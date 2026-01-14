@@ -63,9 +63,11 @@ if _origins_env:
     _allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
 else:
     # Safer defaults limited to local dev
+    # Android 에뮬레이터 접근 허용 (10.0.2.2는 에뮬레이터의 localhost)
     _allowed_origins = [
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "http://10.0.2.2:8000",  # Android 에뮬레이터
     ]
 
 app.add_middleware(
@@ -179,9 +181,27 @@ async def health_check():
 @app.get("/api/game-state")
 async def get_game_state():
     """Get current game state"""
+    # Helper function to get win rate from training stats
+    def _get_win_rate(base_dir: Path) -> float:
+        """Get win rate from training stats"""
+        try:
+            stats_file = base_dir / "data" / "training_stats.json"
+            if stats_file.exists():
+                with open(stats_file, 'r', encoding='utf-8') as f:
+                    stats = json.load(f)
+                    wins = stats.get("wins", 0)
+                    total = stats.get("total_games", 0)
+                    if total > 0:
+                        return (wins / total) * 100.0
+        except Exception:
+            pass
+        return 0.0
+    
     if bot_connector:
         state = bot_connector.get_game_state()
         if state:
+            base_dir = get_base_dir()
+            win_rate = _get_win_rate(base_dir)
             return {
                 "current_frame": state.current_frame,
                 "game_status": state.game_status,
@@ -194,11 +214,14 @@ async def get_game_state():
                 "threat_level": state.threat_level,
                 "strategy_mode": state.strategy_mode,
                 "map_name": state.map_name,
+                "win_rate": win_rate,  # Android 앱용
+                "winRate": win_rate,   # camelCase 버전도 제공
                 "timestamp": state.timestamp
             }
     # Fallback: read from JSON files in current working directory
     base_dir = get_base_dir()
     status = _find_latest_instance_status(base_dir)
+    win_rate = _get_win_rate(base_dir)
     if status:
         src = status.get("game_state", status)
         return {
@@ -213,10 +236,15 @@ async def get_game_state():
             "threat_level": src.get("threat_level", game_state_cache["threat_level"]),
             "strategy_mode": src.get("strategy_mode", game_state_cache["strategy_mode"]),
             "map_name": src.get("map_name", game_state_cache["map_name"]),
+            "win_rate": src.get("win_rate", win_rate),  # Android 앱용
+            "winRate": src.get("win_rate", src.get("winRate", win_rate)),  # camelCase 버전도 제공
             "timestamp": datetime.now().isoformat()
         }
-    # Fallback to cache
-    return game_state_cache
+    # Fallback to cache with win_rate
+    result = game_state_cache.copy()
+    result["win_rate"] = win_rate
+    result["winRate"] = win_rate
+    return result
 
 @app.post("/api/game-state/update")
 async def update_game_state(data: dict):

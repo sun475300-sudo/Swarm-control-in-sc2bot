@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#16213e">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="봇설정"
+                android:textColor="#00ff00"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="16dp" />
+
+            <!-- Active Config Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/activeConfigContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#1a1a2e"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/activeConfigTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="현재 활성설정"
+                        android:textColor="#00ff00"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/activeConfigName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="설정 이름"
+                        android:textColor="#ffffff"
+                        android:textSize="16sp"
+                        android:padding="4dp" />
+
+                    <TextView
+                        android:id="@+id/activeConfigDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="설명"
+                        android:textColor="#ffffff"
+                        android:textSize="14sp"
+                        android:padding="4dp" />
+
+                    <TextView
+                        android:id="@+id/activeConfigTraits"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="특성"
+                        android:textColor="#00ff00"
+                        android:textSize="14sp"
+                        android:padding="4dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- No Active Config -->
+            <TextView
+                android:id="@+id/noActiveConfigText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="활성화된 설정이 없습니다"
+                android:textColor="#ffffff"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:padding="16dp"
+                android:visibility="gone" />
+
+            <!-- All Configs Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="#1a1a2e"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="모든 설정"
+                        android:textColor="#00ff00"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:paddingBottom="8dp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/configsRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddConfig"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_input_add"
+        app:tint="#00ff00" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

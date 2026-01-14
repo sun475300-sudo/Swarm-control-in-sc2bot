@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.wickedzerg.mobilegcs.fragments.HomeFragment"
+        android:label="홈"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_monitor"
+        android:name="com.wickedzerg.mobilegcs.fragments.MonitorFragment"
+        android:label="실시간 모니터링"
+        tools:layout="@layout/fragment_monitor" />
+
+    <fragment
+        android:id="@+id/nav_battles"
+        android:name="com.wickedzerg.mobilegcs.fragments.BattlesFragment"
+        android:label="전투분석"
+        tools:layout="@layout/fragment_battles" />
+
+    <fragment
+        android:id="@+id/nav_training"
+        android:name="com.wickedzerg.mobilegcs.fragments.TrainingFragment"
+        android:label="학습진행"
+        tools:layout="@layout/fragment_training" />
+
+    <fragment
+        android:id="@+id/nav_bot_config"
+        android:name="com.wickedzerg.mobilegcs.fragments.BotConfigFragment"
+        android:label="봇설정"
+        tools:layout="@layout/fragment_bot_config" />
+
+    <fragment
+        android:id="@+id/nav_arena"
+        android:name="com.wickedzerg.mobilegcs.fragments.ArenaFragment"
+        android:label="AI Arena"
+        tools:layout="@layout/fragment_arena" />
+
+</navigation>

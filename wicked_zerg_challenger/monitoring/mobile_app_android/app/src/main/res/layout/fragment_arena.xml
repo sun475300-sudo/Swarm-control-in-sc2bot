@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#16213e"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AI Arena"
+            android:textColor="#00ff00"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="16dp" />
+
+        <!-- Stats Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#1a1a2e"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="경기 통계"
+                    android:textColor="#00ff00"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/totalMatchesText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="총 경기수: 0"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/winsText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="승리: 0"
+                    android:textColor="#00ff00"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/lossesText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="패배: 0"
+                    android:textColor="#ff0000"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/currentELOText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="현재 ELO: 0"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+
+                <!-- Win Rate -->
+                <TextView
+                    android:id="@+id/winRateText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="아레나 승률"
+                    android:textColor="#00ff00"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/winRatePercentText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0.0%"
+                    android:textColor="#ffffff"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:padding="8dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Bot Info Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#1a1a2e"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="봇 정보"
+                    android:textColor="#00ff00"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/botNameText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="봇 이름: -"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/botRaceText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="종족: -"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/botStatusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="상태: -"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:padding="4dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Recent Matches Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#1a1a2e"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="최근 경기 기록 (20개)"
+                    android:textColor="#00ff00"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recentMatchesRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>

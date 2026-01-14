@@ -199,6 +199,24 @@ class TelemetryLogger:
             # Check persona
             personality = getattr(bot, "personality", "unknown")
 
+            # Get map name
+            map_name = "Unknown"
+            if hasattr(bot, "game_info") and bot.game_info:
+                if hasattr(bot.game_info, "map_name"):
+                    map_name = bot.game_info.map_name
+                elif hasattr(bot.game_info, "map_name"):
+                    map_name = str(bot.game_info.map_name)
+
+            # Calculate units killed/lost (simplified)
+            units_killed = loss_details.get("units_killed", 0)
+            units_lost = loss_details.get("units_lost", 0)
+            
+            # If not provided, estimate from army count
+            if units_killed == 0 and units_lost == 0:
+                army_count = loss_details.get("army_count", 0)
+                # Rough estimate: assume some units were lost in battle
+                units_lost = max(0, army_count // 3)
+
             # Game data
             log_data = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -221,6 +239,36 @@ class TelemetryLogger:
                 f.write(json.dumps(log_data, ensure_ascii=False) + "\n")
 
             print(f"[STATS] {personality} ({self.instance_id}): {loss_reason} -> {self.stats_file}")
+
+            # Send to Manus Dashboard (if enabled)
+            try:
+                from monitoring.manus_dashboard_client import create_client_from_env
+                manus_client = create_client_from_env()
+                
+                if manus_client and manus_client.enabled:
+                    success = manus_client.create_game_session(
+                        map_name=map_name,
+                        enemy_race=opponent_race_str,
+                        final_minerals=bot.minerals,
+                        final_gas=bot.vespene,
+                        final_supply=bot.supply_used,
+                        units_killed=units_killed,
+                        units_lost=units_lost,
+                        duration=int(bot.time),
+                        result=result_str,
+                        personality=personality,
+                        loss_reason=loss_reason if result_str == "Defeat" else None,
+                        worker_count=loss_details.get("worker_count", 0),
+                        townhall_count=loss_details.get("townhall_count", 0),
+                        army_count=loss_details.get("army_count", 0),
+                    )
+                    if success:
+                        print(f"[MANUS] 게임 결과를 대시보드에 전송했습니다: {result_str}")
+            except ImportError:
+                # Manus client not available, skip
+                pass
+            except Exception as e:
+                print(f"[WARNING] Manus 대시보드 전송 실패: {e}")
 
         except Exception as e:
             print(f"[WARNING] Failed to record statistics: {e}")
