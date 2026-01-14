@@ -650,22 +650,32 @@ class CombatManager:
                             return False
                     return True
 
-            if self.config.ALL_IN_12_POOL:
-                intel = getattr(b, "intel", None)
-                if intel and intel.cached_zerglings is not None:
-                    zerglings = list(intel.cached_zerglings)
-                else:
-                    zerglings = [u for u in b.units(UnitTypeId.ZERGLING)]
-                zergling_count = len(zerglings)
+            # IMPROVED: Early game aggression - force attack when 12+ zerglings ready
+            # This addresses low win rate against VeryEasy by being more aggressive
+            intel = getattr(b, "intel", None)
+            if intel and intel.cached_zerglings is not None:
+                zerglings = list(intel.cached_zerglings)
+            else:
+                zerglings = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready]
+            zergling_count = len(zerglings)
 
-                spawning_pools = list(
-                    b.units.filter(
-                        lambda u: u.type_id == UnitTypeId.SPAWNINGPOOL and u.is_structure
-                    )
+            spawning_pools = list(
+                b.units.filter(
+                    lambda u: u.type_id == UnitTypeId.SPAWNINGPOOL and u.is_structure
                 )
-                if spawning_pools and spawning_pools[0].is_ready:
-                    if zergling_count >= self.config.ALL_IN_ZERGLING_ATTACK:
-                        return True
+            )
+            if spawning_pools and spawning_pools[0].is_ready:
+                # IMPROVED: Attack when 12+ zerglings ready (reduced from 20)
+                # This creates "offensive virtuous cycle" by converting resources to units
+                if zergling_count >= 12 and b.time >= 180:  # At least 3 minutes passed
+                    current_iteration = getattr(b, "iteration", 0)
+                    if current_iteration % 50 == 0:
+                        print(f"[EARLY AGGRESSION] [{int(b.time)}s] {zergling_count} zerglings ready - forcing attack!")
+                    return True
+
+            if self.config.ALL_IN_12_POOL:
+                if zergling_count >= self.config.ALL_IN_ZERGLING_ATTACK:
+                    return True
 
             if self.is_retreating:
                 if self.army_gathered:
