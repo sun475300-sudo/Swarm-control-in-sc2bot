@@ -149,13 +149,13 @@ class ReinforcementLearner:
             model_path: Model save path (auto-generated if None)
             instance_id: Unique instance identifier to prevent file conflicts in parallel training
         """
-        # CPU Full Power: Use all available CPU cores
+        # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
         import multiprocessing
-        cpu_count = multiprocessing.cpu_count()
-        torch.set_num_threads(cpu_count)
-        os.environ["OMP_NUM_THREADS"] = str(cpu_count)
-        os.environ["MKL_NUM_THREADS"] = str(cpu_count)
-        print(f"[CPU] Using all {cpu_count} CPU cores for maximum performance")
+        num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
+        torch.set_num_threads(num_threads)
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+        os.environ["MKL_NUM_THREADS"] = str(num_threads)
+        print(f"[CPU] PyTorch configured to use {num_threads} threads")
         
         # GPU Full Power: Device auto-detection and model placement
         # Get detailed device information (prints GPU info)

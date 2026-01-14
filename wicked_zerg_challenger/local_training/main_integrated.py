@@ -108,15 +108,15 @@ except Exception as e:
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="asyncio")
 
-# CPU Full Power: Use all available CPU cores for maximum performance
+# CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
 try:
     import multiprocessing
     import torch
-    cpu_count = multiprocessing.cpu_count()
-    torch.set_num_threads(cpu_count)
-    os.environ["OMP_NUM_THREADS"] = str(cpu_count)
-    os.environ["MKL_NUM_THREADS"] = str(cpu_count)
-    print(f"[CPU] Configured to use all {cpu_count} CPU cores for maximum performance")
+    num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
+    torch.set_num_threads(num_threads)
+    os.environ["OMP_NUM_THREADS"] = str(num_threads)
+    os.environ["MKL_NUM_THREADS"] = str(num_threads)
+    print(f"[CPU] PyTorch configured to use {num_threads} threads")
 except Exception as e:
     print(f"[WARNING] Failed to configure CPU threads: {e}")
 
@@ -1172,15 +1172,15 @@ if __name__ == "__main__":
     os.environ["HEADLESS_MODE"] = "false"
     os.environ["DISABLE_DASHBOARD"] = "true"
     
-    # CPU Full Power: Ensure all CPU cores are used
+    # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
     try:
         import multiprocessing
         import torch
-        cpu_count = multiprocessing.cpu_count()
-        torch.set_num_threads(cpu_count)
-        os.environ["OMP_NUM_THREADS"] = str(cpu_count)
-        os.environ["MKL_NUM_THREADS"] = str(cpu_count)
-        print(f"[CONFIG] Single instance mode: 1 instance with full GPU and CPU ({cpu_count} cores) utilization")
+        num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
+        torch.set_num_threads(num_threads)
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+        os.environ["MKL_NUM_THREADS"] = str(num_threads)
+        print(f"[CONFIG] Single instance mode: 1 instance with GPU and {num_threads} CPU threads")
     except Exception as e:
         print(f"[WARNING] Failed to configure CPU threads: {e}")
 
