@@ -259,6 +259,11 @@ class IntelManager:
         self.cached_overlords = None
         self.cached_queens = None
         self.cached_structures = None  # 모든 건물
+        self.cached_ravagers = None
+        self.cached_lurkers = None
+        self.cached_banelings = None
+        self.cached_mutalisks = None
+        self.cached_spine_crawlers = None
 
         # 캐시 갱신 주기 (프레임 단위)
         self.cache_refresh_interval = 8  # 8프레임마다 캐시 갱신 (기존 on_step 주기와 동일)

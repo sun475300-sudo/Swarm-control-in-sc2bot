@@ -160,6 +160,7 @@ class ReplayBuildOrderExtractor:
                                 supply_history[event.second] = event.food_used
 
                             # Track unit born events (structures being created)
+                            # Check for UnitBornEvent or similar events
                             if hasattr(event, 'unit') and hasattr(event, 'second'):
                                 unit = event.unit
                                 if hasattr(unit, 'name'):
@@ -170,7 +171,21 @@ class ReplayBuildOrderExtractor:
                                         supply = self._get_supply_at_time(replay, zerg_player, event.second)
                                         if supply > 0:
                                             unit_creation_events.append((param_name, event.second, supply))
-                    except Exception:
+                            # Also check for UnitInitEvent (unit creation)
+                            elif hasattr(event, '__class__') and 'UnitInit' in str(event.__class__):
+                                if hasattr(event, 'unit') and hasattr(event, 'second'):
+                                    unit = event.unit
+                                    if hasattr(unit, 'name'):
+                                        unit_name = unit.name
+                                        if unit_name in unit_to_parameter:
+                                            param_name = unit_to_parameter[unit_name]
+                                            supply = self._get_supply_at_time(replay, zerg_player, event.second)
+                                            if supply > 0:
+                                                unit_creation_events.append((param_name, event.second, supply))
+                    except Exception as e:
+                        # Log first few errors for debugging
+                        if len(unit_creation_events) == 0 and len(supply_history) < 10:
+                            logger.debug(f"Tracker event error: {e}")
                         continue
 
             # CRITICAL: Filter out cancellations and unit losses
@@ -196,24 +211,78 @@ class ReplayBuildOrderExtractor:
                             "time": creation_time
                         }
 
-            # IMPROVED: Also try to extract from game events as fallback
+            # IMPROVED: Extract from UnitBornEvent (most reliable for structure creation)
+            # UnitBornEvent uses control_pid instead of player attribute
+            zerg_pid = getattr(zerg_player, 'pid', None)
+            if zerg_pid is None:
+                # Try to get PID from player object
+                for p in replay.players:
+                    if p == zerg_player and hasattr(p, 'pid'):
+                        zerg_pid = p.pid
+                        break
+            
+            # Track Hatchery count to skip the starting Hatchery
+            hatchery_count = 0
+            
             for event in replay.events:
                 try:
-                    if hasattr(event, 'player') and event.player == zerg_player:
-                        # Track structure creation
-                        if hasattr(event, 'unit_type_name'):
+                    # Check if this is a UnitBornEvent for Zerg player
+                    is_zerg_event = False
+                    if hasattr(event, '__class__') and 'UnitBorn' in str(event.__class__):
+                        if zerg_pid is not None and hasattr(event, 'control_pid'):
+                            is_zerg_event = event.control_pid == zerg_pid
+                        elif hasattr(event, 'player') and event.player == zerg_player:
+                            is_zerg_event = True
+                    
+                    if is_zerg_event:
+                        # Get unit name from event.unit.name
+                        unit_name = None
+                        event_time = None
+                        is_building = False
+                        
+                        if hasattr(event, 'unit'):
+                            unit = event.unit
+                            if hasattr(unit, 'name'):
+                                unit_name = unit.name
+                            # CRITICAL: Only process buildings (skip units like BeaconArmy, etc.)
+                            if hasattr(unit, 'is_building'):
+                                is_building = unit.is_building
+                            elif hasattr(unit, 'name'):
+                                # Fallback: check if name suggests it's a building
+                                building_keywords = ['Hatchery', 'Pool', 'Warren', 'Den', 'Extractor', 'Lair', 'Hive', 'Crawler', 'Spire', 'Nydus', 'Infestation']
+                                is_building = any(kw in unit_name for kw in building_keywords)
+                        elif hasattr(event, 'unit_type_name'):
                             unit_name = event.unit_type_name
-                            if unit_name in unit_to_parameter:
-                                param_name = unit_to_parameter[unit_name]
-                                if param_name not in build_order["timings"]:
-                                    # Get supply at time of event
-                                    supply = self._get_supply_at_time(replay, zerg_player, event.second)
-                                    if supply > 0:
-                                        build_order["timings"][param_name] = {
-                                            "supply": supply,
-                                            "time": event.second
-                                        }
-                except Exception:
+                            # Assume it's a building if it's in our mapping
+                            is_building = unit_name in unit_to_parameter
+                        
+                        if hasattr(event, 'second'):
+                            event_time = event.second
+                        elif hasattr(event, 'frame'):
+                            event_time = event.frame / 16.0  # Approximate conversion
+                        
+                        # CRITICAL: Only process buildings, skip units
+                        if is_building and unit_name and unit_name in unit_to_parameter and event_time is not None:
+                            param_name = unit_to_parameter[unit_name]
+                            
+                            # Special handling for Hatchery: skip the first one (starting base)
+                            if unit_name == "Hatchery":
+                                hatchery_count += 1
+                                if hatchery_count == 1:
+                                    continue  # Skip starting Hatchery
+                            
+                            if param_name not in build_order["timings"]:
+                                # Get supply at time of event
+                                supply = self._get_supply_at_time(replay, zerg_player, event_time)
+                                if supply > 0:
+                                    build_order["timings"][param_name] = {
+                                        "supply": supply,
+                                        "time": event_time
+                                    }
+                except Exception as e:
+                    # Log first few errors for debugging
+                    if len(build_order["timings"]) == 0:
+                        logger.debug(f"Event processing error: {e}")
                     continue
 
             return build_order if build_order["timings"] else None
@@ -280,7 +349,12 @@ class ReplayBuildOrderExtractor:
         strategies = []
 
         try:
-            from scripts.strategy_database import StrategyType, MatchupType
+            import sys
+            from pathlib import Path
+            script_dir = Path(__file__).parent
+            if str(script_dir) not in sys.path:
+                sys.path.insert(0, str(script_dir))
+            from strategy_database import StrategyType, MatchupType
 
             replay = sc2reader.load_replay(str(replay_path), load_map=True)
 
@@ -442,7 +516,12 @@ class ReplayBuildOrderExtractor:
         # CRITICAL: Load crash handler to prevent infinite retry loops
         crash_handler = None
         try:
-            from scripts.replay_crash_handler import ReplayCrashHandler
+            import sys
+            from pathlib import Path
+            script_dir = Path(__file__).parent
+            if str(script_dir) not in sys.path:
+                sys.path.insert(0, str(script_dir))
+            from replay_crash_handler import ReplayCrashHandler
             crash_log_file = self.replay_dir / "crash_log.json"
             crash_handler = ReplayCrashHandler(crash_log_file, max_crashes=3)
             # Recover stale sessions (mark as crashed if > 30 minutes old)
@@ -512,7 +591,12 @@ class ReplayBuildOrderExtractor:
 
                         # CRITICAL: Also update learning_status.json for hard requirement enforcement
                         try:
-                            from scripts.learning_status_manager import LearningStatusManager
+                            import sys
+                            from pathlib import Path
+                            script_dir = Path(__file__).parent
+                            if str(script_dir) not in sys.path:
+                                sys.path.insert(0, str(script_dir))
+                            from learning_status_manager import LearningStatusManager
                             status_file = self.replay_dir / "learning_status.json"
                             status_manager = LearningStatusManager(status_file, min_iterations=5)
                             status_count = status_manager.increment_learning_count(replay_path)
@@ -546,8 +630,9 @@ class ReplayBuildOrderExtractor:
                 else:
                     logger.error(f"[ERROR] {replay_path.name} - Learning failed: {e}")
                 continue
-
-                # Collect timing statistics
+            
+            # Collect timing statistics (moved outside try-except to ensure it runs)
+            if build_order and "timings" in build_order:
                 for param_name, timing_data in build_order["timings"].items():
                     if "supply" in timing_data:
                         self.timing_stats[param_name].append(timing_data["supply"])
@@ -600,15 +685,28 @@ class ReplayBuildOrderExtractor:
 
 def update_config_with_learned_params(learned_params: Dict[str, float]):
     """Update config.py with learned parameters"""
-    config_path = Path(__file__).parent / "config.py"
+    # Try multiple config.py locations
+    possible_config_paths = [
+        Path(__file__).parent.parent.parent / "config.py",  # Project root
+        Path(__file__).parent / "config.py",  # Scripts directory
+    ]
+    config_path = None
+    for path in possible_config_paths:
+        if path.exists():
+            config_path = path
+            break
 
-    if not config_path.exists():
-        logger.warning(f"config.py not found at {config_path}")
-        return
-
-    # Read current config
-    with open(config_path, 'r', encoding='utf-8') as f:
-        config_content = f.read()
+    if config_path is None or not config_path.exists():
+        logger.warning(f"config.py not found. Tried: {possible_config_paths}")
+        # Still save to JSON for manual update
+    else:
+        # Read current config (for future automatic updates)
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config_content = f.read()
+            logger.debug(f"Read config.py from {config_path}")
+        except Exception as e:
+            logger.warning(f"Could not read config.py: {e}")
 
     # Update get_learned_parameter function defaults
     # This is a simple approach - in production, you might want a more sophisticated update mechanism
