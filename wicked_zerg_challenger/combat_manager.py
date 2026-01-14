@@ -195,10 +195,21 @@ class CombatManager:
 
             eco_stability = min(1.0, worker_count / 30.0)
 
+            # IMPROVED: Adjust aggression based on win rate
+            # If win rate is low (below 30%), be more aggressive to improve performance
+            win_rate = getattr(b, "last_calculated_win_rate", 50.0)
+            low_win_rate_penalty = win_rate < 30.0  # Below 30% win rate
+
             if worker_count < 10:
                 new_mode = "DEFENSIVE"
             elif worker_count >= 30 or supply_cap >= 100:
                 new_mode = "AGGRESSIVE"
+            elif low_win_rate_penalty and worker_count >= 16:
+                # IMPROVED: Force AGGRESSIVE mode when win rate is low and we have enough workers
+                new_mode = "AGGRESSIVE"
+                current_iteration = getattr(b, "iteration", 0)
+                if current_iteration % 100 == 0:
+                    print(f"[COMBAT MODE] [{int(b.time)}s] Low win rate ({win_rate:.1f}%) - forcing AGGRESSIVE mode")
             else:
                 new_mode = "CAUTIOUS"
 
@@ -207,7 +218,7 @@ class CombatManager:
                 current_iteration = getattr(b, "iteration", 0)
                 if current_iteration % 100 == 0:
                     print(
-                        f"[COMBAT MODE] [{int(b.time)}s] Mode changed to {new_mode} (Workers: {worker_count}, Supply: {supply_cap}, Eco Stability: {eco_stability:.2f})"
+                        f"[COMBAT MODE] [{int(b.time)}s] Mode changed to {new_mode} (Workers: {worker_count}, Supply: {supply_cap}, Win Rate: {win_rate:.1f}%, Eco Stability: {eco_stability:.2f})"
                     )
 
         except Exception as e:
