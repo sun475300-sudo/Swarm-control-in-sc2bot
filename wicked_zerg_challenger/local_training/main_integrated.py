@@ -109,16 +109,29 @@ except Exception as e:
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="asyncio")
 
 # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
+# CRITICAL: Import torch safely to avoid C extensions loading errors
 try:
     import multiprocessing
-    import torch
-    num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
-    torch.set_num_threads(num_threads)
-    os.environ["OMP_NUM_THREADS"] = str(num_threads)
-    os.environ["MKL_NUM_THREADS"] = str(num_threads)
-    print(f"[CPU] PyTorch configured to use {num_threads} threads")
+    # Change to a safe directory before importing torch to avoid path conflicts
+    original_cwd = os.getcwd()
+    try:
+        # Temporarily change to project root to avoid local directory conflicts
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.chdir(project_root)
+        import torch
+        # Verify torch is properly installed
+        if not hasattr(torch, '_C'):
+            raise ImportError("PyTorch C extensions not properly loaded")
+        num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
+        torch.set_num_threads(num_threads)
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+        os.environ["MKL_NUM_THREADS"] = str(num_threads)
+        print(f"[CPU] PyTorch configured to use {num_threads} threads")
+    finally:
+        os.chdir(original_cwd)
 except Exception as e:
     print(f"[WARNING] Failed to configure CPU threads: {e}")
+    print(f"[INFO] Game will continue but may use default thread settings")
 
 # Initialize logging configuration at the start to prevent logging errors
 # This fixes ValueError: I/O operation on closed file issues
@@ -1175,14 +1188,26 @@ if __name__ == "__main__":
     # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
     try:
         import multiprocessing
-        import torch
-        num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
-        torch.set_num_threads(num_threads)
-        os.environ["OMP_NUM_THREADS"] = str(num_threads)
-        os.environ["MKL_NUM_THREADS"] = str(num_threads)
-        print(f"[CONFIG] Single instance mode: 1 instance with GPU and {num_threads} CPU threads")
+        # Change to a safe directory before importing torch to avoid path conflicts
+        original_cwd = os.getcwd()
+        try:
+            # Temporarily change to project root to avoid local directory conflicts
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            os.chdir(project_root)
+            import torch
+            # Verify torch is properly installed
+            if not hasattr(torch, '_C'):
+                raise ImportError("PyTorch C extensions not properly loaded")
+            num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
+            torch.set_num_threads(num_threads)
+            os.environ["OMP_NUM_THREADS"] = str(num_threads)
+            os.environ["MKL_NUM_THREADS"] = str(num_threads)
+            print(f"[CONFIG] Single instance mode: 1 instance with GPU and {num_threads} CPU threads")
+        finally:
+            os.chdir(original_cwd)
     except Exception as e:
         print(f"[WARNING] Failed to configure CPU threads: {e}")
+        print(f"[INFO] Game will continue but may use default thread settings")
 
     try:
         if logger:
