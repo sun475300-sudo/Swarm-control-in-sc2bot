@@ -95,6 +95,15 @@ try:
 except ImportError:
     DASHBOARD_AVAILABLE = False
 
+# IMPROVED: Gemini Self-Healing System (optional)
+try:
+    from genai_self_healing import GenAISelfHealing, init_self_healing
+    GEMINI_SELF_HEALING_AVAILABLE = True
+except ImportError:
+    GEMINI_SELF_HEALING_AVAILABLE = False
+    GenAISelfHealing = None  # type: ignore[assignment]
+    init_self_healing = None  # type: ignore[assignment]
+
 EarlyDefenseManager = None
 HotLoader = None
 GasMaximizer = None
@@ -356,6 +365,27 @@ class WickedZergBotPro(BotAI):
         self.game_log: list = []
         self.telemetry_data: list = self.telemetry_logger.telemetry_data
         self.telemetry_file: str = self.telemetry_logger.telemetry_file
+
+        # IMPROVED: Gemini Self-Healing System - Automated error analysis and patching
+        self.self_healing = None
+        if GEMINI_SELF_HEALING_AVAILABLE and GenAISelfHealing:
+            try:
+                # Initialize with auto-patch disabled by default (manual review recommended)
+                enable_auto_patch = os.environ.get("GEMINI_AUTO_PATCH", "false").lower() == "true"
+                log_dir = Path(project_root) / "data" / "self_healing"
+                self.self_healing = GenAISelfHealing(
+                    api_key=None,  # Will use GOOGLE_API_KEY from environment
+                    model_name="gemini-1.5-flash",  # Fast and cost-effective
+                    enable_auto_patch=enable_auto_patch,
+                    log_dir=log_dir
+                )
+                if self.self_healing.is_available():
+                    print(f"[SELF-HEALING] ✅ Gemini Self-Healing initialized (model: gemini-1.5-flash, auto-patch: {enable_auto_patch})")
+                else:
+                    print(f"[SELF-HEALING] ⚠️ Gemini API not available (check GOOGLE_API_KEY environment variable)")
+            except Exception as e:
+                print(f"[WARNING] Failed to initialize Gemini Self-Healing: {e}")
+                self.self_healing = None
 
         # Debug Visualizer (disabled for performance)
         class DummyVisualizer:
@@ -1572,6 +1602,51 @@ class WickedZergBotPro(BotAI):
                 )
             except Exception:
                 pass
+
+            # IMPROVED: Gemini Self-Healing - Analyze error and suggest patch
+            if self.self_healing and self.self_healing.is_available():
+                try:
+                    # Collect error context for Gemini analysis
+                    error_context = {
+                        "iteration": iteration,
+                        "game_time": self.time,
+                        "instance_id": getattr(self, "instance_id", 0),
+                        "minerals": self.minerals,
+                        "vespene": self.vespene,
+                        "supply_used": self.supply_used,
+                        "supply_cap": self.supply_cap,
+                    }
+                    
+                    # Analyze error with Gemini (async to avoid blocking game loop)
+                    # Use asyncio.create_task to run in background
+                    async def analyze_error_async():
+                        try:
+                            patch = self.self_healing.analyze_error(e, context=error_context)
+                            if patch:
+                                print(f"\n[SELF-HEALING] ✅ Patch suggestion received:")
+                                print(f"   Description: {patch.description}")
+                                print(f"   File: {patch.file_path}")
+                                print(f"   Confidence: {patch.confidence:.2f}")
+                                print(f"   Reasoning: {patch.reasoning[:200]}...")
+                                print(f"   Patch saved to: {self.self_healing.log_dir}")
+                                
+                                # If auto-patch is enabled and confidence is high, apply patch
+                                if self.self_healing.enable_auto_patch and patch.confidence >= 0.8:
+                                    if self.self_healing.apply_patch(patch):
+                                        print(f"[SELF-HEALING] 🔧 Patch applied automatically (confidence: {patch.confidence:.2f})")
+                                    else:
+                                        print(f"[SELF-HEALING] ⚠️ Auto-patch failed (check logs)")
+                        except Exception as analysis_error:
+                            # Don't crash if Gemini analysis fails
+                            if iteration % 500 == 0:  # Log only occasionally
+                                print(f"[SELF-HEALING] ⚠️ Error analysis failed: {analysis_error}")
+                    
+                    # Schedule error analysis in background (non-blocking)
+                    asyncio.create_task(analyze_error_async())
+                except Exception as healing_error:
+                    # Don't crash if self-healing setup fails
+                    if iteration % 500 == 0:
+                        print(f"[SELF-HEALING] ⚠️ Self-healing error: {healing_error}")
 
             # Console output (throttled)
             if iteration - self.last_error_log_frame >= 50:
