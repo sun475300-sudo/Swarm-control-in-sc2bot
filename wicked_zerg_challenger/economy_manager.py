@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 
 from typing import Dict, Optional
 
 import traceback
+
+
+from config import Config
+
+        from config import get_learned_parameter
+        from config import get_learned_parameter, Config
 
 from sc2.bot_ai import BotAI  # type: ignore
 from sc2.ids.ability_id import AbilityId  # type: ignore
@@ -10,8 +15,7 @@ from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
 from sc2.ids.upgrade_id import UpgradeId  # type: ignore
 from sc2.position import Point2  # type: ignore
 
-from config import Config
-
+# -*- coding: utf-8 -*-
 class EconomyManager:
     def __init__(self, bot: BotAI):
         self.bot = bot
@@ -731,7 +735,6 @@ class EconomyManager:
         except Exception:
             pass
 
-        from config import get_learned_parameter
 
         aggressive_build_supply = get_learned_parameter("aggressive_build_supply", 6)
 
@@ -1020,7 +1023,6 @@ class EconomyManager:
                     pass
 
         # Use learned parameter or config default for pool supply threshold
-        from config import get_learned_parameter, Config
         pool_supply_threshold = get_learned_parameter("spawning_pool_supply", Config.SPAWNING_POOL_SUPPLY)
 
         if b.supply_used >= pool_supply_threshold:

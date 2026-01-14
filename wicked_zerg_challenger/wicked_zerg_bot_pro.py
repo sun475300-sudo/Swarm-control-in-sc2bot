@@ -1,18 +1,4 @@
-# -*- coding: utf-8 -*-
 
-from sc2.bot_ai import BotAI  # type: ignore
-from sc2.data import Race, Result  # type: ignore
-from sc2.ids.ability_id import AbilityId  # type: ignore
-from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
-
-try:
-    from sc2.ids.buff_id import BuffId as SC2BuffId
-
-    BuffId = SC2BuffId  # type: ignore[assignment]
-except ImportError:
-    # Fallback if BuffId is not available
-    class BuffId:
-        METABOLICBOOST = None
 
 import asyncio
 import gc
@@ -26,14 +12,60 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
+    import logging
+from combat_manager import CombatManager
+from combat_tactics import CombatTactics
+from config import Config, EnemyRace, GamePhase
+from economy_manager import EconomyManager
+from intel_manager import IntelManager
+    from micro_controller import MicroController
+from rogue_tactics_manager import RogueTacticsManager
+from personality_manager import PersonalityManager
+from production_manager import ProductionManager
+from production_resilience import ProductionResilience
+from queen_manager import QueenManager
+from scouting_system import ScoutingSystem
+from telemetry_logger import TelemetryLogger
+    from strategy_analyzer import StrategyAnalyzer
+    from bot_api_connector import bot_connector
+    from genai_self_healing import GenAISelfHealing, init_self_healing
+    from debug_visualizer import DebugVisualizer as SC2DebugVisualizer
+    from zerg_net import Action, ReinforcementLearner, ZergNet
+        from pathlib import Path
+        from config import Config
+                from spell_unit_manager import SpellUnitManager
+                import traceback as tb
+                            from pathlib import Path as PathLib
+            import psutil
+            from zerg_net import MODELS_DIR
 
+from sc2.bot_ai import BotAI  # type: ignore
+from sc2.data import Race, Result  # type: ignore
+from sc2.ids.ability_id import AbilityId  # type: ignore
+from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
+    from sc2.ids.buff_id import BuffId as SC2BuffId
 import numpy as np
+    from loguru import logger
+    import torch
+                                    from loguru import logger as loguru_logger
+                        from sc2.position import Point2
+                        from sc2.ids.unit_typeid import UnitTypeId
+
+# -*- coding: utf-8 -*-
+try:
+
+    BuffId = SC2BuffId  # type: ignore[assignment]
+except ImportError:
+    # Fallback if BuffId is not available
+    class BuffId:
+        METABOLICBOOST = None
+
+
 
 # Antigravity easter egg removed - no longer used
 
 # Logger setup for clean text output with safe buffer handling
 try:
-    from loguru import logger
 
     # Remove default handler and add safe handler with enqueue=True
     # enqueue=True processes logs asynchronously to prevent buffer detachment errors
@@ -46,7 +78,6 @@ try:
         level="INFO",
     )
 except ImportError:
-    import logging
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -61,43 +92,27 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from combat_manager import CombatManager
-from combat_tactics import CombatTactics
-from config import Config, EnemyRace, GamePhase
-from economy_manager import EconomyManager
-from intel_manager import IntelManager
 
 # MicroController - optional import
 try:
-    from micro_controller import MicroController
 except ImportError:
     MicroController = None  # type: ignore[assignment]
 
-from rogue_tactics_manager import RogueTacticsManager
 
 # 🎯 New modules - Code slimdown
-from personality_manager import PersonalityManager
-from production_manager import ProductionManager
-from production_resilience import ProductionResilience
-from queen_manager import QueenManager
-from scouting_system import ScoutingSystem
-from telemetry_logger import TelemetryLogger
 
 # IMPROVED: Strategy analyzer (optional - gracefully handles missing module)
 try:
-    from strategy_analyzer import StrategyAnalyzer
 except Exception:
     StrategyAnalyzer = None  # type: ignore[assignment]
 
 try:
-    from bot_api_connector import bot_connector
     DASHBOARD_AVAILABLE = True
 except ImportError:
     DASHBOARD_AVAILABLE = False
 
 # IMPROVED: Gemini Self-Healing System (optional)
 try:
-    from genai_self_healing import GenAISelfHealing, init_self_healing
     GEMINI_SELF_HEALING_AVAILABLE = True
 except ImportError:
     GEMINI_SELF_HEALING_AVAILABLE = False
@@ -109,7 +124,6 @@ HotLoader = None
 GasMaximizer = None
 # Debug Visualizer: Real-time dashboard
 try:
-    from debug_visualizer import DebugVisualizer as SC2DebugVisualizer
 
     DebugVisualizer = SC2DebugVisualizer  # type: ignore[assignment]
 except ImportError:
@@ -124,9 +138,7 @@ except ImportError:
 # PyTorch Neural Network (Optional)
 torch = None
 try:
-    import torch
 
-    from zerg_net import Action, ReinforcementLearner, ZergNet
 
     PYTORCH_AVAILABLE = True
     print("[OK] PyTorch loaded")
@@ -161,7 +173,6 @@ class WickedZergBotPro(BotAI):
         """
         super().__init__()
 
-        from pathlib import Path
 
         self.instance_id = instance_id
         self.personality = personality.lower()
@@ -227,7 +238,6 @@ class WickedZergBotPro(BotAI):
         self.neural_network_inference_interval = 24
         self.last_neural_network_inference = -1
         self._cached_neural_action = None
-        from config import Config
         _config = Config()
         gpu_target_env = os.environ.get("GPU_USAGE_TARGET", str(_config.GPU_USAGE_TARGET))
         try:
@@ -746,7 +756,6 @@ class WickedZergBotPro(BotAI):
 
             # Initialize spell unit manager (optimized targeting)
             try:
-                from spell_unit_manager import SpellUnitManager
                 self.spell_unit_manager = SpellUnitManager(self)
                 print(f"[SPELL UNITS] Spell unit manager initialized")
             except Exception as e:
@@ -955,7 +964,6 @@ class WickedZergBotPro(BotAI):
             # Critical error during initialization - log with full traceback
             error_msg = f"Critical error in on_start: {str(e)}\n"
             try:
-                import traceback as tb
                 error_msg += f"Traceback:\n{tb.format_exc()}\n"
             except Exception:
                 pass
@@ -1108,7 +1116,6 @@ class WickedZergBotPro(BotAI):
 
                         if instance_id > 0 and self.iteration % write_interval == 0:
                             # IMPROVED: Use project root stats/ directory with instance subdirectory
-                            from pathlib import Path as PathLib
                             project_root = PathLib(__file__).parent.parent.parent
                             status_dir = project_root / "stats" / f"instance_{instance_id}"
                             status_dir.mkdir(parents=True, exist_ok=True)
@@ -1616,7 +1623,7 @@ class WickedZergBotPro(BotAI):
                         "supply_used": self.supply_used,
                         "supply_cap": self.supply_cap,
                     }
-                    
+
                     # Analyze error with Gemini (async to avoid blocking game loop)
                     # Use asyncio.create_task to run in background
                     async def analyze_error_async():
@@ -1629,7 +1636,7 @@ class WickedZergBotPro(BotAI):
                                 print(f"   Confidence: {patch.confidence:.2f}")
                                 print(f"   Reasoning: {patch.reasoning[:200]}...")
                                 print(f"   Patch saved to: {self.self_healing.log_dir}")
-                                
+
                                 # If auto-patch is enabled and confidence is high, apply patch
                                 if self.self_healing.enable_auto_patch and patch.confidence >= 0.8:
                                     if self.self_healing.apply_patch(patch):
@@ -1640,7 +1647,7 @@ class WickedZergBotPro(BotAI):
                             # Don't crash if Gemini analysis fails
                             if iteration % 500 == 0:  # Log only occasionally
                                 print(f"[SELF-HEALING] ⚠️ Error analysis failed: {analysis_error}")
-                    
+
                     # Schedule error analysis in background (non-blocking)
                     asyncio.create_task(analyze_error_async())
                 except Exception as healing_error:
@@ -3012,7 +3019,6 @@ class WickedZergBotPro(BotAI):
                             if iteration % 500 == 0:  # Reduced from 50 to 500 to minimize I/O
                                 # Use logger.debug if available, otherwise skip in training mode
                                 try:
-                                    from loguru import logger as loguru_logger
                                     loguru_logger.debug(f"Spawning Pool detected: Building... ({pool_progress*100:.1f}%)")
                                 except ImportError:
                                     # Only print if not in training mode to reduce I/O overhead
@@ -3949,7 +3955,6 @@ class WickedZergBotPro(BotAI):
         """
         try:
 
-            import psutil
 
             process = psutil.Process(os.getpid())
             memory_mb = process.memory_info().rss / 1024 / 1024
@@ -4633,7 +4638,6 @@ class WickedZergBotPro(BotAI):
             return
 
         try:
-            from zerg_net import MODELS_DIR
 
             os.makedirs(MODELS_DIR, exist_ok=True)
 
@@ -4750,7 +4754,6 @@ class WickedZergBotPro(BotAI):
                 # NEW: Enemy main base distance (normalized to 0-1, max distance ~200)
                 if intel.enemy_main_location and hasattr(self, 'start_location'):
                     try:
-                        from sc2.position import Point2
                         enemy_main_pos = Point2(intel.enemy_main_location)
                         distance = self.start_location.distance_to(enemy_main_pos)
                         enemy_main_distance = min(1.0, float(distance) / 200.0)  # Normalize to 0-1
@@ -4785,7 +4788,6 @@ class WickedZergBotPro(BotAI):
                 elif intel.enemy_unit_count:
                     # Fallback: Estimate from unit counts using UnitTypeId (more accurate)
                     try:
-                        from sc2.ids.unit_typeid import UnitTypeId
                         # Common air unit type IDs
                         air_unit_types = {
                             UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD,

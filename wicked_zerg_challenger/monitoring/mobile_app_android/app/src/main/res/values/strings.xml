@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SC2 Monitor</string>
+    <string name="minerals">Minerals</string>
+    <string name="vespene">Vespene</string>
+    <string name="supply">Supply</string>
+    <string name="units">Units</string>
+    <string name="win_rate">Win Rate</string>
+    <string name="status">Status</string>
+    <string name="connecting">Connecting...</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+</resources>

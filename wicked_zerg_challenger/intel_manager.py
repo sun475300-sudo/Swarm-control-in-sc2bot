@@ -1,3 +1,17 @@
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List, Optional, Set
+    from wicked_zerg_bot_pro import WickedZergBotPro
+from dataclasses import dataclass, field
+from enum import Enum, IntEnum, auto
+from typing import Dict, List, Optional, Set
+            from config import TARGET_PRIORITY
+
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+from sc2.unit import Unit
+        from sc2.ids.upgrade_id import UpgradeId
+
 # -*- coding: utf-8 -*-
 """
 ================================================================================
@@ -17,22 +31,12 @@
 ================================================================================
 """
 
-import sys
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.absolute()))
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Set
 
 if TYPE_CHECKING:
-    from wicked_zerg_bot_pro import WickedZergBotPro
 
-from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
-from typing import Dict, List, Optional, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
 
 
 class StrategyMode(Enum):
@@ -839,7 +843,6 @@ Threat Level: {self.threat_level.name}
 
         # 2. 업그레이드 완료 시점 (Upgrade Spike)
         # 저글링 발업 완료 직후
-        from sc2.ids.upgrade_id import UpgradeId
 
         if UpgradeId.ZERGLINGMOVEMENTSPEED in b.state.upgrades:
             # 발업이 방금 완료되었는지 확인 (이전 프레임에 없었고 지금 있으면)
@@ -971,7 +974,6 @@ Threat Level: {self.threat_level.name}
             bot: 봇 인스턴스 (TARGET_PRIORITY 접근용)
         """
         try:
-            from config import TARGET_PRIORITY
 
             # 타겟 우선순위 딕셔너리 초기화
             self.cached_target_priority = {}

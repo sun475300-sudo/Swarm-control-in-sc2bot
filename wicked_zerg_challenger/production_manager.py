@@ -1,29 +1,36 @@
-# -*- coding: utf-8 -*-
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-if TYPE_CHECKING:
     from wicked_zerg_bot_pro import WickedZergBotPro
-
 import json
 import os
 import random
 import traceback
+from config import COUNTER_BUILD, Config, EnemyRace, GamePhase, get_learned_parameter
+from unit_factory import UnitFactory
+    import logging
+                from config import Config
+            from config import get_learned_parameter
+                            from personality_manager import ChatPriority
 
 from sc2.data import Race  # type: ignore
 from sc2.ids.ability_id import AbilityId  # type: ignore
 from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
 from sc2.ids.upgrade_id import UpgradeId  # type: ignore
 from sc2.position import Point2  # type: ignore
+    from loguru import logger
+                        from loguru import logger as loguru_logger
+                                    from sc2.position import Point2
 
-from config import COUNTER_BUILD, Config, EnemyRace, GamePhase, get_learned_parameter
-from unit_factory import UnitFactory
+# -*- coding: utf-8 -*-
+if TYPE_CHECKING:
+
+
+
 
 # Logger setup
 try:
-    from loguru import logger
 except ImportError:
-    import logging
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -229,7 +236,6 @@ class ProductionManager:
 
             if existing_count > max_count:
                 duplicates = existing_count - max_count
-                from config import Config
                 _config = Config()
                 allowed_multi = max_count * max(1, int(townhall_count * _config.DUPLICATE_PENALTY_MULTI_FACTOR))
                 if existing_count <= allowed_multi:
@@ -510,7 +516,6 @@ class ProductionManager:
             # This prevents mineral accumulation (5,000+ minerals problem)
             # Check minerals BEFORE any production decisions
             # CRITICAL: Lower threshold (500) for aggressive resource spending
-            from config import get_learned_parameter
 
             aggressive_flush_threshold = get_learned_parameter(
                 "aggressive_flush_threshold", 500
@@ -552,7 +557,6 @@ class ProductionManager:
                 elif b.iteration % 50 == 0:
                     # IMPROVED: Log optimization - use DEBUG level for frequent logs
                     try:
-                        from loguru import logger as loguru_logger
                         loguru_logger.debug(f"FORCE ZERGLING: No production - minerals={int(b.minerals)}, supply_left={b.supply_left}, can_afford={b.can_afford(UnitTypeId.ZERGLING)}")
                     except ImportError:
                         # Only print if not in training mode to reduce I/O overhead
@@ -1618,7 +1622,6 @@ class ProductionManager:
                 if current_iteration % 500 == 0:
                     try:
                         if hasattr(b, "personality_manager"):
-                            from personality_manager import ChatPriority
                             await b.personality_manager.send_chat(
                                 f"EMERGENCY: {int(b.minerals)} minerals stacked! Army production priority!",
                                 priority=ChatPriority.HIGH
@@ -1660,7 +1663,6 @@ class ProductionManager:
                             if b.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th).amount < 2:
                                 # Find placement near townhall
                                 try:
-                                    from sc2.position import Point2
 
                                     spine_pos = th.position.offset(Point2((5, 5)))
                                     # CRITICAL: Use _try_build_structure to prevent duplicate construction
@@ -1781,7 +1783,7 @@ class ProductionManager:
             roach_warrens_ready = b.structures(UnitTypeId.ROACHWARREN).ready.exists
             hydra_dens_ready = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
             has_lair = b.structures(UnitTypeId.LAIR).exists or b.structures(UnitTypeId.HIVE).exists
-            
+
             # Prioritize tech units when gas is high
             if hydra_dens_ready and has_lair and b.can_afford(UnitTypeId.HYDRALISK):
                 for larva in larvae:
@@ -1797,7 +1799,7 @@ class ProductionManager:
                             continue
                 if units_produced > 0:
                     return True
-            
+
             if roach_warrens_ready and b.can_afford(UnitTypeId.ROACH):
                 for larva in larvae:
                     if not larva.is_ready:
@@ -3100,7 +3102,7 @@ class ProductionManager:
                     if current_iteration % 75 == 0:
                         print(f"[LATE-GAME TECH] [{int(b.time)}s] Producing Roach (gas: {b.vespene})")
                     return
-                
+
                 # IMPROVED: Also try Baneling morph when force_high_tech is active
                 baneling_nests = b.structures(UnitTypeId.BANELINGNEST).ready
                 if baneling_nests.exists:
@@ -3109,7 +3111,7 @@ class ProductionManager:
                         zerglings_ready = [u for u in intel.cached_zerglings if u.is_ready and u.is_idle]
                     else:
                         zerglings_ready = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready and u.is_idle]
-                    
+
                     if zerglings_ready and b.can_afford(AbilityId.MORPHZERGLINGTOBANELING_BANELING):
                         try:
                             zerglings_ready[0](AbilityId.MORPHZERGLINGTOBANELING_BANELING)

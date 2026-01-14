@@ -1,22 +1,28 @@
-# -*- coding: utf-8 -*-
 
 from typing import TYPE_CHECKING, List, Optional
 
-if TYPE_CHECKING:
     from wicked_zerg_bot_pro import WickedZergBotPro
-
 import json
 import math
 import os
 import traceback
+from config import TARGET_PRIORITY, Config, GamePhase
+                        from personality_manager import ChatPriority
+                    import random
+            from config import Config
 
 from sc2.data import Race  # type: ignore
 from sc2.ids.ability_id import AbilityId  # type: ignore
 from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
 from sc2.position import Point2  # type: ignore
 from sc2.unit import Unit  # type: ignore
+                    from sc2.ids.upgrade_id import UpgradeId
 
-from config import TARGET_PRIORITY, Config, GamePhase
+# -*- coding: utf-8 -*-
+if TYPE_CHECKING:
+
+
+
 
 class CombatManager:
     def __init__(self, bot: "WickedZergBotPro"):
@@ -134,7 +140,6 @@ class CombatManager:
                 current_iteration = getattr(b, "iteration", 0)
                 if current_iteration % 448 == 0:
                     if hasattr(b, "personality_manager"):
-                        from personality_manager import ChatPriority
                         await b.personality_manager.send_chat(
                             f"⚠️ 승률 {win_rate:.0f}%... 지금은 승산이 없습니다. 병력을 보존하기 위해 후퇴합니다.",
                             priority=ChatPriority.MEDIUM
@@ -683,7 +688,7 @@ class CombatManager:
                     if current_iteration % 50 == 0:
                         print(f"[FORCE ATTACK] [{int(b.time)}s] Trigger: {zergling_count} zerglings OR {b.supply_army} supply - forcing attack!")
                     return True
-                
+
                 # IMPROVED: Attack when 12+ zerglings ready (reduced from 20)
                 # This creates "offensive virtuous cycle" by converting resources to units
                 if zergling_count >= 12 and b.time >= 180:  # At least 3 minutes passed
@@ -1297,7 +1302,6 @@ class CombatManager:
                 if unit.distance_to(self.rally_point) > 25:  # IMPROVED: 20 -> 25
                     await b.do(unit.move(self.rally_point))
                 elif unit.is_idle:
-                    import random
 
                     offset_x = random.uniform(-4, 4)  # IMPROVED: -3,3 -> -4,4
                     offset_y = random.uniform(-4, 4)  # IMPROVED: -3,3 -> -4,4
@@ -2112,7 +2116,6 @@ class CombatManager:
         b = self.bot
 
         try:
-            from config import Config
             _config = Config()
             hydralisks = b.units(UnitTypeId.HYDRALISK).ready
             zerglings = b.units(UnitTypeId.ZERGLING).ready
@@ -2253,7 +2256,6 @@ class CombatManager:
 
                 if hasattr(b, "state") and hasattr(b.state, "upgrades"):
                     upgrades = b.state.upgrades
-                    from sc2.ids.upgrade_id import UpgradeId
 
                     centrifugal_upgrade_id = getattr(UpgradeId, "CENTRIFUGALHOOKS", None)
                     if not centrifugal_upgrade_id:
