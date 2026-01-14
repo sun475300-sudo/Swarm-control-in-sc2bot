@@ -1348,7 +1348,7 @@ class WickedZergBotPro(BotAI):
                                     # OPTIMIZED: Process only first larva (no need to iterate all)
                                     for larva in larvae[:1]:
                                         if larva.is_ready:
-                                            larva.train(UnitTypeId.DRONE)
+                                            await larva.train(UnitTypeId.DRONE)
                                             # Skip other production this frame to ensure drone is trained
                                             return
                                 except Exception:
@@ -2799,7 +2799,7 @@ class WickedZergBotPro(BotAI):
                     # type: ignore[operator] keeps can_afford wrapper from type errors
                     if self.can_afford(UnitTypeId.ZERGLING) and self.supply_left >= 2:  # type: ignore[operator]
                         try:
-                            larva.train(UnitTypeId.ZERGLING)
+                            await larva.train(UnitTypeId.ZERGLING)
                             produced_count += 1
                         except Exception:
                             continue
