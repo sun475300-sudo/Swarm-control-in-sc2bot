@@ -853,6 +853,66 @@ def run_training():
             )
             write_status_file(instance_id, status_data)
 
+            # 🧠 Strategy Audit: Analyze performance gap vs pro gamers (매 게임마다 실행)
+            try:
+                from local_training.strategy_audit import StrategyAudit
+                
+                # bot 인스턴스가 유효한지 확인
+                if bot_instance_ref and hasattr(bot_instance_ref, 'production'):
+                    auditor = StrategyAudit()
+                    gap_analysis = auditor.analyze_last_game(
+                        bot_instance_ref,
+                        game_result=result_text.lower()
+                    )
+                    
+                    if gap_analysis:
+                        # 프로 대비 지연 시간 로그 출력
+                        if gap_analysis.time_gaps:
+                            print(f"\n[🧠 STRATEGY AUDIT] 프로 대비 빌드오더 분석 결과:")
+                            print(f"  게임 ID: {gap_analysis.game_id}")
+                            
+                            # 가장 심각한 시간 오차 상위 3개 출력
+                            critical_gaps = [g for g in gap_analysis.time_gaps if g.severity in ["critical", "major"]]
+                            if critical_gaps:
+                                print(f"  ⚠️  심각한 지연 발견 ({len(critical_gaps)}개):")
+                                for i, gap in enumerate(critical_gaps[:3], 1):
+                                    print(
+                                        f"    {i}. {gap.building_name}: "
+                                        f"프로 {gap.pro_time:.1f}초 vs 봇 {gap.bot_time:.1f}초 "
+                                        f"(지연: {gap.gap_seconds:+.1f}초, {gap.gap_percentage:+.1f}%)"
+                                    )
+                            else:
+                                # 모든 시간 오차 출력 (심각한 것이 없으면)
+                                print(f"  📊 시간 오차 분석:")
+                                for i, gap in enumerate(gap_analysis.time_gaps[:5], 1):
+                                    severity_icon = "🔴" if gap.severity == "critical" else "🟡" if gap.severity == "major" else "🟢"
+                                    print(
+                                        f"    {i}. {severity_icon} {gap.building_name}: "
+                                        f"프로 {gap.pro_time:.1f}초 vs 봇 {gap.bot_time:.1f}초 "
+                                        f"(지연: {gap.gap_seconds:+.1f}초)"
+                                    )
+                            
+                            # 권장사항 출력
+                            if gap_analysis.recommendations:
+                                print(f"  💡 개선 권장사항:")
+                                for i, rec in enumerate(gap_analysis.recommendations[:3], 1):
+                                    print(f"    {i}. {rec}")
+                            
+                            print()  # 빈 줄 추가
+                        else:
+                            print(f"[🧠 STRATEGY AUDIT] 분석 완료 (시간 오차 없음 또는 데이터 부족)\n")
+                    else:
+                        print(f"[🧠 STRATEGY AUDIT] 분석 스킵 (승리 또는 데이터 부족)\n")
+                else:
+                    print(f"[🧠 STRATEGY AUDIT] 분석 스킵 (봇 인스턴스 또는 데이터 부족)\n")
+            except ImportError as import_err:
+                print(f"[WARNING] Strategy Audit 모듈을 불러올 수 없습니다: {import_err}\n")
+            except Exception as audit_error:
+                # 분석 실패해도 게임 진행은 계속
+                print(f"[WARNING] Strategy Audit 분석 중 오류 발생: {audit_error}\n")
+                import traceback
+                traceback.print_exc()
+
             # Calculate win rate
             total_games = win_count + loss_count
             if total_games > 0:
@@ -1051,6 +1111,17 @@ def run_training():
                             if learned_params:
                                 extractor.save_learned_parameters(learned_params)
                                 print(f"[BUILD LEARNING] Iteration {iteration + 1}: Updated {len(learned_params)} parameters from new replays")
+                                
+                                # 🧠 Strategy Audit: Verify learned parameters are loaded
+                                try:
+                                    from local_training.strategy_audit import StrategyAudit
+                                    learned_json_path = Path("local_training/scripts/learned_build_orders.json")
+                                    if learned_json_path.exists():
+                                        auditor = StrategyAudit(learned_build_orders_path=learned_json_path)
+                                        if auditor.pro_data:
+                                            print(f"[🧠 STRATEGY AUDIT] Pro gamer data refreshed: {len(auditor.pro_data.get('build_orders', []))} build orders available")
+                                except Exception as audit_refresh_err:
+                                    print(f"[WARNING] Strategy Audit refresh failed: {audit_refresh_err}")
                         print(f"[BUILD LEARNING] Completed {_config.REPLAY_LEARNING_ITERATIONS} iterations")
                 except ImportError as e:
                     print(f"[INFO] Replay downloader not available: {e}")

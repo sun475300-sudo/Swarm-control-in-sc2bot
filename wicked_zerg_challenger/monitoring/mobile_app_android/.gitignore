@@ -58,6 +58,7 @@ captures/
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
+client_secret*.json
 
 # Freeline
 freeline.py

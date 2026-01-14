@@ -15,6 +15,8 @@ import com.wickedzerg.mobilegcs.api.ManusApiClient
 import com.wickedzerg.mobilegcs.models.ArenaMatch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class ArenaFragment : Fragment() {
     
@@ -152,8 +154,12 @@ class ArenaFragment : Fragment() {
         
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val match = matches[position]
-            holder.text1.text = "${match.result} vs ${match.opponent}"
-            holder.text2.text = "ELO: ${match.eloAfter} (${if (match.eloChange >= 0) "+" else ""}${match.eloChange})"
+            holder.text1.text = "${match.result} vs ${match.opponent_name}"
+            
+            // Format date
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            val dateString = dateFormat.format(match.played_at)
+            holder.text2.text = "Played at: $dateString"
         }
         
         override fun getItemCount() = matches.size

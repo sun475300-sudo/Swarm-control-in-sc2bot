@@ -130,8 +130,8 @@ class BattlesFragment : Fragment() {
         
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val game = games[position]
-            holder.text1.text = "${game.result} vs ${game.enemyRace}"
-            holder.text2.text = "${game.mapName} - ${game.duration}√ "
+            holder.text1.text = "${game.result} vs ${game.opponent_race}"
+            holder.text2.text = "${game.map_name} - ${game.game_duration_seconds}√ "
         }
         
         override fun getItemCount() = games.size

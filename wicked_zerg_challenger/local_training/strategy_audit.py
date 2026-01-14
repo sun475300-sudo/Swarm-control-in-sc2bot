@@ -557,6 +557,24 @@ def update_curriculum_priority(
             curriculum_manager.update_priority(building_name, "Urgent")
 
 
+    def analyze_last_game(
+        self,
+        bot,
+        game_result: str = "defeat"
+    ) -> Optional[GapAnalysisResult]:
+        """
+        게임 종료 후 마지막 게임 분석 (편의 메서드)
+        
+        Args:
+            bot: WickedZergBotPro 인스턴스
+            game_result: 게임 결과 ("victory" or "defeat")
+        
+        Returns:
+            분석 결과
+        """
+        return analyze_bot_performance(bot, game_result)
+
+
 # 사용 예시 함수
 def analyze_bot_performance(
     bot,
@@ -570,11 +588,9 @@ def analyze_bot_performance(
         game_result: 게임 결과 ("victory" or "defeat")
     
     Returns:
-        분석 결과 (패배한 경우에만)
+        분석 결과 (모든 게임에서 분석, 승리한 경우에도 개선점 확인)
     """
-    # 패배한 경우에만 분석
-    if game_result.lower() != "defeat":
-        return None
+    # 모든 게임에서 분석 (승리한 경우에도 개선점 확인 가능)
     
     try:
         # StrategyAudit 초기화

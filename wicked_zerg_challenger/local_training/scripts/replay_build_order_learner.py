@@ -829,6 +829,36 @@ def main():
     # 3. learned_build_orders.json (in local_training/scripts/) - via update_config_with_learned_params()
     print("\n[INFO] Results saved to strategy_db.json and learned_build_orders.json")
     print("[INFO] Auto commit disabled - results saved only")
+    
+    # 🧠 Strategy Audit: Analyze learned parameters vs current bot performance
+    try:
+        import sys
+        from pathlib import Path
+        
+        # Add parent directory to path for imports
+        script_dir = Path(__file__).parent
+        project_root = script_dir.parent.parent
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+        
+        from local_training.strategy_audit import StrategyAudit
+        
+        print("\n[🧠 STRATEGY AUDIT] Analyzing learned build orders...")
+        auditor = StrategyAudit(
+            learned_build_orders_path=learned_json_path
+        )
+        
+        # 프로게이머 데이터가 로드되었는지 확인
+        if auditor.pro_data:
+            print(f"[🧠 STRATEGY AUDIT] Loaded pro gamer data: {len(auditor.pro_data.get('build_orders', []))} build orders")
+            print("[🧠 STRATEGY AUDIT] Strategy audit ready for game analysis")
+        else:
+            print("[🧠 STRATEGY AUDIT] Warning: Pro gamer data not loaded. Analysis may be limited.")
+            
+    except ImportError as import_err:
+        print(f"[WARNING] Strategy Audit not available: {import_err}")
+    except Exception as audit_err:
+        print(f"[WARNING] Strategy Audit initialization failed: {audit_err}")
 
 
 if __name__ == "__main__":

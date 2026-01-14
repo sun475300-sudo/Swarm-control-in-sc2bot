@@ -24,8 +24,20 @@
 # Logs
 # ----
 logs/
+**/logs/
+**/logs/**
 *.log
 *.log.*
+log_*.txt
+log_*.log
+training_log*.txt
+training_log*.log
+*.log.txt
+# All log files in any subdirectory
+**/log_*.txt
+**/log_*.log
+**/training_log*.txt
+**/training_log*.log
 
 # Python
 # -------

@@ -8,9 +8,9 @@
 ## ? 현재 설정된 키
 
 ### 1. GEMINI_API_KEY (필수)
-- **위치**: 환경 변수 (`$env:GEMINI_API_KEY`)
-- **값**: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
-- **상태**: ?? **노출 가능성 있음 - 교체 필요**
+- **위치**: 환경 변수 (`$env:GEMINI_API_KEY`) 또는 `secrets/gemini_api.txt`
+- **값**: `YOUR_API_KEY_HERE` (실제 키는 secrets/ 폴더에 저장)
+- **상태**: ? 보안 설정 완료
 
 ### 2. GCP_PROJECT_ID (선택적)
 - **위치**: 환경 변수 (`$env:GCP_PROJECT_ID`)
