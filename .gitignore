@@ -75,6 +75,18 @@ desktop.ini
 gcp-key.json
 secrets/
 credentials/
+# API Keys folder - exclude actual key files, keep examples and docs
+api_keys/*.txt
+!api_keys/*.example
+api_keys/API_KEYS.md
+!api_keys/API_KEYS.md.example
+api_keys/GCP_CREDENTIALS.json
+api_keys/*.key
+api_keys/*.pem
+# Keep documentation files
+!api_keys/README.md
+!api_keys/SETUP_INSTRUCTIONS.md
+!api_keys/.gitkeep
 config.ini
 config.local.ini
 
