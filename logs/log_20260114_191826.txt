@@ -3,3 +3,7 @@ Started: 2026-01-14 19:18:26
 Personality: dark
 ==================================================
 
+[19:18:49] [INFO] Monsterbot online! Version 2026.01.06
+[19:18:49] [INFO] Personality: DARK
+[19:18:49] [INFO] Opponent race: Terran
+[19:18:49] [DEBUG] State: 0M/0G, Supply: 12/14, Army: 0
