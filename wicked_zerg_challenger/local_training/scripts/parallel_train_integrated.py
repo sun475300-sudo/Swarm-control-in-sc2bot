@@ -85,11 +85,12 @@ except Exception:
 
 # Allow NUM_INSTANCES to be set via environment variable (for runtime adjustment)
 
-NUM_INSTANCES = int(os.environ.get("NUM_INSTANCES", "2"))  # Default: 2 instances
+NUM_INSTANCES = int(os.environ.get("NUM_INSTANCES", "1"))  # Default: 1 instance (full GPU/CPU utilization)
 
-# Tip: RTX 3080(10GB) or higher GPU can increase NUM_INSTANCES to 5-8 for faster training
+# CRITICAL: Set to 1 instance for maximum GPU and CPU utilization per instance
+# With 1 instance, all GPU memory and CPU cores are dedicated to a single game instance
 
-# Set via: $env:NUM_INSTANCES=6; python parallel_train_integrated.py
+# Set via: $env:NUM_INSTANCES=1; python parallel_train_integrated.py
 
 START_INTERVAL = 15  # Seconds between instance launches (prevents shader compilation spike)
 

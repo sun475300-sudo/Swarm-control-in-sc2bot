@@ -149,6 +149,14 @@ class ReinforcementLearner:
             model_path: Model save path (auto-generated if None)
             instance_id: Unique instance identifier to prevent file conflicts in parallel training
         """
+        # CPU Full Power: Use all available CPU cores
+        import multiprocessing
+        cpu_count = multiprocessing.cpu_count()
+        torch.set_num_threads(cpu_count)
+        os.environ["OMP_NUM_THREADS"] = str(cpu_count)
+        os.environ["MKL_NUM_THREADS"] = str(cpu_count)
+        print(f"[CPU] Using all {cpu_count} CPU cores for maximum performance")
+        
         # GPU Full Power: Device auto-detection and model placement
         # Get detailed device information (prints GPU info)
         self.device = self._get_device()

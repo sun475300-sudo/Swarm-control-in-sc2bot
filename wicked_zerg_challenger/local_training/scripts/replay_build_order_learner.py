@@ -14,7 +14,7 @@ if str(script_dir) not in sys.path:
     sys.path.insert(0, str(script_dir))
 
 try:
-    import sc2reader
+    import sc2reader  # type: ignore[import-untyped]
     SC2READER_AVAILABLE = True
 except ImportError:
     SC2READER_AVAILABLE = False
@@ -267,6 +267,7 @@ class ReplayBuildOrderExtractor:
                             unit = event.unit
                             if hasattr(unit, 'name'):
                                 unit_name = unit.name
+                            
                             # CRITICAL: Only process buildings (skip units like BeaconArmy, etc.)
                             if hasattr(unit, 'is_building'):
                                 is_building = unit.is_building
@@ -301,6 +302,33 @@ class ReplayBuildOrderExtractor:
                             if param_name not in build_order["timings"]:
                                 # Get supply at time of event
                                 supply = self._get_supply_at_time(replay, zerg_player, event_time)
+                                
+                                # CRITICAL: If supply lookup fails, try to estimate from nearby events
+                                # This is especially important for early game events like Extractor
+                                if supply <= 0:
+                                    # Try to find supply from nearby tracker events (within 5 seconds)
+                                    if hasattr(replay, 'tracker_events'):
+                                        for tracker_event in replay.tracker_events:
+                                            try:
+                                                if hasattr(tracker_event, 'player') and tracker_event.player == zerg_player:
+                                                    if hasattr(tracker_event, 'second') and hasattr(tracker_event, 'food_used'):
+                                                        time_diff = abs(tracker_event.second - event_time)
+                                                        if time_diff < 5.0:  # Within 5 seconds
+                                                            supply = tracker_event.food_used
+                                                            if supply > 0:
+                                                                break
+                                            except Exception:
+                                                continue
+                                
+                                # CRITICAL: For Extractor (early game), use a minimum supply estimate if lookup fails
+                                # Extractor is typically built around 15-20 supply, so use that as fallback
+                                if supply <= 0 and 'Extractor' in unit_name:
+                                    # Estimate supply based on game time (rough approximation)
+                                    if event_time < 120:  # Early game
+                                        supply = 18  # Typical Extractor timing
+                                    else:
+                                        supply = 20  # Later Extractor
+                                
                                 if supply > 0:
                                     build_order["timings"][param_name] = {
                                         "supply": supply,

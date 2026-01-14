@@ -108,6 +108,18 @@ except Exception as e:
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="asyncio")
 
+# CPU Full Power: Use all available CPU cores for maximum performance
+try:
+    import multiprocessing
+    import torch
+    cpu_count = multiprocessing.cpu_count()
+    torch.set_num_threads(cpu_count)
+    os.environ["OMP_NUM_THREADS"] = str(cpu_count)
+    os.environ["MKL_NUM_THREADS"] = str(cpu_count)
+    print(f"[CPU] Configured to use all {cpu_count} CPU cores for maximum performance")
+except Exception as e:
+    print(f"[WARNING] Failed to configure CPU threads: {e}")
+
 # Initialize logging configuration at the start to prevent logging errors
 # This fixes ValueError: I/O operation on closed file issues
 # Use a safe handler that catches buffer detachment errors
@@ -1152,12 +1164,25 @@ def run_training():
         pass  # Ignore errors during logging shutdown
 
 if __name__ == "__main__":
+    # Single Instance Mode: 1 instance with full GPU and CPU utilization
     os.environ["INSTANCE_ID"] = "0"
     os.environ["NUM_INSTANCES"] = "1"
     os.environ["SINGLE_GAME_MODE"] = "true"
     os.environ["SHOW_WINDOW"] = "true"
     os.environ["HEADLESS_MODE"] = "false"
     os.environ["DISABLE_DASHBOARD"] = "true"
+    
+    # CPU Full Power: Ensure all CPU cores are used
+    try:
+        import multiprocessing
+        import torch
+        cpu_count = multiprocessing.cpu_count()
+        torch.set_num_threads(cpu_count)
+        os.environ["OMP_NUM_THREADS"] = str(cpu_count)
+        os.environ["MKL_NUM_THREADS"] = str(cpu_count)
+        print(f"[CONFIG] Single instance mode: 1 instance with full GPU and CPU ({cpu_count} cores) utilization")
+    except Exception as e:
+        print(f"[WARNING] Failed to configure CPU threads: {e}")
 
     try:
         if logger:
