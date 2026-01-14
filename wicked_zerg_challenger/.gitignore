@@ -145,6 +145,11 @@ secrets/
 *.key
 *.pem
 
+# Android local.properties (contains API keys and SDK paths)
+local.properties
+**/local.properties
+monitoring/mobile_app_android/local.properties
+
 # Auto-generated HTML
 # -------------------
 dashboard.html
