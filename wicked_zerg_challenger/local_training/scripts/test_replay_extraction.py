@@ -101,21 +101,35 @@ for building_name, count in sorted(all_zerg_buildings.items()):
 
 print(f"\n=== Checking for Extractor variants ===")
 extractor_variants = []
+all_unit_names = set()
+
+# Check all events for gas-related units
 for event in replay.events:
-    if hasattr(event, '__class__') and 'UnitBorn' in str(event.__class__):
-        if hasattr(event, 'control_pid') and event.control_pid == zerg_pid:
-            if hasattr(event, 'unit') and hasattr(event.unit, 'name'):
-                unit_name = event.unit.name
-                # Check for any gas-related buildings
-                if 'extractor' in unit_name.lower() or 'gas' in unit_name.lower() or 'vespene' in unit_name.lower():
-                    if hasattr(event, 'second'):
-                        extractor_variants.append((unit_name, event.second))
-                    elif hasattr(event, 'frame'):
-                        extractor_variants.append((unit_name, event.frame / 16.0))
+    if hasattr(event, 'control_pid') and event.control_pid == zerg_pid:
+        unit_name = None
+        if hasattr(event, 'unit') and hasattr(event.unit, 'name'):
+            unit_name = event.unit.name
+        elif hasattr(event, 'unit_type_name'):
+            unit_name = event.unit_type_name
+        
+        if unit_name:
+            all_unit_names.add(unit_name)
+            # Check for any gas-related buildings
+            if 'extractor' in unit_name.lower() or 'gas' in unit_name.lower() or 'vespene' in unit_name.lower():
+                time = getattr(event, 'second', getattr(event, 'frame', 0) / 16.0)
+                extractor_variants.append((unit_name, time, str(event.__class__)))
 
 if extractor_variants:
     print(f"Found {len(extractor_variants)} gas-related buildings:")
-    for unit_name, time in extractor_variants[:10]:
-        print(f"  {unit_name} at {time:.1f}s")
+    for unit_name, time, event_type in extractor_variants[:10]:
+        print(f"  {unit_name} at {time:.1f}s (Event: {event_type})")
 else:
-    print("No gas-related buildings found in UnitBornEvents")
+    print("No gas-related buildings found in events")
+    
+    # Show all unique unit names to help identify the correct name
+    print(f"\n=== All unique Zerg unit names (first 50) ===")
+    for i, unit_name in enumerate(sorted(all_unit_names)[:50]):
+        print(f"  {unit_name}")
+        if i >= 49:
+            print(f"  ... (showing first 50 of {len(all_unit_names)} total)")
+            break
