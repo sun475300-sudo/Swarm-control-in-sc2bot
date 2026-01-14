@@ -16,3 +16,4 @@ Personality: serral
 [19:16:11] [WARNING] Unit deaths detected: 4 units lost, Army: 58 -> 54
 [19:16:14] [WARNING] Unit deaths detected: 1 units lost, Army: 54 -> 53
 [19:16:17] [WARNING] Unit deaths detected: 1 units lost, Army: 55 -> 54
+[19:16:40] [WARNING] Unit deaths detected: 1 units lost, Army: 71 -> 70
