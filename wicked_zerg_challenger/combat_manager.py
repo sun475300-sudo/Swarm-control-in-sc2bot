@@ -1477,7 +1477,7 @@ class CombatManager:
         b = self.bot
 
         intel = getattr(b, "intel", None)
-        if intel and intel.cached_banelings is not None:
+        if intel and hasattr(intel, "cached_banelings") and intel.cached_banelings is not None:
             all_banelings = list(intel.cached_banelings)
         else:
             all_banelings = [u for u in b.units(UnitTypeId.BANELING).ready]
