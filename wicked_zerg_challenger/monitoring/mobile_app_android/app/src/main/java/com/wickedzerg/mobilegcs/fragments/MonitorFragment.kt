@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.wickedzerg.mobilegcs.R
 import com.wickedzerg.mobilegcs.api.ApiClient
+import com.wickedzerg.mobilegcs.models.GameState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -92,7 +93,7 @@ class MonitorFragment : Fragment() {
         }
     }
     
-    private fun showGameState(gameState: com.wickedzerg.mobilegcs.GameState) {
+    private fun showGameState(gameState: GameState) {
         // 게임 상태 컨테이너 표시
         gameStateContainer.visibility = View.VISIBLE
         noGameMessage.visibility = View.GONE
