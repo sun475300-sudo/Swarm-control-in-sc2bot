@@ -62,7 +62,7 @@ def setup_remote() -> bool:
     # 새로운 origin 추가
     success, output = run_command([
         "git", "remote", "add", "origin",
-        "https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot.git"
+        "https://github.com/sun475300-sudo/Swarm-contol-in-sc2bot.git"
     ])
 
     if success:

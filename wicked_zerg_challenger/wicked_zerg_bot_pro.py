@@ -24,6 +24,7 @@ import sys
 import time
 import traceback
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -1101,14 +1102,20 @@ class WickedZergBotPro(BotAI):
                                 "timestamp": time.time(),
                             }
 
-                            # IMPROVED: Use temporary file + atomic move to prevent file lock conflicts
+                            # CRITICAL FIX: Use asyncio executor for non-blocking file I/O
+                            # This prevents game freezing from synchronous file operations
                             temp_file = status_file.with_suffix('.tmp')
                             try:
-                                with open(temp_file, "w", encoding="utf-8") as f:
-                                    json.dump(status_data, f, indent=2)
-                                # Atomic move
-                                os.replace(str(temp_file), str(status_file))
-                            except (IOError, OSError, PermissionError) as file_error:
+                                # Schedule file write in thread pool to avoid blocking game loop
+                                loop = asyncio.get_event_loop()
+                                await loop.run_in_executor(
+                                    None,
+                                    self._write_status_file_sync,
+                                    temp_file,
+                                    status_file,
+                                    status_data
+                                )
+                            except Exception as file_error:
                                 # If temp file exists, try to remove it
                                 try:
                                     if temp_file.exists():
@@ -1193,8 +1200,15 @@ class WickedZergBotPro(BotAI):
             if iteration % 4 == 0:
                 if self.combat is not None:
                     try:
+                        # CRITICAL FIX: Add timeout to prevent game freezing from blocking operations
                         # CombatManager.update() uses intel.cached_military internally
-                        await self.combat.update(self.game_phase, {})
+                        await asyncio.wait_for(
+                            self.combat.update(self.game_phase, {}),
+                            timeout=0.1  # 100ms timeout to prevent blocking
+                        )
+                    except asyncio.TimeoutError:
+                        if iteration % 200 == 0:
+                            print(f"[WARNING] CombatManager.update() timed out at iteration {iteration}")
                     except Exception as e:
                         if iteration - self.last_error_log_frame >= 50:
                             if iteration % 200 == 0:
@@ -1776,8 +1790,12 @@ class WickedZergBotPro(BotAI):
                         # Production manager has its own composition logic internally
                         # No need to pre-calculate it here, which was causing delays
 
+                        # CRITICAL FIX: Add timeout to prevent game freezing from blocking operations
                         # Always run production manager - it has its own panic handling logic inside
-                        await self.production.update(self.game_phase)
+                        await asyncio.wait_for(
+                            self.production.update(self.game_phase),
+                            timeout=0.2  # 200ms timeout to prevent blocking
+                        )
 
                         if self.intel and self.intel.signals.get("need_overseer", False):
                             await self._morph_overseer()
@@ -1828,9 +1846,19 @@ class WickedZergBotPro(BotAI):
                     and not self.early_defense.is_panic_mode()
                 ):
                     try:
-                        await self.economy.update()
+                        # CRITICAL FIX: Add timeout to prevent game freezing from blocking operations
+                        await asyncio.wait_for(
+                            self.economy.update(),
+                            timeout=0.2  # 200ms timeout to prevent blocking
+                        )
                         if self.intel and self.intel.signals.get("need_spine", False):
-                            await self.economy.build_defense(count=2)
+                            await asyncio.wait_for(
+                                self.economy.build_defense(count=2),
+                                timeout=0.1  # 100ms timeout
+                            )
+                    except asyncio.TimeoutError:
+                        if iteration % 200 == 0:
+                            print(f"[WARNING] EconomyManager.update() timed out at iteration {iteration}")
                     except Exception as e:
                         if iteration - self.last_error_log_frame >= 50:
                             if iteration % 200 == 0:  # Throttle print statements (every ~9 seconds)
@@ -6094,3 +6122,21 @@ class WickedZergBotPro(BotAI):
             print(f"[WARNING] Failed to display matchup statistics: {e}")
 
             traceback.print_exc()
+
+    def _write_status_file_sync(self, temp_file: Path, status_file: Path, status_data: Dict):
+        """
+        Synchronous file write helper for use with asyncio executor
+        This prevents blocking the game loop during file I/O operations
+        """
+        try:
+            with open(temp_file, "w", encoding="utf-8") as f:
+                json.dump(status_data, f, indent=2)
+            # Atomic move
+            os.replace(str(temp_file), str(status_file))
+        except (IOError, OSError, PermissionError):
+            # If temp file exists, try to remove it
+            try:
+                if temp_file.exists():
+                    temp_file.unlink()
+            except (OSError, PermissionError):
+                pass  # Ignore cleanup errors
