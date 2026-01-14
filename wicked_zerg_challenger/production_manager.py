@@ -257,6 +257,21 @@ class ProductionManager:
         b = self.bot
         intel = getattr(b, "intel", None)
 
+        # IMPROVED: Late-game tech activation (after 20 minutes)
+        # If game time > 20 minutes and gas >= 100, force tech production regardless of zergling ratio
+        game_time = b.time
+        if game_time >= 1200:  # 20 minutes = 1200 seconds
+            if b.vespene >= 100:
+                # Check if we have tech buildings
+                has_hydra_den = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                has_baneling_nest = b.structures(UnitTypeId.BANELINGNEST).ready.exists
+                if has_hydra_den or has_roach_warren or has_baneling_nest:
+                    current_iteration = getattr(b, "iteration", 0)
+                    if current_iteration % 100 == 0:
+                        print(f"[LATE-GAME TECH] [{int(b.time)}s] Forcing tech unit production (gas: {b.vespene}, time: {int(game_time)}s)")
+                    return True
+
         # Prefer cached counts for performance
         if intel and intel.cached_zerglings is not None:
             zerglings = intel.cached_zerglings
@@ -796,13 +811,18 @@ class ProductionManager:
         # Early game: Smaller buffer (8 supply)
         # Mid game: Medium buffer (12 supply)
         # Late game: Larger buffer (16 supply)
+        # IMPROVED: Long games (20+ minutes) need even larger buffer (20 supply)
         game_time = b.time
         if game_time < 180:  # First 3 minutes
             supply_buffer = 8
         elif game_time < 600:  # 3-10 minutes
             supply_buffer = 12
-        else:  # After 10 minutes
+        elif game_time < 1200:  # 10-20 minutes
             supply_buffer = 16
+        else:  # After 20 minutes - long games need larger buffer
+            supply_buffer = 20
+            if b.iteration % 100 == 0:
+                print(f"[LONG GAME OVERLORD] [{int(b.time)}s] Increased supply buffer to {supply_buffer} for long game")
 
         # Calculate production rate (units per minute)
         # Estimate based on larva count, hatchery count, AND military production buildings
