@@ -1,6 +1,7 @@
 package com.wickedzerg.mobilegcs.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,16 +21,17 @@ class ArenaFragment : Fragment() {
     private lateinit var totalMatchesText: TextView
     private lateinit var winsText: TextView
     private lateinit var lossesText: TextView
-    private lateinit var currentELOText: TextView
     private lateinit var winRateText: TextView
     private lateinit var winRatePercentText: TextView
     private lateinit var botNameText: TextView
     private lateinit var botRaceText: TextView
     private lateinit var botStatusText: TextView
     private lateinit var recentMatchesRecyclerView: RecyclerView
+    private lateinit var statusText: TextView
     
     private val manusApiClient = ManusApiClient()
     private val matchAdapter = ArenaMatchAdapter(emptyList())
+    private var isServerConnected = false
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,13 +48,13 @@ class ArenaFragment : Fragment() {
         totalMatchesText = view.findViewById(R.id.totalMatchesText)
         winsText = view.findViewById(R.id.winsText)
         lossesText = view.findViewById(R.id.lossesText)
-        currentELOText = view.findViewById(R.id.currentELOText)
         winRateText = view.findViewById(R.id.winRateText)
         winRatePercentText = view.findViewById(R.id.winRatePercentText)
         botNameText = view.findViewById(R.id.botNameText)
         botRaceText = view.findViewById(R.id.botRaceText)
         botStatusText = view.findViewById(R.id.botStatusText)
         recentMatchesRecyclerView = view.findViewById(R.id.recentMatchesRecyclerView)
+        statusText = view.findViewById(R.id.statusText)
         
         // Setup RecyclerView
         recentMatchesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -69,33 +71,68 @@ class ArenaFragment : Fragment() {
                     // Arena 통계
                     val stats = manusApiClient.getArenaStats()
                     stats?.let {
-                        totalMatchesText.text = "총 경기수: ${it.totalMatches}"
-                        winsText.text = "승리: ${it.wins}"
-                        lossesText.text = "패배: ${it.losses}"
-                        currentELOText.text = "현재 ELO: ${it.currentELO}"
+                        totalMatchesText.text = "Total Matches: ${it.total_matches}"
+                        winsText.text = "Wins: ${it.wins}"
+                        lossesText.text = "Losses: ${it.losses}"
                         
-                        val winRatePercent = it.winRate * 100
-                        winRateText.text = "아레나 승률"
+                        val winRatePercent = it.win_rate * 100
+                        winRateText.text = "Arena Win Rate"
                         winRatePercentText.text = "${String.format("%.1f", winRatePercent)}%"
                     }
                     
                     // 봇 정보
                     val botInfo = manusApiClient.getArenaBotInfo()
                     botInfo?.let {
-                        botNameText.text = "봇 이름: ${it.name}"
-                        botRaceText.text = "종족: ${it.race}"
-                        botStatusText.text = "상태: ${it.status}"
+                        botNameText.text = "Bot Name: ${it.name}"
+                        botRaceText.text = "Race: ${it.race}"
+                        botStatusText.text = "Status: ${it.status}"
                     }
                     
                     // 최근 20경기
                     val recentMatches = manusApiClient.getRecentArenaMatches(20)
                     matchAdapter.updateMatches(recentMatches)
+                    
+                    // 서버 연결 성공
+                    if (!isServerConnected) {
+                        isServerConnected = true
+                        statusText.visibility = View.GONE
+                    }
+                } catch (e: java.net.ConnectException) {
+                    // 서버 연결 실패
+                    Log.e("ArenaFragment", "서버 연결 실패: ${e.message}", e)
+                    isServerConnected = false
+                    showServerDisconnected("서버에 연결할 수 없습니다")
+                } catch (e: java.net.SocketTimeoutException) {
+                    // 타임아웃
+                    Log.e("ArenaFragment", "서버 응답 타임아웃: ${e.message}", e)
+                    isServerConnected = false
+                    showServerDisconnected("서버 응답 시간 초과")
                 } catch (e: Exception) {
-                    // 에러 무시
+                    // 기타 오류
+                    Log.e("ArenaFragment", "데이터 수신 오류: ${e.message}", e)
+                    isServerConnected = false
+                    showServerDisconnected("서버 연결 오류: ${e.message ?: "알 수 없는 오류"}")
                 }
                 delay(5000) // 5초마다 업데이트
             }
         }
+    }
+    
+    private fun showServerDisconnected(message: String) {
+        statusText.text = "Server Disconnected: $message"
+        statusText.setTextColor(requireContext().getColor(R.color.red))
+        statusText.visibility = View.VISIBLE
+        
+        // 데이터 초기화
+        totalMatchesText.text = "Total Matches: -"
+        winsText.text = "Wins: -"
+        lossesText.text = "Losses: -"
+        winRateText.text = "Arena Win Rate"
+        winRatePercentText.text = "-"
+        botNameText.text = "Bot Name: -"
+        botRaceText.text = "Race: -"
+        botStatusText.text = "Status: -"
+        matchAdapter.updateMatches(emptyList())
     }
     
     // RecyclerView Adapter

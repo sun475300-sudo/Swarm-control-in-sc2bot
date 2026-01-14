@@ -3,27 +3,27 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@android:drawable/ic_menu_view"
-        android:title="홈" />
+        android:title="Home" />
     
     <item
         android:id="@+id/nav_monitor"
         android:icon="@android:drawable/ic_menu_myplaces"
-        android:title="모니터링" />
+        android:title="Monitor" />
     
     <item
         android:id="@+id/nav_battles"
         android:icon="@android:drawable/ic_menu_compass"
-        android:title="전투분석" />
+        android:title="Battles" />
     
     <item
         android:id="@+id/nav_training"
         android:icon="@android:drawable/ic_menu_agenda"
-        android:title="학습진행" />
+        android:title="Training" />
     
     <item
         android:id="@+id/nav_bot_config"
         android:icon="@android:drawable/ic_menu_preferences"
-        android:title="봇설정" />
+        android:title="Bot Config" />
     
     <item
         android:id="@+id/nav_arena"
