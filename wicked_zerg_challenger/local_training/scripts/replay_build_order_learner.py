@@ -725,11 +725,13 @@ class ReplayBuildOrderExtractor:
 def update_config_with_learned_params(learned_params: Dict[str, float]):
     """Update config.py with learned parameters"""
     # Try multiple config.py locations
-    # CRITICAL: From local_training/scripts/ to project root requires .parent.parent.parent
+    # CRITICAL: From local_training/scripts/ to project root requires parents[2]
+    # Path structure: scripts/ -> local_training/ -> wicked_zerg_challenger/ (project root)
+    script_path = Path(__file__).resolve()
     possible_config_paths = [
-        Path(__file__).parent.parent.parent / "config.py",  # Project root (wicked_zerg_challenger/)
-        Path(__file__).parent.parent / "config.py",  # local_training/ directory
-        Path(__file__).parent / "config.py",  # Scripts directory
+        script_path.parents[2] / "config.py",  # Project root (wicked_zerg_challenger/)
+        script_path.parent.parent / "config.py",  # local_training/ directory
+        script_path.parent / "config.py",  # Scripts directory
     ]
     config_path = None
     for path in possible_config_paths:
@@ -826,13 +828,14 @@ def main():
         try:
             import subprocess
             import sys
-            # CRITICAL: From local_training/scripts/ to tools/ requires .parent.parent.parent
-            # Path: scripts/ -> local_training/ -> wicked_zerg_challenger/ -> tools/
-            script_path = Path(__file__).parent.parent.parent / "tools" / "auto_commit_after_training.py"
+            # CRITICAL: From local_training/scripts/ to tools/ requires parents[2]
+            # Path structure: scripts/ -> local_training/ -> wicked_zerg_challenger/ (project root) -> tools/
+            script_file = Path(__file__).resolve()
+            script_path = script_file.parents[2] / "tools" / "auto_commit_after_training.py"
             if script_path.exists():
                 result = subprocess.run(
                     [sys.executable, str(script_path)],
-                    cwd=str(Path(__file__).parent.parent.parent),  # Project root for cwd
+                    cwd=str(script_file.parents[2]),  # Project root for cwd
                     capture_output=True,
                     text=True,
                     encoding='utf-8',
