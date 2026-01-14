@@ -74,6 +74,13 @@ fastlane/readme.md
 # Version control
 vcs.xml
 
+# Allow source code models folder (override parent .gitignore)
+# Note: This explicitly includes the models folder for Android source code
+!app/src/main/java/com/wickedzerg/mobilegcs/models/
+!app/src/main/java/com/wickedzerg/mobilegcs/models/**
+!app/src/main/kotlin/com/wickedzerg/mobilegcs/models/
+!app/src/main/kotlin/com/wickedzerg/mobilegcs/models/**
+
 # lint
 lint/intermediates/
 lint/generated/

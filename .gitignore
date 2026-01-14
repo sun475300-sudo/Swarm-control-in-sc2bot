@@ -74,6 +74,8 @@ desktop.ini
 *-key.json
 gcp-key.json
 secrets/
+!secrets/.gitkeep
+!secrets/README.md
 credentials/
 # API Keys folder - exclude actual key files, keep examples and docs
 api_keys/*.txt

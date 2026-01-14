@@ -3,7 +3,8 @@
 """
 API Key 로더 유틸리티
 
-api_keys/ 폴더에서 API 키를 안전하게 로드하는 헬퍼 함수
+secrets/ 또는 api_keys/ 폴더에서 API 키를 안전하게 로드하는 헬퍼 함수
+보안 모범 사례: 파일에서 직접 읽어오기
 """
 
 import os
@@ -11,21 +12,58 @@ from pathlib import Path
 from typing import Optional
 
 
-def get_api_keys_dir() -> Path:
-    """API 키 폴더 경로 반환"""
-    # 프로젝트 루트에서 api_keys 폴더 찾기
+def get_project_root() -> Path:
+    """프로젝트 루트 경로 반환"""
     current = Path(__file__).resolve()
-    
     # tools/ 폴더에서 프로젝트 루트로 이동
-    project_root = current.parent.parent
+    return current.parent.parent
+
+
+def get_secrets_dir() -> Path:
+    """secrets 폴더 경로 반환 (권장)"""
+    return get_project_root() / "secrets"
+
+
+def get_api_keys_dir() -> Path:
+    """api_keys 폴더 경로 반환 (하위 호환성)"""
+    return get_project_root() / "api_keys"
+
+
+def load_key_from_file(file_path: Path) -> str:
+    """
+    파일에서 키를 읽어옵니다 (보안 모범 사례)
     
-    api_keys_dir = project_root / "api_keys"
-    return api_keys_dir
+    Args:
+        file_path: 키 파일 경로
+    
+    Returns:
+        키 문자열 (없으면 빈 문자열)
+    """
+    if not file_path.exists():
+        return ""
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                # 주석이나 빈 줄 건너뛰기
+                if line and not line.startswith('#'):
+                    return line
+    except Exception as e:
+        print(f"[WARNING] Failed to read {file_path}: {e}")
+    
+    return ""
 
 
 def load_api_key(key_name: str, fallback_env: Optional[str] = None) -> str:
     """
-    API 키 파일에서 키를 읽어옵니다.
+    API 키를 로드합니다 (보안 모범 사례)
+    
+    우선순위:
+    1. secrets/ 폴더 (권장)
+    2. api_keys/ 폴더 (하위 호환성)
+    3. .env 파일
+    4. 환경 변수
     
     Args:
         key_name: API 키 이름 (예: "GEMINI_API_KEY")
@@ -38,37 +76,52 @@ def load_api_key(key_name: str, fallback_env: Optional[str] = None) -> str:
         >>> key = load_api_key("GEMINI_API_KEY")
         >>> key = load_api_key("GOOGLE_API_KEY", fallback_env="GOOGLE_API_KEY")
     """
-    api_keys_dir = get_api_keys_dir()
+    # 1. secrets/ 폴더에서 시도 (권장)
+    secrets_dir = get_secrets_dir()
     
-    # 파일에서 읽기 시도
+    # 키 이름 매핑 (간단한 이름 → 파일명)
+    key_mapping = {
+        "GEMINI_API_KEY": "gemini_api.txt",
+        "GOOGLE_API_KEY": "gemini_api.txt",  # 동일한 파일 사용 가능
+        "NGROK_AUTH_TOKEN": "ngrok_auth.txt",
+    }
+    
+    # 매핑된 파일명이 있으면 사용
+    if key_name in key_mapping:
+        secret_file = secrets_dir / key_mapping[key_name]
+        key = load_key_from_file(secret_file)
+        if key:
+            return key
+    
+    # 일반적인 형식으로도 시도 (GEMINI_API_KEY → gemini_api.txt 또는 GEMINI_API_KEY.txt)
+    secret_file = secrets_dir / f"{key_name.lower()}.txt"
+    key = load_key_from_file(secret_file)
+    if key:
+        return key
+    
+    # 2. api_keys/ 폴더에서 시도 (하위 호환성)
+    api_keys_dir = get_api_keys_dir()
     key_file = api_keys_dir / f"{key_name}.txt"
-    if key_file.exists():
+    key = load_key_from_file(key_file)
+    if key:
+        return key
+    
+    # 3. .env 파일에서 시도
+    env_file = get_project_root() / ".env"
+    if env_file.exists():
         try:
-            with open(key_file, 'r', encoding='utf-8') as f:
+            with open(env_file, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
-                    # 주석이나 빈 줄 건너뛰기
                     if line and not line.startswith('#'):
-                        return line
+                        if '=' in line:
+                            env_key, env_value = line.split('=', 1)
+                            if env_key.strip() == key_name:
+                                return env_value.strip()
         except Exception as e:
-            print(f"[WARNING] Failed to read {key_file}: {e}")
+            print(f"[WARNING] Failed to read .env file: {e}")
     
-    # 마크다운 파일에서도 시도
-    md_file = api_keys_dir / "API_KEYS.md"
-    if md_file.exists():
-        try:
-            with open(md_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # 키 이름으로 검색
-                import re
-                pattern = rf'{key_name}.*?\n```\n(.*?)\n```'
-                match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
-                if match:
-                    return match.group(1).strip()
-        except Exception as e:
-            print(f"[WARNING] Failed to read {md_file}: {e}")
-    
-    # 환경 변수에서 시도
+    # 4. 환경 변수에서 시도
     env_name = fallback_env or key_name
     env_value = os.environ.get(env_name)
     if env_value:
