@@ -1,0 +1,10 @@
+# Google API Key (Gemini Self-Healing용)
+# 
+# 발급 링크: https://makersuite.google.com/app/apikey
+# 
+# 이 파일을 GOOGLE_API_KEY.txt로 복사하고 실제 키를 입력하세요
+# 
+# 형식: 키만 입력 (줄바꿈 없이)
+# 예: AIzaSyAbc123def456ghi789jkl012mno345pqr678
+
+YOUR_GOOGLE_API_KEY_HERE
