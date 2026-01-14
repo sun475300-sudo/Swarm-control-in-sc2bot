@@ -364,7 +364,7 @@ class ProductionResilience:
                     if larvae_list:
                         for larva in larvae_list:
                             if larva.is_ready:
-                                larva.train(UnitTypeId.OVERLORD)
+                                await larva.train(UnitTypeId.OVERLORD)
                                 return
         if hasattr(b, "current_build_plan") and "ideal_composition" in b.current_build_plan:
             ideal_comp = b.current_build_plan["ideal_composition"]
@@ -447,7 +447,7 @@ class ProductionResilience:
                 if larvae_list:
                     for larva in larvae_list:
                         if larva.is_ready:
-                            larva.train(unit_to_produce)
+                            await larva.train(unit_to_produce)
                             break
             except Exception:
                 pass
@@ -465,7 +465,7 @@ class ProductionResilience:
                 for larva in larvae:
                     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
                         try:
-                            larva.train(UnitTypeId.ZERGLING)
+                            await larva.train(UnitTypeId.ZERGLING)
                         except Exception:
                             continue
 

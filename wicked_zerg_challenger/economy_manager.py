@@ -1940,7 +1940,7 @@ class EconomyManager:
                         continue
 
     async def _build_tech_buildings(self):
-        """테크 건물 자동 건설"""
+        """Automatically build tech buildings"""
         b = self.bot
         if not b.townhalls.exists:
             return

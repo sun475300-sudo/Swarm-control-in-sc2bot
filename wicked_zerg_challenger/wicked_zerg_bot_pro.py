@@ -706,7 +706,7 @@ class WickedZergBotPro(BotAI):
             except Exception as e:
                 print(f"[WARNING] Failed to initialize CombatManager: {e}")
 
-            # 이병렬(Rogue) 선수 전술 매니저 초기화
+            # Initialize Rogue tactics manager
             try:
                 self.rogue_tactics = RogueTacticsManager(self)
                 print(f"[ROGUE TACTICS] Rogue tactics manager initialized")
@@ -714,7 +714,7 @@ class WickedZergBotPro(BotAI):
                 print(f"[WARNING] Failed to initialize RogueTacticsManager: {e}")
                 self.rogue_tactics = None
 
-            # 마법 유닛 매니저 초기화 (최적화된 타겟팅)
+            # Initialize spell unit manager (optimized targeting)
             try:
                 from spell_unit_manager import SpellUnitManager
                 self.spell_unit_manager = SpellUnitManager(self)
@@ -4568,7 +4568,7 @@ class WickedZergBotPro(BotAI):
 
             print(f"💾 [저장 완료] 모델이 {save_path}에 저장되었습니다.")
             if hasattr(self, "instance_id"):
-                print(f"💾 [인스턴스 #{self.instance_id}] 모델 저장 완료")
+                print(f"💾 [Instance #{self.instance_id}] Model saved")
         except Exception as e:
             print(f"❌ 모델 저장 중 오류 발생: {e}")
             traceback.print_exc()
@@ -5462,14 +5462,14 @@ class WickedZergBotPro(BotAI):
                     print(f"[WARNING] Failed to calculate refined reward: {e}")
                     # Fallback to original base_reward
 
-                # 이병렬(Rogue) 전술 보상: 맹독충 드랍 및 점막 기반 의사결정
+                # Rogue tactics reward: Baneling drop and creep-based decision making
                 rogue_reward = 0.0
                 if self.rogue_tactics:
                     try:
-                        # 드랍 성공 보상
+                        # Drop success reward
                         if hasattr(self.rogue_tactics, "last_drop_time") and self.rogue_tactics.last_drop_time > 0:
-                            # 드랍이 실행되었으면 보상 (게임 시간의 20% 이상 진행된 경우)
-                            if self.time > 120:  # 2분 이후
+                            # Reward if drop executed (after 20% of game time)
+                            if self.time > 120:  # After 2 minutes
                                 rogue_reward += 0.2
 
                         # 적이 점막에 닿았을 때 드랍 준비 보상

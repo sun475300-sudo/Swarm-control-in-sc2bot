@@ -2650,17 +2650,17 @@ class ProductionManager:
 
     async def _produce_army(self, game_phase: GamePhase, build_plan: Optional[Dict] = None):
         """
-        군사 유닛 생산
+        Produce military units
 
-        생산 우선순위 (테크 기반):
-            1. CounterPunchManager 우선순위 (상대 유닛 감지 시)
-            2. 히드라리스크 (히드라 덴 필요)
-            3. 로치 (로치 워렌 필요)
-            4. 저글링 (기본)
+        Production priority (tech-based):
+            1. CounterPunchManager priority (when enemy units detected)
+            2. Hydralisk (requires Hydralisk Den)
+            3. Roach (requires Roach Warren)
+            4. Zergling (basic)
 
         Args:
-            game_phase: 현재 게임 단계
-            build_plan: 적응형 빌드 계획 (선택적)
+            game_phase: Current game phase
+            build_plan: Adaptive build plan (optional)
         """
         b = self.bot
 
@@ -2706,15 +2706,15 @@ class ProductionManager:
                     if intel.combat.under_attack:
                         enemy_attacking = True
 
-            # 이병렬(Rogue) 전술: 라바 세이빙 모드 확인
+            # Rogue tactics: Check larva saving mode
             rogue_tactics = getattr(b, "rogue_tactics", None)
             larva_saving_mode = False
             if rogue_tactics and hasattr(rogue_tactics, "should_save_larva"):
                 larva_saving_mode = rogue_tactics.should_save_larva()
 
             if larva_saving_mode:
-                # Rogue 전술: 교전 직전 라바를 모아두었다가 드랍 후 폭발적 생산
-                # 라바를 모두 세이빙 (드랍 완료 후 사용)
+                # Rogue tactics: Save larvae before engagement, then explosive production after drop
+                # Save all larvae (use after drop completes)
                 available_larvae = []
                 if b.iteration % 100 == 0:
                     print(f"[ROGUE LARVA SAVE] [{int(b.time)}s] Saving {total_larvae} larvae for post-drop explosive production")
@@ -3818,13 +3818,13 @@ class ProductionManager:
 
     async def _autonomous_tech_progression(self) -> bool:
         """
-        자율적 테크 진행: 가치 기반 의사결정 시스템
+        Autonomous tech progression: Value-based decision system
 
-        봇이 스스로 "지금 테크를 올리는 것이 유닛을 뽑는 것보다 가치 있는가?"를 판단하여
-        가장 가치 있는 행동을 선택합니다.
+        Bot determines whether upgrading tech is more valuable than producing units,
+        and selects the most valuable action.
 
         Returns:
-            bool: 테크 건물 건설이 시작되거나 자원을 보존 중이면 True
+            bool: True if tech building construction started or resources are being reserved
         """
         b = self.bot
 

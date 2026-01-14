@@ -216,7 +216,7 @@ class CombatManager:
                 print(f"[WARNING] Failed to determine combat mode: {e}")
 
     def _update_army_status(self):
-        """군대 상태 업데이트 (성능 최적화 + 병력 손실 감지)"""
+        """Update army status (performance optimized + unit loss detection)"""
         b = self.bot
 
         self.current_army_count = b.supply_army
@@ -1490,7 +1490,7 @@ class CombatManager:
         if not enemy_units:
             return
 
-        # Terran 해병 상대: MicroController의 execute_baneling_vs_marines 사용
+        # vs Terran Marines: Use MicroController's execute_baneling_vs_marines
         if b.opponent_race == Race.Terran:
             marines = [u for u in enemy_units if u.type_id == UnitTypeId.MARINE]
             if marines and b.micro:
@@ -1510,7 +1510,7 @@ class CombatManager:
             if not baneling.is_ready:
                 continue
 
-            # 근처 적 찾기
+            # Find nearby enemies
             nearby_enemies = [
                 u for u in enemy_units
                 if baneling.distance_to(u) ** 2 < engage_range_squared
@@ -1519,7 +1519,7 @@ class CombatManager:
             if not nearby_enemies:
                 continue
 
-            # 가장 가까운 클러스터 찾기
+            # Find closest cluster
             best_cluster = None
             min_distance = float('inf')
 
@@ -1529,7 +1529,7 @@ class CombatManager:
                     min_distance = distance
                     best_cluster = (cluster_center, cluster_enemies)
 
-            # 다른 맹독충과 너무 가까이 있으면 산개
+            # Spread out if too close to other banelings
             nearby_banelings = [
                 b for b in banelings
                 if b.tag != baneling.tag
@@ -1537,7 +1537,7 @@ class CombatManager:
             ]
 
             if nearby_banelings and best_cluster:
-                # 산개: 다른 맹독충들의 평균 위치에서 벗어나기
+                # Spread: Move away from average position of other banelings
                 avg_pos = Point2((
                     sum(b.position.x for b in nearby_banelings) / len(nearby_banelings),
                     sum(b.position.y for b in nearby_banelings) / len(nearby_banelings),
@@ -1547,7 +1547,7 @@ class CombatManager:
                 spread_length = math.sqrt(spread_dir_x ** 2 + spread_dir_y ** 2)
 
                 if spread_length > 0.1:
-                    # 정규화 후 2.0 거리만큼 산개
+                    # Spread 2.0 distance after normalization
                     spread_dir_x = (spread_dir_x / spread_length) * 2.0
                     spread_dir_y = (spread_dir_y / spread_length) * 2.0
                     spread_pos = Point2((
@@ -1556,15 +1556,15 @@ class CombatManager:
                     ))
                     await b.do(baneling.move(spread_pos))
                 else:
-                    # 산개할 방향이 없으면 클러스터 중심으로 이동
+                    # If no spread direction, move to cluster center
                     cluster_center, _ = best_cluster
                     await b.do(baneling.move(cluster_center))
             elif best_cluster:
-                # 클러스터 중심으로 이동
+                # Move to cluster center
                 cluster_center, _ = best_cluster
                 await b.do(baneling.move(cluster_center))
             else:
-                # 클러스터가 없으면 가장 가까운 적 공격
+                # If no cluster, attack closest enemy
                 closest_enemy = min(nearby_enemies, key=lambda e: baneling.distance_to(e))
                 await b.do(baneling.attack(closest_enemy))
 
