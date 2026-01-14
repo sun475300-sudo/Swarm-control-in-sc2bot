@@ -217,8 +217,9 @@ class ReplayBuildOrderExtractor:
                             "time": creation_time
                         }
 
-            # IMPROVED: Extract from UnitBornEvent (most reliable for structure creation)
+            # IMPROVED: Extract from UnitBornEvent and UnitInitEvent (both are needed)
             # UnitBornEvent uses control_pid instead of player attribute
+            # UnitInitEvent also uses control_pid and is used for some structures like Extractor
             zerg_pid = getattr(zerg_player, 'pid', None)
             if zerg_pid is None:
                 # Try to get PID from player object
@@ -230,7 +231,22 @@ class ReplayBuildOrderExtractor:
             # Track Hatchery count to skip the starting Hatchery
             hatchery_count = 0
             
+            # CRITICAL: Check both replay.events (UnitBornEvent) and replay.tracker_events (UnitInitEvent)
+            # Extractor often appears in tracker_events as UnitInitEvent, not in events as UnitBornEvent
+            all_events_to_check = []
+            
+            # Add UnitBornEvents from replay.events
             for event in replay.events:
+                if hasattr(event, '__class__') and 'UnitBorn' in str(event.__class__):
+                    all_events_to_check.append(event)
+            
+            # Add UnitInitEvents from tracker_events (for Extractor and other structures)
+            if hasattr(replay, 'tracker_events'):
+                for event in replay.tracker_events:
+                    if hasattr(event, '__class__') and 'UnitInit' in str(event.__class__):
+                        all_events_to_check.append(event)
+            
+            for event in all_events_to_check:
                 try:
                     # Check if this is a UnitBornEvent for Zerg player
                     is_zerg_event = False
