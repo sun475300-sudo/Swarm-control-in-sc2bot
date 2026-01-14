@@ -11,7 +11,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -22,7 +21,6 @@
             android:gravity="center"
             android:padding="16dp" />
 
-        <!-- Status Indicator -->
         <TextView
             android:id="@+id/statusText"
             android:layout_width="match_parent"
@@ -34,7 +32,6 @@
             android:padding="8dp"
             android:visibility="gone" />
 
-        <!-- Stats Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,7 +49,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="경기 통계"
+                    android:text="Arena Stats"
                     android:textColor="#00ff00"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -62,7 +59,7 @@
                     android:id="@+id/totalMatchesText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="총 경기수: 0"
+                    android:text="Total Matches: 0"
                     android:textColor="#ffffff"
                     android:textSize="16sp"
                     android:padding="4dp" />
@@ -71,7 +68,7 @@
                     android:id="@+id/winsText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="승리: 0"
+                    android:text="Wins: 0"
                     android:textColor="#00ff00"
                     android:textSize="16sp"
                     android:padding="4dp" />
@@ -80,7 +77,7 @@
                     android:id="@+id/lossesText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="패배: 0"
+                    android:text="Losses: 0"
                     android:textColor="#ff0000"
                     android:textSize="16sp"
                     android:padding="4dp" />
@@ -89,17 +86,16 @@
                     android:id="@+id/currentELOText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="현재 ELO: 0"
+                    android:text="Current ELO: 0"
                     android:textColor="#ffffff"
                     android:textSize="16sp"
                     android:padding="4dp" />
 
-                <!-- Win Rate -->
                 <TextView
                     android:id="@+id/winRateText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="아레나 승률"
+                    android:text="Arena Win Rate"
                     android:textColor="#00ff00"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -119,7 +115,6 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Bot Info Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -137,7 +132,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="봇 정보"
+                    android:text="Bot Info"
                     android:textColor="#00ff00"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -147,7 +142,7 @@
                     android:id="@+id/botNameText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="봇 이름: -"
+                    android:text="Bot Name: -"
                     android:textColor="#ffffff"
                     android:textSize="16sp"
                     android:padding="4dp" />
@@ -156,7 +151,7 @@
                     android:id="@+id/botRaceText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="종족: -"
+                    android:text="Race: -"
                     android:textColor="#ffffff"
                     android:textSize="16sp"
                     android:padding="4dp" />
@@ -165,14 +160,13 @@
                     android:id="@+id/botStatusText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="상태: -"
+                    android:text="Status: -"
                     android:textColor="#ffffff"
                     android:textSize="16sp"
                     android:padding="4dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Recent Matches Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -190,7 +184,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="최근 경기 기록 (20개)"
+                    android:text="Recent Matches (Last 20)"
                     android:textColor="#00ff00"
                     android:textSize="18sp"
                     android:textStyle="bold"

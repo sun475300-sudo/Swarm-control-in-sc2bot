@@ -69,6 +69,18 @@ else:
         "http://127.0.0.1:8000",
         "http://10.0.2.2:8000",  # Android 에뮬레이터
     ]
+    
+    # Ngrok 도메인 자동 추가 (동적)
+    try:
+        ngrok_url_file = Path(__file__).parent / ".ngrok_url.txt"
+        if ngrok_url_file.exists():
+            with open(ngrok_url_file, 'r', encoding='utf-8') as f:
+                ngrok_url = f.read().strip()
+                if ngrok_url:
+                    _allowed_origins.append(ngrok_url)
+                    logger.info(f"Ngrok URL 추가됨: {ngrok_url}")
+    except Exception:
+        pass  # Ngrok URL 파일이 없어도 계속 진행
 
 app.add_middleware(
     CORSMiddleware,
@@ -176,6 +188,55 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/ngrok-url")
+async def get_ngrok_url():
+    """Get current ngrok tunnel URL"""
+    try:
+        # 1. Ngrok API에서 시도
+        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            tunnels = data.get("tunnels", [])
+            if tunnels:
+                # HTTPS 터널 우선 선택
+                for tunnel in tunnels:
+                    if tunnel.get("proto") == "https":
+                        return {
+                            "url": tunnel.get("public_url", ""),
+                            "status": "active",
+                            "source": "ngrok_api"
+                        }
+                # HTTPS가 없으면 HTTP 선택
+                if tunnels:
+                    return {
+                        "url": tunnels[0].get("public_url", ""),
+                        "status": "active",
+                        "source": "ngrok_api"
+                    }
+    except Exception:
+        pass
+    
+    # 2. 저장된 파일에서 시도
+    try:
+        url_file = Path(__file__).parent / ".ngrok_url.txt"
+        if url_file.exists():
+            with open(url_file, 'r', encoding='utf-8') as f:
+                url = f.read().strip()
+                if url:
+                    return {
+                        "url": url,
+                        "status": "cached",
+                        "source": "file"
+                    }
+    except Exception:
+        pass
+    
+    return {
+        "url": "",
+        "status": "not_found",
+        "source": "none"
     }
 
 @app.get("/api/game-state")

@@ -68,7 +68,7 @@ class ArenaFragment : Fragment() {
         lifecycleScope.launch {
             while (true) {
                 try {
-                    // Arena 통계
+                    // Arena ???
                     val stats = manusApiClient.getArenaStats()
                     stats?.let {
                         totalMatchesText.text = "Total Matches: ${it.total_matches}"
@@ -80,7 +80,7 @@ class ArenaFragment : Fragment() {
                         winRatePercentText.text = "${String.format("%.1f", winRatePercent)}%"
                     }
                     
-                    // 봇 정보
+                    // ?? ????
                     val botInfo = manusApiClient.getArenaBotInfo()
                     botInfo?.let {
                         botNameText.text = "Bot Name: ${it.name}"
@@ -88,32 +88,32 @@ class ArenaFragment : Fragment() {
                         botStatusText.text = "Status: ${it.status}"
                     }
                     
-                    // 최근 20경기
+                    // ??? 20???
                     val recentMatches = manusApiClient.getRecentArenaMatches(20)
                     matchAdapter.updateMatches(recentMatches)
                     
-                    // 서버 연결 성공
+                    // ???? ???? ????
                     if (!isServerConnected) {
                         isServerConnected = true
                         statusText.visibility = View.GONE
                     }
                 } catch (e: java.net.ConnectException) {
-                    // 서버 연결 실패
-                    Log.e("ArenaFragment", "서버 연결 실패: ${e.message}", e)
+                    // ???? ???? ????
+                    Log.e("ArenaFragment", "???? ???? ????: ${e.message}", e)
                     isServerConnected = false
-                    showServerDisconnected("서버에 연결할 수 없습니다")
+                    showServerDisconnected("?????? ?????? ?? ???????")
                 } catch (e: java.net.SocketTimeoutException) {
-                    // 타임아웃
-                    Log.e("ArenaFragment", "서버 응답 타임아웃: ${e.message}", e)
+                    // ?????
+                    Log.e("ArenaFragment", "???? ???? ?????: ${e.message}", e)
                     isServerConnected = false
-                    showServerDisconnected("서버 응답 시간 초과")
+                    showServerDisconnected("???? ???? ?ð? ???")
                 } catch (e: Exception) {
-                    // 기타 오류
-                    Log.e("ArenaFragment", "데이터 수신 오류: ${e.message}", e)
+                    // ??? ????
+                    Log.e("ArenaFragment", "?????? ???? ????: ${e.message}", e)
                     isServerConnected = false
-                    showServerDisconnected("서버 연결 오류: ${e.message ?: "알 수 없는 오류"}")
+                    showServerDisconnected("???? ???? ????: ${e.message ?: "?? ?? ???? ????"}")
                 }
-                delay(5000) // 5초마다 업데이트
+                delay(5000) // 5????? ???????
             }
         }
     }
@@ -123,7 +123,7 @@ class ArenaFragment : Fragment() {
         statusText.setTextColor(requireContext().getColor(R.color.red))
         statusText.visibility = View.VISIBLE
         
-        // 데이터 초기화
+        // ?????? ????
         totalMatchesText.text = "Total Matches: -"
         winsText.text = "Wins: -"
         lossesText.text = "Losses: -"

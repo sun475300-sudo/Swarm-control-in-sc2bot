@@ -150,9 +150,17 @@ wicked_zerg_challenger/
 gcp-key.json
 *-key.json
 .env
+.env.local
+.env.*.local
 secrets/
 *.key
 *.pem
+
+# Config files with sensitive data
+# --------------------------------
+config/allowed_ips.txt
+config/allowed_domains.txt
+!config/*.example
 
 # Android local.properties (contains API keys and SDK paths)
 local.properties
