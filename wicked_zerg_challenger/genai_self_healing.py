@@ -166,7 +166,17 @@ class GenAISelfHealing:
 
         """
 
-        self.api_key = api_key or os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        # API 키 로드: secrets/ 폴더 → api_keys/ 폴더 → 환경 변수 순서
+        if api_key:
+            self.api_key = api_key
+        else:
+            # tools.load_api_key 모듈 사용 (보안 모범 사례)
+            try:
+                from tools.load_api_key import get_gemini_api_key
+                self.api_key = get_gemini_api_key()
+            except ImportError:
+                # Fallback: 환경 변수에서 직접 읽기
+                self.api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
         self.model_name = model_name
 

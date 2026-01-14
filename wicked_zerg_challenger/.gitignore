@@ -51,9 +51,9 @@ training_debug.log
 game_log.txt
 log.txt
 
-# Models & Checkpoints
-# --------------------
-models/
+# Models & Checkpoints (AI/ML model files only)
+# ----------------------------------------------
+# Exclude AI model files, but NOT Android source code models folder
 *.pt
 *.pth
 *.h5
@@ -61,6 +61,15 @@ models/
 *.pb
 *.onnx
 *.tflite
+# Exclude model directories (but allow Android source code)
+# IMPORTANT: Android source code models folder must be explicitly allowed
+# Exclude models/ but allow Android app source code
+models/
+# Allow Android source code models folder (override models/ rule)
+!monitoring/mobile_app_android/app/src/main/java/com/wickedzerg/mobilegcs/models/
+!monitoring/mobile_app_android/app/src/main/java/com/wickedzerg/mobilegcs/models/**
+!monitoring/mobile_app_android/app/src/main/kotlin/com/wickedzerg/mobilegcs/models/
+!monitoring/mobile_app_android/app/src/main/kotlin/com/wickedzerg/mobilegcs/models/**
 
 # Replays & Game Data
 # --------------------
