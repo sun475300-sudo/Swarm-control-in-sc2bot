@@ -45,9 +45,10 @@ def check_remote() -> bool:
         return False
 
     # 원하는 원격 저장소 URL 확인 (부분 매칭으로 유연하게)
+    # NOTE: 폴더명은 Swarm-contol-in-sc2bot (contol 유지)
     target_urls = [
-        "github.com/sun475300-sudo/Swarm-Control-in-sc2bot",
-        "Swarm-Control-in-sc2bot.git"
+        "github.com/sun475300-sudo/Swarm-contol-in-sc2bot",
+        "Swarm-contol-in-sc2bot.git"
     ]
     return any(url in output for url in target_urls)
 
@@ -190,7 +191,7 @@ def commit_and_push() -> bool:
     print("\n" + "="*70)
     print("AUTO COMMIT COMPLETE")
     print("="*70)
-    print(f"Repository: https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot.git")
+    print(f"Repository: https://github.com/sun475300-sudo/Swarm-contol-in-sc2bot.git")
     print(f"Branch: {branch}")
     print("="*70 + "\n")
 

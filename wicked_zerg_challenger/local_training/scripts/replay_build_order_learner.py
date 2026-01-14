@@ -826,11 +826,13 @@ def main():
         try:
             import subprocess
             import sys
-            script_path = Path(__file__).parent.parent / "tools" / "auto_commit_after_training.py"
+            # CRITICAL: From local_training/scripts/ to tools/ requires .parent.parent.parent
+            # Path: scripts/ -> local_training/ -> wicked_zerg_challenger/ -> tools/
+            script_path = Path(__file__).parent.parent.parent / "tools" / "auto_commit_after_training.py"
             if script_path.exists():
                 result = subprocess.run(
                     [sys.executable, str(script_path)],
-                    cwd=str(Path(__file__).parent.parent),
+                    cwd=str(Path(__file__).parent.parent.parent),  # Project root for cwd
                     capture_output=True,
                     text=True,
                     encoding='utf-8',
