@@ -383,13 +383,82 @@ Target industries include **ADD, LIG Nex1, Hanwha Systems, and autonomous roboti
 
 ---
 
+## 🚀 Quick Start
+
+**실제 실행 가능한 코드로 구성된 프로젝트입니다!**
+
+```bash
+# 1. 저장소 클론
+git clone https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git
+cd Swarm-control-in-sc2bot
+
+# 2. 자동 설치
+.\setup.ps1  # Windows
+# 또는
+./setup.sh   # Linux/macOS
+
+# 3. 게임 실행
+cd wicked_zerg_challenger
+python run.py
+```
+
+**더 자세한 내용**: [Quick Start Guide](QUICK_START.md) | [Setup Guide](SETUP.md)
+
+---
+
+## 📊 실제 구현 현황
+
+| 구성 요소 | 상태 | 파일 | 라인 수 |
+|-----------|------|------|---------|
+| **StarCraft II Bot** | ✅ 완성 | `wicked_zerg_bot_pro.py` | **5,603줄** |
+| **강화학습 시스템** | ✅ 완성 | `zerg_net.py`, `local_training/` | 수천 줄 |
+| **Self-Healing DevOps** | ✅ 완성 | `genai_self_healing.py` | 334줄 |
+| **Android GCS** | ✅ 완성 | `monitoring/mobile_app_android/` | 68파일 |
+| **Monitoring Dashboard** | ✅ 완성 | `monitoring/dashboard_api.py` | 완전 구현 |
+
+**실제 코드 통계:**
+- Python 파일: **120개 이상**
+- 총 코드 라인: **수만 줄**
+- 실행 스크립트: **43개**
+
+**자세한 내용**: [Code Implementation Status](CODE_IMPLEMENTATION_STATUS.md)
+
+---
+
+## 📁 주요 파일 위치
+
+```
+wicked_zerg_challenger/
+├── run.py                       # 🎮 게임 실행 진입점
+├── wicked_zerg_bot_pro.py       # 🤖 메인 봇 (5,603줄)
+├── genai_self_healing.py        # 🔧 Self-Healing 시스템
+├── zerg_net.py                  # 🧠 강화학습 신경망
+├── local_training/              # 📚 학습 파이프라인
+│   └── main_integrated.py       # 통합 학습 실행
+└── monitoring/                  # 📊 모니터링 시스템
+    ├── dashboard_api.py         # FastAPI 서버
+    └── mobile_app_android/      # 📱 Android 앱 (68파일)
+```
+
+---
+
 ## 📬 Contact
 
 * **Author:** 장선우 (Jang S. W.)
 * **Major:** 목포대학교 드론응용학과 (드론기계공학전공) / Drone Application Engineering
 * **Email:** `sun475300@naver.com`
-* **Repository:** [[https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot](https://github.com/sun475300-sudo/Swarm-contol-in-sc2bot.git)]([https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot]
-(https://github.com/sun475300-sudo/Swarm-contol-in-sc2bot.git))
+* **Repository:** [https://github.com/sun475300-sudo/Swarm-control-in-sc2bot](https://github.com/sun475300-sudo/Swarm-contol-in-sc2bot.git)
+
+---
+
+## 📚 추가 문서
+
+- [🚀 Quick Start Guide](QUICK_START.md) - 빠른 시작
+- [⚙️ Setup Guide](SETUP.md) - 상세 설치 가이드
+- [🏗️ Architecture](ARCHITECTURE.md) - 시스템 아키텍처
+- [📊 Code Implementation Status](CODE_IMPLEMENTATION_STATUS.md) - 실제 코드 현황
+- [🤝 Contributing](CONTRIBUTING.md) - 기여 가이드
+- [🔐 Environment Setup](ENV_SETUP.md) - 환경 변수 설정
 
 ```
 
