@@ -26,7 +26,8 @@ if (Test-Path "$hooksDir\pre-commit") {
 }
 
 # 2. 새 Hook 파일 생성 (LF, UTF-8 without BOM)
-$hookContent = @"
+    # PowerShell here-string에서 변수를 이스케이프하여 리터럴로 저장
+$hookContent = @'
 #!/bin/sh
 # Git Pre-commit Hook - Security Check
 # Windows Git Bash / Linux / Mac 모두 지원
@@ -86,7 +87,7 @@ else
 fi
 
 exit 0
-"@
+'@
 
 # 3. LF 줄바꿈으로 저장 (UTF-8 without BOM)
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -118,7 +119,7 @@ foreach ($path in $gitBashPaths) {
 if ($gitBashFound) {
     Write-Host "   Git Bash 발견: $gitBashPath" -ForegroundColor Gray
     $projectRoot = (Get-Location).Path
-    $projectRootUnix = $projectRoot -replace "\\", "/" -replace "^([A-Z]):", "/`$1" -replace ":", ""
+    $projectRootUnix = $projectRoot -replace "\\", "/" -replace "^([A-Z]):", '/$1' -replace ":", ""
     
     Write-Host "   Hook 직접 실행 테스트..." -ForegroundColor Gray
     try {

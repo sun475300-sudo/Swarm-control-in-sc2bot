@@ -3,12 +3,13 @@
 
 param(
     [Parameter(Mandatory=$true)]
-    [string]$NewApiKey = "AIzaSyBDdPWJyXs56AxeCPmqZpySFOVPjjSt_CM",
+    [string]$NewApiKey = "",
     
     [string[]]$OldKeys = @(
         "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo",
-        "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc",
-        "AIzaSyBDdPWJyXs56AxeCPmqZpySFOVPjjSt_CM"
+        "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
+        # 주의: 이전에 사용된 키는 여기에 추가할 수 있지만, 실제 키 값은 보안상 제외됩니다.
+        # 마이그레이션 시 구체적인 키 값은 명령줄 인수로 전달하세요.
     )
 )
 
@@ -21,6 +22,19 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
+
+# 새 키 필수 확인
+if ([string]::IsNullOrWhiteSpace($NewApiKey)) {
+    Write-Host "? 오류: 새 API 키가 제공되지 않았습니다." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "사용법:" -ForegroundColor Yellow
+    Write-Host "  .\migrate_to_new_key.ps1 -NewApiKey 'YOUR_NEW_API_KEY'" -ForegroundColor White
+    Write-Host ""
+    Write-Host "또는 이전 키를 제거하면서:" -ForegroundColor Yellow
+    Write-Host "  .\migrate_to_new_key.ps1 -NewApiKey 'YOUR_NEW_API_KEY' -OldKeys @('OLD_KEY_1', 'OLD_KEY_2')" -ForegroundColor White
+    Write-Host ""
+    exit 1
+}
 
 # 새 키 검증
 if (-not $NewApiKey.StartsWith("AIzaSy")) {
