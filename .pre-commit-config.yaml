@@ -18,6 +18,12 @@ repos:
             \.eggs
           )/
 
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
   - repo: https://github.com/pycqa/flake8
     rev: 6.1.0
     hooks:
@@ -27,3 +33,10 @@ repos:
           '--max-line-length=120',
           '--exclude=.git,__pycache__,*.pyc,*.pyo,build,dist,.venv,venv'
         ]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.4.1
+    hooks:
+      - id: mypy
+        args: ["--ignore-missing-imports"]
+        additional_dependencies: [types-all]
