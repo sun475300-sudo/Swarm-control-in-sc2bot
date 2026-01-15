@@ -44,12 +44,19 @@ echo.
 cd wicked_zerg_challenger
 
 REM Clear Python cache to ensure latest code is used
-echo [INFO] Clearing Python cache...
+echo.
+echo ================================
+echo [STEP 1] Python Cache Clearing
+echo ================================
+echo [INFO] Clearing Python cache to ensure latest code is used...
 if exist __pycache__ (
     rmdir /s /q __pycache__
-    echo [OK] Python cache cleared
+    echo [OK] Python cache cleared successfully
+) else (
+    echo [INFO] No Python cache found (already clean)
 )
 del /q *.pyc 2>nul
+echo [OK] Python cache cleanup complete
 echo.
 
 REM Check if --LadderServer flag is provided

@@ -83,32 +83,40 @@ def main():
     import time
     import random
     
+    print("\n" + "=" * 70)
+    print("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
     print("=" * 70)
-    print("NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
-    print("=" * 70)
     print()
-    print("This will start continuous games and train the neural network model.")
-    print("Model will be saved to: local_training/models/zerg_net_model.pt")
+    print("? Training Configuration:")
+    print("   ? 15-dimensional state vector (Self 5 + Enemy 10)")
+    print("   ? REINFORCE algorithm for policy learning")
+    print("   ? Model auto-saves after each game")
+    print("   ? Continuous training: Games run continuously without stopping")
+    print("   ? Build order comparison with pro gamer baseline")
+    print("   ? Auto-update learned parameters on victory")
     print()
-    print("Training features:")
-    print("  - 15-dimensional state vector (Self 5 + Enemy 10)")
-    print("  - REINFORCE algorithm for policy learning")
-    print("  - Model auto-saves after each game")
-    print("  - Continuous training: Games will run continuously without stopping")
+    print("? Model save location: local_training/models/zerg_net_model.pt")
+    print("? Build order data: local_training/scripts/learned_build_orders.json")
     print()
-    print("Press Ctrl+C to stop training")
+    print("??  Press Ctrl+C to stop training")
     print("=" * 70)
     print()
 
     # 1. Run on AI Arena server (when --LadderServer flag is present)
     if "--LadderServer" in sys.argv:
         from sc2.main import run_ladder_game  # type: ignore
-        print("Joining Ladder Game with Training Enabled...")
+        print("\n[STEP 2] ? Connecting to AI Arena Server...")
+        print("=" * 70)
         bot = create_bot_with_training()
+        print("[OK] Bot created with training enabled")
+        print("[INFO] Joining Ladder Game...")
         run_ladder_game(bot)
         return
 
     # 2. Run on local machine for continuous training
+    print("\n[STEP 2] ? Initializing Continuous Training Loop...")
+    print("=" * 70)
+    
     game_count = 0
     max_consecutive_failures = 5
     consecutive_failures = 0
@@ -119,9 +127,14 @@ def main():
     # IMPROVED: Use only available Difficulty values (Elite doesn't exist, VeryHard is the highest)
     difficulties = [Difficulty.Hard, Difficulty.VeryHard]
     
-    print("Starting Continuous Training Loop...")
-    print("Game windows will open - you can watch the games in real-time!")
-    print("Neural network is learning from your gameplay...")
+    print(f"[INFO] Available maps: {len(available_maps)} maps")
+    print(f"[INFO] Available opponent races: {len(opponent_races)} races")
+    print(f"[INFO] Available difficulties: {len(difficulties)} levels")
+    print()
+    print("[OK] Continuous training loop initialized")
+    print("[INFO] Game windows will open - you can watch the games in real-time!")
+    print("[INFO] Neural network is learning from your gameplay...")
+    print("=" * 70)
     print()
     
     while True:
@@ -129,21 +142,27 @@ def main():
             game_count += 1
             
             if consecutive_failures > 0:
-                print(f"[RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}")
+                print(f"\n??  [RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}")
                 if consecutive_failures >= max_consecutive_failures:
-                    print(f"[ERROR] Too many consecutive failures ({consecutive_failures}). Stopping training.")
+                    print(f"? [ERROR] Too many consecutive failures ({consecutive_failures}). Stopping training.")
                     break
             
-            # Select random map, opponent race, and difficulty
+            # [STEP 3] Select random map, opponent race, and difficulty
+            print(f"\n{'='*70}")
+            print(f"? [STEP 3] GAME #{game_count} - Random Selection")
+            print("=" * 70)
+            
             map_name = random.choice(available_maps)
             opponent_race = random.choice(opponent_races)
             difficulty = random.choice(difficulties)
             
-            print(f"\n{'='*70}")
-            print(f"[GAME #{game_count}] Starting new training game...")
-            print(f"  Map: {map_name}")
-            print(f"  Opponent: {opponent_race.name} {difficulty.name}")
-            print(f"{'='*70}\n")
+            print(f"[SELECTED] Map: {map_name}")
+            print(f"[SELECTED] Opponent Race: {opponent_race.name}")
+            print(f"[SELECTED] Difficulty: {difficulty.name}")
+            print()
+            print("[INFO] Starting game...")
+            print("=" * 70)
+            print()
             
             # Create new bot instance for each game
             bot = create_bot_with_training()
@@ -175,9 +194,14 @@ def main():
                 # Game completed successfully
                 consecutive_failures = 0
                 
-                print(f"\n[GAME #{game_count}] Completed successfully!")
-                print("Model saved to: local_training/models/zerg_net_model.pt")
-                print(f"\nWaiting 3 seconds before next game...")
+                print(f"\n{'='*70}")
+                print(f"? [GAME #{game_count}] COMPLETED SUCCESSFULLY")
+                print("=" * 70)
+                print("[INFO] Neural network model saved")
+                print("[INFO] Build order comparison analysis will be displayed above")
+                print()
+                print("[NEXT] Automatically starting next game in 3 seconds...")
+                print("=" * 70)
                 time.sleep(3)
                 
             except KeyboardInterrupt:
