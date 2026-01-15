@@ -1,7 +1,7 @@
 # Git 히스토리에서 API 키 제거 가이드
 
 **작성일**: 2026-01-15  
-**제거할 API 키**: `***REDACTED_GEMINI_KEY***`
+**제거할 API 키**: `[API_KEY_REMOVED]` (실제 키는 환경 변수나 설정 파일에서 확인)
 
 ---
 
@@ -45,7 +45,7 @@ wget https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar
 
 `passwords.txt` 파일 생성:
 ```
-***REDACTED_GEMINI_KEY***==>[API_KEY_REMOVED]
+[API_KEY]==>[API_KEY_REMOVED]
 ```
 
 #### 3단계: BFG 실행
@@ -63,7 +63,7 @@ git gc --prune=now --aggressive
 
 ```bash
 # API 키가 제거되었는지 확인
-git log --all -S "***REDACTED_GEMINI_KEY***"
+git log --all -S "[API_KEY]"
 
 # 결과가 없어야 함
 
@@ -88,7 +88,7 @@ git branch backup-before-api-key-removal-$(date +%Y%m%d-%H%M%S)
 ```bash
 # 모든 브랜치와 태그에서 API 키 제거
 git filter-branch --force --index-filter \
-    "git ls-files -z | xargs -0 sed -i 's/***REDACTED_GEMINI_KEY***/[API_KEY_REMOVED]/g'" \
+    "git ls-files -z | xargs -0 sed -i 's/[API_KEY]/[API_KEY_REMOVED]/g'" \
     --prune-empty --tag-name-filter cat -- --all
 ```
 
@@ -103,7 +103,7 @@ git gc --prune=now --aggressive
 
 ```bash
 # 확인
-git log --all -S "***REDACTED_GEMINI_KEY***"
+git log --all -S "[API_KEY]"
 
 # Force push
 git push --force --all
@@ -118,7 +118,7 @@ git push --force --tags
 
 ```powershell
 cd d:\Swarm-contol-in-sc2bot
-.\tools\remove_api_key_from_git_history.ps1 -ApiKey "***REDACTED_GEMINI_KEY***"
+.\tools\remove_api_key_from_git_history.ps1 -ApiKey "[YOUR_API_KEY]"
 ```
 
 **주의**: PowerShell 스크립트는 가이드만 제공합니다. 실제 실행은 Git Bash에서 해야 합니다.
@@ -128,7 +128,7 @@ cd d:\Swarm-contol-in-sc2bot
 ```bash
 cd d:/Swarm-contol-in-sc2bot
 chmod +x tools/remove_api_key_from_git_history.sh
-./tools/remove_api_key_from_git_history.sh "***REDACTED_GEMINI_KEY***"
+./tools/remove_api_key_from_git_history.sh "[YOUR_API_KEY]"
 ```
 
 ---
@@ -153,17 +153,17 @@ git commit -m "Remove API key from NEW_API_KEY_SETUP.md"
 
 ```bash
 # 모든 커밋에서 검색
-git log --all --source --full-history -S "***REDACTED_GEMINI_KEY***"
+git log --all --source --full-history -S "[API_KEY]"
 
 # 특정 파일에서 검색
-git log --all --source --full-history -S "***REDACTED_GEMINI_KEY***" -- "wicked_zerg_challenger/NEW_API_KEY_SETUP.md"
+git log --all --source --full-history -S "[API_KEY]" -- "wicked_zerg_challenger/NEW_API_KEY_SETUP.md"
 ```
 
 ### 현재 파일에서 검색
 
 ```bash
 # 현재 작업 디렉토리에서 검색
-grep -r "***REDACTED_GEMINI_KEY***" .
+grep -r "[API_KEY]" .
 ```
 
 ---

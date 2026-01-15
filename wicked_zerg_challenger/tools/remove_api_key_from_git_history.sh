@@ -1,10 +1,10 @@
 #!/bin/bash
 # Git 히스토리에서 API 키 제거 스크립트
-# 사용법: ./remove_api_key_from_git_history.sh "***REDACTED_GEMINI_KEY***"
+# 사용법: ./remove_api_key_from_git_history.sh "[YOUR_API_KEY]"
 
 set -e
 
-API_KEY="${1:-***REDACTED_GEMINI_KEY***}"
+API_KEY="${1:-[YOUR_API_KEY_HERE]}"
 
 echo "============================================================"
 echo "Git 히스토리에서 API 키 제거"

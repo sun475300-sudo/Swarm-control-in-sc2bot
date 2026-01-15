@@ -32,11 +32,12 @@ class ManusDashboardClient:
         
         Args:
             base_url: Manus 대시보드 URL
-            api_key: API 인증 키 (선택적)
+            api_key: API 인증 키 (선택적, 우선순위: 인자 > 환경 변수 > 파일)
             enabled: 원격 전송 활성화 여부
         """
         self.base_url = base_url.rstrip('/')
-        self.api_key = api_key or os.environ.get("MANUS_DASHBOARD_API_KEY")
+        # API 키 로드 우선순위: 1) 인자, 2) 환경 변수, 3) 파일
+        self.api_key = api_key or self._load_api_key()
         self.enabled = enabled and os.environ.get("MANUS_DASHBOARD_ENABLED", "1") == "1"
         
         # tRPC API 엔드포인트
@@ -58,6 +59,39 @@ class ManusDashboardClient:
         self.retry_delay = 2
         
         logger.info(f"[MANUS] 클라이언트 초기화: {self.base_url} (활성화: {self.enabled})")
+    
+    def _load_api_key(self) -> Optional[str]:
+        """
+        API 키 로드 (환경 변수 우선, 파일 fallback)
+        
+        Returns:
+            API 키 또는 None
+        """
+        # 1. 환경 변수 우선
+        key = os.environ.get("MANUS_DASHBOARD_API_KEY")
+        if key:
+            return key
+        
+        # 2. 파일에서 읽기 (fallback)
+        try:
+            from pathlib import Path
+            # 여러 가능한 경로 시도
+            possible_paths = [
+                Path("monitoring/api_keys/manus_api_key.txt"),
+                Path("api_keys/manus_api_key.txt"),
+                Path("secrets/manus_api_key.txt"),
+            ]
+            
+            for key_file in possible_paths:
+                if key_file.exists():
+                    key = key_file.read_text(encoding="utf-8").strip()
+                    if key:
+                        logger.info(f"[MANUS] API 키를 파일에서 로드: {key_file}")
+                        return key
+        except Exception as e:
+            logger.warning(f"[MANUS] API 키 파일 읽기 실패: {e}")
+        
+        return None
     
     def _call_trpc(
         self,
