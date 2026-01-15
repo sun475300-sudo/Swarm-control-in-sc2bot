@@ -226,14 +226,14 @@ if [ -n "$WINDIR" ] || [ -n "$MSYSTEM" ]; then
     if command -v pwsh.exe >/dev/null 2>&1; then
         if [ -f "wicked_zerg_challenger/tools/pre_commit_security_check.ps1" ]; then
             pwsh.exe -File "wicked_zerg_challenger/tools/pre_commit_security_check.ps1"
-            exit_code=`$?
-            if [ `$exit_code -ne 0 ]; then
+            exit_code=$?
+            if [ $exit_code -ne 0 ]; then
                 exit 1
             fi
         elif [ -f "tools/pre_commit_security_check.ps1" ]; then
             pwsh.exe -File "tools/pre_commit_security_check.ps1"
-            exit_code=`$?
-            if [ `$exit_code -ne 0 ]; then
+            exit_code=$?
+            if [ $exit_code -ne 0 ]; then
                 exit 1
             fi
         fi
@@ -241,14 +241,14 @@ if [ -n "$WINDIR" ] || [ -n "$MSYSTEM" ]; then
     elif command -v powershell.exe >/dev/null 2>&1; then
         if [ -f "wicked_zerg_challenger/tools/pre_commit_security_check.ps1" ]; then
             powershell.exe -File "wicked_zerg_challenger/tools/pre_commit_security_check.ps1"
-            exit_code=`$?
-            if [ `$exit_code -ne 0 ]; then
+            exit_code=$?
+            if [ $exit_code -ne 0 ]; then
                 exit 1
             fi
         elif [ -f "tools/pre_commit_security_check.ps1" ]; then
             powershell.exe -File "tools/pre_commit_security_check.ps1"
-            exit_code=`$?
-            if [ `$exit_code -ne 0 ]; then
+            exit_code=$?
+            if [ $exit_code -ne 0 ]; then
                 exit 1
             fi
         fi
@@ -258,15 +258,15 @@ else
     if [ -f "wicked_zerg_challenger/tools/pre_commit_security_check.sh" ]; then
         chmod +x "wicked_zerg_challenger/tools/pre_commit_security_check.sh" 2>/dev/null
         ./wicked_zerg_challenger/tools/pre_commit_security_check.sh
-        exit_code=`$?
-        if [ `$exit_code -ne 0 ]; then
+        exit_code=$?
+        if [ $exit_code -ne 0 ]; then
             exit 1
         fi
     elif [ -f "tools/pre_commit_security_check.sh" ]; then
         chmod +x "tools/pre_commit_security_check.sh" 2>/dev/null
         ./tools/pre_commit_security_check.sh
-        exit_code=`$?
-        if [ `$exit_code -ne 0 ]; then
+        exit_code=$?
+        if [ $exit_code -ne 0 ]; then
             exit 1
         fi
     fi

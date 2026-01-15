@@ -13,94 +13,104 @@
     
 .NOTES
     이 스크립트는 커밋 전에 자동으로 실행되어 민감한 정보를 차단합니다.
+    개선 사항:
+    - 강화된 오류 처리 및 예외 관리
+    - 파일 읽기 실패 시 안전한 처리
+    - 패턴 매칭 실패 시 무시
+    - 더 명확한 오류 메시지
 #>
 
-$ErrorActionPreference = "Stop"
+# 오류 처리 설정: 오류 발생 시 계속 진행하되 로깅
+$ErrorActionPreference = "Continue"
 
-Write-Host "=" * 70 -ForegroundColor Cyan
-Write-Host "🔒 Git 커밋 전 민감한 정보 검사" -ForegroundColor Cyan
-Write-Host "=" * 70 -ForegroundColor Cyan
-Write-Host ""
-
-# 검사할 패턴들
-$sensitivePatterns = @(
-    # API 키 패턴
-    "AIzaSy[A-Za-z0-9_-]{35}",  # Google API Key
-    "sk-[A-Za-z0-9]{32,}",      # OpenAI API Key
-    "xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24,32}",  # Slack Token
-    "[0-9a-f]{32}",             # 일반적인 32자리 해시 (API 키 가능성)
-    "[0-9a-f]{40}",             # 40자리 해시 (GitHub token 등)
-    
-    # 비밀번호 패턴 (간단한 패턴)
-    "password\s*[:=]\s*['\""]?[^'\""\s]{8,}",  # password: "value"
-    "passwd\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # passwd: "value"
-    "secret\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # secret: "value"
-    "token\s*[:=]\s*['\""]?[^'\""\s]{20,}"     # token: "value"
-    
-    # 주의: 구체적인 API 키 예시는 스크립트 자체 검사 시 오탐지를 방지하기 위해 제외됨
-    # 필요 시 다른 파일에서 패턴으로 검사 가능
-)
-
-# 검사할 파일 확장자
-$fileExtensions = @("*.py", "*.kt", "*.java", "*.js", "*.ts", "*.md", "*.txt", "*.json", "*.yaml", "*.yml", "*.sh", "*.ps1", "*.bat")
-
-# 검사 결과
-$foundIssues = @()
-$checkedFiles = 0
-
-Write-Host "📁 스테이징된 파일 검사 중..." -ForegroundColor Yellow
-Write-Host ""
-
-# 검사에서 제외할 파일/경로 (보안 검사 스크립트 자체와 Hook 파일 제외)
-# 제외 로직은 Test-ExcludeFile 함수 내부에 정의됨
-
-# Git 스테이징된 파일 가져오기
+# 전체 스크립트 실행을 try-catch로 감싸기
 try {
-    $stagedFiles = git diff --cached --name-only --diff-filter=ACM
-} catch {
-    Write-Host "⚠️  Git 저장소가 아니거나 스테이징된 파일이 없습니다." -ForegroundColor Yellow
-    Write-Host "   모든 파일을 검사합니다..." -ForegroundColor Yellow
-    $stagedFiles = @()
-}
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host "🔒 Git 커밋 전 민감한 정보 검사" -ForegroundColor Cyan
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host ""
 
-# 제외 함수 (보안 검사 스크립트 자체와 Hook 파일 제외)
-function Test-ExcludeFile {
-    param([string]$filePath)
-    
-    if ([string]::IsNullOrWhiteSpace($filePath)) {
+    # 검사할 패턴들 (하드코딩된 실제 키는 제외, 패턴만 사용)
+    $sensitivePatterns = @(
+        # API 키 패턴 (일반적인 패턴만, 실제 키 예시 제외)
+        "AIzaSy[A-Za-z0-9_-]{35}",  # Google API Key
+        "sk-[A-Za-z0-9]{32,}",      # OpenAI API Key
+        "xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24,32}",  # Slack Token
+        "[0-9a-f]{32}",             # 일반적인 32자리 해시 (API 키 가능성)
+        "[0-9a-f]{40}",             # 40자리 해시 (GitHub token 등)
+        
+        # 비밀번호 패턴 (간단한 패턴)
+        "password\s*[:=]\s*['\""]?[^'\""\s]{8,}",  # password: "value"
+        "passwd\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # passwd: "value"
+        "secret\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # secret: "value"
+        "token\s*[:=]\s*['\""]?[^'\""\s]{20,}"     # token: "value"
+    )
+
+    # 검사할 파일 확장자
+    $fileExtensions = @("*.py", "*.kt", "*.java", "*.js", "*.ts", "*.md", "*.txt", "*.json", "*.yaml", "*.yml", "*.sh", "*.ps1", "*.bat")
+
+    # 검사 결과
+    $foundIssues = @()
+    $checkedFiles = 0
+    $errorCount = 0
+
+    Write-Host "📁 스테이징된 파일 검사 중..." -ForegroundColor Yellow
+    Write-Host ""
+
+    # Git 스테이징된 파일 가져오기 (개선된 오류 처리)
+    $stagedFiles = @()
+    try {
+        $gitOutput = git diff --cached --name-only --diff-filter=ACM 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $stagedFiles = $gitOutput | Where-Object { $_ -and $_.Trim() }
+        } else {
+            Write-Host "⚠️  Git 저장소가 아니거나 스테이징된 파일이 없습니다." -ForegroundColor Yellow
+            Write-Host "   모든 파일을 검사합니다..." -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "⚠️  Git 명령 실행 중 오류: $_" -ForegroundColor Yellow
+        Write-Host "   모든 파일을 검사합니다..." -ForegroundColor Yellow
+        $errorCount++
+    }
+
+    # 제외 함수 (보안 검사 스크립트 자체와 Hook 파일 제외)
+    function Test-ExcludeFile {
+        param([string]$filePath)
+        
+        if ([string]::IsNullOrWhiteSpace($filePath)) {
+            return $false
+        }
+        
+        # 경로 정규화 (Windows와 Unix 경로 모두 처리)
+        $normalizedPath = $filePath -replace '\\', '/' -replace '//', '/'
+        
+        # 파일명 추출 (경로의 마지막 부분)
+        $fileName = $normalizedPath -split '/' | Select-Object -Last 1
+        
+        # 제외할 파일명 목록 (간단하게)
+        $excludeFileNames = @(
+            "pre_commit_security_check.ps1",
+            "pre_commit_security_check.sh",
+            "pre-commit",
+            "pre-commit.ps1"
+        )
+        
+        # 파일명 직접 매칭 (대소문자 무시)
+        foreach ($excludeName in $excludeFileNames) {
+            if ($fileName -ieq $excludeName) {
+                return $true
+            }
+        }
+        
+        # 추가 확인: 경로 전체에 제외 파일명이 포함되어 있는지
+        foreach ($excludeName in $excludeFileNames) {
+            if ($normalizedPath -like "*$excludeName" -or $normalizedPath -like "*/$excludeName") {
+                return $true
+            }
+        }
+        
         return $false
     }
-    
-    # 경로 정규화 (Windows와 Unix 경로 모두 처리)
-    $normalizedPath = $filePath -replace '\\', '/' -replace '//', '/'
-    
-    # 파일명 추출 (경로의 마지막 부분)
-    $fileName = $normalizedPath -split '/' | Select-Object -Last 1
-    
-    # 제외할 파일명 목록 (간단하게)
-    $excludeFileNames = @(
-        "pre_commit_security_check.ps1",
-        "pre_commit_security_check.sh",
-        "pre-commit",
-        "pre-commit.ps1"
-    )
-    
-    # 파일명 직접 매칭 (대소문자 무시)
-    foreach ($excludeName in $excludeFileNames) {
-        if ($fileName -ieq $excludeName) {
-            return $true
-        }
-    }
-    
-    # 추가 확인: 경로 전체에 제외 파일명이 포함되어 있는지
-    foreach ($excludeName in $excludeFileNames) {
-        if ($normalizedPath -like "*$excludeName" -or $normalizedPath -like "*/$excludeName") {
-            return $true
-        }
-    }
-    
-    return $false
-}
 
 # 스테이징된 파일이 없으면 모든 파일 검사
 if (-not $stagedFiles) {
@@ -115,20 +125,45 @@ if (-not $stagedFiles) {
                  }
         
         foreach ($file in $files) {
-            $checkedFiles++
-            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
-            
-            if ($content) {
-                foreach ($pattern in $sensitivePatterns) {
-                    if ($content -match $pattern) {
-                        $lineNumber = ($content -split "`n").IndexOf(($content -split "`n" | Where-Object { $_ -match $pattern } | Select-Object -First 1)) + 1
-                        $foundIssues += [PSCustomObject]@{
-                            File = $file.FullName
-                            Pattern = $pattern
-                            Line = $lineNumber
+            try {
+                $checkedFiles++
+                
+                # 파일 읽기 시도 (오류 처리 개선)
+                $content = $null
+                try {
+                    $content = Get-Content $file.FullName -Raw -ErrorAction Stop
+                } catch {
+                    Write-Host "⚠️  파일 읽기 실패 (무시): $($file.FullName) - $_" -ForegroundColor Gray
+                    $errorCount++
+                    continue
+                }
+                
+                if ($content) {
+                    foreach ($pattern in $sensitivePatterns) {
+                        try {
+                            if ($content -match $pattern) {
+                                $lines = $content -split "`n"
+                                $matchingLine = $lines | Where-Object { $_ -match $pattern } | Select-Object -First 1
+                                if ($matchingLine) {
+                                    $lineNumber = [Array]::IndexOf($lines, $matchingLine) + 1
+                                    $foundIssues += [PSCustomObject]@{
+                                        File = $file.FullName
+                                        Pattern = $pattern
+                                        Line = $lineNumber
+                                    }
+                                }
+                            }
+                        } catch {
+                            # 패턴 매칭 실패 시 무시 (오류 로깅만)
+                            Write-Host "⚠️  패턴 매칭 오류 (무시): $pattern - $_" -ForegroundColor Gray
+                            $errorCount++
                         }
                     }
                 }
+            } catch {
+                Write-Host "⚠️  파일 처리 중 오류 (무시): $($file.FullName) - $_" -ForegroundColor Gray
+                $errorCount++
+                continue
             }
         }
     }
@@ -167,21 +202,39 @@ if (-not $stagedFiles) {
             }
             
             if ($shouldCheck) {
-                $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+                # 파일 읽기 시도 (오류 처리 개선)
+                $content = $null
+                try {
+                    $content = Get-Content $file.FullName -Raw -ErrorAction Stop
+                } catch {
+                    Write-Host "⚠️  파일 읽기 실패 (무시): $filePath - $_" -ForegroundColor Gray
+                    $errorCount++
+                    continue
+                }
                 
                 if ($content) {
                     foreach ($pattern in $sensitivePatterns) {
-                        if ($content -match $pattern) {
-                            $lines = $content -split "`n"
-                            $matchingLine = $lines | Where-Object { $_ -match $pattern } | Select-Object -First 1
-                            $lineNumber = [Array]::IndexOf($lines, $matchingLine) + 1
-                            
-                            $foundIssues += [PSCustomObject]@{
-                                File = $file.FullName
-                                Pattern = $pattern
-                                Line = $lineNumber
-                                Preview = ($matchingLine -replace $pattern, "[REDACTED]").Substring(0, [Math]::Min(80, ($matchingLine -replace $pattern, "[REDACTED]").Length))
+                        try {
+                            if ($content -match $pattern) {
+                                $lines = $content -split "`n"
+                                $matchingLine = $lines | Where-Object { $_ -match $pattern } | Select-Object -First 1
+                                if ($matchingLine) {
+                                    $lineNumber = [Array]::IndexOf($lines, $matchingLine) + 1
+                                    $previewText = $matchingLine -replace $pattern, "[REDACTED]"
+                                    $previewLength = [Math]::Min(80, $previewText.Length)
+                                    
+                                    $foundIssues += [PSCustomObject]@{
+                                        File = $file.FullName
+                                        Pattern = $pattern
+                                        Line = $lineNumber
+                                        Preview = if ($previewLength -gt 0) { $previewText.Substring(0, $previewLength) } else { "" }
+                                    }
+                                }
                             }
+                        } catch {
+                            # 패턴 매칭 실패 시 무시 (오류 로깅만)
+                            Write-Host "⚠️  패턴 매칭 오류 (무시): $pattern in $filePath - $_" -ForegroundColor Gray
+                            $errorCount++
                         }
                     }
                 }
@@ -190,45 +243,65 @@ if (-not $stagedFiles) {
     }
 }
 
-Write-Host ""
-Write-Host "=" * 70 -ForegroundColor Cyan
-Write-Host "검사 결과" -ForegroundColor Cyan
-Write-Host "=" * 70 -ForegroundColor Cyan
-Write-Host ""
-Write-Host "검사한 파일 수: $checkedFiles" -ForegroundColor White
-Write-Host ""
-
-if ($foundIssues.Count -gt 0) {
-    Write-Host "🚨 민감한 정보가 발견되었습니다!" -ForegroundColor Red
     Write-Host ""
-    
-    foreach ($issue in $foundIssues) {
-        Write-Host "  파일: $($issue.File)" -ForegroundColor Yellow
-        Write-Host "  패턴: $($issue.Pattern)" -ForegroundColor Yellow
-        Write-Host "  라인: $($issue.Line)" -ForegroundColor Yellow
-        if ($issue.Preview) {
-            Write-Host "  미리보기: $($issue.Preview)" -ForegroundColor Gray
-        }
-        Write-Host ""
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host "검사 결과" -ForegroundColor Cyan
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "검사한 파일 수: $checkedFiles" -ForegroundColor White
+    if ($errorCount -gt 0) {
+        Write-Host "처리 중 오류 발생 수: $errorCount (무시됨)" -ForegroundColor Yellow
     }
-    
+    Write-Host ""
+
+    if ($foundIssues.Count -gt 0) {
+        Write-Host "🚨 민감한 정보가 발견되었습니다!" -ForegroundColor Red
+        Write-Host ""
+        
+        foreach ($issue in $foundIssues) {
+            Write-Host "  파일: $($issue.File)" -ForegroundColor Yellow
+            Write-Host "  패턴: $($issue.Pattern)" -ForegroundColor Yellow
+            Write-Host "  라인: $($issue.Line)" -ForegroundColor Yellow
+            if ($issue.Preview) {
+                Write-Host "  미리보기: $($issue.Preview)" -ForegroundColor Gray
+            }
+            Write-Host ""
+        }
+        
+        Write-Host ("=" * 70) -ForegroundColor Red
+        Write-Host "❌ 커밋이 차단되었습니다!" -ForegroundColor Red
+        Write-Host ("=" * 70) -ForegroundColor Red
+        Write-Host ""
+        Write-Host "조치 사항:" -ForegroundColor Yellow
+        Write-Host "  1. 위 파일들에서 민감한 정보를 제거하세요" -ForegroundColor White
+        Write-Host "  2. 플레이스홀더로 대체하세요 (예: [YOUR_API_KEY])" -ForegroundColor White
+        Write-Host "  3. 환경 변수나 설정 파일을 사용하세요" -ForegroundColor White
+        Write-Host "  4. 다시 검사 후 커밋하세요" -ForegroundColor White
+        Write-Host ""
+        
+        exit 1
+    } else {
+        Write-Host "✅ 민감한 정보가 발견되지 않았습니다." -ForegroundColor Green
+        Write-Host ""
+        Write-Host "안전하게 커밋할 수 있습니다." -ForegroundColor Green
+        Write-Host ""
+        
+        exit 0
+    }
+} catch {
+    # 예상치 못한 오류 발생 시
+    Write-Host ""
     Write-Host "=" * 70 -ForegroundColor Red
-    Write-Host "❌ 커밋이 차단되었습니다!" -ForegroundColor Red
+    Write-Host "❌ 스크립트 실행 중 예상치 못한 오류가 발생했습니다!" -ForegroundColor Red
     Write-Host "=" * 70 -ForegroundColor Red
     Write-Host ""
-    Write-Host "조치 사항:" -ForegroundColor Yellow
-    Write-Host "  1. 위 파일들에서 민감한 정보를 제거하세요" -ForegroundColor White
-    Write-Host "  2. 플레이스홀더로 대체하세요 (예: [YOUR_API_KEY])" -ForegroundColor White
-    Write-Host "  3. 환경 변수나 설정 파일을 사용하세요" -ForegroundColor White
-    Write-Host "  4. 다시 검사 후 커밋하세요" -ForegroundColor White
+    Write-Host "오류 메시지: $_" -ForegroundColor Yellow
+    Write-Host "오류 위치: $($_.InvocationInfo.ScriptLineNumber)번째 줄" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "⚠️  보안 검사를 건너뛰고 커밋하려면 --no-verify 옵션을 사용하세요." -ForegroundColor Yellow
+    Write-Host "   그러나 이는 권장되지 않습니다." -ForegroundColor Yellow
     Write-Host ""
     
+    # 오류 발생 시에도 커밋을 차단 (보안상 안전)
     exit 1
-} else {
-    Write-Host "✅ 민감한 정보가 발견되지 않았습니다." -ForegroundColor Green
-    Write-Host ""
-    Write-Host "안전하게 커밋할 수 있습니다." -ForegroundColor Green
-    Write-Host ""
-    
-    exit 0
 }
