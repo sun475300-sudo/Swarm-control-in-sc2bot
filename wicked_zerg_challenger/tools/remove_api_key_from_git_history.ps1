@@ -12,7 +12,7 @@
     제거할 API 키
     
 .EXAMPLE
-    .\remove_api_key_from_git_history.ps1 -ApiKey "***REDACTED_GEMINI_KEY***"
+    .\remove_api_key_from_git_history.ps1 -ApiKey 
 #>
 
 param(
