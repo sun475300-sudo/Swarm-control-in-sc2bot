@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Mock SC2 Environment for testing without actual StarCraft II installation.
 This module provides a lightweight simulation environment for testing bot logic.
@@ -31,7 +32,7 @@ class MockState:
 
 class MockSC2Env:
     """
-    StarCraft II 없이, Swarm 제어 느낌만 테스트할 수 있는 간단 환경.
+    Mock SC2 Environment for testing bot logic without SC2 runtime.
     
     This mock environment simulates basic SC2 game mechanics without
     requiring an actual StarCraft II installation. It allows testing
