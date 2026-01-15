@@ -5585,6 +5585,95 @@ class WickedZergBotPro(BotAI):
             print(f"[WARNING] 최종 통계 저장 실패: {e}")
             self.final_stats = None
 
+        # 🧠 Build Order Comparison: Compare training build with pro gamer baseline
+        try:
+            if hasattr(self, "production") and self.production:
+                # Get build order timing from current game
+                training_build = self.production.get_build_order_timing()
+                
+                # Extract supply values for comparison
+                training_build_supply = {
+                    "natural_expansion_supply": training_build.get("natural_expansion_supply"),
+                    "gas_supply": training_build.get("gas_supply"),
+                    "spawning_pool_supply": training_build.get("spawning_pool_supply"),
+                    "third_hatchery_supply": training_build.get("third_hatchery_supply"),
+                    "speed_upgrade_supply": training_build.get("speed_upgrade_supply"),
+                }
+                
+                # Compare with pro gamer baseline
+                import sys
+                from pathlib import Path
+                tools_path = Path(__file__).parent / "tools"
+                if str(tools_path) not in sys.path:
+                    sys.path.insert(0, str(tools_path))
+                from build_order_comparator import BuildOrderComparator
+                
+                comparator = BuildOrderComparator()
+                game_id = f"game_{instance_id}_{int(self.time)}s"
+                game_result_str = "Victory" if str(game_result) == "Victory" else "Defeat"
+                
+                analysis = comparator.compare(
+                    training_build_supply,
+                    game_result_str,
+                    game_id=game_id
+                )
+                
+                # Print comparison report
+                print("\n" + "=" * 70)
+                print("🔍 BUILD ORDER COMPARISON ANALYSIS")
+                print("=" * 70)
+                report = comparator.generate_report(analysis)
+                print(report)
+                
+                # Update learned parameters if we won (victory builds are better)
+                if game_result_str == "Victory":
+                    updated_params = comparator.update_learned_parameters(analysis, learning_rate=0.1)
+                    
+                    # Save updated parameters to learned_build_orders.json
+                    try:
+                        learned_json_path = Path(__file__).parent / "local_training" / "scripts" / "learned_build_orders.json"
+                        learned_json_path.parent.mkdir(parents=True, exist_ok=True)
+                        
+                        # Load existing data or create new
+                        if learned_json_path.exists():
+                            with open(learned_json_path, 'r', encoding='utf-8') as f:
+                                existing_data = json.load(f)
+                        else:
+                            existing_data = {}
+                        
+                        # Update learned_parameters
+                        if "learned_parameters" not in existing_data:
+                            existing_data["learned_parameters"] = {}
+                        
+                        # Merge updated parameters (only update if better)
+                        for param_name, new_value in updated_params.items():
+                            old_value = existing_data["learned_parameters"].get(param_name)
+                            if old_value is None or abs(new_value - old_value) > 0.5:
+                                existing_data["learned_parameters"][param_name] = new_value
+                        
+                        # Save updated data
+                        with open(learned_json_path, 'w', encoding='utf-8') as f:
+                            json.dump(existing_data, f, indent=2, ensure_ascii=False)
+                        
+                        print(f"\n✅ Updated learned parameters saved to: {learned_json_path}")
+                        print("   Next game will use improved build order timings!")
+                        
+                    except Exception as save_error:
+                        print(f"[WARNING] Failed to save updated learned parameters: {save_error}")
+                
+                # Log recommendations for next game
+                if analysis.recommendations:
+                    print("\n📋 RECOMMENDATIONS FOR NEXT GAME:")
+                    for i, rec in enumerate(analysis.recommendations, 1):
+                        print(f"   {i}. {rec}")
+                    
+        except ImportError as import_error:
+            print(f"[WARNING] Build order comparator not available: {import_error}")
+        except Exception as comp_error:
+            print(f"[WARNING] Build order comparison failed: {comp_error}")
+            import traceback
+            traceback.print_exc()
+
         if self.use_neural_network and self.neural_network is not None:
             try:
                 base_reward = 0.0
