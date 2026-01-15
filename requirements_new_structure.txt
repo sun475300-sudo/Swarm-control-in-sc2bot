@@ -1,0 +1,22 @@
+# Core dependencies
+numpy>=1.23.0,<2.0.0
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Code quality
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0
+mypy>=1.4.0
+pre-commit>=3.0.0
+
+# Type checking
+types-all>=0.1.0
+
+# Optional: For actual SC2 runtime (not required for mock environment)
+# sc2>=1.0.0
+# PySC2>=3.0.0
+
+# Optional: For machine learning (when integrating RL)
+# torch>=2.0.0
+# gym>=0.26.0
