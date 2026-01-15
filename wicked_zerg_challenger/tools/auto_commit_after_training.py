@@ -18,87 +18,87 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 def run_command(cmd: list, cwd: Path = None) -> tuple:
     """명령어 실행"""
-    try:
-        result = subprocess.run(
-            cmd,
-            cwd=cwd or PROJECT_ROOT,
-            capture_output=True,
-            text=True,
+ try:
+ result = subprocess.run(
+ cmd,
+ cwd=cwd or PROJECT_ROOT,
+ capture_output=True,
+ text=True,
             encoding='utf-8',
             errors='replace'
-        )
-        return result.returncode == 0, result.stdout + result.stderr
-    except Exception as e:
-        return False, str(e)
+ )
+ return result.returncode == 0, result.stdout + result.stderr
+ except Exception as e:
+ return False, str(e)
 
 
 def check_git_repo() -> bool:
     """Git 저장소인지 확인"""
     success, _ = run_command(["git", "rev-parse", "--git-dir"])
-    return success
+ return success
 
 
 def check_remote() -> bool:
     """원격 저장소 설정 확인"""
     success, output = run_command(["git", "remote", "-v"])
-    if not success:
-        return False
+ if not success:
+ return False
 
-    # 원하는 원격 저장소 URL 확인 (부분 매칭으로 유연하게)
-    # NOTE: 폴더명은 Swarm-contol-in-sc2bot (contol 유지)
-    target_urls = [
+ # 원하는 원격 저장소 URL 확인 (부분 매칭으로 유연하게)
+ # NOTE: 폴더명은 Swarm-contol-in-sc2bot (contol 유지)
+ target_urls = [
         "github.com/sun475300-sudo/Swarm-contol-in-sc2bot",
         "Swarm-contol-in-sc2bot.git"
-    ]
-    return any(url in output for url in target_urls)
+ ]
+ return any(url in output for url in target_urls)
 
 
 def setup_remote() -> bool:
     """원격 저장소 설정"""
     print("[INFO] Setting up remote repository...")
 
-    # 기존 origin 제거 (있다면)
+ # 기존 origin 제거 (있다면)
     run_command(["git", "remote", "remove", "origin"])
 
-    # 새로운 origin 추가
-    success, output = run_command([
+ # 새로운 origin 추가
+ success, output = run_command([
         "git", "remote", "add", "origin",
         "https://github.com/sun475300-sudo/Swarm-contol-in-sc2bot.git"
-    ])
+ ])
 
-    if success:
+ if success:
         print(f"[OK] Remote repository configured: origin")
-        return True
-    else:
+ return True
+ else:
         print(f"[ERROR] Failed to setup remote: {output}")
-        return False
+ return False
 
 
 def get_changed_files() -> list[str]:
     """변경된 파일 목록 가져오기"""
     success, output = run_command(["git", "status", "--porcelain"])
-    if not success:
-        return []
+ if not success:
+ return []
 
-    files = []
+ files = []
     for line in output.strip().split('\n'):
-        if line.strip():
+ if line.strip():
             # 상태 코드 제거 (예: " M", "A ", "??")
-            file_path = line[3:].strip()
-            if file_path:
-                files.append(file_path)
+ file_path = line[3:].strip()
+ if file_path:
+ files.append(file_path)
 
-    return files
+ return files
 
 
 def create_commit_message() -> str:
     """커밋 메시지 생성"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 변경된 파일 목록
-    changed_files = get_changed_files()
+ # 변경된 파일 목록
+ changed_files = get_changed_files()
 
-    # 주요 변경사항 분류
+ # 주요 변경사항 분류
     model_files = [f for f in changed_files if 'models/' in f or '.pt' in f]
     code_files = [f for f in changed_files if f.endswith('.py')]
     config_files = [f for f in changed_files if f.endswith('.json') or f.endswith('.md')]
@@ -116,7 +116,7 @@ Changes:
 Training session completed successfully.
 """
 
-    return message
+ return message
 
 
 def commit_and_push() -> bool:
@@ -125,67 +125,67 @@ def commit_and_push() -> bool:
     print("AUTO COMMIT AFTER TRAINING")
     print("="*70)
 
-    # Git 저장소 확인
-    if not check_git_repo():
+ # Git 저장소 확인
+ if not check_git_repo():
         print("[ERROR] Not a git repository!")
-        return False
+ return False
 
-    # 원격 저장소 확인 및 설정
-    if not check_remote():
+ # 원격 저장소 확인 및 설정
+ if not check_remote():
         print("[WARNING] Remote repository not configured. Setting up...")
-        if not setup_remote():
-            return False
+ if not setup_remote():
+ return False
 
-    # 변경된 파일 확인
-    changed_files = get_changed_files()
-    if not changed_files:
+ # 변경된 파일 확인
+ changed_files = get_changed_files()
+ if not changed_files:
         print("[INFO] No changes to commit.")
-        return True
+ return True
 
     print(f"\n[INFO] Found {len(changed_files)} changed files:")
-    for f in changed_files[:10]:  # 처음 10개만 표시
+ for f in changed_files[:10]: # 처음 10개만 표시
         print(f"  - {f}")
-    if len(changed_files) > 10:
+ if len(changed_files) > 10:
         print(f"  ... and {len(changed_files) - 10} more files")
 
-    # 모든 변경사항 스테이징
+ # 모든 변경사항 스테이징
     print("\n[STEP 1] Staging all changes...")
     success, output = run_command(["git", "add", "-A"])
-    if not success:
+ if not success:
         print(f"[ERROR] Failed to stage changes: {output}")
-        return False
+ return False
     print("[OK] All changes staged")
 
-    # 커밋 메시지 생성
-    commit_message = create_commit_message()
+ # 커밋 메시지 생성
+ commit_message = create_commit_message()
 
-    # 커밋
+ # 커밋
     print("\n[STEP 2] Creating commit...")
-    success, output = run_command([
+ success, output = run_command([
         "git", "commit", "-m", commit_message
-    ])
-    if not success:
+ ])
+ if not success:
         if "nothing to commit" in output.lower():
             print("[INFO] Nothing to commit (working tree clean)")
-            return True
+ return True
         print(f"[ERROR] Failed to commit: {output}")
-        return False
+ return False
     print("[OK] Commit created")
 
-    # 현재 브랜치 확인
+ # 현재 브랜치 확인
     success, branch_output = run_command(["git", "branch", "--show-current"])
     branch = branch_output.strip() if success else "main"
 
-    # 푸시
+ # 푸시
     print(f"\n[STEP 3] Pushing to origin/{branch}...")
-    success, output = run_command([
+ success, output = run_command([
         "git", "push", "-u", "origin", branch
-    ])
-    if not success:
+ ])
+ if not success:
         print(f"[ERROR] Failed to push: {output}")
         print("[INFO] You may need to push manually:")
         print(f"  git push -u origin {branch}")
-        return False
+ return False
     print("[OK] Pushed to remote repository")
 
     print("\n" + "="*70)
@@ -195,23 +195,23 @@ def commit_and_push() -> bool:
     print(f"Branch: {branch}")
     print("="*70 + "\n")
 
-    return True
+ return True
 
 
 def main():
     """메인 함수"""
-    try:
-        success = commit_and_push()
-        sys.exit(0 if success else 1)
-    except KeyboardInterrupt:
+ try:
+ success = commit_and_push()
+ sys.exit(0 if success else 1)
+ except KeyboardInterrupt:
         print("\n[INFO] Interrupted by user")
-        sys.exit(1)
-    except Exception as e:
+ sys.exit(1)
+ except Exception as e:
         print(f"[ERROR] Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+ import traceback
+ traceback.print_exc()
+ sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+ main()

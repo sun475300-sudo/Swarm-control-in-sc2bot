@@ -1,255 +1,254 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-¼­¹ö¿Í Android ¾Û °£ µ¥ÀÌÅÍ ºñ±³ µµ±¸
+ì„œë²„ì™€ Android ì•± ê°„ ë°ì´í„° ë¹„êµ ë„êµ¬
 
-¼­¹ö°¡ º¸³»´Â JSON µ¥ÀÌÅÍ¿Í Android ¾ÛÀÌ ¹ŞÀº JSON µ¥ÀÌÅÍ¸¦ ºñ±³ÇÕ´Ï´Ù.
+ì„œë²„ê°€ ë³´ë‚´ëŠ” JSON ë°ì´í„°ì™€ Android ì•±ì´ ë°›ì€ JSON ë°ì´í„°ë¥¼ ë¹„êµí•©ë‹ˆë‹¤.
 """
 
 import requests
 import json
-from typing import Dict, Any, List
 from datetime import datetime
 from pathlib import Path
 
 BASE_URL = "http://localhost:8000"
 
 def get_server_response() -> Dict[str, Any]:
-    """¼­¹ö¿¡¼­ ½ÇÁ¦·Î º¸³»´Â JSON µ¥ÀÌÅÍ °¡Á®¿À±â"""
-    try:
-        response = requests.get(f"{BASE_URL}/api/game-state", timeout=5)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        print(f"? ¼­¹ö ¿¬°á ½ÇÆĞ: {e}")
-        return {}
+    """ì„œë²„ì—ì„œ ì‹¤ì œë¡œ ë³´ë‚´ëŠ” JSON ë°ì´í„° ê°€ì ¸ì˜¤ê¸°"""
+ try:
+        response = requests.get(f"{BASE_URL}/api/game-state", timeout = 5)
+ response.raise_for_status()
+ return response.json()
+ except Exception as e:
+        print(f"? ì„œë²„ ì—°ê²° ì‹¤íŒ¨: {e}")
+ return {}
 
 def normalize_data(data: Dict[str, Any]) -> Dict[str, Any]:
-    """µ¥ÀÌÅÍ¸¦ Á¤±ÔÈ­ (ÇÊµå¸í ÅëÀÏ, Å¸ÀÔ º¯È¯)"""
-    normalized = {}
-    
-    # ÇÊµå¸í ¸ÅÇÎ (snake_case ¡æ camelCase)
-    field_mapping = {
+    """ë°ì´í„°ë¥¼ ì •ê·œí™” (í•„ë“œëª… í†µì¼, íƒ€ì… ë³€í™˜)"""
+ normalized = {}
+
+ # í•„ë“œëª… ë§¤í•‘ (snake_case â†’ camelCase)
+ field_mapping = {
         "supply_used": "supplyUsed",
         "supply_cap": "supplyCap",
         "win_rate": "winRate",
-        "winRate": "winRate",  # ÀÌ¹Ì camelCaseÀÎ °æ¿ì
-    }
-    
-    for key, value in data.items():
-        # ÇÊµå¸í º¯È¯
-        new_key = field_mapping.get(key, key)
-        
-        # Å¸ÀÔ º¯È¯
-        if isinstance(value, dict):
-            normalized[new_key] = normalize_data(value)
-        elif isinstance(value, (int, float)):
-            # ¼ıÀÚ´Â ±×´ë·Î
-            normalized[new_key] = value
-        else:
-            normalized[new_key] = value
-    
-    return normalized
+        "winRate": "winRate",  # ì´ë¯¸ camelCaseì¸ ê²½ìš°
+ }
+
+ for key, value in data.items():
+ # í•„ë“œëª… ë³€í™˜
+ new_key = field_mapping.get(key, key)
+
+ # íƒ€ì… ë³€í™˜
+ if isinstance(value, dict):
+ normalized[new_key] = normalize_data(value)
+ elif isinstance(value, (int, float)):
+ # ìˆ«ìëŠ” ê·¸ëŒ€ë¡œ
+ normalized[new_key] = value
+ else:
+ normalized[new_key] = value
+
+ return normalized
 
 def compare_data(server_data: Dict[str, Any], android_data: Dict[str, Any]) -> Dict[str, Any]:
-    """µÎ µ¥ÀÌÅÍ¸¦ ºñ±³"""
-    server_normalized = normalize_data(server_data)
-    
-    differences = []
-    matches = []
-    missing_in_android = []
-    missing_in_server = []
-    
-    # ¼­¹ö µ¥ÀÌÅÍ ±âÁØÀ¸·Î ºñ±³
-    for key, server_value in server_normalized.items():
-        if key in android_data:
-            android_value = android_data[key]
-            
-            # °ª ºñ±³
-            if server_value == android_value:
+    """ë‘ ë°ì´í„°ë¥¼ ë¹„êµ"""
+ server_normalized = normalize_data(server_data)
+
+ differences = []
+ matches = []
+ missing_in_android = []
+ missing_in_server = []
+
+ # ì„œë²„ ë°ì´í„° ê¸°ì¤€ìœ¼ë¡œ ë¹„êµ
+ for key, server_value in server_normalized.items():
+ if key in android_data:
+ android_value = android_data[key]
+
+ # ê°’ ë¹„êµ
+ if server_value == android_value:
                 matches.append(f"? {key}: {server_value}")
-            else:
-                differences.append({
+ else:
+ differences.append({
                     "field": key,
                     "server": server_value,
                     "android": android_value,
                     "type_server": type(server_value).__name__,
                     "type_android": type(android_value).__name__
-                })
-        else:
-            missing_in_android.append(key)
-    
-    # Android¿¡¸¸ ÀÖ´Â ÇÊµå
-    for key in android_data:
-        if key not in server_normalized:
-            missing_in_server.append(key)
-    
-    return {
+ })
+ else:
+ missing_in_android.append(key)
+
+ # Androidì—ë§Œ ìˆëŠ” í•„ë“œ
+ for key in android_data:
+ if key not in server_normalized:
+ missing_in_server.append(key)
+
+ return {
         "matches": matches,
         "differences": differences,
         "missing_in_android": missing_in_android,
         "missing_in_server": missing_in_server,
         "server_fields": list(server_normalized.keys()),
         "android_fields": list(android_data.keys())
-    }
+ }
 
 def print_comparison_result(server_data: Dict[str, Any], comparison: Dict[str, Any]):
-    """ºñ±³ °á°ú Ãâ·Â"""
+    """ë¹„êµ ê²°ê³¼ ì¶œë ¥"""
     print("="*70)
-    print("¼­¹ö vs Android ¾Û µ¥ÀÌÅÍ ºñ±³ °á°ú")
+    print("ì„œë²„ vs Android ì•± ë°ì´í„° ë¹„êµ ê²°ê³¼")
     print("="*70)
-    print(f"\n? ºñ±³ ½Ã°£: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+    print(f"\n? ë¹„êµ ì‹œê°„: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
     print("\n" + "="*70)
-    print("1. ¼­¹ö°¡ º¸³»´Â µ¥ÀÌÅÍ (¿øº»)")
+    print("1. ì„œë²„ê°€ ë³´ë‚´ëŠ” ë°ì´í„° (ì›ë³¸)")
     print("="*70)
-    print(json.dumps(server_data, indent=2, ensure_ascii=False))
-    
+ print(json.dumps(server_data, indent = 2, ensure_ascii = False))
+
     print("\n" + "="*70)
-    print("2. ÇÊµå ºñ±³ °á°ú")
+    print("2. í•„ë“œ ë¹„êµ ê²°ê³¼")
     print("="*70)
-    
+
     if comparison["matches"]:
-        print(f"\n? ÀÏÄ¡ÇÏ´Â ÇÊµå ({len(comparison['matches'])}°³):")
-        for match in comparison["matches"][:10]:  # ÃÖ´ë 10°³¸¸ Ç¥½Ã
+        print(f"\n? ì¼ì¹˜í•˜ëŠ” í•„ë“œ ({len(comparison['matches'])}ê°œ):")
+        for match in comparison["matches"][:10]:  # ìµœëŒ€ 10ê°œë§Œ í‘œì‹œ
             print(f"   {match}")
         if len(comparison["matches"]) > 10:
-            print(f"   ... ¿Ü {len(comparison['matches']) - 10}°³")
-    
+            print(f"   ... ì™¸ {len(comparison['matches']) - 10}ê°œ")
+
     if comparison["differences"]:
-        print(f"\n?? ´Ù¸¥ ÇÊµå ({len(comparison['differences'])}°³):")
+        print(f"\n?? ë‹¤ë¥¸ í•„ë“œ ({len(comparison['differences'])}ê°œ):")
         for diff in comparison["differences"]:
-            print(f"   ÇÊµå: {diff['field']}")
-            print(f"      ¼­¹ö: {diff['server']} ({diff['type_server']})")
+            print(f"   í•„ë“œ: {diff['field']}")
+            print(f"      ì„œë²„: {diff['server']} ({diff['type_server']})")
             print(f"      Android: {diff['android']} ({diff['type_android']})")
-            print()
-    
+ print()
+
     if comparison["missing_in_android"]:
-        print(f"\n? Android¿¡ ¾ø´Â ÇÊµå ({len(comparison['missing_in_android'])}°³):")
+        print(f"\n? Androidì— ì—†ëŠ” í•„ë“œ ({len(comparison['missing_in_android'])}ê°œ):")
         for field in comparison["missing_in_android"]:
             print(f"   - {field}")
-    
+
     if comparison["missing_in_server"]:
-        print(f"\n? ¼­¹ö¿¡ ¾ø´Â ÇÊµå (Android¿¡¸¸ ÀÖÀ½) ({len(comparison['missing_in_server'])}°³):")
+        print(f"\n? ì„œë²„ì— ì—†ëŠ” í•„ë“œ (Androidì—ë§Œ ìˆìŒ) ({len(comparison['missing_in_server'])}ê°œ):")
         for field in comparison["missing_in_server"]:
             print(f"   - {field}")
-    
+
     print("\n" + "="*70)
-    print("3. ¿ä¾à")
+    print("3. ìš”ì•½")
     print("="*70)
     total_fields = len(comparison["server_fields"])
     match_count = len(comparison["matches"])
     diff_count = len(comparison["differences"])
     missing_count = len(comparison["missing_in_android"])
-    
-    print(f"   ÃÑ ÇÊµå ¼ö: {total_fields}")
-    print(f"   ? ÀÏÄ¡: {match_count}")
-    print(f"   ?? ´Ù¸§: {diff_count}")
-    print(f"   ? ´©¶ô: {missing_count}")
-    
-    if diff_count == 0 and missing_count == 0:
-        print("\n   ? ¿Ïº®ÇÏ°Ô ÀÏÄ¡ÇÕ´Ï´Ù!")
-    elif diff_count == 0:
-        print("\n   ?? ÀÏºÎ ÇÊµå°¡ Android¿¡ ¾ø½À´Ï´Ù (ÇÊµå¸í ¸ÅÇÎ È®ÀÎ ÇÊ¿ä)")
-    else:
-        print("\n   ?? µ¥ÀÌÅÍ ºÒÀÏÄ¡°¡ ÀÖ½À´Ï´Ù. Android ¾Û ·Î±×¸¦ È®ÀÎÇÏ¼¼¿ä.")
+
+    print(f"   ì´ í•„ë“œ ìˆ˜: {total_fields}")
+    print(f"   ? ì¼ì¹˜: {match_count}")
+    print(f"   ?? ë‹¤ë¦„: {diff_count}")
+    print(f"   ? ëˆ„ë½: {missing_count}")
+
+ if diff_count == 0 and missing_count == 0:
+        print("\n   ? ì™„ë²½í•˜ê²Œ ì¼ì¹˜í•©ë‹ˆë‹¤!")
+ elif diff_count == 0:
+        print("\n   ?? ì¼ë¶€ í•„ë“œê°€ Androidì— ì—†ìŠµë‹ˆë‹¤ (í•„ë“œëª… ë§¤í•‘ í™•ì¸ í•„ìš”)")
+ else:
+        print("\n   ?? ë°ì´í„° ë¶ˆì¼ì¹˜ê°€ ìˆìŠµë‹ˆë‹¤. Android ì•± ë¡œê·¸ë¥¼ í™•ì¸í•˜ì„¸ìš”.")
 
 def parse_android_log(log_text: str) -> Dict[str, Any]:
-    """Android ·Î±×¿¡¼­ JSON µ¥ÀÌÅÍ ÃßÃâ"""
-    # "=== ¼­¹ö¿¡¼­ ¹ŞÀº ¿øº» JSON ===" ¿Í "=============================" »çÀÌÀÇ JSON ÃßÃâ
-    import re
-    
-    # ÆĞÅÏ 1: "=== ¼­¹ö¿¡¼­ ¹ŞÀº ¿øº» JSON ===" ´ÙÀ½ÀÇ JSON
-    pattern1 = r"=== ¼­¹ö¿¡¼­ ¹ŞÀº ¿øº» JSON ===\s*\n(.*?)\n============================="
-    match1 = re.search(pattern1, log_text, re.DOTALL)
-    
-    if match1:
-        json_str = match1.group(1).strip()
-        try:
-            return json.loads(json_str)
-        except:
-            pass
-    
-    # ÆĞÅÏ 2: "=== Android ¾Û¿¡¼­ ¹ŞÀº JSON µ¥ÀÌÅÍ ===" ´ÙÀ½ÀÇ JSON
-    pattern2 = r"=== Android ¾Û¿¡¼­ ¹ŞÀº JSON µ¥ÀÌÅÍ ===\s*\n(.*?)\n====================================="
-    match2 = re.search(pattern2, log_text, re.DOTALL)
-    
-    if match2:
-        json_str = match2.group(1).strip()
-        try:
-            return json.loads(json_str)
-        except:
-            pass
-    
-    # ÆĞÅÏ 3: ÀÏ¹İ JSON °´Ã¼ Ã£±â
+    """Android ë¡œê·¸ì—ì„œ JSON ë°ì´í„° ì¶”ì¶œ"""
+    # "=== ì„œë²„ì—ì„œ ë°›ì€ ì›ë³¸ JSON ===" ì™€ "=============================" ì‚¬ì´ì˜ JSON ì¶”ì¶œ
+ import re
+
+    # íŒ¨í„´ 1: "=== ì„œë²„ì—ì„œ ë°›ì€ ì›ë³¸ JSON ===" ë‹¤ìŒì˜ JSON
+    pattern1 = r"=== ì„œë²„ì—ì„œ ë°›ì€ ì›ë³¸ JSON ===\s*\n(.*?)\n============================="
+ match1 = re.search(pattern1, log_text, re.DOTALL)
+
+ if match1:
+ json_str = match1.group(1).strip()
+ try:
+ return json.loads(json_str)
+ except:
+ pass
+
+    # íŒ¨í„´ 2: "=== Android ì•±ì—ì„œ ë°›ì€ JSON ë°ì´í„° ===" ë‹¤ìŒì˜ JSON
+    pattern2 = r"=== Android ì•±ì—ì„œ ë°›ì€ JSON ë°ì´í„° ===\s*\n(.*?)\n====================================="
+ match2 = re.search(pattern2, log_text, re.DOTALL)
+
+ if match2:
+ json_str = match2.group(1).strip()
+ try:
+ return json.loads(json_str)
+ except:
+ pass
+
+ # íŒ¨í„´ 3: ì¼ë°˜ JSON ê°ì²´ ì°¾ê¸°
     pattern3 = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-    matches = re.findall(pattern3, log_text)
-    
-    for match in matches:
-        try:
-            data = json.loads(match)
-            # GameState Çü½ÄÀÎÁö È®ÀÎ
+ matches = re.findall(pattern3, log_text)
+
+ for match in matches:
+ try:
+ data = json.loads(match)
+ # GameState í˜•ì‹ì¸ì§€ í™•ì¸
             if "minerals" in data and "vespene" in data:
-                return data
-        except:
-            continue
-    
-    return {}
+ return data
+ except:
+ continue
+
+ return {}
 
 def main():
     print("="*70)
-    print("¼­¹ö¿Í Android ¾Û µ¥ÀÌÅÍ ºñ±³ µµ±¸")
+    print("ì„œë²„ì™€ Android ì•± ë°ì´í„° ë¹„êµ ë„êµ¬")
     print("="*70)
-    
-    # 1. ¼­¹ö µ¥ÀÌÅÍ °¡Á®¿À±â
-    print("\n[1/3] ¼­¹ö¿¡¼­ µ¥ÀÌÅÍ °¡Á®¿À´Â Áß...")
-    server_data = get_server_response()
-    
-    if not server_data:
-        print("\n? ¼­¹ö µ¥ÀÌÅÍ¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.")
-        print("   ¼­¹ö°¡ ½ÇÇà ÁßÀÎÁö È®ÀÎÇÏ¼¼¿ä: python dashboard.py")
-        return
-    
-    print("? ¼­¹ö µ¥ÀÌÅÍ ¼ö½Å ¿Ï·á")
-    
-    # 2. Android ·Î±×¿¡¼­ µ¥ÀÌÅÍ ÃßÃâ (¼±ÅÃÀû)
-    print("\n[2/3] Android ·Î±× ÆÄÀÏ È®ÀÎ Áß...")
-    android_data = None
-    
-    # »ç¿ëÀÚ°¡ ·Î±× ÆÄÀÏ °æ·Î¸¦ Á¦°øÇÒ ¼ö ÀÖÀ½
-    log_file_path = input("\nAndroid ·Î±× ÆÄÀÏ °æ·Î¸¦ ÀÔ·ÂÇÏ¼¼¿ä (Enter·Î °Ç³Ê¶Ù±â): ").strip()
-    
-    if log_file_path and Path(log_file_path).exists():
+
+ # 1. ì„œë²„ ë°ì´í„° ê°€ì ¸ì˜¤ê¸°
+    print("\n[1/3] ì„œë²„ì—ì„œ ë°ì´í„° ê°€ì ¸ì˜¤ëŠ” ì¤‘...")
+ server_data = get_server_response()
+
+ if not server_data:
+        print("\n? ì„œë²„ ë°ì´í„°ë¥¼ ê°€ì ¸ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+        print("   ì„œë²„ê°€ ì‹¤í–‰ ì¤‘ì¸ì§€ í™•ì¸í•˜ì„¸ìš”: python dashboard.py")
+ return
+
+    print("? ì„œë²„ ë°ì´í„° ìˆ˜ì‹  ì™„ë£Œ")
+
+ # 2. Android ë¡œê·¸ì—ì„œ ë°ì´í„° ì¶”ì¶œ (ì„ íƒì )
+    print("\n[2/3] Android ë¡œê·¸ íŒŒì¼ í™•ì¸ ì¤‘...")
+ android_data = None
+
+ # ì‚¬ìš©ìê°€ ë¡œê·¸ íŒŒì¼ ê²½ë¡œë¥¼ ì œê³µí•  ìˆ˜ ìˆìŒ
+    log_file_path = input("\nAndroid ë¡œê·¸ íŒŒì¼ ê²½ë¡œë¥¼ ì…ë ¥í•˜ì„¸ìš” (Enterë¡œ ê±´ë„ˆë›°ê¸°): ").strip()
+
+ if log_file_path and Path(log_file_path).exists():
         with open(log_file_path, 'r', encoding='utf-8') as f:
-            log_text = f.read()
-            android_data = parse_android_log(log_text)
-        
-        if android_data:
-            print("? Android ·Î±×¿¡¼­ µ¥ÀÌÅÍ ÃßÃâ ¿Ï·á")
-        else:
-            print("?? Android ·Î±×¿¡¼­ JSONÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù")
-    else:
-        print("?? ·Î±× ÆÄÀÏÀÌ ¾ø½À´Ï´Ù. ¼­¹ö µ¥ÀÌÅÍ¸¸ Ç¥½ÃÇÕ´Ï´Ù.")
-        print("\n? Android Studio Logcat¿¡¼­ ´ÙÀ½ ÅÂ±×·Î ÇÊÅÍ¸µÇÏ¼¼¿ä:")
+ log_text = f.read()
+ android_data = parse_android_log(log_text)
+
+ if android_data:
+            print("? Android ë¡œê·¸ì—ì„œ ë°ì´í„° ì¶”ì¶œ ì™„ë£Œ")
+ else:
+            print("?? Android ë¡œê·¸ì—ì„œ JSONì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤")
+ else:
+        print("?? ë¡œê·¸ íŒŒì¼ì´ ì—†ìŠµë‹ˆë‹¤. ì„œë²„ ë°ì´í„°ë§Œ í‘œì‹œí•©ë‹ˆë‹¤.")
+        print("\n? Android Studio Logcatì—ì„œ ë‹¤ìŒ íƒœê·¸ë¡œ í•„í„°ë§í•˜ì„¸ìš”:")
         print("   - ApiClient")
         print("   - WickedZerg")
-        print("\n   ·Î±×¿¡¼­ JSON ºÎºĞÀ» º¹»çÇÏ¿© ÆÄÀÏ·Î ÀúÀåÇÏ°Å³ª,")
-        print("   ¾Æ·¡ ¼­¹ö µ¥ÀÌÅÍ¿Í Á÷Á¢ ºñ±³ÇÏ¼¼¿ä.")
-    
-    # 3. ºñ±³ ¹× Ãâ·Â
-    print("\n[3/3] µ¥ÀÌÅÍ ºñ±³ Áß...")
-    
-    if android_data:
-        comparison = compare_data(server_data, android_data)
-        print_comparison_result(server_data, comparison)
-    else:
-        # Android µ¥ÀÌÅÍ°¡ ¾øÀ¸¸é ¼­¹ö µ¥ÀÌÅÍ¸¸ Ç¥½Ã
+        print("\n   ë¡œê·¸ì—ì„œ JSON ë¶€ë¶„ì„ ë³µì‚¬í•˜ì—¬ íŒŒì¼ë¡œ ì €ì¥í•˜ê±°ë‚˜,")
+        print("   ì•„ë˜ ì„œë²„ ë°ì´í„°ì™€ ì§ì ‘ ë¹„êµí•˜ì„¸ìš”.")
+
+ # 3. ë¹„êµ ë° ì¶œë ¥
+    print("\n[3/3] ë°ì´í„° ë¹„êµ ì¤‘...")
+
+ if android_data:
+ comparison = compare_data(server_data, android_data)
+ print_comparison_result(server_data, comparison)
+ else:
+ # Android ë°ì´í„°ê°€ ì—†ìœ¼ë©´ ì„œë²„ ë°ì´í„°ë§Œ í‘œì‹œ
         print("\n" + "="*70)
-        print("¼­¹ö°¡ º¸³»´Â µ¥ÀÌÅÍ (Android ¾Û°ú ºñ±³¿ë)")
+        print("ì„œë²„ê°€ ë³´ë‚´ëŠ” ë°ì´í„° (Android ì•±ê³¼ ë¹„êµìš©)")
         print("="*70)
-        print(json.dumps(server_data, indent=2, ensure_ascii=False))
-        print("\n? ÀÌ µ¥ÀÌÅÍ¸¦ Android Studio LogcatÀÇ JSON°ú ºñ±³ÇÏ¼¼¿ä.")
-        print("   Logcat ÇÊÅÍ: ApiClient ¶Ç´Â WickedZerg")
+ print(json.dumps(server_data, indent = 2, ensure_ascii = False))
+        print("\n? ì´ ë°ì´í„°ë¥¼ Android Studio Logcatì˜ JSONê³¼ ë¹„êµí•˜ì„¸ìš”.")
+        print("   Logcat í•„í„°: ApiClient ë˜ëŠ” WickedZerg")
 
 if __name__ == "__main__":
-    main()
+ main()

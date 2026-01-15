@@ -1,7 +1,7 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ ¿¾ Å° Á¦°Å
+echo è«›ê³ ë£· ?ëš¯ì” ?ê¾¨ì”ª?ëª„ë¿‰???????ì’“êµ…
 echo Remove Old Keys from Deployment Pipelines
 echo ========================================
 echo.

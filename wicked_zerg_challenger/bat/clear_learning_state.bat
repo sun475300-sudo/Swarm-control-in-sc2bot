@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Clear learning state files to force replay analysis
 REM This script deletes learning status and stats files to reset the learning state
 

@@ -1,9 +1,18 @@
-@echo off
+ï»¿@echo off
 REM Neural Network Model Training - Continuous Training Mode
-REM °ÔÀÓ ½ÇÇàÇÏ¿© ½Å°æ¸Á ¸ðµ¨ »ý¼º ½ÃÀÛ (¿¬¼Ó ½ÇÇà ¸ðµå)
+REM ê²Œìž„ ì‹¤í–‰í•˜ì—¬ ì‹ ê²½ë§ ëª¨ë¸ ìƒì„± ì‹œìž‘ (ì—°ì† ì‹¤í–‰ ëª¨ë“œ)
 
-REM CRITICAL: Ensure script runs from project root regardless of current directory
-cd /d "%~dp0.."
+REM CRITICAL: Ensure script runs from wicked_zerg_challenger directory
+REM bat íŒŒì¼ ê²½ë¡œ: D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\bat
+REM %~dp0 = D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\bat\
+REM %~dp0.. = D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\
+cd /d "%~dp0\.."
+if not exist "%CD%\run_with_training.py" (
+    echo [ERROR] Cannot find run_with_training.py
+    echo [ERROR] Current directory: %CD%
+    pause
+    exit /b 1
+)
 
 chcp 65001 > nul
 setlocal

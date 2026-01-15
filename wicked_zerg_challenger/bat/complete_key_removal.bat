@@ -1,23 +1,23 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo ¿ÏÀüÇÑ API Å° Á¦°Å
+echo ?ê¾©ìŸ¾??API ???ì’“êµ…
 echo Complete API Key Removal
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [ÁÖÀÇ»çÇ×]
-echo - ÀÌ ½ºÅ©¸³Æ®´Â ´ÙÀ½À» ¼öÇàÇÕ´Ï´Ù:
-echo   1. È¯°æ º¯¼ö¿¡¼­ Å° Á¦°Å
-echo   2. .env ÆÄÀÏ¿¡¼­ Å° Á¦°Å
-echo   3. ¹®¼­ ÆÄÀÏ¿¡¼­ ¿¹Á¦ Å° ¸¶½ºÅ·
-echo   4. ÄÚµå ÆÄÀÏ¿¡¼­ ÇÏµåÄÚµùµÈ Å° Á¦°Å
-echo   5. Git History¿¡¼­ Å° Á¦°Å (¼±ÅÃÀû)
+echo [äºŒì‡±ì“½?Ñ‹ë¹†]
+echo - ???ã…½ê²•ç”±ì€ë“ƒ???ã…¼ì“¬???ì„‘ë»¾?â‘¸ë•²??
+echo   1. ?ì„ê¼ è¹‚Â€?ì„ë¿‰?????ì’“êµ…
+echo   2. .env ?ëš¯ì”ª?ë¨¯ê½Œ ???ì’“êµ…
+echo   3. è‡¾ëª„ê½Œ ?ëš¯ì”ª?ë¨¯ê½Œ ?ë‰ì £ ??ï§ë‰ë’ª??
+echo   4. è‚„ë¶¾ë±¶ ?ëš¯ì”ª?ë¨¯ê½Œ ?ì„Žë±¶è‚„ë¶¾ëµ«?????ì’“êµ…
+echo   5. Git History?ë¨¯ê½Œ ???ì’“êµ… (?ì¢ê¹®??
 echo.
-echo - Git History Á¦°Å´Â ¿µ±¸ÀûÀ¸·Î º¯°æµË´Ï´Ù!
-echo - ¸ðµç ÆÀ¿ø¿¡°Ô ¾Ë·Á¾ß ÇÕ´Ï´Ù!
+echo - Git History ?ì’“êµ…???ê³´ëŽ„?ê³¸ì‘æ¿¡?è¹‚Â€å¯ƒìŽˆë§—?ëˆë–Ž!
+echo - ï§â‘¤ë±º ?Â€?ë¨¯ë¿‰å¯ƒ??ëš®ì ®???â‘¸ë•²??
 echo.
 
 pause

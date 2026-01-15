@@ -1,13 +1,13 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo Manus ´ë½Ãº¸µå ¿¬°á Å×½ºÆ®
+echo Manus ?Â€?ì’•ë‚«???ê³Œê» ?ëš¯ë’ª??
 echo ========================================
 echo.
 
 cd /d "%~dp0\..\monitoring"
 
-echo [1/2] È¯°æ º¯¼ö ¼³Á¤...
+echo [1/2] ?ì„ê¼ è¹‚Â€???ã…¼ì ™...
 set MANUS_DASHBOARD_URL=https://sc2aidash-bncleqgg.manus.space
 set MANUS_DASHBOARD_ENABLED=1
 
@@ -15,18 +15,18 @@ echo ? MANUS_DASHBOARD_URL: %MANUS_DASHBOARD_URL%
 echo ? MANUS_DASHBOARD_ENABLED: %MANUS_DASHBOARD_ENABLED%
 echo.
 
-echo [2/2] ¿¬°á Å×½ºÆ® ½ÇÇà...
+echo [2/2] ?ê³Œê» ?ëš¯ë’ª???ã…½ë»¾...
 python manus_dashboard_client.py
 
 echo.
 echo ========================================
-echo Å×½ºÆ® ¿Ï·á!
+echo ?ëš¯ë’ª???ê¾¨ì¦º!
 echo ========================================
 echo.
-echo ? ´ÙÀ½ ´Ü°è:
-echo    1. º¿ ½ÇÇà: bat\start_with_manus.bat
-echo    2. °ÔÀÓ ÇÃ·¹ÀÌ
-echo    3. ´ë½Ãº¸µå È®ÀÎ: https://sc2aidash-bncleqgg.manus.space
+echo ? ?ã…¼ì“¬ ?â‘£í€:
+echo    1. éŠ??ã…½ë»¾: bat\start_with_manus.bat
+echo    2. å¯ƒëš¯ì—« ?ëš®ì …??
+echo    3. ?Â€?ì’•ë‚«???ëº¤ì”¤: https://sc2aidash-bncleqgg.manus.space
 echo.
 
 pause

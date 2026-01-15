@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Repeat integrated_pipeline.py 30 times
 REM Training rounds with automatic archiving
 

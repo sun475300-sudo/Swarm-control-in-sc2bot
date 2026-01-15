@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Fix replay learning issues: Clear cache, upgrade NumPy, clear crash log
 
 echo ======================================================================

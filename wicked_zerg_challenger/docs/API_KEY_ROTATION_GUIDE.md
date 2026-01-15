@@ -10,7 +10,7 @@
 ### 현재 확인된 키
 
 **환경 변수에 설정된 키**:
-- `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
+- `AIzaSyC_Ci...MIIo`
 
 **상태**: 이전에 Git에 커밋되었을 가능성이 있으므로 **즉시 삭제 및 재생성 필요**
 
@@ -127,7 +127,7 @@ if new_key:
     print(f"  전체 키: {new_key}")
     
     # 기존 키와 다른지 확인
-    old_key = "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+    old_key = "AIzaSyC_Ci...MIIo"
     if new_key != old_key:
         print("? 기존 키와 다름 (교체 완료)")
     else:
@@ -154,7 +154,7 @@ Get-Content secrets\gemini_api.txt
 
 ```bash
 # Git 히스토리에서 키 검색
-git log -p --all -S "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" --source --all
+git log -p --all -S "AIzaSyC_Ci...MIIo" --source --all
 
 # 현재 추적 중인 파일 확인
 git ls-files | grep -E "(gemini_api|GEMINI_API_KEY|\.env)"

@@ -13,7 +13,7 @@
 
 **키 값**:
 ```
-AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+AIzaSyC_Ci...MIIo
 ```
 
 ---
@@ -22,7 +22,7 @@ AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
 
 ### 1. ? 환경 변수 (활성화됨)
 **위치**: `$env:GEMINI_API_KEY`  
-**키 값**: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`  
+**키 값**: `AIzaSyC_Ci...MIIo`  
 **상태**: ? **현재 사용 중**
 
 ### 2. ? secrets/gemini_api.txt
@@ -61,17 +61,17 @@ AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
 
 1. **`docs/GEMINI_API_KEY_FORMAT.md`**에 있는 키:
    - `AQ.Ab8RN6LPDB1-6pre2l_RuRnUmr5GFb_5Qbf31YxKeF5kB9K8Yw` (예시)
-   - `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc` (예시)
+   - `AIzaSyD-c6...UZrc` (예시)
 
 2. **`docs/CURRENT_API_KEY_INFO.md`**에 있는 키:
-   - `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo` (현재 환경 변수와 동일)
+   - `AIzaSyC_Ci...MIIo` (현재 환경 변수와 동일)
 
 ---
 
 ## ? 현재 사용 중인 키
 
 **위치**: 환경 변수  
-**키**: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`  
+**키**: `AIzaSyC_Ci...MIIo`  
 **형식**: ? 올바름 (AIzaSy로 시작, 39자)
 
 ---
@@ -84,7 +84,7 @@ AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
 
 ```powershell
 # secrets/ 폴더에 저장 (권장)
-echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" > secrets\gemini_api.txt
+echo "AIzaSyC_Ci...MIIo" > secrets\gemini_api.txt
 ```
 
 이렇게 하면:

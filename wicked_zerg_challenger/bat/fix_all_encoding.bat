@@ -1,32 +1,33 @@
-@echo off
-REM ÀüÃ¼ ÇÁ·ÎÁ§Æ® ÇÑ±Û ÀÎÄÚµù ¹®Á¦ ¼öÁ¤ ¹èÄ¡ ÆÄÀÏ
+ï»¿@echo off
+chcp 65001 > nul
+REM ?ê¾©ê»œ ?ê¾¨ì¤ˆ?ì•ºë“ƒ ?ì’“? ?ëª„í«??è‡¾ëª„ì £ ?ì„ì ™ è«›ê³—íŠ‚ ?ëš¯ì”ª
 
 echo.
 echo ================================
-echo ÀüÃ¼ ÆÄÀÏ ÀÎÄÚµù ¼öÁ¤
+echo ?ê¾©ê»œ ?ëš¯ì”ª ?ëª„í«???ì„ì ™
 echo ================================
 echo.
 
 cd /d "%~dp0.."
 
-echo [STEP 1] ÇÁ·ÎÁ§Æ® ·çÆ®·Î ÀÌµ¿...
+echo [STEP 1] ?ê¾¨ì¤ˆ?ì•ºë“ƒ çŒ·â‘¦ë“ƒæ¿¡??ëŒ€ë£...
 cd /d "%~dp0.."
 
-echo [STEP 2] ¸ğµç Python ÆÄÀÏ °Ë»ç ¹× ¼öÁ¤ Áß...
+echo [STEP 2] ï§â‘¤ë±º Python ?ëš¯ì”ª å¯ƒÂ€??è«›??ì„ì ™ ä»¥?..
 echo.
 
-REM ÁÖ¿ä µğ·ºÅä¸®ÀÇ Python ÆÄÀÏµé ¼öÁ¤
+REM äºŒì‡±ìŠ‚ ?ë¶¾ì †?ì¢Šâ”??Python ?ëš¯ì”ª???ì„ì ™
 for /r %%f in (*.py) do (
     python scripts\fix_encoding.py "%%f" 2>nul
 )
 
 echo.
-echo [STEP 3] Syntax °ËÁõ Áß...
+echo [STEP 3] Syntax å¯ƒÂ€ï§?ä»¥?..
 python -m py_compile local_training\main_integrated.py 2>nul && echo OK: main_integrated.py || echo ERROR: main_integrated.py
 
 echo.
 echo ================================
-echo ÀÎÄÚµù ¼öÁ¤ ¿Ï·á
+echo ?ëª„í«???ì„ì ™ ?ê¾¨ì¦º
 echo ================================
 echo.
 

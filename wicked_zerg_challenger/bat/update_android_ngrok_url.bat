@@ -1,7 +1,7 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo Android ¾Û Ngrok URL ÀÚµ¿ ¾÷µ¥ÀÌÆ®
+echo Android ??Ngrok URL ?ë¨®ë£ž ?ë‚…ëœ²?ëŒ„ë“ƒ
 echo ========================================
 echo.
 

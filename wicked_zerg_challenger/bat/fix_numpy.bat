@@ -1,5 +1,6 @@
-@echo off
-REM NumPy ¹öÀü ºÒÀÏÄ¡ ÇØ°á ½ºÅ©¸³Æ®
+ï»¿@echo off
+chcp 65001 > nul
+REM NumPy è¸°ê¾©ìŸ¾ éºë‰ì”ªç§»??ë‹¿ê» ?ã…½ê²•ç”±ì€ë“ƒ
 REM Fix NumPy version mismatch for Python 3.10
 
 echo.

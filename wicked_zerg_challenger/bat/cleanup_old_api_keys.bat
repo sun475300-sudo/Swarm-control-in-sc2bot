@@ -1,54 +1,54 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo ±âÁ¸ API Å° Á¦°Å ½ºÅ©¸³Æ®
+echo æ¹²ê³—ã€ˆ API ???ì’“êµ… ?ã…½ê²•ç”±ì€ë“ƒ
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [1/3] ÇÏµåÄÚµùµÈ Å° °Ë»ö ¹× Á¦°Å...
+echo [1/3] ?ì„Žë±¶è‚„ë¶¾ëµ«????å¯ƒÂ€??è«›??ì’“êµ…...
 python tools\remove_old_api_keys.py
 if errorlevel 1 (
-    echo ?? ½ºÅ©¸³Æ® ½ÇÇà ½ÇÆÐ
+    echo ?? ?ã…½ê²•ç”±ì€ë“ƒ ?ã…½ë»¾ ?ã…½ë™£
     pause
     exit /b 1
 )
 echo.
 
-echo [2/3] È¯°æ º¯¼ö È®ÀÎ...
-echo ÇöÀç ¼¼¼ÇÀÇ È¯°æ º¯¼ö:
+echo [2/3] ?ì„ê¼ è¹‚Â€???ëº¤ì”¤...
+echo ?ê¾©ì˜± ?ëª„ë€¡???ì„ê¼ è¹‚Â€??
 if defined GEMINI_API_KEY (
-    echo   GEMINI_API_KEY: ¼³Á¤µÊ (Á¦°Å ±ÇÀå)
+    echo   GEMINI_API_KEY: ?ã…¼ì ™??(?ì’“êµ… æ²…ëš¯ì˜£)
 ) else (
-    echo   GEMINI_API_KEY: ¾øÀ½
+    echo   GEMINI_API_KEY: ?ë†ì“¬
 )
 if defined GOOGLE_API_KEY (
-    echo   GOOGLE_API_KEY: ¼³Á¤µÊ (Á¦°Å ±ÇÀå)
+    echo   GOOGLE_API_KEY: ?ã…¼ì ™??(?ì’“êµ… æ²…ëš¯ì˜£)
 ) else (
-    echo   GOOGLE_API_KEY: ¾øÀ½
+    echo   GOOGLE_API_KEY: ?ë†ì“¬
 )
 echo.
 
-echo [3/3] .env ÆÄÀÏ È®ÀÎ...
+echo [3/3] .env ?ëš¯ì”ª ?ëº¤ì”¤...
 if exist .env (
-    echo   .env ÆÄÀÏÀÌ ÀÖ½À´Ï´Ù.
-    echo   API Å° ¶óÀÎÀ» È®ÀÎÇÏ¼¼¿ä:
+    echo   .env ?ëš¯ì”ª???ë‰ë’¿?ëˆë–Ž.
+    echo   API ???ì‡±ì”¤???ëº¤ì”¤?ì„ê½­??
     findstr /C:"GEMINI_API_KEY" /C:"GOOGLE_API_KEY" .env
 ) else (
-    echo   .env ÆÄÀÏÀÌ ¾ø½À´Ï´Ù.
+    echo   .env ?ëš¯ì”ª???ë†ë’¿?ëˆë–Ž.
 )
 echo.
 
 echo ========================================
-echo ¿Ï·á!
+echo ?ê¾¨ì¦º!
 echo ========================================
 echo.
-echo ´ÙÀ½ ´Ü°è:
-echo   1. È¯°æ º¯¼ö¿¡¼­ Å° Á¦°Å (ÇÊ¿äÇÑ °æ¿ì)
-echo   2. Git history¿¡¼­ Å° Á¦°Å (ÇÊ¿äÇÑ °æ¿ì)
-echo      - tools\clean_git_history.ps1 ½ÇÇà
-echo   3. »õ Å° ¼³Á¤ È®ÀÎ
+echo ?ã…¼ì“¬ ?â‘£í€Ž:
+echo   1. ?ì„ê¼ è¹‚Â€?ì„ë¿‰?????ì’“êµ… (?ê¾©ìŠ‚??å¯ƒìŽŒìŠ¦)
+echo   2. Git history?ë¨¯ê½Œ ???ì’“êµ… (?ê¾©ìŠ‚??å¯ƒìŽŒìŠ¦)
+echo      - tools\clean_git_history.ps1 ?ã…½ë»¾
+echo   3. ?????ã…¼ì ™ ?ëº¤ì”¤
 echo.
 
 pause

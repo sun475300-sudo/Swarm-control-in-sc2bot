@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Android App Build Script
 REM Builds the Android APK for Mobile GCS
 

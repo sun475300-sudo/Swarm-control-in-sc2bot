@@ -13,45 +13,45 @@ def main():
     print("ZERG DATA PIPELINE - ENVIRONMENT CHECK")
     print("="*80 + "\n")
 
-    # Python version
+ # Python version
     print(f"Python: {sys.version.split()[0]}")
-    if sys.version_info < (3, 8):
+ if sys.version_info < (3, 8):
         print("WARNING: Python 3.8+ required")
-        return 1
+ return 1
 
-    # Check files
-    base = Path(__file__).parent
+ # Check files
+ base = Path(__file__).parent
     print(f"\nBase folder: {base}\n")
 
-    files_to_check = [
+ files_to_check = [
         ("fetch_replay_links.py", "Link fetcher"),
         ("replay_lifecycle_manager.py", "Lifecycle manager"),
         ("data/zerg_players.json", "Pro player DB"),
-    ]
+ ]
 
     print("Files:")
-    for fname, desc in files_to_check:
-        fpath = base / fname
+ for fname, desc in files_to_check:
+ fpath = base / fname
         status = "OK" if fpath.exists() else "MISSING"
         print(f"  [{status}] {fname:<35} ({desc})")
 
-    # Check folders
-    folders = [
+ # Check folders
+ folders = [
         ("data", "Data storage"),
         ("logs", "Log storage"),
-    ]
+ ]
 
     print("\nFolders:")
-    for fname, desc in folders:
-        fpath = base / fname
-        if not fpath.exists():
-            fpath.mkdir(exist_ok=True)
+ for fname, desc in folders:
+ fpath = base / fname
+ if not fpath.exists():
+ fpath.mkdir(exist_ok=True)
         status = "OK"
         print(f"  [{status}] {fname:<35} ({desc})")
 
-    # Quick test import
+ # Quick test import
     print("\nPackages:")
-    packages = [
+ packages = [
         ("pathlib", "Standard"),
         ("json", "Standard"),
         ("zipfile", "Standard"),
@@ -60,66 +60,66 @@ def main():
         ("sc2reader", "External"),
         ("torch", "External"),
         ("numpy", "External"),
-    ]
+ ]
 
-    for pkg, category in packages:
-        try:
-            __import__(pkg)
+ for pkg, category in packages:
+ try:
+ __import__(pkg)
             print(f"  [OK] {pkg:<35} ({category})")
-        except ImportError:
+ except ImportError:
             print(f"  [FAIL] {pkg:<35} ({category})")
 
-    # CRITICAL: Check replay directory access permissions
+ # CRITICAL: Check replay directory access permissions
     print("\nReplay Directory Permissions:")
     replay_dir = Path("D:/replays/replays")
-    if replay_dir.exists():
-        try:
-            # Test write permission
+ if replay_dir.exists():
+ try:
+ # Test write permission
             test_file = replay_dir / ".test_write"
             test_file.write_text("test")
-            test_file.unlink()
+ test_file.unlink()
             print(f"  [OK] D:/replays/replays - Read/Write access")
-        except PermissionError:
+ except PermissionError:
             print(f"  [FAIL] D:/replays/replays - No write permission")
-        except Exception as e:
+ except Exception as e:
             print(f"  [WARNING] D:/replays/replays - Access check failed: {e}")
-    else:
+ else:
         print(f"  [INFO] D:/replays/replays - Directory does not exist (will be created)")
 
-    # CRITICAL: Check model storage directory permissions
+ # CRITICAL: Check model storage directory permissions
     print("\nModel Storage Permissions:")
     local_training = base.parent / "local_training"
     models_dir = local_training / "models"
-    if models_dir.exists():
-        try:
+ if models_dir.exists():
+ try:
             test_file = models_dir / ".test_write"
             test_file.write_text("test")
-            test_file.unlink()
+ test_file.unlink()
             print(f"  [OK] local_training/models - Read/Write access")
-        except PermissionError:
+ except PermissionError:
             print(f"  [FAIL] local_training/models - No write permission")
-        except Exception as e:
+ except Exception as e:
             print(f"  [WARNING] local_training/models - Access check failed: {e}")
-    else:
-        try:
-            models_dir.mkdir(parents=True, exist_ok=True)
+ else:
+ try:
+ models_dir.mkdir(parents=True, exist_ok=True)
             print(f"  [OK] local_training/models - Created successfully")
-        except Exception as e:
+ except Exception as e:
             print(f"  [FAIL] local_training/models - Cannot create: {e}")
 
-    # CRITICAL: Check StarCraft II replay folder access
+ # CRITICAL: Check StarCraft II replay folder access
     print("\nStarCraft II Integration:")
-    sc2_replay_paths = [
+ sc2_replay_paths = [
         Path.home() / "Documents" / "StarCraft II" / "Accounts",
         Path("C:/Users") / "Public" / "Documents" / "StarCraft II" / "Accounts",
-    ]
-    sc2_found = False
-    for sc2_path in sc2_replay_paths:
-        if sc2_path.exists():
+ ]
+ sc2_found = False
+ for sc2_path in sc2_replay_paths:
+ if sc2_path.exists():
             print(f"  [OK] StarCraft II found: {sc2_path}")
-            sc2_found = True
-            break
-    if not sc2_found:
+ sc2_found = True
+ break
+ if not sc2_found:
         print(f"  [WARNING] StarCraft II installation not detected in common locations")
 
     print("\n" + "="*80)
@@ -133,8 +133,8 @@ def main():
     print("  4. Run: python replay_lifecycle_manager.py --extract")
     print("  5. Run training in local_training folder\n")
 
-    return 0
+ return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+ sys.exit(main())

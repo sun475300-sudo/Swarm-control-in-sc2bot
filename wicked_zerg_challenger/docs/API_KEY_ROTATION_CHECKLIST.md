@@ -10,7 +10,7 @@
 ### 1. Google AI Studio에서 기존 키 삭제
 
 - [ ] https://makersuite.google.com/app/apikey 접속
-- [ ] 기존 키 찾기: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
+- [ ] 기존 키 찾기: `AIzaSyC_Ci...MIIo`
 - [ ] 키 삭제 또는 비활성화
 - [ ] 삭제 확인
 
@@ -100,7 +100,7 @@ print(f"새 키: {key[:10]}...")
 
 ```bash
 # Git 히스토리에서 키 검색
-git log -p --all -S "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+git log -p --all -S "AIzaSyC_Ci...MIIo"
 ```
 
 - [ ] Git 히스토리에서 기존 키 검색

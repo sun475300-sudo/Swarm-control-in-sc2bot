@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Ngrok Tunnel Manager - LTE/5G IoT ¿¬µ¿
-¿ÜºÎ ³×Æ®¿öÅ©¿¡¼­ ·ÎÄÃ ¼­¹ö¿¡ ¾ÈÀüÇÏ°Ô Á¢¼ÓÇÒ ¼ö ÀÖµµ·Ï ngrok ÅÍ³ÎÀ» °ü¸®ÇÕ´Ï´Ù.
+Ngrok Tunnel Manager - LTE/5G IoT ì—°ë™
+ì™¸ë¶€ ë„¤íŠ¸ì›Œí¬ì—ì„œ ë¡œì»¬ ì„œë²„ì— ì•ˆì „í•˜ê²Œ ì ‘ì†í•  ìˆ˜ ìˆë„ë¡ ngrok í„°ë„ì„ ê´€ë¦¬í•©ë‹ˆë‹¤.
 """
 
 import os
@@ -15,245 +15,244 @@ from pathlib import Path
 from typing import Optional, Dict
 import logging
 
-# ÇÁ·ÎÁ§Æ® ·çÆ® °æ·Î Ãß°¡
+# í”„ë¡œì íŠ¸ ë£¨íŠ¸ ê²½ë¡œ ì¶”ê°€
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from tools.load_api_key import load_api_key
 
 logger = logging.getLogger(__name__)
 
 class NgrokTunnel:
-    """Ngrok ÅÍ³Î °ü¸® Å¬·¡½º"""
-    
-    def __init__(self, local_port: int = 8000, auth_token: Optional[str] = None):
+    """Ngrok í„°ë„ ê´€ë¦¬ í´ë˜ìŠ¤"""
+ 
+ def __init__(self, local_port: int = 8000, auth_token: Optional[str] = None):
         """
-        Ngrok ÅÍ³Î ÃÊ±âÈ­
-        
-        Args:
-            local_port: ·ÎÄÃ ¼­¹ö Æ÷Æ® (±âº»: 8000)
-            auth_token: Ngrok ÀÎÁõ ÅäÅ« (¾øÀ¸¸é È¯°æ º¯¼ö ¶Ç´Â ÆÄÀÏ¿¡¼­ ·Îµå)
+ Ngrok í„°ë„ ì´ˆê¸°í™”
+ 
+ Args:
+ local_port: ë¡œì»¬ ì„œë²„ í¬íŠ¸ (ê¸°ë³¸: 8000)
+ auth_token: Ngrok ì¸ì¦ í† í° (ì—†ìœ¼ë©´ í™˜ê²½ ë³€ìˆ˜ ë˜ëŠ” íŒŒì¼ì—ì„œ ë¡œë“œ)
         """
-        self.local_port = local_port
-        self.auth_token = auth_token or self._load_auth_token()
-        self.ngrok_process: Optional[subprocess.Popen] = None
-        self.tunnel_url: Optional[str] = None
-        self.api_url = "http://127.0.0.1:4040"  # Ngrok API ±âº» ÁÖ¼Ò
-        
-    def _load_auth_token(self) -> Optional[str]:
-        """Ngrok ÀÎÁõ ÅäÅ« ·Îµå"""
-        # 1. È¯°æ º¯¼ö¿¡¼­ ½Ãµµ
+ self.local_port = local_port
+ self.auth_token = auth_token or self._load_auth_token()
+ self.ngrok_process: Optional[subprocess.Popen] = None
+ self.tunnel_url: Optional[str] = None
+        self.api_url = "http://127.0.0.1:4040"  # Ngrok API ê¸°ë³¸ ì£¼ì†Œ
+ 
+ def _load_auth_token(self) -> Optional[str]:
+        """Ngrok ì¸ì¦ í† í° ë¡œë“œ"""
+ # 1. í™˜ê²½ ë³€ìˆ˜ì—ì„œ ì‹œë„
         token = os.environ.get("NGROK_AUTH_TOKEN")
-        if token:
-            return token
-        
-        # 2. ÆÄÀÏ¿¡¼­ ½Ãµµ
+ if token:
+ return token
+ 
+ # 2. íŒŒì¼ì—ì„œ ì‹œë„
         token = load_api_key("NGROK_AUTH_TOKEN")
-        if token:
-            return token
-        
-        return None
-    
-    def is_ngrok_installed(self) -> bool:
-        """NgrokÀÌ ¼³Ä¡µÇ¾î ÀÖ´ÂÁö È®ÀÎ"""
-        try:
-            result = subprocess.run(
+ if token:
+ return token
+ 
+ return None
+ 
+ def is_ngrok_installed(self) -> bool:
+        """Ngrokì´ ì„¤ì¹˜ë˜ì–´ ìˆëŠ”ì§€ í™•ì¸"""
+ try:
+ result = subprocess.run(
                 ["ngrok", "version"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            return False
-    
-    def start_tunnel(self) -> bool:
+ capture_output=True,
+ text=True,
+ timeout=5
+ )
+ return result.returncode == 0
+ except (FileNotFoundError, subprocess.TimeoutExpired):
+ return False
+ 
+ def start_tunnel(self) -> bool:
         """
-        Ngrok ÅÍ³Î ½ÃÀÛ
-        
-        Returns:
-            ¼º°ø ¿©ºÎ
+ Ngrok í„°ë„ ì‹œì‘
+ 
+ Returns:
+ ì„±ê³µ ì—¬ë¶€
         """
-        if not self.is_ngrok_installed():
-            logger.error("NgrokÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.")
-            logger.error("´Ù¿î·Îµå: https://ngrok.com/download")
-            return False
-        
-        if not self.auth_token:
-            logger.warning("Ngrok ÀÎÁõ ÅäÅ«ÀÌ ¾ø½À´Ï´Ù. ¹«·á ¹öÀüÀº Á¦ÇÑÀÌ ÀÖÀ» ¼ö ÀÖ½À´Ï´Ù.")
-            logger.warning("ÀÎÁõ ÅäÅ« ¼³Á¤: https://dashboard.ngrok.com/get-started/your-authtoken")
-        
-        try:
-            # Ngrok ¸í·É¾î ±¸¼º
+ if not self.is_ngrok_installed():
+            logger.error("Ngrokì´ ì„¤ì¹˜ë˜ì–´ ìˆì§€ ì•ŠìŠµë‹ˆë‹¤.")
+            logger.error("ë‹¤ìš´ë¡œë“œ: https://ngrok.com/download")
+ return False
+ 
+ if not self.auth_token:
+            logger.warning("Ngrok ì¸ì¦ í† í°ì´ ì—†ìŠµë‹ˆë‹¤. ë¬´ë£Œ ë²„ì „ì€ ì œí•œì´ ìˆì„ ìˆ˜ ìˆìŠµë‹ˆë‹¤.")
+            logger.warning("ì¸ì¦ í† í° ì„¤ì •: https://dashboard.ngrok.com/get-started/your-authtoken")
+ 
+ try:
+ # Ngrok ëª…ë ¹ì–´ êµ¬ì„±
             cmd = ["ngrok", "http", str(self.local_port)]
-            
-            # ÀÎÁõ ÅäÅ«ÀÌ ÀÖÀ¸¸é ¼³Á¤
-            if self.auth_token:
+ 
+ # ì¸ì¦ í† í°ì´ ìˆìœ¼ë©´ ì„¤ì •
+ if self.auth_token:
                 cmd.extend(["--authtoken", self.auth_token])
-            
-            # ¹é±×¶ó¿îµå¿¡¼­ ½ÇÇà
-            self.ngrok_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            
-            # ÅÍ³ÎÀÌ ½ÃÀÛµÉ ¶§±îÁö ´ë±â
-            time.sleep(3)
-            
-            # ÅÍ³Î URL °¡Á®¿À±â
-            self.tunnel_url = self.get_tunnel_url()
-            
-            if self.tunnel_url:
-                logger.info(f"Ngrok ÅÍ³Î ½ÃÀÛµÊ: {self.tunnel_url}")
-                logger.info(f"·ÎÄÃ ¼­¹ö: http://localhost:{self.local_port}")
-                return True
-            else:
-                logger.error("Ngrok ÅÍ³Î URLÀ» °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Ngrok ÅÍ³Î ½ÃÀÛ ½ÇÆĞ: {e}")
-            return False
-    
-    def get_tunnel_url(self) -> Optional[str]:
+ 
+ # ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì‹¤í–‰
+ self.ngrok_process = subprocess.Popen(
+ cmd,
+ stdout=subprocess.PIPE,
+ stderr=subprocess.PIPE,
+ text=True
+ )
+ 
+ # í„°ë„ì´ ì‹œì‘ë  ë•Œê¹Œì§€ ëŒ€ê¸°
+ time.sleep(3)
+ 
+ # í„°ë„ URL ê°€ì ¸ì˜¤ê¸°
+ self.tunnel_url = self.get_tunnel_url()
+ 
+ if self.tunnel_url:
+                logger.info(f"Ngrok í„°ë„ ì‹œì‘ë¨: {self.tunnel_url}")
+                logger.info(f"ë¡œì»¬ ì„œë²„: http://localhost:{self.local_port}")
+ return True
+ else:
+                logger.error("Ngrok í„°ë„ URLì„ ê°€ì ¸ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+ return False
+ 
+ except Exception as e:
+            logger.error(f"Ngrok í„°ë„ ì‹œì‘ ì‹¤íŒ¨: {e}")
+ return False
+ 
+ def get_tunnel_url(self) -> Optional[str]:
         """
-        Ngrok ÅÍ³Î URL °¡Á®¿À±â
-        
-        Returns:
-            ÅÍ³Î URL (¿¹: https://xxxx-xx-xx-xx-xx.ngrok.io)
+ Ngrok í„°ë„ URL ê°€ì ¸ì˜¤ê¸°
+ 
+ Returns:
+ í„°ë„ URL (ì˜ˆ: https://xxxx-xx-xx-xx-xx.ngrok.io)
         """
-        try:
-            # Ngrok API¸¦ ÅëÇØ ÅÍ³Î Á¤º¸ °¡Á®¿À±â
+ try:
+ # Ngrok APIë¥¼ í†µí•´ í„°ë„ ì •ë³´ ê°€ì ¸ì˜¤ê¸°
             response = requests.get(f"{self.api_url}/api/tunnels", timeout=5)
-            if response.status_code == 200:
-                data = response.json()
+ if response.status_code == 200:
+ data = response.json()
                 tunnels = data.get("tunnels", [])
-                if tunnels:
-                    # HTTPS ÅÍ³Î ¿ì¼± ¼±ÅÃ
-                    for tunnel in tunnels:
+ if tunnels:
+ # HTTPS í„°ë„ ìš°ì„  ì„ íƒ
+ for tunnel in tunnels:
                         if tunnel.get("proto") == "https":
                             return tunnel.get("public_url")
-                    # HTTPS°¡ ¾øÀ¸¸é HTTP ¼±ÅÃ
-                    if tunnels:
+ # HTTPSê°€ ì—†ìœ¼ë©´ HTTP ì„ íƒ
+ if tunnels:
                         return tunnels[0].get("public_url")
-        except Exception as e:
-            logger.debug(f"Ngrok API È£Ãâ ½ÇÆĞ: {e}")
-        
-        return None
-    
-    def get_tunnel_info(self) -> Dict:
+ except Exception as e:
+            logger.debug(f"Ngrok API í˜¸ì¶œ ì‹¤íŒ¨: {e}")
+ 
+ return None
+ 
+ def get_tunnel_info(self) -> Dict:
         """
-        ÅÍ³Î »ó¼¼ Á¤º¸ °¡Á®¿À±â
-        
-        Returns:
-            ÅÍ³Î Á¤º¸ µñ¼Å³Ê¸®
+ í„°ë„ ìƒì„¸ ì •ë³´ ê°€ì ¸ì˜¤ê¸°
+ 
+ Returns:
+ í„°ë„ ì •ë³´ ë”•ì…”ë„ˆë¦¬
         """
-        try:
+ try:
             response = requests.get(f"{self.api_url}/api/tunnels", timeout=5)
-            if response.status_code == 200:
-                return response.json()
-        except Exception as e:
-            logger.debug(f"Ngrok API È£Ãâ ½ÇÆĞ: {e}")
-        
-        return {}
-    
-    def stop_tunnel(self):
-        """Ngrok ÅÍ³Î ÁßÁö"""
-        if self.ngrok_process:
-            try:
-                self.ngrok_process.terminate()
-                self.ngrok_process.wait(timeout=5)
-                logger.info("Ngrok ÅÍ³Î ÁßÁöµÊ")
-            except subprocess.TimeoutExpired:
-                self.ngrok_process.kill()
-                logger.warning("Ngrok ÇÁ·Î¼¼½º °­Á¦ Á¾·áµÊ")
-            except Exception as e:
-                logger.error(f"Ngrok ÅÍ³Î ÁßÁö ½ÇÆĞ: {e}")
-            finally:
-                self.ngrok_process = None
-                self.tunnel_url = None
-    
-    def save_tunnel_url(self, file_path: Optional[Path] = None):
+ if response.status_code == 200:
+ return response.json()
+ except Exception as e:
+            logger.debug(f"Ngrok API í˜¸ì¶œ ì‹¤íŒ¨: {e}")
+ 
+ return {}
+ 
+ def stop_tunnel(self):
+        """Ngrok í„°ë„ ì¤‘ì§€"""
+ if self.ngrok_process:
+ try:
+ self.ngrok_process.terminate()
+ self.ngrok_process.wait(timeout=5)
+                logger.info("Ngrok í„°ë„ ì¤‘ì§€ë¨")
+ except subprocess.TimeoutExpired:
+ self.ngrok_process.kill()
+                logger.warning("Ngrok í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œë¨")
+ except Exception as e:
+                logger.error(f"Ngrok í„°ë„ ì¤‘ì§€ ì‹¤íŒ¨: {e}")
+ finally:
+ self.ngrok_process = None
+ self.tunnel_url = None
+ 
+ def save_tunnel_url(self, file_path: Optional[Path] = None):
         """
-        ÅÍ³Î URLÀ» ÆÄÀÏ¿¡ ÀúÀå
-        
-        Args:
-            file_path: ÀúÀåÇÒ ÆÄÀÏ °æ·Î (NoneÀÌ¸é ±âº» °æ·Î)
+ í„°ë„ URLì„ íŒŒì¼ì— ì €ì¥
+ 
+ Args:
+ file_path: ì €ì¥í•  íŒŒì¼ ê²½ë¡œ (Noneì´ë©´ ê¸°ë³¸ ê²½ë¡œ)
         """
-        if not self.tunnel_url:
-            logger.warning("ÅÍ³Î URLÀÌ ¾ø½À´Ï´Ù.")
-            return
-        
-        if file_path is None:
+ if not self.tunnel_url:
+            logger.warning("í„°ë„ URLì´ ì—†ìŠµë‹ˆë‹¤.")
+ return
+ 
+ if file_path is None:
             file_path = project_root / "monitoring" / ".ngrok_url.txt"
-        
-        try:
+ 
+ try:
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(self.tunnel_url)
-            logger.info(f"ÅÍ³Î URL ÀúÀåµÊ: {file_path}")
-        except Exception as e:
-            logger.error(f"ÅÍ³Î URL ÀúÀå ½ÇÆĞ: {e}")
+ f.write(self.tunnel_url)
+            logger.info(f"í„°ë„ URL ì €ì¥ë¨: {file_path}")
+ except Exception as e:
+            logger.error(f"í„°ë„ URL ì €ì¥ ì‹¤íŒ¨: {e}")
 
 
 def main():
-    """¸ŞÀÎ ÇÔ¼ö - Ngrok ÅÍ³Î ½ÃÀÛ"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Ngrok ÅÍ³Î °ü¸®")
-    parser.add_argument("--port", type=int, default=8000, help="·ÎÄÃ ¼­¹ö Æ÷Æ®")
-    parser.add_argument("--auth-token", type=str, help="Ngrok ÀÎÁõ ÅäÅ«")
-    parser.add_argument("--save-url", action="store_true", help="ÅÍ³Î URLÀ» ÆÄÀÏ¿¡ ÀúÀå")
-    
-    args = parser.parse_args()
-    
-    # ·Î±ë ¼³Á¤
-    logging.basicConfig(
-        level=logging.INFO,
+    """ë©”ì¸ í•¨ìˆ˜ - Ngrok í„°ë„ ì‹œì‘"""
+ import argparse
+ 
+    parser = argparse.ArgumentParser(description="Ngrok í„°ë„ ê´€ë¦¬")
+    parser.add_argument("--port", type=int, default=8000, help="ë¡œì»¬ ì„œë²„ í¬íŠ¸")
+    parser.add_argument("--auth-token", type=str, help="Ngrok ì¸ì¦ í† í°")
+    parser.add_argument("--save-url", action="store_true", help="í„°ë„ URLì„ íŒŒì¼ì— ì €ì¥")
+ 
+ args = parser.parse_args()
+ 
+ # ë¡œê¹… ì„¤ì •
+ logging.basicConfig(
+ level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s'
-    )
-    
+ )
+ 
     print("=" * 70)
-    print("Ngrok ÅÍ³Î ½ÃÀÛ")
+    print("Ngrok í„°ë„ ì‹œì‘")
     print("=" * 70)
-    print()
-    
-    # ÅÍ³Î »ı¼º
-    tunnel = NgrokTunnel(local_port=args.port, auth_token=args.auth_token)
-    
-    # ÅÍ³Î ½ÃÀÛ
-    if tunnel.start_tunnel():
-        print(f"? ÅÍ³Î URL: {tunnel.tunnel_url}")
-        print(f"? ·ÎÄÃ ¼­¹ö: http://localhost:{args.port}")
-        print()
-        print("ÅÍ³ÎÀ» ÁßÁöÇÏ·Á¸é Ctrl+C¸¦ ´©¸£¼¼¿ä.")
-        print()
-        
-        # URL ÀúÀå
-        if args.save_url:
-            tunnel.save_tunnel_url()
-        
-        try:
-            # ÅÍ³Î À¯Áö
-            while True:
-                time.sleep(10)
-                # ÅÍ³Î »óÅÂ È®ÀÎ
-                url = tunnel.get_tunnel_url()
-                if not url:
-                    logger.warning("ÅÍ³ÎÀÌ ²÷¾îÁø °Í °°½À´Ï´Ù. Àç½ÃÀÛ Áß...")
-                    tunnel.stop_tunnel()
-                    if not tunnel.start_tunnel():
-                        logger.error("ÅÍ³Î Àç½ÃÀÛ ½ÇÆĞ")
-                        break
-        except KeyboardInterrupt:
-            print("\nÅÍ³Î ÁßÁö Áß...")
-        finally:
-            tunnel.stop_tunnel()
-    else:
-        print("ÅÍ³Î ½ÃÀÛ ½ÇÆĞ")
-        sys.exit(1)
+ print()
+ 
+ # í„°ë„ ìƒì„±
+ tunnel = NgrokTunnel(local_port=args.port, auth_token=args.auth_token)
+ 
+ # í„°ë„ ì‹œì‘
+ if tunnel.start_tunnel():
+        print(f"? í„°ë„ URL: {tunnel.tunnel_url}")
+        print(f"? ë¡œì»¬ ì„œë²„: http://localhost:{args.port}")
+ print()
+        print("í„°ë„ì„ ì¤‘ì§€í•˜ë ¤ë©´ Ctrl+Cë¥¼ ëˆ„ë¥´ì„¸ìš”.")
+ print()
+ 
+ # URL ì €ì¥
+ if args.save_url:
+ tunnel.save_tunnel_url()
+ 
+ try:
+ # í„°ë„ ìœ ì§€
+ while True:
+ time.sleep(10)
+ # í„°ë„ ìƒíƒœ í™•ì¸
+ url = tunnel.get_tunnel_url()
+ if not url:
+                    logger.warning("í„°ë„ì´ ëŠì–´ì§„ ê²ƒ ê°™ìŠµë‹ˆë‹¤. ì¬ì‹œì‘ ì¤‘...")
+ tunnel.stop_tunnel()
+ if not tunnel.start_tunnel():
+                        logger.error("í„°ë„ ì¬ì‹œì‘ ì‹¤íŒ¨")
+ break
+ except KeyboardInterrupt:
+            print("\ní„°ë„ ì¤‘ì§€ ì¤‘...")
+ finally:
+ tunnel.stop_tunnel()
+ else:
+        print("í„°ë„ ì‹œì‘ ì‹¤íŒ¨")
+ sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+ main()

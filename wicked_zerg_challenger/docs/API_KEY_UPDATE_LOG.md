@@ -9,7 +9,7 @@
 ### Google Cloud API 키 업데이트
 
 **날짜**: 2026-01-14  
-**키**: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+**키**: `AIzaSyD-c6...UZrc`
 
 **저장 위치**:
 - ? `secrets/gemini_api.txt` (권장)

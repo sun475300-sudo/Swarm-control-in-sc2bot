@@ -1,0 +1,42 @@
+======================================================================
+PRO GAMER REPLAYS vs TRAINING REPLAYS COMPARISON REPORT
+======================================================================
+Generated: 2026-01-15 20:02:23
+
+DATA SOURCES:
+----------------------------------------------------------------------
+Pro Replay Directory: D:\replays\replays
+Pro Replays Analyzed: 50
+Training Data Directory: D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger
+Training Games Analyzed: 1
+
+PERFORMANCE SUMMARY:
+----------------------------------------------------------------------
+Training Win Rate: 0.00%
+Training Victories: 0
+Training Defeats: 1
+Average Build Order Score: 18.00%
+Median Build Order Score: 18.00%
+Score Range: 18.00% - 18.00%
+
+BUILD ORDER TIMING COMPARISONS:
+----------------------------------------------------------------------
+
+natural_expansion_supply:
+  Pro Baseline: 30.0 supply
+
+gas_supply:
+  Pro Baseline: 17.0 supply
+
+spawning_pool_supply:
+  Pro Baseline: 17.0 supply
+
+third_hatchery_supply:
+
+speed_upgrade_supply:
+
+RECOMMENDATIONS:
+----------------------------------------------------------------------
+  ? All timings are within acceptable range!
+
+======================================================================

@@ -1,5 +1,6 @@
-@echo off
-REM 리플레이 학습 시작 스크립트
+﻿@echo off
+chcp 65001 > nul
+REM 由ы뵆?덉씠 ?숈뒿 ?쒖옉 ?ㅽ겕由쏀듃
 REM Replay Build Order Learning System
 
 REM CRITICAL: Ensure script runs from project root regardless of current directory

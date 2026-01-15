@@ -1,7 +1,7 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo Å° Á¦°Å È®ÀÎ
+echo ???ì’“êµ… ?ëº¤ì”¤
 echo Key Removal Verification
 echo ========================================
 echo.

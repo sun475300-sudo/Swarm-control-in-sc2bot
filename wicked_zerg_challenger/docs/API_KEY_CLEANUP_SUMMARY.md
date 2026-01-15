@@ -7,7 +7,7 @@
 ## ? 완료된 작업
 
 ### 1. 새 키 설정
-- ? 새 Google Cloud API 키: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+- ? 새 Google Cloud API 키: `AIzaSyD-c6...UZrc`
 - ? 저장 위치: `secrets/gemini_api.txt`, `api_keys/GOOGLE_API_KEY.txt`, `api_keys/GEMINI_API_KEY.txt`
 
 ### 2. 제거 도구 생성

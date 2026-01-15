@@ -1,124 +1,122 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-´ë½Ãº¸µå ¼­¹ö + Ngrok ÅÍ³Î ÀÚµ¿ ½ÃÀÛ
+ëŒ€ì‹œë³´ë“œ ì„œë²„ + Ngrok í„°ë„ ìë™ ì‹œì‘
 Dashboard Server + Ngrok Tunnel Auto-Start
 
-·ÎÄÃ ¼­¹ö¿Í ngrok ÅÍ³ÎÀ» ÇÔ²² ½ÃÀÛÇÏ¿© ¿ÜºÎ ³×Æ®¿öÅ©¿¡¼­ Á¢¼Ó °¡´ÉÇÏ°Ô ÇÕ´Ï´Ù.
+ë¡œì»¬ ì„œë²„ì™€ ngrok í„°ë„ì„ í•¨ê»˜ ì‹œì‘í•˜ì—¬ ì™¸ë¶€ ë„¤íŠ¸ì›Œí¬ì—ì„œ ì ‘ì† ê°€ëŠ¥í•˜ê²Œ í•©ë‹ˆë‹¤.
 """
 
 import os
 import sys
 import subprocess
 import time
-import signal
 from pathlib import Path
 import logging
 
-# ÇÁ·ÎÁ§Æ® ·çÆ® °æ·Î Ãß°¡
+# í”„ë¡œì íŠ¸ ë£¨íŠ¸ ê²½ë¡œ ì¶”ê°€
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from monitoring.ngrok_tunnel import NgrokTunnel
 
 logging.basicConfig(
-    level=logging.INFO,
+ level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
 def start_dashboard_server(port: int = 8000):
-    """´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ"""
-    try:
-        # FastAPI ¼­¹ö ½ÃÀÛ
+    """ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘"""
+ try:
+ # FastAPI ì„œë²„ ì‹œì‘
         dashboard_script = Path(__file__).parent / "dashboard_api.py"
-        process = subprocess.Popen(
-            [sys.executable, str(dashboard_script)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        logger.info(f"´ë½Ãº¸µå ¼­¹ö ½ÃÀÛµÊ (PID: {process.pid})")
-        time.sleep(3)  # ¼­¹ö ½ÃÀÛ ´ë±â
-        return process
-    except Exception as e:
-        logger.error(f"´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ ½ÇÆĞ: {e}")
-        return None
+ process = subprocess.Popen(
+ [sys.executable, str(dashboard_script)],
+ stdout=subprocess.PIPE,
+ stderr=subprocess.PIPE,
+ text=True
+ )
+        logger.info(f"ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘ë¨ (PID: {process.pid})")
+ time.sleep(3) # ì„œë²„ ì‹œì‘ ëŒ€ê¸°
+ return process
+ except Exception as e:
+        logger.error(f"ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘ ì‹¤íŒ¨: {e}")
+ return None
 
 def main():
-    """¸ŞÀÎ ÇÔ¼ö"""
+    """ë©”ì¸ í•¨ìˆ˜"""
     print("=" * 70)
-    print("´ë½Ãº¸µå ¼­¹ö + Ngrok ÅÍ³Î ÀÚµ¿ ½ÃÀÛ")
+    print("ëŒ€ì‹œë³´ë“œ ì„œë²„ + Ngrok í„°ë„ ìë™ ì‹œì‘")
     print("Dashboard Server + Ngrok Tunnel Auto-Start")
     print("=" * 70)
-    print()
-    
+ print()
+ 
     port = int(os.environ.get("DASHBOARD_PORT", "8000"))
-    
-    # 1. ´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ
-    print("[1/2] ´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ...")
-    dashboard_process = start_dashboard_server(port)
-    if not dashboard_process:
-        print("´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ ½ÇÆĞ. Á¾·áÇÕ´Ï´Ù.")
-        sys.exit(1)
-    print(f"  ? ´ë½Ãº¸µå ¼­¹ö ½ÃÀÛµÊ: http://localhost:{port}")
-    print()
-    
-    # 2. Ngrok ÅÍ³Î ½ÃÀÛ
-    print("[2/2] Ngrok ÅÍ³Î ½ÃÀÛ...")
-    tunnel = NgrokTunnel(local_port=port)
-    if not tunnel.start_tunnel():
-        print("Ngrok ÅÍ³Î ½ÃÀÛ ½ÇÆĞ. ´ë½Ãº¸µå ¼­¹ö¸¸ ½ÇÇàµË´Ï´Ù.")
-        print(f"·ÎÄÃ Á¢¼Ó: http://localhost:{port}")
-    else:
-        print(f"  ? Ngrok ÅÍ³Î ½ÃÀÛµÊ: {tunnel.tunnel_url}")
-        print()
+ 
+ # 1. ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘
+    print("[1/2] ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘...")
+ dashboard_process = start_dashboard_server(port)
+ if not dashboard_process:
+        print("ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘ ì‹¤íŒ¨. ì¢…ë£Œí•©ë‹ˆë‹¤.")
+ sys.exit(1)
+    print(f"  ? ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘ë¨: http://localhost:{port}")
+ print()
+ 
+ # 2. Ngrok í„°ë„ ì‹œì‘
+    print("[2/2] Ngrok í„°ë„ ì‹œì‘...")
+ tunnel = NgrokTunnel(local_port=port)
+ if not tunnel.start_tunnel():
+        print("Ngrok í„°ë„ ì‹œì‘ ì‹¤íŒ¨. ëŒ€ì‹œë³´ë“œ ì„œë²„ë§Œ ì‹¤í–‰ë©ë‹ˆë‹¤.")
+        print(f"ë¡œì»¬ ì ‘ì†: http://localhost:{port}")
+ else:
+        print(f"  ? Ngrok í„°ë„ ì‹œì‘ë¨: {tunnel.tunnel_url}")
+ print()
         print("=" * 70)
-        print("¿ÜºÎ Á¢¼Ó Á¤º¸")
+        print("ì™¸ë¶€ ì ‘ì† ì •ë³´")
         print("=" * 70)
-        print(f"ÅÍ³Î URL: {tunnel.tunnel_url}")
-        print(f"·ÎÄÃ URL: http://localhost:{port}")
-        print()
-        print("Android ¾Û ¼³Á¤:")
+        print(f"í„°ë„ URL: {tunnel.tunnel_url}")
+        print(f"ë¡œì»¬ URL: http://localhost:{port}")
+ print()
+        print("Android ì•± ì„¤ì •:")
         print(f"  BASE_URL = \"{tunnel.tunnel_url}\"")
-        print()
-        
-        # ÅÍ³Î URL ÀúÀå
-        tunnel.save_tunnel_url()
-    
+ print()
+ 
+ # í„°ë„ URL ì €ì¥
+ tunnel.save_tunnel_url()
+ 
     print("=" * 70)
-    print("¼­¹ö ½ÇÇà Áß...")
-    print("ÁßÁöÇÏ·Á¸é Ctrl+C¸¦ ´©¸£¼¼¿ä.")
+    print("ì„œë²„ ì‹¤í–‰ ì¤‘...")
+    print("ì¤‘ì§€í•˜ë ¤ë©´ Ctrl+Cë¥¼ ëˆ„ë¥´ì„¸ìš”.")
     print("=" * 70)
-    print()
-    
-    try:
-        # ÇÁ·Î¼¼½º À¯Áö
-        while True:
-            time.sleep(10)
-            
-            # ´ë½Ãº¸µå ¼­¹ö »óÅÂ È®ÀÎ
-            if dashboard_process.poll() is not None:
-                logger.error("´ë½Ãº¸µå ¼­¹ö°¡ Á¾·áµÇ¾ú½À´Ï´Ù.")
-                break
-            
-            # ÅÍ³Î »óÅÂ È®ÀÎ
-            if tunnel.ngrok_process and tunnel.ngrok_process.poll() is not None:
-                logger.warning("Ngrok ÅÍ³ÎÀÌ Á¾·áµÇ¾ú½À´Ï´Ù. Àç½ÃÀÛ Áß...")
-                if not tunnel.start_tunnel():
-                    logger.error("ÅÍ³Î Àç½ÃÀÛ ½ÇÆĞ")
-                    break
-    except KeyboardInterrupt:
-        print("\n¼­¹ö Á¾·á Áß...")
-    finally:
-        # Á¤¸®
-        if dashboard_process:
-            dashboard_process.terminate()
-            dashboard_process.wait()
-            logger.info("´ë½Ãº¸µå ¼­¹ö Á¾·áµÊ")
-        
-        tunnel.stop_tunnel()
-        logger.info("Ngrok ÅÍ³Î Á¾·áµÊ")
+ print()
+ 
+ try:
+ # í”„ë¡œì„¸ìŠ¤ ìœ ì§€
+ while True:
+ time.sleep(10)
+ 
+ # ëŒ€ì‹œë³´ë“œ ì„œë²„ ìƒíƒœ í™•ì¸
+ if dashboard_process.poll() is not None:
+                logger.error("ëŒ€ì‹œë³´ë“œ ì„œë²„ê°€ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.")
+ break
+ 
+ # í„°ë„ ìƒíƒœ í™•ì¸
+ if tunnel.ngrok_process and tunnel.ngrok_process.poll() is not None:
+                logger.warning("Ngrok í„°ë„ì´ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤. ì¬ì‹œì‘ ì¤‘...")
+ if not tunnel.start_tunnel():
+                    logger.error("í„°ë„ ì¬ì‹œì‘ ì‹¤íŒ¨")
+ break
+ except KeyboardInterrupt:
+        print("\nì„œë²„ ì¢…ë£Œ ì¤‘...")
+ finally:
+ # ì •ë¦¬
+ if dashboard_process:
+ dashboard_process.terminate()
+ dashboard_process.wait()
+            logger.info("ëŒ€ì‹œë³´ë“œ ì„œë²„ ì¢…ë£Œë¨")
+ 
+ tunnel.stop_tunnel()
+        logger.info("Ngrok í„°ë„ ì¢…ë£Œë¨")
 
 if __name__ == "__main__":
-    main()
+ main()

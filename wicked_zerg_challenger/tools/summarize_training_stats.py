@@ -9,7 +9,7 @@ from pathlib import Path
 p = Path(__file__).parent.parent / "training_stats.json"
 if not p.exists():
     print("training_stats.json not found")
-    raise SystemExit(1)
+ raise SystemExit(1)
 
 wins = 0
 losses = 0
@@ -20,20 +20,20 @@ by_personality = Counter()
 total_time = 0
 
 with p.open("r", encoding="utf-8", errors="ignore") as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        games += 1
+ for line in f:
+ line = line.strip()
+ if not line:
+ continue
+ try:
+ obj = json.loads(line)
+ except json.JSONDecodeError:
+ continue
+ games += 1
         r = obj.get("result", "").lower()
         if "victory" in r:
-            wins += 1
-        else:
-            losses += 1
+ wins += 1
+ else:
+ losses += 1
         reasons[obj.get("loss_reason", "UNKNOWN")] += 1
         by_instance[obj.get("instance_id", "unknown")] += 1
         by_personality[obj.get("personality", "unknown")] += 1

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Ngrok ÅÍ³Î URL °¡Á®¿À±â
-ÅÍ³ÎÀÌ ½ÇÇà ÁßÀÏ ¶§ ÇöÀç URLÀ» ¹İÈ¯ÇÕ´Ï´Ù.
+Ngrok í„°ë„ URL ê°€ì ¸ì˜¤ê¸°
+í„°ë„ì´ ì‹¤í–‰ ì¤‘ì¼ ë•Œ í˜„ì¬ URLì„ ë°˜í™˜í•©ë‹ˆë‹¤.
 """
 
 import sys
@@ -10,53 +10,53 @@ import requests
 from pathlib import Path
 
 def get_ngrok_url_from_api() -> str:
-    """Ngrok API¿¡¼­ ÇöÀç ÅÍ³Î URL °¡Á®¿À±â"""
-    try:
-        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
-        if response.status_code == 200:
-            data = response.json()
+    """Ngrok APIì—ì„œ í˜„ì¬ í„°ë„ URL ê°€ì ¸ì˜¤ê¸°"""
+ try:
+        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout = 5)
+ if response.status_code == 200:
+ data = response.json()
             tunnels = data.get("tunnels", [])
-            if tunnels:
-                # HTTPS ÅÍ³Î ¿ì¼± ¼±ÅÃ
-                for tunnel in tunnels:
+ if tunnels:
+ # HTTPS í„°ë„ ìš°ì„  ì„ íƒ
+ for tunnel in tunnels:
                     if tunnel.get("proto") == "https":
                         return tunnel.get("public_url", "")
-                # HTTPS°¡ ¾øÀ¸¸é HTTP ¼±ÅÃ
-                if tunnels:
+ # HTTPSê°€ ì—†ìœ¼ë©´ HTTP ì„ íƒ
+ if tunnels:
                     return tunnels[0].get("public_url", "")
-    except Exception:
-        pass
+ except Exception:
+ pass
     return ""
 
 def get_ngrok_url_from_file() -> str:
-    """ÀúÀåµÈ ÆÄÀÏ¿¡¼­ ÅÍ³Î URL °¡Á®¿À±â"""
-    try:
+    """ì €ì¥ëœ íŒŒì¼ì—ì„œ í„°ë„ URL ê°€ì ¸ì˜¤ê¸°"""
+ try:
         url_file = Path(__file__).parent / ".ngrok_url.txt"
-        if url_file.exists():
+ if url_file.exists():
             with open(url_file, 'r', encoding='utf-8') as f:
-                return f.read().strip()
-    except Exception:
-        pass
+ return f.read().strip()
+ except Exception:
+ pass
     return ""
 
 def main():
-    """¸ŞÀÎ ÇÔ¼ö"""
-    # 1. API¿¡¼­ ½Ãµµ
-    url = get_ngrok_url_from_api()
-    if url:
-        print(url)
-        return 0
-    
-    # 2. ÆÄÀÏ¿¡¼­ ½Ãµµ
-    url = get_ngrok_url_from_file()
-    if url:
-        print(url)
-        return 0
-    
-    # 3. ¾øÀ¸¸é ¿¡·¯
-    print("Ngrok ÅÍ³Î URLÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.", file=sys.stderr)
-    print("ÅÍ³ÎÀÌ ½ÇÇà ÁßÀÎÁö È®ÀÎÇÏ¼¼¿ä.", file=sys.stderr)
-    return 1
+    """ë©”ì¸ í•¨ìˆ˜"""
+ # 1. APIì—ì„œ ì‹œë„
+ url = get_ngrok_url_from_api()
+ if url:
+ print(url)
+ return 0
+
+ # 2. íŒŒì¼ì—ì„œ ì‹œë„
+ url = get_ngrok_url_from_file()
+ if url:
+ print(url)
+ return 0
+
+ # 3. ì—†ìœ¼ë©´ ì—ëŸ¬
+    print("Ngrok í„°ë„ URLì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.", file = sys.stderr)
+    print("í„°ë„ì´ ì‹¤í–‰ ì¤‘ì¸ì§€ í™•ì¸í•˜ì„¸ìš”.", file = sys.stderr)
+ return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+ sys.exit(main())

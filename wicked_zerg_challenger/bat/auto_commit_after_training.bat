@@ -1,4 +1,5 @@
-@echo off
+﻿@echo off
+chcp 65001 > nul
 REM 훈련 종료 후 자동 커밋 스크립트
 REM Auto Commit After Training
 

@@ -81,7 +81,7 @@ pip install git-filter-repo
 git branch backup-before-key-removal
 
 # 3. 키 제거
-git filter-repo --replace-text <(echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo==>REDACTED")
+git filter-repo --replace-text <(echo "AIzaSyC_Ci...MIIo==>REDACTED")
 
 # 4. 원격 저장소에 강제 푸시 (주의!)
 git push origin --force --all
@@ -104,8 +104,8 @@ git gc --prune=now --aggressive
 
 **keys.txt 내용**:
 ```
-AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo==>REDACTED
-AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc==>REDACTED
+AIzaSyC_Ci...MIIo==>REDACTED
+AIzaSyD-c6...UZrc==>REDACTED
 ```
 
 #### PowerShell 스크립트 사용
@@ -123,20 +123,20 @@ cd wicked_zerg_challenger
 
 ```bash
 # 모든 파일에서 키 검색
-git grep "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" --all
+git grep "AIzaSyC_Ci...MIIo" --all
 
 # Git history에서 검색
-git log -p --all -S "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+git log -p --all -S "AIzaSyC_Ci...MIIo"
 ```
 
 ### 키가 제거되었는지 확인
 
 ```bash
 # 프로젝트 파일에서 검색
-grep -r "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" . --exclude-dir=.git
+grep -r "AIzaSyC_Ci...MIIo" . --exclude-dir=.git
 
 # Git history에서 검색
-git log --all --full-history --source -- "**/*" | grep "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+git log --all --full-history --source -- "**/*" | grep "AIzaSyC_Ci...MIIo"
 ```
 
 ---
@@ -147,11 +147,11 @@ git log --all --full-history --source -- "**/*" | grep "AIzaSyC_CiEZ6CtVz9e1kAK0
 
 ```powershell
 # secrets 폴더에 새 키 저장 (권장)
-echo "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc" > secrets\gemini_api.txt
+echo "AIzaSyD-c6...UZrc" > secrets\gemini_api.txt
 
 # 또는 api_keys 폴더에 저장
-echo "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc" > api_keys\GEMINI_API_KEY.txt
-echo "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc" > api_keys\GOOGLE_API_KEY.txt
+echo "AIzaSyD-c6...UZrc" > api_keys\GEMINI_API_KEY.txt
+echo "AIzaSyD-c6...UZrc" > api_keys\GOOGLE_API_KEY.txt
 ```
 
 ### 2. 새 키 확인

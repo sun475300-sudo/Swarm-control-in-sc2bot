@@ -9,7 +9,7 @@
 
 ### ? 1. 프로젝트 전체를 새 키로 교체
 
-**새 키**: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+**새 키**: `AIzaSyD-c6...UZrc`
 
 **교체 범위**:
 - ? 키 파일 (`secrets/gemini_api.txt`, `api_keys/*.txt`)

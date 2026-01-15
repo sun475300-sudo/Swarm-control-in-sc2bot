@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Zerg AI Training Pipeline - All in One Launcher
 REM Choose training option: Real Replays, Test, or AI Practice
 

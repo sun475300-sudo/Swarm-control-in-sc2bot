@@ -1,178 +1,177 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GEMINI_API_KEY È®ÀÎ ½ºÅ©¸³Æ®
+GEMINI_API_KEY í™•ì¸ ìŠ¤í¬ë¦½íŠ¸
 
-ÇöÀç ¼³Á¤µÈ GEMINI_API_KEY¸¦ È®ÀÎÇÏ°í Çü½ÄÀ» °ËÁõÇÕ´Ï´Ù.
+í˜„ì¬ ì„¤ì •ëœ GEMINI_API_KEYë¥¼ í™•ì¸í•˜ê³  í˜•ì‹ì„ ê²€ì¦í•©ë‹ˆë‹¤.
 """
 
 import re
 import sys
 from pathlib import Path
 
-# ÇÁ·ÎÁ§Æ® ·çÆ®¸¦ Python °æ·Î¿¡ Ãß°¡
+# í”„ë¡œì íŠ¸ ë£¨íŠ¸ë¥¼ Python ê²½ë¡œì— ì¶”ê°€
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from tools.load_api_key import get_gemini_api_key, get_google_api_key
 except ImportError:
-    print("? tools.load_api_key ¸ğµâÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.")
-    sys.exit(1)
+    print("? tools.load_api_key ëª¨ë“ˆì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+ sys.exit(1)
 
 
 def validate_gemini_api_key(api_key: str) -> tuple[bool, str]:
     """
-    GEMINI_API_KEY Çü½Ä °ËÁõ
-    
-    Returns:
-        (is_valid, message)
+ GEMINI_API_KEY í˜•ì‹ ê²€ì¦
+ 
+ Returns:
+ (is_valid, message)
     """
-    if not api_key:
-        return False, "Å°°¡ ºñ¾îÀÖ½À´Ï´Ù"
-    
-    if len(api_key) < 30:
-        return False, f"Å°°¡ ³Ê¹« Âª½À´Ï´Ù (±æÀÌ: {len(api_key)})"
-    
+ if not api_key:
+        return False, "í‚¤ê°€ ë¹„ì–´ìˆìŠµë‹ˆë‹¤"
+ 
+ if len(api_key) < 30:
+        return False, f"í‚¤ê°€ ë„ˆë¬´ ì§§ìŠµë‹ˆë‹¤ (ê¸¸ì´: {len(api_key)})"
+ 
     if not api_key.startswith("AIzaSy"):
-        return False, "Å°°¡ 'AIzaSy'·Î ½ÃÀÛÇÏÁö ¾Ê½À´Ï´Ù"
-    
-    # Google API Å° Çü½Ä: AIzaSy·Î ½ÃÀÛ, ¾à 39ÀÚ
+        return False, "í‚¤ê°€ 'AIzaSy'ë¡œ ì‹œì‘í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤"
+ 
+ # Google API í‚¤ í˜•ì‹: AIzaSyë¡œ ì‹œì‘, ì•½ 39ì
     pattern = r'^AIzaSy[A-Za-z0-9_-]{30,}$'
-    if not re.match(pattern, api_key):
-        return False, "Å° Çü½ÄÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù"
-    
-    return True, "¿Ã¹Ù¸¥ Çü½ÄÀÔ´Ï´Ù"
+ if not re.match(pattern, api_key):
+        return False, "í‚¤ í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤"
+ 
+    return True, "ì˜¬ë°”ë¥¸ í˜•ì‹ì…ë‹ˆë‹¤"
 
 
 def check_key_from_file(file_path: Path) -> tuple[bool, str]:
-    """ÆÄÀÏ¿¡¼­ Å° È®ÀÎ"""
-    if not file_path.exists():
-        return False, "ÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù"
-    
-    try:
+    """íŒŒì¼ì—ì„œ í‚¤ í™•ì¸"""
+ if not file_path.exists():
+        return False, "íŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤"
+ 
+ try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read().strip()
-            if not content:
-                return False, "ÆÄÀÏÀÌ ºñ¾îÀÖ½À´Ï´Ù"
-            return True, content
-    except Exception as e:
-        return False, f"ÆÄÀÏ ÀĞ±â ¿À·ù: {e}"
+ content = f.read().strip()
+ if not content:
+                return False, "íŒŒì¼ì´ ë¹„ì–´ìˆìŠµë‹ˆë‹¤"
+ return True, content
+ except Exception as e:
+        return False, f"íŒŒì¼ ì½ê¸° ì˜¤ë¥˜: {e}"
 
 
 def main():
     print("=" * 60)
-    print("GEMINI_API_KEY È®ÀÎ ¹× °ËÁõ")
+    print("GEMINI_API_KEY í™•ì¸ ë° ê²€ì¦")
     print("=" * 60)
-    print()
-    
-    # 1. load_api_key¸¦ ÅëÇÑ È®ÀÎ
-    print("? ¹æ¹ı 1: load_api_key ¸ğµâ »ç¿ë")
+ print()
+ 
+ # 1. load_api_keyë¥¼ í†µí•œ í™•ì¸
+    print("? ë°©ë²• 1: load_api_key ëª¨ë“ˆ ì‚¬ìš©")
     print("-" * 60)
-    
-    gemini_key = get_gemini_api_key()
-    google_key = get_google_api_key()
-    
-    if gemini_key:
-        is_valid, message = validate_gemini_api_key(gemini_key)
+ 
+ gemini_key = get_gemini_api_key()
+ google_key = get_google_api_key()
+ 
+ if gemini_key:
+ is_valid, message = validate_gemini_api_key(gemini_key)
         status = "?" if is_valid else "?"
-        print(f"{status} GEMINI_API_KEY: {gemini_key[:10]}... (±æÀÌ: {len(gemini_key)})")
-        print(f"  °ËÁõ: {message}")
-        if is_valid:
-            print(f"  ÀüÃ¼ Å°: {gemini_key}")
-    else:
-        print("? GEMINI_API_KEY: Ã£À» ¼ö ¾øÀ½")
-    
-    print()
-    
-    if google_key and google_key != gemini_key:
-        is_valid, message = validate_gemini_api_key(google_key)
+        print(f"{status} GEMINI_API_KEY: {gemini_key[:10]}... (ê¸¸ì´: {len(gemini_key)})")
+        print(f"  ê²€ì¦: {message}")
+ if is_valid:
+            print(f"  ì „ì²´ í‚¤: {gemini_key}")
+ else:
+        print("? GEMINI_API_KEY: ì°¾ì„ ìˆ˜ ì—†ìŒ")
+ 
+ print()
+ 
+ if google_key and google_key != gemini_key:
+ is_valid, message = validate_gemini_api_key(google_key)
         status = "?" if is_valid else "?"
-        print(f"{status} GOOGLE_API_KEY: {google_key[:10]}... (±æÀÌ: {len(google_key)})")
-        print(f"  °ËÁõ: {message}")
-    elif google_key:
-        print("? GOOGLE_API_KEY: GEMINI_API_KEY¿Í µ¿ÀÏ")
-    else:
-        print("? GOOGLE_API_KEY: Ã£À» ¼ö ¾øÀ½")
-    
-    print()
+        print(f"{status} GOOGLE_API_KEY: {google_key[:10]}... (ê¸¸ì´: {len(google_key)})")
+        print(f"  ê²€ì¦: {message}")
+ elif google_key:
+        print("? GOOGLE_API_KEY: GEMINI_API_KEYì™€ ë™ì¼")
+ else:
+        print("? GOOGLE_API_KEY: ì°¾ì„ ìˆ˜ ì—†ìŒ")
+ 
+ print()
     print("=" * 60)
-    print("? ¹æ¹ı 2: ÆÄÀÏ¿¡¼­ Á÷Á¢ È®ÀÎ")
+    print("? ë°©ë²• 2: íŒŒì¼ì—ì„œ ì§ì ‘ í™•ì¸")
     print("-" * 60)
-    
-    # 2. ÆÄÀÏ¿¡¼­ Á÷Á¢ È®ÀÎ
-    project_root = Path(__file__).parent.parent
-    
-    # secrets/ Æú´õ È®ÀÎ
+ 
+ # 2. íŒŒì¼ì—ì„œ ì§ì ‘ í™•ì¸
+ project_root = Path(__file__).parent.parent
+ 
+ # secrets/ í´ë” í™•ì¸
     secrets_file = project_root / "secrets" / "gemini_api.txt"
-    exists, result = check_key_from_file(secrets_file)
-    if exists:
-        is_valid, message = validate_gemini_api_key(result)
+ exists, result = check_key_from_file(secrets_file)
+ if exists:
+ is_valid, message = validate_gemini_api_key(result)
         status = "?" if is_valid else "?"
         print(f"{status} secrets/gemini_api.txt: {result[:10]}...")
-        print(f"  °ËÁõ: {message}")
-    else:
+        print(f"  ê²€ì¦: {message}")
+ else:
         print(f"? secrets/gemini_api.txt: {result}")
-    
-    # api_keys/ Æú´õ È®ÀÎ
+ 
+ # api_keys/ í´ë” í™•ì¸
     api_keys_file = project_root / "api_keys" / "GEMINI_API_KEY.txt"
-    exists, result = check_key_from_file(api_keys_file)
-    if exists:
-        is_valid, message = validate_gemini_api_key(result)
+ exists, result = check_key_from_file(api_keys_file)
+ if exists:
+ is_valid, message = validate_gemini_api_key(result)
         status = "?" if is_valid else "?"
         print(f"{status} api_keys/GEMINI_API_KEY.txt: {result[:10]}...")
-        print(f"  °ËÁõ: {message}")
-    else:
+        print(f"  ê²€ì¦: {message}")
+ else:
         print(f"? api_keys/GEMINI_API_KEY.txt: {result}")
-    
-    # .env ÆÄÀÏ È®ÀÎ
+ 
+ # .env íŒŒì¼ í™•ì¸
     env_file = project_root / ".env"
-    if env_file.exists():
-        try:
+ if env_file.exists():
+ try:
             with open(env_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
+ for line in f:
+ line = line.strip()
                     if line.startswith('GEMINI_API_KEY=') or line.startswith('GOOGLE_API_KEY='):
                         key_value = line.split('=', 1)[1].strip()
-                        if key_value:
-                            is_valid, message = validate_gemini_api_key(key_value)
+ if key_value:
+ is_valid, message = validate_gemini_api_key(key_value)
                             status = "?" if is_valid else "?"
                             print(f"{status} .env ({line.split('=')[0]}): {key_value[:10]}...")
-                            print(f"  °ËÁõ: {message}")
-        except Exception as e:
-            print(f"? .env ÆÄÀÏ ÀĞ±â ¿À·ù: {e}")
-    else:
-        print("? .env ÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù")
-    
-    print()
+                            print(f"  ê²€ì¦: {message}")
+ except Exception as e:
+            print(f"? .env íŒŒì¼ ì½ê¸° ì˜¤ë¥˜: {e}")
+ else:
+        print("? .env íŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤")
+ 
+ print()
     print("=" * 60)
-    print("? ¿ä¾à")
+    print("? ìš”ì•½")
     print("-" * 60)
-    
-    if gemini_key:
-        is_valid, message = validate_gemini_api_key(gemini_key)
-        if is_valid:
-            print("? GEMINI_API_KEY°¡ ¿Ã¹Ù¸£°Ô ¼³Á¤µÇ¾î ÀÖ½À´Ï´Ù!")
-            print(f"   Å°: {gemini_key}")
-        else:
-            print("?? GEMINI_API_KEY°¡ ¼³Á¤µÇ¾î ÀÖÁö¸¸ Çü½ÄÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù.")
-            print(f"   ¹®Á¦: {message}")
-    else:
-        print("? GEMINI_API_KEY¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.")
-        print()
-        print("¼³Á¤ ¹æ¹ı:")
-        print("  1. secrets/gemini_api.txt ÆÄÀÏ »ı¼º")
+ 
+ if gemini_key:
+ is_valid, message = validate_gemini_api_key(gemini_key)
+ if is_valid:
+            print("? GEMINI_API_KEYê°€ ì˜¬ë°”ë¥´ê²Œ ì„¤ì •ë˜ì–´ ìˆìŠµë‹ˆë‹¤!")
+            print(f"   í‚¤: {gemini_key}")
+ else:
+            print("?? GEMINI_API_KEYê°€ ì„¤ì •ë˜ì–´ ìˆì§€ë§Œ í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤.")
+            print(f"   ë¬¸ì œ: {message}")
+ else:
+        print("? GEMINI_API_KEYë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+ print()
+        print("ì„¤ì • ë°©ë²•:")
+        print("  1. secrets/gemini_api.txt íŒŒì¼ ìƒì„±")
         print("     echo 'YOUR_API_KEY' > secrets/gemini_api.txt")
-        print()
-        print("  2. ¶Ç´Â È¯°æ º¯¼ö ¼³Á¤")
+ print()
+        print("  2. ë˜ëŠ” í™˜ê²½ ë³€ìˆ˜ ì„¤ì •")
         print("     $env:GEMINI_API_KEY='YOUR_API_KEY'")
-        print()
-        print("  3. ¶Ç´Â .env ÆÄÀÏ¿¡ Ãß°¡")
+ print()
+        print("  3. ë˜ëŠ” .env íŒŒì¼ì— ì¶”ê°€")
         print("     GEMINI_API_KEY=YOUR_API_KEY")
-    
-    print()
+ 
+ print()
     print("=" * 60)
 
 
 if __name__ == "__main__":
-    main()
+ main()

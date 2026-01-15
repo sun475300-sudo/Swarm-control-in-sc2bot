@@ -1,7 +1,7 @@
-@echo off
+Ôªø@echo off
 chcp 65001 >nul
 echo ========================================
-echo «¡∑Œ¡ß∆Æ ¿¸√º∏¶ ªı ≈∞∑Œ ±≥√º
+echo ?Íæ®Ï§à?Ïï∫ÎìÉ ?Íæ©ÍªúÁëú????„ÖªÏ§à Êè¥Î®ØÍªú
 echo Migrate Entire Project to New API Key
 echo ========================================
 echo.
@@ -10,7 +10,7 @@ cd /d "%~dp0\.."
 
 set NEW_KEY=AIzaSyBDdPWJyXs56AxeCPmqZpySFOVPjjSt_CM
 
-echo ªı ≈∞: %NEW_KEY%
+echo ???? %NEW_KEY%
 echo.
 
 pause

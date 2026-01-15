@@ -9,7 +9,7 @@
 
 ### ? 1. 새 키 설정
 
-**새 Google Cloud API 키**: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+**새 Google Cloud API 키**: `AIzaSyD-c6...UZrc`
 
 **저장 위치**:
 - ? `secrets/gemini_api.txt` (권장)
@@ -99,7 +99,7 @@ cd wicked_zerg_challenger
 pip install git-filter-repo
 
 # 키 제거
-git filter-repo --replace-text <(echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo==>REDACTED")
+git filter-repo --replace-text <(echo "AIzaSyC_Ci...MIIo==>REDACTED")
 
 # 원격 저장소에 강제 푸시 (주의!)
 git push origin --force --all
@@ -125,10 +125,10 @@ GOOGLE: AIzaSyD-c6nmOLolncI...
 
 ```bash
 # 프로젝트 파일에서 검색
-grep -r "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" . --exclude-dir=.git
+grep -r "AIzaSyC_Ci...MIIo" . --exclude-dir=.git
 
 # Git history에서 검색
-git log -p --all -S "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+git log -p --all -S "AIzaSyC_Ci...MIIo"
 ```
 
 ---
@@ -165,7 +165,7 @@ git status api_keys/
 ## ? 요약
 
 ### 완료된 작업
-- ? 새 키 설정 (`AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`)
+- ? 새 키 설정 (`AIzaSyD-c6...UZrc`)
 - ? 제거 도구 생성
 - ? 제거 가이드 작성
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 script_dir = Path(__file__).parent
 if str(script_dir) not in sys.path:
-    sys.path.insert(0, str(script_dir))
+ sys.path.insert(0, str(script_dir))
 
 print("Testing imports...")
 print(f"Script directory: {script_dir}")
@@ -22,10 +22,10 @@ modules_to_test = [
 ]
 
 for module_name in modules_to_test:
-    try:
-        __import__(module_name)
+ try:
+ __import__(module_name)
         print(f"[OK] {module_name}")
-    except ImportError as e:
+ except ImportError as e:
         print(f"[FAIL] {module_name}: {e}")
-    except Exception as e:
+ except Exception as e:
         print(f"[ERROR] {module_name}: {e}")

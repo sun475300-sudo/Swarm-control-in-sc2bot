@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-¿ÏÀüÇÑ ½ÇÇà ½ºÅ©¸³Æ® - ÀüÃ¼ ½Ã½ºÅÛÀ» Ã³À½ºÎÅÍ ³¡±îÁö ½ÇÇà
+ì™„ì „í•œ ì‹¤í–‰ ìŠ¤í¬ë¦½íŠ¸ - ì „ì²´ ì‹œìŠ¤í…œì„ ì²˜ìŒë¶€í„° ëê¹Œì§€ ì‹¤í–‰
 Complete Execution Script - Run entire system from start to finish
 
-ÀÌ ½ºÅ©¸³Æ®´Â ÇÁ·ÎÁ§Æ®ÀÇ ÀüÃ¼ ½ÇÇà Èå¸§À» ÇÑ °÷¿¡ ¸ğ¾Æ¼­ ½ÇÇàÇÕ´Ï´Ù.
+ì´ ìŠ¤í¬ë¦½íŠ¸ëŠ” í”„ë¡œì íŠ¸ì˜ ì „ì²´ ì‹¤í–‰ íë¦„ì„ í•œ ê³³ì— ëª¨ì•„ì„œ ì‹¤í–‰í•©ë‹ˆë‹¤.
 This script consolidates the entire execution flow of the project.
 """
 
@@ -12,35 +12,36 @@ import sys
 import os
 import asyncio
 from pathlib import Path
+from typing import Optional, Any
 
 # ============================================================================
-# 1. ½Ã½ºÅÛ ÃÊ±âÈ­ (System Initialization)
+# 1. ì‹œìŠ¤í…œ ì´ˆê¸°í™” (System Initialization)
 # ============================================================================
 
-def initialize_system():
-    """½Ã½ºÅÛ ÃÊ±âÈ­"""
+def initialize_system() -> Path:
+    """ì‹œìŠ¤í…œ ì´ˆê¸°í™”"""
     print("=" * 70)
-    print("1. ½Ã½ºÅÛ ÃÊ±âÈ­ (System Initialization)")
+    print("1. ì‹œìŠ¤í…œ ì´ˆê¸°í™” (System Initialization)")
     print("=" * 70)
-    
-    # 1.1 SC2 °æ·Î ¼³Á¤
-    print("\n[1.1] SC2 °æ·Î ¼³Á¤...")
+
+    # 1.1 SC2 ê²½ë¡œ ì„¤ì •
+    print("\n[1.1] SC2 ê²½ë¡œ ì„¤ì •...")
     sc2_path = setup_sc2_path()
     if sc2_path:
-        print(f"  ? SC2 °æ·Î: {sc2_path}")
+        print(f"  ? SC2 ê²½ë¡œ: {sc2_path}")
     else:
-        print("  ? SC2 °æ·Î¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù. SC2PATH È¯°æ º¯¼ö¸¦ ¼³Á¤ÇÏ¼¼¿ä.")
-    
-    # 1.2 Python °æ·Î ¼³Á¤
-    print("\n[1.2] Python °æ·Î ¼³Á¤...")
+        print("  ? SC2 ê²½ë¡œë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. SC2PATH í™˜ê²½ ë³€ìˆ˜ë¥¼ ì„¤ì •í•˜ì„¸ìš”.")
+
+    # 1.2 Python ê²½ë¡œ ì„¤ì •
+    print("\n[1.2] Python ê²½ë¡œ ì„¤ì •...")
     script_dir = Path(__file__).resolve().parent
     project_dir = script_dir
     if str(script_dir) not in sys.path:
         sys.path.insert(0, str(script_dir))
-    print(f"  ? ÇÁ·ÎÁ§Æ® °æ·Î: {project_dir}")
-    
-    # 1.3 ·Î±ë ½Ã½ºÅÛ ÃÊ±âÈ­
-    print("\n[1.3] ·Î±ë ½Ã½ºÅÛ ÃÊ±âÈ­...")
+    print(f"  ? í”„ë¡œì íŠ¸ ê²½ë¡œ: {project_dir}")
+
+    # 1.3 ë¡œê¹… ì‹œìŠ¤í…œ ì´ˆê¸°í™”
+    print("\n[1.3] ë¡œê¹… ì‹œìŠ¤í…œ ì´ˆê¸°í™”...")
     try:
         from loguru import logger
         logger.remove()
@@ -55,14 +56,14 @@ def initialize_system():
             level="DEBUG",
             encoding="utf-8",
         )
-        print("  ? ·Î±ë ½Ã½ºÅÛ ÃÊ±âÈ­ ¿Ï·á")
+        print("  ? ë¡œê¹… ì‹œìŠ¤í…œ ì´ˆê¸°í™” ì™„ë£Œ")
     except ImportError:
-        print("  ? loguru°¡ ¼³Ä¡µÇÁö ¾Ê¾Ò½À´Ï´Ù. ±âº» ·Î±ëÀ» »ç¿ëÇÕ´Ï´Ù.")
+        print("  ? loguruê°€ ì„¤ì¹˜ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤. ê¸°ë³¸ ë¡œê¹…ì„ ì‚¬ìš©í•©ë‹ˆë‹¤.")
         import logging
         logging.basicConfig(level=logging.INFO)
-    
-    # 1.4 PyTorch ¼³Á¤
-    print("\n[1.4] PyTorch ¼³Á¤...")
+
+    # 1.4 PyTorch ì„¤ì •
+    print("\n[1.4] PyTorch ì„¤ì •...")
     try:
         import torch
         num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
@@ -72,14 +73,14 @@ def initialize_system():
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if device == "cuda":
             gpu_name = torch.cuda.get_device_name(0)
-            print(f"  ? GPU: {gpu_name} ({num_threads} CPU ½º·¹µå)")
+            print(f"  ? GPU: {gpu_name} ({num_threads} CPU ìŠ¤ë ˆë“œ)")
         else:
-            print(f"  ? CPU ¸ğµå ({num_threads} ½º·¹µå)")
+            print(f"  ? CPU ëª¨ë“œ ({num_threads} ìŠ¤ë ˆë“œ)")
     except ImportError:
-        print("  ? PyTorch°¡ ¼³Ä¡µÇÁö ¾Ê¾Ò½À´Ï´Ù. Neural Network ±â´ÉÀÌ ºñÈ°¼ºÈ­µË´Ï´Ù.")
-    
-    # 1.5 ÀÌº¥Æ® ·çÇÁ ¼³Á¤
-    print("\n[1.5] ÀÌº¥Æ® ·çÇÁ ¼³Á¤...")
+        print("  ? PyTorchê°€ ì„¤ì¹˜ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤. Neural Network ê¸°ëŠ¥ì´ ë¹„í™œì„±í™”ë©ë‹ˆë‹¤.")
+
+    # 1.5 ì´ë²¤íŠ¸ ë£¨í”„ ì„¤ì •
+    print("\n[1.5] ì´ë²¤íŠ¸ ë£¨í”„ ì„¤ì •...")
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -91,21 +92,21 @@ def initialize_system():
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         except:
             pass
-    print("  ? ÀÌº¥Æ® ·çÇÁ ¼³Á¤ ¿Ï·á")
-    
+    print("  ? ì´ë²¤íŠ¸ ë£¨í”„ ì„¤ì • ì™„ë£Œ")
+
     print("\n" + "=" * 70)
-    print("½Ã½ºÅÛ ÃÊ±âÈ­ ¿Ï·á!")
+    print("ì‹œìŠ¤í…œ ì´ˆê¸°í™” ì™„ë£Œ!")
     print("=" * 70 + "\n")
-    
+
     return project_dir
 
-def setup_sc2_path():
-    """SC2 °æ·Î ¼³Á¤"""
+def setup_sc2_path() -> Optional[str]:
+    """SC2 ê²½ë¡œ ì„¤ì •"""
     if "SC2PATH" in os.environ:
         sc2_path = os.environ["SC2PATH"]
         if os.path.exists(sc2_path):
             return sc2_path
-    
+
     if sys.platform == "win32":
         try:
             import winreg
@@ -118,38 +119,38 @@ def setup_sc2_path():
                 return install_path
         except:
             pass
-        
-        common_paths = [
-            "C:\\Program Files (x86)\\StarCraft II",
-            "C:\\Program Files\\StarCraft II",
-            "D:\\StarCraft II",
-        ]
-        for path in common_paths:
-            if os.path.exists(path):
-                os.environ["SC2PATH"] = path
-                return path
-    
+
+    common_paths = [
+        "C:\\Program Files (x86)\\StarCraft II",
+        "C:\\Program Files\\StarCraft II",
+        "D:\\StarCraft II",
+    ]
+    for path in common_paths:
+        if os.path.exists(path):
+            os.environ["SC2PATH"] = path
+            return path
+
     return None
 
 # ============================================================================
-# 2. º¿ ÃÊ±âÈ­ (Bot Initialization)
+# 2. ë´‡ ì´ˆê¸°í™” (Bot Initialization)
 # ============================================================================
 
-def initialize_bot(project_dir: Path):
-    """º¿ ÃÊ±âÈ­"""
+def initialize_bot(project_dir: Path) -> Optional[Any]:
+    """ë´‡ ì´ˆê¸°í™”"""
     print("=" * 70)
-    print("2. º¿ ÃÊ±âÈ­ (Bot Initialization)")
+    print("2. ë´‡ ì´ˆê¸°í™” (Bot Initialization)")
     print("=" * 70)
-    
-    print("\n[2.1] º¿ Å¬·¡½º ÀÓÆ÷Æ®...")
+
+    print("\n[2.1] ë´‡ í´ë˜ìŠ¤ ì„í¬íŠ¸...")
     try:
         from wicked_zerg_bot_pro import WickedZergBotPro
-        print("  ? WickedZergBotPro Å¬·¡½º ·Îµå ¿Ï·á")
+        print("  ? WickedZergBotPro í´ë˜ìŠ¤ ë¡œë“œ ì™„ë£Œ")
     except ImportError as e:
-        print(f"  ? º¿ Å¬·¡½º ÀÓÆ÷Æ® ½ÇÆĞ: {e}")
+        print(f"  ? ë´‡ í´ë˜ìŠ¤ ì„í¬íŠ¸ ì‹¤íŒ¨: {e}")
         return None
-    
-    print("\n[2.2] º¿ ÀÎ½ºÅÏ½º »ı¼º...")
+
+    print("\n[2.2] ë´‡ ì¸ìŠ¤í„´ìŠ¤ ìƒì„±...")
     try:
         bot_instance = WickedZergBotPro(
             train_mode=True,
@@ -158,15 +159,15 @@ def initialize_bot(project_dir: Path):
             opponent_race=None,
             game_count=0
         )
-        print("  ? º¿ ÀÎ½ºÅÏ½º »ı¼º ¿Ï·á")
+        print("  ? ë´‡ ì¸ìŠ¤í„´ìŠ¤ ìƒì„± ì™„ë£Œ")
         print(f"     - Personality: {bot_instance.personality}")
         print(f"     - Instance ID: {bot_instance.instance_id}")
         print(f"     - Train Mode: {bot_instance.train_mode}")
     except Exception as e:
-        print(f"  ? º¿ ÀÎ½ºÅÏ½º »ı¼º ½ÇÆĞ: {e}")
+        print(f"  ? ë´‡ ì¸ìŠ¤í„´ìŠ¤ ìƒì„± ì‹¤íŒ¨: {e}")
         return None
-    
-    print("\n[2.3] ¸Å´ÏÀú ÃÊ±âÈ­ È®ÀÎ...")
+
+    print("\n[2.3] ë§¤ë‹ˆì € ì´ˆê¸°í™” í™•ì¸...")
     managers = [
         ("Intel Manager", "intel"),
         ("Economy Manager", "economy"),
@@ -176,95 +177,95 @@ def initialize_bot(project_dir: Path):
         ("Micro Controller", "micro"),
         ("Queen Manager", "queen_manager"),
     ]
-    
+
     for name, attr in managers:
         manager = getattr(bot_instance, attr, None)
         if manager is None:
-            print(f"  ? {name}: ³ªÁß¿¡ ÃÊ±âÈ­µÊ (on_start¿¡¼­)")
+            print(f"  ? {name}: ë‚˜ì¤‘ì— ì´ˆê¸°í™”ë¨ (on_startì—ì„œ)")
         else:
-            print(f"  ? {name}: ÃÊ±âÈ­µÊ")
-    
-    print("\n[2.4] Telemetry Logger È®ÀÎ...")
+            print(f"  ? {name}: ì´ˆê¸°í™”ë¨")
+
+    print("\n[2.4] Telemetry Logger í™•ì¸...")
     if hasattr(bot_instance, 'telemetry_logger'):
-        print("  ? Telemetry Logger: ÃÊ±âÈ­µÊ")
+        print("  ? Telemetry Logger: ì´ˆê¸°í™”ë¨")
     else:
-        print("  ? Telemetry Logger: ÃÊ±âÈ­µÇÁö ¾ÊÀ½")
-    
+        print("  ? Telemetry Logger: ì´ˆê¸°í™”ë˜ì§€ ì•ŠìŒ")
+
     print("\n" + "=" * 70)
-    print("º¿ ÃÊ±âÈ­ ¿Ï·á!")
+    print("ë´‡ ì´ˆê¸°í™” ì™„ë£Œ!")
     print("=" * 70 + "\n")
-    
+
     return bot_instance
 
 # ============================================================================
-# 3. °ÔÀÓ ½ÇÇà (Game Execution)
+# 3. ê²Œì„ ì‹¤í–‰ (Game Execution)
 # ============================================================================
 
-def run_game(bot_instance):
-    """°ÔÀÓ ½ÇÇà"""
+def run_game(bot_instance: Any) -> bool:
+    """ê²Œì„ ì‹¤í–‰"""
     print("=" * 70)
-    print("3. °ÔÀÓ ½ÇÇà (Game Execution)")
+    print("3. ê²Œì„ ì‹¤í–‰ (Game Execution)")
     print("=" * 70)
-    
-    print("\n[3.1] SC2 ¶óÀÌºê·¯¸® ÀÓÆ÷Æ®...")
+
+    print("\n[3.1] SC2 ë¼ì´ë¸ŒëŸ¬ë¦¬ ì„í¬íŠ¸...")
     try:
-        from sc2.data import Race, Difficulty
         from sc2.main import run_game as sc2_run_game
         from sc2.player import Bot, Computer
+        from sc2.data import Race, Difficulty
         from sc2 import maps
-        print("  ? SC2 ¶óÀÌºê·¯¸® ·Îµå ¿Ï·á")
+        print("  ? SC2 ë¼ì´ë¸ŒëŸ¬ë¦¬ ë¡œë“œ ì™„ë£Œ")
     except ImportError as e:
-        print(f"  ? SC2 ¶óÀÌºê·¯¸® ÀÓÆ÷Æ® ½ÇÆĞ: {e}")
-        print("     sc2 ÆĞÅ°Áö¸¦ ¼³Ä¡ÇÏ¼¼¿ä: pip install sc2")
+        print(f"  ? SC2 ë¼ì´ë¸ŒëŸ¬ë¦¬ ì„í¬íŠ¸ ì‹¤íŒ¨: {e}")
+        print("     sc2 íŒ¨í‚¤ì§€ë¥¼ ì„¤ì¹˜í•˜ì„¸ìš”: pip install sc2")
         return False
-    
-    print("\n[3.2] °ÔÀÓ ¼³Á¤...")
+
+    print("\n[3.2] ê²Œì„ ì„¤ì •...")
     map_name = "AbyssalReefLE"
     bot = Bot(Race.Zerg, bot_instance)
     opponent = Computer(Race.Terran, Difficulty.VeryHard)
-    print(f"  ? ¸Ê: {map_name}")
-    print(f"  ? »ó´ë: Terran (VeryHard)")
-    
-    print("\n[3.3] °ÔÀÓ ½ÃÀÛ...")
-    print("  ¡æ °ÔÀÓÀÌ ½ÃÀÛµË´Ï´Ù. Á¾·áÇÏ·Á¸é Ctrl+C¸¦ ´©¸£¼¼¿ä.")
-    print("  ¡æ °ÔÀÓ ÁøÇà Áß¿¡´Â on_step()ÀÌ ¸Å ÇÁ·¹ÀÓ¸¶´Ù ½ÇÇàµË´Ï´Ù.")
-    print("  ¡æ °ÔÀÓ Á¾·á ½Ã on_end()°¡ ½ÇÇàµË´Ï´Ù.")
+    print(f"  ? ë§µ: {map_name}")
+    print(f"  ? ìƒëŒ€: Terran (VeryHard)")
+
+    print("\n[3.3] ê²Œì„ ì‹œì‘...")
+    print("  â†’ ê²Œì„ì´ ì‹œì‘ë©ë‹ˆë‹¤. ì¢…ë£Œí•˜ë ¤ë©´ Ctrl+Cë¥¼ ëˆ„ë¥´ì„¸ìš”.")
+    print("  â†’ ê²Œì„ ì§„í–‰ ì¤‘ì—ëŠ” on_step()ì´ ë§¤ í”„ë ˆì„ë§ˆë‹¤ ì‹¤í–‰ë©ë‹ˆë‹¤.")
+    print("  â†’ ê²Œì„ ì¢…ë£Œ ì‹œ on_end()ê°€ ì‹¤í–‰ë©ë‹ˆë‹¤.")
     print()
-    
+
     try:
         sc2_run_game(
             maps.get(map_name),
             [bot, opponent],
             realtime=False
         )
-        print("\n  ? °ÔÀÓ ¿Ï·á!")
+        print("\n  ? ê²Œì„ ì™„ë£Œ!")
         return True
     except KeyboardInterrupt:
-        print("\n  ? »ç¿ëÀÚ¿¡ ÀÇÇØ Áß´ÜµÊ")
+        print("\n  ? ì‚¬ìš©ìì— ì˜í•´ ì¤‘ë‹¨ë¨")
         return False
     except Exception as e:
-        print(f"\n  ? °ÔÀÓ ½ÇÇà ¿À·ù: {e}")
+        print(f"\n  ? ê²Œì„ ì‹¤í–‰ ì˜¤ë¥˜: {e}")
         return False
 
 # ============================================================================
-# 4. ´ë½Ãº¸µå ¼­¹ö (Dashboard Server) - ¼±ÅÃÀû
+# 4. ëŒ€ì‹œë³´ë“œ ì„œë²„ (Dashboard Server) - ì„ íƒì 
 # ============================================================================
 
-def start_dashboard_server(background=False):
-    """´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ"""
+def start_dashboard_server(background: bool = False) -> Optional[Any]:
+    """ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘"""
     print("=" * 70)
-    print("4. ´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ (Dashboard Server)")
+    print("4. ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘ (Dashboard Server)")
     print("=" * 70)
-    
-    print("\n[4.1] ´ë½Ãº¸µå ¼­¹ö È®ÀÎ...")
+
+    print("\n[4.1] ëŒ€ì‹œë³´ë“œ ì„œë²„ í™•ì¸...")
     dashboard_api_path = Path("monitoring/dashboard_api.py")
     if not dashboard_api_path.exists():
-        print("  ? dashboard_api.py¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.")
+        print("  ? dashboard_api.pyë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
         return None
-    
-    print("\n[4.2] FastAPI ¼­¹ö ½ÃÀÛ...")
+
+    print("\n[4.2] FastAPI ì„œë²„ ì‹œì‘...")
     if background:
-        print("  ¡æ ¹é±×¶ó¿îµå¿¡¼­ ½ÇÇàµË´Ï´Ù.")
+        print("  â†’ ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì‹¤í–‰ë©ë‹ˆë‹¤.")
         import subprocess
         import sys
         process = subprocess.Popen(
@@ -272,61 +273,61 @@ def start_dashboard_server(background=False):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        print(f"  ? ¼­¹ö ÇÁ·Î¼¼½º ½ÃÀÛµÊ (PID: {process.pid})")
-        print(f"     ¡æ http://localhost:8000 ¿¡¼­ Á¢¼Ó °¡´É")
+        print(f"  ? ì„œë²„ í”„ë¡œì„¸ìŠ¤ ì‹œì‘ë¨ (PID: {process.pid})")
+        print(f"     â†’ http://localhost:8000 ì—ì„œ ì ‘ì† ê°€ëŠ¥")
         return process
     else:
-        print("  ¡æ ¼­¹ö¸¦ ½ÃÀÛÇÏ·Á¸é º°µµ ÅÍ¹Ì³Î¿¡¼­ ´ÙÀ½ ¸í·ÉÀ» ½ÇÇàÇÏ¼¼¿ä:")
+        print("  â†’ ì„œë²„ë¥¼ ì‹œì‘í•˜ë ¤ë©´ ë³„ë„ í„°ë¯¸ë„ì—ì„œ ë‹¤ìŒ ëª…ë ¹ì„ ì‹¤í–‰í•˜ì„¸ìš”:")
         print(f"     python {dashboard_api_path}")
         return None
 
 # ============================================================================
-# 5. ¸ŞÀÎ ½ÇÇà ÇÔ¼ö
+# 5. ë©”ì¸ ì‹¤í–‰ í•¨ìˆ˜
 # ============================================================================
 
 def main():
-    """¸ŞÀÎ ½ÇÇà ÇÔ¼ö"""
+    """ë©”ì¸ ì‹¤í–‰ í•¨ìˆ˜"""
     print("\n" + "=" * 70)
-    print("¿ÏÀüÇÑ ½ÇÇà ½ºÅ©¸³Æ® - ÀüÃ¼ ½Ã½ºÅÛ ½ÇÇà")
+    print("ì™„ì „í•œ ì‹¤í–‰ ìŠ¤í¬ë¦½íŠ¸ - ì „ì²´ ì‹œìŠ¤í…œ ì‹¤í–‰")
     print("Complete Execution Script - Full System Run")
     print("=" * 70 + "\n")
-    
-    # 1. ½Ã½ºÅÛ ÃÊ±âÈ­
+
+    # 1. ì‹œìŠ¤í…œ ì´ˆê¸°í™”
     project_dir = initialize_system()
-    
-    # 2. º¿ ÃÊ±âÈ­
+
+    # 2. ë´‡ ì´ˆê¸°í™”
     bot_instance = initialize_bot(project_dir)
     if bot_instance is None:
-        print("º¿ ÃÊ±âÈ­ ½ÇÆĞ. Á¾·áÇÕ´Ï´Ù.")
+        print("ë´‡ ì´ˆê¸°í™” ì‹¤íŒ¨. ì¢…ë£Œí•©ë‹ˆë‹¤.")
         return 1
-    
-    # 3. ´ë½Ãº¸µå ¼­¹ö ½ÃÀÛ (¼±ÅÃÀû)
+
+    # 3. ëŒ€ì‹œë³´ë“œ ì„œë²„ ì‹œì‘ (ì„ íƒì )
     dashboard_process = None
-    start_dashboard = input("\n´ë½Ãº¸µå ¼­¹ö¸¦ ½ÃÀÛÇÏ½Ã°Ú½À´Ï±î? (y/n): ").lower().strip()
+    start_dashboard = input("\nëŒ€ì‹œë³´ë“œ ì„œë²„ë¥¼ ì‹œì‘í•˜ì‹œê² ìŠµë‹ˆê¹Œ? (y/n): ").lower().strip()
     if start_dashboard == 'y':
         dashboard_process = start_dashboard_server(background=True)
-    
-    # 4. °ÔÀÓ ½ÇÇà
+
+    # 4. ê²Œì„ ì‹¤í–‰
     try:
         success = run_game(bot_instance)
         if success:
             print("\n" + "=" * 70)
-            print("ÀüÃ¼ ½ÇÇà ¿Ï·á!")
+            print("ì „ì²´ ì‹¤í–‰ ì™„ë£Œ!")
             print("=" * 70)
         else:
             print("\n" + "=" * 70)
-            print("°ÔÀÓ ½ÇÇà Áß ¿À·ù ¹ß»ı")
+            print("ê²Œì„ ì‹¤í–‰ ì¤‘ ì˜¤ë¥˜ ë°œìƒ")
             print("=" * 70)
     finally:
-        # 5. Á¤¸®
+        # 5. ì •ë¦¬
         if dashboard_process:
-            print("\n[5] ´ë½Ãº¸µå ¼­¹ö Á¾·á...")
+            print("\n[5] ëŒ€ì‹œë³´ë“œ ì„œë²„ ì¢…ë£Œ...")
             dashboard_process.terminate()
             dashboard_process.wait()
-            print("  ? ´ë½Ãº¸µå ¼­¹ö Á¾·áµÊ")
-    
+            print("  ? ëŒ€ì‹œë³´ë“œ ì„œë²„ ì¢…ë£Œë¨")
+
     return 0
 
 if __name__ == "__main__":
-    exit_code = main()
-    sys.exit(exit_code)
+ exit_code = main()
+ sys.exit(exit_code)

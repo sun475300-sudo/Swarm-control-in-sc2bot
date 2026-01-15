@@ -26,7 +26,7 @@ bat\migrate_to_new_key.bat
 
 ```powershell
 # PowerShell 스크립트 직접 실행
-.\tools\migrate_to_new_key.ps1 -NewApiKey "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
+.\tools\migrate_to_new_key.ps1 -NewApiKey "AIzaSyD-c6...UZrc"
 ```
 
 **실행 내용**:
@@ -72,14 +72,14 @@ bat\api_key_security_hardening.bat
 
 #### 현재 세션
 ```powershell
-$env:GEMINI_API_KEY = "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
-$env:GOOGLE_API_KEY = "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
+$env:GEMINI_API_KEY = "AIzaSyD-c6...UZrc"
+$env:GOOGLE_API_KEY = "AIzaSyD-c6...UZrc"
 ```
 
 #### 사용자 환경 변수
 ```powershell
-[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc", "User")
-[System.Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc", "User")
+[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "AIzaSyD-c6...UZrc", "User")
+[System.Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "AIzaSyD-c6...UZrc", "User")
 ```
 
 ---
@@ -88,14 +88,14 @@ $env:GOOGLE_API_KEY = "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
 
 **변경 전**:
 ```
-GEMINI_API_KEY=AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
-GOOGLE_API_KEY=AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+GEMINI_API_KEY=AIzaSyC_Ci...MIIo
+GOOGLE_API_KEY=AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
 ```
-GEMINI_API_KEY=AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc
-GOOGLE_API_KEY=AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc
+GEMINI_API_KEY=AIzaSyD-c6...UZrc
+GOOGLE_API_KEY=AIzaSyD-c6...UZrc
 ```
 
 ---
@@ -107,7 +107,7 @@ GOOGLE_API_KEY=AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc
 **변경 전**:
 ```yaml
 env:
-  GEMINI_API_KEY: AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+  GEMINI_API_KEY: AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -120,7 +120,7 @@ env:
 1. GitHub 저장소 → Settings → Secrets and variables → Actions
 2. "New repository secret" 클릭
 3. Name: `GEMINI_API_KEY`
-4. Value: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+4. Value: `AIzaSyD-c6...UZrc`
 
 ---
 
@@ -129,7 +129,7 @@ env:
 **변경 전**:
 ```yaml
 variables:
-  GEMINI_API_KEY: AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+  GEMINI_API_KEY: AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -142,7 +142,7 @@ variables:
 1. GitLab 프로젝트 → Settings → CI/CD → Variables
 2. "Add variable" 클릭
 3. Key: `GEMINI_API_KEY`
-4. Value: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+4. Value: `AIzaSyD-c6...UZrc`
 5. "Mask variable" 체크
 
 ---
@@ -151,7 +151,7 @@ variables:
 
 **변경 전**:
 ```dockerfile
-ENV GEMINI_API_KEY=AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+ENV GEMINI_API_KEY=AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -161,7 +161,7 @@ ENV GEMINI_API_KEY=$GEMINI_API_KEY
 
 **Docker 실행 시**:
 ```bash
-docker run -e GEMINI_API_KEY="AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc" your-image
+docker run -e GEMINI_API_KEY="AIzaSyD-c6...UZrc" your-image
 ```
 
 ---
@@ -170,12 +170,12 @@ docker run -e GEMINI_API_KEY="AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc" your-imag
 
 **변경 전**:
 ```
-GEMINI_API_KEY=AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+GEMINI_API_KEY=AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
 ```
-GEMINI_API_KEY=AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc
+GEMINI_API_KEY=AIzaSyD-c6...UZrc
 ```
 
 ---
@@ -269,7 +269,7 @@ python -c "from tools.load_api_key import get_gemini_api_key; print(get_gemini_a
 $env:GEMINI_API_KEY
 ```
 
-**예상 결과**: `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+**예상 결과**: `AIzaSyD-c6...UZrc`
 
 ---
 

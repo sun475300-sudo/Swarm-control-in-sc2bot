@@ -5,36 +5,28 @@ Dashboard API Server - sc2AIagent Integration
 Real-time game state, combat stats, and AI control API
 """
 
-from fastapi import FastAPI, WebSocket, HTTPException, Depends, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.responses import JSONResponse, HTMLResponse
-from fastapi.responses import FileResponse
 import asyncio
 import json
 import requests
 from datetime import datetime
-from typing import Optional, Dict, List
 import logging
 from pathlib import Path
-from glob import glob
 import os
 import secrets
 
 # Logging setup
 logging.basicConfig(
-    level=logging.INFO,
+ level = logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
 # Import bot connector if available
 try:
-    from bot_api_connector import bot_connector
     logger.info("? bot_api_connector imported successfully")
 except ImportError:
     logger.warning("?? bot_api_connector not found - using fallback cache mode")
-    bot_connector = None
+ bot_connector = None
 
 # Create FastAPI app with UTF-8 JSON encoding
 app = FastAPI(
@@ -44,45 +36,50 @@ app = FastAPI(
 )
 
 # Configure default JSON encoder for UTF-8
-from starlette.responses import JSONResponse as StarletteJSONResponse
 
 class UTF8JSONResponse(StarletteJSONResponse):
-    def render(self, content) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=None,
+ def render(self, content) -> bytes:
+ return json.dumps(
+ content,
+ ensure_ascii = False,
+ allow_nan = False,
+ indent = None,
             separators=(",", ":")
         ).encode("utf-8")
 
 # Override default JSONResponse
 app.default_response_class = UTF8JSONResponse
 
-# Basic Auth ¼³Á¤ (¼±ÅÃÀû)
-# È¯°æº¯¼ö·Î È°¼ºÈ­: MONITORING_AUTH_ENABLED=true
-# È¯°æº¯¼ö·Î ID/PW ¼³Á¤: MONITORING_AUTH_USER, MONITORING_AUTH_PASSWORD
+# Basic Auth ì„¤ì • (ì„ íƒì )
+# í™˜ê²½ë³€ìˆ˜ë¡œ í™œì„±í™”: MONITORING_AUTH_ENABLED = true
+# í™˜ê²½ë³€ìˆ˜ë¡œ ID/PW ì„¤ì •: MONITORING_AUTH_USER, MONITORING_AUTH_PASSWORD
 _auth_enabled = os.environ.get("MONITORING_AUTH_ENABLED", "false").lower() == "true"
 _auth_user = os.environ.get("MONITORING_AUTH_USER", "admin")
-_auth_password = os.environ.get("MONITORING_AUTH_PASSWORD", "admin123")
+# Get auth credential from environment variable (avoid hardcoding)
+_auth_cred = os.environ.get("MONITORING_AUTH_PASSWORD", None)
+if _auth_cred is None:
+    import warnings
+    warnings.warn("MONITORING_AUTH_PASSWORD environment variable not set. Please set it for production use.")
+    _auth_cred = ""  # Empty string - must be set via MONITORING_AUTH_PASSWORD environment variable
+_auth_password = _auth_cred  # Alias for backward compatibility
 
 security = HTTPBasic()
 
 def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
-    """Basic Auth ÀÎÁõ °ËÁõ"""
-    if not _auth_enabled:
-        return True  # ÀÎÁõ ºñÈ°¼ºÈ­ ½Ã Ç×»ó Åë°ú
-    
-    correct_username = secrets.compare_digest(credentials.username, _auth_user)
-    correct_password = secrets.compare_digest(credentials.password, _auth_password)
-    
-    if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+    """Basic Auth ì¸ì¦ ê²€ì¦"""
+ if not _auth_enabled:
+ return True # ì¸ì¦ ë¹„í™œì„±í™” ì‹œ í•­ìƒ í†µê³¼
+
+ correct_username = secrets.compare_digest(credentials.username, _auth_user)
+ correct_password = secrets.compare_digest(credentials.password, _auth_password)
+
+ if not (correct_username and correct_password):
+ raise HTTPException(
+ status_code = status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Basic"},
-        )
-    return True
+ )
+ return True
 
 # Add CORS middleware
 # Configurable CORS: MONITORING_ALLOWED_ORIGINS (comma-separated)
@@ -90,54 +87,54 @@ _origins_env = os.environ.get("MONITORING_ALLOWED_ORIGINS")
 if _origins_env:
     _allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
 else:
-    # Safer defaults limited to local dev
-    # Android ¿¡¹Ä·¹ÀÌÅÍ Á¢±Ù Çã¿ë (10.0.2.2´Â ¿¡¹Ä·¹ÀÌÅÍÀÇ localhost)
-    _allowed_origins = [
+ # Safer defaults limited to local dev
+ # Android ì—ë®¬ë ˆì´í„° ì ‘ê·¼ í—ˆìš© (10.0.2.2ëŠ” ì—ë®¬ë ˆì´í„°ì˜ localhost)
+ _allowed_origins = [
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "http://10.0.2.2:8000",  # Android ¿¡¹Ä·¹ÀÌÅÍ
-    ]
-    
-    # Ngrok µµ¸ÞÀÎ ÀÚµ¿ Ãß°¡ (µ¿Àû)
-    try:
-        ngrok_url_file = Path(__file__).parent / ".ngrok_url.txt"
-        if ngrok_url_file.exists():
-            with open(ngrok_url_file, 'r', encoding='utf-8') as f:
-                ngrok_url = f.read().strip()
-                if ngrok_url:
-                    _allowed_origins.append(ngrok_url)
-                    logger.info(f"Ngrok URL added: {ngrok_url}")
-    except Exception:
-        pass  # Ngrok URL ÆÄÀÏÀÌ ¾ø¾îµµ °è¼Ó ÁøÇà
+        "http://10.0.2.2:8000",  # Android ì—ë®¬ë ˆì´í„°
+ ]
 
-# CORS º¸¾È °­È­: °³¹ß È¯°æ¿¡¼­´Â Á¦ÇÑÀû, ÇÁ·Î´ö¼Ç¿¡¼­´Â ´õ ¾ö°ÝÇÏ°Ô
+ # Ngrok ë„ë©”ì¸ ìžë™ ì¶”ê°€ (ë™ì )
+ try:
+        ngrok_url_file = Path(__file__).parent / ".ngrok_url.txt"
+ if ngrok_url_file.exists():
+            with open(ngrok_url_file, 'r', encoding='utf-8') as f:
+ ngrok_url = f.read().strip()
+ if ngrok_url:
+ _allowed_origins.append(ngrok_url)
+                    logger.info(f"Ngrok URL added: {ngrok_url}")
+ except Exception:
+ pass # Ngrok URL íŒŒì¼ì´ ì—†ì–´ë„ ê³„ì† ì§„í–‰
+
+# CORS ë³´ì•ˆ ê°•í™”: ê°œë°œ í™˜ê²½ì—ì„œëŠ” ì œí•œì , í”„ë¡œë•ì…˜ì—ì„œëŠ” ë” ì—„ê²©í•˜ê²Œ
 _is_production = os.environ.get("MONITORING_PRODUCTION", "false").lower() == "true"
 
 if _is_production:
-    # ÇÁ·Î´ö¼Ç: ´õ ¾ö°ÝÇÑ CORS ¼³Á¤
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=_allowed_origins,  # ¸í½ÃÀûÀ¸·Î Çã¿ëµÈ origin¸¸
-        allow_credentials=True,
-        allow_methods=["GET", "POST"],  # ÇÊ¿äÇÑ ¸Þ¼­µå¸¸
-        allow_headers=["Content-Type", "Authorization"],  # ÇÊ¿äÇÑ Çì´õ¸¸
-    )
-    logger.info("? ÇÁ·Î´ö¼Ç ¸ðµå: ¾ö°ÝÇÑ CORS ¼³Á¤ Àû¿ë")
+ # í”„ë¡œë•ì…˜: ë” ì—„ê²©í•œ CORS ì„¤ì •
+ app.add_middleware(
+ CORSMiddleware,
+ allow_origins = _allowed_origins, # ëª…ì‹œì ìœ¼ë¡œ í—ˆìš©ëœ originë§Œ
+ allow_credentials = True,
+        allow_methods=["GET", "POST"],  # í•„ìš”í•œ ë©”ì„œë“œë§Œ
+        allow_headers=["Content-Type", "Authorization"],  # í•„ìš”í•œ í—¤ë”ë§Œ
+ )
+    logger.info("? í”„ë¡œë•ì…˜ ëª¨ë“œ: ì—„ê²©í•œ CORS ì„¤ì • ì ìš©")
 else:
-    # °³¹ß È¯°æ: ´õ °ü´ëÇÑ ¼³Á¤ (°³¹ß ÆíÀÇ¼º)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=_allowed_origins,
-        allow_credentials=True,
+ # ê°œë°œ í™˜ê²½: ë” ê´€ëŒ€í•œ ì„¤ì • (ê°œë°œ íŽ¸ì˜ì„±)
+ app.add_middleware(
+ CORSMiddleware,
+ allow_origins = _allowed_origins,
+ allow_credentials = True,
         allow_methods=["*"],
         allow_headers=["*"],
-    )
-    logger.info("? °³¹ß ¸ðµå: °ü´ëÇÑ CORS ¼³Á¤ Àû¿ë")
+ )
+    logger.info("? ê°œë°œ ëª¨ë“œ: ê´€ëŒ€í•œ CORS ì„¤ì • ì ìš©")
 
 if _auth_enabled:
-    logger.info(f"? Basic Auth È°¼ºÈ­µÊ (»ç¿ëÀÚ: {_auth_user})")
+    logger.info(f"? Basic Auth í™œì„±í™”ë¨ (ì‚¬ìš©ìž: {_auth_user})")
 else:
-    logger.warning("?? Basic Auth ºñÈ°¼ºÈ­µÊ - º¸¾È À§Çè °¡´É")
+    logger.warning("?? Basic Auth ë¹„í™œì„±í™”ë¨ - ë³´ì•ˆ ìœ„í—˜ ê°€ëŠ¥")
 
 # Game state cache (will be updated by bot connector)
 game_state_cache = {
@@ -153,7 +150,7 @@ game_state_cache = {
         "roaches": 0,
         "hydralisks": 0,
         "queens": 2
-    },
+ },
     "threat_level": "NONE",
     "strategy_mode": "OPENING",
     "map_name": "AbyssalReefLE",
@@ -185,7 +182,7 @@ learning_progress_cache = {
         {"time": "09:45:32", "message": "Episode 428 completed"},
         {"time": "09:44:18", "message": "Loss decreased to 0.0342"},
         {"time": "09:43:05", "message": "Model checkpoint saved"}
-    ]
+ ]
 }
 
 # Bot config cache
@@ -203,11 +200,10 @@ connected_clients: List[WebSocket] = []
 # -----------------------------
 # Shared data loading helpers
 # -----------------------------
-from monitoring_utils import (
-    get_base_dir,
-    load_json as _load_json,
-    find_latest_instance_status as _find_latest_instance_status,
-    load_training_stats as _load_training_stats,
+ get_base_dir,
+ load_json as _load_json,
+ find_latest_instance_status as _find_latest_instance_status,
+ load_training_stats as _load_training_stats,
 )
 
 # ============================================================================
@@ -217,7 +213,7 @@ from monitoring_utils import (
 @app.get("/")
 async def root():
     """API root endpoint"""
-    return {
+ return {
         "message": "SC2 AI Dashboard API",
         "version": "1.0.0",
         "docs": "/docs",
@@ -228,91 +224,91 @@ async def root():
             "bot_config": "/api/bot-config",
             "control": "/api/control",
             "health": "/health"
-        }
-    }
+ }
+ }
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {
+ return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
-    }
+ }
 
 @app.get("/api/ngrok-url")
 async def get_ngrok_url():
     """Get current ngrok tunnel URL"""
-    try:
-        # 1. Ngrok API¿¡¼­ ½Ãµµ
-        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
-        if response.status_code == 200:
-            data = response.json()
+ try:
+ # 1. Ngrok APIì—ì„œ ì‹œë„
+        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout = 5)
+ if response.status_code == 200:
+ data = response.json()
             tunnels = data.get("tunnels", [])
-            if tunnels:
-                # HTTPS ÅÍ³Î ¿ì¼± ¼±ÅÃ
-                for tunnel in tunnels:
+ if tunnels:
+ # HTTPS í„°ë„ ìš°ì„  ì„ íƒ
+ for tunnel in tunnels:
                     if tunnel.get("proto") == "https":
-                        return {
+ return {
                             "url": tunnel.get("public_url", ""),
                             "status": "active",
                             "source": "ngrok_api"
-                        }
-                # HTTPS°¡ ¾øÀ¸¸é HTTP ¼±ÅÃ
-                if tunnels:
-                    return {
+ }
+ # HTTPSê°€ ì—†ìœ¼ë©´ HTTP ì„ íƒ
+ if tunnels:
+ return {
                         "url": tunnels[0].get("public_url", ""),
                         "status": "active",
                         "source": "ngrok_api"
-                    }
-    except Exception:
-        pass
-    
-    # 2. ÀúÀåµÈ ÆÄÀÏ¿¡¼­ ½Ãµµ
-    try:
+ }
+ except Exception:
+ pass
+
+ # 2. ì €ìž¥ëœ íŒŒì¼ì—ì„œ ì‹œë„
+ try:
         url_file = Path(__file__).parent / ".ngrok_url.txt"
-        if url_file.exists():
+ if url_file.exists():
             with open(url_file, 'r', encoding='utf-8') as f:
-                url = f.read().strip()
-                if url:
-                    return {
+ url = f.read().strip()
+ if url:
+ return {
                         "url": url,
                         "status": "cached",
                         "source": "file"
-                    }
-    except Exception:
-        pass
-    
-    return {
+ }
+ except Exception:
+ pass
+
+ return {
         "url": "",
         "status": "not_found",
         "source": "none"
-    }
+ }
 
 @app.get("/api/game-state", dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
 async def get_game_state():
     """Get current game state"""
-    # Helper function to get win rate from training stats
-    def _get_win_rate(base_dir: Path) -> float:
+ # Helper function to get win rate from training stats
+ def _get_win_rate(base_dir: Path) -> float:
         """Get win rate from training stats"""
-        try:
+ try:
             stats_file = base_dir / "data" / "training_stats.json"
-            if stats_file.exists():
+ if stats_file.exists():
                 with open(stats_file, 'r', encoding='utf-8') as f:
-                    stats = json.load(f)
+ stats = json.load(f)
                     wins = stats.get("wins", 0)
                     total = stats.get("total_games", 0)
-                    if total > 0:
-                        return (wins / total) * 100.0
-        except Exception:
-            pass
-        return 0.0
-    
-    if bot_connector:
-        state = bot_connector.get_game_state()
-        if state:
-            base_dir = get_base_dir()
-            win_rate = _get_win_rate(base_dir)
-            return {
+ if total > 0:
+ return (wins / total) * 100.0
+ except Exception:
+ pass
+ return 0.0
+
+ if bot_connector:
+ state = bot_connector.get_game_state()
+ if state:
+ base_dir = get_base_dir()
+ win_rate = _get_win_rate(base_dir)
+ return {
                 "current_frame": state.current_frame,
                 "game_status": state.game_status,
                 "is_running": state.is_running,
@@ -324,17 +320,17 @@ async def get_game_state():
                 "threat_level": state.threat_level,
                 "strategy_mode": state.strategy_mode,
                 "map_name": state.map_name,
-                "win_rate": win_rate,  # Android ¾Û¿ë
-                "winRate": win_rate,   # camelCase ¹öÀüµµ Á¦°ø
+                "win_rate": win_rate,  # Android ì•±ìš©
+                "winRate": win_rate,   # camelCase ë²„ì „ë„ ì œê³µ
                 "timestamp": state.timestamp
-            }
-    # Fallback: read from JSON files in current working directory
-    base_dir = get_base_dir()
-    status = _find_latest_instance_status(base_dir)
-    win_rate = _get_win_rate(base_dir)
-    if status:
+ }
+ # Fallback: read from JSON files in current working directory
+ base_dir = get_base_dir()
+ status = _find_latest_instance_status(base_dir)
+ win_rate = _get_win_rate(base_dir)
+ if status:
         src = status.get("game_state", status)
-        return {
+ return {
             "current_frame": src.get("current_frame", src.get("frame", game_state_cache["current_frame"])),
             "game_status": src.get("game_status", game_state_cache["game_status"]),
             "is_running": src.get("is_running", game_state_cache["is_running"]),
@@ -346,21 +342,21 @@ async def get_game_state():
             "threat_level": src.get("threat_level", game_state_cache["threat_level"]),
             "strategy_mode": src.get("strategy_mode", game_state_cache["strategy_mode"]),
             "map_name": src.get("map_name", game_state_cache["map_name"]),
-            "win_rate": src.get("win_rate", win_rate),  # Android ¾Û¿ë
-            "winRate": src.get("win_rate", src.get("winRate", win_rate)),  # camelCase ¹öÀüµµ Á¦°ø
+            "win_rate": src.get("win_rate", win_rate),  # Android ì•±ìš©
+            "winRate": src.get("win_rate", src.get("winRate", win_rate)),  # camelCase ë²„ì „ë„ ì œê³µ
             "timestamp": datetime.now().isoformat()
-        }
-    # Fallback to cache with win_rate
-    result = game_state_cache.copy()
+ }
+ # Fallback to cache with win_rate
+ result = game_state_cache.copy()
     result["win_rate"] = win_rate
     result["winRate"] = win_rate
-    return result
+ return result
 
 @app.post("/api/game-state/update")
 async def update_game_state(data: dict):
     """Update game state (internal)"""
-    global game_state_cache
-    game_state_cache.update(data)
+ global game_state_cache
+ game_state_cache.update(data)
     game_state_cache["last_update"] = datetime.now().isoformat()
     logger.info(f"Game state updated: frame {game_state_cache['current_frame']}")
     return {"status": "updated"}
@@ -368,10 +364,10 @@ async def update_game_state(data: dict):
 @app.get("/api/combat-stats")
 async def get_combat_stats():
     """Get combat statistics"""
-    if bot_connector:
-        stats = bot_connector.get_combat_stats()
-        if stats:
-            return {
+ if bot_connector:
+ stats = bot_connector.get_combat_stats()
+ if stats:
+ return {
                 "wins": stats.wins,
                 "losses": stats.losses,
                 "win_rate": stats.win_rate,
@@ -379,14 +375,14 @@ async def get_combat_stats():
                 "avg_army_supply": stats.avg_army_supply,
                 "enemy_killed_supply": stats.enemy_killed_supply,
                 "supply_lost": stats.supply_lost
-            }
-    base_dir = get_base_dir()
-    ts = _load_training_stats(base_dir)
-    if ts:
+ }
+ base_dir = get_base_dir()
+ ts = _load_training_stats(base_dir)
+ if ts:
         wins = ts.get("wins", combat_stats_cache["wins"])
         losses = ts.get("losses", combat_stats_cache["losses"])
-        total = wins + losses
-        return {
+ total = wins + losses
+ return {
             "wins": wins,
             "losses": losses,
             "win_rate": ts.get("win_rate", round((wins / max(1, total)) * 100, 2) if total > 0 else combat_stats_cache["win_rate"]),
@@ -394,15 +390,15 @@ async def get_combat_stats():
             "avg_army_supply": ts.get("average_army_supply", combat_stats_cache["avg_army_supply"]),
             "enemy_killed_supply": ts.get("enemy_killed_supply", combat_stats_cache["enemy_killed_supply"]),
             "supply_lost": ts.get("supply_lost", combat_stats_cache["supply_lost"])
-        }
-    return combat_stats_cache
+ }
+ return combat_stats_cache
 
 @app.get("/api/combat-stats/recent")
 async def get_recent_battles(limit: int = 10):
     """Get recent battle records"""
-    if bot_connector:
-        stats = bot_connector.get_combat_stats()
-        if stats:
+ if bot_connector:
+ stats = bot_connector.get_combat_stats()
+ if stats:
             return {"recent_battles": []}
     return {"recent_battles": combat_stats_cache.get("recent_battles", [])}
 
@@ -415,10 +411,10 @@ async def record_battle(result: dict):
 @app.get("/api/learning-progress", dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
 async def get_learning_progress():
     """Get learning progress"""
-    if bot_connector:
-        progress = bot_connector.get_learning_progress()
-        if progress:
-            return {
+ if bot_connector:
+ progress = bot_connector.get_learning_progress()
+ if progress:
+ return {
                 "episode": progress.episode,
                 "total_episodes": progress.total_episodes,
                 "progress_percent": progress.progress_percent,
@@ -427,11 +423,11 @@ async def get_learning_progress():
                 "training_hours": progress.training_hours,
                 "win_rate_trend": progress.win_rate_trend,
                 "training_logs": progress.training_logs
-            }
-    base_dir = get_base_dir()
-    ts = _load_training_stats(base_dir)
-    if ts:
-        return {
+ }
+ base_dir = get_base_dir()
+ ts = _load_training_stats(base_dir)
+ if ts:
+ return {
             "episode": ts.get("episode", learning_progress_cache["episode"]),
             "total_episodes": ts.get("total_episodes", learning_progress_cache["total_episodes"]),
             "progress_percent": ts.get("progress_percent", learning_progress_cache["progress_percent"]),
@@ -440,38 +436,38 @@ async def get_learning_progress():
             "training_hours": ts.get("training_hours", learning_progress_cache["training_hours"]),
             "win_rate_trend": ts.get("win_rate_trend", learning_progress_cache["win_rate_trend"]),
             "training_logs": ts.get("training_logs", learning_progress_cache.get("training_logs", []))
-        }
-    return learning_progress_cache
+ }
+ return learning_progress_cache
 
 @app.post("/api/learning-progress/update")
 async def update_learning_progress(data: dict):
     """Update learning progress"""
-    global learning_progress_cache
-    learning_progress_cache.update(data)
+ global learning_progress_cache
+ learning_progress_cache.update(data)
     logger.info(f"Learning progress updated: {data}")
     return {"status": "updated"}
 
 @app.get("/api/bot-config")
 async def get_bot_config():
     """Get bot configuration"""
-    if bot_connector:
-        config = bot_connector.get_bot_config()
-        if config:
-            return {
+ if bot_connector:
+ config = bot_connector.get_bot_config()
+ if config:
+ return {
                 "strategy_mode": config.strategy_mode,
                 "auto_mode": config.auto_mode,
                 "aggressive_mode": config.aggressive_mode,
                 "build_order": config.build_order,
                 "max_army_supply": config.max_army_supply,
                 "defense_threshold": config.defense_threshold
-            }
-    return bot_config_cache
+ }
+ return bot_config_cache
 
 @app.post("/api/bot-config/update")
 async def update_bot_config(data: dict):
     """Update bot configuration"""
-    global bot_config_cache
-    bot_config_cache.update(data)
+ global bot_config_cache
+ bot_config_cache.update(data)
     logger.info(f"Bot config updated: {data}")
     return {"status": "updated"}
 
@@ -482,20 +478,20 @@ async def send_control_command(command: dict):
 
     if cmd_type == "strategy":
         strategy = command.get("value", "OPENING")
-        if bot_connector:
-            bot_connector.set_strategy_mode(strategy)
+ if bot_connector:
+ bot_connector.set_strategy_mode(strategy)
         logger.info(f"Strategy changed to: {strategy}")
         return {"status": "success", "message": f"Strategy changed to {strategy}"}
 
     elif cmd_type == "play":
-        if bot_connector:
-            bot_connector.resume_game()
+ if bot_connector:
+ bot_connector.resume_game()
         logger.info("Game resumed")
         return {"status": "success", "message": "Game resumed"}
 
     elif cmd_type == "pause":
-        if bot_connector:
-            bot_connector.pause_game()
+ if bot_connector:
+ bot_connector.pause_game()
         logger.info("Game paused")
         return {"status": "success", "message": "Game paused"}
 
@@ -503,58 +499,58 @@ async def send_control_command(command: dict):
         logger.info("Game stopped")
         return {"status": "success", "message": "Game stopped"}
 
-    else:
-        raise HTTPException(status_code=400, detail=f"Unknown command type: {cmd_type}")
+ else:
+        raise HTTPException(status_code = 400, detail = f"Unknown command type: {cmd_type}")
 
 @app.websocket("/ws/game-state")
 async def websocket_game_state(websocket: WebSocket):
     """WebSocket endpoint for real-time game state updates.
-    Sends messages in the same structure as dashboard.py broadcast:
+ Sends messages in the same structure as dashboard.py broadcast:
     { type: 'game_status', game_state: {...}, units: {...}, timestamp: 'ISO' }
     """
-    await websocket.accept()
-    connected_clients.append(websocket)
-    try:
-        while True:
-            state = await get_game_state()
+ await websocket.accept()
+ connected_clients.append(websocket)
+ try:
+ while True:
+ state = await get_game_state()
             units = state.get("units") or state.get("unit_count") or {}
-            message = {
+ message = {
                 "type": "game_status",
                 "game_state": state,
                 "units": units,
                 "timestamp": datetime.now().isoformat()
-            }
-            await websocket.send_json(message)
-            await asyncio.sleep(0.5)
-    except Exception as e:
+ }
+ await websocket.send_json(message)
+ await asyncio.sleep(0.5)
+ except Exception as e:
         logger.error(f"WebSocket error: {e}")
-    finally:
-        connected_clients.remove(websocket)
+ finally:
+ connected_clients.remove(websocket)
 
 # Backward-compatible alias for existing frontend (ws://.../ws/game-status)
 @app.websocket("/ws/game-status")
 async def websocket_game_status_alias(websocket: WebSocket):
-    await websocket_game_state(websocket)
+ await websocket_game_state(websocket)
 
 # Simple UI route to serve dashboard.html via FastAPI
-@app.get("/ui", response_class=HTMLResponse)
+@app.get("/ui", response_class = HTMLResponse)
 async def serve_dashboard_ui():
     html_path = Path(__file__).parent / "dashboard.html"
-    if html_path.exists():
+ if html_path.exists():
         with html_path.open("r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, media_type="text/html; charset=utf-8")
-    raise HTTPException(status_code=404, detail="dashboard.html not found")
+ content = f.read()
+        return HTMLResponse(content = content, media_type="text/html; charset = utf-8")
+    raise HTTPException(status_code = 404, detail="dashboard.html not found")
 
 # ============================================================================
 # Server startup
 # ============================================================================
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        app,
+ import uvicorn
+ uvicorn.run(
+ app,
         host="0.0.0.0",
-        port=8001,
+ port = 8001,
         log_level="info"
-    )
+ )

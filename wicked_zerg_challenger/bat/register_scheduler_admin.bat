@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 :: Run register_cleanup_scheduler.ps1 with Administrator privileges
 title Register Cleanup Scheduler (Admin Mode)
 color 0B

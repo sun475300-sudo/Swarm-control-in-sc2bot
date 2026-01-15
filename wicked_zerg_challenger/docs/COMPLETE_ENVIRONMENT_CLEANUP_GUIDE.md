@@ -116,7 +116,7 @@ Remove-Item Env:\GOOGLE_API_KEY -ErrorAction SilentlyContinue
 **변경 전**:
 ```yaml
 env:
-  GEMINI_API_KEY: AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+  GEMINI_API_KEY: AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -140,7 +140,7 @@ env:
 **변경 전**:
 ```yaml
 variables:
-  GEMINI_API_KEY: AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+  GEMINI_API_KEY: AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -165,7 +165,7 @@ variables:
 **변경 전**:
 ```yaml
 variables:
-  GEMINI_API_KEY: AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+  GEMINI_API_KEY: AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -190,7 +190,7 @@ variables:
 
 **변경 전**:
 ```dockerfile
-ENV GEMINI_API_KEY=AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+ENV GEMINI_API_KEY=AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -213,7 +213,7 @@ docker run -e GEMINI_API_KEY="YOUR_NEW_KEY" your-image
 ```yaml
 env:
   - name: GEMINI_API_KEY
-    value: AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+    value: AIzaSyC_Ci...MIIo
 ```
 
 **변경 후**:
@@ -268,7 +268,7 @@ $env:GEMINI_API_KEY
 
 ```powershell
 # 배치 파일에서 키 검색
-Select-String -Path ".\bat\*.bat" -Pattern "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+Select-String -Path ".\bat\*.bat" -Pattern "AIzaSyC_Ci...MIIo"
 ```
 
 **예상 결과**: 검색 결과 없음
@@ -279,10 +279,10 @@ Select-String -Path ".\bat\*.bat" -Pattern "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGM
 
 ```powershell
 # GitHub Actions 확인
-Select-String -Path ".\.github\workflows\*.yml" -Pattern "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+Select-String -Path ".\.github\workflows\*.yml" -Pattern "AIzaSyC_Ci...MIIo"
 
 # Dockerfile 확인
-Select-String -Path ".\Dockerfile*" -Pattern "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"
+Select-String -Path ".\Dockerfile*" -Pattern "AIzaSyC_Ci...MIIo"
 ```
 
 **예상 결과**: 검색 결과 없음 (또는 `${{ secrets.GEMINI_API_KEY }}` 등으로 변경됨)

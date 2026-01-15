@@ -13,7 +13,7 @@
 
 **키 값**:
 ```
-AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+AIzaSyC_Ci...MIIo
 ```
 
 **형식 검증**:
@@ -65,7 +65,7 @@ echo %GEMINI_API_KEY%
 
 ```powershell
 # secrets/ 폴더에 저장
-echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" > secrets\gemini_api.txt
+echo "AIzaSyC_Ci...MIIo" > secrets\gemini_api.txt
 ```
 
 ---
@@ -80,7 +80,7 @@ echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" > secrets\gemini_api.txt
 ### 권장 조치
 1. **파일로 저장** (영구 보관)
    ```powershell
-   echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" > secrets\gemini_api.txt
+   echo "AIzaSyC_Ci...MIIo" > secrets\gemini_api.txt
    ```
 
 2. **환경 변수 유지** (선택적)

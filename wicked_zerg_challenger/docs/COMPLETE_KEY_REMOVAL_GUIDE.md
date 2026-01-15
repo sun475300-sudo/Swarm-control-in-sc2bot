@@ -90,8 +90,8 @@ $newContent | Set-Content .env
 ### 3. 문서 파일에서 예제 키 마스킹
 
 **제거할 키**:
-- `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
-- `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+- `AIzaSyC_Ci...MIIo`
+- `AIzaSyD-c6...UZrc`
 
 **마스킹 형식**: `AIzaSyC_Ci...MIIo`
 
@@ -104,7 +104,7 @@ $newContent | Set-Content .env
 **대상 파일**: `.py`, `.kt`, `.java`, `.js`, `.ts`
 
 **변경 내용**:
-- `"AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo"` → `"YOUR_API_KEY_HERE"`
+- `"AIzaSyC_Ci...MIIo"` → `"YOUR_API_KEY_HERE"`
 - 환경 변수나 `load_api_key()` 함수 사용 권장
 
 ---
@@ -121,7 +121,7 @@ pip install git-filter-repo
 git branch backup-before-key-removal
 
 # 3. 키 제거
-git filter-repo --replace-text <(echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo==>REDACTED")
+git filter-repo --replace-text <(echo "AIzaSyC_Ci...MIIo==>REDACTED")
 
 # 4. 원격 저장소에 강제 푸시 (주의!)
 git push origin --force --all
@@ -132,8 +132,8 @@ git push origin --force --tags
 
 ```bash
 # 1. keys.txt 파일 생성
-echo "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo==>REDACTED" > keys.txt
-echo "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc==>REDACTED" >> keys.txt
+echo "AIzaSyC_Ci...MIIo==>REDACTED" > keys.txt
+echo "AIzaSyD-c6...UZrc==>REDACTED" >> keys.txt
 
 # 2. BFG 실행
 java -jar bfg.jar --replace-text keys.txt
@@ -170,7 +170,7 @@ $env:GOOGLE_API_KEY
 
 ```powershell
 # 프로젝트 파일에서 검색
-Select-String -Path ".\*" -Pattern "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" -Recurse | 
+Select-String -Path ".\*" -Pattern "AIzaSyC_Ci...MIIo" -Recurse | 
     Where-Object { $_.Path -notmatch "\.git|node_modules|venv|secrets|api_keys" }
 ```
 
@@ -182,7 +182,7 @@ Select-String -Path ".\*" -Pattern "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" -Re
 
 ```bash
 # Git history에서 검색
-git log -p --all -S "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo" --source --all
+git log -p --all -S "AIzaSyC_Ci...MIIo" --source --all
 ```
 
 **예상 결과**: 검색 결과 없음 (또는 `REDACTED`로 마스킹됨)
