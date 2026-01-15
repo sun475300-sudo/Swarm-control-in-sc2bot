@@ -11,7 +11,7 @@ These algorithms are directly applicable to real-world drone swarm control.
 """
 
 import math
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Dict, Any
 from dataclasses import dataclass
 import numpy as np
 
