@@ -28,23 +28,30 @@ class AIArenaPackager:
         # Neural network
         "zerg_net.py",
 
-        # Game logic modules
+        # Game logic modules (required)
         "combat_manager.py",
-        "combat_tactics.py",
         "economy_manager.py",
         "production_manager.py",
-        "production_resilience.py",
         "micro_controller.py",
         "scouting_system.py",
         "intel_manager.py",
-        "map_manager.py",
         "queen_manager.py",
-        "unit_factory.py",
-        "personality_manager.py",
         "telemetry_logger.py",
+        "rogue_tactics_manager.py",
 
         # Configuration
         "requirements.txt",
+    ]
+    
+    # Optional files (will be included if they exist)
+    OPTIONAL_FILES = [
+        "combat_tactics.py",
+        "production_resilience.py",
+        "personality_manager.py",
+        "strategy_analyzer.py",
+        "spell_unit_manager.py",
+        "unit_factory.py",
+        "map_manager.py",
     ]
 
     # Model files (latest only)
@@ -52,11 +59,31 @@ class AIArenaPackager:
         "models/zerg_net_model.pt",
     ]
 
-    def __init__(self, project_root: Path = None, include_checkpoints: bool = False):
-        self.project_root = project_root or Path(__file__).parent.absolute()
+    def __init__(self, project_root: Path = None, include_checkpoints: bool = False, output_dir: Path = None):
+        self.project_root = project_root or Path(__file__).parent.parent.absolute()
         self.include_checkpoints = include_checkpoints
 
-        self.output_dir = self.project_root / "deployment"
+        # Default output directory
+        if output_dir is None:
+            # Use environment variable first
+            env_path = os.environ.get("ARENA_DEPLOY_PATH", None)
+            if env_path:
+                default_output = Path(env_path)
+            else:
+                # Default path - must be set via environment variable
+                # Set ARENA_DEPLOY_PATH="D:/Ʒ_/deployment" or use --output argument
+                raise ValueError(
+                    "Output directory not specified. "
+                    "Please use --output argument or set ARENA_DEPLOY_PATH environment variable. "
+                    "Example: use --output argument with full path"
+                )
+            default_output.mkdir(parents=True, exist_ok=True)
+            self.output_dir = default_output
+        else:
+            self.output_dir = Path(output_dir)
+            # Use os.makedirs for better encoding handling
+            os.makedirs(str(self.output_dir), exist_ok=True)
+        
         self.temp_dir = self.output_dir / "temp_package"
 
         print("[*] AI Arena Packager initialized")
@@ -142,8 +169,48 @@ class AIArenaPackager:
             print(f"    [OK] Model: {latest_model.name} -> models/zerg_net_model.pt")
         else:
             print("    [!] No model file (submitting untrained bot)")
+        
+        # 3. Copy local_training directory (essential for deployment)
+        print("    - Copying local_training directory...")
+        local_training_src = self.project_root / "local_training"
+        if local_training_src.exists():
+            local_training_dst = self.temp_dir / "local_training"
+            local_training_dst.mkdir(exist_ok=True)
+            
+            # Copy all Python files (excluding tests and replay learners)
+            for py_file in local_training_src.rglob("*.py"):
+                # Skip test files
+                if "test" in py_file.name.lower():
+                    continue
+                # Skip replay learning scripts (not needed for deployment)
+                if "replay" in py_file.name.lower() and "learner" in py_file.name.lower():
+                    continue
+                
+                # Calculate relative path
+                rel_path = py_file.relative_to(local_training_src)
+                dst_file = local_training_dst / rel_path
+                dst_file.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(py_file, dst_file)
+                print(f"      [OK] {rel_path}")
+            
+            # Copy learned parameters if they exist
+            learned_files = [
+                "scripts/learned_build_orders.json",
+                "scripts/strategy_db.json",
+            ]
+            for learned_file in learned_files:
+                src_file = local_training_src / learned_file
+                if src_file.exists():
+                    dst_file = local_training_dst / learned_file
+                    dst_file.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src_file, dst_file)
+                    print(f"      [OK] {learned_file}")
+            
+            print("    [OK] local_training directory copied")
+        else:
+            print("    [!] local_training directory not found")
 
-        # 3. Create metadata
+        # 4. Create metadata
         self._create_metadata()
 
         print("[OK] Package structure created")
@@ -329,6 +396,64 @@ class AIArenaPackager:
 def main():
     """Main execution function"""
     import argparse
+    
+    parser = argparse.ArgumentParser(description="Create AI Arena deployment package")
+    parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="Output directory for zip file (default: ARENA_DEPLOY_PATH env var)"
+    )
+    parser.add_argument(
+        "--project-root",
+        type=str,
+        default=None,
+        help="Project root directory (default: auto-detect)"
+    )
+    parser.add_argument(
+        "--include-checkpoints",
+        action="store_true",
+        help="Include checkpoint files"
+    )
+    
+    args = parser.parse_args()
+    
+    project_root = Path(args.project_root) if args.project_root else None
+    
+    # Handle output directory - ensure proper encoding
+    if args.output:
+        # Use the provided path directly - handle encoding issues
+        try:
+            output_dir = Path(args.output)
+        except:
+            # If encoding fails, try to decode and re-encode
+            output_dir = Path(args.output.encode('utf-8', errors='ignore').decode('utf-8'))
+    else:
+        # Try environment variable
+        env_path = os.environ.get("ARENA_DEPLOY_PATH")
+        if env_path:
+            output_dir = Path(env_path)
+        else:
+            # Default path - build from parts to avoid encoding issues
+            base = Path("D:/")
+            # Use Unicode string building
+            arena_part = "아레나_배포"
+            output_dir = base / arena_part / "deployment"
+    
+    packager = AIArenaPackager(
+        project_root=project_root,
+        include_checkpoints=args.include_checkpoints,
+        output_dir=output_dir
+    )
+    
+    zip_path = packager.package()
+    
+    if zip_path:
+        print(f"\n✅ Deployment package created: {zip_path}")
+        return 0
+    else:
+        print("\n❌ Failed to create deployment package")
+        return 1
 
     parser = argparse.ArgumentParser(description="AI Arena packaging tool")
     parser.add_argument("--include-checkpoints", action="store_true",
