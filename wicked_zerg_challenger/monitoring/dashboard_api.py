@@ -61,7 +61,6 @@ if _auth_cred is None:
     import warnings
     warnings.warn("MONITORING_AUTH_PASSWORD environment variable not set. Please set it for production use.")
     _auth_cred = ""  # Empty string - must be set via environment variable
-_auth_password = _auth_cred  # Alias for backward compatibility
 
 security = HTTPBasic()
 
@@ -70,10 +69,10 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
  if not _auth_enabled:
  return True # 인증 비활성화 시 항상 통과
 
- correct_username = secrets.compare_digest(credentials.username, _auth_user)
- correct_password = secrets.compare_digest(credentials.password, _auth_password)
+    correct_username = secrets.compare_digest(credentials.username, _auth_user)
+    correct_cred = secrets.compare_digest(credentials.password, _auth_cred)
 
- if not (correct_username and correct_password):
+    if not (correct_username and correct_cred):
  raise HTTPException(
  status_code = status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
