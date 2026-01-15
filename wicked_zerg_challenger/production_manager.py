@@ -41,6 +41,19 @@ except ImportError:
         logger.setLevel(logging.INFO)
 
 class ProductionManager:
+    async def _safe_train(self, unit, unit_type):
+        """Safely train a unit, handling both sync and async train() methods"""
+        try:
+            result = unit.train(unit_type)
+            # train() may return bool or coroutine
+            if hasattr(result, '__await__'):
+                await result
+            return True
+        except Exception as e:
+            current_iteration = getattr(self.bot, "iteration", 0)
+            if current_iteration % 200 == 0:
+                print(f"[WARNING] _safe_train error: {e}")
+            return False
     def __init__(self, bot: "WickedZergBotPro"):
         self.bot = bot
         self.config = Config()
@@ -930,13 +943,19 @@ class ProductionManager:
                 larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
                 if len(larva_list) > 0:
                     if pending_overlords == 0:
-                        await random.choice(larva_list).train(UnitTypeId.OVERLORD)
+                        result = random.choice(larva_list).train(UnitTypeId.OVERLORD)
+                        # train() may return bool or coroutine
+                        if hasattr(result, '__await__'):
+                            await result
                         print(f"[OVERLORD] Emergency production at {b.supply_left} supply left")
                         return True
                     elif pending_overlords == 1 and b.supply_left < 2:
                         # Double emergency: produce second overlord
                         if b.can_afford(UnitTypeId.OVERLORD) and len(larva_list) > 1:
-                            await random.choice(larva_list).train(UnitTypeId.OVERLORD)
+                            result = random.choice(larva_list).train(UnitTypeId.OVERLORD)
+                            # train() may return bool or coroutine
+                            if hasattr(result, '__await__'):
+                                await result
                         print(
                             f"[OVERLORD] Double emergency production at {b.supply_left} supply left"
                         )
@@ -968,7 +987,7 @@ class ProductionManager:
                     )
                     for _ in range(overlords_to_produce):
                         if b.can_afford(UnitTypeId.OVERLORD) and len(larva_list) > 0:
-                            await random.choice(larva_list).train(UnitTypeId.OVERLORD)
+                            await self._safe_train(random.choice(larva_list), UnitTypeId.OVERLORD)
                             if overlords_to_produce > 1:
                                 print(
                                     f"[OVERLORD] Predictive production: {overlords_to_produce} overlords (supply: {b.supply_left}/{b.supply_cap})"
@@ -996,7 +1015,7 @@ class ProductionManager:
             ):  # Excess minerals
                 if pending_overlords == 0:
                     if b.can_afford(UnitTypeId.OVERLORD):
-                        await random.choice(larva_list).train(UnitTypeId.OVERLORD)
+                        await self._safe_train(random.choice(larva_list), UnitTypeId.OVERLORD)
                         print(f"[OVERLORD] Proactive production (excess minerals: {b.minerals})")
                         return True
 
@@ -1265,22 +1284,28 @@ class ProductionManager:
             if hydra_dens and hydralisks < 15:
                 if b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
                     if larvae and len(larvae) > 0:
-                        await random.choice(larvae).train(UnitTypeId.HYDRALISK)
-                        return True
+                        larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+                        if len(larva_list) > 0:
+                            if await self._safe_train(random.choice(larva_list), UnitTypeId.HYDRALISK):
+                                return True
 
             roach_warrens = [s for s in b.structures(UnitTypeId.ROACHWARREN) if s.is_ready]
             if roach_warrens and roaches < 20:
                 if b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
                     if larvae and len(larvae) > 0:
-                        await random.choice(larvae).train(UnitTypeId.ROACH)
-                        return True
+                        larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+                        if len(larva_list) > 0:
+                            if await self._safe_train(random.choice(larva_list), UnitTypeId.ROACH):
+                                return True
 
             spawning_pools = [s for s in b.structures(UnitTypeId.SPAWNINGPOOL) if s.is_ready]
             if spawning_pools and zerglings < 40:
                 if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
                     if larvae and len(larvae) > 0:
-                        await random.choice(larvae).train(UnitTypeId.ZERGLING)
-                        return True
+                        larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+                        if len(larva_list) > 0:
+                            if await self._safe_train(random.choice(larva_list), UnitTypeId.ZERGLING):
+                                return True
 
         except Exception as e:
             current_iteration = getattr(b, "iteration", 0)
@@ -2200,8 +2225,8 @@ class ProductionManager:
                     # Convert larvae to list if needed
                     larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
                     if len(larva_list) > 0:
-                        await random.choice(larva_list).train(UnitTypeId.OVERLORD)
-                        return True
+                        if await self._safe_train(random.choice(larva_list), UnitTypeId.OVERLORD):
+                            return True
                 except Exception:
                     pass
             return False
@@ -2762,8 +2787,11 @@ class ProductionManager:
                 return False
 
             if b.can_afford(UnitTypeId.DRONE) and larvae and len(larvae) > 0:
-                await random.choice(larvae).train(UnitTypeId.DRONE)
-                return True
+                # Convert larvae to list if needed
+                larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+                if len(larva_list) > 0:
+                    if await self._safe_train(random.choice(larva_list), UnitTypeId.DRONE):
+                        return True
             # If can't afford, still return False but this will be checked every frame
             # The bot should prioritize getting 50 minerals for a drone above all else
             return False
@@ -2772,8 +2800,14 @@ class ProductionManager:
         # Ignore supply block if workers are critically low (produce overlord in parallel)
         if worker_count < 16:
             if b.can_afford(UnitTypeId.DRONE) and larvae and len(larvae) > 0:
-                await random.choice(larvae).train(UnitTypeId.DRONE)
-                return True
+                # Convert larvae to list if needed
+                larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+                if len(larva_list) > 0:
+                    result = random.choice(larva_list).train(UnitTypeId.DRONE)
+                    # train() may return bool or coroutine
+                    if hasattr(result, '__await__'):
+                        await result
+                    return True
             # If can't afford, skip supply check and return False (will try next frame)
             return False
 
@@ -2782,8 +2816,14 @@ class ProductionManager:
                 return False
 
             if b.can_afford(UnitTypeId.DRONE) and larvae and len(larvae) > 0:
-                await random.choice(larvae).train(UnitTypeId.DRONE)
-                return True
+                # Convert larvae to list if needed
+                larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+                if len(larva_list) > 0:
+                    result = random.choice(larva_list).train(UnitTypeId.DRONE)
+                    # train() may return bool or coroutine
+                    if hasattr(result, '__await__'):
+                        await result
+                    return True
 
         if worker_count >= self.config.MAX_WORKERS:
             return False
@@ -2795,7 +2835,13 @@ class ProductionManager:
             return False
 
         if b.can_afford(UnitTypeId.DRONE) and larvae and len(larvae) > 0:
-            await random.choice(larvae).train(UnitTypeId.DRONE)
+            # Convert larvae to list if needed
+            larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
+            if len(larva_list) > 0:
+                result = random.choice(larva_list).train(UnitTypeId.DRONE)
+                # train() may return bool or coroutine
+                if hasattr(result, '__await__'):
+                    await result
             return True
 
         return False
