@@ -49,13 +49,21 @@ echo ================================
 echo [STEP 1] Python Cache Clearing
 echo ================================
 echo [INFO] Clearing Python cache to ensure latest code is used...
-if exist __pycache__ (
-    rmdir /s /q __pycache__
-    echo [OK] Python cache cleared successfully
-) else (
-    echo [INFO] No Python cache found (already clean)
+REM Remove all __pycache__ directories recursively
+for /d /r . %%d in (__pycache__) do @if exist "%%d" (
+    echo [CLEAN] Removing %%d
+    rmdir /s /q "%%d" 2>nul
 )
-del /q *.pyc 2>nul
+REM Remove all .pyc files recursively
+for /r . %%f in (*.pyc) do @if exist "%%f" (
+    echo [CLEAN] Removing %%f
+    del /q "%%f" 2>nul
+)
+REM Remove .pyo files
+for /r . %%f in (*.pyo) do @if exist "%%f" (
+    echo [CLEAN] Removing %%f
+    del /q "%%f" 2>nul
+)
 echo [OK] Python cache cleanup complete
 echo.
 
