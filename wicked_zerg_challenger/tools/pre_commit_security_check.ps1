@@ -31,19 +31,20 @@ try {
     Write-Host ""
 
     # 검사할 패턴들 (하드코딩된 실제 키는 제외, 패턴만 사용)
+    # PowerShell에서 정규식 패턴의 대괄호를 배열로 해석하지 않도록 작은따옴표 사용
     $sensitivePatterns = @(
         # API 키 패턴 (일반적인 패턴만, 실제 키 예시 제외)
-        "AIzaSy[A-Za-z0-9_-]{35}",  # Google API Key
-        "sk-[A-Za-z0-9]{32,}",      # OpenAI API Key
-        "xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24,32}",  # Slack Token
-        "[0-9a-f]{32}",             # 일반적인 32자리 해시 (API 키 가능성)
-        "[0-9a-f]{40}",             # 40자리 해시 (GitHub token 등)
+        'AIzaSy[A-Za-z0-9_-]{35}',  # Google API Key
+        'sk-[A-Za-z0-9]{32,}',      # OpenAI API Key
+        'xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24,32}',  # Slack Token
+        '[0-9a-f]{32}',             # 일반적인 32자리 해시 (API 키 가능성)
+        '[0-9a-f]{40}',             # 40자리 해시 (GitHub token 등)
         
         # 비밀번호 패턴 (간단한 패턴)
-        "password\s*[:=]\s*['\""]?[^'\""\s]{8,}",  # password: "value"
-        "passwd\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # passwd: "value"
-        "secret\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # secret: "value"
-        "token\s*[:=]\s*['\""]?[^'\""\s]{20,}"     # token: "value"
+        'password\s*[:=]\s*[''"]?[^''"\s]{8,}',  # password: "value"
+        'passwd\s*[:=]\s*[''"]?[^''"\s]{8,}',    # passwd: "value"
+        'secret\s*[:=]\s*[''"]?[^''"\s]{8,}',    # secret: "value"
+        'token\s*[:=]\s*[''"]?[^''"\s]{20,}'     # token: "value"
     )
 
     # 검사할 파일 확장자
@@ -102,9 +103,18 @@ try {
             }
         }
         
-        # 추가 확인: 경로 전체에 제외 파일명이 포함되어 있는지
+        # 추가 확인: 경로 전체에 제외 파일명이 정확히 포함되어 있는지
+        # 부분 문자열 매칭 방지: 경로 구분자 앞뒤로 정확히 일치해야 함
         foreach ($excludeName in $excludeFileNames) {
-            if ($normalizedPath -like "*$excludeName" -or $normalizedPath -like "*/$excludeName") {
+            # 정확한 경로 패턴 매칭 (부분 문자열 매칭 방지)
+            # 예: /.git/hooks/pre-commit, /tools/pre_commit_security_check.ps1
+            $escapedName = [regex]::Escape($excludeName)
+            
+            # 패턴: 경로 구분자(`/`) 앞에 경로 구분자가 없거나 문자열 시작이고,
+            #       뒤에 경로 구분자(`/`) 또는 문자열 끝(`$`)이 오는 경우
+            # 이렇게 하면 `my-pre-commit-config.ps1` 같은 파일은 매칭되지 않음
+            # (경로 구분자 앞에 다른 문자가 없어야 함)
+            if ($normalizedPath -match ('(?:^|/)' + $escapedName + '(?:/|$)')) {
                 return $true
             }
         }
@@ -175,9 +185,9 @@ if (-not $stagedFiles) {
         $normalizedPath = $filePath -replace '\\', '/' -replace '//', '/'
         
         # 제외 로직: 파일명 또는 경로에 제외 패턴이 포함되어 있는지 확인
+        # 경로 정규화 후에는 포워드 슬래시만 사용하므로 백슬래시 패턴은 불필요
         if ($normalizedPath -match 'pre_commit_security_check\.(ps1|sh)$' -or
-            $normalizedPath -match '/hooks/pre-commit' -or
-            $normalizedPath -match '\\hooks\\pre-commit') {
+            $normalizedPath -match '/hooks/pre-commit') {
             Write-Host "⏭️  파일 제외됨: $filePath" -ForegroundColor Gray
             continue
         }
@@ -273,10 +283,10 @@ if (-not $stagedFiles) {
         Write-Host ("=" * 70) -ForegroundColor Red
         Write-Host ""
         Write-Host "조치 사항:" -ForegroundColor Yellow
-        Write-Host "  1. 위 파일들에서 민감한 정보를 제거하세요" -ForegroundColor White
-        Write-Host "  2. 플레이스홀더로 대체하세요 (예: [YOUR_API_KEY])" -ForegroundColor White
-        Write-Host "  3. 환경 변수나 설정 파일을 사용하세요" -ForegroundColor White
-        Write-Host "  4. 다시 검사 후 커밋하세요" -ForegroundColor White
+        Write-Host '  1. 위 파일들에서 민감한 정보를 제거하세요' -ForegroundColor White
+        Write-Host '  2. 플레이스홀더로 대체하세요 (예: YOUR_API_KEY)' -ForegroundColor White
+        Write-Host '  3. 환경 변수나 설정 파일을 사용하세요' -ForegroundColor White
+        Write-Host '  4. 다시 검사 후 커밋하세요' -ForegroundColor White
         Write-Host ""
         
         exit 1
@@ -291,15 +301,16 @@ if (-not $stagedFiles) {
 } catch {
     # 예상치 못한 오류 발생 시
     Write-Host ""
-    Write-Host "=" * 70 -ForegroundColor Red
+    Write-Host ("=" * 70) -ForegroundColor Red
     Write-Host "❌ 스크립트 실행 중 예상치 못한 오류가 발생했습니다!" -ForegroundColor Red
-    Write-Host "=" * 70 -ForegroundColor Red
+    Write-Host ("=" * 70) -ForegroundColor Red
     Write-Host ""
-    Write-Host "오류 메시지: $_" -ForegroundColor Yellow
-    Write-Host "오류 위치: $($_.InvocationInfo.ScriptLineNumber)번째 줄" -ForegroundColor Yellow
+    Write-Host ('오류 메시지: ' + $_) -ForegroundColor Yellow
+    $lineNum = $_.InvocationInfo.ScriptLineNumber
+    Write-Host ('오류 위치: ' + $lineNum + '번째 줄') -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "⚠️  보안 검사를 건너뛰고 커밋하려면 --no-verify 옵션을 사용하세요." -ForegroundColor Yellow
-    Write-Host "   그러나 이는 권장되지 않습니다." -ForegroundColor Yellow
+    Write-Host '⚠️  보안 검사를 건너뛰고 커밋하려면 --no-verify 옵션을 사용하세요.' -ForegroundColor Yellow
+    Write-Host '   그러나 이는 권장되지 않습니다.' -ForegroundColor Yellow
     Write-Host ""
     
     # 오류 발생 시에도 커밋을 차단 (보안상 안전)
