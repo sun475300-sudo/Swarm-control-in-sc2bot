@@ -223,7 +223,11 @@ def main():
                 if session_manager:
                     session_manager.reset_error_count()
                 
-                # IMPROVED: Get game result from bot (if available)
+                # IMPROVED: Get game result from bot (wait for on_end to complete)
+                # Wait a moment for on_end() to complete and store _training_result
+                import time as time_module
+                time_module.sleep(0.5)  # Small delay to ensure on_end() completes
+                
                 game_result_str = "Unknown"
                 game_time = 0.0
                 build_order_score = None
@@ -231,11 +235,24 @@ def main():
                 parameters_updated = 0
                 
                 if hasattr(bot, 'ai') and bot.ai:
-                    # Try to get game result from bot
-                    if hasattr(bot.ai, 'last_result'):
-                        game_result_str = str(bot.ai.last_result)
-                    if hasattr(bot.ai, 'time'):
-                        game_time = float(bot.ai.time)
+                    # CRITICAL: Get training result from on_end() if available
+                    if hasattr(bot.ai, '_training_result'):
+                        result = bot.ai._training_result
+                        game_result_str = result.get("game_result", "Unknown")
+                        game_time = result.get("game_time", 0.0)
+                        build_order_score = result.get("build_order_score")
+                        loss_reason = result.get("loss_reason")
+                        parameters_updated = result.get("parameters_updated", 0)
+                        print(f"[INFO] Retrieved training result: {game_result_str}, "
+                              f"Time: {game_time:.1f}s, Score: {build_order_score}, "
+                              f"Params: {parameters_updated}")
+                    else:
+                        # Fallback: Try to get from bot attributes
+                        if hasattr(bot.ai, 'last_result'):
+                            game_result_str = str(bot.ai.last_result)
+                        if hasattr(bot.ai, 'time'):
+                            game_time = float(bot.ai.time)
+                        print(f"[WARNING] _training_result not found, using fallback values")
                 
                 # Record game result in session manager
                 if session_manager:

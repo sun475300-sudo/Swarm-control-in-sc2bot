@@ -5626,6 +5626,7 @@ class WickedZergBotPro(BotAI):
                 print(report)
                 
                 # [STEP 5] Update learned parameters if we won (victory builds are better)
+                updated_count = 0  # Initialize counter
                 if game_result_str == "Victory":
                     print("\n" + "=" * 70)
                     print("🎉 [STEP 5] VICTORY - UPDATING LEARNED PARAMETERS")
@@ -5709,6 +5710,22 @@ class WickedZergBotPro(BotAI):
                     except Exception as save_error:
                         print(f"[WARNING] Failed to save updated learned parameters: {save_error}")
                         print("=" * 70)
+                
+                # IMPROVED: Store training result for session manager
+                # Get loss reason if available
+                loss_reason = None
+                if game_result_str == "Defeat":
+                    if hasattr(self, "final_stats") and self.final_stats:
+                        loss_reason = self.final_stats.get("loss_reason", None)
+                
+                # Store result in bot instance for run_with_training.py to access
+                self._training_result = {
+                    "game_result": game_result_str,
+                    "game_time": float(self.time),
+                    "build_order_score": analysis.overall_score,
+                    "loss_reason": loss_reason,
+                    "parameters_updated": updated_count
+                }
                 else:
                     print("\n" + "=" * 70)
                     print(f"😞 [STEP 5] DEFEAT - LEARNING FROM MISTAKES")
