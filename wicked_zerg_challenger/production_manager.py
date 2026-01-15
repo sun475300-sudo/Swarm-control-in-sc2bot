@@ -1223,6 +1223,21 @@ class ProductionManager:
 
             if enemy_attacking_soon:
                 min_defense_supply = max(min_defense_supply, 50)
+            
+            # IMPROVED: 공격 중일 때는 방어 병력 요구량 감소
+            # 공격 중인지 확인
+            is_attacking = False
+            if hasattr(b, "combat") and b.combat:
+                is_attacking = getattr(b.combat, "is_attacking", False)
+            
+            # 공격 중일 때는 방어 병력 요구량 30% 감소 (최소 20 supply는 유지)
+            if is_attacking:
+                min_defense_supply = max(20, int(min_defense_supply * 0.7))  # 30% 감소
+                current_iteration = getattr(b, "iteration", 0)
+                if current_iteration % 200 == 0:
+                    print(
+                        f"[DEFENSE ARMY] [{int(b.time)}s] Attacking mode - Reduced defense requirement to {min_defense_supply} supply"
+                    )
 
             mineral_threshold = 800
             needs_army_production = False

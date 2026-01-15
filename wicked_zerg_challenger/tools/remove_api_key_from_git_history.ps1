@@ -12,7 +12,7 @@
     제거할 API 키
     
 .EXAMPLE
-    .\remove_api_key_from_git_history.ps1 -ApiKey "AIzaSyBDdPWJyXs56AxeCPmqZpySFOVPjjSt_CM"
+    .\remove_api_key_from_git_history.ps1 -ApiKey 
 #>
 
 param(

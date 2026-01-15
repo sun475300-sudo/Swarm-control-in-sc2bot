@@ -886,7 +886,15 @@ class EconomyManager:
             if b.already_pending(UnitTypeId.HATCHERY) == 0:
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        old_bases_build = set(th.tag for th in b.townhalls)
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases_build]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         print(
                             f"[BUILD ORDER] [{int(b.time)}s] 16 Supply: Natural Expansion (Large map economy build)"
                         )
@@ -903,7 +911,15 @@ class EconomyManager:
             if b.already_pending(UnitTypeId.HATCHERY) == 0:
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        old_bases_build = set(th.tag for th in b.townhalls)
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases_build]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         print(
                             f"[BUILD ORDER] [{int(b.time)}s] 16 Supply: Natural Expansion (Serral Build)"
                         )
@@ -2273,7 +2289,15 @@ class EconomyManager:
                 # Try expansion first (highest priority)
                 if current_base_count < 4 and b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        old_bases_resource = set(th.tag for th in b.townhalls)
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases_resource]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         if getattr(b, "iteration", 0) % 100 == 0:
                             print(
                                 f"[RESOURCE] [{int(b.time)}s] Emergency expansion: {b.minerals} minerals"
@@ -2309,6 +2333,55 @@ class EconomyManager:
             # Fail silently to avoid disrupting game flow
             pass
 
+    async def _assign_workers_to_new_base(self, new_base):
+        """새 기지에 일벌레 자동 배치
+        
+        Args:
+            new_base: 새로 건설된 기지 (Townhall)
+        """
+        b = self.bot
+        
+        try:
+            # 새 기지에 필요한 일벌레 수 (미네랄 8명 + 가스 3명 = 11명)
+            workers_needed = 11
+            
+            # 기존 기지에서 일벌레 가져오기
+            existing_bases = [th for th in b.townhalls if th.tag != new_base.tag]
+            if not existing_bases:
+                return
+            
+            # 각 기지에서 일벌레 수집
+            workers_to_assign = []
+            for base in existing_bases:
+                # 기지 근처 일벌레 찾기
+                nearby_workers = [w for w in b.workers if w.distance_to(base) < 10]
+                # 각 기지에서 최대 4명씩 가져오기 (경제 붕괴 방지)
+                for worker in nearby_workers[:4]:
+                    if len(workers_to_assign) < workers_needed:
+                        workers_to_assign.append(worker)
+                    else:
+                        break
+                if len(workers_to_assign) >= workers_needed:
+                    break
+            
+            # 일벌레를 새 기지로 이동
+            for worker in workers_to_assign:
+                try:
+                    # 미네랄 필드로 이동
+                    if b.mineral_field.exists:
+                        nearest_mineral = b.mineral_field.closest_to(new_base)
+                        worker.gather(nearest_mineral)
+                except Exception:
+                    pass
+            
+            current_iteration = getattr(b, "iteration", 0)
+            if current_iteration % 100 == 0:
+                print(f"[EXPANSION] [{int(b.time)}s] Assigned {len(workers_to_assign)} workers to new base")
+        except Exception as e:
+            current_iteration = getattr(b, "iteration", 0)
+            if current_iteration % 200 == 0:
+                print(f"[WARNING] Failed to assign workers to new base: {e}")
+
     async def _manage_expansion(self):
         """확장 타이밍 결정 - 멀티(확장 기지) 자동으로 늘리기
 
@@ -2323,6 +2396,7 @@ class EconomyManager:
 
         townhalls = [th for th in b.townhalls]
         current_base_count = len(townhalls)
+        old_bases = set(th.tag for th in townhalls)  # 확장 전 기지 태그 저장
 
         if current_base_count >= 4:
             return
@@ -2356,7 +2430,14 @@ class EconomyManager:
             if b.minerals >= 250:
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         return
                     except Exception:
                         pass
@@ -2384,7 +2465,15 @@ class EconomyManager:
         ):
             if b.can_afford(UnitTypeId.HATCHERY):
                 try:
-                    await b.expand_now()
+                    expand_result = await b.expand_now()
+                    if expand_result:
+                        # 새 기지 찾기 (건설 중이거나 완료된 기지)
+                        new_townhalls = [th for th in b.townhalls if th.tag not in old_bases]
+                        if new_townhalls:
+                            # 건설 완료된 기지 우선, 없으면 건설 중인 기지
+                            completed_bases = [th for th in new_townhalls if th.is_ready]
+                            target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                            await self._assign_workers_to_new_base(target_base)
                     if getattr(b, "iteration", 0) % 100 == 0:
                         print(
                             f"[EXPANSION] [{int(b.time)}s] Emergency expansion: {b.minerals} minerals (resource expenditure)"
@@ -2408,7 +2497,14 @@ class EconomyManager:
                 # When minerals are high, only check if we can afford it
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         if getattr(b, "iteration", 0) % 100 == 0:
                             print(f"[EXPANSION] [{int(b.time)}s] First expansion (high minerals: {b.minerals})")
                         return
@@ -2421,7 +2517,14 @@ class EconomyManager:
             ):
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         return
                     except Exception:
                         pass
@@ -2442,7 +2545,14 @@ class EconomyManager:
             ):
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
-                        await b.expand_now()
+                        expand_result = await b.expand_now()
+                        if expand_result:
+                            # 새 기지 찾기 및 일벌레 배치
+                            new_townhalls = [th for th in b.townhalls if th.tag not in old_bases]
+                            if new_townhalls:
+                                completed_bases = [th for th in new_townhalls if th.is_ready]
+                                target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                                await self._assign_workers_to_new_base(target_base)
                         return
                     except Exception:
                         pass
@@ -2541,7 +2651,15 @@ class EconomyManager:
         if should_expand:
             if b.can_afford(UnitTypeId.HATCHERY):
                 try:
-                    await b.expand_now()
+                    old_bases_optimal = set(th.tag for th in b.townhalls)
+                    expand_result = await b.expand_now()
+                    if expand_result:
+                        # 새 기지 찾기 및 일벌레 배치
+                        new_townhalls = [th for th in b.townhalls if th.tag not in old_bases_optimal]
+                        if new_townhalls:
+                            completed_bases = [th for th in new_townhalls if th.is_ready]
+                            target_base = completed_bases[0] if completed_bases else new_townhalls[0]
+                            await self._assign_workers_to_new_base(target_base)
                 except Exception as e:
                     pass
 
