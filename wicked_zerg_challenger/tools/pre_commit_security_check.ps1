@@ -275,10 +275,10 @@ if (-not $stagedFiles) {
     Write-Host $resultTitle -ForegroundColor Cyan
     Write-Host $separator -ForegroundColor Cyan
     Write-Host ""
-    $filesMsg = "Files checked: $checkedFiles"
+    $filesMsg = 'Files checked: ' + $checkedFiles
     Write-Host $filesMsg -ForegroundColor White
     if ($errorCount -gt 0) {
-        $errorMsg = "Errors occurred: $errorCount (ignored)"
+        $errorMsg = 'Errors occurred: ' + $errorCount + ' (ignored)'
         Write-Host $errorMsg -ForegroundColor Yellow
     }
     Write-Host ""
