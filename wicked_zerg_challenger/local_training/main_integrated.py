@@ -1019,7 +1019,9 @@ def run_training():
                         weighted_params = {}
                         total_weight = 0.0
 
-                        for replay_file in replay_files[:50]:
+                        # IMPROVED: Use configurable max_replays instead of hardcoded 50
+                        max_replays_batch = _config.MAX_REPLAYS_FOR_LEARNING // 2  # Process in batches
+                        for replay_file in replay_files[:max_replays_batch]:
                             try:
                                 quality_data = quality_analyzer.process_replay(replay_file)
 
