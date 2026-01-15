@@ -308,32 +308,64 @@ class ReinforcementLearner:
 
         for attempt in range(max_retries):
             try:
+                # IMPROVED: Check multiple locations for trained model
+                # Priority 1: local_training/models/ (where training saves)
+                # Priority 2: default models/ (backward compatibility)
+                model_paths_to_check = []
+                
+                # Add local_training/models/ path if current path is not there
+                if "local_training" not in self.model_path:
+                    local_training_models = os.path.join(SCRIPT_DIR, "local_training", "models")
+                    model_name = os.path.basename(self.model_path)
+                    local_training_path = os.path.join(local_training_models, model_name)
+                    if os.path.exists(local_training_path):
+                        model_paths_to_check.append(local_training_path)
+                        print(f"[MODEL] Found trained model in local_training: {local_training_path}")
+                
+                # Add current path
+                model_paths_to_check.append(self.model_path)
+                
+                # Also check default models/ as fallback if current is in local_training
+                if "local_training" in self.model_path:
+                    default_models = os.path.join(SCRIPT_DIR, "models")
+                    model_name = os.path.basename(self.model_path)
+                    default_path = os.path.join(default_models, model_name)
+                    if os.path.exists(default_path):
+                        model_paths_to_check.append(default_path)
+
+                # Try each path in priority order
+                for check_path in model_paths_to_check:
+                    if os.path.exists(check_path):
+                        # Attempt to read file (may be in use by another process)
+                        # Set map_location to auto-detected device
+                        print(f"[MODEL] Attempting to load model from: {check_path}")
+                        print(f"[MODEL] Target device: {self.device}")
+
+                        # weights_only=True: Security warning removed and performance optimized
+                        loaded_state = torch.load(
+                            check_path,
+                            map_location=str(self.device),
+                            weights_only=True,
+                        )
+                        self.model.load_state_dict(loaded_state)
+                        # Update model_path to the one we actually loaded from
+                        self.model_path = check_path
+                        print(
+                            f"[OK] Model loaded successfully: {check_path} (device: {self.device})"
+                        )
+                        return
+                
+                # No model found in any location
+                print(f"[INFO] Model file not found in any location")
+                print(f"[INFO] Checked paths: {model_paths_to_check}")
+                print(f"[INFO] Starting with a new model (will be saved to: {self.model_path})")
+                
                 # Create model directory if it doesn't exist
                 model_dir = os.path.dirname(self.model_path)
                 if model_dir:
                     os.makedirs(model_dir, exist_ok=True)
-
-                if os.path.exists(self.model_path):
-                    # Attempt to read file (may be in use by another process)
-                    # Set map_location to auto-detected device
-                    print(f"[MODEL] Attempting to load model from: {self.model_path}")
-                    print(f"[MODEL] Target device: {self.device}")
-
-                    # weights_only=True: Security warning removed and performance optimized
-                    loaded_state = torch.load(
-                        self.model_path,
-                        map_location=str(self.device),
-                        weights_only=True,
-                    )
-                    self.model.load_state_dict(loaded_state)
-                    print(
-                        f"[OK] Model loaded successfully: {self.model_path} (device: {self.device})"
-                    )
-                    return
-                else:
-                    print(f"[INFO] Model file not found: {self.model_path}")
-                    print(f"[INFO] Starting with a new model (will be saved after first game)")
-                    return
+                
+                return
             except (IOError, OSError, PermissionError) as e:
                 # File locking error: retry
                 print(
@@ -442,6 +474,15 @@ class ReinforcementLearner:
 
         for attempt in range(max_retries):
             try:
+                # IMPROVED: Save to local_training/models/ for consistency with training
+                # Ensure we're saving to local_training/models/ if it exists
+                if "local_training" not in self.model_path:
+                    local_training_models = os.path.join(SCRIPT_DIR, "local_training", "models")
+                    if os.path.exists(local_training_models) or os.path.exists(os.path.dirname(local_training_models)):
+                        model_name = os.path.basename(self.model_path)
+                        self.model_path = os.path.join(local_training_models, model_name)
+                        print(f"[MODEL] Saving to local_training/models/: {self.model_path}")
+                
                 # Create model directory if it doesn't exist
                 model_dir = os.path.dirname(self.model_path)
                 if model_dir:
