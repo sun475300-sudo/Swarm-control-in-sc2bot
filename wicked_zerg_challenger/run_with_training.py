@@ -274,9 +274,41 @@ def main():
                 print("[INFO] Neural network model saved")
                 print("[INFO] Build order comparison analysis will be displayed above")
                 print()
-                print("[NEXT] Automatically starting next game in 3 seconds...")
+                
+                # IMPROVED: Longer wait time between games to ensure SC2 client fully closes
+                wait_between_games = 10  # Increased from 3 to 10 seconds
+                print(f"[NEXT] Automatically starting next game in {wait_between_games} seconds...")
+                print(f"[INFO] Waiting for SC2 client to fully close before next game")
                 print("=" * 70)
-                time.sleep(3)
+                
+                # IMPROVED: Check if SC2 processes are still running before next game
+                try:
+                    import psutil
+                    for _ in range(wait_between_games):
+                        sc2_running = False
+                        for proc in psutil.process_iter(['pid', 'name']):
+                            try:
+                                proc_name = proc.info['name'].lower()
+                                if 'sc2' in proc_name or 'starcraft' in proc_name:
+                                    sc2_running = True
+                                    break
+                            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                                pass
+                        
+                        if not sc2_running:
+                            # SC2 processes closed, can proceed
+                            break
+                        
+                        time.sleep(1)
+                    else:
+                        # Still waiting, proceed anyway
+                        print(f"[WARNING] SC2 processes may still be running, but proceeding anyway")
+                except ImportError:
+                    # psutil not available, use simple sleep
+                    time.sleep(wait_between_games)
+                except Exception:
+                    # Process check failed, use simple sleep
+                    time.sleep(wait_between_games)
                 
             except KeyboardInterrupt:
                 print("\n[STOP] Training stopped by user.")
@@ -290,11 +322,57 @@ def main():
                     error_message = str(game_error)
                     session_manager.record_error(error_type, error_message)
                 
-                print(f"\n[ERROR] Game #{game_count} failed: {game_error}")
-                print(f"[RETRY] Will retry after 5 seconds...")
+                # IMPROVED: Handle connection errors with longer wait time
+                error_msg = str(game_error).lower()
+                is_connection_error = (
+                    "connection" in error_msg or
+                    "connectionalreadyclosed" in error_msg or
+                    "websocket" in error_msg or
+                    "closing transport" in error_msg
+                )
+                
+                if is_connection_error:
+                    wait_time = 15  # Longer wait for connection errors
+                    print(f"\n[ERROR] Game #{game_count} failed: Connection error")
+                    print(f"[ERROR] StarCraft II client connection was closed unexpectedly")
+                    print(f"[INFO] This usually happens when:")
+                    print(f"   - Previous game session didn't fully close")
+                    print(f"   - SC2 client crashed or was terminated")
+                    print(f"   - Network/WebSocket connection was interrupted")
+                    print(f"[RETRY] Waiting {wait_time} seconds for SC2 client to fully close...")
+                    print(f"[INFO] Please ensure no SC2 game windows are still open")
+                else:
+                    wait_time = 10  # Standard wait for other errors
+                    print(f"\n[ERROR] Game #{game_count} failed: {game_error}")
+                    print(f"[RETRY] Will retry after {wait_time} seconds...")
+                
                 import traceback
                 traceback.print_exc()
-                time.sleep(5)
+                time.sleep(wait_time)
+                
+                # IMPROVED: Try to check if SC2 processes are still running
+                try:
+                    import psutil
+                    sc2_processes = []
+                    for proc in psutil.process_iter(['pid', 'name']):
+                        try:
+                            proc_name = proc.info['name'].lower()
+                            if 'sc2' in proc_name or 'starcraft' in proc_name:
+                                sc2_processes.append(proc.info['pid'])
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            pass
+                    
+                    if sc2_processes:
+                        print(f"[WARNING] Found {len(sc2_processes)} SC2 process(es) still running")
+                        print(f"[INFO] Waiting additional 5 seconds for processes to close...")
+                        time.sleep(5)
+                except ImportError:
+                    # psutil not available, skip process check
+                    pass
+                except Exception as proc_error:
+                    # Process check failed, continue anyway
+                    print(f"[WARNING] Could not check SC2 processes: {proc_error}")
+                
                 continue
                 
         except KeyboardInterrupt:

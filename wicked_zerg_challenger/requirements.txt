@@ -53,3 +53,5 @@ protobuf<=3.20.3
 # WebSocket support for real-time dashboard
 websocket-client>=1.6.0
 
+# System and process utilities (for SC2 process monitoring)
+psutil>=5.9.0
