@@ -93,7 +93,7 @@ def main() -> None:
     agent = BasicZergAgent()
     
     obs = env.reset()
-    print(f"Initial State: Minerals={obs['minerals']}, Supply={obs['food_used']}/{obs['food_cap']}")
+    print(f"Initial State: Minerals={{obs['minerals']}}, Supply={{obs['food_used']}}/{{obs['food_cap']}}")
     print()
     
     for step in range({steps}):
@@ -101,11 +101,11 @@ def main() -> None:
         obs = env.step(action)
         
         if step % 5 == 0:
-            print(f"Step {obs['step']:3d}: {action:15s} | "
-                  f"Minerals={obs['minerals']:3d} | Supply={obs['food_used']:2d}/{obs['food_cap']:2d}")
+            print(f"Step {{obs['step']:3d}}: {{action:15s}} | "
+                  f"Minerals={{obs['minerals']:3d}} | Supply={{obs['food_used']:2d}}/{{obs['food_cap']:2d}}")
     
     print()
-    print(f"Final State: Minerals={obs['minerals']}, Supply={obs['food_used']}/{obs['food_cap']}, Army={obs['army_size']}")
+    print(f"Final State: Minerals={{obs['minerals']}}, Supply={{obs['food_used']}}/{{obs['food_cap']}}, Army={{obs['army_size']}}")
     print("="*70)
 
 
