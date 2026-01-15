@@ -35,10 +35,10 @@ $sensitivePatterns = @(
     "password\s*[:=]\s*['\""]?[^'\""\s]{8,}",  # password: "value"
     "passwd\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # passwd: "value"
     "secret\s*[:=]\s*['\""]?[^'\""\s]{8,}",    # secret: "value"
-    "token\s*[:=]\s*['\""]?[^'\""\s]{20,}",     # token: "value"
+    "token\s*[:=]\s*['\""]?[^'\""\s]{20,}"     # token: "value"
     
-    # 실제 API 키 (이미 제거된 것으로 알려진 키)
-    "***REDACTED_GEMINI_KEY***",
+    # 주의: 구체적인 API 키 예시는 스크립트 자체 검사 시 오탐지를 방지하기 위해 제외됨
+    # 필요 시 다른 파일에서 패턴으로 검사 가능
 )
 
 # 검사할 파일 확장자
@@ -51,6 +51,9 @@ $checkedFiles = 0
 Write-Host "📁 스테이징된 파일 검사 중..." -ForegroundColor Yellow
 Write-Host ""
 
+# 검사에서 제외할 파일/경로 (보안 검사 스크립트 자체와 Hook 파일 제외)
+# 제외 로직은 Test-ExcludeFile 함수 내부에 정의됨
+
 # Git 스테이징된 파일 가져오기
 try {
     $stagedFiles = git diff --cached --name-only --diff-filter=ACM
@@ -60,6 +63,45 @@ try {
     $stagedFiles = @()
 }
 
+# 제외 함수 (보안 검사 스크립트 자체와 Hook 파일 제외)
+function Test-ExcludeFile {
+    param([string]$filePath)
+    
+    if ([string]::IsNullOrWhiteSpace($filePath)) {
+        return $false
+    }
+    
+    # 경로 정규화 (Windows와 Unix 경로 모두 처리)
+    $normalizedPath = $filePath -replace '\\', '/' -replace '//', '/'
+    
+    # 파일명 추출 (경로의 마지막 부분)
+    $fileName = $normalizedPath -split '/' | Select-Object -Last 1
+    
+    # 제외할 파일명 목록 (간단하게)
+    $excludeFileNames = @(
+        "pre_commit_security_check.ps1",
+        "pre_commit_security_check.sh",
+        "pre-commit",
+        "pre-commit.ps1"
+    )
+    
+    # 파일명 직접 매칭 (대소문자 무시)
+    foreach ($excludeName in $excludeFileNames) {
+        if ($fileName -ieq $excludeName) {
+            return $true
+        }
+    }
+    
+    # 추가 확인: 경로 전체에 제외 파일명이 포함되어 있는지
+    foreach ($excludeName in $excludeFileNames) {
+        if ($normalizedPath -like "*$excludeName" -or $normalizedPath -like "*/$excludeName") {
+            return $true
+        }
+    }
+    
+    return $false
+}
+
 # 스테이징된 파일이 없으면 모든 파일 검사
 if (-not $stagedFiles) {
     Write-Host "📁 모든 파일 검사 중..." -ForegroundColor Yellow
@@ -67,7 +109,10 @@ if (-not $stagedFiles) {
     
     foreach ($ext in $fileExtensions) {
         $files = Get-ChildItem -Path . -Filter $ext -Recurse -ErrorAction SilentlyContinue | 
-                 Where-Object { $_.FullName -notmatch '\.git|node_modules|venv|__pycache__|\.gradle|build' }
+                 Where-Object { 
+                     $_.FullName -notmatch '\.git|node_modules|venv|__pycache__|\.gradle|build' -and
+                     -not (Test-ExcludeFile $_.FullName)
+                 }
         
         foreach ($file in $files) {
             $checkedFiles++
@@ -90,6 +135,24 @@ if (-not $stagedFiles) {
 } else {
     # 스테이징된 파일만 검사
     foreach ($filePath in $stagedFiles) {
+        # 검사에서 제외할 파일은 건너뛰기 (보안 검사 스크립트 자체와 Hook 파일)
+        # 상대 경로와 절대 경로 모두 처리
+        $normalizedPath = $filePath -replace '\\', '/' -replace '//', '/'
+        
+        # 제외 로직: 파일명 또는 경로에 제외 패턴이 포함되어 있는지 확인
+        if ($normalizedPath -match 'pre_commit_security_check\.(ps1|sh)$' -or
+            $normalizedPath -match '/hooks/pre-commit' -or
+            $normalizedPath -match '\\hooks\\pre-commit') {
+            Write-Host "⏭️  파일 제외됨: $filePath" -ForegroundColor Gray
+            continue
+        }
+        
+        # 함수를 통한 제외 확인
+        if (Test-ExcludeFile $normalizedPath) {
+            Write-Host "⏭️  파일 제외됨: $filePath" -ForegroundColor Gray
+            continue
+        }
+        
         if (Test-Path $filePath) {
             $file = Get-Item $filePath
             $checkedFiles++
