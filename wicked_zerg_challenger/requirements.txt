@@ -4,7 +4,9 @@ burnysc2>=5.0.12
 
 # Numerical operations
 # CRITICAL: numpy<2.0.0 required for sc2 library compatibility
-numpy>=1.20.0,<2.0.0
+# Using pinned version for CI/CD stability
+numpy>=1.20.0,<2.0.0; python_version<"3.12"
+numpy>=1.24.0,<2.0.0; python_version>="3.12"
 
 # PyTorch for neural network features (optional but recommended)
 # For GPU support: pip install torch>=2.0.0 --index-url https://download.pytorch.org/whl/cu118
