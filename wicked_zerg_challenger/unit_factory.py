@@ -676,7 +676,15 @@ class UnitFactory:
     # =========================================================================
 
     async def _produce_queen(self):
-        """Queen production (1 per Hatchery)"""
+        """
+        Queen production (1 per Hatchery) with improved conditions
+        
+        IMPROVED: Prevents excessive queen production by checking:
+        - Resource availability (minerals >= 200, gas >= 100)
+        - Base stability (at least 8 workers per base)
+        - Supply capacity (at least 10 supply buffer)
+        - Hatchery availability (ready and idle)
+        """
         b = self.bot
 
         # 🚀 Performance optimization: Use .structures().ready (no list conversion needed)
@@ -697,15 +705,58 @@ class UnitFactory:
             townhalls = [th for th in b.townhalls]
         queens_count = len(queens) + b.already_pending(UnitTypeId.QUEEN)
 
-        # 1 Queen per base
-        if queens_count < len(townhalls):
-            ready_idle_townhalls = [th for th in townhalls if th.is_ready and th.is_idle]
-            for hatch in ready_idle_townhalls:
-                if b.can_afford(UnitTypeId.QUEEN):
-                    # Use _safe_train() for consistency and safety (handles both sync/async)
-                    await self.pm._safe_train(hatch, UnitTypeId.QUEEN)
-                    print(f"👑 [{int(b.time)}s] Queen production")
-                    break
+        # IMPROVED: Check if we already have enough queens (1 per base)
+        if queens_count >= len(townhalls):
+            return
+        
+        # IMPROVED: Resource availability check
+        mineral_threshold = 200
+        gas_threshold = 100
+        
+        if b.minerals < mineral_threshold or b.vespene_gas < gas_threshold:
+            # Resource shortage - skip queen production
+            return
+        
+        # IMPROVED: Base stability check
+        worker_count = b.workers.amount
+        min_workers_per_base = 8
+        
+        if worker_count < len(townhalls) * min_workers_per_base:
+            # Too few workers - prioritize worker production
+            return
+        
+        # IMPROVED: Supply capacity check
+        supply_buffer = 10
+        if b.supply_cap - b.supply_used < supply_buffer:
+            # Supply is tight - skip queen production
+            return
+
+        # IMPROVED: Only produce queen if hatchery is ready and idle
+        ready_idle_townhalls = [
+            th for th in townhalls 
+            if th.is_ready and th.is_idle
+            and (not hasattr(th, 'orders') or len(th.orders) == 0)
+        ]
+        
+        if not ready_idle_townhalls:
+            return
+        
+        # IMPROVED: Final affordability check
+        if not b.can_afford(UnitTypeId.QUEEN):
+            return
+        
+        # IMPROVED: Produce queen with safe_train
+        for hatch in ready_idle_townhalls:
+            try:
+                await self.pm._safe_train(hatch, UnitTypeId.QUEEN)
+                print(f"👑 [{int(b.time)}s] Queen production (Bases: {len(townhalls)}, Queens: {queens_count})")
+                break
+            except Exception as e:
+                # Continue to next hatchery if this one fails
+                current_iteration = getattr(b, "iteration", 0)
+                if current_iteration % 200 == 0:
+                    print(f"[WARNING] UnitFactory queen production failed: {e}")
+                continue
 
     # =========================================================================
     # 3️⃣ Secure defense units before expansion
