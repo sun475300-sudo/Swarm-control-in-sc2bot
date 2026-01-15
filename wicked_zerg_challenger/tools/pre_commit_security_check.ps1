@@ -151,7 +151,8 @@ if (-not $stagedFiles) {
                 try {
                     $content = Get-Content $file.FullName -Raw -ErrorAction Stop
                 } catch {
-                    Write-Host "⚠️  파일 읽기 실패 (무시): $($file.FullName) - $_" -ForegroundColor Gray
+                    $readErrorMsg = 'File read failed (ignored): ' + $file.FullName + ' - ' + $_
+                    Write-Host $readErrorMsg -ForegroundColor Gray
                     $errorCount++
                     continue
                 }
@@ -173,13 +174,15 @@ if (-not $stagedFiles) {
                             }
                         } catch {
                             # 패턴 매칭 실패 시 무시 (오류 로깅만)
-                            Write-Host "⚠️  패턴 매칭 오류 (무시): $pattern - $_" -ForegroundColor Gray
+                            $matchErrorMsg = 'Pattern match error (ignored): ' + $pattern + ' - ' + $_
+                            Write-Host $matchErrorMsg -ForegroundColor Gray
                             $errorCount++
                         }
                     }
                 }
             } catch {
-                Write-Host "⚠️  파일 처리 중 오류 (무시): $($file.FullName) - $_" -ForegroundColor Gray
+                $processErrorMsg = 'File processing error (ignored): ' + $file.FullName + ' - ' + $_
+                Write-Host $processErrorMsg -ForegroundColor Gray
                 $errorCount++
                 continue
             }
@@ -196,13 +199,15 @@ if (-not $stagedFiles) {
         # 경로 정규화 후에는 포워드 슬래시만 사용하므로 백슬래시 패턴은 불필요
         if ($normalizedPath -match 'pre_commit_security_check\.(ps1|sh)$' -or
             $normalizedPath -match '/hooks/pre-commit') {
-            Write-Host "⏭️  파일 제외됨: $filePath" -ForegroundColor Gray
+            $excludedMsg = 'File excluded: ' + $filePath
+            Write-Host $excludedMsg -ForegroundColor Gray
             continue
         }
         
         # 함수를 통한 제외 확인
         if (Test-ExcludeFile $normalizedPath) {
-            Write-Host "⏭️  파일 제외됨: $filePath" -ForegroundColor Gray
+            $excludedMsg = 'File excluded: ' + $filePath
+            Write-Host $excludedMsg -ForegroundColor Gray
             continue
         }
         
@@ -225,7 +230,8 @@ if (-not $stagedFiles) {
                 try {
                     $content = Get-Content $file.FullName -Raw -ErrorAction Stop
                 } catch {
-                    Write-Host "⚠️  파일 읽기 실패 (무시): $filePath - $_" -ForegroundColor Gray
+                    $readErrorMsg = 'File read failed (ignored): ' + $filePath + ' - ' + $_
+                    Write-Host $readErrorMsg -ForegroundColor Gray
                     $errorCount++
                     continue
                 }
@@ -251,7 +257,8 @@ if (-not $stagedFiles) {
                             }
                         } catch {
                             # 패턴 매칭 실패 시 무시 (오류 로깅만)
-                            Write-Host "⚠️  패턴 매칭 오류 (무시): $pattern in $filePath - $_" -ForegroundColor Gray
+                            $matchErrorMsg = 'Pattern match error (ignored): ' + $pattern + ' in ' + $filePath + ' - ' + $_
+                            Write-Host $matchErrorMsg -ForegroundColor Gray
                             $errorCount++
                         }
                     }
