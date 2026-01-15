@@ -5209,7 +5209,8 @@ class ProductionManager:
             # IMPROVED: Execute speed upgrade more aggressively
             if b.supply_used >= speed_upgrade_supply:
                 # IMPROVED: Allow speed upgrade even with less supply buffer (need upgrade for mobility)
-                if b.supply_left < 8:  # Changed from 4 to 8 (still allow upgrade with some buffer)
+                # Don't block speed upgrade unless supply is critically low (< 4)
+                if b.supply_left < 4:  # Only block if supply is critically low
                     if larvae and len(larvae) > 0:
                         if b.can_afford(UnitTypeId.OVERLORD):
                             larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []
