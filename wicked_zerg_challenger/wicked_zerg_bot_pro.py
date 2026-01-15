@@ -5710,8 +5710,15 @@ class WickedZergBotPro(BotAI):
                     except Exception as save_error:
                         print(f"[WARNING] Failed to save updated learned parameters: {save_error}")
                         print("=" * 70)
+                else:
+                    print("\n" + "=" * 70)
+                    print(f"😞 [STEP 5] DEFEAT - LEARNING FROM MISTAKES")
+                    print("=" * 70)
+                    print("[INFO] Build order baseline maintained (only victories update parameters)")
+                    print("[INFO] Recommendations below will help improve next game")
+                    print("=" * 70)
                 
-                # IMPROVED: Store training result for session manager
+                # IMPROVED: Store training result for session manager (always, regardless of victory/defeat)
                 # Get loss reason if available
                 loss_reason = None
                 if game_result_str == "Defeat":
@@ -5726,13 +5733,6 @@ class WickedZergBotPro(BotAI):
                     "loss_reason": loss_reason,
                     "parameters_updated": updated_count
                 }
-                else:
-                    print("\n" + "=" * 70)
-                    print(f"😞 [STEP 5] DEFEAT - LEARNING FROM MISTAKES")
-                    print("=" * 70)
-                    print("[INFO] Build order baseline maintained (only victories update parameters)")
-                    print("[INFO] Recommendations below will help improve next game")
-                    print("=" * 70)
                 
                 # [STEP 6] Log recommendations for next game
                 if analysis.recommendations:
