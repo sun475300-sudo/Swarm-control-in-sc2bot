@@ -38,6 +38,7 @@ class AIArenaPackager:
         "queen_manager.py",
         "telemetry_logger.py",
         "rogue_tactics_manager.py",
+        "unit_factory.py",  # Required by production_manager.py
 
         # Configuration
         "requirements.txt",
@@ -50,7 +51,6 @@ class AIArenaPackager:
         "personality_manager.py",
         "strategy_analyzer.py",
         "spell_unit_manager.py",
-        "unit_factory.py",
         "map_manager.py",
     ]
 
