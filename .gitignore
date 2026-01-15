@@ -43,6 +43,13 @@ training_log*.log
 **/training_log*.txt
 **/training_log*.log
 
+# Telemetry Data Files
+# --------------------
+telemetry_*.csv
+telemetry_*.json
+**/telemetry_*.csv
+**/telemetry_*.json
+
 # Python
 # -------
 __pycache__/
