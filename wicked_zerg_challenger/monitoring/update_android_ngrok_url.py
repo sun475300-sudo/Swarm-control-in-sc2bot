@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Android ¾ÛÀÇ Ngrok URL ÀÚµ¿ ¾÷µ¥ÀÌÆ®
-Ngrok ÅÍ³Î URLÀ» Android ¾Û ÄÚµå¿¡ ÀÚµ¿À¸·Î ¹İ¿µÇÕ´Ï´Ù.
+Android ì•±ì˜ Ngrok URL ìë™ ì—…ë°ì´íŠ¸
+Ngrok í„°ë„ URLì„ Android ì•± ì½”ë“œì— ìë™ìœ¼ë¡œ ë°˜ì˜í•©ë‹ˆë‹¤.
 """
 
 import sys
@@ -11,143 +11,143 @@ from pathlib import Path
 import requests
 
 def get_ngrok_url() -> str:
-    """ÇöÀç Ngrok ÅÍ³Î URL °¡Á®¿À±â"""
-    # 1. API¿¡¼­ ½Ãµµ
-    try:
+    """í˜„ì¬ Ngrok í„°ë„ URL ê°€ì ¸ì˜¤ê¸°"""
+ # 1. APIì—ì„œ ì‹œë„
+ try:
         response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
-        if response.status_code == 200:
-            data = response.json()
+ if response.status_code == 200:
+ data = response.json()
             tunnels = data.get("tunnels", [])
-            if tunnels:
-                for tunnel in tunnels:
+ if tunnels:
+ for tunnel in tunnels:
                     if tunnel.get("proto") == "https":
                         return tunnel.get("public_url", "")
-                if tunnels:
+ if tunnels:
                     return tunnels[0].get("public_url", "")
-    except Exception:
-        pass
-    
-    # 2. ÆÄÀÏ¿¡¼­ ½Ãµµ
-    try:
+ except Exception:
+ pass
+ 
+ # 2. íŒŒì¼ì—ì„œ ì‹œë„
+ try:
         url_file = Path(__file__).parent / ".ngrok_url.txt"
-        if url_file.exists():
+ if url_file.exists():
             with open(url_file, 'r', encoding='utf-8') as f:
-                url = f.read().strip()
-                if url:
-                    return url
-    except Exception:
-        pass
-    
+ url = f.read().strip()
+ if url:
+ return url
+ except Exception:
+ pass
+ 
     return ""
 
 def update_android_api_client(ngrok_url: str):
-    """Android ApiClient.kt ÆÄÀÏ ¾÷µ¥ÀÌÆ®"""
+    """Android ApiClient.kt íŒŒì¼ ì—…ë°ì´íŠ¸"""
     android_dir = Path(__file__).parent.parent / "monitoring" / "mobile_app_android"
     api_client_file = android_dir / "app" / "src" / "main" / "java" / "com" / "wickedzerg" / "mobilegcs" / "api" / "ApiClient.kt"
-    
-    if not api_client_file.exists():
-        print(f"? ApiClient.kt ÆÄÀÏÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: {api_client_file}")
-        return False
-    
-    try:
-        # ÆÄÀÏ ÀĞ±â
+ 
+ if not api_client_file.exists():
+        print(f"? ApiClient.kt íŒŒì¼ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {api_client_file}")
+ return False
+ 
+ try:
+ # íŒŒì¼ ì½ê¸°
         with open(api_client_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # BASE_URL ¾÷µ¥ÀÌÆ®
+ content = f.read()
+ 
+ # BASE_URL ì—…ë°ì´íŠ¸
         pattern = r'private val BASE_URL = ["\']([^"\']+)["\']'
         replacement = f'private val BASE_URL = "{ngrok_url}"'
-        
-        if re.search(pattern, content):
-            new_content = re.sub(pattern, replacement, content)
-            
-            # ÆÄÀÏ ¾²±â
+ 
+ if re.search(pattern, content):
+ new_content = re.sub(pattern, replacement, content)
+ 
+ # íŒŒì¼ ì“°ê¸°
             with open(api_client_file, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            
-            print(f"? ApiClient.kt ¾÷µ¥ÀÌÆ®µÊ: {ngrok_url}")
-            return True
-        else:
-            print("? BASE_URL ÆĞÅÏÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.")
-            return False
-    except Exception as e:
-        print(f"? ApiClient.kt ¾÷µ¥ÀÌÆ® ½ÇÆĞ: {e}")
-        return False
+ f.write(new_content)
+ 
+            print(f"? ApiClient.kt ì—…ë°ì´íŠ¸ë¨: {ngrok_url}")
+ return True
+ else:
+            print("? BASE_URL íŒ¨í„´ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+ return False
+ except Exception as e:
+        print(f"? ApiClient.kt ì—…ë°ì´íŠ¸ ì‹¤íŒ¨: {e}")
+ return False
 
 def update_manus_api_client(ngrok_url: str):
-    """Android ManusApiClient.kt ÆÄÀÏ ¾÷µ¥ÀÌÆ®"""
+    """Android ManusApiClient.kt íŒŒì¼ ì—…ë°ì´íŠ¸"""
     android_dir = Path(__file__).parent.parent / "monitoring" / "mobile_app_android"
     api_client_file = android_dir / "app" / "src" / "main" / "java" / "com" / "wickedzerg" / "mobilegcs" / "api" / "ManusApiClient.kt"
-    
-    if not api_client_file.exists():
-        return False
-    
-    try:
+ 
+ if not api_client_file.exists():
+ return False
+ 
+ try:
         with open(api_client_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
+ content = f.read()
+ 
         pattern = r'private val BASE_URL = ["\']([^"\']+)["\']'
         replacement = f'private val BASE_URL = "{ngrok_url}"'
-        
-        if re.search(pattern, content):
-            new_content = re.sub(pattern, replacement, content)
-            
+ 
+ if re.search(pattern, content):
+ new_content = re.sub(pattern, replacement, content)
+ 
             with open(api_client_file, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            
-            print(f"? ManusApiClient.kt ¾÷µ¥ÀÌÆ®µÊ: {ngrok_url}")
-            return True
-    except Exception as e:
-        print(f"? ManusApiClient.kt ¾÷µ¥ÀÌÆ® ½ÇÆĞ: {e}")
-    
-    return False
+ f.write(new_content)
+ 
+            print(f"? ManusApiClient.kt ì—…ë°ì´íŠ¸ë¨: {ngrok_url}")
+ return True
+ except Exception as e:
+        print(f"? ManusApiClient.kt ì—…ë°ì´íŠ¸ ì‹¤íŒ¨: {e}")
+ 
+ return False
 
 def main():
-    """¸ŞÀÎ ÇÔ¼ö"""
+    """ë©”ì¸ í•¨ìˆ˜"""
     print("=" * 70)
-    print("Android ¾Û Ngrok URL ÀÚµ¿ ¾÷µ¥ÀÌÆ®")
+    print("Android ì•± Ngrok URL ìë™ ì—…ë°ì´íŠ¸")
     print("=" * 70)
-    print()
-    
-    # Ngrok URL °¡Á®¿À±â
-    print("[1/2] Ngrok ÅÍ³Î URL È®ÀÎ...")
-    ngrok_url = get_ngrok_url()
-    
-    if not ngrok_url:
-        print("? Ngrok ÅÍ³Î URLÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.")
-        print("  ¡æ ÅÍ³ÎÀÌ ½ÇÇà ÁßÀÎÁö È®ÀÎÇÏ¼¼¿ä.")
-        print("  ¡æ bat\\start_ngrok_tunnel.bat ½ÇÇà")
-        return 1
-    
-    print(f"  ? ÅÍ³Î URL: {ngrok_url}")
-    print()
-    
-    # Android ¾Û ÆÄÀÏ ¾÷µ¥ÀÌÆ®
-    print("[2/2] Android ¾Û ÆÄÀÏ ¾÷µ¥ÀÌÆ®...")
-    updated = False
-    
-    if update_android_api_client(ngrok_url):
-        updated = True
-    
-    if update_manus_api_client(ngrok_url):
-        updated = True
-    
-    if not updated:
-        print("? ¾÷µ¥ÀÌÆ®µÈ ÆÄÀÏÀÌ ¾ø½À´Ï´Ù.")
-        return 1
-    
-    print()
+ print()
+ 
+ # Ngrok URL ê°€ì ¸ì˜¤ê¸°
+    print("[1/2] Ngrok í„°ë„ URL í™•ì¸...")
+ ngrok_url = get_ngrok_url()
+ 
+ if not ngrok_url:
+        print("? Ngrok í„°ë„ URLì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+        print("  â†’ í„°ë„ì´ ì‹¤í–‰ ì¤‘ì¸ì§€ í™•ì¸í•˜ì„¸ìš”.")
+        print("  â†’ bat\\start_ngrok_tunnel.bat ì‹¤í–‰")
+ return 1
+ 
+    print(f"  ? í„°ë„ URL: {ngrok_url}")
+ print()
+ 
+ # Android ì•± íŒŒì¼ ì—…ë°ì´íŠ¸
+    print("[2/2] Android ì•± íŒŒì¼ ì—…ë°ì´íŠ¸...")
+ updated = False
+ 
+ if update_android_api_client(ngrok_url):
+ updated = True
+ 
+ if update_manus_api_client(ngrok_url):
+ updated = True
+ 
+ if not updated:
+        print("? ì—…ë°ì´íŠ¸ëœ íŒŒì¼ì´ ì—†ìŠµë‹ˆë‹¤.")
+ return 1
+ 
+ print()
     print("=" * 70)
-    print("¾÷µ¥ÀÌÆ® ¿Ï·á!")
+    print("ì—…ë°ì´íŠ¸ ì™„ë£Œ!")
     print("=" * 70)
-    print()
-    print("´ÙÀ½ ´Ü°è:")
-    print("  1. Android Studio¿¡¼­ ÇÁ·ÎÁ§Æ® ¿­±â")
-    print("  2. Gradle Sync ½ÇÇà")
-    print("  3. ¾Û ºôµå ¹× ½ÇÇà")
-    print()
-    
-    return 0
+ print()
+    print("ë‹¤ìŒ ë‹¨ê³„:")
+    print("  1. Android Studioì—ì„œ í”„ë¡œì íŠ¸ ì—´ê¸°")
+    print("  2. Gradle Sync ì‹¤í–‰")
+    print("  3. ì•± ë¹Œë“œ ë° ì‹¤í–‰")
+ print()
+ 
+ return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+ sys.exit(main())

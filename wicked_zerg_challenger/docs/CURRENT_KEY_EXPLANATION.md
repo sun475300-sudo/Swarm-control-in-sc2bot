@@ -1,7 +1,7 @@
 # ? 현재 GEMINI_API_KEY 설명
 
 **작성일**: 2026-01-14  
-**키 값**: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
+**키 값**: `AIzaSyC_Ci...MIIo`
 
 ---
 
@@ -9,7 +9,7 @@
 
 ### Google Gemini API 키
 
-`AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`는 **Google Gemini API 키**입니다.
+`AIzaSyC_Ci...MIIo`는 **Google Gemini API 키**입니다.
 
 **형식**:
 - `AIzaSy`로 시작 (Google API 키 표준 형식)
@@ -31,7 +31,7 @@ $env:GEMINI_API_KEY
 
 **출력**:
 ```
-AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
+AIzaSyC_Ci...MIIo
 ```
 
 ---
@@ -80,7 +80,7 @@ AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo
 
 **Google AI Studio에서**:
 1. https://makersuite.google.com/app/apikey 접속
-2. 키 목록에서 `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo` 찾기
+2. 키 목록에서 `AIzaSyC_Ci...MIIo` 찾기
 3. "Delete" 또는 "삭제" 클릭
 
 ### 2단계: 새 키 발급
@@ -115,8 +115,8 @@ AIzaSy[알파벳/숫자/특수문자 35자]
 
 **예시**:
 ```
-AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo  ← 현재 키
-AIzaSyAbc123def456ghi789jkl012mno345pqr678  ← 예시
+AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  ← 예시 (실제 키 아님)
+YOUR_API_KEY_HERE  ← 환경 변수에서 로드
 ```
 
 ---
@@ -126,7 +126,7 @@ AIzaSyAbc123def456ghi789jkl012mno345pqr678  ← 예시
 | 항목 | 값 |
 |------|-----|
 | **키 이름** | GEMINI_API_KEY |
-| **키 값** | `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo` |
+| **키 값** | `AIzaSyC_Ci...MIIo` |
 | **저장 위치** | 환경 변수 (`$env:GEMINI_API_KEY`) |
 | **형식** | ? 올바름 (Google API 키) |
 | **상태** | ?? **노출 가능성 있음 - 교체 필요** |

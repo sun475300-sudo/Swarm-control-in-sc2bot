@@ -3,7 +3,7 @@
 """
 Remote Dashboard Client
 
-·ÎÄÃ AI º¿ÀÇ µ¥ÀÌÅÍ¸¦ Manus À¥ È£½ºÆÃ ´ë½Ãº¸µå·Î Àü¼ÛÇÏ´Â Å¬¶óÀÌ¾ğÆ® ¸ğµâ
+ë¡œì»¬ AI ë´‡ì˜ ë°ì´í„°ë¥¼ Manus ì›¹ í˜¸ìŠ¤íŒ… ëŒ€ì‹œë³´ë“œë¡œ ì „ì†¡í•˜ëŠ” í´ë¼ì´ì–¸íŠ¸ ëª¨ë“ˆ
 """
 
 import requests
@@ -12,229 +12,228 @@ import time
 import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from pathlib import Path
 import os
 
-# ·Î±ë ¼³Á¤
+# ë¡œê¹… ì„¤ì •
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RemoteDashboardClient:
-    """¿ø°İ ´ë½Ãº¸µå Å¬¶óÀÌ¾ğÆ®"""
-    
-    def __init__(
-        self,
-        base_url: str,
-        api_key: Optional[str] = None,
-        enabled: bool = True,
-        sync_interval: int = 5
-    ):
+    """ì›ê²© ëŒ€ì‹œë³´ë“œ í´ë¼ì´ì–¸íŠ¸"""
+ 
+ def __init__(
+ self,
+ base_url: str,
+ api_key: Optional[str] = None,
+ enabled: bool = True,
+ sync_interval: int = 5
+ ):
         """
-        ¿ø°İ ´ë½Ãº¸µå Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­
-        
-        Args:
-            base_url: ¿ø°İ ¼­¹ö URL (¿¹: https://sc2aidash-bncleqgg.manus.space)
-            api_key: API ÀÎÁõ Å° (¼±ÅÃÀû)
-            enabled: ¿ø°İ Àü¼Û È°¼ºÈ­ ¿©ºÎ
-            sync_interval: µ¿±âÈ­ °£°İ (ÃÊ)
+ ì›ê²© ëŒ€ì‹œë³´ë“œ í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™”
+ 
+ Args:
+ base_url: ì›ê²© ì„œë²„ URL (ì˜ˆ: https://sc2aidash-bncleqgg.manus.space)
+ api_key: API ì¸ì¦ í‚¤ (ì„ íƒì )
+ enabled: ì›ê²© ì „ì†¡ í™œì„±í™” ì—¬ë¶€
+ sync_interval: ë™ê¸°í™” ê°„ê²© (ì´ˆ)
         """
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key or os.environ.get("REMOTE_DASHBOARD_API_KEY")
         self.enabled = enabled and os.environ.get("REMOTE_DASHBOARD_ENABLED", "1") == "1"
-        self.sync_interval = sync_interval
-        
-        # HTTP ¼¼¼Ç
-        self.session = requests.Session()
-        if self.api_key:
-            self.session.headers.update({
+ self.sync_interval = sync_interval
+ 
+ # HTTP ì„¸ì…˜
+ self.session = requests.Session()
+ if self.api_key:
+ self.session.headers.update({
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
-            })
-        else:
-            self.session.headers.update({
+ })
+ else:
+ self.session.headers.update({
                 "Content-Type": "application/json"
-            })
-        
-        # Àç½Ãµµ ¼³Á¤
-        self.max_retries = 3
-        self.retry_delay = 2  # ÃÊ
-        
-        logger.info(f"[REMOTE] Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­: {self.base_url} (È°¼ºÈ­: {self.enabled})")
-    
-    def _make_request(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
-        retry: bool = True
-    ) -> Optional[requests.Response]:
+ })
+ 
+ # ì¬ì‹œë„ ì„¤ì •
+ self.max_retries = 3
+ self.retry_delay = 2 # ì´ˆ
+ 
+        logger.info(f"[REMOTE] í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™”: {self.base_url} (í™œì„±í™”: {self.enabled})")
+ 
+ def _make_request(
+ self,
+ method: str,
+ endpoint: str,
+ data: Optional[Dict[str, Any]] = None,
+ retry: bool = True
+ ) -> Optional[requests.Response]:
         """
-        HTTP ¿äÃ» ½ÇÇà (Àç½Ãµµ ·ÎÁ÷ Æ÷ÇÔ)
-        
-        Args:
-            method: HTTP ¸Ş¼­µå (GET, POST, PUT, DELETE)
-            endpoint: API ¿£µåÆ÷ÀÎÆ®
-            data: ¿äÃ» µ¥ÀÌÅÍ
-            retry: Àç½Ãµµ ¿©ºÎ
-            
-        Returns:
-            Response °´Ã¼ ¶Ç´Â None
+ HTTP ìš”ì²­ ì‹¤í–‰ (ì¬ì‹œë„ ë¡œì§ í¬í•¨)
+ 
+ Args:
+ method: HTTP ë©”ì„œë“œ (GET, POST, PUT, DELETE)
+ endpoint: API ì—”ë“œí¬ì¸íŠ¸
+ data: ìš”ì²­ ë°ì´í„°
+ retry: ì¬ì‹œë„ ì—¬ë¶€
+ 
+ Returns:
+ Response ê°ì²´ ë˜ëŠ” None
         """
-        if not self.enabled:
-            return None
-        
+ if not self.enabled:
+ return None
+ 
         url = f"{self.base_url}{endpoint}"
-        
-        for attempt in range(self.max_retries if retry else 1):
-            try:
+ 
+ for attempt in range(self.max_retries if retry else 1):
+ try:
                 if method.upper() == "POST":
-                    response = self.session.post(url, json=data, timeout=10)
+ response = self.session.post(url, json=data, timeout=10)
                 elif method.upper() == "GET":
-                    response = self.session.get(url, timeout=10)
+ response = self.session.get(url, timeout=10)
                 elif method.upper() == "PUT":
-                    response = self.session.put(url, json=data, timeout=10)
-                else:
-                    raise ValueError(f"Áö¿øÇÏÁö ¾Ê´Â HTTP ¸Ş¼­µå: {method}")
-                
-                response.raise_for_status()
-                return response
-                
-            except requests.exceptions.RequestException as e:
-                if attempt < self.max_retries - 1:
-                    logger.warning(f"[REMOTE] ¿äÃ» ½ÇÆĞ (½Ãµµ {attempt + 1}/{self.max_retries}): {e}")
-                    time.sleep(self.retry_delay * (attempt + 1))
-                else:
-                    logger.error(f"[REMOTE] ¿äÃ» ÃÖÁ¾ ½ÇÆĞ: {e}")
-                    return None
-        
-        return None
-    
-    def send_game_state(self, game_state: Dict[str, Any]) -> bool:
+ response = self.session.put(url, json=data, timeout=10)
+ else:
+                    raise ValueError(f"ì§€ì›í•˜ì§€ ì•ŠëŠ” HTTP ë©”ì„œë“œ: {method}")
+ 
+ response.raise_for_status()
+ return response
+ 
+ except requests.exceptions.RequestException as e:
+ if attempt < self.max_retries - 1:
+                    logger.warning(f"[REMOTE] ìš”ì²­ ì‹¤íŒ¨ (ì‹œë„ {attempt + 1}/{self.max_retries}): {e}")
+ time.sleep(self.retry_delay * (attempt + 1))
+ else:
+                    logger.error(f"[REMOTE] ìš”ì²­ ìµœì¢… ì‹¤íŒ¨: {e}")
+ return None
+ 
+ return None
+ 
+ def send_game_state(self, game_state: Dict[str, Any]) -> bool:
         """
-        °ÔÀÓ »óÅÂ¸¦ ¿ø°İ ¼­¹ö·Î Àü¼Û
-        
-        Args:
-            game_state: °ÔÀÓ »óÅÂ µ¥ÀÌÅÍ
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ ê²Œì„ ìƒíƒœë¥¼ ì›ê²© ì„œë²„ë¡œ ì „ì†¡
+ 
+ Args:
+ game_state: ê²Œì„ ìƒíƒœ ë°ì´í„°
+ 
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        # Å¸ÀÓ½ºÅÆÇÁ Ãß°¡
+ # íƒ€ì„ìŠ¤íƒ¬í”„ ì¶”ê°€
         if "timestamp" not in game_state:
             game_state["timestamp"] = datetime.now().isoformat()
-        
+ 
         response = self._make_request("POST", "/api/game-state", data=game_state)
-        
-        if response:
-            logger.debug(f"[REMOTE] °ÔÀÓ »óÅÂ Àü¼Û ¼º°ø: {response.status_code}")
-            return True
-        else:
-            logger.warning("[REMOTE] °ÔÀÓ »óÅÂ Àü¼Û ½ÇÆĞ")
-            return False
-    
-    def send_telemetry(self, telemetry_data: List[Dict[str, Any]]) -> bool:
+ 
+ if response:
+            logger.debug(f"[REMOTE] ê²Œì„ ìƒíƒœ ì „ì†¡ ì„±ê³µ: {response.status_code}")
+ return True
+ else:
+            logger.warning("[REMOTE] ê²Œì„ ìƒíƒœ ì „ì†¡ ì‹¤íŒ¨")
+ return False
+ 
+ def send_telemetry(self, telemetry_data: List[Dict[str, Any]]) -> bool:
         """
-        ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ¸¦ ¿ø°İ ¼­¹ö·Î Àü¼Û
-        
-        Args:
-            telemetry_data: ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ ¸®½ºÆ®
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„°ë¥¼ ì›ê²© ì„œë²„ë¡œ ì „ì†¡
+ 
+ Args:
+ telemetry_data: í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„° ë¦¬ìŠ¤íŠ¸
+ 
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        if not telemetry_data:
-            return True
-        
+ if not telemetry_data:
+ return True
+ 
         response = self._make_request("POST", "/api/telemetry", data={"data": telemetry_data})
-        
-        if response:
-            logger.debug(f"[REMOTE] ÅÚ·¹¸ŞÆ®¸® Àü¼Û ¼º°ø: {len(telemetry_data)}°³ Ç×¸ñ")
-            return True
-        else:
-            logger.warning("[REMOTE] ÅÚ·¹¸ŞÆ®¸® Àü¼Û ½ÇÆĞ")
-            return False
-    
-    def send_stats(self, stats: Dict[str, Any]) -> bool:
+ 
+ if response:
+            logger.debug(f"[REMOTE] í…”ë ˆë©”íŠ¸ë¦¬ ì „ì†¡ ì„±ê³µ: {len(telemetry_data)}ê°œ í•­ëª©")
+ return True
+ else:
+            logger.warning("[REMOTE] í…”ë ˆë©”íŠ¸ë¦¬ ì „ì†¡ ì‹¤íŒ¨")
+ return False
+ 
+ def send_stats(self, stats: Dict[str, Any]) -> bool:
         """
-        Åë°è µ¥ÀÌÅÍ¸¦ ¿ø°İ ¼­¹ö·Î Àü¼Û
-        
-        Args:
-            stats: Åë°è µ¥ÀÌÅÍ
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ í†µê³„ ë°ì´í„°ë¥¼ ì›ê²© ì„œë²„ë¡œ ì „ì†¡
+ 
+ Args:
+ stats: í†µê³„ ë°ì´í„°
+ 
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
         response = self._make_request("POST", "/api/stats", data=stats)
-        
-        if response:
-            logger.debug(f"[REMOTE] Åë°è Àü¼Û ¼º°ø")
-            return True
-        else:
-            logger.warning("[REMOTE] Åë°è Àü¼Û ½ÇÆĞ")
-            return False
-    
-    def health_check(self) -> bool:
+ 
+ if response:
+            logger.debug(f"[REMOTE] í†µê³„ ì „ì†¡ ì„±ê³µ")
+ return True
+ else:
+            logger.warning("[REMOTE] í†µê³„ ì „ì†¡ ì‹¤íŒ¨")
+ return False
+ 
+ def health_check(self) -> bool:
         """
-        ¿ø°İ ¼­¹ö ¿¬°á »óÅÂ È®ÀÎ
-        
-        Returns:
-            ¼­¹ö ÀÀ´ä ¿©ºÎ
+ ì›ê²© ì„œë²„ ì—°ê²° ìƒíƒœ í™•ì¸
+ 
+ Returns:
+ ì„œë²„ ì‘ë‹µ ì—¬ë¶€
         """
         response = self._make_request("GET", "/health", retry=False)
-        return response is not None and response.status_code == 200
+ return response is not None and response.status_code == 200
 
 
 def create_client_from_env() -> Optional[RemoteDashboardClient]:
     """
-    È¯°æ º¯¼ö¿¡¼­ Å¬¶óÀÌ¾ğÆ® »ı¼º
-    
-    È¯°æ º¯¼ö:
-        REMOTE_DASHBOARD_URL: ¿ø°İ ¼­¹ö URL
-        REMOTE_DASHBOARD_API_KEY: API Å° (¼±ÅÃÀû)
-        REMOTE_DASHBOARD_ENABLED: È°¼ºÈ­ ¿©ºÎ (1 ¶Ç´Â 0)
-        REMOTE_SYNC_INTERVAL: µ¿±âÈ­ °£°İ (ÃÊ)
-    
-    Returns:
-        RemoteDashboardClient ÀÎ½ºÅÏ½º ¶Ç´Â None
+ í™˜ê²½ ë³€ìˆ˜ì—ì„œ í´ë¼ì´ì–¸íŠ¸ ìƒì„±
+ 
+ í™˜ê²½ ë³€ìˆ˜:
+ REMOTE_DASHBOARD_URL: ì›ê²© ì„œë²„ URL
+ REMOTE_DASHBOARD_API_KEY: API í‚¤ (ì„ íƒì )
+ REMOTE_DASHBOARD_ENABLED: í™œì„±í™” ì—¬ë¶€ (1 ë˜ëŠ” 0)
+ REMOTE_SYNC_INTERVAL: ë™ê¸°í™” ê°„ê²© (ì´ˆ)
+ 
+ Returns:
+ RemoteDashboardClient ì¸ìŠ¤í„´ìŠ¤ ë˜ëŠ” None
     """
     base_url = os.environ.get("REMOTE_DASHBOARD_URL")
-    if not base_url:
-        logger.warning("[REMOTE] REMOTE_DASHBOARD_URL È¯°æ º¯¼ö°¡ ¼³Á¤µÇÁö ¾ÊÀ½")
-        return None
-    
+ if not base_url:
+        logger.warning("[REMOTE] REMOTE_DASHBOARD_URL í™˜ê²½ ë³€ìˆ˜ê°€ ì„¤ì •ë˜ì§€ ì•ŠìŒ")
+ return None
+ 
     api_key = os.environ.get("REMOTE_DASHBOARD_API_KEY")
     enabled = os.environ.get("REMOTE_DASHBOARD_ENABLED", "1") == "1"
     sync_interval = int(os.environ.get("REMOTE_SYNC_INTERVAL", "5"))
-    
-    return RemoteDashboardClient(
-        base_url=base_url,
-        api_key=api_key,
-        enabled=enabled,
-        sync_interval=sync_interval
-    )
+ 
+ return RemoteDashboardClient(
+ base_url=base_url,
+ api_key=api_key,
+ enabled=enabled,
+ sync_interval=sync_interval
+ )
 
 
-# Å×½ºÆ® ÄÚµå
+# í…ŒìŠ¤íŠ¸ ì½”ë“œ
 if __name__ == "__main__":
-    # È¯°æ º¯¼ö¿¡¼­ Å¬¶óÀÌ¾ğÆ® »ı¼º
-    client = create_client_from_env()
-    
-    if not client:
-        print("È¯°æ º¯¼ö¸¦ ¼³Á¤ÇÏ¼¼¿ä:")
+ # í™˜ê²½ ë³€ìˆ˜ì—ì„œ í´ë¼ì´ì–¸íŠ¸ ìƒì„±
+ client = create_client_from_env()
+ 
+ if not client:
+        print("í™˜ê²½ ë³€ìˆ˜ë¥¼ ì„¤ì •í•˜ì„¸ìš”:")
         print("  REMOTE_DASHBOARD_URL=https://sc2aidash-bncleqgg.manus.space")
-        print("  REMOTE_DASHBOARD_API_KEY=your_api_key (¼±ÅÃÀû)")
+        print("  REMOTE_DASHBOARD_API_KEY=your_api_key (ì„ íƒì )")
         print("  REMOTE_DASHBOARD_ENABLED=1")
-        exit(1)
-    
-    # Çï½º Ã¼Å©
-    print("¿ø°İ ¼­¹ö ¿¬°á È®ÀÎ Áß...")
-    if client.health_check():
-        print("? ¼­¹ö ¿¬°á ¼º°ø")
-    else:
-        print("? ¼­¹ö ¿¬°á ½ÇÆĞ")
-    
-    # Å×½ºÆ® µ¥ÀÌÅÍ Àü¼Û
-    test_game_state = {
+ exit(1)
+ 
+ # í—¬ìŠ¤ ì²´í¬
+    print("ì›ê²© ì„œë²„ ì—°ê²° í™•ì¸ ì¤‘...")
+ if client.health_check():
+        print("? ì„œë²„ ì—°ê²° ì„±ê³µ")
+ else:
+        print("? ì„œë²„ ì—°ê²° ì‹¤íŒ¨")
+ 
+ # í…ŒìŠ¤íŠ¸ ë°ì´í„° ì „ì†¡
+ test_game_state = {
         "minerals": 50,
         "vespene": 0,
         "supply_used": 12,
@@ -242,14 +241,14 @@ if __name__ == "__main__":
         "units": {
             "zerglings": 0,
             "roaches": 0
-        },
+ },
         "win_rate": 45.3,
         "current_frame": 0,
         "game_status": "READY"
-    }
-    
-    print("\nÅ×½ºÆ® °ÔÀÓ »óÅÂ Àü¼Û Áß...")
-    if client.send_game_state(test_game_state):
-        print("? °ÔÀÓ »óÅÂ Àü¼Û ¼º°ø")
-    else:
-        print("? °ÔÀÓ »óÅÂ Àü¼Û ½ÇÆĞ")
+ }
+ 
+    print("\ní…ŒìŠ¤íŠ¸ ê²Œì„ ìƒíƒœ ì „ì†¡ ì¤‘...")
+ if client.send_game_state(test_game_state):
+        print("? ê²Œì„ ìƒíƒœ ì „ì†¡ ì„±ê³µ")
+ else:
+        print("? ê²Œì„ ìƒíƒœ ì „ì†¡ ì‹¤íŒ¨")

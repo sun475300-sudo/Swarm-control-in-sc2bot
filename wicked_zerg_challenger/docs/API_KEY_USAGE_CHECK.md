@@ -2,7 +2,7 @@
 
 **작성일**: 2026-01-14  
 **확인 대상**: 
-- `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+- `AIzaSyD-c6...UZrc`
 - `AQ.Ab8RN6LPDB1-6pre2l_RuRnUmr5GFb_5Qbf31YxKeF5kB9K8Yw`
 
 ---
@@ -17,7 +17,7 @@
 
 ## ? 상세 검색 결과
 
-### 1. `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+### 1. `AIzaSyD-c6...UZrc`
 
 #### 검색 위치별 결과:
 
@@ -64,14 +64,14 @@
 ### 활성화된 키
 
 **위치**: 환경 변수 (`$env:GEMINI_API_KEY`)  
-**키 값**: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`  
+**키 값**: `AIzaSyC_Ci...MIIo`  
 **상태**: ? **현재 사용 중**
 
 ---
 
 ## ? 키 형식 분석
 
-### `AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc`
+### `AIzaSyD-c6...UZrc`
 - ? `AIzaSy`로 시작 (Google API 키 형식)
 - ? 길이: 39자 (정상)
 - ? 실제 사용 안 함
@@ -90,7 +90,7 @@
    - 실제 코드나 설정 파일에서 사용 안 함
 
 2. **현재 사용 중인 키**
-   - `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo` (환경 변수)
+   - `AIzaSyC_Ci...MIIo` (환경 변수)
 
 3. **권장 사항**
    - 문서에서 예시 키를 제거하거나 더 명확하게 표시
@@ -105,7 +105,7 @@
 ```markdown
 **예시** (실제 키 아님):
 ```
-AIzaSyAbc123def456ghi789jkl012mno345pqr678
+AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 ```
 

@@ -1,22 +1,22 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo ¿ÏÀüÇÑ È¯°æ º¯¼ö Ä³½Ã ¹× Å° Á¦°Å
+echo ?ê¾©ìŸ¾???ì„ê¼ è¹‚Â€??ï§¦ë¨¯ë–† è«›????ì’“êµ…
 echo Complete Environment Cleanup
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [ÁÖÀÇ»çÇ×]
-echo - ÀÌ ½ºÅ©¸³Æ®´Â ´ÙÀ½À» ¼öÇàÇÕ´Ï´Ù:
-echo   1. IDE È¯°æ º¯¼ö Ä³½Ã »èÁ¦
-echo   2. ÅÍ¹Ì³Î/¹èÄ¡ ÆÄÀÏ¿¡¼­ ÀÌÀü Å° Á¦°Å
-echo   3. È¯°æ º¯¼ö ¿ÏÀü Á¦°Å
-echo   4. ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ ¿¾ Å° Á¦°Å
-echo   5. .env ÆÄÀÏ Á¤¸®
+echo [äºŒì‡±ì“½?Ñ‹ë¹†]
+echo - ???ã…½ê²•ç”±ì€ë“ƒ???ã…¼ì“¬???ì„‘ë»¾?â‘¸ë•²??
+echo   1. IDE ?ì„ê¼ è¹‚Â€??ï§¦ë¨¯ë–† ??ì £
+echo   2. ?ê³•???è«›ê³—íŠ‚ ?ëš¯ì”ª?ë¨¯ê½Œ ?ëŒìŸ¾ ???ì’“êµ…
+echo   3. ?ì„ê¼ è¹‚Â€???ê¾©ìŸ¾ ?ì’“êµ…
+echo   4. è«›ê³ ë£· ?ëš¯ì” ?ê¾¨ì”ª?ëª„ë¿‰???????ì’“êµ…
+echo   5. .env ?ëš¯ì”ª ?ëº£â”
 echo.
-echo - IDE¸¦ ´Ý°í ½ÇÇàÇÏ´Â °ÍÀ» ±ÇÀåÇÕ´Ï´Ù!
+echo - IDEç‘œ??ãƒªí€¬ ?ã…½ë»¾?ì„Žë’— å¯ƒê»‹ì“£ æ²…ëš¯ì˜£?â‘¸ë•²??
 echo.
 
 pause
@@ -25,13 +25,13 @@ powershell -ExecutionPolicy Bypass -File "%~dp0..\tools\complete_environment_cle
 
 echo.
 echo ========================================
-echo ¿Ï·á!
+echo ?ê¾¨ì¦º!
 echo ========================================
 echo.
-echo ´ÙÀ½ ´Ü°è:
-echo   1. IDE Àç½ÃÀÛ
-echo   2. »õ ÅÍ¹Ì³Î ¿­±â
-echo   3. »õ Å° ¼³Á¤ È®ÀÎ
+echo ?ã…¼ì“¬ ?â‘£í€Ž:
+echo   1. IDE ?ÑŠë–†??
+echo   2. ???ê³•????ë‹¿ë¦°
+echo   3. ?????ã…¼ì ™ ?ëº¤ì”¤
 echo.
 
 pause

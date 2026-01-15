@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-API Key ·Î´õ À¯Æ¿¸®Æ¼
+API Key ë¡œë” ìœ í‹¸ë¦¬í‹°
 
-secrets/ ¶Ç´Â api_keys/ Æú´õ¿¡¼­ API Å°¸¦ ¾ÈÀüÇÏ°Ô ·ÎµåÇÏ´Â ÇïÆÛ ÇÔ¼ö
-º¸¾È ¸ğ¹ü »ç·Ê: ÆÄÀÏ¿¡¼­ Á÷Á¢ ÀĞ¾î¿À±â
+secrets/ ë˜ëŠ” api_keys/ í´ë”ì—ì„œ API í‚¤ë¥¼ ì•ˆì „í•˜ê²Œ ë¡œë“œí•˜ëŠ” í—¬í¼ í•¨ìˆ˜
+ë³´ì•ˆ ëª¨ë²” ì‚¬ë¡€: íŒŒì¼ì—ì„œ ì§ì ‘ ì½ì–´ì˜¤ê¸°
 """
 
 import os
@@ -13,186 +13,213 @@ from typing import Optional
 
 
 def get_project_root() -> Path:
-    """ÇÁ·ÎÁ§Æ® ·çÆ® °æ·Î ¹İÈ¯"""
-    current = Path(__file__).resolve()
-    # tools/ Æú´õ¿¡¼­ ÇÁ·ÎÁ§Æ® ·çÆ®·Î ÀÌµ¿
-    return current.parent.parent
+    """í”„ë¡œì íŠ¸ ë£¨íŠ¸ ê²½ë¡œ ë°˜í™˜"""
+ current = Path(__file__).resolve()
+ # tools/ í´ë”ì—ì„œ í”„ë¡œì íŠ¸ ë£¨íŠ¸ë¡œ ì´ë™
+ return current.parent.parent
 
 
 def get_secrets_dir() -> Path:
-    """secrets Æú´õ °æ·Î ¹İÈ¯ (±ÇÀå)"""
+    """secrets í´ë” ê²½ë¡œ ë°˜í™˜ (ê¶Œì¥)"""
     return get_project_root() / "secrets"
 
 
 def get_api_keys_dir() -> Path:
-    """api_keys Æú´õ °æ·Î ¹İÈ¯ (ÇÏÀ§ È£È¯¼º)"""
+    """api_keys í´ë” ê²½ë¡œ ë°˜í™˜ (í•˜ìœ„ í˜¸í™˜ì„±)"""
     return get_project_root() / "api_keys"
 
 
 def load_key_from_file(file_path: Path) -> str:
     """
-    ÆÄÀÏ¿¡¼­ Å°¸¦ ÀĞ¾î¿É´Ï´Ù (º¸¾È ¸ğ¹ü »ç·Ê)
-    
-    Args:
-        file_path: Å° ÆÄÀÏ °æ·Î
-    
-    Returns:
-        Å° ¹®ÀÚ¿­ (¾øÀ¸¸é ºó ¹®ÀÚ¿­)
+ íŒŒì¼ì—ì„œ í‚¤ë¥¼ ì½ì–´ì˜µë‹ˆë‹¤ (ë³´ì•ˆ ëª¨ë²” ì‚¬ë¡€)
+ 
+ Args:
+ file_path: í‚¤ íŒŒì¼ ê²½ë¡œ
+ 
+ Returns:
+ í‚¤ ë¬¸ìì—´ (ì—†ìœ¼ë©´ ë¹ˆ ë¬¸ìì—´)
     """
-    if not file_path.exists():
+ if not file_path.exists():
         return ""
-    
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                # ÁÖ¼®ÀÌ³ª ºó ÁÙ °Ç³Ê¶Ù±â
-                if line and not line.startswith('#'):
-                    return line
-    except Exception as e:
-        print(f"[WARNING] Failed to read {file_path}: {e}")
-    
+ 
+ # ì—¬ëŸ¬ ì¸ì½”ë”© ì‹œë„ (UTF-8, CP949, latin-1, utf-8-sig)
+    encodings = ['utf-8', 'cp949', 'latin-1', 'utf-8-sig']
+ 
+ last_error = None
+ for encoding in encodings:
+ try:
+            with open(file_path, 'r', encoding=encoding) as f:
+ for line in f:
+ line = line.strip()
+ # ì£¼ì„ì´ë‚˜ ë¹ˆ ì¤„ ê±´ë„ˆë›°ê¸°
+                    if line and not line.startswith('#'):
+ return line
+ # íŒŒì¼ì„ ì½ì—ˆì§€ë§Œ ìœ íš¨í•œ ì¤„ì´ ì—†ëŠ” ê²½ìš°
+ break
+ except UnicodeDecodeError as e:
+ # ì´ ì¸ì½”ë”©ìœ¼ë¡œ ì½ì„ ìˆ˜ ì—†ìŒ, ë‹¤ìŒ ì¸ì½”ë”© ì‹œë„
+ last_error = e
+ continue
+ except Exception as e:
+ # ë‹¤ë¥¸ ì˜¤ë¥˜ (íŒŒì¼ ê¶Œí•œ ë“±) - ì²« ë²ˆì§¸ ì‹œë„ì—ì„œë§Œ ë¡œê·¸
+ if encoding == encodings[0]:
+                # Silent fail - don't spam warnings for encoding issues
+ last_error = e
+ continue
+ 
+ # ëª¨ë“  ì¸ì½”ë”© ì‹œë„ ì‹¤íŒ¨ ì‹œ ì¡°ìš©íˆ ë¹ˆ ë¬¸ìì—´ ë°˜í™˜
+ # (ê²½ê³ ëŠ” ìƒìœ„ í˜¸ì¶œìì—ì„œ ì²˜ë¦¬)
     return ""
 
 
 def load_api_key(key_name: str, fallback_env: Optional[str] = None) -> str:
     """
-    API Å°¸¦ ·ÎµåÇÕ´Ï´Ù (º¸¾È ¸ğ¹ü »ç·Ê)
-    
-    ¿ì¼±¼øÀ§:
-    1. secrets/ Æú´õ (±ÇÀå)
-    2. api_keys/ Æú´õ (ÇÏÀ§ È£È¯¼º)
-    3. .env ÆÄÀÏ
-    4. È¯°æ º¯¼ö
-    
-    Args:
-        key_name: API Å° ÀÌ¸§ (¿¹: "GEMINI_API_KEY")
-        fallback_env: È¯°æ º¯¼ö ÀÌ¸§ (NoneÀÌ¸é key_name »ç¿ë)
-    
-    Returns:
-        API Å° ¹®ÀÚ¿­ (¾øÀ¸¸é ºó ¹®ÀÚ¿­)
-    
-    Examples:
+ API í‚¤ë¥¼ ë¡œë“œí•©ë‹ˆë‹¤ (ë³´ì•ˆ ëª¨ë²” ì‚¬ë¡€)
+ 
+ ìš°ì„ ìˆœìœ„:
+ 1. secrets/ í´ë” (ê¶Œì¥)
+ 2. api_keys/ í´ë” (í•˜ìœ„ í˜¸í™˜ì„±)
+ 3. .env íŒŒì¼
+ 4. í™˜ê²½ ë³€ìˆ˜
+ 
+ Args:
+        key_name: API í‚¤ ì´ë¦„ (ì˜ˆ: "GEMINI_API_KEY")
+ fallback_env: í™˜ê²½ ë³€ìˆ˜ ì´ë¦„ (Noneì´ë©´ key_name ì‚¬ìš©)
+ 
+ Returns:
+ API í‚¤ ë¬¸ìì—´ (ì—†ìœ¼ë©´ ë¹ˆ ë¬¸ìì—´)
+ 
+ Examples:
         >>> key = load_api_key("GEMINI_API_KEY")
         >>> key = load_api_key("GOOGLE_API_KEY", fallback_env="GOOGLE_API_KEY")
     """
-    # 1. secrets/ Æú´õ¿¡¼­ ½Ãµµ (±ÇÀå)
-    secrets_dir = get_secrets_dir()
-    
-    # Å° ÀÌ¸§ ¸ÅÇÎ (°£´ÜÇÑ ÀÌ¸§ ¡æ ÆÄÀÏ¸í)
-    key_mapping = {
+ # 1. secrets/ í´ë”ì—ì„œ ì‹œë„ (ê¶Œì¥)
+ secrets_dir = get_secrets_dir()
+ 
+ # í‚¤ ì´ë¦„ ë§¤í•‘ (ê°„ë‹¨í•œ ì´ë¦„ â†’ íŒŒì¼ëª…)
+ key_mapping = {
         "GEMINI_API_KEY": "gemini_api.txt",
-        "GOOGLE_API_KEY": "gemini_api.txt",  # µ¿ÀÏÇÑ ÆÄÀÏ »ç¿ë °¡´É
+        "GOOGLE_API_KEY": "gemini_api.txt",  # ë™ì¼í•œ íŒŒì¼ ì‚¬ìš© ê°€ëŠ¥
         "NGROK_AUTH_TOKEN": "ngrok_auth.txt",
-    }
-    
-    # ¸ÅÇÎµÈ ÆÄÀÏ¸íÀÌ ÀÖÀ¸¸é »ç¿ë
-    if key_name in key_mapping:
-        secret_file = secrets_dir / key_mapping[key_name]
-        key = load_key_from_file(secret_file)
-        if key:
-            return key
-    
-    # ÀÏ¹İÀûÀÎ Çü½ÄÀ¸·Îµµ ½Ãµµ (GEMINI_API_KEY ¡æ gemini_api.txt ¶Ç´Â GEMINI_API_KEY.txt)
+ }
+ 
+ # ë§¤í•‘ëœ íŒŒì¼ëª…ì´ ìˆìœ¼ë©´ ì‚¬ìš©
+ if key_name in key_mapping:
+ secret_file = secrets_dir / key_mapping[key_name]
+ key = load_key_from_file(secret_file)
+ if key:
+ return key
+ 
+ # ì¼ë°˜ì ì¸ í˜•ì‹ìœ¼ë¡œë„ ì‹œë„ (GEMINI_API_KEY â†’ gemini_api.txt ë˜ëŠ” GEMINI_API_KEY.txt)
     secret_file = secrets_dir / f"{key_name.lower()}.txt"
-    key = load_key_from_file(secret_file)
-    if key:
-        return key
-    
-    # 2. api_keys/ Æú´õ¿¡¼­ ½Ãµµ (ÇÏÀ§ È£È¯¼º)
-    api_keys_dir = get_api_keys_dir()
+ key = load_key_from_file(secret_file)
+ if key:
+ return key
+ 
+ # 2. api_keys/ í´ë”ì—ì„œ ì‹œë„ (í•˜ìœ„ í˜¸í™˜ì„±)
+ api_keys_dir = get_api_keys_dir()
     key_file = api_keys_dir / f"{key_name}.txt"
-    key = load_key_from_file(key_file)
-    if key:
-        return key
-    
-    # 3. .env ÆÄÀÏ¿¡¼­ ½Ãµµ
+ key = load_key_from_file(key_file)
+ if key:
+ return key
+ 
+ # 3. .env íŒŒì¼ì—ì„œ ì‹œë„
     env_file = get_project_root() / ".env"
-    if env_file.exists():
-        try:
+ if env_file.exists():
+ try:
             with open(env_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
+ for line in f:
+ line = line.strip()
                     if line and not line.startswith('#'):
                         if '=' in line:
                             env_key, env_value = line.split('=', 1)
-                            if env_key.strip() == key_name:
-                                return env_value.strip()
-        except Exception as e:
+ if env_key.strip() == key_name:
+ return env_value.strip()
+ except Exception as e:
             print(f"[WARNING] Failed to read .env file: {e}")
-    
-    # 4. È¯°æ º¯¼ö¿¡¼­ ½Ãµµ
-    env_name = fallback_env or key_name
-    env_value = os.environ.get(env_name)
-    if env_value:
-        return env_value
-    
-    # ºó ¹®ÀÚ¿­ ¹İÈ¯
+ 
+ # 4. í™˜ê²½ ë³€ìˆ˜ì—ì„œ ì‹œë„
+ env_name = fallback_env or key_name
+ env_value = os.environ.get(env_name)
+ if env_value:
+ return env_value
+ 
+ # ë¹ˆ ë¬¸ìì—´ ë°˜í™˜
     return ""
 
 
 def set_api_key_to_env(key_name: str, fallback_env: Optional[str] = None) -> bool:
     """
-    API Å°¸¦ È¯°æ º¯¼ö·Î ¼³Á¤ÇÕ´Ï´Ù.
-    
-    Args:
-        key_name: API Å° ÀÌ¸§
-        fallback_env: È¯°æ º¯¼ö ÀÌ¸§ (NoneÀÌ¸é key_name »ç¿ë)
-    
-    Returns:
-        ¼º°ø ¿©ºÎ
+ API í‚¤ë¥¼ í™˜ê²½ ë³€ìˆ˜ë¡œ ì„¤ì •í•©ë‹ˆë‹¤.
+ 
+ Args:
+ key_name: API í‚¤ ì´ë¦„
+ fallback_env: í™˜ê²½ ë³€ìˆ˜ ì´ë¦„ (Noneì´ë©´ key_name ì‚¬ìš©)
+ 
+ Returns:
+ ì„±ê³µ ì—¬ë¶€
     """
-    key = load_api_key(key_name, fallback_env)
-    if key:
-        env_name = fallback_env or key_name
-        os.environ[env_name] = key
-        return True
-    return False
+ key = load_api_key(key_name, fallback_env)
+ if key:
+ env_name = fallback_env or key_name
+ os.environ[env_name] = key
+ return True
+ return False
 
 
-# ÆíÀÇ ÇÔ¼öµé
+# í¸ì˜ í•¨ìˆ˜ë“¤
 def get_gemini_api_key() -> str:
-    """Gemini API Å° ¹İÈ¯"""
-    return load_api_key("GEMINI_API_KEY", "GEMINI_API_KEY") or load_api_key("GOOGLE_API_KEY", "GOOGLE_API_KEY")
+    """Gemini API í‚¤ ë°˜í™˜"""
+ try:
+        key = load_api_key("GEMINI_API_KEY", "GEMINI_API_KEY") or load_api_key("GOOGLE_API_KEY", "GOOGLE_API_KEY")
+ return key
+ except (UnicodeDecodeError, SyntaxError, ImportError) as e:
+ # íŒŒì¼ ì¸ì½”ë”© ì˜¤ë¥˜ë‚˜ import ì˜¤ë¥˜ ì‹œ í™˜ê²½ ë³€ìˆ˜ì—ì„œ ì½ê¸°
+ import os
+        return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+ except Exception as e:
+ # ê¸°íƒ€ ì˜¤ë¥˜ ì‹œ í™˜ê²½ ë³€ìˆ˜ì—ì„œ ì½ê¸°
+ import os
+        return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
 
 
 def get_google_api_key() -> str:
-    """Google API Å° ¹İÈ¯"""
+    """Google API í‚¤ ë°˜í™˜"""
     return load_api_key("GOOGLE_API_KEY", "GOOGLE_API_KEY")
 
 
 def get_gcp_project_id() -> str:
-    """GCP ÇÁ·ÎÁ§Æ® ID ¹İÈ¯"""
+    """GCP í”„ë¡œì íŠ¸ ID ë°˜í™˜"""
     return load_api_key("GCP_PROJECT_ID", "GCP_PROJECT_ID")
 
 
-# »ç¿ë ¿¹½Ã
+# ì‚¬ìš© ì˜ˆì‹œ
 if __name__ == "__main__":
     print("API Key Loader Test")
     print("=" * 50)
-    
-    # Gemini API Å° Å×½ºÆ®
-    gemini_key = get_gemini_api_key()
-    if gemini_key:
+ 
+ # Gemini API í‚¤ í…ŒìŠ¤íŠ¸
+ gemini_key = get_gemini_api_key()
+ if gemini_key:
         print(f"? GEMINI_API_KEY: {gemini_key[:10]}... (loaded)")
-    else:
+ else:
         print("? GEMINI_API_KEY: Not found")
-    
-    # Google API Å° Å×½ºÆ®
-    google_key = get_google_api_key()
-    if google_key:
+ 
+ # Google API í‚¤ í…ŒìŠ¤íŠ¸
+ google_key = get_google_api_key()
+ if google_key:
         print(f"? GOOGLE_API_KEY: {google_key[:10]}... (loaded)")
-    else:
+ else:
         print("? GOOGLE_API_KEY: Not found")
-    
-    # GCP ÇÁ·ÎÁ§Æ® ID Å×½ºÆ®
-    gcp_id = get_gcp_project_id()
-    if gcp_id:
+ 
+ # GCP í”„ë¡œì íŠ¸ ID í…ŒìŠ¤íŠ¸
+ gcp_id = get_gcp_project_id()
+ if gcp_id:
         print(f"? GCP_PROJECT_ID: {gcp_id} (loaded)")
-    else:
+ else:
         print("? GCP_PROJECT_ID: Not found")
-    
+ 
     print("=" * 50)
-    print("\n»ç¿ë ¹æ¹ı:")
+    print("\nì‚¬ìš© ë°©ë²•:")
     print("  from tools.load_api_key import get_gemini_api_key")
     print("  api_key = get_gemini_api_key()")

@@ -1,132 +1,35 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-API Å° Á¢±Ù Á¦¾î
-API Key Access Control
-"""
-
+# API í‚¤ ì ‘ê·¼ ì œì–´ ì„¤ì •
 import os
 from pathlib import Path
-from typing import Optional, List
-
+from typing import Optional
 
 class ApiKeyAccessControl:
-    """API Å° Á¢±Ù Á¦¾î Å¬·¡½º"""
-    
-    def __init__(self):
-        """ÃÊ±âÈ­"""
-        self.allowed_ips = self._load_allowed_ips()
-        self.allowed_domains = self._load_allowed_domains()
-    
-    def _load_allowed_ips(self) -> List[str]:
-        """Çã¿ëµÈ IP ÁÖ¼Ò ¸ñ·Ï ·Îµå"""
-        config_file = Path("config") / "allowed_ips.txt"
-        
-        # ¿¹Á¦ ÆÄÀÏÀÌ ÀÖÀ¸¸é »ç¿ë
-        if not config_file.exists():
-            example_file = Path("config") / "allowed_ips.txt.example"
-            if example_file.exists():
-                return []  # ¿¹Á¦ ÆÄÀÏÀº ¹«½Ã
-        
-        if config_file.exists():
-            try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    ips = []
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            ips.append(line)
-                    return ips
-            except Exception:
-                return []
-        
-        return []
-    
-    def _load_allowed_domains(self) -> List[str]:
-        """Çã¿ëµÈ µµ¸ŞÀÎ ¸ñ·Ï ·Îµå"""
-        config_file = Path("config") / "allowed_domains.txt"
-        
-        # ¿¹Á¦ ÆÄÀÏÀÌ ÀÖÀ¸¸é »ç¿ë
-        if not config_file.exists():
-            example_file = Path("config") / "allowed_domains.txt.example"
-            if example_file.exists():
-                return []  # ¿¹Á¦ ÆÄÀÏÀº ¹«½Ã
-        
-        if config_file.exists():
-            try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    domains = []
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            domains.append(line)
-                    return domains
-            except Exception:
-                return []
-        
-        return []
-    
-    def is_allowed(self, ip: Optional[str] = None, domain: Optional[str] = None) -> bool:
-        """
-        Á¢±ÙÀÌ Çã¿ëµÇ¾ú´ÂÁö È®ÀÎ
-        
-        Args:
-            ip: Å¬¶óÀÌ¾ğÆ® IP ÁÖ¼Ò
-            domain: Å¬¶óÀÌ¾ğÆ® µµ¸ŞÀÎ
-        
-        Returns:
-            Çã¿ë ¿©ºÎ
-        """
-        # Á¦ÇÑÀÌ ¾øÀ¸¸é Çã¿ë
-        if not self.allowed_ips and not self.allowed_domains:
-            return True
-        
-        # IP È®ÀÎ
-        if ip and self.allowed_ips:
-            # Á¤È®ÇÑ IP ¸ÅÄª
-            if ip in self.allowed_ips:
-                return True
-            
-            # CIDR Ç¥±â¹ı Áö¿ø (°£´ÜÇÑ ±¸Çö)
-            for allowed_ip in self.allowed_ips:
-                if '/' in allowed_ip:
-                    # CIDR Ç¥±â¹ı (¿¹: 192.168.1.0/24)
-                    # °£´ÜÇÑ ±¸Çö: Á¤È®ÇÑ ¸ÅÄª¸¸
-                    if ip == allowed_ip.split('/')[0]:
-                        return True
-                elif ip == allowed_ip:
-                    return True
-        
-        # µµ¸ŞÀÎ È®ÀÎ
-        if domain and self.allowed_domains:
-            for allowed_domain in self.allowed_domains:
-                if allowed_domain.startswith('*.'):
-                    # ¿ÍÀÏµåÄ«µå µµ¸ŞÀÎ (¿¹: *.example.com)
-                    base_domain = allowed_domain[2:]
-                    if domain.endswith('.' + base_domain) or domain == base_domain:
-                        return True
-                elif domain == allowed_domain:
-                    return True
-        
-        # IP³ª µµ¸ŞÀÎÀÌ Á¦°øµÇÁö ¾Ê¾Ò°í Á¦ÇÑÀÌ ÀÖÀ¸¸é °ÅºÎ
-        if self.allowed_ips or self.allowed_domains:
-            return False
-        
-        return True
-
-
-if __name__ == "__main__":
-    # Å×½ºÆ®
-    access_control = ApiKeyAccessControl()
-    
-    print("Á¢±Ù Á¦¾î ¼³Á¤:")
-    print(f"  Çã¿ëµÈ IP: {access_control.allowed_ips}")
-    print(f"  Çã¿ëµÈ µµ¸ŞÀÎ: {access_control.allowed_domains}")
-    
-    # Å×½ºÆ®
-    test_ip = "192.168.1.100"
-    test_domain = "example.com"
-    
-    print(f"\nÅ×½ºÆ®:")
-    print(f"  IP {test_ip}: {'Çã¿ë' if access_control.is_allowed(ip=test_ip) else '°ÅºÎ'}")
-    print(f"  µµ¸ŞÀÎ {test_domain}: {'Çã¿ë' if access_control.is_allowed(domain=test_domain) else '°ÅºÎ'}")
+    '''API í‚¤ ì ‘ê·¼ ì œì–´ í´ë˜ìŠ¤'''
+ 
+ def __init__(self):
+ self.allowed_ips = self._load_allowed_ips()
+ self.allowed_domains = self._load_allowed_domains()
+ 
+ def _load_allowed_ips(self) -> list:
+        '''í—ˆìš©ëœ IP ì£¼ì†Œ ëª©ë¡ ë¡œë“œ'''
+        config_file = Path('config') / 'allowed_ips.txt'
+ if config_file.exists():
+            with open(config_file, 'r', encoding='utf-8') as f:
+                return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+ return []
+ 
+ def _load_allowed_domains(self) -> list:
+        '''í—ˆìš©ëœ ë„ë©”ì¸ ëª©ë¡ ë¡œë“œ'''
+        config_file = Path('config') / 'allowed_domains.txt'
+ if config_file.exists():
+            with open(config_file, 'r', encoding='utf-8') as f:
+                return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+ return []
+ 
+ def is_allowed(self, ip: Optional[str] = None, domain: Optional[str] = None) -> bool:
+        '''ì ‘ê·¼ì´ í—ˆìš©ë˜ì—ˆëŠ”ì§€ í™•ì¸'''
+ if ip and self.allowed_ips:
+ return ip in self.allowed_ips
+ if domain and self.allowed_domains:
+ return domain in self.allowed_domains
+ return True # ì œí•œì´ ì—†ìœ¼ë©´ í—ˆìš©

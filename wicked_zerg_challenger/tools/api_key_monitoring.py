@@ -1,138 +1,37 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-API Å° »ç¿ë ¸ð´ÏÅÍ¸µ
-API Key Usage Monitoring
-"""
-
+# API í‚¤ ì‚¬ìš© ëª¨ë‹ˆí„°ë§ ìŠ¤í¬ë¦½íŠ¸
+import os
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict
 
-
-def get_log_file() -> Path:
-    """·Î±× ÆÄÀÏ °æ·Î ¹ÝÈ¯"""
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    return log_dir / "api_key_usage.json"
-
-
-def log_api_key_usage(api_name: str, success: bool = True, error: Optional[str] = None):
-    """
-    API Å° »ç¿ë ·Î±× ±â·Ï
-    
-    Args:
-        api_name: API ÀÌ¸§ (¿¹: "gemini", "google")
-        success: ¼º°ø ¿©ºÎ
-        error: ¿¡·¯ ¸Þ½ÃÁö (½ÇÆÐ ½Ã)
-    """
-    log_file = get_log_file()
-    
-    # ±âÁ¸ ·Î±× ÀÐ±â
-    if log_file.exists():
-        try:
-            with open(log_file, 'r', encoding='utf-8') as f:
-                logs = json.load(f)
-        except Exception:
-            logs = []
-    else:
-        logs = []
-    
-    # »õ ·Î±× Ãß°¡
-    log_entry = {
+def log_api_key_usage(api_name, success=True, error=None):
+    '''API í‚¤ ì‚¬ìš© ë¡œê·¸ ê¸°ë¡'''
+    log_dir = Path('logs')
+ log_dir.mkdir(exist_ok=True)
+ 
+    log_file = log_dir / 'api_key_usage.json'
+ 
+ # ê¸°ì¡´ ë¡œê·¸ ì½ê¸°
+ if log_file.exists():
+        with open(log_file, 'r', encoding='utf-8') as f:
+ logs = json.load(f)
+ else:
+ logs = []
+ 
+ # ìƒˆ ë¡œê·¸ ì¶”ê°€
+ log_entry = {
         'timestamp': datetime.now().isoformat(),
         'api': api_name,
         'success': success,
         'error': str(error) if error else None
-    }
-    
-    logs.append(log_entry)
-    
-    # ÃÖ±Ù 1000°³¸¸ À¯Áö
-    if len(logs) > 1000:
-        logs = logs[-1000:]
-    
-    # ·Î±× ÀúÀå
-    try:
-        with open(log_file, 'w', encoding='utf-8') as f:
-            json.dump(logs, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        print(f"[WARNING] API Å° »ç¿ë ·Î±× ÀúÀå ½ÇÆÐ: {e}")
-
-
-def load_usage_logs() -> List[Dict]:
-    """»ç¿ë ·Î±× ·Îµå"""
-    log_file = get_log_file()
-    
-    if not log_file.exists():
-        return []
-    
-    try:
-        with open(log_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return []
-
-
-def get_usage_stats(days: int = 7) -> Dict:
-    """
-    »ç¿ë·® Åë°è ¹ÝÈ¯
-    
-    Args:
-        days: Åë°è ±â°£ (ÀÏ)
-    
-    Returns:
-        Åë°è µñ¼Å³Ê¸®
-    """
-    logs = load_usage_logs()
-    
-    if not logs:
-        return {
-            'total_requests': 0,
-            'successful_requests': 0,
-            'failed_requests': 0,
-            'success_rate': 0.0,
-            'daily_usage': {}
-        }
-    
-    # ±â°£ ÇÊÅÍ¸µ
-    cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-    recent_logs = [log for log in logs if log['timestamp'] >= cutoff_date]
-    
-    # Åë°è °è»ê
-    total = len(recent_logs)
-    successful = sum(1 for log in recent_logs if log.get('success', False))
-    failed = total - successful
-    success_rate = (successful / total * 100) if total > 0 else 0.0
-    
-    # ÀÏÀÏ »ç¿ë·®
-    daily_usage = {}
-    for log in recent_logs:
-        date = log['timestamp'][:10]  # YYYY-MM-DD
-        daily_usage[date] = daily_usage.get(date, 0) + 1
-    
-    return {
-        'total_requests': total,
-        'successful_requests': successful,
-        'failed_requests': failed,
-        'success_rate': success_rate,
-        'daily_usage': daily_usage
-    }
-
-
-if __name__ == "__main__":
-    from datetime import timedelta
-    
-    # Å×½ºÆ®
-    log_api_key_usage("gemini", success=True)
-    log_api_key_usage("gemini", success=False, error="Test error")
-    
-    # Åë°è Ãâ·Â
-    stats = get_usage_stats(days=7)
-    print("API Å° »ç¿ë Åë°è (ÃÖ±Ù 7ÀÏ):")
-    print(f"  ÃÑ ¿äÃ»: {stats['total_requests']}")
-    print(f"  ¼º°ø: {stats['successful_requests']}")
-    print(f"  ½ÇÆÐ: {stats['failed_requests']}")
-    print(f"  ¼º°ø·ü: {stats['success_rate']:.2f}%")
-    print(f"  ÀÏÀÏ »ç¿ë·®: {stats['daily_usage']}")
+ }
+ 
+ logs.append(log_entry)
+ 
+ # ìµœê·¼ 1000ê°œë§Œ ìœ ì§€
+ if len(logs) > 1000:
+ logs = logs[-1000:]
+ 
+ # ë¡œê·¸ ì €ìž¥
+    with open(log_file, 'w', encoding='utf-8') as f:
+ json.dump(logs, f, indent=2, ensure_ascii=False)

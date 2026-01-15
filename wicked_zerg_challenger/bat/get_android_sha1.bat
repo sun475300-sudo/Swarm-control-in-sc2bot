@@ -1,7 +1,7 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo Android SHA-1 ÀÎÁõ¼­ Áö¹® °¡Á®¿À±â
+echo Android SHA-1 ?ëª„ì¬†??ï§žÂ€è‡¾?åª›Â€?ëª„ì‚¤æ¹²?
 echo Get Android SHA-1 Certificate Fingerprint
 echo ========================================
 echo.

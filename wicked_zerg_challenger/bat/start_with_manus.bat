@@ -1,13 +1,13 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo Manus ´ë½Ãº¸µå ÅëÇÕ º¿ ½ÇÇà
+echo Manus ?Â€?ì’•ë‚«???ë“¯ë¹€ éŠ??ã…½ë»¾
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [1/3] È¯°æ º¯¼ö ¼³Á¤...
+echo [1/3] ?ì„ê¼ è¹‚Â€???ã…¼ì ™...
 set MANUS_DASHBOARD_URL=https://sc2aidash-bncleqgg.manus.space
 set MANUS_DASHBOARD_ENABLED=1
 set MANUS_SYNC_INTERVAL=5
@@ -17,21 +17,21 @@ echo ? MANUS_DASHBOARD_ENABLED: %MANUS_DASHBOARD_ENABLED%
 echo ? MANUS_SYNC_INTERVAL: %MANUS_SYNC_INTERVAL%
 echo.
 
-echo [2/3] ¿¬°á Å×½ºÆ®...
+echo [2/3] ?ê³Œê» ?ëš¯ë’ª??..
 cd monitoring
 python manus_dashboard_client.py
 if errorlevel 1 (
     echo.
-    echo ?? ¿¬°á Å×½ºÆ® ½ÇÆÐ. °è¼Ó ÁøÇàÇÒ±î¿ä? (Y/N)
+    echo ?? ?ê³Œê» ?ëš¯ë’ª???ã…½ë™£. æ€¨ê¾©ëƒ½ ï§žê¾ªë»¾?ì¢‰í‰´?? (Y/N)
     set /p continue=
     if /i not "%continue%"=="Y" exit /b 1
 )
 cd ..
 echo.
 
-echo [3/3] º¿ ½ÇÇà...
+echo [3/3] éŠ??ã…½ë»¾...
 echo.
-echo ? °ÔÀÓÀÌ ½ÃÀÛµÇ¸é Manus ´ë½Ãº¸µå¿¡¼­ ½Ç½Ã°£À¸·Î È®ÀÎÇÒ ¼ö ÀÖ½À´Ï´Ù:
+echo ? å¯ƒëš¯ì—«???ì’–ì˜‰?ì„Žãˆƒ Manus ?Â€?ì’•ë‚«?ì’–ë¿‰???ã…¼ë–†åª›ê¾©ì‘æ¿¡??ëº¤ì”¤?????ë‰ë’¿?ëˆë–Ž:
 echo    https://sc2aidash-bncleqgg.manus.space
 echo.
 python run.py

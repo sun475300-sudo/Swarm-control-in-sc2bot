@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Mobile GCS Setup Script
 REM Generates PWA icons and verifies setup
 

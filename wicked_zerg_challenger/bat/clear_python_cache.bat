@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Clear Python cache files to ensure latest code is used
 
 echo Clearing Python cache files...

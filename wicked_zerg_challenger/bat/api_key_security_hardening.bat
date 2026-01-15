@@ -1,7 +1,7 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo API Å° º¸¾È °­È­
+echo API ??è¹‚ëŒë¸ åª›ëº¥ì†•
 echo API Key Security Hardening
 echo ========================================
 echo.

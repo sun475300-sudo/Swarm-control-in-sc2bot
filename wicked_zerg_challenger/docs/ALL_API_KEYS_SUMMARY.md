@@ -49,7 +49,7 @@
 ### GEMINI_API_KEY 교체
 
 1. **Google AI Studio에서 기존 키 삭제**
-   - 키: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
+   - 키: `AIzaSyC_Ci...MIIo`
    - https://makersuite.google.com/app/apikey
 
 2. **새 키 발급 및 적용**

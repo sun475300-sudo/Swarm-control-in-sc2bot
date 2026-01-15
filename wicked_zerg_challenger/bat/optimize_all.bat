@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Optimize and sort learning data + code optimization
 
 echo ================================

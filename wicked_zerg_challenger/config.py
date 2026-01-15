@@ -1,14 +1,74 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Optional
 
-from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    # Mock for testing without SC2
+    class UnitTypeId:
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
+        ROACH = "ROACH"
+        RAVAGER = "RAVAGER"
+        HYDRALISK = "HYDRALISK"
+        LURKER = "LURKER"
+        CORRUPTOR = "CORRUPTOR"
+        BROODLORD = "BROODLORD"
+        ULTRALISK = "ULTRALISK"
+        SIEGETANK = "SIEGETANK"
+        SIEGETANKSIEGED = "SIEGETANKSIEGED"
+        MEDIVAC = "MEDIVAC"
+        THOR = "THOR"
+        BATTLECRUISER = "BATTLECRUISER"
+        LIBERATOR = "LIBERATOR"
+        WIDOWMINE = "WIDOWMINE"
+        MARINE = "MARINE"
+        MARAUDER = "MARAUDER"
+        HELLION = "HELLION"
+        CYCLONE = "CYCLONE"
+        COLOSSUS = "COLOSSUS"
+        HIGHTEMPLAR = "HIGHTEMPLAR"
+        DISRUPTOR = "DISRUPTOR"
+        IMMORTAL = "IMMORTAL"
+        ARCHON = "ARCHON"
+        CARRIER = "CARRIER"
+        VOIDRAY = "VOIDRAY"
+        STALKER = "STALKER"
+        ZEALOT = "ZEALOT"
+        ADEPT = "ADEPT"
+        SENTRY = "SENTRY"
+        INFESTOR = "INFESTOR"
+        SCV = "SCV"
+        PROBE = "PROBE"
+        DRONE = "DRONE"
+        COMMANDCENTER = "COMMANDCENTER"
+        COMMANDCENTERFLYING = "COMMANDCENTERFLYING"
+        NEXUS = "NEXUS"
+        HATCHERY = "HATCHERY"
+        LAIR = "LAIR"
+        HIVE = "HIVE"
+        ORBITALCOMMAND = "ORBITALCOMMAND"
+        PLANETARYFORTRESS = "PLANETARYFORTRESS"
+        BARRACKS = "BARRACKS"
+        FACTORY = "FACTORY"
+        STARPORT = "STARPORT"
+        BUNKER = "BUNKER"
+        GATEWAY = "GATEWAY"
+        STARGATE = "STARGATE"
+        ROBOTICSFACILITY = "ROBOTICSFACILITY"
+        DARKSHRINE = "DARKSHRINE"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        ROACHWARREN = "ROACHWARREN"
+        BANELINGNEST = "BANELINGNEST"
+        SPINECRAWLER = "SPINECRAWLER"
+        SPORECRAWLER = "SPORECRAWLER"
 
-# Logger for learned parameters
 try:
     from loguru import logger
 except ImportError:
@@ -19,7 +79,6 @@ except ImportError:
 
 class GamePhase(Enum):
     """Current game phase - transitions dynamically based on scouting"""
-
     OPENING = auto()
     ECONOMY = auto()
     TECH = auto()
@@ -30,7 +89,6 @@ class GamePhase(Enum):
 
 class EnemyRace(Enum):
     """Opponent race"""
-
     TERRAN = auto()
     PROTOSS = auto()
     ZERG = auto()
@@ -40,7 +98,6 @@ class EnemyRace(Enum):
 @dataclass(frozen=True)
 class Config:
     """AI behavior configuration values (immutable)"""
-
     MAX_WORKERS: int = 60
     WORKERS_PER_BASE: int = 16
     WORKERS_PER_GAS: int = 3
@@ -100,6 +157,26 @@ class Config:
     REPLAY_LEARNING_INTERVAL: int = 1
     REPLAY_LEARNING_ITERATIONS: int = 3
     MAX_REPLAYS_FOR_LEARNING: int = 300  # Maximum number of replays to analyze (increased from 100)
+
+
+# ============================================================================
+# Replay Path Configuration
+# ============================================================================
+# IMPROVED: Replay paths moved from hardcoded values to config
+# Environment variables take priority, then defaults
+
+REPLAY_DIR = Path(os.environ.get("REPLAY_DIR", "D:/replays"))
+REPLAY_SOURCE_DIR = Path(os.environ.get("REPLAY_SOURCE_DIR", REPLAY_DIR / "replays"))
+REPLAY_COMPLETED_DIR = REPLAY_SOURCE_DIR / "completed"
+REPLAY_ARCHIVE_DIR = Path(os.environ.get("REPLAY_ARCHIVE_DIR", REPLAY_DIR / "archive"))
+
+# Ensure directories exist (create if needed)
+try:
+    REPLAY_DIR.mkdir(parents=True, exist_ok=True)
+    REPLAY_SOURCE_DIR.mkdir(parents=True, exist_ok=True)
+    REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass  # Directory creation may fail, but that's okay
 
 
 TARGET_PRIORITY = {
@@ -285,20 +362,20 @@ def get_learned_parameter(parameter_name: str, default_value: Any = None) -> Any
     local_training_path = Path(__file__).parent / "local_training" / "scripts" / "learned_build_orders.json"
     # Priority 2: learned_build_orders.json in same directory (backward compatibility)
     default_path = Path(__file__).parent / "learned_build_orders.json"
-    
+
     # Try local_training first
     learned_json_path = local_training_path if local_training_path.exists() else default_path
     if learned_json_path.exists():
         try:
             with open(learned_json_path, 'r', encoding='utf-8') as f:
                 learned_data = json.load(f)
-                if isinstance(learned_data, dict):
-                    if "learned_parameters" in learned_data:
-                        learned_params = learned_data["learned_parameters"]
-                    else:
-                        learned_params = learned_data
-                    if parameter_name in learned_params:
-                        return learned_params[parameter_name]
+            if isinstance(learned_data, dict):
+                if "learned_parameters" in learned_data:
+                    learned_params = learned_data["learned_parameters"]
+                else:
+                    learned_params = learned_data
+                if parameter_name in learned_params:
+                    return learned_params[parameter_name]
         except Exception:
             pass
     loader = get_config_loader()

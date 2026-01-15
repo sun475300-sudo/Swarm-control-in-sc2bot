@@ -1,6 +1,6 @@
-@echo off
+ï»¿@echo off
 REM AI Arena Deployment Package Creator
-REM Creates zip file in D:\¾Æ·¹³ª_¹èÆ÷\deployment
+REM Creates zip file in D:\?ê¾¨ì …??è«›ê³ ë£·\deployment
 
 chcp 65001 >nul
 cd /d "%~dp0.."
@@ -11,7 +11,7 @@ echo ========================================
 echo.
 
 REM Set output directory
-set OUTPUT_DIR=D:\¾Æ·¹³ª_¹èÆ÷\deployment
+set OUTPUT_DIR=D:\?ê¾¨ì …??è«›ê³ ë£·\deployment
 
 REM Create output directory
 if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"

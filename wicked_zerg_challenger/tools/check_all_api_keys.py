@@ -1,191 +1,190 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-¸ğµç API Å° »óÅÂ È®ÀÎ ½ºÅ©¸³Æ®
+ëª¨ë“  API í‚¤ ìƒíƒœ í™•ì¸ ìŠ¤í¬ë¦½íŠ¸
 
-ÇÁ·ÎÁ§Æ®¿¡¼­ »ç¿ëµÇ´Â ¸ğµç API Å°ÀÇ ÇöÀç »óÅÂ¸¦ È®ÀÎÇÕ´Ï´Ù.
+í”„ë¡œì íŠ¸ì—ì„œ ì‚¬ìš©ë˜ëŠ” ëª¨ë“  API í‚¤ì˜ í˜„ì¬ ìƒíƒœë¥¼ í™•ì¸í•©ë‹ˆë‹¤.
 """
 
 import os
 import sys
 from pathlib import Path
 
-# ÇÁ·ÎÁ§Æ® ·çÆ®¸¦ Python °æ·Î¿¡ Ãß°¡
+# í”„ë¡œì íŠ¸ ë£¨íŠ¸ë¥¼ Python ê²½ë¡œì— ì¶”ê°€
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from tools.load_api_key import (
-        get_gemini_api_key,
-        get_google_api_key,
-        get_gcp_project_id,
-        load_api_key
-    )
+ get_gemini_api_key,
+ get_google_api_key,
+ get_gcp_project_id,
+ load_api_key
+ )
 except ImportError:
-    print("? tools.load_api_key ¸ğµâÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.")
-    sys.exit(1)
+    print("? tools.load_api_key ëª¨ë“ˆì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+ sys.exit(1)
 
 
 def check_key(name: str, value: str, is_sensitive: bool = True) -> dict:
-    """Å° »óÅÂ È®ÀÎ"""
-    if not value:
-        return {
+    """í‚¤ ìƒíƒœ í™•ì¸"""
+ if not value:
+ return {
             "name": name,
-            "status": "? ¾øÀ½",
+            "status": "? ì—†ìŒ",
             "value": None,
-            "location": "¾øÀ½"
-        }
-    
-    # ¹Î°¨ÇÑ Å°´Â ¾ÕºÎºĞ¸¸ Ç¥½Ã
-    if is_sensitive and len(value) > 10:
-        display_value = f"{value[:10]}... (±æÀÌ: {len(value)})"
-    else:
-        display_value = value
-    
-    # À§Ä¡ È®ÀÎ
-    locations = []
-    
-    # È¯°æ º¯¼ö È®ÀÎ
+            "location": "ì—†ìŒ"
+ }
+ 
+ # ë¯¼ê°í•œ í‚¤ëŠ” ì•ë¶€ë¶„ë§Œ í‘œì‹œ
+ if is_sensitive and len(value) > 10:
+        display_value = f"{value[:10]}... (ê¸¸ì´: {len(value)})"
+ else:
+ display_value = value
+ 
+ # ìœ„ì¹˜ í™•ì¸
+ locations = []
+ 
+ # í™˜ê²½ ë³€ìˆ˜ í™•ì¸
     env_name = name.upper().replace("-", "_")
-    if os.environ.get(env_name) == value:
-        locations.append(f"È¯°æ º¯¼ö ({env_name})")
-    
-    # ÆÄÀÏ È®ÀÎ
-    project_root = Path(__file__).parent.parent
-    
-    # secrets/ Æú´õ È®ÀÎ
+ if os.environ.get(env_name) == value:
+        locations.append(f"í™˜ê²½ ë³€ìˆ˜ ({env_name})")
+ 
+ # íŒŒì¼ í™•ì¸
+ project_root = Path(__file__).parent.parent
+ 
+ # secrets/ í´ë” í™•ì¸
     secrets_file = project_root / "secrets" / f"{name.lower().replace('_', '_')}.txt"
-    if secrets_file.exists():
-        try:
+ if secrets_file.exists():
+ try:
             with open(secrets_file, 'r', encoding='utf-8') as f:
-                file_content = f.read().strip()
-                if file_content == value:
+ file_content = f.read().strip()
+ if file_content == value:
                     locations.append(f"secrets/{secrets_file.name}")
-        except:
-            pass
-    
-    # api_keys/ Æú´õ È®ÀÎ
+ except:
+ pass
+ 
+ # api_keys/ í´ë” í™•ì¸
     api_keys_file = project_root / "api_keys" / f"{name}.txt"
-    if api_keys_file.exists():
-        try:
+ if api_keys_file.exists():
+ try:
             with open(api_keys_file, 'r', encoding='utf-8') as f:
-                file_content = f.read().strip()
-                if file_content == value:
+ file_content = f.read().strip()
+ if file_content == value:
                     locations.append(f"api_keys/{api_keys_file.name}")
-        except:
-            pass
-    
-    location_str = ", ".join(locations) if locations else "È¯°æ º¯¼ö (ÃßÁ¤)"
-    
-    return {
+ except:
+ pass
+ 
+    location_str = ", ".join(locations) if locations else "í™˜ê²½ ë³€ìˆ˜ (ì¶”ì •)"
+ 
+ return {
         "name": name,
-        "status": "? ¼³Á¤µÊ",
+        "status": "? ì„¤ì •ë¨",
         "value": display_value,
         "location": location_str
-    }
+ }
 
 
 def main():
     print("=" * 70)
-    print("¸ğµç API Å° »óÅÂ È®ÀÎ")
+    print("ëª¨ë“  API í‚¤ ìƒíƒœ í™•ì¸")
     print("=" * 70)
-    print()
-    
-    # ÇÊ¼ö Å° È®ÀÎ
-    print("? ÇÊ¼ö Å° (Required)")
+ print()
+ 
+ # í•„ìˆ˜ í‚¤ í™•ì¸
+    print("? í•„ìˆ˜ í‚¤ (Required)")
     print("-" * 70)
-    
-    gemini_key = get_gemini_api_key()
+ 
+ gemini_key = get_gemini_api_key()
     gemini_info = check_key("GEMINI_API_KEY", gemini_key)
     print(f"{gemini_info['status']} {gemini_info['name']}")
     if gemini_info['value']:
-        print(f"   °ª: {gemini_info['value']}")
-        print(f"   À§Ä¡: {gemini_info['location']}")
-    print()
-    
-    google_key = get_google_api_key()
+        print(f"   ê°’: {gemini_info['value']}")
+        print(f"   ìœ„ì¹˜: {gemini_info['location']}")
+ print()
+ 
+ google_key = get_google_api_key()
     google_info = check_key("GOOGLE_API_KEY", google_key)
     print(f"{google_info['status']} {google_info['name']}")
     if google_info['value']:
-        print(f"   °ª: {google_info['value']}")
-        print(f"   À§Ä¡: {google_info['location']}")
-    else:
-        print("   ?? GEMINI_API_KEY¿Í µ¿ÀÏÇÑ Å° »ç¿ë °¡´É")
-    print()
-    
-    # ¼±ÅÃÀû Å° È®ÀÎ
-    print("? ¼±ÅÃÀû Å° (Optional)")
+        print(f"   ê°’: {google_info['value']}")
+        print(f"   ìœ„ì¹˜: {google_info['location']}")
+ else:
+        print("   ?? GEMINI_API_KEYì™€ ë™ì¼í•œ í‚¤ ì‚¬ìš© ê°€ëŠ¥")
+ print()
+ 
+ # ì„ íƒì  í‚¤ í™•ì¸
+    print("? ì„ íƒì  í‚¤ (Optional)")
     print("-" * 70)
-    
-    # GCP_PROJECT_ID
+ 
+ # GCP_PROJECT_ID
     gcp_id = get_gcp_project_id() or os.environ.get("GCP_PROJECT_ID")
     gcp_info = check_key("GCP_PROJECT_ID", gcp_id, is_sensitive=False)
     print(f"{gcp_info['status']} {gcp_info['name']}")
     if gcp_info['value']:
-        print(f"   °ª: {gcp_info['value']}")
-        print(f"   À§Ä¡: {gcp_info['location']}")
-    else:
-        print("   ?? Vertex AI »ç¿ë ½Ã¿¡¸¸ ÇÊ¿ä")
-    print()
-    
-    # AIARENA_TOKEN
+        print(f"   ê°’: {gcp_info['value']}")
+        print(f"   ìœ„ì¹˜: {gcp_info['location']}")
+ else:
+        print("   ?? Vertex AI ì‚¬ìš© ì‹œì—ë§Œ í•„ìš”")
+ print()
+ 
+ # AIARENA_TOKEN
     aiarena_token = os.environ.get("AIARENA_TOKEN")
     aiarena_info = check_key("AIARENA_TOKEN", aiarena_token)
     print(f"{aiarena_info['status']} {aiarena_info['name']}")
     if aiarena_info['value']:
-        print(f"   °ª: {aiarena_info['value']}")
-        print(f"   À§Ä¡: {aiarena_info['location']}")
-    else:
-        print("   ?? AI Arena ¾÷·Îµå ½Ã¿¡¸¸ ÇÊ¿ä")
-    print()
-    
-    # NGROK_AUTH_TOKEN
+        print(f"   ê°’: {aiarena_info['value']}")
+        print(f"   ìœ„ì¹˜: {aiarena_info['location']}")
+ else:
+        print("   ?? AI Arena ì—…ë¡œë“œ ì‹œì—ë§Œ í•„ìš”")
+ print()
+ 
+ # NGROK_AUTH_TOKEN
     ngrok_token = load_api_key("NGROK_AUTH_TOKEN") or os.environ.get("NGROK_AUTH_TOKEN")
     ngrok_info = check_key("NGROK_AUTH_TOKEN", ngrok_token)
     print(f"{ngrok_info['status']} {ngrok_info['name']}")
     if ngrok_info['value']:
-        print(f"   °ª: {ngrok_info['value']}")
-        print(f"   À§Ä¡: {ngrok_info['location']}")
-    else:
-        print("   ?? ¿ÜºÎ Á¢¼ÓÀÌ ÇÊ¿äÇÒ ¶§¸¸ »ç¿ë")
-    print()
-    
-    # GCP_CREDENTIALS.json
-    project_root = Path(__file__).parent.parent
+        print(f"   ê°’: {ngrok_info['value']}")
+        print(f"   ìœ„ì¹˜: {ngrok_info['location']}")
+ else:
+        print("   ?? ì™¸ë¶€ ì ‘ì†ì´ í•„ìš”í•  ë•Œë§Œ ì‚¬ìš©")
+ print()
+ 
+ # GCP_CREDENTIALS.json
+ project_root = Path(__file__).parent.parent
     gcp_creds_file = project_root / "secrets" / "gcp_credentials.json"
-    if not gcp_creds_file.exists():
+ if not gcp_creds_file.exists():
         gcp_creds_file = project_root / "api_keys" / "GCP_CREDENTIALS.json"
-    
-    if gcp_creds_file.exists():
+ 
+ if gcp_creds_file.exists():
         print(f"? GCP_CREDENTIALS.json")
-        print(f"   À§Ä¡: {gcp_creds_file}")
-    else:
+        print(f"   ìœ„ì¹˜: {gcp_creds_file}")
+ else:
         print(f"? GCP_CREDENTIALS.json")
-        print("   ?? Vertex AI »ç¿ë ½Ã¿¡¸¸ ÇÊ¿ä")
-    print()
-    
-    # ¿ä¾à
+        print("   ?? Vertex AI ì‚¬ìš© ì‹œì—ë§Œ í•„ìš”")
+ print()
+ 
+ # ìš”ì•½
     print("=" * 70)
-    print("? ¿ä¾à")
+    print("? ìš”ì•½")
     print("-" * 70)
-    
-    required_keys = [gemini_info, google_info]
-    optional_keys = [gcp_info, aiarena_info, ngrok_info]
-    
-    required_set = sum(1 for k in required_keys if k['status'] == '? ¼³Á¤µÊ')
-    optional_set = sum(1 for k in optional_keys if k['status'] == '? ¼³Á¤µÊ')
-    
-    print(f"ÇÊ¼ö Å°: {required_set}/{len(required_keys)} ¼³Á¤µÊ")
-    print(f"¼±ÅÃÀû Å°: {optional_set}/{len(optional_keys)} ¼³Á¤µÊ")
-    print()
-    
-    if gemini_key:
-        print("?? GEMINI_API_KEY°¡ ¼³Á¤µÇ¾î ÀÖ½À´Ï´Ù.")
-        print("   ³ëÃâ °¡´É¼ºÀÌ ÀÖÀ¸¹Ç·Î ±³Ã¼¸¦ ±ÇÀåÇÕ´Ï´Ù.")
-        print("   °¡ÀÌµå: docs/API_KEY_ROTATION_GUIDE.md")
-    
+ 
+ required_keys = [gemini_info, google_info]
+ optional_keys = [gcp_info, aiarena_info, ngrok_info]
+ 
+    required_set = sum(1 for k in required_keys if k['status'] == '? ì„¤ì •ë¨')
+    optional_set = sum(1 for k in optional_keys if k['status'] == '? ì„¤ì •ë¨')
+ 
+    print(f"í•„ìˆ˜ í‚¤: {required_set}/{len(required_keys)} ì„¤ì •ë¨")
+    print(f"ì„ íƒì  í‚¤: {optional_set}/{len(optional_keys)} ì„¤ì •ë¨")
+ print()
+ 
+ if gemini_key:
+        print("?? GEMINI_API_KEYê°€ ì„¤ì •ë˜ì–´ ìˆìŠµë‹ˆë‹¤.")
+        print("   ë…¸ì¶œ ê°€ëŠ¥ì„±ì´ ìˆìœ¼ë¯€ë¡œ êµì²´ë¥¼ ê¶Œì¥í•©ë‹ˆë‹¤.")
+        print("   ê°€ì´ë“œ: docs/API_KEY_ROTATION_GUIDE.md")
+ 
     print("=" * 70)
 
 
 if __name__ == "__main__":
-    main()
+ main()

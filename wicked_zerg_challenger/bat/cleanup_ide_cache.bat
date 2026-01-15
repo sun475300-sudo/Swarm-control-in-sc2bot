@@ -1,15 +1,15 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo IDE È¯°æ º¯¼ö Ä³½Ã »èÁ¦
+echo IDE ?ì„ê¼ è¹‚Â€??ï§¦ë¨¯ë–† ??ì £
 echo Remove IDE Environment Variable Cache
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [ÁÖÀÇ»çÇ×]
-echo - IDE¸¦ ´Ý°í ½ÇÇàÇÏ´Â °ÍÀ» ±ÇÀåÇÕ´Ï´Ù!
+echo [äºŒì‡±ì“½?Ñ‹ë¹†]
+echo - IDEç‘œ??ãƒªí€¬ ?ã…½ë»¾?ì„Žë’— å¯ƒê»‹ì“£ æ²…ëš¯ì˜£?â‘¸ë•²??
 echo.
 
 pause

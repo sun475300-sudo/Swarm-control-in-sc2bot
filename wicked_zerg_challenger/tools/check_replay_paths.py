@@ -24,41 +24,41 @@ def main():
 
     print("=" * 70)
 
-    print()
+ print()
 
-    
+ 
 
-    # È¯°æ º¯¼ö È®ÀÎ
+ # È¯°æ º¯¼ö È®ÀÎ
 
     env_path = os.environ.get("REPLAY_ARCHIVE_DIR")
 
-    if env_path:
+ if env_path:
 
         print(f"[ENV] REPLAY_ARCHIVE_DIR: {env_path}")
 
-        if Path(env_path).exists():
+ if Path(env_path).exists():
 
             count = len(list(Path(env_path).glob("*.SC2Replay")))
 
             print(f"     -> {count} replay files found")
 
-        else:
+ else:
 
             print(f"     -> Path does not exist")
 
-    else:
+ else:
 
         print("[INFO] REPLAY_ARCHIVE_DIR environment variable not set")
 
-    print()
+ print()
 
-    
+ 
 
-    # °æ·Î ¿ì¼±¼øÀ§ È®ÀÎ
+ # °æ·Î ¿ì¼±¼øÀ§ È®ÀÎ
 
     print("=== Path Priority Check ===")
 
-    paths = [
+ paths = [
 
         ("D:/replays/replays", "Default training source directory"),
 
@@ -72,15 +72,15 @@ def main():
 
         (str(Path.home() / "replays"), "Home replays"),
 
-    ]
+ ]
 
-    
+ 
 
-    for path_str, description in paths:
+ for path_str, description in paths:
 
-        path = Path(path_str)
+ path = Path(path_str)
 
-        if path.exists():
+ if path.exists():
 
             count = len(list(path.glob("*.SC2Replay")))
 
@@ -90,17 +90,17 @@ def main():
 
             print(f"     Replay files: {count}")
 
-            print()
+ print()
 
-        else:
+ else:
 
             print(f"[NOT FOUND] {path_str} ({description})")
 
-    
+ 
 
-    # ±âº» °æ·Î »ó¼¼ Á¤º¸
+ # ±âº» °æ·Î »ó¼¼ Á¤º¸
 
-    print()
+ print()
 
     print("=" * 70)
 
@@ -110,49 +110,49 @@ def main():
 
     default_path = Path("D:/replays/replays")
 
-    if default_path.exists():
+ if default_path.exists():
 
         replays = list(default_path.glob("*.SC2Replay"))
 
         print(f"Total replay files: {len(replays)}")
 
-        print()
+ print()
 
         print("Sample files (first 10):")
 
-        for r in replays[:10]:
+ for r in replays[:10]:
 
-            size_kb = r.stat().st_size // 1024
+ size_kb = r.stat().st_size // 1024
 
             print(f"  - {r.name} ({size_kb} KB)")
 
-        
+ 
 
-        # ¿Ï·á µð·ºÅä¸® È®ÀÎ
+ # ¿Ï·á µð·ºÅä¸® È®ÀÎ
 
         completed_dir = default_path / "completed"
 
-        if completed_dir.exists():
+ if completed_dir.exists():
 
             completed_count = len(list(completed_dir.glob("*.SC2Replay")))
 
-            print()
+ print()
 
             print(f"Completed replays: {completed_count} (in {completed_dir})")
 
-    else:
+ else:
 
         print("[ERROR] Default path does not exist!")
 
         print("[INFO] Creating directory...")
 
-        default_path.mkdir(parents=True, exist_ok=True)
+ default_path.mkdir(parents=True, exist_ok=True)
 
         print("[OK] Directory created")
 
-    
+ 
 
-    print()
+ print()
 
     print("=" * 70)
 
@@ -164,5 +164,4 @@ def main():
 
 if __name__ == "__main__":
 
-    main()
-
+ main()

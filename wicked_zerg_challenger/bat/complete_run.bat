@@ -1,18 +1,18 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo ¿ÏÀüÇÑ ½ÇÇà ½ºÅ©¸³Æ®
+echo ?ê¾©ìŸ¾???ã…½ë»¾ ?ã…½ê²•ç”±ì€ë“ƒ
 echo Complete Execution Script
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [½ÇÇà ´Ü°è]
-echo 1. ½Ã½ºÅÛ ÃÊ±âÈ­
-echo 2. º¿ ÃÊ±âÈ­
-echo 3. °ÔÀÓ ½ÇÇà
-echo 4. ´ë½Ãº¸µå ¼­¹ö (¼±ÅÃÀû)
+echo [?ã…½ë»¾ ?â‘£í€Ž]
+echo 1. ?ì’–ë’ª??ç¥ë‡ë¦°??
+echo 2. éŠ?ç¥ë‡ë¦°??
+echo 3. å¯ƒëš¯ì—« ?ã…½ë»¾
+echo 4. ?Â€?ì’•ë‚«???ì’•ì¾­ (?ì¢ê¹®??
 echo.
 
 python COMPLETE_RUN_SCRIPT.py

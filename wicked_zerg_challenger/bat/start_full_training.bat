@@ -1,5 +1,6 @@
-@echo off
-REM 전체 학습 파이프라인 시작 스크립트
+﻿@echo off
+chcp 65001 > nul
+REM ?꾩껜 ?숈뒿 ?뚯씠?꾨씪???쒖옉 ?ㅽ겕由쏀듃
 REM Full Training Pipeline: Replay Learning + Game Training
 
 echo.

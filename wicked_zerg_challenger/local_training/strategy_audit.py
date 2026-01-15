@@ -1,164 +1,160 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Build-Order Gap Analyzer (ºôµå¿À´õ ¿ÀÂ÷ ºĞ¼®±â)
+Build-Order Gap Analyzer (ë¹Œë“œì˜¤ë” ì˜¤ì°¨ ë¶„ì„ê¸°)
 
-ÇÁ·Î°ÔÀÌ¸ÓÀÇ ¸®ÇÃ·¹ÀÌ µ¥ÀÌÅÍ¿Í º¿ÀÌ ½ÇÁ¦·Î ¼öÇàÇÑ µ¥ÀÌÅÍ¸¦ ÇÁ·¹ÀÓ ´ÜÀ§·Î ´ëÁ¶ÇÏ¿©
-'¼º´É ÀúÇÏÀÇ ±¸°£'À» Ã£¾Æ³»´Â ½Ã½ºÅÛ
+í”„ë¡œê²Œì´ë¨¸ì˜ ë¦¬í”Œë ˆì´ ë°ì´í„°ì™€ ë´‡ì´ ì‹¤ì œë¡œ ìˆ˜í–‰í•œ ë°ì´í„°ë¥¼ í”„ë ˆì„ ë‹¨ìœ„ë¡œ ëŒ€ì¡°í•˜ì—¬
+'ì„±ëŠ¥ ì €í•˜ì˜ êµ¬ê°„'ì„ ì°¾ì•„ë‚´ëŠ” ì‹œìŠ¤í…œ
 
-ÇÙ½É ±â´É:
-1. Time Gap (½Ã°£ ¿ÀÂ÷) ºĞ¼®
-2. Sequence Error (¼ø¼­ ¿À·ù) ºĞ¼®
-3. Resource Efficiency (ÀÚ¿ø È¿À²) ºĞ¼®
-4. ÀÚµ¿ º¸¿Ï ·ÎÁ÷ (CurriculumManager ¿¬µ¿)
-5. Gemini Self-Healing ¿¬µ¿
+í•µì‹¬ ê¸°ëŠ¥:
+1. Time Gap (ì‹œê°„ ì˜¤ì°¨) ë¶„ì„
+2. Sequence Error (ìˆœì„œ ì˜¤ë¥˜) ë¶„ì„
+3. Resource Efficiency (ìì› íš¨ìœ¨) ë¶„ì„
+4. ìë™ ë³´ì™„ ë¡œì§ (CurriculumManager ì—°ë™)
+5. Gemini Self-Healing ì—°ë™
 """
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
 from datetime import datetime
-from collections import defaultdict
 
 try:
-    from loguru import logger
 except ImportError:
-    import logging
-    logger = logging.getLogger(__name__)
+ import logging
+ logger = logging.getLogger(__name__)
 
 
 @dataclass
 class BuildEvent:
-    """°Ç¹° °Ç¼³ ÀÌº¥Æ®"""
-    building_name: str
-    completion_time: float  # °ÔÀÓ ½Ã°£ (ÃÊ)
-    supply_at_completion: int
-    minerals_at_completion: int
-    vespene_at_completion: int
+    """ê±´ë¬¼ ê±´ì„¤ ì´ë²¤íŠ¸"""
+ building_name: str
+ completion_time: float # ê²Œì„ ì‹œê°„ (ì´ˆ)
+ supply_at_completion: int
+ minerals_at_completion: int
+ vespene_at_completion: int
     event_type: str = "building_completed"  # building_completed, building_started, upgrade_completed
 
 
 @dataclass
 class TimeGap:
-    """½Ã°£ ¿ÀÂ÷ ºĞ¼® °á°ú"""
-    building_name: str
-    pro_time: float  # ÇÁ·Î°ÔÀÌ¸Ó ½Ã°£
-    bot_time: float  # º¿ ½Ã°£
-    gap_seconds: float  # ¿ÀÂ÷ (ÃÊ)
-    gap_percentage: float  # ¿ÀÂ÷ ºñÀ² (%)
+    """ì‹œê°„ ì˜¤ì°¨ ë¶„ì„ ê²°ê³¼"""
+ building_name: str
+ pro_time: float # í”„ë¡œê²Œì´ë¨¸ ì‹œê°„
+ bot_time: float # ë´‡ ì‹œê°„
+ gap_seconds: float # ì˜¤ì°¨ (ì´ˆ)
+ gap_percentage: float # ì˜¤ì°¨ ë¹„ìœ¨ (%)
     severity: str  # "critical", "major", "minor", "ok"
 
 
 @dataclass
 class SequenceError:
-    """¼ø¼­ ¿À·ù ºĞ¼® °á°ú"""
-    expected_building: str
-    actual_building: str
-    expected_time: float
-    actual_time: float
+    """ìˆœì„œ ì˜¤ë¥˜ ë¶„ì„ ê²°ê³¼"""
+ expected_building: str
+ actual_building: str
+ expected_time: float
+ actual_time: float
     error_type: str  # "order_mismatch", "missing_building", "extra_building"
 
 
 @dataclass
 class ResourceEfficiency:
-    """ÀÚ¿ø È¿À² ºĞ¼® °á°ú"""
-    supply: int
-    pro_minerals: int
-    bot_minerals: int
-    pro_vespene: int
-    bot_vespene: int
-    mineral_waste: int  # º¿ÀÌ ÇÁ·Îº¸´Ù ´õ ¸¹ÀÌ ³²±ä ¹Ì³×¶ö
-    vespene_waste: int  # º¿ÀÌ ÇÁ·Îº¸´Ù ´õ ¸¹ÀÌ ³²±ä °¡½º
-    efficiency_score: float  # 0.0 ~ 1.0 (1.0ÀÌ ÃÖ°í)
+    """ìì› íš¨ìœ¨ ë¶„ì„ ê²°ê³¼"""
+ supply: int
+ pro_minerals: int
+ bot_minerals: int
+ pro_vespene: int
+ bot_vespene: int
+ mineral_waste: int # ë´‡ì´ í”„ë¡œë³´ë‹¤ ë” ë§ì´ ë‚¨ê¸´ ë¯¸ë„¤ë„
+ vespene_waste: int # ë´‡ì´ í”„ë¡œë³´ë‹¤ ë” ë§ì´ ë‚¨ê¸´ ê°€ìŠ¤
+ efficiency_score: float # 0.0 ~ 1.0 (1.0ì´ ìµœê³ )
 
 
 @dataclass
 class GapAnalysisResult:
-    """ÀüÃ¼ ºĞ¼® °á°ú"""
-    game_id: str
-    analysis_time: str
-    time_gaps: List[TimeGap]
-    sequence_errors: List[SequenceError]
-    resource_efficiency: List[ResourceEfficiency]
-    critical_issues: List[str]  # °¡Àå ½É°¢ÇÑ ¹®Á¦ 3°³
-    recommendations: List[str]  # °³¼± ±ÇÀå»çÇ×
+    """ì „ì²´ ë¶„ì„ ê²°ê³¼"""
+ game_id: str
+ analysis_time: str
+ time_gaps: List[TimeGap]
+ sequence_errors: List[SequenceError]
+ resource_efficiency: List[ResourceEfficiency]
+ critical_issues: List[str] # ê°€ì¥ ì‹¬ê°í•œ ë¬¸ì œ 3ê°œ
+ recommendations: List[str] # ê°œì„  ê¶Œì¥ì‚¬í•­
 
 
 class StrategyAudit:
-    """ºôµå¿À´õ ¿ÀÂ÷ ºĞ¼®±â"""
-    
-    def __init__(
-        self,
-        learned_build_orders_path: Optional[Path] = None,
-        telemetry_data_path: Optional[Path] = None
-    ):
+    """ë¹Œë“œì˜¤ë” ì˜¤ì°¨ ë¶„ì„ê¸°"""
+
+ def __init__(
+ self,
+ learned_build_orders_path: Optional[Path] = None,
+ telemetry_data_path: Optional[Path] = None
+ ):
         """
-        Args:
-            learned_build_orders_path: ÇÁ·Î°ÔÀÌ¸Ó µ¥ÀÌÅÍ °æ·Î
-            telemetry_data_path: º¿ ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ °æ·Î
+ Args:
+ learned_build_orders_path: í”„ë¡œê²Œì´ë¨¸ ë°ì´í„° ê²½ë¡œ
+ telemetry_data_path: ë´‡ í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„° ê²½ë¡œ
         """
-        # ÇÁ·Î°ÔÀÌ¸Ó µ¥ÀÌÅÍ °æ·Î
-        if learned_build_orders_path is None:
-            # ¿©·¯ °æ·Î ½Ãµµ
-            possible_paths = [
+ # í”„ë¡œê²Œì´ë¨¸ ë°ì´í„° ê²½ë¡œ
+ if learned_build_orders_path is None:
+ # ì—¬ëŸ¬ ê²½ë¡œ ì‹œë„
+ possible_paths = [
                 Path("local_training/scripts/learned_build_orders.json"),
                 Path("D:/replays/archive"),
-            ]
-            for path in possible_paths:
-                if path.is_dir():
-                    training_dirs = sorted(path.glob("training_*"), reverse=True)
-                    if training_dirs:
+ ]
+ for path in possible_paths:
+ if path.is_dir():
+                    training_dirs = sorted(path.glob("training_*"), reverse = True)
+ if training_dirs:
                         learned_build_orders_path = training_dirs[0] / "learned_build_orders.json"
-                        break
-                elif path.exists():
-                    learned_build_orders_path = path
-                    break
-        
-        self.learned_build_orders_path = learned_build_orders_path
-        self.pro_data: Dict[str, Any] = {}
-        self.load_pro_data()
-        
-        # ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ´Â °ÔÀÓ Áß¿¡ ½Ç½Ã°£À¸·Î Àü´Ş¹ŞÀ½
-        self.telemetry_data_path = telemetry_data_path
-        
-        # ºĞ¼® °á°ú ÀúÀå °æ·Î
+ break
+ elif path.exists():
+ learned_build_orders_path = path
+ break
+
+ self.learned_build_orders_path = learned_build_orders_path
+ self.pro_data: Dict[str, Any] = {}
+ self.load_pro_data()
+
+ # í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„°ëŠ” ê²Œì„ ì¤‘ì— ì‹¤ì‹œê°„ìœ¼ë¡œ ì „ë‹¬ë°›ìŒ
+ self.telemetry_data_path = telemetry_data_path
+
+ # ë¶„ì„ ê²°ê³¼ ì €ì¥ ê²½ë¡œ
         self.analysis_output_dir = Path("local_training/data/strategy_audit")
-        self.analysis_output_dir.mkdir(parents=True, exist_ok=True)
-        
-    def load_pro_data(self) -> None:
-        """ÇÁ·Î°ÔÀÌ¸Ó µ¥ÀÌÅÍ ·Îµå"""
-        if not self.learned_build_orders_path or not self.learned_build_orders_path.exists():
+ self.analysis_output_dir.mkdir(parents = True, exist_ok = True)
+
+ def load_pro_data(self) -> None:
+        """í”„ë¡œê²Œì´ë¨¸ ë°ì´í„° ë¡œë“œ"""
+ if not self.learned_build_orders_path or not self.learned_build_orders_path.exists():
             logger.warning(f"Pro gamer data not found: {self.learned_build_orders_path}")
-            return
-        
-        try:
+ return
+
+ try:
             with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
-                self.pro_data = json.load(f)
+ self.pro_data = json.load(f)
             logger.info(f"Loaded pro gamer data from {self.learned_build_orders_path}")
-        except Exception as e:
+ except Exception as e:
             logger.error(f"Failed to load pro gamer data: {e}")
-            self.pro_data = {}
-    
-    def extract_bot_build_events(
-        self,
-        build_order_timing: Dict[str, float],
-        telemetry_data: List[Dict[str, Any]]
-    ) -> List[BuildEvent]:
+ self.pro_data = {}
+
+ def extract_bot_build_events(
+ self,
+ build_order_timing: Dict[str, float],
+ telemetry_data: List[Dict[str, Any]]
+ ) -> List[BuildEvent]:
         """
-        º¿ÀÇ ºôµå ÀÌº¥Æ® ÃßÃâ
-        
-        Args:
-            build_order_timing: production_managerÀÇ build_order_timing µñ¼Å³Ê¸®
-            telemetry_data: ÅÚ·¹¸ŞÆ®¸® ·Î±× µ¥ÀÌÅÍ
-        
-        Returns:
-            ºôµå ÀÌº¥Æ® ¸®½ºÆ®
+ ë´‡ì˜ ë¹Œë“œ ì´ë²¤íŠ¸ ì¶”ì¶œ
+
+ Args:
+ build_order_timing: production_managerì˜ build_order_timing ë”•ì…”ë„ˆë¦¬
+ telemetry_data: í…”ë ˆë©”íŠ¸ë¦¬ ë¡œê·¸ ë°ì´í„°
+
+ Returns:
+ ë¹Œë“œ ì´ë²¤íŠ¸ ë¦¬ìŠ¤íŠ¸
         """
-        events = []
-        
-        # build_order_timing¿¡¼­ °Ç¹° ¿Ï¼º ½Ã°£ ÃßÃâ
-        building_mapping = {
+ events = []
+
+ # build_order_timingì—ì„œ ê±´ë¬¼ ì™„ì„± ì‹œê°„ ì¶”ì¶œ
+ building_mapping = {
             "spawning_pool": "SpawningPool",
             "spawning_pool_time": "SpawningPool",
             "gas": "Extractor",
@@ -173,451 +169,451 @@ class StrategyAudit:
             "lair_time": "Lair",
             "hive": "Hive",
             "hive_time": "Hive",
-        }
-        
-        for key, time in build_order_timing.items():
-            building_name = building_mapping.get(key, key)
-            
-            # ÇØ´ç ½Ã°£ÀÇ ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ Ã£±â
-            telemetry_at_time = None
-            for tel in telemetry_data:
-                if abs(tel.get("time", 0) - time) < 1.0:  # 1ÃÊ ÀÌ³»
-                    telemetry_at_time = tel
-                    break
-            
-            if telemetry_at_time:
-                event = BuildEvent(
-                    building_name=building_name,
-                    completion_time=time,
-                    supply_at_completion=int(telemetry_at_time.get("supply_used", 0)),
-                    minerals_at_completion=int(telemetry_at_time.get("minerals", 0)),
-                    vespene_at_completion=int(telemetry_at_time.get("vespene", 0)),
-                )
-                events.append(event)
-        
-        return sorted(events, key=lambda x: x.completion_time)
-    
-    def extract_pro_build_events(self) -> List[BuildEvent]:
-        """ÇÁ·Î°ÔÀÌ¸ÓÀÇ ºôµå ÀÌº¥Æ® ÃßÃâ"""
-        events = []
-        
-        if not self.pro_data:
-            return events
-        
+ }
+
+ for key, time in build_order_timing.items():
+ building_name = building_mapping.get(key, key)
+
+ # í•´ë‹¹ ì‹œê°„ì˜ í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„° ì°¾ê¸°
+ telemetry_at_time = None
+ for tel in telemetry_data:
+                if abs(tel.get("time", 0) - time) < 1.0:  # 1ì´ˆ ì´ë‚´
+ telemetry_at_time = tel
+ break
+
+ if telemetry_at_time:
+ event = BuildEvent(
+ building_name = building_name,
+ completion_time = time,
+                    supply_at_completion = int(telemetry_at_time.get("supply_used", 0)),
+                    minerals_at_completion = int(telemetry_at_time.get("minerals", 0)),
+                    vespene_at_completion = int(telemetry_at_time.get("vespene", 0)),
+ )
+ events.append(event)
+
+ return sorted(events, key = lambda x: x.completion_time)
+
+ def extract_pro_build_events(self) -> List[BuildEvent]:
+        """í”„ë¡œê²Œì´ë¨¸ì˜ ë¹Œë“œ ì´ë²¤íŠ¸ ì¶”ì¶œ"""
+ events = []
+
+ if not self.pro_data:
+ return events
+
         learned_params = self.pro_data.get("learned_parameters", {})
         build_orders = self.pro_data.get("build_orders", [])
-        
-        # learned_parameters¿¡¼­ Å¸ÀÌ¹Ö ÃßÃâ
-        supply_to_time_mapping = {}  # supply -> time ¸ÅÇÎ (Æò±Õ°ª)
-        
-        for bo in build_orders[:10]:  # Ã³À½ 10°³ »ùÇÃ »ç¿ë
+
+ # learned_parametersì—ì„œ íƒ€ì´ë° ì¶”ì¶œ
+ supply_to_time_mapping = {} # supply -> time ë§¤í•‘ (í‰ê· ê°’)
+
+ for bo in build_orders[:10]: # ì²˜ìŒ 10ê°œ ìƒ˜í”Œ ì‚¬ìš©
             timings = bo.get("timings", {})
-            for key, supply in timings.items():
-                if key not in supply_to_time_mapping:
-                    supply_to_time_mapping[key] = []
-                supply_to_time_mapping[key].append(supply)
-        
-        # Supply¸¦ ½Ã°£À¸·Î º¯È¯ (´ë·«ÀûÀÎ º¯È¯: supply 1 = ¾à 1.5ÃÊ)
-        # ½ÇÁ¦·Î´Â ´õ Á¤±³ÇÑ º¯È¯ÀÌ ÇÊ¿äÇÏÁö¸¸, ¿©±â¼­´Â ´Ü¼øÈ­
-        for key, supply_list in supply_to_time_mapping.items():
-            avg_supply = sum(supply_list) / len(supply_list)
-            estimated_time = avg_supply * 1.5  # ´ë·«ÀûÀÎ º¯È¯
-            
+ for key, supply in timings.items():
+ if key not in supply_to_time_mapping:
+ supply_to_time_mapping[key] = []
+ supply_to_time_mapping[key].append(supply)
+
+ # Supplyë¥¼ ì‹œê°„ìœ¼ë¡œ ë³€í™˜ (ëŒ€ëµì ì¸ ë³€í™˜: supply 1 = ì•½ 1.5ì´ˆ)
+ # ì‹¤ì œë¡œëŠ” ë” ì •êµí•œ ë³€í™˜ì´ í•„ìš”í•˜ì§€ë§Œ, ì—¬ê¸°ì„œëŠ” ë‹¨ìˆœí™”
+ for key, supply_list in supply_to_time_mapping.items():
+ avg_supply = sum(supply_list) / len(supply_list)
+ estimated_time = avg_supply * 1.5 # ëŒ€ëµì ì¸ ë³€í™˜
+
             building_name = key.replace("_supply", "").replace("_", "").title()
-            
-            event = BuildEvent(
-                building_name=building_name,
-                completion_time=estimated_time,
-                supply_at_completion=int(avg_supply),
-                minerals_at_completion=0,  # ÇÁ·Î µ¥ÀÌÅÍ¿¡´Â ¾øÀ½
-                vespene_at_completion=0,   # ÇÁ·Î µ¥ÀÌÅÍ¿¡´Â ¾øÀ½
-            )
-            events.append(event)
-        
-        return sorted(events, key=lambda x: x.completion_time)
-    
-    def analyze_time_gaps(
-        self,
-        pro_events: List[BuildEvent],
-        bot_events: List[BuildEvent]
-    ) -> List[TimeGap]:
-        """½Ã°£ ¿ÀÂ÷ ºĞ¼®"""
-        gaps = []
-        
-        # °Ç¹° ÀÌ¸§À¸·Î ¸ÅÄª
-        pro_by_name = {e.building_name: e for e in pro_events}
-        bot_by_name = {e.building_name: e for e in bot_events}
-        
-        for building_name in set(pro_by_name.keys()) & set(bot_by_name.keys()):
-            pro_event = pro_by_name[building_name]
-            bot_event = bot_by_name[building_name]
-            
-            gap_seconds = bot_event.completion_time - pro_event.completion_time
-            gap_percentage = (gap_seconds / pro_event.completion_time * 100) if pro_event.completion_time > 0 else 0
-            
-            # ½É°¢µµ ÆÇÁ¤
-            if gap_seconds > 30 or gap_percentage > 50:
+
+ event = BuildEvent(
+ building_name = building_name,
+ completion_time = estimated_time,
+ supply_at_completion = int(avg_supply),
+ minerals_at_completion = 0, # í”„ë¡œ ë°ì´í„°ì—ëŠ” ì—†ìŒ
+ vespene_at_completion = 0, # í”„ë¡œ ë°ì´í„°ì—ëŠ” ì—†ìŒ
+ )
+ events.append(event)
+
+ return sorted(events, key = lambda x: x.completion_time)
+
+ def analyze_time_gaps(
+ self,
+ pro_events: List[BuildEvent],
+ bot_events: List[BuildEvent]
+ ) -> List[TimeGap]:
+        """ì‹œê°„ ì˜¤ì°¨ ë¶„ì„"""
+ gaps = []
+
+ # ê±´ë¬¼ ì´ë¦„ìœ¼ë¡œ ë§¤ì¹­
+ pro_by_name = {e.building_name: e for e in pro_events}
+ bot_by_name = {e.building_name: e for e in bot_events}
+
+ for building_name in set(pro_by_name.keys()) & set(bot_by_name.keys()):
+ pro_event = pro_by_name[building_name]
+ bot_event = bot_by_name[building_name]
+
+ gap_seconds = bot_event.completion_time - pro_event.completion_time
+ gap_percentage = (gap_seconds / pro_event.completion_time * 100) if pro_event.completion_time > 0 else 0
+
+ # ì‹¬ê°ë„ íŒì •
+ if gap_seconds > 30 or gap_percentage > 50:
                 severity = "critical"
-            elif gap_seconds > 15 or gap_percentage > 25:
+ elif gap_seconds > 15 or gap_percentage > 25:
                 severity = "major"
-            elif gap_seconds > 5 or gap_percentage > 10:
+ elif gap_seconds > 5 or gap_percentage > 10:
                 severity = "minor"
-            else:
+ else:
                 severity = "ok"
-            
-            gap = TimeGap(
-                building_name=building_name,
-                pro_time=pro_event.completion_time,
-                bot_time=bot_event.completion_time,
-                gap_seconds=gap_seconds,
-                gap_percentage=gap_percentage,
-                severity=severity
-            )
-            gaps.append(gap)
-        
-        return sorted(gaps, key=lambda x: abs(x.gap_seconds), reverse=True)
-    
-    def analyze_sequence_errors(
-        self,
-        pro_events: List[BuildEvent],
-        bot_events: List[BuildEvent]
-    ) -> List[SequenceError]:
-        """¼ø¼­ ¿À·ù ºĞ¼®"""
-        errors = []
-        
-        # ¼ø¼­ ºñ±³ (Ã³À½ 10°³ °Ç¹°¸¸)
-        pro_order = [e.building_name for e in pro_events[:10]]
-        bot_order = [e.building_name for e in bot_events[:10]]
-        
-        # ¼ø¼­°¡ ´Ù¸¥ °æ¿ì Ã£±â
-        for i, (pro_building, bot_building) in enumerate(zip(pro_order, bot_order)):
-            if pro_building != bot_building:
-                pro_time = pro_events[i].completion_time if i < len(pro_events) else 0
-                bot_time = bot_events[i].completion_time if i < len(bot_events) else 0
-                
-                error = SequenceError(
-                    expected_building=pro_building,
-                    actual_building=bot_building,
-                    expected_time=pro_time,
-                    actual_time=bot_time,
+
+ gap = TimeGap(
+ building_name = building_name,
+ pro_time = pro_event.completion_time,
+ bot_time = bot_event.completion_time,
+ gap_seconds = gap_seconds,
+ gap_percentage = gap_percentage,
+ severity = severity
+ )
+ gaps.append(gap)
+
+ return sorted(gaps, key = lambda x: abs(x.gap_seconds), reverse = True)
+
+ def analyze_sequence_errors(
+ self,
+ pro_events: List[BuildEvent],
+ bot_events: List[BuildEvent]
+ ) -> List[SequenceError]:
+        """ìˆœì„œ ì˜¤ë¥˜ ë¶„ì„"""
+ errors = []
+
+ # ìˆœì„œ ë¹„êµ (ì²˜ìŒ 10ê°œ ê±´ë¬¼ë§Œ)
+ pro_order = [e.building_name for e in pro_events[:10]]
+ bot_order = [e.building_name for e in bot_events[:10]]
+
+ # ìˆœì„œê°€ ë‹¤ë¥¸ ê²½ìš° ì°¾ê¸°
+ for i, (pro_building, bot_building) in enumerate(zip(pro_order, bot_order)):
+ if pro_building != bot_building:
+ pro_time = pro_events[i].completion_time if i < len(pro_events) else 0
+ bot_time = bot_events[i].completion_time if i < len(bot_events) else 0
+
+ error = SequenceError(
+ expected_building = pro_building,
+ actual_building = bot_building,
+ expected_time = pro_time,
+ actual_time = bot_time,
                     error_type="order_mismatch"
-                )
-                errors.append(error)
-        
-        # ´©¶ôµÈ °Ç¹° Ã£±â
-        pro_buildings = {e.building_name for e in pro_events}
-        bot_buildings = {e.building_name for e in bot_events}
-        missing = pro_buildings - bot_buildings
-        
-        for building_name in missing:
-            pro_event = next((e for e in pro_events if e.building_name == building_name), None)
-            if pro_event:
-                error = SequenceError(
-                    expected_building=building_name,
+ )
+ errors.append(error)
+
+ # ëˆ„ë½ëœ ê±´ë¬¼ ì°¾ê¸°
+ pro_buildings = {e.building_name for e in pro_events}
+ bot_buildings = {e.building_name for e in bot_events}
+ missing = pro_buildings - bot_buildings
+
+ for building_name in missing:
+ pro_event = next((e for e in pro_events if e.building_name == building_name), None)
+ if pro_event:
+ error = SequenceError(
+ expected_building = building_name,
                     actual_building="MISSING",
-                    expected_time=pro_event.completion_time,
-                    actual_time=0,
+ expected_time = pro_event.completion_time,
+ actual_time = 0,
                     error_type="missing_building"
-                )
-                errors.append(error)
-        
-        return errors
-    
-    def analyze_resource_efficiency(
-        self,
-        pro_events: List[BuildEvent],
-        bot_events: List[BuildEvent],
-        telemetry_data: List[Dict[str, Any]]
-    ) -> List[ResourceEfficiency]:
-        """ÀÚ¿ø È¿À² ºĞ¼®"""
-        efficiency_data = []
-        
-        # Supply ±¸°£º°·Î ºñ±³ (10, 20, 30, 40, 50)
-        supply_checkpoints = [10, 20, 30, 40, 50]
-        
-        for supply in supply_checkpoints:
-            # º¿ÀÇ ÇØ´ç supply ½ÃÁ¡ Ã£±â
-            bot_tel = None
-            for tel in telemetry_data:
+ )
+ errors.append(error)
+
+ return errors
+
+ def analyze_resource_efficiency(
+ self,
+ pro_events: List[BuildEvent],
+ bot_events: List[BuildEvent],
+ telemetry_data: List[Dict[str, Any]]
+ ) -> List[ResourceEfficiency]:
+        """ìì› íš¨ìœ¨ ë¶„ì„"""
+ efficiency_data = []
+
+ # Supply êµ¬ê°„ë³„ë¡œ ë¹„êµ (10, 20, 30, 40, 50)
+ supply_checkpoints = [10, 20, 30, 40, 50]
+
+ for supply in supply_checkpoints:
+ # ë´‡ì˜ í•´ë‹¹ supply ì‹œì  ì°¾ê¸°
+ bot_tel = None
+ for tel in telemetry_data:
                 if tel.get("supply_used", 0) >= supply:
-                    bot_tel = tel
-                    break
-            
-            if not bot_tel:
-                continue
-            
-            # ÇÁ·Î´Â Æò±ÕÀûÀ¸·Î ÇØ´ç supply¿¡¼­ ÀÚ¿øÀÌ °ÅÀÇ 0¿¡ ¼ö·ÅÇÑ´Ù°í °¡Á¤
-            # (½ÇÁ¦·Î´Â ´õ Á¤±³ÇÑ ºĞ¼® ÇÊ¿ä)
-            pro_minerals = 50  # ÇÁ·Î´Â Æò±Õ 50 ¹Ì³×¶ö À¯Áö
-            pro_vespene = 25   # ÇÁ·Î´Â Æò±Õ 25 °¡½º À¯Áö
-            
+ bot_tel = tel
+ break
+
+ if not bot_tel:
+ continue
+
+ # í”„ë¡œëŠ” í‰ê· ì ìœ¼ë¡œ í•´ë‹¹ supplyì—ì„œ ìì›ì´ ê±°ì˜ 0ì— ìˆ˜ë ´í•œë‹¤ê³  ê°€ì •
+ # (ì‹¤ì œë¡œëŠ” ë” ì •êµí•œ ë¶„ì„ í•„ìš”)
+ pro_minerals = 50 # í”„ë¡œëŠ” í‰ê·  50 ë¯¸ë„¤ë„ ìœ ì§€
+ pro_vespene = 25 # í”„ë¡œëŠ” í‰ê·  25 ê°€ìŠ¤ ìœ ì§€
+
             bot_minerals = bot_tel.get("minerals", 0)
             bot_vespene = bot_tel.get("vespene", 0)
-            
-            mineral_waste = max(0, bot_minerals - pro_minerals)
-            vespene_waste = max(0, bot_vespene - pro_vespene)
-            
-            # È¿À² Á¡¼ö °è»ê (0.0 ~ 1.0)
-            total_waste = mineral_waste + vespene_waste * 2  # °¡½º´Â 2¹è °¡ÁßÄ¡
-            max_waste = 500  # ÃÖ´ë ³¶ºñ ±âÁØ
-            efficiency_score = max(0.0, 1.0 - (total_waste / max_waste))
-            
-            efficiency = ResourceEfficiency(
-                supply=supply,
-                pro_minerals=pro_minerals,
-                bot_minerals=bot_minerals,
-                pro_vespene=pro_vespene,
-                bot_vespene=bot_vespene,
-                mineral_waste=mineral_waste,
-                vespene_waste=vespene_waste,
-                efficiency_score=efficiency_score
-            )
-            efficiency_data.append(efficiency)
-        
-        return efficiency_data
-    
-    def analyze(
-        self,
-        build_order_timing: Dict[str, float],
-        telemetry_data: List[Dict[str, Any]],
-        game_id: Optional[str] = None
-    ) -> GapAnalysisResult:
+
+ mineral_waste = max(0, bot_minerals - pro_minerals)
+ vespene_waste = max(0, bot_vespene - pro_vespene)
+
+ # íš¨ìœ¨ ì ìˆ˜ ê³„ì‚° (0.0 ~ 1.0)
+ total_waste = mineral_waste + vespene_waste * 2 # ê°€ìŠ¤ëŠ” 2ë°° ê°€ì¤‘ì¹˜
+ max_waste = 500 # ìµœëŒ€ ë‚­ë¹„ ê¸°ì¤€
+ efficiency_score = max(0.0, 1.0 - (total_waste / max_waste))
+
+ efficiency = ResourceEfficiency(
+ supply = supply,
+ pro_minerals = pro_minerals,
+ bot_minerals = bot_minerals,
+ pro_vespene = pro_vespene,
+ bot_vespene = bot_vespene,
+ mineral_waste = mineral_waste,
+ vespene_waste = vespene_waste,
+ efficiency_score = efficiency_score
+ )
+ efficiency_data.append(efficiency)
+
+ return efficiency_data
+
+ def analyze(
+ self,
+ build_order_timing: Dict[str, float],
+ telemetry_data: List[Dict[str, Any]],
+ game_id: Optional[str] = None
+ ) -> GapAnalysisResult:
         """
-        ÀüÃ¼ ºĞ¼® ¼öÇà
-        
-        Args:
-            build_order_timing: º¿ÀÇ ºôµå ¿À´õ Å¸ÀÌ¹Ö
-            telemetry_data: º¿ÀÇ ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ
-            game_id: °ÔÀÓ ID (¼±ÅÃ»çÇ×)
-        
-        Returns:
-            ºĞ¼® °á°ú
+ ì „ì²´ ë¶„ì„ ìˆ˜í–‰
+
+ Args:
+ build_order_timing: ë´‡ì˜ ë¹Œë“œ ì˜¤ë” íƒ€ì´ë°
+ telemetry_data: ë´‡ì˜ í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„°
+ game_id: ê²Œì„ ID (ì„ íƒì‚¬í•­)
+
+ Returns:
+ ë¶„ì„ ê²°ê³¼
         """
-        if game_id is None:
+ if game_id is None:
             game_id = f"game_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
-        # ÀÌº¥Æ® ÃßÃâ
-        pro_events = self.extract_pro_build_events()
-        bot_events = self.extract_bot_build_events(build_order_timing, telemetry_data)
-        
-        if not pro_events or not bot_events:
+
+ # ì´ë²¤íŠ¸ ì¶”ì¶œ
+ pro_events = self.extract_pro_build_events()
+ bot_events = self.extract_bot_build_events(build_order_timing, telemetry_data)
+
+ if not pro_events or not bot_events:
             logger.warning("Insufficient data for analysis")
-            return GapAnalysisResult(
-                game_id=game_id,
-                analysis_time=datetime.now().isoformat(),
-                time_gaps=[],
-                sequence_errors=[],
-                resource_efficiency=[],
-                critical_issues=[],
-                recommendations=[]
-            )
-        
-        # ºĞ¼® ¼öÇà
-        time_gaps = self.analyze_time_gaps(pro_events, bot_events)
-        sequence_errors = self.analyze_sequence_errors(pro_events, bot_events)
-        resource_efficiency = self.analyze_resource_efficiency(pro_events, bot_events, telemetry_data)
-        
-        # ½É°¢ÇÑ ¹®Á¦ ÃßÃâ (»óÀ§ 3°³)
-        critical_issues = []
-        for gap in sorted(time_gaps, key=lambda x: abs(x.gap_seconds), reverse=True)[:3]:
+ return GapAnalysisResult(
+ game_id = game_id,
+ analysis_time = datetime.now().isoformat(),
+ time_gaps=[],
+ sequence_errors=[],
+ resource_efficiency=[],
+ critical_issues=[],
+ recommendations=[]
+ )
+
+ # ë¶„ì„ ìˆ˜í–‰
+ time_gaps = self.analyze_time_gaps(pro_events, bot_events)
+ sequence_errors = self.analyze_sequence_errors(pro_events, bot_events)
+ resource_efficiency = self.analyze_resource_efficiency(pro_events, bot_events, telemetry_data)
+
+ # ì‹¬ê°í•œ ë¬¸ì œ ì¶”ì¶œ (ìƒìœ„ 3ê°œ)
+ critical_issues = []
+ for gap in sorted(time_gaps, key = lambda x: abs(x.gap_seconds), reverse = True)[:3]:
             if gap.severity in ["critical", "major"]:
-                critical_issues.append(
-                    f"{gap.building_name}: {gap.gap_seconds:.1f}ÃÊ ´ÊÀ½ "
-                    f"(ÇÁ·Î: {gap.pro_time:.1f}ÃÊ, º¿: {gap.bot_time:.1f}ÃÊ)"
-                )
-        
-        # ±ÇÀå»çÇ× »ı¼º
-        recommendations = []
-        for gap in time_gaps[:3]:
+ critical_issues.append(
+                    f"{gap.building_name}: {gap.gap_seconds:.1f}ì´ˆ ëŠ¦ìŒ "
+                    f"(í”„ë¡œ: {gap.pro_time:.1f}ì´ˆ, ë´‡: {gap.bot_time:.1f}ì´ˆ)"
+ )
+
+ # ê¶Œì¥ì‚¬í•­ ìƒì„±
+ recommendations = []
+ for gap in time_gaps[:3]:
             if gap.severity == "critical":
-                recommendations.append(
-                    f"{gap.building_name} °Ç¼³À» {gap.gap_seconds:.1f}ÃÊ ´õ ºü¸£°Ô ½ÃÀÛÇÏµµ·Ï "
-                    f"economy_manager.pyÀÇ µå·Ğ »ı»ê ·ÎÁ÷À» ÃÖÀûÈ­ÇÏ¼¼¿ä."
-                )
-        
-        # ÀÚ¿ø È¿À²ÀÌ ³·Àº °æ¿ì
-        low_efficiency = [e for e in resource_efficiency if e.efficiency_score < 0.5]
-        if low_efficiency:
-            recommendations.append(
-                f"Supply {low_efficiency[0].supply} ±¸°£¿¡¼­ ÀÚ¿ø È¿À²ÀÌ ³·½À´Ï´Ù. "
-                f"production_manager.pyÀÇ Emergency Flush ·ÎÁ÷À» °­È­ÇÏ¼¼¿ä."
-            )
-        
-        result = GapAnalysisResult(
-            game_id=game_id,
-            analysis_time=datetime.now().isoformat(),
-            time_gaps=time_gaps,
-            sequence_errors=sequence_errors,
-            resource_efficiency=resource_efficiency,
-            critical_issues=critical_issues,
-            recommendations=recommendations
-        )
-        
-        # °á°ú ÀúÀå
-        self.save_analysis_result(result)
-        
-        return result
-    
-    def save_analysis_result(self, result: GapAnalysisResult) -> None:
-        """ºĞ¼® °á°ú ÀúÀå"""
+ recommendations.append(
+                    f"{gap.building_name} ê±´ì„¤ì„ {gap.gap_seconds:.1f}ì´ˆ ë” ë¹ ë¥´ê²Œ ì‹œì‘í•˜ë„ë¡ "
+                    f"economy_manager.pyì˜ ë“œë¡  ìƒì‚° ë¡œì§ì„ ìµœì í™”í•˜ì„¸ìš”."
+ )
+
+ # ìì› íš¨ìœ¨ì´ ë‚®ì€ ê²½ìš°
+ low_efficiency = [e for e in resource_efficiency if e.efficiency_score < 0.5]
+ if low_efficiency:
+ recommendations.append(
+                f"Supply {low_efficiency[0].supply} êµ¬ê°„ì—ì„œ ìì› íš¨ìœ¨ì´ ë‚®ìŠµë‹ˆë‹¤. "
+                f"production_manager.pyì˜ Emergency Flush ë¡œì§ì„ ê°•í™”í•˜ì„¸ìš”."
+ )
+
+ result = GapAnalysisResult(
+ game_id = game_id,
+ analysis_time = datetime.now().isoformat(),
+ time_gaps = time_gaps,
+ sequence_errors = sequence_errors,
+ resource_efficiency = resource_efficiency,
+ critical_issues = critical_issues,
+ recommendations = recommendations
+ )
+
+ # ê²°ê³¼ ì €ì¥
+ self.save_analysis_result(result)
+
+ return result
+
+ def save_analysis_result(self, result: GapAnalysisResult) -> None:
+        """ë¶„ì„ ê²°ê³¼ ì €ì¥"""
         output_file = self.analysis_output_dir / f"gap_analysis_{result.game_id}.json"
-        
-        try:
+
+ try:
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(asdict(result), f, indent=2, ensure_ascii=False)
+ json.dump(asdict(result), f, indent = 2, ensure_ascii = False)
             logger.info(f"Analysis result saved to {output_file}")
-        except Exception as e:
+ except Exception as e:
             logger.error(f"Failed to save analysis result: {e}")
-    
-    def generate_gemini_feedback(self, result: GapAnalysisResult) -> str:
+
+ def generate_gemini_feedback(self, result: GapAnalysisResult) -> str:
         """
-        Gemini Self-HealingÀ» À§ÇÑ ÇÇµå¹é »ı¼º
-        
-        Returns:
-            Gemini¿¡°Ô Àü´ŞÇÒ ÇÇµå¹é ¹®ÀÚ¿­
+ Gemini Self-Healingì„ ìœ„í•œ í”¼ë“œë°± ìƒì„±
+
+ Returns:
+ Geminiì—ê²Œ ì „ë‹¬í•  í”¼ë“œë°± ë¬¸ìì—´
         """
-        feedback_parts = []
-        
+ feedback_parts = []
+
         feedback_parts.append("=== Build-Order Gap Analysis ===")
         feedback_parts.append(f"Game ID: {result.game_id}")
         feedback_parts.append("")
-        
-        if result.critical_issues:
-            feedback_parts.append("Critical Issues (ÇÁ·Î ´ëºñ °¡Àå ´ÊÀº °Ç¹° 3°³):")
-            for i, issue in enumerate(result.critical_issues, 1):
+
+ if result.critical_issues:
+            feedback_parts.append("Critical Issues (í”„ë¡œ ëŒ€ë¹„ ê°€ì¥ ëŠ¦ì€ ê±´ë¬¼ 3ê°œ):")
+ for i, issue in enumerate(result.critical_issues, 1):
                 feedback_parts.append(f"  {i}. {issue}")
             feedback_parts.append("")
-        
-        if result.time_gaps:
-            feedback_parts.append("Time Gaps (½Ã°£ ¿ÀÂ÷):")
-            for gap in result.time_gaps[:5]:
-                feedback_parts.append(
-                    f"  - {gap.building_name}: {gap.gap_seconds:.1f}ÃÊ ´ÊÀ½ "
+
+ if result.time_gaps:
+            feedback_parts.append("Time Gaps (ì‹œê°„ ì˜¤ì°¨):")
+ for gap in result.time_gaps[:5]:
+ feedback_parts.append(
+                    f"  - {gap.building_name}: {gap.gap_seconds:.1f}ì´ˆ ëŠ¦ìŒ "
                     f"({gap.severity})"
-                )
+ )
             feedback_parts.append("")
-        
-        if result.sequence_errors:
-            feedback_parts.append("Sequence Errors (¼ø¼­ ¿À·ù):")
-            for error in result.sequence_errors[:3]:
-                feedback_parts.append(
-                    f"  - ¿¹»ó: {error.expected_building}, ½ÇÁ¦: {error.actual_building}"
-                )
+
+ if result.sequence_errors:
+            feedback_parts.append("Sequence Errors (ìˆœì„œ ì˜¤ë¥˜):")
+ for error in result.sequence_errors[:3]:
+ feedback_parts.append(
+                    f"  - ì˜ˆìƒ: {error.expected_building}, ì‹¤ì œ: {error.actual_building}"
+ )
             feedback_parts.append("")
-        
-        if result.resource_efficiency:
-            low_efficiency = [e for e in result.resource_efficiency if e.efficiency_score < 0.5]
-            if low_efficiency:
-                feedback_parts.append("Resource Efficiency Issues (ÀÚ¿ø È¿À² ¹®Á¦):")
-                for eff in low_efficiency:
-                    feedback_parts.append(
-                        f"  - Supply {eff.supply}: È¿À² {eff.efficiency_score:.2f} "
-                        f"(¹Ì³×¶ö ³¶ºñ: {eff.mineral_waste}, °¡½º ³¶ºñ: {eff.vespene_waste})"
-                    )
+
+ if result.resource_efficiency:
+ low_efficiency = [e for e in result.resource_efficiency if e.efficiency_score < 0.5]
+ if low_efficiency:
+                feedback_parts.append("Resource Efficiency Issues (ìì› íš¨ìœ¨ ë¬¸ì œ):")
+ for eff in low_efficiency:
+ feedback_parts.append(
+                        f"  - Supply {eff.supply}: íš¨ìœ¨ {eff.efficiency_score:.2f} "
+                        f"(ë¯¸ë„¤ë„ ë‚­ë¹„: {eff.mineral_waste}, ê°€ìŠ¤ ë‚­ë¹„: {eff.vespene_waste})"
+ )
                 feedback_parts.append("")
-        
-        if result.recommendations:
-            feedback_parts.append("Recommendations (±ÇÀå»çÇ×):")
-            for i, rec in enumerate(result.recommendations, 1):
+
+ if result.recommendations:
+            feedback_parts.append("Recommendations (ê¶Œì¥ì‚¬í•­):")
+ for i, rec in enumerate(result.recommendations, 1):
                 feedback_parts.append(f"  {i}. {rec}")
-        
+
         return "\n".join(feedback_parts)
 
 
 def update_curriculum_priority(
-    curriculum_manager,
-    gap_analysis: GapAnalysisResult
+ curriculum_manager,
+ gap_analysis: GapAnalysisResult
 ) -> None:
     """
-    CurriculumManagerÀÇ ¿ì¼±¼øÀ§ ¾÷µ¥ÀÌÆ®
-    
-    Args:
-        curriculum_manager: CurriculumManager ÀÎ½ºÅÏ½º
-        gap_analysis: ºĞ¼® °á°ú
+ CurriculumManagerì˜ ìš°ì„ ìˆœìœ„ ì—…ë°ì´íŠ¸
+
+ Args:
+ curriculum_manager: CurriculumManager ì¸ìŠ¤í„´ìŠ¤
+ gap_analysis: ë¶„ì„ ê²°ê³¼
     """
-    if not gap_analysis.time_gaps:
-        return
-    
-    # °¡Àå ½É°¢ÇÑ ½Ã°£ ¿ÀÂ÷¸¦ °¡Áø °Ç¹° Ã£±â
-    critical_gap = max(
-        gap_analysis.time_gaps,
-        key=lambda x: abs(x.gap_seconds) if x.severity in ["critical", "major"] else 0
-    )
-    
+ if not gap_analysis.time_gaps:
+ return
+
+ # ê°€ì¥ ì‹¬ê°í•œ ì‹œê°„ ì˜¤ì°¨ë¥¼ ê°€ì§„ ê±´ë¬¼ ì°¾ê¸°
+ critical_gap = max(
+ gap_analysis.time_gaps,
+        key = lambda x: abs(x.gap_seconds) if x.severity in ["critical", "major"] else 0
+ )
+
     if critical_gap.severity in ["critical", "major"]:
-        building_name = critical_gap.building_name
-        logger.info(
+ building_name = critical_gap.building_name
+ logger.info(
             f"[CURRICULUM] Updating priority for {building_name} "
-            f"(gap: {critical_gap.gap_seconds:.1f}ÃÊ)"
-        )
-        
-        # CurriculumManager¿¡ ¿ì¼±¼øÀ§ ¾÷µ¥ÀÌÆ® ¿äÃ»
-        # (½ÇÁ¦ ±¸ÇöÀº CurriculumManagerÀÇ ¸Ş¼­µå¿¡ µû¶ó ´Ù¸§)
+            f"(gap: {critical_gap.gap_seconds:.1f}ì´ˆ)"
+ )
+
+ # CurriculumManagerì— ìš°ì„ ìˆœìœ„ ì—…ë°ì´íŠ¸ ìš”ì²­
+ # (ì‹¤ì œ êµ¬í˜„ì€ CurriculumManagerì˜ ë©”ì„œë“œì— ë”°ë¼ ë‹¤ë¦„)
         if hasattr(curriculum_manager, 'update_priority'):
             curriculum_manager.update_priority(building_name, "Urgent")
 
 
-    def analyze_last_game(
-        self,
-        bot,
+ def analyze_last_game(
+ self,
+ bot,
         game_result: str = "defeat"
-    ) -> Optional[GapAnalysisResult]:
+ ) -> Optional[GapAnalysisResult]:
         """
-        °ÔÀÓ Á¾·á ÈÄ ¸¶Áö¸· °ÔÀÓ ºĞ¼® (ÆíÀÇ ¸Ş¼­µå)
-        
-        Args:
-            bot: WickedZergBotPro ÀÎ½ºÅÏ½º
-            game_result: °ÔÀÓ °á°ú ("victory" or "defeat")
-        
-        Returns:
-            ºĞ¼® °á°ú
+ ê²Œì„ ì¢…ë£Œ í›„ ë§ˆì§€ë§‰ ê²Œì„ ë¶„ì„ (í¸ì˜ ë©”ì„œë“œ)
+
+ Args:
+ bot: WickedZergBotPro ì¸ìŠ¤í„´ìŠ¤
+            game_result: ê²Œì„ ê²°ê³¼ ("victory" or "defeat")
+
+ Returns:
+ ë¶„ì„ ê²°ê³¼
         """
-        return analyze_bot_performance(bot, game_result)
+ return analyze_bot_performance(bot, game_result)
 
 
-# »ç¿ë ¿¹½Ã ÇÔ¼ö
+# ì‚¬ìš© ì˜ˆì‹œ í•¨ìˆ˜
 def analyze_bot_performance(
-    bot,
+ bot,
     game_result: str = "defeat"
 ) -> Optional[GapAnalysisResult]:
     """
-    °ÔÀÓ Á¾·á ÈÄ º¿ ¼º´É ºĞ¼®
-    
-    Args:
-        bot: WickedZergBotPro ÀÎ½ºÅÏ½º
-        game_result: °ÔÀÓ °á°ú ("victory" or "defeat")
-    
-    Returns:
-        ºĞ¼® °á°ú (¸ğµç °ÔÀÓ¿¡¼­ ºĞ¼®, ½Â¸®ÇÑ °æ¿ì¿¡µµ °³¼±Á¡ È®ÀÎ)
+ ê²Œì„ ì¢…ë£Œ í›„ ë´‡ ì„±ëŠ¥ ë¶„ì„
+
+ Args:
+ bot: WickedZergBotPro ì¸ìŠ¤í„´ìŠ¤
+        game_result: ê²Œì„ ê²°ê³¼ ("victory" or "defeat")
+
+ Returns:
+ ë¶„ì„ ê²°ê³¼ (ëª¨ë“  ê²Œì„ì—ì„œ ë¶„ì„, ìŠ¹ë¦¬í•œ ê²½ìš°ì—ë„ ê°œì„ ì  í™•ì¸)
     """
-    # ¸ğµç °ÔÀÓ¿¡¼­ ºĞ¼® (½Â¸®ÇÑ °æ¿ì¿¡µµ °³¼±Á¡ È®ÀÎ °¡´É)
-    
-    try:
-        # StrategyAudit ÃÊ±âÈ­
-        auditor = StrategyAudit()
-        
-        # º¿ÀÇ ºôµå ¿À´õ Å¸ÀÌ¹Ö ÃßÃâ
-        build_order_timing = {}
+ # ëª¨ë“  ê²Œì„ì—ì„œ ë¶„ì„ (ìŠ¹ë¦¬í•œ ê²½ìš°ì—ë„ ê°œì„ ì  í™•ì¸ ê°€ëŠ¥)
+
+ try:
+ # StrategyAudit ì´ˆê¸°í™”
+ auditor = StrategyAudit()
+
+ # ë´‡ì˜ ë¹Œë“œ ì˜¤ë” íƒ€ì´ë° ì¶”ì¶œ
+ build_order_timing = {}
         if hasattr(bot, 'production') and bot.production:
             build_order_timing = getattr(bot.production, 'build_order_timing', {})
-        
-        # ÅÚ·¹¸ŞÆ®¸® µ¥ÀÌÅÍ ÃßÃâ
-        telemetry_data = []
+
+ # í…”ë ˆë©”íŠ¸ë¦¬ ë°ì´í„° ì¶”ì¶œ
+ telemetry_data = []
         if hasattr(bot, 'telemetry_logger') and bot.telemetry_logger:
-            telemetry_data = bot.telemetry_logger.telemetry_data
-        
-        # ºĞ¼® ¼öÇà
+ telemetry_data = bot.telemetry_logger.telemetry_data
+
+ # ë¶„ì„ ìˆ˜í–‰
         instance_id = getattr(bot, 'instance_id', 0)
-        result = auditor.analyze(
-            build_order_timing=build_order_timing,
-            telemetry_data=telemetry_data,
-            game_id=f"game_{instance_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        )
-        
-        return result
-        
-    except Exception as e:
+ result = auditor.analyze(
+ build_order_timing = build_order_timing,
+ telemetry_data = telemetry_data,
+            game_id = f"game_{instance_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+ )
+
+ return result
+
+ except Exception as e:
         logger.error(f"Failed to analyze bot performance: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
+ import traceback
+ traceback.print_exc()
+ return None

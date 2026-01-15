@@ -14,7 +14,7 @@
 
 **현재 상태**:
 - ? **환경 변수에 설정됨**
-- 키 값: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo`
+- 키 값: `AIzaSyC_Ci...MIIo`
 - ?? **노출 가능성 있음 - 교체 필요**
 
 **파일 위치**:
@@ -205,7 +205,7 @@ print(f"GOOGLE_API_KEY: {google_key[:10]}..." if google_key else "GOOGLE_API_KEY
 
 1. **Google AI Studio에서 기존 키 삭제**
    - https://makersuite.google.com/app/apikey
-   - 키: `AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo` 삭제
+   - 키: `AIzaSyC_Ci...MIIo` 삭제
 
 2. **새 키 발급 및 적용**
    ```powershell

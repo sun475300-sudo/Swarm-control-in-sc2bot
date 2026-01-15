@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM ===================================================
 REM Unregister Auto Git Push from Task Scheduler
 REM ===================================================

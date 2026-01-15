@@ -1,5 +1,6 @@
-@echo off
-REM 게임 학습 시작 스크립트
+﻿@echo off
+chcp 65001 > nul
+REM 寃뚯엫 ?숈뒿 ?쒖옉 ?ㅽ겕由쏀듃
 REM Game Training with Reinforcement Learning
 
 REM CRITICAL: Ensure script runs from project root regardless of current directory

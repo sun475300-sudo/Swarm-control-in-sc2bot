@@ -1,116 +1,61 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-API Å° »ç¿ë·® Á¦ÇÑ
-API Key Usage Limiter
-"""
-
-import json
+# API í‚¤ ì‚¬ìš©ëŸ‰ ì œí•œ ì„¤ì •
+import time
 from datetime import datetime, timedelta
 from collections import defaultdict
 from pathlib import Path
-from typing import Tuple
-
+import json
 
 class ApiKeyUsageLimiter:
-    """API Å° »ç¿ë·® Á¦ÇÑ Å¬·¡½º"""
-    
-    def __init__(self, daily_limit: int = 1000, hourly_limit: int = 100):
-        """
-        ÃÊ±âÈ­
-        
-        Args:
-            daily_limit: ÀÏÀÏ »ç¿ë·® Á¦ÇÑ
-            hourly_limit: ½Ã°£´ç »ç¿ë·® Á¦ÇÑ
-        """
-        self.daily_limit = daily_limit
-        self.hourly_limit = hourly_limit
-        self.usage_file = Path("logs") / "api_key_usage_limits.json"
-        self.usage = defaultdict(int)
-        self._load_usage()
-    
-    def _load_usage(self):
-        """»ç¿ë·® ·Îµå"""
-        if self.usage_file.exists():
-            try:
-                with open(self.usage_file, 'r', encoding='utf-8') as f:
-                    self.usage = defaultdict(int, json.load(f))
-            except Exception:
-                self.usage = defaultdict(int)
-        else:
-            self.usage = defaultdict(int)
-    
-    def _save_usage(self):
-        """»ç¿ë·® ÀúÀå"""
-        self.usage_file.parent.mkdir(exist_ok=True)
-        try:
-            with open(self.usage_file, 'w', encoding='utf-8') as f:
-                json.dump(dict(self.usage), f, indent=2)
-        except Exception as e:
-            print(f"[WARNING] »ç¿ë·® ÀúÀå ½ÇÆĞ: {e}")
-    
-    def can_make_request(self) -> Tuple[bool, str]:
-        """
-        ¿äÃ» °¡´ÉÇÑÁö È®ÀÎ
-        
-        Returns:
-            (°¡´É ¿©ºÎ, ¸Ş½ÃÁö)
-        """
-        now = datetime.now()
+    '''API í‚¤ ì‚¬ìš©ëŸ‰ ì œí•œ í´ë˜ìŠ¤'''
+ 
+ def __init__(self, daily_limit: int = 1000, hourly_limit: int = 100):
+ self.daily_limit = daily_limit
+ self.hourly_limit = hourly_limit
+        self.usage_file = Path('logs') / 'api_key_usage_limits.json'
+ self._load_usage()
+ 
+ def _load_usage(self):
+        '''ì‚¬ìš©ëŸ‰ ë¡œë“œ'''
+ if self.usage_file.exists():
+            with open(self.usage_file, 'r', encoding='utf-8') as f:
+ self.usage = json.load(f)
+ else:
+ self.usage = defaultdict(int)
+ 
+ def _save_usage(self):
+        '''ì‚¬ìš©ëŸ‰ ì €ì¥'''
+ self.usage_file.parent.mkdir(exist_ok=True)
+        with open(self.usage_file, 'w', encoding='utf-8') as f:
+ json.dump(dict(self.usage), f, indent=2)
+ 
+ def can_make_request(self) -> tuple[bool, str]:
+        '''ìš”ì²­ ê°€ëŠ¥í•œì§€ í™•ì¸'''
+ now = datetime.now()
         date_key = now.strftime('%Y-%m-%d')
         hour_key = now.strftime('%Y-%m-%d-%H')
-        
-        daily_count = self.usage.get(date_key, 0)
-        hourly_count = self.usage.get(hour_key, 0)
-        
-        if daily_count >= self.daily_limit:
-            return False, f"ÀÏÀÏ »ç¿ë·® Á¦ÇÑ ÃÊ°ú ({daily_count}/{self.daily_limit})"
-        
-        if hourly_count >= self.hourly_limit:
-            return False, f"½Ã°£´ç »ç¿ë·® Á¦ÇÑ ÃÊ°ú ({hourly_count}/{self.hourly_limit})"
-        
+ 
+ daily_count = self.usage.get(date_key, 0)
+ hourly_count = self.usage.get(hour_key, 0)
+ 
+ if daily_count >= self.daily_limit:
+            return False, f"ì¼ì¼ ì‚¬ìš©ëŸ‰ ì œí•œ ì´ˆê³¼ ({daily_count}/{self.daily_limit})"
+ 
+ if hourly_count >= self.hourly_limit:
+            return False, f"ì‹œê°„ë‹¹ ì‚¬ìš©ëŸ‰ ì œí•œ ì´ˆê³¼ ({hourly_count}/{self.hourly_limit})"
+ 
         return True, ""
-    
-    def record_request(self):
-        """¿äÃ» ±â·Ï"""
-        now = datetime.now()
+ 
+ def record_request(self):
+        '''ìš”ì²­ ê¸°ë¡'''
+ now = datetime.now()
         date_key = now.strftime('%Y-%m-%d')
         hour_key = now.strftime('%Y-%m-%d-%H')
-        
-        self.usage[date_key] = self.usage.get(date_key, 0) + 1
-        self.usage[hour_key] = self.usage.get(hour_key, 0) + 1
-        
-        # ¿À·¡µÈ µ¥ÀÌÅÍ Á¤¸® (30ÀÏ ÀÌ»ó)
+ 
+ self.usage[date_key] = self.usage.get(date_key, 0) + 1
+ self.usage[hour_key] = self.usage.get(hour_key, 0) + 1
+ 
+ # ì˜¤ë˜ëœ ë°ì´í„° ì •ë¦¬ (30ì¼ ì´ìƒ)
         cutoff_date = (now - timedelta(days=30)).strftime('%Y-%m-%d')
-        self.usage = defaultdict(int, {k: v for k, v in self.usage.items() if k >= cutoff_date})
-        
-        self._save_usage()
-    
-    def get_current_usage(self) -> dict:
-        """ÇöÀç »ç¿ë·® ¹İÈ¯"""
-        now = datetime.now()
-        date_key = now.strftime('%Y-%m-%d')
-        hour_key = now.strftime('%Y-%m-%d-%H')
-        
-        return {
-            'daily': self.usage.get(date_key, 0),
-            'daily_limit': self.daily_limit,
-            'hourly': self.usage.get(hour_key, 0),
-            'hourly_limit': self.hourly_limit
-        }
-
-
-if __name__ == "__main__":
-    # Å×½ºÆ®
-    limiter = ApiKeyUsageLimiter(daily_limit=1000, hourly_limit=100)
-    
-    can_request, message = limiter.can_make_request()
-    print(f"¿äÃ» °¡´É: {can_request}")
-    if not can_request:
-        print(f"  ÀÌÀ¯: {message}")
-    else:
-        limiter.record_request()
-        usage = limiter.get_current_usage()
-        print(f"ÇöÀç »ç¿ë·®:")
-        print(f"  ÀÏÀÏ: {usage['daily']}/{usage['daily_limit']}")
-        print(f"  ½Ã°£´ç: {usage['hourly']}/{usage['hourly_limit']}")
+ self.usage = {k: v for k, v in self.usage.items() if k >= cutoff_date}
+ 
+ self._save_usage()

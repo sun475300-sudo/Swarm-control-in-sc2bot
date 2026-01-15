@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-±âÁ¸ API Å° Á¦°Å ½ºÅ©¸³Æ®
-ÇÁ·ÎÁ§Æ®¿¡¼­ ÇÏµåÄÚµùµÈ API Å°¸¦ Ã£¾Æ¼­ Á¦°ÅÇÕ´Ï´Ù.
+ê¸°ì¡´ API í‚¤ ì œê±° ìŠ¤í¬ë¦½íŠ¸
+í”„ë¡œì íŠ¸ì—ì„œ í•˜ë“œì½”ë”©ëœ API í‚¤ë¥¼ ì°¾ì•„ì„œ ì œê±°í•©ë‹ˆë‹¤.
 """
 
 import os
@@ -10,13 +10,13 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
-# Á¦°ÅÇÒ ±âÁ¸ Å°µé
+# ì œê±°í•  ê¸°ì¡´ í‚¤ë“¤
 OLD_KEYS = [
-    "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo",
-    "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc",  # ¿¹Á¦·Î¸¸ »ç¿ëµÈ Å°
+    "YOUR_API_KEY_HERE",
+    "YOUR_API_KEY_HERE",  # ì˜ˆì œë¡œë§Œ ì‚¬ìš©ëœ í‚¤
 ]
 
-# Á¦¿ÜÇÒ ÆÄÀÏ/µğ·ºÅä¸®
+# ì œì™¸í•  íŒŒì¼/ë””ë ‰í† ë¦¬
 EXCLUDE_PATTERNS = [
     ".git",
     "__pycache__",
@@ -31,125 +31,125 @@ EXCLUDE_PATTERNS = [
     "*.pyo",
     "*.log",
     "secrets/",
-    "api_keys/",  # ½ÇÁ¦ Å° ÆÄÀÏÀº Á¦¿Ü (ÀÌ¹Ì .gitignore¿¡ ÀÖÀ½)
+    "api_keys/",  # ì‹¤ì œ í‚¤ íŒŒì¼ì€ ì œì™¸ (ì´ë¯¸ .gitignoreì— ìˆìŒ)
 ]
 
 def should_exclude(path: Path) -> bool:
-    """ÆÄÀÏ/µğ·ºÅä¸®¸¦ Á¦¿ÜÇØ¾ß ÇÏ´ÂÁö È®ÀÎ"""
-    path_str = str(path)
-    for pattern in EXCLUDE_PATTERNS:
-        if pattern in path_str:
-            return True
-    return False
+    """íŒŒì¼/ë””ë ‰í† ë¦¬ë¥¼ ì œì™¸í•´ì•¼ í•˜ëŠ”ì§€ í™•ì¸"""
+ path_str = str(path)
+ for pattern in EXCLUDE_PATTERNS:
+ if pattern in path_str:
+ return True
+ return False
 
 def find_hardcoded_keys(root_dir: Path) -> List[Tuple[Path, int, str]]:
-    """ÇÏµåÄÚµùµÈ Å°¸¦ Ã£½À´Ï´Ù"""
-    results = []
-    
-    # °Ë»öÇÒ ÆÄÀÏ È®ÀåÀÚ
+    """í•˜ë“œì½”ë”©ëœ í‚¤ë¥¼ ì°¾ìŠµë‹ˆë‹¤"""
+ results = []
+ 
+ # ê²€ìƒ‰í•  íŒŒì¼ í™•ì¥ì
     search_extensions = {".py", ".kt", ".java", ".js", ".ts", ".md", ".txt", ".env", ".bat", ".ps1", ".sh"}
-    
+ 
     for file_path in root_dir.rglob("*"):
-        if should_exclude(file_path):
-            continue
-        
-        if file_path.is_file() and file_path.suffix in search_extensions:
-            try:
+ if should_exclude(file_path):
+ continue
+ 
+ if file_path.is_file() and file_path.suffix in search_extensions:
+ try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    for line_num, line in enumerate(f, 1):
-                        for old_key in OLD_KEYS:
-                            if old_key in line:
-                                results.append((file_path, line_num, line.strip()))
-            except Exception as e:
-                print(f"? ÆÄÀÏ ÀĞ±â ½ÇÆĞ: {file_path} - {e}")
-    
-    return results
+ for line_num, line in enumerate(f, 1):
+ for old_key in OLD_KEYS:
+ if old_key in line:
+ results.append((file_path, line_num, line.strip()))
+ except Exception as e:
+                print(f"? íŒŒì¼ ì½ê¸° ì‹¤íŒ¨: {file_path} - {e}")
+ 
+ return results
 
 def remove_keys_from_file(file_path: Path, old_keys: List[str]) -> bool:
-    """ÆÄÀÏ¿¡¼­ Å°¸¦ Á¦°ÅÇÕ´Ï´Ù (¿¹Á¦ Å°¸¸ ¸¶½ºÅ·)"""
-    try:
+    """íŒŒì¼ì—ì„œ í‚¤ë¥¼ ì œê±°í•©ë‹ˆë‹¤ (ì˜ˆì œ í‚¤ë§Œ ë§ˆìŠ¤í‚¹)"""
+ try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        original_content = content
-        
-        # ¹®¼­ ÆÄÀÏÀÇ °æ¿ì ¿¹Á¦ Å°¸¦ ¸¶½ºÅ·
+ content = f.read()
+ 
+ original_content = content
+ 
+ # ë¬¸ì„œ íŒŒì¼ì˜ ê²½ìš° ì˜ˆì œ í‚¤ë¥¼ ë§ˆìŠ¤í‚¹
         if file_path.suffix in {".md", ".txt"}:
-            for old_key in old_keys:
-                # ¿¹Á¦ Å°¸¦ ¸¶½ºÅ·µÈ Çü½ÄÀ¸·Î º¯°æ
+ for old_key in old_keys:
+ # ì˜ˆì œ í‚¤ë¥¼ ë§ˆìŠ¤í‚¹ëœ í˜•ì‹ìœ¼ë¡œ ë³€ê²½
                 masked = old_key[:10] + "..." + old_key[-4:]
-                content = content.replace(old_key, masked)
-        
-        # ÄÚµå ÆÄÀÏÀÇ °æ¿ì ÁÖ¼® Ã³¸® ¶Ç´Â Á¦°Å
+ content = content.replace(old_key, masked)
+ 
+ # ì½”ë“œ íŒŒì¼ì˜ ê²½ìš° ì£¼ì„ ì²˜ë¦¬ ë˜ëŠ” ì œê±°
         elif file_path.suffix in {".py", ".kt", ".java", ".js", ".ts"}:
-            for old_key in old_keys:
-                # ÇÏµåÄÚµùµÈ Å°¸¦ Ã£¾Æ¼­ ÁÖ¼® Ã³¸®
+ for old_key in old_keys:
+ # í•˜ë“œì½”ë”©ëœ í‚¤ë¥¼ ì°¾ì•„ì„œ ì£¼ì„ ì²˜ë¦¬
                 pattern = rf'["\']?{re.escape(old_key)}["\']?'
                 content = re.sub(pattern, '"YOUR_API_KEY_HERE"', content)
-        
-        # º¯°æ»çÇ×ÀÌ ÀÖÀ¸¸é ÀúÀå
-        if content != original_content:
+ 
+ # ë³€ê²½ì‚¬í•­ì´ ìˆìœ¼ë©´ ì €ì¥
+ if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            return True
-        
-        return False
-    except Exception as e:
-        print(f"? ÆÄÀÏ ¼öÁ¤ ½ÇÆĞ: {file_path} - {e}")
-        return False
+ f.write(content)
+ return True
+ 
+ return False
+ except Exception as e:
+        print(f"? íŒŒì¼ ìˆ˜ì • ì‹¤íŒ¨: {file_path} - {e}")
+ return False
 
 def main():
-    """¸ŞÀÎ ÇÔ¼ö"""
-    project_root = Path(__file__).parent.parent
-    
+    """ë©”ì¸ í•¨ìˆ˜"""
+ project_root = Path(__file__).parent.parent
+ 
     print("=" * 70)
-    print("±âÁ¸ API Å° Á¦°Å ½ºÅ©¸³Æ®")
+    print("ê¸°ì¡´ API í‚¤ ì œê±° ìŠ¤í¬ë¦½íŠ¸")
     print("=" * 70)
-    print()
-    
-    # 1. ÇÏµåÄÚµùµÈ Å° Ã£±â
-    print("[1/3] ÇÏµåÄÚµùµÈ Å° °Ë»ö Áß...")
-    results = find_hardcoded_keys(project_root)
-    
-    if not results:
-        print("  ? ÇÏµåÄÚµùµÈ Å°¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.")
-    else:
-        print(f"  ? {len(results)}°³ÀÇ ÆÄÀÏ¿¡¼­ Å°¸¦ ¹ß°ßÇß½À´Ï´Ù:")
-        for file_path, line_num, line in results[:10]:  # Ã³À½ 10°³¸¸ Ç¥½Ã
-            rel_path = file_path.relative_to(project_root)
+ print()
+ 
+ # 1. í•˜ë“œì½”ë”©ëœ í‚¤ ì°¾ê¸°
+    print("[1/3] í•˜ë“œì½”ë”©ëœ í‚¤ ê²€ìƒ‰ ì¤‘...")
+ results = find_hardcoded_keys(project_root)
+ 
+ if not results:
+        print("  ? í•˜ë“œì½”ë”©ëœ í‚¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
+ else:
+        print(f"  ? {len(results)}ê°œì˜ íŒŒì¼ì—ì„œ í‚¤ë¥¼ ë°œê²¬í–ˆìŠµë‹ˆë‹¤:")
+ for file_path, line_num, line in results[:10]: # ì²˜ìŒ 10ê°œë§Œ í‘œì‹œ
+ rel_path = file_path.relative_to(project_root)
             print(f"    - {rel_path}:{line_num}")
             print(f"      {line[:80]}...")
-        if len(results) > 10:
-            print(f"    ... ¹× {len(results) - 10}°³ ´õ")
-        print()
-    
-    # 2. ¹®¼­ ÆÄÀÏ¿¡¼­ ¿¹Á¦ Å° ¸¶½ºÅ·
-    print("[2/3] ¹®¼­ ÆÄÀÏ¿¡¼­ ¿¹Á¦ Å° ¸¶½ºÅ· Áß...")
+ if len(results) > 10:
+            print(f"    ... ë° {len(results) - 10}ê°œ ë”")
+ print()
+ 
+ # 2. ë¬¸ì„œ íŒŒì¼ì—ì„œ ì˜ˆì œ í‚¤ ë§ˆìŠ¤í‚¹
+    print("[2/3] ë¬¸ì„œ íŒŒì¼ì—ì„œ ì˜ˆì œ í‚¤ ë§ˆìŠ¤í‚¹ ì¤‘...")
     doc_files = [r[0] for r in results if r[0].suffix in {".md", ".txt"}]
-    masked_count = 0
-    for file_path in doc_files:
-        if remove_keys_from_file(file_path, OLD_KEYS):
-            masked_count += 1
-            rel_path = file_path.relative_to(project_root)
-            print(f"  ? {rel_path} ¾÷µ¥ÀÌÆ®µÊ")
-    
-    if masked_count == 0:
-        print("  ? ¸¶½ºÅ·ÇÒ ÆÄÀÏÀÌ ¾ø½À´Ï´Ù.")
-    else:
-        print(f"  ? {masked_count}°³ ÆÄÀÏ ¾÷µ¥ÀÌÆ® ¿Ï·á")
-    print()
-    
-    # 3. ¿ä¾à
-    print("[3/3] ¿ä¾à")
+ masked_count = 0
+ for file_path in doc_files:
+ if remove_keys_from_file(file_path, OLD_KEYS):
+ masked_count += 1
+ rel_path = file_path.relative_to(project_root)
+            print(f"  ? {rel_path} ì—…ë°ì´íŠ¸ë¨")
+ 
+ if masked_count == 0:
+        print("  ? ë§ˆìŠ¤í‚¹í•  íŒŒì¼ì´ ì—†ìŠµë‹ˆë‹¤.")
+ else:
+        print(f"  ? {masked_count}ê°œ íŒŒì¼ ì—…ë°ì´íŠ¸ ì™„ë£Œ")
+ print()
+ 
+ # 3. ìš”ì•½
+    print("[3/3] ìš”ì•½")
     print("=" * 70)
-    print(f"¹ß°ßµÈ Å°: {len(results)}°³")
-    print(f"¸¶½ºÅ·µÈ ÆÄÀÏ: {masked_count}°³")
-    print()
-    print("? Áß¿ä:")
-    print("  1. ½ÇÁ¦ Å° ÆÄÀÏ (secrets/, api_keys/)Àº ÀÌ¹Ì .gitignore¿¡ ÀÖ½À´Ï´Ù")
-    print("  2. Git history¿¡¼­ Å°¸¦ Á¦°ÅÇÏ·Á¸é git-filter-repo¸¦ »ç¿ëÇÏ¼¼¿ä")
-    print("  3. È¯°æ º¯¼ö¿¡¼­µµ Å°¸¦ Á¦°ÅÇØ¾ß ÇÕ´Ï´Ù")
-    print()
+    print(f"ë°œê²¬ëœ í‚¤: {len(results)}ê°œ")
+    print(f"ë§ˆìŠ¤í‚¹ëœ íŒŒì¼: {masked_count}ê°œ")
+ print()
+    print("? ì¤‘ìš”:")
+    print("  1. ì‹¤ì œ í‚¤ íŒŒì¼ (secrets/, api_keys/)ì€ ì´ë¯¸ .gitignoreì— ìˆìŠµë‹ˆë‹¤")
+    print("  2. Git historyì—ì„œ í‚¤ë¥¼ ì œê±°í•˜ë ¤ë©´ git-filter-repoë¥¼ ì‚¬ìš©í•˜ì„¸ìš”")
+    print("  3. í™˜ê²½ ë³€ìˆ˜ì—ì„œë„ í‚¤ë¥¼ ì œê±°í•´ì•¼ í•©ë‹ˆë‹¤")
+ print()
 
 if __name__ == "__main__":
-    main()
+ main()

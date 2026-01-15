@@ -1,42 +1,42 @@
-@echo off
+ï»¿@echo off
 chcp 65001 >nul
 echo ========================================
-echo Ngrok ÅÍ³Î ½ÃÀÛ - LTE/5G IoT ¿¬µ¿
+echo Ngrok ?ê³•ê¼¸ ?ì’–ì˜‰ - LTE/5G IoT ?ê³•ë£ž
 echo ========================================
 echo.
 
 cd /d "%~dp0\.."
 
-echo [1/3] Ngrok ¼³Ä¡ È®ÀÎ...
+echo [1/3] Ngrok ?ã…¼íŠ‚ ?ëº¤ì”¤...
 where ngrok >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo ?? NgrokÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.
+    echo ?? Ngrok???ã…¼íŠ‚?ì„ë¼± ?ë‰? ?ë”†ë’¿?ëˆë–Ž.
     echo.
-    echo ´Ù¿î·Îµå: https://ngrok.com/download
-    echo ¼³Ä¡ ÈÄ PATH¿¡ Ãß°¡ÇÏ¼¼¿ä.
+    echo ?ã…¼ìŠ«æ¿¡ì’•ë±¶: https://ngrok.com/download
+    echo ?ã…¼íŠ‚ ??PATH??ç•°ë¶½??ì„ê½­??
     echo.
     pause
     exit /b 1
 )
-echo ? Ngrok ¼³Ä¡ È®ÀÎµÊ
+echo ? Ngrok ?ã…¼íŠ‚ ?ëº¤ì”¤??
 echo.
 
-echo [2/3] Ngrok ÀÎÁõ ÅäÅ« È®ÀÎ...
+echo [2/3] Ngrok ?ëª„ì¬† ?ì¢ê²™ ?ëº¤ì”¤...
 cd monitoring
-python -c "from tools.load_api_key import load_api_key; token = load_api_key('NGROK_AUTH_TOKEN'); print('? ÀÎÁõ ÅäÅ«:', 'ÀÖÀ½' if token else '¾øÀ½ (¹«·á ¹öÀü Á¦ÇÑ)')"
+python -c "from tools.load_api_key import load_api_key; token = load_api_key('NGROK_AUTH_TOKEN'); print('? ?ëª„ì¬† ?ì¢ê²™:', '?ë‰ì“¬' if token else '?ë†ì“¬ (è‡¾ëŒ€ì¦º è¸°ê¾©ìŸ¾ ?ì’—ë¸³)')"
 if errorlevel 1 (
-    echo ?? ÀÎÁõ ÅäÅ« È®ÀÎ ½ÇÆÐ
+    echo ?? ?ëª„ì¬† ?ì¢ê²™ ?ëº¤ì”¤ ?ã…½ë™£
 )
 cd ..
 echo.
 
-echo [3/3] Ngrok ÅÍ³Î ½ÃÀÛ...
+echo [3/3] Ngrok ?ê³•ê¼¸ ?ì’–ì˜‰...
 echo.
-echo ? ·ÎÄÃ ¼­¹ö Æ÷Æ®: 8000
-echo ? ÅÍ³Î URLÀº ¾Æ·¡¿¡ Ç¥½ÃµË´Ï´Ù.
+echo ? æ¿¡ì’–ëº„ ?ì’•ì¾­ ?Ñ‹ë“ƒ: 8000
+echo ? ?ê³•ê¼¸ URL?Â€ ?ê¾¨ì˜’???ì’–ë–†?â‘¸ë•²??
 echo.
-echo ÅÍ³ÎÀ» ÁßÁöÇÏ·Á¸é Ctrl+C¸¦ ´©¸£¼¼¿ä.
+echo ?ê³•ê¼¸??ä»¥ë¬’??ì„Žì ®ï§Ž?Ctrl+Cç‘œ??ê¾¨â…¤?ëª„ìŠ‚.
 echo.
 
 cd monitoring

@@ -17,18 +17,18 @@ import json
 class AIArenaPackager:
     """AI Arena deployment packaging system"""
 
-    # Essential files for AI Arena submission
-    # Only files needed to run the bot (no training scripts)
-    ESSENTIAL_FILES = [
-        # Core files
+ # Essential files for AI Arena submission
+ # Only files needed to run the bot (no training scripts)
+ ESSENTIAL_FILES = [
+ # Core files
         "wicked_zerg_bot_pro.py",
         "run.py",  # AI Arena entry point
         "config.py",
 
-        # Neural network
+ # Neural network
         "zerg_net.py",
 
-        # Game logic modules (required)
+ # Game logic modules (required)
         "combat_manager.py",
         "economy_manager.py",
         "production_manager.py",
@@ -40,206 +40,206 @@ class AIArenaPackager:
         "rogue_tactics_manager.py",
         "unit_factory.py",  # Required by production_manager.py
 
-        # Configuration
+ # Configuration
         "requirements.txt",
-    ]
-    
-    # Optional files (will be included if they exist)
-    OPTIONAL_FILES = [
+ ]
+ 
+ # Optional files (will be included if they exist)
+ OPTIONAL_FILES = [
         "combat_tactics.py",
         "production_resilience.py",
         "personality_manager.py",
         "strategy_analyzer.py",
         "spell_unit_manager.py",
         "map_manager.py",
-    ]
+ ]
 
-    # Model files (latest only)
-    MODEL_FILES = [
+ # Model files (latest only)
+ MODEL_FILES = [
         "models/zerg_net_model.pt",
-    ]
+ ]
 
-    def __init__(self, project_root: Path = None, include_checkpoints: bool = False, output_dir: Path = None):
-        self.project_root = project_root or Path(__file__).parent.parent.absolute()
-        self.include_checkpoints = include_checkpoints
+ def __init__(self, project_root: Path = None, include_checkpoints: bool = False, output_dir: Path = None):
+ self.project_root = project_root or Path(__file__).parent.parent.absolute()
+ self.include_checkpoints = include_checkpoints
 
-        # Default output directory
-        if output_dir is None:
-            # Use environment variable first
+ # Default output directory
+ if output_dir is None:
+ # Use environment variable first
             env_path = os.environ.get("ARENA_DEPLOY_PATH", None)
-            if env_path:
-                default_output = Path(env_path)
-            else:
-                # Default path - must be set via environment variable
+ if env_path:
+ default_output = Path(env_path)
+ else:
+ # Default path - must be set via environment variable
                 # Set ARENA_DEPLOY_PATH="D:/Ʒ_/deployment" or use --output argument
-                raise ValueError(
+ raise ValueError(
                     "Output directory not specified. "
                     "Please use --output argument or set ARENA_DEPLOY_PATH environment variable. "
                     "Example: use --output argument with full path"
-                )
-            default_output.mkdir(parents=True, exist_ok=True)
-            self.output_dir = default_output
-        else:
-            self.output_dir = Path(output_dir)
-            # Use os.makedirs for better encoding handling
-            os.makedirs(str(self.output_dir), exist_ok=True)
-        
+ )
+ default_output.mkdir(parents=True, exist_ok=True)
+ self.output_dir = default_output
+ else:
+ self.output_dir = Path(output_dir)
+ # Use os.makedirs for better encoding handling
+ os.makedirs(str(self.output_dir), exist_ok=True)
+ 
         self.temp_dir = self.output_dir / "temp_package"
 
         print("[*] AI Arena Packager initialized")
         print(f"    Project root: {self.project_root}")
         print(f"    Output dir: {self.output_dir}")
 
-    def validate_project(self):
+ def validate_project(self):
         """Validate project files"""
         print("\n[*] Validating project...")
 
-        missing_files = []
-        for file_name in self.ESSENTIAL_FILES:
-            file_path = self.project_root / file_name
-            if not file_path.exists():
-                missing_files.append(file_name)
+ missing_files = []
+ for file_name in self.ESSENTIAL_FILES:
+ file_path = self.project_root / file_name
+ if not file_path.exists():
+ missing_files.append(file_name)
 
-        if missing_files:
+ if missing_files:
             print(f"[!] Missing files: {', '.join(missing_files)}")
-            return False
+ return False
 
         print("[OK] All required files found")
-        return True
+ return True
 
-    def find_latest_model(self):
+ def find_latest_model(self):
         """Find latest model file"""
         models_dir = self.project_root / "models"
 
-        if not models_dir.exists():
+ if not models_dir.exists():
             print("[!] models/ folder not found")
-            return None
+ return None
 
         model_files = list(models_dir.glob("*.pt"))
 
-        if not model_files:
+ if not model_files:
             print("[!] No model files (.pt) found")
-            return None
+ return None
 
-        latest_model = max(model_files, key=lambda p: p.stat().st_mtime)
+ latest_model = max(model_files, key=lambda p: p.stat().st_mtime)
 
-        model_size_mb = latest_model.stat().st_size / (1024 * 1024)
-        mod_time = datetime.fromtimestamp(latest_model.stat().st_mtime)
+ model_size_mb = latest_model.stat().st_size / (1024 * 1024)
+ mod_time = datetime.fromtimestamp(latest_model.stat().st_mtime)
 
         print(f"\n[*] Latest model found:")
         print(f"    File: {latest_model.name}")
         print(f"    Size: {model_size_mb:.2f} MB")
         print(f"    Modified: {mod_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        return latest_model
+ return latest_model
 
-    def create_package_structure(self):
+ def create_package_structure(self):
         """Create package structure - Flat layout for AI Arena"""
         print("\n[*] Creating package structure...")
 
-        # Clean temp directory
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
+ # Clean temp directory
+ if self.temp_dir.exists():
+ shutil.rmtree(self.temp_dir)
 
-        self.temp_dir.mkdir(parents=True, exist_ok=True)
+ self.temp_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Copy essential files (FLAT structure - all in root)
+ # 1. Copy essential files (FLAT structure - all in root)
         print("    - Copying essential files (Flat structure)...")
-        for file_name in self.ESSENTIAL_FILES:
-            src = self.project_root / file_name
-            # Extract filename only to place in root (remove path depth)
-            dst = self.temp_dir / Path(file_name).name
+ for file_name in self.ESSENTIAL_FILES:
+ src = self.project_root / file_name
+ # Extract filename only to place in root (remove path depth)
+ dst = self.temp_dir / Path(file_name).name
 
-            if src.exists():
-                shutil.copy2(src, dst)
+ if src.exists():
+ shutil.copy2(src, dst)
                 print(f"      [OK] {file_name} -> {dst.name}")
-            else:
+ else:
                 print(f"      [!] {file_name} missing")
 
-        # 2. Copy model files (keep models/ subfolder)
+ # 2. Copy model files (keep models/ subfolder)
         print("    - Copying model files...")
         models_temp_dir = self.temp_dir / "models"
-        models_temp_dir.mkdir(exist_ok=True)
+ models_temp_dir.mkdir(exist_ok=True)
 
-        latest_model = self.find_latest_model()
-        if latest_model:
-            # Copy to standard name: models/zerg_net_model.pt
+ latest_model = self.find_latest_model()
+ if latest_model:
+ # Copy to standard name: models/zerg_net_model.pt
             dst_model = models_temp_dir / "zerg_net_model.pt"
-            shutil.copy2(latest_model, dst_model)
+ shutil.copy2(latest_model, dst_model)
             print(f"    [OK] Model: {latest_model.name} -> models/zerg_net_model.pt")
-        else:
+ else:
             print("    [!] No model file (submitting untrained bot)")
-        
-        # 3. Copy local_training directory (essential for deployment)
+ 
+ # 3. Copy local_training directory (essential for deployment)
         print("    - Copying local_training directory...")
         local_training_src = self.project_root / "local_training"
-        if local_training_src.exists():
+ if local_training_src.exists():
             local_training_dst = self.temp_dir / "local_training"
-            local_training_dst.mkdir(exist_ok=True)
-            
-            # Copy all Python files (excluding tests and replay learners)
+ local_training_dst.mkdir(exist_ok=True)
+ 
+ # Copy all Python files (excluding tests and replay learners)
             for py_file in local_training_src.rglob("*.py"):
-                # Skip test files
+ # Skip test files
                 if "test" in py_file.name.lower():
-                    continue
-                # Skip replay learning scripts (not needed for deployment)
+ continue
+ # Skip replay learning scripts (not needed for deployment)
                 if "replay" in py_file.name.lower() and "learner" in py_file.name.lower():
-                    continue
-                
-                # Calculate relative path
-                rel_path = py_file.relative_to(local_training_src)
-                dst_file = local_training_dst / rel_path
-                dst_file.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(py_file, dst_file)
+ continue
+ 
+ # Calculate relative path
+ rel_path = py_file.relative_to(local_training_src)
+ dst_file = local_training_dst / rel_path
+ dst_file.parent.mkdir(parents=True, exist_ok=True)
+ shutil.copy2(py_file, dst_file)
                 print(f"      [OK] {rel_path}")
-            
-            # Copy learned parameters if they exist
-            learned_files = [
+ 
+ # Copy learned parameters if they exist
+ learned_files = [
                 "scripts/learned_build_orders.json",
                 "scripts/strategy_db.json",
-            ]
-            for learned_file in learned_files:
-                src_file = local_training_src / learned_file
-                if src_file.exists():
-                    dst_file = local_training_dst / learned_file
-                    dst_file.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(src_file, dst_file)
+ ]
+ for learned_file in learned_files:
+ src_file = local_training_src / learned_file
+ if src_file.exists():
+ dst_file = local_training_dst / learned_file
+ dst_file.parent.mkdir(parents=True, exist_ok=True)
+ shutil.copy2(src_file, dst_file)
                     print(f"      [OK] {learned_file}")
-            
+ 
             print("    [OK] local_training directory copied")
-        else:
+ else:
             print("    [!] local_training directory not found")
 
-        # 4. Create metadata
-        self._create_metadata()
+ # 4. Create metadata
+ self._create_metadata()
 
         print("[OK] Package structure created")
 
-    def _create_metadata(self):
+ def _create_metadata(self):
         """Create package metadata"""
-        metadata = {
+ metadata = {
             "bot_name": "Wicked Zerg Challenger",
             "version": "1.0.0",
             "race": "Zerg",
             "packaged_at": datetime.now().isoformat(),
             "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             "has_model": (self.project_root / "models").exists(),
-        }
+ }
 
         metadata_file = self.temp_dir / "package_info.json"
         with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, indent=2, ensure_ascii=False)
+ json.dump(metadata, f, indent=2, ensure_ascii=False)
 
-    def create_zip(self):
+ def create_zip(self):
         """Create ZIP file with filtering"""
         print("\n[*] Creating ZIP file...")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         zip_name = f"WickedZerg_AIArena_{timestamp}.zip"
-        zip_path = self.output_dir / zip_name
+ zip_path = self.output_dir / zip_name
 
-        # Exclude patterns (training data, cache, temp files)
-        EXCLUDE_PATTERNS = [
+ # Exclude patterns (training data, cache, temp files)
+ EXCLUDE_PATTERNS = [
             '__pycache__',
             '*.pyc',
             '*.pyo',
@@ -254,89 +254,89 @@ class AIArenaPackager:
             'parallel_train_integrated.py',
             'main_integrated.py',
             'arena_update.py',
-        ]
+ ]
 
-        def should_exclude(file_path: Path) -> bool:
+ def should_exclude(file_path: Path) -> bool:
             """Check if file should be excluded"""
-            file_str = str(file_path)
-            for pattern in EXCLUDE_PATTERNS:
-                if pattern in file_str or file_path.name == pattern:
-                    return True
-            return False
+ file_str = str(file_path)
+ for pattern in EXCLUDE_PATTERNS:
+ if pattern in file_str or file_path.name == pattern:
+ return True
+ return False
 
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk(self.temp_dir):
-                # Exclude directories matching patterns
-                dirs[:] = [d for d in dirs if d not in EXCLUDE_PATTERNS]
+ for root, dirs, files in os.walk(self.temp_dir):
+ # Exclude directories matching patterns
+ dirs[:] = [d for d in dirs if d not in EXCLUDE_PATTERNS]
 
-                for file in files:
-                    file_path = Path(root) / file
+ for file in files:
+ file_path = Path(root) / file
 
-                    if should_exclude(file_path):
+ if should_exclude(file_path):
                         print(f"      [SKIP] {file}")
-                        continue
+ continue
 
-                    arcname = file_path.relative_to(self.temp_dir)
-                    zipf.write(file_path, arcname)
+ arcname = file_path.relative_to(self.temp_dir)
+ zipf.write(file_path, arcname)
 
-        zip_size_mb = zip_path.stat().st_size / (1024 * 1024)
+ zip_size_mb = zip_path.stat().st_size / (1024 * 1024)
 
         print(f"[OK] ZIP created:")
         print(f"    File: {zip_name}")
         print(f"    Size: {zip_size_mb:.2f} MB")
         print(f"    Path: {zip_path}")
 
-        # Size warning
-        if zip_size_mb > 50:
+ # Size warning
+ if zip_size_mb > 50:
             print(f"\n[!] WARNING: ZIP size is {zip_size_mb:.1f}MB")
             print(f"    AI Arena typically recommends under 50MB")
 
-        return zip_path
+ return zip_path
 
-    def cleanup(self):
+ def cleanup(self):
         """Clean up temporary files"""
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
+ if self.temp_dir.exists():
+ shutil.rmtree(self.temp_dir)
         print("\n[OK] Temporary files cleaned")
 
-    def _verify_package(self, zip_path: Path):
+ def _verify_package(self, zip_path: Path):
         """Verify ZIP package contents"""
         print("\n[*] Verifying package...")
 
         with zipfile.ZipFile(zip_path, 'r') as zipf:
-            file_list = zipf.namelist()
+ file_list = zipf.namelist()
 
-            # Check critical files
+ # Check critical files
             print("    Critical files:")
             critical_files = ['run.py', 'wicked_zerg_bot_pro.py', 'config.py', 'zerg_net.py']
-            for cfile in critical_files:
-                if cfile in file_list:
+ for cfile in critical_files:
+ if cfile in file_list:
                     print(f"      [OK] {cfile}")
-                else:
+ else:
                     print(f"      [!] {cfile} MISSING!")
 
-            # Check model
+ # Check model
             model_found = any('models/zerg_net_model.pt' in f for f in file_list)
-            if model_found:
+ if model_found:
                 print(f"      [OK] models/zerg_net_model.pt")
-            else:
+ else:
                 print(f"      [!] Model file missing (untrained)")
 
-            # Check for unwanted files
+ # Check for unwanted files
             print("\n    Unwanted files check:")
             unwanted_patterns = ['parallel_train', 'main_integrated', '__pycache__',
                                'upload_to_aiarena', 'package_for_aiarena', '.backup']
-            found_unwanted = False
-            for pattern in unwanted_patterns:
-                unwanted = [f for f in file_list if pattern in f]
-                if unwanted:
-                    found_unwanted = True
+ found_unwanted = False
+ for pattern in unwanted_patterns:
+ unwanted = [f for f in file_list if pattern in f]
+ if unwanted:
+ found_unwanted = True
                     print(f"      [!] {pattern}: {len(unwanted)} found")
 
-            if not found_unwanted:
+ if not found_unwanted:
                 print(f"      [OK] Clean package (no unwanted files)")
 
-            # Statistics
+ # Statistics
             py_files = [f for f in file_list if f.endswith('.py')]
             pt_files = [f for f in file_list if f.endswith('.pt')]
 
@@ -347,31 +347,31 @@ class AIArenaPackager:
 
         print("[OK] Verification complete")
 
-    def package(self):
+ def package(self):
         """Complete packaging process"""
         print("\n" + "="*70)
         print("[*] AI ARENA PACKAGING - WICKED ZERG")
         print("="*70)
 
-        try:
-            # 1. Validation
-            if not self.validate_project():
+ try:
+ # 1. Validation
+ if not self.validate_project():
                 print("\n[!] Packaging failed: validation error")
-                return None
+ return None
 
-            # 2. Create structure
-            self.create_package_structure()
+ # 2. Create structure
+ self.create_package_structure()
 
-            # 3. Create ZIP
-            zip_path = self.create_zip()
+ # 3. Create ZIP
+ zip_path = self.create_zip()
 
-            # 4. Verify
-            self._verify_package(zip_path)
+ # 4. Verify
+ self._verify_package(zip_path)
 
-            # 5. Cleanup
-            self.cleanup()
+ # 5. Cleanup
+ self.cleanup()
 
-            # 6. Summary
+ # 6. Summary
             print("\n" + "="*70)
             print("[OK] PACKAGING COMPLETE!")
             print("="*70)
@@ -383,77 +383,77 @@ class AIArenaPackager:
             print(f"    3. Monitor first match results")
             print("\n[OK] Ready for AI Arena upload!")
 
-            return zip_path
+ return zip_path
 
-        except Exception as e:
+ except Exception as e:
             print(f"\n[!] Packaging error: {e}")
-            import traceback
-            traceback.print_exc()
-            self.cleanup()
-            return None
+ import traceback
+ traceback.print_exc()
+ self.cleanup()
+ return None
 
 
 def main():
     """Main execution function"""
-    import argparse
-    
+ import argparse
+ 
     parser = argparse.ArgumentParser(description="Create AI Arena deployment package")
-    parser.add_argument(
+ parser.add_argument(
         "--output",
-        type=str,
-        default=None,
+ type=str,
+ default=None,
         help="Output directory for zip file (default: ARENA_DEPLOY_PATH env var)"
-    )
-    parser.add_argument(
+ )
+ parser.add_argument(
         "--project-root",
-        type=str,
-        default=None,
+ type=str,
+ default=None,
         help="Project root directory (default: auto-detect)"
-    )
-    parser.add_argument(
+ )
+ parser.add_argument(
         "--include-checkpoints",
         action="store_true",
         help="Include checkpoint files"
-    )
-    
-    args = parser.parse_args()
-    
-    project_root = Path(args.project_root) if args.project_root else None
-    
-    # Handle output directory - ensure proper encoding
-    if args.output:
-        # Use the provided path directly - handle encoding issues
-        try:
-            output_dir = Path(args.output)
-        except:
-            # If encoding fails, try to decode and re-encode
+ )
+ 
+ args = parser.parse_args()
+ 
+ project_root = Path(args.project_root) if args.project_root else None
+ 
+ # Handle output directory - ensure proper encoding
+ if args.output:
+ # Use the provided path directly - handle encoding issues
+ try:
+ output_dir = Path(args.output)
+ except:
+ # If encoding fails, try to decode and re-encode
             output_dir = Path(args.output.encode('utf-8', errors='ignore').decode('utf-8'))
-    else:
-        # Try environment variable
+ else:
+ # Try environment variable
         env_path = os.environ.get("ARENA_DEPLOY_PATH")
-        if env_path:
-            output_dir = Path(env_path)
-        else:
-            # Default path - build from parts to avoid encoding issues
+ if env_path:
+ output_dir = Path(env_path)
+ else:
+ # Default path - build from parts to avoid encoding issues
             base = Path("D:/")
-            # Use Unicode string building
+ # Use Unicode string building
             arena_part = "아레나_배포"
             output_dir = base / arena_part / "deployment"
-    
-    packager = AIArenaPackager(
-        project_root=project_root,
-        include_checkpoints=args.include_checkpoints,
-        output_dir=output_dir
-    )
-    
-    zip_path = packager.package()
-    
-    if zip_path:
+ 
+ packager = AIArenaPackager(
+ project_root=project_root,
+ include_checkpoints=args.include_checkpoints,
+ output_dir=output_dir
+ )
+ 
+ zip_path = packager.package()
+ 
+ if zip_path:
         print(f"\n✅ Deployment package created: {zip_path}")
-        return 0
-    else:
+ return 0
+ else:
         print("\n❌ Failed to create deployment package")
-        return 1
+ return 1
 
     parser = argparse.ArgumentParser(description="AI Arena packaging tool")
     parser.add_argument("--include-checkpoints", action="store_true",
@@ -461,17 +461,17 @@ def main():
     parser.add_argument("--project-root", type=str,
                        help="Project root path (default: current directory)")
 
-    args = parser.parse_args()
+ args = parser.parse_args()
 
-    project_root = Path(args.project_root) if args.project_root else None
+ project_root = Path(args.project_root) if args.project_root else None
 
-    packager = AIArenaPackager(
-        project_root=project_root,
-        include_checkpoints=args.include_checkpoints
-    )
+ packager = AIArenaPackager(
+ project_root=project_root,
+ include_checkpoints=args.include_checkpoints
+ )
 
-    packager.package()
+ packager.package()
 
 
 if __name__ == "__main__":
-    main()
+ main()

@@ -3,89 +3,86 @@
 """
 Manus Dashboard Sync
 
-·ÎÄÃ °ÔÀÓ »óÅÂ¸¦ Manus ´ë½Ãº¸µå·Î ÁÖ±âÀûÀ¸·Î µ¿±âÈ­ÇÏ´Â ¸ğµâ
+ë¡œì»¬ ê²Œì„ ìƒíƒœë¥¼ Manus ëŒ€ì‹œë³´ë“œë¡œ ì£¼ê¸°ì ìœ¼ë¡œ ë™ê¸°í™”í•˜ëŠ” ëª¨ë“ˆ
 """
 
 import time
 import threading
 import logging
 from typing import Optional
-from pathlib import Path
-from monitoring.manus_dashboard_client import create_client_from_env
-from monitoring.monitoring_utils import get_base_dir, find_latest_instance_status
 
-# ·Î±ë ¼³Á¤
+# ë¡œê¹… ì„¤ì •
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ManusSyncService:
-    """Manus ´ë½Ãº¸µå µ¿±âÈ­ ¼­ºñ½º"""
-    
-    def __init__(self, sync_interval: int = 5):
+    """Manus ëŒ€ì‹œë³´ë“œ ë™ê¸°í™” ì„œë¹„ìŠ¤"""
+ 
+ def __init__(self, sync_interval: int = 5):
         """
-        µ¿±âÈ­ ¼­ºñ½º ÃÊ±âÈ­
-        
-        Args:
-            sync_interval: µ¿±âÈ­ °£°İ (ÃÊ)
+ ë™ê¸°í™” ì„œë¹„ìŠ¤ ì´ˆê¸°í™”
+ 
+ Args:
+ sync_interval: ë™ê¸°í™” ê°„ê²© (ì´ˆ)
         """
-        self.client = create_client_from_env()
-        self.sync_interval = sync_interval
-        self.running = False
-        self.thread: Optional[threading.Thread] = None
-        
-        if self.client and self.client.enabled:
-            logger.info(f"[MANUS SYNC] ¼­ºñ½º ÃÊ±âÈ­ ¿Ï·á (°£°İ: {sync_interval}ÃÊ)")
-        else:
-            logger.warning("[MANUS SYNC] Manus Å¬¶óÀÌ¾ğÆ®°¡ ºñÈ°¼ºÈ­µÇ¾î ÀÖ½À´Ï´Ù")
-    
-    def _get_game_state(self) -> Optional[dict]:
+ self.client = create_client_from_env()
+ self.sync_interval = sync_interval
+ self.running = False
+ self.thread: Optional[threading.Thread] = None
+ 
+ if self.client and self.client.enabled:
+            logger.info(f"[MANUS SYNC] ì„œë¹„ìŠ¤ ì´ˆê¸°í™” ì™„ë£Œ (ê°„ê²©: {sync_interval}ì´ˆ)")
+ else:
+            logger.warning("[MANUS SYNC] Manus í´ë¼ì´ì–¸íŠ¸ê°€ ë¹„í™œì„±í™”ë˜ì–´ ìˆìŠµë‹ˆë‹¤")
+ 
+ def _get_game_state(self) -> Optional[dict]:
         """
-        ÇöÀç °ÔÀÓ »óÅÂ °¡Á®¿À±â
-        
-        Returns:
-            °ÔÀÓ »óÅÂ µñ¼Å³Ê¸® ¶Ç´Â None
+ í˜„ì¬ ê²Œì„ ìƒíƒœ ê°€ì ¸ì˜¤ê¸°
+ 
+ Returns:
+ ê²Œì„ ìƒíƒœ ë”•ì…”ë„ˆë¦¬ ë˜ëŠ” None
         """
-        try:
-            base_dir = get_base_dir()
-            status = find_latest_instance_status(base_dir)
-            
-            if not status:
-                return None
-            
+ try:
+ base_dir = get_base_dir()
+ status = find_latest_instance_status(base_dir)
+ 
+ if not status:
+ return None
+ 
             src = status.get("game_state", status)
-            
-            # °ÔÀÓÀÌ ½ÇÇà ÁßÀÎÁö È®ÀÎ
+ 
+ # ê²Œì„ì´ ì‹¤í–‰ ì¤‘ì¸ì§€ í™•ì¸
             is_running = src.get("is_running", False)
-            if not is_running:
-                return None
-            
-            # °ÔÀÓ »óÅÂ ±¸¼º
-            game_state = {
+ if not is_running:
+ return None
+ 
+ # ê²Œì„ ìƒíƒœ êµ¬ì„±
+ game_state = {
                 "minerals": src.get("minerals", 0),
                 "vespene": src.get("vespene", src.get("gas", 0)),
                 "supply_used": src.get("supply_used", src.get("supply", 0)),
                 "supply_cap": src.get("supply_cap", src.get("supply_max", 15)),
                 "units": src.get("unit_count", src.get("units", {})),
                 "map_name": src.get("map_name", src.get("current_map", "Unknown")),
-                "game_time": src.get("current_frame", src.get("frame", 0)) // 22,  # ÇÁ·¹ÀÓÀ» ÃÊ·Î º¯È¯
-            }
-            
-            return game_state
-            
-        except Exception as e:
-            logger.warning(f"[MANUS SYNC] °ÔÀÓ »óÅÂ °¡Á®¿À±â ½ÇÆĞ: {e}")
-            return None
-    
-    def _sync_loop(self):
-        """µ¿±âÈ­ ·çÇÁ"""
-        while self.running:
-            try:
-                if self.client and self.client.enabled:
-                    game_state = self._get_game_state()
-                    
-                    if game_state:
-                        # °ÔÀÓ »óÅÂ ¾÷µ¥ÀÌÆ®
-                        self.client.update_game_state(
+                "game_time": src.get("current_frame", src.get("frame", 0)) // 22,  # í”„ë ˆì„ì„ ì´ˆë¡œ ë³€í™˜
+ }
+ 
+ return game_state
+ 
+ except Exception as e:
+            logger.warning(f"[MANUS SYNC] ê²Œì„ ìƒíƒœ ê°€ì ¸ì˜¤ê¸° ì‹¤íŒ¨: {e}")
+ return None
+ 
+ def _sync_loop(self):
+        """ë™ê¸°í™” ë£¨í”„"""
+ while self.running:
+ try:
+ if self.client and self.client.enabled:
+ game_state = self._get_game_state()
+ 
+ if game_state:
+ # ê²Œì„ ìƒíƒœ ì—…ë°ì´íŠ¸
+ self.client.update_game_state(
                             minerals=game_state["minerals"],
                             vespene=game_state["vespene"],
                             supply_used=game_state["supply_used"],
@@ -93,60 +90,60 @@ class ManusSyncService:
                             units=game_state["units"],
                             map_name=game_state.get("map_name"),
                             game_time=game_state.get("game_time")
-                        )
-                
-                time.sleep(self.sync_interval)
-                
-            except Exception as e:
-                logger.error(f"[MANUS SYNC] µ¿±âÈ­ ¿À·ù: {e}")
-                time.sleep(self.sync_interval)
-    
-    def start(self):
-        """µ¿±âÈ­ ¼­ºñ½º ½ÃÀÛ"""
-        if not self.client or not self.client.enabled:
-            logger.warning("[MANUS SYNC] Å¬¶óÀÌ¾ğÆ®°¡ ºñÈ°¼ºÈ­µÇ¾î ÀÖ¾î ½ÃÀÛÇÒ ¼ö ¾ø½À´Ï´Ù")
-            return
-        
-        if self.running:
-            logger.warning("[MANUS SYNC] ÀÌ¹Ì ½ÇÇà ÁßÀÔ´Ï´Ù")
-            return
-        
-        self.running = True
-        self.thread = threading.Thread(target=self._sync_loop, daemon=True)
-        self.thread.start()
-        logger.info("[MANUS SYNC] µ¿±âÈ­ ¼­ºñ½º ½ÃÀÛ")
-    
-    def stop(self):
-        """µ¿±âÈ­ ¼­ºñ½º ÁßÁö"""
-        if not self.running:
-            return
-        
-        self.running = False
-        if self.thread:
-            self.thread.join(timeout=2)
-        logger.info("[MANUS SYNC] µ¿±âÈ­ ¼­ºñ½º ÁßÁö")
+ )
+ 
+ time.sleep(self.sync_interval)
+ 
+ except Exception as e:
+                logger.error(f"[MANUS SYNC] ë™ê¸°í™” ì˜¤ë¥˜: {e}")
+ time.sleep(self.sync_interval)
+ 
+ def start(self):
+        """ë™ê¸°í™” ì„œë¹„ìŠ¤ ì‹œì‘"""
+ if not self.client or not self.client.enabled:
+            logger.warning("[MANUS SYNC] í´ë¼ì´ì–¸íŠ¸ê°€ ë¹„í™œì„±í™”ë˜ì–´ ìˆì–´ ì‹œì‘í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤")
+ return
+ 
+ if self.running:
+            logger.warning("[MANUS SYNC] ì´ë¯¸ ì‹¤í–‰ ì¤‘ì…ë‹ˆë‹¤")
+ return
+ 
+ self.running = True
+ self.thread = threading.Thread(target=self._sync_loop, daemon=True)
+ self.thread.start()
+        logger.info("[MANUS SYNC] ë™ê¸°í™” ì„œë¹„ìŠ¤ ì‹œì‘")
+ 
+ def stop(self):
+        """ë™ê¸°í™” ì„œë¹„ìŠ¤ ì¤‘ì§€"""
+ if not self.running:
+ return
+ 
+ self.running = False
+ if self.thread:
+ self.thread.join(timeout=2)
+        logger.info("[MANUS SYNC] ë™ê¸°í™” ì„œë¹„ìŠ¤ ì¤‘ì§€")
 
 
-# Àü¿ª ÀÎ½ºÅÏ½º
+# ì „ì—­ ì¸ìŠ¤í„´ìŠ¤
 _sync_service: Optional[ManusSyncService] = None
 
 def start_manus_sync(sync_interval: int = 5):
     """
-    Manus µ¿±âÈ­ ¼­ºñ½º ½ÃÀÛ
-    
-    Args:
-        sync_interval: µ¿±âÈ­ °£°İ (ÃÊ)
+ Manus ë™ê¸°í™” ì„œë¹„ìŠ¤ ì‹œì‘
+ 
+ Args:
+ sync_interval: ë™ê¸°í™” ê°„ê²© (ì´ˆ)
     """
-    global _sync_service
-    
-    if _sync_service is None:
-        _sync_service = ManusSyncService(sync_interval=sync_interval)
-    
-    _sync_service.start()
+ global _sync_service
+ 
+ if _sync_service is None:
+ _sync_service = ManusSyncService(sync_interval=sync_interval)
+ 
+ _sync_service.start()
 
 def stop_manus_sync():
-    """Manus µ¿±âÈ­ ¼­ºñ½º ÁßÁö"""
-    global _sync_service
-    
-    if _sync_service:
-        _sync_service.stop()
+    """Manus ë™ê¸°í™” ì„œë¹„ìŠ¤ ì¤‘ì§€"""
+ global _sync_service
+ 
+ if _sync_service:
+ _sync_service.stop()

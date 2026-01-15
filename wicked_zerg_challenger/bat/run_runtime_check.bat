@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Wrapper to run the Python runtime check script and open the generated log
 python "%~dp0runtime_check.py" %*
 if %ERRORLEVEL% EQU 0 (

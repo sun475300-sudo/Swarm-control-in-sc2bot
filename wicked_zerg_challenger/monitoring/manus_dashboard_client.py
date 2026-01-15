@@ -3,175 +3,200 @@
 """
 Manus Dashboard Client
 
-SC2 AI º¿ÀÇ µ¥ÀÌÅÍ¸¦ Manus À¥ È£½ºÆÃ ´ë½Ãº¸µå(tRPC API)·Î Àü¼ÛÇÏ´Â Å¬¶óÀÌ¾ğÆ®
+SC2 AI ë´‡ì˜ ë°ì´í„°ë¥¼ Manus ì›¹ í˜¸ìŠ¤íŒ… ëŒ€ì‹œë³´ë“œ(tRPC API)ë¡œ ì „ì†¡í•˜ëŠ” í´ë¼ì´ì–¸íŠ¸
 """
 
 import requests
-import json
 import time
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime
 import os
 
-# ·Î±ë ¼³Á¤
-logging.basicConfig(level=logging.INFO)
+# ë¡œê¹… ì„¤ì •
+logging.basicConfig(level = logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ManusDashboardClient:
-    """Manus ´ë½Ãº¸µå tRPC API Å¬¶óÀÌ¾ğÆ®"""
-    
-    def __init__(
-        self,
+    """Manus ëŒ€ì‹œë³´ë“œ tRPC API í´ë¼ì´ì–¸íŠ¸"""
+
+ def __init__(
+ self,
         base_url: str = "https://sc2aidash-bncleqgg.manus.space",
-        api_key: Optional[str] = None,
-        enabled: bool = True
-    ):
+ api_key: Optional[str] = None,
+ enabled: bool = True
+ ):
         """
-        Manus ´ë½Ãº¸µå Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­
-        
-        Args:
-            base_url: Manus ´ë½Ãº¸µå URL
-            api_key: API ÀÎÁõ Å° (¼±ÅÃÀû, ¿ì¼±¼øÀ§: ÀÎÀÚ > È¯°æ º¯¼ö > ÆÄÀÏ)
-            enabled: ¿ø°İ Àü¼Û È°¼ºÈ­ ¿©ºÎ
+ Manus ëŒ€ì‹œë³´ë“œ í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™”
+
+ Args:
+ base_url: Manus ëŒ€ì‹œë³´ë“œ URL
+ api_key: API ì¸ì¦ í‚¤ (ì„ íƒì , ìš°ì„ ìˆœìœ„: ì¸ì > í™˜ê²½ ë³€ìˆ˜ > íŒŒì¼)
+ enabled: ì›ê²© ì „ì†¡ í™œì„±í™” ì—¬ë¶€
         """
         self.base_url = base_url.rstrip('/')
-        # API Å° ·Îµå ¿ì¼±¼øÀ§: 1) ÀÎÀÚ, 2) È¯°æ º¯¼ö, 3) ÆÄÀÏ
-        self.api_key = api_key or self._load_api_key()
+ # API í‚¤ ë¡œë“œ ìš°ì„ ìˆœìœ„: 1) ì¸ì, 2) í™˜ê²½ ë³€ìˆ˜, 3) íŒŒì¼
+ self.api_key = api_key or self._load_api_key()
         self.enabled = enabled and os.environ.get("MANUS_DASHBOARD_ENABLED", "1") == "1"
-        
-        # tRPC API ¿£µåÆ÷ÀÎÆ®
+
+ # tRPC API ì—”ë“œí¬ì¸íŠ¸
         self.trpc_url = f"{self.base_url}/api/trpc"
-        
-        # HTTP ¼¼¼Ç
-        self.session = requests.Session()
-        self.session.headers.update({
+
+ # HTTP ì„¸ì…˜
+ self.session = requests.Session()
+ self.session.headers.update({
             "Content-Type": "application/json"
-        })
-        
-        if self.api_key:
-            self.session.headers.update({
+ })
+
+ if self.api_key:
+ self.session.headers.update({
                 "Authorization": f"Bearer {self.api_key}"
-            })
-        
-        # Àç½Ãµµ ¼³Á¤
-        self.max_retries = 3
-        self.retry_delay = 2
-        
-        logger.info(f"[MANUS] Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­: {self.base_url} (È°¼ºÈ­: {self.enabled})")
-    
-    def _load_api_key(self) -> Optional[str]:
+ })
+
+ # ì¬ì‹œë„ ì„¤ì •
+ self.max_retries = 3
+ self.retry_delay = 2
+
+        logger.info(f"[MANUS] í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™”: {self.base_url} (í™œì„±í™”: {self.enabled})")
+
+ def _load_api_key(self) -> Optional[str]:
         """
-        API Å° ·Îµå (È¯°æ º¯¼ö ¿ì¼±, ÆÄÀÏ fallback)
-        
-        Returns:
-            API Å° ¶Ç´Â None
+ API í‚¤ ë¡œë“œ (í™˜ê²½ ë³€ìˆ˜ ìš°ì„ , íŒŒì¼ fallback)
+
+ Returns:
+ API í‚¤ ë˜ëŠ” None
         """
-        # 1. È¯°æ º¯¼ö ¿ì¼±
+ # 1. í™˜ê²½ ë³€ìˆ˜ ìš°ì„ 
         key = os.environ.get("MANUS_DASHBOARD_API_KEY")
-        if key:
-            return key
-        
-        # 2. ÆÄÀÏ¿¡¼­ ÀĞ±â (fallback)
-        try:
-            from pathlib import Path
-            # ¿©·¯ °¡´ÉÇÑ °æ·Î ½Ãµµ
-            possible_paths = [
+ if key:
+ return key
+
+ # 2. íŒŒì¼ì—ì„œ ì½ê¸° (fallback)
+ try:
+ from pathlib import Path
+ # ì—¬ëŸ¬ ê°€ëŠ¥í•œ ê²½ë¡œ ì‹œë„
+ possible_paths = [
                 Path("monitoring/api_keys/manus_api_key.txt"),
                 Path("api_keys/manus_api_key.txt"),
                 Path("secrets/manus_api_key.txt"),
-            ]
-            
-            for key_file in possible_paths:
-                if key_file.exists():
-                    key = key_file.read_text(encoding="utf-8").strip()
-                    if key:
-                        logger.info(f"[MANUS] API Å°¸¦ ÆÄÀÏ¿¡¼­ ·Îµå: {key_file}")
-                        return key
-        except Exception as e:
-            logger.warning(f"[MANUS] API Å° ÆÄÀÏ ÀĞ±â ½ÇÆĞ: {e}")
-        
-        return None
-    
-    def _call_trpc(
-        self,
-        procedure: str,
-        input_data: Dict[str, Any],
-        retry: bool = True
-    ) -> Optional[Dict[str, Any]]:
+ ]
+
+ for key_file in possible_paths:
+ if key_file.exists():
+ # Try multiple encodings to handle different file encodings
+                    for encoding in ["utf-8", "cp949", "latin-1", "utf-8-sig"]:
+ try:
+ key = key_file.read_text(encoding = encoding).strip()
+ if key:
+                                logger.info(f"[MANUS] API í‚¤ë¥¼ íŒŒì¼ì—ì„œ ë¡œë“œ: {key_file}")
+ return key
+ break
+ except UnicodeDecodeError:
+ continue
+ except Exception as e:
+            logger.warning(f"[MANUS] API í‚¤ íŒŒì¼ ì½ê¸° ì‹¤íŒ¨: {e}")
+
+ return None
+
+ def _call_trpc(
+ self,
+ procedure: str,
+ input_data: Dict[str, Any],
+ retry: bool = True
+ ) -> Optional[Dict[str, Any]]:
         """
-        tRPC ÇÁ·Î½ÃÀú È£Ãâ
-        
-        Args:
-            procedure: tRPC ÇÁ·Î½ÃÀú ÀÌ¸§ (¿¹: "game.createSession")
-            input_data: ÀÔ·Â µ¥ÀÌÅÍ
-            retry: Àç½Ãµµ ¿©ºÎ
-            
-        Returns:
-            ÀÀ´ä µ¥ÀÌÅÍ ¶Ç´Â None
+ tRPC í”„ë¡œì‹œì € í˜¸ì¶œ
+
+ Args:
+            procedure: tRPC í”„ë¡œì‹œì € ì´ë¦„ (ì˜ˆ: "game.createSession")
+ input_data: ì…ë ¥ ë°ì´í„°
+ retry: ì¬ì‹œë„ ì—¬ë¶€
+
+ Returns:
+ ì‘ë‹µ ë°ì´í„° ë˜ëŠ” None
         """
-        if not self.enabled:
-            return None
-        
-        # tRPC URL Çü½Ä: /api/trpc/{procedure}
+ if not self.enabled:
+ return None
+
+ # tRPC URL í˜•ì‹: /api/trpc/{procedure}
         url = f"{self.trpc_url}/{procedure}"
-        
-        for attempt in range(self.max_retries if retry else 1):
-            try:
-                response = self.session.post(
-                    url,
-                    json=input_data,
-                    timeout=10
-                )
-                response.raise_for_status()
-                return response.json()
-                
-            except requests.exceptions.RequestException as e:
-                if attempt < self.max_retries - 1:
-                    logger.warning(f"[MANUS] ¿äÃ» ½ÇÆĞ (½Ãµµ {attempt + 1}/{self.max_retries}): {e}")
-                    time.sleep(self.retry_delay * (attempt + 1))
-                else:
-                    logger.error(f"[MANUS] ¿äÃ» ÃÖÁ¾ ½ÇÆĞ: {e}")
-                    return None
-        
-        return None
-    
-    def create_game_session(
-        self,
-        map_name: str,
-        enemy_race: str,
-        final_minerals: int,
-        final_gas: int,
-        final_supply: int,
-        units_killed: int,
-        units_lost: int,
-        duration: int,
+
+ for attempt in range(self.max_retries if retry else 1):
+ try:
+ # CRITICAL FIX: Ensure all data is UTF-8 encoded before JSON serialization
+ # Convert any non-string values to strings and ensure UTF-8 encoding
+ encoded_data = {}
+ for key, value in input_data.items():
+ if isinstance(value, str):
+ # Ensure string is UTF-8 encoded
+ try:
+                            encoded_data[key] = value.encode('utf-8').decode('utf-8')
+ except (UnicodeEncodeError, UnicodeDecodeError):
+ # If encoding fails, try to fix it
+                            encoded_data[key] = value.encode('utf-8', errors='replace').decode('utf-8')
+ else:
+ encoded_data[key] = value
+
+ response = self.session.post(
+ url,
+ json = encoded_data,
+ timeout = 10
+ )
+ response.raise_for_status()
+ return response.json()
+
+ except (UnicodeEncodeError, UnicodeDecodeError) as e:
+ # Handle encoding errors gracefully
+                logger.warning(f"[MANUS] ì¸ì½”ë”© ì˜¤ë¥˜ (ì‹œë„ {attempt + 1}/{self.max_retries}): {e}")
+ if attempt < self.max_retries - 1:
+ time.sleep(self.retry_delay * (attempt + 1))
+ else:
+ return None
+ except requests.exceptions.RequestException as e:
+ if attempt < self.max_retries - 1:
+                    logger.warning(f"[MANUS] ìš”ì²­ ì‹¤íŒ¨ (ì‹œë„ {attempt + 1}/{self.max_retries}): {e}")
+ time.sleep(self.retry_delay * (attempt + 1))
+ else:
+                    logger.error(f"[MANUS] ìš”ì²­ ìµœì¢… ì‹¤íŒ¨: {e}")
+ return None
+
+ return None
+
+ def create_game_session(
+ self,
+ map_name: str,
+ enemy_race: str,
+ final_minerals: int,
+ final_gas: int,
+ final_supply: int,
+ units_killed: int,
+ units_lost: int,
+ duration: int,
         result: str,  # "Victory" or "Defeat"
-        personality: Optional[str] = None,
-        loss_reason: Optional[str] = None,
-        **kwargs
-    ) -> bool:
+ personality: Optional[str] = None,
+ loss_reason: Optional[str] = None,
+ **kwargs
+ ) -> bool:
         """
-        °ÔÀÓ ¼¼¼Ç »ı¼º (°ÔÀÓ Á¾·á ½Ã È£Ãâ)
-        
-        Args:
-            map_name: ¸Ê ÀÌ¸§
-            enemy_race: »ó´ë Á¾Á·
-            final_minerals: ÃÖÁ¾ ¹Ì³×¶ö
-            final_gas: ÃÖÁ¾ °¡½º
-            final_supply: ÃÖÁ¾ ÀÎ±¸¼ö
-            units_killed: Ã³Ä¡ÇÑ À¯´Ö ¼ö
-            units_lost: ÀÒÀº À¯´Ö ¼ö
-            duration: °ÔÀÓ ½Ã°£ (ÃÊ)
-            result: °ÔÀÓ °á°ú ("Victory" or "Defeat")
-            personality: º¿ ¼º°İ (¼±ÅÃÀû)
-            loss_reason: ÆĞ¹è ÀÌÀ¯ (¼±ÅÃÀû)
-            **kwargs: Ãß°¡ ÇÊµå
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ ê²Œì„ ì„¸ì…˜ ìƒì„± (ê²Œì„ ì¢…ë£Œ ì‹œ í˜¸ì¶œ)
+
+ Args:
+ map_name: ë§µ ì´ë¦„
+ enemy_race: ìƒëŒ€ ì¢…ì¡±
+ final_minerals: ìµœì¢… ë¯¸ë„¤ë„
+ final_gas: ìµœì¢… ê°€ìŠ¤
+ final_supply: ìµœì¢… ì¸êµ¬ìˆ˜
+ units_killed: ì²˜ì¹˜í•œ ìœ ë‹› ìˆ˜
+ units_lost: ìƒì€ ìœ ë‹› ìˆ˜
+ duration: ê²Œì„ ì‹œê°„ (ì´ˆ)
+            result: ê²Œì„ ê²°ê³¼ ("Victory" or "Defeat")
+ personality: ë´‡ ì„±ê²© (ì„ íƒì )
+ loss_reason: íŒ¨ë°° ì´ìœ  (ì„ íƒì )
+ **kwargs: ì¶”ê°€ í•„ë“œ
+
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        payload = {
+ payload = {
             "mapName": map_name,
             "enemyRace": enemy_race,
             "finalMinerals": final_minerals,
@@ -181,277 +206,277 @@ class ManusDashboardClient:
             "unitsLost": units_lost,
             "duration": duration,
             "result": result,
-        }
-        
-        # ¼±ÅÃÀû ÇÊµå Ãß°¡
-        if personality:
+ }
+
+ # ì„ íƒì  í•„ë“œ ì¶”ê°€
+ if personality:
             payload["personality"] = personality
-        if loss_reason:
+ if loss_reason:
             payload["lossReason"] = loss_reason
-        
-        # Ãß°¡ ÇÊµå º´ÇÕ
-        payload.update(kwargs)
-        
+
+ # ì¶”ê°€ í•„ë“œ ë³‘í•©
+ payload.update(kwargs)
+
         response = self._call_trpc("game.createSession", payload)
-        
-        if response:
-            logger.info(f"[MANUS] °ÔÀÓ ¼¼¼Ç »ı¼º ¼º°ø: {result} vs {enemy_race}")
-            return True
-        else:
-            logger.warning("[MANUS] °ÔÀÓ ¼¼¼Ç »ı¼º ½ÇÆĞ")
-            return False
-    
-    def create_training_episode(
-        self,
-        episode: int,
-        reward: float,
-        loss: float,
-        win_rate: float,
-        games: Optional[int] = None,
-        **kwargs
-    ) -> bool:
+
+ if response:
+            logger.info(f"[MANUS] ê²Œì„ ì„¸ì…˜ ìƒì„± ì„±ê³µ: {result} vs {enemy_race}")
+ return True
+ else:
+            logger.warning("[MANUS] ê²Œì„ ì„¸ì…˜ ìƒì„± ì‹¤íŒ¨")
+ return False
+
+ def create_training_episode(
+ self,
+ episode: int,
+ reward: float,
+ loss: float,
+ win_rate: float,
+ games: Optional[int] = None,
+ **kwargs
+ ) -> bool:
         """
-        ÇĞ½À ¿¡ÇÇ¼Òµå »ı¼º
-        
-        Args:
-            episode: ¿¡ÇÇ¼Òµå ¹øÈ£
-            reward: º¸»ó
-            loss: ¼Õ½Ç
-            win_rate: ½Â·ü (0.0 ~ 1.0)
-            games: °ÔÀÓ ¼ö (¼±ÅÃÀû)
-            **kwargs: Ãß°¡ ÇÊµå
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ í•™ìŠµ ì—í”¼ì†Œë“œ ìƒì„±
+
+ Args:
+ episode: ì—í”¼ì†Œë“œ ë²ˆí˜¸
+ reward: ë³´ìƒ
+ loss: ì†ì‹¤
+ win_rate: ìŠ¹ë¥  (0.0 ~ 1.0)
+ games: ê²Œì„ ìˆ˜ (ì„ íƒì )
+ **kwargs: ì¶”ê°€ í•„ë“œ
+
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        payload = {
+ payload = {
             "episode": episode,
             "reward": reward,
             "loss": loss,
             "winRate": win_rate,
-            **kwargs
-        }
-        
-        if games is not None:
+ **kwargs
+ }
+
+ if games is not None:
             payload["games"] = games
-        
+
         response = self._call_trpc("training.createEpisode", payload)
-        
-        if response:
-            logger.debug(f"[MANUS] ÇĞ½À ¿¡ÇÇ¼Òµå »ı¼º ¼º°ø: Episode {episode}")
-            return True
-        else:
-            logger.warning("[MANUS] ÇĞ½À ¿¡ÇÇ¼Òµå »ı¼º ½ÇÆĞ")
-            return False
-    
-    def update_bot_config(
-        self,
-        config_name: str,
-        strategy: str,
-        build_order: Optional[List[str]] = None,
-        description: Optional[str] = None,
-        traits: Optional[List[str]] = None,
-        is_active: bool = False,
-        **kwargs
-    ) -> bool:
+
+ if response:
+            logger.debug(f"[MANUS] í•™ìŠµ ì—í”¼ì†Œë“œ ìƒì„± ì„±ê³µ: Episode {episode}")
+ return True
+ else:
+            logger.warning("[MANUS] í•™ìŠµ ì—í”¼ì†Œë“œ ìƒì„± ì‹¤íŒ¨")
+ return False
+
+ def update_bot_config(
+ self,
+ config_name: str,
+ strategy: str,
+ build_order: Optional[List[str]] = None,
+ description: Optional[str] = None,
+ traits: Optional[List[str]] = None,
+ is_active: bool = False,
+ **kwargs
+ ) -> bool:
         """
-        º¿ ¼³Á¤ ¾÷µ¥ÀÌÆ®
-        
-        Args:
-            config_name: ¼³Á¤ ÀÌ¸§
-            strategy: Àü·«
-            build_order: ºôµå ¿À´õ (¼±ÅÃÀû)
-            description: ºôµå¿À´õ ¼³¸í (¼±ÅÃÀû)
-            traits: Æ¯¼º ¸®½ºÆ® (¼±ÅÃÀû)
-            is_active: È°¼ºÈ­ ¿©ºÎ
-            **kwargs: Ãß°¡ ÇÊµå
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ ë´‡ ì„¤ì • ì—…ë°ì´íŠ¸
+
+ Args:
+ config_name: ì„¤ì • ì´ë¦„
+ strategy: ì „ëµ
+ build_order: ë¹Œë“œ ì˜¤ë” (ì„ íƒì )
+ description: ë¹Œë“œì˜¤ë” ì„¤ëª… (ì„ íƒì )
+ traits: íŠ¹ì„± ë¦¬ìŠ¤íŠ¸ (ì„ íƒì )
+ is_active: í™œì„±í™” ì—¬ë¶€
+ **kwargs: ì¶”ê°€ í•„ë“œ
+
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        payload = {
+ payload = {
             "name": config_name,
             "strategy": strategy,
             "isActive": is_active,
-            **kwargs
-        }
-        
-        if build_order:
+ **kwargs
+ }
+
+ if build_order:
             payload["buildOrder"] = build_order
-        if description:
+ if description:
             payload["description"] = description
-        if traits:
+ if traits:
             payload["traits"] = traits
-        
+
         response = self._call_trpc("botConfig.update", payload)
-        
-        if response:
-            logger.debug(f"[MANUS] º¿ ¼³Á¤ ¾÷µ¥ÀÌÆ® ¼º°ø: {config_name}")
-            return True
-        else:
-            logger.warning("[MANUS] º¿ ¼³Á¤ ¾÷µ¥ÀÌÆ® ½ÇÆĞ")
-            return False
-    
-    def create_arena_match(
-        self,
-        opponent: str,
-        result: str,
-        elo_change: int,
-        elo_after: Optional[int] = None,
-        **kwargs
-    ) -> bool:
+
+ if response:
+            logger.debug(f"[MANUS] ë´‡ ì„¤ì • ì—…ë°ì´íŠ¸ ì„±ê³µ: {config_name}")
+ return True
+ else:
+            logger.warning("[MANUS] ë´‡ ì„¤ì • ì—…ë°ì´íŠ¸ ì‹¤íŒ¨")
+ return False
+
+ def create_arena_match(
+ self,
+ opponent: str,
+ result: str,
+ elo_change: int,
+ elo_after: Optional[int] = None,
+ **kwargs
+ ) -> bool:
         """
-        AI Arena °æ±â »ı¼º
-        
-        Args:
-            opponent: »ó´ë º¿ ÀÌ¸§
-            result: °æ±â °á°ú ("Victory" or "Defeat")
-            elo_change: ELO º¯È­
-            elo_after: °æ±â ÈÄ ELO (¼±ÅÃÀû)
-            **kwargs: Ãß°¡ ÇÊµå
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ AI Arena ê²½ê¸° ìƒì„±
+
+ Args:
+ opponent: ìƒëŒ€ ë´‡ ì´ë¦„
+            result: ê²½ê¸° ê²°ê³¼ ("Victory" or "Defeat")
+ elo_change: ELO ë³€í™”
+ elo_after: ê²½ê¸° í›„ ELO (ì„ íƒì )
+ **kwargs: ì¶”ê°€ í•„ë“œ
+
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        payload = {
+ payload = {
             "opponent": opponent,
             "result": result,
             "eloChange": elo_change,
-            **kwargs
-        }
-        
-        if elo_after is not None:
+ **kwargs
+ }
+
+ if elo_after is not None:
             payload["eloAfter"] = elo_after
-        
+
         response = self._call_trpc("arena.createMatch", payload)
-        
-        if response:
-            logger.info(f"[MANUS] Arena °æ±â »ı¼º ¼º°ø: {result} vs {opponent}")
-            return True
-        else:
-            logger.warning("[MANUS] Arena °æ±â »ı¼º ½ÇÆĞ")
-            return False
-    
-    def update_game_state(
-        self,
-        minerals: int,
-        vespene: int,
-        supply_used: int,
-        supply_cap: int,
-        units: Dict[str, int],
-        map_name: Optional[str] = None,
-        game_time: Optional[int] = None,
-        **kwargs
-    ) -> bool:
+
+ if response:
+            logger.info(f"[MANUS] Arena ê²½ê¸° ìƒì„± ì„±ê³µ: {result} vs {opponent}")
+ return True
+ else:
+            logger.warning("[MANUS] Arena ê²½ê¸° ìƒì„± ì‹¤íŒ¨")
+ return False
+
+ def update_game_state(
+ self,
+ minerals: int,
+ vespene: int,
+ supply_used: int,
+ supply_cap: int,
+ units: Dict[str, int],
+ map_name: Optional[str] = None,
+ game_time: Optional[int] = None,
+ **kwargs
+ ) -> bool:
         """
-        ½Ç½Ã°£ °ÔÀÓ »óÅÂ ¾÷µ¥ÀÌÆ®
-        
-        Args:
-            minerals: ¹Ì³×¶ö
-            vespene: °¡½º
-            supply_used: »ç¿ë ÀÎ±¸¼ö
-            supply_cap: ÃÖ´ë ÀÎ±¸¼ö
-            units: À¯´Ö µñ¼Å³Ê¸®
-            map_name: ¸Ê ÀÌ¸§ (¼±ÅÃÀû)
-            game_time: °ÔÀÓ ½Ã°£ (¼±ÅÃÀû)
-            **kwargs: Ãß°¡ ÇÊµå
-            
-        Returns:
-            Àü¼Û ¼º°ø ¿©ºÎ
+ ì‹¤ì‹œê°„ ê²Œì„ ìƒíƒœ ì—…ë°ì´íŠ¸
+
+ Args:
+ minerals: ë¯¸ë„¤ë„
+ vespene: ê°€ìŠ¤
+ supply_used: ì‚¬ìš© ì¸êµ¬ìˆ˜
+ supply_cap: ìµœëŒ€ ì¸êµ¬ìˆ˜
+ units: ìœ ë‹› ë”•ì…”ë„ˆë¦¬
+ map_name: ë§µ ì´ë¦„ (ì„ íƒì )
+ game_time: ê²Œì„ ì‹œê°„ (ì„ íƒì )
+ **kwargs: ì¶”ê°€ í•„ë“œ
+
+ Returns:
+ ì „ì†¡ ì„±ê³µ ì—¬ë¶€
         """
-        payload = {
+ payload = {
             "minerals": minerals,
             "vespene": vespene,
             "supplyUsed": supply_used,
             "supplyCap": supply_cap,
             "units": units,
-            **kwargs
-        }
-        
-        if map_name:
+ **kwargs
+ }
+
+ if map_name:
             payload["mapName"] = map_name
-        if game_time is not None:
+ if game_time is not None:
             payload["gameTime"] = game_time
-        
+
         response = self._call_trpc("game.updateState", payload)
-        
-        if response:
-            logger.debug("[MANUS] °ÔÀÓ »óÅÂ ¾÷µ¥ÀÌÆ® ¼º°ø")
-            return True
-        else:
-            logger.warning("[MANUS] °ÔÀÓ »óÅÂ ¾÷µ¥ÀÌÆ® ½ÇÆĞ")
-            return False
-    
-    def health_check(self) -> bool:
+
+ if response:
+            logger.debug("[MANUS] ê²Œì„ ìƒíƒœ ì—…ë°ì´íŠ¸ ì„±ê³µ")
+ return True
+ else:
+            logger.warning("[MANUS] ê²Œì„ ìƒíƒœ ì—…ë°ì´íŠ¸ ì‹¤íŒ¨")
+ return False
+
+ def health_check(self) -> bool:
         """
-        ´ë½Ãº¸µå ¿¬°á »óÅÂ È®ÀÎ
-        
-        Returns:
-            ¼­¹ö ÀÀ´ä ¿©ºÎ
+ ëŒ€ì‹œë³´ë“œ ì—°ê²° ìƒíƒœ í™•ì¸
+
+ Returns:
+ ì„œë²„ ì‘ë‹µ ì—¬ë¶€
         """
-        try:
-            response = self.session.get(f"{self.base_url}/health", timeout=5)
-            return response.status_code == 200
-        except Exception as e:
-            logger.warning(f"[MANUS] Çï½º Ã¼Å© ½ÇÆĞ: {e}")
-            return False
+ try:
+            response = self.session.get(f"{self.base_url}/health", timeout = 5)
+ return response.status_code == 200
+ except Exception as e:
+            logger.warning(f"[MANUS] í—¬ìŠ¤ ì²´í¬ ì‹¤íŒ¨: {e}")
+ return False
 
 
 def create_client_from_env() -> Optional[ManusDashboardClient]:
     """
-    È¯°æ º¯¼ö¿¡¼­ Å¬¶óÀÌ¾ğÆ® »ı¼º
-    
-    È¯°æ º¯¼ö:
-        MANUS_DASHBOARD_URL: Manus ´ë½Ãº¸µå URL
-        MANUS_DASHBOARD_API_KEY: API Å° (¼±ÅÃÀû)
-        MANUS_DASHBOARD_ENABLED: È°¼ºÈ­ ¿©ºÎ (1 ¶Ç´Â 0)
-    
-    Returns:
-        ManusDashboardClient ÀÎ½ºÅÏ½º ¶Ç´Â None
+ í™˜ê²½ ë³€ìˆ˜ì—ì„œ í´ë¼ì´ì–¸íŠ¸ ìƒì„±
+
+ í™˜ê²½ ë³€ìˆ˜:
+ MANUS_DASHBOARD_URL: Manus ëŒ€ì‹œë³´ë“œ URL
+ MANUS_DASHBOARD_API_KEY: API í‚¤ (ì„ íƒì )
+ MANUS_DASHBOARD_ENABLED: í™œì„±í™” ì—¬ë¶€ (1 ë˜ëŠ” 0)
+
+ Returns:
+ ManusDashboardClient ì¸ìŠ¤í„´ìŠ¤ ë˜ëŠ” None
     """
     base_url = os.environ.get("MANUS_DASHBOARD_URL", "https://sc2aidash-bncleqgg.manus.space")
     api_key = os.environ.get("MANUS_DASHBOARD_API_KEY")
     enabled = os.environ.get("MANUS_DASHBOARD_ENABLED", "1") == "1"
-    
-    return ManusDashboardClient(
-        base_url=base_url,
-        api_key=api_key,
-        enabled=enabled
-    )
+
+ return ManusDashboardClient(
+ base_url = base_url,
+ api_key = api_key,
+ enabled = enabled
+ )
 
 
-# Å×½ºÆ® ÄÚµå
+# í…ŒìŠ¤íŠ¸ ì½”ë“œ
 if __name__ == "__main__":
-    client = create_client_from_env()
-    
-    if not client:
-        print("È¯°æ º¯¼ö¸¦ ¼³Á¤ÇÏ¼¼¿ä:")
-        print("  MANUS_DASHBOARD_URL=https://sc2aidash-bncleqgg.manus.space")
-        print("  MANUS_DASHBOARD_API_KEY=your_api_key (¼±ÅÃÀû)")
-        print("  MANUS_DASHBOARD_ENABLED=1")
-        exit(1)
-    
-    # Çï½º Ã¼Å©
-    print("Manus ´ë½Ãº¸µå ¿¬°á È®ÀÎ Áß...")
-    if client.health_check():
-        print("? ¼­¹ö ¿¬°á ¼º°ø")
-    else:
-        print("? ¼­¹ö ¿¬°á ½ÇÆĞ")
-    
-    # Å×½ºÆ® °ÔÀÓ ¼¼¼Ç »ı¼º
-    print("\nÅ×½ºÆ® °ÔÀÓ ¼¼¼Ç »ı¼º Áß...")
-    if client.create_game_session(
+ client = create_client_from_env()
+
+ if not client:
+        print("í™˜ê²½ ë³€ìˆ˜ë¥¼ ì„¤ì •í•˜ì„¸ìš”:")
+        print("  MANUS_DASHBOARD_URL = https://sc2aidash-bncleqgg.manus.space")
+        print("  MANUS_DASHBOARD_API_KEY = your_api_key (ì„ íƒì )")
+        print("  MANUS_DASHBOARD_ENABLED = 1")
+ exit(1)
+
+ # í—¬ìŠ¤ ì²´í¬
+    print("Manus ëŒ€ì‹œë³´ë“œ ì—°ê²° í™•ì¸ ì¤‘...")
+ if client.health_check():
+        print("? ì„œë²„ ì—°ê²° ì„±ê³µ")
+ else:
+        print("? ì„œë²„ ì—°ê²° ì‹¤íŒ¨")
+
+ # í…ŒìŠ¤íŠ¸ ê²Œì„ ì„¸ì…˜ ìƒì„±
+    print("\ní…ŒìŠ¤íŠ¸ ê²Œì„ ì„¸ì…˜ ìƒì„± ì¤‘...")
+ if client.create_game_session(
         map_name="AbyssalReefLE",
         enemy_race="Terran",
-        final_minerals=200,
-        final_gas=100,
-        final_supply=150,
-        units_killed=50,
-        units_lost=30,
-        duration=600,
+ final_minerals = 200,
+ final_gas = 100,
+ final_supply = 150,
+ units_killed = 50,
+ units_lost = 30,
+ duration = 600,
         result="Victory",
         personality="serral"
-    ):
-        print("? °ÔÀÓ ¼¼¼Ç »ı¼º ¼º°ø")
-    else:
-        print("? °ÔÀÓ ¼¼¼Ç »ı¼º ½ÇÆĞ")
+ ):
+        print("? ê²Œì„ ì„¸ì…˜ ìƒì„± ì„±ê³µ")
+ else:
+        print("? ê²Œì„ ì„¸ì…˜ ìƒì„± ì‹¤íŒ¨")

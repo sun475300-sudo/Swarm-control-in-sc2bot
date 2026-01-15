@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM Force clear crash_log.json in_progress entries
 REM This script directly clears the in_progress section to force replay analysis
 
