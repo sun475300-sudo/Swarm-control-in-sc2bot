@@ -74,11 +74,10 @@ class UnitFactory:
             if b.supply_left < 2:
                 return
 
-            # CRITICAL: Larva Saving - Reserve 30% of larvae for tech unit morphing
+            # CRITICAL: Larva Saving - Reserve larvae for tech unit morphing (Improved)
             # Reserve some larvae for tech unit morphing when enemy attack intent not confirmed
             total_larvae = len(larvae)
-            reserved_larvae_count = max(1, int(total_larvae * 0.3))  # Reserve 30%
-
+            
             # Check if enemy attack intent is detected
             enemy_attacking = False
             intel = getattr(b, "intel", None)
@@ -91,15 +90,27 @@ class UnitFactory:
                 if hasattr(intel, "combat") and hasattr(intel.combat, "under_attack"):
                     if intel.combat.under_attack:
                         enemy_attacking = True
+            
+            # Calculate total army supply for dynamic reservation
+            total_army_supply = b.supply_army if hasattr(b, "supply_army") else 0
+            
+            # Improved: Dynamic larva reservation based on army supply and enemy status
+            # 병력이 부족하거나 적이 공격 중이면 예약 비율 감소
+            if enemy_attacking or total_army_supply < 30:
+                reserved_larvae_count = max(1, int(total_larvae * 0.1))  # 10%만 예약
+            elif total_army_supply < 50:
+                reserved_larvae_count = max(1, int(total_larvae * 0.2))  # 20% 예약
+            else:
+                reserved_larvae_count = max(1, int(total_larvae * 0.3))  # 30% 예약 (정상)
 
             # If enemy is attacking, use all larvae (no saving)
-            # Otherwise, save 30% for tech unit morphing
+            # Otherwise, save based on army supply
             if enemy_attacking:
                 # Emergency: Enemy attacking - use all larvae
                 available_larvae = larvae
                 reserved_larvae_count = 0
             else:
-                # Normal: Save 30% for tech units (Roaches, Hydralisks)
+                # Normal: Save based on army supply (dynamic reservation)
                 if total_larvae > reserved_larvae_count:
                     available_larvae = larvae[:-reserved_larvae_count]
                 else:

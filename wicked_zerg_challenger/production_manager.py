@@ -913,14 +913,17 @@ class ProductionManager:
 
         pending_overlords = b.already_pending(UnitTypeId.OVERLORD)
 
-        # CRITICAL: If supply_left < 4, produce overlord IMMEDIATELY (emergency)
+        # CRITICAL: If supply_left < threshold, produce overlord IMMEDIATELY (emergency)
         # This prevents supply blocks during rapid unit production
-        # OPTIMIZED: Proactive overlord production to prevent supply blocks
-        # Produce overlord when supply_left < 5 to ensure continuous unit production
-        # This prevents supply blocks during rapid unit production
-        supply_threshold = (
-            5  # Produce overlord when 5 supply left (optimal for continuous production)
-        )
+        # IMPROVED: Dynamic threshold based on production rate
+        # 생산 속도에 따라 동적 임계값 조정
+        if estimated_production_rate > 4:  # 매우 빠른 생산
+            supply_threshold = 8  # 더 일찍 생산
+        elif estimated_production_rate > 2:  # 빠른 생산
+            supply_threshold = 6
+        else:  # 느린 생산
+            supply_threshold = 5  # 기본값
+        
         if b.supply_left < supply_threshold and b.supply_cap < 200:
             if b.can_afford(UnitTypeId.OVERLORD) and larvae:
                 # Convert larvae to list if needed

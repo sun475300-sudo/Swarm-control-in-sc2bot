@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.responses import FileResponse
 import asyncio
 import json
+import requests
 from datetime import datetime
 from typing import Optional, Dict, List
 import logging
@@ -287,7 +288,7 @@ async def get_ngrok_url():
         "source": "none"
     }
 
-@app.get("/api/game-state")
+@app.get("/api/game-state", dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
 async def get_game_state():
     """Get current game state"""
     # Helper function to get win rate from training stats
@@ -411,7 +412,7 @@ async def record_battle(result: dict):
     logger.info(f"Battle recorded: {result}")
     return {"status": "recorded"}
 
-@app.get("/api/learning-progress")
+@app.get("/api/learning-progress", dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
 async def get_learning_progress():
     """Get learning progress"""
     if bot_connector:
