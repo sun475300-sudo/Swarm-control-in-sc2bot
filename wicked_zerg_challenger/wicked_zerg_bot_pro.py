@@ -5618,15 +5618,19 @@ class WickedZergBotPro(BotAI):
                     game_id=game_id
                 )
                 
-                # Print comparison report
+                # [STEP 4] Print comparison report
                 print("\n" + "=" * 70)
-                print("🔍 BUILD ORDER COMPARISON ANALYSIS")
+                print("📊 [STEP 4] BUILD ORDER COMPARISON ANALYSIS")
                 print("=" * 70)
                 report = comparator.generate_report(analysis)
                 print(report)
                 
-                # Update learned parameters if we won (victory builds are better)
+                # [STEP 5] Update learned parameters if we won (victory builds are better)
                 if game_result_str == "Victory":
+                    print("\n" + "=" * 70)
+                    print("🎉 [STEP 5] VICTORY - UPDATING LEARNED PARAMETERS")
+                    print("=" * 70)
+                    
                     updated_params = comparator.update_learned_parameters(analysis, learning_rate=0.1)
                     
                     # Save updated parameters to learned_build_orders.json
@@ -5645,27 +5649,55 @@ class WickedZergBotPro(BotAI):
                         if "learned_parameters" not in existing_data:
                             existing_data["learned_parameters"] = {}
                         
-                        # Merge updated parameters (only update if better)
+                        # Count updated parameters
+                        updated_count = 0
                         for param_name, new_value in updated_params.items():
                             old_value = existing_data["learned_parameters"].get(param_name)
                             if old_value is None or abs(new_value - old_value) > 0.5:
                                 existing_data["learned_parameters"][param_name] = new_value
+                                updated_count += 1
                         
                         # Save updated data
                         with open(learned_json_path, 'w', encoding='utf-8') as f:
                             json.dump(existing_data, f, indent=2, ensure_ascii=False)
                         
-                        print(f"\n✅ Updated learned parameters saved to: {learned_json_path}")
-                        print("   Next game will use improved build order timings!")
+                        print(f"[SAVED] Updated {updated_count} learned parameters")
+                        print(f"[PATH] {learned_json_path}")
+                        print("[INFO] ✅ Next game will use improved build order timings!")
+                        print("=" * 70)
                         
                     except Exception as save_error:
                         print(f"[WARNING] Failed to save updated learned parameters: {save_error}")
+                        print("=" * 70)
+                else:
+                    print("\n" + "=" * 70)
+                    print(f"😞 [STEP 5] DEFEAT - LEARNING FROM MISTAKES")
+                    print("=" * 70)
+                    print("[INFO] Build order baseline maintained (only victories update parameters)")
+                    print("[INFO] Recommendations below will help improve next game")
+                    print("=" * 70)
                 
-                # Log recommendations for next game
+                # [STEP 6] Log recommendations for next game
                 if analysis.recommendations:
-                    print("\n📋 RECOMMENDATIONS FOR NEXT GAME:")
+                    print("\n" + "=" * 70)
+                    print("💡 [STEP 6] RECOMMENDATIONS FOR NEXT GAME")
+                    print("=" * 70)
                     for i, rec in enumerate(analysis.recommendations, 1):
                         print(f"   {i}. {rec}")
+                    print("=" * 70)
+                else:
+                    print("\n" + "=" * 70)
+                    print("💡 [STEP 6] RECOMMENDATIONS FOR NEXT GAME")
+                    print("=" * 70)
+                    print("[INFO] ✅ No critical issues found - build order timing is good!")
+                    print("=" * 70)
+                
+                # [STEP 7] Next game auto-start notification
+                print("\n" + "=" * 70)
+                print("🔄 [STEP 7] AUTO-STARTING NEXT GAME")
+                print("=" * 70)
+                print("[INFO] Next game will start automatically...")
+                print("=" * 70)
                     
         except ImportError as import_error:
             print(f"[WARNING] Build order comparator not available: {import_error}")
