@@ -99,6 +99,7 @@ class Config:
     AUTO_OPTIMIZE_CODE: bool = True
     REPLAY_LEARNING_INTERVAL: int = 1
     REPLAY_LEARNING_ITERATIONS: int = 3
+    MAX_REPLAYS_FOR_LEARNING: int = 300  # Maximum number of replays to analyze (increased from 100)
 
 
 TARGET_PRIORITY = {
