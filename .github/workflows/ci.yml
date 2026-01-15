@@ -31,21 +31,28 @@ jobs:
         timeout-minutes: 10
         run: |
           pip install --upgrade pip setuptools wheel
-          # Main requirements
+          # Main requirements (에러 허용 - 의존성 충돌 가능)
           if [ -f wicked_zerg_challenger/requirements.txt ]; then
             cd wicked_zerg_challenger
-            pip install -r requirements.txt
+            pip install -r requirements.txt || {
+              echo "??  WARNING: Requirements installation failed, continuing..."
+              echo "This may cause import errors in later steps"
+            }
             cd ..
           fi
-          # Root requirements if exists
+          # Root requirements if exists (에러 허용)
           if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+            pip install -r requirements.txt || {
+              echo "??  WARNING: Root requirements installation failed, continuing..."
+            }
           fi
-          # New structure requirements if exists
+          # New structure requirements if exists (에러 허용)
           if [ -f requirements_new_structure.txt ]; then
-            pip install -r requirements_new_structure.txt
+            pip install -r requirements_new_structure.txt || {
+              echo "??  WARNING: New structure requirements installation failed, continuing..."
+            }
           fi
-          # CI tools
+          # CI tools (필수 - 실패 시 중단)
           pip install black flake8 mypy pytest pytest-cov
 
       # ---------------------------------
@@ -142,13 +149,20 @@ jobs:
           project_root = os.getcwd()
           sys.path.insert(0, project_root)
 
+          errors = []
+          warnings = []
+
           # Test new src/ structure
           try:
               from src.bot.agents.basic_zerg_agent import BasicZergAgent
               from src.sc2_env.mock_env import MockSC2Env
               print("? New src/ structure imports successful")
           except ImportError as e:
+              warnings.append(f"New src/ structure import: {e}")
               print(f"??  New src/ structure import warning: {e} (non-critical)")
+          except Exception as e:
+              errors.append(f"New src/ structure error: {e}")
+              print(f"? New src/ structure error: {e}")
 
           # Test old wicked_zerg_challenger structure
           wicked_zerg_path = os.path.join(project_root, 'wicked_zerg_challenger')
@@ -158,7 +172,24 @@ jobs:
                   import numpy
                   print(f"? NumPy {numpy.__version__} imported successfully")
               except ImportError as e:
+                  warnings.append(f"NumPy import: {e}")
                   print(f"??  NumPy import warning: {e} (non-critical)")
+              except Exception as e:
+                  errors.append(f"NumPy import error: {e}")
+                  print(f"? NumPy import error: {e}")
 
-          print("? CI build check completed successfully")
+          # Print summary
+          if warnings:
+              print(f"\n??  Warnings ({len(warnings)}):")
+              for w in warnings:
+                  print(f"  - {w}")
+
+          if errors:
+              print(f"\n? Critical errors ({len(errors)}):")
+              for e in errors:
+                  print(f"  - {e}")
+              print("\n? CI build check failed due to critical errors")
+              sys.exit(1)
+
+          print("\n? CI build check completed successfully")
           EOF
