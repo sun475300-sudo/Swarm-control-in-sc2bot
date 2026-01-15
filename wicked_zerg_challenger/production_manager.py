@@ -597,8 +597,12 @@ class ProductionManager:
                 if await self._flush_resources():
                     return  # Resources flushed, continue next frame
 
-            # Build order execution (early game priority)
-            if game_phase == GamePhase.OPENING:
+            # IMPROVED: Build order execution (early game priority) - Always check in early game
+            # Execute Serral opening regardless of game phase if early game conditions are met
+            # This ensures critical build orders (natural expansion, gas, spawning pool) are executed
+            early_game = b.supply_used <= 50 or b.time < 180  # Early game: Supply <= 50 or Time < 3 minutes
+            
+            if early_game or game_phase == GamePhase.OPENING:
                 if await self._execute_serral_opening():
                     return
 
@@ -4941,13 +4945,32 @@ class ProductionManager:
             larvae = [u for u in b.units(UnitTypeId.LARVA)]
 
 
-            natural_expansion_supply = get_learned_parameter("natural_expansion_supply", 16)
+            natural_expansion_supply = get_learned_parameter("natural_expansion_supply", 30)  # Use learned parameter (default 30)
 
-            if (
-                b.supply_used >= natural_expansion_supply
-                and not self.serral_build_completed["natural_expansion"]
-            ):
-                if len(townhalls) < 2:
+            # IMPROVED: Execute natural expansion more aggressively - allow late execution if not completed
+            if not self.serral_build_completed["natural_expansion"]:
+                # Priority 1: Execute at target supply if possible
+                if b.supply_used >= natural_expansion_supply:
+                    if len(townhalls) < 2:
+                        if b.already_pending(UnitTypeId.HATCHERY) == 0:
+                            if b.can_afford(UnitTypeId.HATCHERY):
+                                try:
+                                    await b.expand_now()
+                                    self.serral_build_completed["natural_expansion"] = True
+                                    self.build_order_timing["natural_expansion_supply"] = float(
+                                        b.supply_used
+                                    )  # type: ignore
+                                    self.build_order_timing["natural_expansion_time"] = b.time  # type: ignore
+                                    print(
+                                        f"[SERRAL BUILD] [{int(b.time)}s] Supply {b.supply_used}: Natural Expansion (앞마당)"
+                                    )
+                                    return True
+                                except Exception as e:
+                                    current_iteration = getattr(b, "iteration", 0)
+                                    if current_iteration % 200 == 0:
+                                        print(f"[WARNING] Natural expansion failed: {e}")
+                # Priority 2: Force execution if too late (supply 40+) and still not expanded
+                elif b.supply_used >= 40 and len(townhalls) < 2:
                     if b.already_pending(UnitTypeId.HATCHERY) == 0:
                         if b.can_afford(UnitTypeId.HATCHERY):
                             try:
@@ -4958,87 +4981,161 @@ class ProductionManager:
                                 )  # type: ignore
                                 self.build_order_timing["natural_expansion_time"] = b.time  # type: ignore
                                 print(
-                                    f"[SERRAL BUILD] [{int(b.time)}s] 16 Supply: Natural Expansion (앞마당)"
+                                    f"[SERRAL BUILD] [{int(b.time)}s] ⚠️ LATE Natural Expansion (Supply {b.supply_used})"
                                 )
                                 return True
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                current_iteration = getattr(b, "iteration", 0)
+                                if current_iteration % 200 == 0:
+                                    print(f"[WARNING] Late natural expansion failed: {e}")
 
-            gas_supply = get_learned_parameter("gas_supply", 18)
+            gas_supply = get_learned_parameter("gas_supply", 17)  # Use learned parameter (default 17)
 
-            if b.supply_used >= gas_supply and not self.serral_build_completed["gas"]:
-                if len(townhalls) >= 2 or b.already_pending(UnitTypeId.HATCHERY) > 0:
-                    if self._can_build_safely(UnitTypeId.EXTRACTOR, reserve_on_pass=True):
-                        if b.can_afford(UnitTypeId.EXTRACTOR):
-                            try:
-                                if townhalls and len(townhalls) > 0:
-                                    main_hatch = townhalls[0]
-                                    vgs = [
-                                        vg
-                                        for vg in b.vespene_geyser
-                                        if vg.position.distance_to(main_hatch.position) < 15
-                                    ]
-                                    if vgs:
-                                        target_gas = vgs[0]
-                                        workers = [
-                                            w for w in b.workers if w.is_idle or w.is_gathering
+            # IMPROVED: Execute gas extraction more aggressively - allow execution even without natural expansion
+            if not self.serral_build_completed["gas"]:
+                # Priority 1: Execute at target supply if possible
+                if b.supply_used >= gas_supply:
+                    # IMPROVED: Allow gas extraction even without natural expansion (can build on main base)
+                    if len(townhalls) >= 1:  # Changed from 2 to 1 (can build on main base)
+                        if self._can_build_safely(UnitTypeId.EXTRACTOR, reserve_on_pass=True):
+                            if b.can_afford(UnitTypeId.EXTRACTOR):
+                                try:
+                                    if townhalls and len(townhalls) > 0:
+                                        main_hatch = townhalls[0]
+                                        vgs = [
+                                            vg
+                                            for vg in b.vespene_geyser
+                                            if vg.position.distance_to(main_hatch.position) < 15
                                         ]
-                                        if workers:
-                                            worker = workers[0]
-                                            worker.build(UnitTypeId.EXTRACTOR, target_gas)
-                                            self.serral_build_completed["gas"] = True
-                                            self.build_order_timing["gas_supply"] = float(
-                                                b.supply_used
-                                            )  # type: ignore
-                                            self.build_order_timing["gas_time"] = b.time  # type: ignore
-                                            print(
-                                                f"[SERRAL BUILD] [{int(b.time)}s] 18 Supply: Extractor (가스)"
-                                            )
-                                            return True
-                            except Exception:
-                                pass
+                                        if vgs:
+                                            target_gas = vgs[0]
+                                            # IMPROVED: Check if extractor already exists at this location
+                                            existing_extractors = [
+                                                e for e in b.structures(UnitTypeId.EXTRACTOR)
+                                                if e.position.distance_to(target_gas.position) < 2
+                                            ]
+                                            if not existing_extractors:
+                                                workers = [
+                                                    w for w in b.workers if w.is_idle or w.is_gathering
+                                                ]
+                                                if workers:
+                                                    worker = workers[0]
+                                                    worker.build(UnitTypeId.EXTRACTOR, target_gas)
+                                                    self.serral_build_completed["gas"] = True
+                                                    self.build_order_timing["gas_supply"] = float(
+                                                        b.supply_used
+                                                    )  # type: ignore
+                                                    self.build_order_timing["gas_time"] = b.time  # type: ignore
+                                                    print(
+                                                        f"[SERRAL BUILD] [{int(b.time)}s] Supply {b.supply_used}: Extractor (가스)"
+                                                    )
+                                                    return True
+                                except Exception as e:
+                                    current_iteration = getattr(b, "iteration", 0)
+                                    if current_iteration % 200 == 0:
+                                        print(f"[WARNING] Gas extraction failed: {e}")
+                # Priority 2: Force execution if too late (supply 30+) and still no gas
+                elif b.supply_used >= 30:
+                    extractors = b.structures(UnitTypeId.EXTRACTOR)
+                    if len(extractors) == 0 and b.already_pending(UnitTypeId.EXTRACTOR) == 0:
+                        if len(townhalls) >= 1:
+                            if self._can_build_safely(UnitTypeId.EXTRACTOR, reserve_on_pass=True):
+                                if b.can_afford(UnitTypeId.EXTRACTOR):
+                                    try:
+                                        if townhalls and len(townhalls) > 0:
+                                            main_hatch = townhalls[0]
+                                            vgs = [
+                                                vg
+                                                for vg in b.vespene_geyser
+                                                if vg.position.distance_to(main_hatch.position) < 15
+                                            ]
+                                            if vgs:
+                                                target_gas = vgs[0]
+                                                existing_extractors = [
+                                                    e for e in b.structures(UnitTypeId.EXTRACTOR)
+                                                    if e.position.distance_to(target_gas.position) < 2
+                                                ]
+                                                if not existing_extractors:
+                                                    workers = [
+                                                        w for w in b.workers if w.is_idle or w.is_gathering
+                                                    ]
+                                                    if workers:
+                                                        worker = workers[0]
+                                                        worker.build(UnitTypeId.EXTRACTOR, target_gas)
+                                                        self.serral_build_completed["gas"] = True
+                                                        self.build_order_timing["gas_supply"] = float(
+                                                            b.supply_used
+                                                        )  # type: ignore
+                                                        self.build_order_timing["gas_time"] = b.time  # type: ignore
+                                                        print(
+                                                            f"[SERRAL BUILD] [{int(b.time)}s] ⚠️ LATE Extractor (Supply {b.supply_used})"
+                                                        )
+                                                        return True
+                                    except Exception as e:
+                                        current_iteration = getattr(b, "iteration", 0)
+                                        if current_iteration % 200 == 0:
+                                            print(f"[WARNING] Late gas extraction failed: {e}")
 
             spawning_pools_existing = list(
                 b.units.filter(lambda u: u.type_id == UnitTypeId.SPAWNINGPOOL and u.is_structure)
             )
-            spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 17)
+            spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 17)  # Use learned parameter
 
-            if (
-                b.supply_used >= spawning_pool_supply
-                and not self.serral_build_completed["spawning_pool"]
-            ):
-                if not spawning_pools_existing and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
-                    if self._can_build_safely(UnitTypeId.SPAWNINGPOOL, reserve_on_pass=True):
-                        if b.can_afford(UnitTypeId.SPAWNINGPOOL):
-                            try:
-                                if townhalls and len(townhalls) > 0:
-                                    main_hatch = townhalls[0]
-                                    # Use _try_build_structure for duplicate prevention
-                                    if await self._try_build_structure(
-                                        UnitTypeId.SPAWNINGPOOL,
-                                        near=main_hatch.position,
-                                    ):
-                                        self.serral_build_completed["spawning_pool"] = True
-                                        self.build_order_timing["spawning_pool_supply"] = float(
-                                            b.supply_used
-                                        )  # type: ignore
-                                        self.build_order_timing["spawning_pool_time"] = b.time  # type: ignore
-                                        print(
-                                            f"[SERRAL BUILD] [{int(b.time)}s] 17 Supply: Spawning Pool (산란못)"
-                                        )
-                                        current_iteration = getattr(b, "iteration", 0)
-                                        # 🚀 PERFORMANCE: Reduced chat frequency from 224 to 500 frames (~22 seconds)
-                                        # Chat disabled to reduce spam
-                                        # if current_iteration % 500 == 0:
-                                        #     if hasattr(b, "personality_manager"):
-                                        #         from personality_manager import ChatPriority
-                                        #         await b.personality_manager.send_chat(
-                                        #             priority=ChatPriority.LOW
-                                        #         )
-                                        return True
-                            except Exception:
-                                pass
+            # IMPROVED: Execute spawning pool more aggressively - critical for defense
+            if not self.serral_build_completed["spawning_pool"]:
+                # Priority 1: Execute at target supply if possible
+                if b.supply_used >= spawning_pool_supply:
+                    if not spawning_pools_existing and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
+                        if self._can_build_safely(UnitTypeId.SPAWNINGPOOL, reserve_on_pass=True):
+                            if b.can_afford(UnitTypeId.SPAWNINGPOOL):
+                                try:
+                                    if townhalls and len(townhalls) > 0:
+                                        main_hatch = townhalls[0]
+                                        # Use _try_build_structure for duplicate prevention
+                                        if await self._try_build_structure(
+                                            UnitTypeId.SPAWNINGPOOL,
+                                            near=main_hatch.position,
+                                        ):
+                                            self.serral_build_completed["spawning_pool"] = True
+                                            self.build_order_timing["spawning_pool_supply"] = float(
+                                                b.supply_used
+                                            )  # type: ignore
+                                            self.build_order_timing["spawning_pool_time"] = b.time  # type: ignore
+                                            print(
+                                                f"[SERRAL BUILD] [{int(b.time)}s] Supply {b.supply_used}: Spawning Pool (산란못)"
+                                            )
+                                            return True
+                                except Exception as e:
+                                    current_iteration = getattr(b, "iteration", 0)
+                                    if current_iteration % 200 == 0:
+                                        print(f"[WARNING] Spawning pool build failed: {e}")
+                # Priority 2: Force execution if too late (supply 25+) and still no pool
+                elif b.supply_used >= 25:
+                    if not spawning_pools_existing and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
+                        if self._can_build_safely(UnitTypeId.SPAWNINGPOOL, reserve_on_pass=True):
+                            if b.can_afford(UnitTypeId.SPAWNINGPOOL):
+                                try:
+                                    if townhalls and len(townhalls) > 0:
+                                        main_hatch = townhalls[0]
+                                        if await self._try_build_structure(
+                                            UnitTypeId.SPAWNINGPOOL,
+                                            near=main_hatch.position,
+                                        ):
+                                            self.serral_build_completed["spawning_pool"] = True
+                                            self.build_order_timing["spawning_pool_supply"] = float(
+                                                b.supply_used
+                                            )  # type: ignore
+                                            self.build_order_timing["spawning_pool_time"] = b.time  # type: ignore
+                                            print(
+                                                f"[SERRAL BUILD] [{int(b.time)}s] ⚠️ LATE Spawning Pool (Supply {b.supply_used})"
+                                            )
+                                            return True
+                                except Exception as e:
+                                    current_iteration = getattr(b, "iteration", 0)
+                                    if current_iteration % 200 == 0:
+                                        print(f"[WARNING] Late spawning pool build failed: {e}")
                 else:
+                    # Mark as completed if already exists (in case we missed the timing)
                     if spawning_pools_existing:
                         self.serral_build_completed["spawning_pool"] = True
 
@@ -5107,10 +5204,12 @@ class ProductionManager:
                             except Exception:
                                 pass
 
-            speed_upgrade_supply = get_learned_parameter("speed_upgrade_supply", 30)
+            speed_upgrade_supply = get_learned_parameter("speed_upgrade_supply", 30)  # Use learned parameter
 
+            # IMPROVED: Execute speed upgrade more aggressively
             if b.supply_used >= speed_upgrade_supply:
-                if b.supply_left < 4:
+                # IMPROVED: Allow speed upgrade even with less supply buffer (need upgrade for mobility)
+                if b.supply_left < 8:  # Changed from 4 to 8 (still allow upgrade with some buffer)
                     if larvae and len(larvae) > 0:
                         if b.can_afford(UnitTypeId.OVERLORD):
                             larva_list = list(larvae) if hasattr(larvae, '__iter__') and not isinstance(larvae, bool) else []

@@ -12,6 +12,7 @@ Core features:
 
 import csv
 import json
+import statistics
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
