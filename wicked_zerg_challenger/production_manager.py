@@ -5259,9 +5259,22 @@ class ProductionManager:
         빌드 오더 타이밍 정보 반환 (신경망 학습용)
 
         Returns:
-            dict: 빌드 오더 타이밍 정보
+            dict: 빌드 오더 타이밍 정보 (supply 및 time 값 포함)
         """
-        return self.build_order_timing.copy()
+        # Return serral build order timing (more detailed)
+        result = {}
+        
+        # Add serral build order timing (supply-based)
+        if hasattr(self, "serral_build_order_timing"):
+            for key, value in self.serral_build_order_timing.items():
+                result[key] = value
+        
+        # Add build order timing (time-based)
+        for key, value in self.build_order_timing.items():
+            if key not in result:  # Don't override supply-based values
+                result[key] = value
+        
+        return result
 
     async def _expand_for_gas(self):
         """
