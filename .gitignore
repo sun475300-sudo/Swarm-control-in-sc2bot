@@ -21,6 +21,10 @@
 *private*.txt
 *personal*.txt
 
+# Research Documents (moved to research/ folder)
+# -----------------------------------------------
+research/
+
 # Logs
 # ----
 logs/

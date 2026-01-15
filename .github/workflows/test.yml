@@ -1,0 +1,69 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd wicked_zerg_challenger
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+    
+    - name: Run tests
+      run: |
+        cd wicked_zerg_challenger
+        pytest tests/ -v --tb=short || true
+      continue-on-error: true  # StarCraft II 환경 없이 실행 시 일부 테스트 실패 가능
+    
+    - name: Code quality check
+      run: |
+        python -m pip install flake8 black
+        flake8 wicked_zerg_challenger --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        black --check wicked_zerg_challenger || true
+      continue-on-error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort
+    
+    - name: Run flake8
+      run: |
+        flake8 wicked_zerg_challenger --count --max-line-length=120 --statistics || true
+      continue-on-error: true
+    
+    - name: Check code formatting
+      run: |
+        black --check wicked_zerg_challenger || true
+        isort --check-only wicked_zerg_challenger || true
+      continue-on-error: true

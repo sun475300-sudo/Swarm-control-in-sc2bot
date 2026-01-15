@@ -29,7 +29,7 @@ if (Test-Path "$hooksDir\pre-commit") {
     # PowerShell here-string에서 변수를 이스케이프하여 리터럴로 저장
 $hookContent = @'
 #!/bin/sh
-# Git Pre-commit Hook - Security Check
+# Git Pre-commit Hook - Security Check  
 # Windows Git Bash / Linux / Mac 모두 지원
 
 cd "$(git rev-parse --show-toplevel)"
