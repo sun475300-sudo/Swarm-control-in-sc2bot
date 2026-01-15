@@ -30,21 +30,21 @@ try {
     Write-Host ("=" * 70) -ForegroundColor Cyan
     Write-Host ""
 
-    # 검사할 패턴들 (하드코딩된 실제 키는 제외, 패턴만 사용)
-    # PowerShell에서 정규식 패턴의 대괄호를 배열로 해석하지 않도록 작은따옴표 사용
+    # Sensitive patterns (generic patterns only, no actual key examples)
+    # Using single quotes to prevent PowerShell from interpreting brackets as array indexing
     $sensitivePatterns = @(
-        # API 키 패턴 (일반적인 패턴만, 실제 키 예시 제외)
-        'AIzaSy[A-Za-z0-9_-]{35}',  # Google API Key
-        'sk-[A-Za-z0-9]{32,}',      # OpenAI API Key
-        'xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24,32}',  # Slack Token
-        '[0-9a-f]{32}',             # 일반적인 32자리 해시 (API 키 가능성)
-        '[0-9a-f]{40}',             # 40자리 해시 (GitHub token 등)
+        # API Key patterns
+        'AIzaSy[A-Za-z0-9_-]{35}',
+        'sk-[A-Za-z0-9]{32,}',
+        'xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24,32}',
+        '[0-9a-f]{32}',
+        '[0-9a-f]{40}',
         
-        # 비밀번호 패턴 (간단한 패턴)
-        'password\s*[:=]\s*[''"]?[^''"\s]{8,}',  # password: "value"
-        'passwd\s*[:=]\s*[''"]?[^''"\s]{8,}',    # passwd: "value"
-        'secret\s*[:=]\s*[''"]?[^''"\s]{8,}',    # secret: "value"
-        'token\s*[:=]\s*[''"]?[^''"\s]{20,}'     # token: "value"
+        # Password patterns
+        'password\s*[:=]\s*[''"]?[^''"\s]{8,}',
+        'passwd\s*[:=]\s*[''"]?[^''"\s]{8,}',
+        'secret\s*[:=]\s*[''"]?[^''"\s]{8,}',
+        'token\s*[:=]\s*[''"]?[^''"\s]{20,}'
     )
 
     # 검사할 파일 확장자
@@ -299,20 +299,24 @@ if (-not $stagedFiles) {
         exit 0
     }
 } catch {
-    # 예상치 못한 오류 발생 시
+    # Unexpected error occurred
     Write-Host ""
-    Write-Host ("=" * 70) -ForegroundColor Red
-    Write-Host "❌ 스크립트 실행 중 예상치 못한 오류가 발생했습니다!" -ForegroundColor Red
-    Write-Host ("=" * 70) -ForegroundColor Red
+    $separator = "=" * 70
+    Write-Host $separator -ForegroundColor Red
+    Write-Host "Unexpected error occurred during script execution!" -ForegroundColor Red
+    Write-Host $separator -ForegroundColor Red
     Write-Host ""
-    Write-Host ('오류 메시지: ' + $_) -ForegroundColor Yellow
+    $errorMsg = "Error message: " + $_
+    Write-Host $errorMsg -ForegroundColor Yellow
     $lineNum = $_.InvocationInfo.ScriptLineNumber
-    Write-Host ('오류 위치: ' + $lineNum + '번째 줄') -ForegroundColor Yellow
+    $locationMsg = "Error location: Line " + $lineNum
+    Write-Host $locationMsg -ForegroundColor Yellow
     Write-Host ""
-    Write-Host '⚠️  보안 검사를 건너뛰고 커밋하려면 --no-verify 옵션을 사용하세요.' -ForegroundColor Yellow
-    Write-Host '   그러나 이는 권장되지 않습니다.' -ForegroundColor Yellow
+    $skipMsg = 'To skip security check, use --no-verify option.'
+    Write-Host $skipMsg -ForegroundColor Yellow
+    Write-Host 'However, this is not recommended.' -ForegroundColor Yellow
     Write-Host ""
     
-    # 오류 발생 시에도 커밋을 차단 (보안상 안전)
+    # Block commit on error (security-safe default)
     exit 1
 }
