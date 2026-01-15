@@ -47,18 +47,50 @@ class QueenManager:
                 del self.queen_hatchery_assignments[dead_tag]
 
         if not queens_exists:
-            # Queen production (only if we have hatcheries but no queens)
-            if self.bot.can_afford(UnitTypeId.QUEEN):
-                # Use list iteration instead of .random to avoid conflicts (repo rule)
-                idle_hatcheries = [h for h in hatcheries_list if hasattr(h, 'is_idle') and h.is_idle]
-                if idle_hatcheries:
-                    try:
-                        idle_hatcheries[0].train(
-                            UnitTypeId.QUEEN
-                        )  # train() is not async, removed await
-                    except (AttributeError, TypeError) as e:
-                        # Handle case where train() might fail
-                        pass
+            # IMPROVED: Queen production with strict conditions (prevent excessive production)
+            # Only produce first queen if:
+            # 1. We have spawning pool (required building)
+            # 2. We have sufficient resources (minerals >= 200, gas >= 100)
+            # 3. We have enough workers to justify queen (at least 8 workers)
+            # 4. Hatchery is ready and idle
+            
+            # Check required building
+            spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+            if not spawning_pools.exists:
+                return
+            
+            # IMPROVED: Resource availability check
+            mineral_threshold = 200  # Need sufficient minerals after queen cost
+            gas_threshold = 100      # Need sufficient gas after queen cost
+            
+            if self.bot.minerals < mineral_threshold or self.bot.vespene_gas < gas_threshold:
+                # Resource shortage - skip queen production, let production_manager handle it
+                return
+            
+            # IMPROVED: Worker count check - need enough workers to justify queen
+            worker_count = self.bot.workers.amount
+            min_workers_for_first_queen = 8
+            
+            if worker_count < min_workers_for_first_queen:
+                # Too few workers - prioritize worker production
+                return
+            
+            # IMPROVED: Only produce if hatchery is ready and idle (not already training)
+            idle_hatcheries = [
+                h for h in hatcheries_list 
+                if hasattr(h, 'is_idle') and h.is_idle 
+                and hasattr(h, 'is_ready') and h.is_ready
+                and (not hasattr(h, 'orders') or len(h.orders) == 0)
+            ]
+            
+            if idle_hatcheries and self.bot.can_afford(UnitTypeId.QUEEN):
+                try:
+                    idle_hatcheries[0].train(UnitTypeId.QUEEN)
+                    print(f"👑 [QueenManager] 첫 여왕 생산 (일꾼: {worker_count}개)")
+                except (AttributeError, TypeError, Exception) as e:
+                    # Handle case where train() might fail
+                    # Don't log every error to avoid spam
+                    pass
             return
 
         # Assign queens to hatcheries for efficient injects (if not already assigned)

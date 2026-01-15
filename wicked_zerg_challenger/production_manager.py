@@ -1022,7 +1022,15 @@ class ProductionManager:
         return False
 
     async def _produce_queen(self):
-        """Produce queens (1 per hatchery)"""
+        """
+        Produce queens (1 per hatchery) with improved conditions
+        
+        IMPROVED: Prevents excessive queen production by:
+        - Checking resource availability (minerals >= 150, gas >= 50)
+        - Ensuring base stability (at least 2 workers per base)
+        - Avoiding queen production during critical resource shortages
+        - Only producing when hatchery is ready and idle
+        """
         b = self.bot
 
         if not self._has_required_building(UnitTypeId.SPAWNINGPOOL):
@@ -1038,15 +1046,65 @@ class ProductionManager:
         else:
             queens = b.units(UnitTypeId.QUEEN)
             townhalls = [th for th in b.townhalls]
+        
         queens_count = len(queens) + b.already_pending(UnitTypeId.QUEEN)
-
-        if queens_count < len(townhalls):
-            ready_idle_townhalls = [th for th in townhalls if th.is_ready and th.is_idle]
-            for hatch in ready_idle_townhalls:
-                if b.can_afford(UnitTypeId.QUEEN):
-                    await hatch.train(UnitTypeId.QUEEN)
-                    print(f"👑 [{int(b.time)}초] 여왕 생산")
-                    break
+        
+        # IMPROVED: Check if we already have enough queens (1 per hatchery)
+        if queens_count >= len(townhalls):
+            return
+        
+        # IMPROVED: Resource availability check - queen is expensive (150 minerals, 50 gas)
+        # Don't produce queen if we're low on resources or need them for other priorities
+        mineral_threshold = 200  # Need at least 200 minerals after queen cost
+        gas_threshold = 100      # Need at least 100 gas after queen cost
+        
+        if b.minerals < mineral_threshold or b.vespene_gas < gas_threshold:
+            # Resource shortage - skip queen production
+            return
+        
+        # IMPROVED: Base stability check - ensure we have enough workers to justify a queen
+        worker_count = b.workers.amount
+        min_workers_per_base = 8  # Need at least 8 workers per base for queen to be useful
+        
+        if worker_count < len(townhalls) * min_workers_per_base:
+            # Too few workers - prioritize worker production over queen
+            return
+        
+        # IMPROVED: Only produce queen if we have sufficient supply capacity
+        # Don't produce queen if we're close to supply cap (would block more important units)
+        supply_buffer = 10
+        if b.supply_cap - b.supply_used < supply_buffer:
+            # Supply is tight - skip queen production
+            return
+        
+        # IMPROVED: Check if hatchery is ready and idle (not already training)
+        ready_idle_townhalls = [th for th in townhalls if th.is_ready and th.is_idle]
+        
+        if not ready_idle_townhalls:
+            # No available hatcheries - skip
+            return
+        
+        # IMPROVED: Check if we can afford queen with resource reserve
+        if not b.can_afford(UnitTypeId.QUEEN):
+            return
+        
+        # IMPROVED: Final check - ensure hatchery is not already training a queen
+        for hatch in ready_idle_townhalls:
+            # Double-check hatchery is idle (not training anything)
+            if hasattr(hatch, 'orders') and len(hatch.orders) > 0:
+                continue
+            
+            try:
+                await hatch.train(UnitTypeId.QUEEN)
+                print(f"👑 [{int(b.time)}초] 여왕 생산 (기지: {len(townhalls)}개, 여왕: {queens_count}개)")
+                break
+            except Exception as e:
+                # Hatchery might be busy or queen production might have failed
+                # Continue to next hatchery instead of breaking
+                current_iteration = getattr(b, "iteration", 0)
+                if current_iteration % 200 == 0:
+                    print(f"[WARNING] Queen production failed: {e}")
+                continue
 
     async def _ensure_defense_before_expansion(self) -> bool:
         """
@@ -4989,13 +5047,26 @@ class ProductionManager:
             if b.supply_used >= queen_production_supply:
                 queens = [u for u in b.units(UnitTypeId.QUEEN)]
                 queens_count = len(queens) + b.already_pending(UnitTypeId.QUEEN)
+                
+                # IMPROVED: Additional checks to prevent excessive queen production
                 if queens_count < len(townhalls):
-                    ready_townhalls = [th for th in townhalls if th.is_ready and th.is_idle]
-                    for hatch in ready_townhalls:
-                        if b.can_afford(UnitTypeId.QUEEN):
-                            await hatch.train(UnitTypeId.QUEEN)
-                            print(f"[SERRAL BUILD] [{int(b.time)}s] 20 Supply: Queen (여왕)")
-                            return True
+                    # IMPROVED: Resource availability check (minerals >= 200, gas >= 100)
+                    if b.minerals >= 200 and b.vespene_gas >= 100:
+                        # IMPROVED: Worker count check (at least 8 workers per base)
+                        worker_count = b.workers.amount
+                        min_workers_per_base = 8
+                        
+                        if worker_count >= len(townhalls) * min_workers_per_base:
+                            ready_townhalls = [th for th in townhalls if th.is_ready and th.is_idle]
+                            for hatch in ready_townhalls:
+                                # IMPROVED: Check if hatchery is not already training
+                                if hasattr(hatch, 'orders') and len(hatch.orders) > 0:
+                                    continue
+                                
+                                if b.can_afford(UnitTypeId.QUEEN):
+                                    await hatch.train(UnitTypeId.QUEEN)
+                                    print(f"[SERRAL BUILD] [{int(b.time)}s] 20 Supply: Queen (여왕) - 조건 충족")
+                                    return True
 
                 spawning_pools = [
                     s for s in b.units(UnitTypeId.SPAWNINGPOOL) if s.is_structure and s.is_ready
