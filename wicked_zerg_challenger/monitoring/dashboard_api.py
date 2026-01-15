@@ -58,6 +58,31 @@ class UTF8JSONResponse(StarletteJSONResponse):
 # Override default JSONResponse
 app.default_response_class = UTF8JSONResponse
 
+# Basic Auth 설정 (선택적)
+# 환경변수로 활성화: MONITORING_AUTH_ENABLED=true
+# 환경변수로 ID/PW 설정: MONITORING_AUTH_USER, MONITORING_AUTH_PASSWORD
+_auth_enabled = os.environ.get("MONITORING_AUTH_ENABLED", "false").lower() == "true"
+_auth_user = os.environ.get("MONITORING_AUTH_USER", "admin")
+_auth_password = os.environ.get("MONITORING_AUTH_PASSWORD", "admin123")
+
+security = HTTPBasic()
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    """Basic Auth 인증 검증"""
+    if not _auth_enabled:
+        return True  # 인증 비활성화 시 항상 통과
+    
+    correct_username = secrets.compare_digest(credentials.username, _auth_user)
+    correct_password = secrets.compare_digest(credentials.password, _auth_password)
+    
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return True
+
 # Add CORS middleware
 # Configurable CORS: MONITORING_ALLOWED_ORIGINS (comma-separated)
 _origins_env = os.environ.get("MONITORING_ALLOWED_ORIGINS")
@@ -84,13 +109,34 @@ else:
     except Exception:
         pass  # Ngrok URL 파일이 없어도 계속 진행
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS 보안 강화: 개발 환경에서는 제한적, 프로덕션에서는 더 엄격하게
+_is_production = os.environ.get("MONITORING_PRODUCTION", "false").lower() == "true"
+
+if _is_production:
+    # 프로덕션: 더 엄격한 CORS 설정
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_allowed_origins,  # 명시적으로 허용된 origin만
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],  # 필요한 메서드만
+        allow_headers=["Content-Type", "Authorization"],  # 필요한 헤더만
+    )
+    logger.info("? 프로덕션 모드: 엄격한 CORS 설정 적용")
+else:
+    # 개발 환경: 더 관대한 설정 (개발 편의성)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    logger.info("? 개발 모드: 관대한 CORS 설정 적용")
+
+if _auth_enabled:
+    logger.info(f"? Basic Auth 활성화됨 (사용자: {_auth_user})")
+else:
+    logger.warning("?? Basic Auth 비활성화됨 - 보안 위험 가능")
 
 # Game state cache (will be updated by bot connector)
 game_state_cache = {
