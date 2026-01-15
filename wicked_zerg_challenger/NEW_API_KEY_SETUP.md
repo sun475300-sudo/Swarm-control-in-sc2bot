@@ -1,7 +1,7 @@
 # 새 Google Cloud API 키 설정 완료
 
 **작성일**: 2026-01-15  
-**API 키**: `***REDACTED_GEMINI_KEY***`
+**API 키**: `[REMOVED - Use secrets/gemini_api.txt]`
 
 ---
 
@@ -13,7 +13,7 @@
 
 **내용**:
 ```
-***REDACTED_GEMINI_KEY***
+[API 키는 secrets/gemini_api.txt 파일에 저장되어 있습니다]
 ```
 
 ### 2. Git 추적 확인
@@ -78,15 +78,15 @@ api_key = get_gemini_api_key()
 
 **Windows PowerShell**:
 ```powershell
-$env:GOOGLE_API_KEY = "***REDACTED_GEMINI_KEY***"
-$env:GEMINI_API_KEY = "***REDACTED_GEMINI_KEY***"
+$env:GOOGLE_API_KEY = "[YOUR_API_KEY_HERE]"
+$env:GEMINI_API_KEY = "[YOUR_API_KEY_HERE]"
 ```
 
 **영구 설정 (PowerShell 프로필)**:
 ```powershell
 # 프로필에 추가
-[System.Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "***REDACTED_GEMINI_KEY***", "User")
-[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "***REDACTED_GEMINI_KEY***", "User")
+[System.Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "[YOUR_API_KEY_HERE]", "User")
+[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "[YOUR_API_KEY_HERE]", "User")
 ```
 
 ---
@@ -98,7 +98,7 @@ $env:GEMINI_API_KEY = "***REDACTED_GEMINI_KEY***"
 1. ❌ **코드에 직접 하드코딩하지 마세요**
    ```python
    # 나쁜 예
-   api_key = "***REDACTED_GEMINI_KEY***"
+   api_key = "[YOUR_API_KEY_HERE]"  # ❌ 절대 하드코딩하지 마세요!
    ```
 
 2. ❌ **Git에 커밋하지 마세요**
