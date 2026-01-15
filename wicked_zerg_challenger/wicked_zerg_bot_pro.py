@@ -3299,7 +3299,13 @@ class WickedZergBotPro(BotAI):
                     ):
                         if self.supply_left >= 2:
                             try:
-                                await larvae.random.train(UnitTypeId.HYDRALISK)
+                                # Use _safe_train() if available for consistency
+                                if hasattr(self, "production") and self.production:
+                                    await self.production._safe_train(larvae.random, UnitTypeId.HYDRALISK)
+                                else:
+                                    result = larvae.random.train(UnitTypeId.HYDRALISK)
+                                    if hasattr(result, '__await__'):
+                                        await result
                                 if self.iteration % 100 == 0:
                                     print(
                                         f"[DEFENSIVE ARMY] [{int(self.time)}s] Building Hydralisk for defense (Army: {army_count}/{min_army_count})"
@@ -3314,7 +3320,13 @@ class WickedZergBotPro(BotAI):
                 ):
                     if self.supply_left >= 2:
                         try:
-                            await larvae.random.train(UnitTypeId.ZERGLING)
+                            # Use _safe_train() if available for consistency
+                            if hasattr(self, "production") and self.production:
+                                await self.production._safe_train(larvae.random, UnitTypeId.ZERGLING)
+                            else:
+                                result = larvae.random.train(UnitTypeId.ZERGLING)
+                                if hasattr(result, '__await__'):
+                                    await result
                             if self.iteration % 100 == 0:
                                 print(
                                     f"[DEFENSIVE ARMY] [{int(self.time)}s] Building Zergling for defense (Army: {army_count}/{min_army_count})"
@@ -4581,7 +4593,14 @@ class WickedZergBotPro(BotAI):
             if self.can_afford(UnitTypeId.ZERGLING):
                 spawning_pools = self.units(UnitTypeId.SPAWNINGPOOL).ready
                 if spawning_pools:
-                    await random.choice(larvae).train(UnitTypeId.ZERGLING)
+                    # Use _safe_train() if available, otherwise use direct train()
+                    if hasattr(self, "production") and self.production:
+                        await self.production._safe_train(random.choice(larvae), UnitTypeId.ZERGLING)
+                    else:
+                        # Fallback: direct train() with await
+                        result = random.choice(larvae).train(UnitTypeId.ZERGLING)
+                        if hasattr(result, '__await__'):
+                            await result
 
     async def _build_terran_counters(self):
         """

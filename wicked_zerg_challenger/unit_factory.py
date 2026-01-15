@@ -702,7 +702,8 @@ class UnitFactory:
             ready_idle_townhalls = [th for th in townhalls if th.is_ready and th.is_idle]
             for hatch in ready_idle_townhalls:
                 if b.can_afford(UnitTypeId.QUEEN):
-                    hatch.train(UnitTypeId.QUEEN)
+                    # Use _safe_train() for consistency and safety (handles both sync/async)
+                    await self.pm._safe_train(hatch, UnitTypeId.QUEEN)
                     print(f"👑 [{int(b.time)}s] Queen production")
                     break
 
