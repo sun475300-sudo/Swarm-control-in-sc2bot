@@ -802,7 +802,9 @@ def main():
 
     extractor = ReplayBuildOrderExtractor(replay_dir=default_replay_dir)
 
-    learned_params = extractor.learn_from_replays(max_replays=100)
+    # IMPROVED: Use configurable max_replays (default 300, increased from 100)
+    max_replays = int(os.environ.get("MAX_REPLAYS_FOR_LEARNING", "300"))
+    learned_params = extractor.learn_from_replays(max_replays=max_replays)
 
     if not learned_params:
         print("\n[WARNING] No build orders extracted. Check replay directory.")

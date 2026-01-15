@@ -1107,7 +1107,7 @@ def run_training():
                         for iteration in range(_config.REPLAY_LEARNING_ITERATIONS):
                             print(f"[BUILD LEARNING] Iteration {iteration + 1}/{_config.REPLAY_LEARNING_ITERATIONS}...")
                             extractor = ReplayBuildOrderExtractor(replay_dir=replay_archive_dir)
-                            learned_params = extractor.learn_from_replays(max_replays=100)
+                            learned_params = extractor.learn_from_replays(max_replays=_config.MAX_REPLAYS_FOR_LEARNING)
                             if learned_params:
                                 extractor.save_learned_parameters(learned_params)
                                 print(f"[BUILD LEARNING] Iteration {iteration + 1}: Updated {len(learned_params)} parameters from new replays")
