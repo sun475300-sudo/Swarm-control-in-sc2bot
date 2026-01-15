@@ -78,54 +78,139 @@ def create_bot_with_training():
 def main():
     """
     Main entry point for bot execution with training enabled.
+    IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
+    import time
+    import random
+    
     print("=" * 70)
-    print("NEURAL NETWORK TRAINING MODE")
+    print("NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
     print("=" * 70)
     print()
-    print("This will start a game and train the neural network model.")
+    print("This will start continuous games and train the neural network model.")
     print("Model will be saved to: local_training/models/zerg_net_model.pt")
     print()
     print("Training features:")
     print("  - 15-dimensional state vector (Self 5 + Enemy 10)")
     print("  - REINFORCE algorithm for policy learning")
     print("  - Model auto-saves after each game")
+    print("  - Continuous training: Games will run continuously without stopping")
     print()
+    print("Press Ctrl+C to stop training")
     print("=" * 70)
     print()
-    
-    bot = create_bot_with_training()
 
     # 1. Run on AI Arena server (when --LadderServer flag is present)
     if "--LadderServer" in sys.argv:
         from sc2.main import run_ladder_game  # type: ignore
         print("Joining Ladder Game with Training Enabled...")
+        bot = create_bot_with_training()
         run_ladder_game(bot)
+        return
 
-    # 2. Run on local machine for training
-    else:
-        print("Starting Local Training Game...")
-        print("Game window will open - you can watch the game in real-time!")
-        print("Neural network is learning from your gameplay...")
-        print()
-        
-        map_name = "AbyssalReefLE"
-        run_game(
-            maps.get(map_name),
-            [
-                bot,
-                Computer(Race.Terran, Difficulty.VeryHard)
-            ],
-            realtime=False  # False = fast speed, True = real-time speed
-        )
-        
-        print()
-        print("=" * 70)
-        print("TRAINING COMPLETE")
-        print("=" * 70)
-        print("Model saved to: local_training/models/zerg_net_model.pt")
-        print("You can now use this trained model in future games!")
-        print("=" * 70)
+    # 2. Run on local machine for continuous training
+    game_count = 0
+    max_consecutive_failures = 5
+    consecutive_failures = 0
+    
+    # Available maps
+    available_maps = ["AbyssalReefLE", "BelShirVestigeLE", "CactusValleyLE", "HonorgroundsLE", "ProximaStationLE"]
+    opponent_races = [Race.Terran, Race.Protoss, Race.Zerg]
+    difficulties = [Difficulty.Hard, Difficulty.VeryHard, Difficulty.Elite]
+    
+    print("Starting Continuous Training Loop...")
+    print("Game windows will open - you can watch the games in real-time!")
+    print("Neural network is learning from your gameplay...")
+    print()
+    
+    while True:
+        try:
+            game_count += 1
+            
+            if consecutive_failures > 0:
+                print(f"[RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}")
+                if consecutive_failures >= max_consecutive_failures:
+                    print(f"[ERROR] Too many consecutive failures ({consecutive_failures}). Stopping training.")
+                    break
+            
+            # Select random map, opponent race, and difficulty
+            map_name = random.choice(available_maps)
+            opponent_race = random.choice(opponent_races)
+            difficulty = random.choice(difficulties)
+            
+            print(f"\n{'='*70}")
+            print(f"[GAME #{game_count}] Starting new training game...")
+            print(f"  Map: {map_name}")
+            print(f"  Opponent: {opponent_race.name} {difficulty.name}")
+            print(f"{'='*70}\n")
+            
+            # Create new bot instance for each game
+            bot = create_bot_with_training()
+            bot.game_count = game_count  # Track game count
+            
+            # Run game with error handling
+            try:
+                map_instance = maps.get(map_name)
+                if map_instance is None:
+                    print(f"[WARNING] Map '{map_name}' not found, using default: AbyssalReefLE")
+                    map_name = "AbyssalReefLE"
+                    map_instance = maps.get(map_name)
+                
+                if map_instance is None:
+                    print(f"[ERROR] Default map not found. Skipping this game.")
+                    consecutive_failures += 1
+                    time.sleep(5)
+                    continue
+                
+                run_game(
+                    map_instance,
+                    [
+                        Bot(Race.Zerg, bot),
+                        Computer(opponent_race, difficulty)
+                    ],
+                    realtime=False  # False = fast speed, True = real-time speed
+                )
+                
+                # Game completed successfully
+                consecutive_failures = 0
+                
+                print(f"\n[GAME #{game_count}] Completed successfully!")
+                print("Model saved to: local_training/models/zerg_net_model.pt")
+                print(f"\nWaiting 3 seconds before next game...")
+                time.sleep(3)
+                
+            except KeyboardInterrupt:
+                print("\n[STOP] Training stopped by user.")
+                break
+            except Exception as game_error:
+                consecutive_failures += 1
+                print(f"\n[ERROR] Game #{game_count} failed: {game_error}")
+                print(f"[RETRY] Will retry after 5 seconds...")
+                import traceback
+                traceback.print_exc()
+                time.sleep(5)
+                continue
+                
+        except KeyboardInterrupt:
+            print("\n[STOP] Training stopped by user.")
+            break
+        except Exception as e:
+            consecutive_failures += 1
+            print(f"\n[ERROR] Unexpected error in training loop: {e}")
+            print(f"[RETRY] Will retry after 5 seconds...")
+            import traceback
+            traceback.print_exc()
+            time.sleep(5)
+            continue
+    
+    print()
+    print("=" * 70)
+    print("TRAINING STOPPED")
+    print("=" * 70)
+    print(f"Total games completed: {game_count}")
+    print("Model saved to: local_training/models/zerg_net_model.pt")
+    print("You can now use this trained model in future games!")
+    print("=" * 70)
 
 if __name__ == "__main__":
     main()
