@@ -25,9 +25,11 @@ $ErrorActionPreference = "Continue"
 
 # 전체 스크립트 실행을 try-catch로 감싸기
 try {
-    Write-Host ("=" * 70) -ForegroundColor Cyan
-    Write-Host "🔒 Git 커밋 전 민감한 정보 검사" -ForegroundColor Cyan
-    Write-Host ("=" * 70) -ForegroundColor Cyan
+    $separator = '=' * 70
+    Write-Host $separator -ForegroundColor Cyan
+    $title = 'Git Pre-Commit Security Check'
+    Write-Host $title -ForegroundColor Cyan
+    Write-Host $separator -ForegroundColor Cyan
     Write-Host ""
 
     # Sensitive patterns (generic patterns only, no actual key examples)
@@ -55,7 +57,8 @@ try {
     $checkedFiles = 0
     $errorCount = 0
 
-    Write-Host "📁 스테이징된 파일 검사 중..." -ForegroundColor Yellow
+    $checkingMsg = 'Checking staged files...'
+    Write-Host $checkingMsg -ForegroundColor Yellow
     Write-Host ""
 
     # Git 스테이징된 파일 가져오기 (개선된 오류 처리)
@@ -65,12 +68,16 @@ try {
         if ($LASTEXITCODE -eq 0) {
             $stagedFiles = $gitOutput | Where-Object { $_ -and $_.Trim() }
         } else {
-            Write-Host "⚠️  Git 저장소가 아니거나 스테이징된 파일이 없습니다." -ForegroundColor Yellow
-            Write-Host "   모든 파일을 검사합니다..." -ForegroundColor Yellow
+            $noStagedMsg = 'Not a Git repository or no staged files found.'
+            Write-Host $noStagedMsg -ForegroundColor Yellow
+            $scanAllMsg = 'Scanning all files...'
+            Write-Host $scanAllMsg -ForegroundColor Yellow
         }
     } catch {
-        Write-Host "⚠️  Git 명령 실행 중 오류: $_" -ForegroundColor Yellow
-        Write-Host "   모든 파일을 검사합니다..." -ForegroundColor Yellow
+        $gitErrorMsg = 'Git command error: ' + $_
+        Write-Host $gitErrorMsg -ForegroundColor Yellow
+        $scanAllMsg = 'Scanning all files...'
+        Write-Host $scanAllMsg -ForegroundColor Yellow
         $errorCount++
     }
 
@@ -124,7 +131,8 @@ try {
 
 # 스테이징된 파일이 없으면 모든 파일 검사
 if (-not $stagedFiles) {
-    Write-Host "📁 모든 파일 검사 중..." -ForegroundColor Yellow
+    $scanAllMsg = 'Scanning all files...'
+    Write-Host $scanAllMsg -ForegroundColor Yellow
     Write-Host ""
     
     foreach ($ext in $fileExtensions) {
@@ -254,46 +262,64 @@ if (-not $stagedFiles) {
 }
 
     Write-Host ""
-    Write-Host ("=" * 70) -ForegroundColor Cyan
-    Write-Host "검사 결과" -ForegroundColor Cyan
-    Write-Host ("=" * 70) -ForegroundColor Cyan
+    $separator = '=' * 70
+    Write-Host $separator -ForegroundColor Cyan
+    $resultTitle = 'Scan Results'
+    Write-Host $resultTitle -ForegroundColor Cyan
+    Write-Host $separator -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "검사한 파일 수: $checkedFiles" -ForegroundColor White
+    $filesMsg = "Files checked: $checkedFiles"
+    Write-Host $filesMsg -ForegroundColor White
     if ($errorCount -gt 0) {
-        Write-Host "처리 중 오류 발생 수: $errorCount (무시됨)" -ForegroundColor Yellow
+        $errorMsg = "Errors occurred: $errorCount (ignored)"
+        Write-Host $errorMsg -ForegroundColor Yellow
     }
     Write-Host ""
 
     if ($foundIssues.Count -gt 0) {
-        Write-Host "🚨 민감한 정보가 발견되었습니다!" -ForegroundColor Red
+        $foundMsg = 'Sensitive information found!'
+        Write-Host $foundMsg -ForegroundColor Red
         Write-Host ""
         
         foreach ($issue in $foundIssues) {
-            Write-Host "  파일: $($issue.File)" -ForegroundColor Yellow
-            Write-Host "  패턴: $($issue.Pattern)" -ForegroundColor Yellow
-            Write-Host "  라인: $($issue.Line)" -ForegroundColor Yellow
+            $fileMsg = '  File: ' + $issue.File
+            Write-Host $fileMsg -ForegroundColor Yellow
+            $patternMsg = '  Pattern: ' + $issue.Pattern
+            Write-Host $patternMsg -ForegroundColor Yellow
+            $lineMsg = '  Line: ' + $issue.Line
+            Write-Host $lineMsg -ForegroundColor Yellow
             if ($issue.Preview) {
-                Write-Host "  미리보기: $($issue.Preview)" -ForegroundColor Gray
+                $previewMsg = '  Preview: ' + $issue.Preview
+                Write-Host $previewMsg -ForegroundColor Gray
             }
             Write-Host ""
         }
         
-        Write-Host ("=" * 70) -ForegroundColor Red
-        Write-Host "❌ 커밋이 차단되었습니다!" -ForegroundColor Red
-        Write-Host ("=" * 70) -ForegroundColor Red
+        $separator = '=' * 70
+        Write-Host $separator -ForegroundColor Red
+        $blockedMsg = 'Commit blocked!'
+        Write-Host $blockedMsg -ForegroundColor Red
+        Write-Host $separator -ForegroundColor Red
         Write-Host ""
-        Write-Host "조치 사항:" -ForegroundColor Yellow
-        Write-Host '  1. 위 파일들에서 민감한 정보를 제거하세요' -ForegroundColor White
-        Write-Host '  2. 플레이스홀더로 대체하세요 (예: YOUR_API_KEY)' -ForegroundColor White
-        Write-Host '  3. 환경 변수나 설정 파일을 사용하세요' -ForegroundColor White
-        Write-Host '  4. 다시 검사 후 커밋하세요' -ForegroundColor White
+        $actionTitle = 'Required Actions:'
+        Write-Host $actionTitle -ForegroundColor Yellow
+        $action1 = '  1. Remove sensitive information from the files above'
+        Write-Host $action1 -ForegroundColor White
+        $action2 = '  2. Replace with placeholders (e.g., YOUR_API_KEY)'
+        Write-Host $action2 -ForegroundColor White
+        $action3 = '  3. Use environment variables or config files'
+        Write-Host $action3 -ForegroundColor White
+        $action4 = '  4. Run check again before committing'
+        Write-Host $action4 -ForegroundColor White
         Write-Host ""
         
         exit 1
     } else {
-        Write-Host "✅ 민감한 정보가 발견되지 않았습니다." -ForegroundColor Green
+        $successMsg1 = 'Sensitive information not found.'
+        Write-Host $successMsg1 -ForegroundColor Green
         Write-Host ""
-        Write-Host "안전하게 커밋할 수 있습니다." -ForegroundColor Green
+        $successMsg2 = 'You can commit safely.'
+        Write-Host $successMsg2 -ForegroundColor Green
         Write-Host ""
         
         exit 0
@@ -301,15 +327,16 @@ if (-not $stagedFiles) {
 } catch {
     # Unexpected error occurred
     Write-Host ""
-    $separator = "=" * 70
+    $separator = '=' * 70
     Write-Host $separator -ForegroundColor Red
-    Write-Host "Unexpected error occurred during script execution!" -ForegroundColor Red
+    $errorTitle = 'Unexpected error occurred during script execution!'
+    Write-Host $errorTitle -ForegroundColor Red
     Write-Host $separator -ForegroundColor Red
     Write-Host ""
-    $errorMsg = "Error message: " + $_
+    $errorMsg = 'Error message: ' + $_
     Write-Host $errorMsg -ForegroundColor Yellow
     $lineNum = $_.InvocationInfo.ScriptLineNumber
-    $locationMsg = "Error location: Line " + $lineNum
+    $locationMsg = 'Error location: Line ' + $lineNum
     Write-Host $locationMsg -ForegroundColor Yellow
     Write-Host ""
     $skipMsg = 'To skip security check, use --no-verify option.'
