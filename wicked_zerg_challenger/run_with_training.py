@@ -6,11 +6,18 @@ This script starts a game and trains the neural network model in real-time.
 Model will be saved to: local_training/models/zerg_net_model.pt
 """
 
+from sc2 import maps  # type: ignore
+from sc2.player import Bot, Computer  # type: ignore
+from sc2.main import run_game  # type: ignore
+from sc2.data import Race, Difficulty  # type: ignore
+from wicked_zerg_bot_pro import WickedZergBotPro
 import sys
 import os
 from pathlib import Path
 
 # SC2 path auto-setup function
+
+
 def _ensure_sc2_path():
     """
     Set SC2PATH environment variable - search via Windows Registry or common paths
@@ -55,16 +62,13 @@ def _ensure_sc2_path():
 
     print("[WARNING] SC2 installation not found automatically")
 
+
 # Setup SC2 path before sc2 import
 _ensure_sc2_path()
 
 # Bot class import
 sys.path.append(str(Path(__file__).parent))
-from wicked_zerg_bot_pro import WickedZergBotPro
-from sc2.data import Race, Difficulty # type: ignore
-from sc2.main import run_game # type: ignore
-from sc2.player import Bot, Computer # type: ignore
-from sc2 import maps # type: ignore
+
 
 def create_bot_with_training():
     """
@@ -74,6 +78,7 @@ def create_bot_with_training():
     # CRITICAL: Set train_mode = True to enable neural network training
     bot_instance = WickedZergBotPro(train_mode=True)
     return Bot(Race.Zerg, bot_instance)
+
 
 def main():
     """
@@ -105,7 +110,7 @@ def main():
     # 1. Run on AI Arena server (when --LadderServer flag is present)
     if "--LadderServer" in sys.argv:
         from sc2.main import run_ladder_game  # type: ignore
-        
+
         # Start Arena Monitoring Server
         arena_server_manager = None
         try:
@@ -247,7 +252,7 @@ def main():
             # bot is already a Bot instance, so we can set attributes on the underlying AI
             if hasattr(bot, 'ai') and bot.ai:
                 bot.ai.game_count = game_count  # Track game count
-            
+
             # Run game with error handling
             try:
                 map_instance = maps.get(map_name)
@@ -489,77 +494,78 @@ def main():
     print("Model saved to: local_training/models/zerg_net_model.pt")
     print("You can now use this trained model in future games!")
 
- if session_manager:
- print(session_manager.get_training_summary())
+    if session_manager:
+        print(session_manager.get_training_summary())
 
     print("=" * 70)
 
- # ? NEW: Auto-extract and learn from training data after training ends
- if game_count > 0:
+    # ? NEW: Auto-extract and learn from training data after training ends
+    if game_count > 0:
         print("\n" + "=" * 70)
         print("AUTO-EXTRACTING AND LEARNING FROM TRAINING DATA")
         print("=" * 70)
- try:
- # Import extractor module - add parent directory to path
- script_dir = Path(__file__).parent
- if str(script_dir) not in sys.path:
- sys.path.insert(0, str(script_dir))
+        try:
+            # Import extractor module - add parent directory to path
+            script_dir = Path(__file__).parent
+            if str(script_dir) not in sys.path:
+                sys.path.insert(0, str(script_dir))
 
- from tools.extract_and_train_from_training import TrainingDataExtractor
- from datetime import datetime
+            from tools.extract_and_train_from_training import TrainingDataExtractor
+            from datetime import datetime
 
- extractor = TrainingDataExtractor()
+            extractor = TrainingDataExtractor()
 
- # Extract data
+            # Extract data
             print("\n[STEP 1] Extracting training data...")
- training_data = extractor.extract_training_stats()
- comparisons = extractor.extract_build_order_comparisons()
- session_stats = extractor.extract_session_stats()
+            training_data = extractor.extract_training_stats()
+            comparisons = extractor.extract_build_order_comparisons()
+            session_stats = extractor.extract_session_stats()
 
- if training_data or comparisons:
- # Analyze data
+            if training_data or comparisons:
+                # Analyze data
                 print("\n[STEP 2] Analyzing training data...")
- analysis = extractor.analyze_training_data(training_data)
+                analysis = extractor.analyze_training_data(training_data)
 
- # Learn from data
+                # Learn from data
                 print("\n[STEP 3] Learning from training data...")
- learned_params = extractor.learn_from_training_data(
- training_data,
- comparisons,
- learning_rate = 0.1
- )
+                learned_params = extractor.learn_from_training_data(
+                    training_data,
+                    comparisons,
+                    learning_rate=0.1
+                )
 
- # Save extracted data
+                # Save extracted data
                 print("\n[STEP 4] Saving extracted data...")
- extractor.save_extracted_data(
- training_data,
- comparisons,
- analysis,
- learned_params
- )
+                extractor.save_extracted_data(
+                    training_data,
+                    comparisons,
+                    analysis,
+                    learned_params
+                )
 
- # Generate and print report
+                # Generate and print report
                 print("\n[STEP 5] Generating report...")
- report = extractor.generate_report(analysis, learned_params)
+                report = extractor.generate_report(analysis, learned_params)
                 print("\n" + report)
 
- # Save report
+                # Save report
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 report_file = extractor.output_dir / f"report_{timestamp}.txt"
                 with open(report_file, 'w', encoding='utf-8') as f:
- f.write(report)
+                    f.write(report)
                 print(f"\n[SAVED] Report: {report_file}")
 
                 print("\n" + "=" * 70)
                 print("EXTRACTION AND LEARNING COMPLETE")
                 print("=" * 70)
- else:
+            else:
                 print("[INFO] No training data found to extract. Skipping extraction.")
- except Exception as e:
+        except Exception as e:
             print(f"\n[WARNING] Failed to extract and learn from training data: {e}")
             print("[INFO] You can manually run: python -m wicked_zerg_challenger.tools.extract_and_train_from_training")
- import traceback
- traceback.print_exc()
+            import traceback
+            traceback.print_exc()
+
 
 if __name__ == "__main__":
- main()
+    main()

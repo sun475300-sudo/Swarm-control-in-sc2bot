@@ -79,71 +79,73 @@ class ReplayBuildOrderExtractor:
         """Extract build order from a single replay file"""
         if not SC2READER_AVAILABLE:
             logger.error("sc2reader not available. Cannot extract build orders.")
- return None
+            return None
 
- try:
- replay = sc2reader.load_replay(str(replay_path), load_map = True)
+        try:
+            replay = sc2reader.load_replay(str(replay_path), load_map=True)
 
- # IMPROVED: Strict Zerg player validation using sc2reader metadata
- # Always use play_race attribute from replay metadata (most reliable)
- zerg_player = None
- pro_zerg_player = None
+            # IMPROVED: Strict Zerg player validation using sc2reader metadata
+            # Always use play_race attribute from replay metadata (most reliable)
+            zerg_player = None
+            pro_zerg_player = None
 
- # IMPROVED: First pass - find Zerg players by race (strict validation)
- for player in replay.players:
- # CRITICAL: Always check play_race attribute (most reliable)
+            # IMPROVED: First pass - find Zerg players by race (strict validation)
+            for player in replay.players:
+                # CRITICAL: Always check play_race attribute (most reliable)
                 if hasattr(player, 'play_race'):
- player_race = str(player.play_race).lower()
+                    player_race = str(player.play_race).lower()
                     if player_race == "zerg":
                         player_name_lower = (player.name or "").lower()
- # Prioritize pro players
- if any(pro_name in player_name_lower for pro_name in PRO_ZERG_PLAYERS):
- pro_zerg_player = player
- break
- elif not zerg_player:
- zerg_player = player
+                        # Prioritize pro players
+                        if any(pro_name in player_name_lower for pro_name in PRO_ZERG_PLAYERS):
+                            pro_zerg_player = player
+                            break
+                        elif not zerg_player:
+                            zerg_player = player
 
- # IMPROVED: Second pass - if no Zerg found by race, check alternative methods
- if not zerg_player and not pro_zerg_player:
- # Fallback: Check if any player has Zerg-related indicators
- # But this should be rare - most replays have proper race metadata
- for player in replay.players:
+            # IMPROVED: Second pass - if no Zerg found by race, check alternative methods
+            if not zerg_player and not pro_zerg_player:
+                # Fallback: Check if any player has Zerg-related indicators
+                # But this should be rare - most replays have proper race metadata
+                for player in replay.players:
                     if hasattr(player, 'name'):
                         player_name_lower = (player.name or "").lower()
- # Only use name-based detection if race metadata is missing
+                        # Only use name-based detection if race metadata is missing
                         if not hasattr(player, 'play_race') or player.play_race is None:
                             if any(zerg_keyword in player_name_lower for zerg_keyword in ["zerg", "z", "zv"]):
-                                logger.warning(f"Using name-based Zerg detection for {replay_path.name} (race metadata missing)")
- zerg_player = player
- break
+                                logger.warning(
+                                    f"Using name-based Zerg detection for {replay_path.name} (race metadata missing)")
+                                zerg_player = player
+                                break
 
- # Prefer pro player if found
- zerg_player = pro_zerg_player if pro_zerg_player else zerg_player
+            # Prefer pro player if found
+            zerg_player = pro_zerg_player if pro_zerg_player else zerg_player
 
- # IMPROVED: Final validation - ensure we have a valid Zerg player
- if not zerg_player:
+            # IMPROVED: Final validation - ensure we have a valid Zerg player
+            if not zerg_player:
                 logger.debug(f"No Zerg player found in {replay_path.name} (strict validation)")
- return None
+                return None
 
- # IMPROVED: Double-check race attribute (safety check)
+            # IMPROVED: Double-check race attribute (safety check)
             if hasattr(zerg_player, 'play_race'):
- final_race = str(zerg_player.play_race).lower()
+                final_race = str(zerg_player.play_race).lower()
                 if final_race != "zerg":
-                    logger.warning(f"Player {zerg_player.name} race mismatch: {final_race} (expected Zerg) in {replay_path.name}")
- return None
+                    logger.warning(
+                        f"Player {zerg_player.name} race mismatch: {final_race} (expected Zerg) in {replay_path.name}")
+                    return None
 
- # IMPROVED: Extract build order events with better tracking
- build_order = {
+            # IMPROVED: Extract build order events with better tracking
+            build_order = {
                 "replay_file": replay_path.name,
                 "player_name": zerg_player.name,
                 "map_name": replay.map_name if hasattr(replay, 'map_name') else "Unknown",
                 "game_length": replay.game_length.seconds if hasattr(replay, 'game_length') else 0,
                 "timings": {}
- }
+            }
 
- # IMPROVED: Track structure/unit creation events
- # Map SC2 unit type names to our parameter names
- unit_to_parameter = {
+            # IMPROVED: Track structure/unit creation events
+            # Map SC2 unit type names to our parameter names
+            unit_to_parameter = {
                 "Hatchery": "natural_expansion_supply",
                 "Extractor": "gas_supply",
                 "SpawningPool": "spawning_pool_supply",
@@ -151,83 +153,84 @@ class ReplayBuildOrderExtractor:
                 "HydraliskDen": "hydralisk_den_supply",
                 "Lair": "lair_supply",
                 "Hive": "hive_supply",
- }
+            }
 
- # IMPROVED: Extract from tracker events (more reliable than game events)
- # CRITICAL: Track supply history to filter out cancellations and unit losses
- supply_history: Dict[float, int] = {} # time -> supply
- unit_creation_events: List[Tuple[str, float, int]] = [] # (unit_name, time, supply)
+            # IMPROVED: Extract from tracker events (more reliable than game events)
+            # CRITICAL: Track supply history to filter out cancellations and unit losses
+            supply_history: Dict[float, int] = {}  # time -> supply
+            unit_creation_events: List[Tuple[str, float, int]] = []  # (unit_name, time, supply)
 
             if hasattr(replay, 'tracker_events'):
- for event in replay.tracker_events:
- try:
+                for event in replay.tracker_events:
+                    try:
                         if hasattr(event, 'player') and event.player == zerg_player:
- # Track supply history for cancellation/loss detection
+                            # Track supply history for cancellation/loss detection
                             if hasattr(event, 'second') and hasattr(event, 'food_used'):
- supply_history[event.second] = event.food_used
+                                supply_history[event.second] = event.food_used
 
- # Track unit born events (structures being created)
- # Check for UnitBornEvent or similar events
+                            # Track unit born events (structures being created)
+                            # Check for UnitBornEvent or similar events
                             if hasattr(event, 'unit') and hasattr(event, 'second'):
- unit = event.unit
+                                unit = event.unit
                                 if hasattr(unit, 'name'):
- unit_name = unit.name
- if unit_name in unit_to_parameter:
- param_name = unit_to_parameter[unit_name]
- # Get supply at time of event
- supply = self._get_supply_at_time(replay, zerg_player, event.second)
- if supply > 0:
- unit_creation_events.append((param_name, event.second, supply))
- # Also check for UnitInitEvent (unit creation)
+                                    unit_name = unit.name
+                                    if unit_name in unit_to_parameter:
+                                        param_name = unit_to_parameter[unit_name]
+                                        # Get supply at time of event
+                                        supply = self._get_supply_at_time(replay, zerg_player, event.second)
+                                        if supply > 0:
+                                            unit_creation_events.append((param_name, event.second, supply))
+                            # Also check for UnitInitEvent (unit creation)
                             elif hasattr(event, '__class__') and 'UnitInit' in str(event.__class__):
                                 if hasattr(event, 'unit') and hasattr(event, 'second'):
- unit = event.unit
+                                    unit = event.unit
                                     if hasattr(unit, 'name'):
- unit_name = unit.name
- if unit_name in unit_to_parameter:
- param_name = unit_to_parameter[unit_name]
- supply = self._get_supply_at_time(replay, zerg_player, event.second)
- if supply > 0:
- unit_creation_events.append((param_name, event.second, supply))
- except Exception as e:
- # Log first few errors for debugging
- if len(unit_creation_events) == 0 and len(supply_history) < 10:
+                                        unit_name = unit.name
+                                        if unit_name in unit_to_parameter:
+                                            param_name = unit_to_parameter[unit_name]
+                                            supply = self._get_supply_at_time(replay, zerg_player, event.second)
+                                            if supply > 0:
+                                                unit_creation_events.append((param_name, event.second, supply))
+                    except Exception as e:
+                        # Log first few errors for debugging
+                        if len(unit_creation_events) == 0 and len(supply_history) < 10:
                             logger.debug(f"Tracker event error: {e}")
- continue
+                        continue
 
- # CRITICAL: Filter out cancellations and unit losses
- # Check if supply decreases significantly after unit creation (indicates cancellation/loss)
- for param_name, creation_time, creation_supply in unit_creation_events:
+            # CRITICAL: Filter out cancellations and unit losses
+            # Check if supply decreases significantly after unit creation (indicates cancellation/loss)
+            for param_name, creation_time, creation_supply in unit_creation_events:
                 if param_name not in build_order["timings"]:
- # Check supply changes in the next 10 seconds
- is_valid = True
- check_times = [t for t in supply_history.keys() if creation_time <= t <= creation_time + 10.0]
- if check_times:
- max_supply_after = max(supply_history[t] for t in check_times)
- supply_decrease = creation_supply - max_supply_after
+                    # Check supply changes in the next 10 seconds
+                    is_valid = True
+                    check_times = [t for t in supply_history.keys() if creation_time <= t <= creation_time + 10.0]
+                    if check_times:
+                        max_supply_after = max(supply_history[t] for t in check_times)
+                        supply_decrease = creation_supply - max_supply_after
 
- # If supply decreases by more than 5, likely a cancellation or unit loss
- # (5 supply = 1 worker or small unit loss)
- if supply_decrease > 5:
-                            logger.debug(f"Filtered {param_name} at {creation_time}s: supply decreased by {supply_decrease} (likely cancellation/loss)")
- is_valid = False
+                        # If supply decreases by more than 5, likely a cancellation or unit loss
+                        # (5 supply = 1 worker or small unit loss)
+                        if supply_decrease > 5:
+                            logger.debug(
+                                f"Filtered {param_name} at {creation_time}s: supply decreased by {supply_decrease} (likely cancellation/loss)")
+                            is_valid = False
 
- if is_valid:
+                    if is_valid:
                         build_order["timings"][param_name] = {
                             "supply": creation_supply,
                             "time": creation_time
- }
+                        }
 
- # IMPROVED: Extract from UnitBornEvent and UnitInitEvent (both are needed)
- # UnitBornEvent uses control_pid instead of player attribute
- # UnitInitEvent also uses control_pid and is used for some structures like Extractor
+            # IMPROVED: Extract from UnitBornEvent and UnitInitEvent (both are needed)
+            # UnitBornEvent uses control_pid instead of player attribute
+            # UnitInitEvent also uses control_pid and is used for some structures like Extractor
             zerg_pid = getattr(zerg_player, 'pid', None)
- if zerg_pid is None:
- # Try to get PID from player object
- for p in replay.players:
+            if zerg_pid is None:
+                # Try to get PID from player object
+                for p in replay.players:
                     if p == zerg_player and hasattr(p, 'pid'):
- zerg_pid = p.pid
- break
+                        zerg_pid = p.pid
+                        break
 
  # Track Hatchery count to skip the starting Hatchery
  hatchery_count = 0

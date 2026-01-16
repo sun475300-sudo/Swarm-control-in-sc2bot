@@ -2,11 +2,11 @@
 """
 Compare Pro Gamer Replays vs Training Replays
 
-ï¿½ï¿½ï¿½Î°ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
-- ï¿½ï¿½ï¿½Î°ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ (D:\replays\replays)
-- ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ (training_stats.json, build_order_comparison_history.json)
-- ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ò½ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½
-- ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
+ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ ÇÐ½Àµ¥ÀÌÅÍ¿Í ÈÆ·ÃÇÑ ¸®ÇÃ·¹ÀÌ ÇÐ½Àµ¥ÀÌÅÍ¸¦ ºñ±³ ºÐ¼®ÇÏ´Â ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
+- ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ µ¥ÀÌÅÍ ·Îµå (D:\replays\replays)
+- ÈÆ·Ã ¸®ÇÃ·¹ÀÌ µ¥ÀÌÅÍ ·Îµå (training_stats.json, build_order_comparison_history.json)
+- µÎ µ¥ÀÌÅÍ ¼Ò½º ºñ±³ ºÐ¼®
+- »ó¼¼ ¸®Æ÷Æ® »ý¼º
 """
 
 import json
@@ -32,7 +32,7 @@ except ImportError as e:
 
 
 class ProVsTrainingComparator:
-    """ï¿½ï¿½ï¿½Î°ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ vs ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½"""
+    """ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ vs ÈÆ·Ã ¸®ÇÃ·¹ÀÌ ºñ±³ ºÐ¼® Å¬·¡½º"""
 
     def __init__(
         self,
@@ -385,11 +385,11 @@ class ProVsTrainingComparator:
 
                 report_parts.append(f"  Difference: {diff:+.1f} supply {status}")
                 if diff > 0:
-                    report_parts.append(f"    ï¿½ï¿½ Training is {diff:.1f} supply LATER than pro")
+                    report_parts.append(f"    ¡æ Training is {diff:.1f} supply LATER than pro")
                 elif diff < 0:
-                    report_parts.append(f"    ï¿½ï¿½ Training is {abs(diff):.1f} supply EARLIER than pro")
+                    report_parts.append(f"    ¡æ Training is {abs(diff):.1f} supply EARLIER than pro")
                 else:
-                    report_parts.append(f"    ï¿½ï¿½ Training matches pro timing")
+                    report_parts.append(f"    ¡æ Training matches pro timing")
 
         report_parts.append("")
 

@@ -16,6 +16,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = SCRIPT_DIR.parent
 
 # IMPROVED: Use flexible venv path detection
+
+
 def get_venv_dir() -> Path:
     """Get virtual environment directory from environment variable or use project default"""
     venv_dir = os.environ.get("VENV_DIR")
@@ -33,6 +35,7 @@ def get_venv_dir() -> Path:
     # Default fallback
     return PROJECT_DIR / ".venv"
 
+
 VENV_DIR = get_venv_dir()
 VENV_PYTHON = VENV_DIR / "Scripts" / "python.exe" if sys.platform == "win32" else VENV_DIR / "bin" / "python3"
 
@@ -42,6 +45,7 @@ if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
 if VENV_DIR.exists() and str(VENV_DIR / "Lib" / "site-packages") not in sys.path:
     sys.path.insert(0, str(VENV_DIR / "Lib" / "site-packages"))
+
 
 def get_sc2_path():
     if "SC2PATH" in os.environ:
@@ -75,6 +79,7 @@ def get_sc2_path():
     print(f"[INFO] Tried paths: {default_paths}")
     return None
 
+
 sc2_path = get_sc2_path()
 if sc2_path:
     print(f"[OK] SC2 path: {sc2_path}")
@@ -92,8 +97,8 @@ try:
     logger.add(
         str(log_dir / "training_log.log"),
         rotation="10 MB",
- enqueue = True,
- catch = True,
+ enqueue=True,
+ catch=True,
         level="DEBUG",
         encoding="utf-8",
  )
@@ -102,32 +107,32 @@ except ImportError:
     logger = None
     print("[WARNING] loguru not installed")
 except Exception as e:
- logger = None
+    logger = None
     print(f"[WARNING] Failed to configure loguru: {e}")
 
-warnings.filterwarnings("ignore", category = DeprecationWarning, module="asyncio")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="asyncio")
 
 # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
 # CRITICAL: Import torch safely to avoid C extensions loading errors
 try:
- import multiprocessing
- # Change to a safe directory before importing torch to avoid path conflicts
- original_cwd = os.getcwd()
- try:
- # Temporarily change to project root to avoid local directory conflicts
- project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
- os.chdir(project_root)
- import torch
- # Verify torch is properly installed
+    import multiprocessing
+    # Change to a safe directory before importing torch to avoid path conflicts
+    original_cwd = os.getcwd()
+    try:
+        # Temporarily change to project root to avoid local directory conflicts
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.chdir(project_root)
+        import torch
+        # Verify torch is properly installed
         if not hasattr(torch, '_C'):
             raise ImportError("PyTorch C extensions not properly loaded")
         num_threads = int(os.environ.get("TORCH_NUM_THREADS", "12"))
- torch.set_num_threads(num_threads)
+        torch.set_num_threads(num_threads)
         os.environ["OMP_NUM_THREADS"] = str(num_threads)
         os.environ["MKL_NUM_THREADS"] = str(num_threads)
         print(f"[CPU] PyTorch configured to use {num_threads} threads")
- finally:
- os.chdir(original_cwd)
+    finally:
+        os.chdir(original_cwd)
 except Exception as e:
     print(f"[WARNING] Failed to configure CPU threads: {e}")
     print(f"[INFO] Game will continue but may use default thread settings")
@@ -135,36 +140,39 @@ except Exception as e:
 # Initialize logging configuration at the start to prevent logging errors
 # This fixes ValueError: I/O operation on closed file issues
 # Use a safe handler that catches buffer detachment errors
+
+
 class SafeStreamHandler(logging.StreamHandler):
     """StreamHandler that catches ValueError when buffer is detached"""
 
- def emit(self, record):
- try:
- # Check if stream is closed before attempting to write
+    def emit(self, record):
+        try:
+            # Check if stream is closed before attempting to write
             if hasattr(self.stream, "closed") and self.stream.closed:
- return # Stream is closed, skip logging
+                return  # Stream is closed, skip logging
             if hasattr(self.stream, "detach") and not hasattr(self.stream, "write"):
- return # Buffer has been detached, skip logging
- super().emit(record)
- except (ValueError, OSError, AttributeError) as e:
- # Silently ignore buffer detachment errors
- # These occur when sc2 library tries to log after stream is closed
- error_msg = str(e).lower()
+                return  # Buffer has been detached, skip logging
+            super().emit(record)
+        except (ValueError, OSError, AttributeError) as e:
+            # Silently ignore buffer detachment errors
+            # These occur when sc2 library tries to log after stream is closed
+            error_msg = str(e).lower()
             if "buffer" in error_msg or "detached" in error_msg or "closed" in error_msg:
- # Silently ignore buffer-related errors from sc2 internal logging
- pass
- else:
- # Re-raise or handle other errors normally
- try:
- self.handleError(record)
- except Exception:
- pass # Even handleError can fail, so suppress it
+                # Silently ignore buffer-related errors from sc2 internal logging
+                pass
+            else:
+                # Re-raise or handle other errors normally
+                try:
+                    self.handleError(record)
+                except Exception:
+                    pass  # Even handleError can fail, so suppress it
+
 
 # Configure logging with safe handler using sys.stdout explicitly
 logging.basicConfig(
  handlers=[SafeStreamHandler(sys.stdout)],
- force = True,
- level = logging.INFO,
+ force=True,
+ level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
@@ -180,17 +188,17 @@ except RuntimeError:
 # IMPROVED: Only set Windows-specific policy if explicitly needed and available
 # This allows the code to run on Linux/Docker without modification
 if sys.platform == "win32":
- try:
- # Only use WindowsSelectorEventLoopPolicy if default policy causes issues
- # Most modern Python versions handle this automatically
+    try:
+        # Only use WindowsSelectorEventLoopPolicy if default policy causes issues
+        # Most modern Python versions handle this automatically
         if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
             # Check if we're in a Docker container or WSL (should use default policy)
             if not os.environ.get("WSL_DISTRO_NAME") and not os.path.exists("/.dockerenv"):
- asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 print("[INFO] Using Windows-specific event loop policy")
- except (AttributeError, Exception) as e:
- # Silently fall back to default policy
- pass
+    except (AttributeError, Exception) as e:
+        # Silently fall back to default policy
+        pass
 
 # Ensure event loop exists (fixes RuntimeError and DeprecationWarning in Python 3.10+)
 # Python 3.10+ requires explicit loop creation - get_event_loop() no longer auto-creates
@@ -214,35 +222,35 @@ _host_game = None
 root_logger = logging.getLogger()
 root_logger.handlers = [
  SafeStreamHandler(sys.stdout)
-] # Replace all root handlers with safe handler
+]  # Replace all root handlers with safe handler
 
 # Also configure sc2 logger specifically
 sc2_logger = logging.getLogger("sc2")
-sc2_logger.handlers = [SafeStreamHandler(sys.stdout)] # Replace all sc2 handlers with safe handler
+sc2_logger.handlers = [SafeStreamHandler(sys.stdout)]  # Replace all sc2 handlers with safe handler
 sc2_logger.setLevel(logging.INFO)
-sc2_logger.propagate = False # Prevent propagation to root logger
+sc2_logger.propagate = False  # Prevent propagation to root logger
 
 # Monkey-patch StreamHandler.emit to catch buffer errors globally
 # This ensures any StreamHandler created later will also be safe
 _original_stream_handler_emit = logging.StreamHandler.emit
 
+
 def safe_stream_handler_emit(self, record):
- try:
- return _original_stream_handler_emit(self, record)
- except (ValueError, OSError) as e:
- error_msg = str(e).lower()
+    try:
+        return _original_stream_handler_emit(self, record)
+    except (ValueError, OSError) as e:
+        error_msg = str(e).lower()
         if "buffer" in error_msg or "detached" in error_msg:
- # Silently ignore buffer detachment errors
- return
- # Re-raise other errors
- raise
+            # Silently ignore buffer detachment errors
+            return
+        # Re-raise other errors
+        raise
+
 
 logging.StreamHandler.emit = safe_stream_handler_emit
 
 # Bot import - Use WickedZergBotPro as integrated bot
 # Add parent directory (root) to sys.path from current directory (local_training)
-import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Curriculum Learning System
@@ -288,6 +296,7 @@ OPPONENT_RACES = [Race.Terran, Race.Protoss, Race.Zerg]
 # Personality options
 PERSONALITIES = ["serral", "dark", "reynor"]
 
+
 def write_status_file(instance_id, status_data):
     """
  Write instance status to a JSON file for dashboard display
@@ -300,72 +309,73 @@ def write_status_file(instance_id, status_data):
  instance_id: Unique instance identifier (0 if not in parallel mode)
  status_data: Dictionary containing status information
     """
- try:
- import json
- import time
+    try:
+        import json
+        import time
 
- # IMPROVED: Use project root stats/ directory with instance subdirectory
- # This prevents I/O bottleneck when running 30+ instances
- project_root = Path(__file__).parent.parent
+        # IMPROVED: Use project root stats/ directory with instance subdirectory
+        # This prevents I/O bottleneck when running 30+ instances
+        project_root = Path(__file__).parent.parent
         status_dir = project_root / "stats" / f"instance_{instance_id}"
- status_dir.mkdir(parents = True, exist_ok = True)
+        status_dir.mkdir(parents=True, exist_ok=True)
         status_file = status_dir / "status.json"
 
- # IMPROVED: Use temporary file + atomic move to prevent file lock conflicts
- max_retries = 3
- retry_delay = 0.1
+        # IMPROVED: Use temporary file + atomic move to prevent file lock conflicts
+        max_retries = 3
+        retry_delay = 0.1
 
- for attempt in range(max_retries):
- try:
- # Step 1: Write to temporary file
+        for attempt in range(max_retries):
+            try:
+                # Step 1: Write to temporary file
                 temp_file = status_file.with_suffix('.tmp')
                 with open(temp_file, "w", encoding="utf-8") as f:
- json.dump(status_data, f, indent = 2)
+                    json.dump(status_data, f, indent=2)
 
- # Step 2: Atomic move (replaces existing file atomically)
+                # Step 2: Atomic move (replaces existing file atomically)
                 # On Windows, os.replace is atomic; on Unix, it's also atomic
- import os
- os.replace(str(temp_file), str(status_file))
- return # Success
+                import os
+                os.replace(str(temp_file), str(status_file))
+                return  # Success
 
- except (IOError, OSError, PermissionError) as e:
- if attempt < max_retries - 1:
- time.sleep(retry_delay * (attempt + 1)) # Exponential backoff
- continue
- else:
+            except (IOError, OSError, PermissionError) as e:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                    continue
+                else:
                     # Last attempt failed - log but don't raise
                     print(f"[WARNING] Failed to write status file after {max_retries} attempts: {e}")
- return
- except Exception as e:
- # Silently fail - status file writing is optional
- pass
+                    return
+    except Exception as e:
+        # Silently fail - status file writing is optional
+        pass
+
 
 def run_training():
- monitoring_procs = (None, None)
+    monitoring_procs = (None, None)
 
- # DRY-RUN MODE: Test all logic without running actual games
- if DRY_RUN_MODE:
+    # DRY-RUN MODE: Test all logic without running actual games
+    if DRY_RUN_MODE:
         print("\n" + "=" * 70)
         print("? DRY-RUN MODE ACTIVATED - Testing without StarCraft II")
         print("=" * 70)
 
- try:
+        try:
             print("\n[1/5] Verifying SC2 path...")
- sc2_path = get_sc2_path()
- if sc2_path:
+            sc2_path = get_sc2_path()
+            if sc2_path:
                 print(f"  ? SC2 path verified: {sc2_path}")
- else:
+            else:
                 print(f"  ??  SC2 path not found (but that's OK for dry-run)")
 
             print("\n[2/5] Initializing CurriculumManager...")
- curriculum = CurriculumManager()
- current_difficulty = curriculum.get_difficulty()
- progress_info = curriculum.get_progress_info()
+            curriculum = CurriculumManager()
+            current_difficulty = curriculum.get_difficulty()
+            progress_info = curriculum.get_progress_info()
             print(f"  ? Curriculum loaded: {progress_info['level_name']}")
             print(f"     Level: {progress_info['current_level']}/{progress_info['total_levels']}")
- print(
+            print(
                 f"     Games at current level: {progress_info['games_at_current_level']}/{progress_info['min_games_required']}"
- )
+            )
 
             print("\n[3/5] Loading bot architecture...")
             print(f"  ? WickedZergBotPro class loaded successfully")
@@ -375,9 +385,9 @@ def run_training():
 
             print("\n[4/5] Checking data directories...")
             directories = ["replays", "logs", "stats", "data"]
- for dir_name in directories:
- dir_path = Path(dir_name)
- dir_path.mkdir(exist_ok = True)
+            for dir_name in directories:
+                dir_path = Path(dir_name)
+                dir_path.mkdir(exist_ok=True)
                 print(f"  ? {dir_name}/ directory ready")
 
             print("\n[5/5] Configuration summary...")
@@ -395,99 +405,99 @@ def run_training():
             print("  2. Change 'DRY_RUN_MODE = True' to 'DRY_RUN_MODE = False'")
             print("  3. Run: python main_integrated.py")
             print("\n")
- return # Exit without starting actual training
+            return  # Exit without starting actual training
 
- except Exception as e:
+        except Exception as e:
             print("\n" + "=" * 70)
             print(f"? [DRY-RUN FAILED] Error during validation:")
             print("=" * 70)
             print(f"Error: {type(e).__name__}: {e}")
- import traceback
+            import traceback
 
- traceback.print_exc()
- return
+            traceback.print_exc()
+            return
 
- # ACTUAL TRAINING MODE: Run real games with StarCraft II
+    # ACTUAL TRAINING MODE: Run real games with StarCraft II
 
- # Note: Event loop is already running when this function is called (via asyncio.run())
- instance_id = 0 # IMPROVED: Always 0 (single game mode)
- # Override environment variable to force single game mode
+    # Note: Event loop is already running when this function is called (via asyncio.run())
+    instance_id = 0  # IMPROVED: Always 0 (single game mode)
+    # Override environment variable to force single game mode
     os.environ["INSTANCE_ID"] = "0"
     os.environ["NUM_INSTANCES"] = "1"
- # IMPROVED: Show window for visual monitoring
+    # IMPROVED: Show window for visual monitoring
     show_window = os.environ.get("SHOW_WINDOW", "true").lower() == "true"
     os.environ["SHOW_WINDOW"] = "true" if show_window else "false"
 
- sc2_path = get_sc2_path()
- if sc2_path:
+    sc2_path = get_sc2_path()
+    if sc2_path:
         os.environ["SC2PATH"] = sc2_path
- _config = Config()
- # IMPROVED: Try C++ implementation first for better performance, fallback to Python if needed
- if _config.PROTOCOL_BUFFERS_IMPL:
- try:
- # Try to use C++ implementation (10x faster)
+    _config = Config()
+    # IMPROVED: Try C++ implementation first for better performance, fallback to Python if needed
+    if _config.PROTOCOL_BUFFERS_IMPL:
+        try:
+            # Try to use C++ implementation (10x faster)
             os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = _config.PROTOCOL_BUFFERS_IMPL
             if _config.PROTOCOL_BUFFERS_IMPL == "cpp":
- # Verify C++ implementation is available
- try:
+                # Verify C++ implementation is available
+                try:
                     print("[OK] Using C++ protobuf implementation (fast mode)")
- except ImportError:
- # Fallback to Python implementation if C++ not available
+                except ImportError:
+                    # Fallback to Python implementation if C++ not available
                     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
                     print("[WARNING] C++ protobuf not available, using Python implementation (slower)")
- except Exception as e:
- # Fallback to Python on any error
+        except Exception as e:
+            # Fallback to Python on any error
             os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
             print(f"[WARNING] Protobuf setup error: {e}, using Python implementation")
 
- if not sc2_path:
+    if not sc2_path:
         print(f"[WARNING] SC2 path not found")
         print(f"[INFO] Please set SC2PATH environment variable to your StarCraft II installation path")
 
- # Create replay directory
+    # Create replay directory
     replay_dir = "replays"
- os.makedirs(replay_dir, exist_ok = True)
+    os.makedirs(replay_dir, exist_ok=True)
 
- # Training statistics
- game_count = 0
- win_count = 0
- loss_count = 0
+    # Training statistics
+    game_count = 0
+    win_count = 0
+    loss_count = 0
     last_result = "N/A"  # Store last game result for terminal display
- # LEARNING: Batch processing - collect results first
- batch_results = []
- if len(batch_results) >= 10:
- # Process batch of 10 games at once
- process_batch(batch_results)
- batch_results.clear()
- # LEARNING: Batch processing - collect results first
- batch_results = []
- if len(batch_results) >= 10:
- # Process batch of 10 games at once
- process_batch(batch_results)
- batch_results.clear()
+    # LEARNING: Batch processing - collect results first
+    batch_results = []
+    if len(batch_results) >= 10:
+        # Process batch of 10 games at once
+        process_batch(batch_results)
+        batch_results.clear()
+    # LEARNING: Batch processing - collect results first
+    batch_results = []
+    if len(batch_results) >= 10:
+        # Process batch of 10 games at once
+        process_batch(batch_results)
+        batch_results.clear()
 
- MAX_CONTINUOUS_FAILURES = 3
- continuous_failures = 0
+    MAX_CONTINUOUS_FAILURES = 3
+    continuous_failures = 0
 
     monitor_enabled = os.environ.get("ENABLE_MONITOR", "false").lower() == "true"
- code_monitor = None
- code_monitor = None
- monitor_enabled = False
+    code_monitor = None
+    code_monitor = None
+    monitor_enabled = False
 
- curriculum = CurriculumManager()
- current_difficulty = curriculum.get_difficulty()
+    curriculum = CurriculumManager()
+    current_difficulty = curriculum.get_difficulty()
 
- # Legacy: Dynamic difficulty tracking (for backward compatibility)
- current_difficulty_index = curriculum.current_idx
- difficulty_games = curriculum.games_at_current_level
+    # Legacy: Dynamic difficulty tracking (for backward compatibility)
+    current_difficulty_index = curriculum.current_idx
+    difficulty_games = curriculum.games_at_current_level
 
- # IMPROVED: Auto code optimization (default rule)
- if _config.AUTO_OPTIMIZE_CODE:
- try:
+    # IMPROVED: Auto code optimization (default rule)
+    if _config.AUTO_OPTIMIZE_CODE:
+        try:
             print(f"[CODE OPTIMIZATION] Auto-optimization enabled (default rule)")
- import re
+            import re
 
- optimization_files = [
+            optimization_files = [
                 'wicked_zerg_bot_pro.py',
                 'production_manager.py',
                 'economy_manager.py',
@@ -499,14 +509,13 @@ def run_training():
                 'main_integrated.py'
  ]
 
- optimized_count = 0
- for filename in optimization_files:
- filepath = Path(filename)
- if filepath.exists():
- try:
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                        with open(filepath, 'r', encoding='utf-8') as f:
- # LEARNING: Cache file contents if read multiple times
+    optimized_count = 0
+    for filename in optimization_files:
+        filepath = Path(filename)
+        if filepath.exists():
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    # LEARNING: Cache file contents if read multiple times
  content = f.read()
  # LEARNING: Cache file contents if read multiple times
  content = f.read()
@@ -1033,89 +1042,43 @@ def run_training():
 
                         print(f"[BUILD LEARNING] Iteration {iteration + 1}/{learning_iterations} (Speed: {speed_multiplier}x)...")
 
- # Performance monitoring
- perf = performance_monitor.check_performance()
+                        # Performance monitoring
+                        perf = performance_monitor.check_performance()
                         if perf["needs_optimization"]:
                             print(f"[PERFORMANCE] High resource usage detected (CPU: {perf['cpu_percent']:.1f}%, Memory: {perf['memory_percent']:.1f}%)")
- opt_result = performance_monitor.trigger_code_optimization()
- # LEARNING: Batch processing - collect results first
- batch_results = []
- if len(batch_results) >= 10:
- # Process batch of 10 games at once
- process_batch(batch_results)
- batch_results.clear()
- # LEARNING: Batch processing - collect results first
- batch_results = []
- if len(batch_results) >= 10:
- # Process batch of 10 games at once
- process_batch(batch_results)
- batch_results.clear()
+                            opt_result = performance_monitor.trigger_code_optimization()
                             if opt_result.get("success"):
                                 print("[PERFORMANCE] Code optimization triggered")
 
- extractor = ReplayBuildOrderExtractor(replay_dir = replay_archive_dir)
- replay_files = extractor.scan_replays()
-
- weighted_params = {}
- total_weight = 0.0
-
- # IMPROVED: Use configurable max_replays instead of hardcoded 50
- max_replays_batch = _config.MAX_REPLAYS_FOR_LEARNING // 2 # Process in batches
- for replay_file in replay_files[:max_replays_batch]:
- try:
- quality_data = quality_analyzer.process_replay(replay_file)
-
- if quality_data:
-                                    weight = quality_data["weight"]
-                                    strategy_type = quality_data.get("strategy_type", "balanced")
- learning_accelerator.update_strategy_count(strategy_type)
-
- learned_params = extractor.extract_build_order(replay_file)
- if learned_params:
-                                        for key, value in learned_params.get("timings", {}).items():
- if key not in weighted_params:
- weighted_params[key] = []
- weighted_params[key].append((value, weight))
- total_weight += weight
- except UnicodeDecodeError:
- error_handler.handle_unicode_error(replay_file)
- continue
- except Exception as e:
- error_type = type(e).__name__
-                                if "Mpq" in error_type or "Corrupt" in error_type:
- error_handler.handle_mpq_error(replay_file)
- continue
-
- if weighted_params:
- final_params = {}
- for key, weighted_values in weighted_params.items():
- if weighted_values:
- weighted_sum = sum(v * w for v, w in weighted_values)
- weight_sum = sum(w for _, w in weighted_values)
- final_params[key] = weighted_sum / weight_sum if weight_sum > 0 else 0.0
-
- if final_params:
- extractor.save_learned_parameters(final_params)
-                                print(f"[BUILD LEARNING] Iteration {iteration + 1}: Updated {len(final_params)} build order parameters (Weighted: Victory={VICTORY_WEIGHT}, Defeat={DEFEAT_WEIGHT})")
- else:
+                        # OPTIMIZED: Use learn_from_replays for batch processing instead of manual loop
+                        extractor = ReplayBuildOrderExtractor(replay_dir=replay_archive_dir)
+                        max_replays_batch = _config.MAX_REPLAYS_FOR_LEARNING // 2  # Process in batches
+                        learned_params = extractor.learn_from_replays(max_replays=max_replays_batch)
+                        
+                        if learned_params:
+                            extractor.save_learned_parameters(learned_params)
+                            print(f"[BUILD LEARNING] Iteration {iteration + 1}: Updated {len(learned_params)} build order parameters")
+                        else:
                             print(f"[BUILD LEARNING] Iteration {iteration + 1}: No new parameters learned")
 
- # Generate reports
- error_report = error_handler.get_error_report()
-                    if error_report["corrupted_files"] > 0:
-                        print(f"[ERROR HANDLING] Moved {error_report['corrupted_files']} corrupted files to trash")
+                        # Generate reports
+                        error_report = error_handler.get_error_report()
+                        if error_report.get("corrupted_files", 0) > 0:
+                            print(f"[ERROR HANDLING] Moved {error_report['corrupted_files']} corrupted files to trash")
 
- learning_report = learning_accelerator.get_report()
-                    print(f"[LEARNING STATS] Strategy distribution: {learning_report['strategy_distribution']}")
-                    print(f"[LEARNING STATS] Priority strategy: {learning_report['priority_strategy']}")
+                        learning_report = learning_accelerator.get_report()
+                        print(f"[LEARNING STATS] Strategy distribution: {learning_report.get('strategy_distribution', {})}")
+                        print(f"[LEARNING STATS] Priority strategy: {learning_report.get('priority_strategy', 'N/A')}")
 
- accuracy_report_path = error_handler.generate_accuracy_report()
- if accuracy_report_path:
-                        print(f"[REPORT] Accuracy report saved to: {accuracy_report_path}")
+                        accuracy_report_path = error_handler.generate_accuracy_report()
+                        if accuracy_report_path:
+                            print(f"[REPORT] Accuracy report saved to: {accuracy_report_path}")
 
                     print(f"[BUILD LEARNING] Completed {learning_iterations} iterations")
- except ImportError as e:
-                print(f"[INFO] Build order learning not available: {e}")
+                except ImportError as e:
+                    print(f"[INFO] Build order learning not available: {e}")
+                except Exception as e:
+                    print(f"[WARNING] Build order learning error: {e}")
  except Exception as e:
                 print(f"[WARNING] Build order learning error: {e}")
 
