@@ -61,8 +61,12 @@ class BuildOrderComparator:
             # Auto-detect learned_build_orders.json
             script_dir = Path(__file__).parent.parent
             possible_paths = [
-                script_dir / "local_training" / "scripts" / "learned_build_orders.json",
-                script_dir / "learned_build_orders.json",
+                script_dir /
+                "local_training" /
+                "scripts" /
+                "learned_build_orders.json",
+                script_dir /
+                "learned_build_orders.json",
                 Path("local_training/scripts/learned_build_orders.json"),
             ]
 
@@ -126,8 +130,12 @@ class BuildOrderComparator:
         recommendations: List[str] = []
 
         # Compare each parameter
-        for param_name in ["natural_expansion_supply", "gas_supply", "spawning_pool_supply",
-                          "third_hatchery_supply", "speed_upgrade_supply"]:
+        for param_name in [
+            "natural_expansion_supply",
+            "gas_supply",
+            "spawning_pool_supply",
+            "third_hatchery_supply",
+                "speed_upgrade_supply"]:
             training_value = training_build.get(param_name)
             pro_value = self.pro_baseline.get(param_name)
 
@@ -270,7 +278,7 @@ class BuildOrderComparator:
         # Adjust based on game result
         if game_result == "Victory":
             overall_score = min(
-    1.0, overall_score * 1.1)  # Boost for victories
+                1.0, overall_score * 1.1)  # Boost for victories
         else:
             overall_score = overall_score * 0.9  # Reduce for defeats
 
@@ -280,15 +288,15 @@ class BuildOrderComparator:
         """Save comparison to history file"""
         try:
             # Ensure directory exists
-            self.comparison_history_file.parent.mkdir(parents=True, exist_ok=True)
+            self.comparison_history_file.parent.mkdir(
+                parents=True, exist_ok=True)
 
             # Load existing history
             if self.comparison_history_file.exists():
                 with open(self.comparison_history_file, 'r', encoding='utf-8') as f:
                     history_data = json.load(f)
-                self.comparison_history = [
-                    BuildOrderAnalysis(**item) for item in history_data.get("comparisons", [])
-                ]
+                self.comparison_history = [BuildOrderAnalysis(
+                    **item) for item in history_data.get("comparisons", [])]
             else:
                 self.comparison_history = []
 
@@ -358,13 +366,16 @@ class BuildOrderComparator:
         for comp in analysis.comparisons:
             if comp.training_supply is not None and comp.pro_supply is not None:
                 # Move towards training value if it was successful
-                current_value = updated_params.get(comp.parameter_name, comp.pro_supply)
+                current_value = updated_params.get(
+                    comp.parameter_name, comp.pro_supply)
 
                 # If training was earlier and we won, move baseline earlier
                 if comp.difference is not None and comp.difference < 0:
                     # Training was earlier - move baseline earlier slightly
-                    new_value = current_value + (comp.difference * learning_rate * 0.5)
-                    updated_params[comp.parameter_name] = max(6.0, new_value)  # Minimum supply 6
+                    new_value = current_value + \
+                        (comp.difference * learning_rate * 0.5)
+                    updated_params[comp.parameter_name] = max(
+                        6.0, new_value)  # Minimum supply 6
                 elif comp.difference is not None and comp.difference > 2:
                     # Training was later - don't move (keep earlier baseline)
                     pass
@@ -388,10 +399,12 @@ class BuildOrderComparator:
 
         for comp in analysis.comparisons:
             report_parts.append(f"\n{comp.parameter_name}:")
-            report_parts.append(f"  Training: {comp.training_supply or 'Not executed'}")
+            report_parts.append(
+                f"  Training: {comp.training_supply or 'Not executed'}")
             report_parts.append(f"  Pro Baseline: {comp.pro_supply or 'N/A'}")
             if comp.difference is not None:
-                report_parts.append(f"  Difference: {comp.difference:+.1f} supply")
+                report_parts.append(
+                    f"  Difference: {comp.difference:+.1f} supply")
             report_parts.append(f"  {comp.recommendation}")
 
         if analysis.recommendations:

@@ -25,9 +25,10 @@ def check_python_processes():
     print("\n" + "=" * 70)
     print("PYTHON PROCESSES")
     print("=" * 70)
-    
+
     training_processes = []
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time', 'cpu_percent', 'memory_info']):
+    for proc in psutil.process_iter(
+            ['pid', 'name', 'cmdline', 'create_time', 'cpu_percent', 'memory_info']):
         try:
             if proc.info['name'] and 'python' in proc.info['name'].lower():
                 cmdline = proc.info.get('cmdline', [])
@@ -44,7 +45,7 @@ def check_python_processes():
                         })
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
-    
+
     if training_processes:
         print(f"\n[FOUND] {len(training_processes)} training process(es):")
         for proc in training_processes:
@@ -56,7 +57,7 @@ def check_python_processes():
     else:
         print("\n[NOT FOUND] No training process detected")
         print("  Training may have stopped or not started yet")
-    
+
     return len(training_processes) > 0
 
 
@@ -65,7 +66,7 @@ def check_monitoring_server():
     print("\n" + "=" * 70)
     print("MONITORING SERVER")
     print("=" * 70)
-    
+
     try:
         import requests
         response = requests.get("http://localhost:8001/api/health", timeout=2)
@@ -75,7 +76,9 @@ def check_monitoring_server():
             print("  Status: OK")
             return True
         else:
-            print("\n[WARNING] Monitoring server responded with status:", response.status_code)
+            print(
+                "\n[WARNING] Monitoring server responded with status:",
+                response.status_code)
             return False
     except requests.exceptions.ConnectionError:
         print("\n[NOT RUNNING] Monitoring server is not accessible")
@@ -92,14 +95,14 @@ def check_training_stats():
     print("\n" + "=" * 70)
     print("TRAINING STATISTICS")
     print("=" * 70)
-    
+
     # Check multiple possible locations
     stats_files = [
         PROJECT_ROOT / "training_stats.json",
         PROJECT_ROOT / "data" / "training_stats.json",
         PROJECT_ROOT / "local_training" / "training_stats.json",
     ]
-    
+
     stats_found = False
     for stats_file in stats_files:
         if stats_file.exists():
@@ -110,22 +113,27 @@ def check_training_stats():
                 with open(stats_file, 'r', encoding='utf-8') as f:
                     first_line = f.readline().strip()
                     f.seek(0)  # Reset to beginning
-                    
-                    if first_line.startswith('{') and first_line.count('{') == first_line.count('}'):
+
+                    if first_line.startswith('{') and first_line.count(
+                            '{') == first_line.count('}'):
                         # Single JSON object - try to parse
                         try:
                             stats = json.loads(first_line)
-                            print(f"  Total Games: {stats.get('total_games', 0)}")
+                            print(
+                                f"  Total Games: {stats.get('total_games', 0)}")
                             print(f"  Wins: {stats.get('wins', 0)}")
                             print(f"  Losses: {stats.get('losses', 0)}")
-                            print(f"  Win Rate: {stats.get('win_rate', 0):.1f}%")
+                            print(
+                                f"  Win Rate: {stats.get('win_rate', 0):.1f}%")
                             if 'episode' in stats:
-                                print(f"  Episode: {stats.get('episode', 0)}/{stats.get('total_episodes', 0)}")
-                                print(f"  Progress: {stats.get('progress_percent', 0):.1f}%")
+                                print(
+                                    f"  Episode: {stats.get('episode', 0)}/{stats.get('total_episodes', 0)}")
+                                print(
+                                    f"  Progress: {stats.get('progress_percent', 0):.1f}%")
                         except json.JSONDecodeError:
                             # Fall through to JSONL parsing
                             pass
-                    
+
                     # JSONL format - read all lines
                     f.seek(0)
                     lines = [line.strip() for line in f if line.strip()]
@@ -139,45 +147,54 @@ def check_training_stats():
                             try:
                                 game_data = json.loads(line)
                                 games.append(game_data)
-                                if game_data.get('result', '').upper() == 'VICTORY' or game_data.get('loss_reason', '').upper() == 'VICTORY':
+                                if game_data.get(
+                                        'result', '').upper() == 'VICTORY' or game_data.get(
+                                        'loss_reason', '').upper() == 'VICTORY':
                                     wins += 1
                                 elif game_data.get('result', '').upper() == 'DEFEAT' or game_data.get('loss_reason', '').upper() == 'DEFEAT':
                                     losses += 1
                             except json.JSONDecodeError:
                                 continue
-                        
+
                         if games:
                             total = len(games)
-                            win_rate = (wins / total * 100) if total > 0 else 0.0
+                            win_rate = (
+                                wins / total * 100) if total > 0 else 0.0
                             print(f"  Total Games: {total}")
                             print(f"  Wins: {wins}")
                             print(f"  Losses: {losses}")
                             print(f"  Win Rate: {win_rate:.1f}%")
-                            
+
                             # Show last game info
                             if games:
                                 last_game = games[-1]
                                 print(f"\n  Last Game:")
-                                print(f"    Result: {last_game.get('result', last_game.get('loss_reason', 'N/A'))}")
+                                print(
+                                    f"    Result: {last_game.get('result', last_game.get('loss_reason', 'N/A'))}")
                                 if 'map_name' in last_game:
-                                    print(f"    Map: {last_game.get('map_name', 'N/A')}")
+                                    print(
+                                        f"    Map: {last_game.get('map_name', 'N/A')}")
                                 if 'enemy_race' in last_game or 'opponent_race' in last_game:
-                                    race = last_game.get('enemy_race', last_game.get('opponent_race', 'N/A'))
+                                    race = last_game.get(
+                                        'enemy_race', last_game.get(
+                                            'opponent_race', 'N/A'))
                                     print(f"    Enemy: {race}")
                                 if 'game_time' in last_game:
-                                    print(f"    Duration: {last_game.get('game_time', 0)}s")
+                                    print(
+                                        f"    Duration: {last_game.get('game_time', 0)}s")
                                 if 'timestamp' in last_game:
-                                    print(f"    Time: {last_game.get('timestamp', 'N/A')}")
+                                    print(
+                                        f"    Time: {last_game.get('timestamp', 'N/A')}")
             except Exception as e:
                 print(f"  [ERROR] Failed to read: {e}")
                 import traceback
                 traceback.print_exc()
             break
-    
+
     if not stats_found:
         print("\n[NOT FOUND] No training statistics file found")
         print("  Training may not have started yet or no games completed")
-    
+
     return stats_found
 
 
@@ -186,8 +203,9 @@ def check_instance_status():
     print("\n" + "=" * 70)
     print("INSTANCE STATUS")
     print("=" * 70)
-    
-    instance_file = PROJECT_ROOT / "local_training" / "stats" / "instance_0_status.json"
+
+    instance_file = PROJECT_ROOT / "local_training" / \
+        "stats" / "instance_0_status.json"
     if instance_file.exists():
         print(f"\n[FOUND] {instance_file}")
         try:
@@ -197,10 +215,12 @@ def check_instance_status():
                 print(f"  Win Count: {instance_data.get('win_count', 0)}")
                 print(f"  Loss Count: {instance_data.get('loss_count', 0)}")
                 print(f"  Win Rate: {instance_data.get('win_rate', 0):.1f}%")
-                print(f"  Difficulty: {instance_data.get('difficulty', 'N/A')}")
+                print(
+                    f"  Difficulty: {instance_data.get('difficulty', 'N/A')}")
                 print(f"  Status: {instance_data.get('status', 'N/A')}")
                 if 'last_update' in instance_data:
-                    print(f"  Last Update: {instance_data.get('last_update', 'N/A')}")
+                    print(
+                        f"  Last Update: {instance_data.get('last_update', 'N/A')}")
         except Exception as e:
             print(f"  [ERROR] Failed to read: {e}")
     else:
@@ -213,13 +233,13 @@ def check_recent_replays():
     print("\n" + "=" * 70)
     print("RECENT REPLAYS")
     print("=" * 70)
-    
+
     replay_dirs = [
         PROJECT_ROOT / "replays",
         Path("D:/replays"),
         PROJECT_ROOT / "local_training" / "replays",
     ]
-    
+
     recent_replays = []
     for replay_dir in replay_dirs:
         if replay_dir.exists():
@@ -231,16 +251,17 @@ def check_recent_replays():
                         'modified': datetime.fromtimestamp(stat.st_mtime),
                         'size_mb': stat.st_size / 1024 / 1024
                     })
-                except:
+                except BaseException:
                     pass
-    
+
     if recent_replays:
         # Sort by modification time
         recent_replays.sort(key=lambda x: x['modified'], reverse=True)
         print(f"\n[FOUND] {len(recent_replays)} replay file(s)")
         print("\n  Most recent replays:")
         for replay in recent_replays[:5]:
-            print(f"    {replay['modified'].strftime('%Y-%m-%d %H:%M:%S')} - {Path(replay['path']).name} ({replay['size_mb']:.1f} MB)")
+            print(
+                f"    {replay['modified'].strftime('%Y-%m-%d %H:%M:%S')} - {Path(replay['path']).name} ({replay['size_mb']:.1f} MB)")
     else:
         print("\n[NOT FOUND] No replay files found")
         print("  Training may not have generated replays yet")
@@ -252,37 +273,39 @@ def main():
     print("TRAINING STATUS CHECK")
     print("=" * 70)
     print(f"\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     # Check processes
     process_running = check_python_processes()
-    
+
     # Check monitoring server
     server_running = check_monitoring_server()
-    
+
     # Check training stats
     stats_found = check_training_stats()
-    
+
     # Check instance status
     check_instance_status()
-    
+
     # Check recent replays
     check_recent_replays()
-    
+
     # Summary
     print("\n" + "=" * 70)
     print("SUMMARY")
     print("=" * 70)
-    print(f"  Training Process: {'RUNNING' if process_running else 'NOT RUNNING'}")
-    print(f"  Monitoring Server: {'RUNNING' if server_running else 'NOT RUNNING'}")
+    print(
+        f"  Training Process: {'RUNNING' if process_running else 'NOT RUNNING'}")
+    print(
+        f"  Monitoring Server: {'RUNNING' if server_running else 'NOT RUNNING'}")
     print(f"  Training Stats: {'FOUND' if stats_found else 'NOT FOUND'}")
-    
+
     if process_running or server_running:
         print("\n? Training appears to be active")
         print("\n  Monitor at: http://localhost:8001")
     else:
         print("\n??  Training does not appear to be running")
         print("\n  To start training: python run_with_training.py")
-    
+
     print("=" * 70)
 
 

@@ -37,7 +37,8 @@ class ManusDashboardClient:
         self.base_url = base_url.rstrip('/')
         # API 키 로드 우선순위: 1) 인자, 2) 환경 변수, 3) 파일
         self.api_key = api_key or self._load_api_key()
-        self.enabled = enabled and os.environ.get("MANUS_DASHBOARD_ENABLED", "1") == "1"
+        self.enabled = enabled and os.environ.get(
+            "MANUS_DASHBOARD_ENABLED", "1") == "1"
 
         # tRPC API 엔드포인트
         self.trpc_url = f"{self.base_url}/api/trpc"
@@ -57,7 +58,8 @@ class ManusDashboardClient:
         self.max_retries = 3
         self.retry_delay = 2
 
-        logger.info(f"[MANUS] 클라이언트 초기화: {self.base_url} (활성화: {self.enabled})")
+        logger.info(
+            f"[MANUS] 클라이언트 초기화: {self.base_url} (활성화: {self.enabled})")
 
     def _load_api_key(self) -> Optional[str]:
         """
@@ -88,7 +90,8 @@ class ManusDashboardClient:
                         try:
                             key = key_file.read_text(encoding=encoding).strip()
                             if key:
-                                logger.info(f"[MANUS] API 키를 파일에서 로드: {key_file}")
+                                logger.info(
+                                    f"[MANUS] API 키를 파일에서 로드: {key_file}")
                                 return key
                             break
                         except UnicodeDecodeError:

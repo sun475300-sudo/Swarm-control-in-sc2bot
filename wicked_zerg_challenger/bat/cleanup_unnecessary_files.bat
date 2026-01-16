@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 > nul
-REM 阂鞘夸茄 颇老 力芭 硅摹 胶农赋飘
+REM 攵堩晞鞖旐暅 韺岇澕 鞝滉卑 氚办箻 鞀ろ伂毽巾姼
 
 echo ======================================================================
-echo Cleanup Unnecessary Files - 阂鞘夸茄 颇老 力芭
+echo Cleanup Unnecessary Files - 攵堩晞鞖旐暅 韺岇澕 鞝滉卑
 echo ======================================================================
 echo.
 

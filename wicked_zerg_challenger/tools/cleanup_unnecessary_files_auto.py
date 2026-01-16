@@ -53,43 +53,43 @@ DELETE_PATTERNS = {
 def find_files_to_delete() -> List[Path]:
     """Find files that should be deleted"""
     files_to_delete: List[Path] = []
-    
+
     # Find backup files
     for ext in DELETE_PATTERNS["extensions"]:
         for file_path in PROJECT_ROOT.rglob(f"*{ext}"):
             if file_path.is_file():
                 files_to_delete.append(file_path)
-    
+
     # Find duplicate Python files
     for suffix in DELETE_PATTERNS["suffixes"]:
         for file_path in PROJECT_ROOT.rglob(f"*{suffix}"):
             if file_path.is_file():
                 files_to_delete.append(file_path)
-    
+
     # Find redundant documentation files
     for file_path in PROJECT_ROOT.rglob("*.md"):
         # Skip if in keep list
         if file_path.name in KEEP_FILES:
             continue
-        
+
         # Skip important files
         if any(important in file_path.name for important in [
             "README", "SETUP", "LICENSE", "CONTRIBUTING", "CHANGELOG"
         ]):
             continue
-        
+
         # Check if matches delete patterns
         for pattern in DELETE_PATTERNS["doc_patterns"]:
             if pattern in file_path.name:
                 # But keep some important ones
                 if any(keep in file_path.name for keep in [
-                    "CODE_CHECK", "CODE_OPTIMIZATION", "GIT_COMMIT", 
+                    "CODE_CHECK", "CODE_OPTIMIZATION", "GIT_COMMIT",
                     "PROJECT_OPTIMIZATION", "TRAINING_MONITORING"
                 ]):
                     continue
                 files_to_delete.append(file_path)
                 break
-    
+
     return files_to_delete
 
 
@@ -99,42 +99,54 @@ def main():
     print("CLEANUP UNNECESSARY FILES (AUTO MODE)")
     print("=" * 70)
     print()
-    
+
     files_to_delete = find_files_to_delete()
-    
+
     if not files_to_delete:
         print("No unnecessary files found.")
         return
-    
+
     print(f"Found {len(files_to_delete)} files to delete:")
     print()
-    
+
     # Group by type
-    backup_files = [f for f in files_to_delete if f.suffix in [".bak", ".tmp", ".old", ".orig", ".swp"]]
-    duplicate_files = [f for f in files_to_delete if any(suffix in f.name for suffix in ["_fixed", "_old", "_backup", "_copy"])]
+    backup_files = [
+        f for f in files_to_delete if f.suffix in [
+            ".bak",
+            ".tmp",
+            ".old",
+            ".orig",
+            ".swp"]]
+    duplicate_files = [
+        f for f in files_to_delete if any(
+            suffix in f.name for suffix in [
+                "_fixed",
+                "_old",
+                "_backup",
+                "_copy"])]
     redundant_docs = [f for f in files_to_delete if f.suffix == ".md"]
-    
+
     print(f"  Backup files: {len(backup_files)}")
     print(f"  Duplicate files: {len(duplicate_files)}")
     print(f"  Redundant docs: {len(redundant_docs)}")
     print()
-    
+
     # Show first 20 files
     print("Files to be deleted (showing first 20):")
     for i, file_path in enumerate(sorted(files_to_delete)[:20], 1):
         rel_path = file_path.relative_to(PROJECT_ROOT)
         print(f"  {i}. {rel_path}")
-    
+
     if len(files_to_delete) > 20:
         print(f"  ... and {len(files_to_delete) - 20} more files")
-    
+
     print()
     print("Deleting files...")
     print()
-    
+
     deleted_count = 0
     failed_count = 0
-    
+
     for file_path in sorted(files_to_delete):
         try:
             file_path.unlink()
@@ -144,8 +156,9 @@ def main():
         except Exception as e:
             failed_count += 1
             if failed_count <= 5:  # Show first 5 errors
-                print(f"[ERROR] Failed to delete {file_path.relative_to(PROJECT_ROOT)}: {e}")
-    
+                print(
+                    f"[ERROR] Failed to delete {file_path.relative_to(PROJECT_ROOT)}: {e}")
+
     print()
     print("=" * 70)
     print("CLEANUP COMPLETE")

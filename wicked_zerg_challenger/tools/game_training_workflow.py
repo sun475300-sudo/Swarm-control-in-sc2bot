@@ -28,12 +28,12 @@ def run_precision_check() -> bool:
     print("STEP 1: PRECISION CODE STYLE CHECK")
     print("=" * 70)
     print()
-    
+
     check_script = PROJECT_ROOT / "tools" / "comprehensive_code_style_check.py"
     if not check_script.exists():
         print(f"[ERROR] {check_script} not found")
         return False
-    
+
     print("[INFO] Running comprehensive code style check...")
     try:
         result = subprocess.run(
@@ -62,19 +62,19 @@ def start_game_training() -> bool:
     print("STEP 2: STARTING GAME TRAINING")
     print("=" * 70)
     print()
-    
+
     training_script = PROJECT_ROOT / "run_with_training.py"
     if not training_script.exists():
         print(f"[ERROR] {training_script} not found")
         return False
-    
+
     print("[INFO] Starting game training...")
     print("[INFO] Training will run until stopped (Ctrl+C)")
     print("[INFO] Monitor progress at: http://localhost:8001")
     print()
     print("[NOTE] Press Ctrl+C to stop training and proceed to post-training checks")
     print()
-    
+
     try:
         # Start training
         subprocess.run(
@@ -100,7 +100,7 @@ def run_post_training_logic_check() -> bool:
     print("STEP 3: POST-TRAINING LOGIC CHECK AND ERROR FIXING")
     print("=" * 70)
     print()
-    
+
     # 3.1: Full logic check
     print("[3.1] Running full logic check...")
     logic_check_script = PROJECT_ROOT / "tools" / "full_logic_check.py"
@@ -118,7 +118,7 @@ def run_post_training_logic_check() -> bool:
             print(f"[WARNING] Logic check failed: {e}")
     else:
         print("[WARNING] full_logic_check.py not found")
-    
+
     # 3.2: Auto error fixer
     print("\n[3.2] Running auto error fixer...")
     error_fixer_script = PROJECT_ROOT / "tools" / "auto_error_fixer.py"
@@ -138,7 +138,7 @@ def run_post_training_logic_check() -> bool:
             print(f"[WARNING] Auto error fixer failed: {e}")
     else:
         print("[WARNING] auto_error_fixer.py not found")
-    
+
     # 3.3: Re-run logic check after fixes
     print("\n[3.3] Re-running logic check after fixes...")
     if logic_check_script.exists():
@@ -158,7 +158,7 @@ def run_post_training_logic_check() -> bool:
         except Exception as e:
             print(f"[WARNING] Post-fix logic check failed: {e}")
             return False
-    
+
     return True
 
 
@@ -168,12 +168,12 @@ def run_full_file_logic_check() -> bool:
     print("STEP 4: FULL FILE LOGIC CHECK")
     print("=" * 70)
     print()
-    
+
     logic_check_script = PROJECT_ROOT / "tools" / "full_logic_check.py"
     if not logic_check_script.exists():
         print(f"[ERROR] {logic_check_script} not found")
         return False
-    
+
     print("[INFO] Running comprehensive file logic check...")
     try:
         result = subprocess.run(
@@ -205,34 +205,34 @@ def main():
     print("  3. Run post-training logic check and error fixing")
     print("  4. Run full file logic check")
     print()
-    
+
     # Step 1: Precision check
     if not run_precision_check():
         print("\n[ERROR] Precision check failed. Aborting workflow.")
         return 1
-    
+
     # Step 2: Start game training
     if not start_game_training():
         print("\n[ERROR] Game training failed. Aborting workflow.")
         return 1
-    
+
     # Step 3: Post-training logic check and error fixing
     if not run_post_training_logic_check():
         print("\n[WARNING] Post-training logic check found errors")
         # Continue anyway
-    
+
     # Step 4: Full file logic check
     if not run_full_file_logic_check():
         print("\n[WARNING] Full file logic check found errors")
         return 1
-    
+
     print("\n" + "=" * 70)
     print("WORKFLOW COMPLETE")
     print("=" * 70)
     print()
     print("All steps completed successfully!")
     print()
-    
+
     return 0
 
 
