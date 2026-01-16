@@ -19,10 +19,10 @@ def find_unused_imports_in_file(file_path: Path) -> List[str]:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
  tree = ast.parse(content, filename=str(file_path))
- 
+
  imports = []
  used_names = set()
- 
+
  # Import 찾기
  for node in ast.walk(tree):
  if isinstance(node, ast.Import):
@@ -35,14 +35,14 @@ def find_unused_imports_in_file(file_path: Path) -> List[str]:
                             imports.append(('from', f"{node.module}.{alias.name}", node.lineno, alias.name))
  else:
                         imports.append(('from', node.module, node.lineno))
- 
+
  # 사용된 이름 찾기
  if isinstance(node, ast.Name):
  used_names.add(node.id)
  elif isinstance(node, ast.Attribute):
  if isinstance(node.value, ast.Name):
  used_names.add(node.value.id)
- 
+
  # 사용하지 않는 import 찾기
  unused = []
  for imp in imports:
@@ -50,7 +50,7 @@ def find_unused_imports_in_file(file_path: Path) -> List[str]:
                 base_name = imp[1].split('.')[0]
  if base_name not in used_names and imp[1] not in used_names:
  # 표준 라이브러리는 제외
-                    if base_name not in ['os', 'sys', 'json', 'pathlib', 'typing', 'collections', 
+                    if base_name not in ['os', 'sys', 'json', 'pathlib', 'typing', 'collections',
                                          'datetime', 'logging', 'subprocess', 're', 'ast']:
  unused.append(imp)
             elif imp[0] == 'from':
@@ -58,7 +58,7 @@ def find_unused_imports_in_file(file_path: Path) -> List[str]:
  # from module import name
  if imp[3] not in used_names:
  unused.append(imp)
- 
+
  return unused
  except Exception as e:
         print(f"[ERROR] {file_path}: {e}")
@@ -70,30 +70,30 @@ def remove_unused_imports(file_path: Path, unused_imports: List, dry_run: bool =
  try:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  lines = f.readlines()
- 
+
  # 제거할 라인 번호 수집
  lines_to_remove = set()
  for imp in unused_imports:
  lines_to_remove.add(imp[2] - 1) # 0-based index
- 
+
  if not lines_to_remove:
  return False
- 
+
  if dry_run:
             print(f"[DRY RUN] {file_path}: {len(lines_to_remove)}개 import 제거 예정")
  return True
- 
+
  # 백업 생성
         backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  shutil.copy2(file_path, backup_path)
- 
+
  # 라인 제거
  new_lines = [line for i, line in enumerate(lines) if i not in lines_to_remove]
- 
+
  # 파일 쓰기
         with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
  f.writelines(new_lines)
- 
+
         print(f"[REMOVED] {file_path}: {len(lines_to_remove)}개 import 제거 완료")
  return True
  except Exception as e:
@@ -104,18 +104,18 @@ def remove_unused_imports(file_path: Path, unused_imports: List, dry_run: bool =
 def main():
     """메인 함수"""
  import argparse
- 
+
     parser = argparse.ArgumentParser(description="사용하지 않는 import 제거")
     parser.add_argument("--dry-run", action="store_true", help="실제 제거하지 않고 미리보기만")
     parser.add_argument("--file", help="특정 파일만 처리")
- 
+
  args = parser.parse_args()
- 
+
     print("=" * 70)
     print("사용하지 않는 Import 제거 도구")
     print("=" * 70)
  print()
- 
+
  if args.dry_run:
         print("[DRY RUN 모드] 실제로 제거하지 않습니다.")
  else:
@@ -124,9 +124,9 @@ def main():
         if response.lower() not in ['yes', 'y']:
             print("취소되었습니다.")
  return
- 
+
  print()
- 
+
  files_to_process = []
  if args.file:
  file_path = PROJECT_ROOT / args.file
@@ -142,17 +142,17 @@ def main():
  for file in files:
                 if file.endswith('.py'):
  files_to_process.append(Path(root) / file)
- 
+
     print(f"총 {len(files_to_process)}개 파일을 분석합니다...")
  print()
- 
+
  total_removed = 0
  for file_path in files_to_process:
  unused = find_unused_imports_in_file(file_path)
  if unused:
  if remove_unused_imports(file_path, unused, dry_run=args.dry_run):
  total_removed += len(unused)
- 
+
  print()
     print("=" * 70)
     print(f"완료! 총 {total_removed}개 import 제거 {'예정' if args.dry_run else '완료'}")

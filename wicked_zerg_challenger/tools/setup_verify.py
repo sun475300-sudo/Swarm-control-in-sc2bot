@@ -9,9 +9,9 @@ from pathlib import Path
 
 
 def main():
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("ZERG DATA PIPELINE - ENVIRONMENT CHECK")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
  # Python version
     print(f"Python: {sys.version.split()[0]}")

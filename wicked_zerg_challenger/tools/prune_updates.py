@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import shutil
 from pathlib import Path
@@ -29,9 +30,17 @@ def prune(keep: int, dry_run: bool = False) -> int:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Prune old AI_Arena_Updates folders, keeping the latest N")
-    ap.add_argument("--keep", type=int, default=3, help="Number of latest update folders to keep")
-    ap.add_argument("--dry-run", action="store_true", help="Show actions without deleting")
+    ap = argparse.ArgumentParser(
+    description="Prune old AI_Arena_Updates folders, keeping the latest N")
+    ap.add_argument(
+    "--keep",
+    type=int,
+    default=3,
+     help="Number of latest update folders to keep")
+    ap.add_argument(
+    "--dry-run",
+    action="store_true",
+     help="Show actions without deleting")
  args = ap.parse_args()
 
  removed = prune(keep=args.keep, dry_run=args.dry_run)

@@ -52,11 +52,17 @@ def _build_game_state(base_dir: Path) -> dict:
  # Flexible mapping: support nested or flat structures
         src = status.get("game_state", status)
         state["is_running"] = src.get("is_running", state["is_running"])
-        state["current_frame"] = src.get("current_frame", src.get("frame", state["current_frame"]))
+        state["current_frame"] = src.get(
+    "current_frame", src.get(
+        "frame", state["current_frame"]))
         state["minerals"] = src.get("minerals", state["minerals"])
         state["vespene"] = src.get("vespene", src.get("gas", state["vespene"]))
-        state["supply_used"] = src.get("supply_used", src.get("supply", state["supply_used"]))
-        state["supply_cap"] = src.get("supply_cap", src.get("supply_max", state["supply_cap"]))
+        state["supply_used"] = src.get(
+    "supply_used", src.get(
+        "supply", state["supply_used"]))
+        state["supply_cap"] = src.get(
+    "supply_cap", src.get(
+        "supply_max", state["supply_cap"]))
         units = src.get("unit_count", src.get("units", state["unit_count"]))
  if isinstance(units, dict):
  # Merge known unit keys
@@ -68,10 +74,15 @@ def _build_game_state(base_dir: Path) -> dict:
  })
             state["unit_count"] = merged
         state["win_rate"] = src.get("win_rate", state["win_rate"])
-        state["total_games"] = src.get("total_games", src.get("game_id", state["total_games"]))
-        state["current_map"] = src.get("current_map", src.get("map_name", state["current_map"]))
+        state["total_games"] = src.get(
+    "total_games", src.get(
+        "game_id", state["total_games"]))
+        state["current_map"] = src.get(
+    "current_map", src.get(
+        "map_name", state["current_map"]))
         state["threat_level"] = src.get("threat_level", state["threat_level"])
-        state["strategy_mode"] = src.get("strategy_mode", state["strategy_mode"])
+        state["strategy_mode"] = src.get(
+    "strategy_mode", state["strategy_mode"])
  else:
  # Fallback to training stats
  ts = _load_training_stats(base_dir)

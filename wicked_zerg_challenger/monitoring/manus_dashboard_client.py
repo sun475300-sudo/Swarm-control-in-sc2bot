@@ -13,18 +13,19 @@ from typing import Dict, Any, Optional, List
 import os
 
 # 로깅 설정
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class ManusDashboardClient:
     """Manus 대시보드 tRPC API 클라이언트"""
 
- def __init__(
- self,
+    def __init__(
+        self,
         base_url: str = "https://sc2aidash-bncleqgg.manus.space",
- api_key: Optional[str] = None,
- enabled: bool = True
- ):
+        api_key: Optional[str] = None,
+        enabled: bool = True
+    ):
         """
  Manus 대시보드 클라이언트 초기화
 
@@ -34,71 +35,71 @@ class ManusDashboardClient:
  enabled: 원격 전송 활성화 여부
         """
         self.base_url = base_url.rstrip('/')
- # API 키 로드 우선순위: 1) 인자, 2) 환경 변수, 3) 파일
- self.api_key = api_key or self._load_api_key()
+        # API 키 로드 우선순위: 1) 인자, 2) 환경 변수, 3) 파일
+        self.api_key = api_key or self._load_api_key()
         self.enabled = enabled and os.environ.get("MANUS_DASHBOARD_ENABLED", "1") == "1"
 
- # tRPC API 엔드포인트
+        # tRPC API 엔드포인트
         self.trpc_url = f"{self.base_url}/api/trpc"
 
- # HTTP 세션
- self.session = requests.Session()
- self.session.headers.update({
+        # HTTP 세션
+        self.session = requests.Session()
+        self.session.headers.update({
             "Content-Type": "application/json"
- })
+        })
 
- if self.api_key:
- self.session.headers.update({
+        if self.api_key:
+            self.session.headers.update({
                 "Authorization": f"Bearer {self.api_key}"
- })
+            })
 
- # 재시도 설정
- self.max_retries = 3
- self.retry_delay = 2
+        # 재시도 설정
+        self.max_retries = 3
+        self.retry_delay = 2
 
         logger.info(f"[MANUS] 클라이언트 초기화: {self.base_url} (활성화: {self.enabled})")
 
- def _load_api_key(self) -> Optional[str]:
+    def _load_api_key(self) -> Optional[str]:
         """
  API 키 로드 (환경 변수 우선, 파일 fallback)
 
  Returns:
  API 키 또는 None
         """
- # 1. 환경 변수 우선
+        # 1. 환경 변수 우선
         key = os.environ.get("MANUS_DASHBOARD_API_KEY")
- if key:
- return key
+        if key:
+            return key
 
- # 2. 파일에서 읽기 (fallback)
- try:
- from pathlib import Path
- # 여러 가능한 경로 시도
- possible_paths = [
+        # 2. 파일에서 읽기 (fallback)
+        try:
+            from pathlib import Path
+            # 여러 가능한 경로 시도
+            possible_paths = [
                 Path("monitoring/api_keys/manus_api_key.txt"),
                 Path("api_keys/manus_api_key.txt"),
                 Path("secrets/manus_api_key.txt"),
- ]
+            ]
 
- for key_file in possible_paths:
- if key_file.exists():
- # Try multiple encodings to handle different file encodings
+            for key_file in possible_paths:
+                if key_file.exists():
+                    # Try multiple encodings to handle different file encodings
                     for encoding in ["utf-8", "cp949", "latin-1", "utf-8-sig"]:
- try:
- key = key_file.read_text(encoding = encoding).strip()
- if key:
+                        try:
+                            key = key_file.read_text(encoding=encoding).strip()
+                            if key:
                                 logger.info(f"[MANUS] API 키를 파일에서 로드: {key_file}")
- return key
- break
- except UnicodeDecodeError:
- continue
- except Exception as e:
+                                return key
+                            break
+                        except UnicodeDecodeError:
+                            continue
+        except Exception as e:
             logger.warning(f"[MANUS] API 키 파일 읽기 실패: {e}")
 
- return None
+        return None
 
- def _call_trpc(
- self,
+    def _call_trpc(
+        self,
  procedure: str,
  input_data: Dict[str, Any],
  retry: bool = True

@@ -17,8 +17,17 @@ if sys.platform == "win32":
         pass
 
 PROJECT_ROOT = Path(__file__).parent.parent
-EXCLUDE_DIRS = {'__pycache__', '.git', 'node_modules', '.venv', 'venv',
-                'build', 'dist', '.pytest_cache', '.mypy_cache', 'local_training'}
+EXCLUDE_DIRS = {
+    '__pycache__',
+    '.git',
+    'node_modules',
+    '.venv',
+    'venv',
+    'build',
+    'dist',
+    '.pytest_cache',
+    '.mypy_cache',
+    'local_training'}
 
 
 def normalize_file(file_path: Path) -> tuple[bool, int]:
@@ -50,7 +59,8 @@ def normalize_file(file_path: Path) -> tuple[bool, int]:
             if line.endswith(('\r\n', '\n')):
                 line_content = line.rstrip('\r\n')
                 line_content = line_content.rstrip()
-                line = line_content + ('\r\n' if original_line.endswith('\r\n') else '\n')
+                line = line_content + \
+                    ('\r\n' if original_line.endswith('\r\n') else '\n')
             else:
                 line = line.rstrip()
             if original_line != line:
@@ -99,7 +109,8 @@ def main():
     """Main function"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Apply code style unification")
+    parser = argparse.ArgumentParser(
+        description="Apply code style unification")
     parser.add_argument("--all", action="store_true", help="Process all files")
     parser.add_argument("--file", help="Process specific file")
 

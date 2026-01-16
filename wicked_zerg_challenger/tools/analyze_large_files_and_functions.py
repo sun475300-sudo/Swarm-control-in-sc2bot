@@ -34,13 +34,20 @@ def analyze_file_structure(file_path: Path) -> Dict:
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 start_line = node.lineno
-                end_line = node.end_lineno if hasattr(node, 'end_lineno') else start_line
+                end_line = node.end_lineno if hasattr(
+                    node, 'end_lineno') else start_line
                 func_length = end_line - start_line + 1
 
                 # ���⵵ ���
                 complexity = 1
                 for child in ast.walk(node):
-                    if isinstance(child, (ast.If, ast.While, ast.For, ast.Try, ast.ExceptHandler)):
+                    if isinstance(
+                        child,
+                        (ast.If,
+                         ast.While,
+                         ast.For,
+                         ast.Try,
+                         ast.ExceptHandler)):
                         complexity += 1
                     elif isinstance(child, ast.BoolOp):
                         complexity += len(child.values) - 1
@@ -53,7 +60,9 @@ def analyze_file_structure(file_path: Path) -> Dict:
                 })
 
             elif isinstance(node, ast.ClassDef):
-                methods = [n for n in node.body if isinstance(n, ast.FunctionDef)]
+                methods = [
+                    n for n in node.body if isinstance(
+                        n, ast.FunctionDef)]
                 result["classes"].append({
                     "name": node.name,
                     "line": node.lineno,
@@ -62,7 +71,10 @@ def analyze_file_structure(file_path: Path) -> Dict:
 
         return result
     except Exception as e:
-        return {"file": str(file_path.relative_to(PROJECT_ROOT)), "error": str(e)}
+        return {
+            "file": str(
+                file_path.relative_to(PROJECT_ROOT)),
+            "error": str(e)}
 
 
 def find_large_files(min_lines: int = 1000) -> List[Dict]:
@@ -70,9 +82,15 @@ def find_large_files(min_lines: int = 1000) -> List[Dict]:
     large_files = []
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
-        dirs[:] = [d for d in dirs if d not in {
-            '__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', 'logs'
-        }]
+        dirs[:] = [
+            d for d in dirs if d not in {
+                '__pycache__',
+                '.git',
+                'node_modules',
+                '.venv',
+                'venv',
+                'models',
+                'logs'}]
 
         for file in files:
             if file.endswith('.py'):
@@ -87,7 +105,12 @@ def find_large_files(min_lines: int = 1000) -> List[Dict]:
                 except Exception:
                     continue
 
-    return sorted(large_files, key=lambda x: x.get("total_lines", 0), reverse=True)
+    return sorted(
+        large_files,
+        key=lambda x: x.get(
+            "total_lines",
+            0),
+        reverse=True)
 
 
 def find_complex_functions(min_complexity: int = 15) -> List[Dict]:
@@ -95,9 +118,15 @@ def find_complex_functions(min_complexity: int = 15) -> List[Dict]:
     complex_functions = []
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
-        dirs[:] = [d for d in dirs if d not in {
-            '__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', 'logs'
-        }]
+        dirs[:] = [
+            d for d in dirs if d not in {
+                '__pycache__',
+                '.git',
+                'node_modules',
+                '.venv',
+                'venv',
+                'models',
+                'logs'}]
 
         for file in files:
             if file.endswith('.py'):
@@ -110,10 +139,17 @@ def find_complex_functions(min_complexity: int = 15) -> List[Dict]:
                         func_info["file"] = analysis["file"]
                         complex_functions.append(func_info)
 
-    return sorted(complex_functions, key=lambda x: x.get("complexity", 0), reverse=True)
+    return sorted(
+        complex_functions,
+        key=lambda x: x.get(
+            "complexity",
+            0),
+        reverse=True)
 
 
-def generate_refactoring_suggestions(large_files: List[Dict], complex_functions: List[Dict]) -> str:
+def generate_refactoring_suggestions(
+        large_files: List[Dict],
+        complex_functions: List[Dict]) -> str:
     """�����丵 ���� ����"""
     suggestions = []
     suggestions.append("# ū ���� �� ������ �Լ� �����丵 ����\n\n")
@@ -136,7 +172,8 @@ def generate_refactoring_suggestions(large_files: List[Dict], complex_functions:
             if classes:
                 suggestions.append("**�и� ������ Ŭ����**:\n\n")
                 for cls in classes[:5]:
-                    suggestions.append(f"- `{cls['name']}` (�޼���: {cls['method_count']}��)\n")
+                    suggestions.append(
+                        f"- `{cls['name']}` (�޼���: {cls['method_count']}��)\n")
                 suggestions.append("\n")
 
             suggestions.append("**�и� ����**:\n\n")
@@ -147,7 +184,8 @@ def generate_refactoring_suggestions(large_files: List[Dict], complex_functions:
     # ������ �Լ� ����
     if complex_functions:
         suggestions.append("## 2. ������ �Լ� �ܼ�ȭ ����\n\n")
-        suggestions.append(f"�� {len(complex_functions)}���� ������ �Լ��� �߰ߵǾ����ϴ�.\n\n")
+        suggestions.append(
+            f"�� {len(complex_functions)}���� ������ �Լ��� �߰ߵǾ����ϴ�.\n\n")
 
         for func_info in complex_functions[:10]:  # ���� 10����
             file_path = func_info["file"]
@@ -185,18 +223,21 @@ def main():
     large_files = find_large_files(min_lines=1000)
     print(f"  - �߰�: {len(large_files)}��")
     for file_info in large_files:
-        print(f"    - {file_info['file']}: {file_info.get('total_lines', 0)}��")
+        print(
+            f"    - {file_info['file']}: {file_info.get('total_lines', 0)}��")
     print()
 
     print("������ �Լ� ã�� ��...")
     complex_functions = find_complex_functions(min_complexity=15)
     print(f"  - �߰�: {len(complex_functions)}��")
     for func_info in complex_functions[:5]:
-        print(f"    - {func_info['file']}:{func_info['line']} - {func_info['name']} (���⵵: {func_info['complexity']})")
+        print(
+            f"    - {func_info['file']}:{func_info['line']} - {func_info['name']} (���⵵: {func_info['complexity']})")
     print()
 
     print("�����丵 ���� ���� ��...")
-    suggestions = generate_refactoring_suggestions(large_files, complex_functions)
+    suggestions = generate_refactoring_suggestions(
+        large_files, complex_functions)
 
     report_path = PROJECT_ROOT / "REFACTORING_SUGGESTIONS.md"
     with open(report_path, 'w', encoding='utf-8') as f:

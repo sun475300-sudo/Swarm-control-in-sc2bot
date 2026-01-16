@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 class FeatureEnhancer:
     """기능 강화기"""
- 
+
  def __init__(self):
  self.build_orders: List[Dict] = []
  self.race_strategies: Dict[str, List[Dict]] = {
@@ -22,17 +22,17 @@ class FeatureEnhancer:
             "Zerg": []
  }
  self.map_strategies: Dict[str, List[Dict]] = {}
- 
+
  def analyze_build_orders(self) -> List[Dict]:
         """빌드 오더 분석"""
  build_orders = []
- 
+
  # 빌드 오더 파일 찾기
  build_order_files = [
             PROJECT_ROOT / "local_training" / "scripts" / "learned_build_orders.json",
             PROJECT_ROOT / "data" / "build_orders.json"
  ]
- 
+
  for file_path in build_order_files:
  if file_path.exists():
  try:
@@ -44,9 +44,9 @@ class FeatureEnhancer:
  build_orders.append(data)
  except Exception:
  continue
- 
+
  return build_orders
- 
+
  def analyze_race_strategies(self) -> Dict[str, List[Dict]]:
         """적 종족별 대응 전략 분석"""
  strategies = {
@@ -54,13 +54,13 @@ class FeatureEnhancer:
             "Protoss": [],
             "Zerg": []
  }
- 
+
  # 전략 파일 찾기
  strategy_files = [
             PROJECT_ROOT / "data" / "race_strategies.json",
             PROJECT_ROOT / "local_training" / "scripts" / "strategy_database.py"
  ]
- 
+
  for file_path in strategy_files:
  if file_path.exists():
                 if file_path.suffix == '.json':
@@ -72,18 +72,18 @@ class FeatureEnhancer:
  strategies[race].extend(race_strategies)
  except Exception:
  continue
- 
+
  return strategies
- 
+
  def analyze_map_strategies(self) -> Dict[str, List[Dict]]:
         """맵별 최적화 전략 분석"""
  map_strategies = {}
- 
+
  # 맵 전략 파일 찾기
  map_strategy_files = [
             PROJECT_ROOT / "data" / "map_strategies.json"
  ]
- 
+
  for file_path in map_strategy_files:
  if file_path.exists():
  try:
@@ -92,16 +92,16 @@ class FeatureEnhancer:
  map_strategies.update(data)
  except Exception:
  continue
- 
+
  return map_strategies
- 
+
  def generate_feature_suggestions(self) -> str:
         """기능 추가 제안 생성"""
  suggestions = []
         suggestions.append("# 기능 추가 제안\n\n")
         suggestions.append(f"**생성 일시**: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         suggestions.append("---\n\n")
- 
+
  # 빌드 오더 분석
  build_orders = self.analyze_build_orders()
         suggestions.append("## 1. 새로운 빌드 오더 추가\n\n")
@@ -119,11 +119,11 @@ class FeatureEnhancer:
         suggestions.append("   - 울트라리스크 빌드\n")
         suggestions.append("   - 브루들링 빌드\n")
         suggestions.append("   - 가디언 빌드\n\n")
- 
+
  # 적 종족별 대응 전략
  race_strategies = self.analyze_race_strategies()
         suggestions.append("## 2. 적 종족별 대응 전략\n\n")
- 
+
  for race, strategies in race_strategies.items():
             suggestions.append(f"### vs {race}\n\n")
  if strategies:
@@ -143,7 +143,7 @@ class FeatureEnhancer:
                     suggestions.append("   - 빠른 뮤탈리스크\n")
                     suggestions.append("   - 저글링 러시 대응\n\n")
             suggestions.append("\n")
- 
+
  # 맵별 최적화
  map_strategies = self.analyze_map_strategies()
         suggestions.append("## 3. 맵별 최적화\n\n")
@@ -159,7 +159,7 @@ class FeatureEnhancer:
         suggestions.append("   - 확장 중심 전략\n")
         suggestions.append("   - 경제 우선\n")
         suggestions.append("   - 후반 테크\n\n")
- 
+
         return ''.join(suggestions)
 
 
@@ -169,32 +169,32 @@ def main():
     print("기능 추가 분석")
     print("=" * 70)
  print()
- 
+
  enhancer = FeatureEnhancer()
- 
+
     print("빌드 오더 분석 중...")
  build_orders = enhancer.analyze_build_orders()
     print(f"  - 현재 빌드 오더: {len(build_orders)}개")
  print()
- 
+
     print("적 종족별 전략 분석 중...")
  race_strategies = enhancer.analyze_race_strategies()
  for race, strategies in race_strategies.items():
         print(f"  - vs {race}: {len(strategies)}개 전략")
  print()
- 
+
     print("맵별 전략 분석 중...")
  map_strategies = enhancer.analyze_map_strategies()
     print(f"  - 맵별 전략: {len(map_strategies)}개")
  print()
- 
+
     print("기능 추가 제안 생성 중...")
  suggestions = enhancer.generate_feature_suggestions()
- 
+
     report_path = PROJECT_ROOT / "FEATURE_ENHANCEMENT_SUGGESTIONS.md"
     with open(report_path, 'w', encoding='utf-8') as f:
  f.write(suggestions)
- 
+
     print(f"리포트가 생성되었습니다: {report_path}")
  print()
     print("=" * 70)

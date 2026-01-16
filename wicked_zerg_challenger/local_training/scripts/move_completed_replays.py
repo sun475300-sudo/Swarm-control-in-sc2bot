@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Move Completed Replays Script
-Move completed replays to D:\replays\replays\completed folder
+Move completed replays to D:\replays\replays\\completed folder
 """
 
 import sys

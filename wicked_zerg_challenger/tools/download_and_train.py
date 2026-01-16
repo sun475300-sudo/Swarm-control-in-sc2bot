@@ -52,6 +52,8 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # IMPROVED: Use flexible venv path detection
+
+
 def get_venv_dir() -> Path:
     """Get virtual environment directory from environment variable or use project default"""
     venv_dir = os.environ.get("VENV_DIR")

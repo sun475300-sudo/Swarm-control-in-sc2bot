@@ -11,7 +11,6 @@ Pre-training system check script
 """
 
 
-
 import os
 
 import sys
@@ -19,10 +18,7 @@ import sys
 import subprocess
 
 
-
-
 def check_sc2_installation():
-
     """Check StarCraft II installation"""
 
     print("\n" + "=" * 70)
@@ -31,11 +27,11 @@ def check_sc2_installation():
 
     print("=" * 70)
 
- 
+
 
  sc2_path = None
 
- 
+
 
  # Check environment variable
 
@@ -53,7 +49,7 @@ def check_sc2_installation():
 
             print(f"[WARNING] SC2PATH set but path does not exist: {sc2_path}")
 
- 
+
 
  # Check Windows Registry
 
@@ -75,7 +71,7 @@ def check_sc2_installation():
 
  winreg.CloseKey(key)
 
- 
+
 
  if os.path.exists(install_path):
 
@@ -89,7 +85,7 @@ def check_sc2_installation():
 
             print(f"[INFO] Registry check failed: {e}")
 
- 
+
 
  # Check common paths
 
@@ -127,7 +123,7 @@ def check_sc2_installation():
 
  ]
 
- 
+
 
  for path in common_paths:
 
@@ -139,7 +135,7 @@ def check_sc2_installation():
 
  return path
 
- 
+
 
     print("[ERROR] StarCraft II installation not found!")
 
@@ -159,7 +155,7 @@ def check_python_packages():
 
     print("=" * 70)
 
- 
+
 
  required_packages = [
 
@@ -173,11 +169,11 @@ def check_python_packages():
 
  ]
 
- 
+
 
  missing_packages = []
 
- 
+
 
  for package in required_packages:
 
@@ -193,7 +189,7 @@ def check_python_packages():
 
  missing_packages.append(package)
 
- 
+
 
  if missing_packages:
 
@@ -203,7 +199,7 @@ def check_python_packages():
 
  return False
 
- 
+
 
  return True
 
@@ -219,7 +215,7 @@ def check_sc2_process():
 
     print("=" * 70)
 
- 
+
 
     if sys.platform == "win32":
 
@@ -301,7 +297,7 @@ def check_gpu():
 
     print("=" * 70)
 
- 
+
 
  try:
 
@@ -347,13 +343,13 @@ def main():
 
     print("=" * 70)
 
- 
+
 
  checks_passed = 0
 
  total_checks = 4
 
- 
+
 
  # Check 1: SC2 Installation
 
@@ -363,7 +359,7 @@ def main():
 
  checks_passed += 1
 
- 
+
 
  # Check 2: Python Packages
 
@@ -371,7 +367,7 @@ def main():
 
  checks_passed += 1
 
- 
+
 
  # Check 3: SC2 Process
 
@@ -379,7 +375,7 @@ def main():
 
  checks_passed += 1
 
- 
+
 
  # Check 4: GPU
 
@@ -387,7 +383,7 @@ def main():
 
  checks_passed += 1 # GPU is optional, so always pass
 
- 
+
 
  # Summary
 
@@ -399,7 +395,7 @@ def main():
 
     print(f"Passed: {checks_passed}/{total_checks}")
 
- 
+
 
  if checks_passed >= 3: # SC2 and packages are critical
 

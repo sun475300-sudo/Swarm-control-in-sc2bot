@@ -11,7 +11,7 @@ print(f"Found {len(replay_files)} replay files")
 if replay_files:
  replay_path = replay_files[0]
     print(f"Testing first replay: {replay_path.name}")
- 
+
  # First, check if Zerg player exists
  replay = sc2reader.load_replay(str(replay_path), load_map=True)
     zerg_players = [p for p in replay.players if hasattr(p, 'play_race') and str(p.play_race).lower() == 'zerg']
@@ -19,7 +19,7 @@ if replay_files:
  if zerg_players:
  zerg_pid = zerg_players[0].pid
         print(f"  Zerg player PID: {zerg_pid}")
- 
+
  # Count UnitBornEvents for Zerg
  zerg_units = 0
  for event in replay.events:
@@ -30,10 +30,10 @@ if replay_files:
                         unit_name = event.unit.name if hasattr(event, 'unit') and hasattr(event.unit, 'name') else 'Unknown'
                         print(f"    Unit #{zerg_units}: {unit_name}")
         print(f"  Total Zerg UnitBornEvents: {zerg_units}")
- 
+
  # Now try extraction
  build_order = extractor.extract_build_order(replay_path)
- 
+
  if build_order:
         print(f"[OK] Build order extracted")
         print(f"  Player: {build_order.get('player_name', 'Unknown')}")

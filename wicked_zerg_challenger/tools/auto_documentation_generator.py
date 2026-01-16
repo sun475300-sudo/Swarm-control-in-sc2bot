@@ -15,12 +15,12 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 class DocumentationGenerator:
     """문서 자동 생성기"""
- 
+
  def __init__(self):
  self.modules: Dict[str, Dict] = {}
  self.classes: Dict[str, Dict] = {}
  self.functions: Dict[str, Dict] = {}
- 
+
  def analyze_file(self, file_path: Path) -> Dict:
         """파일 분석 및 문서 추출"""
  try:
@@ -29,7 +29,7 @@ class DocumentationGenerator:
  tree = ast.parse(content, filename=str(file_path))
  except Exception as e:
             return {"error": str(e)}
- 
+
  rel_path = str(file_path.relative_to(PROJECT_ROOT))
  result = {
             "file": rel_path,
@@ -39,7 +39,7 @@ class DocumentationGenerator:
             "functions": [],
             "imports": []
  }
- 
+
  for node in ast.walk(tree):
  if isinstance(node, ast.ClassDef):
  class_info = self._extract_class_info(node)
@@ -48,7 +48,7 @@ class DocumentationGenerator:
  **class_info,
                     "file": rel_path
  }
- 
+
  elif isinstance(node, ast.FunctionDef) and not self._is_method(node, tree):
  func_info = self._extract_function_info(node)
                 result["functions"].append(func_info)
@@ -56,10 +56,10 @@ class DocumentationGenerator:
  **func_info,
                     "file": rel_path
  }
- 
+
         self.modules[result["module"]] = result
  return result
- 
+
  def _extract_module_name(self, file_path: str) -> str:
         """모듈 이름 추출"""
  # 파일 경로를 모듈 이름으로 변환
@@ -69,13 +69,13 @@ class DocumentationGenerator:
  module_parts = parts[idx+1:]
  else:
  module_parts = parts
- 
+
  # .py 확장자 제거
         if module_parts[-1].endswith('.py'):
  module_parts = list(module_parts[:-1]) + [module_parts[-1][:-3]]
- 
+
         return '.'.join(module_parts)
- 
+
  def _is_method(self, node: ast.FunctionDef, tree: ast.AST) -> bool:
         """함수가 클래스 메서드인지 확인"""
  for parent in ast.walk(tree):
@@ -83,7 +83,7 @@ class DocumentationGenerator:
  if node in parent.body:
  return True
  return False
- 
+
  def _extract_class_info(self, node: ast.ClassDef) -> Dict:
         """클래스 정보 추출"""
  methods = []
@@ -95,7 +95,7 @@ class DocumentationGenerator:
                     "args": len(item.args.args),
                     "decorators": [ast.unparse(d) for d in item.decorator_list] if hasattr(ast, 'unparse') else []
  })
- 
+
  return {
             "name": node.name,
             "docstring": ast.get_docstring(node),
@@ -103,7 +103,7 @@ class DocumentationGenerator:
             "methods": methods,
             "line": node.lineno
  }
- 
+
  def _extract_function_info(self, node: ast.FunctionDef) -> Dict:
         """함수 정보 추출"""
  args = []
@@ -112,7 +112,7 @@ class DocumentationGenerator:
                 "name": arg.arg,
                 "annotation": ast.unparse(arg.annotation) if arg.annotation and hasattr(ast, 'unparse') else None
  })
- 
+
  return {
             "name": node.name,
             "docstring": ast.get_docstring(node),
@@ -120,7 +120,7 @@ class DocumentationGenerator:
             "decorators": [ast.unparse(d) for d in node.decorator_list] if hasattr(ast, 'unparse') else [],
             "line": node.lineno
  }
- 
+
  def generate_api_documentation(self) -> str:
         """API 문서 생성"""
  doc = []
@@ -128,15 +128,15 @@ class DocumentationGenerator:
         doc.append("**자동 생성 일시**: 2026-01-15\n")
         doc.append("**생성 도구**: auto_documentation_generator.py\n\n")
         doc.append("---\n\n")
- 
+
  # 모듈별로 정리
  for module_name in sorted(self.modules.keys()):
  module = self.modules[module_name]
             doc.append(f"## Module: `{module_name}`\n\n")
- 
+
             if module.get("docstring"):
                 doc.append(f"{module['docstring']}\n\n")
- 
+
  # 클래스
             if module["classes"]:
                 doc.append("### Classes\n\n")
@@ -154,7 +154,7 @@ class DocumentationGenerator:
                                 doc.append(f": {method['docstring'][:100]}...")
                             doc.append("\n")
                         doc.append("\n")
- 
+
  # 함수
             if module["functions"]:
                 doc.append("### Functions\n\n")
@@ -170,21 +170,21 @@ class DocumentationGenerator:
                                 doc.append(f": {arg['annotation']}")
                             doc.append("\n")
                         doc.append("\n")
- 
+
             doc.append("---\n\n")
- 
+
         return ''.join(doc)
- 
+
  def generate_readme_update(self) -> str:
         """README 업데이트 제안 생성"""
  doc = []
         doc.append("# README 업데이트 제안\n\n")
         doc.append("**생성 일시**: 2026-01-15\n\n")
         doc.append("---\n\n")
- 
+
         doc.append("## 프로젝트 구조\n\n")
         doc.append("### 주요 모듈\n\n")
- 
+
  # 주요 모듈 목록
  main_modules = [
             "wicked_zerg_bot_pro",
@@ -194,7 +194,7 @@ class DocumentationGenerator:
             "economy_manager",
             "intel_manager"
  ]
- 
+
  for module_name in main_modules:
  if module_name in self.modules:
  module = self.modules[module_name]
@@ -204,7 +204,7 @@ class DocumentationGenerator:
                 doc.append(f"- **파일**: `{module['file']}`\n")
                 doc.append(f"- **클래스**: {len(module['classes'])}개\n")
                 doc.append(f"- **함수**: {len(module['functions'])}개\n\n")
- 
+
         return ''.join(doc)
 
 
@@ -212,14 +212,14 @@ def find_all_python_files() -> List[Path]:
     """모든 Python 파일 찾기"""
  python_files = []
     exclude_dirs = {'__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', 'scripts'}
- 
+
  for root, dirs, files in os.walk(PROJECT_ROOT):
  dirs[:] = [d for d in dirs if d not in exclude_dirs]
- 
+
  for file in files:
             if file.endswith('.py'):
  python_files.append(Path(root) / file)
- 
+
  return python_files
 
 
@@ -229,14 +229,14 @@ def main():
     print("자동 문서 생성 도구")
     print("=" * 70)
  print()
- 
+
  generator = DocumentationGenerator()
- 
+
     print("파일 검색 중...")
  python_files = find_all_python_files()
     print(f"총 {len(python_files)}개의 Python 파일을 찾았습니다.")
  print()
- 
+
     print("파일 분석 중...")
  for i, file_path in enumerate(python_files, 1):
  if i % 20 == 0:
@@ -244,7 +244,7 @@ def main():
  generator.analyze_file(file_path)
     print("분석 완료!")
  print()
- 
+
  # API 문서 생성
     print("API 문서 생성 중...")
  api_doc = generator.generate_api_documentation()
@@ -253,7 +253,7 @@ def main():
     with open(api_doc_path, 'w', encoding='utf-8') as f:
  f.write(api_doc)
     print(f"API 문서 생성 완료: {api_doc_path}")
- 
+
  # README 업데이트 제안 생성
     print("README 업데이트 제안 생성 중...")
  readme_update = generator.generate_readme_update()
@@ -261,7 +261,7 @@ def main():
     with open(readme_update_path, 'w', encoding='utf-8') as f:
  f.write(readme_update)
     print(f"README 업데이트 제안 생성 완료: {readme_update_path}")
- 
+
  print()
     print("=" * 70)
     print("문서 생성 완료!")

@@ -45,12 +45,14 @@ class ServerManager:
             self.server_script = monitoring_dir / "arena_dashboard_api.py"
             self.server_port = ARENA_SERVER_PORT
 
-        logger.info(f"ServerManager initialized: type={server_type}, port={self.server_port}")
+        logger.info(
+            f"ServerManager initialized: type={server_type}, port={self.server_port}")
 
     def start_server(self, background: bool = True) -> bool:
         """Start monitoring server"""
         if self.is_running:
-            logger.warning(f"Server already running on port {self.server_port}")
+            logger.warning(
+                f"Server already running on port {self.server_port}")
             return True
 
         if not self.server_script.exists():
@@ -72,7 +74,8 @@ class ServerManager:
                     env=env,
                     cwd=str(self.server_script.parent)
                 )
-                logger.info(f"Server started in background (PID: {self.server_process.pid})")
+                logger.info(
+                    f"Server started in background (PID: {self.server_process.pid})")
             else:
                 # Run in foreground (separate thread)
                 def run_server():
@@ -85,7 +88,8 @@ class ServerManager:
                     except Exception as e:
                         logger.error(f"Server error: {e}")
 
-                self.server_thread = threading.Thread(target=run_server, daemon=True)
+                self.server_thread = threading.Thread(
+                    target=run_server, daemon=True)
                 self.server_thread.start()
                 logger.info("Server started in background thread")
 
@@ -94,10 +98,12 @@ class ServerManager:
 
             # Check server health
             if self.check_server_health():
-                logger.info(f"? {self.server_type.upper()} monitoring server is running on port {self.server_port}")
+                logger.info(
+                    f"? {self.server_type.upper()} monitoring server is running on port {self.server_port}")
                 return True
             else:
-                logger.warning(f"?? Server may not be responding on port {self.server_port}")
+                logger.warning(
+                    f"?? Server may not be responding on port {self.server_port}")
                 return False
 
         except Exception as e:
@@ -151,13 +157,13 @@ def start_local_monitoring(background: bool = True) -> Optional[ServerManager]:
     if manager.start_server(background=background):
         print(f"\n{'='*70}")
         print("? LOCAL MONITORING SERVER STARTED")
-        print("="*70)
+        print("=" * 70)
         print(f"Server URL: {manager.get_server_url()}")
         print(f"API URL: {manager.get_api_url()}")
         print(f"Web UI: {manager.get_server_url()}/ui")
         print(f"API Docs: {manager.get_server_url()}/docs")
         print(f"Health: {manager.get_server_url()}/health")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
         return manager
     return None
 
@@ -168,13 +174,13 @@ def start_arena_monitoring(background: bool = True) -> Optional[ServerManager]:
     if manager.start_server(background=background):
         print(f"\n{'='*70}")
         print("? ARENA MONITORING SERVER STARTED")
-        print("="*70)
+        print("=" * 70)
         print(f"Server URL: {manager.get_server_url()}")
         print(f"API URL: {manager.get_api_url()}")
         print(f"Web UI: {manager.get_server_url()}/ui")
         print(f"API Docs: {manager.get_server_url()}/docs")
         print(f"Health: {manager.get_server_url()}/health")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
         return manager
     return None
 
@@ -198,9 +204,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Monitoring Server Manager")
     parser.add_argument("--type", choices=["local", "arena"], default="local",
-                       help="Server type: local or arena")
+                        help="Server type: local or arena")
     parser.add_argument("--stop", action="store_true",
-                       help="Stop server")
+                        help="Stop server")
 
     args = parser.parse_args()
 

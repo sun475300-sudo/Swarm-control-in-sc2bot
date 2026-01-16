@@ -15,35 +15,35 @@ PROJECT_ROOT = Path(__file__).parent.parent
 def fix_markdown_file(file_path: Path) -> List[str]:
     """마크다운 파일의 경고를 수정"""
  fixes = []
- 
+
  try:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  lines = f.readlines()
  except Exception as e:
         return [f"Error reading file: {e}"]
- 
+
  new_lines = []
  i = 0
- 
+
  while i < len(lines):
  line = lines[i]
  original_line = line
- 
+
  # MD009: Trailing spaces 제거
  if line.rstrip() != line and line.strip():
             line = line.rstrip() + '\n'
  if line != original_line:
                 fixes.append(f"Line {i+1}: Removed trailing spaces")
- 
+
  # MD022: 헤딩 앞뒤 빈 줄 추가
         if re.match(r'^#{1,6}\s+', line):
  # 헤딩 앞에 빈 줄 추가 (이전 줄이 비어있지 않으면)
             if new_lines and new_lines[-1].strip() and new_lines[-1] != '\n':
                 new_lines.append('\n')
                 fixes.append(f"Line {i+1}: Added blank line before heading")
- 
+
  new_lines.append(line)
- 
+
  # 헤딩 뒤에 빈 줄 추가 (다음 줄이 비어있지 않으면)
             if i + 1 < len(lines) and lines[i + 1].strip() and lines[i + 1] != '\n':
                 new_lines.append('\n')
@@ -55,9 +55,9 @@ def fix_markdown_file(file_path: Path) -> List[str]:
                 if new_lines[-1] != '\n':
                     new_lines.append('\n')
                     fixes.append(f"Line {i+1}: Added blank line before list")
- 
+
  new_lines.append(line)
- 
+
  # 리스트 뒤에 빈 줄 추가 (다음 줄이 리스트가 아니고 비어있지 않으면)
  if i + 1 < len(lines):
  next_line = lines[i + 1]
@@ -73,9 +73,9 @@ def fix_markdown_file(file_path: Path) -> List[str]:
             if new_lines and new_lines[-1].strip() and new_lines[-1] != '\n':
                 new_lines.append('\n')
                 fixes.append(f"Line {i+1}: Added blank line before code block")
- 
+
  new_lines.append(line)
- 
+
  # 코드 블록 뒤에 빈 줄 추가
             if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].strip().startswith('```'):
  # 코드 블록이 끝나는 경우
@@ -108,7 +108,7 @@ def fix_markdown_file(file_path: Path) -> List[str]:
                     elif 'markdown' in content.lower() or content.startswith('#'):
                         language = 'markdown'
  break
- 
+
  if language:
                 new_lines.append(f'```{language}\n')
                 fixes.append(f"Line {i+1}: Added language '{language}' to code block")
@@ -116,9 +116,9 @@ def fix_markdown_file(file_path: Path) -> List[str]:
  new_lines.append(line)
  else:
  new_lines.append(line)
- 
+
  i += 1
- 
+
  # 파일 저장
  try:
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -134,7 +134,7 @@ def main():
     print("Markdown 경고 자동 수정 도구")
     print("=" * 70)
  print()
- 
+
  # 주요 MD 파일 목록
  md_files = [
         "PRE_COMMIT_CHECKLIST.md",
@@ -147,18 +147,18 @@ def main():
         "COMPLETE_RUN_SCRIPT_ERRORS_EXPLANATION.md",
         "MARKDOWN_WARNINGS_EXPLANATION.md",
  ]
- 
+
  total_fixes = 0
- 
+
  for md_file in md_files:
  file_path = PROJECT_ROOT / md_file
  if not file_path.exists():
             print(f"[SKIP] {md_file} - 파일이 없습니다.")
  continue
- 
+
         print(f"\n[FIXING] {md_file}...")
  fixes = fix_markdown_file(file_path)
- 
+
  if fixes:
             print(f"  수정 사항: {len(fixes)}개")
  for fix in fixes[:5]: # 처음 5개만 표시
@@ -168,7 +168,7 @@ def main():
  total_fixes += len(fixes)
  else:
             print("  수정 사항 없음")
- 
+
     print("\n" + "=" * 70)
     print(f"총 {total_fixes}개 수정 완료!")
     print("=" * 70)

@@ -41,7 +41,8 @@ class ArenaDashboardClient:
         self.arena_api_url = arena_api_url.rstrip('/')
         self.bot_name = bot_name
         self.dashboard_url = dashboard_url.rstrip('/')
-        self.enabled = enabled and os.environ.get("ARENA_DASHBOARD_ENABLED", "1") == "1"
+        self.enabled = enabled and os.environ.get(
+            "ARENA_DASHBOARD_ENABLED", "1") == "1"
 
         # Arena API ����
         self.arena_session = requests.Session()
@@ -134,9 +135,13 @@ def create_client_from_env() -> Optional[ArenaDashboardClient]:
     Returns:
         ArenaDashboardClient �ν��Ͻ� �Ǵ� None
     """
-    arena_api_url = os.environ.get("ARENA_API_URL", "https://aiarena.net/api/v2")
+    arena_api_url = os.environ.get(
+        "ARENA_API_URL",
+        "https://aiarena.net/api/v2")
     bot_name = os.environ.get("ARENA_BOT_NAME", "WickedZerg")
-    dashboard_url = os.environ.get("ARENA_DASHBOARD_URL", "http://localhost:8002")
+    dashboard_url = os.environ.get(
+        "ARENA_DASHBOARD_URL",
+        "http://localhost:8002")
     enabled = os.environ.get("ARENA_DASHBOARD_ENABLED", "1") == "1"
 
     return ArenaDashboardClient(

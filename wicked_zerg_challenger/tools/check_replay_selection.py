@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import json
 from pathlib import Path
@@ -49,9 +50,17 @@ def select_files(files, pro_names, pro_only: bool, max_files: int | None):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Preview replay selection with pro-first policy")
-    ap.add_argument("--pro-only", action="store_true", help="Select only pro replays")
-    ap.add_argument("--max-files", type=int, default=None, help="Limit total selected files")
+    ap = argparse.ArgumentParser(
+    description="Preview replay selection with pro-first policy")
+    ap.add_argument(
+    "--pro-only",
+    action="store_true",
+     help="Select only pro replays")
+    ap.add_argument(
+    "--max-files",
+    type=int,
+    default=None,
+     help="Limit total selected files")
  args = ap.parse_args()
 
  pro_names = load_pro_players()

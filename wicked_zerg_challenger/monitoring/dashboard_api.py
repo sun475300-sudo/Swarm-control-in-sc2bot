@@ -17,7 +17,7 @@ from typing import List, Any
 
 # Logging setup
 logging.basicConfig(
- level = logging.INFO,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -26,18 +26,20 @@ logger = logging.getLogger(__name__)
 try:
     logger.info("? bot_api_connector imported successfully")
 except ImportError:
-    logger.warning("?? bot_api_connector not found - using fallback cache mode")
+    logger.warning(
+        "?? bot_api_connector not found - using fallback cache mode")
 bot_connector = None
 
 # Import FastAPI components
 try:
- from fastapi import FastAPI, HTTPException, Depends, WebSocket, status
- from fastapi.responses import HTMLResponse
- from fastapi.security import HTTPBasic, HTTPBasicCredentials
- from fastapi.middleware.cors import CORSMiddleware
- from starlette.responses import JSONResponse as StarletteJSONResponse
+    from fastapi import FastAPI, HTTPException, Depends, WebSocket, status
+    from fastapi.responses import HTMLResponse
+    from fastapi.security import HTTPBasic, HTTPBasicCredentials
+    from fastapi.middleware.cors import CORSMiddleware
+    from starlette.responses import JSONResponse as StarletteJSONResponse
 except ImportError:
-    raise ImportError("fastapi is required. Install with: pip install fastapi uvicorn")
+    raise ImportError(
+        "fastapi is required. Install with: pip install fastapi uvicorn")
 
 # Create FastAPI app with UTF-8 JSON encoding
 app = FastAPI(
@@ -47,6 +49,8 @@ app = FastAPI(
 )
 
 # Configure default JSON encoder for UTF-8
+
+
 class UTF8JSONResponse(StarletteJSONResponse):
     def render(self, content: Any) -> bytes:  # type: ignore
         return json.dumps(
@@ -57,22 +61,27 @@ class UTF8JSONResponse(StarletteJSONResponse):
             separators=(",", ":")
         ).encode("utf-8")
 
+
 # Override default JSONResponse
 app.default_response_class = UTF8JSONResponse  # type: ignore
 
 # Basic Auth 설정 (선택적)
 # 환경변수로 활성화: MONITORING_AUTH_ENABLED = true
 # 환경변수로 ID/PW 설정: MONITORING_AUTH_USER, MONITORING_AUTH_PASSWORD
-_auth_enabled = os.environ.get("MONITORING_AUTH_ENABLED", "false").lower() == "true"
+_auth_enabled = os.environ.get(
+    "MONITORING_AUTH_ENABLED",
+    "false").lower() == "true"
 _auth_user = os.environ.get("MONITORING_AUTH_USER", "admin")
 # Get auth credential from environment variable (avoid hardcoding)
 _auth_cred = os.environ.get("MONITORING_AUTH_PASSWORD", None)
 if _auth_cred is None:
     import warnings
-    warnings.warn("MONITORING_AUTH_PASSWORD environment variable not set. Please set it for production use.")
+    warnings.warn(
+        "MONITORING_AUTH_PASSWORD environment variable not set. Please set it for production use.")
     _auth_cred = ""  # Empty string - must be set via environment variable
 
 security = HTTPBasic()
+
 
 def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
     """Basic Auth 인증 검증"""
@@ -80,7 +89,9 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
         return True  # 인증 비활성화 시 항상 통과
 
     correct_username = secrets.compare_digest(credentials.username, _auth_user)
-    correct_cred = secrets.compare_digest(credentials.password, _auth_cred or "")  # type: ignore
+    correct_cred = secrets.compare_digest(
+        credentials.password,
+        _auth_cred or "")  # type: ignore
 
     if not (correct_username and correct_cred):
         raise HTTPException(
@@ -90,11 +101,13 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return True
 
+
 # Add CORS middleware
 # Configurable CORS: MONITORING_ALLOWED_ORIGINS (comma-separated)
 _origins_env = os.environ.get("MONITORING_ALLOWED_ORIGINS")
 if _origins_env:
-    _allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
+    _allowed_origins = [o.strip()
+                        for o in _origins_env.split(",") if o.strip()]
 else:
     # Safer defaults limited to local dev
     # Android 에뮬레이터 접근 허용 (10.0.2.2는 에뮬레이터의 localhost)
@@ -117,7 +130,9 @@ else:
         pass  # Ngrok URL 파일이 없어도 계속 진행
 
 # CORS 보안 강화: 개발 환경에서는 제한적, 프로덕션에서는 더 엄격하게
-_is_production = os.environ.get("MONITORING_PRODUCTION", "false").lower() == "true"
+_is_production = os.environ.get(
+    "MONITORING_PRODUCTION",
+    "false").lower() == "true"
 
 if _is_production:
     # 프로덕션: 더 엄격한 CORS 설정
@@ -159,7 +174,7 @@ game_state_cache = {
         "roaches": 0,
         "hydralisks": 0,
         "queens": 2
- },
+    },
     "threat_level": "NONE",
     "strategy_mode": "OPENING",
     "map_name": "AbyssalReefLE",
@@ -191,7 +206,7 @@ learning_progress_cache = {
         {"time": "09:45:32", "message": "Episode 428 completed"},
         {"time": "09:44:18", "message": "Loss decreased to 0.0342"},
         {"time": "09:43:05", "message": "Model checkpoint saved"}
- ]
+    ]
 }
 
 # Bot config cache
@@ -241,7 +256,8 @@ except ImportError:
             if stats_file.exists():
                 with open(stats_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    return data if isinstance(data, dict) else {}  # type: ignore
+                    return data if isinstance(
+                        data, dict) else {}  # type: ignore
         except Exception:
             pass
         return {}
@@ -249,6 +265,7 @@ except ImportError:
 # ============================================================================
 # API Endpoints
 # ============================================================================
+
 
 @app.get("/")
 async def root():
@@ -267,6 +284,7 @@ async def root():
         }
     }
 
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -274,6 +292,7 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
     }
+
 
 @app.get("/api/ngrok-url")
 async def get_ngrok_url():
@@ -324,7 +343,9 @@ async def get_ngrok_url():
         "source": "none"
     }
 
-@app.get("/api/game-state", dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
+
+@app.get("/api/game-state",
+         dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
 async def get_game_state():
     """Get current game state"""
     # Helper function to get win rate from training stats
@@ -384,7 +405,8 @@ async def get_game_state():
             "strategy_mode": src.get("strategy_mode", game_state_cache["strategy_mode"]),
             "map_name": src.get("map_name", game_state_cache["map_name"]),
             "win_rate": src.get("win_rate", win_rate),  # Android 앱용
-            "winRate": src.get("win_rate", src.get("winRate", win_rate)),  # camelCase 버전도 제공
+            # camelCase 버전도 제공
+            "winRate": src.get("win_rate", src.get("winRate", win_rate)),
             "timestamp": datetime.now().isoformat()
         }
 
@@ -394,14 +416,17 @@ async def get_game_state():
     result["winRate"] = float(win_rate)  # type: ignore
     return result
 
+
 @app.post("/api/game-state/update")
 async def update_game_state(data: dict[str, Any]):  # type: ignore
     """Update game state (internal)"""
     global game_state_cache
     game_state_cache.update(data)
     game_state_cache["last_update"] = datetime.now().isoformat()
-    logger.info(f"Game state updated: frame {game_state_cache['current_frame']}")
+    logger.info(
+        f"Game state updated: frame {game_state_cache['current_frame']}")
     return {"status": "updated"}
+
 
 @app.get("/api/combat-stats")
 async def get_combat_stats():
@@ -428,13 +453,27 @@ async def get_combat_stats():
         return {
             "wins": wins,
             "losses": losses,
-            "win_rate": ts.get("win_rate", round((wins / max(1, total)) * 100, 2) if total > 0 else combat_stats_cache["win_rate"]),
-            "kda_ratio": ts.get("kda_ratio", combat_stats_cache["kda_ratio"]),
-            "avg_army_supply": ts.get("average_army_supply", combat_stats_cache["avg_army_supply"]),
-            "enemy_killed_supply": ts.get("enemy_killed_supply", combat_stats_cache["enemy_killed_supply"]),
-            "supply_lost": ts.get("supply_lost", combat_stats_cache["supply_lost"])
-        }
+            "win_rate": ts.get(
+                "win_rate",
+                round(
+                    (wins / max(
+                        1,
+                        total)) * 100,
+                    2) if total > 0 else combat_stats_cache["win_rate"]),
+            "kda_ratio": ts.get(
+                "kda_ratio",
+                combat_stats_cache["kda_ratio"]),
+            "avg_army_supply": ts.get(
+                "average_army_supply",
+                combat_stats_cache["avg_army_supply"]),
+            "enemy_killed_supply": ts.get(
+                "enemy_killed_supply",
+                combat_stats_cache["enemy_killed_supply"]),
+            "supply_lost": ts.get(
+                "supply_lost",
+                combat_stats_cache["supply_lost"])}
     return combat_stats_cache
+
 
 @app.get("/api/combat-stats/recent")
 async def get_recent_battles(limit: int = 10):  # type: ignore
@@ -443,7 +482,11 @@ async def get_recent_battles(limit: int = 10):  # type: ignore
         stats = bot_connector.get_combat_stats()
         if stats:
             return {"recent_battles": []}  # type: ignore
-    return {"recent_battles": combat_stats_cache.get("recent_battles", [])}  # type: ignore
+    return {
+        "recent_battles": combat_stats_cache.get(
+            "recent_battles",
+            [])}  # type: ignore
+
 
 @app.post("/api/combat-stats/record")
 async def record_battle(result: dict[str, Any]):  # type: ignore
@@ -451,7 +494,9 @@ async def record_battle(result: dict[str, Any]):  # type: ignore
     logger.info(f"Battle recorded: {result}")
     return {"status": "recorded"}
 
-@app.get("/api/learning-progress", dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
+
+@app.get("/api/learning-progress",
+         dependencies=[Depends(verify_credentials)] if _auth_enabled else [])
 async def get_learning_progress():
     """Get learning progress"""
     if bot_connector:
@@ -483,6 +528,7 @@ async def get_learning_progress():
         }
     return learning_progress_cache
 
+
 @app.post("/api/learning-progress/update")
 async def update_learning_progress(data: dict[str, Any]):  # type: ignore
     """Update learning progress"""
@@ -490,6 +536,7 @@ async def update_learning_progress(data: dict[str, Any]):  # type: ignore
     learning_progress_cache.update(data)
     logger.info(f"Learning progress updated: {data}")
     return {"status": "updated"}
+
 
 @app.get("/api/bot-config")
 async def get_bot_config():
@@ -507,6 +554,7 @@ async def get_bot_config():
             }
     return bot_config_cache
 
+
 @app.post("/api/bot-config/update")
 async def update_bot_config(data: dict[str, Any]):  # type: ignore
     """Update bot configuration"""
@@ -514,6 +562,7 @@ async def update_bot_config(data: dict[str, Any]):  # type: ignore
     bot_config_cache.update(data)
     logger.info(f"Bot config updated: {data}")
     return {"status": "updated"}
+
 
 @app.post("/api/control")
 async def send_control_command(command: dict[str, Any]):  # type: ignore
@@ -525,7 +574,9 @@ async def send_control_command(command: dict[str, Any]):  # type: ignore
         if bot_connector:
             bot_connector.set_strategy_mode(strategy)
         logger.info(f"Strategy changed to: {strategy}")
-        return {"status": "success", "message": f"Strategy changed to {strategy}"}
+        return {
+            "status": "success",
+            "message": f"Strategy changed to {strategy}"}
 
     elif cmd_type == "play":
         if bot_connector:
@@ -544,7 +595,9 @@ async def send_control_command(command: dict[str, Any]):  # type: ignore
         return {"status": "success", "message": "Game stopped"}
 
     else:
-        raise HTTPException(status_code=400, detail=f"Unknown command type: {cmd_type}")
+        raise HTTPException(status_code=400,
+                            detail=f"Unknown command type: {cmd_type}")
+
 
 @app.websocket("/ws/game-state")
 async def websocket_game_state(websocket: WebSocket):
@@ -572,6 +625,8 @@ async def websocket_game_state(websocket: WebSocket):
         connected_clients.remove(websocket)
 
 # Backward-compatible alias for existing frontend (ws://.../ws/game-status)
+
+
 @app.websocket("/ws/game-status")
 async def websocket_game_status_alias(websocket: WebSocket):
     await websocket_game_state(websocket)
@@ -587,35 +642,44 @@ ALLOWED_BASE_DIRS = {
     "sc2-ai-dashboard": Path("D:/Swarm-contol-in-sc2bot/sc2-ai-dashboard"),
 }
 
+
 def _validate_path(base_key: str, relative_path: str = "") -> Path:
     """Validate and resolve file path (prevent path traversal attacks)"""
     if base_key not in ALLOWED_BASE_DIRS:
-        raise HTTPException(status_code=400, detail=f"Invalid base directory: {base_key}")
+        raise HTTPException(status_code=400,
+                            detail=f"Invalid base directory: {base_key}")
 
     base_dir = ALLOWED_BASE_DIRS[base_key]
     if not base_dir.exists():
-        raise HTTPException(status_code=404, detail=f"Base directory not found: {base_dir}")
+        raise HTTPException(status_code=404,
+                            detail=f"Base directory not found: {base_dir}")
 
     # Resolve relative path
     if relative_path:
         # Normalize path and prevent path traversal
         normalized = os.path.normpath(relative_path)
         if normalized.startswith("..") or normalized.startswith("/"):
-            raise HTTPException(status_code=403, detail="Path traversal detected")
+            raise HTTPException(
+                status_code=403,
+                detail="Path traversal detected")
 
         full_path = base_dir / normalized
         # Ensure the resolved path is still within base directory
         try:
             full_path.resolve().relative_to(base_dir.resolve())
         except ValueError:
-            raise HTTPException(status_code=403, detail="Path traversal detected")
+            raise HTTPException(
+                status_code=403,
+                detail="Path traversal detected")
     else:
         full_path = base_dir
 
     return full_path
 
+
 @app.get("/api/files/local-training")
-async def list_local_training_files(path: str = "") -> dict[str, Any]:  # type: ignore
+# type: ignore
+async def list_local_training_files(path: str = "") -> dict[str, Any]:
     """List files and directories in local_training folder"""
     try:
         target_path = _validate_path("local_training", path)
@@ -654,6 +718,7 @@ async def list_local_training_files(path: str = "") -> dict[str, Any]:  # type: 
     except Exception as e:
         logger.error(f"Error listing local_training files: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/files/sc2-mobile-app")
 async def list_sc2_mobile_app_files(path: str = ""):  # type: ignore
@@ -696,6 +761,7 @@ async def list_sc2_mobile_app_files(path: str = ""):  # type: ignore
         logger.error(f"Error listing sc2-mobile-app files: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/files/sc2-ai-dashboard")
 async def list_sc2_ai_dashboard_files(path: str = ""):  # type: ignore
     """List files and directories in sc2-ai-dashboard folder"""
@@ -737,6 +803,7 @@ async def list_sc2_ai_dashboard_files(path: str = ""):  # type: ignore
         logger.error(f"Error listing sc2-ai-dashboard files: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/files/content")
 async def get_file_content(base: str, path: str, max_size: int = 1024 * 1024):  # 1MB limit
     """Get file content (text files only, with size limit)"""
@@ -747,19 +814,35 @@ async def get_file_content(base: str, path: str, max_size: int = 1024 * 1024):  
             raise HTTPException(status_code=404, detail="File not found")
 
         if target_path.is_dir():
-            raise HTTPException(status_code=400, detail="Path is a directory, not a file")
+            raise HTTPException(status_code=400,
+                                detail="Path is a directory, not a file")
 
         # Check file size
         file_size = target_path.stat().st_size
         if file_size > max_size:
             raise HTTPException(
                 status_code=413,
-                detail=f"File too large ({file_size} bytes). Maximum size: {max_size} bytes"
-            )
+                detail=f"File too large ({file_size} bytes). Maximum size: {max_size} bytes")
 
         # Determine if it's a text file
-        text_extensions = {'.txt', '.py', '.js', '.ts', '.tsx', '.json', '.md', '.yml', '.yaml',
-                          '.xml', '.html', '.css', '.log', '.csv', '.ini', '.cfg', '.toml'}
+        text_extensions = {
+            '.txt',
+            '.py',
+            '.js',
+            '.ts',
+            '.tsx',
+            '.json',
+            '.md',
+            '.yml',
+            '.yaml',
+            '.xml',
+            '.html',
+            '.css',
+            '.log',
+            '.csv',
+            '.ini',
+            '.cfg',
+            '.toml'}
         is_text = target_path.suffix.lower() in text_extensions
 
         if is_text:
@@ -776,7 +859,9 @@ async def get_file_content(base: str, path: str, max_size: int = 1024 * 1024):  
                 }
             except Exception as e:
                 logger.error(f"Error reading text file: {e}")
-                raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error reading file: {str(e)}")
         else:
             # Binary file - return metadata only
             return {
@@ -785,13 +870,13 @@ async def get_file_content(base: str, path: str, max_size: int = 1024 * 1024):  
                 "content": None,
                 "type": "binary",
                 "size": file_size,
-                "message": "Binary file - content not available. Use download endpoint."
-            }
+                "message": "Binary file - content not available. Use download endpoint."}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error reading file content: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/files/stats")
 async def get_folder_stats(base: str, path: str = ""):
@@ -803,7 +888,9 @@ async def get_folder_stats(base: str, path: str = ""):
             raise HTTPException(status_code=404, detail="Path not found")
 
         if not target_path.is_dir():
-            raise HTTPException(status_code=400, detail="Path is not a directory")
+            raise HTTPException(
+                status_code=400,
+                detail="Path is not a directory")
 
         total_files = 0
         total_dirs = 0
@@ -833,13 +920,17 @@ async def get_folder_stats(base: str, path: str = ""):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Simple UI route to serve dashboard.html via FastAPI
+
+
 @app.get("/ui", response_class=HTMLResponse)
 async def serve_dashboard_ui():
     html_path = Path(__file__).parent / "dashboard.html"
     if html_path.exists():
         with html_path.open("r", encoding="utf-8") as f:
             content = f.read()
-        return HTMLResponse(content=content, media_type="text/html; charset=utf-8")
+        return HTMLResponse(
+            content=content,
+            media_type="text/html; charset=utf-8")
     raise HTTPException(status_code=404, detail="dashboard.html not found")
 
 # ============================================================================
@@ -860,15 +951,20 @@ except ImportError:
     logger.warning("⚠️ Manus dashboard client not available")
 
 # Manus API proxy endpoints
+
+
 @app.get("/api/manus/game-sessions")
 async def get_manus_game_sessions(limit: int = 20):  # type: ignore
     """Get recent game sessions from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
         # Call Manus API to get recent sessions
-        response = manus_client._call_trpc("game.getSessions", {"limit": limit}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "game.getSessions", {
+                "limit": limit}, retry=True)  # type: ignore
         if response:
             return {
                 "success": True,
@@ -880,14 +976,17 @@ async def get_manus_game_sessions(limit: int = 20):  # type: ignore
         logger.error(f"Error fetching Manus game sessions: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/game-stats")
 async def get_manus_game_stats():  # type: ignore
     """Get game statistics from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
-        response = manus_client._call_trpc("game.getStats", {}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "game.getStats", {}, retry=True)  # type: ignore
         if response:
             return {"success": True, "data": response}  # type: ignore
         return {"success": False, "data": {}}  # type: ignore
@@ -895,14 +994,18 @@ async def get_manus_game_stats():  # type: ignore
         logger.error(f"Error fetching Manus game stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/training-episodes")
 async def get_manus_training_episodes(limit: int = 20):  # type: ignore
     """Get recent training episodes from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
-        response = manus_client._call_trpc("training.getEpisodes", {"limit": limit}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "training.getEpisodes", {
+                "limit": limit}, retry=True)  # type: ignore
         if response:
             return {
                 "success": True,
@@ -914,14 +1017,17 @@ async def get_manus_training_episodes(limit: int = 20):  # type: ignore
         logger.error(f"Error fetching Manus training episodes: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/training-stats")
 async def get_manus_training_stats():  # type: ignore
     """Get training statistics from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
-        response = manus_client._call_trpc("training.getStats", {}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "training.getStats", {}, retry=True)  # type: ignore
         if response:
             return {"success": True, "data": response}  # type: ignore
         return {"success": False, "data": {}}  # type: ignore
@@ -929,14 +1035,17 @@ async def get_manus_training_stats():  # type: ignore
         logger.error(f"Error fetching Manus training stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/arena-stats")
 async def get_manus_arena_stats():  # type: ignore
     """Get Arena statistics from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
-        response = manus_client._call_trpc("arena.getStats", {}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "arena.getStats", {}, retry=True)  # type: ignore
         if response:
             return {"success": True, "data": response}  # type: ignore
         return {"success": False, "data": {}}  # type: ignore
@@ -944,14 +1053,17 @@ async def get_manus_arena_stats():  # type: ignore
         logger.error(f"Error fetching Manus arena stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/bot-configs")
 async def get_manus_bot_configs():  # type: ignore
     """Get bot configurations from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
-        response = manus_client._call_trpc("botConfig.getAll", {}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "botConfig.getAll", {}, retry=True)  # type: ignore
         if response:
             return {
                 "success": True,
@@ -963,44 +1075,58 @@ async def get_manus_bot_configs():  # type: ignore
         logger.error(f"Error fetching Manus bot configs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/active-config")
 async def get_manus_active_config():  # type: ignore
     """Get active bot configuration from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
-        response = manus_client._call_trpc("botConfig.getActive", {}, retry=True)  # type: ignore
+        response = manus_client._call_trpc(
+            "botConfig.getActive", {}, retry=True)  # type: ignore
         if response:
-            return {"success": True, "data": response.get("activeConfig")}  # type: ignore
+            return {"success": True, "data": response.get(
+                "activeConfig")}  # type: ignore
         return {"success": False, "data": None}
     except Exception as e:
         logger.error(f"Error fetching Manus active config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Analytics & Insights endpoints
+
+
 @app.get("/api/analytics/performance-trends")
 async def get_performance_trends(days: int = 7):  # type: ignore
     """Get performance trends from Manus API data"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
         # Get recent sessions
-        sessions_response = manus_client._call_trpc("game.getSessions", {"limit": 100}, retry=True)  # type: ignore
+        sessions_response = manus_client._call_trpc(
+            "game.getSessions", {"limit": 100}, retry=True)  # type: ignore
         if not sessions_response:
             return {"success": False, "data": {}}  # type: ignore
 
         sessions = sessions_response.get("sessions", [])  # type: ignore
 
         # Calculate trends
-        wins = sum(1 for s in sessions if s.get("result") == "Victory")  # type: ignore
-        losses = sum(1 for s in sessions if s.get("result") == "Defeat")  # type: ignore
+        wins = sum(1 for s in sessions if s.get(
+            "result") == "Victory")  # type: ignore
+        losses = sum(1 for s in sessions if s.get(
+            "result") == "Defeat")  # type: ignore
         total = wins + losses
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        avg_duration = sum(s.get("duration", 0) for s in sessions) / len(sessions) if sessions else 0  # type: ignore
-        avg_minerals = sum(s.get("finalMinerals", 0) for s in sessions) / len(sessions) if sessions else 0  # type: ignore
+        avg_duration = sum(s.get("duration", 0) for s in sessions) / \
+            len(sessions) if sessions else 0  # type: ignore
+        avg_minerals = sum(
+            s.get(
+                "finalMinerals",
+                0) for s in sessions) / len(sessions) if sessions else 0  # type: ignore
 
         # Race-based statistics
         race_stats: dict[str, Any] = {}
@@ -1045,16 +1171,21 @@ async def get_performance_trends(days: int = 7):  # type: ignore
         logger.error(f"Error calculating performance trends: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/analytics/training-trends")
 async def get_training_trends(limit: int = 50):  # type: ignore
     """Get training trends and insights from Manus API"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
         # Get training stats
-        stats_response = manus_client._call_trpc("training.getStats", {}, retry=True)  # type: ignore
-        episodes_response = manus_client._call_trpc("training.getEpisodes", {"limit": limit}, retry=True)  # type: ignore
+        stats_response = manus_client._call_trpc(
+            "training.getStats", {}, retry=True)  # type: ignore
+        episodes_response = manus_client._call_trpc(
+            "training.getEpisodes", {
+                "limit": limit}, retry=True)  # type: ignore
 
         if not stats_response or not episodes_response:
             return {"success": False, "data": {}}  # type: ignore
@@ -1064,12 +1195,16 @@ async def get_training_trends(limit: int = 50):  # type: ignore
         # Calculate trends
         if episodes:
             rewards = [e.get("reward", 0) for e in episodes]  # type: ignore
-            win_rates = [e.get("winRate", 0) * 100 for e in episodes]  # type: ignore
+            win_rates = [e.get("winRate", 0) *
+                         100 for e in episodes]  # type: ignore
             losses = [e.get("loss", 0) for e in episodes]  # type: ignore
 
-            reward_trend = "improving" if len(rewards) > 1 and rewards[-1] > rewards[0] else "declining"  # type: ignore
-            win_rate_trend = "improving" if len(win_rates) > 1 and win_rates[-1] > win_rates[0] else "declining"  # type: ignore
-            loss_trend = "decreasing" if len(losses) > 1 and losses[-1] < losses[0] else "increasing"  # type: ignore
+            reward_trend = "improving" if len(
+                rewards) > 1 and rewards[-1] > rewards[0] else "declining"  # type: ignore
+            win_rate_trend = "improving" if len(
+                win_rates) > 1 and win_rates[-1] > win_rates[0] else "declining"  # type: ignore
+            loss_trend = "decreasing" if len(
+                losses) > 1 and losses[-1] < losses[0] else "increasing"  # type: ignore
         else:
             reward_trend = "unknown"
             win_rate_trend = "unknown"
@@ -1089,9 +1224,12 @@ async def get_training_trends(limit: int = 50):  # type: ignore
                 },
                 "recentEpisodes": {
                     "count": len(episodes),  # type: ignore
-                    "avgReward": round(sum(rewards) / len(rewards), 2) if rewards else 0,  # type: ignore
-                    "avgWinRate": round(sum(win_rates) / len(win_rates), 2) if win_rates else 0,  # type: ignore
-                    "avgLoss": round(sum(losses) / len(losses), 6) if losses else 0  # type: ignore
+                    # type: ignore
+                    "avgReward": round(sum(rewards) / len(rewards), 2) if rewards else 0,
+                    # type: ignore
+                    "avgWinRate": round(sum(win_rates) / len(win_rates), 2) if win_rates else 0,
+                    # type: ignore
+                    "avgLoss": round(sum(losses) / len(losses), 6) if losses else 0
                 }
             }
         }
@@ -1099,17 +1237,22 @@ async def get_training_trends(limit: int = 50):  # type: ignore
         logger.error(f"Error calculating training trends: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/analytics/insights")
 async def get_insights():  # type: ignore
     """Get AI-powered insights and recommendations"""
     if not manus_client:
-        raise HTTPException(status_code=503, detail="Manus API client not available")
+        raise HTTPException(status_code=503,
+                            detail="Manus API client not available")
 
     try:
         # Get all relevant data
-        game_stats = manus_client._call_trpc("game.getStats", {}, retry=True)  # type: ignore
-        training_stats = manus_client._call_trpc("training.getStats", {}, retry=True)  # type: ignore
-        arena_stats = manus_client._call_trpc("arena.getStats", {}, retry=True)  # type: ignore
+        game_stats = manus_client._call_trpc(
+            "game.getStats", {}, retry=True)  # type: ignore
+        training_stats = manus_client._call_trpc(
+            "training.getStats", {}, retry=True)  # type: ignore
+        arena_stats = manus_client._call_trpc(
+            "arena.getStats", {}, retry=True)  # type: ignore
 
         insights: list[dict[str, Any]] = []
         recommendations: list[dict[str, Any]] = []
@@ -1141,7 +1284,8 @@ async def get_insights():  # type: ignore
 
         # Analyze training progress
         if training_stats:
-            total_episodes = training_stats.get("totalEpisodes", 0)  # type: ignore
+            total_episodes = training_stats.get(
+                "totalEpisodes", 0)  # type: ignore
             avg_reward = training_stats.get("averageReward", 0)  # type: ignore
 
             if total_episodes > 100:
@@ -1189,6 +1333,7 @@ async def get_insights():  # type: ignore
         logger.error(f"Error generating insights: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/manus/health")
 async def check_manus_health():  # type: ignore
     """Check Manus API connection health"""
@@ -1221,10 +1366,10 @@ async def check_manus_health():  # type: ignore
 # ============================================================================
 
 if __name__ == "__main__":
- import uvicorn
- uvicorn.run(
- app,
+    import uvicorn
+    uvicorn.run(
+        app,
         host="0.0.0.0",
- port = 8001,
+        port=8001,
         log_level="info"
- )
+    )

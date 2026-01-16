@@ -35,7 +35,7 @@ if build_order:
         supply = timing_data.get('supply', 0)
         time = timing_data.get('time', 0)
         print(f"  - {param_name}: supply={supply}, time={time:.1f}s")
- 
+
  # Check specifically for Extractor
     if 'gas_supply' in build_order.get('timings', {}):
         print(f"\n[SUCCESS] Extractor (gas_supply) found!")

@@ -12,16 +12,16 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 class LearningSpeedOptimizer:
     """학습 속도 최적화기"""
- 
+
  def __init__(self):
  self.optimizations_applied: List[Dict] = []
- 
+
  def optimize_batch_processing(self, content: str, file_path: Path) -> Tuple[str, int]:
         """배치 처리 최적화"""
  lines = content.splitlines()
  modified_lines = []
  fix_count = 0
- 
+
  # 게임 결과 처리 루프 찾기
  for i, line in enumerate(lines):
  # for loop with game results
@@ -37,15 +37,15 @@ class LearningSpeedOptimizer:
  modified_lines.append(line)
  else:
  modified_lines.append(line)
- 
+
         return '\n'.join(modified_lines), fix_count
- 
+
  def optimize_model_loading(self, content: str, file_path: Path) -> Tuple[str, int]:
         """모델 로딩 최적화"""
  lines = content.splitlines()
  modified_lines = []
  fix_count = 0
- 
+
  # 모델 로딩 패턴 찾기
  for i, line in enumerate(lines):
  # torch.load, model.load 등
@@ -61,15 +61,15 @@ class LearningSpeedOptimizer:
  modified_lines.append(line)
  else:
  modified_lines.append(line)
- 
+
         return '\n'.join(modified_lines), fix_count
- 
+
  def optimize_data_loading(self, content: str, file_path: Path) -> Tuple[str, int]:
         """데이터 로딩 최적화"""
  lines = content.splitlines()
  modified_lines = []
  fix_count = 0
- 
+
  # 파일 읽기 패턴 찾기
  for i, line in enumerate(lines):
  # open(, json.load, 파일 읽기
@@ -85,41 +85,41 @@ class LearningSpeedOptimizer:
  modified_lines.append(line)
  else:
  modified_lines.append(line)
- 
+
         return '\n'.join(modified_lines), fix_count
 
 
 def optimize_learning_speed(file_path: Path) -> Dict:
     """학습 속도 최적화"""
  optimizer = LearningSpeedOptimizer()
- 
+
  try:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
- 
+
  original_content = content
- 
+
  # 배치 처리 최적화
  content, batch_fixes = optimizer.optimize_batch_processing(content, file_path)
- 
+
  # 모델 로딩 최적화
  content, model_fixes = optimizer.optimize_model_loading(content, file_path)
- 
+
  # 데이터 로딩 최적화
  content, data_fixes = optimizer.optimize_data_loading(content, file_path)
- 
+
  total_fixes = batch_fixes + model_fixes + data_fixes
- 
+
  if total_fixes > 0:
  # 백업 생성
             backup_path = file_path.with_suffix(file_path.suffix + '.bak')
             with open(backup_path, 'w', encoding='utf-8') as f:
  f.write(original_content)
- 
+
  # 수정된 내용 저장
             with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
- 
+
  return {
                 "success": True,
                 "batch_fixes": batch_fixes,
@@ -132,7 +132,7 @@ def optimize_learning_speed(file_path: Path) -> Dict:
                 "success": False,
                 "total_fixes": 0
  }
- 
+
  except Exception as e:
  return {
             "success": False,
@@ -146,7 +146,7 @@ def main():
     print("학습 속도 향상 도구")
     print("=" * 70)
  print()
- 
+
  # 학습 관련 파일 목록
  learning_files = [
         "local_training/main_integrated.py",
@@ -154,18 +154,18 @@ def main():
         "local_training/scripts/replay_learning_manager.py",
         "zerg_net.py"
  ]
- 
+
  total_batch_fixes = 0
  total_model_fixes = 0
  total_data_fixes = 0
- 
+
     print("학습 속도 최적화 적용 중...")
  for learning_file in learning_files:
  file_path = PROJECT_ROOT / learning_file
  if file_path.exists():
             print(f"  - {learning_file}")
  result = optimize_learning_speed(file_path)
- 
+
             if result.get("success"):
                 print(f"    배치 처리: {result['batch_fixes']}개")
                 print(f"    모델 로딩: {result['model_fixes']}개")
@@ -177,7 +177,7 @@ def main():
                 print(f"    오류: {result['error']}")
  else:
                 print(f"    변경 사항 없음")
- 
+
  print()
     print("=" * 70)
     print("학습 속도 최적화 완료!")

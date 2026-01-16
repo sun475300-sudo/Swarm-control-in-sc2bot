@@ -23,7 +23,13 @@ def find_python_files(root_dir: Path) -> List[Path]:
     python_files = []
     for path in root_dir.rglob("*.py"):
         # Skip virtual environments and cache
-        if any(skip in str(path) for skip in ["__pycache__", "venv", ".venv", "env", ".env"]):
+        if any(
+            skip in str(path) for skip in [
+                "__pycache__",
+                "venv",
+                ".venv",
+                "env",
+                ".env"]):
             continue
         python_files.append(path)
     return python_files
@@ -45,13 +51,17 @@ def check_syntax(file_path: Path) -> Tuple[bool, str]:
 def fix_with_autopep8(file_path: Path) -> bool:
     """Try to fix syntax errors using autopep8"""
     try:
-        result = subprocess.run(
-            ["python", "-m", "autopep8", "--in-place", "--aggressive", "--aggressive",
-             "--max-line-length=120", str(file_path)],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        result = subprocess.run(["python",
+                                 "-m",
+                                 "autopep8",
+                                 "--in-place",
+                                 "--aggressive",
+                                 "--aggressive",
+                                 "--max-line-length=120",
+                                 str(file_path)],
+                                capture_output=True,
+                                text=True,
+                                timeout=30)
         return result.returncode == 0
     except Exception:
         return False
@@ -77,7 +87,8 @@ def main():
         is_valid, error_msg = check_syntax(file_path)
         if not is_valid:
             errors_found.append((file_path, error_msg))
-            print(f"[ERROR] {file_path.relative_to(project_root)}: {error_msg}")
+            print(
+                f"[ERROR] {file_path.relative_to(project_root)}: {error_msg}")
 
             # Try to fix with autopep8
             print(f"[FIXING] Attempting to fix {file_path.name}...")

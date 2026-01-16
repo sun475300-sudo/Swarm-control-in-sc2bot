@@ -8,10 +8,11 @@ import os
 import sys
 from pathlib import Path
 
+
 def detect_encoding(file_path):
     """Detect file encoding"""
     encodings = ['utf-8', 'cp949', 'euc-kr', 'latin-1', 'utf-8-sig']
- 
+
  for encoding in encodings:
  try:
             with open(file_path, 'r', encoding=encoding) as f:
@@ -21,7 +22,7 @@ def detect_encoding(file_path):
  continue
  except Exception:
  continue
- 
+
  return None
 
 def fix_file_encoding(file_path):
@@ -31,11 +32,11 @@ def fix_file_encoding(file_path):
  except Exception as e:
         print(f"[ERROR] Failed to detect encoding for {file_path}: {e}")
  return False
- 
+
  if detected_encoding is None:
         print(f"[SKIP] Cannot detect encoding: {file_path}")
  return False
- 
+
     if detected_encoding == 'utf-8':
  # Already UTF-8, check if it has BOM
  try:
@@ -53,17 +54,17 @@ def fix_file_encoding(file_path):
             print(f"[ERROR] Failed to check/remove BOM from {file_path}: {e}")
  return False
  return False # Already UTF-8 without BOM
- 
+
  # Convert to UTF-8
     print(f"[FIX] Converting {detected_encoding} -> UTF-8: {file_path}")
  try:
         with open(file_path, 'r', encoding=detected_encoding, errors='replace') as f:
  content = f.read()
- 
+
  # Write as UTF-8
         with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
  f.write(content)
- 
+
  return True
  except Exception as e:
         print(f"[ERROR] Failed to convert {file_path}: {e}")
@@ -72,20 +73,20 @@ def fix_file_encoding(file_path):
 def main():
     """Main function"""
  base_dir = Path(__file__).parent.parent
- 
+
     print("=" * 70)
     print("FIXING ENCODING ISSUES IN ALL PYTHON FILES")
     print("=" * 70)
     print(f"Base directory: {base_dir}")
  print()
- 
+
  python_files = []
  try:
  for root, dirs, files in os.walk(base_dir):
  # Skip certain directories
             skip_dirs = ['__pycache__', '.git', 'node_modules', '.venv', 'venv']
  dirs[:] = [d for d in dirs if d not in skip_dirs]
- 
+
  for file in files:
                 if file.endswith('.py'):
  try:
@@ -97,14 +98,14 @@ def main():
  except Exception as e:
         print(f"[ERROR] Failed to walk directory: {e}")
  return
- 
+
     print(f"Found {len(python_files)} Python files")
  print()
- 
+
  fixed_count = 0
  skipped_count = 0
  error_count = 0
- 
+
  for file_path in python_files:
  try:
  # Handle path encoding issues
@@ -112,7 +113,7 @@ def main():
  str_path = str(file_path)
  except (UnicodeError, ValueError):
  str_path = file_path.as_posix()
- 
+
  if fix_file_encoding(file_path):
  fixed_count += 1
  else:
@@ -123,7 +124,7 @@ def main():
  except Exception as e:
             print(f"[ERROR] {file_path}: {e}")
  error_count += 1
- 
+
  print()
     print("=" * 70)
     print("SUMMARY")

@@ -16,7 +16,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 class RefactoringAnalyzer:
     """리팩토링 분석기"""
- 
+
  def __init__(self):
  self.duplicate_functions: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
  self.long_functions: List[Tuple[str, int, int]] = [] # (file, line, length)
@@ -24,7 +24,7 @@ class RefactoringAnalyzer:
  self.duplicate_code_blocks: List[Tuple[str, str, int, int]] = [] # (file1, file2, line1, line2)
  self.large_classes: List[Tuple[str, int, int]] = [] # (file, line, method_count)
  self.unused_imports: Dict[str, List[str]] = {}
- 
+
  def analyze_file(self, file_path: Path) -> Dict:
         """파일 분석"""
  try:
@@ -33,7 +33,7 @@ class RefactoringAnalyzer:
  tree = ast.parse(content, filename=str(file_path))
  except Exception as e:
             return {"error": str(e)}
- 
+
  result = {
             "file": str(file_path.relative_to(PROJECT_ROOT)),
             "functions": [],
@@ -42,30 +42,30 @@ class RefactoringAnalyzer:
             "line_count": len(content.splitlines()),
             "complexity": 0
  }
- 
+
  for node in ast.walk(tree):
  if isinstance(node, ast.FunctionDef):
  func_info = self._analyze_function(node, content)
                 result["functions"].append(func_info)
                 result["complexity"] += func_info["complexity"]
- 
+
  elif isinstance(node, ast.ClassDef):
  class_info = self._analyze_class(node, content)
                 result["classes"].append(class_info)
- 
+
  elif isinstance(node, (ast.Import, ast.ImportFrom)):
  import_info = self._analyze_import(node)
                 result["imports"].append(import_info)
- 
+
  return result
- 
+
  def _analyze_function(self, node: ast.FunctionDef, content: str) -> Dict:
         """함수 분석"""
  start_line = node.lineno
         end_line = node.end_lineno if hasattr(node, 'end_lineno') else start_line
  lines = content.splitlines()[start_line-1:end_line]
  length = len(lines)
- 
+
  # 복잡도 계산 (순환 복잡도 간단 버전)
  complexity = 1 # 기본 복잡도
  for child in ast.walk(node):
@@ -73,7 +73,7 @@ class RefactoringAnalyzer:
  complexity += 1
  elif isinstance(child, ast.BoolOp):
  complexity += len(child.values) - 1
- 
+
  return {
             "name": node.name,
             "line": start_line,
@@ -82,18 +82,18 @@ class RefactoringAnalyzer:
             "args": len(node.args.args),
             "decorators": [ast.unparse(d) for d in node.decorator_list] if hasattr(ast, 'unparse') else []
  }
- 
+
  def _analyze_class(self, node: ast.ClassDef, content: str) -> Dict:
         """클래스 분석"""
  methods = [n for n in node.body if isinstance(n, ast.FunctionDef)]
- 
+
  return {
             "name": node.name,
             "line": node.lineno,
             "method_count": len(methods),
             "methods": [m.name for m in methods]
  }
- 
+
  def _analyze_import(self, node: ast.Import) -> Dict:
         """Import 분석"""
  if isinstance(node, ast.Import):
@@ -107,11 +107,11 @@ class RefactoringAnalyzer:
                 "module": node.module or "",
                 "names": [alias.name for alias in node.names]
  }
- 
+
  def find_duplicate_functions(self, all_results: List[Dict]) -> List[Dict]:
         """중복 함수 찾기"""
  function_signatures: Dict[str, List[Tuple[str, str, int]]] = defaultdict(list)
- 
+
  for result in all_results:
             if "error" in result:
  continue
@@ -123,7 +123,7 @@ class RefactoringAnalyzer:
                     func["name"],
                     func["line"]
  ))
- 
+
  duplicates = []
  for sig, occurrences in function_signatures.items():
  if len(occurrences) > 1:
@@ -132,9 +132,9 @@ class RefactoringAnalyzer:
                     "occurrences": occurrences,
                     "count": len(occurrences)
  })
- 
+
         return sorted(duplicates, key=lambda x: x["count"], reverse=True)
- 
+
  def find_long_functions(self, all_results: List[Dict], threshold: int = 100) -> List[Dict]:
         """긴 함수 찾기"""
  long_funcs = []
@@ -149,9 +149,9 @@ class RefactoringAnalyzer:
                         "line": func["line"],
                         "length": func["length"]
  })
- 
+
         return sorted(long_funcs, key=lambda x: x["length"], reverse=True)
- 
+
  def find_complex_functions(self, all_results: List[Dict], threshold: int = 10) -> List[Dict]:
         """복잡한 함수 찾기"""
  complex_funcs = []
@@ -166,9 +166,9 @@ class RefactoringAnalyzer:
                         "line": func["line"],
                         "complexity": func["complexity"]
  })
- 
+
         return sorted(complex_funcs, key=lambda x: x["complexity"], reverse=True)
- 
+
  def find_large_classes(self, all_results: List[Dict], threshold: int = 20) -> List[Dict]:
         """큰 클래스 찾기"""
  large_classes = []
@@ -183,18 +183,18 @@ class RefactoringAnalyzer:
                         "line": cls["line"],
                         "method_count": cls["method_count"]
  })
- 
+
         return sorted(large_classes, key=lambda x: x["method_count"], reverse=True)
- 
+
  def find_duplicate_code_blocks(self, file_paths: List[Path], min_lines: int = 5) -> List[Dict]:
         """중복 코드 블록 찾기 (간단한 버전)"""
  code_blocks: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
- 
+
  for file_path in file_paths:
  try:
                 with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  lines = f.readlines()
- 
+
  # 간단한 해시 기반 중복 검사
  for i in range(len(lines) - min_lines + 1):
                     block = ''.join(lines[i:i+min_lines]).strip()
@@ -207,7 +207,7 @@ class RefactoringAnalyzer:
  ))
  except Exception:
  continue
- 
+
  duplicates = []
  for block, occurrences in code_blocks.items():
  if len(occurrences) > 1:
@@ -219,7 +219,7 @@ class RefactoringAnalyzer:
                         "occurrences": occurrences,
                         "count": len(occurrences)
  })
- 
+
         return sorted(duplicates, key=lambda x: x["count"], reverse=True)[:20]  # 상위 20개만
 
 
@@ -227,15 +227,15 @@ def find_all_python_files() -> List[Path]:
     """모든 Python 파일 찾기"""
  python_files = []
     exclude_dirs = {'__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models'}
- 
+
  for root, dirs, files in os.walk(PROJECT_ROOT):
  # 제외할 디렉토리 제거
  dirs[:] = [d for d in dirs if d not in exclude_dirs]
- 
+
  for file in files:
             if file.endswith('.py'):
  python_files.append(Path(root) / file)
- 
+
  return python_files
 
 
@@ -245,14 +245,14 @@ def generate_refactoring_report():
     print("대규모 리팩토링 및 코드 품질 개선 분석")
     print("=" * 70)
  print()
- 
+
  analyzer = RefactoringAnalyzer()
- 
+
     print("파일 검색 중...")
  python_files = find_all_python_files()
     print(f"총 {len(python_files)}개의 Python 파일을 찾았습니다.")
  print()
- 
+
     print("파일 분석 중...")
  all_results = []
  for i, file_path in enumerate(python_files, 1):
@@ -262,36 +262,36 @@ def generate_refactoring_report():
  all_results.append(result)
     print("분석 완료!")
  print()
- 
+
  # 중복 함수 찾기
     print("중복 함수 찾는 중...")
  duplicate_functions = analyzer.find_duplicate_functions(all_results)
- 
+
  # 긴 함수 찾기
     print("긴 함수 찾는 중...")
  long_functions = analyzer.find_long_functions(all_results)
- 
+
  # 복잡한 함수 찾기
     print("복잡한 함수 찾는 중...")
  complex_functions = analyzer.find_complex_functions(all_results)
- 
+
  # 큰 클래스 찾기
     print("큰 클래스 찾는 중...")
  large_classes = analyzer.find_large_classes(all_results)
- 
+
  # 중복 코드 블록 찾기
     print("중복 코드 블록 찾는 중...")
  duplicate_blocks = analyzer.find_duplicate_code_blocks(python_files)
- 
+
  # 리포트 생성
     report_path = PROJECT_ROOT / "REFACTORING_ANALYSIS_REPORT.md"
- 
+
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write("# 리팩토링 분석 리포트\n\n")
         f.write("**생성 일시**: 2026-01-15\n")
         f.write("**목적**: 대규모 리팩토링 및 코드 품질 개선을 위한 분석\n\n")
         f.write("---\n\n")
- 
+
  # 중복 함수
         f.write("## 1. 중복 함수 (리팩토링 우선순위: 높음)\n\n")
  if duplicate_functions:
@@ -303,7 +303,7 @@ def generate_refactoring_report():
                 f.write("\n")
  else:
             f.write("중복 함수를 찾지 못했습니다.\n\n")
- 
+
  # 긴 함수
         f.write("## 2. 긴 함수 (100줄 이상, 리팩토링 권장)\n\n")
  if long_functions:
@@ -313,7 +313,7 @@ def generate_refactoring_report():
             f.write("\n")
  else:
             f.write("긴 함수를 찾지 못했습니다.\n\n")
- 
+
  # 복잡한 함수
         f.write("## 3. 복잡한 함수 (순환 복잡도 10 이상, 리팩토링 권장)\n\n")
  if complex_functions:
@@ -323,7 +323,7 @@ def generate_refactoring_report():
             f.write("\n")
  else:
             f.write("복잡한 함수를 찾지 못했습니다.\n\n")
- 
+
  # 큰 클래스
         f.write("## 4. 큰 클래스 (메서드 20개 이상, 리팩토링 권장)\n\n")
  if large_classes:
@@ -333,7 +333,7 @@ def generate_refactoring_report():
             f.write("\n")
  else:
             f.write("큰 클래스를 찾지 못했습니다.\n\n")
- 
+
  # 중복 코드 블록
         f.write("## 5. 중복 코드 블록 (5줄 이상, 리팩토링 권장)\n\n")
  if duplicate_blocks:
@@ -347,7 +347,7 @@ def generate_refactoring_report():
                 f.write("\n")
  else:
             f.write("중복 코드 블록을 찾지 못했습니다.\n\n")
- 
+
  # 클로드 코드 활용 제안
         f.write("---\n\n")
         f.write("## 클로드 코드 활용 제안\n\n")
@@ -357,7 +357,7 @@ def generate_refactoring_report():
         f.write("3. **복잡한 함수 단순화**: 복잡한 로직을 더 읽기 쉽게 리팩토링\n")
         f.write("4. **큰 클래스 분리**: 큰 클래스를 더 작은 클래스로 분리\n")
         f.write("5. **중복 코드 제거**: 중복 코드 블록을 공통 함수로 추출\n\n")
- 
+
     print(f"\n리포트가 생성되었습니다: {report_path}")
     print(f"\n발견된 항목:")
     print(f"  - 중복 함수: {len(duplicate_functions)}개")

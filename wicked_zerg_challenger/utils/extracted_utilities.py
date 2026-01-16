@@ -5,25 +5,26 @@
 REFACTORING_ANALYSIS_REPORT.md에서 식별된 중복 함수들을 통합
 """
 
+
 def main(*args, **kwargs):
     """
  공통 유틸리티 함수: main
- 
+
  중복 발생 위치:
  - COMPLETE_RUN_SCRIPT.py:287
  - run.py:69
- - local_training\scripts\learning_logger.py:174
- - local_training\scripts\move_completed_replays.py:157
- - local_training\scripts\replay_build_order_learner.py:771
- - local_training\scripts\replay_learning_manager.py:212
- - local_training\scripts\replay_quality_filter.py:330
- - local_training\scripts\run_hybrid_supervised.py:94
- - local_training\scripts\strategy_database.py:204
- - monitoring\compare_server_android_data.py:199
- - monitoring\config_server.py:206
- - monitoring\get_ngrok_url.py:42
+ - local_training\\scripts\\learning_logger.py:174
+ - local_training\\scripts\\move_completed_replays.py:157
+ - local_training\\scripts\replay_build_order_learner.py:771
+ - local_training\\scripts\replay_learning_manager.py:212
+ - local_training\\scripts\replay_quality_filter.py:330
+ - local_training\\scripts\run_hybrid_supervised.py:94
+ - local_training\\scripts\\strategy_database.py:204
+ - monitoring\\compare_server_android_data.py:199
+ - monitoring\\config_server.py:206
+ - monitoring\\get_ngrok_url.py:42
  - monitoring\ngrok_tunnel.py:200
- - monitoring\start_with_ngrok.py:48
+ - monitoring\\start_with_ngrok.py:48
  - monitoring\update_android_ngrok_url.py:105
  - tools\analyze_and_cleanup.py:231
  - tools\analyze_telemetry.py:319
@@ -34,43 +35,43 @@ def main(*args, **kwargs):
  - tools\auto_documentation_generator.py:227
  - tools\auto_git_push.py:144
  - tools\background_parallel_learner.py:478
- - tools\check_all_api_keys.py:88
- - tools\check_all_sources.py:117
- - tools\check_api_key.py:63
- - tools\check_learning_progress.py:214
- - tools\check_replay_paths.py:19
- - tools\check_replay_selection.py:51
- - tools\claude_code_executor.py:235
- - tools\claude_code_project_analyzer.py:306
- - tools\cleanup_artifacts.py:190
- - tools\cleanup_deploy.py:15
- - tools\clean_duplicates.py:149
- - tools\code_diet_analyzer.py:176
- - tools\code_quality_improver.py:204
- - tools\compare_archive_paths.py:10
- - tools\compare_pro_vs_training_replays.py:459
- - tools\comprehensive_code_improvement.py:368
- - tools\convert_to_euc_kr.py:155
- - tools\download_and_train.py:1064
- - tools\extract_and_train_from_training.py:380
+ - tools\\check_all_api_keys.py:88
+ - tools\\check_all_sources.py:117
+ - tools\\check_api_key.py:63
+ - tools\\check_learning_progress.py:214
+ - tools\\check_replay_paths.py:19
+ - tools\\check_replay_selection.py:51
+ - tools\\claude_code_executor.py:235
+ - tools\\claude_code_project_analyzer.py:306
+ - tools\\cleanup_artifacts.py:190
+ - tools\\cleanup_deploy.py:15
+ - tools\\clean_duplicates.py:149
+ - tools\\code_diet_analyzer.py:176
+ - tools\\code_quality_improver.py:204
+ - tools\\compare_archive_paths.py:10
+ - tools\\compare_pro_vs_training_replays.py:459
+ - tools\\comprehensive_code_improvement.py:368
+ - tools\\convert_to_euc_kr.py:155
+ - tools\\download_and_train.py:1064
+ - tools\\extract_and_train_from_training.py:380
  - tools\fix_all_encoding_issues.py:73
- - tools\generate_pwa_icons.py:91
- - tools\generate_readme.py:483
- - tools\integrated_pipeline.py:39
- - tools\large_scale_refactoring.py:168
- - tools\merge_training_stats.py:118
- - tools\optimize_and_sort_learning_data.py:193
- - tools\package_for_aiarena.py:723
- - tools\package_for_aiarena_clean.py:396
- - tools\package_for_aiarena_clean_fixed.py:388
- - tools\pre_training_check.py:343
- - tools\prune_updates.py:31
+ - tools\\generate_pwa_icons.py:91
+ - tools\\generate_readme.py:483
+ - tools\\integrated_pipeline.py:39
+ - tools\\large_scale_refactoring.py:168
+ - tools\\merge_training_stats.py:118
+ - tools\\optimize_and_sort_learning_data.py:193
+ - tools\\package_for_aiarena.py:723
+ - tools\\package_for_aiarena_clean.py:396
+ - tools\\package_for_aiarena_clean_fixed.py:388
+ - tools\\pre_training_check.py:343
+ - tools\\prune_updates.py:31
  - tools\remove_old_api_keys.py:101
  - tools\remove_unused_imports.py:105
  - tools\replay_lifecycle_manager.py:450
  - tools\runtime_check.py:218
- - tools\self_diagnosis.py:12
- - tools\setup_verify.py:11
+ - tools\\self_diagnosis.py:12
+ - tools\\setup_verify.py:11
  - tools\upload_report.py:33
  - tools\upload_to_aiarena.py:191
  - tools\validate_arena_deployment.py:298
@@ -82,7 +83,7 @@ def main(*args, **kwargs):
 def __init__(*args, **kwargs):
     """
  공통 유틸리티 함수: __init__
- 
+
  중복 발생 위치:
  - combat_manager.py:27
  - config.py:200
@@ -165,7 +166,7 @@ def __init__(*args, **kwargs):
 def initialize(*args, **kwargs):
     """
  공통 유틸리티 함수: initialize
- 
+
  중복 발생 위치:
  - combat_manager.py:72
  - scouting_system.py:125
@@ -179,7 +180,7 @@ def initialize(*args, **kwargs):
 def __post_init__(*args, **kwargs):
     """
  공통 유틸리티 함수: __post_init__
- 
+
  중복 발생 위치:
  - local_training\build_order_learner.py:66
  - monitoring\bot_api_connector.py:39
@@ -193,7 +194,7 @@ def __post_init__(*args, **kwargs):
 def generate_report(*args, **kwargs):
     """
  공통 유틸리티 함수: generate_report
- 
+
  중복 발생 위치:
  - tools\analyze_and_cleanup.py:204
  - tools\analyze_telemetry.py:228
@@ -207,7 +208,7 @@ def generate_report(*args, **kwargs):
 def _cleanup_build_reservations(*args, **kwargs):
     """
  공통 유틸리티 함수: _cleanup_build_reservations
- 
+
  중복 발생 위치:
  - economy_manager.py:78
  - production_manager.py:431
@@ -220,7 +221,7 @@ def _cleanup_build_reservations(*args, **kwargs):
 def close(*args, **kwargs):
     """
  공통 유틸리티 함수: close
- 
+
  중복 발생 위치:
  - wicked_zerg_bot_pro.py:171
  - wicked_zerg_bot_pro.py:438
@@ -233,7 +234,7 @@ def close(*args, **kwargs):
 def get_venv_dir(*args, **kwargs):
     """
  공통 유틸리티 함수: get_venv_dir
- 
+
  중복 발생 위치:
  - local_training\main_integrated.py:19
  - local_training\scripts\parallel_train_integrated.py:117
@@ -246,7 +247,7 @@ def get_venv_dir(*args, **kwargs):
 def get_learning_count(*args, **kwargs):
     """
  공통 유틸리티 함수: get_learning_count
- 
+
  중복 발생 위치:
  - local_training\scripts\learning_status_manager.py:104
  - local_training\scripts\replay_learning_manager.py:139
@@ -259,7 +260,7 @@ def get_learning_count(*args, **kwargs):
 def is_completed(*args, **kwargs):
     """
  공통 유틸리티 함수: is_completed
- 
+
  중복 발생 위치:
  - local_training\scripts\learning_status_manager.py:145
  - local_training\scripts\replay_learning_manager.py:169
@@ -272,7 +273,7 @@ def is_completed(*args, **kwargs):
 def find_all_python_files(*args, **kwargs):
     """
  공통 유틸리티 함수: find_all_python_files
- 
+
  중복 발생 위치:
  - tools\auto_documentation_generator.py:212
  - tools\code_quality_improver.py:189
@@ -285,7 +286,7 @@ def find_all_python_files(*args, **kwargs):
 def analyze_file(*args, **kwargs):
     """
  공통 유틸리티 함수: analyze_file
- 
+
  중복 발생 위치:
  - tools\auto_documentation_generator.py:25
  - tools\code_diet_analyzer.py:22
@@ -298,7 +299,7 @@ def analyze_file(*args, **kwargs):
 def analyze_dependencies(*args, **kwargs):
     """
  공통 유틸리티 함수: analyze_dependencies
- 
+
  중복 발생 위치:
  - tools\claude_code_project_analyzer.py:73
  - tools\comprehensive_code_improvement.py:217
@@ -311,7 +312,7 @@ def analyze_dependencies(*args, **kwargs):
 def should_exclude(*args, **kwargs):
     """
  공통 유틸리티 함수: should_exclude
- 
+
  중복 발생 위치:
  - tools\package_for_aiarena_clean.py:259
  - tools\package_for_aiarena_clean_fixed.py:251
@@ -324,7 +325,7 @@ def should_exclude(*args, **kwargs):
 def _load_curriculum_level(*args, **kwargs):
     """
  공통 유틸리티 함수: _load_curriculum_level
- 
+
  중복 발생 위치:
  - combat_manager.py:56
  - production_manager.py:220
@@ -336,7 +337,7 @@ def _load_curriculum_level(*args, **kwargs):
 def start_dashboard_server(*args, **kwargs):
     """
  공통 유틸리티 함수: start_dashboard_server
- 
+
  중복 발생 위치:
  - COMPLETE_RUN_SCRIPT.py:253
  - monitoring\start_with_ngrok.py:30

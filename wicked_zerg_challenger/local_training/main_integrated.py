@@ -37,7 +37,8 @@ def get_venv_dir() -> Path:
 
 
 VENV_DIR = get_venv_dir()
-VENV_PYTHON = VENV_DIR / "Scripts" / "python.exe" if sys.platform == "win32" else VENV_DIR / "bin" / "python3"
+VENV_PYTHON = VENV_DIR / "Scripts" / \
+    "python.exe" if sys.platform == "win32" else VENV_DIR / "bin" / "python3"
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -61,7 +62,8 @@ def get_sc2_path():
         ]
     elif sys.platform == "darwin":
         default_paths = [
-            os.path.expanduser("~/Library/Application Support/Blizzard/StarCraft II"),
+            os.path.expanduser(
+                "~/Library/Application Support/Blizzard/StarCraft II"),
             "/Applications/StarCraft II",
         ]
     else:
@@ -91,7 +93,12 @@ DRY_RUN_MODE = os.environ.get("DRY_RUN_MODE", "false").lower() == "true"
 try:
     from loguru import logger
     logger.remove()
-    logger.add(sys.stderr, colorize=True, enqueue=True, catch=True, level="INFO")
+    logger.add(
+    sys.stderr,
+    colorize=True,
+    enqueue=True,
+    catch=True,
+     level="INFO")
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
     logger.add(
@@ -110,7 +117,10 @@ except Exception as e:
     logger = None
     print(f"[WARNING] Failed to configure loguru: {e}")
 
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="asyncio")
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+     module="asyncio")
 
 # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
 # CRITICAL: Import torch safely to avoid C extensions loading errors
@@ -120,7 +130,8 @@ try:
     original_cwd = os.getcwd()
     try:
         # Temporarily change to project root to avoid local directory conflicts
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__)))
         os.chdir(project_root)
         import torch
         # Verify torch is properly installed
@@ -150,7 +161,11 @@ class SafeStreamHandler(logging.StreamHandler):
             # Check if stream is closed before attempting to write
             if hasattr(self.stream, "closed") and self.stream.closed:
                 return  # Stream is closed, skip logging
-            if hasattr(self.stream, "detach") and not hasattr(self.stream, "write"):
+            if hasattr(
+    self.stream,
+    "detach") and not hasattr(
+        self.stream,
+         "write"):
                 return  # Buffer has been detached, skip logging
             super().emit(record)
         except (ValueError, OSError, AttributeError) as e:
@@ -158,7 +173,8 @@ class SafeStreamHandler(logging.StreamHandler):
             # These occur when sc2 library tries to log after stream is closed
             error_msg = str(e).lower()
             if "buffer" in error_msg or "detached" in error_msg or "closed" in error_msg:
-                # Silently ignore buffer-related errors from sc2 internal logging
+                # Silently ignore buffer-related errors from sc2 internal
+                # logging
                 pass
             else:
                 # Re-raise or handle other errors normally
@@ -192,9 +208,12 @@ if sys.platform == "win32":
         # Only use WindowsSelectorEventLoopPolicy if default policy causes issues
         # Most modern Python versions handle this automatically
         if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
-            # Check if we're in a Docker container or WSL (should use default policy)
-            if not os.environ.get("WSL_DISTRO_NAME") and not os.path.exists("/.dockerenv"):
-                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            # Check if we're in a Docker container or WSL (should use default
+            # policy)
+            if not os.environ.get(
+                "WSL_DISTRO_NAME") and not os.path.exists("/.dockerenv"):
+                asyncio.set_event_loop_policy(
+    asyncio.WindowsSelectorEventLoopPolicy())
                 print("[INFO] Using Windows-specific event loop policy")
     except (AttributeError, Exception) as e:
         # Silently fall back to default policy
@@ -226,7 +245,8 @@ root_logger.handlers = [
 
 # Also configure sc2 logger specifically
 sc2_logger = logging.getLogger("sc2")
-sc2_logger.handlers = [SafeStreamHandler(sys.stdout)]  # Replace all sc2 handlers with safe handler
+# Replace all sc2 handlers with safe handler
+sc2_logger.handlers = [SafeStreamHandler(sys.stdout)]
 sc2_logger.setLevel(logging.INFO)
 sc2_logger.propagate = False  # Prevent propagation to root logger
 
@@ -250,7 +270,8 @@ def safe_stream_handler_emit(self, record):
 logging.StreamHandler.emit = safe_stream_handler_emit
 
 # Bot import - Use WickedZergBotPro as integrated bot
-# Add parent directory (root) to sys.path from current directory (local_training)
+# Add parent directory (root) to sys.path from current directory
+# (local_training)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Curriculum Learning System
@@ -265,7 +286,8 @@ MAP_NAME = "AcropolisLE"  # Default map (confirmed to exist in Maps folder)
 # CurriculumManager handles all difficulty progression automatically
 
 # Available maps - verified to exist in StarCraft II Maps directory
-# Using exact file names (without .SC2Map extension) as they appear in the folder
+# Using exact file names (without .SC2Map extension) as they appear in the
+# folder
 AVAILABLE_MAPS = [
     "AcropolisLE",  # Default map
     "AbyssalReefLE",
@@ -320,7 +342,8 @@ def write_status_file(instance_id, status_data):
         status_dir.mkdir(parents=True, exist_ok=True)
         status_file = status_dir / "status.json"
 
-        # IMPROVED: Use temporary file + atomic move to prevent file lock conflicts
+        # IMPROVED: Use temporary file + atomic move to prevent file lock
+        # conflicts
         max_retries = 3
         retry_delay = 0.1
 
@@ -339,11 +362,13 @@ def write_status_file(instance_id, status_data):
 
             except (IOError, OSError, PermissionError) as e:
                 if attempt < max_retries - 1:
-                    time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                    # Exponential backoff
+                    time.sleep(retry_delay * (attempt + 1))
                     continue
                 else:
                     # Last attempt failed - log but don't raise
-                    print(f"[WARNING] Failed to write status file after {max_retries} attempts: {e}")
+                    print(
+                        f"[WARNING] Failed to write status file after {max_retries} attempts: {e}")
                     return
     except Exception as e:
         # Silently fail - status file writing is optional
@@ -372,7 +397,8 @@ def run_training():
             current_difficulty = curriculum.get_difficulty()
             progress_info = curriculum.get_progress_info()
             print(f"  ? Curriculum loaded: {progress_info['level_name']}")
-            print(f"     Level: {progress_info['current_level']}/{progress_info['total_levels']}")
+            print(
+                f"     Level: {progress_info['current_level']}/{progress_info['total_levels']}")
             print(
                 f"     Games at current level: {progress_info['games_at_current_level']}/{progress_info['min_games_required']}"
             )
@@ -395,7 +421,8 @@ def run_training():
             print(f"  Render mode: HEADLESS (no window) - Default")
             print(f"  Map pool: {len(AVAILABLE_MAPS)} maps available")
             print(f"  Opponent races: {len(OPPONENT_RACES)} races")
-            print(f"  Personality profiles: {len(PERSONALITIES)} personalities")
+            print(
+                f"  Personality profiles: {len(PERSONALITIES)} personalities")
 
             print("\n" + "=" * 70)
             print("? [DRY-RUN SUCCESS] All systems ready for actual training!")
@@ -419,7 +446,8 @@ def run_training():
 
     # ACTUAL TRAINING MODE: Run real games with StarCraft II
 
-    # Note: Event loop is already running when this function is called (via asyncio.run())
+    # Note: Event loop is already running when this function is called (via
+    # asyncio.run())
     instance_id = 0  # IMPROVED: Always 0 (single game mode)
     # Override environment variable to force single game mode
     os.environ["INSTANCE_ID"] = "0"
@@ -432,7 +460,8 @@ def run_training():
     if sc2_path:
         os.environ["SC2PATH"] = sc2_path
     _config = Config()
-    # IMPROVED: Try C++ implementation first for better performance, fallback to Python if needed
+    # IMPROVED: Try C++ implementation first for better performance, fallback
+    # to Python if needed
     if _config.PROTOCOL_BUFFERS_IMPL:
         try:
             # Try to use C++ implementation (10x faster)
@@ -444,15 +473,18 @@ def run_training():
                 except ImportError:
                     # Fallback to Python implementation if C++ not available
                     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-                    print("[WARNING] C++ protobuf not available, using Python implementation (slower)")
+                    print(
+                        "[WARNING] C++ protobuf not available, using Python implementation (slower)")
         except Exception as e:
             # Fallback to Python on any error
             os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-            print(f"[WARNING] Protobuf setup error: {e}, using Python implementation")
+            print(
+                f"[WARNING] Protobuf setup error: {e}, using Python implementation")
 
     if not sc2_path:
         print(f"[WARNING] SC2 path not found")
-        print(f"[INFO] Please set SC2PATH environment variable to your StarCraft II installation path")
+        print(
+            f"[INFO] Please set SC2PATH environment variable to your StarCraft II installation path")
 
     # Create replay directory
     replay_dir = "replays"
@@ -479,7 +511,8 @@ def run_training():
     MAX_CONTINUOUS_FAILURES = 3
     continuous_failures = 0
 
-    monitor_enabled = os.environ.get("ENABLE_MONITOR", "false").lower() == "true"
+    monitor_enabled = os.environ.get(
+    "ENABLE_MONITOR", "false").lower() == "true"
     code_monitor = None
     code_monitor = None
     monitor_enabled = False
@@ -1054,7 +1087,7 @@ def run_training():
                         extractor = ReplayBuildOrderExtractor(replay_dir=replay_archive_dir)
                         max_replays_batch = _config.MAX_REPLAYS_FOR_LEARNING // 2  # Process in batches
                         learned_params = extractor.learn_from_replays(max_replays=max_replays_batch)
-                        
+
                         if learned_params:
                             extractor.save_learned_parameters(learned_params)
                             print(f"[BUILD LEARNING] Iteration {iteration + 1}: Updated {len(learned_params)} build order parameters")

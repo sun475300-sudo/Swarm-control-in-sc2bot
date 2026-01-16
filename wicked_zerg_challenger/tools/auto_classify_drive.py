@@ -50,8 +50,15 @@ EXCLUDE_EXTENSIONS = {
     ".exe", ".dll", ".sys", ".tmp", ".temp", ".log", ".bak"
 }
 
+
 class DriveClassifier:
-    def __init__(self, drives=["C:", "D:"], target_base="D:/wicked_zerg_challenger/data", dry_run=False):
+    def __init__(
+    self,
+    drives=[
+        "C:",
+        "D:"],
+        target_base="D:/wicked_zerg_challenger/data",
+         dry_run=False):
  self.drives = drives
  self.target_base = Path(target_base)
  self.dry_run = dry_run

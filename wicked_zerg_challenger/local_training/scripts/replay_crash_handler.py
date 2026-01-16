@@ -24,57 +24,57 @@ class ReplayCrashHandler:
  3. Recovery from incomplete learning sessions
     """
 
- def __init__(self, crash_log_file: Path, max_crashes: int = 3):
+    def __init__(self, crash_log_file: Path, max_crashes: int = 3):
         """
- Args:
- crash_log_file: Path to crash tracking JSON file
- max_crashes: Maximum crashes before marking as bad replay (default: 3)
+        Args:
+            crash_log_file: Path to crash tracking JSON file
+            max_crashes: Maximum crashes before marking as bad replay (default: 3)
         """
- self.crash_log_file = crash_log_file
- self.crash_log_file.parent.mkdir(parents = True, exist_ok = True)
- self.max_crashes = max_crashes
- self.crash_data = self._load_crash_log()
+        self.crash_log_file = crash_log_file
+        self.crash_log_file.parent.mkdir(parents=True, exist_ok=True)
+        self.max_crashes = max_crashes
+        self.crash_data = self._load_crash_log()
 
- def _load_crash_log(self) -> Dict:
+    def _load_crash_log(self) -> Dict:
         """Load crash tracking data from JSON file"""
- if not self.crash_log_file.exists():
- return {
+        if not self.crash_log_file.exists():
+            return {
                 "_format_version": "1.0",
                 "_description": "Replay crash tracking - Prevents infinite retry loops",
                 "_last_updated": datetime.now().isoformat(),
                 "in_progress": {},  # replay_key -> start_time
                 "crash_count": {},  # replay_key -> count
                 "bad_replays": []  # List of replay keys marked as bad
- }
+            }
 
- try:
+        try:
             content = self.crash_log_file.read_text(encoding="utf-8")
- if not content.strip():
- return self._get_default_crash_log()
+            if not content.strip():
+                return self._get_default_crash_log()
 
- data = json.loads(content)
- # Ensure required fields exist
+            data = json.loads(content)
+            # Ensure required fields exist
             if "in_progress" not in data:
                 data["in_progress"] = {}
             if "crash_count" not in data:
                 data["crash_count"] = {}
             if "bad_replays" not in data:
                 data["bad_replays"] = []
- return data
- except Exception as e:
+            return data
+        except Exception as e:
             print(f"[WARNING] Failed to load crash log: {e}")
- return self._get_default_crash_log()
+            return self._get_default_crash_log()
 
- def _get_default_crash_log(self) -> Dict:
+    def _get_default_crash_log(self) -> Dict:
         """Get default crash log structure"""
- return {
+        return {
             "_format_version": "1.0",
             "_description": "Replay crash tracking - Prevents infinite retry loops",
             "_last_updated": datetime.now().isoformat(),
             "in_progress": {},
             "crash_count": {},
             "bad_replays": []
- }
+        }
 
  def _save_crash_log(self):
         """Save crash tracking data to JSON file (atomic write)"""

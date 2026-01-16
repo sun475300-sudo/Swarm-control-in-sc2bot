@@ -18,6 +18,7 @@ from typing import Optional, Any
 # 1. 시스템 초기화 (System Initialization)
 # ============================================================================
 
+
 def initialize_system() -> Path:
     """시스템 초기화"""
     print("=" * 70)
@@ -45,7 +46,12 @@ def initialize_system() -> Path:
     try:
         from loguru import logger
         logger.remove()
-        logger.add(sys.stderr, colorize=True, enqueue=True, catch=True, level="INFO")
+        logger.add(
+            sys.stderr,
+            colorize=True,
+            enqueue=True,
+            catch=True,
+            level="INFO")
         log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
         logger.add(
@@ -91,7 +97,7 @@ def initialize_system() -> Path:
             # WindowsSelectorEventLoopPolicy is deprecated in Python 3.12+
             # Using default event loop policy
             pass
-        except:
+        except BaseException:
             pass
     print("  ? 이벤트 루프 설정 완료")
 
@@ -112,14 +118,15 @@ def setup_sc2_path() -> Optional[str]:
     if sys.platform == "win32":
         try:
             import winreg
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                 r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+            key = winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SOFTWARE\Blizzard Entertainment\StarCraft II")
             install_path, _ = winreg.QueryValueEx(key, "InstallPath")
             winreg.CloseKey(key)
             if os.path.exists(install_path):
                 os.environ["SC2PATH"] = install_path
                 return install_path
-        except:
+        except BaseException:
             pass
 
     common_paths = [
@@ -137,6 +144,7 @@ def setup_sc2_path() -> Optional[str]:
 # ============================================================================
 # 2. 봇 초기화 (Bot Initialization)
 # ============================================================================
+
 
 def initialize_bot(project_dir: Path) -> Optional[Any]:
     """봇 초기화"""
@@ -165,9 +173,11 @@ def initialize_bot(project_dir: Path) -> Optional[Any]:
             game_count=0
         )
         print("  ? 봇 인스턴스 생성 완료")
-        print(f"     - Personality: {getattr(bot_instance, 'personality', 'unknown')}")
+        print(
+            f"     - Personality: {getattr(bot_instance, 'personality', 'unknown')}")
         print(f"     - Instance ID: {getattr(bot_instance, 'instance_id', 0)}")
-        print(f"     - Train Mode: {getattr(bot_instance, 'train_mode', False)}")
+        print(
+            f"     - Train Mode: {getattr(bot_instance, 'train_mode', False)}")
     except Exception as e:
         print(f"  ? 봇 인스턴스 생성 실패: {e}")
         return None
@@ -181,7 +191,7 @@ def initialize_bot(project_dir: Path) -> Optional[Any]:
         ("Scouting System", "scout"),
         ("Micro Controller", "micro"),
         ("Queen Manager", "queen_manager"),
- ]
+    ]
 
     for name, attr in managers:
         manager = getattr(bot_instance, attr, None)
@@ -205,6 +215,7 @@ def initialize_bot(project_dir: Path) -> Optional[Any]:
 # ============================================================================
 # 3. 게임 실행 (Game Execution)
 # ============================================================================
+
 
 def run_game(bot_instance: Any) -> bool:
     """게임 실행"""
@@ -256,6 +267,7 @@ def run_game(bot_instance: Any) -> bool:
 # 4. 대시보드 서버 (Dashboard Server) - 선택적
 # ============================================================================
 
+
 def start_dashboard_server(background: bool = False) -> Optional[Any]:
     """대시보드 서버 시작"""
     print("=" * 70)
@@ -289,6 +301,7 @@ def start_dashboard_server(background: bool = False) -> Optional[Any]:
 # ============================================================================
 # 5. 메인 실행 함수
 # ============================================================================
+
 
 def main():
     """메인 실행 함수"""

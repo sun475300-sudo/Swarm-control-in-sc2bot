@@ -144,7 +144,8 @@ class ArenaDeploymentPreparer:
                     if node.module and 'training' in node.module.lower():
                         # Training imports might not be available in Arena
                         if 'run_with_training' in node.module or 'main_integrated' in node.module:
-                            errors.append(f"Training import found: {node.module}")
+                            errors.append(
+                                f"Training import found: {node.module}")
         except Exception:
             pass  # Syntax errors already checked
 
@@ -221,7 +222,8 @@ class ArenaDeploymentPreparer:
             syntax_ok, syntax_errors = self.check_syntax_errors(file_path)
             if not syntax_ok:
                 results["syntax_errors"] += 1
-                self.errors.extend([f"{file_name}: {e}" for e in syntax_errors])
+                self.errors.extend(
+                    [f"{file_name}: {e}" for e in syntax_errors])
                 print(f"  [!] {file_name} - Syntax errors: {syntax_errors}")
 
                 # Try to fix
@@ -235,8 +237,10 @@ class ArenaDeploymentPreparer:
             import_ok, import_warnings = self.check_import_errors(file_path)
             if not import_ok:
                 results["import_warnings"] += 1
-                self.warnings.extend([f"{file_name}: {w}" for w in import_warnings])
-                print(f"  [~] {file_name} - Import warnings: {import_warnings}")
+                self.warnings.extend(
+                    [f"{file_name}: {w}" for w in import_warnings])
+                print(
+                    f"  [~] {file_name} - Import warnings: {import_warnings}")
 
         return results
 
@@ -274,7 +278,9 @@ class ArenaDeploymentPreparer:
             src_dir = self.project_root / dir_name
             if src_dir.exists() and src_dir.is_dir():
                 dst_dir = self.temp_dir / dir_name
-                shutil.copytree(src_dir, dst_dir, ignore=shutil.ignore_patterns('*.pyc', '__pycache__', '*.bak'))
+                shutil.copytree(
+                    src_dir, dst_dir, ignore=shutil.ignore_patterns(
+                        '*.pyc', '__pycache__', '*.bak'))
                 print(f"      [OK] {dir_name}/")
 
         # Copy models (latest only)
@@ -287,7 +293,8 @@ class ArenaDeploymentPreparer:
             # Find latest model
             model_files = list(models_src.glob("*.pt"))
             if model_files:
-                latest_model = max(model_files, key=lambda p: p.stat().st_mtime)
+                latest_model = max(
+                    model_files, key=lambda p: p.stat().st_mtime)
                 dst_model = models_dst / "zerg_net_model.pt"
                 shutil.copy2(latest_model, dst_model)
                 print(f"      [OK] models/zerg_net_model.pt")
@@ -312,15 +319,19 @@ class ArenaDeploymentPreparer:
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, dirs, files in os.walk(self.temp_dir):
                 # Exclude patterns
-                dirs[:] = [d for d in dirs if not any(
-                    pattern in d for pattern in ['__pycache__', '.git', '.venv']
-                )]
+                dirs[:] = [
+                    d for d in dirs if not any(
+                        pattern in d for pattern in [
+                            '__pycache__',
+                            '.git',
+                            '.venv'])]
 
                 for file in files:
                     file_path = Path(root) / file
 
                     # Skip excluded files
-                    if any(file.endswith(ext) for ext in ['.pyc', '.pyo', '.bak', '.log']):
+                    if any(file.endswith(ext)
+                           for ext in ['.pyc', '.pyo', '.bak', '.log']):
                         continue
 
                     # Relative path for ZIP
@@ -354,7 +365,8 @@ class ArenaDeploymentPreparer:
         bot_py = package_dir / "wicked_zerg_bot_pro.py"
         validation_results["bot_class_exists"] = bot_py.exists()
         if not bot_py.exists():
-            validation_results["errors"].append("wicked_zerg_bot_pro.py not found")
+            validation_results["errors"].append(
+                "wicked_zerg_bot_pro.py not found")
 
         # Check requirements.txt
         req_txt = package_dir / "requirements.txt"
@@ -364,7 +376,10 @@ class ArenaDeploymentPreparer:
 
         # Check all essential files
         for file_name in self.ESSENTIAL_FILES:
-            if file_name not in ['run.py', 'wicked_zerg_bot_pro.py', 'requirements.txt']:
+            if file_name not in [
+                'run.py',
+                'wicked_zerg_bot_pro.py',
+                    'requirements.txt']:
                 file_path = package_dir / Path(file_name).name
                 if not file_path.exists():
                     validation_results["all_essential_files"] = False
@@ -398,14 +413,18 @@ class ArenaDeploymentPreparer:
         results["validation"] = validation_results
 
         if validation_results["missing_files"]:
-            print(f"\n[!] Missing {len(validation_results['missing_files'])} essential files")
-            results["errors"].extend([f"Missing: {f}" for f in validation_results["missing_files"]])
+            print(
+                f"\n[!] Missing {len(validation_results['missing_files'])} essential files")
+            results["errors"].extend(
+                [f"Missing: {f}" for f in validation_results["missing_files"]])
             return results
 
         if validation_results["syntax_errors"] > 0:
-            print(f"\n[!] Found {validation_results['syntax_errors']} syntax errors")
+            print(
+                f"\n[!] Found {validation_results['syntax_errors']} syntax errors")
             if validation_results["files_fixed"] > 0:
-                print(f"    [FIXED] {validation_results['files_fixed']} files were auto-fixed")
+                print(
+                    f"    [FIXED] {validation_results['files_fixed']} files were auto-fixed")
 
         # Step 2: Create clean package
         package_dir = self.create_clean_package()
@@ -444,15 +463,20 @@ def main():
     """Main function"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="AI Arena Deployment Preparation Tool")
-    parser.add_argument("--deploy-path", type=str, default=None,
-                       help=f"Deployment path (default: {DEFAULT_DEPLOY_PATH})")
+    parser = argparse.ArgumentParser(
+        description="AI Arena Deployment Preparation Tool")
+    parser.add_argument(
+        "--deploy-path",
+        type=str,
+        default=None,
+        help=f"Deployment path (default: {DEFAULT_DEPLOY_PATH})")
     parser.add_argument("--skip-validation", action="store_true",
-                       help="Skip file validation")
+                        help="Skip file validation")
 
     args = parser.parse_args()
 
-    deploy_path = Path(args.deploy_path) if args.deploy_path else DEFAULT_DEPLOY_PATH
+    deploy_path = Path(
+        args.deploy_path) if args.deploy_path else DEFAULT_DEPLOY_PATH
 
     preparer = ArenaDeploymentPreparer(deploy_path=deploy_path)
 

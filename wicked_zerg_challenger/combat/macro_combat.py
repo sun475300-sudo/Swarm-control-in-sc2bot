@@ -6,7 +6,6 @@ CombatManager에서 분리된 매크로 전투 기능
 """
 
 
-
 class MacroCombat:
     """매크로 전투 관리"""
 

@@ -9,7 +9,6 @@
 """
 
 
-
 import ast
 
 import sys
@@ -17,10 +16,7 @@ import sys
 from pathlib import Path
 
 
-
-
 def check_syntax(filepath: Path) -> Tuple[bool, str]:
-
     """Python ÆÄÀÏÀÇ syntax Ã¼Å©"""
 
  try:
@@ -51,7 +47,7 @@ def find_python_files(root: Path) -> List[Path]:
 
     exclude_dirs = {'__pycache__', '.git', 'node_modules', 'venv', 'env', '.venv'}
 
- 
+
 
     for py_file in root.rglob('*.py'):
 
@@ -63,7 +59,7 @@ def find_python_files(root: Path) -> List[Path]:
 
  python_files.append(py_file)
 
- 
+
 
  return sorted(python_files)
 
@@ -81,11 +77,11 @@ def check_imports(filepath: Path, root: Path) -> List[str]:
 
  code = f.read()
 
- 
+
 
  tree = ast.parse(code, filename=str(filepath))
 
- 
+
 
  for node in ast.walk(tree):
 
@@ -107,7 +103,7 @@ def check_imports(filepath: Path, root: Path) -> List[str]:
 
  pass
 
- 
+
 
  return issues
 
@@ -119,7 +115,7 @@ def main():
 
  python_files = find_python_files(project_root)
 
- 
+
 
     print(f"ÀüÃ¼ Python ÆÄÀÏ ¼ö: {len(python_files)}\n")
 
@@ -129,13 +125,13 @@ def main():
 
     print("=" * 80 + "\n")
 
- 
+
 
  syntax_errors = []
 
  files_checked = 0
 
- 
+
 
  for py_file in python_files:
 
@@ -143,11 +139,11 @@ def main():
 
  relative_path = py_file.relative_to(project_root)
 
- 
+
 
  is_valid, error_msg = check_syntax(py_file)
 
- 
+
 
  if not is_valid:
 
@@ -161,7 +157,7 @@ def main():
 
             print(f"[OK] {files_checked}/{len(python_files)} files checked...")
 
- 
+
 
     print("\n" + "=" * 80)
 
@@ -173,7 +169,7 @@ def main():
 
     print(f"Syntax ¿À·ù: {len(syntax_errors)}")
 
- 
+
 
  if syntax_errors:
 

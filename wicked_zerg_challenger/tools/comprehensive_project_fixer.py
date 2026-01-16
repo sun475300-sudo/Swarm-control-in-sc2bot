@@ -19,23 +19,23 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 class ComprehensiveProjectFixer:
     """���� ������Ʈ ������"""
- 
+
  def __init__(self):
  self.fixes_applied = []
  self.errors_found = []
- 
+
  def fix_micro_controller_imports(self) -> bool:
         """micro_controller.py�� import ���� ����"""
         file_path = PROJECT_ROOT / "micro_controller.py"
- 
+
  if not file_path.exists():
             self.errors_found.append(f"micro_controller.py not found")
  return False
- 
+
  try:
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
- 
+
  # @dataclass import Ȯ��
             if '@dataclass' in content and 'from dataclasses import dataclass' not in content:
  # dataclass import �߰�
@@ -45,7 +45,7 @@ class ComprehensiveProjectFixer:
                         'import math\nfrom dataclasses import dataclass'
  )
                     self.fixes_applied.append("Added @dataclass import to micro_controller.py")
- 
+
  # SC2 Point2 import Ȯ��
             if 'from sc2.position import Point2' not in content:
  # SC2 import �߰�
@@ -57,7 +57,7 @@ class ComprehensiveProjectFixer:
  content
  )
                     self.fixes_applied.append("Added SC2 Point2 import to micro_controller.py")
- 
+
  # ������ ���� ����
  if self.fixes_applied:
                 backup_path = file_path.with_suffix(file_path.suffix + '.bak')
@@ -66,34 +66,34 @@ class ComprehensiveProjectFixer:
  f.write(content)
  except Exception:
  pass
- 
+
                 with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
- 
+
  return True
- 
+
  except Exception as e:
             self.errors_found.append(f"Error fixing micro_controller.py: {e}")
  return False
- 
+
  return False
- 
+
  def add_replay_paths_to_config(self) -> bool:
         """config.py�� ���÷��� ��� ���� �߰�"""
         file_path = PROJECT_ROOT / "config.py"
- 
+
  if not file_path.exists():
             self.errors_found.append("config.py not found")
  return False
- 
+
  try:
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
- 
+
  # �̹� ��� ������ �ִ��� Ȯ��
             if 'REPLAY_DIR' in content or 'REPLAY_SOURCE_DIR' in content:
  return False # �̹� ����
- 
+
  # ��� ���� �߰�
             path_config = """
 # ============================================================================
@@ -112,7 +112,7 @@ REPLAY_DIR.mkdir(parents=True, exist_ok=True)
 REPLAY_SOURCE_DIR.mkdir(parents=True, exist_ok=True)
 REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
 """
- 
+
  # Config Ŭ���� ���� ���� �߰�
             if 'class Config' in content:
                 content = content.replace('class Config', path_config + '\nclass Config')
@@ -125,14 +125,14 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
  content
  )
                 self.fixes_applied.append("Added replay path configuration to config.py")
- 
+
  # os import Ȯ��
             if 'import os' not in content and 'from pathlib import Path' in content:
  content = content.replace(
                     'from pathlib import Path',
                     'import os\nfrom pathlib import Path'
  )
- 
+
  if self.fixes_applied:
                 backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
@@ -140,39 +140,39 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
  f.write(content)
  except Exception:
  pass
- 
+
                 with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
- 
+
  return True
- 
+
  except Exception as e:
             self.errors_found.append(f"Error adding paths to config.py: {e}")
  return False
- 
+
  return False
- 
+
  def remove_hardcoded_paths(self) -> int:
         """�ϵ��ڵ��� ��θ� config���� �ε��ϵ��� ����"""
  fixed_count = 0
- 
+
  # �ϵ��ڵ��� ��ΰ� �ִ� ���ϵ�
  target_files = [
             "tools/integrated_pipeline.py",
             "local_training/scripts/replay_build_order_learner.py"
  ]
- 
+
  for file_rel_path in target_files:
  file_path = PROJECT_ROOT / file_rel_path
  if not file_path.exists():
  continue
- 
+
  try:
                 with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
- 
+
  original_content = content
- 
+
  # D:\replays\replays �ϵ��ڵ� ����
                 if 'D:/replays/replays' in content or r'D:\replays\replays' in content:
  # config���� import �߰�
@@ -188,7 +188,7 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
                                 '\nfrom config import REPLAY_SOURCE_DIR, REPLAY_COMPLETED_DIR, REPLAY_ARCHIVE_DIR' +
  content[insert_pos:]
  )
- 
+
  # �ϵ��ڵ��� ��θ� ������ ��ü
  content = re.sub(
                         r'["\']D:[/\\]replays[/\\]replays["\']',
@@ -210,7 +210,7 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
                         'REPLAY_ARCHIVE_DIR',
  content
  )
- 
+
  if content != original_content:
                         backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
@@ -218,18 +218,18 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
  f.write(original_content)
  except Exception:
  pass
- 
+
                         with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
- 
+
  fixed_count += 1
                         self.fixes_applied.append(f"Removed hardcoded paths from {file_rel_path}")
- 
+
  except Exception as e:
                 self.errors_found.append(f"Error fixing {file_rel_path}: {e}")
- 
+
  return fixed_count
- 
+
  def check_state_vector_matching(self) -> Dict:
         """���� ���� ��Ī ����"""
  results = {
@@ -238,31 +238,31 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
             "dimension_match": False,
             "issues": []
  }
- 
+
  # zerg_net.py Ȯ��
         zerg_net_path = PROJECT_ROOT / "zerg_net.py"
  if zerg_net_path.exists():
  try:
                 with open(zerg_net_path, 'r', encoding='utf-8', errors='replace') as f:
  zerg_net_content = f.read()
- 
+
  # input_size ã��
                 input_size_match = re.search(r'input_size\s*[:=]\s*(\d+)', zerg_net_content)
  if input_size_match:
                     results["zerg_net_input_size"] = int(input_size_match.group(1))
  except Exception as e:
                 results["issues"].append(f"Error reading zerg_net.py: {e}")
- 
+
  # _collect_state �Լ� ã��
         bot_pro_path = PROJECT_ROOT / "wicked_zerg_bot_pro.py"
  if bot_pro_path.exists():
  try:
                 with open(bot_pro_path, 'r', encoding='utf-8', errors='replace') as f:
  bot_content = f.read()
- 
+
                 if '_collect_state' in bot_content:
                     results["state_collector_found"] = True
- 
+
  # ���� ���� ���� Ȯ��
  # Self (5) + Enemy (10) = 15 ���� ���
                     if results["zerg_net_input_size"] == 15:
@@ -274,9 +274,9 @@ REPLAY_COMPLETED_DIR.mkdir(parents=True, exist_ok=True)
  )
  except Exception as e:
                 results["issues"].append(f"Error reading wicked_zerg_bot_pro.py: {e}")
- 
+
  return results
- 
+
  def create_requirements_essential(self) -> bool:
         """�ʼ� ���̺귯���� ������ requirements.txt ����"""
         essential_requirements = """# Essential dependencies for StarCraft II Bot
@@ -309,7 +309,7 @@ requests>=2.31.0
 psutil>=5.9.0
 protobuf<=3.20.3
 """
- 
+
         essential_path = PROJECT_ROOT / "requirements_essential.txt"
  try:
             with open(essential_path, 'w', encoding='utf-8') as f:
@@ -327,9 +327,9 @@ def main():
     print("���� ������Ʈ ���� ���� �� ��üȭ ����")
     print("=" * 70)
  print()
- 
+
  fixer = ComprehensiveProjectFixer()
- 
+
  # 1. micro_controller.py ����
     print("[1/5] micro_controller.py import ���� ��...")
  if fixer.fix_micro_controller_imports():
@@ -337,7 +337,7 @@ def main():
  else:
         print("  ?? micro_controller.py ���� ���ʿ� �Ǵ� ����")
  print()
- 
+
  # 2. config.py�� ��� �߰�
     print("[2/5] config.py�� ���÷��� ��� ���� �߰� ��...")
  if fixer.add_replay_paths_to_config():
@@ -345,13 +345,13 @@ def main():
  else:
         print("  ?? config.py ��� ���� �߰� ���ʿ� �Ǵ� ����")
  print()
- 
+
  # 3. �ϵ��ڵ��� ��� ����
     print("[3/5] �ϵ��ڵ��� ��� ���� ��...")
  fixed_count = fixer.remove_hardcoded_paths()
     print(f"  ? {fixed_count}�� ���Ͽ��� �ϵ��ڵ��� ��� ����")
  print()
- 
+
  # 4. ���� ���� ��Ī ����
     print("[4/5] ���� ���� ��Ī ���� ��...")
  state_check = fixer.check_state_vector_matching()
@@ -366,7 +366,7 @@ def main():
         for issue in state_check["issues"]:
             print(f"    - {issue}")
  print()
- 
+
  # 5. �ʼ� requirements.txt ����
     print("[5/5] �ʼ� requirements.txt ���� ��...")
  if fixer.create_requirements_essential():
@@ -374,7 +374,7 @@ def main():
  else:
         print("  ?? requirements_essential.txt ���� ����")
  print()
- 
+
     print("=" * 70)
     print("���� ������Ʈ ���� �Ϸ�!")
     print("=" * 70)
@@ -382,13 +382,13 @@ def main():
  if fixer.errors_found:
         print(f"  �߰ߵ� ����: {len(fixer.errors_found)}��")
  print()
- 
+
  if fixer.fixes_applied:
         print("����� ���� ����:")
  for fix in fixer.fixes_applied:
             print(f"  ? {fix}")
  print()
- 
+
  if fixer.errors_found:
         print("�߰ߵ� ����:")
  for error in fixer.errors_found:

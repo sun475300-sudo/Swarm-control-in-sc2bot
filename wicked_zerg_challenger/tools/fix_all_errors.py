@@ -43,7 +43,8 @@ def fix_complete_run_script():
             if i == 92:
                 # �߸��� �ڵ� ���� (deprecated)
                 if 'set_event_loop_����' in line or 'WindowsSelectorEventLoopPolicy' in line:
-                    fixed_lines.append("                pass  # WindowsSelectorEventLoopPolicy is deprecated")
+                    fixed_lines.append(
+                        "                pass  # WindowsSelectorEventLoopPolicy is deprecated")
                     continue
 
             # �ε����̼� ���� ���� (29�� �� ��ó)
@@ -93,7 +94,7 @@ def fix_dashboard_api_indentation():
             # _validate_path �Լ��� else ���� ����
             if 'else:' in line and i > 595 and i < 605:
                 # ���� ���� try �������� Ȯ��
-                if i > 0 and 'try:' in lines[i-1]:
+                if i > 0 and 'try:' in lines[i - 1]:
                     fixed_lines.append("        " + line.lstrip())
                 else:
                     # �ùٸ� �ε����̼�
@@ -104,17 +105,20 @@ def fix_dashboard_api_indentation():
             # �ε����̼� ����ġ ���� (�Ϲ����� ����)
             # if �� ������ �߸��� �ε����̼�
             stripped = line.lstrip()
-            if stripped.startswith('if ') or stripped.startswith('for ') or stripped.startswith('while '):
+            if stripped.startswith('if ') or stripped.startswith(
+                    'for ') or stripped.startswith('while '):
                 # ���� ���� �鿩���� ������ ���
                 if i + 1 < len(lines):
                     next_line = lines[i + 1]
-                    if next_line.strip() and not next_line.startswith(' ') and not next_line.startswith('\t'):
+                    if next_line.strip() and not next_line.startswith(
+                            ' ') and not next_line.startswith('\t'):
                         # ���� ���� �ε����̼� ����
                         fixed_lines.append(line)
                         i += 1
                         # ���� �ٿ� �ùٸ� �ε����̼� �߰�
                         indent = len(line) - len(line.lstrip())
-                        fixed_lines.append(' ' * (indent + 4) + next_line.lstrip())
+                        fixed_lines.append(
+                            ' ' * (indent + 4) + next_line.lstrip())
                         i += 1
                         continue
 
@@ -200,7 +204,10 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="��� ���� �ڵ� ���� ����")
-    parser.add_argument("--dry-run", action="store_true", help="���� �������� �ʰ� �˻縸 ����")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="���� �������� �ʰ� �˻縸 ����")
 
     args = parser.parse_args()
 

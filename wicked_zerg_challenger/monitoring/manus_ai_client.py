@@ -39,7 +39,8 @@ class ManusAIClient:
         self.base_url = base_url.rstrip('/')
         # API Ű �ε� �켱����: 1) ����, 2) ȯ�� ����, 3) ����
         self.api_key = api_key or self._load_api_key()
-        self.enabled = enabled and os.environ.get("MANUS_AI_ENABLED", "1") == "1"
+        self.enabled = enabled and os.environ.get(
+            "MANUS_AI_ENABLED", "1") == "1"
 
         # HTTP ����
         self.session = requests.Session()
@@ -56,7 +57,8 @@ class ManusAIClient:
         self.max_retries = 3
         self.retry_delay = 2
 
-        logger.info(f"[MANUS AI] Ŭ���̾�Ʈ �ʱ�ȭ: {self.base_url} (Ȱ��ȭ: {self.enabled})")
+        logger.info(
+            f"[MANUS AI] Ŭ���̾�Ʈ �ʱ�ȭ: {self.base_url} (Ȱ��ȭ: {self.enabled})")
 
     def _load_api_key(self) -> Optional[str]:
         """
@@ -86,7 +88,8 @@ class ManusAIClient:
                         try:
                             key = key_file.read_text(encoding=encoding).strip()
                             if key:
-                                logger.info(f"[MANUS AI] API Ű�� ���Ͽ��� �ε�: {key_file}")
+                                logger.info(
+                                    f"[MANUS AI] API Ű�� ���Ͽ��� �ε�: {key_file}")
                                 return key
                             break
                         except UnicodeDecodeError:
@@ -122,17 +125,20 @@ class ManusAIClient:
 
         for attempt in range(self.max_retries if retry else 1):
             try:
-                # CRITICAL FIX: Ensure all data is UTF-8 encoded before JSON serialization
+                # CRITICAL FIX: Ensure all data is UTF-8 encoded before JSON
+                # serialization
                 encoded_data = {}
                 if data:
                     for key, value in data.items():
                         if isinstance(value, str):
                             # Ensure string is UTF-8 encoded
                             try:
-                                encoded_data[key] = value.encode('utf-8').decode('utf-8')
+                                encoded_data[key] = value.encode(
+                                    'utf-8').decode('utf-8')
                             except (UnicodeEncodeError, UnicodeDecodeError):
                                 # If encoding fails, try to fix it
-                                encoded_data[key] = value.encode('utf-8', errors='replace').decode('utf-8')
+                                encoded_data[key] = value.encode(
+                                    'utf-8', errors='replace').decode('utf-8')
                         else:
                             encoded_data[key] = value
 
@@ -147,14 +153,16 @@ class ManusAIClient:
 
             except (UnicodeEncodeError, UnicodeDecodeError) as e:
                 # Handle encoding errors gracefully
-                logger.warning(f"[MANUS AI] ���ڵ� ���� (�õ� {attempt + 1}/{self.max_retries}): {e}")
+                logger.warning(
+                    f"[MANUS AI] ���ڵ� ���� (�õ� {attempt + 1}/{self.max_retries}): {e}")
                 if attempt < self.max_retries - 1:
                     time.sleep(self.retry_delay * (attempt + 1))
                 else:
                     return None
             except requests.exceptions.RequestException as e:
                 if attempt < self.max_retries - 1:
-                    logger.warning(f"[MANUS AI] ��û ���� (�õ� {attempt + 1}/{self.max_retries}): {e}")
+                    logger.warning(
+                        f"[MANUS AI] ��û ���� (�õ� {attempt + 1}/{self.max_retries}): {e}")
                     time.sleep(self.retry_delay * (attempt + 1))
                 else:
                     logger.error(f"[MANUS AI] ��û ���� ����: {e}")
@@ -190,7 +198,11 @@ class ManusAIClient:
         """
         return self._call_api("GET", f"/v1/projects/{project_id}")
 
-    def create_project(self, name: str, description: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def create_project(self,
+                       name: str,
+                       description: Optional[str] = None,
+                       **kwargs) -> Optional[Dict[str,
+                                                  Any]]:
         """
         ������Ʈ ����
 
@@ -220,7 +232,10 @@ class ManusAIClient:
     # Tasks API
     # ============================================================================
 
-    def list_tasks(self, project_id: Optional[str] = None, limit: int = 20) -> List[Dict[str, Any]]:
+    def list_tasks(self,
+                   project_id: Optional[str] = None,
+                   limit: int = 20) -> List[Dict[str,
+                                                 Any]]:
         """
         �۾� ��� ��ȸ
 
@@ -328,7 +343,8 @@ class ManusAIClient:
     # Files API
     # ============================================================================
 
-    def upload_file(self, file_path: str, project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def upload_file(self, file_path: str,
+                    project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         ���� ���ε�
 
@@ -350,7 +366,11 @@ class ManusAIClient:
                 endpoint = f"/v1/projects/{project_id}/files"
 
             with open(file_path_obj, 'rb') as f:
-                files = {'file': (file_path_obj.name, f, 'application/octet-stream')}
+                files = {
+                    'file': (
+                        file_path_obj.name,
+                        f,
+                        'application/octet-stream')}
                 headers = {}
                 if self.api_key:
                     headers["API_KEY"] = self.api_key
@@ -363,13 +383,15 @@ class ManusAIClient:
                 )
                 response.raise_for_status()
                 result = response.json()
-                logger.info(f"[MANUS AI] ���� ���ε� ����: {file_path_obj.name}")
+                logger.info(
+                    f"[MANUS AI] ���� ���ε� ����: {file_path_obj.name}")
                 return result
         except Exception as e:
             logger.error(f"[MANUS AI] ���� ���ε� ����: {e}")
             return None
 
-    def list_files(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_files(
+            self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         ���� ��� ��ȸ
 
@@ -425,7 +447,8 @@ class ManusAIClient:
             logger.warning("[MANUS AI] ���� ���� ����")
         return response
 
-    def list_webhooks(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_webhooks(
+            self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         ���� ��� ��ȸ
 

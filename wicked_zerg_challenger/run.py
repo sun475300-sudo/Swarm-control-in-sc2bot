@@ -6,16 +6,24 @@ This is the main entry point for AI Arena deployment.
 It supports both ladder server mode (--LadderServer) and local testing.
 """
 
+from wicked_zerg_bot_pro import WickedZergBotPro
+from sc2 import maps  # type: ignore
+from sc2.player import Bot, Computer  # type: ignore
+from sc2.main import run_game, run_ladder_game  # type: ignore
+from sc2.data import Race, Difficulty  # type: ignore
 import sys
 import os
 from pathlib import Path
 
 # SC2 path auto-setup function
+
+
 def _ensure_sc2_path():
     """
     Set SC2PATH environment variable - search via Windows Registry or common paths
     """
-    # Skip Windows-specific discovery on non-Windows hosts (AI Arena runs on Linux)
+    # Skip Windows-specific discovery on non-Windows hosts (AI Arena runs on
+    # Linux)
     if sys.platform != "win32":
         return
 
@@ -55,21 +63,18 @@ def _ensure_sc2_path():
 
     print("[WARNING] SC2 installation not found automatically")
 
+
 # Setup SC2 path before sc2 import
 _ensure_sc2_path()
 
 # Bot class import
-# Add project root to sys.path to ensure bot modules resolve in packaged environments
+# Add project root to sys.path to ensure bot modules resolve in packaged
+# environments
 sys.path.append(str(Path(__file__).parent))
 
 # Import SC2 library
-from sc2.data import Race, Difficulty  # type: ignore
-from sc2.main import run_game, run_ladder_game  # type: ignore
-from sc2.player import Bot, Computer  # type: ignore
-from sc2 import maps  # type: ignore
 
 # Import bot class
-from wicked_zerg_bot_pro import WickedZergBotPro
 
 
 def create_bot():
@@ -98,7 +103,8 @@ def main():
             arena_server_manager = start_arena_monitoring(background=True)
             if arena_server_manager:
                 print("\n? Arena monitoring server started")
-                print(f"   Server URL: {arena_server_manager.get_server_url()}")
+                print(
+                    f"   Server URL: {arena_server_manager.get_server_url()}")
                 print(f"   Mobile/Web Access: Available")
         except Exception as e:
             print(f"\n?? Arena monitoring server not available: {e}")
@@ -124,7 +130,8 @@ def main():
             local_server_manager = start_local_monitoring(background=True)
             if local_server_manager:
                 print("\n? Local monitoring server started")
-                print(f"   Server URL: {local_server_manager.get_server_url()}")
+                print(
+                    f"   Server URL: {local_server_manager.get_server_url()}")
                 print(f"   Mobile/Web Access: Available")
         except Exception as e:
             print(f"\n?? Local monitoring server not available: {e}")
@@ -148,5 +155,6 @@ def main():
                 print("\n[INFO] Stopping local monitoring server...")
                 local_server_manager.stop_server()
 
+
 if __name__ == "__main__":
- main()
+    main()

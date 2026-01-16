@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Merge per-instance training statistics into a single summary.
 

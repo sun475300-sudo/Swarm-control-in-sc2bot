@@ -74,13 +74,20 @@ class AutoErrorFixer:
         except Exception as e:
             return False, [f"Error: {str(e)}"]
 
-    def scan_and_fix(self, target_files: Optional[List[Path]] = None) -> Dict[str, Any]:
+    def scan_and_fix(
+            self, target_files: Optional[List[Path]] = None) -> Dict[str, Any]:
         """스캔 및 수정"""
         if target_files is None:
             # 모든 Python 파일 찾기
             target_files = []
             for root, dirs, files in os.walk(PROJECT_ROOT):
-                dirs[:] = [d for d in dirs if d not in {'__pycache__', '.git', 'node_modules', '.venv', 'venv'}]
+                dirs[:] = [
+                    d for d in dirs if d not in {
+                        '__pycache__',
+                        '.git',
+                        'node_modules',
+                        '.venv',
+                        'venv'}]
                 for file in files:
                     if file.endswith('.py'):
                         target_files.append(Path(root) / file)

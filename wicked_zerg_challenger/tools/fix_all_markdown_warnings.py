@@ -15,13 +15,13 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
  fixes = 0
     lines = content.split('\n')
  new_lines = []
- 
+
  i = 0
  while i < len(lines):
  line = lines[i]
         prev_line = new_lines[-1] if new_lines else ""
         next_line = lines[i + 1] if i + 1 < len(lines) else ""
- 
+
  # MD022: 헤딩 앞뒤 빈 줄
         if re.match(r'^#{1,6}\s+', line):
  # 헤딩 앞에 빈 줄
@@ -91,9 +91,9 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
  fixes += 1
  else:
  new_lines.append(line)
- 
+
  i += 1
- 
+
  # 연속된 빈 줄 제거 (최대 2개)
  result_lines = []
  prev_empty = False
@@ -105,13 +105,13 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
  else:
  result_lines.append(line)
  prev_empty = False
- 
+
     result = '\n'.join(result_lines)
- 
+
  # 파일 끝에 빈 줄 추가
     if result and not result.endswith('\n'):
         result += '\n'
- 
+
  return result, fixes
 
 
@@ -123,9 +123,9 @@ def fix_file(file_path: Path) -> int:
  except Exception as e:
         print(f"  Error reading {file_path.name}: {e}")
  return 0
- 
+
  fixed_content, fixes = fix_markdown_content(content)
- 
+
  if fixes > 0:
  try:
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -134,7 +134,7 @@ def fix_file(file_path: Path) -> int:
  except Exception as e:
             print(f"  Error writing {file_path.name}: {e}")
  return 0
- 
+
  return 0
 
 
@@ -144,21 +144,21 @@ def main():
     print("Markdown 경고 자동 수정 도구")
     print("=" * 70)
  print()
- 
+
  # 모든 MD 파일 찾기
     md_files = list(PROJECT_ROOT.rglob("*.md"))
- 
+
  # 제외할 디렉토리
     exclude_dirs = {'.git', '__pycache__', 'node_modules', '.venv', 'venv', 'backup_before_refactoring'}
- 
+
  md_files = [f for f in md_files if not any(exclude in str(f) for exclude in exclude_dirs)]
- 
+
     print(f"총 {len(md_files)}개 MD 파일 발견")
  print()
- 
+
  total_fixes = 0
  fixed_files = []
- 
+
  for md_file in md_files:
  rel_path = md_file.relative_to(PROJECT_ROOT)
  fixes = fix_file(md_file)
@@ -166,7 +166,7 @@ def main():
             print(f"[FIXED] {rel_path} - {fixes}개 수정")
  fixed_files.append((rel_path, fixes))
  total_fixes += fixes
- 
+
  print()
     print("=" * 70)
  if total_fixes > 0:

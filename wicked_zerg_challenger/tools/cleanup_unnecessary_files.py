@@ -62,13 +62,17 @@ def find_files_to_delete(root: Path) -> List[Path]:
     for file_path in root.rglob("*.md"):
         if file_path.name in KEEP_FILES:
             continue
-        
+
         # Check if it matches redundant patterns
         for pattern in DELETE_PATTERNS["redundant_docs"]:
             if pattern.replace("*", "") in file_path.name:
                 # But keep important ones
-                if any(keep in file_path.name for keep in ["CODE_CHECK", "CODE_OPTIMIZATION", 
-                                                            "GIT_COMMIT", "PROJECT_OPTIMIZATION"]):
+                if any(
+                    keep in file_path.name for keep in [
+                        "CODE_CHECK",
+                        "CODE_OPTIMIZATION",
+                        "GIT_COMMIT",
+                        "PROJECT_OPTIMIZATION"]):
                     continue
                 files_to_delete.append(file_path)
                 break
@@ -93,8 +97,11 @@ def main():
     print()
 
     # Group by type
-    backup_files = [f for f in files_to_delete if f.suffix in [".bak", ".tmp", ".old", ".orig"]]
-    duplicate_files = [f for f in files_to_delete if "_fixed" in f.name or "_old" in f.name]
+    backup_files = [
+        f for f in files_to_delete if f.suffix in [
+            ".bak", ".tmp", ".old", ".orig"]]
+    duplicate_files = [
+        f for f in files_to_delete if "_fixed" in f.name or "_old" in f.name]
     redundant_docs = [f for f in files_to_delete if f.suffix == ".md"]
 
     print(f"  Backup files: {len(backup_files)}")
@@ -119,7 +126,8 @@ def main():
                 deleted_count += 1
                 print(f"[DELETED] {file_path.relative_to(PROJECT_ROOT)}")
             except Exception as e:
-                print(f"[ERROR] Failed to delete {file_path.relative_to(PROJECT_ROOT)}: {e}")
+                print(
+                    f"[ERROR] Failed to delete {file_path.relative_to(PROJECT_ROOT)}: {e}")
 
         print()
         print(f"Deleted {deleted_count} files.")

@@ -4,13 +4,13 @@ Map Manager for Training
 Manages map rotation, selection, and performance tracking
 """
 
+from typing import Dict, List, Optional
+import random
+import json
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.absolute()))
 
-import json
-import random
-from typing import Dict, List, Optional
 
 # Training map pool (Zerg vs Terran focus)
 TRAINING_MAPS = [

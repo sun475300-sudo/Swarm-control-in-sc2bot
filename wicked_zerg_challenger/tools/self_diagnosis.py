@@ -9,13 +9,14 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+
 def main():
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("REPLAY LEARNING SYSTEM - SELF DIAGNOSIS")
-    print("="*70 + "\n")
- 
+    print("=" * 70 + "\n")
+
     replay_dir = Path("D:/replays/replays")
- 
+
  # 1. Check replay directory
     print("[1] Replay Directory Status")
     print(f"    Path: {replay_dir}")
@@ -26,7 +27,7 @@ def main():
  else:
         print(f"    Status: ? Not found")
         print(f"    Replay files: 0")
- 
+
  # 2. Check strategy_db.json
     print("\n[2] Strategy Database Status")
     strategy_db_path = replay_dir / "strategy_db.json"
@@ -34,12 +35,12 @@ def main():
  try:
             with open(strategy_db_path, 'r', encoding='utf-8') as f:
  strategy_db = json.load(f)
- 
+
  # CRITICAL: strategy_db.json structure is flat - strategies are top-level keys
             # Keys are like "build_order_ZvP_0_1", "build_order_ZvT_0_2", etc.
             strategy_keys = [k for k in strategy_db.keys() if k.startswith("build_order")]
  total_strategies = len(strategy_keys)
- 
+
  # Find last updated time from strategy objects
             last_updated = "Unknown"
  if strategy_keys:
@@ -51,12 +52,12 @@ def main():
                         extracted_at = strategy.get("extracted_at")
  if extracted_at:
  extracted_times.append(extracted_at)
- 
+
  if extracted_times:
  # Sort and get the most recent
  extracted_times.sort(reverse=True)
  last_updated = extracted_times[0]
- 
+
  # Also get matchup breakdown
  matchup_counts = {}
  for key in strategy_keys:
@@ -64,7 +65,7 @@ def main():
  if isinstance(strategy, dict):
                     matchup = strategy.get("matchup", "Unknown")
  matchup_counts[matchup] = matchup_counts.get(matchup, 0) + 1
- 
+
             print(f"    Status: ? Exists")
             print(f"    Total strategies: {total_strategies}")
             print(f"    Last updated: {last_updated}")
@@ -78,7 +79,7 @@ def main():
  traceback.print_exc()
  else:
         print(f"    Status: ? Not found")
- 
+
  # 3. Check learning_status.json
     print("\n[3] Learning Status")
     status_file = replay_dir / "learning_status.json"
@@ -100,7 +101,7 @@ def main():
             print(f"    Status: ? Exists but error reading: {e}")
  else:
         print(f"    Status: ? Not found")
- 
+
  # 4. Check learning_log.txt
     print("\n[4] Learning Log")
     log_file = replay_dir / "learning_log.txt"
@@ -116,7 +117,7 @@ def main():
             print(f"    Status: ? Exists but error reading: {e}")
  else:
         print(f"    Status: ? Not found")
- 
+
  # 5. Check completed directory
     print("\n[5] Completed Replays Directory")
     completed_dir = replay_dir / "completed"
@@ -126,7 +127,7 @@ def main():
         print(f"    Completed replays: {len(completed_files)}")
  else:
         print(f"    Status: ? Not found")
- 
+
  # 6. Check Python processes
     print("\n[6] Running Processes")
  try:
@@ -147,7 +148,7 @@ def main():
             print(f"    Status: ? No Python processes found")
  except Exception as e:
         print(f"    Status: ? Error checking processes: {e}")
- 
+
  # 7. Check code status
     print("\n[7] Code Status")
     script_path = Path(__file__).parent.parent / "local_training" / "scripts" / "replay_build_order_learner.py"
@@ -163,7 +164,7 @@ def main():
             print(f"    Auto-commit: ? Status unknown")
  else:
         print(f"    Status: ? Script not found")
- 
+
  # 8. Summary
     print("\n" + "="*70)
     print("DIAGNOSIS SUMMARY")

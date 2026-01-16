@@ -17,7 +17,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
-
 class TelemetryLogger:
     """Logger for training statistics and telemetry data"""
 
@@ -49,6 +48,7 @@ self.losses = 0
 
         print(f"[TELEMETRY] Logger initialized: {self.telemetry_file}")
 
+
 def should_log_telemetry(self, iteration: int) -> bool:
         """
 Determine if telemetry should be logged
@@ -59,7 +59,10 @@ iteration: Current game frame
 Returns:
 bool: Whether to log (every 100 frames)
         """
+
+
 return iteration % 100 == 0
+
 
 def log_game_state(self, combat_unit_types: set) -> None:
         """
@@ -68,12 +71,15 @@ Log current game state to telemetry
 Args:
 combat_unit_types: Set of combat unit types
         """
+
+
 try:
 bot = self.bot
 
  # Calculate combat unit count (optimized: whitelist approach)
 army_units = bot.units.filter(lambda u: u.type_id in combat_unit_types)
-            army_count = army_units.amount if hasattr(army_units, "amount") else len(army_units)
+            army_count = army_units.amount if hasattr(
+                army_units, "amount") else len(army_units)
 
  # Calculate enemy army count
             enemy_units = getattr(bot, "enemy_units", None)
@@ -89,21 +95,26 @@ and u.can_attack
 
  # Worker count
 workers = bot.workers
-            drone_count = workers.amount if hasattr(workers, "amount") else len(workers)
+            drone_count = workers.amount if hasattr(
+                workers, "amount") else len(workers)
 
  # Larva count
 larvae = bot.units(UnitTypeId.LARVA)
-            larva_count = larvae.amount if hasattr(larvae, "amount") else len(larvae)
+            larva_count = larvae.amount if hasattr(
+                larvae, "amount") else len(larvae)
 
  # Queen count and energy
 queens = bot.units(UnitTypeId.QUEEN)
-            queen_count = queens.amount if hasattr(queens, "amount") else len(queens)
+            queen_count = queens.amount if hasattr(
+                queens, "amount") else len(queens)
 queen_energy = (
-                sum(q.energy for q in queens if hasattr(q, "energy")) if queen_count > 0 else 0
+                sum(q.energy for q in queens if hasattr(
+                    q, "energy")) if queen_count > 0 else 0
 )
 
  # Swarm control metrics (for drone major portfolio analysis)
-swarm_metrics = self._calculate_swarm_metrics(bot, army_count, combat_unit_types)
+swarm_metrics = self._calculate_swarm_metrics(
+    bot, army_count, combat_unit_types)
 
  # Telemetry entry
 log_entry = {
@@ -141,7 +152,9 @@ except Exception as e:
 if bot.iteration % 500 == 0:
                 print(f"[WARNING] Telemetry logging error: {e}")
 
-def _calculate_swarm_metrics(self, bot: Any, army_count: int, combat_unit_types: set) -> Dict[str, Any]:
+
+def _calculate_swarm_metrics(
+    self, bot: Any, army_count: int, combat_unit_types: set) -> Dict[str, Any]:
         """
 Calculate swarm control algorithm performance metrics.
 
@@ -151,6 +164,8 @@ This provides data to prove whether swarm control algorithms
 Returns:
 Dict with swarm control metrics
         """
+
+
 try:
 metrics = {
                 "swarm_formation_score": 0.0,
@@ -179,7 +194,8 @@ elif supply_per_unit < 0.5:
                         metrics["swarm_formation_score"] = supply_per_unit / 0.5
 else:
  # Too spread out
-                        metrics["swarm_formation_score"] = max(0.0, 1.0 - (supply_per_unit - 2.5) / 2.5)
+                        metrics["swarm_formation_score"] = max(
+                            0.0, 1.0 - (supply_per_unit - 2.5) / 2.5)
 
  # Cohesion: based on army count vs enemy army ratio
                     enemy_army = getattr(bot, "enemy_units", None)

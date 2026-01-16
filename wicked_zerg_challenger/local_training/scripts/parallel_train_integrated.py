@@ -72,7 +72,8 @@ try:
  except ImportError:
  # Fallback to Python if C++ not available
             os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-            print("[WARNING] C++ protobuf not available, using Python implementation (slower)")
+            print(
+                "[WARNING] C++ protobuf not available, using Python implementation (slower)")
  else:
         os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = protobuf_impl
 except Exception:
@@ -81,19 +82,24 @@ except Exception:
 
 # Settings
 
-# Allow NUM_INSTANCES to be set via environment variable (for runtime adjustment)
+# Allow NUM_INSTANCES to be set via environment variable (for runtime
+# adjustment)
 
-NUM_INSTANCES = int(os.environ.get("NUM_INSTANCES", "1"))  # Default: 1 instance (full GPU/CPU utilization)
+# Default: 1 instance (full GPU/CPU utilization)
+NUM_INSTANCES = int(os.environ.get("NUM_INSTANCES", "1"))
 
 # CRITICAL: Set to 1 instance for maximum GPU and CPU utilization per instance
-# With 1 instance, all GPU memory and CPU cores are dedicated to a single game instance
+# With 1 instance, all GPU memory and CPU cores are dedicated to a single
+# game instance
 
 # Set via: $env:NUM_INSTANCES = 1; python parallel_train_integrated.py
 
-START_INTERVAL = 15 # Seconds between instance launches (prevents shader compilation spike)
+# Seconds between instance launches (prevents shader compilation spike)
+START_INTERVAL = 15
 
 MAIN_FILE = (
-    "main_integrated.py"  # Use main_integrated.py (supports parallel training with RL orchestrator)
+    # Use main_integrated.py (supports parallel training with RL orchestrator)
+    "main_integrated.py"
 )
 
 # Display Settings
@@ -105,13 +111,16 @@ HEADLESS_MODE = os.environ.get("HEADLESS_MODE", "true").lower() == "true"
 
 # GPU memory settings (estimated usage per instance)
 
-ESTIMATED_VRAM_PER_INSTANCE = 0.8 # GB (each instance uses ~0.8GB at Very Low settings)
+# GB (each instance uses ~0.8GB at Very Low settings)
+ESTIMATED_VRAM_PER_INSTANCE = 0.8
 
-MIN_SAFE_VRAM_RESERVE = 1.0 # GB (reserve for OS DWM and display output)
+MIN_SAFE_VRAM_RESERVE = 1.0  # GB (reserve for OS DWM and display output)
 
 PROJECT_ROOT = Path(__file__).parent.absolute()
 
 # IMPROVED: Use flexible venv path detection
+
+
 def get_venv_dir() -> Path:
     """Get virtual environment directory from environment variable or use project default"""
  import os

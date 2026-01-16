@@ -13,6 +13,7 @@ from pathlib import Path
 
 BASE_URL = "http://localhost:8000"
 
+
 def get_server_response() -> Dict[str, Any]:
     """서버에서 실제로 보내는 JSON 데이터 가져오기"""
  try:

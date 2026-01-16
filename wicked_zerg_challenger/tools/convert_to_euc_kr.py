@@ -52,7 +52,7 @@ TARGET_EXTENSIONS = ['.py', '.txt']
 def detect_encoding(file_path: Path) -> str:
     """파일의 인코딩을 감지"""
     encodings = ['utf-8', 'utf-8-sig', 'cp949', 'euc-kr', 'latin-1']
- 
+
  for encoding in encodings:
  try:
             with open(file_path, 'r', encoding=encoding) as f:
@@ -60,7 +60,7 @@ def detect_encoding(file_path: Path) -> str:
  return encoding
  except (UnicodeDecodeError, UnicodeError):
  continue
- 
+
     return 'unknown'
 
 
@@ -69,13 +69,13 @@ def should_convert_file(file_path: Path) -> bool:
  # 확장자 확인
  if file_path.suffix.lower() not in TARGET_EXTENSIONS:
  return False
- 
+
  # 제외 패턴 확인
  file_str = str(file_path)
  for pattern in EXCLUDE_PATTERNS:
  if pattern in file_str:
  return False
- 
+
  return True
 
 
@@ -84,20 +84,20 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
  try:
  # 현재 인코딩 감지
  current_encoding = detect_encoding(file_path)
- 
+
         if current_encoding == 'euc-kr':
             return False, "이미 EUC-KR 인코딩입니다"
- 
+
         if current_encoding == 'unknown':
             return False, "인코딩을 감지할 수 없습니다"
- 
+
  # 파일 읽기
  try:
             with open(file_path, 'r', encoding=current_encoding, errors='replace') as f:
  content = f.read()
  except Exception as e:
             return False, f"파일 읽기 실패: {e}"
- 
+
  # EUC-KR로 변환 시도
  try:
  # UTF-8로 먼저 정규화
@@ -106,7 +106,7 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
             content_euc_kr = content_utf8.encode('euc-kr', errors='replace').decode('euc-kr')
  except Exception as e:
             return False, f"인코딩 변환 실패: {e}"
- 
+
  # 백업 파일 생성
         backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
@@ -114,7 +114,7 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
  f.write(content)
  except Exception as e:
             return False, f"백업 파일 생성 실패: {e}"
- 
+
  # EUC-KR로 저장
  try:
             with open(file_path, 'w', encoding='euc-kr', errors='replace') as f:
@@ -129,9 +129,9 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
  except:
  pass
             return False, f"파일 저장 실패: {e}"
- 
+
         return True, f"{current_encoding} -> euc-kr 변환 완료"
- 
+
  except Exception as e:
         return False, f"오류: {e}"
 
@@ -139,16 +139,16 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
 def find_all_files(root_dir: Path) -> List[Path]:
     """변환할 모든 파일 찾기"""
  files = []
- 
+
  for root, dirs, filenames in os.walk(root_dir):
  # 제외할 디렉토리 제거
  dirs[:] = [d for d in dirs if not any(pattern in d for pattern in EXCLUDE_PATTERNS)]
- 
+
  for filename in filenames:
  file_path = Path(root) / filename
  if should_convert_file(file_path):
  files.append(file_path)
- 
+
  return files
 
 
@@ -164,34 +164,34 @@ def main():
     print("3. 변환 전에 백업을 권장합니다")
     print("4. 이미 UTF-8로 잘 작동하는 파일은 변환하지 않는 것이 좋습니다")
  print()
- 
+
  # 사용자 확인
     response = input("정말로 모든 파일을 EUC-KR로 변환하시겠습니까? (yes/no): ")
     if response.lower() not in ['yes', 'y']:
         print("변환을 취소했습니다.")
  return
- 
+
  print()
     print("파일 검색 중...")
- 
+
  # 모든 파일 찾기
  files = find_all_files(PROJECT_ROOT)
- 
+
     print(f"총 {len(files)}개의 파일을 찾았습니다.")
  print()
- 
+
  # 변환 통계
  converted = 0
  skipped = 0
  failed = 0
- 
+
  # 각 파일 변환
  for i, file_path in enumerate(files, 1):
  relative_path = file_path.relative_to(PROJECT_ROOT)
         print(f"[{i}/{len(files)}] {relative_path}...", end=' ')
- 
+
  success, message = convert_file_to_euc_kr(file_path)
- 
+
  if success:
             print(f"? {message}")
  converted += 1
@@ -201,7 +201,7 @@ def main():
  else:
             print(f"? {message}")
  failed += 1
- 
+
  print()
     print("=" * 70)
     print("변환 완료")

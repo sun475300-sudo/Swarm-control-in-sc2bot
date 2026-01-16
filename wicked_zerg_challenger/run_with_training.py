@@ -22,7 +22,8 @@ def _ensure_sc2_path():
     """
     Set SC2PATH environment variable - search via Windows Registry or common paths
     """
-    # Skip Windows-specific discovery on non-Windows hosts (AI Arena runs on Linux)
+    # Skip Windows-specific discovery on non-Windows hosts (AI Arena runs on
+    # Linux)
     if sys.platform != "win32":
         return
 
@@ -119,7 +120,8 @@ def main():
             arena_server_manager = start_arena_monitoring(background=True)
             if arena_server_manager:
                 print("[OK] Arena monitoring server started")
-                print(f"     Server URL: {arena_server_manager.get_server_url()}")
+                print(
+                    f"     Server URL: {arena_server_manager.get_server_url()}")
                 print(f"     Mobile/Web Access: Available")
             else:
                 print("[WARNING] Failed to start arena monitoring server")
@@ -155,7 +157,8 @@ def main():
             print(f"     Server URL: {local_server_manager.get_server_url()}")
             print(f"     Mobile/Web Access: Available")
             print(f"     Web UI: {local_server_manager.get_server_url()}/ui")
-            print(f"     API Docs: {local_server_manager.get_server_url()}/docs")
+            print(
+                f"     API Docs: {local_server_manager.get_server_url()}/docs")
         else:
             print("[WARNING] Failed to start local monitoring server")
     except Exception as e:
@@ -193,9 +196,15 @@ def main():
     consecutive_failures = 0
 
     # Available maps
-    available_maps = ["AbyssalReefLE", "BelShirVestigeLE", "CactusValleyLE", "HonorgroundsLE", "ProximaStationLE"]
+    available_maps = [
+        "AbyssalReefLE",
+        "BelShirVestigeLE",
+        "CactusValleyLE",
+        "HonorgroundsLE",
+        "ProximaStationLE"]
     opponent_races = [Race.Terran, Race.Protoss, Race.Zerg]
-    # IMPROVED: Use only available Difficulty values (Elite doesn't exist, VeryHard is the highest)
+    # IMPROVED: Use only available Difficulty values (Elite doesn't exist,
+    # VeryHard is the highest)
     difficulties = [Difficulty.Hard, Difficulty.VeryHard]
 
     print(f"[INFO] Available maps: {len(available_maps)} maps")
@@ -213,9 +222,11 @@ def main():
             game_count += 1
 
             if consecutive_failures > 0:
-                print(f"\n??  [RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}")
+                print(
+                    f"\n??  [RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}")
                 if consecutive_failures >= max_consecutive_failures:
-                    print(f"? [ERROR] Too many consecutive failures ({consecutive_failures}). Stopping training.")
+                    print(
+                        f"? [ERROR] Too many consecutive failures ({consecutive_failures}). Stopping training.")
                     break
 
  # [STEP 3] Select random map, opponent race, and adaptive difficulty
@@ -234,8 +245,9 @@ def main():
                     difficulty = Difficulty.VeryHard
                 else:
                     difficulty = Difficulty.Hard
-                print(f"[ADAPTIVE] Recommended difficulty: {recommended_difficulty_str} "
-                      f"(based on {session_manager.session_stats.win_rate:.1f}% win rate)")
+                print(
+                    f"[ADAPTIVE] Recommended difficulty: {recommended_difficulty_str} "
+                    f"(based on {session_manager.session_stats.win_rate:.1f}% win rate)")
             else:
                 difficulty = random.choice(difficulties)
 
@@ -249,7 +261,8 @@ def main():
 
             # Create new bot instance for each game
             bot = create_bot_with_training()
-            # bot is already a Bot instance, so we can set attributes on the underlying AI
+            # bot is already a Bot instance, so we can set attributes on the
+            # underlying AI
             if hasattr(bot, 'ai') and bot.ai:
                 bot.ai.game_count = game_count  # Track game count
 
@@ -257,7 +270,8 @@ def main():
             try:
                 map_instance = maps.get(map_name)
                 if map_instance is None:
-                    print(f"[WARNING] Map '{map_name}' not found, using default: AbyssalReefLE")
+                    print(
+                        f"[WARNING] Map '{map_name}' not found, using default: AbyssalReefLE")
                     map_name = "AbyssalReefLE"
                     map_instance = maps.get(map_name)
 
@@ -274,7 +288,8 @@ def main():
                 run_game(
                     map_instance,
                     [
-                        bot,  # CORRECT: Use bot directly (already a Bot instance)
+                        bot,
+                        # CORRECT: Use bot directly (already a Bot instance)
                         Computer(opponent_race, difficulty)
                     ],
                     realtime=False  # False = fast speed, True = real-time speed
@@ -286,9 +301,11 @@ def main():
                     session_manager.reset_error_count()
 
                 # IMPROVED: Get game result from bot (wait for on_end to complete)
-                # Wait a moment for on_end() to complete and store _training_result
+                # Wait a moment for on_end() to complete and store
+                # _training_result
                 import time as time_module
-                time_module.sleep(0.5)  # Small delay to ensure on_end() completes
+                # Small delay to ensure on_end() completes
+                time_module.sleep(0.5)
 
                 game_result_str = "Unknown"
                 game_time = 0.0
@@ -304,17 +321,20 @@ def main():
                         game_time = result.get("game_time", 0.0)
                         build_order_score = result.get("build_order_score")
                         loss_reason = result.get("loss_reason")
-                        parameters_updated = result.get("parameters_updated", 0)
-                        print(f"[INFO] Retrieved training result: {game_result_str}, "
-                              f"Time: {game_time:.1f}s, Score: {build_order_score}, "
-                              f"Params: {parameters_updated}")
+                        parameters_updated = result.get(
+                            "parameters_updated", 0)
+                        print(
+                            f"[INFO] Retrieved training result: {game_result_str}, "
+                            f"Time: {game_time:.1f}s, Score: {build_order_score}, "
+                            f"Params: {parameters_updated}")
                     else:
                         # Fallback: Try to get from bot attributes
                         if hasattr(bot.ai, 'last_result'):
                             game_result_str = str(bot.ai.last_result)
                         if hasattr(bot.ai, 'time'):
                             game_time = float(bot.ai.time)
-                        print(f"[WARNING] _training_result not found, using fallback values")
+                        print(
+                            f"[WARNING] _training_result not found, using fallback values")
 
                 # Record game result in session manager
                 if session_manager:
@@ -334,16 +354,21 @@ def main():
                 print(f"? [GAME #{game_count}] COMPLETED SUCCESSFULLY")
                 print("=" * 70)
                 print("[INFO] Neural network model saved")
-                print("[INFO] Build order comparison analysis will be displayed above")
+                print(
+                    "[INFO] Build order comparison analysis will be displayed above")
                 print()
 
-                # IMPROVED: Longer wait time between games to ensure SC2 client fully closes
+                # IMPROVED: Longer wait time between games to ensure SC2 client
+                # fully closes
                 wait_between_games = 10  # Increased from 3 to 10 seconds
-                print(f"[NEXT] Automatically starting next game in {wait_between_games} seconds...")
-                print(f"[INFO] Waiting for SC2 client to fully close before next game")
+                print(
+                    f"[NEXT] Automatically starting next game in {wait_between_games} seconds...")
+                print(
+                    f"[INFO] Waiting for SC2 client to fully close before next game")
                 print("=" * 70)
 
-                # IMPROVED: Check if SC2 processes are still running before next game
+                # IMPROVED: Check if SC2 processes are still running before
+                # next game
                 try:
                     import psutil
                     for _ in range(wait_between_games):
@@ -364,7 +389,8 @@ def main():
                         time.sleep(1)
                     else:
                         # Still waiting, proceed anyway
-                        print(f"[WARNING] SC2 processes may still be running, but proceeding anyway")
+                        print(
+                            f"[WARNING] SC2 processes may still be running, but proceeding anyway")
                 except ImportError:
                     # psutil not available, use simple sleep
                     time.sleep(wait_between_games)
@@ -380,8 +406,10 @@ def main():
                     print("=" * 70)
                     print(f"Replays Analyzed: {stats['replays_analyzed']}")
                     print(f"Models Trained: {stats['models_trained']}")
-                    print(f"Total Processing Time: {stats['total_processing_time']:.2f}s")
-                    print(f"Active Workers: {stats['active_workers']}/{stats['max_workers']}")
+                    print(
+                        f"Total Processing Time: {stats['total_processing_time']:.2f}s")
+                    print(
+                        f"Active Workers: {stats['active_workers']}/{stats['max_workers']}")
                     print(f"Errors: {stats['errors']}")
                     print("=" * 70)
                     print()
@@ -405,14 +433,18 @@ def main():
 
                 if is_connection_error:
                     wait_time = 15  # Longer wait for connection errors
-                    print(f"\n[ERROR] Game #{game_count} failed: Connection error")
-                    print(f"[ERROR] StarCraft II client connection was closed unexpectedly")
+                    print(
+                        f"\n[ERROR] Game #{game_count} failed: Connection error")
+                    print(
+                        f"[ERROR] StarCraft II client connection was closed unexpectedly")
                     print(f"[INFO] This usually happens when:")
                     print(f"   - Previous game session didn't fully close")
                     print(f"   - SC2 client crashed or was terminated")
                     print(f"   - Network/WebSocket connection was interrupted")
-                    print(f"[RETRY] Waiting {wait_time} seconds for SC2 client to fully close...")
-                    print(f"[INFO] Please ensure no SC2 game windows are still open")
+                    print(
+                        f"[RETRY] Waiting {wait_time} seconds for SC2 client to fully close...")
+                    print(
+                        f"[INFO] Please ensure no SC2 game windows are still open")
                 else:
                     wait_time = 10  # Standard wait for other errors
                     print(f"\n[ERROR] Game #{game_count} failed: {game_error}")
@@ -435,15 +467,18 @@ def main():
                             pass
 
                     if sc2_processes:
-                        print(f"[WARNING] Found {len(sc2_processes)} SC2 process(es) still running")
-                        print(f"[INFO] Waiting additional 5 seconds for processes to close...")
+                        print(
+                            f"[WARNING] Found {len(sc2_processes)} SC2 process(es) still running")
+                        print(
+                            f"[INFO] Waiting additional 5 seconds for processes to close...")
                         time.sleep(5)
                 except ImportError:
                     # psutil not available, skip process check
                     pass
                 except Exception as proc_error:
                     # Process check failed, continue anyway
-                    print(f"[WARNING] Could not check SC2 processes: {proc_error}")
+                    print(
+                        f"[WARNING] Could not check SC2 processes: {proc_error}")
 
                 continue
         except KeyboardInterrupt:
@@ -477,7 +512,8 @@ def main():
         print(f"[BACKGROUND LEARNER] Final stats:")
         print(f"  - Replays Analyzed: {stats['replays_analyzed']}")
         print(f"  - Models Trained: {stats['models_trained']}")
-        print(f"  - Total Processing Time: {stats['total_processing_time']:.2f}s")
+        print(
+            f"  - Total Processing Time: {stats['total_processing_time']:.2f}s")
         print(f"  - Errors: {stats['errors']}")
 
     # Stop local monitoring server
@@ -559,10 +595,13 @@ def main():
                 print("EXTRACTION AND LEARNING COMPLETE")
                 print("=" * 70)
             else:
-                print("[INFO] No training data found to extract. Skipping extraction.")
+                print(
+                    "[INFO] No training data found to extract. Skipping extraction.")
         except Exception as e:
-            print(f"\n[WARNING] Failed to extract and learn from training data: {e}")
-            print("[INFO] You can manually run: python -m wicked_zerg_challenger.tools.extract_and_train_from_training")
+            print(
+                f"\n[WARNING] Failed to extract and learn from training data: {e}")
+            print(
+                "[INFO] You can manually run: python -m wicked_zerg_challenger.tools.extract_and_train_from_training")
             import traceback
             traceback.print_exc()
 

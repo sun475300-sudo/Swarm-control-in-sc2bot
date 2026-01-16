@@ -20,9 +20,9 @@ except ImportError:
  SC2READER_AVAILABLE = False
 
 # Configuration constants
-MIN_ZERG_APM = 250 # Minimum APM for Zerg player
-MIN_GAME_TIME_SECONDS = 300 # 5 minutes
-MAX_GAME_TIME_SECONDS = 1800 # 30 minutes
+MIN_ZERG_APM = 250  # Minimum APM for Zerg player
+MIN_GAME_TIME_SECONDS = 300  # 5 minutes
+MAX_GAME_TIME_SECONDS = 1800  # 30 minutes
 LOTV_RELEASE_DATE = datetime(2015, 11, 10)
 
 # Grandmaster tier names (common indicators)

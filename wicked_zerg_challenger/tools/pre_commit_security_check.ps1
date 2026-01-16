@@ -235,55 +235,57 @@ if (-not $stagedFiles) {
             continue
         }
         
-        if (Test-Path -LiteralPath $filePath) {
-            $file = Get-Item $filePath
-            $checkedFiles++
-            
-            # 특정 확장자만 검사
-            $shouldCheck = $false
-            foreach ($ext in $fileExtensions) {
-                if ($file.Name -like $ext) {
-                    $shouldCheck = $true
-                    break
-                }
-            }
-            
-            if ($shouldCheck) {
-                # 파일 읽기 시도 (오류 처리 개선)
-                $content = $null
-                try {
-                    $content = Get-Content $file.FullName -Raw -ErrorAction Stop
-                } catch {
-                    $readErrorMsg = 'File read failed (ignored): ' + $filePath + ' - ' + $_
-                    Write-Host $readErrorMsg -ForegroundColor Gray
-                    $errorCount++
-                    continue
+        try {
+            if (Test-Path -LiteralPath $filePath) {
+                $file = Get-Item $filePath
+                $checkedFiles++
+                
+                # 특정 확장자만 검사
+                $shouldCheck = $false
+                foreach ($ext in $fileExtensions) {
+                    if ($file.Name -like $ext) {
+                        $shouldCheck = $true
+                        break
+                    }
                 }
                 
-                if ($content) {
-                    foreach ($pattern in $sensitivePatterns) {
-                        try {
-                            if ($content -match $pattern) {
-                                $lines = $content -split "`n"
-                                $matchingLine = $lines | Where-Object { $_ -match $pattern } | Select-Object -First 1
-                                if ($matchingLine) {
-                                    $lineNumber = [Array]::IndexOf($lines, $matchingLine) + 1
-                                    $previewText = $matchingLine -replace $pattern, "[REDACTED]"
-                                    $previewLength = [Math]::Min(80, $previewText.Length)
-                                    
-                                    $foundIssues += [PSCustomObject]@{
-                                        File = $file.FullName
-                                        Pattern = $pattern
-                                        Line = $lineNumber
-                                        Preview = if ($previewLength -gt 0) { $previewText.Substring(0, $previewLength) } else { "" }
+                if ($shouldCheck) {
+                    # 파일 읽기 시도 (오류 처리 개선)
+                    $content = $null
+                    try {
+                        $content = Get-Content $file.FullName -Raw -ErrorAction Stop
+                    } catch {
+                        $readErrorMsg = 'File read failed (ignored): ' + $filePath + ' - ' + $_
+                        Write-Host $readErrorMsg -ForegroundColor Gray
+                        $errorCount++
+                        continue
+                    }
+                    
+                    if ($content) {
+                        foreach ($pattern in $sensitivePatterns) {
+                            try {
+                                if ($content -match $pattern) {
+                                    $lines = $content -split "`n"
+                                    $matchingLine = $lines | Where-Object { $_ -match $pattern } | Select-Object -First 1
+                                    if ($matchingLine) {
+                                        $lineNumber = [Array]::IndexOf($lines, $matchingLine) + 1
+                                        $previewText = $matchingLine -replace $pattern, "[REDACTED]"
+                                        $previewLength = [Math]::Min(80, $previewText.Length)
+                                        
+                                        $foundIssues += [PSCustomObject]@{
+                                            File = $file.FullName
+                                            Pattern = $pattern
+                                            Line = $lineNumber
+                                            Preview = if ($previewLength -gt 0) { $previewText.Substring(0, $previewLength) } else { "" }
+                                        }
                                     }
                                 }
+                            } catch {
+                                # 패턴 매칭 실패 시 무시 (오류 로깅만)
+                                $matchErrorMsg = 'Pattern match error (ignored): ' + $pattern + ' in ' + $filePath + ' - ' + $_
+                                Write-Host $matchErrorMsg -ForegroundColor Gray
+                                $errorCount++
                             }
-                        } catch {
-                            # 패턴 매칭 실패 시 무시 (오류 로깅만)
-                            $matchErrorMsg = 'Pattern match error (ignored): ' + $pattern + ' in ' + $filePath + ' - ' + $_
-                            Write-Host $matchErrorMsg -ForegroundColor Gray
-                            $errorCount++
                         }
                     }
                 }
@@ -295,6 +297,7 @@ if (-not $stagedFiles) {
             $errorCount++
         }
     }
+}
 
     Write-Host ""
     $separator = '=' * 70

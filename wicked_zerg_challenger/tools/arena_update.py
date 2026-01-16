@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Arena Update Packager
 
@@ -25,7 +26,10 @@ def timestamp() -> str:
 
 
 def find_latest_zip(root: Path, bot_prefix: str) -> Path | None:
-    zips = sorted(root.glob(f"{bot_prefix}_*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+    zips = sorted(
+    root.glob(f"{bot_prefix}_*.zip"),
+    key=lambda p: p.stat().st_mtime,
+     reverse=True)
  return zips[0] if zips else None
 
 

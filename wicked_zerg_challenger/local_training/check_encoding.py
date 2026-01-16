@@ -5,21 +5,17 @@
 """ÀÎÄÚµù È®ÀÎ ½ºÅ©¸³Æ®"""
 
 
-
 import sys
 
 from pathlib import Path
 
 
-
 filepath = Path(__file__).parent / 'main_integrated.py'
-
 
 
 print(f"Checking file: {filepath}")
 
 print(f"File exists: {filepath.exists()}")
-
 
 
 if filepath.exists():

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """tools/runtime_check.py
 Comprehensive runtime & static-check tool for Wicked Zerg Challenger
 - Environment checks (Python, optional packages, nvidia-smi, SC2PATH)

@@ -9,6 +9,7 @@ import sys
 import requests
 from pathlib import Path
 
+
 def get_ngrok_url_from_api() -> str:
     """Ngrok API에서 현재 터널 URL 가져오기"""
  try:

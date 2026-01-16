@@ -480,47 +480,54 @@ def write_file(path: Path, content: str) -> None:
 
 
 def main():
- parser = argparse.ArgumentParser(
-        description="Generate README files (Korean / English) for Swarm Control System project."
- )
- parser.add_argument(
+    parser = argparse.ArgumentParser(
+     description="Generate README files (Korean / English) for Swarm Control System project.")
+    parser.add_argument(
         "--lang",
         choices=["ko", "en", "both"],
         default="en",
         help="Target language: ko, en, or both (default: en)",
- )
- parser.add_argument(
+    )
+    parser.add_argument(
         "--ko-name",
- type=str,
- default=AUTHOR_NAME_KO,
+        type=str,
+        default=AUTHOR_NAME_KO,
         help="Override Korean author name (default: script constant)",
- )
- parser.add_argument(
+    )
+    parser.add_argument(
         "--en-name",
- type=str,
- default=AUTHOR_NAME_EN,
+        type=str,
+        default=AUTHOR_NAME_EN,
         help="Override English author name (default: script constant)",
- )
- parser.add_argument(
+    )
+    parser.add_argument(
         "--email",
- type=str,
- default=AUTHOR_EMAIL,
+        type=str,
+        default=AUTHOR_EMAIL,
         help="Override email address (default: script constant)",
- )
- args = parser.parse_args()
+    )
+    args = parser.parse_args()
 
- # Optional overrides (simple replace)
- ko_content = README_KO.replace(AUTHOR_NAME_KO, args.ko_name).replace(AUTHOR_EMAIL, args.email)
- en_content = README_EN.replace(AUTHOR_NAME_EN, args.en_name).replace(AUTHOR_EMAIL, args.email)
+    # Optional overrides (simple replace)
+    ko_content = README_KO.replace(
+        AUTHOR_NAME_KO,
+        args.ko_name).replace(
+        AUTHOR_EMAIL,
+        args.email)
+    en_content = README_EN.replace(
+        AUTHOR_NAME_EN,
+        args.en_name).replace(
+        AUTHOR_EMAIL,
+        args.email)
 
-    cwd = Path(".").resolve()
+      cwd = Path(".").resolve()
 
-    if args.lang in ("ko", "both"):
-        write_file(cwd / "README_ko.md", ko_content)
+       if args.lang in ("ko", "both"):
+            write_file(cwd / "README_ko.md", ko_content)
 
-    if args.lang in ("en", "both"):
-        write_file(cwd / "README.md", en_content)
+        if args.lang in ("en", "both"):
+            write_file(cwd / "README.md", en_content)
 
 
 if __name__ == "__main__":
- main()
+    main()

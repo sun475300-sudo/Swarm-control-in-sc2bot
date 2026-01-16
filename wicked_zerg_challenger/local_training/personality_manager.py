@@ -10,12 +10,11 @@ Core features:
  4. Bot internal thoughts broadcast
 """
 
+from typing import Any
+import random
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.absolute()))
-
-import random
-from typing import Any
 
 
 class PersonalityManager:

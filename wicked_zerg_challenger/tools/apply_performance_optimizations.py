@@ -17,7 +17,7 @@ def main():
     print("성능 최적화 적용")
     print("=" * 70)
  print()
- 
+
     print("[1/3] 메모리 최적화 적용 중...")
  try:
  result = subprocess.run(
@@ -35,7 +35,7 @@ def main():
  except Exception as e:
         print(f"  ? 메모리 최적화 실패: {e}")
  print()
- 
+
     print("[2/3] 학습 속도 최적화 적용 중...")
  try:
  result = subprocess.run(
@@ -53,7 +53,7 @@ def main():
  except Exception as e:
         print(f"  ? 학습 속도 최적화 실패: {e}")
  print()
- 
+
     print("[3/3] 성능 향상 적용 중...")
  try:
  result = subprocess.run(
@@ -71,7 +71,7 @@ def main():
  except Exception as e:
         print(f"  ? 성능 향상 실패: {e}")
  print()
- 
+
     print("=" * 70)
     print("성능 최적화 적용 완료!")
     print("=" * 70)

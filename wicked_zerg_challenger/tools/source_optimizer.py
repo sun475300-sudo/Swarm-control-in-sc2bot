@@ -72,7 +72,8 @@ class SourceOptimizer:
                 current_indent = len(line) - len(stripped)
 
                 # ���� ���� Ű���� ó��
-                if stripped.startswith(('else:', 'elif ', 'except', 'finally:')):
+                if stripped.startswith(
+                        ('else:', 'elif ', 'except', 'finally:')):
                     if len(indent_stack) > 1:
                         indent_stack.pop()
                     expected_indent = indent_stack[-1]
@@ -91,7 +92,17 @@ class SourceOptimizer:
 
                 # ���� ���� Ű���� ó��
                 if stripped.endswith(':'):
-                    if not stripped.startswith(('class ', 'def ', 'if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except', 'finally:')):
+                    if not stripped.startswith(
+                        ('class ',
+                         'def ',
+                         'if ',
+                         'elif ',
+                         'else:',
+                         'for ',
+                         'while ',
+                         'try:',
+                         'except',
+                         'finally:')):
                         indent_stack.append(expected_indent + 4)
 
                 i += 1
@@ -156,7 +167,8 @@ class SourceOptimizer:
 
             # Import ����
             if import_lines_to_remove:
-                new_lines = [line for i, line in enumerate(lines) if i not in import_lines_to_remove]
+                new_lines = [line for i, line in enumerate(
+                    lines) if i not in import_lines_to_remove]
                 new_content = '\n'.join(new_lines) + '\n'
                 with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
                     f.write(new_content)
@@ -195,8 +207,17 @@ class SourceOptimizer:
         if root is None:
             root = self.project_root
 
-        exclude_dirs = {'__pycache__', '.git', 'node_modules', '.venv', 'venv',
-                       'build', 'dist', '.pytest_cache', '.mypy_cache', 'local_training'}
+        exclude_dirs = {
+            '__pycache__',
+            '.git',
+            'node_modules',
+            '.venv',
+            'venv',
+            'build',
+            'dist',
+            '.pytest_cache',
+            '.mypy_cache',
+            'local_training'}
 
         python_files = []
         for dirpath, dirnames, filenames in os.walk(root):
@@ -235,8 +256,14 @@ def main():
 
     parser = argparse.ArgumentParser(description="�ҽ��ڵ� ����ȭ ����")
     parser.add_argument("--file", type=str, help="Ư�� ���ϸ� ����ȭ")
-    parser.add_argument("--all", action="store_true", help="��� Python ���� ����ȭ")
-    parser.add_argument("--dry-run", action="store_true", help="���� �������� �ʰ� �˻縸 ����")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="��� Python ���� ����ȭ")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="���� �������� �ʰ� �˻縸 ����")
 
     args = parser.parse_args()
 
@@ -259,7 +286,8 @@ def main():
         print("=" * 70)
         print(f"ó���� ����: {result['stats']['files_processed']}��")
         print(f"������ �ε����̼�: {result['stats']['indentation_fixed']}��")
-        print(f"���ŵ� unused imports: {result['stats']['unused_imports_removed']}��")
+        print(
+            f"���ŵ� unused imports: {result['stats']['unused_imports_removed']}��")
         print("=" * 70)
     else:
         result = optimizer.optimize_project()
@@ -268,7 +296,8 @@ def main():
         print("=" * 70)
         print(f"ó���� ����: {result['stats']['files_processed']}��")
         print(f"������ �ε����̼�: {result['stats']['indentation_fixed']}��")
-        print(f"���ŵ� unused imports: {result['stats']['unused_imports_removed']}��")
+        print(
+            f"���ŵ� unused imports: {result['stats']['unused_imports_removed']}��")
         print("=" * 70)
 
 

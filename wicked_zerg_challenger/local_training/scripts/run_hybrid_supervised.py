@@ -31,33 +31,36 @@ def run_epochs(
 ) -> None:
  # Import locally to avoid import-time side effects if not needed
 
- output_dir.mkdir(parents = True, exist_ok = True)
+ output_dir.mkdir(parents=True, exist_ok=True)
 
- trainer = HybridTrainer(replay_dir = replay_dir)
+ trainer = HybridTrainer(replay_dir=replay_dir)
 
  # IMPROVED: Validate replay directory and handle missing manifest
     latest_manifest = output_dir / "hybrid_learning_manifest.json"
  if not latest_manifest.exists():
         print(f"[INFO] No existing manifest found at {latest_manifest}")
-        print(f"[INFO] Will create new manifest from replay directory: {replay_dir}")
+        print(
+            f"[INFO] Will create new manifest from replay directory: {replay_dir}")
 
  for epoch in range(1, epochs + 1):
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        epoch_manifest = output_dir / f"hybrid_learning_manifest_epoch{epoch:02d}_{ts}.json"
+        epoch_manifest = output_dir / \
+            f"hybrid_learning_manifest_epoch{epoch:02d}_{ts}.json"
         latest_manifest = output_dir / "hybrid_learning_manifest.json"
 
  count = trainer.train_supervised(
- max_files = max_files,
- pro_only = pro_only,
- zvp_priority = zvp_priority,
- output_path = epoch_manifest,
+ max_files=max_files,
+ pro_only=pro_only,
+ zvp_priority=zvp_priority,
+ output_path=epoch_manifest,
  )
 
  # IMPROVED: Enhanced manifest handling with validation
  # Keep a stable pointer for downstream tools
  try:
  if not epoch_manifest.exists():
-                print(f"[WARNING] Epoch manifest not created: {epoch_manifest}")
+                print(
+                    f"[WARNING] Epoch manifest not created: {epoch_manifest}")
  continue
 
             manifest_content = epoch_manifest.read_text(encoding="utf-8")
@@ -67,7 +70,7 @@ def run_epochs(
 
  # Validate JSON before writing
  try:
- json.loads(manifest_content) # Validate JSON structure
+ json.loads(manifest_content)  # Validate JSON structure
  except json.JSONDecodeError as e:
                 print(f"[ERROR] Epoch manifest contains invalid JSON: {e}")
  continue
@@ -80,8 +83,10 @@ def run_epochs(
             print(f"[WARNING] Failed to update latest manifest: {e}")
  pass
 
-        print(f"[EPOCH {epoch}/{epochs}] Selected {count} replays -> {epoch_manifest}")
-        print(f"[EPOCH {epoch}/{epochs}] Latest manifest refreshed -> {latest_manifest}")
+        print(
+            f"[EPOCH {epoch}/{epochs}] Selected {count} replays -> {epoch_manifest}")
+        print(
+            f"[EPOCH {epoch}/{epochs}] Latest manifest refreshed -> {latest_manifest}")
 
  # Placeholder for actual supervised training step
  # TODO: Integrate your replay-based trainer here, e.g.:
@@ -90,11 +95,26 @@ def run_epochs(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run hybrid supervised selection for multiple epochs")
-    parser.add_argument("--epochs", type = int, default = 1, help="Number of epochs to repeat selection")
-    parser.add_argument("--max-files", type = int, default = 0, help="Limit number of selected replays (0 = no limit)")
-    parser.add_argument("--pro-only", action="store_true", help="Filter to known pro-player replays")
-    parser.add_argument("--zvp-priority", action="store_true", help="Filter to ZvP/PvZ only")
+    parser = argparse.ArgumentParser(
+    description="Run hybrid supervised selection for multiple epochs")
+    parser.add_argument(
+    "--epochs",
+    type=int,
+    default=1,
+     help="Number of epochs to repeat selection")
+    parser.add_argument(
+    "--max-files",
+    type=int,
+    default=0,
+     help="Limit number of selected replays (0 = no limit)")
+    parser.add_argument(
+    "--pro-only",
+    action="store_true",
+     help="Filter to known pro-player replays")
+    parser.add_argument(
+    "--zvp-priority",
+    action="store_true",
+     help="Filter to ZvP/PvZ only")
  parser.add_argument(
         "--replay-dir",
  default = None,

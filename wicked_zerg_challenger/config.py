@@ -146,21 +146,25 @@ SUPPLY_BUFFER: int = 16
 OVERLORD_PREDICT_TIME: float = 5.0
 
 SC2_PATH: Optional[str] = None
-PROTOCOL_BUFFERS_IMPL: str = "cpp"  # IMPROVED: Use C++ implementation for better performance (10x faster)
+# IMPROVED: Use C++ implementation for better performance (10x faster)
+PROTOCOL_BUFFERS_IMPL: str = "cpp"
 GPU_USAGE_TARGET: float = 0.30
 DIAGNOSE_INTERVAL: int = 500
 WORKER_DEFENSE_RETREAT_THRESHOLD: float = 0.3
 DUPLICATE_PENALTY_MULTI_FACTOR: float = 1.0
 
-MIN_WORKERS_FOR_ECONOMY: int = 8  # CRITICAL: Minimum workers to maintain economy (prevents economy collapse)
-MIN_DRONES_FOR_DEFENSE: int = 8  # CRITICAL: Minimum drones to preserve during emergency defense
+# CRITICAL: Minimum workers to maintain economy (prevents economy collapse)
+MIN_WORKERS_FOR_ECONOMY: int = 8
+# CRITICAL: Minimum drones to preserve during emergency defense
+MIN_DRONES_FOR_DEFENSE: int = 8
 TERRAIN_ADVANTAGE_MULTIPLIER: float = 1.2
 SPLASH_DAMAGE_PENALTY_MULTIPLIER: float = 1.5
 
 AUTO_OPTIMIZE_CODE: bool = True
 REPLAY_LEARNING_INTERVAL: int = 1
 REPLAY_LEARNING_ITERATIONS: int = 3
-MAX_REPLAYS_FOR_LEARNING: int = 300  # Maximum number of replays to analyze (increased from 100)
+# Maximum number of replays to analyze (increased from 100)
+MAX_REPLAYS_FOR_LEARNING: int = 300
 
 
 # ============================================================================
@@ -170,9 +174,17 @@ MAX_REPLAYS_FOR_LEARNING: int = 300  # Maximum number of replays to analyze (inc
 # Environment variables take priority, then defaults
 
 REPLAY_DIR = Path(os.environ.get("REPLAY_DIR", "D:/replays"))
-REPLAY_SOURCE_DIR = Path(os.environ.get("REPLAY_SOURCE_DIR", REPLAY_DIR / "replays"))
+REPLAY_SOURCE_DIR = Path(
+    os.environ.get(
+        "REPLAY_SOURCE_DIR",
+        REPLAY_DIR /
+        "replays"))
 REPLAY_COMPLETED_DIR = REPLAY_SOURCE_DIR / "completed"
-REPLAY_ARCHIVE_DIR = Path(os.environ.get("REPLAY_ARCHIVE_DIR", REPLAY_DIR / "archive"))
+REPLAY_ARCHIVE_DIR = Path(
+    os.environ.get(
+        "REPLAY_ARCHIVE_DIR",
+        REPLAY_DIR /
+        "archive"))
 
 # Ensure directories exist (create if needed)
 try:
@@ -334,7 +346,10 @@ class ConfigLoader:
 
         return config_dict
 
-    def get_parameter(self, parameter_name: str, default_value: Any = None) -> Any:
+    def get_parameter(
+            self,
+            parameter_name: str,
+            default_value: Any = None) -> Any:
         """Get a specific learned parameter value"""
         param_data = self.learned_params.get(parameter_name)
         if param_data is None:
@@ -357,14 +372,19 @@ def get_config_loader() -> ConfigLoader:
     return _config_loader
 
 
-def get_learned_parameter(parameter_name: str, default_value: Any = None) -> Any:
+def get_learned_parameter(
+        parameter_name: str,
+        default_value: Any = None) -> Any:
     """
 Get learned parameter from local_training/scripts/learned_build_orders.json
 Priority: local_training/scripts/learned_build_orders.json > learned_build_orders.json (same dir)
     """
-    # Priority 1: local_training/scripts/learned_build_orders.json (where training saves)
-    local_training_path = Path(__file__).parent / "local_training" / "scripts" / "learned_build_orders.json"
-    # Priority 2: learned_build_orders.json in same directory (backward compatibility)
+    # Priority 1: local_training/scripts/learned_build_orders.json (where
+    # training saves)
+    local_training_path = Path(
+        __file__).parent / "local_training" / "scripts" / "learned_build_orders.json"
+    # Priority 2: learned_build_orders.json in same directory (backward
+    # compatibility)
     default_path = Path(__file__).parent / "learned_build_orders.json"
 
     # Try local_training first

@@ -15,21 +15,33 @@ def fix_file_indentation(file_path: Path) -> bool:
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
-        
+
         fixed_lines = []
         indent_stack = [0]  # 들여쓰기 레벨 스택
-        
+
         for i, line in enumerate(lines):
             stripped = line.lstrip()
             if not stripped:  # 빈 줄
                 fixed_lines.append('\n')
                 continue
-            
+
             # 현재 줄의 원래 들여쓰기 계산
             original_indent = len(line) - len(stripped)
-            
+
             # 들여쓰기 키워드 감지
-            if stripped.startswith(('def ', 'class ', 'if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except ', 'finally:', 'with ', 'async def ')):
+            if stripped.startswith(
+                ('def ',
+                 'class ',
+                 'if ',
+                 'elif ',
+                 'else:',
+                 'for ',
+                 'while ',
+                 'try:',
+                 'except ',
+                 'finally:',
+                 'with ',
+                 'async def ')):
                 # 키워드 줄은 이전 레벨과 동일
                 current_indent = indent_stack[-1]
                 fixed_lines.append(' ' * current_indent + stripped)
@@ -57,11 +69,11 @@ def fix_file_indentation(file_path: Path) -> bool:
                         indent_stack.pop()
                     current_indent = indent_stack[-1]
                     fixed_lines[-1] = ' ' * current_indent + stripped
-        
+
         # 파일 쓰기
         with open(file_path, 'w', encoding='utf-8') as f:
             f.writelines(fixed_lines)
-        
+
         return True
     except Exception as e:
         print(f"Error fixing {file_path}: {e}")
@@ -72,7 +84,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python fix_indentation.py <file1> [file2] ...")
         sys.exit(1)
-    
+
     for file_path in sys.argv[1:]:
         path = Path(file_path)
         if path.exists():

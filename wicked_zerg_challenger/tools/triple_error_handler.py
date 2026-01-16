@@ -19,15 +19,15 @@ def enhance_error_handling(content: str, file_name: str) -> Tuple[str, int]:
  modified_lines = []
  fix_count = 0
  i = 0
- 
+
  while i < len(lines):
  line = lines[i]
- 
+
  # except Exception: 또는 except: 패턴 찾기
         if re.match(r'^\s*except\s+(Exception|BaseException)?\s*(as\s+\w+)?\s*:\s*$', line):
  indent = len(line) - len(line.lstrip())
             indent_str = ' ' * indent
- 
+
  # 다음 줄이 pass인지 확인
  if i + 1 < len(lines):
  next_line = lines[i + 1].strip()
@@ -38,7 +38,7 @@ def enhance_error_handling(content: str, file_name: str) -> Tuple[str, int]:
                         match = re.search(r'as\s+(\w+)', line)
  if match:
  exception_var = match.group(1)
- 
+
  enhanced = []
                     enhanced.append(f"{indent_str}except Exception as {exception_var}:")
                     enhanced.append(f"{indent_str}    # Level 1: Error logging")
@@ -57,15 +57,15 @@ def enhance_error_handling(content: str, file_name: str) -> Tuple[str, int]:
                     enhanced.append(f"{indent_str}        print(f\"[CRITICAL] Recovery failed: {{recovery_error}}\")")
                     enhanced.append(f"{indent_str}        # Continue execution to prevent crash")
                     enhanced.append(f"{indent_str}        pass")
- 
+
  modified_lines.extend(enhanced)
  i += 2 # except와 pass 줄 건너뛰기
  fix_count += 1
  continue
- 
+
  modified_lines.append(line)
  i += 1
- 
+
     return '\n'.join(modified_lines), fix_count
 
 
@@ -74,21 +74,21 @@ def fix_silent_exceptions(file_path: Path) -> bool:
  try:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
- 
+
  enhanced_content, fix_count = enhance_error_handling(content, file_path.name)
- 
+
  if fix_count > 0:
  # 백업 생성
             backup_path = file_path.with_suffix(file_path.suffix + '.bak')
             with open(backup_path, 'w', encoding='utf-8') as f:
  f.write(content)
- 
+
  # 수정된 내용 저장
             with open(file_path, 'w', encoding='utf-8') as f:
  f.write(enhanced_content)
- 
+
  return True
- 
+
  return False
  except Exception as e:
         print(f"[ERROR] Failed to fix {file_path}: {e}")
@@ -101,7 +101,7 @@ def main():
     print("3중 에러 처리 강화")
     print("=" * 70)
  print()
- 
+
  # 주요 파일 목록
  main_files = [
         "wicked_zerg_bot_pro.py",
@@ -112,9 +112,9 @@ def main():
         "scouting_system.py",
         "queen_manager.py"
  ]
- 
+
  fixed_count = 0
- 
+
     print("에러 처리 강화 중...")
  for main_file in main_files:
  file_path = PROJECT_ROOT / main_file
@@ -125,7 +125,7 @@ def main():
  fixed_count += 1
  else:
                 print(f"    ??  변경 사항 없음")
- 
+
  print()
     print("=" * 70)
     print(f"완료! {fixed_count}개 파일 수정됨")

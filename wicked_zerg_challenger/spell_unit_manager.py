@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, List, Optional
 if TYPE_CHECKING:
 
 
-
 class SpellUnitManager:
     """
  Spell Unit Manager - Optimized spell unit control

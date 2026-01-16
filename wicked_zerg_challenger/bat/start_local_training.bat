@@ -9,7 +9,18 @@ echo.
 
 REM CRITICAL: Change to project directory
 cd /d "%~dp0\.."
+if not exist "tools" (
+    echo [ERROR] tools directory not found. Current directory: %CD%
+    exit /b 1
+)
 set PYTHONPATH=%CD%
+
+REM Verify Python is available
+python --version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Python not found in PATH
+    exit /b 1
+)
 
 echo [INFO] Current directory: %CD%
 echo [INFO] Starting local training with integrated system...
@@ -63,7 +74,13 @@ REM Option 1: Integrated system (may need indentation fixes)
 REM python local_training/main_integrated.py
 
 REM Option 2: Training with monitoring (recommended)
-python run_with_training.py
+if exist "run_with_training.py" (
+    python run_with_training.py
+) else (
+    echo [ERROR] run_with_training.py not found
+    pause
+    exit /b 1
+)
 
 echo.
 echo ======================================================================

@@ -2,11 +2,11 @@
 """
 Compare Pro Gamer Replays vs Training Replays
 
-���ΰ��̸� ���÷��� �н������Ϳ� �Ʒ��� ���÷��� �н������͸� �� �м��ϴ� ��ũ��Ʈ�Դϴ�.
-- ���ΰ��̸� ���÷��� ������ �ε� (D:\replays\replays)
-- �Ʒ� ���÷��� ������ �ε� (training_stats.json, build_order_comparison_history.json)
-- �� ������ �ҽ� �� �м�
-- �� ����Ʈ ����
+?꾨줈寃뚯씠癒?由ы뵆?덉씠? ?덈젴 由ы뵆?덉씠 ?곗씠?곕? 鍮꾧탳 遺꾩꽍?섎뒗 ?ㅽ겕由쏀듃?낅땲??
+- ?꾨줈寃뚯씠癒?由ы뵆?덉씠 ?곗씠??濡쒕뱶 (D:\replays\replays)
+- ?덈젴 由ы뵆?덉씠 ?곗씠??濡쒕뱶 (training_stats.json, build_order_comparison_history.json)
+- ???곗씠?곕? 鍮꾧탳 遺꾩꽍
+- 鍮꾧탳 由ы룷???앹꽦
 """
 
 import json
@@ -73,8 +73,10 @@ class ProVsTrainingComparator:
         if not self.training_stats_path.exists():
             self.training_stats_path = training_data_dir / "training_stats.json"
 
-        self.comparison_history_path = training_data_dir / "local_training" / "scripts" / "build_order_comparison_history.json"
-        self.learned_build_orders_path = training_data_dir / "local_training" / "scripts" / "learned_build_orders.json"
+        self.comparison_history_path = training_data_dir / "local_training" / \
+            "scripts" / "build_order_comparison_history.json"
+        self.learned_build_orders_path = training_data_dir / \
+            "local_training" / "scripts" / "learned_build_orders.json"
 
         # Pro replay learned data paths
         self.pro_archive_dir = Path("D:/replays/archive")
@@ -87,7 +89,8 @@ class ProVsTrainingComparator:
 
         print(f"[COMPARATOR] Initialized")
         print(f"[COMPARATOR] Pro replay directory: {self.pro_replay_dir}")
-        print(f"[COMPARATOR] Training data directory: {self.training_data_dir}")
+        print(
+            f"[COMPARATOR] Training data directory: {self.training_data_dir}")
         print(f"[COMPARATOR] Output directory: {self.output_dir}")
 
     def load_pro_replay_data(self) -> Dict[str, Any]:
@@ -105,16 +108,19 @@ class ProVsTrainingComparator:
                 with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
                     pro_baseline = json.load(f)
                     pro_data["baseline"] = pro_baseline
-                    print(f"[PRO DATA] Loaded pro baseline from {self.learned_build_orders_path}")
+                    print(
+                        f"[PRO DATA] Loaded pro baseline from {self.learned_build_orders_path}")
             except Exception as e:
                 print(f"[WARNING] Failed to load pro baseline: {e}")
 
         # Try to load from archive directory
         if self.pro_archive_dir.exists():
-            archive_files = list(self.pro_archive_dir.glob("training_*/learned_build_orders.json"))
+            archive_files = list(self.pro_archive_dir.glob(
+                "training_*/learned_build_orders.json"))
             if archive_files:
                 # Load most recent archive
-                latest_archive = max(archive_files, key=lambda p: p.stat().st_mtime)
+                latest_archive = max(
+                    archive_files, key=lambda p: p.stat().st_mtime)
                 try:
                     with open(latest_archive, 'r', encoding='utf-8') as f:
                         archive_data = json.load(f)
@@ -122,7 +128,8 @@ class ProVsTrainingComparator:
                             pro_data["baseline"] = archive_data["learned_parameters"]
                         elif isinstance(archive_data, dict):
                             pro_data["baseline"] = archive_data
-                        print(f"[PRO DATA] Loaded pro data from archive: {latest_archive}")
+                        print(
+                            f"[PRO DATA] Loaded pro data from archive: {latest_archive}")
                 except Exception as e:
                     print(f"[WARNING] Failed to load archive data: {e}")
 
@@ -133,29 +140,38 @@ class ProVsTrainingComparator:
                 replay_files = extractor.scan_replays()
 
                 if replay_files:
-                    print(f"[PRO DATA] Found {len(replay_files)} pro replay files")
-                    # Extract build orders from a sample of replays (limit to 50 for performance)
+                    print(
+                        f"[PRO DATA] Found {len(replay_files)} pro replay files")
+                    # Extract build orders from a sample of replays (limit to
+                    # 50 for performance)
                     sample_size = min(50, len(replay_files))
                     for replay_path in replay_files[:sample_size]:
                         try:
-                            build_order = extractor.extract_build_order(replay_path)
+                            build_order = extractor.extract_build_order(
+                                replay_path)
                             if build_order:
                                 pro_data["build_orders"].append(build_order)
 
                                 # Extract timings
-                                for param_name in ["natural_expansion_supply", "gas_supply",
-                                                   "spawning_pool_supply", "third_hatchery_supply",
-                                                   "speed_upgrade_supply"]:
+                                for param_name in [
+                                    "natural_expansion_supply",
+                                    "gas_supply",
+                                    "spawning_pool_supply",
+                                    "third_hatchery_supply",
+                                        "speed_upgrade_supply"]:
                                     if param_name in build_order:
                                         value = build_order[param_name]
                                         if value is not None:
-                                            pro_data["timings"][param_name].append(value)
+                                            pro_data["timings"][param_name].append(
+                                                value)
                         except Exception as e:
-                            print(f"[WARNING] Failed to extract from {replay_path.name}: {e}")
+                            print(
+                                f"[WARNING] Failed to extract from {replay_path.name}: {e}")
                             continue
 
                     pro_data["replay_count"] = len(pro_data["build_orders"])
-                    print(f"[PRO DATA] Extracted {pro_data['replay_count']} build orders from replays")
+                    print(
+                        f"[PRO DATA] Extracted {pro_data['replay_count']} build orders from replays")
             except Exception as e:
                 print(f"[WARNING] Failed to extract from replay files: {e}")
 
@@ -184,14 +200,17 @@ class ProVsTrainingComparator:
                     for comp in comparisons:
                         training_build = comp.get("training_build", {})
                         if training_build:
-                            training_data["build_orders"].append(training_build)
+                            training_data["build_orders"].append(
+                                training_build)
 
                             # Extract timings
                             for param_name, value in training_build.items():
                                 if value is not None:
-                                    training_data["timings"][param_name].append(value)
+                                    training_data["timings"][param_name].append(
+                                        value)
 
-                    print(f"[TRAINING DATA] Loaded {len(comparisons)} comparisons")
+                    print(
+                        f"[TRAINING DATA] Loaded {len(comparisons)} comparisons")
             except Exception as e:
                 print(f"[WARNING] Failed to load comparison history: {e}")
 
@@ -210,7 +229,8 @@ class ProVsTrainingComparator:
                         except json.JSONDecodeError:
                             continue
                     training_data["stats_count"] = stats_count
-                    print(f"[TRAINING DATA] Loaded {stats_count} training stats records")
+                    print(
+                        f"[TRAINING DATA] Loaded {stats_count} training stats records")
             except Exception as e:
                 print(f"[WARNING] Failed to load training stats: {e}")
 
@@ -258,7 +278,8 @@ class ProVsTrainingComparator:
 
             # Calculate differences
             if comparison["pro_mean"] is not None and comparison["training_mean"] is not None:
-                comparison["mean_difference"] = comparison["training_mean"] - comparison["pro_mean"]
+                comparison["mean_difference"] = comparison["training_mean"] - \
+                    comparison["pro_mean"]
                 comparison["median_difference"] = (
                     comparison["training_median"] - comparison["pro_median"]
                     if comparison["training_median"] is not None and comparison["pro_median"] is not None
@@ -279,10 +300,17 @@ class ProVsTrainingComparator:
     ) -> Dict[str, Any]:
         """Analyze overall performance comparison"""
         analysis = {
-            "pro_replay_count": pro_data.get("replay_count", 0),
-            "training_game_count": training_data.get("game_count", 0),
+            "pro_replay_count": pro_data.get(
+                "replay_count",
+                0),
+            "training_game_count": training_data.get(
+                "game_count",
+                0),
             "pro_baseline_available": "baseline" in pro_data,
-            "training_comparisons_available": len(training_data.get("comparisons", [])) > 0,
+            "training_comparisons_available": len(
+                training_data.get(
+                    "comparisons",
+                    [])) > 0,
         }
 
         # Analyze build order scores from training
@@ -305,13 +333,17 @@ class ProVsTrainingComparator:
 
             if scores:
                 analysis["avg_build_order_score"] = statistics.mean(scores)
-                analysis["median_build_order_score"] = statistics.median(scores)
+                analysis["median_build_order_score"] = statistics.median(
+                    scores)
                 analysis["min_build_order_score"] = min(scores)
                 analysis["max_build_order_score"] = max(scores)
 
             analysis["victories"] = victories
             analysis["defeats"] = defeats
-            analysis["win_rate"] = (victories / len(comparisons) * 100) if comparisons else 0.0
+            analysis["win_rate"] = (
+                victories /
+                len(comparisons) *
+                100) if comparisons else 0.0
 
         return analysis
 
@@ -326,32 +358,43 @@ class ProVsTrainingComparator:
         report_parts = []
 
         report_parts.append("=" * 70)
-        report_parts.append("PRO GAMER REPLAYS vs TRAINING REPLAYS COMPARISON REPORT")
+        report_parts.append(
+            "PRO GAMER REPLAYS vs TRAINING REPLAYS COMPARISON REPORT")
         report_parts.append("=" * 70)
-        report_parts.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        report_parts.append(
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report_parts.append("")
 
         # Data sources
         report_parts.append("DATA SOURCES:")
         report_parts.append("-" * 70)
         report_parts.append(f"Pro Replay Directory: {self.pro_replay_dir}")
-        report_parts.append(f"Pro Replays Analyzed: {pro_data.get('replay_count', 0)}")
-        report_parts.append(f"Training Data Directory: {self.training_data_dir}")
-        report_parts.append(f"Training Games Analyzed: {training_data.get('game_count', 0)}")
+        report_parts.append(
+            f"Pro Replays Analyzed: {pro_data.get('replay_count', 0)}")
+        report_parts.append(
+            f"Training Data Directory: {self.training_data_dir}")
+        report_parts.append(
+            f"Training Games Analyzed: {training_data.get('game_count', 0)}")
         report_parts.append("")
 
         # Performance summary
         report_parts.append("PERFORMANCE SUMMARY:")
         report_parts.append("-" * 70)
         if performance_analysis.get("win_rate") is not None:
-            report_parts.append(f"Training Win Rate: {performance_analysis.get('win_rate', 0.0):.2f}%")
-            report_parts.append(f"Training Victories: {performance_analysis.get('victories', 0)}")
-            report_parts.append(f"Training Defeats: {performance_analysis.get('defeats', 0)}")
+            report_parts.append(
+                f"Training Win Rate: {performance_analysis.get('win_rate', 0.0):.2f}%")
+            report_parts.append(
+                f"Training Victories: {performance_analysis.get('victories', 0)}")
+            report_parts.append(
+                f"Training Defeats: {performance_analysis.get('defeats', 0)}")
 
         if performance_analysis.get("avg_build_order_score") is not None:
-            report_parts.append(f"Average Build Order Score: {performance_analysis.get('avg_build_order_score', 0.0):.2%}")
-            report_parts.append(f"Median Build Order Score: {performance_analysis.get('median_build_order_score', 0.0):.2%}")
-            report_parts.append(f"Score Range: {performance_analysis.get('min_build_order_score', 0.0):.2%} - {performance_analysis.get('max_build_order_score', 0.0):.2%}")
+            report_parts.append(
+                f"Average Build Order Score: {performance_analysis.get('avg_build_order_score', 0.0):.2%}")
+            report_parts.append(
+                f"Median Build Order Score: {performance_analysis.get('median_build_order_score', 0.0):.2%}")
+            report_parts.append(
+                f"Score Range: {performance_analysis.get('min_build_order_score', 0.0):.2%} - {performance_analysis.get('max_build_order_score', 0.0):.2%}")
         report_parts.append("")
 
         # Timing comparisons
@@ -362,17 +405,22 @@ class ProVsTrainingComparator:
             report_parts.append(f"\n{param_name}:")
 
             if comp["pro_baseline"] is not None:
-                report_parts.append(f"  Pro Baseline: {comp['pro_baseline']:.1f} supply")
+                report_parts.append(
+                    f"  Pro Baseline: {comp['pro_baseline']:.1f} supply")
 
             if comp["pro_mean"] is not None:
-                report_parts.append(f"  Pro Mean: {comp['pro_mean']:.1f} supply (n={comp['pro_count']})")
+                report_parts.append(
+                    f"  Pro Mean: {comp['pro_mean']:.1f} supply (n={comp['pro_count']})")
                 if comp["pro_std"] is not None:
-                    report_parts.append(f"  Pro Std Dev: {comp['pro_std']:.2f} supply")
+                    report_parts.append(
+                        f"  Pro Std Dev: {comp['pro_std']:.2f} supply")
 
             if comp["training_mean"] is not None:
-                report_parts.append(f"  Training Mean: {comp['training_mean']:.1f} supply (n={comp['training_count']})")
+                report_parts.append(
+                    f"  Training Mean: {comp['training_mean']:.1f} supply (n={comp['training_count']})")
                 if comp["training_std"] is not None:
-                    report_parts.append(f"  Training Std Dev: {comp['training_std']:.2f} supply")
+                    report_parts.append(
+                        f"  Training Std Dev: {comp['training_std']:.2f} supply")
 
             if comp["mean_difference"] is not None:
                 diff = comp["mean_difference"]
@@ -383,11 +431,14 @@ class ProVsTrainingComparator:
                 else:
                     status = "? NEEDS IMPROVEMENT"
 
-                report_parts.append(f"  Difference: {diff:+.1f} supply {status}")
+                report_parts.append(
+                    f"  Difference: {diff:+.1f} supply {status}")
                 if diff > 0:
-                    report_parts.append(f"    �� Training is {diff:.1f} supply LATER than pro")
+                    report_parts.append(
+                        f"    �� Training is {diff:.1f} supply LATER than pro")
                 elif diff < 0:
-                    report_parts.append(f"    �� Training is {abs(diff):.1f} supply EARLIER than pro")
+                    report_parts.append(
+                        f"    �� Training is {abs(diff):.1f} supply EARLIER than pro")
                 else:
                     report_parts.append(f"    �� Training matches pro timing")
 
@@ -432,17 +483,28 @@ class ProVsTrainingComparator:
         comparison_data = {
             "timestamp": timestamp,
             "pro_data": {
-                "replay_count": pro_data.get("replay_count", 0),
-                "baseline": pro_data.get("baseline", {}),
-                "timings": {k: list(v) for k, v in pro_data.get("timings", {}).items()}
-            },
+                "replay_count": pro_data.get(
+                    "replay_count",
+                    0),
+                "baseline": pro_data.get(
+                    "baseline",
+                    {}),
+                "timings": {
+                    k: list(v) for k,
+                    v in pro_data.get(
+                        "timings",
+                        {}).items()}},
             "training_data": {
-                "game_count": training_data.get("game_count", 0),
-                "timings": {k: list(v) for k, v in training_data.get("timings", {}).items()}
-            },
+                "game_count": training_data.get(
+                    "game_count",
+                    0),
+                "timings": {
+                    k: list(v) for k,
+                    v in training_data.get(
+                        "timings",
+                        {}).items()}},
             "timing_comparisons": timing_comparisons,
-            "performance_analysis": performance_analysis
-        }
+            "performance_analysis": performance_analysis}
 
         comparison_file = self.output_dir / f"comparison_{timestamp}.json"
         with open(comparison_file, 'w', encoding='utf-8') as f:
@@ -473,9 +535,11 @@ def main():
     training_data = comparator.load_training_data()
 
     if not pro_data.get("baseline") and not pro_data.get("build_orders"):
-        print("[WARNING] No pro replay data found. Please ensure pro replays are available.")
+        print(
+            "[WARNING] No pro replay data found. Please ensure pro replays are available.")
 
-    if not training_data.get("comparisons") and not training_data.get("build_orders"):
+    if not training_data.get(
+            "comparisons") and not training_data.get("build_orders"):
         print("[WARNING] No training data found. Please run training first.")
         return
 
@@ -485,7 +549,8 @@ def main():
 
     # Analyze performance
     print("\n[STEP 4] Analyzing performance...")
-    performance_analysis = comparator.analyze_performance(pro_data, training_data)
+    performance_analysis = comparator.analyze_performance(
+        pro_data, training_data)
 
     # Generate report
     print("\n[STEP 5] Generating comparison report...")
@@ -502,8 +567,11 @@ def main():
     # Save data
     print("\n[STEP 6] Saving comparison data...")
     comparator.save_comparison_data(
-        pro_data, training_data, timing_comparisons, performance_analysis, report
-    )
+        pro_data,
+        training_data,
+        timing_comparisons,
+        performance_analysis,
+        report)
 
     print("\n" + "=" * 70)
     print("COMPARISON COMPLETE")

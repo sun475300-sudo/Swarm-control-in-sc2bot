@@ -82,7 +82,8 @@ def is_allowed_content(match: str) -> bool:
     return False
 
 
-def check_file(file_path: Path, patterns: List[Tuple[str, str]]) -> List[Tuple[int, str, str]]:
+def check_file(file_path: Path,
+               patterns: List[Tuple[str, str]]) -> List[Tuple[int, str, str]]:
     """���Ͽ��� �ΰ� ���� �˻�"""
     issues = []
 
@@ -99,8 +100,10 @@ def check_file(file_path: Path, patterns: List[Tuple[str, str]]) -> List[Tuple[i
                         # ���� �������� Ȯ��
                         if not is_allowed_content(matched_text):
                             # �ΰ� ���� �Ϻθ� ǥ�� (����)
-                            display_text = matched_text[:20] + '...' if len(matched_text) > 20 else matched_text
-                            issues.append((line_num, description, display_text))
+                            display_text = matched_text[:20] + '...' if len(
+                                matched_text) > 20 else matched_text
+                            issues.append(
+                                (line_num, description, display_text))
     except Exception as e:
         print(f"??  ���� �б� ����: {file_path} - {e}", file=sys.stderr)
 
@@ -141,8 +144,12 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='�ΰ� ���� �˻� ����')
-    parser.add_argument('--path', type=str, default='.', help='�˻��� ���丮 (�⺻��: ���� ���丮)')
-    parser.add_argument('--fix', action='store_true', help='�ڵ����� ���� �õ� (����)')
+    parser.add_argument('--path', type=str, default='.',
+                        help='�˻��� ���丮 (�⺻��: ���� ���丮)')
+    parser.add_argument(
+        '--fix',
+        action='store_true',
+        help='�ڵ����� ���� �õ� (����)')
 
     args = parser.parse_args()
 

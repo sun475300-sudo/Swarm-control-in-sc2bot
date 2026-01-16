@@ -19,22 +19,24 @@ class RogueTacticsManager:
     """
     Rogue tactics manager for aggressive strategies
     """
-    
+
     def __init__(self, bot: "WickedZergBotPro"):
         self.bot = bot
-        
+
         # Drop squad state
         self.drop_squad: List = []  # Drop squad: Overlord + Zerglings
         self.drop_target: Optional = None
+
+
 self.drop_in_progress: bool = False
 self.last_drop_time: float = 0.0
-self.drop_cooldown: float = 30.0 # µå¶ø Äð´Ù¿î (30ÃÊ)
+self.drop_cooldown: float = 30.0  # µå¶ø Äð´Ù¿î (30ÃÊ)
 
  # ¶ó¹Ù ¼¼ÀÌºù »óÅÂ
 self.larva_saving_mode: bool = False
 self.saved_larva_count: int = 0
 self.larva_save_start_time: float = 0.0
-self.larva_save_duration: float = 10.0 # ¶ó¹Ù ¼¼ÀÌºù Áö¼Ó ½Ã°£ (10ÃÊ)
+self.larva_save_duration: float = 10.0  # ¶ó¹Ù ¼¼ÀÌºù Áö¼Ó ½Ã°£ (10ÃÊ)
 
  # Àû º´·Â °¨Áö (Á¡¸· ±â¹Ý)
 self.enemy_on_creep: bool = False
@@ -46,8 +48,9 @@ self.overlord_speed_researched: bool = False
 self.overlord_speed_research_time: float = 0.0
 
  # ½Ã¾ß ¹üÀ§ °è»ê¿ë
-self.vision_range: float = 11.0 # ´ë±ºÁÖ ½Ã¾ß ¹üÀ§
-self.enemy_vision_range: float = 9.0 # Àû À¯´Ö Æò±Õ ½Ã¾ß ¹üÀ§
+self.vision_range: float = 11.0  # ´ë±ºÁÖ ½Ã¾ß ¹üÀ§
+self.enemy_vision_range: float = 9.0  # Àû À¯´Ö Æò±Õ ½Ã¾ß ¹üÀ§
+
 
 async def update(self):
         """¸Å ÇÁ·¹ÀÓ ¾÷µ¥ÀÌÆ®"""
@@ -76,9 +79,11 @@ await self._manage_drop_units()
             if not self.overlord_speed_researched:
                 self.overlord_speed_researched = True
                 self.overlord_speed_research_time = b.time
-                print(f"[ROGUE TACTICS] [{int(b.time)}s] Overlord Speed researched - Drop tactics enabled")
+                print(
+                    f"[ROGUE TACTICS] [{int(b.time)}s] Overlord Speed researched - Drop tactics enabled")
 else:
 self.overlord_speed_researched = False
+
 
 def _detect_enemy_on_creep(self):
         """
@@ -86,6 +91,8 @@ def _detect_enemy_on_creep(self):
 
 Rogue Àü¼ú: Àû º´·ÂÀÌ ³» ±âÁö ¾Õ¸¶´ç Á¡¸· ³¡¿¡ µµ´ÞÇßÀ» ¶§ µå¶ø À¯´Ö Ãâ¹ß
         """
+
+
 b = self.bot
 
  # Á¡¸·ÀÌ ÀÖ´Â Áö¿ª È®ÀÎ
@@ -116,22 +123,25 @@ current_pos = enemy.position
  # ÀûÀÌ ¿ì¸® ±âÁö ¹æÇâÀ¸·Î ÀÌµ¿ ÁßÀÎÁö È®ÀÎ
 to_base = main_hatch.position - last_pos
 movement = current_pos - last_pos
-                        # CRITICAL FIX: Point2 doesn't have .dot() method - calculate dot product manually
+                        # CRITICAL FIX: Point2 doesn't have .dot() method -
+                        # calculate dot product manually
 dot_product = to_base.x * movement.x + to_base.y * movement.y
-if dot_product > 0: # ³»ÀûÀÌ ¾ç¼ö¸é °°Àº ¹æÇâ
+if dot_product > 0:  # ³»ÀûÀÌ ¾ç¼ö¸é °°Àº ¹æÇâ
 advancing_count += 1
 
-self.enemy_advancing = advancing_count >= 3 # 3±â ÀÌ»ó ÀüÁø Áß
+self.enemy_advancing = advancing_count >= 3  # 3±â ÀÌ»ó ÀüÁø Áß
 else:
 self.enemy_advancing = True
 
  # Àû À§Ä¡ ÀúÀå
-self._last_enemy_positions = {enemy.tag: enemy.position for enemy in enemy_units}
+self._last_enemy_positions = {
+    enemy.tag: enemy.position for enemy in enemy_units}
 else:
 self.enemy_on_creep = False
  # 5ÃÊ ÀÌ»ó ÀûÀÌ Á¡¸·¿¡ ¾øÀ¸¸é ÀüÁø »óÅÂ ÇØÁ¦
 if b.time - self.last_enemy_on_creep_time > 5.0:
 self.enemy_advancing = False
+
 
 async def _execute_baneling_drop(self):
         """
@@ -154,14 +164,17 @@ if self.drop_in_progress:
 overlords = b.units(UnitTypeId.OVERLORD)
 drop_overlord = None
 for overlord in overlords:
-if overlord.passengers: # À¯´ÖÀ» ÅÂ¿î ´ë±ºÁÖ
+if overlord.passengers:  # À¯´ÖÀ» ÅÂ¿î ´ë±ºÁÖ
 drop_overlord = overlord
 break
 
 if drop_overlord and self.drop_target:
  # µå¶ø ½ÃÄö½º °è¼Ó ½ÇÇà
 banelings = list(b.units(UnitTypeId.BANELING).ready)
-path = self._calculate_stealth_path(drop_overlord.position, self.drop_target) or [self.drop_target]
+path = self._calculate_stealth_path(
+    drop_overlord.position,
+    self.drop_target) or [
+        self.drop_target]
 await self._execute_drop_sequence(drop_overlord, banelings, path, self.drop_target)
 else:
  # µå¶ø À¯´ÖÀÌ ¾øÀ¸¸é µå¶ø Áß´Ü
@@ -191,8 +204,11 @@ path = [drop_target]
  # µå¶ø ½ÇÇà ½ÃÀÛ
 await self._execute_drop_sequence(drop_overlord, banelings, path, drop_target)
 
+
 def _can_execute_drop(self) -> bool:
         """µå¶ø ½ÇÇà °¡´É ¿©ºÎ È®ÀÎ"""
+
+
 b = self.bot
 
  # 1. ´ë±ºÁÖ ¼Ó¾÷ ¿Ï·á È®ÀÎ
@@ -213,7 +229,7 @@ return False
 
  # 5. ¸Íµ¶ÃæÀÌ ÁØºñµÇ¾î ÀÖ´ÂÁö È®ÀÎ
 banelings = b.units(UnitTypeId.BANELING).ready
-if not banelings.exists or banelings.amount < 4: # ÃÖ¼Ò 4±â ÇÊ¿ä
+if not banelings.exists or banelings.amount < 4:  # ÃÖ¼Ò 4±â ÇÊ¿ä
 return False
 
  # 6. µå¶ø¿ë ´ë±ºÁÖ È®ÀÎ
@@ -222,6 +238,7 @@ if not overlords.exists:
 return False
 
 return True
+
 
 async def _prepare_drop_units(self) -> Tuple[Optional[Unit], List[Unit]]:
         """µå¶ø À¯´Ö ÁØºñ"""
@@ -246,6 +263,7 @@ return overlord, banelings
 drop_overlord = overlords.closest_to(b.townhalls.first.position)
 return drop_overlord, banelings
 
+
 def _find_drop_target(self) -> Optional[Point2]:
         """
 µå¶ø Å¸°Ù °áÁ¤
@@ -255,6 +273,8 @@ def _find_drop_target(self) -> Optional[Point2]:
 2. Àû È®Àå ±âÁö ÀÏ²Û
 3. Àû ÁÖ¿ä °Ç¹° (°ø¼º ÀüÂ÷ ¶óÀÎ µî)
         """
+
+
 b = self.bot
 
  # Àû º»Áø À§Ä¡ È®ÀÎ
@@ -281,6 +301,7 @@ return enemy_main
  # Àû º»ÁøÀ» ¸ð¸£¸é ¸Ê Áß½É
 return b.game_info.map_center
 
+
 def _calculate_stealth_path(
 self, start: Point2, target: Point2
 ) -> Optional[List[Point2]]:
@@ -294,6 +315,8 @@ Rogue Àü¼ú: ÀûÀÇ ½Ã¾ß ¹üÀ§¸¦ ÇÇÇØ ¸Ê °¡ÀåÀÚ¸®¸�
 2. Á÷Á¢ °æ·Î»ó¿¡ Àû ½Ã¾ß°¡ ÀÖÀ¸¸é ¿ìÈ¸ °æ·Î °è»ê
 3. ¸Ê °¡ÀåÀÚ¸®¸¦ µû¶ó ÀÌµ¿ÇÏ¿© Àû ½Ã¾ß È¸ÇÇ
         """
+
+
 b = self.bot
 
  # 1. ¸Ê °æ°è È®ÀÎ
@@ -317,10 +340,11 @@ to_enemy = enemy_pos - start
 
  # ³»ÀûÀ» »ç¿ëÇÏ¿© °æ·Î°¡ Àû ½Ã¾ß ¹üÀ§ ³»¿¡ ÀÖ´ÂÁö È®ÀÎ
 if to_target.length > 0:
-                # CRITICAL FIX: Point2 doesn't have .dot() method - calculate dot product manually
+                # CRITICAL FIX: Point2 doesn't have .dot() method - calculate
+                # dot product manually
 dot_product = to_enemy.x * to_target.x + to_enemy.y * to_target.y
 projection = (dot_product / to_target.length) / to_target.length
-if 0 < projection < 1: # °æ·Î»ó¿¡ ÀÖÀ½
+if 0 < projection < 1:  # °æ·Î»ó¿¡ ÀÖÀ½
 closest_point = start + to_target * projection
 if closest_point.distance_to(enemy_pos) < self.enemy_vision_range:
 direct_path_blocked = True
@@ -350,6 +374,7 @@ waypoints.append(target)
 
 return waypoints
 
+
 async def _execute_drop_sequence(
 self,
 overlord: Unit,
@@ -371,12 +396,13 @@ if not self.drop_in_progress:
 self.drop_in_progress = True
 self.drop_target = target
 self.drop_squad = [overlord] + banelings[:8]
-            print(f"[ROGUE DROP] [{int(b.time)}s] Drop sequence started - Target: {target}")
+            print(
+                f"[ROGUE DROP] [{int(b.time)}s] Drop sequence started - Target: {target}")
 
 try:
  # 1. ¸Íµ¶ÃæÀ» ´ë±ºÁÖ¿¡ ÅÂ¿ì±â (¾ÆÁ÷ ÅÂ¿ìÁö ¾Ê¾ÒÀ¸¸é)
 if not overlord.passengers or len(overlord.passengers) < len(banelings):
-for baneling in banelings[:8]: # ÃÖ´ë 8±â
+for baneling in banelings[:8]:  # ÃÖ´ë 8±â
 if baneling.is_ready and overlord.cargo_space_left > 0:
  # python-sc2: load ¸í·É »ç¿ë
 try:
@@ -389,12 +415,13 @@ try:
 overlord.load(baneling)
 except Exception:
 pass
-return # ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ °è¼Ó
+return  # ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ °è¼Ó
 
  # 2. °æ·Î¸¦ µû¶ó ÀÌµ¿
 if path and len(path) > 0:
  # ÇöÀç waypoint È®ÀÎ
-                current_waypoint_idx = getattr(self, "_current_waypoint_idx", 0)
+                current_waypoint_idx = getattr(
+                    self, "_current_waypoint_idx", 0)
 if current_waypoint_idx < len(path):
 next_waypoint = path[current_waypoint_idx]
 
@@ -415,7 +442,7 @@ else:
 overlord.move(target)
 
  # 3. Å¸°Ù ÁöÁ¡¿¡ µµ´ÞÇß´ÂÁö È®ÀÎÇÏ°í µå¶ø
-if overlord.distance_to(target) < 8.0: # 8 À¯´Ö ÀÌ³»¸é µå¶ø °¡´É
+if overlord.distance_to(target) < 8.0:  # 8 À¯´Ö ÀÌ³»¸é µå¶ø °¡´É
  # µå¶ø ½ÇÇà
 try:
  # python-sc2: unload_all ¸í·É »ç¿ë (À§Ä¡ ÁöÁ¤)
@@ -433,7 +460,8 @@ overlord.unload_all(target)
 except Exception as unload_error:
  # µå¶ø ½ÇÆÐ ½Ã ·Î±×¸¸ Ãâ·Â (´ÙÀ½ ÇÁ·¹ÀÓ¿¡ Àç½Ãµµ)
 if b.iteration % 50 == 0:
-                        print(f"[ROGUE DROP] Unload attempt failed: {unload_error}")
+                        print(
+                            f"[ROGUE DROP] Unload attempt failed: {unload_error}")
 
                 print(f"[ROGUE DROP] [{int(b.time)}s] Baneling drop executed at {target}")
 self.last_drop_time = b.time

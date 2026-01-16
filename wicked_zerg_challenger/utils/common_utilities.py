@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 
 
-
 # ============================================================================
 # 초기화 관련 공통 함수
 # ============================================================================
@@ -49,7 +48,7 @@ def cleanup_build_reservations(reservations: Dict, current_time: float, timeout:
  for key, reservation in reservations.items():
         if current_time - reservation.get('time', 0) > timeout:
  expired_keys.append(key)
- 
+
  for key in expired_keys:
  reservations.pop(key, None)
 
@@ -71,7 +70,7 @@ def generate_report(data: Dict, output_path: Path, format: str = "json") -> bool
     """리포트 생성 공통 함수"""
  try:
  output_path.parent.mkdir(parents=True, exist_ok=True)
- 
+
         if format == "json":
  import json
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -81,7 +80,7 @@ def generate_report(data: Dict, output_path: Path, format: str = "json") -> bool
                 f.write("# 리포트\n\n")
  for key, value in data.items():
                     f.write(f"## {key}\n\n{value}\n\n")
- 
+
  return True
  except Exception as e:
         print(f"[ERROR] 리포트 생성 실패: {e}")
@@ -122,11 +121,11 @@ def validate_data(data: Any, required_keys: List[str]) -> bool:
     """데이터 검증 공통 함수"""
  if not isinstance(data, dict):
  return False
- 
+
  for key in required_keys:
  if key not in data:
  return False
- 
+
  return True
 
 

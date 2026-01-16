@@ -9,11 +9,9 @@
 """
 
 
-
 import os
 
 from pathlib import Path
-
 
 
 def main():
@@ -26,7 +24,7 @@ def main():
 
  print()
 
- 
+
 
  # È¯°æ º¯¼ö È®ÀÎ
 
@@ -52,7 +50,7 @@ def main():
 
  print()
 
- 
+
 
  # °æ·Î ¿ì¼±¼øÀ§ È®ÀÎ
 
@@ -74,7 +72,7 @@ def main():
 
  ]
 
- 
+
 
  for path_str, description in paths:
 
@@ -96,7 +94,7 @@ def main():
 
             print(f"[NOT FOUND] {path_str} ({description})")
 
- 
+
 
  # ±âº» °æ·Î »ó¼¼ Á¤º¸
 
@@ -126,7 +124,7 @@ def main():
 
             print(f"  - {r.name} ({size_kb} KB)")
 
- 
+
 
  # ¿Ï·á µð·ºÅä¸® È®ÀÎ
 
@@ -150,7 +148,7 @@ def main():
 
         print("[OK] Directory created")
 
- 
+
 
  print()
 

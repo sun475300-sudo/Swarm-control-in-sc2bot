@@ -29,7 +29,6 @@ Google Vertex AI (Gemini)¸¦ È°¿ëÇÑ ÀÚµ¿ ¿¡·¯ ºÐ¼® ¹× ÆÐ�
 """
 
 
-
 import os
 
 import traceback
@@ -42,10 +41,7 @@ from pathlib import Path
 from datetime import datetime
 
 
-
-
 try:
-
 
  GEMINI_AVAILABLE = True
 
@@ -54,7 +50,6 @@ except ImportError:
  GEMINI_AVAILABLE = False
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
-
 
 
 try:
@@ -69,11 +64,7 @@ except ImportError:
  logger.setLevel(logging.INFO)
 
 
-
-
-
 @dataclass
-
 class ErrorContext:
 
     """¿¡·¯ ¹ß»ý ÄÁÅØ½ºÆ® Á¤º¸"""

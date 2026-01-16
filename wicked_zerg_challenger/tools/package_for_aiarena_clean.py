@@ -43,7 +43,7 @@ class AIArenaPackager:
  # Configuration
         "requirements.txt",
  ]
- 
+
  # Optional files (will be included if they exist)
  OPTIONAL_FILES = [
         "combat_tactics.py",
@@ -83,7 +83,7 @@ class AIArenaPackager:
  self.output_dir = Path(output_dir)
  # Use os.makedirs for better encoding handling
  os.makedirs(str(self.output_dir), exist_ok=True)
- 
+
         self.temp_dir = self.output_dir / "temp_package"
 
         print("[*] AI Arena Packager initialized")
@@ -169,14 +169,14 @@ class AIArenaPackager:
             print(f"    [OK] Model: {latest_model.name} -> models/zerg_net_model.pt")
  else:
             print("    [!] No model file (submitting untrained bot)")
- 
+
  # 3. Copy local_training directory (essential for deployment)
         print("    - Copying local_training directory...")
         local_training_src = self.project_root / "local_training"
  if local_training_src.exists():
             local_training_dst = self.temp_dir / "local_training"
  local_training_dst.mkdir(exist_ok=True)
- 
+
  # Copy all Python files (excluding tests and replay learners)
             for py_file in local_training_src.rglob("*.py"):
  # Skip test files
@@ -185,14 +185,14 @@ class AIArenaPackager:
  # Skip replay learning scripts (not needed for deployment)
                 if "replay" in py_file.name.lower() and "learner" in py_file.name.lower():
  continue
- 
+
  # Calculate relative path
  rel_path = py_file.relative_to(local_training_src)
  dst_file = local_training_dst / rel_path
  dst_file.parent.mkdir(parents=True, exist_ok=True)
  shutil.copy2(py_file, dst_file)
                 print(f"      [OK] {rel_path}")
- 
+
  # Copy learned parameters if they exist
  learned_files = [
                 "scripts/learned_build_orders.json",
@@ -205,7 +205,7 @@ class AIArenaPackager:
  dst_file.parent.mkdir(parents=True, exist_ok=True)
  shutil.copy2(src_file, dst_file)
                     print(f"      [OK] {learned_file}")
- 
+
             print("    [OK] local_training directory copied")
  else:
             print("    [!] local_training directory not found")
@@ -396,7 +396,7 @@ class AIArenaPackager:
 def main():
     """Main execution function"""
  import argparse
- 
+
     parser = argparse.ArgumentParser(description="Create AI Arena deployment package")
  parser.add_argument(
         "--output",
@@ -415,11 +415,11 @@ def main():
         action="store_true",
         help="Include checkpoint files"
  )
- 
+
  args = parser.parse_args()
- 
+
  project_root = Path(args.project_root) if args.project_root else None
- 
+
  # Handle output directory - ensure proper encoding
  if args.output:
  # Use the provided path directly - handle encoding issues
@@ -439,15 +439,15 @@ def main():
  # Use Unicode string building
             arena_part = "아레나_배포"
             output_dir = base / arena_part / "deployment"
- 
+
  packager = AIArenaPackager(
  project_root=project_root,
  include_checkpoints=args.include_checkpoints,
  output_dir=output_dir
  )
- 
+
  zip_path = packager.package()
- 
+
  if zip_path:
         print(f"\n✅ Deployment package created: {zip_path}")
  return 0

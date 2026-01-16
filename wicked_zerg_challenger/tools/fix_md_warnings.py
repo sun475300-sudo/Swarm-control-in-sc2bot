@@ -14,12 +14,12 @@ def fix_content(content: str) -> str:
     lines = content.split('\n')
  result = []
  i = 0
- 
+
  while i < len(lines):
  line = lines[i]
         prev = result[-1] if result else ""
         next_line = lines[i + 1] if i + 1 < len(lines) else ""
- 
+
  # Heading
         if re.match(r'^#{1,6}\s+', line):
  if result and prev.strip():
@@ -60,7 +60,7 @@ def fix_content(content: str) -> str:
  else:
  result.append(line)
  i += 1
- 
+
  # Remove excessive blank lines
  final = []
  prev_empty = False
@@ -72,7 +72,7 @@ def fix_content(content: str) -> str:
  else:
  final.append(line)
  prev_empty = False
- 
+
     return '\n'.join(final) + '\n'
 
 
@@ -85,7 +85,7 @@ def main():
         "FINAL_STATUS.md",
         "README_GITHUB_UPLOAD.md",
  ]
- 
+
  for fname in files:
  path = PROJECT_ROOT / fname
  if path.exists():

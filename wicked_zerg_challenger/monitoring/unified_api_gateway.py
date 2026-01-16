@@ -27,10 +27,11 @@ ARENA_SERVER_PORT = 8002
 app = FastAPI(
     title="SC2 AI Unified Monitoring Gateway",
     description="Unified API Gateway for Local Training and Arena Battle Monitoring",
-    version="1.0.0"
-)
+    version="1.0.0")
 
 # Configure default JSON encoder for UTF-8
+
+
 class UTF8JSONResponse(StarletteJSONResponse):
     def render(self, content) -> bytes:
         return json.dumps(
@@ -40,6 +41,7 @@ class UTF8JSONResponse(StarletteJSONResponse):
             indent=None,
             separators=(",", ":")
         ).encode("utf-8")
+
 
 app.default_response_class = UTF8JSONResponse
 
@@ -62,12 +64,18 @@ def check_server_health(port: int) -> bool:
         return False
 
 
-def proxy_request(server_type: str, endpoint: str, method: str = "GET", params: Optional[Dict] = None) -> Dict:
+def proxy_request(
+        server_type: str,
+        endpoint: str,
+        method: str = "GET",
+        params: Optional[Dict] = None) -> Dict:
     """Proxy request to appropriate server"""
     port = LOCAL_SERVER_PORT if server_type == "local" else ARENA_SERVER_PORT
 
     if not check_server_health(port):
-        raise HTTPException(status_code=503, detail=f"{server_type.upper()} server is not available on port {port}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"{server_type.upper()} server is not available on port {port}")
 
     url = f"http://localhost:{port}{endpoint}"
 
@@ -77,14 +85,20 @@ def proxy_request(server_type: str, endpoint: str, method: str = "GET", params: 
         elif method == "POST":
             response = requests.post(url, json=params, timeout=10)
         else:
-            raise HTTPException(status_code=405, detail=f"Method {method} not supported")
+            raise HTTPException(
+                status_code=405,
+                detail=f"Method {method} not supported")
 
         if response.status_code == 200:
             return response.json()
         else:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=response.text)
     except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=503, detail=f"Failed to connect to {server_type} server: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Failed to connect to {server_type} server: {e}")
 
 
 @app.get("/")
@@ -101,22 +115,17 @@ async def root():
                 "available": local_available,
                 "port": LOCAL_SERVER_PORT,
                 "url": f"http://localhost:{LOCAL_SERVER_PORT}" if local_available else None,
-                "description": "Local training monitoring server"
-            },
+                "description": "Local training monitoring server"},
             "arena": {
                 "available": arena_available,
                 "port": ARENA_SERVER_PORT,
                 "url": f"http://localhost:{ARENA_SERVER_PORT}" if arena_available else None,
-                "description": "Arena battle monitoring server"
-            }
-        },
+                "description": "Arena battle monitoring server"}},
         "endpoints": {
             "local_api": "/api/local/*",
             "arena_api": "/api/arena/*",
-            "unified_api": "/api/unified/*"
-        },
-        "docs": "/docs"
-    }
+            "unified_api": "/api/unified/*"},
+        "docs": "/docs"}
 
 
 @app.get("/health")
@@ -171,7 +180,8 @@ async def unified_game_state():
     elif check_server_health(ARENA_SERVER_PORT):
         return proxy_request("arena", "/api/game-state")
     else:
-        raise HTTPException(status_code=503, detail="No monitoring servers available")
+        raise HTTPException(status_code=503,
+                            detail="No monitoring servers available")
 
 
 @app.get("/api/unified/stats")

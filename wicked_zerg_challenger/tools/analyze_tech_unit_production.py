@@ -8,6 +8,7 @@ import sys
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
+
 def analyze_tech_unit_issues():
     """Analyze potential issues with tech unit production"""
 
@@ -100,5 +101,6 @@ def analyze_tech_unit_issues():
     print("Analysis Complete")
     print("=" * 70)
 
+
 if __name__ == "__main__":
- analyze_tech_unit_issues()
+    analyze_tech_unit_issues()

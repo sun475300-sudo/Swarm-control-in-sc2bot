@@ -18,7 +18,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
-
 class TelemetryLogger:
     """Logger for training statistics and telemetry data"""
 
@@ -142,7 +141,7 @@ class TelemetryLogger:
  # Initialize temp file variables to None for safe cleanup
  temp_json = None
  temp_csv = None
- 
+
  try:
  if not self.telemetry_data:
                 print("[TELEMETRY] No data to save")
@@ -151,12 +150,12 @@ class TelemetryLogger:
  # Atomic write for JSON (임시 파일 생성 후 교체)
  json_path = Path(self.telemetry_file)
             temp_json = json_path.with_suffix(json_path.suffix + '.tmp')
- 
+
  try:
  # 임시 파일에 쓰기
                 with open(temp_json, "w", encoding="utf-8") as f:
  json.dump(self.telemetry_data, f, indent=2, ensure_ascii=False)
- 
+
  # 원자적 교체 (Windows 호환)
  try:
  temp_json.replace(json_path)
@@ -178,13 +177,13 @@ class TelemetryLogger:
  # Atomic write for CSV (only if JSON succeeded)
             csv_file = json_path.with_suffix('.csv')
             temp_csv = csv_file.with_suffix(csv_file.suffix + '.tmp')
- 
+
  try:
                 with open(temp_csv, "w", encoding="utf-8", newline="") as f:
  writer = csv.DictWriter(f, fieldnames=self.telemetry_data[0].keys())
  writer.writeheader()
  writer.writerows(self.telemetry_data)
- 
+
  # 원자적 교체
  try:
  temp_csv.replace(csv_file)
@@ -213,7 +212,7 @@ class TelemetryLogger:
  temp_file.unlink()
  except Exception:
  pass # Ignore cleanup errors to avoid masking original exception
- 
+
             print(f"[WARNING] Telemetry save error: {e}")
 
  def record_game_result(
@@ -274,7 +273,7 @@ class TelemetryLogger:
  # Atomic append to training_stats.json (JSONL format)
  stats_path = Path(self.stats_file)
             temp_stats = stats_path.with_suffix(stats_path.suffix + '.tmp')
- 
+
  try:
  # 기존 내용 읽기
  existing_lines = []
@@ -284,16 +283,16 @@ class TelemetryLogger:
  existing_lines = [line.strip() for line in f if line.strip()]
  except Exception:
  pass
- 
+
  # 새 라인 추가
  new_line = json.dumps(log_data, ensure_ascii=False)
  existing_lines.append(new_line)
- 
+
  # 임시 파일에 전체 내용 쓰기
                 with open(temp_stats, "w", encoding="utf-8") as f:
  for line in existing_lines:
                         f.write(line + "\n")
- 
+
  # 원자적 교체
  try:
  temp_stats.replace(stats_path)
