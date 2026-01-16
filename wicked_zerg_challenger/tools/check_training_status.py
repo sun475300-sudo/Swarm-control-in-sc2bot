@@ -33,7 +33,8 @@ def check_python_processes():
                 cmdline = proc.info.get('cmdline', [])
                 if cmdline:
                     cmdline_str = ' '.join(cmdline)
-                    if 'run_with_training' in cmdline_str or 'training' in cmdline_str.lower():
+                    # Check for actual training script, not status check script
+                    if 'run_with_training' in cmdline_str and 'check_training_status' not in cmdline_str:
                         training_processes.append({
                             'pid': proc.info['pid'],
                             'cmdline': cmdline_str,
@@ -41,7 +42,7 @@ def check_python_processes():
                             'cpu_percent': proc.cpu_percent(interval=0.1),
                             'memory_mb': proc.info['memory_info'].rss / 1024 / 1024
                         })
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
     
     if training_processes:
@@ -107,55 +108,70 @@ def check_training_stats():
             try:
                 # Try JSON format first
                 with open(stats_file, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                    if content.startswith('{'):
-                        stats = json.loads(content)
-                        print(f"  Total Games: {stats.get('total_games', 0)}")
-                        print(f"  Wins: {stats.get('wins', 0)}")
-                        print(f"  Losses: {stats.get('losses', 0)}")
-                        print(f"  Win Rate: {stats.get('win_rate', 0):.1f}%")
-                        if 'episode' in stats:
-                            print(f"  Episode: {stats.get('episode', 0)}/{stats.get('total_episodes', 0)}")
-                            print(f"  Progress: {stats.get('progress_percent', 0):.1f}%")
-                    else:
-                        # JSONL format - read all lines
-                        lines = [line.strip() for line in content.split('\n') if line.strip()]
-                        if lines:
-                            print(f"  Format: JSONL ({len(lines)} records)")
-                            # Parse all lines and aggregate
-                            games = []
-                            wins = 0
-                            losses = 0
-                            for line in lines:
-                                try:
-                                    game_data = json.loads(line)
-                                    games.append(game_data)
-                                    if game_data.get('result', '').upper() == 'VICTORY' or game_data.get('loss_reason', '').upper() == 'VICTORY':
-                                        wins += 1
-                                    elif game_data.get('result', '').upper() == 'DEFEAT' or game_data.get('loss_reason', '').upper() == 'DEFEAT':
-                                        losses += 1
-                                except:
-                                    pass
+                    first_line = f.readline().strip()
+                    f.seek(0)  # Reset to beginning
+                    
+                    if first_line.startswith('{') and first_line.count('{') == first_line.count('}'):
+                        # Single JSON object - try to parse
+                        try:
+                            stats = json.loads(first_line)
+                            print(f"  Total Games: {stats.get('total_games', 0)}")
+                            print(f"  Wins: {stats.get('wins', 0)}")
+                            print(f"  Losses: {stats.get('losses', 0)}")
+                            print(f"  Win Rate: {stats.get('win_rate', 0):.1f}%")
+                            if 'episode' in stats:
+                                print(f"  Episode: {stats.get('episode', 0)}/{stats.get('total_episodes', 0)}")
+                                print(f"  Progress: {stats.get('progress_percent', 0):.1f}%")
+                        except json.JSONDecodeError:
+                            # Fall through to JSONL parsing
+                            pass
+                    
+                    # JSONL format - read all lines
+                    f.seek(0)
+                    lines = [line.strip() for line in f if line.strip()]
+                    if lines:
+                        print(f"  Format: JSONL ({len(lines)} records)")
+                        # Parse all lines and aggregate
+                        games = []
+                        wins = 0
+                        losses = 0
+                        for line in lines:
+                            try:
+                                game_data = json.loads(line)
+                                games.append(game_data)
+                                if game_data.get('result', '').upper() == 'VICTORY' or game_data.get('loss_reason', '').upper() == 'VICTORY':
+                                    wins += 1
+                                elif game_data.get('result', '').upper() == 'DEFEAT' or game_data.get('loss_reason', '').upper() == 'DEFEAT':
+                                    losses += 1
+                            except json.JSONDecodeError:
+                                continue
+                        
+                        if games:
+                            total = len(games)
+                            win_rate = (wins / total * 100) if total > 0 else 0.0
+                            print(f"  Total Games: {total}")
+                            print(f"  Wins: {wins}")
+                            print(f"  Losses: {losses}")
+                            print(f"  Win Rate: {win_rate:.1f}%")
                             
+                            # Show last game info
                             if games:
-                                total = len(games)
-                                win_rate = (wins / total * 100) if total > 0 else 0.0
-                                print(f"  Total Games: {total}")
-                                print(f"  Wins: {wins}")
-                                print(f"  Losses: {losses}")
-                                print(f"  Win Rate: {win_rate:.1f}%")
-                                
-                                # Show last game info
-                                if games:
-                                    last_game = games[-1]
-                                    print(f"\n  Last Game:")
-                                    print(f"    Result: {last_game.get('result', last_game.get('loss_reason', 'N/A'))}")
-                                    if 'map_name' in last_game:
-                                        print(f"    Map: {last_game.get('map_name', 'N/A')}")
-                                    if 'enemy_race' in last_game:
-                                        print(f"    Enemy: {last_game.get('enemy_race', 'N/A')}")
+                                last_game = games[-1]
+                                print(f"\n  Last Game:")
+                                print(f"    Result: {last_game.get('result', last_game.get('loss_reason', 'N/A'))}")
+                                if 'map_name' in last_game:
+                                    print(f"    Map: {last_game.get('map_name', 'N/A')}")
+                                if 'enemy_race' in last_game or 'opponent_race' in last_game:
+                                    race = last_game.get('enemy_race', last_game.get('opponent_race', 'N/A'))
+                                    print(f"    Enemy: {race}")
+                                if 'game_time' in last_game:
+                                    print(f"    Duration: {last_game.get('game_time', 0)}s")
+                                if 'timestamp' in last_game:
+                                    print(f"    Time: {last_game.get('timestamp', 'N/A')}")
             except Exception as e:
                 print(f"  [ERROR] Failed to read: {e}")
+                import traceback
+                traceback.print_exc()
             break
     
     if not stats_found:
