@@ -232,8 +232,8 @@ class ReplayBuildOrderExtractor:
                         zerg_pid = p.pid
                         break
 
- # Track Hatchery count to skip the starting Hatchery
- hatchery_count = 0
+            # Track Hatchery count to skip the starting Hatchery
+            hatchery_count = 0
 
  # CRITICAL: Check both replay.events (UnitBornEvent) and replay.tracker_events (UnitInitEvent)
  # Extractor often appears in tracker_events as UnitInitEvent, not in events as UnitBornEvent
