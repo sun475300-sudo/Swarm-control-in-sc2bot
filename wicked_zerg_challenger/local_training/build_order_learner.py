@@ -15,40 +15,41 @@ from typing import Dict, List, Optional, Tuple, Set, Any, Union
 from dataclasses import dataclass
 
 try:
+    from sc2.ids.unit_typeid import UnitTypeId
     SC2_AVAILABLE = True
 except ImportError:
     SC2_AVAILABLE = False
- # Fallback for testing without SC2
-class UnitTypeId:
-    pass
- SPAWNINGPOOL = None
- EXTRACTOR = None
- HATCHERY = None
- OVERLORD = None
- QUEEN = None
- ZERGLING = None
- ROACHWARREN = None
- BANELINGNEST = None
- EVOLUTIONCHAMBER = None
- LAIR = None
- SPIRE = None
- INFESTATIONPIT = None
- ULTRALISKCAVERN = None
- LURKERDENMP = None
- HYDRALISKDEN = None
- GREATERSPIRE = None
- HIVE = None
+    # Fallback for testing without SC2
+    class UnitTypeId:
+        pass
+    SPAWNINGPOOL = None
+    EXTRACTOR = None
+    HATCHERY = None
+    OVERLORD = None
+    QUEEN = None
+    ZERGLING = None
+    ROACHWARREN = None
+    BANELINGNEST = None
+    EVOLUTIONCHAMBER = None
+    LAIR = None
+    SPIRE = None
+    INFESTATIONPIT = None
+    ULTRALISKCAVERN = None
+    LURKERDENMP = None
+    HYDRALISKDEN = None
+    GREATERSPIRE = None
+    HIVE = None
 
 
 @dataclass
 class BuildOrderStep:
     """Single build order step"""
- supply: int
- time_seconds: int
- action: str
- minerals: Optional[int] = None
- gas: Optional[int] = None
- notes: Optional[str] = None
+    supply: int
+    time_seconds: int
+    action: str
+    minerals: Optional[int] = None
+    gas: Optional[int] = None
+    notes: Optional[str] = None
 
 
 @dataclass
