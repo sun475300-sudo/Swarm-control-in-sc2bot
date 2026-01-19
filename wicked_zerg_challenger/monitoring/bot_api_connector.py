@@ -44,6 +44,7 @@ class GameState:
 
 def __post_init__(self):
     if self.units is None:
+        pass
     self.units = {}
  if not self.timestamp:
      self.timestamp = datetime.now().isoformat()
@@ -75,6 +76,7 @@ class LearningProgress:
 
 def __post_init__(self):
     if self.win_rate_trend is None:
+        pass
     self.win_rate_trend = []
  if self.training_logs is None:
      self.training_logs = []

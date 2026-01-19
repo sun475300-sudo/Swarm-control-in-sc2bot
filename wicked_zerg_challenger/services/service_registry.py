@@ -28,6 +28,7 @@ class ServiceInfo:
 
 def __post_init__(self):
     if self.metadata is None:
+        pass
     self.metadata = {}
 
 

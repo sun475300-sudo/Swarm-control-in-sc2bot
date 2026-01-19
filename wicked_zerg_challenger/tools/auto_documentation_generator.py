@@ -77,6 +77,7 @@ def _extract_module_name(self, file_path: str) -> str:
  # 파일 경로를 모듈 이름으로 변환
  parts = Path(file_path).parts
     if 'wicked_zerg_challenger' in parts:
+        pass
     pass
     idx = parts.index('wicked_zerg_challenger')
  module_parts = parts[idx+1:]

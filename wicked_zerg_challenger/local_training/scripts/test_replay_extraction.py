@@ -13,15 +13,14 @@ replay = sc2reader.load_replay(str(replay_path), load_map=True)
 # Find Zerg player
 zerg_player = None
 for player in replay.players:
-    if hasattr(player, 'play_race') and str(
-    player.play_race).lower() == 'zerg':
-    zerg_player = player
-    print(f"Found Zerg player: {zerg_player.name}")
- break
+    if hasattr(player, 'play_race') and str(player.play_race).lower() == 'zerg':
+        zerg_player = player
+        print(f"Found Zerg player: {zerg_player.name}")
+        break
 
 if not zerg_player:
     print("No Zerg player found!")
- exit(1)
+    exit(1)
 
 # Check UnitBornEvent
 unit_to_parameter = {

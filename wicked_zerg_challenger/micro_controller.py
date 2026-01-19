@@ -235,39 +235,69 @@ This is the same algorithm used in:
 
 def __init__(self, config: SwarmConfig = None):
     """Initialize Boids Controller."""
-
-
-self.config = config or SwarmConfig()
+    self.config = config or SwarmConfig()
+    
+    # OPTIMIZATION: Use spatial partitioning for O(N^2) -> O(N) optimization
+    if SPATIAL_PARTITION_AVAILABLE and OptimizedSpatialPartition:
+        # Cell size should be ~2x the max interaction radius
+        max_radius = max(
+            self.config.separation_distance,
+            self.config.cohesion_radius,
+            self.config.alignment_radius or 10.0
+        )
+        cell_size = max_radius * 0.5  # Optimal cell size
+        self.spatial_partition = OptimizedSpatialPartition(cell_size=cell_size)
+        self._use_spatial_partition = True
+    else:
+        self.spatial_partition = None
+        self._use_spatial_partition = False
 
 
 def calculate_boids_velocity(
     self,
     unit_position: Point2,
     unit_velocity: Point2,
-    nearby_units: List[Tuple[Point2, Point2]]  # (position, velocity)
+    nearby_units: List[Tuple[Point2, Point2]] = None,  # (position, velocity)
+    all_units: List[Tuple[Point2, Point2]] = None  # For spatial partitioning
 ) -> Point2:
     """
 Calculate desired velocity using Boids algorithm.
+OPTIMIZED: Uses spatial partitioning for O(N^2) -> O(N) when all_units provided.
 
 Args:
 unit_position: Current position of the unit
 unit_velocity: Current velocity of the unit
-nearby_units: List of (position, velocity) tuples for nearby units
+nearby_units: List of (position, velocity) tuples (optional, if not provided uses spatial partition)
+all_units: List of all (position, velocity) tuples for spatial partitioning optimization
 
 Returns:
 Desired velocity vector (Point2)
     """
+    # OPTIMIZATION: Use spatial partitioning if available and all_units provided
+    if self._use_spatial_partition and all_units is not None and nearby_units is None:
+        # Add all units to spatial partition
+        self.spatial_partition.add_units(all_units)
+        
+        # Query nearby units efficiently (O(K) instead of O(N))
+        max_radius = max(
+            self.config.separation_distance,
+            self.config.cohesion_radius,
+            self.config.alignment_radius or 10.0
+        )
+        nearby_units = self.spatial_partition.query_nearby(unit_position, max_radius)
+    
+    # Fallback to provided nearby_units if spatial partition not available
+    if nearby_units is None:
+        nearby_units = []
+    
+    if not nearby_units:
+        return unit_velocity
 
+    # Separation: Steer away from nearby units
+    separation = self._calculate_separation(unit_position, nearby_units)
 
-if not nearby_units:
-    pass
-return unit_velocity
-
-# Separation: Steer away from nearby units
-separation = self._calculate_separation(unit_position, nearby_units)
-
-# Alignment: Steer toward average velocity of nearby units
-alignment = self._calculate_alignment(unit_velocity, nearby_units)
+    # Alignment: Steer toward average velocity of nearby units
+    alignment = self._calculate_alignment(unit_velocity, nearby_units)
 
 # Cohesion: Steer toward average position of nearby units
 cohesion = self._calculate_cohesion(unit_position, nearby_units)

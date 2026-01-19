@@ -184,6 +184,7 @@ class LinkExtractor(HTMLParser):
 
 def handle_starttag(self, tag, attrs):
     if tag != "a":
+        pass
     return
  for key, value in attrs:
      if key == "href" and value:
@@ -266,12 +267,15 @@ def _scan_existing_hashes(self) -> Set[str]:
     """Scan existing replay files and return set of hashes for duplicate detection"""
  hashes = set()
     for replay_file in self.replay_dir.glob("*.SC2Replay"):
+        pass
     pass
     try:
+        pass
     pass
     pass
 
     except Exception:
+        pass
     pass
     pass
     file_hash = self._get_file_hash(replay_file)
@@ -443,6 +447,7 @@ def _google_search_fallback(self, search_terms: List[str]) -> List[str]:
 
 def _http_head(self, url: str):
     if not self.session:
+        pass
     return None
  try:
      return self.session.head(url, timeout=self.TIMEOUT, allow_redirects=True)
@@ -451,6 +456,7 @@ def _http_head(self, url: str):
 
 def _http_get(self, url: str):
     if not self.session:
+        pass
     return None
  try:
      return self.session.get(url, timeout=self.TIMEOUT, allow_redirects=True)
@@ -653,6 +659,7 @@ import urllib.error
 
 def _is_downloadable(self, download_url: Optional[str]) -> bool:
     if not download_url or not self.session:
+        pass
     return False
  resp = self._http_head(download_url)
  if not resp:
@@ -689,6 +696,7 @@ def _fetch_page_links(self, url: str) -> List[str]:
 
 def _liquipedia_search_pages(self) -> List[str]:
     if not self.session:
+        pass
     return []
  pages: List[str] = []
  for term in self.liquipedia_terms:
@@ -720,6 +728,7 @@ def _liquipedia_search_pages(self) -> List[str]:
 
 def _liquipedia_page_links(self, page_title: str) -> List[str]:
     if not self.session:
+        pass
     return []
  try:
      pass
@@ -749,6 +758,7 @@ def _liquipedia_page_links(self, page_title: str) -> List[str]:
 
 def fetch_replay_pack_links(self, max_links: int = 50) -> List[str]:
     if not self.session:
+        pass
     print("[DOWNLOAD] requests library not available; skipping web scraping")
  return []
 

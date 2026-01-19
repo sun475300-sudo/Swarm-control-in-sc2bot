@@ -107,20 +107,33 @@ def main():
     print("=" * 70)
     print()
 
-    # Step 1: Code optimization and style unification
-    print("[STEP 1] Code optimization and style unification...")
+    # Step 1: Precision Check - Fix all errors repeatedly
+    print("[STEP 1] PRECISION CHECK - ERROR FIXING")
     print("-" * 70)
-
-    # 1.1 Fix import errors
-    print("[1.1] Fixing import errors...")
-    result = run_command([sys.executable, "tools/fix_all_import_statements.py"], timeout=300)
-    if result and result.returncode == 0:
-        print("  ? Import errors fixed")
-    else:
-        print("  ? Some import issues may remain")
-
-    # 1.2 Apply autopep8
-    print("[1.2] Applying autopep8 formatting...")
+    
+    # 1.1 Check and fix errors (multiple iterations)
+    print("[1.1] Running precision check (multiple iterations)...")
+    for iteration in range(3):
+        print(f"  [CHECK {iteration + 1}/3] Checking errors...")
+        result = run_command([sys.executable, "tools/full_logic_check.py"], timeout=300)
+        
+        # Check if errors exist
+        if result:
+            output = result.stdout or ""
+            if "Errors: 0" in output:
+                print("  ? All errors fixed!")
+                break
+        
+        # Fix errors
+        print(f"  [FIX {iteration + 1}/3] Fixing errors...")
+        run_command([sys.executable, "tools/fix_all_import_statements.py"], timeout=300)
+        run_command([sys.executable, "tools/fix_all_remaining_errors.py"], timeout=600)
+        
+        if iteration < 2:
+            time.sleep(5)
+    
+    # 1.2 Apply code style unification
+    print("[1.2] Applying code style unification...")
     result = run_command(
         [sys.executable, "-m", "autopep8", "--in-place", "--recursive",
          "--aggressive", "--aggressive", "--max-line-length=120", "."],
@@ -130,14 +143,6 @@ def main():
         print("  ? Code formatted")
     else:
         print("  ? Some formatting issues may remain")
-
-    # 1.3 Fix remaining syntax errors
-    print("[1.3] Fixing remaining syntax errors...")
-    result = run_command([sys.executable, "tools/fix_all_remaining_errors.py"], timeout=600)
-    if result and result.returncode == 0:
-        print("  ? Syntax errors fixed")
-    else:
-        print("  ? Some syntax issues may remain")
 
     print()
     print("[STEP 1] Complete")

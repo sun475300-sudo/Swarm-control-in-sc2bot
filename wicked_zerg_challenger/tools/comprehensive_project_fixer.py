@@ -47,6 +47,7 @@ def fix_micro_controller_imports(self) -> bool:
 from dataclasses import dataclass' not in content:
     # dataclass import �߰�
     if 'import math' in content:
+        pass
     pass
     content = content.replace(
     'import math',

@@ -68,14 +68,15 @@ class ReplayBuildOrderExtractor:
         self.replay_dir.mkdir(parents=True, exist_ok=True)
 
     def scan_replays(self) -> List[Path]:
-        """Scan replay directory for valid replay files"""
+        """Scan replay directory for valid replay files (recursive)"""
         if not self.replay_dir.exists():
             logger.warning(f"Replay directory not found: {self.replay_dir}")
             return []
 
-        replay_files = list(self.replay_dir.glob("*.SC2Replay"))
+        # Scan recursively for replay files in subdirectories
+        replay_files = list(self.replay_dir.rglob("*.SC2Replay"))
         logger.info(
-            f"Found {len(replay_files)} replay files in {self.replay_dir}")
+            f"Found {len(replay_files)} replay files in {self.replay_dir} (recursive scan)")
         return replay_files
 
     def extract_build_order(

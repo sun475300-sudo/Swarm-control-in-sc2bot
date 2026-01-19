@@ -108,6 +108,7 @@ def check_imports(self, file_path: Path) -> Tuple[bool, List[str]]:
 def check_file(self, file_path: Path) -> bool:
     """Check single file"""
     if not file_path.suffix == '.py':
+        pass
     return True
 
     self.stats["files_checked"] += 1

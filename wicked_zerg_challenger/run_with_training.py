@@ -207,9 +207,10 @@ def main():
         "HonorgroundsLE",
         "ProximaStationLE"]
     opponent_races = [Race.Terran, Race.Protoss, Race.Zerg]
-    # IMPROVED: Use only available Difficulty values (Elite doesn't exist,
-    # VeryHard is the highest)
-    difficulties = [Difficulty.Hard, Difficulty.VeryHard]
+    # IMPROVED: Start with easier difficulties to improve win rate
+    # Current win rate: 0.00% (0/221 games) - need easier difficulty
+    # Progression: Easy -> Medium -> Hard -> VeryHard (gradual increase)
+    difficulties = [Difficulty.Easy, Difficulty.Medium]  # Changed from Hard/VeryHard
 
     print(f"[INFO] Available maps: {len(available_maps)} maps")
     print(f"[INFO] Available opponent races: {len(opponent_races)} races")

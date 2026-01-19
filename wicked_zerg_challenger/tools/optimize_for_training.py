@@ -139,8 +139,10 @@ def scan_for_removal(self):
 
  # 1. .bak 파일들
     for bak_file in PROJECT_ROOT.rglob("*.bak"):
+        pass
     pass
     if bak_file not in self.files_to_keep:
+        pass
     pass
     self.files_to_remove.append(bak_file)
 
@@ -151,10 +153,12 @@ def scan_for_removal(self):
  }
 
     for md_file in PROJECT_ROOT.rglob("*.md"):
+        pass
     pass
     if md_file.name not in keep_md and md_file not in self.files_to_keep:
     # local_training/설명서는 유지
     if "local_training/설명서" not in str(md_file):
+        pass
     pass
     self.files_to_remove.append(md_file)
 

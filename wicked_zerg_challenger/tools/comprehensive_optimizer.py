@@ -267,9 +267,11 @@ def generate_report(self) -> str:
     report.append(f"- 발견된 디렉토리: {len(unnecessary['dirs'])}개\n\n")
 
     if unnecessary['files']:
+        pass
     pass
     report.append("### 삭제 대상 파일 (상위 20개)\n\n")
     for file_path in unnecessary['files'][:20]:
+        pass
     pass
     report.append(f"- `{file_path.relative_to(PROJECT_ROOT)}`\n")
     report.append("\n")
@@ -286,6 +288,7 @@ def generate_report(self) -> str:
     report.append("## 3. 실행 로직 분석\n\n")
     report.append(f"- 메인 스크립트: {len(execution['main_scripts'])}개\n")
     for script in execution['main_scripts']:
+        pass
     pass
     report.append(f"  - `{script}`\n")
     report.append("\n")

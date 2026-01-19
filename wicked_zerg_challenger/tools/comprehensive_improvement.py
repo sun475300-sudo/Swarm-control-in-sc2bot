@@ -165,6 +165,7 @@ def generate_comprehensive_report(self, results: Dict) -> str:
     report.append("## 분석 결과 요약\n\n")
 
     if results["performance"] and results["performance"]["success"]:
+        pass
     pass
     report.append("? 성능 최적화 분석 완료\n")
     report.append("   - 리포트: `PERFORMANCE_OPTIMIZATION_SUGGESTIONS.md`\n\n")

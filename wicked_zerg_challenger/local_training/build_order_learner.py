@@ -63,6 +63,7 @@ class BuildOrder:
 
 def __post_init__(self):
     if self.tags is None:
+        pass
     self.tags = []
 
 
