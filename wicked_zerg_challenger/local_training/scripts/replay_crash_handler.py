@@ -54,32 +54,21 @@ def _load_crash_log(self) -> Dict:
     }
 
     try:
-    pass
-
-    except Exception:
-        pass
-        pass
-    content = self.crash_log_file.read_text(encoding="utf-8")
-    if not content.strip():
-        pass
-    return self._get_default_crash_log()
-
-    data = json.loads(content)
-    # Ensure required fields exist
-    if "in_progress" not in data:
-        pass
-    data["in_progress"] = {}
-    if "crash_count" not in data:
-        pass
-    data["crash_count"] = {}
-    if "bad_replays" not in data:
-        pass
-    data["bad_replays"] = []
-    return data
+        content = self.crash_log_file.read_text(encoding="utf-8")
+        if not content.strip():
+            return self._get_default_crash_log()
+        data = json.loads(content)
+        # Ensure required fields exist
+        if "in_progress" not in data:
+            data["in_progress"] = {}
+        if "crash_count" not in data:
+            data["crash_count"] = {}
+        if "bad_replays" not in data:
+            data["bad_replays"] = []
+        return data
     except Exception as e:
-        pass
-    print(f"[WARNING] Failed to load crash log: {e}")
-    return self._get_default_crash_log()
+        print(f"[WARNING] Failed to load crash log: {e}")
+        return self._get_default_crash_log()
 
 def _get_default_crash_log(self) -> Dict:
     """Get default crash log structure"""

@@ -26,18 +26,20 @@ from typing import Any
 from typing import Union
 
 try:
-    pass
+    import logging
+    logger = logging.getLogger(__name__)
 except ImportError:
     import logging
- logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
+from dataclasses import dataclass
 
 @dataclass
 class BuildEvent:
     """건물 건설 이벤트"""
- building_name: str
- completion_time: float # 게임 시간 (초)
- supply_at_completion: int
+    building_name: str
+    completion_time: float  # 게임 시간 (초)
+    supply_at_completion: int
  minerals_at_completion: int
  vespene_at_completion: int
     event_type: str = "building_completed"  # building_completed, building_started, upgrade_completed

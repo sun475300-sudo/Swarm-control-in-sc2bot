@@ -22,7 +22,7 @@ from typing import List, Tuple
 def run_command(cmd: List[str], cwd: Path, description: str) -> Tuple[bool, str]:
     """Run a command and return success status and output"""
     print(f"\n{'='*70}")
-    print(f"¢º {description}")
+    print(f"[STEP] {description}")
     print(f"{'='*70}")
     print(f"Command: {' '.join(cmd)}")
     print()
@@ -52,7 +52,7 @@ def main():
     project_root = Path(__file__).parent.parent
     
     print("=" * 70)
-    print("? COMPREHENSIVE TRAINING WORKFLOW - 5 ITERATIONS")
+    print("[COMPREHENSIVE TRAINING WORKFLOW - 5 ITERATIONS]")
     print("=" * 70)
     print("\nThis workflow will execute:")
     print("  1. Precision check (completed)")
@@ -70,8 +70,6 @@ def main():
         print(f"# ITERATION {iteration} / 5")
         print(f"{'#'*70}\n")
         
-        # Step 1: Precision check (completed - skip)
-        print("\n[STEP 1] Precision check - COMPLETED (skipping)")
         
         # Step 2: Start game training
         print("\n[STEP 2] Starting game training...")
@@ -148,7 +146,7 @@ def main():
             )
         
         print(f"\n{'='*70}")
-        print(f"? ITERATION {iteration} / 5 COMPLETED")
+        print(f"[ITERATION {iteration} / 5 COMPLETED]")
         print(f"{'='*70}")
         
         if iteration < 5:
@@ -171,10 +169,10 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n??  Workflow interrupted by user")
+        print("\n\n[WARNING] Workflow interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n? Fatal error: {e}")
+        print(f"\n\n[ERROR] Fatal error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
