@@ -109,6 +109,20 @@ idle_hatcheries = [
 if idle_hatcheries and self.bot.can_afford(UnitTypeId.QUEEN):
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -164,6 +178,20 @@ for hatch in hatchery_list:
     # Skip if hatchery already has an active inject buff
 has_inject_buff = False
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -192,6 +220,20 @@ queen_to_use = min(nearby_queens, key=lambda q: q.distance_to(hatch))
 if queen_to_use.is_idle or queen_to_use.is_moving:
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -289,6 +331,20 @@ target_unit = min(nearby_military, key=lambda u: u.health_percentage)
 if target_unit:
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 

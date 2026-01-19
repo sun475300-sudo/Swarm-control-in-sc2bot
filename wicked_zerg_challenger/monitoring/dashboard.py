@@ -345,6 +345,20 @@ def find_available_server(start_port: int, handler: http.server.BaseHTTPRequestH
     """Try to bind a server from start_port upward, returning (server, port)."""
  for p in range(start_port, start_port + max_tries):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -359,6 +373,20 @@ def find_available_server(start_port: int, handler: http.server.BaseHTTPRequestH
 def write_port_file(port: int):
     """Write the selected port to a file for other scripts (e.g., ngrok)."""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -376,6 +404,20 @@ def broadcast_game_state(base_dir: Path):
  while True:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -409,6 +451,20 @@ def broadcast_game_state(base_dir: Path):
  with ws_lock:
  for client in list(ws_clients):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -444,6 +500,20 @@ if __name__ == "__main__":
 
  # Optionally start FastAPI backend for advanced controls on port 8001
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -464,6 +534,20 @@ if __name__ == "__main__":
  ws_thread.start()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

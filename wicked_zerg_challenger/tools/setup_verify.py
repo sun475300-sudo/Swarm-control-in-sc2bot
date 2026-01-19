@@ -74,6 +74,20 @@ def main():
     replay_dir = Path("D:/replays/replays")
  if replay_dir.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -97,6 +111,20 @@ def main():
     models_dir = local_training / "models"
  if models_dir.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

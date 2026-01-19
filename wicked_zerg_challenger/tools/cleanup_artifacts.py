@@ -100,6 +100,20 @@ def prune_reports(keep: int = 1, dry_run: bool = False) -> int:
  else:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -118,6 +132,20 @@ def cleanup_aiarena_submission_path(dry_run: bool = False) -> int:
      return 0
  # Handle stray file vs directory
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -146,6 +174,20 @@ def remove_ai_arena_deploy(dry_run: bool = False) -> int:
     if not DEPLOY_DIR.exists():
         return 0
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -187,6 +229,20 @@ def prune_pycache_and_cursor(dry_run: bool = False) -> int:
 
  for t in targets:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -213,6 +269,20 @@ def remove_model_backups(dry_run: bool = False) -> int:
  else:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -22,6 +22,20 @@ def try_read_file(file_path: Path,
     Optional[str]]:
     """Try to read file with specific encoding"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -95,6 +109,20 @@ def fix_file_encoding(file_path: Path, target_encoding: str = 'utf-8') -> bool:
  return True
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -105,6 +133,20 @@ def fix_file_encoding(file_path: Path, target_encoding: str = 'utf-8') -> bool:
 
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

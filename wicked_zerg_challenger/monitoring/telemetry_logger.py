@@ -72,6 +72,20 @@ def log_game_state(self, combat_unit_types: set) -> None:
  combat_unit_types: Set of combat unit types
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -151,6 +165,20 @@ def log_game_state(self, combat_unit_types: set) -> None:
  temp_csv = None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -165,6 +193,20 @@ def log_game_state(self, combat_unit_types: set) -> None:
      temp_json = json_path.with_suffix(json_path.suffix + '.tmp')
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -176,6 +218,20 @@ def log_game_state(self, combat_unit_types: set) -> None:
 
  # 원자적 교체 (Windows 호환)
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -202,6 +258,20 @@ def log_game_state(self, combat_unit_types: set) -> None:
      temp_csv = csv_file.with_suffix(csv_file.suffix + '.tmp')
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -214,6 +284,20 @@ def log_game_state(self, combat_unit_types: set) -> None:
 
  # 원자적 교체
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -260,6 +344,20 @@ def record_game_result(
  loss_details: Detailed loss information
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -318,6 +416,20 @@ def record_game_result(
      temp_stats = stats_path.with_suffix(stats_path.suffix + '.tmp')
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -327,6 +439,20 @@ def record_game_result(
  existing_lines = []
  if stats_path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -410,6 +536,20 @@ def get_final_stats_dict(self) -> Optional[Dict[str, Any]]:
  Dict: Final statistics (None if failed)
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

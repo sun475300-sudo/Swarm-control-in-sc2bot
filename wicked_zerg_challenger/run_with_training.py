@@ -146,6 +146,25 @@ def main():
                 arena_server_manager.stop_server()
         return
 
+    # 2. Check for checkpoint and auto-resume
+    checkpoint_manager = None
+    try:
+        from utils.checkpoint_manager import CheckpointManager
+        checkpoint_dir = Path(__file__).parent / "local_training" / "checkpoints"
+        checkpoint_manager = CheckpointManager(checkpoint_dir)
+        
+        # Try to load latest checkpoint
+        latest_checkpoint = checkpoint_manager.load_latest_checkpoint()
+        if latest_checkpoint:
+            print("\n[CHECKPOINT] Found previous training checkpoint")
+            print(f"  Iteration: {latest_checkpoint['iteration']}")
+            print(f"  Timestamp: {latest_checkpoint['timestamp']}")
+            print("[INFO] Auto-resuming from checkpoint...")
+            # Checkpoint data will be used when creating bot
+    except Exception as e:
+        print(f"[WARNING] Checkpoint manager not available: {e}")
+        checkpoint_manager = None
+
     # 2. Run on local machine for continuous training
     print("\n[STEP 2] ? Initializing Continuous Training Loop...")
     print("=" * 70)
@@ -248,12 +267,20 @@ def main():
                 # Convert string to Difficulty enum
                 if recommended_difficulty_str == "VeryHard":
                     difficulty = Difficulty.VeryHard
-                else:
+                elif recommended_difficulty_str == "Hard":
                     difficulty = Difficulty.Hard
+                elif recommended_difficulty_str == "Medium":
+                    difficulty = Difficulty.Medium
+                elif recommended_difficulty_str == "Easy":
+                    difficulty = Difficulty.Easy
+                else:
+                    # Fallback to random choice from difficulties list
+                    difficulty = random.choice(difficulties)
                 print(
                     f"[ADAPTIVE] Recommended difficulty: {recommended_difficulty_str} "
                     f"(based on {session_manager.session_stats.win_rate:.1f}% win rate)")
             else:
+                # No session manager: use random choice from difficulties list (Easy/Medium)
                 difficulty = random.choice(difficulties)
 
             print(f"[SELECTED] Map: {map_name}")
@@ -297,7 +324,7 @@ def main():
                         # CORRECT: Use bot directly (already a Bot instance)
                         Computer(opponent_race, difficulty)
                     ],
-                    realtime=False  # False = fast speed, True = real-time speed
+                    realtime=True  # True = real-time speed with visible game window
                 )
 
                 # Game completed successfully

@@ -48,6 +48,20 @@ def load_key_from_file(file_path: Path) -> str:
  last_error = None
  for encoding in encodings:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -133,6 +147,20 @@ def load_api_key(key_name: str, fallback_env: Optional[str] = None) -> str:
     env_file = get_project_root() / ".env"
  if env_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -184,6 +212,20 @@ def set_api_key_to_env(key_name: str, fallback_env: Optional[str] = None) -> boo
 def get_gemini_api_key() -> str:
     """Gemini API 키 반환"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

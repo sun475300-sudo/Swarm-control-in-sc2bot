@@ -24,7 +24,7 @@ if replay_files:
  zerg_units = 0
  for event in replay.events:
      if hasattr(event, '__class__') and 'UnitBorn' in str(event.__class__):
-         pass
+             pass
      if hasattr(event, 'control_pid') and event.control_pid == zerg_pid:
          pass
      zerg_units += 1

@@ -127,15 +127,43 @@ warnings.filterwarnings(
 # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
 # CRITICAL: Import torch safely to avoid C extensions loading errors
 try:
+pass
+
+except Exception:
+    pass
     pass
 pass
 
 except Exception:
     pass
-    import multiprocessing
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+import multiprocessing
     # Change to a safe directory before importing torch to avoid path conflicts
     original_cwd = os.getcwd()
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -170,6 +198,20 @@ class SafeStreamHandler(logging.StreamHandler):
 
 def emit(self, record):
         try:
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
             pass
         pass
 
@@ -222,6 +264,20 @@ except RuntimeError:
 # This allows the code to run on Linux/Docker without modification
 if sys.platform == "win32":
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -354,12 +410,26 @@ def write_status_file(instance_id, status_data):
  status_data: Dictionary containing status information
     """
     try:
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
     except Exception:
         pass
-        import json
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+import json
 import time
 
         # IMPROVED: Use project root stats/ directory with instance subdirectory
@@ -376,6 +446,20 @@ import time
 
         for attempt in range(max_retries):
             try:
+            pass
+
+            except Exception:
+                pass
+                pass
+            pass
+
+            except Exception:
+                pass
+                pass
+            pass
+
+            except Exception:
+                pass
                 pass
             pass
 
@@ -559,6 +643,20 @@ import traceback
     # IMPROVED: Auto code optimization (default rule)
     if _config.AUTO_OPTIMIZE_CODE:
         try:
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
             pass
         pass
 
@@ -669,6 +767,20 @@ import re
  while True:
      pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -776,6 +888,20 @@ import re
  result = None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -820,12 +946,26 @@ import re
                         print("=" * 70 + "\n")
 
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     from datetime import datetime
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+from datetime import datetime
 
                             with open("crash_report.txt", "a", encoding="utf-8") as f:
                                 f.write(f"\n{'=' * 70}\n")
@@ -844,12 +984,26 @@ import re
 
                     result = "Defeat"
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import torch
 
  if torch.cuda.is_available():
      torch.cuda.empty_cache()
@@ -889,12 +1043,26 @@ import traceback
  finally:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import torch
 
  if torch.cuda.is_available():
      torch.cuda.empty_cache()
@@ -916,6 +1084,20 @@ import traceback
  # Also give loguru a moment to flush pending logs after each game
  # This reduces the chance of buffer errors during final shutdown
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -964,6 +1146,20 @@ import traceback
  if len(main.batch_results) >= 10:
      # Process batch of 10 games at once
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -998,12 +1194,26 @@ import traceback
 
  # 🧠 Strategy Audit: Analyze performance gap vs pro gamers (매 게임마다 실행)
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     from local_training.strategy_audit import StrategyAudit
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+from local_training.strategy_audit import StrategyAudit
 
  # bot 인스턴스가 유효한지 확인
                 if bot_instance_ref and hasattr(bot_instance_ref, 'production'):
@@ -1115,12 +1325,26 @@ import traceback
      run_code_optimization()
 
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     from scripts.replay_build_order_learner import ReplayBuildOrderExtractor
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+from scripts.replay_build_order_learner import ReplayBuildOrderExtractor
 from learning_accelerator import LearningAccelerator
 from error_handler import ErrorHandler
 from performance_monitor import PerformanceMonitor
@@ -1200,6 +1424,20 @@ from performance_monitor import PerformanceMonitor
             replay_download_url = os.environ.get("REPLAY_DOWNLOAD_URL", None)
  if replay_download_url and game_count % 20 == 0: # Check every 20 games
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1237,6 +1475,20 @@ from performance_monitor import PerformanceMonitor
 
  # 🧠 Strategy Audit: Verify learned parameters are loaded
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1256,6 +1508,20 @@ from performance_monitor import PerformanceMonitor
                     print(f"[WARNING] Replay download error: {e}")
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1267,6 +1533,20 @@ from performance_monitor import PerformanceMonitor
  except ImportError:
      # Fallback to extract_replay_insights if self_evolution not available
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1355,6 +1635,20 @@ import traceback
 
  if monitor_enabled and code_monitor:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -1377,6 +1671,20 @@ import traceback
  # CRITICAL: Clean up logging system BEFORE function returns
  # This ensures all pending logs are flushed before program shutdown
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1405,6 +1713,20 @@ if __name__ == "__main__":
 
  # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1413,6 +1735,20 @@ if __name__ == "__main__":
      # Change to a safe directory before importing torch to avoid path conflicts
  original_cwd = os.getcwd()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1445,6 +1781,20 @@ import torch
      pass
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1471,6 +1821,20 @@ import traceback
  finally:
  # Ensure logging is properly shut down and buffers are flushed
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

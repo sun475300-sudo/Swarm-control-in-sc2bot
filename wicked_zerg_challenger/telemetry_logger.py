@@ -78,6 +78,20 @@ combat_unit_types: Set of combat unit types
 
 
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -180,6 +194,20 @@ Dict with swarm control metrics
 
 
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -258,6 +286,20 @@ return {
 async def save_telemetry(self) -> None:
         """Save telemetry data to JSON and CSV files"""
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -297,6 +339,20 @@ loss_reason: Reason for loss
 loss_details: Detailed loss information
         """
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -383,6 +439,20 @@ log_data = {
 
  # Send to Manus Dashboard (if enabled)
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -469,6 +539,20 @@ Returns:
 Dict: Final statistics (None if failed)
         """
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 

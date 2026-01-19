@@ -73,7 +73,7 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
      break
  check_line = lines[j].strip().lower()
      if 'python' in check_line or 'import ' in lines[j] or 'def ' in lines[j] or 'class ' in lines[j]:
-         pass
+             pass
      lang = 'python'
  break
      elif 'bash' in check_line or check_line.startswith('$') or 'cd ' in check_line or 'git ' in check_line:
@@ -139,6 +139,20 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
 def fix_file(file_path: Path) -> int:
     """Fix a single markdown file"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -154,6 +168,20 @@ def fix_file(file_path: Path) -> int:
 
  if fixes > 0:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

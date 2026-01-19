@@ -31,6 +31,20 @@ def __init__(self):
 def analyze_file(self, file_path: Path) -> Dict:
     """파일 분석 및 문서 추출"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -156,10 +170,10 @@ def generate_api_documentation(self) -> str:
 
  # 클래스
      if module["classes"]:
-         pass
+             pass
      doc.append("### Classes\n\n")
      for cls in module["classes"]:
-         pass
+             pass
      doc.append(f"#### `{cls['name']}`\n\n")
      if cls.get("docstring"):
          pass

@@ -232,6 +232,20 @@ def calculate_space(self) -> float:
              for file_path in dir_path.rglob("*"):
                  pass
              try:
+             pass
+
+             except Exception:
+                 pass
+                 pass
+             pass
+
+             except Exception:
+                 pass
+                 pass
+             pass
+
+             except Exception:
+                 pass
                  pass
              pass
 
@@ -266,6 +280,20 @@ def generate_report(self) -> str:
      report.append("제거할 파일 목록 (상위 20개):")
  for i, file_path in enumerate(self.files_to_remove[:20], 1):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -300,6 +328,20 @@ def execute_optimization(self):
  # 파일 제거
  for file_path in self.files_to_remove:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -316,6 +358,20 @@ def execute_optimization(self):
  # 디렉토리 제거
  for dir_path in self.dirs_to_remove:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

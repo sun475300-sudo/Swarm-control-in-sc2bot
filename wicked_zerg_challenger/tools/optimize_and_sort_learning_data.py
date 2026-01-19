@@ -24,6 +24,20 @@ from typing import Union
 def load_json_safe(file_path: Path) -> Dict:
     """Safely load JSON file"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -43,6 +57,20 @@ def save_json_safe(file_path: Path, data: Dict, indent: int = 2):
  if file_path.exists():
      backup_path = file_path.with_suffix('.json.backup')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -91,6 +119,20 @@ def sort_key(item):
     matchup = strategy.get("matchup", "Unknown")
     extracted_at = strategy.get("extracted_at", "1970-01-01T00:00:00")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

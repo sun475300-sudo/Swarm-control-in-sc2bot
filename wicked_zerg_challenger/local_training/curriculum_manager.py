@@ -58,6 +58,20 @@ def load_level(self) -> int:
      return 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -80,6 +94,20 @@ def load_level(self) -> int:
 def save_level(self):
     """Save current curriculum level to stats file."""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -240,6 +268,20 @@ def update_priority(self, building_name: str, priority: str = "Urgent") -> None:
 
  # 우선순위 파일에 저장
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -265,6 +307,20 @@ def get_priority(self, building_name: str) -> str:
      if not hasattr(self, 'building_priorities'):
      # 파일에서 로드 시도
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

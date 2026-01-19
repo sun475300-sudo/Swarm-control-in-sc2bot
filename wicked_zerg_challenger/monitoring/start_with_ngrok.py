@@ -29,6 +29,20 @@ logger = logging.getLogger(__name__)
 def start_dashboard_server(port: int = 8000):
     """대시보드 서버 시작"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -97,6 +111,20 @@ def main():
  print()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

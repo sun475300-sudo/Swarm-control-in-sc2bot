@@ -16,6 +16,20 @@ PROJECT_ROOT = Path(__file__).parent.parent
 def find_unused_imports_in_file(file_path: Path) -> List[str]:
     """파일에서 사용하지 않는 import 찾기"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -76,6 +90,20 @@ from module import name
 def remove_unused_imports(file_path: Path, unused_imports: List, dry_run: bool = True) -> bool:
     """사용하지 않는 import 제거"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

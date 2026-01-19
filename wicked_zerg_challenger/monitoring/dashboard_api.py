@@ -32,12 +32,26 @@ except ImportError:
 
 # Import FastAPI components
 try:
-    from fastapi import FastAPI, HTTPException, Depends, WebSocket
-    from fastapi.responses import HTMLResponse
-    from fastapi.security import HTTPBasic, HTTPBasicCredentials
-    from fastapi.middleware.cors import CORSMiddleware
-    from starlette import status
-    from starlette.responses import JSONResponse as StarletteJSONResponse
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+from fastapi import FastAPI, HTTPException, Depends, WebSocket
+from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.middleware.cors import CORSMiddleware
+from starlette import status
+from starlette.responses import JSONResponse as StarletteJSONResponse
 except ImportError:
     raise ImportError(
     "fastapi is required. Install with: pip install fastapi uvicorn")
@@ -121,6 +135,20 @@ else:
 
  # Ngrok 도메인 자동 추가 (동적)
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      ngrok_url_file = Path(__file__).parent / ".ngrok_url.txt"
  if ngrok_url_file.exists():
      with open(ngrok_url_file, 'r', encoding='utf-8') as f:
@@ -235,35 +263,48 @@ try:
     )
 except ImportError:
     # Fallback if monitoring_utils is not available
-    def get_base_dir() -> Path:
-        """Get base directory for monitoring data"""
-        return Path.cwd()
+def get_base_dir() -> Path:
+    """Get base directory for monitoring data"""
+    return Path.cwd()
 
-    def _load_json(path: Path) -> dict[str, Any]:  # type: ignore
-        """Load JSON file"""
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data if isinstance(data, dict) else {}  # type: ignore
-        except Exception:
-            return {}
+def _load_json(path: Path) -> dict[str, Any]:  # type: ignore
+    """Load JSON file"""
+    try:
+    pass
 
-    def _find_latest_instance_status(base_dir: Path) -> Any:  # type: ignore
-        """Find latest instance status"""
-        return None
+    except Exception:
+        pass
+        pass
+    with open(path, 'r', encoding='utf-8') as f:
+    data = json.load(f)
+    return data if isinstance(data, dict) else {}  # type: ignore
+    except Exception:
+        pass
+    return {}
 
-    def _load_training_stats(base_dir: Path) -> dict[str, Any]:  # type: ignore
-        """Load training stats"""
-        try:
-            stats_file = base_dir / "data" / "training_stats.json"
-            if stats_file.exists():
-                with open(stats_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return data if isinstance(
-                    data, dict) else {}  # type: ignore
-        except Exception:
-            pass
-        return {}
+def _find_latest_instance_status(base_dir: Path) -> Any:  # type: ignore
+    """Find latest instance status"""
+    return None
+
+def _load_training_stats(base_dir: Path) -> dict[str, Any]:  # type: ignore
+    """Load training stats"""
+    try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    stats_file = base_dir / "data" / "training_stats.json"
+    if stats_file.exists():
+        pass
+    with open(stats_file, 'r', encoding='utf-8') as f:
+    data = json.load(f)
+    return data if isinstance(
+    data, dict) else {}  # type: ignore
+    except Exception:
+        pass
+    pass
+    return {}
 
 # ============================================================================
 # API Endpoints
@@ -301,6 +342,20 @@ async def health_check():
 async def get_ngrok_url():
     """Get current ngrok tunnel URL"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  # 1. Ngrok API에서 시도
      response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
@@ -333,6 +388,20 @@ async def get_ngrok_url():
 
  # 2. 저장된 파일에서 시도
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      url_file = Path(__file__).parent / ".ngrok_url.txt"
  if url_file.exists():
      with open(url_file, 'r', encoding='utf-8') as f:
@@ -360,9 +429,23 @@ async def get_ngrok_url():
 async def get_game_state():
     """Get current game state"""
  # Helper function to get win rate from training stats
- def _get_win_rate(base_dir: Path) -> float:
-     """Get win rate from training stats"""
+def _get_win_rate(base_dir: Path) -> float:
+    """Get win rate from training stats"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      stats_file = base_dir / "data" / "training_stats.json"
  if stats_file.exists():
      with open(stats_file, 'r', encoding='utf-8') as f:
@@ -636,6 +719,20 @@ async def websocket_game_state(websocket: WebSocket):
  await websocket.accept()
  connected_clients.append(websocket)
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  while True:
      pass
@@ -1401,7 +1498,7 @@ async def check_manus_health():  # type: ignore
 
 if __name__ == "__main__":
     pass
- import uvicorn
+import uvicorn
  uvicorn.run(
  app,
     host="0.0.0.0",

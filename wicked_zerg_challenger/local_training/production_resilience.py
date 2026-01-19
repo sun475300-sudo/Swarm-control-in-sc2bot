@@ -27,6 +27,20 @@ class ProductionResilience:
     async def _safe_train(self, unit, unit_type):
         """Safely train a unit, handling both sync and async train() methods"""
         try:
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
             pass
         pass
 
@@ -76,6 +90,20 @@ def __init__(self, bot: Any) -> None:
     if structure_type == UnitTypeId.SPAWNINGPOOL:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -100,6 +128,20 @@ def __init__(self, bot: Any) -> None:
 def _cleanup_build_reservations(self) -> None:
         """Drop stale reservations to avoid permanent blocks."""
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -119,6 +161,20 @@ def _cleanup_build_reservations(self) -> None:
     b = self.bot
     self._cleanup_build_reservations()
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -142,6 +198,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.townhalls.exists and b.can_afford(UnitTypeId.SPAWNINGPOOL):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -178,6 +248,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -196,6 +280,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.ZERGLING):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -325,6 +423,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.OVERLORD) and larvae.exists:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -357,6 +469,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.OVERLORD):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -387,6 +513,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -418,6 +558,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -444,6 +598,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -469,6 +637,20 @@ def _cleanup_build_reservations(self) -> None:
         """
     b = self.bot
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -477,6 +659,20 @@ def _cleanup_build_reservations(self) -> None:
         # IMPROVED: Only log at DEBUG level during training to reduce I/O overhead
         # Use logger if available, otherwise use print only for critical issues
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -513,6 +709,20 @@ def _cleanup_build_reservations(self) -> None:
     elif spawning_pool_query.exists:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -535,6 +745,20 @@ def _cleanup_build_reservations(self) -> None:
     elif roach_warren_query.exists:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -557,6 +781,20 @@ def _cleanup_build_reservations(self) -> None:
     elif hydralisk_den_query.exists:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -702,6 +940,20 @@ def _cleanup_build_reservations(self) -> None:
     if roaches_ready.exists and b.can_afford(AbilityId.MORPHTORAVAGER_RAVAGER):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -721,6 +973,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(AbilityId.MORPHZERGLINGTOBANELING_BANELING):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -747,6 +1013,20 @@ def _cleanup_build_reservations(self) -> None:
     if unit_to_produce and larvae.exists and b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -773,6 +1053,20 @@ def _cleanup_build_reservations(self) -> None:
             UnitTypeId.HATCHERY) and b.already_pending(
             UnitTypeId.HATCHERY) < 2:
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -793,6 +1087,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -829,6 +1137,20 @@ def _cleanup_build_reservations(self) -> None:
     if b.townhalls.exists:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 

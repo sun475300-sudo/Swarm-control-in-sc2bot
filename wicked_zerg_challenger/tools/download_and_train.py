@@ -270,6 +270,20 @@ def _scan_existing_hashes(self) -> Set[str]:
         pass
     pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
     pass
@@ -288,6 +302,20 @@ def _get_file_hash(self, file_path: Path) -> str:
     """Calculate MD5 hash of file for duplicate detection"""
  hash_md5 = hashlib.md5()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -319,6 +347,20 @@ def _organize_replay_file(self, source_path: Path, filename: str) -> Path:
  Final path where file was moved
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -327,6 +369,20 @@ def _organize_replay_file(self, source_path: Path, filename: str) -> Path:
      # Try to extract metadata for organization
  if SC2READER_AVAILABLE:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -430,6 +486,20 @@ def _google_search_fallback(self, search_terms: List[str]) -> List[str]:
  found_urls = []
  for term in search_terms:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -478,6 +548,20 @@ def _extract_archive(self, archive_path: Path) -> int:
      if archive_path.suffix.lower() == ".zip":
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -517,6 +601,20 @@ def _extract_archive(self, archive_path: Path) -> int:
          # Move to incompatible folder
  incompatible_target = self.incompatible_dir / filename
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -569,6 +667,20 @@ import urllib.error
 
  # Download file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -612,6 +724,20 @@ import urllib.error
          # Move to incompatible folder
  incompatible_target = self.incompatible_dir / file_name
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -635,6 +761,20 @@ import urllib.error
  target = self.replay_dir / file_name
  if file_name not in self.existing_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -701,6 +841,20 @@ def _liquipedia_search_pages(self) -> List[str]:
  pages: List[str] = []
  for term in self.liquipedia_terms:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -731,6 +885,20 @@ def _liquipedia_page_links(self, page_title: str) -> List[str]:
         pass
     return []
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -828,6 +996,20 @@ def _validate_replay_metadata(self, replay_path: Path) -> Tuple[bool, Optional[s
      return True, None, False # Skip validation if sc2reader not available
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -899,6 +1081,20 @@ def _is_downloadable(self, download_url: Optional[str]) -> bool:
  if not download_url or not requests:
      return False
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -926,6 +1122,20 @@ def fetch_replays_from_api(self, max_replays: int = 50, page_size: int = 20) -> 
  max_pages = (max_replays // page_size) + 1
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1026,6 +1236,20 @@ def download_replay(self, replay_meta: Dict[str, Any]) -> Optional[Path]:
  return None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1056,6 +1280,20 @@ def download_replay(self, replay_meta: Dict[str, Any]) -> Optional[Path]:
          # Move to incompatible folder
  incompatible_target = self.incompatible_dir / filename
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1115,6 +1353,20 @@ def scan_local_replays(self) -> List[Path]:
      # Move to incompatible folder
  incompatible_target = self.incompatible_dir / rp.name
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1239,6 +1491,20 @@ def main() -> None:
  if manifest_path.exists():
      print(f"[FALLBACK] No replays found locally; attempting to use manifest: {manifest_path}")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1270,6 +1536,20 @@ def main() -> None:
  if not manifest_valid and not all_replays:
      print("[FALLBACK] Manifest invalid or missing, scanning local directory...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -1302,19 +1582,33 @@ def main() -> None:
     print("=" * 80 + "\n")
 
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import subprocess
-     train_script = BASE_DIR / "scripts" / "train_replay_supervised.py"
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import subprocess
+    train_script = BASE_DIR / "scripts" / "train_replay_supervised.py"
  cmd = [
  PYTHON_EXECUTABLE,
  str(train_script),
-     "--manifest",
+    "--manifest",
  str(manifest_path),
-     "--epochs",
+    "--epochs",
  str(args.epochs),
  ]
  if args.zerg_only:

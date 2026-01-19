@@ -39,6 +39,20 @@ def analyze_file_performance(self, file_path: Path) -> Dict:
  }
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -168,8 +168,11 @@ def analyze_class(self, file_path: Path, class_name: str) -> Dict:
 
  for node in ast.walk(tree):
      if isinstance(node, ast.ClassDef) and node.name == class_name:
-         for item in node.body:
+             for item in node.body:
              pass
+         pass
+         pass
+         pass
          pass
          if isinstance(item, ast.FunctionDef):
              pass

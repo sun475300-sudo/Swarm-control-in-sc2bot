@@ -51,6 +51,20 @@ def check_key_from_file(file_path: Path) -> tuple[bool, str]:
      return False, "파일이 존재하지 않습니다"
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -134,6 +148,20 @@ def main():
     env_file = project_root / ".env"
  if env_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

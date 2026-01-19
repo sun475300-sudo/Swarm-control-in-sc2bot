@@ -70,6 +70,20 @@ def _check_registry_availability(self) -> bool:
  return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -135,6 +149,20 @@ def _register_to_registry(self, service_info: ServiceInfo) -> bool:
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -191,6 +219,20 @@ def _discover_from_registry(self, name: str) -> Optional[ServiceInfo]:
      return None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -239,6 +281,20 @@ def _list_from_registry(self) -> List[ServiceInfo]:
      return []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

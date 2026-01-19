@@ -92,6 +92,20 @@ def _make_request(
 
  for attempt in range(self.max_retries if retry else 1):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

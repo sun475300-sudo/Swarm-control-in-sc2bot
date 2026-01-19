@@ -69,6 +69,20 @@ def extract_training_stats(self) -> List[Dict[str, Any]]:
 
  training_data = []
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -81,6 +95,20 @@ def extract_training_stats(self) -> List[Dict[str, Any]]:
  if not line:
      continue
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -105,6 +133,20 @@ def extract_build_order_comparisons(self) -> List[Dict[str, Any]]:
  return []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -127,6 +169,20 @@ def extract_session_stats(self) -> Optional[Dict[str, Any]]:
  return None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -256,6 +312,20 @@ def learn_from_training_data(
 
  # Load current learned parameters
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

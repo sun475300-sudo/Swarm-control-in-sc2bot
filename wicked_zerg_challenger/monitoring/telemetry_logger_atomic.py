@@ -36,6 +36,20 @@ def atomic_write_json(filepath: Path, data: Any) -> bool:
  bool: 성공 여부
     """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -50,6 +64,20 @@ def atomic_write_json(filepath: Path, data: Any) -> bool:
 
  # 원자적 교체 (Windows에서는 rename이 실패할 수 있으므로 try-except)
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -90,6 +118,20 @@ def atomic_write_csv(filepath: Path, data: List[Dict[str, Any]]) -> bool:
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -137,6 +179,20 @@ def atomic_append_jsonl(filepath: Path, data: Dict[str, Any]) -> bool:
  bool: 성공 여부
     """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -146,6 +202,20 @@ def atomic_append_jsonl(filepath: Path, data: Dict[str, Any]) -> bool:
  existing_lines = []
  if filepath.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -192,6 +262,20 @@ def patch_telemetry_logger():
  atomic write를 사용하도록 패치합니다.
     """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -204,6 +288,20 @@ def patch_telemetry_logger():
  async def patched_save_telemetry(self):
      """Atomic write를 사용하는 패치된 save_telemetry"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

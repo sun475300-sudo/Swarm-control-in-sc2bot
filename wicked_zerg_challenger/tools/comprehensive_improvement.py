@@ -44,6 +44,20 @@ def run_all_analyses(self) -> Dict:
  # 성능 최적화 분석
     print("[1/4] 성능 최적화 분석 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -72,6 +86,20 @@ def run_all_analyses(self) -> Dict:
  # 기능 추가 분석
      print("[2/4] 기능 추가 분석 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -100,6 +128,20 @@ def run_all_analyses(self) -> Dict:
  # 타입 힌트 분석
      print("[3/4] 타입 힌트 분석 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -128,6 +170,20 @@ def run_all_analyses(self) -> Dict:
  # 테스트 생성 분석
      print("[4/4] 테스트 생성 분석 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

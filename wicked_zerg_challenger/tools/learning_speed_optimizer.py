@@ -112,6 +112,20 @@ def optimize_learning_speed(file_path: Path) -> Dict:
  optimizer = LearningSpeedOptimizer()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -67,13 +67,25 @@ class MetaController:
             # 전략 모드 결정
             new_mode = self._select_strategy_mode(game_state)
             
-            # 모드 변경 기록
+            # 모드 변경 기록 및 상태 전이 처리
             if new_mode != self.current_mode:
+                # 상태 전이: 이전 모드의 명령 취소 신호 전달
+                transition_info = {
+                    'old_mode': self.current_mode,
+                    'new_mode': new_mode,
+                    'time': current_time,
+                    'reason': self._get_mode_change_reason(game_state)
+                }
+                
+                # 상태 전이 신호를 하위 에이전트들에게 전달
+                # (실제 구현은 봇에서 처리)
+                self._notify_mode_transition(transition_info)
+                
                 self.strategy_history.append({
                     'time': current_time,
                     'old_mode': self.current_mode.value,
                     'new_mode': new_mode.value,
-                    'reason': self._get_mode_change_reason(game_state)
+                    'reason': transition_info['reason']
                 })
                 self.current_mode = new_mode
                 self.last_decision_time = current_time
@@ -211,6 +223,35 @@ class MetaController:
             현재 전략 모드 (StrategyMode)
         """
         return self.current_mode
+    
+    def _notify_mode_transition(self, transition_info: Dict[str, Any]):
+        """
+        상태 전이를 하위 에이전트들에게 알립니다.
+        
+        전략 모드가 변경될 때 하위 에이전트들이 이전 명령을 취소하고
+        새로운 명령을 받을 수 있도록 합니다.
+        
+        Args:
+            transition_info: 전이 정보 (old_mode, new_mode, time, reason)
+        """
+        # 실제 구현은 봇의 하위 에이전트들에게 전달
+        # 예: bot.combat_agent.cancel_previous_commands()
+        #     bot.economy_agent.cancel_previous_commands()
+        #     bot.queen_agent.cancel_previous_commands()
+        pass
+    
+    def get_transition_signal(self) -> Optional[Dict[str, Any]]:
+        """
+        상태 전이 신호를 반환합니다.
+        
+        하위 에이전트들이 이전 명령을 취소해야 할 때 호출됩니다.
+        
+        Returns:
+            전이 정보 (없으면 None)
+        """
+        if len(self.strategy_history) > 0:
+            return self.strategy_history[-1]
+        return None
     
     def reset(self):
         """

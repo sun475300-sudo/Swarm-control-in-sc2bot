@@ -12,6 +12,20 @@ PROJECT_ROOT = Path(__file__).parent.parent
 def fix_file(file_path: Path) -> int:
     """Fix markdown file"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -71,6 +85,20 @@ def fix_file(file_path: Path) -> int:
 
  if content != original:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

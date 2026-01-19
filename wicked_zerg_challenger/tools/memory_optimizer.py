@@ -144,6 +144,20 @@ def optimize_file_memory(file_path: Path) -> Dict:
  optimizer = MemoryOptimizer()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

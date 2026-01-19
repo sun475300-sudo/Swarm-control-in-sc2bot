@@ -25,6 +25,20 @@ def analyze_functions_for_testing(self, file_path: Path) -> List[Dict]:
  functions = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

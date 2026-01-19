@@ -38,6 +38,20 @@ def main():
      print(f"    JSON files: {len(json_files)}")
  if json_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -70,6 +84,20 @@ def main():
      print(f"    JSON files: {len(json_files)}")
  if json_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

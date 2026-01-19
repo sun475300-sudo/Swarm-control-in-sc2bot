@@ -10,6 +10,20 @@ class CombatTactics:
     async def execute_combat(self) -> None:
         b = self.bot
         try:
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
+            pass
+        pass
+
+        except Exception:
+            pass
             pass
         pass
 
@@ -33,6 +47,20 @@ class CombatTactics:
     if not hasattr(b, "unit_micro"):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -139,6 +167,20 @@ class DummyMicroController:
     if hasattr(b.micro, "execute_stutter_step"):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -160,6 +202,20 @@ class DummyMicroController:
         if hasattr(b.micro, "execute_spread_attack"):
             pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -279,6 +335,20 @@ class DummyMicroController:
     for lurker in lurkers:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -319,6 +389,20 @@ class DummyMicroController:
     async def maintain_defensive_army(self) -> None:
     b = self.bot
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -343,6 +427,20 @@ class DummyMicroController:
     if b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -366,6 +464,20 @@ class DummyMicroController:
     if b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -389,6 +501,20 @@ class DummyMicroController:
     if b.supply_left >= 2:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -413,6 +539,20 @@ class DummyMicroController:
     async def defensive_rally(self) -> None:
     b = self.bot
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -449,6 +589,20 @@ class DummyMicroController:
     for unit in army:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -483,6 +637,20 @@ class DummyMicroController:
     for unit in idle_army:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -505,6 +673,20 @@ class DummyMicroController:
     for unit in idle_army:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -525,6 +707,20 @@ class DummyMicroController:
     async def worker_defense_emergency(self) -> None:
     b = self.bot
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -553,6 +749,20 @@ class DummyMicroController:
     for drone in workers.filter(lambda w: w.is_attacking):
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -577,6 +787,20 @@ class DummyMicroController:
     for worker in workers_at_risk:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -681,6 +905,20 @@ class DummyMicroController:
     for drone in defense_workers:
         pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -719,6 +957,20 @@ class DummyMicroController:
         if not hasattr(b, "game_ended") or not b.game_ended:
             pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 

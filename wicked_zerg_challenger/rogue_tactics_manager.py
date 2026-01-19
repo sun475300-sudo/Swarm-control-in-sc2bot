@@ -432,6 +432,20 @@ self.drop_squad = [overlord] + banelings[:8]
                 f"[ROGUE DROP] [{int(b.time)}s] Drop sequence started - Target: {target}")
 
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -444,6 +458,20 @@ for baneling in banelings[:8]:  # ÃÖ´ë 8±â
 if baneling.is_ready and overlord.cargo_space_left > 0:
     # python-sc2: load ¸í·É »ç¿ë
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -454,6 +482,20 @@ await b.do(overlord(AbilityId.LOAD, baneling))
 except Exception:
     # ´ëÃ¼ ¹æ¹ý ½Ãµµ
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -497,6 +539,20 @@ overlord.move(target)
 if overlord.distance_to(target) < 8.0:  # 8 À¯´Ö ÀÌ³»¸é µå¶ø °¡´É
  # µå¶ø ½ÇÇà
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -505,6 +561,20 @@ except Exception:
     # python-sc2: unload_all ¸í·É »ç¿ë (À§Ä¡ ÁöÁ¤)
  # UNLOADALL_AT ¶Ç´Â UNLOADALL »ç¿ë
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -515,6 +585,20 @@ await b.do(overlord(AbilityId.UNLOADALL_AT, target))
 except (AttributeError, KeyError):
     # ´ëÃ¼ ¹æ¹ý: UNLOADALL »ç¿ë
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 

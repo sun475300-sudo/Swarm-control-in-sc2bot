@@ -34,6 +34,20 @@ def fix_micro_controller_imports(self) -> bool:
  return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -75,6 +89,20 @@ from sc2.position import Point2\n    SC2_AVAILABLE = True',
  if self.fixes_applied:
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -105,6 +133,20 @@ def add_replay_paths_to_config(self) -> bool:
  return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -167,6 +209,20 @@ from pathlib import Path'
  if self.fixes_applied:
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -204,6 +260,20 @@ def remove_hardcoded_paths(self) -> int:
      continue
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -257,6 +327,20 @@ from config import REPLAY_SOURCE_DIR, REPLAY_COMPLETED_DIR, REPLAY_ARCHIVE_DIR' 
  if content != original_content:
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -291,6 +375,20 @@ def check_state_vector_matching(self) -> Dict:
     zerg_net_path = PROJECT_ROOT / "zerg_net.py"
  if zerg_net_path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -310,6 +408,20 @@ def check_state_vector_matching(self) -> Dict:
      bot_pro_path = PROJECT_ROOT / "wicked_zerg_bot_pro.py"
  if bot_pro_path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -373,6 +485,20 @@ protobuf<=3.20.3
 
     essential_path = PROJECT_ROOT / "requirements_essential.txt"
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

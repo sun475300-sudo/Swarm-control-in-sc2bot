@@ -44,6 +44,20 @@ def _get_game_state(self) -> Optional[dict]:
  게임 상태 딕셔너리 또는 None
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -84,6 +98,20 @@ def _sync_loop(self):
  while self.running:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

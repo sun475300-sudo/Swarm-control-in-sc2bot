@@ -57,6 +57,20 @@ def find_hardcoded_keys(root_dir: Path) -> List[Tuple[Path, int, str]]:
 
  if file_path.is_file() and file_path.suffix in search_extensions:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -75,6 +89,20 @@ def find_hardcoded_keys(root_dir: Path) -> List[Tuple[Path, int, str]]:
 def remove_keys_from_file(file_path: Path, old_keys: List[str]) -> bool:
     """파일에서 키를 제거합니다 (예제 키만 마스킹)"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

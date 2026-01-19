@@ -59,6 +59,20 @@ from typing import Dict
  self.last_spell_update_frame = iteration
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -120,6 +134,20 @@ from typing import Dict
      target = nearby_targets[0]
  if infestor.energy >= 100: # Neural Parasite costs 100 energy
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -146,6 +174,20 @@ from typing import Dict
  best_target = self._find_best_fungal_target(infestor, nearby_enemies)
  if best_target and infestor.energy >= 75: # Fungal costs 75 energy
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -210,6 +252,20 @@ from typing import Dict
      target = nearby_targets[0]
  if viper.energy >= 75: # Abduct costs 75 energy
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -247,6 +303,20 @@ from typing import Dict
      target = nearby_air[0]
  if viper.energy >= 125: # Parasitic Bomb costs 125 energy
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -282,6 +352,20 @@ from typing import Dict
  best_position = self._find_best_blinding_cloud_position(viper, nearby_ground)
  if best_position and viper.energy >= 100: # Blinding Cloud costs 100 energy
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

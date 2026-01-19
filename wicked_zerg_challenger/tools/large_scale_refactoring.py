@@ -38,6 +38,20 @@ def analyze_classes(self) -> Dict[str, Dict]:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -77,6 +91,20 @@ def analyze_dependencies(self) -> Dict[str, Set[str]]:
  rel_path = str(file_path.relative_to(PROJECT_ROOT))
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -114,9 +142,9 @@ def generate_refactoring_plan(self) -> str:
  # 큰 클래스 찾기
     large_classes = {k: v for k, v in classes.items() if v['methods'] > 20}
  if large_classes:
-     plan.append("### 큰 클래스 (메서드 20개 이상) - 분리 권장\n\n")
+         plan.append("### 큰 클래스 (메서드 20개 이상) - 분리 권장\n\n")
      for class_key, info in sorted(large_classes.items(), key=lambda x: x[1]['methods'], reverse=True)[:10]:
-         pass
+             pass
      plan.append(f"- `{info['file']}:{info['line']}` - `{info['name']}` ({info['methods']}개 메서드)\n")
      plan.append("\n")
 
@@ -157,9 +185,9 @@ def generate_refactoring_plan(self) -> str:
  # 클래스 분리 제안
      plan.append("## 4. 클래스 분리 및 통합 제안\n\n")
  if large_classes:
-     plan.append("### 분리 권장 클래스\n\n")
+         plan.append("### 분리 권장 클래스\n\n")
  for class_key, info in list(large_classes.items())[:5]:
-     plan.append(f"#### `{info['name']}` ({info['file']})\n\n")
+         plan.append(f"#### `{info['name']}` ({info['file']})\n\n")
      plan.append(f"- **메서드 수**: {info['methods']}개\n")
      plan.append(f"- **제안**: 기능별로 여러 클래스로 분리\n")
      plan.append(f"  - 예: `{info['name']}Core`, `{info['name']}Manager`, `{info['name']}Utils`\n\n")
@@ -195,7 +223,7 @@ def main():
 
     large_classes = {k: v for k, v in classes.items() if v['methods'] > 20}
  if large_classes:
-     print(f"  - 큰 클래스: {len(large_classes)}개 (메서드 20개 이상)")
+         print(f"  - 큰 클래스: {len(large_classes)}개 (메서드 20개 이상)")
  print()
 
     print("의존성 분석 중...")

@@ -66,6 +66,20 @@ def _init_database(self):
     """Initialize database schema"""
  conn = self._get_connection()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -92,6 +106,20 @@ def _init_database(self):
 def _get_replay_hash(self, replay_path: Path) -> str:
     """Get unique hash for replay file"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -144,6 +172,20 @@ def get_learning_count(self, replay_path: Path) -> int:
  replay_hash = self._get_replay_hash(replay_path)
  conn = self._get_connection()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -164,6 +206,20 @@ def increment_learning_count(self, replay_path: Path, phase_focus: Optional[Dict
  replay_hash = self._get_replay_hash(replay_path)
  conn = self._get_connection()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -208,6 +264,20 @@ def move_completed_replay(self, replay_path: Path, completed_dir: Path) -> bool:
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

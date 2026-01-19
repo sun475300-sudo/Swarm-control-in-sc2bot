@@ -37,6 +37,20 @@ def analyze_file(self, file_path: Path) -> Dict:
  }
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -300,6 +314,20 @@ def main():
      if analysis.get("warnings") or analysis.get("errors"):
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

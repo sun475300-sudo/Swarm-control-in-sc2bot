@@ -13,6 +13,20 @@ from pathlib import Path
 def get_ngrok_url_from_api() -> str:
     """Ngrok API에서 현재 터널 URL 가져오기"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -38,6 +52,20 @@ def get_ngrok_url_from_api() -> str:
 def get_ngrok_url_from_file() -> str:
     """저장된 파일에서 터널 URL 가져오기"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

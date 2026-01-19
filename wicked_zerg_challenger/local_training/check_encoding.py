@@ -37,6 +37,20 @@ if filepath.exists():
  # UTF-8·Î µðÄÚµù ½Ãµµ
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

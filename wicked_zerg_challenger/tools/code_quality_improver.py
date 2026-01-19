@@ -29,22 +29,22 @@ def __init__(self):
     self.style_issues: Dict[str, List[str]] = {}
 
 def remove_unused_imports(self, file_path: Path) -> Tuple[bool, List[str]]:
-    """사용하지 않는 import 제거"""
- try:
-     pass
- pass
+        """사용하지 않는 import 제거"""
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+                lines = content.splitlines()
+        except Exception:
+            return False, []
 
- except Exception:
-     pass
-     with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
- content = f.read()
- lines = content.splitlines()
+        try:
+            tree = ast.parse(content, filename=str(file_path))
+        except SyntaxError:
+            return False, []
 
- tree = ast.parse(content, filename=str(file_path))
-
- # Import 찾기
- imports = []
- import_lines = {}
+        # Import 찾기
+        imports = []
+        import_lines = {}
  for node in ast.walk(tree):
      if isinstance(node, ast.Import):
          for alias in node.names:
@@ -107,6 +107,20 @@ def check_code_style(self, file_path: Path) -> List[str]:
  issues = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -140,6 +154,20 @@ def check_code_style(self, file_path: Path) -> List[str]:
 def fix_code_style(self, file_path: Path) -> bool:
     """코드 스타일 자동 수정"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -177,6 +205,20 @@ def find_duplicate_functions(self, all_files: List[Path]) -> List[Dict]:
 
  for file_path in all_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

@@ -48,6 +48,20 @@ def __init__(
 def load_telemetry(self, file_path: Path) -> bool:
     """Load telemetry JSON file"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -64,6 +78,20 @@ def load_telemetry(self, file_path: Path) -> bool:
 def load_stats(self, file_path: Path) -> bool:
     """Load training stats JSONL file"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -19,6 +19,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 def run_command(cmd: list, cwd: Path = None) -> tuple:
     """명령어 실행"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -207,6 +221,20 @@ def commit_and_push() -> bool:
 def main():
     """메인 함수"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

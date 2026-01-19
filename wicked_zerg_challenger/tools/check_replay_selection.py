@@ -12,6 +12,20 @@ def load_pro_players():
     if not CONFIG.exists():
         return set()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

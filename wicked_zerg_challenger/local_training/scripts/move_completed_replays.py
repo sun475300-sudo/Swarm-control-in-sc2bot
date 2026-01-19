@@ -121,6 +121,20 @@ def move_completed_replays(replay_dir: Path = None, completed_dir: Path = None, 
 
  for replay_path, count in completed_replays:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -189,6 +203,20 @@ import argparse
      if completed_dir in replay_path.parents:
          continue
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

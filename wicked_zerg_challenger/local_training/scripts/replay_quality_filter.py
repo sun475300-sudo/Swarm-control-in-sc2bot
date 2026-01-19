@@ -82,6 +82,20 @@ def check_file_integrity(self, replay_path: Path) -> Tuple[bool, Optional[str]]:
  (is_valid, error_message)
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -122,6 +136,20 @@ def calculate_apm(self, replay, player) -> Optional[float]:
      return None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -73,6 +73,20 @@ build_plan: Adaptive build plan (optional)
 b = self.bot
 
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -236,6 +250,20 @@ if (
     and b.can_afford(UnitTypeId.BANELINGNEST)
 ):
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -284,6 +312,20 @@ hatcheries = (
 if hatcheries and not lairs and b.time > 180 and b.can_afford(UnitTypeId.LAIR):
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -313,6 +355,20 @@ if not spawning_pools and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
 if b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.supply_used >= 6:
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -666,6 +722,20 @@ for hydra in hydralisks[:5]:  # Increased from 3 to 5
 if b.can_afford(AbilityId.MORPH_LURKER):
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -719,6 +789,20 @@ for hydra in hydralisks[:3]:
 if b.can_afford(AbilityId.MORPH_LURKER):
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -789,6 +873,20 @@ zerglings = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready]
 # Handle both Units object and list
 zerglings_list = []
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 
@@ -951,6 +1049,20 @@ return
 for hatch in ready_idle_townhalls:
     pass
 try:
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
+    pass
+pass
+
+except Exception:
+    pass
     pass
 pass
 

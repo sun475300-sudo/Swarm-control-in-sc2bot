@@ -81,6 +81,20 @@ def _load_api_key(self) -> Optional[str]:
 
      # 2. 파일에서 읽기 (fallback)
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -104,6 +118,20 @@ from pathlib import Path
         pass
     pass
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
     pass
@@ -156,6 +184,20 @@ def _call_trpc(
 
  for attempt in range(self.max_retries if retry else 1):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -456,6 +498,20 @@ def health_check(self) -> bool:
  서버 응답 여부
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

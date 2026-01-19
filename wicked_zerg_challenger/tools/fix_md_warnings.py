@@ -109,6 +109,20 @@ def main():
      path = PROJECT_ROOT / fname
  if path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

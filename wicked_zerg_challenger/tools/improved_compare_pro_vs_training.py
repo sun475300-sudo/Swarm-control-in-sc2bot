@@ -70,6 +70,20 @@ def find_pro_replays(self) -> List[Path]:
 def extract_build_order_from_replay(self, replay_path: Path) -> Optional[Dict]:
     """리플레이에서 빌드 오더 추출"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -184,6 +198,20 @@ def load_training_data(self) -> List[Dict]:
  training_data = []
  for data_file in training_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

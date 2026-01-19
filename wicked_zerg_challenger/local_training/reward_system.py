@@ -60,6 +60,14 @@ class ZergRewardSystem:
             # (내가 파괴한 적 자원 가치) - (내가 잃은 자원 가치)
             reward += self._calculate_combat_exchange_reward(bot)
             
+            # 5. 위협 기반 보상 (NEW: Threat-based rewards)
+            # 적의 테크 건물 발견, 아군 유닛 체력 보존 등
+            reward += self._calculate_threat_based_reward(bot)
+            
+            # 6. 시야 확보 보상 (NEW: Vision acquisition)
+            # 적의 위치를 파악하거나 중요한 정보를 얻으면 보상
+            reward += self._calculate_vision_reward(bot)
+            
         except Exception as e:
             # 에러 발생 시 보상 0 반환
             print(f"[WARNING] Reward calculation error: {e}")
@@ -211,6 +219,146 @@ class ZergRewardSystem:
         except Exception:
             return 0.0
     
+    def _calculate_threat_based_reward(self, bot) -> float:
+        """
+        위협 기반 보상 계산 (NEW)
+        
+        - 적의 테크 건물 발견 시 보상 (정보 획득)
+        - 아군 유닛의 체력 보존(Save) 시 가점
+        - 적의 공격을 피한 경우 보상
+        
+        Returns:
+            위협 기반 보상 점수 (float)
+        """
+        try:
+            reward = 0.0
+            
+            # 1. 적의 테크 건물 발견 보상 (정보 획득)
+            if hasattr(bot, 'enemy_structures'):
+                tech_buildings = ['Factory', 'Starport', 'RoboticsFacility', 'Stargate', 
+                                 'CyberneticsCore', 'TwilightCouncil', 'FusionCore']
+                for building_type in tech_buildings:
+                    if hasattr(bot.enemy_structures, building_type.lower()):
+                        count = len(getattr(bot.enemy_structures, building_type.lower()))
+                        if count > 0:
+                            # 테크 건물 발견 시 보상 (정보 가치)
+                            reward += 0.5 * count
+            
+            # 1-1. 적의 테크 건물 파괴 보상 (위협 제거) - NEW
+            # 이전 프레임과 비교하여 파괴된 건물 수 확인
+            if not hasattr(self, '_previous_enemy_tech_count'):
+                self._previous_enemy_tech_count = {}
+            
+            current_tech_count = {}
+            if hasattr(bot, 'enemy_structures'):
+                for building_type in tech_buildings:
+                    if hasattr(bot.enemy_structures, building_type.lower()):
+                        current_tech_count[building_type] = len(
+                            getattr(bot.enemy_structures, building_type.lower())
+                        )
+            
+            # 파괴된 건물에 대한 보상
+            for building_type, current_count in current_tech_count.items():
+                previous_count = self._previous_enemy_tech_count.get(building_type, current_count)
+                if previous_count > current_count:
+                    destroyed = previous_count - current_count
+                    # 테크 건물 파괴 시 큰 보상 (위협 제거)
+                    reward += 2.0 * destroyed
+            
+            self._previous_enemy_tech_count = current_tech_count
+            
+            # 2. 아군 유닛 체력 보존 보상
+            if hasattr(bot, 'units'):
+                total_health = 0
+                total_max_health = 0
+                
+                # 전투 유닛들의 체력 비율 계산
+                combat_units = ['Zergling', 'Roach', 'Hydralisk', 'Mutalisk', 'Lurker']
+                for unit_type in combat_units:
+                    if hasattr(bot.units, unit_type.lower()):
+                        units = getattr(bot.units, unit_type.lower())
+                        for unit in units:
+                            if hasattr(unit, 'health') and hasattr(unit, 'health_max'):
+                                total_health += unit.health
+                                total_max_health += unit.health_max
+                
+                # 체력 비율이 높을수록 보상 (유닛 보존)
+                if total_max_health > 0:
+                    health_ratio = total_health / total_max_health
+                    # 체력 비율이 0.8 이상이면 보상
+                    if health_ratio > 0.8:
+                        reward += 0.1 * (health_ratio - 0.8) * 10
+            
+            # 3. 적의 공격을 피한 경우 보상 (간접적 - 체력 손실이 적으면)
+            # 이전 체력과 비교는 다음 프레임에서 처리
+            
+            # 4. 후퇴 보상 (NEW: Risk-Aware Reward)
+            # 유닛이 죽지 않고 체력을 보존하며 후퇴했을 때 가점
+            if not hasattr(self, '_previous_unit_count'):
+                self._previous_unit_count = 0
+                self._previous_total_health = 0
+            
+            current_unit_count = 0
+            current_total_health = 0
+            if hasattr(bot, 'units'):
+                for unit_type in combat_units:
+                    if hasattr(bot.units, unit_type.lower()):
+                        units = getattr(bot.units, unit_type.lower())
+                        current_unit_count += len(units)
+                        for unit in units:
+                            if hasattr(unit, 'health'):
+                                current_total_health += unit.health
+            
+            # 유닛 수는 유지되거나 증가했고, 체력 손실이 적으면 후퇴 성공
+            if (current_unit_count >= self._previous_unit_count * 0.9 and 
+                current_total_health > self._previous_total_health * 0.8):
+                # 후퇴 성공 보상 (유닛 보존)
+                reward += 0.5
+            
+            self._previous_unit_count = current_unit_count
+            self._previous_total_health = current_total_health
+            
+            return reward
+            
+        except Exception:
+            return 0.0
+    
+    def _calculate_vision_reward(self, bot) -> float:
+        """
+        시야 확보 보상 계산 (NEW)
+        
+        - 적의 위치를 파악하거나 중요한 정보를 얻으면 보상
+        - 적의 멀티 타이밍 방해 시 보상
+        
+        Returns:
+            시야 확보 보상 점수 (float)
+        """
+        try:
+            reward = 0.0
+            
+            # 1. 적의 멀티 발견 보상
+            if hasattr(bot, 'enemy_structures'):
+                if hasattr(bot.enemy_structures, 'townhall'):
+                    enemy_bases = len(bot.enemy_structures.townhall)
+                    if enemy_bases > 1:
+                        # 적의 멀티 발견 시 보상 (정보 가치)
+                        reward += 1.0 * (enemy_bases - 1)
+            
+            # 2. 적의 병력 위치 파악 보상
+            if hasattr(bot, 'enemy_units'):
+                enemy_count = len(bot.enemy_units)
+                if enemy_count > 0:
+                    # 적의 병력 위치를 파악하면 작은 보상
+                    reward += 0.05 * min(enemy_count, 20)  # 최대 1.0
+            
+            # 3. 적의 공격 타이밍 방해 (적의 건물 파괴)
+            # 이는 전투 교전비 보상에서 이미 처리됨
+            
+            return reward
+            
+        except Exception:
+            return 0.0
+    
     def reset(self):
         """
         에피소드 간 상태 초기화
@@ -220,6 +368,13 @@ class ZergRewardSystem:
         self.previous_score = 0
         self.previous_creep_coverage = 0.0
         self.previous_larva_efficiency = 0.0
+        # Reset threat-based reward tracking
+        if hasattr(self, '_previous_enemy_tech_count'):
+            self._previous_enemy_tech_count = {}
+        if hasattr(self, '_previous_unit_count'):
+            self._previous_unit_count = 0
+        if hasattr(self, '_previous_total_health'):
+            self._previous_total_health = 0
 
 
 # 사용 예시 (주석 처리)

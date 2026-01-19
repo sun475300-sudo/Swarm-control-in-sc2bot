@@ -34,6 +34,20 @@ def __init__(self, dry_run: bool = True):
 def remove_unused_imports_from_file(self, file_path: Path, unused_imports: List[str]) -> bool:
     """파일에서 사용하지 않는 import 제거"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -44,6 +58,20 @@ def remove_unused_imports_from_file(self, file_path: Path, unused_imports: List[
 
  # AST로 정확한 import 라인 찾기
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -108,6 +136,20 @@ def remove_unused_imports_from_file(self, file_path: Path, unused_imports: List[
 def fix_code_style_issues(self, file_path: Path, issues: List[str]) -> bool:
     """코드 스타일 이슈 수정"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -165,6 +207,20 @@ def fix_code_style_issues(self, file_path: Path, issues: List[str]) -> bool:
 def apply_black_formatting(self) -> bool:
     """Black 포맷터 적용"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -191,6 +247,20 @@ def apply_black_formatting(self) -> bool:
  return True
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

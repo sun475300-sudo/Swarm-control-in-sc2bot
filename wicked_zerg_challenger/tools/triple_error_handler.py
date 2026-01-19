@@ -83,6 +83,20 @@ def enhance_error_handling(content: str, file_name: str) -> Tuple[str, int]:
 def fix_silent_exceptions(file_path: Path) -> bool:
     """파일의 silent exception 처리 개선"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

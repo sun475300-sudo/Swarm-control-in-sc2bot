@@ -33,6 +33,20 @@ def run_tests(self, test_pattern: Optional[str] = None) -> Dict:
 
  # pytest가 있는지 확인
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -61,6 +75,20 @@ def run_tests(self, test_pattern: Optional[str] = None) -> Dict:
      cmd.append("--collect-only")  # 테스트 수집만
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -106,6 +134,20 @@ def _run_syntax_check(self) -> Dict:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -143,6 +185,20 @@ def run_refactoring_analysis(self) -> Dict:
  print()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -176,6 +232,20 @@ def run_documentation_generation(self) -> Dict:
  print()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -221,6 +291,20 @@ def validate_changes(self, changed_files: List[str]) -> Dict:
      if full_path.exists() and file_path.endswith('.py'):
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
