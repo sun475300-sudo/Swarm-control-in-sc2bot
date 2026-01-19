@@ -5,7 +5,11 @@ echo ======================================================================
 echo ? REPLAY LEARNING DATA COMPARISON ^& LEARNING - 5 ITERATIONS
 echo ======================================================================
 echo.
-echo This will run replay learning and comparison analysis 5 times.
+echo This workflow will execute:
+echo   1. Replay build order learning
+echo   2. Replay comparison analysis (pro vs bot)
+echo   3. Apply learned data
+echo   4. Repeat 5 times
 echo.
 echo ======================================================================
 echo.
