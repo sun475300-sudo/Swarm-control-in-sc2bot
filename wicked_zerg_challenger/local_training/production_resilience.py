@@ -28,6 +28,13 @@ except ImportError:
     BALANCER_AVAILABLE = False
     EconomyCombatBalancer = None
 
+try:
+    from local_training.resource_manager import ResourceManager
+    RESOURCE_MANAGER_AVAILABLE = True
+except ImportError:
+    RESOURCE_MANAGER_AVAILABLE = False
+    ResourceManager = None
+
 
 class ProductionResilience:
 
@@ -78,6 +85,16 @@ def __init__(self, bot: Any) -> None:
             self.balancer = None
     else:
         self.balancer = None
+
+    # Initialize Resource Manager
+    if RESOURCE_MANAGER_AVAILABLE and ResourceManager:
+        try:
+            self.resource_manager = ResourceManager(bot)
+        except Exception as e:
+            print(f"[WARNING] Failed to initialize ResourceManager: {e}")
+            self.resource_manager = None
+    else:
+        self.resource_manager = None
 
     # Shared build reservation map to block duplicate construction across
     # managers
@@ -180,6 +197,14 @@ def _cleanup_build_reservations(self) -> None:
         """
         b = self.bot
         self._cleanup_build_reservations()
+        
+        # === RESOURCE MANAGEMENT: Optimize worker assignment ===
+        if self.resource_manager:
+            try:
+                await self.resource_manager.optimize_resource_gathering()
+            except Exception as e:
+                if b.iteration % 200 == 0:
+                    print(f"[WARNING] Resource manager error: {e}")
         
         # === EARLY GAME BOOSTER: First 3 minutes - Maximum priority ===
         time = getattr(b, "time", 0.0)
