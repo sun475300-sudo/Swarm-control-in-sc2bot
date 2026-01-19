@@ -238,17 +238,21 @@ def generate_improvement_report(self) -> str:
     report.append(f"- **총 에러 수**: {errors['total_errors']}개\n\n")
 
     if errors["error_types"]:
+        pass
     pass
     report.append("### 에러 타입별 분포\n\n")
     for error_type, count in sorted(errors["error_types"].items(), key=lambda x: x[1], reverse=True):
+        pass
     pass
     report.append(f"- `{error_type}`: {count}개\n")
     report.append("\n")
 
     if errors["error_files"]:
+        pass
     pass
     report.append("### 에러가 발생한 파일\n\n")
     for file, count in sorted(errors["error_files"].items(), key=lambda x: x[1], reverse=True)[:10]:
+        pass
     pass
     report.append(f"- `{file}`: {count}회\n")
     report.append("\n")
@@ -261,17 +265,21 @@ def generate_improvement_report(self) -> str:
     report.append(f"- **평균 파일 크기**: {performance['average_file_size']:.1f}줄\n\n")
 
     if performance["large_files"]:
+        pass
     pass
     report.append("### 큰 파일 (1000줄 이상)\n\n")
     for file_info in sorted(performance["large_files"], key=lambda x: x["lines"], reverse=True)[:10]:
+        pass
     pass
     report.append(f"- `{file_info['file']}`: {file_info['lines']}줄\n")
     report.append("\n")
 
     if performance["complex_functions"]:
+        pass
     pass
     report.append("### 복잡한 함수 (순환 복잡도 15 이상)\n\n")
     for func_info in sorted(performance["complex_functions"], key=lambda x: x["complexity"], reverse=True)[:10]:
+        pass
     pass
     report.append(f"- `{func_info['file']}:{func_info['line']}` - `{func_info['function']}` (복잡도: {func_info['complexity']})\n")
     report.append("\n")
@@ -287,24 +295,28 @@ def generate_improvement_report(self) -> str:
     report.append("## 개선 제안\n\n")
 
     if errors["total_errors"] > 0:
+        pass
     pass
     report.append("### 1. 에러 수정\n\n")
     report.append(f"- 총 {errors['total_errors']}개의 에러가 발견되었습니다.\n")
     report.append("- 가장 빈번한 에러 타입을 우선적으로 수정하세요.\n\n")
 
     if performance["large_files"]:
+        pass
     pass
     report.append("### 2. 큰 파일 분리\n\n")
     report.append(f"- {len(performance['large_files'])}개의 큰 파일이 발견되었습니다.\n")
     report.append("- 큰 파일을 작은 모듈로 분리하세요.\n\n")
 
     if performance["complex_functions"]:
+        pass
     pass
     report.append("### 3. 복잡한 함수 단순화\n\n")
     report.append(f"- {len(performance['complex_functions'])}개의 복잡한 함수가 발견되었습니다.\n")
     report.append("- 복잡한 함수를 작은 함수로 분리하세요.\n\n")
 
     if quality["style_issues"] > 0:
+        pass
     pass
     report.append("### 4. 코드 스타일 개선\n\n")
     report.append(f"- {quality['style_issues']}개의 스타일 이슈가 발견되었습니다.\n")

@@ -315,6 +315,7 @@ import importlib.util
 
  # Check if create_bot function exists
     if hasattr(run_module, 'create_bot'):
+        pass
     pass
     print("  ? create_bot() function found")
  else:

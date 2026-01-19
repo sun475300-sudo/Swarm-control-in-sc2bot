@@ -169,8 +169,10 @@ def analyze_class(self, file_path: Path, class_name: str) -> Dict:
  for node in ast.walk(tree):
      if isinstance(node, ast.ClassDef) and node.name == class_name:
          for item in node.body:
+             pass
          pass
          if isinstance(item, ast.FunctionDef):
+             pass
          class_info["methods"].append(item.name)
  elif isinstance(item, ast.Assign):
      for target in item.targets:
@@ -192,17 +194,22 @@ def split_combat_manager(self, file_path: Path, output_dir: Path):
  }
 
     for method in class_info["methods"]:
+        pass
     pass
     if any(keyword in method.lower() for keyword in ['micro', 'unit', 'attack']):
+        pass
     pass
     groups["micro"].append(method)
     elif any(keyword in method.lower() for keyword in ['macro', 'army', 'composition']):
+        pass
     pass
     groups["macro"].append(method)
     elif any(keyword in method.lower() for keyword in ['target', 'priority']):
+        pass
     pass
     groups["targeting"].append(method)
     elif any(keyword in method.lower() for keyword in ['position', 'formation']):
+        pass
     pass
     groups["positioning"].append(method)
  else:

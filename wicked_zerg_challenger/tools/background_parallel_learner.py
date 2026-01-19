@@ -461,6 +461,7 @@ def _collect_results(self):
 def _process_result(self, result: Dict):
     """학습 결과 처리"""
     if result.get("success"):
+        pass
     if "learned_params" in result:
     # 리플레이 분석 결과
     self.stats["replays_analyzed"] += 1

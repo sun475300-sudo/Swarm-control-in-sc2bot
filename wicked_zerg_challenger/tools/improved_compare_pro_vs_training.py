@@ -48,6 +48,7 @@ def find_pro_replays(self) -> List[Path]:
     replays = []
 
     if not self.replay_dir.exists():
+        pass
     print(f"[INFO] 프로 리플레이 디렉토리가 없습니다: {self.replay_dir}")
     return replays
 

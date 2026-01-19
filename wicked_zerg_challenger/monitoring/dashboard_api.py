@@ -312,6 +312,7 @@ async def get_ngrok_url():
  # HTTPS 터널 우선 선택
  for tunnel in tunnels:
      if tunnel.get("proto") == "https":
+         pass
      pass
  return {
      "url": tunnel.get("public_url", ""),
@@ -604,6 +605,7 @@ async def send_control_command(command: dict[str, Any]):  # type: ignore
     elif cmd_type == "play":
         pass
  if bot_connector:
+     pass
  bot_connector.resume_game()
      logger.info("Game resumed")
      return {"status": "success", "message": "Game resumed"}
@@ -611,6 +613,7 @@ async def send_control_command(command: dict[str, Any]):  # type: ignore
     elif cmd_type == "pause":
         pass
  if bot_connector:
+     pass
  bot_connector.pause_game()
      logger.info("Game paused")
      return {"status": "success", "message": "Game paused"}

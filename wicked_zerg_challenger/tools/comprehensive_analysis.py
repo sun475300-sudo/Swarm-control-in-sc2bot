@@ -300,9 +300,11 @@ def generate_report(self) -> str:
     report.append(f"- **�ߺ� ����**: {len(unnecessary['duplicate_docs'])}��\n\n")
 
     if unnecessary['backup_files']:
+        pass
     pass
     report.append("### ��� ���� ��� (���� ����)\n\n")
     for file in unnecessary['backup_files'][:20]:
+        pass
     pass
     report.append(f"- `{file}`\n")
     report.append("\n")
@@ -318,6 +320,7 @@ def generate_report(self) -> str:
     report.append("## 3. ���� ���� ����\n\n")
     report.append(f"- **������**: {len(execution['entry_points'])}��\n")
     for entry in execution['entry_points']:
+        pass
     pass
     report.append(f"  - `{entry}`\n")
     report.append(f"\n- **��� ��**: {execution['total_modules']}��\n\n")
@@ -336,11 +339,13 @@ def generate_report(self) -> str:
     report.append("## ���� ����\n\n")
 
     if unnecessary['backup_files'] or unnecessary['cache_files']:
+        pass
     pass
     report.append("### 1. ���ʿ��� ���� ����\n\n")
     report.append(f"- {len(unnecessary['backup_files'])}���� ��� ���ϰ� {len(unnecessary['cache_files'])}���� ĳ�� ������ �����ϼ���.\n\n")
 
     if style_issues['tab_usage']:
+        pass
     pass
     report.append("### 2. �ڵ� ��Ÿ�� ����ȭ\n\n")
     report.append(f"- {len(style_issues['tab_usage'])}�� ���Ͽ��� �� ���ڸ� �������� �����ϼ���.\n")

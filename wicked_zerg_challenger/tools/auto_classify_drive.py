@@ -214,6 +214,7 @@ def generate_report(self):
     self.log(f"Skipped files: {self.stats['skipped']:,}")
 
     if self.stats['errors']:
+        pass
     self.log(f"\nErrors: {len(self.stats['errors'])}")
     for err in self.stats['errors'][:10]:  # Show max 10
     self.log(f"  - {err}")

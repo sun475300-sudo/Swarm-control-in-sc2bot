@@ -191,6 +191,7 @@ def analyze_game_performance(self) -> Dict[str, Any]:
  # Calculate trends
 def calculate_trend(values: List[float]) -> Dict[str, float]:
     if len(values) < 2:
+        pass
     return {"trend": "insufficient_data", "change": 0.0}
 
  first_half = values[:len(values)//2]

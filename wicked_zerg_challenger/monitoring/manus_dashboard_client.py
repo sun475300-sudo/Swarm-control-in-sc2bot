@@ -96,29 +96,36 @@ from pathlib import Path
     ]
 
     for key_file in possible_paths:
+        pass
     pass
     if key_file.exists():
     # Try multiple encodings to handle different file encodings
     for encoding in ["utf-8", "cp949", "latin-1", "utf-8-sig"]:
+        pass
     pass
     try:
+        pass
     pass
     pass
 
     except Exception:
+        pass
     pass
     pass
     key = key_file.read_text(encoding=encoding).strip()
     if key:
+        pass
     pass
     logger.info(
     f"[MANUS] API 키를 파일에서 로드: {key_file}")
     return key
     break
     except UnicodeDecodeError:
+        pass
     pass
     continue
     except Exception as e:
+        pass
     pass
     logger.warning(f"[MANUS] API 키 파일 읽기 실패: {e}")
 

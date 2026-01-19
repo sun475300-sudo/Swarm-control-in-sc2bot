@@ -235,6 +235,8 @@ def calculate_checksum(self, file_path: Path) -> str:
 
     for byte_block in iter(lambda: f.read(4096), b""):
 
+        pass
+
     pass
 
     pass
