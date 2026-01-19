@@ -10,6 +10,13 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 import logging
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
@@ -29,32 +36,42 @@ def atomic_write_json(filepath: Path, data: Any) -> bool:
  bool: 성공 여부
     """
  try:
- # 임시 파일 생성
-        temp_file = filepath.with_suffix(filepath.suffix + '.tmp')
+     pass
+ pass
+
+ except Exception:
+     pass
+     # 임시 파일 생성
+     temp_file = filepath.with_suffix(filepath.suffix + '.tmp')
 
  # 임시 파일에 쓰기
-        with open(temp_file, 'w', encoding='utf-8') as f:
+     with open(temp_file, 'w', encoding='utf-8') as f:
  json.dump(data, f, indent=2, ensure_ascii=False)
 
  # 원자적 교체 (Windows에서는 rename이 실패할 수 있으므로 try-except)
  try:
- # Unix/Linux/Mac: rename는 원자적 연산
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Unix/Linux/Mac: rename는 원자적 연산
  temp_file.replace(filepath)
  except OSError:
- # Windows: rename가 실패할 수 있으므로 copy + remove
+     # Windows: rename가 실패할 수 있으므로 copy + remove
  shutil.copy2(temp_file, filepath)
  temp_file.unlink()
 
  return True
 
  except Exception as e:
-        logger.error(f"Atomic write 실패: {e}")
+     logger.error(f"Atomic write 실패: {e}")
  # 임시 파일 정리
  try:
- if temp_file.exists():
- temp_file.unlink()
+     if temp_file.exists():
+         temp_file.unlink()
  except Exception:
- pass
+     pass
  return False
 
 
@@ -70,34 +87,39 @@ def atomic_write_csv(filepath: Path, data: List[Dict[str, Any]]) -> bool:
  bool: 성공 여부
     """
  if not data:
- return False
+     return False
 
  try:
- # 임시 파일 생성
-        temp_file = filepath.with_suffix(filepath.suffix + '.tmp')
+     pass
+ pass
+
+ except Exception:
+     pass
+     # 임시 파일 생성
+     temp_file = filepath.with_suffix(filepath.suffix + '.tmp')
 
  # 임시 파일에 쓰기
-        with open(temp_file, 'w', encoding='utf-8', newline='') as f:
+     with open(temp_file, 'w', encoding='utf-8', newline='') as f:
  writer = csv.DictWriter(f, fieldnames=data[0].keys())
  writer.writeheader()
  writer.writerows(data)
 
  # 원자적 교체
  try:
- temp_file.replace(filepath)
+     temp_file.replace(filepath)
  except OSError:
- shutil.copy2(temp_file, filepath)
+     shutil.copy2(temp_file, filepath)
  temp_file.unlink()
 
  return True
 
  except Exception as e:
-        logger.error(f"Atomic CSV write 실패: {e}")
+     logger.error(f"Atomic CSV write 실패: {e}")
  try:
- if temp_file.exists():
- temp_file.unlink()
+     if temp_file.exists():
+         temp_file.unlink()
  except Exception:
- pass
+     pass
  return False
 
 
@@ -115,41 +137,51 @@ def atomic_append_jsonl(filepath: Path, data: Dict[str, Any]) -> bool:
  bool: 성공 여부
     """
  try:
- # 기존 내용 읽기
+     pass
+ pass
+
+ except Exception:
+     pass
+     # 기존 내용 읽기
  existing_lines = []
  if filepath.exists():
- try:
-                with open(filepath, 'r', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(filepath, 'r', encoding='utf-8') as f:
  existing_lines = [line.strip() for line in f if line.strip()]
  except Exception:
- pass
+     pass
 
  # 새 라인 추가
  new_line = json.dumps(data, ensure_ascii=False)
  existing_lines.append(new_line)
 
  # 임시 파일에 전체 내용 쓰기
-        temp_file = filepath.with_suffix(filepath.suffix + '.tmp')
-        with open(temp_file, 'w', encoding='utf-8') as f:
+     temp_file = filepath.with_suffix(filepath.suffix + '.tmp')
+     with open(temp_file, 'w', encoding='utf-8') as f:
  for line in existing_lines:
-                f.write(line + '\n')
+     f.write(line + '\n')
 
  # 원자적 교체
  try:
- temp_file.replace(filepath)
+     temp_file.replace(filepath)
  except OSError:
- shutil.copy2(temp_file, filepath)
+     shutil.copy2(temp_file, filepath)
  temp_file.unlink()
 
  return True
 
  except Exception as e:
-        logger.error(f"Atomic JSONL append 실패: {e}")
+     logger.error(f"Atomic JSONL append 실패: {e}")
  try:
- if temp_file.exists():
- temp_file.unlink()
+     if temp_file.exists():
+         temp_file.unlink()
  except Exception:
- pass
+     pass
  return False
 
 
@@ -160,41 +192,52 @@ def patch_telemetry_logger():
  atomic write를 사용하도록 패치합니다.
     """
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  original_save = TelemetryLogger.save_telemetry
 
  async def patched_save_telemetry(self):
-            """Atomic write를 사용하는 패치된 save_telemetry"""
+     """Atomic write를 사용하는 패치된 save_telemetry"""
  try:
- if not self.telemetry_data:
-                    print("[TELEMETRY] No data to save")
+     pass
+ pass
+
+ except Exception:
+     pass
+     if not self.telemetry_data:
+         print("[TELEMETRY] No data to save")
  return
 
  # Atomic write for JSON
  json_file = Path(self.telemetry_file)
  if atomic_write_json(json_file, self.telemetry_data):
-                    print(f"[TELEMETRY] Data saved (atomic): {self.telemetry_file}")
+     print(f"[TELEMETRY] Data saved (atomic): {self.telemetry_file}")
 
  # Atomic write for CSV
-                csv_file = json_file.with_suffix('.csv')
+     csv_file = json_file.with_suffix('.csv')
  if atomic_write_csv(csv_file, self.telemetry_data):
-                    print(f"[TELEMETRY] CSV saved (atomic): {csv_file}")
+     print(f"[TELEMETRY] CSV saved (atomic): {csv_file}")
 
  except Exception as e:
-                print(f"[WARNING] Telemetry save error: {e}")
+     print(f"[WARNING] Telemetry save error: {e}")
 
  TelemetryLogger.save_telemetry = patched_save_telemetry
-        logger.info("TelemetryLogger에 atomic write 패치 적용됨")
+     logger.info("TelemetryLogger에 atomic write 패치 적용됨")
 
  except ImportError:
-        logger.warning("telemetry_logger를 찾을 수 없습니다. 패치를 건너뜁니다.")
+     logger.warning("telemetry_logger를 찾을 수 없습니다. 패치를 건너뜁니다.")
 
 
 if __name__ == "__main__":
- # 테스트
+    # 테스트
  test_data = [
-        {"time": 100, "minerals": 500, "vespene": 200},
-        {"time": 200, "minerals": 600, "vespene": 250}
+    {"time": 100, "minerals": 500, "vespene": 200},
+    {"time": 200, "minerals": 600, "vespene": 250}
  ]
 
     test_json = Path("test_telemetry.json")
@@ -202,13 +245,13 @@ if __name__ == "__main__":
 
     print("Atomic write 테스트...")
  if atomic_write_json(test_json, test_data):
-        print(f"✅ JSON 저장 성공: {test_json}")
+     print(f"✅ JSON 저장 성공: {test_json}")
 
  if atomic_write_csv(test_csv, test_data):
-        print(f"✅ CSV 저장 성공: {test_csv}")
+     print(f"✅ CSV 저장 성공: {test_csv}")
 
  # 정리
  if test_json.exists():
- test_json.unlink()
+     test_json.unlink()
  if test_csv.exists():
- test_csv.unlink()
+     test_csv.unlink()

@@ -10,7 +10,9 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
+import List
+import Optional
 from dataclasses import dataclass
 
 
@@ -61,12 +63,12 @@ class BuildOrderComparator:
             # Auto-detect learned_build_orders.json
             script_dir = Path(__file__).parent.parent
             possible_paths = [
-                script_dir /
-                "local_training" /
-                "scripts" /
-                "learned_build_orders.json",
-                script_dir /
-                "learned_build_orders.json",
+                script_dir
+                / "local_training"
+                / "scripts"
+                / "learned_build_orders.json",
+                script_dir
+                / "learned_build_orders.json",
                 Path("local_training/scripts/learned_build_orders.json"),
             ]
 

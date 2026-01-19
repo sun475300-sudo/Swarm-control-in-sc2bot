@@ -9,12 +9,17 @@ Enables mobile app and web to access both servers
 
 import requests
 import asyncio
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import FastAPI
+import HTTPException
+import Query
+from fastapi.responses import JSONResponse
+import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse as StarletteJSONResponse
 import json
-from typing import Optional, Dict, Any
+from typing import Optional
+import Dict
+import Any
 import logging
 import os
 

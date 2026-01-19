@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-ÈÆ·Ã ·ÎÁ÷ °³¼± µµ±¸
+ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-ÈÆ·Ã ¼º´É, ¾ÈÁ¤¼º, È¿À²¼ºÀ» Çâ»ó½ÃÅ°´Â ´Ù¾çÇÑ °³¼± »çÇ× Àû¿ë
+ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, È¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ ï¿½Ù¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 """
 
 import os
@@ -10,8 +10,12 @@ import sys
 import time
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+from typing import Dict
+import Any
+import Optional
+import Tuple
+from dataclasses import dataclass
+import asdict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TrainingMetrics:
-    """ÈÆ·Ã ¸ÞÆ®¸¯"""
+    """ï¿½Æ·ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½"""
     total_games: int = 0
     wins: int = 0
     losses: int = 0
@@ -33,17 +37,17 @@ class TrainingMetrics:
 
 
 class AdaptiveDifficultyManager:
-    """ÀûÀÀÇü ³­ÀÌµµ °ü¸®ÀÚ"""
+    """ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"""
 
     def __init__(self):
         self.base_difficulty = "Hard"
         self.current_difficulty = "Hard"
-        self.win_rate_threshold_increase = 0.7  # 70% ½Â·ü ÀÌ»óÀÌ¸é ³­ÀÌµµ Áõ°¡
-        self.win_rate_threshold_decrease = 0.4  # 40% ½Â·ü ÀÌÇÏ¸é ³­ÀÌµµ °¨¼Ò
-        self.min_games_for_change = 10  # ÃÖ¼Ò °ÔÀÓ ¼ö
+        self.win_rate_threshold_increase = 0.7  # 70% ï¿½Â·ï¿½ ï¿½Ì»ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½
+        self.win_rate_threshold_decrease = 0.4  # 40% ï¿½Â·ï¿½ ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½
+        self.min_games_for_change = 10  # ï¿½Ö¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 
     def update(self, metrics: TrainingMetrics) -> str:
-        """³­ÀÌµµ ¾÷µ¥ÀÌÆ®"""
+        """ï¿½ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®"""
         if metrics.total_games < self.min_games_for_change:
             return self.current_difficulty
 
@@ -62,20 +66,20 @@ class AdaptiveDifficultyManager:
 
 
 class TrainingPerformanceMonitor:
-    """ÈÆ·Ã ¼º´É ¸ð´ÏÅÍ"""
+    """ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½"""
 
     def __init__(self):
         self.game_times: list[float] = []
         self.max_game_time_history = 100
 
     def record_game(self, game_time: float, result: str):
-        """°ÔÀÓ ±â·Ï"""
+        """ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½"""
         self.game_times.append(game_time)
         if len(self.game_times) > self.max_game_time_history:
             self.game_times.pop(0)
 
     def get_stats(self) -> Dict[str, Any]:
-        """Åë°è ¹ÝÈ¯"""
+        """ï¿½ï¿½ï¿½ ï¿½ï¿½È¯"""
         if not self.game_times:
             return {"avg_time": 0.0, "min_time": 0.0, "max_time": 0.0}
 
@@ -88,7 +92,7 @@ class TrainingPerformanceMonitor:
 
 
 class TrainingStateManager:
-    """ÈÆ·Ã »óÅÂ °ü¸®ÀÚ"""
+    """ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"""
 
     def __init__(self, state_file: Optional[Path] = None):
         if state_file is None:
@@ -97,7 +101,7 @@ class TrainingStateManager:
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
 
     def load_state(self) -> Dict[str, Any]:
-        """»óÅÂ ·Îµå"""
+        """ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½"""
         if not self.state_file.exists():
             return {}
 
@@ -109,7 +113,7 @@ class TrainingStateManager:
             return {}
 
     def save_state(self, state: Dict[str, Any]):
-        """»óÅÂ ÀúÀå"""
+        """ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         try:
             with open(self.state_file, 'w', encoding='utf-8') as f:
                 json.dump(state, f, indent=2, ensure_ascii=False)
@@ -117,14 +121,14 @@ class TrainingStateManager:
             logger.warning(f"Failed to save training state: {e}")
 
     def update_metrics(self, metrics: TrainingMetrics):
-        """¸ÞÆ®¸¯ ¾÷µ¥ÀÌÆ®"""
+        """ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®"""
         state = self.load_state()
         state['metrics'] = asdict(metrics)
         self.save_state(state)
 
 
 class TrainingErrorHandler:
-    """ÈÆ·Ã ¿¡·¯ Ã³¸®±â"""
+    """ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½"""
 
     def __init__(self):
         self.error_counts: Dict[str, int] = {}
@@ -133,7 +137,7 @@ class TrainingErrorHandler:
 
     def handle_error(self, error: Exception,
                      context: str = "") -> Tuple[bool, float]:
-        """¿¡·¯ Ã³¸®
+        """ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
 
         Returns:
             (should_continue, wait_time)
@@ -156,21 +160,21 @@ class TrainingErrorHandler:
         return True, wait_time
 
     def reset_error_count(self, context: str = ""):
-        """¿¡·¯ Ä«¿îÆ® ¸®¼Â"""
+        """ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½"""
         keys_to_remove = [k for k in self.error_counts.keys() if context in k]
         for key in keys_to_remove:
             del self.error_counts[key]
 
 
 class TrainingProgressTracker:
-    """ÈÆ·Ã ÁøÇà »óÈ² ÃßÀû±â"""
+    """ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È² ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"""
 
     def __init__(self):
         self.start_time = time.time()
-        self.checkpoint_interval = 10  # 10°ÔÀÓ¸¶´Ù Ã¼Å©Æ÷ÀÎÆ®
+        self.checkpoint_interval = 10  # 10ï¿½ï¿½ï¿½Ó¸ï¿½ï¿½ï¿½ Ã¼Å©ï¿½ï¿½ï¿½ï¿½Æ®
 
     def get_progress_summary(self, metrics: TrainingMetrics) -> str:
-        """ÁøÇà »óÈ² ¿ä¾à"""
+        """ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È² ï¿½ï¿½ï¿½"""
         elapsed = time.time() - self.start_time
         hours = int(elapsed // 3600)
         minutes = int((elapsed % 3600) // 60)
@@ -197,20 +201,20 @@ Errors: {metrics.errors}
         """.strip()
 
     def should_save_checkpoint(self, game_count: int) -> bool:
-        """Ã¼Å©Æ÷ÀÎÆ® ÀúÀå ¿©ºÎ"""
+        """Ã¼Å©ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         return game_count % self.checkpoint_interval == 0
 
 
 def improve_training_config() -> Dict[str, Any]:
-    """ÈÆ·Ã ¼³Á¤ °³¼±"""
+    """ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
     return {
         "adaptive_difficulty": True,
         "performance_monitoring": True,
         "error_recovery": True,
         "progress_tracking": True,
-        "auto_save_interval": 10,  # 10°ÔÀÓ¸¶´Ù ÀÚµ¿ ÀúÀå
+        "auto_save_interval": 10,  # 10ï¿½ï¿½ï¿½Ó¸ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½
         "max_consecutive_failures": 5,
-        "wait_between_games": 10,  # °ÔÀÓ °£ ´ë±â ½Ã°£ (ÃÊ)
+        "wait_between_games": 10,  # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ (ï¿½ï¿½)
         "min_games_for_difficulty_change": 10,
     }
 

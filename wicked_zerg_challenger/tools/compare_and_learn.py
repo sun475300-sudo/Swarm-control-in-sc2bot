@@ -2,14 +2,16 @@
 """
 Compare Pro vs Training Replays and Apply Learning
 
-¸®ÇÃ·¹ÀÌ ÇÐ½À µ¥ÀÌÅÍ¿Í ÈÆ·Ã ¸®ÇÃ·¹ÀÌ ÇÐ½À µ¥ÀÌÅÍ¸¦ ºñ±³ ºÐ¼®ÇÏ°í,
-Â÷ÀÌÁ¡À» Ã£¾Æ ÇÐ½ÀÀ» ½ÇÇàÇÏ´Â ÅëÇÕ ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
+ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ï¿½Ï°ï¿½,
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½Ð½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
 """
 
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict
+import Any
+import Optional
 from datetime import datetime
 
 # Add parent directory to path
@@ -19,7 +21,8 @@ if str(script_dir) not in sys.path:
 
 try:
     from tools.compare_pro_vs_training_replays import ProVsTrainingComparator
-    from local_training.scripts.replay_build_order_learner import ReplayBuildOrderExtractor, update_config_with_learned_params
+    from local_training.scripts.replay_build_order_learner import ReplayBuildOrderExtractor
+    import update_config_with_learned_params
 except ImportError as e:
     print(f"[ERROR] Failed to import required modules: {e}")
     sys.exit(1)
@@ -82,7 +85,7 @@ def apply_learned_differences(
                 "adjustment": adjustment
             })
             print(
-                f"[LEARNING] {param_name}: {current_value:.1f} ¡æ {updated_params[param_name]:.1f} (target: {pro_mean:.1f}, diff: {diff:.1f})")
+                f"[LEARNING] {param_name}: {current_value:.1f} ï¿½ï¿½ {updated_params[param_name]:.1f} (target: {pro_mean:.1f}, diff: {diff:.1f})")
 
     return updated_params, improvements_applied
 

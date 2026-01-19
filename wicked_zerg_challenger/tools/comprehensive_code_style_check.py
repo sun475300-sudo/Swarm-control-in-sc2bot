@@ -9,7 +9,10 @@ import sys
 import subprocess
 import ast
 from pathlib import Path
-from typing import List, Dict, Tuple, Any
+from typing import List
+import Dict
+import Tuple
+import Any
 
 # Setup encoding
 if sys.platform == "win32":
@@ -52,15 +55,15 @@ def apply_autopep8(file_path: Path) -> Tuple[bool, str]:
     """Apply autopep8 formatting"""
     try:
         result = subprocess.run(['python',
-                                 '-m',
-                                 'autopep8',
-                                 '--in-place',
-                                 '--aggressive',
-                                 '--aggressive',
-                                 str(file_path)],
-                                capture_output=True,
-                                text=True,
-                                timeout=30)
+        '-m',
+        'autopep8',
+        '--in-place',
+        '--aggressive',
+        '--aggressive',
+        str(file_path)],
+        capture_output=True,
+        text=True,
+        timeout=30)
         if result.returncode == 0:
             return True, "Formatted"
         else:
@@ -100,7 +103,7 @@ def normalize_file(file_path: Path) -> Tuple[bool, int]:
                 line_content = line.rstrip('\r\n')
                 line_content = line_content.rstrip()
                 line = line_content + \
-                    ('\r\n' if original_line.endswith('\r\n') else '\n')
+                ('\r\n' if original_line.endswith('\r\n') else '\n')
             else:
                 line = line.rstrip()
             if original_line != line:
@@ -180,8 +183,20 @@ def main():
     print("-" * 70)
     for i, file_path in enumerate(python_files, 1):
         if any(excluded in str(file_path)
-               for excluded in ['test', 'tests', '__pycache__']):
-            continue
+        for excluded in ['test', 'tests', '__pycache__']):
+            pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        pass
+        continue
         rel_path = file_path.relative_to(PROJECT_ROOT)
         success, msg = apply_autopep8(file_path)
         if success:
@@ -203,7 +218,7 @@ def main():
             total_fixes += fixes
             if i % 20 == 0:
                 print(
-                    f"[{i}/{len(python_files)}] Normalized: {rel_path} ({fixes} fixes)")
+                f"[{i}/{len(python_files)}] Normalized: {rel_path} ({fixes} fixes)")
 
     print()
     print("=" * 70)
@@ -218,7 +233,7 @@ def main():
 
     if syntax_errors:
         print(
-            "\nWARNING: Some files have syntax errors. Please fix them before proceeding.")
+        "\nWARNING: Some files have syntax errors. Please fix them before proceeding.")
         return 1
 
     return 0

@@ -5,6 +5,7 @@ import shutil
 
 def remove_dir(path: Path) -> bool:
     if path.exists():
+        pass
     shutil.rmtree(path, ignore_errors=True)
     print(f"[CLEANUP] Removed {path}")
     return True

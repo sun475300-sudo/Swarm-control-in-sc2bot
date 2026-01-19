@@ -3,7 +3,7 @@
 """
 Cleanup Unnecessary Batch Files
 
-ÈÆ·Ã¿¡ ÇÊ¿äÇÑ ¹èÄ¡ ÆÄÀÏ¸¸ ³²±â°í ³ª¸ÓÁö¸¦ Á¦°ÅÇÏ´Â ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
+ï¿½Æ·Ã¿ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
 """
 
 import sys
@@ -17,30 +17,30 @@ if str(script_dir) not in sys.path:
 PROJECT_ROOT = script_dir
 BAT_DIR = PROJECT_ROOT / "bat"
 
-# ÈÆ·Ã¿¡ ÇÊ¿äÇÑ ¹èÄ¡ ÆÄÀÏ ¸ñ·Ï
+# ï¿½Æ·Ã¿ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 REQUIRED_BATCH_FILES = {
-    # ÈÆ·Ã ½ÃÀÛ
+    # ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½
     "start_local_training.bat",
     "training_with_post_learning.bat",
 
-    # ÈÆ·Ã ÈÄ ÇÐ½À
+    # ï¿½Æ·ï¿½ ï¿½ï¿½ ï¿½Ð½ï¿½
     "post_training_learning.bat",
 
-    # ºñ±³ ¹× ÇÐ½À
+    # ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð½ï¿½
     "compare_and_learn.bat",
     "compare_pro_vs_training.bat",
     "run_comparison_and_apply_learning.bat",
     "apply_differences_and_learn.bat",
 
-    # ÇÐ½À µ¥ÀÌÅÍ ÃÖÀûÈ­
+    # ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­
     "optimize_learning_data.bat",
     "apply_optimized_params.bat",
 
-    # ¸®ÇÃ·¹ÀÌ ÇÐ½À
+    # ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½
     "start_replay_learning.bat",
     "start_replay_comparison.bat",
 
-    # ÀÏÀÏ °³¼± (¼±ÅÃÀû)
+    # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
     "daily_improvement.bat",
 }
 
@@ -56,13 +56,13 @@ def main():
         print(f"[ERROR] bat directory not found: {BAT_DIR}")
         return
 
-    # ¸ðµç ¹èÄ¡ ÆÄÀÏ Ã£±â
+    # ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
     all_bat_files = list(BAT_DIR.glob("*.bat"))
 
     print(f"[INFO] Found {len(all_bat_files)} batch files")
     print()
 
-    # Á¦°ÅÇÒ ÆÄÀÏ Ã£±â
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
     files_to_remove = []
     files_to_keep = []
 
@@ -76,20 +76,20 @@ def main():
     print(f"[INFO] Files to remove: {len(files_to_remove)}")
     print()
 
-    # Á¦°ÅÇÒ ÆÄÀÏ ¸ñ·Ï Ç¥½Ã
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
     if files_to_remove:
         print("Files to remove:")
         for bat_file in sorted(files_to_remove):
             print(f"  - {bat_file.name}")
         print()
 
-    # À¯ÁöÇÒ ÆÄÀÏ ¸ñ·Ï Ç¥½Ã
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
     print("Files to keep:")
     for bat_file in sorted(files_to_keep):
         print(f"  - {bat_file.name}")
     print()
 
-    # È®ÀÎ
+    # È®ï¿½ï¿½
     print("=" * 70)
     response = input(
         f"Remove {len(files_to_remove)} unnecessary batch files? (yes/no): ")
@@ -98,7 +98,7 @@ def main():
         print("[CANCELLED] Cleanup cancelled by user")
         return
 
-    # ÆÄÀÏ Á¦°Å
+    # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     removed_count = 0
     for bat_file in files_to_remove:
         try:

@@ -18,6 +18,7 @@ while i < len(lines):
 
     # Fix GamePhase enum
      if 'class GamePhase(Enum):' in line:
+             pass
     fixed_lines.append(line)
     i += 1
      if i < len(lines) and lines[i].strip(
@@ -25,32 +26,35 @@ while i < len(lines):
     fixed_lines.append(lines[i])
     i += 1
     # Fix enum members
-      while i < len(lines) and (lines[i].strip().startswith('OPENING') or lines[i].strip().startswith('ECONOMY') or
-                                 lines[i].strip().startswith('TECH') or lines[i].strip().startswith('ATTACK') or
-                                 lines[i].strip().startswith('DEFENSE') or lines[i].strip().startswith('ALL_IN')):
+      while i < len(lines) and (lines[i].strip().startswith('OPENING') or lines[i].strip().startswith('ECONOMY')
+                                 or lines[i].strip().startswith('TECH') or lines[i].strip().startswith('ATTACK')
+                                 or lines[i].strip().startswith('DEFENSE') or lines[i].strip().startswith('ALL_IN')):
            fixed_lines.append('    ' + lines[i].lstrip())
     i += 1
     continue
 
     # Fix EnemyRace enum
      if 'class EnemyRace(Enum):' in line:
+             pass
     fixed_lines.append(line)
     i += 1
      if i < len(lines) and '"""Opponent race"""' in lines[i]:
+         pass
     fixed_lines.append(lines[i])
     i += 1
     # Fix enum members
-      while i < len(lines) and (lines[i].strip().startswith('TERRAN') or lines[i].strip().startswith('PROTOSS') or
-                                 lines[i].strip().startswith('ZERG') or lines[i].strip().startswith('UNKNOWN')):
+      while i < len(lines) and (lines[i].strip().startswith('TERRAN') or lines[i].strip().startswith('PROTOSS')
+                                 or lines[i].strip().startswith('ZERG') or lines[i].strip().startswith('UNKNOWN')):
            fixed_lines.append('    ' + lines[i].lstrip())
     i += 1
     continue
 
     # Fix Config dataclass
      if '@dataclass(frozen = True)' in line or '@dataclass(frozen=True)' in line:
-          fixed_lines.append('@dataclass(frozen=True)\n')
+             fixed_lines.append('@dataclass(frozen=True)\n')
     i += 1
      if i < len(lines) and 'class Config:' in lines[i]:
+             pass
     fixed_lines.append(lines[i])
     i += 1
      if i < len(
@@ -58,12 +62,13 @@ while i < len(lines):
     fixed_lines.append(lines[i])
     i += 1
     # Fix class attributes
-      while i < len(lines) and (lines[i].strip() and not lines[i].strip().startswith('class ') and
-                                 not lines[i].strip().startswith('def ') and not lines[i].strip().startswith('@') and
-                                 not lines[i].strip().startswith('#') and not lines[i].strip().startswith('REPLAY')):
+      while i < len(lines) and (lines[i].strip() and not lines[i].strip().startswith('class ')
+                                 and not lines[i].strip().startswith('def ') and not lines[i].strip().startswith('@')
+                                 and not lines[i].strip().startswith('#') and not lines[i].strip().startswith('REPLAY')):
     if lines[i].strip():
         fixed_lines.append('    ' + lines[i].lstrip())
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
@@ -77,6 +82,7 @@ while i < len(lines):
     if lines[i].strip():
         fixed_lines.append('        ' + lines[i].lstrip())
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
@@ -87,12 +93,13 @@ while i < len(lines):
      while i < len(lines) and not (
     lines[i].strip().startswith('def ') and 'get_config' in lines[i]):
           if lines[i].strip() and not lines[i].strip().startswith('class '):
-               indent = '        ' if lines[i].strip(
+                  indent = '        ' if lines[i].strip(
                 ) and not lines[i].strip().startswith('if ') else '    '
     fixed_lines.append(
-        indent +
-        lines[i].lstrip() if lines[i].strip() else lines[i])
+        indent
+        + lines[i].lstrip() if lines[i].strip() else lines[i])
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
@@ -103,12 +110,13 @@ while i < len(lines):
      while i < len(lines) and not (lines[i].strip().startswith(
          'def ') and 'get_parameter' in lines[i]):
           if lines[i].strip() and not lines[i].strip().startswith('class '):
-               indent = '        ' if lines[i].strip(
+                  indent = '        ' if lines[i].strip(
                 ) and not lines[i].strip().startswith('for ') else '    '
     fixed_lines.append(
-        indent +
-        lines[i].lstrip() if lines[i].strip() else lines[i])
+        indent
+        + lines[i].lstrip() if lines[i].strip() else lines[i])
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
@@ -119,30 +127,34 @@ while i < len(lines):
      while i < len(lines) and not (lines[i].strip().startswith(
          'def ') or lines[i].strip().startswith('_config_loader')):
           if lines[i].strip() and not lines[i].strip().startswith('class '):
-               indent = '        ' if lines[i].strip() else '    '
+                  indent = '        ' if lines[i].strip() else '    '
     fixed_lines.append(
-        indent +
-        lines[i].lstrip() if lines[i].strip() else lines[i])
+        indent
+        + lines[i].lstrip() if lines[i].strip() else lines[i])
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
 
     # Fix get_config_loader
      if 'def get_config_loader' in line:
+         pass
     fixed_lines.append(line)
     i += 1
      while i < len(lines) and not (lines[i].strip().startswith(
          'def ') and 'get_learned_parameter' in lines[i]):
           if lines[i].strip() and not lines[i].strip().startswith('class '):
-               fixed_lines.append('    ' + lines[i].lstrip())
+                  fixed_lines.append('    ' + lines[i].lstrip())
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
 
     # Fix get_learned_parameter
      if 'def get_learned_parameter' in line:
+         pass
     fixed_lines.append(line)
     i += 1
     while i < len(lines):
@@ -150,25 +162,29 @@ while i < len(lines):
                 'def ') and not lines[i].strip().startswith('class '):
             fixed_lines.append('    ' + lines[i].lstrip())
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     break
 
     # Fix REPLAY_DIR try block
      if 'try:' in line and 'REPLAY_DIR.mkdir' in ''.join(lines[i + 1:i + 5]):
+         pass
     fixed_lines.append(line)
     i += 1
-      while i < len(lines) and ('REPLAY_DIR.mkdir' in lines[i] or 'REPLAY_SOURCE_DIR.mkdir' in lines[i] or
-                                 'REPLAY_COMPLETED_DIR.mkdir' in lines[i] or 'except Exception:' in lines[i] or
-                                  'pass' in lines[i]):
+      while i < len(lines) and ('REPLAY_DIR.mkdir' in lines[i] or 'REPLAY_SOURCE_DIR.mkdir' in lines[i]
+                                 or 'REPLAY_COMPLETED_DIR.mkdir' in lines[i] or 'except Exception:' in lines[i]
+                                  or 'pass' in lines[i]):
            if 'REPLAY_DIR.mkdir' in lines[i] or 'REPLAY_SOURCE_DIR.mkdir' in lines[
                     i] or 'REPLAY_COMPLETED_DIR.mkdir' in lines[i]:
                 fixed_lines.append('    ' + lines[i].lstrip())
             elif 'except Exception:' in lines[i]:
+                pass
     fixed_lines.append(lines[i])
      elif 'pass' in lines[i]:
           fixed_lines.append('    ' + lines[i].lstrip())
     else:
+        pass
     fixed_lines.append(lines[i])
     i += 1
     continue
@@ -184,6 +200,7 @@ while i < len(lines):
           if not line.startswith(' '):
                fixed_lines.append('    ' + line.lstrip())
     else:
+        pass
     fixed_lines.append(line)
     i += 1
     continue

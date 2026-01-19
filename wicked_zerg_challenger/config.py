@@ -3,9 +3,12 @@
 import json
 import os
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
+import auto
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+import Optional
+import logging
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -128,7 +131,7 @@ KITING_DISTANCE: float = 2.0
 ENGAGE_DISTANCE: float = 15.0
 RETREAT_HP_PERCENT: float = 0.3
 
-SPAWNING_POOL_SUPPLY: int = 14
+SPAWNING_POOL_SUPPLY: int = 17  # Updated to match pro baseline (was 14)
 ROACH_WARREN_TIME: int = 180
 LAIR_TIME: int = 300
 HYDRA_DEN_TIME: int = 360
@@ -177,14 +180,14 @@ REPLAY_DIR = Path(os.environ.get("REPLAY_DIR", "D:/replays"))
 REPLAY_SOURCE_DIR = Path(
     os.environ.get(
         "REPLAY_SOURCE_DIR",
-        REPLAY_DIR /
-        "replays"))
+        REPLAY_DIR
+        / "replays"))
 REPLAY_COMPLETED_DIR = REPLAY_SOURCE_DIR / "completed"
 REPLAY_ARCHIVE_DIR = Path(
     os.environ.get(
         "REPLAY_ARCHIVE_DIR",
-        REPLAY_DIR /
-        "archive"))
+        REPLAY_DIR
+        / "archive"))
 
 # Ensure directories exist (create if needed)
 try:

@@ -14,6 +14,10 @@ from wicked_zerg_bot_pro import WickedZergBotPro
 import sys
 import os
 from pathlib import Path
+import random
+import time
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple, Set, Any, Union
 
 # SC2 path auto-setup function
 
@@ -425,10 +429,10 @@ def main():
                 # IMPROVED: Handle connection errors with longer wait time
                 error_msg = str(game_error).lower()
                 is_connection_error = (
-                    "connection" in error_msg or
-                    "connectionalreadyclosed" in error_msg or
-                    "websocket" in error_msg or
-                    "closing transport" in error_msg
+                    "connection" in error_msg
+                    or "connectionalreadyclosed" in error_msg
+                    or "websocket" in error_msg
+                    or "closing transport" in error_msg
                 )
 
                 if is_connection_error:

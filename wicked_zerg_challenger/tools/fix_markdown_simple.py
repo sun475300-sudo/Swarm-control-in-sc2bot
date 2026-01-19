@@ -12,10 +12,15 @@ PROJECT_ROOT = Path(__file__).parent.parent
 def fix_file(file_path: Path) -> int:
     """Fix markdown file"""
  try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
  except Exception:
- return 0
+     return 0
 
  original = content
  fixes = 0
@@ -42,18 +47,22 @@ def fix_file(file_path: Path) -> int:
  new_lines = []
  i = 0
  while i < len(lines):
+     pass
  line = lines[i]
-        if line.strip() == '```' and i + 1 < len(lines):
- # 다음 몇 줄 확인
+     if line.strip() == '```' and i + 1 < len(lines):
+     # 다음 몇 줄 확인
  for j in range(i + 1, min(i + 5, len(lines))):
-                if '```' in lines[j]:
- break
-                if 'python' in lines[j].lower() or 'import ' in lines[j] or 'def ' in lines[j]:
-                    line = '```python'
+     if '```' in lines[j]:
+         pass
+     break
+     if 'python' in lines[j].lower() or 'import ' in lines[j] or 'def ' in lines[j]:
+         pass
+     line = '```python'
  fixes += 1
  break
-                elif 'bash' in lines[j].lower() or lines[j].strip().startswith('$') or 'cd ' in lines[j]:
-                    line = '```bash'
+     elif 'bash' in lines[j].lower() or lines[j].strip().startswith('$') or 'cd ' in lines[j]:
+         pass
+     line = '```bash'
  fixes += 1
  break
  new_lines.append(line)
@@ -61,38 +70,43 @@ def fix_file(file_path: Path) -> int:
     content = '\n'.join(new_lines)
 
  if content != original:
- try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
  return fixes + 1
  except Exception:
- return 0
+     return 0
 
  return 0
 
 
 def main():
- files = [
-        "PRE_COMMIT_CHECKLIST.md",
-        "FINAL_PRE_COMMIT_SUMMARY.md",
-        "PROJECT_STRUCTURE_IMPROVEMENT_PLAN.md",
-        "TRAINING_OPTIMIZATION_GUIDE.md",
-        "GITHUB_UPLOAD_READY.md",
-        "FINAL_STATUS.md",
-        "README_GITHUB_UPLOAD.md",
+    files = [
+    "PRE_COMMIT_CHECKLIST.md",
+    "FINAL_PRE_COMMIT_SUMMARY.md",
+    "PROJECT_STRUCTURE_IMPROVEMENT_PLAN.md",
+    "TRAINING_OPTIMIZATION_GUIDE.md",
+    "GITHUB_UPLOAD_READY.md",
+    "FINAL_STATUS.md",
+    "README_GITHUB_UPLOAD.md",
  ]
 
  total = 0
  for fname in files:
- path = PROJECT_ROOT / fname
+     path = PROJECT_ROOT / fname
  if path.exists():
- count = fix_file(path)
+     count = fix_file(path)
  if count > 0:
-                print(f"Fixed: {fname} ({count} changes)")
+     print(f"Fixed: {fname} ({count} changes)")
  total += count
 
     print(f"\nTotal: {total} files fixed")
 
 
 if __name__ == "__main__":
- main()
+    main()

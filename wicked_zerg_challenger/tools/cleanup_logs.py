@@ -9,8 +9,10 @@ Remove old and duplicate log files to reduce disk usage.
 import os
 import re
 from pathlib import Path
-from typing import List, Dict
-from datetime import datetime, timedelta
+from typing import List
+import Dict
+from datetime import datetime
+import timedelta
 from collections import defaultdict
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent  # Go up to project root

@@ -11,6 +11,14 @@ import json
 import time
 from datetime import datetime
 import logging
+import os
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +42,11 @@ class GameState:
     map_name: str = "Unknown"
     timestamp: str = ""
 
- def __post_init__(self):
- if self.units is None:
- self.units = {}
+def __post_init__(self):
+    if self.units is None:
+    self.units = {}
  if not self.timestamp:
- self.timestamp = datetime.now().isoformat()
+     self.timestamp = datetime.now().isoformat()
 
 
 @dataclass
@@ -65,11 +73,11 @@ class LearningProgress:
  win_rate_trend: list = None
  training_logs: list = None
 
- def __post_init__(self):
- if self.win_rate_trend is None:
- self.win_rate_trend = []
+def __post_init__(self):
+    if self.win_rate_trend is None:
+    self.win_rate_trend = []
  if self.training_logs is None:
- self.training_logs = []
+     self.training_logs = []
 
 
 class BotApiConnector:
@@ -80,24 +88,24 @@ class BotApiConnector:
  methods to update game state, combat stats, and learning progress.
     """
 
-    def __init__(self, api_url: str = "http://localhost:8000"):
-        """
+def __init__(self, api_url: str = "http://localhost:8000"):
+    """
  Initialize the bot API connector.
 
  Args:
  api_url: Base URL of the FastAPI server (default: http://localhost:8000)
-        """
-        self.api_url = api_url.rstrip('/')
+     """
+     self.api_url = api_url.rstrip('/')
  self.current_state: Optional[GameState] = None
  self.combat_stats: Optional[CombatStats] = None
  self.learning_progress: Optional[LearningProgress] = None
  self.last_update_time = 0
  self.update_interval = 0.5 # Update every 0.5 seconds
 
-        logger.info(f"BotApiConnector initialized with API URL: {self.api_url}")
+     logger.info(f"BotApiConnector initialized with API URL: {self.api_url}")
 
- def update_state(self, bot_instance) -> bool:
-        """
+def update_state(self, bot_instance) -> bool:
+    """
  Update game state from bot instance.
 
  Args:
@@ -105,22 +113,27 @@ class BotApiConnector:
 
  Returns:
  bool: True if update was successful, False otherwise
-        """
+     """
  try:
- # Throttle updates to avoid overwhelming the server
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Throttle updates to avoid overwhelming the server
  current_time = time.time()
  if current_time - self.last_update_time < self.update_interval:
- return True # Skip this update
+     return True # Skip this update
 
  # Extract game state from bot instance
  state = GameState(
-                current_frame = getattr(bot_instance, 'iteration', 0),
+     current_frame = getattr(bot_instance, 'iteration', 0),
  game_status = self._get_game_status(bot_instance),
-                is_running = getattr(bot_instance, 'is_running', False),
-                minerals = int(getattr(bot_instance, 'minerals', 50)),
-                vespene = int(getattr(bot_instance, 'vespene', 0)),
-                supply_used = getattr(bot_instance, 'supply_used', 12),
-                supply_cap = getattr(bot_instance, 'supply_cap', 15),
+     is_running = getattr(bot_instance, 'is_running', False),
+     minerals = int(getattr(bot_instance, 'minerals', 50)),
+     vespene = int(getattr(bot_instance, 'vespene', 0)),
+     supply_used = getattr(bot_instance, 'supply_used', 12),
+     supply_cap = getattr(bot_instance, 'supply_cap', 15),
  units = self._extract_units(bot_instance),
  threat_level = self._get_threat_level(bot_instance),
  strategy_mode = self._get_strategy_mode(bot_instance),
@@ -135,79 +148,98 @@ class BotApiConnector:
  return self._send_state_update(state)
 
  except Exception as e:
-            logger.debug(f"Failed to update game state: {e}")
+     logger.debug(f"Failed to update game state: {e}")
  return False
 
- def _get_game_status(self, bot_instance) -> str:
-        """Extract game status from bot instance"""
+def _get_game_status(self, bot_instance) -> str:
+    """Extract game status from bot instance"""
  try:
-            if not hasattr(bot_instance, 'townhalls') or not bot_instance.townhalls.exists:
-                return "ENDED"
-            if getattr(bot_instance, 'is_running', False):
-                return "IN_PROGRESS"
-            return "READY"
+     if not hasattr(bot_instance, 'townhalls') or not bot_instance.townhalls.exists:
+         pass
+     return "ENDED"
+     if getattr(bot_instance, 'is_running', False):
+         pass
+     return "IN_PROGRESS"
+     return "READY"
  except Exception:
-            return "UNKNOWN"
+     return "UNKNOWN"
 
- def _extract_units(self, bot_instance) -> Dict[str, int]:
-        """Extract unit counts from bot instance"""
+def _extract_units(self, bot_instance) -> Dict[str, int]:
+    """Extract unit counts from bot instance"""
  units = {}
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  # Common Zerg units
  unit_types = {
-                'zerglings': UnitTypeId.ZERGLING,
-                'roaches': UnitTypeId.ROACH,
-                'hydralisks': UnitTypeId.HYDRALISK,
-                'queens': UnitTypeId.QUEEN,
-                'drones': UnitTypeId.DRONE,
-                'overlords': UnitTypeId.OVERLORD,
+     'zerglings': UnitTypeId.ZERGLING,
+     'roaches': UnitTypeId.ROACH,
+     'hydralisks': UnitTypeId.HYDRALISK,
+     'queens': UnitTypeId.QUEEN,
+     'drones': UnitTypeId.DRONE,
+     'overlords': UnitTypeId.OVERLORD,
  }
 
  for name, unit_id in unit_types.items():
- try:
-                    count = bot_instance.units(unit_id).amount if hasattr(bot_instance, 'units') else 0
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         count = bot_instance.units(unit_id).amount if hasattr(bot_instance, 'units') else 0
  units[name] = count
  except Exception:
- units[name] = 0
+     units[name] = 0
  except Exception:
- pass
+     pass
 
  return units
 
- def _get_threat_level(self, bot_instance) -> str:
-        """Determine threat level from bot instance"""
+def _get_threat_level(self, bot_instance) -> str:
+    """Determine threat level from bot instance"""
  try:
-            if hasattr(bot_instance, 'early_defense') and bot_instance.early_defense:
-                if hasattr(bot_instance.early_defense, 'is_panic_mode'):
- if bot_instance.early_defense.is_panic_mode():
-                        return "HIGH"
-            return "NONE"
+     if hasattr(bot_instance, 'early_defense') and bot_instance.early_defense:
+         pass
+     if hasattr(bot_instance.early_defense, 'is_panic_mode'):
+         pass
+     if bot_instance.early_defense.is_panic_mode():
+         pass
+     return "HIGH"
+     return "NONE"
  except Exception:
-            return "NONE"
+     return "NONE"
 
- def _get_strategy_mode(self, bot_instance) -> str:
-        """Extract strategy mode from bot instance"""
+def _get_strategy_mode(self, bot_instance) -> str:
+    """Extract strategy mode from bot instance"""
  try:
-            if hasattr(bot_instance, 'strategy_mode'):
- return str(bot_instance.strategy_mode)
-            if hasattr(bot_instance, 'game_phase'):
- return str(bot_instance.game_phase)
-            return "OPENING"
+     if hasattr(bot_instance, 'strategy_mode'):
+         pass
+     return str(bot_instance.strategy_mode)
+     if hasattr(bot_instance, 'game_phase'):
+         pass
+     return str(bot_instance.game_phase)
+     return "OPENING"
  except Exception:
-            return "OPENING"
+     return "OPENING"
 
- def _get_map_name(self, bot_instance) -> str:
-        """Extract map name from bot instance"""
+def _get_map_name(self, bot_instance) -> str:
+    """Extract map name from bot instance"""
  try:
-            if hasattr(bot_instance, 'game_info') and bot_instance.game_info:
- return bot_instance.game_info.map_name
-            return "Unknown"
+     if hasattr(bot_instance, 'game_info') and bot_instance.game_info:
+         pass
+     return bot_instance.game_info.map_name
+     return "Unknown"
  except Exception:
-            return "Unknown"
+     return "Unknown"
 
- def _send_state_update(self, state: GameState) -> bool:
-        """
+def _send_state_update(self, state: GameState) -> bool:
+    """
  Send game state update to API server.
 
  Args:
@@ -215,58 +247,63 @@ class BotApiConnector:
 
  Returns:
  bool: True if successful, False otherwise
-        """
+     """
  try:
- import requests
+     pass
+ pass
 
-            url = f"{self.api_url}/api/game-state/update"
+ except Exception:
+     pass
+     import requests
+
+     url = f"{self.api_url}/api/game-state/update"
  data = {
-                "current_frame": state.current_frame,
-                "game_status": state.game_status,
-                "is_running": state.is_running,
-                "minerals": state.minerals,
-                "vespene": state.vespene,
-                "supply_used": state.supply_used,
-                "supply_cap": state.supply_cap,
-                "units": state.units,
-                "threat_level": state.threat_level,
-                "strategy_mode": state.strategy_mode,
-                "map_name": state.map_name,
-                "last_update": state.timestamp
+     "current_frame": state.current_frame,
+     "game_status": state.game_status,
+     "is_running": state.is_running,
+     "minerals": state.minerals,
+     "vespene": state.vespene,
+     "supply_used": state.supply_used,
+     "supply_cap": state.supply_cap,
+     "units": state.units,
+     "threat_level": state.threat_level,
+     "strategy_mode": state.strategy_mode,
+     "map_name": state.map_name,
+     "last_update": state.timestamp
  }
 
  response = requests.post(url, json = data, timeout = 1.0)
  return response.status_code == 200
 
  except Exception as e:
-            # Silent fail - don't spam logs if server is not available
+     # Silent fail - don't spam logs if server is not available
  return False
 
- def get_game_state(self) -> Optional[GameState]:
-        """Get current game state"""
+def get_game_state(self) -> Optional[GameState]:
+    """Get current game state"""
  return self.current_state
 
- def get_combat_stats(self) -> Optional[CombatStats]:
-        """Get combat statistics"""
+def get_combat_stats(self) -> Optional[CombatStats]:
+    """Get combat statistics"""
  return self.combat_stats
 
- def get_learning_progress(self) -> Optional[LearningProgress]:
-        """Get learning progress"""
+def get_learning_progress(self) -> Optional[LearningProgress]:
+    """Get learning progress"""
  return self.learning_progress
 
- def set_strategy_mode(self, strategy: str):
-        """Set strategy mode"""
-        logger.info(f"Strategy mode set to: {strategy}")
+def set_strategy_mode(self, strategy: str):
+    """Set strategy mode"""
+    logger.info(f"Strategy mode set to: {strategy}")
  # Strategy is set in bot instance, not via API
 
- def resume_game(self):
-        """Resume game"""
-        logger.info("Game resumed")
+def resume_game(self):
+    """Resume game"""
+    logger.info("Game resumed")
  # Game control is handled by bot instance
 
- def pause_game(self):
-        """Pause game"""
-        logger.info("Game paused")
+def pause_game(self):
+    """Pause game"""
+    logger.info("Game paused")
  # Game control is handled by bot instance
 
 
@@ -289,11 +326,16 @@ def init_connector(api_url: str = "http://localhost:8000") -> BotApiConnector:
 
 # Auto-initialize if not already initialized
 if bot_connector is None:
- try:
- import os
+    try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        import os
         api_url = os.environ.get("MONITORING_API_URL", "http://localhost:8000")
  bot_connector = BotApiConnector(api_url)
-        logger.info("BotApiConnector auto-initialized")
+    logger.info("BotApiConnector auto-initialized")
  except Exception as e:
-        logger.warning(f"Failed to auto-initialize BotApiConnector: {e}")
+     logger.warning(f"Failed to auto-initialize BotApiConnector: {e}")
  bot_connector = None

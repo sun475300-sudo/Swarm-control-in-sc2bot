@@ -3,26 +3,36 @@
 """
 SC2 AI Arena Dashboard API
 
-SC2 AI Arena¿¡ ¹èÆ÷µÈ º¿À» À§ÇÑ Àü¿ë ´ë½Ãº¸µå API
-·©Å·, ELO, °æ±â °á°ú µîÀ» ¸ð´ÏÅÍ¸µ
+SC2 AI Arenaï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ãºï¿½ï¿½ï¿½ API
+ï¿½ï¿½Å·, ELO, ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Í¸ï¿½
 """
 
 import asyncio
 import json
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
+import timedelta
 import logging
 from pathlib import Path
 import os
-from typing import List, Dict, Any, Optional
+from typing import List
+import Dict
+import Any
+import Optional
 import time
 
 # FastAPI imports
 try:
-    from fastapi import FastAPI, HTTPException, Depends, WebSocket, status
-    from fastapi.responses import HTMLResponse, JSONResponse
+    from fastapi import FastAPI
+    import HTTPException
+    import Depends
+    import WebSocket
+    import status
+    from fastapi.responses import HTMLResponse
+    import JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.security import HTTPBasic, HTTPBasicCredentials
+    from fastapi.security import HTTPBasic
+    import HTTPBasicCredentials
     from starlette.responses import JSONResponse as StarletteJSONResponse
 except ImportError:
     raise ImportError(
@@ -38,7 +48,7 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="SC2 AI Arena Dashboard API",
-    description="SC2 AI Arena ¹èÆ÷ º¿ Àü¿ë ´ë½Ãº¸µå API",
+    description="SC2 AI Arena ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ãºï¿½ï¿½ï¿½ API",
     version="1.0.0"
 )
 
@@ -61,7 +71,7 @@ app.default_response_class = UTF8JSONResponse
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Arena ´ë½Ãº¸µå´Â °ø°³ÀûÀ¸·Î Á¢±Ù °¡´ÉÇÏµµ·Ï ¼³Á¤
+    allow_origins=["*"],  # Arena ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,13 +81,13 @@ app.add_middleware(
 # Arena API Integration
 # ============================================================================
 
-# Arena API ¼³Á¤ (È¯°æ º¯¼ö ¶Ç´Â ±âº»°ª)
+# Arena API ï¿½ï¿½ï¿½ï¿½ (È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ ï¿½âº»ï¿½ï¿½)
 ARENA_API_BASE_URL = os.environ.get(
     "ARENA_API_URL", "https://aiarena.net/api/v2")
 ARENA_BOT_NAME = os.environ.get("ARENA_BOT_NAME", "WickedZerg")
 ARENA_BOT_ID = os.environ.get("ARENA_BOT_ID", None)
 
-# Arena µ¥ÀÌÅÍ Ä³½Ã
+# Arena ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½
 arena_data_cache = {
     "bot_info": None,
     "matches": [],
@@ -94,10 +104,10 @@ arena_data_cache = {
 
 def fetch_arena_bot_info() -> Optional[Dict[str, Any]]:
     """
-    Arena API¿¡¼­ º¿ Á¤º¸ °¡Á®¿À±â
+    Arena APIï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     Returns:
-        º¿ Á¤º¸ ¶Ç´Â None
+        ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ None
     """
     try:
         url = f"{ARENA_API_BASE_URL}/bots/{ARENA_BOT_NAME}/"
@@ -105,22 +115,22 @@ def fetch_arena_bot_info() -> Optional[Dict[str, Any]]:
         if response.status_code == 200:
             return response.json()
         else:
-            logger.warning(f"Arena API È£Ãâ ½ÇÆÐ: {response.status_code}")
+            logger.warning(f"Arena API È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {response.status_code}")
             return None
     except Exception as e:
-        logger.error(f"Arena º¿ Á¤º¸ °¡Á®¿À±â ½ÇÆÐ: {e}")
+        logger.error(f"Arena ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {e}")
         return None
 
 
 def fetch_arena_matches(limit: int = 50) -> List[Dict[str, Any]]:
     """
-    Arena API¿¡¼­ °æ±â ±â·Ï °¡Á®¿À±â
+    Arena APIï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     Args:
-        limit: ÃÖ´ë °æ±â ¼ö
+        limit: ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½
 
     Returns:
-        °æ±â ±â·Ï ¸®½ºÆ®
+        ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
     """
     try:
         if ARENA_BOT_ID:
@@ -134,19 +144,19 @@ def fetch_arena_matches(limit: int = 50) -> List[Dict[str, Any]]:
             return data.get("results", [])
         else:
             logger.warning(
-                f"Arena °æ±â ±â·Ï °¡Á®¿À±â ½ÇÆÐ: {response.status_code}")
+                f"Arena ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {response.status_code}")
             return []
     except Exception as e:
-        logger.error(f"Arena °æ±â ±â·Ï °¡Á®¿À±â ½ÇÆÐ: {e}")
+        logger.error(f"Arena ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {e}")
         return []
 
 
 def fetch_arena_ranking() -> Optional[Dict[str, Any]]:
     """
-    Arena ·©Å· Á¤º¸ °¡Á®¿À±â
+    Arena ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     Returns:
-        ·©Å· Á¤º¸ ¶Ç´Â None
+        ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ None
     """
     try:
         url = f"{ARENA_API_BASE_URL}/ladders/"
@@ -155,7 +165,7 @@ def fetch_arena_ranking() -> Optional[Dict[str, Any]]:
             data = response.json()
             results = data.get("results", [])
 
-            # º¿ÀÇ ·©Å· Ã£±â
+            # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å· Ã£ï¿½ï¿½
             for ladder in results:
                 if ARENA_BOT_NAME.lower() in ladder.get("bot_name", "").lower():
                     return ladder
@@ -163,22 +173,22 @@ def fetch_arena_ranking() -> Optional[Dict[str, Any]]:
             return None
         else:
             logger.warning(
-                f"Arena ·©Å· Á¤º¸ °¡Á®¿À±â ½ÇÆÐ: {response.status_code}")
+                f"Arena ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {response.status_code}")
             return None
     except Exception as e:
-        logger.error(f"Arena ·©Å· Á¤º¸ °¡Á®¿À±â ½ÇÆÐ: {e}")
+        logger.error(f"Arena ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {e}")
         return None
 
 
 def calculate_arena_stats(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    °æ±â ±â·Ï¿¡¼­ Åë°è °è»ê
+    ï¿½ï¿½ï¿½ ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 
     Args:
-        matches: °æ±â ±â·Ï ¸®½ºÆ®
+        matches: ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
 
     Returns:
-        Åë°è µñ¼Å³Ê¸®
+        ï¿½ï¿½ï¿½ ï¿½ï¿½Å³Ê¸ï¿½
     """
     if not matches:
         return {
@@ -230,11 +240,11 @@ def calculate_arena_stats(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 async def update_arena_cache():
-    """Arena µ¥ÀÌÅÍ Ä³½Ã ¾÷µ¥ÀÌÆ®"""
+    """Arena ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®"""
     try:
-        logger.info("Arena µ¥ÀÌÅÍ Ä³½Ã ¾÷µ¥ÀÌÆ® Áß...")
+        logger.info("Arena ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½...")
 
-        # º¿ Á¤º¸ °¡Á®¿À±â
+        # ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         bot_info = fetch_arena_bot_info()
         if bot_info:
             arena_data_cache["bot_info"] = bot_info
@@ -242,21 +252,21 @@ async def update_arena_cache():
                 global ARENA_BOT_ID
                 ARENA_BOT_ID = bot_info.get("id")
 
-        # °æ±â ±â·Ï °¡Á®¿À±â
+        # ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         matches = fetch_arena_matches(limit=100)
         arena_data_cache["matches"] = matches
 
-        # Åë°è °è»ê
+        # ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
         arena_data_cache["stats"] = calculate_arena_stats(matches)
 
-        # ·©Å· Á¤º¸ °¡Á®¿À±â
+        # ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         ranking = fetch_arena_ranking()
         arena_data_cache["ranking"] = ranking
 
-        # ELO È÷½ºÅä¸® »ý¼º (ÃÖ±Ù 50°æ±â)
+        # ELO ï¿½ï¿½ï¿½ï¿½ï¿½ä¸® ï¿½ï¿½ï¿½ï¿½ (ï¿½Ö±ï¿½ 50ï¿½ï¿½ï¿½)
         recent_matches = matches[:50] if len(matches) > 50 else matches
         elo_history = []
-        for match in reversed(recent_matches):  # ¿À·¡µÈ ¼ø¼­´ë·Î
+        for match in reversed(recent_matches):  # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             elo_after = match.get(
                 "bot1_elo_after", match.get(
                     "elo_after", None))
@@ -270,10 +280,10 @@ async def update_arena_cache():
         arena_data_cache["elo_history"] = elo_history
 
         arena_data_cache["last_update"] = datetime.now().isoformat()
-        logger.info("Arena µ¥ÀÌÅÍ Ä³½Ã ¾÷µ¥ÀÌÆ® ¿Ï·á")
+        logger.info("Arena ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï·ï¿½")
 
     except Exception as e:
-        logger.error(f"Arena Ä³½Ã ¾÷µ¥ÀÌÆ® ½ÇÆÐ: {e}")
+        logger.error(f"Arena Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½: {e}")
 
 # ============================================================================
 # API Endpoints
@@ -312,11 +322,11 @@ async def health_check():
 
 @app.get("/api/arena/bot-info")
 async def get_arena_bot_info():
-    """Arena º¿ Á¤º¸ Á¶È¸"""
+    """Arena ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¸"""
     bot_info = arena_data_cache.get("bot_info")
 
     if not bot_info:
-        # Ä³½Ã°¡ ¾øÀ¸¸é Á÷Á¢ °¡Á®¿À±â
+        # Ä³ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         bot_info = fetch_arena_bot_info()
         if bot_info:
             arena_data_cache["bot_info"] = bot_info
@@ -324,7 +334,7 @@ async def get_arena_bot_info():
     if not bot_info:
         return {
             "success": False,
-            "message": "º¿ Á¤º¸¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù. Arena API URL°ú º¿ ÀÌ¸§À» È®ÀÎÇÏ¼¼¿ä.",
+            "message": "ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½. Arena API URLï¿½ï¿½ ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½.",
             "config": {
                 "arena_api_url": ARENA_API_BASE_URL,
                 "bot_name": ARENA_BOT_NAME,
@@ -339,11 +349,11 @@ async def get_arena_bot_info():
 
 @app.get("/api/arena/stats")
 async def get_arena_stats():
-    """Arena Åë°è Á¶È¸"""
+    """Arena ï¿½ï¿½ï¿½ ï¿½ï¿½È¸"""
     stats = arena_data_cache.get("stats")
 
     if not stats or not arena_data_cache.get("last_update"):
-        # Ä³½Ã°¡ ¾øÀ¸¸é ¾÷µ¥ÀÌÆ®
+        # Ä³ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
         matches = fetch_arena_matches(limit=100)
         stats = calculate_arena_stats(matches)
         arena_data_cache["stats"] = stats
@@ -357,10 +367,10 @@ async def get_arena_stats():
 
 @app.get("/api/arena/matches")
 async def get_arena_matches(limit: int = 50, offset: int = 0):
-    """Arena °æ±â ±â·Ï Á¶È¸"""
+    """Arena ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½È¸"""
     matches = arena_data_cache.get("matches", [])
 
-    # ÆäÀÌÁö³×ÀÌ¼Ç
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½
     total = len(matches)
     paginated_matches = matches[offset:offset + limit]
 
@@ -379,11 +389,11 @@ async def get_arena_matches(limit: int = 50, offset: int = 0):
 
 @app.get("/api/arena/ranking")
 async def get_arena_ranking():
-    """Arena ·©Å· Á¤º¸ Á¶È¸"""
+    """Arena ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¸"""
     ranking = arena_data_cache.get("ranking")
 
     if not ranking:
-        # Ä³½Ã°¡ ¾øÀ¸¸é Á÷Á¢ °¡Á®¿À±â
+        # Ä³ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         ranking = fetch_arena_ranking()
         if ranking:
             arena_data_cache["ranking"] = ranking
@@ -391,7 +401,7 @@ async def get_arena_ranking():
     if not ranking:
         return {
             "success": False,
-            "message": "·©Å· Á¤º¸¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.",
+            "message": "ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.",
             "data": None
         }
 
@@ -403,11 +413,11 @@ async def get_arena_ranking():
 
 @app.get("/api/arena/elo-history")
 async def get_arena_elo_history(limit: int = 50):
-    """ELO ·¹ÀÌÆÃ È÷½ºÅä¸® Á¶È¸"""
+    """ELO ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ä¸® ï¿½ï¿½È¸"""
     elo_history = arena_data_cache.get("elo_history", [])
 
     if not elo_history:
-        # Ä³½Ã°¡ ¾øÀ¸¸é »ý¼º
+        # Ä³ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         matches = fetch_arena_matches(limit=limit)
         elo_history = []
         for match in reversed(matches):
@@ -432,18 +442,18 @@ async def get_arena_elo_history(limit: int = 50):
 
 @app.post("/api/arena/refresh")
 async def refresh_arena_data():
-    """Arena µ¥ÀÌÅÍ Ä³½Ã °­Á¦ »õ·Î°íÄ§"""
+    """Arena ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î°ï¿½Ä§"""
     await update_arena_cache()
     return {
         "success": True,
-        "message": "Arena µ¥ÀÌÅÍ°¡ »õ·Î°íÄ§µÇ¾ú½À´Ï´Ù.",
+        "message": "Arena ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½Î°ï¿½Ä§ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.",
         "last_update": arena_data_cache.get("last_update")
     }
 
 
 @app.get("/api/arena/opponents")
 async def get_arena_opponents():
-    """»ó´ë º¿º° ¼ºÀû Á¶È¸"""
+    """ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¸"""
     matches = arena_data_cache.get("matches", [])
 
     opponent_stats = {}
@@ -471,13 +481,13 @@ async def get_arena_opponents():
 
         opponent_stats[opponent]["total"] += 1
 
-    # ½Â·ü °è»ê
+    # ï¿½Â·ï¿½ ï¿½ï¿½ï¿½
     for opponent, stats in opponent_stats.items():
         if stats["total"] > 0:
             stats["win_rate"] = round(
                 (stats["wins"] / stats["total"]) * 100, 2)
 
-    # ½Â·ü ¼øÀ¸·Î Á¤·Ä
+    # ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     sorted_opponents = sorted(
         opponent_stats.values(),
         key=lambda x: x["win_rate"],
@@ -493,7 +503,7 @@ async def get_arena_opponents():
 
 @app.get("/api/arena/recent-performance")
 async def get_recent_performance(days: int = 7):
-    """ÃÖ±Ù ¼ºÀû Á¶È¸ (±â°£º°)"""
+    """ï¿½Ö±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¸ (ï¿½â°£ï¿½ï¿½)"""
     matches = arena_data_cache.get("matches", [])
 
     cutoff_date = datetime.now() - timedelta(days=days)
@@ -531,13 +541,13 @@ connected_arena_clients: List[WebSocket] = []
 
 @app.websocket("/ws/arena-updates")
 async def websocket_arena_updates(websocket: WebSocket):
-    """½Ç½Ã°£ Arena ¾÷µ¥ÀÌÆ® WebSocket"""
+    """ï¿½Ç½Ã°ï¿½ Arena ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® WebSocket"""
     await websocket.accept()
     connected_arena_clients.append(websocket)
 
     try:
         while True:
-            # Ä³½ÃµÈ µ¥ÀÌÅÍ Àü¼Û
+            # Ä³ï¿½Ãµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             data = {
                 "type": "arena_update",
                 "stats": arena_data_cache.get("stats", {}),
@@ -546,9 +556,9 @@ async def websocket_arena_updates(websocket: WebSocket):
                 "timestamp": datetime.now().isoformat()
             }
             await websocket.send_json(data)
-            await asyncio.sleep(30)  # 30ÃÊ¸¶´Ù ¾÷µ¥ÀÌÆ®
+            await asyncio.sleep(30)  # 30ï¿½Ê¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
     except Exception as e:
-        logger.error(f"WebSocket ¿¡·¯: {e}")
+        logger.error(f"WebSocket ï¿½ï¿½ï¿½ï¿½: {e}")
     finally:
         connected_arena_clients.remove(websocket)
 
@@ -559,21 +569,21 @@ async def websocket_arena_updates(websocket: WebSocket):
 
 @app.on_event("startup")
 async def startup_event():
-    """¼­¹ö ½ÃÀÛ ½Ã ½ÇÇà"""
-    logger.info("SC2 AI Arena Dashboard API ½ÃÀÛ")
-    logger.info(f"º¿ ÀÌ¸§: {ARENA_BOT_NAME}")
+    """ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
+    logger.info("SC2 AI Arena Dashboard API ï¿½ï¿½ï¿½ï¿½")
+    logger.info(f"ï¿½ï¿½ ï¿½Ì¸ï¿½: {ARENA_BOT_NAME}")
     logger.info(f"Arena API URL: {ARENA_API_BASE_URL}")
 
-    # ÃÊ±â Ä³½Ã ¾÷µ¥ÀÌÆ®
+    # ï¿½Ê±ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
     await update_arena_cache()
 
-    # ÁÖ±âÀûÀ¸·Î Ä³½Ã ¾÷µ¥ÀÌÆ® (5ºÐ¸¶´Ù)
+    # ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (5ï¿½Ð¸ï¿½ï¿½ï¿½)
     async def periodic_update():
         while True:
-            await asyncio.sleep(300)  # 5ºÐ
+            await asyncio.sleep(300)  # 5ï¿½ï¿½
             await update_arena_cache()
 
-    # ¹é±×¶ó¿îµå ÅÂ½ºÅ© ½ÃÀÛ
+    # ï¿½ï¿½×¶ï¿½ï¿½ï¿½ ï¿½Â½ï¿½Å© ï¿½ï¿½ï¿½ï¿½
     asyncio.create_task(periodic_update())
 
 # ============================================================================
@@ -585,6 +595,6 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8002,  # Arena ´ë½Ãº¸µå´Â ´Ù¸¥ Æ÷Æ® »ç¿ë
+        port=8002,  # Arena ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½ï¿½
         log_level="info"
     )

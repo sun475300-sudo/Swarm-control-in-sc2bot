@@ -14,13 +14,16 @@ import csv
 import json
 import statistics
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 
 class TelemetryLogger:
     """Logger for training statistics and telemetry data"""
 
-    def __init__(self, bot: Any, instance_id: int = 0):
+def __init__(self, bot: Any, instance_id: int = 0):
         """
 Initialize TelemetryLogger
 
@@ -40,6 +43,7 @@ instance_id: Instance ID (for file naming)
 
  # Statistics file
         self.stats_file = "training_stats.json"
+
 
  # Win/loss counter
 self.total_games = 0
@@ -74,6 +78,12 @@ combat_unit_types: Set of combat unit types
 
 
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 bot = self.bot
 
  # Calculate combat unit count (optimized: whitelist approach)
@@ -85,6 +95,7 @@ army_units = bot.units.filter(lambda u: u.type_id in combat_unit_types)
             enemy_units = getattr(bot, "enemy_units", None)
 enemy_army_count = 0
 if enemy_units:
+    pass
 enemy_army_count = sum(
 1
 for u in enemy_units
@@ -146,9 +157,11 @@ self.telemetry_data.append(log_entry)
 
  # Memory management: keep only last 1000 entries
 if len(self.telemetry_data) > 1000:
+    pass
 self.telemetry_data = self.telemetry_data[-1000:]
 
 except Exception as e:
+    pass
 if bot.iteration % 500 == 0:
                 print(f"[WARNING] Telemetry logging error: {e}")
 
@@ -167,6 +180,12 @@ Dict with swarm control metrics
 
 
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 metrics = {
                 "swarm_formation_score": 0.0,
                 "unit_spacing_avg": 0.0,
@@ -181,6 +200,7 @@ metrics = {
 
  # Calculate unit spacing (simplified: based on army count and supply)
 if army_count > 0:
+    pass
 army_supply = bot.supply_army
  # Ideal spacing: 1-2 supply per unit indicates good spread
 supply_per_unit = army_supply / army_count if army_count > 0 else 0
@@ -190,7 +210,7 @@ supply_per_unit = army_supply / army_count if army_count > 0 else 0
 if 0.5 <= supply_per_unit <= 2.5:
                         metrics["swarm_formation_score"] = 1.0
 elif supply_per_unit < 0.5:
- # Too clustered
+    # Too clustered
                         metrics["swarm_formation_score"] = supply_per_unit / 0.5
 else:
  # Too spread out
@@ -201,6 +221,7 @@ else:
                     enemy_army = getattr(bot, "enemy_units", None)
 enemy_count = 0
 if enemy_army:
+    pass
 enemy_count = sum(
 1 for u in enemy_army
                             if hasattr(u, "can_attack") and u.can_attack
@@ -208,7 +229,7 @@ enemy_count = sum(
 )
 
 if enemy_count > 0:
- # Cohesion: how well our army is grouped relative to enemy
+    # Cohesion: how well our army is grouped relative to enemy
  # Higher cohesion = better swarm control
 army_ratio = army_count / enemy_count if enemy_count > 0 else 0
                         metrics["swarm_cohesion"] = min(1.0, army_ratio / 2.0)  # Normalize to 0-1
@@ -217,13 +238,13 @@ else:
 
                     # Obstacle avoidance: check if we're avoiding enemy units
 if enemy_count > 0 and army_count > 0:
- # If we have army and enemy is present, assume obstacle avoidance is active
+    # If we have army and enemy is present, assume obstacle avoidance is active
                         metrics["obstacle_avoidance_active"] = True
 
 return metrics
 
 except Exception as e:
- # Return default metrics on error
+    # Return default metrics on error
 return {
  # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
  # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
@@ -237,6 +258,12 @@ return {
 async def save_telemetry(self) -> None:
         """Save telemetry data to JSON and CSV files"""
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 if not self.telemetry_data:
                 print("[TELEMETRY] No data to save")
 return
@@ -270,6 +297,12 @@ loss_reason: Reason for loss
 loss_details: Detailed loss information
         """
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 bot = self.bot
 
  # Convert result to string
@@ -288,9 +321,11 @@ self.total_games += 1
  # Check opponent race
             opponent_race_str = "Unknown"
             if hasattr(bot, "opponent_race") and bot.opponent_race:
+                pass
 opponent_race_str = str(bot.opponent_race)
             elif hasattr(bot, "intel") and bot.intel and hasattr(bot.intel, "enemy"):
                 if hasattr(bot.intel.enemy, "race"):
+                    pass
 opponent_race_str = str(bot.intel.enemy.race)
 
  # Check persona
@@ -300,8 +335,10 @@ opponent_race_str = str(bot.intel.enemy.race)
             map_name = "Unknown"
             if hasattr(bot, "game_info") and bot.game_info:
                 if hasattr(bot.game_info, "map_name"):
+                    pass
 map_name = bot.game_info.map_name
                 elif hasattr(bot.game_info, "map_name"):
+                    pass
 map_name = str(bot.game_info.map_name)
 
  # Calculate units killed/lost (simplified)
@@ -346,9 +383,16 @@ log_data = {
 
  # Send to Manus Dashboard (if enabled)
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 manus_client = create_client_from_env()
 
 if manus_client and manus_client.enabled:
+    pass
 success = manus_client.create_game_session(
 map_name = map_name,
 enemy_race = opponent_race_str,
@@ -368,7 +412,7 @@ personality = personality,
 if success:
                         print(f"[MANUS] Game result sent to dashboard: {result_str}")
 except ImportError:
- # Manus client not available, skip
+    # Manus client not available, skip
 pass
 except Exception as e:
                 print(f"[WARNING] Manus dashboard send failed: {e}")
@@ -384,6 +428,7 @@ Returns:
 float: Win rate (0.0 ~ 1.0)
         """
 if self.total_games == 0:
+    pass
 return 0.0
 return self.wins / self.total_games
 
@@ -424,6 +469,12 @@ Returns:
 Dict: Final statistics (None if failed)
         """
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 bot = self.bot
 
  # Calculate unit counts (optimized: use amount attribute)
@@ -473,6 +524,7 @@ Returns:
 Dict with swarm performance metrics
         """
 if not self.telemetry_data:
+    pass
 return {
                 "avg_formation_score": 0.0,
                 "avg_cohesion": 0.0,
@@ -492,8 +544,10 @@ for entry in self.telemetry_data:
             if "swarm_cohesion" in entry:
                 cohesion_scores.append(entry["swarm_cohesion"])
             if entry.get("micro_controller_active", False):
+                pass
 micro_active_count += 1
             if entry.get("obstacle_avoidance_active", False):
+                pass
 obstacle_avoidance_count += 1
 
 total_entries = len(self.telemetry_data)

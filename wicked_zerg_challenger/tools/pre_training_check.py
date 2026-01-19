@@ -41,13 +41,13 @@ def check_sc2_installation():
 
  if os.path.exists(sc2_path):
 
-            print(f"[OK] SC2PATH environment variable: {sc2_path}")
+     print(f"[OK] SC2PATH environment variable: {sc2_path}")
 
  return sc2_path
 
  else:
 
-            print(f"[WARNING] SC2PATH set but path does not exist: {sc2_path}")
+     print(f"[WARNING] SC2PATH set but path does not exist: {sc2_path}")
 
 
 
@@ -55,19 +55,27 @@ def check_sc2_installation():
 
     if sys.platform == "win32":
 
- try:
+        pass
 
- import winreg
+ try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+
+import winreg
 
  key = winreg.OpenKey(
 
  winreg.HKEY_LOCAL_MACHINE,
 
-                r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+    r"SOFTWARE\Blizzard Entertainment\StarCraft II"
 
  )
 
-            install_path, _ = winreg.QueryValueEx(key, "InstallPath")
+    install_path, _ = winreg.QueryValueEx(key, "InstallPath")
 
  winreg.CloseKey(key)
 
@@ -75,15 +83,15 @@ def check_sc2_installation():
 
  if os.path.exists(install_path):
 
-                print(f"[OK] Found via Registry: {install_path}")
+     print(f"[OK] Found via Registry: {install_path}")
 
-                os.environ["SC2PATH"] = install_path
+     os.environ["SC2PATH"] = install_path
 
  return install_path
 
  except Exception as e:
 
-            print(f"[INFO] Registry check failed: {e}")
+     print(f"[INFO] Registry check failed: {e}")
 
 
 
@@ -93,33 +101,39 @@ def check_sc2_installation():
 
     if sys.platform == "win32":
 
+        pass
+
  common_paths = [
 
-            r"C:\Program Files (x86)\StarCraft II",
+     r"C:\Program Files (x86)\StarCraft II",
 
-            r"C:\Program Files\StarCraft II",
+     r"C:\Program Files\StarCraft II",
 
-            r"D:\StarCraft II",
+     r"D:\StarCraft II",
 
  ]
 
     elif sys.platform == "darwin":
 
+        pass
+
  common_paths = [
 
-            os.path.expanduser("~/Library/Application Support/Blizzard/StarCraft II"),
+     os.path.expanduser("~/Library/Application Support/Blizzard/StarCraft II"),
 
-            "/Applications/StarCraft II",
+     "/Applications/StarCraft II",
 
  ]
 
  else:
 
+     pass
+
  common_paths = [
 
-            os.path.expanduser("~/StarCraft II"),
+     os.path.expanduser("~/StarCraft II"),
 
-            "/opt/StarCraft II",
+     "/opt/StarCraft II",
 
  ]
 
@@ -127,11 +141,13 @@ def check_sc2_installation():
 
  for path in common_paths:
 
+     pass
+
  if os.path.exists(path):
 
-            print(f"[OK] Found at common path: {path}")
+     print(f"[OK] Found at common path: {path}")
 
-            os.environ["SC2PATH"] = path
+     os.environ["SC2PATH"] = path
 
  return path
 
@@ -159,13 +175,13 @@ def check_python_packages():
 
  required_packages = [
 
-        "sc2",
+    "sc2",
 
-        "torch",
+    "torch",
 
-        "numpy",
+    "numpy",
 
-        "loguru",
+    "loguru",
 
  ]
 
@@ -177,15 +193,23 @@ def check_python_packages():
 
  for package in required_packages:
 
+     pass
+
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  __import__(package)
 
-            print(f"[OK] {package}")
+     print(f"[OK] {package}")
 
  except ImportError:
 
-            print(f"[ERROR] {package} - NOT FOUND")
+     print(f"[ERROR] {package} - NOT FOUND")
 
  missing_packages.append(package)
 
@@ -193,9 +217,9 @@ def check_python_packages():
 
  if missing_packages:
 
-        print(f"\n[WARNING] Missing packages: {', '.join(missing_packages)}")
+     print(f"\n[WARNING] Missing packages: {', '.join(missing_packages)}")
 
-        print("[INFO] Install with: pip install " + " ".join(missing_packages))
+     print("[INFO] Install with: pip install " + " ".join(missing_packages))
 
  return False
 
@@ -219,11 +243,19 @@ def check_sc2_process():
 
     if sys.platform == "win32":
 
+        pass
+
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  result = subprocess.run(
 
-                ['tasklist', '/FI', 'IMAGENAME eq SC2_x64.exe'],
+     ['tasklist', '/FI', 'IMAGENAME eq SC2_x64.exe'],
 
  capture_output=True,
 
@@ -233,33 +265,43 @@ def check_sc2_process():
 
  )
 
-            if 'SC2_x64.exe' in result.stdout:
+     if 'SC2_x64.exe' in result.stdout:
 
-                print("[WARNING] StarCraft II is already running!")
+         pass
 
-                print("[INFO] It is recommended to close SC2 before training")
+     print("[WARNING] StarCraft II is already running!")
+
+     print("[INFO] It is recommended to close SC2 before training")
 
  return False
 
  else:
 
-                print("[OK] StarCraft II is not running")
+     print("[OK] StarCraft II is not running")
 
  return True
 
  except Exception as e:
 
-            print(f"[INFO] Could not check process: {e}")
+     print(f"[INFO] Could not check process: {e}")
 
  return True
 
  else:
 
+     pass
+
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  result = subprocess.run(
 
-                ['pgrep', '-f', 'SC2'],
+     ['pgrep', '-f', 'SC2'],
 
  capture_output=True,
 
@@ -269,19 +311,19 @@ def check_sc2_process():
 
  if result.returncode == 0:
 
-                print("[WARNING] StarCraft II process found!")
+     print("[WARNING] StarCraft II process found!")
 
  return False
 
  else:
 
-                print("[OK] StarCraft II is not running")
+     print("[OK] StarCraft II is not running")
 
  return True
 
  except Exception as e:
 
-            print("[INFO] Could not check process: {e}")
+     print("[INFO] Could not check process: {e}")
 
  return True
 
@@ -300,36 +342,44 @@ def check_gpu():
 
 
  try:
+     pass
+ pass
 
- import torch
+ except Exception:
+     pass
+     pass
+
+import torch
 
  if torch.cuda.is_available():
+
+     pass
 
  gpu_count = torch.cuda.device_count()
 
  gpu_name = torch.cuda.get_device_name(0)
 
-            print(f"[OK] CUDA available - {gpu_count} GPU(s)")
+     print(f"[OK] CUDA available - {gpu_count} GPU(s)")
 
-            print(f"[INFO] GPU 0: {gpu_name}")
+     print(f"[INFO] GPU 0: {gpu_name}")
 
  return True
 
  else:
 
-            print("[INFO] CUDA not available - will use CPU")
+     print("[INFO] CUDA not available - will use CPU")
 
  return False
 
  except ImportError:
 
-        print("[WARNING] PyTorch not found")
+     print("[WARNING] PyTorch not found")
 
  return False
 
  except Exception as e:
 
-        print(f"[INFO] GPU check error: {e}")
+     print(f"[INFO] GPU check error: {e}")
 
  return False
 
@@ -357,6 +407,8 @@ def main():
 
  if sc2_path:
 
+     pass
+
  checks_passed += 1
 
 
@@ -365,6 +417,8 @@ def main():
 
  if check_python_packages():
 
+     pass
+
  checks_passed += 1
 
 
@@ -372,6 +426,8 @@ def main():
  # Check 3: SC2 Process
 
  if check_sc2_process():
+
+     pass
 
  checks_passed += 1
 
@@ -399,18 +455,20 @@ def main():
 
  if checks_passed >= 3: # SC2 and packages are critical
 
-        print("[OK] System ready for training!")
+     print("[OK] System ready for training!")
 
  return 0
 
  else:
 
-        print("[ERROR] System not ready. Please fix issues above.")
+     print("[ERROR] System not ready. Please fix issues above.")
 
  return 1
 
 
 
 if __name__ == "__main__":
+
+    pass
 
  sys.exit(main())

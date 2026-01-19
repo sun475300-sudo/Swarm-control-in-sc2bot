@@ -8,7 +8,7 @@ from pathlib import Path
 # Add script directory to sys.path
 script_dir = Path(__file__).parent
 if str(script_dir) not in sys.path:
- sys.path.insert(0, str(script_dir))
+    sys.path.insert(0, str(script_dir))
 
 
 # Initialize extractor
@@ -40,6 +40,6 @@ if build_order:
     if 'gas_supply' in build_order.get('timings', {}):
         print(f"\n[SUCCESS] Extractor (gas_supply) found!")
  else:
-        print(f"\n[WARNING] Extractor (gas_supply) not found in timings")
+     print(f"\n[WARNING] Extractor (gas_supply) not found in timings")
 else:
     print(f"\n[ERROR] Failed to extract build order")

@@ -29,10 +29,12 @@ class QueenManager:
 
 
 if not hatcheries_exists:
+    pass
 return
 
 # Use cached queens
 if intel and intel.cached_queens is not None:
+    pass
 queens = intel.cached_queens
 queens_exists = len(queens) > 0 if isinstance(
     queens, list) else (
@@ -46,6 +48,7 @@ queens_exists = len(queens) > 0 if isinstance(
 # STYLE: Line too long (131 chars). Consider splitting.
 # STYLE: Line too long (131 chars). Consider splitting.
 else:
+    pass
 queens = self.bot.units(UnitTypeId.QUEEN)
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 queens_exists = queens.exists if hasattr(
@@ -54,15 +57,17 @@ queens_exists = queens.exists if hasattr(
 
 # Clean up dead queen assignments
 if queens_exists:
+    pass
 queen_tags = {q.tag for q in queens}
 dead_queens = [
     tag for tag in self.queen_hatchery_assignments.keys() if tag not in queen_tags
 ]
 for dead_tag in dead_queens:
+    pass
 del self.queen_hatchery_assignments[dead_tag]
 
 if not queens_exists:
- # IMPROVED: Queen production with strict conditions (prevent excessive production)
+    # IMPROVED: Queen production with strict conditions (prevent excessive production)
  # Only produce first queen if:
  # 1. We have spawning pool (required building)
  # 2. We have sufficient resources (minerals >= 200, gas >= 100)
@@ -72,6 +77,7 @@ if not queens_exists:
  # Check required building
 spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
 if not spawning_pools.exists:
+    pass
 return
 
 # IMPROVED: Resource availability check
@@ -80,7 +86,8 @@ gas_threshold = 100  # Need sufficient gas after queen cost
 
 # CRITICAL FIX: Use 'vespene' instead of 'vespene' (correct SC2 API attribute)
 if self.bot.minerals < mineral_threshold or self.bot.vespene < gas_threshold:
- # Resource shortage - skip queen production, let production_manager handle it
+    # Resource shortage - skip queen production, let production_manager handle
+    # it
 return
 
 # IMPROVED: Worker count check - need enough workers to justify queen
@@ -88,7 +95,7 @@ worker_count = self.bot.workers.amount
 min_workers_for_first_queen = 8
 
 if worker_count < min_workers_for_first_queen:
- # Too few workers - prioritize worker production
+    # Too few workers - prioritize worker production
 return
 
 # IMPROVED: Only produce if hatchery is ready and idle (not already training)
@@ -100,11 +107,18 @@ idle_hatcheries = [
 ]
 
 if idle_hatcheries and self.bot.can_afford(UnitTypeId.QUEEN):
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 idle_hatcheries[0].train(UnitTypeId.QUEEN)
 print(f"👑 [QueenManager] 첫 여왕 생산 (일꾼: {worker_count}개)")
 except (AttributeError, TypeError, Exception) as e:
- # Handle case where train() might fail
+    # Handle case where train() might fail
     # Don't log every error to avoid spam
 pass
 return
@@ -125,9 +139,12 @@ queen_list = list(queens) if not isinstance(queens, list) else queens
 
 # Assign queens to hatcheries (one queen per hatchery for optimal injects)
 for i, hatch in enumerate(hatchery_list):
+    pass
 if i < len(queen_list):
+    pass
 queen_tag = queen_list[i].tag
 if queen_tag not in self.queen_hatchery_assignments:
+    pass
 self.queen_hatchery_assignments[queen_tag] = hatch.tag
 
 # Queen abilities - process all queens (limited by CPU optimization in main loop)
@@ -137,66 +154,87 @@ current_larva_count = self.bot.units(UnitTypeId.LARVA).amount
 should_skip_inject = current_larva_count > 100
 
 if not should_skip_inject:
- # Larva inject (energy >= 25) - Priority 1
+    # Larva inject (energy >= 25) - Priority 1
  # Use explicit ready queen filter and per-hatchery check to avoid missed
  # injects
 ready_queens = [q for q in queen_list if q.is_ready and q.energy >= 25]
 if ready_queens:
+    pass
 for hatch in hatchery_list:
- # Skip if hatchery already has an active inject buff
+    # Skip if hatchery already has an active inject buff
 has_inject_buff = False
 try:
+    pass
+pass
+
+except Exception:
+    pass
     inject_buff = getattr(BuffId, "QUEENSTACKINJECT", None)
     if inject_buff and hasattr(hatch, "has_buff"):
+        pass
 has_inject_buff = hatch.has_buff(inject_buff)  # type: ignore[misc]
 except Exception:
+    pass
 has_inject_buff = False
 
 if has_inject_buff:
+    pass
 continue
 
 # Find queens within 20 range of the hatchery (increased from 15 for
 # better coverage)
 nearby_queens = [q for q in ready_queens if q.distance_to(hatch) < 20]
 if nearby_queens:
- # Choose closest queen to the hatchery
+    # Choose closest queen to the hatchery
 queen_to_use = min(nearby_queens, key=lambda q: q.distance_to(hatch))
 
 # Allow queens that are idle OR moving to inject (improves responsiveness)
 if queen_to_use.is_idle or queen_to_use.is_moving:
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 await self.bot.do(queen_to_use(AbilityId.EFFECT_INJECTLARVA, hatch))
 # Update assignment to current hatchery for tracking
 self.queen_hatchery_assignments[queen_to_use.tag] = hatch.tag
 
 # Success debug message (throttled)
 if getattr(self.bot, "iteration", 0) % 50 == 0:
+    pass
 print(
     f"[SUCCESS] {hatch.tag}¿¡ ÆßÇÎ ¿Ï·á! ¿©¿Õ ¿¡³ÊÁö: {queen_to_use.energy}"
 )
 except Exception:
- # Silently ignore transient failures (network/issue in SC2 API)
+    # Silently ignore transient failures (network/issue in SC2 API)
 pass
 else:
  # Too many larvae already - skip inject to save energy for other abilities
     if getattr(self.bot, "iteration", 0) % 200 == 0:
+        pass
 print(
     f"[QUEEN MANAGER] Skipping inject - {current_larva_count} larvae already available"
 )
 
 # Process each queen for other abilities
 for queen in queen_list:
+    pass
 if not queen.is_ready:
+    pass
 continue
 
 # Transfuse (energy >= 50) - Priority 2 (only if not injecting)
 # Performance optimization: Use IntelManager cache + distance calculation
 # optimization
 if queen.energy >= 50:
- # Check if queen is not busy with inject
+    # Check if queen is not busy with inject
 is_busy = queen.is_attacking or (queen.orders and len(queen.orders) > 0)
 
 if not is_busy:
+    pass
 heal_range_squared = 8 * 8  # 8^2 = 64 (transfuse range)
 
 # Priority 1: Heal other queens (they're expensive and critical)
@@ -212,6 +250,7 @@ nearby_queens = [
 # Priority 2: Heal expensive/valuable military units
 nearby_military = []
 if intel and intel.cached_military is not None:
+    pass
 nearby_military = [
     u
     for u in intel.cached_military
@@ -241,16 +280,24 @@ nearby_military = [
 # Select target: Prioritize queens, then valuable units by health percentage
 target_unit = None
 if nearby_queens:
- # Heal most damaged queen first
+    # Heal most damaged queen first
 target_unit = min(nearby_queens, key=lambda u: u.health_percentage)
 elif nearby_military:
- # Heal most damaged valuable unit first
+    # Heal most damaged valuable unit first
 target_unit = min(nearby_military, key=lambda u: u.health_percentage)
 
 if target_unit:
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 await self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, target_unit))
 except Exception:
+    pass
 pass  # Transfuse not available in this version
 
 
@@ -265,26 +312,33 @@ Performance optimization:
  # Performance optimization: Use IntelManager cache
     intel = getattr(self.bot, "intel", None)
 if intel and intel.cached_queens is not None:
+    pass
 queens = intel.cached_queens
 else:
+    pass
 queens = self.bot.units(UnitTypeId.QUEEN)
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 if not queens.exists:
+    pass
 return
 
 # Performance optimization: Use IntelManager cache (townhalls)
 # Use list iteration instead of .random to avoid conflicts (repo rule)
 if intel and intel.cached_townhalls is not None:
+    pass
 townhall_list = list(
     intel.cached_townhalls) if intel.cached_townhalls.exists else []
 else:
+    pass
 townhall_list = list(self.bot.townhalls) if self.bot.townhalls.exists else []
 
 if not townhall_list:
+    pass
 return
 
 # Performance optimization: Use IntelManager cache (enemy_units)
 if intel and intel.cached_enemy_units is not None:
+    pass
 enemy_units = (
     list(
         intel.cached_enemy_units) if isinstance(
@@ -294,6 +348,7 @@ else:
     enemy_units = getattr(self.bot, "enemy_units", [])
 
 if not enemy_units:
+    pass
 return
 
 # Performance optimization: Distance calculation optimization
@@ -304,7 +359,9 @@ defend_range_squared = 15 * 15  # 15^2 = 225
 queen_list = list(queens) if queens.exists else []
 
 for queen in queen_list:
+    pass
 if not queen.is_ready:
+    pass
 continue
 
 # Find the hatchery this queen is assigned to (or closest hatchery)
@@ -312,13 +369,17 @@ assigned_hatch_tag = self.queen_hatchery_assignments.get(queen.tag)
 defend_hatch = None
 
 if assigned_hatch_tag:
+    pass
 for th in townhall_list:
+    pass
 if th.tag == assigned_hatch_tag:
+    pass
 defend_hatch = th
 break
 
 # If no assigned hatchery, use closest
 if not defend_hatch:
+    pass
 defend_hatch = (
     min(townhall_list, key=lambda th: queen.distance_to(th) ** 2)
     if townhall_list
@@ -326,6 +387,7 @@ defend_hatch = (
 )
 
 if not defend_hatch:
+    pass
 continue
 
 defend_point = defend_hatch.position
@@ -335,6 +397,7 @@ nearby_enemies = [e for e in enemy_units if e.distance_to(
     defend_point) ** 2 < defend_range_squared]
 
 if not nearby_enemies:
+    pass
 continue
 
 # Priority 1: Air units (queens are excellent anti-air)
@@ -342,7 +405,7 @@ air_enemies = [
     e for e in nearby_enemies if hasattr(
         e, "is_flying") and e.is_flying]
 if air_enemies:
- # Prioritize closest air unit
+    # Prioritize closest air unit
 closest_air = min(
     air_enemies,
     key=lambda e: e.distance_to(

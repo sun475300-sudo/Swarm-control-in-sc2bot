@@ -15,20 +15,30 @@ try:
  b = f.read()
 
  try:
-        b.decode("utf-8")
-        print("OK: already UTF-8")
+     pass
+ pass
+
+ except Exception:
+     pass
+     b.decode("utf-8")
+     print("OK: already UTF-8")
  sys.exit(0)
  except UnicodeDecodeError as e:
-        print("Unicode issue at byte", e.start, "-> converting using latin1 fallback")
-        s = b.decode("latin1")
+     print("Unicode issue at byte", e.start, "-> converting using latin1 fallback")
+     s = b.decode("latin1")
 
  try:
-            with open(p, "w", encoding="utf-8") as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(p, "w", encoding="utf-8") as f:
  f.write(s)
-            print("Rewrote", p, "as UTF-8 (latin1 fallback)")
+     print("Rewrote", p, "as UTF-8 (latin1 fallback)")
  sys.exit(0)
  except (IOError, OSError) as write_error:
-            print(f"Failed to write file: {write_error}")
+     print(f"Failed to write file: {write_error}")
  sys.exit(3)
 except (IOError, OSError) as read_error:
     print(f"Failed to read file: {read_error}")

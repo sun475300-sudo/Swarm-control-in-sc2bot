@@ -9,7 +9,9 @@ Show Learning Data
 import sys
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict
+import Any
+import Optional
 from datetime import datetime
 
 # Add parent directory to path
@@ -134,8 +136,8 @@ def show_comparison_data():
             differences = []
             for param in set(
                 list(
-                    training_build.keys()) +
-                list(
+                    training_build.keys())
+                + list(
                     pro_baseline.keys())):
                 train_val = training_build.get(param)
                 pro_val = pro_baseline.get(param)

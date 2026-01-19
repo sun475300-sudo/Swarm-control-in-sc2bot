@@ -14,7 +14,10 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict
+import List
+import Optional
+import Any
 import statistics
 
 # Add parent directory to path
@@ -341,9 +344,9 @@ class ProVsTrainingComparator:
             analysis["victories"] = victories
             analysis["defeats"] = defeats
             analysis["win_rate"] = (
-                victories /
-                len(comparisons) *
-                100) if comparisons else 0.0
+                victories
+                / len(comparisons)
+                * 100) if comparisons else 0.0
 
         return analysis
 

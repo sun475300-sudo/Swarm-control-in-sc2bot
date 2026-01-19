@@ -13,31 +13,42 @@ from pathlib import Path
 def get_ngrok_url_from_api() -> str:
     """Ngrok API에서 현재 터널 URL 가져오기"""
  try:
-        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout = 5)
+     pass
+ pass
+
+ except Exception:
+     pass
+     response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout = 5)
  if response.status_code == 200:
- data = response.json()
-            tunnels = data.get("tunnels", [])
+     data = response.json()
+     tunnels = data.get("tunnels", [])
  if tunnels:
- # HTTPS 터널 우선 선택
+     # HTTPS 터널 우선 선택
  for tunnel in tunnels:
-                    if tunnel.get("proto") == "https":
-                        return tunnel.get("public_url", "")
+     if tunnel.get("proto") == "https":
+         pass
+     return tunnel.get("public_url", "")
  # HTTPS가 없으면 HTTP 선택
  if tunnels:
-                    return tunnels[0].get("public_url", "")
+     return tunnels[0].get("public_url", "")
  except Exception:
- pass
+     pass
     return ""
 
 def get_ngrok_url_from_file() -> str:
     """저장된 파일에서 터널 URL 가져오기"""
  try:
-        url_file = Path(__file__).parent / ".ngrok_url.txt"
+     pass
+ pass
+
+ except Exception:
+     pass
+     url_file = Path(__file__).parent / ".ngrok_url.txt"
  if url_file.exists():
-            with open(url_file, 'r', encoding='utf-8') as f:
+     with open(url_file, 'r', encoding='utf-8') as f:
  return f.read().strip()
  except Exception:
- pass
+     pass
     return ""
 
 def main():
@@ -45,13 +56,13 @@ def main():
  # 1. API에서 시도
  url = get_ngrok_url_from_api()
  if url:
- print(url)
+     print(url)
  return 0
 
  # 2. 파일에서 시도
  url = get_ngrok_url_from_file()
  if url:
- print(url)
+     print(url)
  return 0
 
  # 3. 없으면 에러
@@ -60,4 +71,4 @@ def main():
  return 1
 
 if __name__ == "__main__":
- sys.exit(main())
+    sys.exit(main())

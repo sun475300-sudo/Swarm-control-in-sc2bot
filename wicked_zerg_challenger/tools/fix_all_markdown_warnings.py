@@ -18,78 +18,96 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
 
  i = 0
  while i < len(lines):
+     pass
  line = lines[i]
-        prev_line = new_lines[-1] if new_lines else ""
-        next_line = lines[i + 1] if i + 1 < len(lines) else ""
+     prev_line = new_lines[-1] if new_lines else ""
+     next_line = lines[i + 1] if i + 1 < len(lines) else ""
 
  # MD022: 헤딩 앞뒤 빈 줄
-        if re.match(r'^#{1,6}\s+', line):
- # 헤딩 앞에 빈 줄
-            if new_lines and prev_line.strip() and prev_line != '':
-                new_lines.append('')
+     if re.match(r'^#{1,6}\s+', line):
+     # 헤딩 앞에 빈 줄
+     if new_lines and prev_line.strip() and prev_line != '':
+         pass
+     new_lines.append('')
  fixes += 1
  new_lines.append(line)
  # 헤딩 뒤에 빈 줄
-            if next_line.strip() and not re.match(r'^#{1,6}\s+', next_line) and next_line != '':
-                new_lines.append('')
+     if next_line.strip() and not re.match(r'^#{1,6}\s+', next_line) and next_line != '':
+         pass
+     new_lines.append('')
  fixes += 1
  # MD032: 리스트 앞뒤 빈 줄
-        elif re.match(r'^[\s]*[-*+]\s+', line) or re.match(r'^[\s]*\d+\.\s+', line):
- # 리스트 앞에 빈 줄 (이전이 헤딩이나 리스트가 아니면)
+     elif re.match(r'^[\s]*[-*+]\s+', line) or re.match(r'^[\s]*\d+\.\s+', line):
+     # 리스트 앞에 빈 줄 (이전이 헤딩이나 리스트가 아니면)
  if new_lines and prev_line.strip():
-                if not re.match(r'^#{1,6}\s+', prev_line) and not re.match(r'^[\s]*[-*+]\s+', prev_line) and not re.match(r'^[\s]*\d+\.\s+', prev_line):
-                    if prev_line != '':
-                        new_lines.append('')
+     if not re.match(r'^#{1,6}\s+', prev_line) and not re.match(r'^[\s]*[-*+]\s+', prev_line) and not re.match(r'^[\s]*\d+\.\s+', prev_line):
+         pass
+     if prev_line != '':
+         pass
+     new_lines.append('')
  fixes += 1
  new_lines.append(line)
  # 리스트 뒤에 빈 줄 (다음이 리스트나 헤딩이 아니면)
-            if next_line.strip() and not re.match(r'^[\s]*[-*+]\s+', next_line) and not re.match(r'^[\s]*\d+\.\s+', next_line) and not re.match(r'^#{1,6}\s+', next_line):
-                if not next_line.strip().startswith('```'):
- # 다음 줄이 코드 블록이 아니면
-                    if i + 2 < len(lines) and lines[i + 2].strip() and not lines[i + 2].strip().startswith('```'):
-                        new_lines.append('')
+     if next_line.strip() and not re.match(r'^[\s]*[-*+]\s+', next_line) and not re.match(r'^[\s]*\d+\.\s+', next_line) and not re.match(r'^#{1,6}\s+', next_line):
+         pass
+     if not next_line.strip().startswith('```'):
+     # 다음 줄이 코드 블록이 아니면
+     if i + 2 < len(lines) and lines[i + 2].strip() and not lines[i + 2].strip().startswith('```'):
+         pass
+     new_lines.append('')
  fixes += 1
  # MD031: 코드 블록 앞뒤 빈 줄
-        elif line.strip().startswith('```'):
- # 코드 블록 앞에 빈 줄
-            if new_lines and prev_line.strip() and prev_line != '':
-                new_lines.append('')
+     elif line.strip().startswith('```'):
+     # 코드 블록 앞에 빈 줄
+     if new_lines and prev_line.strip() and prev_line != '':
+         pass
+     new_lines.append('')
  fixes += 1
  # MD040: 코드 블록 언어 지정
-            if line.strip() == '```':
- # 다음 몇 줄 확인하여 언어 추론
+     if line.strip() == '```':
+     # 다음 몇 줄 확인하여 언어 추론
  lang = None
  for j in range(i + 1, min(i + 10, len(lines))):
-                    if '```' in lines[j]:
- break
+     if '```' in lines[j]:
+         pass
+     break
  check_line = lines[j].strip().lower()
-                    if 'python' in check_line or 'import ' in lines[j] or 'def ' in lines[j] or 'class ' in lines[j]:
-                        lang = 'python'
+     if 'python' in check_line or 'import ' in lines[j] or 'def ' in lines[j] or 'class ' in lines[j]:
+         pass
+     lang = 'python'
  break
-                    elif 'bash' in check_line or check_line.startswith('$') or 'cd ' in check_line or 'git ' in check_line:
-                        lang = 'bash'
+     elif 'bash' in check_line or check_line.startswith('$') or 'cd ' in check_line or 'git ' in check_line:
+         pass
+     lang = 'bash'
  break
-                    elif 'yaml' in check_line or lines[j].strip().startswith('-') or ':' in lines[j] and not 'http' in lines[j]:
-                        lang = 'yaml'
+     elif 'yaml' in check_line or lines[j].strip().startswith('-') or ':' in lines[j] and not 'http' in lines[j]:
+         pass
+     lang = 'yaml'
  break
-                    elif 'json' in check_line or lines[j].strip().startswith('{') or lines[j].strip().startswith('['):
-                        lang = 'json'
+     elif 'json' in check_line or lines[j].strip().startswith('{') or lines[j].strip().startswith('['):
+         pass
+     lang = 'json'
  break
-                    elif 'markdown' in check_line or lines[j].strip().startswith('#'):
-                        lang = 'markdown'
+     elif 'markdown' in check_line or lines[j].strip().startswith('#'):
+         pass
+     lang = 'markdown'
  break
  if lang:
-                    new_lines.append(f'```{lang}')
+     new_lines.append(f'```{lang}')
  fixes += 1
  else:
+     pass
  new_lines.append(line)
  else:
+     pass
  new_lines.append(line)
  # 코드 블록 뒤에 빈 줄
-            if next_line.strip() and not next_line.strip().startswith('```'):
-                new_lines.append('')
+     if next_line.strip() and not next_line.strip().startswith('```'):
+         pass
+     new_lines.append('')
  fixes += 1
  else:
+     pass
  new_lines.append(line)
 
  i += 1
@@ -98,11 +116,14 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
  result_lines = []
  prev_empty = False
  for line in new_lines:
-        if line == '':
- if not prev_empty:
-                result_lines.append('')
+     if line == '':
+         pass
+     if not prev_empty:
+         pass
+     result_lines.append('')
  prev_empty = True
  else:
+     pass
  result_lines.append(line)
  prev_empty = False
 
@@ -118,21 +139,31 @@ def fix_markdown_content(content: str) -> tuple[str, int]:
 def fix_file(file_path: Path) -> int:
     """Fix a single markdown file"""
  try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
  except Exception as e:
-        print(f"  Error reading {file_path.name}: {e}")
+     print(f"  Error reading {file_path.name}: {e}")
  return 0
 
  fixed_content, fixes = fix_markdown_content(content)
 
  if fixes > 0:
- try:
-            with open(file_path, 'w', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(file_path, 'w', encoding='utf-8') as f:
  f.write(fixed_content)
  return fixes
  except Exception as e:
-            print(f"  Error writing {file_path.name}: {e}")
+     print(f"  Error writing {file_path.name}: {e}")
  return 0
 
  return 0
@@ -160,21 +191,21 @@ def main():
  fixed_files = []
 
  for md_file in md_files:
- rel_path = md_file.relative_to(PROJECT_ROOT)
+     rel_path = md_file.relative_to(PROJECT_ROOT)
  fixes = fix_file(md_file)
  if fixes > 0:
-            print(f"[FIXED] {rel_path} - {fixes}개 수정")
+     print(f"[FIXED] {rel_path} - {fixes}개 수정")
  fixed_files.append((rel_path, fixes))
  total_fixes += fixes
 
  print()
     print("=" * 70)
  if total_fixes > 0:
-        print(f"총 {len(fixed_files)}개 파일, {total_fixes}개 수정 완료!")
+     print(f"총 {len(fixed_files)}개 파일, {total_fixes}개 수정 완료!")
  else:
-        print("수정할 내용이 없습니다.")
+     print("수정할 내용이 없습니다.")
     print("=" * 70)
 
 
 if __name__ == "__main__":
- main()
+    main()

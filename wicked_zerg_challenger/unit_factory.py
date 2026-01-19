@@ -14,14 +14,18 @@ Core Features:
 ================================================================================
 """
 
-from typing import Dict, Optional
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import Dict
+from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Optional
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.absolute()))
 
 
 if TYPE_CHECKING:
+    pass
 pass
 
 
@@ -40,6 +44,8 @@ class UnitFactory:
 
 
 def __init__(self, production_manager):
+
+    pass
 
 
 self.pm = production_manager
@@ -67,13 +73,21 @@ build_plan: Adaptive build plan (optional)
 b = self.bot
 
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 larvae = [u for u in b.units(UnitTypeId.LARVA)]
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 if not larvae:
+    pass
 return
 
 # Supply check
 if b.supply_left < 2:
+    pass
 return
 
 # CRITICAL: Larva Saving - Reserve larvae for tech unit morphing (Improved)
@@ -85,13 +99,15 @@ total_larvae = len(larvae)
 enemy_attacking = False
 intel = getattr(b, "intel", None)
 if intel:
- # Check if enemy is attacking our bases
+    # Check if enemy is attacking our bases
     if hasattr(intel, "signals") and isinstance(intel.signals, dict):
         enemy_attacking = intel.signals.get("enemy_attacking_our_bases", False)
 
     # Check if we're under attack
     if hasattr(intel, "combat") and hasattr(intel.combat, "under_attack"):
+        pass
 if intel.combat.under_attack:
+    pass
 enemy_attacking = True
 
 # Calculate total army supply for dynamic reservation
@@ -100,27 +116,33 @@ total_army_supply = b.supply_army if hasattr(b, "supply_army") else 0
 # Improved: Dynamic larva reservation based on army supply and enemy status
 # 병력이 부족하거나 적이 공격 중이면 예약 비율 감소
 if enemy_attacking or total_army_supply < 30:
+    pass
 reserved_larvae_count = max(1, int(total_larvae * 0.1))  # 10%만 예약
 elif total_army_supply < 50:
+    pass
 reserved_larvae_count = max(1, int(total_larvae * 0.2))  # 20% 예약
 else:
+    pass
 reserved_larvae_count = max(1, int(total_larvae * 0.3))  # 30% 예약 (정상)
 
 # If enemy is attacking, use all larvae (no saving)
 # Otherwise, save based on army supply
 if enemy_attacking:
- # Emergency: Enemy attacking - use all larvae
+    # Emergency: Enemy attacking - use all larvae
 available_larvae = larvae
 reserved_larvae_count = 0
 else:
  # Normal: Save based on army supply (dynamic reservation)
 if total_larvae > reserved_larvae_count:
+    pass
 available_larvae = larvae[:-reserved_larvae_count]
 else:
+    pass
 available_larvae = []
 
 # If no available larvae (all reserved), don't produce
 if not available_larvae:
+    pass
 return
 
 # Use available_larvae instead of larvae for the rest of the function
@@ -130,12 +152,16 @@ larvae = available_larvae
 counter_priority = []
 if hasattr(b, "counter_punch") and b.counter_punch:
     if hasattr(b.counter_punch, "get_train_priority"):
+        pass
 counter_priority = b.counter_punch.get_train_priority()  # type: ignore
 
 # If counter priority exists, apply it first
 if counter_priority:
+    pass
 for unit_type in counter_priority:
+    pass
 if await self._try_produce_unit(unit_type, larvae):
+    pass
 return
 # If all counter priority units produced, switch to normal production
 
@@ -144,7 +170,7 @@ return
 # building, immediately prioritize counter unit production
 tech_based_units = await self._get_tech_based_unit_composition()
 if tech_based_units:
- # Forced trigger: If tech detected recently (within 30 seconds), produce
+    # Forced trigger: If tech detected recently (within 30 seconds), produce
  # with highest priority
     intel = getattr(b, "intel", None)
     scout = getattr(b, "scout", None)
@@ -167,15 +193,19 @@ tech_detected_recently = True
 
 # Forced trigger: Immediately produce counter units for recently detected tech
 for unit_type in tech_based_units:
+    pass
 if await self._try_produce_unit(unit_type, larvae):
     current_iteration = getattr(b, "iteration", 0)
 # Print more frequently (enhanced responsiveness)
 if current_iteration % 25 == 0:
+    pass
 if tech_detected_recently:
+    pass
 print(
     f"[TECH COUNTER - FORCED TRIGGER] [{int(b.time)}s] IMMEDIATE: Producing {unit_type.name} (Tech detected {b.time - detection_time:.1f}s ago)"
 )
 else:
+    pass
 print(
     f"[TECH COUNTER] [{int(b.time)}s] Producing {unit_type.name} based on enemy tech"
 )
@@ -187,10 +217,12 @@ is_eris_opponent = False
 
 # opponent_tracker merged into strategy_analyzer
 if hasattr(b, "strategy_analyzer") and b.strategy_analyzer:
+    pass
 use_aggressive_build = b.strategy_analyzer.should_use_aggressive_build()
 # Check if opponent is Eris (top-ranked Zerg bot)
 current_opponent = getattr(b.strategy_analyzer, "current_opponent", None)
 if current_opponent and "eris" in current_opponent.lower():
+    pass
 is_eris_opponent = True
 
 # Eris-specific special build: Fast Baneling + Mutalisk tech
@@ -204,21 +236,29 @@ if (
     and b.can_afford(UnitTypeId.BANELINGNEST)
 ):
 try:
- # Use _try_build_structure for duplicate prevention
+    pass
+pass
+
+except Exception:
+    pass
+    # Use _try_build_structure for duplicate prevention
 if await self._try_build_structure(
     UnitTypeId.BANELINGNEST, near=spawning_pools[0].position
 ):
     print(
         f"[ERIS COUNTER] [{int(b.time)}s] Building Baneling Nest (Eris counter)")
 except Exception:
+    pass
 pass
 
 # Fast Lair tech (Mutalisk preparation)
 # 🚀 Performance optimization: Use IntelManager cache
 intel = getattr(b, "intel", None)
 if intel and intel.cached_lairs is not None:
+    pass
 lairs = list(intel.cached_lairs) if intel.cached_lairs.exists else []
 else:
+    pass
 lairs = (
     list(b.structures(UnitTypeId.LAIR).ready)
     if hasattr(b, "structures")
@@ -226,6 +266,7 @@ lairs = (
 )
 # 🚀 Performance optimization: Use IntelManager cache
 if intel and intel.cached_townhalls is not None:
+    pass
 hatcheries = (
     list(
         intel.cached_townhalls.filter(
@@ -236,15 +277,25 @@ hatcheries = (
     else []
 )
 else:
+    pass
 hatcheries = (
     list(b.structures(UnitTypeId.HATCHERY)) if hasattr(b, "structures") else []
 )
 if hatcheries and not lairs and b.time > 180 and b.can_afford(UnitTypeId.LAIR):
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 if hatcheries:
+    pass
 hatcheries[0].morph(UnitTypeId.LAIR)  # type: ignore # type: ignore
 print(f"[ERIS COUNTER] [{int(b.time)}s] Starting Lair morph (Mutalisk tech)")
 except Exception:
+    pass
 pass
 
 # 6-pool aggressive build: Build spawning pool at 6 supply, then rush
@@ -258,14 +309,23 @@ spawning_pools = list(
 # Enhanced duplicate construction prevention: Don't build if already
 # exists or under construction
 if not spawning_pools and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
- # Build spawning pool immediately if we can afford it
+    # Build spawning pool immediately if we can afford it
 if b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.supply_used >= 6:
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 if b.townhalls.exists:
+    pass
 townhalls_list = list(b.townhalls)
 if townhalls_list:
- # Use _can_build_safely to prevent duplicate construction
+    # Use _can_build_safely to prevent duplicate construction
 if self._can_build_safely(UnitTypeId.SPAWNINGPOOL):
+    pass
 if await self._try_build_structure(
     UnitTypeId.SPAWNINGPOOL,
     near=townhalls_list[0].position,
@@ -274,35 +334,40 @@ if await self._try_build_structure(
     current_iteration = getattr(b, "iteration", 0)
  # 🚀 PERFORMANCE: Reduced chat frequency from 224 to 500 frames (~22 seconds)
 if current_iteration % 500 == 0:
+    pass
 await b.chat_send(
     "🏗️ [Cautious] Starting Spawning Pool construction for basic defense."
 )
 return
 except Exception:
+    pass
 pass
 else:
+    pass
 pool = spawning_pools[0]
 if pool.is_ready:
- # Produce zerglings aggressively (6-pool rush)
+    # Produce zerglings aggressively (6-pool rush)
 if await self._try_produce_unit(UnitTypeId.ZERGLING, larvae):
+    pass
 return
 return
 
 # 12-pool all-in mode: After Spawning Pool complete, produce only
 # Zerglings infinitely
 if self.config.ALL_IN_12_POOL:
- # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
+    # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 spawning_pools = list(
     b.units.filter(
         lambda u: u.type_id == UnitTypeId.SPAWNINGPOOL and u.is_structure
     )
 )
 if spawning_pools:
- # If Spawning Pool complete, produce only Zerglings
+    # If Spawning Pool complete, produce only Zerglings
 pool = spawning_pools[0]
 if pool.is_ready:
- # Produce Zerglings (no gas or other unit production)
+    # Produce Zerglings (no gas or other unit production)
 if await self._try_produce_unit(UnitTypeId.ZERGLING, larvae):
+    pass
 return
 return
 
@@ -310,17 +375,20 @@ return
 # 1. Always produce Zerglings (when supply available)
 if b.supply_left >= 4:  # Manage with buffer
 if await self._try_produce_unit(UnitTypeId.ZERGLING, larvae):
+    pass
 return
 
 # 2. Reactive production: Detect enemy air units and prepare counters
 # Check if enemy has air units or air tech buildings
 enemy_has_air = False
 if hasattr(b, "scout") and b.scout:
+    pass
 enemy_has_air = b.scout.enemy_has_air
 
 # Also check enemy structures for air tech
 enemy_structures = getattr(b, "enemy_structures", [])
 for building in enemy_structures:
+    pass
 if building.type_id in [
     UnitTypeId.STARGATE,
     UnitTypeId.STARPORT,
@@ -333,33 +401,38 @@ break
 # Tech building construction is now handled by _autonomous_tech_progression()
 # Only produce units if buildings already exist
 if enemy_has_air:
- # 🚀 성능 최적화: IntelManager 캐시 사용
+    # 🚀 성능 최적화: IntelManager 캐시 사용
     intel = getattr(b, "intel", None)
 if intel and intel.cached_hydralisk_dens is not None:
+    pass
 hydra_dens = (
     list(intel.cached_hydralisk_dens)
     if intel.cached_hydralisk_dens.exists
     else []
 )
 else:
+    pass
 hydra_dens = (
     list(b.structures(UnitTypeId.HYDRALISKDEN).ready)
     if hasattr(b, "structures")
     else []
 )
 if hydra_dens:
- # Prioritize Hydralisk production
+    # Prioritize Hydralisk production
 if await self._try_produce_unit(UnitTypeId.HYDRALISK, larvae):
+    pass
 return
 
 # Build Spore Crawlers for air defense (defensive structure, not tech building)
 if intel and intel.cached_evolution_chambers is not None:
+    pass
 evo_chambers_exist = (
     intel.cached_evolution_chambers.exists
     if intel.cached_evolution_chambers
     else False
 )
 else:
+    pass
 evo_chambers_exist = (
     b.structures(UnitTypeId.EVOLUTIONCHAMBER).ready.exists
     if hasattr(b, "structures")
@@ -367,10 +440,12 @@ evo_chambers_exist = (
 )
 
 if evo_chambers_exist:
- # Check if we need more spore crawlers
+    # Check if we need more spore crawlers
 if intel and intel.cached_spore_crawlers is not None:
+    pass
 spores = intel.cached_spore_crawlers
 else:
+    pass
 spores = (
     b.structures(UnitTypeId.SPORECRAWLER).ready
     if hasattr(b, "structures")
@@ -380,8 +455,9 @@ if (
     spores and hasattr(spores, "amount") and spores.amount < 3
 ):  # Build at least 3 spores
 for th in b.townhalls.ready:
+    pass
 if b.can_afford(UnitTypeId.SPORECRAWLER):
- # Build spore near townhall
+    # Build spore near townhall
 await self._try_build_structure(
     UnitTypeId.SPORECRAWLER, near=th.position
 )
@@ -396,19 +472,23 @@ else:
  # 🚀 성능 최적화: IntelManager 캐시 사용
     intel = getattr(b, "intel", None)
 if intel and intel.cached_baneling_nests is not None:
+    pass
 baneling_nests = (
     list(intel.cached_baneling_nests)
     if intel.cached_baneling_nests.exists
     else []
 )
 else:
+    pass
 baneling_nests = (
     list(b.structures(UnitTypeId.BANELINGNEST).ready)
     if hasattr(b, "structures")
     else []
 )
 if baneling_nests:
+    pass
 if intel and intel.cached_zerglings is not None:
+    pass
 zerglings = intel.cached_zerglings
 zergling_count = (
     zerglings.amount
@@ -416,6 +496,7 @@ zergling_count = (
     else len(list(zerglings))
 )
 else:
+    pass
 zerglings = b.units(UnitTypeId.ZERGLING)
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
@@ -425,12 +506,13 @@ zergling_count = (
     else len(list(zerglings))
 )
 if zergling_count >= 10:
- # Morph zerglings to banelings if nest exists
+    # Morph zerglings to banelings if nest exists
 pass  # Morphing logic is handled elsewhere
 
 # Produce Roaches if Roach Warren exists
 # 🚀 성능 최적화: IntelManager 캐시 사용
 if intel and intel.cached_roach_warrens is not None:
+    pass
 roach_warrens_existing = (
     list(intel.cached_roach_warrens)
     if intel.cached_roach_warrens.exists
@@ -442,6 +524,7 @@ roach_warrens = (
     else []
 )
 else:
+    pass
 roach_warrens_existing = (
     list(b.structures(UnitTypeId.ROACHWARREN).ready)
     if hasattr(b, "structures")
@@ -454,17 +537,19 @@ roach_warrens = (
 )
 
 if roach_warrens_existing:
- # Roach production logic is handled below
+    # Roach production logic is handled below
 pass
 
 # Produce Roaches for ground combat (enhanced: more aggressive roach
 # production)
 ready_roach_warrens = [rw for rw in roach_warrens if rw.is_ready]
 if ready_roach_warrens:
- # Check current roach count
+    # Check current roach count
 if intel and intel.cached_roaches is not None:
+    pass
 roaches = intel.cached_roaches
 else:
+    pass
 roaches = b.units(UnitTypeId.ROACH)
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 roach_count = (
@@ -473,16 +558,20 @@ roach_count = (
 
 # Produce roaches more aggressively (if we have less than 8 roaches)
 if roach_count < 8:
+    pass
 if await self._try_produce_unit(UnitTypeId.ROACH, larvae):
     current_iteration = getattr(b, "iteration", 0)
 if current_iteration % 50 == 0:
+    pass
 print(
     f"[ROACH] [{int(b.time)}s] Roach production started! (Current: {roach_count})"
 )
 return
 # If we have enough roaches, still produce occasionally to maintain army
 elif roach_count < 15 and b.supply_left >= 2:
+    pass
 if await self._try_produce_unit(UnitTypeId.ROACH, larvae):
+    pass
 return
 
 # Produce Banelings from Zerglings
@@ -498,26 +587,33 @@ return
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 # 🚀 성능 최적화: IntelManager 캐시 사용
 if intel and intel.cached_baneling_nests is not None:
+    pass
 baneling_nests = (
     list(intel.cached_baneling_nests)
     if intel.cached_baneling_nests.exists
     else []
 )
 else:
+    pass
 baneling_nests = (
     list(b.structures(UnitTypeId.BANELINGNEST).ready)
     if hasattr(b, "structures")
     else []
 )
 if baneling_nests:
+    pass
 if intel and intel.cached_zerglings is not None:
+    pass
 zerglings_ready = [u for u in intel.cached_zerglings if u.is_ready]
 else:
+    pass
 zerglings_ready = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready]
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 if zerglings_ready:
+    pass
 for zergling in zerglings_ready[:2]:  # Morph 2 at a time
 if b.can_afford(AbilityId.MORPHZERGLINGTOBANELING_BANELING):
+    pass
 zergling(AbilityId.MORPHZERGLINGTOBANELING_BANELING)
 return
 
@@ -525,34 +621,39 @@ return
 # 🚀 Performance optimization: Use IntelManager cache
 intel = getattr(b, "intel", None)
 if intel and intel.cached_hydralisk_dens is not None:
+    pass
 hydra_dens = (list(intel.cached_hydralisk_dens)
               if intel.cached_hydralisk_dens.exists else [])
 else:
+    pass
 hydra_dens = (
     list(b.structures(UnitTypeId.HYDRALISKDEN).ready)
     if hasattr(b, "structures")
     else []
 )
 if hydra_dens:
- # Hydralisk production
+    # Hydralisk production
 if await self._try_produce_unit(UnitTypeId.HYDRALISK, larvae):
+    pass
 return
 
 # 3. Reactive tech branching: Unit production based on enemy race
 # Enhanced Lurker production for Division 2 ladder play
 # vs Protoss: Ling-Hydralisk-Lurker - Enhanced version
 if self.enemy_race == EnemyRace.PROTOSS:
- # 🚀 Performance optimization: Use b.structures (faster)
+    # 🚀 Performance optimization: Use b.structures (faster)
 lurker_dens = list(b.structures(UnitTypeId.LURKERDEN).ready)
 if lurker_dens:
- # Check if we have Hydralisks to morph
+    # Check if we have Hydralisks to morph
  # 🚀 Performance optimization: Use IntelManager cache
     intel = getattr(b, "intel", None)
 if intel and intel.cached_hydralisks is not None:
+    pass
 hydralisks = [
     u for u in intel.cached_hydralisks if u.is_ready and not u.is_burrowed
 ]
 else:
+    pass
 hydralisks = [
     u
     for u in b.units(UnitTypeId.HYDRALISK)
@@ -560,10 +661,17 @@ hydralisks = [
     if u.is_ready and not u.is_burrowed
 ]
 if hydralisks:
- # More aggressive Lurker morphing (up to 5 at a time for ladder)
+    # More aggressive Lurker morphing (up to 5 at a time for ladder)
 for hydra in hydralisks[:5]:  # Increased from 3 to 5
 if b.can_afford(AbilityId.MORPH_LURKER):
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 hydra(AbilityId.MORPH_LURKER)
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
@@ -579,22 +687,25 @@ current_iteration = getattr(b, "iteration", 0)
 if current_iteration % 50 == 0:
     print(f"[LURKER] [{int(b.time)}s] Lurker morphing started!")
 except BaseException:
+    pass
 pass
 return
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 
 # vs Terran: Lurker also effective (ground army counter)
 elif self.enemy_race == EnemyRace.TERRAN:
- # 🚀 Performance optimization: Use b.structures (faster)
+    # 🚀 Performance optimization: Use b.structures (faster)
 lurker_dens = list(b.structures(UnitTypeId.LURKERDEN).ready)
 if lurker_dens and b.time > 300:  # After 5 minutes
  # 🚀 Performance optimization: Use IntelManager cache
     intel = getattr(b, "intel", None)
 if intel and intel.cached_hydralisks is not None:
+    pass
 hydralisks = [
     u for u in intel.cached_hydralisks if u.is_ready and not u.is_burrowed
 ]
 else:
+    pass
 hydralisks = [
     u
     for u in b.units(UnitTypeId.HYDRALISK)
@@ -602,30 +713,43 @@ hydralisks = [
     if u.is_ready and not u.is_burrowed
 ]
 if hydralisks:
- # Morph up to 3 Hydralisks to Lurkers for ground control
+    # Morph up to 3 Hydralisks to Lurkers for ground control
 for hydra in hydralisks[:3]:
+    pass
 if b.can_afford(AbilityId.MORPH_LURKER):
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 hydra(AbilityId.MORPH_LURKER)
 current_iteration = getattr(b, "iteration", 0)
 if current_iteration % 50 == 0:
+    pass
 print(
     f"[LURKER] [{int(b.time)}s] Lurker morphing vs Terran!"
 )
 except BaseException:
+    pass
 pass
 return
 # vs Terran: Ling-Baneling-Mutalisk or Ling-Baneling-Ultralisk
 elif self.enemy_race == EnemyRace.TERRAN:
- # Baneling production (requires Baneling Nest)
+    # Baneling production (requires Baneling Nest)
  # 🚀 Performance optimization: Use b.structures (faster)
 baneling_nests = list(b.structures(UnitTypeId.BANELINGNEST).ready)
 if baneling_nests:
+    pass
 zerglings = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready]
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 if zerglings:
+    pass
 for zergling in zerglings[:2]:  # Morph up to 2 at a time
 if b.can_afford(AbilityId.MORPHZERGLINGTOBANELING_BANELING):
+    pass
 zergling(AbilityId.MORPHZERGLINGTOBANELING_BANELING)
 return
 
@@ -633,44 +757,61 @@ return
 # 🚀 Performance optimization: Use b.structures (faster)
 spires = list(b.structures(UnitTypeId.SPIRE).ready)
 if spires:
+    pass
 if await self._try_produce_unit(UnitTypeId.MUTALISK, larvae):
+    pass
 return
 
 # Ultralisk production (requires Ultralisk Cavern)
 # 🚀 Performance optimization: Use b.structures (faster)
 ultralisk_caverns = list(b.structures(UnitTypeId.ULTRALISKCAVERN).ready)
 if ultralisk_caverns:
+    pass
 if await self._try_produce_unit(UnitTypeId.ULTRALISK, larvae):
+    pass
 return
 # vs Zerg: Zergling-Baneling early control fight then Roach-Ravager
 elif self.enemy_race == EnemyRace.ZERG:
- # Early: Zergling-Baneling
+    # Early: Zergling-Baneling
 if b.time < 300:  # Before 5 minutes
  # 🚀 Performance optimization: Use b.structures (faster)
 baneling_nests = list(b.structures(UnitTypeId.BANELINGNEST).ready)
 if baneling_nests:
- # 🚀 Performance optimization: Use IntelManager cache
+    # 🚀 Performance optimization: Use IntelManager cache
     intel = getattr(b, "intel", None)
 if intel and intel.cached_zerglings is not None:
+    pass
 zerglings = intel.cached_zerglings
 else:
+    pass
 zerglings = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready]
 zerglings = [u for u in b.units(UnitTypeId.ZERGLING) if u.is_ready]
 # Handle both Units object and list
 zerglings_list = []
 try:
+    pass
+pass
+
+except Exception:
+    pass
     # Check if it's a Units object (has 'exists' attribute)
     if hasattr(zerglings, "exists") and not isinstance(zerglings, list):
+        pass
 if zerglings.exists:  # type: ignore
 zerglings_list = list(zerglings)[:2]
 elif isinstance(zerglings, list):
+    pass
 if zerglings and len(zerglings) > 0:
+    pass
 zerglings_list = zerglings[:2]
 except Exception:
+    pass
 pass
 
 for zergling in zerglings_list:
+    pass
 if b.can_afford(AbilityId.MORPHZERGLINGTOBANELING_BANELING):
+    pass
 zergling(AbilityId.MORPHZERGLINGTOBANELING_BANELING)
 return
 else:
@@ -678,25 +819,30 @@ else:
  # 🚀 Performance optimization: Use b.structures (faster)
 roach_warrens = list(b.structures(UnitTypeId.ROACHWARREN).ready)
 if roach_warrens:
+    pass
 if await self._try_produce_unit(UnitTypeId.ROACH, larvae):
+    pass
 return
 # Ravager morph
 roaches = [u for u in b.units(UnitTypeId.ROACH) if u.is_ready]
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 if roaches:
+    pass
 for roach in roaches[:1]:  # Morph 1 at a time
 if b.can_afford(AbilityId.MORPHTORAVAGER_RAVAGER):
+    pass
 roach(AbilityId.MORPHTORAVAGER_RAVAGER)
 return
 
 # 4. Final unit production (composition-based)
 if await self._produce_ultimate_units(larvae):
+    pass
 return
 
 # 5. Composition-based unit selection (if Hydra fails)
 # Curriculum Learning: Focus on basic units when difficulty is low
 if self._should_use_basic_units():
- # VeryEasy, Easy stages: Focus on Zergling + Roach (avoid complex unit
+    # VeryEasy, Easy stages: Focus on Zergling + Roach (avoid complex unit
  # compositions)
 units_to_produce = [UnitTypeId.ZERGLING, UnitTypeId.ROACH]
 else:
@@ -704,11 +850,13 @@ else:
 units_to_produce = self._get_counter_units(game_phase)
 
 for unit_type in units_to_produce:
+    pass
 if unit_type != UnitTypeId.ZERGLING:  # Zergling already handled above
 if await self._try_produce_unit(unit_type, larvae):
+    pass
 return
 except Exception as e:
- # Only log on error (prevent game interruption)
+    # Only log on error (prevent game interruption)
     current_iteration = getattr(b, "iteration", 0)
 if current_iteration % 50 == 0:
     print(f"[ERROR] _produce_army error: {e}")
@@ -733,18 +881,23 @@ b = self.bot
 # 🚀 Performance optimization: Use .structures().ready (no list conversion needed)
 spawning_pools = b.structures(UnitTypeId.SPAWNINGPOOL).ready
 if not spawning_pools.exists:
+    pass
 return
 
 # 🚀 Performance optimization: Use IntelManager cache
 intel = getattr(b, "intel", None)
 if intel:
+    pass
 queens = intel.cached_queens or b.units(UnitTypeId.QUEEN)
 if intel.cached_townhalls is not None:
+    pass
 townhalls = list(
     intel.cached_townhalls) if intel.cached_townhalls.exists else []
 else:
+    pass
 townhalls = [th for th in b.townhalls]
 else:
+    pass
 queens = b.units(UnitTypeId.QUEEN)
 # OPTIMIZE: Use intel.cached_* instead of direct units() call
 townhalls = [th for th in b.townhalls]
@@ -752,6 +905,7 @@ queens_count = len(queens) + b.already_pending(UnitTypeId.QUEEN)
 
 # IMPROVED: Check if we already have enough queens (1 per base)
 if queens_count >= len(townhalls):
+    pass
 return
 
 # IMPROVED: Resource availability check
@@ -760,7 +914,7 @@ gas_threshold = 100
 
 # CRITICAL FIX: Use 'vespene' instead of 'vespene' (correct SC2 API attribute)
 if b.minerals < mineral_threshold or b.vespene < gas_threshold:
- # Resource shortage - skip queen production
+    # Resource shortage - skip queen production
 return
 
 # IMPROVED: Base stability check
@@ -768,13 +922,13 @@ worker_count = b.workers.amount
 min_workers_per_base = 8
 
 if worker_count < len(townhalls) * min_workers_per_base:
- # Too few workers - prioritize worker production
+    # Too few workers - prioritize worker production
 return
 
 # IMPROVED: Supply capacity check
 supply_buffer = 10
 if b.supply_cap - b.supply_used < supply_buffer:
- # Supply is tight - skip queen production
+    # Supply is tight - skip queen production
 return
 
 # IMPROVED: Only produce queen if hatchery is ready and idle
@@ -785,20 +939,29 @@ ready_idle_townhalls = [
 ]
 
 if not ready_idle_townhalls:
+    pass
 return
 
 # IMPROVED: Final affordability check
 if not b.can_afford(UnitTypeId.QUEEN):
+    pass
 return
 
 # IMPROVED: Produce queen with safe_train
 for hatch in ready_idle_townhalls:
+    pass
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 await self.pm._safe_train(hatch, UnitTypeId.QUEEN)
 print(f"👑 [{int(b.time)}s] Queen production (Bases: {len(townhalls)}, Queens: {queens_count})")
 break
 except Exception as e:
- # Continue to next hatchery if this one fails
+    # Continue to next hatchery if this one fails
     current_iteration = getattr(b, "iteration", 0)
 if current_iteration % 200 == 0:
     print(f"[WARNING] UnitFactory queen production failed: {e}")

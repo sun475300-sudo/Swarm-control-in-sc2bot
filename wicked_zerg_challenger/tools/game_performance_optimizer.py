@@ -6,6 +6,14 @@
 """
 
 import re
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -13,90 +21,97 @@ PROJECT_ROOT = Path(__file__).parent.parent
 class GamePerformanceOptimizer:
     """게임 성능 최적화기"""
 
- def optimize_execution_frequency(self, content: str, file_path: Path) -> Tuple[str, int]:
-        """실행 주기 최적화"""
+def optimize_execution_frequency(
+    self, content: str, file_path: Path) -> Tuple[str, int]:
+    """실행 주기 최적화"""
  lines = content.splitlines()
  modified_lines = []
  fix_count = 0
 
  for i, line in enumerate(lines):
- # iteration % N == 0 패턴 찾기
+     # iteration % N == 0 패턴 찾기
  # 너무 자주 실행되는 것들을 줄임
-            if re.search(r'iteration\s*%\s*[1-3]\s*==\s*0', line):
- # 1-3프레임마다 실행되는 것을 4-8프레임으로 변경
+     if re.search(r'iteration\s*%\s*[1-3]\s*==\s*0', line):
+     # 1-3프레임마다 실행되는 것을 4-8프레임으로 변경
  new_line = re.sub(
-                    r'iteration\s*%\s*([1-3])\s*==\s*0',
-                    lambda m: f'iteration % {int(m.group(1)) * 4} == 0',
+     r'iteration\s*%\s*([1-3])\s*==\s*0',
+     lambda m: f'iteration % {int(m.group(1)) * 4} == 0',
  line
  )
  if new_line != line:
- modified_lines.append(new_line)
+     modified_lines.append(new_line)
  fix_count += 1
  continue
 
  # 4프레임마다 실행되는 것을 8프레임으로 변경 (비중요 작업)
-            if re.search(r'iteration\s*%\s*4\s*==\s*0', line) and 'combat' not in line.lower():
- # CombatManager는 반응성이 중요하므로 제외
+     if re.search(r'iteration\s*%\s*4\s*==\s*0', line) and 'combat' not in line.lower():
+     # CombatManager는 반응성이 중요하므로 제외
  new_line = re.sub(
-                    r'iteration\s*%\s*4\s*==\s*0',
-                    'iteration % 8 == 0',
+     r'iteration\s*%\s*4\s*==\s*0',
+     'iteration % 8 == 0',
  line
  )
  if new_line != line:
- modified_lines.append(new_line)
+     modified_lines.append(new_line)
  fix_count += 1
  continue
 
  modified_lines.append(line)
 
-        return '\n'.join(modified_lines), fix_count
+     return '\n'.join(modified_lines), fix_count
 
- def optimize_unit_filtering(self, content: str, file_path: Path) -> Tuple[str, int]:
-        """유닛 필터링 최적화"""
+def optimize_unit_filtering(self, content: str, file_path: Path) -> Tuple[str, int]:
+    """유닛 필터링 최적화"""
  lines = content.splitlines()
  modified_lines = []
  fix_count = 0
 
  for i, line in enumerate(lines):
- # 직접 bot.units() 호출을 캐시 사용으로 변경 제안
-            if re.search(r'b\.units\(|bot\.units\(|self\.units\(', line) and 'cached' not in line.lower():
- # 캐시 사용 주석 추가
+     # 직접 bot.units() 호출을 캐시 사용으로 변경 제안
+     if re.search(r'b\.units\(|bot\.units\(|self\.units\(', line) and 'cached' not in line.lower():
+     # 캐시 사용 주석 추가
  indent = len(line) - len(line.lstrip())
-                comment = f"{' ' * indent}# PERFORMANCE: Consider using intel.cached_* instead of direct units() call"
+     comment = f"{' ' * indent}# PERFORMANCE: Consider using intel.cached_* instead of direct units() call"
  modified_lines.append(line)
  # 다음 줄이 비어있지 않으면 주석 추가
-                if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].strip().startswith('#'):
- modified_lines.append(comment)
+     if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].strip().startswith('#'):
+         pass
+     modified_lines.append(comment)
  fix_count += 1
  else:
+     pass
  modified_lines.append(line)
  else:
+     pass
  modified_lines.append(line)
 
-        return '\n'.join(modified_lines), fix_count
+     return '\n'.join(modified_lines), fix_count
 
- def add_lazy_evaluation(self, content: str, file_path: Path) -> Tuple[str, int]:
-        """지연 평가 추가"""
+def add_lazy_evaluation(self, content: str, file_path: Path) -> Tuple[str, int]:
+    """지연 평가 추가"""
  lines = content.splitlines()
  modified_lines = []
  fix_count = 0
 
  for i, line in enumerate(lines):
- # list() 호출 최적화
-            if re.search(r'list\(.*\.units|list\(.*\.enemy_units|list\(.*\.structures', line):
- # .exists 체크 추가 제안
+     # list() 호출 최적화
+     if re.search(r'list\(.*\.units|list\(.*\.enemy_units|list\(.*\.structures', line):
+     # .exists 체크 추가 제안
  indent = len(line) - len(line.lstrip())
-                comment = f"{' ' * indent}# PERFORMANCE: Check .exists before list() to avoid unnecessary conversion"
+     comment = f"{' ' * indent}# PERFORMANCE: Check .exists before list() to avoid unnecessary conversion"
  modified_lines.append(line)
-                if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].strip().startswith('#'):
- modified_lines.append(comment)
+     if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].strip().startswith('#'):
+         pass
+     modified_lines.append(comment)
  fix_count += 1
  else:
+     pass
  modified_lines.append(line)
  else:
+     pass
  modified_lines.append(line)
 
-        return '\n'.join(modified_lines), fix_count
+     return '\n'.join(modified_lines), fix_count
 
 
 def optimize_game_performance(file_path: Path) -> Dict:
@@ -104,7 +119,12 @@ def optimize_game_performance(file_path: Path) -> Dict:
  optimizer = GamePerformanceOptimizer()
 
  try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
  content = f.read()
 
  original_content = content
@@ -121,32 +141,33 @@ def optimize_game_performance(file_path: Path) -> Dict:
  total_fixes = freq_fixes + filter_fixes + lazy_fixes
 
  if total_fixes > 0:
- # 백업 생성
-            backup_path = file_path.with_suffix(file_path.suffix + '.bak')
-            with open(backup_path, 'w', encoding='utf-8') as f:
+     # 백업 생성
+     backup_path = file_path.with_suffix(file_path.suffix + '.bak')
+     with open(backup_path, 'w', encoding='utf-8') as f:
  f.write(original_content)
 
  # 수정된 내용 저장
-            with open(file_path, 'w', encoding='utf-8') as f:
+     with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
 
  return {
-                "success": True,
-                "freq_fixes": freq_fixes,
-                "filter_fixes": filter_fixes,
-                "lazy_fixes": lazy_fixes,
-                "total_fixes": total_fixes
+     "success": True,
+     "freq_fixes": freq_fixes,
+     "filter_fixes": filter_fixes,
+     "lazy_fixes": lazy_fixes,
+     "total_fixes": total_fixes
  }
  else:
+     pass
  return {
-                "success": False,
-                "total_fixes": 0
+     "success": False,
+     "total_fixes": 0
  }
 
  except Exception as e:
- return {
-            "success": False,
-            "error": str(e)
+     return {
+     "success": False,
+     "error": str(e)
  }
 
 
@@ -159,10 +180,10 @@ def main():
 
  # 주요 파일 목록
  main_files = [
-        "wicked_zerg_bot_pro.py",
-        "production_manager.py",
-        "combat_manager.py",
-        "economy_manager.py"
+    "wicked_zerg_bot_pro.py",
+    "production_manager.py",
+    "combat_manager.py",
+    "economy_manager.py"
  ]
 
  total_freq_fixes = 0
@@ -171,22 +192,24 @@ def main():
 
     print("게임 성능 최적화 적용 중...")
  for main_file in main_files:
- file_path = PROJECT_ROOT / main_file
+     file_path = PROJECT_ROOT / main_file
  if file_path.exists():
-            print(f"  - {main_file}")
+     print(f"  - {main_file}")
  result = optimize_game_performance(file_path)
 
-            if result.get("success"):
-                print(f"    실행 주기: {result['freq_fixes']}개")
-                print(f"    필터링: {result['filter_fixes']}개")
-                print(f"    지연 평가: {result['lazy_fixes']}개")
-                total_freq_fixes += result['freq_fixes']
-                total_filter_fixes += result['filter_fixes']
-                total_lazy_fixes += result['lazy_fixes']
-            elif result.get("error"):
-                print(f"    오류: {result['error']}")
+     if result.get("success"):
+         pass
+     print(f"    실행 주기: {result['freq_fixes']}개")
+     print(f"    필터링: {result['filter_fixes']}개")
+     print(f"    지연 평가: {result['lazy_fixes']}개")
+     total_freq_fixes += result['freq_fixes']
+     total_filter_fixes += result['filter_fixes']
+     total_lazy_fixes += result['lazy_fixes']
+     elif result.get("error"):
+         pass
+     print(f"    오류: {result['error']}")
  else:
-                print(f"    변경 사항 없음")
+     print(f"    변경 사항 없음")
 
  print()
     print("=" * 70)
@@ -198,4 +221,4 @@ def main():
 
 
 if __name__ == "__main__":
- main()
+    main()

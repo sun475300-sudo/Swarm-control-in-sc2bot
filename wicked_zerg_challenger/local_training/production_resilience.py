@@ -1,15 +1,41 @@
 # -*- coding: utf-8 -*-
 from typing import Any, Dict
+import random
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    # Mock for testing
+class UnitTypeId:
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        EXTRACTOR = "EXTRACTOR"
+        HATCHERY = "HATCHERY"
+        OVERLORD = "OVERLORD"
+        LARVA = "LARVA"
+        ZERGLING = "ZERGLING"
+
+try:
+    from config import get_learned_parameter
+except ImportError:
+    # Fallback if config module not available
+def get_learned_parameter(parameter_name: str, default_value: Any = None) -> Any:
+        return default_value
 
 
 class ProductionResilience:
 
     async def _safe_train(self, unit, unit_type):
         """Safely train a unit, handling both sync and async train() methods"""
-    try:
-    result = unit.train(unit_type)
+        try:
+            pass
+        pass
+
+        except Exception:
+            pass
+            result = unit.train(unit_type)
     # train() may return bool or coroutine
     if hasattr(result, '__await__'):
+        pass
     await result
     return True
     except Exception as e:
@@ -18,12 +44,14 @@ class ProductionResilience:
         print(f"[WARNING] _safe_train error: {e}")
     return False
 
-    def __init__(self, bot: Any) -> None:
+def __init__(self, bot: Any) -> None:
+        pass
     self.bot = bot
 
     # Shared build reservation map to block duplicate construction across
     # managers
     if not hasattr(self.bot, "build_reservations"):
+        pass
     self.bot.build_reservations = {}
 
     # Wrap bot.build once to enforce reservation checks globally
@@ -42,10 +70,18 @@ class ProductionResilience:
     ts = reservations.get(structure_type)
     # Skip if recently reserved (another manager already issued the build)
     if ts is not None and now - ts < 45.0:
+        pass
     return None
     reservations[structure_type] = now
     if structure_type == UnitTypeId.SPAWNINGPOOL:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if self.bot.structures(
             UnitTypeId.SPAWNINGPOOL).exists or self.bot.already_pending(
             UnitTypeId.SPAWNINGPOOL) > 0:
@@ -54,31 +90,45 @@ class ProductionResilience:
         print(f"[POOL GUARD] Blocked duplicate Spawning Pool at {int(now)}s")
     return None
     except Exception:
+        pass
     pass
     return await original_build(structure_type, *args, **kwargs)
 
     self.bot.build = _build_with_reservation  # type: ignore
     self.bot._build_reservation_wrapped = True
 
-    def _cleanup_build_reservations(self) -> None:
+def _cleanup_build_reservations(self) -> None:
         """Drop stale reservations to avoid permanent blocks."""
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
         reservations = getattr(self.bot, "build_reservations", {})
         now = getattr(self.bot, "time", 0.0)
     stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
     for sid in stale:
+        pass
     reservations.pop(sid, None)
     except Exception:
+        pass
     pass
 
     async def fix_production_bottleneck(self) -> None:
     b = self.bot
     self._cleanup_build_reservations()
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
         # === EXTREME EMERGENCY: Minerals > 500 - Force all larvae to Zerglings
         # This is the last line of defense against "1,000+ minerals, 0 army"
         # death spiral
     if b.minerals > 500:
+        pass
     larvae = b.units(UnitTypeId.LARVA)
     if larvae.exists:
         # Check Spawning Pool status more reliably
@@ -88,8 +138,16 @@ class ProductionResilience:
 
     # Check for duplicate pool builds - only if NO ready pools exist
     if not spawning_pools_ready.exists and pending_pools == 0 and b.minerals > 500:
+        pass
     if b.townhalls.exists and b.can_afford(UnitTypeId.SPAWNINGPOOL):
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     main_base = b.townhalls.first
     await b.build(
         UnitTypeId.SPAWNINGPOOL,
@@ -97,6 +155,7 @@ class ProductionResilience:
     )
     print(f"[PRODUCTION_RESILIENCE] [{int(b.time)}s] EMERGENCY POOL BUILD [Frame:{b.iteration}] Minerals:{int(b.minerals)} Larvae:{len(list(larvae))} Supply:{b.supply_used}/{b.supply_cap}")
     except Exception as e:
+        pass
     if b.iteration % 100 == 0:
         print(f"[ERROR] Failed to emergency-build Spawning Pool: {e}")
     return  # Exit and wait for Spawning Pool to complete
@@ -110,26 +169,44 @@ class ProductionResilience:
     # IMPROVED: ´õ Àû±ØÀûÀ¸·Î ¸ðµç ¶ó¹Ù »ç¿ë
     for larva in larvae_list:
         if not hasattr(larva, 'is_ready') or not larva.is_ready:
+            pass
     continue
 
     # IMPROVED: ÀÎ±¸¼ö Ã¼Å©¸¦ ¸ÕÀúÇÏ¿© ´ë±ºÁÖ »ý»ê ÇÊ¿ä ½Ã ¾Ë¸²
     if b.supply_left < 1:
         # ÀÎ±¸¼ö ºÎÁ· - ´ë±ºÁÖ »ý»ê ÇÊ¿ä
     if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD):
         print(
             f"[EXTREME EMERGENCY] Produced Overlord for supply (minerals: {int(b.minerals)})")
     return
     except Exception:
+        pass
     pass
     break  # ÀÎ±¸¼ö ºÎÁ·ÇÏ¸é Áß´Ü
 
     if b.can_afford(UnitTypeId.ZERGLING):
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if await self._safe_train(larva, UnitTypeId.ZERGLING):
+        pass
     zergling_produced += 1
     except Exception as e:
+        pass
     if b.iteration % 50 == 0:
         print(f"[ERROR] Failed to force Zergling: {e}")
     break  # ÇÑ ¸¶¸® ½ÇÆÐÇÏ¸é Áß´Ü
@@ -145,88 +222,152 @@ class ProductionResilience:
             f"[WARNING] No Zerglings produced: larvae={len(larvae_list)}, minerals={int(b.minerals)}, supply={b.supply_left}, can_afford={b.can_afford(UnitTypeId.ZERGLING)}")
 
     if zergling_produced > 0:
+        pass
     return  # Exit after emergency production
 
-    # Gas starvation handler: if vespene is zero and no extractor in progress,
-    # build one
+    # Gas extraction: Build at pro baseline supply (17-18)
+    supply_used = getattr(b, "supply_used", 0)
+    gas_supply = get_learned_parameter("gas_supply", 17.0)
+    gas_supply_max = gas_supply + 1.0  # Allow up to 18 (17-18 range)
+    
     try:
-        if getattr(b, "vespene", 0) <= 0:
-            extractors = b.structures(
-                UnitTypeId.EXTRACTOR) if hasattr(
-                b, "structures") else []
-    if not extractors.exists and b.already_pending(UnitTypeId.EXTRACTOR) == 0:
-        geysers = b.vespene_geyser if hasattr(b, "vespene_geyser") else []
-    if geysers:
-        target = geysers.first if hasattr(
-            geysers, "first") else list(geysers)[0]
-    if b.can_afford(UnitTypeId.EXTRACTOR):
-    await b.build(UnitTypeId.EXTRACTOR, target)
+        # Priority 1: Build at target supply (17-18)
+        if supply_used >= gas_supply and supply_used <= gas_supply_max:
+            extractors = b.structures(UnitTypeId.EXTRACTOR) if hasattr(b, "structures") else []
+            if not extractors.exists and b.already_pending(UnitTypeId.EXTRACTOR) == 0:
+                geysers = b.vespene_geyser if hasattr(b, "vespene_geyser") else []
+                if geysers:
+                    target = geysers.first if hasattr(geysers, "first") else list(geysers)[0]
+                    if b.can_afford(UnitTypeId.EXTRACTOR):
+                        await b.build(UnitTypeId.EXTRACTOR, target)
+                        if b.iteration % 50 == 0:
+                            print(f"[TECH BUILD] [{int(b.time)}s] Building Gas Extractor at {supply_used} supply (pro baseline: {gas_supply})")
+        # Priority 2: Emergency build if vespene is zero and no extractor
+        elif getattr(b, "vespene", 0) <= 0:
+            extractors = b.structures(UnitTypeId.EXTRACTOR) if hasattr(b, "structures") else []
+            if not extractors.exists and b.already_pending(UnitTypeId.EXTRACTOR) == 0:
+                geysers = b.vespene_geyser if hasattr(b, "vespene_geyser") else []
+                if geysers:
+                    target = geysers.first if hasattr(geysers, "first") else list(geysers)[0]
+                    if b.can_afford(UnitTypeId.EXTRACTOR):
+                        await b.build(UnitTypeId.EXTRACTOR, target)
     except Exception:
-    pass
+        pass
 
+    # Spawning Pool: Build at pro baseline supply (17)
+    spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 17.0)
     if (
         not b.units(UnitTypeId.SPAWNINGPOOL).exists
         and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0
     ):
         supply_used = getattr(b, "supply_used", 0)
-    should_build_pool = supply_used >= 17 and supply_used <= 20
-    emergency_build = supply_used > 20 and b.can_afford(
-        UnitTypeId.SPAWNINGPOOL)
-    if should_build_pool or emergency_build:
-    if b.can_afford(UnitTypeId.SPAWNINGPOOL):
-    if b.townhalls.exists:
-    try:
-    main_base = b.townhalls.first
-    await b.build(
-        UnitTypeId.SPAWNINGPOOL,
-        near=main_base.position.towards(b.game_info.map_center, 5),
-    )
-    if b.iteration % 50 == 0:
-    print(
-        f"[TECH BUILD] [{int(b.time)}s] Building Spawning Pool at {supply_used} supply (required for Zergling production)"
-    )
-    return
-    except Exception as e:
-    if b.iteration % 100 == 0:
-    print(
-        f"[TECH BUILD] [{int(b.time)}s] Failed to build Spawning Pool: {e}"
-    )
+        # Priority 1: Build at target supply (17)
+        should_build_pool = supply_used >= spawning_pool_supply
+        # Priority 2: Emergency build if too late (supply > 20)
+        emergency_build = supply_used > 20 and b.can_afford(UnitTypeId.SPAWNINGPOOL)
+        
+        if should_build_pool or emergency_build:
+            if b.can_afford(UnitTypeId.SPAWNINGPOOL):
+                if b.townhalls.exists:
+                    try:
+                        main_base = b.townhalls.first
+                        await b.build(
+                            UnitTypeId.SPAWNINGPOOL,
+                            near=main_base.position.towards(b.game_info.map_center, 5),
+                        )
+                        if b.iteration % 50 == 0:
+                            print(f"[TECH BUILD] [{int(b.time)}s] Building Spawning Pool at {supply_used} supply (pro baseline: {spawning_pool_supply})")
+                        return
+                    except Exception as e:
+                        if b.iteration % 100 == 0:
+                            print(f"[TECH BUILD] [{int(b.time)}s] Failed to build Spawning Pool: {e}")
+    # Natural Expansion: Build at pro baseline supply (30-32)
+    natural_expansion_supply = get_learned_parameter("natural_expansion_supply", 30.0)
+    natural_expansion_supply_max = natural_expansion_supply + 2.0  # Allow up to 32 (30-32 range)
+    
     larvae = b.units(UnitTypeId.LARVA)
     if not larvae.exists:
-    if b.minerals > 500 and b.already_pending(UnitTypeId.HATCHERY) == 0:
-    if b.townhalls.exists:
-    main_base = b.townhalls.first
-    macro_pos = main_base.position.towards(b.game_info.map_center, 8)
-    try:
-    await b.build(UnitTypeId.HATCHERY, near=macro_pos)
-    except Exception:
-    pass
-    return
+        pass
+    
+    townhalls = b.townhalls if hasattr(b, "townhalls") else []
+    supply_used = getattr(b, "supply_used", 0)
+    
+    # Priority 1: Build at target supply (30-32)
+    if supply_used >= natural_expansion_supply and supply_used <= natural_expansion_supply_max:
+        if len(townhalls) < 2 and b.already_pending(UnitTypeId.HATCHERY) == 0:
+            if b.can_afford(UnitTypeId.HATCHERY):
+                if b.townhalls.exists:
+                    try:
+                        main_base = b.townhalls.first
+                        macro_pos = main_base.position.towards(b.game_info.map_center, 8)
+                        await b.build(UnitTypeId.HATCHERY, near=macro_pos)
+                        if b.iteration % 50 == 0:
+                            print(f"[TECH BUILD] [{int(b.time)}s] Building Natural Expansion at {supply_used} supply (pro baseline: {natural_expansion_supply})")
+                        return
+                    except Exception as e:
+                        if b.iteration % 100 == 0:
+                            print(f"[TECH BUILD] [{int(b.time)}s] Failed to build Natural Expansion: {e}")
+    # Priority 2: Force expansion if too late (supply 40+) and still no expansion
+    elif supply_used >= 40 and len(townhalls) < 2 and b.already_pending(UnitTypeId.HATCHERY) == 0:
+        if b.can_afford(UnitTypeId.HATCHERY):
+            if b.townhalls.exists:
+                try:
+                    main_base = b.townhalls.first
+                    macro_pos = main_base.position.towards(b.game_info.map_center, 8)
+                    await b.build(UnitTypeId.HATCHERY, near=macro_pos)
+                    if b.iteration % 50 == 0:
+                        print(f"[TECH BUILD] [{int(b.time)}s] FORCING Natural Expansion at {supply_used} supply (emergency)")
+                    return
+                except Exception:
+                    pass
     if b.supply_left < 4 and b.supply_cap < 200:
+        pass
     if b.can_afford(UnitTypeId.OVERLORD) and larvae.exists:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     larvae_list = list(larvae)
     if larvae_list:
+        pass
     await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD)
     except Exception:
+        pass
     pass
 
     # ??? AGGRESSIVE OVERLORD PRODUCTION: When minerals > 1,000, produce 3-5 Overlords at once
     # This creates a supply buffer (12-20) for aggressive army production
     if b.minerals > 500 and b.supply_left < 20 and larvae.exists:
+        pass
     overlords_to_produce = min(5, len(larvae) // 2)  # Produce 3-5 overlords
     overlords_produced = 0
     larvae_list = list(larvae)
     for larva in larvae_list:
+        pass
     if not larva.is_ready:
+        pass
     continue
     if overlords_produced >= overlords_to_produce:
+        pass
     break
     if b.can_afford(UnitTypeId.OVERLORD):
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if await self._safe_train(larva, UnitTypeId.OVERLORD):
+        pass
     overlords_produced += 1
     except Exception:
+        pass
     pass
     if overlords_produced > 0 and b.iteration % 50 == 0:
         print(
@@ -234,51 +375,89 @@ class ProductionResilience:
 
     spawning_pools = b.units(UnitTypeId.SPAWNINGPOOL).ready
     if spawning_pools.exists:
+        pass
     larvae_list = list(larvae)
     produced_count = 0
     max_production = min(10, len(larvae_list))
     for i, larva in enumerate(larvae_list[:max_production]):
+        pass
     if not larva.is_ready:
+        pass
     continue
     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if await self._safe_train(larva, UnitTypeId.ZERGLING):
+        pass
     produced_count += 1
     except Exception:
+        pass
     continue
     if produced_count > 0 and b.iteration % 50 == 0:
+        pass
     print(
         f"[PRODUCTION FIX] [{int(b.time)}s] Produced {produced_count} Zerglings (Minerals: {int(b.minerals)}M, Larva: {len(larvae_list)})"
     )
     roach_warrens = b.units(UnitTypeId.ROACHWARREN).ready
     if roach_warrens.exists:
+        pass
     larvae_list = list(larvae)
     produced_count = 0
     max_production = min(5, len(larvae_list))
     for i, larva in enumerate(larvae_list[:max_production]):
+        pass
     if not larva.is_ready:
+        pass
     continue
     if b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if await self._safe_train(larva, UnitTypeId.ROACH):
+        pass
     produced_count += 1
     except Exception:
+        pass
     continue
     hydra_dens = b.units(UnitTypeId.HYDRALISKDEN).ready
     if hydra_dens.exists:
+        pass
     larvae_list = list(larvae)
     produced_count = 0
     max_production = min(5, len(larvae_list))
     for i, larva in enumerate(larvae_list[:max_production]):
+        pass
     if not larva.is_ready:
+        pass
     continue
     if b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if await self._safe_train(larva, UnitTypeId.HYDRALISK):
+        pass
     produced_count += 1
     except Exception:
+        pass
     continue
     except Exception as e:
+        pass
     if b.iteration % 100 == 0:
         print(f"[WARNING] fix_production_bottleneck error: {e}")
 
@@ -290,18 +469,31 @@ class ProductionResilience:
         """
     b = self.bot
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
         # IMPROVED: Only log at DEBUG level during training to reduce I/O overhead
         # Use logger if available, otherwise use print only for critical issues
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     use_logger = True
     except ImportError:
+        pass
     use_logger = False
-    loguru_logger = None
+    logger = None
 
     # Check if we're in training mode (reduce logging frequency)
     is_training = getattr(b, 'train_mode', False)
 
     if iteration % 50 == 0:
+        pass
     larvae = b.units(UnitTypeId.LARVA)
     larvae_count = larvae.amount if hasattr(
         larvae, "amount") else len(
@@ -316,37 +508,67 @@ class ProductionResilience:
     spawning_pool_query = b.structures(UnitTypeId.SPAWNINGPOOL)
     spawning_pool_ready = False
     if spawning_pool_query.ready.exists:
+        pass
     spawning_pool_ready = True
     elif spawning_pool_query.exists:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     pool = spawning_pool_query.first
     if pool.build_progress >= 0.99:
+        pass
     spawning_pool_ready = True
     except Exception:
+        pass
     pass
 
     roach_warren_query = b.structures(UnitTypeId.ROACHWARREN)
     roach_warren_ready = False
     if roach_warren_query.ready.exists:
+        pass
     roach_warren_ready = True
     elif roach_warren_query.exists:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     warren = roach_warren_query.first
     if warren.build_progress >= 0.99:
+        pass
     roach_warren_ready = True
     except Exception:
+        pass
     pass
 
     hydralisk_den_query = b.structures(UnitTypeId.HYDRALISKDEN)
     hydralisk_den_ready = False
     if hydralisk_den_query.ready.exists:
+        pass
     hydralisk_den_ready = True
     elif hydralisk_den_query.exists:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     den = hydralisk_den_query.first
     if den.build_progress >= 0.99:
+        pass
     hydralisk_den_ready = True
     except Exception:
+        pass
     pass
     can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
     can_afford_roach = b.can_afford(UnitTypeId.ROACH)
@@ -356,20 +578,20 @@ class ProductionResilience:
     # Only print critical issues at INFO level
     if is_training and use_logger and loguru_logger is not None:
         # Training mode: Use DEBUG level to reduce I/O overhead
-        loguru_logger.debug(
+        logger.debug(
             f"[PRODUCTION DIAGNOSIS] [{int(b.time)}s] Iteration: {iteration}")
-        loguru_logger.debug(
+        logger.debug(
             f"Resources: M:{int(b.minerals)} G:{int(b.vespene)} Supply:{b.supply_used}/{b.supply_cap}")
-        loguru_logger.debug(
+        logger.debug(
             f"Larva: {larvae_count} | Tech: Pool:{spawning_pool_ready} Warren:{roach_warren_ready} Den:{hydralisk_den_ready}")
-        loguru_logger.debug(
+        logger.debug(
             f"Units: Z:{zergling_count} R:{roach_count} H:{hydralisk_count} | Pending: Z:{pending_zerglings} R:{pending_roaches} H:{pending_hydralisks}")
 
     # Only log critical issues at INFO level
     if larvae_count == 0:
-        loguru_logger.warning(f"[PRODUCTION] NO LARVAE - Production blocked!")
+        logger.warning(f"[PRODUCTION] NO LARVAE - Production blocked!")
     elif larvae_count >= 3 and b.minerals > 500 and spawning_pool_ready and can_afford_zergling and b.supply_left >= 2:
-        loguru_logger.warning(
+        logger.warning(
             f"[PRODUCTION] Should produce Zerglings but not producing!")
     else:
         # Non-training mode or no logger: Use print (for debugging)
@@ -388,32 +610,42 @@ class ProductionResilience:
     elif larvae_count >= 3 and b.minerals > 500 and spawning_pool_ready and can_afford_zergling and b.supply_left >= 2:
         print(f"[WARNING] Should produce Zerglings but not producing!")
     except Exception as e:
+        pass
     if iteration % 100 == 0:
         print(f"[WARNING] Production diagnosis error: {e}")
 
     async def build_army_aggressive(self) -> None:
     b = self.bot
     if not b.units(UnitTypeId.LARVA).exists:
+        pass
     return
     larvae = b.units(UnitTypeId.LARVA).ready
     if b.supply_left < 5 and b.supply_cap < 200:
+        pass
     if b.can_afford(
             UnitTypeId.OVERLORD) and not b.already_pending(
             UnitTypeId.OVERLORD):
     if larvae.exists:
+        pass
     larvae_list = list(larvae)
     if larvae_list:
+        pass
     for larva in larvae_list:
+        pass
     if larva.is_ready:
+        pass
     if await self._safe_train(larva, UnitTypeId.OVERLORD):
+        pass
     return
     if hasattr(
         b,
             "current_build_plan") and "ideal_composition" in b.current_build_plan:
         ideal_comp = b.current_build_plan["ideal_composition"]
     else:
+        pass
     ideal_comp = await self._determine_ideal_composition()
     if not hasattr(b, "current_build_plan"):
+        pass
     b.current_build_plan = {}
     b.current_build_plan["ideal_composition"] = ideal_comp
     zerglings = b.units(UnitTypeId.ZERGLING).amount
@@ -424,11 +656,13 @@ class ProductionResilience:
     total_army = zerglings + roaches + hydralisks + banelings + ravagers
     unit_to_produce = None
     if total_army == 0:
+        pass
     if b.units(
             UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
             UnitTypeId.ZERGLING):
     unit_to_produce = UnitTypeId.ZERGLING
     else:
+        pass
     target_hydra = ideal_comp.get(UnitTypeId.HYDRALISK, 0.0)
     target_roach = ideal_comp.get(UnitTypeId.ROACH, 0.0)
     target_ling = ideal_comp.get(UnitTypeId.ZERGLING, 0.0)
@@ -449,53 +683,88 @@ class ProductionResilience:
     max_deficit_unit = max(deficits.items(), key=lambda x: x[1])[0]
     max_deficit = deficits[max_deficit_unit]
     if max_deficit > 0:
+        pass
     if max_deficit_unit == UnitTypeId.HYDRALISK:
+        pass
     if b.units(UnitTypeId.HYDRALISKDEN).ready.exists and b.can_afford(
         UnitTypeId.HYDRALISK
     ):
     unit_to_produce = UnitTypeId.HYDRALISK
     elif max_deficit_unit == UnitTypeId.ROACH:
+        pass
     if b.units(UnitTypeId.ROACHWARREN).ready.exists and b.can_afford(
         UnitTypeId.ROACH
     ):
     unit_to_produce = UnitTypeId.ROACH
     elif max_deficit_unit == UnitTypeId.RAVAGER:
+        pass
     roaches_ready = b.units(UnitTypeId.ROACH).ready
     if roaches_ready.exists and b.can_afford(AbilityId.MORPHTORAVAGER_RAVAGER):
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     roaches_ready.random(AbilityId.MORPHTORAVAGER_RAVAGER)
     return
     except Exception:
+        pass
     pass
     elif max_deficit_unit == UnitTypeId.BANELING:
+        pass
     zerglings_ready = b.units(UnitTypeId.ZERGLING).ready
     if zerglings_ready.exists and b.units(
             UnitTypeId.BANELINGNEST).ready.exists:
     if b.can_afford(AbilityId.MORPHZERGLINGTOBANELING_BANELING):
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     zerglings_ready.random(AbilityId.MORPHZERGLINGTOBANELING_BANELING)
     return
     except Exception:
+        pass
     pass
     elif max_deficit_unit == UnitTypeId.ZERGLING:
+        pass
     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
         UnitTypeId.ZERGLING
     ):
     unit_to_produce = UnitTypeId.ZERGLING
     if not unit_to_produce:
+        pass
     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
         UnitTypeId.ZERGLING
     ):
     unit_to_produce = UnitTypeId.ZERGLING
     if unit_to_produce and larvae.exists and b.supply_left >= 2:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     larvae_list = list(larvae)
     if larvae_list:
+        pass
     for larva in larvae_list:
+        pass
     if larva.is_ready:
+        pass
     if await self._safe_train(larva, unit_to_produce):
+        pass
     break
     except Exception:
+        pass
     pass
 
     async def force_resource_dump(self) -> None:
@@ -504,17 +773,35 @@ class ProductionResilience:
             UnitTypeId.HATCHERY) and b.already_pending(
             UnitTypeId.HATCHERY) < 2:
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     await b.expand_now()
     except Exception:
+        pass
     pass
     if b.units(UnitTypeId.LARVA).exists:
+        pass
     larvae = b.units(UnitTypeId.LARVA).ready
     if larvae.exists and b.units(UnitTypeId.SPAWNINGPOOL).ready.exists:
+        pass
     for larva in larvae:
+        pass
     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     await self._safe_train(larva, UnitTypeId.ZERGLING)
     except Exception:
+        pass
     continue
 
     async def panic_mode_production(self) -> None:
@@ -523,6 +810,7 @@ class ProductionResilience:
     # ??? EMERGENCY DEFENSE: Build Spine Crawlers at 2:30+ if enemy detected
     # Prevents 3-minute defeat when bot has 0 army
     if b.time > 150 and b.already_pending(UnitTypeId.SPINECRAWLER) == 0:
+        pass
     spine_crawlers = b.units(UnitTypeId.SPINECRAWLER)
     spine_count = spine_crawlers.amount if hasattr(
         spine_crawlers, 'amount') else len(
@@ -532,13 +820,21 @@ class ProductionResilience:
     intel = getattr(b, "intel", None)
     enemy_near_base = False
     if intel and hasattr(intel, "enemy_units_near_base"):
+        pass
     enemy_near_base = intel.enemy_units_near_base
 
     # Build 1-2 Spine Crawlers for defense if conditions met
     if (enemy_near_base or b.time > 180) and spine_count < 2 and b.can_afford(
             UnitTypeId.SPINECRAWLER):
     if b.townhalls.exists:
+        pass
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     main_base = b.townhalls.first
     # Place Spine Crawler in front of base (towards enemy)
     defense_pos = main_base.position.towards(b.game_info.map_center, 8)
@@ -547,27 +843,35 @@ class ProductionResilience:
         print(
             f"[EMERGENCY DEFENSE] [{int(b.time)}s] Building Spine Crawler for defense")
     except Exception as e:
+        pass
     if b.iteration % 100 == 0:
         print(f"[EMERGENCY DEFENSE] Failed to build Spine Crawler: {e}")
 
     if b.production:
+        pass
     await b.production._produce_overlord()
     if b.production:
+        pass
     await b.production._produce_queen()
     larvae = list(b.units(UnitTypeId.LARVA))
     if larvae and b.supply_left >= 2:
+        pass
     if b.can_afford(UnitTypeId.ZERGLING):
+        pass
     spawning_pools = b.units(UnitTypeId.SPAWNINGPOOL).ready
     if spawning_pools:
-    import random
+        pass
+import random
     # CRITICAL FIX: Use _safe_train instead of direct train() call
     larva = random.choice(larvae)
     if larva.is_ready:
+        pass
     await self._safe_train(larva, UnitTypeId.ZERGLING)
 
     async def build_terran_counters(self) -> None:
     b = self.bot
     if not b.production:
+        pass
     return
     baneling_nests = [
         s for s in b.units(
@@ -577,10 +881,12 @@ class ProductionResilience:
             UnitTypeId.BANELINGNEST):
         # CRITICAL: Check for duplicate construction before building
     if not b.structures(UnitTypeId.BANELINGNEST).exists:
+        pass
     spawning_pools = [
         s for s in b.units(
             UnitTypeId.SPAWNINGPOOL).structure if s.is_ready]
     if spawning_pools:
+        pass
     await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
     roach_warrens = [
         s for s in b.units(
@@ -590,16 +896,21 @@ class ProductionResilience:
             UnitTypeId.ROACHWARREN):
         # CRITICAL: Check for duplicate construction before building
     if not b.structures(UnitTypeId.ROACHWARREN).exists:
+        pass
     if b.townhalls.exists:
+        pass
     townhalls_list = list(b.townhalls)
     if townhalls_list:
+        pass
     await b.build(UnitTypeId.ROACHWARREN, near=townhalls_list[0])
     else:
+        pass
     await b.build(UnitTypeId.ROACHWARREN, near=b.game_info.map_center)
 
     async def build_protoss_counters(self) -> None:
     b = self.bot
     if not b.production:
+        pass
     return
     hydra_dens = [
         s for s in b.units(
@@ -610,11 +921,15 @@ class ProductionResilience:
     lairs = [s for s in b.units(UnitTypeId.LAIR).structure if s.is_ready]
     hives = [s for s in b.units(UnitTypeId.HIVE).structure if s.is_ready]
     if lairs or hives:
+        pass
     if b.townhalls.exists:
+        pass
     townhalls_list = list(b.townhalls)
     if townhalls_list:
+        pass
     await b.build(UnitTypeId.HYDRALISKDEN, near=townhalls_list[0])
     else:
+        pass
     await b.build(UnitTypeId.HYDRALISKDEN, near=b.game_info.map_center)
     roach_warrens = [
         s for s in b.units(
@@ -623,15 +938,19 @@ class ProductionResilience:
             UnitTypeId.ROACHWARREN) == 0 and b.time > 180 and b.can_afford(
             UnitTypeId.ROACHWARREN):
     if b.townhalls.exists:
+        pass
     townhalls_list = list(b.townhalls)
     if townhalls_list:
+        pass
     await b.build(UnitTypeId.ROACHWARREN, near=townhalls_list[0])
     else:
+        pass
     await b.build(UnitTypeId.ROACHWARREN, near=b.game_info.map_center)
 
     async def build_zerg_counters(self) -> None:
     b = self.bot
     if not b.production:
+        pass
     return
     roach_warrens = [
         s for s in b.units(
@@ -640,10 +959,13 @@ class ProductionResilience:
             UnitTypeId.ROACHWARREN) == 0 and b.time > 180 and b.can_afford(
             UnitTypeId.ROACHWARREN):
     if b.townhalls.exists:
+        pass
     townhalls_list = list(b.townhalls)
     if townhalls_list:
+        pass
     await b.build(UnitTypeId.ROACHWARREN, near=townhalls_list[0])
     else:
+        pass
     await b.build(UnitTypeId.ROACHWARREN, near=b.game_info.map_center)
     baneling_nests = [
         s for s in b.units(
@@ -655,6 +977,7 @@ class ProductionResilience:
         s for s in b.units(
             UnitTypeId.SPAWNINGPOOL).structure if s.is_ready]
     if spawning_pools:
+        pass
     await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
     hydra_dens = [
         s for s in b.units(
@@ -665,11 +988,15 @@ class ProductionResilience:
     lairs = [s for s in b.units(UnitTypeId.LAIR).structure if s.is_ready]
     hives = [s for s in b.units(UnitTypeId.HIVE).structure if s.is_ready]
     if lairs or hives:
+        pass
     if b.townhalls.exists:
+        pass
     townhalls_list = list(b.townhalls)
     if townhalls_list:
+        pass
     await b.build(UnitTypeId.HYDRALISKDEN, near=townhalls_list[0])
     else:
+        pass
     await b.build(UnitTypeId.HYDRALISKDEN, near=b.game_info.map_center)
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:

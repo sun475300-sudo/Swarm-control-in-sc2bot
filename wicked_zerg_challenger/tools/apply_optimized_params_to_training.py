@@ -3,16 +3,18 @@
 """
 Apply Optimized Parameters to Training
 
-╢ыю╫ ╟тюс хф╥ц©║╪╜ цжюШх╜╣х гп╫ю ╣╔юлем╦╕ юШ©Кго╢б ╫╨е╘╦Ёф╝ют╢о╢ы.
-- цжюШх╜╣х фд╤С╧лем х╝юн
-- config.py©║ ╧щ©╣ х╝юн
-- ╟тюс хф╥ц©║╪╜ ╩Г©Кгр аь╨Я ©о╥А
+О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫ф╥ц©О©╫О©╫О©╫ О©╫О©╫О©╫О©╫х╜О©╫О©╫ О©╫п╫О©╫ О©╫О©╫О©╫О©╫О©╫м╦О©╫ О©╫О©╫О©╫О©╫О©╫о╢О©╫ О©╫О©╫е╘О©╫О©╫ф╝О©╫т╢о╢О©╫.
+- О©╫О©╫О©╫О©╫х╜О©╫О©╫ О©╫д╤О©╫О©╫О©╫О©╫ х╝О©╫О©╫
+- config.pyО©╫О©╫ О©╫щ©О©╫ х╝О©╫О©╫
+- О©╫О©╫О©╫О©╫ О©╫ф╥ц©О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫ь╨О©╫ О©╫о╥О©╫
 """
 
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict
+import Any
+import Optional
 
 # Add parent directory to path
 script_dir = Path(__file__).parent.parent

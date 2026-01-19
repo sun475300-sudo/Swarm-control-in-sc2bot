@@ -45,11 +45,11 @@ GAME_STATE = {
 # -----------------------------
 
 def _build_game_state(base_dir: Path) -> dict:
- # Start with defaults
+    # Start with defaults
  state = dict(GAME_STATE)
  status = _find_latest_instance_status(base_dir)
  if status:
- # Flexible mapping: support nested or flat structures
+     # Flexible mapping: support nested or flat structures
         src = status.get("game_state", status)
         state["is_running"] = src.get("is_running", state["is_running"])
         state["current_frame"] = src.get(
@@ -65,7 +65,7 @@ def _build_game_state(base_dir: Path) -> dict:
         "supply_max", state["supply_cap"]))
         units = src.get("unit_count", src.get("units", state["unit_count"]))
  if isinstance(units, dict):
- # Merge known unit keys
+     # Merge known unit keys
             merged = dict(state["unit_count"])
  merged.update({
                 "zerglings": units.get("zerglings", merged.get("zerglings", 0)),
@@ -92,7 +92,7 @@ def _build_game_state(base_dir: Path) -> dict:
  return state
 
 def _build_combat_stats(base_dir: Path) -> dict:
- # Defaults as previously shown
+    # Defaults as previously shown
  defaults = {
         "total_battles": 152,
         "wins": 89,
@@ -104,7 +104,7 @@ def _build_combat_stats(base_dir: Path) -> dict:
  }
  ts = _load_training_stats(base_dir)
  if not ts:
- return defaults
+     return defaults
     wins = ts.get("wins", defaults["wins"])
     losses = ts.get("losses", defaults["losses"])
  total = wins + losses
@@ -120,7 +120,7 @@ def _build_combat_stats(base_dir: Path) -> dict:
  }
 
 def _build_learning_progress(base_dir: Path) -> dict:
- defaults = {
+    defaults = {
         "episode": 428,
         "total_episodes": 1000,
         "win_rate_trend": [35.2, 38.1, 41.5, 42.8, 45.3],
@@ -130,7 +130,7 @@ def _build_learning_progress(base_dir: Path) -> dict:
  }
  ts = _load_training_stats(base_dir)
  if not ts:
- return defaults
+     return defaults
  return {
         "episode": ts.get("episode", defaults["episode"]),
         "total_episodes": ts.get("total_episodes", defaults["total_episodes"]),
@@ -150,10 +150,10 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     static_dir = os.path.join(os.path.dirname(__file__), "static")
  project_root = os.path.dirname(__file__)
 
- def __init__(self, *args, **kwargs):
- super().__init__(*args, directory = WEB_DIR, **kwargs)
+def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory = WEB_DIR, **kwargs)
 
- def end_headers(self):
+def end_headers(self):
         """Override to add UTF-8 charset to all responses"""
  # Only add charset if Content-Type is not already set with charset
         content_type = self.headers.get('Content-Type', '')
@@ -162,35 +162,35 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Type', f'{content_type}; charset = utf-8')
  super().end_headers()
 
- def translate_path(self, path):
+def translate_path(self, path):
         """Override to serve /static from project root as well as WEB_DIR"""
  # Root path defaults to index.html
         if path == '/':
             return os.path.join(WEB_DIR, 'index.html')
  # If request is for /static/*, try project root first
         if path.startswith('/static/'):
- relative_path = path[1:]
+            relative_path = path[1:]
  project_static_path = os.path.join(self.project_root, relative_path)
  if os.path.isfile(project_static_path):
- return project_static_path
+     return project_static_path
  return super().translate_path(path)
  return super().translate_path(path)
 
- def guess_type(self, path):
+def guess_type(self, path):
         """Override to force UTF-8 charset for text files"""
  mimetype = super().guess_type(path)
  if isinstance(mimetype, tuple):
- mtype, encoding = mimetype
+     mtype, encoding = mimetype
             if mtype and ('text' in mtype or 'javascript' in mtype or 'json' in mtype):
                 return mtype + '; charset = utf-8', encoding
  return mimetype
  return mimetype
 
- def do_GET(self):
+def do_GET(self):
         """Handle GET requests with API endpoints"""
  # API: Game state
         if self.path == '/api/game-state':
- self.send_response(200)
+            self.send_response(200)
             self.send_header('Content-type', 'application/json; charset = utf-8')
             self.send_header('Access-Control-Allow-Origin', '*')
  self.end_headers()
@@ -202,7 +202,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
  # API: Combat stats
         if self.path == '/api/combat-stats':
- base_dir = get_base_dir()
+            base_dir = get_base_dir()
  stats = _build_combat_stats(base_dir)
  self.send_response(200)
             self.send_header('Content-type', 'application/json; charset = utf-8')
@@ -213,7 +213,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
  # API: Learning progress
         if self.path == '/api/learning-progress':
- base_dir = get_base_dir()
+            base_dir = get_base_dir()
  progress = _build_learning_progress(base_dir)
  self.send_response(200)
             self.send_header('Content-type', 'application/json; charset = utf-8')
@@ -224,7 +224,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
 
  # API: Code health summary (placeholder or derived)
         if self.path == '/api/code-health':
- base_dir = get_base_dir()
+            base_dir = get_base_dir()
  # Simple derived summary from training stats if present
  ts = _load_training_stats(base_dir) or {}
             issues = ts.get("top_issues", [])
@@ -255,15 +255,15 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
  # Default: serve files
  super().do_GET()
 
- def log_message(self, format_str, *args):
+def log_message(self, format_str, *args):
         """Format log messages"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {format_str % args}")
 
- def do_POST(self):
+def do_POST(self):
         """Handle POST endpoints"""
         if self.path == '/api/code-scan':
- # Placeholder scan trigger; return success
+            # Placeholder scan trigger; return success
  self.send_response(200)
             self.send_header('Content-type', 'application/json; charset = utf-8')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -338,33 +338,50 @@ def ensure_html_exists():
  f.write(html_content)
 
 class ReusableTCPServer(socketserver.TCPServer):
+    pass
  allow_reuse_address = True
 
 def find_available_server(start_port: int, handler: http.server.BaseHTTPRequestHandler, max_tries: int = 20):
     """Try to bind a server from start_port upward, returning (server, port)."""
  for p in range(start_port, start_port + max_tries):
- try:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
             srv = ReusableTCPServer(("", p), handler)
  return srv, p
  except OSError:
- continue
+     continue
  return None, None
 
 def write_port_file(port: int):
     """Write the selected port to a file for other scripts (e.g., ngrok)."""
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
         port_file = os.path.join(os.path.dirname(__file__), ".dashboard_port")
         with open(port_file, "w", encoding="utf-8") as f:
  f.write(str(port))
  except Exception:
- # Non-fatal if writing fails
+     # Non-fatal if writing fails
  pass
 
 def broadcast_game_state(base_dir: Path):
     """Continuously broadcast game state to WebSocket clients."""
  while True:
+     pass
  try:
- # Use current working directory for latest data
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Use current working directory for latest data
  state = _build_game_state(get_base_dir())
  message = json.dumps({
                 "type": "game_status",
@@ -378,11 +395,12 @@ def broadcast_game_state(base_dir: Path):
  frame.append(0x81) # FIN + TEXT frame
 
  if len(payload) < 126:
- frame.append(len(payload))
+     frame.append(len(payload))
  elif len(payload) < 65536:
- frame.append(126)
+     frame.append(126)
                 frame.extend(struct.pack('!H', len(payload)))
  else:
+     pass
  frame.append(127)
                 frame.extend(struct.pack('!Q', len(payload)))
 
@@ -390,12 +408,17 @@ def broadcast_game_state(base_dir: Path):
 
  with ws_lock:
  for client in list(ws_clients):
- try:
- client.write(bytes(frame))
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         client.write(bytes(frame))
  client.flush()
  except Exception:
- if client in ws_clients:
- ws_clients.remove(client)
+     if client in ws_clients:
+         ws_clients.remove(client)
 
  time.sleep(0.5) # Update every 500ms
  except Exception as e:
@@ -404,7 +427,7 @@ def broadcast_game_state(base_dir: Path):
 
 
 if __name__ == "__main__":
- ensure_html_exists()
+    ensure_html_exists()
  # Allow overriding via env vars
     start_port = int(os.environ.get("DASHBOARD_PORT", os.environ.get("PORT", PORT)))
 
@@ -421,9 +444,14 @@ if __name__ == "__main__":
 
  # Optionally start FastAPI backend for advanced controls on port 8001
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
         auto_start = os.environ.get("START_FASTAPI", "0") == "1"
  if auto_start:
- # Spawn: uvicorn dashboard_api:app --host 0.0.0.0 --port 8001
+     # Spawn: uvicorn dashboard_api:app --host 0.0.0.0 --port 8001
  subprocess.Popen([
                 "python", "-m", "uvicorn", "dashboard_api:app", "--host", "0.0.0.0", "--port", "8001"
  ], cwd = os.path.dirname(__file__))
@@ -436,7 +464,12 @@ if __name__ == "__main__":
  ws_thread.start()
 
  try:
- with server as httpd:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with server as httpd:
  httpd.serve_forever()
  except KeyboardInterrupt:
         print("\nServer stopped.")

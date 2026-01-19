@@ -8,7 +8,8 @@ Cleanup Unnecessary Files
 
 import os
 from pathlib import Path
-from typing import List, Set
+from typing import List
+import Set
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

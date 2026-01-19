@@ -9,7 +9,9 @@ Run Comparison and Apply Learning
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict
+import Any
+import Optional
 from datetime import datetime
 
 # Add parent directory to path
@@ -195,9 +197,9 @@ def learn_from_pro_replays(
         saved_path = extractor.save_learned_parameters(
             learned_params,
             output_file=str(
-                archive_dir /
-                f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}" /
-                "learned_build_orders.json"))
+                archive_dir
+                / f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                / "learned_build_orders.json"))
 
         print(f"[SUCCESS] Learned parameters saved to: {saved_path}")
 

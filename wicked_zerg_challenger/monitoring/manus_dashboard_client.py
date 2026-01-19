@@ -9,8 +9,12 @@ SC2 AI 봇의 데이터를 Manus 웹 호스팅 대시보드(tRPC API)로 전송�
 import requests
 import time
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict
+from typing import Any
+from typing import Optional
+from typing import List
 import os
+from pathlib import Path
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -20,11 +24,11 @@ logger = logging.getLogger(__name__)
 class ManusDashboardClient:
     """Manus 대시보드 tRPC API 클라이언트"""
 
-    def __init__(
-        self,
-        base_url: str = "https://sc2aidash-bncleqgg.manus.space",
-        api_key: Optional[str] = None,
-        enabled: bool = True
+def __init__(
+    self,
+    base_url: str = "https://sc2aidash-bncleqgg.manus.space",
+    api_key: Optional[str] = None,
+    enabled: bool = True
     ):
         """
  Manus 대시보드 클라이언트 초기화
@@ -33,111 +37,136 @@ class ManusDashboardClient:
  base_url: Manus 대시보드 URL
  api_key: API 인증 키 (선택적, 우선순위: 인자 > 환경 변수 > 파일)
  enabled: 원격 전송 활성화 여부
-        """
-        self.base_url = base_url.rstrip('/')
-        # API 키 로드 우선순위: 1) 인자, 2) 환경 변수, 3) 파일
-        self.api_key = api_key or self._load_api_key()
-        self.enabled = enabled and os.environ.get(
-            "MANUS_DASHBOARD_ENABLED", "1") == "1"
+     """
+     self.base_url = base_url.rstrip('/')
+     # API 키 로드 우선순위: 1) 인자, 2) 환경 변수, 3) 파일
+     self.api_key = api_key or self._load_api_key()
+     self.enabled = enabled and os.environ.get(
+     "MANUS_DASHBOARD_ENABLED", "1") == "1"
 
-        # tRPC API 엔드포인트
-        self.trpc_url = f"{self.base_url}/api/trpc"
+     # tRPC API 엔드포인트
+     self.trpc_url = f"{self.base_url}/api/trpc"
 
-        # HTTP 세션
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json"
-        })
+     # HTTP 세션
+     self.session = requests.Session()
+     self.session.headers.update({
+     "Content-Type": "application/json"
+     })
 
-        if self.api_key:
-            self.session.headers.update({
-                "Authorization": f"Bearer {self.api_key}"
-            })
+     if self.api_key:
+         pass
+     self.session.headers.update({
+     "Authorization": f"Bearer {self.api_key}"
+     })
 
-        # 재시도 설정
-        self.max_retries = 3
-        self.retry_delay = 2
+     # 재시도 설정
+     self.max_retries = 3
+     self.retry_delay = 2
 
-        logger.info(
-            f"[MANUS] 클라이언트 초기화: {self.base_url} (활성화: {self.enabled})")
+     logger.info(
+     f"[MANUS] 클라이언트 초기화: {self.base_url} (활성화: {self.enabled})")
 
-    def _load_api_key(self) -> Optional[str]:
-        """
+def _load_api_key(self) -> Optional[str]:
+    """
  API 키 로드 (환경 변수 우선, 파일 fallback)
 
  Returns:
  API 키 또는 None
-        """
-        # 1. 환경 변수 우선
-        key = os.environ.get("MANUS_DASHBOARD_API_KEY")
-        if key:
-            return key
+     """
+     # 1. 환경 변수 우선
+     key = os.environ.get("MANUS_DASHBOARD_API_KEY")
+     if key:
+         pass
+     return key
 
-        # 2. 파일에서 읽기 (fallback)
-        try:
-            from pathlib import Path
-            # 여러 가능한 경로 시도
-            possible_paths = [
-                Path("monitoring/api_keys/manus_api_key.txt"),
-                Path("api_keys/manus_api_key.txt"),
-                Path("secrets/manus_api_key.txt"),
-            ]
+     # 2. 파일에서 읽기 (fallback)
+     try:
+         pass
+     pass
 
-            for key_file in possible_paths:
-                if key_file.exists():
-                    # Try multiple encodings to handle different file encodings
-                    for encoding in ["utf-8", "cp949", "latin-1", "utf-8-sig"]:
-                        try:
-                            key = key_file.read_text(encoding=encoding).strip()
-                            if key:
-                                logger.info(
-                                    f"[MANUS] API 키를 파일에서 로드: {key_file}")
-                                return key
-                            break
-                        except UnicodeDecodeError:
-                            continue
-        except Exception as e:
-            logger.warning(f"[MANUS] API 키 파일 읽기 실패: {e}")
+     except Exception:
+         pass
+         pass
+from pathlib import Path
+    # 여러 가능한 경로 시도
+    possible_paths = [
+    Path("monitoring/api_keys/manus_api_key.txt"),
+    Path("api_keys/manus_api_key.txt"),
+    Path("secrets/manus_api_key.txt"),
+    ]
 
-        return None
+    for key_file in possible_paths:
+    pass
+    if key_file.exists():
+    # Try multiple encodings to handle different file encodings
+    for encoding in ["utf-8", "cp949", "latin-1", "utf-8-sig"]:
+    pass
+    try:
+    pass
+    pass
 
-    def _call_trpc(
-        self,
+    except Exception:
+    pass
+    pass
+    key = key_file.read_text(encoding=encoding).strip()
+    if key:
+    pass
+    logger.info(
+    f"[MANUS] API 키를 파일에서 로드: {key_file}")
+    return key
+    break
+    except UnicodeDecodeError:
+    pass
+    continue
+    except Exception as e:
+    pass
+    logger.warning(f"[MANUS] API 키 파일 읽기 실패: {e}")
+
+    return None
+
+def _call_trpc(
+    self,
  procedure: str,
  input_data: Dict[str, Any],
  retry: bool = True
  ) -> Optional[Dict[str, Any]]:
-        """
+     """
  tRPC 프로시저 호출
 
  Args:
-            procedure: tRPC 프로시저 이름 (예: "game.createSession")
+     procedure: tRPC 프로시저 이름 (예: "game.createSession")
  input_data: 입력 데이터
  retry: 재시도 여부
 
  Returns:
  응답 데이터 또는 None
-        """
+     """
  if not self.enabled:
- return None
+     return None
 
  # tRPC URL 형식: /api/trpc/{procedure}
-        url = f"{self.trpc_url}/{procedure}"
+     url = f"{self.trpc_url}/{procedure}"
 
  for attempt in range(self.max_retries if retry else 1):
- try:
- # CRITICAL FIX: Ensure all data is UTF-8 encoded before JSON serialization
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         # CRITICAL FIX: Ensure all data is UTF-8 encoded before JSON serialization
  # Convert any non-string values to strings and ensure UTF-8 encoding
  encoded_data = {}
  for key, value in input_data.items():
- if isinstance(value, str):
- # Ensure string is UTF-8 encoded
+     if isinstance(value, str):
+         # Ensure string is UTF-8 encoded
  try:
-                            encoded_data[key] = value.encode('utf-8').decode('utf-8')
+     encoded_data[key] = value.encode('utf-8').decode('utf-8')
  except (UnicodeEncodeError, UnicodeDecodeError):
- # If encoding fails, try to fix it
-                            encoded_data[key] = value.encode('utf-8', errors='replace').decode('utf-8')
+     # If encoding fails, try to fix it
+     encoded_data[key] = value.encode('utf-8', errors='replace').decode('utf-8')
  else:
+     pass
  encoded_data[key] = value
 
  response = self.session.post(
@@ -149,23 +178,24 @@ class ManusDashboardClient:
  return response.json()
 
  except (UnicodeEncodeError, UnicodeDecodeError) as e:
- # Handle encoding errors gracefully
-                logger.warning(f"[MANUS] 인코딩 오류 (시도 {attempt + 1}/{self.max_retries}): {e}")
+     # Handle encoding errors gracefully
+     logger.warning(f"[MANUS] 인코딩 오류 (시도 {attempt + 1}/{self.max_retries}): {e}")
  if attempt < self.max_retries - 1:
- time.sleep(self.retry_delay * (attempt + 1))
+     time.sleep(self.retry_delay * (attempt + 1))
  else:
+     pass
  return None
  except requests.exceptions.RequestException as e:
- if attempt < self.max_retries - 1:
-                    logger.warning(f"[MANUS] 요청 실패 (시도 {attempt + 1}/{self.max_retries}): {e}")
+     if attempt < self.max_retries - 1:
+         logger.warning(f"[MANUS] 요청 실패 (시도 {attempt + 1}/{self.max_retries}): {e}")
  time.sleep(self.retry_delay * (attempt + 1))
  else:
-                    logger.error(f"[MANUS] 요청 최종 실패: {e}")
+     logger.error(f"[MANUS] 요청 최종 실패: {e}")
  return None
 
  return None
 
- def create_game_session(
+def create_game_session(
  self,
  map_name: str,
  enemy_race: str,
@@ -175,12 +205,12 @@ class ManusDashboardClient:
  units_killed: int,
  units_lost: int,
  duration: int,
-        result: str,  # "Victory" or "Defeat"
+    result: str,  # "Victory" or "Defeat"
  personality: Optional[str] = None,
  loss_reason: Optional[str] = None,
  **kwargs
  ) -> bool:
-        """
+     """
  게임 세션 생성 (게임 종료 시 호출)
 
  Args:
@@ -192,45 +222,45 @@ class ManusDashboardClient:
  units_killed: 처치한 유닛 수
  units_lost: 잃은 유닛 수
  duration: 게임 시간 (초)
-            result: 게임 결과 ("Victory" or "Defeat")
+     result: 게임 결과 ("Victory" or "Defeat")
  personality: 봇 성격 (선택적)
  loss_reason: 패배 이유 (선택적)
  **kwargs: 추가 필드
 
  Returns:
  전송 성공 여부
-        """
+     """
  payload = {
-            "mapName": map_name,
-            "enemyRace": enemy_race,
-            "finalMinerals": final_minerals,
-            "finalGas": final_gas,
-            "finalSupply": final_supply,
-            "unitsKilled": units_killed,
-            "unitsLost": units_lost,
-            "duration": duration,
-            "result": result,
+     "mapName": map_name,
+     "enemyRace": enemy_race,
+     "finalMinerals": final_minerals,
+     "finalGas": final_gas,
+     "finalSupply": final_supply,
+     "unitsKilled": units_killed,
+     "unitsLost": units_lost,
+     "duration": duration,
+     "result": result,
  }
 
  # 선택적 필드 추가
  if personality:
-            payload["personality"] = personality
+     payload["personality"] = personality
  if loss_reason:
-            payload["lossReason"] = loss_reason
+     payload["lossReason"] = loss_reason
 
  # 추가 필드 병합
  payload.update(kwargs)
 
-        response = self._call_trpc("game.createSession", payload)
+     response = self._call_trpc("game.createSession", payload)
 
  if response:
-            logger.info(f"[MANUS] 게임 세션 생성 성공: {result} vs {enemy_race}")
+     logger.info(f"[MANUS] 게임 세션 생성 성공: {result} vs {enemy_race}")
  return True
  else:
-            logger.warning("[MANUS] 게임 세션 생성 실패")
+     logger.warning("[MANUS] 게임 세션 생성 실패")
  return False
 
- def create_training_episode(
+def create_training_episode(
  self,
  episode: int,
  reward: float,
@@ -239,7 +269,7 @@ class ManusDashboardClient:
  games: Optional[int] = None,
  **kwargs
  ) -> bool:
-        """
+     """
  학습 에피소드 생성
 
  Args:
@@ -252,28 +282,28 @@ class ManusDashboardClient:
 
  Returns:
  전송 성공 여부
-        """
+     """
  payload = {
-            "episode": episode,
-            "reward": reward,
-            "loss": loss,
-            "winRate": win_rate,
+     "episode": episode,
+     "reward": reward,
+     "loss": loss,
+     "winRate": win_rate,
  **kwargs
  }
 
  if games is not None:
-            payload["games"] = games
+     payload["games"] = games
 
-        response = self._call_trpc("training.createEpisode", payload)
+     response = self._call_trpc("training.createEpisode", payload)
 
  if response:
-            logger.debug(f"[MANUS] 학습 에피소드 생성 성공: Episode {episode}")
+     logger.debug(f"[MANUS] 학습 에피소드 생성 성공: Episode {episode}")
  return True
  else:
-            logger.warning("[MANUS] 학습 에피소드 생성 실패")
+     logger.warning("[MANUS] 학습 에피소드 생성 실패")
  return False
 
- def update_bot_config(
+def update_bot_config(
  self,
  config_name: str,
  strategy: str,
@@ -283,7 +313,7 @@ class ManusDashboardClient:
  is_active: bool = False,
  **kwargs
  ) -> bool:
-        """
+     """
  봇 설정 업데이트
 
  Args:
@@ -297,31 +327,31 @@ class ManusDashboardClient:
 
  Returns:
  전송 성공 여부
-        """
+     """
  payload = {
-            "name": config_name,
-            "strategy": strategy,
-            "isActive": is_active,
+     "name": config_name,
+     "strategy": strategy,
+     "isActive": is_active,
  **kwargs
  }
 
  if build_order:
-            payload["buildOrder"] = build_order
+     payload["buildOrder"] = build_order
  if description:
-            payload["description"] = description
+     payload["description"] = description
  if traits:
-            payload["traits"] = traits
+     payload["traits"] = traits
 
-        response = self._call_trpc("botConfig.update", payload)
+     response = self._call_trpc("botConfig.update", payload)
 
  if response:
-            logger.debug(f"[MANUS] 봇 설정 업데이트 성공: {config_name}")
+     logger.debug(f"[MANUS] 봇 설정 업데이트 성공: {config_name}")
  return True
  else:
-            logger.warning("[MANUS] 봇 설정 업데이트 실패")
+     logger.warning("[MANUS] 봇 설정 업데이트 실패")
  return False
 
- def create_arena_match(
+def create_arena_match(
  self,
  opponent: str,
  result: str,
@@ -329,39 +359,39 @@ class ManusDashboardClient:
  elo_after: Optional[int] = None,
  **kwargs
  ) -> bool:
-        """
+     """
  AI Arena 경기 생성
 
  Args:
  opponent: 상대 봇 이름
-            result: 경기 결과 ("Victory" or "Defeat")
+     result: 경기 결과 ("Victory" or "Defeat")
  elo_change: ELO 변화
  elo_after: 경기 후 ELO (선택적)
  **kwargs: 추가 필드
 
  Returns:
  전송 성공 여부
-        """
+     """
  payload = {
-            "opponent": opponent,
-            "result": result,
-            "eloChange": elo_change,
+     "opponent": opponent,
+     "result": result,
+     "eloChange": elo_change,
  **kwargs
  }
 
  if elo_after is not None:
-            payload["eloAfter"] = elo_after
+     payload["eloAfter"] = elo_after
 
-        response = self._call_trpc("arena.createMatch", payload)
+     response = self._call_trpc("arena.createMatch", payload)
 
  if response:
-            logger.info(f"[MANUS] Arena 경기 생성 성공: {result} vs {opponent}")
+     logger.info(f"[MANUS] Arena 경기 생성 성공: {result} vs {opponent}")
  return True
  else:
-            logger.warning("[MANUS] Arena 경기 생성 실패")
+     logger.warning("[MANUS] Arena 경기 생성 실패")
  return False
 
- def update_game_state(
+def update_game_state(
  self,
  minerals: int,
  vespene: int,
@@ -372,7 +402,7 @@ class ManusDashboardClient:
  game_time: Optional[int] = None,
  **kwargs
  ) -> bool:
-        """
+     """
  실시간 게임 상태 업데이트
 
  Args:
@@ -387,42 +417,47 @@ class ManusDashboardClient:
 
  Returns:
  전송 성공 여부
-        """
+     """
  payload = {
-            "minerals": minerals,
-            "vespene": vespene,
-            "supplyUsed": supply_used,
-            "supplyCap": supply_cap,
-            "units": units,
+     "minerals": minerals,
+     "vespene": vespene,
+     "supplyUsed": supply_used,
+     "supplyCap": supply_cap,
+     "units": units,
  **kwargs
  }
 
  if map_name:
-            payload["mapName"] = map_name
+     payload["mapName"] = map_name
  if game_time is not None:
-            payload["gameTime"] = game_time
+     payload["gameTime"] = game_time
 
-        response = self._call_trpc("game.updateState", payload)
+     response = self._call_trpc("game.updateState", payload)
 
  if response:
-            logger.debug("[MANUS] 게임 상태 업데이트 성공")
+     logger.debug("[MANUS] 게임 상태 업데이트 성공")
  return True
  else:
-            logger.warning("[MANUS] 게임 상태 업데이트 실패")
+     logger.warning("[MANUS] 게임 상태 업데이트 실패")
  return False
 
- def health_check(self) -> bool:
-        """
+def health_check(self) -> bool:
+    """
  대시보드 연결 상태 확인
 
  Returns:
  서버 응답 여부
-        """
+     """
  try:
-            response = self.session.get(f"{self.base_url}/health", timeout = 5)
+     pass
+ pass
+
+ except Exception:
+     pass
+     response = self.session.get(f"{self.base_url}/health", timeout = 5)
  return response.status_code == 200
  except Exception as e:
-            logger.warning(f"[MANUS] 헬스 체크 실패: {e}")
+     logger.warning(f"[MANUS] 헬스 체크 실패: {e}")
  return False
 
 
@@ -451,36 +486,36 @@ def create_client_from_env() -> Optional[ManusDashboardClient]:
 
 # 테스트 코드
 if __name__ == "__main__":
- client = create_client_from_env()
+    client = create_client_from_env()
 
  if not client:
-        print("환경 변수를 설정하세요:")
-        print("  MANUS_DASHBOARD_URL = https://sc2aidash-bncleqgg.manus.space")
-        print("  MANUS_DASHBOARD_API_KEY = your_api_key (선택적)")
-        print("  MANUS_DASHBOARD_ENABLED = 1")
+     print("환경 변수를 설정하세요:")
+     print("  MANUS_DASHBOARD_URL = https://sc2aidash-bncleqgg.manus.space")
+     print("  MANUS_DASHBOARD_API_KEY = your_api_key (선택적)")
+     print("  MANUS_DASHBOARD_ENABLED = 1")
  exit(1)
 
  # 헬스 체크
     print("Manus 대시보드 연결 확인 중...")
  if client.health_check():
-        print("? 서버 연결 성공")
+     print("? 서버 연결 성공")
  else:
-        print("? 서버 연결 실패")
+     print("? 서버 연결 실패")
 
  # 테스트 게임 세션 생성
     print("\n테스트 게임 세션 생성 중...")
  if client.create_game_session(
-        map_name="AbyssalReefLE",
-        enemy_race="Terran",
+     map_name="AbyssalReefLE",
+     enemy_race="Terran",
  final_minerals = 200,
  final_gas = 100,
  final_supply = 150,
  units_killed = 50,
  units_lost = 30,
  duration = 600,
-        result="Victory",
-        personality="serral"
+     result="Victory",
+     personality="serral"
  ):
-        print("? 게임 세션 생성 성공")
+     print("? 게임 세션 생성 성공")
  else:
-        print("? 게임 세션 생성 실패")
+     print("? 게임 세션 생성 실패")

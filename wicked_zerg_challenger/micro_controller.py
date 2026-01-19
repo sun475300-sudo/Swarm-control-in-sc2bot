@@ -12,21 +12,33 @@ These algorithms are directly applicable to real-world drone swarm control.
 
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Dict, Any
+from typing import List
+from typing import Tuple
+from typing import Dict
+from typing import Any
+from pathlib import Path
+
+# Import spatial partitioning for O(N^2) optimization
+try:
+    from utils.spatial_partition import OptimizedSpatialPartition
+    SPATIAL_PARTITION_AVAILABLE = True
+except ImportError:
+    SPATIAL_PARTITION_AVAILABLE = False
+    OptimizedSpatialPartition = None
 
 try:
     from sc2.position import Point2
     SC2_AVAILABLE = True
 except ImportError:
     # Mock types for testing without SC2
-    class Point2:
+class Point2:
         def __init__(self, coords):
             self.x, self.y = coords[0], coords[1]
 
-        def distance_to(self, other):
+def distance_to(self, other):
             return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
 
-        def towards(self, other, distance):
+def towards(self, other, distance):
             dx = other.x - self.x
             dy = other.y - self.y
             dist = math.sqrt(dx**2 + dy**2)
@@ -59,9 +71,11 @@ def _normalize(p: Point2, max_magnitude: float = None) -> Point2:
 
 mag = _magnitude(p)
 if mag == 0:
+    pass
 return Point2((0.0, 0.0))
 
 if max_magnitude and mag > max_magnitude:
+    pass
 return Point2((p.x / mag * max_magnitude, p.y / mag * max_magnitude))
 
 return Point2((p.x / mag, p.y / mag))
@@ -79,6 +93,7 @@ def _average_points(points: List[Point2]) -> Point2:
 
 
 if not points:
+    pass
 return _zero_point()
 return Point2((
     sum(p.x for p in points) / len(points),
@@ -152,22 +167,25 @@ to_target = Point2((target_position.x - unit_position.x,
 target_distance = _magnitude(to_target)
 
 if target_distance > 0:
+    pass
 attractive_force = Point2((
     to_target.x / target_distance * self.config.potential_field_strength,
     to_target.y / target_distance * self.config.potential_field_strength
 ))
 else:
+    pass
 attractive_force = _zero_point()
 
 # Repulsive force from nearby units (separation)
 repulsive_force = _zero_point()
 for nearby_unit in nearby_units:
+    pass
 to_unit = Point2((nearby_unit.x - unit_position.x,
                   nearby_unit.y - unit_position.y))
 unit_distance = _magnitude(to_unit)
 
 if 0 < unit_distance < self.config.separation_distance:
- # Strong repulsion when too close
+    # Strong repulsion when too close
 repulsion_strength = self.config.obstacle_repulsion / (unit_distance + 0.1)
 repulsive_force = Point2((
     repulsive_force.x - to_unit.x / unit_distance * repulsion_strength,
@@ -176,11 +194,13 @@ repulsive_force = Point2((
 
 # Repulsive force from obstacles
 for obstacle in obstacles:
+    pass
 to_obstacle = Point2((obstacle.x - unit_position.x,
                       obstacle.y - unit_position.y))
 obstacle_distance = _magnitude(to_obstacle)
 
 if obstacle_distance < self.config.separation_distance * 2:
+    pass
 repulsion_strength = self.config.obstacle_repulsion / (obstacle_distance + 0.1)
 repulsive_force = Point2((
     repulsive_force.x - to_obstacle.x / obstacle_distance * repulsion_strength,
@@ -240,6 +260,7 @@ Desired velocity vector (Point2)
 
 
 if not nearby_units:
+    pass
 return unit_velocity
 
 # Separation: Steer away from nearby units
@@ -253,14 +274,14 @@ cohesion = self._calculate_cohesion(unit_position, nearby_units)
 
 # Combine behaviors with weights
 desired_velocity = Point2((
-    unit_velocity.x +
-    separation.x * self.config.separation_weight +
-    alignment.x * self.config.alignment_weight +
-    cohesion.x * self.config.cohesion_weight,
-    unit_velocity.y +
-    separation.y * self.config.separation_weight +
-    alignment.y * self.config.alignment_weight +
-    cohesion.y * self.config.cohesion_weight
+    unit_velocity.x
+    + separation.x * self.config.separation_weight
+    + alignment.x * self.config.alignment_weight
+    + cohesion.x * self.config.cohesion_weight,
+    unit_velocity.y
+    + separation.y * self.config.separation_weight
+    + alignment.y * self.config.alignment_weight
+    + cohesion.y * self.config.cohesion_weight
 ))
 
 # Limit speed
@@ -279,10 +300,11 @@ separation_force = _zero_point()
 neighbor_count = 0
 
 for neighbor_pos, _ in nearby_units:
+    pass
 distance = _distance(unit_position, neighbor_pos)
 
 if 0 < distance < self.config.separation_distance:
- # Steer away from neighbor
+    # Steer away from neighbor
 away_vector = Point2((
     unit_position.x - neighbor_pos.x,
     unit_position.y - neighbor_pos.y
@@ -296,6 +318,7 @@ separation_force = Point2((
 neighbor_count += 1
 
 if neighbor_count > 0:
+    pass
 separation_force = Point2((
     separation_force.x / neighbor_count,
     separation_force.y / neighbor_count
@@ -314,10 +337,13 @@ def _calculate_alignment(
 
 neighbor_velocities = []
 for _, neighbor_vel in nearby_units:
+    pass
 if _magnitude(neighbor_vel) < self.config.alignment_radius:
+    pass
 neighbor_velocities.append(neighbor_vel)
 
 if not neighbor_velocities:
+    pass
 return _zero_point()
 
 avg_velocity = _average_points(neighbor_velocities)
@@ -342,6 +368,7 @@ neighbor_positions = [
 ]
 
 if not neighbor_positions:
+    pass
 return _zero_point()
 
 avg_position = _average_points(neighbor_positions)
@@ -406,6 +433,7 @@ Returns:
 Optimal movement direction (Point2)
     """
 
+
  # Use Potential Field for goal-oriented movement with obstacle avoidance
 potential_force = self.potential_field.calculate_potential_field(
     unit_position, target_position, nearby_units, obstacles
@@ -461,10 +489,12 @@ unit_positions = [self._get_unit_position(u) for u in units]
 target_positions = {}
 
 if formation_type == "circle":
+    pass
 radius = self.config.cohesion_radius
 angle_step = 2 * math.pi / len(units) if units else 0
 
 for i, unit in enumerate(units):
+    pass
 angle = i * angle_step
 target_pos = Point2((
     formation_center.x + radius * math.cos(angle),
@@ -473,10 +503,12 @@ target_pos = Point2((
 target_positions[unit] = target_pos
 
 elif formation_type == "line":
+    pass
 spacing = self.config.separation_distance
 start_offset = -(len(units) - 1) * spacing / 2
 
 for i, unit in enumerate(units):
+    pass
 target_pos = Point2((
     formation_center.x + start_offset + i * spacing,
     formation_center.y
@@ -487,6 +519,7 @@ elif formation_type == "wedge":
     # V-formation (common in drone swarms)
 spacing = self.config.separation_distance
 for i, unit in enumerate(units):
+    pass
 row = i // 3  # 3 units per row
 col = i % 3 - 1  # -1, 0, 1
 target_pos = Point2((
@@ -502,9 +535,12 @@ def _get_unit_position(self, unit: Any) -> Point2:
     """Extract position from unit (handles both SC2 and mock units)."""
     if hasattr(unit, 'position'):
 
+        pass
+
 
 pos = unit.position
 if hasattr(pos, 'x') and hasattr(pos, 'y'):
+    pass
 return Point2((pos.x, pos.y))
 return Point2((0.0, 0.0))
 
@@ -528,6 +564,7 @@ List of (baneling, target_position) tuples
 
 
 if not marines or not banelings:
+    pass
 return []
 
 # Calculate marine cluster centers
@@ -537,18 +574,22 @@ cluster_centers = self._find_clusters(marine_positions, radius=3.0)
 # Assign banelings to clusters using potential field
 assignments = []
 for baneling in banelings:
+    pass
 baneling_pos = self._get_unit_position(baneling)
 
 # Find closest cluster
 best_cluster = None
 min_distance = float('inf')
 for cluster in cluster_centers:
+    pass
 distance = baneling_pos.distance_to(cluster)
 if distance < min_distance:
+    pass
 min_distance = distance
 best_cluster = cluster
 
 if best_cluster:
+    pass
 assignments.append((baneling, best_cluster))
 
 return assignments
@@ -572,13 +613,16 @@ List of cluster center positions
 
 
 if not positions:
+    pass
 return []
 
 clusters = []
 used_positions = set()
 
 for pos in positions:
+    pass
 if pos in used_positions:
+    pass
 continue
 
 # Find all positions within radius
@@ -586,7 +630,7 @@ cluster_members = [p for p in positions
                    if _distance(pos, p) <= radius]
 
 if cluster_members:
- # Calculate cluster center
+    # Calculate cluster center
 clusters.append(_average_points(cluster_members))
 
 # Mark as used

@@ -14,7 +14,10 @@ import ast
 import os
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple, Set
+from typing import List
+import Dict
+import Tuple
+import Set
 import sys
 
 # ���ڵ� ����

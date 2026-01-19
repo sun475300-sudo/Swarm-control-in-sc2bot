@@ -8,24 +8,25 @@ UPDATES = ROOT / "AI_Arena_Updates"
 
 
 def list_update_dirs():
- if not UPDATES.exists():
- return []
+    if not UPDATES.exists():
+        return []
  dirs = [p for p in UPDATES.iterdir() if p.is_dir()]
  dirs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
  return dirs
 
 
 def prune(keep: int, dry_run: bool = False) -> int:
- dirs = list_update_dirs()
+    dirs = list_update_dirs()
  to_delete = dirs[keep:]
  for p in to_delete:
- if dry_run:
-            print(f"[DRY] Remove update folder {p}")
+     if dry_run:
+         print(f"[DRY] Remove update folder {p}")
  else:
+     pass
  try:
- shutil.rmtree(p)
+     shutil.rmtree(p)
  except Exception as e:
-                print(f"[WARN] Failed to remove {p}: {e}")
+     print(f"[WARN] Failed to remove {p}: {e}")
  return len(to_delete)
 
 
@@ -36,11 +37,11 @@ def main():
     "--keep",
     type=int,
     default=3,
-     help="Number of latest update folders to keep")
+    help="Number of latest update folders to keep")
     ap.add_argument(
     "--dry-run",
     action="store_true",
-     help="Show actions without deleting")
+    help="Show actions without deleting")
  args = ap.parse_args()
 
  removed = prune(keep=args.keep, dry_run=args.dry_run)
@@ -48,4 +49,4 @@ def main():
 
 
 if __name__ == "__main__":
- main()
+    main()

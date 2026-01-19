@@ -5,7 +5,9 @@ Generate PWA icons for Mobile GCS
 Creates icon-192.png and icon-512.png
 """
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
+import ImageDraw
+import ImageFont
 import os
 from pathlib import Path
 
@@ -23,8 +25,8 @@ def create_icon(size: int, output_path: str):
  # Outer circle (green)
  draw.ellipse(
  [center - radius, center - radius, center + radius, center + radius],
-        fill='#00ff00',
-        outline='#00cc00',
+    fill='#00ff00',
+    outline='#00cc00',
  width=max(2, size // 64)
  )
 
@@ -32,25 +34,30 @@ def create_icon(size: int, output_path: str):
  inner_radius = radius * 0.7
  draw.ellipse(
  [center - inner_radius, center - inner_radius, center + inner_radius, center + inner_radius],
-        fill='#16213e',
-        outline='#00ff00',
+    fill='#16213e',
+    outline='#00ff00',
  width=max(1, size // 128)
  )
 
     # Draw "Z" letter (Zerg symbol)
  try:
- # Try to use a font if available
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Try to use a font if available
  font_size = size // 4
  try:
-            font = ImageFont.truetype("arial.ttf", font_size)
+     font = ImageFont.truetype("arial.ttf", font_size)
  except:
- try:
-                font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", font_size)
+     try:
+         font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", font_size)
  except:
- font = ImageFont.load_default()
+     font = ImageFont.load_default()
 
-        # Draw "Z" in the center
-        text = "Z"
+     # Draw "Z" in the center
+     text = "Z"
  bbox = draw.textbbox((0, 0), text, font=font)
  text_width = bbox[2] - bbox[0]
  text_height = bbox[3] - bbox[1]
@@ -60,28 +67,28 @@ def create_icon(size: int, output_path: str):
  draw.text(
  (text_x, text_y),
  text,
-            fill='#00ff00',
+     fill='#00ff00',
  font=font
  )
  except Exception as e:
-        # Fallback: draw simple "Z" shape with lines
+     # Fallback: draw simple "Z" shape with lines
  line_width = max(3, size // 64)
  # Top horizontal line
  draw.line(
  [center - radius * 0.5, center - radius * 0.3, center + radius * 0.5, center - radius * 0.3],
-            fill='#00ff00',
+     fill='#00ff00',
  width=line_width
  )
  # Diagonal line
  draw.line(
  [center + radius * 0.5, center - radius * 0.3, center - radius * 0.5, center + radius * 0.3],
-            fill='#00ff00',
+     fill='#00ff00',
  width=line_width
  )
  # Bottom horizontal line
  draw.line(
  [center - radius * 0.5, center + radius * 0.3, center + radius * 0.5, center + radius * 0.3],
-            fill='#00ff00',
+     fill='#00ff00',
  width=line_width
  )
 
@@ -111,11 +118,11 @@ def main():
     print("3. Add to Home Screen (Android) or Share > Add to Home Screen (iOS)")
 
 if __name__ == "__main__":
- try:
- main()
+    try:
+        main()
  except ImportError:
-        print("? PIL/Pillow is required. Install it with:")
-        print("   pip install Pillow")
-        print("\nAlternatively, you can use online icon generators:")
-        print("   - https://www.pwabuilder.com/imageGenerator")
-        print("   - https://realfavicongenerator.net/")
+     print("? PIL/Pillow is required. Install it with:")
+     print("   pip install Pillow")
+     print("\nAlternatively, you can use online icon generators:")
+     print("   - https://www.pwabuilder.com/imageGenerator")
+     print("   - https://realfavicongenerator.net/")

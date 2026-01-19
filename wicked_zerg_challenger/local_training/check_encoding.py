@@ -20,6 +20,8 @@ print(f"File exists: {filepath.exists()}")
 
 if filepath.exists():
 
+    pass
+
  # ¹ÙÀÌ³Ê¸®·Î ÀÐ±â
 
     with open(filepath, 'rb') as f:
@@ -35,10 +37,15 @@ if filepath.exists():
  # UTF-8·Î µðÄÚµù ½Ãµµ
 
  try:
+     pass
+ pass
 
-        text = raw_data.decode('utf-8')
+ except Exception:
+     pass
 
-        print("? File is valid UTF-8")
+     text = raw_data.decode('utf-8')
+
+     print("? File is valid UTF-8")
 
 
 
@@ -46,18 +53,18 @@ if filepath.exists():
 
  try:
 
-            compile(text, str(filepath), 'exec')
+     compile(text, str(filepath), 'exec')
 
-            print("? Syntax is valid")
+     print("? Syntax is valid")
 
  except SyntaxError as e:
 
-            print(f"? Syntax error: {e}")
+     print(f"? Syntax error: {e}")
 
-            print(f"  Line {e.lineno}: {e.text}")
+     print(f"  Line {e.lineno}: {e.text}")
 
  except UnicodeDecodeError as e:
 
-        print(f"? UTF-8 decode error at byte {e.start}: {e}")
+     print(f"? UTF-8 decode error at byte {e.start}: {e}")
 
-        print(f"  Problem bytes: {raw_data[e.start:e.start+20]}")
+     print(f"  Problem bytes: {raw_data[e.start:e.start+20]}")

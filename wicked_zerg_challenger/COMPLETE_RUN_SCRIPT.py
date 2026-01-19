@@ -3,6 +3,8 @@
 """
 완전한 실행 스크립트 - 전체 시스템을 처음부터 끝까지 실행
 Complete Execution Script - Run entire system from start to finish
+import logging
+import subprocess
 
 이 스크립트는 프로젝트의 전체 실행 흐름을 한 곳에 모아서 실행합니다.
 This script consolidates the entire execution flow of the project.
@@ -12,7 +14,8 @@ import sys
 import os
 import asyncio
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
+import Any
 
 # ============================================================================
 # 1. 시스템 초기화 (System Initialization)
@@ -157,7 +160,7 @@ def initialize_bot(project_dir: Path) -> Optional[Any]:
         # Ensure project directory is in sys.path for import resolution
         if str(project_dir) not in sys.path:
             sys.path.insert(0, str(project_dir))
-        from wicked_zerg_bot_pro import WickedZergBotPro  # type: ignore
+        from wicked_zerg_bot_pro import WickedZergBotPro  # type: ignore # type: ignore
         print("  ? WickedZergBotPro 클래스 로드 완료")
     except ImportError as e:
         print(f"  ? 봇 클래스 임포트 실패: {e}")
@@ -225,10 +228,12 @@ def run_game(bot_instance: Any) -> bool:
 
     print("\n[3.1] SC2 라이브러리 임포트...")
     try:
-        from sc2.main import run_game as sc2_run_game  # type: ignore
-        from sc2.player import Bot, Computer  # type: ignore
-        from sc2.data import Race, Difficulty  # type: ignore
-        from sc2 import maps  # type: ignore
+        from sc2.main import run_game as sc2_run_game  # type: ignore # type: ignore
+        from sc2.player import Bot
+        import Computer  # type: ignore
+        from sc2.data import Race
+        import Difficulty  # type: ignore
+        from sc2 import maps  # type: ignore # type: ignore
         print("  ? SC2 라이브러리 로드 완료")
     except ImportError as e:
         print(f"  ? SC2 라이브러리 임포트 실패: {e}")

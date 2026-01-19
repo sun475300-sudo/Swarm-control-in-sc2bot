@@ -11,10 +11,14 @@ Features:
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict
+import List
+import Optional
+import Any
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+import asdict
 
 
 class StrategyType(Enum):

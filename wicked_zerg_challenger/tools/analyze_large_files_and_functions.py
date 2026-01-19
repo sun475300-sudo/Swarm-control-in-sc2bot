@@ -8,7 +8,9 @@
 import ast
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict
+import List
+import Tuple
 from collections import defaultdict
 
 PROJECT_ROOT = Path(__file__).parent.parent

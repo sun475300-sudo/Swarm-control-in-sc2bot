@@ -9,7 +9,9 @@ Git Ŀ�� ���� �ΰ� ����(API Ű, ��й�ȣ ��)�
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Set
+from typing import List
+import Tuple
+import Set
 
 # �ΰ� ���� ����
 SENSITIVE_PATTERNS = [

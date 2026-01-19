@@ -15,6 +15,13 @@ import hashlib
 from pathlib import Path
 from datetime import datetime
 import os
+from typing import Dict
+import List
+import Optional
+import Tuple
+import Set
+import Any
+import Union
 
 
 class LearningStatusManager:

@@ -7,6 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 import statistics
+from datetime import datetime
 
 # CRITICAL: Add script directory to sys.path for local imports
 script_dir = Path(__file__).parent
@@ -489,7 +490,8 @@ class ReplayBuildOrderExtractor:
 
         try:
             # sys.path is already set up at module level
-            from strategy_database import StrategyType, MatchupType
+            from strategy_database import StrategyType
+            import MatchupType
 
             replay = sc2reader.load_replay(str(replay_path), load_map=True)
 
@@ -746,11 +748,15 @@ class ReplayBuildOrderExtractor:
                     # CRITICAL: Mark replay as trained (increment learning count)
                     # This is a hard requirement - MUST be called after each
                     # learning iteration
+                    new_count = current_count + 1  # Default: increment current_count
                     if tracker:
                         new_count = tracker.increment_learning_count(
                             replay_path)
                         logger.info(
                             f"  [LEARNING COUNT] {replay_path.name}: {current_count} → {new_count}/{tracker.min_iterations} iterations (Phase: {phase_info['phase']})")
+                    else:
+                        logger.info(
+                            f"  [LEARNING COUNT] {replay_path.name}: {current_count} → {new_count} iterations (Phase: {phase_info['phase']}, tracker not available)")
 
                     # CRITICAL: Also update learning_status.json for hard
                     # requirement enforcement
@@ -776,7 +782,7 @@ class ReplayBuildOrderExtractor:
 
                     # CRITICAL: Only move to completed folder if 5+ iterations
                     # (hard requirement)
-                    if tracker.is_completed(replay_path):
+                    if tracker and tracker.is_completed(replay_path):
                         if tracker.move_completed_replay(
                                 replay_path, completed_dir):
                             logger.info(

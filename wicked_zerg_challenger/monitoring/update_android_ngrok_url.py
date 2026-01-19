@@ -15,29 +15,40 @@ def get_ngrok_url() -> str:
     """현재 Ngrok 터널 URL 가져오기"""
  # 1. API에서 시도
  try:
-        response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
- if response.status_code == 200:
- data = response.json()
-            tunnels = data.get("tunnels", [])
- if tunnels:
- for tunnel in tunnels:
-                    if tunnel.get("proto") == "https":
-                        return tunnel.get("public_url", "")
- if tunnels:
-                    return tunnels[0].get("public_url", "")
- except Exception:
+     pass
  pass
+
+ except Exception:
+     pass
+     response = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=5)
+ if response.status_code == 200:
+     data = response.json()
+     tunnels = data.get("tunnels", [])
+ if tunnels:
+     for tunnel in tunnels:
+         if tunnel.get("proto") == "https":
+             pass
+         return tunnel.get("public_url", "")
+ if tunnels:
+     return tunnels[0].get("public_url", "")
+ except Exception:
+     pass
 
  # 2. 파일에서 시도
  try:
-        url_file = Path(__file__).parent / ".ngrok_url.txt"
+     pass
+ pass
+
+ except Exception:
+     pass
+     url_file = Path(__file__).parent / ".ngrok_url.txt"
  if url_file.exists():
-            with open(url_file, 'r', encoding='utf-8') as f:
+     with open(url_file, 'r', encoding='utf-8') as f:
  url = f.read().strip()
  if url:
- return url
+     return url
  except Exception:
- pass
+     pass
 
     return ""
 
@@ -47,32 +58,37 @@ def update_android_api_client(ngrok_url: str):
     api_client_file = android_dir / "app" / "src" / "main" / "java" / "com" / "wickedzerg" / "mobilegcs" / "api" / "ApiClient.kt"
 
  if not api_client_file.exists():
-        print(f"? ApiClient.kt 파일을 찾을 수 없습니다: {api_client_file}")
+     print(f"? ApiClient.kt 파일을 찾을 수 없습니다: {api_client_file}")
  return False
 
  try:
- # 파일 읽기
-        with open(api_client_file, 'r', encoding='utf-8') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     # 파일 읽기
+     with open(api_client_file, 'r', encoding='utf-8') as f:
  content = f.read()
 
  # BASE_URL 업데이트
-        pattern = r'private val BASE_URL = ["\']([^"\']+)["\']'
-        replacement = f'private val BASE_URL = "{ngrok_url}"'
+     pattern = r'private val BASE_URL = ["\']([^"\']+)["\']'
+     replacement = f'private val BASE_URL = "{ngrok_url}"'
 
  if re.search(pattern, content):
- new_content = re.sub(pattern, replacement, content)
+     new_content = re.sub(pattern, replacement, content)
 
  # 파일 쓰기
-            with open(api_client_file, 'w', encoding='utf-8') as f:
+     with open(api_client_file, 'w', encoding='utf-8') as f:
  f.write(new_content)
 
-            print(f"? ApiClient.kt 업데이트됨: {ngrok_url}")
+     print(f"? ApiClient.kt 업데이트됨: {ngrok_url}")
  return True
  else:
-            print("? BASE_URL 패턴을 찾을 수 없습니다.")
+     print("? BASE_URL 패턴을 찾을 수 없습니다.")
  return False
  except Exception as e:
-        print(f"? ApiClient.kt 업데이트 실패: {e}")
+     print(f"? ApiClient.kt 업데이트 실패: {e}")
  return False
 
 def update_manus_api_client(ngrok_url: str):
@@ -81,25 +97,30 @@ def update_manus_api_client(ngrok_url: str):
     api_client_file = android_dir / "app" / "src" / "main" / "java" / "com" / "wickedzerg" / "mobilegcs" / "api" / "ManusApiClient.kt"
 
  if not api_client_file.exists():
- return False
+     return False
 
  try:
-        with open(api_client_file, 'r', encoding='utf-8') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(api_client_file, 'r', encoding='utf-8') as f:
  content = f.read()
 
-        pattern = r'private val BASE_URL = ["\']([^"\']+)["\']'
-        replacement = f'private val BASE_URL = "{ngrok_url}"'
+     pattern = r'private val BASE_URL = ["\']([^"\']+)["\']'
+     replacement = f'private val BASE_URL = "{ngrok_url}"'
 
  if re.search(pattern, content):
- new_content = re.sub(pattern, replacement, content)
+     new_content = re.sub(pattern, replacement, content)
 
-            with open(api_client_file, 'w', encoding='utf-8') as f:
+     with open(api_client_file, 'w', encoding='utf-8') as f:
  f.write(new_content)
 
-            print(f"? ManusApiClient.kt 업데이트됨: {ngrok_url}")
+     print(f"? ManusApiClient.kt 업데이트됨: {ngrok_url}")
  return True
  except Exception as e:
-        print(f"? ManusApiClient.kt 업데이트 실패: {e}")
+     print(f"? ManusApiClient.kt 업데이트 실패: {e}")
 
  return False
 
@@ -115,9 +136,9 @@ def main():
  ngrok_url = get_ngrok_url()
 
  if not ngrok_url:
-        print("? Ngrok 터널 URL을 찾을 수 없습니다.")
-        print("  → 터널이 실행 중인지 확인하세요.")
-        print("  → bat\\start_ngrok_tunnel.bat 실행")
+     print("? Ngrok 터널 URL을 찾을 수 없습니다.")
+     print("  → 터널이 실행 중인지 확인하세요.")
+     print("  → bat\\start_ngrok_tunnel.bat 실행")
  return 1
 
     print(f"  ? 터널 URL: {ngrok_url}")
@@ -128,13 +149,13 @@ def main():
  updated = False
 
  if update_android_api_client(ngrok_url):
- updated = True
+     updated = True
 
  if update_manus_api_client(ngrok_url):
- updated = True
+     updated = True
 
  if not updated:
-        print("? 업데이트된 파일이 없습니다.")
+     print("? 업데이트된 파일이 없습니다.")
  return 1
 
  print()
@@ -151,4 +172,4 @@ def main():
  return 0
 
 if __name__ == "__main__":
- sys.exit(main())
+    sys.exit(main())

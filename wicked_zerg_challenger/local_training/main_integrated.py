@@ -9,6 +9,8 @@ import sys
 import time
 import warnings
 from pathlib import Path
+from datetime import datetime
+import json
 
 # Antigravity easter egg removed - no longer used
 
@@ -125,15 +127,25 @@ warnings.filterwarnings(
 # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
 # CRITICAL: Import torch safely to avoid C extensions loading errors
 try:
+    pass
+pass
+
+except Exception:
+    pass
     import multiprocessing
     # Change to a safe directory before importing torch to avoid path conflicts
     original_cwd = os.getcwd()
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
         # Temporarily change to project root to avoid local directory conflicts
         project_root = os.path.dirname(
             os.path.dirname(os.path.abspath(__file__)))
         os.chdir(project_root)
-        import torch
+import torch
         # Verify torch is properly installed
         if not hasattr(torch, '_C'):
             raise ImportError("PyTorch C extensions not properly loaded")
@@ -156,8 +168,13 @@ except Exception as e:
 class SafeStreamHandler(logging.StreamHandler):
     """StreamHandler that catches ValueError when buffer is detached"""
 
-    def emit(self, record):
+def emit(self, record):
         try:
+            pass
+        pass
+
+        except Exception:
+            pass
             # Check if stream is closed before attempting to write
             if hasattr(self.stream, "closed") and self.stream.closed:
                 return  # Stream is closed, skip logging
@@ -196,15 +213,20 @@ logging.basicConfig(
 # IMPROVED: Platform-independent event loop policy
 # Use default policy on all platforms for better compatibility
 try:
- loop = asyncio.get_running_loop()
+    loop = asyncio.get_running_loop()
 except RuntimeError:
- loop = asyncio.new_event_loop()
- asyncio.set_event_loop(loop)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
 # IMPROVED: Only set Windows-specific policy if explicitly needed and available
 # This allows the code to run on Linux/Docker without modification
 if sys.platform == "win32":
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
         # Only use WindowsSelectorEventLoopPolicy if default policy causes issues
         # Most modern Python versions handle this automatically
         if hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
@@ -223,10 +245,10 @@ if sys.platform == "win32":
 # Python 3.10+ requires explicit loop creation - get_event_loop() no longer auto-creates
 # At module level, we just ensure a loop is set (not running)
 try:
- loop = asyncio.get_running_loop()
+    loop = asyncio.get_running_loop()
 except RuntimeError:
- loop = asyncio.new_event_loop()
- asyncio.set_event_loop(loop)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
 # SC2 imports
 
@@ -332,8 +354,13 @@ def write_status_file(instance_id, status_data):
  status_data: Dictionary containing status information
     """
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
         import json
-        import time
+import time
 
         # IMPROVED: Use project root stats/ directory with instance subdirectory
         # This prevents I/O bottleneck when running 30+ instances
@@ -349,6 +376,11 @@ def write_status_file(instance_id, status_data):
 
         for attempt in range(max_retries):
             try:
+                pass
+            pass
+
+            except Exception:
+                pass
                 # Step 1: Write to temporary file
                 temp_file = status_file.with_suffix('.tmp')
                 with open(temp_file, "w", encoding="utf-8") as f:
@@ -356,7 +388,7 @@ def write_status_file(instance_id, status_data):
 
                 # Step 2: Atomic move (replaces existing file atomically)
                 # On Windows, os.replace is atomic; on Unix, it's also atomic
-                import os
+import os
                 os.replace(str(temp_file), str(status_file))
                 return  # Success
 
@@ -439,7 +471,7 @@ def run_training():
             print(f"? [DRY-RUN FAILED] Error during validation:")
             print("=" * 70)
             print(f"Error: {type(e).__name__}: {e}")
-            import traceback
+import traceback
 
             traceback.print_exc()
             return
@@ -527,8 +559,13 @@ def run_training():
     # IMPROVED: Auto code optimization (default rule)
     if _config.AUTO_OPTIMIZE_CODE:
         try:
+            pass
+        pass
+
+        except Exception:
+            pass
             print(f"[CODE OPTIMIZATION] Auto-optimization enabled (default rule)")
-            import re
+import re
 
             optimization_files = [
                 'wicked_zerg_bot_pro.py',
@@ -549,31 +586,28 @@ def run_training():
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
                     # LEARNING: Cache file contents if read multiple times
- content = f.read()
- # LEARNING: Cache file contents if read multiple times
- content = f.read()
- content = f.read()
+                    content = f.read()
 
-                        original_size = len(content.encode('utf-8'))
+                original_size = len(content.encode('utf-8'))
 
- # Remove Korean comments
- content = remove_korean_comments(content)
+                # Remove Korean comments
+                content = remove_korean_comments(content)
 
- # Remove excessive blank lines
-                        content = re.sub(r'\n\n\n+', '\n\n', content)
+                # Remove excessive blank lines
+                content = re.sub(r'\n\n\n+', '\n\n', content)
 
- # Remove trailing whitespace
-                        lines = content.split('\n')
- lines = [line.rstrip() for line in lines]
-                        content = '\n'.join(lines)
+                # Remove trailing whitespace
+                lines = content.split('\n')
+                lines = [line.rstrip() for line in lines]
+                content = '\n'.join(lines)
 
-                        new_size = len(content.encode('utf-8'))
- if new_size < original_size:
-                            with open(filepath, 'w', encoding='utf-8') as f:
- f.write(content)
- optimized_count += 1
- except Exception as e:
- pass
+                new_size = len(content.encode('utf-8'))
+                if new_size < original_size:
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    optimized_count += 1
+            except Exception as e:
+                pass
 
  if optimized_count > 0:
                 print(f"[CODE OPTIMIZATION] Optimized {optimized_count} files")
@@ -633,18 +667,25 @@ def run_training():
         print(f"[HINT] To limit games, set: set MAX_GAMES = N && python main_integrated.py\n")
 
  while True:
- try:
- game_count += 1
+     pass
+    try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        game_count += 1
 
  if continuous_failures > 0:
- print(
+     print(
                     f"[RETRY] Current consecutive failures: {continuous_failures}/{MAX_CONTINUOUS_FAILURES}"
  )
 
  # Map selection (use default if available maps list is empty or map not found)
  if not AVAILABLE_MAPS:
- current_map = MAP_NAME
+     current_map = MAP_NAME
  else:
+     pass
  current_map = random.choice(AVAILABLE_MAPS)
 
  map_instance = maps.get(current_map)
@@ -656,7 +697,7 @@ def run_training():
 
                 # Final fallback: if default map also doesn't exist, skip this game
  if map_instance is None:
- print(
+     print(
                         f"[ERROR] Default map '{MAP_NAME}' also not found. Please install maps in SC2 Maps folder."
  )
                     print(f"[INFO] Expected path: {correct_sc2_path}\\Maps")
@@ -679,7 +720,7 @@ def run_training():
  )
  # Pass last result to bot for terminal display
             if hasattr(bot, "last_result"):
- bot.last_result = last_result
+                bot.last_result = last_result
 
  # Set replay path
  replay_path = os.path.join(
@@ -735,6 +776,11 @@ def run_training():
  result = None
 
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
                 print(f"[GAME] Selected Map: {current_map}")
 
  if DRY_RUN_MODE:
@@ -750,12 +796,12 @@ def run_training():
  )
 
  except Exception as game_error:
- # Catch any game session errors (including logging errors during shutdown)
+     # Catch any game session errors (including logging errors during shutdown)
  error_msg = str(game_error).lower()
 
  # Handle connection reset errors (most common)
                 if "connectionreseterror" in error_msg or "closing transport" in error_msg:
- continuous_failures += 1
+                    continuous_failures += 1
                     print("[SYSTEM] Connection reset detected, stopping training.")
  print(
                         f"[INFO] Connection retry ({continuous_failures}/{MAX_CONTINUOUS_FAILURES}): StarCraft II client disconnected or connection lost"
@@ -774,7 +820,12 @@ def run_training():
                         print("=" * 70 + "\n")
 
  try:
- from datetime import datetime
+     pass
+ pass
+
+ except Exception:
+     pass
+     from datetime import datetime
 
                             with open("crash_report.txt", "a", encoding="utf-8") as f:
                                 f.write(f"\n{'=' * 70}\n")
@@ -787,33 +838,38 @@ def run_training():
                                 f.write(f"{'=' * 70}\n")
                             print(f"[INFO] crash_report.txt saved successfully")
  except Exception:
- pass
+     pass
 
  break
 
                     result = "Defeat"
  try:
- import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     import torch
 
  if torch.cuda.is_available():
- torch.cuda.empty_cache()
+     torch.cuda.empty_cache()
                             print("[SYSTEM] GPU cache cleared")
  except Exception:
- pass
+     pass
  time.sleep(2)
                 elif "buffer" in error_msg or "detached" in error_msg:
- # Logging error during shutdown - can be safely ignored
+                    # Logging error during shutdown - can be safely ignored
                     print(f"[INFO] Game ended (logging cleanup in progress)")
  # Try to determine result from bot state if possible
                     result = "Defeat"  # Default to defeat if we can't determine
                 elif "signal only works in main thread" in error_msg:
- # Signal error - run_game() must run in main thread
+                    # Signal error - run_game() must run in main thread
  # Use print() instead of logger to avoid buffer errors
                     print(f"[ERROR] Signal error: run_game() must run in main thread")
                     print(f"[INFO] This error indicates a threading issue with sc2 library")
                     result = "Defeat"
                 elif "local variable 'asyncio' referenced before assignment" in error_msg:
- # Asyncio variable conflict - should not happen but handle it
+                    # Asyncio variable conflict - should not happen but handle it
  # Use print() instead of logger to avoid buffer errors
                     print(f"[ERROR] Asyncio variable conflict detected: {game_error}")
                     print(f"[ERROR] Game session crashed due to asyncio reference error")
@@ -821,7 +877,7 @@ def run_training():
  else:
  # Other errors should be reported (avoid logger to prevent buffer errors)
                     print(f"[ERROR] Game session error: {game_error}")
- import traceback
+import traceback
 
  # Only print traceback for non-buffer errors
  if (
@@ -831,46 +887,57 @@ def run_training():
  traceback.print_exc()
                     result = "Defeat"  # Default to defeat on error
  finally:
+     pass
  try:
- import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     import torch
 
  if torch.cuda.is_available():
- torch.cuda.empty_cache()
+     torch.cuda.empty_cache()
  except Exception:
- pass
+     pass
 
  # Ensure logging handlers are properly flushed after each game
  # This prevents buffer detachment errors during shutdown
  try:
- for handler in logging.root.handlers[:]:
- try:
- handler.flush()
+     for handler in logging.root.handlers[:]:
+         try:
+             handler.flush()
  except (ValueError, OSError, AttributeError):
- # Handler stream is closed or detached - ignore
+     # Handler stream is closed or detached - ignore
  pass
  except Exception:
- pass # Ignore any errors during logging cleanup
+     pass # Ignore any errors during logging cleanup
 
  # Also give loguru a moment to flush pending logs after each game
  # This reduces the chance of buffer errors during final shutdown
  try:
- if logger:
- # Brief wait to allow async log queue to process (use time.sleep instead of await)
+     pass
+ pass
+
+ except Exception:
+     pass
+     if logger:
+         # Brief wait to allow async log queue to process (use time.sleep instead of await)
  time.sleep(0.05) # Short wait for async log flush
  except Exception:
- pass # Ignore errors during loguru flush
+     pass # Ignore errors during loguru flush
 
  # IMPROVED: Process result (single game mode)
             result_text = "N/A"
             if str(result) == "Victory":
- continuous_failures = 0
+                continuous_failures = 0
  win_count += 1
                 result_text = "WIN"
                 print(f"[VICTORY] Game #{game_count} - {win_count}W / {loss_count}L")
                 print(f"[INFO] Game ended successfully. Waiting for game window to close...")
 
             elif str(result) == "Defeat":
- continuous_failures = 0
+                continuous_failures = 0
  loss_count += 1
                 result_text = "DEFEAT"
                 print(f"[DEFEAT] Game #{game_count} - {win_count}W / {loss_count}L")
@@ -886,7 +953,7 @@ def run_training():
  # LEARNING: Batch processing - collect results for batch learning
  # Process batch of 10 games at once for faster learning
             if not hasattr(main, 'batch_results'):
- main.batch_results = []
+                main.batch_results = []
  main.batch_results.append({
                 'game_count': game_count,
                 'result': result_text,
@@ -895,9 +962,14 @@ def run_training():
  })
 
  if len(main.batch_results) >= 10:
- # Process batch of 10 games at once
+     # Process batch of 10 games at once
  try:
- # LEARNING: Batch learning can be implemented here
+     pass
+ pass
+
+ except Exception:
+     pass
+     # LEARNING: Batch learning can be implemented here
  # This allows processing multiple game results together
                     print(f"[LEARNING] Processing batch of {len(main.batch_results)} games...")
  # TODO: Implement batch learning logic here
@@ -926,18 +998,23 @@ def run_training():
 
  # 🧠 Strategy Audit: Analyze performance gap vs pro gamers (매 게임마다 실행)
  try:
- from local_training.strategy_audit import StrategyAudit
+     pass
+ pass
+
+ except Exception:
+     pass
+     from local_training.strategy_audit import StrategyAudit
 
  # bot 인스턴스가 유효한지 확인
                 if bot_instance_ref and hasattr(bot_instance_ref, 'production'):
- auditor = StrategyAudit()
+                    auditor = StrategyAudit()
  gap_analysis = auditor.analyze_last_game(
  bot_instance_ref,
  game_result = result_text.lower()
  )
 
  if gap_analysis:
- # 프로 대비 지연 시간 로그 출력
+     # 프로 대비 지연 시간 로그 출력
  if gap_analysis.time_gaps:
                             print(f"\n[🧠 STRATEGY AUDIT] 프로 대비 빌드오더 분석 결과:")
                             print(f"  게임 ID: {gap_analysis.game_id}")
@@ -947,7 +1024,7 @@ def run_training():
  if critical_gaps:
                                 print(f"  ⚠️  심각한 지연 발견 ({len(critical_gaps)}개):")
  for i, gap in enumerate(critical_gaps[:3], 1):
- print(
+     print(
                                         f"    {i}. {gap.building_name}: "
                                         f"프로 {gap.pro_time:.1f}초 vs 봇 {gap.bot_time:.1f}초 "
                                         f"(지연: {gap.gap_seconds:+.1f}초, {gap.gap_percentage:+.1f}%)"
@@ -979,15 +1056,15 @@ def run_training():
  except ImportError as import_err:
                 print(f"[WARNING] Strategy Audit 모듈을 불러올 수 없습니다: {import_err}\n")
  except Exception as audit_error:
- # 분석 실패해도 게임 진행은 계속
+     # 분석 실패해도 게임 진행은 계속
                 print(f"[WARNING] Strategy Audit 분석 중 오류 발생: {audit_error}\n")
- import traceback
+import traceback
  traceback.print_exc()
 
  # Calculate win rate
  total_games = win_count + loss_count
  if total_games > 0:
- win_rate_percent = (win_count / total_games) * 100
+     win_rate_percent = (win_count / total_games) * 100
  win_rate_ratio = win_count / total_games # 0.0 ~ 1.0
  print(
                     f"[STATS] Win Rate: {win_rate_percent:.1f}% ({win_count}W / {total_games} games)"
@@ -997,12 +1074,12 @@ def run_training():
 
  recent_games = min(20, total_games)
  if recent_games >= 10:
- recent_wins = max(0, win_count - max(0, total_games - recent_games))
+     recent_wins = max(0, win_count - max(0, total_games - recent_games))
  recent_win_rate = recent_wins / recent_games if recent_games > 0 else 0.0
 
  old_difficulty_idx = curriculum.current_idx
  if curriculum.check_promotion(recent_win_rate, recent_games):
- current_difficulty = curriculum.get_difficulty()
+     current_difficulty = curriculum.get_difficulty()
  current_difficulty_index = curriculum.current_idx
 
 
@@ -1016,9 +1093,9 @@ def run_training():
  curriculum.save_level()
 
  if recent_win_rate < curriculum.demotion_threshold and recent_games >= 30:
- old_difficulty_idx = curriculum.current_idx
+     old_difficulty_idx = curriculum.current_idx
  if curriculum.check_demotion(recent_win_rate, recent_games):
- current_difficulty = curriculum.get_difficulty()
+     current_difficulty = curriculum.get_difficulty()
  current_difficulty_index = curriculum.current_idx
 
  # IMPROVED: Safety check - ensure only one level decreased
@@ -1035,26 +1112,31 @@ def run_training():
 
  # IMPROVED: Periodic code optimization (every 5 games)
  if _config.AUTO_OPTIMIZE_CODE and game_count % 5 == 0:
- run_code_optimization()
+     run_code_optimization()
 
  try:
- from scripts.replay_build_order_learner import ReplayBuildOrderExtractor
- from learning_accelerator import LearningAccelerator
- from error_handler import ErrorHandler
- from performance_monitor import PerformanceMonitor
+     pass
+ pass
+
+ except Exception:
+     pass
+     from scripts.replay_build_order_learner import ReplayBuildOrderExtractor
+from learning_accelerator import LearningAccelerator
+from error_handler import ErrorHandler
+from performance_monitor import PerformanceMonitor
 
  # IMPROVED: Use flexible path detection
                 replay_archive_dir = os.environ.get("REPLAY_ARCHIVE_DIR")
  if not replay_archive_dir or not os.path.exists(replay_archive_dir):
- # Try common locations
+     # Try common locations
  possible_paths = [
                         PROJECT_DIR / "replays_archive",
                         Path.home() / "replays",
                         Path("replays_archive"),
  ]
  for path in possible_paths:
- if path.exists():
- replay_archive_dir = str(path)
+     if path.exists():
+         replay_archive_dir = str(path)
  break
  else:
                         replay_archive_dir = "replays_archive"  # Fallback to relative path
@@ -1070,7 +1152,7 @@ def run_training():
  performance_monitor = PerformanceMonitor()
 
  for iteration in range(learning_iterations):
- learning_accelerator.increment_iteration()
+     learning_accelerator.increment_iteration()
  speed_multiplier = learning_accelerator.get_learning_speed(learning_accelerator.iteration)
 
                         print(f"[BUILD LEARNING] Iteration {iteration + 1}/{learning_iterations} (Speed: {speed_multiplier}x)...")
@@ -1118,20 +1200,25 @@ def run_training():
             replay_download_url = os.environ.get("REPLAY_DOWNLOAD_URL", None)
  if replay_download_url and game_count % 20 == 0: # Check every 20 games
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
 
                     print(f"[REPLAY DOWNLOAD] Checking for new replays from URL...")
  # IMPROVED: Use flexible path detection
                     replay_archive_dir = os.environ.get("REPLAY_ARCHIVE_DIR")
  if not replay_archive_dir or not os.path.exists(replay_archive_dir):
- # Try common locations
+     # Try common locations
  possible_paths = [
                             PROJECT_DIR / "replays_archive",
                             Path.home() / "replays",
                             Path("replays_archive"),
  ]
  for path in possible_paths:
- if path.exists():
- replay_archive_dir = str(path)
+     if path.exists():
+         replay_archive_dir = str(path)
  break
  else:
                             replay_archive_dir = "replays_archive"  # Fallback to relative path
@@ -1145,14 +1232,19 @@ def run_training():
  extractor = ReplayBuildOrderExtractor(replay_dir = replay_archive_dir)
  learned_params = extractor.learn_from_replays(max_replays = _config.MAX_REPLAYS_FOR_LEARNING)
  if learned_params:
- extractor.save_learned_parameters(learned_params)
+     extractor.save_learned_parameters(learned_params)
                                 print(f"[BUILD LEARNING] Iteration {iteration + 1}: Updated {len(learned_params)} parameters from new replays")
 
  # 🧠 Strategy Audit: Verify learned parameters are loaded
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
                                     learned_json_path = Path("local_training/scripts/learned_build_orders.json")
  if learned_json_path.exists():
- auditor = StrategyAudit(learned_build_orders_path = learned_json_path)
+     auditor = StrategyAudit(learned_build_orders_path = learned_json_path)
  if auditor.pro_data:
                                             print(f"[🧠 STRATEGY AUDIT] Pro gamer data refreshed: {len(auditor.pro_data.get('build_orders', []))} build orders available")
  except Exception as audit_refresh_err:
@@ -1164,11 +1256,23 @@ def run_training():
                     print(f"[WARNING] Replay download error: {e}")
 
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  run_self_evolution(replay_dir)
  except ImportError:
- # Fallback to extract_replay_insights if self_evolution not available
+     # Fallback to extract_replay_insights if self_evolution not available
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
 
  analyze_latest_replay(replay_dir)
  except ImportError:
@@ -1202,7 +1306,7 @@ def run_training():
                     print("\n[MONITOR] Stopping real-time code monitor...")
                     print("[MONITOR] Waiting for monitor thread to finish...")
  try:
- code_monitor.stop()
+     code_monitor.stop()
                         print("[? SUCCESS] Real-time code monitor stopped gracefully")
  except Exception as e:
                         print(f"[? WARNING] Error stopping monitor: {e}")
@@ -1226,7 +1330,7 @@ def run_training():
  if monitor_enabled and code_monitor:
                 print("\n[MONITOR] Stopping real-time code monitor...")
  try:
- code_monitor.stop()
+     code_monitor.stop()
                     print("[? SUCCESS] Real-time code monitor stopped gracefully")
  except Exception as e:
                     print(f"[? WARNING] Error stopping monitor: {e}")
@@ -1239,7 +1343,7 @@ def run_training():
 
  except Exception as e:
             print(f"\n[ERROR] Game error: {e}")
- import traceback
+import traceback
 
  traceback.print_exc()
  time.sleep(5) # Wait before retrying
@@ -1250,8 +1354,13 @@ def run_training():
     print("="*70)
 
  if monitor_enabled and code_monitor:
- try:
- code_monitor.stop()
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         code_monitor.stop()
             print("[?] Real-time code monitor stopped successfully")
 
  if code_monitor.has_fixes():
@@ -1268,20 +1377,25 @@ def run_training():
  # CRITICAL: Clean up logging system BEFORE function returns
  # This ensures all pending logs are flushed before program shutdown
  try:
- # Complete loguru logging first (flush all pending logs in queue)
- if logger:
- try:
- logger.complete() # Wait for all pending logs to be written
+     pass
+ pass
+
  except Exception:
- pass # Ignore errors during completion
+     pass
+     # Complete loguru logging first (flush all pending logs in queue)
+ if logger:
+     try:
+         logger.complete() # Wait for all pending logs to be written
+ except Exception:
+     pass # Ignore errors during completion
 
  # Then shutdown standard logging
  logging.shutdown()
  except Exception:
- pass # Ignore errors during logging shutdown
+     pass # Ignore errors during logging shutdown
 
 if __name__ == "__main__":
- # Single Instance Mode: 1 instance with full GPU and CPU utilization
+    # Single Instance Mode: 1 instance with full GPU and CPU utilization
     os.environ["INSTANCE_ID"] = "0"
     os.environ["NUM_INSTANCES"] = "1"
     os.environ["SINGLE_GAME_MODE"] = "true"
@@ -1291,13 +1405,23 @@ if __name__ == "__main__":
 
  # CPU Thread Configuration: Use 12 threads (configurable via TORCH_NUM_THREADS env var)
  try:
- # Change to a safe directory before importing torch to avoid path conflicts
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Change to a safe directory before importing torch to avoid path conflicts
  original_cwd = os.getcwd()
  try:
- # Temporarily change to project root to avoid local directory conflicts
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Temporarily change to project root to avoid local directory conflicts
  project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
  os.chdir(project_root)
- import torch
+import torch
  # Verify torch is properly installed
             if not hasattr(torch, '_C'):
                 raise ImportError("PyTorch C extensions not properly loaded")
@@ -1307,19 +1431,25 @@ if __name__ == "__main__":
             os.environ["MKL_NUM_THREADS"] = str(num_threads)
             print(f"[CONFIG] Single instance mode: 1 instance with GPU and {num_threads} CPU threads")
  finally:
+     pass
  os.chdir(original_cwd)
  except Exception as e:
         print(f"[WARNING] Failed to configure CPU threads: {e}")
         print(f"[INFO] Game will continue but may use default thread settings")
 
  try:
- if logger:
- logger.remove() # Remove existing handlers
+     if logger:
+         logger.remove() # Remove existing handlers
             logger.add(sys.stderr, level="INFO", enqueue = True, catch = True)  # Reconfigure for safety
  except Exception:
- pass
+     pass
 
  try:
+     pass
+ pass
+
+ except Exception:
+     pass
         print("\n" + "="*70)
         print("SINGLE GAME MODE ENABLED")
         print("VISUAL MODE ENABLED (Game window visible)")
@@ -1330,34 +1460,39 @@ if __name__ == "__main__":
         print("="*70 + "\n")
  run_training()
  except KeyboardInterrupt:
- # User interrupted training
+     # User interrupted training
         print("\n[STOP] Training stopped by user.")
  except Exception as e:
- # Log runtime error (use print to avoid loguru buffer errors)
+     # Log runtime error (use print to avoid loguru buffer errors)
         print(f"[ERROR] Runtime error occurred: {e}")
- import traceback
+import traceback
 
  traceback.print_exc()
  finally:
  # Ensure logging is properly shut down and buffers are flushed
  try:
- # Complete loguru logging (flush all pending logs)
- if logger:
- try:
- logger.complete() # Wait for all pending logs to be written
- except Exception:
- pass # Ignore errors during completion
- try:
- logger.remove() # Remove all handlers
- except Exception:
- pass # Ignore errors during removal
- except Exception:
+     pass
  pass
+
+ except Exception:
+     pass
+     # Complete loguru logging (flush all pending logs)
+ if logger:
+     try:
+         logger.complete() # Wait for all pending logs to be written
+ except Exception:
+     pass # Ignore errors during completion
+ try:
+     logger.remove() # Remove all handlers
+ except Exception:
+     pass # Ignore errors during removal
+ except Exception:
+     pass
 
  # Also shutdown standard logging
  try:
- logging.shutdown()
+     logging.shutdown()
  except Exception:
- pass # Ignore errors during logging shutdown
+     pass # Ignore errors during logging shutdown
 
         print("[OK] System safely shut down.")

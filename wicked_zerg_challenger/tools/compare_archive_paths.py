@@ -22,56 +22,66 @@ def main():
     print("[1] Project Internal Archive")
     print(f"    Path: {path1.absolute()}")
  if path1.exists():
- folders = [f for f in path1.iterdir() if f.is_dir()]
-        print(f"    Status: ? Exists")
-        print(f"    Training folders: {len(folders)}")
+     folders = [f for f in path1.iterdir() if f.is_dir()]
+     print(f"    Status: ? Exists")
+     print(f"    Training folders: {len(folders)}")
  if folders:
- sample_folder = folders[0]
-            print(f"    Sample folder: {sample_folder.name}")
-            files = list(sample_folder.glob("*"))
-            print(f"    Files in sample folder: {len(files)}")
+     sample_folder = folders[0]
+     print(f"    Sample folder: {sample_folder.name}")
+     files = list(sample_folder.glob("*"))
+     print(f"    Files in sample folder: {len(files)}")
  for f in files[:5]:
-                print(f"      - {f.name}")
+     print(f"      - {f.name}")
 
  # Check file types
-            json_files = [f for f in files if f.suffix == '.json']
-            print(f"    JSON files: {len(json_files)}")
+     json_files = [f for f in files if f.suffix == '.json']
+     print(f"    JSON files: {len(json_files)}")
  if json_files:
- try:
-                    with open(json_files[0], 'r', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(json_files[0], 'r', encoding='utf-8') as f:
  data = json.load(f)
-                    print(f"    Sample JSON keys: {list(data.keys())[:5]}")
+     print(f"    Sample JSON keys: {list(data.keys())[:5]}")
  except:
- pass
+     pass
  else:
-        print(f"    Status: ? Not found")
+     print(f"    Status: ? Not found")
 
     print("\n[2] External Archive (D:/replays/archive)")
     print(f"    Path: {path2}")
  if path2.exists():
- folders = [f for f in path2.iterdir() if f.is_dir()]
-        print(f"    Status: ? Exists")
-        print(f"    Training folders: {len(folders)}")
+     folders = [f for f in path2.iterdir() if f.is_dir()]
+     print(f"    Status: ? Exists")
+     print(f"    Training folders: {len(folders)}")
  if folders:
- sample_folder = folders[-1] # Most recent
-            print(f"    Sample folder: {sample_folder.name}")
-            files = list(sample_folder.glob("*"))
-            print(f"    Files in sample folder: {len(files)}")
+     sample_folder = folders[-1] # Most recent
+     print(f"    Sample folder: {sample_folder.name}")
+     files = list(sample_folder.glob("*"))
+     print(f"    Files in sample folder: {len(files)}")
  for f in files[:5]:
-                print(f"      - {f.name}")
+     print(f"      - {f.name}")
 
  # Check file types
-            json_files = [f for f in files if f.suffix == '.json']
-            print(f"    JSON files: {len(json_files)}")
+     json_files = [f for f in files if f.suffix == '.json']
+     print(f"    JSON files: {len(json_files)}")
  if json_files:
- try:
-                    with open(json_files[0], 'r', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(json_files[0], 'r', encoding='utf-8') as f:
  data = json.load(f)
-                    print(f"    Sample JSON keys: {list(data.keys())[:5]}")
+     print(f"    Sample JSON keys: {list(data.keys())[:5]}")
  except:
- pass
+     pass
  else:
-        print(f"    Status: ? Not found")
+     print(f"    Status: ? Not found")
 
     print("\n" + "="*70)
     print("DIFFERENCE SUMMARY")
@@ -95,4 +105,4 @@ def main():
     print("\n" + "="*70 + "\n")
 
 if __name__ == "__main__":
- main()
+    main()

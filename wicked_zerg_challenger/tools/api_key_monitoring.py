@@ -15,24 +15,25 @@ def log_api_key_usage(api_name, success=True, error=None):
 
  # 기존 로그 읽기
  if log_file.exists():
-        with open(log_file, 'r', encoding='utf-8') as f:
+     with open(log_file, 'r', encoding='utf-8') as f:
  logs = json.load(f)
  else:
+     pass
  logs = []
 
  # 새 로그 추가
  log_entry = {
-        'timestamp': datetime.now().isoformat(),
-        'api': api_name,
-        'success': success,
-        'error': str(error) if error else None
+     'timestamp': datetime.now().isoformat(),
+     'api': api_name,
+     'success': success,
+     'error': str(error) if error else None
  }
 
  logs.append(log_entry)
 
  # 최근 1000개만 유지
  if len(logs) > 1000:
- logs = logs[-1000:]
+     logs = logs[-1000:]
 
  # 로그 저장
     with open(log_file, 'w', encoding='utf-8') as f:

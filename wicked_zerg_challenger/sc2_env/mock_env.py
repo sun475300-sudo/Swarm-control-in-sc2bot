@@ -1,3 +1,10 @@
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
 """
 Mock SC2 Environment for testing without actual StarCraft II installation.
 This module provides a lightweight simulation environment for testing bot logic.
@@ -46,56 +53,62 @@ class MockSC2Env:
  Example:
  >>> env = MockSC2Env()
  >>> state = env.reset()
-        >>> action = "train_drone"
+     >>> action = "train_drone"
  >>> new_state = env.step(action)
     """
 
- def __init__(self, initial_minerals: int = 50):
-        """
+def __init__(self, initial_minerals: int = 50):
+    """
  Initialize mock SC2 environment.
 
  Args:
  initial_minerals: Starting mineral count
-        """
+     """
  self.state = MockGameState(minerals=initial_minerals)
  self.race = Race.ZERG
 
- def reset(self) -> Dict[str, Any]:
-        """
+def reset(self) -> Dict[str, Any]:
+    """
  Reset environment to initial state.
 
  Returns:
  Dictionary containing game state
-        """
+     """
  self.state = MockGameState(minerals=50)
  return self._state_to_dict()
 
- def step(self, action: str) -> Dict[str, Any]:
-        """
+def step(self, action: str) -> Dict[str, Any]:
+    """
  Execute an action and update game state.
 
  Args:
-            action: Action to execute (e.g., "train_drone", "build_extractor")
+     action: Action to execute (e.g., "train_drone", "build_extractor")
 
  Returns:
  Updated game state dictionary
-        """
-        if action == "train_drone":
- if self.state.minerals >= 50 and self.state.supply_used < self.state.supply_cap:
- self.state.minerals -= 50
+     """
+     if action == "train_drone":
+         pass
+     if self.state.minerals >= 50 and self.state.supply_used < self.state.supply_cap:
+         pass
+     self.state.minerals -= 50
  self.state.supply_used += 1
-                self.state.workers.append(MockUnit("drone"))
+     self.state.workers.append(MockUnit("drone"))
 
-        elif action == "build_extractor":
- if self.state.minerals >= 25:
- self.state.minerals -= 25
-                self.state.structures.append(MockUnit("extractor", is_ready=False))
+     elif action == "build_extractor":
+         pass
+     if self.state.minerals >= 25:
+         pass
+     self.state.minerals -= 25
+     self.state.structures.append(MockUnit("extractor", is_ready=False))
 
-        elif action == "train_zergling":
- if self.state.minerals >= 50 and self.state.supply_used + 1 <= self.state.supply_cap:
- self.state.minerals -= 50
+     elif action == "train_zergling":
+         pass
+     if self.state.minerals >= 50 and self.state.supply_used + 1 <= self.state.supply_cap:
+         pass
+     self.state.minerals -= 50
  self.state.supply_used += 2
-                self.state.army.append(MockUnit("zergling"))
+     self.state.army.append(MockUnit("zergling"))
 
  # Advance game time
  self.state.game_time += 0.045 # ~22 FPS
@@ -103,22 +116,22 @@ class MockSC2Env:
 
  return self._state_to_dict()
 
- def _state_to_dict(self) -> Dict[str, Any]:
-        """Convert game state to dictionary."""
+def _state_to_dict(self) -> Dict[str, Any]:
+    """Convert game state to dictionary."""
  return {
-            "minerals": self.state.minerals,
-            "vespene": self.state.vespene,
-            "supply_used": self.state.supply_used,
-            "supply_cap": self.state.supply_cap,
-            "worker_count": len(self.state.workers),
-            "structure_count": len(self.state.structures),
-            "army_count": len(self.state.army),
-            "game_time": self.state.game_time,
-            "iteration": self.state.iteration,
+    "minerals": self.state.minerals,
+    "vespene": self.state.vespene,
+    "supply_used": self.state.supply_used,
+    "supply_cap": self.state.supply_cap,
+    "worker_count": len(self.state.workers),
+    "structure_count": len(self.state.structures),
+    "army_count": len(self.state.army),
+    "game_time": self.state.game_time,
+    "iteration": self.state.iteration,
  }
 
- def can_afford(self, cost_minerals: int, cost_vespene: int = 0) -> bool:
-        """
+def can_afford(self, cost_minerals: int, cost_vespene: int = 0) -> bool:
+    """
  Check if we can afford a cost.
 
  Args:
@@ -127,14 +140,14 @@ class MockSC2Env:
 
  Returns:
  True if we can afford, False otherwise
-        """
+     """
  return (
  self.state.minerals >= cost_minerals
  and self.state.vespene >= cost_vespene
  )
 
- def get_supply_left(self) -> int:
-        """Get remaining supply capacity."""
+def get_supply_left(self) -> int:
+    """Get remaining supply capacity."""
  return max(0, self.state.supply_cap - self.state.supply_used)
 
 
@@ -146,54 +159,54 @@ class MockBotAI:
  for testing purposes without requiring actual SC2 installation.
     """
 
- def __init__(self):
-        """Initialize mock bot."""
+def __init__(self):
+    """Initialize mock bot."""
  self.env = MockSC2Env()
  self.iteration = 0
  self.time = 0.0
 
- @property
- def minerals(self) -> float:
-        """Get current minerals."""
+@property
+def minerals(self) -> float:
+    """Get current minerals."""
  return float(self.env.state.minerals)
 
- @property
- def vespene(self) -> float:
-        """Get current vespene gas."""
+@property
+def vespene(self) -> float:
+    """Get current vespene gas."""
  return float(self.env.state.vespene)
 
- @property
- def supply_used(self) -> int:
-        """Get used supply."""
+@property
+def supply_used(self) -> int:
+    """Get used supply."""
  return self.env.state.supply_used
 
- @property
- def supply_cap(self) -> int:
-        """Get supply capacity."""
+@property
+def supply_cap(self) -> int:
+    """Get supply capacity."""
  return self.env.state.supply_cap
 
- @property
- def supply_left(self) -> int:
-        """Get remaining supply."""
+@property
+def supply_left(self) -> int:
+    """Get remaining supply."""
  return self.env.get_supply_left()
 
- def can_afford(self, unit_type: str) -> bool:
-        """
+def can_afford(self, unit_type: str) -> bool:
+    """
  Check if we can afford a unit type.
 
  Args:
-            unit_type: Unit type to check (e.g., "drone", "zergling")
+     unit_type: Unit type to check (e.g., "drone", "zergling")
 
  Returns:
  True if affordable, False otherwise
-        """
+     """
  costs = {
-            "drone": (50, 0),
-            "zergling": (50, 0),
-            "extractor": (25, 0),
+     "drone": (50, 0),
+     "zergling": (50, 0),
+     "extractor": (25, 0),
  }
 
  if unit_type in costs:
- minerals, vespene = costs[unit_type]
+     minerals, vespene = costs[unit_type]
  return self.env.can_afford(minerals, vespene)
  return False

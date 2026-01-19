@@ -58,7 +58,12 @@ def run_epochs(
  # IMPROVED: Enhanced manifest handling with validation
  # Keep a stable pointer for downstream tools
  try:
- if not epoch_manifest.exists():
+     pass
+ pass
+
+ except Exception:
+     pass
+     if not epoch_manifest.exists():
                 print(
                     f"[WARNING] Epoch manifest not created: {epoch_manifest}")
  continue
@@ -70,16 +75,16 @@ def run_epochs(
 
  # Validate JSON before writing
  try:
- json.loads(manifest_content)  # Validate JSON structure
+     json.loads(manifest_content)  # Validate JSON structure
  except json.JSONDecodeError as e:
                 print(f"[ERROR] Epoch manifest contains invalid JSON: {e}")
  continue
 
  if latest_manifest.exists():
- latest_manifest.unlink()
+     latest_manifest.unlink()
             latest_manifest.write_text(manifest_content, encoding="utf-8")
  except Exception as e:
- # Best effort; do not fail the loop due to file replacement issues
+     # Best effort; do not fail the loop due to file replacement issues
             print(f"[WARNING] Failed to update latest manifest: {e}")
  pass
 
@@ -142,4 +147,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
- main()
+    main()

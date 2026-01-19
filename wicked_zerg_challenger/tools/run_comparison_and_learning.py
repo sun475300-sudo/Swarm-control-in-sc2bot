@@ -3,14 +3,16 @@
 """
 Run Comparison Analysis and Learning
 
-¼­·Î ´Ù¸¥ µ¥ÀÌÅÍ(ÇÁ·Î ¸®ÇÃ·¹ÀÌ vs ÈÆ·Ã ¸®ÇÃ·¹ÀÌ)¸¦ ºñ±³ ºÐ¼®ÇÏ°í
-Â÷ÀÌÁ¡À» Ã£¾Æ ÇÐ½ÀÀ» ½ÇÇàÇÏ´Â ÅëÇÕ ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
+ï¿½ï¿½ï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ vs ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ï¿½Ï°ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½Ð½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
 """
 
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict
+import Any
+import List
 from datetime import datetime
 
 # Add parent directory to path
@@ -104,7 +106,7 @@ def apply_differences_to_learning(
                 "reason": "Missing execution - using pro baseline"
             })
             print(
-                f"[LEARNING] {param_name}: {current_value} ¡æ {pro_value} (pro baseline)")
+                f"[LEARNING] {param_name}: {current_value} ï¿½ï¿½ {pro_value} (pro baseline)")
 
     return updated_params, improvements
 

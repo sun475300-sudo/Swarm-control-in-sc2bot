@@ -3,14 +3,16 @@
 """
 Integrated Learning Workflow
 
-¸®ÇÃ·¹ÀÌ ÇÐ½À µ¥ÀÌÅÍ ¼öÁý ¡æ ÃÖÀûÈ­ ¡æ ºñ±³ ºÐ¼® ¡æ ÇÐ½À ½ÇÇà ¡æ °³¼±È­
+ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­
 """
 
 import json
 import sys
 import statistics
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict
+import Any
+import List
 from datetime import datetime
 from collections import defaultdict
 
@@ -228,7 +230,7 @@ def apply_optimal_parameters(optimal_params: Dict[str, float]) -> bool:
                 "new": optimal_value
             })
             print(
-                f"  [UPDATE] {param_name}: {current_value} ¡æ {optimal_value}")
+                f"  [UPDATE] {param_name}: {current_value} ï¿½ï¿½ {optimal_value}")
         else:
             print(f"  [KEEP] {param_name}: {optimal_value} (unchanged)")
 
@@ -296,7 +298,7 @@ def main():
     print("\n" + "=" * 70)
     print("INTEGRATED LEARNING WORKFLOW")
     print("=" * 70)
-    print("Collecting replay data ¡æ Optimizing ¡æ Comparing ¡æ Learning ¡æ Improving")
+    print("Collecting replay data ï¿½ï¿½ Optimizing ï¿½ï¿½ Comparing ï¿½ï¿½ Learning ï¿½ï¿½ Improving")
     print()
 
     # Configuration

@@ -9,13 +9,20 @@
 import os
 import sys
 from pathlib import Path
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
 
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
- get_gemini_api_key,
+    get_gemini_api_key,
  get_google_api_key,
  get_gcp_project_id,
  load_api_key
@@ -28,17 +35,18 @@ except ImportError:
 def check_key(name: str, value: str, is_sensitive: bool=True) -> dict:
     """키 상태 확인"""
  if not value:
- return {
-            "name": name,
-            "status": "? 없음",
-            "value": None,
-            "location": "없음"
+     return {
+     "name": name,
+     "status": "? 없음",
+     "value": None,
+     "location": "없음"
  }
 
  # 민감한 키는 앞부분만 표시
  if is_sensitive and len(value) > 10:
-        display_value = f"{value[:10]}... (길이: {len(value)})"
+     display_value = f"{value[:10]}... (길이: {len(value)})"
  else:
+     pass
  display_value = value
 
  # 위치 확인
@@ -47,41 +55,51 @@ def check_key(name: str, value: str, is_sensitive: bool=True) -> dict:
  # 환경 변수 확인
     env_name = name.upper().replace("-", "_")
  if os.environ.get(env_name) == value:
-        locations.append(f"환경 변수 ({env_name})")
+     locations.append(f"환경 변수 ({env_name})")
 
  # 파일 확인
  project_root = Path(__file__).parent.parent
 
  # secrets/ 폴더 확인
     secrets_file = project_root / "secrets" /
-        f"{name.lower().replace('_', '_')}.txt"
+     f"{name.lower().replace('_', '_')}.txt"
  if secrets_file.exists():
- try:
-            with open(secrets_file, 'r', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(secrets_file, 'r', encoding='utf-8') as f:
  file_content = f.read().strip()
  if file_content == value:
-                    locations.append(f"secrets/{secrets_file.name}")
+     locations.append(f"secrets/{secrets_file.name}")
  except:
- pass
+     pass
 
  # api_keys/ 폴더 확인
     api_keys_file = project_root / "api_keys" / f"{name}.txt"
  if api_keys_file.exists():
- try:
-            with open(api_keys_file, 'r', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(api_keys_file, 'r', encoding='utf-8') as f:
  file_content = f.read().strip()
  if file_content == value:
-                    locations.append(f"api_keys/{api_keys_file.name}")
+     locations.append(f"api_keys/{api_keys_file.name}")
  except:
- pass
+     pass
 
     location_str = ", ".join(locations) if locations else "환경 변수 (추정)"
 
  return {
-        "name": name,
-        "status": "? 설정됨",
-        "value": display_value,
-        "location": location_str
+     "name": name,
+     "status": "? 설정됨",
+     "value": display_value,
+     "location": location_str
  }
 
 
@@ -110,7 +128,7 @@ def main():
         print(f"   값: {google_info['value']}")
         print(f"   위치: {google_info['location']}")
  else:
-        print("   ?? GEMINI_API_KEY와 동일한 키 사용 가능")
+     print("   ?? GEMINI_API_KEY와 동일한 키 사용 가능")
  print()
 
  # 선택적 키 확인
@@ -125,7 +143,7 @@ def main():
         print(f"   값: {gcp_info['value']}")
         print(f"   위치: {gcp_info['location']}")
  else:
-        print("   ?? Vertex AI 사용 시에만 필요")
+     print("   ?? Vertex AI 사용 시에만 필요")
  print()
 
  # AIARENA_TOKEN
@@ -136,33 +154,33 @@ def main():
         print(f"   값: {aiarena_info['value']}")
         print(f"   위치: {aiarena_info['location']}")
  else:
-        print("   ?? AI Arena 업로드 시에만 필요")
+     print("   ?? AI Arena 업로드 시에만 필요")
  print()
 
  # NGROK_AUTH_TOKEN
     ngrok_token = load_api_key(
-        "NGROK_AUTH_TOKEN") or os.environ.get("NGROK_AUTH_TOKEN")
+     "NGROK_AUTH_TOKEN") or os.environ.get("NGROK_AUTH_TOKEN")
     ngrok_info = check_key("NGROK_AUTH_TOKEN", ngrok_token)
     print(f"{ngrok_info['status']} {ngrok_info['name']}")
     if ngrok_info['value']:
         print(f"   값: {ngrok_info['value']}")
         print(f"   위치: {ngrok_info['location']}")
  else:
-        print("   ?? 외부 접속이 필요할 때만 사용")
+     print("   ?? 외부 접속이 필요할 때만 사용")
  print()
 
  # GCP_CREDENTIALS.json
  project_root = Path(__file__).parent.parent
     gcp_creds_file = project_root / "secrets" / "gcp_credentials.json"
  if not gcp_creds_file.exists():
-        gcp_creds_file = project_root / "api_keys" / "GCP_CREDENTIALS.json"
+     gcp_creds_file = project_root / "api_keys" / "GCP_CREDENTIALS.json"
 
  if gcp_creds_file.exists():
-        print(f"? GCP_CREDENTIALS.json")
-        print(f"   위치: {gcp_creds_file}")
+     print(f"? GCP_CREDENTIALS.json")
+     print(f"   위치: {gcp_creds_file}")
  else:
-        print(f"? GCP_CREDENTIALS.json")
-        print("   ?? Vertex AI 사용 시에만 필요")
+     print(f"? GCP_CREDENTIALS.json")
+     print("   ?? Vertex AI 사용 시에만 필요")
  print()
 
  # 요약
@@ -181,12 +199,12 @@ def main():
  print()
 
  if gemini_key:
-        print("?? GEMINI_API_KEY가 설정되어 있습니다.")
-        print("   노출 가능성이 있으므로 교체를 권장합니다.")
-        print("   가이드: docs/API_KEY_ROTATION_GUIDE.md")
+     print("?? GEMINI_API_KEY가 설정되어 있습니다.")
+     print("   노출 가능성이 있으므로 교체를 권장합니다.")
+     print("   가이드: docs/API_KEY_ROTATION_GUIDE.md")
 
     print("=" * 70)
 
 
 if __name__ == "__main__":
- main()
+    main()

@@ -7,13 +7,23 @@ It supports both ladder server mode (--LadderServer) and local testing.
 """
 
 from wicked_zerg_bot_pro import WickedZergBotPro
-from sc2 import maps  # type: ignore
-from sc2.player import Bot, Computer  # type: ignore
-from sc2.main import run_game, run_ladder_game  # type: ignore
-from sc2.data import Race, Difficulty  # type: ignore
+from sc2 import maps  # type: ignore # type: ignore
+from sc2.player import Bot
+import Computer  # type: ignore
+from sc2.main import run_game
+import run_ladder_game  # type: ignore
+from sc2.data import Race
+import Difficulty  # type: ignore
 import sys
 import os
 from pathlib import Path
+from typing import Dict
+import List
+import Optional
+import Tuple
+import Set
+import Any
+import Union
 
 # SC2 path auto-setup function
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ÀÚµ¿ µé¿©¾²±â ¼öÁ¤ µµ±¸
-Python ÆÄÀÏÀÇ µé¿©¾²±â¸¦ 4 spaces·Î ÅëÀÏ
+ï¿½Úµï¿½ ï¿½é¿©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+Python ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½é¿©ï¿½ï¿½ï¿½â¸¦ 4 spacesï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 """
 
 import re
@@ -11,24 +11,24 @@ from pathlib import Path
 
 
 def fix_file_indentation(file_path: Path) -> bool:
-    """ÆÄÀÏÀÇ µé¿©¾²±â¸¦ ¼öÁ¤"""
+    """ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½é¿©ï¿½ï¿½ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
         fixed_lines = []
-        indent_stack = [0]  # µé¿©¾²±â ·¹º§ ½ºÅÃ
+        indent_stack = [0]  # ï¿½é¿©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
         for i, line in enumerate(lines):
             stripped = line.lstrip()
-            if not stripped:  # ºó ÁÙ
+            if not stripped:  # ï¿½ï¿½ ï¿½ï¿½
                 fixed_lines.append('\n')
                 continue
 
-            # ÇöÀç ÁÙÀÇ ¿ø·¡ µé¿©¾²±â °è»ê
+            # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½é¿©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
             original_indent = len(line) - len(stripped)
 
-            # µé¿©¾²±â Å°¿öµå °¨Áö
+            # ï¿½é¿©ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if stripped.startswith(
                 ('def ',
                  'class ',
@@ -42,35 +42,35 @@ def fix_file_indentation(file_path: Path) -> bool:
                  'finally:',
                  'with ',
                  'async def ')):
-                # Å°¿öµå ÁÙÀº ÀÌÀü ·¹º§°ú µ¿ÀÏ
+                # Å°ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 current_indent = indent_stack[-1]
                 fixed_lines.append(' ' * current_indent + stripped)
-                # ´ÙÀ½ ÁÙÀº +1 ·¹º§
+                # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ +1 ï¿½ï¿½ï¿½ï¿½
                 if not stripped.endswith(':'):
-                    # : °¡ ¾øÀ¸¸é ´ÙÀ½ ÁÙÀº +1
+                    # : ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ +1
                     indent_stack.append(current_indent + 4)
             elif stripped.startswith('#'):
-                # ÁÖ¼®Àº ÀÌÀü ·¹º§°ú µ¿ÀÏ
+                # ï¿½Ö¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 current_indent = indent_stack[-1]
                 fixed_lines.append(' ' * current_indent + stripped)
             else:
-                # ÀÏ¹Ý ÄÚµå
+                # ï¿½Ï¹ï¿½ ï¿½Úµï¿½
                 current_indent = indent_stack[-1]
                 fixed_lines.append(' ' * current_indent + stripped)
-                # ÁÙ ³¡ÀÌ : ÀÌ¸é ´ÙÀ½ ÁÙÀº +1
+                # ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ : ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ +1
                 if stripped.endswith(':'):
                     indent_stack.append(current_indent + 4)
-                # ÁÙÀÌ pass, return, break, continue µîÀÌ¸é µé¿©¾²±â ·¹º§ À¯Áö
+                # ï¿½ï¿½ï¿½ï¿½ pass, return, break, continue ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½é¿©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 elif stripped.startswith(('pass', 'return', 'break', 'continue', 'raise')):
-                    pass  # ·¹º§ À¯Áö
-                # ÁÙÀÌ except, finally µîÀÌ¸é ·¹º§ °¨¼Ò
+                    pass  # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                # ï¿½ï¿½ï¿½ï¿½ except, finally ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 elif stripped.startswith(('except ', 'finally:', 'else:', 'elif ')):
                     if len(indent_stack) > 1:
                         indent_stack.pop()
                     current_indent = indent_stack[-1]
                     fixed_lines[-1] = ' ' * current_indent + stripped
 
-        # ÆÄÀÏ ¾²±â
+        # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         with open(file_path, 'w', encoding='utf-8') as f:
             f.writelines(fixed_lines)
 

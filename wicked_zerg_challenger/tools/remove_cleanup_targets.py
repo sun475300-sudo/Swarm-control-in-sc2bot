@@ -18,10 +18,18 @@ print("Removing files...")
 for file_path in files_to_remove:
     full_path = base_dir / file_path
     try:
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
     if full_path.is_file():
+        pass
     full_path.unlink()
     print(f"Removed: {file_path}")
     elif full_path.is_dir():
+        pass
     shutil.rmtree(full_path)
     print(f"Removed directory: {file_path}")
     except Exception as e:

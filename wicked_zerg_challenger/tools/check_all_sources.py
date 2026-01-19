@@ -14,28 +14,40 @@ import ast
 import sys
 
 from pathlib import Path
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
 
 
 def check_syntax(filepath: Path) -> Tuple[bool, str]:
     """Python ÆÄÀÏÀÇ syntax Ã¼Å©"""
 
  try:
+     pass
+ pass
 
-        with open(filepath, 'r', encoding='utf-8') as f:
+ except Exception:
+     pass
+
+     with open(filepath, 'r', encoding='utf-8') as f:
 
  code = f.read()
 
  ast.parse(code, filename=str(filepath))
 
-        return True, ""
+     return True, ""
 
  except SyntaxError as e:
 
-        return False, f"Syntax error at line {e.lineno}: {e.msg}"
+     return False, f"Syntax error at line {e.lineno}: {e.msg}"
 
  except Exception as e:
 
-        return False, f"Error: {str(e)}"
+     return False, f"Error: {str(e)}"
 
 
 
@@ -51,9 +63,13 @@ def find_python_files(root: Path) -> List[Path]:
 
     for py_file in root.rglob('*.py'):
 
+        pass
+
  # exclude __pycache__ and other directories
 
  if any(exclude in py_file.parts for exclude in exclude_dirs):
+
+     pass
 
  continue
 
@@ -72,8 +88,13 @@ def check_imports(filepath: Path, root: Path) -> List[str]:
  issues = []
 
  try:
+     pass
+ pass
 
-        with open(filepath, 'r', encoding='utf-8') as f:
+ except Exception:
+     pass
+
+     with open(filepath, 'r', encoding='utf-8') as f:
 
  code = f.read()
 
@@ -85,21 +106,28 @@ def check_imports(filepath: Path, root: Path) -> List[str]:
 
  for node in ast.walk(tree):
 
+     pass
+
  if isinstance(node, ast.Import):
+
+     pass
 
  for alias in node.names:
 
-                    issues.append(f"import {alias.name}")
+     issues.append(f"import {alias.name}")
 
  elif isinstance(node, ast.ImportFrom):
 
-                module = node.module or ""
+     module = node.module or ""
 
  for alias in node.names:
 
-                    issues.append(f"from {module} import {alias.name}")
+     issues.append(f"
+from {module} import {alias.name}")
 
  except Exception:
+
+     pass
 
  pass
 
@@ -110,6 +138,8 @@ def check_imports(filepath: Path, root: Path) -> List[str]:
 
 
 def main():
+
+    pass
 
  project_root = Path(__file__).parent.parent
 
@@ -135,6 +165,8 @@ def main():
 
  for py_file in python_files:
 
+     pass
+
  files_checked += 1
 
  relative_path = py_file.relative_to(project_root)
@@ -147,15 +179,17 @@ def main():
 
  if not is_valid:
 
+     pass
+
  syntax_errors.append((relative_path, error_msg))
 
-            print(f"[ERROR] {relative_path}")
+     print(f"[ERROR] {relative_path}")
 
-            print(f"        {error_msg}\n")
+     print(f"        {error_msg}\n")
 
  elif files_checked % 10 == 0:
 
-            print(f"[OK] {files_checked}/{len(python_files)} files checked...")
+     print(f"[OK] {files_checked}/{len(python_files)} files checked...")
 
 
 
@@ -173,22 +207,24 @@ def main():
 
  if syntax_errors:
 
-        print("\n[Syntax ¿À·ù ¸ñ·Ï]")
+     print("\n[Syntax ¿À·ù ¸ñ·Ï]")
 
  for filepath, error in syntax_errors:
 
-            print(f"  - {filepath}: {error}")
+     print(f"  - {filepath}: {error}")
 
  return 1
 
  else:
 
-        print("\n? ¸ðµç ÆÄÀÏÀÇ syntax °ËÁõ ¿Ï·á!")
+     print("\n? ¸ðµç ÆÄÀÏÀÇ syntax °ËÁõ ¿Ï·á!")
 
  return 0
 
 
 
 if __name__ == "__main__":
+
+    pass
 
  sys.exit(main())

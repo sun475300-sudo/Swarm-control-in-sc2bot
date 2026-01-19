@@ -3,13 +3,14 @@
 """
 Fix File Encodings
 
-°¢ ¼Ò½ºÄÚµå ÆÄÀÏ¿¡ ¸Â´Â ÀÎÄÚµùÀ» Àû¿ëÇÏ´Â ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
+ï¿½ï¿½ ï¿½Ò½ï¿½ï¿½Úµï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½Â´ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
 """
 
 import sys
 import re
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+import Tuple
 
 # Add parent directory to path
 script_dir = Path(__file__).parent.parent

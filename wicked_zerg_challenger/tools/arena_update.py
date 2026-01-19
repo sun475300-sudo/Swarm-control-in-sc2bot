@@ -19,6 +19,13 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 import sys
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
 
 
 def timestamp() -> str:
@@ -29,12 +36,12 @@ def find_latest_zip(root: Path, bot_prefix: str) -> Path | None:
     zips = sorted(
     root.glob(f"{bot_prefix}_*.zip"),
     key=lambda p: p.stat().st_mtime,
-     reverse=True)
+    reverse=True)
  return zips[0] if zips else None
 
 
 def copy_notes(src: Path, dst_dir: Path):
- if not src.exists():
+    if not src.exists():
         print(f"[WARN] Notes file not found: {src}")
  return
  dst_dir.mkdir(parents=True, exist_ok=True)
@@ -42,7 +49,7 @@ def copy_notes(src: Path, dst_dir: Path):
     content = src.read_text(encoding="utf-8", errors="ignore")
     header = f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
     if src.suffix.lower() in {".md", ".txt"}:
- content = header + content
+        content = header + content
     dst.write_text(content, encoding="utf-8")
     print(f"[OK] Notes copied to {dst}")
 
@@ -57,29 +64,29 @@ def main():
  # Ensure project root is on sys.path for imports
  root_str = str(root)
  if root_str not in sys.path:
- sys.path.insert(0, root_str)
+     sys.path.insert(0, root_str)
     updates_dir = root / "AI_Arena_Updates"
 
  # Pre-clean submission path if a stray file exists (avoid NotADirectoryError)
     submission = root / "aiarena_submission"
  try:
- if submission.exists() and not submission.is_dir():
- submission.unlink(missing_ok=True)
-            print(f"[CLEANUP] Pre-removed stray file: {submission}")
+     if submission.exists() and not submission.is_dir():
+         submission.unlink(missing_ok=True)
+         print(f"[CLEANUP] Pre-removed stray file: {submission}")
  except Exception as e:
-        print(f"[WARN] Failed pre-clean on {submission}: {e}")
+     print(f"[WARN] Failed pre-clean on {submission}: {e}")
 
  # Import and run existing packager
  packager = AIArenaPackager()
  ok = packager.package()
  if not ok:
-        print("[ERROR] Packaging failed; aborting update")
+     print("[ERROR] Packaging failed; aborting update")
  return
 
  # Locate the latest zip created by packager
  latest_zip = find_latest_zip(root, packager.bot_name)
  if not latest_zip:
-        print("[ERROR] No ZIP found after packaging")
+     print("[ERROR] No ZIP found after packaging")
  return
 
  # Create update folder and move zip into a timestamped subfolder
@@ -91,17 +98,17 @@ def main():
 
  # Optionally copy notes
  if args.notes:
- copy_notes(Path(args.notes), release_dir)
+     copy_notes(Path(args.notes), release_dir)
 
  # Optionally remove aiarena_submission to avoid duplication
  if not args.keep_submission:
-        submission = root / "aiarena_submission"
+     submission = root / "aiarena_submission"
  if submission.exists():
- shutil.rmtree(submission, ignore_errors=True)
-            print(f"[CLEANUP] Removed {submission}")
+     shutil.rmtree(submission, ignore_errors=True)
+     print(f"[CLEANUP] Removed {submission}")
 
     print(f"[DONE] Arena update prepared at {release_dir}")
 
 
 if __name__ == "__main__":
- main()
+    main()

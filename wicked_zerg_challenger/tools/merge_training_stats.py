@@ -13,10 +13,13 @@ Outputs:
 import argparse
 import json
 from pathlib import Path
-from typing import List, Sequence, TypedDict
+from typing import List
+import Sequence
+import TypedDict
 
 
 class InstanceStats(TypedDict):
+    pass
  instance_id: str
  total_games: int
  wins: int
@@ -26,6 +29,7 @@ class InstanceStats(TypedDict):
 
 
 class Summary(TypedDict):
+    pass
  total_games: int
  wins: int
  losses: int
@@ -35,6 +39,7 @@ class Summary(TypedDict):
 
 
 class MergedStats(TypedDict):
+    pass
  summary: Summary
  instances: List[InstanceStats]
 
@@ -44,19 +49,19 @@ def _load_instance_stats(path: Path) -> InstanceStats:
  data = json.load(f)
  # Normalize and guard against missing fields
  return {
-        "instance_id": path.stem.replace("training_stats_instance_", ""),
-        "total_games": int(data.get("total_games", 0)),
-        "wins": int(data.get("wins", 0)),
-        "losses": int(data.get("losses", 0)),
-        "avg_game_duration": float(data.get("avg_game_duration", 0.0)),
-        "current_level": data.get("current_level"),
+    "instance_id": path.stem.replace("training_stats_instance_", ""),
+    "total_games": int(data.get("total_games", 0)),
+    "wins": int(data.get("wins", 0)),
+    "losses": int(data.get("losses", 0)),
+    "avg_game_duration": float(data.get("avg_game_duration", 0.0)),
+    "current_level": data.get("current_level"),
  }
 
 
 def _weighted_average(durations: Sequence[float], weights: Sequence[int]) -> float:
- total_weight = sum(weights)
+    total_weight = sum(weights)
  if total_weight == 0:
- return 0.0
+     return 0.0
  weighted_sum = sum(d * w for d, w in zip(durations, weights))
  return weighted_sum / total_weight
 
@@ -64,7 +69,7 @@ def _weighted_average(durations: Sequence[float], weights: Sequence[int]) -> flo
 def merge_stats(stats_dir: Path) -> MergedStats:
     instance_files = sorted(stats_dir.glob("training_stats_instance_*.json"))
  if not instance_files:
-        raise FileNotFoundError(f"No stats files found in {stats_dir}")
+     raise FileNotFoundError(f"No stats files found in {stats_dir}")
 
  instances = [_load_instance_stats(path) for path in instance_files]
 
@@ -72,20 +77,20 @@ def merge_stats(stats_dir: Path) -> MergedStats:
     total_wins = sum(i["wins"] for i in instances)
     total_losses = sum(i["losses"] for i in instances)
  avg_duration = _weighted_average(
-        [i["avg_game_duration"] for i in instances],
-        [i["total_games"] for i in instances],
+     [i["avg_game_duration"] for i in instances],
+     [i["total_games"] for i in instances],
  )
 
  merged: MergedStats = {
-        "summary": {
-            "total_games": total_games,
-            "wins": total_wins,
-            "losses": total_losses,
-            "win_rate": round(total_wins / total_games, 4) if total_games else 0.0,
-            "avg_game_duration": round(avg_duration, 2),
-            "instances": len(instances),
+     "summary": {
+     "total_games": total_games,
+     "wins": total_wins,
+     "losses": total_losses,
+     "win_rate": round(total_wins / total_games, 4) if total_games else 0.0,
+     "avg_game_duration": round(avg_duration, 2),
+     "instances": len(instances),
  },
-        "instances": instances,
+     "instances": instances,
  }
  return merged
 
@@ -102,14 +107,15 @@ def write_outputs(merged: MergedStats, output_prefix: Path) -> None:
  # CSV: instance_id,total_games,wins,losses,win_rate,avg_game_duration,current_level
     with csv_path.open("w", encoding="utf-8") as f:
  f.write(
-            "instance_id,total_games,wins,losses,win_rate,avg_game_duration,current_level\n"
+    "instance_id,total_games,wins,losses,win_rate,avg_game_duration,current_level\n"
  )
-        for inst in merged["instances"]:
-            games = inst["total_games"]
-            wins = inst["wins"]
+    for inst in merged["instances"]:
+        pass
+    games = inst["total_games"]
+    wins = inst["wins"]
  win_rate = wins / games if games else 0.0
  f.write(
-                f"{inst['instance_id']},{games},{wins},{inst['losses']},{win_rate:.4f},{inst['avg_game_duration']:.2f},{inst['current_level']}\n"
+    f"{inst['instance_id']},{games},{wins},{inst['losses']},{win_rate:.4f},{inst['avg_game_duration']:.2f},{inst['current_level']}\n"
  )
 
     print(f"[OK] Wrote summary: {json_path}")
@@ -119,16 +125,16 @@ def write_outputs(merged: MergedStats, output_prefix: Path) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Merge training stats across instances")
  parser.add_argument(
-        "--stats-dir",
+    "--stats-dir",
  type=Path,
-        default=Path("stats"),
-        help="Directory containing training_stats_instance_*.json files",
+    default=Path("stats"),
+    help="Directory containing training_stats_instance_*.json files",
  )
  parser.add_argument(
-        "--output-prefix",
+    "--output-prefix",
  type=Path,
-        default=Path("stats/training_stats_merged"),
-        help="Prefix for output files (without extension)",
+    default=Path("stats/training_stats_merged"),
+    help="Prefix for output files (without extension)",
  )
  args = parser.parse_args()
 
@@ -137,11 +143,11 @@ def main():
 
     summary = merged["summary"]
  print(
-        f"[SUMMARY] games={summary['total_games']} wins={summary['wins']} "
-        f"losses={summary['losses']} win_rate={summary['win_rate']:.2%} "
-        f"avg_game_duration={summary['avg_game_duration']}s"
+    f"[SUMMARY] games={summary['total_games']} wins={summary['wins']} "
+    f"losses={summary['losses']} win_rate={summary['win_rate']:.2%} "
+    f"avg_game_duration={summary['avg_game_duration']}s"
  )
 
 
 if __name__ == "__main__":
- main()
+    main()

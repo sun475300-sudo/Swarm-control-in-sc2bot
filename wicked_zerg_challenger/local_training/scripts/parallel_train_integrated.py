@@ -57,27 +57,54 @@ import sys
 import time
 import traceback
 from pathlib import Path
+import time
+from pathlib import Path
+import os
+import sys
+import subprocess
+import json
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
+
+import json
+import subprocess
+import time
+import sys
+import os
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Set
+from typing import Any
+from typing import Union
+from pathlib import Path
 
 # IMPROVED: Try C++ protobuf implementation first for better performance
 # Fallback to Python if C++ is not available (for compatibility)
 try:
- _config = Config()
+    _config = Config()
  protobuf_impl = _config.PROTOCOL_BUFFERS_IMPL
 
  # Try C++ implementation first (10x faster)
     if protobuf_impl == "cpp":
- try:
+        try:
             os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "cpp"
             print("[OK] Using C++ protobuf implementation (fast mode)")
  except ImportError:
- # Fallback to Python if C++ not available
-            os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-            print(
-                "[WARNING] C++ protobuf not available, using Python implementation (slower)")
+     # Fallback to Python if C++ not available
+     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+     print(
+     "[WARNING] C++ protobuf not available, using Python implementation (slower)")
  else:
-        os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = protobuf_impl
+     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = protobuf_impl
 except Exception:
- # Fallback to Python on any error
+    # Fallback to Python on any error
     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 # Settings
@@ -123,19 +150,19 @@ PROJECT_ROOT = Path(__file__).parent.absolute()
 
 def get_venv_dir() -> Path:
     """Get virtual environment directory from environment variable or use project default"""
- import os
+import os
     venv_dir = os.environ.get("VENV_DIR")
  if venv_dir and Path(venv_dir).exists():
- return Path(venv_dir)
+     return Path(venv_dir)
  # Try common locations
  possible_paths = [
-        PROJECT_ROOT / ".venv",
-        Path.home() / ".venv",
-        Path(".venv"),
+     PROJECT_ROOT / ".venv",
+     Path.home() / ".venv",
+     Path(".venv"),
  ]
  for path in possible_paths:
- if path.exists():
- return path
+     if path.exists():
+         return path
  # Default fallback
     return PROJECT_ROOT / ".venv"
 
@@ -187,12 +214,17 @@ def check_gpu_memory():
     """
 
  try:
- import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     import torch
 
  if not torch.cuda.is_available():
-            print("[GPU] CUDA GPU not available. Running in CPU mode.")
+     print("[GPU] CUDA GPU not available. Running in CPU mode.")
 
-            return False, 0, 0, NUM_INSTANCES, "CPU"
+     return False, 0, 0, NUM_INSTANCES, "CPU"
 
  device = torch.cuda.current_device()
 
@@ -226,59 +258,64 @@ def check_gpu_memory():
 
  # Print detailed GPU memory information
 
-        print(f"[GPU] GPU Detected: {gpu_name}")
+     print(f"[GPU] GPU Detected: {gpu_name}")
 
-        print(f"[GPU] Total VRAM: {total_memory:.2f} GB")
+     print(f"[GPU] Total VRAM: {total_memory:.2f} GB")
 
-        print(f"[GPU] Reserved VRAM: {reserved:.2f} GB (Allocated: {allocated:.2f} GB)")
+     print(f"[GPU] Reserved VRAM: {reserved:.2f} GB (Allocated: {allocated:.2f} GB)")
 
-        print(f"[GPU] Available VRAM: {available:.2f} GB")
+     print(f"[GPU] Available VRAM: {available:.2f} GB")
 
-        print(f"[GPU] Safe Reserve: {MIN_SAFE_VRAM_RESERVE:.1f} GB (OS DWM + Display)")
+     print(f"[GPU] Safe Reserve: {MIN_SAFE_VRAM_RESERVE:.1f} GB (OS DWM + Display)")
 
-        print(f"[GPU] Safe Available: {safe_available:.2f} GB")
+     print(f"[GPU] Safe Available: {safe_available:.2f} GB")
 
  print(
-            f"[GPU] Recommended Instances: {safe_instances} (Formula: floor(({available:.2f} - {MIN_SAFE_VRAM_RESERVE:.1f}) / {ESTIMATED_VRAM_PER_INSTANCE:.1f}) = {safe_instances})"
+     f"[GPU] Recommended Instances: {safe_instances} (Formula: floor(({available:.2f} - {MIN_SAFE_VRAM_RESERVE:.1f}) / {ESTIMATED_VRAM_PER_INSTANCE:.1f}) = {safe_instances})"
  )
 
  # High-end GPU detection and recommendation
 
  if total_memory >= 10.0 and safe_instances < NUM_INSTANCES:
- print(
-                f"[GPU] Tip: RTX 3080(10GB) or higher GPU detected! Increasing NUM_INSTANCES to {safe_instances}~{int(safe_available / ESTIMATED_VRAM_PER_INSTANCE)} will significantly improve training speed."
+     print(
+     f"[GPU] Tip: RTX 3080(10GB) or higher GPU detected! Increasing NUM_INSTANCES to {safe_instances}~{int(safe_available / ESTIMATED_VRAM_PER_INSTANCE)} will significantly improve training speed."
  )
 
  return True, total_memory, available, safe_instances, gpu_name
 
  except ImportError:
-        print("[GPU] PyTorch not installed. Running in CPU mode.")
+     print("[GPU] PyTorch not installed. Running in CPU mode.")
 
-        return False, 0, 0, NUM_INSTANCES, "CPU"
+     return False, 0, 0, NUM_INSTANCES, "CPU"
 
  except Exception as e:
-        print(f"[WARNING] GPU memory check failed: {e}")
+     print(f"[WARNING] GPU memory check failed: {e}")
 
- import traceback
+import traceback
 
  traceback.print_exc()
 
  # Try to check if CUDA is available even if memory check failed
 
  try:
- import torch
-
- if torch.cuda.is_available():
- print(
-                    "[GPU] CUDA is available but memory check failed. Using default instance count."
- )
-
-                return True, 0, 0, NUM_INSTANCES, "GPU (Unknown)"
-
- except:
+     pass
  pass
 
-        return False, 0, 0, NUM_INSTANCES, "Unknown"
+ except Exception:
+     pass
+     import torch
+
+ if torch.cuda.is_available():
+     print(
+     "[GPU] CUDA is available but memory check failed. Using default instance count."
+ )
+
+     return True, 0, 0, NUM_INSTANCES, "GPU (Unknown)"
+
+ except:
+     pass
+
+     return False, 0, 0, NUM_INSTANCES, "Unknown"
 
 def read_instance_status(instance_id):
     """
@@ -296,16 +333,21 @@ def read_instance_status(instance_id):
     """
 
  try:
- # IMPROVED: Use project root stats/ directory with instance subdirectory
+     pass
+ pass
+
+ except Exception:
+     pass
+     # IMPROVED: Use project root stats/ directory with instance subdirectory
  project_root = Path(__file__).parent.parent.parent
-        status_file = project_root / "stats" / f"instance_{instance_id}" / "status.json"
+     status_file = project_root / "stats" / f"instance_{instance_id}" / "status.json"
 
  if status_file.exists():
-            with open(status_file, "r", encoding="utf-8") as f:
+     with open(status_file, "r", encoding="utf-8") as f:
  return json.load(f)
 
  except Exception:
- pass
+     pass
 
  return None
 
@@ -321,13 +363,18 @@ def get_gpu_temperature():
     """
 
  try:
- import subprocess
+     pass
+ pass
+
+ except Exception:
+     pass
+     import subprocess
 
  result = subprocess.run(
  [
-                "nvidia-smi",
-                "--query-gpu = temperature.gpu",
-                "--format = csv,noheader,nounits",
+     "nvidia-smi",
+     "--query-gpu = temperature.gpu",
+     "--format = csv,noheader,nounits",
  ],
  capture_output = True,
  text = True,
@@ -335,12 +382,12 @@ def get_gpu_temperature():
  )
 
  if result.returncode == 0:
- temp_str = result.stdout.strip()
+     temp_str = result.stdout.strip()
 
  return float(temp_str)
 
  except Exception:
- pass
+     pass
 
  return None
 
@@ -356,7 +403,12 @@ def display_dashboard(processes):
     """
 
  try:
- # Read all instance statuses
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Read all instance statuses
 
  instance_statuses = []
 
@@ -365,34 +417,34 @@ def display_dashboard(processes):
  total_losses = 0
 
  for proc_info in processes:
-            instance_id = proc_info.get("id", 0)
+     instance_id = proc_info.get("id", 0)
 
  status = read_instance_status(instance_id)
 
  if status:
- instance_statuses.append(
-                    {"id": instance_id, "status": status, "process": proc_info}
+     instance_statuses.append(
+     {"id": instance_id, "status": status, "process": proc_info}
  )
 
-                total_wins += status.get("win_count", 0)
+     total_wins += status.get("win_count", 0)
 
-                total_losses += status.get("loss_count", 0)
+     total_losses += status.get("loss_count", 0)
 
  else:
  # Process exists but status file not found (initializing)
 
  instance_statuses.append(
  {
-                        "id": instance_id,
-                        "status": {
-                            "status": "INITIALIZING",
-                            "mode": "HEADLESS",
-                            "current_game_time": "00:00",
-                            "current_minerals": 0,
-                            "current_supply": "0/0",
-                            "current_units": 0,
+     "id": instance_id,
+     "status": {
+     "status": "INITIALIZING",
+     "mode": "HEADLESS",
+     "current_game_time": "00:00",
+     "current_minerals": 0,
+     "current_supply": "0/0",
+     "current_units": 0,
  },
-                        "process": proc_info,
+     "process": proc_info,
  }
  )
 
@@ -402,39 +454,40 @@ def display_dashboard(processes):
 
  # Instance status lines
 
-        for inst in sorted(instance_statuses, key = lambda x: x["id"]):
-            inst_id = inst["id"]
+     for inst in sorted(instance_statuses, key = lambda x: x["id"]):
+         pass
+     inst_id = inst["id"]
 
-            stat = inst["status"]
+     stat = inst["status"]
 
-            mode = stat.get("mode", "HEADLESS")
+     mode = stat.get("mode", "HEADLESS")
 
-            game_time = stat.get("current_game_time", "00:00")
+     game_time = stat.get("current_game_time", "00:00")
 
-            minerals = stat.get("current_minerals", 0)
+     minerals = stat.get("current_minerals", 0)
 
-            supply = stat.get("current_supply", "0/0")
+     supply = stat.get("current_supply", "0/0")
 
-            units = stat.get("current_units", 0)
+     units = stat.get("current_units", 0)
 
-            status_text = stat.get("status", "UNKNOWN")
+     status_text = stat.get("status", "UNKNOWN")
 
  # Format: [INSTANCE #1] TIME: 05:20 | MIN: 450 | SUPPLY: 45/52 | UNITS: 45 (VISUAL)
 
  line = (
-                f"[INSTANCE #{inst_id}] "
-                f"TIME: {game_time} | "
-                f"MIN: {minerals:4d} | "
-                f"SUPPLY: {supply} | "
-                f"UNITS: {units:3d} "
-                f"({mode})"
+     f"[INSTANCE #{inst_id}] "
+     f"TIME: {game_time} | "
+     f"MIN: {minerals:4d} | "
+     f"SUPPLY: {supply} | "
+     f"UNITS: {units:3d} "
+     f"({mode})"
  )
 
  lines.append(line)
 
  # Separator
 
-        lines.append("-" * 70)
+     lines.append("-" * 70)
 
  # Total stats
 
@@ -446,10 +499,10 @@ def display_dashboard(processes):
 
  gpu_temp = get_gpu_temperature()
 
-        temp_str = f" | GPU Temp: {int(gpu_temp)}Â¡ÃC" if gpu_temp else ""
+     temp_str = f" | GPU Temp: {int(gpu_temp)}Â¡ÃC" if gpu_temp else ""
 
  total_line = (
-            f"TOTAL STATS: {total_wins}W / {total_losses}L (Win Rate: {win_rate:.1f}%){temp_str}"
+     f"TOTAL STATS: {total_wins}W / {total_losses}L (Win Rate: {win_rate:.1f}%){temp_str}"
  )
 
  lines.append(total_line)
@@ -460,20 +513,20 @@ def display_dashboard(processes):
 
  num_lines = len(lines)
 
-        dashboard_text = "\n".join(lines) + "\n"
+     dashboard_text = "\n".join(lines) + "\n"
 
  # Use ANSI escape codes to clear and redraw
 
-        sys.stdout.write(f"\033[{num_lines}A")  # Move up
+     sys.stdout.write(f"\033[{num_lines}A")  # Move up
 
-        sys.stdout.write("\033[J")  # Clear from cursor to end
+     sys.stdout.write("\033[J")  # Clear from cursor to end
 
  sys.stdout.write(dashboard_text)
 
  sys.stdout.flush()
 
  except Exception as e:
- # Silently fail - dashboard is optional
+     # Silently fail - dashboard is optional
 
  pass
 
@@ -499,32 +552,32 @@ def check_requirements():
  is_gpu, total_vram, available_vram, recommended, gpu_name = check_gpu_memory()
 
  if is_gpu:
-        print(f"\n[GPU] GPU Available: {gpu_name}")
+     print(f"\n[GPU] GPU Available: {gpu_name}")
 
-        print(f"[GPU] Total VRAM: {total_vram:.2f} GB")
+     print(f"[GPU] Total VRAM: {total_vram:.2f} GB")
 
-        print(f"[GPU] Available VRAM: {available_vram:.2f} GB")
+     print(f"[GPU] Available VRAM: {available_vram:.2f} GB")
 
-        print(f"[GPU] Recommended Instances: {recommended}")
+     print(f"[GPU] Recommended Instances: {recommended}")
 
  if recommended < NUM_INSTANCES:
-            print(f"\n[WARNING] GPU memory insufficient for {NUM_INSTANCES} instances")
+     print(f"\n[WARNING] GPU memory insufficient for {NUM_INSTANCES} instances")
 
-            print(f"[INFO] Adjusting to {recommended} instances for safety")
+     print(f"[INFO] Adjusting to {recommended} instances for safety")
 
-            print(f"[INFO] Each instance uses ~{ESTIMATED_VRAM_PER_INSTANCE:.1f}GB VRAM")
+     print(f"[INFO] Each instance uses ~{ESTIMATED_VRAM_PER_INSTANCE:.1f}GB VRAM")
 
  return True, recommended, gpu_name
 
  else:
-            print(f"\n[SUCCESS] GPU memory sufficient for {NUM_INSTANCES} instances")
+     print(f"\n[SUCCESS] GPU memory sufficient for {NUM_INSTANCES} instances")
 
  return True, NUM_INSTANCES, gpu_name
 
  else:
-        print("\n[INFO] Running in CPU mode - using default instance count")
+     print("\n[INFO] Running in CPU mode - using default instance count")
 
-        return True, NUM_INSTANCES, "CPU"
+     return True, NUM_INSTANCES, "CPU"
 
 def start_parallel_training():
     """
@@ -551,43 +604,48 @@ def start_parallel_training():
     print("="*70)
 
  try:
- # Local dashboard server
-        print("[1/2] Starting local dashboard (http://localhost:8000)...")
+     pass
+ pass
+
+ except Exception:
+     pass
+     # Local dashboard server
+     print("[1/2] Starting local dashboard (http://localhost:8000)...")
  dashboard_proc = subprocess.Popen(
-            [PYTHON_EXECUTABLE, "monitoring/dashboard.py"],
+     [PYTHON_EXECUTABLE, "monitoring/dashboard.py"],
  cwd = PROJECT_ROOT.parent,
  stdout = subprocess.DEVNULL,
  stderr = subprocess.DEVNULL,
-            creationflags = subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0
+     creationflags = subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0
  )
-        print(f"      ? Dashboard started (PID: {dashboard_proc.pid})")
+     print(f"      ? Dashboard started (PID: {dashboard_proc.pid})")
  time.sleep(2) # Wait for server to start
 
  # Ngrok remote access
-        print("[2/2] Starting ngrok tunnel for remote access...")
-        ngrok_cmd = "start_with_ngrok.bat" if sys.platform == "win32" else "./start_with_ngrok.sh"
+     print("[2/2] Starting ngrok tunnel for remote access...")
+     ngrok_cmd = "start_with_ngrok.bat" if sys.platform == "win32" else "./start_with_ngrok.sh"
  ngrok_proc = subprocess.Popen(
  ngrok_cmd,
  cwd = PROJECT_ROOT,
  stdout = subprocess.DEVNULL,
  stderr = subprocess.DEVNULL,
  shell = True,
-            creationflags = subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0
+     creationflags = subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0
  )
-        print(f"      ? Ngrok tunnel started (PID: {ngrok_proc.pid})")
-        print("\n" + "="*70)
-        print("? Monitoring active!")
-        print("   Local:  http://localhost:8000")
-        print("   Remote: Check .dashboard_port file or ngrok web UI")
-        print("="*70 + "\n")
+     print(f"      ? Ngrok tunnel started (PID: {ngrok_proc.pid})")
+     print("\n" + "="*70)
+     print("? Monitoring active!")
+     print("   Local:  http://localhost:8000")
+     print("   Remote: Check .dashboard_port file or ngrok web UI")
+     print("="*70 + "\n")
  except Exception as e:
-        print(f"??  Failed to start monitoring: {e}")
-        print("   Continuing with training without remote access...\n")
+     print(f"??  Failed to start monitoring: {e}")
+     print("   Continuing with training without remote access...\n")
 
  requirements_ok, safe_instance_count, gpu_name = check_requirements()
 
  if not requirements_ok:
-        print("[ERROR] Requirements check failed. Aborting.")
+     print("[ERROR] Requirements check failed. Aborting.")
 
  return
 
@@ -618,13 +676,13 @@ def start_parallel_training():
  # SHOW_WINDOW only controls window visibility, not realtime mode
 
  print(
-        f"  Performance: realtime = False (Maximum Speed) - Window: {'Visible' if SHOW_WINDOW else 'Hidden'}"
+     f"  Performance: realtime = False (Maximum Speed) - Window: {'Visible' if SHOW_WINDOW else 'Hidden'}"
  )
 
     print(f"  Display: {'Windows Visible' if SHOW_WINDOW else 'Headless (Hidden)'}")
 
  if actual_instances != NUM_INSTANCES:
-        print(f"  GPU Memory Safety: Adjusted from {NUM_INSTANCES} to {actual_instances} instances")
+     print(f"  GPU Memory Safety: Adjusted from {NUM_INSTANCES} to {actual_instances} instances")
 
     print("=" * 70 + "\n")
 
@@ -633,13 +691,18 @@ def start_parallel_training():
  main_path = PROJECT_ROOT / MAIN_FILE
 
  if not main_path.exists():
-        print(f"[ERROR] {MAIN_FILE} not found at {main_path}")
+     print(f"[ERROR] {MAIN_FILE} not found at {main_path}")
 
  return
 
  try:
- for i in range(actual_instances):
-            print(f"[{i + 1}/{actual_instances}] Launching instance #{i + 1}...")
+     pass
+ pass
+
+ except Exception:
+     pass
+     for i in range(actual_instances):
+         print(f"[{i + 1}/{actual_instances}] Launching instance #{i + 1}...")
 
  # Prepare environment variables
 
@@ -647,69 +710,81 @@ def start_parallel_training():
 
  # Pass instance ID for status file naming
 
-            env["INSTANCE_ID"] = str(i + 1)
+     env["INSTANCE_ID"] = str(i + 1)
 
  # RTX 2060 optimization: First instance visual, rest headless (unless all visual requested)
 
  if i == 0 and actual_instances > 1:
- # First instance: Visual mode (for monitoring)
+     # First instance: Visual mode (for monitoring)
 
-                env["SHOW_WINDOW"] = "true"
+     env["SHOW_WINDOW"] = "true"
 
  else:
  # Other instances: Headless (for performance)
 
-                env["SHOW_WINDOW"] = "true" if SHOW_WINDOW else "false"
+     env["SHOW_WINDOW"] = "true" if SHOW_WINDOW else "false"
 
  # Fix protobuf compatibility issue (Python 3.14+)
 
-            if os.environ.get("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "").lower() != "cpp":
-                env["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = os.environ.get(
-                    "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python"
+     if os.environ.get("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "").lower() != "cpp":
+         pass
+     env["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = os.environ.get(
+     "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python"
  )
 
-            sc2_path = os.environ.get("SC2PATH")
+     sc2_path = os.environ.get("SC2PATH")
  if not sc2_path:
- from pathlib import Path
+     from pathlib import Path
  default_paths = []
-                if sys.platform == "win32":
- default_paths = [
-                        r"C:\Program Files (x86)\StarCraft II",
-                        r"C:\Program Files\StarCraft II",
+     if sys.platform == "win32":
+         pass
+     default_paths = [
+     r"C:\Program Files (x86)\StarCraft II",
+     r"C:\Program Files\StarCraft II",
  ]
-                elif sys.platform == "darwin":
- default_paths = [
-                        os.path.expanduser("~/Library/Application Support/Blizzard/StarCraft II"),
-                        "/Applications/StarCraft II",
+     elif sys.platform == "darwin":
+         pass
+     default_paths = [
+     os.path.expanduser("~/Library/Application Support/Blizzard/StarCraft II"),
+     "/Applications/StarCraft II",
  ]
  else:
+     pass
  default_paths = [
-                        os.path.expanduser("~/StarCraft II"),
-                        "/opt/StarCraft II",
+     os.path.expanduser("~/StarCraft II"),
+     "/opt/StarCraft II",
  ]
  for path in default_paths:
- if os.path.exists(path):
- sc2_path = path
+     if os.path.exists(path):
+         sc2_path = path
  break
  if sc2_path:
-                env["SC2PATH"] = sc2_path
+     env["SC2PATH"] = sc2_path
 
-            if sys.platform == "win32":
- try:
- process = subprocess.Popen(
+     if sys.platform == "win32":
+         pass
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     process = subprocess.Popen(
  [PYTHON_EXECUTABLE, str(main_path)],
  cwd = str(PROJECT_ROOT),
  shell = False,
  env = env,
  )
  except:
- process = subprocess.Popen(
+     process = subprocess.Popen(
  [PYTHON_EXECUTABLE, str(main_path)],
  cwd = str(PROJECT_ROOT),
  shell = False,
  env = env,
  )
  else:
+     pass
  process = subprocess.Popen(
  [PYTHON_EXECUTABLE, str(main_path)],
  cwd = str(PROJECT_ROOT),
@@ -717,36 +792,36 @@ def start_parallel_training():
  env = env,
  )
 
-            processes.append({"process": process, "id": i + 1, "start_time": time.time()})
+     processes.append({"process": process, "id": i + 1, "start_time": time.time()})
 
-            print(f"[OK] Instance #{i + 1} PID: {process.pid}")
+     print(f"[OK] Instance #{i + 1} PID: {process.pid}")
 
  # Staggered Launch: Wait before launching next instance (except for the last one)
 
  # This prevents shader compilation spike (1.5-2x resource usage during initial loading)
 
  if i < actual_instances - 1:
- print(
-                    f"[WAIT] Waiting {START_INTERVAL} seconds... (Staggered Launch - prevents shader compilation spike)\n"
+     print(
+     f"[WAIT] Waiting {START_INTERVAL} seconds... (Staggered Launch - prevents shader compilation spike)\n"
  )
 
  time.sleep(START_INTERVAL)
 
-        print("\n" + "=" * 70)
+     print("\n" + "=" * 70)
 
-        print("[SUCCESS] All instances launched!")
+     print("[SUCCESS] All instances launched!")
 
-        print("=" * 70)
+     print("=" * 70)
 
-        print("\n[INFO] Games in progress...")
+     print("\n[INFO] Games in progress...")
 
-        print("[INFO] Real-time dashboard will display below.")
+     print("[INFO] Real-time dashboard will display below.")
 
-        print("[INFO] Monitor GPU memory: nvidia-smi")
+     print("[INFO] Monitor GPU memory: nvidia-smi")
 
-        print("[INFO] Each instance will exit automatically when game ends.")
+     print("[INFO] Each instance will exit automatically when game ends.")
 
-        print("[INFO] Press Ctrl+C to stop all instances.\n")
+     print("[INFO] Press Ctrl+C to stop all instances.\n")
 
  # Initial dashboard space (will be overwritten)
 
@@ -762,35 +837,37 @@ def start_parallel_training():
  # Wait for all processes to complete
 
  while processes:
+     pass
  current_time = time.time()
 
  # Update dashboard periodically
 
  if current_time - last_dashboard_update >= dashboard_update_interval:
- display_dashboard(processes)
+     display_dashboard(processes)
 
  last_dashboard_update = current_time
 
  for proc_info in processes[:]:
-                proc = proc_info["process"]
+     proc = proc_info["process"]
 
  # Check process status
 
  return_code = proc.poll()
 
  if return_code is not None:
- # Process finished
+     # Process finished
 
-                    elapsed = time.time() - proc_info["start_time"]
+     elapsed = time.time() - proc_info["start_time"]
 
  if return_code == 0:
- print(
-                            f"\n[COMPLETE] Instance #{proc_info['id']} finished successfully (runtime: {elapsed:.1f}s)"
+     print(
+     f"\n[COMPLETE] Instance #{proc_info['id']} finished successfully (runtime: {elapsed:.1f}s)"
  )
 
  else:
+     pass
  print(
-                            f"\n[EXIT] Instance #{proc_info['id']} exited (code: {return_code}, runtime: {elapsed:.1f}s)"
+     f"\n[EXIT] Instance #{proc_info['id']} exited (code: {return_code}, runtime: {elapsed:.1f}s)"
  )
 
  processes.remove(proc_info)
@@ -802,39 +879,44 @@ def start_parallel_training():
  # Check every 0.1 seconds for faster dashboard updates
 
  if processes:
- time.sleep(0.1)
+     time.sleep(0.1)
 
-        print("\n" + "=" * 70)
+     print("\n" + "=" * 70)
 
-        print("[SUCCESS] All instances finished!")
+     print("[SUCCESS] All instances finished!")
 
-        print("=" * 70)
+     print("=" * 70)
 
  except KeyboardInterrupt:
-        print("\n\n[INTERRUPT] Stopped by user.")
+     print("\n\n[INTERRUPT] Stopped by user.")
 
-        print("[INFO] Terminating all processes...")
+     print("[INFO] Terminating all processes...")
 
  # Zombie process prevention: Force terminate after 5 seconds
 
  for proc_info in processes:
-            proc = proc_info["process"]
+     proc = proc_info["process"]
 
  try:
- proc.terminate()
+     pass
+ pass
+
+ except Exception:
+     pass
+     proc.terminate()
 
  proc.wait(timeout = 5)
 
-                print(f"[OK] Instance #{proc_info['id']} terminated")
+     print(f"[OK] Instance #{proc_info['id']} terminated")
 
  except:
- try:
- proc.kill()
+     try:
+         proc.kill()
 
-                    print(f"[FORCE] Instance #{proc_info['id']} force killed (zombie prevention)")
+         print(f"[FORCE] Instance #{proc_info['id']} force killed (zombie prevention)")
 
  except:
-                    print(f"[ERROR] Failed to terminate instance #{proc_info['id']}")
+     print(f"[ERROR] Failed to terminate instance #{proc_info['id']}")
 
  # Additional cleanup: Wait 1 second and check for remaining processes
 
@@ -843,32 +925,32 @@ def start_parallel_training():
  # Force kill any remaining processes (zombie prevention)
 
  for proc_info in processes:
-            proc = proc_info["process"]
+     proc = proc_info["process"]
 
  if proc.poll() is None: # Process still running
  try:
- proc.kill()
+     proc.kill()
 
-                    print(f"[CLEANUP] Instance #{proc_info['id']} force killed (zombie cleanup)")
+     print(f"[CLEANUP] Instance #{proc_info['id']} force killed (zombie cleanup)")
 
  except:
- pass
+     pass
 
-        print("[INFO] All processes terminated (zombie prevention active)")
+     print("[INFO] All processes terminated (zombie prevention active)")
 
  except Exception as e:
-        print(f"\n[ERROR] Error during parallel training: {e}")
+     print(f"\n[ERROR] Error during parallel training: {e}")
 
  traceback.print_exc()
 
  # Terminate running processes
 
  for proc_info in processes:
- try:
-                proc_info["process"].terminate()
+     try:
+         proc_info["process"].terminate()
 
  except:
- pass
+     pass
 
 if __name__ == "__main__":
     print("\n" + "=" * 70)

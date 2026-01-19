@@ -8,7 +8,8 @@
 import os
 import re
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 
 # 제거할 기존 키들
 OLD_KEYS = [
@@ -39,8 +40,8 @@ def should_exclude(path: Path) -> bool:
     """파일/디렉토리를 제외해야 하는지 확인"""
  path_str = str(path)
  for pattern in EXCLUDE_PATTERNS:
- if pattern in path_str:
- return True
+     if pattern in path_str:
+         return True
  return False
 
 def find_hardcoded_keys(root_dir: Path) -> List[Tuple[Path, int, str]]:
@@ -51,52 +52,64 @@ def find_hardcoded_keys(root_dir: Path) -> List[Tuple[Path, int, str]]:
     search_extensions = {".py", ".kt", ".java", ".js", ".ts", ".md", ".txt", ".env", ".bat", ".ps1", ".sh"}
 
     for file_path in root_dir.rglob("*"):
- if should_exclude(file_path):
- continue
+        if should_exclude(file_path):
+            continue
 
  if file_path.is_file() and file_path.suffix in search_extensions:
- try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
  for line_num, line in enumerate(f, 1):
- for old_key in OLD_KEYS:
- if old_key in line:
- results.append((file_path, line_num, line.strip()))
+     for old_key in OLD_KEYS:
+         if old_key in line:
+             results.append((file_path, line_num, line.strip()))
  except Exception as e:
-                print(f"? 파일 읽기 실패: {file_path} - {e}")
+     print(f"? 파일 읽기 실패: {file_path} - {e}")
 
  return results
 
 def remove_keys_from_file(file_path: Path, old_keys: List[str]) -> bool:
     """파일에서 키를 제거합니다 (예제 키만 마스킹)"""
  try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(file_path, 'r', encoding='utf-8') as f:
  content = f.read()
 
  original_content = content
 
  # 문서 파일의 경우 예제 키를 마스킹
-        if file_path.suffix in {".md", ".txt"}:
- for old_key in old_keys:
- # 예제 키를 마스킹된 형식으로 변경
-                masked = old_key[:10] + "..." + old_key[-4:]
+     if file_path.suffix in {".md", ".txt"}:
+         pass
+     for old_key in old_keys:
+     # 예제 키를 마스킹된 형식으로 변경
+     masked = old_key[:10] + "..." + old_key[-4:]
  content = content.replace(old_key, masked)
 
  # 코드 파일의 경우 주석 처리 또는 제거
-        elif file_path.suffix in {".py", ".kt", ".java", ".js", ".ts"}:
- for old_key in old_keys:
- # 하드코딩된 키를 찾아서 주석 처리
-                pattern = rf'["\']?{re.escape(old_key)}["\']?'
-                content = re.sub(pattern, '"YOUR_API_KEY_HERE"', content)
+     elif file_path.suffix in {".py", ".kt", ".java", ".js", ".ts"}:
+         pass
+     for old_key in old_keys:
+     # 하드코딩된 키를 찾아서 주석 처리
+     pattern = rf'["\']?{re.escape(old_key)}["\']?'
+     content = re.sub(pattern, '"YOUR_API_KEY_HERE"', content)
 
  # 변경사항이 있으면 저장
  if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+     with open(file_path, 'w', encoding='utf-8') as f:
  f.write(content)
  return True
 
  return False
  except Exception as e:
-        print(f"? 파일 수정 실패: {file_path} - {e}")
+     print(f"? 파일 수정 실패: {file_path} - {e}")
  return False
 
 def main():
@@ -113,15 +126,15 @@ def main():
  results = find_hardcoded_keys(project_root)
 
  if not results:
-        print("  ? 하드코딩된 키를 찾을 수 없습니다.")
+     print("  ? 하드코딩된 키를 찾을 수 없습니다.")
  else:
-        print(f"  ? {len(results)}개의 파일에서 키를 발견했습니다:")
+     print(f"  ? {len(results)}개의 파일에서 키를 발견했습니다:")
  for file_path, line_num, line in results[:10]: # 처음 10개만 표시
  rel_path = file_path.relative_to(project_root)
-            print(f"    - {rel_path}:{line_num}")
-            print(f"      {line[:80]}...")
+     print(f"    - {rel_path}:{line_num}")
+     print(f"      {line[:80]}...")
  if len(results) > 10:
-            print(f"    ... 및 {len(results) - 10}개 더")
+     print(f"    ... 및 {len(results) - 10}개 더")
  print()
 
  # 2. 문서 파일에서 예제 키 마스킹
@@ -129,15 +142,15 @@ def main():
     doc_files = [r[0] for r in results if r[0].suffix in {".md", ".txt"}]
  masked_count = 0
  for file_path in doc_files:
- if remove_keys_from_file(file_path, OLD_KEYS):
- masked_count += 1
+     if remove_keys_from_file(file_path, OLD_KEYS):
+         masked_count += 1
  rel_path = file_path.relative_to(project_root)
-            print(f"  ? {rel_path} 업데이트됨")
+     print(f"  ? {rel_path} 업데이트됨")
 
  if masked_count == 0:
-        print("  ? 마스킹할 파일이 없습니다.")
+     print("  ? 마스킹할 파일이 없습니다.")
  else:
-        print(f"  ? {masked_count}개 파일 업데이트 완료")
+     print(f"  ? {masked_count}개 파일 업데이트 완료")
  print()
 
  # 3. 요약
@@ -153,4 +166,4 @@ def main():
  print()
 
 if __name__ == "__main__":
- main()
+    main()

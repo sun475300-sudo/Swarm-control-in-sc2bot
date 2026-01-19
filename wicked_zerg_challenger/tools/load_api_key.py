@@ -40,30 +40,36 @@ def load_key_from_file(file_path: Path) -> str:
  키 문자열 (없으면 빈 문자열)
     """
  if not file_path.exists():
-        return ""
+     return ""
 
  # 여러 인코딩 시도 (UTF-8, CP949, latin-1, utf-8-sig)
     encodings = ['utf-8', 'cp949', 'latin-1', 'utf-8-sig']
 
  last_error = None
  for encoding in encodings:
- try:
-            with open(file_path, 'r', encoding=encoding) as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(file_path, 'r', encoding=encoding) as f:
  for line in f:
- line = line.strip()
+     line = line.strip()
  # 주석이나 빈 줄 건너뛰기
-                    if line and not line.startswith('#'):
- return line
+     if line and not line.startswith('#'):
+         pass
+     return line
  # 파일을 읽었지만 유효한 줄이 없는 경우
  break
  except UnicodeDecodeError as e:
- # 이 인코딩으로 읽을 수 없음, 다음 인코딩 시도
+     # 이 인코딩으로 읽을 수 없음, 다음 인코딩 시도
  last_error = e
  continue
  except Exception as e:
- # 다른 오류 (파일 권한 등) - 첫 번째 시도에서만 로그
+     # 다른 오류 (파일 권한 등) - 첫 번째 시도에서만 로그
  if encoding == encodings[0]:
-                # Silent fail - don't spam warnings for encoding issues
+     # Silent fail - don't spam warnings for encoding issues
  last_error = e
  continue
 
@@ -83,66 +89,73 @@ def load_api_key(key_name: str, fallback_env: Optional[str] = None) -> str:
  4. 환경 변수
 
  Args:
-        key_name: API 키 이름 (예: "GEMINI_API_KEY")
+     key_name: API 키 이름 (예: "GEMINI_API_KEY")
  fallback_env: 환경 변수 이름 (None이면 key_name 사용)
 
  Returns:
  API 키 문자열 (없으면 빈 문자열)
 
  Examples:
-        >>> key = load_api_key("GEMINI_API_KEY")
-        >>> key = load_api_key("GOOGLE_API_KEY", fallback_env="GOOGLE_API_KEY")
+     >>> key = load_api_key("GEMINI_API_KEY")
+     >>> key = load_api_key("GOOGLE_API_KEY", fallback_env="GOOGLE_API_KEY")
     """
  # 1. secrets/ 폴더에서 시도 (권장)
  secrets_dir = get_secrets_dir()
 
  # 키 이름 매핑 (간단한 이름 → 파일명)
  key_mapping = {
-        "GEMINI_API_KEY": "gemini_api.txt",
-        "GOOGLE_API_KEY": "gemini_api.txt",  # 동일한 파일 사용 가능
-        "NGROK_AUTH_TOKEN": "ngrok_auth.txt",
+     "GEMINI_API_KEY": "gemini_api.txt",
+     "GOOGLE_API_KEY": "gemini_api.txt",  # 동일한 파일 사용 가능
+     "NGROK_AUTH_TOKEN": "ngrok_auth.txt",
  }
 
  # 매핑된 파일명이 있으면 사용
  if key_name in key_mapping:
- secret_file = secrets_dir / key_mapping[key_name]
+     secret_file = secrets_dir / key_mapping[key_name]
  key = load_key_from_file(secret_file)
  if key:
- return key
+     return key
 
  # 일반적인 형식으로도 시도 (GEMINI_API_KEY → gemini_api.txt 또는 GEMINI_API_KEY.txt)
     secret_file = secrets_dir / f"{key_name.lower()}.txt"
  key = load_key_from_file(secret_file)
  if key:
- return key
+     return key
 
  # 2. api_keys/ 폴더에서 시도 (하위 호환성)
  api_keys_dir = get_api_keys_dir()
     key_file = api_keys_dir / f"{key_name}.txt"
  key = load_key_from_file(key_file)
  if key:
- return key
+     return key
 
  # 3. .env 파일에서 시도
     env_file = get_project_root() / ".env"
  if env_file.exists():
- try:
-            with open(env_file, 'r', encoding='utf-8') as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(env_file, 'r', encoding='utf-8') as f:
  for line in f:
- line = line.strip()
-                    if line and not line.startswith('#'):
-                        if '=' in line:
-                            env_key, env_value = line.split('=', 1)
+     line = line.strip()
+     if line and not line.startswith('#'):
+         pass
+     if '=' in line:
+         pass
+     env_key, env_value = line.split('=', 1)
  if env_key.strip() == key_name:
- return env_value.strip()
+     return env_value.strip()
  except Exception as e:
-            print(f"[WARNING] Failed to read .env file: {e}")
+     print(f"[WARNING] Failed to read .env file: {e}")
 
  # 4. 환경 변수에서 시도
  env_name = fallback_env or key_name
  env_value = os.environ.get(env_name)
  if env_value:
- return env_value
+     return env_value
 
  # 빈 문자열 반환
     return ""
@@ -161,7 +174,7 @@ def set_api_key_to_env(key_name: str, fallback_env: Optional[str] = None) -> boo
     """
  key = load_api_key(key_name, fallback_env)
  if key:
- env_name = fallback_env or key_name
+     env_name = fallback_env or key_name
  os.environ[env_name] = key
  return True
  return False
@@ -171,16 +184,21 @@ def set_api_key_to_env(key_name: str, fallback_env: Optional[str] = None) -> boo
 def get_gemini_api_key() -> str:
     """Gemini API 키 반환"""
  try:
-        key = load_api_key("GEMINI_API_KEY", "GEMINI_API_KEY") or load_api_key("GOOGLE_API_KEY", "GOOGLE_API_KEY")
+     pass
+ pass
+
+ except Exception:
+     pass
+     key = load_api_key("GEMINI_API_KEY", "GEMINI_API_KEY") or load_api_key("GOOGLE_API_KEY", "GOOGLE_API_KEY")
  return key
  except (UnicodeDecodeError, SyntaxError, ImportError) as e:
- # 파일 인코딩 오류나 import 오류 시 환경 변수에서 읽기
- import os
-        return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+     # 파일 인코딩 오류나 import 오류 시 환경 변수에서 읽기
+import os
+    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
  except Exception as e:
- # 기타 오류 시 환경 변수에서 읽기
- import os
-        return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+     # 기타 오류 시 환경 변수에서 읽기
+import os
+    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
 
 
 def get_google_api_key() -> str:
@@ -201,25 +219,26 @@ if __name__ == "__main__":
  # Gemini API 키 테스트
  gemini_key = get_gemini_api_key()
  if gemini_key:
-        print(f"? GEMINI_API_KEY: {gemini_key[:10]}... (loaded)")
+     print(f"? GEMINI_API_KEY: {gemini_key[:10]}... (loaded)")
  else:
-        print("? GEMINI_API_KEY: Not found")
+     print("? GEMINI_API_KEY: Not found")
 
  # Google API 키 테스트
  google_key = get_google_api_key()
  if google_key:
-        print(f"? GOOGLE_API_KEY: {google_key[:10]}... (loaded)")
+     print(f"? GOOGLE_API_KEY: {google_key[:10]}... (loaded)")
  else:
-        print("? GOOGLE_API_KEY: Not found")
+     print("? GOOGLE_API_KEY: Not found")
 
  # GCP 프로젝트 ID 테스트
  gcp_id = get_gcp_project_id()
  if gcp_id:
-        print(f"? GCP_PROJECT_ID: {gcp_id} (loaded)")
+     print(f"? GCP_PROJECT_ID: {gcp_id} (loaded)")
  else:
-        print("? GCP_PROJECT_ID: Not found")
+     print("? GCP_PROJECT_ID: Not found")
 
     print("=" * 50)
     print("\n사용 방법:")
-    print("  from tools.load_api_key import get_gemini_api_key")
+    print("
+from tools.load_api_key import get_gemini_api_key")
     print("  api_key = get_gemini_api_key()")

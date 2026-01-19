@@ -3,16 +3,18 @@
 """
 Post Training Learning Workflow
 
-°ÔÀÓ ÈÆ·ÃÀÌ ³¡³­ ÈÄ ÀÚµ¿À¸·Î ½ÇÇàµÇ´Â ¿öÅ©ÇÃ·Î¿ì:
-1. ¸®ÇÃ·¹ÀÌ ºñ±³ ºÐ¼®
-2. ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ ´Ù½Ã ÇÐ½À
-3. ÇÐ½ÀµÈ ÆÄ¶ó¹ÌÅÍ Àû¿ë
+ï¿½ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½Å©ï¿½Ã·Î¿ï¿½:
+1. ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½
+2. ï¿½ï¿½ï¿½Î°ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½Ð½ï¿½
+3. ï¿½Ð½ï¿½ï¿½ï¿½ ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 """
 
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict
+import Any
+import Optional
 from datetime import datetime
 
 # Add parent directory to path
@@ -119,9 +121,9 @@ def learn_from_pro_replays(
         saved_path = extractor.save_learned_parameters(
             learned_params,
             output_file=str(
-                archive_dir /
-                f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}" /
-                "learned_build_orders.json"))
+                archive_dir
+                / f"training_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                / "learned_build_orders.json"))
 
         # Track data paths
         data_paths = {
@@ -269,7 +271,7 @@ def apply_learned_parameters(learned_params: Dict[str, float]) -> bool:
             print(f"[SUCCESS] Updated {len(changes)} parameters:")
             for change in changes:
                 print(
-                    f"  {change['parameter']}: {change['old']} ¡æ {change['new']}")
+                    f"  {change['parameter']}: {change['old']} ï¿½ï¿½ {change['new']}")
 
             return True
         else:

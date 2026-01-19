@@ -9,7 +9,10 @@
 4. ÈÄ¹Ý ¿î¿µ: Á¡¸· °¨Áö ±â¹Ý ÀÇ»ç°áÁ¤
 """
 
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 if TYPE_CHECKING:
     pass
@@ -20,7 +23,7 @@ class RogueTacticsManager:
     Rogue tactics manager for aggressive strategies
     """
 
-    def __init__(self, bot: "WickedZergBotPro"):
+def __init__(self, bot: "WickedZergBotPro"):
         self.bot = bot
 
         # Drop squad state
@@ -71,7 +74,7 @@ await self._manage_larva_saving()
  # µå¶ø À¯´Ö °ü¸®
 await self._manage_drop_units()
 
-    def _check_overlord_speed_upgrade(self):
+def _check_overlord_speed_upgrade(self):
         """Check overlord speed upgrade status"""
         b = self.bot
 
@@ -82,6 +85,7 @@ await self._manage_drop_units()
                 print(
                     f"[ROGUE TACTICS] [{int(b.time)}s] Overlord Speed researched - Drop tactics enabled")
 else:
+    pass
 self.overlord_speed_researched = False
 
 
@@ -97,12 +101,14 @@ b = self.bot
 
  # Á¡¸·ÀÌ ÀÖ´Â Áö¿ª È®ÀÎ
 if not b.townhalls.exists:
+    pass
 self.enemy_on_creep = False
 self.enemy_advancing = False
 return
 
 main_hatch = b.townhalls.first
 if not main_hatch:
+    pass
 return
 
  # Á¡¸· ¹Ý°æ ³» Àû À¯´Ö È®ÀÎ (Á¡¸·Àº ´ë·« 15-20 À¯´Ö ¹Ý°æ)
@@ -110,14 +116,18 @@ creep_radius = 20.0
 enemy_units = b.enemy_units.closer_than(creep_radius, main_hatch.position)
 
 if enemy_units.exists:
+    pass
 self.enemy_on_creep = True
 self.last_enemy_on_creep_time = b.time
 
  # ÀûÀÌ ÀüÁø ÁßÀÎÁö È®ÀÎ (ÀÌÀü ÇÁ·¹ÀÓ ´ëºñ À§Ä¡ º¯È­)
             if hasattr(self, "_last_enemy_positions"):
+                pass
 advancing_count = 0
 for enemy in enemy_units:
+    pass
 if enemy.tag in self._last_enemy_positions:
+    pass
 last_pos = self._last_enemy_positions[enemy.tag]
 current_pos = enemy.position
  # ÀûÀÌ ¿ì¸® ±âÁö ¹æÇâÀ¸·Î ÀÌµ¿ ÁßÀÎÁö È®ÀÎ
@@ -131,15 +141,18 @@ advancing_count += 1
 
 self.enemy_advancing = advancing_count >= 3  # 3±â ÀÌ»ó ÀüÁø Áß
 else:
+    pass
 self.enemy_advancing = True
 
  # Àû À§Ä¡ ÀúÀå
 self._last_enemy_positions = {
     enemy.tag: enemy.position for enemy in enemy_units}
 else:
+    pass
 self.enemy_on_creep = False
  # 5ÃÊ ÀÌ»ó ÀûÀÌ Á¡¸·¿¡ ¾øÀ¸¸é ÀüÁø »óÅÂ ÇØÁ¦
 if b.time - self.last_enemy_on_creep_time > 5.0:
+    pass
 self.enemy_advancing = False
 
 
@@ -160,16 +173,17 @@ b = self.bot
 
  # µå¶ø ÁøÇà ÁßÀÌ¸é °è¼Ó ½ÇÇà
 if self.drop_in_progress:
- # µå¶ø À¯´Ö »óÅÂ È®ÀÎ
+    # µå¶ø À¯´Ö »óÅÂ È®ÀÎ
 overlords = b.units(UnitTypeId.OVERLORD)
 drop_overlord = None
 for overlord in overlords:
+    pass
 if overlord.passengers:  # À¯´ÖÀ» ÅÂ¿î ´ë±ºÁÖ
 drop_overlord = overlord
 break
 
 if drop_overlord and self.drop_target:
- # µå¶ø ½ÃÄö½º °è¼Ó ½ÇÇà
+    # µå¶ø ½ÃÄö½º °è¼Ó ½ÇÇà
 banelings = list(b.units(UnitTypeId.BANELING).ready)
 path = self._calculate_stealth_path(
     drop_overlord.position,
@@ -183,22 +197,25 @@ return
 
  # »õ µå¶ø ½ÃÀÛ Á¶°Ç È®ÀÎ
 if not self._can_execute_drop():
+    pass
 return
 
  # µå¶ø À¯´Ö ÁØºñ
 drop_overlord, banelings = await self._prepare_drop_units()
 if not drop_overlord or not banelings:
+    pass
 return
 
  # µå¶ø Å¸°Ù °áÁ¤
 drop_target = self._find_drop_target()
 if not drop_target:
+    pass
 return
 
  # ½Ã¾ß ¹Û ¿ìÈ¸ °æ·Î °è»ê
 path = self._calculate_stealth_path(drop_overlord.position, drop_target)
 if not path:
- # ¿ìÈ¸ °æ·Î°¡ ¾øÀ¸¸é Á÷Á¢ ÀÌµ¿ (À§ÇèÇÏÁö¸¸ ½Ãµµ)
+    # ¿ìÈ¸ °æ·Î°¡ ¾øÀ¸¸é Á÷Á¢ ÀÌµ¿ (À§ÇèÇÏÁö¸¸ ½Ãµµ)
 path = [drop_target]
 
  # µå¶ø ½ÇÇà ½ÃÀÛ
@@ -213,18 +230,22 @@ b = self.bot
 
  # 1. ´ë±ºÁÖ ¼Ó¾÷ ¿Ï·á È®ÀÎ
 if not self.overlord_speed_researched:
+    pass
 return False
 
  # 2. Äð´Ù¿î È®ÀÎ
 if b.time - self.last_drop_time < self.drop_cooldown:
+    pass
 return False
 
  # 3. ÀÌ¹Ì µå¶ø ÁøÇà ÁßÀÌ¸é ½ºÅµ
 if self.drop_in_progress:
+    pass
 return False
 
  # 4. ÀûÀÌ Á¡¸·¿¡ ÀÖ°í ÀüÁø ÁßÀÎÁö È®ÀÎ (Rogue Àü¼ú ÇÙ½É)
 if not (self.enemy_on_creep and self.enemy_advancing):
+    pass
 return False
 
  # 5. ¸Íµ¶ÃæÀÌ ÁØºñµÇ¾î ÀÖ´ÂÁö È®ÀÎ
@@ -235,6 +256,7 @@ return False
  # 6. µå¶ø¿ë ´ë±ºÁÖ È®ÀÎ
 overlords = b.units(UnitTypeId.OVERLORD).ready
 if not overlords.exists:
+    pass
 return False
 
 return True
@@ -247,16 +269,20 @@ b = self.bot
  # ¸Íµ¶Ãæ ¼±ÅÃ (ÃÖ´ë 8±â)
 banelings = list(b.units(UnitTypeId.BANELING).ready)[:8]
 if len(banelings) < 4:
+    pass
 return None, []
 
  # µå¶ø¿ë ´ë±ºÁÖ ¼±ÅÃ (°¡Àå °¡±î¿î ´ë±ºÁÖ)
 overlords = b.units(UnitTypeId.OVERLORD).ready
 if not overlords.exists:
+    pass
 return None, []
 
  # ÀÌ¹Ì À¯´ÖÀ» ÅÂ¿î ´ë±ºÁÖ°¡ ÀÖÀ¸¸é ¿ì¼± »ç¿ë
 for overlord in overlords:
+    pass
 if overlord.passengers:
+    pass
 return overlord, banelings
 
  # ºó ´ë±ºÁÖ ¼±ÅÃ
@@ -279,6 +305,7 @@ b = self.bot
 
  # Àû º»Áø À§Ä¡ È®ÀÎ
 if b.enemy_start_locations:
+    pass
 enemy_main = b.enemy_start_locations[0]
 
  # Àû ÀÏ²Û À§Ä¡ È®ÀÎ
@@ -287,10 +314,10 @@ lambda u: u.type_id in [UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE]
 )
 
 if enemy_workers.exists:
- # ÀÏ²ÛÀÌ °¡Àå ¸¹Àº Áö¿ª Ã£±â
+    # ÀÏ²ÛÀÌ °¡Àå ¸¹Àº Áö¿ª Ã£±â
 worker_positions = [w.position for w in enemy_workers]
 if worker_positions:
- # ÀÏ²ÛµéÀÇ Áß½ÉÁ¡ °è»ê
+    # ÀÏ²ÛµéÀÇ Áß½ÉÁ¡ °è»ê
 center_x = sum(p.x for p in worker_positions) / len(worker_positions)
 center_y = sum(p.y for p in worker_positions) / len(worker_positions)
 return Point2((center_x, center_y))
@@ -326,13 +353,13 @@ map_height = b.game_info.map_size.height
  # 2. Àû À¯´ÖÀÇ ½Ã¾ß ¹üÀ§ È®ÀÎ
 enemy_units = b.enemy_units
 if not enemy_units.exists:
- # ÀûÀÌ º¸ÀÌÁö ¾ÊÀ¸¸é Á÷Á¢ °æ·Î
+    # ÀûÀÌ º¸ÀÌÁö ¾ÊÀ¸¸é Á÷Á¢ °æ·Î
 return [target]
 
  # 3. Á÷Á¢ °æ·Î»ó¿¡ Àû ½Ã¾ß°¡ ÀÖ´ÂÁö È®ÀÎ
 direct_path_blocked = False
 for enemy in enemy_units:
- # Àû°ú Á÷Á¢ °æ·ÎÀÇ ÃÖ´Ü °Å¸® °è»ê
+    # Àû°ú Á÷Á¢ °æ·ÎÀÇ ÃÖ´Ü °Å¸® °è»ê
 enemy_pos = enemy.position
  # °£´ÜÇÑ °Å¸® Ã¼Å©: Àû ½Ã¾ß ¹üÀ§ ³»¿¡ °æ·Î°¡ ÀÖ´ÂÁö
 to_target = target - start
@@ -347,11 +374,13 @@ projection = (dot_product / to_target.length) / to_target.length
 if 0 < projection < 1:  # °æ·Î»ó¿¡ ÀÖÀ½
 closest_point = start + to_target * projection
 if closest_point.distance_to(enemy_pos) < self.enemy_vision_range:
+    pass
 direct_path_blocked = True
 break
 
  # Á÷Á¢ °æ·Î°¡ ¸·ÇôÀÖÁö ¾ÊÀ¸¸é Á÷Á¢ °æ·Î »ç¿ë
 if not direct_path_blocked:
+    pass
 return [target]
 
  # 4. ¿ìÈ¸ °æ·Î °è»ê: ¸Ê °¡ÀåÀÚ¸®¸¦ µû¶ó ÀÌµ¿
@@ -364,8 +393,10 @@ right_edge = Point2((map_width, start.y))
 
  # Å¸°Ù ¹æÇâÀÇ °¡ÀåÀÚ¸® ¼±ÅÃ
 if abs(start.x - left_edge.x) < abs(start.x - right_edge.x):
+    pass
 waypoints.append(left_edge)
 else:
+    pass
 waypoints.append(right_edge)
 
  # Å¸°Ù ¹æÇâÀÇ °¡ÀåÀÚ¸®¸¦ µû¶ó ÀÌµ¿
@@ -393,6 +424,7 @@ b = self.bot
 
  # µå¶ø »óÅÂ ÃÊ±âÈ­ (Ã¹ ½ÇÇà ½Ã)
 if not self.drop_in_progress:
+    pass
 self.drop_in_progress = True
 self.drop_target = target
 self.drop_squad = [overlord] + banelings[:8]
@@ -400,39 +432,59 @@ self.drop_squad = [overlord] + banelings[:8]
                 f"[ROGUE DROP] [{int(b.time)}s] Drop sequence started - Target: {target}")
 
 try:
- # 1. ¸Íµ¶ÃæÀ» ´ë±ºÁÖ¿¡ ÅÂ¿ì±â (¾ÆÁ÷ ÅÂ¿ìÁö ¾Ê¾ÒÀ¸¸é)
+    pass
+pass
+
+except Exception:
+    pass
+    # 1. ¸Íµ¶ÃæÀ» ´ë±ºÁÖ¿¡ ÅÂ¿ì±â (¾ÆÁ÷ ÅÂ¿ìÁö ¾Ê¾ÒÀ¸¸é)
 if not overlord.passengers or len(overlord.passengers) < len(banelings):
+    pass
 for baneling in banelings[:8]:  # ÃÖ´ë 8±â
 if baneling.is_ready and overlord.cargo_space_left > 0:
- # python-sc2: load ¸í·É »ç¿ë
+    # python-sc2: load ¸í·É »ç¿ë
 try:
- # LOAD ability´Â À¯´Ö Å¸ÀÔ¿¡ µû¶ó ÀÚµ¿ ¼±ÅÃµÊ
+    pass
+pass
+
+except Exception:
+    pass
+    # LOAD ability´Â À¯´Ö Å¸ÀÔ¿¡ µû¶ó ÀÚµ¿ ¼±ÅÃµÊ
 await b.do(overlord(AbilityId.LOAD, baneling))
 except Exception:
- # ´ëÃ¼ ¹æ¹ý ½Ãµµ
+    # ´ëÃ¼ ¹æ¹ý ½Ãµµ
 try:
+    pass
+pass
+
+except Exception:
+    pass
                                 if hasattr(overlord, "load"):
+                                    pass
 overlord.load(baneling)
 except Exception:
+    pass
 pass
 return  # ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ °è¼Ó
 
  # 2. °æ·Î¸¦ µû¶ó ÀÌµ¿
 if path and len(path) > 0:
- # ÇöÀç waypoint È®ÀÎ
+    # ÇöÀç waypoint È®ÀÎ
                 current_waypoint_idx = getattr(
                     self, "_current_waypoint_idx", 0)
 if current_waypoint_idx < len(path):
+    pass
 next_waypoint = path[current_waypoint_idx]
 
  # waypoint¿¡ µµ´ÞÇß´ÂÁö È®ÀÎ
 if overlord.distance_to(next_waypoint) < 3.0:
- # ´ÙÀ½ waypoint·Î ÀÌµ¿
+    # ´ÙÀ½ waypoint·Î ÀÌµ¿
 current_waypoint_idx += 1
 self._current_waypoint_idx = current_waypoint_idx
 
  # ´ÙÀ½ waypoint·Î ÀÌµ¿ ¸í·É
 if current_waypoint_idx < len(path):
+    pass
 overlord.move(path[current_waypoint_idx])
 else:
  # ¸ðµç waypoint¸¦ Áö³ªÃÆÀ¸¸é Å¸°ÙÀ¸·Î Á÷Á¢ ÀÌµ¿
@@ -445,20 +497,38 @@ overlord.move(target)
 if overlord.distance_to(target) < 8.0:  # 8 À¯´Ö ÀÌ³»¸é µå¶ø °¡´É
  # µå¶ø ½ÇÇà
 try:
- # python-sc2: unload_all ¸í·É »ç¿ë (À§Ä¡ ÁöÁ¤)
+    pass
+pass
+
+except Exception:
+    pass
+    # python-sc2: unload_all ¸í·É »ç¿ë (À§Ä¡ ÁöÁ¤)
  # UNLOADALL_AT ¶Ç´Â UNLOADALL »ç¿ë
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 await b.do(overlord(AbilityId.UNLOADALL_AT, target))
 except (AttributeError, KeyError):
- # ´ëÃ¼ ¹æ¹ý: UNLOADALL »ç¿ë
+    # ´ëÃ¼ ¹æ¹ý: UNLOADALL »ç¿ë
 try:
+    pass
+pass
+
+except Exception:
+    pass
+    pass
 await b.do(overlord(AbilityId.UNLOADALL, target))
 except (AttributeError, KeyError):
- # ÃÖÁ¾ ´ëÃ¼: Á÷Á¢ ¸Þ¼­µå È£Ãâ
+    # ÃÖÁ¾ ´ëÃ¼: Á÷Á¢ ¸Þ¼­µå È£Ãâ
                             if hasattr(overlord, "unload_all"):
+                                pass
 overlord.unload_all(target)
 except Exception as unload_error:
- # µå¶ø ½ÇÆÐ ½Ã ·Î±×¸¸ Ãâ·Â (´ÙÀ½ ÇÁ·¹ÀÓ¿¡ Àç½Ãµµ)
+    # µå¶ø ½ÇÆÐ ½Ã ·Î±×¸¸ Ãâ·Â (´ÙÀ½ ÇÁ·¹ÀÓ¿¡ Àç½Ãµµ)
 if b.iteration % 50 == 0:
                         print(
                             f"[ROGUE DROP] Unload attempt failed: {unload_error}")
@@ -491,6 +561,7 @@ b = self.bot
 
  # ÀûÀÌ Á¡¸·¿¡ ÀÖ°í ÀüÁø ÁßÀÌ¸é ¶ó¹Ù ¼¼ÀÌºù ½ÃÀÛ
 if self.enemy_on_creep and self.enemy_advancing and not self.larva_saving_mode:
+    pass
 self.larva_saving_mode = True
 self.larva_save_start_time = b.time
 larvae = b.units(UnitTypeId.LARVA)
@@ -499,18 +570,21 @@ self.saved_larva_count = larvae.amount if larvae.exists else 0
 
  # ¶ó¹Ù ¼¼ÀÌºù ¸ðµå ÇØÁ¦ Á¶°Ç
 if self.larva_saving_mode:
- # 1. µå¶ø ¿Ï·á ÈÄ
+    # 1. µå¶ø ¿Ï·á ÈÄ
 if b.time - self.last_drop_time < 2.0 and self.last_drop_time > 0:
+    pass
 self.larva_saving_mode = False
                 print(f"[ROGUE LARVA SAVE] [{int(b.time)}s] Larva saving ended - Drop completed, explosive production enabled")
 
  # 2. ½Ã°£ ÃÊ°ú (10ÃÊ)
 elif b.time - self.larva_save_start_time > self.larva_save_duration:
+    pass
 self.larva_saving_mode = False
                 print(f"[ROGUE LARVA SAVE] [{int(b.time)}s] Larva saving ended - Timeout")
 
  # 3. ÀûÀÌ Á¡¸·¿¡¼­ ¹þ¾î³²
 elif not self.enemy_on_creep and b.time - self.last_enemy_on_creep_time > 3.0:
+    pass
 self.larva_saving_mode = False
                 print(f"[ROGUE LARVA SAVE] [{int(b.time)}s] Larva saving ended - Enemy retreated")
 
@@ -525,6 +599,7 @@ b = self.bot
 
  # µå¶ø ÁøÇà ÁßÀÌ ¾Æ´Ï¸é ½ºÅµ
 if not self.drop_in_progress:
+    pass
 return
 
  # µå¶ø À¯´Ö »óÅÂ È®ÀÎ (Ãß°¡ ·ÎÁ÷ ÇÊ¿ä ½Ã ±¸Çö)

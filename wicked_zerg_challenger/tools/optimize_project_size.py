@@ -3,14 +3,16 @@
 """
 Optimize Project Size
 
-ÇÁ·ÎÁ§Æ® Å©±â ÃÖÀûÈ­: ºÒÇÊ¿äÇÑ ÆÄÀÏ Á¦°Å, Ä³½Ã Á¤¸®, Áßº¹ Á¦°Å
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­: ï¿½ï¿½ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½
 """
 
 import os
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List
+import Dict
+import Tuple
 from collections import defaultdict
 
 # Add parent directory to path
@@ -22,7 +24,7 @@ PROJECT_ROOT = script_dir
 
 
 class ProjectSizeOptimizer:
-    """ÇÁ·ÎÁ§Æ® Å©±â ÃÖÀûÈ­±â"""
+    """ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½"""
 
     def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
@@ -39,7 +41,7 @@ class ProjectSizeOptimizer:
         }
 
     def find_cache_files(self) -> List[Path]:
-        """Ä³½Ã ÆÄÀÏ Ã£±â"""
+        """Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½"""
         cache_files = []
         cache_patterns = [
             "**/__pycache__/**",
@@ -66,7 +68,7 @@ class ProjectSizeOptimizer:
         return list(set(cache_files))
 
     def find_log_files(self) -> List[Path]:
-        """·Î±× ÆÄÀÏ Ã£±â"""
+        """ï¿½Î±ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½"""
         log_files = []
         log_patterns = ["*.log", "*.log.*", "*.txt"]
 
@@ -95,7 +97,7 @@ class ProjectSizeOptimizer:
         return log_files
 
     def find_backup_files(self) -> List[Path]:
-        """¹é¾÷ ÆÄÀÏ Ã£±â"""
+        """ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½"""
         backup_files = []
         backup_patterns = [
             "*.bak",
@@ -114,7 +116,7 @@ class ProjectSizeOptimizer:
         return backup_files
 
     def find_duplicate_files(self) -> List[Path]:
-        """Áßº¹ ÆÄÀÏ Ã£±â"""
+        """ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½"""
         duplicate_files = []
         duplicate_patterns = [
             "*_fixed.py",
@@ -143,7 +145,7 @@ class ProjectSizeOptimizer:
 
     def find_large_files(
             self, min_size_mb: float = 10.0) -> List[Tuple[Path, float]]:
-        """´ë¿ë·® ÆÄÀÏ Ã£±â"""
+        """ï¿½ï¿½ë·® ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½"""
         large_files = []
         min_size_bytes = min_size_mb * 1024 * 1024
 
@@ -171,7 +173,7 @@ class ProjectSizeOptimizer:
         return sorted(large_files, key=lambda x: x[1], reverse=True)
 
     def find_empty_dirs(self) -> List[Path]:
-        """ºó µð·ºÅä¸® Ã£±â"""
+        """ï¿½ï¿½ ï¿½ï¿½ï¿½ä¸® Ã£ï¿½ï¿½"""
         empty_dirs = []
         exclude_dirs = {'.git', 'node_modules', 'venv', '.venv', '__pycache__'}
 
@@ -188,7 +190,7 @@ class ProjectSizeOptimizer:
         return empty_dirs
 
     def scan_project(self):
-        """ÇÁ·ÎÁ§Æ® ½ºÄµ"""
+        """ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Äµ"""
         print("\n[STEP 1] Scanning project for optimization targets...")
         print("-" * 70)
 
@@ -225,7 +227,7 @@ class ProjectSizeOptimizer:
         print(f"[TOTAL] Directories to remove: {len(self.dirs_to_remove)}")
 
     def calculate_space(self) -> float:
-        """Á¦°ÅÇÒ ÆÄÀÏµéÀÇ ÃÑ Å©±â °è»ê (MB)"""
+        """ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ (MB)"""
         total_size = 0.0
 
         for file_path in self.files_to_remove:
@@ -250,7 +252,7 @@ class ProjectSizeOptimizer:
         return total_size / (1024 * 1024)  # MB
 
     def optimize(self):
-        """ÃÖÀûÈ­ ½ÇÇà"""
+        """ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½"""
         self.scan_project()
 
         space_freed = self.calculate_space()

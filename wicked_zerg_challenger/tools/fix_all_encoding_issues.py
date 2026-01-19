@@ -14,60 +14,75 @@ def detect_encoding(file_path):
     encodings = ['utf-8', 'cp949', 'euc-kr', 'latin-1', 'utf-8-sig']
 
  for encoding in encodings:
- try:
-            with open(file_path, 'r', encoding=encoding) as f:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         with open(file_path, 'r', encoding=encoding) as f:
  f.read()
  return encoding
  except (UnicodeDecodeError, UnicodeError):
- continue
+     continue
  except Exception:
- continue
+     continue
 
  return None
 
 def fix_file_encoding(file_path):
     """Fix encoding of a single file"""
  try:
- detected_encoding = detect_encoding(file_path)
+     detected_encoding = detect_encoding(file_path)
  except Exception as e:
-        print(f"[ERROR] Failed to detect encoding for {file_path}: {e}")
+     print(f"[ERROR] Failed to detect encoding for {file_path}: {e}")
  return False
 
  if detected_encoding is None:
-        print(f"[SKIP] Cannot detect encoding: {file_path}")
+     print(f"[SKIP] Cannot detect encoding: {file_path}")
  return False
 
     if detected_encoding == 'utf-8':
- # Already UTF-8, check if it has BOM
+        # Already UTF-8, check if it has BOM
  try:
-            with open(file_path, 'rb') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(file_path, 'rb') as f:
  first_bytes = f.read(3)
-                if first_bytes == b'\xef\xbb\xbf':
- # Has BOM, remove it
-                    print(f"[FIX] Removing BOM: {file_path}")
-                    with open(file_path, 'rb') as f:
+     if first_bytes == b'\xef\xbb\xbf':
+     # Has BOM, remove it
+     print(f"[FIX] Removing BOM: {file_path}")
+     with open(file_path, 'rb') as f:
  content = f.read()
-                    with open(file_path, 'wb') as f:
+     with open(file_path, 'wb') as f:
  f.write(content[3:])
  return True
  except Exception as e:
-            print(f"[ERROR] Failed to check/remove BOM from {file_path}: {e}")
+     print(f"[ERROR] Failed to check/remove BOM from {file_path}: {e}")
  return False
  return False # Already UTF-8 without BOM
 
  # Convert to UTF-8
     print(f"[FIX] Converting {detected_encoding} -> UTF-8: {file_path}")
  try:
-        with open(file_path, 'r', encoding=detected_encoding, errors='replace') as f:
+     pass
+ pass
+
+ except Exception:
+     pass
+     with open(file_path, 'r', encoding=detected_encoding, errors='replace') as f:
  content = f.read()
 
  # Write as UTF-8
-        with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
+     with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
  f.write(content)
 
  return True
  except Exception as e:
-        print(f"[ERROR] Failed to convert {file_path}: {e}")
+     print(f"[ERROR] Failed to convert {file_path}: {e}")
  return False
 
 def main():
@@ -82,21 +97,33 @@ def main():
 
  python_files = []
  try:
- for root, dirs, files in os.walk(base_dir):
- # Skip certain directories
-            skip_dirs = ['__pycache__', '.git', 'node_modules', '.venv', 'venv']
+     pass
+ pass
+
+ except Exception:
+     pass
+     for root, dirs, files in os.walk(base_dir):
+         # Skip certain directories
+         skip_dirs = ['__pycache__', '.git', 'node_modules', '.venv', 'venv']
  dirs[:] = [d for d in dirs if d not in skip_dirs]
 
  for file in files:
-                if file.endswith('.py'):
- try:
- file_path = Path(root) / file
+     if file.endswith('.py'):
+         pass
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     file_path = Path(root) / file
  python_files.append(file_path)
  except (OSError, UnicodeError) as e:
-                        print(f"[WARNING] Error processing {file}: {e}")
+     print(f"[WARNING] Error processing {file}: {e}")
  continue
  except Exception as e:
-        print(f"[ERROR] Failed to walk directory: {e}")
+     print(f"[ERROR] Failed to walk directory: {e}")
  return
 
     print(f"Found {len(python_files)} Python files")
@@ -107,22 +134,28 @@ def main():
  error_count = 0
 
  for file_path in python_files:
+     try:
+         pass
+     pass
+
+     except Exception:
+         pass
+         # Handle path encoding issues
  try:
- # Handle path encoding issues
- try:
- str_path = str(file_path)
+     str_path = str(file_path)
  except (UnicodeError, ValueError):
- str_path = file_path.as_posix()
+     str_path = file_path.as_posix()
 
  if fix_file_encoding(file_path):
- fixed_count += 1
+     fixed_count += 1
  else:
+     pass
  skipped_count += 1
  except (OSError, UnicodeError, ValueError) as e:
-            print(f"[ERROR] {file_path}: {e}")
+     print(f"[ERROR] {file_path}: {e}")
  error_count += 1
  except Exception as e:
-            print(f"[ERROR] {file_path}: {e}")
+     print(f"[ERROR] {file_path}: {e}")
  error_count += 1
 
  print()
@@ -136,4 +169,4 @@ def main():
     print("=" * 70)
 
 if __name__ == "__main__":
- main()
+    main()

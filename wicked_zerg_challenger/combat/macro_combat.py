@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Dict, List, Optional, Tuple, Set, Any, Union
 """
 Macro Combat Manager
 
@@ -9,25 +10,25 @@ CombatManager에서 분리된 매크로 전투 기능
 class MacroCombat:
     """매크로 전투 관리"""
 
- def __init__(self, bot):
- self.bot = bot
+    def __init__(self, bot):
+        self.bot = bot
 
- def manage_army_composition(self) -> Dict:
+    def manage_army_composition(self) -> Dict:
         """군대 구성 관리"""
- # TODO: 실제 구현
- return {}
+        # TODO: 실제 구현
+        return {}
 
- def plan_attack(self, target_location) -> bool:
+    def plan_attack(self, target_location) -> bool:
         """공격 계획"""
- # TODO: 실제 구현
- pass
+        # TODO: 실제 구현
+        pass
 
- def coordinate_army(self, army: Units) -> bool:
+    def coordinate_army(self, army: Units) -> bool:
         """군대 조율"""
- # TODO: 실제 구현
- pass
+        # TODO: 실제 구현
+        pass
 
- def manage_supply(self) -> bool:
+    def manage_supply(self) -> bool:
         """공급 관리"""
- # TODO: 실제 구현
- pass
+        # TODO: 실제 구현
+        pass

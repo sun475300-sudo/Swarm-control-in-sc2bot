@@ -3,18 +3,21 @@
 """
 Optimize Learning Data
 
-¼öÁýµÈ ÇÐ½À µ¥ÀÌÅÍ¸¦ ºÐ¼®ÇÏ°í ÃÖÀûÈ­ÇÏ´Â ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
-- ÀÌ»óÄ¡ Á¦°Å
-- Åë°è ºÐ¼®
-- ÃÖÀû ÆÄ¶ó¹ÌÅÍ Àç°è»ê
-- µ¥ÀÌÅÍ Á¤±ÔÈ­
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ð¼ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½Ï´ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
+- ï¿½Ì»ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
+- ï¿½ï¿½ï¿½ ï¿½Ð¼ï¿½
+- ï¿½ï¿½ï¿½ï¿½ ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­
 """
 
 import json
 import sys
 import statistics
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict
+import List
+import Any
+import Tuple
 from collections import defaultdict
 from datetime import datetime
 
@@ -318,7 +321,7 @@ def main():
     for param_name, value in sorted(optimized_params.items()):
         current = learning_data["learned_params"].get(param_name)
         if current != value:
-            print(f"    {param_name}: {current} ¡æ {value} (updated)")
+            print(f"    {param_name}: {current} ï¿½ï¿½ {value} (updated)")
         else:
             print(f"    {param_name}: {value} (unchanged)")
 

@@ -9,7 +9,11 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import List, Dict, Tuple, Any, Optional
+from typing import List
+from typing import Dict
+from typing import Tuple
+from typing import Any
+from typing import Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -17,14 +21,19 @@ PROJECT_ROOT = Path(__file__).parent.parent
 class AutoErrorFixer:
     """자동 에러 수정기"""
 
-    def __init__(self):
+def __init__(self):
         self.fixes_applied: List[Dict[str, Any]] = []
 
-    def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
+def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
         """일반적인 에러 수정"""
         fixes: List[str] = []
 
         try:
+            pass
+        pass
+
+        except Exception:
+            pass
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 lines = content.splitlines()
@@ -35,7 +44,8 @@ class AutoErrorFixer:
             _ = lines  # noqa: F841
 
             # 1. loguru_logger 미정의 에러 수정
-            if 'loguru_logger' in content and 'from loguru import logger' not in content:
+            if 'loguru_logger' in content and '
+from loguru import logger' not in content:
                 # loguru_logger를 logger로 변경
                 content = re.sub(r'\bloguru_logger\.', 'logger.', content)
                 content = re.sub(r'\bloguru_logger\s*=', 'logger =', content)
@@ -74,7 +84,7 @@ class AutoErrorFixer:
         except Exception as e:
             return False, [f"Error: {str(e)}"]
 
-    def scan_and_fix(
+def scan_and_fix(
             self, target_files: Optional[List[Path]] = None) -> Dict[str, Any]:
         """스캔 및 수정"""
         if target_files is None:
@@ -119,7 +129,7 @@ class AutoErrorFixer:
 
 def main():
     """메인 함수"""
-    import argparse
+import argparse
 
     parser = argparse.ArgumentParser(description="자동 에러 수정 도구")
     parser.add_argument("--file", help="특정 파일만 수정")

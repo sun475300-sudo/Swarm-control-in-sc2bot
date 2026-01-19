@@ -3,7 +3,7 @@
 """
 Training with Monitoring and Auto Learning
 
-ÇÐ½À ÁøÇà ¸ð´ÏÅÍ¸µ ¹× ÇÐ½À ¿Ï·á ÈÄ ÀÚµ¿ ºñ±³ ºÐ¼® ¹× ÀçÇÐ½À ¿öÅ©ÇÃ·Î¿ì
+ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ð½ï¿½ ï¿½ï¿½Å©ï¿½Ã·Î¿ï¿½
 """
 
 import sys
@@ -13,6 +13,7 @@ import webbrowser
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+import json
 
 # Add parent directory to path
 script_dir = Path(__file__).parent.parent
@@ -23,14 +24,14 @@ PROJECT_ROOT = script_dir
 
 
 class TrainingMonitor:
-    """ÇÐ½À ÁøÇà ¸ð´ÏÅÍ¸µ"""
+    """ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Í¸ï¿½"""
 
     def __init__(self):
         self.monitoring_url = "http://localhost:8000"
         self.stats_file = PROJECT_ROOT / "training_stats.json"
 
     def check_monitoring_server(self) -> bool:
-        """¸ð´ÏÅÍ¸µ ¼­¹ö »óÅÂ È®ÀÎ"""
+        """ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½"""
         try:
             import requests
             # Try local server port (8001)
@@ -53,7 +54,7 @@ class TrainingMonitor:
         return False
 
     def open_monitoring_dashboard(self):
-        """¸ð´ÏÅÍ¸µ ´ë½Ãº¸µå ¿­±â"""
+        """ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½Ãºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         try:
             print(
                 f"\n[INFO] Opening monitoring dashboard: {self.monitoring_url}")
@@ -64,7 +65,7 @@ class TrainingMonitor:
             print(f"[INFO] Manually open: {self.monitoring_url}")
 
     def get_training_stats(self) -> Optional[dict]:
-        """ÇÐ½À Åë°è °¡Á®¿À±â"""
+        """ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"""
         try:
             if self.stats_file.exists():
                 import json
@@ -75,7 +76,7 @@ class TrainingMonitor:
         return None
 
     def print_training_summary(self):
-        """ÇÐ½À ¿ä¾à Ãâ·Â"""
+        """ï¿½Ð½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½"""
         stats = self.get_training_stats()
         if stats:
             print("\n" + "=" * 70)
@@ -90,7 +91,7 @@ class TrainingMonitor:
 
 
 class PostTrainingLearning:
-    """ÇÐ½À ¿Ï·á ÈÄ ÀÚµ¿ ÇÐ½À ¿öÅ©ÇÃ·Î¿ì"""
+    """ï¿½Ð½ï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½Å©ï¿½Ã·Î¿ï¿½"""
 
     def __init__(self):
         self.comparison_script = PROJECT_ROOT / "tools" / \
@@ -99,7 +100,7 @@ class PostTrainingLearning:
             "tools" / "post_training_learning_workflow.py"
 
     def run_comparison_analysis(self) -> bool:
-        """¸®ÇÃ·¹ÀÌ ºñ±³ ºÐ¼® ½ÇÇà"""
+        """ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð¼ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         print("\n[STEP 1] Running comparison analysis...")
         print("-" * 70)
 
@@ -126,7 +127,7 @@ class PostTrainingLearning:
             return False
 
     def learn_from_pro_replays(self) -> bool:
-        """ÇÁ·Î ¸®ÇÃ·¹ÀÌ¿¡¼­ ÀçÇÐ½À"""
+        """ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½Ì¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ð½ï¿½"""
         print("\n[STEP 2] Learning from pro gamer replays...")
         print("-" * 70)
 
@@ -153,7 +154,7 @@ class PostTrainingLearning:
             return False
 
     def apply_learned_parameters(self) -> bool:
-        """ÇÐ½À ÆÄ¶ó¹ÌÅÍ Àû¿ë"""
+        """ï¿½Ð½ï¿½ ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         print("\n[STEP 3] Applying learned parameters...")
         print("-" * 70)
 
@@ -167,7 +168,7 @@ class PostTrainingLearning:
             return False
 
     def run_full_workflow(self) -> bool:
-        """ÀüÃ¼ ¿öÅ©ÇÃ·Î¿ì ½ÇÇà"""
+        """ï¿½ï¿½Ã¼ ï¿½ï¿½Å©ï¿½Ã·Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         print("\n" + "=" * 70)
         print("POST TRAINING LEARNING WORKFLOW")
         print("=" * 70)

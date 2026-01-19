@@ -3,14 +3,15 @@
 """
 Fix All Syntax Errors in Python Files
 
-ÇÁ·ÎÁ§Æ® ÀüÃ¼ÀÇ Python ÆÄÀÏ¿¡¼­ ¹®¹ý ¿¡·¯¸¦ Ã£¾Æ ¼öÁ¤ÇÏ´Â ½ºÅ©¸³Æ®ÀÔ´Ï´Ù.
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã¼ï¿½ï¿½ Python ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½Ô´Ï´ï¿½.
 """
 
 import ast
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+import Tuple
 
 # Add parent directory to path
 script_dir = Path(__file__).parent.parent
