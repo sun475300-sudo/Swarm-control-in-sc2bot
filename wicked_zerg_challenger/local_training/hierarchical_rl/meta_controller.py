@@ -235,10 +235,36 @@ class MetaController:
             transition_info: 전이 정보 (old_mode, new_mode, time, reason)
         """
         # 실제 구현은 봇의 하위 에이전트들에게 전달
-        # 예: bot.combat_agent.cancel_previous_commands()
-        #     bot.economy_agent.cancel_previous_commands()
-        #     bot.queen_agent.cancel_previous_commands()
+        # 하위 에이전트들은 _flush_task_queue()를 통해 자동으로 처리
+        # 이 메서드는 신호만 전달하고, 실제 취소는 SubController에서 처리
         pass
+    
+    def _flush_task_queue(self, bot: Any) -> None:
+        """
+        강제로 하위 에이전트들의 Task Queue를 플러시합니다.
+        
+        긴급 상황(적 기습 등)에서 즉각적인 전략 전환을 위해 사용됩니다.
+        
+        Args:
+            bot: 봇 인스턴스
+        """
+        # 하위 에이전트들에게 인터럽트 신호 전달
+        if hasattr(bot, 'combat_agent'):
+            if hasattr(bot.combat_agent, '_flush_task_queue'):
+                bot.combat_agent._flush_task_queue(bot)
+        
+        if hasattr(bot, 'economy_agent'):
+            if hasattr(bot.economy_agent, '_flush_task_queue'):
+                bot.economy_agent._flush_task_queue(bot)
+    
+    def _interrupt_sub_agents(self, bot: Any) -> None:
+        """
+        하위 에이전트들을 인터럽트하여 즉시 전략 전환을 강제합니다.
+        
+        Args:
+            bot: 봇 인스턴스
+        """
+        self._flush_task_queue(bot)
     
     def get_transition_signal(self) -> Optional[Dict[str, Any]]:
         """

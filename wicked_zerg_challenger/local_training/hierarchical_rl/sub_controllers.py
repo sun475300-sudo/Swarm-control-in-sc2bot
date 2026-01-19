@@ -101,8 +101,32 @@ class CombatAgent(SubController):
             # Clear task queue
             self.task_queue = []
             
+            # Cancel all pending unit commands
+            if hasattr(bot, 'units'):
+                try:
+                    # Get all army units
+                    army_units = []
+                    if hasattr(bot, 'units'):
+                        for unit in bot.units:
+                            if hasattr(unit, 'type_id'):
+                                unit_type = str(unit.type_id)
+                                if any(army_type in unit_type for army_type in 
+                                       ['ZERGLING', 'ROACH', 'HYDRALISK', 'MUTALISK', 'LURKER']):
+                                    army_units.append(unit)
+                    
+                    # Stop all units (cancel previous commands)
+                    for unit in army_units[:20]:  # Limit to 20 units per frame
+                        try:
+                            if hasattr(unit, 'stop') and not unit.is_idle:
+                                unit.stop()
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            
         except Exception as e:
-            print(f"[WARNING] Task queue flush error: {e}")
+            if hasattr(bot, 'iteration') and bot.iteration % 200 == 0:
+                print(f"[WARNING] Task queue flush error: {e}")
     
     def _execute_attack(self, bot) -> None:
         """공격 모드 실행"""
@@ -165,6 +189,8 @@ class EconomyAgent(SubController):
     
     def __init__(self):
         """내정 에이전트 초기화"""
+        self.task_queue = []  # Task queue for interrupt mechanism
+        self.current_strategy_mode = None  # Track current mode for transition detection
         self.last_expansion_time = 0
         self.target_drone_count = 16
         
@@ -177,6 +203,11 @@ class EconomyAgent(SubController):
             strategy_mode: 상위 에이전트가 결정한 전략 모드
         """
         try:
+            # INTERRUPT MECHANISM: If strategy mode changed, flush task queue
+            if self.current_strategy_mode != strategy_mode:
+                self._flush_task_queue(bot)
+                self.current_strategy_mode = strategy_mode
+            
             if strategy_mode == StrategyMode.ECONOMY:
                 self._execute_economy_focus(bot)
             elif strategy_mode == StrategyMode.ALL_IN:
@@ -186,6 +217,29 @@ class EconomyAgent(SubController):
                 
         except Exception as e:
             print(f"[WARNING] Economy Agent execution error: {e}")
+    
+    def _flush_task_queue(self, bot) -> None:
+        """
+        Task Queue 강제 플러시 (인터럽트 메커니즘)
+        
+        전략 모드가 변경될 때 이전 명령들을 즉시 취소합니다.
+        """
+        try:
+            # Cancel all pending worker commands
+            if hasattr(bot, 'workers'):
+                for worker in list(bot.workers)[:20]:  # Limit to 20 per frame
+                    try:
+                        if hasattr(worker, 'stop') and not worker.is_idle:
+                            worker.stop()
+                    except Exception:
+                        pass
+            
+            # Clear task queue
+            self.task_queue = []
+            
+        except Exception as e:
+            if hasattr(bot, 'iteration') and bot.iteration % 200 == 0:
+                print(f"[WARNING] Economy Agent task queue flush error: {e}")
     
     def _execute_economy_focus(self, bot) -> None:
         """경제 우선 모드 실행"""

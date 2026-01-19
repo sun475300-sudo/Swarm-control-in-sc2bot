@@ -60,7 +60,7 @@ class TrainingSessionManager:
     Enhanced training session manager with comprehensive tracking and adaptive improvements
     """
 
-def __init__(self, stats_file: Optional[Path] = None):
+    def __init__(self, stats_file: Optional[Path] = None):
         """
         Initialize TrainingSessionManager
 
@@ -95,7 +95,7 @@ def __init__(self, stats_file: Optional[Path] = None):
         print(f"[TRAINING MANAGER] Current session: {self.session_stats.total_games} games, "
               f"Win rate: {self.session_stats.win_rate:.1f}%")
 
-def _load_stats(self) -> None:
+    def _load_stats(self) -> None:
         """Load existing training statistics"""
         if not self.stats_file.exists():
             return
@@ -137,7 +137,7 @@ def _load_stats(self) -> None:
             import traceback
             traceback.print_exc()
 
-def record_game_result(
+    def record_game_result(
         self,
         game_id: int,
         map_name: str,
@@ -233,7 +233,7 @@ def record_game_result(
         # Print summary
         self._print_game_summary(game_result)
 
-def _print_game_summary(self, game_result: GameResult) -> None:
+    def _print_game_summary(self, game_result: GameResult) -> None:
         """Print game result summary"""
         print("\n" + "=" * 70)
         print("? [TRAINING SESSION] GAME RESULT SUMMARY")
@@ -260,7 +260,7 @@ def _print_game_summary(self, game_result: GameResult) -> None:
         print(f"  Total Parameters Updated: {self.session_stats.total_parameters_updated}")
         print("=" * 70)
 
-def get_adaptive_difficulty(self) -> str:
+    def get_adaptive_difficulty(self) -> str:
         """
         Get adaptive difficulty based on recent performance
         
@@ -307,7 +307,7 @@ def get_adaptive_difficulty(self) -> str:
         # If current difficulty is unknown or invalid, default to Medium
         return "Medium"
 
-def backup_learning_data(self, learned_data_path: Path) -> Optional[Path]:
+    def backup_learning_data(self, learned_data_path: Path) -> Optional[Path]:
         """
         Backup learning data before update
 
@@ -338,7 +338,7 @@ def backup_learning_data(self, learned_data_path: Path) -> Optional[Path]:
             print(f"[WARNING] Failed to backup learning data: {e}")
             return None
 
-def validate_learning_data(self, learned_data_path: Path) -> Tuple[bool, Optional[str]]:
+    def validate_learning_data(self, learned_data_path: Path) -> Tuple[bool, Optional[str]]:
         """
         Validate learning data before use
 
@@ -380,7 +380,7 @@ def validate_learning_data(self, learned_data_path: Path) -> Tuple[bool, Optiona
         except Exception as e:
             return False, f"Validation error: {e}"
 
-def record_error(self, error_type: str, error_message: str) -> None:
+    def record_error(self, error_type: str, error_message: str) -> None:
         """
         Record an error for recovery analysis
 
@@ -402,11 +402,11 @@ def record_error(self, error_type: str, error_message: str) -> None:
             print(f"\n[WARNING] {self.consecutive_errors} consecutive errors detected!")
             print("[WARNING] Consider stopping training to investigate issues.")
 
-def reset_error_count(self) -> None:
+    def reset_error_count(self) -> None:
         """Reset consecutive error count after successful game"""
         self.consecutive_errors = 0
 
-def get_training_summary(self) -> str:
+    def get_training_summary(self) -> str:
         """
         Get comprehensive training summary
 
