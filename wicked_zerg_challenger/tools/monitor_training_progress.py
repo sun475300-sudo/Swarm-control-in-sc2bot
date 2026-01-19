@@ -8,6 +8,7 @@
 
 import json
 import time
+import sys
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
@@ -52,112 +53,67 @@ def monitor_training_progress(interval: int = 10):
     try:
         while True:
             stats = load_training_stats()
-            if not stats:
-                print("[INFO] 통계 파일이 아직 생성되지 않았습니다. 게임이 시작되기를 기다리는 중...")
-                time.sleep(interval)
-                continue
             
-            session_stats = stats.get("session_stats", {})
-            game_history = stats.get("game_history", [])
-            
-            total_games = session_stats.get("total_games", 0)
-            wins = session_stats.get("wins", 0)
-            losses = session_stats.get("losses", 0)
-            win_rate = session_stats.get("win_rate", 0.0)
-            current_difficulty = session_stats.get("current_difficulty", "Unknown")
-            avg_game_time = session_stats.get("average_game_time", 0.0)
-            consecutive_wins = session_stats.get("consecutive_wins", 0)
-            consecutive_losses = session_stats.get("consecutive_losses", 0)
-            last_10_win_rate = session_stats.get("last_10_games_win_rate", 0.0)
-            
-            # 새 게임이 시작되었는지 확인
-            new_games = total_games - last_game_count
-            win_rate_change = win_rate - last_win_rate
-            
-            # 화면 클리어 (선택사항)
-            print("\033[2J\033[H", end="")  # ANSI escape codes for clear screen
-            
-            print("=" * 70)
-            print(f"게임 훈련 진행 상황 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            print("=" * 70)
-            print()
-            
-            # 전체 통계
-            print("? 전체 통계")
-            print("-" * 70)
-            print(f"  총 게임: {total_games}게임")
-            print(f"  승리: {wins}승 | 패배: {losses}패")
-            print(f"  승률: {win_rate:.2f}%", end="")
-            if win_rate_change > 0:
-                print(f" ?? +{win_rate_change:.2f}%")
-            elif win_rate_change < 0:
-                print(f" ?? {win_rate_change:.2f}%")
+            if stats:
+                session_stats = stats.get('session_stats', {})
+                total_games = session_stats.get('total_games', 0)
+                wins = session_stats.get('wins', 0)
+                losses = session_stats.get('losses', 0)
+                win_rate = session_stats.get('win_rate', 0.0)
+                avg_time = session_stats.get('average_game_time', 0.0)
+                current_difficulty = session_stats.get('current_difficulty', 'Unknown')
+                last_10_win_rate = session_stats.get('last_10_games_win_rate', 0.0)
+                
+                # 변화 감지
+                new_games = total_games - last_game_count
+                win_rate_change = win_rate - last_win_rate
+                
+                # 화면 클리어 (선택사항)
+                print("\n" * 2)
+                print("=" * 70)
+                print(f"업데이트 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                print("=" * 70)
+                print(f"총 게임 수: {total_games} ({'+' if new_games > 0 else ''}{new_games if new_games != 0 else ''})")
+                print(f"승리: {wins} | 패배: {losses}")
+                print(f"승률: {win_rate:.2f}% ({'+' if win_rate_change > 0 else ''}{win_rate_change:+.2f}%)")
+                print(f"평균 게임 시간: {format_time(avg_time)}")
+                print(f"현재 난이도: {current_difficulty}")
+                print(f"최근 10게임 승률: {last_10_win_rate:.2f}%")
+                
+                # 게임 히스토리
+                game_history = stats.get('game_history', [])
+                if game_history:
+                    print("\n최근 게임:")
+                    for game in game_history[-5:]:
+                        result = game.get('result', 'Unknown')
+                        game_time = game.get('game_time', 0.0)
+                        map_name = game.get('map_name', 'Unknown')
+                        print(f"  - {result} | {format_time(game_time)} | {map_name}")
+                
+                last_game_count = total_games
+                last_win_rate = win_rate
             else:
-                print()
-            print(f"  현재 난이도: {current_difficulty}")
-            print(f"  평균 게임 시간: {format_time(avg_game_time)}")
-            print(f"  연속 승리: {consecutive_wins} | 연속 패배: {consecutive_losses}")
-            print(f"  최근 10게임 승률: {last_10_win_rate:.2f}%")
-            print()
+                print("훈련 통계 파일을 찾을 수 없습니다.")
+                print("게임 훈련이 시작되지 않았거나 통계 파일이 생성되지 않았습니다.")
             
-            # 최근 게임
-            if game_history:
-                print("? 최근 게임")
-                print("-" * 70)
-                recent_games = game_history[-5:] if len(game_history) >= 5 else game_history
-                for game in recent_games:
-                    result_emoji = "?" if game.get("result") == "Victory" else "?"
-                    game_id = game.get("game_id", "?")
-                    result = game.get("result", "Unknown")
-                    map_name = game.get("map_name", "Unknown")
-                    opponent = game.get("opponent_race", "Unknown")
-                    difficulty = game.get("difficulty", "Unknown")
-                    game_time = game.get("game_time", 0.0)
-                    
-                    print(f"  {result_emoji} 게임 #{game_id}: {result} - {map_name} vs {opponent} ({difficulty}) - {format_time(game_time)}")
-                print()
-            
-            # 변화 추적
-            if new_games > 0:
-                print("? 변화 추적")
-                print("-" * 70)
-                print(f"  새 게임: +{new_games}게임")
-                if win_rate_change != 0:
-                    print(f"  승률 변화: {win_rate_change:+.2f}%")
-                print()
-            
-            # 권장 사항
-            print("? 권장 사항")
-            print("-" * 70)
-            if win_rate < 10.0:
-                print("  ??  승률이 매우 낮습니다. Easy 난이도로 조정 권장")
-            elif win_rate < 30.0:
-                print("  ??  승률이 낮습니다. Medium 난이도 유지 권장")
-            elif win_rate >= 70.0:
-                print("  ? 승률이 높습니다. 난이도 상승 고려")
-            else:
-                print("  ? 승률이 안정적입니다. 현재 난이도 유지")
-            
-            if consecutive_losses >= 10:
-                print("  ??  연속 패배가 많습니다. 전략 재검토 필요")
-            elif consecutive_wins >= 5:
-                print("  ? 연속 승리 중입니다! 난이도 상승 고려")
-            
-            print()
             print("=" * 70)
-            print(f"다음 업데이트: {interval}초 후... (Ctrl+C로 종료)")
-            
-            last_game_count = total_games
-            last_win_rate = win_rate
+            print(f"다음 업데이트까지 {interval}초 대기 중... (Ctrl+C로 종료)")
             
             time.sleep(interval)
             
     except KeyboardInterrupt:
         print("\n\n모니터링을 종료합니다.")
+        sys.exit(0)
     except Exception as e:
         print(f"\n[ERROR] 모니터링 중 오류 발생: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    import sys
-    interval = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-    monitor_training_progress(interval)
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='게임 훈련 진행 상황 모니터링')
+    parser.add_argument('interval', type=int, nargs='?', default=10,
+                        help='업데이트 간격 (초, 기본값: 10)')
+    
+    args = parser.parse_args()
+    monitor_training_progress(args.interval)

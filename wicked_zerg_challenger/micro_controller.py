@@ -39,14 +39,14 @@ try:
     SC2_AVAILABLE = True
 except ImportError:
     # Mock types for testing without SC2
-class Point2:
+    class Point2:
         def __init__(self, coords):
             self.x, self.y = coords[0], coords[1]
 
-def distance_to(self, other):
+        def distance_to(self, other):
             return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
 
-def towards(self, other, distance):
+        def towards(self, other, distance):
             dx = other.x - self.x
             dy = other.y - self.y
             dist = math.sqrt(dx**2 + dy**2)
@@ -139,90 +139,80 @@ and repulsive forces away from obstacles and other units.
     """
 
 
-def __init__(self, config: SwarmConfig = None):
-    """Initialize Potential Field Controller."""
+    def __init__(self, config: SwarmConfig = None):
+        """Initialize Potential Field Controller."""
+        self.config = config or SwarmConfig()
 
+    def calculate_potential_field(
+        self,
+        unit_position: Point2,
+        target_position: Point2,
+        nearby_units: List[Point2],
+        obstacles: List[Point2] = None
+    ) -> Point2:
+        """
+        Calculate potential field force at unit position.
 
-self.config = config or SwarmConfig()
+        Args:
+            unit_position: Current position of the unit
+            target_position: Target/goal position (attractive)
+            nearby_units: Positions of nearby units (repulsive)
+            obstacles: Positions of obstacles (repulsive)
 
+        Returns:
+            Force vector (Point2) representing desired movement direction
+        """
+        obstacles = obstacles or []
 
-def calculate_potential_field(
-    self,
-    unit_position: Point2,
-    target_position: Point2,
-    nearby_units: List[Point2],
-    obstacles: List[Point2] = None
-) -> Point2:
-    """
-Calculate potential field force at unit position.
+        # Attractive force toward target (goal)
+        to_target = Point2((target_position.x - unit_position.x,
+                            target_position.y - unit_position.y))
+        target_distance = _magnitude(to_target)
 
-Args:
-unit_position: Current position of the unit
-target_position: Target/goal position (attractive)
-nearby_units: Positions of nearby units (repulsive)
-obstacles: Positions of obstacles (repulsive)
+        if target_distance > 0:
+            attractive_force = Point2((
+                to_target.x / target_distance * self.config.potential_field_strength,
+                to_target.y / target_distance * self.config.potential_field_strength
+            ))
+        else:
+            attractive_force = _zero_point()
 
-Returns:
-Force vector (Point2) representing desired movement direction
-    """
+        # Repulsive force from nearby units (separation)
+        repulsive_force = _zero_point()
+        for nearby_unit in nearby_units:
+            to_unit = Point2((nearby_unit.x - unit_position.x,
+                              nearby_unit.y - unit_position.y))
+            unit_distance = _magnitude(to_unit)
 
+            if 0 < unit_distance < self.config.separation_distance:
+                # Strong repulsion when too close
+                repulsion_strength = self.config.obstacle_repulsion / (unit_distance + 0.1)
+                repulsive_force = Point2((
+                    repulsive_force.x - to_unit.x / unit_distance * repulsion_strength,
+                    repulsive_force.y - to_unit.y / unit_distance * repulsion_strength
+                ))
 
-obstacles = obstacles or []
+        # Repulsive force from obstacles
+        for obstacle in obstacles:
+            to_obstacle = Point2((obstacle.x - unit_position.x,
+                                  obstacle.y - unit_position.y))
+            obstacle_distance = _magnitude(to_obstacle)
 
-# Attractive force toward target (goal)
-to_target = Point2((target_position.x - unit_position.x,
-                    target_position.y - unit_position.y))
-target_distance = _magnitude(to_target)
+            if obstacle_distance < self.config.separation_distance * 2:
+                repulsion_strength = self.config.obstacle_repulsion / (obstacle_distance + 0.1)
+                repulsive_force = Point2((
+                    repulsive_force.x - to_obstacle.x / obstacle_distance * repulsion_strength,
+                    repulsive_force.y - to_obstacle.y / obstacle_distance * repulsion_strength
+                ))
 
-if target_distance > 0:
-    pass
-attractive_force = Point2((
-    to_target.x / target_distance * self.config.potential_field_strength,
-    to_target.y / target_distance * self.config.potential_field_strength
-))
-else:
-    pass
-attractive_force = _zero_point()
+        # Combine forces
+        total_force = Point2((
+            attractive_force.x + repulsive_force.x,
+            attractive_force.y + repulsive_force.y
+        ))
 
-# Repulsive force from nearby units (separation)
-repulsive_force = _zero_point()
-for nearby_unit in nearby_units:
-    pass
-to_unit = Point2((nearby_unit.x - unit_position.x,
-                  nearby_unit.y - unit_position.y))
-unit_distance = _magnitude(to_unit)
-
-if 0 < unit_distance < self.config.separation_distance:
-    # Strong repulsion when too close
-repulsion_strength = self.config.obstacle_repulsion / (unit_distance + 0.1)
-repulsive_force = Point2((
-    repulsive_force.x - to_unit.x / unit_distance * repulsion_strength,
-    repulsive_force.y - to_unit.y / unit_distance * repulsion_strength
-))
-
-# Repulsive force from obstacles
-for obstacle in obstacles:
-    pass
-to_obstacle = Point2((obstacle.x - unit_position.x,
-                      obstacle.y - unit_position.y))
-obstacle_distance = _magnitude(to_obstacle)
-
-if obstacle_distance < self.config.separation_distance * 2:
-    pass
-repulsion_strength = self.config.obstacle_repulsion / (obstacle_distance + 0.1)
-repulsive_force = Point2((
-    repulsive_force.x - to_obstacle.x / obstacle_distance * repulsion_strength,
-    repulsive_force.y - to_obstacle.y / obstacle_distance * repulsion_strength
-))
-
-# Combine forces
-total_force = Point2((
-    attractive_force.x + repulsive_force.x,
-    attractive_force.y + repulsive_force.y
-))
-
-# Limit force magnitude
-return _normalize(total_force, self.config.max_speed)
+        # Limit force magnitude
+        return _normalize(total_force, self.config.max_speed)
 
 
 class BoidsController:
@@ -347,84 +337,73 @@ desired_velocity = Point2((
 return _normalize(desired_velocity, self.config.max_speed)
 
 
-def _calculate_separation(
-    self,
-    unit_position: Point2,
-    nearby_units: List[Tuple[Point2, Point2]]
-) -> Point2:
-    """Calculate separation force (steer away from neighbors)."""
+    def _calculate_separation(
+        self,
+        unit_position: Point2,
+        nearby_units: List[Tuple[Point2, Point2]]
+    ) -> Point2:
+        """Calculate separation force (steer away from neighbors)."""
+        separation_force = _zero_point()
+        neighbor_count = 0
+
+        for neighbor_pos, _ in nearby_units:
+            distance = _distance(unit_position, neighbor_pos)
+
+            if 0 < distance < self.config.separation_distance:
+                # Steer away from neighbor
+                away_vector = Point2((
+                    unit_position.x - neighbor_pos.x,
+                    unit_position.y - neighbor_pos.y
+                ))
+                # Normalize and weight by distance (closer = stronger)
+                weight = 1.0 / distance
+                separation_force = Point2((
+                    separation_force.x + away_vector.x * weight,
+                    separation_force.y + away_vector.y * weight
+                ))
+                neighbor_count += 1
+
+        if neighbor_count > 0:
+            separation_force = Point2((
+                separation_force.x / neighbor_count,
+                separation_force.y / neighbor_count
+            ))
+
+        return separation_force
 
 
-separation_force = _zero_point()
-neighbor_count = 0
+    def _calculate_alignment(
+        self,
+        unit_velocity: Point2,
+        nearby_units: List[Tuple[Point2, Point2]]
+    ) -> Point2:
+        """Calculate alignment force (steer toward average neighbor velocity)."""
+        neighbor_velocities = []
+        for _, neighbor_vel in nearby_units:
+            if _magnitude(neighbor_vel) < self.config.alignment_radius:
+                neighbor_velocities.append(neighbor_vel)
 
-for neighbor_pos, _ in nearby_units:
-    pass
-distance = _distance(unit_position, neighbor_pos)
+        if not neighbor_velocities:
+            return _zero_point()
 
-if 0 < distance < self.config.separation_distance:
-    # Steer away from neighbor
-away_vector = Point2((
-    unit_position.x - neighbor_pos.x,
-    unit_position.y - neighbor_pos.y
-))
-# Normalize and weight by distance (closer = stronger)
-weight = 1.0 / distance
-separation_force = Point2((
-    separation_force.x + away_vector.x * weight,
-    separation_force.y + away_vector.y * weight
-))
-neighbor_count += 1
-
-if neighbor_count > 0:
-    pass
-separation_force = Point2((
-    separation_force.x / neighbor_count,
-    separation_force.y / neighbor_count
-))
-
-return separation_force
+        avg_velocity = _average_points(neighbor_velocities)
+        # Steer toward average velocity
+        return Point2((
+            avg_velocity.x - unit_velocity.x,
+            avg_velocity.y - unit_velocity.y
+        ))
 
 
-def _calculate_alignment(
-    self,
-    unit_velocity: Point2,
-    nearby_units: List[Tuple[Point2, Point2]]
-) -> Point2:
-    """Calculate alignment force (steer toward average neighbor velocity)."""
-
-
-neighbor_velocities = []
-for _, neighbor_vel in nearby_units:
-    pass
-if _magnitude(neighbor_vel) < self.config.alignment_radius:
-    pass
-neighbor_velocities.append(neighbor_vel)
-
-if not neighbor_velocities:
-    pass
-return _zero_point()
-
-avg_velocity = _average_points(neighbor_velocities)
-# Steer toward average velocity
-return Point2((
-    avg_velocity.x - unit_velocity.x,
-    avg_velocity.y - unit_velocity.y
-))
-
-
-def _calculate_cohesion(
-    self,
-    unit_position: Point2,
-    nearby_units: List[Tuple[Point2, Point2]]
-) -> Point2:
-    """Calculate cohesion force (steer toward average neighbor position)."""
-
-
-neighbor_positions = [
-    neighbor_pos for neighbor_pos, _ in nearby_units
-    if _distance(unit_position, neighbor_pos) < self.config.cohesion_radius
-]
+    def _calculate_cohesion(
+        self,
+        unit_position: Point2,
+        nearby_units: List[Tuple[Point2, Point2]]
+    ) -> Point2:
+        """Calculate cohesion force (steer toward average neighbor position)."""
+        neighbor_positions = [
+            neighbor_pos for neighbor_pos, _ in nearby_units
+            if _distance(unit_position, neighbor_pos) < self.config.cohesion_radius
+        ]
 
 if not neighbor_positions:
     pass
@@ -453,20 +432,22 @@ Real-world applications:
     """
 
 
-def __init__(self, bot=None, config: SwarmConfig = None):
-    """
-Initialize Micro Controller.
+    def __init__(self, bot=None, config: SwarmConfig = None, use_optimization: bool = True):
+        """
+        Initialize Micro Controller.
 
-Args:
-bot: BotAI instance (optional, for SC2 integration)
-config: Swarm configuration
-    """
-
-
-self.bot = bot
-self.config = config or SwarmConfig()
-self.potential_field = PotentialFieldController(config)
-self.boids = BoidsController(config)
+        Args:
+            bot: BotAI instance (optional, for SC2 integration)
+            config: Swarm configuration
+            use_optimization: Enable spatial partitioning optimization (default: True)
+        """
+        self.bot = bot
+        self.config = config or SwarmConfig()
+        self.potential_field = PotentialFieldController(config)
+        # OPTIMIZATION: Enable spatial partitioning by default for O(N^2) -> O(N) optimization
+        # Use Grid-based for dense distributions (default), K-D Tree for sparse (< 200 units)
+        # Grid-based is O(N) and works better for clustered units like Zerglings
+        self.boids = BoidsController(config, use_kd_tree=False)  # Grid-based is default and faster
 
 
 def calculate_swarm_movement(
