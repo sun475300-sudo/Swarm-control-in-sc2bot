@@ -158,9 +158,18 @@ def _cleanup_build_reservations(self) -> None:
     pass
 
     async def fix_production_bottleneck(self) -> None:
-    b = self.bot
-    self._cleanup_build_reservations()
-    try:
+        """
+        Fix production bottlenecks and boost early game build order.
+        """
+        b = self.bot
+        self._cleanup_build_reservations()
+        
+        # === EARLY GAME BOOSTER: First 3 minutes - Maximum priority ===
+        time = getattr(b, "time", 0.0)
+        if time <= 180:  # First 3 minutes
+            await self._boost_early_game()
+        
+        try:
     pass
 
     except Exception:

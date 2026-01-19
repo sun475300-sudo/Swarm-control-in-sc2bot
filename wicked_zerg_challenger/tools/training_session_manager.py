@@ -118,7 +118,7 @@ def _load_stats(self) -> None:
         except Exception as e:
             print(f"[WARNING] Failed to load training stats: {e}")
 
-def _save_stats(self) -> None:
+    def _save_stats(self) -> None:
         """Save current training statistics"""
         try:
             data = {
@@ -129,8 +129,13 @@ def _save_stats(self) -> None:
 
             with open(self.stats_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            # Log successful save
+            print(f"[TRAINING MANAGER] Statistics saved: {len(self.game_history)} games, win rate: {self.session_stats.win_rate:.2f}%")
         except Exception as e:
-            print(f"[WARNING] Failed to save training stats: {e}")
+            print(f"[ERROR] Failed to save training stats: {e}")
+            import traceback
+            traceback.print_exc()
 
 def record_game_result(
         self,
@@ -218,7 +223,12 @@ def record_game_result(
         self.session_stats.total_parameters_updated += parameters_updated
 
         # Save statistics
-        self._save_stats()
+        try:
+            self._save_stats()
+            if self.bot.iteration % 50 == 0:
+                print(f"[TRAINING MANAGER] Statistics saved successfully")
+        except Exception as e:
+            print(f"[ERROR] Failed to save statistics: {e}")
 
         # Print summary
         self._print_game_summary(game_result)

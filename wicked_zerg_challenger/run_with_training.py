@@ -370,17 +370,24 @@ def main():
 
                 # Record game result in session manager
                 if session_manager:
-                    session_manager.record_game_result(
-                        game_id=game_count,
-                        map_name=map_name,
-                        opponent_race=opponent_race.name,
-                        difficulty=difficulty.name,
-                        result=game_result_str,
-                        game_time=game_time,
-                        build_order_score=build_order_score,
-                        loss_reason=loss_reason,
-                        parameters_updated=parameters_updated
-                    )
+                    try:
+                        print(f"[TRAINING] Recording game result: Game #{game_count}, Result: {game_result_str}, Time: {game_time:.1f}s")
+                        session_manager.record_game_result(
+                            game_id=game_count,
+                            map_name=map_name,
+                            opponent_race=opponent_race.name,
+                            difficulty=difficulty.name,
+                            result=game_result_str,
+                            game_time=game_time,
+                            build_order_score=build_order_score,
+                            loss_reason=loss_reason,
+                            parameters_updated=parameters_updated
+                        )
+                        print(f"[TRAINING] Game result recorded successfully")
+                    except Exception as e:
+                        print(f"[ERROR] Failed to record game result: {e}")
+                        import traceback
+                        traceback.print_exc()
 
                 print(f"\n{'='*70}")
                 print(f"? [GAME #{game_count}] COMPLETED SUCCESSFULLY")
