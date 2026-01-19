@@ -15,6 +15,20 @@ def get_ngrok_url() -> str:
     """현재 Ngrok 터널 URL 가져오기"""
  # 1. API에서 시도
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -36,6 +50,20 @@ def get_ngrok_url() -> str:
 
  # 2. 파일에서 시도
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -62,6 +90,20 @@ def update_android_api_client(ngrok_url: str):
  return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -100,6 +142,20 @@ def update_manus_api_client(ngrok_url: str):
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

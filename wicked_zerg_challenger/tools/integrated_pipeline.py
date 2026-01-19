@@ -85,6 +85,20 @@ def main():
      dst = LOCAL_REPLAY_DIR / src.name
  if not dst.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -106,12 +120,26 @@ def main():
  if current_replays:
      print(f"   [VALIDATE] Validating replay files...")
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import sc2reader
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import sc2reader
  SC2READER_AVAILABLE = True
  except ImportError:
      SC2READER_AVAILABLE = False
@@ -126,6 +154,20 @@ def main():
 
  for replay_path in current_replays:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -270,6 +312,20 @@ def main():
 
  # IMPROVED: Use learning tracker to manage completed replays
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -305,6 +361,20 @@ def main():
      print(f"   [CLEANUP] Moving processed replays to {processed_dir}...")
  for rp in current_replays:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

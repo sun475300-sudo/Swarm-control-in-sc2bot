@@ -15,6 +15,20 @@ try:
  b = f.read()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -28,6 +42,20 @@ try:
      s = b.decode("latin1")
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

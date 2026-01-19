@@ -37,6 +37,20 @@ def detect_errors(self, file_path: Path) -> List[str]:
  errors = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -49,6 +63,20 @@ def detect_errors(self, file_path: Path) -> List[str]:
 
  for encoding in encodings:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -69,6 +97,20 @@ def detect_errors(self, file_path: Path) -> List[str]:
      if used_encoding != 'utf-8':
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -127,6 +169,20 @@ def detect_errors(self, file_path: Path) -> List[str]:
 def fix_indentation(self, file_path: Path) -> bool:
     """�鿩���� ���� ����"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -157,6 +213,20 @@ def fix_indentation(self, file_path: Path) -> bool:
      # ��� ����
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -181,6 +251,20 @@ def fix_indentation(self, file_path: Path) -> bool:
 def fix_syntax_errors(self, file_path: Path) -> bool:
     """���� ���� ���� �õ�"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -226,6 +310,20 @@ def fix_syntax_errors(self, file_path: Path) -> bool:
      # ��� ����
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

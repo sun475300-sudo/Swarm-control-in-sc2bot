@@ -44,6 +44,20 @@ def analyze_build_orders(self) -> List[Dict]:
  for file_path in build_order_files:
      if file_path.exists():
          try:
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
              pass
          pass
 
@@ -79,6 +93,20 @@ def analyze_race_strategies(self) -> Dict[str, List[Dict]]:
          if file_path.suffix == '.json':
              pass
          try:
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
              pass
          pass
 
@@ -107,6 +135,20 @@ def analyze_map_strategies(self) -> Dict[str, List[Dict]]:
  for file_path in map_strategy_files:
      if file_path.exists():
          try:
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
              pass
          pass
 

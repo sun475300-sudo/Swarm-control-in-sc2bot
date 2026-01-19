@@ -56,6 +56,20 @@ def detect_encoding(file_path: Path) -> str:
 
  for encoding in encodings:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -88,6 +102,20 @@ def should_convert_file(file_path: Path) -> bool:
 def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
     """파일을 EUC-KR로 변환"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -106,6 +134,20 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
 
  # 파일 읽기
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -118,6 +160,20 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
 
  # EUC-KR로 변환 시도
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -133,6 +189,20 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
  # 백업 파일 생성
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -145,6 +215,20 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
 
  # EUC-KR로 저장
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -155,6 +239,20 @@ def convert_file_to_euc_kr(file_path: Path) -> Tuple[bool, str]:
  except Exception as e:
      # 실패 시 백업에서 복원
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -30,6 +30,13 @@ def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
 
         try:
             pass
+        except Exception:
+            pass
+        pass
+
+        except Exception:
+            pass
+            pass
         pass
 
         except Exception:
@@ -44,8 +51,7 @@ def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
             _ = lines  # noqa: F841
 
             # 1. loguru_logger 미정의 에러 수정
-            if 'loguru_logger' in content and '
-from loguru import logger' not in content:
+            if 'loguru_logger' in content and 'from loguru import logger' not in content:
                 # loguru_logger를 logger로 변경
                 content = re.sub(r'\bloguru_logger\.', 'logger.', content)
                 content = re.sub(r'\bloguru_logger\s*=', 'logger =', content)

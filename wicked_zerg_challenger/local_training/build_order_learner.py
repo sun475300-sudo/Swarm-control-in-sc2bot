@@ -98,6 +98,20 @@ def _load_build_orders(self):
 
  for json_file in json_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -117,6 +131,20 @@ def _load_build_orders(self):
 
  for build_data in builds:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -138,6 +166,20 @@ def _load_build_orders(self):
 def _parse_build_order(self, data: Dict) -> Optional[BuildOrder]:
     """Parse build order from dictionary"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -448,6 +490,20 @@ def _has_resources(self, step: BuildOrderStep, unit_type: Any) -> bool:
  # Fallback to game cost if not specified
  if required_minerals is None or required_gas is None:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -500,6 +556,20 @@ def _has_tech_requirements(self, unit_type: Any) -> bool:
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

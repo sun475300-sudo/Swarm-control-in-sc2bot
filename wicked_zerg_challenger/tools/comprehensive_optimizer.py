@@ -121,6 +121,20 @@ def check_code_style_consistency(self) -> Dict:
 
  for file_path in python_files[:100]: # 샘플링
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -202,6 +216,20 @@ def optimize_code(self) -> List[str]:
  large_files = []
  for file_path in python_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -223,6 +251,20 @@ def optimize_code(self) -> List[str]:
  complex_functions = []
  for file_path in python_files[:50]: # 샘플링
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -316,6 +358,20 @@ def execute_optimization(self):
      for file_path in unnecessary['files']:
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -331,6 +387,20 @@ def execute_optimization(self):
      for dir_path in unnecessary['dirs']:
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

@@ -155,6 +155,20 @@ def optimize_file(file_path: Path) -> Dict:
  enhancer = PerformanceEnhancer()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

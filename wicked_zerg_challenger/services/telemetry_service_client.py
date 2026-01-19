@@ -63,6 +63,20 @@ def _check_service_availability(self) -> bool:
  return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -137,6 +151,20 @@ def _send_to_service(self, data: List[Dict[str, Any]]) -> bool:
 
  for attempt in range(self.config.retry_attempts):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -173,6 +201,20 @@ def _save_to_local(self, data: List[Dict[str, Any]]) -> None:
  data: List of telemetry data dictionaries
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -182,6 +224,20 @@ def _save_to_local(self, data: List[Dict[str, Any]]) -> None:
  existing_data = []
  if self.local_telemetry_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

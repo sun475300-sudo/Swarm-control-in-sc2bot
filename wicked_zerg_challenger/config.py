@@ -3,11 +3,9 @@
 import json
 import os
 from dataclasses import dataclass
-from enum import Enum
-import auto
+from enum import Enum, auto
 from pathlib import Path
-from typing import Any
-import Optional
+from typing import Any, Optional
 import logging
 
 try:
@@ -92,12 +90,10 @@ class GamePhase(Enum):
 
 class EnemyRace(Enum):
     """Opponent race"""
-
-
-TERRAN = auto()
-PROTOSS = auto()
-ZERG = auto()
-UNKNOWN = auto()
+    TERRAN = auto()
+    PROTOSS = auto()
+    ZERG = auto()
+    UNKNOWN = auto()
 
 
 @dataclass(frozen=True)

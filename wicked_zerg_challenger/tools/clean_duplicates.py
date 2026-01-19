@@ -25,6 +25,20 @@ def calculate_file_hash(file_path: Path, chunk_size: int = 8192) -> str:
     """Calculate MD5 hash of a file."""
  hash_md5 = hashlib.md5()
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -109,6 +123,20 @@ def remove_duplicates(duplicates: Dict[str, List[Path]], dry_run: bool = True, v
  else:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -138,6 +166,20 @@ def clean_temp_files(directory: Path, dry_run: bool = True) -> int:
  else:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -157,14 +199,28 @@ def clean_temp_files(directory: Path, dry_run: bool = True) -> int:
  else:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import shutil
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import shutil
  shutil.rmtree(temp_dir)
-     print(f"[REMOVED DIR] {temp_dir}")
+    print(f"[REMOVED DIR] {temp_dir}")
  removed_count += 1
  except (IOError, PermissionError) as e:
      print(f"[ERROR] Cannot remove {temp_dir}: {e}")

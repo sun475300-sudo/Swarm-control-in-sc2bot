@@ -18,6 +18,20 @@ print("Removing files...")
 for file_path in files_to_remove:
     full_path = base_dir / file_path
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 

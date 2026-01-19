@@ -58,6 +58,20 @@ def run_epochs(
  # IMPROVED: Enhanced manifest handling with validation
  # Keep a stable pointer for downstream tools
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

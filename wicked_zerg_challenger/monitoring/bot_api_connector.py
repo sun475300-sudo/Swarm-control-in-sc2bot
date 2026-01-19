@@ -117,6 +117,20 @@ def update_state(self, bot_instance) -> bool:
  bool: True if update was successful, False otherwise
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -170,6 +184,20 @@ def _extract_units(self, bot_instance) -> Dict[str, int]:
     """Extract unit counts from bot instance"""
  units = {}
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -189,6 +217,20 @@ def _extract_units(self, bot_instance) -> Dict[str, int]:
 
  for name, unit_id in unit_types.items():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -251,27 +293,41 @@ def _send_state_update(self, state: GameState) -> bool:
  bool: True if successful, False otherwise
      """
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import requests
+     pass
+ pass
 
-     url = f"{self.api_url}/api/game-state/update"
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import requests
+
+    url = f"{self.api_url}/api/game-state/update"
  data = {
-     "current_frame": state.current_frame,
-     "game_status": state.game_status,
-     "is_running": state.is_running,
-     "minerals": state.minerals,
-     "vespene": state.vespene,
-     "supply_used": state.supply_used,
-     "supply_cap": state.supply_cap,
-     "units": state.units,
-     "threat_level": state.threat_level,
-     "strategy_mode": state.strategy_mode,
-     "map_name": state.map_name,
-     "last_update": state.timestamp
+    "current_frame": state.current_frame,
+    "game_status": state.game_status,
+    "is_running": state.is_running,
+    "minerals": state.minerals,
+    "vespene": state.vespene,
+    "supply_used": state.supply_used,
+    "supply_cap": state.supply_cap,
+    "units": state.units,
+    "threat_level": state.threat_level,
+    "strategy_mode": state.strategy_mode,
+    "map_name": state.map_name,
+    "last_update": state.timestamp
  }
 
  response = requests.post(url, json = data, timeout = 1.0)
@@ -329,13 +385,27 @@ def init_connector(api_url: str = "http://localhost:8000") -> BotApiConnector:
 # Auto-initialize if not already initialized
 if bot_connector is None:
     try:
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
     except Exception:
         pass
-        import os
-        api_url = os.environ.get("MONITORING_API_URL", "http://localhost:8000")
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+import os
+    api_url = os.environ.get("MONITORING_API_URL", "http://localhost:8000")
  bot_connector = BotApiConnector(api_url)
     logger.info("BotApiConnector auto-initialized")
  except Exception as e:

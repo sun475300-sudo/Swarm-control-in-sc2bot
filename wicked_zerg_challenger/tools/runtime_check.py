@@ -70,6 +70,20 @@ def find_py_files(root: str) -> List[str]:
 
 def check_syntax(file_path: str) -> Tuple[bool, str]:
     try:
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
+        pass
+    pass
+
+    except Exception:
+        pass
         pass
     pass
 
@@ -114,6 +128,20 @@ def run_env_checks(logger: logging.Logger) -> int:
 
  # Check nvidia-smi
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -185,6 +213,20 @@ import importlib,sys; importlib.invalidate_caches();
 import {module_name}",
  ]
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

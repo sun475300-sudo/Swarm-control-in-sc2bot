@@ -34,6 +34,20 @@ def main():
     strategy_db_path = replay_dir / "strategy_db.json"
  if strategy_db_path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -91,6 +105,20 @@ import traceback
     status_file = replay_dir / "learning_status.json"
  if status_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -118,6 +146,20 @@ import traceback
     log_file = replay_dir / "learning_log.txt"
  if log_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -147,22 +189,36 @@ import traceback
  # 6. Check Python processes
     print("\n[6] Running Processes")
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import subprocess
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import subprocess
  result = subprocess.run(
-     ["tasklist", "/FI", "IMAGENAME eq python.exe", "/FO", "CSV"],
+    ["tasklist", "/FI", "IMAGENAME eq python.exe", "/FO", "CSV"],
  capture_output=True,
  text=True,
-     encoding='utf-8',
-     errors='ignore'
+    encoding='utf-8',
+    errors='ignore'
  )
-     python_processes = [line for line in result.stdout.split('\n') if 'python.exe' in line.lower()]
+    python_processes = [line for line in result.stdout.split('\n') if 'python.exe' in line.lower()]
  python_count = len(python_processes) - 1 # -1 for header
-     print(f"    Python processes: {python_count}")
+    print(f"    Python processes: {python_count}")
  if python_count > 0:
      print(f"    Status: ? Python processes running")
  else:

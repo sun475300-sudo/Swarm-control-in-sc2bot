@@ -86,12 +86,40 @@ def _load_stats(self) -> Dict:
     """Load map performance statistics"""
  if self.stats_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
      except Exception:
          pass
          try:
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
              pass
          pass
 
@@ -111,6 +139,20 @@ def _save_stats(self):
  max_retries = 3
  for attempt in range(max_retries):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

@@ -93,6 +93,20 @@ def analyze_dependencies(self) -> Dict[str, List[str]]:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -129,6 +143,20 @@ def find_entry_points(self) -> List[Dict]:
      for bat_file in bat_dir.glob("*.bat"):
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -181,6 +209,20 @@ def _extract_batch_description(self, content: str) -> str:
 def _extract_file_description(self, file_path: Path) -> str:
     """파일에서 설명 추출"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -216,6 +258,20 @@ def analyze_test_coverage(self) -> Dict:
      test_info["test_files"].append(str(rel_path))
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

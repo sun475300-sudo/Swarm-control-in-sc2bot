@@ -17,6 +17,20 @@ def fix_markdown_file(file_path: Path) -> List[str]:
  fixes = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -144,6 +158,20 @@ def fix_markdown_file(file_path: Path) -> List[str]:
 
  # 파일 저장
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

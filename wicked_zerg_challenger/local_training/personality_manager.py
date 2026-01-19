@@ -161,6 +161,20 @@ def get_taunt_message(self) -> str:
  Send strategy hints via chat at game start
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -192,6 +206,20 @@ def get_taunt_message(self) -> str:
  bool: Whether GG was detected
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -271,6 +299,20 @@ def log_personality_info(self) -> None:
  This method is called periodically to handle queued chat messages
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -26,12 +26,26 @@ def check_imports():
 
  # Core SC2 library
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     from sc2.data import Race
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+from sc2.data import Race
 from sc2.player import Bot
     print("  ? sc2 (burnysc2) core imports successful")
 
@@ -97,6 +111,20 @@ def check_run_py():
 
  # Check if run.py has main function
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -143,6 +171,20 @@ def check_bot_instantiation():
  errors = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -175,6 +217,20 @@ def check_paths():
     zerg_net_path = project_root / "zerg_net.py"
  if zerg_net_path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -196,6 +252,20 @@ def check_paths():
     bot_pro_path = project_root / "wicked_zerg_bot_pro.py"
  if bot_pro_path.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -233,6 +303,20 @@ def check_requirements():
     print("  ? requirements.txt exists")
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -298,6 +382,20 @@ def simulate_arena_start():
     print("\n[VALIDATION] Simulating AI Arena server startup...")
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

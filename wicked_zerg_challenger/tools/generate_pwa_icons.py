@@ -41,6 +41,20 @@ def create_icon(size: int, output_path: str):
 
     # Draw "Z" letter (Zerg symbol)
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

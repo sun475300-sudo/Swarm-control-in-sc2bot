@@ -80,3 +80,13 @@ class WickedZergBotPro(BotAI):
             game_result: Game result (Victory, Defeat, etc.)
         """
         await super().on_end(game_result)
+        
+        # Store training result for run_with_training.py
+        # This allows run_with_training.py to retrieve game statistics
+        self._training_result = {
+            "game_result": str(game_result),
+            "game_time": getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0,
+            "build_order_score": getattr(self, 'build_order_score', None),
+            "loss_reason": getattr(self, 'loss_reason', None),
+            "parameters_updated": getattr(self, 'parameters_updated', 0)
+        }

@@ -190,6 +190,20 @@ def __init__(
      pass
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -274,6 +288,20 @@ def analyze_error(
 
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -359,6 +387,20 @@ def analyze_gap_feedback(
  return None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -446,6 +488,20 @@ def _parse_gemini_gap_response(
  ) -> Optional[PatchSuggestion]:
      """Gemini의 Gap Analysis 응답 파싱"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -522,6 +578,20 @@ def _collect_error_context(
      pass
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -557,6 +627,20 @@ def _collect_error_context(
      pass
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -616,6 +700,20 @@ def _extract_source_files(self, error_context: ErrorContext) -> Dict[str, str]:
      pass
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -768,6 +866,20 @@ def _parse_gemini_response(self, response_text: str, error_context: ErrorContext
     """Gemini ÀÀ´ä ÆÄ½Ì"""
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -870,6 +982,20 @@ def _save_patch_suggestion(self, error_context: ErrorContext, patch: PatchSugges
 
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -932,6 +1058,20 @@ def apply_patch(self, patch: PatchSuggestion) -> bool:
 
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

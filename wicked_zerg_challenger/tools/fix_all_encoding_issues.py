@@ -15,6 +15,20 @@ def detect_encoding(file_path):
 
  for encoding in encodings:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -45,6 +59,20 @@ def fix_file_encoding(file_path):
     if detected_encoding == 'utf-8':
         # Already UTF-8, check if it has BOM
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -68,6 +96,20 @@ def fix_file_encoding(file_path):
  # Convert to UTF-8
     print(f"[FIX] Converting {detected_encoding} -> UTF-8: {file_path}")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -97,6 +139,20 @@ def main():
 
  python_files = []
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -111,6 +167,20 @@ def main():
      if file.endswith('.py'):
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -135,6 +205,20 @@ def main():
 
  for file_path in python_files:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

@@ -65,6 +65,20 @@ def check_key(name: str, value: str, is_sensitive: bool=True) -> dict:
      f"{name.lower().replace('_', '_')}.txt"
  if secrets_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -81,6 +95,20 @@ def check_key(name: str, value: str, is_sensitive: bool=True) -> dict:
     api_keys_file = project_root / "api_keys" / f"{name}.txt"
  if api_keys_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

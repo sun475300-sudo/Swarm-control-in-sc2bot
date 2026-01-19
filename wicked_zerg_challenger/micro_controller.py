@@ -26,6 +26,14 @@ except ImportError:
     SPATIAL_PARTITION_AVAILABLE = False
     OptimizedSpatialPartition = None
 
+# Import K-D Tree for sparse distribution optimization
+try:
+    from utils.kd_tree import KDTree
+    KD_TREE_AVAILABLE = True
+except ImportError:
+    KD_TREE_AVAILABLE = False
+    KDTree = None
+
 try:
     from sc2.position import Point2
     SC2_AVAILABLE = True
@@ -233,24 +241,41 @@ This is the same algorithm used in:
     """
 
 
-def __init__(self, config: SwarmConfig = None):
-    """Initialize Boids Controller."""
-    self.config = config or SwarmConfig()
-    
-    # OPTIMIZATION: Use spatial partitioning for O(N^2) -> O(N) optimization
-    if SPATIAL_PARTITION_AVAILABLE and OptimizedSpatialPartition:
-        # Cell size should be ~2x the max interaction radius
-        max_radius = max(
-            self.config.separation_distance,
-            self.config.cohesion_radius,
-            self.config.alignment_radius or 10.0
-        )
-        cell_size = max_radius * 0.5  # Optimal cell size
-        self.spatial_partition = OptimizedSpatialPartition(cell_size=cell_size)
-        self._use_spatial_partition = True
-    else:
-        self.spatial_partition = None
-        self._use_spatial_partition = False
+def __init__(self, config: SwarmConfig = None, use_kd_tree: bool = False):
+        """
+        Initialize Boids Controller.
+        
+        Args:
+            config: Swarm configuration
+            use_kd_tree: Use K-D Tree instead of Grid (better for sparse distributions)
+        """
+        self.config = config or SwarmConfig()
+        self.use_kd_tree = use_kd_tree
+        
+        # OPTIMIZATION: Use spatial partitioning for O(N^2) -> O(N) optimization
+        # Option 1: K-D Tree (better for sparse distributions, O(N log N))
+        if use_kd_tree and KD_TREE_AVAILABLE and KDTree:
+            self.kd_tree = KDTree()
+            self.spatial_partition = None
+            self._use_spatial_partition = False
+            self._use_kd_tree = True
+        # Option 2: Grid-based (better for dense distributions, O(N))
+        elif SPATIAL_PARTITION_AVAILABLE and OptimizedSpatialPartition:
+            max_radius = max(
+                self.config.separation_distance,
+                self.config.cohesion_radius,
+                self.config.alignment_radius or 10.0
+            )
+            cell_size = max_radius * 0.5  # Optimal cell size
+            self.spatial_partition = OptimizedSpatialPartition(cell_size=cell_size)
+            self.kd_tree = None
+            self._use_spatial_partition = True
+            self._use_kd_tree = False
+        else:
+            self.spatial_partition = None
+            self.kd_tree = None
+            self._use_spatial_partition = False
+            self._use_kd_tree = False
 
 
 def calculate_boids_velocity(
@@ -274,17 +299,21 @@ Returns:
 Desired velocity vector (Point2)
     """
     # OPTIMIZATION: Use spatial partitioning if available and all_units provided
-    if self._use_spatial_partition and all_units is not None and nearby_units is None:
-        # Add all units to spatial partition
-        self.spatial_partition.add_units(all_units)
-        
-        # Query nearby units efficiently (O(K) instead of O(N))
+    if all_units is not None and nearby_units is None:
         max_radius = max(
             self.config.separation_distance,
             self.config.cohesion_radius,
             self.config.alignment_radius or 10.0
         )
-        nearby_units = self.spatial_partition.query_nearby(unit_position, max_radius)
+        
+        # Option 1: K-D Tree (O(N log N) for sparse distributions)
+        if self._use_kd_tree and self.kd_tree:
+            self.kd_tree.build(all_units)
+            nearby_units = self.kd_tree.query_radius(unit_position, max_radius)
+        # Option 2: Grid-based (O(N) for dense distributions)
+        elif self._use_spatial_partition and self.spatial_partition:
+            self.spatial_partition.add_units(all_units)
+            nearby_units = self.spatial_partition.query_nearby(unit_position, max_radius)
     
     # Fallback to provided nearby_units if spatial partition not available
     if nearby_units is None:

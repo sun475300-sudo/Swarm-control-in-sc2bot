@@ -80,12 +80,26 @@ def get_system_resources(self) -> Dict:
  # GPU 메모리 체크 (NVIDIA만)
  gpu_memory_percent = 0
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import torch
  if torch.cuda.is_available():
      allocated = torch.cuda.memory_allocated(0)
  reserved = torch.cuda.memory_reserved(0)
@@ -128,6 +142,20 @@ def analyze_replay_worker(replay_path: str, output_queue: Queue) -> Dict:
  분석 결과 딕셔너리
     """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -179,6 +207,20 @@ def train_model_worker(model_path: str, training_data: Dict, output_queue: Queue
  학습 결과 딕셔너리
     """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -332,6 +374,20 @@ def _background_loop(self):
  while self.running:
      pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -402,6 +458,20 @@ def _get_pending_training_data(self) -> Optional[Dict]:
 def _start_replay_analysis(self, replay_path: str):
     """리플레이 분석 워커 시작"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -420,6 +490,20 @@ def _start_replay_analysis(self, replay_path: str):
 def _start_model_training(self, training_data: Dict):
     """모델 학습 워커 시작"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -438,6 +522,20 @@ def _start_model_training(self, training_data: Dict):
 def _collect_results(self):
     """워커 결과 수집"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -446,6 +544,20 @@ def _collect_results(self):
      while True:
          pass
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -480,6 +592,20 @@ def _process_result(self, result: Dict):
 def _integrate_learned_params(self, learned_params: Dict):
     """학습된 파라미터 통합"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -543,6 +669,20 @@ def main():
  learner.start()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

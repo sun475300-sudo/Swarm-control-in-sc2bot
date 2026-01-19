@@ -27,6 +27,20 @@ def check_syntax(filepath: Path) -> Tuple[bool, str]:
     """Python ÆÄÀÏÀÇ syntax Ã¼Å©"""
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -88,6 +102,20 @@ def check_imports(filepath: Path, root: Path) -> List[str]:
  issues = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -51,6 +51,20 @@ def check_syntax(self, file_path: Path) -> Tuple[bool, List[str]]:
     """Check syntax errors"""
  errors = []
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -76,6 +90,20 @@ def check_imports(self, file_path: Path) -> Tuple[bool, List[str]]:
     """Check import errors"""
  errors = []
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

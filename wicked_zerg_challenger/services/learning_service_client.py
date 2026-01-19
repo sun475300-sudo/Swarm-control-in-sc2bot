@@ -57,6 +57,20 @@ def _check_service_availability(self) -> bool:
  return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -130,6 +144,20 @@ def _send_to_service(self, data: Dict[str, Any]) -> bool:
 
  for attempt in range(self.config.retry_attempts):
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -172,6 +200,20 @@ def get_model_update(self, model_path: str) -> Optional[bytes]:
      return None
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

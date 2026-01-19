@@ -137,6 +137,20 @@ def load_pro_data(self) -> None:
  return
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -475,6 +489,20 @@ def save_analysis_result(self, result: GapAnalysisResult) -> None:
     output_file = self.analysis_output_dir / f"gap_analysis_{result.game_id}.json"
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -611,6 +639,20 @@ def analyze_bot_performance(
  # 모든 게임에서 분석 (승리한 경우에도 개선점 확인 가능)
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

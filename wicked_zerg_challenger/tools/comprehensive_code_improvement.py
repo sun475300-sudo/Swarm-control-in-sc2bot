@@ -51,6 +51,20 @@ def find_unused_imports(self) -> Dict[str, List[str]]:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -117,6 +131,20 @@ def find_duplicate_code_blocks(self, min_lines: int = 5) -> List[Dict]:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -172,6 +200,20 @@ def check_code_style(self) -> Dict[str, List[str]]:
  issues = []
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -213,6 +255,20 @@ def analyze_class_structure(self) -> List[Dict]:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -259,6 +315,20 @@ def analyze_dependencies(self) -> List[Dict]:
          pass
      file_path = Path(root) / file
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -351,9 +421,9 @@ def generate_improvement_report(self) -> str:
  # 클래스 리팩토링 제안
      report.append("## 4. 클래스 리팩토링 제안\n\n")
  if self.class_refactoring_suggestions:
-     report.append(f"총 {len(self.class_refactoring_suggestions)}개의 클래스 리팩토링 제안이 있습니다.\n\n")
+         report.append(f"총 {len(self.class_refactoring_suggestions)}개의 클래스 리팩토링 제안이 있습니다.\n\n")
  for sug in self.class_refactoring_suggestions:
-     report.append(f"### `{sug['file']}:{sug['line']}` - `{sug['class']}`\n\n")
+         report.append(f"### `{sug['file']}:{sug['line']}` - `{sug['class']}`\n\n")
      report.append(f"- **메서드 수**: {sug['method_count']}개\n")
      report.append(f"- **제안**: {sug['suggestion']}\n")
      report.append(f"- **주요 메서드**: {', '.join(sug['methods'])}\n\n")

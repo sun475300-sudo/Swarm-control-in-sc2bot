@@ -109,6 +109,20 @@ def optimize_conditionals(self, content: str, file_path: Path) -> Tuple[str, int
 def remove_unused_imports(self, content: str, file_path: Path) -> Tuple[str, int]:
     """사용하지 않는 import 제거"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -191,6 +205,20 @@ def optimize_source_code(file_path: Path) -> Dict:
  optimizer = SourceCodeOptimizer()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -325,6 +353,20 @@ def main():
  for tool_name, tool_path in tools:
      print(f"  - {tool_name} 최적화...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

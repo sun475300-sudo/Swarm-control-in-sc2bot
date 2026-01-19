@@ -214,12 +214,26 @@ def check_gpu_memory():
     """
 
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import torch
 
  if not torch.cuda.is_available():
      print("[GPU] CUDA GPU not available. Running in CPU mode.")
@@ -298,12 +312,26 @@ import traceback
  # Try to check if CUDA is available even if memory check failed
 
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import torch
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import torch
 
  if torch.cuda.is_available():
      print(
@@ -333,6 +361,20 @@ def read_instance_status(instance_id):
     """
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -363,18 +405,32 @@ def get_gpu_temperature():
     """
 
  try:
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
  except Exception:
      pass
-     import subprocess
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+import subprocess
 
  result = subprocess.run(
  [
-     "nvidia-smi",
-     "--query-gpu = temperature.gpu",
-     "--format = csv,noheader,nounits",
+    "nvidia-smi",
+    "--query-gpu = temperature.gpu",
+    "--format = csv,noheader,nounits",
  ],
  capture_output = True,
  text = True,
@@ -403,6 +459,20 @@ def display_dashboard(processes):
     """
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -604,6 +674,20 @@ def start_parallel_training():
     print("="*70)
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -696,6 +780,20 @@ def start_parallel_training():
  return
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -764,6 +862,20 @@ def start_parallel_training():
      if sys.platform == "win32":
          pass
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -898,6 +1010,20 @@ def start_parallel_training():
      proc = proc_info["process"]
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -21,6 +21,20 @@ def main():
 
     print("[1/3] 메모리 최적화 적용 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -44,6 +58,20 @@ def main():
 
     print("[2/3] 학습 속도 최적화 적용 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -67,6 +95,20 @@ def main():
 
     print("[3/3] 성능 향상 적용 중...")
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

@@ -27,6 +27,20 @@ def remove_unused_imports(self, file_path: Path) -> int:
  removed_count = 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -107,6 +121,20 @@ from ... import Ȯ��
      # ��� ����
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -134,6 +162,20 @@ def fix_style_issues(self, file_path: Path) -> int:
  fixed_count = 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -178,6 +220,20 @@ def fix_style_issues(self, file_path: Path) -> int:
      # ��� ����
      backup_path = file_path.with_suffix(file_path.suffix + '.bak')
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

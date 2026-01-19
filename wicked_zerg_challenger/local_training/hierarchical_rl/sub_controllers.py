@@ -50,6 +50,8 @@ class CombatAgent(SubController):
         """전투 에이전트 초기화"""
         self.target_position = None
         self.formation_mode = "loose"  # "loose", "tight", "surround"
+        self.task_queue = []  # Task queue for interrupt mechanism
+        self.current_strategy_mode = None  # Track current mode for transition detection
         
     def execute(self, bot, strategy_mode: StrategyMode) -> None:
         """
@@ -60,6 +62,11 @@ class CombatAgent(SubController):
             strategy_mode: 상위 에이전트가 결정한 전략 모드
         """
         try:
+            # INTERRUPT MECHANISM: If strategy mode changed, flush task queue
+            if self.current_strategy_mode != strategy_mode:
+                self._flush_task_queue(bot)
+                self.current_strategy_mode = strategy_mode
+            
             if strategy_mode == StrategyMode.ALL_IN:
                 self._execute_attack(bot)
             elif strategy_mode == StrategyMode.DEFENSIVE:
@@ -70,6 +77,32 @@ class CombatAgent(SubController):
                 
         except Exception as e:
             print(f"[WARNING] Combat Agent execution error: {e}")
+    
+    def _flush_task_queue(self, bot) -> None:
+        """
+        Task Queue 강제 플러시 (인터럽트 메커니즘)
+        
+        전략 모드가 변경될 때 이전 명령들을 즉시 취소하고
+        새로운 목표를 주입합니다.
+        """
+        try:
+            # Cancel all pending unit commands
+            if hasattr(bot, 'units'):
+                army_units = []
+                for unit_type in ['Zergling', 'Roach', 'Hydralisk', 'Mutalisk', 'Lurker']:
+                    if hasattr(bot.units, unit_type.lower()):
+                        army_units.extend(getattr(bot.units, unit_type.lower()))
+                
+                # Stop all units (cancel previous commands)
+                for unit in army_units:
+                    if not unit.is_idle:
+                        unit.stop()  # Cancel current command
+            
+            # Clear task queue
+            self.task_queue = []
+            
+        except Exception as e:
+            print(f"[WARNING] Task queue flush error: {e}")
     
     def _execute_attack(self, bot) -> None:
         """공격 모드 실행"""

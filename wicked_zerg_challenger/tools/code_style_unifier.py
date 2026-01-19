@@ -209,6 +209,20 @@ def unify_code_style(file_path: Path) -> Dict:
  unifier = CodeStyleUnifier()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

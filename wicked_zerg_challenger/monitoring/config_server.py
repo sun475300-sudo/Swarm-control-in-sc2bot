@@ -44,6 +44,20 @@ def __init__(self):
 def _get_ngrok_url(self) -> Optional[str]:
     """Ngrok URL 가져오기"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -66,6 +80,20 @@ def _get_ngrok_url(self) -> Optional[str]:
 
  # 파일에서 시도
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -88,6 +116,20 @@ def _update_github_gist(self, url: str) -> bool:
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -147,6 +189,20 @@ def _update_pastebin(self, url: str) -> bool:
      return False
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -186,6 +242,20 @@ def _update_pastebin(self, url: str) -> bool:
 def _update_local_file(self, url: str) -> bool:
     """로컬 파일에 URL 저장 (개발용)"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -222,6 +292,20 @@ def get_server_url(self) -> Optional[str]:
  # 로컬 파일에서 읽기
  if self.local_config_file.exists():
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 

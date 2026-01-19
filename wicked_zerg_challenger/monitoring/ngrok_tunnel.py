@@ -61,6 +61,20 @@ def _load_auth_token(self) -> Optional[str]:
 def is_ngrok_installed(self) -> bool:
     """Ngrok이 설치되어 있는지 확인"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -93,6 +107,20 @@ def start_tunnel(self) -> bool:
      logger.warning("인증 토큰 설정: https://dashboard.ngrok.com/get-started/your-authtoken")
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -139,6 +167,20 @@ def get_tunnel_url(self) -> Optional[str]:
  터널 URL (예: https://xxxx-xx-xx-xx-xx.ngrok.io)
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -171,6 +213,20 @@ def get_tunnel_info(self) -> Dict:
  터널 정보 딕셔너리
      """
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -188,6 +244,20 @@ def stop_tunnel(self):
     """Ngrok 터널 중지"""
  if self.ngrok_process:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -221,6 +291,20 @@ def save_tunnel_url(self, file_path: Optional[Path] = None):
      file_path = project_root / "monitoring" / ".ngrok_url.txt"
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -271,6 +355,20 @@ import argparse
      tunnel.save_tunnel_url()
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

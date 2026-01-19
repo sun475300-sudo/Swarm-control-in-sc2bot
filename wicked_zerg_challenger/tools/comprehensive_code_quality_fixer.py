@@ -31,6 +31,20 @@ def fix_duplicate_functions(self, file_path: Path) -> int:
  fixed_count = 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -90,6 +104,20 @@ def fix_duplicate_blocks(self, file_path: Path) -> int:
  fixed_count = 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -145,6 +173,20 @@ def fix_unused_imports(self, file_path: Path) -> int:
  fixed_count = 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -210,6 +252,20 @@ def fix_style_issues(self, file_path: Path) -> int:
  fixed_count = 0
 
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 

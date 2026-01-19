@@ -19,6 +19,20 @@ def analyze_win_rate():
      line = line.strip()
  if line:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -93,6 +107,20 @@ def analyze_win_rate():
  for instance_file in instance_files:
      if instance_file.exists():
          try:
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
+             pass
+         pass
+
+         except Exception:
+             pass
              pass
          pass
 

@@ -36,6 +36,20 @@ def __init__(self):
 def analyze_file(self, file_path: Path) -> Dict:
     """파일 분석"""
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
@@ -197,7 +211,7 @@ def find_large_classes(self, all_results: List[Dict], threshold: int = 20) -> Li
          pass
      continue
      for cls in result["classes"]:
-         pass
+             pass
      if cls["method_count"] > threshold:
          pass
      large_classes.append({
@@ -215,6 +229,20 @@ def find_duplicate_code_blocks(self, file_paths: List[Path], min_lines: int = 5)
 
  for file_path in file_paths:
      try:
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
+         pass
+     pass
+
+     except Exception:
+         pass
          pass
      pass
 
@@ -357,7 +385,7 @@ def generate_refactoring_report():
  # 큰 클래스
      f.write("## 4. 큰 클래스 (메서드 20개 이상, 리팩토링 권장)\n\n")
  if large_classes:
-     f.write(f"총 {len(large_classes)}개의 큰 클래스를 발견했습니다.\n\n")
+         f.write(f"총 {len(large_classes)}개의 큰 클래스를 발견했습니다.\n\n")
  for cls in large_classes[:10]: # 상위 10개
      f.write(f"- `{cls['file']}:{cls['line']}` - `{cls['class']}` ({cls['method_count']}개 메서드)\n")
      f.write("\n")

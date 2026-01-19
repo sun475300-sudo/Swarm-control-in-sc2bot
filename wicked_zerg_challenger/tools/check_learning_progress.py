@@ -22,6 +22,20 @@ def load_json_safe(file_path: Path) -> Optional[Dict]:
  if not file_path.exists():
      return None
  try:
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
+     pass
+ pass
+
+ except Exception:
+     pass
      pass
  pass
 
