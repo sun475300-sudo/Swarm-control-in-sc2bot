@@ -1,0 +1,6 @@
+time,iteration,minerals,vespene,army_count,army_supply,drone_count,larva_count,queen_count,queen_energy,enemy_army_seen,supply_used,supply_cap,supply_left,townhall_count,game_phase,swarm_formation_score,unit_spacing_avg,swarm_cohesion,obstacle_avoidance_active,micro_controller_active
+0,0,0,0,0,0,12,3,0,0,0,12,14,2,1,OPENING,0.0,0.0,0.0,False,True
+71,400,230,0,0,0,15,0,0,0,0,17,46,29,1,OPENING,0.0,0.0,0.0,False,True
+142,800,985,40,0,0,18,0,0,0,0,20,46,26,1,OPENING,0.0,0.0,0.0,False,True
+214,1200,1835,132,0,0,19,3,0,0,0,20,38,18,1,OPENING,0.0,0.0,0.0,False,True
+285,1600,2205,280,0,0,18,3,0,0,0,19,62,43,1,OPENING,0.0,0.0,0.0,False,True

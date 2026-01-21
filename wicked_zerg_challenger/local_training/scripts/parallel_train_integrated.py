@@ -947,51 +947,95 @@ def start_parallel_training():
  dashboard_update_interval = 1.0
 
  # Wait for all processes to complete
+ # CRITICAL IMPROVEMENT: 게임 엔진 프리징 타임아웃 처리
+ GAME_TIMEOUT_SECONDS = 3600  # 1시간 (게임이 이보다 오래 실행되면 프리징으로 간주)
+ FRAME_TIMEOUT_SECONDS = 300  # 5분 (프레임 업데이트가 없으면 프리징으로 간주)
 
  while processes:
      pass
- current_time = time.time()
+     current_time = time.time()
 
- # Update dashboard periodically
+     # Update dashboard periodically
+     if current_time - last_dashboard_update >= dashboard_update_interval:
+         display_dashboard(processes)
+         last_dashboard_update = current_time
 
- if current_time - last_dashboard_update >= dashboard_update_interval:
-     display_dashboard(processes)
+     for proc_info in processes[:]:
+         proc = proc_info["process"]
+         elapsed = current_time - proc_info["start_time"]
+         
+         # CRITICAL IMPROVEMENT: 게임 엔진 프리징 감지 및 타임아웃 처리
+         # 1. 전체 실행 시간 타임아웃 (1시간)
+         if elapsed > GAME_TIMEOUT_SECONDS:
+             print(f"\n[TIMEOUT] Instance #{proc_info['id']} exceeded timeout ({GAME_TIMEOUT_SECONDS}s) - possible freeze, terminating...")
+             try:
+                 proc.terminate()
+                 proc.wait(timeout=5)
+                 print(f"[OK] Instance #{proc_info['id']} terminated due to timeout")
+             except Exception:
+                 try:
+                     proc.kill()
+                     print(f"[FORCE] Instance #{proc_info['id']} force killed due to timeout")
+                 except Exception:
+                     print(f"[ERROR] Failed to terminate instance #{proc_info['id']}")
+             
+             processes.remove(proc_info)
+             display_dashboard(processes)
+             continue
+         
+         # 2. 프레임 업데이트 타임아웃 체크 (프로세스가 살아있지만 응답 없음)
+         # 마지막 업데이트 시간 추적
+         if "last_update_time" not in proc_info:
+             proc_info["last_update_time"] = current_time
+         
+         # 프로세스가 살아있지만 오랫동안 업데이트가 없으면 프리징으로 간주
+         time_since_update = current_time - proc_info["last_update_time"]
+         if time_since_update > FRAME_TIMEOUT_SECONDS:
+             return_code = proc.poll()
+             if return_code is None:  # 프로세스가 여전히 실행 중
+                 print(f"\n[FREEZE] Instance #{proc_info['id']} appears frozen (no update for {FRAME_TIMEOUT_SECONDS}s) - terminating...")
+                 try:
+                     proc.terminate()
+                     proc.wait(timeout=5)
+                     print(f"[OK] Instance #{proc_info['id']} terminated due to freeze detection")
+                 except Exception:
+                     try:
+                         proc.kill()
+                         print(f"[FORCE] Instance #{proc_info['id']} force killed due to freeze detection")
+                     except Exception:
+                         print(f"[ERROR] Failed to terminate frozen instance #{proc_info['id']}")
+                 
+                 processes.remove(proc_info)
+                 display_dashboard(processes)
+                 continue
+         
+         # Check process status
+         return_code = proc.poll()
 
- last_dashboard_update = current_time
+         if return_code is not None:
+             # Process finished
+             elapsed = time.time() - proc_info["start_time"]
 
- for proc_info in processes[:]:
-     proc = proc_info["process"]
+             if return_code == 0:
+                 print(
+                 f"\n[COMPLETE] Instance #{proc_info['id']} finished successfully (runtime: {elapsed:.1f}s)"
+             )
+             else:
+                 print(
+                 f"\n[EXIT] Instance #{proc_info['id']} exited (code: {return_code}, runtime: {elapsed:.1f}s)"
+             )
 
- # Check process status
+             processes.remove(proc_info)
 
- return_code = proc.poll()
+             # Update dashboard after process removal
+             display_dashboard(processes)
+         else:
+             # 프로세스가 실행 중이면 마지막 업데이트 시간 갱신
+             proc_info["last_update_time"] = current_time
 
- if return_code is not None:
-     # Process finished
-
-     elapsed = time.time() - proc_info["start_time"]
-
- if return_code == 0:
-     print(
-     f"\n[COMPLETE] Instance #{proc_info['id']} finished successfully (runtime: {elapsed:.1f}s)"
- )
-
- else:
-     pass
- print(
-     f"\n[EXIT] Instance #{proc_info['id']} exited (code: {return_code}, runtime: {elapsed:.1f}s)"
- )
-
- processes.remove(proc_info)
-
- # Update dashboard after process removal
-
- display_dashboard(processes)
-
- # Check every 0.1 seconds for faster dashboard updates
-
- if processes:
-     time.sleep(0.1)
+     # Check every 0.1 seconds for faster dashboard updates
+     if processes:
+         time.sleep(0.1)
 
      print("\n" + "=" * 70)
 

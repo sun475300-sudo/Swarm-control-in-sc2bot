@@ -1,0 +1,37 @@
+{
+  "instance_id": 0,
+  "mode": "VISUAL",
+  "game_count": 89,
+  "win_count": 45,
+  "loss_count": 44,
+  "last_result": "Victory",
+  "current_game_time": "05:23",
+  "current_minerals": 500,
+  "current_supply": "45/50",
+  "current_units": 23,
+  "status": "GAME_RUNNING",
+  "timestamp": 1705292772.552486,
+  "game_state": {
+    "current_frame": 12345,
+    "game_status": "IN_PROGRESS",
+    "is_running": true,
+    "minerals": 500,
+    "vespene": 200,
+    "supply_used": 45,
+    "supply_cap": 50,
+    "supply": 45,
+    "supply_max": 50,
+    "gas": 200,
+    "units": {
+      "zerglings": 20,
+      "roaches": 5,
+      "hydralisks": 8,
+      "queens": 2,
+      "drones": 16,
+      "overlords": 3
+    },
+    "threat_level": "MEDIUM",
+    "strategy_mode": "MID_GAME",
+    "map_name": "AbyssalReefLE"
+  }
+}

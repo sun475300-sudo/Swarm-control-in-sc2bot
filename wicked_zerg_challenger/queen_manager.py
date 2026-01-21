@@ -1,478 +1,144 @@
 # -*- coding: utf-8 -*-
-# Re-saved as UTF-8 to fix UnicodeDecodeError when Python imports this
-# module on Windows
+"""
+Queen Manager - ø©ø’ ∞¸∏Æ ∑Œ¡˜
+"""
+
+from typing import Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sc2.unit import Unit
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.buff_id import BuffId
+else:
+    try:
+        from sc2.unit import Unit
+        from sc2.ids.unit_typeid import UnitTypeId
+        from sc2.ids.ability_id import AbilityId
+        from sc2.ids.buff_id import BuffId
+    except ImportError:
+        Unit = object
+        UnitTypeId = object
+        AbilityId = object
+        BuffId = object
 
 
 class QueenManager:
+    """ø©ø’ ª˝ªÍ, ¿Œ¡ß∆Æ, ºˆ«˜ π◊ πÊæÓ ∞¸∏Æ."""
+
     def __init__(self, bot):
         self.bot = bot
-        # Track which queen is assigned to which hatchery for efficient injects
-        self.queen_hatchery_assignments: dict = {}  # {queen_tag: hatchery_tag}
+        self.queen_hatchery_assignments: Dict[int, int] = {}
+        self.max_assign_distance = 10.0
+        self.inject_range = 4.0
 
     async def manage_queens(self):
-        # Performance optimization: Use IntelManager cache (fetch once)
-        intel = getattr(self.bot, "intel", None)
+        b = self.bot
+        hatcheries = b.townhalls.ready if hasattr(b, "townhalls") else []
+        if not hatcheries:
+            return
 
-        # Use cached townhalls
-        if intel and intel.cached_townhalls is not None:
-            # cached_townhalls is a list, filter ready ones
-            hatcheries = [
-                h for h in intel.cached_townhalls if hasattr(
-                    h, 'is_ready') and h.is_ready]
-            hatcheries_exists = len(hatcheries) > 0
-            hatcheries_list = hatcheries
-        else:
-            hatcheries = self.bot.townhalls.ready
-            hatcheries_exists = hatcheries.exists if hasattr(
-                hatcheries, 'exists') else len(list(hatcheries)) > 0
-            hatcheries_list = list(hatcheries) if hatcheries_exists else []
+        queens = b.units(UnitTypeId.QUEEN) if hasattr(b, "units") else []
+        queens_list = list(queens) if hasattr(queens, "__iter__") else []
 
+        if not queens_list:
+            await self._produce_first_queen(hatcheries)
+            return
 
-if not hatcheries_exists:
-    pass
-return
+        alive_queen_tags = {q.tag for q in queens_list}
+        for q_tag in list(self.queen_hatchery_assignments.keys()):
+            if q_tag not in alive_queen_tags:
+                self.queen_hatchery_assignments.pop(q_tag, None)
 
-# Use cached queens
-if intel and intel.cached_queens is not None:
-    pass
-queens = intel.cached_queens
-queens_exists = len(queens) > 0 if isinstance(
-    queens, list) else (
-        queens.exists if hasattr(
-            queens, 'exists') else True)
-# STYLE: Line too long (131 chars). Consider splitting.
-queens_exists = len(queens) > 0 if isinstance(
-    queens, list) else (
-    queens.exists if hasattr(
-        queens, 'exists') else True)
-# STYLE: Line too long (131 chars). Consider splitting.
-# STYLE: Line too long (131 chars). Consider splitting.
-else:
-    pass
-queens = self.bot.units(UnitTypeId.QUEEN)
-# OPTIMIZE: Use intel.cached_* instead of direct units() call
-queens_exists = queens.exists if hasattr(
-    queens, 'exists') else len(
-        list(queens)) > 0
+        await self._inject_larva(hatcheries, queens_list)
+        await self._transfuse_critical_buildings(queens_list)
 
-# Clean up dead queen assignments
-if queens_exists:
-    pass
-queen_tags = {q.tag for q in queens}
-dead_queens = [
-    tag for tag in self.queen_hatchery_assignments.keys() if tag not in queen_tags
-]
-for dead_tag in dead_queens:
-    pass
-del self.queen_hatchery_assignments[dead_tag]
+    async def _produce_first_queen(self, hatcheries):
+        b = self.bot
+        if not b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            return
+        if b.minerals < 150:
+            return
+        if b.workers.amount < 8:
+            return
 
-if not queens_exists:
-    # IMPROVED: Queen production with strict conditions (prevent excessive production)
- # Only produce first queen if:
- # 1. We have spawning pool (required building)
- # 2. We have sufficient resources (minerals >= 200, gas >= 100)
- # 3. We have enough workers to justify queen (at least 8 workers)
- # 4. Hatchery is ready and idle
+        idle_hatcheries = [
+            h for h in hatcheries
+            if h.is_ready and h.is_idle and (not hasattr(h, "orders") or len(h.orders) == 0)
+        ]
+        if not idle_hatcheries:
+            return
 
- # Check required building
-spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
-if not spawning_pools.exists:
-    pass
-return
+        hatch = idle_hatcheries[0]
+        try:
+            await b.do(hatch.train(UnitTypeId.QUEEN))
+        except Exception:
+            return
 
-# IMPROVED: Resource availability check
-mineral_threshold = 200  # Need sufficient minerals after queen cost
-gas_threshold = 100  # Need sufficient gas after queen cost
+    async def _inject_larva(self, hatcheries, queens_list):
+        b = self.bot
+        ready_queens = [q for q in queens_list if q.is_ready and q.energy >= 25]
+        if not ready_queens:
+            return
 
-# CRITICAL FIX: Use 'vespene' instead of 'vespene' (correct SC2 API attribute)
-if self.bot.minerals < mineral_threshold or self.bot.vespene < gas_threshold:
-    # Resource shortage - skip queen production, let production_manager handle
-    # it
-return
+        for hatch in hatcheries:
+            inject_buff = getattr(BuffId, "QUEENSPAWNLARVA", None)
+            if inject_buff and hasattr(hatch, "has_buff") and hatch.has_buff(inject_buff):
+                continue
 
-# IMPROVED: Worker count check - need enough workers to justify queen
-worker_count = self.bot.workers.amount
-min_workers_for_first_queen = 8
+            assigned_tag = None
+            for q_tag, h_tag in self.queen_hatchery_assignments.items():
+                if h_tag == hatch.tag:
+                    assigned_tag = q_tag
+                    break
 
-if worker_count < min_workers_for_first_queen:
-    # Too few workers - prioritize worker production
-return
+            assigned_queen = None
+            if assigned_tag:
+                assigned_queen = next((q for q in ready_queens if q.tag == assigned_tag), None)
 
-# IMPROVED: Only produce if hatchery is ready and idle (not already training)
-idle_hatcheries = [
-    h for h in hatcheries_list
-    if hasattr(h, 'is_idle') and h.is_idle
-    and hasattr(h, 'is_ready') and h.is_ready
-    and (not hasattr(h, 'orders') or len(h.orders) == 0)
-]
+            if assigned_queen and assigned_queen.distance_to(hatch) > self.max_assign_distance:
+                assigned_queen = None
 
-if idle_hatcheries and self.bot.can_afford(UnitTypeId.QUEEN):
-    pass
-try:
-pass
+            if not assigned_queen:
+                nearby = [q for q in ready_queens if q.distance_to(hatch) <= self.max_assign_distance]
+                if not nearby:
+                    continue
+                assigned_queen = min(nearby, key=lambda q: q.distance_to(hatch))
+                self.queen_hatchery_assignments[assigned_queen.tag] = hatch.tag
 
-except Exception:
-    pass
-    pass
-pass
+            if assigned_queen.distance_to(hatch) <= self.inject_range:
+                try:
+                    await b.do(assigned_queen(AbilityId.EFFECT_INJECTLARVA, hatch))
+                except Exception:
+                    continue
 
-except Exception:
-    pass
-    pass
-pass
+    async def _transfuse_critical_buildings(self, queens_list):
+        b = self.bot
+        ready_queens = [q for q in queens_list if q.is_ready and q.energy >= 50]
+        if not ready_queens or not hasattr(b, "structures"):
+            return
 
-except Exception:
-    pass
-    pass
-pass
+        critical_types = [
+            UnitTypeId.SPINECRAWLER,
+            UnitTypeId.SPORECRAWLER,
+            UnitTypeId.SPAWNINGPOOL,
+            UnitTypeId.LURKERDEN,
+            UnitTypeId.HYDRALISKDEN,
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
+        ]
 
-except Exception:
-    pass
-    pass
-idle_hatcheries[0].train(UnitTypeId.QUEEN)
-print(f"üëë [QueenManager] Ï≤´ Ïó¨Ïôï ÏÉùÏÇ∞ (ÏùºÍæº: {worker_count}Í∞ú)")
-except (AttributeError, TypeError, Exception) as e:
-    # Handle case where train() might fail
-    # Don't log every error to avoid spam
-pass
-return
+        critical_buildings = b.structures.filter(
+            lambda s: s.type_id in critical_types and getattr(s, "health_percentage", 1.0) < 0.6
+        )
+        if not critical_buildings.exists:
+            return
 
-# Assign queens to hatcheries for efficient injects (if not already assigned)
-hatchery_list = hatcheries_list if isinstance(
-    hatcheries_list, list) else (
-        list(hatcheries) if hasattr(
-            hatcheries, '__iter__') else [])
-# STYLE: Line too long (143 chars). Consider splitting.
-hatchery_list = hatcheries_list if isinstance(
-    hatcheries_list, list) else (
-    list(hatcheries) if hasattr(
-        hatcheries, '__iter__') else [])
-# STYLE: Line too long (143 chars). Consider splitting.
-# STYLE: Line too long (143 chars). Consider splitting.
-queen_list = list(queens) if not isinstance(queens, list) else queens
-
-# Assign queens to hatcheries (one queen per hatchery for optimal injects)
-for i, hatch in enumerate(hatchery_list):
-    pass
-if i < len(queen_list):
-    pass
-queen_tag = queen_list[i].tag
-if queen_tag not in self.queen_hatchery_assignments:
-    pass
-self.queen_hatchery_assignments[queen_tag] = hatch.tag
-
-# Queen abilities - process all queens (limited by CPU optimization in main loop)
-# CRITICAL: Always inject larva unless we have excessive larvae
-current_larva_count = self.bot.units(UnitTypeId.LARVA).amount
-# OPTIMIZE: Use intel.cached_* instead of direct units() call
-should_skip_inject = current_larva_count > 100
-
-if not should_skip_inject:
-    # Larva inject (energy >= 25) - Priority 1
- # Use explicit ready queen filter and per-hatchery check to avoid missed
- # injects
-ready_queens = [q for q in queen_list if q.is_ready and q.energy >= 25]
-if ready_queens:
-    pass
-for hatch in hatchery_list:
-    # Skip if hatchery already has an active inject buff
-has_inject_buff = False
-try:
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    inject_buff = getattr(BuffId, "QUEENSTACKINJECT", None)
-    if inject_buff and hasattr(hatch, "has_buff"):
-        pass
-has_inject_buff = hatch.has_buff(inject_buff)  # type: ignore[misc]
-except Exception:
-    pass
-has_inject_buff = False
-
-if has_inject_buff:
-    pass
-continue
-
-# Find queens within 20 range of the hatchery (increased from 15 for
-# better coverage)
-nearby_queens = [q for q in ready_queens if q.distance_to(hatch) < 20]
-if nearby_queens:
-    # Choose closest queen to the hatchery
-queen_to_use = min(nearby_queens, key=lambda q: q.distance_to(hatch))
-
-# Allow queens that are idle OR moving to inject (improves responsiveness)
-if queen_to_use.is_idle or queen_to_use.is_moving:
-    pass
-try:
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-await self.bot.do(queen_to_use(AbilityId.EFFECT_INJECTLARVA, hatch))
-# Update assignment to current hatchery for tracking
-self.queen_hatchery_assignments[queen_to_use.tag] = hatch.tag
-
-# Success debug message (throttled)
-if getattr(self.bot, "iteration", 0) % 50 == 0:
-    pass
-print(
-    f"[SUCCESS] {hatch.tag}¬ø¬° √Ü√ü√á√é ¬ø√è¬∑√°! ¬ø¬©¬ø√ï ¬ø¬°¬≥√ä√Å√∂: {queen_to_use.energy}"
-)
-except Exception:
-    # Silently ignore transient failures (network/issue in SC2 API)
-pass
-else:
- # Too many larvae already - skip inject to save energy for other abilities
-    if getattr(self.bot, "iteration", 0) % 200 == 0:
-        pass
-print(
-    f"[QUEEN MANAGER] Skipping inject - {current_larva_count} larvae already available"
-)
-
-# Process each queen for other abilities
-for queen in queen_list:
-    pass
-if not queen.is_ready:
-    pass
-continue
-
-# Transfuse (energy >= 50) - Priority 2 (only if not injecting)
-# Performance optimization: Use IntelManager cache + distance calculation
-# optimization
-if queen.energy >= 50:
-    # Check if queen is not busy with inject
-is_busy = queen.is_attacking or (queen.orders and len(queen.orders) > 0)
-
-if not is_busy:
-    pass
-heal_range_squared = 8 * 8  # 8^2 = 64 (transfuse range)
-
-# Priority 1: Heal other queens (they're expensive and critical)
-nearby_queens = [
-    q
-    for q in queen_list
-    if q.tag != queen.tag
-    and hasattr(q, "health_percentage")
-    and q.health_percentage < 0.6  # Heal queens at 60% health
-    and q.distance_to(queen.position) ** 2 < heal_range_squared
-]
-
-# Priority 2: Heal expensive/valuable military units
-nearby_military = []
-if intel and intel.cached_military is not None:
-    pass
-nearby_military = [
-    u
-    for u in intel.cached_military
-    if hasattr(u, "health_percentage")
-    and u.health_percentage < 0.5
-    and u.distance_to(queen.position) ** 2 < heal_range_squared
-]
-else:
- # Fallback: Direct filtering (distance calculation optimization)
-nearby_military = [
-    u
-    for u in self.bot.units
-    if u.type_id
-    in [
-        UnitTypeId.ROACH,
-        UnitTypeId.HYDRALISK,
-        UnitTypeId.RAVAGER,
-        UnitTypeId.LURKER,
-        UnitTypeId.CORRUPTOR,
-        UnitTypeId.MUTALISK,
-    ]
-    and hasattr(u, "health_percentage")
-    and u.health_percentage < 0.5
-    and u.distance_to(queen.position) ** 2 < heal_range_squared
-]
-
-# Select target: Prioritize queens, then valuable units by health percentage
-target_unit = None
-if nearby_queens:
-    # Heal most damaged queen first
-target_unit = min(nearby_queens, key=lambda u: u.health_percentage)
-elif nearby_military:
-    # Heal most damaged valuable unit first
-target_unit = min(nearby_military, key=lambda u: u.health_percentage)
-
-if target_unit:
-    pass
-try:
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-pass
-
-except Exception:
-    pass
-    pass
-await self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, target_unit))
-except Exception:
-    pass
-pass  # Transfuse not available in this version
-
-
-async def defend_with_queens(self):
-    """
-Queen defense - optimized with IntelManager cache and distance calculation
-
-Performance optimization:
-- Use IntelManager cache
-- Distance calculation optimization (distance_to_squared)
-    """
- # Performance optimization: Use IntelManager cache
-    intel = getattr(self.bot, "intel", None)
-if intel and intel.cached_queens is not None:
-    pass
-queens = intel.cached_queens
-else:
-    pass
-queens = self.bot.units(UnitTypeId.QUEEN)
-# OPTIMIZE: Use intel.cached_* instead of direct units() call
-if not queens.exists:
-    pass
-return
-
-# Performance optimization: Use IntelManager cache (townhalls)
-# Use list iteration instead of .random to avoid conflicts (repo rule)
-if intel and intel.cached_townhalls is not None:
-    pass
-townhall_list = list(
-    intel.cached_townhalls) if intel.cached_townhalls.exists else []
-else:
-    pass
-townhall_list = list(self.bot.townhalls) if self.bot.townhalls.exists else []
-
-if not townhall_list:
-    pass
-return
-
-# Performance optimization: Use IntelManager cache (enemy_units)
-if intel and intel.cached_enemy_units is not None:
-    pass
-enemy_units = (
-    list(
-        intel.cached_enemy_units) if isinstance(
-            intel.cached_enemy_units,
-        list) else [])
-else:
-    enemy_units = getattr(self.bot, "enemy_units", [])
-
-if not enemy_units:
-    pass
-return
-
-# Performance optimization: Distance calculation optimization
-# (distance_to_squared)
-defend_range_squared = 15 * 15  # 15^2 = 225
-
-# Assign queens to defend specific hatcheries
-queen_list = list(queens) if queens.exists else []
-
-for queen in queen_list:
-    pass
-if not queen.is_ready:
-    pass
-continue
-
-# Find the hatchery this queen is assigned to (or closest hatchery)
-assigned_hatch_tag = self.queen_hatchery_assignments.get(queen.tag)
-defend_hatch = None
-
-if assigned_hatch_tag:
-    pass
-for th in townhall_list:
-    pass
-if th.tag == assigned_hatch_tag:
-    pass
-defend_hatch = th
-break
-
-# If no assigned hatchery, use closest
-if not defend_hatch:
-    pass
-defend_hatch = (
-    min(townhall_list, key=lambda th: queen.distance_to(th) ** 2)
-    if townhall_list
-    else None
-)
-
-if not defend_hatch:
-    pass
-continue
-
-defend_point = defend_hatch.position
-
-# Find enemies near this queen's hatchery
-nearby_enemies = [e for e in enemy_units if e.distance_to(
-    defend_point) ** 2 < defend_range_squared]
-
-if not nearby_enemies:
-    pass
-continue
-
-# Priority 1: Air units (queens are excellent anti-air)
-air_enemies = [
-    e for e in nearby_enemies if hasattr(
-        e, "is_flying") and e.is_flying]
-if air_enemies:
-    # Prioritize closest air unit
-closest_air = min(
-    air_enemies,
-    key=lambda e: e.distance_to(
-        queen.position) ** 2)
-queen.attack(closest_air)
-else:
- # Priority 2: Ground units (focus on closest threat to hatchery)
- # Attack enemy closest to hatchery (protect the base)
-closest_to_hatch = min(
-    nearby_enemies, key=lambda e: e.distance_to(defend_point) ** 2
-)
-# Only attack if queen is close enough (don't overextend)
-if queen.distance_to(closest_to_hatch) ** 2 < (10 * 10):  # 10 range
-queen.attack(closest_to_hatch)
+        for queen in ready_queens:
+            # ∞°¿Â √º∑¬¿Ã ≥∑¿∫ «ŸΩ… ∞«π∞ øÏº±
+            target = min(critical_buildings, key=lambda s: s.health_percentage)
+            try:
+                await b.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, target))
+                break
+            except Exception:
+                continue

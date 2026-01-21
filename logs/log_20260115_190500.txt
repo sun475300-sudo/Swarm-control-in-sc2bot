@@ -1,0 +1,9 @@
+=== Monsterbot Log ===
+Started: 2026-01-15 19:05:00
+Personality: serral
+==================================================
+
+[19:05:20] [INFO] Monsterbot online! Version 2026.01.06
+[19:05:20] [INFO] Personality: SERRAL
+[19:05:20] [INFO] Opponent race: Terran
+[19:05:20] [DEBUG] State: 0M/0G, Supply: 12/14, Army: 0

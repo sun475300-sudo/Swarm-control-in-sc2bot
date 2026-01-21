@@ -1,0 +1,54 @@
+[
+  {
+    "game_id": "game_0_505s",
+    "game_result": "Defeat",
+    "training_build": {
+      "natural_expansion_supply": null,
+      "gas_supply": null,
+      "spawning_pool_supply": null,
+      "third_hatchery_supply": null,
+      "speed_upgrade_supply": null
+    },
+    "pro_baseline": {
+      "lair_supply": 12,
+      "gas_supply": 17,
+      "spawning_pool_supply": 17,
+      "natural_expansion_supply": 30,
+      "roach_warren_supply": 56,
+      "hive_supply": 90,
+      "hydralisk_den_supply": 122
+    },
+    "overall_score": 0.18000000000000002,
+    "recommendations": [
+      "?? natural_expansion_supply: Not executed. Should execute at supply 30",
+      "?? gas_supply: Not executed. Should execute at supply 17",
+      "?? spawning_pool_supply: Not executed. Should execute at supply 17"
+    ],
+    "comparisons": [
+      {
+        "parameter_name": "natural_expansion_supply",
+        "training_supply": null,
+        "pro_supply": 30,
+        "difference": null,
+        "improvement_needed": true,
+        "recommendation": "?? natural_expansion_supply: Not executed. Should execute at supply 30"
+      },
+      {
+        "parameter_name": "gas_supply",
+        "training_supply": null,
+        "pro_supply": 17,
+        "difference": null,
+        "improvement_needed": true,
+        "recommendation": "?? gas_supply: Not executed. Should execute at supply 17"
+      },
+      {
+        "parameter_name": "spawning_pool_supply",
+        "training_supply": null,
+        "pro_supply": 17,
+        "difference": null,
+        "improvement_needed": true,
+        "recommendation": "?? spawning_pool_supply: Not executed. Should execute at supply 17"
+      }
+    ]
+  }
+]
