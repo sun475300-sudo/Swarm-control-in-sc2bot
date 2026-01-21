@@ -1,0 +1,105 @@
+{
+  "timestamp": "20260115_200223",
+  "pro_data": {
+    "replay_count": 50,
+    "baseline": {
+      "lair_supply": 12,
+      "gas_supply": 17,
+      "spawning_pool_supply": 17,
+      "natural_expansion_supply": 30,
+      "roach_warren_supply": 56,
+      "hive_supply": 12,
+      "hydralisk_den_supply": 122
+    },
+    "timings": {}
+  },
+  "training_data": {
+    "game_count": 1,
+    "timings": {}
+  },
+  "timing_comparisons": {
+    "natural_expansion_supply": {
+      "parameter": "natural_expansion_supply",
+      "pro_baseline": 30,
+      "pro_mean": null,
+      "pro_median": null,
+      "pro_std": null,
+      "pro_count": 0,
+      "training_mean": null,
+      "training_median": null,
+      "training_std": null,
+      "training_count": 0,
+      "mean_difference": null,
+      "median_difference": null
+    },
+    "gas_supply": {
+      "parameter": "gas_supply",
+      "pro_baseline": 17,
+      "pro_mean": null,
+      "pro_median": null,
+      "pro_std": null,
+      "pro_count": 0,
+      "training_mean": null,
+      "training_median": null,
+      "training_std": null,
+      "training_count": 0,
+      "mean_difference": null,
+      "median_difference": null
+    },
+    "spawning_pool_supply": {
+      "parameter": "spawning_pool_supply",
+      "pro_baseline": 17,
+      "pro_mean": null,
+      "pro_median": null,
+      "pro_std": null,
+      "pro_count": 0,
+      "training_mean": null,
+      "training_median": null,
+      "training_std": null,
+      "training_count": 0,
+      "mean_difference": null,
+      "median_difference": null
+    },
+    "third_hatchery_supply": {
+      "parameter": "third_hatchery_supply",
+      "pro_baseline": null,
+      "pro_mean": null,
+      "pro_median": null,
+      "pro_std": null,
+      "pro_count": 0,
+      "training_mean": null,
+      "training_median": null,
+      "training_std": null,
+      "training_count": 0,
+      "mean_difference": null,
+      "median_difference": null
+    },
+    "speed_upgrade_supply": {
+      "parameter": "speed_upgrade_supply",
+      "pro_baseline": null,
+      "pro_mean": null,
+      "pro_median": null,
+      "pro_std": null,
+      "pro_count": 0,
+      "training_mean": null,
+      "training_median": null,
+      "training_std": null,
+      "training_count": 0,
+      "mean_difference": null,
+      "median_difference": null
+    }
+  },
+  "performance_analysis": {
+    "pro_replay_count": 50,
+    "training_game_count": 1,
+    "pro_baseline_available": true,
+    "training_comparisons_available": true,
+    "avg_build_order_score": 0.18000000000000002,
+    "median_build_order_score": 0.18000000000000002,
+    "min_build_order_score": 0.18000000000000002,
+    "max_build_order_score": 0.18000000000000002,
+    "victories": 0,
+    "defeats": 1,
+    "win_rate": 0.0
+  }
+}

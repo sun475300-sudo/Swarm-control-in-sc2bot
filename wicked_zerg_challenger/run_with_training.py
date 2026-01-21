@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 # -*- coding: utf-8 -*-
 """
 Run bot with neural network training enabled.
@@ -324,7 +326,7 @@ def main():
                         # CORRECT: Use bot directly (already a Bot instance)
                         Computer(opponent_race, difficulty)
                     ],
-                    realtime=True  # True = real-time speed with visible game window
+                    realtime=False  # False = faster speed (no visible game window, faster training)
                 )
 
                 # Game completed successfully
@@ -647,3 +649,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

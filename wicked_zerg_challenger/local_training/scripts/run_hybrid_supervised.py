@@ -107,10 +107,28 @@ def run_epochs(
         print(
             f"[EPOCH {epoch}/{epochs}] Latest manifest refreshed -> {latest_manifest}")
 
- # Placeholder for actual supervised training step
- # TODO: Integrate your replay-based trainer here, e.g.:
- # train_from_manifest(latest_manifest)
- # For now, we only prepare the manifest per epoch.
+        # CRITICAL IMPROVEMENT: 배치 학습 수행
+        try:
+            from batch_trainer import train_from_manifest
+            
+            print(f"[EPOCH {epoch}/{epochs}] Starting batch training from manifest...")
+            training_stats = train_from_manifest(
+                manifest_path=latest_manifest,
+                model_path=str(output_dir / "zerg_net_model.pt"),
+                epochs=10
+            )
+            
+            if training_stats.get("error"):
+                print(f"[WARNING] Batch training had issues: {training_stats.get('error')}")
+            else:
+                print(f"[EPOCH {epoch}/{epochs}] Batch training completed - Loss: {training_stats.get('loss', 0):.4f}, Accuracy: {training_stats.get('accuracy', 0):.2%}")
+        
+        except ImportError:
+            print("[WARNING] batch_trainer module not available, skipping batch training")
+        except Exception as e:
+            print(f"[WARNING] Batch training failed: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 def main() -> None:

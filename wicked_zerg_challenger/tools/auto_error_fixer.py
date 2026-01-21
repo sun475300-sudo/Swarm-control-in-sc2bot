@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 # -*- coding: utf-8 -*-
 """
 자동 에러 수정 도구
@@ -9,11 +11,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import List
-from typing import Dict
-from typing import Tuple
-from typing import Any
-from typing import Optional
+from typing import List, Dict, Tuple, Any, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -21,26 +19,14 @@ PROJECT_ROOT = Path(__file__).parent.parent
 class AutoErrorFixer:
     """자동 에러 수정기"""
 
-def __init__(self):
+    def __init__(self):
         self.fixes_applied: List[Dict[str, Any]] = []
 
-def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
+    def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
         """일반적인 에러 수정"""
         fixes: List[str] = []
 
         try:
-            pass
-        except Exception:
-            pass
-        pass
-
-        except Exception:
-            pass
-            pass
-        pass
-
-        except Exception:
-            pass
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 lines = content.splitlines()
@@ -59,11 +45,11 @@ def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
                     fixes.append("loguru_logger -> logger 변경")
                     modified = True
 
-            # 2. vespene -> vespene 변경
-            if 'vespene' in content:
-                content = content.replace('vespene', 'vespene')
+            # 2. 인덴테이션 오류 수정 (탭을 공백으로)
+            if '\t' in content:
+                content = content.replace('\t', '    ')
                 if content != original_content:
-                    fixes.append("vespene -> vespene 변경")
+                    fixes.append("탭 문자를 공백으로 변경")
                     modified = True
 
             # 3. await bool 에러 수정 (간단한 패턴)
@@ -80,6 +66,17 @@ def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
                 # 이미 체크가 있는지 확인
                 pass
 
+            # 5. SyntaxError 수정: 중복된 except 블록
+            if 'except Exception:' in content:
+                # 중복 except 블록 패턴 검사
+                except_count = content.count('except Exception:')
+                if except_count > 1:
+                    # 간단한 패턴: 연속된 except 블록 제거
+                    content = re.sub(r'except Exception:\s*pass\s*except Exception:', 'except Exception:', content)
+                    if content != original_content:
+                        fixes.append("중복 except 블록 제거")
+                        modified = True
+
             if modified:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
@@ -90,8 +87,7 @@ def fix_common_errors(self, file_path: Path) -> Tuple[bool, List[str]]:
         except Exception as e:
             return False, [f"Error: {str(e)}"]
 
-def scan_and_fix(
-            self, target_files: Optional[List[Path]] = None) -> Dict[str, Any]:
+    def scan_and_fix(self, target_files: Optional[List[Path]] = None) -> Dict[str, Any]:
         """스캔 및 수정"""
         if target_files is None:
             # 모든 Python 파일 찾기
@@ -135,7 +131,7 @@ def scan_and_fix(
 
 def main():
     """메인 함수"""
-import argparse
+    import argparse
 
     parser = argparse.ArgumentParser(description="자동 에러 수정 도구")
     parser.add_argument("--file", help="특정 파일만 수정")
@@ -179,3 +175,4 @@ import argparse
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

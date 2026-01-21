@@ -1,0 +1,22 @@
+=== Monsterbot Log ===
+Started: 2026-01-15 18:21:26
+Personality: serral
+==================================================
+
+[18:21:40] [INFO] Monsterbot online! Version 2026.01.06
+[18:21:40] [INFO] Personality: SERRAL
+[18:21:40] [INFO] Opponent race: Terran
+[18:21:40] [DEBUG] State: 0M/0G, Supply: 12/14, Army: 0
+[18:21:49] [WARNING] Unit deaths detected: 1 units lost, Army: 17 -> 16
+[18:21:51] [WARNING] Unit deaths detected: 1 units lost, Army: 16 -> 15
+[18:22:03] [WARNING] Unit deaths detected: 1 units lost, Army: 20 -> 19
+[18:22:03] [WARNING] Unit deaths detected: 2 units lost, Army: 19 -> 18
+[18:22:20] [WARNING] Unit deaths detected: 1 units lost, Army: 37 -> 36
+[18:22:22] [WARNING] Unit deaths detected: 4 units lost, Army: 38 -> 36
+[18:22:23] [WARNING] Unit deaths detected: 6 units lost, Army: 36 -> 30
+[18:22:46] [WARNING] Unit deaths detected: 7 units lost, Army: 54 -> 48
+[18:22:48] [WARNING] Unit deaths detected: 4 units lost, Army: 50 -> 47
+[18:22:49] [WARNING] Unit deaths detected: 24 units lost, Army: 47 -> 24
+[18:22:50] [WARNING] Unit deaths detected: 7 units lost, Army: 24 -> 18
+[18:22:54] [INFO] Match result: DEFEAT
+[18:22:54] [ERROR] Failed to record opponent data: local variable 'opponent_race_str' referenced before assignment

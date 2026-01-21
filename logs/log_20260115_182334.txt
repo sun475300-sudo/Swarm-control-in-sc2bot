@@ -1,0 +1,35 @@
+=== Monsterbot Log ===
+Started: 2026-01-15 18:23:34
+Personality: serral
+==================================================
+
+[18:23:49] [INFO] Monsterbot online! Version 2026.01.06
+[18:23:49] [INFO] Personality: SERRAL
+[18:23:49] [INFO] Opponent race: Terran
+[18:23:49] [DEBUG] State: 0M/0G, Supply: 12/14, Army: 0
+[18:23:53] [WARNING] Unit deaths detected: 2 units lost, Army: 16 -> 15
+[18:23:56] [WARNING] Unit deaths detected: 1 units lost, Army: 17 -> 16
+[18:24:13] [WARNING] Unit deaths detected: 1 units lost, Army: 44 -> 43
+[18:24:13] [WARNING] Unit deaths detected: 4 units lost, Army: 43 -> 40
+[18:24:18] [WARNING] Unit deaths detected: 1 units lost, Army: 51 -> 50
+[18:24:27] [WARNING] Unit deaths detected: 3 units lost, Army: 58 -> 55
+[18:24:28] [WARNING] Unit deaths detected: 3 units lost, Army: 55 -> 53
+[18:24:29] [WARNING] Unit deaths detected: 2 units lost, Army: 55 -> 53
+[18:24:29] [WARNING] Unit deaths detected: 7 units lost, Army: 53 -> 46
+[18:24:30] [WARNING] Unit deaths detected: 3 units lost, Army: 46 -> 43
+[18:24:31] [WARNING] Unit deaths detected: 7 units lost, Army: 43 -> 39
+[18:24:31] [WARNING] Unit deaths detected: 8 units lost, Army: 39 -> 31
+[18:24:32] [WARNING] Unit deaths detected: 6 units lost, Army: 31 -> 25
+[18:24:32] [WARNING] Unit deaths detected: 4 units lost, Army: 25 -> 24
+[18:24:33] [WARNING] Unit deaths detected: 3 units lost, Army: 24 -> 21
+[18:24:33] [WARNING] Unit deaths detected: 1 units lost, Army: 21 -> 20
+[18:24:45] [WARNING] Unit deaths detected: 1 units lost, Army: 41 -> 40
+[18:24:48] [WARNING] Unit deaths detected: 1 units lost, Army: 43 -> 42
+[18:24:57] [WARNING] Unit deaths detected: 3 units lost, Army: 54 -> 52
+[18:24:57] [WARNING] Unit deaths detected: 19 units lost, Army: 52 -> 36
+[18:24:58] [WARNING] Unit deaths detected: 12 units lost, Army: 36 -> 25
+[18:24:58] [WARNING] Unit deaths detected: 10 units lost, Army: 25 -> 18
+[18:24:59] [WARNING] Unit deaths detected: 2 units lost, Army: 18 -> 17
+[18:25:00] [WARNING] Unit deaths detected: 1 units lost, Army: 17 -> 16
+[18:25:04] [INFO] Match result: DEFEAT
+[18:25:04] [ERROR] Failed to record opponent data: local variable 'opponent_race_str' referenced before assignment

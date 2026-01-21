@@ -1,808 +1,341 @@
-#!/usr/bin/env python3
-
 # -*- coding: utf-8 -*-
+"""
+Gen-AI Self-Healing System - �ڰ� ���� �ý��� ����ȭ
 
+CRITICAL IMPROVEMENT:
+1. ���� �ڵ� ���� �ܰ� ��ȭ (ast.parse() ���� �˻�)
+2. �н� ������ ���� (�ڿ� ȿ��, ���� ȿ�� ����)
+3. �ڵ� ����ȭ ���� ���� (�ߺ� ����, ��ȿ������ ��������� ����)
 """
 
-Gen-AI Self-Healing System
-
-Google Vertex AI (Gemini)¸¦ È°¿ëÇÑ ÀÚµ¿ ¿¡·¯ ºÐ¼® ¹× ÆÐÄ¡ Á¦¾È ½Ã½ºÅÛ
-
-
-
-±â´É:
-
-1. ·±Å¸ÀÓ ¿¡·¯ ¹ß»ý ½Ã Traceback ¹× ¼Ò½º ÄÚµå¸¦ Gemini·Î Àü¼Û
-
-2. Gemini°¡ ¿øÀÎ ºÐ¼® ¹× ¼öÁ¤ ÆÐÄ¡ Á¦¾È
-
-3. ÆÐÄ¡ Á¦¾ÈÀ» ·Î±× ÆÄÀÏ¿¡ ÀúÀå (ÀÚµ¿ Àû¿ëÀº ¼±ÅÃÀû)
-
-
-
-ÁÖÀÇ»çÇ×:
-
-- ÀÚµ¿ ÆÐÄ¡ Àû¿ëÀº À§ÇèÇÒ ¼ö ÀÖÀ¸¹Ç·Î ±âº»ÀûÀ¸·Î ºñÈ°¼ºÈ­
-
-- ÆÐÄ¡ Á¦¾ÈÀ» ·Î±×·Î ÀúÀåÇÏ¿© °³¹ßÀÚ°¡ °ËÅä ÈÄ Àû¿ëÇÏµµ·Ï ±ÇÀå
-
-"""
-
-
-import os
-
-import traceback
-
+import ast
 import json
-
+import os
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 
-
-from datetime import datetime
-import re
-import logging
-from typing import Dict, List, Optional, Tuple, Set, Any, Union
-
-
 try:
-    pass
-    GEMINI_AVAILABLE = True
-
+    import google.generativeai as genai
+    GENAI_AVAILABLE = True
 except ImportError:
-    GEMINI_AVAILABLE = False
-    pass
-# TODO: 중복 코드 블록 - 공통 함수로 추출 검토
-# TODO: 중복 코드 블록 - 공통 함수로 추출 검토
-
-
-try:
-    pass
-except ImportError:
-    pass
-
-import logging
-
-logger = logging.getLogger(__name__)
-
-logger.setLevel(logging.INFO)
-
-
-@dataclass
-class ErrorContext:
-    """에러 발생 컨텍스트 정보"""
-
-    error_type: str
-    error_message: str
-    traceback: str
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
-    function_name: Optional[str] = None
-    iteration: Optional[int] = None
-    game_time: Optional[float] = None
-    instance_id: Optional[int] = None
-
-
-
-
-
-@dataclass
-
-class PatchSuggestion:
-
-    """Gemini°¡ Á¦¾ÈÇÑ ÆÐÄ¡ Á¤º¸"""
-
- description: str
-
- file_path: str
-
- old_code: str
-
- new_code: str
-
- # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
- confidence: float # 0.0 ~ 1.0
-
- reasoning: str
-
-
-
+    GENAI_AVAILABLE = False
+    print("[WARNING] google.generativeai not available")
 
 
 class GenAISelfHealing:
-
     """
-
- Gen-AI Self-Healing ½Ã½ºÅÛ
-
-
-
- Google Gemini API¸¦ »ç¿ëÇÏ¿© ¿¡·¯¸¦ ºÐ¼®ÇÏ°í ÆÐÄ¡¸¦ Á¦¾ÈÇÕ´Ï´Ù.
-
+    Generative AI ��� �ڰ� ���� �ý���
+    
+    Gemini API�� ����Ͽ� ���� �м�, ��ġ ����, �ڵ� ������ �����մϴ�.
     """
-
-
-
-def __init__(
-
- self,
-
- api_key: Optional[str] = None,
-
-    model_name: str = "gemini-1.5-flash",
-
- enable_auto_patch: bool = False,
-
- log_dir: Optional[Path] = None
-
- ):
-
-     """
-
- Args:
-
- api_key: Google Gemini API Å° (È¯°æ º¯¼ö GOOGLE_API_KEY¿¡¼­µµ ÀÐÀ½)
-
- model_name: »ç¿ëÇÒ Gemini ¸ðµ¨ ÀÌ¸§
-
- enable_auto_patch: ÀÚµ¿ ÆÐÄ¡ Àû¿ë ¿©ºÎ (±âº»°ª: False, ±ÇÀåÇÏÁö ¾ÊÀ½)
-
- log_dir: ÆÐÄ¡ ·Î±× ÀúÀå µð·ºÅä¸®
-
-     """
-
- # API 키 로드: secrets/ 폴더 → api_keys/ 폴더 → 환경 변수 순서
- if api_key:
-     self.api_key = api_key
- else:
- # tools.load_api_key 모듈 사용 (보안 모범 사례)
- try:
-     self.api_key = get_gemini_api_key()
- except (ImportError, UnicodeDecodeError, SyntaxError) as e:
-     # ImportError: 모듈을 찾을 수 없음
- # UnicodeDecodeError: 파일 인코딩 오류
- # SyntaxError: 파일 파싱 오류
- # Fallback: 환경 변수에서 직접 읽기
-     self.api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
- if not self.api_key:
-     logger.warning(f"[SELF-HEALING] Failed to load Gemini API key from file: {e}")
- except Exception as e:
-     # 기타 예외 처리
-     logger.warning(f"[SELF-HEALING] Failed to load Gemini API key: {e}")
- # Fallback: 환경 변수에서 직접 읽기
-     self.api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-
- self.model_name = model_name
-
- self.enable_auto_patch = enable_auto_patch
-
-     self.log_dir = log_dir or Path("data/self_healing")
-
- self.log_dir.mkdir(parents = True, exist_ok = True)
-
-
-
- # Gemini API ÃÊ±âÈ­
-
- self.client = None
-
- if GEMINI_AVAILABLE and self.api_key:
-
-     pass
-
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
-
- genai.configure(api_key = self.api_key)
-
- self.client = genai.GenerativeModel(model_name)
-
-     logger.info(f"[SELF-HEALING] Gemini API initialized (model: {model_name})")
-
- except Exception as e:
-
-     logger.warning(f"[SELF-HEALING] Failed to initialize Gemini API: {e}")
-
- self.client = None
-
- else:
-
-     pass
-
- if not GEMINI_AVAILABLE:
-
-     logger.warning("[SELF-HEALING] google-generativeai package not installed")
-
- if not self.api_key:
-
-     logger.warning("[SELF-HEALING] GOOGLE_API_KEY or GEMINI_API_KEY not set")
-
-
-
-def is_available(self) -> bool:
-
-    """Gemini API°¡ »ç¿ë °¡´ÉÇÑÁö È®ÀÎ"""
-
- return self.client is not None
-
-
-
-def analyze_error(
-
- self,
-
- error: Exception,
-
- context: Optional[Dict[str, Any]] = None,
-
- source_files: Optional[Dict[str, str]] = None
-
- ) -> Optional[PatchSuggestion]:
-
-     """
-
- ¿¡·¯¸¦ ºÐ¼®ÇÏ°í ÆÐÄ¡¸¦ Á¦¾È
-
-
-
- Args:
-
- error: ¹ß»ýÇÑ ¿¹¿Ü °´Ã¼
-
- context: Ãß°¡ ÄÁÅØ½ºÆ® Á¤º¸ (iteration, game_time, instance_id µî)
-
- source_files: °ü·Ã ¼Ò½º ÆÄÀÏ ³»¿ë (ÆÄÀÏ °æ·Î -> ÆÄÀÏ ³»¿ë)
-
-
-
- Returns:
-
- PatchSuggestion °´Ã¼ (ºÐ¼® ½ÇÆÐ ½Ã None)
-
-     """
-
- if not self.is_available():
-
-     logger.warning("[SELF-HEALING] Gemini API not available, skipping error analysis")
-
- return None
-
-
-
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
-
- # ¿¡·¯ ÄÁÅØ½ºÆ® ¼öÁý
-
- error_context = self._collect_error_context(error, context)
-
-
-
- # ¼Ò½º ÆÄÀÏ ÀÐ±â (°ü·Ã ÆÄÀÏÀÌ ÀÖ´Â °æ¿ì)
-
- if source_files is None:
-
-     pass
-
- source_files = self._extract_source_files(error_context)
-
-
-
- # Gemini¿¡ Àü¼ÛÇÒ ÇÁ·ÒÇÁÆ® »ý¼º
-
- prompt = self._build_analysis_prompt(error_context, source_files)
-
-
-
- # Gemini API È£Ãâ
-
- response = self.client.generate_content(prompt)
-
-
-
- # ÀÀ´ä ÆÄ½Ì
-
- patch_suggestion = self._parse_gemini_response(response.text, error_context)
-
-
-
- if patch_suggestion:
-
-     pass
-
- # ÆÐÄ¡ Á¦¾È ·Î±× ÀúÀå
-
- self._save_patch_suggestion(error_context, patch_suggestion)
-
-     logger.info(f"[SELF-HEALING] Patch suggestion generated: {patch_suggestion.description}")
-
-
-
- return patch_suggestion
-
-
-
- except Exception as e:
-
-     logger.error(f"[SELF-HEALING] Error analysis failed: {e}")
-
- logger.debug(traceback.format_exc())
-
- return None
-
-def analyze_gap_feedback(
- self,
- gap_feedback: str,
- source_files: Optional[Dict[str, str]] = None
- ) -> Optional[PatchSuggestion]:
-     """
- Build-Order Gap Analyzer 피드백 분석 및 패치 제안
-
- Args:
- gap_feedback: StrategyAudit에서 생성한 피드백 문자열
- source_files: 관련 소스 파일 내용 (선택사항)
-
- Returns:
- PatchSuggestion 객체 (분석 실패 시 None)
-     """
- if not self.is_available():
-     logger.warning("[SELF-HEALING] Gemini API not available, skipping gap analysis")
- return None
-
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     # Gap Analysis 전용 프롬프트 생성
- prompt = self._build_gap_analysis_prompt(gap_feedback, source_files)
-
- # Gemini API 호출
- response = self.client.generate_content(prompt)
-
- # 응답 파싱
- patch_suggestion = self._parse_gemini_gap_response(response.text, gap_feedback)
-
- if patch_suggestion:
-     # 패치 제안 로컬 저장
- error_context = ErrorContext(
-     error_type="BuildOrderGap",
-     error_message="Performance gap detected vs pro gamers",
- traceback = gap_feedback,
- file_path = None,
- line_number = None,
- function_name = None,
- iteration = None,
- game_time = None,
- instance_id = None,
- )
- self._save_patch_suggestion(error_context, patch_suggestion)
-     logger.info(f"[SELF-HEALING] Gap analysis patch suggestion generated: {patch_suggestion.description}")
-
- return patch_suggestion
-
- except Exception as e:
-     logger.error(f"[SELF-HEALING] Gap analysis failed: {e}")
- logger.debug(traceback.format_exc())
- return None
-
-def _build_gap_analysis_prompt(
- self,
- gap_feedback: str,
- source_files: Optional[Dict[str, str]] = None
- ) -> str:
-     """Gap Analysis 전용 프롬프트 생성"""
- prompt_parts = []
-
-     prompt_parts.append("=== Build-Order Gap Analysis Request ===")
-     prompt_parts.append("")
-     prompt_parts.append("You are analyzing a StarCraft II Zerg bot's performance gap compared to professional gamers.")
-     prompt_parts.append("The bot is losing games because it builds structures too late or in wrong order.")
-     prompt_parts.append("")
-     prompt_parts.append("Gap Analysis Feedback:")
- prompt_parts.append(gap_feedback)
-     prompt_parts.append("")
-     prompt_parts.append("Please analyze the feedback and suggest code patches to improve the bot's build order timing.")
-     prompt_parts.append("Focus on:")
-     prompt_parts.append("1. Optimizing economy_manager.py's drone production logic")
-     prompt_parts.append("2. Improving production_manager.py's build order priority system")
-     prompt_parts.append("3. Enhancing resource spending efficiency")
-     prompt_parts.append("")
-
- if source_files:
-     prompt_parts.append("=== Relevant Source Files ===")
- for file_path, content in source_files.items():
-     prompt_parts.append(f"\n--- {file_path} ---")
- prompt_parts.append(content[:2000]) # 최대 2000자만
-     prompt_parts.append("")
-
-     prompt_parts.append("=== Response Format ===")
-     prompt_parts.append("Please provide a JSON response with the following structure:")
-     prompt_parts.append('{')
-     prompt_parts.append('  "description": "Brief description of the issue and fix",')
-     prompt_parts.append('  "file_path": "path/to/file.py",')
-     prompt_parts.append('  "line_number": 123,')
-     prompt_parts.append('  "old_code": "code to replace",')
-     prompt_parts.append('  "new_code": "replacement code",')
-     prompt_parts.append('  "explanation": "Why this fix improves build order timing"')
-     prompt_parts.append('}')
-
-     return "\n".join(prompt_parts)
-
-def _parse_gemini_gap_response(
- self,
- response_text: str,
- gap_feedback: str
- ) -> Optional[PatchSuggestion]:
-     """Gemini의 Gap Analysis 응답 파싱"""
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     # JSON 응답 추출 시도
-import re
-    json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
- if json_match:
-     import json
- data = json.loads(json_match.group())
-
- return PatchSuggestion(
-     description = data.get("description", "Build order timing optimization"),
-     file_path = data.get("file_path", ""),
-     line_number = data.get("line_number", 0),
-     old_code = data.get("old_code", ""),
-     new_code = data.get("new_code", ""),
-     explanation = data.get("explanation", ""),
- )
-
- # JSON이 없으면 텍스트에서 추출 시도
- # (간단한 파싱 로직)
- return PatchSuggestion(
-     description="Build order timing optimization based on gap analysis",
-     file_path="economy_manager.py",  # 기본값
- line_number = 0,
-     old_code="",
-     new_code="",
- explanation = response_text[:500], # 처음 500자만
- )
-
- except Exception as e:
-     # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
-     logger.error(f"[SELF-HEALING] Failed to parse gap analysis response: {e}")
- return None
-
-
-
-def _collect_error_context(
-
- self,
-
- error: Exception,
-
- context: Optional[Dict[str, Any]]
-
- ) -> ErrorContext:
-
-     """¿¡·¯ ÄÁÅØ½ºÆ® ¼öÁý"""
-
- tb_str = traceback.format_exc()
-
-
-
- # Traceback¿¡¼­ ÆÄÀÏ °æ·Î¿Í ¶óÀÎ ¹øÈ£ ÃßÃâ
-
- file_path = None
-
- line_number = None
-
- function_name = None
-
-
-
-     tb_lines = tb_str.split('\n')
-
- for i, line in enumerate(tb_lines):
-
-     if 'File "' in line and '", line' in line:
-
-         pass
-
-     pass
-
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-
-     parts = line.split('"')
-
- if len(parts) >= 2:
-
-     pass
-
- file_path = parts[1]
-
-     if '", line' in line:
-
-         pass
-
-     line_part = line.split('", line ')[1].split(',')[0]
-
- line_number = int(line_part)
-
- except (ValueError, IndexError):
-
-     pass
-
- pass
-
-     if 'def ' in line and function_name is None:
-
-         pass
-
-     pass
-
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-
-     func_part = line.split('def ')[1].split('(')[0].strip()
-
- if func_part:
-
-     pass
-
- function_name = func_part
-
- except (IndexError, AttributeError):
-
-     pass
-
- pass
-
-
-
- return ErrorContext(
-
- error_type = type(error).__name__,
-
- error_message = str(error),
-
- traceback = tb_str,
-
- file_path = file_path,
-
- line_number = line_number,
-
- function_name = function_name,
-
-     iteration = context.get('iteration') if context else None,
-
-     game_time = context.get('game_time') if context else None,
-
-     instance_id = context.get('instance_id') if context else None,
-
- )
-
-
-
-def _extract_source_files(self, error_context: ErrorContext) -> Dict[str, str]:
-
-    """¿¡·¯¿Í °ü·ÃµÈ ¼Ò½º ÆÄÀÏ ÀÐ±â"""
-
- source_files = {}
-
-
-
- if error_context.file_path and Path(error_context.file_path).exists():
-
-     pass
-
- try:
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
- pass
-
- except Exception:
-     pass
-     pass
-
- # ¿¡·¯°¡ ¹ß»ýÇÑ ÆÄÀÏ ÀÐ±â
-
-     with open(error_context.file_path, 'r', encoding='utf-8') as f:
-
- file_content = f.read()
-
-
-
- # °ü·Ã ¶óÀÎ ÁÖº¯ ÄÚµå ÃßÃâ (¿¡·¯ ¶óÀÎ ¡¾20 ¶óÀÎ)
-
- if error_context.line_number:
-
-     lines = file_content.split('\n')
-
- start_line = max(0, error_context.line_number - 21)
-
- end_line = min(len(lines), error_context.line_number + 20)
-
- # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
-     relevant_code = '\n'.join(lines[start_line:end_line])
-
- source_files[error_context.file_path] = relevant_code
-
- else:
-
-     pass
-
- source_files[error_context.file_path] = file_content
-
-
-
- except Exception as e:
-
-     logger.warning(f"[SELF-HEALING] Failed to read source file {error_context.file_path}: {e}")
-
-
-
- return source_files
-
-
-
-def _build_analysis_prompt(
-
- self,
-
- error_context: ErrorContext,
-
- source_files: Dict[str, str]
-
- ) -> str:
-
-     """Gemini¿¡ Àü¼ÛÇÒ ÇÁ·ÒÇÁÆ® »ý¼º"""
-
-     prompt = f"""You are a Python debugging assistant. Analyze the following error and suggest a fix.
-
-
-
-ERROR INFORMATION:
-
-- Error Type: {error_context.error_type}
-
-- Error Message: {error_context.error_message}
-
-- File: {error_context.file_path or 'Unknown'}
-
-- Line: {error_context.line_number or 'Unknown'}
-
-- Function: {error_context.function_name or 'Unknown'}
-
-
-
-TRACEBACK:
-
-```
-
-{error_context.traceback}
-
-```
-
-
+    
+    def __init__(self, api_key: Optional[str] = None, model_name: str = "gemini-1.5-flash"):
+        """
+        Args:
+            api_key: Gemini API Ű (������ ȯ�溯������ ������)
+            model_name: ����� �� �̸�
+        """
+        self.model_name = model_name
+        self.model = None
+        
+        if GENAI_AVAILABLE:
+            try:
+                if api_key is None:
+                    # ȯ�溯�� �Ǵ� ���Ͽ��� API Ű ��������
+                    api_key = os.environ.get("GEMINI_API_KEY")
+                    if api_key is None:
+                        api_key_path = Path(__file__).parent / "api_keys" / "GEMINI_API_KEY.txt"
+                        if api_key_path.exists():
+                            api_key = api_key_path.read_text().strip()
+                
+                if api_key:
+                    genai.configure(api_key=api_key)
+                    self.model = genai.GenerativeModel(model_name)
+            except Exception as e:
+                print(f"[WARNING] Failed to initialize Gemini: {e}")
+    
+    def analyze_error(self, error: Exception, context: Dict, source_code: Optional[str] = None) -> Dict:
+        """
+        ���� �м� �� ��ġ ����
+        
+        CRITICAL IMPROVEMENT: �ڵ� ���� �ܰ� ��ȭ
+        
+        Args:
+            error: �߻��� ����
+            context: ���� ���ؽ�Ʈ (���ϸ�, ���� ��ȣ ��)
+            source_code: �ҽ� �ڵ� (���û���)
+            
+        Returns:
+            �м� ��� ��ųʸ�
+        """
+        if not self.model:
+            return {
+                "success": False,
+                "error": "Gemini model not available",
+                "patch_code": None
+            }
+        
+        try:
+            # ������Ʈ ����
+            prompt = self._generate_error_analysis_prompt(error, context, source_code)
+            
+            # Gemini API ȣ��
+            response = self.model.generate_content(prompt)
+            
+            # ���� �Ľ�
+            response_text = response.text if hasattr(response, 'text') else str(response)
+            
+            # ��ġ �ڵ� ����
+            patch_code = self._extract_patch_code(response_text)
+            
+            # ��ġ �ڵ� ����
+            validation_result = self._validate_patch_code(patch_code)
+            
+            return {
+                "success": True,
+                "analysis": response_text,
+                "patch_code": patch_code,
+                "validation": validation_result
+            }
+        
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "patch_code": None
+            }
+    
+    def _generate_error_analysis_prompt(self, error: Exception, context: Dict, source_code: Optional[str]) -> str:
+        """���� �м� ������Ʈ ����"""
+        prompt = f"""
+���� �м� �� ��ġ ������ ��û�մϴ�.
+
+���� ����:
+- ���� Ÿ��: {type(error).__name__}
+- ���� �޽���: {str(error)}
+- ����: {context.get('file', 'Unknown')}
+- ����: {context.get('line', 'Unknown')}
 
 """
+        if source_code:
+            prompt += f"""
+���� �ҽ� �ڵ�:
+```python
+{source_code}
+```
+
+"""
+        prompt += """
+��û ����:
+1. ������ ���� �м�
+2. ������ �ڵ� ���� (Python �ڵ常, �ּ� ����)
+3. ���� ���� ����
+
+���� ����:
+```python
+# ������ �ڵ�
+...
+```
+
+����:
+...
+"""
+<<<<<<< Current (Your changes)
+        return prompt
+    
+    def _extract_patch_code(self, response_text: str) -> str:
+        """���信�� ��ġ �ڵ� ����"""
+        # �ڵ� ���� ã��
+        if "```python" in response_text:
+            start = response_text.find("```python") + len("```python")
+            end = response_text.find("```", start)
+            if end > start:
+                return response_text[start:end].strip()
+        elif "```" in response_text:
+            start = response_text.find("```") + len("```")
+            end = response_text.find("```", start)
+            if end > start:
+                return response_text[start:end].strip()
+        
+        return ""
+    
+    def _validate_patch_code(self, patch_code: str) -> Dict[str, Any]:
+        """
+        ��ġ �ڵ� ����
+        
+        CRITICAL IMPROVEMENT: ast.parse()�� ���� ���� ���� �˻�
+        
+        Args:
+            patch_code: ������ �ڵ�
+            
+        Returns:
+            ���� ��� ��ųʸ�
+        """
+        result = {
+            "syntax_valid": False,
+            "errors": [],
+            "warnings": [],
+            "nested_loops": 0,
+            "inefficient_comprehensions": []
+        }
+        
+        if not patch_code:
+            result["errors"].append("Empty patch code")
+            return result
+        
+        try:
+            # 1. ���� �˻�
+            try:
+                tree = ast.parse(patch_code)
+                result["syntax_valid"] = True
+            except SyntaxError as e:
+                result["errors"].append(f"Syntax error: {e}")
+                return result
+            
+            # 2. �ߺ� ���� ����
+            result["nested_loops"] = self._detect_nested_loops(tree)
+            if result["nested_loops"] > 2:
+                result["warnings"].append(f"Deep nested loops detected: {result['nested_loops']} levels")
+            
+            # 3. ��ȿ������ ��������� ����
+            result["inefficient_comprehensions"] = self._detect_inefficient_comprehensions(tree)
+            if result["inefficient_comprehensions"]:
+                result["warnings"].append(f"Inefficient comprehensions: {len(result['inefficient_comprehensions'])} found")
+        
+        except Exception as e:
+            result["errors"].append(f"Validation error: {e}")
+        
+        return result
+    
+    def _detect_nested_loops(self, tree: ast.AST) -> int:
+        """�ߺ� ���� ���� ����"""
+        class LoopDepthVisitor(ast.NodeVisitor):
+            def __init__(self):
+                self.max_depth = 0
+                self.current_depth = 0
+            
+            def visit_For(self, node):
+                self.current_depth += 1
+                self.max_depth = max(self.max_depth, self.current_depth)
+                self.generic_visit(node)
+                self.current_depth -= 1
+            
+            def visit_While(self, node):
+                self.current_depth += 1
+                self.max_depth = max(self.max_depth, self.current_depth)
+                self.generic_visit(node)
+                self.current_depth -= 1
+        
+        visitor = LoopDepthVisitor()
+        visitor.visit(tree)
+        return visitor.max_depth
+    
+    def _detect_inefficient_comprehensions(self, tree: ast.AST) -> List[str]:
+        """��ȿ������ ��������� ����"""
+        class ComprehensionVisitor(ast.NodeVisitor):
+            def __init__(self):
+                self.inefficient = []
+            
+            def visit_ListComp(self, node):
+                # ��ø�� ��������� ����
+                for generator in node.generators:
+                    if isinstance(generator.iter, (ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp)):
+                        self.inefficient.append("Nested comprehension detected")
+                self.generic_visit(node)
+            
+            def visit_DictComp(self, node):
+                for generator in node.generators:
+                    if isinstance(generator.iter, (ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp)):
+                        self.inefficient.append("Nested comprehension detected")
+                self.generic_visit(node)
+        
+        visitor = ComprehensionVisitor()
+        visitor.visit(tree)
+        return visitor.inefficient
+    
+    def filter_training_data(self, replay_data: List[Dict], min_resource_efficiency: float = 0.7, min_combat_efficiency: float = 0.6) -> List[Dict]:
+        """
+        �н� ������ ����
+        
+        CRITICAL IMPROVEMENT: �¸��� ���� �߿����� ȿ���� ���� �����͸� ����
+        
+        Args:
+            replay_data: ���÷��� ������ ����Ʈ
+            min_resource_efficiency: �ּ� �ڿ� ȿ�� (0.0 ~ 1.0)
+            min_combat_efficiency: �ּ� ���� ȿ�� (0.0 ~ 1.0)
+            
+        Returns:
+            ������ ������ ����Ʈ
+        """
+        filtered = []
+        
+        for data in replay_data:
+            # �¸��� ���Ӹ� ����
+            if not data.get("victory", False):
+                continue
+            
+            # �ڿ� ȿ�� ���
+            resource_efficiency = self._calculate_resource_efficiency(data)
+            if resource_efficiency < min_resource_efficiency:
+                continue
+            
+            # ���� ȿ�� ���
+            combat_efficiency = self._calculate_combat_efficiency(data)
+            if combat_efficiency < min_combat_efficiency:
+                continue
+            
+            # ȿ�� ���� �߰�
+            data["resource_efficiency"] = resource_efficiency
+            data["combat_efficiency"] = combat_efficiency
+            
+            filtered.append(data)
+        
+        return filtered
+    
+    def _calculate_resource_efficiency(self, data: Dict) -> float:
+        """�ڿ� ȿ�� ���"""
+        try:
+            # �ڿ� �������� �Һ� ��
+            minerals_collected = data.get("minerals_collected", 0)
+            minerals_spent = data.get("minerals_spent", 0)
+            
+            if minerals_collected == 0:
+                return 0.0
+            
+            # ������ �ڿ� �� �Һ��� ����
+            efficiency = min(1.0, minerals_spent / minerals_collected)
+            
+            return efficiency
+        
+        except Exception:
+            return 0.5  # �⺻��
+    
+    def _calculate_combat_efficiency(self, data: Dict) -> float:
+        """���� ȿ�� ���"""
+        try:
+            # ���� �·�
+            battles_won = data.get("battles_won", 0)
+            battles_total = data.get("battles_total", 1)
+            
+            if battles_total == 0:
+                return 0.0
+            
+            win_rate = battles_won / battles_total
+            
+            # �ս� ���� ����
+            units_lost = data.get("units_lost", 0)
+            units_killed = data.get("units_killed", 1)
+            
+            loss_ratio = units_lost / units_killed if units_killed > 0 else 1.0
+            
+            # �·��� ���� �ս��� ������ ȿ�� ����
+            efficiency = win_rate * (1.0 - min(1.0, loss_ratio * 0.5))
+            
+            return efficiency
+        
+        except Exception:
+            return 0.5  # �⺻��
+=======
 
 
 
@@ -1138,12 +671,166 @@ def apply_patch(self, patch: PatchSuggestion) -> bool:
 
  return False
 
+    def validate_code_syntax(self, code: str) -> Tuple[bool, Optional[str]]:
+        """
+        코드 구문 검증 (SyntaxError 체크)
+        
+        Gemini가 생성한 코드를 적용하기 전에 구문 오류를 사전에 검사
+        
+        Args:
+            code: 검증할 코드 문자열
+            
+        Returns:
+            (is_valid, error_message) 튜플
+        """
+        import ast
+        
+        try:
+            # AST 파싱으로 구문 오류 검사
+            ast.parse(code)
+            return True, None
+        except SyntaxError as e:
+            error_msg = f"SyntaxError at line {e.lineno}: {e.msg}"
+            if e.text:
+                error_msg += f"\nCode: {e.text.strip()}"
+            return False, error_msg
+        except Exception as e:
+            return False, f"Validation error: {str(e)}"
+    
+    def filter_training_data(self, replay_data: List[Dict], 
+                           min_resource_efficiency: float = 0.7,
+                           min_combat_win_rate: float = 0.5) -> List[Dict]:
+        """
+        학습 데이터 선별
+        
+        승리한 게임 중에서도 자원 효율이나 교전 승률이 특정 기준 이상인 데이터만 엄선
+        
+        Args:
+            replay_data: 리플레이 데이터 리스트
+            min_resource_efficiency: 최소 자원 효율 (0.0 ~ 1.0)
+            min_combat_win_rate: 최소 교전 승률 (0.0 ~ 1.0)
+            
+        Returns:
+            선별된 리플레이 데이터 리스트
+        """
+        filtered = []
+        
+        for replay in replay_data:
+            # 승리한 게임만 필터링
+            if not replay.get('won', False):
+                continue
+            
+            # 자원 효율 계산
+            resources_spent = replay.get('resources_spent', 0)
+            resources_gathered = replay.get('resources_gathered', 0)
+            if resources_gathered > 0:
+                resource_efficiency = resources_spent / resources_gathered
+            else:
+                resource_efficiency = 0.0
+            
+            # 교전 승률 계산
+            engagements_won = replay.get('engagements_won', 0)
+            total_engagements = replay.get('total_engagements', 1)
+            combat_win_rate = engagements_won / total_engagements if total_engagements > 0 else 0.0
+            
+            # 기준 이상인 데이터만 선별
+            if resource_efficiency >= min_resource_efficiency and combat_win_rate >= min_combat_win_rate:
+                filtered.append(replay)
+        
+        return filtered
+    
+    def static_analysis_optimization(self, file_path: Path) -> List[Dict[str, Any]]:
+        """
+        정적 분석을 통한 코드 최적화 감지
+        
+        성능에 영향을 주는 중복 루프나 비효율적인 리스트 컴프리헨션을 감지
+        
+        Args:
+            file_path: 분석할 파일 경로
+            
+        Returns:
+            최적화 제안 리스트
+        """
+        import ast
+        
+        suggestions = []
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+                lines = content.splitlines()
+            
+            # AST 파싱
+            try:
+                tree = ast.parse(content, filename=str(file_path))
+            except SyntaxError:
+                return suggestions  # 구문 오류가 있으면 분석 불가
+            
+            # 1. 중복 루프 감지
+            for node in ast.walk(tree):
+                if isinstance(node, ast.For):
+                    # 중첩된 for 루프 확인
+                    nested_fors = [n for n in ast.walk(node) if isinstance(n, ast.For) and n != node]
+                    if nested_fors:
+                        suggestions.append({
+                            'type': 'nested_loop',
+                            'line': node.lineno,
+                            'message': f'Nested for loops detected at line {node.lineno}. Consider using itertools.product() or vectorization.',
+                            'severity': 'medium'
+                        })
+            
+            # 2. 비효율적인 리스트 컴프리헨션 감지
+            for i, line in enumerate(lines, 1):
+                # 중첩된 리스트 컴프리헨션
+                if line.count('[') >= 3 and 'for' in line and 'in' in line:
+                    # 간단한 휴리스틱: 너무 복잡한 컴프리헨션
+                    if line.count('for') >= 2:
+                        suggestions.append({
+                            'type': 'complex_comprehension',
+                            'line': i,
+                            'message': f'Complex nested list comprehension at line {i}. Consider breaking into multiple steps for readability and performance.',
+                            'severity': 'low'
+                        })
+                
+                # 리스트 컴프리헨션 내부의 함수 호출
+                if '[' in line and 'for' in line and '(' in line:
+                    # 함수 호출이 있는 컴프리헨션은 map() 사용 고려
+                    if line.count('(') > line.count('['):
+                        suggestions.append({
+                            'type': 'function_in_comprehension',
+                            'line': i,
+                            'message': f'Function calls in list comprehension at line {i}. Consider using map() for better performance.',
+                            'severity': 'low'
+                        })
+            
+            # 3. 중복 코드 블록 감지 (간단한 버전)
+            line_hashes = {}
+            for i, line in enumerate(lines, 1):
+                stripped = line.strip()
+                if len(stripped) > 20:  # 충분히 긴 라인만
+                    line_hash = hash(stripped)
+                    if line_hash in line_hashes:
+                        # 같은 라인이 반복됨
+                        prev_line = line_hashes[line_hash]
+                        suggestions.append({
+                            'type': 'duplicate_code',
+                            'line': i,
+                            'message': f'Duplicate code detected at line {i} (similar to line {prev_line}). Consider extracting to a function.',
+                            'severity': 'medium'
+                        })
+                    else:
+                        line_hashes[line_hash] = i
+        
+        except Exception as e:
+            logger.warning(f"[STATIC_ANALYSIS] Error analyzing {file_path}: {e}")
+        
+        return suggestions
 
 
 # TODO: 중복 코드 블록 - 공통 함수로 추출 검토
 
 
-# Àü¿ª ÀÎ½ºÅÏ½º (¼±ÅÃÀû »ç¿ë)
+# 전역 인스턴스 (선택적 사용)
 
 _global_self_healing: Optional[GenAISelfHealing] = None
 
@@ -1203,3 +890,4 @@ def init_self_healing(
  )
 
  return _global_self_healing
+>>>>>>> Incoming (Background Agent changes)

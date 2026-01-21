@@ -1,0 +1,31 @@
+{
+  "wins": 45,
+  "losses": 44,
+  "total_games": 89,
+  "win_rate": 50.56,
+  "episode": 428,
+  "total_episodes": 1000,
+  "progress_percent": 42.8,
+  "average_reward": 187.5,
+  "loss": 0.0342,
+  "training_hours": 48.5,
+  "kda_ratio": 1.96,
+  "average_army_supply": 67.3,
+  "enemy_killed_supply": 4230,
+  "supply_lost": 2156,
+  "win_rate_trend": [35.2, 38.1, 41.5, 42.8, 45.3],
+  "training_logs": [
+    {
+      "time": "09:45:32",
+      "message": "Episode 428 completed"
+    },
+    {
+      "time": "09:44:18",
+      "message": "Loss decreased to 0.0342"
+    },
+    {
+      "time": "09:43:05",
+      "message": "Model checkpoint saved"
+    }
+  ]
+}
