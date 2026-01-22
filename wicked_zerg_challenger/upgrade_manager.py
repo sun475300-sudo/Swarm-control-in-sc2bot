@@ -34,6 +34,9 @@ class EvolutionUpgradeManager:
         if not hasattr(self.bot, "structures"):
             return
 
+        # Build Evolution Chamber if missing (after 4 minutes)
+        await self._build_evolution_chamber()
+
         evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
         if not evo_chambers:
             return
@@ -228,3 +231,45 @@ class EvolutionUpgradeManager:
             return False
         hive = self.bot.structures(UnitTypeId.HIVE)
         return bool(hive and hive.ready)
+
+    def _can_research(self, upgrade_id) -> bool:
+        """Check if upgrade can be researched (not already done or pending)."""
+        if self._is_upgrade_done(upgrade_id):
+            return False
+        if self.bot.already_pending_upgrade(upgrade_id) > 0:
+            return False
+        if not self._tech_requirement_met(upgrade_id):
+            return False
+        return True
+
+    async def _build_evolution_chamber(self) -> bool:
+        """Build Evolution Chamber for upgrades."""
+        # Check time (after 4 minutes)
+        if getattr(self.bot, "time", 0) < 240:
+            return False
+
+        # Check if already exists or pending
+        evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER)
+        if evo_chambers.exists or self.bot.already_pending(UnitTypeId.EVOLUTIONCHAMBER) > 0:
+            return False
+
+        # Check resources
+        if not self.bot.can_afford(UnitTypeId.EVOLUTIONCHAMBER):
+            return False
+
+        # Need Spawning Pool first
+        if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            return False
+
+        # Build near townhall
+        if self.bot.townhalls.exists:
+            try:
+                await self.bot.build(
+                    UnitTypeId.EVOLUTIONCHAMBER,
+                    near=self.bot.townhalls.first.position
+                )
+                print(f"[UPGRADE] [{int(self.bot.time)}s] Building Evolution Chamber")
+                return True
+            except Exception:
+                pass
+        return False

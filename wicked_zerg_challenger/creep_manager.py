@@ -235,10 +235,14 @@ class CreepManager:
         if actions:
             try:
                 if hasattr(self.bot, "do_actions"):
-                    await self.bot.do_actions(actions)
+                    result = self.bot.do_actions(actions)
+                    if hasattr(result, "__await__"):
+                        await result
                 else:
                     for action in actions:
-                        await self.bot.do(action)
+                        result = self.bot.do(action)
+                        if hasattr(result, "__await__"):
+                            await result
             except Exception:
                 pass
 

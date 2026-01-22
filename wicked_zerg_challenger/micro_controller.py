@@ -59,12 +59,15 @@ class BoidsController:
         self.formation_controller = ConcaveFormationController()
         self.burrow_controller = BurrowController()
 
-        # Update timing
+        # Update timing - increased interval for performance
         self.last_update = 0
-        self.update_interval = 8
+        self.update_interval = 12  # Reduced frequency (was 8) for better performance
 
         # Movement configuration
         self.move_scale = 2.5
+
+        # Performance: limit units processed per frame
+        self.max_units_per_frame = 30
 
         # Combat unit types for filtering
         self.combat_unit_types: Set = set()
@@ -144,12 +147,17 @@ class BoidsController:
             return
         skip_units = skip_units or set()
 
+        # Performance: limit units processed per frame
+        unit_list = list(units)
+        if len(unit_list) > self.max_units_per_frame:
+            unit_list = unit_list[:self.max_units_per_frame]
+
         actions = []
         enemy_center = self._get_enemy_center(enemy_units)
         enemy_structures = getattr(self.bot, "enemy_structures", [])
         splash_threats = self.splash_handler.get_splash_threats(enemy_units)
 
-        for unit in units:
+        for unit in unit_list:
             if unit.tag in skip_units:
                 continue
 
@@ -298,10 +306,14 @@ class BoidsController:
         if not actions:
             return
         if hasattr(self.bot, "do_actions"):
-            await self.bot.do_actions(actions)
+            result = self.bot.do_actions(actions)
+            if hasattr(result, "__await__"):
+                await result
         else:
             for action in actions:
-                await self.bot.do(action)
+                result = self.bot.do(action)
+                if hasattr(result, "__await__"):
+                    await result
 
 
 # Backward compatibility aliases

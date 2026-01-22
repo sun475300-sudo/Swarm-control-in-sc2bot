@@ -294,7 +294,9 @@ class QueenManager:
                     # Queen too far - move closer first
                     if dist <= self.max_queen_travel_distance:
                         try:
-                            await self.bot.do(queen.move(hatch.position))
+                            result = self.bot.do(queen.move(hatch.position))
+                            if hasattr(result, "__await__"):
+                                await result
                         except Exception:
                             pass
                     continue
@@ -305,10 +307,14 @@ class QueenManager:
             try:
                 if hasattr(queen, "can_cast"):
                     if queen.can_cast(AbilityId.EFFECT_INJECTLARVA):
-                        await self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
+                        result = self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
+                        if hasattr(result, "__await__"):
+                            await result
                         self.last_inject_time[hatch_tag] = current_time
                 else:
-                    await self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
+                    result = self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
+                    if hasattr(result, "__await__"):
+                        await result
                     self.last_inject_time[hatch_tag] = current_time
             except Exception:
                 continue
@@ -351,12 +357,16 @@ class QueenManager:
 
                 if hasattr(queen, "can_cast"):
                     if queen.can_cast(AbilityId.BUILD_CREEPTUMOR_QUEEN):
-                        await self.bot.do(
+                        result = self.bot.do(
                             queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target)
                         )
+                        if hasattr(result, "__await__"):
+                            await result
                         self.last_creep_time[queen.tag] = current_time
                 else:
-                    await self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target))
+                    result = self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target))
+                    if hasattr(result, "__await__"):
+                        await result
                     self.last_creep_time[queen.tag] = current_time
             except Exception as e:
                 if iteration % 200 == 0:
@@ -392,10 +402,14 @@ class QueenManager:
             # Move queen toward farthest tumor or enemy base
             if farthest_tumor and hasattr(queen, "distance_to"):
                 if queen.distance_to(farthest_tumor) > 8:
-                    await self.bot.do(queen.move(farthest_tumor.position))
+                    result = self.bot.do(queen.move(farthest_tumor.position))
+                    if hasattr(result, "__await__"):
+                        await result
             elif hasattr(queen, "distance_to") and queen.distance_to(enemy_start) > 15:
                 forward_pos = queen.position.towards(enemy_start, 10)
-                await self.bot.do(queen.move(forward_pos))
+                result = self.bot.do(queen.move(forward_pos))
+                if hasattr(result, "__await__"):
+                    await result
         except Exception:
             pass
 

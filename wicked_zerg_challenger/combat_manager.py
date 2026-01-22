@@ -21,6 +21,15 @@ else:
         Unit = object
         Point2 = tuple
 
+# Import common helpers to reduce code duplication
+try:
+    from utils.common_helpers import (
+        has_units, units_amount, filter_by_type, closest_enemy, centroid
+    )
+    HELPERS_AVAILABLE = True
+except ImportError:
+    HELPERS_AVAILABLE = False
+
 
 class CombatManager:
     """
@@ -68,25 +77,35 @@ class CombatManager:
     async def on_step(self, iteration: int):
         """
         매 프레임 호출되는 전투 로직
-        
+
         Args:
             iteration: 현재 게임 반복 횟수
         """
         try:
+            # Skip if MicroController is handling movement
+            # This prevents dual command conflicts (both issuing move/attack)
+            if hasattr(self.bot, 'micro') and self.bot.micro is not None:
+                # CombatManager only updates targeting info, no direct commands
+                # MicroController will handle actual movement
+                return
+
             # 아군 유닛과 적 유닛 확인
             if not hasattr(self.bot, 'units') or not hasattr(self.bot, 'enemy_units'):
                 return
-            
+
             army_units = self._filter_army_units(getattr(self.bot, "units", []))
 
             enemy_units = getattr(self.bot, "enemy_units", [])
 
-            if not self._has_units(army_units) or not self._has_units(enemy_units):
+            # 적 유닛이 보이면 전투
+            if self._has_units(army_units) and self._has_units(enemy_units):
+                await self._execute_combat(army_units, enemy_units)
                 return
-            
-            # 전투 로직 실행
-            await self._execute_combat(army_units, enemy_units)
-            
+
+            # 적 유닛이 없어도 아군이 충분하면 적 기지 공격
+            if self._has_units(army_units):
+                await self._offensive_attack(army_units, iteration)
+
         except Exception as e:
             if iteration % 200 == 0:
                 print(f"[WARNING] Combat manager error: {e}")
@@ -213,29 +232,80 @@ class CombatManager:
         except Exception:
             pass
 
+    async def _offensive_attack(self, army_units, iteration: int):
+        """
+        선제 공격 로직 - 적 유닛이 보이지 않을 때 적 기지 공격
+
+        Args:
+            army_units: 아군 유닛들
+            iteration: 현재 반복 횟수
+        """
+        try:
+            # 최소 군대 서플라이 확인 (30 이상이면 공격)
+            army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+            if army_supply < 30:
+                return
+
+            # 적 시작 위치로 공격
+            enemy_start = None
+            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+                enemy_start = self.bot.enemy_start_locations[0]
+
+            if not enemy_start:
+                return
+
+            # 매 50 프레임마다 공격 명령 갱신
+            if iteration % 50 != 0:
+                return
+
+            # 아군 유닛들을 적 기지로 공격 명령
+            for unit in list(army_units)[:30]:  # 최대 30개 유닛
+                try:
+                    if hasattr(unit, "is_idle") and unit.is_idle:
+                        await self.bot.do(unit.attack(enemy_start))
+                    elif not hasattr(unit, "is_attacking") or not unit.is_attacking:
+                        await self.bot.do(unit.attack(enemy_start))
+                except Exception:
+                    continue
+
+            if iteration % 200 == 0:
+                print(f"[OFFENSIVE] [{int(self.bot.time)}s] Attacking enemy base with {army_supply} supply army")
+
+        except Exception as e:
+            if iteration % 200 == 0:
+                print(f"[WARNING] Offensive attack error: {e}")
+
     def _filter_army_units(self, units):
         return self._filter_units_by_type(
             units, ["ZERGLING", "ROACH", "HYDRALISK", "MUTALISK"]
         )
 
     def _filter_units_by_type(self, units, names):
+        if HELPERS_AVAILABLE:
+            return filter_by_type(units, names)
         if hasattr(units, "filter"):
             return units.filter(lambda u: u.type_id.name in names)
         return [u for u in units if getattr(u.type_id, "name", "") in names]
 
     @staticmethod
     def _has_units(units) -> bool:
+        if HELPERS_AVAILABLE:
+            return has_units(units)
         if hasattr(units, "exists"):
             return bool(units.exists)
         return bool(units)
 
     @staticmethod
     def _units_amount(units) -> int:
+        if HELPERS_AVAILABLE:
+            return units_amount(units)
         if hasattr(units, "amount"):
             return int(units.amount)
         return len(units)
 
     def _get_enemy_center(self, enemy_units):
+        if HELPERS_AVAILABLE:
+            return centroid(enemy_units)
         if not Point2:
             return None
         items = list(enemy_units)
@@ -247,12 +317,14 @@ class CombatManager:
         return Point2((x_sum / count, y_sum / count))
 
     def _closest_enemy(self, enemy_units, unit):
+        if HELPERS_AVAILABLE:
+            return closest_enemy(unit, enemy_units)
         if hasattr(enemy_units, "closest_to"):
             try:
                 return enemy_units.closest_to(unit.position)
             except Exception:
                 return None
-        closest = None
+        closest_unit = None
         closest_dist = None
         for enemy in enemy_units:
             try:
@@ -260,6 +332,6 @@ class CombatManager:
             except Exception:
                 continue
             if closest_dist is None or dist < closest_dist:
-                closest = enemy
+                closest_unit = enemy
                 closest_dist = dist
-        return closest
+        return closest_unit

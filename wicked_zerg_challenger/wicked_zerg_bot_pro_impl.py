@@ -59,6 +59,9 @@ class WickedZergBotProImpl(BotAI):
 
         This method executes actual game logic and training logic.
         """
+        # Store iteration as attribute for other modules to access
+        self.iteration = iteration
+
         if self._step_integrator is None:
             self._step_integrator = BotStepIntegrator(self)
 
