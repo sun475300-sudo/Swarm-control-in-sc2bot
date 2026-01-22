@@ -32,32 +32,24 @@ class AntiSplashAwareness:
         self.extreme_threats = set()  # High-priority splash threats
 
         if UnitTypeId:
-            # Regular splash threats
-            self.threat_types = {
-                UnitTypeId.SIEGETANK,
-                UnitTypeId.SIEGETANKSIEGED,
-                UnitTypeId.HIGHTEMPLAR,
-                UnitTypeId.BANELING,
-                UnitTypeId.BANELINGBURROWED,
-                UnitTypeId.DISRUPTOR,
-                UnitTypeId.COLOSSUS,
-                UnitTypeId.HELLION,
-                UnitTypeId.HELLBAT,
-                UnitTypeId.LIBERATORAG,  # Siege mode liberator
-                UnitTypeId.LURKERMP,
-                UnitTypeId.LURKERMPBURROWED,
-                UnitTypeId.RAVEN,  # Anti-armor missile
-                UnitTypeId.WIDOWMINE,
-                UnitTypeId.WIDOWMINEBURROWED,
-            }
+            # Regular splash threats - use getattr for compatibility
+            threat_type_names = [
+                "SIEGETANK", "SIEGETANKSIEGED", "HIGHTEMPLAR", "BANELING",
+                "BANELINGBURROWED", "DISRUPTOR", "COLOSSUS", "HELLION",
+                "HELLBAT", "HELLIONTANK", "LIBERATORAG", "LURKERMP",
+                "LURKERMPBURROWED", "RAVEN", "WIDOWMINE", "WIDOWMINEBURROWED",
+            ]
+            for name in threat_type_names:
+                unit_type = getattr(UnitTypeId, name, None)
+                if unit_type is not None:
+                    self.threat_types.add(unit_type)
 
             # Extreme threats requiring immediate panic split
-            self.extreme_threats = {
-                UnitTypeId.SIEGETANKSIEGED,
-                UnitTypeId.HIGHTEMPLAR,
-                UnitTypeId.DISRUPTOR,
-                UnitTypeId.BANELING,
-            }
+            extreme_names = ["SIEGETANKSIEGED", "HIGHTEMPLAR", "DISRUPTOR", "BANELING"]
+            for name in extreme_names:
+                unit_type = getattr(UnitTypeId, name, None)
+                if unit_type is not None:
+                    self.extreme_threats.add(unit_type)
 
     def get_threats(self, enemy_units: Iterable) -> List:
         if not self.threat_types or not enemy_units:
