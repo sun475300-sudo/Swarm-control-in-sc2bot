@@ -124,19 +124,33 @@ class ProductionResilience:
                 reservations = getattr(self.bot, "build_reservations", {})
                 now = getattr(self.bot, "time", 0.0)
                 ts = reservations.get(structure_type)
-                # Skip if recently reserved (another manager already issued the build)
-                if ts is not None and now - ts < 45.0:
-                    return None
-                reservations[structure_type] = now
-                if structure_type == UnitTypeId.SPAWNINGPOOL:
+
+                # === UNIQUE TECH BUILDINGS: Only allow ONE of each ===
+                unique_tech_buildings = [
+                    UnitTypeId.SPAWNINGPOOL, UnitTypeId.ROACHWARREN,
+                    UnitTypeId.BANELINGNEST, UnitTypeId.HYDRALISKDEN,
+                    UnitTypeId.SPIRE, UnitTypeId.GREATERSPIRE,
+                    UnitTypeId.INFESTATIONPIT, UnitTypeId.ULTRALISKCAVERN,
+                    UnitTypeId.EVOLUTIONCHAMBER, UnitTypeId.LURKERDENMP,
+                ]
+
+                if structure_type in unique_tech_buildings:
                     try:
-                        if self.bot.structures(UnitTypeId.SPAWNINGPOOL).exists or self.bot.already_pending(UnitTypeId.SPAWNINGPOOL) > 0:
-                            # throttle log to reduce spam
-                            if int(now) % 10 == 0:
-                                print(f"[POOL GUARD] Blocked duplicate Spawning Pool at {int(now)}s")
+                        # Check if exists OR pending
+                        if (self.bot.structures(structure_type).exists or
+                            self.bot.already_pending(structure_type) > 0):
+                            return None  # Silently block duplicate
+                        # Check reservation (5 second cooldown for unique buildings)
+                        if ts is not None and now - ts < 5.0:
                             return None
                     except Exception:
                         pass
+
+                # Skip if recently reserved (another manager already issued the build)
+                if ts is not None and now - ts < 30.0:
+                    return None
+
+                reservations[structure_type] = now
                 return await original_build(structure_type, *args, **kwargs)
 
             self.bot.build = _build_with_reservation  # type: ignore
@@ -260,6 +274,10 @@ class ProductionResilience:
         """
         b = self.bot
         self._cleanup_build_reservations()
+
+        # === GAS OVERFLOW PREVENTION: Spend gas when > 1500 ===
+        if b.vespene > 1500:
+            await self._spend_excess_gas()
 
         # === AGGRESSIVE EXPANSION: When minerals > 400, prioritize expansion ===
         # Zerg needs expansions for macro advantage
@@ -517,6 +535,14 @@ class ProductionResilience:
             if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
                 return await self._safe_train(larva, UnitTypeId.ZERGLING)
             return False  # Wait for resources
+
+        # === COUNTER ENEMY COMPOSITION ===
+        # Analyze enemy units and produce counters
+        enemy_units = getattr(b, "enemy_units", [])
+        counter_unit = self._get_counter_unit(enemy_units, has_roach_warren, has_hydra_den, has_spire)
+
+        if counter_unit and b.can_afford(counter_unit) and b.supply_left >= 2:
+            return await self._safe_train(larva, counter_unit)
 
         # === Calculate Zergling cap based on game phase ===
         # Early game: Max 20 Zerglings
@@ -1346,6 +1372,16 @@ class ProductionResilience:
         if b.structures(UnitTypeId.LAIR).exists or b.structures(UnitTypeId.HIVE).exists:
             return False
 
+        # Check if Lair is already pending (Hatchery morphing to Lair)
+        if b.already_pending(UnitTypeId.LAIR) > 0:
+            return False
+
+        # Cooldown check to prevent spam
+        game_time = getattr(b, "time", 0)
+        last_lair_morph = getattr(self, "_last_lair_morph_time", 0)
+        if game_time - last_lair_morph < 30:  # 30 second cooldown
+            return False
+
         # Check requirements: Spawning Pool must be ready
         if not b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
             return False
@@ -1369,6 +1405,7 @@ class ProductionResilience:
                 result_do = self.bot.do(result)
                 if hasattr(result_do, "__await__"):
                     await result_do
+            self._last_lair_morph_time = game_time
             print(f"[TECH UPGRADE] [{int(b.time)}s] Morphing Hatchery to Lair")
             return True
         except Exception as e:
@@ -1533,3 +1570,474 @@ class ProductionResilience:
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""
         return await self.bot._determine_ideal_composition()
+
+    def _get_counter_unit(self, enemy_units, has_roach_warren: bool, has_hydra_den: bool, has_spire: bool):
+        """
+        Analyze enemy composition and return the best counter unit.
+
+        Counter logic:
+        - vs Marines/Zealots/Zerglings (light infantry): Banelings (if nest) > Roaches
+        - vs Roaches/Stalkers/Marauders (armored ground): Hydralisks > Roaches
+        - vs Air units (Void Rays, Mutas, Vikings): Hydralisks > Mutalisks
+        - vs Siege Tanks/Colossus (siege): Mutalisks (to flank) > Roaches
+        - vs Immortals (anti-armor): Zerglings (swarm) > Hydralisks
+
+        Args:
+            enemy_units: List of detected enemy units
+            has_roach_warren: Whether Roach Warren is ready
+            has_hydra_den: Whether Hydralisk Den is ready
+            has_spire: Whether Spire is ready
+
+        Returns:
+            UnitTypeId of the recommended counter unit, or None
+        """
+        if not enemy_units:
+            return None
+
+        b = self.bot
+
+        # Count enemy unit types
+        enemy_counts = {
+            "light_infantry": 0,  # Marines, Zealots, Zerglings
+            "armored_ground": 0,  # Roaches, Stalkers, Marauders
+            "air": 0,             # Any flying units
+            "siege": 0,           # Siege Tanks, Colossus
+            "anti_armor": 0,      # Immortals
+        }
+
+        # Light infantry unit IDs
+        light_infantry_ids = ["MARINE", "ZEALOT", "ZERGLING", "ADEPT"]
+        armored_ground_ids = ["ROACH", "STALKER", "MARAUDER", "IMMORTAL", "RAVAGER"]
+        air_unit_ids = ["VOIDRAY", "PHOENIX", "ORACLE", "CARRIER", "TEMPEST",
+                        "VIKINGFIGHTER", "BANSHEE", "BATTLECRUISER", "LIBERATOR",
+                        "MUTALISK", "CORRUPTOR", "BROODLORD"]
+        siege_ids = ["SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "DISRUPTOR"]
+        anti_armor_ids = ["IMMORTAL"]
+
+        for enemy in enemy_units:
+            enemy_name = getattr(enemy.type_id, "name", "")
+
+            if any(light_id in enemy_name for light_id in light_infantry_ids):
+                enemy_counts["light_infantry"] += 1
+            if any(armored_id in enemy_name for armored_id in armored_ground_ids):
+                enemy_counts["armored_ground"] += 1
+            if any(air_id in enemy_name for air_id in air_unit_ids):
+                enemy_counts["air"] += 1
+            if any(siege_id in enemy_name for siege_id in siege_ids):
+                enemy_counts["siege"] += 1
+            if any(aa_id in enemy_name for aa_id in anti_armor_ids):
+                enemy_counts["anti_armor"] += 1
+
+        # Determine main threat
+        max_threat = max(enemy_counts.values())
+        if max_threat == 0:
+            return None
+
+        main_threats = [k for k, v in enemy_counts.items() if v == max_threat]
+        main_threat = main_threats[0]
+
+        # Return counter unit based on threat
+        if main_threat == "air":
+            # vs Air: Hydralisks > Mutalisks
+            if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK):
+                return UnitTypeId.HYDRALISK
+            if has_spire and b.can_afford(UnitTypeId.MUTALISK):
+                return UnitTypeId.MUTALISK
+
+        elif main_threat == "light_infantry":
+            # vs Light: Banelings > Roaches
+            has_baneling_nest = b.structures(UnitTypeId.BANELINGNEST).ready.exists
+            if has_baneling_nest:
+                # Note: Banelings are morphed from Zerglings, not trained from larvae
+                # Return None here; baneling morphing should be handled separately
+                pass
+            if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
+                return UnitTypeId.ROACH
+
+        elif main_threat == "armored_ground":
+            # vs Armored: Hydralisks > Roaches
+            if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK):
+                return UnitTypeId.HYDRALISK
+            if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
+                return UnitTypeId.ROACH
+
+        elif main_threat == "siege":
+            # vs Siege: Mutalisks (flank) > Roaches
+            if has_spire and b.can_afford(UnitTypeId.MUTALISK):
+                return UnitTypeId.MUTALISK
+            if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
+                return UnitTypeId.ROACH
+
+        elif main_threat == "anti_armor":
+            # vs Immortals: Zerglings (swarm) > Hydralisks
+            if b.can_afford(UnitTypeId.ZERGLING) and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                return UnitTypeId.ZERGLING
+            if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK):
+                return UnitTypeId.HYDRALISK
+
+        return None
+
+    # === SCOUTING LOGIC ===
+
+    async def manage_zergling_scouts(self) -> None:
+        """
+        Manage Zergling scouts to explore enemy bases and detect compositions.
+
+        Scout timing:
+        - 2:30 (150s): Send first scout pair to enemy natural
+        - 4:00 (240s): Scout enemy main base
+        - Every 60s after: Continuous scouting
+
+        Scout behavior:
+        - Send 2 Zerglings at a time (survivability)
+        - Store detected enemy units for counter-unit production
+        - Avoid engaging unless overwhelming advantage
+        """
+        b = self.bot
+        game_time = getattr(b, "time", 0)
+
+        # Need Spawning Pool and some Zerglings first
+        if not b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            return
+
+        zerglings = b.units(UnitTypeId.ZERGLING)
+        if not zerglings.exists or zerglings.amount < 4:
+            return  # Need at least 4 Zerglings (2 for scouting, 2 for defense)
+
+        # Initialize scouting state
+        if not hasattr(self, "_scout_state"):
+            self._scout_state = {
+                "last_scout_time": 0,
+                "scout_tags": set(),
+                "scout_interval": 60,  # Scout every 60 seconds
+                "detected_enemy_units": [],
+                "enemy_base_scouted": False,
+            }
+
+        scout_state = self._scout_state
+
+        # Check if it's time to send scouts
+        time_since_last_scout = game_time - scout_state["last_scout_time"]
+
+        # First scout at 2:30 (150s)
+        should_scout = False
+        if game_time >= 150 and not scout_state["enemy_base_scouted"]:
+            should_scout = True
+        elif time_since_last_scout >= scout_state["scout_interval"]:
+            should_scout = True
+
+        if not should_scout:
+            # Just manage existing scouts
+            await self._manage_existing_scouts()
+            return
+
+        # Send new scouts
+        await self._send_zergling_scouts()
+        scout_state["last_scout_time"] = game_time
+
+        # Update detected enemies
+        await self._update_detected_enemies()
+
+    async def _send_zergling_scouts(self) -> None:
+        """Send 2 Zerglings to scout enemy base."""
+        b = self.bot
+
+        zerglings = b.units(UnitTypeId.ZERGLING)
+        if not zerglings.exists or zerglings.amount < 4:
+            return
+
+        scout_state = self._scout_state
+
+        # Find idle or nearby Zerglings not already scouting
+        available_zerglings = zerglings.filter(
+            lambda z: z.tag not in scout_state["scout_tags"]
+        )
+
+        if available_zerglings.amount < 2:
+            return
+
+        # Get scout targets
+        scout_targets = self._get_scout_targets()
+        if not scout_targets:
+            return
+
+        # Assign 2 Zerglings to scout
+        scouts_sent = 0
+        for ling in available_zerglings:
+            if scouts_sent >= 2:
+                break
+
+            if not scout_targets:
+                break
+
+            target = scout_targets[scouts_sent % len(scout_targets)]
+
+            try:
+                ling.move(target)
+                scout_state["scout_tags"].add(ling.tag)
+                scouts_sent += 1
+            except Exception:
+                continue
+
+        if scouts_sent > 0:
+            game_time = getattr(b, "time", 0)
+            print(f"[SCOUT] [{int(game_time)}s] Sent {scouts_sent} Zerglings to scout enemy base")
+
+    def _get_scout_targets(self):
+        """Get positions to scout (enemy start locations, expansions)."""
+        b = self.bot
+        targets = []
+
+        # Primary: Enemy start location
+        if hasattr(b, "enemy_start_locations") and b.enemy_start_locations:
+            targets.append(b.enemy_start_locations[0])
+
+        # Secondary: Natural expansion position (approximation)
+        if targets:
+            main_pos = targets[0]
+            # Natural is usually towards map center
+            if hasattr(b, "game_info") and hasattr(b.game_info, "map_center"):
+                natural_approx = main_pos.towards(b.game_info.map_center, 20)
+                targets.append(natural_approx)
+
+        return targets
+
+    async def _manage_existing_scouts(self) -> None:
+        """
+        Manage scouts that are already sent out.
+        - Remove dead scouts from tracking
+        - Re-assign scouts that are idle
+        - Update detected enemies
+        """
+        b = self.bot
+        scout_state = self._scout_state
+
+        # Clean up dead scouts
+        zerglings = b.units(UnitTypeId.ZERGLING)
+        alive_tags = {z.tag for z in zerglings}
+        dead_scouts = scout_state["scout_tags"] - alive_tags
+        scout_state["scout_tags"] -= dead_scouts
+
+        # Check scout status
+        for ling in zerglings:
+            if ling.tag not in scout_state["scout_tags"]:
+                continue
+
+            # If scout is idle, send it to a new target
+            if ling.is_idle:
+                targets = self._get_scout_targets()
+                if targets:
+                    try:
+                        ling.move(targets[0])
+                    except Exception:
+                        pass
+
+        # Update detected enemies
+        await self._update_detected_enemies()
+
+    async def _update_detected_enemies(self) -> None:
+        """Update the list of detected enemy units for counter-production."""
+        b = self.bot
+        scout_state = self._scout_state
+
+        # Get all enemy units we can see
+        enemy_units = getattr(b, "enemy_units", [])
+        if enemy_units:
+            # Store a snapshot of enemy types for analysis
+            enemy_info = []
+            for enemy in enemy_units:
+                enemy_name = getattr(enemy.type_id, "name", "UNKNOWN")
+                enemy_info.append({
+                    "type": enemy_name,
+                    "tag": enemy.tag,
+                    "position": enemy.position,
+                })
+
+            scout_state["detected_enemy_units"] = enemy_info
+            scout_state["enemy_base_scouted"] = True
+
+            # Log enemy composition periodically
+            if b.iteration % 200 == 0 and enemy_info:
+                enemy_summary = {}
+                for e in enemy_info:
+                    t = e["type"]
+                    enemy_summary[t] = enemy_summary.get(t, 0) + 1
+                print(f"[SCOUT] Detected enemies: {enemy_summary}")
+
+    def get_detected_enemy_composition(self) -> Dict[str, int]:
+        """
+        Get a summary of detected enemy unit types.
+        Can be used by other managers for decision making.
+        """
+        if not hasattr(self, "_scout_state"):
+            return {}
+
+        enemy_info = self._scout_state.get("detected_enemy_units", [])
+        composition = {}
+        for e in enemy_info:
+            t = e.get("type", "UNKNOWN")
+            composition[t] = composition.get(t, 0) + 1
+
+        return composition
+
+    # === GAS OVERFLOW PREVENTION ===
+
+    async def _spend_excess_gas(self) -> None:
+        """
+        Spend excess gas to prevent overflow (> 3000).
+
+        Priority for gas spending:
+        1. Mutalisks (100 gas) - if Spire ready
+        2. Hydralisks (50 gas) - if Hydra Den ready
+        3. Roaches (25 gas) - if Roach Warren ready
+        4. Tech buildings (Spire: 200 gas, Hydra Den: 100 gas)
+        5. Lair/Hive upgrades (100-150 gas)
+        6. Evolution upgrades (consume gas over time)
+        """
+        b = self.bot
+        gas = b.vespene
+        game_time = getattr(b, "time", 0)
+
+        if gas <= 1500:
+            return
+
+        # Log gas overflow warning
+        if b.iteration % 100 == 0:
+            print(f"[GAS OVERFLOW] [{int(game_time)}s] Gas: {int(gas)} - Spending excess gas")
+
+        # Check for larvae
+        larvae = b.units(UnitTypeId.LARVA)
+        if not larvae.exists:
+            # No larvae - try to build tech instead
+            await self._build_gas_heavy_tech()
+            return
+
+        larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
+
+        # === PRIORITY 0: Build Overlords if supply blocked ===
+        if b.supply_left < 4 and gas > 1500:
+            overlords_produced = 0
+            for larva in larvae_list[:5]:
+                if b.can_afford(UnitTypeId.OVERLORD):
+                    if await self._safe_train(larva, UnitTypeId.OVERLORD):
+                        overlords_produced += 1
+                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+            if overlords_produced > 0:
+                print(f"[GAS SINK] Produced {overlords_produced} Overlords (supply blocked)")
+                # Continue to produce gas units
+
+        if not larvae_list:
+            await self._build_gas_heavy_tech()
+            return
+
+        total_produced = 0
+
+        # Priority 1: Mutalisks (100 gas each) - Best gas sink
+        has_spire = b.structures(UnitTypeId.SPIRE).ready.exists
+        if has_spire and b.vespene > 1000:
+            produced = 0
+            for larva in larvae_list[:10]:  # Produce up to 10 Mutalisks
+                if b.vespene < 100:
+                    break
+                if b.supply_left < 2:
+                    break
+                if b.can_afford(UnitTypeId.MUTALISK):
+                    if await self._safe_train(larva, UnitTypeId.MUTALISK):
+                        produced += 1
+                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+            if produced > 0:
+                total_produced += produced
+                print(f"[GAS SINK] Produced {produced} Mutalisks")
+
+        # Priority 2: Hydralisks (50 gas each)
+        has_hydra_den = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+        if has_hydra_den and b.vespene > 500:
+            produced = 0
+            for larva in larvae_list[:15]:  # Produce up to 15 Hydralisks
+                if b.vespene < 50:
+                    break
+                if b.supply_left < 2:
+                    break
+                if b.can_afford(UnitTypeId.HYDRALISK):
+                    if await self._safe_train(larva, UnitTypeId.HYDRALISK):
+                        produced += 1
+                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+            if produced > 0:
+                total_produced += produced
+                print(f"[GAS SINK] Produced {produced} Hydralisks")
+
+        # Priority 3: Roaches (25 gas each)
+        has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists
+        if has_roach_warren and b.vespene > 300:
+            produced = 0
+            for larva in larvae_list[:20]:  # Produce up to 20 Roaches
+                if b.vespene < 25:
+                    break
+                if b.supply_left < 2:
+                    break
+                if b.can_afford(UnitTypeId.ROACH):
+                    if await self._safe_train(larva, UnitTypeId.ROACH):
+                        produced += 1
+                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+            if produced > 0:
+                total_produced += produced
+                print(f"[GAS SINK] Produced {produced} Roaches")
+
+        # Log total production
+        if total_produced > 0:
+            print(f"[GAS SINK] Total: {total_produced} units (Gas: {int(gas)} -> {int(b.vespene)})")
+            return
+
+        # Priority 4: Build gas-heavy tech buildings if no units produced
+        await self._build_gas_heavy_tech()
+
+    async def _build_gas_heavy_tech(self) -> None:
+        """
+        Build gas-heavy tech buildings to spend excess gas.
+        Uses existing tech building methods to avoid duplication.
+
+        Buildings (gas cost):
+        - Spire: 200 gas
+        - Hydralisk Den: 100 gas
+        - Infestation Pit: 100 gas
+        - Hive upgrade: 150 gas
+        """
+        b = self.bot
+        gas = b.vespene
+
+        if gas <= 1500:
+            return
+
+        # Need Lair for most gas-heavy tech
+        has_lair = b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists
+
+        # Build Spire using existing method (200 gas)
+        if has_lair:
+            if await self._build_spire():
+                print(f"[GAS SINK] Building Spire (200 gas)")
+                return
+
+        # Build Hydralisk Den if don't have one (100 gas)
+        if has_lair and not b.structures(UnitTypeId.HYDRALISKDEN).exists and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0:
+            if b.can_afford(UnitTypeId.HYDRALISKDEN) and b.townhalls.exists:
+                try:
+                    await b.build(UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position)
+                    print(f"[GAS SINK] Building Hydralisk Den (100 gas)")
+                    return
+                except Exception:
+                    pass
+
+        # Morph to Hive if we have Lair (150 gas) - need Infestation Pit
+        if b.structures(UnitTypeId.LAIR).ready.exists and not b.structures(UnitTypeId.HIVE).exists:
+            if not b.structures(UnitTypeId.INFESTATIONPIT).exists and b.already_pending(UnitTypeId.INFESTATIONPIT) == 0:
+                if b.can_afford(UnitTypeId.INFESTATIONPIT) and b.townhalls.exists:
+                    try:
+                        await b.build(UnitTypeId.INFESTATIONPIT, near=b.townhalls.first.position)
+                        print(f"[GAS SINK] Building Infestation Pit (100 gas)")
+                        return
+                    except Exception:
+                        pass
+
+        # Morph to Lair if we don't have one (100 gas)
+        if not has_lair and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            await self._morph_to_lair()

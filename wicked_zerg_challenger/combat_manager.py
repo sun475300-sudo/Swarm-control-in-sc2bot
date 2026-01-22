@@ -34,20 +34,45 @@ except ImportError:
 class CombatManager:
     """
     전투 관리자
-    
+
     기능:
     1. 타겟팅 시스템과 연동
     2. 마이크로 전투 (키팅, 스플릿, 집중 사격)
     3. Boids 알고리즘 기반 군집 제어
     4. 진형 형성 (Concave, 길목 차단)
+    5. 공중 유닛 전용 마이크로 (뮤탈리스크 하라스, 타겟 우선순위)
     """
-    
+
     def __init__(self, bot):
         self.bot = bot
         self.targeting = None
         self.micro_combat = None
         self.boids = None
-        
+
+        # Air unit micro state
+        self._air_harass_target = None
+        self._last_air_harass_time = 0
+        self._air_harass_cooldown = 30  # 30 seconds between harass decisions
+
+        # === MULTITASKING SYSTEM ===
+        # Task priorities (higher = more important)
+        self.task_priorities = {
+            "base_defense": 100,      # Defend our base
+            "worker_defense": 90,     # Protect workers
+            "counter_attack": 70,     # Attack enemy attackers
+            "air_harass": 60,         # Air unit harassment
+            "scout": 50,              # Scouting
+            "main_attack": 40,        # Main army attack
+            "creep_spread": 30,       # Creep spreading
+        }
+
+        # Active tasks and assigned units
+        self._active_tasks = {}  # task_name -> {"units": set(), "target": position}
+        self._unit_assignments = {}  # unit_tag -> task_name
+
+        # Task cooldowns
+        self._task_cooldowns = {}
+
         # 매니저 초기화
         self._initialize_managers()
     
@@ -76,17 +101,27 @@ class CombatManager:
     
     async def on_step(self, iteration: int):
         """
-        매 프레임 호출되는 전투 로직
+        매 프레임 호출되는 전투 로직 with multitasking support.
+
+        Multitasking Logic:
+        1. Evaluate all possible tasks and their priorities
+        2. Assign units to tasks based on priority
+        3. Execute all tasks in parallel
 
         Args:
             iteration: 현재 게임 반복 횟수
         """
         try:
+            # Clean up stale unit assignments
+            self._cleanup_assignments()
+
             # Skip if MicroController is handling movement
             # This prevents dual command conflicts (both issuing move/attack)
             if hasattr(self.bot, 'micro') and self.bot.micro is not None:
                 # CombatManager only updates targeting info, no direct commands
                 # MicroController will handle actual movement
+                # BUT still handle air unit harassment (multitasking)
+                await self._handle_air_units_separately(iteration)
                 return
 
             # 아군 유닛과 적 유닛 확인
@@ -94,21 +129,146 @@ class CombatManager:
                 return
 
             army_units = self._filter_army_units(getattr(self.bot, "units", []))
-
+            air_units = self._filter_air_units(getattr(self.bot, "units", []))
             enemy_units = getattr(self.bot, "enemy_units", [])
 
-            # 적 유닛이 보이면 전투
-            if self._has_units(army_units) and self._has_units(enemy_units):
-                await self._execute_combat(army_units, enemy_units)
-                return
-
-            # 적 유닛이 없어도 아군이 충분하면 적 기지 공격
-            if self._has_units(army_units):
-                await self._offensive_attack(army_units, iteration)
+            # === MULTITASKING: Evaluate and assign tasks ===
+            await self._execute_multitasking(army_units, air_units, enemy_units, iteration)
 
         except Exception as e:
             if iteration % 200 == 0:
                 print(f"[WARNING] Combat manager error: {e}")
+
+    async def _execute_multitasking(self, army_units, air_units, enemy_units, iteration: int):
+        """
+        Execute multitasking logic - run multiple tasks in parallel.
+
+        Task Priority:
+        1. Base Defense (if enemies near base)
+        2. Worker Defense (if workers attacked)
+        3. Air Harassment (if we have 5+ Mutalisks)
+        4. Main Army Attack (attack with ground army)
+        5. Scouting (use idle Zerglings)
+        """
+        game_time = getattr(self.bot, "time", 0)
+
+        # Evaluate tasks
+        tasks_to_execute = []
+
+        # === TASK 1: Base Defense ===
+        base_threat = self._evaluate_base_threat(enemy_units)
+        if base_threat:
+            tasks_to_execute.append(("base_defense", base_threat, self.task_priorities["base_defense"]))
+
+        # === TASK 2: Air Harassment ===
+        if self._has_units(air_units) and self._units_amount(air_units) >= 5:
+            harass_target = self._find_harass_target()
+            if harass_target:
+                tasks_to_execute.append(("air_harass", harass_target, self.task_priorities["air_harass"]))
+
+        # === TASK 3: Main Army Attack ===
+        ground_army = self._filter_ground_units(army_units)
+        if self._has_units(ground_army):
+            attack_target = self._get_attack_target(enemy_units)
+            if attack_target:
+                tasks_to_execute.append(("main_attack", attack_target, self.task_priorities["main_attack"]))
+
+        # Sort tasks by priority (highest first)
+        tasks_to_execute.sort(key=lambda x: x[2], reverse=True)
+
+        # Assign units to tasks
+        available_ground = set(u.tag for u in ground_army) if ground_army else set()
+        available_air = set(u.tag for u in air_units) if air_units else set()
+
+        for task_name, target, priority in tasks_to_execute:
+            if task_name == "base_defense":
+                # Use all nearby units for defense
+                defense_units = self._get_units_near_base(army_units, 30)
+                if self._has_units(defense_units):
+                    await self._execute_defense_task(defense_units, target)
+                    # Remove from available pool
+                    for u in defense_units:
+                        available_ground.discard(u.tag)
+                        available_air.discard(u.tag)
+
+            elif task_name == "air_harass":
+                # Use air units for harassment
+                harass_units = [u for u in air_units if u.tag in available_air]
+                if harass_units:
+                    await self._handle_air_combat(harass_units, enemy_units, iteration)
+                    for u in harass_units:
+                        available_air.discard(u.tag)
+
+            elif task_name == "main_attack":
+                # Use remaining ground units for attack
+                attack_units = [u for u in ground_army if u.tag in available_ground]
+                if attack_units and self._has_units(enemy_units):
+                    await self._execute_combat(attack_units, enemy_units)
+                elif attack_units:
+                    await self._offensive_attack(attack_units, iteration)
+
+        # Log multitasking status periodically
+        if iteration % 200 == 0 and tasks_to_execute:
+            active_tasks = [t[0] for t in tasks_to_execute]
+            print(f"[MULTITASK] [{int(game_time)}s] Active tasks: {active_tasks}")
+
+    def _evaluate_base_threat(self, enemy_units):
+        """Check if any base is threatened and return threat position."""
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
+            return None
+
+        for th in self.bot.townhalls:
+            nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < 25]
+            if len(nearby_enemies) >= 2:
+                # Return position of enemies
+                return self._get_enemy_center(nearby_enemies)
+
+        return None
+
+    def _get_units_near_base(self, units, range_distance: float = 30):
+        """Get units near our bases."""
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
+            return []
+
+        near_units = []
+        for th in self.bot.townhalls:
+            for u in units:
+                if u.distance_to(th.position) < range_distance and u not in near_units:
+                    near_units.append(u)
+
+        return near_units
+
+    def _get_attack_target(self, enemy_units):
+        """Get best attack target for main army."""
+        if self._has_units(enemy_units):
+            return self._get_enemy_center(enemy_units)
+
+        # No visible enemies - attack enemy base
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            return self.bot.enemy_start_locations[0]
+
+        return None
+
+    async def _execute_defense_task(self, units, threat_position):
+        """Execute base defense task."""
+        if not threat_position:
+            return
+
+        for unit in units:
+            try:
+                await self.bot.do(unit.attack(threat_position))
+            except Exception:
+                continue
+
+    def _cleanup_assignments(self):
+        """Clean up stale unit assignments (dead units)."""
+        if not hasattr(self.bot, "units"):
+            return
+
+        alive_tags = set(u.tag for u in self.bot.units)
+        stale_tags = [tag for tag in self._unit_assignments if tag not in alive_tags]
+        for tag in stale_tags:
+            del self._unit_assignments[tag]
     
     async def _execute_combat(self, units: Units, enemy_units):
         """
@@ -277,8 +437,346 @@ class CombatManager:
 
     def _filter_army_units(self, units):
         return self._filter_units_by_type(
-            units, ["ZERGLING", "ROACH", "HYDRALISK", "MUTALISK"]
+            units, ["ZERGLING", "ROACH", "HYDRALISK", "MUTALISK", "CORRUPTOR", "BROODLORD"]
         )
+
+    def _filter_air_units(self, units):
+        """Filter air units (Mutalisks, Corruptors, Brood Lords)"""
+        return self._filter_units_by_type(
+            units, ["MUTALISK", "CORRUPTOR", "BROODLORD", "VIPER"]
+        )
+
+    def _filter_ground_units(self, units):
+        """Filter ground army units"""
+        return self._filter_units_by_type(
+            units, ["ZERGLING", "ROACH", "HYDRALISK", "RAVAGER", "ULTRALISK", "LURKER", "BANELING"]
+        )
+
+    async def _handle_air_units_separately(self, iteration: int):
+        """
+        Handle air units even when MicroController is active.
+        This enables multitasking (ground army + air harassment).
+        """
+        if not hasattr(self.bot, 'units'):
+            return
+
+        air_units = self._filter_air_units(self.bot.units)
+        if not self._has_units(air_units):
+            return
+
+        enemy_units = getattr(self.bot, "enemy_units", [])
+        await self._handle_air_combat(air_units, enemy_units, iteration)
+
+    async def _handle_air_combat(self, air_units, enemy_units, iteration: int):
+        """
+        Handle air unit combat and harassment.
+
+        Air Unit Priority:
+        1. Defend base if enemies attacking
+        2. Harass enemy workers
+        3. Pick off isolated units
+        4. Attack with main army
+
+        Mutalisk Target Priority:
+        1. Workers (high value, easy kills)
+        2. Siege units (Tanks, Colossus) - high threat
+        3. Enemy air units
+        4. Ground army units
+        """
+        game_time = getattr(self.bot, "time", 0)
+
+        # Check if our base is under attack
+        base_threatened = self._is_base_under_attack()
+
+        # Separate Mutalisks from other air units
+        mutalisks = self._filter_units_by_type(air_units, ["MUTALISK"])
+        other_air = self._filter_units_by_type(air_units, ["CORRUPTOR", "BROODLORD", "VIPER"])
+
+        # === MUTALISK MICRO ===
+        if self._has_units(mutalisks):
+            mutalisk_count = self._units_amount(mutalisks)
+
+            # If base is threatened, defend
+            if base_threatened:
+                await self._mutalisk_defense(mutalisks, enemy_units)
+            # If we have 5+ Mutalisks, start harassment
+            elif mutalisk_count >= 5:
+                await self._mutalisk_harass(mutalisks, enemy_units, iteration)
+            # Otherwise, attack with priority targeting
+            elif self._has_units(enemy_units):
+                await self._mutalisk_attack(mutalisks, enemy_units)
+
+        # === OTHER AIR UNITS ===
+        if self._has_units(other_air) and self._has_units(enemy_units):
+            # Corruptors: Prioritize enemy air/massive
+            # Brood Lords: Stay back and attack ground
+            await self._other_air_attack(other_air, enemy_units)
+
+    async def _mutalisk_defense(self, mutalisks, enemy_units):
+        """Mutalisks defend base - attack enemies near our bases."""
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
+            return
+
+        base = self.bot.townhalls.first
+        nearby_enemies = [e for e in enemy_units if e.distance_to(base.position) < 25]
+
+        if not nearby_enemies:
+            return
+
+        # Target priority: Workers > Air > Ground
+        target = self._select_mutalisk_target(nearby_enemies)
+        if target:
+            for muta in mutalisks:
+                try:
+                    await self.bot.do(muta.attack(target))
+                except Exception:
+                    continue
+
+    async def _mutalisk_harass(self, mutalisks, enemy_units, iteration: int):
+        """
+        Mutalisk harassment logic.
+
+        Send Mutalisks to enemy base to harass workers.
+        Retreat if anti-air is detected.
+        """
+        game_time = getattr(self.bot, "time", 0)
+
+        # Check cooldown for harass target decision
+        if game_time - self._last_air_harass_time < self._air_harass_cooldown:
+            # Continue current harass or attack visible enemies
+            if self._air_harass_target:
+                await self._execute_harass(mutalisks, enemy_units)
+                return
+            elif self._has_units(enemy_units):
+                await self._mutalisk_attack(mutalisks, enemy_units)
+                return
+
+        # Decide new harass target
+        self._last_air_harass_time = game_time
+        self._air_harass_target = self._find_harass_target()
+
+        if self._air_harass_target:
+            await self._execute_harass(mutalisks, enemy_units)
+            if iteration % 100 == 0:
+                print(f"[AIR HARASS] [{int(game_time)}s] Mutalisks harassing enemy base")
+        else:
+            # No harass target, attack normally
+            if self._has_units(enemy_units):
+                await self._mutalisk_attack(mutalisks, enemy_units)
+
+    def _find_harass_target(self):
+        """Find best harassment target (enemy base with workers)."""
+        # Try enemy main base
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            return self.bot.enemy_start_locations[0]
+
+        # Try known enemy structures
+        enemy_structures = getattr(self.bot, "enemy_structures", [])
+        if enemy_structures:
+            # Find townhalls
+            townhall_names = ["NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS", "HATCHERY", "LAIR", "HIVE"]
+            for struct in enemy_structures:
+                if getattr(struct.type_id, "name", "") in townhall_names:
+                    return struct.position
+            # Any structure as fallback
+            return enemy_structures[0].position
+
+        return None
+
+    async def _execute_harass(self, mutalisks, enemy_units):
+        """Execute harassment - attack workers, retreat from anti-air."""
+        if not self._air_harass_target:
+            return
+
+        # Check for anti-air threats near harass target
+        anti_air_threats = self._get_anti_air_threats(enemy_units, self._air_harass_target)
+
+        if anti_air_threats and len(anti_air_threats) >= 3:
+            # Too much anti-air, retreat
+            await self._mutalisk_retreat(mutalisks)
+            self._air_harass_target = None
+            return
+
+        # Look for workers near harass target
+        enemy_workers = [e for e in enemy_units
+                        if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
+                        and e.distance_to(self._air_harass_target) < 15]
+
+        if enemy_workers:
+            # Attack workers with bouncing logic
+            await self._mutalisk_bounce_attack(mutalisks, enemy_workers)
+        else:
+            # Move to harass target
+            for muta in mutalisks:
+                try:
+                    await self.bot.do(muta.attack(self._air_harass_target))
+                except Exception:
+                    continue
+
+    def _get_anti_air_threats(self, enemy_units, position, range_check=15):
+        """Get enemy units that can attack air near a position."""
+        anti_air_names = [
+            "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VOIDRAY",
+            "VIKINGFIGHTER", "THOR", "CYCLONE", "LIBERATOR",
+            "QUEEN", "CORRUPTOR", "MUTALISK", "ARCHON",
+            "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON"
+        ]
+        return [e for e in enemy_units
+                if getattr(e.type_id, "name", "") in anti_air_names
+                and e.distance_to(position) < range_check]
+
+    async def _mutalisk_bounce_attack(self, mutalisks, targets):
+        """
+        Mutalisk bouncing attack micro.
+
+        Mutalisks deal splash damage in a line.
+        Position to maximize bounce damage on grouped workers.
+        """
+        if not targets:
+            return
+
+        # Find clustered targets for maximum bounce
+        best_target = None
+        best_nearby_count = 0
+
+        for target in targets:
+            nearby = [t for t in targets if t.tag != target.tag and target.distance_to(t) < 3]
+            if len(nearby) >= best_nearby_count:
+                best_nearby_count = len(nearby)
+                best_target = target
+
+        if not best_target:
+            best_target = targets[0]
+
+        # Attack the best clustered target
+        for muta in mutalisks:
+            try:
+                await self.bot.do(muta.attack(best_target))
+            except Exception:
+                continue
+
+    async def _mutalisk_retreat(self, mutalisks):
+        """Retreat Mutalisks to safety."""
+        retreat_pos = None
+
+        # Retreat to our base
+        if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
+            retreat_pos = self.bot.townhalls.first.position
+        elif hasattr(self.bot, "start_location"):
+            retreat_pos = self.bot.start_location
+
+        if retreat_pos:
+            for muta in mutalisks:
+                try:
+                    await self.bot.do(muta.move(retreat_pos))
+                except Exception:
+                    continue
+
+    async def _mutalisk_attack(self, mutalisks, enemy_units):
+        """Mutalisk attack with priority targeting."""
+        target = self._select_mutalisk_target(enemy_units)
+        if not target:
+            return
+
+        for muta in mutalisks:
+            try:
+                await self.bot.do(muta.attack(target))
+            except Exception:
+                continue
+
+    def _select_mutalisk_target(self, enemy_units):
+        """
+        Select best target for Mutalisks.
+
+        Priority:
+        1. Workers (high value)
+        2. Siege units (Tanks, Colossus)
+        3. Low HP units (easy kills)
+        4. Any ground unit
+        """
+        if not enemy_units:
+            return None
+
+        workers = []
+        siege = []
+        low_hp = []
+        other = []
+
+        for enemy in enemy_units:
+            name = getattr(enemy.type_id, "name", "")
+
+            if name in ["SCV", "PROBE", "DRONE"]:
+                workers.append(enemy)
+            elif name in ["SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "LIBERATOR", "WIDOWMINE"]:
+                siege.append(enemy)
+            elif enemy.health_percentage < 0.3:
+                low_hp.append(enemy)
+            else:
+                other.append(enemy)
+
+        # Return highest priority target
+        if workers:
+            return min(workers, key=lambda e: e.health)
+        if siege:
+            return siege[0]
+        if low_hp:
+            return min(low_hp, key=lambda e: e.health)
+        if other:
+            return other[0]
+
+        return None
+
+    async def _other_air_attack(self, air_units, enemy_units):
+        """Handle Corruptors and Brood Lords."""
+        corruptors = self._filter_units_by_type(air_units, ["CORRUPTOR"])
+        broodlords = self._filter_units_by_type(air_units, ["BROODLORD"])
+
+        # Corruptors: Attack enemy air or massive units
+        if self._has_units(corruptors):
+            air_targets = [e for e in enemy_units if getattr(e, "is_flying", False)]
+            massive_targets = [e for e in enemy_units
+                             if getattr(e.type_id, "name", "") in
+                             ["COLOSSUS", "THOR", "BATTLECRUISER", "CARRIER", "TEMPEST", "MOTHERSHIP"]]
+
+            target = None
+            if air_targets:
+                target = min(air_targets, key=lambda e: e.health)
+            elif massive_targets:
+                target = massive_targets[0]
+
+            if target:
+                for corr in corruptors:
+                    try:
+                        await self.bot.do(corr.attack(target))
+                    except Exception:
+                        continue
+
+        # Brood Lords: Stay back, attack ground
+        if self._has_units(broodlords):
+            ground_targets = [e for e in enemy_units if not getattr(e, "is_flying", False)]
+            if ground_targets:
+                target = min(ground_targets, key=lambda e: e.health)
+                for bl in broodlords:
+                    try:
+                        await self.bot.do(bl.attack(target))
+                    except Exception:
+                        continue
+
+    def _is_base_under_attack(self) -> bool:
+        """Check if our base is under attack."""
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
+            return False
+
+        enemy_units = getattr(self.bot, "enemy_units", [])
+        if not enemy_units:
+            return False
+
+        for th in self.bot.townhalls:
+            nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < 20]
+            if len(nearby_enemies) >= 3:
+                return True
+
+        return False
 
     def _filter_units_by_type(self, units, names):
         if HELPERS_AVAILABLE:

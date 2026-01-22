@@ -396,20 +396,23 @@ class AdvancedBuildingManager:
         
         # 가스가 많이 적체되었을 때: 고테크 건물 우선
         if gas_surplus > 200:
-            # 가시지옥 굴 (Lurker Den)
-            if not self.bot.structures(UnitTypeId.LURKERDENMP).exists:
+            # 가시지옥 굴 (Lurker Den) - Check exists AND pending
+            if (not self.bot.structures(UnitTypeId.LURKERDENMP).exists and
+                self.bot.already_pending(UnitTypeId.LURKERDENMP) == 0):
                 tech_buildings.append((UnitTypeId.LURKERDENMP, 100, 200, 1))
-            
-            # 울트라리스크 동굴
+
+            # 울트라리스크 동굴 - Check exists AND pending
             if (self.bot.structures(UnitTypeId.HIVE).ready.exists and
-                not self.bot.structures(UnitTypeId.ULTRALISKCAVERN).exists):
+                not self.bot.structures(UnitTypeId.ULTRALISKCAVERN).exists and
+                self.bot.already_pending(UnitTypeId.ULTRALISKCAVERN) == 0):
                 tech_buildings.append((UnitTypeId.ULTRALISKCAVERN, 300, 200, 2))
         
         # 미네랄이 많이 적체되었을 때: 중간 테크 건물
         if mineral_surplus > 500:
-            # 맹독충 둥지
+            # 맹독충 둥지 - Check exists AND pending
             if (self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists and
-                not self.bot.structures(UnitTypeId.BANELINGNEST).exists):
+                not self.bot.structures(UnitTypeId.BANELINGNEST).exists and
+                self.bot.already_pending(UnitTypeId.BANELINGNEST) == 0):
                 tech_buildings.append((UnitTypeId.BANELINGNEST, 100, 50, 3))
         
         # 우선순위 순으로 정렬
