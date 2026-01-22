@@ -20,7 +20,8 @@
       "Bash(findstr:*)",
       "Bash(dir:*)",
       "Bash(powershell -Command \"Get-ChildItem ''D:\\\\replays\\\\replays'' -Filter ''*.SC2Replay'' | Select-Object -First 20 Name\")",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(grep:*)"
     ]
   }
 }
