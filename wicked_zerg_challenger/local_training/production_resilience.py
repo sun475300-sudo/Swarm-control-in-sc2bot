@@ -14,9 +14,22 @@ except ImportError:
         OVERLORD = "OVERLORD"
         LARVA = "LARVA"
         ZERGLING = "ZERGLING"
+        LAIR = "LAIR"
+        HIVE = "HIVE"
+        SPIRE = "SPIRE"
+        MUTALISK = "MUTALISK"
+        ROACH = "ROACH"
+        HYDRALISK = "HYDRALISK"
+        ROACHWARREN = "ROACHWARREN"
+        HYDRALISKDEN = "HYDRALISKDEN"
+        BANELINGNEST = "BANELINGNEST"
+        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
+        DRONE = "DRONE"
     class AbilityId:
         MORPHTORAVAGER_RAVAGER = "MORPHTORAVAGER_RAVAGER"
         MORPHZERGLINGTOBANELING_BANELING = "MORPHZERGLINGTOBANELING_BANELING"
+        UPGRADETOLAIR_LAIR = "UPGRADETOLAIR_LAIR"
+        UPGRADETOHIVE_HIVE = "UPGRADETOHIVE_HIVE"
 
 try:
     from config import get_learned_parameter
@@ -274,6 +287,9 @@ class ProductionResilience:
         if time <= 180:  # First 3 minutes
             await self._boost_early_game()
 
+        # === AUTO TECH BUILDINGS: Build tech structures based on game time ===
+        await self._auto_build_tech_structures()
+
         try:
             # === CRITICAL EMERGENCY: Minerals > 3000 - Force immediate production
             # When minerals exceed 3000, force all available production immediately
@@ -332,27 +348,38 @@ class ProductionResilience:
         if not larvae_list:
             return
         
-        # RESOURCE FLUSH MODE: When minerals >= 1000, skip reservation and convert all larvae to Zerglings
-        # This prevents resource hoarding by immediately spending all available resources
+        # RESOURCE FLUSH MODE: When minerals >= 1000, produce units based on available tech
+        # IMPROVED: Prioritize tech units over Zerglings to balance composition
         if b.minerals >= 1000:
-            # Flush mode: Convert all available larvae to Zerglings immediately
-            zergling_produced = 0
+            units_produced = 0
+            zergling_count = b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
+            max_zerglings = 40  # Cap for resource flush mode
+
             for larva in larvae_list:
                 if not hasattr(larva, 'is_ready') or not larva.is_ready:
                     continue
-                
+
                 if b.supply_left < 1:
                     if b.can_afford(UnitTypeId.OVERLORD):
                         if await self._safe_train(larva, UnitTypeId.OVERLORD):
-                            break
+                            units_produced += 1
+                            continue
                     continue
-                
-                if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
+
+                # IMPROVED: Try tech units first before Zerglings
+                produced = await self._produce_army_unit(larva)
+                if produced:
+                    units_produced += 1
+                    continue
+
+                # Fallback: Zerglings only if under cap
+                if zergling_count < max_zerglings and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
                     if await self._safe_train(larva, UnitTypeId.ZERGLING):
-                        zergling_produced += 1
-            
-            if zergling_produced > 0:
-                print(f"[RESOURCE_FLUSH] [{int(b.time)}s] Converted {zergling_produced} larvae to Zerglings (Minerals: {int(b.minerals)})")
+                        units_produced += 1
+                        zergling_count += 1
+
+            if units_produced > 0:
+                print(f"[RESOURCE_FLUSH] [{int(b.time)}s] Produced {units_produced} units (Minerals: {int(b.minerals)})")
             return
         
         # Get current counts
@@ -404,30 +431,124 @@ class ProductionResilience:
                         drone_count += 1
                         continue
             
-            # Make army unit (Zergling)
-            if b.can_afford(UnitTypeId.ZERGLING):
-                if await self._safe_train(larva, UnitTypeId.ZERGLING):
-                    army_produced += 1
-        
+            # Make army unit based on composition
+            unit_produced = await self._produce_army_unit(larva)
+            if unit_produced:
+                army_produced += 1
+
         if drones_produced > 0 or army_produced > 0:
             if b.iteration % 50 == 0:
                 print(f"[BALANCE] Produced {drones_produced} drones, {army_produced} army units "
                       f"(Total drones: {drone_count}, Target: {target_drones})")
+
+    async def _produce_army_unit(self, larva) -> bool:
+        """
+        Produce army unit based on current composition and available tech.
+
+        Unit priority by game phase:
+        - Early (0-5min): Zerglings (with cap to avoid spam)
+        - Mid (5-10min): Roaches 40%, Hydralisks 30%, Zerglings 30%
+        - Late (10min+): Mutalisks 30%, Hydralisks 25%, Roaches 25%, Zerglings 20%
+
+        IMPROVED: Limit Zergling production to avoid spam when waiting for gas.
+        """
+        b = self.bot
+        game_time = getattr(b, "time", 0)
+
+        # Get current unit counts
+        zergling_count = b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
+        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
+        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
+        mutalisk_count = b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
+
+        # Check available tech
+        has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists
+        has_hydra_den = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+        has_spire = b.structures(UnitTypeId.SPIRE).ready.exists
+
+        # === IMPROVED: Calculate Zergling cap based on game phase ===
+        # Early game: Max 20 Zerglings
+        # Mid game: Max 30 Zerglings (if tech available)
+        # Late game: Max 40 Zerglings (if air tech available)
+        max_zerglings = 20
+        if game_time > 300:
+            max_zerglings = 30 if (has_roach_warren or has_hydra_den) else 50
+        if game_time > 600:
+            max_zerglings = 40 if has_spire else 60
+
+        # Late game (10+ min): Prioritize air and ranged
+        if game_time > 600 and has_spire:
+            # Target: Mutalisk 30%, Hydra 25%, Roach 25%, Ling 20%
+            total = zergling_count + roach_count + hydra_count + mutalisk_count + 1
+            mutalisk_ratio = mutalisk_count / total
+            hydra_ratio = hydra_count / total
+            roach_ratio = roach_count / total
+
+            # Prioritize Mutalisks if under ratio
+            if mutalisk_ratio < 0.30 and b.can_afford(UnitTypeId.MUTALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.MUTALISK)
+
+            # Then Hydralisks
+            if has_hydra_den and hydra_ratio < 0.25 and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.HYDRALISK)
+
+            # Then Roaches
+            if has_roach_warren and roach_ratio < 0.25 and b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.ROACH)
+
+            # Only produce Zerglings if under cap
+            if zergling_count < max_zerglings and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+                return await self._safe_train(larva, UnitTypeId.ZERGLING)
+            return False  # Wait for gas instead of spamming Zerglings
+
+        # Mid game (5-10 min): Mixed army
+        elif game_time > 300:
+            total = zergling_count + roach_count + hydra_count + 1
+            roach_ratio = roach_count / total
+            hydra_ratio = hydra_count / total
+
+            # Prioritize Hydralisks if Lair tech available
+            if has_hydra_den and hydra_ratio < 0.30 and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.HYDRALISK)
+
+            # Then Roaches
+            if has_roach_warren and roach_ratio < 0.40 and b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.ROACH)
+
+            # Only produce Zerglings if under cap
+            if zergling_count < max_zerglings and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+                return await self._safe_train(larva, UnitTypeId.ZERGLING)
+
+            # If over Zergling cap but have gas, wait for tech units
+            if b.vespene >= 25:  # Have some gas, wait for tech
+                return False
+
+        # Early game (0-5 min): Zerglings with cap
+        if zergling_count < max_zerglings and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+            return await self._safe_train(larva, UnitTypeId.ZERGLING)
+
+        return False
     
     async def _emergency_zergling_production(self, larvae) -> None:
-        """Fallback emergency zergling production (original logic)"""
+        """
+        Fallback emergency production when balancer is unavailable.
+        IMPROVED: Prioritize tech units over Zerglings; cap Zergling count.
+        """
         b = self.bot
-        zergling_produced = 0
+        units_produced = 0
         larvae_list = list(larvae) if larvae.exists else []
-        
-        # RESOURCE FLUSH MODE: When minerals >= 1000, convert ALL larvae to Zerglings
-        # Skip reservation logic and use all available larvae
+
+        # Get current Zergling count
+        zergling_count = b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
+        max_zerglings = 40  # Cap to prevent spam
+
+        # RESOURCE FLUSH MODE: When minerals >= 1000, produce aggressively but balanced
         flush_mode = b.minerals >= 1000
-        
+
         for larva in larvae_list:
             if not hasattr(larva, 'is_ready') or not larva.is_ready:
                 continue
-            
+
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
                     if await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD):
@@ -435,16 +556,26 @@ class ProductionResilience:
                     if not flush_mode:
                         break
                 continue
-            
-            if b.can_afford(UnitTypeId.ZERGLING):
+
+            # IMPROVED: Try tech units first via _produce_army_unit
+            produced = await self._produce_army_unit(larva)
+            if produced:
+                units_produced += 1
+                if not flush_mode:
+                    break
+                continue
+
+            # Fallback: Zerglings only if under cap
+            if zergling_count < max_zerglings and b.can_afford(UnitTypeId.ZERGLING):
                 if await self._safe_train(larva, UnitTypeId.ZERGLING):
-                    zergling_produced += 1
+                    units_produced += 1
+                    zergling_count += 1
                     if not flush_mode:
-                        break  # In normal mode, produce one and break
-        
-        if zergling_produced > 0:
+                        break
+
+        if units_produced > 0:
             mode_str = "[RESOURCE_FLUSH]" if flush_mode else "[EMERGENCY]"
-            print(f"{mode_str} Produced {zergling_produced} Zerglings (Minerals: {int(b.minerals)})")
+            print(f"{mode_str} Produced {units_produced} units (Minerals: {int(b.minerals)})")
 
     async def _force_emergency_production(self, b: Any) -> None:
         """
@@ -969,10 +1100,298 @@ class ProductionResilience:
                 else:
                     await b.build(UnitTypeId.ROACHWARREN, near=b.game_info.map_center)
 
+    async def _auto_build_tech_structures(self) -> None:
+        """
+        Automatically build tech structures based on game time.
+
+        Tech progression timeline:
+        - 2:00 (120s): First Extractor
+        - 2:30 (150s): Second Extractor
+        - 3:00 (180s): Roach Warren
+        - 4:00 (240s): Lair + Evolution Chamber
+        - 5:00 (300s): Hydralisk Den (requires Lair)
+        - 6:00 (360s): Spire (requires Lair)
+        """
+        b = self.bot
+        game_time = getattr(b, "time", 0)
+
+        # === EXTRACTORS: Build early for gas income ===
+        await self._auto_build_extractors(game_time)
+
+        # Need Spawning Pool first for all tech
+        if not b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            return
+
+        # 3:00+ : Roach Warren
+        if game_time >= 180:
+            if not b.structures(UnitTypeId.ROACHWARREN).exists and b.already_pending(UnitTypeId.ROACHWARREN) == 0:
+                if b.can_afford(UnitTypeId.ROACHWARREN) and b.townhalls.exists:
+                    try:
+                        await b.build(UnitTypeId.ROACHWARREN, near=b.townhalls.first.position)
+                        print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren")
+                    except Exception:
+                        pass
+
+        # 4:00+ : Lair
+        if game_time >= 240:
+            if not b.structures(UnitTypeId.LAIR).exists and not b.structures(UnitTypeId.HIVE).exists:
+                await self._morph_to_lair()
+
+        # 5:00+ : Hydralisk Den (requires Lair)
+        if game_time >= 300:
+            has_lair = b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists
+            if has_lair:
+                if not b.structures(UnitTypeId.HYDRALISKDEN).exists and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0:
+                    if b.can_afford(UnitTypeId.HYDRALISKDEN) and b.townhalls.exists:
+                        try:
+                            await b.build(UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position)
+                            print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den")
+                        except Exception:
+                            pass
+
+        # 4:00+ : Evolution Chamber (for upgrades)
+        if game_time >= 240:
+            if not b.structures(UnitTypeId.EVOLUTIONCHAMBER).exists and b.already_pending(UnitTypeId.EVOLUTIONCHAMBER) == 0:
+                if b.can_afford(UnitTypeId.EVOLUTIONCHAMBER) and b.townhalls.exists:
+                    try:
+                        await b.build(UnitTypeId.EVOLUTIONCHAMBER, near=b.townhalls.first.position)
+                        print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber")
+                    except Exception:
+                        pass
+
+        # 6:00+ : Spire (requires Lair)
+        if game_time >= 360:
+            has_lair = b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists
+            if has_lair:
+                if not b.structures(UnitTypeId.SPIRE).exists and b.already_pending(UnitTypeId.SPIRE) == 0:
+                    if b.can_afford(UnitTypeId.SPIRE) and b.townhalls.exists:
+                        try:
+                            await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
+                            print(f"[AUTO TECH] [{int(game_time)}s] Building Spire")
+                        except Exception:
+                            pass
+
+    async def _auto_build_extractors(self, game_time: float) -> None:
+        """
+        Automatically build extractors for gas income.
+
+        Timeline:
+        - 2:00 (120s): First extractor
+        - 2:30 (150s): Second extractor (same base)
+        - Each new base: Build 2 extractors
+        """
+        b = self.bot
+
+        # Don't build extractors before 2 minutes
+        if game_time < 120:
+            return
+
+        # Count current extractors (including pending)
+        extractors = b.structures(UnitTypeId.EXTRACTOR)
+        extractor_count = extractors.amount if hasattr(extractors, "amount") else len(list(extractors))
+        pending_extractors = b.already_pending(UnitTypeId.EXTRACTOR)
+        total_extractors = extractor_count + pending_extractors
+
+        # Calculate target extractors: 2 per base
+        base_count = b.townhalls.amount if hasattr(b.townhalls, "amount") else len(list(b.townhalls))
+        target_extractors = base_count * 2
+
+        # Early game: at least 2 extractors
+        if game_time >= 150:
+            target_extractors = max(target_extractors, 2)
+
+        # Don't build more than needed
+        if total_extractors >= target_extractors:
+            return
+
+        # Check resources
+        if not b.can_afford(UnitTypeId.EXTRACTOR):
+            return
+
+        # Find available geysers
+        geysers = b.vespene_geyser if hasattr(b, "vespene_geyser") else []
+        if not geysers:
+            return
+
+        # Find geysers near our townhalls that don't have extractors
+        for townhall in b.townhalls:
+            if total_extractors >= target_extractors:
+                break
+
+            nearby_geysers = [g for g in geysers if g.distance_to(townhall.position) < 12]
+            for geyser in nearby_geysers:
+                # Check if this geyser already has an extractor
+                has_extractor = any(
+                    e.distance_to(geyser.position) < 1
+                    for e in extractors
+                )
+                if has_extractor:
+                    continue
+
+                # Build extractor on this geyser
+                try:
+                    await b.build(UnitTypeId.EXTRACTOR, geyser)
+                    print(f"[AUTO TECH] [{int(game_time)}s] Building Extractor #{total_extractors + 1}")
+                    total_extractors += 1
+                    return  # Build one at a time
+                except Exception:
+                    continue
+
+    async def _morph_to_lair(self) -> bool:
+        """
+        Morph a Hatchery to Lair.
+        Lair is required for: Hydralisk Den, Spire, Infestation Pit, etc.
+        """
+        b = self.bot
+
+        # Check if we already have Lair or Hive
+        if b.structures(UnitTypeId.LAIR).exists or b.structures(UnitTypeId.HIVE).exists:
+            return False
+
+        # Check requirements: Spawning Pool must be ready
+        if not b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            return False
+
+        # Check resources: Lair costs 150 minerals, 100 gas
+        if b.minerals < 150 or b.vespene < 100:
+            return False
+
+        # Find an idle Hatchery to morph
+        hatcheries = b.structures(UnitTypeId.HATCHERY).ready.idle
+        if not hatcheries.exists:
+            return False
+
+        try:
+            hatch = hatcheries.first
+            # Use ability to morph to Lair
+            result = hatch(AbilityId.UPGRADETOLAIR_LAIR)
+            if hasattr(result, "__await__"):
+                await result
+            else:
+                result_do = self.bot.do(result)
+                if hasattr(result_do, "__await__"):
+                    await result_do
+            print(f"[TECH UPGRADE] [{int(b.time)}s] Morphing Hatchery to Lair")
+            return True
+        except Exception as e:
+            if b.iteration % 200 == 0:
+                print(f"[WARNING] Lair morph error: {e}")
+            return False
+
+    async def _build_spire(self) -> bool:
+        """
+        Build Spire for Mutalisk production.
+        Requires: Lair or Hive
+        """
+        b = self.bot
+
+        # Check if Spire already exists or pending
+        if b.structures(UnitTypeId.SPIRE).exists or b.already_pending(UnitTypeId.SPIRE) > 0:
+            return False
+
+        # Check Lair/Hive requirement
+        if not b.structures(UnitTypeId.LAIR).ready.exists and not b.structures(UnitTypeId.HIVE).ready.exists:
+            return False
+
+        # Check resources: Spire costs 200 minerals, 200 gas
+        if not b.can_afford(UnitTypeId.SPIRE):
+            return False
+
+        # Build near townhall
+        if b.townhalls.exists:
+            try:
+                await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
+                print(f"[TECH BUILD] [{int(b.time)}s] Building Spire for Mutalisks")
+                return True
+            except Exception as e:
+                if b.iteration % 200 == 0:
+                    print(f"[WARNING] Spire build error: {e}")
+        return False
+
+    async def _produce_mutalisks(self, count: int = 5) -> int:
+        """
+        Produce Mutalisks from larvae.
+        Mutalisk: 100 minerals, 100 gas, 2 supply
+
+        Args:
+            count: Maximum number of Mutalisks to produce
+
+        Returns:
+            Number of Mutalisks produced
+        """
+        b = self.bot
+
+        # Check Spire requirement
+        if not b.structures(UnitTypeId.SPIRE).ready.exists:
+            return 0
+
+        larvae = b.units(UnitTypeId.LARVA)
+        if not larvae.exists:
+            return 0
+
+        produced = 0
+        larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
+
+        for larva in larvae_list[:count]:
+            if produced >= count:
+                break
+
+            # Check resources and supply
+            if not b.can_afford(UnitTypeId.MUTALISK):
+                break
+            if b.supply_left < 2:
+                break
+
+            try:
+                if await self._safe_train(larva, UnitTypeId.MUTALISK):
+                    produced += 1
+            except Exception:
+                continue
+
+        if produced > 0:
+            print(f"[MUTALISK] [{int(b.time)}s] Produced {produced} Mutalisks")
+
+        return produced
+
+    async def _build_air_tech(self) -> None:
+        """
+        Build air tech progression: Lair -> Spire -> Mutalisks
+        Called when minerals > 400 and gas > 200 (mid-game)
+        """
+        b = self.bot
+
+        # Step 1: Ensure Lair
+        if not b.structures(UnitTypeId.LAIR).exists and not b.structures(UnitTypeId.HIVE).exists:
+            if b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                await self._morph_to_lair()
+            return
+
+        # Step 2: Build Spire
+        if not b.structures(UnitTypeId.SPIRE).exists and b.already_pending(UnitTypeId.SPIRE) == 0:
+            if b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists:
+                await self._build_spire()
+            return
+
+        # Step 3: Produce Mutalisks
+        if b.structures(UnitTypeId.SPIRE).ready.exists:
+            # Produce more Mutalisks if we have excess resources
+            mutalisk_count = b.units(UnitTypeId.MUTALISK).amount
+            if mutalisk_count < 15:  # Target: 15 Mutalisks
+                await self._produce_mutalisks(count=5)
+
     async def build_protoss_counters(self) -> None:
         b = self.bot
         if not b.production:
             return
+
+        # First, check if we need to morph to Lair for Hydralisk Den
+        lairs = b.structures(UnitTypeId.LAIR)
+        hives = b.structures(UnitTypeId.HIVE)
+        if not lairs.exists and not hives.exists:
+            # Need Lair for Hydralisk Den - try to morph
+            if b.time > 200 and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                await self._morph_to_lair()
+
         hydra_dens = [
             s for s in b.units(UnitTypeId.HYDRALISKDEN).structure if s.is_ready]
         if not hydra_dens and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0 and b.time > 240 and b.can_afford(UnitTypeId.HYDRALISKDEN):
@@ -996,51 +1415,22 @@ class ProductionResilience:
                 await b.build(UnitTypeId.ROACHWARREN, near=b.game_info.map_center)
 
     async def build_zerg_counters(self) -> None:
-        """Build counter units against Zerg opponents."""
+        """Build counter units against Zerg opponents.
+        Note: Most tech building is now handled by _auto_build_tech_structures.
+        This method adds Zerg-specific Baneling Nest priority.
+        """
         b = self.bot
         if not b.production:
             return
 
-        # Roach Warren for anti-Zerg
-        roach_warrens = [
-            s for s in b.units(UnitTypeId.ROACHWARREN).structure if s.is_ready
-        ]
-        if (not roach_warrens and b.already_pending(UnitTypeId.ROACHWARREN) == 0
-            and b.time > 180 and b.can_afford(UnitTypeId.ROACHWARREN)):
-            if b.townhalls.exists:
-                townhalls_list = list(b.townhalls)
-                if townhalls_list:
-                    await b.build(UnitTypeId.ROACHWARREN, near=townhalls_list[0])
-            else:
-                await b.build(UnitTypeId.ROACHWARREN, near=b.game_info.map_center)
-
-        # Baneling Nest for anti-Zerg
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (not baneling_nests and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)):
-            spawning_pools = [
-                s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-            ]
-            if spawning_pools:
-                await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-
-        # Hydralisk Den for late game
-        hydra_dens = [
-            s for s in b.units(UnitTypeId.HYDRALISKDEN).structure if s.is_ready
-        ]
-        if (not hydra_dens and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0
-            and b.time > 300 and b.can_afford(UnitTypeId.HYDRALISKDEN)):
-            lairs = [s for s in b.units(UnitTypeId.LAIR).structure if s.is_ready]
-            hives = [s for s in b.units(UnitTypeId.HIVE).structure if s.is_ready]
-            if lairs or hives:
+        # Baneling Nest for anti-Zerg (Zerglings counter)
+        if not b.structures(UnitTypeId.BANELINGNEST).exists and b.already_pending(UnitTypeId.BANELINGNEST) == 0:
+            if b.can_afford(UnitTypeId.BANELINGNEST) and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                 if b.townhalls.exists:
-                    townhalls_list = list(b.townhalls)
-                    if townhalls_list:
-                        await b.build(UnitTypeId.HYDRALISKDEN, near=townhalls_list[0])
-                else:
-                    await b.build(UnitTypeId.HYDRALISKDEN, near=b.game_info.map_center)
+                    try:
+                        await b.build(UnitTypeId.BANELINGNEST, near=b.townhalls.first.position)
+                    except Exception:
+                        pass
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""

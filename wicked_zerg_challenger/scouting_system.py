@@ -110,12 +110,27 @@ class ScoutingSystem:
                     pass
 
     async def _move_scouts(self):
+        # Get nearby enemy detection to avoid interfering with combat
+        enemy_units = getattr(self.bot, "enemy_units", [])
+
         for unit_tag, target_pos in list(self.scout_assignments.items()):
             unit = self.bot.units.find_by_tag(unit_tag)
             if not unit:
                 self.scout_assignments.pop(unit_tag, None)
                 continue
-            if unit.is_idle or unit.is_moving:
+
+            # Skip if unit is in combat (enemies nearby)
+            has_enemies_nearby = False
+            for enemy in enemy_units:
+                try:
+                    if unit.distance_to(enemy) < 15:
+                        has_enemies_nearby = True
+                        break
+                except Exception:
+                    pass
+
+            # Only move if idle AND not in combat
+            if unit.is_idle and not has_enemies_nearby:
                 try:
                     await self.bot.do(unit.move(target_pos))
                 except Exception:
