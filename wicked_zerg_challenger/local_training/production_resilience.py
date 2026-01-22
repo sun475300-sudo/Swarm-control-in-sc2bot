@@ -385,16 +385,17 @@ class ProductionResilience:
         # Get current counts
         drones = b.units(UnitTypeId.DRONE) if hasattr(b, "units") else []
         drone_count = drones.amount if hasattr(drones, "amount") else len(list(drones))
-        
-        # Get balance state
-        state = self.balancer.get_balance_state()
-        target_drones = self.balancer.get_target_drone_count()
-        
+
+        # Get balance state (use correct method names)
+        stats = self.balancer.get_production_stats()
+        target_drones = self.balancer.get_drone_target()
+        balance_mode = self.balancer.get_balance_mode()
+
         # Log balance decision periodically
         if b.iteration % 100 == 0:
-            print(f"[BALANCE] Mode: {state.mode.value}, Drone: {state.drone_ratio:.1%}, "
-                  f"Army: {state.army_ratio:.1%}, Threat: {state.threat_level:.1%}, "
-                  f"Economy: {state.economy_score:.1%}, Current: {drone_count}, Target: {target_drones}")
+            print(f"[BALANCE] Mode: {balance_mode}, Drone: {stats.get('drone_ratio', 0):.1%}, "
+                  f"Army: {stats.get('army_ratio', 0):.1%}, "
+                  f"Current: {drone_count}, Target: {target_drones}")
         
         drones_produced = 0
         army_produced = 0
@@ -440,14 +441,14 @@ class ProductionResilience:
             # Consider strategy preference
             if self.strategy_manager and self.strategy_manager.should_prioritize_drones():
                 # Strategy prefers drones, but still check balancer
-                should_make_drone = self.balancer.should_make_drone() or (drone_count < target_drones)
+                should_train_drone = self.balancer.should_train_drone() or (drone_count < target_drones)
             elif self.strategy_manager and self.strategy_manager.should_early_aggression():
                 # Strategy prefers early army
-                should_make_drone = False
+                should_train_drone = False
             else:
-                should_make_drone = self.balancer.should_make_drone()
+                should_train_drone = self.balancer.should_train_drone()
 
-            if should_make_drone and drone_count < target_drones:
+            if should_train_drone and drone_count < target_drones:
                 # Make drone
                 if b.can_afford(UnitTypeId.DRONE):
                     if await self._safe_train(larva, UnitTypeId.DRONE):
