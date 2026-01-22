@@ -165,22 +165,29 @@ class ProductionResilience:
                 threshold = self.enemy_near_base_distance * self.enemy_near_base_scale
                 enemy_near_base = any(e.distance_to(base.position) < threshold for e in b.enemy_units)
 
-        if under_attack:
+        # AGGRESSIVE EXPANSION: If minerals > 400, bypass most safety checks
+        aggressive_expand = b.minerals > 400
+
+        if under_attack and not aggressive_expand:
             return False, "under_attack"
-        if enemy_near_base:
+        if enemy_near_base and not aggressive_expand:
             return False, "enemy_near_base"
 
+        # Relax army requirement - Zerg needs expansions for macro
         supply_army = getattr(b, "supply_army", 0)
-        if supply_army < self.min_army_supply and b.time > self.min_army_time:
+        if not aggressive_expand and supply_army < self.min_army_supply and b.time > self.min_army_time:
             return False, "low_army"
 
+        # Relax drone requirement when banking minerals
         drones = b.workers.amount if hasattr(b, "workers") else 0
         bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
-        if drones < bases * self.min_drones_per_base:
+        if not aggressive_expand and drones < bases * self.min_drones_per_base:
             return False, "low_drones"
 
+        # Reduce cooldown when banking minerals
         now = getattr(b, "time", 0.0)
-        if now - self.last_expansion_attempt < self.expansion_retry_cooldown:
+        effective_cooldown = self.expansion_retry_cooldown / 2 if aggressive_expand else self.expansion_retry_cooldown
+        if now - self.last_expansion_attempt < effective_cooldown:
             return False, "cooldown"
 
         return True, ""
@@ -240,7 +247,20 @@ class ProductionResilience:
         """
         b = self.bot
         self._cleanup_build_reservations()
-        
+
+        # === AGGRESSIVE EXPANSION: When minerals > 400, prioritize expansion ===
+        # Zerg needs expansions for macro advantage
+        if b.minerals > 400 and b.already_pending(UnitTypeId.HATCHERY) == 0:
+            bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+            # Always try to have one more base building
+            if b.can_afford(UnitTypeId.HATCHERY):
+                try:
+                    if await self._try_expand():
+                        if b.iteration % 100 == 0:
+                            print(f"[AGGRESSIVE EXPAND] [{int(b.time)}s] Expanding due to mineral bank ({int(b.minerals)} > 400)")
+                except Exception:
+                    pass
+
         # === RESOURCE MANAGEMENT: Optimize worker assignment ===
         if self.resource_manager:
             try:
@@ -248,12 +268,12 @@ class ProductionResilience:
             except Exception as e:
                 if b.iteration % 200 == 0:
                     print(f"[WARNING] Resource manager error: {e}")
-        
+
         # === EARLY GAME BOOSTER: First 3 minutes - Maximum priority ===
         time = getattr(b, "time", 0.0)
         if time <= 180:  # First 3 minutes
             await self._boost_early_game()
-        
+
         try:
             # === CRITICAL EMERGENCY: Minerals > 3000 - Force immediate production
             # When minerals exceed 3000, force all available production immediately

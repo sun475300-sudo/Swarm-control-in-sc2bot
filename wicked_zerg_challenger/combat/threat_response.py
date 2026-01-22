@@ -47,23 +47,18 @@ class SplashThreatHandler:
         self.separation_min = separation_min
         self.separation_max = separation_max
 
-        # Define splash threat unit types
+        # Define splash threat unit types - use getattr for compatibility
         self.splash_threat_types: Set = set()
         if UnitTypeId:
-            self.splash_threat_types = {
-                UnitTypeId.SIEGETANK,
-                UnitTypeId.SIEGETANKSIEGED,
-                UnitTypeId.HIGHTEMPLAR,
-                UnitTypeId.BANELING,
-                UnitTypeId.BANELINGBURROWED,
-                UnitTypeId.DISRUPTOR,
-                UnitTypeId.COLOSSUS,
-                UnitTypeId.RAVAGER,  # Corrosive bile
-                UnitTypeId.WIDOWMINE,
-                UnitTypeId.WIDOWMINEBURROWED,
-                UnitTypeId.LIBERATOR,
-                UnitTypeId.LIBERATORAG,
-            }
+            threat_names = [
+                "SIEGETANK", "SIEGETANKSIEGED", "HIGHTEMPLAR", "BANELING",
+                "BANELINGBURROWED", "DISRUPTOR", "COLOSSUS", "RAVAGER",
+                "WIDOWMINE", "WIDOWMINEBURROWED", "LIBERATOR", "LIBERATORAG",
+            ]
+            for name in threat_names:
+                unit_type = getattr(UnitTypeId, name, None)
+                if unit_type is not None:
+                    self.splash_threat_types.add(unit_type)
 
     def get_splash_threats(self, enemy_units) -> List:
         """
