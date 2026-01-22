@@ -3,14 +3,14 @@
 """
 Integrated Replay Learning Workflow
 
-ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ ÇÐ½À ¡æ ºôµå¿À´õ ÇÐ½À ¡æ °ÔÀÓ ÈÆ·Ã¿¡ Àû¿ë ¹× °³¼±
+Pro gamer replay learning -> Build order learning -> Game training application
 
-ÀüÃ¼ ¿öÅ©ÇÃ·Î¿ì:
-1. ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ¿¡¼­ ºôµå¿À´õ ÃßÃâ ¹× ÇÐ½À
-2. ÇÐ½ÀµÈ ºôµå¿À´õ¸¦ learned_build_orders.json¿¡ ÀúÀå
-3. °ÔÀÓ ÈÆ·Ã µ¥ÀÌÅÍ ¼öÁý (¼±ÅÃÀû)
-4. ÈÆ·Ã µ¥ÀÌÅÍ¿Í ÇÁ·Î ¸®ÇÃ·¹ÀÌ ºñ±³ ºÐ¼®
-5. °³¼±µÈ ÆÄ¶ó¹ÌÅÍ¸¦ ½ÇÁ¦ °ÔÀÓ¿¡ Àû¿ë
+Full workflow:
+1. Extract and learn build orders from pro gamer replays
+2. Save learned build orders to learned_build_orders.json
+3. Collect game training data (optional)
+4. Compare training data with pro replays
+5. Apply improved parameters to actual game
 """
 
 import json
@@ -30,7 +30,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class IntegratedReplayLearningWorkflow:
-    """ÅëÇÕ ¸®ÇÃ·¹ÀÌ ÇÐ½À ¿öÅ©ÇÃ·Î¿ì"""
+    """ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½Å©ï¿½Ã·Î¿ï¿½"""
 
     def __init__(self):
         self.project_root = PROJECT_ROOT
@@ -40,7 +40,7 @@ class IntegratedReplayLearningWorkflow:
         self.extract_train_path = self.project_root / "tools" / "extract_and_train_from_training.py"
         
     def step1_learn_from_replays(self, max_replays: int = 30) -> bool:
-        """Step 1: ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ¿¡¼­ ºôµå¿À´õ ÇÐ½À"""
+        """Step 1: ï¿½ï¿½ï¿½Î°ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½Ì¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½"""
         print("\n" + "=" * 70)
         print("[STEP 1] Learning Build Orders from Pro Gamer Replays")
         print("=" * 70)
@@ -90,7 +90,7 @@ class IntegratedReplayLearningWorkflow:
             return False
     
     def step2_collect_training_data(self) -> bool:
-        """Step 2: °ÔÀÓ ÈÆ·Ã µ¥ÀÌÅÍ ¼öÁý (¼±ÅÃÀû)"""
+        """Step 2: ï¿½ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)"""
         print("\n" + "=" * 70)
         print("[STEP 2] Collecting Training Game Data")
         print("=" * 70)
@@ -123,7 +123,7 @@ class IntegratedReplayLearningWorkflow:
             return True  # Optional step, don't fail
     
     def step3_extract_and_learn_from_training(self) -> bool:
-        """Step 3: ÈÆ·Ã µ¥ÀÌÅÍ¿¡¼­ ÃßÃâ ¹× ÇÐ½À"""
+        """Step 3: ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð½ï¿½"""
         print("\n" + "=" * 70)
         print("[STEP 3] Extracting and Learning from Training Data")
         print("=" * 70)
@@ -155,7 +155,7 @@ class IntegratedReplayLearningWorkflow:
             return True  # Optional step
     
     def step4_apply_learned_parameters(self) -> bool:
-        """Step 4: ÇÐ½ÀµÈ ÆÄ¶ó¹ÌÅÍ È®ÀÎ ¹× Àû¿ë"""
+        """Step 4: ï¿½Ð½ï¿½ï¿½ï¿½ ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         print("\n" + "=" * 70)
         print("[STEP 4] Verifying Learned Parameters")
         print("=" * 70)
@@ -206,10 +206,10 @@ class IntegratedReplayLearningWorkflow:
             return False
     
     def run_full_workflow(self, max_replays: int = 30, skip_training_data: bool = False):
-        """ÀüÃ¼ ¿öÅ©ÇÃ·Î¿ì ½ÇÇà"""
+        """ï¿½ï¿½Ã¼ ï¿½ï¿½Å©ï¿½Ã·Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½"""
         print("\n" + "=" * 70)
         print("INTEGRATED REPLAY LEARNING WORKFLOW")
-        print("ÇÁ·Î°ÔÀÌ¸Ó ¸®ÇÃ·¹ÀÌ ÇÐ½À ¡æ ºôµå¿À´õ ÇÐ½À ¡æ °ÔÀÓ ÈÆ·Ã Àû¿ë")
+        print("ï¿½ï¿½ï¿½Î°ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ ï¿½ï¿½ï¿½ï¿½")
         print("=" * 70)
         print(f"[INFO] Project root: {self.project_root}")
         print(f"[INFO] Max replays: {max_replays}")
