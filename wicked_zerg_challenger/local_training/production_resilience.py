@@ -610,7 +610,110 @@ class ProductionResilience:
             return await self._safe_train(larva, UnitTypeId.ZERGLING)
 
         return False
-    
+
+    async def _ensure_early_defense(self, game_time: float, supply_used: int) -> None:
+        """
+        3분 전 방어 유닛 빌드 최적화
+
+        목표:
+        - 2:00 (120초): 스포닝 풀 완료
+        - 2:30 (150초): 최소 6저글링 + 퀸 생산 시작
+        - 3:00 (180초): 최소 8저글링 + 퀸 1기 완료
+
+        프로게이머 빌드 참고:
+        - 서랄(Serral): 16해처리 → 18가스 → 17풀 → 퀸 우선
+        - 이병렬(Rogue): 13풀 → 퀸 → 저글링 러쉬 옵션
+        """
+        b = self.bot
+
+        try:
+            # 게임 시간 180초(3분) 이후는 이 로직 스킵
+            if game_time > 180:
+                return
+
+            # === 스포닝 풀 확인 ===
+            spawning_pool_exists = b.structures(UnitTypeId.SPAWNINGPOOL).exists
+            spawning_pool_ready = b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists
+            spawning_pool_pending = b.already_pending(UnitTypeId.SPAWNINGPOOL) > 0
+
+            # 100초(1:40) 이후 스포닝 풀이 없으면 긴급 건설
+            if game_time >= 100 and not spawning_pool_exists and not spawning_pool_pending:
+                if b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
+                    try:
+                        main_base = b.townhalls.first
+                        await b.build(
+                            UnitTypeId.SPAWNINGPOOL,
+                            near=main_base.position.towards(b.game_info.map_center, 5),
+                        )
+                        print(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Spawning Pool build")
+                        return
+                    except Exception:
+                        pass
+
+            # 스포닝 풀이 완료되지 않았으면 대기
+            if not spawning_pool_ready:
+                return
+
+            # === 퀸 생산 확인 (방어 + 인젝트 핵심) ===
+            queens = b.units(UnitTypeId.QUEEN) if hasattr(b, "units") else []
+            queen_count = queens.amount if hasattr(queens, "amount") else 0
+            queen_pending = b.already_pending(UnitTypeId.QUEEN)
+
+            # 120초(2분) 이후 퀸이 없으면 긴급 생산
+            if game_time >= 120 and queen_count == 0 and queen_pending == 0:
+                if b.townhalls.ready.exists and b.can_afford(UnitTypeId.QUEEN):
+                    try:
+                        for hatchery in b.townhalls.ready:
+                            if not hatchery.is_idle:
+                                continue
+                            b.do(hatchery.train(UnitTypeId.QUEEN))
+                            print(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Queen production")
+                            break
+                    except Exception:
+                        pass
+
+            # === 저글링 생산 (최소 방어 병력) ===
+            zerglings = b.units(UnitTypeId.ZERGLING) if hasattr(b, "units") else []
+            zergling_count = zerglings.amount if hasattr(zerglings, "amount") else 0
+            zergling_pending = b.already_pending(UnitTypeId.ZERGLING)
+
+            # 150초(2:30) 이후 저글링 6기 미만이면 긴급 생산
+            min_zerglings_150s = 6
+            min_zerglings_180s = 8
+
+            target_zerglings = min_zerglings_150s if game_time < 180 else min_zerglings_180s
+
+            if game_time >= 150 and (zergling_count + zergling_pending) < target_zerglings:
+                larvae = b.units(UnitTypeId.LARVA) if hasattr(b, "units") else []
+                if larvae.exists and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+                    larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
+                    zerglings_to_produce = min(4, target_zerglings - zergling_count - zergling_pending)
+
+                    for larva in larvae_list[:zerglings_to_produce]:
+                        if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+                            try:
+                                await self._safe_train(larva, UnitTypeId.ZERGLING)
+                            except Exception:
+                                continue
+
+                    if zerglings_to_produce > 0:
+                        print(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Zergling production: {zergling_count} -> {target_zerglings}")
+
+            # === 서플라이 확인 (오버로드) ===
+            if b.supply_left < 2 and b.supply_cap < 200:
+                larvae = b.units(UnitTypeId.LARVA) if hasattr(b, "units") else []
+                if larvae.exists and b.can_afford(UnitTypeId.OVERLORD):
+                    larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
+                    if larvae_list:
+                        try:
+                            await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD)
+                        except Exception:
+                            pass
+
+        except Exception as e:
+            if b.iteration % 200 == 0:
+                print(f"[WARNING] _ensure_early_defense error: {e}")
+
     async def _emergency_zergling_production(self, larvae) -> None:
         """
         Fallback emergency production when balancer is unavailable.
@@ -723,14 +826,21 @@ class ProductionResilience:
         """
         Boost early game production (first 3 minutes).
         Prioritizes fast Spawning Pool, early workers, and quick expansion.
+
+        3분 전 방어 유닛 목표:
+        - 2:00 (120초): 스포닝 풀 완료
+        - 2:30 (150초): 최소 6저글링 + 퀸 1기 생산 시작
+        - 3:00 (180초): 최소 8저글링 + 퀸 1기 완료
         """
         b = self.bot
         time = getattr(b, "time", 0.0)
         supply_used = getattr(b, "supply_used", 0)
 
         try:
+            # === 3분 전 방어 유닛 빌드 최적화 ===
+            await self._ensure_early_defense(time, supply_used)
+
             # Priority 1: Fast Spawning Pool (supply 13-15)
-            if supply_used >= 13 and supply_used <= 15:
                 if not b.structures(UnitTypeId.SPAWNINGPOOL).exists and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
                     if b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
                         try:

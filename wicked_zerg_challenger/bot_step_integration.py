@@ -207,6 +207,15 @@ class BotStepIntegrator:
                 except ImportError:
                     pass
 
+            # Rogue Tactics Manager (이병렬 선수 전술)
+            if not hasattr(self.bot, "rogue_tactics"):
+                try:
+                    from rogue_tactics_manager import RogueTacticsManager
+
+                    self.bot.rogue_tactics = RogueTacticsManager(self.bot)
+                except ImportError:
+                    pass
+
             # Advanced Building Manager (최신 개선 사항)
             if not hasattr(self.bot, "advanced_building_manager"):
                 try:
@@ -380,7 +389,16 @@ class BotStepIntegrator:
             # 10. Micro Control (마이크로 컨트롤)
             await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
-            # 11. 실시간 로직 활성화 보고
+            # 11. Rogue Tactics (이병렬 선수 전술 - 맹독충 드랍 등)
+            if iteration % 8 == 0:  # 8프레임마다 실행
+                await self._safe_manager_step(
+                    getattr(self.bot, "rogue_tactics", None),
+                    iteration,
+                    "Rogue Tactics",
+                    method_name="update",
+                )
+
+            # 12. 실시간 로직 활성화 보고
             game_time = getattr(self.bot, "time", 0)
             report = self._logic_tracker.get_activity_report(game_time)
             if report:
