@@ -28,6 +28,7 @@ except ImportError:
     class AbilityId:
         EFFECT_INJECTLARVA = "EFFECT_INJECTLARVA"
         BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
+        TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
 
 
 class QueenManager:
@@ -69,8 +70,14 @@ class QueenManager:
         self.inject_assignments: Dict[int, int] = {}  # hatchery_tag -> queen_tag
         self.last_inject_time: Dict[int, float] = {}  # hatchery_tag -> time
         self.last_creep_time: Dict[int, float] = {}  # queen_tag -> time
+        self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
         self.assigned_queen_tags: Set[int] = set()
         self.dedicated_creep_queens: Set[int] = set()
+
+        # Transfuse settings
+        self.transfuse_energy_threshold = 50
+        self.transfuse_cooldown = 1.0  # 1 second minimum between transfuses
+        self.transfuse_health_threshold = 0.5  # Target health ratio
 
     async def on_step(self, iteration: int) -> None:
         """
@@ -99,6 +106,9 @@ class QueenManager:
 
             self._assign_queen_roles(queens, hatcheries)
             await self._inject_larva(hatcheries, queens)
+
+            # Transfuse injured units (priority over creep spread)
+            await self._transfuse_injured_units(queens, iteration)
 
             creep_queens = [q for q in queens if q.tag not in self.assigned_queen_tags]
             await self._spread_creep(creep_queens, iteration)
@@ -318,6 +328,98 @@ class QueenManager:
                     self.last_inject_time[hatch_tag] = current_time
             except Exception:
                 continue
+
+    async def _transfuse_injured_units(self, queens, iteration: int) -> None:
+        """
+        Transfuse injured biological units.
+
+        Priority targets:
+        1. Queens (preserve queens first)
+        2. High-value units (Ultralisks, Broodlords)
+        3. Low-health combat units
+        """
+        current_time = getattr(self.bot, "time", 0.0)
+
+        # Find injured units to heal
+        injured_targets = []
+        if hasattr(self.bot, "units"):
+            for unit in self.bot.units:
+                if not hasattr(unit, "health") or not hasattr(unit, "health_max"):
+                    continue
+                if unit.health_max == 0:
+                    continue
+
+                health_ratio = unit.health / unit.health_max
+                if health_ratio >= self.transfuse_health_threshold:
+                    continue
+
+                # Skip non-biological units
+                if not getattr(unit, "is_biological", True):
+                    continue
+
+                # Calculate priority (lower = higher priority)
+                priority = health_ratio  # Base priority on health
+                if unit.type_id == UnitTypeId.QUEEN:
+                    priority -= 0.5  # Queens highest priority
+                elif hasattr(UnitTypeId, "ULTRALISK") and unit.type_id == UnitTypeId.ULTRALISK:
+                    priority -= 0.3
+                elif hasattr(UnitTypeId, "BROODLORD") and unit.type_id == UnitTypeId.BROODLORD:
+                    priority -= 0.3
+
+                injured_targets.append((unit, priority))
+
+        if not injured_targets:
+            return
+
+        # Sort by priority (lowest first)
+        injured_targets.sort(key=lambda x: x[1])
+
+        # Assign queens to heal targets
+        for target, _ in injured_targets:
+            # Find closest queen with enough energy
+            best_queen = None
+            best_distance = 999
+
+            for queen in queens:
+                # Check energy
+                if getattr(queen, "energy", 0) < self.transfuse_energy_threshold:
+                    continue
+
+                # Check transfuse cooldown
+                last_transfuse = self.last_transfuse_time.get(queen.tag, 0.0)
+                if current_time - last_transfuse < self.transfuse_cooldown:
+                    continue
+
+                # Check distance (transfuse range is 7)
+                try:
+                    dist = queen.distance_to(target)
+                    if dist <= 7 and dist < best_distance:
+                        best_distance = dist
+                        best_queen = queen
+                except Exception:
+                    continue
+
+            if best_queen:
+                try:
+                    if hasattr(best_queen, "can_cast"):
+                        if best_queen.can_cast(AbilityId.TRANSFUSION_TRANSFUSION):
+                            result = self.bot.do(
+                                best_queen(AbilityId.TRANSFUSION_TRANSFUSION, target)
+                            )
+                            if hasattr(result, "__await__"):
+                                await result
+                            self.last_transfuse_time[best_queen.tag] = current_time
+                    else:
+                        result = self.bot.do(
+                            best_queen(AbilityId.TRANSFUSION_TRANSFUSION, target)
+                        )
+                        if hasattr(result, "__await__"):
+                            await result
+                        self.last_transfuse_time[best_queen.tag] = current_time
+                except Exception as e:
+                    if iteration % 200 == 0:
+                        print(f"[WARNING] Transfuse error: {e}")
+                    continue
 
     async def _spread_creep(self, creep_queens, iteration: int) -> None:
         """
