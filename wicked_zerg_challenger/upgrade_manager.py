@@ -65,9 +65,17 @@ class EvolutionUpgradeManager:
                 return
 
     def _get_upgrade_priority(self) -> List[object]:
+        """
+        Get upgrade priority based on:
+        1. Game time (early = armor for survivability)
+        2. Unit composition (melee vs ranged)
+        3. Enemy race and units
+        4. Specific threats (siege tanks, banelings, etc.)
+        """
         composition = self._get_unit_composition()
         enemy_race = self._normalize_enemy_race(getattr(self.bot, "enemy_race", ""))
         enemy_units = getattr(self.bot, "enemy_units", [])
+        game_time = getattr(self.bot, "time", 0)
 
         total = max(1, composition["melee"] + composition["ranged"])
         melee_ratio = composition["melee"] / total
@@ -79,6 +87,7 @@ class EvolutionUpgradeManager:
         melee_bias = melee_ratio >= 0.7 or zergling_ratio >= 0.7
         ranged_bias = ranged_ratio >= 0.6 or hydra_ratio >= 0.45 or roach_ratio >= 0.5
 
+        # Default priorities based on composition
         priorities = []
         if melee_bias:
             priorities = ["melee", "armor", "missile"]
@@ -87,14 +96,34 @@ class EvolutionUpgradeManager:
         else:
             priorities = ["armor", "melee", "missile"]
 
-        if "terran" in enemy_race or self._has_unit(
-            enemy_units, ["MARINE", "MARAUDER"]
-        ):
+        # === SITUATIONAL ADJUSTMENTS ===
+
+        # Early game (< 6 min): Armor first for survivability
+        if game_time < 360:
             priorities = ["armor"] + [p for p in priorities if p != "armor"]
-        elif "protoss" in enemy_race or self._has_unit(
-            enemy_units, ["COLOSSUS", "IMMORTAL"]
-        ):
-            priorities = ["missile"] + [p for p in priorities if p != "missile"]
+
+        # vs Terran: Armor is crucial against Marines/Marauders
+        if "terran" in enemy_race:
+            priorities = ["armor"] + [p for p in priorities if p != "armor"]
+            # If they have Siege Tanks, even more armor
+            if self._has_unit(enemy_units, ["SIEGETANK", "SIEGETANKSIEGED"]):
+                priorities = ["armor"] + [p for p in priorities if p != "armor"]
+
+        # vs Protoss: Missile for Roaches/Hydras against Stalkers/Immortals
+        elif "protoss" in enemy_race:
+            if self._has_unit(enemy_units, ["COLOSSUS", "IMMORTAL", "ARCHON"]):
+                # Armor helps survive splash
+                priorities = ["armor"] + [p for p in priorities if p != "armor"]
+            elif ranged_bias:
+                priorities = ["missile"] + [p for p in priorities if p != "missile"]
+
+        # vs Zerg: Melee for Zergling fights, Armor vs Banelings
+        elif "zerg" in enemy_race:
+            if self._has_unit(enemy_units, ["BANELING", "BANELINGBURROWED"]):
+                # Armor crucial vs Banelings
+                priorities = ["armor"] + [p for p in priorities if p != "armor"]
+            elif melee_bias:
+                priorities = ["melee"] + [p for p in priorities if p != "melee"]
 
         upgrade_order: List[object] = []
         for lane in priorities:
