@@ -26,10 +26,19 @@ class ZergRewardSystem:
     """
     
     def __init__(self):
-        """���� �ý��� �ʱ�ȭ"""
+        """보상 시스템 초기화"""
         self.previous_score = 0
         self.previous_creep_coverage = 0.0
         self.previous_larva_efficiency = 0.0
+        # 확장 추적
+        self.previous_base_count = 1
+        self.expansion_reward_given = set()
+        # 업그레이드 추적
+        self.completed_upgrades = set()
+        # 보급 차단 추적
+        self.supply_blocked_steps = 0
+        # 군대 가치 추적
+        self.previous_army_value = 0
         
     def calculate_step_reward(self, bot) -> float:
         """
@@ -64,10 +73,24 @@ class ZergRewardSystem:
             # ���� ��ũ �ǹ� �߰�, �Ʊ� ���� ü�� ���� ��
             reward += self._calculate_threat_based_reward(bot)
             
-            # 6. �þ� Ȯ�� ���� (NEW: Vision acquisition)
-            # ���� ��ġ�� �ľ��ϰų� �߿��� ������ ������ ����
+            # 6. 시야 확보 보상 (Vision acquisition)
             reward += self._calculate_vision_reward(bot)
-            
+
+            # 7. 확장 타이밍 보상 (Expansion timing)
+            reward += self._calculate_expansion_reward(bot)
+
+            # 8. 업그레이드 연구 보상 (Upgrade research)
+            reward += self._calculate_upgrade_reward(bot)
+
+            # 9. 보급 차단 페널티 (Supply blocked penalty)
+            reward += self._calculate_supply_blocked_penalty(bot)
+
+            # 10. 군대 효율성 보상 (Army efficiency)
+            reward += self._calculate_army_efficiency_reward(bot)
+
+            # 11. 매크로 해처리 보상 (Macro hatchery)
+            reward += self._calculate_macro_hatchery_reward(bot)
+
         except Exception as e:
             # ���� �߻� �� ���� 0 ��ȯ
             print(f"[WARNING] Reward calculation error: {e}")
@@ -375,15 +398,247 @@ class ZergRewardSystem:
         except Exception:
             return 0.0
     
+    def _calculate_expansion_reward(self, bot) -> float:
+        """
+        확장 타이밍 보상 계산
+
+        적절한 시점에 확장하면 보상:
+        - 2번째 기지: 2분 이전 = +3.0, 3분 이전 = +1.5
+        - 3번째 기지: 5분 이전 = +3.0, 6분 이전 = +1.5
+        - 4번째 기지: 8분 이전 = +2.0
+
+        Returns:
+            확장 타이밍 보상 (float)
+        """
+        try:
+            if not hasattr(bot, 'townhalls'):
+                return 0.0
+
+            reward = 0.0
+            base_count = bot.townhalls.amount
+            game_time = getattr(bot, 'time', 0)
+
+            # 기지 수가 증가했는지 확인
+            if base_count > self.previous_base_count:
+                # 새 확장 보상
+                if base_count == 2 and 2 not in self.expansion_reward_given:
+                    if game_time < 120:  # 2분 이전
+                        reward += 3.0
+                    elif game_time < 180:  # 3분 이전
+                        reward += 1.5
+                    self.expansion_reward_given.add(2)
+
+                elif base_count == 3 and 3 not in self.expansion_reward_given:
+                    if game_time < 300:  # 5분 이전
+                        reward += 3.0
+                    elif game_time < 360:  # 6분 이전
+                        reward += 1.5
+                    self.expansion_reward_given.add(3)
+
+                elif base_count == 4 and 4 not in self.expansion_reward_given:
+                    if game_time < 480:  # 8분 이전
+                        reward += 2.0
+                    self.expansion_reward_given.add(4)
+
+                self.previous_base_count = base_count
+
+            return reward
+
+        except Exception:
+            return 0.0
+
+    def _calculate_upgrade_reward(self, bot) -> float:
+        """
+        업그레이드 연구 보상 계산
+
+        공방 업그레이드 완료 시 보상:
+        - 1레벨 업그레이드: +1.0
+        - 2레벨 업그레이드: +1.5
+        - 3레벨 업그레이드: +2.0
+
+        Returns:
+            업그레이드 보상 (float)
+        """
+        try:
+            if not hasattr(bot, 'state') or not bot.state:
+                return 0.0
+
+            if not hasattr(bot.state, 'upgrades'):
+                return 0.0
+
+            reward = 0.0
+            current_upgrades = set(bot.state.upgrades)
+
+            # 새로 완료된 업그레이드 확인
+            new_upgrades = current_upgrades - self.completed_upgrades
+
+            for upgrade in new_upgrades:
+                upgrade_name = str(upgrade).upper()
+                if 'LEVEL1' in upgrade_name:
+                    reward += 1.0
+                elif 'LEVEL2' in upgrade_name:
+                    reward += 1.5
+                elif 'LEVEL3' in upgrade_name:
+                    reward += 2.0
+                else:
+                    # 기타 업그레이드 (저글링 속도 등)
+                    reward += 0.5
+
+            self.completed_upgrades = current_upgrades
+
+            return reward
+
+        except Exception:
+            return 0.0
+
+    def _calculate_supply_blocked_penalty(self, bot) -> float:
+        """
+        보급 차단 페널티 계산
+
+        서플라이 블록 상태에 페널티:
+        - 블록 상태에서 연속으로 대기하면 페널티 증가
+
+        Returns:
+            보급 차단 페널티 (float, 음수)
+        """
+        try:
+            if not hasattr(bot, 'supply_left') or not hasattr(bot, 'supply_cap'):
+                return 0.0
+
+            # 서플라이 풀 상태 체크 (오버로드 생산 여유 없음)
+            if bot.supply_left <= 0 and bot.supply_cap < 200:
+                self.supply_blocked_steps += 1
+                # 연속 블록 시 페널티 증가
+                penalty = -0.05 * min(self.supply_blocked_steps, 10)
+                return penalty
+            else:
+                self.supply_blocked_steps = 0
+                return 0.0
+
+        except Exception:
+            return 0.0
+
+    def _calculate_army_efficiency_reward(self, bot) -> float:
+        """
+        군대 효율성 보상 계산
+
+        효율적인 군대 조합 및 성장 보상:
+        - 군대 가치 증가 시 보상
+        - 일꾼 대비 적절한 군대 비율 보상
+
+        Returns:
+            군대 효율성 보상 (float)
+        """
+        try:
+            if not hasattr(bot, 'units'):
+                return 0.0
+
+            reward = 0.0
+
+            # 군대 가치 계산 (유닛 수 * 대략적 가치)
+            unit_values = {
+                'zergling': 25,
+                'baneling': 50,
+                'roach': 75,
+                'ravager': 100,
+                'hydralisk': 100,
+                'mutalisk': 100,
+                'lurker': 150,
+                'ultralisk': 300,
+                'broodlord': 300,
+                'corruptor': 150,
+                'infestor': 150,
+                'viper': 200,
+            }
+
+            current_army_value = 0
+            for unit_type, value in unit_values.items():
+                if hasattr(bot.units, unit_type):
+                    units = getattr(bot.units, unit_type)
+                    current_army_value += len(units) * value
+
+            # 군대 가치 증가 보상
+            if current_army_value > self.previous_army_value:
+                value_increase = current_army_value - self.previous_army_value
+                reward += value_increase * 0.0001  # 소규모 증가 보상
+
+            self.previous_army_value = current_army_value
+
+            # 일꾼 대비 군대 비율 체크
+            worker_count = 0
+            if hasattr(bot, 'workers'):
+                worker_count = bot.workers.amount
+
+            game_time = getattr(bot, 'time', 0)
+
+            # 6분 이후에는 최소 군대가 있어야 함
+            if game_time > 360:
+                if current_army_value > worker_count * 50:  # 군대 > 일꾼 * 50
+                    reward += 0.1  # 적절한 군대 유지 보상
+
+            return reward
+
+        except Exception:
+            return 0.0
+
+    def _calculate_macro_hatchery_reward(self, bot) -> float:
+        """
+        매크로 해처리 보상 계산
+
+        라바 생산력 유지 보상:
+        - 기지당 평균 라바 수가 2-3개면 보상
+        - 너무 많은 라바 적체는 페널티 (이미 _calculate_larva_efficiency_reward에서 처리)
+
+        Returns:
+            매크로 해처리 보상 (float)
+        """
+        try:
+            if not hasattr(bot, 'townhalls') or not hasattr(bot, 'larva'):
+                return 0.0
+
+            reward = 0.0
+            base_count = bot.townhalls.ready.amount if hasattr(bot.townhalls, 'ready') else 0
+            larva_count = len(bot.larva)
+
+            if base_count == 0:
+                return 0.0
+
+            avg_larva = larva_count / base_count
+
+            # 기지당 평균 라바가 적정 수준이면 보상
+            if 1.5 <= avg_larva <= 3.0:
+                reward += 0.05
+
+            # 매크로 해처리 보유 시 추가 보상
+            game_time = getattr(bot, 'time', 0)
+            if game_time > 480:  # 8분 이후
+                # 본진 주변에 추가 해처리가 있으면 보상
+                if base_count >= 3 and larva_count >= base_count * 2:
+                    reward += 0.1
+
+            return reward
+
+        except Exception:
+            return 0.0
+
     def reset(self):
         """
-        ���Ǽҵ� �� ���� �ʱ�ȭ
-        
-        ������ ������ �� ������ ���۵� �� ȣ��˴ϴ�.
+        에피소드 끝 보상 초기화
+
+        게임이 끝나고 새 게임이 시작될 때 호출됩니다.
         """
         self.previous_score = 0
         self.previous_creep_coverage = 0.0
         self.previous_larva_efficiency = 0.0
+        # 확장 추적 리셋
+        self.previous_base_count = 1
+        self.expansion_reward_given = set()
+        # 업그레이드 추적 리셋
+        self.completed_upgrades = set()
+        # 보급 차단 추적 리셋
+        self.supply_blocked_steps = 0
+        # 군대 가치 추적 리셋
+        self.previous_army_value = 0
         # Reset threat-based reward tracking
         if hasattr(self, '_previous_enemy_tech_count'):
             self._previous_enemy_tech_count = {}

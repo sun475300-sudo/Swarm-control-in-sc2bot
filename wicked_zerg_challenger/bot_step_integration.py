@@ -7,7 +7,69 @@ Bot Step Integration - on_step 구현 통합 모듈
 """
 
 import asyncio
-from typing import Any, Dict, Optional
+import time
+from typing import Any, Dict, List, Optional
+
+
+class LogicActivityTracker:
+    """실시간 로직 활성화 추적기"""
+
+    def __init__(self):
+        self.active_logics: Dict[str, Dict] = {}
+        self.last_report_time = 0
+        self.report_interval = 10.0  # 10초마다 보고
+        self.execution_counts: Dict[str, int] = {}
+        self.execution_times: Dict[str, float] = {}
+
+    def start_logic(self, name: str) -> float:
+        """로직 시작 시간 기록"""
+        start_time = time.time()
+        self.active_logics[name] = {
+            "start_time": start_time,
+            "status": "running"
+        }
+        return start_time
+
+    def end_logic(self, name: str, start_time: float, success: bool = True):
+        """로직 종료 및 실행 시간 기록"""
+        elapsed = time.time() - start_time
+        if name in self.active_logics:
+            self.active_logics[name]["status"] = "done" if success else "error"
+            self.active_logics[name]["elapsed"] = elapsed
+
+        # 통계 업데이트
+        self.execution_counts[name] = self.execution_counts.get(name, 0) + 1
+        self.execution_times[name] = self.execution_times.get(name, 0) + elapsed
+
+    def get_activity_report(self, game_time: float) -> str:
+        """활성화된 로직 보고서 생성"""
+        current_time = time.time()
+        if current_time - self.last_report_time < self.report_interval:
+            return ""
+
+        self.last_report_time = current_time
+
+        lines = [f"\n[LOGIC ACTIVITY] 게임 시간: {int(game_time)}초"]
+        lines.append("=" * 50)
+
+        # 실행 횟수 및 시간 출력
+        for name, count in sorted(self.execution_counts.items()):
+            total_time = self.execution_times.get(name, 0)
+            avg_time = (total_time / count * 1000) if count > 0 else 0
+            lines.append(f"  {name}: {count}회 실행, 평균 {avg_time:.2f}ms")
+
+        lines.append("=" * 50)
+
+        # 카운터 리셋
+        self.execution_counts.clear()
+        self.execution_times.clear()
+
+        return "\n".join(lines)
+
+    def get_current_status(self) -> List[str]:
+        """현재 활성화된 로직 목록 반환"""
+        return [name for name, info in self.active_logics.items()
+                if info.get("status") == "running"]
 
 try:
     from sc2.bot_ai import BotAI
@@ -30,11 +92,13 @@ class BotStepIntegrator:
     2. 게임 로직 실행 (economy, production, combat 등)
     3. 훈련 모드: 보상 계산 및 RL 업데이트
     4. 최신 개선 사항 통합 (advanced_building_manager 등)
+    5. 실시간 로직 활성화 보고
     """
 
     def __init__(self, bot):
         self.bot = bot
         self._managers_initialized = False
+        self._logic_tracker = LogicActivityTracker()
 
     async def initialize_managers(self):
         """매니저들 초기화 (lazy loading)"""
@@ -220,13 +284,18 @@ class BotStepIntegrator:
 
             # 4. Production (생산)
             if self.bot.production:
+                start_time = self._logic_tracker.start_logic("Production")
+                success = True
                 try:
                     # ProductionResilience의 메서드 호출
                     if hasattr(self.bot.production, "fix_production_bottleneck"):
                         await self.bot.production.fix_production_bottleneck()
                 except Exception as e:
+                    success = False
                     if iteration % 200 == 0:
                         print(f"[WARNING] Production error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("Production", start_time, success)
 
             # 4.2. Unit Factory (fallback when production manager missing)
             if hasattr(self.bot, "unit_factory") and self.bot.production is None:
@@ -245,6 +314,8 @@ class BotStepIntegrator:
 
             # 5. Advanced Building Manager (최신 개선 사항)
             if hasattr(self.bot, "advanced_building_manager"):
+                start_time = self._logic_tracker.start_logic("AdvancedBuilding")
+                success = True
                 try:
                     # 자원 적체 시 처리
                     if iteration % 22 == 0:  # 매 1초마다
@@ -258,11 +329,16 @@ class BotStepIntegrator:
                     if iteration % 44 == 0:  # 매 2초마다
                         await self.bot.advanced_building_manager.build_defense_buildings_optimally()
                 except Exception as e:
+                    success = False
                     if iteration % 200 == 0:
                         print(f"[WARNING] Advanced Building Manager error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("AdvancedBuilding", start_time, success)
 
             # 6. Aggressive Tech Builder (최신 개선 사항)
             if hasattr(self.bot, "aggressive_tech_builder"):
+                start_time = self._logic_tracker.start_logic("AggressiveTech")
+                success = True
                 try:
                     # 자원이 넘칠 때 테크 건설
                     if iteration % 22 == 0:  # 매 1초마다
@@ -281,8 +357,11 @@ class BotStepIntegrator:
                                     priority,
                                 )
                 except Exception as e:
+                    success = False
                     if iteration % 200 == 0:
                         print(f"[WARNING] Aggressive Tech Builder error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("AggressiveTech", start_time, success)
 
             # 7. Queen Manager (여왕 관리)
             await self._safe_manager_step(self.bot.queen_manager, iteration, "Queen Manager")
@@ -301,6 +380,12 @@ class BotStepIntegrator:
             # 10. Micro Control (마이크로 컨트롤)
             await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
+            # 11. 실시간 로직 활성화 보고
+            game_time = getattr(self.bot, "time", 0)
+            report = self._logic_tracker.get_activity_report(game_time)
+            if report:
+                print(report)
+
         except Exception as e:
             if iteration % 100 == 0:
                 print(f"[WARNING] Game logic execution error: {e}")
@@ -313,11 +398,17 @@ class BotStepIntegrator:
         method = getattr(manager, method_name, None)
         if not method:
             return
+
+        start_time = self._logic_tracker.start_logic(label)
+        success = True
         try:
             await method(iteration)
         except Exception as e:
+            success = False
             if iteration % 200 == 0:
                 print(f"[WARNING] {label} error: {e}")
+        finally:
+            self._logic_tracker.end_logic(label, start_time, success)
 
     async def _build_tech(self, tech_type):
         """테크 건물 건설 헬퍼 함수"""
