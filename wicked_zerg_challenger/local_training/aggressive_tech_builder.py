@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Aggressive Tech Builder - ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ Å×Å©¸¦ ´õ °ø°ÝÀûÀ¸·Î ¿Ã¸®´Â ¸ðµâ
+Aggressive Tech Builder - Build tech more aggressively when resources overflow.
 
-ÇöÀç °Ç¼³ ·ÎÁ÷Àº Áßº¹ °Ç¼³À» Àß ¹æÁöÇÏÁö¸¸, ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ Å×Å©¸¦ ´õ ºü¸£°Ô ¿Ã¸®°Å³ª
-À¯¿¬ÇÏ°Ô ´ëÃ³ÇÏ´Â '°ú°¨ÇÔ'ÀÌ ÇÊ¿äÇÕ´Ï´Ù.
+When construction logic prevents duplicates well but resources overflow,
+we need more aggression to build tech faster.
 
-ÀÌ ¸ðµâÀº ÀÚ¿øÀÌ ³ÑÄ¥ ¶§:
-1. Å×Å© °Ç¼³ ¿ì¼±¼øÀ§¸¦ ³ôÀÓ
-2. Supply Á¶°ÇÀ» ¿ÏÈ­ÇÏ¿© ´õ ºü¸£°Ô Å×Å©¸¦ ¿Ã¸²
-3. ¿©·¯ Å×Å©¸¦ µ¿½Ã¿¡ ¿Ã¸± ¼ö ÀÖµµ·Ï ÇÔ
+This module does when resources overflow:
+1. Increase tech construction priority
+2. Relax Supply conditions to build tech faster
+3. Allow building multiple techs simultaneously
 """
 
 from typing import Optional, Dict, List, Tuple
@@ -29,31 +29,31 @@ except ImportError:
 
 class AggressiveTechBuilder:
     """
-    ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ Å×Å©¸¦ ´õ °ø°ÝÀûÀ¸·Î ¿Ã¸®´Â ºô´õ
+    ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     
-    ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ (¹Ì³×¶ö 800+, °¡½º 200+):
-    - Supply Á¶°ÇÀ» ¿ÏÈ­ÇÏ¿© ´õ ºü¸£°Ô Å×Å©¸¦ ¿Ã¸²
-    - ¿©·¯ Å×Å©¸¦ µ¿½Ã¿¡ ¿Ã¸± ¼ö ÀÖµµ·Ï ÇÔ
-    - Å×Å© °Ç¼³ ¿ì¼±¼øÀ§¸¦ ³ôÀÓ
+    ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ (ï¿½Ì³×¶ï¿½ 800+, ï¿½ï¿½ï¿½ï¿½ 200+):
+    - Supply ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­ï¿½Ï¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½Ã¸ï¿½
+    - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ ï¿½Ã¸ï¿½ ï¿½ï¿½ ï¿½Öµï¿½ï¿½ï¿½ ï¿½ï¿½
+    - ï¿½ï¿½Å© ï¿½Ç¼ï¿½ ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     """
     
     def __init__(self, bot):
         self.bot = bot
-        # ÀÚ¿øÀÌ ³ÑÄ¡´Â ±âÁØ°ª
-        self.excess_mineral_threshold = 800  # ¹Ì³×¶ö 800 ÀÌ»ó
-        self.excess_gas_threshold = 200      # °¡½º 200 ÀÌ»ó
-        # Supply ¿ÏÈ­ ºñÀ² (ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ supply Á¶°ÇÀ» ÀÌ¸¸Å­ ¿ÏÈ­)
-        self.supply_reduction_factor = 0.7   # 30% ¿ÏÈ­ (¿¹: 17 -> 12)
+        # ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½Ø°ï¿½
+        self.excess_mineral_threshold = 800  # ï¿½Ì³×¶ï¿½ 800 ï¿½Ì»ï¿½
+        self.excess_gas_threshold = 200      # ï¿½ï¿½ï¿½ï¿½ 200 ï¿½Ì»ï¿½
+        # Supply ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ (ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ supply ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½Å­ ï¿½ï¿½È­)
+        self.supply_reduction_factor = 0.7   # 30% ï¿½ï¿½È­ (ï¿½ï¿½: 17 -> 12)
         
     def has_excess_resources(self) -> Tuple[bool, float, float]:
         """
-        ÀÚ¿øÀÌ ³ÑÄ¡´ÂÁö È®ÀÎ
+        ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         
         Returns:
             (has_excess, mineral_excess, gas_excess): 
-            - has_excess: ÀÚ¿øÀÌ ³ÑÄ¡´ÂÁö ¿©ºÎ
-            - mineral_excess: ¹Ì³×¶ö ÃÊ°ú·®
-            - gas_excess: °¡½º ÃÊ°ú·®
+            - has_excess: ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            - mineral_excess: ï¿½Ì³×¶ï¿½ ï¿½Ê°ï¿½ï¿½ï¿½
+            - gas_excess: ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ï¿½ï¿½
         """
         minerals = getattr(self.bot, "minerals", 0)
         gas = getattr(self.bot, "vespene", 0)
@@ -67,13 +67,13 @@ class AggressiveTechBuilder:
     
     def get_adjusted_supply_threshold(self, base_supply: float) -> float:
         """
-        ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ supply Á¶°ÇÀ» ¿ÏÈ­
+        ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ supply ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­
         
         Args:
-            base_supply: ±âº» supply Á¶°Ç
+            base_supply: ï¿½âº» supply ï¿½ï¿½ï¿½ï¿½
             
         Returns:
-            ¿ÏÈ­µÈ supply Á¶°Ç
+            ï¿½ï¿½È­ï¿½ï¿½ supply ï¿½ï¿½ï¿½ï¿½
         """
         has_excess, _, _ = self.has_excess_resources()
         if has_excess:
@@ -87,33 +87,33 @@ class AggressiveTechBuilder:
         check_existing: bool = True
     ) -> bool:
         """
-        ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ Å×Å©¸¦ ´õ °ø°ÝÀûÀ¸·Î ¿Ã¸±Áö °áÁ¤
+        ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         
         Args:
-            tech_type: °Ç¼³ÇÒ Å×Å© Å¸ÀÔ
-            base_supply: ±âº» supply Á¶°Ç
-            check_existing: ±âÁ¸ °Ç¹° Á¸Àç ¿©ºÎ È®ÀÎ
+            tech_type: ï¿½Ç¼ï¿½ï¿½ï¿½ ï¿½ï¿½Å© Å¸ï¿½ï¿½
+            base_supply: ï¿½âº» supply ï¿½ï¿½ï¿½ï¿½
+            check_existing: ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
             
         Returns:
-            °Ç¼³ÇØ¾ß ÇÏ´ÂÁö ¿©ºÎ
+            ï¿½Ç¼ï¿½ï¿½Ø¾ï¿½ ï¿½Ï´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         """
         has_excess, mineral_excess, gas_excess = self.has_excess_resources()
         supply_used = getattr(self.bot, "supply_used", 0)
         
-        # ±âÁ¸ °Ç¹° È®ÀÎ
+        # ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¹ï¿½ È®ï¿½ï¿½
         if check_existing:
             if hasattr(self.bot, "structures"):
                 existing = self.bot.structures(tech_type)
                 if existing.exists or self.bot.already_pending(tech_type) > 0:
                     return False
         
-        # ÀÚ¿øÀÌ ³ÑÄ¥ ¶§: supply Á¶°Ç ¿ÏÈ­
+        # ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½: supply ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­
         if has_excess:
             adjusted_supply = self.get_adjusted_supply_threshold(base_supply)
             if supply_used >= adjusted_supply:
                 return True
         else:
-            # ÀÚ¿øÀÌ ³ÑÄ¡Áö ¾ÊÀ» ¶§: ±âº» Á¶°Ç
+            # ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½: ï¿½âº» ï¿½ï¿½ï¿½ï¿½
             if supply_used >= base_supply:
                 return True
         
@@ -127,28 +127,28 @@ class AggressiveTechBuilder:
         priority: int = 1
     ) -> bool:
         """
-        ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ Å×Å©¸¦ ´õ °ø°ÝÀûÀ¸·Î ¿Ã¸²
+        ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¸ï¿½
         
         Args:
-            tech_type: °Ç¼³ÇÒ Å×Å© Å¸ÀÔ
-            build_func: °Ç¼³ ÇÔ¼ö (async function)
-            base_supply: ±âº» supply Á¶°Ç
-            priority: ¿ì¼±¼øÀ§ (1=ÃÖ¿ì¼±, 2=Â÷¼øÀ§)
+            tech_type: ï¿½Ç¼ï¿½ï¿½ï¿½ ï¿½ï¿½Å© Å¸ï¿½ï¿½
+            build_func: ï¿½Ç¼ï¿½ ï¿½Ô¼ï¿½ (async function)
+            base_supply: ï¿½âº» supply ï¿½ï¿½ï¿½ï¿½
+            priority: ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ (1=ï¿½Ö¿ì¼±, 2=ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
             
         Returns:
-            °Ç¼³ ¼º°ø ¿©ºÎ
+            ï¿½Ç¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         """
         has_excess, mineral_excess, gas_excess = self.has_excess_resources()
         
-        # ÀÚ¿øÀÌ ³ÑÄ¡Áö ¾ÊÀ¸¸é ±âº» ·ÎÁ÷ »ç¿ë
+        # ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½âº» ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
         if not has_excess:
             return False
         
-        # °Ç¼³ °¡´É ¿©ºÎ È®ÀÎ
+        # ï¿½Ç¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         if not self.bot.can_afford(tech_type):
             return False
         
-        # Supply Á¶°Ç È®ÀÎ (¿ÏÈ­µÈ Á¶°Ç)
+        # Supply ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ (ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         should_build = await self.should_build_tech_aggressively(
             tech_type, 
             base_supply,
@@ -158,7 +158,7 @@ class AggressiveTechBuilder:
         if not should_build:
             return False
         
-        # °Ç¼³ ½ÇÇà
+        # ï¿½Ç¼ï¿½ ï¿½ï¿½ï¿½ï¿½
         try:
             result = await build_func()
             if result:
@@ -177,13 +177,13 @@ class AggressiveTechBuilder:
         tech_priorities: List[Tuple[UnitTypeId, callable, float]]
     ) -> Dict[UnitTypeId, bool]:
         """
-        ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ ¿©·¯ Å×Å©¸¦ µ¿½Ã¿¡ ¿Ã¸²
+        ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ ï¿½Ã¸ï¿½
         
         Args:
-            tech_priorities: [(tech_type, build_func, base_supply), ...] ¸®½ºÆ®
+            tech_priorities: [(tech_type, build_func, base_supply), ...] ï¿½ï¿½ï¿½ï¿½Æ®
         
         Returns:
-            {tech_type: success} µñ¼Å³Ê¸®
+            {tech_type: success} ï¿½ï¿½Å³Ê¸ï¿½
         """
         has_excess, _, _ = self.has_excess_resources()
         if not has_excess:
@@ -191,7 +191,7 @@ class AggressiveTechBuilder:
         
         results = {}
         
-        # ¿ì¼±¼øÀ§ ¼øÀ¸·Î °Ç¼³
+        # ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¼ï¿½
         sorted_techs = sorted(tech_priorities, key=lambda x: x[3] if len(x) > 3 else 1)
         
         for tech_info in sorted_techs:
@@ -199,12 +199,12 @@ class AggressiveTechBuilder:
             build_func = tech_info[1]
             base_supply = tech_info[2] if len(tech_info) > 2 else 17.0
             
-            # ÀÚ¿øÀÌ ÃæºÐÇÑÁö È®ÀÎ
+            # ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
             if not self.bot.can_afford(tech_type):
                 results[tech_type] = False
                 continue
             
-            # °Ç¼³ ½ÇÇà
+            # ï¿½Ç¼ï¿½ ï¿½ï¿½ï¿½ï¿½
             success = await self.build_tech_aggressively(
                 tech_type,
                 build_func,
@@ -212,7 +212,7 @@ class AggressiveTechBuilder:
             )
             results[tech_type] = success
             
-            # ÇÑ ¹ø¿¡ ÇÏ³ª¾¿¸¸ °Ç¼³ (Áßº¹ ¹æÁö)
+            # ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¼ï¿½ (ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½)
             if success:
                 break
         
@@ -220,32 +220,32 @@ class AggressiveTechBuilder:
     
     def get_tech_build_priority(self, tech_type: UnitTypeId) -> int:
         """
-        Å×Å© °Ç¼³ ¿ì¼±¼øÀ§ ¹ÝÈ¯
+        ï¿½ï¿½Å© ï¿½Ç¼ï¿½ ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
         
         Args:
-            tech_type: Å×Å© Å¸ÀÔ
+            tech_type: ï¿½ï¿½Å© Å¸ï¿½ï¿½
             
         Returns:
-            ¿ì¼±¼øÀ§ (1=ÃÖ¿ì¼±, ¼ýÀÚ°¡ Å¬¼ö·Ï ³·Àº ¿ì¼±¼øÀ§)
+            ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ (1=ï¿½Ö¿ì¼±, ï¿½ï¿½ï¿½Ú°ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½)
         """
         priority_map = {
-            UnitTypeId.SPAWNINGPOOL: 1,      # ÃÖ¿ì¼±
-            UnitTypeId.EXTRACTOR: 2,         # Â÷¼øÀ§
-            UnitTypeId.ROACHWARREN: 3,       # 3¼øÀ§
-            UnitTypeId.HYDRALISKDEN: 4,      # 4¼øÀ§
-            UnitTypeId.BANELINGNEST: 5,      # 5¼øÀ§
-            UnitTypeId.EVOLUTIONCHAMBER: 6,  # 6¼øÀ§
-            UnitTypeId.LAIR: 7,              # 7¼øÀ§
-            UnitTypeId.SPAIRE: 8,            # 8¼øÀ§
+            UnitTypeId.SPAWNINGPOOL: 1,      # ï¿½Ö¿ì¼±
+            UnitTypeId.EXTRACTOR: 2,         # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            UnitTypeId.ROACHWARREN: 3,       # 3ï¿½ï¿½ï¿½ï¿½
+            UnitTypeId.HYDRALISKDEN: 4,      # 4ï¿½ï¿½ï¿½ï¿½
+            UnitTypeId.BANELINGNEST: 5,      # 5ï¿½ï¿½ï¿½ï¿½
+            UnitTypeId.EVOLUTIONCHAMBER: 6,  # 6ï¿½ï¿½ï¿½ï¿½
+            UnitTypeId.LAIR: 7,              # 7ï¿½ï¿½ï¿½ï¿½
+            UnitTypeId.SPAIRE: 8,            # 8ï¿½ï¿½ï¿½ï¿½
         }
         return priority_map.get(tech_type, 10)
     
     async def recommend_tech_builds(self) -> List[Tuple[UnitTypeId, float, int]]:
         """
-        ÀÚ¿øÀÌ ³ÑÄ¥ ¶§ °Ç¼³ÇÒ Å×Å© ÃßÃµ
+        ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½ ï¿½Ç¼ï¿½ï¿½ï¿½ ï¿½ï¿½Å© ï¿½ï¿½Ãµ
         
         Returns:
-            [(tech_type, base_supply, priority), ...] ¸®½ºÆ®
+            [(tech_type, base_supply, priority), ...] ï¿½ï¿½ï¿½ï¿½Æ®
         """
         has_excess, mineral_excess, gas_excess = self.has_excess_resources()
         if not has_excess:
@@ -254,29 +254,29 @@ class AggressiveTechBuilder:
         recommendations = []
         supply_used = getattr(self.bot, "supply_used", 0)
         
-        # Spawning Pool (±âº» Å×Å©)
+        # Spawning Pool (ï¿½âº» ï¿½ï¿½Å©)
         if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).exists:
             recommendations.append((UnitTypeId.SPAWNINGPOOL, 12.0, 1))
         
-        # Extractor (°¡½º°¡ ºÎÁ·ÇÒ ¶§)
+        # Extractor (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
         if gas_excess < 100 and not self.bot.structures(UnitTypeId.EXTRACTOR).exists:
             recommendations.append((UnitTypeId.EXTRACTOR, 14.0, 2))
         
-        # Roach Warren (¹Ì³×¶öÀÌ ¸¹ÀÌ ³ÑÄ¥ ¶§)
+        # Roach Warren (ï¿½Ì³×¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½)
         if mineral_excess > 300 and not self.bot.structures(UnitTypeId.ROACHWARREN).exists:
             recommendations.append((UnitTypeId.ROACHWARREN, 20.0, 3))
         
-        # Hydralisk Den (°¡½º°¡ ¸¹ÀÌ ³ÑÄ¥ ¶§)
+        # Hydralisk Den (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½)
         if gas_excess > 100 and not self.bot.structures(UnitTypeId.HYDRALISKDEN).exists:
             recommendations.append((UnitTypeId.HYDRALISKDEN, 25.0, 4))
         
-        # Lair (¹Ì³×¶ö°ú °¡½º°¡ ¸ðµÎ ¸¹ÀÌ ³ÑÄ¥ ¶§) - °­È­µÈ ·ÎÁ÷
+        # Lair (ï¿½Ì³×¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¥ ï¿½ï¿½) - ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         if (mineral_excess > 500 and gas_excess > 150 and 
             self.bot.structures(UnitTypeId.LAIR).amount == 0 and
             self.bot.structures(UnitTypeId.HATCHERY).ready.exists):
-            # Spawning Pool È®ÀÎ (ÇÊ¼ö ¿ä±¸»çÇ×)
+            # Spawning Pool È®ï¿½ï¿½ (ï¿½Ê¼ï¿½ ï¿½ä±¸ï¿½ï¿½ï¿½ï¿½)
             if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
-                # Extractor È®ÀÎ (°¡½º ¼öÀÔ È®ÀÎ)
+                # Extractor È®ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½)
                 if self.bot.structures(UnitTypeId.EXTRACTOR).ready.exists:
                     recommendations.append((UnitTypeId.LAIR, 30.0, 5))
         

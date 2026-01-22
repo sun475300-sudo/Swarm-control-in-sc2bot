@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-WickedZergBotPro Implementation - on_step ±¸Çö
+WickedZergBotPro Implementation - on_step êµ¬í˜„
 
-ÀÌ ÆÄÀÏÀº WickedZergBotProÀÇ on_step ¸Ş¼­µå¸¦ ±¸ÇöÇÕ´Ï´Ù.
-±âÁ¸ wicked_zerg_bot_pro.py ÆÄÀÏ¿¡ ÀÌ ÄÚµå¸¦ ÅëÇÕÇÏ°Å³ª,
-ÀÌ ÆÄÀÏÀ» importÇÏ¿© »ç¿ëÇÒ ¼ö ÀÖ½À´Ï´Ù.
+ì´ íŒŒì¼ì€ WickedZergBotProì˜ on_step ë©”ì„œë“œë¥¼ êµ¬í˜„í•©ë‹ˆë‹¤.
+ê¸°ì¡´ wicked_zerg_bot_pro.py íŒŒì¼ì— ì´ ì½”ë“œë¥¼ í†µí•©í•˜ê±°ë‚˜,
+ì´ íŒŒì¼ì„ importí•˜ì—¬ ì‚¬ìš©í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 """
 
 try:
@@ -18,10 +18,10 @@ from bot_step_integration import BotStepIntegrator
 
 class WickedZergBotProImpl(BotAI):
     """
-    WickedZergBotProÀÇ on_step ±¸Çö
+    WickedZergBotProì˜ on_step êµ¬í˜„
     
-    ÀÌ Å¬·¡½º´Â ±âÁ¸ WickedZergBotPro¸¦ È®ÀåÇÏ°Å³ª,
-    ±âÁ¸ Å¬·¡½º¿¡ ÅëÇÕÇÒ ¼ö ÀÖ½À´Ï´Ù.
+    ì´ í´ë˜ìŠ¤ëŠ” ê¸°ì¡´ WickedZergBotProë¥¼ í™•ì¥í•˜ê±°ë‚˜,
+    ê¸°ì¡´ í´ë˜ìŠ¤ì— í†µí•©í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
     """
     
     def __init__(self, train_mode: bool = False, instance_id: int = 0,
@@ -44,25 +44,25 @@ class WickedZergBotProImpl(BotAI):
         self.micro = None
         self.queen_manager = None
         
-        # Step integrator ÃÊ±âÈ­
+        # Step integrator ì´ˆê¸°í™”
         self._step_integrator = None
     
     async def on_start(self):
         """Called when the bot starts."""
         await super().on_start()
-        # Step integrator ÃÊ±âÈ­
+        # Step integrator ì´ˆê¸°í™”
         self._step_integrator = BotStepIntegrator(self)
     
     async def on_step(self, iteration: int):
         """
         Called every game step.
         
-        ÀÌ ¸Ş¼­µå´Â ½ÇÁ¦ °ÔÀÓ ·ÎÁ÷°ú ÈÆ·Ã ·ÎÁ÷À» ½ÇÇàÇÕ´Ï´Ù.
+        ì´ ë©”ì„œë“œëŠ” ì‹¤ì œ ê²Œì„ ë¡œì§ê³¼ í›ˆë ¨ ë¡œì§ì„ ì‹¤í–‰í•©ë‹ˆë‹¤.
         """
         if self._step_integrator is None:
             self._step_integrator = BotStepIntegrator(self)
         
-        # ÅëÇÕ on_step ½ÇÇà
+        # í†µí•© on_step ì‹¤í–‰
         await self._step_integrator.on_step(iteration)
     
     async def on_end(self, game_result):
@@ -74,24 +74,24 @@ class WickedZergBotProImpl(BotAI):
         """
         await super().on_end(game_result)
         
-        # ÈÆ·Ã ¸ğµå: ÃÖÁ¾ º¸»ó °è»ê ¹× ¸ğµ¨ ÀúÀå
+        # í›ˆë ¨ ëª¨ë“œ: ìµœì¢… ë³´ìƒ ê³„ì‚° ë° ëª¨ë¸ ì €ì¥
         if self.train_mode:
             try:
-                # ÃÖÁ¾ º¸»ó °è»ê
+                # ìµœì¢… ë³´ìƒ ê³„ì‚°
                 if hasattr(self, '_reward_system'):
                     final_reward = self._reward_system.calculate_step_reward(self)
                     
-                    # RL ¿¡ÀÌÀüÆ® ÃÖÁ¾ ¾÷µ¥ÀÌÆ®
+                    # RL ì—ì´ì „íŠ¸ ìµœì¢… ì—…ë°ì´íŠ¸
                     if hasattr(self, 'rl_agent') and self.rl_agent:
                         self.rl_agent.update_reward(final_reward)
                         
-                        # ¸ğµ¨ ÀúÀå
+                        # ëª¨ë¸ ì €ì¥
                         if hasattr(self.rl_agent, 'save_model'):
                             model_path = "local_training/models/zerg_net_model.pt"
                             self.rl_agent.save_model(model_path)
                             print(f"[TRAINING] Model saved to {model_path}")
                 
-                # º¸»ó ½Ã½ºÅÛ ¸®¼Â
+                # ë³´ìƒ ì‹œìŠ¤í…œ ë¦¬ì…‹
                 if hasattr(self, '_reward_system'):
                     self._reward_system.reset()
                     
@@ -108,9 +108,9 @@ class WickedZergBotProImpl(BotAI):
         }
 
 
-# ±âÁ¸ WickedZergBotPro Å¬·¡½º¿¡ ÅëÇÕÇÏ´Â ¹æ¹ı:
+# ê¸°ì¡´ WickedZergBotPro í´ë˜ìŠ¤ì— í†µí•©í•˜ëŠ” ë°©ë²•:
 # 
-# 1. ±âÁ¸ Å¬·¡½º¿¡ ÅëÇÕ:
+# 1. ê¸°ì¡´ í´ë˜ìŠ¤ì— í†µí•©:
 #    from bot_step_integration import BotStepIntegrator
 #    
 #    class WickedZergBotPro(BotAI):
@@ -123,6 +123,6 @@ class WickedZergBotProImpl(BotAI):
 #                self._step_integrator = BotStepIntegrator(self)
 #            await self._step_integrator.on_step(iteration)
 #
-# 2. ¶Ç´Â ÀÌ Å¬·¡½º¸¦ »ó¼Ó:
+# 2. ë˜ëŠ” ì´ í´ë˜ìŠ¤ë¥¼ ìƒì†:
 #    class WickedZergBotPro(WickedZergBotProImpl):
-#        # Ãß°¡ ¸Ş¼­µåµé...
+#        # ì¶”ê°€ ë©”ì„œë“œë“¤...

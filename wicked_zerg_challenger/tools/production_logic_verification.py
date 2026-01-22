@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Production Logic Verification - »ý»ê ·ÎÁ÷ °ËÁõ µµ±¸
+Production Logic Verification - Production logic verification tool
 
-¼öÁ¤µÈ ·ÎÁ÷ÀÇ Á¤È®¼ºÀ» °ËÁõÇÕ´Ï´Ù.
+Verifies the correctness of modified production logic.
 """
 
 import sys
@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 
 
 def verify_production_enhancements():
-    """ProductionEnhancements Å¬·¡½º °ËÁõ"""
+    """ProductionEnhancements Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"""
     print("=" * 70)
     print("Production Enhancements Verification")
     print("=" * 70)
@@ -22,11 +22,11 @@ def verify_production_enhancements():
     try:
         from local_training.production_enhancements import ProductionEnhancements
         
-        # Å¬·¡½º Á¸Àç È®ÀÎ
-        print("\n[1] Å¬·¡½º Á¸Àç È®ÀÎ: ?")
-        print(f"   - ProductionEnhancements Å¬·¡½º ·Îµå ¼º°ø")
+        # Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+        print("\n[1] Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½: ?")
+        print(f"   - ProductionEnhancements Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½")
         
-        # ¸Þ¼­µå Á¸Àç È®ÀÎ
+        # ï¿½Þ¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         required_methods = [
             'should_upgrade_to_lair',
             'upgrade_to_lair',
@@ -37,16 +37,16 @@ def verify_production_enhancements():
             '_check_unit_requirements',
         ]
         
-        print("\n[2] ÇÊ¼ö ¸Þ¼­µå È®ÀÎ:")
+        print("\n[2] ï¿½Ê¼ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½ È®ï¿½ï¿½:")
         for method_name in required_methods:
             if hasattr(ProductionEnhancements, method_name):
                 print(f"   ? {method_name}")
             else:
-                print(f"   ? {method_name} (´©¶ô)")
+                print(f"   ? {method_name} (ï¿½ï¿½ï¿½ï¿½)")
         
-        # ¼Ó¼º È®ÀÎ
-        print("\n[3] ÇÊ¼ö ¼Ó¼º È®ÀÎ:")
-        # Mock bot °´Ã¼ »ý¼º
+        # ï¿½Ó¼ï¿½ È®ï¿½ï¿½
+        print("\n[3] ï¿½Ê¼ï¿½ ï¿½Ó¼ï¿½ È®ï¿½ï¿½:")
+        # Mock bot ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½
         class MockBot:
             def __init__(self):
                 self.minerals = 1000
@@ -84,29 +84,29 @@ def verify_production_enhancements():
             if hasattr(enhancer, attr_name):
                 print(f"   ? {attr_name}")
             else:
-                print(f"   ? {attr_name} (´©¶ô)")
+                print(f"   ? {attr_name} (ï¿½ï¿½ï¿½ï¿½)")
         
-        # ¿ì¼±¼øÀ§ È®ÀÎ
-        print("\n[4] »ý»ê ¿ì¼±¼øÀ§ È®ÀÎ:")
+        # ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+        print("\n[4] ï¿½ï¿½ï¿½ï¿½ ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½:")
         priorities = enhancer.production_priority
         sorted_priorities = sorted(priorities.items(), key=lambda x: x[1], reverse=True)
         for unit_type, priority in sorted_priorities:
             print(f"   {unit_type}: {priority}")
         
         print("\n" + "=" * 70)
-        print("°ËÁõ ¿Ï·á: ¸ðµç Ç×¸ñÀÌ Á¤»óÀûÀ¸·Î ·ÎµåµÇ¾ú½À´Ï´Ù.")
+        print("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½: ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.")
         print("=" * 70)
         return True
         
     except Exception as e:
-        print(f"\n[ERROR] °ËÁõ ½ÇÆÐ: {e}")
+        print(f"\n[ERROR] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 
 def verify_indentation_fixes():
-    """ÀÎµ§Å×ÀÌ¼Ç ¼öÁ¤ È®ÀÎ"""
+    """ï¿½Îµï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½"""
     print("\n" + "=" * 70)
     print("Indentation Fixes Verification")
     print("=" * 70)
@@ -124,37 +124,37 @@ def verify_indentation_fixes():
         if full_path.exists():
             try:
                 py_compile.compile(str(full_path), doraise=True)
-                print(f"? {file_path}: ¹®¹ý °Ë»ç Åë°ú")
+                print(f"? {file_path}: ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½ ï¿½ï¿½ï¿½")
             except py_compile.PyCompileError as e:
-                print(f"? {file_path}: ¹®¹ý ¿À·ù - {e}")
+                print(f"? {file_path}: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - {e}")
                 all_passed = False
         else:
-            print(f"? {file_path}: ÆÄÀÏ ¾øÀ½")
+            print(f"? {file_path}: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")
             all_passed = False
     
     print("\n" + "=" * 70)
     if all_passed:
-        print("ÀÎµ§Å×ÀÌ¼Ç ¼öÁ¤ È®ÀÎ ¿Ï·á: ¸ðµç ÆÄÀÏÀÌ Á¤»óÀÔ´Ï´Ù.")
+        print("ï¿½Îµï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ ï¿½Ï·ï¿½: ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.")
     else:
-        print("ÀÎµ§Å×ÀÌ¼Ç ¼öÁ¤ È®ÀÎ ½ÇÆÐ: ÀÏºÎ ÆÄÀÏ¿¡ ¿À·ù°¡ ÀÖ½À´Ï´Ù.")
+        print("ï¿½Îµï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½Ïºï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.")
     print("=" * 70)
     
     return all_passed
 
 
 if __name__ == "__main__":
-    print("\n»ý»ê ·ÎÁ÷ °ËÁõ ½ÃÀÛ...\n")
+    print("\nï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½...\n")
     
-    # 1. ProductionEnhancements °ËÁõ
+    # 1. ProductionEnhancements ï¿½ï¿½ï¿½ï¿½
     result1 = verify_production_enhancements()
     
-    # 2. ÀÎµ§Å×ÀÌ¼Ç ¼öÁ¤ È®ÀÎ
+    # 2. ï¿½Îµï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
     result2 = verify_indentation_fixes()
     
-    # ÃÖÁ¾ °á°ú
+    # ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     print("\n" + "=" * 70)
     if result1 and result2:
-        print("? ¸ðµç °ËÁõ Åë°ú")
+        print("? ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½")
     else:
-        print("? ÀÏºÎ °ËÁõ ½ÇÆÐ")
+        print("? ï¿½Ïºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")
     print("=" * 70)

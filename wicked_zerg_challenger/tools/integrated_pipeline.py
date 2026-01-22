@@ -16,53 +16,53 @@ PYTHON_EXECUTABLE = sys.executable
 
 
 def get_replay_dir() -> Path:
-    """Get replay directory - default to D:\replays"""
+    """Get replay directory - default to D:\\replays"""
     replay_dir_env = os.environ.get("REPLAY_DIR")
- if replay_dir_env and Path(replay_dir_env).exists():
-     return Path(replay_dir_env)
+    if replay_dir_env and Path(replay_dir_env).exists():
+        return Path(replay_dir_env)
 
     default_path = Path("D:/replays")
     if default_path.exists() or sys.platform == "win32":
         return default_path
 
- # Fallback to common locations
- possible_paths = [
-     Path(__file__).parent / "replays",
-     Path("replays"),
- ]
- for path in possible_paths:
-     if path.exists():
-         return path
+    # Fallback to common locations
+    possible_paths = [
+        Path(__file__).parent / "replays",
+        Path("replays"),
+    ]
+    for path in possible_paths:
+        if path.exists():
+            return path
 
- return default_path
+    return default_path
 
 LOCAL_REPLAY_DIR = get_replay_dir()
 
 def main():
     parser = argparse.ArgumentParser(description="Integrated training pipeline")
     parser.add_argument("--epochs", type=int, default=3, help="Training epochs")
- # IMPROVED: Use environment variable or flexible path detection
- # Priority 1: D:\replays\replays (all Zerg pro gamer replays)
+
+    # Use environment variable or flexible path detection
     default_source = os.environ.get("REPLAY_SOURCE_DIR")
- if not default_source or not os.path.exists(default_source):
-     # Try common locations (priority: D:\replays\replays)
- possible_paths = [
-     Path("D:/replays/replays"),  # All Zerg pro gamer replays (highest priority)
-     Path(__file__).parent.parent / "replays_archive",
-     Path.home() / "replays" / "replays",
-     Path("replays_archive"),
- ]
- for path in possible_paths:
-     if path.exists():
-         default_source = str(path)
- break
- else:
-     default_source = "D:/replays/replays"  # Default to Zerg pro gamer replays directory
+    if not default_source or not os.path.exists(default_source):
+        # Try common locations (priority: D:\replays\replays)
+        possible_paths = [
+            Path("D:/replays/replays"),
+            Path(__file__).parent.parent / "replays_archive",
+            Path.home() / "replays" / "replays",
+            Path("replays_archive"),
+        ]
+        for path in possible_paths:
+            if path.exists():
+                default_source = str(path)
+                break
+        else:
+            default_source = "D:/replays/replays"
 
     parser.add_argument("--source-replays", default=default_source, help="Source replays folder")
     parser.add_argument("--cleanup", action="store_true", help="Move processed files")
     parser.add_argument("--validate-only", action="store_true", help="Only validate, no training")
- args = parser.parse_args()
+    args = parser.parse_args()
 
     print(f"\n{'='*80}")
     print("WICKED ZERG TRAINING PIPELINE STARTED")

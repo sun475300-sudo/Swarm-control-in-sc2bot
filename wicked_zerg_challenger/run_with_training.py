@@ -10,7 +10,7 @@ from sc2 import maps  # type: ignore
 from sc2.player import Bot, Computer  # type: ignore
 from sc2.main import run_game  # type: ignore
 from sc2.data import Race, Difficulty  # type: ignore
-from wicked_zerg_bot_pro import WickedZergBotPro
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 import sys
 import os
 from pathlib import Path
