@@ -99,6 +99,28 @@ class UnitFactory:
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
 
+        # === StrategyManager 실시간 비율 연동 ===
+        # 매 스텝마다 전략 매니저의 가스 비율을 가져와서 적용
+        strategy = getattr(self.bot, "strategy_manager", None)
+        if strategy:
+            # Emergency Mode에서는 저글링 위주 생산 (가스 비율 낮춤)
+            if getattr(strategy, "emergency_active", False):
+                self.gas_unit_ratio_target = 0.15  # 긴급 시 가스 유닛 최소화
+            else:
+                # 종족별 유닛 비율에서 가스 유닛 비율 계산
+                ratios = strategy.get_unit_ratios()
+                if ratios:
+                    # 가스 유닛: hydra, mutalisk, roach 등
+                    gas_ratio = ratios.get("hydra", 0) + ratios.get("mutalisk", 0) + ratios.get("roach", 0)
+                    if gas_ratio > 0:
+                        self.gas_unit_ratio_target = gas_ratio
+
+                        # 디버그 로그 (100 프레임마다)
+                        if iteration % 100 == 0:
+                            race = getattr(strategy, "detected_enemy_race", None)
+                            race_name = race.value if hasattr(race, "value") else str(race)
+                            print(f"[UNIT_FACTORY] vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}")
+
         # Rogue Tactics 라바 세이빙 체크
         if self._should_save_larva():
             # 라바 세이빙 모드: 최소 라바만 사용 (오버로드 등 필수 유닛만)
@@ -112,8 +134,9 @@ class UnitFactory:
                     pass
             return
 
-        # 종족별 가스 비율 업데이트
-        self._update_gas_ratio_target()
+        # 종족별 가스 비율 업데이트 (StrategyManager 없을 때 fallback)
+        if not strategy:
+            self._update_gas_ratio_target()
 
         minerals = getattr(self.bot, "minerals", 0)
         vespene = getattr(self.bot, "vespene", 0)

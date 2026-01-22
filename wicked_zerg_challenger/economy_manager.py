@@ -80,6 +80,19 @@ class EconomyManager:
             return
 
     async def _train_drone_if_needed(self) -> None:
+        # === Emergency Mode Check ===
+        # 비상 모드에서는 최소 드론만 유지 (12기)
+        strategy = getattr(self.bot, "strategy_manager", None)
+        if strategy and getattr(strategy, "emergency_active", False):
+            worker_count = 0
+            if hasattr(self.bot, "workers"):
+                workers = self.bot.workers
+                worker_count = workers.amount if hasattr(workers, "amount") else len(list(workers))
+
+            if worker_count >= 12:
+                # 비상 모드 + 최소 드론 확보 → 드론 생산 중단
+                return
+
         if not self.balancer.should_train_drone():
             return
 
@@ -95,7 +108,9 @@ class EconomyManager:
 
         try:
             await self.bot.do(larva_unit.train(UnitTypeId.DRONE))
-        except Exception:
+        except Exception as e:
+            game_time = getattr(self.bot, "time", 0.0)
+            print(f"[ECONOMY_WARN] [{int(game_time)}s] Drone train failed: {e}")
             return
 
     async def _distribute_workers_to_gas(self) -> None:
