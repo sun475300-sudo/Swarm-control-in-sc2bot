@@ -63,19 +63,44 @@ except ImportError:
 
 class ProductionResilience:
 
-    async def _safe_train(self, unit, unit_type):
-        """Safely train a unit, handling both sync and async train() methods"""
-        try:
-            result = unit.train(unit_type)
-            # train() may return bool or coroutine
-            if hasattr(result, '__await__'):
-                await result
-            return True
-        except Exception as e:
-            current_iteration = getattr(self.bot, "iteration", 0)
-            if current_iteration % 200 == 0:
-                print(f"[WARNING] _safe_train error: {e}")
-            return False
+    async def _safe_train(self, unit, unit_type, retry_count: int = 1):
+        """
+        Safely train a unit, handling both sync and async train() methods.
+
+        Args:
+            unit: The larva or unit to train from
+            unit_type: The UnitTypeId to train
+            retry_count: Number of retry attempts (default: 1)
+
+        Returns:
+            True if training succeeded, False otherwise
+        """
+        last_error = None
+
+        for attempt in range(retry_count + 1):
+            try:
+                # Validate unit is still valid
+                if not unit or not hasattr(unit, 'train'):
+                    print(f"[TRAIN_ERROR] Invalid unit for training {unit_type}")
+                    return False
+
+                result = unit.train(unit_type)
+                # train() may return bool or coroutine
+                if hasattr(result, '__await__'):
+                    await result
+                return True
+
+            except Exception as e:
+                last_error = e
+                game_time = getattr(self.bot, "time", 0.0)
+
+                # Always log errors (not just every 200 iterations)
+                if attempt == retry_count:  # Final attempt failed
+                    print(f"[TRAIN_ERROR] [{int(game_time)}s] Failed to train {unit_type}: {e}")
+                else:
+                    print(f"[TRAIN_WARN] [{int(game_time)}s] Retry {attempt + 1}/{retry_count} for {unit_type}: {e}")
+
+        return False
 
     def __init__(self, bot: Any) -> None:
         self.bot = bot
@@ -691,10 +716,8 @@ class ProductionResilience:
 
                     for larva in larvae_list[:zerglings_to_produce]:
                         if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
-                            try:
-                                await self._safe_train(larva, UnitTypeId.ZERGLING)
-                            except Exception:
-                                continue
+                            # _safe_train already handles exceptions internally
+                            await self._safe_train(larva, UnitTypeId.ZERGLING)
 
                     if zerglings_to_produce > 0:
                         print(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Zergling production: {zergling_count} -> {target_zerglings}")
@@ -705,14 +728,12 @@ class ProductionResilience:
                 if larvae.exists and b.can_afford(UnitTypeId.OVERLORD):
                     larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
                     if larvae_list:
-                        try:
-                            await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD)
-                        except Exception:
-                            pass
+                        # _safe_train handles exceptions internally
+                        await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD)
 
         except Exception as e:
-            if b.iteration % 200 == 0:
-                print(f"[WARNING] _ensure_early_defense error: {e}")
+            game_time = getattr(b, "time", 0.0)
+            print(f"[DEFENSE_ERROR] [{int(game_time)}s] _ensure_early_defense error: {e}")
 
     async def _emergency_zergling_production(self, larvae) -> None:
         """
@@ -913,12 +934,10 @@ class ProductionResilience:
             # Overlord production
             larvae = b.units(UnitTypeId.LARVA)
             if b.supply_left < 6 and b.supply_cap < 200 and b.can_afford(UnitTypeId.OVERLORD) and larvae.exists:
-                try:
-                    larvae_list = list(larvae)
-                    if larvae_list:
-                        await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD)
-                except Exception:
-                    pass
+                larvae_list = list(larvae)
+                if larvae_list:
+                    # _safe_train handles exceptions internally
+                    await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD)
 
             # Aggressive overlord production when banking minerals
             if b.minerals > 500 and b.supply_left < 20 and larvae.exists:
@@ -930,11 +949,9 @@ class ProductionResilience:
                     if overlords_produced >= overlords_to_produce:
                         break
                     if b.can_afford(UnitTypeId.OVERLORD):
-                        try:
-                            if await self._safe_train(larva, UnitTypeId.OVERLORD):
-                                overlords_produced += 1
-                        except Exception:
-                            pass
+                        # _safe_train handles exceptions internally
+                        if await self._safe_train(larva, UnitTypeId.OVERLORD):
+                            overlords_produced += 1
 
             # Unit production
             spawning_pools = b.units(UnitTypeId.SPAWNINGPOOL).ready
@@ -945,10 +962,8 @@ class ProductionResilience:
                     if not larva.is_ready:
                         continue
                     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
-                        try:
-                            await self._safe_train(larva, UnitTypeId.ZERGLING)
-                        except Exception:
-                            continue
+                        # _safe_train handles exceptions internally
+                        await self._safe_train(larva, UnitTypeId.ZERGLING)
 
             roach_warrens = b.units(UnitTypeId.ROACHWARREN).ready
             if roach_warrens.exists and larvae.exists:
@@ -958,10 +973,8 @@ class ProductionResilience:
                     if not larva.is_ready:
                         continue
                     if b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
-                        try:
-                            await self._safe_train(larva, UnitTypeId.ROACH)
-                        except Exception:
-                            continue
+                        # _safe_train handles exceptions internally
+                        await self._safe_train(larva, UnitTypeId.ROACH)
 
             hydra_dens = b.units(UnitTypeId.HYDRALISKDEN).ready
             if hydra_dens.exists and larvae.exists:
@@ -971,14 +984,12 @@ class ProductionResilience:
                     if not larva.is_ready:
                         continue
                     if b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
-                        try:
-                            await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                        except Exception:
-                            continue
+                        # _safe_train handles exceptions internally
+                        await self._safe_train(larva, UnitTypeId.HYDRALISK)
 
         except Exception as e:
-            if b.iteration % 100 == 0:
-                print(f"[WARNING] _boost_early_game error: {e}")
+            game_time = getattr(b, "time", 0.0)
+            print(f"[BOOST_ERROR] [{int(game_time)}s] _boost_early_game error: {e}")
 
     async def diagnose_production_status(self, iteration: int) -> None:
         """
@@ -1192,10 +1203,8 @@ class ProductionResilience:
             if larvae.exists and b.units(UnitTypeId.SPAWNINGPOOL).ready.exists:
                 for larva in larvae:
                     if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 2:
-                        try:
-                            await self._safe_train(larva, UnitTypeId.ZERGLING)
-                        except Exception:
-                            continue
+                        # _safe_train handles exceptions internally
+                        await self._safe_train(larva, UnitTypeId.ZERGLING)
 
     async def panic_mode_production(self) -> None:
         b = self.bot
@@ -1582,11 +1591,9 @@ class ProductionResilience:
             if b.supply_left < 2:
                 break
 
-            try:
-                if await self._safe_train(larva, UnitTypeId.MUTALISK):
-                    produced += 1
-            except Exception:
-                continue
+            # _safe_train handles exceptions internally
+            if await self._safe_train(larva, UnitTypeId.MUTALISK):
+                produced += 1
 
         if produced > 0:
             print(f"[MUTALISK] [{int(b.time)}s] Produced {produced} Mutalisks")

@@ -44,14 +44,96 @@ class WickedZergBotProImpl(BotAI):
         self.micro = None
         self.queen_manager = None
 
+        # Advanced managers (initialized in on_start)
+        self.strategy_manager = None       # Race-specific strategies + Emergency Mode
+        self.performance_optimizer = None  # Distance caching + spatial indexing
+        self.formation_controller = None   # PID-based smooth movement
+        self.rogue_tactics = None          # Baneling drop + larva saving
+        self.transformer_model = None      # Transformer decision model
+        self.hierarchical_rl = None        # Hierarchical RL agent
+
         # Step integrator initialization
         self._step_integrator = None
 
     async def on_start(self):
-        """Called when the bot starts."""
+        """
+        Called when the bot starts.
+
+        Initializes all managers:
+        - Strategy Manager: Race-specific strategies, Emergency Mode
+        - Performance Optimizer: Distance caching, spatial indexing
+        - PID Controller: Smooth unit movement
+        - Rogue Tactics: Baneling drop, larva saving
+        - Transformer Model: Decision making (training mode)
+        """
         await super().on_start()
-        # Step integrator initialization
+
+        print("[BOT] on_start: Initializing all managers...")
+
+        # === 1. Strategy Manager (종족별 전략 + Emergency Mode) ===
+        try:
+            from strategy_manager import StrategyManager
+            self.strategy_manager = StrategyManager(self)
+            print("[BOT] StrategyManager initialized")
+        except ImportError as e:
+            print(f"[BOT_WARN] StrategyManager not available: {e}")
+            self.strategy_manager = None
+
+        # === 2. Performance Optimizer (거리 캐싱 + 공간 인덱싱) ===
+        try:
+            from local_training.performance_optimizer import PerformanceOptimizer
+            self.performance_optimizer = PerformanceOptimizer(self)
+            print("[BOT] PerformanceOptimizer initialized")
+        except ImportError as e:
+            print(f"[BOT_WARN] PerformanceOptimizer not available: {e}")
+            self.performance_optimizer = None
+
+        # === 3. PID Controller (부드러운 유닛 이동) ===
+        try:
+            from utils.pid_controller import FormationController
+            self.formation_controller = FormationController()
+            print("[BOT] PID FormationController initialized")
+        except ImportError as e:
+            print(f"[BOT_WARN] PID Controller not available: {e}")
+            self.formation_controller = None
+
+        # === 4. Rogue Tactics Manager (맹독충 드랍 + 라바 세이빙) ===
+        try:
+            from rogue_tactics_manager import RogueTacticsManager
+            self.rogue_tactics = RogueTacticsManager(self)
+            print("[BOT] RogueTacticsManager initialized")
+        except ImportError as e:
+            print(f"[BOT_WARN] RogueTacticsManager not available: {e}")
+            self.rogue_tactics = None
+
+        # === 5. Transformer Model (훈련 모드에서만) ===
+        if self.train_mode:
+            try:
+                from local_training.transformer_model import TransformerDecisionModel
+                self.transformer_model = TransformerDecisionModel()
+                print("[BOT] TransformerDecisionModel initialized (training mode)")
+            except ImportError as e:
+                print(f"[BOT_WARN] TransformerModel not available: {e}")
+                self.transformer_model = None
+        else:
+            self.transformer_model = None
+
+        # === 6. Hierarchical RL (훈련 모드에서만) ===
+        if self.train_mode:
+            try:
+                from local_training.hierarchical_rl import HierarchicalRLAgent
+                self.hierarchical_rl = HierarchicalRLAgent(self)
+                print("[BOT] HierarchicalRLAgent initialized (training mode)")
+            except ImportError as e:
+                print(f"[BOT_WARN] HierarchicalRL not available: {e}")
+                self.hierarchical_rl = None
+        else:
+            self.hierarchical_rl = None
+
+        # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
+
+        print(f"[BOT] on_start complete. Enemy race: {self.opponent_race}")
 
     async def on_step(self, iteration: int):
         """
