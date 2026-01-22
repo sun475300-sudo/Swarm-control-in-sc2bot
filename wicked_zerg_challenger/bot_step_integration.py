@@ -249,6 +249,44 @@ class BotStepIntegrator:
                 except ImportError:
                     pass
 
+            # Hierarchical RL System (계층적 강화학습)
+            if not hasattr(self.bot, "hierarchical_rl"):
+                try:
+                    from local_training.hierarchical_rl.improved_hierarchical_rl import (
+                        HierarchicalRLSystem,
+                    )
+
+                    self.bot.hierarchical_rl = HierarchicalRLSystem()
+                except ImportError:
+                    pass
+
+            # Transformer Decision Model (트랜스포머 의사결정 모델)
+            if not hasattr(self.bot, "transformer_model"):
+                try:
+                    from local_training.transformer_model import TransformerDecisionModel
+
+                    self.bot.transformer_model = TransformerDecisionModel()
+                except ImportError:
+                    pass
+
+            # Strategy Manager (종족별 전략 + Emergency Mode)
+            if not hasattr(self.bot, "strategy_manager"):
+                try:
+                    from strategy_manager import StrategyManager
+
+                    self.bot.strategy_manager = StrategyManager(self.bot)
+                except ImportError:
+                    pass
+
+            # Performance Optimizer (거리 캐싱 + 공간 인덱싱)
+            if not hasattr(self.bot, "performance_optimizer"):
+                try:
+                    from local_training.performance_optimizer import PerformanceOptimizer
+
+                    self.bot.performance_optimizer = PerformanceOptimizer(self.bot)
+                except ImportError:
+                    pass
+
             # RL Agent (훈련 모드용)
             if self.bot.train_mode and not hasattr(self.bot, "rl_agent"):
                 try:
@@ -275,6 +313,21 @@ class BotStepIntegrator:
     async def execute_game_logic(self, iteration: int):
         """게임 로직 실행"""
         try:
+            # 0. Performance Optimizer 프레임 시작
+            if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
+                self.bot.performance_optimizer.start_frame()
+
+            # 0.1 Strategy Manager 업데이트 (종족별 전략 + Emergency Mode)
+            if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
+                start_time = self._logic_tracker.start_logic("Strategy")
+                try:
+                    self.bot.strategy_manager.update()
+                except Exception as e:
+                    if iteration % 200 == 0:
+                        print(f"[WARNING] Strategy Manager error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("Strategy", start_time)
+
             # 1. Intel (정보 수집)
             await self._safe_manager_step(self.bot.intel, iteration, "Intel")
 
@@ -398,7 +451,15 @@ class BotStepIntegrator:
                     method_name="update",
                 )
 
-            # 12. 실시간 로직 활성화 보고
+            # 12. Hierarchical RL System (계층적 강화학습 - 전략 결정)
+            if iteration % 22 == 0:  # 매 1초마다 전략 결정
+                await self._safe_hierarchical_rl_step(iteration)
+
+            # 13. Transformer Decision (트랜스포머 의사결정 - 고급 패턴 인식)
+            if iteration % 44 == 0:  # 매 2초마다
+                await self._safe_transformer_step(iteration)
+
+            # 14. 실시간 로직 활성화 보고
             game_time = getattr(self.bot, "time", 0)
             report = self._logic_tracker.get_activity_report(game_time)
             if report:
@@ -427,6 +488,91 @@ class BotStepIntegrator:
                 print(f"[WARNING] {label} error: {e}")
         finally:
             self._logic_tracker.end_logic(label, start_time, success)
+
+    async def _safe_hierarchical_rl_step(self, iteration: int) -> None:
+        """계층적 강화학습 시스템 실행"""
+        if not hasattr(self.bot, "hierarchical_rl") or self.bot.hierarchical_rl is None:
+            return
+
+        start_time = self._logic_tracker.start_logic("HierarchicalRL")
+        success = True
+        try:
+            result = self.bot.hierarchical_rl.step(self.bot)
+
+            # 전략 모드 저장 (다른 매니저에서 참조 가능)
+            if result and "strategy_mode" in result:
+                self.bot._current_strategy = result["strategy_mode"]
+
+                # 주기적으로 전략 로그 출력
+                if iteration % 220 == 0:  # 10초마다
+                    print(f"[HIERARCHICAL RL] Strategy: {result['strategy_mode']}")
+        except Exception as e:
+            success = False
+            if iteration % 200 == 0:
+                print(f"[WARNING] Hierarchical RL error: {e}")
+        finally:
+            self._logic_tracker.end_logic("HierarchicalRL", start_time, success)
+
+    async def _safe_transformer_step(self, iteration: int) -> None:
+        """트랜스포머 의사결정 모델 실행"""
+        if not hasattr(self.bot, "transformer_model") or self.bot.transformer_model is None:
+            return
+
+        start_time = self._logic_tracker.start_logic("Transformer")
+        success = True
+        try:
+            # 게임 상태를 시퀀스로 변환하여 트랜스포머에 입력
+            game_state = self._extract_game_state_sequence()
+            if game_state:
+                prediction = self.bot.transformer_model.predict(game_state)
+
+                # 예측 결과 저장
+                if prediction:
+                    self.bot._transformer_prediction = prediction
+        except Exception as e:
+            success = False
+            if iteration % 200 == 0:
+                print(f"[WARNING] Transformer model error: {e}")
+        finally:
+            self._logic_tracker.end_logic("Transformer", start_time, success)
+
+    def _extract_game_state_sequence(self) -> list:
+        """게임 상태를 시퀀스로 추출 (트랜스포머 입력용)"""
+        try:
+            sequence = []
+
+            # 자원 상태
+            sequence.append(getattr(self.bot, "minerals", 0) / 1000.0)
+            sequence.append(getattr(self.bot, "vespene", 0) / 1000.0)
+
+            # 서플라이 상태
+            sequence.append(getattr(self.bot, "supply_used", 0) / 200.0)
+            sequence.append(getattr(self.bot, "supply_cap", 0) / 200.0)
+
+            # 유닛 수
+            if hasattr(self.bot, "units"):
+                sequence.append(len(self.bot.units) / 100.0)
+            else:
+                sequence.append(0.0)
+
+            # 적 유닛 수
+            if hasattr(self.bot, "enemy_units"):
+                sequence.append(len(self.bot.enemy_units) / 100.0)
+            else:
+                sequence.append(0.0)
+
+            # 게임 시간
+            sequence.append(getattr(self.bot, "time", 0) / 1000.0)
+
+            # 기지 수
+            if hasattr(self.bot, "townhalls"):
+                sequence.append(len(self.bot.townhalls) / 10.0)
+            else:
+                sequence.append(0.0)
+
+            return sequence
+        except Exception:
+            return []
 
     async def _build_tech(self, tech_type):
         """테크 건물 건설 헬퍼 함수"""
