@@ -412,6 +412,30 @@ class ProductionResilience:
                     break
                 continue
             
+            # === CHECK MINIMUM DEFENSE FIRST ===
+            # Always prioritize army if minimum defense not met
+            game_time = getattr(b, "time", 0)
+            zergling_count = b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
+            roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
+            hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
+            mutalisk_count = b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
+            total_army_supply = (zergling_count * 0.5) + (roach_count * 2) + (hydra_count * 2) + (mutalisk_count * 2)
+
+            min_defense_met = True
+            if game_time >= 120 and game_time < 240:
+                min_defense_met = zergling_count >= 6
+            elif game_time >= 240 and game_time < 360:
+                min_defense_met = zergling_count >= 8 or roach_count >= 4 or total_army_supply >= 8
+            elif game_time >= 360:
+                min_defense_met = total_army_supply >= 10
+
+            # If minimum defense NOT met, skip droning - prioritize army
+            if not min_defense_met:
+                unit_produced = await self._produce_army_unit(larva)
+                if unit_produced:
+                    army_produced += 1
+                continue
+
             # Decide: drone or army?
             # Consider strategy preference
             if self.strategy_manager and self.strategy_manager.should_prioritize_drones():
@@ -422,7 +446,7 @@ class ProductionResilience:
                 should_make_drone = False
             else:
                 should_make_drone = self.balancer.should_make_drone()
-            
+
             if should_make_drone and drone_count < target_drones:
                 # Make drone
                 if b.can_afford(UnitTypeId.DRONE):
@@ -430,7 +454,7 @@ class ProductionResilience:
                         drones_produced += 1
                         drone_count += 1
                         continue
-            
+
             # Make army unit based on composition
             unit_produced = await self._produce_army_unit(larva)
             if unit_produced:
@@ -450,7 +474,9 @@ class ProductionResilience:
         - Mid (5-10min): Roaches 40%, Hydralisks 30%, Zerglings 30%
         - Late (10min+): Mutalisks 30%, Hydralisks 25%, Roaches 25%, Zerglings 20%
 
-        IMPROVED: Limit Zergling production to avoid spam when waiting for gas.
+        IMPROVED:
+        - Limit Zergling production to avoid spam when waiting for gas.
+        - Ensure MINIMUM DEFENSE units before droning/teching.
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
@@ -466,7 +492,32 @@ class ProductionResilience:
         has_hydra_den = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
         has_spire = b.structures(UnitTypeId.SPIRE).ready.exists
 
-        # === IMPROVED: Calculate Zergling cap based on game phase ===
+        # === MINIMUM DEFENSE REQUIREMENT ===
+        # Always maintain minimum army for defense before teching/droning
+        # Early (2-4min): At least 6 Zerglings
+        # Mid (4-6min): At least 8 Zerglings OR 4 Roaches
+        # Late (6min+): At least 10 army supply
+        min_defense_met = True
+        total_army_supply = (zergling_count * 0.5) + (roach_count * 2) + (hydra_count * 2) + (mutalisk_count * 2)
+
+        if game_time >= 120 and game_time < 240:
+            # 2-4 min: Need at least 6 Zerglings
+            min_defense_met = zergling_count >= 6
+        elif game_time >= 240 and game_time < 360:
+            # 4-6 min: Need at least 8 Zerglings OR 4 Roaches
+            min_defense_met = zergling_count >= 8 or roach_count >= 4 or total_army_supply >= 8
+        elif game_time >= 360:
+            # 6+ min: Need at least 10 army supply
+            min_defense_met = total_army_supply >= 10
+
+        # If minimum defense NOT met, prioritize army production
+        if not min_defense_met:
+            # Force produce Zerglings for minimum defense
+            if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+                return await self._safe_train(larva, UnitTypeId.ZERGLING)
+            return False  # Wait for resources
+
+        # === Calculate Zergling cap based on game phase ===
         # Early game: Max 20 Zerglings
         # Mid game: Max 30 Zerglings (if tech available)
         # Late game: Max 40 Zerglings (if air tech available)
@@ -678,33 +729,8 @@ class ProductionResilience:
                         if await self._safe_train(larva, UnitTypeId.DRONE):
                             continue
 
-            # Priority 3: Early gas (supply 16-17)
-            if supply_used >= 16 and supply_used <= 17:
-                extractors = b.structures(UnitTypeId.EXTRACTOR)
-                if not extractors.exists and b.already_pending(UnitTypeId.EXTRACTOR) == 0:
-                    geysers = b.vespene_geyser if hasattr(b, "vespene_geyser") else []
-                    if geysers and b.can_afford(UnitTypeId.EXTRACTOR):
-                        try:
-                            target = geysers.first if hasattr(geysers, "first") else list(geysers)[0]
-                            await b.build(UnitTypeId.EXTRACTOR, target)
-                            if b.iteration % 50 == 0:
-                                print(f"[EARLY_BOOST] [{int(time)}s] Early gas at supply {supply_used}")
-                        except Exception:
-                            pass
-
-            # Gas extraction at pro baseline supply
-            gas_supply = get_learned_parameter("gas_supply", 17.0)
-            gas_supply_max = gas_supply + 1.0
-            if supply_used >= gas_supply and supply_used <= gas_supply_max:
-                extractors = b.structures(UnitTypeId.EXTRACTOR) if hasattr(b, "structures") else []
-                if not extractors.exists and b.already_pending(UnitTypeId.EXTRACTOR) == 0:
-                    geysers = b.vespene_geyser if hasattr(b, "vespene_geyser") else []
-                    if geysers and b.can_afford(UnitTypeId.EXTRACTOR):
-                        try:
-                            target = geysers.first if hasattr(geysers, "first") else list(geysers)[0]
-                            await b.build(UnitTypeId.EXTRACTOR, target)
-                        except Exception:
-                            pass
+            # NOTE: Extractor building is now handled by _auto_build_extractors()
+            # Called from _auto_build_tech_structures() for consistent timing
 
             # Spawning Pool timing
             if self.strategy_manager:
@@ -1176,14 +1202,14 @@ class ProductionResilience:
         Automatically build extractors for gas income.
 
         Timeline:
-        - 2:00 (120s): First extractor
-        - 2:30 (150s): Second extractor (same base)
+        - 1:30 (90s): First extractor (for early Roach/tech)
+        - 2:00 (120s): Second extractor (same base)
         - Each new base: Build 2 extractors
         """
         b = self.bot
 
-        # Don't build extractors before 2 minutes
-        if game_time < 120:
+        # Don't build extractors before 1:30 (need pool first usually)
+        if game_time < 90:
             return
 
         # Count current extractors (including pending)
@@ -1196,8 +1222,12 @@ class ProductionResilience:
         base_count = b.townhalls.amount if hasattr(b.townhalls, "amount") else len(list(b.townhalls))
         target_extractors = base_count * 2
 
-        # Early game: at least 2 extractors
-        if game_time >= 150:
+        # Early game timing:
+        # 1:30 (90s): First extractor
+        # 2:00 (120s): Second extractor
+        if game_time >= 90 and total_extractors < 1:
+            target_extractors = max(target_extractors, 1)
+        if game_time >= 120:
             target_extractors = max(target_extractors, 2)
 
         # Don't build more than needed
