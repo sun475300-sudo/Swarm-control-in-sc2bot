@@ -225,19 +225,41 @@ class WickedZergBotProImpl(BotAI):
                 import traceback
                 traceback.print_exc()
 
-        # ★★★ 커리큘럼 매니저: 승리/패배 기록 ★★★
+        # ★★★ 커리큘럼 매니저: 승리/패배 기록 (종족별 추적 포함) ★★★
         try:
             from local_training.curriculum_manager import CurriculumManager
 
             curriculum = CurriculumManager()
             result_str = str(game_result).upper()
 
+            # ★ 상대 종족 감지 ★
+            opponent_race = None
+            try:
+                if hasattr(self, 'enemy_race') and self.enemy_race:
+                    opponent_race = str(self.enemy_race).replace("Race.", "")
+                elif hasattr(self, '_enemy_race'):
+                    opponent_race = str(self._enemy_race).replace("Race.", "")
+                # 적 유닛/건물에서 종족 추론
+                elif hasattr(self, 'enemy_units') and self.enemy_units:
+                    enemy_unit = self.enemy_units.first
+                    if hasattr(enemy_unit, 'race'):
+                        opponent_race = str(enemy_unit.race).replace("Race.", "")
+                elif hasattr(self, 'enemy_structures') and self.enemy_structures:
+                    enemy_struct = self.enemy_structures.first
+                    if hasattr(enemy_struct, 'race'):
+                        opponent_race = str(enemy_struct.race).replace("Race.", "")
+            except Exception:
+                pass
+
+            if opponent_race:
+                print(f"[RACE] 상대 종족: {opponent_race}")
+
             if "VICTORY" in result_str or "WIN" in result_str:
-                promoted = curriculum.record_win()
+                promoted = curriculum.record_win(opponent_race)
                 if promoted:
                     print("[CURRICULUM] ★★★ 다음 단계로 승격! ★★★")
             elif "DEFEAT" in result_str or "LOSS" in result_str:
-                demoted = curriculum.record_loss()
+                demoted = curriculum.record_loss(opponent_race)
                 if demoted:
                     print("[CURRICULUM] 난이도 하향 - 연습 더 필요")
 
@@ -246,6 +268,9 @@ class WickedZergBotProImpl(BotAI):
             print(f"[CURRICULUM] 현재 단계: {progress['level_name']} "
                   f"({progress['wins_at_current_level']}/{progress['wins_required']}승)")
             print(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
+
+            # ★ 종족별 승률 출력 ★
+            curriculum.print_race_stats()
 
         except Exception as e:
             print(f"[WARNING] Curriculum manager error: {e}")

@@ -80,6 +80,14 @@ class CurriculumManager:
         # 데이터 로드
         self._load_win_loss_data()
 
+        # ★ NEW: 종족별 승률 추적 시스템 ★
+        self.race_stats = {
+            "Terran": {"wins": 0, "losses": 0, "games": 0},
+            "Protoss": {"wins": 0, "losses": 0, "games": 0},
+            "Zerg": {"wins": 0, "losses": 0, "games": 0},
+        }
+        self._load_race_stats()
+
     def load_level(self) -> int:
         """Load curriculum level from stats file."""
         if not self.stats_file.exists():
@@ -111,6 +119,42 @@ class CurriculumManager:
             self.losses_at_current_level = data.get("losses_at_current_level", 0)
         except (IOError, json.JSONDecodeError):
             pass
+
+    def _load_race_stats(self):
+        """★ 종족별 승률 데이터 로드 ★"""
+        race_stats_file = self.data_dir / "race_stats.json"
+        if not race_stats_file.exists():
+            return
+
+        try:
+            with open(race_stats_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for race in ["Terran", "Protoss", "Zerg"]:
+                if race in data:
+                    self.race_stats[race] = data[race]
+        except (IOError, json.JSONDecodeError):
+            pass
+
+    def _save_race_stats(self):
+        """★ 종족별 승률 데이터 저장 ★"""
+        race_stats_file = self.data_dir / "race_stats.json"
+        try:
+            # 승률 계산 추가
+            stats_with_rates = {}
+            for race, stats in self.race_stats.items():
+                games = stats["games"]
+                win_rate = (stats["wins"] / games * 100) if games > 0 else 0.0
+                stats_with_rates[race] = {
+                    "wins": stats["wins"],
+                    "losses": stats["losses"],
+                    "games": games,
+                    "win_rate": round(win_rate, 2),
+                }
+
+            with open(race_stats_file, "w", encoding="utf-8") as f:
+                json.dump(stats_with_rates, f, indent=2, ensure_ascii=False)
+        except IOError as e:
+            print(f"[WARNING] Failed to save race stats: {e}")
 
     def save_level(self):
         """Save current curriculum level and win/loss data to stats file."""
@@ -149,18 +193,31 @@ class CurriculumManager:
             return difficulty_names[self.current_idx]
         return "Very Easy"
 
-    def record_win(self) -> bool:
+    def record_win(self, opponent_race: str = None) -> bool:
         """
         ★ 승리 기록 및 승격 체크 ★
 
         승리할 때마다 호출됩니다.
         필요한 승리 횟수에 도달하면 자동으로 다음 단계로 승격합니다.
 
+        Args:
+            opponent_race: 상대 종족 ("Terran", "Protoss", "Zerg")
+
         Returns:
             True if promoted to next level, False otherwise
         """
         self.wins_at_current_level += 1
         self.games_at_current_level += 1
+
+        # ★ 종족별 승률 기록 ★
+        if opponent_race and opponent_race in self.race_stats:
+            self.race_stats[opponent_race]["wins"] += 1
+            self.race_stats[opponent_race]["games"] += 1
+            self._save_race_stats()
+            race_wins = self.race_stats[opponent_race]["wins"]
+            race_games = self.race_stats[opponent_race]["games"]
+            race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
+            print(f"[RACE STATS] vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -176,18 +233,31 @@ class CurriculumManager:
         self.save_level()
         return False
 
-    def record_loss(self) -> bool:
+    def record_loss(self, opponent_race: str = None) -> bool:
         """
         ★ 패배 기록 및 강등 체크 ★
 
         패배할 때마다 호출됩니다.
         연속 패배가 많으면 강등될 수 있습니다.
 
+        Args:
+            opponent_race: 상대 종족 ("Terran", "Protoss", "Zerg")
+
         Returns:
             True if demoted to previous level, False otherwise
         """
         self.losses_at_current_level += 1
         self.games_at_current_level += 1
+
+        # ★ 종족별 승률 기록 ★
+        if opponent_race and opponent_race in self.race_stats:
+            self.race_stats[opponent_race]["losses"] += 1
+            self.race_stats[opponent_race]["games"] += 1
+            self._save_race_stats()
+            race_wins = self.race_stats[opponent_race]["wins"]
+            race_games = self.race_stats[opponent_race]["games"]
+            race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
+            print(f"[RACE STATS] vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -426,3 +496,113 @@ class CurriculumManager:
                 self.building_priorities = {}
 
         return self.building_priorities.get(building_name, "Normal")
+
+    # ============================================================
+    # ★★★ 종족별 승률 추적 시스템 ★★★
+    # ============================================================
+
+    def get_race_stats(self) -> dict:
+        """
+        ★ 종족별 승률 통계 조회 ★
+
+        Returns:
+            {
+                "Terran": {"wins": 10, "losses": 5, "games": 15, "win_rate": 66.67},
+                "Protoss": {"wins": 8, "losses": 7, "games": 15, "win_rate": 53.33},
+                "Zerg": {"wins": 12, "losses": 3, "games": 15, "win_rate": 80.00},
+                "total": {"wins": 30, "losses": 15, "games": 45, "win_rate": 66.67}
+            }
+        """
+        result = {}
+        total_wins = 0
+        total_losses = 0
+        total_games = 0
+
+        for race, stats in self.race_stats.items():
+            games = stats["games"]
+            wins = stats["wins"]
+            losses = stats["losses"]
+            win_rate = (wins / games * 100) if games > 0 else 0.0
+
+            result[race] = {
+                "wins": wins,
+                "losses": losses,
+                "games": games,
+                "win_rate": round(win_rate, 2),
+            }
+
+            total_wins += wins
+            total_losses += losses
+            total_games += games
+
+        # 전체 통계
+        total_win_rate = (total_wins / total_games * 100) if total_games > 0 else 0.0
+        result["total"] = {
+            "wins": total_wins,
+            "losses": total_losses,
+            "games": total_games,
+            "win_rate": round(total_win_rate, 2),
+        }
+
+        return result
+
+    def print_race_stats(self):
+        """★ 종족별 승률 출력 ★"""
+        stats = self.get_race_stats()
+
+        print(f"\n{'='*70}")
+        print("★★★ 종족별 승률 (Race Win Rates) ★★★")
+        print(f"{'='*70}")
+        print(f"{'종족':<10} {'승리':<8} {'패배':<8} {'게임':<8} {'승률':<10}")
+        print(f"{'-'*70}")
+
+        for race in ["Terran", "Protoss", "Zerg"]:
+            r = stats[race]
+            print(f"{race:<10} {r['wins']:<8} {r['losses']:<8} {r['games']:<8} {r['win_rate']:.2f}%")
+
+        print(f"{'-'*70}")
+        t = stats["total"]
+        print(f"{'전체':<10} {t['wins']:<8} {t['losses']:<8} {t['games']:<8} {t['win_rate']:.2f}%")
+        print(f"{'='*70}\n")
+
+    def get_weakest_race(self) -> str:
+        """
+        ★ 가장 승률이 낮은 종족 반환 ★
+
+        이 종족에 대해 더 많은 연습이 필요합니다.
+
+        Returns:
+            종족 이름 ("Terran", "Protoss", "Zerg")
+        """
+        stats = self.get_race_stats()
+        min_rate = 100.0
+        weakest = "Terran"
+
+        for race in ["Terran", "Protoss", "Zerg"]:
+            # 최소 5게임 이상 플레이한 종족만 고려
+            if stats[race]["games"] >= 5:
+                if stats[race]["win_rate"] < min_rate:
+                    min_rate = stats[race]["win_rate"]
+                    weakest = race
+
+        return weakest
+
+    def get_strongest_race(self) -> str:
+        """
+        ★ 가장 승률이 높은 종족 반환 ★
+
+        Returns:
+            종족 이름 ("Terran", "Protoss", "Zerg")
+        """
+        stats = self.get_race_stats()
+        max_rate = 0.0
+        strongest = "Terran"
+
+        for race in ["Terran", "Protoss", "Zerg"]:
+            # 최소 5게임 이상 플레이한 종족만 고려
+            if stats[race]["games"] >= 5:
+                if stats[race]["win_rate"] > max_rate:
+                    max_rate = stats[race]["win_rate"]
+                    strongest = race
+
+        return strongest

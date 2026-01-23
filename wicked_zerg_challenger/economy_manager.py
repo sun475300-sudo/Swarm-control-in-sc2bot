@@ -54,6 +54,9 @@ class EconomyManager:
         await self._train_overlord_if_needed()
         await self._train_drone_if_needed()
 
+        # ★ CRITICAL: 대기 일꾼 즉시 할당 (매 프레임 체크) ★
+        await self._assign_idle_workers()
+
         # Distribute workers to gas (every 11 frames = ~0.5 seconds) - IMPROVED: 더 자주 재분배
         if iteration % 11 == 0:
             await self._distribute_workers_to_gas()
@@ -545,6 +548,74 @@ class EconomyManager:
             return next(iter(larva))
         except Exception:
             return None
+
+    async def _assign_idle_workers(self) -> None:
+        """
+        ★ 대기(idle) 일꾼 즉시 자원 채취 할당 ★
+
+        매 프레임 체크하여 놀고 있는 일꾼이 없도록 함.
+        - idle 상태 일꾼 감지
+        - 가장 가까운 미네랄/가스에 할당
+        - 포화되지 않은 기지 우선
+        """
+        if not hasattr(self.bot, "workers") or not self.bot.workers:
+            return
+
+        try:
+            # 대기 일꾼 찾기
+            idle_workers = self.bot.workers.filter(lambda w: w.is_idle)
+
+            if not idle_workers:
+                return  # 대기 일꾼 없음
+
+            # 타운홀이 있는지 확인
+            if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
+                return
+
+            townhalls = self.bot.townhalls.ready
+
+            for worker in idle_workers:
+                assigned = False
+
+                # 1순위: 가스가 부족한 익스트랙터에 할당
+                if hasattr(self.bot, "gas_buildings"):
+                    for extractor in self.bot.gas_buildings.ready:
+                        if extractor.assigned_harvesters < extractor.ideal_harvesters:
+                            if worker.distance_to(extractor) < 20:
+                                self.bot.do(worker.gather(extractor))
+                                assigned = True
+                                break
+
+                if assigned:
+                    continue
+
+                # 2순위: 포화되지 않은 기지의 미네랄에 할당
+                best_th = None
+                best_deficit = 0
+
+                for th in townhalls:
+                    deficit = th.ideal_harvesters - th.assigned_harvesters
+                    if deficit > best_deficit:
+                        best_deficit = deficit
+                        best_th = th
+
+                if best_th:
+                    # 해당 기지 근처 미네랄 찾기
+                    minerals = self.bot.mineral_field.closer_than(10, best_th)
+                    if minerals:
+                        self.bot.do(worker.gather(minerals.closest_to(best_th)))
+                        assigned = True
+
+                if assigned:
+                    continue
+
+                # 3순위: 가장 가까운 미네랄에 할당 (폴백)
+                closest_mineral = self.bot.mineral_field.closest_to(worker)
+                if closest_mineral:
+                    self.bot.do(worker.gather(closest_mineral))
+
+        except Exception:
+            pass  # 에러 무시
 
     async def _check_proactive_expansion(self) -> None:
         """
