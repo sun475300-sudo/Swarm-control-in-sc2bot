@@ -1044,8 +1044,9 @@ class CombatManager:
         # Check for anti-air threats near harass target
         anti_air_threats = self._get_anti_air_threats(enemy_units, self._air_harass_target)
 
-        if anti_air_threats and len(anti_air_threats) >= 3:
-            # Too much anti-air, retreat
+        # ★ FIX: 뮤탈리스크는 대공 1-2기에도 치명적 → 퇴각 임계값 하향 ★
+        if anti_air_threats and len(anti_air_threats) >= 1:
+            # Anti-air detected, retreat immediately (Mutalisks are fragile)
             await self._mutalisk_retreat(mutalisks)
             self._air_harass_target = None
             return
