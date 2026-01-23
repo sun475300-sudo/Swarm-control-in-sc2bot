@@ -700,12 +700,13 @@ class CombatManager:
         ★ 우선 공격 타겟 찾기 - 보이는 적 기지 우선 ★
 
         우선순위:
-        1. 적 기지 (타운홀) - 네서스, 사령부, 해처리 등
-        2. 적 생산 건물 - 배럭, 게이트웨이, 스포닝풀 등
-        3. 적 테크 건물 - 팩토리, 로보, 스파이어 등
-        4. 기타 적 건물
-        5. ★ 맵 수색 위치 (적 건물이 없을 때) ★
-        6. 적 시작 위치 (fallback)
+        1. ★★★ 승리 푸시 모드: 가장 가까운 적 건물 (거리 우선) ★★★
+        2. 적 기지 (타운홀) - 네서스, 사령부, 해처리 등
+        3. 적 생산 건물 - 배럭, 게이트웨이, 스포닝풀 등
+        4. 적 테크 건물 - 팩토리, 로보, 스파이어 등
+        5. 기타 적 건물
+        6. ★ 맵 수색 위치 (적 건물이 없을 때) ★
+        7. 적 시작 위치 (fallback)
 
         Returns:
             공격 타겟 위치 또는 유닛
@@ -742,6 +743,14 @@ class CombatManager:
                     production_targets.append(struct)
                 else:
                     other_targets.append(struct)
+
+            # ★★★ 승리 푸시 모드: 가장 가까운 건물 공격 (빠른 마무리) ★★★
+            if self._victory_push_active and hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
+                our_base = self.bot.townhalls.first.position
+                # 모든 적 건물 중 가장 가까운 것
+                all_targets = townhall_targets + production_targets + other_targets
+                if all_targets:
+                    return min(all_targets, key=lambda s: s.distance_to(our_base))
 
             # 1. 기지 우선 (가장 가까운 것)
             if townhall_targets:
@@ -1608,6 +1617,10 @@ class CombatManager:
     async def _execute_mandatory_defense(self, threat_position, threat_enemies, iteration: int):
         """
         ★ 필수 방어 실행 - 모든 군대 귀환 ★
+
+        패배 직감 시스템 연동:
+        - 패배 직전이면 더 공격적인 방어
+        - 위기 상황에서 우선순위 타겟 집중
         """
         if not hasattr(self.bot, "units"):
             return
@@ -1618,6 +1631,14 @@ class CombatManager:
             from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
+
+        # ★ 패배 직감 시스템 연동 ★
+        defeat_level = 0
+        last_stand_mode = False
+        if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
+            defeat_status = self.bot.defeat_detection._get_current_status()
+            defeat_level = defeat_status.get("defeat_level", 0)
+            last_stand_mode = defeat_status.get("last_stand_required", False)
 
         # 모든 군대 유닛 수집
         army_types = {
@@ -1632,25 +1653,91 @@ class CombatManager:
         if not army_units:
             return
 
-        # 적 중 우선순위 타겟 찾기
-        priority_target = None
+        # ★ 개선된 타겟 우선순위 시스템 ★
+        # 1순위: 고위협 유닛 (시즈탱크, 콜로서스, 분열기)
+        high_priority_targets = []
+        # 2순위: 지원 유닛 (메디박, 고위기사, 불멸자)
+        medium_priority_targets = []
+        # 3순위: 일반 공격 유닛
+        low_priority_targets = []
+
         for enemy in threat_enemies:
             enemy_type = getattr(enemy.type_id, "name", "").upper()
-            # 시즈탱크, 메디박, 콜로서스 등 우선 제거
-            if enemy_type in ["SIEGETANK", "SIEGETANKSIEGED", "MEDIVAC",
-                              "COLOSSUS", "IMMORTAL", "HIGHTEMPLAR", "DISRUPTOR"]:
-                priority_target = enemy
-                break
 
-        # 군대 유닛들에게 방어 명령
+            # 고위협 유닛
+            if enemy_type in ["SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "DISRUPTOR",
+                             "THOR", "BATTLECRUISER", "TEMPEST", "CARRIER"]:
+                high_priority_targets.append(enemy)
+            # 지원 유닛
+            elif enemy_type in ["MEDIVAC", "HIGHTEMPLAR", "IMMORTAL", "RAVAGER",
+                               "INFESTOR", "VIPER", "ORACLE", "WARPPRISM"]:
+                medium_priority_targets.append(enemy)
+            # 일반 유닛
+            else:
+                low_priority_targets.append(enemy)
+
+        # 타겟 선택
+        priority_targets = high_priority_targets or medium_priority_targets or low_priority_targets
+
+        # ★ 마지막 방어 모드: 더 공격적인 전략 ★
+        if last_stand_mode:
+            # 모든 유닛이 최고 우선순위 타겟에 집중
+            if high_priority_targets:
+                # 가장 가까운 고위협 타겟
+                main_target = min(high_priority_targets,
+                                key=lambda e: e.distance_to(threat_position))
+
+                for unit in army_units:
+                    try:
+                        # 맹독충: 가장 밀집된 곳으로
+                        if unit.type_id == UnitTypeId.BANELING:
+                            densest_enemy = self._find_densest_enemy_position(threat_enemies)
+                            if densest_enemy:
+                                self.bot.do(unit.attack(densest_enemy.position))
+                            else:
+                                self.bot.do(unit.attack(main_target))
+                        # 다른 유닛: 메인 타겟 집중
+                        else:
+                            self.bot.do(unit.attack(main_target))
+                    except Exception:
+                        continue
+
+                if iteration % 220 == 0:
+                    print(f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}")
+                return
+
+        # ★ 일반 방어 모드 ★
         for unit in army_units:
             try:
-                # 이미 위협 위치 근처면 공격
-                if unit.distance_to(threat_position) < 15:
-                    if priority_target:
-                        self.bot.do(unit.attack(priority_target))
+                # 맹독충: 밀집된 적에게
+                if unit.type_id == UnitTypeId.BANELING:
+                    densest_enemy = self._find_densest_enemy_position(threat_enemies)
+                    if densest_enemy:
+                        self.bot.do(unit.attack(densest_enemy.position))
                     elif threat_enemies:
-                        closest = min(threat_enemies, key=lambda e: e.distance_to(unit))
+                        self.bot.do(unit.attack(threat_enemies[0]))
+                    else:
+                        self.bot.do(unit.attack(threat_position))
+                    continue
+
+                # 뮤탈리스크: 메디박 우선
+                if unit.type_id == UnitTypeId.MUTALISK:
+                    medivacs = [e for e in threat_enemies
+                               if getattr(e.type_id, "name", "").upper() == "MEDIVAC"]
+                    if medivacs:
+                        self.bot.do(unit.attack(medivacs[0]))
+                        continue
+
+                # 일반 유닛: 우선순위 타겟 공격
+                if unit.distance_to(threat_position) < 15:
+                    if priority_targets:
+                        # 가장 가까운 우선순위 타겟
+                        closest_priority = min(priority_targets,
+                                             key=lambda e: e.distance_to(unit))
+                        self.bot.do(unit.attack(closest_priority))
+                    elif threat_enemies:
+                        closest = min(threat_enemies,
+                                    key=lambda e: e.distance_to(unit))
                         self.bot.do(unit.attack(closest))
                     else:
                         self.bot.do(unit.attack(threat_position))
@@ -1662,11 +1749,34 @@ class CombatManager:
 
         # 로그 (10초마다)
         if iteration % 220 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending base")
+            defeat_msg = f" [위기도: {defeat_level}]" if defeat_level >= 2 else ""
+            print(f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}")
+
+    def _find_densest_enemy_position(self, enemies):
+        """가장 밀집된 적 위치 찾기 (맹독충용)"""
+        if not enemies:
+            return None
+
+        max_density = 0
+        densest_enemy = None
+
+        for enemy in enemies:
+            # 5 거리 내의 적 수 계산
+            nearby_count = sum(1 for e in enemies if e.distance_to(enemy) < 5)
+            if nearby_count > max_density:
+                max_density = nearby_count
+                densest_enemy = enemy
+
+        return densest_enemy
 
     async def _worker_defense(self, threat_position, threat_enemies, iteration: int):
         """
         ★ 일꾼 방어 - 위험 상황에서 일꾼도 싸움 ★
+
+        패배 직감 시스템 연동:
+        - 패배 직전: 모든 일꾼 방어 참여
+        - 위기 상황: 일꾼 12명 방어
+        - 일반 상황: 일꾼 6명 방어
         """
         if not hasattr(self.bot, "workers"):
             return
@@ -1677,14 +1787,33 @@ class CombatManager:
         if not workers:
             return
 
+        # ★ 패배 직감 시스템 연동 ★
+        defeat_level = 0
+        last_stand_mode = False
+        if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
+            defeat_status = self.bot.defeat_detection._get_current_status()
+            defeat_level = defeat_status.get("defeat_level", 0)
+            last_stand_mode = defeat_status.get("last_stand_required", False)
+
         # 위협 근처 일꾼만 방어 (15 거리 내)
         nearby_workers = [w for w in workers if w.distance_to(threat_position) < 15]
 
         if not nearby_workers:
             return
 
-        # 최대 6명까지만 방어 참여 (경제 보존)
-        defense_workers = nearby_workers[:6]
+        # ★ 패배 직전: 모든 일꾼 방어 참여 ★
+        if last_stand_mode or defeat_level >= 3:  # IMMINENT
+            defense_workers = nearby_workers  # 모든 일꾼
+            if iteration % 220 == 0:
+                print(f"[WORKER DEFENSE] ★ 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! ★")
+        # ★ 위기 상황: 일꾼 12명 방어 ★
+        elif defeat_level >= 2:  # CRITICAL
+            defense_workers = nearby_workers[:12]
+            if iteration % 220 == 0:
+                print(f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어")
+        # ★ 일반 상황: 일꾼 6명 방어 (경제 보존) ★
+        else:
+            defense_workers = nearby_workers[:6]
 
         for worker in defense_workers:
             try:
@@ -1698,3 +1827,146 @@ class CombatManager:
 
         if iteration % 220 == 0:
             print(f"[BASE DEFENSE] [{int(game_time)}s] ★ {len(defense_workers)} WORKERS DEFENDING ★")
+
+    # ==================== ★★★ VICTORY CONDITION SYSTEM ★★★ ====================
+
+    async def _check_victory_conditions(self, iteration: int):
+        """
+        ★★★ 승리 조건 추적 및 승리 푸시 활성화 ★★★
+
+        기능:
+        1. 적 건물 수 추적
+        2. 적 확장 기지 발견 및 추적
+        3. 승리 푸시 모드 활성화 조건 판단
+        4. 적 건물이 적을 때 전력 공격 명령
+        """
+        game_time = getattr(self.bot, "time", 0)
+
+        # 적 건물 수 추적
+        enemy_structures = getattr(self.bot, "enemy_structures", [])
+        current_structure_count = len(enemy_structures) if enemy_structures else 0
+
+        # 적 확장 추적 (30초마다)
+        if iteration - self._last_expansion_check > 660:
+            await self._track_enemy_expansions()
+            self._last_expansion_check = iteration
+
+        # 건물이 파괴되었는지 확인
+        if current_structure_count < self._last_enemy_structure_count:
+            destroyed = self._last_enemy_structure_count - current_structure_count
+            self._enemy_structures_destroyed += destroyed
+            print(f"[VICTORY] {destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}")
+
+        self._last_enemy_structure_count = current_structure_count
+
+        # ★★★ 승리 푸시 활성화 조건 ★★★
+        # 1. 게임 6분 이후
+        # 2. 적 건물이 5개 이하
+        # 3. 우리 병력이 충분함 (supply > 30)
+        our_army_supply = self._get_army_supply()
+
+        should_activate_victory_push = (
+            game_time > self._endgame_push_threshold  # 6분 이후
+            and current_structure_count <= 5  # 적 건물 5개 이하
+            and our_army_supply >= 30  # 우리 병력 충분
+        )
+
+        # 승리 푸시 활성화
+        if should_activate_victory_push and not self._victory_push_active:
+            self._victory_push_active = True
+            print(f"[VICTORY PUSH] ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}")
+
+        # 승리 푸시 비활성화 조건 (적이 다시 건물을 많이 지었거나, 병력이 부족)
+        if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
+            self._victory_push_active = False
+            print(f"[VICTORY PUSH] Deactivated - regroup needed")
+
+        # 승리 푸시 모드일 때 공격 강도 증가
+        if self._victory_push_active:
+            await self._execute_victory_push(iteration)
+
+        # 로그 (30초마다)
+        if iteration % 660 == 0:
+            expansion_count = len(self._known_enemy_expansions)
+            status = "ACTIVE" if self._victory_push_active else "STANDBY"
+            print(f"[VICTORY] [{int(game_time)}s] Enemy: {current_structure_count} structures, "
+                  f"{expansion_count} expansions | Status: {status}")
+
+    async def _track_enemy_expansions(self):
+        """
+        적 확장 기지 추적
+
+        발견한 적 확장 위치를 기록하여 승리 조건 판단에 활용
+        """
+        if not hasattr(self.bot, "enemy_structures"):
+            return
+
+        enemy_structures = self.bot.enemy_structures
+        if not enemy_structures:
+            return
+
+        # 타운홀 타입
+        townhall_types = {
+            "NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
+            "HATCHERY", "LAIR", "HIVE"
+        }
+
+        # 적 타운홀 찾기
+        for struct in enemy_structures:
+            struct_type = getattr(struct.type_id, "name", "").upper()
+            if struct_type in townhall_types:
+                # 확장 위치 기록
+                pos = struct.position
+                if pos not in self._known_enemy_expansions:
+                    self._known_enemy_expansions.add(pos)
+                    print(f"[VICTORY] New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
+
+    async def _execute_victory_push(self, iteration: int):
+        """
+        ★★★ 승리 푸시 실행 ★★★
+
+        승리가 가까워졌을 때 전력을 다해 적 건물 파괴
+        """
+        game_time = getattr(self.bot, "time", 0)
+
+        # 모든 전투 유닛 동원
+        army_units = self._filter_army_units(getattr(self.bot, "units", []))
+        if not army_units:
+            return
+
+        # 최우선 목표: 적 건물
+        attack_target = self._find_priority_attack_target()
+        if not attack_target:
+            return
+
+        # ★★★ 승리 푸시: 최소 병력 제한 없이 모든 병력 투입 ★★★
+        for unit in army_units:
+            try:
+                # idle이거나 공격 중이 아닌 유닛은 목표로 공격
+                if unit.is_idle or not getattr(unit, "is_attacking", False):
+                    self.bot.do(unit.attack(attack_target))
+            except Exception:
+                continue
+
+        # 로그 (10초마다)
+        if iteration % 220 == 0:
+            target_str = f"({attack_target.x:.1f}, {attack_target.y:.1f})" if hasattr(attack_target, 'x') else str(attack_target)
+            print(f"[VICTORY PUSH] [{int(game_time)}s] {len(army_units)} units attacking {target_str}")
+
+    def _get_army_supply(self) -> int:
+        """현재 아군 병력의 supply 합계 계산"""
+        if not hasattr(self.bot, "units"):
+            return 0
+
+        army_units = self._filter_army_units(self.bot.units)
+        total_supply = 0
+
+        for unit in army_units:
+            try:
+                supply = getattr(unit, "supply", 0)
+                if isinstance(supply, (int, float)):
+                    total_supply += supply
+            except Exception:
+                continue
+
+        return int(total_supply)
