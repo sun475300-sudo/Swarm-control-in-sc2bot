@@ -58,14 +58,14 @@ class QueenManager:
         self.max_inject_distance = 4.0
         self.max_queen_travel_distance = 10.0
 
-        # Creep settings
+        # Creep settings - ★★★ 점막 확장 강화 ★★★
         self.creep_energy_threshold = 25
-        self.creep_spread_cooldown = 12.0  # 개선: 15초 → 12초 (더 공격적인 확장)
-        self.inject_queen_creep_threshold = 50  # 인젝트 퀸이 점막 놓을 에너지 임계값
+        self.creep_spread_cooldown = 8.0  # ★ 개선: 12초 → 8초 (더 공격적인 확장) ★
+        self.inject_queen_creep_threshold = 40  # ★ 개선: 50 → 40 (더 빠른 점막 생성) ★
 
         # Queen production - ★ 기지당 2마리 배치 ★
         self.max_queens_per_base = 2  # 개선: 1 → 2 (기지당 2마리)
-        self.creep_queen_bonus = 2    # 점막 전용 퀸 (기지 2개 이상일 때)
+        self.creep_queen_bonus = 3    # ★ 개선: 2 → 3 (점막 전용 퀸 추가) ★
 
         # 점막 확장 추적
         self.creep_tumor_count = 0
@@ -133,6 +133,9 @@ class QueenManager:
 
                 # 인젝트 퀸도 에너지 여유 있으면 점막 확장 (개선)
                 await self._inject_queens_spread_creep(queens, iteration)
+
+                # ★★★ NEW: 여유 있는 모든 퀸 점막 확장 활용 ★★★
+                await self._utilize_idle_queens_for_creep(queens, iteration)
 
         except Exception as e:
             if iteration % 200 == 0:
@@ -711,9 +714,9 @@ class QueenManager:
             if getattr(queen, "energy", 0) < self.inject_queen_creep_threshold:
                 continue
 
-            # 쿨다운 확인 (전용 퀸보다 긴 간격)
+            # ★ 쿨다운 확인 (개선: 1.5배로 단축) ★
             last_time = self.last_creep_time.get(queen.tag, 0.0)
-            if current_time - last_time < self.creep_spread_cooldown * 2:
+            if current_time - last_time < self.creep_spread_cooldown * 1.5:
                 continue
 
             # 바쁜 퀸은 스킵
@@ -740,6 +743,119 @@ class QueenManager:
                         self.last_creep_time[queen.tag] = current_time
             except Exception:
                 continue
+
+    async def _utilize_idle_queens_for_creep(self, queens, iteration: int) -> None:
+        """
+        ★★★ 여유 있는 퀸을 점막 확장에 활용 ★★★
+
+        조건:
+        1. idle 상태인 퀸 (명령 없음)
+        2. 에너지 75 이상인 퀸 (인젝트 후 여유 에너지)
+        3. 최근 점막 생성하지 않은 퀸
+
+        이 함수는 모든 퀸을 검사하여 여유 있는 퀸을 점막 확장에 투입합니다.
+        """
+        current_time = getattr(self.bot, "time", 0.0)
+        game_time = int(current_time)
+
+        # 여유 퀸 필터링
+        idle_queens = []
+        high_energy_queens = []
+
+        for queen in queens:
+            energy = getattr(queen, "energy", 0)
+
+            # 최근 점막 생성 체크 (쿨다운 5초)
+            last_creep = self.last_creep_time.get(queen.tag, 0.0)
+            if current_time - last_creep < 5.0:
+                continue
+
+            # 조건 1: idle 상태 + 에너지 25 이상
+            if hasattr(queen, "is_idle") and queen.is_idle and energy >= 25:
+                idle_queens.append(queen)
+
+            # 조건 2: 에너지 75 이상 (인젝트 3회분)
+            elif energy >= 75:
+                high_energy_queens.append(queen)
+
+        # 여유 퀸 합치기 (중복 제거)
+        available_queens = list(set(idle_queens + high_energy_queens))
+
+        if not available_queens:
+            return
+
+        # 로그 (30초마다)
+        if game_time % 30 == 0 and iteration % 22 == 0:
+            print(f"[QUEEN CREEP] [{game_time}s] ★ {len(available_queens)} idle/high-energy queens spreading creep ★")
+
+        # 각 여유 퀸으로 점막 확장
+        tumors_placed = 0
+        for queen in available_queens:
+            if tumors_placed >= 3:  # 한 번에 최대 3개
+                break
+
+            try:
+                # 적 방향으로 점막 타겟 설정
+                target = self._get_aggressive_creep_target(queen)
+
+                if not target:
+                    target = self._get_creep_target_position(queen)
+
+                if not target:
+                    continue
+
+                # 점막 위 확인
+                if not self._is_valid_creep_position(target):
+                    continue
+
+                # 점막 종양 생성
+                if hasattr(queen, "can_cast"):
+                    if queen.can_cast(AbilityId.BUILD_CREEPTUMOR_QUEEN):
+                        result = self.bot.do(
+                            queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target)
+                        )
+                        if hasattr(result, "__await__"):
+                            await result
+                        self.last_creep_time[queen.tag] = current_time
+                        tumors_placed += 1
+                else:
+                    result = self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target))
+                    if hasattr(result, "__await__"):
+                        await result
+                    self.last_creep_time[queen.tag] = current_time
+                    tumors_placed += 1
+
+            except Exception:
+                continue
+
+    def _get_aggressive_creep_target(self, queen):
+        """
+        ★ 적 방향으로 공격적인 점막 타겟 설정 ★
+
+        기지 근처가 아닌 적 방향으로 점막 확장
+        """
+        try:
+            from sc2.position import Point2
+
+            # 적 시작 위치
+            enemy_start = None
+            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+                enemy_start = self.bot.enemy_start_locations[0]
+
+            if not enemy_start:
+                return None
+
+            queen_pos = queen.position
+
+            # 적 방향으로 8-10 거리 위치
+            import random
+            distance = random.uniform(7.0, 10.0)
+            target = queen_pos.towards(enemy_start, distance)
+
+            return target
+
+        except Exception:
+            return None
 
     def _get_base_creep_target(self, queen):
         """기지 근처 점막 타겟 위치 결정."""
