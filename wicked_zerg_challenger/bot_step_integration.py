@@ -533,6 +533,31 @@ class BotStepIntegrator:
             if result and "strategy_mode" in result:
                 self.bot._current_strategy = result["strategy_mode"]
 
+                # RLAgent 연동: 게임 상태와 선택된 전략을 기록
+                if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
+                    try:
+                        import numpy as np
+                        # 게임 상태 추출
+                        game_state = np.array([
+                            getattr(self.bot, "minerals", 0) / 2000.0,
+                            getattr(self.bot, "vespene", 0) / 1000.0,
+                            getattr(self.bot, "supply_used", 0) / 200.0,
+                            getattr(self.bot, "supply_cap", 0) / 200.0,
+                            len(getattr(self.bot, "workers", [])) / 100.0,
+                            len(getattr(self.bot, "units", [])) / 100.0,
+                            len(getattr(self.bot, "enemy_units", [])) / 100.0,
+                            len(getattr(self.bot, "townhalls", [])) / 10.0,
+                            getattr(self.bot, "time", 0) / 1000.0,
+                            # 패딩 (15차원 맞추기)
+                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                        ], dtype=np.float32)
+
+                        # RLAgent에 상태와 행동 기록
+                        self.bot.rl_agent.get_action(game_state)
+                    except Exception as e:
+                        if iteration % 500 == 0:
+                            print(f"[WARNING] RLAgent state recording error: {e}")
+
                 # 주기적으로 전략 로그 출력
                 if iteration % 220 == 0:  # 10초마다
                     print(f"[HIERARCHICAL RL] Strategy: {result['strategy_mode']}")
