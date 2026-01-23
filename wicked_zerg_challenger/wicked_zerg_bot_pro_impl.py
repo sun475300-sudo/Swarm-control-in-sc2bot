@@ -193,19 +193,28 @@ class WickedZergBotProImpl(BotAI):
         # Training mode: Calculate final reward and save model
         if self.train_mode:
             try:
-                # Calculate final reward
-                if hasattr(self, '_reward_system'):
-                    final_reward = self._reward_system.calculate_step_reward(self)
+                # Determine final reward based on game result
+                result_str = str(game_result).upper()
+                if "VICTORY" in result_str or "WIN" in result_str:
+                    game_outcome_reward = 10.0  # 승리 보상
+                elif "DEFEAT" in result_str or "LOSS" in result_str:
+                    game_outcome_reward = -5.0  # 패배 페널티
+                else:
+                    game_outcome_reward = 0.0  # 무승부/기타
 
-                    # RL agent final update
-                    if hasattr(self, 'rl_agent') and self.rl_agent:
-                        self.rl_agent.update_reward(final_reward)
+                # RL agent: end episode and perform learning (CRITICAL!)
+                if hasattr(self, 'rl_agent') and self.rl_agent:
+                    # End episode triggers backpropagation and weight update
+                    training_stats = self.rl_agent.end_episode(final_reward=game_outcome_reward)
+                    print(f"[TRAINING] Episode ended - Loss: {training_stats.get('loss', 0):.4f}, "
+                          f"Avg Reward: {training_stats.get('avg_reward', 0):.3f}, "
+                          f"Steps: {training_stats.get('steps', 0)}")
 
-                        # Save model
-                        if hasattr(self.rl_agent, 'save_model'):
-                            model_path = "local_training/models/zerg_net_model.pt"
-                            self.rl_agent.save_model(model_path)
-                            print(f"[TRAINING] Model saved to {model_path}")
+                    # Save model
+                    if hasattr(self.rl_agent, 'save_model'):
+                        model_path = "local_training/models/rl_agent_model.npz"
+                        self.rl_agent.save_model(model_path)
+                        print(f"[TRAINING] Model saved to {model_path}")
 
                 # Reset reward system
                 if hasattr(self, '_reward_system'):
@@ -213,6 +222,8 @@ class WickedZergBotProImpl(BotAI):
 
             except Exception as e:
                 print(f"[WARNING] Training end logic error: {e}")
+                import traceback
+                traceback.print_exc()
 
         # Store training result for run_with_training.py
         self._training_result = {
