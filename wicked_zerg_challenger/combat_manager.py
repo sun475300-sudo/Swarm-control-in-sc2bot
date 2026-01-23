@@ -90,7 +90,7 @@ class CombatManager:
         self._defense_rally_point = None
         self._last_defense_check = 0
         self._defense_check_interval = 5  # 5프레임마다 체크 (더 자주)
-        self._worker_defense_threshold = 5  # 적 5기 이상이면 일꾼도 방어
+        self._worker_defense_threshold = 1  # ★ FIX: 적 1기라도 일꾼 근처 위협 시 방어 ★
         self._critical_defense_threshold = 8  # 적 8기 이상이면 모든 유닛 방어
 
         # 매니저 초기화
@@ -1437,9 +1437,15 @@ class CombatManager:
         if time_since_last_counter < self._counter_attack_cooldown:
             return False
 
-        # Check if we have overwhelming advantage
-        if our_supply >= 10 and our_supply > enemy_supply * 2:
+        # ★ FIX: 카운터 어택 임계값 하향 (2x → 1.4x) ★
+        # 유닛 품질 고려: 저그 유닛이 대부분 저렴하므로 낮은 비율로도 공격 가능
+        if our_supply >= 8 and our_supply > enemy_supply * 1.4:
             self._last_counter_attack_time = game_time  # Update cooldown
+            return True
+
+        # 적이 거의 없으면 바로 공격
+        if our_supply >= 12 and enemy_supply <= 3:
+            self._last_counter_attack_time = game_time
             return True
 
         return False

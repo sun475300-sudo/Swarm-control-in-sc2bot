@@ -149,6 +149,23 @@ class UnitFactory:
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
 
+        # ★★★ FIX: 사전 오버로드 생산 (supply_left < 4 시 강제) ★★★
+        # 서플라이 블럭 방지: 미리 오버로드 생산
+        if hasattr(self.bot, "supply_left") and self.bot.supply_left < 4:
+            # 이미 생산 중인 오버로드 체크
+            pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
+            if pending_overlords == 0 and self.bot.can_afford(UnitTypeId.OVERLORD):
+                try:
+                    if larva:
+                        if hasattr(self.bot, 'production') and self.bot.production:
+                            await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
+                        else:
+                            self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
+                        if iteration % 100 == 0:
+                            print(f"[UNIT_FACTORY] ★ Preemptive Overlord (supply_left={self.bot.supply_left}) ★")
+                except Exception:
+                    pass
+
         # ★ COMBAT REINFORCEMENT: 전투 모드 체크 ★
         in_combat = self._check_combat_mode(iteration)
 
@@ -169,13 +186,20 @@ class UnitFactory:
             if getattr(strategy, "emergency_active", False):
                 self.gas_unit_ratio_target = 0.15  # 긴급 시 가스 유닛 최소화
             else:
-                # 종족별 유닛 비율에서 가스 유닛 비율 계산
-                ratios = strategy.get_unit_ratios()
-                if ratios:
-                    # 가스 유닛: hydra, mutalisk, roach 등
-                    gas_ratio = ratios.get("hydra", 0) + ratios.get("mutalisk", 0) + ratios.get("roach", 0)
-                    if gas_ratio > 0:
-                        self.gas_unit_ratio_target = gas_ratio
+                # ★★★ FIX: 프로토스 핵심 유닛 감지 시 가스 부스트 ★★★
+                protoss_threat_boost = self._check_protoss_threat_boost()
+                if protoss_threat_boost:
+                    self.gas_unit_ratio_target = 0.55  # 히드라/커럽터 우선
+                else:
+                    # 종족별 유닛 비율에서 가스 유닛 비율 계산
+                    ratios = strategy.get_unit_ratios()
+                    if ratios:
+                        # 가스 유닛: hydra, mutalisk, roach, ravager, corruptor 등
+                        gas_ratio = (ratios.get("hydra", 0) + ratios.get("mutalisk", 0) +
+                                    ratios.get("roach", 0) + ratios.get("ravager", 0) +
+                                    ratios.get("corruptor", 0))
+                        if gas_ratio > 0:
+                            self.gas_unit_ratio_target = gas_ratio
 
                         # 디버그 로그 (100 프레임마다)
                         if iteration % 100 == 0:
@@ -386,3 +410,49 @@ class UnitFactory:
     def _unit_ratio(self, unit_type) -> float:
         total = max(1, self._count_combat_units())
         return self._count_unit_type(unit_type) / total
+
+    def _check_protoss_threat_boost(self) -> bool:
+        """
+        ★★★ 프로토스 핵심 위협 유닛 감지 ★★★
+
+        감지 시 가스 유닛 생산 우선 (히드라/커럽터):
+        - 불멸자 (Immortal): 1기 이상
+        - 공허 포격기 (VoidRay): 1기 이상
+        - 콜로서스 (Colossus): 1기 이상
+        - 아콘 (Archon): 2기 이상
+        - 캐리어 (Carrier): 1기 이상
+
+        Returns:
+            True if threat detected, should boost gas unit production
+        """
+        if not hasattr(self.bot, "enemy_units"):
+            return False
+
+        threat_units = {
+            "IMMORTAL": 1,      # 불멸자 1기
+            "VOIDRAY": 1,       # 공허 1기
+            "COLOSSUS": 1,      # 콜로서스 1기
+            "CARRIER": 1,       # 캐리어 1기
+            "ARCHON": 2,        # 아콘 2기
+            "DISRUPTOR": 1,     # 분열기 1기
+            "TEMPEST": 1,       # 폭풍함 1기
+        }
+
+        unit_counts = {}
+        for enemy in self.bot.enemy_units:
+            try:
+                enemy_type = getattr(enemy.type_id, "name", "").upper()
+                if enemy_type in threat_units:
+                    unit_counts[enemy_type] = unit_counts.get(enemy_type, 0) + 1
+            except Exception:
+                continue
+
+        # 위협 임계값 체크
+        for unit_type, threshold in threat_units.items():
+            if unit_counts.get(unit_type, 0) >= threshold:
+                game_time = getattr(self.bot, "time", 0)
+                if self.bot.iteration % 200 == 0:
+                    print(f"[UNIT_FACTORY] [{int(game_time)}s] ★ Protoss threat: {unit_type} x{unit_counts[unit_type]} → Gas boost! ★")
+                return True
+
+        return False
