@@ -177,6 +177,13 @@ class BotStepIntegrator:
                     from unit_factory import UnitFactory
 
                     self.bot.unit_factory = UnitFactory(self.bot)
+
+            # ★ Defeat Detection (패배 직감 시스템) ★
+            if not hasattr(self.bot, "defeat_detection"):
+                try:
+                    from defeat_detection import DefeatDetection
+
+                    self.bot.defeat_detection = DefeatDetection(self.bot)
                 except ImportError:
                     pass
 
@@ -333,6 +340,42 @@ class BotStepIntegrator:
             else:
                 if iteration == 1:
                     print(f"[WARNING] strategy_manager not found! hasattr={hasattr(self.bot, 'strategy_manager')}, value={getattr(self.bot, 'strategy_manager', None)}")
+
+            # 0.15 ★ Defeat Detection (패배 직감 시스템) ★
+            if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
+                start_time = self._logic_tracker.start_logic("DefeatDetection")
+                try:
+                    defeat_status = await self.bot.defeat_detection.on_step(iteration)
+
+                    # 패배 직전이면 마지막 방어 시도
+                    if defeat_status.get("last_stand_required", False):
+                        if iteration % 200 == 0:  # 주기적으로 출력
+                            print(f"[DEFEAT DETECTION] ★ 패배 직전! 마지막 방어 시도! ★")
+                            print(f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}")
+                            print(f"  - 이유: {defeat_status.get('defeat_reason', '알 수 없음')}")
+
+                        # Combat Manager에게 마지막 방어 위치 전달
+                        if hasattr(self.bot, "combat") and self.bot.combat:
+                            last_stand_pos = defeat_status.get("last_stand_position")
+                            if last_stand_pos and hasattr(self.bot.combat, "_defense_rally_point"):
+                                self.bot.combat._defense_rally_point = last_stand_pos
+                                self.bot.combat._base_defense_active = True
+
+                    # 패배 불가피하면 항복 고려 (훈련 모드에서는 빠른 게임 종료)
+                    elif defeat_status.get("should_surrender", False):
+                        if iteration % 200 == 0:
+                            print(f"[DEFEAT DETECTION] 패배 불가피 - {defeat_status.get('defeat_reason', '알 수 없음')}")
+
+                    # 위기 상황이면 경고
+                    elif defeat_status.get("defeat_level", 0) >= 2:  # CRITICAL
+                        if iteration % 300 == 0:
+                            print(f"[DEFEAT DETECTION] 위기 상황! - {defeat_status.get('defeat_reason', '알 수 없음')}")
+
+                except Exception as e:
+                    if iteration % 200 == 0:
+                        print(f"[WARNING] Defeat Detection error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("DefeatDetection", start_time)
 
             # 0.2 Aggressive Strategies (초반 공격 전략 - 12풀, 맹독충 올인 등)
             if iteration % 4 == 0:  # 4프레임마다 실행
@@ -654,6 +697,11 @@ class BotStepIntegrator:
         1. 긴급 스파인 크롤러 건설
         2. 긴급 스포어 크롤러 건설
         3. 방어 유닛 우선 생산 신호
+
+        패배 직감 시스템 연동:
+        - 패배 직전: 스파인 크롤러 최대 6개까지 긴급 건설
+        - 위기 상황: 스파인 크롤러 4개까지 건설
+        - 일반: 스파인 크롤러 3개까지 건설
         """
         if iteration % 22 != 0:  # 1초마다 확인
             return
@@ -665,9 +713,30 @@ class BotStepIntegrator:
 
         game_time = getattr(self.bot, "time", 0)
 
+        # ★ 패배 직감 시스템 연동 ★
+        defeat_level = 0
+        last_stand_mode = False
+        if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
+            defeat_status = self.bot.defeat_detection._get_current_status()
+            defeat_level = defeat_status.get("defeat_level", 0)
+            last_stand_mode = defeat_status.get("last_stand_required", False)
+
         try:
+            # ★ 패배 직전: 스파인 크롤러 최대 6개 ★
+            if last_stand_mode or defeat_level >= 3:
+                max_spines = 6
+                force_build = True
+            # ★ 위기 상황: 스파인 크롤러 4개 ★
+            elif defeat_level >= 2:
+                max_spines = 4
+                force_build = True
+            # ★ 일반: 스파인 크롤러 3개 ★
+            else:
+                max_spines = 3
+                force_build = False
+
             # 긴급 스파인 크롤러 건설
-            if getattr(strategy, "emergency_spine_requested", False):
+            if getattr(strategy, "emergency_spine_requested", False) or force_build:
                 if hasattr(self.bot, "structures") and hasattr(self.bot, "townhalls"):
                     from sc2.ids.unit_typeid import UnitTypeId
 
@@ -678,13 +747,19 @@ class BotStepIntegrator:
 
                     # 스포닝 풀 필요
                     pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
-                    if pools.exists and spine_count + pending < 3 and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
+                    if pools.exists and spine_count + pending < max_spines and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
                         if self.bot.townhalls.exists:
                             main_base = self.bot.townhalls.first
                             defense_pos = main_base.position.towards(self.bot.game_info.map_center, 7)
                             await self.bot.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
-                            print(f"[EMERGENCY] [{int(game_time)}s] Building emergency Spine Crawler!")
-                            strategy.emergency_spine_requested = False
+
+                            if last_stand_mode:
+                                print(f"[LAST STAND] [{int(game_time)}s] ★ 긴급 스파인 크롤러 건설! ({spine_count + pending + 1}/{max_spines}) ★")
+                            else:
+                                print(f"[EMERGENCY] [{int(game_time)}s] Building emergency Spine Crawler ({spine_count + pending + 1}/{max_spines})")
+
+                            if hasattr(strategy, "emergency_spine_requested"):
+                                strategy.emergency_spine_requested = False
 
             # 긴급 스포어 크롤러 건설 (대공)
             if getattr(strategy, "emergency_spore_requested", False):
