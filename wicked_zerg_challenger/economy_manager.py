@@ -1169,3 +1169,140 @@ class EconomyManager:
             "gas_income": min(bases * 6, workers // 3) * 35,
             "is_banking": minerals > 1000 or gas > 500,
         }
+
+    # ============================================================
+    # ★★★ 경제 회복 시스템 (병력 생산 후 자원 재건) ★★★
+    # ============================================================
+
+    async def check_economic_recovery(self) -> None:
+        """
+        ★ 경제 회복 체크 ★
+
+        병력 생산으로 자원이 소진되면:
+        1. 드론 수 확인 → 부족하면 드론 생산 우선
+        2. 확장 필요 여부 확인 → 포화 시 확장
+        3. 미래 수입 예측 → 미리 확장/드론 생산
+
+        호출 시점: 매 스텝 또는 전투 후
+        """
+        if not hasattr(self.bot, "workers") or not hasattr(self.bot, "townhalls"):
+            return
+
+        game_time = getattr(self.bot, "time", 0)
+        workers = self.bot.workers
+        bases = self.bot.townhalls.ready
+        minerals = getattr(self.bot, "minerals", 0)
+
+        # ★ 현재 경제 상태 분석 ★
+        worker_count = workers.amount
+        base_count = bases.amount
+        ideal_workers = base_count * 16 + (base_count * 6)  # 미네랄 16 + 가스 6
+
+        # ★ 드론 부족 감지 ★
+        worker_deficit = ideal_workers - worker_count
+
+        if worker_deficit > 5:
+            # 드론 심각하게 부족 → 드론 생산 우선 모드
+            self._economy_recovery_mode = True
+            self._target_drone_count = min(ideal_workers, 75)
+
+            if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
+                print(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Worker deficit: {worker_deficit} ★")
+                print(f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}")
+                print(f"[ECONOMY RECOVERY]   Prioritizing drone production...")
+
+        elif worker_deficit <= 0:
+            # 드론 포화 → 확장 필요
+            self._economy_recovery_mode = False
+
+            # 확장 여부 체크
+            if worker_count >= base_count * 20:  # 기지당 20명 이상
+                await self._trigger_expansion_for_growth()
+
+        # ★ 자원 수입 예측 및 사전 확장 ★
+        await self._predict_and_expand()
+
+    async def _trigger_expansion_for_growth(self) -> None:
+        """포화 시 확장 건설"""
+        if not hasattr(self.bot, "townhalls"):
+            return
+
+        game_time = getattr(self.bot, "time", 0)
+        base_count = self.bot.townhalls.amount
+        pending = self.bot.already_pending(UnitTypeId.HATCHERY)
+
+        # 확장 제한: 최대 6베이스
+        if base_count + pending >= 6:
+            return
+
+        # 자원 여유 체크 (확장 비용 300)
+        if self.bot.minerals < 350:
+            return
+
+        try:
+            exp_pos = await self.bot.get_next_expansion()
+            if exp_pos:
+                if await self.bot.can_place(UnitTypeId.HATCHERY, exp_pos):
+                    await self.bot.build(UnitTypeId.HATCHERY, exp_pos)
+                    print(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Expanding for growth (bases: {base_count}) ★")
+        except Exception:
+            pass
+
+    async def _predict_and_expand(self) -> None:
+        """
+        ★ 미래 수입 예측 및 사전 확장 ★
+
+        미네랄 패치 고갈 예측:
+        - 현재 채취 속도와 남은 미네랄 양 비교
+        - 고갈 예상 시 미리 확장
+        """
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
+            return
+
+        game_time = getattr(self.bot, "time", 0)
+
+        try:
+            for th in self.bot.townhalls.ready:
+                # 해당 기지 근처 미네랄 체크
+                minerals_near = self.bot.mineral_field.closer_than(10, th)
+
+                if not minerals_near:
+                    continue
+
+                # 총 남은 미네랄 양
+                total_remaining = sum(m.mineral_contents for m in minerals_near)
+
+                # 일꾼 수 기반 채취 속도 추정 (일꾼당 ~40/분)
+                workers_at_base = th.assigned_harvesters
+                mining_rate = workers_at_base * 40  # 분당
+
+                # 고갈 예상 시간 (분)
+                if mining_rate > 0:
+                    depletion_time = total_remaining / mining_rate
+                else:
+                    depletion_time = 999
+
+                # 2분 내 고갈 예상 시 확장 (확장 건설에 1분 30초 소요)
+                if depletion_time < 2.0 and total_remaining < 2000:
+                    base_count = self.bot.townhalls.amount
+                    pending = self.bot.already_pending(UnitTypeId.HATCHERY)
+
+                    if pending == 0 and base_count < 5:
+                        if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                            print(f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min")
+                            print(f"[ECONOMY PREDICTION]   Remaining minerals: {total_remaining}")
+                            print(f"[ECONOMY PREDICTION]   Triggering pre-emptive expansion...")
+
+                        await self._trigger_expansion_for_growth()
+                        break  # 한 번에 하나만
+
+        except Exception:
+            pass
+
+    def is_economy_recovery_mode(self) -> bool:
+        """경제 회복 모드 여부"""
+        return getattr(self, "_economy_recovery_mode", False)
+
+    def get_target_drone_count(self) -> int:
+        """목표 드론 수"""
+        return getattr(self, "_target_drone_count", 66)
