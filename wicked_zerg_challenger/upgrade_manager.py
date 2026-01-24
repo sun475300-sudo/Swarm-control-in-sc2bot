@@ -69,11 +69,42 @@ class EvolutionUpgradeManager:
         upgrade_order = self._get_upgrade_priority()
         vespene = getattr(self.bot, "vespene", 0)
         gas_constrained = vespene < self.gas_reserve_threshold
+
+        # ★★★ Spire 공중 업그레이드 ★★★
+        spires = self.bot.structures(UnitTypeId.SPIRE).ready | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
+        for spire in spires:
+            if hasattr(spire, "is_idle") and not spire.is_idle:
+                continue
+
+            for upgrade_id in upgrade_order:
+                # 공중 업그레이드만 Spire에서
+                upgrade_name = getattr(upgrade_id, "name", "")
+                if "FLYER" not in upgrade_name:
+                    continue
+
+                if not self._can_research(upgrade_id):
+                    continue
+                if not self.bot.can_afford(upgrade_id):
+                    continue
+
+                try:
+                    self.bot.do(spire.research(upgrade_id))
+                    self.logger.info(f"[SPIRE] Researching {upgrade_name}")
+                    return
+                except Exception as e:
+                    self.logger.warning(f"[SPIRE] Failed to research {upgrade_name}: {e}")
+
+        # Evolution Chamber 지상 업그레이드
         for evo in evo_chambers:
             if hasattr(evo, "is_idle") and not evo.is_idle:
                 continue
 
             for upgrade_id in upgrade_order:
+                # 지상 업그레이드만 Evolution Chamber에서
+                upgrade_name = getattr(upgrade_id, "name", "")
+                if "FLYER" in upgrade_name:
+                    continue
+
                 if gas_constrained and upgrade_id != upgrade_order[0]:
                     continue
                 if not self._can_research(upgrade_id):
@@ -83,7 +114,6 @@ class EvolutionUpgradeManager:
 
                 try:
                     self.bot.do(evo.research(upgrade_id))
-                    upgrade_name = getattr(upgrade_id, "name", str(upgrade_id))
                     self.logger.info(f"Researching {upgrade_name}")
                 except Exception as e:
                     self.logger.warning(f"Failed to research upgrade {upgrade_id}: {e}")
@@ -130,9 +160,13 @@ class EvolutionUpgradeManager:
             # 저글링/맹독충 체제 (기본): 근접 → 방어 → 근접
             priorities = ["melee", "armor", "melee", "armor", "melee"]
 
-        # 뮤탈이 있으면 공중 공격도 추가
-        if mutalisk_count >= 5:
+        # ★★★ 공중 유닛이 있으면 공중 업그레이드 추가 ★★★
+        corruptor_count = composition.get("corruptor", 0)
+        total_air = mutalisk_count + corruptor_count
+
+        if total_air >= 3:  # 공중 유닛 3마리 이상이면
             priorities.append("air_attack")
+            priorities.append("air_armor")
 
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []

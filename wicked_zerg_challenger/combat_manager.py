@@ -86,8 +86,8 @@ class CombatManager:
         self._rally_point = None
         self._last_rally_update = 0
         self._rally_update_interval = 30  # Update rally point every 30 seconds
-        self._min_army_for_attack = 15  # Minimum supply before attacking (후반)
-        self._early_game_min_attack = 4  # ★ NEW: 초반(0-4분) 최소 서플라이 (저글링 2마리)
+        self._min_army_for_attack = 10  # ★ AGGRESSIVE: 중반 공격 최소 서플라이 (기존 15 → 10)
+        self._early_game_min_attack = 6  # ★ AGGRESSIVE: 초반(0-4분) 최소 서플라이 (저글링 3마리, 기존 4 → 6)
 
         # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
         self._base_defense_active = False
@@ -231,13 +231,14 @@ class CombatManager:
             if harass_target:
                 tasks_to_execute.append(("air_harass", harass_target, self.task_priorities["air_harass"]))
 
-        # === TASK 2.3: Early Zergling Harass (3-5분) ===
+        # === TASK 2.3: ★ AGGRESSIVE Early Zergling Harass (2-7분) ★ ===
         game_time = getattr(self.bot, 'time', 0)
-        if 180 <= game_time <= 300:  # 3-5분
+        if 120 <= game_time <= 420:  # ★ 2-7분 (기존 3-5분 → 확장)
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 zerglings = [u for u in army_units if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
-                if 6 <= len(zerglings) <= 24:
+                # ★ 저글링 4마리부터 하라스 시작 (기존 6마리 → 4마리)
+                if 4 <= len(zerglings) <= 24:
                     harass_target = self._find_harass_target()
                     if harass_target:
                         # Priority 65 (between air_harass and counter_attack)
@@ -253,6 +254,24 @@ class CombatManager:
             if enemy_base:
                 tasks_to_execute.append(("counter_attack", enemy_base, self.task_priorities["counter_attack"]))
                 self.logger.info("Detected victory - attacking enemy base!")
+
+        # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-7분) ★ ===
+        # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
+        if 300 <= game_time <= 420:  # 5-7분
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                # 바퀴 + 저글링 조합 타이밍 공격
+                roaches = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ROACH]
+                zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
+
+                # 바퀴 5마리 이상 또는 저글링 12마리 이상이면 타이밍 공격
+                if len(roaches) >= 5 or len(zerglings) >= 12:
+                    enemy_base = self._get_enemy_base_location()
+                    if enemy_base:
+                        # Priority 75 (higher than counter_attack)
+                        tasks_to_execute.append(("mid_timing_attack", enemy_base, 75))
+            except ImportError:
+                pass
 
         # === TASK 3: Main Army Attack ===
         if self._has_units(ground_army):
@@ -300,6 +319,22 @@ class CombatManager:
                             available_ground.discard(u.tag)
                 except ImportError:
                     pass
+
+            elif task_name == "mid_timing_attack":
+                # ★ 중반 타이밍 공격: 모든 지상 유닛 투입 ★
+                attack_units = [u for u in ground_army if u.tag in available_ground]
+                if attack_units:
+                    # 적 기지 직접 공격
+                    for unit in attack_units:
+                        try:
+                            self.bot.do(unit.attack(target))
+                        except Exception:
+                            continue
+                    # 로그 (30초마다)
+                    if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                        self.logger.warning(f"[{int(game_time)}s] ★ MID-GAME TIMING ATTACK! {len(attack_units)} units attacking! ★")
+                    for u in attack_units:
+                        available_ground.discard(u.tag)
 
             elif task_name == "counter_attack":
                 # Use all available ground units for counter attack
@@ -1903,7 +1938,7 @@ class CombatManager:
 
         should_activate_victory_push = (
             game_time > self._endgame_push_threshold  # 6분 이후
-            and current_structure_count <= 5  # 적 건물 5개 이하
+            and current_structure_count <= 10  # 적 건물 10개 이하 (개선: 5 → 10)
             and our_army_supply >= 30  # 우리 병력 충분
         )
 

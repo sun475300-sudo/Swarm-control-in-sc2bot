@@ -117,12 +117,15 @@ class BoidsController:
         Args:
             iteration: Current game iteration/frame
         """
-        if iteration - self.last_update < self.update_interval:
+        # Global update rate limiter (run every 2 frames instead of 12)
+        if iteration % 2 != 0:
             return
+            
         self.last_update = iteration
 
-        # Update terrain cache
-        self.chokepoint_detector.update_chokepoints(iteration)
+        # Update terrain cache (less frequent)
+        if iteration % 4 == 0:
+            self.chokepoint_detector.update_chokepoints(iteration)
 
         # Get combat units
         units = self._get_combat_units()
@@ -133,20 +136,80 @@ class BoidsController:
         self._build_spatial_index(units, iteration)
 
         enemy_units = getattr(self.bot, "enemy_units", [])
+        
+        # ★ NEW: Priority-based Unit Selection ★
+        # 1. Identify high-priority units (near enemies or in danger)
+        high_priority_units = []
+        low_priority_units = []
+        
+        # Quick check for combat status
+        if enemy_units:
+            # Spatial query would be better here, but requires building it first
+            # We'll use a simple heuristic: if bad guys exist, check proximity
+            # Optimization: check distance to nearest enemy center? No, too risky.
+            
+            # Use spatial index if available
+            if self._spatial_index and self._spatial_available:
+                # Find units near any enemy
+                pass # Complex to query for all enemies efficiently
+            
+            # Fallback: simple proximity check (optimized)
+            for unit in units:
+                # If unit was attacked recently or is attacking -> High Priority
+                if (unit.is_attacking or unit.weapon_cooldown > 0 or 
+                    (hasattr(unit, "shield_health_percentage") and unit.shield_health_percentage < 1.0)):
+                    high_priority_units.append(unit)
+                    continue
+                    
+                # Check proximity to closest enemy (expensive O(N*M)) -> Optimize?
+                # Rely on cached "closest_enemy_dist" if available, or just check briefly
+                # Here we assume units in combat set a flag or we check a subset
+                
+                # Simple optimization: Randomly promote some units if list is empty
+                # For now, let's treat ALL units as candidates, but simple filter
+                closest_enemy = unit.target_in_range(enemy_units, gap=4) # Range + 4 buffer
+                if closest_enemy:
+                    high_priority_units.append(unit)
+                else:
+                    low_priority_units.append(unit)
+        else:
+            low_priority_units = list(units)
+
+        # 2. Staggered processing for low priority units
+        # Process 1/4 of low priority units each update
+        rollover_idx = (iteration // 2) % 4
+        chunk_size = len(low_priority_units) // 4 + 1
+        start_idx = rollover_idx * chunk_size
+        end_idx = start_idx + chunk_size
+        active_low_priority = low_priority_units[start_idx:end_idx]
+        
+        # Combine lists
+        active_units = high_priority_units + active_low_priority
+        
+        # Limit total processing (increased from 30 -> 80)
+        # Combat units take precedence
+        self.max_units_per_frame = 80
+        if len(active_units) > self.max_units_per_frame:
+             # Keep all high priority, trim low priority
+             if len(high_priority_units) >= self.max_units_per_frame:
+                 active_units = high_priority_units[:self.max_units_per_frame]
+             else:
+                 remaining_slots = self.max_units_per_frame - len(high_priority_units)
+                 active_units = high_priority_units + active_low_priority[:remaining_slots]
 
         try:
             # Handle burrow abilities
             skip_units = await self.burrow_controller.handle_burrow(
-                units, enemy_units, iteration, self._do_actions, bot=self.bot
+                active_units, enemy_units, iteration, self._do_actions, bot=self.bot
             )
 
             # Apply main boids movement
-            await self._apply_boids(units, enemy_units, skip_units=skip_units)
+            await self._apply_boids(active_units, enemy_units, skip_units=skip_units)
 
         except Exception as e:
             if iteration % 200 == 0:
                 print(f"[WARNING] Boids micro error: {e}")
-            await self._fallback_spread(units, enemy_units)
+            await self._fallback_spread(active_units, enemy_units)
 
     def _get_combat_units(self):
         """Filter and return combat-capable units."""
@@ -164,7 +227,7 @@ class BoidsController:
         Apply Boids algorithm with all integrated components.
 
         Args:
-            units: Friendly combat units
+            units: Friendly combat units (already filtered for this frame)
             enemy_units: Enemy units
             skip_units: Set of unit tags to skip (e.g., burrowing units)
         """
@@ -172,25 +235,23 @@ class BoidsController:
             return
         skip_units = skip_units or set()
 
-        # Performance: limit units processed per frame
-        unit_list = list(units)
-        if len(unit_list) > self.max_units_per_frame:
-            unit_list = unit_list[:self.max_units_per_frame]
-
         actions = []
         enemy_center = self._get_enemy_center(enemy_units)
         enemy_structures = getattr(self.bot, "enemy_structures", [])
         splash_threats = self.splash_handler.get_splash_threats(enemy_units)
 
-        for unit in unit_list:
+        # Optimization: Pre-calculate map center for simple fallback
+        # map_center = self.bot.game_info.map_center
+
+        for unit in units:
             if unit.tag in skip_units:
                 continue
 
             # Get nearby friendly units for flocking
-            neighbors = self._nearby_units(units, unit, 6.0)
+            neighbors = self._nearby_units(self.bot.units, unit, 6.0) # Query against ALL units for cohesion
 
             # Select target enemy
-            target = select_target(unit, enemy_units, max_range=12.0)
+            target = select_target(unit, enemy_units, max_range=14.0)
             target_pos = target.position if target else None
 
             # Calculate splash-based separation multiplier
@@ -260,10 +321,12 @@ class BoidsController:
                 )
 
             # Execute attack or move command
+            # Attack if close and weapon ready, otherwise move
             if (
                 target
                 and hasattr(unit, "distance_to")
-                and unit.distance_to(target) <= 4
+                and unit.distance_to(target) <= (unit.ground_range + 1.0) # Attack range buffer
+                and unit.weapon_cooldown == 0
             ):
                 actions.append(unit.attack(target))
             else:

@@ -570,62 +570,69 @@ class EconomyManager:
         - idle 상태 일꾼 감지
         - 가장 가까운 미네랄/가스에 할당
         - 포화되지 않은 기지 우선
+        
+        OPTIMIZED: 불필요한 연산 최소화
         """
         if not hasattr(self.bot, "workers") or not self.bot.workers:
             return
 
         try:
-            # 대기 일꾼 찾기
-            idle_workers = self.bot.workers.filter(lambda w: w.is_idle)
-
+            # 대기 일꾼 찾기 (가장 비용이 적은 필터)
+            idle_workers = self.bot.workers.idle
+            
             if not idle_workers:
                 return  # 대기 일꾼 없음
 
             # 타운홀이 있는지 확인
             if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
                 return
-
+                
             townhalls = self.bot.townhalls.ready
+            
+            # 캐싱된 미네랄 필드 사용 (매번 closer_than 호출 방지)
+            if not hasattr(self, "_cached_minerals_near_base"):
+                self._cached_minerals_near_base = {}
+                self._last_mineral_cache = 0
+            
+            current_frame = self.bot.iteration
+            if current_frame - getattr(self, "_last_mineral_cache", 0) > 100:
+                self._cached_minerals_near_base = {}
+                self._last_mineral_cache = current_frame
 
             for worker in idle_workers:
                 assigned = False
 
-                # 1순위: 가스가 부족한 익스트랙터에 할당
+                # 1순위: 가스가 부족한 익스트랙터에 할당 (가장 급함)
+                # 성능 최적화: 가스 건물이 적으므로 루프 돌아도 괜찮음
                 if hasattr(self.bot, "gas_buildings"):
                     for extractor in self.bot.gas_buildings.ready:
                         if extractor.assigned_harvesters < extractor.ideal_harvesters:
-                            if worker.distance_to(extractor) < 20:
-                                self.bot.do(worker.gather(extractor))
-                                assigned = True
-                                break
+                             # 거리 체크 없이 바로 할당해도 됨 (일단 채취가 중요)
+                             self.bot.do(worker.gather(extractor))
+                             assigned = True
+                             break
 
                 if assigned:
                     continue
 
-                # 2순위: 포화되지 않은 기지의 미네랄에 할당
-                best_th = None
-                best_deficit = 0
-
-                for th in townhalls:
-                    deficit = th.ideal_harvesters - th.assigned_harvesters
-                    if deficit > best_deficit:
-                        best_deficit = deficit
-                        best_th = th
-
-                if best_th:
-                    # 해당 기지 근처 미네랄 찾기
-                    minerals = self.bot.mineral_field.closer_than(10, best_th)
-                    if minerals:
-                        self.bot.do(worker.gather(minerals.closest_to(best_th)))
-                        assigned = True
-
-                if assigned:
-                    continue
-
-                # 3순위: 가장 가까운 미네랄에 할당 (폴백)
-                closest_mineral = self.bot.mineral_field.closest_to(worker)
-                if closest_mineral:
-                    self.bot.do(worker.gather(closest_mineral))
+                # 2순위: 가장 가까운 기지의 미네랄에 할당
+                closest_th = townhalls.closest_to(worker)
+                
+                # 미네랄 찾기 (캐싱 활용)
+                minerals = None
+                if closest_th.tag in self._cached_minerals_near_base:
+                    minerals = self._cached_minerals_near_base[closest_th.tag]
+                else:
+                    minerals = self.bot.mineral_field.closer_than(10, closest_th)
+                    self._cached_minerals_near_base[closest_th.tag] = minerals
+                
+                if minerals:
+                    target_mineral = minerals.closest_to(worker)
+                    self.bot.do(worker.gather(target_mineral))
+                else:
+                    # 폴백: 맵 전체에서 찾기 (드문 경우)
+                    if self.bot.mineral_field:
+                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(worker)))
 
         except Exception:
             pass  # 에러 무시
@@ -659,24 +666,31 @@ class EconomyManager:
                 should_expand = True
                 expand_reason = f"Natural expansion (time: {int(game_time)}s, workers: {worker_count})"
 
-        # 2베이스 → 3베이스: 240초(4분) 이후
+        # ★ 2베이스 → 3베이스: 210초(3:30) 이후 (더 빠르게!) ★
         elif base_count == 2:
-            if game_time >= 240:  # 4분
+            if game_time >= 210:  # 3분 30초 (기존 4분 → 30초 단축)
                 should_expand = True
-                expand_reason = f"3rd base timing (time: {int(game_time)}s)"
+                expand_reason = f"3rd base timing - AGGRESSIVE (time: {int(game_time)}s)"
 
-        # 3베이스 → 4베이스: 360초(6분) 이후
+        # ★ 3베이스 → 4베이스: 300초(5분) 이후 (더 빠르게!) ★
         elif base_count == 3:
-            if game_time >= 360:  # 6분
+            if game_time >= 300:  # 5분 (기존 6분 → 1분 단축)
                 should_expand = True
-                expand_reason = f"4th base timing (time: {int(game_time)}s)"
+                expand_reason = f"4th base timing - AGGRESSIVE (time: {int(game_time)}s)"
 
-        # 4베이스 이상: 480초(8분) 이후, 또는 미네랄 > 800
-        elif base_count >= 4:
+        # ★ 4베이스 → 5베이스: 390초(6:30) 이후, 또는 미네랄 > 800 ★
+        elif base_count == 4:
             minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 480 or minerals > 800:
+            if game_time >= 390 or minerals > 800:  # 6분 30초 (기존 8분 → 1분 30초 단축)
                 should_expand = True
-                expand_reason = f"5th+ base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"5th base timing - AGGRESSIVE (time: {int(game_time)}s, minerals: {minerals})"
+
+        # ★ 5베이스 이상: 480초(8분) 이후, 또는 미네랄 > 1000 ★
+        elif base_count >= 5:
+            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
+            if game_time >= 480 or minerals > 1000:
+                should_expand = True
+                expand_reason = f"6th+ base (time: {int(game_time)}s, minerals: {minerals})"
 
         if not should_expand:
             return

@@ -72,6 +72,11 @@ class StrategyManager:
         self.rush_detection_threshold = 150.0  # 2:30 이전 공격 = 러시
         self.cheese_detection_threshold = 120.0  # 2분 이전 공격 = 치즈
 
+        # ★★★ 로그 스팸 방지 ★★★
+        self.last_air_threat_log = 0
+        self.last_major_attack_log = 0
+        self.log_cooldown = 5.0  # 5초마다만 로그
+
         # 종족별 유닛 비율 (ZERGLING, ROACH, HYDRA, MUTALISK, BANELING, RAVAGER, CORRUPTOR)
         self.race_unit_ratios = {
             EnemyRace.TERRAN: {
@@ -265,8 +270,11 @@ class StrategyManager:
         # 대규모 공격 판정
         # 조건: 위협 점수 20 이상 또는 고위협 유닛 2개 이상
         if total_threat_score >= 20 or high_threat_count >= 2:
-            self.logger.warning(f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
-                                f"Threat score: {total_threat_score}, High-threat units: {high_threat_count}")
+            # ★★★ 로그 스팸 방지: 5초마다만 출력 ★★★
+            if game_time - self.last_major_attack_log > self.log_cooldown:
+                self.logger.warning(f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
+                                    f"Threat score: {total_threat_score}, High-threat units: {high_threat_count}")
+                self.last_major_attack_log = game_time
             return True
 
         return False
@@ -286,8 +294,7 @@ class StrategyManager:
 
         self.current_mode = StrategyMode.DEFENSIVE
 
-        self.current_mode = StrategyMode.DEFENSIVE
-
+        # ★★★ 로그 스팸 방지: 모드 전환 시에만 출력 ★★★
         self.logger.warning(f"[{int(game_time)}s] DEFENSE MODE ACTIVATED - Major attack incoming!")
 
         # 군대 집결 신호
@@ -429,7 +436,10 @@ class StrategyManager:
                     lairs = self.bot.structures(UnitTypeId.LAIR)
                     hives = self.bot.structures(UnitTypeId.HIVE)
                     if lairs.exists or hives.exists:
-                        print(f"[STRATEGY] [{int(game_time)}s] ★★★ AIR THREAT - BUILDING HYDRA DEN NOW ★★★")
+                        # ★★★ 로그 스팸 방지: 5초마다만 출력 ★★★
+                        if game_time - self.last_air_threat_log > self.log_cooldown:
+                            print(f"[STRATEGY] [{int(game_time)}s] ★★★ AIR THREAT - BUILDING HYDRA DEN NOW ★★★")
+                            self.last_air_threat_log = game_time
                         # 직접 건설 시도
                         if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
                             if self.bot.townhalls.exists:
@@ -704,7 +714,51 @@ class StrategyManager:
 
                     if (lairs.exists or hives.exists) and self.bot.can_afford(UnitTypeId.SPIRE):
                         game_time = getattr(self.bot, "time", 0)
-                        print(f"[PROTOSS COUNTER] [{int(game_time)}s] ★★★ BUILDING SPIRE FOR CORRUPTORS ★★★")
+                        print(f"[STRATEGY] [{int(game_time)}s] ★★★ BUILDING SPIRE FOR CORRUPTORS (Auto) ★★★")
+                        
+                        # 건설 위치: 메인 기지 근처
+                        if self.bot.townhalls.exists:
+                            main_base = self.bot.townhalls.first
+                            # 맵 중앙 방향으로 약간 이동 (건물 겹침 방지)
+                            pos = main_base.position.towards(self.bot.game_info.map_center, 6)
+                            
+                            # 비동기 빌드 명령 (Worker Manager가 처리하도록 build 사용)
+                            # self.bot.build는 적절한 일꾼을 찾아 건설함
+                            try:
+                                # await self.bot.build(...)는 코루틴이므로 await 필요하지만
+                                # on_step이 async이므로 가능? 아니면 create_task?
+                                # StrategyManager.update는 동기 함수일 수 있음.
+                                # self.bot.do(self.bot.workers.closest_to(pos).build(UnitTypeId.SPIRE, pos)) 사용이 안전.
+                                
+                                # 하지만 build 함수는 최적 위치를 찾아주므로 build 사용이 좋음.
+                                # 여기서 bot은 BotAI 인스턴스.
+                                # 비동기 함수 호출이 어려우면 동기식으로 처리해야 함.
+                                # 여기서는 안전하게 bot.build (async) 대신 일꾼 직접 명령 사용
+                                
+                                worker = self.bot.workers.closest_to(pos)
+                                if worker:
+                                    # 위치 찾기 (sc2 메서드)
+                                    # find_placement는 async 메서드임. 동기 컨텍스트라면 문제.
+                                    # StrategyManager.update가 sync인지 async인지 확인 필요.
+                                    # bot_step_integration.py에서 `await self._safe_manager_step(...)`으로 호출됨.
+                                    # `_safe_manager_step`을 보면 `method_name="update"`를 호출함.
+                                    # execute_game_logic -> StrategyManager.update (sync defined).
+                                    
+                                    # Sync method cannot await.
+                                    # So we use self.bot.do(worker.build(UnitTypeId.SPIRE, pos)) and hope placement is valid.
+                                    # Better: Use `client.query_building_placement`? Too slow for sync.
+                                    # Let's just issue the command. The bot class usually has `train_or_build_sync` helper if defined?
+                                    # I saw `self.bot.train_or_build_sync` in `_handle_air_threat` earlier!
+                                    # Let's use that if available, or just print warning if not.
+                                    
+                                    if hasattr(self.bot, "train_or_build_sync"):
+                                        self.bot.train_or_build_sync(UnitTypeId.SPIRE, near=pos)
+                                    else:
+                                        # Fallback logic
+                                        self.bot.do(worker.build(UnitTypeId.SPIRE, pos))
+                                        
+                            except Exception as e:
+                                self.logger.warning(f"Spire construction failed: {e}")
 
         except Exception as e:
             self.logger.warning(f"Spire build request failed: {e}")

@@ -122,6 +122,13 @@ class BotStepIntegrator:
 
     async def execute_game_logic(self, iteration: int):
         """게임 로직 실행"""
+
+        # ★ SC2 매너 채팅: GL HF 선언 ★
+        if not getattr(self.bot, "_glhf_sent", False):
+            if self.bot.time < 10.0:
+                await self.bot.chat_send("gl hf")
+            self.bot._glhf_sent = True
+
         try:
             # 0. Performance Optimizer 프레임 시작
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
@@ -225,6 +232,27 @@ class BotStepIntegrator:
                 try:
                     defeat_status = await self.bot.defeat_detection.on_step(iteration)
 
+                    # ★★★ 패배 불가피 시 게임 포기 (훈련 효율 향상) ★★★
+                    if defeat_status.get("should_surrender", False):
+                        game_time = getattr(self.bot, "time", 0)
+                        reason = defeat_status.get("defeat_reason", "알 수 없음")
+                        print(f"\n[SURRENDER] ★★★ 게임 포기! ★★★")
+                        print(f"  - 게임 시간: {int(game_time)}초")
+                        print(f"  - 이유: {reason}")
+                        print(f"  - 다음 게임으로 이동...\n")
+
+                        # ★ SC2 매너 채팅: GG 선언 ★
+                        await self.bot.chat_send("gg")
+                        await asyncio.sleep(1.0) # 채팅 전송 대기
+
+                        # SC2 게임 종료
+                        try:
+                            await self.bot.client.leave()
+                        except Exception as leave_error:
+                            print(f"[ERROR] 게임 종료 실패: {leave_error}")
+
+                        return  # on_step 즉시 종료
+
                     # 패배 직전이면 마지막 방어 시도
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 200 == 0:  # 주기적으로 출력
@@ -263,6 +291,10 @@ class BotStepIntegrator:
                     "Aggressive Strategies",
                     method_name="execute",
                 )
+
+            # ★ NEW: Chat Manager - 상대방 항복/채팅 감지 (10프레임마다) ★
+            if iteration % 10 == 0:
+                await self._handle_chat_interaction()
 
             # 1. Intel (정보 수집)
             await self._safe_manager_step(self.bot.intel, iteration, "Intel")
@@ -731,9 +763,21 @@ class BotStepIntegrator:
             if not hydra_dens.exists and hydra_pending == 0:
                 if has_lair_or_higher and self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
                     if self.bot.townhalls.exists:
-                        await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first.position)
-                        print(f"[ANTI-AIR] [{int(game_time)}s] ★★ Building Hydralisk Den for anti-air! ★★")
-                        return
+                        # 점막 체크 헬퍼 사용
+                        if self.placement_helper:
+                            success = await self.placement_helper.build_structure_safely(
+                                UnitTypeId.HYDRALISKDEN,
+                                self.bot.townhalls.first.position,
+                                max_distance=15.0
+                            )
+                            if success:
+                                print(f"[ANTI-AIR] [{int(game_time)}s] ★★ Building Hydralisk Den for anti-air! ★★")
+                                return
+                        else:
+                            # 폴백: 기존 방식
+                            await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first.position)
+                            print(f"[ANTI-AIR] [{int(game_time)}s] ★★ Building Hydralisk Den for anti-air! ★★")
+                            return
 
             # === 4. 히드라 우선 생산 플래그 설정 ===
             if hydra_dens.ready.exists:
@@ -862,6 +906,34 @@ class BotStepIntegrator:
                 traceback.print_exc()
 
 
+    async def _handle_chat_interaction(self):
+        """
+        상대방 채팅 메시지 처리
+        - "gg", "surrender" 등 항복 메시지 감지 시 응답
+        """
+        if not hasattr(self.bot, "state") or not hasattr(self.bot.state, "chat"):
+            return
+
+        for chat in self.bot.state.chat:
+            # 내 메시지는 무시
+            if chat.player_id == self.bot.player_id:
+                continue
+            
+            message = chat.message.lower().strip()
+            
+            # 항복/GG 메시지 패턴
+            surrender_patterns = ["gg", "good game", "surrender", "i quit", "gewonnen", "g.g"]
+            
+            if any(pattern in message for pattern in surrender_patterns):
+                # 이미 응답했는지 확인 (플래그 사용)
+                if not getattr(self.bot, "_gg_replied", False):
+                    print(f"[CHAT] Opponent surrendered: {chat.message}")
+                    await self.bot.chat_send("gg wp")
+                    self.bot._gg_replied = True
+                    
+                    # 훈련 보상에 승리 보너스 추가 가능성 (여기서는 로깅만)
+                    print("[CHAT] Detected opponent surrender! Victory imminent.")
+
 def create_on_step_implementation(bot):
     """
     on_step 구현을 생성하는 팩토리 함수
@@ -872,3 +944,4 @@ def create_on_step_implementation(bot):
             await integrator.on_step(iteration)
     """
     return BotStepIntegrator(bot)
+

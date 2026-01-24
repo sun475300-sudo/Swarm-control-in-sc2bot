@@ -30,13 +30,23 @@ except ImportError:
         HATCHERY = "HATCHERY"
         LAIR = "LAIR"
         HIVE = "HIVE"
-    
+
     class AbilityId:
         MORPH_LURKER = "MORPH_LURKER"
         MORPHZERGLINGTOBANELING_BANELING = "MORPHZERGLINGTOBANELING_BANELING"
-    
+
     Point2 = tuple
     Unit = object
+
+try:
+    import sys
+    import os
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    from building_placement_helper import BuildingPlacementHelper
+except ImportError:
+    BuildingPlacementHelper = None
 
 
 class AdvancedBuildingManager:
@@ -64,6 +74,12 @@ class AdvancedBuildingManager:
         self.min_distance_from_gas = 3.0       # 가스에서 최소 거리
         self.min_distance_from_townhall = 5.0  # 해처리에서 최소 거리
         self.worker_path_width = 2.0           # 일꾼 이동 경로 폭
+
+        # ★ 점막 체크 헬퍼 ★
+        if BuildingPlacementHelper:
+            self.placement_helper = BuildingPlacementHelper(bot)
+        else:
+            self.placement_helper = None
         
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
     
@@ -634,10 +650,22 @@ class AdvancedBuildingManager:
             return False
 
     async def build_with_worker_safety(self, building_type: UnitTypeId, near: Point2) -> bool:
-        """★ 일꾼 안전을 고려한 건물 건설 ★"""
+        """★ 일꾼 안전을 고려한 건물 건설 (점막 체크 포함) ★"""
         if not self.bot.can_afford(building_type):
             return False
 
+        # 점막 체크 헬퍼 사용
+        if self.placement_helper:
+            success = await self.placement_helper.build_structure_safely(
+                building_type,
+                near,
+                max_distance=15.0
+            )
+            if success:
+                print(f"[BUILDING] Built {building_type} safely on creep")
+                return True
+
+        # 폴백: 기존 방식 (일꾼 안전만 체크)
         safe_position = self.get_safe_building_position(building_type, near)
 
         if not safe_position:
