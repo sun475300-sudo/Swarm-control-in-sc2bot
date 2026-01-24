@@ -46,7 +46,8 @@
       "Bash(if exist nul del /F nul)",
       "Bash(cmd /c \"if exist nul del /F nul\")",
       "Bash(git push:*)",
-      "Bash(shutdown:*)"
+      "Bash(shutdown:*)",
+      "Bash(tee:*)"
     ]
   }
 }

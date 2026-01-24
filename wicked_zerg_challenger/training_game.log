@@ -1,0 +1,574 @@
+
+======================================================================
+? NEURAL NETWORK TRAINING MODE (CONTINUOUS)
+======================================================================
+
+? Training Configuration:
+   ? 15-dimensional state vector (Self 5 + Enemy 10)
+   ? REINFORCE algorithm for policy learning
+   ? Model auto-saves after each game
+   ? Continuous training: Games run continuously without stopping
+   ? Build order comparison with pro gamer baseline
+   ? Auto-update learned parameters on victory
+
+? Model save location: local_training/models/zerg_net_model.pt
+? Build order data: local_training/scripts/learned_build_orders.json
+
+??  Press Ctrl+C to stop training
+======================================================================
+
+[WARNING] Checkpoint manager not available: No module named 'utils.checkpoint_manager'
+
+[STEP 2] ? Initializing Continuous Training Loop...
+======================================================================
+[WARNING] Monitoring server not available: No module named 'monitoring.server_manager'
+[INFO] Continuing without monitoring server...
+[WARNING] Training session manager not available: No module named 'tools.training_session_manager'
+[BG_LEARNER] Started with 2 workers
+[OK] Background parallel learner initialized and started
+[INFO] Replay analysis and model training will run in background
+[INFO] Available maps: 5 maps
+[INFO] Available opponent races: 3 races
+[INFO] Available difficulties: 2 levels
+
+[OK] Continuous training loop initialized
+[INFO] Game windows will open - you can watch the games in real-time!
+[INFO] Neural network is learning from your gameplay...
+======================================================================
+
+
+======================================================================
+? [STEP 3] GAME #1 - Random Selection
+======================================================================
+[SELECTED] Map: AbyssalReefLE
+[SELECTED] Opponent Race: Terran
+[SELECTED] Difficulty: Medium
+
+[INFO] Starting game...
+======================================================================
+
+[32m2026-01-25 00:28:12.504[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was None)[0m
+[32m2026-01-25 00:28:12.504[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m42[0m - [1mCreating new game[0m
+[32m2026-01-25 00:28:12.504[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m43[0m - [1mMap:     AbyssalReefLE[0m
+[32m2026-01-25 00:28:12.504[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m44[0m - [1mPlayers: Bot WickedZergBotProImpl(Zerg), Computer Medium(Terran, RandomBuild)[0m
+[32m2026-01-25 00:28:12.505[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.init_game (was Status.launched)[0m
+[32m2026-01-25 00:28:24.117[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.in_game (was None)[0m
+[32m2026-01-25 00:28:24.117[0m | [1mINFO    [0m | [36msc2.main[0m:[36m_play_game[0m:[36m220[0m - [1mPlayer 1 - Bot WickedZergBotProImpl(Zerg)[0m
+[BOT] on_start: Initializing all managers...
+00:28:24 - WickedZergBot - INFO - Bot started. Initializing managers...
+[BOT] ProductionResilience initialized
+[BOT] EconomyManager initialized
+[BOT] CombatManager initialized
+[BOT] IntelManager initialized
+[INTEL] Data loaded from data/intel_data.json
+  - Enemy Race: Zerg
+  - Build Pattern: zerg_muta
+  - Scouted Locations: 35
+[BOT] ScoutingSystem initialized
+[BOT] StrategyManager initialized
+[BOT] PerformanceOptimizer initialized
+[BOT] PID FormationController initialized
+[BOT] RogueTacticsManager initialized
+[BOT] TransformerDecisionModel initialized (training mode)
+[BOT] HierarchicalRLSystem initialized (training mode)
+[BOT] AggressiveStrategyExecutor initialized
+[BOT] AdaptiveLearningRate initialized - LR: 0.001000
+[BOT] GameAnalytics initialized - 0 games tracked
+[BOT] RL Agent initialized with LR: 0.001000
+[BOT] on_start complete. Enemy race: None
+[BUILD_ORDER] ºôµå ¿À´õ ¼³Á¤: 19roach_rush
+[BUILD_ORDER] ÃÑ 10°³ ´Ü°è
+[BUILD_ORDER] ºôµå ¿À´õ ½Ã½ºÅÛ È°¼ºÈ­!
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[EARLY_DEFENSE] ÃÊ¹Ý ¹æ¾î ½Ã½ºÅÛ È°¼ºÈ­!
+[WARNING] Early Defense error: 'cp949' codec can't encode character '\u26aa' in position 16: illegal multibyte sequence
+[EARLY_SCOUT] ÃÊ¹Ý Á¤Âû ½Ã½ºÅÛ È°¼ºÈ­!
+[EARLY_SCOUT] Lings: ´ë±â | OL: ´ë±â
+[DEBUG] Calling strategy_manager.update() at iteration 0
+00:28:24 - StrategyManager - INFO - [0s] Counter build for zerg_muta
+[ECONOMY] Early worker split completed: 12 workers distributed
+[ECONOMY RECOVERY] [0s] ¡Ú Worker deficit: 10 ¡Ú
+[ECONOMY RECOVERY]   Current: 12, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[HIERARCHICAL RL] Strategy: AGGRESSIVE
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 0ÃÊ
+==================================================
+  AdvancedBuilding: 1È¸ ½ÇÇà, Æò±Õ 1.11ms
+  Aggressive Strategies: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  BuildOrder: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 1È¸ ½ÇÇà, Æò±Õ 1.01ms
+  Creep manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  DefeatDetection: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  EarlyDefense: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  EarlyScout: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Economy: 1È¸ ½ÇÇà, Æò±Õ 2.59ms
+  HierarchicalRL: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Intel: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Micro: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Morph manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Protoss counter: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Queen Manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Rogue Tactics: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Scouting: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Spell manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Strategy: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Transformer: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Upgrade manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+==================================================
+[TRAINING] Step reward: 0.060
+[DEBUG] Calling strategy_manager.update() at iteration 1
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[EXPANSION] [17s] Trying to expand: Natural expansion ASAP (time: 17s, workers: 13)
+[EXPANSION] [17s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [23s] Trying to expand: Natural expansion ASAP (time: 23s, workers: 14)
+[EXPANSION] [23s] Cannot afford Hatchery (need 300 minerals)
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[EARLY_SCOUT] Lings: ´ë±â | OL: Á¤Âû Áß
+[EXPANSION] [29s] Trying to expand: Natural expansion ASAP (time: 29s, workers: 14)
+[EXPANSION] [29s] Cannot afford Hatchery (need 300 minerals)
+[AGGRESSIVE] Selected strategy: baneling_bust vs Race.Terran
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[EXPANSION] [35s] Trying to expand: Natural expansion ASAP (time: 35s, workers: 14)
+[EXPANSION] [35s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Early Defense error: 'cp949' codec can't encode character '\u26aa' in position 16: illegal multibyte sequence
+[HIERARCHICAL RL] Strategy: AGGRESSIVE
+[EXPANSION] [41s] Trying to expand: Natural expansion ASAP (time: 41s, workers: 14)
+[EXPANSION] [41s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [47s] Trying to expand: Natural expansion ASAP (time: 47s, workers: 14)
+[EXPANSION] [47s] Cannot afford Hatchery (need 300 minerals)
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[EXPANSION] [53s] Trying to expand: Natural expansion ASAP (time: 53s, workers: 16)
+[EXPANSION] [53s] Cannot afford Hatchery (need 300 minerals)
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[EARLY_SCOUT] Lings: ´ë±â | OL: Á¤Âû Áß
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[EXPANSION] [58s] Trying to expand: Natural expansion ASAP (time: 58s, workers: 16)
+[EXPANSION] [58s] Cannot afford Hatchery (need 300 minerals)
+[BUILD] SPINECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPINECRAWLER safely on creep
+[EXPANSION] [64s] Trying to expand: Natural expansion ASAP (time: 64s, workers: 16)
+[EXPANSION] [64s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] Building extractor (gas shortage)
+[ECONOMY] [64s] ¡Ú First gas timing ¡Ú
+[EARLY_DEFENSE] Pool °Ç¼³ ½ÇÆÐ: 'cp949' codec can't encode character '\u2713' in position 16: illegal multibyte sequence
+[EXPANSION] [70s] Trying to expand: Natural expansion ASAP (time: 70s, workers: 15)
+[EXPANSION] [70s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Early Defense error: 'cp949' codec can't encode character '\u26aa' in position 16: illegal multibyte sequence
+[EXPANSION] [76s] Trying to expand: Natural expansion ASAP (time: 76s, workers: 14)
+[EXPANSION] [76s] Cannot afford Hatchery (need 300 minerals)
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 55) ¡Ú
+[HIERARCHICAL RL] Strategy: ECONOMY
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[EARLY_SCOUT] Lings: ´ë±â | OL: Á¤Âû Áß
+[EXPANSION] [82s] Trying to expand: Natural expansion ASAP (time: 82s, workers: 14)
+[EXPANSION] [82s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [88s] Trying to expand: Natural expansion ASAP (time: 88s, workers: 15)
+[EXPANSION] [88s] Cannot afford Hatchery (need 300 minerals)
+[DEBUG] Calling strategy_manager.update() at iteration 500
+[TRAINING] Step reward: 0.010
+[AUTO TECH] [90s] Building Extractor #2
+[EXPANSION] [94s] Trying to expand: Natural expansion ASAP (time: 94s, workers: 13)
+[EXPANSION] [94s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [100s] Trying to expand: Natural expansion ASAP (time: 100s, workers: 13)
+[EXPANSION] [100s] Cannot afford Hatchery (need 300 minerals)
+[BUILD] SPINECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPINECRAWLER safely on creep
+[EXPANSION] [106s] Trying to expand: Natural expansion ASAP (time: 106s, workers: 13)
+[EXPANSION] [106s] Cannot afford Hatchery (need 300 minerals)
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[WARNING] Early Defense error: 'cp949' codec can't encode character '\u26aa' in position 16: illegal multibyte sequence
+[EARLY_SCOUT] Lings: ´ë±â | OL: Á¤Âû Áß
+[CREEP] [107s] Tumors: 0, Farthest: 0 from base
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[EXPANSION] [111s] Trying to expand: Natural expansion ASAP (time: 111s, workers: 13)
+[EXPANSION] [111s] Cannot afford Hatchery (need 300 minerals)
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 116ÃÊ
+==================================================
+  AdvancedBuilding: 654È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Aggressive Strategies: 163È¸ ½ÇÇà, Æò±Õ 0.14ms
+  AggressiveTech: 654È¸ ½ÇÇà, Æò±Õ 0.00ms
+  BuildOrder: 654È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Combat: 654È¸ ½ÇÇà, Æò±Õ 0.09ms
+  Creep manager: 654È¸ ½ÇÇà, Æò±Õ 0.01ms
+  DefeatDetection: 654È¸ ½ÇÇà, Æò±Õ 0.02ms
+  EarlyDefense: 654È¸ ½ÇÇà, Æò±Õ 0.15ms
+  EarlyScout: 654È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Economy: 654È¸ ½ÇÇà, Æò±Õ 0.10ms
+  HierarchicalRL: 29È¸ ½ÇÇà, Æò±Õ 0.24ms
+  Intel: 654È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Micro: 654È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Morph manager: 654È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 654È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 654È¸ ½ÇÇà, Æò±Õ 0.26ms
+  Protoss counter: 654È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Queen Manager: 654È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Rogue Tactics: 81È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Scouting: 654È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Spell manager: 654È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Strategy: 654È¸ ½ÇÇà, Æò±Õ 0.11ms
+  Transformer: 14È¸ ½ÇÇà, Æò±Õ 0.49ms
+  Upgrade manager: 654È¸ ½ÇÇà, Æò±Õ 0.02ms
+==================================================
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 65) ¡Ú
+[EXPANSION] [117s] Trying to expand: Natural expansion ASAP (time: 117s, workers: 12)
+[EXPANSION] [117s] Cannot afford Hatchery (need 300 minerals)
+[HIERARCHICAL RL] Strategy: ECONOMY
+[EMERGENCY] [121s] Building emergency Spore Crawler!
+[EXPANSION] [123s] Trying to expand: Natural expansion ASAP (time: 123s, workers: 12)
+[EXPANSION] [123s] Cannot afford Hatchery (need 300 minerals)
+[EARLY_DEFENSE] Zergling 2¸¶¸® »ý»ê (¸ñÇ¥: 6)
+[EXPANSION] [129s] Trying to expand: Natural expansion ASAP (time: 129s, workers: 11)
+[EXPANSION] [129s] Cannot afford Hatchery (need 300 minerals)
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[EARLY_SCOUT] Lings: ´ë±â | OL: Á¤Âû Áß
+[EXPANSION] [135s] Trying to expand: Natural expansion ASAP (time: 135s, workers: 11)
+[EXPANSION] [135s] Cannot afford Hatchery (need 300 minerals)
+[EARLY_DEFENSE] Zergling 2¸¶¸® »ý»ê (¸ñÇ¥: 6)
+[EXPANSION] [141s] Trying to expand: Natural expansion ASAP (time: 141s, workers: 11)
+[EXPANSION] [141s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Early Defense error: 'cp949' codec can't encode character '\u26aa' in position 16: illegal multibyte sequence
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EARLY_DEFENSE] Zergling 2¸¶¸® »ý»ê (¸ñÇ¥: 6)
+[EXPANSION] [147s] Trying to expand: Natural expansion ASAP (time: 147s, workers: 11)
+[EXPANSION] [147s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [153s] Trying to expand: Natural expansion ASAP (time: 153s, workers: 11)
+[EXPANSION] [153s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 10) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[HIERARCHICAL RL] Strategy: ECONOMY
+[EXPANSION] [159s] Trying to expand: Natural expansion ASAP (time: 159s, workers: 11)
+[EXPANSION] [159s] Cannot afford Hatchery (need 300 minerals)
+[BUILD_ORDER] 0/10 (0%) | ´ÙÀ½: 13º¸±Þ 13¿À¹ö·Îµå
+[EARLY_SCOUT] Lings: 2/2 | OL: Á¤Âû Áß
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [165s] Trying to expand: Natural expansion ASAP (time: 165s, workers: 11)
+[EXPANSION] [165s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [170s] Trying to expand: Natural expansion ASAP (time: 170s, workers: 11)
+[EXPANSION] [170s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [176s] Trying to expand: Natural expansion ASAP (time: 176s, workers: 11)
+[EXPANSION] [176s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Early Defense error: 'cp949' codec can't encode character '\u26aa' in position 16: illegal multibyte sequence
+[DEBUG] Calling strategy_manager.update() at iteration 1000
+00:28:41 - ScoutingSystem - ERROR - Scouting system error: 'IntelManager' object has no attribute 'enemy_main_base_location'
+[TRAINING] Step reward: 0.010
+[ECONOMY RECOVERY] [180s] ¡Ú Worker deficit: 10 ¡Ú
+[ECONOMY RECOVERY]   Current: 12, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [182s] Trying to expand: Natural expansion ASAP (time: 182s, workers: 12)
+[EXPANSION] [182s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EARLY_SCOUT] Lings: 2/2 | OL: Á¤Âû Áß
+[EXPANSION] [188s] Trying to expand: Natural expansion ASAP (time: 188s, workers: 12)
+[EXPANSION] [188s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [194s] Trying to expand: Natural expansion ASAP (time: 194s, workers: 12)
+[EXPANSION] [194s] Cannot afford Hatchery (need 300 minerals)
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 75) ¡Ú
+[RESOURCE SURPLUS] Handled: {'tech_buildings_built': 0, 'lurkers_morphed': 0, 'banelings_morphed': 0}
+[BUILD] SPORECRAWLER at (44.68269045571747, 117.4231566176629) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[HIERARCHICAL RL] Strategy: ECONOMY
+[EXPANSION] [200s] Trying to expand: Natural expansion ASAP (time: 200s, workers: 12)
+[EXPANSION] [200s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY RECOVERY] [200s] ¡Ú Worker deficit: 10 ¡Ú
+[ECONOMY RECOVERY]   Current: 12, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [206s] Trying to expand: Natural expansion ASAP (time: 206s, workers: 13)
+[EXPANSION] [206s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 211ÃÊ
+==================================================
+  AdvancedBuilding: 531È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 133È¸ ½ÇÇà, Æò±Õ 0.21ms
+  AggressiveTech: 531È¸ ½ÇÇà, Æò±Õ 0.00ms
+  BuildOrder: 353È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Combat: 531È¸ ½ÇÇà, Æò±Õ 0.12ms
+  Creep manager: 531È¸ ½ÇÇà, Æò±Õ 0.02ms
+  DefeatDetection: 531È¸ ½ÇÇà, Æò±Õ 0.03ms
+  EarlyDefense: 353È¸ ½ÇÇà, Æò±Õ 0.39ms
+  EarlyScout: 531È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Economy: 531È¸ ½ÇÇà, Æò±Õ 0.09ms
+  HierarchicalRL: 24È¸ ½ÇÇà, Æò±Õ 0.24ms
+  Intel: 531È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Micro: 531È¸ ½ÇÇà, Æò±Õ 0.17ms
+  Morph manager: 531È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Multi-base defense: 531È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 531È¸ ½ÇÇà, Æò±Õ 0.36ms
+  Protoss counter: 531È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Queen Manager: 531È¸ ½ÇÇà, Æò±Õ 0.07ms
+  Rogue Tactics: 67È¸ ½ÇÇà, Æò±Õ 0.08ms
+  Scouting: 531È¸ ½ÇÇà, Æò±Õ 0.13ms
+  Spell manager: 531È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Strategy: 531È¸ ½ÇÇà, Æò±Õ 0.14ms
+  Transformer: 12È¸ ½ÇÇà, Æò±Õ 0.50ms
+  Upgrade manager: 531È¸ ½ÇÇà, Æò±Õ 0.02ms
+==================================================
+[EXPANSION] [212s] Trying to expand: Natural expansion ASAP (time: 212s, workers: 13)
+[EXPANSION] [212s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EARLY_SCOUT] Lings: 2/2 | OL: Á¤Âû Áß
+00:28:44 - ScoutingSystem - ERROR - Scouting system error: 'IntelManager' object has no attribute 'enemy_main_base_location'
+[CREEP] [214s] Tumors: 0, Farthest: 0 from base
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [218s] Trying to expand: Natural expansion ASAP (time: 218s, workers: 13)
+[EXPANSION] [218s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY RECOVERY] [220s] ¡Ú Worker deficit: 9 ¡Ú
+[ECONOMY RECOVERY]   Current: 13, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [223s] Trying to expand: Natural expansion ASAP (time: 223s, workers: 14)
+[EXPANSION] [223s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [229s] Trying to expand: Natural expansion ASAP (time: 229s, workers: 14)
+[EXPANSION] [229s] Cannot afford Hatchery (need 300 minerals)
+00:28:46 - UpgradeManager - INFO - [231s] ¡Ú¡Ú¡Ú ´ë»ç ÃËÁø (Àú±Û¸µ ¹ß¾÷) ¿¬±¸ ½ÃÀÛ! ¡Ú¡Ú¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 25) ¡Ú
+[EXPANSION] [235s] Trying to expand: Natural expansion ASAP (time: 235s, workers: 15)
+[EXPANSION] [235s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[HIERARCHICAL RL] Strategy: ECONOMY
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[AUTO TECH] [240s] Building Evolution Chamber
+[EARLY_SCOUT] Lings: 2/2 | OL: Á¤Âû Áß
+[EXPANSION] [241s] Trying to expand: Natural expansion ASAP (time: 241s, workers: 15)
+[EXPANSION] [241s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [247s] Trying to expand: Natural expansion ASAP (time: 247s, workers: 15)
+[EXPANSION] [247s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 247s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+00:28:48 - ScoutingSystem - ERROR - Scouting system error: 'IntelManager' object has no attribute 'enemy_main_base_location'
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [253s] Trying to expand: Natural expansion ASAP (time: 253s, workers: 15)
+[EXPANSION] [253s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [259s] Trying to expand: Natural expansion ASAP (time: 259s, workers: 16)
+[EXPANSION] [259s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 259s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [265s] Trying to expand: Natural expansion ASAP (time: 265s, workers: 16)
+[EXPANSION] [265s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EARLY_SCOUT] Lings: 2/2 | OL: Á¤Âû Áß
+[DEBUG] Calling strategy_manager.update() at iteration 1500
+[TRAINING] Step reward: 0.060
+[EXPANSION] [271s] Trying to expand: Natural expansion ASAP (time: 271s, workers: 16)
+[EXPANSION] [271s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 271s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 0) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[HIERARCHICAL RL] Strategy: ECONOMY
+[EXPANSION] [276s] Trying to expand: Natural expansion ASAP (time: 276s, workers: 18)
+[EXPANSION] [276s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [282s] Trying to expand: Natural expansion ASAP (time: 282s, workers: 17)
+[EXPANSION] [282s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 282s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+00:28:52 - ScoutingSystem - ERROR - Scouting system error: 'IntelManager' object has no attribute 'enemy_main_base_location'
+[WARNING] Micro error: Unit.target_in_range() got an unexpected keyword argument 'gap'
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [288s] Trying to expand: Natural expansion ASAP (time: 288s, workers: 18)
+[EXPANSION] [288s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EARLY_SCOUT] Lings: 2/2 | OL: Á¤Âû Áß
+[EXPANSION] [294s] Trying to expand: Natural expansion ASAP (time: 294s, workers: 18)
+[EXPANSION] [294s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 294s) ¡Ú
+00:28:53 - UpgradeManager - INFO - [294s] ¡Ú¡Ú¡Ú ±â³¶ °©ÇÇ (´ë±ºÁÖ ¼Ó¾÷) ¿¬±¸ ½ÃÀÛ! ¡Ú¡Ú¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [300s] Trying to expand: Natural expansion ASAP (time: 300s, workers: 16)
+[EXPANSION] [300s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 304ÃÊ
+==================================================
+  AdvancedBuilding: 519È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Aggressive Strategies: 130È¸ ½ÇÇà, Æò±Õ 0.40ms
+  AggressiveTech: 519È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 519È¸ ½ÇÇà, Æò±Õ 0.10ms
+  Creep manager: 519È¸ ½ÇÇà, Æò±Õ 0.01ms
+  DefeatDetection: 519È¸ ½ÇÇà, Æò±Õ 0.03ms
+  EarlyScout: 494È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Economy: 519È¸ ½ÇÇà, Æò±Õ 0.20ms
+  HierarchicalRL: 24È¸ ½ÇÇà, Æò±Õ 0.27ms
+  Intel: 519È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Micro: 519È¸ ½ÇÇà, Æò±Õ 0.20ms
+  Morph manager: 519È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 519È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 519È¸ ½ÇÇà, Æò±Õ 0.34ms
+  Protoss counter: 519È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Queen Manager: 519È¸ ½ÇÇà, Æò±Õ 0.11ms
+  Rogue Tactics: 65È¸ ½ÇÇà, Æò±Õ 0.11ms
+  Scouting: 519È¸ ½ÇÇà, Æò±Õ 0.15ms
+  Spell manager: 519È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Strategy: 519È¸ ½ÇÇà, Æò±Õ 0.15ms
+  Transformer: 12È¸ ½ÇÇà, Æò±Õ 0.63ms
+  Upgrade manager: 519È¸ ½ÇÇà, Æò±Õ 0.03ms
+==================================================
+[EXPANSION] [306s] Trying to expand: Natural expansion ASAP (time: 306s, workers: 16)
+[EXPANSION] [306s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 306s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [312s] Trying to expand: Natural expansion ASAP (time: 312s, workers: 17)
+[EXPANSION] [312s] Cannot afford Hatchery (need 300 minerals)
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 20) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[HIERARCHICAL RL] Strategy: ECONOMY
+[AUTO TECH] [317s] Building Roach Warren
+[EXPANSION] [318s] Trying to expand: Natural expansion ASAP (time: 318s, workers: 17)
+[EXPANSION] [318s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 318s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+00:28:56 - ScoutingSystem - ERROR - Scouting system error: 'IntelManager' object has no attribute 'enemy_main_base_location'
+[CREEP] [321s] Tumors: 0, Farthest: 0 from base
+[WARNING] Micro error: Unit.target_in_range() got an unexpected keyword argument 'gap'
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [324s] Trying to expand: Natural expansion ASAP (time: 324s, workers: 18)
+[EXPANSION] [324s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [330s] Trying to expand: Natural expansion ASAP (time: 330s, workers: 17)
+[EXPANSION] [330s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 330s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [335s] Trying to expand: Natural expansion ASAP (time: 335s, workers: 17)
+[EXPANSION] [335s] Cannot afford Hatchery (need 300 minerals)
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[EXPANSION] [341s] Trying to expand: Natural expansion ASAP (time: 341s, workers: 18)
+[EXPANSION] [341s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 341s) ¡Ú
+[WARNING] Combat Agent execution error: name 'Point2' is not defined
+[BUILD] SPORECRAWLER at (44.730769856770834, 120.1466552734375) (creep: True)
+[BUILDING] Built UnitTypeId.SPORECRAWLER safely on creep
+[EXPANSION] [347s] Trying to expand: Natural expansion ASAP (time: 347s, workers: 16)
+[EXPANSION] [347s] Cannot afford Hatchery (need 300 minerals)
+[FORCE EXPAND] ¡Ú 1min with only 1 base - FORCING natural! BUT cannot afford (minerals: 20) ¡Ú
+[EXPANSION] [353s] Trying to expand: Natural expansion ASAP (time: 353s, workers: 17)
+[EXPANSION] [353s] Cannot afford Hatchery (need 300 minerals)
+[ECONOMY] ¡Ú DESPERATE EXPANSION: Force expanding! (No natural @ 353s) ¡Ú
+[BASE DEFENSE] [353s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 9, Threat score: 18
+[BASE DEFENSE] [353s] ¡Ú 6 WORKERS DEFENDING ¡Ú
+[HIERARCHICAL RL] Strategy: ECONOMY
+[DEBUG] Calling strategy_manager.update() at iteration 2000
+[TRAINING] Step reward: 0.460
+[EXPANSION] [359s] Trying to expand: Natural expansion ASAP (time: 359s, workers: 9)
+[EXPANSION] [359s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [365s] Trying to expand: Natural expansion ASAP (time: 365s, workers: 2)
+[EXPANSION] [365s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [371s] Trying to expand: Natural expansion ASAP (time: 371s, workers: 2)
+[EXPANSION] [371s] Cannot afford Hatchery (need 300 minerals)
+[BASE DEFENSE] [373s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 8, Threat score: 16
+[DEFEAT DETECTION] À§±â »óÈ²! - °æÁ¦ À§±â (ÀÏ²Û 2, ¹Ì³×¶ö 25)
+[EXPANSION] [377s] Trying to expand: Natural expansion ASAP (time: 377s, workers: 1)
+[EXPANSION] [377s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [383s] Trying to expand: Natural expansion ASAP (time: 383s, workers: 0)
+[EXPANSION] [383s] Cannot afford Hatchery (need 300 minerals)
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 383ÃÊ
+==================================================
+  AdvancedBuilding: 441È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Aggressive Strategies: 110È¸ ½ÇÇà, Æò±Õ 0.39ms
+  AggressiveTech: 441È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 441È¸ ½ÇÇà, Æò±Õ 0.17ms
+  Creep manager: 441È¸ ½ÇÇà, Æò±Õ 0.02ms
+  DefeatDetection: 441È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Economy: 441È¸ ½ÇÇà, Æò±Õ 0.18ms
+  HierarchicalRL: 20È¸ ½ÇÇà, Æò±Õ 0.05ms
+  Intel: 441È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Micro: 441È¸ ½ÇÇà, Æò±Õ 0.19ms
+  Morph manager: 441È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 441È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 441È¸ ½ÇÇà, Æò±Õ 0.39ms
+  Protoss counter: 441È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Queen Manager: 441È¸ ½ÇÇà, Æò±Õ 0.11ms
+  Rogue Tactics: 55È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Scouting: 441È¸ ½ÇÇà, Æò±Õ 0.17ms
+  Spell manager: 441È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Strategy: 441È¸ ½ÇÇà, Æò±Õ 0.19ms
+  Transformer: 10È¸ ½ÇÇà, Æò±Õ 0.54ms
+  Upgrade manager: 441È¸ ½ÇÇà, Æò±Õ 0.02ms
+==================================================
+[EXPANSION] [388s] Trying to expand: Natural expansion ASAP (time: 388s, workers: 0)
+[EXPANSION] [388s] Cannot afford Hatchery (need 300 minerals)
+
+[SURRENDER] ¡Ú¡Ú¡Ú °ÔÀÓ Æ÷±â! ¡Ú¡Ú¡Ú
+  - °ÔÀÓ ½Ã°£: 392ÃÊ
+  - ÀÌÀ¯: ¸ðµç ±âÁö ÆÄ±«µÊ (ÇØÃ³¸® 0)
+  - ´ÙÀ½ °ÔÀÓÀ¸·Î ÀÌµ¿...
+
+[32m2026-01-25 00:29:07.842[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was Status.in_game)[0m
+[BOT] Game ended with result: Result.Defeat
+[INTEL] Data saved to data/intel_data.json
+[32m2026-01-25 00:29:07.843[0m | [1mINFO    [0m | [36msc2.sc2process[0m:[36m_close_connection[0m:[36m241[0m - [1mClosing connection at 54720...[0m
+[32m2026-01-25 00:29:07.844[0m | [1mINFO    [0m | [36msc2.sc2process[0m:[36mkill_all[0m:[36m36[0m - [1mkill_switch: Process cleanup for 1 processes[0m
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 320, in main
+    run_game(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 521, in run_game
+    result: Result = asyncio.run(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 365, in _host_game
+    result = await _play_game(players[0], client, realtime, portconfig, game_time_limit, rgb_render_config)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 225, in _play_game
+    result = await _play_game_ai(client, player_id, player.ai, realtime, game_time_limit)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 199, in _play_game_ai
+    await ai.on_end(client._game_result[player_id])
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\wicked_zerg_bot_pro_impl.py", line 347, in on_end
+    self.performance_optimizer.on_end(game_result)
+AttributeError: 'PerformanceOptimizer' object has no attribute 'on_end'
+
+[ERROR] Game #1 failed: 'PerformanceOptimizer' object has no attribute 'on_end'
+[RETRY] Will retry after 10 seconds...
+
+??  [RETRY] Current consecutive failures: 1/5
+
+======================================================================
+? [STEP 3] GAME #2 - Random Selection
+======================================================================
+[SELECTED] Map: AbyssalReefLE
+[SELECTED] Opponent Race: Terran
+[SELECTED] Difficulty: Easy
+
+[INFO] Starting game...
+======================================================================
+
+[32m2026-01-25 00:29:23.102[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was None)[0m
+[32m2026-01-25 00:29:23.102[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m42[0m - [1mCreating new game[0m
+[32m2026-01-25 00:29:23.102[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m43[0m - [1mMap:     AbyssalReefLE[0m
+[32m2026-01-25 00:29:23.104[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m44[0m - [1mPlayers: Bot WickedZergBotProImpl(Zerg), Computer Easy(Terran, RandomBuild)[0m
+[32m2026-01-25 00:29:23.104[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.init_game (was Status.launched)[0m
+[32m2026-01-25 00:29:33.146[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.in_game (was None)[0m
+[32m2026-01-25 00:29:33.146[0m | [1mINFO    [0m | [36msc2.main[0m:[36m_play_game[0m:[36m220[0m - [1mPlayer 1 - Bot WickedZergBotProImpl(Zerg)[0m

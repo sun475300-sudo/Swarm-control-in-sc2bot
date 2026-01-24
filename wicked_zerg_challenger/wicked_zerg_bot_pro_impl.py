@@ -236,6 +236,13 @@ class WickedZergBotProImpl(BotAI):
         except ImportError:
             pass
 
+        # ★ NEW: Multi-Base Defense System ★
+        try:
+            from multi_base_defense import MultiBaseDefense
+            self.multi_base_defense = MultiBaseDefense(self)
+        except ImportError:
+            pass
+
         try:
             from queen_manager import QueenManager
             self.queen_manager = QueenManager(self)

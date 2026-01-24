@@ -217,6 +217,26 @@ class CombatManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
+        # ★ DYNAMIC PRIORITY ADJUSTMENT ★
+        # 전략 모드에 따라 우선순위 동적 변경
+        strategy = getattr(self.bot, "strategy_manager", None)
+        current_mode = "normal"
+        if strategy:
+            current_mode = strategy.current_mode.value
+
+        # 기본 우선순위
+        self.task_priorities["base_defense"] = 100
+        self.task_priorities["main_attack"] = 40
+
+        # 공격 모드면 공격 우선순위 대폭 상향
+        if current_mode in ["aggressive", "all_in"]:
+            self.task_priorities["main_attack"] = 90  # 방어(100)보다는 낮지만 매우 높게
+            self.task_priorities["base_defense"] = 45 # 일반 방어는 무시하고 공격 집중 (크리티컬만 방어)
+            
+            # ALL_IN이면 방어 더 낮춤
+            if current_mode == "all_in":
+                self.task_priorities["base_defense"] = 20
+        
         # Evaluate tasks
         tasks_to_execute = []
 
@@ -2202,26 +2222,29 @@ class CombatManager:
 
         for worker in defense_workers:
             try:
-                # ★ 일꾼이 기지에서 20거리 이상 벗어나면 복귀 ★
-                if closest_townhall and worker.distance_to(closest_townhall) > 20:
-                    self.bot.do(worker.gather(self.bot.mineral_field.closest_to(worker)))
+                # ★ CRITICAL: 일꾼이 기지에서 12거리 이상 벗어나면 즉시 복귀 ★
+                if closest_townhall and worker.distance_to(closest_townhall) > 12:
+                    self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
                     continue
 
                 if threat_enemies:
-                    # ★ 가까운 적만 공격 (15 거리 이내) ★
-                    nearby_threats = [e for e in threat_enemies if e.distance_to(worker) < 15]
-                    if nearby_threats:
-                        closest = min(nearby_threats, key=lambda e: e.distance_to(worker))
+                    # ★ 적이 기지 근처(12거리)에 있을 때만 공격 ★
+                    base_close_threats = [e for e in threat_enemies
+                                         if closest_townhall and e.distance_to(closest_townhall) < 12]
+                    if base_close_threats:
+                        # 일꾼에게 가까운 위협 공격
+                        closest = min(base_close_threats, key=lambda e: e.distance_to(worker))
                         self.bot.do(worker.attack(closest))
                     else:
-                        # 가까운 적이 없으면 채취로 복귀
-                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(worker)))
+                        # 적이 기지에서 멀어지면 복귀
+                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
                 else:
-                    # 위협 위치가 15거리 이내면 공격, 아니면 복귀
-                    if worker.distance_to(threat_position) < 15:
+                    # 위협 위치가 기지 근처(12거리)에 있을 때만 공격
+                    if closest_townhall and threat_position.distance_to(closest_townhall) < 12:
                         self.bot.do(worker.attack(threat_position))
                     else:
-                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(worker)))
+                        # 적이 멀어지면 복귀
+                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
             except Exception:
                 continue
 

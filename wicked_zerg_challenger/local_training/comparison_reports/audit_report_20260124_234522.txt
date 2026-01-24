@@ -1,0 +1,48 @@
+======================================================================
+STRATEGY AUDIT REPORT
+Generated: 2026-01-24 23:45:22
+======================================================================
+
+## 1. BUILD ORDER TIMING ANALYSIS
+----------------------------------------
+[+] SpawningPool: Bot=75.0s, Pro=75s (diff: +0s)
+[+] Hatchery: Bot=90.0s, Pro=85s (diff: +5s)
+[+] Extractor: Bot=85.0s, Pro=90s (diff: -5s)
+[+] Queen: Bot=100.0s, Pro=105s (diff: -5s)
+[+] Zergling: Bot=110.0s, Pro=115s (diff: -5s)
+[+] RoachWarren: Bot=180.0s, Pro=180s (diff: +0s)
+[-] Lair: Bot=300.0s, Pro=270s (diff: +30s)
+    -> Start Lair earlier for tech advantage
+[!] third_base: Bot=0s, Pro=210s (diff: +0s)
+    -> Add third_base to build order
+[-] HydraliskDen: Bot=360.0s, Pro=330s (diff: +30s)
+    -> Build HydraliskDen 30s earlier
+
+## 2. UNIT COMPOSITION ANALYSIS
+----------------------------------------
+  Ravager: Bot=0.0%, Learned=5.0%
+  Zergling: Bot=25.0%, Learned=20.0%
+  Mutalisk: Bot=5.0%, Learned=3.0%
+  Lurker: Bot=0.0%, Learned=2.0%
+  Queen: Bot=10.0%, Learned=10.0%
+  Roach: Bot=15.0%, Learned=15.0%
+  Hydralisk: Bot=10.0%, Learned=10.0%
+  Baneling: Bot=5.0%, Learned=5.0%
+  Drone: Bot=30.0%, Learned=30.0%
+
+## 3. WIN RATE ANALYSIS
+----------------------------------------
+  Overall: 0.0% (0/0)
+  vs Terran: 0.0%
+  vs Protoss: 0.0%
+  vs Zerg: 0.0%
+
+## 4. RECOMMENDATIONS
+----------------------------------------
+  * Focus on macro fundamentals: drone count, injection, creep spread
+  * Practice standard openers against AI before ladder
+  * Review losing replays to identify common mistakes
+
+======================================================================
+END OF REPORT
+======================================================================

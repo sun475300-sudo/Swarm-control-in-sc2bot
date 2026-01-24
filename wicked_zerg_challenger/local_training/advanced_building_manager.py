@@ -378,20 +378,14 @@ class AdvancedBuildingManager:
             # 적이 보이지 않으면 본진 근처에 건설 (기본 로직)
             if self.bot.townhalls.exists:
                 main_base = self.bot.townhalls.first
+                target_pos = main_base.position.towards(self.bot.game_info.map_center, 8)
+                
                 for building_type in [UnitTypeId.SPINECRAWLER, UnitTypeId.SPORECRAWLER]:
                     if self.bot.can_afford(building_type):
-                        try:
-                            result = await self.bot.build(
-                                building_type,
-                                near=main_base.position.towards(
-                                    self.bot.game_info.map_center, 8
-                                )
-                            )
-                            if result:
-                                results[building_type] = 1
-                                break
-                        except Exception:
-                            pass
+                        # ★ FIX: Use safe placement instead of raw build ★
+                        if await self.build_with_worker_safety(building_type, target_pos):
+                             results[building_type] = 1
+                             break
             return results
         
         # 길목에 방어 건물 건설
@@ -401,11 +395,8 @@ class AdvancedBuildingManager:
                     continue  # 이미 건설됨
                 
                 if self.bot.can_afford(building_type):
-                    success = await self.build_defense_building_at_chokepoint(
-                        building_type,
-                        chokepoint
-                    )
-                    if success:
+                    # ★ FIX: Use safe placement at chokepoint too ★
+                    if await self.build_with_worker_safety(building_type, chokepoint):
                         results[building_type] = 1
                         break  # 한 번에 하나씩만
         
@@ -495,22 +486,14 @@ class AdvancedBuildingManager:
                 self.bot.vespene >= gas_cost):
                 
                 try:
-                    if self.bot.townhalls.exists:
-                        main_base = self.bot.townhalls.first
-                        result = await self.bot.build(
-                            tech_type,
-                            near=main_base.position.towards(
-                                self.bot.game_info.map_center, 5
-                            )
-                        )
-                        
-                        if result:
-                            results[tech_type] = True
-                            self._last_aggressive_tech_time = game_time
-                            print(f"[AGGRESSIVE TECH] Built {tech_type} "
-                                  f"(surplus: M:{int(mineral_surplus)}+ G:{int(gas_surplus)}+)")
-                            # 한 번에 하나씩만 건설
-                            break
+                    target_pos = main_base.position.towards(self.bot.game_info.map_center, 6)
+                    
+                    # ★ FIX: Use safe placement logic ★
+                    if await self.build_with_worker_safety(tech_type, target_pos):
+                        results[tech_type] = True
+                        self._last_aggressive_tech_time = game_time
+                        print(f"[AGGRESSIVE TECH] Built {tech_type} (surplus: M:{int(mineral_surplus)}+ G:{int(gas_surplus)}+)")
+                        break
                 except Exception as e:
                     if self.bot.iteration % 100 == 0:
                         print(f"[AGGRESSIVE TECH] Failed to build {tech_type}: {e}")
@@ -735,22 +718,36 @@ class AdvancedBuildingManager:
         return False
 
     async def rescue_stuck_workers(self) -> int:
-        """★ 끼인 일꾼 구출 ★"""
+        """★ 끼인 일꾼 구출 (강화됨) ★"""
         if not hasattr(self.bot, 'workers'):
             return 0
 
         rescued = 0
         for worker in self.bot.workers:
             try:
+                # 1. Idle 상태인 경우
+                is_stuck = False
                 if hasattr(worker, 'is_idle') and worker.is_idle:
+                    is_stuck = True
+                
+                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+
+                if is_stuck:
                     if hasattr(self.bot, 'structures'):
-                        for structure in self.bot.structures:
-                            if worker.distance_to(structure) < 1.5:
-                                if hasattr(self.bot, 'mineral_field') and self.bot.mineral_field.exists:
-                                    closest_mineral = self.bot.mineral_field.closest_to(worker)
-                                    self.bot.do(worker.gather(closest_mineral))
-                                    rescued += 1
-                                break
+                        # 건물 사이에 끼었는지 확인 (거리 2.0 이내)
+                        nearby_structures = self.bot.structures.closer_than(2.0, worker)
+                        if nearby_structures.amount >= 2: # 2개 이상 건물 근처면 낀 것으로 간주
+                            if hasattr(self.bot, 'mineral_field') and self.bot.mineral_field.exists:
+                                closest_mineral = self.bot.mineral_field.closest_to(worker)
+                                
+                                # 1. Stop command first
+                                self.bot.do(worker.stop())
+                                # 2. Gather command (ignores unit collision)
+                                self.bot.do(worker.gather(closest_mineral))
+                                
+                                if self.bot.iteration % 100 == 0:
+                                    print(f"[RESCUE] Saved stuck worker {worker.tag}")
+                                rescued += 1
             except Exception:
                 continue
 
