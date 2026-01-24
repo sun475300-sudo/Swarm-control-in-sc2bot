@@ -154,11 +154,14 @@ class EvolutionUpgradeManager:
         priorities = []
 
         if is_ranged_main:
-            # 바퀴/히드라 체제: 원거리 → 방어 → 원거리
-            priorities = ["missile", "armor", "missile", "armor", "missile"]
+            # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
+            # 원거리 공1 -> 공2 -> 공3 -> 방어1...
+            # 테크가 막혀있으면(예: 레어 없음) 방어 업그레이드로 넘어감
+            priorities = ["missile", "missile", "missile", "armor", "armor", "armor"]
         else:
-            # 저글링/맹독충 체제 (기본): 근접 → 방어 → 근접
-            priorities = ["melee", "armor", "melee", "armor", "melee"]
+            # ★ 저글링/맹독충 체제: 근접 공격 + 방어 균형
+            # 근접1 -> 방어1 -> 근접2 -> 방어2...
+            priorities = ["melee", "armor", "melee", "armor", "melee", "armor"]
 
         # ★★★ 공중 유닛이 있으면 공중 업그레이드 추가 ★★★
         corruptor_count = composition.get("corruptor", 0)
@@ -391,6 +394,8 @@ class EvolutionUpgradeManager:
             hydras = self.bot.units(UnitTypeId.HYDRALISK)
             if hydras.amount >= 3:
                 await self._research_hydra_speed(iteration)
+                # ★ NEW: 히드라 사거리 업그레이드 (속도 업 완료 후)
+                await self._research_hydra_range(iteration)
 
             # 잠복 (맹독충 4기 이상일 때)
             banelings = self.bot.units(UnitTypeId.BANELING)
@@ -403,6 +408,14 @@ class EvolutionUpgradeManager:
             melee_2 = getattr(UpgradeId, "ZERGMELEEWEAPONSLEVEL2", None)
             if melee_2 and self._is_upgrade_done(melee_2):
                 await self._research_adrenal_glands(iteration)
+            
+            # 울트라리스크 업그레이드
+            if self.bot.units(UnitTypeId.ULTRALISK).amount >= 1:
+                await self._research_ultra_upgrades(iteration)
+
+        # 럴커 업그레이드 (Lair or Hive)
+        if self.bot.units(UnitTypeId.LURKER).amount >= 2:
+             await self._research_lurker_upgrades(iteration)
 
     async def _research_zergling_speed(self, iteration: int) -> None:
         """대사 촉진 (Metabolic Boost) 연구 - 저글링 속도"""
@@ -573,6 +586,42 @@ class EvolutionUpgradeManager:
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra speed: {e}")
 
+    async def _research_hydra_range(self, iteration: int) -> None:
+        """홈 스파인 (Grooved Spines) 연구 - 히드라 사거리 +2"""
+        hydra_range = getattr(UpgradeId, "EVOLVEGROOVEDSPINES", None)
+        if not hydra_range:
+            return
+
+        if self._is_upgrade_done(hydra_range):
+            return
+
+        if self.bot.already_pending_upgrade(hydra_range) > 0:
+            return
+
+        # 히드라 발업이 먼저 완료되어야 함
+        hydra_speed = getattr(UpgradeId, "EVOLVEMUSCULARAUGMENTS", None)
+        if hydra_speed and not self._is_upgrade_done(hydra_speed):
+            return
+
+        # 히드라 굴 확인
+        hydra_dens = self.bot.structures(UnitTypeId.HYDRALISKDEN).ready
+        if not hydra_dens.exists:
+            return
+
+        # 가스 150 필요
+        if not self.bot.can_afford(hydra_range):
+            return
+
+        # 연구 시작
+        den = hydra_dens.first
+        if hasattr(den, "is_idle") and den.is_idle:
+            try:
+                self.bot.do(den.research(hydra_range))
+                game_time = getattr(self.bot, "time", 0)
+                self.logger.info(f"[{int(game_time)}s] ★★ 홈 스파인 (히드라 사거리 +2) 연구 시작! ★★")
+            except Exception as e:
+                self.logger.warning(f"Failed to research hydra range: {e}")
+
     async def _research_burrow(self, iteration: int) -> None:
         """잠복 (Burrow) 연구 - 맹독충 지뢰, 바퀴 회복 등"""
         burrow = getattr(UpgradeId, "BURROW", None)
@@ -591,8 +640,17 @@ class EvolutionUpgradeManager:
             return
 
         # 맹독충이 2기 이상 있을 때 잠복 연구 (맹독충 지뢰용)
+        # 또는 바퀴가 5기 이상 있을 때 (바퀴 잠복 회복용)
         banelings = self.bot.units(UnitTypeId.BANELING)
-        if banelings.amount < 2:
+        roaches = self.bot.units(UnitTypeId.ROACH)
+        
+        should_research_burrow = False
+        if banelings.amount >= 2:
+            should_research_burrow = True
+        elif roaches.amount >= 5:
+             should_research_burrow = True
+
+        if not should_research_burrow:
             return
 
         # 가스 100 필요
@@ -648,8 +706,9 @@ class EvolutionUpgradeManager:
 
     async def _build_evolution_chamber(self) -> bool:
         """Build Evolution Chamber for upgrades."""
-        # Check time (after 4 minutes)
-        if getattr(self.bot, "time", 0) < 240:
+        # ★ AGGRESSIVE: 진화장 더 빨리 (공격력 업그레이드 우선)
+        # Check time (after 3 minutes)
+        if getattr(self.bot, "time", 0) < 180:  # 240 → 180 (3분)
             return False
 
         # Check if already exists or pending
@@ -697,12 +756,14 @@ class EvolutionUpgradeManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # === 레어 (Lair) 변이: 4분 이후 ===
-        if game_time >= 240:
+        # ★★★ BALANCED: 30분 승리를 위한 테크 타이밍 ★★★
+        # === 레어 (Lair) 변이: 4분 30초 이후 ===
+        if game_time >= 270:  # 4분 30초 (빠르게)
             await self._upgrade_to_lair(iteration)
 
-        # === 군락 (Hive) 변이: 8분 이후 ===
-        if game_time >= 480:
+        # === 군락 (Hive) 변이: 10분 이후 (후반 테크) ===
+        # 하이브 테크는 게임이 길어질 때
+        if game_time >= 600:  # 10분 이후 하이브
             await self._upgrade_to_hive(iteration)
 
     async def _upgrade_to_lair(self, iteration: int) -> None:
@@ -840,3 +901,55 @@ class EvolutionUpgradeManager:
                 self.logger.info(f"[{int(game_time)}s] Building Infestation Pit")
             except Exception as e:
                 self.logger.warning(f"Failed to build Infestation Pit: {e}")
+
+    async def _research_lurker_upgrades(self, iteration: int) -> None:
+        """럴커 사거리 및 속도 연구"""
+        lurker_den = self.bot.structures(UnitTypeId.LURKERDENMP).ready
+        if not lurker_den.exists:
+            return
+
+        den = lurker_den.first
+        if not hasattr(den, "is_idle") or not den.is_idle:
+            return
+
+        # 1. 사거리 업 (Seismic Spines) - Priority 1
+        range_up = getattr(UpgradeId, "LURKERRANGE", None)
+        if range_up and not self._is_upgrade_done(range_up) and self.bot.already_pending_upgrade(range_up) == 0:
+            if self.bot.can_afford(range_up):
+                self.bot.do(den.research(range_up))
+                self.logger.info("Researching Lurker Range")
+                return
+
+        # 2. 속도 업 (Adaptive Talons) - Priority 2
+        speed_up = getattr(UpgradeId, "DIGGINGCLAWS", None) 
+        if speed_up and not self._is_upgrade_done(speed_up) and self.bot.already_pending_upgrade(speed_up) == 0:
+            if self.bot.can_afford(speed_up):
+                self.bot.do(den.research(speed_up))
+                self.logger.info("Researching Lurker Speed")
+                return
+
+    async def _research_ultra_upgrades(self, iteration: int) -> None:
+        """울트라리스크 방어 및 속도 연구"""
+        ultra_cavern = self.bot.structures(UnitTypeId.ULTRALISKCAVERN).ready
+        if not ultra_cavern.exists:
+            return
+
+        cavern = ultra_cavern.first
+        if not hasattr(cavern, "is_idle") or not cavern.is_idle:
+            return
+
+        # 1. 방어 업 (Chitinous Plating) - Priority 1
+        armor_up = getattr(UpgradeId, "CHITINOUSPLATING", None)
+        if armor_up and not self._is_upgrade_done(armor_up) and self.bot.already_pending_upgrade(armor_up) == 0:
+            if self.bot.can_afford(armor_up):
+                self.bot.do(cavern.research(armor_up))
+                self.logger.info("Researching Ultra Armor (Chitinous Plating)")
+                return
+
+        # 2. 속도 업 (Anabolic Synthesis) - Priority 2
+        speed_up = getattr(UpgradeId, "ANABOLICSYNTHESIS", None)
+        if speed_up and not self._is_upgrade_done(speed_up) and self.bot.already_pending_upgrade(speed_up) == 0:
+            if self.bot.can_afford(speed_up):
+                self.bot.do(cavern.research(speed_up))
+                self.logger.info("Researching Ultra Speed (Anabolic Synthesis)")
+                return

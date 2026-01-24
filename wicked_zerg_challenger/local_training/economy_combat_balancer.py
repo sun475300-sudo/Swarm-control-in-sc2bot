@@ -51,15 +51,16 @@ class EconomyCombatBalancer:
         self.resource_bank_threshold = 3000
         self.min_drone_count = 12
 
+        # ★ BALANCED AGGRESSIVE: 30분 승리를 위한 일꾼 수 조정 ★
         # Drone targets by game phase
         self.drone_targets = {
-            "early": 30,  # 0-6 min
-            "mid": 60,  # 6-12 min
-            "late": 80,  # 12+ min
+            "early": 24,  # 0-6 min (안정적인 초반 경제)
+            "mid": 45,  # 6-12 min (2-3베이스 포화)
+            "late": 45,  # 12+ min (더 이상 확장 안함)
         }
 
         # Base calculation
-        self.drones_per_base = 16
+        self.drones_per_base = 16  # 기지당 16마리
 
         # Production history tracking
         self.production_history: Dict[str, int] = {

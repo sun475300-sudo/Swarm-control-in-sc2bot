@@ -1,33 +1,99 @@
 {
   "enemy_race_name": "Zerg",
   "enemy_unit_counts": {
-    "BROODLING": 7,
-    "BROODLORD": 5,
-    "ZERGLING": 12,
-    "OVERSEER": 3,
-    "OVERLORDTRANSPORT": 2,
-    "CORRUPTOR": 1
+    "INFESTOR": 2,
+    "ROACH": 5,
+    "HYDRALISK": 2,
+    "ULTRALISK": 1,
+    "ZERGLING": 1
   },
   "enemy_tech_buildings": [
-    "GREATERSPIRE",
-    "BANELINGNEST",
     "HYDRALISKDEN",
     "INFESTATIONPIT",
     "SPIRE",
+    "BANELINGNEST",
     "ROACHWARREN"
   ],
   "scouted_locations": [
     [
+      42.5,
+      93.5
+    ],
+    [
+      23.5,
+      55.5
+    ],
+    [
+      36.5,
+      55.5
+    ],
+    [
       23.5,
       82.5
+    ],
+    [
+      49.5,
+      104.5
+    ],
+    [
+      30.5,
+      66.5
+    ],
+    [
+      164.5,
+      139.5
+    ],
+    [
+      70.5,
+      117.5
+    ],
+    [
+      35.5,
+      28.5
+    ],
+    [
+      50.5,
+      65.5
+    ],
+    [
+      82.5,
+      152.5
+    ],
+    [
+      157.5,
+      50.5
+    ],
+    [
+      137.5,
+      139.5
+    ],
+    [
+      82.5,
+      23.5
+    ],
+    [
+      80.5,
+      56.5
+    ],
+    [
+      66.5,
+      161.5
+    ],
+    [
+      99.5,
+      115.5
+    ],
+    [
+      40.5,
+      44.5
     ],
     [
       125.5,
       30.5
     ],
     [
-      30.5,
-      66.5
+      70.5,
+      94.5
     ],
     [
       24.5,
@@ -36,10 +102,6 @@
     [
       137.5,
       59.5
-    ],
-    [
-      82.5,
-      152.5
     ]
   ],
   "enemy_build_pattern": "zerg_muta"

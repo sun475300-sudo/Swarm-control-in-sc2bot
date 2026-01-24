@@ -139,8 +139,41 @@ class UnitFactory:
         return in_combat
 
     async def on_step(self, iteration: int) -> None:
-        if not UnitTypeId or not hasattr(self.bot, "larva"):
+        if not (UnitTypeId and hasattr(self.bot, "larva") and self.bot.larva):
+            # 라바가 없으면 할 게 없음
             return
+
+        # ★ CRITICAL FIX: 앞마당/3멀티 확보를 위한 자원 보존 (확장 우선) ★
+        # 유닛 생산이 확장을 방해하지 않도록 강제 제한
+        townhalls = self.bot.townhalls
+        base_count = townhalls.amount
+        game_time = self.bot.time
+
+        # 1. 앞마당 체크 (1분 지났는데 1베이스면 자원 세이브)
+        # 단, 이미 해처리 건설 중이면(pending) 세이브 안 해도 됨
+        pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
+        
+        # ★ OPTIMIZATION: 2분 내 멀티 보장 (60초부터 자원 모으기 시작) ★
+        # 기존 120초 -> 60초로 앞당김
+        if base_count < 2 and game_time > 60 and pending_hatch == 0:
+            if self.bot.minerals < 350: # 300 + 여유
+                 if iteration % 100 == 0:
+                     print(f"[UNIT_FACTORY] Saving minerals for Natural Expansion (Time: {int(game_time)}s)")
+                 return # 라바 소비 중단
+
+        # 2. 3멀티 체크 (빠른 3멀티: 3분 30초 목표 -> 3분 10초부터 자원 보존)
+        if base_count < 3 and game_time > 190 and pending_hatch == 0:
+             if self.bot.minerals < 350:
+                 if iteration % 100 == 0:
+                     print(f"[UNIT_FACTORY] Saving minerals for 3rd Base (Time: {int(game_time)}s)")
+                 return
+
+        # 3. 4멀티 체크 (빠른 4멀티: 5분 목표 -> 4분 40초부터 자원 보존)
+        if base_count < 4 and game_time > 280 and pending_hatch == 0:
+             if self.bot.minerals < 350:
+                 if iteration % 100 == 0:
+                     print(f"[UNIT_FACTORY] Saving minerals for 4th Base (Time: {int(game_time)}s)")
+                 return
 
         larva = self.bot.larva
         if not larva:
@@ -359,20 +392,22 @@ class UnitFactory:
         return queue
 
     def _gas_unit_table(self) -> List[dict]:
+        # ★ OPTIMIZATION: Morph units (Ravager, Lurker) removed.
+        # UnitFactory produces base units (Roach, Hydra) => UnitMorphManager updates them.
         return [
-            {"unit": UnitTypeId.HYDRALISK, "min_gas": 50, "max_ratio": 0.45},
+            {"unit": UnitTypeId.HYDRALISK, "min_gas": 50, "max_ratio": 0.5},    # Lurker material
             {"unit": UnitTypeId.CORRUPTOR, "min_gas": 100, "max_ratio": 0.3},
             {"unit": UnitTypeId.MUTALISK, "min_gas": 100, "max_ratio": 0.25},
-            {"unit": UnitTypeId.ROACH, "min_gas": 25, "max_ratio": 0.5},
-            {"unit": UnitTypeId.RAVAGER, "min_gas": 25, "max_ratio": 0.35},
-            {"unit": UnitTypeId.LURKER, "min_gas": 75, "max_ratio": 0.2},
+            {"unit": UnitTypeId.ROACH, "min_gas": 25, "max_ratio": 0.6},        # Ravager material
             {"unit": UnitTypeId.ULTRALISK, "min_gas": 150, "max_ratio": 0.15},
+            {"unit": UnitTypeId.INFESTOR, "min_gas": 150, "max_ratio": 0.1},
+            {"unit": UnitTypeId.VIPER, "min_gas": 200, "max_ratio": 0.1},
         ]
 
     def _mineral_unit_table(self) -> List[dict]:
+        # Banelings removed (Morphed from Zerglings)
         return [
-            {"unit": UnitTypeId.ZERGLING, "max_ratio": 0.7},
-            {"unit": UnitTypeId.BANELING, "max_ratio": 0.35},
+            {"unit": UnitTypeId.ZERGLING, "max_ratio": 0.9}, # Baneling material included
         ]
 
     def _count_combat_units(self) -> int:

@@ -674,7 +674,7 @@ class EconomyManager:
         game_time = self.bot.time  # 게임 시간 (초)
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
 
-        # 확장 타이밍 체크
+        # ★★★ 30분 승리 전략: 2-3베이스 운영, 4베이스 제한 ★★★
         should_expand = False
         expand_reason = ""
 
@@ -685,31 +685,34 @@ class EconomyManager:
                 should_expand = True
                 expand_reason = f"Natural expansion (time: {int(game_time)}s, workers: {worker_count})"
 
-        # ★ 2베이스 → 3베이스: 210초(3:30) 이후 (더 빠르게!) ★
+        # ★ 2베이스 → 3베이스: 4분 이후 (안정적인 경제) ★
+        # ★ 2베이스 → 3베이스: 3분 30초 (공격적인 멀티) ★
         elif base_count == 2:
-            if game_time >= 210:  # 3분 30초 (기존 4분 → 30초 단축)
+            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
+            if game_time >= 210 or minerals > 600:  # 3분 30초 (기존 4분)
                 should_expand = True
-                expand_reason = f"3rd base timing - AGGRESSIVE (time: {int(game_time)}s)"
+                expand_reason = f"3rd base AGGRESSIVE (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 3베이스 → 4베이스: 300초(5분) 이후 (더 빠르게!) ★
+        # ★ 3베이스 → 4베이스: 5분 (부유한 운영) ★
         elif base_count == 3:
-            if game_time >= 300:  # 5분 (기존 6분 → 1분 단축)
+            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
+            if game_time >= 300 or minerals > 600:  # 5분 (기존 8분 -> 3분 단축)
                 should_expand = True
-                expand_reason = f"4th base timing - AGGRESSIVE (time: {int(game_time)}s)"
-
-        # ★ 4베이스 → 5베이스: 390초(6:30) 이후, 또는 미네랄 > 800 ★
+                expand_reason = f"4th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+                
+        # ★ 4베이스 → 5베이스: 6분 30초 ★
         elif base_count == 4:
             minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 390 or minerals > 800:  # 6분 30초 (기존 8분 → 1분 30초 단축)
+            if game_time >= 390 or minerals > 600:
                 should_expand = True
-                expand_reason = f"5th base timing - AGGRESSIVE (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"5th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 5베이스 이상: 480초(8분) 이후, 또는 미네랄 > 1000 ★
+        # ★ 5베이스 이상: 8분 이후 무한 확장 ★
         elif base_count >= 5:
             minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 480 or minerals > 1000:
+            if game_time >= 480 or minerals > 800:
                 should_expand = True
-                expand_reason = f"6th+ base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"Infinite Expansion (time: {int(game_time)}s, minerals: {minerals})"
 
         if not should_expand:
             return

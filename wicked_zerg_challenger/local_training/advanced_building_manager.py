@@ -196,6 +196,37 @@ class AdvancedBuildingManager:
             min_units=1,
             max_units=max_count
         )
+
+    async def morph_ravagers(self, max_count: Optional[int] = None) -> int:
+        """담즙충(Ravager) 변태"""
+        roaches = self.bot.units(UnitTypeId.ROACH).ready
+        if not roaches.exists:
+            return 0
+            
+        return await self.morph_unit_safely(
+            source_units=list(roaches),
+            target_unit_type=UnitTypeId.RAVAGER,
+            morph_ability=AbilityId.MORPH_RAVAGER,
+            required_building=UnitTypeId.ROACHWARREN,
+            min_units=1,
+            max_units=max_count
+        )
+
+    async def morph_broodlords(self, max_count: Optional[int] = None) -> int:
+        """무리군주(Broodlord) 변태"""
+        corruptors = self.bot.units(UnitTypeId.CORRUPTOR).ready
+        if not corruptors.exists:
+            return 0
+            
+        return await self.morph_unit_safely(
+            source_units=list(corruptors),
+            target_unit_type=UnitTypeId.BROODLORD,
+            morph_ability=AbilityId.MORPH_BROODLORD,
+            required_building=UnitTypeId.GREATERSPIRE,
+            min_units=1,
+            max_units=max_count
+        )
+
     
     # ==================== 2. 방어 건물 위치 최적화 ====================
     
@@ -435,6 +466,17 @@ class AdvancedBuildingManager:
                 not self.bot.structures(UnitTypeId.ULTRALISKCAVERN).exists and
                 self.bot.already_pending(UnitTypeId.ULTRALISKCAVERN) == 0):
                 tech_buildings.append((UnitTypeId.ULTRALISKCAVERN, 300, 200, 2))
+
+            # 거대 둥지탑 (Greater Spire)
+            spires = self.bot.structures(UnitTypeId.SPIRE).ready
+            if (self.bot.structures(UnitTypeId.HIVE).ready.exists and
+                spires.exists and
+                not self.bot.structures(UnitTypeId.GREATERSPIRE).exists and
+                self.bot.already_pending(UnitTypeId.GREATERSPIRE) == 0):
+                # Spire -> Greater Spire morph
+                # Note: This requires Morphing unit, not building. 
+                # Bot.build handles structure morphs if passed correctly.
+                tech_buildings.append((UnitTypeId.GREATERSPIRE, 100, 150, 2))
         
         # 미네랄이 많이 적체되었을 때: 중간 테크 건물
         if mineral_surplus > 500:
@@ -503,7 +545,17 @@ class AdvancedBuildingManager:
             lurkers = await self.morph_lurkers(max_count=5)
             results["lurkers_morphed"] = lurkers
         
-        # 3. 맹독충 변태 (미네랄이 많이 적체되었을 때)
+        # 3. 무리군주 변태 (가스가 매우 많을 때)
+        if gas_surplus > 400:
+            broodlords = await self.morph_broodlords(max_count=2) # 비싸므로 소량만
+            results["broodlords_morphed"] = broodlords
+
+        # 4. 담즙충 변태 (가스 여유)
+        if gas_surplus > 150:
+            ravagers = await self.morph_ravagers(max_count=5)
+            results["ravagers_morphed"] = ravagers
+
+        # 5. 맹독충 변태 (미네랄이 많이 적체되었을 때)
         if mineral_surplus > 500:
             banelings = await self.morph_banelings(max_count=10)
             results["banelings_morphed"] = banelings
