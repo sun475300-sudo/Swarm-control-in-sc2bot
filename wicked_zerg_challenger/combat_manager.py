@@ -86,8 +86,8 @@ class CombatManager:
         self._rally_point = None
         self._last_rally_update = 0
         self._rally_update_interval = 30  # Update rally point every 30 seconds
-        self._min_army_for_attack = 10  # ★ AGGRESSIVE: 중반 공격 최소 서플라이 (기존 15 → 10)
-        self._early_game_min_attack = 6  # ★ AGGRESSIVE: 초반(0-4분) 최소 서플라이 (저글링 3마리, 기존 4 → 6)
+        self._min_army_for_attack = 8  # ★ BALANCED: 중반 공격 최소 서플라이
+        self._early_game_min_attack = 4  # ★ BALANCED: 초반(0-4분) 최소 서플라이 (저글링 2쌍)
 
         # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
         self._base_defense_active = False
@@ -255,17 +255,36 @@ class CombatManager:
                 tasks_to_execute.append(("counter_attack", enemy_base, self.task_priorities["counter_attack"]))
                 self.logger.info("Detected victory - attacking enemy base!")
 
-        # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-7분) ★ ===
+        # === TASK 2.5: ★ 초반 저글링 압박 (3:00-4:30) ★ ===
+        # 저글링 8마리 이상이면 압박
+        if 180 <= game_time <= 270:  # 3:00-4:30
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
+
+                # ★ 저글링 8마리 이상이면 압박 (안정적인 병력)
+                if len(zerglings) >= 8:
+                    enemy_base = self._get_enemy_base_location()
+                    if enemy_base:
+                        # Priority 75
+                        tasks_to_execute.append(("early_pressure", enemy_base, 75))
+                        if iteration % 200 == 0:
+                            self.logger.info(f"[{int(game_time)}s] ★ EARLY PRESSURE: {len(zerglings)} lings! ★")
+            except ImportError:
+                pass
+
+        # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-8분) ★ ===
         # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
-        if 300 <= game_time <= 420:  # 5-7분
+        if 300 <= game_time <= 480:  # 5-8분
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 # 바퀴 + 저글링 조합 타이밍 공격
                 roaches = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ROACH]
                 zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
+                banelings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.BANELING]
 
-                # 바퀴 5마리 이상 또는 저글링 12마리 이상이면 타이밍 공격
-                if len(roaches) >= 5 or len(zerglings) >= 12:
+                # ★ BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
+                if len(roaches) >= 5 or len(zerglings) >= 12 or len(banelings) >= 4:
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
                         # Priority 75 (higher than counter_attack)
@@ -273,11 +292,65 @@ class CombatManager:
             except ImportError:
                 pass
 
+        # === TASK 2.7: ★★★ 10-15분 강력한 타이밍 공격 ★★★ ===
+        # ★ FIX: 15분까지만 (이후는 main_attack이 처리)
+        # 3베이스 포화 후 강력한 타이밍 공격
+        if 600 <= game_time <= 900:  # 10-15분 (기존 10-20분 → 10-15분)
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
+
+                # ★ 서플라이 40 이상이면 강력한 타이밍 공격
+                if army_supply >= 40:
+                    enemy_base = self._get_enemy_base_location()
+                    if enemy_base:
+                        # Priority 75 (main_attack보다 높지만 80은 아님)
+                        tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
+                        if iteration % 200 == 0:
+                            self.logger.info(f"[{int(game_time)}s] ★★★ MAJOR TIMING ATTACK: {army_supply} supply army! ★★★")
+            except ImportError:
+                pass
+
+        # === TASK 2.8: ★ EXPANSION DENIAL (확장 견제) ★ ===
+        # 적의 새로운 확장을 감지하면 저글링 특공대 파견
+        if hasattr(self.bot, "enemy_structures") and 180 < game_time: # 3분 이후
+            townhall_types = {
+                "NEXUS", "COMMANDCENTER", "COMMANDCENTERFLYING",
+                "ORBITALCOMMAND", "ORBITALCOMMANDFLYING", "PLANETARYFORTRESS",
+                "HATCHERY", "LAIR", "HIVE"
+            }
+            
+            enemy_bases = [
+                s for s in self.bot.enemy_structures 
+                if getattr(s.type_id, "name", "").upper() in townhall_types
+            ]
+            
+            # 멀리 있는 기지 찾기
+            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+                enemy_start = self.bot.enemy_start_locations[0]
+                
+                expansions = []
+                for base in enemy_bases:
+                    if base.distance_to(enemy_start) > 15: # 본진에서 15거리 이상
+                         expansions.append(base)
+                
+                if expansions:
+                    # 가장 가까운 확장 기지 타겟팅
+                    if hasattr(self.bot, "start_location"):
+                        target_expansion = min(expansions, key=lambda b: b.distance_to(self.bot.start_location))
+                        # Priority 90 (매우 높음)
+                        tasks_to_execute.append(("deny_expansion", target_expansion.position, 90))
+                        
+                        if iteration % 200 == 0:
+                             self.logger.info(f"[{int(game_time)}s] ★ EXPANSION DETECTED: Sending squad! ★")
+
         # === TASK 3: Main Army Attack ===
+        # ★★★ FIX: 항상 공격 태스크 추가 (병력이 있으면 무조건 공격) ★★★
         if self._has_units(ground_army):
             attack_target = self._get_attack_target(enemy_units)
             if attack_target:
-                tasks_to_execute.append(("main_attack", attack_target, self.task_priorities["main_attack"]))
+                # ★ 우선순위를 50으로 올림 (기존 40 → 50, 더 자주 실행)
+                tasks_to_execute.append(("main_attack", attack_target, 50))
             else:
                  # ★ TASK: Clear Rocks (Destructibles) ★
                  # 공격 대상이 없고 유닛이 놀고 있을 때, 주변의 바위(중립 건물) 파괴
@@ -368,6 +441,19 @@ class CombatManager:
                 except ImportError:
                     pass
 
+            elif task_name == "early_pressure":
+                # ★ 초반 압박: 적 기지 공격 ★
+                attack_units = [u for u in ground_army if u.tag in available_ground]
+                if attack_units:
+                    # 적 기지 압박
+                    for unit in attack_units:
+                        try:
+                            self.bot.do(unit.attack(target))
+                        except Exception:
+                            continue
+                    for u in attack_units:
+                        available_ground.discard(u.tag)
+
             elif task_name == "mid_timing_attack":
                 # ★ 중반 타이밍 공격: 모든 지상 유닛 투입 ★
                 attack_units = [u for u in ground_army if u.tag in available_ground]
@@ -398,13 +484,85 @@ class CombatManager:
                     for u in attack_units:
                         available_ground.discard(u.tag)
 
-            elif task_name == "main_attack":
-                # Use remaining ground units for attack
+            elif task_name == "deny_expansion":
+                # ★ 확장 견제 및 자원/테크 차단 ★
+                # 목표: 적 일꾼(자원) 및 가스통(테크) 파괴
+                
+                # 1. 공격 부대 선별 (저글링 위주, 빠른 기동성)
+                squad_size = 12
+                squad = []
+                
+                # 저글링 먼저 선택
+                zerglings = [u for u in ground_army if u.tag in available_ground and u.type_id == UnitTypeId.ZERGLING]
+                if len(zerglings) >= 8:
+                    squad.extend(zerglings[:squad_size])
+                else:
+                    # 부족하면 다른 유닛도 포함
+                    others = [u for u in ground_army if u.tag in available_ground][:squad_size]
+                    squad.extend(others)
+                
+                if not squad:
+                    continue
+                    
+                # 2. 타겟 우선순위 정밀 설정
+                attack_target = target  # 기본 타겟(확장 기지 위치)
+                
+                # 주변 적 유닛/건물 검색
+                nearby_enemies = self.bot.enemy_units.closer_than(15, target) | self.bot.enemy_structures.closer_than(15, target)
+                
+                if nearby_enemies:
+                    # 우선순위 1: 일꾼 (자원 채취 방해)
+                    workers = nearby_enemies.filter(lambda u: u.type_id in {
+                        UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE, UnitTypeId.MULE
+                    })
+                    
+                    # 우선순위 2: 가스통 (테크 차단 - 사용자 요청)
+                    gas_buildings = nearby_enemies.filter(lambda u: u.type_id in {
+                        UnitTypeId.REFINERY, UnitTypeId.ASSIMILATOR, UnitTypeId.EXTRACTOR,
+                        UnitTypeId.REFINERYRICH, UnitTypeId.ASSIMILATORRICH, UnitTypeId.EXTRACTORRICH
+                    })
+                    
+                    if workers.exists:
+                        attack_target = workers.closest_to(squad[0])
+                    elif gas_buildings.exists:
+                        attack_target = gas_buildings.closest_to(squad[0])
+                
+                # 3. 공격 실행
+                for unit in squad:
+                    try:
+                        self.bot.do(unit.attack(attack_target))
+                        available_ground.discard(unit.tag)
+                    except Exception:
+                        continue
+
+            elif task_name == "major_timing_attack":
+                # ★★★ MAJOR TIMING ATTACK: 강력한 타이밍 공격 ★★★
                 attack_units = [u for u in ground_army if u.tag in available_ground]
-                if attack_units and self._has_units(enemy_units):
-                    await self._execute_combat(attack_units, enemy_units)
-                elif attack_units:
-                    await self._offensive_attack(attack_units, iteration)
+                if attack_units:
+                    # 모든 유닛 공격
+                    for unit in attack_units:
+                        try:
+                            self.bot.do(unit.attack(target))
+                        except Exception:
+                            continue
+                    # Remove from available pool
+                    for u in attack_units:
+                        available_ground.discard(u.tag)
+
+            elif task_name == "main_attack":
+                # ★★★ FIX: 병력이 있으면 무조건 공격 (적 유닛 여부 상관없음) ★★★
+                attack_units = [u for u in ground_army if u.tag in available_ground]
+                if attack_units:
+                    # 적 유닛이 보이면 전투, 안 보이면 기지 공격
+                    if self._has_units(enemy_units):
+                        await self._execute_combat(attack_units, enemy_units)
+                    else:
+                        # ★ 적 유닛이 안 보이면 무조건 기지 공격
+                        await self._offensive_attack(attack_units, iteration)
+
+                    # ★ DEBUG: 공격 실행 로그
+                    if iteration % 200 == 0:
+                        self.logger.info(f"[{int(game_time)}s] MAIN_ATTACK executed with {len(attack_units)} units")
 
         # Log multitasking status periodically
         if iteration % 200 == 0 and tasks_to_execute:
@@ -750,53 +908,155 @@ class CombatManager:
             # 최소 군대 서플라이 확인
             army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
 
-            # ★ 초반(0-4분)에는 더 낮은 최소 서플라이 사용 (저글링 즉시 활동)
+            # ★ HYPER AGGRESSIVE: 집결 시간 최소화
             min_attack_threshold = self._early_game_min_attack if game_time < 240 else self._min_army_for_attack
 
-            # If army is small, gather at rally point (초반 제외)
+            # ★★★ NEW: 집결 시스템 제거 - 즉시 공격 ★★★
+            # 빠른 승부를 위해 병력이 모이기를 기다리지 않음
+            # 유닛이 생산되는 즉시 전선에 투입
             if army_supply < min_attack_threshold:
-                # ★ 초반에는 바로 공격, 중후반에만 랠리 포인트 집결
-                if game_time >= 240 and self._rally_point:
-                    await self._gather_at_rally_point(army_units, iteration)
+                # 최소 병력도 충족 안되면 리턴
                 return
 
-            # ★★★ 보이는 적 기지/건물 우선 파괴 ★★★
-            attack_target = self._find_priority_attack_target()
+            # ★★★ IMPROVED: 여러 기지 동시 공격 로직 ★★★
+            # 적 기지/확장 여러 개 찾기
+            attack_targets = self._find_multiple_attack_targets()
 
-            if not attack_target:
+            if not attack_targets:
                 # 적 시작 위치로 공격 (fallback)
                 if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
-                    attack_target = self.bot.enemy_start_locations[0]
+                    attack_targets = [self.bot.enemy_start_locations[0]]
 
-            if not attack_target:
+            if not attack_targets:
                 return
 
+            # ★★★ REMOVED: 집결 대기 시스템 제거 (즉시 공격) ★★★
             # Check if army is gathered (most units near rally point)
-            if self._rally_point and not self._is_army_gathered(army_units):
-                await self._gather_at_rally_point(army_units, iteration)
+            # if self._rally_point and not self._is_army_gathered(army_units):
+            #     await self._gather_at_rally_point(army_units, iteration)
+            #     return
+
+            # ★★★ FIX: 매 10 프레임마다 공격 명령 갱신 (더 자주) ★★★
+            if iteration % 10 != 0:
                 return
 
-            # 매 30 프레임마다 공격 명령 갱신 (더 자주)
-            if iteration % 30 != 0:
-                return
+            # ★★★ DEBUG: 공격 시작 로그 ★★★
+            if iteration % 100 == 0:
+                self.logger.info(f"[{int(game_time)}s] OFFENSIVE ATTACK: {len(army_units)} units, {army_supply} supply, {len(attack_targets)} targets")
 
-            # 아군 유닛들을 적 타겟으로 공격 명령
-            for unit in list(army_units):  # 모든 유닛 공격
-                try:
-                    if hasattr(unit, "is_idle") and unit.is_idle:
-                        self.bot.do(unit.attack(attack_target))
-                    elif not hasattr(unit, "is_attacking") or not unit.is_attacking:
-                        self.bot.do(unit.attack(attack_target))
-                except Exception:
-                    continue
+            # ★ NEW: 병력 분할 공격 (여러 타겟이 있을 때)
+            if len(attack_targets) > 1 and army_supply >= 20:
+                # 병력을 타겟 수만큼 나눔 (최대 3개 그룹)
+                num_groups = min(len(attack_targets), 3)
+                group_size = len(army_units) // num_groups
 
-            if iteration % 200 == 0:
-                target_name = getattr(attack_target, "name", str(attack_target)[:30])
-                self.logger.info(f"[{int(self.bot.time)}s] Attacking {target_name} with {army_supply} supply army")
+                for group_idx in range(num_groups):
+                    start_idx = group_idx * group_size
+                    end_idx = start_idx + group_size if group_idx < num_groups - 1 else len(army_units)
+                    group_units = army_units[start_idx:end_idx]
+                    target = attack_targets[group_idx]
+
+                    for unit in group_units:
+                        try:
+                            # ★★★ FIX: 모든 유닛에게 무조건 공격 명령 (is_idle 체크 제거) ★★★
+                            self.bot.do(unit.attack(target))
+                        except Exception:
+                            continue
+
+                if iteration % 200 == 0:
+                    self.logger.info(f"[{int(self.bot.time)}s] ★ MULTI-ATTACK: {num_groups} groups attacking {len(attack_targets)} targets (army: {army_supply} supply)")
+            else:
+                # 단일 타겟 공격 (기존 로직)
+                attack_target = attack_targets[0]
+                attack_count = 0
+                for unit in list(army_units):
+                    try:
+                        # ★★★ FIX: 모든 유닛에게 무조건 공격 명령 (is_idle 체크 제거) ★★★
+                        self.bot.do(unit.attack(attack_target))
+                        attack_count += 1
+                    except Exception:
+                        continue
+
+                if iteration % 200 == 0:
+                    target_name = getattr(attack_target, "name", str(attack_target)[:30])
+                    self.logger.info(f"[{int(self.bot.time)}s] Attacking {target_name} with {army_supply} supply army ({attack_count} units ordered)")
 
         except Exception as e:
             if iteration % 200 == 0:
                 self.logger.warning(f"Offensive attack error: {e}")
+
+    def _find_multiple_attack_targets(self):
+        """
+        ★ NEW: 여러 공격 타겟 찾기 - 동시 공격용 ★
+
+        여러 적 기지/확장을 찾아서 동시 공격 가능하도록 리스트로 반환
+
+        우선순위:
+        1. 적 확장 기지들 (약한 확장부터)
+        2. 적 메인 기지
+        3. 적 생산 건물들
+        4. 기타 적 건물들
+
+        Returns:
+            공격 타겟 리스트 (최대 3개)
+        """
+        targets = []
+        enemy_structures = getattr(self.bot, "enemy_structures", None)
+
+        if not enemy_structures or not enemy_structures.exists:
+            # 적 건물이 없으면 단일 타겟 찾기
+            single_target = self._find_priority_attack_target()
+            return [single_target] if single_target else []
+
+        # ★★★ 우선순위 타겟팅 시스템 ★★★
+        # 1순위: 적 일꾼 라인 (경제 차단)
+        # 2순위: 생산 건물 (병력 생산 차단)
+        # 3순위: 타운홀 (본진 파괴)
+
+        # 생산 건물 타입
+        production_types = {
+            "BARRACKS", "BARRACKSFLYING", "FACTORY", "FACTORYFLYING",
+            "STARPORT", "STARPORTFLYING",
+            "GATEWAY", "WARPGATE", "ROBOTICSFACILITY", "STARGATE",
+            "SPAWNINGPOOL", "ROACHWARREN", "HYDRALISKDEN"
+        }
+
+        # 기지 타입
+        townhall_types = {
+            "NEXUS", "COMMANDCENTER", "COMMANDCENTERFLYING",
+            "ORBITALCOMMAND", "ORBITALCOMMANDFLYING", "PLANETARYFORTRESS",
+            "HATCHERY", "LAIR", "HIVE"
+        }
+
+        # 타겟 분류
+        production_buildings = []
+        enemy_bases = []
+
+        for struct in enemy_structures:
+            struct_type = getattr(struct.type_id, "name", "").upper()
+            if struct_type in production_types:
+                production_buildings.append(struct)
+            elif struct_type in townhall_types:
+                enemy_bases.append(struct)
+
+        if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
+            our_base = self.bot.townhalls.first.position
+
+            # ★ 우선순위 1: 생산 건물 (병력 차단)
+            if production_buildings:
+                sorted_production = sorted(production_buildings, key=lambda b: b.distance_to(our_base))
+                targets.extend([p.position for p in sorted_production[:2]])  # 최대 2개
+
+            # ★ 우선순위 2: 적 기지 (경제 차단)
+            if enemy_bases:
+                sorted_bases = sorted(enemy_bases, key=lambda b: b.distance_to(our_base))
+                targets.extend([base.position for base in sorted_bases[:3]])  # 최대 3개
+
+            return targets if targets else [self._find_priority_attack_target()]
+
+        # 적 건물이 없으면 단일 타겟 찾기
+        single_target = self._find_priority_attack_target()
+        return [single_target] if single_target else []
 
     def _find_priority_attack_target(self):
         """

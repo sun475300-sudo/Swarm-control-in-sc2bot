@@ -38,6 +38,7 @@ class BuildOrderType(Enum):
     SAFE_14POOL = "14pool_16hatch_15gas"      # 안전한 14풀
     AGGRESSIVE_10POOL = "10pool_gas_ling"     # 공격적 10풀
     ECONOMY_15HATCH = "15hatch_16pool_17gas"  # 경제 우선 15헷
+    ROACH_RUSH = "19roach_rush"               # ★ NEW: 바퀴 러시 (빠른 끝내기)
 
 
 class BuildOrderStep:
@@ -56,11 +57,12 @@ class BuildOrderStep:
 class BuildOrderSystem:
     """
     빌드 오더 시스템
-
+    
     핵심 기능:
     1. 정확한 타이밍으로 빌드 오더 실행
     2. 승률 기반 빌드 오더 자동 선택
     3. 실시간 진행도 추적
+    4. ★ 빠른 승부를 위한 바퀴 러시 추가
     """
 
     def __init__(self, bot: BotAI):
@@ -68,8 +70,8 @@ class BuildOrderSystem:
         self.enabled = True
         self.build_order_active = True
 
-        # 현재 빌드 오더
-        self.current_build_order: BuildOrderType = BuildOrderType.STANDARD_12POOL
+        # 현재 빌드 오더 (기본값을 바퀴 러시로 변경하여 즉각적 효과 유도)
+        self.current_build_order: BuildOrderType = BuildOrderType.ROACH_RUSH
         self.build_steps: List[BuildOrderStep] = []
         self.current_step_index = 0
 
@@ -77,16 +79,17 @@ class BuildOrderSystem:
         self.step_timings: Dict[int, float] = {}  # supply -> game_time
         self.missed_timings: List[str] = []
 
-        # 성능 통계
+        # 성능 통계 (기존 통계 유지)
         self.build_order_stats = {
             BuildOrderType.STANDARD_12POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.SAFE_14POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.AGGRESSIVE_10POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.ECONOMY_15HATCH: {"games": 0, "wins": 0, "avg_timing": 0.0},
+            BuildOrderType.ROACH_RUSH: {"games": 0, "wins": 0, "avg_timing": 0.0}, # NEW
         }
 
         # 빌드 오더 종료 시간 (이 시간 이후 비활성화)
-        self.build_order_end_time = 180.0  # 3분
+        self.build_order_end_time = 300.0  # 5분 (바퀴 러시까지 커버)
 
         # 초기화
         self._setup_build_order()
@@ -101,6 +104,8 @@ class BuildOrderSystem:
             self.build_steps = self._get_aggressive_10pool_build()
         elif self.current_build_order == BuildOrderType.ECONOMY_15HATCH:
             self.build_steps = self._get_economy_15hatch_build()
+        elif self.current_build_order == BuildOrderType.ROACH_RUSH:
+            self.build_steps = self._get_roach_rush_build()
 
         self.current_step_index = 0
         print(f"[BUILD_ORDER] 빌드 오더 설정: {self.current_build_order.value}")
@@ -155,6 +160,21 @@ class BuildOrderSystem:
             BuildOrderStep(17, "build", UnitTypeId.EXTRACTOR, "17가스"),
             BuildOrderStep(18, "train", UnitTypeId.QUEEN, "18퀸"),
             BuildOrderStep(20, "train", UnitTypeId.OVERLORD, "20오버로드"),
+        ]
+
+    def _get_roach_rush_build(self) -> List[BuildOrderStep]:
+        """★ 바퀴 러시 빌드 (19 Roach Warren) ★"""
+        return [
+            BuildOrderStep(13, "train", UnitTypeId.OVERLORD, "13오버로드"),
+            BuildOrderStep(16, "expand", UnitTypeId.HATCHERY, "16헷 - 앞마당"),
+            BuildOrderStep(18, "build", UnitTypeId.EXTRACTOR, "18가스"),
+            BuildOrderStep(17, "build", UnitTypeId.SPAWNINGPOOL, "17풀"),
+            BuildOrderStep(19, "build", UnitTypeId.ROACHWARREN, "19바퀴굴 - 빠른 바퀴"),
+            BuildOrderStep(19, "train", UnitTypeId.OVERLORD, "19오버로드"),
+            BuildOrderStep(20, "train", UnitTypeId.QUEEN, "20퀸"),
+            BuildOrderStep(22, "train", UnitTypeId.ZERGLING, "22저글링 (2기)"),
+            BuildOrderStep(24, "train", UnitTypeId.ROACH, "24바퀴 - 첫 바퀴"),
+            BuildOrderStep(26, "train", UnitTypeId.ROACH, "26바퀴 - 계속 생산"),
         ]
 
     async def execute(self, iteration: int) -> None:

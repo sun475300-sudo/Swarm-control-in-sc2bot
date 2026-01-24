@@ -1,9 +1,32 @@
 {
-  "lair_supply": 12,
-  "gas_supply": 17,
-  "spawning_pool_supply": 17,
-  "natural_expansion_supply": 31,
-  "roach_warren_supply": 54,
-  "hive_supply": 12,
-  "hydralisk_den_supply": 124
+  "build_order_timings": {
+    "Hatchery": 90.0,
+    "SpawningPool": 75.0,
+    "Extractor": 85.0,
+    "Queen": 100.0,
+    "Zergling": 110.0,
+    "RoachWarren": 180.0,
+    "Lair": 300.0,
+    "HydraliskDen": 360.0
+  },
+  "unit_priorities": {
+    "Drone": 0.3,
+    "Zergling": 0.25,
+    "Roach": 0.15,
+    "Hydralisk": 0.1,
+    "Queen": 0.1,
+    "Baneling": 0.05,
+    "Mutalisk": 0.05
+  },
+  "expansion_timings": {
+    "second_base": 90.0,
+    "third_base": 240.0,
+    "fourth_base": 420.0
+  },
+  "stats": {
+    "total_replays": 0,
+    "zerg_wins": 0,
+    "source": "default"
+  },
+  "generated_at": "2026-01-24T23:17:25.121278"
 }

@@ -222,6 +222,20 @@ class WickedZergBotProImpl(BotAI):
         except ImportError:
             pass
 
+        # ★ NEW: Unit Morph Manager ★
+        try:
+            from unit_morph_manager import UnitMorphManager
+            self.morph_manager = UnitMorphManager(self)
+        except ImportError:
+            pass
+
+        # ★ NEW: Protoss Counter System ★
+        try:
+            from protoss_counter_system import ProtossCounterSystem
+            self.protoss_counter = ProtossCounterSystem(self)
+        except ImportError:
+            pass
+
         try:
             from queen_manager import QueenManager
             self.queen_manager = QueenManager(self)

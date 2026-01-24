@@ -410,6 +410,20 @@ class BotStepIntegrator:
                 method_name="update",
             )
 
+            # ★ NEW: Unit Morph Manager (Baneling/Ravager/Lurker/Broodlord) ★
+            await self._safe_manager_step(
+                getattr(self.bot, "morph_manager", None),
+                iteration,
+                "Morph manager",
+            )
+
+            # ★ NEW: Protoss Counter System (DT/Oracle/Disruptor/Immortal/Prism) ★
+            await self._safe_manager_step(
+                getattr(self.bot, "protoss_counter", None),
+                iteration,
+                "Protoss counter",
+            )
+
             # 10. Micro Control (마이크로 컨트롤)
             await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
