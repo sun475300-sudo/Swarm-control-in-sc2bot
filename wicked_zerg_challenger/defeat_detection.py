@@ -49,11 +49,15 @@ class DefeatDetection:
         self.last_stand_active = False
         self.last_stand_position = None
 
-        # 임계값 설정
-        self.military_ratio_critical = 5.0  # 적 병력이 아군의 5배 이상
-        self.military_ratio_imminent = 10.0  # 적 병력이 아군의 10배 이상
-        self.min_workers_for_recovery = 3
-        self.min_minerals_for_recovery = 50
+        # ★★★ 임계값 설정 (패배 판정 기준 강화) ★★★
+        self.military_ratio_critical = 3.0  # 적 병력이 아군의 3배 이상 (5.0 → 3.0)
+        self.military_ratio_imminent = 6.0  # 적 병력이 아군의 6배 이상 (10.0 → 6.0)
+        self.min_workers_for_recovery = 5   # 최소 일꾼 수 (3 → 5)
+        self.min_minerals_for_recovery = 100  # 최소 미네랄 (50 → 100)
+
+        # ★★★ 추가: 빠른 포기를 위한 새로운 조건 ★★★
+        self.max_critical_duration = 60  # 위기 상태 최대 지속 시간 (초)
+        self.critical_start_time = None  # 위기 상태 시작 시간
 
         # 통계
         self.defeat_warnings = 0
@@ -104,6 +108,8 @@ class DefeatDetection:
         Returns:
             (defeat_level, reason)
         """
+        # ★★★ 빠른 포기 조건 추가 ★★★
+
         # 1. 기지 전멸 체크
         if await self._check_base_elimination():
             return DefeatLevel.INEVITABLE, "모든 기지 파괴됨 (해처리 0)"
@@ -112,25 +118,42 @@ class DefeatDetection:
         if await self._check_structure_elimination():
             return DefeatLevel.INEVITABLE, "모든 건물 파괴됨"
 
-        # 3. 압도적 병력 열세 체크
+        # ★★★ 3. 일꾼 전멸 + 회복 불가 ★★★
+        if await self._check_worker_elimination():
+            return DefeatLevel.INEVITABLE, "일꾼 전멸 + 회복 불가능"
+
+        # 4. 압도적 병력 열세 체크
         military_status = await self._check_military_disadvantage()
         if military_status[0] >= DefeatLevel.IMMINENT:
             return military_status
 
-        # 4. 경제 회복 불가 상태 체크
+        # 5. 경제 회복 불가 상태 체크
         economy_status = await self._check_unrecoverable_economy()
         if economy_status[0] >= DefeatLevel.CRITICAL:
             return economy_status
 
-        # 5. 생산 능력 상실 체크
+        # 6. 생산 능력 상실 체크
         production_status = await self._check_production_loss()
         if production_status[0] >= DefeatLevel.CRITICAL:
             return production_status
 
-        # 6. 복합 위기 상황 체크
+        # ★★★ 7. 위기 상태 장기 지속 체크 ★★★
+        duration_status = await self._check_critical_duration()
+        if duration_status[0] >= DefeatLevel.INEVITABLE:
+            return duration_status
+
+        # 8. 복합 위기 상황 체크
         combined_status = await self._check_combined_crisis()
         if combined_status[0] >= DefeatLevel.CRITICAL:
             return combined_status
+
+        # 위기 상태 시작 시간 추적
+        game_time = getattr(self.bot, "time", 0)
+        if military_status[0] >= DefeatLevel.CRITICAL or economy_status[0] >= DefeatLevel.CRITICAL:
+            if self.critical_start_time is None:
+                self.critical_start_time = game_time
+        else:
+            self.critical_start_time = None  # 회복되면 리셋
 
         # 안전 또는 불리한 상황
         if military_status[0] == DefeatLevel.DISADVANTAGE:
@@ -179,6 +202,56 @@ class DefeatDetection:
                 return True
 
         return False
+
+    async def _check_worker_elimination(self) -> bool:
+        """
+        ★★★ 일꾼 전멸 + 회복 불가능 체크 ★★★
+
+        조건:
+        1. 일꾼 3마리 이하
+        2. 미네랄 100 미만
+        3. 해처리 없거나 라바 없음
+        """
+        if not hasattr(self.bot, "workers"):
+            return False
+
+        workers = self.bot.workers
+        minerals = getattr(self.bot, "minerals", 0)
+        townhalls = getattr(self.bot, "townhalls", [])
+
+        # 일꾼이 충분하면 안전
+        if workers.amount > 3:
+            return False
+
+        # 일꾼 3마리 이하 + 미네랄 부족
+        if workers.amount <= 3 and minerals < 100:
+            # 해처리가 없거나 라바가 없으면 회복 불가
+            if not townhalls.exists:
+                return True
+
+            # 라바 확인
+            larva = getattr(self.bot, "larva", [])
+            if not larva.exists:
+                return True
+
+        return False
+
+    async def _check_critical_duration(self) -> Tuple[int, Optional[str]]:
+        """
+        ★★★ 위기 상태 장기 지속 체크 ★★★
+
+        위기 상태가 60초 이상 지속되면 패배로 간주
+        """
+        if self.critical_start_time is None:
+            return DefeatLevel.SAFE, None
+
+        game_time = getattr(self.bot, "time", 0)
+        duration = game_time - self.critical_start_time
+
+        if duration > self.max_critical_duration:
+            return DefeatLevel.INEVITABLE, f"위기 상태 {int(duration)}초 지속 (회복 불가)"
+
+        return DefeatLevel.SAFE, None
 
     async def _check_military_disadvantage(self) -> Tuple[int, Optional[str]]:
         """압도적 병력 열세 체크"""
@@ -353,10 +426,21 @@ class DefeatDetection:
 
     def _get_current_status(self) -> Dict:
         """현재 패배 감지 상태 반환"""
+        # ★★★ 패배 불가피 시 즉시 항복 (훈련 효율 향상) ★★★
+        should_surrender = self.defeat_level >= DefeatLevel.INEVITABLE
+
+        # ★★★ 추가: 위기 상황이 오래 지속되면 항복 (시간 절약) ★★★
+        if self.defeat_level >= DefeatLevel.IMMINENT:
+            # 패배 직전 상태가 30초 이상 지속되면 항복
+            game_time = getattr(self.bot, "time", 0)
+            if self.critical_moments > 5:  # ~40초 지속
+                should_surrender = True
+                self.defeat_reason = "장기간 패배 직전 상태 (항복)"
+
         return {
             "defeat_level": self.defeat_level,
             "defeat_reason": self.defeat_reason,
-            "should_surrender": self.defeat_level >= DefeatLevel.INEVITABLE,
+            "should_surrender": should_surrender,
             "last_stand_required": self.last_stand_active,
             "last_stand_position": self.last_stand_position,
             "defeat_warnings": self.defeat_warnings,

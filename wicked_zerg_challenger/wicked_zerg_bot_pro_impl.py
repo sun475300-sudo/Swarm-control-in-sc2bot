@@ -102,6 +102,10 @@ class WickedZergBotProImpl(BotAI):
             from intel_manager import IntelManager
             self.intel = IntelManager(self)
             print("[BOT] IntelManager initialized")
+            
+            # ★ NEW: Load previous intel data if available
+            self.intel.load_data()
+            
         except ImportError as e:
             print(f"[BOT_WARN] IntelManager not available: {e}")
 
@@ -309,10 +313,18 @@ class WickedZergBotProImpl(BotAI):
     async def on_end(self, game_result):
         """
         Called when the game ends.
-
-        Args:
-            game_result: Game result (Victory, Defeat, etc.)
+        Handles result logging, reward calculation, and curriculum updates.
         """
+        print(f"[BOT] Game ended with result: {game_result}")
+
+        # ★ NEW: Save intel data for next game
+        if self.intel:
+             self.intel.save_data()
+
+        # Performance Optimizer cleanup
+        if self.performance_optimizer:
+            self.performance_optimizer.on_end(game_result)
+
         await super().on_end(game_result)
 
         # Training mode: Calculate final reward and save model

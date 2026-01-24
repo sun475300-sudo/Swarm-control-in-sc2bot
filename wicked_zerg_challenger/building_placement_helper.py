@@ -97,6 +97,10 @@ class BuildingPlacementHelper:
     ) -> List[Point2]:
         """
         주어진 위치 근처의 점막 위치를 찾습니다.
+        
+        OPTIMIZED: 무작위 샘플링 대신 나선형 탐색(Spiral Search) 사용
+        - 결정론적(Deterministic) 결과 보장
+        - 가까운 위치부터 탐색하여 효율성 증대
 
         Args:
             near: 검색 시작 위치
@@ -104,35 +108,47 @@ class BuildingPlacementHelper:
             max_candidates: 최대 후보 위치 수
 
         Returns:
-            List[Point2]: 점막이 있는 위치 리스트 (거리 순으로 정렬)
+            List[Point2]: 점막이 있는 위치 리스트 (거리 순으로 정렬됨)
         """
         candidates = []
-
-        # 점막이 있는 위치 검색
-        for _ in range(max_candidates * 3):  # 충분한 샘플링
-            # 랜덤 오프셋 생성
-            angle = random.uniform(0, 6.28)  # 0 ~ 2π
-            distance = random.uniform(3.0, search_radius)
-
-            offset_x = distance * (2 * random.random() - 1)
-            offset_y = distance * (2 * random.random() - 1)
-
-            test_pos = Point2((near.x + offset_x, near.y + offset_y))
-
-            # 맵 범위 내인지 확인
-            if not (0 <= test_pos.x < self.bot.game_info.map_size.x and
-                    0 <= test_pos.y < self.bot.game_info.map_size.y):
-                continue
-
-            # 점막 확인
-            if self.has_creep(test_pos):
-                candidates.append(test_pos)
-
-            if len(candidates) >= max_candidates:
-                break
-
-        # 거리 순으로 정렬
-        candidates.sort(key=lambda p: near.distance_to(p))
+        
+        # 나선형 탐색 파라미터
+        step_size = 2.0  # 검색 간격 (그리드 크기)
+        current_radius = 2.0
+        
+        # 중심점 확인
+        if self.has_creep(near):
+            candidates.append(near)
+            
+        while current_radius <= search_radius and len(candidates) < max_candidates:
+            # 원주상의 점들 생성 (반지름에 비례하여 각도 간격 조절)
+            circumference = 2 * 3.14159 * current_radius
+            num_points = int(circumference / step_size)
+            angle_step = 6.28318 / max(1, num_points)
+            
+            for i in range(num_points):
+                angle = i * angle_step
+                
+                # 좌표 계산
+                offset_x = current_radius * math.cos(angle)
+                offset_y = current_radius * math.sin(angle)
+                
+                test_pos = Point2((near.x + offset_x, near.y + offset_y))
+                
+                # 맵 범위 내인지 확인
+                if not (0 <= test_pos.x < self.bot.game_info.map_size.x and
+                        0 <= test_pos.y < self.bot.game_info.map_size.y):
+                    continue
+                
+                # 점막 확인
+                if self.has_creep(test_pos):
+                    candidates.append(test_pos)
+                    if len(candidates) >= max_candidates:
+                        break
+            
+            # 다음 반지름으로 이동
+            current_radius += step_size
+            
         return candidates
 
     async def find_placement_on_creep(

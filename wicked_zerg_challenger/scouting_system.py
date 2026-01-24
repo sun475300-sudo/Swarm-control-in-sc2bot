@@ -60,8 +60,8 @@ class ScoutingSystem:
             if not self.intel_manager and hasattr(self.bot, "intel"):
                 self.intel_manager = self.bot.intel
 
-            # ★ 개선: 110 → 70 (정찰 빈도 증가, 약 3초마다)
-            if iteration - self.last_scout_update > 70:
+            # ★ 개선: 70 → 50 (정찰 빈도 더욱 증가, 약 2초마다)
+            if iteration - self.last_scout_update > 50:
                 await self._update_overlord_network()
                 await self._assign_ling_scouts()
                 await self._maybe_morph_overseer()
@@ -78,11 +78,43 @@ class ScoutingSystem:
                 await self._check_proxy_locations()
                 self.last_proxy_check = iteration
 
+            # 오버로드 희생 정찰 (3분 30초 ~ 4분 사이)
+            if 210 < self.bot.time < 270:
+                await self._sacrifice_overlord_scout()
+
             await self._move_scouts()
             self._log_sensor_snapshot(iteration)
         except Exception as e:
             if iteration % 200 == 0:
                 self.logger.error(f"Scouting system error: {e}")
+
+    async def _sacrifice_overlord_scout(self):
+        """★ 오버로드 희생 정찰 (Sacrifice Scout) ★"""
+        if getattr(self, "_sacrifice_scout_performed", False):
+            return
+
+        if not self.bot.enemy_start_locations:
+            return
+
+        enemy_main = self.bot.enemy_start_locations[0]
+        
+        # 적 본진과 가장 가까운 오버로드 선택
+        overlords = self.bot.units(UnitTypeId.OVERLORD)
+        if not overlords.exists:
+            return
+            
+        scout = overlords.closest_to(enemy_main)
+        
+        # 너무 멀면(100 이상) 아직 도착 안한거라 판단하고 일단 보냄 (또는 가장 가까운 놈)
+        # 희생 정찰 명령
+        if hasattr(scout, "tag"):
+            self.scout_assignments[scout.tag] = enemy_main
+            # 강제로 이동 명령 (move scouts에서 처리하지만 확실하게)
+            self.bot.do(scout.move(enemy_main))
+            self.bot.do(scout.hold_position(queue=True)) # 도착 후 홀드? 아니면 계속 이동? 보통 move면 충분.
+            
+            print(f"[SCOUT] ★★★ SACRIFICE OVERLORD SENT to {enemy_main} ★★★")
+            self._sacrifice_scout_performed = True
 
     async def _update_overlord_network(self):
         if not hasattr(self.bot, "units"):

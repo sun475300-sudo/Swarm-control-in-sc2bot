@@ -431,3 +431,89 @@ class IntelManager:
     def get_enemy_structure_count(self) -> int:
         """남은 적 구조물 수 반환."""
         return len(self.all_enemy_structures)
+
+    # ==========================================================
+    # ★ NEW: Data Backup System (데이터 백업 및 복구) ★
+    # ==========================================================
+
+    def save_data(self, file_path: str = "data/intel_data.json") -> bool:
+        """
+        현재 수집된 인텔 데이터를 JSON 파일로 저장합니다.
+
+        Args:
+            file_path: 저장할 파일 경로
+
+        Returns:
+            bool: 성공 여부
+        """
+        import json
+        import os
+
+        try:
+            # 디렉토리 생성
+            directory = os.path.dirname(file_path)
+            if directory and not os.path.exists(directory):
+                os.makedirs(directory)
+
+            # 데이터 직렬화
+            data = {
+                "enemy_race_name": self.enemy_race_name,
+                "enemy_unit_counts": self.enemy_unit_counts,
+                "enemy_tech_buildings": list(self.enemy_tech_buildings),  # set -> list
+                "scouted_locations": [
+                    (loc.x, loc.y) for loc in self.scouted_locations
+                ],  # Point2 -> tuple
+                "enemy_build_pattern": getattr(self, "_enemy_build_pattern", "unknown"),
+            }
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            
+            print(f"[INTEL] Data saved to {file_path}")
+            return True
+
+        except Exception as e:
+            print(f"[INTEL] Failed to save data: {e}")
+            return False
+
+    def load_data(self, file_path: str = "data/intel_data.json") -> bool:
+        """
+        JSON 파일에서 인텔 데이터를 불러와 복구합니다.
+
+        Args:
+            file_path: 불러올 파일 경로
+
+        Returns:
+            bool: 성공 여부
+        """
+        import json
+        import os
+        from sc2.position import Point2
+
+        if not os.path.exists(file_path):
+            return False
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # 데이터 복원
+            self.enemy_race_name = data.get("enemy_race_name")
+            self.enemy_unit_counts = data.get("enemy_unit_counts", {})
+            self.enemy_tech_buildings = set(data.get("enemy_tech_buildings", []))
+            self._enemy_build_pattern = data.get("enemy_build_pattern", "unknown")
+
+            # Scouted Locations 복원 (tuple -> Point2)
+            scouted = data.get("scouted_locations", [])
+            self.scouted_locations = {Point2(loc) for loc in scouted}
+            
+            print(f"[INTEL] Data loaded from {file_path}")
+            print(f"  - Enemy Race: {self.enemy_race_name}")
+            print(f"  - Build Pattern: {self._enemy_build_pattern}")
+            print(f"  - Scouted Locations: {len(self.scouted_locations)}")
+            
+            return True
+
+        except Exception as e:
+            print(f"[INTEL] Failed to load data: {e}")
+            return False
