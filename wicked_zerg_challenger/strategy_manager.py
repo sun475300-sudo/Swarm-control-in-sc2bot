@@ -208,10 +208,12 @@ class StrategyManager:
         if hasattr(self.bot, "enemy_units") and self.bot.enemy_units:
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 main_base = self.bot.townhalls.first
-                for enemy in self.bot.enemy_units:
-                    # 적 전투 유닛이 기지 근처에 있으면 러시
-                    if enemy.can_attack and enemy.distance_to(main_base) < 30:
-                        return True
+                # ★ CRITICAL: 비상 모드 조건 완화 (30 → 15) - 확장 차단 방지 ★
+                nearby_enemies = [e for e in self.bot.enemy_units
+                                 if e.can_attack and e.distance_to(main_base) < 15]
+                # 적 3마리 이상일 때만 러시로 판정 (정찰 유닛 무시)
+                if len(nearby_enemies) >= 3:
+                    return True
 
         return False
 
@@ -832,13 +834,24 @@ class StrategyManager:
                 if unit.can_attack:
                     enemy_army += 1
 
+        # 공급량 기반 공격 (적 정보가 없어도 공격)
+        army_supply = getattr(self.bot, "supply_army", 0)
+        
         # 전략 결정
-        if our_army > enemy_army * 1.5:
-            self.current_mode = StrategyMode.AGGRESSIVE
-        elif our_army < enemy_army * 0.5 and enemy_army > 5:
-            self.current_mode = StrategyMode.DEFENSIVE
-        else:
-            self.current_mode = StrategyMode.NORMAL
+        if self.current_mode != StrategyMode.EMERGENCY:
+            # 1. 압도적 물량이면 공격 (적 유닛 수와 무관하게)
+            if army_supply >= 100:
+                self.current_mode = StrategyMode.ALL_IN
+            # 2. 적당한 물량이면 공격적 운영
+            elif army_supply >= 40:
+                self.current_mode = StrategyMode.AGGRESSIVE
+            # 3. 상대적 우위 계산 (기존 로직)
+            elif our_army > enemy_army * 1.5 and our_army >= 10:
+                self.current_mode = StrategyMode.AGGRESSIVE
+            elif our_army < enemy_army * 0.5 and enemy_army > 5:
+                self.current_mode = StrategyMode.DEFENSIVE
+            else:
+                self.current_mode = StrategyMode.NORMAL
 
     def get_unit_ratios(self) -> Dict[str, float]:
         """

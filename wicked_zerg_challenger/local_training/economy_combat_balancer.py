@@ -51,16 +51,16 @@ class EconomyCombatBalancer:
         self.resource_bank_threshold = 3000
         self.min_drone_count = 12
 
-        # ★ BALANCED AGGRESSIVE: 30분 승리를 위한 일꾼 수 조정 ★
+        # ★★★ MAXIMUM EXPANSION: 최대 멀티를 위한 일꾼 목표 ★★★
         # Drone targets by game phase
         self.drone_targets = {
-            "early": 24,  # 0-6 min (안정적인 초반 경제)
-            "mid": 45,  # 6-12 min (2-3베이스 포화)
-            "late": 45,  # 12+ min (더 이상 확장 안함)
+            "early": 44,   # 0-6 min (2-3베이스 완전 포화)
+            "mid": 88,     # 6-12 min (4-5베이스 완전 포화)
+            "late": 110,   # 12+ min (6-7베이스 완전 포화)
         }
 
         # Base calculation
-        self.drones_per_base = 16  # 기지당 16마리
+        self.drones_per_base = 22  # 기지당 22마리 (16 미네랄 + 6 가스)
 
         # Production history tracking
         self.production_history: Dict[str, int] = {
@@ -269,13 +269,13 @@ class EconomyCombatBalancer:
             game_time = getattr(self.bot, "time", 0.0)
             game_time_minutes = game_time / 60.0
 
-            # 기본 비율 (드론 : 군대)
+            # ★ MACRO ECONOMY: 경제 비중 증가 (빠른 멀티 지원) ★
             if game_time_minutes < 6:
-                base_ratio = 0.7  # Early: 70% economy
+                base_ratio = 0.75  # Early: 75% economy (빠른 드론 생산)
             elif game_time_minutes < 12:
-                base_ratio = 0.5  # Mid: 50% economy
+                base_ratio = 0.6   # Mid: 60% economy (멀티 포화)
             else:
-                base_ratio = 0.3  # Late: 30% economy
+                base_ratio = 0.4   # Late: 40% economy (여전히 드론 필요)
 
             # ★ 포화 상태면 병력 비중 증가 ★
             saturation = self._check_base_saturation()

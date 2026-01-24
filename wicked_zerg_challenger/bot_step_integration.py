@@ -424,6 +424,13 @@ class BotStepIntegrator:
                 "Protoss counter",
             )
 
+            # ★ NEW: Multi-Base Defense System (모든 확장 기지 방어) ★
+            await self._safe_manager_step(
+                getattr(self.bot, "multi_base_defense", None),
+                iteration,
+                "Multi-base defense",
+            )
+
             # 10. Micro Control (마이크로 컨트롤)
             await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 

@@ -70,6 +70,10 @@ class EconomyManager:
         if iteration % 22 == 0:
             await self._redistribute_mineral_workers()
 
+        # ★ CRITICAL: 강제 확장 체크 (5초마다) ★
+        if iteration % 110 == 0:  # 5초마다 (10초 → 5초, 더 자주)
+            await self._force_expansion_if_stuck()
+
         # PROACTIVE expansion check (every 33 frames = ~1.5 seconds)
         # 10분(600초) 안에 3베이스 확보를 위한 사전 예방적 확장
         if iteration % 33 == 0:
@@ -92,24 +96,42 @@ class EconomyManager:
         if iteration % 33 == 0:  # ~1.5초마다
             await self._optimize_gas_timing()
 
-        # ★ CRITICAL FIX: Extreme Gas Imbalance Fix ★
-        # Gas > 2000 and Minerals < 500 -> Stop Gas Mining TEMPORARILY
-        if iteration % 44 == 0:
+        # ★ NEW: 경제 회복 시스템 가동 (병력 생산 후 재건) ★
+        if iteration % 22 == 0:
+            await self.check_economic_recovery()
+
+        # ★ IMPROVED: Extreme Gas Imbalance Fix (덜 공격적) ★
+        # Gas > 3000 and Minerals < 200 -> 일부 가스 일꾼만 미네랄로 이동
+        if iteration % 88 == 0:  # 4초마다 (2초 → 4초, 덜 빈번하게)
             gas = getattr(self.bot, "vespene", 0)
             minerals = getattr(self.bot, "minerals", 0)
-            if gas > 2000 and minerals < 500:
-                # Pull ALL workers off gas
+
+            # ★ 조건 완화: 가스 3000+ (2000→3000), 미네랄 200- (500→200) ★
+            # 더 심각한 불균형일 때만 개입
+            if gas > 3000 and minerals < 200:
+                # 쿨다운 체크 (30초에 한 번만)
+                if not hasattr(self, "_last_gas_cut_time"):
+                    self._last_gas_cut_time = 0
+
+                if self.bot.time - self._last_gas_cut_time < 30:
+                    return  # 30초 이내에 이미 실행됨
+
+                # ★ 일부 가스 일꾼만 이동 (50%만) ★
                 if hasattr(self.bot, "gas_buildings"):
                     for extractor in self.bot.gas_buildings.ready:
                         if extractor.assigned_harvesters > 0:
-                            workers = self.bot.workers.filter(lambda w: w.is_carrying_vespene or w.order_target == extractor.tag)
-                            for w in workers:
+                            workers = self.bot.workers.filter(
+                                lambda w: w.is_carrying_vespene or w.order_target == extractor.tag
+                            )
+                            # 50%만 이동 (최대 3마리)
+                            workers_to_move = min(len(workers) // 2 + 1, 3)
+                            for w in workers[:workers_to_move]:
                                 nearby_minerals = self.bot.mineral_field.closer_than(10, w)
                                 if nearby_minerals:
                                     self.bot.do(w.gather(nearby_minerals.closest_to(w)))
-                            # Log occassionally
-                            if iteration % 220 == 0:
-                                print(f"[ECONOMY] CUTTING GAS! (Gas: {gas}, Min: {minerals})")
+
+                    self._last_gas_cut_time = self.bot.time
+                    print(f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})")
 
     async def _optimize_early_worker_split(self) -> None:
         """
@@ -545,8 +567,8 @@ class EconomyManager:
                     if excess <= 0 or deficit <= 0:
                         continue
 
-                    # Move workers
-                    workers_to_move = min(excess, deficit, 3)  # Max 3 at a time
+                    # Move workers (더 점진적으로)
+                    workers_to_move = min(excess, deficit, 3)  # Max 3 at a time (6 -> 3, 덜 혼란스럽게)
                     for _ in range(workers_to_move):
                         if not nearby_workers:
                             break
@@ -569,6 +591,56 @@ class EconomyManager:
 
         except Exception:
             pass
+
+    async def _prevent_resource_banking(self) -> None:
+        """
+        ★ Prevent resource banking by spending excess minerals ★
+
+        Logic:
+        1. If Minerals > 1000 and Larva < 3:
+           - Build Extra Queens (Injects/Defense)
+           - Build Static Defense (Spines/Spores)
+        """
+        if not hasattr(self.bot, "minerals"):
+            return
+
+        minerals = self.bot.minerals
+        vespene = self.bot.vespene
+        larva_count = len(self.bot.larva) if hasattr(self.bot, "larva") else 0
+
+        # 임계값: 미네랄 1000, 라바 부족 시
+        if minerals > 1000 and larva_count < 3:
+            # 1. 퀸 추가 생산 (주사기 + 수비)
+            if self.bot.supply_left >= 2 and self.bot.can_afford(UnitTypeId.QUEEN):
+                 for th in self.bot.townhalls.ready.idle:
+                     if not self.bot.units(UnitTypeId.QUEEN).closer_than(5, th).exists:
+                         self.bot.do(th.train(UnitTypeId.QUEEN))
+                         if minerals < 800: break
+
+            # 2. 방어 건물 건설 (본진/멀티)
+            if minerals > 1500 and hasattr(self.bot, "workers") and self.bot.workers:
+                for th in self.bot.townhalls.ready:
+                    # 기지 당 포자촉수 1개, 가시촉수 1개 유지
+                    spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
+                    if not spores.exists and self.bot.can_afford(UnitTypeId.SPORECRAWLER):
+                        pos = th.position.towards(self.bot.game_info.map_center, 5)
+                        worker = self.bot.workers.closest_to(pos)
+                        if worker:
+                            try:
+                                await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
+                                minerals -= 75
+                            except: pass
+                    
+                    if minerals > 2000:
+                        spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th)
+                        if not spines.exists and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
+                             pos = th.position.towards(self.bot.game_info.map_center, 6)
+                             worker = self.bot.workers.closest_to(pos)
+                             if worker:
+                                 try:
+                                     await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
+                                     minerals -= 100
+                                 except: pass
 
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
@@ -656,6 +728,104 @@ class EconomyManager:
         except Exception:
             pass  # 에러 무시
 
+    async def _force_expansion_if_stuck(self) -> None:
+        """
+        ★ CRITICAL: 확장이 막혔을 때 강제 확장 ★
+
+        시간 대비 기지 수가 너무 적으면 모든 조건 무시하고 강제 확장
+        """
+        if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
+            return
+
+        townhalls = self.bot.townhalls
+        base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
+        game_time = self.bot.time
+        minerals = getattr(self.bot, "minerals", 0)
+
+        # ★ 강제 확장 조건 (시간 대비 기지 수) ★
+        force_expand = False
+        reason = ""
+
+        # ★ 1분 (60초): 최소 2베이스 필요 (강제) ★
+        if game_time >= 60 and base_count < 2:
+            force_expand = True
+            reason = "1min with only 1 base - FORCING natural!"
+
+        # ★ 30초: 앞마당이 없으면 강제 확장 (더 빠르게) ★
+        elif game_time >= 30 and base_count < 2 and minerals >= 200:
+            force_expand = True
+            reason = "30sec with only 1 base - FORCING natural ASAP!"
+
+        # ★ 2분: 여전히 1베이스면 긴급 확장 (미네랄 무시) ★
+        elif game_time >= 120 and base_count < 2:
+            force_expand = True
+            reason = "2min with only 1 base - EMERGENCY EXPANSION!"
+
+        # ★ 3분 (180초): 최소 3베이스 필요 (절대적!) ★
+        elif game_time >= 180 and base_count < 3:
+            force_expand = True
+            reason = "3min with less than 3 bases - FORCING 3rd!"
+
+        # ★ 4분: 여전히 3베이스 없으면 긴급 ★
+        elif game_time >= 240 and base_count < 3:
+            force_expand = True
+            reason = "4min with less than 3 bases - EMERGENCY 3rd!"
+
+        # ★ 5분 (300초): 최소 4베이스 필요 ★
+        elif game_time >= 300 and base_count < 4:
+            force_expand = True
+            reason = "5min with less than 4 bases - FORCING 4th!"
+
+        # ★ 7분 (420초): 최소 5베이스 필요 ★
+        elif game_time >= 420 and base_count < 5:
+            force_expand = True
+            reason = "7min with less than 5 bases - FORCING 5th!"
+
+        # ★ 10분 (600초): 최소 6베이스 필요 ★
+        elif game_time >= 600 and base_count < 6:
+            force_expand = True
+            reason = "10min with less than 6 bases - FORCING 6th!"
+
+        # ★ 15분 (900초): 최소 7베이스 필요 ★
+        elif game_time >= 900 and base_count < 7:
+            force_expand = True
+            reason = "15min with less than 7 bases - FORCING 7th!"
+
+        if not force_expand:
+            return
+
+        # ★ 비용 체크 (앞마당 없으면 150만 있어도 시도) ★
+        min_minerals = 150 if base_count < 2 else 300
+        if minerals < min_minerals:
+            if int(game_time) % 30 == 0:  # 30초마다만 로그
+                print(f"[FORCE EXPAND] ★ {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) ★")
+            return
+
+        # ★ CRITICAL: 앞마당 없으면 pending 무시하고 강제 확장 ★
+        pending = getattr(self.bot, "already_pending", lambda x: 0)(UnitTypeId.HATCHERY)
+
+        # 앞마당(2베이스) 확보는 절대적 우선순위 - pending 무시
+        if base_count >= 2 and pending >= 1:
+            if int(game_time) % 30 == 0:  # 30초마다만 로그
+                print(f"[FORCE EXPAND] ★ {reason} BUT {pending} already pending ★")
+            return
+
+        # ★ 강제 확장 실행 ★
+        print(f"[FORCE EXPAND] ★★★ {reason} - FORCING EXPANSION NOW! ★★★")
+
+        try:
+            if hasattr(self.bot, "expand_now"):
+                await self.bot.expand_now()
+            else:
+                # expand_now가 없으면 직접 위치 찾아서 건설
+                expansion_locations = await self.bot.get_next_expansion()
+                if expansion_locations and hasattr(self.bot, "workers") and self.bot.workers:
+                    worker = self.bot.workers.closest_to(expansion_locations)
+                    if worker:
+                        self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
+        except Exception as e:
+            print(f"[FORCE EXPAND] Failed: {e}")
+
     async def _check_proactive_expansion(self) -> None:
         """
         Proactive expansion based on timing - 10분 안에 3베이스 확보.
@@ -674,88 +844,129 @@ class EconomyManager:
         game_time = self.bot.time  # 게임 시간 (초)
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
 
-        # ★★★ 30분 승리 전략: 2-3베이스 운영, 4베이스 제한 ★★★
+        # ★★★ MAXIMUM FAST EXPANSION: 최대한 빠르고 많은 멀티 ★★★
         should_expand = False
         expand_reason = ""
+        minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
 
-        # 1베이스 → 2베이스 (내츄럴): 30초 이후, 드론 13마리 이상
+        # 1베이스 → 2베이스 (내츄럴): 30초 (빠른 내츄럴)
         if base_count == 1:
             worker_count = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
-            if game_time >= 30 and worker_count >= 13:
+            # ★ 1분 안에 앞마당: 17초부터 시도, 일꾼 12마리면 OK ★
+            if (game_time >= 17 and worker_count >= 12) or game_time >= 30:
                 should_expand = True
-                expand_reason = f"Natural expansion (time: {int(game_time)}s, workers: {worker_count})"
+                expand_reason = f"Natural expansion ASAP (time: {int(game_time)}s, workers: {worker_count})"
 
-        # ★ 2베이스 → 3베이스: 4분 이후 (안정적인 경제) ★
-        # ★ 2베이스 → 3베이스: 3분 30초 (공격적인 멀티) ★
+        # ★ 2베이스 → 3베이스: 1분 30초 (초고속 3베이스) ★
         elif base_count == 2:
-            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 210 or minerals > 600:  # 3분 30초 (기존 4분)
+            if game_time >= 90 or minerals > 400:
                 should_expand = True
-                expand_reason = f"3rd base AGGRESSIVE (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"3rd base HYPER-FAST (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 3베이스 → 4베이스: 5분 (부유한 운영) ★
+        # ★ 3베이스 → 4베이스: 2분 30초 (빠른 4베이스) ★
         elif base_count == 3:
-            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 300 or minerals > 600:  # 5분 (기존 8분 -> 3분 단축)
+            if game_time >= 150 or minerals > 500:
                 should_expand = True
                 expand_reason = f"4th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
-                
-        # ★ 4베이스 → 5베이스: 6분 30초 ★
+
+        # ★ 4베이스 → 5베이스: 3분 30초 ★
         elif base_count == 4:
-            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 390 or minerals > 600:
+            if game_time >= 210 or minerals > 600:
                 should_expand = True
                 expand_reason = f"5th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 5베이스 이상: 8분 이후 무한 확장 ★
-        elif base_count >= 5:
-            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
-            if game_time >= 480 or minerals > 800:
+        # ★ 5베이스 → 6베이스: 4분 30초 ★
+        elif base_count == 5:
+            if game_time >= 270 or minerals > 700:
                 should_expand = True
-                expand_reason = f"Infinite Expansion (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"6th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+
+        # ★ 6베이스 → 7베이스: 5분 30초 ★
+        elif base_count == 6:
+            if game_time >= 330 or minerals > 800:
+                should_expand = True
+                expand_reason = f"7th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+
+        # ★ 7베이스 이상: 무한 확장 (60초마다 또는 미네랄 900+ 저장) ★
+        elif base_count >= 7:
+            # 마지막 확장 시간 추적
+            if not hasattr(self, "_last_expansion_time"):
+                self._last_expansion_time = game_time
+
+            time_since_last = game_time - self._last_expansion_time
+            if time_since_last >= 60 or minerals > 900:
+                should_expand = True
+                expand_reason = f"Infinite Expansion #{base_count + 1} (time: {int(game_time)}s, minerals: {minerals})"
+                self._last_expansion_time = game_time
 
         if not should_expand:
             return
 
-        # 이미 확장 중인지 확인 (조건 완화)
+        # ★ DEBUG: 확장 시도 로그 ★
+        print(f"[EXPANSION] [{int(game_time)}s] Trying to expand: {expand_reason}")
+
+        # ★ FAST EXPANSION: 동시 확장 허용 (최대 3개) ★
         if hasattr(self.bot, "already_pending"):
             pending = self.bot.already_pending(UnitTypeId.HATCHERY)
-            # 매크로 해처리나 동시 확장을 위해 최대 2개까지 허용
-            # 단, 자원이 부족하면 1개만 허용
-            if pending >= 2:
-                return
-            if pending >= 1 and self.bot.minerals < 700:  # 자원 여유 있으면 동시 건설 허용
+            # 미네랄이 풍부하면 최대 3개까지 동시 건설 허용
+            max_pending = 3 if minerals > 1000 else 2 if minerals > 600 else 1
+            if pending >= max_pending:
+                print(f"[EXPANSION] [{int(game_time)}s] Already {pending} pending, max is {max_pending}")
                 return
 
         # 비용 확인
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
+            print(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals)")
             return
 
-        # 공격 받고 있는지 확인 (2베이스 이후에만)
-        if base_count >= 2:
-            strategy = getattr(self.bot, "strategy_manager", None)
-            if strategy and getattr(strategy, "emergency_active", False):
-                return  # 비상 모드에서는 확장 중단
+        # ★ MACRO ECONOMY: 비상 모드여도 확장 계속 (매크로 최우선) ★
+        # ★ 심각한 위협만 확장 차단: 본진 근처 15거리에 적 15+ 유닛 ★
+        strategy = getattr(self.bot, "strategy_manager", None)
+        if strategy and getattr(strategy, "emergency_active", False):
+            if hasattr(self.bot, "enemy_units") and self.bot.townhalls.exists:
+                main_base = self.bot.townhalls.first
+                nearby_enemies = self.bot.enemy_units.closer_than(15, main_base)
+                # ★ 극심한 위협만 확장 차단 (적 15명 이상) ★
+                if nearby_enemies.amount >= 15:
+                    if int(game_time) % 30 == 0:  # 30초마다만 로그
+                        print(f"[EXPANSION] [{int(game_time)}s] ★ SEVERE THREAT: {nearby_enemies.amount} enemies - expansion blocked ★")
+                    return  # 심각한 위협: 확장 중단
 
-        # 확장 실행 (황금 기지 우선)
+        # ★ 그 외 모든 경우: 확장 계속 (매크로 경제 우선) ★
+
+        # ★ 확장 실행 (여러 방법 시도) ★
+        expansion_success = False
+
         try:
-            # 황금 기지 우선 확장 시도
+            # 방법 1: 황금 기지 우선 확장 시도
             gold_pos = await self._get_best_expansion_with_gold_priority()
-            if gold_pos:
-                if hasattr(self.bot, "workers") and self.bot.workers:
-                    worker = self.bot.workers.closest_to(gold_pos)
-                    if worker:
-                        self.bot.do(worker.build(UnitTypeId.HATCHERY, gold_pos))
-                        is_gold = self._is_gold_expansion(gold_pos)
-                        gold_tag = " [GOLD!]" if is_gold else ""
-                        print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag}")
-                        return
-            # 폴백: expand_now 사용
-            if hasattr(self.bot, "expand_now"):
-                await self.bot.expand_now()
-                print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}")
+            if gold_pos and hasattr(self.bot, "workers") and self.bot.workers:
+                worker = self.bot.workers.closest_to(gold_pos)
+                if worker:
+                    self.bot.do(worker.build(UnitTypeId.HATCHERY, gold_pos))
+                    is_gold = self._is_gold_expansion(gold_pos)
+                    gold_tag = " [GOLD!]" if is_gold else ""
+                    print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag}")
+                    expansion_success = True
         except Exception as e:
-            pass  # Silently fail
+            print(f"[EXPAND] Gold expansion failed: {e}")
+
+        if not expansion_success:
+            try:
+                # 방법 2: expand_now 사용
+                if hasattr(self.bot, "expand_now"):
+                    await self.bot.expand_now()
+                    print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}")
+                    expansion_success = True
+            except Exception as e:
+                print(f"[EXPAND] expand_now failed: {e}")
+
+        if not expansion_success:
+            try:
+                # 방법 3: 직접 확장 위치 찾기
+                await self._manual_expansion(game_time, expand_reason)
+            except Exception as e:
+                print(f"[EXPAND] Manual expansion failed: {e}")
 
     async def _check_expansion_on_depletion(self) -> None:
         """
@@ -834,19 +1045,36 @@ class EconomyManager:
             if not should_expand:
                 return
 
-            # Check if already expanding
-            if self.bot.already_pending(UnitTypeId.HATCHERY) > 0:
+            # ★ DESPERATE EXPANSION: 4분 지났는데 앞마당 없으면 강제 확장 ★
+            game_time = getattr(self.bot, "time", 0)
+            if townhalls.amount < 2 and game_time > 240:
+                print(f"[ECONOMY] ★ DESPERATE EXPANSION: Force expanding! (No natural @ {int(game_time)}s) ★")
+                if hasattr(self.bot, "expand_now"):
+                    await self.bot.expand_now()
+                return
+
+            # ★ FAST EXPANSION: 동시 확장 허용 ★
+            # Check if already expanding (최대 2개까지 허용)
+            pending = self.bot.already_pending(UnitTypeId.HATCHERY)
+            minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
+            max_pending = 2 if minerals > 800 else 1
+            if pending >= max_pending:
                 return
 
             # Check if we can afford expansion
             if not self.bot.can_afford(UnitTypeId.HATCHERY):
                 return
 
-            # ★ 공격 받고 있으면 확장 지연 (단, 심각한 고갈은 예외) ★
+            # ★ MACRO ECONOMY: 공격 받아도 확장 계속 (심각한 위협만 차단) ★
             strategy = getattr(self.bot, "strategy_manager", None)
             if strategy and getattr(strategy, "emergency_active", False):
-                if depleted_base_count < townhalls.amount // 2:
-                    return  # 비상 모드에서는 확장 중단 (심각한 고갈 제외)
+                # 심각한 위협만 확장 차단 (본진에 적 10+ 유닛)
+                if hasattr(self.bot, "enemy_units") and townhalls.exists:
+                    main_base = townhalls.first
+                    nearby_enemies = self.bot.enemy_units.closer_than(15, main_base)
+                    if nearby_enemies.amount >= 10 and depleted_base_count < townhalls.amount // 2:
+                        return  # 심각한 위협 + 자원 여유: 확장 중단
+                # 경미한 위협 또는 자원 부족: 확장 계속
 
             # Try to expand
             if hasattr(self.bot, "expand_now"):
@@ -868,6 +1096,36 @@ class EconomyManager:
 
         except Exception:
             pass
+
+    async def _manual_expansion(self, game_time: float, reason: str) -> None:
+        """
+        ★ 수동 확장: 직접 확장 위치를 찾아서 일꾼 보내기 ★
+
+        expand_now()가 실패할 때 사용하는 폴백 방법
+        """
+        if not hasattr(self.bot, "workers") or not self.bot.workers:
+            print(f"[MANUAL EXPAND] No workers available!")
+            return
+
+        # 확장 가능한 위치 찾기
+        try:
+            expansion_locations = await self.bot.get_next_expansion()
+            if not expansion_locations:
+                print(f"[MANUAL EXPAND] No expansion locations found!")
+                return
+
+            # 가장 가까운 일꾼 찾기
+            worker = self.bot.workers.closest_to(expansion_locations)
+            if not worker:
+                print(f"[MANUAL EXPAND] No worker found!")
+                return
+
+            # 해처리 건설 명령
+            self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
+            print(f"[MANUAL EXPAND] [{int(game_time)}s] ★ {reason} ★ (Manual expansion)")
+
+        except Exception as e:
+            print(f"[MANUAL EXPAND] Exception: {e}")
 
     def _is_gold_expansion(self, position) -> bool:
         """

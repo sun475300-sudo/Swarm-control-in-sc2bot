@@ -250,7 +250,14 @@ class EarlyDefenseSystem:
             workers_to_defend = self.bot.workers.closest_n_units(closest_enemy.position, defending_workers)
 
             for worker in workers_to_defend:
-                if worker.is_idle or worker.is_gathering:
+                # ★ CRITICAL: 일꾼이 기지에서 12거리 이상 벗어나지 않도록 체크 ★
+                if worker.distance_to(main_base) > 12:
+                    # 너무 멀리 나갔으면 복귀
+                    worker.gather(self.bot.mineral_field.closest_to(main_base))
+                    continue
+
+                # 적이 기지 근처(15거리 이내)에 있을 때만 공격
+                if (worker.is_idle or worker.is_gathering) and closest_enemy.distance_to(main_base) < 10:
                     worker.attack(closest_enemy.position)
 
             print(f"[EARLY_DEFENSE] ⚔️ 일꾼 {defending_workers}명 방어 투입!")
