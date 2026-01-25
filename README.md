@@ -169,9 +169,9 @@ graph TD
 
 * 200기 저그 유닛 → **드론 군집(Multi-Agent Swarm)** 모델링
 
-* 전투력, 적군 규모, 테크, 확장 상태 등을 **10차원 벡터**로 표현
+* 전투력, 적군 규모, 테크, 확장 상태 등을 **15차원 벡터**로 표현 (고도화 완료)
 
-* 공격/방어/확장 전략 **자동 전환**
+* 공격/방어/확장 전략 **자동 전환** (Epsilon-Greedy + Learning Rate Scheduling)
 
 * 프로게이머 **이병렬(Rogue)** 리플레이 기반 **모방학습(IL)** 적용
 
@@ -203,7 +203,7 @@ graph TD
 
 
 
-* Android GCS **직접 개발**
+* **Web 기반 Mobile GCS (PWA)** 직접 개발 + Android Native App 프로토타입
 
 * 실시간 정보:
 
@@ -220,6 +220,8 @@ graph TD
 * ngrok 기반 LTE/5G **안전한 원격 접속**
 
 * 실제 UAV C2(Command & Control) 구조의 프로토타입
+
+* TypeScript/React 기반 크로스 플랫폼 대시보드
 
 
 
@@ -623,11 +625,11 @@ StarCraft II is highly suitable for drone-swarm research due to its structural s
 
 * 200 Zerg units modeled as cooperative UAV agents
 
-* 10-dimensional tactical state vector
+* **15-dimensional** tactical state vector (enhanced from initial 10D design)
 
-* Automatic strategy shifts: **Attack / Defend / Expand**
+* Automatic strategy shifts: **Attack / Defend / Expand** (Epsilon-Greedy + LR Scheduling)
 
-* Imitation learning using professional Zerg player **Rogue**’s replay data
+* Imitation learning using professional Zerg player **Rogue**'s replay data
 
 
 
@@ -667,7 +669,7 @@ StarCraft II is highly suitable for drone-swarm research due to its structural s
 
 
 
-* Fully self-developed Android App
+* **Web-based Mobile GCS (PWA)** + Android Native App prototype
 
 * Real-time telemetry:
 

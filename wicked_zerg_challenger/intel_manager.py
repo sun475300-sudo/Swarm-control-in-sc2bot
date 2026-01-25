@@ -18,6 +18,7 @@ class IntelManager:
         self.last_update = 0
         self.update_interval = 8
         self.enemy_race_name: Optional[str] = None
+        self.enemy_main_base_location = None  # 추가
 
         # Enemy composition tracking
         self.enemy_army_supply = 0

@@ -322,7 +322,7 @@ class GameAnalytics:
             lines.append(f"  - {opponent_race}의 주요 전략 파악")
 
         elif win_rate < 40:
-            lines.append(f"  ⚠️ 승률 낮음 ({win_rate:.1f}%) - 개선 필요")
+            lines.append(f"  [WARNING] 승률 낮음 ({win_rate:.1f}%) - 개선 필요")
             lines.append(f"  - {opponent_race}에 대한 카운터 전략 개발")
 
         elif win_rate < 60:

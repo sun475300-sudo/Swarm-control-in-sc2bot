@@ -152,27 +152,35 @@ class UnitFactory:
         # 1. 앞마당 체크 (1분 지났는데 1베이스면 자원 세이브)
         # 단, 이미 해처리 건설 중이면(pending) 세이브 안 해도 됨
         pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
-        
+
+        # ★ FIX: 전투 중에는 확장 대기하지 않음 (생존 우선) ★
+        strategy = getattr(self.bot, "strategy_manager", None)
+        under_attack = False
+        if strategy:
+            under_attack = getattr(strategy, "emergency_active", False) or getattr(strategy, "defense_active", False)
+
         # ★ OPTIMIZATION: 2분 내 멀티 보장 (60초부터 자원 모으기 시작) ★
         # 기존 120초 -> 60초로 앞당김
-        if base_count < 2 and game_time > 60 and pending_hatch == 0:
-            if self.bot.minerals < 350: # 300 + 여유
+        # ★ 단, 미네랄이 200-350 범위에 있을 때만 세이브 (너무 적으면 방어 유닛 필요)
+        if base_count < 2 and game_time > 60 and pending_hatch == 0 and not under_attack:
+            if 200 <= self.bot.minerals < 350: # 200 미만이면 유닛 생산 계속
                  if iteration % 100 == 0:
-                     print(f"[UNIT_FACTORY] Saving minerals for Natural Expansion (Time: {int(game_time)}s)")
+                     print(f"[UNIT_FACTORY] Saving minerals for Natural Expansion (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
                  return # 라바 소비 중단
 
         # 2. 3멀티 체크 (빠른 3멀티: 3분 30초 목표 -> 3분 10초부터 자원 보존)
-        if base_count < 3 and game_time > 190 and pending_hatch == 0:
-             if self.bot.minerals < 350:
+        if base_count < 3 and game_time > 190 and pending_hatch == 0 and not under_attack:
+             if 200 <= self.bot.minerals < 350:
                  if iteration % 100 == 0:
-                     print(f"[UNIT_FACTORY] Saving minerals for 3rd Base (Time: {int(game_time)}s)")
+                     print(f"[UNIT_FACTORY] Saving minerals for 3rd Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
                  return
 
         # 3. 4멀티 체크 (빠른 4멀티: 5분 목표 -> 4분 40초부터 자원 보존)
-        if base_count < 4 and game_time > 280 and pending_hatch == 0:
-             if self.bot.minerals < 350:
+        # ★ 4멀티는 선택사항이므로 미네랄 250+ 있을 때만 세이브
+        if base_count < 4 and game_time > 280 and pending_hatch == 0 and not under_attack:
+             if 250 <= self.bot.minerals < 350:
                  if iteration % 100 == 0:
-                     print(f"[UNIT_FACTORY] Saving minerals for 4th Base (Time: {int(game_time)}s)")
+                     print(f"[UNIT_FACTORY] Saving minerals for 4th Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
                  return
 
         larva = self.bot.larva

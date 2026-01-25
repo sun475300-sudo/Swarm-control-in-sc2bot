@@ -48,7 +48,7 @@ class EarlyScoutSystem:
 
         # === Zergling 정찰 ===
         self.scout_ling_tags: List[int] = []  # 정찰 Zergling 태그 리스트
-        self.max_scout_lings = 2  # 최대 2마리
+        self.max_scout_lings = 3  # ★ 최대 3마리로 증가 (더 적극적 정찰)
         self.ling_scouts_assigned = False  # Zergling 배치 완료 플래그
 
         # === Overlord 정찰 ===
@@ -99,8 +99,8 @@ class EarlyScoutSystem:
         if self.scout_ling_tags:
             await self._manage_zergling_scouts()
 
-        # 3. Overlord 정찰 (게임 시작 직후)
-        if not self.overlord_scout_sent and self.bot.time > 10:
+        # 3. Overlord 정찰 (게임 시작 즉시 - 5초부터)
+        if not self.overlord_scout_sent and self.bot.time > 5:
             await self._send_overlord_scout()
 
         # 4. Overlord 정찰 관리
@@ -195,7 +195,7 @@ class EarlyScoutSystem:
                 # 정찰 체크포인트 기록
                 if current_wp_idx == 0:
                     self.main_base_scouted = True
-                    print(f"[EARLY_SCOUT] ✓ 적 기지 정찰 완료 (게임 시간: {int(self.bot.time)}초)")
+                    print(f"[EARLY_SCOUT] [OK] 적 기지 정찰 완료 (게임 시간: {int(self.bot.time)}초)")
                 elif current_wp_idx == 1:
                     self.natural_scouted = True
 
@@ -275,7 +275,7 @@ class EarlyScoutSystem:
                     # 6풀 의심 (90초 이전)
                     if self.bot.time < 90:
                         self.cheese_suspected = True
-                        print(f"[EARLY_SCOUT] 🚨 조기 러시 의심! (치즈 가능성)")
+                        print(f"[EARLY_SCOUT] [!] 조기 러시 의심! (치즈 가능성)")
 
                 # Gas 발견
                 if structure.type_id in [UnitTypeId.EXTRACTOR, UnitTypeId.ASSIMILATOR, UnitTypeId.REFINERY]:
@@ -322,6 +322,6 @@ class EarlyScoutSystem:
 
         # 치즈 감지
         if self.cheese_suspected:
-            status_parts.append("🚨치즈!")
+            status_parts.append("[!]치즈!")
 
         return " | ".join(status_parts) if status_parts else "정찰 준비 중"

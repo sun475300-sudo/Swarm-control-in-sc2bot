@@ -1,32 +1,54 @@
 {
   "build_order_timings": {
-    "Hatchery": 90.0,
-    "SpawningPool": 75.0,
-    "Extractor": 85.0,
-    "Queen": 100.0,
-    "Zergling": 110.0,
-    "RoachWarren": 180.0,
-    "Lair": 300.0,
-    "HydraliskDen": 360.0
+    "Drone": 157.92170022371366,
+    "Extractor": 74.42307692307692,
+    "Overlord": 186.66666666666666,
+    "Hatchery": 125.51282051282051,
+    "SpawningPool": 94.76,
+    "Zergling": 225.4494382022472,
+    "SporeCrawler": 234.0,
+    "Queen": 226.875,
+    "Lair": 145.0,
+    "Hive": 198.0,
+    "SpineCrawler": 160.0,
+    "Overseer": 114.2,
+    "RoachWarren": 140.33333333333334,
+    "Roach": 432.0,
+    "Ravager": 432.0,
+    "Baneling": 238.6,
+    "EvolutionChamber": 160.0,
+    "BanelingNest": 288.0
   },
   "unit_priorities": {
-    "Drone": 0.3,
-    "Zergling": 0.25,
-    "Roach": 0.15,
-    "Hydralisk": 0.1,
-    "Queen": 0.1,
-    "Baneling": 0.05,
-    "Mutalisk": 0.05
+    "Hatchery": 0.0352,
+    "Drone": 0.5976,
+    "Overlord": 0.0704,
+    "Extractor": 0.0416,
+    "SpawningPool": 0.02,
+    "Zergling": 0.1424,
+    "SporeCrawler": 0.0056,
+    "Queen": 0.0448,
+    "Hive": 0.0072,
+    "Lair": 0.0112,
+    "SpineCrawler": 0.0008,
+    "Overseer": 0.008,
+    "RoachWarren": 0.0024,
+    "Roach": 0.0016,
+    "Ravager": 0.0016,
+    "Baneling": 0.008,
+    "EvolutionChamber": 0.0008,
+    "BanelingNest": 0.0008
   },
   "expansion_timings": {
-    "second_base": 90.0,
-    "third_base": 240.0,
-    "fourth_base": 420.0
+    "second_base": 55.91304347826087,
+    "third_base": 170.42105263157896,
+    "fourth_base": 185.5
   },
   "stats": {
-    "total_replays": 0,
-    "zerg_wins": 0,
-    "source": "default"
+    "total_replays": 51,
+    "zerg_wins": 25,
+    "avg_game_length": 0.0,
+    "common_openers": {}
   },
-  "generated_at": "2026-01-25T00:04:54.721353"
+  "generated_at": "2026-01-25T15:13:46.638244"
 }

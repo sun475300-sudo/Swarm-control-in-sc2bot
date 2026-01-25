@@ -138,9 +138,48 @@ class BotStepIntegrator:
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
                 if not hasattr(self.bot, "build_order_system"):
                     try:
-                        from build_order_system import BuildOrderSystem
                         self.bot.build_order_system = BuildOrderSystem(self.bot)
                         print("[BUILD_ORDER] 빌드 오더 시스템 활성화!")
+                        
+                        # ★ RL Agent에게 오프닝 빌드 조언 구하기 (게임 시작 시 1회) ★
+                        if self.bot.train_mode and hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
+                            # 초기 상태로 제안 받기 (0 벡터라도 무관 - 초기 성향)
+                            # 간단히 action_labels[0] 등을 쓰는 대신, 랜덤 또는 epsilon 탐험 이용
+                            # 여기서는 RL Agent의 get_action을 호출하여 초기 전략 결정
+                            try:
+                                import numpy as np
+                                dummy_state = np.zeros(15) # 초기화 전이라 0
+                                _, action_label, _ = self.bot.rl_agent.get_action(dummy_state, training=True)
+                                
+                                from build_order_system import BuildOrderType
+                                new_build = None
+                                
+                                if action_label == "ECONOMY":
+                                    new_build = BuildOrderType.ECONOMY_15HATCH
+                                elif action_label == "AGGRESSIVE":
+                                    # 50% 확률로 10pool 또는 Roach Rush
+                                    if np.random.random() < 0.5:
+                                        new_build = BuildOrderType.AGGRESSIVE_10POOL
+                                    else:
+                                        new_build = BuildOrderType.ROACH_RUSH
+                                elif action_label == "DEFENSIVE":
+                                    new_build = BuildOrderType.SAFE_14POOL # or LURKER??
+                                elif action_label == "TECH":
+                                    if np.random.random() < 0.5:
+                                        new_build = BuildOrderType.MUTALISK_RUSH
+                                    else:
+                                        new_build = BuildOrderType.HYDRA_TIMING
+                                elif action_label == "ALL_IN":
+                                    new_build = BuildOrderType.STANDARD_12POOL # or Baneling Bust logic
+                                
+                                if new_build:
+                                    self.bot.build_order_system.current_build_order = new_build
+                                    self.bot.build_order_system._setup_build_order() # 재설정
+                                    print(f"[RL_OPENING] RLAgent initialized build: {new_build.value} (Action: {action_label})")
+                                    
+                            except Exception as e:
+                                print(f"[WARNING] Failed to set RL opening: {e}")
+
                     except ImportError as e:
                         print(f"[WARNING] Build order system not available: {e}")
                         self.bot.build_order_system = None
@@ -322,8 +361,7 @@ class BotStepIntegrator:
                         await self.bot.production.fix_production_bottleneck()
                 except Exception as e:
                     success = False
-                    if iteration % 200 == 0:
-                        print(f"[WARNING] Production error: {e}")
+                    print(f"[WARNING] Production error: {e}")
                 finally:
                     self._logic_tracker.end_logic("Production", start_time, success)
 
@@ -459,11 +497,18 @@ class BotStepIntegrator:
             if iteration % 44 == 0:  # 매 2초마다
                 await self._safe_transformer_step(iteration)
 
+            # NOTE: Scouting과 Creep Manager는 이미 위에서 실행됨 (Line 303, 306)
+            # 중복 실행 방지를 위해 제거됨 (2026-01-25)
+
             # 14. 실시간 로직 활성화 보고
             game_time = getattr(self.bot, "time", 0)
             report = self._logic_tracker.get_activity_report(game_time)
             if report:
                 print(report)
+
+            # 15. ★ 화면 디버그 정보 표시 ★
+            if iteration % 4 == 0:  # 4프레임마다 갱신
+                await self.draw_debug_info()
 
         except Exception as e:
             if iteration % 100 == 0:
@@ -475,6 +520,71 @@ class BotStepIntegrator:
                     self.bot.performance_optimizer.end_frame()
                 except Exception:
                     pass  # Silently ignore end_frame errors
+
+    async def draw_debug_info(self):
+        """화면 좌측 상단에 봇 상태 디버그 정보 표시"""
+        try:
+            b = self.bot
+            client = getattr(b, "client", None)
+            if not client or not hasattr(client, "debug_text_screen"):
+                return
+
+            # 1. 기본 정보 (자원, 인구, 기지)
+            minerals = int(b.minerals)
+            gas = int(b.vespene)
+            supply = f"{int(b.supply_used)}/{int(b.supply_cap)}"
+            bases = b.townhalls.amount if hasattr(b, "townhalls") else 0
+            workers = b.workers.amount if hasattr(b, "workers") else 0
+
+            # 2. 전략 상태
+            strategy_mode = "DEFAULT"
+            if hasattr(b, "strategy_manager") and b.strategy_manager:
+                strategy_mode = str(b.strategy_manager.current_mode).split('.')[-1]
+                if hasattr(b, "strategy_manager") and getattr(b.strategy_manager, "emergency_spine_requested", False):
+                    strategy_mode += " (EMERGENCY)"
+
+            # 3. 확장 상태 (ProductionResilience)
+            expand_status = "Unknown"
+            if hasattr(b, "production") and b.production and hasattr(b.production, "_can_expand_safely"):
+                 try:
+                     can_expand, reason = b.production._can_expand_safely()
+                     if can_expand:
+                         expand_status = "Ready"
+                     else:
+                         expand_status = f"Blocked ({reason})"
+                 except:
+                     pass
+
+            # 4. 텍스트 표시
+            debug_text = f"""
+            [WickedZergBot Pro]
+            Time: {int(b.time // 60)}:{int(b.time % 60):02d}
+            Strategy: {strategy_mode}
+
+            Resources: M {minerals} / G {gas}
+            Supply: {supply}
+            Eco: {bases} Bases / {workers} Drones
+
+            Expansion: {expand_status}
+            """
+
+            # 화면 좌측 상단 (0.01, 0.01)에 표시
+            client.debug_text_screen(debug_text, pos=(0.01, 0.01), size=12, color=(0, 255, 0))
+
+            # 패배 직감 상태가 있다면 표시
+            if hasattr(b, "defeat_detection") and b.defeat_detection:
+                status = b.defeat_detection._get_current_status()
+                level = status.get("defeat_level", 0)
+                if level > 0:
+                    defeat_text = f"Danger Level: {level} ({status.get('defeat_reason', '')})"
+                    client.debug_text_screen(defeat_text, pos=(0.01, 0.2), size=12, color=(255, 0, 0))
+
+            # debug_send 메서드가 있는 경우에만 호출
+            if hasattr(client, "debug_send"):
+                await client.debug_send()
+        except Exception:
+            # 디버그 정보 표시 실패는 조용히 무시
+            pass
 
     async def _safe_manager_step(
         self, manager, iteration: int, label: str, method_name: str = "on_step"
@@ -491,8 +601,8 @@ class BotStepIntegrator:
             await method(iteration)
         except Exception as e:
             success = False
-            if iteration % 200 == 0:
-                print(f"[WARNING] {label} error: {e}")
+            # Always log errors for debugging stability
+            print(f"[WARNING] {label} error: {e}")
         finally:
             self._logic_tracker.end_logic(label, start_time, success)
 
@@ -518,7 +628,14 @@ class BotStepIntegrator:
                     # 적 기지 수
                     enemy_bases = 0
                     if hasattr(self.bot, "enemy_structures"):
-                         enemy_bases = len(self.bot.enemy_structures.townhall)
+                        # Count all enemy townhall types (Hatchery/CC/Nexus etc)
+                        from sc2.ids.unit_typeid import UnitTypeId
+                        townhall_types = {
+                            UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
+                            UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
+                            UnitTypeId.NEXUS
+                        }
+                        enemy_bases = sum(1 for s in self.bot.enemy_structures if s.type_id in townhall_types)
 
                     # 업그레이드 수
                     upgrade_count = 0
@@ -575,15 +692,26 @@ class BotStepIntegrator:
                         print(f"  맵 장악: {game_state[12]:.3f}, 아군 HP: {game_state[13]:.3f}, 적군 HP: {game_state[14]:.3f}")
 
                     # ★★★ CRITICAL: RLAgent에게 행동 결정 요청 (최우선) ★★★
-                    action_idx, action_label, prob = self.bot.rl_agent.get_action(game_state)
+                    # 학습 모드 = train_mode, 추론 모드 = not train_mode
+                    training = getattr(self.bot, 'train_mode', True)
+                    action_idx, action_label, prob = self.bot.rl_agent.get_action(game_state, training=training)
 
-                    # ★ RLAgent의 결정을 무조건 따름 ★
-                    override_strategy = action_label
-                    rl_decision_used = True
-
-                    # ★ 결정 로깅 (10초마다) ★
-                    if iteration % 220 == 0:
-                        print(f"[RL_DECISION] ★ RLAgent 결정: {action_label} (확률: {prob:.3f}) ★")
+                    # ★ Time-based Control Handoff (시간 기반 제어권 전환) ★
+                    # 초반 5분(300초): Rule-based decision 우선 (기본 전략 학습)
+                    # 5분 이후: RLAgent 결정 우선 (학습된 전략 활용)
+                    if self.bot.time < 300.0:
+                        override_strategy = None  # Rule-based decision 사용
+                        rl_decision_used = False
+                        if iteration % 220 == 0:
+                            print(f"[RL_DECISION] ⏰ Early game: Rule-based (RLAgent training: ε={self.bot.rl_agent.epsilon:.3f})")
+                    else:
+                        # ★ RLAgent의 결정을 무조건 따름 ★
+                        override_strategy = action_label
+                        rl_decision_used = True
+                        # ★ 결정 로깅 (10초마다) ★
+                        if iteration % 220 == 0:
+                            mode = "TRAINING" if training else "INFERENCE"
+                            print(f"[RL_DECISION] ★ RLAgent 결정 ({mode}): {action_label} (확률: {prob:.3f}, ε={self.bot.rl_agent.epsilon:.3f}) ★")
 
                 except Exception as e:
                     if iteration % 500 == 0:

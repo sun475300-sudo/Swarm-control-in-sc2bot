@@ -61,8 +61,10 @@ class EvolutionUpgradeManager:
         await self._build_evolution_chamber()
 
         # === 1순위: Evolution Chamber 업그레이드 (3분 이후) ===
+        # Initialize evo_chambers first to avoid UnboundLocalError
+        evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
+
         if game_time >= 180:  # ★ 4분 → 3분으로 앞당김 ★
-            evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
             if not evo_chambers:
                 return
 

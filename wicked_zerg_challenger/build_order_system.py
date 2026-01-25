@@ -39,6 +39,9 @@ class BuildOrderType(Enum):
     AGGRESSIVE_10POOL = "10pool_gas_ling"     # 공격적 10풀
     ECONOMY_15HATCH = "15hatch_16pool_17gas"  # 경제 우선 15헷
     ROACH_RUSH = "19roach_rush"               # ★ NEW: 바퀴 러시 (빠른 끝내기)
+    MUTALISK_RUSH = "two_base_mutalisk"       # ★ NEW: 2베이스 뮤탈
+    HYDRA_TIMING = "hydra_timing_push"        # ★ NEW: 히드라 타이밍
+    LURKER_DEFENSE = "lurker_contain"         # ★ NEW: 러커 조이기
 
 
 class BuildOrderStep:
@@ -86,6 +89,9 @@ class BuildOrderSystem:
             BuildOrderType.AGGRESSIVE_10POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.ECONOMY_15HATCH: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.ROACH_RUSH: {"games": 0, "wins": 0, "avg_timing": 0.0}, # NEW
+            BuildOrderType.MUTALISK_RUSH: {"games": 0, "wins": 0, "avg_timing": 0.0},
+            BuildOrderType.HYDRA_TIMING: {"games": 0, "wins": 0, "avg_timing": 0.0},
+            BuildOrderType.LURKER_DEFENSE: {"games": 0, "wins": 0, "avg_timing": 0.0},
         }
 
         # 빌드 오더 종료 시간 (이 시간 이후 비활성화)
@@ -106,6 +112,12 @@ class BuildOrderSystem:
             self.build_steps = self._get_economy_15hatch_build()
         elif self.current_build_order == BuildOrderType.ROACH_RUSH:
             self.build_steps = self._get_roach_rush_build()
+        elif self.current_build_order == BuildOrderType.MUTALISK_RUSH:
+            self.build_steps = self._get_mutalisk_rush_build()
+        elif self.current_build_order == BuildOrderType.HYDRA_TIMING:
+            self.build_steps = self._get_hydra_timing_build()
+        elif self.current_build_order == BuildOrderType.LURKER_DEFENSE:
+            self.build_steps = self._get_lurker_defense_build()
 
         self.current_step_index = 0
         print(f"[BUILD_ORDER] 빌드 오더 설정: {self.current_build_order.value}")
@@ -177,6 +189,51 @@ class BuildOrderSystem:
             BuildOrderStep(26, "train", UnitTypeId.ROACH, "26바퀴 - 계속 생산"),
         ]
 
+    def _get_mutalisk_rush_build(self) -> List[BuildOrderStep]:
+        """★ 뮤탈리스크 러시 빌드 (빠른 Spire) ★"""
+        return [
+            BuildOrderStep(13, "train", UnitTypeId.OVERLORD, "13오버로드"),
+            BuildOrderStep(16, "expand", UnitTypeId.HATCHERY, "16헷 - 앞마당"),
+            BuildOrderStep(15, "build", UnitTypeId.EXTRACTOR, "15가스"),
+            BuildOrderStep(16, "build", UnitTypeId.SPAWNINGPOOL, "16풀"),
+            BuildOrderStep(17, "build", UnitTypeId.ROACHWARREN, "17바퀴굴 (안전용)"),
+            BuildOrderStep(20, "train", UnitTypeId.QUEEN, "20퀸"),
+            BuildOrderStep(20, "train", UnitTypeId.ZERGLING, "20저글링 (2기 수비)"),
+            BuildOrderStep(31, "build", UnitTypeId.LAIR, "31레어 - 빠른 테크"),
+            BuildOrderStep(33, "build", UnitTypeId.EXTRACTOR, "33가스 (2가스)"),
+            BuildOrderStep(33, "build", UnitTypeId.EXTRACTOR, "33가스 (3가스)"),
+            BuildOrderStep(40, "train", UnitTypeId.OVERLORD, "40오버로드"),
+            BuildOrderStep(42, "build", UnitTypeId.SPIRE, "42스파이어 - 공중 유닛"),
+        ]
+
+    def _get_hydra_timing_build(self) -> List[BuildOrderStep]:
+        """★ 히드라리스크 타이밍 빌드 (강력한 화력) ★"""
+        return [
+            BuildOrderStep(13, "train", UnitTypeId.OVERLORD, "13오버로드"),
+            BuildOrderStep(16, "expand", UnitTypeId.HATCHERY, "16헷 - 앞마당"),
+            BuildOrderStep(16, "build", UnitTypeId.SPAWNINGPOOL, "16풀"),
+            BuildOrderStep(17, "build", UnitTypeId.EXTRACTOR, "17가스"),
+            BuildOrderStep(21, "train", UnitTypeId.QUEEN, "21퀸"),
+            BuildOrderStep(32, "build", UnitTypeId.LAIR, "32레어"),
+            BuildOrderStep(34, "build", UnitTypeId.EXTRACTOR, "34가스 (2가스)"),
+            BuildOrderStep(44, "build", UnitTypeId.HYDRALISKDEN, "44히드라덴"),
+            BuildOrderStep(46, "train", UnitTypeId.OVERLORD, "46오버로드"),
+        ]
+
+    def _get_lurker_defense_build(self) -> List[BuildOrderStep]:
+        """★ 러커 방어 빌드 (지상 장악) ★"""
+        return [
+            BuildOrderStep(13, "train", UnitTypeId.OVERLORD, "13오버로드"),
+            BuildOrderStep(16, "expand", UnitTypeId.HATCHERY, "16헷 - 앞마당"),
+            BuildOrderStep(16, "build", UnitTypeId.SPAWNINGPOOL, "16풀"),
+            BuildOrderStep(17, "build", UnitTypeId.EXTRACTOR, "17가스"),
+            BuildOrderStep(28, "build", UnitTypeId.ROACHWARREN, "28바퀴굴 (초반 수비)"),
+            BuildOrderStep(32, "build", UnitTypeId.LAIR, "32레어"),
+            BuildOrderStep(35, "build", UnitTypeId.EXTRACTOR, "35가스 (2가스)"),
+            BuildOrderStep(45, "build", UnitTypeId.HYDRALISKDEN, "45히드라덴"),
+            BuildOrderStep(55, "build", UnitTypeId.LURKERDENMP, "55러커덴 - 가시지옥"),
+        ]
+
     async def execute(self, iteration: int) -> None:
         """
         매 프레임 빌드 오더 실행
@@ -208,7 +265,7 @@ class BuildOrderSystem:
             if success:
                 # 타이밍 기록
                 self.step_timings[current_step.supply] = self.bot.time
-                print(f"[BUILD_ORDER] ✓ {current_step.supply}보급: {current_step.description} (타이밍: {int(self.bot.time)}초)")
+                print(f"[BUILD_ORDER] [OK] {current_step.supply}보급: {current_step.description} (타이밍: {int(self.bot.time)}초)")
 
                 # 다음 스텝으로
                 current_step.completed = True

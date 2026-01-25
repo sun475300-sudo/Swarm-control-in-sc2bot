@@ -98,7 +98,7 @@ class EarlyDefenseSystem:
             self.emergency_mode = True
             self.early_threats = set(nearby_enemies.tags)
 
-            print(f"[EARLY_DEFENSE] ⚠️ 초반 러시 감지! 적 유닛 {nearby_enemies.amount}개 발견 (게임 시간: {int(self.bot.time)}초)")
+            print(f"[EARLY_DEFENSE] [WARNING] 초반 러시 감지! 적 유닛 {nearby_enemies.amount}개 발견 (게임 시간: {int(self.bot.time)}초)")
             print(f"[EARLY_DEFENSE] 긴급 방어 모드 활성화!")
 
     async def _build_early_pool(self) -> None:
@@ -140,7 +140,7 @@ class EarlyDefenseSystem:
                 if location:
                     worker.build(UnitTypeId.SPAWNINGPOOL, location)
                     self.pool_started = True
-                    print(f"[EARLY_DEFENSE] ✓ Spawning Pool 건설 시작 (게임 시간: {int(self.bot.time)}초)")
+                    print(f"[EARLY_DEFENSE] [OK] Spawning Pool 건설 시작 (게임 시간: {int(self.bot.time)}초)")
         except Exception as e:
             print(f"[EARLY_DEFENSE] Pool 건설 실패: {e}")
 
@@ -209,7 +209,7 @@ class EarlyDefenseSystem:
             if self.bot.can_afford(UnitTypeId.QUEEN):
                 hatchery.train(UnitTypeId.QUEEN)
                 self.queen_started = True
-                print(f"[EARLY_DEFENSE] ✓ 첫 Queen 생산 시작 (게임 시간: {int(self.bot.time)}초)")
+                print(f"[EARLY_DEFENSE] [OK] 첫 Queen 생산 시작 (게임 시간: {int(self.bot.time)}초)")
                 break
 
     async def _emergency_defense(self) -> None:
@@ -272,19 +272,19 @@ class EarlyDefenseSystem:
         status_parts = []
 
         if self.emergency_mode:
-            status_parts.append("🚨 긴급 방어 모드")
+            status_parts.append("[!] 긴급 방어 모드")
         else:
-            status_parts.append("⚪ 정상")
+            status_parts.append("[OK] 정상")
 
         if self.pool_started:
-            status_parts.append("Pool: ✓")
+            status_parts.append("Pool: [OK]")
         else:
-            status_parts.append("Pool: ✗")
+            status_parts.append("Pool: [X]")
 
         if self.queen_started:
-            status_parts.append("Queen: ✓")
+            status_parts.append("Queen: [OK]")
         else:
-            status_parts.append("Queen: ✗")
+            status_parts.append("Queen: [X]")
 
         ling_count = self.bot.units(UnitTypeId.ZERGLING).amount
         status_parts.append(f"Lings: {ling_count}")

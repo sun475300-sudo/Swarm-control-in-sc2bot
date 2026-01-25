@@ -1,0 +1,427 @@
+
+======================================================================
+? NEURAL NETWORK TRAINING MODE (CONTINUOUS)
+======================================================================
+
+? Training Configuration:
+   ? 15-dimensional state vector (Self 5 + Enemy 10)
+   ? REINFORCE algorithm for policy learning
+   ? Model auto-saves after each game
+   ? Continuous training: Games run continuously without stopping
+   ? Build order comparison with pro gamer baseline
+   ? Auto-update learned parameters on victory
+
+? Model save location: local_training/models/zerg_net_model.pt
+? Build order data: local_training/scripts/learned_build_orders.json
+
+??  Press Ctrl+C to stop training
+======================================================================
+
+[WARNING] Checkpoint manager not available: No module named 'utils.checkpoint_manager'
+
+[STEP 2] ? Initializing Continuous Training Loop...
+======================================================================
+[WARNING] Monitoring server not available: No module named 'monitoring.server_manager'
+[INFO] Continuing without monitoring server...
+[WARNING] Training session manager not available: No module named 'tools.training_session_manager'
+[BG_LEARNER] Worker thread started
+[BG_LEARNER] Started (Monitoring D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\data\buffer)
+[OK] Background parallel learner initialized and started
+[INFO] Experience replay training will run in background
+[INFO] Monitoring directory: D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\data\buffer
+[INFO] Available maps: 5 maps
+[INFO] Available opponent races: 3 races
+[INFO] Available difficulties: 2 levels
+
+[OK] Continuous training loop initialized
+[INFO] Game windows will open - you can watch the games in real-time!
+[INFO] Neural network is learning from your gameplay...
+======================================================================
+
+
+======================================================================
+? [STEP 3] GAME #1 - Random Selection
+======================================================================
+[SELECTED] Map: BelShirVestigeLE
+[SELECTED] Opponent Race: Terran
+[SELECTED] Difficulty: Medium
+
+[INFO] Starting game...
+======================================================================
+
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  0
+  Total Samples:        0
+  Average Loss:         0.0000
+  Last Loss:            0.0000
+  Last Adjusted LR:     0.000000
+
+? Directory Status:
+  Buffer Files:         0
+  Archived Files:       2
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   0.00s
+  Errors:               0
+======================================================================
+
+[32m2026-01-25 15:39:17.002[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was None)[0m
+[32m2026-01-25 15:39:17.003[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m42[0m - [1mCreating new game[0m
+[32m2026-01-25 15:39:17.003[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m43[0m - [1mMap:     BelShirVestigeLE[0m
+[32m2026-01-25 15:39:17.003[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m44[0m - [1mPlayers: Bot WickedZergBotProImpl(Zerg), Computer Medium(Terran, RandomBuild)[0m
+[32m2026-01-25 15:39:17.004[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.init_game (was Status.launched)[0m
+[32m2026-01-25 15:39:26.813[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.in_game (was None)[0m
+[32m2026-01-25 15:39:26.813[0m | [1mINFO    [0m | [36msc2.main[0m:[36m_play_game[0m:[36m220[0m - [1mPlayer 1 - Bot WickedZergBotProImpl(Zerg)[0m
+[BOT] on_start: Initializing all managers...
+15:39:27 - WickedZergBot - INFO - Bot started. Initializing managers...
+[BOT] ProductionResilience initialized
+[BOT] EconomyManager initialized
+[BOT] CombatManager initialized
+[BOT] IntelManager initialized
+[INTEL] Data loaded from data/intel_data.json
+  - Enemy Race: Terran
+  - Build Pattern: unknown
+  - Scouted Locations: 41
+[BOT] ScoutingSystem initialized
+[BOT] StrategyManager initialized
+[BOT] PerformanceOptimizer initialized
+[BOT] PID FormationController initialized
+[BOT] RogueTacticsManager initialized
+[BOT] TransformerDecisionModel initialized (training mode)
+[BOT] HierarchicalRLSystem initialized (training mode)
+[BOT] AggressiveStrategyExecutor initialized
+[BOT] AdaptiveLearningRate initialized - LR: 0.001000
+[BOT] GameAnalytics initialized - 0 games tracked
+[BOT] RL Agent TRAINING (Episodes: 0, ¥å=1.000)
+[BOT]   Status: Not enough training games (0/50)
+[BOT] on_start complete. Enemy race: None
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.060
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[STRATEGY] Selected: STANDARD MACRO (Safe Play)
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.050
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.046
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  0
+  Total Samples:        0
+  Average Loss:         0.0000
+  Last Loss:            0.0000
+  Last Adjusted LR:     0.000000
+
+? Directory Status:
+  Buffer Files:         0
+  Archived Files:       2
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   0.00s
+  Errors:               0
+======================================================================
+
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: -0.006
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[EARLY_EXPAND] [300s] Expanding at 1min+ with 3090 minerals (bases: 1)
+[AUTO TECH] [300s] Building Extractor #1
+[EXPAND BLOCK] cooldown at 300s
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 300ÃÊ
+==================================================
+  AdvancedBuilding: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Creep manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  DefeatDetection: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Economy: 1È¸ ½ÇÇà, Æò±Õ 2.10ms
+  Intel: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Micro: 1È¸ ½ÇÇà, Æò±Õ 3.54ms
+  Morph manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 1È¸ ½ÇÇà, Æò±Õ 5.80ms
+  Protoss counter: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Queen Manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Rogue Tactics: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Scouting: 1È¸ ½ÇÇà, Æò±Õ 1.05ms
+  Spell manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Strategy: 1È¸ ½ÇÇà, Æò±Õ 1.07ms
+  UnitFactory: 1È¸ ½ÇÇà, Æò±Õ 1.04ms
+  Upgrade manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+==================================================
+[EXPANSION] [300s] Trying to expand: ULTRA-FAST Natural @300s (min 200, workers: 12)
+[PROACTIVE EXPAND] [300s] ULTRA-FAST Natural @300s (min 200, workers: 12) - SUCCESS
+[AGGRESSIVE TECH] [302s] Building UnitTypeId.SPAWNINGPOOL at supply 12.0 (excess resources: M:2460+ G:0+)
+[EXPANSION] [306s] Trying to expand: ULTRA-FAST Natural @306s (min 200, workers: 10)
+[PROACTIVE EXPAND] [306s] ULTRA-FAST Natural @306s (min 200, workers: 10) - SUCCESS
+[ECONOMY] [306s] ¡Ú Building expansion to spend minerals ¡Ú
+[ECONOMY] Building extractor (gas shortage)
+[EARLY_EXPAND] [310s] Expanding at 1min+ with 3110 minerals (bases: 1)
+[EXPANSION] [312s] Trying to expand: ULTRA-FAST Natural @312s (min 200, workers: 10)
+[PROACTIVE EXPAND] [312s] ULTRA-FAST Natural @312s (min 200, workers: 10) - SUCCESS
+[FORCE EXPAND] ¡Ú¡Ú¡Ú 10sec INSTANT EXPAND - Target: 1min completion! (Emergency Retry) (CRITICAL Retry) - FORCING EXPANSION NOW! ¡Ú¡Ú¡Ú
+[ECONOMY] [314s] ¡Ú Building expansion to spend minerals ¡Ú
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.257, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[EXPAND BLOCK] cooldown at 315s
+[EXPANSION] [318s] Trying to expand: ULTRA-FAST Natural @318s (min 200, workers: 10)
+[PROACTIVE EXPAND] [318s] ULTRA-FAST Natural @318s (min 200, workers: 10) - SUCCESS
+[EARLY_EXPAND] [320s] Expanding at 1min+ with 3095 minerals (bases: 1)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[ECONOMY] [322s] ¡Ú Building expansion to spend minerals ¡Ú
+[EXPANSION] [324s] Trying to expand: ULTRA-FAST Natural @324s (min 200, workers: 10)
+[PROACTIVE EXPAND] [324s] ULTRA-FAST Natural @324s (min 200, workers: 10) - SUCCESS
+[EXPANSION] [330s] Trying to expand: ULTRA-FAST Natural @330s (min 200, workers: 9)
+[PROACTIVE EXPAND] [330s] ULTRA-FAST Natural @330s (min 200, workers: 9) - SUCCESS
+[ECONOMY] [330s] Resource banking: 2850M / 8G
+[ECONOMY]   Larva: 0, Avg per base: 0.0
+[ECONOMY] [330s] ¡Ú Building expansion to spend minerals ¡Ú
+[EARLY_EXPAND] [330s] Expanding at 1min+ with 2850 minerals (bases: 1)
+[FORCE EXPAND] ¡Ú¡Ú¡Ú 10sec INSTANT EXPAND - Target: 1min completion! (Emergency Retry) (CRITICAL Retry) - FORCING EXPANSION NOW! ¡Ú¡Ú¡Ú
+[EXPANSION] [335s] Trying to expand: ULTRA-FAST Natural @335s (min 200, workers: 9)
+[PROACTIVE EXPAND] [335s] ULTRA-FAST Natural @335s (min 200, workers: 9) - SUCCESS
+[AUTO TECH] [339s] Building Extractor #3
+[EXPANSION] [341s] Trying to expand: 3rd base HYPER-FAST (time: 341s, minerals: 2820)
+[PROACTIVE EXPAND] [341s] 3rd base HYPER-FAST (time: 341s, minerals: 2820) - SUCCESS
+[EXPANSION] [347s] Trying to expand: 3rd base HYPER-FAST (time: 347s, minerals: 2785)
+[PROACTIVE EXPAND] [347s] 3rd base HYPER-FAST (time: 347s, minerals: 2785) - SUCCESS
+[AUTO TECH] [351s] Building Roach Warren
+15:39:50 - UpgradeManager - INFO - [353s] ¡Ú¡Ú¡Ú ´ë»ç ÃËÁø (Àú±Û¸µ ¹ß¾÷) ¿¬±¸ ½ÃÀÛ! ¡Ú¡Ú¡Ú
+15:39:50 - UpgradeManager - INFO - [353s] Building Evolution Chamber
+[EXPANSION] [353s] Trying to expand: 3rd base HYPER-FAST (time: 353s, minerals: 2380)
+[PROACTIVE EXPAND] [353s] 3rd base HYPER-FAST (time: 353s, minerals: 2380) - SUCCESS
+[RESOURCE_FLUSH] [353s] Produced 1 units (Minerals: 2280)
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 1.115, °¡½º: 0.016
+  ¼­ÇÃ¶óÀÌ: 0.065/0.190
+  ÀÏ²Û: 0.090, À¯´Ö: 0.150, Àû À¯´Ö: 0.000
+  ±âÁö: 0.200, ½Ã°£: 0.354
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.000, ¶ó¹Ù: 0.050
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.000, Àû±º HP: 0.000
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.240, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+15:39:50 - UpgradeManager - INFO - [355s] Building Evolution Chamber
+15:39:51 - UpgradeManager - INFO - [356s] Building Evolution Chamber
+[DEBUG] Calling strategy_manager.update() at iteration 2000
+[TRAINING] Step reward: -0.012
+15:39:51 - UpgradeManager - INFO - [358s] Building Evolution Chamber
+[EXPANSION] [359s] Trying to expand: 3rd base HYPER-FAST (time: 359s, minerals: 2250)
+[PROACTIVE EXPAND] [359s] 3rd base HYPER-FAST (time: 359s, minerals: 2250) - SUCCESS
+15:39:51 - UpgradeManager - INFO - [360s] Building Evolution Chamber
+15:39:51 - UpgradeManager - INFO - [362s] Building Evolution Chamber
+[RESOURCE_FLUSH] [364s] Produced 1 units (Minerals: 2160)
+15:39:51 - UpgradeManager - INFO - [364s] Building Evolution Chamber
+[EXPANSION] [365s] Trying to expand: 3rd base HYPER-FAST (time: 365s, minerals: 2215)
+[PROACTIVE EXPAND] [365s] 3rd base HYPER-FAST (time: 365s, minerals: 2215) - SUCCESS
+[AUTO TECH] [366s] Building Evolution Chamber
+15:39:51 - UpgradeManager - INFO - [366s] Building Evolution Chamber
+15:39:51 - UpgradeManager - INFO - [368s] Building Evolution Chamber
+15:39:52 - UpgradeManager - INFO - [370s] Building Evolution Chamber
+[EXPANSION] [371s] Trying to expand: 3rd base HYPER-FAST (time: 371s, minerals: 1955)
+[PROACTIVE EXPAND] [371s] 3rd base HYPER-FAST (time: 371s, minerals: 1955) - SUCCESS
+[AUTO TECH] [371s] Building Extractor #4
+15:39:52 - UpgradeManager - INFO - [372s] Building Evolution Chamber
+15:39:52 - UpgradeManager - INFO - [374s] Building Evolution Chamber
+[RESOURCE_FLUSH] [375s] Produced 1 units (Minerals: 1835)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+15:39:52 - UpgradeManager - INFO - [376s] Building Evolution Chamber
+[EXPANSION] [377s] Trying to expand: 3rd base HYPER-FAST (time: 377s, minerals: 1895)
+[PROACTIVE EXPAND] [377s] 3rd base HYPER-FAST (time: 377s, minerals: 1895) - SUCCESS
+15:39:52 - UpgradeManager - INFO - [378s] Building Evolution Chamber
+15:39:53 - UpgradeManager - INFO - [380s] Building Evolution Chamber
+[AUTO TECH] [381s] Building Evolution Chamber
+15:39:53 - UpgradeManager - INFO - [382s] Building Evolution Chamber
+[EXPANSION] [383s] Trying to expand: 3rd base HYPER-FAST (time: 383s, minerals: 1910)
+[PROACTIVE EXPAND] [383s] 3rd base HYPER-FAST (time: 383s, minerals: 1910) - SUCCESS
+15:39:53 - UpgradeManager - INFO - [384s] Building Evolution Chamber
+[RESOURCE_FLUSH] [385s] Produced 1 units (Minerals: 1815)
+15:39:53 - UpgradeManager - INFO - [386s] Building Evolution Chamber
+[CREEP] [387s] Tumors: 0, Farthest: 0 from base
+15:39:53 - UpgradeManager - INFO - [388s] Building Evolution Chamber
+[EXPANSION] [388s] Trying to expand: 4th base MACRO (time: 388s, minerals: 1600)
+[PROACTIVE EXPAND] [388s] 4th base MACRO (time: 388s, minerals: 1600) - SUCCESS
+15:39:54 - UpgradeManager - INFO - [390s] Building Evolution Chamber
+15:39:54 - UpgradeManager - INFO - [392s] Building Evolution Chamber
+[BUILD] SPINECRAWLER at (109.58046532511906, 31.80857975955319) (creep: True)
+[BUILDING] Built UnitTypeId.SPINECRAWLER safely on creep
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): DEFENSIVE (È®·ü: 0.207, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: DEFENSIVE vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: DEFENSIVE ¡Ú¡Ú¡Ú
+15:39:54 - UpgradeManager - INFO - [394s] Building Evolution Chamber
+[EXPANSION] [394s] Trying to expand: 4th base MACRO (time: 394s, minerals: 1440)
+[PROACTIVE EXPAND] [394s] 4th base MACRO (time: 394s, minerals: 1440) - SUCCESS
+15:39:54 - UpgradeManager - INFO - [396s] Building Evolution Chamber
+[RESOURCE_FLUSH] [396s] Produced 1 units (Minerals: 1315)
+[AUTO TECH] [396s] Building Evolution Chamber
+15:39:54 - UpgradeManager - INFO - [398s] Building Evolution Chamber
+15:39:54 - UpgradeManager - INFO - [400s] Building Evolution Chamber
+[EXPANSION] [400s] Trying to expand: 4th base MACRO (time: 400s, minerals: 1400)
+[PROACTIVE EXPAND] [400s] 4th base MACRO (time: 400s, minerals: 1400) - SUCCESS
+[ECONOMY RECOVERY] [400s] ¡Ú Worker deficit: 16 ¡Ú
+[ECONOMY RECOVERY]   Current: 6, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+15:39:55 - UpgradeManager - INFO - [402s] Building Evolution Chamber
+15:39:55 - UpgradeManager - INFO - [404s] Building Evolution Chamber
+[AUTO TECH] [405s] Building Extractor #5
+15:39:55 - UpgradeManager - INFO - [406s] Building Evolution Chamber
+[EXPANSION] [406s] Trying to expand: 4th base MACRO (time: 406s, minerals: 1405)
+[PROACTIVE EXPAND] [406s] 4th base MACRO (time: 406s, minerals: 1405) - SUCCESS
+[RESOURCE_FLUSH] [407s] Produced 1 units (Minerals: 1280)
+15:39:55 - UpgradeManager - INFO - [408s] Building Evolution Chamber
+15:39:55 - UpgradeManager - INFO - [410s] Building Evolution Chamber
+[RESOURCE_FLUSH] [410s] Produced 1 units (Minerals: 1235)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[AUTO TECH] [411s] Building Evolution Chamber
+15:39:56 - UpgradeManager - INFO - [411s] Building Evolution Chamber
+[EXPANSION] [412s] Trying to expand: 4th base MACRO (time: 412s, minerals: 1135)
+[PROACTIVE EXPAND] [412s] 4th base MACRO (time: 412s, minerals: 1135) - SUCCESS
+15:39:56 - UpgradeManager - INFO - [413s] Building Evolution Chamber
+[AUTO TECH] [415s] Building Extractor #5
+15:39:56 - UpgradeManager - INFO - [415s] Building Evolution Chamber
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 417ÃÊ
+==================================================
+  AdvancedBuilding: 657È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 164È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 657È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Combat: 657È¸ ½ÇÇà, Æò±Õ 0.07ms
+  Creep manager: 657È¸ ½ÇÇà, Æò±Õ 0.02ms
+  DefeatDetection: 657È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Economy: 657È¸ ½ÇÇà, Æò±Õ 0.22ms
+  HierarchicalRL: 30È¸ ½ÇÇà, Æò±Õ 0.17ms
+  Intel: 657È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Micro: 657È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Morph manager: 657È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 657È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Production: 657È¸ ½ÇÇà, Æò±Õ 0.36ms
+  Protoss counter: 657È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Queen Manager: 657È¸ ½ÇÇà, Æò±Õ 0.09ms
+  Rogue Tactics: 82È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Scouting: 657È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Spell manager: 657È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Strategy: 657È¸ ½ÇÇà, Æò±Õ 0.07ms
+  Transformer: 15È¸ ½ÇÇà, Æò±Õ 0.35ms
+  UnitFactory: 657È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Upgrade manager: 657È¸ ½ÇÇà, Æò±Õ 0.19ms
+==================================================
+[RESOURCE_FLUSH] [417s] Produced 1 units (Minerals: 945)
+[EXPANSION] [418s] Trying to expand: 4th base MACRO (time: 418s, minerals: 920)
+[PROACTIVE EXPAND] [418s] 4th base MACRO (time: 418s, minerals: 920) - SUCCESS
+[ECONOMY RECOVERY] [420s] ¡Ú Worker deficit: 37 ¡Ú
+[ECONOMY RECOVERY]   Current: 7, Ideal: 44
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[AGGRESSIVE TECH] [420s] Building UnitTypeId.HYDRALISKDEN at supply 20.0 (excess resources: M:70+ G:128+)
+[EXPANSION] [424s] Trying to expand: 4th base MACRO (time: 424s, minerals: 645)
+[PROACTIVE EXPAND] [424s] 4th base MACRO (time: 424s, minerals: 645) - SUCCESS
+[AUTO TECH] [425s] Building Extractor #5
+[EXPANSION] [430s] Trying to expand: 4th base MACRO (time: 430s, minerals: 500)
+[EXPANSION] [430s] Already 1 pending, max is 1
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ECONOMY (È®·ü: 0.196, ¥å=1.000) ¡Ú
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ECONOMY ¡Ú¡Ú¡Ú
+[AUTO TECH] [435s] Building Extractor #5
+[EXPANSION] [436s] Trying to expand: 4th base MACRO (time: 436s, minerals: 440)
+[EXPANSION] [436s] Already 1 pending, max is 1
+[ECONOMY RECOVERY] [440s] ¡Ú Worker deficit: 31 ¡Ú
+[ECONOMY RECOVERY]   Current: 13, Ideal: 44
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[BUILD] SPINECRAWLER at (81.03830125891494, 31.365331321076713) (creep: True)
+[BUILDING] Built UnitTypeId.SPINECRAWLER safely on creep
+15:39:59 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+[EXPANSION] [441s] Trying to expand: 4th base MACRO (time: 441s, minerals: 225)
+[EXPANSION] [441s] Already 1 pending, max is 1
+[DEBUG] Calling strategy_manager.update() at iteration 2500
+[TECH UPGRADE] [446s] Morphing Hatchery to Lair
+[TRAINING] Step reward: 0.010
+[EXPANSION] [447s] Trying to expand: 4th base MACRO (time: 447s, minerals: 55)
+[EXPANSION] [447s] Already 1 pending, max is 1
+[EXPANSION] [453s] Trying to expand: 4th base MACRO (time: 453s, minerals: 35)
+[EXPANSION] [453s] Already 1 pending, max is 1
+15:40:00 - StrategyManager - WARNING - [458s] MAJOR ATTACK DETECTED! Threat score: 20, High-threat units: 0
+15:40:00 - StrategyManager - WARNING - [458s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:00 - StrategyManager - WARNING - [458s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:00 - StrategyManager - WARNING - [458s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:00 - StrategyManager - WARNING - [459s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:00 - StrategyManager - WARNING - [459s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:00 - StrategyManager - WARNING - [459s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[EXPANSION] [459s] Trying to expand: 4th base MACRO (time: 459s, minerals: 15)
+[EXPANSION] [459s] Cannot afford Hatchery (need 300 minerals)
+15:40:01 - StrategyManager - WARNING - [463s] MAJOR ATTACK DETECTED! Threat score: 48, High-threat units: 0
+[UNIT_FACTORY] [464s] COMBAT MODE: Increased production rate
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[QUEEN DEFENSE] [464s] Queens defending! Air: 0, Ground: 4
+[QUEEN DEFENSE] [464s] 1 queens still injecting for reinforcement
+[EXPANSION] [465s] Trying to expand: 4th base MACRO (time: 465s, minerals: 15)
+[EXPANSION] [465s] Cannot afford Hatchery (need 300 minerals)
+[AUTO TECH] [466s] Building Extractor #6
+15:40:02 - StrategyManager - WARNING - [468s] MAJOR ATTACK DETECTED! Threat score: 48, High-threat units: 0
+[EXPANSION] [471s] Trying to expand: 4th base MACRO (time: 471s, minerals: 35)
+[EXPANSION] [471s] Cannot afford Hatchery (need 300 minerals)
+[BASE DEFENSE] [471s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 12, Threat score: 24
+[BASE DEFENSE] [471s] ¡Ú 1 WORKERS DEFENDING ¡Ú
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 0.018, °¡½º: 0.412
+  ¼­ÇÃ¶óÀÌ: 0.135/0.250
+  ÀÏ²Û: 0.170, À¯´Ö: 0.320, Àû À¯´Ö: 0.120
+  ±âÁö: 0.300, ½Ã°£: 0.471
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.100, ¶ó¹Ù: 0.300
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.140, Àû±º HP: 0.176
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): DEFENSIVE (È®·ü: 0.207, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: DEFENSIVE vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: DEFENSIVE ¡Ú¡Ú¡Ú
+15:40:02 - StrategyManager - WARNING - [474s] MAJOR ATTACK DETECTED! Threat score: 48, High-threat units: 0
+[CREEP] [476s] Tumors: 0, Farthest: 0 from base
+[EXPANSION] [477s] Trying to expand: 4th base MACRO (time: 477s, minerals: 10)
+[EXPANSION] [477s] Cannot afford Hatchery (need 300 minerals)
+15:40:03 - StrategyManager - WARNING - [478s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [479s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [479s] MAJOR ATTACK DETECTED! Threat score: 24, High-threat units: 0
+15:40:03 - StrategyManager - WARNING - [479s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [479s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [479s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [479s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [480s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [480s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [480s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [480s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [480s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [480s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [481s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [481s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [481s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:40:03 - StrategyManager - WARNING - [481s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION] [483s] Trying to expand: 3rd base HYPER-FAST (time: 483s, minerals: 10)
+[EXPANSION] [483s] Cannot afford Hatchery (need 300 minerals)
+15:40:04 - StrategyManager - WARNING - [484s] MAJOR ATTACK DETECTED! Threat score: 24, High-threat units: 0
+[EXPANSION] [489s] Trying to expand: 3rd base HYPER-FAST (time: 489s, minerals: 20)
+[EXPANSION] [489s] Cannot afford Hatchery (need 300 minerals)
+15:40:04 - StrategyManager - WARNING - [489s] MAJOR ATTACK DETECTED! Threat score: 22, High-threat units: 0

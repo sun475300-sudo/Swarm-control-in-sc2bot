@@ -1,56 +1,50 @@
 {
-  "last_updated": "2026-01-15T14:58:48.929235",
-  "total_comparisons": 1,
-  "comparisons": [
+  "entries": [
     {
-      "game_id": "game_0_505s",
-      "game_result": "Defeat",
-      "training_build": {
-        "natural_expansion_supply": null,
-        "gas_supply": null,
-        "spawning_pool_supply": null,
-        "third_hatchery_supply": null,
-        "speed_upgrade_supply": null
-      },
-      "pro_baseline": {
-        "lair_supply": 12,
-        "gas_supply": 17,
-        "spawning_pool_supply": 17,
-        "natural_expansion_supply": 30,
-        "roach_warren_supply": 56,
-        "hive_supply": 90,
-        "hydralisk_den_supply": 122
-      },
-      "overall_score": 0.18000000000000002,
-      "recommendations": [
-        "?? natural_expansion_supply: Not executed. Should execute at supply 30",
-        "?? gas_supply: Not executed. Should execute at supply 17",
-        "?? spawning_pool_supply: Not executed. Should execute at supply 17"
-      ],
-      "comparisons": [
+      "timestamp": "2026-01-25T15:15:23.849925",
+      "score": 0.39999999999999997,
+      "details": [
         {
-          "parameter_name": "natural_expansion_supply",
-          "training_supply": null,
-          "pro_supply": 30,
-          "difference": null,
-          "improvement_needed": true,
-          "recommendation": "?? natural_expansion_supply: Not executed. Should execute at supply 30"
+          "unit": "Extractor",
+          "pro_time": 74.42307692307692,
+          "bot_time": 60,
+          "diff": -14.42307692307692,
+          "status": "GOOD"
         },
         {
-          "parameter_name": "gas_supply",
-          "training_supply": null,
-          "pro_supply": 17,
-          "difference": null,
-          "improvement_needed": true,
-          "recommendation": "?? gas_supply: Not executed. Should execute at supply 17"
+          "unit": "Hatchery",
+          "pro_time": 125.51282051282051,
+          "bot_time": 50,
+          "diff": -75.51282051282051,
+          "status": "POOR"
         },
         {
-          "parameter_name": "spawning_pool_supply",
-          "training_supply": null,
-          "pro_supply": 17,
-          "difference": null,
-          "improvement_needed": true,
-          "recommendation": "?? spawning_pool_supply: Not executed. Should execute at supply 17"
+          "unit": "SpawningPool",
+          "pro_time": 94.76,
+          "bot_time": 65,
+          "diff": -29.760000000000005,
+          "status": "FAIR"
+        },
+        {
+          "unit": "Zergling",
+          "pro_time": 225.4494382022472,
+          "bot_time": 110,
+          "diff": -115.4494382022472,
+          "status": "POOR"
+        },
+        {
+          "unit": "Queen",
+          "pro_time": 226.875,
+          "bot_time": 100,
+          "diff": -126.875,
+          "status": "POOR"
+        },
+        {
+          "unit": "RoachWarren",
+          "pro_time": 140.33333333333334,
+          "bot_time": 180,
+          "diff": 39.66666666666666,
+          "status": "FAIR"
         }
       ]
     }

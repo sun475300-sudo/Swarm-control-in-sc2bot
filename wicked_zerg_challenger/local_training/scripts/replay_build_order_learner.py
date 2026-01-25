@@ -29,7 +29,10 @@ class ReplayBuildOrderLearner:
     """리플레이에서 빌드 오더를 학습하는 클래스"""
 
     def __init__(self, replay_dir: Optional[str] = None, output_dir: Optional[str] = None):
-        self.replay_dir = Path(replay_dir) if replay_dir else project_root / "replays"
+        # 2026-01-25: Changed default to D:/replays as requested by user env
+        self.replay_dir = Path(replay_dir) if replay_dir else Path("D:/replays")
+        if not self.replay_dir.exists():
+            self.replay_dir = project_root / "replays"
         self.output_dir = Path(output_dir) if output_dir else script_dir / "learned_build_orders.json"
 
         # 저그 유닛/건물 목록
@@ -108,8 +111,10 @@ class ReplayBuildOrderLearner:
             data["players"].append(player_data)
 
             # 저그 플레이어의 빌드 오더 추출
+            print(f"[DEBUG] Player {player.name} Race: '{player_data['race']}'") # DEBUG
             if "Zerg" in player_data["race"]:
                 build_order = self._extract_build_order(replay, player)
+                print(f"[DEBUG]  - Extracted {len(build_order)} actions") # DEBUG
                 if build_order:
                     data["build_orders"].append({
                         "player": player.name,
@@ -128,19 +133,25 @@ class ReplayBuildOrderLearner:
         build_order = []
 
         try:
+            print(f"[DEBUG] Total events: {len(replay.events)}") # DEBUG
+            debug_count = 0
+            
             # 이벤트에서 유닛/건물 생산 추출
             for event in replay.events:
-                if hasattr(event, 'player') and event.player == player:
-                    # 유닛 생성 이벤트
-                    if hasattr(event, 'unit') and hasattr(event, 'second'):
-                        unit_name = str(event.unit.name) if hasattr(event.unit, 'name') else ""
-                        if unit_name in self.zerg_units or unit_name in self.zerg_buildings:
-                            build_order.append({
-                                "time": event.second,
-                                "action": "build" if unit_name in self.zerg_buildings else "train",
-                                "unit": unit_name,
-                                "supply": getattr(event, 'supply', 0)
-                            })
+                # Check unit owner directly (sc2reader 0.8.0+ compatibility)
+                if hasattr(event, 'unit') and event.unit and event.unit.owner:
+                     # Compare names to ensure correct player
+                     if event.unit.owner.name == player.name:
+                        # 유닛 생성 이벤트
+                        if 'UnitBornEvent' in type(event).__name__ or 'UnitInitEvent' in type(event).__name__:
+                             unit_name = getattr(event.unit, 'name', '')
+                             if unit_name in self.zerg_units or unit_name in self.zerg_buildings:
+                                 build_order.append({
+                                     "time": event.second,
+                                     "action": "build" if unit_name in self.zerg_buildings else "train",
+                                     "unit": unit_name,
+                                     "supply": getattr(event, 'supply', 0)
+                                 })
         except Exception as e:
             print(f"[REPLAY] Build order extraction error: {e}")
 

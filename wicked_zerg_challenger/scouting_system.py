@@ -60,21 +60,21 @@ class ScoutingSystem:
             if not self.intel_manager and hasattr(self.bot, "intel"):
                 self.intel_manager = self.bot.intel
 
-            # ★ 개선: 70 → 50 (정찰 빈도 더욱 증가, 약 2초마다)
-            if iteration - self.last_scout_update > 50:
+            # ★★★ 개선: 50 → 30 (정찰 빈도 최대 증가, 약 1.3초마다) ★★★
+            if iteration - self.last_scout_update > 30:
                 await self._update_overlord_network()
                 await self._assign_ling_scouts()
                 await self._maybe_morph_overseer()
                 self.last_scout_update = iteration
 
             # ★★★ 새로운 정찰 기능 ★★★
-            # 확장 기지 순환 정찰 (15초마다)
-            if iteration - self.last_expansion_scout > 330:
+            # 확장 기지 순환 정찰 (10초마다 - 더 빈번하게)
+            if iteration - self.last_expansion_scout > 220:
                 await self._scout_expansions()
                 self.last_expansion_scout = iteration
 
-            # 프록시/숨겨진 건물 체크 (30초마다, 초반 5분간)
-            if self.bot.time < 300 and iteration - self.last_proxy_check > 660:
+            # 프록시/숨겨진 건물 체크 (20초마다, 초반 6분간 - 더 자주, 더 오래)
+            if self.bot.time < 360 and iteration - self.last_proxy_check > 440:
                 await self._check_proxy_locations()
                 self.last_proxy_check = iteration
 
@@ -139,19 +139,21 @@ class ScoutingSystem:
             self.scout_assignments[overlord.tag] = target
 
     async def _assign_ling_scouts(self):
-        """저글링 정찰 배정 - ★ 개선: 2마리 → 4마리로 증가 ★"""
+        """저글링 정찰 배정 - ★★★ 개선: 즉시 정찰 시작, 최대 6마리 ★★★"""
         zerglings = self.bot.units(UnitTypeId.ZERGLING)
         if not zerglings.exists or not self.bot.enemy_start_locations:
             return
 
-        # ★ 게임 시간대별 정찰 저글링 수 조정
+        # ★★★ 게임 시간대별 정찰 저글링 수 조정 (더 공격적) ★★★
         game_time = getattr(self.bot, "time", 0)
-        if game_time < 180:  # 초반 3분
+        if game_time < 120:  # 초반 2분 - 저글링 나오는 즉시 파견!
             max_scouts = 2
-        elif game_time < 360:  # 3-6분
-            max_scouts = 3
-        else:  # 6분 이후
+        elif game_time < 240:  # 2-4분
             max_scouts = 4
+        elif game_time < 420:  # 4-7분
+            max_scouts = 5
+        else:  # 7분 이후
+            max_scouts = 6
 
         active = [z for z in zerglings if z.tag in self.scout_zerglings]
         if len(active) >= max_scouts:

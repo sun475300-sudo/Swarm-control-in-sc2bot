@@ -23,6 +23,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+try:
+    from sc2.position import Point2
+except ImportError:
+    Point2 = None
+
 
 class CommanderAgent:
     """

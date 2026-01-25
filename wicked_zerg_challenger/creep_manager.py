@@ -88,7 +88,24 @@ class CreepManager:
         targets.extend(self._get_expansion_targets())
         targets.extend(self._get_scout_targets())
         targets.extend(self._get_attack_path_targets())
+        targets.extend(self._get_base_perimeter_targets()) # Issue 8
         self.cached_targets = self._dedupe_positions(targets)
+
+    def _get_base_perimeter_targets(self) -> List[object]:
+        """기지 주변 점막 우선 확장 (방어 및 시야)"""
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
+            return []
+        
+        targets = []
+        import math
+        # 각 기지 주변 12 거리의 원형 포인트 추가
+        for th in self.bot.townhalls:
+            for angle in range(0, 360, 60):
+                rad = math.radians(angle)
+                x = th.position.x + 12 * math.cos(rad)
+                y = th.position.y + 12 * math.sin(rad)
+                targets.append(Point2((x, y)))
+        return targets
 
     def _get_direction_target(self) -> Optional[object]:
         enemy_starts = getattr(self.bot, "enemy_start_locations", [])

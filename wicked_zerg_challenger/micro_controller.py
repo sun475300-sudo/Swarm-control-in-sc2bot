@@ -167,7 +167,8 @@ class BoidsController:
                 
                 # Simple optimization: Randomly promote some units if list is empty
                 # For now, let's treat ALL units as candidates, but simple filter
-                closest_enemy = unit.target_in_range(enemy_units, gap=4) # Range + 4 buffer
+                # NOTE: 'gap' parameter removed for SC2 library compatibility
+                closest_enemy = unit.target_in_range(enemy_units) # Check if enemy in range
                 if closest_enemy:
                     high_priority_units.append(unit)
                 else:
