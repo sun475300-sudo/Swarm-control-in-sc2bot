@@ -720,18 +720,38 @@ class BotStepIntegrator:
                         traceback.print_exc()
 
             # ★★★ HierarchicalRL 실행 (RL Override 강제 적용) ★★★
+            # 이제 순수하게 전략적 결정만 반환함
             result = self.bot.hierarchical_rl.step(self.bot, override_strategy=override_strategy)
 
-            # 전략 모드 저장
+            # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
-                self.bot._current_strategy = result["strategy_mode"]
+                new_mode = result["strategy_mode"]
+                current_mode_str = "Unknown"
+                
+                # StrategyManager에 모드 적용
+                if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
+                    # StrategyMode Enum 변환 시도
+                    from strategy_manager import StrategyMode
+                    try:
+                        # 문자열(예: "ALL_IN")을 Enum으로 변환
+                        mode_enum = StrategyMode[new_mode]
+                        
+                        # 모드가 변경될 때만 로그 출력 및 적용
+                        if self.bot.strategy_manager.current_mode != mode_enum:
+                            self.bot.strategy_manager.current_mode = mode_enum
+                            if iteration % 100 == 0:
+                                print(f"[COMMANDER] ★ 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})")
+                    except KeyError:
+                        pass # 유효하지 않은 모드 문자열이면 무시
+                
+                self.bot._current_strategy = new_mode
 
-                # ★ 전략 결정 로깅 강화 (10초마다) ★
+                # ★ 결정 로깅 (10초마다) ★
                 if iteration % 220 == 0:  # 10초마다
                     if rl_decision_used:
-                        print(f"[STRATEGY] ★★★ RLAgent 결정 사용됨: {result['strategy_mode']} ★★★")
+                        print(f"[STRATEGY] ★★★ RLAgent 결정 적용: {new_mode} ★★★")
                     else:
-                        print(f"[STRATEGY] 규칙 기반 결정: {result['strategy_mode']} (RLAgent 없음)")
+                        print(f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)")
 
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
                 if hasattr(self.bot, "rl_agent") and self.bot.rl_agent and not rl_decision_used:

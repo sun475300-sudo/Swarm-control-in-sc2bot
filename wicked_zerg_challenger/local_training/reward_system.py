@@ -91,11 +91,17 @@ class ZergRewardSystem:
             # 11. 매크로 해처리 보상 (Macro hatchery)
             reward += self._calculate_macro_hatchery_reward(bot)
 
+            # 12. ★★★ NEW: 초반 방어 병력 보상 (Early defense units) ★★★
+            reward += self._calculate_early_defense_reward(bot)
+
+            # 13. ★★★ NEW: 적 피해 보상 (Enemy damage reward) ★★★
+            reward += self._calculate_enemy_damage_reward(bot)
+
         except Exception as e:
             # ���� �߻� �� ���� 0 ��ȯ
             print(f"[WARNING] Reward calculation error: {e}")
             return 0.0
-        
+
         return reward
     
     def _calculate_creep_reward(self, bot) -> float:
@@ -193,32 +199,52 @@ class ZergRewardSystem:
     
     def _calculate_resource_turnover_reward(self, bot) -> float:
         """
-        �ڿ� ȸ���� ���� ���
-        
-        �̳׶��� 2000 �̻� ������ '���� �� ���� �ִ�'�� ���̹Ƿ� ����
-        ���״� ���� ����� ���ϴ�.
-        
+        자원 회전율 기반 보상
+
+        ★★★ FIX: 2분 이후 미네랄 뱅킹 강력 페널티 ★★★
+        - 2분(120초) 이후 미네랄 500+ → 페널티
+        - 미네랄 1000+ → 매우 강한 페널티
+        - 시간이 지날수록 페널티 증가
+
         Returns:
-            �ڿ� ȸ���� ���� ���� (float, ���� ����)
+            자원 회전율 보상 값 (float, 주로 페널티)
         """
         try:
-            if not hasattr(bot, 'minerals'):
+            if not hasattr(bot, 'minerals') or not hasattr(bot, 'time'):
                 return 0.0
-            
+
             minerals = bot.minerals
-            
-            # �̳׶��� 2000 �̻� ������ ���Ƽ
+            game_time = bot.time  # 게임 시간 (초)
+
+            # ★★★ NEW: 2분(120초) 이후 미네랄 뱅킹 강력 페널티 ★★★
+            if game_time >= 120:  # 2분 이후
+                if minerals >= 1500:
+                    # 미네랄 1500+ → 매우 강한 페널티 (초당 증가)
+                    time_factor = min((game_time - 120) / 60.0, 5.0)  # 최대 5배
+                    penalty = -0.5 * (minerals / 1000.0) * (1.0 + time_factor)
+                    return penalty
+                elif minerals >= 1000:
+                    # 미네랄 1000-1500 → 강한 페널티
+                    time_factor = min((game_time - 120) / 60.0, 3.0)  # 최대 3배
+                    penalty = -0.3 * (minerals / 1000.0) * (1.0 + time_factor)
+                    return penalty
+                elif minerals >= 500:
+                    # 미네랄 500-1000 → 중간 페널티
+                    penalty = -0.1 * ((minerals - 500) / 500.0)
+                    return penalty
+
+            # 초반(2분 이내)은 기존 로직 유지
             if minerals > 2000:
                 excess = minerals - 2000
-                penalty = -0.05 * (excess / 1000)  # 1000���� -0.05�� ����
+                penalty = -0.05 * (excess / 1000)
                 return penalty
-            
-            # �ڿ��� �� ����ϰ� ������ ���� ����
+
+            # 자원을 잘 사용하고 있으면 소량 보상
             if minerals < 500:
                 return 0.01
-            
+
             return 0.0
-            
+
         except Exception:
             return 0.0
     
@@ -615,6 +641,172 @@ class ZergRewardSystem:
                 # 본진 주변에 추가 해처리가 있으면 보상
                 if base_count >= 3 and larva_count >= base_count * 2:
                     reward += 0.1
+
+            return reward
+
+        except Exception:
+            return 0.0
+
+    def _calculate_early_defense_reward(self, bot) -> float:
+        """
+        ★★★ NEW: 초반 방어 병력 보상 ★★★
+
+        사용자 요구사항: "1분동안 아무것도 안해서 병력이 3분안으로 뽑혀있지 않음"
+
+        해결:
+        - 1분(60초) 이내: 드론 12 목표
+        - 2분(120초) 이내: 저글링 4+ 또는 퀸 1 목표
+        - 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표
+
+        시간 내 목표 달성 시 강한 보상
+        미달성 시 강한 페널티
+
+        Returns:
+            초반 방어 병력 보상 (float)
+        """
+        try:
+            game_time = getattr(bot, "time", 0)
+
+            if not hasattr(bot, "units"):
+                return 0.0
+
+            reward = 0.0
+
+            # 드론 수 체크
+            drones = bot.units.filter(lambda u: u.name == "Drone")
+            drone_count = len(drones)
+
+            # 저글링 수 체크
+            zerglings = bot.units.filter(lambda u: u.name == "Zergling")
+            zergling_count = len(zerglings)
+
+            # 퀸 수 체크
+            queens = bot.units.filter(lambda u: u.name == "Queen")
+            queen_count = len(queens)
+
+            # ★★★ 1분(60초) 이내: 드론 12 목표 ★★★
+            if game_time <= 60:
+                if drone_count >= 12:
+                    reward += 1.0  # 강한 보상
+                elif drone_count >= 10:
+                    reward += 0.5
+                else:
+                    # 페널티: 1분에 드론 10 미만
+                    reward -= 0.3
+
+            # ★★★ 2분(120초) 이내: 저글링 4+ 또는 퀸 1 목표 ★★★
+            elif 60 < game_time <= 120:
+                # 드론 유지 보상
+                if drone_count >= 14:
+                    reward += 0.5
+
+                # 방어 병력 체크
+                if zergling_count >= 4 or queen_count >= 1:
+                    reward += 1.5  # 매우 강한 보상
+                elif zergling_count >= 2:
+                    reward += 0.5
+                else:
+                    # 페널티: 2분에 병력 없음
+                    reward -= 1.0  # 강한 페널티
+
+            # ★★★ 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표 ★★★
+            elif 120 < game_time <= 180:
+                # 드론 유지 보상
+                if drone_count >= 20:
+                    reward += 0.3
+
+                # 방어 병력 체크 (더 강화)
+                if zergling_count >= 8 or queen_count >= 2:
+                    reward += 2.0  # 매우 강한 보상
+                elif zergling_count >= 6 or queen_count >= 1:
+                    reward += 1.0
+                elif zergling_count >= 4:
+                    reward += 0.3
+                else:
+                    # 페널티: 3분에 병력 부족
+                    reward -= 1.5  # 매우 강한 페널티
+
+            # ★★★ 3분 이후: 지속적인 병력 유지 보상 ★★★
+            elif game_time > 180:
+                total_army = zergling_count + queen_count * 2  # 퀸은 2배 가중치
+
+                if total_army >= 15:
+                    reward += 1.0
+                elif total_army >= 10:
+                    reward += 0.5
+                elif total_army < 5:
+                    # 페널티: 3분 이후 병력 5 미만
+                    reward -= 1.0
+
+            return reward
+
+        except Exception:
+            return 0.0
+
+    def _calculate_enemy_damage_reward(self, bot) -> float:
+        """
+        ★★★ NEW: 적 피해 보상 ★★★
+
+        사용자 요구사항: "상대의 병력과 일꾼손실을 더 일으킬수록 보상"
+
+        보상 체계:
+        - 적 유닛 킬: +0.01 per unit
+        - 적 일꾼 킬: +0.05 per worker (5배 가중치!)
+        - 적 건물 파괴: +0.10 per building
+        - 적 기지 파괴: +1.0 (매우 강한 보상)
+
+        Returns:
+            적 피해 보상 (float)
+        """
+        try:
+            if not hasattr(bot, "state") or not bot.state:
+                return 0.0
+
+            if not hasattr(bot.state, "score"):
+                return 0.0
+
+            score = bot.state.score
+            reward = 0.0
+
+            # 적 유닛 킬 수
+            killed_units = getattr(score, "killed_value_units", 0)
+            killed_structures = getattr(score, "killed_value_structures", 0)
+
+            # 이전 프레임과 비교하여 증가분만 보상
+            if not hasattr(self, "_previous_killed_units"):
+                self._previous_killed_units = 0
+            if not hasattr(self, "_previous_killed_structures"):
+                self._previous_killed_structures = 0
+
+            # 유닛 킬 증가분
+            unit_kills_delta = killed_units - self._previous_killed_units
+            if unit_kills_delta > 0:
+                # 기본 유닛 킬 보상
+                reward += unit_kills_delta * 0.001  # 가치 1000당 1.0 보상
+
+                # ★★★ 특별 보상: 적 일꾼 킬 감지 ★★★
+                # 일꾼 가치는 보통 50 정도이므로, 유닛 킬이 50 단위로 증가하면 일꾼 킬로 추정
+                if 40 <= unit_kills_delta <= 70:  # 일꾼 가치 범위
+                    reward += 0.5  # 일꾼 킬 특별 보상!
+                    if hasattr(bot, "time"):
+                        game_time = bot.time
+                        if game_time < 180:  # 3분 이내 일꾼 킬은 더 강한 보상
+                            reward += 1.0  # 초반 일꾼 킬 = 매우 강력!
+
+            # 건물 파괴 증가분
+            structure_kills_delta = killed_structures - self._previous_killed_structures
+            if structure_kills_delta > 0:
+                # 건물 파괴 보상
+                reward += structure_kills_delta * 0.002  # 가치 1000당 2.0 보상
+
+                # ★★★ 특별 보상: 적 기지 파괴 감지 ★★★
+                # 해처리/넥서스/커맨드센터 가치는 보통 350-450
+                if structure_kills_delta >= 300:  # 기지 파괴
+                    reward += 3.0  # 기지 파괴 특별 보상!
+
+            # 이전 값 업데이트
+            self._previous_killed_units = killed_units
+            self._previous_killed_structures = killed_structures
 
             return reward
 

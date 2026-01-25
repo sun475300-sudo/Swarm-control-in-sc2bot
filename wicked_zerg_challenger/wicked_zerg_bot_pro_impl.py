@@ -272,6 +272,24 @@ class WickedZergBotProImpl(BotAI):
             except ImportError:
                 pass
 
+            # ★★★ NEW: Victory/Defeat Conditions Learner ★★★
+            try:
+                from local_training.victory_conditions import VictoryConditionsLearner
+                self._victory_learner = VictoryConditionsLearner()
+                print("[BOT] VictoryConditionsLearner initialized")
+            except ImportError as e:
+                print(f"[BOT_WARN] VictoryConditionsLearner not available: {e}")
+                self._victory_learner = None
+
+            # ★★★ NEW: Defeat Analysis ★★★
+            try:
+                from local_training.defeat_analysis import DefeatAnalysis
+                self._defeat_analyzer = DefeatAnalysis()
+                print("[BOT] DefeatAnalysis initialized")
+            except ImportError as e:
+                print(f"[BOT_WARN] DefeatAnalysis not available: {e}")
+                self._defeat_analyzer = None
+
             try:
                 from adaptive_learning_rate import AdaptiveLearningRate
                 
@@ -397,14 +415,37 @@ class WickedZergBotProImpl(BotAI):
         # Training mode: Calculate final reward and save model
         if self.train_mode:
             try:
-                # Determine final reward based on game result
+                # ★★★ NEW: Analyze victory/defeat conditions for detailed reward ★★★
                 result_str = str(game_result).upper()
-                if "VICTORY" in result_str or "WIN" in result_str:
-                    game_outcome_reward = 10.0  # 승리 보상
-                elif "DEFEAT" in result_str or "LOSS" in result_str:
-                    game_outcome_reward = -5.0  # 패배 페널티
+                game_won = "VICTORY" in result_str or "WIN" in result_str
+                game_lost = "DEFEAT" in result_str or "LOSS" in result_str
+
+                # Default rewards
+                game_outcome_reward = 0.0
+
+                # Use VictoryConditionsLearner for detailed analysis
+                if hasattr(self, '_victory_learner') and self._victory_learner:
+                    if game_won:
+                        conditions, reward = self._victory_learner.analyze_game_result(self, "Victory")
+                        game_outcome_reward = reward
+                        print(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
+                        print(f"[VICTORY] Total reward: {reward:.1f}")
+                    elif game_lost:
+                        conditions, penalty = self._victory_learner.analyze_game_result(self, "Defeat")
+                        game_outcome_reward = penalty
+                        print(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
+                        print(f"[DEFEAT] Total penalty: {penalty:.1f}")
+
+                    # 통계 출력 (10게임마다)
+                    total_games = len(self._victory_learner.victory_patterns) + len(self._victory_learner.defeat_patterns)
+                    if total_games % 10 == 0 and total_games > 0:
+                        self._victory_learner.print_analysis()
                 else:
-                    game_outcome_reward = 0.0  # 무승부/기타
+                    # Fallback: Simple reward
+                    if game_won:
+                        game_outcome_reward = 10.0
+                    elif game_lost:
+                        game_outcome_reward = -5.0
 
                 # CRITICAL FIX: Initialize parameters_updated counter
                 self.parameters_updated = 0

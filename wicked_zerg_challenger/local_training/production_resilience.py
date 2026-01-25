@@ -903,15 +903,27 @@ class ProductionResilience:
             # NOTE: Extractor building is now handled by _auto_build_extractors()
             # Called from _auto_build_tech_structures() for consistent timing
 
-            # Spawning Pool timing
+            # ★★★ IMPROVED: Spawning Pool timing ★★★
             if self.strategy_manager:
                 spawning_pool_supply = self.strategy_manager.get_pool_supply()
             else:
-                spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 17.0)
+                # ★★★ FIX: 17 → 13으로 변경 (13풀 표준) ★★★
+                spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 13.0)
+
+            # ★★★ NEW: 학습된 시간 기반 타이밍 (94.76초 from learned_build_orders.json) ★★★
+            learned_pool_time = 95.0
+            time_based_trigger = game_time >= learned_pool_time
+
+            # ★★★ NEW: 적 러시 감지 시 12풀로 긴급 전환 ★★★
+            if self.strategy_manager and hasattr(self.strategy_manager, 'rush_detection_active'):
+                if self.strategy_manager.rush_detection_active:
+                    spawning_pool_supply = 12.0
+                    time_based_trigger = True  # 즉시 건설
 
             if not b.units(UnitTypeId.SPAWNINGPOOL).exists and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
-                should_build_pool = supply_used >= spawning_pool_supply
+                should_build_pool = supply_used >= spawning_pool_supply or time_based_trigger
                 emergency_build = supply_used > 20 and b.can_afford(UnitTypeId.SPAWNINGPOOL)
+
                 if (should_build_pool or emergency_build) and b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
                     try:
                         main_base = b.townhalls.first
@@ -919,6 +931,7 @@ class ProductionResilience:
                             UnitTypeId.SPAWNINGPOOL,
                             near=main_base.position.towards(b.game_info.map_center, 5),
                         )
+                        print(f"[SPAWNING_POOL] Built at {game_time:.1f}s, Supply: {supply_used}")
                         return
                     except Exception:
                         pass

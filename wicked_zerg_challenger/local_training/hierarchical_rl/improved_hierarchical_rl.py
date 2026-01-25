@@ -1,48 +1,32 @@
 # -*- coding: utf-8 -*-
 """
-Improved Hierarchical Reinforcement Learning (������ ��ȭ�н� ����)
+Improved Hierarchical Reinforcement Learning (개선된 계층적 강화학습)
 
-��ü ���� �����ؾ� �ϴ� ���״� �Ǵ��ؾ� �� ������ �ʹ� �����ϴ�.
-�̸� �ϳ��� �𵨷� ó���ϸ� �н��� �����ϴ�.
+Role: Pure Strategic Decision Maker (The Brain)
+- Commander Agent: Analyzes state and selects high-level strategy
+- Removed: CombatAgent, QueenAgent (These are now handled by Managers in the bot)
 
-������ ����:
-1. Commander Agent (��ɰ�): �Ž��� ����
-   - "Ȯ���� �ұ�? ������ ������? ��ũ�� Ż��?"
-   - �Է°�: �ڿ�, �α���, ��� ���� ��
-
-2. Combat Agent (������): ���� ��Ʈ��
-   - ��ɰ��� "������"��� �����ϸ�, ��ü���� ���� ��Ʈ�Ѹ� ���
-   - �갳, ����, ��ġ ��
-
-3. Queen Agent (����): ���� ����
-   - ���� '����(Inject Larva)'�� '����(Creep Tumor)' ���� Ÿ�ָ̹� ����ȭ
+변경 사항:
+- CombatAgent, QueenAgent 클래스 삭제 (CombatManager, QueenManager와 충돌 방지)
+- step() 메서드가 순수 전략 모드만 반환하도록 변경
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
-
+from typing import Any, Dict, List, Optional
 import numpy as np
-
-try:
-    from sc2.position import Point2
-except ImportError:
-    Point2 = None
-
 
 class CommanderAgent:
     """
-    ��ɰ� ������Ʈ (Commander Agent)
+    사령관 에이전트 (Commander Agent)
 
-    �Ž��� ������ �����ϴ�:
-    - Ȯ���� �ұ�? ������ ������? ��ũ�� Ż��?
-    - �����ұ�? ����ұ�? ������ �����ұ�?
+    현재 게임 상태를 분석하여 최적의 전략 모드를 결정합니다.
+    (확장할까? 공격할까? 방어할까?)
 
-    �Է°�: �ڿ�, �α���, ��� ����, �� ���� ��
-    ��°�: ���� ��� (StrategyMode)
+    Input: 자원, 인구, 상대 종족, 군사력 비율 등
+    Output: StrategyMode (ALL_IN, AGGRESSIVE, DEFENSIVE, ECONOMY, TECH)
     """
 
     def __init__(self):
-        """��ɰ� ������Ʈ �ʱ�ȭ"""
+        """사령관 에이전트 초기화"""
         self.strategy_history: List[str] = []
         self.decision_confidence: float = 0.5
 
@@ -59,47 +43,47 @@ class CommanderAgent:
         creep_coverage: float,
     ) -> str:
         """
-        �Ž��� ���� ������
+        최적의 전략을 결정합니다.
 
         Args:
-            minerals: ���� �̳׶�
-            vespene: ���� ����
-            supply_used: ��� ���� �α���
-            supply_cap: �ִ� �α���
-            enemy_race: �� ����
-            enemy_army_value: �� ���� ��ġ
-            our_army_value: �Ʊ� ���� ��ġ
-            map_control: �� ��ǵ� (0.0 ~ 1.0)
-            creep_coverage: ���� Ŀ������ (0.0 ~ 1.0)
+            minerals: 보유 미네랄
+            vespene: 보유 가스
+            supply_used: 사용 중인 보급품
+            supply_cap: 최대 보급품
+            enemy_race: 상대 종족
+            enemy_army_value: 적 군사력 평가치
+            our_army_value: 아군 군사력 평가치
+            map_control: 맵 장악력 (0.0 ~ 1.0)
+            creep_coverage: 점막 분포도 (0.0 ~ 1.0)
 
         Returns:
-            ���� ���: "ALL_IN", "AGGRESSIVE", "DEFENSIVE", "ECONOMY", "TECH"
+            전략 모드 문자열
         """
-        # 1. �ڿ� ���� �м�
-        resource_ratio = vespene / (minerals + 1)  # ����/�̳׶� ����
-        supply_ratio = supply_used / (supply_cap + 1)  # �α��� ����
+        # 1. 자원 비율 분석
+        resource_ratio = vespene / (minerals + 1)  # 가스/미네랄 비율
+        supply_ratio = supply_used / (supply_cap + 1)  # 보급품 비율
 
-        # 2. ���� ��
+        # 2. 군사력 비율
         army_advantage = our_army_value / (enemy_army_value + 1)
 
-        # 3. �� ��ǵ�
+        # 3. 맵 주도권
         map_advantage = map_control
 
-        # 4. ���� ���� ����
+        # 4. 전략 결정 로직 (규칙 기반)
 
-        # ALL_IN: ���� ���� + �ڿ� ���� + �α��� ����
+        # ALL_IN: 군사력 우위 + 자원 부족 + 인구수 꽉 참
         if army_advantage > 1.5 and minerals < 500 and supply_ratio > 0.9:
             return "ALL_IN"
 
-        # AGGRESSIVE: ���� ���� + �� ���
+        # AGGRESSIVE: 군사력 우위 + 맵 주도권
         if army_advantage > 1.2 and map_advantage > 0.5 and supply_ratio > 0.7:
             return "AGGRESSIVE"
 
-        # DEFENSIVE: ���� ���� + �� ���� ���ɼ�
+        # DEFENSIVE: 군사력 열세 또는 적 대규모 병력 감지
         if army_advantage < 0.8 and enemy_army_value > 1000:
             return "DEFENSIVE"
 
-        # TECH: �ڿ� ���� + ���� ���� ����
+        # TECH: 자원 여유 + 인구수 여유
         if (
             minerals > 1000
             and vespene > 500
@@ -108,312 +92,31 @@ class CommanderAgent:
         ):
             return "TECH"
 
-        # ECONOMY: �⺻ ��� (Ȯ��, �ڿ� ����)
+        # ECONOMY: 기본 상태 (확장 및 드론 확보)
         if minerals > 800 or supply_ratio < 0.6:
             return "ECONOMY"
 
-        # �⺻: AGGRESSIVE
+        # 기본값: AGGRESSIVE (공격적인 운영 지향)
         return "AGGRESSIVE"
-
-    def get_sub_agent_commands(self, strategy_mode: str) -> Dict[str, Any]:
-        """
-        ���� ������Ʈ���� ���� ���� ����
-
-        Args:
-            strategy_mode: ���� ���
-
-        Returns:
-            ���� ������Ʈ�� ���� ��ųʸ�
-        """
-        commands = {"combat_agent": {}, "economy_agent": {}, "queen_agent": {}}
-
-        if strategy_mode == "ALL_IN":
-            commands["combat_agent"] = {
-                "action": "attack",
-                "target": "enemy_main",
-                "formation": "surround",
-                "priority": "high",
-            }
-            commands["economy_agent"] = {"action": "minimal", "priority": "low"}
-            commands["queen_agent"] = {"action": "inject_only", "priority": "high"}
-
-        elif strategy_mode == "AGGRESSIVE":
-            commands["combat_agent"] = {
-                "action": "harass",
-                "target": "enemy_expansions",
-                "formation": "loose",
-                "priority": "high",
-            }
-            commands["economy_agent"] = {"action": "expand", "priority": "medium"}
-            commands["queen_agent"] = {"action": "inject_and_creep", "priority": "high"}
-
-        elif strategy_mode == "DEFENSIVE":
-            commands["combat_agent"] = {
-                "action": "defend",
-                "target": "our_bases",
-                "formation": "tight",
-                "priority": "high",
-            }
-            commands["economy_agent"] = {
-                "action": "defensive_buildings",
-                "priority": "high",
-            }
-            commands["queen_agent"] = {
-                "action": "inject_and_creep",
-                "priority": "medium",
-            }
-
-        elif strategy_mode == "TECH":
-            commands["combat_agent"] = {"action": "minimal", "priority": "low"}
-            commands["economy_agent"] = {"action": "tech_buildings", "priority": "high"}
-            commands["queen_agent"] = {"action": "inject_only", "priority": "medium"}
-
-        else:  # ECONOMY
-            commands["combat_agent"] = {"action": "scout", "priority": "low"}
-            commands["economy_agent"] = {
-                "action": "expand_and_drones",
-                "priority": "high",
-            }
-            commands["queen_agent"] = {"action": "inject_and_creep", "priority": "high"}
-
-        return commands
-
-
-class CombatAgent:
-    """
-    ���� ������Ʈ (Combat Agent)
-
-    ��ɰ��� "������"��� �����ϸ�,
-    ��ü���� ���� ��Ʈ��(�갳, ����, ��ġ)�� ����մϴ�.
-
-    Boids �˰������� Ȱ���Ͽ� ���� ���� ��� �����մϴ�.
-    """
-
-    def __init__(self):
-        """���� ������Ʈ �ʱ�ȭ"""
-        self.current_action = None
-        self.target_position = None
-        self.formation_mode = "loose"
-
-    def execute_combat(
-        self, bot, command: Dict[str, Any], units: "Units", enemy_units: "Units"
-    ) -> bool:
-        """
-        ���� ���� ����
-
-        Args:
-            bot: �� ��ü
-            command: ��ɰ��� ����
-            units: �Ʊ� ���ֵ�
-            enemy_units: �� ���ֵ�
-
-        Returns:
-            ���� ���� ����
-        """
-        try:
-            action = command.get("action", "attack")
-            formation = command.get("formation", "loose")
-            target = command.get("target", None)
-
-            # Boids �˰����� ����
-            try:
-                from combat.boids_swarm_control import BoidsSwarmController
-                from combat.micro_combat import MicroCombat
-
-                micro_combat = MicroCombat(bot)
-
-                if action == "attack":
-                    # ����: ���� �����ϸ鼭 ����
-                    if enemy_units:
-                        closest_enemy = enemy_units.closest_to(units.center)
-                        if closest_enemy:
-                            micro_combat.focus_fire(units, closest_enemy)
-
-                elif action == "harass":
-                    # ����: ������ ���� �� ����
-                    if enemy_units:
-                        micro_combat.kiting(units, enemy_units)
-
-                elif action == "defend":
-                    # ���: �Ʊ� ���� �ֺ����� ���
-                    if hasattr(bot, "townhalls"):
-                        main_base = bot.townhalls.first
-                        if main_base:
-                            # ���� �ֺ����� ���� ��ġ
-                            for unit in units:
-                                if unit.distance_to(main_base) > 10:
-                                    unit.move(
-                                        main_base.position.towards(unit.position, 8)
-                                    )
-
-                elif action == "scout":
-                    # ����: �� Ž��
-                    if units:
-                        # ��Ž�� �������� �̵�
-                        for unit in units[:3]:  # �ִ� 3�� ���ָ� ����
-                            if unit.is_idle:
-                                # ���� �������� �̵�
-                                import random
-
-                                angle = random.uniform(0, 2 * np.pi)
-                                distance = 20.0
-                                scout_pos = unit.position.towards(
-                                    unit.position.offset(
-                                        Point2(
-                                            (
-                                                np.cos(angle) * distance,
-                                                np.sin(angle) * distance,
-                                            )
-                                        )
-                                    ),
-                                    distance,
-                                )
-                                unit.move(scout_pos)
-
-                return True
-
-            except ImportError:
-                # Boids�� ������ �⺻ ����
-                if enemy_units and units:
-                    for unit in units:
-                        closest_enemy = enemy_units.closest_to(unit.position)
-                        if closest_enemy:
-                            unit.attack(closest_enemy)
-                return True
-
-        except Exception as e:
-            error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
-            print(f"[WARNING] Combat Agent execution error: {error_msg}")
-            return False
-
-
-class QueenAgent:
-    """
-    ���� ������Ʈ (Queen Agent)
-
-    ���� '����(Inject Larva)'�� '����(Creep Tumor)' ���� Ÿ�ָ̹� ����ȭ�մϴ�.
-    """
-
-    def __init__(self):
-        """���� ������Ʈ �ʱ�ȭ"""
-        self.last_inject_time: Dict[int, float] = {}  # {hatchery_tag: time}
-        self.last_creep_time: Dict[int, float] = {}  # {queen_tag: time}
-        self.inject_cooldown = 29.0  # Inject ��Ÿ�� (��)
-        self.creep_cooldown = 11.0  # Creep Tumor ��Ÿ�� (��)
-
-    def execute_queen_management(self, bot, command: Dict[str, Any]) -> bool:
-        """
-        ���� ���� ����
-
-        Args:
-            bot: �� ��ü
-            command: ��ɰ��� ����
-
-        Returns:
-            ���� ���� ����
-        """
-        try:
-            action = command.get("action", "inject_and_creep")
-            priority = command.get("priority", "medium")
-
-            if not hasattr(bot, "units") or not hasattr(bot, "townhalls"):
-                return False
-
-            queens = bot.units.filter(lambda u: u.name == "Queen")
-            if not queens:
-                return False
-
-            # 1. Inject Larva (����)
-            if "inject" in action:
-                self._execute_inject(bot, queens, priority)
-
-            # 2. Creep Tumor (���� ����)
-            if "creep" in action:
-                self._execute_creep_spread(bot, queens, priority)
-
-            return True
-
-        except Exception as e:
-            error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
-            print(f"[WARNING] Queen Agent execution error: {error_msg}")
-            return False
-
-    def _execute_inject(self, bot, queens, priority: str) -> None:
-        """Inject Larva ����"""
-        if not hasattr(bot, "townhalls"):
-            return
-
-        inject_priority = priority == "high"
-
-        for hatch in bot.townhalls:
-            # Inject ��Ÿ�� Ȯ��
-            last_time = self.last_inject_time.get(hatch.tag, 0.0)
-            if bot.time - last_time < self.inject_cooldown:
-                continue
-
-            # ���� ����� ���� ã��
-            closest_queen = queens.closest_to(hatch.position)
-            if not closest_queen:
-                continue
-
-            # ������ Inject �������� Ȯ��
-            if (
-                hasattr(closest_queen, "energy")
-                and closest_queen.energy >= 25
-                and closest_queen.distance_to(hatch) <= 4
-            ):
-
-                # Inject ����
-                if hasattr(closest_queen, "can_cast"):
-                    if closest_queen.can_cast(closest_queen.abilities.InjectLarva):
-                        bot.do(closest_queen(hatch))
-                        self.last_inject_time[hatch.tag] = bot.time
-
-    def _execute_creep_spread(self, bot, queens, priority: str) -> None:
-        """Creep Tumor ���� ����"""
-        creep_priority = priority == "high"
-
-        for queen in queens:
-            # Creep Tumor ��Ÿ�� Ȯ��
-            last_time = self.last_creep_time.get(queen.tag, 0.0)
-            if bot.time - last_time < self.creep_cooldown:
-                continue
-
-            # ������ Creep Tumor ���� �������� Ȯ��
-            if hasattr(queen, "energy") and queen.energy >= 25:
-
-                # ������ ���� ���� ã��
-                # (�����δ� �� �м��� �ʿ������� ���⼭�� �ܼ�ȭ)
-                if hasattr(queen, "can_cast"):
-                    if queen.can_cast(queen.abilities.BuildCreepTumor):
-                        # ���� �������� Creep Tumor ����
-                        creep_pos = queen.position.towards(
-                            (
-                                bot.enemy_start_locations[0]
-                                if hasattr(bot, "enemy_start_locations")
-                                else queen.position
-                            ),
-                            8.0,
-                        )
-                        bot.do(queen(creep_pos))
-                        self.last_creep_time[queen.tag] = bot.time
 
 
 class HierarchicalRLSystem:
     """
-    ������ ��ȭ�н� �ý���
+    계층적 강화학습 시스템 (Hierarchical Reinforcement Learning)
 
-    Commander Agent -> Sub Agents (Combat, Economy, Queen) ����
+    역할:
+    - Commander Agent를 통해 상위 수준의 전략 결정 (Brain)
+    - 하위 실행(Micro, Economy 등)은 각 Manager에게 위임 (Hands)
     """
 
     def __init__(self):
-        """������ ��ȭ�н� �ý��� �ʱ�ȭ"""
+        """계층적 강화학습 시스템 초기화"""
         self.commander = CommanderAgent()
-        self.combat_agent = CombatAgent()
-        self.queen_agent = QueenAgent()
+        # CombatAgent와 QueenAgent는 제거되었습니다. (각 Manager가 담당)
 
     @staticmethod
     def _normalize_enemy_race(value) -> str:
+        """상대 종족 이름을 문자열로 정규화"""
         if value is None:
             return "Unknown"
         if hasattr(value, "name"):
@@ -425,17 +128,17 @@ class HierarchicalRLSystem:
 
     def step(self, bot, override_strategy: Optional[str] = None) -> Dict[str, Any]:
         """
-        매 프레임 실행
-        
+        매 프레임 실행되어 전략적 결정을 내립니다.
+
         Args:
-            bot: 봇 객체
-            override_strategy: 외부(RL Agent)에서 결정한 전략 (있으면 우선 사용)
-            
+            bot: 봇 인스턴스
+            override_strategy: 외부(RL Agent)에서 강제한 전략 (우선순위 높음)
+
         Returns:
-            실행 결과 딕셔너리
+            결정된 전략 모드가 담긴 딕셔너리
         """
         try:
-            # 1. Commander Agent의 상황 판단 (Rule-based)
+            # 1. Commander Agent의 상황 판단 (규칙 기반)
             rule_based_decision = self.commander.make_decision(
                 minerals=bot.minerals,
                 vespene=bot.vespene,
@@ -458,66 +161,38 @@ class HierarchicalRLSystem:
                 creep_coverage=self._calculate_creep_coverage(bot),
             )
 
-            # ★ CRITICAL: RL Agent가 결정을 내렸으면 그것을 따름 ★
-            if override_strategy:
-                strategy_mode = override_strategy
-                # 훈련 로깅을 위해 비교 정보 출력 (가끔)
-                if bot.iteration % 220 == 0 and strategy_mode != rule_based_decision:
-                    print(f"[RL_OVERRIDE] RL: {strategy_mode} vs Rule: {rule_based_decision}")
-            else:
-                strategy_mode = rule_based_decision
+            # 2. 최종 전략 결정 (RL Agent 오버라이드 적용)
+            final_mode = override_strategy if override_strategy else rule_based_decision
 
-            # 2.  Ʈ  
-            commands = self.commander.get_sub_agent_commands(strategy_mode)
+            # 로깅 (오버라이드 발생 시)
+            if override_strategy and bot.iteration % 220 == 0 and final_mode != rule_based_decision:
+                 print(f"[RL_OVERRIDE] RL 결정: {final_mode} (Rule: {rule_based_decision})")
 
-            # 3.  Ʈ 
-            results = {
-                "strategy_mode": strategy_mode,
-                "combat_result": False,
-                "queen_result": False,
+            # 3. 순수 전략 결정 반환 (직접 실행하지 않음)
+            return {
+                "strategy_mode": final_mode,
+                "author": "RLAgent" if override_strategy else "RuleBasedCommander",
+                "timestamp": getattr(bot, "time", 0)
             }
 
-            # Combat Agent ����
-            if hasattr(bot, "units") and hasattr(bot, "enemy_units"):
-                combat_units = bot.units.filter(
-                    lambda u: u.name
-                    in ["Zergling", "Roach", "Hydralisk", "Mutalisk", "Lurker"]
-                )
-                if combat_units:
-                    results["combat_result"] = self.combat_agent.execute_combat(
-                        bot=bot,
-                        command=commands["combat_agent"],
-                        units=combat_units,
-                        enemy_units=bot.enemy_units,
-                    )
-
-            # Queen Agent ����
-            results["queen_result"] = self.queen_agent.execute_queen_management(
-                bot=bot, command=commands["queen_agent"]
-            )
-
-            return results
-
         except Exception as e:
-            error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
-            print(f"[WARNING] Hierarchical RL step error: {error_msg}")
+            # 오류 발생 시 기본 경제 모드 반환
+            # error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
+            # print(f"[WARNING] Hierarchical RL step error: {error_msg}")
             return {"strategy_mode": "ECONOMY", "error": str(e)}
 
     def _calculate_army_value(self, units) -> float:
-        """���� ��ġ ���"""
+        """군사력 가치 계산 (단순 유닛 수 * 100)"""
         if not units:
             return 0.0
-
-        # �ܼ�ȭ: ���� �� * 100
         return len(units) * 100.0
 
     def _calculate_map_control(self, bot) -> float:
-        """�� ��ǵ� ��� (0.0 ~ 1.0)"""
+        """맵 장악력 계산 (기지 수 비율, 0.0 ~ 1.0)"""
         try:
             if not hasattr(bot, "townhalls"):
                 return 0.0
 
-            # �Ʊ� ���� �� / (�Ʊ� ���� �� + �� ���� ��)
             our_bases = len(bot.townhalls)
             enemy_bases = (
                 len(bot.enemy_structures.townhall)
@@ -535,7 +210,7 @@ class HierarchicalRLSystem:
             return 0.5
 
     def _calculate_creep_coverage(self, bot) -> float:
-        """���� Ŀ������ ��� (0.0 ~ 1.0)"""
+        """점막 분포도 계산 (0.0 ~ 1.0)"""
         try:
             if not hasattr(bot, "state") or not hasattr(bot.state, "creep"):
                 return 0.0

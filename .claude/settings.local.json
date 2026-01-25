@@ -49,7 +49,8 @@
       "Bash(shutdown:*)",
       "Bash(tee:*)",
       "Bash(pkill:*)",
-      "Bash(exit 0)"
+      "Bash(exit 0)",
+      "Bash(start /MIN python run_with_training.py)"
     ]
   }
 }

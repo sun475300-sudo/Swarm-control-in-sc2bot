@@ -2,7 +2,7 @@ import requests
 import json
 
 def test_api():
-    url = "https://spawningtool.com/api/replays/"
+    url = "https://lotv.spawningtool.com/api/replays/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
