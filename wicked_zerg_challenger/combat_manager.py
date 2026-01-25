@@ -2513,7 +2513,7 @@ class CombatManager:
                 attack_start_time = self._expansion_under_attack.get(base_tag, current_time)
 
                 # 로그 출력
-                print(f"[EXPANSION DESTROYED] [{int(current_time)}s] ⚠️ Expansion base destroyed after {int(current_time - attack_start_time)}s of attack!")
+                print(f"[EXPANSION DESTROYED] [{int(current_time)}s] [WARNING] Expansion base destroyed after {int(current_time - attack_start_time)}s of attack!")
 
                 # 파괴된 기지 정보 제거
                 if base_tag in self._expansion_under_attack:
@@ -2542,7 +2542,7 @@ class CombatManager:
                 if expansion_tag not in self._expansion_under_attack:
                     # 처음 공격받음
                     self._expansion_under_attack[expansion_tag] = current_time
-                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] ⚠️ Expansion under attack! {len(nearby_enemies)} enemies detected")
+                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] [WARNING] Expansion under attack! {len(nearby_enemies)} enemies detected")
 
                 # ★ 대응: 방어 병력 파견
                 await self._defend_expansion(expansion, nearby_enemies, iteration)
@@ -2551,7 +2551,7 @@ class CombatManager:
                 # 공격받지 않음 - 공격 기록 제거
                 if expansion_tag in self._expansion_under_attack:
                     attack_duration = current_time - self._expansion_under_attack[expansion_tag]
-                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] ✓ Expansion secured after {int(attack_duration)}s")
+                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] [OK] Expansion secured after {int(attack_duration)}s")
                     del self._expansion_under_attack[expansion_tag]
 
     async def _defend_expansion(self, expansion, nearby_enemies, iteration: int):

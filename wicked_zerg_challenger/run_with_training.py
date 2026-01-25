@@ -49,8 +49,8 @@ def _ensure_sc2_path():
             os.environ["SC2PATH"] = install_path
             print(f"[SC2] Found via Registry: {install_path}")
             return
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARNING] Failed to read SC2 path from registry: {e}")
 
     # 2. Search common installation paths
     common_paths = [
@@ -75,13 +75,13 @@ _ensure_sc2_path()
 sys.path.append(str(Path(__file__).parent))
 
 
-def create_bot_with_training():
+def create_bot_with_training(learning_rate: Optional[float] = None):
     """
     Create bot instance with neural network training enabled.
     Model will be saved to: local_training/models/zerg_net_model.pt
     """
     # CRITICAL: Set train_mode = True to enable neural network training
-    bot_instance = WickedZergBotPro(train_mode=True)
+    bot_instance = WickedZergBotPro(train_mode=True, learning_rate=learning_rate)
     return Bot(Race.Zerg, bot_instance)
 
 
@@ -135,7 +135,7 @@ def main():
 
         print("\n[STEP 2] ? Connecting to AI Arena Server...")
         print("=" * 70)
-        bot = create_bot_with_training()
+        bot = create_bot_with_training() # Ladder server doesn't support custom LR yet
         print("[OK] Bot created with training enabled")
         print("[INFO] Joining Ladder Game...")
         try:
@@ -197,22 +197,36 @@ def main():
         print(f"[WARNING] Training session manager not available: {e}")
         session_manager = None
 
-    # Initialize Background Parallel Learner
+    # Initialize Background Parallel Learner (NEW: Experience Replay System)
     background_learner = None
     try:
         from tools.background_parallel_learner import BackgroundParallelLearner
         background_learner = BackgroundParallelLearner(
-            max_workers=2,  # 최대 2개의 병렬 워커
-            enable_replay_analysis=True,
-            enable_model_training=True
+            max_workers=1,  # 단일 모델 업데이트이므로 1개면 충분
+            enable_replay_analysis=False,  # sc2reader 리플레이 분석 비활성화
+            enable_model_training=True  # 경험 데이터 기반 학습 활성화
         )
         background_learner.start()
         print("[OK] Background parallel learner initialized and started")
-        print("[INFO] Replay analysis and model training will run in background")
+        print("[INFO] Experience replay training will run in background")
+        print(f"[INFO] Monitoring directory: {background_learner.data_dir}")
     except ImportError as e:
         print(f"[WARNING] Background parallel learner not available: {e}")
     except Exception as e:
         print(f"[WARNING] Failed to start background learner: {e}")
+
+    # Initialize Auto Replay Learner (NEW: Learn from pro replays)
+    auto_replay_learner = None
+    try:
+        from tools.auto_replay_learner import AutoReplayLearner
+        auto_replay_learner = AutoReplayLearner()
+        print("[OK] Auto replay learner initialized")
+        print("[INFO] Will automatically download and learn from pro replays")
+        print(f"[INFO] Replay learning every 10 games")
+    except ImportError as e:
+        print(f"[WARNING] Auto replay learner not available: {e}")
+    except Exception as e:
+        print(f"[WARNING] Failed to initialize auto replay learner: {e}")
 
     game_count = 0
     max_consecutive_failures = 5
@@ -241,8 +255,32 @@ def main():
     print("=" * 70)
     print()
 
+    # Parse max games from arguments
+    max_games = float('inf')
+    for i, arg in enumerate(sys.argv):
+        if arg == "--max_games":
+            try:
+                max_games = int(sys.argv[i+1])
+                print(f"[CONFIG] Max games set to: {max_games}")
+            except:
+                pass
+    
+    # Parse learning rate from arguments
+    learning_rate = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--learning_rate" or arg == "--lr":
+            try:
+                learning_rate = float(sys.argv[i+1])
+                print(f"[CONFIG] Learning Rate manually set to: {learning_rate}")
+            except:
+                pass
+
     while True:
         try:
+            if game_count >= max_games:
+                 print(f"\n[INFO] Reached maximum number of games ({max_games}). Stopping training.")
+                 break
+
             game_count += 1
 
             if consecutive_failures > 0:
@@ -292,7 +330,7 @@ def main():
             print()
 
             # Create new bot instance for each game
-            bot = create_bot_with_training()
+            bot = create_bot_with_training(learning_rate=learning_rate)
             # bot is already a Bot instance, so we can set attributes on the
             # underlying AI
             if hasattr(bot, 'ai') and bot.ai:
@@ -324,7 +362,7 @@ def main():
                         # CORRECT: Use bot directly (already a Bot instance)
                         Computer(opponent_race, difficulty)
                     ],
-                    realtime=False  # False = faster speed (no visible game window, faster training)
+                    realtime=False  # False = faster speed (no visible game window)
                 )
 
                 # Game completed successfully
@@ -426,15 +464,21 @@ def main():
                             break
 
                         time.sleep(1)
-                    else:
-                        # Still waiting, proceed anyway
-                        print(
-                            f"[WARNING] SC2 processes may still be running, but proceeding anyway")
-                except ImportError:
-                    # psutil not available, use simple sleep
-                    time.sleep(wait_between_games)
-                except Exception:
-                    # Process check failed, use simple sleep
+                        # Force kill if still running
+                        print(f"[WARNING] SC2 process stuck. Forcing termination...")
+                        try:
+                            import subprocess
+                            subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            subprocess.call(["taskkill", "/F", "/IM", "StarCraft II.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        except Exception:
+                            pass
+                except (ImportError, Exception):
+                    # Fallback: Blindly try to kill SC2 just in case, then sleep
+                    try:
+                        import subprocess
+                        subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    except Exception:
+                        pass
                     time.sleep(wait_between_games)
 
                 # IMPROVED: Print background learning stats periodically
@@ -443,8 +487,10 @@ def main():
                     print(f"\n{'='*70}")
                     print("? [BACKGROUND LEARNING] STATISTICS")
                     print("=" * 70)
-                    print(f"Replays Analyzed: {stats['replays_analyzed']}")
-                    print(f"Models Trained: {stats['models_trained']}")
+                    print(f"Experience Files Processed: {stats['files_processed']}")
+                    print(f"Batch Training Runs: {stats['batches_trained']}")
+                    print(f"Total Training Samples: {stats['total_samples']}")
+                    print(f"Average Loss: {stats['avg_loss']:.4f}")
                     print(
                         f"Total Processing Time: {stats['total_processing_time']:.2f}s")
                     print(
@@ -452,8 +498,43 @@ def main():
                     print(f"Errors: {stats['errors']}")
                     print("=" * 70)
                     print()
+
+                # ★ NEW: Auto Replay Learning (every 10 games) ★
+                if auto_replay_learner and game_count % 10 == 0:
+                    print(f"\n{'='*70}")
+                    print("🎮 [AUTO REPLAY LEARNING] Downloading and learning from pro replays...")
+                    print("=" * 70)
+                    try:
+                        # 3개 리플레이 다운로드, 각 5회 학습
+                        auto_replay_learner.run_auto_learning_cycle(
+                            num_replays=3,
+                            learning_iterations=5,
+                            min_mmr=4000
+                        )
+                        print("[AUTO_REPLAY] [OK] Replay learning cycle completed")
+                    except Exception as replay_error:
+                        print(f"[AUTO_REPLAY] [FAILED] Replay learning failed: {replay_error}")
+                        import traceback
+                        traceback.print_exc()
+                    print("=" * 70)
+                    print()
+
             except Exception as game_error:
                 consecutive_failures += 1
+
+                # ★ CRITICAL FIX: Save experience data even when game fails ★
+                print(f"\n[RECOVERY] Attempting to save experience data from failed game...")
+                try:
+                    if hasattr(bot, 'ai') and bot.ai and hasattr(bot.ai, 'rl_agent') and bot.ai.rl_agent:
+                        # Try to save whatever experience data was collected before failure
+                        bot.ai.rl_agent.end_episode(final_reward=-10.0, save_experience=True)
+                        print(f"[RECOVERY] [OK] Successfully saved experience data from failed game #{game_count}")
+                    else:
+                        print(f"[RECOVERY] [FAILED] No RLAgent found - cannot save experience data")
+                except Exception as save_error:
+                    print(f"[RECOVERY] [FAILED] Failed to save experience data: {save_error}")
+                    import traceback
+                    traceback.print_exc()
 
                 # IMPROVED: Record error in session manager
                 if session_manager:
@@ -584,8 +665,10 @@ def main():
         background_learner.stop()
         stats = background_learner.get_stats()
         print(f"[BACKGROUND LEARNER] Final stats:")
-        print(f"  - Replays Analyzed: {stats['replays_analyzed']}")
-        print(f"  - Models Trained: {stats['models_trained']}")
+        print(f"  - Experience Files Processed: {stats['files_processed']}")
+        print(f"  - Batch Training Runs: {stats['batches_trained']}")
+        print(f"  - Total Training Samples: {stats['total_samples']}")
+        print(f"  - Average Loss: {stats['avg_loss']:.4f}")
         print(
             f"  - Total Processing Time: {stats['total_processing_time']:.2f}s")
         print(f"  - Errors: {stats['errors']}")
@@ -610,7 +693,8 @@ def main():
     print("=" * 70)
 
     # ? NEW: Auto-extract and learn from training data after training ends
-    if game_count > 0:
+    # NOTE: Disabled due to missing TrainingDataExtractor module (2026-01-25)
+    if False and game_count > 0:
         print("\n" + "=" * 70)
         print("AUTO-EXTRACTING AND LEARNING FROM TRAINING DATA")
         print("=" * 70)

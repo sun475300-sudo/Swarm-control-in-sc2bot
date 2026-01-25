@@ -43,6 +43,8 @@ class EconomyManager:
         self._gold_bases_cache = []
         self._gold_cache_time = 0
         self._emergency_mode = False
+        # 2026-01-25 FIX: Track Maynarding transfers
+        self.transferred_hatcheries = set()
 
     def set_emergency_mode(self, active: bool) -> None:
         """Set emergency mode validation."""
@@ -56,6 +58,21 @@ class EconomyManager:
         if iteration < 50:
             await self._optimize_early_worker_split()
 
+        # ★★★ PRIORITY: 확장 체크를 가장 먼저 실행 (병력 생산보다 우선) ★★★
+        # ★ CRITICAL: 강제 확장 체크 (5초마다) ★
+        if iteration % 110 == 0:  # 5초마다 (10초 → 5초, 더 자주)
+            await self._force_expansion_if_stuck()
+
+        # PROACTIVE expansion check (every 33 frames = ~1.5 seconds)
+        # 10분(600초) 안에 3베이스 확보를 위한 사전 예방적 확장
+        if iteration % 33 == 0:
+            await self._check_proactive_expansion()
+
+        # Check for expansion needs when resources depleting (every 66 frames = ~3 seconds)
+        if iteration % 66 == 0:
+            await self._check_expansion_on_depletion()
+
+        # 확장 체크 후 드론/오버로드 생산 (자원 확보 후 생산)
         await self._train_overlord_if_needed()
         await self._train_drone_if_needed()
 
@@ -70,19 +87,6 @@ class EconomyManager:
         if iteration % 22 == 0:
             await self._redistribute_mineral_workers()
 
-        # ★ CRITICAL: 강제 확장 체크 (5초마다) ★
-        if iteration % 110 == 0:  # 5초마다 (10초 → 5초, 더 자주)
-            await self._force_expansion_if_stuck()
-
-        # PROACTIVE expansion check (every 33 frames = ~1.5 seconds)
-        # 10분(600초) 안에 3베이스 확보를 위한 사전 예방적 확장
-        if iteration % 33 == 0:
-            await self._check_proactive_expansion()
-
-        # Check for expansion needs when resources depleting (every 66 frames = ~3 seconds)
-        if iteration % 66 == 0:
-            await self._check_expansion_on_depletion()
-
         # Check for macro hatchery needs periodically
         if iteration - self.last_macro_hatch_check >= self.macro_hatch_check_interval:
             self.last_macro_hatch_check = iteration
@@ -95,6 +99,10 @@ class EconomyManager:
         # ★ NEW: 가스 타이밍 최적화 ★
         if iteration % 33 == 0:  # ~1.5초마다
             await self._optimize_gas_timing()
+            
+        # ★ NEW: Maynarding (일꾼 미리 보내기) - Issue 7 ★
+        if iteration % 22 == 0:
+            await self._check_maynarding()
 
         # ★ NEW: 경제 회복 시스템 가동 (병력 생산 후 재건) ★
         if iteration % 22 == 0:
@@ -232,21 +240,28 @@ class EconomyManager:
             return
 
     async def _train_drone_if_needed(self) -> None:
-        # === Emergency Mode Check ===
-        # 비상 모드에서는 최소 드론만 유지 (12기)
-        strategy = getattr(self.bot, "strategy_manager", None)
-        if strategy and getattr(strategy, "emergency_active", False):
-            worker_count = 0
-            if hasattr(self.bot, "workers"):
-                workers = self.bot.workers
-                worker_count = workers.amount if hasattr(workers, "amount") else len(list(workers))
+        # === Worker Count Check ===
+        # ★ 일꾼 수 확인 (기지당 최소 16명 목표) ★
+        worker_count = 0
+        if hasattr(self.bot, "workers"):
+            workers = self.bot.workers
+            worker_count = workers.amount if hasattr(workers, "amount") else len(list(workers))
 
-            if worker_count >= 12:
-                # 비상 모드 + 최소 드론 확보 → 드론 생산 중단
+        # 기지 수 확인
+        townhalls = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
+        base_count = townhalls.amount if hasattr(townhalls, "amount") else 1
+
+        # ★ 최소 일꾼 목표: 기지당 16명 (미네랄 포화) ★
+        min_workers_needed = base_count * 16
+
+        # ★ CRITICAL: 최소 일꾼 미달이면 무조건 생산 (밸런서 무시) ★
+        below_minimum = worker_count < min_workers_needed or worker_count < 22
+
+        if not below_minimum:
+            # 일꾼이 충분하면 밸런서 판단 따름
+            if not self.balancer.should_train_drone():
                 return
-
-        if not self.balancer.should_train_drone():
-            return
+        # else: 일꾼 부족하면 밸런서 무시하고 무조건 생산!
 
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
@@ -552,9 +567,9 @@ class EconomyManager:
                 assigned = th.assigned_harvesters
                 ideal = th.ideal_harvesters  # Usually 16 for minerals
 
-                if assigned > ideal + 2:  # Over by more than 2
+                if assigned > ideal:  # Strict optimization (was ideal + 2)
                     over_saturated.append((th, assigned - ideal))
-                elif assigned < ideal - 2:  # Under by more than 2
+                elif assigned < ideal:  # Fill even small holes
                     under_saturated.append((th, ideal - assigned))
 
             # Move workers from over-saturated to under-saturated
@@ -571,8 +586,8 @@ class EconomyManager:
                     if excess <= 0 or deficit <= 0:
                         continue
 
-                    # Move workers (더 점진적으로)
-                    workers_to_move = min(excess, deficit, 3)  # Max 3 at a time (6 -> 3, 덜 혼란스럽게)
+                    # Move workers (Faster redistribution)
+                    workers_to_move = min(excess, deficit, 5)  # Increased from 3 to 5
                     for _ in range(workers_to_move):
                         if not nearby_workers:
                             break
@@ -639,7 +654,8 @@ class EconomyManager:
                             try:
                                 await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
                                 minerals -= 75
-                            except: pass
+                            except Exception as e:
+                                print(f"[ERROR] Spore build failed: {e}")
 
                     if minerals > 2000:
                         spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th)
@@ -650,7 +666,8 @@ class EconomyManager:
                                  try:
                                      await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
                                      minerals -= 100
-                                 except: pass
+                                 except Exception as e:
+                                     print(f"[ERROR] Spine build failed: {e}")
 
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
@@ -752,44 +769,44 @@ class EconomyManager:
         game_time = self.bot.time
         minerals = getattr(self.bot, "minerals", 0)
 
-        # ★ 강제 확장 조건 (시간 대비 기지 수) - ULTRA AGGRESSIVE ★
+        # ★★★ 강제 확장 조건 - 1분 내 멀티 완성 목표 ★★★
         force_expand = False
         reason = ""
 
-        # ★ 15초: 앞마당이 없고 미네랄 충분하면 즉시 확장 ★
-        if game_time >= 15 and base_count < 2 and minerals >= 300:
+        # ★★★ 10초: 게임 시작 직후 미네랄 200+ 있으면 즉시 확장 시도 ★★★
+        if game_time >= 10 and base_count < 2 and minerals >= 200:
             force_expand = True
-            reason = "15sec with minerals - FORCING natural IMMEDIATELY!"
+            reason = "10sec INSTANT EXPAND - Target: 1min completion!"
 
-        # ★ 25초: 앞마당이 없으면 강제 확장 (낮은 미네랄도 OK) ★
-        elif game_time >= 25 and base_count < 2 and minerals >= 250:
+        # ★ 20초: 앞마당 없으면 강제 확장 (미네랄 180+) ★
+        elif game_time >= 20 and base_count < 2 and minerals >= 180:
             force_expand = True
-            reason = "25sec with only 1 base - FORCING natural ASAP!"
+            reason = "20sec ULTRA-FAST natural (min 180+)!"
 
-        # ★ 40초: 앞마당이 없으면 긴급 확장 (미네랄 더 낮은 임계값) ★
-        elif game_time >= 40 and base_count < 2 and minerals >= 200:
+        # ★ 30초: 여전히 1베이스면 긴급 확장 ★
+        elif game_time >= 30 and base_count < 2 and minerals >= 150:
             force_expand = True
-            reason = "40sec with only 1 base - EMERGENCY natural!"
+            reason = "30sec EMERGENCY natural (min 150+)!"
 
-        # ★ 1분: 여전히 1베이스면 절대 확장 (미네랄 무시) ★
+        # ★ 45초: 1베이스면 절대 확장 (미네랄 무시) ★
+        elif game_time >= 45 and base_count < 2:
+            force_expand = True
+            reason = "45sec CRITICAL - Must expand NOW!"
+
+        # ★ 1분: 여전히 1베이스면 최종 긴급 ★
         elif game_time >= 60 and base_count < 2:
             force_expand = True
             reason = "1min with only 1 base - ABSOLUTE EMERGENCY!"
 
-        # ★ 2분: 여전히 1베이스면 최종 긴급 확장 ★
-        elif game_time >= 120 and base_count < 2:
+        # ★ 2분: 최소 3베이스 필요 (빠른 3베이스) ★
+        elif game_time >= 120 and base_count < 3:
             force_expand = True
-            reason = "2min with only 1 base - CRITICAL EXPANSION!"
+            reason = "2min - FORCING 3rd base!"
 
-        # ★ 3분 (180초): 최소 3베이스 필요 (절대적!) ★
+        # ★ 3분: 여전히 3베이스 없으면 긴급 ★
         elif game_time >= 180 and base_count < 3:
             force_expand = True
-            reason = "3min with less than 3 bases - FORCING 3rd!"
-
-        # ★ 4분: 여전히 3베이스 없으면 긴급 ★
-        elif game_time >= 240 and base_count < 3:
-            force_expand = True
-            reason = "4min with less than 3 bases - EMERGENCY 3rd!"
+            reason = "3min - EMERGENCY 3rd base!"
 
         # ★ 5분 (300초): 최소 4베이스 필요 ★
         elif game_time >= 300 and base_count < 4:
@@ -879,21 +896,26 @@ class EconomyManager:
         expand_reason = ""
         minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
 
-        # 1베이스 → 2베이스 (내츄럴): ★ 1분 안에 확장 (게임 시작 즉시) ★
+        # 1베이스 → 2베이스 (내츄럴): ★★★ 1분 안에 완성 (ULTRA FAST) ★★★
         if base_count == 1:
             worker_count = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
-            # ★ EXTREME FAST NATURAL: 5초부터 시도 → 1분 안에 완성 ★
-            # 해처리 건설 시간 ~100초 고려
-            # 5초 시작 = 105초 완료 (1분 45초) → 조금 늦음
-            # 즉시 시작 (0초): 100초 완료 (1분 40초) → 목표 달성
-            # 미네랄 300 모이는 즉시 expansion (드론 생산과 병행)
-            if minerals >= 300:
+            # ★★★ TARGET: 60초 안에 해처리 완성 ★★★
+            # 해처리 건설 시간: 100초 (1분 40초)
+            # → 60초 완성 목표는 불가능, 하지만 최대한 빠르게!
+            # 실질 목표: 20초 안에 건설 시작 → 120초(2분) 완성
+
+            # ★ 게임 시작 5초부터 미네랄 200만 있어도 시도 (초고속!) ★
+            if game_time >= 5 and minerals >= 200:
                 should_expand = True
-                expand_reason = f"EXTREME-FAST Natural (time: {int(game_time)}s, workers: {worker_count}, minerals: {minerals})"
-            # 또는 13드론 이상일 때 (약 40-50초)
+                expand_reason = f"ULTRA-FAST Natural @{int(game_time)}s (min 200, workers: {worker_count})"
+            # ★ 미네랄 250+ 즉시 확장 (가장 빠른 타이밍) ★
+            elif minerals >= 250:
+                should_expand = True
+                expand_reason = f"INSTANT Natural @{int(game_time)}s (min 250+, workers: {worker_count})"
+            # ★ 13드론 이상 + 미네랄 200+ ★
             elif worker_count >= 13 and minerals >= 200:
                 should_expand = True
-                expand_reason = f"13-POOL Natural (time: {int(game_time)}s, workers: {worker_count}, minerals: {minerals})"
+                expand_reason = f"13-Drone Natural @{int(game_time)}s (workers: {worker_count})"
 
         # ★ 2베이스 → 3베이스: 1분 30초 (초고속 3베이스) ★
         elif base_count == 2:
@@ -1083,12 +1105,19 @@ class EconomyManager:
             if not should_expand:
                 return
 
-            # ★ DESPERATE EXPANSION: 4분 지났는데 앞마당 없으면 강제 확장 ★
+            # ★ CRITICAL: 앞마당 없으면 무조건 확장 (시간 단축) ★
             game_time = getattr(self.bot, "time", 0)
-            if townhalls.amount < 2 and game_time > 240:
-                print(f"[ECONOMY] ★ DESPERATE EXPANSION: Force expanding! (No natural @ {int(game_time)}s) ★")
+            minerals = getattr(self.bot, "minerals", 0)
+
+            # 2분 지났는데 앞마당 없으면 즉시 확장 (미네랄 600+ - 안정적 확장)
+            if townhalls.amount < 2 and game_time > 120 and minerals >= 600:
+                print(f"[ECONOMY] ★ CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) ★")
                 if hasattr(self.bot, "expand_now"):
-                    await self.bot.expand_now()
+                    try:
+                        await self.bot.expand_now()
+                        print(f"[ECONOMY] ★ Natural expansion started successfully! ★")
+                    except Exception as e:
+                        print(f"[ECONOMY] ★ Expansion failed: {e} ★")
                 return
 
             # ★ FAST EXPANSION: 동시 확장 허용 ★
@@ -1099,8 +1128,9 @@ class EconomyManager:
             if pending >= max_pending:
                 return
 
-            # Check if we can afford expansion
-            if not self.bot.can_afford(UnitTypeId.HATCHERY):
+            # Check if we can afford expansion (안정성: 600 미네랄 확보 후 확장)
+            minerals = getattr(self.bot, "minerals", 0)
+            if minerals < 600:
                 return
 
             # ★ MACRO ECONOMY: 공격 받아도 확장 계속 (심각한 위협만 차단) ★
@@ -1693,3 +1723,49 @@ class EconomyManager:
                      if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
                         await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first)
                         print(f"[DEFENSE] ★ Anti-Air Tech: Building Hydralisk Den! ★")
+
+    async def _check_maynarding(self) -> None:
+        """
+        Check for hatcheries nearing completion (Maynarding).
+        If progress > 90%, transfer workers from saturated base.
+        """
+        if not hasattr(self.bot, "structures"):
+            return
+
+        # Find hatcheries under construction, > 90% complete, not yet transferred
+        building_hatcheries = self.bot.structures(UnitTypeId.HATCHERY).not_ready.filter(
+            lambda h: h.build_progress > 0.9 
+            and h.tag not in self.transferred_hatcheries
+        )
+
+        if not building_hatcheries.exists:
+            return
+
+        for target_hatch in building_hatcheries:
+            # Find a source base (ready, has > 12 workers)
+            ready_bases = self.bot.townhalls.ready.filter(
+                lambda th: th.assigned_harvesters > 12
+            )
+            
+            if not ready_bases.exists:
+                continue
+
+            # Closest source base
+            source_base = ready_bases.closest_to(target_hatch)
+            
+            # Select workers to transfer (6-8)
+            workers = self.bot.workers.filter(
+                lambda w: w.distance_to(source_base) < 10 and w.is_gathering
+            )
+            
+            if workers.amount < 6:
+                continue
+                
+            transfer_count = min(workers.amount, 8)
+            transfer_group = workers.take(transfer_count, allow_less=True)
+            
+            for worker in transfer_group:
+                self.bot.do(worker.move(target_hatch.position))
+                
+            print(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base")
+            self.transferred_hatcheries.add(target_hatch.tag)

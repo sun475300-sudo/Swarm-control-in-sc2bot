@@ -1,0 +1,243 @@
+
+======================================================================
+? NEURAL NETWORK TRAINING MODE (CONTINUOUS)
+======================================================================
+
+? Training Configuration:
+   ? 15-dimensional state vector (Self 5 + Enemy 10)
+   ? REINFORCE algorithm for policy learning
+   ? Model auto-saves after each game
+   ? Continuous training: Games run continuously without stopping
+   ? Build order comparison with pro gamer baseline
+   ? Auto-update learned parameters on victory
+
+? Model save location: local_training/models/zerg_net_model.pt
+? Build order data: local_training/scripts/learned_build_orders.json
+
+??  Press Ctrl+C to stop training
+======================================================================
+
+[WARNING] Checkpoint manager not available: No module named 'utils.checkpoint_manager'
+
+[STEP 2] ? Initializing Continuous Training Loop...
+======================================================================
+[WARNING] Monitoring server not available: No module named 'monitoring.server_manager'
+[INFO] Continuing without monitoring server...
+[WARNING] Training session manager not available: No module named 'tools.training_session_manager'
+[BG_LEARNER] Worker thread started
+[BG_LEARNER] Started (Monitoring D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\data\buffer)
+[OK] Background parallel learner initialized and started
+[INFO] Experience replay training will run in background
+[INFO] Monitoring directory: D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\data\buffer
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  0
+  Total Samples:        0
+  Average Loss:         0.0000
+  Last Loss:            0.0000
+  Last Adjusted LR:     0.000000
+
+? Directory Status:
+  Buffer Files:         0
+  Archived Files:       2
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   0.00s
+  Errors:               0
+======================================================================
+
+[OK] Auto replay learner initialized
+[INFO] Will automatically download and learn from pro replays
+[INFO] Replay learning every 10 games
+[INFO] Available maps: 5 maps
+[INFO] Available opponent races: 3 races
+[INFO] Available difficulties: 2 levels
+
+[OK] Continuous training loop initialized
+[INFO] Game windows will open - you can watch the games in real-time!
+[INFO] Neural network is learning from your gameplay...
+======================================================================
+
+
+======================================================================
+? [STEP 3] GAME #1 - Random Selection
+======================================================================
+[SELECTED] Map: CactusValleyLE
+[SELECTED] Opponent Race: Terran
+[SELECTED] Difficulty: Medium
+
+[INFO] Starting game...
+======================================================================
+
+[32m2026-01-25 15:44:30.399[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was None)[0m
+[32m2026-01-25 15:44:30.399[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m42[0m - [1mCreating new game[0m
+[32m2026-01-25 15:44:30.399[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m43[0m - [1mMap:     CactusValleyLE[0m
+[32m2026-01-25 15:44:30.400[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m44[0m - [1mPlayers: Bot WickedZergBotProImpl(Zerg), Computer Medium(Terran, RandomBuild)[0m
+[32m2026-01-25 15:44:30.401[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.init_game (was Status.launched)[0m
+[32m2026-01-25 15:44:41.582[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.in_game (was None)[0m
+[32m2026-01-25 15:44:41.582[0m | [1mINFO    [0m | [36msc2.main[0m:[36m_play_game[0m:[36m220[0m - [1mPlayer 1 - Bot WickedZergBotProImpl(Zerg)[0m
+[BOT] on_start: Initializing all managers...
+15:44:41 - WickedZergBot - INFO - Bot started. Initializing managers...
+[BOT] ProductionResilience initialized
+[BOT] EconomyManager initialized
+[BOT] CombatManager initialized
+[BOT] IntelManager initialized
+[INTEL] Data loaded from data/intel_data.json
+  - Enemy Race: Terran
+  - Build Pattern: unknown
+  - Scouted Locations: 41
+[BOT] ScoutingSystem initialized
+[BOT] StrategyManager initialized
+[BOT] PerformanceOptimizer initialized
+[BOT] PID FormationController initialized
+[BOT] RogueTacticsManager initialized
+[BOT] TransformerDecisionModel initialized (training mode)
+[BOT] HierarchicalRLSystem initialized (training mode)
+[BOT] AggressiveStrategyExecutor initialized
+[BOT] AdaptiveLearningRate initialized - LR: 0.001000
+[BOT] GameAnalytics initialized - 0 games tracked
+[BOT] RL Agent TRAINING (Episodes: 0, ¥å=1.000)
+[BOT]   Status: Not enough training games (0/50)
+[BOT] on_start complete. Enemy race: None
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.060
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[AGGRESSIVE] Selected strategy: baneling_bust vs Race.Terran
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.050
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  0
+  Total Samples:        0
+  Average Loss:         0.0000
+  Last Loss:            0.0000
+  Last Adjusted LR:     0.000000
+
+? Directory Status:
+  Buffer Files:         0
+  Archived Files:       2
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   0.00s
+  Errors:               0
+======================================================================
+
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.048
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: -0.003
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[12POOL] Spawning Pool started!
+[EARLY_EXPAND] [300s] Expanding at 1min+ with 2805 minerals (bases: 1)
+[AUTO TECH] [300s] Building Extractor #1
+[PRODUCTION_RESILIENCE] [300s] EMERGENCY POOL BUILD [Frame:1680] Minerals:2580 Larvae:3 Supply:12/14
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 300ÃÊ
+==================================================
+  AdvancedBuilding: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 1È¸ ½ÇÇà, Æò±Õ 1.00ms
+  AggressiveTech: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Creep manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  DefeatDetection: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Economy: 1È¸ ½ÇÇà, Æò±Õ 1.03ms
+  Intel: 1È¸ ½ÇÇà, Æò±Õ 1.00ms
+  Micro: 1È¸ ½ÇÇà, Æò±Õ 2.42ms
+  Morph manager: 1È¸ ½ÇÇà, Æò±Õ 1.00ms
+  Multi-base defense: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 1È¸ ½ÇÇà, Æò±Õ 8.78ms
+  Protoss counter: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Queen Manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Rogue Tactics: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Scouting: 1È¸ ½ÇÇà, Æò±Õ 1.19ms
+  Spell manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Strategy: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  UnitFactory: 1È¸ ½ÇÇà, Æò±Õ 1.04ms
+  Upgrade manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+==================================================
+[EXPANSION] [300s] Trying to expand: ULTRA-FAST Natural @300s (min 200, workers: 12)
+[PROACTIVE EXPAND] [300s] ULTRA-FAST Natural @300s (min 200, workers: 12) - SUCCESS
+[EXPANSION] [306s] Trying to expand: ULTRA-FAST Natural @306s (min 200, workers: 10)
+[PROACTIVE EXPAND] [306s] ULTRA-FAST Natural @306s (min 200, workers: 10) - SUCCESS
+[ECONOMY] Building extractor (gas shortage)
+[EXPANSION] [312s] Trying to expand: 3rd base HYPER-FAST (time: 312s, minerals: 2645)
+[PROACTIVE EXPAND] [312s] 3rd base HYPER-FAST (time: 312s, minerals: 2645) - SUCCESS
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): AGGRESSIVE (È®·ü: 0.189, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: AGGRESSIVE vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: AGGRESSIVE ¡Ú¡Ú¡Ú
+[EXPANSION] [318s] Trying to expand: 3rd base HYPER-FAST (time: 318s, minerals: 2695)
+[PROACTIVE EXPAND] [318s] 3rd base HYPER-FAST (time: 318s, minerals: 2695) - SUCCESS
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION] [324s] Trying to expand: 3rd base HYPER-FAST (time: 324s, minerals: 2695)
+[PROACTIVE EXPAND] [324s] 3rd base HYPER-FAST (time: 324s, minerals: 2695) - SUCCESS
+[AUTO TECH] [329s] Building Extractor #3
+[EXPANSION] [330s] Trying to expand: 3rd base HYPER-FAST (time: 330s, minerals: 2735)
+[PROACTIVE EXPAND] [330s] 3rd base HYPER-FAST (time: 330s, minerals: 2735) - SUCCESS
+[ECONOMY] [330s] Resource banking: 2460M / 8G
+[ECONOMY]   Larva: 0, Avg per base: 0.0
+[BASE DEFENSE] [333s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 1, Threat score: 2
+[EXPANSION] [335s] Trying to expand: 3rd base HYPER-FAST (time: 335s, minerals: 2690)
+[PROACTIVE EXPAND] [335s] 3rd base HYPER-FAST (time: 335s, minerals: 2690) - SUCCESS
+[AUTO TECH] [339s] Building Extractor #3
+[EXPANSION] [341s] Trying to expand: 3rd base HYPER-FAST (time: 341s, minerals: 2695)
+[PROACTIVE EXPAND] [341s] 3rd base HYPER-FAST (time: 341s, minerals: 2695) - SUCCESS
+[EXPANSION] [347s] Trying to expand: 3rd base HYPER-FAST (time: 347s, minerals: 2650)
+[PROACTIVE EXPAND] [347s] 3rd base HYPER-FAST (time: 347s, minerals: 2650) - SUCCESS
+[AUTO TECH] [348s] Building Roach Warren
+15:45:15 - UpgradeManager - INFO - [349s] Building Evolution Chamber
+[AUTO TECH] [349s] Building Extractor #3
+[EXPANSION] [353s] Trying to expand: 3rd base HYPER-FAST (time: 353s, minerals: 2110)
+[PROACTIVE EXPAND] [353s] 3rd base HYPER-FAST (time: 353s, minerals: 2110) - SUCCESS
+[RESOURCE_FLUSH] [353s] Produced 1 units (Minerals: 2010)
+[BASE DEFENSE] [353s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 1, Threat score: 2
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 0.980, °¡½º: 0.026
+  ¼­ÇÃ¶óÀÌ: 0.060/0.190
+  ÀÏ²Û: 0.070, À¯´Ö: 0.130, Àû À¯´Ö: 0.010
+  ±âÁö: 0.200, ½Ã°£: 0.354
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.000, ¶ó¹Ù: 0.050
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.000, Àû±º HP: 0.007
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ECONOMY (È®·ü: 0.176, ¥å=1.000) ¡Ú
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ECONOMY ¡Ú¡Ú¡Ú
+[DEBUG] Calling strategy_manager.update() at iteration 2000
+[TRAINING] Step reward: -0.001
+[EXPANSION] [359s] Trying to expand: 3rd base HYPER-FAST (time: 359s, minerals: 2115)
+[PROACTIVE EXPAND] [359s] 3rd base HYPER-FAST (time: 359s, minerals: 2115) - SUCCESS
+[AUTO TECH] [359s] Building Extractor #3
+15:45:17 - UpgradeManager - INFO - [360s] ¡Ú¡Ú¡Ú ´ë»ç ÃËÁø (Àú±Û¸µ ¹ß¾÷) ¿¬±¸ ½ÃÀÛ! ¡Ú¡Ú¡Ú
+[RESOURCE_FLUSH] [364s] Produced 1 units (Minerals: 1870)
+[EXPANSION] [365s] Trying to expand: 3rd base HYPER-FAST (time: 365s, minerals: 1970)
+[PROACTIVE EXPAND] [365s] 3rd base HYPER-FAST (time: 365s, minerals: 1970) - SUCCESS
+[AUTO TECH] [369s] Building Extractor #3
+[EXPANSION] [371s] Trying to expand: 3rd base HYPER-FAST (time: 371s, minerals: 1845)
+[PROACTIVE EXPAND] [371s] 3rd base HYPER-FAST (time: 371s, minerals: 1845) - SUCCESS
+[RESOURCE_FLUSH] [375s] Produced 1 units (Minerals: 1745)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION] [377s] Trying to expand: 3rd base HYPER-FAST (time: 377s, minerals: 1800)
+[PROACTIVE EXPAND] [377s] 3rd base HYPER-FAST (time: 377s, minerals: 1800) - SUCCESS
+15:45:19 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1

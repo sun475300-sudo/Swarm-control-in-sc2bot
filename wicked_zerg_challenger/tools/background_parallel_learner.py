@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-Background Parallel Learner
+Background Parallel Learner (Improved)
 
-백그라운드에서 병렬로 학습을 수행하는 모듈입니다.
+제대로 된 백그라운드 학습을 수행하는 모듈입니다.
+sc2reader를 사용한 부정확한 리플레이 분석 대신,
+봇이 직접 저장한 '경험 데이터'를 사용하여 RLAgent를 학습시킵니다.
 
 주요 기능:
-1. 멀티스레드 워커로 리플레이 분석
-2. 비동기 모델 훈련
-3. 게임 중에도 학습 지속
-4. 리소스 효율적 관리
+1. 경험 데이터 모니터링 (local_training/data/buffer)
+2. RLAgent 모델 로드 및 배치 학습
+3. 학습된 모델 원자적 저장 (Atomic Save)
+4. 처리된 데이터 아카이빙
 """
 
-import json
-import queue
+import os
+import shutil
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
-
+from typing import Any, Dict, List, Optional
+import numpy as np
 import sys
 
 # 프로젝트 루트 추가
@@ -28,79 +28,97 @@ project_root = script_dir.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from local_training.rl_agent import RLAgent
 
 class BackgroundParallelLearner:
     """
-    백그라운드 병렬 학습기
-
-    게임이 실행되는 동안 별도 스레드에서 학습을 수행합니다.
+    백그라운드 병렬 학습기 (Offline Experience Replay)
     """
 
     def __init__(
         self,
-        max_workers: int = 2,
-        enable_replay_analysis: bool = True,
-        enable_model_training: bool = True
+        max_workers: int = 1, # 단일 모델 업데이트이므로 1개면 충분
+        enable_replay_analysis: bool = False, # 더 이상 사용 안 함
+        enable_model_training: bool = True,
+        verbose: bool = True,  # 상세 로깅 활성화
+        max_file_age: int = 3600  # 최대 파일 나이 (초) - 1시간
     ):
-        """
-        Args:
-            max_workers: 최대 워커 수
-            enable_replay_analysis: 리플레이 분석 활성화
-            enable_model_training: 모델 훈련 활성화
-        """
-        self.max_workers = max_workers
-        self.enable_replay_analysis = enable_replay_analysis
-        self.enable_model_training = enable_model_training
-
-        # 스레드 풀
-        self.executor: Optional[ThreadPoolExecutor] = None
         self.running = False
+        self.enable_model_training = enable_model_training
+        self.verbose = verbose
+        self.max_file_age = max_file_age
 
-        # 작업 큐
-        self.task_queue: queue.Queue = queue.Queue()
-        self.result_queue: queue.Queue = queue.Queue()
+        # 경로 설정
+        self.data_dir = project_root / "local_training" / "data" / "buffer"
+        self.archive_dir = project_root / "local_training" / "data" / "archive"
+        self.model_path = project_root / "local_training" / "models" / "rl_agent_model.npz"
+        self.log_dir = project_root / "local_training" / "logs"
 
         # 통계
         self.stats = {
-            "replays_analyzed": 0,
-            "models_trained": 0,
+            "files_processed": 0,
+            "batches_trained": 0,
+            "total_samples": 0,
             "total_processing_time": 0.0,
+            "avg_loss": 0.0,
             "errors": 0,
             "active_workers": 0,
             "max_workers": max_workers,
-            "started_at": None,
-            "last_activity": None
+            "last_batch_time": None,
+            "last_loss": 0.0,
+            "buffer_file_count": 0,
+            "archive_file_count": 0,
+            "files_skipped_old": 0,  # 너무 오래된 파일로 건너뛴 개수
+            "last_adjusted_lr": 0.0  # 마지막 조정된 learning rate
         }
 
-        # 경로 설정
-        self.replay_dir = project_root / "replays"
-        self.model_dir = project_root / "local_training" / "models"
-        self.output_dir = project_root / "local_training" / "background_results"
-
-        # 워커 스레드
         self.worker_thread: Optional[threading.Thread] = None
+        self.rl_agent = None
+        self._last_report_time = 0.0
+
+    def _safe_file_op(self, operation: callable, retries: int = 5, delay: float = 0.5) -> Any:
+        """파일 작업 재시도 래퍼"""
+        msg = ""
+        for i in range(retries):
+            try:
+                return operation()
+            except PermissionError:
+                if i < retries - 1:
+                    time.sleep(delay)
+                else:
+                    raise
+            except OSError as e:
+                # WinError 32: The process cannot access the file because it is being used by another process
+                if getattr(e, 'winerror', 0) == 32:
+                    if i < retries - 1:
+                        time.sleep(delay)
+                    else:
+                        raise
+                else:
+                    raise
+            except Exception as e:
+                raise e
+        return None
 
     def start(self) -> bool:
         """백그라운드 학습 시작"""
         if self.running:
-            print("[BG_LEARNER] Already running")
             return False
 
         try:
             self.running = True
-            self.stats["started_at"] = datetime.now().isoformat()
-
-            # 출력 디렉토리 생성
-            self.output_dir.mkdir(parents=True, exist_ok=True)
-
-            # 스레드 풀 생성
-            self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
-
-            # 워커 스레드 시작
+            
+            # 디렉토리 생성
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+            self.archive_dir.mkdir(parents=True, exist_ok=True)
+            
+            # RLAgent 초기화 (모델 로드)
+            self.rl_agent = RLAgent(model_path=str(self.model_path))
+            
             self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
             self.worker_thread.start()
-
-            print(f"[BG_LEARNER] Started with {self.max_workers} workers")
+            
+            print(f"[BG_LEARNER] Started (Monitoring {self.data_dir})")
             return True
 
         except Exception as e:
@@ -111,305 +129,259 @@ class BackgroundParallelLearner:
     def stop(self) -> None:
         """백그라운드 학습 중지"""
         self.running = False
-
-        if self.executor:
-            self.executor.shutdown(wait=False)
-            self.executor = None
-
+        if self.worker_thread:
+            self.worker_thread.join(timeout=2.0)
         print("[BG_LEARNER] Stopped")
 
     def _worker_loop(self) -> None:
         """워커 루프"""
+        if self.verbose:
+            print("[BG_LEARNER] Worker thread started")
+
         while self.running:
             try:
-                # 작업 큐에서 태스크 가져오기
-                try:
-                    task = self.task_queue.get(timeout=1.0)
-                except queue.Empty:
-                    # 큐가 비어있으면 자동 태스크 실행
-                    self._run_auto_tasks()
-                    continue
+                # 버퍼 상태 업데이트
+                self._update_directory_stats()
 
-                # 태스크 실행
-                self._execute_task(task)
+                # 주기적 보고 (30초마다)
+                current_time = time.time()
+                if current_time - self._last_report_time > 30:
+                    self._print_status_report()
+                    self._last_report_time = current_time
+
+                # 5초마다 파일 확인
+                processed = self._process_new_data()
+
+                if not processed:
+                    time.sleep(5)
 
             except Exception as e:
-                print(f"[BG_LEARNER] Worker error: {e}")
+                print(f"[BG_LEARNER] [ERROR] Worker error: {e}")
                 self.stats["errors"] += 1
-                time.sleep(1)
+                time.sleep(5)
 
-    def _run_auto_tasks(self) -> None:
-        """자동 태스크 실행"""
+        if self.verbose:
+            print("[BG_LEARNER] Worker thread stopped")
+
+    def _process_new_data(self) -> bool:
+        """새로운 경험 데이터 처리"""
+        if not self.enable_model_training:
+            return False
+
+        # .npz 파일 찾기
+        files = list(self.data_dir.glob("*.npz"))
+        if not files:
+            return False
+
+        self.stats["active_workers"] = 1
+        start_time = time.time()
         current_time = time.time()
 
-        # 30초마다 리플레이 분석
-        if self.enable_replay_analysis:
-            if not hasattr(self, '_last_replay_check'):
-                self._last_replay_check = 0
-
-            if current_time - self._last_replay_check > 30:
-                self._last_replay_check = current_time
-                self._analyze_new_replays()
-
-        # 60초마다 모델 훈련
-        if self.enable_model_training:
-            if not hasattr(self, '_last_train_check'):
-                self._last_train_check = 0
-
-            if current_time - self._last_train_check > 60:
-                self._last_train_check = current_time
-                self._train_model_batch()
-
-    def _execute_task(self, task: Dict[str, Any]) -> None:
-        """태스크 실행"""
-        task_type = task.get("type", "")
-        start_time = time.time()
-
         try:
-            self.stats["active_workers"] += 1
+            # 배치 로드
+            experiences = []
+            files_to_archive = []
+            files_skipped = 0
 
-            if task_type == "analyze_replay":
-                result = self._do_analyze_replay(task.get("path"))
-            elif task_type == "train_model":
-                result = self._do_train_model(task.get("data"))
-            elif task_type == "custom":
-                func = task.get("func")
-                args = task.get("args", [])
-                result = func(*args) if func else None
+            if self.verbose:
+                print(f"\n[BG_LEARNER] > Processing batch: {len(files)} files available")
+
+            for file_path in files[:10]:  # 한 번에 최대 10개 처리
+                try:
+                    # 파일 나이 체크 (Off-Policy 문제 완화)
+                    file_age = current_time - file_path.stat().st_mtime
+                    if file_age > self.max_file_age:
+                        if self.verbose:
+                            print(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
+                        files_skipped += 1
+                        # 오래된 파일은 바로 아카이브로 이동
+                        try:
+                            archive_path = self.archive_dir / f"old_{file_path.name}"
+                            self._safe_file_op(lambda: shutil.move(str(file_path), str(archive_path)))
+                        except Exception:
+                            pass
+                        continue
+
+                    data = self._safe_file_op(lambda: np.load(str(file_path)))
+                    experiences.append({
+                        "states": data['states'],
+                        "actions": data['actions'],
+                        "rewards": data['rewards']
+                    })
+                    files_to_archive.append(file_path)
+                    if self.verbose:
+                        total_reward = np.sum(data['rewards'])
+                        print(f"  [OK] Loaded: {file_path.name} (Steps: {len(data['states'])}, Reward: {total_reward:.2f})")
+                except Exception as e:
+                    print(f"[BG_LEARNER] [ERROR] Corrupt file {file_path.name}: {e}")
+                    # 손상된 파일은 별도 이동 또는 삭제
+                    try:
+                        file_path.rename(file_path.with_suffix(".corrupt"))
+                    except:
+                        pass
+
+            # 건너뛴 파일 통계 업데이트
+            self.stats["files_skipped_old"] += files_skipped
+
+            if not experiences:
+                return False
+
+            # 학습 수행
+            if self.verbose:
+                total_steps = sum(len(exp['states']) for exp in experiences)
+                print(f"[BG_LEARNER] ~ Training on {len(experiences)} games ({total_steps} total steps)...")
+
+            # RLAgent 리로드 (최신 모델 반영)
+            self.rl_agent = RLAgent(model_path=str(self.model_path))
+
+            train_stats = self.rl_agent.train_from_batch(experiences)
+
+            # 모델 저장
+            saved = self.rl_agent.save_model()
+
+            if saved:
+                # 처리된 파일 아카이브로 이동
+                archived_count = 0
+                for file_path in files_to_archive:
+                    try:
+                        archive_path = self.archive_dir / file_path.name
+                        self._safe_file_op(lambda: shutil.move(str(file_path), str(archive_path)))
+                        archived_count += 1
+                    except Exception as e:
+                        print(f"[BG_LEARNER] [ERROR] Archive error: {e}")
+
+                # 통계 업데이트
+                self.stats["files_processed"] += archived_count
+                self.stats["batches_trained"] += 1
+                self.stats["total_samples"] += train_stats.get("steps", 0)
+                self.stats["avg_loss"] = train_stats.get("loss", 0.0)
+                self.stats["last_loss"] = train_stats.get("loss", 0.0)
+                self.stats["last_adjusted_lr"] = train_stats.get("adjusted_lr", 0.0)
+                self.stats["last_batch_time"] = time.time()
+
+                processing_time = time.time() - start_time
+                if self.verbose:
+                    print(f"[BG_LEARNER] [OK] Training complete!")
+                    print(f"  - Loss: {train_stats.get('loss', 0):.4f}")
+                    print(f"  - Games trained: {train_stats.get('games', 0)}")
+                    print(f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
+                    print(f"  - Files archived: {archived_count}")
+                    print(f"  - Processing time: {processing_time:.2f}s")
+
+                # 로그 파일에 기록
+                self._log_training_result(len(experiences), train_stats, processing_time)
+
+                return True
             else:
-                result = None
-
-            # 결과 저장
-            self.result_queue.put({
-                "task": task,
-                "result": result,
-                "success": True,
-                "duration": time.time() - start_time
-            })
-
-            self.stats["total_processing_time"] += time.time() - start_time
-            self.stats["last_activity"] = datetime.now().isoformat()
+                print("[BG_LEARNER] [ERROR] Failed to save model, skipping archive")
+                return False
 
         except Exception as e:
+            print(f"[BG_LEARNER] [ERROR] Processing error: {e}")
+            import traceback
+            traceback.print_exc()
             self.stats["errors"] += 1
-            self.result_queue.put({
-                "task": task,
-                "result": None,
-                "success": False,
-                "error": str(e)
-            })
+            return False
         finally:
-            self.stats["active_workers"] -= 1
-
-    def _analyze_new_replays(self) -> None:
-        """새 리플레이 분석"""
-        if not self.replay_dir.exists():
-            return
-
-        # 분석되지 않은 리플레이 찾기
-        analyzed_file = self.output_dir / "analyzed_replays.json"
-        analyzed = set()
-        if analyzed_file.exists():
-            try:
-                with open(analyzed_file, 'r') as f:
-                    analyzed = set(json.load(f))
-            except Exception:
-                pass
-
-        # 새 리플레이 큐에 추가
-        for replay_path in self.replay_dir.glob("**/*.SC2Replay"):
-            if str(replay_path) not in analyzed:
-                self.submit_task({
-                    "type": "analyze_replay",
-                    "path": str(replay_path)
-                })
-                analyzed.add(str(replay_path))
-
-        # 분석된 목록 저장
-        try:
-            with open(analyzed_file, 'w') as f:
-                json.dump(list(analyzed), f)
-        except Exception:
-            pass
-
-    def _do_analyze_replay(self, replay_path: str) -> Optional[Dict[str, Any]]:
-        """리플레이 분석 수행"""
-        if not replay_path:
-            return None
-
-        try:
-            # sc2reader로 분석 시도
-            try:
-                import sc2reader
-                replay = sc2reader.load_replay(replay_path, load_level=2)
-
-                result = {
-                    "path": replay_path,
-                    "map": replay.map_name,
-                    "duration": replay.game_length.seconds if hasattr(replay, 'game_length') else 0,
-                    "players": [
-                        {
-                            "name": p.name,
-                            "race": str(p.play_race) if hasattr(p, 'play_race') else "Unknown",
-                            "result": str(p.result) if hasattr(p, 'result') else "Unknown"
-                        }
-                        for p in replay.players
-                    ],
-                    "analyzed_at": datetime.now().isoformat()
-                }
-
-                self.stats["replays_analyzed"] += 1
-                return result
-
-            except ImportError:
-                # sc2reader 없으면 기본 정보만
-                return {
-                    "path": replay_path,
-                    "analyzed_at": datetime.now().isoformat(),
-                    "note": "sc2reader not available"
-                }
-
-        except Exception as e:
-            print(f"[BG_LEARNER] Replay analysis failed: {e}")
-            return None
-
-    def _train_model_batch(self) -> None:
-        """배치 모델 훈련"""
-        # 학습 데이터 수집
-        training_data = self._collect_training_data()
-        if training_data:
-            self.submit_task({
-                "type": "train_model",
-                "data": training_data
-            })
-
-    def _collect_training_data(self) -> List[Dict[str, Any]]:
-        """학습 데이터 수집"""
-        data = []
-
-        # 결과 큐에서 데이터 수집
-        while not self.result_queue.empty():
-            try:
-                result = self.result_queue.get_nowait()
-                if result.get("success") and result.get("result"):
-                    data.append(result["result"])
-            except queue.Empty:
-                break
-
-        return data
-
-    def _do_train_model(self, data: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-        """모델 훈련 수행"""
-        if not data:
-            return None
-
-        try:
-            # BatchTrainer 사용
-            try:
-                from local_training.scripts.batch_trainer import BatchTrainer
-
-                trainer = BatchTrainer()
-                stats = trainer.train_from_batch_results(data, epochs=5)
-                self.stats["models_trained"] += 1
-
-                return {
-                    "samples": len(data),
-                    "stats": stats,
-                    "trained_at": datetime.now().isoformat()
-                }
-
-            except ImportError:
-                # BatchTrainer 없으면 스킵
-                return {
-                    "samples": len(data),
-                    "note": "BatchTrainer not available",
-                    "trained_at": datetime.now().isoformat()
-                }
-
-        except Exception as e:
-            print(f"[BG_LEARNER] Model training failed: {e}")
-            return None
-
-    def submit_task(self, task: Dict[str, Any]) -> None:
-        """태스크 제출"""
-        self.task_queue.put(task)
-
-    def submit_custom_task(self, func: Callable, *args) -> None:
-        """커스텀 태스크 제출"""
-        self.submit_task({
-            "type": "custom",
-            "func": func,
-            "args": args
-        })
+            self.stats["total_processing_time"] += time.time() - start_time
+            self.stats["active_workers"] = 0
 
     def get_stats(self) -> Dict[str, Any]:
         """통계 반환"""
         return self.stats.copy()
 
-    def get_results(self, max_results: int = 10) -> List[Dict[str, Any]]:
-        """결과 가져오기"""
-        results = []
-        while len(results) < max_results and not self.result_queue.empty():
-            try:
-                results.append(self.result_queue.get_nowait())
-            except queue.Empty:
-                break
-        return results
+    def _update_directory_stats(self) -> None:
+        """디렉토리 상태 업데이트"""
+        try:
+            buffer_files = list(self.data_dir.glob("*.npz"))
+            archive_files = list(self.archive_dir.glob("*.npz"))
+            self.stats["buffer_file_count"] = len(buffer_files)
+            self.stats["archive_file_count"] = len(archive_files)
+        except Exception:
+            pass
 
-    def is_running(self) -> bool:
-        """실행 상태 확인"""
-        return self.running
+    def _print_status_report(self) -> None:
+        """주기적 상태 보고"""
+        if not self.verbose:
+            return
 
-    def wait_for_completion(self, timeout: float = 30.0) -> bool:
-        """모든 태스크 완료 대기"""
-        start = time.time()
-        while time.time() - start < timeout:
-            if self.task_queue.empty() and self.stats["active_workers"] == 0:
-                return True
-            time.sleep(0.1)
-        return False
+        print("\n" + "="*70)
+        print("? [BACKGROUND LEARNER] STATUS REPORT")
+        print("="*70)
+        print(f"? Training Statistics:")
+        print(f"  Files Processed:      {self.stats['files_processed']}")
+        print(f"  Files Skipped (Old):  {self.stats['files_skipped_old']}")
+        print(f"  Batch Training Runs:  {self.stats['batches_trained']}")
+        print(f"  Total Samples:        {self.stats['total_samples']}")
+        print(f"  Average Loss:         {self.stats['avg_loss']:.4f}")
+        print(f"  Last Loss:            {self.stats['last_loss']:.4f}")
+        print(f"  Last Adjusted LR:     {self.stats['last_adjusted_lr']:.6f}")
+        print()
+        print(f"? Directory Status:")
+        print(f"  Buffer Files:         {self.stats['buffer_file_count']}")
+        print(f"  Archived Files:       {self.stats['archive_file_count']}")
+        print(f"  Max File Age:         {self.max_file_age/60:.1f} min")
+        print()
+        print(f"? System Status:")
+        print(f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}")
+        print(f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
+        print(f"  Errors:               {self.stats['errors']}")
 
+        if self.stats['last_batch_time']:
+            import datetime
+            last_time = datetime.datetime.fromtimestamp(self.stats['last_batch_time'])
+            print(f"  Last Training:        {last_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-# 싱글톤 인스턴스
+        print("="*70 + "\n")
+
+    def _log_training_result(self, batch_size: int, train_stats: Dict, processing_time: float) -> None:
+        """학습 결과를 로그 파일에 기록"""
+        try:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+            log_file = self.log_dir / "background_training.log"
+
+            import datetime
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            with open(log_file, 'a', encoding='utf-8') as f:
+                f.write(f"\n[{timestamp}] Batch Training Complete\n")
+                f.write(f"  Batch Size:      {batch_size} games\n")
+                f.write(f"  Total Steps:     {train_stats.get('steps', 0)}\n")
+                f.write(f"  Loss:            {train_stats.get('loss', 0):.4f}\n")
+                f.write(f"  Adjusted LR:     {train_stats.get('adjusted_lr', 0):.6f}\n")
+                f.write(f"  Processing Time: {processing_time:.2f}s\n")
+                f.write(f"  Total Processed: {self.stats['files_processed']} files\n")
+                f.write(f"  Total Skipped:   {self.stats['files_skipped_old']} files (too old)\n")
+                f.write(f"  Total Batches:   {self.stats['batches_trained']}\n")
+                f.write("-" * 60 + "\n")
+        except Exception as e:
+            if self.verbose:
+                print(f"[BG_LEARNER] Warning: Could not write log: {e}")
+
+# 싱글톤 및 헬퍼
 _instance: Optional[BackgroundParallelLearner] = None
 
+def get_background_learner(**kwargs) -> BackgroundParallelLearner:
+    """
+    싱글톤 BackgroundParallelLearner 인스턴스 반환
 
-def get_background_learner(
-    max_workers: int = 2,
-    enable_replay_analysis: bool = True,
-    enable_model_training: bool = True
-) -> BackgroundParallelLearner:
-    """싱글톤 인스턴스 반환"""
+    Args:
+        max_workers: 워커 스레드 수 (기본값: 1)
+        enable_replay_analysis: sc2reader 리플레이 분석 (기본값: False, 사용 안 함)
+        enable_model_training: 경험 데이터 기반 학습 (기본값: True)
+        verbose: 상세 로깅 활성화 (기본값: True)
+    """
     global _instance
     if _instance is None:
-        _instance = BackgroundParallelLearner(
-            max_workers=max_workers,
-            enable_replay_analysis=enable_replay_analysis,
-            enable_model_training=enable_model_training
-        )
+        _instance = BackgroundParallelLearner(**kwargs)
     return _instance
 
-
 def main():
-    """테스트 실행"""
-    print("=" * 60)
-    print("BACKGROUND PARALLEL LEARNER TEST")
-    print("=" * 60)
-
-    learner = BackgroundParallelLearner(max_workers=2)
+    print("Testing Background Learner...")
+    learner = BackgroundParallelLearner()
     learner.start()
-
-    print("[TEST] Running for 10 seconds...")
-    time.sleep(10)
-
-    print("\n[STATS]")
-    stats = learner.get_stats()
-    for key, value in stats.items():
-        print(f"  {key}: {value}")
-
+    time.sleep(5)
     learner.stop()
-    print("\n[TEST] Complete")
-
 
 if __name__ == "__main__":
     main()

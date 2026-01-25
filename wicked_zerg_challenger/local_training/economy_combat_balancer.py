@@ -52,12 +52,17 @@ class EconomyCombatBalancer:
         self.min_drone_count = 12
 
         # ★★★ MAXIMUM EXPANSION: 최대 멀티를 위한 일꾼 목표 ★★★
-        # Drone targets by game phase
-        self.drone_targets = {
+        # Drone targets by game phase (base values)
+        self.base_drone_targets = {
             "early": 44,   # 0-6 min (2-3베이스 완전 포화)
             "mid": 88,     # 6-12 min (4-5베이스 완전 포화)
             "late": 110,   # 12+ min (6-7베이스 완전 포화)
         }
+
+        # ★★★ 학습된 데이터 반영: 동적 조정 ★★★
+        # 초기에는 base targets 사용 (StrategyManager가 아직 초기화 안 됨)
+        self.drone_targets = self.base_drone_targets.copy()
+        self.learned_weights_applied = False
 
         # Base calculation
         self.drones_per_base = 22  # 기지당 22마리 (16 미네랄 + 6 가스)
@@ -68,6 +73,58 @@ class EconomyCombatBalancer:
             "army_units": 0,
             "total": 0,
         }
+
+    def apply_learned_economy_weights(self) -> None:
+        """
+        ★★★ 학습된 경제 우선순위를 드론 목표치에 반영 ★★★
+
+        learned_build_orders.json의 Drone 우선순위가 높으면
+        drone_targets를 상향 조정하여 경제 중심 플레이 반영
+
+        이 메서드는 StrategyManager 초기화 후 호출되어야 함
+        """
+        if self.learned_weights_applied:
+            return  # 이미 적용됨
+
+        try:
+            # StrategyManager에서 학습된 경제 가중치 가져오기
+            strategy = getattr(self.bot, "strategy_manager", None)
+            if not strategy:
+                return
+
+            economy_weight = strategy.get_learned_economy_weight()  # Drone priority (0.0~1.0)
+
+            if economy_weight <= 0:
+                return
+
+            # 경제 가중치가 50% 이상이면 매우 높음 (macro-heavy playstyle)
+            if economy_weight >= 0.50:
+                # 드론 목표치 +20% 상향
+                multiplier = 1.20
+                adjustment_desc = "+20% (Macro-heavy)"
+            elif economy_weight >= 0.40:
+                # 드론 목표치 +10% 상향
+                multiplier = 1.10
+                adjustment_desc = "+10% (Economy-focused)"
+            else:
+                # 가중치가 40% 미만이면 조정 없음
+                return
+
+            # 조정 적용
+            self.drone_targets = {
+                phase: int(target * multiplier)
+                for phase, target in self.base_drone_targets.items()
+            }
+
+            self.learned_weights_applied = True
+
+            print(f"[ECONOMY_BALANCER] [LEARNING] Applied learned economy weight: {economy_weight:.2%}")
+            print(f"[ECONOMY_BALANCER] [LEARNING] Drone targets adjusted {adjustment_desc}")
+            print(f"[ECONOMY_BALANCER] [LEARNING] New targets: Early={self.drone_targets['early']}, "
+                  f"Mid={self.drone_targets['mid']}, Late={self.drone_targets['late']}")
+
+        except Exception as e:
+            print(f"[ECONOMY_BALANCER] [WARNING] Failed to apply learned economy weights: {e}")
 
     def get_drone_target(self) -> int:
         """

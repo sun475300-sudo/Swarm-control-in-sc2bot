@@ -15,6 +15,7 @@ except ImportError:
 
 from bot_step_integration import BotStepIntegrator
 from utils.logger import setup_logger
+from typing import Optional
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -26,7 +27,7 @@ class WickedZergBotProImpl(BotAI):
 
     def __init__(self, train_mode: bool = False, instance_id: int = 0,
                  personality: str = "serral", opponent_race=None,
-                 game_count: int = 0):
+                 game_count: int = 0, learning_rate: Optional[float] = None):
         """Initialize WickedZergBotPro."""
         super().__init__()
         self.train_mode = train_mode
@@ -34,6 +35,7 @@ class WickedZergBotProImpl(BotAI):
         self.personality = personality
         self.opponent_race = opponent_race
         self.game_count = game_count
+        self.learning_rate = learning_rate
 
         # Initialize managers (lazy loading)
         self.intel = None
@@ -272,10 +274,19 @@ class WickedZergBotProImpl(BotAI):
 
             try:
                 from adaptive_learning_rate import AdaptiveLearningRate
+                
+                # Determine LR settings
+                initial_lr = 0.001
+                max_lr = 0.01
+                if self.learning_rate is not None:
+                    initial_lr = self.learning_rate
+                    max_lr = max(max_lr, self.learning_rate)
+                    print(f"[BOT] Helper: Using manual learning rate: {self.learning_rate}")
+
                 self.adaptive_lr = AdaptiveLearningRate(
-                    initial_lr=0.001,
+                    initial_lr=initial_lr,
                     min_lr=0.0001,
-                    max_lr=0.01,
+                    max_lr=max_lr,
                     patience=10
                 )
                 print(f"[BOT] AdaptiveLearningRate initialized - LR: {self.adaptive_lr.get_current_lr():.6f}")
@@ -291,17 +302,34 @@ class WickedZergBotProImpl(BotAI):
                 print("[BOT_WARN] GameAnalytics not available")
                 self.game_analytics = None
 
+            # RL Agent - Re-enabled with Epsilon-Greedy (2026-01-25 FIXED)
             try:
                 from local_training.rl_agent import RLAgent
                 # 적응형 학습률 사용
                 initial_lr = self.adaptive_lr.get_current_lr() if self.adaptive_lr else 0.001
                 self.rl_agent = RLAgent(learning_rate=initial_lr)
-                print(f"[BOT] RL Agent initialized with LR: {initial_lr:.6f}")
-            except ImportError:
-                print("[WARNING] RL Agent not available, training will continue without RL updates")
+
+                # 배포 가능 여부 확인
+                ready, reason = self.rl_agent.is_ready_for_deployment()
+                if ready:
+                    print(f"[BOT] RL Agent READY (Episodes: {self.rl_agent.episode_count}, ε={self.rl_agent.epsilon:.3f})")
+                else:
+                    print(f"[BOT] RL Agent TRAINING (Episodes: {self.rl_agent.episode_count}, ε={self.rl_agent.epsilon:.3f})")
+                    print(f"[BOT]   Status: {reason}")
+            except ImportError as e:
+                print(f"[WARNING] RL Agent not available: {e}")
+                self.rl_agent = None
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
+
+        # ★★★ 학습된 데이터 적용 (모든 매니저 초기화 완료 후) ★★★
+        try:
+            if hasattr(self, 'economy') and hasattr(self.economy, 'balancer'):
+                self.economy.balancer.apply_learned_economy_weights()
+                print("[BOT] [OK] Applied learned economy fundamentals to EconomyCombatBalancer")
+        except Exception as e:
+            print(f"[BOT] [WARNING] Failed to apply learned economy weights: {e}")
 
         print(f"[BOT] on_start complete. Enemy race: {self.opponent_race}")
 
@@ -317,6 +345,24 @@ class WickedZergBotProImpl(BotAI):
         - AggressiveStrategies: 초반 공격 전략 (12풀, 맹독충 올인 등)
         중복 호출 방지를 위해 여기서는 호출하지 않음
         """
+        # 게임 시간 제한 (10분)
+        if self.time > 600:  # 600초 = 10분
+            print(f"[AUTO SURRENDER] Game time limit reached ({self.time:.0f}s). Surrendering...")
+
+            # ★ CRITICAL FIX: 게임 종료 전에 경험 데이터 저장 ★
+            if hasattr(self, 'rl_agent') and self.rl_agent:
+                try:
+                    print("[AUTO SURRENDER] Saving experience data before leaving...")
+                    self.rl_agent.end_episode(final_reward=-10.0, save_experience=True)
+                    print("[AUTO SURRENDER] [OK] Experience data saved successfully.")
+                except Exception as e:
+                    print(f"[AUTO SURRENDER] [FAILED] Failed to save experience: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+            await self.client.leave()
+            return
+
         # Store iteration as attribute for other modules to access
         self.iteration = iteration
 
@@ -343,8 +389,8 @@ class WickedZergBotProImpl(BotAI):
              self.intel.save_data()
 
         # Performance Optimizer cleanup
-        if self.performance_optimizer:
-            self.performance_optimizer.on_end(game_result)
+        # if self.performance_optimizer:
+        #     self.performance_optimizer.on_end(game_result)  # Method doesn't exist
 
         await super().on_end(game_result)
 
@@ -373,7 +419,7 @@ class WickedZergBotProImpl(BotAI):
                     # 학습률이 조정되었으면 RL Agent에 적용
                     if new_lr and hasattr(self, 'rl_agent') and self.rl_agent:
                         self.rl_agent.learning_rate = new_lr
-                        print(f"[ADAPTIVE_LR] ✓ RL Agent 학습률 업데이트: {new_lr:.6f}")
+                        print(f"[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}")
 
                     # 10게임마다 통계 출력
                     if self.adaptive_lr.total_games % 10 == 0:
@@ -382,22 +428,34 @@ class WickedZergBotProImpl(BotAI):
                 # RL agent: end episode and perform learning (CRITICAL!)
                 if hasattr(self, 'rl_agent') and self.rl_agent:
                     # End episode triggers backpropagation and weight update
-                    training_stats = self.rl_agent.end_episode(final_reward=game_outcome_reward)
+                    # (경험 데이터는 end_episode 내부에서 자동 저장)
+                    training_stats = self.rl_agent.end_episode(final_reward=game_outcome_reward, save_experience=True)
 
                     # Check if learning occurred (steps > 0 means rewards were collected)
                     if training_stats.get('steps', 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
-                        print(f"[TRAINING] ✓ Neural network updated! Loss: {training_stats.get('loss', 0):.4f}, "
-                              f"Avg Reward: {training_stats.get('avg_reward', 0):.3f}, "
-                              f"Steps: {training_stats.get('steps', 0)}")
+                        print(f"[TRAINING] [OK] Neural network updated!")
+                        print(f"  Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}")
+                        print(f"  Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}")
                     else:
                         print(f"[TRAINING] No learning this episode (no rewards collected)")
+
+                    # 모델 검증 (게임 결과 기록)
+                    game_time = getattr(self, 'time', 0)
+                    self.rl_agent.validate(game_won, game_time)
+
+                    # 배포 가능 여부 확인 (10 게임마다)
+                    if self.rl_agent.episode_count % 10 == 0:
+                        ready, reason = self.rl_agent.is_ready_for_deployment()
+                        if ready:
+                            print(f"[RL_AGENT] ★ MODEL READY FOR DEPLOYMENT ★")
+                        else:
+                            print(f"[RL_AGENT] Training progress: {reason}")
 
                     # Save model
                     if hasattr(self.rl_agent, 'save_model'):
                         model_path = "local_training/models/rl_agent_model.npz"
                         self.rl_agent.save_model(model_path)
-                        print(f"[TRAINING] Model saved to {model_path}")
 
                 # Reset reward system
                 if hasattr(self, '_reward_system'):

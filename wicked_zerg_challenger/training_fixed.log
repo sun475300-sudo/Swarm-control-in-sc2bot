@@ -1,0 +1,2232 @@
+
+======================================================================
+? NEURAL NETWORK TRAINING MODE (CONTINUOUS)
+======================================================================
+
+? Training Configuration:
+   ? 15-dimensional state vector (Self 5 + Enemy 10)
+   ? REINFORCE algorithm for policy learning
+   ? Model auto-saves after each game
+   ? Continuous training: Games run continuously without stopping
+   ? Build order comparison with pro gamer baseline
+   ? Auto-update learned parameters on victory
+
+? Model save location: local_training/models/zerg_net_model.pt
+? Build order data: local_training/scripts/learned_build_orders.json
+
+??  Press Ctrl+C to stop training
+======================================================================
+
+[WARNING] Checkpoint manager not available: No module named 'utils.checkpoint_manager'
+
+[STEP 2] ? Initializing Continuous Training Loop...
+======================================================================
+[WARNING] Monitoring server not available: No module named 'monitoring.server_manager'
+[INFO] Continuing without monitoring server...
+[WARNING] Training session manager not available: No module named 'tools.training_session_manager'
+[BG_LEARNER] Worker thread started
+[BG_LEARNER] Started (Monitoring D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\data\buffer)
+[OK] Background parallel learner initialized and started
+[INFO] Experience replay training will run in background
+[INFO] Monitoring directory: D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\data\buffer
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  0
+  Total Samples:        0
+  Average Loss:         0.0000
+  Last Loss:            0.0000
+  Last Adjusted LR:     0.000000
+
+? Directory Status:
+  Buffer Files:         1
+  Archived Files:       19
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   0.00s
+  Errors:               0
+======================================================================
+
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[OK] Auto replay learner initialized
+[INFO] Will automatically download and learn from pro replays
+[INFO] Replay learning every 10 games
+[INFO] Available maps: 5 maps
+[INFO] Available opponent races: 3 races
+[INFO] Available difficulties: 2 levels
+
+[OK] Continuous training loop initialized
+[INFO] Game windows will open - you can watch the games in real-time!
+[INFO] Neural network is learning from your gameplay...
+======================================================================
+
+
+======================================================================
+? [STEP 3] GAME #1 - Random Selection
+======================================================================
+[SELECTED] Map: AbyssalReefLE
+[SELECTED] Opponent Race: Terran
+[SELECTED] Difficulty: Medium
+
+[INFO] Starting game...
+======================================================================
+
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0083
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[32m2026-01-25 17:51:17.689[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was None)[0m
+[32m2026-01-25 17:51:17.690[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m42[0m - [1mCreating new game[0m
+[32m2026-01-25 17:51:17.690[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m43[0m - [1mMap:     AbyssalReefLE[0m
+[32m2026-01-25 17:51:17.690[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m44[0m - [1mPlayers: Bot WickedZergBotProImpl(Zerg), Computer Medium(Terran, RandomBuild)[0m
+[32m2026-01-25 17:51:17.691[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.init_game (was Status.launched)[0m
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0083
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[32m2026-01-25 17:51:26.734[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.in_game (was None)[0m
+[32m2026-01-25 17:51:26.735[0m | [1mINFO    [0m | [36msc2.main[0m:[36m_play_game[0m:[36m220[0m - [1mPlayer 1 - Bot WickedZergBotProImpl(Zerg)[0m
+[BOT] on_start: Initializing all managers...
+17:51:27 - WickedZergBot - INFO - Bot started. Initializing managers...
+[BOT] ProductionResilience initialized
+[BOT] EconomyManager initialized
+[BOT] CombatManager initialized
+[BOT] IntelManager initialized
+[INTEL] Data loaded from data/intel_data.json
+  - Enemy Race: Zerg
+  - Build Pattern: unknown
+  - Scouted Locations: 46
+[BOT] ScoutingSystem initialized
+[BOT] StrategyManager initialized
+[BOT] PerformanceOptimizer initialized
+[BOT] PID FormationController initialized
+[BOT] RogueTacticsManager initialized
+[BOT] TransformerDecisionModel initialized (training mode)
+[BOT] HierarchicalRLSystem initialized (training mode)
+[BOT] AggressiveStrategyExecutor initialized
+[BOT] AdaptiveLearningRate initialized - LR: 0.001000
+[BOT] GameAnalytics initialized - 0 games tracked
+[BOT] RL Agent TRAINING (Episodes: 0, ¥å=1.000)
+[BOT]   Status: Not enough training games (0/50)
+[BOT] on_start complete. Enemy race: None
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.060
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[STRATEGY] Selected: STANDARD MACRO (Safe Play)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0083
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.050
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.049
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  15
+  Total Samples:        285
+  Average Loss:         0.0080
+  Last Loss:            0.0080
+  Last Adjusted LR:     0.001000
+
+? Directory Status:
+  Buffer Files:         1
+  Archived Files:       19
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   30.91s
+  Errors:               0
+  Last Training:        2026-01-25 17:51:43
+======================================================================
+
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.048
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EARLY_EXPAND] [300s] Expanding at 1min+ with 2990 minerals (bases: 1)
+[AUTO TECH] [300s] Building Extractor #1
+[PRODUCTION_RESILIENCE] [300s] EMERGENCY POOL BUILD [Frame:1680] Minerals:2765 Larvae:3 Supply:12/14
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 300ÃÊ
+==================================================
+  AdvancedBuilding: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Creep manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  DefeatDetection: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Economy: 1È¸ ½ÇÇà, Æò±Õ 2.37ms
+  Intel: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Micro: 1È¸ ½ÇÇà, Æò±Õ 2.87ms
+  Morph manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 1È¸ ½ÇÇà, Æò±Õ 8.97ms
+  Protoss counter: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Queen Manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Rogue Tactics: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Scouting: 1È¸ ½ÇÇà, Æò±Õ 2.10ms
+  Spell manager: 1È¸ ½ÇÇà, Æò±Õ 1.15ms
+  Strategy: 1È¸ ½ÇÇà, Æò±Õ 1.03ms
+  UnitFactory: 1È¸ ½ÇÇà, Æò±Õ 1.00ms
+  Upgrade manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+==================================================
+[EXPAND BLOCK] cooldown at 300s
+[EXPANSION] [300s] Trying to expand: ULTRA-FAST Natural @300s (min 200, workers: 12)
+[PROACTIVE EXPAND] [300s] ULTRA-FAST Natural @300s (min 200, workers: 12) - SUCCESS
+[EXPANSION] [306s] Trying to expand: ULTRA-FAST Natural @306s (min 200, workers: 10)
+[PROACTIVE EXPAND] [306s] ULTRA-FAST Natural @306s (min 200, workers: 10) - SUCCESS
+[ECONOMY] [306s] ¡Ú Building expansion to spend minerals ¡Ú
+[ECONOMY] Building extractor (gas shortage)
+[EARLY_EXPAND] [310s] Expanding at 1min+ with 3005 minerals (bases: 1)
+[EXPANSION] [312s] Trying to expand: ULTRA-FAST Natural @312s (min 200, workers: 10)
+[PROACTIVE EXPAND] [312s] ULTRA-FAST Natural @312s (min 200, workers: 10) - SUCCESS
+[FORCE EXPAND] ¡Ú¡Ú¡Ú 10sec INSTANT EXPAND - Target: 1min completion! (Emergency Retry) (CRITICAL Retry) - FORCING EXPANSION NOW! ¡Ú¡Ú¡Ú
+[ECONOMY] [314s] ¡Ú Building expansion to spend minerals ¡Ú
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): AGGRESSIVE (È®·ü: 0.190, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: AGGRESSIVE vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: AGGRESSIVE ¡Ú¡Ú¡Ú
+[EXPAND BLOCK] cooldown at 315s
+[EXPANSION] [318s] Trying to expand: ULTRA-FAST Natural @318s (min 200, workers: 10)
+[PROACTIVE EXPAND] [318s] ULTRA-FAST Natural @318s (min 200, workers: 10) - SUCCESS
+[EARLY_EXPAND] [320s] Expanding at 1min+ with 2990 minerals (bases: 1)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[ECONOMY] [322s] ¡Ú Building expansion to spend minerals ¡Ú
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [324s] Trying to expand: ULTRA-FAST Natural @324s (min 200, workers: 10)
+[PROACTIVE EXPAND] [324s] ULTRA-FAST Natural @324s (min 200, workers: 10) - SUCCESS
+[EXPANSION] [330s] Trying to expand: ULTRA-FAST Natural @330s (min 200, workers: 9)
+[PROACTIVE EXPAND] [330s] ULTRA-FAST Natural @330s (min 200, workers: 9) - SUCCESS
+[ECONOMY] [330s] Resource banking: 2745M / 8G
+[ECONOMY]   Larva: 0, Avg per base: 0.0
+[ECONOMY] [330s] ¡Ú Building expansion to spend minerals ¡Ú
+[EARLY_EXPAND] [330s] Expanding at 1min+ with 2745 minerals (bases: 1)
+[FORCE EXPAND] ¡Ú¡Ú¡Ú 10sec INSTANT EXPAND - Target: 1min completion! (Emergency Retry) (CRITICAL Retry) - FORCING EXPANSION NOW! ¡Ú¡Ú¡Ú
+[EXPANSION] [335s] Trying to expand: ULTRA-FAST Natural @335s (min 200, workers: 9)
+[PROACTIVE EXPAND] [335s] ULTRA-FAST Natural @335s (min 200, workers: 9) - SUCCESS
+[AUTO TECH] [338s] Building Extractor #3
+[EXPANSION] [341s] Trying to expand: 3rd base HYPER-FAST (time: 341s, minerals: 2720)
+[PROACTIVE EXPAND] [341s] 3rd base HYPER-FAST (time: 341s, minerals: 2720) - SUCCESS
+[EXPANSION] [347s] Trying to expand: 3rd base HYPER-FAST (time: 347s, minerals: 2685)
+[PROACTIVE EXPAND] [347s] 3rd base HYPER-FAST (time: 347s, minerals: 2685) - SUCCESS
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0076
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[AUTO TECH] [349s] Building Roach Warren
+17:51:52 - UpgradeManager - INFO - [351s] ¡Ú¡Ú¡Ú ´ë»ç ÃËÁø (Àú±Û¸µ ¹ß¾÷) ¿¬±¸ ½ÃÀÛ! ¡Ú¡Ú¡Ú
+17:51:52 - UpgradeManager - INFO - [351s] Building Evolution Chamber
+17:51:52 - UpgradeManager - INFO - [353s] Building Evolution Chamber
+[EXPANSION] [353s] Trying to expand: 3rd base HYPER-FAST (time: 353s, minerals: 2275)
+[PROACTIVE EXPAND] [353s] 3rd base HYPER-FAST (time: 353s, minerals: 2275) - SUCCESS
+[RESOURCE_FLUSH] [353s] Produced 1 units (Minerals: 2175)
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 1.062, °¡½º: 0.020
+  ¼­ÇÃ¶óÀÌ: 0.060/0.190
+  ÀÏ²Û: 0.070, À¯´Ö: 0.130, Àû À¯´Ö: 0.000
+  ±âÁö: 0.200, ½Ã°£: 0.354
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.000, ¶ó¹Ù: 0.050
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.000, Àû±º HP: 0.000
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ECONOMY (È®·ü: 0.175, ¥å=1.000) ¡Ú
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ECONOMY ¡Ú¡Ú¡Ú
+17:51:52 - UpgradeManager - INFO - [355s] Building Evolution Chamber
+17:51:52 - UpgradeManager - INFO - [356s] Building Evolution Chamber
+[DEBUG] Calling strategy_manager.update() at iteration 2000
+[TRAINING] Step reward: -0.007
+17:51:52 - UpgradeManager - INFO - [358s] Building Evolution Chamber
+[EXPANSION] [359s] Trying to expand: 3rd base HYPER-FAST (time: 359s, minerals: 2145)
+[PROACTIVE EXPAND] [359s] 3rd base HYPER-FAST (time: 359s, minerals: 2145) - SUCCESS
+17:51:53 - UpgradeManager - INFO - [360s] Building Evolution Chamber
+17:51:53 - UpgradeManager - INFO - [362s] Building Evolution Chamber
+[RESOURCE_FLUSH] [364s] Produced 1 units (Minerals: 2055)
+[AUTO TECH] [364s] Building Evolution Chamber
+17:51:53 - UpgradeManager - INFO - [364s] Building Evolution Chamber
+[EXPANSION] [365s] Trying to expand: 3rd base HYPER-FAST (time: 365s, minerals: 2110)
+[PROACTIVE EXPAND] [365s] 3rd base HYPER-FAST (time: 365s, minerals: 2110) - SUCCESS
+17:51:53 - UpgradeManager - INFO - [366s] Building Evolution Chamber
+17:51:53 - UpgradeManager - INFO - [368s] Building Evolution Chamber
+[AUTO TECH] [368s] Building Extractor #4
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+17:51:53 - UpgradeManager - INFO - [370s] Building Evolution Chamber
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [371s] Trying to expand: 3rd base HYPER-FAST (time: 371s, minerals: 1825)
+[PROACTIVE EXPAND] [371s] 3rd base HYPER-FAST (time: 371s, minerals: 1825) - SUCCESS
+17:51:54 - UpgradeManager - INFO - [372s] Building Evolution Chamber
+17:51:54 - UpgradeManager - INFO - [374s] Building Evolution Chamber
+[RESOURCE_FLUSH] [375s] Produced 1 units (Minerals: 1730)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+17:51:54 - UpgradeManager - INFO - [376s] Building Evolution Chamber
+[EXPANSION] [377s] Trying to expand: 3rd base HYPER-FAST (time: 377s, minerals: 1785)
+[PROACTIVE EXPAND] [377s] 3rd base HYPER-FAST (time: 377s, minerals: 1785) - SUCCESS
+17:51:54 - UpgradeManager - INFO - [378s] Building Evolution Chamber
+[AUTO TECH] [379s] Building Evolution Chamber
+17:51:54 - UpgradeManager - INFO - [380s] Building Evolution Chamber
+17:51:54 - UpgradeManager - INFO - [382s] Building Evolution Chamber
+[EXPANSION] [383s] Trying to expand: 4th base MACRO (time: 383s, minerals: 1725)
+[PROACTIVE EXPAND] [383s] 4th base MACRO (time: 383s, minerals: 1725) - SUCCESS
+[RESOURCE_FLUSH] [385s] Produced 1 units (Minerals: 1460)
+[CREEP] [387s] Tumors: 0, Farthest: 0 from base
+[EXPANSION] [388s] Trying to expand: 4th base MACRO (time: 388s, minerals: 1415)
+[PROACTIVE EXPAND] [388s] 4th base MACRO (time: 388s, minerals: 1415) - SUCCESS
+[WARNING] Advanced Building Manager error: 'float' object cannot be interpreted as an integer
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ALL_IN (È®·ü: 0.221, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: ALL_IN vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ALL_IN ¡Ú¡Ú¡Ú
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [394s] Trying to expand: 4th base MACRO (time: 394s, minerals: 1350)
+[PROACTIVE EXPAND] [394s] 4th base MACRO (time: 394s, minerals: 1350) - SUCCESS
+[RESOURCE_FLUSH] [396s] Produced 1 units (Minerals: 1225)
+[AUTO TECH] [397s] Building Extractor #5
+[EXPANSION] [400s] Trying to expand: 4th base MACRO (time: 400s, minerals: 1305)
+[PROACTIVE EXPAND] [400s] 4th base MACRO (time: 400s, minerals: 1305) - SUCCESS
+[ECONOMY RECOVERY] [400s] ¡Ú Worker deficit: 16 ¡Ú
+[ECONOMY RECOVERY]   Current: 6, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[EXPANSION] [406s] Trying to expand: 4th base MACRO (time: 406s, minerals: 1040)
+[EXPANSION] [406s] Already 3 pending, max is 3
+[AUTO TECH] [407s] Building Extractor #5
+17:51:57 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+[TECH UPGRADE] [410s] Morphing Hatchery to Lair
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 411ÃÊ
+==================================================
+  AdvancedBuilding: 624È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Aggressive Strategies: 156È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 624È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 624È¸ ½ÇÇà, Æò±Õ 0.05ms
+  Creep manager: 624È¸ ½ÇÇà, Æò±Õ 0.04ms
+  DefeatDetection: 624È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Economy: 624È¸ ½ÇÇà, Æò±Õ 0.27ms
+  HierarchicalRL: 28È¸ ½ÇÇà, Æò±Õ 0.34ms
+  Intel: 624È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Micro: 624È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Morph manager: 624È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Multi-base defense: 624È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Production: 624È¸ ½ÇÇà, Æò±Õ 0.35ms
+  Protoss counter: 624È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Queen Manager: 624È¸ ½ÇÇà, Æò±Õ 0.08ms
+  Rogue Tactics: 78È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Scouting: 624È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Spell manager: 624È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Strategy: 624È¸ ½ÇÇà, Æò±Õ 0.07ms
+  Transformer: 14È¸ ½ÇÇà, Æò±Õ 0.53ms
+  UnitFactory: 624È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Upgrade manager: 624È¸ ½ÇÇà, Æò±Õ 0.12ms
+==================================================
+[EXPANSION] [412s] Trying to expand: 4th base MACRO (time: 412s, minerals: 670)
+[EXPANSION] [412s] Already 2 pending, max is 2
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BUILD] SPINECRAWLER at (155.31730954428252, 26.57684338233711) (creep: True)
+[BUILDING] Built UnitTypeId.SPINECRAWLER safely on creep
+[EXPANSION] [418s] Trying to expand: 5th base MACRO (time: 418s, minerals: 425)
+[EXPANSION] [418s] Already 2 pending, max is 1
+[ECONOMY RECOVERY] [420s] ¡Ú Worker deficit: 38 ¡Ú
+[ECONOMY RECOVERY]   Current: 6, Ideal: 44
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[EXPANSION] [424s] Trying to expand: 5th base MACRO (time: 424s, minerals: 155)
+[EXPANSION] [424s] Already 2 pending, max is 1
+17:51:59 - StrategyManager - WARNING - [429s] MAJOR ATTACK DETECTED! Threat score: 24, High-threat units: 0
+17:51:59 - StrategyManager - WARNING - [429s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:51:59 - StrategyManager - WARNING - [429s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:51:59 - StrategyManager - WARNING - [429s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[EXPANSION DEFENSE] [429s] [WARNING] Expansion under attack! 7 enemies detected
+[EXPANSION] [430s] Trying to expand: 5th base MACRO (time: 430s, minerals: 10)
+[EXPANSION] [430s] Already 2 pending, max is 1
+[EXPANSION DEFENSE] [431s] [WARNING] Expansion under attack! 1 enemies detected
+[EXPANSION DEFENSE] [431s] [WARNING] Expansion under attack! 11 enemies detected
+[EXPANSION DEFENSE] [431s] [WARNING] Expansion under attack! 1 enemies detected
+[BASE DEFENSE] [432s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 11, Threat score: 22
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): AGGRESSIVE (È®·ü: 0.199, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: AGGRESSIVE vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: AGGRESSIVE ¡Ú¡Ú¡Ú
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION DEFENSE] [433s] [OK] Expansion secured after 1s
+17:52:00 - StrategyManager - WARNING - [434s] MAJOR ATTACK DETECTED! Threat score: 66, High-threat units: 0
+[EXPANSION DEFENSE] [435s] [OK] Expansion secured after 3s
+[EXPANSION] [436s] Trying to expand: 5th base MACRO (time: 436s, minerals: 75)
+[EXPANSION] [436s] Already 2 pending, max is 1
+[EXPANSION DEFENSE] [439s] [WARNING] Expansion under attack! 10 enemies detected
+17:52:00 - StrategyManager - WARNING - [439s] MAJOR ATTACK DETECTED! Threat score: 90, High-threat units: 0
+[ECONOMY RECOVERY] [440s] ¡Ú Worker deficit: 35 ¡Ú
+[ECONOMY RECOVERY]   Current: 9, Ideal: 44
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[EXPANSION DESTROYED] [441s] [WARNING] Expansion base destroyed after 11s of attack!
+[EXPANSION] [441s] Trying to expand: 4th base MACRO (time: 441s, minerals: 45)
+[EXPANSION] [441s] Already 1 pending, max is 1
+[AUTO TECH] [442s] Building Extractor #6
+17:52:01 - StrategyManager - WARNING - [444s] MAJOR ATTACK DETECTED! Threat score: 74, High-threat units: 0
+[DEBUG] Calling strategy_manager.update() at iteration 2500
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[QUEEN DEFENSE] [446s] Queens defending! Air: 0, Ground: 5
+[TRAINING] Step reward: 0.310
+17:52:01 - StrategyManager - WARNING - [447s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[EXPANSION] [447s] Trying to expand: 4th base MACRO (time: 447s, minerals: 45)
+[EXPANSION] [447s] Already 1 pending, max is 1
+17:52:01 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:01 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[EXPANSION DEFENSE] [449s] [WARNING] Expansion under attack! 1 enemies detected
+17:52:02 - StrategyManager - WARNING - [450s] MAJOR ATTACK DETECTED! Threat score: 78, High-threat units: 0
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BASE DEFENSE] [451s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 13, Threat score: 26
+[AUTO TECH] [452s] Building Extractor #5
+[EXPANSION] [453s] Trying to expand: 4th base MACRO (time: 453s, minerals: 45)
+[EXPANSION] [453s] Already 1 pending, max is 1
+17:52:02 - StrategyManager - WARNING - [455s] MAJOR ATTACK DETECTED! Threat score: 78, High-threat units: 0
+[EXPANSION] [459s] Trying to expand: 4th base MACRO (time: 459s, minerals: 15)
+[EXPANSION] [459s] Already 1 pending, max is 1
+17:52:03 - StrategyManager - WARNING - [460s] MAJOR ATTACK DETECTED! Threat score: 78, High-threat units: 0
+[AUTO TECH] [462s] Building Extractor #5
+[UNIT_FACTORY] [464s] COMBAT MODE: Increased production rate
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[QUEEN DEFENSE] [464s] Queens defending! Air: 0, Ground: 1
+[QUEEN DEFENSE] [464s] 1 queens still injecting for reinforcement
+17:52:03 - StrategyManager - WARNING - [465s] MAJOR ATTACK DETECTED! Threat score: 78, High-threat units: 0
+[EXPANSION] [465s] Trying to expand: 4th base MACRO (time: 465s, minerals: 45)
+[EXPANSION] [465s] Already 1 pending, max is 1
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:52:04 - StrategyManager - WARNING - [470s] MAJOR ATTACK DETECTED! Threat score: 78, High-threat units: 0
+[EXPANSION] [471s] Trying to expand: 4th base MACRO (time: 471s, minerals: 25)
+[EXPANSION] [471s] Already 1 pending, max is 1
+[BASE DEFENSE] [471s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 13, Threat score: 26
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 0.013, °¡½º: 0.460
+  ¼­ÇÃ¶óÀÌ: 0.085/0.220
+  ÀÏ²Û: 0.110, À¯´Ö: 0.220, Àû À¯´Ö: 0.130
+  ±âÁö: 0.300, ½Ã°£: 0.471
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.100, ¶ó¹Ù: 0.200
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.070, Àû±º HP: 0.178
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.194, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[AUTO TECH] [472s] Building Extractor #5
+[EXPANSION DESTROYED] [473s] [WARNING] Expansion base destroyed after 41s of attack!
+17:52:04 - StrategyManager - WARNING - [473s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:04 - StrategyManager - WARNING - [473s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:04 - StrategyManager - WARNING - [473s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:04 - StrategyManager - WARNING - [474s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:04 - StrategyManager - WARNING - [474s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:04 - StrategyManager - WARNING - [474s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:04 - StrategyManager - WARNING - [474s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [474s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [475s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [475s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [475s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [475s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [475s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [475s] MAJOR ATTACK DETECTED! Threat score: 52, High-threat units: 0
+17:52:05 - StrategyManager - WARNING - [475s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [476s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [476s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [476s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:52:05 - StrategyManager - WARNING - [476s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[CREEP] [476s] Tumors: 0, Farthest: 0 from base
+[EXPANSION] [477s] Trying to expand: 3rd base HYPER-FAST (time: 477s, minerals: 5)
+[EXPANSION] [477s] Already 1 pending, max is 1
+17:52:05 - StrategyManager - WARNING - [481s] MAJOR ATTACK DETECTED! Threat score: 52, High-threat units: 0
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[QUEEN DEFENSE] [482s] Queens defending! Air: 0, Ground: 13
+[EXPANSION] [483s] Trying to expand: 3rd base HYPER-FAST (time: 483s, minerals: 45)
+[EXPANSION] [483s] Already 1 pending, max is 1
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:52:06 - StrategyManager - WARNING - [486s] MAJOR ATTACK DETECTED! Threat score: 44, High-threat units: 0
+[EXPANSION] [489s] Trying to expand: 3rd base HYPER-FAST (time: 489s, minerals: 40)
+[EXPANSION] [489s] Cannot afford Hatchery (need 300 minerals)
+[BASE DEFENSE] [491s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 8, Threat score: 16
+17:52:07 - StrategyManager - WARNING - [491s] MAJOR ATTACK DETECTED! Threat score: 32, High-threat units: 0
+[EXPANSION] [495s] Trying to expand: 3rd base HYPER-FAST (time: 495s, minerals: 15)
+[EXPANSION] [495s] Cannot afford Hatchery (need 300 minerals)
+17:52:07 - StrategyManager - WARNING - [496s] MAJOR ATTACK DETECTED! Threat score: 28, High-threat units: 0
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 496ÃÊ
+==================================================
+  AdvancedBuilding: 478È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 119È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 478È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 478È¸ ½ÇÇà, Æò±Õ 0.12ms
+  Creep manager: 478È¸ ½ÇÇà, Æò±Õ 0.06ms
+  DefeatDetection: 478È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Economy: 478È¸ ½ÇÇà, Æò±Õ 0.08ms
+  HierarchicalRL: 22È¸ ½ÇÇà, Æò±Õ 0.26ms
+  Intel: 478È¸ ½ÇÇà, Æò±Õ 0.05ms
+  Micro: 478È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Morph manager: 478È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Multi-base defense: 478È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 478È¸ ½ÇÇà, Æò±Õ 0.53ms
+  Protoss counter: 478È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Queen Manager: 478È¸ ½ÇÇà, Æò±Õ 0.34ms
+  Rogue Tactics: 59È¸ ½ÇÇà, Æò±Õ 0.09ms
+  Scouting: 478È¸ ½ÇÇà, Æò±Õ 0.07ms
+  Spell manager: 478È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Strategy: 478È¸ ½ÇÇà, Æò±Õ 0.28ms
+  Transformer: 11È¸ ½ÇÇà, Æò±Õ 0.60ms
+  UnitFactory: 478È¸ ½ÇÇà, Æò±Õ 0.31ms
+  Upgrade manager: 478È¸ ½ÇÇà, Æò±Õ 0.06ms
+==================================================
+[UNIT_FACTORY] [500s] COMBAT MODE: Increased production rate
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION] [500s] Trying to expand: 3rd base HYPER-FAST (time: 500s, minerals: 15)
+[EXPANSION] [500s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.08s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:52:08 - StrategyManager - WARNING - [501s] MAJOR ATTACK DETECTED! Threat score: 24, High-threat units: 0
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\wicked_zerg_bot_pro_impl.py", line 348, in on_step
+    self.rl_agent.end_episode(game_won=False)
+TypeError: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+[EXPANSION] [506s] Trying to expand: 3rd base HYPER-FAST (time: 506s, minerals: 15)
+[EXPANSION] [506s] Cannot afford Hatchery (need 300 minerals)
+[FORCE EXPAND] ¡Ú 2min - FORCING 3rd base! BUT cannot afford (minerals: 15/300) ¡Ú
+[BASE DEFENSE] [510s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 2, Threat score: 4
+[WORKER DEFENSE] À§±â »óÈ² - 3 ÀÏ²Û ¹æ¾î
+[BASE DEFENSE] [510s] ¡Ú 3 WORKERS DEFENDING ¡Ú
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.198, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[EXPANSION] [512s] Trying to expand: 3rd base HYPER-FAST (time: 512s, minerals: 15)
+[EXPANSION] [512s] Cannot afford Hatchery (need 300 minerals)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION DEFENSE] [518s] [OK] Expansion secured after 68s
+[EXPANSION] [518s] Trying to expand: 3rd base HYPER-FAST (time: 518s, minerals: 15)
+[EXPANSION] [518s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [524s] Trying to expand: 3rd base HYPER-FAST (time: 524s, minerals: 15)
+[EXPANSION] [524s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [530s] Trying to expand: 3rd base HYPER-FAST (time: 530s, minerals: 15)
+[EXPANSION] [530s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION DEFENSE] [532s] [OK] Expansion secured after 92s
+[DEBUG] Calling strategy_manager.update() at iteration 3000
+[DEFEAT DETECTION] À§±â »óÈ²! - °æÁ¦ À§±â (ÀÏ²Û 3, ¹Ì³×¶ö 15)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[TRAINING] Step reward: 0.310
+[EXPANSION] [536s] Trying to expand: 3rd base HYPER-FAST (time: 536s, minerals: 15)
+[EXPANSION] [536s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [542s] Trying to expand: 3rd base HYPER-FAST (time: 542s, minerals: 15)
+[EXPANSION] [542s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [548s] Trying to expand: 3rd base HYPER-FAST (time: 548s, minerals: 15)
+[EXPANSION] [548s] Cannot afford Hatchery (need 300 minerals)
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ALL_IN (È®·ü: 0.196, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: ALL_IN vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ALL_IN ¡Ú¡Ú¡Ú
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION] [553s] Trying to expand: 3rd base HYPER-FAST (time: 553s, minerals: 15)
+[EXPANSION] [553s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0076
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  30
+  Total Samples:        570
+  Average Loss:         0.0076
+  Last Loss:            0.0076
+  Last Adjusted LR:     0.001000
+
+? Directory Status:
+  Buffer Files:         1
+  Archived Files:       19
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   61.83s
+  Errors:               0
+  Last Training:        2026-01-25 17:52:14
+======================================================================
+
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [559s] Trying to expand: 3rd base HYPER-FAST (time: 559s, minerals: 15)
+[EXPANSION] [559s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [565s] Trying to expand: 3rd base HYPER-FAST (time: 565s, minerals: 15)
+[EXPANSION] [565s] Cannot afford Hatchery (need 300 minerals)
+[CREEP] [566s] Tumors: 0, Farthest: 0 from base
+[DEFEAT DETECTION] ¡Ú ÆÐ¹è Á÷Àü! ¸¶Áö¸· ¹æ¾î ½Ãµµ! ¡Ú
+  - ÆÐ¹è ¼öÁØ: À§±â
+  - ÀÌÀ¯: °æÁ¦ À§±â (ÀÏ²Û 3, ¹Ì³×¶ö 15)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[EXPANSION] [571s] Trying to expand: 3rd base HYPER-FAST (time: 571s, minerals: 15)
+[EXPANSION] [571s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [577s] Trying to expand: 3rd base HYPER-FAST (time: 577s, minerals: 15)
+[EXPANSION] [577s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [583s] Trying to expand: 3rd base HYPER-FAST (time: 583s, minerals: 15)
+[EXPANSION] [583s] Cannot afford Hatchery (need 300 minerals)
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 588ÃÊ
+==================================================
+  AdvancedBuilding: 515È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 129È¸ ½ÇÇà, Æò±Õ 0.02ms
+  AggressiveTech: 515È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 515È¸ ½ÇÇà, Æò±Õ 0.08ms
+  Creep manager: 515È¸ ½ÇÇà, Æò±Õ 0.03ms
+  DefeatDetection: 515È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Economy: 515È¸ ½ÇÇà, Æò±Õ 0.06ms
+  HierarchicalRL: 23È¸ ½ÇÇà, Æò±Õ 0.20ms
+  Intel: 515È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Micro: 515È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Morph manager: 515È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 515È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 515È¸ ½ÇÇà, Æò±Õ 0.38ms
+  Protoss counter: 515È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Queen Manager: 515È¸ ½ÇÇà, Æò±Õ 0.08ms
+  Rogue Tactics: 65È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Scouting: 515È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Spell manager: 515È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Strategy: 515È¸ ½ÇÇà, Æò±Õ 0.15ms
+  Transformer: 11È¸ ½ÇÇà, Æò±Õ 0.64ms
+  UnitFactory: 515È¸ ½ÇÇà, Æò±Õ 0.32ms
+  Upgrade manager: 515È¸ ½ÇÇà, Æò±Õ 0.04ms
+==================================================
+[EXPANSION] [589s] Trying to expand: 3rd base HYPER-FAST (time: 589s, minerals: 15)
+[EXPANSION] [589s] Cannot afford Hatchery (need 300 minerals)
+[UNIT_FACTORY] vs Terran: gas_ratio_target = 0.80
+[RESOURCE SURPLUS] Handled: {'tech_buildings_built': 0, 'lurkers_morphed': 0, 'banelings_morphed': 0, 'ravagers_morphed': 0}
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 0.007, °¡½º: 0.664
+  ¼­ÇÃ¶óÀÌ: 0.015/0.220
+  ÀÏ²Û: 0.010, À¯´Ö: 0.140, Àû À¯´Ö: 0.000
+  ±âÁö: 0.200, ½Ã°£: 0.589
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.200, ¶ó¹Ù: 0.450
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.000, Àû±º HP: 0.000
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ALL_IN (È®·ü: 0.195, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: ALL_IN vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ALL_IN ¡Ú¡Ú¡Ú
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [595s] Trying to expand: 3rd base HYPER-FAST (time: 595s, minerals: 15)
+[EXPANSION] [595s] Cannot afford Hatchery (need 300 minerals)
+[AUTO SURRENDER] Game time limit reached (600s). Surrendering...
+[AUTO SURRENDER] Saving experience data before leaving...
+[AUTO SURRENDER] [FAILED] Failed to save experience: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+[32m2026-01-25 17:52:20.158[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was Status.in_game)[0m
+[32m2026-01-25 17:52:20.161[0m | [1mINFO    [0m | [36msc2.sc2process[0m:[36m_close_connection[0m:[36m241[0m - [1mClosing connection at 62416...[0m
+[32m2026-01-25 17:52:20.161[0m | [1mINFO    [0m | [36msc2.sc2process[0m:[36mkill_all[0m:[36m36[0m - [1mkill_switch: Process cleanup for 1 processes[0m
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 358, in main
+    run_game(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 521, in run_game
+    result: Result = asyncio.run(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 365, in _host_game
+    result = await _play_game(players[0], client, realtime, portconfig, game_time_limit, rgb_render_config)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 225, in _play_game
+    result = await _play_game_ai(client, player_id, player.ai, realtime, game_time_limit)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 195, in _play_game_ai
+    await run_bot_iteration(iteration)  # Main bot loop
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 162, in run_bot_iteration
+    await ai._after_step()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\bot_ai_internal.py", line 814, in _after_step
+    await self.client._send_debug()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\client.py", line 666, in _send_debug
+    await self._execute(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\protocol.py", line 125, in _execute
+    raise ProtocolError(f"{response.error}")
+sc2.protocol.ProtocolError: ['Not in a game']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 530, in main
+    bot.ai.rl_agent.end_episode(game_won=False)
+TypeError: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 358, in main
+    run_game(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 521, in run_game
+    result: Result = asyncio.run(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 365, in _host_game
+    result = await _play_game(players[0], client, realtime, portconfig, game_time_limit, rgb_render_config)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 225, in _play_game
+    result = await _play_game_ai(client, player_id, player.ai, realtime, game_time_limit)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 195, in _play_game_ai
+    await run_bot_iteration(iteration)  # Main bot loop
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 162, in run_bot_iteration
+    await ai._after_step()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\bot_ai_internal.py", line 814, in _after_step
+    await self.client._send_debug()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\client.py", line 666, in _send_debug
+    await self._execute(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\protocol.py", line 125, in _execute
+    raise ProtocolError(f"{response.error}")
+sc2.protocol.ProtocolError: ['Not in a game']
+
+[RECOVERY] Attempting to save experience data from failed game...
+[RECOVERY] [FAILED] Failed to save experience data: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+
+[ERROR] Game #1 failed: ['Not in a game']
+[RETRY] Will retry after 10 seconds...
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+
+??  [RETRY] Current consecutive failures: 1/5
+
+======================================================================
+? [STEP 3] GAME #2 - Random Selection
+======================================================================
+[SELECTED] Map: AbyssalReefLE
+[SELECTED] Opponent Race: Protoss
+[SELECTED] Difficulty: Medium
+
+[INFO] Starting game...
+======================================================================
+
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[32m2026-01-25 17:52:35.288[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was None)[0m
+[32m2026-01-25 17:52:35.288[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m42[0m - [1mCreating new game[0m
+[32m2026-01-25 17:52:35.288[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m43[0m - [1mMap:     AbyssalReefLE[0m
+[32m2026-01-25 17:52:35.288[0m | [1mINFO    [0m | [36msc2.controller[0m:[36mcreate_game[0m:[36m44[0m - [1mPlayers: Bot WickedZergBotProImpl(Zerg), Computer Medium(Protoss, RandomBuild)[0m
+[32m2026-01-25 17:52:35.289[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.init_game (was Status.launched)[0m
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[32m2026-01-25 17:52:44.835[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.in_game (was None)[0m
+[32m2026-01-25 17:52:44.836[0m | [1mINFO    [0m | [36msc2.main[0m:[36m_play_game[0m:[36m220[0m - [1mPlayer 1 - Bot WickedZergBotProImpl(Zerg)[0m
+[BOT] on_start: Initializing all managers...
+17:52:45 - WickedZergBot - INFO - Bot started. Initializing managers...
+[BOT] ProductionResilience initialized
+[BOT] EconomyManager initialized
+[BOT] CombatManager initialized
+[BOT] IntelManager initialized
+[INTEL] Data loaded from data/intel_data.json
+  - Enemy Race: Zerg
+  - Build Pattern: unknown
+  - Scouted Locations: 46
+[BOT] ScoutingSystem initialized
+[BOT] StrategyManager initialized
+[BOT] PerformanceOptimizer initialized
+[BOT] PID FormationController initialized
+[BOT] RogueTacticsManager initialized
+[BOT] TransformerDecisionModel initialized (training mode)
+[BOT] HierarchicalRLSystem initialized (training mode)
+[BOT] AggressiveStrategyExecutor initialized
+[BOT] AdaptiveLearningRate initialized - LR: 0.001000
+[BOT] GameAnalytics initialized - 0 games tracked
+[BOT] RL Agent TRAINING (Episodes: 0, ¥å=1.000)
+[BOT]   Status: Not enough training games (0/50)
+[BOT] on_start complete. Enemy race: None
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.060
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  45
+  Total Samples:        855
+  Average Loss:         0.0080
+  Last Loss:            0.0080
+  Last Adjusted LR:     0.001000
+
+? Directory Status:
+  Buffer Files:         1
+  Archived Files:       19
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   92.76s
+  Errors:               0
+  Last Training:        2026-01-25 17:52:45
+======================================================================
+
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[STRATEGY] Selected: STANDARD MACRO (Safe Play)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0084
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0075
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.050
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: 0.049
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[TRAINING] Step reward: -0.002
+[WARNING] Game logic execution error: name 'BuildOrderSystem' is not defined
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EARLY_EXPAND] [300s] Expanding at 1min+ with 2990 minerals (bases: 1)
+[AUTO TECH] [300s] Building Extractor #1
+[PRODUCTION_RESILIENCE] [300s] EMERGENCY POOL BUILD [Frame:1680] Minerals:2765 Larvae:3 Supply:12/14
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 300ÃÊ
+==================================================
+  AdvancedBuilding: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Creep manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  DefeatDetection: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Economy: 1È¸ ½ÇÇà, Æò±Õ 1.03ms
+  Intel: 1È¸ ½ÇÇà, Æò±Õ 1.00ms
+  Micro: 1È¸ ½ÇÇà, Æò±Õ 4.37ms
+  Morph manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Production: 1È¸ ½ÇÇà, Æò±Õ 8.53ms
+  Protoss counter: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Queen Manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Rogue Tactics: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Scouting: 1È¸ ½ÇÇà, Æò±Õ 1.31ms
+  Spell manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Strategy: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+  UnitFactory: 1È¸ ½ÇÇà, Æò±Õ 1.51ms
+  Upgrade manager: 1È¸ ½ÇÇà, Æò±Õ 0.00ms
+==================================================
+[EXPANSION] [300s] Trying to expand: ULTRA-FAST Natural @300s (min 200, workers: 12)
+[PROACTIVE EXPAND] [300s] ULTRA-FAST Natural @300s (min 200, workers: 12) - SUCCESS
+[EXPAND BLOCK] cooldown at 300s
+[EXPANSION] [306s] Trying to expand: ULTRA-FAST Natural @306s (min 200, workers: 10)
+[PROACTIVE EXPAND] [306s] ULTRA-FAST Natural @306s (min 200, workers: 10) - SUCCESS
+[ECONOMY] [306s] ¡Ú Building expansion to spend minerals ¡Ú
+[ECONOMY] Building extractor (gas shortage)
+[EARLY_EXPAND] [310s] Expanding at 1min+ with 3005 minerals (bases: 1)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [312s] Trying to expand: ULTRA-FAST Natural @312s (min 200, workers: 10)
+[PROACTIVE EXPAND] [312s] ULTRA-FAST Natural @312s (min 200, workers: 10) - SUCCESS
+[FORCE EXPAND] ¡Ú¡Ú¡Ú 10sec INSTANT EXPAND - Target: 1min completion! (Emergency Retry) (CRITICAL Retry) - FORCING EXPANSION NOW! ¡Ú¡Ú¡Ú
+[ECONOMY] [314s] ¡Ú Building expansion to spend minerals ¡Ú
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.182, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[EXPAND BLOCK] cooldown at 315s
+[EXPANSION] [318s] Trying to expand: ULTRA-FAST Natural @318s (min 200, workers: 10)
+[PROACTIVE EXPAND] [318s] ULTRA-FAST Natural @318s (min 200, workers: 10) - SUCCESS
+[EARLY_EXPAND] [320s] Expanding at 1min+ with 2990 minerals (bases: 1)
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[ECONOMY] [322s] ¡Ú Building expansion to spend minerals ¡Ú
+[EXPANSION] [324s] Trying to expand: ULTRA-FAST Natural @324s (min 200, workers: 10)
+[PROACTIVE EXPAND] [324s] ULTRA-FAST Natural @324s (min 200, workers: 10) - SUCCESS
+[EXPANSION] [330s] Trying to expand: ULTRA-FAST Natural @330s (min 200, workers: 9)
+[PROACTIVE EXPAND] [330s] ULTRA-FAST Natural @330s (min 200, workers: 9) - SUCCESS
+[ECONOMY] [330s] Resource banking: 2745M / 8G
+[ECONOMY]   Larva: 0, Avg per base: 0.0
+[ECONOMY] [330s] ¡Ú Building expansion to spend minerals ¡Ú
+[EARLY_EXPAND] [330s] Expanding at 1min+ with 2745 minerals (bases: 1)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[FORCE EXPAND] ¡Ú¡Ú¡Ú 10sec INSTANT EXPAND - Target: 1min completion! (Emergency Retry) (CRITICAL Retry) - FORCING EXPANSION NOW! ¡Ú¡Ú¡Ú
+[EXPANSION] [335s] Trying to expand: ULTRA-FAST Natural @335s (min 200, workers: 9)
+[PROACTIVE EXPAND] [335s] ULTRA-FAST Natural @335s (min 200, workers: 9) - SUCCESS
+[AUTO TECH] [338s] Building Extractor #3
+[EXPANSION] [341s] Trying to expand: 3rd base HYPER-FAST (time: 341s, minerals: 2720)
+[PROACTIVE EXPAND] [341s] 3rd base HYPER-FAST (time: 341s, minerals: 2720) - SUCCESS
+[EXPANSION] [347s] Trying to expand: 3rd base HYPER-FAST (time: 347s, minerals: 2685)
+[PROACTIVE EXPAND] [347s] 3rd base HYPER-FAST (time: 347s, minerals: 2685) - SUCCESS
+[EXPANSION DEFENSE] [349s] [WARNING] Expansion under attack! 1 enemies detected
+[AUTO TECH] [349s] Building Roach Warren
+17:53:11 - UpgradeManager - INFO - [351s] ¡Ú¡Ú¡Ú ´ë»ç ÃËÁø (Àú±Û¸µ ¹ß¾÷) ¿¬±¸ ½ÃÀÛ! ¡Ú¡Ú¡Ú
+17:53:12 - UpgradeManager - INFO - [351s] Building Evolution Chamber
+[EXPANSION DEFENSE] [351s] [WARNING] Expansion under attack! 1 enemies detected
+17:53:12 - UpgradeManager - INFO - [353s] Building Evolution Chamber
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [353s] Trying to expand: 3rd base HYPER-FAST (time: 353s, minerals: 2430)
+[PROACTIVE EXPAND] [353s] 3rd base HYPER-FAST (time: 353s, minerals: 2430) - SUCCESS
+[RESOURCE_FLUSH] [353s] Produced 1 units (Minerals: 2330)
+[BASE DEFENSE] [353s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 1, Threat score: 2
+[BASE DEFENSE] [353s] ¡Ú 1 WORKERS DEFENDING ¡Ú
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 1.140, °¡½º: 0.024
+  ¼­ÇÃ¶óÀÌ: 0.065/0.190
+  ÀÏ²Û: 0.080, À¯´Ö: 0.140, Àû À¯´Ö: 0.010
+  ±âÁö: 0.200, ½Ã°£: 0.354
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.000, ¶ó¹Ù: 0.050
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.000, Àû±º HP: 0.004
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): ECONOMY (È®·ü: 0.221, ¥å=1.000) ¡Ú
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: ECONOMY ¡Ú¡Ú¡Ú
+17:53:12 - UpgradeManager - INFO - [355s] Building Evolution Chamber
+17:53:12 - UpgradeManager - INFO - [356s] Building Evolution Chamber
+[DEBUG] Calling strategy_manager.update() at iteration 2000
+[TRAINING] Step reward: 0.030
+17:53:12 - UpgradeManager - INFO - [358s] Building Evolution Chamber
+[EXPANSION] [359s] Trying to expand: 3rd base HYPER-FAST (time: 359s, minerals: 2395)
+[PROACTIVE EXPAND] [359s] 3rd base HYPER-FAST (time: 359s, minerals: 2395) - SUCCESS
+17:53:13 - UpgradeManager - INFO - [360s] Building Evolution Chamber
+17:53:13 - UpgradeManager - INFO - [362s] Building Evolution Chamber
+[RESOURCE_FLUSH] [364s] Produced 1 units (Minerals: 2295)
+[AUTO TECH] [364s] Building Roach Warren
+17:53:13 - UpgradeManager - INFO - [364s] Building Evolution Chamber
+[EXPANSION] [365s] Trying to expand: 3rd base HYPER-FAST (time: 365s, minerals: 2345)
+[PROACTIVE EXPAND] [365s] 3rd base HYPER-FAST (time: 365s, minerals: 2345) - SUCCESS
+17:53:13 - UpgradeManager - INFO - [366s] Building Evolution Chamber
+17:53:13 - UpgradeManager - INFO - [368s] Building Evolution Chamber
+[AUTO TECH] [368s] Building Extractor #4
+17:53:14 - UpgradeManager - INFO - [370s] Building Evolution Chamber
+[EXPANSION] [371s] Trying to expand: 3rd base HYPER-FAST (time: 371s, minerals: 2320)
+[PROACTIVE EXPAND] [371s] 3rd base HYPER-FAST (time: 371s, minerals: 2320) - SUCCESS
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:53:14 - UpgradeManager - INFO - [372s] Building Evolution Chamber
+[BASE DEFENSE] [373s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 1, Threat score: 2
+17:53:14 - UpgradeManager - INFO - [374s] Building Evolution Chamber
+[RESOURCE_FLUSH] [375s] Produced 1 units (Minerals: 2245)
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+17:53:14 - UpgradeManager - INFO - [376s] Building Evolution Chamber
+[EXPANSION] [377s] Trying to expand: 3rd base HYPER-FAST (time: 377s, minerals: 2295)
+[PROACTIVE EXPAND] [377s] 3rd base HYPER-FAST (time: 377s, minerals: 2295) - SUCCESS
+17:53:15 - UpgradeManager - INFO - [378s] Building Evolution Chamber
+[AUTO TECH] [378s] Building Extractor #4
+[AUTO TECH] [379s] Building Roach Warren
+17:53:15 - UpgradeManager - INFO - [380s] Building Evolution Chamber
+[EXPANSION DEFENSE] [380s] [OK] Expansion secured after 29s
+17:53:15 - UpgradeManager - INFO - [382s] Building Evolution Chamber
+[EXPANSION] [383s] Trying to expand: 3rd base HYPER-FAST (time: 383s, minerals: 2145)
+[PROACTIVE EXPAND] [383s] 3rd base HYPER-FAST (time: 383s, minerals: 2145) - SUCCESS
+17:53:15 - UpgradeManager - INFO - [384s] Building Evolution Chamber
+[RESOURCE_FLUSH] [385s] Produced 1 units (Minerals: 1870)
+17:53:16 - UpgradeManager - INFO - [386s] Building Evolution Chamber
+[CREEP] [387s] Tumors: 0, Farthest: 0 from base
+17:53:16 - UpgradeManager - INFO - [388s] Building Evolution Chamber
+[EXPANSION] [388s] Trying to expand: 3rd base HYPER-FAST (time: 388s, minerals: 1825)
+[PROACTIVE EXPAND] [388s] 3rd base HYPER-FAST (time: 388s, minerals: 1825) - SUCCESS
+[AUTO TECH] [388s] Building Extractor #4
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  60
+  Total Samples:        1140
+  Average Loss:         0.0080
+  Last Loss:            0.0080
+  Last Adjusted LR:     0.001000
+
+? Directory Status:
+  Buffer Files:         1
+  Archived Files:       19
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   123.61s
+  Errors:               0
+  Last Training:        2026-01-25 17:53:16
+======================================================================
+
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:53:16 - UpgradeManager - INFO - [390s] Building Evolution Chamber
+17:53:16 - UpgradeManager - INFO - [392s] Building Evolution Chamber
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.172, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ECONOMY
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+17:53:16 - UpgradeManager - INFO - [394s] Building Evolution Chamber
+[AUTO TECH] [394s] Building Evolution Chamber
+[EXPANSION] [394s] Trying to expand: 3rd base HYPER-FAST (time: 394s, minerals: 1850)
+[PROACTIVE EXPAND] [394s] 3rd base HYPER-FAST (time: 394s, minerals: 1850) - SUCCESS
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 395ÃÊ
+==================================================
+  AdvancedBuilding: 535È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 133È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 535È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 535È¸ ½ÇÇà, Æò±Õ 0.10ms
+  Creep manager: 535È¸ ½ÇÇà, Æò±Õ 0.02ms
+  DefeatDetection: 535È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Economy: 535È¸ ½ÇÇà, Æò±Õ 0.33ms
+  HierarchicalRL: 24È¸ ½ÇÇà, Æò±Õ 0.18ms
+  Intel: 535È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Micro: 535È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Morph manager: 535È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 535È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 535È¸ ½ÇÇà, Æò±Õ 0.39ms
+  Protoss counter: 535È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Queen Manager: 535È¸ ½ÇÇà, Æò±Õ 0.04ms
+  Rogue Tactics: 66È¸ ½ÇÇà, Æò±Õ 0.05ms
+  Scouting: 535È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Spell manager: 535È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Strategy: 535È¸ ½ÇÇà, Æò±Õ 0.11ms
+  Transformer: 12È¸ ½ÇÇà, Æò±Õ 0.57ms
+  UnitFactory: 535È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Upgrade manager: 535È¸ ½ÇÇà, Æò±Õ 0.21ms
+==================================================
+17:53:17 - UpgradeManager - INFO - [396s] Building Evolution Chamber
+[RESOURCE_FLUSH] [396s] Produced 1 units (Minerals: 1750)
+17:53:17 - UpgradeManager - INFO - [398s] Building Evolution Chamber
+[AUTO TECH] [398s] Building Extractor #4
+17:53:17 - UpgradeManager - INFO - [400s] Building Evolution Chamber
+[EXPANSION] [400s] Trying to expand: 3rd base HYPER-FAST (time: 400s, minerals: 1775)
+[PROACTIVE EXPAND] [400s] 3rd base HYPER-FAST (time: 400s, minerals: 1775) - SUCCESS
+[ECONOMY RECOVERY] [400s] ¡Ú Worker deficit: 11 ¡Ú
+[ECONOMY RECOVERY]   Current: 11, Ideal: 22
+[ECONOMY RECOVERY]   Prioritizing drone production...
+17:53:17 - UpgradeManager - INFO - [402s] Building Evolution Chamber
+17:53:18 - UpgradeManager - INFO - [404s] Building Evolution Chamber
+17:53:18 - UpgradeManager - INFO - [406s] Building Evolution Chamber
+[EXPANSION] [406s] Trying to expand: 3rd base HYPER-FAST (time: 406s, minerals: 1505)
+[PROACTIVE EXPAND] [406s] 3rd base HYPER-FAST (time: 406s, minerals: 1505) - SUCCESS
+[RESOURCE_FLUSH] [407s] Produced 1 units (Minerals: 1405)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0084
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:53:18 - UpgradeManager - INFO - [408s] Building Evolution Chamber
+[BUILD] SPINECRAWLER at (155.31730954428252, 26.57684338233711) (creep: True)
+[BUILDING] Built UnitTypeId.SPINECRAWLER safely on creep
+[AUTO TECH] [409s] Building Evolution Chamber
+17:53:18 - UpgradeManager - INFO - [410s] Building Evolution Chamber
+[RESOURCE_FLUSH] [410s] Produced 1 units (Minerals: 1260)
+17:53:19 - UpgradeManager - INFO - [411s] Building Evolution Chamber
+[EXPANSION DEFENSE] [411s] [OK] Expansion secured after 62s
+[EXPANSION] [412s] Trying to expand: 4th base MACRO (time: 412s, minerals: 1135)
+[PROACTIVE EXPAND] [412s] 4th base MACRO (time: 412s, minerals: 1135) - SUCCESS
+17:53:19 - UpgradeManager - INFO - [413s] Building Evolution Chamber
+[RESOURCE_FLUSH] [415s] Produced 1 units (Minerals: 1050)
+[RESOURCE_FLUSH] [415s] Produced 1 units (Minerals: 1000)
+[RESOURCE_FLUSH] [415s] Produced 1 units (Minerals: 950)
+17:53:19 - UpgradeManager - INFO - [415s] Building Evolution Chamber
+[EXPANSION DEFENSE] [415s] [WARNING] Expansion under attack! 1 enemies detected
+[DEFENSE] ¡Ú Anti-Air Detected! Building Spore Crawler at (161.5, 21.5) ¡Ú
+17:53:19 - UpgradeManager - INFO - [417s] Building Evolution Chamber
+[EXPANSION] [418s] Trying to expand: 4th base MACRO (time: 418s, minerals: 1000)
+[PROACTIVE EXPAND] [418s] 4th base MACRO (time: 418s, minerals: 1000) - SUCCESS
+17:53:20 - UpgradeManager - INFO - [419s] Building Evolution Chamber
+[ECONOMY RECOVERY] [420s] ¡Ú Worker deficit: 34 ¡Ú
+[ECONOMY RECOVERY]   Current: 10, Ideal: 44
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[AUTO TECH] [421s] Building Extractor #5
+17:53:20 - UpgradeManager - INFO - [421s] Building Evolution Chamber
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0079
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:53:20 - UpgradeManager - INFO - [423s] Building Evolution Chamber
+[EXPANSION DEFENSE] [423s] [WARNING] Expansion under attack! 1 enemies detected
+[EXPANSION] [424s] Trying to expand: 4th base MACRO (time: 424s, minerals: 735)
+[PROACTIVE EXPAND] [424s] 4th base MACRO (time: 424s, minerals: 735) - SUCCESS
+[DEFENSE] ¡Ú Anti-Air Detected! Building Spore Crawler at (161.5, 21.5) ¡Ú
+[AUTO TECH] [424s] Building Evolution Chamber
+17:53:20 - UpgradeManager - INFO - [425s] Building Evolution Chamber
+17:53:20 - UpgradeManager - INFO - [427s] Building Evolution Chamber
+17:53:21 - UpgradeManager - INFO - [429s] Building Evolution Chamber
+[EXPANSION] [430s] Trying to expand: 4th base MACRO (time: 430s, minerals: 600)
+[EXPANSION] [430s] Already 1 pending, max is 1
+[AUTO TECH] [431s] Building Extractor #5
+17:53:21 - UpgradeManager - INFO - [431s] Building Evolution Chamber
+[DEFENSE] ¡Ú Anti-Air Detected! Building Spore Crawler at (129.5, 26.5) ¡Ú
+[AGGRESSIVE TECH] [432s] Building UnitTypeId.HYDRALISKDEN at supply 27.0 (excess resources: M:0+ G:112+)
+[BASE DEFENSE] [432s] ¡Ú MANDATORY DEFENSE ¡Ú Enemies: 1, Threat score: 2
+[BASE DEFENSE] [432s] ¡Ú 2 WORKERS DEFENDING ¡Ú
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): DEFENSIVE (È®·ü: 0.221, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: DEFENSIVE vs Rule: AGGRESSIVE
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: DEFENSIVE ¡Ú¡Ú¡Ú
+17:53:21 - UpgradeManager - INFO - [433s] Building Evolution Chamber
+[EXPANSION DEFENSE] [433s] [WARNING] Expansion under attack! 1 enemies detected
+17:53:21 - UpgradeManager - INFO - [435s] Building Evolution Chamber
+[EXPANSION] [436s] Trying to expand: 4th base MACRO (time: 436s, minerals: 590)
+[EXPANSION] [436s] Already 1 pending, max is 1
+17:53:22 - UpgradeManager - INFO - [437s] Building Evolution Chamber
+[AUTO TECH] [439s] Building Evolution Chamber
+17:53:22 - UpgradeManager - INFO - [439s] Building Evolution Chamber
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0077
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[ECONOMY RECOVERY] [440s] ¡Ú Worker deficit: 29 ¡Ú
+[ECONOMY RECOVERY]   Current: 15, Ideal: 44
+[ECONOMY RECOVERY]   Prioritizing drone production...
+[DEFENSE] ¡Ú Anti-Air Detected! Building Spore Crawler at (129.5, 26.5) ¡Ú
+[AUTO TECH] [441s] Building Extractor #5
+17:53:22 - UpgradeManager - INFO - [441s] Building Evolution Chamber
+[EXPANSION] [441s] Trying to expand: 4th base MACRO (time: 441s, minerals: 585)
+[EXPANSION] [441s] Already 1 pending, max is 1
+17:53:22 - UpgradeManager - INFO - [443s] Building Evolution Chamber
+17:53:23 - UpgradeManager - INFO - [445s] Building Evolution Chamber
+[DEBUG] Calling strategy_manager.update() at iteration 2500
+[QUEEN DEFENSE] [446s] Queens defending! Air: 1, Ground: 0
+[TRAINING] Step reward: 0.060
+[EXPANSION DEFENSE] [447s] [OK] Expansion secured after 23s
+[EXPANSION] [447s] Trying to expand: 4th base MACRO (time: 447s, minerals: 180)
+[EXPANSION] [447s] Already 1 pending, max is 1
+[DEFENSE] ¡Ú Anti-Air Detected! Building Spore Crawler at (129.5, 26.5) ¡Ú
+17:53:23 - UpgradeManager - INFO - [449s] Building Evolution Chamber
+[AUTO TECH] [451s] Building Extractor #5
+17:53:23 - UpgradeManager - INFO - [451s] Building Evolution Chamber
+17:53:24 - UpgradeManager - INFO - [453s] Building Evolution Chamber
+[EXPANSION] [453s] Trying to expand: 4th base MACRO (time: 453s, minerals: 195)
+[EXPANSION] [453s] Already 1 pending, max is 1
+[AUTO TECH] [454s] Building Evolution Chamber
+17:53:24 - UpgradeManager - INFO - [455s] Building Evolution Chamber
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [459s] Trying to expand: 4th base MACRO (time: 459s, minerals: 65)
+[EXPANSION] [459s] Already 1 pending, max is 1
+17:53:25 - UpgradeManager - INFO - [461s] Building Evolution Chamber
+[AUTO TECH] [461s] Building Extractor #5
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[EXPANSION] [465s] Trying to expand: 4th base MACRO (time: 465s, minerals: 35)
+[EXPANSION] [465s] Already 1 pending, max is 1
+[EXPANSION] [471s] Trying to expand: 4th base MACRO (time: 471s, minerals: 65)
+[EXPANSION] [471s] Already 1 pending, max is 1
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 0.032, °¡½º: 0.636
+  ¼­ÇÃ¶óÀÌ: 0.195/0.220
+  ÀÏ²Û: 0.210, À¯´Ö: 0.310, Àû À¯´Ö: 0.000
+  ±âÁö: 0.300, ½Ã°£: 0.471
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.100, ¶ó¹Ù: 0.000
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.140, Àû±º HP: 0.000
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.140, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: AGGRESSIVE
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+[AUTO TECH] [471s] Building Evolution Chamber
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:53:26 - UpgradeManager - INFO - [472s] Building Evolution Chamber
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 475ÃÊ
+==================================================
+  AdvancedBuilding: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Aggressive Strategies: 112È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Combat: 445È¸ ½ÇÇà, Æò±Õ 0.11ms
+  Creep manager: 445È¸ ½ÇÇà, Æò±Õ 0.04ms
+  DefeatDetection: 445È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Economy: 445È¸ ½ÇÇà, Æò±Õ 0.15ms
+  HierarchicalRL: 20È¸ ½ÇÇà, Æò±Õ 0.35ms
+  Intel: 445È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Micro: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Morph manager: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Multi-base defense: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 445È¸ ½ÇÇà, Æò±Õ 0.42ms
+  Protoss counter: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Queen Manager: 445È¸ ½ÇÇà, Æò±Õ 0.22ms
+  Rogue Tactics: 56È¸ ½ÇÇà, Æò±Õ 0.06ms
+  Scouting: 445È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Spell manager: 445È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Strategy: 445È¸ ½ÇÇà, Æò±Õ 0.12ms
+  Transformer: 10È¸ ½ÇÇà, Æò±Õ 0.26ms
+  UnitFactory: 445È¸ ½ÇÇà, Æò±Õ 0.06ms
+  Upgrade manager: 445È¸ ½ÇÇà, Æò±Õ 0.16ms
+==================================================
+[WARNING] Economy error: Units.take() got an unexpected keyword argument 'allow_less'
+[CREEP] [476s] Tumors: 0, Farthest: 0 from base
+[EXPANSION DEFENSE] [476s] [OK] Expansion secured after 60s
+[EXPANSION] [477s] Trying to expand: 4th base MACRO (time: 477s, minerals: 35)
+[EXPANSION] [477s] Already 1 pending, max is 1
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[QUEEN DEFENSE] [482s] Queens defending! Air: 1, Ground: 0
+[EXPANSION] [483s] Trying to expand: 4th base MACRO (time: 483s, minerals: 35)
+[EXPANSION] [483s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION DEFENSE] [484s] [WARNING] Expansion under attack! 1 enemies detected
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [489s] Trying to expand: 4th base MACRO (time: 489s, minerals: 15)
+[EXPANSION] [489s] Cannot afford Hatchery (need 300 minerals)
+[AUTO TECH] [490s] Building Extractor #6
+[EXPANSION DEFENSE] [492s] [OK] Expansion secured after 58s
+[EXPANSION DEFENSE] [492s] [WARNING] Expansion under attack! 1 enemies detected
+[EXPANSION] [495s] Trying to expand: 4th base MACRO (time: 495s, minerals: 5)
+[EXPANSION] [495s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION DEFENSE] [496s] [OK] Expansion secured after 3s
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[AUTO TECH] [500s] Building Extractor #6
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[EXPANSION] [500s] Trying to expand: 4th base MACRO (time: 500s, minerals: 20)
+[EXPANSION] [500s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [506s] Trying to expand: 4th base MACRO (time: 506s, minerals: 10)
+[EXPANSION] [506s] Cannot afford Hatchery (need 300 minerals)
+[FORCE EXPAND] ¡Ú 5min with less than 4 bases - FORCING 4th! BUT cannot afford (minerals: 30/300) ¡Ú
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.126, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: ALL_IN
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[EXPANSION] [512s] Trying to expand: 4th base MACRO (time: 512s, minerals: 15)
+[EXPANSION] [512s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[AUTO TECH] [515s] Building Evolution Chamber
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[EXPANSION] [518s] Trying to expand: 4th base MACRO (time: 518s, minerals: 40)
+[EXPANSION] [518s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [524s] Trying to expand: 4th base MACRO (time: 524s, minerals: 5)
+[EXPANSION] [524s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [530s] Trying to expand: 4th base MACRO (time: 530s, minerals: 30)
+[EXPANSION] [530s] Cannot afford Hatchery (need 300 minerals)
+[DEBUG] Calling strategy_manager.update() at iteration 3000
+[TRAINING] Step reward: -0.340
+[EXPANSION] [536s] Trying to expand: 4th base MACRO (time: 536s, minerals: 35)
+[EXPANSION] [536s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0082
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[EXPANSION] [542s] Trying to expand: 4th base MACRO (time: 542s, minerals: 50)
+[EXPANSION] [542s] Cannot afford Hatchery (need 300 minerals)
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+
+[LOGIC ACTIVITY] °ÔÀÓ ½Ã°£: 542ÃÊ
+==================================================
+  AdvancedBuilding: 380È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Aggressive Strategies: 95È¸ ½ÇÇà, Æò±Õ 0.00ms
+  AggressiveTech: 380È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Combat: 380È¸ ½ÇÇà, Æò±Õ 0.15ms
+  Creep manager: 380È¸ ½ÇÇà, Æò±Õ 0.04ms
+  DefeatDetection: 380È¸ ½ÇÇà, Æò±Õ 0.06ms
+  Economy: 380È¸ ½ÇÇà, Æò±Õ 0.19ms
+  HierarchicalRL: 18È¸ ½ÇÇà, Æò±Õ 0.25ms
+  Intel: 380È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Micro: 380È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Morph manager: 380È¸ ½ÇÇà, Æò±Õ 0.00ms
+  Multi-base defense: 380È¸ ½ÇÇà, Æò±Õ 0.01ms
+  Production: 380È¸ ½ÇÇà, Æò±Õ 0.73ms
+  Protoss counter: 380È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Queen Manager: 380È¸ ½ÇÇà, Æò±Õ 0.43ms
+  Rogue Tactics: 48È¸ ½ÇÇà, Æò±Õ 0.12ms
+  Scouting: 380È¸ ½ÇÇà, Æò±Õ 0.03ms
+  Spell manager: 380È¸ ½ÇÇà, Æò±Õ 0.02ms
+  Strategy: 380È¸ ½ÇÇà, Æò±Õ 0.20ms
+  Transformer: 9È¸ ½ÇÇà, Æò±Õ 0.28ms
+  UnitFactory: 380È¸ ½ÇÇà, Æò±Õ 0.39ms
+  Upgrade manager: 380È¸ ½ÇÇà, Æò±Õ 0.03ms
+==================================================
+[EXPANSION] [548s] Trying to expand: 4th base MACRO (time: 548s, minerals: 50)
+[EXPANSION] [548s] Cannot afford Hatchery (need 300 minerals)
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.105, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: AGGRESSIVE
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[GAS OVERFLOW] [553s] Gas: 1560 - Spending excess gas
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[EXPANSION] [553s] Trying to expand: 4th base MACRO (time: 553s, minerals: 20)
+[EXPANSION] [553s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [559s] Trying to expand: 4th base MACRO (time: 559s, minerals: 40)
+[EXPANSION] [559s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [565s] Trying to expand: 4th base MACRO (time: 565s, minerals: 15)
+[EXPANSION] [565s] Cannot afford Hatchery (need 300 minerals)
+[CREEP] [566s] Tumors: 0, Farthest: 0 from base
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0078
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[GAS OVERFLOW] [571s] Gas: 1828 - Spending excess gas
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[EXPANSION] [571s] Trying to expand: 4th base MACRO (time: 571s, minerals: 45)
+[EXPANSION] [571s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [577s] Trying to expand: 4th base MACRO (time: 577s, minerals: 45)
+[EXPANSION] [577s] Cannot afford Hatchery (need 300 minerals)
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0080
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.05s
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[EXPANSION] [583s] Trying to expand: 4th base MACRO (time: 583s, minerals: 40)
+[EXPANSION] [583s] Cannot afford Hatchery (need 300 minerals)
+[EXPANSION] [589s] Trying to expand: 4th base MACRO (time: 589s, minerals: 20)
+[EXPANSION] [589s] Cannot afford Hatchery (need 300 minerals)
+[GAS OVERFLOW] [589s] Gas: 2096 - Spending excess gas
+[UNIT_FACTORY] vs Protoss: gas_ratio_target = 1.00
+[RESOURCE SURPLUS] Handled: {'tech_buildings_built': 0, 'lurkers_morphed': 0, 'banelings_morphed': 0, 'broodlords_morphed': 0, 'ravagers_morphed': 0}
+[RL_STATE] °ÔÀÓ »óÅÂ º¤ÅÍ (15Â÷¿ø):
+  ¹Ì³×¶ö: 0.010, °¡½º: 2.096
+  ¼­ÇÃ¶óÀÌ: 0.355/0.410
+  ÀÏ²Û: 0.480, À¯´Ö: 0.730, Àû À¯´Ö: 0.000
+  ±âÁö: 0.300, ½Ã°£: 0.589
+  Àû ±âÁö: 0.000, ¾÷±×·¹ÀÌµå: 0.100, ¶ó¹Ù: 0.250
+  ¸Ê Àå¾Ç: 0.500, ¾Æ±º HP: 0.210, Àû±º HP: 0.000
+[RL_DECISION] ¡Ú RLAgent °áÁ¤ (TRAINING): TECH (È®·ü: 0.089, ¥å=1.000) ¡Ú
+[RL_OVERRIDE] RL: TECH vs Rule: AGGRESSIVE
+[STRATEGY] ¡Ú¡Ú¡Ú RLAgent °áÁ¤ »ç¿ëµÊ: TECH ¡Ú¡Ú¡Ú
+[EXPANSION DEFENSE] [590s] [WARNING] Expansion under attack! 1 enemies detected
+17:53:44 - StrategyManager - WARNING - [591s] MAJOR ATTACK DETECTED! Threat score: 52, High-threat units: 4
+17:53:44 - StrategyManager - WARNING - [591s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - INFO - [591s] ¡Ú IMMORTAL DETECTED (2) - Ravager bile priority ¡Ú
+17:53:44 - StrategyManager - WARNING - [591s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [591s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [591s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [591s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [592s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [592s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [592s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:44 - StrategyManager - WARNING - [592s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [592s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [593s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [593s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [593s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [593s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0076
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.07s
+17:53:45 - StrategyManager - WARNING - [593s] DEFENSE MODE ACTIVATED - Major attack incoming!
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+17:53:45 - StrategyManager - WARNING - [593s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [594s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [594s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [594s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [594s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [594s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [595s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [595s] DEFENSE MODE ACTIVATED - Major attack incoming!
+[EXPANSION] [595s] Trying to expand: 4th base MACRO (time: 595s, minerals: 45)
+[EXPANSION] [595s] Cannot afford Hatchery (need 300 minerals)
+17:53:45 - StrategyManager - WARNING - [595s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [595s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [595s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [595s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [596s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [596s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [596s] MAJOR ATTACK DETECTED! Threat score: 92, High-threat units: 6
+17:53:45 - StrategyManager - WARNING - [596s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [596s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [596s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [596s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [597s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [597s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [597s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [597s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [597s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:45 - StrategyManager - WARNING - [598s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [598s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [598s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [598s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [598s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [598s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [599s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [599s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [599s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [599s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [599s] DEFENSE MODE ACTIVATED - Major attack incoming!
+17:53:46 - StrategyManager - WARNING - [600s] DEFENSE MODE ACTIVATED - Major attack incoming!
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\wicked_zerg_bot_pro_impl.py", line 348, in on_step
+    self.rl_agent.end_episode(game_won=False)
+TypeError: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+[AUTO SURRENDER] Game time limit reached (600s). Surrendering...
+[AUTO SURRENDER] Saving experience data before leaving...
+[AUTO SURRENDER] [FAILED] Failed to save experience: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+[BG_LEARNER] [ERROR] Archive error: [WinError 32] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÆÄÀÏÀ» »ç¿ë ÁßÀÌ±â ¶§¹®¿¡ ÇÁ·Î¼¼½º°¡ ¾×¼¼½º ÇÒ ¼ö ¾ø½À´Ï´Ù: 'D:\\Swarm-contol-in-sc2bot\\wicked_zerg_challenger\\local_training\\data\\buffer\\exp_20260125_173649_ep0.npz'
+[BG_LEARNER] [OK] Training complete!
+  - Loss: 0.0081
+  - Games trained: 1
+  - Adjusted LR: 0.001000
+  - Files archived: 0
+  - Processing time: 2.06s
+
+======================================================================
+? [BACKGROUND LEARNER] STATUS REPORT
+======================================================================
+? Training Statistics:
+  Files Processed:      0
+  Files Skipped (Old):  0
+  Batch Training Runs:  75
+  Total Samples:        1425
+  Average Loss:         0.0081
+  Last Loss:            0.0081
+  Last Adjusted LR:     0.001000
+
+? Directory Status:
+  Buffer Files:         1
+  Archived Files:       19
+  Max File Age:         60.0 min
+
+? System Status:
+  Active Workers:       0/1
+  Total Process Time:   154.51s
+  Errors:               0
+  Last Training:        2026-01-25 17:53:47
+======================================================================
+
+
+[BG_LEARNER] > Processing batch: 1 files available
+  [OK] Loaded: exp_20260125_173649_ep0.npz (Steps: 19, Reward: 129.90)
+[BG_LEARNER] ~ Training on 1 games (19 total steps)...
+[RL_AGENT] Model saved to D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\models\rl_agent_model.npz
+[32m2026-01-25 17:53:47.304[0m | [1mINFO    [0m | [36msc2.protocol[0m:[36m_execute[0m:[36m120[0m - [1mClient status changed to Status.launched (was Status.in_game)[0m
+[32m2026-01-25 17:53:47.306[0m | [1mINFO    [0m | [36msc2.sc2process[0m:[36m_close_connection[0m:[36m241[0m - [1mClosing connection at 55590...[0m
+[32m2026-01-25 17:53:47.306[0m | [1mINFO    [0m | [36msc2.sc2process[0m:[36mkill_all[0m:[36m36[0m - [1mkill_switch: Process cleanup for 2 processes[0m
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 358, in main
+    run_game(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 521, in run_game
+    result: Result = asyncio.run(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 365, in _host_game
+    result = await _play_game(players[0], client, realtime, portconfig, game_time_limit, rgb_render_config)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 225, in _play_game
+    result = await _play_game_ai(client, player_id, player.ai, realtime, game_time_limit)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 195, in _play_game_ai
+    await run_bot_iteration(iteration)  # Main bot loop
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 162, in run_bot_iteration
+    await ai._after_step()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\bot_ai_internal.py", line 814, in _after_step
+    await self.client._send_debug()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\client.py", line 666, in _send_debug
+    await self._execute(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\protocol.py", line 125, in _execute
+    raise ProtocolError(f"{response.error}")
+sc2.protocol.ProtocolError: ['Not in a game']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 530, in main
+    bot.ai.rl_agent.end_episode(game_won=False)
+TypeError: RLAgent.end_episode() got an unexpected keyword argument 'game_won'
+Traceback (most recent call last):
+  File "D:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\run_with_training.py", line 358, in main
+    run_game(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 521, in run_game
+    result: Result = asyncio.run(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 365, in _host_game
+    result = await _play_game(players[0], client, realtime, portconfig, game_time_limit, rgb_render_config)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 225, in _play_game
+    result = await _play_game_ai(client, player_id, player.ai, realtime, game_time_limit)
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 195, in _play_game_ai
+    await run_bot_iteration(iteration)  # Main bot loop
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\main.py", line 162, in run_bot_iteration
+    await ai._after_step()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\bot_ai_internal.py", line 814, in _after_step
+    await self.client._send_debug()
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\client.py", line 666, in _send_debug
+    await self._execute(
+  File "C:\Users\sun47\AppData\Local\Programs\Python\Python310\lib\site-packages\sc2\protocol.py", line 125, in _execute
+    raise ProtocolError(f"{response.error}")
+sc2.protocol.ProtocolError: ['Not in a game']

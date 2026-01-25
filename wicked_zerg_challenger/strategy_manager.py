@@ -16,6 +16,8 @@ Features:
 
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+import json
+from pathlib import Path
 from utils.logger import get_logger
 
 
@@ -132,6 +134,14 @@ class StrategyManager:
         self.rogue_tactics_active = False
         self.larva_saving_mode = False
 
+        # ★ 학습된 데이터 저장소 ★
+        self.learned_priorities = {}  # 전체 유닛 우선순위 (Drone, Overlord 포함)
+        self.learned_expansion_timings = {}  # 확장 타이밍
+        self.learned_army_ratios = {}  # 전투 유닛 비율만 (정규화됨)
+
+        # ★ 학습된 데이터 로드 및 적용 ★
+        self.load_learned_data()
+
     def update(self) -> None:
         """매 스텝마다 호출하여 전략 업데이트"""
         self._detect_enemy_race()
@@ -143,6 +153,161 @@ class StrategyManager:
         self._update_counter_build()  # 적 빌드에 따른 대응
         self._detect_direct_air_threat()  # ★ 직접 공중 유닛 감지 ★
         self._counter_protoss_units()  # ★ 프로토스 유닛 카운터 ★
+
+    def load_learned_data(self) -> None:
+        """
+        학습된 빌드 오더 데이터 로드 및 전략 적용
+
+        learned_build_orders.json에서 유닛 우선순위를 읽어와
+        1) 전체 우선순위 저장 (Drone, Overlord 등 포함)
+        2) 전투 유닛 비율만 추출하여 race_unit_ratios에 블렌딩
+        3) 확장 타이밍 저장
+        """
+        try:
+            # 파일 경로 설정 (local_training/scripts/learned_build_orders.json)
+            script_dir = Path(__file__).parent
+            file_path = script_dir / "local_training" / "scripts" / "learned_build_orders.json"
+
+            if not file_path.exists():
+                self.logger.warning(f"[LEARNING] Learned data file not found: {file_path}")
+                return
+
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            priorities = data.get("unit_priorities", {})
+            if not priorities:
+                return
+
+            # ★★★ 1. 전체 우선순위 저장 (economy/macro 분석용) ★★★
+            self.learned_priorities = priorities.copy()
+
+            # 확장 타이밍 저장
+            self.learned_expansion_timings = data.get("expansion_timings", {})
+
+            # ★★★ 2. 학습된 기본기 분석 및 로깅 ★★★
+            drone_prio = priorities.get("Drone", 0)
+            overlord_prio = priorities.get("Overlord", 0)
+            queen_prio = priorities.get("Queen", 0)
+            zergling_prio = priorities.get("Zergling", 0)
+
+            self.logger.info("=" * 60)
+            self.logger.info("[LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis")
+            self.logger.info("=" * 60)
+            self.logger.info(f"Economy Priority (Drone):     {drone_prio:.2%}")
+            self.logger.info(f"Supply Priority (Overlord):   {overlord_prio:.2%}")
+            self.logger.info(f"Macro Priority (Queen):       {queen_prio:.2%}")
+            self.logger.info(f"Defense Priority (Zergling):  {zergling_prio:.2%}")
+
+            if self.learned_expansion_timings:
+                self.logger.info("-" * 60)
+                self.logger.info("[LEARNING] Learned Expansion Timings:")
+                for key, timing in self.learned_expansion_timings.items():
+                    self.logger.info(f"  {key}: {timing:.1f}s")
+
+            self.logger.info("=" * 60)
+
+            # ★★★ 3. 전투 유닛만 필터링하여 race_unit_ratios 블렌딩 ★★★
+            # JSON 키는 대문자(Capitalized), StrategyManager는 소문자 키 사용
+            combat_units = {
+                "Zergling", "Roach", "Hydra", "Hydralisk", "Mutalisk", "Baneling",
+                "Ravager", "Corruptor", "Infestor", "Viper", "Ultralisk", "Broodlord",
+                "Lurker", "LurkerMP", "Queen"
+            }
+
+            learned_army_ratios = {}
+            total_weight = 0.0
+
+            for unit_name, weight in priorities.items():
+                if unit_name in combat_units and weight > 0:
+                    # 키 정규화 (소문자, 별칭 처리)
+                    key = unit_name.lower()
+                    if key == "hydralisk": key = "hydra"
+                    if key == "lurker" or key == "lurkermp": key = "lurker"
+
+                    learned_army_ratios[key] = weight
+                    total_weight += weight
+
+            if total_weight > 0:
+                # 정규화 (비율 합이 1이 되도록)
+                for k in learned_army_ratios:
+                    learned_army_ratios[k] /= total_weight
+
+                self.learned_army_ratios = learned_army_ratios
+
+                self.logger.info(f"[LEARNING] Normalized army composition: {learned_army_ratios}")
+
+                # 기존 전략에 반영 (블렌딩)
+                # 학습된 데이터에서 비중이 높은 유닛(>10%)을 기존 전략에 섞음
+                for race in self.race_unit_ratios:
+                    for phase in self.race_unit_ratios[race]:
+                        original = self.race_unit_ratios[race][phase]
+
+                        updated = False
+                        for unit, ratio in learned_army_ratios.items():
+                            # 유의미한 비중이 있는 경우만 반영
+                            if ratio > 0.10:
+                                if unit in original:
+                                    # 기존 값과 평균 (가중치: 기존 0.6, 학습 0.4)
+                                    original[unit] = (original[unit] * 0.6) + (ratio * 0.4)
+                                    updated = True
+                                else:
+                                    # 새로운 유닛 추가 (낮은 가중치로 시작)
+                                    original[unit] = ratio * 0.5
+                                    updated = True
+
+                        # 다시 정규화
+                        if updated:
+                            total = sum(original.values())
+                            if total > 0:
+                                for u in original:
+                                    original[u] /= total
+
+                self.logger.info("[LEARNING] [OK] Successfully integrated learned data into strategies")
+
+        except Exception as e:
+            self.logger.error(f"[LEARNING] [FAILED] Failed to load learned data: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def get_learned_economy_weight(self) -> float:
+        """
+        학습된 경제 우선순위 반환 (0.0 ~ 1.0)
+
+        Returns:
+            Drone 우선순위 (높을수록 economy 중시)
+        """
+        return self.learned_priorities.get("Drone", 0.0)
+
+    def get_learned_supply_weight(self) -> float:
+        """
+        학습된 보급 우선순위 반환 (0.0 ~ 1.0)
+
+        Returns:
+            Overlord 우선순위 (높을수록 supply 여유 중시)
+        """
+        return self.learned_priorities.get("Overlord", 0.0)
+
+    def get_learned_queen_weight(self) -> float:
+        """
+        학습된 퀸 우선순위 반환 (0.0 ~ 1.0)
+
+        Returns:
+            Queen 우선순위 (높을수록 macro/defense 중시)
+        """
+        return self.learned_priorities.get("Queen", 0.0)
+
+    def get_learned_expansion_timing(self, base_number: str) -> float:
+        """
+        학습된 확장 타이밍 반환
+
+        Args:
+            base_number: "second_base", "third_base", "fourth_base"
+
+        Returns:
+            확장 타이밍 (초 단위), 없으면 0.0
+        """
+        return self.learned_expansion_timings.get(base_number, 0.0)
 
     def _detect_enemy_race(self) -> None:
         """상대 종족 감지"""

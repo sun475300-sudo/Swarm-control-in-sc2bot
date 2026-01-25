@@ -141,16 +141,42 @@ class AggressiveStrategyExecutor:
         if game_time < 30:
             return AggressiveStrategyType.NONE
 
+        import random
+        roll = random.random()
+
+        # 50% Chance: Standard Macro (No Aggressive Strategy)
+        if roll < 0.5:
+            self.active_strategy = AggressiveStrategyType.NONE
+            print(f"[STRATEGY] Selected: STANDARD MACRO (Safe Play)")
+            self._strategy_decided = True
+            return self.active_strategy
+
+        # 50% Chance: Special Tactics (Aggressive or Cheese)
+        
         # 종족별 전략 선택
         if "Terran" in enemy_race:
-            # 테란 상대: 맹독충 올인 (서플라이 벽 파괴)
-            self.active_strategy = AggressiveStrategyType.BANELING_BUST
+            # 테란 상대: 맹독충 올인 / 궤멸충 러시
+            if random.random() < 0.5:
+                self.active_strategy = AggressiveStrategyType.BANELING_BUST
+            else:
+                self.active_strategy = AggressiveStrategyType.RAVAGER_RUSH
+                
         elif "Protoss" in enemy_race:
-            # 프로토스 상대: 궤멸충 러시 (역장 파괴)
-            self.active_strategy = AggressiveStrategyType.RAVAGER_RUSH
+            # 프로토스 상대: 궤멸충 러시 / 땅굴망 / 12풀
+            r = random.random()
+            if r < 0.4:
+                self.active_strategy = AggressiveStrategyType.RAVAGER_RUSH
+            elif r < 0.7:
+                 self.active_strategy = AggressiveStrategyType.NYDUS_ALLIN
+            else:
+                 self.active_strategy = AggressiveStrategyType.TWELVE_POOL
+                 
         elif "Zerg" in enemy_race:
-            # 저그 상대: 12풀 저글링 러시
-            self.active_strategy = AggressiveStrategyType.TWELVE_POOL
+            # 저그 상대: 12풀 / 맹독충 올인
+            if random.random() < 0.6:
+                self.active_strategy = AggressiveStrategyType.TWELVE_POOL
+            else:
+                self.active_strategy = AggressiveStrategyType.BANELING_BUST
         else:
             # 알 수 없는 상대: 12풀
             self.active_strategy = AggressiveStrategyType.TWELVE_POOL
@@ -184,6 +210,13 @@ class AggressiveStrategyExecutor:
                 await self._execute_proxy_hatch()
             elif self.active_strategy == AggressiveStrategyType.NYDUS_ALLIN:
                 await self._execute_nydus_allin()
+            elif self.active_strategy == AggressiveStrategyType.OVERLORD_DROP:
+                await self._execute_overlord_drop()
+
+            # ★★★ 새로운 견제 시스템 (전략과 무관하게 항상 실행) ★★★
+            # 멀티 견제 (3분 이후)
+            if self.bot.time > 180:
+                await self._execute_multi_harass()
         except Exception as e:
             if iteration % 200 == 0:
                 print(f"[WARNING] Aggressive strategy error: {e}")
@@ -627,4 +660,184 @@ class AggressiveStrategyExecutor:
             "ravagers_ready": self._ravagers_ready,
             "proxy_location": str(self._proxy_location) if self._proxy_location else None,
             "nydus_built": self._nydus_built,
+            "overlord_drop_active": self._overlord_drop_active,
         }
+
+    # ========== ★★★ 대군주 드랍 견제 (NEW) ★★★ ==========
+    async def _execute_overlord_drop(self) -> None:
+        """
+        ★ 대군주 드랍 견제 실행 ★
+
+        타이밍:
+        - 3분: Ventral Sacs 업그레이드 시작
+        - 4분: 저글링 8마리 + 대군주 2기로 드랍 시작
+
+        목표:
+        - 상대 멀티 일꾼 라인 공격
+        - 테크 건물 파괴
+        """
+        config = self.strategy_configs[AggressiveStrategyType.OVERLORD_DROP]
+        game_time = getattr(self.bot, "time", 0)
+
+        # 1. Ventral Sacs 업그레이드 (배주머니)
+        if game_time >= config["ventral_sacs_timing"] and not hasattr(self, "_ventral_sacs_started"):
+            # Lair가 있어야 함
+            if self.bot.structures(UnitTypeId.LAIR).ready.exists or self.bot.structures(UnitTypeId.HIVE).ready.exists:
+                if self.bot.can_afford(UpgradeId.OVERLORDSPEED):  # Ventral Sacs는 UpgradeId가 다름
+                    # 업그레이드 시작 (정확한 ability ID 필요)
+                    try:
+                        lairs = self.bot.structures(UnitTypeId.LAIR).ready
+                        if lairs:
+                            # OVERLORDSPEED는 pneumatized sacs (이동속도)
+                            # Ventral sacs는 OVERLORDTRANSPORT
+                            self.bot.do(lairs.first.research(UpgradeId.OVERLORDTRANSPORT))
+                            self._ventral_sacs_started = True
+                            print(f"[OVERLORD DROP] Ventral Sacs upgrade started!")
+                    except Exception as e:
+                        pass
+
+        # 2. 드랍용 대군주 지정
+        if game_time >= config["drop_timing"] and not self._overlord_drop_active:
+            overlords = self.bot.units(UnitTypeId.OVERLORD)
+            if overlords.amount >= config["drop_overlord_count"]:
+                # 2기 선택
+                for i, ol in enumerate(overlords[:config["drop_overlord_count"]]):
+                    self._drop_overlords.add(ol.tag)
+
+                self._overlord_drop_active = True
+                print(f"[OVERLORD DROP] {len(self._drop_overlords)} Overlords designated for drop!")
+
+        # 3. 저글링 탑승 및 드랍 실행
+        if self._overlord_drop_active:
+            await self._execute_drop_attack()
+
+    async def _execute_drop_attack(self) -> None:
+        """드랍 공격 실행"""
+        if not self.bot.enemy_start_locations:
+            return
+
+        # 드랍용 대군주 확인
+        drop_overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in(self._drop_overlords)
+        if not drop_overlords:
+            return
+
+        # 저글링 확인
+        zerglings = self.bot.units(UnitTypeId.ZERGLING)
+        
+        # 목표: 적 멀티 (자연 확장)
+        enemy_base = self.bot.enemy_start_locations[0]
+        # 적 본진 안쪽으로 조금 더 들어가서 드랍
+        drop_target = enemy_base.towards(self.bot.game_info.map_center, -5)
+
+        for overlord in drop_overlords:
+            # 탑승한 유닛 수 확인
+            cargo = getattr(overlord, "cargo_used", 0) # cargo_left가 아니라 cargo_used
+            max_cargo = 8  # 대군주 최대 탑승 8
+
+            # 1. 아직 탑승 안했으면 저글링 탑승
+            if cargo < max_cargo:
+                # 대군주 근처의 저글링 찾기
+                nearby_lings = zerglings.closer_than(10, overlord)
+                if nearby_lings.exists:
+                    # 빈 공간만큼 태우기
+                    slots_free = max_cargo - cargo
+                    for ling in nearby_lings[:slots_free]:
+                        try:
+                            # LOAD 명령: 대군주가 유닛을 태우도록 명령 (AbilityId.LOAD)
+                            # 또는 유닛이 대군주에 타도록 (AbilityId.SMART)
+                            # 여기서는 대군주가 태우는 방식 사용
+                            self.bot.do(overlord(AbilityId.LOAD, ling))
+                        except Exception:
+                            pass
+                else:
+                    # 근처에 저글링이 없으면 저글링들에게 대군주로 모이라고 명령
+                    available_lings = zerglings.idle
+                    if available_lings.exists:
+                        # 3마리씩 호출
+                        for ling in available_lings[:3]:
+                             self.bot.do(ling.move(overlord.position))
+            
+            # 2. 꽉 찼거나 적당히 찼으면 드랍 위치로 이동
+            elif cargo > 0:
+                if overlord.distance_to(drop_target) > 4:
+                    # 이동 (무브 커맨드)
+                    # 적 대공 방어 피하기 위해 could add pathing here, but simple move for now
+                    self.bot.do(overlord(AbilityId.MOVE, drop_target))
+                else:
+                    # 3. 도착 시 하역 (UNLOAD)
+                    try:
+                        # 특정 위치에 모두 하역
+                        self.bot.do(overlord(AbilityId.UNLOADALLAT, drop_target))
+                        print(f"[DROP] Unloading units at {drop_target}")
+                    except Exception as e:
+                        print(f"[DROP] Unload failed: {e}")
+            
+        # 드랍된 유닛 제어는 별도 로직이나 기본 공격 로직이 처리할 것임
+
+    # ========== ★★★ 멀티 견제 시스템 (NEW) ★★★ ==========
+    async def _execute_multi_harass(self) -> None:
+        """
+        ★ 멀티 견제 시스템 ★
+
+        전략:
+        1. 상대 확장 위치 감지
+        2. 저글링 4-6마리를 상대 멀티로 보내서 일꾼 견제
+        3. 지속적으로 순환 견제 (멀티1 → 멀티2 → 멀티1)
+
+        타이밍:
+        - 3분 이후부터 지속
+        - 30초마다 새로운 견제 유닛 파견
+        """
+        game_time = getattr(self.bot, "time", 0)
+
+        # 쿨다운 체크 (30초마다)
+        if not hasattr(self, "_last_multi_harass"):
+            self._last_multi_harass = 0
+
+        if game_time - self._last_multi_harass < 30:
+            return  # 아직 쿨다운
+
+        self._last_multi_harass = game_time
+
+        # 저글링 4-6마리 선택 (idle 또는 방어 중인 유닛)
+        zerglings = self.bot.units(UnitTypeId.ZERGLING).idle
+        if not zerglings or zerglings.amount < 4:
+            # idle이 없으면 전체에서 선택
+            zerglings = self.bot.units(UnitTypeId.ZERGLING)
+            if not zerglings or zerglings.amount < 4:
+                return
+
+        # 견제 유닛 선택 (4-6마리)
+        harass_lings = zerglings.take(min(6, zerglings.amount))
+
+        # 목표: 적 확장 위치 (자연 확장 우선)
+        enemy_expansions = []
+
+        # 적 건물이 있는 확장 찾기
+        if hasattr(self.bot, "enemy_structures"):
+            for structure in self.bot.enemy_structures:
+                if structure.is_structure:
+                    # 타운홀 확인
+                    if structure.type_id in [UnitTypeId.COMMANDCENTER, UnitTypeId.NEXUS, UnitTypeId.HATCHERY]:
+                        enemy_expansions.append(structure.position)
+
+        # 적 확장이 없으면 예상 위치로
+        if not enemy_expansions and hasattr(self.bot, "enemy_start_locations"):
+            enemy_base = self.bot.enemy_start_locations[0]
+            map_center = self.bot.game_info.map_center
+            # 자연 확장 예상 위치
+            natural_pos = enemy_base.towards(map_center, 8)
+            enemy_expansions.append(natural_pos)
+
+        if not enemy_expansions:
+            return
+
+        # 견제 목표: 가장 가까운 적 확장
+        target = min(enemy_expansions, key=lambda pos: harass_lings.center.distance_to(pos))
+
+        # 견제 명령
+        for ling in harass_lings:
+            self.bot.do(ling.attack(target))
+            self._rush_units.add(ling.tag)
+
+        print(f"[MULTI HARASS] [{int(game_time)}s] Sending {harass_lings.amount} Zerglings to harass enemy expansion!")

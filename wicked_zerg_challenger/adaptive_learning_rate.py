@@ -91,7 +91,7 @@ class AdaptiveLearningRate:
                 # 학습률 증가 (더 공격적으로 학습)
                 new_lr = self._increase_learning_rate()
                 if new_lr:
-                    print(f"[ADAPTIVE_LR] ✓ 승률 개선! ({recent_avg:.1%}) - 학습률 증가: {self.learning_rate:.6f}")
+                    print(f"[ADAPTIVE_LR] [OK] 승률 개선! ({recent_avg:.1%}) - 학습률 증가: {self.learning_rate:.6f}")
                     self._save_stats()
                     return new_lr
 
@@ -103,7 +103,7 @@ class AdaptiveLearningRate:
                 if self.games_without_improvement >= self.patience:
                     new_lr = self._decrease_learning_rate()
                     if new_lr:
-                        print(f"[ADAPTIVE_LR] ⚠ {self.patience}게임 개선 없음 - 학습률 감소: {self.learning_rate:.6f}")
+                        print(f"[ADAPTIVE_LR] [WARNING] {self.patience}게임 개선 없음 - 학습률 감소: {self.learning_rate:.6f}")
                         self.games_without_improvement = 0
                         self._save_stats()
                         return new_lr
