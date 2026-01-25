@@ -1,6 +1,10 @@
 {
-  "enemy_race_name": "Terran",
-  "enemy_unit_counts": {},
+  "enemy_race_name": "Zerg",
+  "enemy_unit_counts": {
+    "OVERSEER": 2,
+    "ROACH": 2,
+    "ZERGLING": 1
+  },
   "enemy_tech_buildings": [],
   "scouted_locations": [
     [
@@ -12,12 +16,20 @@
       55.5
     ],
     [
+      141.5,
+      65.5
+    ],
+    [
       36.5,
       55.5
     ],
     [
       35.5,
       93.5
+    ],
+    [
+      38.5,
+      122.5
     ],
     [
       127.5,
@@ -74,6 +86,10 @@
     [
       35.5,
       28.5
+    ],
+    [
+      114.5,
+      25.5
     ],
     [
       33.5,

@@ -13,6 +13,7 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 """
 
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -174,6 +175,9 @@ class RLAgent:
         self.reward_std = 1.0
         self.reward_count = 0
 
+        # ★★★ FIX: Reward buffer for dimension matching ★★★
+        self.reward_buffer: float = 0.0  # Accumulate rewards between state samples
+
         self.action_labels = ["ECONOMY", "AGGRESSIVE", "DEFENSIVE", "TECH", "ALL_IN"]
 
         self._load_model()
@@ -213,11 +217,21 @@ class RLAgent:
             self.actions.append(action_idx)
             self.caches.append(cache)
 
+            # ★★★ FIX: Store accumulated reward from buffer ★★★
+            self.rewards.append(self.reward_buffer)
+            self.reward_buffer = 0.0  # Reset buffer after storing
+
         return action_idx, self.action_labels[action_idx], float(probs[action_idx])
 
     def update_reward(self, reward: float) -> None:
-        """보상 업데이트"""
-        self.rewards.append(reward)
+        """
+        보상 업데이트
+
+        ★★★ FIX: Accumulate to buffer instead of appending to list ★★★
+        Rewards are stored only when get_action() is called (state/action sampling)
+        This ensures dimension matching: len(states) == len(actions) == len(rewards)
+        """
+        self.reward_buffer += reward  # Accumulate to buffer
         self.total_reward += reward
 
     def end_episode(self, final_reward: float = 0.0, save_experience: bool = True) -> Dict[str, float]:
@@ -456,10 +470,20 @@ class RLAgent:
                 episode_count=np.array([self.episode_count])
             )
             
-            # Atomic rename
+            # ★★★ FIX: Atomic rename with Windows compatibility ★★★
             if tmp_path.exists():
-                tmp_path.replace(save_path)
-                
+                try:
+                    # Remove old file first on Windows (replace() can fail silently)
+                    if save_path.exists():
+                        save_path.unlink()
+                    # Use shutil.move() for cross-platform compatibility
+                    shutil.move(str(tmp_path), str(save_path))
+                except Exception as move_error:
+                    # Fallback: copy + delete
+                    print(f"[RL_AGENT] Move failed, trying copy: {move_error}")
+                    shutil.copy(str(tmp_path), str(save_path))
+                    tmp_path.unlink()
+
             print(f"[RL_AGENT] Model saved to {save_path}")
             return True
         except Exception as e:
