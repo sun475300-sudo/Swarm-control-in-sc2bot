@@ -1,0 +1,671 @@
+{
+  "version": "1.0",
+  "description": "WickedZergBot Commander Knowledge Base",
+  "build_orders": {
+    "STANDARD_12POOL": {
+      "name": "Standard 12 Pool",
+      "description": "Standard 12 Pool, 14 Hatch, 14 Gas opener",
+      "steps": [
+        {
+          "supply": 12,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "12 Pool"
+        },
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 14,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "14 Hatchery"
+        },
+        {
+          "supply": 14,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "14 Gas"
+        },
+        {
+          "supply": 16,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "16 Queen"
+        },
+        {
+          "supply": 16,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "16 Zergling x2"
+        },
+        {
+          "supply": 18,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "18 Overlord"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "20 Queen (Natural)"
+        },
+        {
+          "supply": 22,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "22 Overlord"
+        }
+      ]
+    },
+    "SAFE_14POOL": {
+      "name": "Safe 14 Pool",
+      "description": "Safe 14 Pool, 16 Hatch (Defensive)",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 14,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "14 Pool"
+        },
+        {
+          "supply": 16,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "16 Hatchery"
+        },
+        {
+          "supply": 15,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "15 Gas"
+        },
+        {
+          "supply": 17,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "17 Queen"
+        },
+        {
+          "supply": 18,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "18 Zergling"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "20 Overlord"
+        }
+      ]
+    },
+    "AGGRESSIVE_10POOL": {
+      "name": "Aggressive 10 Pool",
+      "description": "10 Pool Speedling Rush",
+      "steps": [
+        {
+          "supply": 10,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "10 Pool"
+        },
+        {
+          "supply": 10,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "10 Gas"
+        },
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 14,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "14 Queen"
+        },
+        {
+          "supply": 14,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "14 Zergling"
+        },
+        {
+          "supply": 16,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "16 Zergling"
+        },
+        {
+          "supply": 18,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "18 Hatchery (Late)"
+        }
+      ]
+    },
+    "ECONOMY_15HATCH": {
+      "name": "Economy 15 Hatch",
+      "description": "15 Hatchery First (Greedy)",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 15,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "15 Hatchery"
+        },
+        {
+          "supply": 16,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "16 Pool"
+        },
+        {
+          "supply": 17,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "17 Gas"
+        },
+        {
+          "supply": 18,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "18 Queen"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "20 Overlord"
+        }
+      ]
+    },
+    "ROACH_RUSH": {
+      "name": "Roach Rush",
+      "description": "19 Roach Warren Rush",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 16,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "16 Hatchery"
+        },
+        {
+          "supply": 18,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "18 Gas"
+        },
+        {
+          "supply": 17,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "17 Pool"
+        },
+        {
+          "supply": 19,
+          "action": "build",
+          "unit_type": "ROACHWARREN",
+          "description": "19 Roach Warren"
+        },
+        {
+          "supply": 19,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "19 Overlord"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "20 Queen"
+        },
+        {
+          "supply": 22,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "22 Zergling"
+        },
+        {
+          "supply": 24,
+          "action": "train",
+          "unit_type": "ROACH",
+          "description": "24 Roach"
+        },
+        {
+          "supply": 26,
+          "action": "train",
+          "unit_type": "ROACH",
+          "description": "26 Roach"
+        }
+      ]
+    },
+    "MUTALISK_RUSH": {
+      "name": "Mutalisk Rush",
+      "description": "Two Base Mutalisk (Fast Spire)",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 16,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "16 Hatchery"
+        },
+        {
+          "supply": 15,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "15 Gas"
+        },
+        {
+          "supply": 16,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "16 Pool"
+        },
+        {
+          "supply": 17,
+          "action": "build",
+          "unit_type": "ROACHWARREN",
+          "description": "17 Roach Warren (Safe)"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "20 Queen"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "20 Zergling"
+        },
+        {
+          "supply": 31,
+          "action": "build",
+          "unit_type": "LAIR",
+          "description": "31 Lair"
+        },
+        {
+          "supply": 33,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "33 Gas (2nd)"
+        },
+        {
+          "supply": 33,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "33 Gas (3rd)"
+        },
+        {
+          "supply": 40,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "40 Overlord"
+        },
+        {
+          "supply": 42,
+          "action": "build",
+          "unit_type": "SPIRE",
+          "description": "42 Spire"
+        }
+      ]
+    },
+    "HYDRA_TIMING": {
+      "name": "Hydra Timing",
+      "description": "Hydralisk Timing Push",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 16,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "16 Hatchery"
+        },
+        {
+          "supply": 16,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "16 Pool"
+        },
+        {
+          "supply": 17,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "17 Gas"
+        },
+        {
+          "supply": 21,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "21 Queen"
+        },
+        {
+          "supply": 32,
+          "action": "build",
+          "unit_type": "LAIR",
+          "description": "32 Lair"
+        },
+        {
+          "supply": 34,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "34 Gas (2nd)"
+        },
+        {
+          "supply": 44,
+          "action": "build",
+          "unit_type": "HYDRALISKDEN",
+          "description": "44 Hydra Den"
+        },
+        {
+          "supply": 46,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "46 Overlord"
+        }
+      ]
+    },
+    "LURKER_DEFENSE": {
+      "name": "Lurker Defense",
+      "description": "Lurker Contain",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 16,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "16 Hatchery"
+        },
+        {
+          "supply": 16,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "16 Pool"
+        },
+        {
+          "supply": 17,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "17 Gas"
+        },
+        {
+          "supply": 28,
+          "action": "build",
+          "unit_type": "ROACHWARREN",
+          "description": "28 Roach Warren"
+        },
+        {
+          "supply": 32,
+          "action": "build",
+          "unit_type": "LAIR",
+          "description": "32 Lair"
+        },
+        {
+          "supply": 35,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "35 Gas (2nd)"
+        },
+        {
+          "supply": 45,
+          "action": "build",
+          "unit_type": "HYDRALISKDEN",
+          "description": "45 Hydra Den"
+        },
+        {
+          "supply": 55,
+          "action": "build",
+          "unit_type": "LURKERDENMP",
+          "description": "55 Lurker Den"
+        }
+      ]
+    }
+  },
+  "unit_ratios": {
+    "Terran": {
+      "early": {
+        "ZERGLING": 0.3,
+        "ROACH": 0.4,
+        "BANELING": 0.3
+      },
+      "mid": {
+        "ZERGLING": 0.2,
+        "ROACH": 0.3,
+        "HYDRALISK": 0.2,
+        "MUTALISK": 0.3
+      },
+      "late": {
+        "ZERGLING": 0.1,
+        "ROACH": 0.2,
+        "HYDRALISK": 0.3,
+        "MUTALISK": 0.4
+      }
+    },
+    "Protoss": {
+      "early": {
+        "ZERGLING": 0.3,
+        "ROACH": 0.3,
+        "RAVAGER": 0.3,
+        "QUEEN": 0.1
+      },
+      "mid": {
+        "ROACH": 0.15,
+        "RAVAGER": 0.2,
+        "HYDRALISK": 0.4,
+        "CORRUPTOR": 0.25
+      },
+      "late": {
+        "HYDRALISK": 0.35,
+        "CORRUPTOR": 0.3,
+        "RAVAGER": 0.15,
+        "INFESTOR": 0.2
+      }
+    },
+    "Zerg": {
+      "early": {
+        "ZERGLING": 0.5,
+        "BANELING": 0.5
+      },
+      "mid": {
+        "ZERGLING": 0.3,
+        "ROACH": 0.2,
+        "BANELING": 0.3,
+        "MUTALISK": 0.2
+      },
+      "late": {
+        "ZERGLING": 0.2,
+        "ROACH": 0.2,
+        "HYDRALISK": 0.2,
+        "MUTALISK": 0.4
+      }
+    }
+  },
+  "timings": {
+    "expansion": {
+      "second_base": 60,
+      "third_base": 90,
+      "fourth_base": 150,
+      "fifth_base": 210,
+      "sixth_base": 270,
+      "seventh_base": 330,
+      "description": "ULTRA-FAST expansion strategy - 1min natural, 1.5min 3rd base"
+    },
+    "tech": {
+      "EVOLUTIONCHAMBER": 150,
+      "LAIR": 240,
+      "HIVE": 600,
+      "ROACHWARREN": 180,
+      "HYDRALISKDEN": 240,
+      "SPIRE": 300,
+      "LURKERDENMP": 360,
+      "description": "Tech timings based on aggressive macro play"
+    },
+    "economy": {
+      "first_extractor": 80,
+      "second_extractor": 140,
+      "extractors_per_base": 2,
+      "workers_per_base": 16,
+      "workers_on_gas": 6,
+      "description": "Economy settings for fast tech and army production"
+    }
+  },
+  "map_strategies": {
+    "Small": {
+      "default_build": "ROACH_RUSH",
+      "description": "Small map -> Aggressive Rush"
+    },
+    "Large": {
+      "default_build": "ECONOMY_15HATCH",
+      "description": "Large map -> Macro Game"
+    },
+    "Default": {
+      "default_build": "SAFE_14POOL",
+      "description": "Unknown map -> Defensive Play"
+    }
+  },
+  "counter_rules": {
+    "VOIDRAY": {
+      "unit": "HYDRALISK",
+      "ratio": 0.4,
+      "description": "Hydras counter Void Rays"
+    },
+    "BATTLECRUISER": {
+      "unit": "CORRUPTOR",
+      "ratio": 0.4,
+      "description": "Corruptors hunt BCs"
+    },
+    "COLOSSUS": {
+      "unit": "CORRUPTOR",
+      "ratio": 0.3,
+      "description": "Corruptors snipe Colossus"
+    },
+    "IMMORTAL": {
+      "unit": "ZERGLING",
+      "ratio": 0.5,
+      "description": "Lings surround Immortals"
+    },
+    "MARINE": {
+      "unit": "BANELING",
+      "ratio": 0.3,
+      "description": "Banelings splash Marines"
+    },
+    "SIEGETANK": {
+      "unit": "MUTALISK",
+      "ratio": 0.3,
+      "description": "Mutas harass Tanks"
+    }
+  },
+  "micro_settings": {
+    "kite_range": {
+      "ROACH": 4.5,
+      "HYDRALISK": 6.0,
+      "MUTALISK": 3.0
+    },
+    "target_priorities": {
+      "SIEGETANK": 10,
+      "COLOSSUS": 9,
+      "HIGHTEMPLAR": 9,
+      "INFESTOR": 9,
+      "VIPER": 8,
+      "VOIDRAY": 7
+    }
+  },
+  "map_statistics": {
+    "Test_Map": {
+      "wins": 3,
+      "losses": 2,
+      "games": 5,
+      "winrate": 60.0
+    }
+  },
+  "learned_timings": {
+    "expansion_avg": {
+      "base_2": {
+        "avg": 60.0,
+        "min": 60.0,
+        "max": 60.0,
+        "samples": 5
+      },
+      "base_3": {
+        "avg": 90.0,
+        "min": 90.0,
+        "max": 90.0,
+        "samples": 5
+      }
+    },
+    "tech_avg": {
+      "EVOLUTIONCHAMBER": {
+        "avg": 150.0,
+        "min": 150.0,
+        "max": 150.0,
+        "samples": 5
+      },
+      "LAIR": {
+        "avg": 240.0,
+        "min": 240.0,
+        "max": 240.0,
+        "samples": 5
+      }
+    }
+  },
+  "expansion_patterns": {
+    "winning_pattern": {
+      "avg_bases_at_10min": 2,
+      "avg_2nd_base_timing": 60.0,
+      "avg_3rd_base_timing": 90.0,
+      "samples": 3
+    }
+  },
+  "learned_builds": {
+    "successful_patterns": []
+  },
+  "engagement_statistics": {
+    "total_engagements": 5,
+    "avg_supply_lost_per_engagement": 15.0,
+    "total_games_analyzed": 5
+  }
+}

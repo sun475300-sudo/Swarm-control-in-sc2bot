@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import json
 from pathlib import Path
 from utils.logger import get_logger
-
+from knowledge_manager import KnowledgeManager # NEW
 
 class GamePhase(Enum):
     """게임 페이즈"""
@@ -48,17 +48,19 @@ class EnemyRace(Enum):
 
 class StrategyManager:
     """
-    종족별 전략 및 Emergency Mode 관리자
-
+    종족별 전략 및 Emergency Mode 관리자 (Data-Driven)
+    
     Features:
-    - 상대 종족에 따른 유닛 비율 조정
+    - 상대 종족에 따른 유닛 비율 조정 (Json Load)
     - 러시/치즈 감지 및 긴급 대응
     - Rogue Tactics 연동
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot, blackboard=None): # Added blackboard
         self.bot = bot
+        self.blackboard = blackboard # Store blackboard
         self.logger = get_logger("StrategyManager")
+        self.knowledge_manager = KnowledgeManager() # Initialize
 
         # 전략 상태
         self.current_mode = StrategyMode.NORMAL
@@ -74,56 +76,34 @@ class StrategyManager:
         self.rush_detection_threshold = 150.0  # 2:30 이전 공격 = 러시
         self.cheese_detection_threshold = 120.0  # 2분 이전 공격 = 치즈
 
-        # ★★★ 로그 스팸 방지 ★★★
+        # 로그 스팸 방지
         self.last_air_threat_log = 0
         self.last_major_attack_log = 0
-        self.last_high_templar_log = 0  # 하이템플러/아콘 로그 쿨다운
-        self.last_disruptor_log = 0  # 디스럽터 로그 쿨다운
-        self.log_cooldown = 5.0  # 5초마다만 로그
+        self.last_high_templar_log = 0
+        self.last_disruptor_log = 0
+        self.log_cooldown = 5.0
 
-        # ★★★ 4분 이전 견제 시스템 ★★★
+        # 4분 이전 견제 시스템
         self.early_harassment_active = False
         self.last_harassment_time = 0
-        self.harassment_interval = 30.0  # 30초마다 견제
+        self.harassment_interval = 30.0
 
-        # 종족별 유닛 비율 (ZERGLING, ROACH, HYDRA, MUTALISK, BANELING, RAVAGER, CORRUPTOR)
+        # ★ Load Unit Ratios from KnowledgeManager ★
         self.race_unit_ratios = {
-            EnemyRace.TERRAN: {
-                GamePhase.EARLY: {"zergling": 0.3, "roach": 0.4, "baneling": 0.3},
-                GamePhase.MID: {"zergling": 0.2, "roach": 0.3, "hydra": 0.2, "mutalisk": 0.3},
-                GamePhase.LATE: {"zergling": 0.1, "roach": 0.2, "hydra": 0.3, "mutalisk": 0.4},
-            },
-            # ★★★ 프로토스 상대 전략 강화 ★★★
-            # 불멸자 → 레이바저 담즙, 저글링 포위
-            # 콜로서스 → 커럽터, 레이바저 담즙
-            # 차원분광기 → 퀸, 히드라
-            # 보호막 배터리 → 레이바저 담즙
-            EnemyRace.PROTOSS: {
-                # 초반: 저글링 압박 + 레이바저 담즙으로 포스필드/배터리 견제
-                GamePhase.EARLY: {"zergling": 0.3, "roach": 0.3, "ravager": 0.3, "queen": 0.1},
-                # 중반: 히드라 중심 + 레이바저 담즙 + 커럽터 (콜로서스/공허)
-                GamePhase.MID: {"roach": 0.15, "ravager": 0.2, "hydra": 0.4, "corruptor": 0.25},
-                # 후반: 히드라 + 커럽터/감염충 (강화장막/둥지벌레)
-                GamePhase.LATE: {"hydra": 0.35, "corruptor": 0.3, "ravager": 0.15, "infestor": 0.2},
-            },
-            EnemyRace.ZERG: {
-                GamePhase.EARLY: {"zergling": 0.5, "baneling": 0.5},
-                GamePhase.MID: {"zergling": 0.3, "roach": 0.2, "baneling": 0.3, "mutalisk": 0.2},
-                GamePhase.LATE: {"zergling": 0.2, "roach": 0.2, "hydra": 0.2, "mutalisk": 0.4},
-            },
-            EnemyRace.UNKNOWN: {
-                GamePhase.EARLY: {"zergling": 0.5, "roach": 0.3, "baneling": 0.2},
-                GamePhase.MID: {"zergling": 0.2, "roach": 0.3, "hydra": 0.3, "mutalisk": 0.2},
-                GamePhase.LATE: {"zergling": 0.1, "roach": 0.2, "hydra": 0.3, "mutalisk": 0.4},
-            },
+            EnemyRace.TERRAN: self._load_ratios("Terran"),
+            EnemyRace.PROTOSS: self._load_ratios("Protoss"),
+            EnemyRace.ZERG: self._load_ratios("Zerg"),
+            EnemyRace.UNKNOWN: self._load_ratios("Terran"), # Default to Terran ratios
         }
+        
+        self.logger.info(f"[STRATEGY] Loaded unit ratios for {len(self.race_unit_ratios)} races from Knowledge Base")
 
         # Emergency Mode 비율 (방어 우선)
         self.emergency_ratios = {
             "zergling": 0.5,
             "roach": 0.25,
-            "baneling": 0.15,  # 맹독충 추가 (러쉬 방어용)
-            "queen": 0.1,  # 퀸 추가 생산 (트랜스퓨전 + 방어)
+            "baneling": 0.15,
+            "queen": 0.1,
         }
 
         # 방어 건물 긴급 건설 플래그
@@ -133,14 +113,45 @@ class StrategyManager:
         # Rogue Tactics 연동
         self.rogue_tactics_active = False
         self.larva_saving_mode = False
+        
+        # Rush Persistence Counter
+        self.rush_persistence_count = 0
 
-        # ★ 학습된 데이터 저장소 ★
-        self.learned_priorities = {}  # 전체 유닛 우선순위 (Drone, Overlord 포함)
-        self.learned_expansion_timings = {}  # 확장 타이밍
-        self.learned_army_ratios = {}  # 전투 유닛 비율만 (정규화됨)
+        # 학습된 데이터 저장소
+        self.learned_priorities = {}
+        self.learned_expansion_timings = {}
+        self.learned_army_ratios = {}
 
-        # ★ 학습된 데이터 로드 및 적용 ★
-        self.load_learned_data()
+    def _load_ratios(self, race_name: str) -> Dict[GamePhase, Dict[str, float]]:
+        """KnowledgeManager에서 유닛 비율 로드"""
+        ratios = {}
+        race_data = self.knowledge_manager.knowledge.get("unit_ratios", {}).get(race_name, {})
+        
+        # Convert string keys to GamePhase enum
+        for phase_str, unit_data in race_data.items():
+            try:
+                # normalize keys to lowercase for internal usage if needed
+                normalized_data = {k.lower(): v for k, v in unit_data.items()}
+                
+                if phase_str == "early":
+                    ratios[GamePhase.EARLY] = normalized_data
+                elif phase_str == "mid":
+                    ratios[GamePhase.MID] = normalized_data
+                elif phase_str == "late":
+                    ratios[GamePhase.LATE] = normalized_data
+            except Exception:
+                pass
+        
+        # Fill missing phases with defaults if empty (Safe Fallback)
+        if not ratios:
+            self.logger.warning(f"No ratios found for {race_name}, using fallback.")
+            return {
+                GamePhase.EARLY: {"zergling": 1.0},
+                GamePhase.MID: {"zergling": 1.0},
+                GamePhase.LATE: {"zergling": 1.0},
+            }
+            
+        return ratios
 
     def update(self) -> None:
         """매 스텝마다 호출하여 전략 업데이트"""
@@ -153,122 +164,15 @@ class StrategyManager:
         self._update_counter_build()  # 적 빌드에 따른 대응
         self._detect_direct_air_threat()  # ★ 직접 공중 유닛 감지 ★
         self._counter_protoss_units()  # ★ 프로토스 유닛 카운터 ★
+        
+        # ★ Write State to Blackboard ★
+        if self.blackboard:
+            self.blackboard.set("strategy_mode", self.current_mode.name)
+            self.blackboard.set("game_phase", self.game_phase.name)
+            self.blackboard.set("enemy_race", self.detected_enemy_race.name)
+            self.blackboard.set("is_rush_detected", self.emergency_active)
 
-    def load_learned_data(self) -> None:
-        """
-        학습된 빌드 오더 데이터 로드 및 전략 적용
 
-        learned_build_orders.json에서 유닛 우선순위를 읽어와
-        1) 전체 우선순위 저장 (Drone, Overlord 등 포함)
-        2) 전투 유닛 비율만 추출하여 race_unit_ratios에 블렌딩
-        3) 확장 타이밍 저장
-        """
-        try:
-            # 파일 경로 설정 (local_training/scripts/learned_build_orders.json)
-            script_dir = Path(__file__).parent
-            file_path = script_dir / "local_training" / "scripts" / "learned_build_orders.json"
-
-            if not file_path.exists():
-                self.logger.warning(f"[LEARNING] Learned data file not found: {file_path}")
-                return
-
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            priorities = data.get("unit_priorities", {})
-            if not priorities:
-                return
-
-            # ★★★ 1. 전체 우선순위 저장 (economy/macro 분석용) ★★★
-            self.learned_priorities = priorities.copy()
-
-            # 확장 타이밍 저장
-            self.learned_expansion_timings = data.get("expansion_timings", {})
-
-            # ★★★ 2. 학습된 기본기 분석 및 로깅 ★★★
-            drone_prio = priorities.get("Drone", 0)
-            overlord_prio = priorities.get("Overlord", 0)
-            queen_prio = priorities.get("Queen", 0)
-            zergling_prio = priorities.get("Zergling", 0)
-
-            self.logger.info("=" * 60)
-            self.logger.info("[LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis")
-            self.logger.info("=" * 60)
-            self.logger.info(f"Economy Priority (Drone):     {drone_prio:.2%}")
-            self.logger.info(f"Supply Priority (Overlord):   {overlord_prio:.2%}")
-            self.logger.info(f"Macro Priority (Queen):       {queen_prio:.2%}")
-            self.logger.info(f"Defense Priority (Zergling):  {zergling_prio:.2%}")
-
-            if self.learned_expansion_timings:
-                self.logger.info("-" * 60)
-                self.logger.info("[LEARNING] Learned Expansion Timings:")
-                for key, timing in self.learned_expansion_timings.items():
-                    self.logger.info(f"  {key}: {timing:.1f}s")
-
-            self.logger.info("=" * 60)
-
-            # ★★★ 3. 전투 유닛만 필터링하여 race_unit_ratios 블렌딩 ★★★
-            # JSON 키는 대문자(Capitalized), StrategyManager는 소문자 키 사용
-            combat_units = {
-                "Zergling", "Roach", "Hydra", "Hydralisk", "Mutalisk", "Baneling",
-                "Ravager", "Corruptor", "Infestor", "Viper", "Ultralisk", "Broodlord",
-                "Lurker", "LurkerMP", "Queen"
-            }
-
-            learned_army_ratios = {}
-            total_weight = 0.0
-
-            for unit_name, weight in priorities.items():
-                if unit_name in combat_units and weight > 0:
-                    # 키 정규화 (소문자, 별칭 처리)
-                    key = unit_name.lower()
-                    if key == "hydralisk": key = "hydra"
-                    if key == "lurker" or key == "lurkermp": key = "lurker"
-
-                    learned_army_ratios[key] = weight
-                    total_weight += weight
-
-            if total_weight > 0:
-                # 정규화 (비율 합이 1이 되도록)
-                for k in learned_army_ratios:
-                    learned_army_ratios[k] /= total_weight
-
-                self.learned_army_ratios = learned_army_ratios
-
-                self.logger.info(f"[LEARNING] Normalized army composition: {learned_army_ratios}")
-
-                # 기존 전략에 반영 (블렌딩)
-                # 학습된 데이터에서 비중이 높은 유닛(>10%)을 기존 전략에 섞음
-                for race in self.race_unit_ratios:
-                    for phase in self.race_unit_ratios[race]:
-                        original = self.race_unit_ratios[race][phase]
-
-                        updated = False
-                        for unit, ratio in learned_army_ratios.items():
-                            # 유의미한 비중이 있는 경우만 반영
-                            if ratio > 0.10:
-                                if unit in original:
-                                    # 기존 값과 평균 (가중치: 기존 0.6, 학습 0.4)
-                                    original[unit] = (original[unit] * 0.6) + (ratio * 0.4)
-                                    updated = True
-                                else:
-                                    # 새로운 유닛 추가 (낮은 가중치로 시작)
-                                    original[unit] = ratio * 0.5
-                                    updated = True
-
-                        # 다시 정규화
-                        if updated:
-                            total = sum(original.values())
-                            if total > 0:
-                                for u in original:
-                                    original[u] /= total
-
-                self.logger.info("[LEARNING] [OK] Successfully integrated learned data into strategies")
-
-        except Exception as e:
-            self.logger.error(f"[LEARNING] [FAILED] Failed to load learned data: {e}")
-            import traceback
-            traceback.print_exc()
 
     def get_learned_economy_weight(self) -> float:
         """
@@ -386,8 +290,13 @@ class StrategyManager:
                                  if e.can_attack and e.distance_to(main_base) < 15]
                 # 적 3마리 이상일 때만 러시로 판정 (정찰 유닛 무시)
                 if len(nearby_enemies) >= 3:
-                    return True
-
+                    self.rush_persistence_count += 1
+                    # 3회 연속 감지 시 True 반환 (약 3프레임/스텝) - Glitch 방지
+                    if self.rush_persistence_count >= 3:
+                        return True
+                    return False
+                
+        self.rush_persistence_count = 0
         return False
 
     def _check_early_harassment(self) -> None:
@@ -548,55 +457,43 @@ class StrategyManager:
 
         # === 적 빌드별 대응 유닛 비율 설정 ===
 
-        # 테란 바이오 (해병/의무관)
-        if enemy_pattern == "terran_bio":
-            self.race_unit_ratios[self.detected_enemy_race] = {
-                GamePhase.EARLY: {"zergling": 0.3, "baneling": 0.5, "roach": 0.2},
-                GamePhase.MID: {"zergling": 0.2, "baneling": 0.4, "mutalisk": 0.3, "ultralisk": 0.1},
-                GamePhase.LATE: {"zergling": 0.2, "baneling": 0.3, "ultralisk": 0.3, "mutalisk": 0.2},
-            }
+        # === Dynamic Counter Logic from Knowledge Base (Commander Learning) ===
+        # 1. Reset to base ratios for this race/phase
+        enemy_race_name = self.detected_enemy_race.name.capitalize() # e.g. "Terran"
+        base_ratios = self.knowledge_manager.get_unit_ratios(enemy_race_name, self.game_phase.value)
+        
+        if not base_ratios:
+             # Keep existing if loading failed
+             return
+        
+        current_ratios = base_ratios.copy()
+        
+        # 2. Scan enemy units and adjust ratios
+        if hasattr(self.bot, "enemy_units"):
+            detected_types = set(u.type_id.name.upper() for u in self.bot.enemy_units)
+            
+            for e_type in detected_types:
+                counter_rule = self.knowledge_manager.get_counter_unit(e_type)
+                if counter_rule:
+                    c_unit = counter_rule["unit"].lower()
+                    # Normalize common names to match UnitFactory keys
+                    if c_unit == "hydralisk": c_unit = "hydra"
+                    if c_unit == "lurkermp": c_unit = "lurker"
+                    
+                    ratio_boost = counter_rule["ratio"]
+                    
+                    # Add/Boost counter unit (Adding weight)
+                    current_ratios[c_unit] = current_ratios.get(c_unit, 0) + ratio_boost
 
-        # 테란 메카닉 (탱크/토르)
-        elif enemy_pattern == "terran_mech":
-            self.race_unit_ratios[self.detected_enemy_race] = {
-                GamePhase.EARLY: {"zergling": 0.4, "roach": 0.4, "ravager": 0.2},
-                GamePhase.MID: {"roach": 0.2, "hydra": 0.4, "mutalisk": 0.3, "corruptor": 0.1},
-                GamePhase.LATE: {"hydra": 0.3, "corruptor": 0.3, "broodlord": 0.2, "viper": 0.2},
-            }
-
-        # 프로토스 스타게이트 (공중 유닛)
-        elif enemy_pattern == "protoss_stargate":
-            self._handle_air_threat()
-            self.race_unit_ratios[self.detected_enemy_race] = {
-                GamePhase.EARLY: {"zergling": 0.3, "queen": 0.2, "hydra": 0.5},
-                GamePhase.MID: {"hydra": 0.5, "corruptor": 0.3, "queen": 0.2},
-                GamePhase.LATE: {"hydra": 0.4, "corruptor": 0.4, "viper": 0.2},
-            }
-
-        # 프로토스 로보 (불멸자/거신)
-        elif enemy_pattern == "protoss_robo":
-            self.race_unit_ratios[self.detected_enemy_race] = {
-                GamePhase.EARLY: {"zergling": 0.3, "roach": 0.5, "ravager": 0.2},
-                GamePhase.MID: {"roach": 0.3, "hydra": 0.4, "corruptor": 0.3},
-                GamePhase.LATE: {"hydra": 0.3, "corruptor": 0.3, "broodlord": 0.2, "viper": 0.2},
-            }
-
-        # 저그 뮤탈 (공중)
-        elif enemy_pattern == "zerg_muta":
-            self._handle_air_threat()
-            self.race_unit_ratios[self.detected_enemy_race] = {
-                GamePhase.EARLY: {"zergling": 0.3, "queen": 0.3, "hydra": 0.4},
-                GamePhase.MID: {"hydra": 0.5, "queen": 0.2, "mutalisk": 0.3},
-                GamePhase.LATE: {"hydra": 0.4, "corruptor": 0.3, "infestor": 0.3},
-            }
-
-        # 러쉬 대응 (공통)
-        elif "rush" in enemy_pattern or "proxy" in enemy_pattern or "12pool" in enemy_pattern:
-            self.emergency_ratios = {
-                "zergling": 0.5,
-                "roach": 0.3,
-                "queen": 0.2,
-            }
+            # 3. Normalize
+            total = sum(current_ratios.values())
+            if total > 0:
+                for k in current_ratios:
+                    current_ratios[k] /= total
+            
+            # 4. Apply to current state
+            if self.detected_enemy_race in self.race_unit_ratios:
+                self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = current_ratios
             self.emergency_spine_requested = True
 
         # 로그 출력 (30초마다)

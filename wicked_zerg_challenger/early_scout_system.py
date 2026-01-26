@@ -165,7 +165,7 @@ class EarlyScoutSystem:
             ling.move(waypoints[0])
 
         self.ling_scouts_assigned = True
-        print(f"[EARLY_SCOUT] 🏃 Zergling {len(scout_lings)}마리 정찰 출발! (게임 시간: {int(self.bot.time)}초)")
+        print(f"[EARLY_SCOUT] >>> Zergling {len(scout_lings)}마리 정찰 출발! (게임 시간: {int(self.bot.time)}초)")
 
     async def _manage_zergling_scouts(self) -> None:
         """
@@ -233,7 +233,7 @@ class EarlyScoutSystem:
         scout_ol.move(self.overlord_waypoints[0])
 
         self.overlord_scout_sent = True
-        print(f"[EARLY_SCOUT] 🛸 Overlord 정찰 출발! (게임 시간: {int(self.bot.time)}초)")
+        print(f"[EARLY_SCOUT] <<< Overlord 정찰 출발! (게임 시간: {int(self.bot.time)}초)")
 
     async def _manage_overlord_scout(self) -> None:
         """
@@ -281,7 +281,7 @@ class EarlyScoutSystem:
                 if structure.type_id in [UnitTypeId.EXTRACTOR, UnitTypeId.ASSIMILATOR, UnitTypeId.REFINERY]:
                     if not self.enemy_gas_timing:
                         self.enemy_gas_timing = self.bot.time
-                        print(f"[EARLY_SCOUT] ⛽ 적 가스 발견! (타이밍: {int(self.bot.time)}초)")
+                        print(f"[EARLY_SCOUT] [GAS] 적 가스 발견! (타이밍: {int(self.bot.time)}초)")
 
         # 적 유닛 카운트 (새로운 유닛만 추가)
         if self.bot.enemy_units:

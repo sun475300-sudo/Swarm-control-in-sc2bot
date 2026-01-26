@@ -16,6 +16,7 @@ except ImportError:
 from bot_step_integration import BotStepIntegrator
 from utils.logger import setup_logger
 from typing import Optional
+from blackboard import Blackboard
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -38,6 +39,9 @@ class WickedZergBotProImpl(BotAI):
         self.learning_rate = learning_rate
 
         # Initialize managers (lazy loading)
+        self.blackboard = Blackboard()     # ★ Blackboard (Single Source of Truth) ★
+        self.defense_coordinator = None    # ★ DefenseCoordinator (Unified Defense) ★
+        self.production_controller = None  # ★ ProductionController (Dynamic Authority) ★
         self.intel = None
         self.economy = None
         self.production = None
@@ -76,7 +80,12 @@ class WickedZergBotProImpl(BotAI):
         self.logger = setup_logger("WickedZergBot")
         self.logger.info("Bot started. Initializing managers...")
 
-        # === 0. ProductionResilience (안전한 유닛 생산) ===
+        # === 0. Blackboard (Central State) ===
+        # Already initialized in __init__, but logging here
+        if self.blackboard:
+             print("[BOT] ★ Blackboard active")
+
+        # === 0.1 ProductionResilience (안전한 유닛 생산) ===
         try:
             from local_training.production_resilience import ProductionResilience
             self.production = ProductionResilience(self)
@@ -202,9 +211,14 @@ class WickedZergBotProImpl(BotAI):
 
         try:
             from unit_factory import UnitFactory
-            self.unit_factory = UnitFactory(self)
-        except ImportError:
-            pass
+            from game_config import config
+            # Blackboard와 Config 통합
+            self.unit_factory = UnitFactory(self, blackboard=self.blackboard, config=config)
+            print("[BOT] UnitFactory initialized with Blackboard integration")
+
+        except ImportError as e:
+            print(f"[BOT_WARN] UnitFactory not available: {e}")
+            self.unit_factory = None
 
         try:
             from defeat_detection import DefeatDetection
@@ -337,6 +351,25 @@ class WickedZergBotProImpl(BotAI):
             except ImportError as e:
                 print(f"[WARNING] RL Agent not available: {e}")
                 self.rl_agent = None
+
+        # === DefenseCoordinator (통합 방어 시스템) ===
+        # === DefenseCoordinator (통합 방어 시스템) ===
+        try:
+            from local_training.defense_coordinator import DefenseCoordinator
+            self.defense_coordinator = DefenseCoordinator(self)
+            print("[BOT] ★ DefenseCoordinator initialized (Unified Defense)")
+        except ImportError as e:
+            print(f"[BOT_WARN] DefenseCoordinator not available: {e}")
+            self.defense_coordinator = None
+
+        # === ProductionController (통합 생산 관리) ===
+        try:
+            from production_controller import ProductionController
+            self.production_controller = ProductionController(self, self.blackboard)
+            print("[BOT] ★ ProductionController initialized (Dynamic Authority)")
+        except ImportError as e:
+            print(f"[BOT_WARN] ProductionController not available: {e}")
+            self.production_controller = None
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)

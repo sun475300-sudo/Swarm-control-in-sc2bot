@@ -15,13 +15,30 @@ except ImportError:  # Fallbacks for tooling environments
 
 
 class UnitFactory:
-    def __init__(self, bot):
+    def __init__(self, bot, blackboard=None, config=None):
+        """
+        UnitFactory - Blackboard 통합 버전
+
+        Args:
+            bot: SC2 Bot 인스턴스
+            blackboard: GameStateBlackboard 인스턴스 (Optional)
+            config: GameConfig 인스턴스 (Optional)
+        """
         self.bot = bot
-        self.min_gas_reserve = 100
+        self.blackboard = blackboard
+        self.config = config
+
+        # Config 기반 설정 (fallback to defaults)
+        if config:
+            self.min_gas_reserve = config.MIN_GAS_RESERVE
+            self.larva_pressure_threshold = config.LARVA_PRESSURE_THRESHOLD
+        else:
+            self.min_gas_reserve = 100
+            self.larva_pressure_threshold = 6
+
         self.min_mineral_reserve_for_gas = 150
         self.gas_unit_ratio_target = 0.35  # 기본값, 동적으로 조정됨
         self.larva_gas_ratio = 0.4
-        self.larva_pressure_threshold = 6
         self.max_larva_spend_per_step = 3
 
         # ★ COMBAT REINFORCEMENT SYSTEM ★
@@ -196,16 +213,28 @@ class UnitFactory:
             # 이미 생산 중인 오버로드 체크
             pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
             if pending_overlords == 0 and self.bot.can_afford(UnitTypeId.OVERLORD):
-                try:
-                    if larva:
-                        if hasattr(self.bot, 'production') and self.bot.production:
-                            await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
-                        else:
-                            self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
-                        if iteration % 100 == 0:
-                            print(f"[UNIT_FACTORY] ★ Preemptive Overlord (supply_left={self.bot.supply_left}) ★")
-                except Exception:
-                    pass
+                # Blackboard 통합: 오버로드 긴급 요청
+                if self.blackboard:
+                    self.blackboard.request_production(
+                        unit_type=UnitTypeId.OVERLORD,
+                        count=1,
+                        requester="UnitFactory",
+                        priority=0  # URGENT
+                    )
+                    if iteration % 100 == 0:
+                        print(f"[UNIT_FACTORY] ★ Preemptive Overlord (supply_left={self.bot.supply_left}) ★")
+                else:
+                    # Fallback: 직접 생산
+                    try:
+                        if larva:
+                            if hasattr(self.bot, 'production') and self.bot.production:
+                                await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
+                            else:
+                                self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
+                            if iteration % 100 == 0:
+                                print(f"[UNIT_FACTORY] ★ Preemptive Overlord (supply_left={self.bot.supply_left}) ★")
+                    except Exception:
+                        pass
 
         # ★ COMBAT REINFORCEMENT: 전투 모드 체크 ★
         in_combat = self._check_combat_mode(iteration)
@@ -219,12 +248,26 @@ class UnitFactory:
         else:
             self.max_larva_spend_per_step = 3  # 기본값
 
-        # === StrategyManager 실시간 비율 연동 ===
+        # === StrategyManager 실시간 비율 연동 (via Blackboard or Direct) ===
         # 매 스텝마다 전략 매니저의 가스 비율을 가져와서 적용
-        strategy = getattr(self.bot, "strategy_manager", None)
+        strategy_mode = "NORMAL"
+        emergency_active = False
+
+        # 1. Try Blackboard first
+        if self.blackboard:
+            strategy_mode = self.blackboard.get("strategy_mode", "NORMAL")
+            emergency_active = self.blackboard.get("is_rush_detected", False)
+        
+        # 2. Fallback to direct access if Blackboard missing (Backward Compat)
+        elif hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
+            strategy = self.bot.strategy_manager
+            strategy_mode = getattr(strategy, "current_mode", "NORMAL")
+            # emergency_active handled below
+
+        strategy = getattr(self.bot, "strategy_manager", None) # Still needed for get_unit_ratios until that is moved to Blackboard
         if strategy:
             # Emergency Mode에서는 저글링 위주 생산 (가스 비율 낮춤)
-            if getattr(strategy, "emergency_active", False):
+            if emergency_active or getattr(strategy, "emergency_active", False):
                 self.gas_unit_ratio_target = 0.15  # 긴급 시 가스 유닛 최소화
             else:
                 # ★★★ FIX: 프로토스 핵심 유닛 감지 시 가스 부스트 ★★★
@@ -255,14 +298,22 @@ class UnitFactory:
                 print("[UNIT_FACTORY] Larva saving mode - minimal production")
             # 오버로드가 필요하면 생산, 아니면 스킵
             if self.bot.supply_left < 2 and self.bot.can_afford(UnitTypeId.OVERLORD):
-                try:
-                    # ProductionResilience의 _safe_train 사용 (있을 경우)
-                    if hasattr(self.bot, 'production') and self.bot.production:
-                        await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
-                    else:
-                        self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
-                except Exception:
-                    pass
+                if self.blackboard:
+                    self.blackboard.request_production(
+                        unit_type=UnitTypeId.OVERLORD,
+                        count=1,
+                        requester="UnitFactory",
+                        priority=0  # URGENT
+                    )
+                else:
+                    # Fallback: 직접 생산
+                    try:
+                        if hasattr(self.bot, 'production') and self.bot.production:
+                            await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
+                        else:
+                            self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
+                    except Exception:
+                        pass
             return
 
         # 종족별 가스 비율 업데이트 (StrategyManager 없을 때 fallback)
@@ -284,25 +335,54 @@ class UnitFactory:
             can_spend_gas=can_spend_gas,
         )
 
-        to_spend = 0
-        for larva_unit in larva:
-            if to_spend >= self.max_larva_spend_per_step:
-                break
+        # ★★★ Blackboard 통합: 우선순위 큐를 Blackboard에 요청으로 등록 ★★★
+        if self.blackboard:
+            to_request = min(self.max_larva_spend_per_step, len(larva))
 
-            unit_type = self._pick_unit(queue)
-            if not unit_type:
-                break
+            # 우선순위 큐에서 유닛 타입별로 그룹화
+            unit_requests = {}
+            for _ in range(to_request):
+                unit_type = self._pick_unit(queue)
+                if not unit_type:
+                    break
+                unit_requests[unit_type] = unit_requests.get(unit_type, 0) + 1
 
-            try:
-                # ProductionResilience의 _safe_train 사용 (있을 경우)
-                if hasattr(self.bot, 'production') and self.bot.production:
-                    await self.bot.production._safe_train(larva_unit, unit_type)
-                else:
-                    # Fallback: 직접 train 호출
-                    self.bot.do(larva_unit.train(unit_type))
-                to_spend += 1
-            except Exception:
-                continue
+            # Blackboard에 생산 요청 등록
+            for unit_type, count in unit_requests.items():
+                # 전투 모드면 우선순위 높임 (MEDIUM → HIGH)
+                priority = 1 if in_combat else 2
+                self.blackboard.request_production(
+                    unit_type=unit_type,
+                    count=count,
+                    requester="UnitFactory",
+                    priority=priority
+                )
+
+            # 디버그 로그
+            if iteration % 200 == 0 and unit_requests:
+                print(f"[UNIT_FACTORY] Production requested: {unit_requests}")
+
+        else:
+            # Fallback: 직접 생산 (Blackboard 없을 때)
+            to_spend = 0
+            for larva_unit in larva:
+                if to_spend >= self.max_larva_spend_per_step:
+                    break
+
+                unit_type = self._pick_unit(queue)
+                if not unit_type:
+                    break
+
+                try:
+                    # ProductionResilience의 _safe_train 사용 (있을 경우)
+                    if hasattr(self.bot, 'production') and self.bot.production:
+                        await self.bot.production._safe_train(larva_unit, unit_type)
+                    else:
+                        # Fallback: 직접 train 호출
+                        self.bot.do(larva_unit.train(unit_type))
+                    to_spend += 1
+                except Exception:
+                    continue
 
     def _pick_unit(self, queue: List[object]) -> Optional[object]:
         for unit_type in queue:

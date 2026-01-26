@@ -944,7 +944,7 @@ class CombatManager:
                 
                 # 대공 가능 유닛은 공중 유닛 우선 타겟팅
                 if unit.type_id in can_shoot_up:
-                    air_enemies = [e for e in enemy_units if e.is_flying]
+                    air_enemies = [e for e in enemy_units if getattr(e, "is_flying", False)]
                     if air_enemies:
                         target = min(air_enemies, key=lambda e: e.distance_to(unit))
                 

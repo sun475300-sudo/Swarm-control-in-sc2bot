@@ -34,9 +34,25 @@ class EconomyManager:
     def __init__(self, bot):
         self.bot = bot
         self.balancer = EconomyCombatBalancer(bot)
-        # Resource thresholds for macro hatchery
-        self.macro_hatchery_mineral_threshold = 1500  # Build macro hatch if minerals > 1500
-        self.macro_hatchery_larva_threshold = 3  # and average larva per base < 3
+
+        # ★ Blackboard 연동 ★
+        self.blackboard = getattr(bot, "blackboard", None)
+
+        # ★ Config 연동 ★
+        try:
+            from game_config import config
+            self.config = config
+        except ImportError:
+            self.config = None
+
+        # ★ Resource thresholds for macro hatchery (Config 기반) ★
+        if self.config:
+            self.macro_hatchery_mineral_threshold = self.config.MINERAL_OVERFLOW
+            self.macro_hatchery_larva_threshold = self.config.LARVA_CRITICAL
+        else:
+            self.macro_hatchery_mineral_threshold = 1500
+            self.macro_hatchery_larva_threshold = 3
+
         self.last_macro_hatch_check = 0
         self.macro_hatch_check_interval = 50  # Check every 50 frames
         # Gold base tracking
@@ -45,6 +61,9 @@ class EconomyManager:
         self._emergency_mode = False
         # 2026-01-25 FIX: Track Maynarding transfers
         self.transferred_hatcheries = set()
+        # 2026-01-26 FIX: Prevent duplicate expansion attempts
+        self._last_expansion_attempt_time = 0.0
+        self._expansion_cooldown = 6.0  # 6초 쿨다운
 
     def set_emergency_mode(self, active: bool) -> None:
         """Set emergency mode validation."""
@@ -214,10 +233,52 @@ class EconomyManager:
         if not hasattr(self.bot, "supply_left"):
             return
 
-        # 더 공격적인 오버로드 생산: supply_left < 6 으로 조정 (기존 2)
-        # 가스가 높으면 더 많은 서플라이 여유분 확보
+        # ★ Blackboard 기반 생산 (ProductionController가 자동 처리) ★
+        # ProductionController가 이미 Overlord를 자동 생산하므로
+        # EconomyManager는 추가 요청만 처리
+        if self.blackboard:
+            # Blackboard를 통해 이미 pending 확인됨
+            overlord_count = self.blackboard.get_unit_count(UnitTypeId.OVERLORD)
+            if overlord_count.pending > 0:
+                return  # 이미 생산 중
+
+            # Config 기반 보급 여유분 계산
+            if self.config:
+                game_time = self.bot.time
+                if game_time < self.config.OPENING_PHASE_END:
+                    supply_threshold = self.config.SUPPLY_BUFFER_OPENING
+                elif game_time < self.config.EARLY_GAME_END:
+                    supply_threshold = self.config.SUPPLY_BUFFER_EARLY
+                else:
+                    supply_threshold = self.config.SUPPLY_BUFFER_MID
+
+                # 가스 많을 때 여유분 확대
+                if self.bot.vespene > self.config.GAS_CRITICAL:
+                    supply_threshold = self.config.SUPPLY_BUFFER_HIGH_GAS
+            else:
+                # Config 없을 때 기본값
+                gas = getattr(self.bot, "vespene", 0)
+                supply_threshold = 6 if gas < 1000 else 10
+
+            # 보급 체크
+            if self.bot.supply_left >= supply_threshold:
+                return
+
+            # Blackboard에 생산 요청 (낮은 우선순위 - 경제)
+            self.blackboard.request_production(
+                unit_type=UnitTypeId.OVERLORD,
+                count=1,
+                requester="EconomyManager"
+            )
+            return
+
+        # ★ Blackboard 없을 때 폴백 (기존 로직) ★
+        pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
+        if pending_overlords > 0:
+            return
+
         gas = getattr(self.bot, "vespene", 0)
-        supply_threshold = 6 if gas < 1000 else 10  # 가스 높으면 더 여유롭게
+        supply_threshold = 6 if gas < 1000 else 10
 
         if self.bot.supply_left >= supply_threshold:
             return
@@ -230,18 +291,15 @@ class EconomyManager:
             return
 
         try:
-            # Use ProductionResilience._safe_train if available
             if hasattr(self.bot, 'production') and self.bot.production:
                 await self.bot.production._safe_train(larva_unit, UnitTypeId.OVERLORD)
             else:
-                # Fallback: bot.do() is not async
                 self.bot.do(larva_unit.train(UnitTypeId.OVERLORD))
         except Exception:
             return
 
     async def _train_drone_if_needed(self) -> None:
         # === Worker Count Check ===
-        # ★ 일꾼 수 확인 (기지당 최소 16명 목표) ★
         worker_count = 0
         if hasattr(self.bot, "workers"):
             workers = self.bot.workers
@@ -251,21 +309,36 @@ class EconomyManager:
         townhalls = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
         base_count = townhalls.amount if hasattr(townhalls, "amount") else 1
 
-        # ★ 최소 일꾼 목표: 기지당 16명 (미네랄 포화) ★
-        min_workers_needed = base_count * 16
+        # ★ Config 기반 최소 일꾼 목표 ★
+        if self.config:
+            min_workers_needed = base_count * self.config.DRONE_LIMIT_PER_BASE
+            absolute_min = self.config.MIN_DRONES
+        else:
+            min_workers_needed = base_count * 16
+            absolute_min = 22
 
         # ★ CRITICAL: 최소 일꾼 미달이면 무조건 생산 (밸런서 무시) ★
-        below_minimum = worker_count < min_workers_needed or worker_count < 22
+        below_minimum = worker_count < min_workers_needed or worker_count < absolute_min
 
         if not below_minimum:
             # 일꾼이 충분하면 밸런서 판단 따름
             if not self.balancer.should_train_drone():
                 return
-        # else: 일꾼 부족하면 밸런서 무시하고 무조건 생산!
 
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
 
+        # ★ Blackboard 기반 생산 ★
+        if self.blackboard:
+            # Blackboard에 드론 생산 요청
+            self.blackboard.request_production(
+                unit_type=UnitTypeId.DRONE,
+                count=1,
+                requester="EconomyManager"
+            )
+            return
+
+        # ★ Blackboard 없을 때 폴백 (기존 로직) ★
         if not self.bot.can_afford(UnitTypeId.DRONE):
             return
 
@@ -274,11 +347,9 @@ class EconomyManager:
             return
 
         try:
-            # Use ProductionResilience._safe_train if available
             if hasattr(self.bot, 'production') and self.bot.production:
                 await self.bot.production._safe_train(larva_unit, UnitTypeId.DRONE)
             else:
-                # Fallback: use bot.do() without await (it's not async)
                 self.bot.do(larva_unit.train(UnitTypeId.DRONE))
         except Exception as e:
             game_time = getattr(self.bot, "time", 0.0)
@@ -764,9 +835,9 @@ class EconomyManager:
         if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
             return
 
+        game_time = self.bot.time
         townhalls = self.bot.townhalls
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
-        game_time = self.bot.time
         minerals = getattr(self.bot, "minerals", 0)
 
         # ★★★ 강제 확장 조건 - 1분 내 멀티 완성 목표 ★★★
@@ -857,12 +928,26 @@ class EconomyManager:
                 print(f"[FORCE EXPAND] {reason} but already expanding (pending: {pending}/{max_pending})")
             return
 
+        # ★ 2026-01-26 FIX: 쿨다운 체크 (중복 시도 방지) ★
+        time_since_last_attempt = game_time - self._last_expansion_attempt_time
+        if time_since_last_attempt < self._expansion_cooldown:
+            return  # 너무 최근에 시도했으면 스킵
+
         # ★ 강제 확장 실행 ★
         print(f"[FORCE EXPAND] ★★★ {reason} - FORCING EXPANSION NOW! ★★★")
 
+        # ★ 2026-01-26 FIX: 확장 시도 시간 기록 ★
+        self._last_expansion_attempt_time = game_time
+
+        expansion_success = False
         try:
             if hasattr(self.bot, "expand_now"):
-                await self.bot.expand_now()
+                result = await self.bot.expand_now()
+                if result is not False:
+                    print(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
+                    expansion_success = True
+                else:
+                    print(f"[FORCE EXPAND] expand_now returned False")
             else:
                 # expand_now가 없으면 직접 위치 찾아서 건설
                 expansion_locations = await self.bot.get_next_expansion()
@@ -870,8 +955,13 @@ class EconomyManager:
                     worker = self.bot.workers.closest_to(expansion_locations)
                     if worker:
                         self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
+                        print(f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion - SUCCESS")
+                        expansion_success = True
         except Exception as e:
             print(f"[FORCE EXPAND] Failed: {e}")
+
+        if not expansion_success:
+            print(f"[FORCE EXPAND] ALL METHODS FAILED")
 
     async def _check_proactive_expansion(self) -> None:
         """
@@ -887,8 +977,8 @@ class EconomyManager:
         if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
             return
 
-        townhalls = self.bot.townhalls
         game_time = self.bot.time  # 게임 시간 (초)
+        townhalls = self.bot.townhalls
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
 
         # ★★★ MAXIMUM FAST EXPANSION: 최대한 빠르고 많은 멀티 ★★★
@@ -962,8 +1052,16 @@ class EconomyManager:
         if not should_expand:
             return
 
+        # ★ 2026-01-26 FIX: 쿨다운 체크 (중복 시도 방지) ★
+        time_since_last_attempt = game_time - self._last_expansion_attempt_time
+        if time_since_last_attempt < self._expansion_cooldown:
+            return  # 너무 최근에 시도했으면 스킵
+
         # ★ DEBUG: 확장 시도 로그 ★
         print(f"[EXPANSION] [{int(game_time)}s] Trying to expand: {expand_reason}")
+
+        # ★ 2026-01-26 FIX: 확장 시도 시간 기록 (시도할 때마다) ★
+        self._last_expansion_attempt_time = game_time
 
         # ★ ULTRA-FAST EXPANSION: 동시 확장 허용 - 앞마당은 무조건 우선 ★
         if hasattr(self.bot, "already_pending"):
@@ -1004,9 +1102,13 @@ class EconomyManager:
         try:
             # 방법 1: expand_now 우선 사용 (가장 안정적)
             if hasattr(self.bot, "expand_now"):
-                await self.bot.expand_now()
-                print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS")
-                expansion_success = True
+                result = await self.bot.expand_now()
+                # expand_now()가 성공하면 None 또는 True 반환
+                if result is not False:  # False가 아니면 성공으로 간주
+                    print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS")
+                    expansion_success = True
+                else:
+                    print(f"[EXPAND] expand_now returned False (no valid location?)")
         except Exception as e:
             print(f"[EXPAND] expand_now failed: {e}")
 
@@ -1690,7 +1792,7 @@ class EconomyManager:
             return
 
         # 적 공중 유닛 감지 (오버로드/감시군주 제외)
-        air_threats = [u for u in self.bot.enemy_units if u.is_flying and u.type_id not in {UnitTypeId.OVERLORD, UnitTypeId.OVERSEER}]
+        air_threats = [u for u in self.bot.enemy_units if getattr(u, "is_flying", False) and u.type_id not in {UnitTypeId.OVERLORD, UnitTypeId.OVERSEER}]
         if not air_threats:
             return
 
@@ -1760,9 +1862,10 @@ class EconomyManager:
             
             if workers.amount < 6:
                 continue
-                
+
             transfer_count = min(workers.amount, 8)
-            transfer_group = workers.take(transfer_count, allow_less=True)
+            # 2026-01-26 FIX: allow_less parameter not supported in this python-sc2 version
+            transfer_group = workers.take(transfer_count) if workers.amount >= transfer_count else workers
             
             for worker in transfer_group:
                 self.bot.do(worker.move(target_hatch.position))

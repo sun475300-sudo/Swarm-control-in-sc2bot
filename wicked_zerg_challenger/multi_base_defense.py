@@ -210,7 +210,7 @@ class MultiBaseDefense:
                 if queens.exists:
                     closest_queen = queens.closest_to(status["position"])
                     self.bot.do(closest_queen.move(status["position"]))
-                    queens = queens.exclude_units([closest_queen])
+                    queens = queens - {closest_queen}
 
                     if not queens.exists:
                         break

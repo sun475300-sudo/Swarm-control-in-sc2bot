@@ -7,6 +7,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 from typing import Optional, List
 import random
+import math
 
 
 # 점막 없이 지을 수 있는 저그 건물
@@ -85,6 +86,42 @@ class BuildingPlacementHelper:
             if hasattr(self.bot, "has_creep"):
                 return self.bot.has_creep(position)
             # 대체 방법: 점막 확인 불가 시 False 반환
+            return False
+        except Exception:
+            return False
+
+    def is_too_close_to_resources(self, position: Point2, min_distance: float = 3.0) -> bool:
+        """
+        건물 위치가 광물이나 가스 근처인지 확인합니다.
+
+        ★ 광물/가스 근처에 건물을 지으면 일꾼 동선이 막혀서 채집 효율이 떨어집니다.
+
+        Args:
+            position: 확인할 위치
+            min_distance: 최소 거리 (기본값: 3타일)
+
+        Returns:
+            bool: 광물/가스 근처이면 True, 아니면 False
+        """
+        try:
+            # 광물 필드 체크
+            if hasattr(self.bot, "mineral_field"):
+                for mineral in self.bot.mineral_field:
+                    if position.distance_to(mineral.position) < min_distance:
+                        return True
+
+            # 가스 간헐천 체크
+            if hasattr(self.bot, "vespene_geyser"):
+                for geyser in self.bot.vespene_geyser:
+                    if position.distance_to(geyser.position) < min_distance:
+                        return True
+
+            # 추출장 체크
+            if hasattr(self.bot, "gas_buildings"):
+                for extractor in self.bot.gas_buildings:
+                    if position.distance_to(extractor.position) < min_distance:
+                        return True
+
             return False
         except Exception:
             return False
@@ -189,6 +226,10 @@ class BuildingPlacementHelper:
 
         # 각 점막 위치에서 배치 가능 여부 확인
         for pos in creep_positions:
+            # ★ 광물/가스 근처 체크 추가 ★
+            if self.is_too_close_to_resources(pos):
+                continue  # 광물/가스 근처는 스킵
+
             if await self.bot.can_place(building_type, pos):
                 return pos
 

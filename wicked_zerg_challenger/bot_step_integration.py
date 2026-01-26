@@ -10,6 +10,15 @@ import asyncio
 import time
 from typing import Any, Dict, List, Optional
 
+# Error Handler 통합
+from error_handler import error_handler
+
+# Build Order System (lazy import fallback)
+try:
+    from build_order_system import BuildOrderSystem
+except ImportError:
+    BuildOrderSystem = None
+
 
 class LogicActivityTracker:
     """실시간 로직 활성화 추적기"""
@@ -80,7 +89,29 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        DRONE = "DRONE"
+        OVERLORD = "OVERLORD"
+        ZERGLING = "ZERGLING"
+        QUEEN = "QUEEN"
+        ROACH = "ROACH"
+        HYDRALISK = "HYDRALISK"
+        MUTALISK = "MUTALISK"
+        BANELING = "BANELING"
+        RAVAGER = "RAVAGER"
+        LURKER = "LURKER"
+        CORRUPTOR = "CORRUPTOR"
+        ULTRALISK = "ULTRALISK"
+        BROODLORD = "BROODLORD"
+        INFESTOR = "INFESTOR"
+        VIPER = "VIPER"
+        SPIRE = "SPIRE"
+        GREATERSPIRE = "GREATERSPIRE"
+        HIVE = "HIVE"
+        LAIR = "LAIR"
+        HATCHERY = "HATCHERY"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        EXTRACTOR = "EXTRACTOR"
+        LARVA = "LARVA"
 
 try:
     from .building_placement_helper import BuildingPlacementHelper
@@ -120,6 +151,66 @@ class BotStepIntegrator:
         self._managers_initialized = True
         return
 
+    async def _update_blackboard_state(self, iteration: int):
+        """
+        ★★★ Blackboard 게임 상태 업데이트 ★★★
+
+        모든 매니저가 Blackboard를 통해 게임 상태를 조회할 수 있도록
+        매 프레임마다 최신 상태로 업데이트
+        """
+        blackboard = self.bot.blackboard
+        if not blackboard:
+            return
+
+        # 1. 기본 게임 정보
+        blackboard.update_game_info(self.bot)
+
+        # 2. 자원 상태
+        blackboard.update_resources(
+            minerals=self.bot.minerals,
+            vespene=self.bot.vespene,
+            supply_used=self.bot.supply_used,
+            supply_cap=self.bot.supply_cap
+        )
+
+        # 3. 기지 및 일꾼 카운트
+        blackboard.bases_count = self.bot.townhalls.amount
+        blackboard.worker_count = self.bot.workers.amount
+
+        # 4. 주요 유닛 카운트 업데이트
+        if UnitTypeId:
+            key_units = [
+                UnitTypeId.DRONE,
+                UnitTypeId.OVERLORD,
+                UnitTypeId.ZERGLING,
+                UnitTypeId.QUEEN,
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.MUTALISK,
+            ]
+
+            for unit_type in key_units:
+                current = self.bot.units(unit_type).amount
+                pending = self.bot.already_pending(unit_type)
+                blackboard.update_unit_count(unit_type, current, pending)
+
+        # 5. 전략 정보
+        if hasattr(self.bot, "enemy_race"):
+            blackboard.enemy_race = str(self.bot.enemy_race)
+
+        if hasattr(self.bot, "aggressive_strategies") and self.bot.aggressive_strategies:
+            blackboard.current_strategy = self.bot.aggressive_strategies.active_strategy.value
+
+        # 6. 빌드 오더 완료 여부
+        if hasattr(self.bot, "build_order_system") and self.bot.build_order_system:
+            if hasattr(self.bot.build_order_system, "is_finished"):
+                blackboard.build_order_complete = self.bot.build_order_system.is_finished()
+            elif hasattr(self.bot.build_order_system, "finished"):
+                blackboard.build_order_complete = self.bot.build_order_system.finished
+            else:
+                # Fallback: 5분 이후면 완료로 간주
+                blackboard.build_order_complete = self.bot.time > 300.0
+
     async def execute_game_logic(self, iteration: int):
         """게임 로직 실행"""
 
@@ -134,54 +225,67 @@ class BotStepIntegrator:
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
                 self.bot.performance_optimizer.start_frame()
 
+            # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
+            if hasattr(self.bot, "blackboard") and self.bot.blackboard:
+                await self._update_blackboard_state(iteration)
+
             # 0.03 ★★★ Build Order System (빌드 오더 - 최최우선) ★★★
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
                 if not hasattr(self.bot, "build_order_system"):
-                    try:
-                        self.bot.build_order_system = BuildOrderSystem(self.bot)
-                        print("[BUILD_ORDER] 빌드 오더 시스템 활성화!")
-                        
-                        # ★ RL Agent에게 오프닝 빌드 조언 구하기 (게임 시작 시 1회) ★
-                        if self.bot.train_mode and hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
-                            # 초기 상태로 제안 받기 (0 벡터라도 무관 - 초기 성향)
-                            # 간단히 action_labels[0] 등을 쓰는 대신, 랜덤 또는 epsilon 탐험 이용
-                            # 여기서는 RL Agent의 get_action을 호출하여 초기 전략 결정
-                            try:
-                                import numpy as np
-                                dummy_state = np.zeros(15) # 초기화 전이라 0
-                                _, action_label, _ = self.bot.rl_agent.get_action(dummy_state, training=True)
-                                
-                                from build_order_system import BuildOrderType
-                                new_build = None
-                                
-                                if action_label == "ECONOMY":
-                                    new_build = BuildOrderType.ECONOMY_15HATCH
-                                elif action_label == "AGGRESSIVE":
-                                    # 50% 확률로 10pool 또는 Roach Rush
-                                    if np.random.random() < 0.5:
-                                        new_build = BuildOrderType.AGGRESSIVE_10POOL
-                                    else:
-                                        new_build = BuildOrderType.ROACH_RUSH
-                                elif action_label == "DEFENSIVE":
-                                    new_build = BuildOrderType.SAFE_14POOL # or LURKER??
-                                elif action_label == "TECH":
-                                    if np.random.random() < 0.5:
-                                        new_build = BuildOrderType.MUTALISK_RUSH
-                                    else:
-                                        new_build = BuildOrderType.HYDRA_TIMING
-                                elif action_label == "ALL_IN":
-                                    new_build = BuildOrderType.STANDARD_12POOL # or Baneling Bust logic
-                                
-                                if new_build:
-                                    self.bot.build_order_system.current_build_order = new_build
-                                    self.bot.build_order_system._setup_build_order() # 재설정
-                                    print(f"[RL_OPENING] RLAgent initialized build: {new_build.value} (Action: {action_label})")
-                                    
-                            except Exception as e:
-                                print(f"[WARNING] Failed to set RL opening: {e}")
+                    if BuildOrderSystem is not None:
+                        try:
+                            self.bot.build_order_system = BuildOrderSystem(self.bot)
+                            print("[BUILD_ORDER] 빌드 오더 시스템 활성화!")
 
-                    except ImportError as e:
-                        print(f"[WARNING] Build order system not available: {e}")
+                            # ★ RL Agent에게 오프닝 빌드 조언 구하기 (게임 시작 시 1회) ★
+                            if self.bot.train_mode and hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
+                                # 초기 상태로 제안 받기 (0 벡터라도 무관 - 초기 성향)
+                                # 간단히 action_labels[0] 등을 쓰는 대신, 랜덤 또는 epsilon 탐험 이용
+                                # 여기서는 RL Agent의 get_action을 호출하여 초기 전략 결정
+                                try:
+                                    import numpy as np
+                                    dummy_state = np.zeros(15) # 초기화 전이라 0
+                                    _, action_label, _ = self.bot.rl_agent.get_action(dummy_state, training=True)
+
+                                    from build_order_system import BuildOrderType
+                                    new_build = None
+
+                                    if action_label == "ECONOMY":
+                                        new_build = BuildOrderType.ECONOMY_15HATCH
+                                    elif action_label == "AGGRESSIVE":
+                                        # 50% 확률로 10pool 또는 Roach Rush
+                                        if np.random.random() < 0.5:
+                                            new_build = BuildOrderType.AGGRESSIVE_10POOL
+                                        else:
+                                            new_build = BuildOrderType.ROACH_RUSH
+                                    elif action_label == "DEFENSIVE":
+                                        new_build = BuildOrderType.SAFE_14POOL # or LURKER??
+                                    elif action_label == "TECH":
+                                        if np.random.random() < 0.5:
+                                            new_build = BuildOrderType.MUTALISK_RUSH
+                                        else:
+                                            new_build = BuildOrderType.HYDRA_TIMING
+                                    elif action_label == "ALL_IN":
+                                        new_build = BuildOrderType.STANDARD_12POOL # or Baneling Bust logic
+
+                                    if new_build:
+                                        self.bot.build_order_system.current_build_order = new_build
+                                        self.bot.build_order_system._setup_build_order() # 재설정
+                                        print(f"[RL_OPENING] RLAgent initialized build: {new_build.value} (Action: {action_label})")
+
+                                except Exception as e:
+                                    print(f"[WARNING] Failed to set RL opening: {e}")
+
+                        except Exception as e:
+                            if error_handler.debug_mode:
+                                raise
+                            else:
+                                error_handler.error_counts["BuildOrderInit"] += 1
+                                if error_handler.error_counts["BuildOrderInit"] <= error_handler.max_error_logs:
+                                    print(f"[ERROR] Build Order initialization error: {e}")
+                            self.bot.build_order_system = None
+                    else:
+                        # BuildOrderSystem not available
                         self.bot.build_order_system = None
 
                 if hasattr(self.bot, "build_order_system") and self.bot.build_order_system:
@@ -193,35 +297,34 @@ class BotStepIntegrator:
                             progress = self.bot.build_order_system.get_progress()
                             print(f"[BUILD_ORDER] {progress}")
                     except Exception as e:
-                        if iteration % 200 == 0:
-                            print(f"[WARNING] Build Order error: {e}")
+                        if error_handler.debug_mode:
+                            raise
+                        else:
+                            error_handler.error_counts["BuildOrder"] += 1
+                            if error_handler.error_counts["BuildOrder"] <= error_handler.max_error_logs:
+                                print(f"[ERROR] Build Order error: {e}")
                     finally:
                         self._logic_tracker.end_logic("BuildOrder", start_time)
 
-            # 0.05 ★★★ Early Defense System (초반 방어 - 최우선) ★★★
-            if self.bot.time < 180.0:  # 3분 이내
-                if not hasattr(self.bot, "early_defense"):
-                    try:
-                        from early_defense_system import EarlyDefenseSystem
-                        self.bot.early_defense = EarlyDefenseSystem(self.bot)
-                        print("[EARLY_DEFENSE] 초반 방어 시스템 활성화!")
-                    except ImportError as e:
-                        print(f"[WARNING] Early defense system not available: {e}")
-                        self.bot.early_defense = None
-
-                if hasattr(self.bot, "early_defense") and self.bot.early_defense:
-                    start_time = self._logic_tracker.start_logic("EarlyDefense")
-                    try:
-                        await self.bot.early_defense.execute(iteration)
-                        # 주기적으로 상태 출력
-                        if iteration % 100 == 0:
-                            status = self.bot.early_defense.get_status()
-                            print(f"[EARLY_DEFENSE] {status}")
-                    except Exception as e:
-                        if iteration % 200 == 0:
-                            print(f"[WARNING] Early Defense error: {e}")
-                    finally:
-                        self._logic_tracker.end_logic("EarlyDefense", start_time)
+            # 0.05 ★★★ DefenseCoordinator (통합 방어 시스템 - 최우선) ★★★
+            if hasattr(self.bot, "defense_coordinator") and self.bot.defense_coordinator:
+                start_time = self._logic_tracker.start_logic("DefenseCoordinator")
+                try:
+                    await self.bot.defense_coordinator.execute(iteration)
+                    # 주기적으로 상태 출력
+                    if iteration % 100 == 0:
+                        status = self.bot.defense_coordinator.get_status()
+                        threat = self.bot.blackboard.threat.level.name if self.bot.blackboard else "UNKNOWN"
+                        print(f"[DEFENSE] Threat: {threat}, Status: {status}")
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["DefenseCoordinator"] += 1
+                        if error_handler.error_counts["DefenseCoordinator"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] DefenseCoordinator error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("DefenseCoordinator", start_time)
 
             # 0.06 ★★★ Early Scout System (초반 정찰) ★★★
             if self.bot.time < 300.0:  # 5분 이내
@@ -243,8 +346,12 @@ class BotStepIntegrator:
                             status = self.bot.early_scout.get_scout_status()
                             print(f"[EARLY_SCOUT] {status}")
                     except Exception as e:
-                        if iteration % 200 == 0:
-                            print(f"[WARNING] Early Scout error: {e}")
+                        if error_handler.debug_mode:
+                            raise
+                        else:
+                            error_handler.error_counts["EarlyScout"] += 1
+                            if error_handler.error_counts["EarlyScout"] <= error_handler.max_error_logs:
+                                print(f"[ERROR] Early Scout error: {e}")
                     finally:
                         self._logic_tracker.end_logic("EarlyScout", start_time)
 
@@ -257,8 +364,12 @@ class BotStepIntegrator:
                         print(f"[DEBUG] Calling strategy_manager.update() at iteration {iteration}")
                     self.bot.strategy_manager.update()
                 except Exception as e:
-                    if iteration % 200 == 0:
-                        print(f"[WARNING] Strategy Manager error: {e}")
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["StrategyManager"] += 1
+                        if error_handler.error_counts["StrategyManager"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] Strategy Manager error: {e}")
                 finally:
                     self._logic_tracker.end_logic("Strategy", start_time)
             else:
@@ -322,15 +433,6 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("DefeatDetection", start_time)
 
-            # 0.2 Aggressive Strategies (초반 공격 전략 - 12풀, 맹독충 올인 등)
-            if iteration % 4 == 0:  # 4프레임마다 실행
-                await self._safe_manager_step(
-                    getattr(self.bot, "aggressive_strategies", None),
-                    iteration,
-                    "Aggressive Strategies",
-                    method_name="execute",
-                )
-
             # ★ NEW: Chat Manager - 상대방 항복/채팅 감지 (10프레임마다) ★
             if iteration % 10 == 0:
                 await self._handle_chat_interaction()
@@ -348,8 +450,40 @@ class BotStepIntegrator:
                 "Creep manager",
             )
 
-            # 3. Economy (경제)
-            await self._safe_manager_step(self.bot.economy, iteration, "Economy")
+            # 3. ProductionController (통합 생산 관리 - Dynamic Authority) ★★★
+            # Blackboard 생산 큐를 우선순위에 따라 처리
+            if hasattr(self.bot, "production_controller") and self.bot.production_controller:
+                start_time = self._logic_tracker.start_logic("ProductionController")
+                try:
+                    await self.bot.production_controller.execute(iteration)
+
+                    # 주기적으로 통계 출력
+                    if iteration % 200 == 0:
+                        stats = self.bot.production_controller.get_production_stats()
+                        print(f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}")
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["ProductionController"] += 1
+                        if error_handler.error_counts["ProductionController"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] ProductionController error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("ProductionController", start_time)
+
+            # 3.5 Unit Factory (기존 시스템 - ProductionController와 협력)
+            # TODO: 점진적으로 ProductionController로 이관
+            if hasattr(self.bot, "unit_factory") and self.bot.unit_factory:
+                start_time = self._logic_tracker.start_logic("UnitFactory")
+                try:
+                    # UnitFactory는 이제 Blackboard에 생산 요청만 등록
+                    # 실제 생산은 ProductionController가 처리
+                    await self.bot.unit_factory.on_step(iteration)
+                except Exception as e:
+                    if iteration % 200 == 0:
+                        print(f"[WARNING] Unit factory error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("UnitFactory", start_time)
 
             # 4. Production (생산)
             if self.bot.production:
@@ -365,17 +499,19 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("Production", start_time, success)
 
-            # 4.2. Unit Factory (Army Production)
-            # ★ CRITICAL FIX: Always run UnitFactory to produce army!
-            if hasattr(self.bot, "unit_factory"):
-                start_time = self._logic_tracker.start_logic("UnitFactory")
-                try:
-                    await self.bot.unit_factory.on_step(iteration)
-                except Exception as e:
-                    if iteration % 200 == 0:
-                        print(f"[WARNING] Unit factory error: {e}")
-                finally:
-                    self._logic_tracker.end_logic("UnitFactory", start_time)
+            # 4.2 Aggressive Strategies (초반 공격 전략) - ★ MOVED AFTER PRODUCTION ★
+            # Production과 UnitFactory 이후 실행하여 애벌레 경쟁 최소화
+            if iteration % 4 == 0:  # 4프레임마다 실행
+                await self._safe_manager_step(
+                    getattr(self.bot, "aggressive_strategies", None),
+                    iteration,
+                    "Aggressive Strategies",
+                    method_name="execute",
+                )
+
+            # 5. Economy (경제) - ★ MOVED AFTER ARMY PRODUCTION ★
+            # 전투 병력 생산 후 남은 애벌레로 드론 생산
+            await self._safe_manager_step(self.bot.economy, iteration, "Economy")
 
             # 4.5. Evolution Upgrades (공방 업그레이드)
             await self._safe_manager_step(
@@ -511,8 +647,13 @@ class BotStepIntegrator:
                 await self.draw_debug_info()
 
         except Exception as e:
-            if iteration % 100 == 0:
-                print(f"[WARNING] Game logic execution error: {e}")
+            if error_handler.debug_mode:
+                print(f"\n[ERROR] Game logic execution error in DEBUG_MODE")
+                raise
+            else:
+                error_handler.error_counts["GameLogic"] += 1
+                if error_handler.error_counts["GameLogic"] <= error_handler.max_error_logs:
+                    print(f"[ERROR] Game logic execution error: {e}")
         finally:
             # Performance Optimizer 프레임 종료
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
@@ -589,6 +730,13 @@ class BotStepIntegrator:
     async def _safe_manager_step(
         self, manager, iteration: int, label: str, method_name: str = "on_step"
     ) -> None:
+        """
+        안전한 매니저 실행 (error_handler 통합)
+
+        error_handler가 DEBUG_MODE에 따라 자동으로 처리:
+        - DEBUG_MODE=True: 즉시 크래시 (개발)
+        - DEBUG_MODE=False: 로그 후 계속 (프로덕션)
+        """
         if not manager:
             return
         method = getattr(manager, method_name, None)
@@ -597,12 +745,23 @@ class BotStepIntegrator:
 
         start_time = self._logic_tracker.start_logic(label)
         success = True
+
         try:
             await method(iteration)
         except Exception as e:
             success = False
-            # Always log errors for debugging stability
-            print(f"[WARNING] {label} error: {e}")
+            if error_handler.debug_mode:
+                # DEBUG_MODE: 즉시 크래시
+                print(f"\n[ERROR] {label} failed in DEBUG_MODE - crashing for debugging")
+                print(f"[ERROR] Exception: {e}")
+                raise
+            else:
+                # 프로덕션 모드: 로그 후 계속
+                error_handler.error_counts[label] += 1
+                if error_handler.error_counts[label] <= error_handler.max_error_logs:
+                    print(f"[ERROR] {label} error: {e}")
+                    if error_handler.error_counts[label] == error_handler.max_error_logs:
+                        print(f"[ERROR] {label}: Suppressing further error logs")
         finally:
             self._logic_tracker.end_logic(label, start_time, success)
 
@@ -714,10 +873,13 @@ class BotStepIntegrator:
                             print(f"[RL_DECISION] ★ RLAgent 결정 ({mode}): {action_label} (확률: {prob:.3f}, ε={self.bot.rl_agent.epsilon:.3f}) ★")
 
                 except Exception as e:
-                    if iteration % 500 == 0:
-                        print(f"[WARNING] RLAgent error: {e}")
-                        import traceback
-                        traceback.print_exc()
+                    if error_handler.debug_mode:
+                        print(f"[ERROR] RLAgent error in DEBUG_MODE: {e}")
+                        raise
+                    else:
+                        error_handler.error_counts["RLAgent"] += 1
+                        if error_handler.error_counts["RLAgent"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] RLAgent error: {e}")
 
             # ★★★ HierarchicalRL 실행 (RL Override 강제 적용) ★★★
             # 이제 순수하게 전략적 결정만 반환함
@@ -1103,33 +1265,25 @@ class BotStepIntegrator:
         except Exception:
             return False
 
+    @error_handler.safe_coroutine(log_key="TrainingLogic", default_return=None)
     async def execute_training_logic(self, iteration: int):
         """훈련 로직 실행 (train_mode=True일 때만)"""
         if not self.bot.train_mode:
             return
 
-        try:
-            # 보상 시스템 계산
-            if hasattr(self.bot, "_reward_system"):
-                try:
-                    step_reward = self.bot._reward_system.calculate_step_reward(
-                        self.bot
-                    )
+        # 보상 시스템 계산
+        if hasattr(self.bot, "_reward_system"):
+            step_reward = self.bot._reward_system.calculate_step_reward(
+                self.bot
+            )
 
-                    # RL 에이전트 업데이트
-                    if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
-                        self.bot.rl_agent.update_reward(step_reward)
+            # RL 에이전트 업데이트
+            if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
+                self.bot.rl_agent.update_reward(step_reward)
 
-                    # 주기적으로 보상 로그 출력
-                    if iteration % 500 == 0:
-                        print(f"[TRAINING] Step reward: {step_reward:.3f}")
-
-                except Exception as e:
-                    if iteration % 200 == 0:
-                        print(f"[WARNING] Training logic error: {e}")
-        except Exception as e:
-            if iteration % 200 == 0:
-                print(f"[WARNING] Training execution error: {e}")
+            # 주기적으로 보상 로그 출력
+            if iteration % 500 == 0:
+                print(f"[TRAINING] Step reward: {step_reward:.3f}")
 
     async def on_step(self, iteration: int):
         """
