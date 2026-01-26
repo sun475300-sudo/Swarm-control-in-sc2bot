@@ -58,6 +58,15 @@ class PerformanceOptimizer:
         self.execution_times = {}
         self.execution_counts = {}
 
+        # ★ 거리 계산 캐시 (Distance Calculation Cache) ★
+        self._distance_cache = {}
+        self._distance_cache_ttl = {}
+        self._distance_cache_hits = 0
+        self._distance_cache_misses = 0
+
+        # 프레임 관리
+        self._frame_start_time = None
+
     def should_execute(self, logic_name: str, iteration: int, force: bool = False) -> bool:
         """
         로직 실행 여부 판단
@@ -240,6 +249,150 @@ class PerformanceOptimizer:
                 if new_interval != current_interval:
                     self.execution_intervals[logic_name] = new_interval
                     print(f"[OPTIMIZER] {logic_name} interval: {current_interval} → {new_interval}")
+
+    # ========== 거리 계산 캐싱 시스템 ==========
+
+    def start_frame(self):
+        """프레임 시작 (거리 캐시 초기화)"""
+        self._frame_start_time = time.time()
+        # 매 프레임마다 거리 캐시 초기화 (유닛 위치가 변경되므로)
+        self._distance_cache.clear()
+        self._distance_cache_ttl.clear()
+
+    def end_frame(self):
+        """프레임 종료 (통계 업데이트)"""
+        if self._frame_start_time:
+            frame_time = time.time() - self._frame_start_time
+            self.track_execution("frame", frame_time)
+
+    def get_distance_cached(self, unit1, unit2, ttl: float = 0.1) -> float:
+        """
+        두 유닛/위치 간 거리 계산 (캐싱 지원)
+
+        Args:
+            unit1: 첫 번째 유닛 또는 위치
+            unit2: 두 번째 유닛 또는 위치
+            ttl: 캐시 유효 시간 (초, 기본 0.1초 = 2프레임)
+
+        Returns:
+            거리
+        """
+        # 캐시 키 생성 (유닛 태그 또는 위치 기반)
+        try:
+            key1 = getattr(unit1, 'tag', None) or str(getattr(unit1, 'position', unit1))
+            key2 = getattr(unit2, 'tag', None) or str(getattr(unit2, 'position', unit2))
+            cache_key = f"dist_{key1}_{key2}"
+
+            # 캐시 조회
+            if cache_key in self._distance_cache:
+                cache_time = self._distance_cache_ttl.get(cache_key, 0)
+                if time.time() - cache_time <= ttl:
+                    self._distance_cache_hits += 1
+                    return self._distance_cache[cache_key]
+
+            # 캐시 미스: 거리 계산
+            self._distance_cache_misses += 1
+
+            # 실제 거리 계산
+            pos1 = getattr(unit1, 'position', unit1)
+            pos2 = getattr(unit2, 'position', unit2)
+
+            # distance_to() 메서드가 있으면 사용, 없으면 수동 계산
+            if hasattr(pos1, 'distance_to'):
+                distance = pos1.distance_to(pos2)
+            else:
+                # 수동 계산 (x, y 좌표)
+                dx = getattr(pos1, 'x', pos1[0]) - getattr(pos2, 'x', pos2[0])
+                dy = getattr(pos1, 'y', pos1[1]) - getattr(pos2, 'y', pos2[1])
+                distance = (dx**2 + dy**2) ** 0.5
+
+            # 캐시에 저장
+            self._distance_cache[cache_key] = distance
+            self._distance_cache_ttl[cache_key] = time.time()
+
+            return distance
+
+        except Exception as e:
+            # 에러 발생 시 폴백: 직접 계산
+            try:
+                pos1 = getattr(unit1, 'position', unit1)
+                pos2 = getattr(unit2, 'position', unit2)
+                if hasattr(pos1, 'distance_to'):
+                    return pos1.distance_to(pos2)
+                else:
+                    dx = getattr(pos1, 'x', pos1[0]) - getattr(pos2, 'x', pos2[0])
+                    dy = getattr(pos1, 'y', pos1[1]) - getattr(pos2, 'y', pos2[1])
+                    return (dx**2 + dy**2) ** 0.5
+            except:
+                return 0.0
+
+    def get_closest_cached(self, unit, candidates, max_distance: Optional[float] = None):
+        """
+        가장 가까운 유닛 찾기 (캐싱 지원)
+
+        Args:
+            unit: 기준 유닛
+            candidates: 후보 유닛 리스트
+            max_distance: 최대 거리 (Optional)
+
+        Returns:
+            가장 가까운 유닛 또는 None
+        """
+        if not candidates:
+            return None
+
+        closest = None
+        min_distance = float('inf')
+
+        for candidate in candidates:
+            distance = self.get_distance_cached(unit, candidate, ttl=0.1)
+
+            if max_distance and distance > max_distance:
+                continue
+
+            if distance < min_distance:
+                min_distance = distance
+                closest = candidate
+
+        return closest
+
+    def filter_by_distance_cached(self, unit, candidates, max_distance: float):
+        """
+        거리 기준 필터링 (캐싱 지원)
+
+        Args:
+            unit: 기준 유닛
+            candidates: 후보 유닛 리스트
+            max_distance: 최대 거리
+
+        Returns:
+            필터링된 유닛 리스트
+        """
+        result = []
+        for candidate in candidates:
+            distance = self.get_distance_cached(unit, candidate, ttl=0.1)
+            if distance <= max_distance:
+                result.append(candidate)
+        return result
+
+    def get_distance_cache_stats(self) -> dict:
+        """거리 캐시 통계 반환"""
+        total_requests = self._distance_cache_hits + self._distance_cache_misses
+        hit_rate = (self._distance_cache_hits / total_requests * 100
+                   if total_requests > 0 else 0.0)
+
+        return {
+            "cache_size": len(self._distance_cache),
+            "hits": self._distance_cache_hits,
+            "misses": self._distance_cache_misses,
+            "hit_rate": f"{hit_rate:.1f}%",
+            "total_requests": total_requests
+        }
+
+    def reset_distance_cache_stats(self):
+        """거리 캐시 통계 초기화"""
+        self._distance_cache_hits = 0
+        self._distance_cache_misses = 0
 
 
 # ==================== 빠른 승리를 위한 전략 최적화 ====================

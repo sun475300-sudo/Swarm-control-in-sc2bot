@@ -124,9 +124,22 @@ def show_rl_agent():
                 
                 # Metadata
                 if 'episode_count' in data:
-                     print(f"  - 총 학습 게임 수: {data['episode_count']}")
+                     print(f"  - 총 학습 에피소드(게임) 수: {data['episode_count']}")
+                
                 if 'epsilon' in data:
-                     print(f"  - 현재 탐험률(Epsilon): {data['epsilon']:.4f} (낮을수록 학습된 대로 행동)")
+                     eps = float(data['epsilon'])
+                     print(f"  - 현재 탐험률(Epsilon): {eps:.4f} ({eps*100:.1f}%)")
+                     if eps > 0.1:
+                         print("    → 아직 다양한 전략을 시도해보는 '탐험 단계'입니다.")
+                     else:
+                         print("    → 학습된 최적 전략을 주로 사용하는 '숙련 단계'입니다.")
+
+                # Neural Network Weights
+                if 'w1' in data:
+                     w1 = data['w1']
+                     print(f"  - 신경망 구조: 입력({w1.shape[0]}) -> 은닉({w1.shape[1]}) -> 출력")
+                     print(f"  - 가중치 평균/표준편차: {np.mean(w1):.4f} / {np.std(w1):.4f}")
+                     print("    (가중치 변화가 있을수록 학습이 진행되고 있음을 의미합니다)")
                 
                 loaded = True
                 break

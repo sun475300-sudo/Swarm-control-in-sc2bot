@@ -55,6 +55,9 @@ class AggressiveStrategyExecutor:
     def __init__(self, bot):
         self.bot = bot
 
+        # ★ Blackboard 연동 ★
+        self.blackboard = getattr(bot, "blackboard", None)
+
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
@@ -291,11 +294,27 @@ class AggressiveStrategyExecutor:
                 await self._build_structure(UnitTypeId.BANELINGNEST)
                 return
 
-        # 3. 저글링 생산
+        # 3. 저글링 생산 (★ Blackboard 요청으로 변경 ★)
         zerglings = self.bot.units(UnitTypeId.ZERGLING)
-        if zerglings.amount < 16 and self.bot.larva.exists:
-            if self.bot.can_afford(UnitTypeId.ZERGLING):
-                self.bot.do(self.bot.larva.first.train(UnitTypeId.ZERGLING))
+        target_zerglings = 16
+
+        if self.blackboard:
+            # Blackboard를 통한 생산 요청
+            zergling_count = self.blackboard.get_unit_count(UnitTypeId.ZERGLING)
+            needed = target_zerglings - zergling_count.total
+
+            if needed > 0:
+                self.blackboard.request_production(
+                    unit_type=UnitTypeId.ZERGLING,
+                    count=needed,
+                    requester="AggressiveStrategies"
+                )
+        else:
+            # Blackboard 없을 때 폴백 (기존 로직)
+            pending_zerglings = self.bot.already_pending(UnitTypeId.ZERGLING)
+            if zerglings.amount + pending_zerglings < target_zerglings and self.bot.larva.exists:
+                if self.bot.can_afford(UnitTypeId.ZERGLING):
+                    self.bot.do(self.bot.larva.first.train(UnitTypeId.ZERGLING))
 
         # 4. 맹독충 변태
         if baneling_nest.ready.exists and not self._banelings_morphing:
@@ -356,12 +375,29 @@ class AggressiveStrategyExecutor:
                     await self._build_structure(UnitTypeId.ROACHWARREN)
             return
 
-        # 2. 바퀴 생산
+        # 2. 바퀴 생산 (★ Blackboard 요청으로 변경 ★)
         roaches = self.bot.units(UnitTypeId.ROACH)
-        if roach_warren.ready.exists and roaches.amount < config["roach_count"]:
-            if self.bot.can_afford(UnitTypeId.ROACH) and self.bot.larva.exists:
-                self.bot.do(self.bot.larva.first.train(UnitTypeId.ROACH))
-            return
+        target_roaches = config["roach_count"]
+
+        if roach_warren.ready.exists:
+            if self.blackboard:
+                # Blackboard를 통한 생산 요청
+                roach_count = self.blackboard.get_unit_count(UnitTypeId.ROACH)
+                needed = target_roaches - roach_count.total
+
+                if needed > 0:
+                    self.blackboard.request_production(
+                        unit_type=UnitTypeId.ROACH,
+                        count=needed,
+                        requester="AggressiveStrategies"
+                    )
+            else:
+                # Blackboard 없을 때 폴백
+                pending_roaches = self.bot.already_pending(UnitTypeId.ROACH)
+                if roaches.amount + pending_roaches < target_roaches:
+                    if self.bot.can_afford(UnitTypeId.ROACH) and self.bot.larva.exists:
+                        self.bot.do(self.bot.larva.first.train(UnitTypeId.ROACH))
+                        return
 
         # 3. 궤멸충 변태
         ravagers = self.bot.units(UnitTypeId.RAVAGER)
@@ -434,12 +470,28 @@ class AggressiveStrategyExecutor:
                         self._tunneling_upgrade_started = True
                         print("[TUNNELING] Tunneling Claws upgrade started!")
 
-        # 4. 바퀴 생산
+        # 4. 바퀴 생산 (★ Blackboard 요청으로 변경 ★)
         roaches = self.bot.units(UnitTypeId.ROACH)
-        if roaches.amount < config["roach_count"]:
-            if self.bot.can_afford(UnitTypeId.ROACH) and self.bot.larva.exists:
-                self.bot.do(self.bot.larva.first.train(UnitTypeId.ROACH))
-            return
+        target_roaches = config["roach_count"]
+
+        if self.blackboard:
+            # Blackboard를 통한 생산 요청
+            roach_count = self.blackboard.get_unit_count(UnitTypeId.ROACH)
+            needed = target_roaches - roach_count.total
+
+            if needed > 0:
+                self.blackboard.request_production(
+                    unit_type=UnitTypeId.ROACH,
+                    count=needed,
+                    requester="AggressiveStrategies"
+                )
+        else:
+            # Blackboard 없을 때 폴백
+            pending_roaches = self.bot.already_pending(UnitTypeId.ROACH)
+            if roaches.amount + pending_roaches < target_roaches:
+                if self.bot.can_afford(UnitTypeId.ROACH) and self.bot.larva.exists:
+                    self.bot.do(self.bot.larva.first.train(UnitTypeId.ROACH))
+                    return
 
         # 5. 잠복 이동 공격
         if self._tunneling_upgrade_started and roaches.amount >= config["roach_count"]:
@@ -556,12 +608,28 @@ class AggressiveStrategyExecutor:
                         await self._build_structure(UnitTypeId.NYDUSNETWORK)
             return
 
-        # 3. 여왕 생산
+        # 3. 여왕 생산 (★ Blackboard 요청으로 변경 ★)
         queens = self.bot.units(UnitTypeId.QUEEN)
-        if queens.amount < config["queen_count"]:
-            for hatch in self.bot.townhalls.ready.idle:
-                if self.bot.can_afford(UnitTypeId.QUEEN):
-                    self.bot.do(hatch.train(UnitTypeId.QUEEN))
+        target_queens = config["queen_count"]
+
+        if self.blackboard:
+            # Blackboard를 통한 생산 요청
+            queen_count = self.blackboard.get_unit_count(UnitTypeId.QUEEN)
+            needed = target_queens - queen_count.total
+
+            if needed > 0:
+                self.blackboard.request_production(
+                    unit_type=UnitTypeId.QUEEN,
+                    count=needed,
+                    requester="AggressiveStrategies"
+                )
+        else:
+            # Blackboard 없을 때 폴백
+            pending_queens = self.bot.already_pending(UnitTypeId.QUEEN)
+            if queens.amount + pending_queens < target_queens:
+                for hatch in self.bot.townhalls.ready.idle:
+                    if self.bot.can_afford(UnitTypeId.QUEEN):
+                        self.bot.do(hatch.train(UnitTypeId.QUEEN))
 
         # 4. 땅굴 벌레 생성
         if nydus_network.ready.exists and not self._nydus_built:

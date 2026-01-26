@@ -707,7 +707,7 @@ class ZergRewardSystem:
                     reward += 0.5
                 else:
                     # 페널티: 2분에 병력 없음
-                    reward -= 1.0  # 강한 페널티
+                    reward -= 2.0  # ★ 강화된 페널티 (1.0 → 2.0) ★
 
             # ★★★ 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표 ★★★
             elif 120 < game_time <= 180:
@@ -724,7 +724,7 @@ class ZergRewardSystem:
                     reward += 0.3
                 else:
                     # 페널티: 3분에 병력 부족
-                    reward -= 1.5  # 매우 강한 페널티
+                    reward -= 2.5  # ★ 강화된 페널티 (1.5 → 2.5) ★
 
             # ★★★ 3분 이후: 지속적인 병력 유지 보상 ★★★
             elif game_time > 180:

@@ -479,7 +479,12 @@ class AdvancedBuildingManager:
         
         # 우선순위 순으로 정렬
         tech_buildings.sort(key=lambda x: x[3])
-        
+
+        # 본진 위치 가져오기
+        if not self.bot.townhalls.exists:
+            return results
+        main_base = self.bot.townhalls.first
+
         # 건설 실행
         for tech_type, mineral_cost, gas_cost, priority in tech_buildings:
             if (self.bot.minerals >= mineral_cost and 

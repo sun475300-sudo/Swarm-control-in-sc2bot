@@ -29487,3 +29487,663 @@
 19:28:19 - StrategyManager - WARNING - [580s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
 19:28:19 - StrategyManager - INFO - [581s] Air threat cleared
 19:28:20 - StrategyManager - WARNING - [590s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
+12:16:57 - WickedZergBot - INFO - Bot started. Initializing managers...
+12:16:57 - StrategyManager - INFO - ============================================================
+12:16:57 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+12:16:57 - StrategyManager - INFO - ============================================================
+12:16:57 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+12:16:57 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+12:16:57 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+12:16:57 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+12:16:57 - StrategyManager - INFO - ------------------------------------------------------------
+12:16:57 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+12:16:57 - StrategyManager - INFO -   second_base: 55.9s
+12:16:57 - StrategyManager - INFO -   third_base: 170.4s
+12:16:57 - StrategyManager - INFO -   fourth_base: 185.5s
+12:16:57 - StrategyManager - INFO - ============================================================
+12:16:57 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+12:16:57 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+12:17:23 - UpgradeManager - INFO - [353s] Building Evolution Chamber
+12:17:29 - UnitMorphManager - INFO - [410s] Morphed Overseer (Active: 0/3)
+12:17:34 - UpgradeManager - INFO - [459s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+12:17:37 - UnitMorphManager - INFO - [480s] Morphed Overseer (Active: 2/3)
+13:01:42 - WickedZergBot - INFO - Bot started. Initializing managers...
+13:01:42 - StrategyManager - INFO - ============================================================
+13:01:42 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+13:01:42 - StrategyManager - INFO - ============================================================
+13:01:42 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+13:01:42 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+13:01:42 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+13:01:42 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+13:01:42 - StrategyManager - INFO - ------------------------------------------------------------
+13:01:42 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+13:01:42 - StrategyManager - INFO -   second_base: 55.9s
+13:01:42 - StrategyManager - INFO -   third_base: 170.4s
+13:01:42 - StrategyManager - INFO -   fourth_base: 185.5s
+13:01:42 - StrategyManager - INFO - ============================================================
+13:01:42 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+13:01:42 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+13:06:30 - WickedZergBot - INFO - Bot started. Initializing managers...
+13:06:30 - StrategyManager - INFO - ============================================================
+13:06:30 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+13:06:30 - StrategyManager - INFO - ============================================================
+13:06:30 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+13:06:30 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+13:06:30 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+13:06:30 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+13:06:30 - StrategyManager - INFO - ------------------------------------------------------------
+13:06:30 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+13:06:30 - StrategyManager - INFO -   second_base: 55.9s
+13:06:30 - StrategyManager - INFO -   third_base: 170.4s
+13:06:30 - StrategyManager - INFO -   fourth_base: 185.5s
+13:06:30 - StrategyManager - INFO - ============================================================
+13:06:30 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+13:06:30 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+13:06:35 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+13:06:38 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+13:06:40 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+13:06:41 - UpgradeManager - INFO - [123s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+13:06:43 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+13:06:44 - UpgradeManager - INFO - [153s] Building Evolution Chamber
+13:06:44 - UpgradeManager - INFO - [155s] Building Evolution Chamber
+13:06:44 - UpgradeManager - INFO - [157s] Building Evolution Chamber
+13:06:44 - UpgradeManager - INFO - [159s] Building Evolution Chamber
+13:06:44 - UpgradeManager - INFO - [161s] Building Evolution Chamber
+13:06:45 - UpgradeManager - INFO - [163s] Building Evolution Chamber
+13:06:45 - UpgradeManager - INFO - [165s] Building Evolution Chamber
+13:06:45 - UpgradeManager - INFO - [166s] Building Evolution Chamber
+13:06:46 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+13:06:47 - UpgradeManager - INFO - [186s] Building Evolution Chamber
+13:06:48 - UpgradeManager - INFO - [194s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+13:06:49 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+13:06:50 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+13:07:01 - UnitMorphManager - INFO - [314s] Morphed Overseer (Active: 0/3)
+13:07:03 - UnitMorphManager - INFO - [330s] Morphed Overseer (Active: 2/3)
+13:07:11 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+13:07:17 - UpgradeManager - INFO - [438s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+13:07:35 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+13:07:36 - UpgradeManager - INFO - [559s] ★★ 근육 보강 (히드라 발업) 연구 시작! ★★
+13:44:33 - WickedZergBot - INFO - Bot started. Initializing managers...
+13:44:33 - StrategyManager - INFO - ============================================================
+13:44:33 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+13:44:33 - StrategyManager - INFO - ============================================================
+13:44:33 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+13:44:33 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+13:44:33 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+13:44:33 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+13:44:33 - StrategyManager - INFO - ------------------------------------------------------------
+13:44:33 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+13:44:33 - StrategyManager - INFO -   second_base: 55.9s
+13:44:33 - StrategyManager - INFO -   third_base: 170.4s
+13:44:33 - StrategyManager - INFO -   fourth_base: 185.5s
+13:44:33 - StrategyManager - INFO - ============================================================
+13:44:33 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+13:44:33 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+13:44:39 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+13:44:42 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+13:44:45 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+13:44:46 - UpgradeManager - INFO - [133s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+13:44:48 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+13:44:48 - UpgradeManager - INFO - [151s] Building Evolution Chamber
+13:44:49 - UpgradeManager - INFO - [153s] Building Evolution Chamber
+13:44:49 - UpgradeManager - INFO - [155s] Building Evolution Chamber
+13:44:49 - UpgradeManager - INFO - [157s] Building Evolution Chamber
+13:44:52 - UpgradeManager - INFO - [172s] Building Evolution Chamber
+13:44:53 - UpgradeManager - INFO - [178s] Building Evolution Chamber
+13:44:54 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+13:44:54 - UpgradeManager - INFO - [182s] Building Evolution Chamber
+13:44:56 - UpgradeManager - INFO - [194s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+13:44:58 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+13:45:01 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+13:45:30 - UnitMorphManager - INFO - [408s] Morphed Overseer (Active: 0/3)
+13:45:32 - UnitMorphManager - INFO - [424s] Morphed Overseer (Active: 1/3)
+13:45:35 - UpgradeManager - INFO - [440s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+13:45:38 - UnitMorphManager - INFO - [455s] Morphed Overseer (Active: 2/3)
+13:45:44 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+14:51:57 - WickedZergBot - INFO - Bot started. Initializing managers...
+14:51:57 - StrategyManager - INFO - ============================================================
+14:51:57 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+14:51:57 - StrategyManager - INFO - ============================================================
+14:51:57 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+14:51:57 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+14:51:57 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+14:51:57 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+14:51:57 - StrategyManager - INFO - ------------------------------------------------------------
+14:51:57 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+14:51:57 - StrategyManager - INFO -   second_base: 55.9s
+14:51:57 - StrategyManager - INFO -   third_base: 170.4s
+14:51:57 - StrategyManager - INFO -   fourth_base: 185.5s
+14:51:57 - StrategyManager - INFO - ============================================================
+14:51:57 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+14:51:57 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+14:52:03 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+14:52:06 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+14:52:08 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+14:52:09 - UpgradeManager - INFO - [129s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+14:52:11 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+14:52:12 - UpgradeManager - INFO - [163s] Building Evolution Chamber
+14:52:14 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+14:52:15 - UpgradeManager - INFO - [192s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+14:52:16 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+14:52:17 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+14:52:38 - UnitMorphManager - INFO - [385s] Morphed Overseer (Active: 1/3)
+14:52:43 - UnitMorphManager - INFO - [416s] Morphed Overseer (Active: 2/3)
+14:52:59 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+15:29:28 - WickedZergBot - INFO - Bot started. Initializing managers...
+15:29:29 - StrategyManager - INFO - ============================================================
+15:29:29 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+15:29:29 - StrategyManager - INFO - ============================================================
+15:29:29 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+15:29:29 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+15:29:29 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+15:29:29 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+15:29:29 - StrategyManager - INFO - ------------------------------------------------------------
+15:29:29 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+15:29:29 - StrategyManager - INFO -   second_base: 55.9s
+15:29:29 - StrategyManager - INFO -   third_base: 170.4s
+15:29:29 - StrategyManager - INFO -   fourth_base: 185.5s
+15:29:29 - StrategyManager - INFO - ============================================================
+15:29:29 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+15:29:29 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+15:29:33 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+15:29:36 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+15:29:39 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+15:29:40 - UpgradeManager - INFO - [133s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+15:29:41 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+15:29:42 - UpgradeManager - INFO - [151s] Building Evolution Chamber
+15:29:42 - UpgradeManager - INFO - [153s] Building Evolution Chamber
+15:29:42 - UpgradeManager - INFO - [155s] Building Evolution Chamber
+15:29:42 - UpgradeManager - INFO - [157s] Building Evolution Chamber
+15:29:43 - UpgradeManager - INFO - [166s] Building Evolution Chamber
+15:29:43 - UpgradeManager - INFO - [170s] Building Evolution Chamber
+15:29:44 - UpgradeManager - INFO - [172s] Building Evolution Chamber
+15:29:44 - UpgradeManager - INFO - [174s] Building Evolution Chamber
+15:29:44 - UpgradeManager - INFO - [176s] Building Evolution Chamber
+15:29:44 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+15:29:45 - UpgradeManager - INFO - [184s] Building Evolution Chamber
+15:29:45 - UpgradeManager - INFO - [192s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+15:29:47 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+15:29:48 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+15:30:03 - UnitMorphManager - INFO - [353s] Morphed Overseer (Active: 0/3)
+15:30:05 - UpgradeManager - INFO - [369s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+15:30:08 - StrategyManager - WARNING - [387s] MAJOR ATTACK DETECTED! Threat score: 20, High-threat units: 0
+15:30:08 - StrategyManager - WARNING - [387s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [388s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [388s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [388s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [388s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [388s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [388s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [389s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [389s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [389s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [389s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [389s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [390s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [390s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [390s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [390s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:08 - StrategyManager - WARNING - [390s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:09 - StrategyManager - WARNING - [390s] DEFENSE MODE ACTIVATED - Major attack incoming!
+15:30:14 - UnitMorphManager - INFO - [432s] Morphed Overseer (Active: 1/3)
+15:30:21 - UnitMorphManager - INFO - [479s] Morphed 2 Ravagers (target ratio: 35.0%)
+15:30:22 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+15:30:25 - UnitMorphManager - INFO - [502s] Morphed 1 Ravagers (target ratio: 35.0%)
+15:30:31 - UnitMorphManager - INFO - [534s] Morphed 1 Ravagers (target ratio: 35.0%)
+15:30:35 - UnitMorphManager - INFO - [550s] Morphed 1 Ravagers (target ratio: 35.0%)
+15:30:40 - UnitMorphManager - INFO - [573s] Morphed 1 Ravagers (target ratio: 35.0%)
+15:30:44 - UnitMorphManager - INFO - [589s] Morphed 1 Ravagers (target ratio: 35.0%)
+19:46:53 - WickedZergBot - INFO - Bot started. Initializing managers...
+19:46:53 - StrategyManager - INFO - ============================================================
+19:46:53 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+19:46:53 - StrategyManager - INFO - ============================================================
+19:46:53 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+19:46:53 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+19:46:53 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+19:46:53 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+19:46:53 - StrategyManager - INFO - ------------------------------------------------------------
+19:46:53 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+19:46:53 - StrategyManager - INFO -   second_base: 55.9s
+19:46:53 - StrategyManager - INFO -   third_base: 170.4s
+19:46:53 - StrategyManager - INFO -   fourth_base: 185.5s
+19:46:53 - StrategyManager - INFO - ============================================================
+19:46:53 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+19:46:53 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+19:46:58 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+19:47:01 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+19:47:04 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+19:47:05 - UpgradeManager - INFO - [131s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+19:47:07 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+19:47:07 - UpgradeManager - INFO - [151s] Building Evolution Chamber
+19:47:09 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [173s] Emergency Zergling production: 0 -> 6
+19:47:10 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+19:47:13 - UpgradeManager - INFO - [208s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+19:47:13 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+19:47:14 - DefenseCoordinator - INFO - [DEFENSE] [223s] Building Spore Crawler #1 (anti-air)
+19:47:17 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+19:47:21 - DefenseCoordinator - INFO - [DEFENSE] [275s] Building Spine Crawler #3
+19:47:25 - DefenseCoordinator - INFO - [DEFENSE] [310s] Building Spore at expansion
+19:47:31 - UnitMorphManager - INFO - [353s] Morphed Overseer (Active: 0/3)
+19:47:32 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+19:47:33 - UnitMorphManager - INFO - [369s] Morphed Overseer (Active: 2/3)
+19:47:34 - UpgradeManager - INFO - [371s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+19:47:37 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+19:47:53 - UnitMorphManager - INFO - [495s] Morphed 2 Ravagers (target ratio: 35.0%)
+19:47:56 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+19:47:57 - StrategyManager - WARNING - [515s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
+19:48:01 - UnitMorphManager - INFO - [534s] Morphed 3 Ravagers (target ratio: 35.0%)
+19:48:05 - UnitMorphManager - INFO - [550s] Morphed 2 Ravagers (target ratio: 35.0%)
+19:48:07 - UpgradeManager - INFO - [559s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+19:48:09 - UnitMorphManager - INFO - [565s] Morphed 1 Ravagers (target ratio: 35.0%)
+19:48:12 - UpgradeManager - INFO - [581s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+19:48:13 - UpgradeManager - INFO - [583s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+19:48:13 - StrategyManager - INFO - [585s] Air threat cleared
+19:48:14 - UpgradeManager - INFO - [589s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+19:48:16 - UnitMorphManager - INFO - [597s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:01:24 - WickedZergBot - INFO - Bot started. Initializing managers...
+20:01:24 - StrategyManager - INFO - ============================================================
+20:01:24 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+20:01:24 - StrategyManager - INFO - ============================================================
+20:01:24 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+20:01:24 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+20:01:24 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+20:01:24 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+20:01:24 - StrategyManager - INFO - ------------------------------------------------------------
+20:01:24 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+20:01:24 - StrategyManager - INFO -   second_base: 55.9s
+20:01:24 - StrategyManager - INFO -   third_base: 170.4s
+20:01:24 - StrategyManager - INFO -   fourth_base: 185.5s
+20:01:24 - StrategyManager - INFO - ============================================================
+20:01:24 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+20:01:24 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+20:01:30 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+20:01:34 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+20:01:37 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+20:01:39 - UpgradeManager - INFO - [131s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+20:01:41 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+20:01:42 - UpgradeManager - INFO - [163s] Building Evolution Chamber
+20:01:43 - UpgradeManager - INFO - [165s] Building Evolution Chamber
+20:01:43 - UpgradeManager - INFO - [166s] Building Evolution Chamber
+20:01:43 - UpgradeManager - INFO - [168s] Building Evolution Chamber
+20:01:43 - UpgradeManager - INFO - [170s] Building Evolution Chamber
+20:01:43 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [171s] Emergency Zergling production: 0 -> 6
+20:01:43 - UpgradeManager - INFO - [172s] Building Evolution Chamber
+20:01:44 - UpgradeManager - INFO - [174s] Building Evolution Chamber
+20:01:44 - UpgradeManager - INFO - [176s] Building Evolution Chamber
+20:01:44 - UpgradeManager - INFO - [178s] Building Evolution Chamber
+20:01:44 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+20:01:44 - UpgradeManager - INFO - [180s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+20:01:45 - UpgradeManager - INFO - [186s] Building Evolution Chamber
+20:01:46 - UpgradeManager - INFO - [192s] Building Evolution Chamber
+20:01:46 - UpgradeManager - INFO - [198s] Building Evolution Chamber
+20:01:48 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+20:01:49 - DefenseCoordinator - INFO - [DEFENSE] [220s] Building Spore Crawler #1 (anti-air)
+20:01:51 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+20:01:53 - DefenseCoordinator - INFO - [DEFENSE] [251s] Building Spine Crawler #3
+20:01:56 - DefenseCoordinator - INFO - [DEFENSE] [275s] Building Spine Crawler #3
+20:02:02 - DefenseCoordinator - INFO - [DEFENSE] [326s] Building Spore at expansion
+20:02:05 - UpgradeManager - INFO - Researching ZERGGROUNDARMORSLEVEL1
+20:02:09 - UnitMorphManager - INFO - [377s] Morphed Overseer (Active: 1/3)
+20:02:11 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+20:02:13 - UnitMorphManager - INFO - [408s] Morphed Overseer (Active: 2/3)
+20:02:17 - UpgradeManager - INFO - [428s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+20:02:20 - UnitMorphManager - INFO - [447s] Morphed 2 Ravagers (target ratio: 35.0%)
+20:02:24 - UnitMorphManager - INFO - [471s] Morphed 2 Ravagers (target ratio: 35.0%)
+20:02:27 - UnitMorphManager - INFO - [487s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:02:28 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+20:02:29 - UpgradeManager - INFO - [496s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:29 - UpgradeManager - INFO - [498s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:30 - UnitMorphManager - INFO - [502s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:02:36 - UpgradeManager - INFO - [528s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:37 - UnitMorphManager - INFO - [534s] Morphed 2 Ravagers (target ratio: 35.0%)
+20:02:40 - UnitMorphManager - INFO - [550s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:02:45 - UpgradeManager - INFO - [569s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:46 - UpgradeManager - INFO - [571s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:46 - UpgradeManager - INFO - [573s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:47 - UpgradeManager - INFO - [575s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+20:02:48 - UnitMorphManager - INFO - [581s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:19:20 - WickedZergBot - INFO - Bot started. Initializing managers...
+20:19:21 - StrategyManager - INFO - ============================================================
+20:19:21 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+20:19:21 - StrategyManager - INFO - ============================================================
+20:19:21 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+20:19:21 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+20:19:21 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+20:19:21 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+20:19:21 - StrategyManager - INFO - ------------------------------------------------------------
+20:19:21 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+20:19:21 - StrategyManager - INFO -   second_base: 55.9s
+20:19:21 - StrategyManager - INFO -   third_base: 170.4s
+20:19:21 - StrategyManager - INFO -   fourth_base: 185.5s
+20:19:21 - StrategyManager - INFO - ============================================================
+20:19:21 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+20:19:21 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+20:19:25 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+20:19:28 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+20:19:32 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+20:19:33 - UpgradeManager - INFO - [135s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+20:19:35 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+20:19:35 - UpgradeManager - INFO - [155s] Building Evolution Chamber
+20:19:35 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [157s] Emergency Zergling production: 0 -> 6
+20:19:36 - UpgradeManager - INFO - [161s] Building Evolution Chamber
+20:19:36 - UpgradeManager - INFO - [163s] Building Evolution Chamber
+20:19:36 - UpgradeManager - INFO - [165s] Building Evolution Chamber
+20:19:36 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [167s] Emergency Zergling production: 0 -> 6
+20:19:37 - UpgradeManager - INFO - [174s] Building Evolution Chamber
+20:19:37 - UpgradeManager - INFO - [176s] Building Evolution Chamber
+20:19:37 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [178s] Emergency Zergling production: 2 -> 6
+20:19:37 - UpgradeManager - INFO - [178s] Building Evolution Chamber
+20:19:38 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+20:19:38 - UpgradeManager - INFO - [184s] Building Evolution Chamber
+20:19:38 - UpgradeManager - INFO - [186s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+20:19:40 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+20:19:42 - UpgradeManager - INFO - [229s] Building Evolution Chamber
+20:19:45 - DefenseCoordinator - INFO - [DEFENSE] [251s] Building Spore Crawler #1 (anti-air)
+20:19:48 - DefenseCoordinator - INFO - [DEFENSE] [271s] Building Spine Crawler #3
+20:19:50 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+20:19:52 - DefenseCoordinator - INFO - [DEFENSE] [302s] Building Spine at expansion
+20:19:55 - DefenseCoordinator - INFO - [DEFENSE] [326s] Building Spore at expansion
+20:20:05 - UnitMorphManager - INFO - [400s] Morphed Overseer (Active: 0/3)
+20:20:07 - UnitMorphManager - INFO - [416s] Morphed Overseer (Active: 2/3)
+20:20:09 - UpgradeManager - INFO - [430s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+20:20:14 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+20:20:14 - UnitMorphManager - INFO - [463s] Morphed 2 Ravagers (target ratio: 35.0%)
+20:20:19 - UnitMorphManager - INFO - [495s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:20:23 - UnitMorphManager - INFO - [518s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:20:30 - UnitMorphManager - INFO - [550s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:20:33 - UnitMorphManager - INFO - [565s] Morphed 1 Ravagers (target ratio: 35.0%)
+20:20:41 - UnitMorphManager - INFO - [597s] Morphed 1 Ravagers (target ratio: 35.0%)
+21:05:55 - WickedZergBot - INFO - Bot started. Initializing managers...
+21:05:55 - StrategyManager - INFO - ============================================================
+21:05:55 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+21:05:55 - StrategyManager - INFO - ============================================================
+21:05:55 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+21:05:55 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+21:05:55 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+21:05:55 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+21:05:55 - StrategyManager - INFO - ------------------------------------------------------------
+21:05:55 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+21:05:55 - StrategyManager - INFO -   second_base: 55.9s
+21:05:55 - StrategyManager - INFO -   third_base: 170.4s
+21:05:55 - StrategyManager - INFO -   fourth_base: 185.5s
+21:05:55 - StrategyManager - INFO - ============================================================
+21:05:55 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+21:05:55 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+21:06:00 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+21:06:03 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+21:06:05 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+21:06:06 - UpgradeManager - INFO - [133s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+21:06:07 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+21:06:08 - UpgradeManager - INFO - [151s] Building Evolution Chamber
+21:06:10 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+21:06:13 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+21:06:13 - UpgradeManager - INFO - [210s] Building Evolution Chamber
+21:06:15 - DefenseCoordinator - INFO - [DEFENSE] [231s] Building Spore Crawler #1 (anti-air)
+21:06:16 - UpgradeManager - INFO - [241s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+21:06:22 - DefenseCoordinator - INFO - [DEFENSE] [294s] Building Spore Crawler #1 (anti-air)
+21:06:23 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+21:06:30 - DefenseCoordinator - INFO - [DEFENSE] [341s] Building Spine Crawler #3
+21:06:38 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+21:06:39 - UnitMorphManager - INFO - [400s] Morphed Overseer (Active: 0/3)
+21:06:39 - UnitMorphManager - INFO - [400s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:06:42 - UnitMorphManager - INFO - [424s] Morphed Overseer (Active: 1/3)
+21:06:42 - UnitMorphManager - INFO - [424s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:06:45 - UnitMorphManager - INFO - [440s] Morphed Overseer (Active: 2/3)
+21:06:45 - UnitMorphManager - INFO - [440s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:06:46 - DefenseCoordinator - INFO - [DEFENSE] [443s] Building Spore at expansion
+21:06:47 - UnitMorphManager - INFO - [455s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:06:54 - UpgradeManager - INFO - [495s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+21:06:55 - UnitMorphManager - INFO - [502s] Morphed 4 Ravagers (target ratio: 35.0%)
+21:06:58 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+21:06:58 - UnitMorphManager - INFO - [518s] Morphed 3 Ravagers (target ratio: 35.0%)
+21:07:01 - UnitMorphManager - INFO - [534s] Morphed 3 Ravagers (target ratio: 35.0%)
+21:07:06 - UpgradeManager - INFO - [555s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+21:07:06 - UnitMorphManager - INFO - [557s] Morphed 1 Ravagers (target ratio: 35.0%)
+21:07:09 - UnitMorphManager - INFO - [573s] Morphed 1 Ravagers (target ratio: 35.0%)
+21:07:13 - UpgradeManager - INFO - [591s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+21:08:38 - WickedZergBot - INFO - Bot started. Initializing managers...
+21:08:38 - StrategyManager - INFO - ============================================================
+21:08:38 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+21:08:38 - StrategyManager - INFO - ============================================================
+21:08:38 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+21:08:38 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+21:08:38 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+21:08:38 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+21:08:38 - StrategyManager - INFO - ------------------------------------------------------------
+21:08:38 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+21:08:38 - StrategyManager - INFO -   second_base: 55.9s
+21:08:38 - StrategyManager - INFO -   third_base: 170.4s
+21:08:38 - StrategyManager - INFO -   fourth_base: 185.5s
+21:08:38 - StrategyManager - INFO - ============================================================
+21:08:38 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+21:08:38 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+21:08:44 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+21:08:47 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+21:08:49 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+21:08:50 - UpgradeManager - INFO - [129s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+21:08:52 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+21:08:52 - UpgradeManager - INFO - [155s] Building Evolution Chamber
+21:08:54 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [167s] Emergency Zergling production: 0 -> 6
+21:08:55 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [178s] Emergency Zergling production: 0 -> 6
+21:08:55 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+21:08:57 - UpgradeManager - INFO - [198s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+21:08:58 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+21:08:59 - DefenseCoordinator - INFO - [DEFENSE] [220s] Building Spore Crawler #1 (anti-air)
+21:09:02 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+21:09:04 - DefenseCoordinator - INFO - [DEFENSE] [263s] Building Spine Crawler #3
+21:09:09 - DefenseCoordinator - INFO - [DEFENSE] [302s] Building Spore at expansion
+21:09:10 - DefenseCoordinator - INFO - [DEFENSE] [318s] Building Spore at expansion
+21:09:18 - UnitMorphManager - INFO - [377s] Morphed Overseer (Active: 0/3)
+21:09:20 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+21:09:23 - UnitMorphManager - INFO - [408s] Morphed Overseer (Active: 1/3)
+21:09:23 - UpgradeManager - INFO - [412s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+21:09:24 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+21:09:25 - UnitMorphManager - INFO - [424s] Morphed Overseer (Active: 2/3)
+21:09:34 - UpgradeManager - INFO - [481s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+21:09:37 - StrategyManager - WARNING - [494s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
+21:09:46 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+21:09:54 - StrategyManager - WARNING - [579s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
+21:09:56 - StrategyManager - WARNING - [589s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
+21:09:59 - StrategyManager - WARNING - [599s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★
+21:14:54 - WickedZergBot - INFO - Bot started. Initializing managers...
+21:14:54 - StrategyManager - INFO - ============================================================
+21:14:54 - StrategyManager - INFO - [LEARNING] [LEARNED FUNDAMENTALS] From Replay Analysis
+21:14:54 - StrategyManager - INFO - ============================================================
+21:14:54 - StrategyManager - INFO - Economy Priority (Drone):     59.76%
+21:14:54 - StrategyManager - INFO - Supply Priority (Overlord):   7.04%
+21:14:54 - StrategyManager - INFO - Macro Priority (Queen):       4.48%
+21:14:54 - StrategyManager - INFO - Defense Priority (Zergling):  14.24%
+21:14:54 - StrategyManager - INFO - ------------------------------------------------------------
+21:14:54 - StrategyManager - INFO - [LEARNING] Learned Expansion Timings:
+21:14:54 - StrategyManager - INFO -   second_base: 55.9s
+21:14:54 - StrategyManager - INFO -   third_base: 170.4s
+21:14:54 - StrategyManager - INFO -   fourth_base: 185.5s
+21:14:54 - StrategyManager - INFO - ============================================================
+21:14:54 - StrategyManager - INFO - [LEARNING] Normalized army composition: {'zergling': 0.717741935483871, 'queen': 0.22580645161290322, 'roach': 0.00806451612903226, 'ravager': 0.00806451612903226, 'baneling': 0.04032258064516129}
+21:14:54 - StrategyManager - INFO - [LEARNING] [OK] Successfully integrated learned data into strategies
+21:14:59 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+21:15:02 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+21:15:05 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+21:15:06 - UpgradeManager - INFO - [129s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+21:15:08 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+21:15:09 - UpgradeManager - INFO - [163s] Building Evolution Chamber
+21:15:11 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+21:15:11 - UpgradeManager - INFO - [180s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+21:15:13 - UpgradeManager - INFO - [196s] Building Evolution Chamber
+21:15:14 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+21:15:15 - DefenseCoordinator - INFO - [DEFENSE] [216s] Building Spore Crawler #1 (anti-air)
+21:15:17 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+21:15:20 - DefenseCoordinator - INFO - [DEFENSE] [251s] Building Spine Crawler #3
+21:15:22 - DefenseCoordinator - INFO - [DEFENSE] [271s] Building Spine Crawler #3
+21:15:25 - DefenseCoordinator - INFO - [DEFENSE] [294s] Building Spine Crawler #3
+21:15:27 - DefenseCoordinator - INFO - [DEFENSE] [314s] Building Spore at expansion
+21:15:32 - UpgradeManager - INFO - Researching ZERGGROUNDARMORSLEVEL1
+21:15:34 - UnitMorphManager - INFO - [369s] Morphed Overseer (Active: 0/3)
+21:15:37 - UpgradeManager - INFO - [388s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+21:15:38 - UnitMorphManager - INFO - [392s] Morphed Overseer (Active: 2/3)
+21:15:38 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+21:15:53 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+21:15:53 - UnitMorphManager - INFO - [463s] Morphed 1 Ravagers (target ratio: 35.0%)
+21:15:55 - UpgradeManager - INFO - [473s] ★★ 근육 보강 (히드라 발업) 연구 시작! ★★
+21:15:58 - UnitMorphManager - INFO - [487s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:16:03 - UpgradeManager - INFO - [512s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+21:16:06 - UnitMorphManager - INFO - [526s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:16:09 - UpgradeManager - INFO - [538s] ★★ 홈 스파인 (히드라 사거리 +2) 연구 시작! ★★
+21:16:09 - UnitMorphManager - INFO - [542s] Morphed 1 Ravagers (target ratio: 35.0%)
+21:16:13 - UnitMorphManager - INFO - [557s] Morphed 1 Ravagers (target ratio: 35.0%)
+21:16:16 - UpgradeManager - INFO - [573s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+21:16:17 - UpgradeManager - INFO - [575s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+21:16:18 - UnitMorphManager - INFO - [581s] Morphed 2 Ravagers (target ratio: 35.0%)
+21:16:18 - UnitMorphManager - INFO - [581s] Morphed 2 Lurkers (target ratio: 40.0%)
+21:26:43 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+21:26:43 - KnowledgeManager - INFO - Loaded 8 build orders
+21:28:37 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+21:28:37 - KnowledgeManager - INFO - Loaded 8 build orders
+21:28:37 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+21:35:38 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+21:35:38 - KnowledgeManager - INFO - Loaded 8 build orders
+23:20:35 - WickedZergBot - INFO - Bot started. Initializing managers...
+23:20:35 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+23:20:35 - KnowledgeManager - INFO - Loaded 8 build orders
+23:20:35 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+23:23:14 - WickedZergBot - INFO - Bot started. Initializing managers...
+23:23:14 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+23:23:14 - KnowledgeManager - INFO - Loaded 8 build orders
+23:23:14 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+23:36:12 - WickedZergBot - INFO - Bot started. Initializing managers...
+23:36:12 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+23:36:12 - KnowledgeManager - INFO - Loaded 8 build orders
+23:36:12 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+23:38:52 - WickedZergBot - INFO - Bot started. Initializing managers...
+23:38:52 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+23:38:52 - KnowledgeManager - INFO - Loaded 8 build orders
+23:38:52 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+23:38:52 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+23:38:52 - KnowledgeManager - INFO - Loaded 8 build orders
+23:38:57 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+23:38:59 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+23:39:02 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+23:39:03 - UpgradeManager - INFO - [131s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+23:39:04 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+23:39:05 - UpgradeManager - INFO - [153s] Building Evolution Chamber
+23:39:06 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [171s] Emergency Zergling production: 0 -> 6
+23:39:07 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [176s] Emergency Zergling production: 0 -> 6
+23:39:07 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+23:39:08 - UpgradeManager - INFO - [184s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+23:39:08 - UpgradeManager - INFO - [190s] Building Evolution Chamber
+23:39:10 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+23:39:10 - DefenseCoordinator - INFO - [DEFENSE] [212s] Building Spore Crawler #1 (anti-air)
+23:39:13 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+23:39:14 - DefenseCoordinator - INFO - [DEFENSE] [243s] Building Spine Crawler #3
+23:39:21 - DefenseCoordinator - INFO - [DEFENSE] [302s] Building Spore at expansion
+23:39:24 - UnitMorphManager - INFO - [322s] Morphed Overseer (Active: 0/3)
+23:39:27 - UnitMorphManager - INFO - [345s] Morphed Overseer (Active: 2/3)
+23:39:34 - MultiBaseDefense - ERROR - Multi-base defense error: 'Units' object has no attribute 'exclude_units'
+23:39:41 - StrategyManager - WARNING - [443s] MAJOR ATTACK DETECTED! Threat score: 20, High-threat units: 0
+23:39:41 - StrategyManager - WARNING - [443s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [445s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [445s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [445s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [445s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [445s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [446s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [446s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [446s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [446s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [446s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:41 - StrategyManager - WARNING - [446s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [447s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [447s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [447s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [447s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [447s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [448s] MAJOR ATTACK DETECTED! Threat score: 20, High-threat units: 0
+23:39:42 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [448s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [449s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [449s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [449s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [449s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [449s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+23:39:42 - StrategyManager - WARNING - [450s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [450s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [450s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:39:42 - StrategyManager - WARNING - [450s] DEFENSE MODE ACTIVATED - Major attack incoming!
+23:40:02 - UpgradeManager - INFO - Researching ZERGGROUNDARMORSLEVEL1
+00:09:39 - WickedZergBot - INFO - Bot started. Initializing managers...
+00:09:39 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+00:09:39 - KnowledgeManager - INFO - Loaded 8 build orders
+00:09:39 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+00:09:39 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+00:09:39 - KnowledgeManager - INFO - Loaded 8 build orders
+00:09:44 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+00:09:47 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+00:09:50 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+00:09:50 - UpgradeManager - INFO - [123s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+00:09:53 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+00:09:54 - UpgradeManager - INFO - [157s] Building Evolution Chamber
+00:09:55 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [168s] Emergency Zergling production: 0 -> 6
+00:09:56 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [179s] Emergency Zergling production: 0 -> 6
+00:09:56 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+00:09:57 - UpgradeManager - INFO - [188s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+00:09:59 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+00:10:01 - DefenseCoordinator - INFO - [DEFENSE] [223s] Building Spore Crawler #1 (anti-air)
+00:10:03 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+00:10:06 - DefenseCoordinator - INFO - [DEFENSE] [263s] Building Spine Crawler #3
+00:10:12 - DefenseCoordinator - INFO - [DEFENSE] [318s] Building Spore at expansion
+00:10:17 - UpgradeManager - INFO - Researching ZERGGROUNDARMORSLEVEL1
+00:10:19 - UnitMorphManager - INFO - [369s] Morphed Overseer (Active: 0/3)
+00:10:22 - UnitMorphManager - INFO - [392s] Morphed Overseer (Active: 2/3)
+00:10:26 - UpgradeManager - INFO - [418s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+00:10:27 - UnitMorphManager - INFO - [424s] Morphed 1 Ravagers (target ratio: 35.0%)
+00:10:33 - UnitMorphManager - INFO - [455s] Morphed 1 Ravagers (target ratio: 35.0%)
+00:10:37 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL2
+00:10:39 - UpgradeManager - INFO - [491s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:40 - UnitMorphManager - INFO - [495s] Morphed 2 Ravagers (target ratio: 35.0%)
+00:10:43 - UnitMorphManager - INFO - [510s] Morphed 1 Ravagers (target ratio: 35.0%)
+00:10:45 - UpgradeManager - INFO - [522s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:51 - UnitMorphManager - INFO - [550s] Morphed 3 Ravagers (target ratio: 35.0%)
+00:10:54 - UpgradeManager - INFO - [561s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:54 - UpgradeManager - INFO - [563s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:55 - UpgradeManager - INFO - [565s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:55 - UnitMorphManager - INFO - [565s] Morphed 4 Ravagers (target ratio: 35.0%)
+00:10:55 - UpgradeManager - INFO - [567s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:56 - UpgradeManager - INFO - [569s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:10:59 - UpgradeManager - INFO - [585s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:11:00 - UpgradeManager - INFO - [587s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★
+00:11:00 - UnitMorphManager - INFO - [589s] Morphed 3 Ravagers (target ratio: 35.0%)
+00:40:34 - WickedZergBot - INFO - Bot started. Initializing managers...
+00:40:34 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+00:40:34 - KnowledgeManager - INFO - Loaded 8 build orders
+00:40:34 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+00:40:34 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+00:40:34 - KnowledgeManager - INFO - Loaded 8 build orders
+00:40:39 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+00:40:42 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+00:40:45 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+00:40:46 - UpgradeManager - INFO - [131s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+00:40:48 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+00:40:49 - UpgradeManager - INFO - [163s] Building Evolution Chamber
+00:40:50 - DefenseCoordinator - INFO - [EARLY_DEFENSE] [170s] Emergency Zergling production: 0 -> 6
+00:40:51 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+00:40:54 - StrategyManager - INFO - [210s] EARLY HARASSMENT: Signal sent to CombatManager
+00:40:57 - UpgradeManager - INFO - [229s] Building Evolution Chamber
+00:40:59 - DefenseCoordinator - INFO - [DEFENSE] [251s] Building Spore Crawler #1 (anti-air)
+00:40:59 - UpgradeManager - INFO - [253s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★
+00:41:02 - DefenseCoordinator - INFO - [DEFENSE] [278s] Building Spore Crawler #1 (anti-air)
+00:41:02 - UpgradeManager - INFO - Researching ZERGMELEEWEAPONSLEVEL1
+00:41:04 - DefenseCoordinator - INFO - [DEFENSE] [294s] Building Spore Crawler #1 (anti-air)
+00:41:06 - DefenseCoordinator - INFO - [DEFENSE] [314s] Building Spine Crawler #3
+00:41:11 - DefenseCoordinator - INFO - [DEFENSE] [353s] Building Spore at expansion
+00:41:18 - UnitMorphManager - INFO - [400s] Morphed Overseer (Active: 1/3)
+00:41:23 - UnitMorphManager - INFO - [432s] Morphed Overseer (Active: 2/3)
+00:41:29 - UnitMorphManager - INFO - [471s] Morphed 2 Ravagers (target ratio: 35.0%)
+00:41:31 - UpgradeManager - INFO - [485s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★
+00:41:32 - UpgradeManager - INFO - Researching ZERGMISSILEWEAPONSLEVEL1
+00:41:35 - UnitMorphManager - INFO - [510s] Morphed 2 Ravagers (target ratio: 35.0%)
+00:41:40 - UnitMorphManager - INFO - [534s] Morphed 3 Ravagers (target ratio: 35.0%)

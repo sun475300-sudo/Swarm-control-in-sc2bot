@@ -50,7 +50,11 @@
       "Bash(tee:*)",
       "Bash(pkill:*)",
       "Bash(exit 0)",
-      "Bash(start /MIN python run_with_training.py)"
+      "Bash(start /MIN python run_with_training.py)",
+      "Bash(if [ -d \"data/games\" ])",
+      "Bash(then ls data/games/*.json)",
+      "Bash(else echo \"Directory not exists\")",
+      "Bash(fi)"
     ]
   }
 }

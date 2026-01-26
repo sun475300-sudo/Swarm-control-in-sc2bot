@@ -39,6 +39,10 @@ class EvolutionUpgradeManager:
         self._overlord_speed_started = False
         self.logger = get_logger("UpgradeManager")
 
+        # 2026-01-26 FIX: Evolution Chamber 건설 쿨다운
+        self._last_evo_chamber_attempt = 0.0
+        self._evo_chamber_cooldown = 30.0  # 30초 쿨다운
+
     async def on_step(self, iteration: int) -> None:
         if not UnitTypeId or not UpgradeId:
             return
@@ -751,6 +755,11 @@ class EvolutionUpgradeManager:
         if game_time < 150:  # ★ 180초(3분) → 150초(2분 30초)로 앞당김 ★
             return False
 
+        # ★ 2026-01-26 FIX: 쿨다운 체크 (중복 건설 방지) ★
+        time_since_last_attempt = game_time - self._last_evo_chamber_attempt
+        if time_since_last_attempt < self._evo_chamber_cooldown:
+            return False  # 너무 최근에 시도했으면 스킵
+
         # Check if already exists or pending
         evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER)
         if evo_chambers.exists or self.bot.already_pending(UnitTypeId.EVOLUTIONCHAMBER) > 0:
@@ -768,6 +777,9 @@ class EvolutionUpgradeManager:
         # Check resources
         if not self.bot.can_afford(UnitTypeId.EVOLUTIONCHAMBER):
             return False
+
+        # ★ 2026-01-26 FIX: 건설 시도 시간 기록 ★
+        self._last_evo_chamber_attempt = game_time
 
         # Build near townhall
         if self.bot.townhalls.exists:
