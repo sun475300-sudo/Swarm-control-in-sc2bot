@@ -49,14 +49,15 @@ class DefeatDetection:
         self.last_stand_active = False
         self.last_stand_position = None
 
-        # ★★★ 임계값 설정 (패배 판정 기준 강화) ★★★
-        self.military_ratio_critical = 3.0  # 적 병력이 아군의 3배 이상 (5.0 → 3.0)
-        self.military_ratio_imminent = 6.0  # 적 병력이 아군의 6배 이상 (10.0 → 6.0)
-        self.min_workers_for_recovery = 5   # 최소 일꾼 수 (3 → 5)
-        self.min_minerals_for_recovery = 100  # 최소 미네랄 (50 → 100)
+        # ★★★ 임계값 설정 (패배 판정 기준 강화 - 빠른 게임 종료를 위해) ★★★
+        # 2026-01-27: 훈련 속도를 위해 조건 대폭 완화
+        self.military_ratio_critical = 2.5  # 적 병력이 아군의 2.5배 이상 (3.0 -> 2.5)
+        self.military_ratio_imminent = 4.5  # 적 병력이 아군의 4.5배 이상 (6.0 -> 4.5)
+        self.min_workers_for_recovery = 8   # 최소 일꾼 수 (5 -> 8)
+        self.min_minerals_for_recovery = 200  # 최소 미네랄 (100 -> 200)
 
         # ★★★ 추가: 빠른 포기를 위한 새로운 조건 ★★★
-        self.max_critical_duration = 60  # 위기 상태 최대 지속 시간 (초)
+        self.max_critical_duration = 40  # 위기 상태 최대 지속 시간 (60초 -> 40초)
         self.critical_start_time = None  # 위기 상태 시작 시간
 
         # 통계

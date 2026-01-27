@@ -281,7 +281,7 @@ class SpellUnitManager:
                 air_targets = [
                     e
                     for e in enemy_units
-                    if e.is_flying
+                    if getattr(e, "is_flying", False)
                     and e.type_id
                     in [
                         UnitTypeId.BANSHEE,
@@ -318,7 +318,7 @@ class SpellUnitManager:
                 ground_targets = [
                     e
                     for e in enemy_units
-                    if not e.is_flying
+                    if not getattr(e, "is_flying", False)
                     and e.type_id
                     in [
                         UnitTypeId.SIEGETANKSIEGED,

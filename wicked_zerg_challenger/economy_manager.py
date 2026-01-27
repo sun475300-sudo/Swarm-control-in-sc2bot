@@ -64,6 +64,9 @@ class EconomyManager:
         # 2026-01-26 FIX: Prevent duplicate expansion attempts
         self._last_expansion_attempt_time = 0.0
         self._expansion_cooldown = 6.0  # 6초 쿨다운
+        # ★ 미네랄 예약 시스템 (확장 우선순위) ★
+        self._mineral_reserved_for_expansion = 0  # 확장 예약 미네랄
+        self._expansion_reserved_until = 0.0  # 예약 만료 시간
 
     def set_emergency_mode(self, active: bool) -> None:
         """Set emergency mode validation."""
@@ -72,6 +75,15 @@ class EconomyManager:
     async def on_step(self, iteration: int) -> None:
         if not hasattr(self.bot, "larva"):
             return
+
+        # ★ Blackboard Sync ★
+        if self.blackboard:
+            from blackboard import AuthorityMode
+            if self.blackboard.authority_mode == AuthorityMode.EMERGENCY:
+                 self._emergency_mode = True
+            else:
+                 self._emergency_mode = False
+
 
         # 게임 시작 초반 일꾼 분할 (첫 10초)
         if iteration < 50:
@@ -230,6 +242,15 @@ class EconomyManager:
             pass
 
     async def _train_overlord_if_needed(self) -> None:
+        # [FIX] Prevent execution multiple times per frame
+        if getattr(self, "_overlord_checked_frame", -1) == self.bot.iteration:
+             return
+        self._overlord_checked_frame = self.bot.iteration
+
+        # [FIX] UnitFactory Conflict Prevention with global pending check
+        if self.bot.already_pending(UnitTypeId.OVERLORD) > 0:
+            return
+
         if not hasattr(self.bot, "supply_left"):
             return
 
@@ -330,6 +351,12 @@ class EconomyManager:
 
         # ★ Blackboard 기반 생산 ★
         if self.blackboard:
+            from blackboard import AuthorityMode
+            # EMERGENCY 모드에서는 최소 일꾼(22) 미만일 때만 생산 요청
+            if self.blackboard.authority_mode == AuthorityMode.EMERGENCY:
+                 if worker_count >= 22:
+                     return
+
             # Blackboard에 드론 생산 요청
             self.blackboard.request_production(
                 unit_type=UnitTypeId.DRONE,
@@ -977,6 +1004,15 @@ class EconomyManager:
         if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
             return
 
+        # ★ Blackboard Threat Check ★
+        if self.blackboard:
+            from blackboard import ThreatLevel
+            # 위협이 높으면 확장 시도 중단 (안정성 우선)
+            if self.blackboard.threat.level >= ThreatLevel.HIGH:
+                if self.bot.iteration % 100 == 0:
+                    print(f"[ECONOMY] Proactive expansion paused due to HIGH THREAT")
+                return
+
         game_time = self.bot.time  # 게임 시간 (초)
         townhalls = self.bot.townhalls
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
@@ -986,42 +1022,41 @@ class EconomyManager:
         expand_reason = ""
         minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
 
-        # 1베이스 → 2베이스 (내츄럴): ★★★ 1분 안에 완성 (ULTRA FAST) ★★★
+        # 1베이스 → 2베이스 (내츄럴): ★★★ 빠르지만 안정적 (FAST & STABLE) ★★★
         if base_count == 1:
             worker_count = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
-            # ★★★ TARGET: 60초 안에 해처리 완성 ★★★
+            # ★★★ TARGET: 안정적인 확장 (자원 확보 후) ★★★
             # 해처리 건설 시간: 100초 (1분 40초)
-            # → 60초 완성 목표는 불가능, 하지만 최대한 빠르게!
-            # 실질 목표: 20초 안에 건설 시작 → 120초(2분) 완성
+            # 목표: 30초 안에 건설 시작 → 130초(2:10) 완성
 
-            # ★ 게임 시작 5초부터 미네랄 200만 있어도 시도 (초고속!) ★
-            if game_time >= 5 and minerals >= 200:
+            # ★ 개선: 미네랄 여유분 확보 후 확장 (350+ 또는 15드론+) ★
+            if minerals >= 350:
                 should_expand = True
-                expand_reason = f"ULTRA-FAST Natural @{int(game_time)}s (min 200, workers: {worker_count})"
-            # ★ 미네랄 250+ 즉시 확장 (가장 빠른 타이밍) ★
-            elif minerals >= 250:
+                expand_reason = f"Natural with buffer @{int(game_time)}s (min 350+, workers: {worker_count})"
+            # ★ 15드론 이상 + 미네랄 300+ (안정적 확장) ★
+            elif worker_count >= 15 and minerals >= 300:
                 should_expand = True
-                expand_reason = f"INSTANT Natural @{int(game_time)}s (min 250+, workers: {worker_count})"
-            # ★ 13드론 이상 + 미네랄 200+ ★
-            elif worker_count >= 13 and minerals >= 200:
+                expand_reason = f"15-Drone Natural @{int(game_time)}s (workers: {worker_count}, min 300+)"
+            # ★ 30초 이후 + 미네랄 280+ (시간 기반 확장) ★
+            elif game_time >= 30 and minerals >= 280:
                 should_expand = True
-                expand_reason = f"13-Drone Natural @{int(game_time)}s (workers: {worker_count})"
+                expand_reason = f"Timed Natural @{int(game_time)}s (min 280+, workers: {worker_count})"
 
-        # ★ 2베이스 → 3베이스: 1분 30초 (초고속 3베이스) ★
+        # ★ 2베이스 → 3베이스: 2분 이후 또는 미네랄 500+ (안정적) ★
         elif base_count == 2:
-            if game_time >= 90 or minerals > 400:
+            if game_time >= 120 or minerals >= 500:
                 should_expand = True
-                expand_reason = f"3rd base HYPER-FAST (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"3rd base STABLE (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 3베이스 → 4베이스: 2분 30초 (빠른 4베이스) ★
+        # ★ 3베이스 → 4베이스: 3분 이후 또는 미네랄 600+ ★
         elif base_count == 3:
-            if game_time >= 150 or minerals > 500:
+            if game_time >= 180 or minerals >= 600:
                 should_expand = True
                 expand_reason = f"4th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 4베이스 → 5베이스: 3분 30초 ★
+        # ★ 4베이스 → 5베이스: 4분 이후 또는 미네랄 700+ ★
         elif base_count == 4:
-            if game_time >= 210 or minerals > 600:
+            if game_time >= 240 or minerals >= 700:
                 should_expand = True
                 expand_reason = f"5th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
 
@@ -1078,7 +1113,11 @@ class EconomyManager:
 
         # 비용 확인
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
-            print(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals)")
+            # ★ 미네랄 부족 시 더 긴 쿨다운 설정 (20초) ★
+            self._last_expansion_attempt_time = game_time + 14.0  # 6초 기본 + 14초 = 20초 총 대기
+            # ★ 로그 스팸 방지: 30초마다만 출력 ★
+            if int(game_time) % 30 < 2:  # 30초 주기로 2초 이내에만 출력
+                print(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals}) - waiting 20s")
             return
 
         # ★ MACRO ECONOMY: 비상 모드여도 확장 계속 (매크로 최우선) ★
@@ -1473,6 +1512,17 @@ class EconomyManager:
         minerals = self.bot.minerals
         gas = self.bot.vespene
         game_time = getattr(self.bot, "time", 0)
+
+        # ★ Blackboard Check for Safe Phase ★
+        is_opening_unsafe = False
+        if self.blackboard:
+            from blackboard import GamePhase, ThreatLevel
+            if self.blackboard.game_phase == GamePhase.OPENING:
+                 if self.blackboard.threat.level >= ThreatLevel.MEDIUM:
+                     is_opening_unsafe = True
+
+        if is_opening_unsafe and minerals < 2000:
+             return # 오프닝 위협 시 자원 보존 (방어 유닛용)
 
         try:
             # ★ 미네랄 과잉 (1000+) ★

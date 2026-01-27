@@ -102,26 +102,26 @@ class AggressiveStrategyExecutor:
             AggressiveStrategyType.RAVAGER_RUSH: {
                 "roach_count": 4,
                 "ravager_count": 3,
-                "attack_timing": 240,  # 4분
+                "attack_timing": 180,  # ★ 3분으로 앞당김 (기존: 4분, 5분 제한 대응)
             },
             AggressiveStrategyType.TUNNELING_CLAWS: {
                 "roach_count": 8,
-                "upgrade_timing": 180,  # 3분에 업그레이드 시작
+                "upgrade_timing": 150,  # ★ 2:30으로 앞당김 (기존: 3분)
             },
             AggressiveStrategyType.PROXY_HATCH: {
-                "proxy_timing": 60,  # 1분에 드론 파견
+                "proxy_timing": 45,  # ★ 45초로 앞당김 (기존: 1분)
                 "spine_count": 2,
             },
             AggressiveStrategyType.NYDUS_ALLIN: {
-                "lair_timing": 240,  # 4분에 레어
-                "nydus_timing": 300,  # 5분에 땅굴
+                "lair_timing": 180,  # ★ 3분으로 앞당김 (기존: 4분)
+                "nydus_timing": 240,  # ★ 4분으로 앞당김 (기존: 5분)
                 "queen_count": 4,
             },
             AggressiveStrategyType.OVERLORD_DROP: {
-                "ventral_sacs_timing": 180,  # ★ 3분에 배주머니 업그레이드
+                "ventral_sacs_timing": 150,  # ★ 2분 30초로 앞당김 (기존: 3분)
                 "drop_overlord_count": 2,  # ★ 드랍용 대군주 2기
                 "drop_unit_count": 16,  # ★ 저글링 8마리 (2기 탑승)
-                "drop_timing": 240,  # ★ 4분에 드랍 시작
+                "drop_timing": 210,  # ★ 3분 30초로 앞당김 (기존: 4분, 5분 제한 대응)
             },
         }
 
@@ -239,6 +239,15 @@ class AggressiveStrategyExecutor:
         # 저글링 생산 및 공격
         if self._pool_started:
             zerglings = self.bot.units(UnitTypeId.ZERGLING)
+
+            # [FIX] 저글링 생산 로직 추가 (pending 체크 포함)
+            pending = self.bot.already_pending(UnitTypeId.ZERGLING)
+            if zerglings.amount + pending < config["ling_count_attack"]:
+                if self.bot.can_afford(UnitTypeId.ZERGLING) and self.bot.larva.exists:
+                     # SpawningPool이 완료되어야 생산 가능
+                     if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                        self.bot.do(self.bot.larva.first.train(UnitTypeId.ZERGLING))
+
             if zerglings.amount >= config["ling_count_attack"] and not self._lings_sent:
                 await self._send_lings_to_attack(zerglings)
 
@@ -252,16 +261,34 @@ class AggressiveStrategyExecutor:
             self._pool_started = True
             return
 
+        # Use TechCoordinator if available
+        tech_coordinator = getattr(self.bot, "tech_coordinator", None)
+        PRIORITY_STRATEGY = 75
+
         if self.bot.can_afford(UnitTypeId.SPAWNINGPOOL):
-            workers = self.bot.workers
-            if workers.exists:
-                worker = workers.random
-                pos = self.bot.townhalls.first.position.towards(
-                    self.bot.game_info.map_center, 5
-                )
-                self.bot.do(worker.build(UnitTypeId.SPAWNINGPOOL, pos))
-                self._pool_started = True
-                print("[12POOL] Spawning Pool started!")
+            if tech_coordinator:
+                if not tech_coordinator.is_planned(UnitTypeId.SPAWNINGPOOL):
+                    target_pos = self.bot.townhalls.first.position.towards(
+                        self.bot.game_info.map_center, 5
+                    )
+                    tech_coordinator.request_structure(
+                        UnitTypeId.SPAWNINGPOOL,
+                        target_pos,
+                        PRIORITY_STRATEGY,
+                        "AggressiveStrategies"
+                    )
+                    self._pool_started = True
+                    print("[12POOL] Spawning Pool requested via Coordinator!")
+            else:
+                workers = self.bot.workers
+                if workers.exists:
+                    worker = workers.random
+                    pos = self.bot.townhalls.first.position.towards(
+                        self.bot.game_info.map_center, 5
+                    )
+                    self.bot.do(worker.build(UnitTypeId.SPAWNINGPOOL, pos))
+                    self._pool_started = True
+                    print("[12POOL] Spawning Pool started!")
 
     async def _send_lings_to_attack(self, zerglings) -> None:
         """저글링 공격 명령"""
@@ -683,14 +710,28 @@ class AggressiveStrategyExecutor:
         """구조물 건설 유틸리티 (점막 체크 포함)"""
         if not self.bot.townhalls.exists:
             return
-
-        workers = self.bot.workers
-        if not workers.exists:
-            return
+            
+        # Use TechCoordinator if available
+        tech_coordinator = getattr(self.bot, "tech_coordinator", None)
+        PRIORITY_STRATEGY = 75
 
         pos = self.bot.townhalls.first.position.towards(
             self.bot.game_info.map_center, 5
         )
+        
+        if tech_coordinator:
+             if not tech_coordinator.is_planned(structure_type):
+                tech_coordinator.request_structure(
+                    structure_type,
+                    pos,
+                    PRIORITY_STRATEGY,
+                    "AggressiveStrategies"
+                )
+                return
+
+        workers = self.bot.workers
+        if not workers.exists:
+            return
 
         # 점막 체크 헬퍼 사용
         if self.placement_helper:

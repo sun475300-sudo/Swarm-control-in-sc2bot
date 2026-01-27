@@ -119,6 +119,12 @@ except ImportError:
     BuildingPlacementHelper = None
 
 
+# Tech Coordinator (Conflict Resolution)
+try:
+    from tech_coordinator import TechCoordinator
+except ImportError:
+    TechCoordinator = None
+
 class BotStepIntegrator:
     """
     Bot의 on_step 메서드를 구현하는 통합 클래스
@@ -139,8 +145,17 @@ class BotStepIntegrator:
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
+            self.bot.placement_helper = self.placement_helper # Attach globally
         else:
             self.placement_helper = None
+            self.bot.placement_helper = None
+
+        # Tech Coordinator (Conflict Resolution)
+        if TechCoordinator:
+            self.bot.tech_coordinator = TechCoordinator(bot)
+            print("[INIT] TechCoordinator initialized")
+        else:
+            self.bot.tech_coordinator = None
 
     async def initialize_managers(self):
         """
@@ -450,6 +465,17 @@ class BotStepIntegrator:
                 "Creep manager",
             )
 
+            # 2.5 Tech Coordinator (테크 건물 건설 조정) ★
+            # Production 전에 테크 건설 요청을 처리
+            if self.bot.tech_coordinator:
+                start_time = self._logic_tracker.start_logic("TechCoordinator")
+                try:
+                    await self.bot.tech_coordinator.update()
+                except Exception as e:
+                    print(f"[ERROR] TechCoordinator error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("TechCoordinator", start_time)
+
             # 3. ProductionController (통합 생산 관리 - Dynamic Authority) ★★★
             # Blackboard 생산 큐를 우선순위에 따라 처리
             if hasattr(self.bot, "production_controller") and self.bot.production_controller:
@@ -484,6 +510,14 @@ class BotStepIntegrator:
                         print(f"[WARNING] Unit factory error: {e}")
                 finally:
                     self._logic_tracker.end_logic("UnitFactory", start_time)
+
+            # 3.6 Economy Manager - Overlord Priority (Army -> Overlord -> Strategy)
+            # 대군주 생산을 전략/드론보다 우선순위에 둠
+            if hasattr(self.bot, "economy") and self.bot.economy:
+                # _train_overlord_if_needed 메서드 직접 호출
+                train_ov_method = getattr(self.bot.economy, "_train_overlord_if_needed", None)
+                if train_ov_method:
+                     await train_ov_method()
 
             # 4. Production (생산)
             if self.bot.production:

@@ -218,6 +218,8 @@ class CurriculumManager:
             race_games = self.race_stats[opponent_race]["games"]
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
             print(f"[RACE STATS] vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
+        elif not opponent_race:
+            print(f"[RACE STATS] Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -258,6 +260,8 @@ class CurriculumManager:
             race_games = self.race_stats[opponent_race]["games"]
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
             print(f"[RACE STATS] vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
+        elif not opponent_race:
+            print(f"[RACE STATS] Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -285,9 +289,9 @@ class CurriculumManager:
             self.save_level()
             return False
 
-        old_difficulty = self.levels[self.current_idx].name
+        old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
         self.current_idx += 1
-        new_difficulty = self.levels[self.current_idx].name
+        new_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
 
         # 새 레벨 초기화
         old_wins = self.wins_at_current_level
@@ -314,9 +318,9 @@ class CurriculumManager:
             self.save_level()
             return False
 
-        old_difficulty = self.levels[self.current_idx].name
+        old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
         self.current_idx -= 1
-        new_difficulty = self.levels[self.current_idx].name
+        new_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
 
         # 새 레벨 초기화
         self.wins_at_current_level = 0
@@ -355,8 +359,8 @@ class CurriculumManager:
 
             # Safety check: ensure we don't exceed bounds
             if 0 <= new_idx < len(self.levels):
-                old_difficulty = self.levels[self.current_idx].name
-                new_difficulty = self.levels[new_idx].name
+                old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name_from_idx(self.current_idx))
+                new_difficulty = getattr(self.levels[new_idx], 'name', self.get_level_name_from_idx(new_idx))
 
                 # IMPROVED: Only promote one level at a time
                 self.current_idx = new_idx
@@ -389,8 +393,8 @@ class CurriculumManager:
 
             # Safety check: ensure we don't go below 0
             if 0 <= new_idx < len(self.levels):
-                old_difficulty = self.levels[self.current_idx].name
-                new_difficulty = self.levels[new_idx].name
+                old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name_from_idx(self.current_idx))
+                new_difficulty = getattr(self.levels[new_idx], 'name', self.get_level_name_from_idx(new_idx))
 
                 # IMPROVED: Only demote one level at a time
                 self.current_idx = new_idx
@@ -437,7 +441,7 @@ class CurriculumManager:
         return {
             "current_level": self.current_idx + 1,
             "total_levels": len(self.levels),
-            "current_difficulty": current_difficulty.name,
+            "current_difficulty": getattr(current_difficulty, 'name', self.get_level_name()),
             "level_name": self.get_level_name(),
             "games_at_current_level": self.games_at_current_level,
             "wins_at_current_level": self.wins_at_current_level,

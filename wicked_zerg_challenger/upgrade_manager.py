@@ -64,17 +64,19 @@ class EvolutionUpgradeManager:
         # === ★ IMPROVED: Evolution Chamber 2분 30초부터 건설 ★ ===
         await self._build_evolution_chamber()
 
-        # === 1순위: Evolution Chamber 업그레이드 (3분 이후) ===
-        # Initialize evo_chambers first to avoid UnboundLocalError
+        # === 1순위: Evolution Chamber 업그레이드 (2분 30초 이후 즉시 시작) ===
         evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
 
-        if game_time >= 180:  # ★ 4분 → 3분으로 앞당김 ★
-            if not evo_chambers:
-                return
+        # ★★★ IMPROVED: 진화실 완성되면 즉시 업그레이드 시작 (기존: 3분 대기) ★★★
+        if not evo_chambers.exists:
+            return  # 진화실 없으면 리턴
 
         upgrade_order = self._get_upgrade_priority()
         vespene = getattr(self.bot, "vespene", 0)
-        gas_constrained = vespene < self.gas_reserve_threshold
+
+        # ★★★ CRITICAL: 가스 제약 완화 (업그레이드 우선순위 강화) ★★★
+        # 가스 50 이상이면 업그레이드 진행 (기존: 150)
+        gas_constrained = vespene < 50
 
         # ★★★ Spire 공중 업그레이드 ★★★
         spires = self.bot.structures(UnitTypeId.SPIRE).ready | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
@@ -111,8 +113,14 @@ class EvolutionUpgradeManager:
                 if "FLYER" in upgrade_name:
                     continue
 
-                if gas_constrained and upgrade_id != upgrade_order[0]:
-                    continue
+                # ★★★ IMPROVED: 가스 제약 대폭 완화 - 업그레이드 최우선 ★★★
+                # 이제 가스가 부족해도 업그레이드 진행 (최대 3개까지)
+                if gas_constrained:
+                    # 상위 3개 업그레이드는 가스 부족해도 진행
+                    upgrade_index = upgrade_order.index(upgrade_id)
+                    if upgrade_index > 2:  # 0, 1, 2는 허용
+                        continue
+
                 if not self._can_research(upgrade_id):
                     continue
                 if not self.bot.can_afford(upgrade_id):
@@ -748,21 +756,36 @@ class EvolutionUpgradeManager:
                 self.logger.warning(f"Failed to research adrenal glands: {e}")
 
     async def _build_evolution_chamber(self) -> bool:
-        """Build Evolution Chamber for upgrades."""
-        # ★ ULTRA-AGGRESSIVE: 진화장 2분 30초부터 건설 (프로 타이밍)
-        # Check time (after 2 minutes 30 seconds)
+        """
+        Build Evolution Chamber for upgrades.
+
+        ★★★ ULTRA-AGGRESSIVE: 진화실 2개 건설 (공3방3 20분 달성) ★★★
+        - 첫 번째: 2분 30초 (150s)
+        - 두 번째: 5분 (300s) - 동시 업그레이드 가능
+        """
         game_time = getattr(self.bot, "time", 0)
-        if game_time < 150:  # ★ 180초(3분) → 150초(2분 30초)로 앞당김 ★
+
+        # Check existing chambers
+        evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER)
+        evo_count = evo_chambers.amount if hasattr(evo_chambers, 'amount') else len(list(evo_chambers))
+        pending_evo = self.bot.already_pending(UnitTypeId.EVOLUTIONCHAMBER)
+        total_evo = evo_count + pending_evo
+
+        # ★★★ 첫 번째 진화실: 2분 30초 ★★★
+        if game_time < 150:
             return False
 
-        # ★ 2026-01-26 FIX: 쿨다운 체크 (중복 건설 방지) ★
+        # ★★★ 두 번째 진화실: 5분 (동시 업그레이드) ★★★
+        if total_evo >= 2:
+            return False  # 이미 2개 있음
+
+        # 두 번째 진화실은 5분부터
+        if total_evo == 1 and game_time < 300:
+            return False
+
+        # ★ 쿨다운 체크 (중복 건설 방지) ★
         time_since_last_attempt = game_time - self._last_evo_chamber_attempt
         if time_since_last_attempt < self._evo_chamber_cooldown:
-            return False  # 너무 최근에 시도했으면 스킵
-
-        # Check if already exists or pending
-        evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER)
-        if evo_chambers.exists or self.bot.already_pending(UnitTypeId.EVOLUTIONCHAMBER) > 0:
             return False
 
         # Need Spawning Pool first
@@ -813,14 +836,15 @@ class EvolutionUpgradeManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★★★ BALANCED: 30분 승리를 위한 테크 타이밍 ★★★
-        # === 레어 (Lair) 변이: 4분 30초 이후 ===
-        if game_time >= 270:  # 4분 30초 (빠르게)
+        # ★★★ ULTRA-AGGRESSIVE: 20분 공3방3 달성을 위한 초공격적 테크 ★★★
+        # === 레어 (Lair) 변이: 3분 30초 이후 (빠르게) ===
+        # 공2업을 위해 레어가 필수 → 빨리 올려야 함
+        if game_time >= 210:  # 3분 30초 (4분 30초 → 1분 앞당김)
             await self._upgrade_to_lair(iteration)
 
-        # === 군락 (Hive) 변이: 10분 이후 (후반 테크) ===
-        # 하이브 테크는 게임이 길어질 때
-        if game_time >= 600:  # 10분 이후 하이브
+        # === 군락 (Hive) 변이: 7분 이후 (공3방3을 위해) ===
+        # 공3, 방3을 위해 하이브 필수 → 빨리 올려야 함
+        if game_time >= 420:  # 7분 (10분 → 3분 앞당김)
             await self._upgrade_to_hive(iteration)
 
     async def _upgrade_to_lair(self, iteration: int) -> None:

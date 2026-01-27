@@ -1,0 +1,313 @@
+{
+  "victory_patterns": [
+    {
+      "timestamp": "2026-01-27T19:48:17.051317",
+      "game_time": 981.4285714285714,
+      "conditions": [
+        "economy_advantage",
+        "army_superiority",
+        "enemy_workers_killed",
+        "enemy_bases_destroyed",
+        "enemy_army_crushed",
+        "tech_advantage"
+      ],
+      "reward": 45.0
+    },
+    {
+      "timestamp": "2026-01-27T20:35:22.179010",
+      "game_time": 818.5714285714287,
+      "conditions": [
+        "economy_advantage",
+        "army_superiority",
+        "enemy_workers_killed",
+        "enemy_bases_destroyed",
+        "enemy_army_crushed",
+        "tech_advantage"
+      ],
+      "reward": 45.0
+    },
+    {
+      "timestamp": "2026-01-27T20:54:53.846618",
+      "game_time": 867.3214285714287,
+      "conditions": [
+        "worker_saturation",
+        "army_superiority",
+        "enemy_workers_killed",
+        "enemy_bases_destroyed",
+        "enemy_army_crushed",
+        "tech_advantage"
+      ],
+      "reward": 48.0
+    },
+    {
+      "timestamp": "2026-01-27T22:19:04.045801",
+      "game_time": 856.25,
+      "conditions": [
+        "worker_saturation",
+        "army_superiority",
+        "enemy_workers_killed",
+        "enemy_bases_destroyed",
+        "enemy_army_crushed",
+        "tech_advantage"
+      ],
+      "reward": 48.0
+    },
+    {
+      "timestamp": "2026-01-27T23:18:01.527811",
+      "game_time": 2676.071428571429,
+      "conditions": [
+        "economy_advantage",
+        "army_superiority",
+        "enemy_workers_killed",
+        "enemy_bases_destroyed",
+        "enemy_army_crushed",
+        "tech_advantage"
+      ],
+      "reward": 45.0
+    },
+    {
+      "timestamp": "2026-01-27T23:36:23.630045",
+      "game_time": 809.2857142857143,
+      "conditions": [
+        "economy_advantage",
+        "army_superiority",
+        "enemy_workers_killed",
+        "enemy_bases_destroyed",
+        "enemy_army_crushed",
+        "tech_advantage"
+      ],
+      "reward": 45.0
+    }
+  ],
+  "defeat_patterns": [
+    {
+      "timestamp": "2026-01-27T19:13:27.685042",
+      "game_time": 1190.0,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T19:33:04.433652",
+      "game_time": 3188.571428571429,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure"
+      ],
+      "penalty": -20.0
+    },
+    {
+      "timestamp": "2026-01-27T19:43:04.893166",
+      "game_time": 1648.5714285714287,
+      "conditions": [
+        "economy_collapse",
+        "army_shortage"
+      ],
+      "penalty": -18.0
+    },
+    {
+      "timestamp": "2026-01-27T19:53:07.795649",
+      "game_time": 1034.2857142857144,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure",
+        "base_lost"
+      ],
+      "penalty": -30.0
+    },
+    {
+      "timestamp": "2026-01-27T19:56:42.782930",
+      "game_time": 917.1428571428572,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T20:01:43.712276",
+      "game_time": 1205.7142857142858,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "army_shortage"
+      ],
+      "penalty": -23.0
+    },
+    {
+      "timestamp": "2026-01-27T20:13:10.018952",
+      "game_time": 1562.857142857143,
+      "conditions": [
+        "economy_collapse",
+        "army_shortage"
+      ],
+      "penalty": -18.0
+    },
+    {
+      "timestamp": "2026-01-27T20:30:44.722022",
+      "game_time": 2482.857142857143,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure"
+      ],
+      "penalty": -20.0
+    },
+    {
+      "timestamp": "2026-01-27T20:51:23.911475",
+      "game_time": 3031.4285714285716,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T20:57:57.117123",
+      "game_time": 1028.5714285714287,
+      "conditions": [
+        "worker_shortage",
+        "base_lost"
+      ],
+      "penalty": -23.0
+    },
+    {
+      "timestamp": "2026-01-27T21:03:45.439585",
+      "game_time": 1397.1428571428573,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T21:13:07.097003",
+      "game_time": 2105.714285714286,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T21:31:10.843535",
+      "game_time": 2785.714285714286,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure"
+      ],
+      "penalty": -20.0
+    },
+    {
+      "timestamp": "2026-01-27T21:43:24.150508",
+      "game_time": 2494.285714285714,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T22:07:18.706390",
+      "game_time": 911.4285714285714,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T22:15:57.483467",
+      "game_time": 1477.1428571428573,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure"
+      ],
+      "penalty": -20.0
+    },
+    {
+      "timestamp": "2026-01-27T22:20:42.849157",
+      "game_time": 655.7142857142858,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T22:25:56.722647",
+      "game_time": 1710.0,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T22:58:44.130123",
+      "game_time": 5364.285714285715,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure"
+      ],
+      "penalty": -20.0
+    },
+    {
+      "timestamp": "2026-01-27T23:08:00.189095",
+      "game_time": 2028.5714285714287,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "army_shortage"
+      ],
+      "penalty": -23.0
+    },
+    {
+      "timestamp": "2026-01-27T23:20:02.467563",
+      "game_time": 787.1428571428572,
+      "conditions": [
+        "economy_collapse",
+        "expansion_failure",
+        "defense_failure"
+      ],
+      "penalty": -25.0
+    },
+    {
+      "timestamp": "2026-01-27T23:34:09.231991",
+      "game_time": 3004.2857142857147,
+      "conditions": [
+        "economy_collapse",
+        "defense_failure"
+      ],
+      "penalty": -20.0
+    }
+  ],
+  "victory_counts": {
+    "economy_advantage": 4,
+    "army_superiority": 6,
+    "enemy_workers_killed": 6,
+    "enemy_bases_destroyed": 6,
+    "enemy_army_crushed": 6,
+    "tech_advantage": 6,
+    "worker_saturation": 2
+  },
+  "defeat_counts": {
+    "economy_collapse": 21,
+    "expansion_failure": 12,
+    "defense_failure": 17,
+    "army_shortage": 4,
+    "base_lost": 2,
+    "worker_shortage": 1
+  },
+  "last_updated": "2026-01-27T23:36:23.630045"
+}

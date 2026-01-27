@@ -54,7 +54,10 @@
       "Bash(if [ -d \"data/games\" ])",
       "Bash(then ls data/games/*.json)",
       "Bash(else echo \"Directory not exists\")",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(git rm:*)",
+      "Bash(wmic process where \"name=''SC2_x64.exe''\" get ProcessId,CommandLine)",
+      "Bash(powershell:*)"
     ]
   }
 }
