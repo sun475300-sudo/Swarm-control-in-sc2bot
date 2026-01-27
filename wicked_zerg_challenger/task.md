@@ -1,5 +1,15 @@
-# WiekdZergBot Logic Improvement Tasks
+# WickedZergBot Logic Improvement Tasks
 
+- [x] Critical Priority Fixes <!-- id: 6 -->
+    - [x] AggressiveStrategies: Add pending checks to prevent unit spam <!-- id: 7 -->
+    - [x] BotStepIntegration: Reorder execution (Defense -> Army -> Overlord -> Strategy -> Drone) <!-- id: 8 -->
+    - [x] ProductionResilience: Improve Spawning Pool timing (13 pool + 95s trigger) <!-- id: 9 -->
+- [x] High Priority Improvements <!-- id: 10 -->
+    - [x] EconomyManager: Add check to prevent Overlord duplication with UnitFactory <!-- id: 11 -->
+    - [x] Building Placement: Prevent building too close (3 tiles) to minerals/gas (Enforced for Spine/Spore) <!-- id: 12 -->
+    - [x] RewardSystem: Strengthen penalties for lack of early defense (Verified already present) <!-- id: 13 -->
+    - [x] TechCoordinator: Resolve tech building conflicts (Implemented TechCoordinator) <!-- id: 14 -->
+    - [x] Learning Data Cleanup & Restart: Cleared experience data and verified training restart <!-- id: 15 -->
 - [x] Analyze existing "improved" modules (`advanced_building_manager`, `aggressive_tech_builder`, `production_resilience`) <!-- id: 0 -->
 - [x] Consolidate Defense Logic (Priority 1) <!-- id: 1 -->
     - [x] Create `DefenseCoordinator` class
@@ -11,8 +21,8 @@
     - [x] Create `KnowledgeManager` component
     - [x] Extract hardcoded builds to JSON
     - [x] Refactor `BuildOrderSystem` to use `KnowledgeManager`
-- [ ] Centralize State (Phase 3) <!-- id: 3 -->
-    - [ ] Create `Blackboard` / `GameState` class
-    - [ ] Refactor managers to read/write to Blackboard
+- [x] Centralize State (Phase 3) <!-- id: 3 -->
+    - [x] Create `Blackboard` / `GameState` class
+    - [x] Refactor managers to read/write to Blackboard
 - [x] Fix Blackboard attribute errors <!-- id: 4 -->
 - [x] Fix Units API compatibility issues <!-- id: 5 -->

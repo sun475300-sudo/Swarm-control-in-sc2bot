@@ -396,22 +396,12 @@ class WickedZergBotProImpl(BotAI):
         - AggressiveStrategies: 초반 공격 전략 (12풀, 맹독충 올인 등)
         중복 호출 방지를 위해 여기서는 호출하지 않음
         """
-        # 게임 시간 제한 (10분)
-        if self.time > 600:  # 600초 = 10분
-            print(f"[AUTO SURRENDER] Game time limit reached ({self.time:.0f}s). Surrendering...")
-
-            # ★ CRITICAL FIX: 게임 종료 전에 경험 데이터 저장 ★
-            if hasattr(self, 'rl_agent') and self.rl_agent:
-                try:
-                    print("[AUTO SURRENDER] Saving experience data before leaving...")
-                    self.rl_agent.end_episode(final_reward=-10.0, save_experience=True)
-                    print("[AUTO SURRENDER] [OK] Experience data saved successfully.")
-                except Exception as e:
-                    print(f"[AUTO SURRENDER] [FAILED] Failed to save experience: {e}")
-                    import traceback
-                    traceback.print_exc()
-
-            await self.client.leave()
+        # ★★★ 시간 제한: 5분(300초) 강제 종료 (빠른 학습) ★★★
+        if self.time > 300:
+            if not hasattr(self, '_game_ended'):
+                self._game_ended = True
+                print(f"[GAME] Time limit reached ({int(self.time)}s). Surrendering for fast training.")
+                await self.client.leave()
             return
 
         # Store iteration as attribute for other modules to access

@@ -209,35 +209,77 @@ class BuildOrderSystem:
         if not self.bot.workers:
             return False
 
+        # Use TechCoordinator if available
+        tech_coordinator = getattr(self.bot, "tech_coordinator", None)
+        PRIORITY_BUILD_ORDER = 50
+
         # Spawning Pool 건설
         if structure_type == UnitTypeId.SPAWNINGPOOL:
-            worker = self.bot.workers.random
             main_base = self.bot.townhalls.first
-            location = await self.bot.find_placement(
-                UnitTypeId.SPAWNINGPOOL,
-                main_base.position.towards(self.bot.game_info.map_center, 5),
-                max_distance=15,
-                placement_step=2
-            )
-            if location:
-                worker.build(UnitTypeId.SPAWNINGPOOL, location)
-                return True
+            # Calculate approx location
+            pos = main_base.position.towards(self.bot.game_info.map_center, 5)
+            
+            if tech_coordinator:
+                 if not tech_coordinator.is_planned(structure_type):
+                    tech_coordinator.request_structure(
+                        UnitTypeId.SPAWNINGPOOL,
+                        pos,
+                        PRIORITY_BUILD_ORDER,
+                        "BuildOrderSystem"
+                    )
+                    return True # Request accepted, move to next step
+            else:
+                worker = self.bot.workers.random
+                location = await self.bot.find_placement(
+                    UnitTypeId.SPAWNINGPOOL,
+                    pos,
+                    max_distance=15,
+                    placement_step=2
+                )
+                if location:
+                    worker.build(UnitTypeId.SPAWNINGPOOL, location)
+                    return True
 
         # Extractor 건설
         elif structure_type == UnitTypeId.EXTRACTOR:
-            # 가스 간헐천 확인
             if self.bot.townhalls:
                 main_base = self.bot.townhalls.first
                 geysers = self.bot.vespene_geyser.closer_than(10, main_base)
 
-                # 빈 간헐천 찾기
                 for geyser in geysers:
-                    # 이미 Extractor가 있는지 확인
                     if not self.bot.structures(UnitTypeId.EXTRACTOR).closer_than(1, geyser):
-                        worker = self.bot.workers.closest_to(geyser)
-                        if worker:
-                            worker.build_gas(geyser)
-                            return True
+                        if tech_coordinator:
+                             # Request on this specific geyser
+                             # TechCoordinator handles duplication checks but we check here too
+                             tech_coordinator.request_structure(
+                                UnitTypeId.EXTRACTOR,
+                                geyser, # Pass Unit object as location
+                                PRIORITY_BUILD_ORDER,
+                                "BuildOrderSystem"
+                            )
+                             return True
+                        else:
+                            worker = self.bot.workers.closest_to(geyser)
+                            if worker:
+                                worker.build_gas(geyser)
+                                return True
+        
+        # General Structure Fallback (e.g. Roach Warren)
+        else:
+             if self.bot.townhalls:
+                pos = self.bot.townhalls.first.position
+                if tech_coordinator:
+                    if not tech_coordinator.is_planned(structure_type):
+                        tech_coordinator.request_structure(
+                            structure_type,
+                            pos,
+                            PRIORITY_BUILD_ORDER,
+                            "BuildOrderSystem"
+                        )
+                        return True
+                else:
+                    await self.bot.build(structure_type, near=pos)
+                    return True
 
         return False
 
@@ -301,10 +343,24 @@ class BuildOrderSystem:
         # 확장 위치 찾기
         location = await self.bot.get_next_expansion()
         if location:
-            worker = self.bot.workers.random
-            if worker:
-                worker.build(UnitTypeId.HATCHERY, location)
-                return True
+            # Use TechCoordinator if available
+            tech_coordinator = getattr(self.bot, "tech_coordinator", None)
+            PRIORITY_BUILD_ORDER = 50
+            
+            if tech_coordinator:
+                if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
+                    tech_coordinator.request_structure(
+                        UnitTypeId.HATCHERY,
+                        location,
+                        PRIORITY_BUILD_ORDER,
+                        "BuildOrderSystem"
+                    )
+                    return True
+            else:
+                worker = self.bot.workers.random
+                if worker:
+                    worker.build(UnitTypeId.HATCHERY, location)
+                    return True
 
         return False
 

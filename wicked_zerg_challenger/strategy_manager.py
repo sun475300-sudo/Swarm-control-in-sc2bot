@@ -605,8 +605,8 @@ class StrategyManager:
             except Exception:
                 continue
 
-        # 공중 유닛 2기 이상 감지시 대응 활성화
-        if air_unit_count >= 2:
+        # ★★★ IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) ★★★
+        if air_unit_count >= 1:
             self._air_threat_active = True
             self.emergency_spore_requested = True
 
@@ -618,12 +618,21 @@ class StrategyManager:
             # 히드라 우선 생산 설정
             self._force_hydra_production = True
 
-            # 현재 페이즈에 히드라 비율 증가
+            # ★★★ IMPROVED: 공중 유닛 수에 따라 히드라 비율 동적 조정 ★★★
             current_ratios = self.get_unit_ratios()
-            if "hydra" in current_ratios:
-                current_ratios["hydra"] = max(current_ratios.get("hydra", 0), 0.4)
+
+            # 공중 유닛이 많을수록 히드라 비율 증가
+            if air_unit_count >= 10:
+                hydra_ratio = 0.70  # 대규모 공중 병력 → 70% 히드라
+            elif air_unit_count >= 5:
+                hydra_ratio = 0.55  # 중간 규모 → 55% 히드라
             else:
-                current_ratios["hydra"] = 0.4
+                hydra_ratio = 0.45  # 소규모 → 45% 히드라 (기존 40%에서 증가)
+
+            if "hydra" in current_ratios:
+                current_ratios["hydra"] = max(current_ratios.get("hydra", 0), hydra_ratio)
+            else:
+                current_ratios["hydra"] = hydra_ratio
 
             # 공중 위협 대응 호출
             self._handle_air_threat()
@@ -805,7 +814,7 @@ class StrategyManager:
         # 적 공중 유닛이 있으면 스포어도 요청
         if hasattr(self.bot, "enemy_units"):
             for enemy in self.bot.enemy_units:
-                if hasattr(enemy, "is_flying") and enemy.is_flying:
+                if getattr(enemy, "is_flying", False):
                     self.emergency_spore_requested = True
                     break
 

@@ -792,18 +792,42 @@ class ProductionResilience:
             # await self._ensure_early_defense(time, supply_used)
 
             # Priority 1: Fast Spawning Pool (supply 13-15)
-            if not b.structures(UnitTypeId.SPAWNINGPOOL).exists and b.already_pending(UnitTypeId.SPAWNINGPOOL) == 0:
-                    if b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
-                        try:
-                            main_base = b.townhalls.first
-                            await b.build(
-                                UnitTypeId.SPAWNINGPOOL,
-                                near=main_base.position.towards(b.game_info.map_center, 5),
-                            )
-                            if b.iteration % 50 == 0:
-                                print(f"[EARLY_BOOST] [{int(time)}s] Fast Spawning Pool at supply {supply_used}")
-                        except Exception:
-                            pass
+            # [FIX] Optimized Spawning Pool Timing (13 Pool + Time Based Trigger)
+            spawning_pools = b.structures(UnitTypeId.SPAWNINGPOOL)
+            pending_pools = b.already_pending(UnitTypeId.SPAWNINGPOOL)
+
+            if not spawning_pools.exists and pending_pools == 0:
+                # Default: 13 Pool (Improved from 17)
+                spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 13.0)
+                
+                # Time Based Trigger (95 seconds - ~1:35)
+                learned_pool_time = 95.0
+                time_trigger = time >= learned_pool_time
+                
+                # Rush Detection Override (12 Pool)
+                if hasattr(b, "strategy_manager") and getattr(b.strategy_manager, "rush_detection_active", False):
+                    spawning_pool_supply = 12.0
+                    time_trigger = True
+                
+                should_build = supply_used >= spawning_pool_supply or time_trigger
+                
+                if should_build and b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
+                    main_base = b.townhalls.first
+                    pos = main_base.position.towards(b.game_info.map_center, 5)
+                    
+                    try:
+                        built = False
+                        # [NEW] Use Placement Helper to avoid blocking resources
+                        if hasattr(self, "placement_helper") and self.placement_helper and hasattr(self.placement_helper, "build_structure_safely"):
+                             built = await self.placement_helper.build_structure_safely(UnitTypeId.SPAWNINGPOOL, pos)
+                        
+                        if not built:
+                             await b.build(UnitTypeId.SPAWNINGPOOL, near=pos)
+
+                        if b.iteration % 50 == 0:
+                            print(f"[EARLY_BOOST] [{int(time)}s] Fast Spawning Pool at supply {supply_used}")
+                    except Exception:
+                        pass
 
             # Priority 2: Early workers (maximize drone production)
             larvae = b.units(UnitTypeId.LARVA)
@@ -1184,6 +1208,7 @@ class ProductionResilience:
     async def _auto_build_tech_structures(self) -> None:
         """
         Automatically build tech structures based on game time.
+        Uses TechCoordinator for conflict resolution if available.
 
         Tech progression timeline:
         - 2:00 (120s): First Extractor
@@ -1195,6 +1220,10 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
+        
+        # Use TechCoordinator if available
+        tech_coordinator = getattr(b, "tech_coordinator", None)
+        PRIORITY_MACRO = 25
 
         # === EXTRACTORS: Build early for gas income ===
         await self._auto_build_extractors(game_time)
@@ -1212,28 +1241,40 @@ class ProductionResilience:
         if game_time >= 180:
             if not b.structures(UnitTypeId.ROACHWARREN).exists and b.already_pending(UnitTypeId.ROACHWARREN) == 0:
                 if b.can_afford(UnitTypeId.ROACHWARREN) and b.townhalls.exists:
-                    try:
-                        build_pos = b.townhalls.first.position
-
-                        # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
-                        if self.placement_helper:
-                            success = await self.placement_helper.build_structure_safely(
-                                UnitTypeId.ROACHWARREN,
-                                build_pos,
-                                max_distance=15.0
+                    if tech_coordinator:
+                        if not tech_coordinator.is_planned(UnitTypeId.ROACHWARREN):
+                            tech_coordinator.request_structure(
+                                UnitTypeId.ROACHWARREN, 
+                                b.townhalls.first.position, 
+                                PRIORITY_MACRO, 
+                                "ProductionResilience"
                             )
-                            if success:
+                            # Dont update _last_tech_build_time here, wait for coordinator execution? 
+                            # Actually, we should probably let coordinator handle it.
+                    else:
+                        # Fallback
+                        try:
+                            build_pos = b.townhalls.first.position
+
+                            # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
+                            if self.placement_helper:
+                                success = await self.placement_helper.build_structure_safely(
+                                    UnitTypeId.ROACHWARREN,
+                                    build_pos,
+                                    max_distance=15.0
+                                )
+                                if success:
+                                    self._last_tech_build_time = game_time
+                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren (safe placement)")
+                                    return
+                            else:
+                                # 폴백: 기존 방식
+                                await b.build(UnitTypeId.ROACHWARREN, near=build_pos)
                                 self._last_tech_build_time = game_time
-                                print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren (safe placement)")
+                                print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren")
                                 return
-                        else:
-                            # 폴백: 기존 방식
-                            await b.build(UnitTypeId.ROACHWARREN, near=build_pos)
-                            self._last_tech_build_time = game_time
-                            print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren")
-                            return
-                    except Exception:
-                        pass
+                        except Exception:
+                            pass
 
         # 4:00+ : Lair
         if game_time >= 240:
@@ -1244,71 +1285,99 @@ class ProductionResilience:
         if game_time >= 240:
             if not b.structures(UnitTypeId.EVOLUTIONCHAMBER).exists and b.already_pending(UnitTypeId.EVOLUTIONCHAMBER) == 0:
                 if b.can_afford(UnitTypeId.EVOLUTIONCHAMBER) and b.townhalls.exists:
-                    try:
-                        build_pos = b.townhalls.first.position
-
-                        # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
-                        if self.placement_helper:
-                            success = await self.placement_helper.build_structure_safely(
-                                UnitTypeId.EVOLUTIONCHAMBER,
-                                build_pos,
-                                max_distance=15.0
+                    if tech_coordinator:
+                        if not tech_coordinator.is_planned(UnitTypeId.EVOLUTIONCHAMBER):
+                            tech_coordinator.request_structure(
+                                UnitTypeId.EVOLUTIONCHAMBER, 
+                                b.townhalls.first.position, 
+                                PRIORITY_MACRO, 
+                                "ProductionResilience"
                             )
-                            if success:
-                                self._last_tech_build_time = game_time
-                                print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber (safe placement)")
-                                return
-                        else:
-                            # 폴백: 기존 방식
-                            await b.build(UnitTypeId.EVOLUTIONCHAMBER, near=build_pos)
-                            self._last_tech_build_time = game_time
-                            print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber")
-                            return
-                    except Exception:
-                        pass
-
-        # 5:00+ : Hydralisk Den (requires Lair)
-        if game_time >= 300:
-            has_lair = b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists
-            if has_lair:
-                if not b.structures(UnitTypeId.HYDRALISKDEN).exists and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0:
-                    if b.can_afford(UnitTypeId.HYDRALISKDEN) and b.townhalls.exists:
+                    else:
+                        # Fallback
                         try:
                             build_pos = b.townhalls.first.position
 
                             # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
                             if self.placement_helper:
                                 success = await self.placement_helper.build_structure_safely(
-                                    UnitTypeId.HYDRALISKDEN,
+                                    UnitTypeId.EVOLUTIONCHAMBER,
                                     build_pos,
                                     max_distance=15.0
                                 )
                                 if success:
                                     self._last_tech_build_time = game_time
-                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den (safe placement)")
+                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber (safe placement)")
                                     return
                             else:
                                 # 폴백: 기존 방식
-                                await b.build(UnitTypeId.HYDRALISKDEN, near=build_pos)
+                                await b.build(UnitTypeId.EVOLUTIONCHAMBER, near=build_pos)
                                 self._last_tech_build_time = game_time
-                                print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den")
+                                print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber")
                                 return
                         except Exception:
                             pass
+
+        # 5:00+ : Hydralisk Den (requires Lair)
+        if game_time >= 300:
+            has_lair = b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists
+            if has_lair:
+                if not b.structures(UnitTypeId.HYDRALISKDEN).exists and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0:
+                     if b.can_afford(UnitTypeId.HYDRALISKDEN) and b.townhalls.exists:
+                        if tech_coordinator:
+                            if not tech_coordinator.is_planned(UnitTypeId.HYDRALISKDEN):
+                                tech_coordinator.request_structure(
+                                    UnitTypeId.HYDRALISKDEN, 
+                                    b.townhalls.first.position, 
+                                    PRIORITY_MACRO, 
+                                    "ProductionResilience"
+                                )
+                        else:
+                            try:
+                                build_pos = b.townhalls.first.position
+
+                                # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
+                                if self.placement_helper:
+                                    success = await self.placement_helper.build_structure_safely(
+                                        UnitTypeId.HYDRALISKDEN,
+                                        build_pos,
+                                        max_distance=15.0
+                                    )
+                                    if success:
+                                        self._last_tech_build_time = game_time
+                                        print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den (safe placement)")
+                                        return
+                                else:
+                                    # 폴백: 기존 방식
+                                    await b.build(UnitTypeId.HYDRALISKDEN, near=build_pos)
+                                    self._last_tech_build_time = game_time
+                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den")
+                                    return
+                            except Exception:
+                                pass
 
         # 6:00+ : Spire (requires Lair)
         if game_time >= 360:
             has_lair = b.structures(UnitTypeId.LAIR).ready.exists or b.structures(UnitTypeId.HIVE).ready.exists
             if has_lair:
                 if not b.structures(UnitTypeId.SPIRE).exists and b.already_pending(UnitTypeId.SPIRE) == 0:
-                    if b.can_afford(UnitTypeId.SPIRE) and b.townhalls.exists:
-                        try:
-                            await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
-                            self._last_tech_build_time = game_time
-                            print(f"[AUTO TECH] [{int(game_time)}s] Building Spire")
-                            return
-                        except Exception:
-                            pass
+                     if b.can_afford(UnitTypeId.SPIRE) and b.townhalls.exists:
+                        if tech_coordinator:
+                            if not tech_coordinator.is_planned(UnitTypeId.SPIRE):
+                                tech_coordinator.request_structure(
+                                    UnitTypeId.SPIRE, 
+                                    b.townhalls.first.position, 
+                                    PRIORITY_MACRO, 
+                                    "ProductionResilience"
+                                )
+                        else:
+                            try:
+                                await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
+                                self._last_tech_build_time = game_time
+                                print(f"[AUTO TECH] [{int(game_time)}s] Building Spire")
+                                return
+                            except Exception:
+                                pass
 
     async def _auto_build_extractors(self, game_time: float) -> None:
         """
@@ -1542,11 +1611,51 @@ class ProductionResilience:
             if mutalisk_count < 15:  # Target: 15 Mutalisks
                 await self._produce_mutalisks(count=5)
 
+    async def build_terran_counters(self) -> None:
+        b = self.bot
+        if not b.production:
+            return
+            
+        # Use TechCoordinator if available
+        tech_coordinator = getattr(b, "tech_coordinator", None)
+        PRIORITY_MACRO = 25
+            
+        # Baneling Nest for anti-Zerg (Zerglings counter)
+        # Check if Baneling Nest already exists or is pending
+        if not b.structures(UnitTypeId.BANELINGNEST).exists and b.already_pending(UnitTypeId.BANELINGNEST) == 0:
+            # Check if we can afford it and Spawning Pool is ready
+            if b.can_afford(UnitTypeId.BANELINGNEST) and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                # CRITICAL: Check for duplicate construction before building
+                if tech_coordinator:
+                     if not tech_coordinator.is_planned(UnitTypeId.BANELINGNEST):
+                        # Request structure via TechCoordinator
+                        # Use the position of the first ready Spawning Pool as a near target
+                        spawning_pool_pos = b.structures(UnitTypeId.SPAWNINGPOOL).ready.first.position
+                        tech_coordinator.request_structure(
+                            UnitTypeId.BANELINGNEST, 
+                            spawning_pool_pos, 
+                            PRIORITY_MACRO, 
+                            "ProductionResilience"
+                        )
+                else:
+                    # Fallback: Direct build if TechCoordinator is not available
+                    if b.townhalls.exists:
+                        try:
+                            await b.build(UnitTypeId.BANELINGNEST, near=b.townhalls.first.position)
+                        except Exception:
+                            pass
+        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
+        # Removed duplicate code to prevent building spam
+
     async def build_protoss_counters(self) -> None:
         b = self.bot
         if not b.production:
             return
-
+            
+        # Use TechCoordinator if available
+        tech_coordinator = getattr(b, "tech_coordinator", None)
+        PRIORITY_MACRO = 25
+            
         # First, check if we need to morph to Lair for Hydralisk Den
         lairs = b.structures(UnitTypeId.LAIR)
         hives = b.structures(UnitTypeId.HIVE)
@@ -1555,18 +1664,31 @@ class ProductionResilience:
             if b.time > 200 and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                 await self._morph_to_lair()
 
-        hydra_dens = [
-            s for s in b.units(UnitTypeId.HYDRALISKDEN).structure if s.is_ready]
-        if not hydra_dens and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0 and b.time > 240 and b.can_afford(UnitTypeId.HYDRALISKDEN):
-            lairs = [s for s in b.units(UnitTypeId.LAIR).structure if s.is_ready]
-            hives = [s for s in b.units(UnitTypeId.HIVE).structure if s.is_ready]
-            if lairs or hives:
-                if b.townhalls.exists:
-                    townhalls_list = list(b.townhalls)
-                    if townhalls_list:
-                        await b.build(UnitTypeId.HYDRALISKDEN, near=townhalls_list[0])
-                else:
-                    await b.build(UnitTypeId.HYDRALISKDEN, near=b.game_info.map_center)
+        # Check if Hydralisk Den already exists or is pending
+        if not b.structures(UnitTypeId.HYDRALISKDEN).exists and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0:
+            # Check timing and affordability
+            if b.time > 240 and b.can_afford(UnitTypeId.HYDRALISKDEN):
+                # Check Lair/Hive requirement
+                if lairs.ready.exists or hives.ready.exists:
+                    if tech_coordinator:
+                        if not tech_coordinator.is_planned(UnitTypeId.HYDRALISKDEN):
+                            # Determine target position for the structure
+                            target = b.townhalls.first if b.townhalls.exists else b.game_info.map_center
+                            target_pos = target.position if hasattr(target, "position") else target
+                            tech_coordinator.request_structure(
+                                UnitTypeId.HYDRALISKDEN, 
+                                target_pos, 
+                                PRIORITY_MACRO, 
+                                "ProductionResilience"
+                            )
+                    else: 
+                        # Fallback: Direct build if TechCoordinator is not available
+                        if b.townhalls.exists:
+                            townhalls_list = list(b.townhalls)
+                            if townhalls_list:
+                                await b.build(UnitTypeId.HYDRALISKDEN, near=townhalls_list[0])
+                        else:
+                            await b.build(UnitTypeId.HYDRALISKDEN, near=b.game_info.map_center)
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
 

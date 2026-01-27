@@ -16,8 +16,6 @@ CREEP_NOT_REQUIRED = {
     UnitTypeId.LAIR,
     UnitTypeId.HIVE,
     UnitTypeId.EXTRACTOR,
-    UnitTypeId.SPINECRAWLER,  # 초기 배치 후 이동 가능
-    UnitTypeId.SPORECRAWLER,  # 초기 배치 후 이동 가능
 }
 
 # 반드시 점막 위에 지어야 하는 건물
@@ -33,6 +31,8 @@ CREEP_REQUIRED = {
     UnitTypeId.INFESTATIONPIT,
     UnitTypeId.ULTRALISKCAVERN,
     UnitTypeId.NYDUSNETWORK,
+    UnitTypeId.SPINECRAWLER,
+    UnitTypeId.SPORECRAWLER,
 }
 
 

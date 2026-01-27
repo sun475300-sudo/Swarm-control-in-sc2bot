@@ -1,7 +1,7 @@
 {
-  "curriculum_level_idx": 0,
+  "curriculum_level_idx": 1,
   "games_at_current_level": 1,
-  "wins_at_current_level": 0,
-  "losses_at_current_level": 37,
-  "wins_required": 5
+  "wins_at_current_level": 1,
+  "losses_at_current_level": 2,
+  "wins_required": 7
 }

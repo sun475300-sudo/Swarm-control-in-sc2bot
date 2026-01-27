@@ -164,14 +164,17 @@ class BoidsController:
                 # Check proximity to closest enemy (expensive O(N*M)) -> Optimize?
                 # Rely on cached "closest_enemy_dist" if available, or just check briefly
                 # Here we assume units in combat set a flag or we check a subset
-                
+
                 # Simple optimization: Randomly promote some units if list is empty
                 # For now, let's treat ALL units as candidates, but simple filter
-                # NOTE: 'gap' parameter removed for SC2 library compatibility
-                closest_enemy = unit.target_in_range(enemy_units) # Check if enemy in range
-                if closest_enemy:
-                    high_priority_units.append(unit)
-                else:
+                # Check if any enemy is in range (safer than target_in_range with Units collection)
+                try:
+                    in_range = any(unit.distance_to(e) <= unit.ground_range + 3 for e in enemy_units if hasattr(unit, 'ground_range'))
+                    if in_range:
+                        high_priority_units.append(unit)
+                    else:
+                        low_priority_units.append(unit)
+                except:
                     low_priority_units.append(unit)
         else:
             low_priority_units = list(units)

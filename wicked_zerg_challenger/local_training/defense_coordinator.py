@@ -128,13 +128,29 @@ class DefenseCoordinator:
             zergling_count = zerglings.amount if hasattr(zerglings, "amount") else 0
             zergling_pending = b.already_pending(UnitTypeId.ZERGLING)
 
-            # 150초(2:30) 이후 저글링 6기 미만이면 긴급 생산
-            min_zerglings_150s = 6
-            min_zerglings_180s = 8
+            # ★ 개선: 적 위협 감지 (기지 근처 적 유닛)
+            enemy_threat_detected = False
+            if hasattr(b, "enemy_units") and hasattr(b, "townhalls"):
+                for th in b.townhalls:
+                    nearby_enemies = [e for e in b.enemy_units if e.distance_to(th.position) < 40]
+                    if nearby_enemies:
+                        enemy_threat_detected = True
+                        break
+
+            # ★ 수정: 조건 완화 (4기/6기) 및 적 위협 또는 시간 조건
+            min_zerglings_150s = 4  # ★ 6 -> 4 (조건 완화)
+            min_zerglings_180s = 6  # ★ 8 -> 6 (조건 완화)
 
             target_zerglings = min_zerglings_150s if game_time < 180 else min_zerglings_180s
 
-            if game_time >= 150 and (zergling_count + zergling_pending) < target_zerglings:
+            # ★ 개선: 적 위협이 있거나 3분(180초) 이후에만 긴급 생산
+            should_emergency_produce = (
+                game_time >= 150 and
+                (zergling_count + zergling_pending) < target_zerglings and
+                (enemy_threat_detected or game_time >= 180)
+            )
+
+            if should_emergency_produce:
                 larvae = b.units(UnitTypeId.LARVA) if hasattr(b, "units") else []
                 if larvae.exists and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
                     larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
@@ -208,14 +224,16 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # Spore Crawler (Air Defense)
-        if requested_spore and spore_count < 1: # Start with 1 per base
+        # ★★★ IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ★★★
+        if requested_spore and spore_count + pending_spores < 3:  # 긴급 시 3개까지 증가 (기존: 1개)
              if b.can_afford(UnitTypeId.SPORECRAWLER) and b.townhalls.exists:
                 try:
                     main_base = b.townhalls.first
-                    await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4))
+                    # 다양한 위치에 분산 배치
+                    offset = spore_count * 5  # 각 스포어를 5칸씩 떨어뜨림
+                    await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4 + offset))
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPORE REQUESTED")
+                    self.logger.info(f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPORE #{spore_count + 1} REQUESTED (Air threat)")
                     return
                 except Exception:
                     pass
@@ -250,14 +268,14 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # 3:30+ : First Spore Crawler
-        if game_time >= 210 and spore_count + pending_spores < 1:
+        # ★★★ IMPROVED: 3:00+ First Spore Crawler (30초 앞당김) ★★★
+        if game_time >= 180 and spore_count + pending_spores < 1:  # 3:30 → 3:00으로 앞당김
             if b.can_afford(UnitTypeId.SPORECRAWLER) and b.townhalls.exists:
                 try:
                     main_base = b.townhalls.first
                     await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4))
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore Crawler #1 (anti-air)")
+                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore Crawler #1 (anti-air, earlier timing)")
                     return
                 except Exception:
                     pass
@@ -327,11 +345,13 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-            if spore_count < 1 and b.can_afford(UnitTypeId.SPORECRAWLER):
+            # ★★★ IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 → 2개) ★★★
+            if spore_count < 2 and b.can_afford(UnitTypeId.SPORECRAWLER):  # 확장당 2개로 증가
                 try:
-                    await b.build(UnitTypeId.SPORECRAWLER, near=th.position)
+                    offset = spore_count * 6  # 스포어 간격 조정
+                    await b.build(UnitTypeId.SPORECRAWLER, near=th.position.towards(b.game_info.map_center, 3 + offset))
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore at expansion")
+                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore #{spore_count + 1} at expansion")
                     return
                 except Exception:
                     pass
