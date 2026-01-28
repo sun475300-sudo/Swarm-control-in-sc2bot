@@ -698,6 +698,22 @@ class BotStepIntegrator:
             )
 
             # 10. Micro Control (마이크로 컨트롤)
+            # ★ NEW: Focus Mode Trigger ★
+            if hasattr(self.bot, "micro") and self.bot.micro:
+                is_focused = False
+                # 1. 인텔 매니저 확인 (공격 받는 중)
+                if hasattr(self.bot, "intel") and self.bot.intel and self.bot.intel.is_under_attack():
+                    is_focused = True
+                
+                # 2. 공격 중인지 확인 (CombatManager 상태)
+                if not is_focused and hasattr(self.bot, "combat") and hasattr(self.bot.combat, "is_engaging"):
+                     if self.bot.combat.is_engaging: # 전투 중
+                         is_focused = True
+
+                # Focus Mode 설정
+                if hasattr(self.bot.micro, "set_focus_mode"):
+                    self.bot.micro.set_focus_mode(is_focused)
+
             await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
             # 11. Rogue Tactics (이병렬 선수 전술 - 맹독충 드랍 등)

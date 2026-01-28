@@ -47,7 +47,16 @@ class PotentialFieldController:
         self.structure_weight = structure_weight
         self.enemy_radius = enemy_radius
         self.structure_radius = structure_radius
+        self.structure_radius = structure_radius
         self.terrain_radius = terrain_radius
+
+        # ★ NEW: Splash Damage Threats ★
+        self.splash_unit_types = {
+            "THOR", "ARCHON", "WIDOWMINE", "WIDOWMINEBURROWED", "RAVAGER", 
+            "INFESTOR", "VIPER", "HIGHTEMPLAR", "LIBERATOR", "LIBERATORAG", "LURKERMP", "LURKER"
+        }
+        self.splash_weight = 2.5 # Strong repulsion from splash units
+        self.splash_radius = 9.0 # Keep safe distance
 
     def get_repulsion_vector(
         self,
@@ -112,6 +121,19 @@ class PotentialFieldController:
             dy = unit.position.y - enemy.position.y
             repulsion_x += (dx / (dist + 0.1)) * strength * self.enemy_weight
             repulsion_y += (dy / (dist + 0.1)) * strength * self.enemy_weight
+
+            # ★ NEW: Anti-Clumping (Extra repulsion from Splash Units) ★
+            # If the enemy is a splash damage dealer, add extra repulsion force
+            try:
+                type_name = getattr(enemy.type_id, "name", "").upper()
+                if type_name in self.splash_unit_types:
+                    # Stronger repulsion to force spreading
+                    splash_strength = strength * self.splash_weight 
+                    repulsion_x += (dx / (dist + 0.1)) * splash_strength
+                    repulsion_y += (dy / (dist + 0.1)) * splash_strength
+            except:
+                pass
+
         return repulsion_x, repulsion_y
 
     def _calculate_structure_repulsion(
