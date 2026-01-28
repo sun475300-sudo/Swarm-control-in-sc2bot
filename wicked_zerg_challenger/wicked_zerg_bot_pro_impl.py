@@ -245,6 +245,33 @@ class WickedZergBotProImpl(BotAI):
         except ImportError:
             pass
 
+        # === 9. Logic Optimizer (실행 최적화) ===
+        try:
+            from logic_optimizer import LogicOptimizer
+            self.logic_optimizer = LogicOptimizer(self)
+            print("[BOT] LogicOptimizer initialized - 47 systems managed")
+        except ImportError as e:
+            print(f"[BOT_WARN] LogicOptimizer not available: {e}")
+            self.logic_optimizer = None
+
+        # === 10. Unit Authority Manager (유닛 제어 권한 관리) ===
+        try:
+            from unit_authority_manager import UnitAuthorityManager
+            self.unit_authority = UnitAuthorityManager(self)
+            print("[BOT] UnitAuthorityManager initialized - Conflict resolution active")
+        except ImportError as e:
+            print(f"[BOT_WARN] UnitAuthorityManager not available: {e}")
+            self.unit_authority = None
+
+        # === 11. Map Memory System (맵 기억 시스템) ===
+        try:
+            from map_memory_system import MapMemorySystem
+            self.map_memory = MapMemorySystem(self)
+            print("[BOT] MapMemorySystem initialized - Enemy structure tracking active")
+        except ImportError as e:
+            print(f"[BOT_WARN] MapMemorySystem not available: {e}")
+            self.map_memory = None
+
         # ★ NEW: RL Tech Adapter (적 테크 기반 강화학습 적응) ★
         try:
             from rl_tech_adapter import RLTechAdapter
@@ -536,6 +563,14 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             print(f"[BOT_WARN] ProductionController not available: {e}")
             self.production_controller = None
+
+        # === Map Memory System 시작 ===
+        if hasattr(self, "map_memory") and self.map_memory:
+            try:
+                await self.map_memory.on_start()
+                print("[BOT] MapMemorySystem started - Enemy tracking active")
+            except Exception as e:
+                print(f"[BOT_WARN] MapMemorySystem on_start failed: {e}")
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)

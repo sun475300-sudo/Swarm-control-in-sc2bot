@@ -240,12 +240,24 @@ class BotStepIntegrator:
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
                 self.bot.performance_optimizer.start_frame()
 
+            # 0.005 ★★★ Logic Optimizer (시스템 활성화 관리) ★★★
+            if hasattr(self.bot, "logic_optimizer") and self.bot.logic_optimizer:
+                await self.bot.logic_optimizer.on_step(iteration)
+
+            # 0.006 ★★★ Unit Authority Manager (유닛 제어 권한 관리) ★★★
+            if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
+                await self.bot.unit_authority.on_step(iteration)
+
+            # 0.007 ★★★ Map Memory System (맵 기억 - 적 건물 추적) ★★★
+            if hasattr(self.bot, "map_memory") and self.bot.map_memory:
+                await self.bot.map_memory.on_step(iteration)
+
             # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 await self._update_blackboard_state(iteration)
 
             # 0.02 ★★★ Spatial Optimizer & Data Cache (최우선 최적화) ★★★
-            # 다른 모든 시스템보다 먼저 실행하여 캐시 준비
+            # 다른 모든 시스템보다 먼저 실행하여 캐시 준비 (항상 실행)
             if hasattr(self.bot, "spatial_optimizer") and self.bot.spatial_optimizer:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
@@ -989,14 +1001,21 @@ class BotStepIntegrator:
         self, manager, iteration: int, label: str, method_name: str = "on_step"
     ) -> None:
         """
-        안전한 매니저 실행 (error_handler 통합)
+        안전한 매니저 실행 (error_handler + Logic Optimizer 통합)
 
-        error_handler가 DEBUG_MODE에 따라 자동으로 처리:
-        - DEBUG_MODE=True: 즉시 크래시 (개발)
-        - DEBUG_MODE=False: 로그 후 계속 (프로덕션)
+        1. Logic Optimizer로 실행 여부 결정
+        2. error_handler가 DEBUG_MODE에 따라 자동으로 처리:
+           - DEBUG_MODE=True: 즉시 크래시 (개발)
+           - DEBUG_MODE=False: 로그 후 계속 (프로덕션)
         """
         if not manager:
             return
+
+        # ★★★ Logic Optimizer: 실행 여부 결정 ★★★
+        if hasattr(self.bot, "logic_optimizer") and self.bot.logic_optimizer:
+            if not self.bot.logic_optimizer.should_execute_system(label, iteration):
+                return  # 이번 프레임은 스킵
+
         method = getattr(manager, method_name, None)
         if not method:
             return
