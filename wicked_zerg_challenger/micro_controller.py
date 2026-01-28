@@ -63,7 +63,13 @@ class BoidsController:
 
         # Update timing - increased interval for performance
         self.last_update = 0
-        self.update_interval = 12  # Reduced frequency (was 8) for better performance
+        # Update timing - increased interval for performance
+        self.last_update = 0
+        self.default_interval = 12
+        self.focus_interval = 3  # Combat focus mode (4x faster)
+        self.update_interval = self.default_interval
+        self.focus_mode_active = False
+        self.focus_mode_end_frame = 0
 
         # Movement configuration
         self.move_scale = 2.5
@@ -110,6 +116,24 @@ class BoidsController:
                 UnitTypeId.SWARMHOSTMP,
             }
 
+
+    def set_focus_mode(self, active: bool, duration: int = 44) -> None:
+        """
+        Set High-Performance Focus Mode for combat.
+        
+        Args:
+            active: Enable/Disable focus mode
+            duration: Duration in frames (default ~2s)
+        """
+        if active:
+            self.focus_mode_active = True
+            self.update_interval = self.focus_interval
+            if hasattr(self.bot, "iteration"):
+                 self.focus_mode_end_frame = self.bot.iteration + duration
+        else:
+            self.focus_mode_active = False
+            self.update_interval = self.default_interval
+
     async def on_step(self, iteration: int) -> None:
         """
         Main update loop - called each game frame.
@@ -117,8 +141,12 @@ class BoidsController:
         Args:
             iteration: Current game iteration/frame
         """
-        # Global update rate limiter (run every 2 frames instead of 12)
-        if iteration % 2 != 0:
+        # Auto-disable focus mode
+        if self.focus_mode_active and iteration > self.focus_mode_end_frame:
+            self.set_focus_mode(False)
+
+        # Global update rate limiter (use dynamic interval)
+        if iteration - self.last_update < self.update_interval:
             return
             
         self.last_update = iteration

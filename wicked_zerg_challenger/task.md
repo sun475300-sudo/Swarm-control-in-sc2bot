@@ -26,3 +26,8 @@
     - [x] Refactor managers to read/write to Blackboard
 - [x] Fix Blackboard attribute errors <!-- id: 4 -->
 - [x] Fix Units API compatibility issues <!-- id: 5 -->
+- [ ] Roadmap Phase 2: Micro Refinement <!-- id: 29 -->
+    - [x] Implement Micro Focus Mode in `micro_controller.py` <!-- id: 30 -->
+    - [x] Optimize Potential Fields (Anti-Clumping for Splash) <!-- id: 31 -->
+    - [x] Trigger Focus Mode on Attack Limit in `bot_step_integration.py` <!-- id: 32 -->
+    - [x] Field Test with new Micro Logic (Locally Verified) <!-- id: 33 -->

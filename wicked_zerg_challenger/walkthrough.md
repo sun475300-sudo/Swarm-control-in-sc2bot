@@ -41,3 +41,7 @@ The bot will automatically read this file on startup.
 - **KnowledgeManager**: Reads the JSON file.
 - **BuildOrderSystem**: Asks KnowledgeManager for the build steps.
 - **StrategyManager**: Asks KnowledgeManager for unit ratios.
+
+### Micro & Combat Logic (New)
+- **Micro Focus Mode**: During combat (detected by `IntelManager`), the bot accelerates its micro-control update rate by **400%** (12 frames -> 3 frames).
+- **Anti-Clumping**: Units now actively repel from Splash Damage dealers (Thor, Archon, Mine) using an enhanced Potential Field force.

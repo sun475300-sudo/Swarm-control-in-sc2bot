@@ -1345,3 +1345,17 @@
 09:54:33 - UpgradeManager - INFO - [250s] ⏳ Lair 자원 대기: 40m/544g (필요: 150m/100g)
 09:54:34 - DefenseCoordinator - INFO - [DEFENSE] [255s] Building Spine Crawler #3
 09:54:39 - UpgradeManager - INFO - [291s] ★ ZERGMELEEWEAPONSLEVEL1 시작! ★
+11:25:13 - WickedZergBot - INFO - Bot started. Initializing managers...
+11:25:13 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+11:25:13 - KnowledgeManager - INFO - Loaded 8 build orders
+11:25:13 - StrategyManager - INFO - [STRATEGY] Loaded unit ratios for 4 races from Knowledge Base
+11:25:13 - KnowledgeManager - INFO - Loaded knowledge version: 1.0
+11:25:13 - KnowledgeManager - INFO - Loaded 8 build orders
+11:25:21 - StrategyManager - INFO - [60s] EARLY HARASSMENT: Signal sent to CombatManager
+11:25:25 - StrategyManager - INFO - [90s] EARLY HARASSMENT: Signal sent to CombatManager
+11:25:28 - StrategyManager - INFO - [120s] EARLY HARASSMENT: Signal sent to CombatManager
+11:25:29 - UpgradeManager - INFO - [125s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★
+11:25:32 - StrategyManager - INFO - [150s] EARLY HARASSMENT: Signal sent to CombatManager
+11:25:37 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
+11:25:37 - DefenseCoordinator - INFO - [DEFENSE] [180s] ⏳ Spore 자원 대기: 15m (필요: 75m)
+11:25:37 - DefenseCoordinator - INFO - [DEFENSE] [184s] ⏳ Spore 자원 대기: 75m (필요: 75m)
