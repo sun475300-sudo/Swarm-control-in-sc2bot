@@ -26,10 +26,9 @@ from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 # Lock 파일
 LOCK_FILE = Path("game_running.lock")
 
-# 맵/난이도/종족 리스트
+# 맵/난이도/종족 리스트 (사용 가능한 맵만)
 MAPS = [
     "AbyssalReefLE",
-    "(2)CatalystLE",
     "AscensiontoAiurLE",
     "BelShirVestigeLE"
 ]

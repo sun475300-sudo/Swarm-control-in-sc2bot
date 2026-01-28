@@ -45,7 +45,10 @@
     - [x] Rogue Tactics (Nydus / Drops / 12 Pool) <!-- id: 42 -->
     - [x] Overlord Safety Mode (Implemented `overlord_safety_manager.py`) <!-- id: 43 -->
     - [x] Nydus Network Logic <!-- id: 44 -->
+    - [x] Nydus Network Logic <!-- id: 44 -->
     - [x] Upgrade Coordination System <!-- id: 60 -->
+    - [ ] **Worker Rush Defense**: Attack logic for Drones against early threats (instead of just fleeing) <!-- id: 61 -->
+    - [ ] **Strict Upgrade Priority**: Enforce Metabolic Boost as absolute priority over other gas spending <!-- id: 62 -->
 - [ ] Roadmap Phase 5: Superintelligence <!-- id: 45 -->
     - [x] Real-time Opponent Modeling (`rl_tech_adapter.py`) <!-- id: 46 -->
     - [x] Runtime Self-Healing (`runtime_self_healing.py`) <!-- id: 47 -->

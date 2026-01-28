@@ -276,6 +276,22 @@ class BotStepIntegrator:
             if hasattr(self.bot, "space_control") and self.bot.space_control:
                 await self.bot.space_control.on_step(iteration)
 
+            # 0.014 Comprehensive Unit Abilities (모든 유닛 스킬)
+            if hasattr(self.bot, "unit_abilities") and self.bot.unit_abilities:
+                await self.bot.unit_abilities.on_step(iteration)
+
+            # 0.015 Roach Tunneling Tactics (바퀴 땅굴발톱 전술)
+            if hasattr(self.bot, "roach_tunneling") and self.bot.roach_tunneling:
+                await self.bot.roach_tunneling.on_step(iteration)
+
+            # 0.016 Creep Expansion System (전 맵 점막 확장)
+            if hasattr(self.bot, "creep_expansion") and self.bot.creep_expansion:
+                await self.bot.creep_expansion.on_step(iteration)
+
+            # 0.017 Hive Tech Maximizer (군락 기술 극대화)
+            if hasattr(self.bot, "hive_tech") and self.bot.hive_tech:
+                await self.bot.hive_tech.on_step(iteration)
+
             # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 await self._update_blackboard_state(iteration)

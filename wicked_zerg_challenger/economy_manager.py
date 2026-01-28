@@ -1070,10 +1070,10 @@ class EconomyManager:
         minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0
 
         # ★★★ CRITICAL: 4베이스 미만일 때 최우선 복구 (자원 균형 유지 필수) ★★★
-        if base_count < 4 and game_time >= 180 and minerals >= 300:
+        if base_count < 4 and game_time >= 120 and minerals >= 250:
             should_expand = True
-            expand_reason = f"CRITICAL RECOVERY: Need minimum 4 bases for resource balance (current: {base_count})"
-            print(f"[ECONOMY] [{int(game_time)}s] {expand_reason}")
+            expand_reason = f"CRITICAL: Maintain 4+ bases! (current: {base_count}, time: {int(game_time)}s)"
+            print(f"[ECONOMY_CRITICAL] {expand_reason}")
             # 바로 확장 실행 로직으로 이동 (아래 타이밍 조건 스킵)
 
         # 1베이스 → 2베이스 (내츄럴): ★★★ 빠르지만 안정적 (FAST & STABLE) ★★★
