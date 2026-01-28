@@ -272,6 +272,15 @@ class WickedZergBotProImpl(BotAI):
             print(f"[BOT_WARN] MapMemorySystem not available: {e}")
             self.map_memory = None
 
+        # === 12. Complete Destruction Trainer (완전 파괴 학습) ===
+        try:
+            from complete_destruction_trainer import CompleteDestructionTrainer
+            self.complete_destruction = CompleteDestructionTrainer(self)
+            print("[BOT] CompleteDestructionTrainer initialized - All buildings targeted")
+        except ImportError as e:
+            print(f"[BOT_WARN] CompleteDestructionTrainer not available: {e}")
+            self.complete_destruction = None
+
         # ★ NEW: RL Tech Adapter (적 테크 기반 강화학습 적응) ★
         try:
             from rl_tech_adapter import RLTechAdapter

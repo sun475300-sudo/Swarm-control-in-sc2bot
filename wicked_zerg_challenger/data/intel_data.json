@@ -1,8 +1,6 @@
 {
   "enemy_race_name": "Protoss",
-  "enemy_unit_counts": {
-    "OBSERVER": 1
-  },
+  "enemy_unit_counts": {},
   "enemy_tech_buildings": [],
   "scouted_locations": [
     [
@@ -210,10 +208,6 @@
       152.5
     ],
     [
-      93.5,
-      156.5
-    ],
-    [
       28.5,
       153.5
     ],
@@ -240,6 +234,10 @@
     [
       42.5,
       93.5
+    ],
+    [
+      165.5,
+      23.5
     ],
     [
       38.5,
@@ -314,8 +312,8 @@
       111.5
     ],
     [
-      165.5,
-      23.5
+      93.5,
+      156.5
     ]
   ],
   "enemy_build_pattern": "unknown"

@@ -252,6 +252,10 @@ class BotStepIntegrator:
             if hasattr(self.bot, "map_memory") and self.bot.map_memory:
                 await self.bot.map_memory.on_step(iteration)
 
+            # 0.008 ★★★ Complete Destruction Trainer (모든 건물 파괴) ★★★
+            if hasattr(self.bot, "complete_destruction") and self.bot.complete_destruction:
+                await self.bot.complete_destruction.on_step(iteration)
+
             # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 await self._update_blackboard_state(iteration)
