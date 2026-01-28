@@ -281,6 +281,51 @@ class WickedZergBotProImpl(BotAI):
             print(f"[BOT_WARN] CompleteDestructionTrainer not available: {e}")
             self.complete_destruction = None
 
+        # === 13. Roach Tactics Trainer (바퀴 잠복 회복 전술) ===
+        try:
+            from roach_tactics_trainer import RoachTacticsTrainer
+            self.roach_tactics = RoachTacticsTrainer(self)
+            print("[BOT] RoachTacticsTrainer initialized - Burrow healing tactics active")
+        except ImportError as e:
+            print(f"[BOT_WARN] RoachTacticsTrainer not available: {e}")
+            self.roach_tactics = None
+
+        # === 14. Zergling Harassment Trainer (저글링 괴롭힘 전술) ===
+        try:
+            from zergling_harassment_trainer import ZerglingHarassmentTrainer
+            self.zergling_harass = ZerglingHarassmentTrainer(self)
+            print("[BOT] ZerglingHarassmentTrainer initialized - Mobility harassment active")
+        except ImportError as e:
+            print(f"[BOT_WARN] ZerglingHarassmentTrainer not available: {e}")
+            self.zergling_harass = None
+
+        # === 15. Overseer Scout Trainer (감시군주 정찰) ===
+        try:
+            from overseer_scout_trainer import OverseerScoutTrainer
+            self.overseer_scout = OverseerScoutTrainer(self)
+            print("[BOT] OverseerScoutTrainer initialized - Overseer scouting active")
+        except ImportError as e:
+            print(f"[BOT_WARN] OverseerScoutTrainer not available: {e}")
+            self.overseer_scout = None
+
+        # === 16. Air Threat Response Trainer (공중 위협 대응) ===
+        try:
+            from air_threat_response_trainer import AirThreatResponseTrainer
+            self.air_threat_response = AirThreatResponseTrainer(self)
+            print("[BOT] AirThreatResponseTrainer initialized - Air threat analysis active")
+        except ImportError as e:
+            print(f"[BOT_WARN] AirThreatResponseTrainer not available: {e}")
+            self.air_threat_response = None
+
+        # === 17. Space Control Trainer (공간 확보) ===
+        try:
+            from space_control_trainer import SpaceControlTrainer
+            self.space_control = SpaceControlTrainer(self)
+            print("[BOT] SpaceControlTrainer initialized - Destructible clearing active")
+        except ImportError as e:
+            print(f"[BOT_WARN] SpaceControlTrainer not available: {e}")
+            self.space_control = None
+
         # ★ NEW: RL Tech Adapter (적 테크 기반 강화학습 적응) ★
         try:
             from rl_tech_adapter import RLTechAdapter
@@ -479,6 +524,15 @@ class WickedZergBotProImpl(BotAI):
             self.aggressive_tech_builder = AggressiveTechBuilder(self)
         except ImportError:
             pass
+
+        # ★ NEW: Overlord Safety Manager ★
+        try:
+            from overlord_safety_manager import OverlordSafetyManager
+            self.overlord_safety = OverlordSafetyManager(self)
+            print("[BOT] ★ OverlordSafetyManager initialized (Safe Positioning)")
+        except ImportError as e:
+            print(f"[BOT_WARN] OverlordSafetyManager not available: {e}")
+            self.overlord_safety = None
 
         # === 10. Training Components (Reward System, RL Agent, Adaptive LR) ===
         if self.train_mode:

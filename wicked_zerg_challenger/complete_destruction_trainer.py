@@ -92,7 +92,12 @@ class CompleteDestructionTrainer:
 
         # 설정
         self.MIN_ARMY_FOR_DESTRUCTION = 8  # 건물 파괴에 필요한 최소 군대
-        self.MAX_UNITS_PER_BUILDING = 5  # 건물당 최대 할당 유닛
+        self.MAX_UNITS_PER_BUILDING = 5  # 건물당 최대 할당 유닛 (전투 중)
+        self.MIN_UNITS_PER_BUILDING = 3  # 건물당 최소 할당 유닛 (전투 없을 때)
+
+        # 멀티테스킹 설정
+        self.MULTITASK_ENABLED = True  # 여러 건물 동시 공격
+        self.MAX_SIMULTANEOUS_TARGETS = 8  # 동시 공격 가능한 최대 건물 수
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -203,21 +208,72 @@ class CompleteDestructionTrainer:
             # 최종 우선순위
             building.priority = int(base_priority * base_weight * (0.7 + 0.3 * distance_weight))
 
+    def _is_combat_happening(self) -> bool:
+        """
+        현재 전투가 발생 중인지 확인
+
+        Returns:
+            True if combat is happening, False otherwise
+        """
+        try:
+            # 1. Intel Manager 확인
+            if hasattr(self.bot, "intel") and self.bot.intel:
+                if hasattr(self.bot.intel, "is_under_attack"):
+                    if self.bot.intel.is_under_attack():
+                        return True
+
+            # 2. 아군 유닛 근처에 적 유닛이 있는지 확인
+            if self.bot.enemy_units:
+                army_units = self.bot.units.filter(
+                    lambda u: u.type_id in {
+                        UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
+                        UnitTypeId.MUTALISK, UnitTypeId.RAVAGER, UnitTypeId.ULTRALISK,
+                        UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD
+                    }
+                )
+
+                if army_units:
+                    for unit in army_units:
+                        nearby_enemies = self.bot.enemy_units.closer_than(12, unit.position)
+                        if nearby_enemies.amount > 0:
+                            return True
+
+            # 3. 본진 근처에 적이 있는지 확인
+            if self.bot.townhalls.exists and self.bot.enemy_units:
+                main_base = self.bot.townhalls.first
+                nearby_threats = self.bot.enemy_units.closer_than(15, main_base)
+                if nearby_threats.amount > 0:
+                    return True
+
+            return False
+        except Exception as e:
+            # 에러 시 안전하게 False 반환
+            return False
+
     async def _assign_attack_units(self):
-        """공격 유닛 할당"""
+        """
+        공격 유닛 할당 (전투 상태에 따라 전체 병력 활용)
+
+        전투 없을 때: 모든 병력을 여러 건물에 분산하여 동시 공격 (멀티테스킹)
+        전투 중일 때: 제한된 병력만 건물 파괴에 할당
+        """
         if not self.target_buildings:
             return
 
-        # 충분한 군대가 있는지 확인
+        # 공격 가능한 군대 확인
         army_units = self.bot.units.filter(
             lambda u: u.type_id in {
                 UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-                UnitTypeId.MUTALISK, UnitTypeId.RAVAGER, UnitTypeId.ULTRALISK
+                UnitTypeId.MUTALISK, UnitTypeId.RAVAGER, UnitTypeId.ULTRALISK,
+                UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD, UnitTypeId.SWARMHOSTMP
             }
         )
 
         if army_units.amount < self.MIN_ARMY_FOR_DESTRUCTION:
             return
+
+        # 전투 상태 확인
+        is_combat = self._is_combat_happening()
 
         # 우선순위 순으로 정렬
         sorted_buildings = sorted(
@@ -229,32 +285,119 @@ class CompleteDestructionTrainer:
         if not sorted_buildings:
             return
 
-        # 최고 우선순위 건물 선택
+        # === 전투가 없을 때: 모든 병력을 여러 건물에 분산 공격 (멀티테스킹) ===
+        if not is_combat and self.MULTITASK_ENABLED:
+            await self._multitask_destruction(army_units, sorted_buildings)
+        else:
+            # === 전투 중: 제한된 병력만 건물 파괴 ===
+            await self._limited_destruction(army_units, sorted_buildings)
+
+    async def _multitask_destruction(self, army_units, sorted_buildings):
+        """
+        멀티테스킹: 모든 병력을 여러 건물에 분산하여 동시 공격
+
+        Args:
+            army_units: 전체 군대 유닛
+            sorted_buildings: 우선순위 순으로 정렬된 건물 목록
+        """
+        total_army = army_units.amount
+
+        # 동시 공격할 건물 수 결정
+        num_targets = min(len(sorted_buildings), self.MAX_SIMULTANEOUS_TARGETS)
+
+        if num_targets == 0:
+            return
+
+        # 병력을 건물 수만큼 분할
+        units_per_building = max(self.MIN_UNITS_PER_BUILDING, total_army // num_targets)
+
+        available_units = list(army_units)
+        assigned_count = 0
+
+        for i in range(num_targets):
+            if i >= len(sorted_buildings) or not available_units:
+                break
+
+            target_building = sorted_buildings[i]
+            target_pos = target_building.position
+
+            # 이 건물에 할당할 유닛 수
+            units_for_this_target = min(units_per_building, len(available_units))
+
+            if units_for_this_target == 0:
+                break
+
+            # 유닛 할당
+            units_to_assign = available_units[:units_for_this_target]
+            available_units = available_units[units_for_this_target:]
+
+            for unit in units_to_assign:
+                try:
+                    # Unit Authority Manager 통합
+                    if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
+                        from unit_authority_manager import Authority
+                        granted = self.bot.unit_authority.request_authority(
+                            {unit.tag},
+                            Authority.COMBAT,
+                            "CompleteDestruction",
+                            self.bot.state.game_loop
+                        )
+
+                        if unit.tag in granted:
+                            self.bot.do(unit.attack(target_pos))
+                            assigned_count += 1
+                    else:
+                        # 폴백: 직접 명령
+                        self.bot.do(unit.attack(target_pos))
+                        assigned_count += 1
+                except Exception:
+                    continue
+
+            target_building.assigned_units = units_for_this_target
+
+        # 로그 (30초마다)
+        if assigned_count > 0 and int(self.bot.time) % 30 == 0:
+            self.logger.info(
+                f"[MULTITASK] {assigned_count} units attacking {num_targets} buildings simultaneously"
+            )
+
+    async def _limited_destruction(self, army_units, sorted_buildings):
+        """
+        제한된 파괴: 전투 중 최소 병력만 건물 파괴에 할당
+
+        Args:
+            army_units: 전체 군대 유닛
+            sorted_buildings: 우선순위 순으로 정렬된 건물 목록
+        """
+        # 최고 우선순위 건물만 공격
         target = sorted_buildings[0]
 
         # 근처 유닛 찾기
         nearby_units = army_units.closer_than(50, target.position)
 
         if nearby_units:
-            # 최대 5유닛 할당
+            # 최대 5유닛만 할당 (전투 중이므로 병력 보존)
             units_to_assign = nearby_units.take(self.MAX_UNITS_PER_BUILDING)
 
             for unit in units_to_assign:
-                # Unit Authority Manager 통합
-                if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                    from unit_authority_manager import Authority
-                    granted = self.bot.unit_authority.request_authority(
-                        {unit.tag},
-                        Authority.COMBAT,
-                        "CompleteDestruction",
-                        self.bot.state.game_loop
-                    )
+                try:
+                    # Unit Authority Manager 통합
+                    if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
+                        from unit_authority_manager import Authority
+                        granted = self.bot.unit_authority.request_authority(
+                            {unit.tag},
+                            Authority.COMBAT,
+                            "CompleteDestruction",
+                            self.bot.state.game_loop
+                        )
 
-                    if unit.tag in granted:
+                        if unit.tag in granted:
+                            self.bot.do(unit.attack(target.position))
+                    else:
+                        # 폴백: 직접 명령
                         self.bot.do(unit.attack(target.position))
-                else:
-                    # 폴백: 직접 명령
-                    self.bot.do(unit.attack(target.position))
+                except Exception:
+                    continue
 
             target.assigned_units = units_to_assign.amount
 
