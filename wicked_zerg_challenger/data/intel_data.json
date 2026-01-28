@@ -1,12 +1,15 @@
 {
-  "enemy_race_name": "Zerg",
+  "enemy_race_name": "Protoss",
   "enemy_unit_counts": {
-    "CHANGELINGZERGLINGWINGS": 2,
-    "EGG": 1,
-    "OVERLORD": 1,
-    "OVERSEER": 1
+    "STALKER": 4,
+    "IMMORTAL": 2,
+    "TEMPEST": 1,
+    "OBSERVER": 1
   },
-  "enemy_tech_buildings": [],
+  "enemy_tech_buildings": [
+    "ROBOTICSFACILITY",
+    "FLEETBEACON"
+  ],
   "scouted_locations": [
     [
       71.5,
@@ -333,5 +336,5 @@
       156.5
     ]
   ],
-  "enemy_build_pattern": "unknown"
+  "enemy_build_pattern": "protoss_robo"
 }

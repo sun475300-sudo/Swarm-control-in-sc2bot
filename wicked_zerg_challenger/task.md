@@ -47,11 +47,11 @@
     - [x] Nydus Network Logic <!-- id: 44 -->
     - [x] Nydus Network Logic <!-- id: 44 -->
     - [x] Upgrade Coordination System <!-- id: 60 -->
-    - [ ] **Worker Rush Defense**: Attack logic for Drones against early threats (instead of just fleeing) <!-- id: 61 -->
-    - [ ] **Strict Upgrade Priority**: Enforce Metabolic Boost as absolute priority over other gas spending <!-- id: 62 -->
-    - [ ] **Combat Micro Integration**: Ensure Main Army uses MicroController instead of simple A-Move <!-- id: 63 -->
-    - [ ] **Lurker Stability Fix**: Fix Oscillating Burrow/Unburrow bug (Range 8 vs 9 discrepancy) <!-- id: 64 -->
-    - [ ] **Advanced Kiting SDK**: Implement true Stutter-Stepping (Attack-Move-Retreat) for Hydra/Roach <!-- id: 65 -->
+    - [x] **Worker Rush Defense**: Attack logic for Drones against early threats (instead of just fleeing) <!-- id: 61 -->
+    - [x] **Strict Upgrade Priority**: Enforce Metabolic Boost as absolute priority over other gas spending <!-- id: 62 -->
+    - [x] **Combat Micro Integration**: Ensure Main Army uses MicroController instead of simple A-Move <!-- id: 63 -->
+    - [x] **Lurker Stability Fix**: Fix Oscillating Burrow/Unburrow bug (Range 8 vs 9 discrepancy) <!-- id: 64 -->
+    - [x] **Advanced Kiting SDK**: Implement true Stutter-Stepping (Attack-Move-Retreat) for Hydra/Roach <!-- id: 65 -->
 - [ ] ★★★ PHASE 6: Critical Bug Fixes & Enhancements (2026-01-28) ★★★ <!-- id: 70 -->
     - [x] **Duplicate Building Fix**: Removed duplicate Spawning Pool construction in production_resilience.py <!-- id: 71 -->
     - [x] **TechCoordinator Enforcement**: All building construction now uses TechCoordinator (no direct build() calls) <!-- id: 72 -->
