@@ -31,8 +31,8 @@ class EvolutionUpgradeManager:
     def __init__(self, bot):
         self.bot = bot
         self.last_update = 0
-        self.update_interval = 11  # ★ 더 자주 체크 (22→11, 0.5초마다) ★
-        self.gas_reserve_threshold = 150  # ★ 가스 임계값 낮춤 (200→150) ★
+        self.update_interval = 7  # ★ OPTIMIZED: 11 → 7 (더 자주 체크) ★
+        self.gas_reserve_threshold = 100  # ★ OPTIMIZED: 150 → 100 (가스 자유롭게 사용) ★
 
         # 0순위 업그레이드 상태 추적
         self._zergling_speed_started = False
@@ -41,7 +41,7 @@ class EvolutionUpgradeManager:
 
         # 2026-01-26 FIX: Evolution Chamber 건설 쿨다운
         self._last_evo_chamber_attempt = 0.0
-        self._evo_chamber_cooldown = 30.0  # 30초 쿨다운
+        self._evo_chamber_cooldown = 20.0  # ★ OPTIMIZED: 30 → 20초 ★
 
     async def on_step(self, iteration: int) -> None:
         if not UnitTypeId or not UpgradeId:
@@ -128,7 +128,8 @@ class EvolutionUpgradeManager:
 
                 try:
                     self.bot.do(evo.research(upgrade_id))
-                    self.logger.info(f"Researching {upgrade_name}")
+                    game_time = getattr(self.bot, "time", 0)
+                    self.logger.info(f"[{int(game_time)}s] ★ {upgrade_name} 시작! ★")
                 except Exception as e:
                     self.logger.warning(f"Failed to research upgrade {upgrade_id}: {e}")
                     continue
@@ -849,12 +850,16 @@ class EvolutionUpgradeManager:
 
     async def _upgrade_to_lair(self, iteration: int) -> None:
         """
-        해처리 → 레어 변이
+        해처리 → 레어 변이 (OPTIMIZED: 3:30 달성을 위한 공격적 업그레이드)
 
         조건:
         - 스포닝 풀이 완료되어야 함
         - 레어/군락이 없어야 함
         - 변이 중이 아니어야 함
+
+        최적화:
+        - Hatchery idle 체크 제거 (larva 생성 중이어도 진행)
+        - 자원 여유분 확보 (50 minerals 추가)
         """
         # 이미 레어나 군락이 있으면 스킵
         lairs = self.bot.structures(UnitTypeId.LAIR)
@@ -870,15 +875,20 @@ class EvolutionUpgradeManager:
         # 스포닝 풀 필요
         spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
         if not spawning_pools.exists:
+            if iteration % 100 == 0:
+                self.logger.warning(f"[{int(self.bot.time)}s] ⚠️ Lair 대기 중: Spawning Pool 미완료")
             return
 
-        # 해처리가 있어야 함
-        hatcheries = self.bot.structures(UnitTypeId.HATCHERY).ready.idle
+        # ★ 최적화: idle 체크 제거 - 모든 ready Hatchery 허용 ★
+        hatcheries = self.bot.structures(UnitTypeId.HATCHERY).ready
         if not hatcheries.exists:
             return
 
-        # 자원 확인 (미네랄 150 + 가스 100)
-        if self.bot.minerals < 150 or self.bot.vespene < 100:
+        # ★ 최적화: 자원 여유분 확보 (200 minerals + 100 gas) ★
+        # Drone 생산과 겹치지 않도록 버퍼 추가
+        if self.bot.minerals < 200 or self.bot.vespene < 100:
+            if iteration % 100 == 0:
+                self.logger.info(f"[{int(self.bot.time)}s] ⏳ Lair 자원 대기: {self.bot.minerals}m/{self.bot.vespene}g (필요: 150m/100g)")
             return
 
         # 변이 시작 (가장 안전한 해처리 = 본진)
@@ -891,7 +901,7 @@ class EvolutionUpgradeManager:
 
             self.bot.do(main_hatch(UnitTypeId.LAIR))
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(f"[{int(game_time)}s] ★★★ 레어 (Lair) 변이 시작! ★★★")
+            self.logger.info(f"[{int(game_time)}s] ★★★ 레어 (Lair) 변이 시작! (목표: 3:30) ★★★")
         except Exception as e:
             if iteration % 200 == 0:
                 self.logger.warning(f"Lair upgrade error: {e}")

@@ -81,7 +81,7 @@ class ProductionController:
 
         # 생산 요청 처리 (우선순위 순)
         processed_count = 0
-        max_per_frame = 3  # 프레임당 최대 생산 개수
+        max_per_frame = 5  # ★ OPTIMIZED: 3 → 5 (더 빠른 유닛 생산) ★
 
         while processed_count < max_per_frame:
             # 다음 요청 가져오기

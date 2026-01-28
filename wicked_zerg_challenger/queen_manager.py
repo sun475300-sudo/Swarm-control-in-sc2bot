@@ -52,20 +52,20 @@ class QueenManager:
         """
         self.bot = bot
 
-        # Injection settings
+        # Injection settings - ★ OPTIMIZED ★
         self.inject_energy_threshold = 25
-        self.inject_cooldown = 29.0  # Inject ability cooldown
+        self.inject_cooldown = 25.0  # ★ OPTIMIZED: 29 → 25 (더 빠른 inject 체크) ★
         self.max_inject_distance = 4.0
         self.max_queen_travel_distance = 10.0
 
-        # Creep settings - ★ 개선: 초반 점막 확장 강화 ★
-        self.creep_energy_threshold = 25
-        self.creep_spread_cooldown = 6.0  # ★ 수정: 12초 → 6초 (빠른 점막 확장)
-        self.inject_queen_creep_threshold = 40  # ★ 수정: 50 → 40 (점막 우선순위 상승)
+        # Creep settings - ★ OPTIMIZED: 공격적 점막 확장 ★
+        self.creep_energy_threshold = 20  # ★ OPTIMIZED: 25 → 20 ★
+        self.creep_spread_cooldown = 4.0  # ★ OPTIMIZED: 6 → 4초 (더 빠른 확장) ★
+        self.inject_queen_creep_threshold = 35  # ★ OPTIMIZED: 40 → 35 ★
 
-        # Queen production - ★ 기지당 2마리 배치 ★
-        self.max_queens_per_base = 2  # 개선: 1 → 2 (기지당 2마리)
-        self.creep_queen_bonus = 3    # ★ 개선: 2 → 3 (점막 전용 퀸 추가) ★
+        # Queen production - ★ OPTIMIZED: 더 많은 퀸 ★
+        self.max_queens_per_base = 2  # 기지당 2마리
+        self.creep_queen_bonus = 4    # ★ OPTIMIZED: 3 → 4 (점막 전용 퀸 4마리) ★
 
         # 점막 확장 추적
         self.creep_tumor_count = 0
