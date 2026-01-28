@@ -296,8 +296,41 @@ def main():
             print(f"? [STEP 3] GAME #{game_count} - Random Selection")
             print("=" * 70)
 
-            map_name = random.choice(available_maps)
-            opponent_race = random.choice(opponent_races)
+            # IMPROVED: Random Map Selection with Retry
+            # Try up to 3 times to find a valid map
+            map_name = "AbyssalReefLE" # Default fallback
+            
+            # Expanded map pool (including newer and standard maps)
+            extended_maps = [
+                "AbyssalReefLE", "BelShirVestigeLE", "CactusValleyLE", "ProximaStationLE", 
+                "NewRepugnancyLE", "AcropolisLE", "DiscoBloodbathLE", "EphemeronLE", 
+                "TritonLE", "WintersGateLE", "WorldofSleepersLE", "ThunderbirdLE",
+                "AutomatonLE", "PortAleksanderLE", "CyberForestLE", "KairosJunctionLE",
+                "KingsCoveLE", "YearZeroLE"
+            ]
+            
+            # Combine ensuring uniqueness
+            all_maps = list(set(available_maps + extended_maps))
+            
+            # Try to pick a map that exists
+            for _ in range(3):
+                candidate = random.choice(all_maps)
+                try:
+                    if maps.get(candidate) is not None:
+                        map_name = candidate
+                        break
+                except Exception:
+                    continue
+
+            # IMPROVED: Bag of Races (Ensure variety)
+            # If bag is empty, refill it
+            if not hasattr(main, "race_bag") or not main.race_bag:
+                main.race_bag = [Race.Terran, Race.Protoss, Race.Zerg]
+                random.shuffle(main.race_bag)
+                print(f"[RACE_LOGIC] Refilled race bag: {[r.name for r in main.race_bag]}")
+            
+            # Pick from bag
+            opponent_race = main.race_bag.pop()
 
             # IMPROVED: Use adaptive difficulty from session manager
             if session_manager:

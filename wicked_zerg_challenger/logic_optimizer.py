@@ -130,9 +130,9 @@ class LogicOptimizer:
                              interval=22,
                              condition=lambda: self._can_attack())
 
-        self._register_system("CompleteDestruction", SystemPriority.HIGH,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22,  # 1초마다
+        self._register_system("CompleteDestruction", SystemPriority.CRITICAL,
+                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+                             interval=11,  # 0.5초마다 (더 빠른 건물 파괴)
                              condition=lambda: self._has_army())
 
         # === LOW: 2초마다 (점막/업그레이드) ===
@@ -202,6 +202,30 @@ class LogicOptimizer:
         self._register_system("SelfHealing", SystemPriority.HIGH,
                              {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
                              interval=110)  # 5초
+
+        # === 특수: 바퀴 잠복 회복 전술 ===
+        self._register_system("RoachTactics", SystemPriority.CRITICAL,
+                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+                             interval=1,  # 매 프레임 (빠른 반응 필요)
+                             condition=lambda: self._has_roaches())
+
+        # === 특수: 저글링 괴롭힘 전술 (초반) ===
+        self._register_system("ZerglingHarass", SystemPriority.HIGH,
+                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID},
+                             interval=11,  # 0.5초
+                             condition=lambda: self._has_zerglings())
+
+        # === 특수: 공중 위협 대응 ===
+        self._register_system("AirThreatResponse", SystemPriority.HIGH,
+                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+                             interval=22,  # 1초
+                             condition=lambda: self._has_enemy_air())
+
+        # === 특수: 공간 확보 (장애물 파괴) ===
+        self._register_system("SpaceControl", SystemPriority.MEDIUM,
+                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID},
+                             interval=44,  # 2초
+                             condition=lambda: self._has_destructibles())
 
         self.total_systems = len(self.systems)
         self.logger.info(f"[INIT] Registered {self.total_systems} systems")
@@ -348,6 +372,52 @@ class LogicOptimizer:
             from sc2.ids.unit_typeid import UnitTypeId
             networks = self.bot.structures(UnitTypeId.NYDUSNETWORK).ready
             return networks.exists
+        except Exception:
+            return False
+
+    def _has_roaches(self) -> bool:
+        """바퀴가 있는지 확인"""
+        try:
+            from sc2.ids.unit_typeid import UnitTypeId
+            roaches = self.bot.units(UnitTypeId.ROACH)
+            return roaches.amount > 0
+        except Exception:
+            return False
+
+    def _has_zerglings(self) -> bool:
+        """저글링이 있는지 확인"""
+        try:
+            from sc2.ids.unit_typeid import UnitTypeId
+            zerglings = self.bot.units(UnitTypeId.ZERGLING)
+            return zerglings.amount >= 4  # 4마리 이상일 때만 괴롭힘 활성화
+        except Exception:
+            return False
+
+    def _has_enemy_air(self) -> bool:
+        """적 공중유닛이 있는지 확인"""
+        try:
+            if not self.bot.enemy_units:
+                return False
+
+            from sc2.ids.unit_typeid import UnitTypeId
+            air_units = {
+                UnitTypeId.MUTALISK, UnitTypeId.PHOENIX, UnitTypeId.VOIDRAY,
+                UnitTypeId.CARRIER, UnitTypeId.BATTLECRUISER, UnitTypeId.MEDIVAC,
+                UnitTypeId.ORACLE, UnitTypeId.TEMPEST, UnitTypeId.BROODLORD,
+                UnitTypeId.CORRUPTOR
+            }
+
+            enemy_air = self.bot.enemy_units.filter(lambda u: u.type_id in air_units)
+            return enemy_air.amount > 0
+        except Exception:
+            return False
+
+    def _has_destructibles(self) -> bool:
+        """파괴 가능한 구조물이 있는지 확인"""
+        try:
+            if not hasattr(self.bot, "destructables"):
+                return False
+            return self.bot.destructables.exists
         except Exception:
             return False
 

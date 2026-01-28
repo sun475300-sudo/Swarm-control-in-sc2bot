@@ -256,6 +256,26 @@ class BotStepIntegrator:
             if hasattr(self.bot, "complete_destruction") and self.bot.complete_destruction:
                 await self.bot.complete_destruction.on_step(iteration)
 
+            # 0.009 ★★★ Roach Tactics Trainer (바퀴 잠복 회복 전술) ★★★
+            if hasattr(self.bot, "roach_tactics") and self.bot.roach_tactics:
+                await self.bot.roach_tactics.on_step(iteration)
+
+            # 0.010 ★★★ Zergling Harassment Trainer (저글링 괴롭힘 전술) ★★★
+            if hasattr(self.bot, "zergling_harass") and self.bot.zergling_harass:
+                await self.bot.zergling_harass.on_step(iteration)
+
+            # 0.011 ★★★ Overseer Scout Trainer (감시군주 정찰) ★★★
+            if hasattr(self.bot, "overseer_scout") and self.bot.overseer_scout:
+                await self.bot.overseer_scout.on_step(iteration)
+
+            # 0.012 ★★★ Air Threat Response Trainer (공중 위협 대응) ★★★
+            if hasattr(self.bot, "air_threat_response") and self.bot.air_threat_response:
+                await self.bot.air_threat_response.on_step(iteration)
+
+            # 0.013 ★★★ Space Control Trainer (공간 확보) ★★★
+            if hasattr(self.bot, "space_control") and self.bot.space_control:
+                await self.bot.space_control.on_step(iteration)
+
             # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 await self._update_blackboard_state(iteration)
@@ -324,6 +344,14 @@ class BotStepIntegrator:
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+
+            # ★★★ Overlord Safety Manager (대군주 안전) ★★★
+            if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
+                try:
+                    await self.bot.overlord_safety.on_step(iteration)
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise

@@ -58,7 +58,12 @@
       "Bash(git rm:*)",
       "Bash(wmic process where \"name=''SC2_x64.exe''\" get ProcessId,CommandLine)",
       "Bash(powershell:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(Get-Process -Name \"SC2_x64\",\"python\" -ErrorAction SilentlyContinue)",
+      "Bash(Stop-Process -Force)",
+      "Bash(pgrep:*)",
+      "Bash(Get-Process)",
+      "Bash(Where-Object {$_ProcessName -like \"*SC2*\"})"
     ]
   }
 }

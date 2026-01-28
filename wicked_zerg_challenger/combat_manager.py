@@ -207,6 +207,20 @@ class CombatManager:
             air_units = self._filter_air_units(getattr(self.bot, "units", []))
             enemy_units = getattr(self.bot, "enemy_units", [])
 
+            # ★ NEW: Unit Authority (유닛 제어 권한 필터링) ★
+            if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
+                from unit_authority_manager import Authority
+                
+                # Army Units filtering
+                army_units = self.bot.unit_authority.filter_controllable_units(
+                    army_units, Authority.COMBAT, "CombatManager", iteration
+                )
+                
+                # Air Units filtering
+                air_units = self.bot.unit_authority.filter_controllable_units(
+                    air_units, Authority.COMBAT, "CombatManager", iteration
+                )
+
             # === MULTITASKING: Evaluate and assign tasks ===
             await self._execute_multitasking(army_units, air_units, enemy_units, iteration)
 
@@ -251,6 +265,26 @@ class CombatManager:
         
         # Evaluate tasks
         tasks_to_execute = []
+
+        # === TASK 0: Complete Destruction (전투 없을 때 모든 병력 건물 파괴) ===
+        # 전투가 없고 Complete Destruction Trainer가 활성화되어 있으면 최우선 실행
+        if hasattr(self.bot, "complete_destruction") and self.bot.complete_destruction:
+            is_combat = self.bot.complete_destruction._is_combat_happening()
+
+            # 전투가 없고 파괴할 건물이 있으면
+            if not is_combat and len(self.bot.complete_destruction.target_buildings) > 0:
+                # 우선순위 95 (기지 방어 100보다는 낮지만 다른 모든 것보다 높음)
+                primary_target = self.bot.complete_destruction.get_primary_target()
+                if primary_target:
+                    tasks_to_execute.append(("complete_destruction", primary_target, 95))
+
+                    # 로그 (30초마다)
+                    if iteration % 660 == 0:  # 30초
+                        remaining = len(self.bot.complete_destruction.target_buildings)
+                        self.logger.info(
+                            f"[{int(game_time)}s] ★ COMPLETE DESTRUCTION MODE: "
+                            f"{remaining} buildings remaining, ALL FORCES ATTACKING! ★"
+                        )
 
         # === TASK 1: Base Defense ===
         base_threat = self._evaluate_base_threat(enemy_units)
@@ -454,7 +488,13 @@ class CombatManager:
         available_air = set(u.tag for u in air_units) if air_units else set()
 
         for task_name, target, priority in tasks_to_execute:
-            if task_name == "base_defense":
+            if task_name == "complete_destruction":
+                # ★ Complete Destruction: 모든 병력을 건물 파괴에 투입 (전투 없을 때)
+                # Complete Destruction Trainer가 자체적으로 병력 할당 처리
+                # 여기서는 우선순위만 보장하고 실제 실행은 Complete Destruction의 on_step에서 처리
+                pass  # Complete Destruction Trainer가 자체 실행
+
+            elif task_name == "base_defense":
                 # Use all nearby units for defense
                 defense_units = self._get_units_near_base(army_units, 30)
                 if self._has_units(defense_units):
@@ -562,11 +602,16 @@ class CombatManager:
             elif task_name == "deny_expansion":
                 # ★ 확장 견제 및 자원/테크 차단 ★
                 # 목표: 적 일꾼(자원) 및 가스통(테크) 파괴
-                
+
+                try:
+                    from sc2.ids.unit_typeid import UnitTypeId
+                except ImportError:
+                    continue
+
                 # 1. 공격 부대 선별 (저글링 위주, 빠른 기동성)
                 squad_size = 12
                 squad = []
-                
+
                 # 저글링 먼저 선택
                 zerglings = [u for u in ground_army if u.tag in available_ground and u.type_id == UnitTypeId.ZERGLING]
                 if len(zerglings) >= 8:

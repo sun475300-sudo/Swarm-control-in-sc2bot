@@ -43,7 +43,7 @@
 - [x] Roadmap Phase 4: Advanced Tactics <!-- id: 40 -->
     - [x] Active Scouting (Zergling Run-by) <!-- id: 41 -->
     - [x] Rogue Tactics (Nydus / Drops / 12 Pool) <!-- id: 42 -->
-    - [ ] Overlord Safety Mode <!-- id: 43 -->
+    - [x] Overlord Safety Mode (Implemented `overlord_safety_manager.py`) <!-- id: 43 -->
     - [x] Nydus Network Logic <!-- id: 44 -->
     - [x] Upgrade Coordination System <!-- id: 60 -->
 - [ ] Roadmap Phase 5: Superintelligence <!-- id: 45 -->
