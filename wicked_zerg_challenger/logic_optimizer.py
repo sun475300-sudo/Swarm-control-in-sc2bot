@@ -130,6 +130,11 @@ class LogicOptimizer:
                              interval=22,
                              condition=lambda: self._can_attack())
 
+        self._register_system("CompleteDestruction", SystemPriority.HIGH,
+                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+                             interval=22,  # 1초마다
+                             condition=lambda: self._has_army())
+
         # === LOW: 2초마다 (점막/업그레이드) ===
         self._register_system("Creep", SystemPriority.LOW,
                              {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},

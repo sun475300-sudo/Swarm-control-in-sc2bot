@@ -2015,16 +2015,23 @@ class CombatManager:
         Get enemy base location for counter attack.
 
         우선순위:
-        1. BaseDestructionCoordinator의 현재 타겟 (모든 적 기지 파괴)
-        2. 적 시작 위치 (기본값)
+        1. CompleteDestructionTrainer의 최우선 타겟 (모든 건물 파괴)
+        2. BaseDestructionCoordinator의 현재 타겟 (적 기지 파괴)
+        3. 적 시작 위치 (기본값)
         """
-        # 1. BaseDestructionCoordinator에서 타겟 가져오기
+        # 1. CompleteDestructionTrainer에서 최우선 타겟 가져오기
+        if hasattr(self.bot, "complete_destruction") and self.bot.complete_destruction:
+            target_pos = self.bot.complete_destruction.get_primary_target()
+            if target_pos:
+                return target_pos
+
+        # 2. BaseDestructionCoordinator에서 타겟 가져오기 (폴백)
         if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
             target_pos = self.bot.base_destruction.get_target_base_position()
             if target_pos:
                 return target_pos
 
-        # 2. 적 시작 위치 (기본값)
+        # 3. 적 시작 위치 (기본값)
         if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
             return self.bot.enemy_start_locations[0]
 
