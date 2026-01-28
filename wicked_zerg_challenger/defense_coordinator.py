@@ -65,6 +65,10 @@ class DefenseCoordinator:
         self.spine_crawler_positions: List[Point2] = []
         self.spore_crawler_positions: List[Point2] = []
 
+        # === Proactive 공중 방어 ★ NEW ★ ===
+        self.proactive_spore_requested = False  # 3:00 자동 스포어 요청 여부
+        self.proactive_spore_timing = 180.0     # 3:00 (180초)
+
         # === 성능 최적화 ===
         self.last_threat_check = 0.0
         self.threat_check_interval = 0.5  # 0.5초마다 체크
@@ -88,11 +92,15 @@ class DefenseCoordinator:
         if game_time < self.early_game_threshold:
             await self._early_game_defense()
 
-        # 4. 긴급 방어 (위협 HIGH 이상)
+        # 4. ★ Proactive 공중 방어 (3:00 자동 스포어) ★
+        if iteration % 22 == 0 and game_time >= self.proactive_spore_timing and not self.proactive_spore_requested:
+            await self._proactive_air_defense()
+
+        # 5. 긴급 방어 (위협 HIGH 이상)
         if self.blackboard.threat.level >= ThreatLevel.HIGH:
             await self._emergency_defense()
 
-        # 5. 방어 건물 배치
+        # 6. 방어 건물 배치
         if iteration % 50 == 0:  # 2초마다
             await self._build_defense_structures()
 
@@ -390,7 +398,7 @@ class DefenseCoordinator:
                     worker.build(UnitTypeId.SPINECRAWLER, build_pos)
                     print(f"[DEFENSE] Building Spine Crawler at base")
 
-        # 공중 위협 시 포자 촉수
+        # 공중 위협 시 포자 촉수 (Reactive)
         if self.blackboard and self.blackboard.threat.is_air_threat:
             spores_nearby = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(15, base.position)
 
@@ -401,7 +409,64 @@ class DefenseCoordinator:
                     if self.bot.workers.exists:
                         worker = self.bot.workers.closest_to(build_pos)
                         worker.build(UnitTypeId.SPORECRAWLER, build_pos)
-                        print(f"[DEFENSE] Building Spore Crawler (air threat)")
+                        print(f"[DEFENSE] Building Spore Crawler (reactive - air threat)")
+
+    # ========== Proactive 공중 방어 ★ NEW ★ ==========
+
+    async def _proactive_air_defense(self) -> None:
+        """
+        Proactive 공중 방어: 3:00에 자동으로 스포어 크롤러 1개 건설
+
+        목적:
+        - 적 공중 유닛이 오기 전에 미리 준비 (reactive → proactive)
+        - vs Protoss: 불사조/공허 포격기 대비
+        - vs Terran: 의료선/밴시/밴시 대비
+        - vs Zerg: 뮤탈리스크 대비
+
+        타이밍: 3:00 (180초)
+        """
+        game_time = self.bot.time
+
+        # 이미 요청했으면 스킵
+        if self.proactive_spore_requested:
+            return
+
+        # Spawning Pool 필요 (스포어 크롤러 테크 요구사항)
+        spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+        if not spawning_pools.exists:
+            print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 대기: Spawning Pool 미완료")
+            return
+
+        # 이미 스포어 크롤러가 있으면 스킵
+        existing_spores = self.bot.structures(UnitTypeId.SPORECRAWLER)
+        if existing_spores.exists:
+            self.proactive_spore_requested = True
+            print(f"[DEFENSE] [{int(game_time)}s] ✅ Proactive Spore 스킵: 이미 존재")
+            return
+
+        # 자원 확인 (75 minerals)
+        if not self.bot.can_afford(UnitTypeId.SPORECRAWLER):
+            print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 자원 대기: {self.bot.minerals}m (필요: 75m)")
+            return
+
+        # 건설 위치: 본진 기지 앞쪽
+        if not self.bot.townhalls.exists:
+            return
+
+        main_base = self.bot.townhalls.first
+        build_pos = main_base.position.towards(self.bot.game_info.map_center, 6)
+
+        # 일꾼 확인
+        if not self.bot.workers.exists:
+            return
+
+        try:
+            worker = self.bot.workers.closest_to(build_pos)
+            worker.build(UnitTypeId.SPORECRAWLER, build_pos)
+            self.proactive_spore_requested = True
+            print(f"[DEFENSE] [{int(game_time)}s] ★★★ Proactive Spore Crawler 건설! (목표: 3:00) ★★★")
+        except Exception as e:
+            print(f"[DEFENSE] Proactive Spore build error: {e}")
 
     # ========== 병력 방어 배치 ==========
 

@@ -68,6 +68,10 @@ class EconomyManager:
         self._mineral_reserved_for_expansion = 0  # 확장 예약 미네랄
         self._expansion_reserved_until = 0.0  # 예약 만료 시간
 
+        # ★ NEW: 자원 예약 시스템 ★
+        self._reserved_minerals = 0
+        self._reserved_gas = 0
+
     def set_emergency_mode(self, active: bool) -> None:
         """Set emergency mode validation."""
         self._emergency_mode = active
@@ -122,6 +126,10 @@ class EconomyManager:
         if iteration - self.last_macro_hatch_check >= self.macro_hatch_check_interval:
             self.last_macro_hatch_check = iteration
             await self._build_macro_hatchery_if_needed()
+
+        # ★ NEW: 자원 예약 관리 (스포어/레어 등) ★
+        if iteration % 22 == 0:  # ~1초마다
+            self._update_resource_reservations()
 
         # ★ NEW: 자원 낭비 방지 (미네랄/가스 과잉 시 대응) ★
         if iteration % 44 == 0:  # ~2초마다
@@ -366,6 +374,12 @@ class EconomyManager:
             return
 
         # ★ Blackboard 없을 때 폴백 (기존 로직) ★
+        # ★ 자원 예약 체크 ★
+        available_minerals = self.bot.minerals - self._reserved_minerals
+        available_gas = self.bot.vespene - self._reserved_gas
+        if available_minerals < 50:  # Drone 비용
+            return
+
         if not self.bot.can_afford(UnitTypeId.DRONE):
             return
 
@@ -580,11 +594,11 @@ class EconomyManager:
         if not workers:
             return
 
-        # 쿨다운 체크 (5초마다만 실행)
+        # 쿨다운 체크 - ★ OPTIMIZED: 5초 → 2초 (더 빠른 재분배) ★
         current_time = getattr(self.bot, "time", 0)
         if not hasattr(self, "_last_redistribute_time"):
             self._last_redistribute_time = 0
-        if current_time - self._last_redistribute_time < 5.0:
+        if current_time - self._last_redistribute_time < 2.0:  # ★ 5.0 → 2.0 ★
             return
         self._last_redistribute_time = current_time
 
@@ -684,8 +698,8 @@ class EconomyManager:
                     if excess <= 0 or deficit <= 0:
                         continue
 
-                    # Move workers (Faster redistribution)
-                    workers_to_move = min(excess, deficit, 5)  # Increased from 3 to 5
+                    # Move workers - ★ OPTIMIZED: 더 공격적인 재분배 ★
+                    workers_to_move = min(excess, deficit, 8)  # ★ 5 → 8 (더 빠른 재분배) ★
                     for _ in range(workers_to_move):
                         if not nearby_workers:
                             break
@@ -896,25 +910,40 @@ class EconomyManager:
             force_expand = True
             reason = "1min with only 1 base - ABSOLUTE EMERGENCY!"
 
-        # ★ 2분: 최소 3베이스 필요 (빠른 3베이스) ★
+        # ★ OPTIMIZED: 1분 30초 - 3베이스 시작 (더 빠른 확장) ★
+        elif game_time >= 90 and base_count < 3 and minerals >= 250:
+            force_expand = True
+            reason = "1:30 - ULTRA-FAST 3rd base!"
+
+        # ★ 2분: 3베이스 필수 ★
         elif game_time >= 120 and base_count < 3:
             force_expand = True
             reason = "2min - FORCING 3rd base!"
 
-        # ★ 3분: 여전히 3베이스 없으면 긴급 ★
-        elif game_time >= 180 and base_count < 3:
+        # ★ 2분 30초: 여전히 3베이스 없으면 긴급 ★
+        elif game_time >= 150 and base_count < 3:
             force_expand = True
-            reason = "3min - EMERGENCY 3rd base!"
+            reason = "2:30 - EMERGENCY 3rd base!"
 
-        # ★ 5분 (300초): 최소 4베이스 필요 ★
-        elif game_time >= 300 and base_count < 4:
+        # ★ OPTIMIZED: 3분 - 4베이스 필요 (자원 수입 극대화) ★
+        elif game_time >= 180 and base_count < 4 and minerals >= 350:
             force_expand = True
-            reason = "5min with less than 4 bases - FORCING 4th!"
+            reason = "3min - AGGRESSIVE 4th base!"
 
-        # ★ 7분 (420초): 최소 5베이스 필요 ★
-        elif game_time >= 420 and base_count < 5:
+        # ★ 4분: 4베이스 필수 ★
+        elif game_time >= 240 and base_count < 4:
             force_expand = True
-            reason = "7min with less than 5 bases - FORCING 5th!"
+            reason = "4min - FORCING 4th base!"
+
+        # ★ 5분: 5베이스 필요 ★
+        elif game_time >= 300 and base_count < 5:
+            force_expand = True
+            reason = "5min - FORCING 5th base!"
+
+        # ★ 6분: 6베이스 필요 ★
+        elif game_time >= 360 and base_count < 6:
+            force_expand = True
+            reason = "6min - FORCING 6th base!"
 
         # ★ 10분 (600초): 최소 6베이스 필요 ★
         elif game_time >= 600 and base_count < 6:
@@ -937,17 +966,23 @@ class EconomyManager:
                 print(f"[FORCE EXPAND] ★ {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) ★")
             return
 
-        # ★ CRITICAL: Pending check with ULTRA-AGGRESSIVE Override ★
+        # ★ OPTIMIZED: 동시 확장 허용 증가 (자원 수입 극대화) ★
         pending = getattr(self.bot, "already_pending", lambda x: 0)(UnitTypeId.HATCHERY)
 
-        # Emergency Retry: 40초 지났는데 앞마당 없으면 pending 무시하고 재시도 (일꾼 사망 대비)
+        # ★ 공격적 동시 확장 전략 ★
         max_pending = 1
         if game_time > 40 and base_count < 2:
              max_pending = 2  # 2개까지 동시 시도 허용
              reason += " (Emergency Retry)"
-        if game_time > 60 and base_count < 2:
+        elif game_time > 60 and base_count < 2:
              max_pending = 3  # 1분 넘으면 3개까지 시도
              reason += " (CRITICAL Retry)"
+        elif game_time > 120 and base_count < 4:
+             max_pending = 2  # ★ 2분+ 동시 2개 확장 허용 ★
+             reason += " (Dual Expansion)"
+        elif game_time > 300:
+             max_pending = 3  # ★ 5분+ 동시 3개 확장 허용 (초공격적) ★
+             reason += " (Triple Expansion)"
 
         # 이미 건설 중인 해처리가 max_pending 이상이면 중단
         if pending >= max_pending:
@@ -1042,33 +1077,33 @@ class EconomyManager:
                 should_expand = True
                 expand_reason = f"Timed Natural @{int(game_time)}s (min 280+, workers: {worker_count})"
 
-        # ★ 2베이스 → 3베이스: 2분 이후 또는 미네랄 500+ (안정적) ★
+        # ★ OPTIMIZED: 2베이스 → 3베이스 (1분 30초, 초공격적) ★
         elif base_count == 2:
-            if game_time >= 120 or minerals >= 500:
+            if game_time >= 90 or minerals >= 400:  # ★ 120→90, 500→400 ★
                 should_expand = True
-                expand_reason = f"3rd base STABLE (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"3rd base ULTRA-FAST (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 3베이스 → 4베이스: 3분 이후 또는 미네랄 600+ ★
+        # ★ OPTIMIZED: 3베이스 → 4베이스 (2분 15초, 자원 수입 극대화) ★
         elif base_count == 3:
-            if game_time >= 180 or minerals >= 600:
+            if game_time >= 135 or minerals >= 450:  # ★ 180→135, 600→450 ★
                 should_expand = True
-                expand_reason = f"4th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"4th base AGGRESSIVE (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 4베이스 → 5베이스: 4분 이후 또는 미네랄 700+ ★
+        # ★ OPTIMIZED: 4베이스 → 5베이스 (3분, 5베이스 경제) ★
         elif base_count == 4:
-            if game_time >= 240 or minerals >= 700:
+            if game_time >= 180 or minerals >= 500:  # ★ 240→180, 700→500 ★
                 should_expand = True
-                expand_reason = f"5th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"5th base FAST (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 5베이스 → 6베이스: 4분 30초 ★
+        # ★ OPTIMIZED: 5베이스 → 6베이스 (3분 30초) ★
         elif base_count == 5:
-            if game_time >= 270 or minerals > 700:
+            if game_time >= 210 or minerals >= 550:  # ★ 270→210, 700→550 ★
                 should_expand = True
                 expand_reason = f"6th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ 6베이스 → 7베이스: 5분 30초 ★
+        # ★ OPTIMIZED: 6베이스 → 7베이스 (4분) ★
         elif base_count == 6:
-            if game_time >= 330 or minerals > 800:
+            if game_time >= 240 or minerals >= 600:  # ★ 330→240, 800→600 ★
                 should_expand = True
                 expand_reason = f"7th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
 
@@ -1568,6 +1603,26 @@ class EconomyManager:
             if self.bot.iteration % 200 == 0:
                 print(f"[ECONOMY] Resource banking prevention error: {e}")
 
+    def _update_resource_reservations(self) -> None:
+        """자원 예약 업데이트"""
+        game_time = getattr(self.bot, "time", 0)
+        self._reserved_minerals = 0
+        self._reserved_gas = 0
+
+        # 2:50-3:10: 스포어 예약
+        if 170 <= game_time < 190:
+            spores = self.bot.structures(UnitTypeId.SPORECRAWLER)
+            spore_count = spores.amount if hasattr(spores, "amount") else 0
+            if spore_count == 0:
+                self._reserved_minerals = 75
+
+        # 3:20-3:40: 레어 예약
+        elif 200 <= game_time < 220:
+            lairs = self.bot.structures(UnitTypeId.LAIR)
+            if not lairs.exists:
+                self._reserved_minerals = 150
+                self._reserved_gas = 100
+
     async def _reduce_gas_workers(self) -> None:
         """가스 일꾼 감소 (과잉 가스 방지)"""
         try:
@@ -1879,14 +1934,15 @@ class EconomyManager:
     async def _check_maynarding(self) -> None:
         """
         Check for hatcheries nearing completion (Maynarding).
-        If progress > 90%, transfer workers from saturated base.
+        ★ OPTIMIZED: 80% 진행도에서 더 많은 일꾼 미리 보내기 ★
+        If progress > 80%, transfer workers from saturated base.
         """
         if not hasattr(self.bot, "structures"):
             return
 
-        # Find hatcheries under construction, > 90% complete, not yet transferred
+        # Find hatcheries under construction - ★ OPTIMIZED: 90% → 80% (더 빠른 준비) ★
         building_hatcheries = self.bot.structures(UnitTypeId.HATCHERY).not_ready.filter(
-            lambda h: h.build_progress > 0.9 
+            lambda h: h.build_progress > 0.8  # ★ 0.9 → 0.8 ★
             and h.tag not in self.transferred_hatcheries
         )
 
@@ -1905,15 +1961,15 @@ class EconomyManager:
             # Closest source base
             source_base = ready_bases.closest_to(target_hatch)
             
-            # Select workers to transfer (6-8)
+            # Select workers to transfer - ★ OPTIMIZED: 6-8 → 10-16 (더 많은 일꾼) ★
             workers = self.bot.workers.filter(
                 lambda w: w.distance_to(source_base) < 10 and w.is_gathering
             )
-            
-            if workers.amount < 6:
+
+            if workers.amount < 10:  # ★ 6 → 10 (최소 인원 증가) ★
                 continue
 
-            transfer_count = min(workers.amount, 8)
+            transfer_count = min(workers.amount, 16)  # ★ 8 → 16 (ideal_harvesters 만큼) ★
             # 2026-01-26 FIX: allow_less parameter not supported in this python-sc2 version
             transfer_group = workers.take(transfer_count) if workers.amount >= transfer_count else workers
             

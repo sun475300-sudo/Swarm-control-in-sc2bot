@@ -33,13 +33,13 @@ class UnitFactory:
             self.min_gas_reserve = config.MIN_GAS_RESERVE
             self.larva_pressure_threshold = config.LARVA_PRESSURE_THRESHOLD
         else:
-            self.min_gas_reserve = 100
+            self.min_gas_reserve = 50  # ★ OPTIMIZED: 100 → 50 (가스 자유롭게 사용) ★
             self.larva_pressure_threshold = 6
 
         self.min_mineral_reserve_for_gas = 150
-        self.gas_unit_ratio_target = 0.35  # 기본값, 동적으로 조정됨
-        self.larva_gas_ratio = 0.4
-        self.max_larva_spend_per_step = 3
+        self.gas_unit_ratio_target = 0.60  # ★ OPTIMIZED: 0.35 → 0.60 (가스 유닛 60%) ★
+        self.larva_gas_ratio = 0.6  # ★ OPTIMIZED: 0.4 → 0.6 (라바의 60%를 가스 유닛에) ★
+        self.max_larva_spend_per_step = 5  # ★ OPTIMIZED: 3 → 5 (더 빠른 생산) ★
 
         # ★ COMBAT REINFORCEMENT SYSTEM ★
         # 전투 중 병력 충원을 위한 시스템
@@ -49,11 +49,12 @@ class UnitFactory:
         self._combat_larva_spend = 5  # 전투 중 더 많은 라바 소비 (3 -> 5)
 
         # 종족별 가스 유닛 비율 (Strategy Manager와 연동)
+        # ★ OPTIMIZED: 가스/미네랄 밸런스 1:1로 조정 ★
         self.race_gas_ratios = {
-            "Terran": 0.40,    # 대 테란: 뮤탈/히드라 비중 높음
-            "Protoss": 0.45,   # 대 프로토스: 히드라 비중 매우 높음
-            "Zerg": 0.30,      # 대 저그: 저글링/맹독충 비중 높음
-            "Unknown": 0.35,
+            "Terran": 0.65,    # ★ OPTIMIZED: 0.40 → 0.65 (뮤탈/히드라 비중 대폭 증가) ★
+            "Protoss": 0.70,   # ★ OPTIMIZED: 0.45 → 0.70 (히드라/로치 비중 극대화) ★
+            "Zerg": 0.55,      # ★ OPTIMIZED: 0.30 → 0.55 (바퀴/히드라 추가) ★
+            "Unknown": 0.60,   # ★ OPTIMIZED: 0.35 → 0.60 ★
         }
 
     def _should_save_larva(self) -> bool:

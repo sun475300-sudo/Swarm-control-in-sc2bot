@@ -134,6 +134,13 @@ def show_rl_agent():
                      else:
                          print("    → 학습된 최적 전략을 주로 사용하는 '숙련 단계'입니다.")
 
+                # Learning Rate
+                if 'learning_rate' in data:
+                     lr = float(data['learning_rate'])
+                     print(f"  - 현재 학습률(Learning Rate): {lr:.5f}")
+                else:
+                     print("  - 현재 학습률(Learning Rate): 0.001 (Adaptive - 상황에 따라 자동 조절됨)")
+
                 # Neural Network Weights
                 if 'w1' in data:
                      w1 = data['w1']

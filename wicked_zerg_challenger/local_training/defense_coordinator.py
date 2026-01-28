@@ -268,17 +268,27 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # ★★★ IMPROVED: 3:00+ First Spore Crawler (30초 앞당김) ★★★
-        if game_time >= 180 and spore_count + pending_spores < 1:  # 3:30 → 3:00으로 앞당김
-            if b.can_afford(UnitTypeId.SPORECRAWLER) and b.townhalls.exists:
+        # ★★★ OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) ★★★
+        if game_time >= 180 and spore_count + pending_spores < 1:  # 정확히 3:00
+            # ★ 자원이 80이상이면 즉시 건설 (75 cost + 5 buffer) ★
+            if b.minerals >= 80 and b.townhalls.exists:
+                # Spawning Pool 체크
+                pools = b.structures(UnitTypeId.SPAWNINGPOOL).ready
+                if not pools.exists:
+                    if game_time < 185:  # 3:05까지만 대기 로그
+                        self.logger.info(f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 대기: Spawning Pool 미완료")
+                    return
+
                 try:
                     main_base = b.townhalls.first
                     await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4))
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore Crawler #1 (anti-air, earlier timing)")
+                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] ★★★ Spore Crawler #1 건설! (목표: 3:00) ★★★")
                     return
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.warning(f"[DEFENSE] Spore build failed: {e}")
+            elif game_time < 185:  # 3:05까지만 대기 로그
+                self.logger.info(f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 자원 대기: {b.minerals}m (필요: 75m)")
 
         # 4:00+ : Third Spine Crawler
         if game_time >= 240 and spine_count + pending_spines < 3:

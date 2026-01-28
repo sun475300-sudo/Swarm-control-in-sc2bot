@@ -86,14 +86,14 @@ class CombatManager:
         self._rally_point = None
         self._last_rally_update = 0
         self._rally_update_interval = 30  # Update rally point every 30 seconds
-        self._min_army_for_attack = 8  # ★ BALANCED: 중반 공격 최소 서플라이
-        self._early_game_min_attack = 4  # ★ BALANCED: 초반(0-4분) 최소 서플라이 (저글링 2쌍)
+        self._min_army_for_attack = 6  # ★ OPTIMIZED: 8 → 6 (더 빠른 공격) ★
+        self._early_game_min_attack = 3  # ★ OPTIMIZED: 4 → 3 (더 빠른 초반 압박) ★
 
         # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
         self._base_defense_active = False
         self._defense_rally_point = None
         self._last_defense_check = 0
-        self._defense_check_interval = 5  # 5프레임마다 체크 (더 자주)
+        self._defense_check_interval = 3  # ★ OPTIMIZED: 5 → 3 (더 빠른 반응) ★
         self._worker_defense_threshold = 1  # ★ FIX: 적 1기라도 일꾼 근처 위협 시 방어 ★
         self._critical_defense_threshold = 8  # 적 8기 이상이면 모든 유닛 방어
 

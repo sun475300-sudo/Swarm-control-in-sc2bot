@@ -57,7 +57,8 @@
       "Bash(fi)",
       "Bash(git rm:*)",
       "Bash(wmic process where \"name=''SC2_x64.exe''\" get ProcessId,CommandLine)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(echo:*)"
     ]
   }
 }
