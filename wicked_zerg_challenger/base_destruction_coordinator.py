@@ -84,10 +84,15 @@ class BaseDestructionCoordinator:
                 self.logger.error(f"[BASE_DESTRUCTION] Error: {e}")
 
     def _discover_enemy_bases(self, game_time: float):
-        """적 기지 발견"""
+        """
+        적 기지 발견 (Map Memory System 통합)
+
+        1. 현재 보이는 적 타운홀 (직접 관찰)
+        2. Map Memory에 기록된 적 기지 (과거 관찰)
+        """
+        # === 방법 1: 현재 보이는 적 구조물 (직접 관찰) ===
         enemy_structures = self.bot.enemy_structures
 
-        # 타운홀류 건물 찾기
         townhall_types = {
             UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
             UnitTypeId.NEXUS,
@@ -109,6 +114,27 @@ class BaseDestructionCoordinator:
                 else:
                     # 기존 기지 업데이트
                     self.enemy_bases[key].last_seen_time = game_time
+
+        # === 방법 2: Map Memory System에서 기억된 기지 가져오기 ===
+        if hasattr(self.bot, "map_memory") and self.bot.map_memory:
+            try:
+                # Map Memory의 모든 적 기지 위치 가져오기
+                remembered_bases = self.bot.map_memory.get_enemy_bases()
+
+                for base_pos in remembered_bases:
+                    key = self._position_to_key(base_pos)
+
+                    if key not in self.enemy_bases:
+                        # Map Memory에만 있는 기지 (현재 안 보이지만 과거에 발견됨)
+                        self.enemy_bases[key] = EnemyBase(base_pos, game_time)
+                        self.total_bases_discovered += 1
+                        self.logger.info(
+                            f"[{int(game_time)}s] REMEMBERED ENEMY BASE from Map Memory at {base_pos} "
+                            f"(Not visible, but recorded)"
+                        )
+
+            except Exception as e:
+                self.logger.error(f"[BASE_DESTRUCTION] Map Memory integration error: {e}")
 
         # 모든 기지의 정보 업데이트
         self._update_base_info()
