@@ -326,6 +326,51 @@ class WickedZergBotProImpl(BotAI):
             print(f"[BOT_WARN] SpaceControlTrainer not available: {e}")
             self.space_control = None
 
+        # === 18. Comprehensive Unit Abilities (모든 유닛 스킬 통합) ===
+        try:
+            from comprehensive_unit_abilities import ComprehensiveUnitAbilities
+            self.unit_abilities = ComprehensiveUnitAbilities(self)
+            print("[BOT] ComprehensiveUnitAbilities initialized - All unit skills active!")
+        except ImportError as e:
+            print(f"[BOT_WARN] ComprehensiveUnitAbilities not available: {e}")
+            self.unit_abilities = None
+
+        # === 19. Roach Tunneling Tactics (바퀴 땅굴발톱 전술) ===
+        try:
+            from roach_tunneling_tactics import RoachTunnelingTactics
+            self.roach_tunneling = RoachTunnelingTactics(self)
+            print("[BOT] RoachTunnelingTactics initialized - Burrow move tactics ready!")
+        except ImportError as e:
+            print(f"[BOT_WARN] RoachTunnelingTactics not available: {e}")
+            self.roach_tunneling = None
+
+        # === 20. Building Coordination (건물 중복 방지) ===
+        try:
+            from building_coordination import BuildingCoordination
+            self.building_coord = BuildingCoordination(self)
+            print("[BOT] BuildingCoordination initialized - Duplicate prevention active!")
+        except ImportError as e:
+            print(f"[BOT_WARN] BuildingCoordination not available: {e}")
+            self.building_coord = None
+
+        # === 21. Creep Expansion System (전 맵 점막 확장) ===
+        try:
+            from creep_expansion_system import CreepExpansionSystem
+            self.creep_expansion = CreepExpansionSystem(self)
+            print("[BOT] CreepExpansionSystem initialized - Full map creep spread!")
+        except ImportError as e:
+            print(f"[BOT_WARN] CreepExpansionSystem not available: {e}")
+            self.creep_expansion = None
+
+        # === 22. Hive Tech Maximizer (군락 기술 극대화) ===
+        try:
+            from hive_tech_maximizer import HiveTechMaximizer
+            self.hive_tech = HiveTechMaximizer(self)
+            print("[BOT] HiveTechMaximizer initialized - Advanced tech production!")
+        except ImportError as e:
+            print(f"[BOT_WARN] HiveTechMaximizer not available: {e}")
+            self.hive_tech = None
+
         # ★ NEW: RL Tech Adapter (적 테크 기반 강화학습 적응) ★
         try:
             from rl_tech_adapter import RLTechAdapter

@@ -94,10 +94,9 @@ def main():
         print("="*70)
         kill_all_sc2()
 
-        # ★ 4. 맵/종족 선택 ★
+        # ★ 4. 맵/종족 선택 (사용 가능한 맵만) ★
         maps_list = [
             "AbyssalReefLE",
-            "(2)CatalystLE",
             "AscensiontoAiurLE",
             "BelShirVestigeLE"
         ]
@@ -127,11 +126,14 @@ def main():
         )
 
         # ★ 6. 결과 기록 및 출력 ★
-        victory = (result == sc2.Result.Victory)
+        from sc2.data import Result
+        victory = (result == Result.Victory)
         stats.record_game(selected_map, "Easy", enemy_race.name, victory)
 
         if victory:
             print("\n[VICTORY] Game won!")
+        elif result == Result.Tie:
+            print("\n[TIE] Game ended in a tie (time limit)")
         else:
             print("\n[DEFEAT] Game lost.")
 

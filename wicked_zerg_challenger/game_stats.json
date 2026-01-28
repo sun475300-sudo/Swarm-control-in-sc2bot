@@ -1,0 +1,63 @@
+{
+  "total_games": 2,
+  "total_wins": 1,
+  "total_losses": 1,
+  "by_map": {
+    "BelShirVestigeLE": {
+      "wins": 0,
+      "losses": 1
+    },
+    "AscensiontoAiurLE": {
+      "wins": 1,
+      "losses": 0
+    }
+  },
+  "by_difficulty": {
+    "Easy": {
+      "wins": 1,
+      "losses": 1
+    }
+  },
+  "by_race": {
+    "Zerg": {
+      "wins": 1,
+      "losses": 1
+    }
+  },
+  "by_map_difficulty": {
+    "BelShirVestigeLE_Easy": {
+      "wins": 0,
+      "losses": 1
+    },
+    "AscensiontoAiurLE_Easy": {
+      "wins": 1,
+      "losses": 0
+    }
+  },
+  "by_map_race": {
+    "BelShirVestigeLE_Zerg": {
+      "wins": 0,
+      "losses": 1
+    },
+    "AscensiontoAiurLE_Zerg": {
+      "wins": 1,
+      "losses": 0
+    }
+  },
+  "games": [
+    {
+      "timestamp": "2026-01-28T17:52:19.663263",
+      "map": "BelShirVestigeLE",
+      "difficulty": "Easy",
+      "enemy_race": "Zerg",
+      "result": "Defeat"
+    },
+    {
+      "timestamp": "2026-01-28T18:04:46.114576",
+      "map": "AscensiontoAiurLE",
+      "difficulty": "Easy",
+      "enemy_race": "Zerg",
+      "result": "Victory"
+    }
+  ]
+}
