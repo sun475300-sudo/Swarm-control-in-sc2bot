@@ -315,8 +315,10 @@ class DynamicCounterSystem:
                     if unit_type:
                         count = self.bot.units(unit_type).amount
                         total_count += count
-                except:
-                    pass
+                except (AttributeError, TypeError) as e:
+                    # Invalid unit type or units API not available
+                    self.logger.debug(f"Counter unit check failed for {unit_name}: {e}")
+                    continue
 
             # 목표 달성 확인
             if total_count >= rule["min_count"] and not counter_info["target_met"]:

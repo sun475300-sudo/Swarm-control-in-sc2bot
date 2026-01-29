@@ -19,6 +19,12 @@ try:
 except ImportError:
     BuildOrderSystem = None
 
+# Performance Profiler
+try:
+    from utils.performance_profiler import get_profiler
+except ImportError:
+    get_profiler = None
+
 
 class LogicActivityTracker:
     """실시간 로직 활성화 추적기"""
@@ -137,6 +143,99 @@ try:
 except ImportError:
     StrictUpgradePriority = None
 
+# ★★★ PHASE 8/9 SYSTEMS ★★★
+
+# Enhanced Scouting System
+try:
+    from scouting.enhanced_scout_system import EnhancedScoutSystem
+except ImportError:
+    EnhancedScoutSystem = None
+
+# Harassment Coordinator
+try:
+    from combat.harassment_coordinator import HarassmentCoordinator
+except ImportError:
+    HarassmentCoordinator = None
+
+# Queen Inject Optimizer
+try:
+    from economy.queen_inject_optimizer import QueenInjectOptimizer
+except ImportError:
+    QueenInjectOptimizer = None
+
+# Multi-Prong Attack Coordinator
+try:
+    from combat.multi_prong_coordinator import MultiProngCoordinator
+except ImportError:
+    MultiProngCoordinator = None
+
+# Trade Efficiency Analyzer
+try:
+    from combat.trade_analyzer import TradeAnalyzer
+except ImportError:
+    TradeAnalyzer = None
+
+# Late Game Composition Optimizer
+try:
+    from strategy.late_game_optimizer import LateGameOptimizer
+except ImportError:
+    LateGameOptimizer = None
+
+# Overlord Vision Network
+try:
+    from overlord_vision_network import OverlordVisionNetwork
+except ImportError:
+    OverlordVisionNetwork = None
+
+# Build Order Optimizer
+try:
+    from strategy.build_order_optimizer import BuildOrderOptimizer
+except ImportError:
+    BuildOrderOptimizer = None
+
+# Adaptive Build Order AI
+try:
+    from strategy.adaptive_build_order import AdaptiveBuildOrder
+except ImportError:
+    AdaptiveBuildOrder = None
+
+# Timing Attacks Library
+try:
+    from strategy.timing_attacks import TimingAttacks
+except ImportError:
+    TimingAttacks = None
+
+# Advanced Creep Automation V2
+try:
+    from creep_automation_v2 import CreepAutomationV2
+except ImportError:
+    CreepAutomationV2 = None
+
+# Proxy Hatchery Tactics
+try:
+    from strategy.proxy_hatchery import ProxyHatchery
+except ImportError:
+    ProxyHatchery = None
+
+# 1-Min Multi Test
+try:
+    from tests.one_min_multi_test import OneMinMultiTest
+except ImportError:
+    OneMinMultiTest = None
+
+# Unit Authority Manager
+try:
+    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+except ImportError:
+    UnitAuthorityManager = None
+    AuthorityLevel = None
+
+# Advanced Scout System V2
+try:
+    from scouting.advanced_scout_system_v2 import AdvancedScoutSystemV2
+except ImportError:
+    AdvancedScoutSystemV2 = None
+
 class BotStepIntegrator:
     """
     Bot의 on_step 메서드를 구현하는 통합 클래스
@@ -162,7 +261,14 @@ class BotStepIntegrator:
             self.placement_helper = None
             self.bot.placement_helper = None
 
-        # Tech Coordinator (Conflict Resolution)
+        # Unit Authority Manager (Phase 10)
+        from unit_authority_manager import UnitAuthorityManager
+        self.bot.unit_authority = UnitAuthorityManager(bot)
+        
+        # Advanced Scouting V2 (Phase 10)
+        from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
+        self.bot.advanced_scout_v2 = AdvancedScoutingSystemV2(bot)
+
         if TechCoordinator:
             self.bot.tech_coordinator = TechCoordinator(bot)
             print("[INIT] TechCoordinator initialized")
@@ -182,6 +288,113 @@ class BotStepIntegrator:
             print("[INIT] StrictUpgradePriority initialized")
         else:
             self.bot.upgrade_priority = None
+
+        # ★★★ PHASE 8/9 SYSTEMS INITIALIZATION ★★★
+
+        # Enhanced Scouting System
+        if EnhancedScoutSystem:
+            self.bot.enhanced_scout = EnhancedScoutSystem(bot)
+            print("[INIT] EnhancedScoutSystem initialized (Phase 9)")
+        else:
+            self.bot.enhanced_scout = None
+
+        # Harassment Coordinator
+        if HarassmentCoordinator:
+            self.bot.harassment_coord = HarassmentCoordinator(bot)
+            print("[INIT] HarassmentCoordinator initialized (Phase 9)")
+        else:
+            self.bot.harassment_coord = None
+
+        # Queen Inject Optimizer
+        if QueenInjectOptimizer:
+            self.bot.queen_inject_opt = QueenInjectOptimizer(bot)
+            print("[INIT] QueenInjectOptimizer initialized (Phase 8)")
+        else:
+            self.bot.queen_inject_opt = None
+
+        # Multi-Prong Attack Coordinator
+        if MultiProngCoordinator:
+            self.bot.multi_prong = MultiProngCoordinator(bot)
+            print("[INIT] MultiProngCoordinator initialized (Phase 8)")
+        else:
+            self.bot.multi_prong = None
+
+        # Trade Efficiency Analyzer
+        if TradeAnalyzer:
+            self.bot.trade_analyzer = TradeAnalyzer(bot)
+            print("[INIT] TradeAnalyzer initialized (Phase 8)")
+        else:
+            self.bot.trade_analyzer = None
+
+        # Late Game Composition Optimizer
+        if LateGameOptimizer:
+            self.bot.late_game_opt = LateGameOptimizer(bot)
+            print("[INIT] LateGameOptimizer initialized (Phase 8)")
+        else:
+            self.bot.late_game_opt = None
+
+        # Overlord Vision Network
+        if OverlordVisionNetwork:
+            self.bot.vision_network = OverlordVisionNetwork(bot)
+            print("[INIT] OverlordVisionNetwork initialized (Phase 8)")
+        else:
+            self.bot.vision_network = None
+
+        # Build Order Optimizer
+        if BuildOrderOptimizer:
+            self.bot.build_order_opt = BuildOrderOptimizer(bot)
+            print("[INIT] BuildOrderOptimizer initialized (Phase 9)")
+        else:
+            self.bot.build_order_opt = None
+
+        # Adaptive Build Order AI
+        if AdaptiveBuildOrder:
+            self.bot.adaptive_build = AdaptiveBuildOrder(bot)
+            print("[INIT] AdaptiveBuildOrder initialized (Phase 8)")
+        else:
+            self.bot.adaptive_build = None
+
+        # Timing Attacks Library
+        if TimingAttacks:
+            self.bot.timing_attacks = TimingAttacks(bot)
+            print("[INIT] TimingAttacks initialized (Phase 8)")
+        else:
+            self.bot.timing_attacks = None
+
+        # Advanced Creep Automation V2
+        if CreepAutomationV2:
+            self.bot.creep_v2 = CreepAutomationV2(bot)
+            print("[INIT] CreepAutomationV2 initialized (Phase 8)")
+        else:
+            self.bot.creep_v2 = None
+
+        # Proxy Hatchery Tactics
+        if ProxyHatchery:
+            self.bot.proxy_hatch = ProxyHatchery(bot)
+            print("[INIT] ProxyHatchery initialized (Phase 8)")
+        else:
+            self.bot.proxy_hatch = None
+
+        # 1-Min Multi Test
+        if OneMinMultiTest:
+            self.bot.multi_test = OneMinMultiTest(bot)
+            print("[INIT] OneMinMultiTest initialized (Phase 9)")
+        else:
+            self.bot.multi_test = None
+
+        # Unit Authority Manager
+        if UnitAuthorityManager:
+            self.bot.unit_authority = UnitAuthorityManager(bot)
+            print("[INIT] ★ UnitAuthorityManager initialized ★")
+        else:
+            self.bot.unit_authority = None
+
+        # Advanced Scout System V2 (개선판)
+        if AdvancedScoutSystemV2:
+            self.bot.advanced_scout_v2 = AdvancedScoutSystemV2(bot)
+            print("[INIT] ★ AdvancedScoutSystemV2 initialized (Overseer + Changeling) ★")
+        else:
+            self.bot.advanced_scout_v2 = None
 
     async def initialize_managers(self):
         """
@@ -273,6 +486,10 @@ class BotStepIntegrator:
             # 0.006 ★★★ Unit Authority Manager (유닛 제어 권한 관리) ★★★
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 await self.bot.unit_authority.on_step(iteration)
+
+                # ★ 죽은 유닛의 권한 해제 (2초마다) ★
+                if iteration % 44 == 0:
+                    self._cleanup_dead_unit_authorities()
 
             # 0.007 ★★★ Map Memory System (맵 기억 - 적 건물 추적) ★★★
             if hasattr(self.bot, "map_memory") and self.bot.map_memory:
@@ -694,6 +911,60 @@ class BotStepIntegrator:
                     finally:
                         self._logic_tracker.end_logic("EarlyScout", start_time)
 
+            # 0.061 ★★★ Advanced Scouting System V2 (개선판 - Overseer + Changeling) ★★★
+            if hasattr(self.bot, "advanced_scout_v2") and self.bot.advanced_scout_v2:
+                start_time = self._logic_tracker.start_logic("AdvancedScoutV2")
+                try:
+                    await self.bot.advanced_scout_v2.on_step(iteration)
+                    # 주기적으로 정찰 리포트 출력
+                    if iteration % 660 == 0:  # ~30초마다
+                        report = self.bot.advanced_scout_v2.get_scout_report()
+                        print(f"[ADVANCED_SCOUT_V2] Ling:{report['zergling_patrol_count']}, "
+                              f"Overlord:{report['overlord_scout_count']}, "
+                              f"Overseer:{report['overseer_count']}, "
+                              f"Changeling:{report['changeling_count']}, "
+                              f"Interval:{report['current_interval']:.0f}s, "
+                              f"InfoAge:{report['enemy_info_age']:.0f}s")
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["AdvancedScoutV2"] = error_handler.error_counts.get("AdvancedScoutV2", 0) + 1
+                        if error_handler.error_counts["AdvancedScoutV2"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] AdvancedScoutV2 error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("AdvancedScoutV2", start_time)
+
+            # 0.062 ★★★ Build Order Optimizer (Phase 9 - 빌드 최적화) ★★★
+            if hasattr(self.bot, "build_order_opt") and self.bot.build_order_opt:
+                start_time = self._logic_tracker.start_logic("BuildOrderOpt")
+                try:
+                    await self.bot.build_order_opt.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["BuildOrderOpt"] = error_handler.error_counts.get("BuildOrderOpt", 0) + 1
+                        if error_handler.error_counts["BuildOrderOpt"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] BuildOrderOpt error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("BuildOrderOpt", start_time)
+
+            # 0.063 ★★★ 1-Min Multi Test (Phase 9 - 타이밍 검증) ★★★
+            if hasattr(self.bot, "multi_test") and self.bot.multi_test:
+                start_time = self._logic_tracker.start_logic("MultiTest")
+                try:
+                    await self.bot.multi_test.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["MultiTest"] = error_handler.error_counts.get("MultiTest", 0) + 1
+                        if error_handler.error_counts["MultiTest"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] MultiTest error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("MultiTest", start_time)
+
             # 0.1 Strategy Manager 업데이트 (종족별 전략 + Emergency Mode)
             if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
                 start_time = self._logic_tracker.start_logic("Strategy")
@@ -779,6 +1050,28 @@ class BotStepIntegrator:
             # 1. Intel (정보 수집)
             await self._safe_manager_step(self.bot.intel, iteration, "Intel")
 
+            # 1.5 ★★★ Opponent Modeling (Phase 15 - 적 학습 및 전략 예측) ★★★
+            if hasattr(self.bot, "opponent_modeling") and self.bot.opponent_modeling:
+                start_time = self._logic_tracker.start_logic("OpponentModeling")
+                try:
+                    # Update opponent modeling with current game state
+                    await self.bot.opponent_modeling.on_step(iteration)
+
+                    # Log strategy prediction every 30 seconds
+                    if iteration % 660 == 0:  # ~30 seconds at 22 FPS
+                        predicted_strategy, confidence = self.bot.opponent_modeling.get_predicted_strategy()
+                        if predicted_strategy and confidence > 0.3:
+                            print(f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)")
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["OpponentModeling"] = error_handler.error_counts.get("OpponentModeling", 0) + 1
+                        if error_handler.error_counts["OpponentModeling"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] OpponentModeling error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("OpponentModeling", start_time)
+
             # 2. Scouting (정찰)
             await self._safe_manager_step(self.bot.scout, iteration, "Scouting")
 
@@ -799,6 +1092,10 @@ class BotStepIntegrator:
                     print(f"[ERROR] TechCoordinator error: {e}")
                 finally:
                     self._logic_tracker.end_logic("TechCoordinator", start_time)
+
+            # 2.9 Unit Authority Manager (Phase 10)
+            if hasattr(self.bot, "unit_authority"):
+                await self.bot.unit_authority.on_step(iteration)
 
             # 3. ProductionController (통합 생산 관리 - Dynamic Authority) ★★★
             # Blackboard 생산 큐를 우선순위에 따라 처리
@@ -871,6 +1168,57 @@ class BotStepIntegrator:
             # 전투 병력 생산 후 남은 애벌레로 드론 생산
             await self._safe_manager_step(self.bot.economy, iteration, "Economy")
 
+            # 5.1 ★★★ Queen Inject Optimizer (Phase 8 - 완벽한 Inject) ★★★
+            if hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt:
+                start_time = self._logic_tracker.start_logic("QueenInjectOpt")
+                try:
+                    await self.bot.queen_inject_opt.on_step(iteration)
+                    # 주기적으로 효율성 출력
+                    if iteration % 1320 == 0:  # ~1분마다
+                        stats = self.bot.queen_inject_opt.get_inject_stats()
+                        print(f"[QUEEN_INJECT] Efficiency: {stats['inject_efficiency']*100:.1f}%, "
+                              f"Total: {stats['total_injects']}, "
+                              f"Queens: {stats['queens_assigned']}")
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["QueenInjectOpt"] = error_handler.error_counts.get("QueenInjectOpt", 0) + 1
+                        if error_handler.error_counts["QueenInjectOpt"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] QueenInjectOpt error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("QueenInjectOpt", start_time)
+
+            # 5.2 ★★★ Overlord Vision Network (Phase 8 - 시야 네트워크) ★★★
+            if hasattr(self.bot, "vision_network") and self.bot.vision_network:
+                start_time = self._logic_tracker.start_logic("VisionNetwork")
+                try:
+                    await self.bot.vision_network.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["VisionNetwork"] = error_handler.error_counts.get("VisionNetwork", 0) + 1
+                        if error_handler.error_counts["VisionNetwork"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] VisionNetwork error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("VisionNetwork", start_time)
+
+            # 5.3 ★★★ Advanced Creep Automation V2 (Phase 8 - 고급 크립) ★★★
+            if hasattr(self.bot, "creep_v2") and self.bot.creep_v2:
+                start_time = self._logic_tracker.start_logic("CreepV2")
+                try:
+                    await self.bot.creep_v2.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["CreepV2"] = error_handler.error_counts.get("CreepV2", 0) + 1
+                        if error_handler.error_counts["CreepV2"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] CreepV2 error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("CreepV2", start_time)
+
             # 4.5. Evolution Upgrades (공방 업그레이드)
             await self._safe_manager_step(
                 getattr(self.bot, "upgrade_manager", None),
@@ -942,6 +1290,51 @@ class BotStepIntegrator:
             # 8. Combat (전투) - 단일 호출 (방어 모드 자동 감지)
             await self._safe_manager_step(self.bot.combat, iteration, "Combat")
 
+            # 8.1 ★★★ Harassment Coordinator (Phase 9 - 견제 시스템) ★★★
+            if hasattr(self.bot, "harassment_coord") and self.bot.harassment_coord:
+                start_time = self._logic_tracker.start_logic("HarassmentCoord")
+                try:
+                    await self.bot.harassment_coord.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["HarassmentCoord"] = error_handler.error_counts.get("HarassmentCoord", 0) + 1
+                        if error_handler.error_counts["HarassmentCoord"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] HarassmentCoord error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("HarassmentCoord", start_time)
+
+            # 8.2 ★★★ Multi-Prong Attack (Phase 8 - 다방향 공격) ★★★
+            if hasattr(self.bot, "multi_prong") and self.bot.multi_prong:
+                start_time = self._logic_tracker.start_logic("MultiProng")
+                try:
+                    await self.bot.multi_prong.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["MultiProng"] = error_handler.error_counts.get("MultiProng", 0) + 1
+                        if error_handler.error_counts["MultiProng"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] MultiProng error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("MultiProng", start_time)
+
+            # 8.3 ★★★ Trade Efficiency Analyzer (Phase 8 - 교환 효율) ★★★
+            if hasattr(self.bot, "trade_analyzer") and self.bot.trade_analyzer:
+                start_time = self._logic_tracker.start_logic("TradeAnalyzer")
+                try:
+                    await self.bot.trade_analyzer.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["TradeAnalyzer"] = error_handler.error_counts.get("TradeAnalyzer", 0) + 1
+                        if error_handler.error_counts["TradeAnalyzer"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] TradeAnalyzer error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("TradeAnalyzer", start_time)
+
             # 9. Spell Units (Infestor/Viper)
             await self._safe_manager_step(
                 getattr(self.bot, "spell_manager", None),
@@ -990,6 +1383,32 @@ class BotStepIntegrator:
 
             await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
+            # 10.1 ★★★ Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) ★★★
+            if hasattr(self.bot, "micro_v3") and self.bot.micro_v3:
+                start_time = self._logic_tracker.start_logic("MicroV3")
+                try:
+                    await self.bot.micro_v3.on_step(iteration)
+
+                    # Log micro status every 60 seconds
+                    if iteration % 1320 == 0:  # ~60 seconds at 22 FPS
+                        status = self.bot.micro_v3.get_status()
+                        print(f"[MICRO_V3] Ravagers: {len(status.get('ravager_cooldowns', {}))}, "
+                              f"Lurkers burrowed: {len(status.get('lurker_burrowed', {}))}, "
+                              f"Focus fire: {len(status.get('focus_fire_assignments', {}))} assignments")
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["MicroV3"] = error_handler.error_counts.get("MicroV3", 0) + 1
+                        if error_handler.error_counts["MicroV3"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] MicroV3 error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("MicroV3", start_time)
+
+            # 10.5 Advanced Scouting V2 (Phase 10)
+            if hasattr(self.bot, "advanced_scout_v2"):
+                await self._safe_manager_step(self.bot.advanced_scout_v2, iteration, "AdvancedScoutV2")
+
             # 11. Rogue Tactics (이병렬 선수 전술 - 맹독충 드랍 등)
             if iteration % 8 == 0:  # 8프레임마다 실행
                 await self._safe_manager_step(
@@ -1002,6 +1421,66 @@ class BotStepIntegrator:
             # 12. Hierarchical RL System (계층적 강화학습 - 전략 결정)
             if iteration % 22 == 0:  # 매 1초마다 전략 결정
                 await self._safe_hierarchical_rl_step(iteration)
+
+            # 12.1 ★★★ Late Game Composition Optimizer (Phase 8 - 후반 조합) ★★★
+            if hasattr(self.bot, "late_game_opt") and self.bot.late_game_opt:
+                start_time = self._logic_tracker.start_logic("LateGameOpt")
+                try:
+                    await self.bot.late_game_opt.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["LateGameOpt"] = error_handler.error_counts.get("LateGameOpt", 0) + 1
+                        if error_handler.error_counts["LateGameOpt"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] LateGameOpt error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("LateGameOpt", start_time)
+
+            # 12.2 ★★★ Adaptive Build Order AI (Phase 8 - 적응형 빌드) ★★★
+            if hasattr(self.bot, "adaptive_build") and self.bot.adaptive_build:
+                start_time = self._logic_tracker.start_logic("AdaptiveBuild")
+                try:
+                    await self.bot.adaptive_build.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["AdaptiveBuild"] = error_handler.error_counts.get("AdaptiveBuild", 0) + 1
+                        if error_handler.error_counts["AdaptiveBuild"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] AdaptiveBuild error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("AdaptiveBuild", start_time)
+
+            # 12.3 ★★★ Timing Attacks Library (Phase 8 - 타이밍 공격) ★★★
+            if hasattr(self.bot, "timing_attacks") and self.bot.timing_attacks:
+                start_time = self._logic_tracker.start_logic("TimingAttacks")
+                try:
+                    await self.bot.timing_attacks.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["TimingAttacks"] = error_handler.error_counts.get("TimingAttacks", 0) + 1
+                        if error_handler.error_counts["TimingAttacks"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] TimingAttacks error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("TimingAttacks", start_time)
+
+            # 12.4 ★★★ Proxy Hatchery Tactics (Phase 8 - 프록시 전술) ★★★
+            if hasattr(self.bot, "proxy_hatch") and self.bot.proxy_hatch:
+                start_time = self._logic_tracker.start_logic("ProxyHatch")
+                try:
+                    await self.bot.proxy_hatch.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["ProxyHatch"] = error_handler.error_counts.get("ProxyHatch", 0) + 1
+                        if error_handler.error_counts["ProxyHatch"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] ProxyHatch error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("ProxyHatch", start_time)
 
             # 13. Transformer Decision (트랜스포머 의사결정 - 고급 패턴 인식)
             if iteration % 44 == 0:  # 매 2초마다
@@ -1036,6 +1515,43 @@ class BotStepIntegrator:
                 except Exception:
                     pass  # Silently ignore end_frame errors
 
+    def _cleanup_dead_unit_authorities(self):
+        """죽은 유닛의 권한 자동 해제"""
+        if not hasattr(self.bot, "unit_authority"):
+            return
+
+        try:
+            # 각 시스템별로 죽은 유닛 권한 해제
+            system_names = [
+                "scouting", "harassment_coord", "multi_prong_coord",
+                "combat_manager", "spell_unit_manager", "economy_manager"
+            ]
+
+            for system_name in system_names:
+                system = getattr(self.bot, system_name, None)
+                if not system:
+                    continue
+
+                # 시스템이 unit_tags 또는 active_scouts 속성을 가지고 있으면
+                if hasattr(system, "unit_tags"):
+                    for unit_tag in list(system.unit_tags):
+                        unit = self.bot.units.find_by_tag(unit_tag)
+                        if not unit:  # 유닛이 죽었음
+                            self.bot.unit_authority.release_unit(unit_tag, system_name)
+                            system.unit_tags.discard(unit_tag)
+
+                # AdvancedScoutingV2의 active_scouts 처리
+                if hasattr(system, "active_scouts"):
+                    for unit_tag in list(system.active_scouts.keys()):
+                        unit = self.bot.units.find_by_tag(unit_tag)
+                        if not unit:  # 유닛이 죽었음
+                            self.bot.unit_authority.release_unit(unit_tag, system_name)
+                            del system.active_scouts[unit_tag]
+
+        except Exception as e:
+            # Silent fail - 권한 해제는 critical하지 않음
+            pass
+
     async def draw_debug_info(self):
         """화면 좌측 상단에 봇 상태 디버그 정보 표시"""
         try:
@@ -1067,8 +1583,11 @@ class BotStepIntegrator:
                          expand_status = "Ready"
                      else:
                          expand_status = f"Blocked ({reason})"
-                 except:
-                     pass
+                 except (AttributeError, TypeError, ValueError) as e:
+                     # Expansion check failed, use default status
+                     expand_status = "Unknown"
+                     if iteration % 1000 == 0:  # Log occasionally
+                         print(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시
             debug_text = f"""
@@ -1672,6 +2191,11 @@ class BotStepIntegrator:
 
         이 메서드는 WickedZergBotPro의 on_step에서 호출됩니다.
         """
+        # ★ PERFORMANCE PROFILING: Start frame timing
+        profiler = get_profiler(self.bot.logger) if get_profiler else None
+        if profiler:
+            profiler.start_frame()
+
         try:
             # 1. 매니저들 초기화 (첫 호출 시)
             await self.initialize_managers()
@@ -1688,6 +2212,14 @@ class BotStepIntegrator:
                 import traceback
 
                 traceback.print_exc()
+        finally:
+            # ★ PERFORMANCE PROFILING: End frame timing
+            if profiler:
+                profiler.end_frame()
+
+                # Print performance report every 5 minutes
+                if iteration % 6600 == 0:  # ~5 minutes at 22 FPS
+                    profiler.print_report()
 
 
     async def _handle_chat_interaction(self):

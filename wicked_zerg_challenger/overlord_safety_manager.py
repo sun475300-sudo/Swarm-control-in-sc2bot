@@ -59,31 +59,207 @@ class OverlordSafetyManager:
                 self.logger.error(f"[OVERLORD_SAFETY] Error: {e}")
 
     def _calculate_safe_spots(self):
-        """맵의 안전한 위치(Pillars) 계산"""
+        """맵의 안전한 위치(Pillars) 계산
+
+        Pillar: 공중 유닛만 접근 가능한 고지대 (지상 유닛 불가)
+        - terrain_height가 높은 위치
+        - pathing_grid가 0 (지상 이동 불가)
+        - 주변보다 고립된 지형
+        """
         if not hasattr(self.bot, "game_info"):
             return
 
-        # 1. 맵의 전술적 고지대 (Pillars) 가져오기
-        # sc2.game_info.GameInfo.overlord_spots or similar logic
-        # 기본 라이브러리에서 제공하지 않을 경우 지형 분석 필요
-        
-        # 임시: 맵 경계 근처를 안전지대로 간주 (초간단 로직)
-        # 실제로는 지형 높이(pathing grid vs height grid) 비교가 필요함
-        
-        if hasattr(self.bot.game_info, "map_size"):
-            w = self.bot.game_info.map_size.width
-            h = self.bot.game_info.map_size.height
-            
-            # 맵 가장자리 포인트
-            self.safe_spots = [
-                Point2((10, 10)), Point2((w/2, 10)), Point2((w-10, 10)),
-                Point2((10, h/2)), Point2((w-10, h/2)),
-                Point2((10, h-10)), Point2((w/2, h-10)), Point2((w-10, h-10))
-            ]
+        game_info = self.bot.game_info
+
+        # 지형 정보 확인
+        if not hasattr(game_info, "terrain_height") or not hasattr(game_info, "pathing_grid"):
+            self.logger.warning("[OVERLORD_SAFETY] Terrain data not available, using fallback positions")
+            self._use_fallback_positions()
+            return
+
+        try:
+            # 실제 Pillar 위치 계산
+            pillars = self._find_pillar_positions()
+
+            if pillars:
+                self.safe_spots = pillars
+                self.logger.info(f"[OVERLORD_SAFETY] Found {len(pillars)} Pillar positions")
+            else:
+                # Pillar를 찾지 못한 경우 폴백
+                self.logger.warning("[OVERLORD_SAFETY] No Pillars found, using fallback positions")
+                self._use_fallback_positions()
+
             self._pillars_calculated = True
-            
-            # TODO: 실제 Pillar(공중 유닛만 갈 수 있는 지형) 계산 로직 추가 필요
-            # TerrainAnalysis 모듈이 있다면 활용 가능
+
+        except Exception as e:
+            self.logger.error(f"[OVERLORD_SAFETY] Pillar calculation failed: {e}")
+            self._use_fallback_positions()
+            self._pillars_calculated = True
+
+    def _find_pillar_positions(self) -> List[Point2]:
+        """지형 분석을 통한 실제 Pillar 위치 탐색
+
+        Returns:
+            Pillar 위치 리스트 (공중만 접근 가능한 고지대)
+        """
+        game_info = self.bot.game_info
+        terrain_height = game_info.terrain_height
+        pathing_grid = game_info.pathing_grid
+
+        pillars = []
+
+        # 맵 크기
+        width = terrain_height.width
+        height = terrain_height.height
+
+        # 샘플링 간격 (모든 타일을 체크하면 너무 느림)
+        sample_step = 5
+
+        # 고지대 임계값 계산 (맵 평균 높이)
+        heights = []
+        for x in range(0, width, sample_step):
+            for y in range(0, height, sample_step):
+                heights.append(terrain_height[x, y])
+
+        if not heights:
+            return []
+
+        avg_height = sum(heights) / len(heights)
+        high_threshold = avg_height + 2  # 평균보다 2 이상 높은 지형
+
+        # Pillar 후보 탐색
+        for x in range(sample_step, width - sample_step, sample_step):
+            for y in range(sample_step, height - sample_step, sample_step):
+                pos = Point2((x, y))
+
+                # 1. 높은 지형인가?
+                current_height = terrain_height[x, y]
+                if current_height < high_threshold:
+                    continue
+
+                # 2. 지상 유닛이 접근 불가능한가? (pathing_grid == 0)
+                if pathing_grid[x, y] != 0:
+                    continue
+
+                # 3. 주변도 접근 불가능한 고립 지형인가? (더 엄격한 체크)
+                # 주변 3x3 영역이 대부분 unpathable이어야 함
+                unpathable_count = 0
+                for dx in range(-1, 2):
+                    for dy in range(-1, 2):
+                        nx, ny = x + dx, y + dy
+                        if 0 <= nx < width and 0 <= ny < height:
+                            if pathing_grid[nx, ny] == 0:
+                                unpathable_count += 1
+
+                # 주변 9칸 중 7칸 이상이 unpathable이면 Pillar로 판정
+                if unpathable_count >= 7:
+                    # 적 시작 위치와 너무 가깝지 않은지 체크 (안전성)
+                    if self._is_safe_from_enemy_start(pos):
+                        pillars.append(pos)
+
+        # Pillar가 너무 많으면 필터링 (최대 12개)
+        if len(pillars) > 12:
+            # 맵 전체에 고르게 분포하도록 선택
+            pillars = self._select_distributed_pillars(pillars, max_count=12)
+
+        return pillars
+
+    def _is_safe_from_enemy_start(self, pos: Point2) -> bool:
+        """적 시작 위치에서 충분히 먼지 확인
+
+        Args:
+            pos: 체크할 위치
+
+        Returns:
+            안전 여부 (적 시작 위치에서 25 이상 떨어짐)
+        """
+        if not hasattr(self.bot, "enemy_start_locations"):
+            return True
+
+        enemy_starts = self.bot.enemy_start_locations
+        if not enemy_starts:
+            return True
+
+        min_safe_distance = 25.0
+
+        for enemy_start in enemy_starts:
+            if pos.distance_to(enemy_start) < min_safe_distance:
+                return False
+
+        return True
+
+    def _select_distributed_pillars(self, pillars: List[Point2], max_count: int) -> List[Point2]:
+        """맵 전체에 고르게 분포된 Pillar 선택
+
+        Args:
+            pillars: Pillar 후보 리스트
+            max_count: 최대 선택 개수
+
+        Returns:
+            분산 선택된 Pillar 리스트
+        """
+        if len(pillars) <= max_count:
+            return pillars
+
+        # 간단한 그리드 기반 분산 선택
+        selected = []
+        game_info = self.bot.game_info
+        width = game_info.terrain_height.width
+        height = game_info.terrain_height.height
+
+        # 맵을 그리드로 나눔 (4x3 = 12칸)
+        grid_cols = 4
+        grid_rows = 3
+        cell_width = width / grid_cols
+        cell_height = height / grid_rows
+
+        # 각 셀에서 하나씩 선택
+        for row in range(grid_rows):
+            for col in range(grid_cols):
+                if len(selected) >= max_count:
+                    break
+
+                # 현재 셀 영역
+                min_x = col * cell_width
+                max_x = (col + 1) * cell_width
+                min_y = row * cell_height
+                max_y = (row + 1) * cell_height
+
+                # 이 셀에 속하는 Pillar 찾기
+                cell_pillars = [
+                    p for p in pillars
+                    if min_x <= p.x < max_x and min_y <= p.y < max_y
+                ]
+
+                if cell_pillars:
+                    # 셀 중앙에 가장 가까운 것 선택
+                    cell_center = Point2((min_x + max_x) / 2, (min_y + max_y) / 2)
+                    best = min(cell_pillars, key=lambda p: p.distance_to(cell_center))
+                    selected.append(best)
+
+        # 여전히 부족하면 남은 것 중에서 랜덤 선택
+        if len(selected) < max_count:
+            remaining = [p for p in pillars if p not in selected]
+            import random
+            additional = random.sample(remaining, min(max_count - len(selected), len(remaining)))
+            selected.extend(additional)
+
+        return selected
+
+    def _use_fallback_positions(self):
+        """Pillar 계산 실패 시 폴백 위치 사용 (맵 가장자리)"""
+        if not hasattr(self.bot.game_info, "map_size"):
+            return
+
+        w = self.bot.game_info.map_size.width
+        h = self.bot.game_info.map_size.height
+
+        # 맵 가장자리 포인트 (기존 로직)
+        self.safe_spots = [
+            Point2((10, 10)), Point2((w/2, 10)), Point2((w-10, 10)),
+            Point2((10, h/2)), Point2((w-10, h/2)),
+            Point2((10, h-10)), Point2((w/2, h-10)), Point2((w-10, h-10))
+        ]
 
     async def _manage_overlords(self):
         """대군주 분산 배치"""

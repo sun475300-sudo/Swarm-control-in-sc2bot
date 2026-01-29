@@ -323,7 +323,8 @@ class PerformanceOptimizer:
                     dx = getattr(pos1, 'x', pos1[0]) - getattr(pos2, 'x', pos2[0])
                     dy = getattr(pos1, 'y', pos1[1]) - getattr(pos2, 'y', pos2[1])
                     return (dx**2 + dy**2) ** 0.5
-            except:
+            except (AttributeError, TypeError, IndexError):
+                # Failed to calculate distance (invalid position objects)
                 return 0.0
 
     def get_closest_cached(self, unit, candidates, max_distance: Optional[float] = None):

@@ -1,0 +1,23 @@
+{
+  "report_time": "2026-01-29T15:14:54.722374",
+  "opponent_modeling": {
+    "status": "no_models"
+  },
+  "micro_v3": {
+    "status": "active",
+    "log_entries": 2,
+    "ravager_executions": 0,
+    "lurker_executions": 0,
+    "focus_fire_executions": 0
+  },
+  "errors": {
+    "status": "no_errors",
+    "error_count": 0
+  },
+  "performance": {
+    "status": "ok",
+    "om_timings": 0,
+    "micro_timings": 0,
+    "lag_warnings": 4
+  }
+}

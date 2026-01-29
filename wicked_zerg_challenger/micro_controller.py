@@ -204,7 +204,8 @@ class BoidsController:
                         high_priority_units.append(unit)
                     else:
                         low_priority_units.append(unit)
-                except:
+                except (AttributeError, ValueError) as e:
+                    # Unit has no ground_range or distance calculation failed
                     low_priority_units.append(unit)
         else:
             low_priority_units = list(units)

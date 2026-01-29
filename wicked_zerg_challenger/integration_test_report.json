@@ -1,0 +1,14 @@
+{
+  "test_date": "2026-01-29T14:10:17.916429",
+  "opponent_modeling": {
+    "import": "success",
+    "data_dir": "created",
+    "integration_points": true
+  },
+  "micro_v3": {
+    "import": "success",
+    "integration_points": true
+  },
+  "performance": {},
+  "errors": []
+}

@@ -17,6 +17,7 @@ from bot_step_integration import BotStepIntegrator
 from utils.logger import setup_logger
 from typing import Optional
 from blackboard import Blackboard
+from difficulty_progression import DifficultyProgression
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -48,6 +49,10 @@ class WickedZergBotProImpl(BotAI):
         self.combat = None
         self.scout = None
         self.micro = None
+
+        # Difficulty Progression System
+        self.difficulty_progression = DifficultyProgression()
+        self.current_difficulty = None  # Will be set in on_start()
         self.queen_manager = None
 
         # Advanced managers (initialized in on_start)
@@ -84,6 +89,38 @@ class WickedZergBotProImpl(BotAI):
         # Already initialized in __init__, but logging here
         if self.blackboard:
              print("[BOT] ★ Blackboard active")
+
+        # === 0.05 Difficulty Progression ===
+        try:
+            map_name = self.game_info.map_name if hasattr(self, 'game_info') else "Unknown"
+            opponent_race = self.enemy_race if hasattr(self, 'enemy_race') else None
+
+            if opponent_race and self.difficulty_progression:
+                self.current_difficulty = self.difficulty_progression.get_recommended_difficulty(
+                    map_name, opponent_race
+                )
+                print(f"[DIFFICULTY] Map: {map_name}, Opponent: {opponent_race.name}")
+                print(f"[DIFFICULTY] Recommended Difficulty: {self.current_difficulty.name}")
+
+                # Print stats summary if available
+                stats_summary = self.difficulty_progression.get_stats_summary(map_name, opponent_race)
+                if "No stats" not in stats_summary:
+                    print(stats_summary)
+            else:
+                # Fallback
+                try:
+                    from sc2.data import Difficulty
+                    self.current_difficulty = Difficulty.Easy
+                    print("[DIFFICULTY] Using fallback difficulty: Easy")
+                except ImportError:
+                    self.current_difficulty = None
+        except Exception as e:
+            print(f"[DIFFICULTY] Error getting recommended difficulty: {e}")
+            try:
+                from sc2.data import Difficulty
+                self.current_difficulty = Difficulty.Easy
+            except ImportError:
+                self.current_difficulty = None
 
         # === 0.1 ProductionResilience (안전한 유닛 생산) ===
         try:
@@ -370,6 +407,24 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             print(f"[BOT_WARN] HiveTechMaximizer not available: {e}")
             self.hive_tech = None
+
+        # ★ NEW (PHASE 15): Opponent Modeling System (적 학습 시스템) ★
+        try:
+            from opponent_modeling import OpponentModeling
+            self.opponent_modeling = OpponentModeling(self, intel_manager=self.intel)
+            print("[BOT] ★ OpponentModeling initialized (Strategy Prediction)")
+        except ImportError as e:
+            print(f"[BOT_WARN] OpponentModeling not available: {e}")
+            self.opponent_modeling = None
+
+        # ★ NEW (PHASE 15): Advanced Micro Controller V3 (고급 마이크로 컨트롤) ★
+        try:
+            from advanced_micro_controller_v3 import AdvancedMicroControllerV3
+            self.micro_v3 = AdvancedMicroControllerV3(self)
+            print("[BOT] ★ AdvancedMicroControllerV3 initialized (Ravager/Lurker/Queen/Viper/Corruptor/FocusFire)")
+        except ImportError as e:
+            print(f"[BOT_WARN] AdvancedMicroControllerV3 not available: {e}")
+            self.micro_v3 = None
 
         # ★ NEW: RL Tech Adapter (적 테크 기반 강화학습 적응) ★
         try:
@@ -691,6 +746,32 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             print(f"[BOT] [WARNING] Failed to apply learned economy weights: {e}")
 
+        # ★★★ Opponent Modeling - Load previous data and start tracking ★★★
+        if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
+            try:
+                # Detect opponent ID (player name or ID)
+                opponent_id = None
+                if hasattr(self, 'opponent_id'):
+                    opponent_id = self.opponent_id
+                elif hasattr(self, 'enemy_name'):
+                    opponent_id = self.enemy_name
+                else:
+                    # Fallback: use enemy race as identifier
+                    opponent_id = f"AI_{self.enemy_race.name if hasattr(self, 'enemy_race') else 'Unknown'}"
+
+                # Start tracking
+                self.opponent_modeling.on_game_start(opponent_id, self.enemy_race if hasattr(self, 'enemy_race') else None)
+                print(f"[OPPONENT_MODELING] Started tracking opponent: {opponent_id}")
+
+                # Get strategy prediction
+                predicted_strategy, confidence = self.opponent_modeling.get_predicted_strategy()
+                if predicted_strategy:
+                    print(f"[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})")
+                    counter_units = self.opponent_modeling.get_counter_recommendations()
+                    print(f"[OPPONENT_MODELING] Recommended counters: {counter_units}")
+            except Exception as e:
+                print(f"[BOT_WARN] OpponentModeling on_start error: {e}")
+
         print(f"[BOT] on_start complete. Enemy race: {self.opponent_race}")
 
     async def on_step(self, iteration: int):
@@ -745,6 +826,27 @@ class WickedZergBotProImpl(BotAI):
         # ★ NEW: Save intel data for next game
         if self.intel:
              self.intel.save_data()
+
+        # ★★★ Opponent Modeling - Save game data for learning ★★★
+        if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
+            try:
+                result_str = str(game_result).upper()
+                won = "VICTORY" in result_str or "WIN" in result_str
+                lost = "DEFEAT" in result_str or "LOSS" in result_str
+
+                # Record game outcome
+                self.opponent_modeling.on_game_end(won, lost)
+                print(f"[OPPONENT_MODELING] Game data saved. Opponent model updated.")
+
+                # Print learning summary every 5 games
+                if self.opponent_modeling.current_opponent:
+                    model = self.opponent_modeling.models.get(self.opponent_modeling.current_opponent)
+                    if model and model.games_played % 5 == 0:
+                        print(f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}")
+                        print(f"  Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}")
+                        print(f"  Win rate: {model.games_won / model.games_played * 100:.1f}%")
+            except Exception as e:
+                print(f"[BOT_WARN] OpponentModeling on_end error: {e}")
 
         # Performance Optimizer cleanup
         # if self.performance_optimizer:
@@ -911,16 +1013,39 @@ class WickedZergBotProImpl(BotAI):
                     "vespene": self.vespene if hasattr(self, 'vespene') else 0,
                 }
 
+                # 실제 난이도 가져오기
+                difficulty_str = 'Easy'  # 기본값
+                if hasattr(self, 'current_difficulty') and self.current_difficulty:
+                    difficulty_str = self.current_difficulty.name
+
                 # 게임 분석 기록
                 self.game_analytics.record_game(
                     game_id=getattr(self, 'game_count', 0),
                     map_name=str(getattr(self, 'game_info', {}).get('map_name', 'Unknown')) if hasattr(self, 'game_info') else 'Unknown',
                     opponent_race=str(getattr(self, 'enemy_race', 'Unknown')).replace('Race.', ''),
-                    difficulty='Easy',  # TODO: 실제 난이도 가져오기
+                    difficulty=difficulty_str,
                     result=str(game_result),
                     game_time=getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0,
                     additional_stats=additional_stats
                 )
+
+                # 난이도 진행도 시스템에도 기록
+                if hasattr(self, 'difficulty_progression') and self.difficulty_progression:
+                    try:
+                        map_name = str(getattr(self, 'game_info', {}).get('map_name', 'Unknown')) if hasattr(self, 'game_info') else 'Unknown'
+                        opponent_race = getattr(self, 'enemy_race', None)
+                        won = (str(game_result) == "Victory")
+
+                        if opponent_race and hasattr(self, 'current_difficulty') and self.current_difficulty:
+                            self.difficulty_progression.record_game(
+                                map_name=map_name,
+                                opponent_race=opponent_race,
+                                difficulty=self.current_difficulty,
+                                won=won
+                            )
+                            print(f"[DIFFICULTY] Recorded: {map_name} vs {opponent_race.name} ({self.current_difficulty.name}): {'WIN' if won else 'LOSS'}")
+                    except Exception as e:
+                        print(f"[DIFFICULTY] Error recording to progression system: {e}")
 
                 # 10게임마다 통계 요약 출력
                 if self.game_analytics.total_games % 10 == 0:
