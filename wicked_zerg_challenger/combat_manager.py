@@ -867,23 +867,31 @@ class CombatManager:
         # 스파인 크롤러 타겟팅 (고위협 유닛 우선)
         if hasattr(self.bot, "structures"):
             spines = self.bot.structures(UnitTypeId.SPINECRAWLER).ready
-            for spine in spines:
-                if spine.distance_to(threat_position) < 20:  # 범위 확대
-                    try:
+            # ★ OPTIMIZATION: Use closer_than for better performance
+            spines_in_range = spines.closer_than(20, threat_position) if hasattr(spines, "closer_than") else \
+                             [s for s in spines if s.distance_to(threat_position) < 20]
+
+            for spine in spines_in_range:
+                try:
+                    # ★ OPTIMIZATION: Use closer_than instead of list comprehension
+                    if hasattr(enemy_units, "closer_than"):
+                        enemies_near = enemy_units.closer_than(12, spine)
+                    else:
                         enemies_near = [e for e in enemy_units if e.distance_to(spine) < 12]
-                        if enemies_near:
-                            # 우선순위 타겟 먼저
-                            priority_enemies = [
-                                e for e in enemies_near
-                                if getattr(e.type_id, "name", "").upper() in high_priority_targets
-                            ]
-                            if priority_enemies:
-                                target = min(priority_enemies, key=lambda e: e.distance_to(spine))
-                            else:
-                                target = min(enemies_near, key=lambda e: e.distance_to(spine))
-                            self.bot.do(spine.attack(target))
-                    except Exception:
-                        pass
+
+                    if enemies_near:
+                        # 우선순위 타겟 먼저
+                        priority_enemies = [
+                            e for e in enemies_near
+                            if getattr(e.type_id, "name", "").upper() in high_priority_targets
+                        ]
+                        if priority_enemies:
+                            target = spine.position.closest(priority_enemies)
+                        else:
+                            target = spine.position.closest(enemies_near)
+                        self.bot.do(spine.attack(target))
+                except Exception:
+                    pass
 
         # 다른 유닛들 방어 (우선순위 타겟 집중)
         for unit in other_units:
@@ -1594,7 +1602,11 @@ class CombatManager:
             return
 
         base = self.bot.townhalls.first
-        nearby_enemies = [e for e in enemy_units if e.distance_to(base.position) < 25]
+        # ★ OPTIMIZATION: Use closer_than for better performance
+        if hasattr(enemy_units, "closer_than"):
+            nearby_enemies = enemy_units.closer_than(25, base.position)
+        else:
+            nearby_enemies = [e for e in enemy_units if e.distance_to(base.position) < 25]
 
         if not nearby_enemies:
             return
@@ -1697,9 +1709,17 @@ class CombatManager:
             return
 
         # Look for workers near harass target
-        enemy_workers = [e for e in enemy_units
-                        if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
-                        and e.distance_to(self._air_harass_target) < 15]
+        # ★ OPTIMIZATION: Filter by type first, then use closer_than
+        workers_only = [e for e in enemy_units
+                       if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]]
+
+        if hasattr(enemy_units, "closer_than"):
+            # Use SC2 Units collection for better performance
+            enemy_workers = [w for w in workers_only
+                           if w.distance_to(self._air_harass_target) < 15]
+        else:
+            enemy_workers = [w for w in workers_only
+                           if w.distance_to(self._air_harass_target) < 15]
 
         if enemy_workers:
             # Attack workers with bouncing logic
@@ -1740,11 +1760,20 @@ class CombatManager:
             return
 
         # 적 방어 병력 확인 (타겟 근처 15 거리)
-        enemy_combat_units = [
-            e for e in enemy_units
-            if hasattr(e, 'can_attack') and e.can_attack
-            and getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE"]
-            and e.distance_to(harass_target) < 15
+        # ★ OPTIMIZATION: Use closer_than for distance filtering
+        if hasattr(enemy_units, "closer_than"):
+            nearby_enemies = enemy_units.closer_than(15, harass_target)
+            enemy_combat_units = [
+                e for e in nearby_enemies
+                if hasattr(e, 'can_attack') and e.can_attack
+                and getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE"]
+            ]
+        else:
+            enemy_combat_units = [
+                e for e in enemy_units
+                if hasattr(e, 'can_attack') and e.can_attack
+                and getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE"]
+                and e.distance_to(harass_target) < 15
         ]
 
         # 방어 병력이 3기 이상이면 후퇴

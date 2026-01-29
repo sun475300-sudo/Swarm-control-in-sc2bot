@@ -229,12 +229,17 @@ class MicroCombat:
                 if self._micro_queen(unit, units, actions):
                     continue
 
-            # 2. Baneling Micro (Crash into clumps)
+            # 2. Zergling Micro (Surround)
+            if unit.type_id == getattr(UnitTypeId, "ZERGLING", None):
+                if self._micro_zergling(unit, threats, actions):
+                    continue
+
+            # 3. Baneling Micro (Crash into clumps)
             if unit.type_id == getattr(UnitTypeId, "BANELING", None):
                 if self._micro_baneling(unit, threats, actions):
                     continue
 
-            # 3. Anti-Splash Repulsion
+            # 4. Anti-Splash Repulsion
             rep_x, rep_y = self.anti_splash.repulsion_vector(unit, threats)
             if rep_x or rep_y:
                 move_target = self._offset_position(unit, rep_x, rep_y)
@@ -242,7 +247,7 @@ class MicroCombat:
                     actions.append(unit.move(move_target))
                     continue
 
-            # 4. Kiting Logic
+            # 5. Kiting Logic
             target = self._closest_enemy(unit, threats)
             if target:
                 # 무기 쿨다운 중이고 사거리가 닿으면 후퇴 (카이팅)
@@ -287,15 +292,54 @@ class MicroCombat:
             
         return False
 
+    def _micro_zergling(self, zergling, enemy_units: Iterable, actions: List) -> bool:
+        """
+        Zergling Surround Logic - maximize attack surface by surrounding enemies.
+
+        Strategy:
+        - Front zerglings attack directly
+        - Rear zerglings move to enemy's back/sides to create surround
+        - Prevents wasted DPS from zerglings stuck behind
+        """
+        if not enemy_units:
+            return False
+
+        # Find closest enemy
+        target = self._closest_enemy(zergling, enemy_units)
+        if not target:
+            return False
+
+        distance = zergling.distance_to(target)
+
+        # If close enough to engage (within 3 range)
+        if distance < 3.0:
+            # Check if there are friendly units already attacking this target
+            nearby_allies = [
+                u for u in getattr(self.bot, "units", [])
+                if u.type_id == UnitTypeId.ZERGLING and u.distance_to(target) < 2.0 and u.tag != zergling.tag
+            ]
+
+            # If 2+ allies already engaging, move to flank/surround instead of stacking
+            # OPTIMIZED: 4 → 2 (more aggressive surround, reduce unit losses)
+            if len(nearby_allies) >= 2:
+                # Calculate surround position (behind enemy)
+                # Move to position 2 units behind enemy
+                surround_pos = target.position.towards(zergling.position, -2.0)
+                actions.append(zergling.move(surround_pos))
+                return True
+
+        # Default: attack normally if not in surround scenario
+        return False
+
     def _micro_baneling(self, baneling, enemy_units: Iterable, actions: List) -> bool:
         """Baneling optimization: avoid single units, target clumps."""
         if not enemy_units:
             return False
-            
+
         nearby_enemies = [e for e in enemy_units if e.distance_to(baneling) < 10]
         if not nearby_enemies:
             return False
-            
+
         # 1. Prioritize structures and light units (marines/lings)
         vital_targets = [
             e for e in nearby_enemies 

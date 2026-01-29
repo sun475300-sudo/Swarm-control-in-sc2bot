@@ -326,6 +326,12 @@ class UnitFactory:
         total_units = max(1, self._count_combat_units())
         gas_ratio = gas_units / total_units
         can_spend_gas = vespene >= self.min_gas_reserve
+
+        # ★★★ IMPROVED: 업그레이드 우선순위 존중 (자원 예약 시스템) ★★★
+        # StrictUpgradePriority가 가스를 예약했으면 유닛 생산 제한
+        if hasattr(self.bot, 'upgrade_priority') and self.bot.upgrade_priority:
+            available_gas = self.bot.upgrade_priority.get_available_gas()
+            can_spend_gas = can_spend_gas and available_gas >= self.min_gas_reserve
         queue = self._build_priority_queue(
             minerals=minerals,
             vespene=vespene,

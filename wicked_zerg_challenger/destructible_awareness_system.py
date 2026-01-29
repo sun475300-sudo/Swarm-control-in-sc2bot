@@ -50,36 +50,21 @@ class DestructibleAwarenessSystem:
         # 주의: 일부 유닛 타입은 맵마다 다를 수 있으므로 이름으로도 확인
         self.DESTRUCTIBLE_TYPES = set()
 
-        # 안전하게 존재하는 타입만 추가
-        try:
-            if hasattr(UnitTypeId, 'DESTRUCTIBLEROCK6X6'):
-                self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEROCK6X6)
-        except:
-            pass
+        # 안전하게 존재하는 타입만 추가 (hasattr이 이미 안전하므로 try-except 불필요)
+        if hasattr(UnitTypeId, 'DESTRUCTIBLEROCK6X6'):
+            self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEROCK6X6)
 
-        try:
-            if hasattr(UnitTypeId, 'DESTRUCTIBLEDEBRIS6X6'):
-                self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEDEBRIS6X6)
-        except:
-            pass
+        if hasattr(UnitTypeId, 'DESTRUCTIBLEDEBRIS6X6'):
+            self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEDEBRIS6X6)
 
-        try:
-            if hasattr(UnitTypeId, 'DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR'):
-                self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR)
-        except:
-            pass
+        if hasattr(UnitTypeId, 'DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR'):
+            self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR)
 
-        try:
-            if hasattr(UnitTypeId, 'UNBUILDABLEPLATESDESTRUCTIBLE'):
-                self.DESTRUCTIBLE_TYPES.add(UnitTypeId.UNBUILDABLEPLATESDESTRUCTIBLE)
-        except:
-            pass
+        if hasattr(UnitTypeId, 'UNBUILDABLEPLATESDESTRUCTIBLE'):
+            self.DESTRUCTIBLE_TYPES.add(UnitTypeId.UNBUILDABLEPLATESDESTRUCTIBLE)
 
-        try:
-            if hasattr(UnitTypeId, 'UNBUILDABLEBRICKSDESTRUCTIBLE'):
-                self.DESTRUCTIBLE_TYPES.add(UnitTypeId.UNBUILDABLEBRICKSDESTRUCTIBLE)
-        except:
-            pass
+        if hasattr(UnitTypeId, 'UNBUILDABLEBRICKSDESTRUCTIBLE'):
+            self.DESTRUCTIBLE_TYPES.add(UnitTypeId.UNBUILDABLEBRICKSDESTRUCTIBLE)
 
         # 통계
         self.total_discovered = 0
@@ -153,7 +138,7 @@ class DestructibleAwarenessSystem:
                 type_name = str(unit.type_id.name).upper()
                 if 'DESTRUCTIBLE' in type_name or 'UNBUILDABLE' in type_name:
                     return True
-            except:
+            except AttributeError:
                 pass
 
         return False

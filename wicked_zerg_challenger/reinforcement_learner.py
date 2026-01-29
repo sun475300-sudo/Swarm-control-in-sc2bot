@@ -314,15 +314,113 @@ class ReinforcementLearner:
         return {}
 
     def _reinforce_counters(self) -> Dict:
-        """적 카운터 패턴 강화 학습"""
+        """적 카운터 패턴 강화 학습
+
+        실제 교전 결과를 분석하여 유효한 카운터 유닛 학습:
+        1. 교전 데이터에서 적/아군 유닛 구성 추출
+        2. 트레이드 효율(kills/losses) 계산
+        3. 높은 효율을 보인 카운터 조합 학습
+        4. 신뢰도 기반 필터링 (MIN_SAMPLES 적용)
+        """
         print("\n[COUNTERS] Reinforcement learning for enemy counters...")
 
-        # 현재는 기본 구현 - 적 유닛 대응 패턴 학습
-        # TODO: 실제 교전 결과 기반 카운터 학습
+        # 카운터 데이터 수집: {enemy_unit: {our_unit: [trade_efficiency_samples]}}
+        counter_samples = defaultdict(lambda: defaultdict(lambda: {
+            "trade_efficiencies": [],
+            "wins": 0,
+            "losses": 0,
+            "total_battles": 0
+        }))
 
-        return {
-            "note": "Counter patterns require more engagement data"
-        }
+        for game in self.games_data:
+            result = game.get("game_result", {}).get("result", "Unknown")
+            battles = game.get("battles", [])
+
+            for battle in battles:
+                enemy_comp = battle.get("enemy_composition", {})
+                our_comp = battle.get("our_composition", {})
+                trade_result = battle.get("trade_result", {})
+
+                # 트레이드 효율 계산
+                units_killed = trade_result.get("enemy_units_killed", 0)
+                units_lost = trade_result.get("our_units_lost", 0)
+
+                if units_lost == 0:
+                    # 완벽한 승리 (손실 없음)
+                    trade_efficiency = 10.0
+                elif units_killed == 0:
+                    # 완벽한 패배 (처치 없음)
+                    trade_efficiency = 0.0
+                else:
+                    # 일반적인 트레이드: kills/losses
+                    trade_efficiency = units_killed / units_lost
+
+                # 각 적 유닛에 대해 우리가 사용한 유닛 기록
+                for enemy_unit, enemy_count in enemy_comp.items():
+                    if enemy_count <= 0:
+                        continue
+
+                    for our_unit, our_count in our_comp.items():
+                        if our_count <= 0:
+                            continue
+
+                        # 트레이드 효율 기록
+                        data = counter_samples[enemy_unit][our_unit]
+                        data["trade_efficiencies"].append(trade_efficiency)
+                        data["total_battles"] += 1
+
+                        if result == "Victory":
+                            data["wins"] += 1
+                        else:
+                            data["losses"] += 1
+
+        # 강화 학습 적용: 신뢰도 있는 카운터만 학습
+        learned_counters = {}
+
+        for enemy_unit, counter_data in counter_samples.items():
+            best_counters = []
+
+            for our_unit, data in counter_data.items():
+                if data["total_battles"] >= self.MIN_SAMPLES:
+                    # 평균 트레이드 효율
+                    avg_efficiency = statistics.mean(data["trade_efficiencies"])
+
+                    # 신뢰도 계산
+                    confidence = self._calculate_confidence(
+                        data["wins"],
+                        data["losses"],
+                        data["total_battles"]
+                    )
+
+                    # 효율 임계값: 1.0 이상 (최소한 1:1 교환)
+                    if avg_efficiency >= 1.0 and confidence >= self.CONFIDENCE_THRESHOLD:
+                        best_counters.append({
+                            "counter_unit": our_unit,
+                            "avg_trade_efficiency": round(avg_efficiency, 2),
+                            "samples": data["total_battles"],
+                            "confidence": round(confidence, 3),
+                            "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
+                        })
+                        self.learning_stats["learned_patterns"] += 1
+
+            # 효율이 높은 순으로 정렬
+            best_counters.sort(key=lambda x: x["avg_trade_efficiency"], reverse=True)
+
+            if best_counters:
+                learned_counters[enemy_unit] = {
+                    "recommended_counters": best_counters[:3],  # 상위 3개만
+                    "total_counter_options": len(best_counters)
+                }
+                print(f"  ✓ {enemy_unit}: {len(best_counters)} effective counters found")
+
+        self.learning_stats["total_patterns"] += len(counter_samples)
+
+        # 추가 통계
+        if learned_counters:
+            print(f"\n  Total enemy units analyzed: {len(counter_samples)}")
+            print(f"  Counter patterns learned: {len(learned_counters)}")
+
+        return learned_counters
 
     def _calculate_confidence(self, wins: int, losses: int, total_samples: int) -> float:
         """신뢰도 계산"""

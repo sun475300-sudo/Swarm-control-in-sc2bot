@@ -81,7 +81,10 @@ class ProductionController:
 
         # 생산 요청 처리 (우선순위 순)
         processed_count = 0
-        max_per_frame = 5  # ★ OPTIMIZED: 3 → 5 (더 빠른 유닛 생산) ★
+        # ★ SMART REMAX: 50 units per frame (Zerg instant remax capability) ★
+        # Zerg's key strength is producing 50+ units instantly when resources allow
+        # Previous limit of 5 prevented instant army rebuilding
+        max_per_frame = 50  # OPTIMIZED: 5 → 50 (enable instant remax)
 
         while processed_count < max_per_frame:
             # 다음 요청 가져오기

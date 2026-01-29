@@ -47,7 +47,6 @@ class PotentialFieldController:
         self.structure_weight = structure_weight
         self.enemy_radius = enemy_radius
         self.structure_radius = structure_radius
-        self.structure_radius = structure_radius
         self.terrain_radius = terrain_radius
 
         # ★ NEW: Splash Damage Threats ★
@@ -128,11 +127,12 @@ class PotentialFieldController:
                 type_name = getattr(enemy.type_id, "name", "").upper()
                 if type_name in self.splash_unit_types:
                     # Stronger repulsion to force spreading
-                    splash_strength = strength * self.splash_weight 
+                    splash_strength = strength * self.splash_weight
                     repulsion_x += (dx / (dist + 0.1)) * splash_strength
                     repulsion_y += (dy / (dist + 0.1)) * splash_strength
-            except:
-                pass
+            except (AttributeError, ZeroDivisionError) as e:
+                # Unit position or attribute access failed, skip this unit
+                continue
 
         return repulsion_x, repulsion_y
 
