@@ -56,36 +56,74 @@ class OverlordVisionNetwork:
                 self.logger.error(f"[VISION_NETWORK] Error: {e}")
 
     def _update_vision_positions(self):
-        """시야 위치 업데이트"""
+        """시야 위치 업데이트 (★ OPTIMIZED: 우선순위 기반 위치 선정 ★)"""
         if not hasattr(self.bot, "expansion_locations_list"):
             return
 
         self.vision_positions = []
+        our_base = self.bot.start_location
+        enemy_base = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
 
-        # 1. Watchtowers (if any)
-        # 2. Expansion paths
-        for exp_pos in self.bot.expansion_locations_list[:5]:
+        # ★ PRIORITY 1: Watchtowers (best vision, defensible)
+        if hasattr(self.bot, "watchtowers"):
+            for tower in self.bot.watchtowers[:2]:
+                self.vision_positions.append(tower.position)
+
+        # ★ PRIORITY 2: Enemy base perimeter (drop detection + tech scouting)
+        if enemy_base:
+            # 적 본진 주변 4방향 감시
+            for angle in [0, 90, 180, 270]:
+                import math
+                rad = math.radians(angle)
+                offset_x = 15 * math.cos(rad)
+                offset_y = 15 * math.sin(rad)
+                watch_pos = Point2((enemy_base.x + offset_x, enemy_base.y + offset_y))
+                self.vision_positions.append(watch_pos)
+
+        # ★ PRIORITY 3: Main attack path (between bases)
+        if enemy_base:
+            midpoint = Point2(((our_base.x + enemy_base.x) / 2, (our_base.y + enemy_base.y) / 2))
+            self.vision_positions.append(midpoint)
+
+        # ★ PRIORITY 4: Expansion paths (우리 확장 + 적 예상 확장)
+        for exp_pos in self.bot.expansion_locations_list[1:4]:  # Skip main base
             self.vision_positions.append(exp_pos.towards(self.bot.game_info.map_center, 5))
 
-        # 3. Map center
+        # ★ PRIORITY 5: Map center (general awareness)
         self.vision_positions.append(self.bot.game_info.map_center)
 
     async def _deploy_vision_network(self):
-        """시야 네트워크 배치"""
+        """시야 네트워크 배치 (★ OPTIMIZED: 생존 검증 + 재배치 ★)"""
         if not hasattr(self.bot, "units"):
             return
 
         overlords = self.bot.units(UnitTypeId.OVERLORD).idle
 
+        # ★ Clean up dead/missing overlords from assignments
+        positions_to_remove = []
+        for pos, tag in self.assigned_overlords.items():
+            overlord = self.bot.units.find_by_tag(tag)
+            if not overlord or overlord.type_id != UnitTypeId.OVERLORD:
+                # Overlord dead or transformed to Overseer
+                positions_to_remove.append(pos)
+            elif overlord.distance_to(pos) > 15:
+                # Overlord moved away (possibly reassigned by other logic)
+                positions_to_remove.append(pos)
+
+        for pos in positions_to_remove:
+            del self.assigned_overlords[pos]
+
+        # ★ Deploy overlords to uncovered positions (priority order)
         for pos in self.vision_positions:
             if pos in self.assigned_overlords:
-                # Already assigned
+                # Already assigned and validated
                 continue
 
-            if overlords:
+            if overlords.exists:
                 overlord = overlords.first
                 self.bot.do(overlord.move(pos))
                 self.assigned_overlords[pos] = overlord.tag
-                overlords = overlords.exclude_type(UnitTypeId.OVERLORD)
+                # Remove from available pool
+                overlords = overlords.filter(lambda u: u.tag != overlord.tag)
 
                 self.logger.info(f"[{int(self.bot.time)}s] ★ Overlord deployed to vision position {pos} ★")

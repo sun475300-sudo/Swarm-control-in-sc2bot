@@ -17,7 +17,9 @@ from bot_step_integration import BotStepIntegrator
 from utils.logger import setup_logger
 from typing import Optional
 from blackboard import Blackboard
+from blackboard import Blackboard
 from difficulty_progression import DifficultyProgression
+import traceback  # ★ ADDED: For better debugging
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -42,6 +44,7 @@ class WickedZergBotProImpl(BotAI):
         # Initialize managers (lazy loading)
         self.blackboard = Blackboard()     # ★ Blackboard (Single Source of Truth) ★
         self.defense_coordinator = None    # ★ DefenseCoordinator (Unified Defense) ★
+        self.early_defense = None          # ★ EarlyDefenseSystem (0-3 min rush defense) ★
         self.production_controller = None  # ★ ProductionController (Dynamic Authority) ★
         self.intel = None
         self.economy = None
@@ -49,6 +52,7 @@ class WickedZergBotProImpl(BotAI):
         self.combat = None
         self.scout = None
         self.micro = None
+        self.idle_units = None  # ★ IdleUnitManager (Idle unit harassment) ★
 
         # Difficulty Progression System
         self.difficulty_progression = DifficultyProgression()
@@ -139,12 +143,39 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             print(f"[BOT_WARN] EconomyManager not available: {e}")
 
+        # === ★ NEW: Advanced Worker Optimizer (고급 일꾼 최적화) ★ ===
+        try:
+            from advanced_worker_optimizer import AdvancedWorkerOptimizer
+            self.worker_optimizer = AdvancedWorkerOptimizer(self)
+            print("[BOT] ★ AdvancedWorkerOptimizer initialized - Efficient resource harvesting ★")
+        except ImportError as e:
+            print(f"[BOT_WARN] AdvancedWorkerOptimizer not available: {e}")
+            self.worker_optimizer = None
+
         try:
             from combat_manager import CombatManager
             self.combat = CombatManager(self)
             print("[BOT] CombatManager initialized")
         except ImportError as e:
             print(f"[BOT_WARN] CombatManager not available: {e}")
+
+        # === IdleUnitManager (유휴 유닛 관리) ===
+        try:
+            from idle_unit_manager import IdleUnitManager
+            self.idle_units = IdleUnitManager(self)
+            print("[BOT] ★ IdleUnitManager initialized (Idle unit harassment)")
+        except ImportError as e:
+            print(f"[BOT_WARN] IdleUnitManager not available: {e}")
+            self.idle_units = None
+
+        # === ★ NEW: Combat Phase Controller (전투 단계별 컨트롤) ★ ===
+        try:
+            from combat_phase_controller import CombatPhaseController
+            self.combat_phase = CombatPhaseController(self)
+            print("[BOT] ★ CombatPhaseController initialized - Multi-phase combat control ★")
+        except ImportError as e:
+            print(f"[BOT_WARN] CombatPhaseController not available: {e}")
+            self.combat_phase = None
 
         try:
             from intel_manager import IntelManager
@@ -245,6 +276,15 @@ class WickedZergBotProImpl(BotAI):
             self.upgrade_manager = EvolutionUpgradeManager(self)
         except ImportError:
             pass
+
+        # === ★ NEW: Upgrade Resource Planner (업그레이드 자원 계획 시스템) ★ ===
+        try:
+            from upgrade_resource_planner import UpgradeResourcePlanner
+            self.upgrade_planner = UpgradeResourcePlanner(self)
+            print("[BOT] ★ UpgradeResourcePlanner initialized - Resource banking for upgrades ★")
+        except ImportError as e:
+            print(f"[BOT_WARN] UpgradeResourcePlanner not available: {e}")
+            self.upgrade_planner = None
 
         try:
             from unit_factory import UnitFactory
@@ -398,6 +438,15 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             print(f"[BOT_WARN] CreepExpansionSystem not available: {e}")
             self.creep_expansion = None
+
+        # === 21.5 ★ NEW: Creep Denial System (적 점막 제거) ★ ===
+        try:
+            from creep_denial_system import CreepDenialSystem
+            self.creep_denial = CreepDenialSystem(self)
+            print("[BOT] ★ CreepDenialSystem initialized - Enemy creep tumor elimination! ★")
+        except ImportError as e:
+            print(f"[BOT_WARN] CreepDenialSystem not available: {e}")
+            self.creep_denial = None
 
         # === 22. Hive Tech Maximizer (군락 기술 극대화) ===
         try:
@@ -718,6 +767,15 @@ class WickedZergBotProImpl(BotAI):
             print(f"[BOT_WARN] DefenseCoordinator not available: {e}")
             self.defense_coordinator = None
 
+        # === EarlyDefenseSystem (초반 러시 방어) ===
+        try:
+            from early_defense_system import EarlyDefenseSystem
+            self.early_defense = EarlyDefenseSystem(self)
+            print("[BOT] ★ EarlyDefenseSystem initialized (0-3 min rush defense)")
+        except ImportError as e:
+            print(f"[BOT_WARN] EarlyDefenseSystem not available: {e}")
+            self.early_defense = None
+
         # === ProductionController (통합 생산 관리) ===
         try:
             from production_controller import ProductionController
@@ -734,6 +792,7 @@ class WickedZergBotProImpl(BotAI):
                 print("[BOT] MapMemorySystem started - Enemy tracking active")
             except Exception as e:
                 print(f"[BOT_WARN] MapMemorySystem on_start failed: {e}")
+                traceback.print_exc()
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
@@ -745,6 +804,7 @@ class WickedZergBotProImpl(BotAI):
                 print("[BOT] [OK] Applied learned economy fundamentals to EconomyCombatBalancer")
         except Exception as e:
             print(f"[BOT] [WARNING] Failed to apply learned economy weights: {e}")
+            traceback.print_exc()
 
         # ★★★ Opponent Modeling - Load previous data and start tracking ★★★
         if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
@@ -771,6 +831,7 @@ class WickedZergBotProImpl(BotAI):
                     print(f"[OPPONENT_MODELING] Recommended counters: {counter_units}")
             except Exception as e:
                 print(f"[BOT_WARN] OpponentModeling on_start error: {e}")
+                traceback.print_exc()
 
         print(f"[BOT] on_start complete. Enemy race: {self.opponent_race}")
 
@@ -847,6 +908,7 @@ class WickedZergBotProImpl(BotAI):
                         print(f"  Win rate: {model.games_won / model.games_played * 100:.1f}%")
             except Exception as e:
                 print(f"[BOT_WARN] OpponentModeling on_end error: {e}")
+                traceback.print_exc()
 
         # Performance Optimizer cleanup
         # if self.performance_optimizer:

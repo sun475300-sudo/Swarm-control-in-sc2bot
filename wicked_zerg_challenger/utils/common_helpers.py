@@ -1,199 +1,167 @@
 # -*- coding: utf-8 -*-
 """
-Common Helper Functions - Shared utilities across managers.
+Common Helpers - 공통 유틸리티 함수
 
-This module consolidates duplicate utility functions to reduce code duplication.
+목적:
+1. 중복 코드 제거
+2. 일관된 체크 로직
+3. 유지보수성 개선
 """
 
-from typing import Any, Iterable, Optional, Tuple
-
-try:
-    from sc2.position import Point2
-except ImportError:
-    Point2 = None
+from typing import Any, Optional, List
 
 
-class SafeTrainHelper:
-    """Helper for safe unit training with async/sync compatibility."""
+def has_units(units: Any) -> bool:
+    """
+    유닛 컬렉션이 비어있지 않은지 확인
 
-    @staticmethod
-    async def safe_train(unit, unit_type) -> bool:
-        """
-        Safely train a unit, handling both sync and async train() methods.
+    Args:
+        units: SC2 Units collection 또는 리스트
 
-        Args:
-            unit: The unit (typically larva) to train from
-            unit_type: UnitTypeId to train
+    Returns:
+        유닛이 존재하면 True, 없으면 False
 
-        Returns:
-            True if training was initiated successfully
-        """
-        try:
-            result = unit.train(unit_type)
-            if hasattr(result, '__await__'):
-                await result
-            return True
-        except Exception:
-            return False
-
-
-class UnitFilterHelper:
-    """Helper for unit filtering and selection."""
-
-    @staticmethod
-    def closest_enemy(unit, enemies: Iterable) -> Optional[Any]:
-        """
-        Find the closest enemy to a given unit.
-
-        Args:
-            unit: The reference unit
-            enemies: Iterable of enemy units
-
-        Returns:
-            Closest enemy unit or None
-        """
-        closest = None
-        closest_dist = None
-        for enemy in enemies:
-            try:
-                dist = unit.distance_to(enemy)
-            except Exception:
-                continue
-            if closest_dist is None or dist < closest_dist:
-                closest = enemy
-                closest_dist = dist
-        return closest
-
-    @staticmethod
-    def filter_by_type(units, type_names: list) -> list:
-        """
-        Filter units by type name.
-
-        Args:
-            units: Units to filter
-            type_names: List of type names (e.g., ["ZERGLING", "ROACH"])
-
-        Returns:
-            Filtered list of units
-        """
-        if hasattr(units, "filter"):
-            return units.filter(lambda u: u.type_id.name in type_names)
-        return [u for u in units if getattr(u.type_id, "name", "") in type_names]
-
-    @staticmethod
-    def has_units(units) -> bool:
-        """Check if units collection has any units."""
-        if hasattr(units, "exists"):
-            return bool(units.exists)
-        return bool(units)
-
-    @staticmethod
-    def units_amount(units) -> int:
-        """Get the amount/count of units."""
-        if hasattr(units, "amount"):
-            return int(units.amount)
-        return len(units) if units else 0
-
-
-class PositionHelper:
-    """Helper for position calculations."""
-
-    @staticmethod
-    def centroid(units) -> Optional[Any]:
-        """
-        Calculate center of mass for a group of units.
-
-        Args:
-            units: Collection of units
-
-        Returns:
-            Point2 representing the centroid, or None
-        """
-        if not units or not Point2:
-            return Point2((0, 0)) if Point2 else None
-
-        try:
-            unit_list = list(units)
-            if not unit_list:
-                return Point2((0, 0)) if Point2 else None
-
-            total_x = sum(u.position.x for u in unit_list)
-            total_y = sum(u.position.y for u in unit_list)
-            count = len(unit_list)
-            return Point2((total_x / count, total_y / count))
-        except Exception:
-            return Point2((0, 0)) if Point2 else None
-
-    @staticmethod
-    def get_first_larva(bot) -> Optional[Any]:
-        """
-        Get the first available larva.
-
-        Args:
-            bot: Bot instance
-
-        Returns:
-            First larva unit or None
-        """
-        larva = getattr(bot, "larva", None)
-        if not larva:
-            return None
-        if hasattr(larva, "first"):
-            return larva.first
-        try:
-            return next(iter(larva))
-        except (StopIteration, TypeError):
-            return None
-
-
-class LogHelper:
-    """Helper for throttled logging."""
-
-    @staticmethod
-    def log_with_interval(iteration: int, message: str, interval: int = 200) -> bool:
-        """
-        Log message only at specified intervals.
-
-        Args:
-            iteration: Current game iteration
-            message: Message to log
-            interval: Logging interval (default 200)
-
-        Returns:
-            True if message was logged
-        """
-        if iteration % interval == 0:
-            print(message)
-            return True
+    Example:
+        >>> if has_units(self.bot.units(UnitTypeId.ZERGLING)):
+        >>>     # Do something with zerglings
+    """
+    if units is None:
         return False
 
-    @staticmethod
-    def warning_with_interval(iteration: int, context: str, error: Exception, interval: int = 200) -> bool:
-        """
-        Log warning only at specified intervals.
+    # SC2 Units collection
+    if hasattr(units, 'exists'):
+        return units.exists
 
-        Args:
-            iteration: Current game iteration
-            context: Context description
-            error: Exception that occurred
-            interval: Logging interval (default 200)
+    # Standard list/collection
+    if hasattr(units, '__len__'):
+        return len(units) > 0
 
-        Returns:
-            True if warning was logged
-        """
-        if iteration % interval == 0:
-            print(f"[WARNING] {context}: {error}")
-            return True
-        return False
+    return False
 
 
-# Convenience functions for direct import
-safe_train = SafeTrainHelper.safe_train
-closest_enemy = UnitFilterHelper.closest_enemy
-filter_by_type = UnitFilterHelper.filter_by_type
-has_units = UnitFilterHelper.has_units
-units_amount = UnitFilterHelper.units_amount
-centroid = PositionHelper.centroid
-get_first_larva = PositionHelper.get_first_larva
-log_with_interval = LogHelper.log_with_interval
-warning_with_interval = LogHelper.warning_with_interval
+def safe_first(units: Any) -> Optional[Any]:
+    """
+    컬렉션의 첫 번째 요소를 안전하게 가져옴
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+
+    Returns:
+        첫 번째 유닛, 없으면 None
+
+    Example:
+        >>> hatchery = safe_first(self.bot.townhalls)
+        >>> if hatchery:
+        >>>     # Use hatchery
+    """
+    if not has_units(units):
+        return None
+
+    # SC2 Units collection
+    if hasattr(units, 'first'):
+        return units.first
+
+    # Standard list/collection
+    try:
+        return units[0]
+    except (IndexError, KeyError, TypeError):
+        return None
+
+
+def safe_closest(units: Any, position) -> Optional[Any]:
+    """
+    위치에서 가장 가까운 유닛을 안전하게 가져옴
+
+    Args:
+        units: SC2 Units collection
+        position: 기준 위치
+
+    Returns:
+        가장 가까운 유닛, 없으면 None
+
+    Example:
+        >>> closest_enemy = safe_closest(enemy_units, my_unit.position)
+        >>> if closest_enemy:
+        >>>     my_unit.attack(closest_enemy)
+    """
+    if not has_units(units):
+        return None
+
+    if not position:
+        return None
+
+    try:
+        if hasattr(units, 'closest_to'):
+            return units.closest_to(position)
+
+        # Fallback: manual distance calculation
+        return min(units, key=lambda u: u.distance_to(position))
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
+def safe_amount(units: Any) -> int:
+    """
+    유닛 수를 안전하게 가져옴
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+
+    Returns:
+        유닛 수 (없으면 0)
+
+    Example:
+        >>> ling_count = safe_amount(self.bot.units(UnitTypeId.ZERGLING))
+    """
+    if not has_units(units):
+        return 0
+
+    # SC2 Units collection
+    if hasattr(units, 'amount'):
+        return units.amount
+
+    # Standard list/collection
+    if hasattr(units, '__len__'):
+        return len(units)
+
+    return 0
+
+
+def clamp(value: float, min_value: float, max_value: float) -> float:
+    """
+    값을 최소/최대 범위 내로 제한
+
+    Args:
+        value: 원본 값
+        min_value: 최소값
+        max_value: 최대값
+
+    Returns:
+        제한된 값
+
+    Example:
+        >>> worker_count = clamp(calculated_workers, 0, 24)
+    """
+    return max(min_value, min(value, max_value))
+
+
+def percentage(value: float, total: float) -> float:
+    """
+    백분율 계산 (0.0 ~ 1.0)
+
+    Args:
+        value: 현재 값
+        total: 전체 값
+
+    Returns:
+        백분율 (0.0 ~ 1.0), total이 0이면 0.0
+
+    Example:
+        >>> health_pct = percentage(unit.health, unit.health_max)
+        >>> if health_pct < 0.3:
+        >>>     retreat()
+    """
+    if total <= 0:
+        return 0.0
+
+    return clamp(value / total, 0.0, 1.0)

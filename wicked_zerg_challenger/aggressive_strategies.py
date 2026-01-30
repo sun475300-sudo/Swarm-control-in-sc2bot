@@ -117,7 +117,7 @@ class AggressiveStrategyExecutor:
             },
             AggressiveStrategyType.NYDUS_ALLIN: {
                 "lair_timing": 180,  # ★ 3분으로 앞당김 (기존: 4분)
-                "nydus_timing": 240,  # ★ 4분으로 앞당김 (기존: 5분)
+                "nydus_timing": 190,  # ★ 3:10으로 앞당김 - Lair 완료 즉시 건설 (기존: 4분)
                 "queen_count": 4,
             },
             AggressiveStrategyType.OVERLORD_DROP: {
@@ -481,7 +481,7 @@ class AggressiveStrategyExecutor:
         if not self.bot.structures(UnitTypeId.LAIR).exists:
             hatcheries = self.bot.structures(UnitTypeId.HATCHERY).ready.idle
             if hatcheries.exists and self.bot.can_afford(UnitTypeId.LAIR):
-                self.bot.do(hatcheries.first(AbilityId.UPGRADETOLAIR_LAIR))
+                self.bot.do(hatcheries.first.build(UnitTypeId.LAIR))
             return
 
         # 3. 잠복 이동 업그레이드
@@ -551,14 +551,22 @@ class AggressiveStrategyExecutor:
             if self._proxy_location is None:
                 return
 
-        # 2. 드론 파견
-        if game_time >= config["proxy_timing"] and not self._proxy_drones:
+        # 2. 드론 파견 (★ IMPROVED: 2마리 파견 + 대체 드론 ★)
+        if game_time >= config["proxy_timing"]:
             workers = self.bot.workers
             if workers.exists:
-                drone = workers.random
-                self.bot.do(drone.move(self._proxy_location))
-                self._proxy_drones.add(drone.tag)
-                print(f"[PROXY] Drone sent to proxy location!")
+                # 최대 2마리까지 파견 (redundancy)
+                target_drone_count = 2
+                current_alive_drones = sum(1 for tag in self._proxy_drones if self.bot.workers.find_by_tag(tag))
+
+                if current_alive_drones < target_drone_count:
+                    drones_to_send = min(target_drone_count - current_alive_drones, workers.amount)
+                    for _ in range(drones_to_send):
+                        drone = workers.random
+                        if drone and drone.tag not in self._proxy_drones:
+                            self.bot.do(drone.move(self._proxy_location))
+                            self._proxy_drones.add(drone.tag)
+                            print(f"[PROXY] Drone sent to proxy location! (Total sent: {len(self._proxy_drones)})")
 
         # 3. 해처리 건설
         proxy_hatch = None
@@ -570,10 +578,11 @@ class AggressiveStrategyExecutor:
         if proxy_hatch is None and not self.bot.already_pending(UnitTypeId.HATCHERY):
             for drone_tag in self._proxy_drones:
                 drone = self.bot.workers.find_by_tag(drone_tag)
-                if drone and drone.distance_to(self._proxy_location) < 5:
+                if drone and drone.distance_to(self._proxy_location) < 8:  # ★ IMPROVED: 5 → 8 거리 완화 ★
                     if self.bot.can_afford(UnitTypeId.HATCHERY):
                         self.bot.do(drone.build(UnitTypeId.HATCHERY, self._proxy_location))
                         print(f"[PROXY] Building proxy Hatchery!")
+                        break  # ★ 한 드론만 건설하면 충분 ★
 
         # 4. 가시 촉수 건설
         if proxy_hatch and proxy_hatch.is_ready:
@@ -619,7 +628,7 @@ class AggressiveStrategyExecutor:
             if game_time >= config["lair_timing"]:
                 hatcheries = self.bot.structures(UnitTypeId.HATCHERY).ready.idle
                 if hatcheries.exists and self.bot.can_afford(UnitTypeId.LAIR):
-                    self.bot.do(hatcheries.first(AbilityId.UPGRADETOLAIR_LAIR))
+                    self.bot.do(hatcheries.first.build(UnitTypeId.LAIR))
             return
 
         # 2. 땅굴망 건설

@@ -1359,3 +1359,255 @@
 11:25:37 - StrategyManager - INFO - [180s] EARLY HARASSMENT: Signal sent to CombatManager
 11:25:37 - DefenseCoordinator - INFO - [DEFENSE] [180s] ⏳ Spore 자원 대기: 15m (필요: 75m)
 11:25:37 - DefenseCoordinator - INFO - [DEFENSE] [184s] ⏳ Spore 자원 대기: 75m (필요: 75m)
+17:32:20 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:20 - CombatManager - WARNING - Targeting system not available
+17:32:20 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:20 - CombatManager - WARNING - Targeting system not available
+17:32:20 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:20 - CombatManager - WARNING - Targeting system not available
+17:32:20 - CombatManager - ERROR - Combat manager error: 'MockUnits' object has no attribute 'first'
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - ERROR - Combat manager error: 'MockUnits' object has no attribute 'first'
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:32:21 - CombatManager - INFO - CreepDenialSystem initialized
+17:32:21 - CombatManager - WARNING - Targeting system not available
+17:32:21 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:34:11 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:11 - CombatManager - WARNING - Targeting system not available
+17:34:11 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:34:40 - CombatManager - INFO - CreepDenialSystem initialized
+17:34:40 - CombatManager - WARNING - Targeting system not available
+17:34:40 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:57 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:57 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:41:58 - CombatManager - INFO - CreepDenialSystem initialized
+17:41:58 - CombatManager - WARNING - Targeting system not available
+17:41:58 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+17:52:32 - CombatManager - INFO - CreepDenialSystem initialized
+17:52:32 - CombatManager - WARNING - Targeting system not available
+17:52:32 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+18:34:10 - CombatManager - INFO - CreepDenialSystem initialized
+18:34:10 - CombatManager - WARNING - Targeting system not available
+18:34:10 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+19:26:51 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:51 - CombatManager - WARNING - Targeting system not available
+19:26:51 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:51 - CombatManager - WARNING - Targeting system not available
+19:26:51 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:51 - CombatManager - WARNING - Targeting system not available
+19:26:51 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+19:26:51 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:51 - CombatManager - WARNING - Targeting system not available
+19:26:51 - CombatManager - INFO - [0s] Active tasks: ['creep_denial', 'rally']
+19:26:51 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:51 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'
+19:26:52 - CombatManager - INFO - CreepDenialSystem initialized
+19:26:52 - CombatManager - WARNING - Targeting system not available
+19:26:52 - CombatManager - ERROR - Combat manager error: 'str' object has no attribute 'name'

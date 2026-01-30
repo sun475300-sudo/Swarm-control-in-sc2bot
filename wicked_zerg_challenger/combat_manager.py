@@ -98,6 +98,15 @@ class CombatManager:
         # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
         self._base_defense_active = False
         self._defense_rally_point = None
+
+        # === ★ Creep Denial System (New) ★ ===
+        try:
+            from combat.creep_denial_system import CreepDenialSystem
+            self.creep_denial = CreepDenialSystem(bot)
+            self.logger.info("CreepDenialSystem initialized")
+        except ImportError as e:
+            self.logger.warning(f"CreepDenialSystem import failed: {e}")
+            self.creep_denial = None
         self._last_defense_check = 0
         self._defense_check_interval = 3  # ★ OPTIMIZED: 5 → 3 (더 빠른 반응) ★
         self._worker_defense_threshold = 1  # ★ FIX: 적 1기라도 일꾼 근처 위협 시 방어 ★
@@ -163,6 +172,24 @@ class CombatManager:
             self.baneling_tactics = None
             if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
                 self.logger.warning("Baneling tactics controller not available")
+
+        # ★ NEW: Overlord Transport (대군주 수송) ★
+        try:
+            from combat.overlord_transport import OverlordTransport
+            self.overlord_transport = OverlordTransport(self.bot)
+        except ImportError:
+            self.overlord_transport = None
+            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
+                self.logger.warning("Overlord transport not available")
+
+        # ★ NEW: Roach Burrow Heal (바퀴 잠복 회복) ★
+        try:
+            from combat.roach_burrow_heal import RoachBurrowHeal
+            self.roach_burrow_heal = RoachBurrowHeal(self.bot)
+        except ImportError:
+            self.roach_burrow_heal = None
+            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
+                self.logger.warning("Roach burrow heal not available")
     
     async def on_step(self, iteration: int):
         """
@@ -215,6 +242,15 @@ class CombatManager:
 
                 # Also ensure burrow controller gets called for banelings
                 await self._ensure_baneling_burrow(iteration)
+
+                # ★ NEW: Overlord Transport System ★
+                if self.overlord_transport:
+                    await self.overlord_transport.on_step(iteration)
+
+                # ★ NEW: Roach Burrow Heal System ★
+                if self.roach_burrow_heal:
+                    await self.roach_burrow_heal.on_step(iteration)
+
                 return
 
             # 아군 유닛과 적 유닛 확인
@@ -440,6 +476,10 @@ class CombatManager:
                         if iteration % 200 == 0:
                              self.logger.info(f"[{int(game_time)}s] ★ EXPANSION DETECTED: Sending squad! ★")
 
+        # === TASK 2.9: ★ CREEP DENIAL (점막 제거) ★ ===
+        if self.creep_denial:
+            tasks_to_execute.append(("creep_denial", None, 35))  # Priority 35
+
         # === TASK 3: Main Army Attack ===
         # ★★★ FIX: 항상 공격 태스크 추가 (병력이 있으면 무조건 공격) ★★★
         if self._has_units(ground_army):
@@ -586,6 +626,15 @@ class CombatManager:
                             continue
                     for u in attack_units:
                         available_ground.discard(u.tag)
+
+            elif task_name == "creep_denial":
+                # ★ 점막 제거 로직 실행 ★
+                if self.creep_denial:
+                    await self.creep_denial.on_step(iteration)
+                    # Note: CreepDenialSystem handles unit assignment internally
+                    # It only uses units that are NOT assigned to higher priority tasks
+                    # But since we don't return used tags yet, we rely on its own filtering
+
 
             elif task_name == "mid_timing_attack":
                 # ★ 중반 타이밍 공격: 모든 지상 유닛 투입 ★
@@ -1023,11 +1072,18 @@ class CombatManager:
     async def _basic_attack(self, units: Units, enemy_units):
         """
         기본 공격 (에러 발생 시)
-        
+
         Args:
             units: 아군 유닛들
             enemy_units: 적 유닛들
         """
+        # ★ OPTIMIZED: Early returns to skip pipeline when no units ★
+        if not units or not enemy_units:
+            return
+
+        if not hasattr(units, 'exists') or not units.exists:
+            return
+
         try:
             # ★ Anti-Air Prioritization for Queens/Hydras ★
             can_shoot_up = {UnitTypeId.QUEEN, UnitTypeId.HYDRALISK, UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK, UnitTypeId.SPORECRAWLER}

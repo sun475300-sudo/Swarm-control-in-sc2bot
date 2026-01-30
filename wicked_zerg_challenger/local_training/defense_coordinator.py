@@ -48,6 +48,14 @@ class DefenseCoordinator:
         if iteration % 22 == 0: # Every ~1 sec
              await self._build_early_defense()
 
+        # 4. Drop Defense (Frequency optimized: Every 8 frames)
+        if iteration % 8 == 0:
+            await self._handle_drop_defense()
+
+        # 5. Worker Defense (Frequency optimized: Every 4 frames)
+        if iteration % 4 == 0:
+            await self._handle_worker_defense()
+
     def get_status(self) -> str:
         return f"Threat: {self.threat_level}"
 
@@ -365,3 +373,126 @@ class DefenseCoordinator:
                     return
                 except Exception:
                     pass
+
+    async def _handle_drop_defense(self) -> None:
+        """
+        ★ Drop Defense System ★
+        Detect enemies near bases and dispatch defense squad.
+        """
+        b = self.bot
+        if not hasattr(b, "townhalls") or not b.townhalls.ready:
+            return
+
+        # 1. Check for enemies near any base
+        enemy_units = getattr(b, "enemy_units", [])
+        if not enemy_units:
+            return
+
+        threat_bases = []
+        for th in b.townhalls.ready:
+            # Check for enemies within 25 range of base
+            nearby_enemies = [
+                e for e in enemy_units 
+                if e.distance_to(th) < 25 and not e.is_structure and not e.is_flying
+            ]
+            
+            if nearby_enemies:
+                threat_bases.append((th, nearby_enemies))
+        
+        if not threat_bases:
+            return
+
+        # 2. Dispatch Defense Units (Locally)
+        # For each threatened base, find nearby allies and attack
+        for base, enemies in threat_bases:
+            # Find closest enemy center
+            target_enemy = enemies[0]
+            
+            # Find available combat units nearby (exclude Queens if possible unless emergency)
+            # Use units within 35 range (local response)
+            defenders = b.units.filter(
+                lambda u: u.type_id in {
+                    UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK, 
+                    UnitTypeId.MUTALISK, UnitTypeId.QUEEN
+                } and u.distance_to(base) < 35
+            )
+            
+            if not defenders.exists:
+                # [TODO] Global request if local defense fails?
+                continue
+                
+            # Attack command
+            for defender in defenders:
+                # Don't interrupt important micro (handled by CombatManager hopefully)
+                # But simple attack-move is good for now
+                if defender.is_idle or defender.is_moving:
+                    b.do(defender.attack(target_enemy.position))
+            
+            if defenders.amount > 0:
+                # Log occasionally
+                if b.iteration % 100 == 0:
+                    self.logger.info(f"[DEFENSE] Defending base at {base.position} with {defenders.amount} units vs {len(enemies)} enemies")
+
+    async def _handle_worker_defense(self) -> None:
+        """
+        ★ Worker Defense System (Mineral Walk & Drill) ★
+        """
+        b = self.bot
+        if not hasattr(b, "workers"):
+            return
+
+        enemy_units = getattr(b, "enemy_units", [])
+        if not enemy_units:
+            return
+
+        # Filter workers under attack (HP < 100% or enemies very close)
+        # Optimization: Only check workers near enemies
+        
+        # 1. Find threatened bases (enemies in mineral line)
+        for th in b.townhalls.ready:
+            nearby_enemies = [e for e in enemy_units if e.distance_to(th) < 10]
+            if not nearby_enemies:
+                continue
+                
+            # Get workers at this base
+            workers = b.workers.closer_than(15, th)
+            if not workers:
+                continue
+
+            threat_center = Point2.center([e.position for e in nearby_enemies])
+            enemy_count = len(nearby_enemies)
+            worker_count = workers.amount
+            
+            # === Decision: Fight or Flee ===
+            
+            # Condition to Fight (Drill):
+            # - Many workers (10+) vs Few enemies (<3)
+            # - Enemies are ground units (not Hellions/Banelings ideally, but basic check first)
+            should_fight = (worker_count >= 10 and enemy_count <= 2)
+            
+            # Dangerous enemies to NEVER fight with drones
+            dangerous_types = {
+                UnitTypeId.HELLION, UnitTypeId.BANELING, UnitTypeId.ARCHON, 
+                UnitTypeId.COLOSSUS, UnitTypeId.LURKER
+            }
+            if any(e.type_id in dangerous_types for e in nearby_enemies):
+                should_fight = False
+
+            if should_fight:
+                # ALL ATTACK!
+                for worker in workers:
+                    if worker.weapon_cooldown == 0:
+                        b.do(worker.attack(nearby_enemies[0]))
+            else:
+                # FLEE (Mineral Walk)
+                minerals = b.mineral_field.closer_than(20, th)
+                if not minerals:
+                    continue
+                    
+                for worker in workers:
+                    # Only flee if too close to enemy or taking damage
+                    dist = worker.distance_to(threat_center)
+                    if dist < 6 or worker.health_percentage < 0.9:
+                        # Find mineral patch FURTHEST from threat
+                        safe_mineral = max(minerals, key=lambda m: m.distance_to(threat_center))
+                        b.do(worker.gather(safe_mineral))

@@ -185,31 +185,31 @@
         - [x] Multi-strategy execution (5 tests)
         - [x] Helper methods (6 tests)
         - [x] Status reporting (1 test)
-## Phase 15: Code Quality & Refactoring (In Progress 2026-01-29)
+## Phase 15: Code Quality & Refactoring (In Progress 2026-01-30)
 - [x] Exception Handling Improvement
     - [x] strategy_manager_v2.py (6 fixes)
-        - [x] _count_workers: ImportError, AttributeError
-        - [x] _estimate_enemy_workers: AttributeError
-        - [x] _estimate_enemy_bases: AttributeError
-        - [x] _estimate_enemy_army_supply: AttributeError
-        - [x] _count_tech_structures: ImportError, AttributeError
-        - [x] _estimate_enemy_tech: AttributeError
     - [x] performance_optimizer.py (1 fix)
-        - [x] Distance calculation: AttributeError, TypeError, IndexError
     - [x] scouting/enhanced_scout_system.py (1 fix)
-        - [x] Spawning pool check: ImportError, AttributeError, NameError
     - [x] destructible_awareness_system.py (1 fix)
-        - [x] Type ID check: AttributeError
     - [x] Total: 9 bare except blocks converted to specific exceptions
-- [x] Large File Analysis (Refactoring pending - see PHASE_15_SUMMARY.md)
-    - [x] combat_manager.py analyzed (2,973 lines → 8 modules planned)
-        - [x] Top 5 methods identified (1,654 lines = 55%)
-        - [x] Module structure designed
-        - [ ] Implementation (8-12 hours, needs tests first)
-    - [x] production_resilience.py analyzed (2,271 lines → 4 modules planned)
-    - [x] bot_step_integration.py analyzed (2,219 lines → 4 modules planned)
-    - [ ] **Recommendation**: Create tests before refactoring
-- [x] Test Coverage Expansion (80 tests total)
+- [/] Large File Refactoring (combat_manager.py)
+    - [x] Logic Analysis (Completed 2026-01-29)
+    - [ ] Create Modular Structure (combat/)
+        - [ ] initialization.py
+        - [ ] enemy_tracking.py
+        - [ ] assignment_manager.py
+        - [ ] rally_point_calculator.py
+    - [ ] Integrate Modules into CombatManager
+    - [ ] Verify with Unit Tests
+- [/] Test Coverage Expansion
+    - [x] combat_manager.py (38 tests - ALL PASS)
+    - [/] economy_manager.py (Goal: 15+ tests)
+        - [ ] Resource Management tests
+        - [ ] Expansion Logic tests
+        - [ ] Worker Optimization tests
+    - [ ] production_resilience.py (Goal: 15+ tests)
+        - [ ] Production Safety tests
+        - [ ] Emergency Logic tests
     - [x] test_combat_manager.py (38 tests - ALL PASS)
         - [x] Helper methods (_has_units, _units_amount) - 6 tests
         - [x] Unit filtering (_filter_army_units, _filter_air_units, _filter_ground_units) - 6 tests

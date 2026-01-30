@@ -65,7 +65,8 @@
       "Bash(Get-Process)",
       "Bash(Where-Object {$_ProcessName -like \"*SC2*\"})",
       "Bash(wmic process where \"name=''SC2_x64.exe'' or name=''SC2.exe'' or name=''python.exe''\" get ProcessId,CommandLine)",
-      "Bash(do echo \"=== Running $file ===\")"
+      "Bash(do echo \"=== Running $file ===\")",
+      "Bash(xargs basename:*)"
     ]
   }
 }

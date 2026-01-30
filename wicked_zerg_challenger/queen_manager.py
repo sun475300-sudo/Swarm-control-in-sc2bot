@@ -54,7 +54,7 @@ class QueenManager:
 
         # Injection settings - ★ OPTIMIZED ★
         self.inject_energy_threshold = 25
-        self.inject_cooldown = 25.0  # ★ OPTIMIZED: 29 → 25 (더 빠른 inject 체크) ★
+        self.inject_cooldown = 29.0  # ★ FIXED: 정확한 SC2 Spawn Larva 쿨다운 (29초) ★
         self.max_inject_distance = 4.0
         self.max_queen_travel_distance = 10.0
 
@@ -619,14 +619,25 @@ class QueenManager:
                 if not getattr(unit, "is_biological", True):
                     continue
 
+                # Skip unhealable units (suicidal/temporary units)
+                UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
+                if hasattr(UnitTypeId, "LOCUSTMP"):
+                    UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
+                if unit.type_id in UNHEALABLE_UNITS:
+                    continue
+
                 # Calculate priority (lower = higher priority)
                 priority = health_ratio  # Base priority on health
                 if unit.type_id == UnitTypeId.QUEEN:
                     priority -= 0.5  # Queens highest priority
                 elif hasattr(UnitTypeId, "ULTRALISK") and unit.type_id == UnitTypeId.ULTRALISK:
-                    priority -= 0.3
+                    priority -= 0.3  # Ultralisk very high priority (300/200)
                 elif hasattr(UnitTypeId, "BROODLORD") and unit.type_id == UnitTypeId.BROODLORD:
-                    priority -= 0.3
+                    priority -= 0.3  # Broodlord very high priority (150/150)
+                elif hasattr(UnitTypeId, "RAVAGER") and unit.type_id == UnitTypeId.RAVAGER:
+                    priority -= 0.2  # Ravager high priority (100/100)
+                elif hasattr(UnitTypeId, "ROACH") and unit.type_id == UnitTypeId.ROACH:
+                    priority -= 0.1  # Roach medium priority (75/25)
 
                 injured_targets.append((unit, priority))
 

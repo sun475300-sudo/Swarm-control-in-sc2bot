@@ -212,38 +212,34 @@ class EvolutionUpgradeManager:
         return upgrade_order
 
     def _get_unit_composition(self) -> Dict[str, int]:
-        counts = {
-            "melee": 0,
-            "ranged": 0,
-            "zergling": 0,
-            "baneling": 0,
-            "hydralisk": 0,
-            "roach": 0,
-            "mutalisk": 0,
-            "corruptor": 0,
-        }
+        """
+        ★ OPTIMIZED: O(k) instead of O(n*m) using SC2 API's filter
+        Uses C++-optimized units() method instead of manual iteration
+        """
         if not hasattr(self.bot, "units"):
-            return counts
+            return {
+                "melee": 0, "ranged": 0, "zergling": 0, "baneling": 0,
+                "hydralisk": 0, "roach": 0, "mutalisk": 0, "corruptor": 0,
+            }
 
-        units = self.bot.units
-        for unit in units:
-            if unit.type_id in self._melee_unit_types():
-                counts["melee"] += 1
-                if unit.type_id == UnitTypeId.ZERGLING:
-                    counts["zergling"] += 1
-                if unit.type_id == UnitTypeId.BANELING:
-                    counts["baneling"] += 1
-            elif unit.type_id in self._ranged_unit_types():
-                counts["ranged"] += 1
-                if unit.type_id == UnitTypeId.HYDRALISK:
-                    counts["hydralisk"] += 1
-                if unit.type_id == UnitTypeId.ROACH:
-                    counts["roach"] += 1
-            elif unit.type_id in self._air_unit_types():
-                if unit.type_id == UnitTypeId.MUTALISK:
-                    counts["mutalisk"] += 1
-                if unit.type_id == UnitTypeId.CORRUPTOR:
-                    counts["corruptor"] += 1
+        # Direct counting using SC2 API - much faster than manual iteration
+        zergling_count = self.bot.units(UnitTypeId.ZERGLING).amount
+        baneling_count = self.bot.units(UnitTypeId.BANELING).amount
+        hydralisk_count = self.bot.units(UnitTypeId.HYDRALISK).amount
+        roach_count = self.bot.units(UnitTypeId.ROACH).amount
+        mutalisk_count = self.bot.units(UnitTypeId.MUTALISK).amount
+        corruptor_count = self.bot.units(UnitTypeId.CORRUPTOR).amount
+
+        counts = {
+            "zergling": zergling_count,
+            "baneling": baneling_count,
+            "hydralisk": hydralisk_count,
+            "roach": roach_count,
+            "mutalisk": mutalisk_count,
+            "corruptor": corruptor_count,
+            "melee": zergling_count + baneling_count,
+            "ranged": hydralisk_count + roach_count,
+        }
 
         return counts
 
