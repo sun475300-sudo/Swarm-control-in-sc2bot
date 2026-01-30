@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Save, RotateCcw, Key, CheckCircle, XCircle } from 'lucide-react';
+import { Save, RotateCcw, Key, CheckCircle, XCircle, Bell } from 'lucide-react';
 import { getBotConfigs, BotConfig } from '@/lib/api';
 import { setGitHubToken, hasGitHubToken, getRateLimit } from '@/lib/github';
+import { 
+  requestNotificationPermission, 
+  getNotificationPermission,
+  isPushNotificationSupported 
+} from '@/lib/notifications';
 
 export default function Settings() {
   const [botConfigs, setBotConfigs] = useState<BotConfig[]>([]);
@@ -10,6 +15,9 @@ export default function Settings() {
   const [githubToken, setGithubToken] = useState('');
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [rateLimit, setRateLimit] = useState<any>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    getNotificationPermission()
+  );
 
   // 설정 상태
   const [settings, setSettings] = useState({
@@ -37,6 +45,9 @@ export default function Settings() {
     if (hasGitHubToken()) {
       checkGitHubToken();
     }
+    
+    // 알림 권한 확인
+    setNotificationPermission(getNotificationPermission());
   }, []);
   
   const checkGitHubToken = async () => {
@@ -65,6 +76,15 @@ export default function Settings() {
     setGithubToken('');
     setTokenValid(null);
     setRateLimit(null);
+  };
+  
+  const handleRequestNotificationPermission = async () => {
+    const permission = await requestNotificationPermission();
+    setNotificationPermission(permission);
+    if (permission === 'granted') {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
   };
 
   const handleSettingChange = (key: string, value: any) => {
@@ -227,8 +247,44 @@ export default function Settings() {
 
       {/* 알림 설정 */}
       <div className="glass rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-        <h3 className="mb-4 font-semibold">알림 설정</h3>
+        <h3 className="mb-4 font-semibold flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          알림 설정
+        </h3>
         <div className="space-y-4">
+          {/* 알림 권한 상태 */}
+          {isPushNotificationSupported() && (
+            <div className="rounded-lg bg-white/5 p-4 border border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm font-medium">브라우저 알림 권한</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {notificationPermission === 'granted' 
+                      ? '✅ 알림이 허용되었습니다'
+                      : notificationPermission === 'denied'
+                      ? '❌ 알림이 차단되었습니다. 브라우저 설정에서 변경하세요.'
+                      : '⚠️ 알림 권한이 필요합니다'}
+                  </p>
+                </div>
+                <div className={`h-3 w-3 rounded-full ${
+                  notificationPermission === 'granted' 
+                    ? 'bg-green-500' 
+                    : notificationPermission === 'denied'
+                    ? 'bg-red-500'
+                    : 'bg-yellow-500'
+                }`} />
+              </div>
+              {notificationPermission !== 'granted' && notificationPermission !== 'denied' && (
+                <button
+                  onClick={handleRequestNotificationPermission}
+                  className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90"
+                >
+                  알림 권한 요청
+                </button>
+              )}
+            </div>
+          )}
+          
           <label className="flex items-center gap-3">
             <input
               type="checkbox"
