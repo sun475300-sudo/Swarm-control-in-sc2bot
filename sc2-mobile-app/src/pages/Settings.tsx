@@ -7,6 +7,7 @@ import {
   getNotificationPermission,
   isPushNotificationSupported 
 } from '@/lib/notifications';
+import PWAInstallGuide from '@/components/PWAInstallGuide';
 
 export default function Settings() {
   const [botConfigs, setBotConfigs] = useState<BotConfig[]>([]);
@@ -398,6 +399,12 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      {/* PWA 설치 가이드 */}
+      <div className="glass rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+        <h3 className="mb-4 font-semibold">📱 앱 설치하기</h3>
+        <PWAInstallGuide />
+      </div>
 
       {/* 저장 버튼 */}
       <div className="sticky bottom-0 flex gap-3 bg-background/80 backdrop-blur-sm pt-4">
