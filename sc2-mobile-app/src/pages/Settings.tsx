@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Save, RotateCcw } from 'lucide-react';
+import { Save, RotateCcw, Key, CheckCircle, XCircle } from 'lucide-react';
 import { getBotConfigs, BotConfig } from '@/lib/api';
+import { setGitHubToken, hasGitHubToken, getRateLimit } from '@/lib/github';
 
 export default function Settings() {
   const [botConfigs, setBotConfigs] = useState<BotConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [githubToken, setGithubToken] = useState('');
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [rateLimit, setRateLimit] = useState<any>(null);
 
   // 설정 상태
   const [settings, setSettings] = useState({
@@ -28,7 +32,40 @@ export default function Settings() {
     };
 
     fetchConfigs();
+    
+    // GitHub 토큰 확인
+    if (hasGitHubToken()) {
+      checkGitHubToken();
+    }
   }, []);
+  
+  const checkGitHubToken = async () => {
+    try {
+      const limit = await getRateLimit();
+      if (limit) {
+        setTokenValid(true);
+        setRateLimit(limit);
+      } else {
+        setTokenValid(false);
+      }
+    } catch (error) {
+      setTokenValid(false);
+    }
+  };
+  
+  const handleSaveGitHubToken = () => {
+    setGitHubToken(githubToken);
+    checkGitHubToken();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+  
+  const handleRemoveGitHubToken = () => {
+    setGitHubToken('');
+    setGithubToken('');
+    setTokenValid(null);
+    setRateLimit(null);
+  };
 
   const handleSettingChange = (key: string, value: any) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -64,6 +101,79 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 pb-8">
+      {/* GitHub 토큰 설정 */}
+      <div className="glass rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+        <h3 className="mb-4 font-semibold flex items-center gap-2">
+          <Key className="h-5 w-5" />
+          GitHub 개인 액세스 토큰
+        </h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Personal Access Token</label>
+            <input
+              type="password"
+              value={githubToken}
+              onChange={(e) => setGithubToken(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-border bg-white/5 px-4 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              GitHub API Rate Limit를 향상시키려면 개인 액세스 토큰을 입력하세요.
+              <br />
+              <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                토큰 생성하기 →
+              </a>
+            </p>
+          </div>
+          
+          {tokenValid !== null && (
+            <div className={`flex items-center gap-2 text-sm ${tokenValid ? 'text-green-400' : 'text-red-400'}`}>
+              {tokenValid ? (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  <span>토큰이 유효합니다</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4" />
+                  <span>토큰이 유효하지 않습니다</span>
+                </>
+              )}
+            </div>
+          )}
+          
+          {rateLimit && (
+            <div className="rounded-lg bg-white/5 p-3 text-xs">
+              <p className="font-medium mb-1">API Rate Limit</p>
+              <p className="text-muted-foreground">
+                사용 가능: {rateLimit.remaining} / {rateLimit.limit}
+              </p>
+              <p className="text-muted-foreground">
+                리셋 시간: {rateLimit.reset.toLocaleTimeString()}
+              </p>
+            </div>
+          )}
+          
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveGitHubToken}
+              disabled={!githubToken}
+              className="flex-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              토큰 저장
+            </button>
+            {hasGitHubToken() && (
+              <button
+                onClick={handleRemoveGitHubToken}
+                className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30"
+              >
+                토큰 제거
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* 대시보드 연결 */}
       <div className="glass rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-md">
         <h3 className="mb-4 font-semibold">대시보드 연결</h3>

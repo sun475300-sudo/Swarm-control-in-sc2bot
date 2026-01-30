@@ -22,15 +22,19 @@ import {
   getRepositoryConfig,
   saveRepositoryConfig,
   formatRelativeTime,
+  getWorkflowRuns,
+  getBranches,
   GitHubCommit,
   GitHubPullRequest,
   GitHubRelease,
   GitHubIssue,
   GitHubRepository,
+  GitHubWorkflowRun,
+  GitHubBranch,
 } from '@/lib/github';
 import { showNotification } from '@/lib/notifications';
 
-type TabType = 'overview' | 'commits' | 'prs' | 'releases' | 'issues';
+type TabType = 'overview' | 'commits' | 'prs' | 'releases' | 'issues' | 'actions' | 'branches';
 
 export default function GitHub() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -41,6 +45,8 @@ export default function GitHub() {
   const [pullRequests, setPullRequests] = useState<GitHubPullRequest[]>([]);
   const [releases, setReleases] = useState<GitHubRelease[]>([]);
   const [issues, setIssues] = useState<GitHubIssue[]>([]);
+  const [workflowRuns, setWorkflowRuns] = useState<GitHubWorkflowRun[]>([]);
+  const [branches, setBranches] = useState<GitHubBranch[]>([]);
   const [newUpdates, setNewUpdates] = useState<{
     commits: number;
     prs: number;
@@ -62,6 +68,14 @@ export default function GitHub() {
       setPullRequests(stats.openPullRequests);
       setReleases(stats.recentReleases);
       setIssues(stats.openIssues);
+      
+      // Workflows 및 Branches 가져오기
+      const [workflows, branchList] = await Promise.all([
+        getWorkflowRuns(repoConfig.owner, repoConfig.repo, 10),
+        getBranches(repoConfig.owner, repoConfig.repo),
+      ]);
+      setWorkflowRuns(workflows);
+      setBranches(branchList);
 
       // 새로운 업데이트 확인
       const lastChecked = getLastCheckedTime();
@@ -114,6 +128,8 @@ export default function GitHub() {
     { id: 'overview' as TabType, label: '개요', count: null },
     { id: 'commits' as TabType, label: '커밋', count: newUpdates.commits },
     { id: 'prs' as TabType, label: 'PR', count: newUpdates.prs },
+    { id: 'actions' as TabType, label: 'Actions', count: null },
+    { id: 'branches' as TabType, label: '브랜치', count: null },
     { id: 'releases' as TabType, label: '릴리즈', count: newUpdates.releases },
     { id: 'issues' as TabType, label: '이슈', count: newUpdates.issues },
   ];
@@ -498,6 +514,100 @@ export default function GitHub() {
                   </div>
                 </div>
               </a>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'actions' && (
+        <div className="space-y-2">
+          {workflowRuns.length === 0 ? (
+            <div className="glass rounded-lg border border-white/10 bg-white/5 p-8 text-center backdrop-blur-md">
+              <Clock className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+              <p className="mt-4 text-muted-foreground">워크플로우 실행 기록이 없습니다</p>
+            </div>
+          ) : (
+            workflowRuns.map((run) => (
+              <a
+                key={run.id}
+                href={run.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass block rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-md hover:bg-white/10"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {run.status === 'completed' && run.conclusion === 'success' && (
+                        <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                      )}
+                      {run.status === 'completed' && run.conclusion === 'failure' && (
+                        <XCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                      )}
+                      {run.status === 'in_progress' && (
+                        <Clock className="h-4 w-4 text-yellow-400 animate-pulse flex-shrink-0" />
+                      )}
+                      <p className="font-medium line-clamp-1">{run.name}</p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      #{run.run_number} • {run.event} • {run.head_branch}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatRelativeTime(run.created_at)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                        run.status === 'completed' && run.conclusion === 'success'
+                          ? 'bg-green-500/20 text-green-400'
+                          : run.status === 'completed' && run.conclusion === 'failure'
+                          ? 'bg-red-500/20 text-red-400'
+                          : run.status === 'in_progress'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                      }`}
+                    >
+                      {run.status === 'completed' ? run.conclusion : run.status}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'branches' && (
+        <div className="space-y-2">
+          {branches.length === 0 ? (
+            <div className="glass rounded-lg border border-white/10 bg-white/5 p-8 text-center backdrop-blur-md">
+              <GitBranch className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+              <p className="mt-4 text-muted-foreground">브랜치가 없습니다</p>
+            </div>
+          ) : (
+            branches.map((branch) => (
+              <div
+                key={branch.name}
+                className="glass block rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <GitBranch className="h-5 w-5 text-cyan-400 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{branch.name}</p>
+                      <p className="mt-1 text-xs font-mono text-muted-foreground truncate">
+                        {branch.commit.sha.substring(0, 7)}
+                      </p>
+                    </div>
+                  </div>
+                  {branch.protected && (
+                    <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-xs font-medium text-yellow-400">
+                      Protected
+                    </span>
+                  )}
+                </div>
+              </div>
             ))
           )}
         </div>
