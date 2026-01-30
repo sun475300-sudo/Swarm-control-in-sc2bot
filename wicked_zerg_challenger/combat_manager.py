@@ -22,6 +22,20 @@ else:
         Point2 = tuple
 
 from utils.logger import get_logger
+from combat.initialization import initialize_combat_state, initialize_managers
+from combat.enemy_tracking import (
+    track_enemy_expansions, get_anti_air_threats, find_densest_enemy_position,
+    detect_nearby_enemies, get_closest_enemy, track_enemy_army_composition
+)
+from combat.assignment_manager import (
+    cleanup_assignments, assign_unit_to_task, unassign_unit, get_unit_task,
+    get_unassigned_units, get_units_by_task, set_task_target, get_task_target,
+    clear_task, get_all_active_tasks, count_units_in_task
+)
+from combat.rally_point_calculator import (
+    calculate_rally_point, update_rally_point, gather_at_rally_point,
+    is_army_gathered, get_rally_position, set_rally_position, clear_rally_position
+)
 
 # Import common helpers to reduce code duplication
 try:
@@ -47,149 +61,12 @@ class CombatManager:
     """
 
     def __init__(self, bot):
+        """전투 매니저 초기화"""
         self.bot = bot
-        self.logger = get_logger("CombatManager")
-        self.targeting = None
-        self.micro_combat = None
-        self.boids = None
 
-        # Air unit micro state
-        self._air_harass_target = None
-        self._last_air_harass_time = 0
-        self._air_harass_cooldown = 30  # 30 seconds between harass decisions
-
-        # === MULTITASKING SYSTEM ===
-        # Task priorities (higher = more important)
-        self.task_priorities = {
-            "base_defense": 100,      # Defend our base - HIGHEST PRIORITY
-            "worker_defense": 90,     # Protect workers
-            "counter_attack": 70,     # Attack enemy attackers
-            "air_harass": 60,         # Air unit harassment
-            "scout": 50,              # Scouting
-            "main_attack": 40,        # Main army attack
-            "creep_spread": 30,       # Creep spreading
-        }
-
-        # Active tasks and assigned units
-        self._active_tasks = {}  # task_name -> {"units": set(), "target": position}
-        self._unit_assignments = {}  # unit_tag -> task_name
-
-        # Task cooldowns
-        self._task_cooldowns = {}
-
-        # === COUNTER ATTACK SYSTEM ===
-        self._last_combat_time = 0  # Track when last combat occurred
-        self._counter_attack_cooldown = 15  # 15 seconds cooldown between counter attacks
-
-        # === RALLY POINT SYSTEM ===
-        # Rally point for army units to gather before attacking
-        self._rally_point = None
-        self._last_rally_update = 0
-        self._rally_update_interval = 30  # Update rally point every 30 seconds
-        self._min_army_for_attack = 6  # ★ OPTIMIZED: 8 → 6 (더 빠른 공격) ★
-        self._early_game_min_attack = 3  # ★ OPTIMIZED: 4 → 3 (더 빠른 초반 압박) ★
-
-        # === ★★★ ROACH RUSH TIMING ATTACK ★★★ ===
-        self._roach_rush_active = False
-        self._roach_rush_timing = 360  # 6:00 (6분)
-        self._roach_rush_min_count = 12  # 최소 12 바퀴
-        self._roach_rush_sent = False
-
-        # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
-        self._base_defense_active = False
-        self._defense_rally_point = None
-
-        # === ★ Creep Denial System (New) ★ ===
-        try:
-            from combat.creep_denial_system import CreepDenialSystem
-            self.creep_denial = CreepDenialSystem(bot)
-            self.logger.info("CreepDenialSystem initialized")
-        except ImportError as e:
-            self.logger.warning(f"CreepDenialSystem import failed: {e}")
-            self.creep_denial = None
-        self._last_defense_check = 0
-        self._defense_check_interval = 3  # ★ OPTIMIZED: 5 → 3 (더 빠른 반응) ★
-        self._worker_defense_threshold = 1  # ★ FIX: 적 1기라도 일꾼 근처 위협 시 방어 ★
-        self._critical_defense_threshold = 8  # 적 8기 이상이면 모든 유닛 방어
-
-        # === ★★★ VICTORY CONDITION TRACKING ★★★ ===
-        self._victory_push_active = False  # 승리 푸시 모드
-        self._last_enemy_structure_count = 0  # 마지막으로 본 적 건물 수
-        self._enemy_structures_destroyed = 0  # 파괴한 적 건물 수
-        self._last_victory_check = 0  # 마지막 승리 조건 체크 시간
-        self._victory_check_interval = 110  # 승리 조건 체크 주기 (약 5초)
-        self._endgame_push_threshold = 360  # 6분 이후 승리 푸시 가능
-        self._known_enemy_expansions = set()  # 발견한 적 확장 위치
-        self._last_expansion_check = 0  # 마지막 확장 체크 시간
-
-        # === ★★★ EXPANSION DEFENSE SYSTEM ★★★ ===
-        self._expansion_under_attack = {}  # 확장 기지 tag -> 공격 시작 시간
-        self._expansion_destroyed_positions = []  # 파괴된 확장 기지 위치
-        self._last_expansion_defense_check = 0
-        self._expansion_defense_check_interval = 10  # 10프레임마다 확장 방어 체크
-        self._expansion_defense_force_size = 8  # 확장 방어에 투입할 최소 유닛 수
-
-        # 매니저 초기화
-        self._initialize_managers()
-    
-    def _initialize_managers(self):
-        """매니저들 초기화"""
-        try:
-            from combat.targeting import Targeting
-            self.targeting = Targeting(self.bot)
-        except ImportError:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Targeting system not available")
-        
-        try:
-            from combat.micro_combat import MicroCombat
-            self.micro_combat = MicroCombat(self.bot)
-        except ImportError:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Micro combat not available")
-        
-        try:
-            from combat.boids_swarm_control import BoidsSwarmController
-            self.boids = BoidsSwarmController()
-        except ImportError:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Boids controller not available")
-
-        # ★ NEW: Mutalisk Micro Controller (Regen Dance + Magic Box) ★
-        try:
-            from combat.mutalisk_micro import MutaliskMicroController
-            self.mutalisk_micro = MutaliskMicroController()
-        except ImportError:
-            self.mutalisk_micro = None
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Mutalisk micro controller not available")
-
-        # ★ NEW: Baneling Tactics Controller (Land Mines) ★
-        try:
-            from combat.baneling_tactics import BanelingTacticsController
-            self.baneling_tactics = BanelingTacticsController()
-        except ImportError:
-            self.baneling_tactics = None
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Baneling tactics controller not available")
-
-        # ★ NEW: Overlord Transport (대군주 수송) ★
-        try:
-            from combat.overlord_transport import OverlordTransport
-            self.overlord_transport = OverlordTransport(self.bot)
-        except ImportError:
-            self.overlord_transport = None
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Overlord transport not available")
-
-        # ★ NEW: Roach Burrow Heal (바퀴 잠복 회복) ★
-        try:
-            from combat.roach_burrow_heal import RoachBurrowHeal
-            self.roach_burrow_heal = RoachBurrowHeal(self.bot)
-        except ImportError:
-            self.roach_burrow_heal = None
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 500 == 0:
-                self.logger.warning("Roach burrow heal not available")
+        # Initialize combat state and managers using extracted modules
+        initialize_combat_state(self)
+        initialize_managers(self)
     
     async def on_step(self, iteration: int):
         """
@@ -207,8 +84,8 @@ class CombatManager:
             iteration: 현재 게임 반복 횟수
         """
         try:
-            # Clean up stale unit assignments
-            self._cleanup_assignments()
+            # Clean up stale unit assignments (using assignment_manager module)
+            cleanup_assignments(self)
 
             # ★★★ 승리 조건 체크 및 승리 푸시 활성화 ★★★
             if iteration - self._last_victory_check > self._victory_check_interval:
@@ -953,15 +830,6 @@ class CombatManager:
             except Exception:
                 continue
 
-    def _cleanup_assignments(self):
-        """Clean up stale unit assignments (dead units)."""
-        if not hasattr(self.bot, "units"):
-            return
-
-        alive_tags = set(u.tag for u in self.bot.units)
-        stale_tags = [tag for tag in self._unit_assignments if tag not in alive_tags]
-        for tag in stale_tags:
-            del self._unit_assignments[tag]
     
     async def _execute_combat(self, units: Units, enemy_units):
         """
@@ -1495,85 +1363,16 @@ class CombatManager:
         return search_locations[self._search_index]
 
     def _update_rally_point(self):
-        """
-        Update the rally point for army gathering.
-
-        Rally point is positioned:
-        - Between our natural expansion and map center
-        - On our side of the map for safety
-        - Away from enemy attack routes
-        """
-        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
-            return
-
-        try:
-            our_base = self.bot.townhalls.first.position
-            map_center = self.bot.game_info.map_center if hasattr(self.bot, "game_info") else our_base
-
-            # Rally point is 30% of the way from our base to map center
-            rally_x = our_base.x + (map_center.x - our_base.x) * 0.3
-            rally_y = our_base.y + (map_center.y - our_base.y) * 0.3
-
-            if hasattr(self.bot, "Point2"):
-                self._rally_point = self.bot.Point2((rally_x, rally_y))
-            else:
-                from sc2.position import Point2
-                self._rally_point = Point2((rally_x, rally_y))
-
-        except Exception:
-            # Fallback to main base position
-            if hasattr(self.bot, "start_location"):
-                self._rally_point = self.bot.start_location
+        """Update the rally point (rally_point_calculator 모듈 사용)"""
+        update_rally_point(self)
 
     async def _gather_at_rally_point(self, army_units, iteration: int):
-        """
-        Gather army units at the rally point.
-
-        Only sends idle or wandering units to rally point.
-        """
-        if not self._rally_point:
-            return
-
-        if iteration % 22 != 0:  # Only update every ~1 second
-            return
-
-        for unit in army_units:
-            try:
-                # Only send idle units or units far from rally point
-                is_idle = getattr(unit, "is_idle", False)
-                distance_to_rally = unit.distance_to(self._rally_point)
-
-                if is_idle and distance_to_rally > 5:
-                    self.bot.do(unit.move(self._rally_point))
-                elif distance_to_rally > 20:  # Very far from rally
-                    self.bot.do(unit.move(self._rally_point))
-            except Exception:
-                continue
+        """Gather army units (rally_point_calculator 모듈 사용)"""
+        await gather_at_rally_point(self, army_units, iteration)
 
     def _is_army_gathered(self, army_units) -> bool:
-        """
-        Check if army is gathered at rally point.
-
-        Returns True if at least 70% of units are near rally point.
-        """
-        if not self._rally_point or not army_units:
-            return True  # No rally point = consider gathered
-
-        near_count = 0
-        total = 0
-
-        for unit in army_units:
-            total += 1
-            try:
-                if unit.distance_to(self._rally_point) < 15:
-                    near_count += 1
-            except Exception:
-                continue
-
-        if total == 0:
-            return True
-
-        return (near_count / total) >= 0.7
+        """Check if army is gathered (rally_point_calculator 모듈 사용)"""
+        return is_army_gathered(self, army_units)
 
     def _filter_army_units(self, units):
         return self._filter_units_by_type(
@@ -1884,16 +1683,8 @@ class CombatManager:
                     continue
 
     def _get_anti_air_threats(self, enemy_units, position, range_check=15):
-        """Get enemy units that can attack air near a position."""
-        anti_air_names = [
-            "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VOIDRAY",
-            "VIKINGFIGHTER", "THOR", "CYCLONE", "LIBERATOR",
-            "QUEEN", "CORRUPTOR", "MUTALISK", "ARCHON",
-            "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON"
-        ]
-        return [e for e in enemy_units
-                if getattr(e.type_id, "name", "") in anti_air_names
-                and e.distance_to(position) < range_check]
+        """Get enemy units that can attack air near a position (enemy_tracking 모듈 사용)"""
+        return get_anti_air_threats(enemy_units, position, range_check)
 
     async def _mutalisk_bounce_attack(self, mutalisks, targets):
         """
@@ -2554,21 +2345,8 @@ class CombatManager:
             print(f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}")
 
     def _find_densest_enemy_position(self, enemies):
-        """가장 밀집된 적 위치 찾기 (맹독충용)"""
-        if not enemies:
-            return None
-
-        max_density = 0
-        densest_enemy = None
-
-        for enemy in enemies:
-            # 5 거리 내의 적 수 계산
-            nearby_count = sum(1 for e in enemies if e.distance_to(enemy) < 5)
-            if nearby_count > max_density:
-                max_density = nearby_count
-                densest_enemy = enemy
-
-        return densest_enemy
+        """가장 밀집된 적 위치 찾기 (맹독충용) - enemy_tracking 모듈 사용"""
+        return find_densest_enemy_position(enemies)
 
     async def _worker_defense(self, threat_position, threat_enemies, iteration: int):
         """
@@ -2718,33 +2496,8 @@ class CombatManager:
                   f"{expansion_count} expansions | Status: {status}")
 
     async def _track_enemy_expansions(self):
-        """
-        적 확장 기지 추적
-
-        발견한 적 확장 위치를 기록하여 승리 조건 판단에 활용
-        """
-        if not hasattr(self.bot, "enemy_structures"):
-            return
-
-        enemy_structures = self.bot.enemy_structures
-        if not enemy_structures:
-            return
-
-        # 타운홀 타입
-        townhall_types = {
-            "NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
-            "HATCHERY", "LAIR", "HIVE"
-        }
-
-        # 적 타운홀 찾기
-        for struct in enemy_structures:
-            struct_type = getattr(struct.type_id, "name", "").upper()
-            if struct_type in townhall_types:
-                # 확장 위치 기록
-                pos = struct.position
-                if pos not in self._known_enemy_expansions:
-                    self._known_enemy_expansions.add(pos)
-                    print(f"[VICTORY] New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
+        """적 확장 기지 추적 (enemy_tracking 모듈 사용)"""
+        await track_enemy_expansions(self)
 
     async def _execute_victory_push(self, iteration: int):
         """
@@ -2797,32 +2550,8 @@ class CombatManager:
         return int(total_supply)
 
     def _calculate_rally_point(self):
-        """
-        랠리 포인트 계산 (병력 집결지)
-        - 2베이스 이상: 앞마당 앞
-        - 1베이스: 본진 입구
-        """
-        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
-            return None
-
-        # 메인 기지
-        main_base = self.bot.townhalls.first
-        
-        # 앞마당 찾기 - 맵 중앙에 가장 가까운 기지
-        target_base = main_base
-        if self.bot.townhalls.amount > 1 and hasattr(self.bot, "game_info"):
-            try:
-                target_base = self.bot.townhalls.closest_to(self.bot.game_info.map_center)
-            except Exception:
-                pass
-        
-        # 기지와 맵 중앙 사이 (전진 배치)
-        if hasattr(self.bot, "game_info"):
-            map_center = self.bot.game_info.map_center
-            rally = target_base.position.towards(map_center, 10)
-            return rally
-        
-        return target_base.position
+        """랠리 포인트 계산 (rally_point_calculator 모듈 사용)"""
+        return calculate_rally_point(self)
 
     async def _check_expansion_defense(self, iteration: int):
         """

@@ -67,46 +67,19 @@ except ImportError:
     PLACEMENT_HELPER_AVAILABLE = False
     BuildingPlacementHelper = None
 
+# Import production modules
+from local_training.production import (
+    can_expand_safely, try_expand, log_expand_block, cleanup_build_reservations,
+    safe_train, produce_army_unit, emergency_zergling_production, balanced_production,
+    get_counter_unit
+)
+
 
 class ProductionResilience:
 
     async def _safe_train(self, unit, unit_type, retry_count: int = 1):
-        """
-        Safely train a unit, handling both sync and async train() methods.
-
-        Args:
-            unit: The larva or unit to train from
-            unit_type: The UnitTypeId to train
-            retry_count: Number of retry attempts (default: 1)
-
-        Returns:
-            True if training succeeded, False otherwise
-        """
-        last_error = None
-
-        for attempt in range(retry_count + 1):
-            try:
-                # Validate unit is still valid
-                if not unit or not hasattr(unit, 'train'):
-                    print(f"[TRAIN_ERROR] Invalid unit for training {unit_type}")
-                    return False
-
-                # Create train action and execute it via bot.do()
-                action = unit.train(unit_type)
-                self.bot.do(action)  # bot.do() is not async, just call it
-                return True
-
-            except Exception as e:
-                last_error = e
-                game_time = getattr(self.bot, "time", 0.0)
-
-                # Always log errors (not just every 200 iterations)
-                if attempt == retry_count:  # Final attempt failed
-                    print(f"[TRAIN_ERROR] [{int(game_time)}s] Failed to train {unit_type}: {e}")
-                else:
-                    print(f"[TRAIN_WARN] [{int(game_time)}s] Retry {attempt + 1}/{retry_count} for {unit_type}: {e}")
-
-        return False
+        """Safely train a unit (using production module)"""
+        return await safe_train(self, unit, unit_type, retry_count)
 
     def __init__(self, bot: Any) -> None:
         self.bot = bot
@@ -220,6 +193,10 @@ class ProductionResilience:
             self.enemy_near_base_scale = override.get("enemy_near_base_scale", self.enemy_near_base_scale)
 
     def _can_expand_safely(self) -> tuple:
+        """Check if expansion is safe (using production module)"""
+        return can_expand_safely(self)
+
+    def _can_expand_safely_legacy(self) -> tuple:
         b = self.bot
         intel = getattr(b, "intel", None)
         under_attack = False
