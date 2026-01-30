@@ -12,9 +12,13 @@ from typing import Iterable, List, Optional, Tuple
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
+    AbilityId = None
+    UpgradeId = None
     Point2 = None
 
 
@@ -238,6 +242,16 @@ class MicroCombat:
             if unit.type_id == getattr(UnitTypeId, "BANELING", None):
                 if self._micro_baneling(unit, threats, actions):
                     continue
+            
+            # 3.1 Roach Micro (Burrow Heal)
+            if unit.type_id == getattr(UnitTypeId, "ROACH", None):
+                if self._micro_roach(unit, actions):
+                    continue
+            
+            # 3.2 Roach Burrowed (Unburrow logic)
+            if unit.type_id == getattr(UnitTypeId, "ROACHBURROWED", None):
+                if self._micro_roach_burrowed(unit, actions):
+                    continue
 
             # 4. Anti-Splash Repulsion
             rep_x, rep_y = self.anti_splash.repulsion_vector(unit, threats)
@@ -354,6 +368,43 @@ class MicroCombat:
                  return True
                  
         return False
+
+    def _micro_roach(self, roach, actions: List) -> bool:
+        """
+        Roach Burrow Heal Logic.
+        If HP < 30% and Burrow researched, burrow to heal/de-aggro.
+        """
+        # Check if Burrow is researched
+        if not self.bot.state.upgrades:
+            return False
+            
+        burrow_upgrade = getattr(UpgradeId, "BURROW", None)
+        if not burrow_upgrade or burrow_upgrade not in self.bot.state.upgrades:
+            return False
+
+        # If low HP, burrow
+        if roach.health_percentage < 0.35:
+            burrow_down = getattr(AbilityId, "BURROWDOWN_ROACH", None)
+            if burrow_down:
+                actions.append(roach(burrow_down))
+                return True
+        
+        return False
+
+    def _micro_roach_burrowed(self, roach, actions: List) -> bool:
+        """
+        Handle burrowed Roaches.
+        If HP > 80%, unburrow to fight again.
+        """
+        # If high HP, unburrow
+        if roach.health_percentage > 0.85:
+            burrow_up = getattr(AbilityId, "BURROWUP_ROACH", None)
+            if burrow_up:
+                actions.append(roach(burrow_up))
+                return True
+        
+        # Otherwise stay burrowed (healing)
+        return True
 
     def harass_workers(self, units: Iterable, nearby_enemies: Iterable) -> None:
         """

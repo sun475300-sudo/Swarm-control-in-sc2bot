@@ -487,6 +487,28 @@ class BotStepIntegrator:
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 await self.bot.unit_authority.on_step(iteration)
 
+            # 0.0065 ★★★ Early Defense System (초반 러시 방어) - USER ADDED ★★★
+            if hasattr(self.bot, "early_defense") and self.bot.early_defense:
+                start_time = self._logic_tracker.start_logic("EarlyDefense")
+                try:
+                    await self.bot.early_defense.execute(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode: raise
+                    print(f"[ERROR] EarlyDefense error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("EarlyDefense", start_time)
+
+            # 0.0066 ★★★ Idle Unit Manager (유휴 병력 관리) - USER ADDED ★★★
+            if hasattr(self.bot, "idle_units") and self.bot.idle_units:
+                start_time = self._logic_tracker.start_logic("IdleUnitManager")
+                try:
+                    await self.bot.idle_units.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode: raise
+                    print(f"[ERROR] IdleUnitManager error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("IdleUnitManager", start_time)
+
                 # ★ 죽은 유닛의 권한 해제 (2초마다) ★
                 if iteration % 44 == 0:
                     self._cleanup_dead_unit_authorities()
@@ -530,6 +552,26 @@ class BotStepIntegrator:
             # 0.016 Creep Expansion System (전 맵 점막 확장)
             if hasattr(self.bot, "creep_expansion") and self.bot.creep_expansion:
                 await self.bot.creep_expansion.on_step(iteration)
+
+            # 0.0165 ★ NEW: Creep Denial System (적 점막 제거) ★
+            if hasattr(self.bot, "creep_denial") and self.bot.creep_denial:
+                start_time = self._logic_tracker.start_logic("CreepDenial")
+                try:
+                    await self.bot.creep_denial.on_step(iteration)
+
+                    # 주기적으로 보고서 출력 (1분마다)
+                    if iteration % 1320 == 0:
+                        report = self.bot.creep_denial.get_creep_denial_report()
+                        print(report)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["CreepDenial"] = error_handler.error_counts.get("CreepDenial", 0) + 1
+                        if error_handler.error_counts["CreepDenial"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] CreepDenial error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("CreepDenial", start_time)
 
             # 0.017 Hive Tech Maximizer (군락 기술 극대화)
             if hasattr(self.bot, "hive_tech") and self.bot.hive_tech:
@@ -712,6 +754,21 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("DefenseCoordinator", start_time)
 
+            # 0.048 ★★★ EarlyDefenseSystem (0-3분 러시 전용 방어) ★★★
+            if self.bot.time < 180 and hasattr(self.bot, "early_defense") and self.bot.early_defense:
+                start_time = self._logic_tracker.start_logic("EarlyDefense")
+                try:
+                    await self.bot.early_defense.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["EarlyDefense"] = error_handler.error_counts.get("EarlyDefense", 0) + 1
+                        if error_handler.error_counts["EarlyDefense"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] EarlyDefense error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("EarlyDefense", start_time)
+
             # 0.051 ★★★ Worker Combat System (Early Rush Defense) ★★★
             if hasattr(self.bot, "worker_combat") and self.bot.worker_combat:
                 start_time = self._logic_tracker.start_logic("WorkerCombat")
@@ -778,10 +835,16 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("ResourceBalancer")
                 try:
                     ratio_adjustments = self.bot.resource_balancer.update(iteration)
+
+                    # ★ OPTIMIZED: Store in bot for all systems to use
+                    self.bot.current_gas_ratio = ratio_adjustments.get("gas_unit_ratio", 0.50)
+                    self.bot.resource_state = ratio_adjustments.get("state", "BALANCED")
+                    self.bot.mineral_excess = ratio_adjustments.get("mineral_excess", False)
+                    self.bot.gas_shortage = ratio_adjustments.get("gas_shortage", False)
+
                     # UnitFactory에 조정된 비율 전달
                     if hasattr(self.bot, "unit_factory") and self.bot.unit_factory:
-                        gas_ratio = ratio_adjustments.get("gas_unit_ratio", 0.50)
-                        self.bot.unit_factory.gas_unit_ratio_target = gas_ratio
+                        self.bot.unit_factory.gas_unit_ratio_target = self.bot.current_gas_ratio
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -806,6 +869,42 @@ class BotStepIntegrator:
                             print(f"[ERROR] SmartBalancer error: {e}")
                 finally:
                     self._logic_tracker.end_logic("SmartBalancer", start_time)
+
+            # 0.059 ★★★ INSTANT Air Threat Response (치명적 공중 유닛 즉시 대응) ★★★
+            if iteration % 11 == 0:  # 매 0.5초마다 체크 (빠른 반응)
+                try:
+                    from sc2.ids.unit_typeid import UnitTypeId
+                    enemy_units = getattr(self.bot, "enemy_units", None)
+                    enemy_structures = getattr(self.bot, "enemy_structures", None)
+
+                    if enemy_units and enemy_structures:
+                        # Carrier 감지 → 즉시 Corruptor 생산
+                        if enemy_units(UnitTypeId.CARRIER).exists:
+                            if self.bot.can_afford(UnitTypeId.CORRUPTOR) and self.bot.larva.exists:
+                                larva = self.bot.larva.first
+                                self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
+                                print(f"[INSTANT_AIR] Carrier detected! Building Corruptor")
+
+                        # Stargate 감지 → Hydralisk Den 건설 준비
+                        elif enemy_structures(UnitTypeId.STARGATE).exists:
+                            hydra_den = self.bot.structures(UnitTypeId.HYDRALISKDEN)
+                            if not hydra_den.exists and not self.bot.already_pending(UnitTypeId.HYDRALISKDEN):
+                                if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
+                                    lair_or_hive = self.bot.structures.of_type([UnitTypeId.LAIR, UnitTypeId.HIVE])
+                                    if lair_or_hive.ready.exists:
+                                        await self.bot.build(UnitTypeId.HYDRALISKDEN, near=lair_or_hive.ready.first)
+                                        print(f"[INSTANT_AIR] Stargate detected! Building Hydralisk Den")
+
+                        # Battlecruiser 감지 → 즉시 Corruptor 대량 생산
+                        elif enemy_units(UnitTypeId.BATTLECRUISER).exists:
+                            corruptor_count = self.bot.units(UnitTypeId.CORRUPTOR).amount
+                            if corruptor_count < 12 and self.bot.can_afford(UnitTypeId.CORRUPTOR):
+                                for larva in self.bot.larva[:3]:  # 최대 3마리 동시 생산
+                                    self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
+                                print(f"[INSTANT_AIR] Battlecruiser detected! Mass Corruptor production")
+                except Exception as e:
+                    # Silent fail - 즉각 대응이므로 에러가 critical하지 않음
+                    pass
 
             # 0.060 ★★★ Dynamic Counter System (적 유닛 즉시 카운터) ★★★
             if hasattr(self.bot, "dynamic_counter") and self.bot.dynamic_counter:
@@ -1164,7 +1263,29 @@ class BotStepIntegrator:
                     method_name="execute",
                 )
 
-            # 5. Economy (경제) - ★ MOVED AFTER ARMY PRODUCTION ★
+            # 4.95 ★ OPTIMIZED: Advanced Worker Optimizer BEFORE Economy ★
+            # Worker optimization runs FIRST so economy can use saturation data
+            if hasattr(self.bot, "worker_optimizer") and self.bot.worker_optimizer:
+                start_time = self._logic_tracker.start_logic("WorkerOptimizer")
+                try:
+                    await self.bot.worker_optimizer.on_step(iteration)
+
+                    # 주기적으로 효율성 보고서 출력 (1분마다)
+                    if iteration % 1320 == 0:
+                        report = self.bot.worker_optimizer.get_efficiency_report()
+                        print(report)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["WorkerOptimizer"] = error_handler.error_counts.get("WorkerOptimizer", 0) + 1
+                        if error_handler.error_counts["WorkerOptimizer"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] WorkerOptimizer error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("WorkerOptimizer", start_time)
+
+            # 5. Economy (경제) - ★ MOVED AFTER ARMY PRODUCTION & WORKER OPT ★
+            # Worker optimizer가 먼저 실행되어 최적 saturation 계산
             # 전투 병력 생산 후 남은 애벌레로 드론 생산
             await self._safe_manager_step(self.bot.economy, iteration, "Economy")
 
@@ -1225,6 +1346,26 @@ class BotStepIntegrator:
                 iteration,
                 "Upgrade manager",
             )
+
+            # 4.6 ★ NEW: Upgrade Resource Planner (업그레이드 자원 계획) ★
+            if hasattr(self.bot, "upgrade_planner") and self.bot.upgrade_planner:
+                start_time = self._logic_tracker.start_logic("UpgradePlanner")
+                try:
+                    await self.bot.upgrade_planner.on_step(iteration)
+
+                    # 주기적으로 보고서 출력 (30초마다)
+                    if iteration % 660 == 0:
+                        report = self.bot.upgrade_planner.get_upgrade_progress_report()
+                        print(report)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["UpgradePlanner"] = error_handler.error_counts.get("UpgradePlanner", 0) + 1
+                        if error_handler.error_counts["UpgradePlanner"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] UpgradePlanner error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("UpgradePlanner", start_time)
 
             # 5. Advanced Building Manager (최신 개선 사항)
             if hasattr(self.bot, "advanced_building_manager"):
@@ -1289,6 +1430,41 @@ class BotStepIntegrator:
 
             # 8. Combat (전투) - 단일 호출 (방어 모드 자동 감지)
             await self._safe_manager_step(self.bot.combat, iteration, "Combat")
+
+            # 8.03 ★ NEW: Idle Unit Manager (유휴 유닛 괴롭힘) ★
+            if hasattr(self.bot, "idle_units") and self.bot.idle_units:
+                start_time = self._logic_tracker.start_logic("IdleUnits")
+                try:
+                    await self.bot.idle_units.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["IdleUnits"] = error_handler.error_counts.get("IdleUnits", 0) + 1
+                        if error_handler.error_counts["IdleUnits"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] IdleUnits error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("IdleUnits", start_time)
+
+            # 8.05 ★ NEW: Combat Phase Controller (전투 단계별 컨트롤) ★
+            if hasattr(self.bot, "combat_phase") and self.bot.combat_phase:
+                start_time = self._logic_tracker.start_logic("CombatPhase")
+                try:
+                    await self.bot.combat_phase.on_step(iteration)
+
+                    # 주기적으로 전투 보고서 출력 (30초마다)
+                    if iteration % 660 == 0:
+                        report = self.bot.combat_phase.get_combat_report()
+                        print(report)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["CombatPhase"] = error_handler.error_counts.get("CombatPhase", 0) + 1
+                        if error_handler.error_counts["CombatPhase"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] CombatPhase error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("CombatPhase", start_time)
 
             # 8.1 ★★★ Harassment Coordinator (Phase 9 - 견제 시스템) ★★★
             if hasattr(self.bot, "harassment_coord") and self.bot.harassment_coord:

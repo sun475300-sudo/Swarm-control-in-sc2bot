@@ -2,11 +2,12 @@
 """
 SpellCaster Automation - 마법 유닛 스킬 자동화
 
-퀸, 궤멸충, 살모사, 감염충의 스킬을 자동으로 사용합니다:
+퀸, 궤멸충, 살모사, 감염충, 감시군주의 스킬을 자동으로 사용합니다:
 - 퀸: 체력 낮은 유닛 수혈 (Transfuse)
 - 궤멸충: 적 밀집 지역 담즙 (Corrosive Bile)
-- 살모사: 고가치 유닛 납치 (Abduct), 흑구름 (Blinding Cloud)
+- 살모사: 에너지 회복 (Consume), 고가치 유닛 납치 (Abduct), 흑구름 (Blinding Cloud)
 - 감염충: 신경 기생충 (Neural Parasite), 진균 번식 (Fungal Growth)
+- 감시군주: 무료 정찰 유닛 생성 (Changeling)
 
 효과: 고급 유닛 활용도 0% → 100%
 """
@@ -25,13 +26,17 @@ except ImportError:
         RAVAGER = "RAVAGER"
         VIPER = "VIPER"
         INFESTOR = "INFESTOR"
+        OVERSEER = "OVERSEER"
+        OVERLORD = "OVERLORD"
     class AbilityId:
         TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
         EFFECT_CORROSIVEBILE = "EFFECT_CORROSIVEBILE"
         EFFECT_ABDUCT = "EFFECT_ABDUCT"
         EFFECT_BLINDINGCLOUD = "EFFECT_BLINDINGCLOUD"
+        EFFECT_VIPERCONSUME = "EFFECT_VIPERCONSUME"
         NEURALPARASITE_NEURALPARASITE = "NEURALPARASITE_NEURALPARASITE"
         FUNGALGROWTH_FUNGALGROWTH = "FUNGALGROWTH_FUNGALGROWTH"
+        SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
     class UpgradeId:
         pass
     Point2 = tuple
@@ -60,16 +65,18 @@ class SpellCasterAutomation:
         self.queen_transfuse_threshold = 0.35  # 체력 35% 이하
         self.ravager_min_targets = 3  # 최소 3명 이상 밀집
         self.viper_abduct_range = 9
-        self.infestor_fungal_min_targets = 5
+        self.infestor_fungal_min_targets = 3  # ★ IMPROVED: 5 → 3 (실전에서 5명 밀집은 드뭄)
 
         # ★ 통계 ★
         self.skills_used = {
             "transfuse": 0,
             "bile": 0,
+            "consume": 0,
             "abduct": 0,
             "blinding_cloud": 0,
             "neural": 0,
             "fungal": 0,
+            "changeling": 0,
         }
 
     async def on_step(self, iteration: int):
@@ -91,6 +98,9 @@ class SpellCasterAutomation:
 
             # ★ 4. 감염충 스킬 (Neural, Fungal) ★
             await self._infestor_skills()
+
+            # ★ 5. 감시군주 환상 (Changeling) ★
+            await self._overseer_changeling()
 
         except Exception as e:
             if iteration % 200 == 0:
@@ -216,7 +226,7 @@ class SpellCasterAutomation:
 
     async def _viper_skills(self):
         """
-        살모사 스킬 (Abduct, Blinding Cloud)
+        살모사 스킬 (Consume, Abduct, Blinding Cloud)
         """
         if not hasattr(self.bot, "units") or not hasattr(self.bot, "enemy_units"):
             return
@@ -228,6 +238,12 @@ class SpellCasterAutomation:
         enemy_units = self.bot.enemy_units
 
         for viper in vipers:
+            # ★ 0. 에너지 회복 (Consume) - 에너지 < 25 ★
+            if viper.energy < 25:
+                if not self._is_on_cooldown(viper.tag, "consume", 30):
+                    await self._viper_consume(viper)
+                    continue
+
             # ★ 1. 납치 (Abduct) - 75 에너지 ★
             if viper.energy >= 75:
                 if not self._is_on_cooldown(viper.tag, "abduct", 15):
@@ -324,6 +340,34 @@ class SpellCasterAutomation:
                 f"[{int(game_time)}s] ★ BLINDING CLOUD: {max_count} targets ★"
             )
 
+    async def _viper_consume(self, viper):
+        """
+        살모사 에너지 회복 (Consume) - Overlord를 소비해 에너지 50 획득
+        """
+        if not hasattr(self.bot, "units"):
+            return
+
+        # 가장 가까운 Overlord 찾기 (수송 중이 아닌 것)
+        overlords = self.bot.units(UnitTypeId.OVERLORD).filter(
+            lambda o: not o.has_cargo and o.distance_to(viper) < 8
+        )
+
+        if not overlords:
+            return
+
+        target_overlord = overlords.closest_to(viper)
+
+        abilities = await self.bot.get_available_abilities(viper)
+        if AbilityId.EFFECT_VIPERCONSUME in abilities:
+            self.bot.do(viper(AbilityId.EFFECT_VIPERCONSUME, target_overlord))
+            self._record_skill_use(viper.tag, "consume")
+            self.skills_used["consume"] = self.skills_used.get("consume", 0) + 1
+
+            game_time = getattr(self.bot, "time", 0)
+            self.logger.info(
+                f"[{int(game_time)}s] ★ CONSUME: Viper energy recovery (Overlord sacrificed) ★"
+            )
+
     async def _infestor_skills(self):
         """
         감염충 스킬 (Neural Parasite, Fungal Growth)
@@ -417,6 +461,44 @@ class SpellCasterAutomation:
             self.logger.info(
                 f"[{int(game_time)}s] ★ NEURAL: {target.type_id.name} ★"
             )
+
+    async def _overseer_changeling(self):
+        """
+        감시군주 환상 (Changeling) - 무료 정찰 유닛 생성
+        """
+        if not hasattr(self.bot, "units"):
+            return
+
+        overseers = self.bot.units(UnitTypeId.OVERSEER)
+        if not overseers:
+            return
+
+        for overseer in overseers:
+            # 에너지 체크 (50 필요)
+            if overseer.energy < 50:
+                continue
+
+            # 쿨다운 체크 (14초)
+            if self._is_on_cooldown(overseer.tag, "changeling", 14):
+                continue
+
+            # 환상 생성 (적 본진 방향으로)
+            if self.bot.enemy_start_locations:
+                target_pos = self.bot.enemy_start_locations[0]
+            else:
+                target_pos = self.bot.game_info.map_center
+
+            abilities = await self.bot.get_available_abilities(overseer)
+            if AbilityId.SPAWNCHANGELING_SPAWNCHANGELING in abilities:
+                self.bot.do(overseer(AbilityId.SPAWNCHANGELING_SPAWNCHANGELING, target_pos))
+                self._record_skill_use(overseer.tag, "changeling")
+                self.skills_used["changeling"] = self.skills_used.get("changeling", 0) + 1
+
+                game_time = getattr(self.bot, "time", 0)
+                self.logger.info(
+                    f"[{int(game_time)}s] ★ CHANGELING: Scout sent to {target_pos} ★"
+                )
+                break  # 한 프레임에 하나만
 
     def _is_on_cooldown(self, unit_tag: int, ability: str, cooldown: float) -> bool:
         """

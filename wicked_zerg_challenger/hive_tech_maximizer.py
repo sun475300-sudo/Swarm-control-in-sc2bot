@@ -96,6 +96,69 @@ class HiveTechMaximizer:
             self.hive_completion_time = game_time
             self.logger.info(f"[HIVE] HIVE ACTIVE at {int(game_time)}s! Starting advanced tech!")
 
+    def _analyze_enemy_composition(self) -> str:
+        """
+        ★ 적 병력 구성 분석 (Tech Path Selection) ★
+
+        Returns:
+            "anti_air": 공중 유닛 카운터 필요
+            "anti_ground_heavy": 중장갑 지상 유닛 카운터 필요
+            "anti_bio": 경장갑 다수 유닛 카운터 필요
+            "balanced": 균형 잡힌 조합
+        """
+        if not hasattr(self.bot, "enemy_units"):
+            return "balanced"
+
+        enemy_units = self.bot.enemy_units
+        if not enemy_units:
+            return "balanced"
+
+        # ★ 공중 유닛 카운트 ★
+        air_units = enemy_units.filter(lambda u: u.is_flying)
+        air_count = air_units.amount
+
+        # 고가치 공중 유닛
+        high_value_air = {
+            UnitTypeId.CARRIER, UnitTypeId.BATTLECRUISER, UnitTypeId.TEMPEST,
+            UnitTypeId.BROODLORD, UnitTypeId.VOIDRAY
+        }
+        critical_air = sum(1 for u in air_units if u.type_id in high_value_air)
+
+        # ★ 중장갑 지상 유닛 카운트 ★
+        heavy_ground = {
+            UnitTypeId.THOR, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED,
+            UnitTypeId.IMMORTAL, UnitTypeId.COLOSSUS, UnitTypeId.ULTRALISK,
+            UnitTypeId.ARCHON
+        }
+        heavy_count = sum(1 for u in enemy_units if u.type_id in heavy_ground)
+
+        # ★ 경장갑 다수 유닛 카운트 ★
+        bio_units = {
+            UnitTypeId.MARINE, UnitTypeId.MARAUDER, UnitTypeId.ZEALOT,
+            UnitTypeId.ZERGLING, UnitTypeId.HYDRALISK, UnitTypeId.ROACH
+        }
+        bio_count = sum(1 for u in enemy_units if u.type_id in bio_units)
+
+        # ★ Tech Path 결정 ★
+        total_units = enemy_units.amount
+
+        if total_units < 5:
+            return "balanced"  # 초반은 균형 잡힌 조합
+
+        # 공중 위협이 크면 anti_air
+        if critical_air >= 3 or (air_count / total_units > 0.4):
+            return "anti_air"
+
+        # 중장갑이 많으면 anti_ground_heavy
+        if heavy_count >= 4 or (heavy_count / total_units > 0.3):
+            return "anti_ground_heavy"
+
+        # 바이오닉이 많으면 anti_bio
+        if bio_count >= 15 or (bio_count / total_units > 0.6):
+            return "anti_bio"
+
+        return "balanced"
+
     async def _build_advanced_structures(self, game_time: float):
         """고급 건물 건설"""
         if not self.bot.townhalls.exists:
@@ -149,21 +212,39 @@ class HiveTechMaximizer:
                 continue
 
     async def _produce_advanced_units(self, game_time: float):
-        """고급 유닛 생산"""
-        # Ultralisk 생산
-        await self._produce_ultralisks()
+        """
+        고급 유닛 생산 (★ IMPROVED: Tech Path Selection ★)
+        적 병력 구성에 따라 최적의 유닛 선택
+        """
+        # ★ 적 병력 구성 분석 ★
+        tech_path = self._analyze_enemy_composition()
 
-        # Brood Lord 변태
-        await self._morph_broodlords()
+        # ★ Tech Path별 우선순위 생산 ★
+        if tech_path == "anti_air":
+            # vs Air Heavy (Carrier, BC, Mutalisk)
+            await self._produce_vipers()      # Abduct high-value air
+            await self._morph_broodlords()    # Long-range air counter
+            await self._produce_infestors()   # Fungal flying units
 
-        # Lurker 변태
-        await self._morph_lurkers()
+        elif tech_path == "anti_ground_heavy":
+            # vs Ground Heavy (Thor, Siege Tank, Immortal, Colossus)
+            await self._produce_ultralisks()  # Tank ground units
+            await self._produce_vipers()      # Abduct key units
+            await self._morph_lurkers()       # Long-range siege
 
-        # Viper 생산
-        await self._produce_vipers()
+        elif tech_path == "anti_bio":
+            # vs Bio (Marine, Marauder, Zealot, Hydralisk)
+            await self._produce_infestors()   # Fungal clumps
+            await self._morph_lurkers()       # AoE damage
+            await self._produce_ultralisks()  # Splash tank
 
-        # Infestor 생산
-        await self._produce_infestors()
+        else:
+            # Balanced / Unknown → Standard production
+            await self._produce_vipers()
+            await self._produce_infestors()
+            await self._morph_broodlords()
+            await self._produce_ultralisks()
+            await self._morph_lurkers()
 
     async def _produce_ultralisks(self):
         """Ultralisk 생산"""
@@ -265,6 +346,18 @@ class HiveTechMaximizer:
 
     async def _research_advanced_upgrades(self):
         """고급 업그레이드 연구"""
+        # ★ Adrenal Glands (Zergling 공속 +20%) - 가장 중요! ★
+        if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
+            pool = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.idle
+            if pool:
+                if self.bot.can_afford(UpgradeId.ZERGLINGATTACKSPEED):
+                    if UpgradeId.ZERGLINGATTACKSPEED not in self.bot.state.upgrades:
+                        abilities = await self.bot.get_available_abilities(pool.first)
+                        if AbilityId.RESEARCH_ZERGLINGADRENALGLANDS in abilities:
+                            self.bot.do(pool.first(AbilityId.RESEARCH_ZERGLINGADRENALGLANDS))
+                            self.logger.info("[HIVE] ★ Researching Adrenal Glands! (Zergling attack speed +20%) ★")
+                            return  # 한 번에 하나씩
+
         # Chitinous Plating (Ultralisk 방어력)
         if self.bot.structures(UnitTypeId.ULTRALISKCAVERN).ready:
             cavern = self.bot.structures(UnitTypeId.ULTRALISKCAVERN).ready.idle
@@ -275,6 +368,7 @@ class HiveTechMaximizer:
                         if AbilityId.RESEARCH_CHITINOUSPLATING in abilities:
                             self.bot.do(cavern.first(AbilityId.RESEARCH_CHITINOUSPLATING))
                             self.logger.info("[HIVE] Researching Chitinous Plating!")
+                            return
 
         # Anabolic Synthesis (Ultralisk 이속)
         if self.bot.structures(UnitTypeId.ULTRALISKCAVERN).ready:
@@ -286,6 +380,7 @@ class HiveTechMaximizer:
                         if AbilityId.RESEARCH_ANABOLICSYNTHESIS in abilities:
                             self.bot.do(cavern.first(AbilityId.RESEARCH_ANABOLICSYNTHESIS))
                             self.logger.info("[HIVE] Researching Anabolic Synthesis!")
+                            return
 
     def _print_statistics(self, game_time: float):
         """통계 출력"""

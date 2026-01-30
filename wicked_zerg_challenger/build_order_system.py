@@ -75,8 +75,8 @@ class BuildOrderSystem:
         self.enabled = True
         self.build_order_active = True
 
-        # 현재 빌드 오더 (기본값을 바퀴 러시로 변경하여 즉각적 효과 유도)
-        self.current_build_order: BuildOrderType = BuildOrderType.ROACH_RUSH
+        # 현재 빌드 오더 (적 종족에 따라 선택)
+        self.current_build_order: BuildOrderType = self._select_build_by_enemy_race()
         self.build_steps: List[BuildOrderStep] = []
         self.current_step_index = 0
 
@@ -101,6 +101,31 @@ class BuildOrderSystem:
 
         # 초기화
         self._setup_build_order()
+
+    def _select_build_by_enemy_race(self) -> BuildOrderType:
+        """
+        적 종족에 따라 최적 빌드 오더 선택
+
+        Returns:
+            BuildOrderType: 선택된 빌드 오더
+        """
+        if not hasattr(self.bot, "enemy_race") or not self.bot.enemy_race:
+            return BuildOrderType.ROACH_RUSH  # Fallback
+
+        race_name = str(self.bot.enemy_race).lower()
+
+        if "protoss" in race_name:
+            # vs Protoss: 14-pool (Stargate 대비 안전한 오프닝)
+            # Hydralisk/Roach로 전환 가능
+            return BuildOrderType.SAFE_14POOL
+        elif "terran" in race_name:
+            # vs Terran: 12-pool (초반 압박 또는 Reaper 대응)
+            # 빠른 전투로 테란 확장 지연
+            return BuildOrderType.STANDARD_12POOL
+        else:
+            # vs Zerg: 14-pool (미러전 안정성)
+            # Pool 타이밍 맞추면서 경제력 확보
+            return BuildOrderType.SAFE_14POOL
 
     def _setup_build_order(self) -> None:
         """현재 빌드 오더 설정 (From KnowledgeManager)"""

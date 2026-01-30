@@ -21,6 +21,7 @@ try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
@@ -39,6 +40,8 @@ except ImportError:
     class AbilityId:
         EFFECT_CORROSIVEBILE = "EFFECT_CORROSIVEBILE"
         LOAD = "LOAD"
+    class UpgradeId:
+        OVERLORDTRANSPORT = "OVERLORDTRANSPORT"
     Point2 = tuple
     Unit = None
     Units = list
@@ -540,6 +543,10 @@ class HarassmentCoordinator:
             return  # 본진이 교전 중일 때만 Drop Play 실행
 
         # ★ 2. Overlord 운송 능력 확인 ★
+        # [FIX] 수송 업그레이드(Pneumatized Carapace) 확인
+        if UpgradeId.OVERLORDTRANSPORT not in self.bot.state.upgrades:
+            return
+
         overlords = self.bot.units(UnitTypeId.OVERLORD).filter(
             lambda o: o.is_idle and not o.has_cargo
         )
