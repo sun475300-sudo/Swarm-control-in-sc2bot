@@ -33,8 +33,10 @@ import {
   GitHubBranch,
 } from '@/lib/github';
 import { showNotification } from '@/lib/notifications';
+import CommitModal from '@/components/CommitModal';
+import CommitStats from '@/components/CommitStats';
 
-type TabType = 'overview' | 'commits' | 'prs' | 'releases' | 'issues' | 'actions' | 'branches';
+type TabType = 'overview' | 'commits' | 'prs' | 'releases' | 'issues' | 'actions' | 'branches' | 'stats';
 
 export default function GitHub() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -47,6 +49,7 @@ export default function GitHub() {
   const [issues, setIssues] = useState<GitHubIssue[]>([]);
   const [workflowRuns, setWorkflowRuns] = useState<GitHubWorkflowRun[]>([]);
   const [branches, setBranches] = useState<GitHubBranch[]>([]);
+  const [selectedCommit, setSelectedCommit] = useState<string | null>(null);
   const [newUpdates, setNewUpdates] = useState<{
     commits: number;
     prs: number;
@@ -130,6 +133,7 @@ export default function GitHub() {
     { id: 'prs' as TabType, label: 'PR', count: newUpdates.prs },
     { id: 'actions' as TabType, label: 'Actions', count: null },
     { id: 'branches' as TabType, label: '브랜치', count: null },
+    { id: 'stats' as TabType, label: '통계', count: null },
     { id: 'releases' as TabType, label: '릴리즈', count: newUpdates.releases },
     { id: 'issues' as TabType, label: '이슈', count: newUpdates.issues },
   ];
@@ -282,12 +286,10 @@ export default function GitHub() {
             </h4>
             <div className="space-y-2">
               {commits.slice(0, 3).map((commit) => (
-                <a
+                <button
                   key={commit.sha}
-                  href={commit.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block rounded-lg bg-white/5 p-3 hover:bg-white/10"
+                  onClick={() => setSelectedCommit(commit.sha)}
+                  className="w-full text-left block rounded-lg bg-white/5 p-3 hover:bg-white/10 transition-colors"
                 >
                   <p className="text-sm font-medium line-clamp-1">
                     {commit.message.split('\n')[0]}
@@ -295,7 +297,7 @@ export default function GitHub() {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {commit.author.name} • {formatRelativeTime(commit.author.date)}
                   </p>
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -354,12 +356,10 @@ export default function GitHub() {
       {activeTab === 'commits' && (
         <div className="space-y-2">
           {commits.map((commit) => (
-            <a
+            <button
               key={commit.sha}
-              href={commit.html_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass block rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-md hover:bg-white/10"
+              onClick={() => setSelectedCommit(commit.sha)}
+              className="glass w-full text-left block rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-md hover:bg-white/10 transition-colors"
             >
               <div className="flex items-start gap-3">
                 {commit.author.avatar_url && (
@@ -379,7 +379,7 @@ export default function GitHub() {
                   </p>
                 </div>
               </div>
-            </a>
+            </button>
           ))}
         </div>
       )}
@@ -611,6 +611,18 @@ export default function GitHub() {
             ))
           )}
         </div>
+      )}
+      
+      {activeTab === 'stats' && <CommitStats />}
+      
+      {/* 커밋 상세 모달 */}
+      {selectedCommit && (
+        <CommitModal
+          owner={repoConfig.owner}
+          repo={repoConfig.repo}
+          sha={selectedCommit}
+          onClose={() => setSelectedCommit(null)}
+        />
       )}
     </div>
   );
