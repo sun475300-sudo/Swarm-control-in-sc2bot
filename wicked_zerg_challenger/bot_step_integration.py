@@ -951,20 +951,21 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("SpellCaster", start_time)
 
+            # DEPRECATED: ActiveScoutingSystem replaced by AdvancedScoutingSystemV2
             # 0.063 ★★★ Active Scouting System (능동형 정찰) ★★★
-            if hasattr(self.bot, "active_scout") and self.bot.active_scout:
-                start_time = self._logic_tracker.start_logic("ActiveScout")
-                try:
-                    await self.bot.active_scout.on_step(iteration)
-                except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["ActiveScout"] += 1
-                        if error_handler.error_counts["ActiveScout"] <= error_handler.max_error_logs:
-                            print(f"[ERROR] ActiveScout error: {e}")
-                finally:
-                    self._logic_tracker.end_logic("ActiveScout", start_time)
+            # if hasattr(self.bot, "active_scout") and self.bot.active_scout:
+            #     start_time = self._logic_tracker.start_logic("ActiveScout")
+            #     try:
+            #         await self.bot.active_scout.on_step(iteration)
+            #     except Exception as e:
+            #         if error_handler.debug_mode:
+            #             raise
+            #         else:
+            #             error_handler.error_counts["ActiveScout"] += 1
+            #             if error_handler.error_counts["ActiveScout"] <= error_handler.max_error_logs:
+            #                 print(f"[ERROR] ActiveScout error: {e}")
+            #     finally:
+            #         self._logic_tracker.end_logic("ActiveScout", start_time)
 
             # 0.064 ★★★ Upgrade Coordination System (업그레이드 타이밍) ★★★
             if hasattr(self.bot, "upgrade_coord") and self.bot.upgrade_coord:
@@ -1171,8 +1172,8 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("OpponentModeling", start_time)
 
-            # 2. Scouting (정찰)
-            await self._safe_manager_step(self.bot.scout, iteration, "Scouting")
+            # 2. Scouting (정찰) - DEPRECATED: Use AdvancedScoutingSystemV2 instead
+            # await self._safe_manager_step(self.bot.scout, iteration, "Scouting")
 
             # 2.2. Creep Manager (점막 계획)
             await self._safe_manager_step(
@@ -1688,8 +1689,9 @@ class BotStepIntegrator:
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
                 try:
                     self.bot.performance_optimizer.end_frame()
-                except Exception:
-                    pass  # Silently ignore end_frame errors
+                except (AttributeError, TypeError, RuntimeError) as e:
+                    # Silently ignore end_frame errors - performance tracking is non-critical
+                    pass
 
     def _cleanup_dead_unit_authorities(self):
         """죽은 유닛의 권한 자동 해제"""
@@ -1792,8 +1794,8 @@ class BotStepIntegrator:
             # debug_send 메서드가 있는 경우에만 호출
             if hasattr(client, "debug_send"):
                 await client.debug_send()
-        except Exception:
-            # 디버그 정보 표시 실패는 조용히 무시
+        except (AttributeError, TypeError, RuntimeError) as e:
+            # 디버그 정보 표시 실패는 조용히 무시 (debug display is non-critical)
             pass
 
     async def _safe_manager_step(
@@ -2061,7 +2063,8 @@ class BotStepIntegrator:
                 sequence.append(0.0)
 
             return sequence
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError) as e:
+            # Return empty sequence if state observation fails
             return []
 
     def _is_defense_mode(self) -> bool:
@@ -2307,7 +2310,8 @@ class BotStepIntegrator:
                     enemy_type = getattr(enemy.type_id, "name", "").upper()
                     if enemy_type in high_threat_air:
                         high_threat_air_count += 1
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Skip enemy unit if attributes unavailable
                 continue
 
         # 위협 레벨 결정
@@ -2338,7 +2342,8 @@ class BotStepIntegrator:
                 tech_type,
                 near=main_base.position.towards(map_center, 5),
             )
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Building placement failed - return False to retry later
             return False
 
     @error_handler.safe_coroutine(log_key="TrainingLogic", default_return=None)

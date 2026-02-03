@@ -17,6 +17,11 @@ from enum import Enum
 from strategy_manager import StrategyManager, GamePhase, StrategyMode, EnemyRace
 from utils.logger import get_logger
 
+try:
+    from config.unit_configs import StrategyConfig
+except ImportError:
+    StrategyConfig = None
+
 
 class WinCondition(Enum):
     """승리/패배 조건"""
@@ -64,10 +69,13 @@ class StrategyManagerV2(StrategyManager):
         super().__init__(bot, blackboard)
         self.logger = get_logger("StrategyManagerV2")
 
+        # Load configuration
+        self.config = StrategyConfig() if StrategyConfig else None
+
         # Win condition tracking
         self.current_win_condition = WinCondition.UNKNOWN
         self.win_condition_history: List[WinCondition] = []
-        self.win_condition_update_interval = 5.0  # Update every 5 seconds
+        self.win_condition_update_interval = self.config.WIN_CONDITION_UPDATE_INTERVAL if self.config else 5.0
         self.last_win_condition_check = 0.0
 
         # Build order system
@@ -80,17 +88,25 @@ class StrategyManagerV2(StrategyManager):
         self.strategy_scores: Dict[str, float] = {}
         self.active_strategies: List[Dict[str, Any]] = []
 
-        # Resource allocation
-        self.resource_priorities: Dict[str, float] = {
-            "economy": 0.4,    # 40% to economy (drones/expansions)
-            "army": 0.4,       # 40% to army
-            "tech": 0.1,       # 10% to tech
-            "defense": 0.1     # 10% to defense
-        }
+        # Resource allocation (설정값 사용)
+        if self.config:
+            self.resource_priorities: Dict[str, float] = {
+                "economy": self.config.DEFAULT_PRIORITY_ECONOMY,
+                "army": self.config.DEFAULT_PRIORITY_ARMY,
+                "tech": self.config.DEFAULT_PRIORITY_TECH,
+                "defense": self.config.DEFAULT_PRIORITY_DEFENSE
+            }
+        else:
+            self.resource_priorities: Dict[str, float] = {
+                "economy": 0.4,
+                "army": 0.4,
+                "tech": 0.1,
+                "defense": 0.1
+            }
 
         # Multi-strategy execution
         self.strategy_queue: List[Dict[str, Any]] = []
-        self.concurrent_strategy_limit = 3
+        self.concurrent_strategy_limit = self.config.CONCURRENT_STRATEGY_LIMIT if self.config else 3
 
         self.logger.info("[STRATEGY_V2] Initialized with enhanced decision-making")
 
@@ -138,32 +154,42 @@ class StrategyManagerV2(StrategyManager):
         army_score = self._calculate_army_score()
         tech_score = self._calculate_tech_score()
 
-        # Determine overall condition
+        # Determine overall condition (설정값 사용)
         total_score = economy_score + army_score + tech_score
 
         previous_condition = self.current_win_condition
 
-        if total_score >= 6:  # Strong winning
-            if economy_score >= 2:
+        if self.config:
+            strong_win = self.config.STRONG_WINNING_SCORE
+            strong_lose = self.config.STRONG_LOSING_SCORE
+            cat_threshold = self.config.SCORE_CATEGORY_THRESHOLD
+        else:
+            strong_win = 6
+            strong_lose = -6
+            cat_threshold = 2
+
+        if total_score >= strong_win:  # Strong winning
+            if economy_score >= cat_threshold:
                 self.current_win_condition = WinCondition.WINNING_ECONOMY
-            elif army_score >= 2:
+            elif army_score >= cat_threshold:
                 self.current_win_condition = WinCondition.WINNING_ARMY
             else:
                 self.current_win_condition = WinCondition.WINNING_TECH
-        elif total_score <= -6:  # Strong losing
-            if economy_score <= -2:
+        elif total_score <= strong_lose:  # Strong losing
+            if economy_score <= -cat_threshold:
                 self.current_win_condition = WinCondition.LOSING_ECONOMY
-            elif army_score <= -2:
+            elif army_score <= -cat_threshold:
                 self.current_win_condition = WinCondition.LOSING_ARMY
             else:
                 self.current_win_condition = WinCondition.LOSING_TECH
         else:
             self.current_win_condition = WinCondition.EVEN
 
-        # Track history
+        # Track history (설정값 사용)
         if self.current_win_condition != previous_condition:
             self.win_condition_history.append(self.current_win_condition)
-            if len(self.win_condition_history) > 20:  # Keep last 20
+            history_size = self.config.WIN_CONDITION_HISTORY_SIZE if self.config else 20
+            if len(self.win_condition_history) > history_size:
                 self.win_condition_history.pop(0)
 
             self.logger.info(f"[{int(game_time)}s] Win Condition: {self.current_win_condition.name} "
@@ -178,31 +204,47 @@ class StrategyManagerV2(StrategyManager):
         """
         score = 0.0
 
-        # Worker count comparison
+        # Worker count comparison (설정값 사용)
         our_workers = self._count_workers()
         enemy_workers = self._estimate_enemy_workers()
 
         if enemy_workers > 0:
             worker_ratio = our_workers / enemy_workers
-            if worker_ratio >= 1.5:
-                score += 2.0
-            elif worker_ratio >= 1.2:
-                score += 1.0
-            elif worker_ratio <= 0.7:
-                score -= 2.0
-            elif worker_ratio <= 0.8:
-                score -= 1.0
+            if self.config:
+                if worker_ratio >= self.config.ECONOMY_WORKER_RATIO_STRONG:
+                    score += self.config.ECONOMY_SCORE_STRONG
+                elif worker_ratio >= self.config.ECONOMY_WORKER_RATIO_GOOD:
+                    score += self.config.ECONOMY_SCORE_GOOD
+                elif worker_ratio <= self.config.ECONOMY_WORKER_RATIO_WEAK:
+                    score += self.config.ECONOMY_SCORE_WEAK
+                elif worker_ratio <= self.config.ECONOMY_WORKER_RATIO_BAD:
+                    score += self.config.ECONOMY_SCORE_BAD
+            else:
+                if worker_ratio >= 1.5:
+                    score += 2.0
+                elif worker_ratio >= 1.2:
+                    score += 1.0
+                elif worker_ratio <= 0.7:
+                    score -= 2.0
+                elif worker_ratio <= 0.8:
+                    score -= 1.0
 
-        # Base count comparison
+        # Base count comparison (설정값 사용)
         our_bases = self._count_bases()
         enemy_bases = self._estimate_enemy_bases()
 
         if enemy_bases > 0:
             base_ratio = our_bases / enemy_bases
-            if base_ratio >= 1.5:
-                score += 1.0
-            elif base_ratio <= 0.7:
-                score -= 1.0
+            if self.config:
+                if base_ratio >= self.config.ECONOMY_BASE_RATIO_GOOD:
+                    score += self.config.ECONOMY_SCORE_GOOD
+                elif base_ratio <= self.config.ECONOMY_BASE_RATIO_BAD:
+                    score += self.config.ECONOMY_SCORE_BAD
+            else:
+                if base_ratio >= 1.5:
+                    score += 1.0
+                elif base_ratio <= 0.7:
+                    score -= 1.0
 
         return score
 
@@ -215,24 +257,38 @@ class StrategyManagerV2(StrategyManager):
         """
         score = 0.0
 
-        # Army supply comparison
+        # Army supply comparison (설정값 사용)
         our_army_supply = getattr(self.bot, "supply_army", 0)
         enemy_army_supply = self._estimate_enemy_army_supply()
 
         if enemy_army_supply > 0:
             army_ratio = our_army_supply / enemy_army_supply
-            if army_ratio >= 2.0:
-                score += 3.0
-            elif army_ratio >= 1.5:
-                score += 2.0
-            elif army_ratio >= 1.2:
-                score += 1.0
-            elif army_ratio <= 0.5:
-                score -= 3.0
-            elif army_ratio <= 0.7:
-                score -= 2.0
-            elif army_ratio <= 0.8:
-                score -= 1.0
+            if self.config:
+                if army_ratio >= self.config.ARMY_RATIO_OVERWHELMING:
+                    score += self.config.ARMY_SCORE_OVERWHELMING
+                elif army_ratio >= self.config.ARMY_RATIO_STRONG:
+                    score += self.config.ARMY_SCORE_STRONG
+                elif army_ratio >= self.config.ARMY_RATIO_GOOD:
+                    score += self.config.ARMY_SCORE_GOOD
+                elif army_ratio <= self.config.ARMY_RATIO_WEAK:
+                    score += self.config.ARMY_SCORE_WEAK
+                elif army_ratio <= self.config.ARMY_RATIO_BAD:
+                    score += self.config.ARMY_SCORE_BAD
+                elif army_ratio <= self.config.ARMY_RATIO_POOR:
+                    score += self.config.ARMY_SCORE_POOR
+            else:
+                if army_ratio >= 2.0:
+                    score += 3.0
+                elif army_ratio >= 1.5:
+                    score += 2.0
+                elif army_ratio >= 1.2:
+                    score += 1.0
+                elif army_ratio <= 0.5:
+                    score -= 3.0
+                elif army_ratio <= 0.7:
+                    score -= 2.0
+                elif army_ratio <= 0.8:
+                    score -= 1.0
 
         return score
 
@@ -245,18 +301,28 @@ class StrategyManagerV2(StrategyManager):
         """
         score = 0.0
 
-        # Count tech buildings
+        # Count tech buildings (설정값 사용)
         our_tech = self._count_tech_structures()
         enemy_tech = self._estimate_enemy_tech()
 
-        if our_tech >= enemy_tech + 2:
-            score += 2.0
-        elif our_tech >= enemy_tech + 1:
-            score += 1.0
-        elif our_tech <= enemy_tech - 2:
-            score -= 2.0
-        elif our_tech <= enemy_tech - 1:
-            score -= 1.0
+        if self.config:
+            if our_tech >= enemy_tech + self.config.TECH_DIFF_STRONG:
+                score += self.config.TECH_SCORE_STRONG
+            elif our_tech >= enemy_tech + self.config.TECH_DIFF_GOOD:
+                score += self.config.TECH_SCORE_GOOD
+            elif our_tech <= enemy_tech + self.config.TECH_DIFF_BAD:
+                score += self.config.TECH_SCORE_BAD
+            elif our_tech <= enemy_tech + self.config.TECH_DIFF_POOR:
+                score += self.config.TECH_SCORE_POOR
+        else:
+            if our_tech >= enemy_tech + 2:
+                score += 2.0
+            elif our_tech >= enemy_tech + 1:
+                score += 1.0
+            elif our_tech <= enemy_tech - 2:
+                score -= 2.0
+            elif our_tech <= enemy_tech - 1:
+                score -= 1.0
 
         return score
 
@@ -272,9 +338,10 @@ class StrategyManagerV2(StrategyManager):
             return 0
 
     def _estimate_enemy_workers(self) -> int:
-        """Estimate enemy worker count"""
+        """Estimate enemy worker count (설정값 사용)"""
+        default_workers = self.config.DEFAULT_ENEMY_WORKERS if self.config else 16
         if not hasattr(self.bot, "enemy_units"):
-            return 16  # Default assumption
+            return default_workers
 
         worker_types = {"SCV", "PROBE", "DRONE", "MULE"}
         count = 0
@@ -285,12 +352,14 @@ class StrategyManagerV2(StrategyManager):
             except AttributeError:
                 continue
 
-        # If we haven't scouted workers, estimate based on bases
+        # If we haven't scouted workers, estimate based on bases (설정값 사용)
         if count == 0:
             enemy_bases = self._estimate_enemy_bases()
-            count = enemy_bases * 16  # Assume 16 per base
+            workers_per_base = self.config.DEFAULT_ENEMY_WORKERS if self.config else 16
+            count = enemy_bases * workers_per_base
 
-        return max(count, 16)  # Minimum 16
+        min_workers = self.config.MIN_ENEMY_WORKERS if self.config else 16
+        return max(count, min_workers)
 
     def _count_bases(self) -> int:
         """Count our bases"""
@@ -299,9 +368,10 @@ class StrategyManagerV2(StrategyManager):
         return self.bot.townhalls.amount
 
     def _estimate_enemy_bases(self) -> int:
-        """Estimate enemy base count"""
+        """Estimate enemy base count (설정값 사용)"""
+        default_bases = self.config.DEFAULT_ENEMY_BASES if self.config else 1
         if not hasattr(self.bot, "enemy_structures"):
-            return 1
+            return default_bases
 
         base_types = {
             "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
@@ -316,30 +386,33 @@ class StrategyManagerV2(StrategyManager):
             except AttributeError:
                 continue
 
-        return max(count, 1)  # Minimum 1
+        min_bases = self.config.MIN_ENEMY_BASES if self.config else 1
+        return max(count, min_bases)
 
     def _estimate_enemy_army_supply(self) -> int:
-        """Estimate enemy army supply"""
+        """Estimate enemy army supply (설정값 사용)"""
+        default_supply = self.config.DEFAULT_ENEMY_SUPPLY if self.config else 10
         if not hasattr(self.bot, "enemy_units"):
-            return 10  # Default assumption
+            return default_supply
 
         supply = 0
-        supply_costs = {
-            # Rough estimates
+        supply_costs = self.config.UNIT_SUPPLY_COSTS if self.config else {
             "MARINE": 1, "MARAUDER": 2, "SIEGETANK": 3, "THOR": 6,
             "ZEALOT": 2, "STALKER": 2, "IMMORTAL": 4, "COLOSSUS": 6,
-            "ZERGLING": 0.5, "ROACH": 2, "HYDRALISK": 2, "ULTRALISK": 6
+            "ZERGLING": 0.5, "ROACH": 2, "HYDRALISK": 2, "ULTRALISK": 6,
+            "DEFAULT": 2
         }
 
         for unit in self.bot.enemy_units:
             try:
                 if unit.can_attack:
                     unit_name = unit.type_id.name.upper()
-                    supply += supply_costs.get(unit_name, 2)  # Default 2
+                    supply += supply_costs.get(unit_name, supply_costs.get("DEFAULT", 2))
             except AttributeError:
                 continue
 
-        return max(supply, 10)  # Minimum 10
+        min_supply = self.config.MIN_ENEMY_SUPPLY if self.config else 10
+        return max(supply, min_supply)
 
     def _count_tech_structures(self) -> int:
         """Count our tech buildings"""
@@ -364,9 +437,10 @@ class StrategyManagerV2(StrategyManager):
             return 0
 
     def _estimate_enemy_tech(self) -> int:
-        """Estimate enemy tech level"""
+        """Estimate enemy tech level (설정값 사용)"""
+        default_tech = self.config.DEFAULT_ENEMY_TECH if self.config else 1
         if not hasattr(self.bot, "enemy_structures"):
-            return 1
+            return default_tech
 
         # Count known enemy tech structures
         tech_count = 0
@@ -383,7 +457,8 @@ class StrategyManagerV2(StrategyManager):
             except AttributeError:
                 continue
 
-        return max(tech_count, 1)
+        min_tech = self.config.MIN_ENEMY_TECH if self.config else 1
+        return max(tech_count, min_tech)
 
     # ========== BUILD ORDER TRANSITION SYSTEM ==========
 
@@ -399,13 +474,23 @@ class StrategyManagerV2(StrategyManager):
         """
         previous_phase = self.current_build_phase
 
-        if game_time < 180:  # 0-3 minutes
+        # 페이즈 시간 (설정값 사용)
+        if self.config:
+            opening_time = self.config.OPENING_PHASE_TIME
+            transition_time = self.config.TRANSITION_PHASE_TIME
+            midgame_time = self.config.MIDGAME_PHASE_TIME
+        else:
+            opening_time = 180
+            transition_time = 360
+            midgame_time = 600
+
+        if game_time < opening_time:
             self.current_build_phase = BuildOrderPhase.OPENING
-        elif game_time < 360:  # 3-6 minutes
+        elif game_time < transition_time:
             self.current_build_phase = BuildOrderPhase.TRANSITION
-        elif game_time < 600:  # 6-10 minutes
+        elif game_time < midgame_time:
             self.current_build_phase = BuildOrderPhase.MIDGAME
-        else:  # 10+ minutes
+        else:
             self.current_build_phase = BuildOrderPhase.LATEGAME
 
         # Trigger transition logic on phase change
@@ -438,18 +523,20 @@ class StrategyManagerV2(StrategyManager):
         # Economy manager handles actual construction
 
     def _transition_to_aggressive(self) -> None:
-        """Transition to aggressive mid-game (6-10 min)"""
+        """Transition to aggressive mid-game (6-10 min) (설정값 사용)"""
         self.logger.info("[BUILD] Transitioning to aggressive: Multi-base + Army production")
 
-        # Plan 3rd base
-        self._plan_expansion(target_time=380)  # Around 6:20
+        # Plan 3rd base (설정값 사용)
+        expansion_time = self.config.TRANSITION_EXPANSION_TIME if self.config else 380
+        self._plan_expansion(target_time=expansion_time)
 
     def _transition_to_maxout(self) -> None:
-        """Transition to late-game maxout (10+ min)"""
+        """Transition to late-game maxout (10+ min) (설정값 사용)"""
         self.logger.info("[BUILD] Transitioning to late-game: Max out army")
 
-        # Plan 4th+ bases
-        self._plan_expansion(target_time=650)  # Around 10:50
+        # Plan 4th+ bases (설정값 사용)
+        expansion_time = self.config.LATEGAME_EXPANSION_TIME if self.config else 650
+        self._plan_expansion(target_time=expansion_time)
 
     def _plan_expansion(self, target_time: float) -> None:
         """
@@ -481,8 +568,9 @@ class StrategyManagerV2(StrategyManager):
             score = self._calculate_strategy_score(strategy)
             self.strategy_scores[strategy_name] = score
 
-        # Log periodically
-        if int(game_time) % 60 == 0 and self.bot.iteration % 22 == 0:
+        # Log periodically (설정값 사용)
+        status_interval = self.config.STATUS_PRINT_INTERVAL if self.config else 60
+        if int(game_time) % status_interval == 0 and self.bot.iteration % 22 == 0:
             if self.strategy_scores:
                 self.logger.info(f"[STRATEGY_SCORES] {self.strategy_scores}")
 
@@ -513,39 +601,68 @@ class StrategyManagerV2(StrategyManager):
         - Game phase
         - Enemy pressure
         """
-        # Reset to defaults
-        self.resource_priorities = {
-            "economy": 0.4,
-            "army": 0.4,
-            "tech": 0.1,
-            "defense": 0.1
-        }
+        # Reset to defaults (설정값 사용)
+        if self.config:
+            self.resource_priorities = {
+                "economy": self.config.DEFAULT_PRIORITY_ECONOMY,
+                "army": self.config.DEFAULT_PRIORITY_ARMY,
+                "tech": self.config.DEFAULT_PRIORITY_TECH,
+                "defense": self.config.DEFAULT_PRIORITY_DEFENSE
+            }
+        else:
+            self.resource_priorities = {
+                "economy": 0.4,
+                "army": 0.4,
+                "tech": 0.1,
+                "defense": 0.1
+            }
 
-        # Adjust based on win condition
+        # Adjust based on win condition (설정값 사용)
         if self.current_win_condition == WinCondition.LOSING_ARMY:
             # Need more army immediately
-            self.resource_priorities["army"] = 0.6
-            self.resource_priorities["economy"] = 0.2
-            self.resource_priorities["defense"] = 0.2
+            if self.config:
+                self.resource_priorities["army"] = self.config.LOSING_ARMY_PRIORITY_ARMY
+                self.resource_priorities["economy"] = self.config.LOSING_ARMY_PRIORITY_ECONOMY
+                self.resource_priorities["defense"] = self.config.LOSING_ARMY_PRIORITY_DEFENSE
+            else:
+                self.resource_priorities["army"] = 0.6
+                self.resource_priorities["economy"] = 0.2
+                self.resource_priorities["defense"] = 0.2
 
         elif self.current_win_condition == WinCondition.LOSING_ECONOMY:
             # Need more workers/bases
-            self.resource_priorities["economy"] = 0.6
-            self.resource_priorities["army"] = 0.2
-            self.resource_priorities["defense"] = 0.2
+            if self.config:
+                self.resource_priorities["economy"] = self.config.WINNING_ECONOMY_PRIORITY_ECONOMY
+                self.resource_priorities["army"] = self.config.WINNING_ECONOMY_PRIORITY_ARMY
+                self.resource_priorities["defense"] = self.config.WINNING_ECONOMY_PRIORITY_DEFENSE
+            else:
+                self.resource_priorities["economy"] = 0.6
+                self.resource_priorities["army"] = 0.2
+                self.resource_priorities["defense"] = 0.2
 
         elif self.current_win_condition in [WinCondition.WINNING_ARMY, WinCondition.WINNING_ECONOMY]:
             # Push advantage
-            self.resource_priorities["army"] = 0.6
-            self.resource_priorities["economy"] = 0.2
-            self.resource_priorities["tech"] = 0.2
+            if self.config:
+                self.resource_priorities["army"] = self.config.WINNING_ARMY_PRIORITY_ARMY
+                self.resource_priorities["economy"] = self.config.WINNING_ARMY_PRIORITY_ECONOMY
+                self.resource_priorities["tech"] = self.config.WINNING_ARMY_PRIORITY_TECH
+            else:
+                self.resource_priorities["army"] = 0.6
+                self.resource_priorities["economy"] = 0.2
+                self.resource_priorities["tech"] = 0.2
 
-        # Adjust for emergency mode
+        # Adjust for emergency mode (설정값 사용)
         if self.emergency_active:
-            self.resource_priorities["army"] = 0.7
-            self.resource_priorities["defense"] = 0.3
-            self.resource_priorities["economy"] = 0.0
-            self.resource_priorities["tech"] = 0.0
+            if self.config:
+                self.resource_priorities["army"] = self.config.LOSING_EMERGENCY_PRIORITY_ARMY
+                self.resource_priorities["defense"] = self.config.LOSING_EMERGENCY_PRIORITY_DEFENSE
+                self.resource_priorities["economy"] = self.config.LOSING_EMERGENCY_PRIORITY_ECONOMY
+                self.resource_priorities["tech"] = self.config.LOSING_EMERGENCY_PRIORITY_TECH
+            else:
+                self.resource_priorities["army"] = 0.7
+                self.resource_priorities["defense"] = 0.3
+                self.resource_priorities["economy"] = 0.0
+                self.resource_priorities["tech"] = 0.0
 
     def get_resource_priority(self, category: str) -> float:
         """
@@ -601,10 +718,11 @@ class StrategyManagerV2(StrategyManager):
             })
 
     def _should_expand(self, game_time: float) -> bool:
-        """Check if we should expand now"""
+        """Check if we should expand now (설정값 사용)"""
         # Check if expansion is in plan
+        timing_window = self.config.EXPANSION_TIMING_WINDOW if self.config else 10
         for planned_time in self.planned_expansions:
-            if abs(game_time - planned_time) < 10:  # Within 10 seconds
+            if abs(game_time - planned_time) < timing_window:
                 return True
         return False
 
@@ -637,12 +755,14 @@ class StrategyManagerV2(StrategyManager):
         return self.current_build_phase
 
     def should_prioritize_economy(self) -> bool:
-        """Check if economy should be prioritized"""
-        return self.get_resource_priority("economy") >= 0.4
+        """Check if economy should be prioritized (설정값 사용)"""
+        threshold = self.config.SHOULD_EXPAND_THRESHOLD if self.config else 0.4
+        return self.get_resource_priority("economy") >= threshold
 
     def should_prioritize_army(self) -> bool:
-        """Check if army should be prioritized"""
-        return self.get_resource_priority("army") >= 0.5
+        """Check if army should be prioritized (설정값 사용)"""
+        threshold = self.config.SHOULD_BUILD_ARMY_THRESHOLD if self.config else 0.5
+        return self.get_resource_priority("army") >= threshold
 
     def get_status_report_v2(self) -> Dict[str, Any]:
         """
