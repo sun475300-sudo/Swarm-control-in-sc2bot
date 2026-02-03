@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Scouting System - Overlord sensor network + scouting.
+
+⚠️ DEPRECATED: This system has been superseded by AdvancedScoutingSystemV2
+(scouting/advanced_scout_system_v2.py). Use the new system instead.
+
+This file is kept for reference only and should not be used in new code.
 """
 
 from typing import Dict, List

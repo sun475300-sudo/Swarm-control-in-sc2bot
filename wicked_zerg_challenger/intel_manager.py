@@ -45,6 +45,10 @@ class IntelManager:
             "LIBERATOR", "LIBERATORAG", "WIDOWMINE", "HIGHTEMPLAR"
         }
 
+        # Build pattern confidence tracking
+        self._build_pattern_confidence = 0.0  # 0.0 ~ 1.0
+        self._build_pattern_status = "unknown"  # "unknown", "suspected", "confirmed"
+
         # ★ NEW: Destructible structures tracking
         self.destructible_rocks = []  # 파괴 가능한 중립 구조물
         self.all_enemy_structures = []  # 모든 적 구조물 (승리 조건용)
@@ -329,11 +333,87 @@ class IntelManager:
         self._enemy_build_pattern = detected_pattern
         self._recommended_response = recommended_response
 
+        # ★ Calculate confidence score ★
+        self._build_pattern_confidence = self._calculate_build_confidence(
+            detected_pattern, structure_counts, enemy_units, game_time
+        )
+
+        # ★ Determine confidence status ★
+        if self._build_pattern_confidence >= 0.7:
+            self._build_pattern_status = "confirmed"
+        elif self._build_pattern_confidence >= 0.3:
+            self._build_pattern_status = "suspected"
+        else:
+            self._build_pattern_status = "unknown"
+
+        # ★ Push to Blackboard ★
+        self._push_intel_to_blackboard(detected_pattern)
+
         # Log detection (every 30 seconds)
         if game_time > 0 and int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
             if detected_pattern != "unknown":
-                print(f"[INTEL] [{int(game_time)}s] Enemy build: {detected_pattern}")
+                confidence_pct = int(self._build_pattern_confidence * 100)
+                print(f"[INTEL] [{int(game_time)}s] Enemy build: {detected_pattern} ({self._build_pattern_status}, {confidence_pct}%)")
                 print(f"[INTEL] Recommended counter: {recommended_response}")
+
+    def _calculate_build_confidence(self, pattern: str, structure_counts: dict,
+                                    enemy_units, game_time: float) -> float:
+        """
+        Calculate confidence score for detected build pattern.
+
+        Factors:
+        - Number of tech buildings (more = higher confidence)
+        - Number of related units (more = higher confidence)
+        - Game time (later = higher confidence)
+        - Pattern specificity (specific patterns = higher confidence)
+
+        Returns:
+            float: Confidence score (0.0 ~ 1.0)
+        """
+        if pattern == "unknown":
+            return 0.0
+
+        confidence = 0.0
+
+        # Factor 1: Tech building count (0 ~ 0.4)
+        tech_building_count = sum(
+            1 for name in structure_counts.keys()
+            if name in self.enemy_tech_buildings
+        )
+        confidence += min(tech_building_count * 0.15, 0.4)
+
+        # Factor 2: Related unit count (0 ~ 0.3)
+        related_unit_patterns = {
+            "terran_bio": ["MARINE", "MARAUDER", "MEDIVAC"],
+            "terran_mech": ["SIEGETANK", "HELLION", "THOR", "CYCLONE"],
+            "terran_factory": ["SIEGETANK", "HELLION"],
+            "protoss_stargate": ["PHOENIX", "VOIDRAY", "ORACLE", "CARRIER"],
+            "protoss_robo": ["IMMORTAL", "COLOSSUS", "OBSERVER"],
+            "protoss_gateway": ["ZEALOT", "STALKER", "ADEPT"],
+            "zerg_muta": ["MUTALISK", "CORRUPTOR"],
+            "zerg_roach": ["ROACH", "RAVAGER"],
+            "zerg_ling_bane": ["ZERGLING", "BANELING"],
+        }
+
+        pattern_units = related_unit_patterns.get(pattern, [])
+        related_unit_count = sum(
+            self.enemy_unit_counts.get(unit_type, 0)
+            for unit_type in pattern_units
+        )
+        confidence += min(related_unit_count * 0.03, 0.3)
+
+        # Factor 3: Game time progression (0 ~ 0.2)
+        # More time = more confidence (up to 5 minutes)
+        time_factor = min(game_time / 300.0, 1.0) * 0.2
+        confidence += time_factor
+
+        # Factor 4: Rush pattern bonus (early aggression = high confidence)
+        if "rush" in pattern or "proxy" in pattern or "12pool" in pattern:
+            if game_time < 180:  # First 3 minutes
+                confidence += 0.2  # High confidence for early aggression
+
+        # Cap at 1.0
+        return min(confidence, 1.0)
 
     def get_enemy_build_pattern(self) -> str:
         """Get detected enemy build pattern."""
@@ -342,6 +422,67 @@ class IntelManager:
     def get_recommended_response(self) -> list:
         """Get recommended unit composition to counter enemy build."""
         return getattr(self, "_recommended_response", [])
+
+    def get_build_pattern_confidence(self) -> float:
+        """
+        Get confidence score for detected build pattern.
+
+        Returns:
+            float: Confidence score (0.0 ~ 1.0)
+        """
+        return self._build_pattern_confidence
+
+    def get_build_pattern_status(self) -> str:
+        """
+        Get build pattern detection status.
+
+        Returns:
+            str: "unknown", "suspected", or "confirmed"
+        """
+        return self._build_pattern_status
+
+    def is_build_pattern_confirmed(self) -> bool:
+        """
+        Check if build pattern is confirmed (confidence >= 0.7).
+
+        Returns:
+            bool: True if confirmed
+        """
+        return self._build_pattern_status == "confirmed"
+
+    def _push_intel_to_blackboard(self, detected_pattern: str) -> None:
+        """
+        Push intelligence data to Blackboard for other systems to use.
+
+        Args:
+            detected_pattern: Detected enemy build pattern
+        """
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard:
+            return
+
+        try:
+            # Push build pattern info
+            blackboard.set("enemy_build_pattern", detected_pattern)
+            blackboard.set("enemy_build_confidence", self._build_pattern_confidence)
+            blackboard.set("enemy_build_status", self._build_pattern_status)
+
+            # Push recommended response
+            blackboard.set("recommended_counter_units", self._recommended_response)
+
+            # Push threat info
+            blackboard.set("under_attack", self._under_attack)
+            blackboard.set("threat_level", self._threat_level)
+            blackboard.set("has_high_threat_units", self._high_threat_units_detected)
+
+            # Push composition info
+            blackboard.set("enemy_army_supply", self.enemy_army_supply)
+            blackboard.set("enemy_base_count", self.enemy_base_count)
+            blackboard.set("enemy_worker_count", self.enemy_worker_count)
+
+        except (AttributeError, TypeError) as e:
+            # Silently fail if blackboard doesn't support set operation
+            pass
 
     def record_scouted_location(self, location) -> None:
         """Record a location that has been scouted."""

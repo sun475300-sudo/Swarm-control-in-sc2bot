@@ -35,6 +35,11 @@ except ImportError:
     ThreatLevel = None
     AuthorityMode = None
 
+try:
+    from config.unit_configs import DefenseConfig
+except ImportError:
+    DefenseConfig = None
+
 
 class DefenseCoordinator:
     """
@@ -52,12 +57,15 @@ class DefenseCoordinator:
         self.bot = bot
         self.blackboard = blackboard
 
+        # Load configuration
+        self.config = DefenseConfig() if DefenseConfig else None
+
         # === 방어 상태 ===
         self.detected_threats: Set[int] = set()  # 감지된 적 태그
         self.defending_units: Set[int] = set()   # 방어 중인 유닛 태그
 
         # === 초반 방어 (0-3분) ===
-        self.early_game_threshold = 180.0
+        self.early_game_threshold = self.config.EARLY_GAME_THRESHOLD if self.config else 180.0
         self.pool_requested = False
         self.first_queen_requested = False
 
@@ -67,11 +75,11 @@ class DefenseCoordinator:
 
         # === Proactive 공중 방어 ★ NEW ★ ===
         self.proactive_spore_requested = False  # 3:00 자동 스포어 요청 여부
-        self.proactive_spore_timing = 180.0     # 3:00 (180초)
+        self.proactive_spore_timing = self.config.PROACTIVE_SPORE_TIMING if self.config else 180.0
 
         # === 성능 최적화 ===
         self.last_threat_check = 0.0
-        self.threat_check_interval = 0.5  # 0.5초마다 체크
+        self.threat_check_interval = self.config.THREAT_CHECK_INTERVAL if self.config else 0.5
 
     async def execute(self, iteration: int) -> None:
         """방어 로직 실행"""
@@ -138,8 +146,9 @@ class DefenseCoordinator:
         threat_position = None
 
         for base in bases:
-            # 기지 25 거리 내 적
-            nearby_enemies = self.bot.enemy_units.closer_than(25, base.position)
+            # 기지 근처 적 (설정값 사용)
+            detection_range = self.config.BASE_DETECTION_RANGE if self.config else 25
+            nearby_enemies = self.bot.enemy_units.closer_than(detection_range, base.position)
 
             if nearby_enemies:
                 # 적 태그 저장
@@ -156,40 +165,74 @@ class DefenseCoordinator:
                 if any(getattr(e, "is_flying", False) for e in nearby_enemies):
                     is_air_threat = True
 
-                # 보급 계산 (근사치)
+                # 보급 계산 (설정값 사용)
                 for enemy in nearby_enemies:
-                    if enemy.type_id in [UnitTypeId.ZERGLING, UnitTypeId.MARINE]:
-                        total_enemy_supply += 0.5
-                    elif enemy.type_id in [UnitTypeId.REAPER, UnitTypeId.BANELING]:
-                        total_enemy_supply += 1
-                    elif enemy.type_id in [UnitTypeId.ROACH, UnitTypeId.STALKER]:
-                        total_enemy_supply += 2
-                    elif enemy.type_id in [UnitTypeId.IMMORTAL, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED]:
-                        total_enemy_supply += 4
+                    unit_name = getattr(enemy.type_id, "name", "")
+                    if self.config:
+                        supply_value = self.config.UNIT_SUPPLY_VALUES.get(unit_name, self.config.UNIT_SUPPLY_VALUES["DEFAULT"])
                     else:
-                        total_enemy_supply += 2  # 기본값
+                        # Fallback to hardcoded values
+                        if enemy.type_id in [UnitTypeId.ZERGLING, UnitTypeId.MARINE]:
+                            supply_value = 0.5
+                        elif enemy.type_id in [UnitTypeId.REAPER, UnitTypeId.BANELING]:
+                            supply_value = 1
+                        elif enemy.type_id in [UnitTypeId.ROACH, UnitTypeId.STALKER]:
+                            supply_value = 2
+                        elif enemy.type_id in [UnitTypeId.IMMORTAL, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED]:
+                            supply_value = 4
+                        else:
+                            supply_value = 2
+                    total_enemy_supply += supply_value
 
-        # 게임 시간 고려한 러시 판정
+        # 게임 시간 고려한 러시 판정 (설정값 사용)
         game_time = self.bot.time
-        if game_time < 180:  # 3분 이내
-            # 초반 러시: 적 병력 4+ 또는 보급 4+
-            if max_enemy_near_base >= 4 or total_enemy_supply >= 4:
+        if self.config:
+            early_rush_time = self.config.EARLY_RUSH_TIME
+            early_rush_count = self.config.EARLY_RUSH_ENEMY_COUNT
+            early_rush_supply = self.config.EARLY_RUSH_SUPPLY
+            mid_rush_time = self.config.MID_RUSH_TIME
+            mid_rush_count = self.config.MID_RUSH_ENEMY_COUNT
+            mid_rush_supply = self.config.MID_RUSH_SUPPLY
+        else:
+            early_rush_time = 180
+            early_rush_count = 4
+            early_rush_supply = 4
+            mid_rush_time = 300
+            mid_rush_count = 8
+            mid_rush_supply = 8
+
+        if game_time < early_rush_time:
+            if max_enemy_near_base >= early_rush_count or total_enemy_supply >= early_rush_supply:
                 is_rushing = True
-        elif game_time < 300:  # 5분 이내
-            # 중반 러시: 적 병력 8+ 또는 보급 8+
-            if max_enemy_near_base >= 8 or total_enemy_supply >= 8:
+        elif game_time < mid_rush_time:
+            if max_enemy_near_base >= mid_rush_count or total_enemy_supply >= mid_rush_supply:
                 is_rushing = True
 
-        # 위협 레벨 결정
+        # 위협 레벨 결정 (설정값 사용)
         threat_level = ThreatLevel.NONE
 
-        if is_rushing or total_enemy_supply >= 20:
+        if self.config:
+            crit_supply = self.config.THREAT_CRITICAL_SUPPLY
+            high_supply = self.config.THREAT_HIGH_SUPPLY
+            high_count = self.config.THREAT_HIGH_COUNT
+            med_supply = self.config.THREAT_MEDIUM_SUPPLY
+            med_count = self.config.THREAT_MEDIUM_COUNT
+            low_count = self.config.THREAT_LOW_COUNT
+        else:
+            crit_supply = 20
+            high_supply = 10
+            high_count = 6
+            med_supply = 4
+            med_count = 3
+            low_count = 1
+
+        if is_rushing or total_enemy_supply >= crit_supply:
             threat_level = ThreatLevel.CRITICAL
-        elif total_enemy_supply >= 10 or max_enemy_near_base >= 6:
+        elif total_enemy_supply >= high_supply or max_enemy_near_base >= high_count:
             threat_level = ThreatLevel.HIGH
-        elif max_enemy_near_base >= 3 or total_enemy_supply >= 4:
+        elif max_enemy_near_base >= med_count or total_enemy_supply >= med_supply:
             threat_level = ThreatLevel.MEDIUM
-        elif max_enemy_near_base >= 1:
+        elif max_enemy_near_base >= low_count:
             threat_level = ThreatLevel.LOW
 
         # Blackboard 업데이트
@@ -234,8 +277,9 @@ class DefenseCoordinator:
         supply_used = self.bot.supply_used
         game_time = self.bot.time
 
-        # 1. Spawning Pool 우선 건설 (12 드론 이후)
-        if not self.pool_requested and supply_used >= 12:
+        # 1. Spawning Pool 우선 건설 (설정값 사용)
+        pool_supply = self.config.SPAWNING_POOL_SUPPLY if self.config else 12
+        if not self.pool_requested and supply_used >= pool_supply:
             if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).exists:
                 if not self.bot.already_pending(UnitTypeId.SPAWNINGPOOL):
                     # Blackboard 통해 건설 예약
@@ -255,10 +299,10 @@ class DefenseCoordinator:
                 self.first_queen_requested = True
                 print(f"[DEFENSE] Requesting first Queen at {game_time:.1f}s")
 
-        # 3. 초기 Zergling 생산 요청 (러시 감지 시)
+        # 3. 초기 Zergling 생산 요청 (러시 감지 시, 설정값 사용)
         if pools_ready and self.blackboard.threat.is_rushing:
             zergling_count = self.blackboard.get_unit_count(UnitTypeId.ZERGLING)
-            target_zerglings = 6  # 초반 목표: 6마리
+            target_zerglings = self.config.INITIAL_ZERGLING_TARGET if self.config else 6
 
             if zergling_count.total < target_zerglings:
                 needed = target_zerglings - zergling_count.total
@@ -310,16 +354,27 @@ class DefenseCoordinator:
         zergling_count = self.blackboard.get_unit_count(UnitTypeId.ZERGLING)
         queen_count = self.blackboard.get_unit_count(UnitTypeId.QUEEN)
 
-        # 긴급 목표 병력
-        if game_time < 180:  # 3분 이내
-            target_zerglings = 12
-            target_queens = 2
-        elif game_time < 300:  # 5분 이내
-            target_zerglings = 20
-            target_queens = 3
+        # 긁급 목표 병력 (설정값 사용)
+        if self.config:
+            if game_time < self.config.EARLY_RUSH_TIME:
+                target_zerglings = self.config.EMERGENCY_EARLY_ZERGLINGS
+                target_queens = self.config.EMERGENCY_EARLY_QUEENS
+            elif game_time < self.config.MID_RUSH_TIME:
+                target_zerglings = self.config.EMERGENCY_MID_ZERGLINGS
+                target_queens = self.config.EMERGENCY_MID_QUEENS
+            else:
+                target_zerglings = self.config.EMERGENCY_LATE_ZERGLINGS
+                target_queens = self.config.EMERGENCY_LATE_QUEENS
         else:
-            target_zerglings = 30
-            target_queens = 4
+            if game_time < 180:
+                target_zerglings = 12
+                target_queens = 2
+            elif game_time < 300:
+                target_zerglings = 20
+                target_queens = 3
+            else:
+                target_zerglings = 30
+                target_queens = 4
 
         # Zergling 요청
         if zergling_count.total < target_zerglings:
@@ -345,14 +400,16 @@ class DefenseCoordinator:
         if not threat_pos:
             return
 
-        # 위험 근처 일꾼 찾기
-        workers_in_danger = self.bot.workers.closer_than(10, threat_pos)
+        # 위험 근처 일꾼 찾기 (설정값 사용)
+        danger_range = self.config.WORKER_DANGER_RANGE if self.config else 10
+        workers_in_danger = self.bot.workers.closer_than(danger_range, threat_pos)
 
         if workers_in_danger:
-            # 가장 가까운 안전한 기지로 대피
+            # 가장 가까운 안전한 기지로 대피 (설정값 사용)
+            safe_distance = self.config.SAFE_DISTANCE if self.config else 20
             safe_bases = [
                 base for base in self.bot.townhalls
-                if base.position.distance_to(threat_pos) > 20
+                if base.position.distance_to(threat_pos) > safe_distance
             ]
 
             if safe_bases:
@@ -372,25 +429,35 @@ class DefenseCoordinator:
             await self._build_base_defense(base)
 
     async def _build_base_defense(self, base) -> None:
-        """기지별 방어 건물 배치"""
+        """기지별 방어 건물 배치 (설정값 사용)"""
         # 기지 근처 가시 촉수 개수
-        spines_nearby = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(15, base.position)
+        defense_range = self.config.DEFENSE_STRUCTURE_RANGE if self.config else 15
+        spines_nearby = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(defense_range, base.position)
 
-        # 위협 수준에 따라 목표 개수 결정
+        # 위협 수준에 따라 목표 개수 결정 (설정값 사용)
         threat_level = self.blackboard.threat.level if self.blackboard else ThreatLevel.NONE
 
-        if threat_level >= ThreatLevel.HIGH:
-            target_spines = 3
-        elif threat_level >= ThreatLevel.MEDIUM:
-            target_spines = 2
+        if self.config:
+            if threat_level >= ThreatLevel.HIGH:
+                target_spines = self.config.SPINE_TARGET_HIGH
+            elif threat_level >= ThreatLevel.MEDIUM:
+                target_spines = self.config.SPINE_TARGET_MEDIUM
+            else:
+                target_spines = self.config.SPINE_TARGET_DEFAULT
         else:
-            target_spines = 1
+            if threat_level >= ThreatLevel.HIGH:
+                target_spines = 3
+            elif threat_level >= ThreatLevel.MEDIUM:
+                target_spines = 2
+            else:
+                target_spines = 1
 
         # 부족하면 건설 요청
         if len(spines_nearby) < target_spines:
             if self.bot.can_afford(UnitTypeId.SPINECRAWLER):
-                # 건설 위치: 기지 앞쪽
-                build_pos = base.position.towards(self.bot.game_info.map_center, 8)
+                # 건설 위치: 기지 앞쪽 (설정값 사용)
+                spine_distance = self.config.SPINE_BUILD_DISTANCE if self.config else 8
+                build_pos = base.position.towards(self.bot.game_info.map_center, spine_distance)
 
                 # 건설 (점막 체크 필요)
                 if self.bot.workers.exists:
@@ -398,13 +465,14 @@ class DefenseCoordinator:
                     worker.build(UnitTypeId.SPINECRAWLER, build_pos)
                     print(f"[DEFENSE] Building Spine Crawler at base")
 
-        # 공중 위협 시 포자 촉수 (Reactive)
+        # 공중 위협 시 포자 촉수 (Reactive, 설정값 사용)
         if self.blackboard and self.blackboard.threat.is_air_threat:
-            spores_nearby = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(15, base.position)
+            spores_nearby = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(defense_range, base.position)
 
             if len(spores_nearby) == 0:
                 if self.bot.can_afford(UnitTypeId.SPORECRAWLER):
-                    build_pos = base.position.towards(self.bot.game_info.map_center, 6)
+                    spore_distance = self.config.SPORE_BUILD_DISTANCE if self.config else 6
+                    build_pos = base.position.towards(self.bot.game_info.map_center, spore_distance)
 
                     if self.bot.workers.exists:
                         worker = self.bot.workers.closest_to(build_pos)
@@ -444,17 +512,19 @@ class DefenseCoordinator:
             print(f"[DEFENSE] [{int(game_time)}s] ✅ Proactive Spore 스킵: 이미 존재")
             return
 
-        # 자원 확인 (75 minerals)
+        # 자원 확인 (설정값 사용)
+        cost = self.config.SPORE_CRAWLER_COST if self.config else 75
         if not self.bot.can_afford(UnitTypeId.SPORECRAWLER):
-            print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 자원 대기: {self.bot.minerals}m (필요: 75m)")
+            print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 자원 대기: {self.bot.minerals}m (필요: {cost}m)")
             return
 
-        # 건설 위치: 본진 기지 앞쪽
+        # 건설 위치: 본진 기지 앞쪽 (설정값 사용)
         if not self.bot.townhalls.exists:
             return
 
         main_base = self.bot.townhalls.first
-        build_pos = main_base.position.towards(self.bot.game_info.map_center, 6)
+        spore_distance = self.config.SPORE_BUILD_DISTANCE if self.config else 6
+        build_pos = main_base.position.towards(self.bot.game_info.map_center, spore_distance)
 
         # 일꾼 확인
         if not self.bot.workers.exists:

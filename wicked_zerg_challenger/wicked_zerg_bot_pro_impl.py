@@ -126,6 +126,34 @@ class WickedZergBotProImpl(BotAI):
             except ImportError:
                 self.current_difficulty = None
 
+        # ========== MANAGER INITIALIZATION (Factory Pattern) ==========
+        # 기존 650줄의 중복 코드를 간결한 factory pattern으로 대체
+        try:
+            from core.manager_factory import ManagerFactory
+            from core.manager_registry import get_all_manager_configs
+
+            # Factory 생성 및 매니저 등록
+            factory = ManagerFactory(self)
+            factory.register_managers(get_all_manager_configs())
+
+            # 모든 매니저 초기화 (의존성 순서 자동 관리)
+            stats = factory.initialize_all(verbose=True)
+
+            # Factory를 bot에 저장 (나중에 매니저 조회용)
+            self.manager_factory = factory
+
+            print(f"\n[BOT] ★ Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded ★\n")
+
+        except ImportError as e:
+            print(f"[BOT_ERROR] ManagerFactory not available: {e}")
+            print("[BOT] Falling back to legacy initialization...")
+            # Fallback: 레거시 초기화 (아래 주석 처리된 코드 사용)
+            self._legacy_initialize_managers()
+
+        # ========== LEGACY INITIALIZATION (백업용, 삭제 예정) ==========
+        # 아래 코드는 ManagerFactory가 실패할 경우를 대비한 fallback입니다.
+        # 테스트 완료 후 제거 예정.
+        """
         # === 0.1 ProductionResilience (안전한 유닛 생산) ===
         try:
             from local_training.production_resilience import ProductionResilience
@@ -188,12 +216,14 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             print(f"[BOT_WARN] IntelManager not available: {e}")
 
-        try:
-            from scouting_system import ScoutingSystem
-            self.scout = ScoutingSystem(self)
-            print("[BOT] ScoutingSystem initialized")
-        except ImportError as e:
-            print(f"[BOT_WARN] ScoutingSystem not available: {e}")
+        # DEPRECATED: Use AdvancedScoutingSystemV2 instead (scouting/advanced_scout_system_v2.py)
+        # try:
+        #     from scouting_system import ScoutingSystem
+        #     self.scout = ScoutingSystem(self)
+        #     print("[BOT] ScoutingSystem initialized")
+        # except ImportError as e:
+        #     print(f"[BOT_WARN] ScoutingSystem not available: {e}")
+        self.scout = None  # Disabled - using AdvancedScoutingSystemV2
 
         # === 1. Strategy Manager (종족별 전략 + Emergency Mode) ===
         try:
@@ -443,6 +473,9 @@ class WickedZergBotProImpl(BotAI):
         try:
             from creep_denial_system import CreepDenialSystem
             self.creep_denial = CreepDenialSystem(self)
+            # ★ UnitAuthorityManager 연동 ★
+            if hasattr(self, "unit_authority") and self.unit_authority:
+                self.creep_denial.unit_authority = self.unit_authority
             print("[BOT] ★ CreepDenialSystem initialized - Enemy creep tumor elimination! ★")
         except ImportError as e:
             print(f"[BOT_WARN] CreepDenialSystem not available: {e}")
@@ -549,14 +582,15 @@ class WickedZergBotProImpl(BotAI):
             print(f"[BOT_WARN] SpellCasterAutomation not available: {e}")
             self.spellcaster = None
 
+        # DEPRECATED: Use AdvancedScoutingSystemV2 instead (scouting/advanced_scout_system_v2.py)
         # ★ NEW: Active Scouting System (능동형 정찰) ★
-        try:
-            from active_scouting_system import ActiveScoutingSystem
-            self.active_scout = ActiveScoutingSystem(self)
-            print("[BOT] ★ ActiveScoutingSystem initialized (Periodic Scouting)")
-        except ImportError as e:
-            print(f"[BOT_WARN] ActiveScoutingSystem not available: {e}")
-            self.active_scout = None
+        # try:
+        #     from active_scouting_system import ActiveScoutingSystem
+        #     self.active_scout = ActiveScoutingSystem(self)
+        #     print("[BOT] ★ ActiveScoutingSystem initialized (Periodic Scouting)")
+        # except ImportError as e:
+        #     print(f"[BOT_WARN] ActiveScoutingSystem not available: {e}")
+        self.active_scout = None  # Disabled - using AdvancedScoutingSystemV2
 
         # ★ NEW: Upgrade Coordination System (업그레이드 타이밍) ★
         try:
@@ -784,6 +818,8 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             print(f"[BOT_WARN] ProductionController not available: {e}")
             self.production_controller = None
+        """
+        # ========== END OF LEGACY INITIALIZATION ==========
 
         # === Map Memory System 시작 ===
         if hasattr(self, "map_memory") and self.map_memory:
@@ -868,6 +904,47 @@ class WickedZergBotProImpl(BotAI):
 
         # Execute integrated on_step (모든 핵심 매니저 포함)
         await self._step_integrator.on_step(iteration)
+
+    def _legacy_initialize_managers(self):
+        """
+        DEPRECATED: Legacy manager initialization (fallback only)
+
+        This method is kept as a fallback in case ManagerFactory fails.
+        Will be removed after factory pattern is fully tested.
+        """
+        print("[BOT] Using legacy initialization (factory unavailable)")
+
+        # Only initialize critical managers
+        try:
+            from local_training.production_resilience import ProductionResilience
+            self.production = ProductionResilience(self)
+            print("[BOT] ProductionResilience initialized (legacy)")
+        except ImportError:
+            self.production = None
+
+        try:
+            from economy_manager import EconomyManager
+            self.economy = EconomyManager(self)
+            print("[BOT] EconomyManager initialized (legacy)")
+        except ImportError:
+            self.economy = None
+
+        try:
+            from combat_manager import CombatManager
+            self.combat = CombatManager(self)
+            print("[BOT] CombatManager initialized (legacy)")
+        except ImportError:
+            self.combat = None
+
+        try:
+            from intel_manager import IntelManager
+            self.intel = IntelManager(self)
+            self.intel.load_data()
+            print("[BOT] IntelManager initialized (legacy)")
+        except ImportError:
+            self.intel = None
+
+        print("[BOT] Legacy initialization complete (minimal managers only)")
 
     async def on_end(self, game_result):
         """

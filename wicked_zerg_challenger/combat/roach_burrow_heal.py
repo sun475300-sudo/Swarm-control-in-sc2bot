@@ -27,6 +27,11 @@ else:
 
 from utils.logger import get_logger
 
+try:
+    from config.unit_configs import RoachBurrowConfig
+except ImportError:
+    RoachBurrowConfig = None
+
 
 class RoachBurrowHeal:
     """
@@ -42,14 +47,22 @@ class RoachBurrowHeal:
         self.bot = bot
         self.logger = get_logger("RoachBurrowHeal")
 
+        # Load configuration
+        self.config = RoachBurrowConfig() if RoachBurrowConfig else None
+
         # Burrow tracking
         self._burrowed_roaches: Set[int] = set()  # Set of roach tags that are healing
         self._burrow_start_time: Dict[int, float] = {}  # roach_tag -> burrow_time
-        self._min_heal_time = 5  # 최소 5초 회복
 
-        # Thresholds
-        self._burrow_hp_threshold = 0.4  # 40% 이하면 잠복
-        self._return_hp_threshold = 0.8  # 80% 이상이면 전투 복귀
+        # Thresholds (from config or defaults)
+        if self.config:
+            self._min_heal_time = self.config.MIN_HEAL_TIME
+            self._burrow_hp_threshold = self.config.BURROW_HP_THRESHOLD
+            self._return_hp_threshold = self.config.RETURN_HP_THRESHOLD
+        else:
+            self._min_heal_time = 5
+            self._burrow_hp_threshold = 0.3
+            self._return_hp_threshold = 0.8
 
         # Upgrade tracking
         self._burrow_available = False
@@ -66,6 +79,10 @@ class RoachBurrowHeal:
 
         # 바퀴 회복 관리
         await self.manage_roach_healing(iteration)
+
+        # 죽은 바퀴 정리 (50초마다)
+        if iteration % 1100 == 0:
+            self.cleanup_dead_roaches()
 
     async def check_burrow_upgrades(self):
         """
@@ -120,11 +137,12 @@ class RoachBurrowHeal:
 
             # === 1. 저체력 바퀴 잠복 ===
             if roach_tag not in self._burrowed_roaches:
-                # 체력이 40% 이하면 잠복
+                # 체력이 30% 이하면 잠복
                 if roach.health_percentage <= self._burrow_hp_threshold:
-                    # 적이 근처에 있는지 확인
+                    # 적이 근처에 있는지 확인 (설정값 사용)
+                    detection_range = self.config.ENEMY_DETECTION_RANGE if self.config else 10
                     enemy_units = getattr(self.bot, "enemy_units", [])
-                    nearby_enemies = [e for e in enemy_units if e.distance_to(roach.position) < 10]
+                    nearby_enemies = [e for e in enemy_units if e.distance_to(roach.position) < detection_range]
 
                     # 적이 근처에 있으면 잠복 (안전)
                     if nearby_enemies or roach.health_percentage <= 0.3:
@@ -213,12 +231,15 @@ class RoachBurrowHeal:
         if not self._tunneling_claws_available:
             return
 
-        # 디텍터 유닛 타입
-        detector_types = {
+        # 디텍터 유닛 타입 (설정값 사용)
+        detector_types = self.config.DETECTOR_TYPES if self.config else {
             "OBSERVER", "RAVEN", "OVERSEER", "OBSERVERSIEGEMODE",
             "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON",
-            "SCAN"  # 스캔은 유닛이 아니지만 감지 가능
+            "SCAN"
         }
+
+        # 디텍터 감지 거리 (설정값 사용)
+        detector_range = self.config.DETECTOR_THREAT_RANGE if self.config else 15
 
         enemy_units = getattr(self.bot, "enemy_units", [])
         enemy_structures = getattr(self.bot, "enemy_structures", [])
@@ -228,12 +249,12 @@ class RoachBurrowHeal:
 
         for enemy in enemy_units:
             enemy_type = getattr(enemy.type_id, "name", "").upper()
-            if enemy_type in detector_types and enemy.distance_to(roach.position) < 15:
+            if enemy_type in detector_types and enemy.distance_to(roach.position) < detector_range:
                 nearby_detectors.append(enemy)
 
         for struct in enemy_structures:
             struct_type = getattr(struct.type_id, "name", "").upper()
-            if struct_type in detector_types and struct.distance_to(roach.position) < 15:
+            if struct_type in detector_types and struct.distance_to(roach.position) < detector_range:
                 nearby_detectors.append(struct)
 
         # 디텍터가 근처에 있으면 이동
