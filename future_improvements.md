@@ -42,3 +42,51 @@ This document outlines a comprehensive list of potential improvements for the Wi
 ## 6. Documentation
 *   **Wiki/Guide**: Create a `DEVELOPER.md` guide explaining the manager architecture for new contributors.
 *   **Docstrings**: Ensure all public methods have Google-style docstrings.
+
+## 7. Specialize & Optimize (미세 컨트롤 최적화)
+*   **Queen Specialization (여왕 역할 분담)**:
+    *   [ ] **Inject Queen**: Dedicate queens with reserved energy exclusively for larvae injection
+        *   Energy management: Save 25+ energy for inject cycles
+        *   Position lock: Stay within inject range of assigned hatchery
+        *   Priority override: Never use for creep/defense unless emergency
+    *   [ ] **Creep Queen**: Assign queens to advance with main army for frontline creep spread
+        *   Travel with army: Position queens behind main force
+        *   Aggressive tumors: Plant creep along attack paths, not just expansions
+        *   Safety checks: Retreat when HP < 50% or enemy air nearby
+*   **Creep Highway (점막 고속도로)**:
+    *   [ ] **Priority Pathing**: Instead of uniform creep spread, prioritize shortest path connections
+        *   Main Base ↔ Natural ↔ Third Base (highway connections)
+        *   Base ↔ Attack Target (offensive creep lanes)
+        *   A* pathfinding for optimal tumor placement sequence
+    *   [ ] **Dynamic Rerouting**: Adjust creep highways based on:
+        *   Enemy position changes (avoid contested areas)
+        *   New expansion timings
+        *   Retreat paths during defensive situations
+*   **Overlord Pillars (대군주 안전지대)**:
+    *   [ ] **Pillar Detection System**:
+        *   Hardcode known pillar positions for common ladder maps (Altitude, etc.)
+        *   Runtime calculation: Detect high ground + unpathable terrain combinations
+        *   Safety scoring: Distance from enemy base + air threat assessment
+    *   [ ] **Strategic Positioning**:
+        *   Station overlords on pillars for permanent vision
+        *   Auto-replace: Send new overlord if pillar overlord dies
+        *   Map coverage: Ensure 3-4 pillars cover key chokepoints and attack paths
+
+## 8. Deep Economy (초미세 경제 최적화)
+*   **Gold Base Priority (황금 기지 우선 활용)**:
+    *   [ ] **Auto-Detection**: Identify gold mineral bases at game start
+        *   Check for 1200+ mineral patches (gold minerals have 1500, normal 1800)
+        *   Mark gold base locations in expansion planner
+    *   [ ] **Instant Saturation**: When gold base secured:
+        *   Transfer 16 drones immediately from main/natural
+        *   Maintain perfect saturation (2 drones per mineral patch)
+        *   Resource boost tracking: Log gold base income efficiency
+*   **Distance Mining (거리 기반 채굴 최적화)**:
+    *   [ ] **Micro-Optimization**: Assign drones to closest available mineral patch
+        *   Calculate exact distance from hatchery to each mineral
+        *   Rebalance assignments every 30 seconds
+        *   Prevent "long walk" inefficiency (drones walking to far minerals)
+    *   [ ] **Dynamic Rebalancing**:
+        *   Detect mineral depletion (patches with <100 minerals)
+        *   Reassign drones from depleted patches to closest alternatives
+        *   Gas timing: Move closest drones to extractors when gas needed
