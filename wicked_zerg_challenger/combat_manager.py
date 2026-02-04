@@ -70,9 +70,11 @@ class CombatManager:
     
     async def on_step(self, iteration: int):
         """
-        매 프레임 호출되는 전투 로직 with multitasking support.
+        ★ Phase 17: 매 프레임 호출되는 전투 로직 (성능 최적화 적용) ★
 
-        ★ IMPROVED: 필수 기지 방어 우선 ★
+        성능 최적화:
+        - 일반 상황: 4프레임마다 실행 (~0.18초)
+        - 긴급 상황: 매 프레임 실행 (기지 공격, 대규모 전투)
 
         Priority:
         1. ★ MANDATORY BASE DEFENSE - Always check first ★
@@ -84,6 +86,19 @@ class CombatManager:
             iteration: 현재 게임 반복 횟수
         """
         try:
+            # ★ Phase 17: 긴급 상황 체크 (매 3프레임마다) ★
+            if iteration - self._last_emergency_check >= 3:
+                self._combat_is_emergency = self._check_emergency_situation()
+                self._last_emergency_check = iteration
+
+            # ★ Phase 17: 프레임 스킵 적용 ★
+            current_skip = self._combat_emergency_skip if self._combat_is_emergency else self._combat_frame_skip
+
+            if iteration - self._last_combat_frame < current_skip:
+                return  # 프레임 스킵
+
+            self._last_combat_frame = iteration
+
             # Clean up stale unit assignments (using assignment_manager module)
             cleanup_assignments(self)
 
@@ -127,6 +142,14 @@ class CombatManager:
                 # ★ NEW: Roach Burrow Heal System ★
                 if self.roach_burrow_heal:
                     await self.roach_burrow_heal.on_step(iteration)
+
+                # ★★★ Phase 19: Lurker Ambush System ★★★
+                if self.lurker_ambush:
+                    await self.lurker_ambush.on_step(iteration)
+
+                # ★★★ Phase 19: Smart Consume System ★★★
+                if self.smart_consume:
+                    await self.smart_consume.on_step(iteration)
 
                 return
 
@@ -227,6 +250,23 @@ class CombatManager:
             harass_target = self._find_harass_target()
             if harass_target:
                 tasks_to_execute.append(("air_harass", harass_target, self.task_priorities["air_harass"]))
+
+        # === TASK 2.2: Kill Squad (Hunt Observers/Overseers) - Phase 17 ===
+        # Corruptors/Mutas로 관측선/감시군주 사냥
+        if self._has_units(air_units):
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                targets = self.bot.enemy_units.filter(lambda u: u.type_id in {UnitTypeId.OBSERVER, UnitTypeId.OVERSEER})
+                if targets:
+                    hunters = [u for u in air_units if u.tag in available_air and u.type_id in {UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK}]
+                    if hunters:
+                        target = targets.closest_to(hunters[0])
+                        # Priority 60 (Main Attack(50)보다 높음)
+                        tasks_to_execute.append(("kill_squad", target, 60))
+                        if iteration % 200 == 0:
+                            self.logger.info(f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}")
+            except ImportError:
+                 pass
 
         # === TASK 2.3: ★ ULTRA-AGGRESSIVE Early Zergling Harass (1분-7분) ★ ===
         game_time = getattr(self.bot, 'time', 0)
@@ -473,6 +513,19 @@ class CombatManager:
                     await self._handle_air_combat(harass_units, enemy_units, iteration)
                     for u in harass_units:
                         available_air.discard(u.tag)
+
+            elif task_name == "kill_squad":
+                 # Kill Squad Execution
+                 hunters = [u for u in air_units if u.tag in available_air and u.type_id in {UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK}]
+                 if hunters:
+                     # 3마리만 할당 (과잉 대응 방지)
+                     squad = hunters[:3]
+                     for unit in squad:
+                         try:
+                             self.bot.do(unit.attack(target))
+                             available_air.discard(unit.tag)
+                         except:
+                             pass
 
             elif task_name == "early_harass":
                 # Use zerglings for early harassment (Smart Worker Hunt)
@@ -1403,6 +1456,71 @@ class CombatManager:
         return self._filter_units_by_type(
             units, ["ZERGLING", "ROACH", "HYDRALISK", "RAVAGER", "ULTRALISK", "LURKER", "BANELING"]
         )
+
+    def _check_emergency_situation(self) -> bool:
+        """
+        ★ Phase 17: 긴급 상황 감지 ★
+
+        긴급 상황 조건:
+        1. 기지가 공격받고 있음 (적이 25거리 이내)
+        2. 대규모 전투 (아군/적 전투 유닛 10마리 이상, 15거리 이내 교전)
+        3. 일꾼이 공격받고 있음 (적이 10거리 이내)
+
+        Returns:
+            bool: 긴급 상황 여부
+        """
+        try:
+            # 1. 기지 공격 체크
+            if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "enemy_units"):
+                return False
+
+            townhalls = self.bot.townhalls
+            enemy_units = self.bot.enemy_units
+
+            if townhalls.exists and enemy_units.exists:
+                for townhall in townhalls:
+                    # closer_than 사용 (최적화)
+                    if hasattr(enemy_units, "closer_than"):
+                        nearby_enemies = enemy_units.closer_than(25, townhall)
+                    else:
+                        nearby_enemies = [e for e in enemy_units if e.distance_to(townhall) < 25]
+
+                    if nearby_enemies:
+                        return True  # 기지 공격 = 긴급 상황
+
+            # 2. 대규모 전투 체크
+            if hasattr(self.bot, "units"):
+                army = self._filter_army_units(self.bot.units)
+
+                if len(army) >= 10 and len(enemy_units) >= 10:
+                    # 전투 유닛이 적 근처에 있는지 확인 (샘플링)
+                    for unit in army[:5]:  # 샘플링 (5마리만 체크)
+                        if hasattr(enemy_units, "closer_than"):
+                            nearby_enemies = enemy_units.closer_than(15, unit)
+                        else:
+                            nearby_enemies = [e for e in enemy_units if e.distance_to(unit) < 15]
+
+                        if nearby_enemies:
+                            return True  # 대규모 교전 = 긴급 상황
+
+            # 3. 일꾼 공격 체크
+            if hasattr(self.bot, "workers"):
+                workers = self.bot.workers
+
+                if workers.exists and enemy_units.exists:
+                    for worker in workers[:3]:  # 샘플링
+                        if hasattr(enemy_units, "closer_than"):
+                            nearby_enemies = enemy_units.closer_than(10, worker)
+                        else:
+                            nearby_enemies = [e for e in enemy_units if e.distance_to(worker) < 10]
+
+                        if nearby_enemies:
+                            return True  # 일꾼 공격 = 긴급 상황
+
+            return False
+
+        except Exception:
+            return False  # 에러 발생 시 안전하게 False 반환
 
     async def _handle_air_units_separately(self, iteration: int):
         """

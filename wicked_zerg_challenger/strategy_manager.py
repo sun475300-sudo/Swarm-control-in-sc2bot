@@ -437,20 +437,33 @@ class StrategyManager:
 
     def _update_counter_build(self) -> None:
         """
-        적 빌드에 따른 대응 빌드 업데이트
+        ★ Phase 17: 적 빌드에 따른 실시간 대응 빌드 업데이트 ★
 
-        Intel Manager에서 감지한 적 빌드 패턴에 따라
-        아군 유닛 비율을 조정합니다.
+        IntelManager에서 감지한 적 빌드 패턴에 따라 아군 유닛 비율을 즉각 조정합니다.
+        - 정찰 정보의 신뢰도(confidence)를 고려한 대응 강도 조절
+        - 확인된(confirmed) 패턴에는 강력한 대응
+        - 의심(suspected) 패턴에는 부분적 대응
         """
         intel = getattr(self.bot, "intel", None)
         if not intel:
             return
 
+        # ★ Phase 17: 적 빌드 패턴 및 신뢰도 확인 ★
         enemy_pattern = ""
+        build_confidence = 0.0
+        build_status = "unknown"
+
         if hasattr(intel, "get_enemy_build_pattern"):
             enemy_pattern = intel.get_enemy_build_pattern()
 
-        if enemy_pattern == "unknown":
+        if hasattr(intel, "get_build_pattern_confidence"):
+            build_confidence = intel.get_build_pattern_confidence()
+
+        if hasattr(intel, "get_build_pattern_status"):
+            build_status = intel.get_build_pattern_status()
+
+        # 패턴이 없거나 신뢰도가 너무 낮으면 스킵
+        if enemy_pattern == "unknown" or build_confidence < 0.2:
             return
 
         game_time = getattr(self.bot, "time", 0)
@@ -468,17 +481,38 @@ class StrategyManager:
         
         current_ratios = base_ratios.copy()
         
-        # 2. Apply Build Pattern Counters (Predictive)
+        # 2. ★ Phase 17: Apply Build Pattern Counters with Confidence-Based Scaling ★
         recommended = intel.get_recommended_response()
         if recommended:
             # IntelManager recommends a list of units (e.g. ['hydralisk', 'corruptor'])
-            # We boost their ratios significantly
+            # Boost ratio based on confidence level:
+            # - confirmed (0.7+): 0.4 boost (strong counter)
+            # - suspected (0.3-0.7): 0.2 boost (moderate counter)
+            # - unknown (<0.3): 0.1 boost (weak counter)
+
+            if build_status == "confirmed":
+                boost_multiplier = 1.3  # 30% stronger
+            elif build_status == "suspected":
+                boost_multiplier = 0.7  # 30% weaker
+            else:
+                boost_multiplier = 0.3  # 70% weaker
+
             for unit_name in recommended:
                 u_key = unit_name.lower().replace(" ", "")
                 if u_key == "hydralisk": u_key = "hydra"
                 if u_key == "lurkermp": u_key = "lurker"
-                # Pattern matching is high confidence, so we give a strong boost (0.3)
-                current_ratios[u_key] = current_ratios.get(u_key, 0) + 0.3
+
+                base_boost = 0.3
+                adjusted_boost = base_boost * boost_multiplier
+
+                current_ratios[u_key] = current_ratios.get(u_key, 0) + adjusted_boost
+
+                # ★ 로그 출력 (10초마다만) ★
+                if int(game_time) % 10 == 0 and self.bot.iteration % 22 == 0:
+                    self.logger.info(
+                        f"[{int(game_time)}s] Counter boost: {u_key} +{adjusted_boost:.2f} "
+                        f"({build_status}, confidence={build_confidence:.0%})"
+                    )
         
         # 3. Scan enemy units and adjust ratios (Reactive)
         if hasattr(self.bot, "enemy_units"):

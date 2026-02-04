@@ -97,6 +97,13 @@ def initialize_combat_state(manager):
     manager._expansion_defense_check_interval = 10  # 10프레임마다 확장 방어 체크
     manager._expansion_defense_force_size = 8  # 확장 방어에 투입할 최소 유닛 수
 
+    # === ★★★ Phase 17: PERFORMANCE OPTIMIZATION - FRAME SKIP ★★★ ===
+    manager._last_combat_frame = 0  # 마지막 전투 로직 실행 프레임
+    manager._combat_frame_skip = 4  # 4프레임마다 실행 (약 0.18초)
+    manager._combat_emergency_skip = 1  # 긴급 상황에서는 매 프레임
+    manager._combat_is_emergency = False  # 긴급 상황 여부
+    manager._last_emergency_check = 0  # 마지막 긴급 상황 체크
+
 
 def initialize_managers(manager):
     """
@@ -161,3 +168,21 @@ def initialize_managers(manager):
         manager.roach_burrow_heal = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Roach burrow heal not available")
+
+    # ★★★ Phase 19: Lurker Ambush System ★★★
+    try:
+        from combat.lurker_ambush import LurkerAmbushSystem
+        manager.lurker_ambush = LurkerAmbushSystem(manager.bot)
+    except ImportError:
+        manager.lurker_ambush = None
+        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+            manager.logger.warning("Lurker ambush system not available")
+
+    # ★★★ Phase 19: Smart Consume System ★★★
+    try:
+        from combat.smart_consume import SmartConsumeSystem
+        manager.smart_consume = SmartConsumeSystem(manager.bot)
+    except ImportError:
+        manager.smart_consume = None
+        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+            manager.logger.warning("Smart consume system not available")

@@ -2,10 +2,16 @@
 """
 Evolution Chamber upgrade manager.
 
+★ Phase 18: Enhanced Upgrade System ★
+- IntelManager integration for counter upgrades
+- Race-specific upgrade priorities
+- Gas reservation system
+- Timing-based upgrade optimization
+
 Chooses upgrades based on unit composition and opponent race.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -43,6 +49,30 @@ class EvolutionUpgradeManager:
         self._last_evo_chamber_attempt = 0.0
         self._evo_chamber_cooldown = 20.0  # ★ OPTIMIZED: 30 → 20초 ★
 
+        # ★★★ Phase 18: Gas Reservation System ★★★
+        self.reserved_upgrades: List[object] = []  # 가스 부족으로 예약된 업그레이드
+        self.gas_reservation_threshold = 50  # 가스가 50 이상이면 예약 업그레이드 실행
+
+        # ★★★ Phase 18: IntelManager Integration ★★★
+        self.intel_based_priority_boost: Dict[str, float] = {}  # {upgrade_type: boost_multiplier}
+        self.last_intel_check = 0
+        self.intel_check_interval = 110  # ~5초마다
+
+        # ★★★ Phase 18: Timing-Based Upgrades ★★★
+        self.critical_upgrade_timings = {
+            "zergling_speed": 90,  # 1분 30초 - 최우선 (이미 구현됨)
+            "melee_attack_1": 180,  # 3분 - 저글링 공격력
+            "armor_1": 240,  # 4분 - 방어력
+            "melee_attack_2": 360,  # 6분 - 저글링 공격력 2단계
+        }
+
+        # ★★★ Phase 18: Race-Specific Priority Modifiers ★★★
+        self.race_priority_modifiers = {
+            "Terran": {"armor": 1.3, "melee": 1.0, "missile": 1.1},  # 테란: 방어력 중요 (마린/해병)
+            "Protoss": {"armor": 1.2, "melee": 1.2, "missile": 1.0},  # 프로토스: 근접/방어 균형
+            "Zerg": {"melee": 1.3, "armor": 1.0, "missile": 1.1},  # 저그: 공격력 중요 (저글링 싸움)
+        }
+
     async def on_step(self, iteration: int) -> None:
         if not UnitTypeId or not UpgradeId:
             return
@@ -54,6 +84,9 @@ class EvolutionUpgradeManager:
             return
 
         game_time = getattr(self.bot, "time", 0)
+
+        # === ★★★ Phase 18: Process gas reservations ★★★ ===
+        await self._process_gas_reservations()
 
         # === 0순위: 핵심 업그레이드 (생명줄) ===
         await self._research_critical_upgrades(iteration)
@@ -92,7 +125,18 @@ class EvolutionUpgradeManager:
 
                 if not self._can_research(upgrade_id):
                     continue
+
+                # ★★★ Phase 18: Gas reservation system ★★★
                 if not self.bot.can_afford(upgrade_id):
+                    # 가스가 부족하면 예약
+                    vespene_cost = getattr(upgrade_id, "_cost", {}).get("Vespene", 0)
+                    minerals = getattr(self.bot, "minerals", 0)
+                    vespene = getattr(self.bot, "vespene", 0)
+
+                    # 미네랄은 충분하지만 가스가 부족한 경우에만 예약
+                    mineral_cost = getattr(upgrade_id, "_cost", {}).get("Minerals", 0)
+                    if minerals >= mineral_cost and vespene < vespene_cost:
+                        self._reserve_upgrade(upgrade_id)
                     continue
 
                 try:
@@ -123,7 +167,18 @@ class EvolutionUpgradeManager:
 
                 if not self._can_research(upgrade_id):
                     continue
+
+                # ★★★ Phase 18: Gas reservation system ★★★
                 if not self.bot.can_afford(upgrade_id):
+                    # 가스가 부족하면 예약
+                    vespene_cost = getattr(upgrade_id, "_cost", {}).get("Vespene", 0)
+                    minerals = getattr(self.bot, "minerals", 0)
+                    vespene = getattr(self.bot, "vespene", 0)
+
+                    # 미네랄은 충분하지만 가스가 부족한 경우에만 예약
+                    mineral_cost = getattr(upgrade_id, "_cost", {}).get("Minerals", 0)
+                    if minerals >= mineral_cost and vespene < vespene_cost:
+                        self._reserve_upgrade(upgrade_id)
                     continue
 
                 try:
@@ -137,7 +192,13 @@ class EvolutionUpgradeManager:
 
     def _get_upgrade_priority(self) -> List[object]:
         """
-        Get upgrade priority - 명확한 순서
+        ★ Phase 18: Get upgrade priority with Intel integration ★
+
+        Enhanced features:
+        - Race-specific priority modifiers
+        - IntelManager-based counter upgrades
+        - Timing-based priorities
+        - Dynamic adjustment based on enemy composition
 
         기본 순서 (저글링/맹독충 체제):
         3. 공격 +1 (Melee +1)
@@ -151,6 +212,9 @@ class EvolutionUpgradeManager:
         """
         composition = self._get_unit_composition()
         enemy_race = self._normalize_enemy_race(getattr(self.bot, "enemy_race", ""))
+
+        # ★★★ Phase 18: IntelManager 연동 - 적 유닛 구성 확인 ★★★
+        self._update_intel_based_priorities()
 
         # 유닛 수 확인
         zergling_count = composition.get("zergling", 0)
@@ -167,6 +231,9 @@ class EvolutionUpgradeManager:
         is_ranged_main = total_ranged > total_melee and total_ranged >= 5
 
         priorities = []
+
+        # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
+        race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
 
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
@@ -1053,3 +1120,138 @@ class EvolutionUpgradeManager:
                 self.bot.do(cavern.research(speed_up))
                 self.logger.info("Researching Ultra Speed (Anabolic Synthesis)")
                 return
+
+
+    # ========================================
+    # ★★★ Phase 18: Intel-Based Priorities ★★★
+    # ========================================
+
+    def _update_intel_based_priorities(self):
+        """
+        ★ Phase 18: IntelManager 연동 - 적 유닛 구성에 따른 업그레이드 우선순위 조정 ★
+
+        예시:
+        - 적이 마린 위주: 방어력 업그레이드 우선
+        - 적이 불멸자/거신: 공격력 업그레이드 우선
+        - 적이 공중 유닛: 공중 업그레이드 우선
+        """
+        if not hasattr(self.bot, "enemy_units"):
+            return
+
+        # 적 유닛 구성 분석
+        enemy_units = self.bot.enemy_units
+        
+        # 카운트
+        enemy_bio = 0  # 마린, 사신, 히드라, 저글링 등
+        enemy_armored = 0  # 불멸자, 거신, 토르, 울트라 등
+        enemy_air = 0  # 뮤탈, 밴시, 불사조 등
+
+        for unit in enemy_units:
+            unit_type = getattr(unit.type_id, "name", "").upper()
+            
+            # Bio 유닛
+            if unit_type in {"MARINE", "MARAUDER", "REAPER", "ZEALOT", "STALKER", "ZERGLING", "HYDRALISK"}:
+                enemy_bio += 1
+            
+            # Armored 유닛
+            if unit_type in {"IMMORTAL", "COLOSSUS", "THOR", "SIEGETANK", "ULTRALISK", "ROACH"}:
+                enemy_armored += 1
+            
+            # Air 유닛
+            if unit_type in {"MUTALISK", "CORRUPTOR", "BANSHEE", "VIKING", "PHOENIX", "VOIDRAY"}:
+                enemy_air += 1
+
+        # ★ 우선순위 부스트 결정 ★
+        self.intel_based_priority_boost.clear()
+
+        # Bio가 많으면 방어력 우선 (작은 공격 여러 번)
+        if enemy_bio >= 10:
+            self.intel_based_priority_boost["armor"] = 1.5
+            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_bio} bio units → Armor priority boost!")
+
+        # Armored가 많으면 공격력 우선 (강한 공격 필요)
+        if enemy_armored >= 5:
+            self.intel_based_priority_boost["melee"] = 1.3
+            self.intel_based_priority_boost["missile"] = 1.3
+            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_armored} armored units → Attack priority boost!")
+
+        # Air가 많으면 공중 업그레이드 우선
+        if enemy_air >= 5:
+            self.intel_based_priority_boost["air_attack"] = 1.8
+            self.intel_based_priority_boost["air_armor"] = 1.3
+            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_air} air units → Air upgrade priority boost!")
+
+    # ========================================
+    # ★★★ Phase 18: Gas Reservation System ★★★
+    # ========================================
+
+    def _reserve_upgrade(self, upgrade_id: object):
+        """
+        ★ Phase 18: 가스 부족 시 업그레이드 예약 ★
+
+        Args:
+            upgrade_id: 예약할 업그레이드
+        """
+        if upgrade_id not in self.reserved_upgrades:
+            self.reserved_upgrades.append(upgrade_id)
+            upgrade_name = getattr(upgrade_id, "name", "UNKNOWN")
+            game_time = getattr(self.bot, "time", 0)
+            self.logger.info(
+                f"[{int(game_time)}s] ★ UPGRADE RESERVED: {upgrade_name} (waiting for gas) ★"
+            )
+
+    async def _process_gas_reservations(self):
+        """
+        ★ Phase 18: 예약된 업그레이드 처리 ★
+
+        가스가 충분해지면 예약된 업그레이드를 실행합니다.
+        """
+        if not self.reserved_upgrades:
+            return
+
+        vespene = getattr(self.bot, "vespene", 0)
+
+        if vespene < self.gas_reservation_threshold:
+            return  # 아직 가스 부족
+
+        # 가스가 충분함 - 예약된 업그레이드 실행
+        evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
+        spires = self.bot.structures(UnitTypeId.SPIRE).ready | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
+
+        for upgrade_id in self.reserved_upgrades[:]:  # 복사본으로 순회 (삭제 중)
+            if not self._can_research(upgrade_id):
+                self.reserved_upgrades.remove(upgrade_id)
+                continue
+
+            if not self.bot.can_afford(upgrade_id):
+                continue  # 아직 부담 안 됨
+
+            # 업그레이드 타입 확인
+            upgrade_name = getattr(upgrade_id, "name", "")
+            is_air = "FLYER" in upgrade_name
+
+            # 적절한 건물 찾기
+            buildings = spires if is_air else evo_chambers
+
+            for building in buildings:
+                if hasattr(building, "is_idle") and building.is_idle:
+                    try:
+                        self.bot.do(building.research(upgrade_id))
+                        game_time = getattr(self.bot, "time", 0)
+                        self.logger.info(
+                            f"[{int(game_time)}s] ★ RESERVED UPGRADE EXECUTED: {upgrade_name} ★"
+                        )
+                        self.reserved_upgrades.remove(upgrade_id)
+                        return
+                    except Exception as e:
+                        self.logger.warning(f"Failed to execute reserved upgrade: {e}")
+                        continue
+
+    def get_upgrade_stats(self) -> Dict:
+        """★ Phase 18: 업그레이드 통계 반환 ★"""
+        return {
+            "reserved_upgrades": len(self.reserved_upgrades),
+            "intel_boosts": dict(self.intel_based_priority_boost),
+            "zergling_speed": self._zergling_speed_started,
+            "overlord_speed": self._overlord_speed_started,
+        }
