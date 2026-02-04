@@ -250,11 +250,12 @@ class SpellCasterAutomation:
                     await self._viper_abduct(viper, enemy_units)
                     continue
 
-            # ★ 2. 흑구름 (Blinding Cloud) - 100 에너지 ★
-            if viper.energy >= 100:
                 if not self._is_on_cooldown(viper.tag, "blinding_cloud", 20):
                     await self._viper_blinding_cloud(viper, enemy_units)
                     continue
+
+            # ★ 3. 안전 후퇴 (Phase 18) ★
+            await self._viper_safety(viper, enemy_units)
 
     async def _viper_abduct(self, viper, enemies):
         """
@@ -368,6 +369,20 @@ class SpellCasterAutomation:
                 f"[{int(game_time)}s] ★ CONSUME: Viper energy recovery (Overlord sacrificed) ★"
             )
 
+    async def _viper_safety(self, viper, enemies):
+        """살모사 안전 관리 - 스킬 사용 후 후퇴"""
+        # 최근에 스킬을 썼으면 후퇴
+        if self._is_on_cooldown(viper.tag, "abduct", 2) or self._is_on_cooldown(viper.tag, "blinding_cloud", 2):
+             retreat_pos = viper.position.towards(self.bot.game_info.map_center, -5)
+             self.bot.do(viper.move(retreat_pos))
+             return
+
+        # 적이 너무 가까우면 후퇴
+        closest_enemy = enemies.closest_to(viper) if enemies else None
+        if closest_enemy and closest_enemy.distance_to(viper) < 8:
+             retreat_pos = viper.position.towards(closest_enemy, -4)
+             self.bot.do(viper.move(retreat_pos))
+
     async def _infestor_skills(self):
         """
         감염충 스킬 (Neural Parasite, Fungal Growth)
@@ -389,10 +404,12 @@ class SpellCasterAutomation:
                     continue
 
             # ★ 2. 신경 기생충 (Neural Parasite) - 100 에너지 ★
-            if infestor.energy >= 100:
                 if not self._is_on_cooldown(infestor.tag, "neural", 20):
                     await self._infestor_neural(infestor, enemy_units)
                     continue
+
+            # ★ 3. 안전 잠복 (Phase 18) ★
+            await self._infestor_safety(infestor, enemy_units)
 
     async def _infestor_fungal(self, infestor, enemies):
         """
@@ -461,6 +478,20 @@ class SpellCasterAutomation:
             self.logger.info(
                 f"[{int(game_time)}s] ★ NEURAL: {target.type_id.name} ★"
             )
+
+    async def _infestor_safety(self, infestor, enemies):
+        """감염충 안전 잠복"""
+        # 적이 가까우면 잠복
+        nearby_enemies = enemies.closer_than(9, infestor)
+        
+        if nearby_enemies.exists:
+             if not infestor.is_burrowed:
+                 self.bot.do(infestor(AbilityId.BURROWDOWN_INFESTOR))
+        else:
+             # 적이 없고 에너지가 차면 잠복 해제 (이동을 위해)
+             # 단, 진균/신경 쓸 때는 자동 해제되므로 평소엔 잠복 해제 상태 유지
+             if infestor.is_burrowed and infestor.energy > 80:
+                 self.bot.do(infestor(AbilityId.BURROWUP_INFESTOR))
 
     async def _overseer_changeling(self):
         """

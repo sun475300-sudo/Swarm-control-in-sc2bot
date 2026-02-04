@@ -78,6 +78,11 @@ class StrategyManagerV2(StrategyManager):
         self.win_condition_update_interval = self.config.WIN_CONDITION_UPDATE_INTERVAL if self.config else 5.0
         self.last_win_condition_check = 0.0
 
+        # Smart Surrender (Phase 18)
+        self.surrender_trigger_time = 0
+        self.surrender_threshold = 30 # seconds of strong losing
+
+
         # Build order system
         self.current_build_phase = BuildOrderPhase.OPENING
         self.build_transition_complete = False
@@ -108,6 +113,11 @@ class StrategyManagerV2(StrategyManager):
         self.strategy_queue: List[Dict[str, Any]] = []
         self.concurrent_strategy_limit = self.config.CONCURRENT_STRATEGY_LIMIT if self.config else 3
 
+        # Adaptive Composition (Phase 18)
+        self.target_unit_ratios: Dict[str, float] = {}
+        self.last_composition_update = 0
+
+
         self.logger.info("[STRATEGY_V2] Initialized with enhanced decision-making")
 
     def update(self) -> None:
@@ -122,7 +132,16 @@ class StrategyManagerV2(StrategyManager):
         self._update_build_phase(game_time)
         self._evaluate_strategy_effectiveness()
         self._adjust_resource_priorities()
+        self._evaluate_strategy_effectiveness()
+        self._adjust_resource_priorities()
         self._execute_multi_strategy()
+        
+        # Phase 18: Adaptive Composition
+        self._update_unit_composition(game_time)
+
+        # Phase 18: Smart Surrender
+        # await self._check_smart_surrender(game_time) # Async call needs await
+
 
         # Update blackboard with V2 data
         if self.blackboard:
@@ -742,7 +761,147 @@ class StrategyManagerV2(StrategyManager):
             return
 
         self.active_strategies.append(strategy)
+        self.active_strategies.append(strategy)
         self.logger.info(f"[STRATEGY] Added: {strategy_name} (Priority: {strategy.get('priority', 'N/A')})")
+
+    # ========== ADAPTIVE COMPOSITION (Phase 18) ==========
+
+    def _update_unit_composition(self, game_time: float) -> None:
+        """Update target unit composition based on enemy tech"""
+        if game_time - self.last_composition_update < 5:
+            return
+            
+        self.last_composition_update = game_time
+        self.target_unit_ratios = self._calculate_desired_composition()
+
+    def _calculate_desired_composition(self) -> Dict[str, float]:
+        """
+        Calculate ideal Zerg unit composition based on enemy army
+        
+        Returns:
+            Dictionary of {unit_type_name: ratio}
+        """
+        ratios = {
+            "roach": 0.0, "ravager": 0.0, "hydra": 0.0,
+            "lingu": 0.0, "baneling": 0.0, "mutalisk": 0.0,
+            "corruptor": 0.0, "infestor": 0.0, "viper": 0.0,
+            "ultralisk": 0.0, "lurker": 0.0
+        }
+        
+        # Default composition based on race if no enemies seen
+        if not hasattr(self.bot, "enemy_units") or not self.bot.enemy_units:
+             return self._get_default_composition_by_race()
+
+        enemy_units = self.bot.enemy_units
+        total_enemy_supply = sum(u.radius for u in enemy_units) # Rough proxy for supply
+        if total_enemy_supply == 0:
+            return self._get_default_composition_by_race()
+
+        # Count enemy composition tags
+        counts = {
+            "air_capital": 0, # Carrier, BC, Tempest
+            "air_fighter": 0, # Viking, Phoenix, VoidRay, Mutalisk
+            "ground_mech": 0, # Tank, Thor, Colossus, Immortal
+            "ground_bio": 0,  # Marine, Zealot, Zergling
+            "massive": 0      # Ultralisk, Archon
+        }
+
+        for u in enemy_units:
+            name = u.type_id.name.upper()
+            if name in ["CARRIER", "BATTLECRUISER", "TEMPEST", "BROODLORD", "MOTHERSHIP"]:
+                counts["air_capital"] += 1
+            elif name in ["VIKINGFIGHTER", "PHOENIX", "VOIDRAY", "MUTALISK", "CORRUPTOR", "LIBERATOR", "BANSHEE"]:
+                counts["air_fighter"] += 1
+            elif name in ["SIEGETANK", "SIEGETANKSIEGED", "THOR", "COLOSSUS", "IMMORTAL", "STALKER", "DRAGOON"]:
+                counts["ground_mech"] += 1
+            elif name in ["MARINE", "MARAUDER", "ZEALOT", "ADEPT", "ZERGLING", "ROACH", "HYDRALISK"]:
+                counts["ground_bio"] += 1
+            elif name in ["ULTRALISK", "ARCHON"]:
+                counts["massive"] += 1
+        
+        # Logic Tree for Composition
+        
+        # 1. Anti-Air Capital (Corruptor Heavy)
+        if counts["air_capital"] >= 2 or (counts["air_capital"] + counts["air_fighter"] >= 8):
+            ratios["corruptor"] = 0.50
+            ratios["viper"] = 0.10 # Abduct
+            ratios["hydra"] = 0.20
+            ratios["zergling"] = 0.20 # Mineral dump
+            
+        # 2. Anti-Ground Mech (Ravager/Viper/Lurker)
+        elif counts["ground_mech"] >= 5:
+            ratios["ravager"] = 0.30
+            ratios["roach"] = 0.20
+            ratios["viper"] = 0.10
+            ratios["zergling"] = 0.20
+            ratios["hydra"] = 0.20
+            
+        # 3. Anti-Bio (Baneling/Roach/Lurker)
+        elif counts["ground_bio"] >= 10:
+            ratios["roach"] = 0.40
+            ratios["ravager"] = 0.10
+            ratios["baneling"] = 0.20
+            ratios["hydra"] = 0.20
+            ratios["infestor"] = 0.10 # Fungal
+            
+        # 4. Default Balanced
+        else:
+            return self._get_default_composition_by_race()
+            
+        return ratios
+
+    def _get_default_composition_by_race(self) -> Dict[str, float]:
+        """Default compositions per matchup"""
+        if not hasattr(self.bot, "enemy_race"):
+            return {"roach": 0.5, "hydra": 0.3, "ravager": 0.2}
+            
+        race = self.bot.enemy_race
+        if race == self.bot.Race.Terran:
+            # Roach/Ravager/Ling
+            return {"roach": 0.4, "ravager": 0.2, "hydra": 0.2, "zergling": 0.2}
+        elif race == self.bot.Race.Protoss:
+            # Roach/Hydra/Lurker
+            return {"roach": 0.4, "hydra": 0.4, "lurker": 0.1, "viper": 0.1}
+        elif race == self.bot.Race.Zerg:
+            # Roach/Ravager
+            return {"roach": 0.6, "ravager": 0.3, "hydra": 0.1}
+        else:
+            return {"roach": 0.5, "hydra": 0.3, "ravager": 0.2}
+
+    def get_unit_ratios(self) -> Dict[str, float]:
+        """Public API for UnitFactory"""
+        return self.target_unit_ratios
+
+    # ========== SMART SURRENDER (Phase 18) ==========
+    
+    def check_surrender(self, game_time: float) -> bool:
+        """Surrender if game is hopeless to save training time"""
+        # Only surrender after 5 minutes
+        if game_time < 300:
+             return False
+             
+        # Conditions for hopeless state:
+        # 1. Strong Losing Economy AND Strong Losing Army
+        is_hopeless = (
+            self.current_win_condition in [WinCondition.LOSING_ECONOMY, WinCondition.LOSING_ARMY] 
+            and self._calculate_economy_score() <= -3.0 # Very bad eco
+            and self._calculate_army_score() <= -3.0    # Very bad army
+        )
+        
+        if is_hopeless:
+             if self.surrender_trigger_time == 0:
+                 self.surrender_trigger_time = game_time
+                 
+             # If hopeless for 30 seconds
+             duration = game_time - self.surrender_trigger_time
+             if duration > self.surrender_threshold:
+                 self.logger.warning(f"[SURRENDER] Game is hopeless for {int(duration)}s. Surrendering to speed up training.")
+                 return True
+        else:
+             self.surrender_trigger_time = 0
+             
+        return False
+
 
     # ========== PUBLIC API ==========
 

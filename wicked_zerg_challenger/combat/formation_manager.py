@@ -127,6 +127,14 @@ class FormationManager:
 
         return choke_points
 
+    def find_chokepoint(self, enemy_units: Units, our_base: Point2) -> Optional[Point2]:
+        """단일 길목 찾기 (CombatManager 호환용)"""
+        # 적군과 아군 본진 사이의 중간 지점
+        if enemy_units.exists:
+             enemy_center = enemy_units.center
+             return our_base.towards(enemy_center, 15.0)
+        return None
+
     def should_avoid_choke(self, units: Units, enemy_units: Units) -> bool:
         """
         길목에서 피해야 하는지 판단
@@ -168,6 +176,15 @@ class FormationManager:
                     return True
 
         return False
+
+    def should_avoid_chokepoint(self, units: Units, chokepoint: Point2, enemy_units: Units) -> bool:
+        """Alias for should_avoid_choke"""
+        return self.should_avoid_choke(units, enemy_units)
+
+    def get_retreat_position(self, units: Units, enemy_units: Units, our_base: Point2) -> Optional[Point2]:
+        """후퇴 위치 계산 (넓은 곳으로)"""
+        # 단순히 본진 쪽으로 후퇴
+        return our_base
 
     def get_optimal_position(
         self, unit: Unit, enemy_center: Point2, formation_type: str = "concave"

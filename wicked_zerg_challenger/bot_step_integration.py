@@ -1073,6 +1073,15 @@ class BotStepIntegrator:
                     if iteration == 1 or iteration % 500 == 0:
                         print(f"[DEBUG] Calling strategy_manager.update() at iteration {iteration}")
                     self.bot.strategy_manager.update()
+
+                    # Phase 18: Smart Surrender Check
+                    if hasattr(self.bot.strategy_manager, "check_surrender"):
+                        if self.bot.strategy_manager.check_surrender(self.bot.time):
+                             print("[SURRENDER] StrategyManager requested surrender.")
+                             await self.bot.chat_send("gg")
+                             await self.bot.client.leave()
+                             return
+                             
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
