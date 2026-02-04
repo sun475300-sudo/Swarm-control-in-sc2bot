@@ -486,22 +486,45 @@ class UnitFactory:
         return queue
 
     def _gas_unit_table(self) -> List[dict]:
-        # ★ OPTIMIZATION: Morph units (Ravager, Lurker) removed.
-        # UnitFactory produces base units (Roach, Hydra) => UnitMorphManager updates them.
+        # Phase 18: Dynamic Ratios from StrategyManager
+        strategy = getattr(self.bot, "strategy_manager", None)
+        ratios = {}
+        if strategy and hasattr(strategy, "get_unit_ratios"):
+            ratios = strategy.get_unit_ratios()
+
+        # Default fallbacks if no ratios provided
+        def get_ratio(name, default):
+            return ratios.get(name, default)
+
+        # Base units that consume gas
+        # Note: Ravager/Lurker/Baneling are morphs, but we control their base unit production here
+        # We use the ratio of the *final* unit to control the *base* unit production if needed,
+        # but typically UnitMorphManager handles the morphing.
+        # However, to support "Heavy Ravager" style, we need enough Roaches.
+        
+        # Calculate max_ratio dynamically
         return [
-            {"unit": UnitTypeId.HYDRALISK, "min_gas": 50, "max_ratio": 0.5},    # Lurker material
-            {"unit": UnitTypeId.CORRUPTOR, "min_gas": 100, "max_ratio": 0.3},
-            {"unit": UnitTypeId.MUTALISK, "min_gas": 100, "max_ratio": 0.25},
-            {"unit": UnitTypeId.ROACH, "min_gas": 25, "max_ratio": 0.6},        # Ravager material
-            {"unit": UnitTypeId.ULTRALISK, "min_gas": 150, "max_ratio": 0.15},
-            {"unit": UnitTypeId.INFESTOR, "min_gas": 150, "max_ratio": 0.1},
-            {"unit": UnitTypeId.VIPER, "min_gas": 200, "max_ratio": 0.1},
+            {"unit": UnitTypeId.HYDRALISK, "min_gas": 50, "max_ratio": get_ratio("hydra", 0.3) + get_ratio("lurker", 0.1)}, 
+            {"unit": UnitTypeId.CORRUPTOR, "min_gas": 100, "max_ratio": get_ratio("corruptor", 0.15)},
+            {"unit": UnitTypeId.MUTALISK, "min_gas": 100, "max_ratio": get_ratio("mutalisk", 0.10)},
+            {"unit": UnitTypeId.ROACH, "min_gas": 25, "max_ratio": get_ratio("roach", 0.4) + get_ratio("ravager", 0.2)},
+            {"unit": UnitTypeId.ULTRALISK, "min_gas": 150, "max_ratio": get_ratio("ultralisk", 0.05)},
+            {"unit": UnitTypeId.INFESTOR, "min_gas": 150, "max_ratio": get_ratio("infestor", 0.05)},
+            {"unit": UnitTypeId.VIPER, "min_gas": 200, "max_ratio": get_ratio("viper", 0.05)},
         ]
 
     def _mineral_unit_table(self) -> List[dict]:
-        # Banelings removed (Morphed from Zerglings)
+        strategy = getattr(self.bot, "strategy_manager", None)
+        ratios = {}
+        if strategy and hasattr(strategy, "get_unit_ratios"):
+            ratios = strategy.get_unit_ratios()
+
+        # Banelings are morphed from Zerglings
+        ling_ratio = ratios.get("zergling", 0.4)
+        bane_ratio = ratios.get("baneling", 0.1)
+        
         return [
-            {"unit": UnitTypeId.ZERGLING, "max_ratio": 0.9}, # Baneling material included
+            {"unit": UnitTypeId.ZERGLING, "max_ratio": ling_ratio + bane_ratio + 0.2}, # +0.2 buffer
         ]
 
     def _count_combat_units(self) -> int:
