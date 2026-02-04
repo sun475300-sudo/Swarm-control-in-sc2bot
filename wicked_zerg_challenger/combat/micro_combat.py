@@ -310,9 +310,10 @@ class MicroCombat:
         """
         Zergling Surround Logic - maximize attack surface by surrounding enemies.
 
-        Strategy:
+        Enhanced Strategy (LOGIC_AUDIT_REPORT v2):
         - Front zerglings attack directly
-        - Rear zerglings move to enemy's back/sides to create surround
+        - Rear zerglings move to enemy's back/sides in circular pattern
+        - Creates 360-degree surround for maximum DPS
         - Prevents wasted DPS from zerglings stuck behind
         """
         if not enemy_units:
@@ -333,14 +334,40 @@ class MicroCombat:
                 if u.type_id == UnitTypeId.ZERGLING and u.distance_to(target) < 2.0 and u.tag != zergling.tag
             ]
 
-            # If 2+ allies already engaging, move to flank/surround instead of stacking
-            # OPTIMIZED: 4 → 2 (more aggressive surround, reduce unit losses)
+            # If 2+ allies already engaging, create circular surround instead of stacking
+            # OPTIMIZED: 4 → 2 (more aggressive surround)
             if len(nearby_allies) >= 2:
-                # Calculate surround position (behind enemy)
-                # Move to position 2 units behind enemy
-                surround_pos = target.position.towards(zergling.position, -2.0)
-                actions.append(zergling.move(surround_pos))
-                return True
+                # ★ Enhanced Surround: Calculate optimal surround position ★
+                import math
+
+                # Count allies to determine surround angle
+                ally_count = len(nearby_allies)
+
+                # Calculate angle based on zergling's position relative to target
+                dx = zergling.position.x - target.position.x
+                dy = zergling.position.y - target.position.y
+                current_angle = math.atan2(dy, dx)
+
+                # Distribute units evenly around target (360 degrees)
+                # Add offset to create spiral surround pattern
+                angle_offset = (zergling.tag % 8) * (math.pi / 4)  # 8 positions around circle
+                optimal_angle = current_angle + angle_offset
+
+                # Calculate surround position (1.5 units from target center)
+                surround_radius = 1.5
+                surround_x = target.position.x + surround_radius * math.cos(optimal_angle)
+                surround_y = target.position.y + surround_radius * math.sin(optimal_angle)
+
+                try:
+                    from sc2.position import Point2
+                    surround_pos = Point2((surround_x, surround_y))
+                    actions.append(zergling.move(surround_pos))
+                    return True
+                except (ImportError, AttributeError):
+                    # Fallback: simple surround
+                    surround_pos = target.position.towards(zergling.position, -2.0)
+                    actions.append(zergling.move(surround_pos))
+                    return True
 
         # Default: attack normally if not in surround scenario
         return False

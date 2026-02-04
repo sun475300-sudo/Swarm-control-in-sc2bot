@@ -63,7 +63,13 @@ class IntelManager:
             result = self.update(iteration)
             if asyncio.iscoroutine(result):
                 await result
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            # Expected errors from missing bot attributes or type mismatches
+            return
+        except Exception as e:
+            # Log unexpected errors
+            if iteration % 200 == 0:
+                print(f"[INTEL] Unexpected error in on_step: {type(e).__name__} - {e}")
             return
 
     def update(self, iteration: int) -> None:
@@ -190,7 +196,8 @@ class IntelManager:
                             print(f"[INTEL] [{int(current_time)}s] EARLY ATTACK: {enemy_type} detected at {detection_range} range!")
 
                         # Continue checking other enemies to properly assess threat level
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Expected errors from missing unit attributes
                     continue
 
         # Clear attack flag after 10 seconds of no enemies
@@ -527,7 +534,8 @@ class IntelManager:
                     # 파괴 가능한 구조물인지 확인
                     if any(dest_type in type_name for dest_type in destructible_types):
                         destructible_list.append(unit)
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Expected errors from missing unit attributes
                     continue
 
             self.destructible_rocks = destructible_list
@@ -536,7 +544,8 @@ class IntelManager:
             if destructible_list and current_time < 60 and self.bot.iteration % 100 == 0:
                 print(f"[INTEL] [{int(current_time)}s] ★ {len(destructible_list)} destructible rocks detected!")
 
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            # Expected errors from missing bot attributes
             pass
 
     def _update_all_enemy_structures(self) -> None:
@@ -555,7 +564,8 @@ class IntelManager:
             if int(current_time) % 30 == 0 and self.bot.iteration % 22 == 0:
                 if len(self.all_enemy_structures) > 0:
                     print(f"[INTEL] [{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}")
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            # Expected errors from missing bot attributes
             pass
 
     def get_destructible_rocks(self) -> list:
@@ -620,8 +630,11 @@ class IntelManager:
             print(f"[INTEL] Data saved to {file_path}")
             return True
 
-        except Exception as e:
-            print(f"[INTEL] Failed to save data: {e}")
+        except (IOError, OSError) as e:
+            print(f"[INTEL] Failed to save data (I/O error): {e}")
+            return False
+        except (TypeError, ValueError) as e:
+            print(f"[INTEL] Failed to save data (serialization error): {e}")
             return False
 
     def load_data(self, file_path: str = "data/intel_data.json") -> bool:
@@ -662,6 +675,9 @@ class IntelManager:
             
             return True
 
-        except Exception as e:
-            print(f"[INTEL] Failed to load data: {e}")
+        except (IOError, OSError) as e:
+            print(f"[INTEL] Failed to load data (I/O error): {e}")
+            return False
+        except (TypeError, ValueError, KeyError) as e:
+            print(f"[INTEL] Failed to load data (parsing error): {e}")
             return False

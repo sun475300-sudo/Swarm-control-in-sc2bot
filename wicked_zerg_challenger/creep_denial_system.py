@@ -30,6 +30,7 @@ except ImportError:
     AbilityId = None
 
 from utils.logger import get_logger
+from game_config import GameConfig
 
 
 @dataclass
@@ -79,10 +80,10 @@ class CreepDenialSystem:
         self.tumors_detected = 0
         self.detection_by_unit_type: Dict[str, int] = defaultdict(int)
 
-        # 설정
-        self.min_overseers = 2  # 최소 감시군주 수 (ZvZ)
-        self.tumor_memory_duration = 60.0  # 종양 위치 기억 시간 (60초)
-        self.detection_radius = 11  # 감시군주 탐지 반경
+        # ★ 설정 (GameConfig에서 로드) ★
+        self.min_overseers = GameConfig.CREEP_DENIAL_MIN_OVERSEERS
+        self.tumor_memory_duration = GameConfig.CREEP_DENIAL_TUMOR_MEMORY_DURATION
+        self.detection_radius = GameConfig.CREEP_DENIAL_DETECTION_RADIUS
 
         # 크립 종양 우선순위 지점
         self.priority_areas: List[Point2] = []  # 확장 위치, 전략적 요충지
@@ -92,6 +93,10 @@ class CreepDenialSystem:
         self.last_tumor_scan = 0
         self.last_attack_dispatch = 0
 
+        # ★ UnitAuthorityManager 통합 ★
+        self.unit_authority = None  # 초기화 시 설정됨
+        self.managed_units: Set[int] = set()  # 현재 관리 중인 유닛 태그
+
     async def on_step(self, iteration: int) -> None:
         """매 프레임 호출"""
         game_time = getattr(self.bot, "time", 0)
@@ -99,25 +104,33 @@ class CreepDenialSystem:
         # ZvZ가 아니면 감시군주만 소량 생산 (다른 종족도 크립 종양 탐지 필요)
         is_zvz = self._is_zvz()
 
-        # 1. 우선순위 지점 업데이트 (5초마다)
-        if iteration % 110 == 0:
+        # 1. 우선순위 지점 업데이트
+        if iteration % GameConfig.CREEP_DENIAL_PRIORITY_UPDATE_INTERVAL == 0:
             self._update_priority_areas()
 
-        # 2. 크립 종양 탐지 (1초마다)
-        if iteration % 22 == 0:
+        # 2. 크립 종양 탐지
+        if iteration % GameConfig.CREEP_DENIAL_TUMOR_SCAN_INTERVAL == 0:
             self._detect_enemy_tumors(game_time)
 
-        # 3. 감시군주 생산 및 배치 (3초마다)
-        if iteration % 66 == 0:
+        # 3. 감시군주 생산 및 배치
+        if iteration % GameConfig.CREEP_DENIAL_OVERSEER_MANAGE_INTERVAL == 0:
             await self._manage_overseers(game_time, is_zvz)
 
-        # 4. 크립 종양 공격 유닛 파견 (1초마다)
-        if iteration % 22 == 0:
+        # 4. 크립 종양 공격 유닛 파견
+        if iteration % GameConfig.CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL == 0:
             await self._dispatch_tumor_attackers(game_time)
 
-        # 5. 오래된 종양 정보 정리 (5초마다)
-        if iteration % 110 == 0:
+        # 5. 오래된 종양 정보 정리
+        if iteration % GameConfig.CREEP_DENIAL_CLEANUP_INTERVAL == 0:
             self._cleanup_old_tumor_data(game_time)
+
+        # 6. ★ 관리 중인 유닛 정리 및 반환 ★
+        if iteration % GameConfig.CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL == 0:
+            self._cleanup_managed_units()
+
+        # 7. ★ 후퇴 로직 (위협 감지 및 안전한 철수) ★
+        if iteration % GameConfig.CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL == 0:
+            await self._check_and_retreat_units(game_time)
 
     def _is_zvz(self) -> bool:
         """ZvZ 여부 확인"""
@@ -219,9 +232,9 @@ class CreepDenialSystem:
         if not hasattr(self.bot, "townhalls"):
             return False
 
-        # 아군 기지 반경 10 이내면 아군 크립
+        # 아군 기지 반경 이내면 아군 크립
         for base in self.bot.townhalls:
-            if base.distance_to(position) < 10:
+            if base.distance_to(position) < GameConfig.CREEP_DENIAL_ATTACK_UNIT_DISTANCE:
                 return True
 
         return False
@@ -251,7 +264,7 @@ class CreepDenialSystem:
 
             # 순찰 위치로 이동
             patrol_pos = self.overseer_assignments[overseer.tag]
-            if overseer.distance_to(patrol_pos) > 3:
+            if overseer.distance_to(patrol_pos) > GameConfig.CREEP_DENIAL_PATROL_DISTANCE:
                 self.bot.do(overseer.move(patrol_pos))
             else:
                 # 순찰 위치에 도착하면 다음 위치로
@@ -269,8 +282,9 @@ class CreepDenialSystem:
         if not overlords:
             return
 
-        # 가스 확인 (감시군주 변이: 50 미네랄 + 50 가스)
-        if self.bot.vespene < 50 or self.bot.minerals < 50:
+        # 가스 확인 (감시군주 변이 비용)
+        if (self.bot.vespene < GameConfig.CREEP_DENIAL_MIN_GAS or
+            self.bot.minerals < GameConfig.CREEP_DENIAL_MIN_MINERALS):
             return
 
         # 레어 필요
@@ -327,11 +341,14 @@ class CreepDenialSystem:
 
         for tumor_id, tumor in sorted_tumors:
             # 이미 충분한 유닛이 할당되었으면 스킵
-            if len(tumor.assigned_units) >= 3:
+            if len(tumor.assigned_units) >= GameConfig.CREEP_DENIAL_MAX_UNITS_PER_TUMOR:
                 continue
 
             # 가장 가까운 공격 유닛 찾기
-            nearest_units = self._get_nearest_units(attack_units, tumor.position, count=3)
+            nearest_units = self._get_nearest_units(
+                attack_units, tumor.position,
+                count=GameConfig.CREEP_DENIAL_MAX_UNITS_PER_TUMOR
+            )
 
             for unit in nearest_units:
                 if unit.tag not in tumor.assigned_units:
@@ -357,9 +374,21 @@ class CreepDenialSystem:
                 break
 
     def _get_available_attack_units(self) -> List[Unit]:
-        """공격 가능한 유닛 가져오기"""
+        """
+        공격 가능한 유닛 가져오기 (UnitAuthorityManager 통합)
+
+        UnitAuthorityManager를 통해 안전하게 유닛을 요청하여
+        전투 중인 유닛이나 다른 시스템이 사용 중인 유닛을 뺏어오지 않습니다.
+        """
         if not hasattr(self.bot, "units"):
             return []
+
+        # UnitAuthorityManager가 없으면 fallback (하위 호환성)
+        if not self.unit_authority:
+            self.unit_authority = getattr(self.bot, "unit_authority", None)
+            if not self.unit_authority:
+                self.logger.warning("[CREEP_DENIAL] UnitAuthorityManager not available - using fallback mode")
+                return self._get_available_attack_units_fallback()
 
         # 저글링, 바퀴, 히드라 등 지상 공격 유닛
         attack_types = [
@@ -370,9 +399,40 @@ class CreepDenialSystem:
         ]
 
         available_units = []
+
+        from unit_authority_manager import AuthorityLevel
+
         for unit_type in attack_types:
             units = self.bot.units(unit_type)
             # 대기 중이거나 근처에 적이 없는 유닛만
+            for unit in units:
+                # 기본 가용성 체크
+                if not self._is_unit_available_for_tumor_attack(unit):
+                    continue
+
+                # ★ UnitAuthorityManager를 통해 유닛 요청 ★
+                if self.unit_authority.request_unit(
+                    unit.tag,
+                    "creep_denial",
+                    AuthorityLevel.CREEP  # 낮은 우선순위 (20)
+                ):
+                    available_units.append(unit)
+                    self.managed_units.add(unit.tag)
+
+        return available_units
+
+    def _get_available_attack_units_fallback(self) -> List[Unit]:
+        """Fallback: UnitAuthorityManager 없이 유닛 가져오기 (legacy)"""
+        attack_types = [
+            UnitTypeId.ZERGLING,
+            UnitTypeId.ROACH,
+            UnitTypeId.HYDRALISK,
+            UnitTypeId.RAVAGER
+        ]
+
+        available_units = []
+        for unit_type in attack_types:
+            units = self.bot.units(unit_type)
             for unit in units:
                 if self._is_unit_available_for_tumor_attack(unit):
                     available_units.append(unit)
@@ -380,16 +440,36 @@ class CreepDenialSystem:
         return available_units
 
     def _is_unit_available_for_tumor_attack(self, unit: Unit) -> bool:
-        """유닛이 종양 공격에 사용 가능한지 확인"""
-        # 대기 중
+        """
+        유닛이 종양 공격에 사용 가능한지 확인
+
+        안전성 체크:
+        1. 전투 중인 유닛은 사용하지 않음
+        2. 근처에 적이 있으면 사용하지 않음
+        3. 체력이 낮은 유닛은 사용하지 않음
+        """
+        # ★ 전투 중인 유닛 보호 ★
+        # 근처에 적 유닛이 있으면 사용 불가
+        if hasattr(self.bot, "enemy_units"):
+            nearby_enemies = self.bot.enemy_units.closer_than(
+                GameConfig.CREEP_DENIAL_ATTACK_UNIT_DISTANCE, unit
+            )
+            if nearby_enemies:
+                return False
+
+        # ★ 체력이 낮은 유닛 보호 ★
+        # 체력이 최소 비율 미만이면 사용 불가
+        if hasattr(unit, "health") and hasattr(unit, "health_max"):
+            if unit.health < unit.health_max * GameConfig.CREEP_DENIAL_MIN_HEALTH_PERCENT:
+                return False
+
+        # ★ 대기 중이거나 이미 creep denial 임무 중인 유닛만 사용 ★
         if unit.is_idle:
             return True
 
-        # 근처에 적이 없으면 사용 가능
-        if hasattr(self.bot, "enemy_units"):
-            nearby_enemies = self.bot.enemy_units.closer_than(10, unit)
-            if not nearby_enemies:
-                return True
+        # 이미 관리 중인 유닛이면 사용 가능
+        if unit.tag in self.managed_units:
+            return True
 
         return False
 
@@ -413,23 +493,23 @@ class CreepDenialSystem:
         # 1. 우선순위 지역에 가까울수록 높은 우선순위
         if self.priority_areas:
             min_dist = min(tumor.position.distance_to(p) for p in self.priority_areas)
-            priority += max(0, 20 - min_dist)  # 거리 20 이내면 보너스
+            priority += max(0, GameConfig.CREEP_DENIAL_PRIORITY_DISTANCE_BONUS - min_dist)
 
         # 2. 아군 기지에 가까울수록 높은 우선순위
         if hasattr(self.bot, "townhalls"):
             for base in self.bot.townhalls:
                 dist = tumor.position.distance_to(base)
-                if dist < 15:
-                    priority += (15 - dist) * 2
+                if dist < GameConfig.CREEP_DENIAL_BASE_DISTANCE_THRESHOLD:
+                    priority += (GameConfig.CREEP_DENIAL_BASE_DISTANCE_THRESHOLD - dist) * 2
 
         # 3. 보이는 종양이 더 높은 우선순위
         if tumor.unit_tag:
-            priority += 10
+            priority += GameConfig.CREEP_DENIAL_VISIBLE_TUMOR_BONUS
 
         # 4. 최근에 본 종양이 더 높은 우선순위
         game_time = getattr(self.bot, "time", 0)
         time_since_seen = game_time - tumor.last_seen
-        priority += max(0, 30 - time_since_seen)
+        priority += max(0, GameConfig.CREEP_DENIAL_RECENT_SIGHTING_BONUS - time_since_seen)
 
         return priority
 
@@ -462,8 +542,165 @@ class CreepDenialSystem:
                     self.tumors_destroyed += 1
                     self.logger.info(f"[CREEP_DENIAL] ★ Tumor destroyed at {tumor.position}! ★")
 
+                    # ★ 할당된 유닛들 반환 ★
+                    self._release_tumor_units(tumor)
+
         for tumor_id in to_remove:
+            tumor = self.detected_tumors[tumor_id]
+            # 제거되는 종양의 유닛들도 반환
+            self._release_tumor_units(tumor)
             del self.detected_tumors[tumor_id]
+
+    def _release_tumor_units(self, tumor: DetectedTumor) -> None:
+        """종양에 할당된 유닛들을 UnitAuthorityManager에 반환"""
+        if not self.unit_authority:
+            return
+
+        for unit_tag in tumor.assigned_units:
+            if self.unit_authority.release_unit(unit_tag, "creep_denial"):
+                self.managed_units.discard(unit_tag)
+
+        tumor.assigned_units.clear()
+
+    def _cleanup_managed_units(self) -> None:
+        """
+        관리 중인 유닛 정리 및 반환
+
+        다음 경우 유닛을 UnitAuthorityManager에 반환:
+        1. 유닛이 죽었을 때
+        2. 유닛이 종양 공격 임무를 완료했을 때
+        3. 유닛이 더 이상 사용 가능하지 않을 때
+        """
+        if not self.unit_authority or not hasattr(self.bot, "units"):
+            return
+
+        units_to_release = []
+
+        for unit_tag in self.managed_units:
+            # 유닛이 존재하는지 확인
+            unit = self.bot.units.find_by_tag(unit_tag)
+            if not unit:
+                # 유닛이 죽었으면 반환
+                units_to_release.append(unit_tag)
+                continue
+
+            # 유닛이 idle이고 종양 할당도 없으면 반환
+            if unit.is_idle:
+                # 이 유닛이 어떤 종양에도 할당되어 있지 않으면 반환
+                is_assigned = False
+                for tumor in self.detected_tumors.values():
+                    if unit_tag in tumor.assigned_units:
+                        is_assigned = True
+                        break
+
+                if not is_assigned:
+                    units_to_release.append(unit_tag)
+
+        # 유닛 반환
+        for unit_tag in units_to_release:
+            if self.unit_authority.release_unit(unit_tag, "creep_denial"):
+                self.managed_units.discard(unit_tag)
+                self.logger.debug(f"[CREEP_DENIAL] Released unit {unit_tag} back to authority manager")
+
+    async def _check_and_retreat_units(self, game_time: float) -> None:
+        """
+        ★ 위협 감지 및 후퇴 로직 ★
+
+        관리 중인 유닛이 적 주력과 마주치면:
+        1. 위협 감지 (IntelManager 활용)
+        2. 후퇴 경로 계산 (가장 가까운 아군 기지로)
+        3. 후퇴 명령 실행
+        4. 유닛 권한 반환
+        """
+        if not self.managed_units or not hasattr(self.bot, "units"):
+            return
+
+        intel = getattr(self.bot, "intel", None)
+        if not intel:
+            return
+
+        # ★ 1. 위협 감지 ★
+        # IntelManager의 위협 정보 사용
+        is_under_attack = getattr(intel, "is_under_attack", lambda: False)()
+        threat_level = getattr(intel, "get_threat_level", lambda: "none")()
+        has_high_threat = threat_level in ["heavy", "critical"]
+
+        if not is_under_attack and not has_high_threat:
+            # 위협이 없으면 추가 체크
+            return
+
+        # ★ 2. 관리 중인 유닛 중 위협에 노출된 유닛 찾기 ★
+        units_to_retreat = []
+
+        for unit_tag in self.managed_units:
+            unit = self.bot.units.find_by_tag(unit_tag)
+            if not unit:
+                continue
+
+            # 근처에 적이 있는지 확인
+            if hasattr(self.bot, "enemy_units"):
+                nearby_enemies = self.bot.enemy_units.closer_than(
+                    GameConfig.CREEP_DENIAL_RETREAT_ENEMY_DISTANCE, unit
+                )
+
+                # 적이 있고, 적이 우리보다 강하면 후퇴
+                if nearby_enemies:
+                    # 적 전투력 추정
+                    enemy_supply = sum(
+                        getattr(enemy, "supply_cost", 1)
+                        for enemy in nearby_enemies
+                    )
+
+                    # 우리 유닛이 1개뿐이고 적이 2보급 이상이면 후퇴
+                    if enemy_supply >= 2:
+                        units_to_retreat.append((unit_tag, unit))
+
+        if not units_to_retreat:
+            return
+
+        # ★ 3. 후퇴 명령 실행 ★
+        retreat_count = 0
+        for unit_tag, unit in units_to_retreat:
+            # 가장 가까운 아군 기지 찾기
+            retreat_pos = self._get_retreat_position(unit)
+            if retreat_pos:
+                self.bot.do(unit.move(retreat_pos))
+                retreat_count += 1
+
+                # 종양 할당에서 제거
+                for tumor in self.detected_tumors.values():
+                    tumor.assigned_units.discard(unit_tag)
+
+                # 유닛 권한 반환
+                if self.unit_authority:
+                    self.unit_authority.release_unit(unit_tag, "creep_denial")
+                    self.managed_units.discard(unit_tag)
+
+        if retreat_count > 0:
+            self.logger.info(
+                f"[CREEP_DENIAL] ★ {retreat_count} units retreating from threat! ★"
+            )
+
+    def _get_retreat_position(self, unit: Unit) -> Optional[Point2]:
+        """
+        후퇴 위치 계산
+
+        Args:
+            unit: 후퇴할 유닛
+
+        Returns:
+            가장 가까운 아군 기지 위치, 없으면 None
+        """
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
+            return None
+
+        # 가장 가까운 아군 기지
+        closest_base = min(
+            self.bot.townhalls,
+            key=lambda base: unit.distance_to(base)
+        )
+
+        return closest_base.position
 
     def _tumor_exists(self, tumor_tag: int) -> bool:
         """종양이 여전히 존재하는지 확인"""

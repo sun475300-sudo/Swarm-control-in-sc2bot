@@ -64,6 +64,12 @@ class OverlordTransport:
         if not self._ventral_sacs_completed:
             return
 
+        # 드랍 실행 확인 (매 프레임)
+        await self.check_drop_execution(iteration)
+
+        # 빈 대군주 후퇴
+        await self.retreat_empty_overlords()
+
         # 드랍 전술 실행 (쿨다운 확인)
         if game_time - self._last_drop_time >= self._drop_cooldown:
             await self.execute_drop_tactics(iteration)
@@ -183,7 +189,7 @@ class OverlordTransport:
         for overlord in overlords:
             try:
                 self.bot.do(overlord.move(target))
-            except Exception as e:
+            except (AttributeError, TypeError) as e:
                 self.logger.warning(f"Failed to move overlord: {e}")
 
     async def check_drop_execution(self, iteration: int):

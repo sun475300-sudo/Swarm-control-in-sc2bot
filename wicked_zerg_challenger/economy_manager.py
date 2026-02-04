@@ -19,6 +19,7 @@ except ImportError:  # Fallbacks for tooling environments
 
 
 from local_training.economy_combat_balancer import EconomyCombatBalancer
+from config.unit_configs import EconomyConfig
 
 
 class EconomyManager:
@@ -333,7 +334,8 @@ class EconomyManager:
                 await self.bot.production._safe_train(larva_unit, UnitTypeId.OVERLORD)
             else:
                 self.bot.do(larva_unit.train(UnitTypeId.OVERLORD))
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            # Overlord production failed
             return
 
     async def _train_drone_if_needed(self) -> None:
@@ -464,7 +466,8 @@ class EconomyManager:
                                 available_workers = available_workers.filter(
                                     lambda w: w.tag != worker.tag
                                 )
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Worker filtering failed
                     continue
 
     async def _build_macro_hatchery_if_needed(self) -> None:
@@ -550,7 +553,8 @@ class EconomyManager:
                     game_time = getattr(self.bot, "time", 0)
                     reason = "COMBAT/GAS_OVERFLOW" if (in_combat or gas_overflow) else "normal"
                     print(f"[ECONOMY] [{int(game_time)}s] Building MACRO HATCHERY ({reason}, gas: {gas}, larva: {total_larva})")
-            except Exception:
+            except (AttributeError, TypeError, ValueError) as e:
+                # Macro hatchery placement failed
                 pass
 
     async def _find_macro_hatch_location(self, main_base):
@@ -580,10 +584,12 @@ class EconomyManager:
                         # Check if we can place hatchery there
                         if await self.bot.can_place(UnitTypeId.HATCHERY, test_pos):
                             return test_pos
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError) as e:
+                        # Position check failed
                         continue
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Finding safe position failed
             pass
 
         return None
@@ -682,7 +688,8 @@ class EconomyManager:
                         try:
                             self.bot.do(worker.gather(minerals.closest_to(best_target)))
                             workers_moved += 1
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Worker command failed
                             continue
 
                 if workers_moved > 0:
@@ -737,7 +744,8 @@ class EconomyManager:
                     if deficit <= 0:
                         under_saturated.remove((under_th, deficit))
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Worker balancing failed
             pass
 
     async def _prevent_resource_banking(self) -> None:
@@ -745,7 +753,7 @@ class EconomyManager:
         ★ Prevent resource banking by spending excess minerals ★
 
         Logic:
-        1. If Minerals > 1000 and Larva < 3:
+        1. If Minerals > Config.Threshold and Larva < Config.Threshold:
            - Build Extra Queens (Injects/Defense)
            - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
         """
@@ -759,11 +767,14 @@ class EconomyManager:
         base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
 
         # ★ CRITICAL: 초반 (3분 이전) 또는 3베이스 이전에는 방어 건물 금지! ★
-        # 확장이 최우선이므로 미네랄 낭비 방지
-        can_build_defense = (game_time >= 180 and base_count >= 3) or minerals > 2000
+        # 확장이 최우선이므로 미네랄 낭비 방지 (Config 기반)
+        can_build_defense = (
+            (game_time >= EconomyConfig.BANKING_DEFENSE_TIME_REQ and base_count >= EconomyConfig.BANKING_DEFENSE_BASE_REQ) 
+            or minerals > 2000
+        )
 
-        # 임계값: 미네랄 1000, 라바 부족 시
-        if minerals > 1000 and larva_count < 3:
+        # 임계값: 미네랄 1000, 라바 부족 시 (Config 기반)
+        if minerals > EconomyConfig.BANKING_MINERAL_THRESHOLD and larva_count < EconomyConfig.BANKING_LARVA_THRESHOLD:
             # 1. 퀸 추가 생산 (주사기 + 수비)
             if self.bot.supply_left >= 2 and self.bot.can_afford(UnitTypeId.QUEEN):
                  for th in self.bot.townhalls.ready.idle:
@@ -806,7 +817,8 @@ class EconomyManager:
             return larva.first
         try:
             return next(iter(larva))
-        except Exception:
+        except (StopIteration, AttributeError, TypeError) as e:
+            # No larva available
             return None
 
     async def _assign_idle_workers(self) -> None:
@@ -881,14 +893,15 @@ class EconomyManager:
                     if self.bot.mineral_field:
                         self.bot.do(worker.gather(self.bot.mineral_field.closest_to(worker)))
 
-        except Exception:
-            pass  # 에러 무시
+        except (AttributeError, TypeError) as e:
+            # Idle worker assignment failed
+            pass
 
     async def _force_expansion_if_stuck(self) -> None:
         """
         ★ CRITICAL: 확장이 막혔을 때 강제 확장 ★
-
-        시간 대비 기지 수가 너무 적으면 모든 조건 무시하고 강제 확장
+        
+        Uses EconomyConfig.FORCE_EXPAND_TRIGGERS for table-driven logic.
         """
         if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
             return
@@ -898,108 +911,51 @@ class EconomyManager:
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
         minerals = getattr(self.bot, "minerals", 0)
 
-        # ★★★ 강제 확장 조건 - 1분 내 멀티 완성 목표 ★★★
         force_expand = False
         reason = ""
 
-        # ★★★ 10초: 게임 시작 직후 미네랄 200+ 있으면 즉시 확장 시도 ★★★
-        if game_time >= 10 and base_count < 2 and minerals >= 200:
-            force_expand = True
-            reason = "10sec INSTANT EXPAND - Target: 1min completion!"
+        # Table-driven check using EconomyConfig
+        for time_req, min_req, target_bases in EconomyConfig.FORCE_EXPAND_TRIGGERS:
+            # Check if condition met: Time passed AND Base count below target
+            if game_time >= time_req and base_count < target_bases:
+                # Check mineral requirement (0 means ignore minerals/critical)
+                if min_req == 0 or minerals >= min_req:
+                    force_expand = True
+                    reason = f"{time_req}s Force Expand (Target: {target_bases} bases)"
+                    # Keep checking later triggers? No, finding one valid trigger is enough logic-wise?
+                    # The original code prioritized later (stricter) conditions, so we iterate all and keep the last one or just break?
+                    # Actually, if any trigger matches, we force expand. The specific reason might matter for logging.
+                    # We can pick the most urgent one. Since the list is sorted by time, later ones are more advanced.
+                    # Let's use the matching one.
+                    break 
 
-        # ★ 20초: 앞마당 없으면 강제 확장 (미네랄 180+) ★
-        elif game_time >= 20 and base_count < 2 and minerals >= 180:
-            force_expand = True
-            reason = "20sec ULTRA-FAST natural (min 180+)!"
-
-        # ★ 30초: 여전히 1베이스면 긴급 확장 ★
-        elif game_time >= 30 and base_count < 2 and minerals >= 150:
-            force_expand = True
-            reason = "30sec EMERGENCY natural (min 150+)!"
-
-        # ★ 45초: 1베이스면 절대 확장 (미네랄 무시) ★
-        elif game_time >= 45 and base_count < 2:
-            force_expand = True
-            reason = "45sec CRITICAL - Must expand NOW!"
-
-        # ★ 1분: 여전히 1베이스면 최종 긴급 ★
-        elif game_time >= 60 and base_count < 2:
-            force_expand = True
-            reason = "1min with only 1 base - ABSOLUTE EMERGENCY!"
-
-        # ★ OPTIMIZED: 1분 30초 - 3베이스 시작 (더 빠른 확장) ★
-        elif game_time >= 90 and base_count < 3 and minerals >= 250:
-            force_expand = True
-            reason = "1:30 - ULTRA-FAST 3rd base!"
-
-        # ★ 2분: 3베이스 필수 ★
-        elif game_time >= 120 and base_count < 3:
-            force_expand = True
-            reason = "2min - FORCING 3rd base!"
-
-        # ★ 2분 30초: 여전히 3베이스 없으면 긴급 ★
-        elif game_time >= 150 and base_count < 3:
-            force_expand = True
-            reason = "2:30 - EMERGENCY 3rd base!"
-
-        # ★ OPTIMIZED: 3분 - 4베이스 필요 (자원 수입 극대화) ★
-        elif game_time >= 180 and base_count < 4 and minerals >= 350:
-            force_expand = True
-            reason = "3min - AGGRESSIVE 4th base!"
-
-        # ★ 4분: 4베이스 필수 ★
-        elif game_time >= 240 and base_count < 4:
-            force_expand = True
-            reason = "4min - FORCING 4th base!"
-
-        # ★ 5분: 5베이스 필요 ★
-        elif game_time >= 300 and base_count < 5:
-            force_expand = True
-            reason = "5min - FORCING 5th base!"
-
-        # ★ 6분: 6베이스 필요 ★
-        elif game_time >= 360 and base_count < 6:
-            force_expand = True
-            reason = "6min - FORCING 6th base!"
-
-        # ★ 10분 (600초): 최소 6베이스 필요 ★
-        elif game_time >= 600 and base_count < 6:
-            force_expand = True
-            reason = "10min with less than 6 bases - FORCING 6th!"
-
-        # ★ 15분 (900초): 최소 7베이스 필요 ★
-        elif game_time >= 900 and base_count < 7:
-            force_expand = True
-            reason = "15min with less than 7 bases - FORCING 7th!"
 
         if not force_expand:
             return
 
-        # ★ 비용 체크 (앞마당 없으면 최소 비용으로 시도) ★
-        # 1분 안 확장을 위해 매우 낮은 임계값 사용
-        min_minerals = 200 if base_count < 2 else 300
+        # ★ 비용 체크 (Config 기반) ★
+        triggers = EconomyConfig.FORCE_EXPAND_TRIGGERS
+        min_minerals = 300 # Default
+        for time_req, min_req, target_bases in triggers:
+             if game_time >= time_req and base_count < target_bases:
+                 min_minerals = min_req
+
         if minerals < min_minerals:
-            if int(game_time) % 30 == 0:  # 30초마다만 로그
+            if int(game_time) % 30 == 0:
                 print(f"[FORCE EXPAND] ★ {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) ★")
             return
 
-        # ★ OPTIMIZED: 동시 확장 허용 증가 (자원 수입 극대화) ★
+        # ★ OPTIMIZED: 동시 확장 허용 (Config 기반) ★
         pending = getattr(self.bot, "already_pending", lambda x: 0)(UnitTypeId.HATCHERY)
-
-        # ★ 공격적 동시 확장 전략 ★
-        max_pending = 1
-        if game_time > 40 and base_count < 2:
-             max_pending = 2  # 2개까지 동시 시도 허용
-             reason += " (Emergency Retry)"
-        elif game_time > 60 and base_count < 2:
-             max_pending = 3  # 1분 넘으면 3개까지 시도
-             reason += " (CRITICAL Retry)"
-        elif game_time > 120 and base_count < 4:
-             max_pending = 2  # ★ 2분+ 동시 2개 확장 허용 ★
-             reason += " (Dual Expansion)"
+        max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["DEFAULT"]
+        
+        if base_count < 2:
+             if game_time > 60: max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["CRITICAL_RETRY"]
+             else: max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["NATURAL_EMERGENCY"]
+        elif base_count < 4 and game_time > 120:
+             max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["DUAL_EXPAND"]
         elif game_time > 300:
-             max_pending = 3  # ★ 5분+ 동시 3개 확장 허용 (초공격적) ★
-             reason += " (Triple Expansion)"
+             max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["TRIPLE_EXPAND"]
 
         # 이미 건설 중인 해처리가 max_pending 이상이면 중단
         if pending >= max_pending:
@@ -1444,7 +1400,8 @@ class EconomyManager:
             # Execute Smart Expansion
             await self._perform_smart_expansion(expand_reason, force_hidden=force_hidden)
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Smart expansion failed
             pass
 
     async def _manual_expansion(self, game_time: float, reason: str) -> None:
@@ -1500,7 +1457,8 @@ class EconomyManager:
                 if mineral.mineral_contents > self.GOLD_MINERAL_THRESHOLD:
                     return True
             return False
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            # Gold mineral check failed
             return False
 
     def _get_gold_expansion_locations(self) -> list:
@@ -1569,7 +1527,8 @@ class EconomyManager:
 
             return gold_expansions
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Finding gold expansions failed
             return []
 
     async def _get_best_expansion_with_gold_priority(self):
@@ -1632,8 +1591,8 @@ class EconomyManager:
 
             return None
 
-        except Exception:
-            # Fallback on error
+        except (AttributeError, TypeError, ValueError) as e:
+            # Finding safe expansion failed - fallback on error
             if hasattr(self.bot, "get_next_expansion"):
                 return await self.bot.get_next_expansion()
             return None
@@ -1756,7 +1715,8 @@ class EconomyManager:
                             self.bot.do(worker.gather(closest_mineral))
                             return  # 한 번에 하나만
 
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            # Early expansion failed
             pass
 
     async def _build_extractors(self) -> None:
@@ -1785,7 +1745,8 @@ class EconomyManager:
                         print(f"[ECONOMY] Building extractor (gas shortage)")
                         return  # 한 번에 하나만
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Extractor building failed
             pass
 
     async def _optimize_gas_timing(self) -> None:
@@ -1947,7 +1908,8 @@ class EconomyManager:
 
                     await self.bot.build(UnitTypeId.HATCHERY, exp_pos)
                     print(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Expanding for growth ({gold_marker}, bases: {base_count}) ★")
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Expansion building failed
             pass
 
     async def _predict_and_expand(self) -> None:
@@ -1998,7 +1960,8 @@ class EconomyManager:
                         await self._trigger_expansion_for_growth()
                         break  # 한 번에 하나만
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Growth expansion check failed
             pass
 
     def is_economy_recovery_mode(self) -> bool:

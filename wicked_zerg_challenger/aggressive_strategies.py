@@ -937,7 +937,8 @@ class AggressiveStrategyExecutor:
                             # 또는 유닛이 대군주에 타도록 (AbilityId.SMART)
                             # 여기서는 대군주가 태우는 방식 사용
                             self.bot.do(overlord(AbilityId.LOAD, ling))
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Overlord transport may fail if unit is busy or ability unavailable
                             pass
                 else:
                     # 근처에 저글링이 없으면 저글링들에게 대군주로 모이라고 명령
