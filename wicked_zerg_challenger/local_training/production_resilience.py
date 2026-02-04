@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 from typing import Any, Dict
 import random
+from config.unit_configs import EconomyConfig
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -196,76 +196,7 @@ class ProductionResilience:
         """Check if expansion is safe (using production module)"""
         return can_expand_safely(self)
 
-    def _can_expand_safely_legacy(self) -> tuple:
-        b = self.bot
-        intel = getattr(b, "intel", None)
-        under_attack = False
-        enemy_near_base = False
 
-        if intel and hasattr(intel, "is_under_attack"):
-            under_attack = bool(intel.is_under_attack())
-        if not under_attack and hasattr(b, "enemy_units") and b.enemy_units:
-            if b.townhalls.exists:
-                base = b.townhalls.first
-                threshold = self.enemy_near_base_distance * self.enemy_near_base_scale
-                enemy_near_base = any(e.distance_to(base.position) < threshold for e in b.enemy_units)
-
-        # AGGRESSIVE EXPANSION: If minerals > 300, bypass most safety checks
-        # Especially if we don't have a natural expansion yet (bases < 2)
-        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
-        aggressive_expand = b.minerals >= 300 or (bases < 2 and b.minerals >= 200)
-
-        # Critical: Bypass enemy check if it's just 1-2 units (likely scouts)
-        if enemy_near_base and not under_attack:
-            enemy_count = sum(1 for e in b.enemy_units if e.distance_to(b.townhalls.first.position) < 30)
-            if enemy_count <= 2:
-                enemy_near_base = False  # Ignore scouts
-
-        if under_attack and not aggressive_expand:
-            return False, "under_attack"
-        if enemy_near_base and not aggressive_expand:
-            return False, "enemy_near_base"
-
-        # Relax army requirement - Zerg needs expansions for macro
-        # Relax army requirement - Zerg needs expansions for macro
-        supply_army = getattr(b, "supply_army", 0)
-        
-        # 2026-01-25 FIX: Weak Defense (Issue 2)
-        # Verify army presence before taking 3rd base (bases >= 2)
-        # Aggressive expand ignores this ONLY if we are rich (>800 mins)
-        req_army = self.min_army_supply
-        if bases >= 2:
-             # If aggressive but poor army, BLOCK expansion to force army production
-             if aggressive_expand and b.minerals < 800 and supply_army < 6:
-                  return False, f"danger_no_army ({supply_army}/6)"
-             
-             if not aggressive_expand and supply_army < req_army and b.time > self.min_army_time:
-                  return False, f"low_army ({supply_army}/{req_army})"
-
-        # Relax drone requirement when banking minerals
-        # Relax drone requirement when banking minerals
-        drones = b.workers.amount if hasattr(b, "workers") else 0
-        
-        # 2026-01-25 FIX: Enforce saturation even for aggressive expansion (Issue 1)
-        # Exception: Huge bank (>1000) allows expanding to burn minerals
-        min_drones_limit = self.min_drones_per_base  # Default 14-16
-        if aggressive_expand:
-             if b.minerals > 1000:
-                 min_drones_limit = 0 # Ignore limit if rich
-             else:
-                 min_drones_limit = 12 # Minimum functional saturation
-
-        if drones < bases * min_drones_limit:
-            return False, f"low_drones ({drones}/{bases*min_drones_limit})"
-
-        # Reduce cooldown when banking minerals
-        now = getattr(b, "time", 0.0)
-        # If no natural, almost zero cooldown
-        effective_cooldown = 10.0 if bases < 2 else (self.expansion_retry_cooldown / 2 if aggressive_expand else self.expansion_retry_cooldown)
-        if now - self.last_expansion_attempt < effective_cooldown:
-            return False, "cooldown"
-
-        return True, ""
 
     async def _try_expand(self) -> bool:
         b = self.bot
@@ -546,6 +477,42 @@ class ProductionResilience:
                 print(f"[BALANCE] Produced {drones_produced} drones, {army_produced} army units "
                       f"(Total drones: {drone_count}, Target: {target_drones})")
 
+    def _check_min_defense_met(self, game_time: float) -> bool:
+        """Check if minimum defense requirements are met based on game time."""
+        b = self.bot
+        zergling_count = b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
+        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
+        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
+        mutalisk_count = b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
+        
+        total_army_supply = (zergling_count * 0.5) + (roach_count * 2) + (hydra_count * 2) + (mutalisk_count * 2)
+
+        if 120 <= game_time < 240:
+            return zergling_count >= 6
+        elif 240 <= game_time < 360:
+            return zergling_count >= 8 or roach_count >= 4 or total_army_supply >= 8
+        elif game_time >= 360:
+            return total_army_supply >= 10
+        return True
+
+    def _get_zergling_cap(self, game_time: float, ignore_caps: bool) -> int:
+        """Calculate Zergling cap based on game phase and tech."""
+        if ignore_caps:
+            return 9999
+            
+        b = self.bot
+        has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists
+        has_hydra_den = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+        has_spire = b.structures(UnitTypeId.SPIRE).ready.exists
+        
+        max_zerglings = 20
+        if game_time > 300:
+            max_zerglings = 30 if (has_roach_warren or has_hydra_den) else 50
+        if game_time > 600:
+            max_zerglings = 40 if has_spire else 60
+            
+        return max_zerglings
+
     async def _produce_army_unit(self, larva, ignore_caps=False) -> bool:
         """
         Produce army unit based on current composition and available tech.
@@ -579,19 +546,7 @@ class ProductionResilience:
 
         # === MINIMUM DEFENSE REQUIREMENT ===
         if not ignore_caps:
-            # Always maintain minimum army for defense before teching/droning
-            min_defense_met = True
-            total_army_supply = (zergling_count * 0.5) + (roach_count * 2) + (hydra_count * 2) + (mutalisk_count * 2)
-    
-            if game_time >= 120 and game_time < 240:
-                min_defense_met = zergling_count >= 6
-            elif game_time >= 240 and game_time < 360:
-                min_defense_met = zergling_count >= 8 or roach_count >= 4 or total_army_supply >= 8
-            elif game_time >= 360:
-                min_defense_met = total_army_supply >= 10
-    
-            # If minimum defense NOT met, prioritize army production
-            if not min_defense_met:
+            if not self._check_min_defense_met(game_time):
                 if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
@@ -604,25 +559,16 @@ class ProductionResilience:
             return await self._safe_train(larva, counter_unit)
 
         # === Calculate Zergling cap based on game phase ===
-        max_zerglings = 20
-        if game_time > 300:
-            max_zerglings = 30 if (has_roach_warren or has_hydra_den) else 50
-        if game_time > 600:
-            max_zerglings = 40 if has_spire else 60
-            
-        # If ignoring caps, set limit to infinity
-        if ignore_caps:
-            max_zerglings = 9999
+        max_zerglings = self._get_zergling_cap(game_time, ignore_caps)
 
-        # Late game (10+ min) logic ... (Simplified for brevity regarding caps)
-        
-        # Late game priority
+        # === Late/Mid Game Priority ===
+        # Late game (10min+)
         if game_time > 600 and has_spire:
-             # Logic ...
+             # Priority: Muta > Hydra > Roach > Zergling
              if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
                   return await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                  
-        # Mid game priority
+        
+        # Mid game (5min+)
         if game_time > 300:
              if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
                   return await self._safe_train(larva, UnitTypeId.HYDRALISK)
@@ -739,7 +685,7 @@ class ProductionResilience:
             print(f"[FORCE_EMERGENCY] [{int(b.time)}s] Forced production of {produced_count} units (Minerals: {int(b.minerals)})")
         
         # Also try to build structures if we still have too many minerals
-        if b.minerals > 2000:
+        if b.minerals > EconomyConfig.MINERAL_OVERFLOW_THRESHOLD:
             # Build expansion if possible
             if b.can_afford(UnitTypeId.HATCHERY) and b.already_pending(UnitTypeId.HATCHERY) == 0:
                 if b.townhalls.exists and len(b.townhalls) < 3:
@@ -764,12 +710,7 @@ class ProductionResilience:
         supply_used = getattr(b, "supply_used", 0)
 
         try:
-            # === 3분 전 방어 유닛 빌드 최적화 ===
-            # Moved to DefenseCoordinator
-            # await self._ensure_early_defense(time, supply_used)
-
             # Priority 1: Spawning Pool now handled ONLY by TechCoordinator (below at lines 851-896)
-            # [REMOVED DUPLICATE] Previous code here caused duplicate Spawning Pool builds
 
             # Priority 2: Early workers (maximize drone production)
             larvae = b.units(UnitTypeId.LARVA)

@@ -180,7 +180,9 @@ class RavagerMicro:
                         actions.append(ravager(ability, target_pos))
                         self.last_shot_time[ravager.tag] = current_time
                         shot_tags.add(ravager.tag)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Ability execution failed
+                        self.logger.debug(f"Ravager ability failed: {e}")
                         continue
 
         if actions:
@@ -316,7 +318,8 @@ class LurkerMicro:
                         self.burrowed_lurkers.add(lurker.tag)
                         acted_tags.add(lurker.tag)
                         continue
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Lurker burrow failed: {e}")
                         pass
 
             elif self.should_unburrow(lurker, enemy_units) and is_burrowed:
@@ -328,7 +331,8 @@ class LurkerMicro:
                         self.burrowed_lurkers.discard(lurker.tag)
                         acted_tags.add(lurker.tag)
                         continue
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Lurker unburrow failed: {e}")
                         pass
 
             # Reposition if not burrowed and enemies present
@@ -339,7 +343,8 @@ class LurkerMicro:
                     try:
                         actions.append(lurker.move(optimal_pos))
                         acted_tags.add(lurker.tag)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Lurker reposition failed: {e}")
                         pass
 
         if actions:
@@ -460,7 +465,8 @@ class QueenMicro:
                             actions.append(queen(ability, target))
                             acted_tags.add(queen.tag)
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            self.logger.debug(f"Queen transfusion failed: {e}")
                             pass
 
         if actions:
@@ -569,7 +575,8 @@ class ViperMicro:
                             actions.append(viper(ability, target))
                             acted_tags.add(viper.tag)
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            self.logger.debug(f"Viper abduct failed: {e}")
                             pass
 
             # Priority 2: Consume if low energy
@@ -588,7 +595,8 @@ class ViperMicro:
                             actions.append(viper(ability, consume_targets[0]))
                             acted_tags.add(viper.tag)
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            self.logger.debug(f"Viper consume failed: {e}")
                             pass
 
         if actions:
@@ -714,7 +722,8 @@ class CorruptorMicro:
                             actions.append(corruptor(ability, target))
                             self.last_spray_time[corruptor.tag] = current_time
                             acted_tags.add(corruptor.tag)
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            self.logger.debug(f"Corruptor caustic spray failed: {e}")
                             continue
 
         if actions:
@@ -955,7 +964,8 @@ class AdvancedMicroControllerV3:
                 self.focus_fire.assign_target(unit.tag, target.tag)
                 try:
                     actions.append(unit.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Focus fire attack failed: {e}")
                     continue
 
         if actions:

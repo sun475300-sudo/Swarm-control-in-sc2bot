@@ -135,6 +135,71 @@ class GameConfig:
     CACHE_TTL_MEDIUM = 1.0              # 중간 캐시 (1초)
     CACHE_TTL_LONG = 2.0                # 긴 캐시 (2초)
 
+    # ========== Creep Denial System (적 점막 제거) ==========
+
+    # 감시군주 관리
+    CREEP_DENIAL_MIN_OVERSEERS = 2          # 최소 감시군주 수 (ZvZ)
+    CREEP_DENIAL_MIN_OVERSEERS_OTHER = 1    # 다른 종족전 최소 감시군주 수
+
+    # 종양 탐지 및 기억
+    CREEP_DENIAL_TUMOR_MEMORY_DURATION = 60.0   # 종양 위치 기억 시간 (초)
+    CREEP_DENIAL_DETECTION_RADIUS = 11          # 감시군주 탐지 반경
+
+    # 유닛 할당 및 공격
+    CREEP_DENIAL_MAX_UNITS_PER_TUMOR = 3        # 종양당 최대 할당 유닛 수
+    CREEP_DENIAL_ATTACK_UNIT_DISTANCE = 10      # 공격 유닛 근처 적 감지 거리
+    CREEP_DENIAL_PATROL_DISTANCE = 3            # 순찰 목표 도달 거리
+
+    # 자원 임계값
+    CREEP_DENIAL_MIN_MINERALS = 50              # 감시군주 생산 최소 미네랄
+    CREEP_DENIAL_MIN_GAS = 50                   # 감시군주 생산 최소 가스
+
+    # 우선순위 계산
+    CREEP_DENIAL_PRIORITY_DISTANCE_BONUS = 20   # 우선순위 지역 거리 보너스
+    CREEP_DENIAL_BASE_DISTANCE_THRESHOLD = 15   # 기지 근처 거리 임계값
+    CREEP_DENIAL_VISIBLE_TUMOR_BONUS = 10       # 보이는 종양 우선순위 보너스
+    CREEP_DENIAL_RECENT_SIGHTING_BONUS = 30     # 최근 목격 시간 보너스
+
+    # 업데이트 간격 (iterations)
+    CREEP_DENIAL_PRIORITY_UPDATE_INTERVAL = 110     # 우선순위 지점 업데이트 (5초)
+    CREEP_DENIAL_TUMOR_SCAN_INTERVAL = 22           # 종양 탐지 (1초)
+    CREEP_DENIAL_OVERSEER_MANAGE_INTERVAL = 66      # 감시군주 관리 (3초)
+    CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL = 22      # 공격 유닛 파견 (1초)
+    CREEP_DENIAL_CLEANUP_INTERVAL = 110             # 데이터 정리 (5초)
+
+    # 후퇴 로직 (안전성)
+    CREEP_DENIAL_RETREAT_ENEMY_DISTANCE = 12        # 후퇴 트리거 적 거리
+    CREEP_DENIAL_MIN_HEALTH_PERCENT = 0.5           # 최소 체력 비율 (50%)
+
+    # ========== Production System (생산 시스템) ==========
+
+    # Smart Remax (순간 회전력)
+    PRODUCTION_MAX_PER_FRAME_DEFAULT = 100      # 기본 프레임당 최대 생산 수
+    PRODUCTION_MAX_PER_FRAME_EMERGENCY = 200    # 긴급 상황 시 (자원 넘침, 공격 후)
+    PRODUCTION_UNLIMITED_REMAX = True           # True면 애벌레 수만큼 무제한 생산
+
+    # 생산 우선순위
+    PRODUCTION_PRIORITY_WORKER = 100
+    PRODUCTION_PRIORITY_DEFENSE = 90
+    PRODUCTION_PRIORITY_ARMY = 70
+    PRODUCTION_PRIORITY_TECH = 50
+
+    # ========== Active Scouting System (능동 정찰) ==========
+
+    # 정찰 간격
+    SCOUT_INTERVAL_DEFAULT = 560            # 기본 정찰 간격 (25초)
+    SCOUT_INTERVAL_ALERT = 336              # 경고 모드 정찰 간격 (15초)
+    SCOUT_INTEL_STALE_TIME = 30.0           # 정보 오래됨 판정 시간 (초)
+
+    # 위치 재정찰
+    SCOUT_LOCATION_REVISIT_TIME = 30.0      # 위치 재정찰 최소 간격 (초)
+
+    # Changeling 관리
+    SCOUT_CHANGELING_COOLDOWN = 30.0        # Changeling 재사용 대기시간 (초)
+
+    # 성과 추적
+    SCOUT_SUCCESS_RATE_TARGET = 0.8         # 목표 성공률 (80%)
+
     # ========== 디버그 설정 ==========
 
     DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"

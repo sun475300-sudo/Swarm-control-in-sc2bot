@@ -15,6 +15,7 @@ Dynamic Authority 기반 생산 관리:
 """
 
 from typing import Optional, Dict, Any
+from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
@@ -45,10 +46,12 @@ class ProductionController:
     def __init__(self, bot: BotAI, blackboard: Optional[GameStateBlackboard] = None):
         self.bot = bot
         self.blackboard = blackboard
+        self.logger = get_logger("ProductionController")
 
         # 생산 통계
         self.units_produced: Dict[Any, int] = {}
         self.production_failures: int = 0
+        self.max_produced_per_frame = 0  # 프레임당 최대 생산 기록
 
     async def execute(self, iteration: int) -> None:
         """생산 로직 실행"""
@@ -81,10 +84,24 @@ class ProductionController:
 
         # 생산 요청 처리 (우선순위 순)
         processed_count = 0
-        # ★ SMART REMAX: 50 units per frame (Zerg instant remax capability) ★
-        # Zerg's key strength is producing 50+ units instantly when resources allow
-        # Previous limit of 5 prevented instant army rebuilding
-        max_per_frame = 50  # OPTIMIZED: 5 → 50 (enable instant remax)
+
+        # ★ SMART REMAX: Dynamic production limit ★
+        # Zerg's key strength is producing massive units instantly when resources allow
+        from game_config import GameConfig
+
+        if GameConfig.PRODUCTION_UNLIMITED_REMAX:
+            # 무제한 모드: 애벌레 수만큼 생산 가능
+            max_per_frame = len(larvae) if larvae else 100
+        else:
+            # 동적 제한: 자원 상황에 따라 조정
+            minerals = getattr(self.bot, "minerals", 0)
+            vespene = getattr(self.bot, "vespene", 0)
+
+            # 자원이 넘칠 때는 긴급 생산
+            if minerals > 1500 or vespene > 1000:
+                max_per_frame = GameConfig.PRODUCTION_MAX_PER_FRAME_EMERGENCY
+            else:
+                max_per_frame = GameConfig.PRODUCTION_MAX_PER_FRAME_DEFAULT
 
         while processed_count < max_per_frame:
             # 다음 요청 가져오기
@@ -110,6 +127,18 @@ class ProductionController:
                 priority = self.blackboard.get_authority_priority(requester)
                 self.blackboard.request_production(unit_type, count, requester, priority)
                 break  # 자원 부족 시 더 이상 처리 안 함
+
+        # ★ 대량 생산 로깅 (Smart Remax 추적) ★
+        if processed_count > self.max_produced_per_frame:
+            self.max_produced_per_frame = processed_count
+
+        # 20개 이상 생산 시 로그 (Instant Remax 발생)
+        if processed_count >= 20:
+            game_time = getattr(self.bot, "time", 0)
+            self.logger.info(
+                f"[REMAX][{int(game_time)}s] ★ Instant Remax: {processed_count} units produced "
+                f"(max_limit: {max_per_frame}, larvae: {len(larvae) if larvae else 0}) ★"
+            )
 
     async def _produce_unit(self, unit_type: Any, count: int, requester: str) -> int:
         """

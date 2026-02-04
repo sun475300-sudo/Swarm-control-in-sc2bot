@@ -499,7 +499,8 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Unit command failed
                             continue
                     for u in attack_units:
                         available_ground.discard(u.tag)
@@ -521,7 +522,8 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Unit command failed
                             continue
                     # 로그 (30초마다)
                     if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -537,7 +539,8 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Unit command failed
                             continue
                     # Remove from available pool
                     for u in attack_units:
@@ -596,7 +599,8 @@ class CombatManager:
                     try:
                         self.bot.do(unit.attack(attack_target))
                         available_ground.discard(unit.tag)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Unit command failed
                         continue
 
             elif task_name == "major_timing_attack":
@@ -607,7 +611,8 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Unit command failed
                             continue
                     # Remove from available pool
                     for u in attack_units:
@@ -753,7 +758,8 @@ class CombatManager:
             for unit in units:
                 try:
                     self.bot.do(unit.attack(threat_position))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
             return
 
@@ -787,7 +793,8 @@ class CombatManager:
                     self.bot.do(queen.attack(target))
                 else:
                     self.bot.do(queen.move(threat_position))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Queen defense command failed
                 continue
 
         # 스파인 크롤러 타겟팅 (고위협 유닛 우선)
@@ -816,7 +823,8 @@ class CombatManager:
                         else:
                             target = spine.position.closest(enemies_near)
                         self.bot.do(spine.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Spine crawler attack failed
                     pass
 
         # 다른 유닛들 방어 (우선순위 타겟 집중)
@@ -827,7 +835,8 @@ class CombatManager:
                     self.bot.do(unit.attack(priority_target))
                 else:
                     self.bot.do(unit.attack(threat_position))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Defense unit attack failed
                 continue
 
     
@@ -915,7 +924,8 @@ class CombatManager:
                 for unit, target_pos in formation_positions[:10]:  # 최대 10개만
                     try:
                         self.bot.do(unit.move(target_pos))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Formation move failed
                         pass
             
             # 길목 회피 확인
@@ -930,7 +940,8 @@ class CombatManager:
                         for unit in units[:10]:  # 최대 10개만
                             try:
                                 self.bot.do(unit.move(retreat_pos))
-                            except Exception:
+                            except (AttributeError, TypeError) as e:
+                                # Retreat move failed
                                 pass
         
         except Exception as e:
@@ -1091,7 +1102,8 @@ class CombatManager:
                         try:
                             # ★★★ FIX: 모든 유닛에게 무조건 공격 명령 (is_idle 체크 제거) ★★★
                             self.bot.do(unit.attack(target))
-                        except Exception:
+                        except (AttributeError, TypeError) as e:
+                            # Unit command failed
                             continue
 
                 if iteration % 200 == 0:
@@ -1105,7 +1117,8 @@ class CombatManager:
                         # ★★★ FIX: 모든 유닛에게 무조건 공격 명령 (is_idle 체크 제거) ★★★
                         self.bot.do(unit.attack(attack_target))
                         attack_count += 1
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Unit command failed
                         continue
 
                 if iteration % 200 == 0:
@@ -1472,7 +1485,8 @@ class CombatManager:
             for muta in mutalisks:
                 try:
                     self.bot.do(muta.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
     async def _mutalisk_harass(self, mutalisks, enemy_units, iteration: int):
@@ -1584,7 +1598,8 @@ class CombatManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(self._air_harass_target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
     async def _zergling_early_harass(self, zerglings, enemy_units, iteration: int):
@@ -1651,7 +1666,8 @@ class CombatManager:
                 closest_worker = min(enemy_workers, key=lambda w: w.distance_to(ling))
                 try:
                     self.bot.do(ling.attack(closest_worker))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
             if iteration % 200 == 0:
                 print(f"[EARLY HARASS] [{int(game_time)}s] {len(zerglings)} Zerglings harassing workers")
@@ -1660,7 +1676,8 @@ class CombatManager:
             for ling in zerglings:
                 try:
                     self.bot.do(ling.attack(harass_target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
     async def _retreat_to_base(self, units):
@@ -1679,7 +1696,8 @@ class CombatManager:
             for unit in units:
                 try:
                     self.bot.do(unit.move(main_base))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
     def _get_anti_air_threats(self, enemy_units, position, range_check=15):
@@ -1713,7 +1731,8 @@ class CombatManager:
         for muta in mutalisks:
             try:
                 self.bot.do(muta.attack(best_target))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Mutalisk attack failed
                 continue
 
     async def _mutalisk_retreat(self, mutalisks):
@@ -1730,7 +1749,8 @@ class CombatManager:
             for muta in mutalisks:
                 try:
                     self.bot.do(muta.move(retreat_pos))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
     async def _mutalisk_attack(self, mutalisks, enemy_units):
@@ -1782,14 +1802,16 @@ class CombatManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
         else:
             # Standard attack
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
     def _select_mutalisk_target(self, enemy_units):
@@ -1856,7 +1878,8 @@ class CombatManager:
                 for corr in corruptors:
                     try:
                         self.bot.do(corr.attack(target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Unit command failed
                         continue
 
         # Brood Lords: Stay back, attack ground
@@ -1867,7 +1890,8 @@ class CombatManager:
                 for bl in broodlords:
                     try:
                         self.bot.do(bl.attack(target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Unit command failed
                         continue
 
     def _is_base_under_attack(self) -> bool:
@@ -1957,14 +1981,16 @@ class CombatManager:
         if hasattr(enemy_units, "closest_to"):
             try:
                 return enemy_units.closest_to(unit.position)
-            except Exception:
+            except (AttributeError, TypeError, ValueError) as e:
+                # Finding closest enemy failed
                 return None
         closest_unit = None
         closest_dist = None
         for enemy in enemy_units:
             try:
                 dist = unit.distance_to(enemy)
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Distance calculation failed
                 continue
             if closest_dist is None or dist < closest_dist:
                 closest_unit = enemy
@@ -2291,7 +2317,8 @@ class CombatManager:
                         # 다른 유닛: 메인 타겟 집중
                         else:
                             self.bot.do(unit.attack(main_target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Unit command failed
                         continue
 
                 if iteration % 220 == 0:
@@ -2336,7 +2363,8 @@ class CombatManager:
                 else:
                     # 멀리 있으면 위협 위치로 이동
                     self.bot.do(unit.attack(threat_position))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Worker defense attack failed
                 continue
 
         # 로그 (10초마다)
@@ -2425,7 +2453,8 @@ class CombatManager:
                     else:
                         # 적이 멀어지면 복귀
                         self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Worker return to gather failed
                 continue
 
         if iteration % 220 == 0:
@@ -2523,7 +2552,8 @@ class CombatManager:
                 # idle이거나 공격 중이 아닌 유닛은 목표로 공격
                 if unit.is_idle or not getattr(unit, "is_attacking", False):
                     self.bot.do(unit.attack(attack_target))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Army attack command failed
                 continue
 
         # 로그 (10초마다)
@@ -2544,7 +2574,8 @@ class CombatManager:
                 supply = getattr(unit, "supply", 0)
                 if isinstance(supply, (int, float)):
                     total_supply += supply
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Supply calculation failed
                 continue
 
         return int(total_supply)
@@ -2692,7 +2723,8 @@ class CombatManager:
                     self.bot.do(queen.attack(target))
                 else:
                     self.bot.do(queen.move(expansion.position))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Queen expansion defense failed
                 continue
 
         # 다른 유닛 방어
@@ -2700,7 +2732,8 @@ class CombatManager:
             try:
                 target = priority_target if priority_target else threat_center
                 self.bot.do(unit.attack(target))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                # Unit attack command failed
                 continue
 
         # 로그 (10초마다)
@@ -2743,7 +2776,8 @@ class CombatManager:
             for unit in counterattack_force:
                 try:
                     self.bot.do(unit.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    # Unit command failed
                     continue
 
             print(f"[COUNTERATTACK] [{int(current_time)}s] {len(counterattack_force)} units attacking enemy structure for revenge!")
@@ -2754,5 +2788,6 @@ class CombatManager:
                 for unit in counterattack_force:
                     try:
                         self.bot.do(unit.attack(target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        # Unit command failed
                         continue
