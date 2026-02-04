@@ -52,11 +52,11 @@ class HarassmentCoordinator:
         self.bot = bot
         self.logger = get_logger("Harassment")
 
-        # ★ Zergling Run-by ★
+        # ★ Zergling Run-by - Phase 17: 더 공격적인 견제 ★
         self.zergling_runby_active = False
         self.zergling_runby_tags: Set[int] = set()
         self.zergling_runby_cooldown = 0  # 쿨다운 (초)
-        self.zergling_runby_interval = 120  # 2분마다
+        self.zergling_runby_interval = 60  # ★ Phase 17: 2분 → 1분으로 단축 (더 빈번한 견제) ★
 
         # ★ Mutalisk Harassment ★
         self.mutalisk_harass_active = False
@@ -82,6 +82,20 @@ class HarassmentCoordinator:
         self._has_closer_than = None  # hasattr 체크 캐시
         self._cached_army_fighting = False  # 전투 상태 캐시
         self._last_army_check_time = 0  # 마지막 전투 체크 시간
+
+        # ★ Synchronized Strikes - Phase 17 ★
+        self.sync_strike_active = False
+        self.sync_strike_cooldown = 0
+        self.sync_strike_interval = 120  # 2분마다 합동 타격 시도
+        self.sync_strike_setup_time = 0
+
+        # ★ Nydus Harassment - Phase 17 ★
+        self.nydus_active = False
+        self.nydus_network_tag: Optional[int] = None
+        self.nydus_worm_tag: Optional[int] = None
+        self.nydus_target: Optional[Point2] = None
+        self.nydus_squad_tags: Set[int] = set()
+        self.nydus_cooldown = 0
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -111,6 +125,14 @@ class HarassmentCoordinator:
             # 6. Drop Play
             if iteration % 44 == 0:  # ~2초마다
                 await self._manage_drop_play()
+
+            # 7. ★ Synchronized Strikes (Phase 17) ★
+            if iteration % 22 == 0:
+                await self._manage_synchronized_strikes()
+
+            # 8. ★ Nydus Harassment (Phase 17) ★
+            if iteration % 33 == 0:
+                await self._manage_nydus_harassment()
 
         except Exception as e:
             if iteration % 200 == 0:
@@ -209,9 +231,12 @@ class HarassmentCoordinator:
         if game_time < self.zergling_runby_cooldown:
             return
 
-        # ★ 전투 중인지 확인 ★
+        # ★ Phase 17: 전투 중이 아니어도 주기적으로 견제 (4분 이후) ★
         is_combat = self._is_main_army_fighting()
-        if not is_combat:
+        is_mid_game = game_time > 240  # 4분 이후
+
+        # 전투 중이거나, 중반 이후에는 전투 없이도 견제
+        if not is_combat and not is_mid_game:
             return
 
         # ★ 저글링 확인 ★
@@ -334,13 +359,17 @@ class HarassmentCoordinator:
 
     async def _manage_mutalisk_harassment(self):
         """
-        Mutalisk 견제 관리 (Unit Authority 적용)
+        ★ Phase 17: Mutalisk 견제 관리 (더 공격적) ★
+
+        - 뮤탈리스크가 3마리 이상이면 즉시 견제 시작
+        - HP 회복된 유닛은 즉시 재투입
+        - 일꾼 집중 타격
         """
         if not hasattr(self.bot, "units") or not hasattr(self.bot, "unit_authority"):
             return
 
         mutalisks = self.bot.units(UnitTypeId.MUTALISK)
-        if not mutalisks:
+        if not mutalisks or len(mutalisks) < 3:  # ★ Phase 17: 최소 3마리면 견제 시작 ★
             return
 
         # 1. 기존 견제 유닛 관리
@@ -571,9 +600,15 @@ class HarassmentCoordinator:
                     self.bot.do(overlord.move(self.drop_target))
              return
 
-        # 2. 새로운 드랍 시작 조건
-        if not self._is_main_army_fighting():
-            return 
+        # 2. ★ Phase 17: 새로운 드랍 시작 조건 (더 공격적) ★
+        # 전투 중이 아니어도 드랍 가능 (중반 이후)
+        game_time = getattr(self.bot, "time", 0)
+        is_combat = self._is_main_army_fighting()
+        is_mid_game = game_time > 300  # 5분 이후
+
+        if not is_combat and not is_mid_game:
+            return
+
         if UpgradeId.OVERLORDTRANSPORT not in self.bot.state.upgrades:
             return
 
@@ -623,7 +658,127 @@ class HarassmentCoordinator:
         self.drop_play_active = True
         self.logger.info(f"[Harassment] Drop Play Started Target: {self.drop_target}")
 
-    def _find_drop_target(self) -> Optional[Point2]:
+        return None
+
+    # ========================================
+    # Synchronized Strikes (Phase 17)
+    # ========================================
+
+    async def _manage_synchronized_strikes(self):
+        """
+        합동 견제 코디네이터
+        
+        서로 다른 견제 수단(Run-by, Drop, Nydus)을 동시에 트리거하여
+        적의 멀티태스킹 붕괴를 유도합니다.
+        """
+        current_time = self.bot.time
+
+        # 1. 쿨다운 체크
+        if current_time < self.sync_strike_cooldown:
+            return
+
+        # 2. 발동 조건 (인구수 충족 시)
+        if self.bot.supply_used < 100:
+            return
+
+        # 3. 준비 단계 (모든 견제 수단 준비 확인)
+        # 이미 개별적으로 로직들이 돌고 있지만, 여기서 강제로 여러 개를 동시에 활성화시킴
+        
+        # Run-by 가능?
+        runby_ready = not self.zergling_runby_active and len(self.bot.units(UnitTypeId.ZERGLING)) >= 12
+        
+        # Drop 가능?
+        drop_ready = not self.drop_play_active and \
+                     UpgradeId.OVERLORDTRANSPORT in self.bot.state.upgrades and \
+                     self.bot.units(UnitTypeId.OVERLORD).exists
+
+        # 동시 실행 가능한 조합이 있을 때만 발동
+        if runby_ready and drop_ready:
+            self.logger.info(f"[{int(current_time)}s] ★ SYNCHRONIZED STRIKE ACTIVATED! (Run-by + Drop) ★")
+            
+            # 강제로 쿨다운 무시하고 실행 요청
+            self.zergling_runby_cooldown = 0
+            await self._manage_zergling_runby()
+            await self._manage_drop_play()
+            
+            self.sync_strike_active = True
+            self.sync_strike_cooldown = current_time + self.sync_strike_interval
+
+    # ========================================
+    # Nydus Harassment (Phase 17)
+    # ========================================
+
+    async def _manage_nydus_harassment(self):
+        """
+        땅굴망 견제 시스템
+        """
+        current_time = self.bot.time
+        
+        # 1. 쿨다운 및 조건 체크
+        if current_time < self.nydus_cooldown:
+            return
+
+        # 땅굴망 건물 확인
+        nydus_network = self.bot.structures(UnitTypeId.NYDUSNETWORK).ready
+        if not nydus_network:
+            return
+        network = nydus_network.first
+        self.nydus_network_tag = network.tag
+
+        # 2. 진행 중인 땅굴망 관리
+        if self.nydus_active:
+            # 웜 확인
+            worm = self.bot.structures(UnitTypeId.NYDUSCANAL).ready
+            if not worm:
+                # 웜이 파괴되었거나 아직 건설 중
+                return
+            self.nydus_worm_tag = worm.first.tag
+            
+            # 병력 내리기
+            if network.cargo_used > 0:
+                self.bot.do(network(AbilityId.UNLOADALL_NYDUSNETWORK))
+            elif worm.first.cargo_used > 0:
+                self.bot.do(worm.first(AbilityId.UNLOADALL_NYDUSWORM))
+                
+            return
+
+        # 3. 새로운 땅굴망 공격 시작
+        if self.bot.supply_used < 120: # 충분한 병력 있을 때
+            return
+
+        # 타겟 설정
+        target = self._find_drop_target() # 드랍 타겟 로직 재사용
+        if not target:
+            return
+
+        # 시야가 밝혀져 있어야 땅굴 소환 가능
+        # 해당 위치에 감시군주나 오버로드가 있거나, 크립이 있어야 함 (NydusCanal 요구사항은 시야)
+        # 하지만 봇 API에서는 AbilityId.BUILD_NYDUSWORM 사용
+        
+        # 권한 요청 및 병력 로딩 로직은 복잡하므로
+        # 여기서는 단순하게 "가능하면 적 기지 근처에 뚫는다"로 구현
+        
+        # 땅굴 뚫기 (사거리 제한 없음, 시야 必)
+        # 시야 확인을 위해 정찰 유닛이나 오버로드 주변 체크
+        # 시야가 있는 적 기지 근처 위치 찾기
+        valid_target = None
+        for unit in self.bot.units:
+            if unit.distance_to(target) < 15:
+                valid_target = unit.position
+                break
+                
+        if valid_target:
+             if self.bot.can_afford(UnitTypeId.NYDUSCANAL):
+                 # 건설 명령
+                 try:
+                     self.bot.do(network(AbilityId.BUILD_NYDUSWORM, valid_target))
+                     self.logger.info(f"[{int(current_time)}s] ★ NYDUS WORM SUMMONED at {valid_target} ★")
+                     self.nydus_active = True
+                     self.nydus_cooldown = current_time + 60
+                 except:
+                     pass
+
+
         """Drop 타겟 선택 (적 확장)"""
         if not hasattr(self.bot, "enemy_structures"):
             return None

@@ -78,6 +78,35 @@ class EconomyManager:
         self._reserved_minerals = 0
         self._reserved_gas = 0
 
+        # ★★★ Phase 18: Gas Timing Optimization ★★★
+        self.gas_timing_by_race = {
+            "Terran": 90,  # 1분 30초 (중간 타이밍)
+            "Protoss": 75,  # 1분 15초 (빠른 가스 - 프로토스는 초반 올인 많음)
+            "Zerg": 105,  # 1분 45초 (느린 가스 - 저그는 드론 펌핑 우선)
+            "Random": 90,
+            "Unknown": 90,
+        }
+
+        self.gas_boost_mode = False  # 빠른 테크가 필요할 때 활성화
+        self.gas_boost_start_time = 0
+        self.gas_boost_duration = 120  # 2분간 가스 부스트
+
+        self.dynamic_gas_workers_enabled = True  # 생산 큐 기반 가스 일꾼 조정
+        self.gas_overflow_prevention_threshold = 3000  # 가스 3000+ 시 일꾼 회수
+
+        self.last_gas_worker_adjustment = 0
+        self.gas_worker_adjustment_interval = 110  # ~5초마다 조정
+
+        # ★ Expansion Blocking (Phase 17) ★
+        self.expansion_block_active = False
+        self.expansion_block_worker_tag = None
+        self.expansion_block_start_time = 50  # 50초에 출발
+        self.expansion_block_duration = 45    # 45초간 방해
+
+        # ★ Expansion Telemetry ★
+        self.first_expansion_time = 0.0
+        self.first_expansion_reported = False
+
     def set_emergency_mode(self, active: bool) -> None:
         """Set emergency mode validation."""
         self._emergency_mode = active
@@ -144,7 +173,16 @@ class EconomyManager:
         # ★ NEW: 가스 타이밍 최적화 ★
         if iteration % 33 == 0:  # ~1.5초마다
             await self._optimize_gas_timing()
-            
+
+        # ★★★ Phase 18: Dynamic gas worker adjustment ★★★
+        if iteration - self.last_gas_worker_adjustment >= self.gas_worker_adjustment_interval:
+            await self._adjust_gas_workers_dynamically()
+            self.last_gas_worker_adjustment = iteration
+
+        # ★★★ Phase 18: Gas overflow prevention ★★★
+        if iteration % 110 == 0:  # ~5초마다
+            await self._prevent_gas_overflow()
+
         # ★ NEW: Maynarding (일꾼 미리 보내기) - Issue 7 ★
         if iteration % 22 == 0:
             await self._check_maynarding()
@@ -156,6 +194,14 @@ class EconomyManager:
         # ★ NEW: 공중 위협 대응 시스템 (Anti-Air Response) ★
         if iteration % 44 == 0:
             await self._check_air_threat_response()
+
+        # ★ NEW: Expansion Blocking (Phase 17) ★
+        if iteration % 22 == 0:
+            await self._manage_expansion_blocking()
+
+        # ★ NEW: Expansion Telemetry (Phase 17) ★
+        if not self.first_expansion_reported:
+            self._check_first_expansion_timing()
 
         # ★ IMPROVED: Extreme Gas Imbalance Fix (덜 공격적) ★
         # Gas > 3000 and Minerals < 200 -> 일부 가스 일꾼만 미네랄로 이동
@@ -798,6 +844,9 @@ class EconomyManager:
                                 print(f"[ERROR] Spore build failed: {e}")
 
                     if minerals > 2000:
+                        pass # 너무 많이 쌓이면 패스 (기존 로직 유지)
+
+
                         spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th)
                         if not spines.exists and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
                              pos = th.position.towards(self.bot.game_info.map_center, 6)
@@ -1751,27 +1800,40 @@ class EconomyManager:
 
     async def _optimize_gas_timing(self) -> None:
         """
-        ★ 가스 타이밍 최적화 ★
+        ★★★ Phase 18: 가스 타이밍 최적화 (종족별) ★★★
 
-        게임 시간에 따른 최적 가스 일꾼 수:
-        - 0-2분: 첫 가스 3명
-        - 2-4분: 두 번째 가스 건설
-        - 4분+: 모든 가스 가동
+        종족별 가스 타이밍:
+        - vs Terran: 1분 30초 (중간)
+        - vs Protoss: 1분 15초 (빠름 - 프로토스 초반 올인 대비)
+        - vs Zerg: 1분 45초 (느림 - 드론 펌핑 우선)
+
+        가스 부스트 모드: 빠른 테크가 필요할 때 (뮤탈, 히드라 등)
+        가스 오버플로우 방지: 3000+ 가스 시 일꾼 회수
         """
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
             return
 
         game_time = getattr(self.bot, "time", 0)
 
+        # ★★★ Phase 18: 종족별 가스 타이밍 ★★★
+        enemy_race = getattr(self.bot, "enemy_race", None)
+        race_name = str(enemy_race).split(".")[-1] if enemy_race else "Unknown"
+
+        optimal_gas_timing = self.gas_timing_by_race.get(race_name, 90)
+
+        # ★★★ Phase 18: 가스 부스트 모드 ★★★
+        if self.gas_boost_mode:
+            optimal_gas_timing = max(60, optimal_gas_timing - 15)  # 15초 빠르게
+
         try:
-            # ★ 첫 가스 타이밍 (게임 시작 시 자동 건설) ★
-            if game_time >= 60 and game_time < 90:  # 1분-1분30초
+            # ★ 첫 가스 타이밍 (종족별 최적화) ★
+            if game_time >= optimal_gas_timing and game_time < optimal_gas_timing + 30:
                 # 첫 가스 확인
                 if not hasattr(self.bot, "gas_buildings") or self.bot.gas_buildings.amount == 0:
                     if self.bot.already_pending(UnitTypeId.EXTRACTOR) == 0:
                         if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                             await self._build_extractors()
-                            print(f"[ECONOMY] [{int(game_time)}s] ★ First gas timing ★")
+                            print(f"[ECONOMY] [{int(game_time)}s] ★ First gas timing (vs {race_name}) ★")
 
             # ★ 두 번째 가스 타이밍 (2분) ★
             elif game_time >= 120 and game_time < 150:  # 2분-2분30초
@@ -2065,3 +2127,249 @@ class EconomyManager:
                 
             print(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base")
             self.transferred_hatcheries.add(target_hatch.tag)
+
+    # ========================================
+    # Expansion Optimization & Telemetry (Phase 17)
+    # ========================================
+
+    def _check_first_expansion_timing(self):
+        """1분 확장 타이밍 정밀 측정"""
+        if not hasattr(self.bot, "townhalls") or self.bot.townhalls.amount < 2:
+            return
+
+        # 2번째 해처리가 건설 시작되었는지 확인
+        hatcheries = self.bot.structures(UnitTypeId.HATCHERY)
+        second_hatch = None
+        for h in hatcheries:
+            if h.position != self.bot.start_location:
+                 second_hatch = h
+                 break
+        
+        if second_hatch:
+            # 건설 시작 시간 추정 (현재 시간 - 진행된 시간)
+            # build_time = 71s (Standard speed)
+            start_time = self.bot.time - (second_hatch.build_progress * 71)
+            self.first_expansion_time = start_time
+            self.first_expansion_reported = True
+            
+            # 로그 출력
+            status = "SUCCESS" if start_time < 70 else "DELAYED"
+            print(f"[ECONOMY_TELEMETRY] First Expansion Started at {start_time:.2f}s ({status})")
+
+    async def _manage_expansion_blocking(self):
+        """
+        적 앞마당 확장 방해 (Expansion Blocking)
+        0:50초에 드론 1기를 적 앞마당으로 보내서 건설을 방해합니다.
+        """
+        game_time = self.bot.time
+        
+        # 1. 종료 조건
+        if game_time > self.expansion_block_start_time + self.expansion_block_duration:
+             if self.expansion_block_active and self.expansion_block_worker_tag:
+                 # 복귀
+                 worker = self.bot.units.find_by_tag(self.expansion_block_worker_tag)
+                 if worker:
+                     self.bot.do(worker.gather(self.bot.mineral_field.closest_to(self.bot.start_location)))
+                 self.expansion_block_active = False
+                 self.expansion_block_worker_tag = None
+             return
+
+        # 2. 시작 조건 (0:50 ~ 1:00 사이)
+        if game_time < self.expansion_block_start_time:
+            return
+
+        if not self.expansion_block_active:
+             # 일꾼 선발
+             if not hasattr(self.bot, "workers") or not self.bot.workers:
+                 return
+             
+             candidates = self.bot.workers.filter(lambda w: w.is_carrying_minerals or w.is_gathering)
+             if candidates:
+                 worker = candidates.first
+                 self.expansion_block_worker_tag = worker.tag
+                 self.expansion_block_active = True
+                 print(f"[ECONOMY] Sending Expansion Blocker Drone (Tag: {worker.tag})")
+        
+        # 3. 방해 실행
+        if self.expansion_block_active and self.expansion_block_worker_tag:
+             worker = self.bot.units.find_by_tag(self.expansion_block_worker_tag)
+             if not worker:
+                 self.expansion_block_active = False
+                 return
+             
+             # 적 앞마당 찾기
+             target_loc = None
+             if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+                 enemy_main = self.bot.enemy_start_locations[0]
+                 if hasattr(self.bot, "expansion_locations_list"):
+                     expansions = [loc for loc in self.bot.expansion_locations_list if loc != enemy_main]
+                     if expansions:
+                         target_loc = min(expansions, key=lambda p: p.distance_to(enemy_main))
+             
+             if target_loc:
+                 if worker.distance_to(target_loc) > 5:
+                     self.bot.do(worker.move(target_loc))
+                 else:
+                     nearby_enemies = self.bot.enemy_units.closer_than(5, worker)
+                     if nearby_enemies:
+                         self.bot.do(worker.attack(nearby_enemies.closest_to(worker)))
+                     else:
+                         # 패트롤
+                         p1 = target_loc.offset((2, 2))
+                         self.bot.do(worker.patrol(p1))
+
+    # ========================================
+    # ★★★ Phase 18: Gas Optimization ★★★
+    # ========================================
+
+    async def _adjust_gas_workers_dynamically(self):
+        """
+        ★ Phase 18: 생산 큐에 따른 동적 가스 일꾼 조정 ★
+
+        생산 큐에 가스가 많이 필요한 유닛이 있으면 가스 일꾼 증가,
+        가스가 넘치면 가스 일꾼 감소
+        """
+        if not self.dynamic_gas_workers_enabled:
+            return
+
+        if not hasattr(self.bot, "gas_buildings") or not hasattr(self.bot, "vespene"):
+            return
+
+        gas = self.bot.vespene
+        minerals = self.bot.minerals
+
+        # 1. 가스가 매우 부족하면 가스 일꾼 증가
+        if gas < 100 and minerals > 500:
+            await self._boost_gas_workers()
+
+        # 2. 가스가 넘치고 미네랄이 부족하면 가스 일꾼 감소
+        elif gas > 1500 and minerals < 300:
+            await self._reduce_gas_workers()
+
+    async def _boost_gas_workers(self):
+        """가스 일꾼 증가 (미네랄 일꾼 → 가스 일꾼)"""
+        if not hasattr(self.bot, "gas_buildings"):
+            return
+
+        extractors = self.bot.gas_buildings.ready
+
+        for extractor in extractors:
+            if extractor.assigned_harvesters < 3:
+                # 근처 미네랄 일꾼을 가스로 이동
+                workers = self.bot.workers.closer_than(15, extractor).filter(
+                    lambda w: w.is_gathering and not w.is_carrying_vespene
+                )
+
+                if workers:
+                    worker = workers.first
+                    self.bot.do(worker.gather(extractor))
+                    print(f"[ECONOMY] Boosting gas workers (Gas: {self.bot.vespene})")
+                    return
+
+    async def _reduce_gas_workers(self):
+        """가스 일꾼 감소 (가스 일꾼 → 미네랄 일꾼)"""
+        if not hasattr(self.bot, "gas_buildings"):
+            return
+
+        extractors = self.bot.gas_buildings.ready
+
+        for extractor in extractors:
+            if extractor.assigned_harvesters > 2:  # 최소 2명 유지
+                # 가스 일꾼을 미네랄로 이동
+                workers = self.bot.workers.filter(
+                    lambda w: w.is_gathering and w.order_target == extractor.tag
+                )
+
+                if workers:
+                    worker = workers.first
+                    # 가장 가까운 미네랄 패치 찾기
+                    if self.bot.townhalls.ready:
+                        closest_th = self.bot.townhalls.ready.closest_to(worker)
+                        minerals = self.bot.mineral_field.closer_than(10, closest_th)
+                        if minerals:
+                            self.bot.do(worker.gather(minerals.closest_to(worker)))
+                            print(f"[ECONOMY] Reducing gas workers (Gas: {self.bot.vespene}, Min: {self.bot.minerals})")
+                            return
+
+    async def _prevent_gas_overflow(self):
+        """
+        ★ Phase 18: 가스 오버플로우 방지 ★
+
+        가스가 3000+ 이상이면 가스 일꾼을 미네랄로 이동
+        """
+        if not hasattr(self.bot, "vespene") or not hasattr(self.bot, "gas_buildings"):
+            return
+
+        gas = self.bot.vespene
+
+        if gas < self.gas_overflow_prevention_threshold:
+            return
+
+        # 가스가 넘침 - 가스 일꾼을 미네랄로 이동
+        print(f"[ECONOMY] ★ GAS OVERFLOW: {gas} (moving gas workers to minerals) ★")
+
+        extractors = self.bot.gas_buildings.ready
+
+        workers_moved = 0
+        max_workers_to_move = 6  # 최대 6명까지 이동
+
+        for extractor in extractors:
+            if workers_moved >= max_workers_to_move:
+                break
+
+            if extractor.assigned_harvesters > 0:
+                # 가스 일꾼을 미네랄로 이동
+                workers = self.bot.workers.filter(
+                    lambda w: w.order_target == extractor.tag
+                )
+
+                for worker in workers:
+                    if workers_moved >= max_workers_to_move:
+                        break
+
+                    # 가장 가까운 미네랄 패치 찾기
+                    if self.bot.townhalls.ready:
+                        closest_th = self.bot.townhalls.ready.closest_to(worker)
+                        minerals = self.bot.mineral_field.closer_than(10, closest_th)
+                        if minerals:
+                            self.bot.do(worker.gather(minerals.closest_to(worker)))
+                            workers_moved += 1
+
+    def enable_gas_boost_mode(self, duration: float = 120):
+        """
+        ★ Phase 18: 가스 부스트 모드 활성화 ★
+
+        빠른 테크가 필요할 때 (뮤탈, 히드라 등) 가스 채취를 우선합니다.
+
+        Args:
+            duration: 부스트 지속 시간 (기본: 120초 = 2분)
+        """
+        self.gas_boost_mode = True
+        self.gas_boost_start_time = self.bot.time
+        self.gas_boost_duration = duration
+
+        print(f"[ECONOMY] ★ GAS BOOST MODE ACTIVATED (duration: {duration}s) ★")
+
+    def disable_gas_boost_mode(self):
+        """가스 부스트 모드 비활성화"""
+        self.gas_boost_mode = False
+        print(f"[ECONOMY] Gas boost mode deactivated")
+
+    def get_gas_stats(self) -> dict:
+        """★ Phase 18: 가스 통계 반환 ★"""
+        if not hasattr(self.bot, "gas_buildings"):
+            return {}
+
+        extractors = self.bot.gas_buildings.ready
+        total_gas_workers = sum(e.assigned_harvesters for e in extractors)
+
+        return {
+            "gas": self.bot.vespene,
+            "extractors": len(extractors),
+            "gas_workers": total_gas_workers,
+            "gas_boost_mode": self.gas_boost_mode,
+            "optimal_gas_timing": self.gas_timing_by_race.get(
+                str(self.bot.enemy_race).split(".")[-1] if hasattr(self.bot, "enemy_race") else "Unknown",
+                90
+            ),
+        }

@@ -29,26 +29,35 @@ class AdvancedScoutingSystemV2:
     def __init__(self, bot: BotAI):
         self.bot = bot
         self.logger = get_logger("AdvScoutV2")
-        
-        # 정찰 설정
+
+        # 정찰 설정 - ★ Phase 17: 더 빈번한 정찰 ★
         self.BASE_INTERVAL = 25.0
         self.EMERGENCY_INTERVAL = 15.0
+        self.EARLY_GAME_INTERVAL = 30.0  # 초반 (0-5분): 30초마다
+        self.MID_GAME_INTERVAL = 60.0     # 중반 (5-10분): 1분마다
+        self.LATE_GAME_INTERVAL = 45.0    # 후반 (10분+): 45초마다
         self.last_scout_time = 0.0
-        
+
         # 정찰 유닛 상태
         # {tag: {"type": str, "target": Point2, "start_time": float}}
         self.active_scouts = {}
-        
+
         # 정찰 목표 기록 (위치 -> 마지막 정찰 시간)
         self.last_scouted_at: Dict[Point2, float] = {}
-        
-        # 유닛별 최대 정찰 수
+
+        # 유닛별 최대 정찰 수 - ★ Phase 17: 정찰 유닛 수 증가 ★
         self.MAX_SCOUTS = {
             "WORKER": 1,      # 초반용
-            "ZERGLING": 3,    # 주력
-            "OVERLORD": 2,    # 보조 (속업 후)
-            "OVERSEER": 2     # 탐지/변신수
+            "ZERGLING": 4,    # 주력 (3 -> 4)
+            "OVERLORD": 3,    # 보조 (2 -> 3, 속업 후 더 적극적)
+            "OVERSEER": 3     # 탐지/변신수 (2 -> 3)
         }
+
+        # ★ Phase 17: 정찰 통계 ★
+        self.scouts_sent = 0
+        self.scouts_returned = 0
+        self.scouts_lost = 0
+        self.intel_updates = 0  # IntelManager로 전달한 정보 수
 
     async def on_step(self, iteration: int):
         # 1. 활성 정찰 유닛 관리 (사망/임무완료 체크)
@@ -74,18 +83,32 @@ class AdvancedScoutingSystemV2:
             self._print_report()
 
     def _get_dynamic_interval(self) -> float:
-        """적 정보 신선도에 따른 동적 주기 계산"""
+        """
+        ★ Phase 17: 게임 시간대와 적 정보 신선도에 따른 동적 주기 계산 ★
+
+        - 초반 (0-5분): 30초마다 (적 빌드 파악)
+        - 중반 (5-10분): 1분마다 (확장 및 군대 조합 확인)
+        - 후반 (10분+): 45초마다 (멀티 확장 및 테크 체크)
+        - 긴급 상황: 15초마다 (정보가 1분 이상 오래됨)
+        """
+        game_time = self.bot.time
+
+        # 긴급 모드: 적 정보가 1분 이상 오래됨
         blackboard = getattr(self.bot, "blackboard", None)
-        if not blackboard:
-            return self.BASE_INTERVAL
-            
-        # 마지막 적 정보 갱신 시간 확인 (Blackboard 연동 가정)
-        last_seen = getattr(blackboard, "last_enemy_seen_time", 0)
-        info_age = self.bot.time - last_seen
-        
-        if info_age > 60.0:  # 1분 이상 정보 없음
-            return self.EMERGENCY_INTERVAL
-        return self.BASE_INTERVAL
+        if blackboard:
+            last_seen = getattr(blackboard, "last_enemy_seen_time", 0)
+            info_age = game_time - last_seen
+
+            if info_age > 60.0:  # 1분 이상 정보 없음
+                return self.EMERGENCY_INTERVAL
+
+        # 게임 시간대별 주기
+        if game_time < 300:  # 0-5분: 초반
+            return self.EARLY_GAME_INTERVAL
+        elif game_time < 600:  # 5-10분: 중반
+            return self.MID_GAME_INTERVAL
+        else:  # 10분+: 후반
+            return self.LATE_GAME_INTERVAL
 
     def _manage_active_scouts(self):
         """
@@ -103,6 +126,7 @@ class AdvancedScoutingSystemV2:
             # 유닛 사망
             if not unit:
                 to_remove.append(tag)
+                self.scouts_lost += 1  # ★ Phase 17: 정찰 유닛 손실 추적 ★
                 continue
 
             # ★ NEW: Scout Safety Check - 위협 감지 및 회피 ★
@@ -116,34 +140,45 @@ class AdvancedScoutingSystemV2:
                     to_remove.append(tag)
                     continue
                 
+            # ★ NEW: Path Safety Check - 경로상 위험 감지 시 우회 ★
+            if self._is_path_unsafe(unit, info["target"]):
+                safe_pos = self._find_safe_detour(unit, info["target"])
+                if safe_pos:
+                    unit.move(safe_pos)
+                    continue
+
             # 목표 도달 (시야 범위 내)
             target = info["target"]
             sight = unit.sight_range
-            
+
             if unit.distance_to(target) < sight * 0.8:
                 self.last_scouted_at[target] = self.bot.time
+                self.scouts_returned += 1
                 to_remove.append(tag)
-                
+
+                # ★ Phase 17: IntelManager에 정찰 정보 전달 ★
+                self._report_scouted_intel(unit, target)
+
                 # 권한 해제
                 if hasattr(self.bot, "unit_authority"):
                     self.bot.unit_authority.release_unit(tag, "AdvancedScoutingV2")
-                
+
                 # 정찰 완료 후 복귀 또는 순찰 등 추가 로직 가능
                 
         for tag in to_remove:
             del self.active_scouts[tag]
 
     def _send_new_scout(self) -> bool:
-        """새로운 정찰 유닛 파견"""
+        """★ Phase 17: 새로운 정찰 유닛 파견 (통계 추적) ★"""
         target = self._select_scout_target()
         if not target:
             return False
-            
+
         # 적절한 유닛 선택
         scout_unit = self._select_scout_unit(target)
         if not scout_unit:
             return False
-            
+
         # 정찰 명령
         if self._request_authority(scout_unit):
             self.bot.do(scout_unit.move(target))
@@ -152,8 +187,15 @@ class AdvancedScoutingSystemV2:
                 "target": target,
                 "start_time": self.bot.time
             }
+            self.scouts_sent += 1  # ★ 통계 추적 ★
+
+            # 로그
+            game_time = self.bot.time
+            self.logger.info(
+                f"[{int(game_time)}s] Scout {scout_unit.type_id.name} sent to {target} (Total: {self.scouts_sent})"
+            )
             return True
-            
+
         return False
 
     def _select_scout_target(self) -> Optional[Point2]:
@@ -189,8 +231,93 @@ class AdvancedScoutingSystemV2:
         if self.bot.time - self.last_scouted_at.get(target, 0) > 60:
             return target
             
-        # 3. 맵 중앙/감시탑 (Low) - 룰렛 방식이나 상황에 따라 추가
+        # 3. ★ Race-Specific Strategic Scouting (Phase 17) ★
+        # 적 종족에 따라 특정 테크 건물이 있을만한 곳(본진 구석 등) 정찰
+        enemy_race = self.bot.enemy_race
+        if enemy_race:
+             # 적 본진 찾기
+             if self.bot.enemy_start_locations:
+                 enemy_main = self.bot.enemy_start_locations[0]
+                 
+                 # 테란/프로토스: 본진 구석구석 (테크 건물 숨기는 곳)
+                 if enemy_race in {self.bot.Race.Terran, self.bot.Race.Protoss}:
+                     # 본진 주변 4방향 (10~15 거리)
+                     corners = [
+                         enemy_main.offset((10, 10)),
+                         enemy_main.offset((-10, 10)),
+                         enemy_main.offset((10, -10)),
+                         enemy_main.offset((-10, -10))
+                     ]
+                     # 아직 안 가본 구석 확인
+                     for corner in corners:
+                         if corner not in self.last_scouted_at:
+                             return corner
+         
+        # 4. 맵 중앙/감시탑 (Low) - 룰렛 방식이나 상황에 따라 추가
         return self.bot.game_info.map_center
+
+    def _is_path_unsafe(self, unit, target) -> bool:
+        """이동 경로상에 known static defense가 있는지 확인"""
+        if not hasattr(self.bot, "enemy_structures"):
+            return False
+            
+        # 정적 방어 건물 (반경 7+2=9 내에는 접근 금지)
+        static_defense = self.bot.enemy_structures.filter(
+            lambda u: u.type_id in {
+                UnitTypeId.PHOTONCANNON, UnitTypeId.MISSILETURRET, 
+                UnitTypeId.SPORECRAWLER, UnitTypeId.BUNKER, UnitTypeId.PLANETARYFORTRESS
+            }
+        )
+        
+        if not static_defense:
+            return False
+            
+        # 현재 위치에서 목표까지의 직선 경로에 방어 건물 반경이 겹치는지 체크 (단순화)
+        # 3점 체크: 현재, 중간, 목표
+        mid_point = (unit.position + target) / 2
+        
+        for defense in static_defense:
+            # 방어 사거리 (7) + 여유 (2) = 9
+            if unit.distance_to(defense) < 9 or \
+               mid_point.distance_to(defense) < 9 or \
+               target.distance_to(defense) < 9:
+                return True
+                
+        return False
+
+    def _find_safe_detour(self, unit, target) -> Optional[Point2]:
+        """안전한 우회 경로 찾기 (단순화된 8방향 체크)"""
+        # 현재 위치 기준 8방향으로 5거리 이동 지점 중 안전한 곳 선택
+        angles = [45, 90, 135, 180, 225, 270, 315, 0]
+        
+        best_detour = None
+        min_dist_to_target = 999
+        
+        for angle in angles:
+            # 해당 방향으로 조금 이동한 지점
+            rad = math.radians(angle)
+            check_pos = unit.position.offset((5 * math.cos(rad), 5 * math.sin(rad)))
+            
+            # 맵 밖이면 패스
+            if not self.bot.in_pathing_grid(check_pos):
+                continue
+                
+            # 안전한지 체크 (재귀 호출 방지 위해 로직 복사)
+            is_safe = True
+            enemy_structures = getattr(self.bot, "enemy_structures", [])
+            for structure in enemy_structures:
+                if structure.type_id in {UnitTypeId.PHOTONCANNON, UnitTypeId.MISSILETURRET, UnitTypeId.SPORECRAWLER, UnitTypeId.BUNKER, UnitTypeId.PLANETARYFORTRESS}:
+                     if check_pos.distance_to(structure) < 9:
+                         is_safe = False
+                         break
+            
+            if is_safe:
+                dist = check_pos.distance_to(target)
+                if dist < min_dist_to_target:
+                    min_dist_to_target = dist
+                    best_detour = check_pos
+                    
+        return best_detour
 
     def _select_scout_unit(self, target: Point2) -> Optional[Unit]:
         """목표와 상황에 맞는 정찰 유닛 선택"""
@@ -332,12 +459,76 @@ class AdvancedScoutingSystemV2:
 
             self.logger.debug(f"Cleaned up old scout data: {len(self.last_scouted_at)} locations remaining")
 
+    def _report_scouted_intel(self, unit, target: Point2):
+        """
+        ★ Phase 17: IntelManager에 정찰 정보 전달 ★
+
+        정찰 유닛이 목표 위치에 도착했을 때 발견한 정보를 IntelManager에 전달합니다:
+        - 적 건물 발견
+        - 적 유닛 구성
+        - 확장 타이밍
+        """
+        intel_manager = getattr(self.bot, "intel", None)
+        if not intel_manager:
+            return
+
+        try:
+            # 정찰 위치 기록
+            if hasattr(intel_manager, "record_scouted_location"):
+                intel_manager.record_scouted_location(target)
+                self.intel_updates += 1
+
+            # 주변 적 건물 확인
+            enemy_structures = getattr(self.bot, "enemy_structures", [])
+            nearby_structures = [s for s in enemy_structures if s.distance_to(target) < 15]
+
+            if nearby_structures:
+                game_time = self.bot.time
+                for structure in nearby_structures:
+                    structure_type = getattr(structure.type_id, "name", "").upper()
+
+                    # 확장 기지 발견
+                    if structure_type in {"COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE"}:
+                        self.logger.info(
+                            f"[{int(game_time)}s] ★ SCOUT INTEL: Enemy base found at {target} ({structure_type}) ★"
+                        )
+
+                    # 테크 건물 발견
+                    tech_buildings = {
+                        "FACTORY", "STARPORT", "ARMORY", "FUSIONCORE",
+                        "ROBOTICSFACILITY", "STARGATE", "DARKSHRINE",
+                        "TEMPLARARCHIVE", "FLEETBEACON", "TWILIGHTCOUNCIL",
+                        "SPIRE", "GREATERSPIRE", "INFESTATIONPIT",
+                        "BANELINGNEST", "ROACHWARREN", "HYDRALISKDEN"
+                    }
+                    if structure_type in tech_buildings:
+                        self.logger.info(
+                            f"[{int(game_time)}s] ★ SCOUT INTEL: Enemy tech discovered: {structure_type} ★"
+                        )
+
+            # Blackboard에 마지막 적 발견 시간 업데이트
+            blackboard = getattr(self.bot, "blackboard", None)
+            if blackboard and (nearby_structures or getattr(self.bot, "enemy_units", [])):
+                blackboard.set("last_enemy_seen_time", self.bot.time)
+
+        except Exception as e:
+            self.logger.warning(f"Failed to report scouted intel: {e}")
+
     def _print_report(self):
-        """정찰 상태 리포트"""
+        """★ Phase 17: 정찰 상태 리포트 (통계 추가) ★"""
         types = [info['type'] for info in self.active_scouts.values()]
         counts = {t: types.count(t) for t in set(types)}
 
-        self.logger.info(f"=== Advanced Scouting V2 Report ===")
-        self.logger.info(f"Interval: {self._get_dynamic_interval()}s")
+        game_time = self.bot.time
+        interval = self._get_dynamic_interval()
+
+        # 정찰 성공률 계산
+        total_scouts = self.scouts_sent
+        success_rate = (self.scouts_returned / total_scouts * 100) if total_scouts > 0 else 0
+
+        self.logger.info(f"=== Advanced Scouting V2 Report [{int(game_time)}s] ===")
+        self.logger.info(f"Interval: {interval:.1f}s")
         self.logger.info(f"Active Scouts: {len(self.active_scouts)} {counts}")
         self.logger.info(f"Scouted Locations: {len(self.last_scouted_at)}/{len(self.bot.expansion_locations_list)}")
+        self.logger.info(f"Scout Stats: Sent={self.scouts_sent}, Returned={self.scouts_returned}, Lost={self.scouts_lost} (Success: {success_rate:.1f}%)")
+        self.logger.info(f"Intel Updates: {self.intel_updates}")
