@@ -1,0 +1,44 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 그라디언트 -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a2e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 배경 -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  
+  <!-- 외부 링 -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#accent)" stroke-width="8" opacity="0.3"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#accent)" stroke-width="6" opacity="0.5"/>
+  
+  <!-- Git 브랜치 구조 -->
+  <g transform="translate(256, 256)" stroke="url(#accent)" stroke-width="12" fill="none" stroke-linecap="round">
+    <!-- 메인 라인 -->
+    <line x1="-80" y1="80" x2="0" y2="0"/>
+    <line x1="0" y1="0" x2="80" y2="80"/>
+    
+    <!-- 브랜치 라인 -->
+    <line x1="0" y1="0" x2="-80" y2="-80"/>
+    <line x1="0" y1="0" x2="80" y2="-80"/>
+  </g>
+  
+  <!-- 노드 -->
+  <circle cx="176" cy="336" r="24" fill="#06b6d4"/>
+  <circle cx="256" cy="256" r="28" fill="#8b5cf6"/>
+  <circle cx="336" cy="336" r="24" fill="#06b6d4"/>
+  <circle cx="176" cy="176" r="24" fill="#06b6d4"/>
+  <circle cx="336" cy="176" r="24" fill="#06b6d4"/>
+  
+  <!-- 중앙 강조 -->
+  <circle cx="256" cy="256" r="20" fill="#ffffff" opacity="0.9"/>
+  
+  <!-- 글로우 효과 -->
+  <circle cx="256" cy="256" r="100" fill="url(#accent)" opacity="0.1"/>
+</svg>
