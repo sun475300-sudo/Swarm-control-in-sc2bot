@@ -13,12 +13,38 @@ const DEFAULT_REPO = {
   repo: 'Swarm-control-in-sc2bot',
 };
 
+// GitHub API 토큰 관리
+function getGitHubToken(): string | null {
+  return localStorage.getItem('github_token');
+}
+
+export function setGitHubToken(token: string): void {
+  if (token) {
+    localStorage.setItem('github_token', token);
+  } else {
+    localStorage.removeItem('github_token');
+  }
+}
+
+export function hasGitHubToken(): boolean {
+  return !!getGitHubToken();
+}
+
 const api = axios.create({
   baseURL: GITHUB_API_URL,
   timeout: 10000,
   headers: {
     Accept: 'application/vnd.github.v3+json',
   },
+});
+
+// 요청 인터셉터: GitHub 토큰 자동 추가
+api.interceptors.request.use((config) => {
+  const token = getGitHubToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 /**
@@ -416,6 +442,65 @@ export function saveLastCheckedTime(): void {
 export function getLastCheckedTime(): Date {
   const stored = localStorage.getItem('github_last_checked');
   return stored ? new Date(stored) : new Date(0);
+}
+
+/**
+ * GitHub API Rate Limit 확인
+ */
+export async function getRateLimit(): Promise<{
+  limit: number;
+  remaining: number;
+  reset: Date;
+  used: number;
+} | null> {
+  try {
+    const response = await api.get('/rate_limit');
+    const core = response.data.resources.core;
+    return {
+      limit: core.limit,
+      remaining: core.remaining,
+      reset: new Date(core.reset * 1000),
+      used: core.used,
+    };
+  } catch (error) {
+    console.error('Failed to fetch rate limit:', error);
+    return null;
+  }
+}
+
+/**
+ * 커밋 상세 정보 가져오기 (파일 변경사항 포함)
+ */
+export async function getCommitDetails(
+  owner: string,
+  repo: string,
+  sha: string
+): Promise<any | null> {
+  try {
+    const response = await api.get(`/repos/${owner}/${repo}/commits/${sha}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch commit details:', error);
+    return null;
+  }
+}
+
+/**
+ * 두 브랜치 또는 커밋 비교
+ */
+export async function compareCommits(
+  owner: string,
+  repo: string,
+  base: string,
+  head: string
+): Promise<any | null> {
+  try {
+    const response = await api.get(`/repos/${owner}/${repo}/compare/${base}...${head}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to compare commits:', error);
+    return null;
+  }
 }
 
 /**

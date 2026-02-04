@@ -19,11 +19,12 @@
   }
 
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -39,20 +40,10 @@
     @apply mx-auto max-w-7xl px-4;
   }
 
-  .btn {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-  }
-
-  .btn-primary {
-    @apply btn bg-primary text-primary-foreground hover:bg-primary/90;
-  }
-
-  .btn-secondary {
-    @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/90;
-  }
-
   .card {
-    @apply rounded-lg border bg-card p-6 text-card-foreground shadow-sm;
+    @apply rounded-lg border p-6 shadow-sm;
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
   }
 
   .glass {
@@ -83,5 +74,20 @@
 
   .text-gradient {
     @apply bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
   }
 }

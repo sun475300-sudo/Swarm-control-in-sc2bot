@@ -8,6 +8,7 @@ import SettingsPage from './pages/Settings';
 import BotControl from './pages/BotControl';
 import GitHub from './pages/GitHub';
 import Replays from './pages/Replays';
+import InstallPrompt from './components/InstallPrompt';
 
 type Page = 'dashboard' | 'monitor' | 'analytics' | 'notifications' | 'settings' | 'botcontrol' | 'github' | 'replays';
 
@@ -156,6 +157,9 @@ export default function App() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+      
+      {/* PWA 설치 프롬프트 */}
+      <InstallPrompt />
     </div>
   );
 }
