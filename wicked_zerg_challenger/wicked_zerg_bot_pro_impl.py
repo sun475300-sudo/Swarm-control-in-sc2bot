@@ -94,6 +94,15 @@ class WickedZergBotProImpl(BotAI):
         if self.blackboard:
              print("[BOT] ★ Blackboard active")
 
+        # === 0.1 Resource Manager (Thread-safe resource reservation) ===
+        try:
+            from core.resource_manager import ResourceManager
+            self.resource_manager = ResourceManager(self)
+            print("[BOT] ★ ResourceManager initialized (thread-safe reservation system)")
+        except ImportError as e:
+            print(f"[BOT_WARN] ResourceManager not available: {e}")
+            self.resource_manager = None
+
         # === 0.05 Difficulty Progression ===
         try:
             map_name = self.game_info.map_name if hasattr(self, 'game_info') else "Unknown"

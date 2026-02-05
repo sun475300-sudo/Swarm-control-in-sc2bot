@@ -435,9 +435,14 @@ class EconomyManager:
             return
 
         # ★ Blackboard 없을 때 폴백 (기존 로직) ★
-        # ★ 자원 예약 체크 ★
-        available_minerals = self.bot.minerals - self._reserved_minerals
-        available_gas = self.bot.vespene - self._reserved_gas
+        # ★ 자원 예약 체크 (ResourceManager 사용) ★
+        if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+            available_minerals, available_gas = self.bot.resource_manager.get_available_resources()
+        else:
+            # Fallback to simple calculation
+            available_minerals = self.bot.minerals - self._reserved_minerals
+            available_gas = self.bot.vespene - self._reserved_gas
+
         if available_minerals < 50:  # Drone 비용
             return
 
@@ -1301,6 +1306,16 @@ class EconomyManager:
                 method = "Default"
 
             if target_pos:
+                # ★ Reserve resources using ResourceManager (thread-safe) ★
+                reserved = False
+                if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+                    reserved = await self.bot.resource_manager.try_reserve(
+                        300, 0, "EconomyManager_Expansion"
+                    )
+                    if not reserved:
+                        # Resources not available (reserved by other manager)
+                        return False
+
                 if await self.bot.can_place(UnitTypeId.HATCHERY, target_pos):
                     # Use TechCoordinator if available, else direct build
                     tech_coordinator = getattr(self.bot, "tech_coordinator", None)
@@ -1318,11 +1333,26 @@ class EconomyManager:
                     
                     game_time = getattr(self.bot, "time", 0)
                     print(f"[ECONOMY] [{int(game_time)}s] ★ Expanding ({method}): {reason} @ {target_pos} ★")
+
+                    # ★ Release resources after successful build command ★
+                    if reserved and hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+                        await self.bot.resource_manager.release("EconomyManager_Expansion")
+
                     return True
+                else:
+                    # ★ Release resources if placement failed ★
+                    if reserved and hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+                        await self.bot.resource_manager.release("EconomyManager_Expansion")
 
         except Exception as e:
             print(f"[ECONOMY] Smart expansion failed: {e}")
-            
+            # ★ Release resources on exception ★
+            if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+                try:
+                    await self.bot.resource_manager.release("EconomyManager_Expansion")
+                except:
+                    pass
+
         return False
 
     async def _check_expansion_on_depletion(self) -> None:
@@ -1725,7 +1755,13 @@ class EconomyManager:
                 print(f"[ECONOMY] Resource banking prevention error: {e}")
 
     def _update_resource_reservations(self) -> None:
-        """자원 예약 업데이트"""
+        """
+        자원 예약 업데이트
+
+        NOTE: This uses legacy _reserved_minerals/_reserved_gas for fallback.
+        For proper thread-safe reservation, use self.bot.resource_manager.try_reserve()
+        in async contexts. This function is kept for backward compatibility.
+        """
         game_time = getattr(self.bot, "time", 0)
         self._reserved_minerals = 0
         self._reserved_gas = 0

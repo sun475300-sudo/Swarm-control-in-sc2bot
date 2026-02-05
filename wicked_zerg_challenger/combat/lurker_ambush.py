@@ -325,8 +325,12 @@ class LurkerAmbushSystem:
             from sc2.ids.upgrade_id import UpgradeId
             if UpgradeId.LURKERRANGE in self.bot.state.upgrades:
                 self.LURKER_RANGE = 10  # Base 9 + 1 (upgrade gives +2 but we use 10 for safety)
-        except:
-            pass
+        except ImportError as e:
+            self.logger.error(f"[LurkerAmbush] Failed to import UpgradeId: {e}")
+        except AttributeError as e:
+            self.logger.error(f"[LurkerAmbush] Bot state not available: {e}")
+        except Exception as e:
+            self.logger.error(f"[LurkerAmbush] Unexpected error checking lurker upgrades: {e}")
 
     # ========================================
     # Statistics

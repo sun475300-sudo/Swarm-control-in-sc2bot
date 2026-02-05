@@ -109,6 +109,18 @@ class HarassmentCoordinator:
         self.baneling_drop_cooldown = 0  # 쿨다운 (초)
         self.baneling_drop_interval = 120  # 2분 쿨다운
 
+        # ★ Phase 21.3: Unit Persistence System (Squad Lock) ★
+        self.locked_units: Set[int] = set()  # 견제에 할당된 유닛 태그
+        self.squad_assignments: Dict[int, str] = {}  # {unit_tag: squad_name}
+        self.squad_members: Dict[str, Set[int]] = {
+            "zergling_runby": set(),
+            "mutalisk_harass": set(),
+            "baneling_drop": set(),
+            "roach_poke": set()
+        }
+        self.squad_lock_duration: Dict[str, float] = {}  # {squad_name: lock_until_time}
+        self.default_lock_duration = 30.0  # 30초 동안 유닛 고정
+
         # ★ Harassment Targets ★
         self.priority_targets: List[Point2] = []  # 우선순위 타겟 위치
 
@@ -155,6 +167,11 @@ class HarassmentCoordinator:
             # 5. 메모리 누수 방지 & 권한 체크 정리 (50초마다)
             if iteration % 1100 == 0:
                 self._cleanup_dead_unit_tags()
+
+            # 5.1. ★ Phase 21.3: Unit Persistence Cleanup ★
+            if iteration % 22 == 0:  # 매 1초마다
+                self.cleanup_dead_units()
+                self.cleanup_expired_locks()
 
             # 6. Drop Play
             if iteration % 44 == 0:  # ~2초마다
@@ -809,8 +826,10 @@ class HarassmentCoordinator:
                      self.logger.info(f"[{int(current_time)}s] ★ NYDUS WORM SUMMONED at {valid_target} ★")
                      self.nydus_active = True
                      self.nydus_cooldown = current_time + 60
-                 except:
-                     pass
+                 except AttributeError as e:
+                     self.logger.error(f"[HarassmentCoordinator] Nydus worm build failed (AttributeError): {e}")
+                 except Exception as e:
+                     self.logger.error(f"[HarassmentCoordinator] Unexpected error in nydus worm placement: {e}")
 
 
         """Drop 타겟 선택 (적 확장)"""
@@ -1086,6 +1105,173 @@ class HarassmentCoordinator:
         """Trigger mutalisk harassment (placeholder for existing logic)"""
         # This would call existing mutalisk harassment logic
         pass
+
+    # ============================================================================
+    # Phase 21.3: Unit Persistence System (Squad Lock)
+    # ============================================================================
+
+    def lock_unit_to_squad(self, unit_tag: int, squad_name: str, duration: Optional[float] = None) -> None:
+        """
+        ★ Phase 21.3: 유닛을 스쿼드에 고정 ★
+
+        유닛이 다른 시스템(메인 어택 등)에 의해 재할당되지 않도록 락 걸기
+
+        Args:
+            unit_tag: Unit tag to lock
+            squad_name: Squad identifier (e.g., "zergling_runby")
+            duration: Lock duration in seconds (None = default 30s)
+        """
+        self.locked_units.add(unit_tag)
+        self.squad_assignments[unit_tag] = squad_name
+
+        if squad_name not in self.squad_members:
+            self.squad_members[squad_name] = set()
+
+        self.squad_members[squad_name].add(unit_tag)
+
+        # Set squad lock expiration
+        lock_time = duration if duration else self.default_lock_duration
+        self.squad_lock_duration[squad_name] = self.bot.time + lock_time
+
+    def unlock_unit(self, unit_tag: int) -> None:
+        """
+        유닛 락 해제
+
+        Args:
+            unit_tag: Unit tag to unlock
+        """
+        if unit_tag in self.locked_units:
+            self.locked_units.discard(unit_tag)
+
+        if unit_tag in self.squad_assignments:
+            squad_name = self.squad_assignments[unit_tag]
+
+            # Remove from squad
+            if squad_name in self.squad_members:
+                self.squad_members[squad_name].discard(unit_tag)
+
+            del self.squad_assignments[unit_tag]
+
+    def is_unit_locked(self, unit_tag: int) -> bool:
+        """
+        유닛이 락되어 있는지 확인
+
+        Args:
+            unit_tag: Unit tag to check
+
+        Returns:
+            True if unit is locked to harassment
+        """
+        return unit_tag in self.locked_units
+
+    def get_unit_squad(self, unit_tag: int) -> Optional[str]:
+        """
+        유닛이 속한 스쿼드 반환
+
+        Args:
+            unit_tag: Unit tag
+
+        Returns:
+            Squad name or None
+        """
+        return self.squad_assignments.get(unit_tag)
+
+    def cleanup_dead_units(self) -> None:
+        """
+        죽은 유닛 정리 (매 프레임 호출)
+        """
+        alive_tags = {unit.tag for unit in self.bot.units}
+
+        # Remove dead units from locks
+        dead_units = self.locked_units - alive_tags
+
+        for unit_tag in dead_units:
+            self.unlock_unit(unit_tag)
+
+    def cleanup_expired_locks(self) -> None:
+        """
+        만료된 락 정리
+        """
+        current_time = self.bot.time
+
+        expired_squads = []
+        for squad_name, expire_time in self.squad_lock_duration.items():
+            if current_time >= expire_time:
+                expired_squads.append(squad_name)
+
+        for squad_name in expired_squads:
+            # Unlock all units in squad
+            if squad_name in self.squad_members:
+                for unit_tag in list(self.squad_members[squad_name]):
+                    self.unlock_unit(unit_tag)
+
+            # Remove expiration
+            del self.squad_lock_duration[squad_name]
+
+            self.logger.info(
+                f"[HARASSMENT] Squad '{squad_name}' lock expired and released"
+            )
+
+    def get_available_units_for_harassment(self, unit_type: "UnitTypeId") -> "Units":
+        """
+        견제에 사용 가능한 유닛 반환 (락되지 않은 유닛만)
+
+        Args:
+            unit_type: Unit type to get
+
+        Returns:
+            Available units (not locked by other systems)
+        """
+        all_units = self.bot.units(unit_type)
+
+        # Filter out locked units
+        available = all_units.filter(
+            lambda u: u.tag not in self.locked_units
+        )
+
+        return available
+
+    def renew_squad_lock(self, squad_name: str, additional_duration: Optional[float] = None) -> None:
+        """
+        스쿼드 락 갱신 (임무 연장)
+
+        Args:
+            squad_name: Squad to renew
+            additional_duration: Additional time (None = default 30s)
+        """
+        duration = additional_duration if additional_duration else self.default_lock_duration
+
+        if squad_name in self.squad_lock_duration:
+            # Extend existing lock
+            self.squad_lock_duration[squad_name] = max(
+                self.squad_lock_duration[squad_name],
+                self.bot.time + duration
+            )
+        else:
+            # Create new lock
+            self.squad_lock_duration[squad_name] = self.bot.time + duration
+
+    def get_squad_status(self) -> Dict[str, Dict]:
+        """
+        모든 스쿼드 상태 반환
+
+        Returns:
+            Dictionary of squad info
+        """
+        status = {}
+
+        for squad_name, members in self.squad_members.items():
+            if members:
+                expire_time = self.squad_lock_duration.get(squad_name, 0)
+                time_left = max(0, expire_time - self.bot.time)
+
+                status[squad_name] = {
+                    "members": len(members),
+                    "time_left": time_left,
+                    "active": time_left > 0
+                }
+
+        return status
 
     def get_harassment_status(self) -> Dict:
         """견제 상태 반환"""

@@ -458,9 +458,20 @@ class CombatManager:
         # Sort tasks by priority (highest first)
         tasks_to_execute.sort(key=lambda x: x[2], reverse=True)
 
-        # Assign units to tasks
-        available_ground = set(u.tag for u in ground_army) if ground_army else set()
-        available_air = set(u.tag for u in air_units) if air_units else set()
+        # ★ CRITICAL: Exclude locked units from harassment missions ★
+        # Get locked units from harassment_coordinator to prevent reassignment
+        locked_units = set()
+        if hasattr(self.bot, 'harassment_coordinator') and self.bot.harassment_coordinator:
+            locked_units = self.bot.harassment_coordinator.locked_units.copy()
+            if locked_units and iteration % 220 == 0:  # Log every 10 seconds
+                self.logger.info(
+                    f"[CombatManager] {len(locked_units)} units locked in harassment missions "
+                    f"(excluded from combat reassignment)"
+                )
+
+        # Assign units to tasks (exclude locked units)
+        available_ground = set(u.tag for u in ground_army if u.tag not in locked_units) if ground_army else set()
+        available_air = set(u.tag for u in air_units if u.tag not in locked_units) if air_units else set()
 
         for task_name, target, priority in tasks_to_execute:
             if task_name == "complete_destruction":
@@ -524,8 +535,10 @@ class CombatManager:
                          try:
                              self.bot.do(unit.attack(target))
                              available_air.discard(unit.tag)
-                         except:
-                             pass
+                         except AttributeError as e:
+                             self.logger.error(f"[CombatManager] Unit attack failed (AttributeError): {e}")
+                         except Exception as e:
+                             self.logger.error(f"[CombatManager] Unexpected error in air unit attack: {e}")
 
             elif task_name == "early_harass":
                 # Use zerglings for early harassment (Smart Worker Hunt)
