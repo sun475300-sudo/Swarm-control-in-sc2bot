@@ -595,19 +595,171 @@ class StrategyManagerV2(StrategyManager):
 
     def _calculate_strategy_score(self, strategy: Dict[str, Any]) -> float:
         """
-        Calculate effectiveness score for a strategy
+        ★ Phase 21.1: 실제 전략 효과 계산 ★
+
+        Calculate effectiveness score for a strategy based on:
+        - Kill/Death ratio (교환비)
+        - Resource efficiency (자원 효율)
+        - Territory control (영토 확보)
+        - Enemy production disruption (생산 방해)
 
         Returns:
             Score: 0.0 (ineffective) to 1.0 (highly effective)
         """
-        # Placeholder scoring logic
-        # In full implementation, would track:
-        # - Units killed vs lost
-        # - Resources traded
-        # - Territory gained
-        # - Enemy production disrupted
+        score = 0.5  # Baseline (neutral)
 
-        return 0.5  # Neutral baseline
+        # 1. 교환비 계산 (Kill/Death Ratio)
+        kill_death_score = self._calculate_kill_death_score()
+
+        # 2. 자원 효율 계산 (Resource Trade Efficiency)
+        resource_efficiency_score = self._calculate_resource_efficiency()
+
+        # 3. 영토 확보 계산 (Territory Control)
+        territory_score = self._calculate_territory_score()
+
+        # 4. 적 생산 방해 (Enemy Production Disruption)
+        disruption_score = self._calculate_disruption_score()
+
+        # 가중 평균 (각 요소에 가중치 적용)
+        weights = {
+            "kill_death": 0.35,      # 35% - 교환비가 가장 중요
+            "resource": 0.25,        # 25% - 자원 효율
+            "territory": 0.20,       # 20% - 영토 확보
+            "disruption": 0.20       # 20% - 생산 방해
+        }
+
+        score = (
+            kill_death_score * weights["kill_death"] +
+            resource_efficiency_score * weights["resource"] +
+            territory_score * weights["territory"] +
+            disruption_score * weights["disruption"]
+        )
+
+        # 0.0 ~ 1.0 범위로 제한
+        return max(0.0, min(1.0, score))
+
+    def _calculate_kill_death_score(self) -> float:
+        """
+        교환비 점수 계산 (Units Killed vs Lost)
+
+        Returns:
+            0.0 (terrible trades) to 1.0 (excellent trades)
+        """
+        # Blackboard에서 통계 가져오기
+        if not self.blackboard:
+            return 0.5
+
+        units_killed = getattr(self.blackboard, "units_killed", 0)
+        units_lost = getattr(self.blackboard, "units_lost", 0)
+
+        # 아직 전투가 없으면 중립
+        if units_killed == 0 and units_lost == 0:
+            return 0.5
+
+        # 손실 없이 킬만 있으면 완벽
+        if units_lost == 0:
+            return 1.0
+
+        # Kill/Death ratio 계산
+        kd_ratio = units_killed / max(units_lost, 1)
+
+        # 비율을 0~1 점수로 변환
+        # 1:1 = 0.5, 2:1 = 0.75, 3:1 = 0.875, 4:1+ = 1.0
+        # 1:2 = 0.25, 1:3 = 0.125
+        if kd_ratio >= 4.0:
+            return 1.0
+        elif kd_ratio >= 2.0:
+            return 0.5 + (kd_ratio - 2.0) / 4.0  # 0.5 ~ 1.0
+        elif kd_ratio >= 1.0:
+            return 0.5 + (kd_ratio - 1.0) / 2.0  # 0.5 ~ 0.75
+        else:  # kd_ratio < 1.0
+            return kd_ratio * 0.5  # 0.0 ~ 0.5
+
+    def _calculate_resource_efficiency(self) -> float:
+        """
+        자원 효율 점수 (Resources Traded)
+
+        Returns:
+            0.0 (poor efficiency) to 1.0 (excellent efficiency)
+        """
+        if not self.blackboard:
+            return 0.5
+
+        resources_killed = getattr(self.blackboard, "resources_killed", 0)
+        resources_lost = getattr(self.blackboard, "resources_lost", 0)
+
+        # 전투 없으면 중립
+        if resources_killed == 0 and resources_lost == 0:
+            return 0.5
+
+        # 손실 없이 적 자원만 파괴
+        if resources_lost == 0:
+            return 1.0
+
+        # 자원 교환비
+        resource_ratio = resources_killed / max(resources_lost, 1)
+
+        # 1:1 = 0.5, 2:1 = 0.75, 3:1+ = 1.0
+        if resource_ratio >= 3.0:
+            return 1.0
+        elif resource_ratio >= 1.0:
+            return 0.5 + (resource_ratio - 1.0) / 4.0
+        else:
+            return resource_ratio * 0.5
+
+    def _calculate_territory_score(self) -> float:
+        """
+        영토 확보 점수 (Bases Gained vs Lost)
+
+        Returns:
+            0.0 (losing ground) to 1.0 (gaining ground)
+        """
+        # 현재 기지 수
+        our_bases = len(getattr(self.bot, "townhalls", []))
+
+        # 적 기지 수 추정
+        if self.blackboard:
+            enemy_bases = getattr(self.blackboard, "enemy_base_count", 1)
+        else:
+            enemy_bases = 1
+
+        # 기지 비율
+        base_ratio = our_bases / max(enemy_bases, 1)
+
+        # 1:1 = 0.5, 2:1 = 0.75, 3:1 = 1.0
+        if base_ratio >= 2.5:
+            return 1.0
+        elif base_ratio >= 1.0:
+            return 0.5 + (base_ratio - 1.0) / 3.0
+        else:
+            return base_ratio * 0.5
+
+    def _calculate_disruption_score(self) -> float:
+        """
+        적 생산 방해 점수 (Enemy Production Disrupted)
+
+        Returns:
+            0.0 (no disruption) to 1.0 (heavy disruption)
+        """
+        if not self.blackboard:
+            return 0.5
+
+        # 적 건물 파괴 수
+        enemy_structures_destroyed = getattr(self.blackboard, "enemy_structures_destroyed", 0)
+
+        # 적 일꾼 킬 수
+        enemy_workers_killed = getattr(self.blackboard, "enemy_workers_killed", 0)
+
+        # 점수 계산 (건물 1개 = 2점, 일꾼 1명 = 0.5점)
+        disruption_points = enemy_structures_destroyed * 2.0 + enemy_workers_killed * 0.5
+
+        # 10점 이상이면 완벽한 방해
+        if disruption_points >= 10:
+            return 1.0
+        elif disruption_points > 0:
+            return min(1.0, disruption_points / 10.0)
+        else:
+            return 0.0
 
     # ========== RESOURCE ALLOCATION ==========
 
@@ -819,12 +971,22 @@ class StrategyManagerV2(StrategyManager):
             elif name in ["ULTRALISK", "ARCHON"]:
                 counts["massive"] += 1
         
-        # Logic Tree for Composition
-        
-        # 1. Anti-Air Capital (Corruptor Heavy)
-        if counts["air_capital"] >= 2 or (counts["air_capital"] + counts["air_fighter"] >= 8):
-            ratios["corruptor"] = 0.50
-            ratios["viper"] = 0.10 # Abduct
+        # ★ Phase 21.2: 향상된 유닛 조합 로직 ★
+        # Logic Tree for Composition (우선순위 기반)
+
+        # 1. Anti-Air Capital Ships (Carrier, BC, Tempest)
+        if counts["air_capital"] >= 3:
+            # 대규모 공중 자본함 위협 (3+ 유닛)
+            ratios["corruptor"] = 0.55  # 주력 대응
+            ratios["viper"] = 0.15      # Abduct 중요
+            ratios["hydra"] = 0.20      # 지상 방어
+            ratios["queen"] = 0.10      # Transfusion 지원
+        elif counts["air_capital"] >= 1:
+            # 소규모 공중 자본함 (1-2 유닛)
+            ratios["corruptor"] = 0.40
+            ratios["hydra"] = 0.30
+            ratios["viper"] = 0.10
+            ratios["roach"] = 0.20
             ratios["hydra"] = 0.20
             ratios["zergling"] = 0.20 # Mineral dump
             

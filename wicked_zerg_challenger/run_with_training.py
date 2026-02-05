@@ -262,8 +262,8 @@ def main():
             try:
                 max_games = int(sys.argv[i+1])
                 print(f"[CONFIG] Max games set to: {max_games}")
-            except:
-                pass
+            except (IndexError, ValueError) as e:
+                print(f"[WARNING] Invalid --max_games argument: {e}")
     
     # Parse learning rate from arguments
     learning_rate = None
@@ -272,8 +272,8 @@ def main():
             try:
                 learning_rate = float(sys.argv[i+1])
                 print(f"[CONFIG] Learning Rate manually set to: {learning_rate}")
-            except:
-                pass
+            except (IndexError, ValueError) as e:
+                print(f"[WARNING] Invalid --learning_rate argument: {e}")
 
     while True:
         try:
