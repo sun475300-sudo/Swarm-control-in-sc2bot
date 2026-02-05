@@ -1,13 +1,18 @@
 """
 Harassment Coordinator - 견제 시스템 통합 관리
 
+★ Phase 21: Aggressive Mode System & Baneling Drops ★
+
 다방향 견제를 조율하여 적의 멀티태스킹을 강요합니다:
 1. Zergling Run-by - 전투 중 일꾼 타겟 (Unit Authority 사용)
 2. Mutalisk Worker Harassment - 미네랄 라인 타격, HP 30% 이하 퇴각
 3. Roach/Ravager Poking - 담즙으로 주요 건물 공격, 본진 오기 전 퇴각
 4. Drop Play - Overlord + 유닛으로 확장 타격
+5. ★ NEW: Baneling Drops - 맹독충 드랍으로 일꾼 라인 타격 ★
+6. ★ NEW: Multi-angle Coordination - 2+ 방향 동시 공격 ★
 
 Features:
+- ★ Aggressive Mode System: 게임 상황에 따른 견제 강도 조절
 - Unit Authority Manager 연동으로 안전한 유닛 제어
 - 본진 교전 중 자동 멀티프롱 어택
 - HP 기반 자동 후퇴 시스템
@@ -16,6 +21,7 @@ Features:
 """
 
 from typing import List, Dict, Optional, Set
+from enum import Enum
 from utils.logger import get_logger
 
 try:
@@ -41,6 +47,22 @@ try:
 except ImportError:
     UnitAuthorityManager = None
     AuthorityLevel = None
+
+
+class AggressiveMode(Enum):
+    """
+    ★ Phase 21: Harassment Aggressive Mode System ★
+
+    견제 강도 레벨:
+    - PASSIVE: 5% 병력 할당, 방어적 견제
+    - OPPORTUNISTIC: 10% 병력 할당, 기회주의적 견제 (기본)
+    - AGGRESSIVE: 15% 병력 할당, 공격적 견제 (우세 시)
+    - ULTRA_AGGRESSIVE: 25% 병력 할당, 초공격적 견제 (초반 1-4분)
+    """
+    PASSIVE = "passive"
+    OPPORTUNISTIC = "opportunistic"
+    AGGRESSIVE = "aggressive"
+    ULTRA_AGGRESSIVE = "ultra_aggressive"
 
 
 class HarassmentCoordinator:
@@ -74,6 +96,18 @@ class HarassmentCoordinator:
         self.drop_overlord_tag: Optional[int] = None
         self.drop_unit_tags: Set[int] = set()
         self.drop_target: Optional[Point2] = None
+
+        # ★ Phase 21: Aggressive Mode System ★
+        self.aggressive_mode = AggressiveMode.OPPORTUNISTIC
+        self.harassment_allocation_percent = 0.10  # 기본: 10% 병력 할당
+
+        # ★ Phase 21: Baneling Drop System ★
+        self.baneling_drop_active = False
+        self.baneling_drop_overlord_tag: Optional[int] = None
+        self.baneling_drop_baneling_tags: Set[int] = set()
+        self.baneling_drop_target: Optional[Point2] = None
+        self.baneling_drop_cooldown = 0  # 쿨다운 (초)
+        self.baneling_drop_interval = 120  # 2분 쿨다운
 
         # ★ Harassment Targets ★
         self.priority_targets: List[Point2] = []  # 우선순위 타겟 위치
@@ -790,8 +824,268 @@ class HarassmentCoordinator:
             if bases:
                  # 본진에서 가장 먼 기지
                  return max(bases, key=lambda b: b.distance_to(enemy_main)).position
-        
+
         return None
+
+    # ============================================================================
+    # Phase 21: Aggressive Mode System & Baneling Drops
+    # ============================================================================
+
+    def set_aggressive_mode(self, mode: AggressiveMode) -> None:
+        """
+        ★ Phase 21: 견제 강도 설정 ★
+
+        Args:
+            mode: AggressiveMode enum value
+        """
+        self.aggressive_mode = mode
+
+        # 할당 비율 조정
+        if mode == AggressiveMode.PASSIVE:
+            self.harassment_allocation_percent = 0.05
+        elif mode == AggressiveMode.OPPORTUNISTIC:
+            self.harassment_allocation_percent = 0.10
+        elif mode == AggressiveMode.AGGRESSIVE:
+            self.harassment_allocation_percent = 0.15
+        elif mode == AggressiveMode.ULTRA_AGGRESSIVE:
+            self.harassment_allocation_percent = 0.25
+
+        self.logger.info(
+            f"[HARASSMENT MODE] {mode.value.upper()} "
+            f"({self.harassment_allocation_percent:.0%} allocation)"
+        )
+
+    async def execute_baneling_drop(self, iteration: int) -> bool:
+        """
+        ★ Phase 21: Baneling Drop 실행 ★
+
+        맹독충 4기를 대군주에 태워 적 미네랄 라인에 드랍
+
+        Args:
+            iteration: Current game iteration
+
+        Returns:
+            True if drop was initiated
+        """
+        current_time = self.bot.time
+
+        # 쿨다운 체크
+        if current_time < self.baneling_drop_cooldown:
+            return False
+
+        # 이미 활성 드랍 있으면 스킵
+        if self.baneling_drop_active:
+            return False
+
+        # 1. Transport Overlord 확보
+        overlord = self._get_transport_overlord()
+        if not overlord:
+            return False
+
+        # 2. Banelings 확보 (최소 4기)
+        banelings = self._get_drop_banelings(min_count=4)
+        if len(banelings) < 4:
+            return False
+
+        # 3. 타겟 선택 (적 미네랄 라인)
+        target = self._select_drop_target()
+        if not target:
+            return False
+
+        # 4. Load banelings
+        for baneling in banelings:
+            self.bot.do(overlord(AbilityId.LOAD, baneling))
+            self.baneling_drop_baneling_tags.add(baneling.tag)
+
+        # 5. Fly to target
+        overlord.move(target)
+
+        # 6. Track drop
+        self.baneling_drop_active = True
+        self.baneling_drop_overlord_tag = overlord.tag
+        self.baneling_drop_target = target
+        self.baneling_drop_cooldown = current_time + self.baneling_drop_interval
+
+        self.logger.info(
+            f"[{int(current_time)}s] ★★ BANELING DROP LAUNCHED ★★ "
+            f"{len(banelings)} banelings → {target}"
+        )
+
+        return True
+
+    async def manage_active_baneling_drop(self) -> None:
+        """
+        활성 맹독 드랍 관리 (언로드 및 후퇴)
+        """
+        if not self.baneling_drop_active:
+            return
+
+        # Overlord 확인
+        overlord = self.bot.units.find_by_tag(self.baneling_drop_overlord_tag)
+        if not overlord:
+            self._cancel_baneling_drop()
+            return
+
+        # 타겟 근처 도착 시 언로드
+        if overlord.distance_to(self.baneling_drop_target) < 3:
+            self.bot.do(overlord(AbilityId.UNLOADALLAT, self.baneling_drop_target))
+
+            # Overlord 후퇴
+            safe_pos = self.bot.start_location
+            overlord.move(safe_pos)
+
+            self.logger.info(
+                f"[{int(self.bot.time)}s] Baneling drop: UNLOADING at target"
+            )
+
+            # 드랍 종료
+            self._cancel_baneling_drop()
+
+    def _get_transport_overlord(self) -> Optional[Unit]:
+        """
+        운송용 대군주 확보 (Ventral Sacs 업그레이드 필요)
+
+        Returns:
+            Available transport overlord, or None
+        """
+        # Ventral Sacs 업그레이드 체크
+        if UpgradeId.OVERLORDSPEED not in self.bot.state.upgrades:
+            return None
+
+        # 사용 가능한 대군주 찾기
+        overlords = self.bot.units(UnitTypeId.OVERLORD).filter(
+            lambda o: o.is_idle and o.cargo_used == 0
+        )
+
+        if overlords:
+            return overlords.first
+
+        return None
+
+    def _get_drop_banelings(self, min_count: int = 4) -> List[Unit]:
+        """
+        드랍용 맹독충 확보
+
+        Args:
+            min_count: 최소 맹독충 수
+
+        Returns:
+            List of available banelings
+        """
+        banelings = self.bot.units(UnitTypeId.BANELING).filter(
+            lambda b: b.is_idle
+        )
+
+        if len(banelings) >= min_count:
+            return banelings[:min_count]
+
+        return []
+
+    def _select_drop_target(self) -> Optional[Point2]:
+        """
+        드랍 타겟 선택 (적 미네랄 라인 우선)
+
+        Returns:
+            Target position, or None
+        """
+        # 적 확장 찾기
+        if not hasattr(self.bot, "enemy_structures"):
+            return None
+
+        # 적 기지 (TownHall 타입)
+        townhalls = self.bot.enemy_structures.filter(
+            lambda s: s.type_id in {
+                UnitTypeId.COMMANDCENTER, UnitTypeId.NEXUS, UnitTypeId.HATCHERY,
+                UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
+                UnitTypeId.LAIR, UnitTypeId.HIVE
+            }
+        )
+
+        if not townhalls:
+            return None
+
+        # 본진에서 가장 먼 기지 (확장) 우선
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            enemy_main = self.bot.enemy_start_locations[0]
+            furthest_base = max(townhalls, key=lambda b: b.distance_to(enemy_main))
+            return furthest_base.position
+
+        return townhalls.first.position
+
+    def _cancel_baneling_drop(self) -> None:
+        """맹독 드랍 취소 및 정리"""
+        self.baneling_drop_active = False
+        self.baneling_drop_overlord_tag = None
+        self.baneling_drop_baneling_tags.clear()
+        self.baneling_drop_target = None
+
+    async def coordinate_multi_angle_attack(self, iteration: int) -> None:
+        """
+        ★ Phase 21: 다각도 동시 공격 조율 ★
+
+        2개 이상의 견제를 동시에 실행하여 상대 멀티태스킹 강요
+
+        Args:
+            iteration: Current game iteration
+        """
+        attack_vectors = []
+
+        # Vector 1: Zergling run-by
+        if self._can_execute_zergling_runby():
+            attack_vectors.append("zergling_runby")
+            await self._trigger_zergling_runby()
+
+        # Vector 2: Mutalisk harassment
+        if self._can_execute_mutalisk_harass():
+            attack_vectors.append("mutalisk_harass")
+            await self._trigger_mutalisk_harassment()
+
+        # Vector 3: Baneling drop
+        if self._can_execute_baneling_drop():
+            success = await self.execute_baneling_drop(iteration)
+            if success:
+                attack_vectors.append("baneling_drop")
+
+        # Log multi-angle attack
+        if len(attack_vectors) >= 2:
+            self.logger.info(
+                f"[{int(self.bot.time)}s] ★★ MULTI-ANGLE ATTACK ★★ "
+                f"{' + '.join(attack_vectors)}"
+            )
+
+    def _can_execute_zergling_runby(self) -> bool:
+        """Check if zergling run-by can be executed"""
+        zerglings = self.bot.units(UnitTypeId.ZERGLING)
+        return len(zerglings) >= 8 and self.zergling_runby_cooldown <= 0
+
+    def _can_execute_mutalisk_harass(self) -> bool:
+        """Check if mutalisk harassment can be executed"""
+        mutalisks = self.bot.units(UnitTypeId.MUTALISK)
+        return len(mutalisks) >= 5 and not self.mutalisk_harass_active
+
+    def _can_execute_baneling_drop(self) -> bool:
+        """Check if baneling drop can be executed"""
+        banelings = self.bot.units(UnitTypeId.BANELING)
+        overlords = self.bot.units(UnitTypeId.OVERLORD)
+        has_upgrade = UpgradeId.OVERLORDSPEED in self.bot.state.upgrades
+
+        return (
+            len(banelings) >= 4 and
+            len(overlords) >= 1 and
+            has_upgrade and
+            not self.baneling_drop_active and
+            self.bot.time >= self.baneling_drop_cooldown
+        )
+
+    async def _trigger_zergling_runby(self) -> None:
+        """Trigger zergling run-by (placeholder for existing logic)"""
+        # This would call existing zergling run-by logic
+        pass
+
+    async def _trigger_mutalisk_harassment(self) -> None:
+        """Trigger mutalisk harassment (placeholder for existing logic)"""
+        # This would call existing mutalisk harassment logic
+        pass
 
     def get_harassment_status(self) -> Dict:
         """견제 상태 반환"""

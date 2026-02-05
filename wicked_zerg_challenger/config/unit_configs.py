@@ -507,3 +507,227 @@ class CreepDenialConfig:
 def get_creep_denial_config() -> CreepDenialConfig:
     """Creep Denial 설정 반환"""
     return CreepDenialConfig()
+
+
+# ============================================================================
+# Phase 21: Magic Number Elimination - Additional Constants
+# ============================================================================
+
+
+class CombatConstants:
+    """Combat behavior thresholds and ranges"""
+
+    # HP-based behavior thresholds
+    BURROW_HP_THRESHOLD = 0.4      # 40% HP - burrow to save unit
+    RETREAT_HP_THRESHOLD = 0.3     # 30% HP - retreat to safety
+    FULL_HP_THRESHOLD = 0.8        # 80% HP - considered healthy
+    CRITICAL_HP_THRESHOLD = 0.2    # 20% HP - critical condition
+
+    # Distance-based thresholds
+    DETECTOR_THREAT_RANGE = 15     # Distance to flee from detectors
+    RETREAT_SAFE_DISTANCE = 20     # Safe distance for retreating units
+    MELEE_ENGAGEMENT_RANGE = 2     # Melee attack range
+    RANGED_ENGAGEMENT_RANGE = 6    # Average ranged attack range
+
+    # Threat assessment
+    THREAT_RANGE_CLOSE = 5         # Close threat range
+    THREAT_RANGE_MEDIUM = 10       # Medium threat range
+    THREAT_RANGE_FAR = 15          # Far threat range
+
+    # Formation and positioning
+    UNIT_SPREAD_DISTANCE = 2.0     # Minimum spread distance between units
+    FORMATION_TIGHTNESS = 3.0      # Formation cohesion distance
+    FLANKING_DISTANCE = 8.0        # Distance for flanking maneuvers
+
+    # Army composition thresholds
+    MIN_ARMY_SIZE_ATTACK = 10      # Minimum army supply for attack
+    MIN_ARMY_SIZE_DEFEND = 5       # Minimum army supply for defense
+    OVERWHELMING_FORCE_RATIO = 2.0  # Overwhelming force advantage
+
+
+class FrameTimingConstants:
+    """Game loop timing constants and intervals"""
+
+    # Base timing
+    GAME_FPS = 22                  # SC2 runs at 22.4 FPS (approximated to 22)
+    SECOND = 22                    # Frames per second
+    MINUTE = 1320                  # Frames per minute (60 * 22)
+
+    # Common intervals (in frames)
+    INTERVAL_1_SEC = 22
+    INTERVAL_2_SEC = 44
+    INTERVAL_3_SEC = 66
+    INTERVAL_5_SEC = 110
+    INTERVAL_10_SEC = 220
+    INTERVAL_30_SEC = 660
+    INTERVAL_1_MIN = 1320
+    INTERVAL_2_MIN = 2640
+    INTERVAL_5_MIN = 6600
+
+    # Manager update intervals
+    ECONOMY_UPDATE_INTERVAL = 8     # Economy manager runs every 8 frames
+    COMBAT_UPDATE_INTERVAL = 1      # Combat manager runs every frame
+    SCOUT_UPDATE_INTERVAL = 22      # Scout system every 1 second
+    UPGRADE_UPDATE_INTERVAL = 44    # Upgrade manager every 2 seconds
+    VISION_UPDATE_INTERVAL = 110    # Vision network every 5 seconds
+
+    # Periodic logging intervals
+    STATS_LOG_INTERVAL = 1320       # Log statistics every minute
+    STATUS_LOG_INTERVAL = 2640      # Log status every 2 minutes
+    PERFORMANCE_LOG_INTERVAL = 110  # Log performance every 5 seconds
+
+
+class ScoutingConstants:
+    """Scouting system configuration and intervals"""
+
+    # Phase-based scouting intervals (in seconds)
+    EARLY_GAME_INTERVAL = 25       # Scout every 25 seconds (0-5 min)
+    MID_GAME_INTERVAL = 40         # Scout every 40 seconds (5-10 min)
+    LATE_GAME_INTERVAL = 35        # Scout every 35 seconds (10+ min)
+    EMERGENCY_INTERVAL = 15        # Scout every 15 seconds (emergency mode)
+    TECH_TIMING_INTERVAL = 20      # Scout every 20 seconds (4-7 min tech window)
+
+    # Scout unit limits
+    MAX_OVERLORD_SCOUTS = 3        # Maximum overlords on scout duty
+    MAX_ZERGLING_SCOUTS = 4        # Maximum zerglings on scout duty
+    MAX_CHANGELING_SCOUTS = 2      # Maximum changelings on scout duty
+
+    # Scout behavior thresholds
+    SCOUT_DEATH_RETREAT_TIME = 30  # Seconds to wait after scout death
+    SCOUT_HP_RETREAT_THRESHOLD = 0.5  # HP threshold to retreat scout
+    INTEL_STALE_THRESHOLD = 60     # Seconds before intel is considered stale
+
+    # Priority targets
+    PRIORITY_HIGH_DURATION = 10    # Seconds to scout high-priority targets
+    PRIORITY_MEDIUM_DURATION = 20  # Seconds for medium priority
+    PRIORITY_LOW_DURATION = 30     # Seconds for low priority
+
+    # Game phase timing (in seconds)
+    EARLY_GAME_END = 300           # Early game ends at 5 minutes
+    MID_GAME_END = 600             # Mid game ends at 10 minutes
+    TECH_TIMING_START = 240        # Tech timing window starts at 4 minutes
+    TECH_TIMING_END = 420          # Tech timing window ends at 7 minutes
+
+
+class HarassmentConstants:
+    """Harassment system configuration"""
+
+    # Aggressive mode allocation percentages
+    PASSIVE_ALLOCATION = 0.05           # 5% of army for harassment
+    OPPORTUNISTIC_ALLOCATION = 0.10     # 10% of army
+    AGGRESSIVE_ALLOCATION = 0.15        # 15% of army
+    ULTRA_AGGRESSIVE_ALLOCATION = 0.25  # 25% of army
+
+    # Timing windows (in seconds)
+    EARLY_AGGRESSIVE_START = 60         # Ultra aggressive from 1-4 minutes
+    EARLY_AGGRESSIVE_END = 240
+
+    # Unit composition thresholds
+    MIN_MUTALISK_HARASS = 5             # Minimum mutalisks for harassment
+    MIN_ZERGLING_RUNBY = 8              # Minimum zerglings for run-by
+    MIN_BANELING_DROP = 4               # Minimum banelings for drop
+
+    # Cooldowns (in seconds)
+    BANELING_DROP_COOLDOWN = 120        # 2 minutes between drops
+    MUTALISK_HARASS_COOLDOWN = 60       # 1 minute between muta attacks
+    ZERGLING_RUNBY_COOLDOWN = 45        # 45 seconds between run-bys
+
+    # HP and retreat thresholds
+    MUTALISK_RETREAT_HP = 0.35          # Retreat mutalisks at 35% HP
+    ZERGLING_SACRIFICE_HP = 0.20        # Zerglings fight to death below 20%
+    HARASSMENT_ABORT_HP = 0.50          # Abort mission at 50% HP average
+
+    # Target selection
+    WORKER_HARASSMENT_PRIORITY = 100    # Priority for worker harassment
+    TECH_BUILDING_PRIORITY = 80         # Priority for tech buildings
+    PRODUCTION_PRIORITY = 60            # Priority for production buildings
+    EXPANSION_PRIORITY = 40             # Priority for expansions
+
+
+class ExpansionConstants:
+    """Expansion timing and safety thresholds"""
+
+    # Target timings (in seconds)
+    TARGET_NATURAL_TIMING = 60          # Target: natural by 60 seconds
+    TARGET_THIRD_TIMING = 90            # Target: third base by 90 seconds
+    TARGET_FOURTH_TIMING = 150          # Target: fourth base by 150 seconds
+    TARGET_FIFTH_TIMING = 210           # Target: fifth base by 210 seconds
+
+    # Timing validation thresholds
+    ACCEPTABLE_NATURAL_DELAY = 10       # Acceptable delay: +10 seconds
+    CRITICAL_NATURAL_DELAY = 20         # Critical delay: +20 seconds
+    EMERGENCY_NATURAL_TIMING = 90       # Emergency: must expand by 90s
+
+    # Resource thresholds
+    AGGRESSIVE_MINERAL_THRESHOLD = 300  # Expand aggressively at 300 minerals
+    SAFE_MINERAL_THRESHOLD = 350        # Safe expand at 350 minerals
+    BANK_MINERAL_THRESHOLD = 500        # Force expand if banking 500+ minerals
+
+    # Safety checks
+    SAFETY_RADIUS = 30                  # Check enemies within 30 units
+    SAFETY_ENEMY_THRESHOLD = 3          # Safe if < 3 enemies nearby
+    SAFETY_IGNORE_WORKERS = True        # Ignore enemy workers in safety check
+
+    # Saturation thresholds
+    MINIMUM_DRONES_PER_BASE = 14        # Minimum 14 drones before expanding
+    OPTIMAL_DRONES_PER_BASE = 16        # Optimal 16 drones on minerals
+    FULL_SATURATION = 22                # Full saturation: 16 minerals + 6 gas
+
+
+class PerformanceConstants:
+    """Performance profiling and optimization thresholds"""
+
+    # Frame time thresholds (in milliseconds)
+    TARGET_FRAME_TIME = 10.0            # Target: < 10ms per frame
+    WARNING_FRAME_TIME = 15.0           # Warning: > 15ms per frame
+    CRITICAL_FRAME_TIME = 20.0          # Critical: > 20ms per frame
+    MAX_FRAME_TIME = 45.0               # Max: 45ms (22 FPS limit)
+
+    # Manager-specific budgets (in milliseconds)
+    COMBAT_MANAGER_BUDGET = 6.0         # Combat manager: < 6ms
+    ECONOMY_MANAGER_BUDGET = 3.0        # Economy manager: < 3ms
+    PRODUCTION_MANAGER_BUDGET = 2.0     # Production: < 2ms
+    UPGRADE_MANAGER_BUDGET = 1.0        # Upgrades: < 1ms
+    SCOUT_MANAGER_BUDGET = 1.0          # Scouting: < 1ms
+
+    # Cache and optimization
+    SPATIAL_QUERY_CACHE_FRAMES = 22     # Cache spatial queries for 1 second
+    UNIT_FILTER_CACHE_FRAMES = 11       # Cache unit filters for 0.5 seconds
+    PATH_CACHE_FRAMES = 44              # Cache paths for 2 seconds
+
+    # Batch processing limits
+    MAX_UNITS_PER_BATCH = 50            # Process max 50 units per batch
+    MAX_MICRO_UNITS_PER_FRAME = 30      # Micro max 30 units per frame
+    MAX_SPATIAL_QUERIES_PER_FRAME = 20  # Max 20 spatial queries per frame
+
+
+# Helper functions for new constants
+
+def get_combat_constants() -> CombatConstants:
+    """전투 상수 반환"""
+    return CombatConstants()
+
+
+def get_frame_timing_constants() -> FrameTimingConstants:
+    """프레임 타이밍 상수 반환"""
+    return FrameTimingConstants()
+
+
+def get_scouting_constants() -> ScoutingConstants:
+    """정찰 상수 반환"""
+    return ScoutingConstants()
+
+
+def get_harassment_constants() -> HarassmentConstants:
+    """견제 상수 반환"""
+    return HarassmentConstants()
+
+
+def get_expansion_constants() -> ExpansionConstants:
+    """확장 상수 반환"""
+    return ExpansionConstants()
+
+
+def get_performance_constants() -> PerformanceConstants:
+    """성능 상수 반환"""
+    return PerformanceConstants()
