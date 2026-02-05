@@ -1,0 +1,135 @@
+{
+  "scouting": {
+    "early_game_interval": 25,
+    "mid_game_interval": 40,
+    "late_game_interval": 35,
+    "tech_timing_interval": 20,
+    "emergency_interval": 15,
+    "max_overlord_scouts": 3,
+    "max_zergling_scouts": 4,
+    "max_changeling_scouts": 2,
+    "intel_stale_threshold": 60
+  },
+  "harassment": {
+    "default_mode": "opportunistic",
+    "allocation_percent": {
+      "passive": 0.05,
+      "opportunistic": 0.10,
+      "aggressive": 0.15,
+      "ultra_aggressive": 0.25
+    },
+    "cooldowns": {
+      "zergling_runby": 60,
+      "mutalisk_harass": 60,
+      "baneling_drop": 120,
+      "roach_poke": 45
+    },
+    "thresholds": {
+      "mutalisk_retreat_hp": 0.35,
+      "zergling_sacrifice_hp": 0.20,
+      "abort_mission_hp": 0.50
+    },
+    "unit_requirements": {
+      "min_mutalisk_harass": 5,
+      "min_zergling_runby": 8,
+      "min_baneling_drop": 4,
+      "min_roach_poke": 5
+    }
+  },
+  "expansion": {
+    "target_timings": [60, 90, 150, 210, 270, 330],
+    "timing_warnings": {
+      "excellent": 70,
+      "acceptable": 90,
+      "delayed": 120
+    },
+    "thresholds": {
+      "aggressive_minerals": 300,
+      "safe_minerals": 350,
+      "bank_minerals": 500
+    },
+    "safety": {
+      "check_radius": 30,
+      "enemy_threshold": 3,
+      "ignore_workers": true
+    },
+    "saturation": {
+      "minimum_drones_per_base": 14,
+      "optimal_drones_minerals": 16,
+      "optimal_drones_gas": 6,
+      "full_saturation": 22
+    }
+  },
+  "combat": {
+    "hp_thresholds": {
+      "burrow": 0.4,
+      "retreat": 0.3,
+      "full_hp": 0.8,
+      "critical": 0.2
+    },
+    "ranges": {
+      "detector_threat": 15,
+      "retreat_safe_distance": 20,
+      "melee_engagement": 2,
+      "ranged_engagement": 6
+    },
+    "army_requirements": {
+      "min_attack_supply": 10,
+      "min_defend_supply": 5,
+      "overwhelming_ratio": 2.0
+    },
+    "formation": {
+      "unit_spread_distance": 2.0,
+      "formation_tightness": 3.0,
+      "flanking_distance": 8.0
+    }
+  },
+  "performance": {
+    "frame_time_targets": {
+      "target_ms": 10.0,
+      "warning_ms": 15.0,
+      "critical_ms": 20.0,
+      "max_ms": 45.0
+    },
+    "manager_budgets": {
+      "combat_manager": 6.0,
+      "economy_manager": 3.0,
+      "production_manager": 2.0,
+      "upgrade_manager": 1.0,
+      "scout_manager": 1.0
+    },
+    "cache_durations": {
+      "spatial_query_frames": 22,
+      "unit_filter_frames": 11,
+      "path_cache_frames": 44
+    },
+    "batch_limits": {
+      "max_units_per_batch": 50,
+      "max_micro_units_per_frame": 30,
+      "max_spatial_queries_per_frame": 20
+    }
+  },
+  "timing": {
+    "game_fps": 22,
+    "intervals_frames": {
+      "1_second": 22,
+      "2_seconds": 44,
+      "5_seconds": 110,
+      "10_seconds": 220,
+      "1_minute": 1320
+    },
+    "manager_intervals": {
+      "economy": 8,
+      "combat": 1,
+      "scout": 22,
+      "upgrade": 44,
+      "vision": 110
+    },
+    "game_phases": {
+      "early_game_end": 300,
+      "mid_game_end": 600,
+      "tech_timing_start": 240,
+      "tech_timing_end": 420
+    }
+  }
+}

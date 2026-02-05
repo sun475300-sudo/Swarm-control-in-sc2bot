@@ -163,6 +163,24 @@ try:
 except ImportError:
     QueenInjectOptimizer = None
 
+# Queen Transfusion Manager
+try:
+    from economy.queen_transfusion_manager import QueenTransfusionManager
+except ImportError:
+    QueenTransfusionManager = None
+
+# Resource Manager (Thread-safe reservations)
+try:
+    from core.resource_manager import ResourceManager
+except ImportError:
+    ResourceManager = None
+
+# Spatial Query Optimizer (C++ optimized proximity)
+try:
+    from combat.spatial_query_optimizer import SpatialQueryOptimizer
+except ImportError:
+    SpatialQueryOptimizer = None
+
 # Multi-Prong Attack Coordinator
 try:
     from combat.multi_prong_coordinator import MultiProngCoordinator
@@ -311,6 +329,27 @@ class BotStepIntegrator:
             print("[INIT] QueenInjectOptimizer initialized (Phase 8)")
         else:
             self.bot.queen_inject_opt = None
+
+        # Queen Transfusion Manager
+        if QueenTransfusionManager:
+            self.bot.queen_transfusion = QueenTransfusionManager(bot)
+            print("[INIT] QueenTransfusionManager initialized (Phase 21)")
+        else:
+            self.bot.queen_transfusion = None
+
+        # Resource Manager (Thread-safe resource reservation)
+        if ResourceManager:
+            self.bot.resource_manager = ResourceManager(bot)
+            print("[INIT] ResourceManager initialized (Phase 21 - Race condition fix)")
+        else:
+            self.bot.resource_manager = None
+
+        # Spatial Query Optimizer (Performance optimization)
+        if SpatialQueryOptimizer:
+            self.bot.spatial_query = SpatialQueryOptimizer(bot)
+            print("[INIT] SpatialQueryOptimizer initialized (Phase 21 - C++ optimization)")
+        else:
+            self.bot.spatial_query = None
 
         # Multi-Prong Attack Coordinator
         if MultiProngCoordinator:
@@ -1299,6 +1338,10 @@ class BotStepIntegrator:
             # 전투 병력 생산 후 남은 애벌레로 드론 생산
             await self._safe_manager_step(self.bot.economy, iteration, "Economy")
 
+            # ★ Phase 21: 확장 타이밍 모니터링 (50초마다) ★
+            if iteration % 1100 == 0:  # Every 50 seconds
+                self._check_expansion_status()
+
             # 5.1 ★★★ Queen Inject Optimizer (Phase 8 - 완벽한 Inject) ★★★
             if hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt:
                 start_time = self._logic_tracker.start_logic("QueenInjectOpt")
@@ -1320,7 +1363,73 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("QueenInjectOpt", start_time)
 
-            # 5.2 ★★★ Overlord Vision Network (Phase 8 - 시야 네트워크) ★★★
+            # 5.2 ★★★ Queen Transfusion Manager (Phase 21 - Smart Healing) ★★★
+            if hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion:
+                start_time = self._logic_tracker.start_logic("QueenTransfusion")
+                try:
+                    # Get available queens (defense/flexible role queens with energy)
+                    from sc2.ids.unit_typeid import UnitTypeId
+                    queens = self.bot.units(UnitTypeId.QUEEN)
+
+                    # Get damaged friendly units (biological only)
+                    damaged_units = self.bot.units.filter(
+                        lambda u: u.is_biological and u.health_percentage < 0.6
+                    )
+
+                    if queens and damaged_units:
+                        await self.bot.queen_transfusion.execute_transfusions(
+                            queens, damaged_units, iteration
+                        )
+
+                    # Log statistics periodically
+                    self.bot.queen_transfusion.log_statistics(iteration)
+
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["QueenTransfusion"] = error_handler.error_counts.get("QueenTransfusion", 0) + 1
+                        if error_handler.error_counts["QueenTransfusion"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] QueenTransfusion error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("QueenTransfusion", start_time)
+
+            # 5.3 ★★★ Resource Manager (Phase 21 - Race Condition Prevention) ★★★
+            if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
+                try:
+                    # Log statistics periodically
+                    self.bot.resource_manager.log_statistics(iteration)
+
+                    # Clear stale reservations (safety mechanism)
+                    if iteration % 220 == 0:  # Every 10 seconds
+                        await self.bot.resource_manager.clear_stale_reservations(iteration)
+
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["ResourceManager"] = error_handler.error_counts.get("ResourceManager", 0) + 1
+                        if error_handler.error_counts["ResourceManager"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] ResourceManager error: {e}")
+
+            # 5.4 ★★★ Spatial Query Optimizer (Phase 21 - Performance) ★★★
+            if hasattr(self.bot, "spatial_query") and self.bot.spatial_query:
+                try:
+                    # Clear cache at start of frame
+                    self.bot.spatial_query.clear_cache_if_needed(iteration)
+
+                    # Log statistics periodically
+                    self.bot.spatial_query.log_statistics(iteration)
+
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["SpatialQuery"] = error_handler.error_counts.get("SpatialQuery", 0) + 1
+                        if error_handler.error_counts["SpatialQuery"] <= error_handler.max_error_logs:
+                            print(f"[ERROR] SpatialQuery error: {e}")
+
+            # 5.5 ★★★ Overlord Vision Network (Phase 8 - 시야 네트워크) ★★★
             if hasattr(self.bot, "vision_network") and self.bot.vision_network:
                 start_time = self._logic_tracker.start_logic("VisionNetwork")
                 try:

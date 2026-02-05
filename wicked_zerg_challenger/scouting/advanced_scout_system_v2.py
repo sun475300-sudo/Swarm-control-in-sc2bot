@@ -84,31 +84,50 @@ class AdvancedScoutingSystemV2:
 
     def _get_dynamic_interval(self) -> float:
         """
-        ★ Phase 17: 게임 시간대와 적 정보 신선도에 따른 동적 주기 계산 ★
+        ★ Phase 21: 향상된 동적 정찰 간격 (더 빈번한 정찰) ★
 
-        - 초반 (0-5분): 30초마다 (적 빌드 파악)
-        - 중반 (5-10분): 1분마다 (확장 및 군대 조합 확인)
-        - 후반 (10분+): 45초마다 (멀티 확장 및 테크 체크)
-        - 긴급 상황: 15초마다 (정보가 1분 이상 오래됨)
+        - 초반 (0-5분): 25초마다 (30초 → 25초) - 적 빌드 빠른 파악
+        - 중반 (5-10분): 40초마다 (60초 → 40초) - 대폭 개선, 확장/군대 조합 확인
+        - 후반 (10분+): 35초마다 (45초 → 35초) - 멀티 확장 및 테크 빠른 체크
+        - 테크 타이밍 (4-7분): 20초마다 (NEW) - 중요 테크 전환 윈도우
+        - 긴급 상황: 15초마다 (정보가 60초 이상 오래됨)
+
+        Performance impact: Minimal (scouts run on separate frame budget)
         """
         game_time = self.bot.time
 
-        # 긴급 모드: 적 정보가 1분 이상 오래됨
+        # 긴급 모드: 적 정보가 60초 이상 오래됨
+        if self._is_emergency_mode():
+            return 15.0
+
+        # 테크 타이밍 윈도우 (4-7분): 가장 중요한 테크 전환 시기
+        if 240 < game_time < 420:  # 4분 ~ 7분
+            return 20.0
+
+        # 게임 시간대별 간격 (Phase 21 개선)
+        if game_time < 300:  # 0-5분 (초반)
+            return 25.0      # 30초 → 25초 (17% 향상)
+        elif game_time < 600:  # 5-10분 (중반)
+            return 40.0      # 60초 → 40초 (33% 향상)
+        else:  # 10분+ (후반)
+            return 35.0      # 45초 → 35초 (22% 향상)
+
+    def _is_emergency_mode(self) -> bool:
+        """
+        긴급 모드 감지: 적 정보가 오래됨
+
+        Returns:
+            True if intel is stale (>60s old)
+        """
+        game_time = self.bot.time
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard:
             last_seen = getattr(blackboard, "last_enemy_seen_time", 0)
             info_age = game_time - last_seen
+            if info_age > 60:  # 60초 이상 오래된 정보
+                return True
 
-            if info_age > 60.0:  # 1분 이상 정보 없음
-                return self.EMERGENCY_INTERVAL
-
-        # 게임 시간대별 주기
-        if game_time < 300:  # 0-5분: 초반
-            return self.EARLY_GAME_INTERVAL
-        elif game_time < 600:  # 5-10분: 중반
-            return self.MID_GAME_INTERVAL
-        else:  # 10분+: 후반
-            return self.LATE_GAME_INTERVAL
+        return False
 
     def _manage_active_scouts(self):
         """
