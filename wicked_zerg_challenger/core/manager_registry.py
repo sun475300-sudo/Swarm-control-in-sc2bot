@@ -21,7 +21,7 @@ def get_all_manager_configs():
 
         ManagerConfig(
             name="Blackboard",
-            module_path="utils.blackboard",
+            module_path="blackboard",
             class_name="Blackboard",
             attribute_name="blackboard",
             priority=ManagerPriority.CRITICAL,
@@ -225,8 +225,8 @@ def get_all_manager_configs():
 
         ManagerConfig(
             name="CreepExpansion",
-            module_path="creep_expansion",
-            class_name="CreepExpansion",
+            module_path="creep_expansion_system",
+            class_name="CreepExpansionSystem",
             attribute_name="creep_expansion",
             priority=ManagerPriority.LOW,
         ),
@@ -260,17 +260,9 @@ def get_all_manager_configs():
         # ========== OPTIONAL (완전 선택적) ==========
 
         ManagerConfig(
-            name="KnowledgeManager",
-            module_path="knowledge.knowledge_manager",
-            class_name="KnowledgeManager",
-            attribute_name="knowledge",
-            priority=ManagerPriority.OPTIONAL,
-        ),
-
-        ManagerConfig(
             name="DataCache",
-            module_path="data_cache",
-            class_name="DataCache",
+            module_path="data_cache_manager",
+            class_name="DataCacheManager",
             attribute_name="data_cache",
             priority=ManagerPriority.OPTIONAL,
         ),
@@ -291,30 +283,6 @@ def get_all_manager_configs():
             attribute_name="production_controller",
             priority=ManagerPriority.OPTIONAL,
             dependencies=["blackboard"],
-        ),
-
-        ManagerConfig(
-            name="GameStateTracker",
-            module_path="game_state_tracker",
-            class_name="GameStateTracker",
-            attribute_name="game_state",
-            priority=ManagerPriority.OPTIONAL,
-        ),
-
-        ManagerConfig(
-            name="TimingAttackPlanner",
-            module_path="timing_attack_planner",
-            class_name="TimingAttackPlanner",
-            attribute_name="timing_attack",
-            priority=ManagerPriority.OPTIONAL,
-        ),
-
-        ManagerConfig(
-            name="TechTreeOptimizer",
-            module_path="tech_tree_optimizer",
-            class_name="TechTreeOptimizer",
-            attribute_name="tech_tree",
-            priority=ManagerPriority.OPTIONAL,
         ),
     ]
 
