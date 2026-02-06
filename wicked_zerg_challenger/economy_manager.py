@@ -111,6 +111,32 @@ class EconomyManager:
         """Set emergency mode validation."""
         self._emergency_mode = active
 
+    def safeguard_resources(self) -> tuple:
+        """
+        Phase 17: Centralized Resource Safety Check
+        Ensures available resources never report negative values.
+        """
+        # 1. Use centralized manager if available
+        if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+            mins, gas = self.bot.resource_manager.get_available_resources()
+            return max(0, mins), max(0, gas)
+
+        # 2. Local fallback with safety clamping
+        current_mins = getattr(self.bot, "minerals", 0)
+        current_gas = getattr(self.bot, "vespene", 0)
+
+        available_mins = current_mins - self._reserved_minerals
+        available_gas = current_gas - self._reserved_gas
+
+        # Log warning on over-reservation (Logic Bug Detection)
+        if available_mins < 0 and self.bot.iteration % 100 == 0:
+            print(f"[ECONOMY_WARN] Negative minerals detected! ({available_mins}) Reserved: {self._reserved_minerals}")
+        
+        if available_gas < 0 and self.bot.iteration % 100 == 0:
+             print(f"[ECONOMY_WARN] Negative gas detected! ({available_gas}) Reserved: {self._reserved_gas}")
+
+        return max(0, available_mins), max(0, available_gas)
+
     async def on_step(self, iteration: int) -> None:
         if not hasattr(self.bot, "larva"):
             return
@@ -435,13 +461,8 @@ class EconomyManager:
             return
 
         # ★ Blackboard 없을 때 폴백 (기존 로직) ★
-        # ★ 자원 예약 체크 (ResourceManager 사용) ★
-        if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
-            available_minerals, available_gas = self.bot.resource_manager.get_available_resources()
-        else:
-            # Fallback to simple calculation
-            available_minerals = self.bot.minerals - self._reserved_minerals
-            available_gas = self.bot.vespene - self._reserved_gas
+        # ★ Phase 17: Centralized Resource Check ★
+        available_minerals, available_gas = self.safeguard_resources()
 
         if available_minerals < 50:  # Drone 비용
             return

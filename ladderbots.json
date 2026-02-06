@@ -1,0 +1,12 @@
+{
+    "Bots": {
+        "WickedZergBotPro": {
+            "Race": "Zerg",
+            "Type": "Python",
+            "RootDir": "./",
+            "FileName": "run.py",
+            "Args": "",
+            "Debug": false
+        }
+    }
+}

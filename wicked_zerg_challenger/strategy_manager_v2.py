@@ -132,8 +132,6 @@ class StrategyManagerV2(StrategyManager):
         self._update_build_phase(game_time)
         self._evaluate_strategy_effectiveness()
         self._adjust_resource_priorities()
-        self._evaluate_strategy_effectiveness()
-        self._adjust_resource_priorities()
         self._execute_multi_strategy()
         
         # Phase 18: Adaptive Composition
@@ -143,12 +141,14 @@ class StrategyManagerV2(StrategyManager):
         # await self._check_smart_surrender(game_time) # Async call needs await
 
 
-        # Update blackboard with V2 data
         if self.blackboard:
             self.blackboard.set("win_condition", self.current_win_condition.name)
             self.blackboard.set("build_phase", self.current_build_phase.name)
             self.blackboard.set("resource_priorities", self.resource_priorities)
             self.blackboard.set("active_strategies", len(self.active_strategies))
+
+        # Phase 18: Smart Surrender
+        self._check_smart_surrender(game_time)
 
     # ========== WIN CONDITION DETECTION ==========
 
@@ -913,7 +913,6 @@ class StrategyManagerV2(StrategyManager):
             return
 
         self.active_strategies.append(strategy)
-        self.active_strategies.append(strategy)
         self.logger.info(f"[STRATEGY] Added: {strategy_name} (Priority: {strategy.get('priority', 'N/A')})")
 
     # ========== ADAPTIVE COMPOSITION (Phase 18) ==========
@@ -986,9 +985,7 @@ class StrategyManagerV2(StrategyManager):
             ratios["corruptor"] = 0.40
             ratios["hydra"] = 0.30
             ratios["viper"] = 0.10
-            ratios["roach"] = 0.20
-            ratios["hydra"] = 0.20
-            ratios["zergling"] = 0.20 # Mineral dump
+            ratios["zergling"] = 0.20  # Mineral dump
             
         # 2. Anti-Ground Mech (Ravager/Viper/Lurker)
         elif counts["ground_mech"] >= 5:
@@ -1034,12 +1031,12 @@ class StrategyManagerV2(StrategyManager):
         """Public API for UnitFactory"""
         return self.target_unit_ratios
 
-    # ========== SMART SURRENDER (Phase 18) ==========
+    # ========== SMART SURRENDER (Phase 18/17) ==========
     
-    def check_surrender(self, game_time: float) -> bool:
+    def _check_smart_surrender(self, game_time: float) -> bool:
         """Surrender if game is hopeless to save training time"""
-        # Only surrender after 5 minutes
-        if game_time < 300:
+        # Only surrender after 4 minutes (was 5)
+        if game_time < 240:
              return False
              
         # Conditions for hopeless state:
@@ -1058,6 +1055,14 @@ class StrategyManagerV2(StrategyManager):
              duration = game_time - self.surrender_trigger_time
              if duration > self.surrender_threshold:
                  self.logger.warning(f"[SURRENDER] Game is hopeless for {int(duration)}s. Surrendering to speed up training.")
+                 
+                 # Force async leave
+                 import asyncio
+                 try:
+                    asyncio.create_task(self.bot.client.leave())
+                 except Exception as e:
+                    self.logger.error(f"Failed to trigger leave: {e}")
+                 
                  return True
         else:
              self.surrender_trigger_time = 0

@@ -187,7 +187,7 @@ def get_all_manager_configs():
             name="★ AdvancedMicroControllerV3",
             module_path="advanced_micro_controller_v3",
             class_name="AdvancedMicroControllerV3",
-            attribute_name="advanced_micro",
+            attribute_name="micro_v3",  # Fixed: code accesses bot.micro_v3
             priority=ManagerPriority.LOW,
         ),
 
@@ -195,7 +195,7 @@ def get_all_manager_configs():
             name="MicroController",
             module_path="micro_controller",
             class_name="MicroController",
-            attribute_name="micro_controller",
+            attribute_name="micro",  # Fixed: code accesses bot.micro
             priority=ManagerPriority.LOW,
         ),
 

@@ -275,6 +275,29 @@ def main():
             except (IndexError, ValueError) as e:
                 print(f"[WARNING] Invalid --learning_rate argument: {e}")
 
+    # Parse opponent race filter (--race zerg/protoss/terran/all)
+    opponent_race_filter = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--race" or arg == "--opponent_race":
+            try:
+                race_str = sys.argv[i+1].lower()
+                if race_str == "zerg":
+                    opponent_race_filter = [Race.Zerg]
+                    print(f"[CONFIG] Opponent race filter: Zerg only (ZvZ)")
+                elif race_str == "protoss":
+                    opponent_race_filter = [Race.Protoss]
+                    print(f"[CONFIG] Opponent race filter: Protoss only (ZvP)")
+                elif race_str == "terran":
+                    opponent_race_filter = [Race.Terran]
+                    print(f"[CONFIG] Opponent race filter: Terran only (ZvT)")
+                elif race_str == "all":
+                    opponent_race_filter = None
+                    print(f"[CONFIG] Opponent race filter: All races")
+                else:
+                    print(f"[WARNING] Unknown race '{race_str}'. Using all races.")
+            except (IndexError, ValueError) as e:
+                print(f"[WARNING] Invalid --race argument: {e}")
+
     while True:
         try:
             if game_count >= max_games:
@@ -322,13 +345,20 @@ def main():
                 except Exception:
                     continue
 
-            # IMPROVED: Bag of Races (Ensure variety)
-            # If bag is empty, refill it
-            if not hasattr(main, "race_bag") or not main.race_bag:
-                main.race_bag = [Race.Terran, Race.Protoss, Race.Zerg]
-                random.shuffle(main.race_bag)
-                print(f"[RACE_LOGIC] Refilled race bag: {[r.name for r in main.race_bag]}")
-            
+            # IMPROVED: Bag of Races (Ensure variety) with --race filter support
+            if opponent_race_filter is not None:
+                # Filtered mode: only use specified races
+                if not hasattr(main, "race_bag") or not main.race_bag:
+                    main.race_bag = list(opponent_race_filter)
+                    random.shuffle(main.race_bag)
+                    print(f"[RACE_LOGIC] Filtered race bag: {[r.name for r in main.race_bag]}")
+            else:
+                # Default: all races
+                if not hasattr(main, "race_bag") or not main.race_bag:
+                    main.race_bag = [Race.Terran, Race.Protoss, Race.Zerg]
+                    random.shuffle(main.race_bag)
+                    print(f"[RACE_LOGIC] Refilled race bag: {[r.name for r in main.race_bag]}")
+
             # Pick from bag
             opponent_race = main.race_bag.pop()
 
@@ -497,19 +527,25 @@ def main():
                             break
 
                         time.sleep(1)
-                        # Force kill if still running
+                        # Force kill if still running (Windows only)
                         print(f"[WARNING] SC2 process stuck. Forcing termination...")
                         try:
                             import subprocess
-                            subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                            subprocess.call(["taskkill", "/F", "/IM", "StarCraft II.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            if sys.platform == "win32":
+                                subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                subprocess.call(["taskkill", "/F", "/IM", "StarCraft II.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            else:
+                                subprocess.call(["pkill", "-f", "SC2_x64"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         except Exception:
                             pass
                 except (ImportError, Exception):
-                    # Fallback: Blindly try to kill SC2 just in case, then sleep
+                    # Fallback: try to kill SC2, then sleep
                     try:
                         import subprocess
-                        subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        if sys.platform == "win32":
+                            subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        else:
+                            subprocess.call(["pkill", "-f", "SC2_x64"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     except Exception:
                         pass
                     time.sleep(wait_between_games)

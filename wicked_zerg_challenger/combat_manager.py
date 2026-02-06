@@ -120,16 +120,14 @@ class CombatManager:
                 self._last_expansion_defense_check = iteration
 
             # ★★★ INTEGRATED: MicroController handles all ground combat ★★★
-            # MicroController provides kiting, spreading, and focus fire
+            # NOTE: MicroController.on_step() is called by BotStepIntegrator (single caller)
+            # CombatManager only sets defense mode flag, does NOT call on_step() directly
             if hasattr(self.bot, 'micro') and self.bot.micro is not None:
                 # ★ 기지 위협 시 MicroController도 방어 모드로 전환 ★
                 if base_threat and hasattr(self.bot.micro, 'set_defense_mode'):
                     self.bot.micro.set_defense_mode(True, base_threat)
 
-                # ★★★ EXECUTE MicroController for ground units ★★★
-                await self.bot.micro.on_step(iteration)
-
-                # CombatManager still handles air unit harassment (multitasking)
+                # CombatManager handles air unit harassment (multitasking)
                 await self._handle_air_units_separately(iteration)
 
                 # Also ensure burrow controller gets called for banelings
