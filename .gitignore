@@ -35,3 +35,27 @@ wicked_zerg_challenger/nul
 # Test outputs
 test_output*.log
 quick_test*.log
+
+# API Keys and Secrets - NEVER commit these!
+.env
+.env.*
+*.key
+*.pem
+api_keys/
+secrets/
+**/api_keys/
+**/secrets/
+*_api_key.txt
+*_API_KEY.txt
+client_secret.json
+**/client_secret.json
+
+# Claude Code local settings (contains API keys)
+.claude/settings.local.json
+
+# OpenClaw config (contains tokens)
+.openclaw/
+
+# CLI Proxy API
+.cli-proxy-api/
+config.yaml
