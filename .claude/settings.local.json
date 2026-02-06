@@ -108,7 +108,11 @@
       "Bash(npx clawhub install:*)",
       "Bash(npx clawhub explore:*)",
       "Read(//d/**)",
-      "Bash(winget search:*)"
+      "Bash(winget search:*)",
+      "Bash(\"C:\\\\Users\\\\sun47\\\\.local\\\\bin\\\\claude.exe\" --version)",
+      "Bash(\"C:\\\\Users\\\\sun47\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\LuisPater.CLIProxyAPI_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\cli-proxy-api.exe\" --help)",
+      "Bash(\"C:\\\\Users\\\\sun47\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\LuisPater.CLIProxyAPI_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\cli-proxy-api.exe\" -claude-login)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }
