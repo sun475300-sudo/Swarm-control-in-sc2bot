@@ -41,6 +41,12 @@ except ImportError:
         pass
     Point2 = tuple
 
+try:
+    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+except ImportError:
+    UnitAuthorityManager = None
+    AuthorityLevel = None
+
 
 class SpellCasterAutomation:
     """
@@ -79,7 +85,50 @@ class SpellCasterAutomation:
             "changeling": 0,
         }
 
-    async def on_step(self, iteration: int):
+        # ★ Authority Tracking ★
+        self.active_casters: Dict[int, str] = {}  # {tag: ability_name}
+
+    def _cleanup_authorities(self):
+        """Clean up finished assignments"""
+        if not hasattr(self.bot, "unit_authority"):
+            return
+
+        # Release units that are no longer casting or died
+        for tag in list(self.active_casters.keys()):
+            unit = self.bot.units.find_by_tag(tag)
+            
+            # If unit dead or idle (finished casting), release
+            if not unit or (unit.is_idle and self._is_cast_finished(tag)):
+                self.bot.unit_authority.release_unit(tag, "SpellCaster")
+                del self.active_casters[tag]
+
+    def _is_cast_finished(self, tag: int) -> bool:
+        """Check if enough time passed since cast"""
+        if tag not in self.active_casters:
+            return True
+            
+        ability = self.active_casters[tag]
+        last_used = self.last_skill_used.get(tag, {}).get(ability, 0)
+        
+        # Give 2 seconds for cast execution
+        return (getattr(self.bot, "time", 0) - last_used) > 1.0
+
+    async def _request_authority(self, unit, ability_name: str) -> bool:
+        """Request authority for unit"""
+        if not hasattr(self.bot, "unit_authority"):
+            return True  # No authority manager, allow
+            
+        if self.bot.unit_authority.request_unit(
+            unit.tag, 
+            "SpellCaster", 
+            AuthorityLevel.TACTICAL
+        ):
+            self.active_casters[unit.tag] = ability_name
+            return True
+            
+        return False
+
+    async def on_step(self, iteration: int) -> None:
         """매 프레임 실행"""
         try:
             if iteration - self.last_check < self.check_interval:
@@ -101,6 +150,9 @@ class SpellCasterAutomation:
 
             # ★ 5. 감시군주 환상 (Changeling) ★
             await self._overseer_changeling()
+
+            # ★ 6. Authority Cleanup (매 프레임) ★
+            self._cleanup_authorities()
 
         except Exception as e:
             if iteration % 200 == 0:
@@ -144,6 +196,10 @@ class SpellCasterAutomation:
             # 가장 체력이 낮은 유닛 선택
             target = min(injured_units, key=lambda u: u.health_percentage)
 
+            # 권한 요청 (이미 가지고 있으면 True 반환)
+            if not await self._request_authority(queen, "transfuse"):
+                continue
+
             # 수혈 실행
             abilities = await self.bot.get_available_abilities(queen)
             if AbilityId.TRANSFUSION_TRANSFUSION in abilities:
@@ -185,6 +241,10 @@ class SpellCasterAutomation:
             best_target, target_count = self._find_bile_target(enemies_in_range)
 
             if target_count < self.ravager_min_targets:
+                continue
+
+            # 권한 요청
+            if not await self._request_authority(ravager, "bile"):
                 continue
 
             # 담즙 발사
@@ -284,6 +344,10 @@ class SpellCasterAutomation:
         # 가장 가까운 고가치 유닛 납치
         target = min(targets, key=lambda e: viper.distance_to(e))
 
+        # 권한 요청
+        if not await self._request_authority(viper, "abduct"):
+            return
+
         abilities = await self.bot.get_available_abilities(viper)
         if AbilityId.EFFECT_ABDUCT in abilities:
             self.bot.do(viper(AbilityId.EFFECT_ABDUCT, target))
@@ -330,6 +394,10 @@ class SpellCasterAutomation:
         if max_count < 3:  # 최소 3명
             return
 
+        # 권한 요청
+        if not await self._request_authority(viper, "blinding_cloud"):
+            return
+
         abilities = await self.bot.get_available_abilities(viper)
         if AbilityId.EFFECT_BLINDINGCLOUD in abilities:
             self.bot.do(viper(AbilityId.EFFECT_BLINDINGCLOUD, best_pos))
@@ -357,6 +425,10 @@ class SpellCasterAutomation:
             return
 
         target_overlord = overlords.closest_to(viper)
+
+        # 권한 요청
+        if not await self._request_authority(viper, "consume"):
+            return
 
         abilities = await self.bot.get_available_abilities(viper)
         if AbilityId.EFFECT_VIPERCONSUME in abilities:
@@ -433,6 +505,10 @@ class SpellCasterAutomation:
         if max_count < self.infestor_fungal_min_targets:
             return
 
+        # 권한 요청
+        if not await self._request_authority(infestor, "fungal"):
+            return
+
         abilities = await self.bot.get_available_abilities(infestor)
         if AbilityId.FUNGALGROWTH_FUNGALGROWTH in abilities:
             self.bot.do(infestor(AbilityId.FUNGALGROWTH_FUNGALGROWTH, best_pos))
@@ -467,6 +543,10 @@ class SpellCasterAutomation:
             return
 
         target = min(targets, key=lambda e: infestor.distance_to(e))
+
+        # 권한 요청
+        if not await self._request_authority(infestor, "neural"):
+            return
 
         abilities = await self.bot.get_available_abilities(infestor)
         if AbilityId.NEURALPARASITE_NEURALPARASITE in abilities:
@@ -518,6 +598,10 @@ class SpellCasterAutomation:
                 target_pos = self.bot.enemy_start_locations[0]
             else:
                 target_pos = self.bot.game_info.map_center
+
+            # 권한 요청
+            if not await self._request_authority(overseer, "changeling"):
+                continue
 
             abilities = await self.bot.get_available_abilities(overseer)
             if AbilityId.SPAWNCHANGELING_SPAWNCHANGELING in abilities:

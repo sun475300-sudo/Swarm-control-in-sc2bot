@@ -74,6 +74,9 @@ class RavagerMicro:
         """
         Predict enemy position after prediction_time seconds.
 
+        Uses enemy's current movement direction and speed to estimate
+        where they will be when the Corrosive Bile lands.
+
         Args:
             enemy: Enemy unit
             prediction_time: Seconds to predict ahead
@@ -84,12 +87,34 @@ class RavagerMicro:
         if not Point2:
             return None
 
-        # Get enemy position and velocity
         pos = enemy.position
 
-        # Simple prediction: assume enemy continues current direction
-        # (In real game, velocity is available but needs proper handling)
-        # For now, return current position (can be enhanced)
+        # ★ Phase 18: Velocity-based prediction ★
+        # SC2 API provides velocity components when unit is moving
+        if hasattr(enemy, 'movement_speed') and enemy.movement_speed > 0:
+            # Get velocity if available (newer SC2 API versions)
+            if hasattr(enemy, 'velocity'):
+                vx = enemy.velocity.x if hasattr(enemy.velocity, 'x') else 0
+                vy = enemy.velocity.y if hasattr(enemy.velocity, 'y') else 0
+            elif hasattr(enemy, 'is_moving') and enemy.is_moving:
+                # Estimate direction from facing angle
+                import math
+                if hasattr(enemy, 'facing'):
+                    speed = enemy.movement_speed
+                    angle = enemy.facing
+                    vx = math.cos(angle) * speed
+                    vy = math.sin(angle) * speed
+                else:
+                    vx, vy = 0, 0
+            else:
+                vx, vy = 0, 0
+
+            # Predict future position
+            pred_x = pos.x + vx * prediction_time
+            pred_y = pos.y + vy * prediction_time
+            return Point2((pred_x, pred_y))
+
+        # Fallback: return current position if stationary or no velocity data
         return Point2((pos.x, pos.y))
 
     def find_best_bile_target(
@@ -732,6 +757,311 @@ class CorruptorMicro:
         return acted_tags
 
 
+class InfestorMicro:
+    """
+    ★ Phase 18: Infestor Micro Controller ★
+
+    Features:
+    - Fungal Growth targeting (crowd control)
+    - Neural Parasite high-value target selection
+    - Energy management and burrow safety
+    """
+
+    def __init__(self):
+        self.logger = get_logger("InfestorMicro")
+        self.fungal_energy_cost = 75
+        self.neural_energy_cost = 100
+        self.fungal_radius = 2.25
+        self.fungal_range = 10
+        self.neural_range = 9
+        self.min_fungal_targets = 3
+        self.last_fungal_time: Dict[int, float] = {}
+        self.fungal_cooldown = 10.0
+
+        # High-value targets for Neural Parasite
+        self.neural_priority_targets: Set = set()
+        if UnitTypeId:
+            self.neural_priority_targets = {
+                UnitTypeId.THOR,
+                UnitTypeId.BATTLECRUISER,
+                UnitTypeId.SIEGETANKSIEGED,
+                UnitTypeId.COLOSSUS,
+                UnitTypeId.CARRIER,
+                UnitTypeId.TEMPEST,
+                UnitTypeId.ULTRALISK,
+                UnitTypeId.BROODLORD,
+            }
+
+    def find_fungal_target(
+        self,
+        infestor: Unit,
+        enemy_units,
+        current_time: float
+    ) -> Optional[Point2]:
+        """Find best position for Fungal Growth."""
+        if not enemy_units:
+            return None
+
+        # Cooldown check
+        if infestor.tag in self.last_fungal_time:
+            if current_time - self.last_fungal_time[infestor.tag] < self.fungal_cooldown:
+                return None
+
+        # Find enemies in range
+        in_range = [
+            e for e in enemy_units
+            if infestor.position.distance_to(e.position) <= self.fungal_range
+        ]
+
+        if len(in_range) < self.min_fungal_targets:
+            return None
+
+        # Find cluster center
+        best_pos = None
+        best_count = 0
+
+        for enemy in in_range:
+            nearby = sum(
+                1 for e in in_range
+                if e.position.distance_to(enemy.position) <= self.fungal_radius
+            )
+            if nearby > best_count:
+                best_count = nearby
+                best_pos = enemy.position
+
+        if best_count >= self.min_fungal_targets:
+            return Point2((best_pos.x, best_pos.y)) if Point2 else None
+        return None
+
+    def find_neural_target(
+        self,
+        infestor: Unit,
+        enemy_units
+    ) -> Optional[Unit]:
+        """Find high-value target for Neural Parasite."""
+        if not enemy_units:
+            return None
+
+        # Find priority targets in range
+        targets = [
+            e for e in enemy_units
+            if e.type_id in self.neural_priority_targets
+            and infestor.position.distance_to(e.position) <= self.neural_range
+        ]
+
+        if not targets:
+            return None
+
+        # Return closest high-value target
+        return min(targets, key=lambda e: infestor.position.distance_to(e.position))
+
+    async def execute_infestor_micro(
+        self,
+        infestors,
+        enemy_units,
+        bot,
+        current_time: float
+    ) -> Set[int]:
+        """Execute Infestor micro."""
+        if not infestors or not enemy_units:
+            return set()
+
+        actions = []
+        acted_tags = set()
+
+        for infestor in infestors:
+            energy = getattr(infestor, 'energy', 0)
+
+            # Priority 1: Fungal Growth for crowd control
+            if energy >= self.fungal_energy_cost:
+                target_pos = self.find_fungal_target(infestor, enemy_units, current_time)
+                if target_pos:
+                    ability = getattr(AbilityId, 'FUNGALGROWTH_FUNGALGROWTH', None)
+                    if ability:
+                        try:
+                            actions.append(infestor(ability, target_pos))
+                            self.last_fungal_time[infestor.tag] = current_time
+                            acted_tags.add(infestor.tag)
+                            continue
+                        except (AttributeError, TypeError):
+                            pass
+
+            # Priority 2: Neural Parasite for high-value units
+            if energy >= self.neural_energy_cost:
+                target = self.find_neural_target(infestor, enemy_units)
+                if target:
+                    ability = getattr(AbilityId, 'NEURALPARASITE_NEURALPARASITE', None)
+                    if ability:
+                        try:
+                            actions.append(infestor(ability, target))
+                            acted_tags.add(infestor.tag)
+                            continue
+                        except (AttributeError, TypeError):
+                            pass
+
+            # Safety: Burrow if in danger and low energy
+            if energy < 50:
+                nearby_enemies = [
+                    e for e in enemy_units
+                    if infestor.position.distance_to(e.position) < 7
+                ]
+                if nearby_enemies and not infestor.is_burrowed:
+                    burrow_ability = getattr(AbilityId, 'BURROWDOWN_INFESTOR', None)
+                    if burrow_ability:
+                        try:
+                            actions.append(infestor(burrow_ability))
+                            acted_tags.add(infestor.tag)
+                        except (AttributeError, TypeError):
+                            pass
+
+        if actions:
+            await bot.do_actions(actions)
+
+        return acted_tags
+
+
+class BanelingMicro:
+    """
+    ★ Phase 18: Baneling Micro Controller ★
+
+    Features:
+    - Surround detection and positioning
+    - Optimal detonation timing
+    - Target prioritization (workers, light units)
+    """
+
+    def __init__(self):
+        self.logger = get_logger("BanelingMicro")
+        self.detonation_radius = 2.2
+        self.min_value_to_detonate = 3  # Minimum unit count worth exploding
+
+        # High-value targets for Banelings
+        self.priority_targets: Set = set()
+        if UnitTypeId:
+            self.priority_targets = {
+                UnitTypeId.MARINE,
+                UnitTypeId.ZEALOT,
+                UnitTypeId.ZERGLING,
+                UnitTypeId.SCV,
+                UnitTypeId.PROBE,
+                UnitTypeId.DRONE,
+                UnitTypeId.ADEPT,
+                UnitTypeId.MARAUDER,
+            }
+
+    def find_detonation_position(
+        self,
+        baneling: Unit,
+        enemy_units
+    ) -> Optional[Point2]:
+        """Find optimal position for Baneling detonation."""
+        if not enemy_units:
+            return None
+
+        # Find enemies in range
+        in_range = [
+            e for e in enemy_units
+            if baneling.position.distance_to(e.position) <= 5
+        ]
+
+        if not in_range:
+            return None
+
+        # Find cluster of priority targets
+        best_pos = None
+        best_value = 0
+
+        for enemy in in_range:
+            # Count nearby units that would be hit
+            nearby = [
+                e for e in in_range
+                if e.position.distance_to(enemy.position) <= self.detonation_radius
+            ]
+
+            # Calculate value (priority targets worth more)
+            value = sum(
+                2 if e.type_id in self.priority_targets else 1
+                for e in nearby
+            )
+
+            if value > best_value:
+                best_value = value
+                best_pos = enemy.position
+
+        if best_value >= self.min_value_to_detonate:
+            return Point2((best_pos.x, best_pos.y)) if Point2 else None
+        return None
+
+    def should_attack_move(
+        self,
+        baneling: Unit,
+        enemy_units
+    ) -> Optional[Point2]:
+        """Determine if Baneling should attack-move toward enemies."""
+        if not enemy_units:
+            return None
+
+        # Find closest cluster of priority targets
+        priority_enemies = [
+            e for e in enemy_units
+            if e.type_id in self.priority_targets
+        ]
+
+        if not priority_enemies:
+            # Attack closest enemy if no priority targets
+            all_enemies = list(enemy_units)
+            if all_enemies:
+                closest = min(all_enemies, key=lambda e: baneling.position.distance_to(e.position))
+                return closest.position
+            return None
+
+        # Find cluster center of priority targets
+        closest = min(priority_enemies, key=lambda e: baneling.position.distance_to(e.position))
+        return closest.position
+
+    async def execute_baneling_micro(
+        self,
+        banelings,
+        enemy_units,
+        bot
+    ) -> Set[int]:
+        """Execute Baneling micro."""
+        if not banelings or not enemy_units:
+            return set()
+
+        actions = []
+        acted_tags = set()
+
+        for baneling in banelings:
+            # Check if we should detonate (manual explosion)
+            det_pos = self.find_detonation_position(baneling, enemy_units)
+
+            if det_pos and baneling.position.distance_to(det_pos) <= self.detonation_radius:
+                # Explode command
+                ability = getattr(AbilityId, 'EXPLODE_EXPLODE', None)
+                if ability:
+                    try:
+                        actions.append(baneling(ability))
+                        acted_tags.add(baneling.tag)
+                        continue
+                    except (AttributeError, TypeError):
+                        pass
+
+            # Otherwise, attack-move toward targets
+            target_pos = self.should_attack_move(baneling, enemy_units)
+            if target_pos:
+                try:
+                    actions.append(baneling.attack(target_pos))
+                    acted_tags.add(baneling.tag)
+                except (AttributeError, TypeError):
+                    pass
+
+        if actions:
+            await bot.do_actions(actions)
+
+        return acted_tags
+
+
 class FocusFireCoordinator:
     """
     Focus Fire Coordinator - Coordinate unit targeting
@@ -760,6 +1090,10 @@ class FocusFireCoordinator:
         # Current target assignments
         self.target_assignments: Dict[int, int] = {}  # unit_tag -> target_tag
         self.target_damage_count: Dict[int, int] = defaultdict(int)  # target_tag -> attacker_count
+
+        # ★ Phase 18: Memory leak prevention ★
+        self.max_tracked_units = 500  # Maximum tracked entries
+        self.last_cleanup_time = 0
 
     def select_focus_target(
         self,
@@ -822,13 +1156,24 @@ class FocusFireCoordinator:
         # Remove dead attackers
         dead_attackers = set(self.target_assignments.keys()) - alive_unit_tags
         for tag in dead_attackers:
-            target = self.target_assignments.pop(tag)
-            self.target_damage_count[target] = max(0, self.target_damage_count[target] - 1)
+            target = self.target_assignments.pop(tag, None)
+            if target is not None:
+                self.target_damage_count[target] = max(0, self.target_damage_count.get(target, 1) - 1)
 
         # Clear counts for dead targets
         for target_tag in list(self.target_damage_count.keys()):
             if target_tag not in alive_enemy_tags:
                 del self.target_damage_count[target_tag]
+
+        # ★ Phase 18: Hard limit cleanup to prevent memory leak ★
+        if len(self.target_assignments) > self.max_tracked_units:
+            # Keep only the most recent half
+            entries = list(self.target_assignments.items())
+            self.target_assignments = dict(entries[-self.max_tracked_units // 2:])
+            # Rebuild damage counts
+            self.target_damage_count.clear()
+            for _, target_tag in self.target_assignments.items():
+                self.target_damage_count[target_tag] += 1
 
 
 class AdvancedMicroControllerV3:
@@ -855,11 +1200,15 @@ class AdvancedMicroControllerV3:
         self.corruptor_micro = CorruptorMicro()
         self.focus_fire = FocusFireCoordinator()
 
+        # ★ Phase 18: New micro controllers ★
+        self.infestor_micro = InfestorMicro()
+        self.baneling_micro = BanelingMicro()
+
         # Update timing
         self.last_update = 0
         self.update_interval = 8  # ~0.3s between updates
 
-        self.logger.info("[MICRO_V3] Advanced Micro Controller V3 initialized")
+        self.logger.info("[MICRO_V3] Advanced Micro Controller V3 initialized (Phase 18)")
 
     async def on_step(self, iteration: int):
         """
@@ -885,6 +1234,10 @@ class AdvancedMicroControllerV3:
         await self._execute_viper_micro(enemy_units, units)
         await self._execute_corruptor_micro(current_time, enemy_units)
         await self._execute_focus_fire(units, enemy_units)
+
+        # ★ Phase 18: New micro executions ★
+        await self._execute_infestor_micro(current_time, enemy_units)
+        await self._execute_baneling_micro(enemy_units)
 
         # Cleanup dead assignments
         if iteration % 44 == 0:  # Every ~2 seconds
@@ -971,12 +1324,39 @@ class AdvancedMicroControllerV3:
         if actions:
             await self.bot.do_actions(actions)
 
+    async def _execute_infestor_micro(self, current_time: float, enemy_units):
+        """★ Phase 18: Execute Infestor Fungal/Neural micro."""
+        infestors = self.bot.units(UnitTypeId.INFESTOR) if UnitTypeId else []
+        if infestors:
+            await self.infestor_micro.execute_infestor_micro(
+                infestors,
+                enemy_units,
+                self.bot,
+                current_time
+            )
+
+    async def _execute_baneling_micro(self, enemy_units):
+        """★ Phase 18: Execute Baneling detonation micro."""
+        banelings = self.bot.units(UnitTypeId.BANELING) if UnitTypeId else []
+        if banelings:
+            await self.baneling_micro.execute_baneling_micro(
+                banelings,
+                enemy_units,
+                self.bot
+            )
+
     def _cleanup_dead_units(self):
         """Cleanup dead unit assignments."""
         alive_unit_tags = {u.tag for u in getattr(self.bot, 'units', [])}
         alive_enemy_tags = {e.tag for e in getattr(self.bot, 'enemy_units', [])}
 
         self.focus_fire.clear_dead_assignments(alive_unit_tags, alive_enemy_tags)
+
+        # ★ Phase 18: Cleanup for new micro controllers ★
+        # Clean infestor cooldown tracking
+        dead_infestor_tags = set(self.infestor_micro.last_fungal_time.keys()) - alive_unit_tags
+        for tag in dead_infestor_tags:
+            del self.infestor_micro.last_fungal_time[tag]
 
     def get_status(self) -> Dict[str, any]:
         """Get micro controller status."""
@@ -986,4 +1366,6 @@ class AdvancedMicroControllerV3:
             "corruptor_cooldowns": len(self.corruptor_micro.last_spray_time),
             "focus_fire_assignments": len(self.focus_fire.target_assignments),
             "priority_targets": len(self.focus_fire.target_damage_count),
+            # ★ Phase 18: New metrics ★
+            "infestor_cooldowns": len(self.infestor_micro.last_fungal_time),
         }

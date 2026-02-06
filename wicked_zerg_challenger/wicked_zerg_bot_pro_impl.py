@@ -16,10 +16,10 @@ except ImportError:
 from bot_step_integration import BotStepIntegrator
 from utils.logger import setup_logger
 from typing import Optional
-from blackboard import Blackboard
+from pathlib import Path
 from blackboard import Blackboard
 from difficulty_progression import DifficultyProgression
-import traceback  # ★ ADDED: For better debugging
+import traceback
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -165,6 +165,24 @@ class WickedZergBotProImpl(BotAI):
                 print("[BOT] MapMemorySystem started - Enemy tracking active")
             except Exception as e:
                 print(f"[BOT_WARN] MapMemorySystem on_start failed: {e}")
+                traceback.print_exc()
+
+        # === RL Agent initialization (train_mode only) ===
+        self.rl_agent = None
+        if self.train_mode:
+            try:
+                from local_training.rl_agent import RLAgent
+                import os as _os
+                initial_lr = self.learning_rate if self.learning_rate else 0.001
+                model_path = str(Path(__file__).parent / "local_training" / "models" / "rl_agent_model.npz")
+                self.rl_agent = RLAgent(learning_rate=initial_lr, model_path=model_path)
+                if _os.path.exists(model_path):
+                    print(f"[RL_AGENT] Loaded existing model from {model_path}")
+                print(f"[RL_AGENT] Initialized (lr={initial_lr}, train_mode=True)")
+            except ImportError as e:
+                print(f"[RL_AGENT] Not available: {e}")
+            except Exception as e:
+                print(f"[RL_AGENT] Initialization failed: {e}")
                 traceback.print_exc()
 
         # === Step integrator initialization ===
