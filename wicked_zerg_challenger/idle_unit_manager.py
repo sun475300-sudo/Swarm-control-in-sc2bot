@@ -46,6 +46,42 @@ class IdleUnitManager:
         self.rally_point: Optional[Point2] = None
         self.last_rally_update = 0
 
+    def _is_unit_managed_by_other_system(self, unit_tag: int) -> bool:
+        """★ 다른 시스템이 제어 중인 유닛인지 확인 ★"""
+        # UnitAuthority 체크
+        authority = getattr(self.bot, "unit_authority", None)
+        if authority and unit_tag in authority.authorities:
+            owner = authority.authorities[unit_tag].owner
+            if owner != "IdleUnitManager":
+                return True
+
+        # HarassmentCoordinator squad 체크
+        harass = getattr(self.bot, "harassment_coord", None)
+        if harass:
+            if unit_tag in getattr(harass, "zergling_runby_tags", set()):
+                return True
+            if unit_tag in getattr(harass, "mutalisk_harass_tags", set()):
+                return True
+            if unit_tag in getattr(harass, "roach_poke_tags", set()):
+                return True
+            if unit_tag in getattr(harass, "drop_unit_tags", set()):
+                return True
+            if unit_tag in getattr(harass, "locked_units", set()):
+                return True
+
+        # AdvancedScoutV2 체크
+        scout = getattr(self.bot, "advanced_scout_v2", None)
+        if scout and hasattr(scout, "active_scouts"):
+            if unit_tag in scout.active_scouts:
+                return True
+
+        # RogueTactics 드랍 체크
+        rogue = getattr(self.bot, "rogue_tactics", None)
+        if rogue and unit_tag in getattr(rogue, "_drop_overlords", set()):
+            return True
+
+        return False
+
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
@@ -106,6 +142,10 @@ class IdleUnitManager:
             if unit.is_attacking:
                 continue
 
+            # ★ 다른 시스템이 제어 중인 유닛 제외 ★
+            if self._is_unit_managed_by_other_system(unit.tag):
+                continue
+
             # 주력 부대 찾기
             main_force = self._find_main_force()
 
@@ -160,6 +200,10 @@ class IdleUnitManager:
         )
 
         for unit in combat_units:
+            # ★ 다른 시스템이 제어 중인 유닛 제외 ★
+            if self._is_unit_managed_by_other_system(unit.tag):
+                continue
+
             # 주력과의 거리
             distance_to_main = unit.distance_to(main_force)
 

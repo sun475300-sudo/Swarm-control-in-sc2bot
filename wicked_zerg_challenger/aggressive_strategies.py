@@ -89,6 +89,9 @@ class AggressiveStrategyExecutor:
         self._overlord_drop_active = False  # ★ 드랍 활성화 여부
         self._last_drop_time = 0  # ★ 마지막 드랍 시간
 
+        # ★ UnitAuthority 연동 ★
+        self._authority_system_name = "AggressiveStrategies"
+
         # 타이밍 설정
         self.strategy_configs = {
             AggressiveStrategyType.TWELVE_POOL: {
@@ -193,6 +196,14 @@ class AggressiveStrategyExecutor:
 
         return self.active_strategy
 
+    def _can_command_unit(self, unit_tag: int) -> bool:
+        """★ UnitAuthority 체크: 다른 시스템이 제어 중인 유닛이면 False ★"""
+        authority = getattr(self.bot, "unit_authority", None)
+        if not authority:
+            return True  # authority 시스템 없으면 허용
+        from unit_authority_manager import AuthorityLevel
+        return authority.request_unit(unit_tag, self._authority_system_name, AuthorityLevel.COMBAT)
+
     async def execute(self, iteration: int) -> None:
         """
         현재 전략 실행
@@ -292,12 +303,16 @@ class AggressiveStrategyExecutor:
             return
 
         target = self.bot.enemy_start_locations[0]
+        sent = 0
         for ling in zerglings:
+            if not self._can_command_unit(ling.tag):
+                continue  # ★ 다른 시스템이 제어 중인 유닛 스킵 ★
             self.bot.do(ling.attack(target))
             self._rush_units.add(ling.tag)
+            sent += 1
 
         self._lings_sent = True
-        print(f"[12POOL] Sending {zerglings.amount} Zerglings to attack!")
+        print(f"[12POOL] Sending {sent} Zerglings to attack!")
 
     # ========== 맹독충 올인 ==========
     async def _execute_baneling_bust(self) -> None:
@@ -374,15 +389,21 @@ class AggressiveStrategyExecutor:
         if wall_structures:
             closest_wall = min(wall_structures, key=lambda s: s.distance_to(target))
             for baneling in banelings:
+                if not self._can_command_unit(baneling.tag):
+                    continue
                 self.bot.do(baneling.attack(closest_wall.position))
             print(f"[BANELING BUST] Attacking wall with {banelings.amount} banelings!")
         else:
             # 벽이 없으면 본진 공격
             for baneling in banelings:
+                if not self._can_command_unit(baneling.tag):
+                    continue
                 self.bot.do(baneling.attack(target))
 
         # 저글링도 따라서 공격
         for ling in zerglings:
+            if not self._can_command_unit(ling.tag):
+                continue
             self.bot.do(ling.attack(target))
 
     # ========== 궤멸충 담즙 러시 ==========
@@ -454,6 +475,8 @@ class AggressiveStrategyExecutor:
         # Force Fields are effects, not units - skip for now
 
         for ravager in ravagers:
+            if not self._can_command_unit(ravager.tag):
+                continue
             # 담즙 발사 가능 여부 확인
             abilities = await self.bot.get_available_abilities(ravager)
             if AbilityId.EFFECT_CORROSIVEBILE in abilities:
@@ -527,7 +550,10 @@ class AggressiveStrategyExecutor:
 
         target = self.bot.enemy_start_locations[0]
 
+        sent = 0
         for roach in roaches:
+            if not self._can_command_unit(roach.tag):
+                continue
             # 잠복 명령
             if not roach.is_burrowed:
                 abilities = await self.bot.get_available_abilities(roach)
@@ -536,8 +562,9 @@ class AggressiveStrategyExecutor:
             else:
                 # 잠복 상태에서 이동
                 self.bot.do(roach.move(target))
+            sent += 1
 
-        print(f"[TUNNELING] {roaches.amount} Roaches burrowing to enemy base!")
+        print(f"[TUNNELING] {sent} Roaches burrowing to enemy base!")
 
     # ========== 전진 해처리 ==========
     async def _execute_proxy_hatch(self) -> None:
@@ -771,6 +798,8 @@ class AggressiveStrategyExecutor:
             if self.bot.enemy_start_locations:
                 target_pos = self.bot.enemy_start_locations[0]
                 for unit in our_units:
+                    if not self._can_command_unit(unit.tag):
+                        continue
                     self.bot.do(unit.attack(target_pos))
 
                 if not self._nydus_attack_started:
@@ -780,6 +809,8 @@ class AggressiveStrategyExecutor:
 
         # 공격 명령
         for unit in our_units:
+            if not self._can_command_unit(unit.tag):
+                continue
             self.bot.do(unit.attack(target.position))
 
         if not self._nydus_attack_started:
@@ -1028,6 +1059,8 @@ class AggressiveStrategyExecutor:
 
         # 견제 명령
         for ling in harass_lings:
+            if not self._can_command_unit(ling.tag):
+                continue
             self.bot.do(ling.attack(target))
             self._rush_units.add(ling.tag)
 

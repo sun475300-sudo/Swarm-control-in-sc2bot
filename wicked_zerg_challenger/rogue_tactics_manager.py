@@ -301,12 +301,25 @@ class RogueTacticsManager:
             return
 
         try:
+            # ★ HarassmentCoordinator가 이미 드랍 중이면 스킵 ★
+            harass = getattr(self.bot, "harassment_coord", None)
+            if harass and (getattr(harass, "drop_play_active", False) or
+                          getattr(harass, "baneling_drop_active", False)):
+                return
+
             # 수송 대군주 선택
             overlord_transports = self.bot.units(UnitTypeId.OVERLORDTRANSPORT)
             if not overlord_transports.exists:
                 return
 
             transport = overlord_transports.first
+
+            # ★ UnitAuthority 체크: 다른 시스템이 이미 제어 중인 대군주 스킵 ★
+            authority = getattr(self.bot, "unit_authority", None)
+            if authority and transport.tag in authority.authorities:
+                owner = authority.authorities[transport.tag].owner
+                if owner != "RogueTactics":
+                    return
 
             # 맹독충 선택 (최대 8기)
             banelings = self.bot.units(UnitTypeId.BANELING)

@@ -44,6 +44,8 @@ class EvolutionUpgradeManager:
         self._zergling_speed_started = False
         self._overlord_speed_started = False
         self.logger = get_logger("UpgradeManager")
+        # ★ StrictUpgradePriority와 중복 연구 방지 플래그 ★
+        self._strict_priority_active = False
 
         # 2026-01-26 FIX: Evolution Chamber 건설 쿨다운
         self._last_evo_chamber_attempt = 0.0
@@ -459,10 +461,28 @@ class EvolutionUpgradeManager:
         game_time = getattr(self.bot, "time", 0)
 
         # === 1순위: 저글링 발업 (Metabolic Boost) ===
-        # 스포닝 풀 완료 후 즉시!
+        # ★ StrictUpgradePriority가 활성이면 발업은 해당 시스템에 위임 ★
+        _strict = getattr(self.bot, "upgrade_priority", None)
         if not self._zergling_speed_started:
-            await self._research_zergling_speed(iteration)
-            return  # 발업 연구 시작할 때까지 다른 것 하지 않음
+            if _strict and not getattr(_strict, "gas_spending_blocked", False):
+                # StrictUpgradePriority가 이미 발업을 완료했을 수 있음
+                zergling_speed = getattr(UpgradeId, "ZERGLINGMOVEMENTSPEED", None)
+                if zergling_speed and self._is_upgrade_done(zergling_speed):
+                    self._zergling_speed_started = True
+                elif _strict:
+                    pass  # StrictUpgradePriority에 위임
+                else:
+                    await self._research_zergling_speed(iteration)
+                    return
+            elif _strict:
+                # 가스 차단 중 = StrictUpgradePriority가 발업 처리 중
+                zergling_speed = getattr(UpgradeId, "ZERGLINGMOVEMENTSPEED", None)
+                if zergling_speed and self._is_upgrade_done(zergling_speed):
+                    self._zergling_speed_started = True
+                return  # StrictUpgradePriority에 위임
+            else:
+                await self._research_zergling_speed(iteration)
+                return  # 발업 연구 시작할 때까지 다른 것 하지 않음
 
         # === 2순위: 대군주 속업 (Pneumatized Carapace) ===
         # 저글링 발업 시작 후, 3:00~3:30 사이에 연구

@@ -92,12 +92,38 @@ class OverlordVisionNetwork:
         # ★ PRIORITY 5: Map center (general awareness)
         self.vision_positions.append(self.bot.game_info.map_center)
 
+    def _is_overlord_managed(self, overlord_tag: int) -> bool:
+        """다른 시스템이 관리 중인 오버로드인지 확인"""
+        # ★ UnitAuthority 체크 ★
+        authority = getattr(self.bot, "unit_authority", None)
+        if authority and overlord_tag in getattr(authority, "authorities", {}):
+            owner = authority.authorities[overlord_tag].owner
+            if owner != "OverlordVisionNetwork":
+                return True
+        # ★ AdvancedScoutV2 체크 ★
+        scout = getattr(self.bot, "advanced_scout_v2", None)
+        if scout:
+            # 정찰용 오버로드 확인
+            if overlord_tag in getattr(scout, "active_scouts", {}):
+                return True
+            if overlord_tag in getattr(scout, "_overlord_scouts", set()):
+                return True
+            if overlord_tag in getattr(scout, "assigned_overlords", set()):
+                return True
+        # ★ RogueTactics 드랍 오버로드 체크 ★
+        rogue = getattr(self.bot, "rogue_tactics", None)
+        if rogue and overlord_tag in getattr(rogue, "_drop_overlords", set()):
+            return True
+        return False
+
     async def _deploy_vision_network(self):
         """시야 네트워크 배치 (★ OPTIMIZED: 생존 검증 + 재배치 ★)"""
         if not hasattr(self.bot, "units"):
             return
 
+        # ★ 다른 시스템이 관리하지 않는 idle 오버로드만 사용 ★
         overlords = self.bot.units(UnitTypeId.OVERLORD).idle
+        overlords = overlords.filter(lambda u: not self._is_overlord_managed(u.tag))
 
         # ★ Clean up dead/missing overlords from assignments
         positions_to_remove = []

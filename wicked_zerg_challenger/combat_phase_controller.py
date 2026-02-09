@@ -97,12 +97,16 @@ class CombatPhaseController:
         """매 프레임 호출"""
         game_time = getattr(self.bot, "time", 0)
 
+        # ★ MicroV3가 활성이면 직접 유닛 명령 발행 스킵 (분석만 수행) ★
+        self._skip_commands = hasattr(self.bot, "micro_v3") and self.bot.micro_v3 is not None
+
         # 전투 그룹 업데이트
         self._update_combat_groups(game_time)
 
         # 각 그룹별 단계 관리
-        for group_id, group in list(self.combat_groups.items()):
-            await self._manage_group_phase(group_id, group, game_time, iteration)
+        if not self._skip_commands:
+            for group_id, group in list(self.combat_groups.items()):
+                await self._manage_group_phase(group_id, group, game_time, iteration)
 
         # 학습 데이터 수집 (5초마다)
         if iteration % 110 == 0:

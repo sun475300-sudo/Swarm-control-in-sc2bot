@@ -86,6 +86,16 @@ class AdaptiveBuildOrder:
         - vs Protoss: Roach 압박 + Ravager bile (7:00)
         - vs Zerg: Zergling/Baneling 올인 (5:30)
         """
+        # ★ StrategyManager가 Emergency 모드이면 AdaptiveBuild 판단 스킵 ★
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard:
+            strategy_mode = blackboard.get("strategy_mode", "NORMAL")
+            if strategy_mode == "EMERGENCY":
+                self.current_build = "anti_cheese"
+                self._setup_anti_cheese_build()
+                self._sync_to_blackboard(blackboard)
+                return
+
         if self.enemy_cheese_detected:
             self.current_build = "anti_cheese"
             self._setup_anti_cheese_build()
@@ -101,6 +111,18 @@ class AdaptiveBuildOrder:
         else:
             self.current_build = "macro"
             self._setup_macro_build()
+
+        # ★ Blackboard에 빌드 결정 동기화 ★
+        if blackboard:
+            self._sync_to_blackboard(blackboard)
+
+    def _sync_to_blackboard(self, blackboard):
+        """Blackboard에 빌드 결정 사항 기록 (다른 시스템이 참조 가능)"""
+        blackboard.set("adaptive_build_plan", self.current_build)
+        blackboard.set("adaptive_attack_supply", self.attack_supply_requirement)
+        blackboard.set("adaptive_attack_time", self.attack_target_time)
+        if self.timing_attack_details:
+            blackboard.set("adaptive_build_details", self.timing_attack_details)
 
     def _setup_anti_cheese_build(self):
         """

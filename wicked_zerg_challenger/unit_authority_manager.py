@@ -22,6 +22,7 @@ class AuthorityLevel(IntEnum):
     WORKER_COMBAT = 90
     SPELL_UNIT = 80
     COMBAT = 70
+    TACTICAL = 65       # ★ 견제/드랍 등 전술적 제어 (COMBAT과 HARASSMENT 사이)
     HARASSMENT = 60
     MULTI_PRONG = 50
     ECONOMY = 40
@@ -91,6 +92,6 @@ class UnitAuthorityManager:
     def _cleanup_expired_authorities(self):
         game_time = getattr(self.bot, "time", 0)
         expired = [(tag, auth.owner) for tag, auth in self.authorities.items()
-                   if game_time - auth.request_time > self.AUTHORITY_TIMEOUT]
+                   if game_time - auth.last_command_time > self.AUTHORITY_TIMEOUT]
         for tag, owner in expired:
             self.release_unit(tag, owner)
