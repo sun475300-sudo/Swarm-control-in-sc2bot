@@ -279,13 +279,8 @@ class BotStepIntegrator:
             self.placement_helper = None
             self.bot.placement_helper = None
 
-        # Unit Authority Manager (Phase 10)
-        from unit_authority_manager import UnitAuthorityManager
-        self.bot.unit_authority = UnitAuthorityManager(bot)
-        
-        # Advanced Scouting V2 (Phase 10)
-        from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
-        self.bot.advanced_scout_v2 = AdvancedScoutingSystemV2(bot)
+        # NOTE: UnitAuthorityManager and AdvancedScoutV2 are initialized
+        # in the Phase 10+ section below with proper None-safety checks.
 
         if TechCoordinator:
             self.bot.tech_coordinator = TechCoordinator(bot)
@@ -310,7 +305,8 @@ class BotStepIntegrator:
         # ★★★ PHASE 8/9 SYSTEMS INITIALIZATION ★★★
 
         # Enhanced Scouting System
-        if EnhancedScoutSystem:
+        # ★ Skip if AdvancedScoutSystemV2 is available (it supersedes EnhancedScout)
+        if EnhancedScoutSystem and not AdvancedScoutSystemV2:
             self.bot.enhanced_scout = EnhancedScoutSystem(bot)
             print("[INIT] EnhancedScoutSystem initialized (Phase 9)")
         else:
@@ -537,16 +533,9 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("EarlyDefense", start_time)
 
-            # 0.0066 ★★★ Idle Unit Manager (유휴 병력 관리) - USER ADDED ★★★
-            if hasattr(self.bot, "idle_units") and self.bot.idle_units:
-                start_time = self._logic_tracker.start_logic("IdleUnitManager")
-                try:
-                    await self.bot.idle_units.on_step(iteration)
-                except Exception as e:
-                    if error_handler.debug_mode: raise
-                    print(f"[ERROR] IdleUnitManager error: {e}")
-                finally:
-                    self._logic_tracker.end_logic("IdleUnitManager", start_time)
+            # 0.0066 ★★★ Idle Unit Manager - REMOVED EARLY CALL ★★★
+            # ★ IdleUnits는 8.03에서만 실행 (다른 시스템이 유닛 할당 완료 후 실행해야 함)
+            # ★ 이 위치에서 실행하면 견제/스카우트 유닛을 강제 복귀시키는 문제 발생
 
                 # ★ 죽은 유닛의 권한 해제 (2초마다) ★
                 if iteration % 44 == 0:
@@ -1224,11 +1213,13 @@ class BotStepIntegrator:
             # await self._safe_manager_step(self.bot.scout, iteration, "Scouting")
 
             # 2.2. Creep Manager (점막 계획)
-            await self._safe_manager_step(
-                getattr(self.bot, "creep_manager", None),
-                iteration,
-                "Creep manager",
-            )
+            # ★ Skip if CreepAutomationV2 is active (avoid duplicate creep commands)
+            if not (hasattr(self.bot, "creep_v2") and self.bot.creep_v2):
+                await self._safe_manager_step(
+                    getattr(self.bot, "creep_manager", None),
+                    iteration,
+                    "Creep manager",
+                )
 
             # 2.5 Tech Coordinator (테크 건물 건설 조정) ★
             # Production 전에 테크 건설 요청을 처리
@@ -1676,7 +1667,9 @@ class BotStepIntegrator:
                 if hasattr(self.bot.micro, "set_focus_mode"):
                     self.bot.micro.set_focus_mode(is_focused)
 
-            await self._safe_manager_step(self.bot.micro, iteration, "Micro")
+            # ★ MicroV3가 활성이면 Boids Micro 스킵 (명령 덮어쓰기 방지) ★
+            if not (hasattr(self.bot, "micro_v3") and self.bot.micro_v3):
+                await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
             # 10.1 ★★★ Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) ★★★
             if hasattr(self.bot, "micro_v3") and self.bot.micro_v3:
@@ -1701,8 +1694,9 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("MicroV3", start_time)
 
             # 10.5 Advanced Scouting V2 (Phase 10)
-            if hasattr(self.bot, "advanced_scout_v2"):
-                await self._safe_manager_step(self.bot.advanced_scout_v2, iteration, "AdvancedScoutV2")
+            # ★ REMOVED: 0.061에서 이미 실행됨 (중복 호출 방지) ★
+            # if hasattr(self.bot, "advanced_scout_v2"):
+            #     await self._safe_manager_step(self.bot.advanced_scout_v2, iteration, "AdvancedScoutV2")
 
             # 11. Rogue Tactics (이병렬 선수 전술 - 맹독충 드랍 등)
             if iteration % 8 == 0:  # 8프레임마다 실행

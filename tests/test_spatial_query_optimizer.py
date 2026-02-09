@@ -10,26 +10,45 @@ from sc2.position import Point2
 
 
 class MockUnits:
-    """Mock Units collection with closer_than support"""
+    """Mock Units collection with closer_than and closest_to support"""
 
-    def __init__(self, units=[]):
-        self._units = units
+    def __init__(self, units=None):
+        self._units = units if units is not None else []
 
     def closer_than(self, radius, position):
         """Mock closer_than method"""
+        pos = position
+        if hasattr(position, 'position'):
+            pos = position.position
         result = []
         for unit in self._units:
-            distance = ((unit.position.x - position.x) ** 2 +
-                       (unit.position.y - position.y) ** 2) ** 0.5
+            distance = ((unit.position.x - pos.x) ** 2 +
+                       (unit.position.y - pos.y) ** 2) ** 0.5
             if distance < radius:
                 result.append(unit)
         return MockUnits(result)
+
+    def closest_to(self, position):
+        """Mock closest_to method"""
+        if not self._units:
+            return None
+        pos = position
+        if hasattr(position, 'position'):
+            pos = position.position
+        return min(
+            self._units,
+            key=lambda u: ((u.position.x - pos.x) ** 2 +
+                          (u.position.y - pos.y) ** 2) ** 0.5
+        )
 
     def __iter__(self):
         return iter(self._units)
 
     def __len__(self):
         return len(self._units)
+
+    def __bool__(self):
+        return len(self._units) > 0
 
 
 class MockBot:
@@ -136,7 +155,8 @@ class TestSpatialQueryOptimizer:
         for i in range(5):
             self.optimizer.get_enemies_near_position(position, radius, iteration)
 
-        hit_rate = self.optimizer.get_cache_hit_rate()
+        stats = self.optimizer.get_statistics()
+        hit_rate = stats["cache_hit_rate"]
 
         # First query is miss, next 4 are hits = 80% hit rate
         assert isinstance(hit_rate, float)

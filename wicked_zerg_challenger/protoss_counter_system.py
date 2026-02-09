@@ -425,6 +425,13 @@ class ProtossCounterSystem:
 
         ★ CRITICAL: 바퀴는 불멸자에게 약함! 저글링 + 파멸충 사용 ★
         """
+        # ★ DynamicCounter가 이미 IMMORTAL 대응 중이면 생산 비율 수정 스킵 ★
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard and blackboard.get("dynamic_counter_active", False):
+            dynamic_counter = getattr(self.bot, "dynamic_counter", None)
+            if dynamic_counter and "IMMORTAL" in getattr(dynamic_counter, "active_counters", {}):
+                return  # DynamicCounter가 Blackboard를 통해 이미 대응 중
+
         # 전략 매니저에 불멸자 카운터 요청
         if hasattr(self.bot, "strategy_manager"):
             strategy = self.bot.strategy_manager

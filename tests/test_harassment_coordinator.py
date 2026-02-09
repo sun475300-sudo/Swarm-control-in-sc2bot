@@ -10,6 +10,11 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
+class MockState:
+    def __init__(self):
+        self.upgrades = set()
+
+
 class MockBot:
     def __init__(self, time=0):
         self.time = time
@@ -17,6 +22,7 @@ class MockBot:
         self.enemy_units = Mock()
         self.start_location = Point2((10, 10))
         self.enemy_start_locations = [Point2((100, 100))]
+        self.state = MockState()
 
     def do(self, action):
         pass
@@ -184,14 +190,22 @@ class TestHarassmentCoordinator:
         assert self.coordinator.baneling_drop_cooldown == 60
         assert self.coordinator.baneling_drop_cooldown > 0
 
-    @pytest.mark.asyncio
-    async def test_can_execute_baneling_drop(self):
+    def test_can_execute_baneling_drop(self):
         """Test conditions for executing baneling drop"""
+
+        class EmptyUnits:
+            def __len__(self):
+                return 0
+
+        # Patch units to return empty collections for unit type queries
+        self.bot.units = Mock(side_effect=lambda *args: EmptyUnits())
+
         # Should not be able to execute initially (no overlord, no banelings)
         can_execute = self.coordinator._can_execute_baneling_drop()
 
         # Initially false due to missing units or cooldown
         assert isinstance(can_execute, bool)
+        assert can_execute == False
 
     # ===== Multi-Angle Attack Tests =====
 
@@ -204,11 +218,11 @@ class TestHarassmentCoordinator:
     @pytest.mark.asyncio
     async def test_coordinate_multi_angle_attack_exists(self):
         """Test that multi-angle coordination method exists"""
-        assert hasattr(self.coordinator, '_coordinate_multi_angle_attack')
+        assert hasattr(self.coordinator, 'coordinate_multi_angle_attack')
 
         # Should not crash
         try:
-            await self.coordinator._coordinate_multi_angle_attack()
+            await self.coordinator.coordinate_multi_angle_attack(iteration=0)
         except Exception:
             # May fail in test environment
             pass
@@ -222,8 +236,9 @@ class TestHarassmentCoordinator:
 
     def test_worker_target_priority(self):
         """Test that workers have highest priority for harassment"""
-        # This is implementation-dependent, verify method exists
-        assert hasattr(self.coordinator, '_find_worker_targets') or \
+        # Verify worker finding method exists
+        assert hasattr(self.coordinator, '_find_enemy_workers_near') or \
+               hasattr(self.coordinator, '_find_worker_targets') or \
                hasattr(self.coordinator, '_get_priority_targets')
 
     # ===== Zergling Runby Tests =====

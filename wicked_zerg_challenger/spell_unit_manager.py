@@ -77,6 +77,15 @@ class SpellUnitManager:
 
         self.consume_energy_threshold = 50
 
+    def _is_controlled_by_spellcaster(self, unit_tag: int) -> bool:
+        """★ SpellCasterAutomation이 이미 제어 중인 유닛인지 확인 ★"""
+        authority = getattr(self.bot, "unit_authority", None)
+        if authority and unit_tag in authority.authorities:
+            owner = authority.authorities[unit_tag].owner
+            if "SpellCaster" in owner or "Spell" in owner:
+                return True
+        return False
+
     async def update(self, iteration: int):
         """
         Update spell units (called less frequently than regular units)
@@ -89,6 +98,10 @@ class SpellUnitManager:
             return
 
         self.last_spell_update_frame = iteration
+
+        # ★ SpellCasterAutomation이 활성이면 이 매니저는 스킵 (중복 스펠 방지) ★
+        if hasattr(self.bot, "spellcaster") and self.bot.spellcaster:
+            return  # SpellCasterAutomation이 더 높은 우선순위로 먼저 실행
 
         try:
             # ★ UPDATE RAVAGERS (HIGHEST PRIORITY - 가장 흔한 스킬 유닛)

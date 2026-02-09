@@ -57,6 +57,10 @@ class CreepHighwayManager:
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
+            # ★ CreepAutomationV2가 활성이면 스킵 (퀸 명령 충돌 방지) ★
+            if hasattr(self.bot, "creep_v2") and self.bot.creep_v2:
+                return
+
             if iteration - self.last_check < self.check_interval:
                 return
 

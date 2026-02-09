@@ -118,31 +118,36 @@ class QueenManager:
                 # Defense mode: Queens defend instead of creep spread
                 await self._queen_defense_mode(queens, iteration)
             else:
-                # Normal mode
-                await self._inject_larva(hatcheries, queens)
+                # Normal mode - skip inject if specialized optimizer handles it
+                if not (hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt):
+                    await self._inject_larva(hatcheries, queens)
 
-            # Transfuse injured units (priority over creep spread)
-            # Also transfuse Spine Crawlers during defense
-            await self._transfuse_injured_units(queens, iteration, include_structures=under_attack)
+            # Transfuse injured units - skip if specialized manager handles it
+            if not (hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion):
+                await self._transfuse_injured_units(queens, iteration, include_structures=under_attack)
 
             # ★★★ IMPROVED: 점막 전담 퀸은 항상 점막 확장 (방어 중에도) ★★★
-            # Dedicated creep queens ALWAYS spread creep (even during defense)
-            creep_queens_dedicated = [q for q in queens if q.tag in self.dedicated_creep_queens]
-            if creep_queens_dedicated:
-                await self._spread_creep(creep_queens_dedicated, iteration)
+            # Skip creep spread if CreepAutomationV2 handles it
+            _creep_v2_active = hasattr(self.bot, "creep_v2") and self.bot.creep_v2
 
-            # Only non-dedicated queens affected by defense status
-            if not under_attack:
-                # Other creep queens (non-dedicated)
-                creep_queens_other = [q for q in queens if q.tag not in self.assigned_queen_tags and q.tag not in self.dedicated_creep_queens]
-                if creep_queens_other:
-                    await self._spread_creep(creep_queens_other, iteration)
+            if not _creep_v2_active:
+                # Dedicated creep queens ALWAYS spread creep (even during defense)
+                creep_queens_dedicated = [q for q in queens if q.tag in self.dedicated_creep_queens]
+                if creep_queens_dedicated:
+                    await self._spread_creep(creep_queens_dedicated, iteration)
 
-                # 인젝트 퀸도 에너지 여유 있으면 점막 확장 (개선)
-                await self._inject_queens_spread_creep(queens, iteration)
+                # Only non-dedicated queens affected by defense status
+                if not under_attack:
+                    # Other creep queens (non-dedicated)
+                    creep_queens_other = [q for q in queens if q.tag not in self.assigned_queen_tags and q.tag not in self.dedicated_creep_queens]
+                    if creep_queens_other:
+                        await self._spread_creep(creep_queens_other, iteration)
 
-                # ★★★ NEW: 여유 있는 모든 퀸 점막 확장 활용 ★★★
-                await self._utilize_idle_queens_for_creep(queens, iteration)
+                    # 인젝트 퀸도 에너지 여유 있으면 점막 확장 (개선)
+                    await self._inject_queens_spread_creep(queens, iteration)
+
+                    # ★★★ NEW: 여유 있는 모든 퀸 점막 확장 활용 ★★★
+                    await self._utilize_idle_queens_for_creep(queens, iteration)
 
         except Exception as e:
             if iteration % 200 == 0:

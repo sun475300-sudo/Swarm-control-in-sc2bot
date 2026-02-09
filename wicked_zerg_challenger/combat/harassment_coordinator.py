@@ -831,18 +831,26 @@ class HarassmentCoordinator:
                  except Exception as e:
                      self.logger.error(f"[HarassmentCoordinator] Unexpected error in nydus worm placement: {e}")
 
-
+    def _find_drop_target(self) -> Optional[Point2]:
         """Drop 타겟 선택 (적 확장)"""
         if not hasattr(self.bot, "enemy_structures"):
             return None
-        
+
         # 가장 먼 기지
         if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
             enemy_main = self.bot.enemy_start_locations[0]
-            bases = self.bot.enemy_structures.filter(lambda s: s.type_id == UnitTypeId.HATCHERY or s.type_id == UnitTypeId.NEXUS or s.type_id == UnitTypeId.COMMANDCENTER)
+            bases = self.bot.enemy_structures.filter(
+                lambda s: s.type_id == UnitTypeId.HATCHERY or
+                          s.type_id == UnitTypeId.NEXUS or
+                          s.type_id == UnitTypeId.COMMANDCENTER
+            )
             if bases:
-                 # 본진에서 가장 먼 기지
-                 return max(bases, key=lambda b: b.distance_to(enemy_main)).position
+                # 본진에서 가장 먼 기지
+                return max(bases, key=lambda b: b.distance_to(enemy_main)).position
+
+        # Fallback: 적 본진
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            return self.bot.enemy_start_locations[0]
 
         return None
 
@@ -1163,6 +1171,22 @@ class HarassmentCoordinator:
             True if unit is locked to harassment
         """
         return unit_tag in self.locked_units
+
+    def get_locked_units_by_squad(self, squad_name: str) -> Set[int]:
+        """
+        특정 스쿼드에 락된 유닛 태그 반환
+
+        Args:
+            squad_name: Squad identifier
+
+        Returns:
+            Set of unit tags in the squad
+        """
+        return set(self.squad_members.get(squad_name, set()))
+
+    def _auto_unlock_expired_squads(self) -> None:
+        """만료된 스쿼드 자동 언락 (cleanup_expired_locks 호출)"""
+        self.cleanup_expired_locks()
 
     def get_unit_squad(self, unit_tag: int) -> Optional[str]:
         """

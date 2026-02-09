@@ -33,9 +33,15 @@ def create_mock_unit(type_id, health_pct=1.0, health_max=100, position=(10, 10),
     unit.is_ready = True
 
     def distance_to(other):
-        if hasattr(other, 'x'):
-            return abs(unit.position.x - other.x) + abs(unit.position.y - other.y)
-        return 5  # Default distance
+        # Handle unit-like objects with position attribute
+        if hasattr(other, 'position') and hasattr(other.position, 'x') and isinstance(other.position.x, (int, float)):
+            ox, oy = other.position.x, other.position.y
+        # Handle Point2-like objects with numeric x/y
+        elif hasattr(other, 'x') and isinstance(other.x, (int, float)):
+            ox, oy = other.x, other.y
+        else:
+            return 5  # Default distance
+        return ((unit.position.x - ox) ** 2 + (unit.position.y - oy) ** 2) ** 0.5
 
     unit.distance_to = distance_to
     return unit
@@ -77,9 +83,11 @@ class TestQueenTransfusionManager:
 
     def test_valid_transfusion_target_hp_threshold(self):
         """Test HP threshold for transfusion"""
-        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, tag=1)
-        target_low_hp = create_mock_unit(UnitTypeId.ROACH, health_pct=0.5, tag=2)
-        target_high_hp = create_mock_unit(UnitTypeId.ROACH, health_pct=0.7, tag=3)
+        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1)
+        # Use realistic health_max (145 for Roach) so overheal check passes
+        # hp_missing = 145 * 0.5 = 72.5, overheal threshold = 125 * 0.5 = 62.5
+        target_low_hp = create_mock_unit(UnitTypeId.ROACH, health_pct=0.5, health_max=145, tag=2)
+        target_high_hp = create_mock_unit(UnitTypeId.ROACH, health_pct=0.7, health_max=145, tag=3)
 
         # 50% HP should be valid (below 60% threshold)
         assert self.manager._is_valid_transfusion_target(target_low_hp, queen) == True
@@ -97,14 +105,14 @@ class TestQueenTransfusionManager:
 
     def test_range_check(self):
         """Test that range is properly checked"""
-        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, position=(0, 0), tag=1)
-        target_close = create_mock_unit(UnitTypeId.ROACH, health_pct=0.5, position=(5, 0), tag=2)
-        target_far = create_mock_unit(UnitTypeId.ROACH, health_pct=0.5, position=(50, 0), tag=3)
+        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, position=(0, 0), tag=1)
+        target_close = create_mock_unit(UnitTypeId.ROACH, health_pct=0.5, health_max=145, position=(5, 0), tag=2)
+        target_far = create_mock_unit(UnitTypeId.ROACH, health_pct=0.5, health_max=145, position=(50, 0), tag=3)
 
-        # Close target should be valid
+        # Close target should be valid (distance=5 <= 7)
         assert self.manager._is_valid_transfusion_target(target_close, queen) == True
 
-        # Far target should be invalid (> 7 range)
+        # Far target should be invalid (distance=50 > 7 range)
         assert self.manager._is_valid_transfusion_target(target_far, queen) == False
 
     def test_statistics_tracking(self):
@@ -123,12 +131,13 @@ class TestQueenTransfusionManager:
 
     def test_best_target_selection(self):
         """Test that best target is selected by priority"""
-        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, tag=1)
+        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1)
 
-        # Create multiple damaged units
-        ultra = create_mock_unit(UnitTypeId.ULTRALISK, health_pct=0.5, tag=2)
-        zergling = create_mock_unit(UnitTypeId.ZERGLING, health_pct=0.3, tag=3)
-        roach = create_mock_unit(UnitTypeId.ROACH, health_pct=0.4, tag=4)
+        # Create multiple damaged units with realistic health_max
+        # Ultralisk: 500 HP, Zergling: 35 HP, Roach: 145 HP
+        ultra = create_mock_unit(UnitTypeId.ULTRALISK, health_pct=0.5, health_max=500, tag=2)
+        zergling = create_mock_unit(UnitTypeId.ZERGLING, health_pct=0.3, health_max=145, tag=3)
+        roach = create_mock_unit(UnitTypeId.ROACH, health_pct=0.4, health_max=145, tag=4)
 
         class MockUnits:
             def __iter__(self):
