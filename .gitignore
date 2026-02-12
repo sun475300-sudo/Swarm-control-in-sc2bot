@@ -41,6 +41,8 @@ quick_test*.log
 .env.*
 *.key
 *.pem
+*.p12
+*.pfx
 api_keys/
 secrets/
 **/api_keys/
@@ -49,8 +51,24 @@ secrets/
 *_API_KEY.txt
 client_secret.json
 **/client_secret.json
-.vscode/
-.idea/
+
+# Google Cloud / Service Account credentials
+google_credentials.json
+**/google_credentials.json
+*-credentials.json
+**/service_account*.json
+**/openclaw-antigravity-*.json
+
+# SSH keys
+id_rsa
+id_ed25519
+*.pub
+
+# Token / Auth files
+**/token.json
+**/tokens.json
+**/auth.json
+*.token
 
 # JARVIS Local Scripts (Often contain keys)
 JARVIS_CLEAN_START.bat
@@ -70,3 +88,8 @@ jarvis_invisible_boot.vbs
 # CLI Proxy API
 .cli-proxy-api/
 config.yaml
+
+# PowerShell scripts with credentials/paths
+restart_all.ps1
+kill_and_restart.ps1
+start_gateway.ps1
