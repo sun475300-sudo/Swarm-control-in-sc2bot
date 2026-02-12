@@ -54,7 +54,7 @@ class QueenManager:
 
         # Injection settings - ★ OPTIMIZED ★
         self.inject_energy_threshold = 25
-        self.inject_cooldown = 29.0  # ★ FIXED: 정확한 SC2 Spawn Larva 쿨다운 (29초) ★
+        self.inject_cooldown = 30.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 (29초 + 1초 여유) ★
         self.max_inject_distance = 4.0
         self.max_queen_travel_distance = 10.0
 

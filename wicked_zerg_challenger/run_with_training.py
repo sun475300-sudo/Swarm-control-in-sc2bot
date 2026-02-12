@@ -75,13 +75,13 @@ _ensure_sc2_path()
 sys.path.append(str(Path(__file__).parent))
 
 
-def create_bot_with_training(learning_rate: Optional[float] = None):
+def create_bot_with_training(learning_rate: Optional[float] = None, personality: str = "serral"):
     """
     Create bot instance with neural network training enabled.
     Model will be saved to: local_training/models/zerg_net_model.pt
     """
     # CRITICAL: Set train_mode = True to enable neural network training
-    bot_instance = WickedZergBotPro(train_mode=True, learning_rate=learning_rate)
+    bot_instance = WickedZergBotPro(train_mode=True, learning_rate=learning_rate, personality=personality)
     return Bot(Race.Zerg, bot_instance)
 
 
@@ -135,7 +135,7 @@ def main():
 
         print("\n[STEP 2] ? Connecting to AI Arena Server...")
         print("=" * 70)
-        bot = create_bot_with_training() # Ladder server doesn't support custom LR yet
+        bot = create_bot_with_training(personality="serral") # Ladder server doesn't support custom LR yet
         print("[OK] Bot created with training enabled")
         print("[INFO] Joining Ladder Game...")
         try:
@@ -298,6 +298,16 @@ def main():
             except (IndexError, ValueError) as e:
                 print(f"[WARNING] Invalid --race argument: {e}")
 
+    # Parse personality (--personality serral/maru/dark/silent)
+    personality_setting = "serral"  # Default
+    for i, arg in enumerate(sys.argv):
+        if arg == "--personality":
+            try:
+                personality_setting = sys.argv[i+1].lower()
+                print(f"[CONFIG] Bot Personality set to: {personality_setting}")
+            except IndexError:
+                print(f"[WARNING] Missing value for --personality")
+
     while True:
         try:
             if game_count >= max_games:
@@ -393,7 +403,7 @@ def main():
             print()
 
             # Create new bot instance for each game
-            bot = create_bot_with_training(learning_rate=learning_rate)
+            bot = create_bot_with_training(learning_rate=learning_rate, personality=personality_setting)
             # bot is already a Bot instance, so we can set attributes on the
             # underlying AI
             if hasattr(bot, 'ai') and bot.ai:

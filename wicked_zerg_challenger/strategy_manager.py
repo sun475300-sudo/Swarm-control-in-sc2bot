@@ -155,6 +155,7 @@ class StrategyManager:
 
     def update(self) -> None:
         """매 스텝마다 호출하여 전략 업데이트"""
+        self._check_jarvis_commands() # NEW: Check for external commands
         self._detect_enemy_race()
         self._update_game_phase()
         self._check_rush_detection()
@@ -171,6 +172,33 @@ class StrategyManager:
             self.blackboard.set("game_phase", self.game_phase.name)
             self.blackboard.set("enemy_race", self.detected_enemy_race.name)
             self.blackboard.set("is_rush_detected", self.emergency_active)
+
+    def _check_jarvis_commands(self) -> None:
+        """자비스로부터 받은 외부 명령어 체크 (aggression_level 등)"""
+        if self.bot.iteration % 22 != 0: # 1초마다만 체크
+            return
+            
+        cmd_path = Path("jarvis_command.json")
+        if cmd_path.exists():
+            try:
+                with open(cmd_path, "r", encoding="utf-8") as f:
+                    cmd_data = json.load(f)
+                    level = cmd_data.get("aggression_level")
+                    if level:
+                        if level == "passive":
+                            self.current_mode = StrategyMode.DEFENSIVE
+                        elif level == "balanced":
+                            self.current_mode = StrategyMode.NORMAL
+                        elif level == "aggressive":
+                            self.current_mode = StrategyMode.AGGRESSIVE
+                        elif level == "all_in":
+                            self.current_mode = StrategyMode.ALL_IN
+                        
+                        self.logger.info(f"[JARVIS] Aggression level updated to: {level}")
+                        # 한번 처리한 명령어는 삭제하거나 플래그 처리 (여기서는 계속 읽어도 무방하나 삭제 권장)
+                        # cmd_path.unlink() 
+            except Exception as e:
+                self.logger.warning(f"Failed to read jarvis command: {e}")
 
 
 
@@ -1000,3 +1028,49 @@ class StrategyManager:
             "larva_saving": self.larva_saving_mode,
             "unit_ratios": self.get_unit_ratios(),
         }
+
+    def check_surrender(self, game_time: float) -> bool:
+        """
+        ★ Smart Surrender Logic ★
+        
+        Check if the game is hopelessly lost to save time.
+        
+        Conditions:
+        1. Time > 5 minutes
+        2. No bases left OR
+        3. Massive army disadvantage (5x) with low population OR
+        4. Critical supply drop (< 10) after 5 mins
+        """
+        if game_time < 300:  # Don't surrender in first 5 mins
+            return False
+            
+        # 1. No bases left
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
+            # Check if we have enough minerals to rebuild (300+) AND a drone
+            can_rebuild = False
+            if self.bot.minerals >= 300:
+                if hasattr(self.bot, "workers") and self.bot.workers.exists:
+                    can_rebuild = True
+            
+            if not can_rebuild:
+                self.logger.warning(f"[{int(game_time)}s] SURRENDER: No bases and cannot rebuild.")
+                return True
+
+        # 2. Critical Supply Drop (Wiped out)
+        if hasattr(self.bot, "supply_used"):
+            if self.bot.supply_used < 10 and game_time > 600: # 10분 이후 인구 10 미만
+                self.logger.warning(f"[{int(game_time)}s] SURRENDER: Critical supply drop ({self.bot.supply_used}) late game.")
+                return True
+                
+        # 3. Massive Disadvantage
+        # (Requires reliable army value calculation, so keep it simple for now)
+        # If opponent has 5+ bases and we have 1 base after 15 mins?
+        if game_time > 900: # 15분
+            if hasattr(self.bot, "townhalls") and self.bot.townhalls.amount < 2:
+                 if hasattr(self.bot, "enemy_structures"):
+                     enemy_bases = len([s for s in self.bot.enemy_structures if s.name.lower() in ["nexus", "commandcenter", "orbitalcommand", "planetaryfortress", "hatchery", "lair", "hive"]])
+                     if enemy_bases >= 4:
+                        self.logger.warning(f"[{int(game_time)}s] SURRENDER: Economic collapse (1 vs {enemy_bases} bases).")
+                        return True
+                        
+        return False

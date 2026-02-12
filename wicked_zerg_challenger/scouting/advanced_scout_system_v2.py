@@ -30,13 +30,12 @@ class AdvancedScoutingSystemV2:
         self.bot = bot
         self.logger = get_logger("AdvScoutV2")
 
-        # 정찰 설정 - ★ Phase 17: 더 빈번한 정찰 ★
-        self.BASE_INTERVAL = 25.0
-        self.EMERGENCY_INTERVAL = 15.0
-        self.EARLY_GAME_INTERVAL = 30.0  # 초반 (0-5분): 30초마다
-        self.MID_GAME_INTERVAL = 60.0     # 중반 (5-10분): 1분마다
-        self.LATE_GAME_INTERVAL = 45.0    # 후반 (10분+): 45초마다
-        self.last_scout_time = 0.0
+        # Scouting timers - ★ Phase 21: Separate timers for Overlords and Zerglings ★
+        self.last_scout_times = {
+            "OVERLORD": 0.0,
+            "ZERGLING": 0.0,
+            "GENERAL": 0.0
+        }
 
         # 정찰 유닛 상태
         # {tag: {"type": str, "target": Point2, "start_time": float}}
@@ -63,13 +62,24 @@ class AdvancedScoutingSystemV2:
         # 1. 활성 정찰 유닛 관리 (사망/임무완료 체크)
         self._manage_active_scouts()
 
-        # 2. 정찰 주기 체크
+        # 2. 정찰 주기 체크 (개별 타이머 통합 관리)
         current_time = self.bot.time
-        interval = self._get_dynamic_interval()
 
-        if current_time - self.last_scout_time >= interval:
+        # A. Overlord Scouting (Every 30s)
+        if current_time - self.last_scout_times["OVERLORD"] >= 30.0:
+            if self._send_specific_scout(UnitTypeId.OVERLORD):
+                self.last_scout_times["OVERLORD"] = current_time
+
+        # B. Zergling Scouting (Every 60s)
+        if current_time - self.last_scout_times["ZERGLING"] >= 60.0:
+            if self._send_specific_scout(UnitTypeId.ZERGLING):
+                self.last_scout_times["ZERGLING"] = current_time
+
+        # C. General Dynamic Scouting (Based on interval)
+        interval = self._get_dynamic_interval()
+        if current_time - self.last_scout_times["GENERAL"] >= interval:
             if self._send_new_scout():
-                self.last_scout_time = current_time
+                self.last_scout_times["GENERAL"] = current_time
 
         # 3. 감시군주 변신수 활용
         await self._manage_changelings()
@@ -189,12 +199,32 @@ class AdvancedScoutingSystemV2:
 
     def _send_new_scout(self) -> bool:
         """★ Phase 17: 새로운 정찰 유닛 파견 (통계 추적) ★"""
+        return self._send_specific_scout()
+
+    def _send_specific_scout(self, force_unit_type: Optional[UnitTypeId] = None) -> bool:
+        """
+        특정 유닛 타입을 강제하거나 일반적인 로직으로 정찰 유닛 파견
+        """
         target = self._select_scout_target()
         if not target:
             return False
 
-        # 적절한 유닛 선택
-        scout_unit = self._select_scout_unit(target)
+        # 유닛 선택 (강제 타입이 있으면 해당 타입만, 없으면 일반 로직)
+        scout_unit = None
+        if force_unit_type:
+            available_units = self.bot.units(force_unit_type).filter(
+                lambda u: u.tag not in self.active_scouts
+            )
+            if force_unit_type == UnitTypeId.OVERLORD:
+                # 대군주 속업 체크 (속업 안 되어있으면 정찰 지양하지만 강제라면 수행)
+                if available_units:
+                    scout_unit = available_units.closest_to(target)
+            elif force_unit_type == UnitTypeId.ZERGLING:
+                if available_units:
+                    scout_unit = available_units.closest_to(target)
+        else:
+            scout_unit = self._select_scout_unit(target)
+
         if not scout_unit:
             return False
 
@@ -206,12 +236,12 @@ class AdvancedScoutingSystemV2:
                 "target": target,
                 "start_time": self.bot.time
             }
-            self.scouts_sent += 1  # ★ 통계 추적 ★
+            self.scouts_sent += 1
 
             # 로그
             game_time = self.bot.time
             self.logger.info(
-                f"[{int(game_time)}s] Scout {scout_unit.type_id.name} sent to {target} (Total: {self.scouts_sent})"
+                f"[{int(game_time)}s] Scout {scout_unit.type_id.name} sent to {target} (Total: {self.scouts_sent}, Forced: {force_unit_type is not None})"
             )
             return True
 

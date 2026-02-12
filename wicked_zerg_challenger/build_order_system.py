@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Build Order System - 빌드 오더 최적화 시스템
 
-목적: 안정적이고 최적화된 빌드 오더 자동 실행
-- 12풀 14헷 14가스 표준 빌드
-- 타이밍 정확도 향상
-- 승률 기반 자동 조정
+Build Order Optimization System
+
+Purpose: Stable and optimized automated build order execution
+- Standard 12 Pool, 14 Hatch, 14 Gas builds
+- Improved timing accuracy
+- Win-rate based adjustment
 """
 
 from typing import Optional, List, Dict, Tuple
@@ -35,7 +36,7 @@ except ImportError:
 
 
 class BuildOrderType(Enum):
-    """빌드 오더 종류"""
+    """Build Order Types"""
     STANDARD_12POOL = "STANDARD_12POOL"  # Matches JSON key
     SAFE_14POOL = "SAFE_14POOL"      # Need to add to JSON
     AGGRESSIVE_10POOL = "AGGRESSIVE_10POOL"
@@ -47,9 +48,9 @@ class BuildOrderType(Enum):
 
 
 class BuildOrderStep:
-    """빌드 오더 단계"""
+    """Build Order Step"""
     def __init__(self, supply: int, action: str, unit_type: UnitTypeId, description: str = ""):
-        self.supply = supply  # 이 보급에서 실행
+        self.supply = supply  # Supply to execute at
         self.action = action  # "build", "train", "expand"
         self.unit_type = unit_type
         self.description = description
@@ -61,12 +62,13 @@ class BuildOrderStep:
 
 class BuildOrderSystem:
     """
-    빌드 오더 시스템 (Data-Driven by KnowledgeManager)
+
+    Build Order System (Data-Driven by KnowledgeManager)
     
-    핵심 기능:
-    1. KnowledgeManager를 통해 빌드 오더 데이터 로드
-    2. JSON 기반 빌드 오더 자동 실행
-    3. 실시간 진행도 추적
+    Key Features:
+    1. Load build order data via KnowledgeManager
+    2. JSON-based automated execution
+    3. Real-time progress tracking
     """
 
     def __init__(self, bot: BotAI):
@@ -75,16 +77,16 @@ class BuildOrderSystem:
         self.enabled = True
         self.build_order_active = True
 
-        # 현재 빌드 오더 (적 종족에 따라 선택)
+        # Current Build Order (Selected by enemy race)
         self.current_build_order: BuildOrderType = self._select_build_by_enemy_race()
         self.build_steps: List[BuildOrderStep] = []
         self.current_step_index = 0
 
-        # 타이밍 추적
+        # Timing tracking
         self.step_timings: Dict[int, float] = {}  # supply -> game_time
         self.missed_timings: List[str] = []
 
-        # 성능 통계 (기존 통계 유지)
+        # Performance Stats
         self.build_order_stats = {
             BuildOrderType.STANDARD_12POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.SAFE_14POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
@@ -96,18 +98,18 @@ class BuildOrderSystem:
             BuildOrderType.LURKER_DEFENSE: {"games": 0, "wins": 0, "avg_timing": 0.0},
         }
 
-        # 빌드 오더 종료 시간 (이 시간 이후 비활성화)
-        self.build_order_end_time = 300.0  # 5분 (바퀴 러시까지 커버)
+        # Build Order End Time
+        self.build_order_end_time = 300.0  # 5 minutes
 
-        # 초기화
+        # Initialization
         self._setup_build_order()
 
     def _select_build_by_enemy_race(self) -> BuildOrderType:
         """
-        적 종족에 따라 최적 빌드 오더 선택
+        Select best build order by enemy race
 
         Returns:
-            BuildOrderType: 선택된 빌드 오더
+            BuildOrderType: Selected Build Order
         """
         if not hasattr(self.bot, "enemy_race") or not self.bot.enemy_race:
             return BuildOrderType.ROACH_RUSH  # Fallback
@@ -115,20 +117,20 @@ class BuildOrderSystem:
         race_name = str(self.bot.enemy_race).lower()
 
         if "protoss" in race_name:
-            # vs Protoss: 14-pool (Stargate 대비 안전한 오프닝)
-            # Hydralisk/Roach로 전환 가능
+            # vs Protoss: 14-pool (Safe opening vs Stargate or Proxies)
+            # Transition to Hydralisk/Roach
             return BuildOrderType.SAFE_14POOL
         elif "terran" in race_name:
-            # vs Terran: 12-pool (초반 압박 또는 Reaper 대응)
-            # 빠른 전투로 테란 확장 지연
+            # vs Terran: 12-pool (Early pressure or Reaper defense)
+            # Delay Terran expansion
             return BuildOrderType.STANDARD_12POOL
         else:
-            # vs Zerg: 14-pool (미러전 안정성)
-            # Pool 타이밍 맞추면서 경제력 확보
+            # vs Zerg: 14-pool (Mirror matchup stability)
+            # Secure economy while matching pool timing
             return BuildOrderType.SAFE_14POOL
 
     def _setup_build_order(self) -> None:
-        """현재 빌드 오더 설정 (From KnowledgeManager)"""
+        """Setup current build order (From KnowledgeManager)"""
         build_key = self.current_build_order.value
         build_data = self.knowledge_manager.get_build_order(build_key)
 
@@ -140,8 +142,8 @@ class BuildOrderSystem:
             self.build_steps = []
 
         self.current_step_index = 0
-        print(f"[BUILD_ORDER] 빌드 오더 설정: {self.current_build_order.value}")
-        print(f"[BUILD_ORDER] 총 {len(self.build_steps)}개 단계")
+        print(f"[BUILD_ORDER] Build Order Set: {self.current_build_order.value}")
+        print(f"[BUILD_ORDER] Total {len(self.build_steps)} steps")
 
     def _parse_build_steps(self, steps_data: List[Dict]) -> List[BuildOrderStep]:
         """Parse JSON steps into objects"""
@@ -169,43 +171,43 @@ class BuildOrderSystem:
 
     async def execute(self, iteration: int) -> None:
         """
-        매 프레임 빌드 오더 실행
+        Execute build order every frame
         """
-        # 3분 이후 비활성화
+        # Disable after 3 mins
         if self.bot.time > self.build_order_end_time:
             if self.build_order_active:
                 self.build_order_active = False
-                print(f"[BUILD_ORDER] 빌드 오더 단계 완료 (게임 시간: {int(self.bot.time)}초)")
+                print(f"[BUILD_ORDER] Build Order Steps Completed (Game Time: {int(self.bot.time)}s)")
             return
 
         if not self.enabled or not self.build_order_active:
             return
 
-        # 현재 보급 확인
+        # Check current supply
         current_supply = int(self.bot.supply_used)
-
-        # 다음 스텝 확인
+ 
+        # Check next step
         if self.current_step_index >= len(self.build_steps):
             return
 
         current_step = self.build_steps[self.current_step_index]
 
-        # 보급 도달 확인
+        # Check supply requirement
         if current_supply >= current_step.supply:
-            # 스텝 실행
+            # Execute step
             success = await self._execute_step(current_step)
 
             if success:
-                # 타이밍 기록
+                # Record timing
                 self.step_timings[current_step.supply] = self.bot.time
-                print(f"[BUILD_ORDER] [OK] {current_step.supply}보급: {current_step.description} (타이밍: {int(self.bot.time)}초)")
-
-                # 다음 스텝으로
+                print(f"[BUILD_ORDER] [OK] {current_step.supply} Supply: {current_step.description} (Timing: {int(self.bot.time)}s)")
+ 
+                # Next step
                 current_step.completed = True
                 self.current_step_index += 1
 
     async def _execute_step(self, step: BuildOrderStep) -> bool:
-        """빌드 오더 단계 실행"""
+        """Execute Build Order Step"""
         try:
             if step.action == "build":
                 return await self._build_structure(step.unit_type)
@@ -215,22 +217,22 @@ class BuildOrderSystem:
                 return await self._expand(step.unit_type)
             return False
         except Exception as e:
-            print(f"[BUILD_ORDER] 단계 실행 실패: {e}")
+            print(f"[BUILD_ORDER] Step Execution Failed: {e}")
             return False
 
     async def _build_structure(self, structure_type: UnitTypeId) -> bool:
-        """건물 건설"""
-        # 이미 건설 중이거나 있으면 스킵
+        """Build Structure"""
+        # Skip if already exists or pending
         if self.bot.structures(structure_type).exists:
             return True
         if self.bot.already_pending(structure_type) > 0:
             return True
 
-        # 자원 확인
+        # Check Resources
         if not self.bot.can_afford(structure_type):
             return False
 
-        # 일꾼 확인
+        # Check Workers
         if not self.bot.workers:
             return False
 
@@ -238,7 +240,7 @@ class BuildOrderSystem:
         tech_coordinator = getattr(self.bot, "tech_coordinator", None)
         PRIORITY_BUILD_ORDER = 50
 
-        # Spawning Pool 건설
+        # Build Spawning Pool
         if structure_type == UnitTypeId.SPAWNINGPOOL:
             main_base = self.bot.townhalls.first
             # Calculate approx location
@@ -265,7 +267,7 @@ class BuildOrderSystem:
                     worker.build(UnitTypeId.SPAWNINGPOOL, location)
                     return True
 
-        # Extractor 건설
+        # Build Extractor
         elif structure_type == UnitTypeId.EXTRACTOR:
             if self.bot.townhalls:
                 main_base = self.bot.townhalls.first
@@ -309,33 +311,33 @@ class BuildOrderSystem:
         return False
 
     async def _train_unit(self, unit_type: UnitTypeId) -> bool:
-        """유닛 생산"""
-        # 자원 확인
+        """Train Unit"""
+        # Check Resources
         if not self.bot.can_afford(unit_type):
             return False
 
-        # Overlord 생산
+        # Train Overlord
         if unit_type == UnitTypeId.OVERLORD:
             if self.bot.larva:
                 larva = self.bot.larva.first
                 larva.train(UnitTypeId.OVERLORD)
                 return True
 
-        # Queen 생산
+        # Train Queen
         elif unit_type == UnitTypeId.QUEEN:
-            # Spawning Pool 확인
+            # Check Spawning Pool
             if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
                 return False
 
-            # 대기 중인 Hatchery 찾기
+            # Find Idle Hatchery
             for hatchery in self.bot.townhalls.ready.idle:
                 if self.bot.can_afford(UnitTypeId.QUEEN):
                     hatchery.train(UnitTypeId.QUEEN)
                     return True
 
-        # Zergling 생산
+        # Train Zergling
         elif unit_type == UnitTypeId.ZERGLING:
-            # Spawning Pool 확인
+            # Check Spawning Pool
             if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
                 return False
 
@@ -344,7 +346,7 @@ class BuildOrderSystem:
                 larva.train(UnitTypeId.ZERGLING)
                 return True
 
-        # Drone 생산 (기본)
+        # Train Drone
         elif unit_type == UnitTypeId.DRONE:
             if self.bot.larva:
                 larva = self.bot.larva.first
@@ -354,18 +356,18 @@ class BuildOrderSystem:
         return False
 
     async def _expand(self, structure_type: UnitTypeId) -> bool:
-        """확장 기지 건설"""
-        # 이미 확장했으면 스킵
+        """Expand Base"""
+        # Skip if already expanded
         if self.bot.townhalls.amount >= 2:
             return True
         if self.bot.already_pending(UnitTypeId.HATCHERY) > 0:
             return True
 
-        # 자원 확인
+        # Check Resources
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
             return False
 
-        # 확장 위치 찾기
+        # Find Expansion Location
         location = await self.bot.get_next_expansion()
         if location:
             # Use TechCoordinator if available
@@ -390,8 +392,8 @@ class BuildOrderSystem:
         return False
 
     def select_build_order_by_win_rate(self) -> BuildOrderType:
-        """승률 기반 빌드 오더 자동 선택"""
-        # 승률 계산
+        """Auto-select Build Order by Win Rate"""
+        # Calculate Win Rates
         win_rates = {}
         for build_type, stats in self.build_order_stats.items():
             if stats["games"] > 0:
@@ -399,7 +401,7 @@ class BuildOrderSystem:
             else:
                 win_rates[build_type] = 0.0
 
-        # 승률이 가장 높은 빌드 선택 (최소 5게임 이상)
+        # Select Best Build (Min 5 games)
         best_build = BuildOrderType.STANDARD_12POOL
         best_win_rate = 0.0
 
@@ -411,16 +413,16 @@ class BuildOrderSystem:
         return best_build
 
     def record_game_result(self, build_order: BuildOrderType, won: bool) -> None:
-        """게임 결과 기록"""
+        """Record Game Result"""
         if build_order in self.build_order_stats:
             self.build_order_stats[build_order]["games"] += 1
             if won:
                 self.build_order_stats[build_order]["wins"] += 1
 
     def get_progress(self) -> str:
-        """빌드 오더 진행도 반환"""
+        """Return Build Order Progress"""
         if not self.build_order_active:
-            return "빌드 오더 완료"
+            return "Build Order Complete"
 
         completed = sum(1 for step in self.build_steps if step.completed)
         total = len(self.build_steps)
@@ -430,26 +432,26 @@ class BuildOrderSystem:
         else:
             progress = "0/0"
 
-        # 현재 목표
+        # Current Target
         if self.current_step_index < len(self.build_steps):
             next_step = self.build_steps[self.current_step_index]
-            target = f"다음: {next_step.supply}보급 {next_step.description}"
+            target = f"Next: {next_step.supply} Supply {next_step.description}"
         else:
-            target = "모든 단계 완료"
+            target = "All Steps Completed"
 
         return f"{progress} | {target}"
 
     def get_stats_summary(self) -> str:
-        """빌드 오더 통계 요약"""
+        """Build Order Stats Summary"""
         lines = []
-        lines.append("\n[BUILD_ORDER] === 빌드 오더 통계 ===")
+        lines.append("\n[BUILD_ORDER] === Build Order Stats ===")
 
         for build_type, stats in self.build_order_stats.items():
             games = stats["games"]
             wins = stats["wins"]
             win_rate = (wins / games * 100) if games > 0 else 0.0
 
-            lines.append(f"  {build_type.value}: {wins}/{games}승 ({win_rate:.1f}%)")
+            lines.append(f"  {build_type.value}: {wins}/{games} wins ({win_rate:.1f}%)")
 
         lines.append("=" * 40)
         return "\n".join(lines)

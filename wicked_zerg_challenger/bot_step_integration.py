@@ -1123,6 +1123,22 @@ class BotStepIntegrator:
                 if iteration == 1:
                     print(f"[WARNING] strategy_manager not found! hasattr={hasattr(self.bot, 'strategy_manager')}, value={getattr(self.bot, 'strategy_manager', None)}")
 
+            # 0.11 ★★★ Situational Awareness (Stage 5 - SITREP Generation) ★★★
+            # StrategyManager 직후에 실행하여 최신 전략 상태를 반영
+            if hasattr(self.bot, "situational_awareness") and self.bot.situational_awareness:
+                 start_time = self._logic_tracker.start_logic("SituationalAwareness")
+                 try:
+                     self.bot.situational_awareness.on_step(iteration)
+                 except Exception as e:
+                     if error_handler.debug_mode:
+                         raise
+                     else:
+                         error_handler.error_counts["SituationalAwareness"] = error_handler.error_counts.get("SituationalAwareness", 0) + 1
+                         if error_handler.error_counts["SituationalAwareness"] <= error_handler.max_error_logs:
+                             print(f"[ERROR] SituationalAwareness error: {e}")
+                 finally:
+                     self._logic_tracker.end_logic("SituationalAwareness", start_time)
+
             # 0.15 ★ Defeat Detection (패배 직감 시스템) ★
             if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
                 start_time = self._logic_tracker.start_logic("DefeatDetection")
@@ -2045,22 +2061,16 @@ class BotStepIntegrator:
                     training = getattr(self.bot, 'train_mode', True)
                     action_idx, action_label, prob = self.bot.rl_agent.get_action(game_state, training=training)
 
-                    # ★ Time-based Control Handoff (시간 기반 제어권 전환) ★
-                    # 초반 5분(300초): Rule-based decision 우선 (기본 전략 학습)
-                    # 5분 이후: RLAgent 결정 우선 (학습된 전략 활용)
-                    if self.bot.time < 300.0:
-                        override_strategy = None  # Rule-based decision 사용
-                        rl_decision_used = False
-                        if iteration % 220 == 0:
-                            print(f"[RL_DECISION] ⏰ Early game: Rule-based (RLAgent training: ε={self.bot.rl_agent.epsilon:.3f})")
-                    else:
-                        # ★ RLAgent의 결정을 무조건 따름 ★
-                        override_strategy = action_label
-                        rl_decision_used = True
-                        # ★ 결정 로깅 (10초마다) ★
-                        if iteration % 220 == 0:
-                            mode = "TRAINING" if training else "INFERENCE"
-                            print(f"[RL_DECISION] ★ RLAgent 결정 ({mode}): {action_label} (확률: {prob:.3f}, ε={self.bot.rl_agent.epsilon:.3f}) ★")
+                    # ★ SHADOW MODE: Force Rule-based decision (User Request) ★
+                    # Always use rule-based decision, but keep RLAgent running for training
+                    override_strategy = None
+                    rl_decision_used = False
+                    is_shadow_mode = True  # Flag for conflict resolution
+                    
+                    if iteration % 220 == 0:
+                        mode = "TRAINING" if training else "INFERENCE"
+                        # Log what RLAgent WOULD have done
+                        print(f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Prob: {prob:.3f}, ε={self.bot.rl_agent.epsilon:.3f}) - IGNORED")
 
                 except Exception as e:
                     if error_handler.debug_mode:
@@ -2088,22 +2098,33 @@ class BotStepIntegrator:
                         # 문자열(예: "ALL_IN")을 Enum으로 변환
                         mode_enum = StrategyMode[new_mode]
                         
-                        # 모드가 변경될 때만 로그 출력 및 적용
-                        if self.bot.strategy_manager.current_mode != mode_enum:
-                            self.bot.strategy_manager.current_mode = mode_enum
-                            if iteration % 100 == 0:
-                                print(f"[COMMANDER] ★ 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})")
+                        # ★ CONFLICT RESOLUTION: Shadow Mode일 때는 StrategyManager를 덮어쓰지 않음 ★
+                        if not is_shadow_mode:
+                            # 모드가 변경될 때만 로그 출력 및 적용
+                            if self.bot.strategy_manager.current_mode != mode_enum:
+                                self.bot.strategy_manager.current_mode = mode_enum
+                                if iteration % 100 == 0:
+                                    print(f"[COMMANDER] ★ 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})")
+                        else:
+                            # Shadow Mode: 단순히 Commander의 의견을 로그로만 남김 (디버깅용)
+                            if self.bot.strategy_manager.current_mode != mode_enum:
+                                if iteration % 220 == 0:
+                                     print(f"[SHADOW_CONFLICT] Manager: {self.bot.strategy_manager.current_mode.name} vs Commander: {new_mode}")
+                                     
                     except KeyError:
                         pass # 유효하지 않은 모드 문자열이면 무시
                 
-                self.bot._current_strategy = new_mode
+                if not is_shadow_mode:
+                    self.bot._current_strategy = new_mode
 
                 # ★ 결정 로깅 (10초마다) ★
                 if iteration % 220 == 0:  # 10초마다
                     if rl_decision_used:
                         print(f"[STRATEGY] ★★★ RLAgent 결정 적용: {new_mode} ★★★")
-                    else:
+                    elif not is_shadow_mode:
                         print(f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)")
+                    else:
+                        print(f"[STRATEGY] 현행 유지 (Shadow Mode)")
 
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
                 if hasattr(self.bot, "rl_agent") and self.bot.rl_agent and not rl_decision_used:
