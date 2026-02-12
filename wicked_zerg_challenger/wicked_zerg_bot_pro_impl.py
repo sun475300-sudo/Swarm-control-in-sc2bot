@@ -1,3 +1,7 @@
+
+
+
+
 # -*- coding: utf-8 -*-
 """
 WickedZergBotPro Implementation - on_step implementation
@@ -19,6 +23,7 @@ from typing import Optional
 from pathlib import Path
 from blackboard import Blackboard
 from difficulty_progression import DifficultyProgression
+from personality_module import PersonalityModule, PersonalityMode
 import traceback
 
 class WickedZergBotProImpl(BotAI):
@@ -36,7 +41,8 @@ class WickedZergBotProImpl(BotAI):
         super().__init__()
         self.train_mode = train_mode
         self.instance_id = instance_id
-        self.personality = personality
+        self.personality_type = personality  # Store the requested personality type (string)
+        self.personality = None              # Will be the actual module instance
         self.opponent_race = opponent_race
         self.game_count = game_count
         self.learning_rate = learning_rate
@@ -167,6 +173,28 @@ class WickedZergBotProImpl(BotAI):
                 print(f"[BOT_WARN] MapMemorySystem on_start failed: {e}")
                 traceback.print_exc()
 
+        # === Personality Module (Jarvis) ===
+        try:
+            mode = PersonalityMode.NEUTRAL
+            if self.personality_type:
+                p_type = self.personality_type.lower()
+                if "serral" in p_type or "cocky" in p_type:
+                    mode = PersonalityMode.COCKY
+                elif "maru" in p_type or "polite" in p_type:
+                    mode = PersonalityMode.POLITE
+                elif "dark" in p_type:
+                    mode = PersonalityMode.COCKY
+                elif "silent" in p_type:
+                    mode = PersonalityMode.SILENT
+            
+            self.personality = PersonalityModule(self, mode=mode, 
+                                               knowledge_manager=self.knowledge_manager,
+                                               opponent_modeling=self.opponent_modeling)
+            print(f"[BOT] ★ PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
+        except Exception as e:
+            print(f"[BOT_WARN] Failed to initialize PersonalityModule: {e}")
+            traceback.print_exc()
+
         # === RL Agent initialization (train_mode only) ===
         self.rl_agent = None
         if self.train_mode:
@@ -184,6 +212,30 @@ class WickedZergBotProImpl(BotAI):
             except Exception as e:
                 print(f"[RL_AGENT] Initialization failed: {e}")
                 traceback.print_exc()
+
+        # === Hierarchical RL System initialization ===
+        self.hierarchical_rl = None
+        try:
+            from local_training.hierarchical_rl.improved_hierarchical_rl import HierarchicalRLSystem
+            self.hierarchical_rl = HierarchicalRLSystem()
+            print(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
+        except ImportError as e:
+            print(f"[HIERARCHICAL_RL] Not available: {e}")
+        except Exception as e:
+            print(f"[HIERARCHICAL_RL] Initialization failed: {e}")
+            traceback.print_exc()
+
+        # === Situational Awareness Module Integration (Stage 5) ===
+        self.situational_awareness = None
+        try:
+            from core.situational_awareness import SituationalAwareness
+            self.situational_awareness = SituationalAwareness(self)
+            print(f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)")
+        except ImportError as e:
+            print(f"[SITUATIONAL_AWARENESS] Not available: {e}")
+        except Exception as e:
+            print(f"[SITUATIONAL_AWARENESS] Initialization failed: {e}")
+            traceback.print_exc()
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
@@ -259,6 +311,10 @@ class WickedZergBotProImpl(BotAI):
 
         # Execute integrated on_step (모든 핵심 매니저 포함)
         await self._step_integrator.on_step(iteration)
+
+        # ★ Execute Personality Module (Chat)
+        if self.personality:
+            await self.personality.on_step(iteration)
 
     async def on_end(self, game_result):
         """

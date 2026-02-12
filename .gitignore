@@ -49,6 +49,17 @@ secrets/
 *_API_KEY.txt
 client_secret.json
 **/client_secret.json
+.vscode/
+.idea/
+
+# JARVIS Local Scripts (Often contain keys)
+JARVIS_CLEAN_START.bat
+JARVIS_RECOVERY.bat
+JARVIS_VISIBLE_START.bat
+run_jarvis_full_system.cmd
+jarvis_visible_boot.vbs
+jarvis_invisible_boot.vbs
+.env.jarvis
 
 # Claude Code local settings (contains API keys)
 .claude/settings.local.json

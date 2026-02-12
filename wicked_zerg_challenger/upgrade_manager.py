@@ -521,9 +521,7 @@ class EvolutionUpgradeManager:
         # === 7순위: 아드레날린 (Adrenal Glands) - Hive 필요 ===
         # 공2업 이후 연구
         if self._has_hive():
-            melee_2 = getattr(UpgradeId, "ZERGMELEEWEAPONSLEVEL2", None)
-            if melee_2 and self._is_upgrade_done(melee_2):
-                await self._research_adrenal_glands(iteration)
+            await self._research_adrenal_glands(iteration)
             
             # 울트라리스크 업그레이드
             if self.bot.units(UnitTypeId.ULTRALISK).amount >= 1:
@@ -746,10 +744,7 @@ class EvolutionUpgradeManager:
         if self.bot.already_pending_upgrade(hydra_range) > 0:
             return
 
-        # 히드라 발업이 먼저 완료되어야 함
-        hydra_speed = getattr(UpgradeId, "EVOLVEMUSCULARAUGMENTS", None)
-        if hydra_speed and not self._is_upgrade_done(hydra_speed):
-            return
+
 
         # 히드라 굴 확인
         hydra_dens = self.bot.structures(UnitTypeId.HYDRALISKDEN).ready

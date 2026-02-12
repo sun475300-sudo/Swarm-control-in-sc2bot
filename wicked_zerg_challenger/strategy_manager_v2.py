@@ -150,6 +150,78 @@ class StrategyManagerV2(StrategyManager):
         # Phase 18: Smart Surrender
         self._check_smart_surrender(game_time)
 
+        # Stage 5: Decision Logic (Situational Overrides)
+        self._apply_situational_overrides()
+
+    def _apply_situational_overrides(self) -> None:
+        """
+        Stage 5: High-level strategic overrides based on SITREP
+        """
+        if not hasattr(self.bot, "situational_awareness") or not self.bot.situational_awareness:
+            return
+
+        try:
+            from core.situational_awareness import ThreatLevel, OpportunityIndex
+        except ImportError:
+            return
+
+        sitrep = self.bot.situational_awareness.get_latest_sitrep()
+        if not sitrep:
+            return
+            
+        status = sitrep.get("status", {})
+        threat_level_name = status.get("threat_level", "NONE")
+        opportunity_name = status.get("opportunity", "NONE")
+        
+        # 1. CRITICAL THREAT -> EMERGENCY Mode
+        if threat_level_name == ThreatLevel.CRITICAL.name:
+            if self.current_mode != StrategyMode.EMERGENCY:
+                self.logger.warning("[DECISION] CRITICAL THREAT DETECTED! Forcing EMERGENCY mode.")
+                self.current_mode = StrategyMode.EMERGENCY
+                self.emergency_active = True
+                self.emergency_start_time = self.bot.time
+
+        # 2. Specific Tech Threat Adaptation (Phase 21)
+        intel = sitrep.get("intelligence", {})
+        detected_threats = intel.get("threats", [])
+        
+        if "CLOAK_TECH" in detected_threats:
+            # Prioritize detection
+            if hasattr(self.bot, "blackboard") and self.bot.blackboard:
+                # Request Overseer
+                try:
+                    from sc2.ids.unit_typeid import UnitTypeId
+                    # Request at least 2 Overseers
+                    if self.bot.units(UnitTypeId.OVERSEER).amount < 2:
+                        self.bot.blackboard.request_production(UnitTypeId.OVERSEER, 1, "StrategyManagerV2", priority=0)
+                except (ImportError, AttributeError):
+                    pass
+            self.logger.info("[STRATEGY] CLOAK_TECH detected! Prioritizing detection.")
+
+        if "AIR_THREAT" in detected_threats:
+            # Prioritize Anti-Air
+            if hasattr(self.bot, "blackboard") and self.bot.blackboard:
+                try:
+                    from sc2.ids.unit_typeid import UnitTypeId
+                    # Request Hydralisks or Corruptors
+                    if self.bot.units(UnitTypeId.HYDRALISK).amount < 10:
+                        self.bot.blackboard.request_production(UnitTypeId.HYDRALISK, 5, "StrategyManagerV2", priority=1)
+                except (ImportError, AttributeError):
+                    pass
+            self.logger.info("[STRATEGY] AIR_THREAT detected! Increasing anti-air production.")
+
+        # 3. HIGH OPPORTUNITY -> ALL_IN / AGGRESSIVE (Only if not in emergency)
+        elif self.current_mode != StrategyMode.EMERGENCY:
+            if opportunity_name == OpportunityIndex.GAME_ENDING.name:
+                 if self.current_mode != StrategyMode.ALL_IN:
+                     self.logger.info("[DECISION] FINISH move detected! Forcing ALL_IN mode.")
+                     self.current_mode = StrategyMode.ALL_IN
+
+            elif opportunity_name == OpportunityIndex.HIGH.name:
+                 if self.current_mode not in [StrategyMode.ALL_IN, StrategyMode.AGGRESSIVE]:
+                     self.logger.info("[DECISION] High opportunity detected. Switching to AGGRESSIVE.")
+                     self.current_mode = StrategyMode.AGGRESSIVE
+
     # ========== WIN CONDITION DETECTION ==========
 
     def _update_win_condition(self, game_time: float) -> None:

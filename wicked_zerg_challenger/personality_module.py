@@ -40,10 +40,13 @@ class PersonalityModule:
     게임 상황에 맞는 채팅을 자동으로 보냅니다.
     """
 
-    def __init__(self, bot, mode: PersonalityMode = PersonalityMode.NEUTRAL):
+    def __init__(self, bot, mode: PersonalityMode = PersonalityMode.NEUTRAL,
+                 knowledge_manager=None, opponent_modeling=None):
         self.bot = bot
         self.logger = get_logger("Personality")
         self.mode = mode
+        self.knowledge_manager = knowledge_manager
+        self.opponent_modeling = opponent_modeling
 
         # 채팅 이력
         self.messages_sent: List[str] = []
@@ -65,18 +68,18 @@ class PersonalityModule:
             # 게임 시작
             "greeting": {
                 PersonalityMode.POLITE: [
-                    "gl hf!",
-                    "Good luck, have fun!",
-                    "May the best player win!",
+                    "좋은 게임 부탁드립니다! (gl hf)",
+                    "운이 좋으시길! (gl hf)",
+                    "즐거운 게임 해요~ (hf)",
                 ],
                 PersonalityMode.NEUTRAL: [
-                    "glhf",
-                    "hf",
+                    "gl hf",
+                    "안녕하세요 (gl hf)",
                 ],
                 PersonalityMode.COCKY: [
-                    "gl, you'll need it",
-                    "Prepare to be outplayed",
-                    "This won't take long",
+                    "운이 필요하실 겁니다.",
+                    "준비 되셨나요?",
+                    "금방 끝내드리죠.",
                 ],
                 PersonalityMode.SILENT: [],
             },
@@ -84,17 +87,17 @@ class PersonalityModule:
             # 우위 시 도발
             "ahead": {
                 PersonalityMode.POLITE: [
-                    "Nice economy!",
-                    "Good defense",
+                    "경제가 튼튼하시네요!",
+                    "방어가 좋으십니다.",
                 ],
                 PersonalityMode.NEUTRAL: [
-                    "Interesting strategy",
+                    "흥미로운 전략이군요.",
                 ],
                 PersonalityMode.COCKY: [
-                    "Is that all you got?",
-                    "My swarm grows stronger",
-                    "You cannot stop the Swarm",
-                    "Resistance is futile",
+                    "그게 최선입니까?",
+                    "군단은 멈추지 않습니다.",
+                    "저항은 무의미합니다.",
+                    "제 병력이 너무 많군요.",
                 ],
                 PersonalityMode.SILENT: [],
             },
@@ -102,15 +105,16 @@ class PersonalityModule:
             # 적 좋은 플레이
             "respect": {
                 PersonalityMode.POLITE: [
-                    "Nice move!",
-                    "Well played",
-                    "That was impressive",
+                    "멋진 플레이네요!",
+                    "잘 하시네요!",
+                    "인상적입니다.",
                 ],
                 PersonalityMode.NEUTRAL: [
                     "wp",
+                    "잘하시네요",
                 ],
                 PersonalityMode.COCKY: [
-                    "Not bad",
+                    "나쁘지 않군요.",
                 ],
                 PersonalityMode.SILENT: [],
             },
@@ -118,17 +122,18 @@ class PersonalityModule:
             # 승리
             "victory": {
                 PersonalityMode.POLITE: [
-                    "gg wp!",
-                    "Good game, well played!",
-                    "That was fun!",
+                    "수고하셨습니다! (gg wp)",
+                    "좋은 승부였습니다! (gg)",
+                    "즐거웠습니다!",
                 ],
                 PersonalityMode.NEUTRAL: [
                     "gg",
+                    "수고하셨습니다",
                 ],
                 PersonalityMode.COCKY: [
                     "gg ez",
-                    "The Swarm always wins",
-                    "Better luck next time",
+                    "군단의 승리입니다.",
+                    "다음엔 더 분발하세요.",
                 ],
                 PersonalityMode.SILENT: ["gg"],
             },
@@ -136,15 +141,16 @@ class PersonalityModule:
             # 패배
             "defeat": {
                 PersonalityMode.POLITE: [
-                    "gg wp!",
-                    "Well played! You deserved that win",
+                    "수고하셨습니다! (gg wp)",
+                    "잘 하시네요, 제가 졌습니다.",
                 ],
                 PersonalityMode.NEUTRAL: [
                     "gg",
+                    "지지",
                 ],
                 PersonalityMode.COCKY: [
                     "gg",
-                    "Lucky win",
+                    "운이 좋으시네요.",
                 ],
                 PersonalityMode.SILENT: ["gg"],
             },
@@ -152,15 +158,15 @@ class PersonalityModule:
             # 긴 게임
             "long_game": {
                 PersonalityMode.POLITE: [
-                    "This is an epic battle!",
-                    "What a game!",
+                    "정말 치열한 승부네요!",
+                    "대단한 경기입니다!",
                 ],
                 PersonalityMode.NEUTRAL: [
-                    "Long game",
+                    "장기전이네요.",
                 ],
                 PersonalityMode.COCKY: [
-                    "You're persistent, I'll give you that",
-                    "How are you still alive?",
+                    "끈질기시군요.",
+                    "아직도 살아계시다니.",
                 ],
                 PersonalityMode.SILENT: [],
             },
@@ -186,9 +192,38 @@ class PersonalityModule:
 
     async def _send_greeting(self, game_time: float):
         """게임 시작 인사"""
+        # Memory-based greeting (Priority)
+        memory_msg = self._get_memory_greeting()
+        if memory_msg:
+            await self._send_message(memory_msg, game_time)
+            return
+
+        # Fallback to random greeting
         message = self._get_random_message("greeting")
         if message:
             await self._send_message(message, game_time)
+
+    def _get_memory_greeting(self) -> Optional[str]:
+        """기억 기반 인사말 생성"""
+        if not self.opponent_modeling or not self.opponent_modeling.current_opponent_id:
+            return None
+
+        # Get stats
+        stats = self.opponent_modeling.get_opponent_stats(self.opponent_modeling.current_opponent_id)
+        if not stats or stats["games_played"] == 0:
+            return "처음 뵙겠습니다. 잘 부탁드립니다. (gl hf)"
+
+        games = stats["games_played"]
+        win_rate = stats["win_rate"] * 100
+        style = stats["dominant_style"]
+        
+        # Format message based on win rate
+        if win_rate > 70:
+            return f"또 오셨나요? 이번엔 좀 버티시길. (승률: {win_rate:.1f}%) gl hf."
+        elif win_rate < 30:
+            return f"지난번의 패배를 분석했습니다. 이번엔 다를 겁니다. (승률: {win_rate:.1f}%) gl hf."
+        else:
+            return f"{games+1}번째 판이네요. 누가 더 발전했는지 봅시다. (승률: {win_rate:.1f}%) gl hf."
 
     async def _check_game_situation(self, game_time: float):
         """게임 상황 체크 및 적절한 메시지"""

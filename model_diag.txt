@@ -1,0 +1,38 @@
+API Key: AIzaS...2wcSg
+
+--- Listing Available Models ---
+ID: models/gemini-2.5-flash, Display: Gemini 2.5 Flash
+ID: models/gemini-2.5-pro, Display: Gemini 2.5 Pro
+ID: models/gemini-2.0-flash, Display: Gemini 2.0 Flash
+ID: models/gemini-2.0-flash-001, Display: Gemini 2.0 Flash 001
+ID: models/gemini-2.0-flash-exp-image-generation, Display: Gemini 2.0 Flash (Image Generation) Experimental
+ID: models/gemini-2.0-flash-lite-001, Display: Gemini 2.0 Flash-Lite 001
+ID: models/gemini-2.0-flash-lite, Display: Gemini 2.0 Flash-Lite
+ID: models/gemini-exp-1206, Display: Gemini Experimental 1206
+ID: models/gemini-2.5-flash-preview-tts, Display: Gemini 2.5 Flash Preview TTS
+ID: models/gemini-2.5-pro-preview-tts, Display: Gemini 2.5 Pro Preview TTS
+ID: models/gemma-3-1b-it, Display: Gemma 3 1B
+ID: models/gemma-3-4b-it, Display: Gemma 3 4B
+ID: models/gemma-3-12b-it, Display: Gemma 3 12B
+ID: models/gemma-3-27b-it, Display: Gemma 3 27B
+ID: models/gemma-3n-e4b-it, Display: Gemma 3n E4B
+ID: models/gemma-3n-e2b-it, Display: Gemma 3n E2B
+ID: models/gemini-flash-latest, Display: Gemini Flash Latest
+ID: models/gemini-flash-lite-latest, Display: Gemini Flash-Lite Latest
+ID: models/gemini-pro-latest, Display: Gemini Pro Latest
+ID: models/gemini-2.5-flash-lite, Display: Gemini 2.5 Flash-Lite
+ID: models/gemini-2.5-flash-image, Display: Nano Banana
+ID: models/gemini-2.5-flash-preview-09-2025, Display: Gemini 2.5 Flash Preview Sep 2025
+ID: models/gemini-2.5-flash-lite-preview-09-2025, Display: Gemini 2.5 Flash-Lite Preview Sep 2025
+ID: models/gemini-3-pro-preview, Display: Gemini 3 Pro Preview
+ID: models/gemini-3-flash-preview, Display: Gemini 3 Flash Preview
+ID: models/gemini-3-pro-image-preview, Display: Nano Banana Pro
+ID: models/nano-banana-pro-preview, Display: Nano Banana Pro
+ID: models/gemini-robotics-er-1.5-preview, Display: Gemini Robotics-ER 1.5 Preview
+ID: models/gemini-2.5-computer-use-preview-10-2025, Display: Gemini 2.5 Computer Use Preview 10-2025
+ID: models/deep-research-pro-preview-12-2025, Display: Deep Research Pro Preview (Dec-12-2025)
+
+--- Testing String-based Tool Support ---
+FAILED  [gemini-2.0-flash] with string tool: 400 Unable to submit request because google_search_retrieval is not supported; please use google_search field instead. Learn more: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini
+FAILED  [gemini-1.5-pro] with string tool: 404 models/gemini-1.5-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+FAILED  [gemini-pro-latest] with string tool: 400 google_search_retrieval is not supported. Please use google_search tool instead.
