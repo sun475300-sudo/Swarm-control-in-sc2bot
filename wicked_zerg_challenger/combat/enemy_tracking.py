@@ -51,20 +51,29 @@ def get_anti_air_threats(enemy_units, position, range_check=15):
     Returns:
         공중 공격 가능한 적 유닛 리스트
     """
-    anti_air_names = [
+    # ★ Phase 22: Use set for O(1) lookup + closer_than() ★
+    anti_air_names = {
         "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VOIDRAY",
         "VIKINGFIGHTER", "THOR", "CYCLONE", "LIBERATOR",
         "QUEEN", "CORRUPTOR", "MUTALISK", "ARCHON",
         "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON"
-    ]
-    return [e for e in enemy_units
-            if getattr(e.type_id, "name", "") in anti_air_names
-            and e.distance_to(position) < range_check]
+    }
+
+    # Use closer_than to pre-filter by distance first
+    if hasattr(enemy_units, "closer_than"):
+        nearby = enemy_units.closer_than(range_check, position)
+        return [e for e in nearby if getattr(e.type_id, "name", "") in anti_air_names]
+    else:
+        return [e for e in enemy_units
+                if getattr(e.type_id, "name", "") in anti_air_names
+                and e.distance_to(position) < range_check]
 
 
 def find_densest_enemy_position(enemies):
     """
     가장 밀집된 적 위치 찾기 (맹독충용)
+
+    Phase 22 최적화: O(N^2) -> O(N) grid-based density calculation
 
     Args:
         enemies: 적 유닛 리스트
@@ -75,15 +84,42 @@ def find_densest_enemy_position(enemies):
     if not enemies:
         return None
 
+    enemy_list = list(enemies)
+    if len(enemy_list) <= 3:
+        # Small group: just return first enemy (no meaningful density)
+        return enemy_list[0]
+
+    # ★ Phase 22: Grid-based density (O(N) instead of O(N^2)) ★
+    # Use a spatial grid with 5-unit cells
+    cell_size = 5.0
+    grid = {}
+
+    for enemy in enemy_list:
+        cx = int(enemy.position.x / cell_size)
+        cy = int(enemy.position.y / cell_size)
+        key = (cx, cy)
+        if key not in grid:
+            grid[key] = []
+        grid[key].append(enemy)
+
+    # Find cell with most enemies (including adjacent cells)
     max_density = 0
     densest_enemy = None
 
-    for enemy in enemies:
-        # 5 거리 내의 적 수 계산
-        nearby_count = sum(1 for e in enemies if e.distance_to(enemy) < 5)
-        if nearby_count > max_density:
-            max_density = nearby_count
-            densest_enemy = enemy
+    for (cx, cy), cell_enemies in grid.items():
+        # Count enemies in this cell + 8 adjacent cells
+        density = len(cell_enemies)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                neighbor_key = (cx + dx, cy + dy)
+                if neighbor_key in grid:
+                    density += len(grid[neighbor_key])
+
+        if density > max_density:
+            max_density = density
+            densest_enemy = cell_enemies[0]  # Representative from densest cell
 
     return densest_enemy
 

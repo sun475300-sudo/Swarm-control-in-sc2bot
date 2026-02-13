@@ -143,6 +143,14 @@ class HarassmentCoordinator:
         self.nydus_squad_tags: Set[int] = set()
         self.nydus_cooldown = 0
 
+        # ★ Phase 22: 일꾼 처치 추적 & 스마트 견제 ★
+        self.workers_killed = 0
+        self.raids_executed = 0
+        self.last_worker_kill_count = 0  # 시작 시점 적 일꾼 수 스냅샷
+        self._aggro_mode_last_update = 0  # 마지막 공격모드 자동 갱신 시간
+        self._mineral_line_defense_cache: Dict[Point2, int] = {}  # 미네랄라인별 방어력 캐시
+        self._defense_cache_time = 0
+
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
@@ -184,6 +192,14 @@ class HarassmentCoordinator:
             # 8. ★ Nydus Harassment (Phase 17) ★
             if iteration % 33 == 0:
                 await self._manage_nydus_harassment()
+
+            # 9. ★ Phase 22: 자동 공격모드 조정 (30초마다) ★
+            if iteration % 660 == 0:
+                self._auto_adjust_aggressive_mode()
+
+            # 10. ★ Phase 22: 일꾼 처치 추적 (5초마다) ★
+            if iteration % 110 == 0:
+                self._track_worker_kills()
 
         except Exception as e:
             if iteration % 200 == 0:
@@ -262,8 +278,10 @@ class HarassmentCoordinator:
                 self.zergling_runby_tags.discard(tag)
                 continue
             
-            # HP 너무 낮으면 권한 해제 (CombatManager가 가져가도록)
+            # HP 너무 낮으면 안전 후퇴 후 권한 해제
             if unit.health_percentage < 0.2:
+                retreat = self._find_safe_retreat_point(unit.position)
+                self.bot.do(unit.move(retreat))
                 self.bot.unit_authority.release_unit(tag, "Harassment_Runby")
                 self.zergling_runby_tags.discard(tag)
                 continue
@@ -297,31 +315,46 @@ class HarassmentCoordinator:
         if len(zerglings) < 12:  # 최소 12마리 (본대 유지 위해)
             return
 
-        # ★ 6마리를 Run-by로 파견 ★
-        runby_count = 6
-        candidates = zerglings.sorted(lambda u: u.distance_to(self.bot.start_location))[:runby_count]
+        # ★ Phase 22: 멀티 베이스 동시 타격 ★
+        targets = self._find_multi_mineral_lines(count=2)
+        if not targets:
+            target = self._find_enemy_mineral_line()
+            if target:
+                targets = [target]
+            else:
+                return
 
-        # ★ 타겟: 적 미네랄 라인 ★
-        target = self._find_enemy_mineral_line()
-        if not target:
-            return
+        # 분대 크기 결정 (공격모드에 따라)
+        total_runby = min(
+            int(len(zerglings) * self.harassment_allocation_percent * 2),
+            12  # 최대 12마리
+        )
+        total_runby = max(total_runby, 6)  # 최소 6마리
+        per_squad = total_runby // len(targets)
 
-        # ★ 권한 요청 및 실행 ★
-        for ling in candidates:
-            if self.bot.unit_authority.request_unit(
-                ling.tag, 
-                "Harassment_Runby", 
-                AuthorityLevel.TACTICAL
-            ):
-                self.bot.do(ling.attack(target))
-                self.zergling_runby_tags.add(ling.tag)
+        candidates = zerglings.sorted(lambda u: u.distance_to(self.bot.start_location))
+
+        # ★ Phase 22: 각 타겟에 분대 배정 ★
+        assigned_count = 0
+        for i, target in enumerate(targets):
+            squad_candidates = candidates[i * per_squad:(i + 1) * per_squad]
+            for ling in squad_candidates:
+                if self.bot.unit_authority.request_unit(
+                    ling.tag,
+                    "Harassment_Runby",
+                    AuthorityLevel.TACTICAL
+                ):
+                    self.bot.do(ling.attack(target))
+                    self.zergling_runby_tags.add(ling.tag)
+                    assigned_count += 1
 
         if self.zergling_runby_tags:
             self.zergling_runby_active = True
             self.zergling_runby_cooldown = game_time + self.zergling_runby_interval
+            self.raids_executed += 1
 
             self.logger.info(
-                f"[{int(game_time)}s] ★ ZERGLING RUN-BY activated! ({len(self.zergling_runby_tags)} units) → {target} ★"
+                f"[{int(game_time)}s] ★ ZERGLING RUN-BY activated! ({assigned_count} units) → {len(targets)} targets ★"
             )
 
     def _is_main_army_fighting(self) -> bool:
@@ -367,11 +400,13 @@ class HarassmentCoordinator:
         return False
 
     def _find_enemy_mineral_line(self) -> Optional[Point2]:
-        """적 미네랄 라인 찾기"""
+        """
+        ★ Phase 22: 스마트 미네랄라인 타겟팅 ★
+        가장 방어가 약한(전투 유닛이 적은) 적 미네랄라인을 선택.
+        """
         if not hasattr(self.bot, "enemy_structures"):
             return None
 
-        # 적 본진 또는 확장 기지
         enemy_bases = self.bot.enemy_structures.filter(
             lambda s: getattr(s.type_id, "name", "").upper() in {
                 "COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE",
@@ -382,27 +417,81 @@ class HarassmentCoordinator:
         if not enemy_bases:
             return None
 
-        # 가장 먼 기지 선택 (빈집 털이 효과 증대)
-        if not hasattr(self.bot, "start_location") or not self.bot.start_location:
-            target_base = enemy_bases[0]
-        else:
-            # 적 본진에서 가장 먼 적 기지 (확장)
-            if self.bot.enemy_start_locations:
-                enemy_main = self.bot.enemy_start_locations[0]
-                target_base = max(
-                    enemy_bases,
-                    key=lambda b: b.position.distance_to(enemy_main)
-                )
-            else:
-                target_base = enemy_bases[0]
+        # ★ Phase 22: 방어력 평가 캐시 업데이트 (2초마다) ★
+        current_time = self.bot.time
+        if current_time - self._defense_cache_time > 2.0:
+            self._mineral_line_defense_cache = {}
+            for base in enemy_bases:
+                defense = self._assess_threat_at_position(base.position)
+                self._mineral_line_defense_cache[base.position] = defense
+            self._defense_cache_time = current_time
+
+        # 방어가 가장 약한 기지 선택 (동점이면 아군 본진에서 가까운 쪽)
+        best_base = None
+        min_defense = 999
+        for base in enemy_bases:
+            defense = self._mineral_line_defense_cache.get(base.position, 0)
+            # 행성요새는 직접 공격 불가 → 페널티
+            if getattr(base.type_id, "name", "").upper() == "PLANETARYFORTRESS":
+                defense += 20
+            if defense < min_defense:
+                min_defense = defense
+                best_base = base
+            elif defense == min_defense and best_base:
+                # 동점: 아군 본진에 가까운 쪽 (이동시간 단축)
+                if hasattr(self.bot, "start_location"):
+                    if base.distance_to(self.bot.start_location) < best_base.distance_to(self.bot.start_location):
+                        best_base = base
+
+        if not best_base:
+            best_base = enemy_bases[0]
 
         # 미네랄 패치 근처 위치 반환
         if hasattr(self.bot, "mineral_field") and self.bot.mineral_field:
-            minerals_near_base = self.bot.mineral_field.closer_than(10, target_base)
+            minerals_near_base = self.bot.mineral_field.closer_than(10, best_base)
             if minerals_near_base:
                 return minerals_near_base.center
 
-        return target_base.position
+        return best_base.position
+
+    def _find_multi_mineral_lines(self, count: int = 2) -> List[Point2]:
+        """
+        ★ Phase 22: 멀티 베이스 동시 타격용 - 여러 미네랄라인 반환 ★
+        방어가 가장 약한 순서대로 최대 count개 반환.
+        """
+        if not hasattr(self.bot, "enemy_structures"):
+            return []
+
+        enemy_bases = self.bot.enemy_structures.filter(
+            lambda s: getattr(s.type_id, "name", "").upper() in {
+                "COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE",
+                "PLANETARYFORTRESS", "ORBITALCOMMAND"
+            }
+        )
+
+        if not enemy_bases:
+            return []
+
+        # 방어력 기준 정렬
+        scored = []
+        for base in enemy_bases:
+            defense = self._mineral_line_defense_cache.get(base.position, 0)
+            if getattr(base.type_id, "name", "").upper() == "PLANETARYFORTRESS":
+                defense += 20
+            scored.append((base, defense))
+
+        scored.sort(key=lambda x: x[1])
+
+        targets = []
+        for base, _ in scored[:count]:
+            if hasattr(self.bot, "mineral_field") and self.bot.mineral_field:
+                minerals = self.bot.mineral_field.closer_than(10, base)
+                if minerals:
+                    targets.append(minerals.center)
+                    continue
+            targets.append(base.position)
+
+        return targets
 
     # ========================================
     # Mutalisk Harassment
@@ -431,8 +520,8 @@ class HarassmentCoordinator:
             # 유닛 없음 or HP 낮음 -> 해제
             if not muta or muta.health_percentage <= self.mutalisk_retreat_hp_threshold:
                 if muta:
-                    # 안전한 곳으로 후퇴 명령 후 해제
-                    safe_spot = self.bot.start_location
+                    # ★ Phase 22: 가장 가까운 안전 지점으로 후퇴 ★
+                    safe_spot = self._find_safe_retreat_point(muta.position)
                     self.bot.do(muta.move(safe_spot))
                     self.bot.unit_authority.release_unit(tag, "Harassment_Muta")
                 self.mutalisk_harass_tags.discard(tag)
@@ -1307,4 +1396,100 @@ class HarassmentCoordinator:
             "roach_poke_active": self.roach_poke_active,
             "drop_play_active": self.drop_play_active,
             "priority_targets": len(self.priority_targets),
+            "workers_killed": self.workers_killed,
+            "raids_executed": self.raids_executed,
+            "aggressive_mode": self.aggressive_mode.value,
         }
+
+    # ================================================================
+    # ★ Phase 22: 자동 공격모드 조정 ★
+    # ================================================================
+
+    def _auto_adjust_aggressive_mode(self):
+        """
+        게임 상황에 따라 견제 강도 자동 조정:
+        - 경제 우세 → AGGRESSIVE (적극적 견제로 격차 벌리기)
+        - 군대 우세 → AGGRESSIVE (여유 병력으로 견제)
+        - 초반 러시 → ULTRA_AGGRESSIVE
+        - 방어 필요 → PASSIVE
+        """
+        game_time = self.bot.time
+        intel = getattr(self.bot, "intel", None)
+
+        # 초반 (1-4분): 초공격적
+        if 60 < game_time < 240:
+            self.set_aggressive_mode(AggressiveMode.ULTRA_AGGRESSIVE)
+            return
+
+        if not intel:
+            return
+
+        # 위협 체크: 공격받고 있으면 수비 우선
+        if intel.is_under_attack() and intel.get_threat_level() in ("heavy", "critical"):
+            self.set_aggressive_mode(AggressiveMode.PASSIVE)
+            return
+
+        # 경제/군사 우위 판단
+        our_workers = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
+        enemy_workers = getattr(intel, "enemy_worker_count", 0)
+        our_supply = getattr(self.bot, "supply_army", 0)
+        enemy_supply = getattr(intel, "enemy_army_supply", 0)
+
+        economic_advantage = our_workers > enemy_workers + 10
+        military_advantage = our_supply > enemy_supply * 1.3
+
+        if economic_advantage and military_advantage:
+            self.set_aggressive_mode(AggressiveMode.AGGRESSIVE)
+        elif economic_advantage or military_advantage:
+            self.set_aggressive_mode(AggressiveMode.OPPORTUNISTIC)
+        else:
+            self.set_aggressive_mode(AggressiveMode.OPPORTUNISTIC)
+
+    # ================================================================
+    # ★ Phase 22: 일꾼 처치 추적 ★
+    # ================================================================
+
+    def _track_worker_kills(self):
+        """
+        적 일꾼 수 변화를 추적하여 견제 효과 측정.
+        (정확한 킬 카운트는 불가능하므로, 적 일꾼 수 감소량으로 추정)
+        """
+        intel = getattr(self.bot, "intel", None)
+        if not intel:
+            return
+
+        current_enemy_workers = getattr(intel, "enemy_worker_count", 0)
+
+        # 첫 측정
+        if self.last_worker_kill_count == 0 and current_enemy_workers > 0:
+            self.last_worker_kill_count = current_enemy_workers
+            return
+
+        # 적 일꾼이 감소했으면 (우리 견제 or 자연 감소)
+        if current_enemy_workers < self.last_worker_kill_count:
+            killed = self.last_worker_kill_count - current_enemy_workers
+            # 견제가 활성화된 상태에서만 카운트 (자연 감소 제외)
+            if self.zergling_runby_active or self.mutalisk_harass_active or self.drop_play_active:
+                self.workers_killed += killed
+                if killed >= 3:
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] ★ HARASSMENT EFFECTIVE: ~{killed} workers eliminated! (Total: {self.workers_killed}) ★"
+                    )
+
+        self.last_worker_kill_count = current_enemy_workers
+
+    # ================================================================
+    # ★ Phase 22: 안전 후퇴 지점 ★
+    # ================================================================
+
+    def _find_safe_retreat_point(self, unit_position: Point2) -> Point2:
+        """
+        본진 대신 가장 가까운 아군 확장 기지로 후퇴.
+        확장이 없으면 본진으로.
+        """
+        if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
+            return self.bot.start_location
+
+        # 가장 가까운 아군 기지
+        closest_base = self.bot.townhalls.closest_to(unit_position)
+        return closest_base.position

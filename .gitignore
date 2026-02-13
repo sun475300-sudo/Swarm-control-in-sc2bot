@@ -12,6 +12,10 @@ build/
 venv/
 env/
 ENV/
+.venv/
+node_modules/
+.claude/
+.cursor/
 
 # IDE
 .vscode/
@@ -31,6 +35,11 @@ Thumbs.db
 nul
 wicked_zerg_challenger/data/games/nul
 wicked_zerg_challenger/nul
+logs/
+jarvis_gateway.log
+bot.log
+jarvis_state.json
+voice_bot_memory.json
 
 # Test outputs
 test_output*.log
@@ -93,3 +102,48 @@ config.yaml
 restart_all.ps1
 kill_and_restart.ps1
 start_gateway.ps1
+
+# ═══════════════════════════════════════════════
+# Crypto Trading - 민감 정보 보호
+# ═══════════════════════════════════════════════
+# 거래 데이터 (포트폴리오 히스토리, 거래 로그)
+crypto_trading/data/
+# 생성된 그래프 이미지
+crypto_trading/data/graphs/
+# 암호화된 키 파일
+crypto_trading/*.enc
+crypto_trading/*.encrypted
+# 혹시 모를 키 파일
+**/upbit_*.txt
+**/upbit_*.json
+**/binance_*.txt
+**/binance_*.json
+
+# ═══════════════════════════════════════════════
+# Crypto Trading Service (FastAPI)
+# ═══════════════════════════════════════════════
+crypto_trading_service/data/
+crypto_trading_service/*.enc
+crypto_trading_service/*.encrypted
+
+# ═══════════════════════════════════════════════
+# 추가 보호 항목
+# ═══════════════════════════════════════════════
+# 스타트업 로그 (로컬 경로 노출 가능)
+*_startup_log*
+crypto_startup_log*
+
+# 배치/스크립트 (로컬 경로 포함)
+_start_gateway.bat
+_temp_start_jarvis.bat
+
+# 보안 감사 결과
+security_audit.json
+
+# node_modules 하위 전체
+**/node_modules/
+
+# 학습 모델/로그
+**/local_training/logs/
+**/local_training/models/*.npz
+**/local_training/models/*.tmp*

@@ -102,10 +102,35 @@ def _score_target(unit) -> float:
     return base
 
 
+# ★ Phase 22: Frame-level cache for sorted targets ★
+_prioritized_cache = {"frame": -1, "enemies_id": None, "result": []}
+
+
 def prioritize_targets(enemies: Iterable) -> List:
-    """Return enemies sorted by priority (highest first)."""
+    """Return enemies sorted by priority (highest first).
+
+    Phase 22: Caches result per enemy set to avoid redundant sorts.
+    """
     enemy_list = list(enemies) if enemies else []
+    if not enemy_list:
+        return []
+
+    # Cache key: use frozenset of tags for identity
+    cache_id = None
+    try:
+        cache_id = frozenset(e.tag for e in enemy_list)
+    except (AttributeError, TypeError):
+        pass
+
+    if cache_id and cache_id == _prioritized_cache.get("enemies_id"):
+        return _prioritized_cache["result"]
+
     enemy_list.sort(key=_score_target, reverse=True)
+
+    if cache_id:
+        _prioritized_cache["enemies_id"] = cache_id
+        _prioritized_cache["result"] = enemy_list
+
     return enemy_list
 
 
@@ -114,12 +139,13 @@ def select_target(unit, enemies: Iterable, max_range: float = 12.0) -> Optional[
     if not enemies:
         return None
 
-    enemy_list = list(enemies)
     if hasattr(enemies, "closer_than") and hasattr(unit, "position"):
         try:
             enemy_list = list(enemies.closer_than(max_range, unit.position))
         except Exception:
             enemy_list = list(enemies)
+    else:
+        enemy_list = list(enemies)
 
     if not enemy_list:
         return None

@@ -53,6 +53,11 @@ class ThreatAssessment:
             "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE"
         }
 
+        # ★ Phase 22: Supply calculation cache ★
+        self._cached_our_supply = 0
+        self._cached_enemy_supply = 0
+        self._supply_cache_time = -10  # Force first update
+
     def is_base_under_attack(self) -> bool:
         """
         기지가 공격받고 있는지 확인
@@ -75,19 +80,22 @@ class ThreatAssessment:
             # 초반에 더 민감
             base_range = 25 if game_time >= 180 else 30
 
-            # 일반 적 확인
-            nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < base_range]
+            # ★ Phase 22: Use optimized closer_than() instead of manual loop ★
+            if hasattr(enemy_units, "closer_than"):
+                nearby_enemies = enemy_units.closer_than(base_range, th.position)
+                if nearby_enemies.exists:
+                    return True
 
-            # 고위협 적은 더 넓은 범위에서 확인
-            high_threat_enemies = [
-                e for e in enemy_units
-                if getattr(e.type_id, "name", "").upper() in self.high_threat_names
-                and e.distance_to(th.position) < base_range + 10
-            ]
-
-            # 조건: 1기 이상의 적, 또는 고위협 적 감지
-            if len(nearby_enemies) >= 1 or high_threat_enemies:
-                return True
+                # 고위협 적은 더 넓은 범위에서 확인
+                extended_enemies = enemy_units.closer_than(base_range + 10, th.position)
+                for e in extended_enemies:
+                    if getattr(e.type_id, "name", "").upper() in self.high_threat_names:
+                        return True
+            else:
+                # Fallback for non-Units collections
+                nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < base_range]
+                if len(nearby_enemies) >= 1:
+                    return True
 
         return False
 
@@ -113,9 +121,13 @@ class ThreatAssessment:
         if time_since_combat > 5:  # No recent combat in last 5 seconds
             return False
 
-        # Calculate army supplies
-        our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
-        enemy_supply = sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
+        # ★ Phase 22: Use cached supply calculations (updated every 2s) ★
+        if game_time - self._supply_cache_time >= 2.0:
+            self._cached_our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+            self._cached_enemy_supply = sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
+            self._supply_cache_time = game_time
+        our_supply = self._cached_our_supply
+        enemy_supply = self._cached_enemy_supply
 
         # Check cooldown
         time_since_last_counter = game_time - self._last_counter_attack_time
@@ -145,7 +157,11 @@ class ThreatAssessment:
             return 0
 
         threat_score = 0
-        nearby_enemies = [e for e in enemy_units if e.distance_to(position) < 20]
+        # ★ Phase 22: Use optimized closer_than() ★
+        if hasattr(enemy_units, "closer_than"):
+            nearby_enemies = enemy_units.closer_than(20, position)
+        else:
+            nearby_enemies = [e for e in enemy_units if e.distance_to(position) < 20]
 
         for enemy in nearby_enemies:
             enemy_type = getattr(enemy.type_id, "name", "").upper()

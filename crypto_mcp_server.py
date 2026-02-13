@@ -1,0 +1,583 @@
+"""
+JARVIS Crypto Trading MCP Server
+- 모든 기능을 자연어로 제어 가능한 MCP 도구로 노출
+- 시세 조회, 잔고, 매수/매도, 자동매매, 포트폴리오 그래프 등
+"""
+import json
+import logging
+import sys
+import os
+
+# 프로젝트 루트를 path에 추가
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from mcp.server.fastmcp import FastMCP
+from crypto_trading.upbit_client import UpbitClient
+from crypto_trading.auto_trader import AutoTrader
+from crypto_trading.portfolio_tracker import PortfolioTracker
+from crypto_trading import config
+from crypto_trading.strategies import AVAILABLE_STRATEGIES
+from crypto_trading.market_analyzer import MarketAnalyzer
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
+logger = logging.getLogger("crypto_mcp")
+
+# ── 5중 보안 체계 초기화 ──
+from crypto_trading.security import initialize_security
+_security_report = initialize_security()
+logger.info(f"보안 초기화 완료")
+
+# ── 전역 인스턴스 ──
+mcp = FastMCP("JARVIS-Crypto-Trader")
+client = UpbitClient()
+trader = AutoTrader()
+tracker = PortfolioTracker()
+analyzer = MarketAnalyzer(client)
+
+
+# ═══════════════════════════════════════════════════
+#  시세 조회
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def coin_price(ticker: str = "KRW-BTC") -> str:
+    """코인 현재가를 조회합니다. 예: 'KRW-BTC', 'KRW-ETH', 'KRW-XRP'"""
+    price = client.get_current_price(ticker)
+    if price is None:
+        return f"'{ticker}' 시세 조회 실패. 티커 형식: KRW-BTC"
+    return f"{ticker} 현재가: {price:,.0f}원"
+
+
+@mcp.tool()
+async def coin_prices(tickers: str = "") -> str:
+    """여러 코인의 현재가를 한번에 조회합니다. 쉼표로 구분. 비워두면 관심 목록 조회."""
+    if tickers.strip():
+        ticker_list = [t.strip().upper() for t in tickers.split(",")]
+    else:
+        ticker_list = config.DEFAULT_WATCH_LIST
+
+    prices = client.get_prices(ticker_list)
+    if not prices:
+        return "시세 조회 실패"
+
+    lines = ["📊 코인 시세 현황:"]
+    for t in ticker_list:
+        p = prices.get(t, 0)
+        coin = t.replace("KRW-", "")
+        lines.append(f"  {coin}: {p:,.0f}원")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def coin_orderbook(ticker: str = "KRW-BTC") -> str:
+    """코인 호가창(매수/매도 호가)을 조회합니다."""
+    ob = client.get_orderbook(ticker)
+    if not ob:
+        return f"'{ticker}' 호가 조회 실패"
+
+    units = ob.get("orderbook_units", [])[:5]
+    lines = [f"📋 {ticker} 호가 (상위 5개):"]
+    lines.append("  [매도]                    [매수]")
+    for u in reversed(units):
+        ask = f"{u['ask_price']:>12,.0f} ({u['ask_size']:.4f})"
+        bid = f"{u['bid_price']:>12,.0f} ({u['bid_size']:.4f})"
+        lines.append(f"  {ask}  |  {bid}")
+    lines.append(f"  총 매도잔량: {ob.get('total_ask_size', 0):.4f}")
+    lines.append(f"  총 매수잔량: {ob.get('total_bid_size', 0):.4f}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def market_list(fiat: str = "KRW") -> str:
+    """거래 가능한 전체 코인 목록을 보여줍니다. fiat: KRW, BTC, USDT"""
+    tickers = client.get_tickers(fiat=fiat.upper())
+    if not tickers:
+        return "마켓 목록 조회 실패"
+    coins = [t.replace(f"{fiat.upper()}-", "") for t in tickers]
+    return f"📋 {fiat.upper()} 마켓 ({len(coins)}개): {', '.join(coins[:50])}{'...' if len(coins) > 50 else ''}"
+
+
+# ═══════════════════════════════════════════════════
+#  스마트 분석 (AI 판단용)
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def analyze_market(tickers: str = "") -> str:
+    """관심 코인의 시장을 종합 분석합니다. RSI, 이동평균, 볼린저, 거래량, 호가 등 다중 지표를 분석하고 매수/매도 추천을 제공합니다."""
+    if tickers.strip():
+        ticker_list = [t.strip().upper() for t in tickers.split(",")]
+    else:
+        ticker_list = trader.watch_list
+
+    analyses = analyzer.analyze_watchlist(ticker_list)
+    return analyzer.format_watchlist_report(analyses)
+
+
+@mcp.tool()
+async def analyze_coin_detail(ticker: str = "KRW-BTC") -> str:
+    """특정 코인을 상세 분석합니다. 종합 점수(-100~+100), 지표별 판단 근거를 보여줍니다."""
+    ticker = ticker.upper()
+    a = analyzer.analyze_coin(ticker)
+    return analyzer.format_analysis(a)
+
+
+@mcp.tool()
+async def smart_trade_now(tickers: str = "") -> str:
+    """시장을 분석하고 조건이 맞으면 자동으로 매수/매도를 실행합니다. 스마트 모드 1회 실행."""
+    if tickers.strip():
+        ticker_list = [t.strip().upper() for t in tickers.split(",")]
+        trader.set_watch_list(ticker_list)
+
+    # 스마트 모드로 강제 전환 후 1회 실행
+    old_mode = trader.smart_mode
+    trader.smart_mode = True
+    result = trader.run_cycle()
+    trader.smart_mode = old_mode
+
+    lines = [f"🧠 스마트 매매 실행 완료 ({'모의' if result['dry_run'] else '실전'})"]
+    lines.append(f"  KRW 잔고: {result.get('krw_balance', 0):,.0f}원")
+
+    for a in result.get("analyses", []):
+        emoji = "🟢" if a["score"] >= 30 else "🔴" if a["score"] <= -30 else "⚪"
+        coin = a["ticker"].replace("KRW-", "")
+        lines.append(f"  {emoji} {coin}: {a['recommendation']} ({a['score']:+d}점) RSI={a['rsi']}")
+        if a.get("reasons"):
+            lines.append(f"      근거: {' / '.join(a['reasons'][:3])}")
+
+    for action in result.get("actions", []):
+        lines.append(f"  ▶ {action}")
+
+    if not result.get("actions"):
+        lines.append("  → 매매 조건 미충족, 관망")
+
+    for err in result.get("errors", []):
+        lines.append(f"  ❌ {err}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def set_smart_mode(enabled: bool = True, buy_threshold: int = 30, sell_threshold: int = -30) -> str:
+    """스마트 모드 설정. enabled=True면 종합 분석 기반, False면 단일 전략 기반. threshold는 자동매매 실행 기준 점수."""
+    trader.smart_mode = enabled
+    trader.buy_threshold = buy_threshold
+    trader.sell_threshold = sell_threshold
+    mode = "스마트 분석 (다중 지표)" if enabled else f"단일 전략 ({trader.strategy_name})"
+    return (
+        f"✅ 매매 모드: {mode}\n"
+        f"  매수 기준: 점수 {buy_threshold:+d} 이상\n"
+        f"  매도 기준: 점수 {sell_threshold:+d} 이하"
+    )
+
+
+@mcp.tool()
+async def set_smart_params(max_positions: int = 5, cooldown_minutes: int = 30) -> str:
+    """스마트 모드 고급 파라미터 설정. max_positions: 동시 보유 최대 종목 수, cooldown_minutes: 같은 코인 재매매 대기 시간."""
+    trader.max_positions = max_positions
+    trader.cooldown_minutes = cooldown_minutes
+    return (
+        f"✅ 스마트 파라미터 변경:\n"
+        f"  최대 동시 포지션: {max_positions}개\n"
+        f"  매매 쿨다운: {cooldown_minutes}분"
+    )
+
+
+# ═══════════════════════════════════════════════════
+#  잔고 / 자산
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def my_balance() -> str:
+    """내 전체 보유 자산을 조회합니다."""
+    balances = client.get_balances()
+    if not balances:
+        return "잔고 조회 실패. API 키를 확인하세요."
+
+    lines = ["💰 보유 자산:"]
+    total_krw = 0.0
+    tickers_for_price = []
+    coin_balances = []
+
+    for b in balances:
+        currency = b.get("currency", "")
+        balance = float(b.get("balance", 0))
+        locked = float(b.get("locked", 0))
+        total_amount = balance + locked
+        if total_amount <= 0:
+            continue
+
+        if currency == "KRW":
+            total_krw += total_amount
+            lines.append(f"  KRW(원화): {total_amount:,.0f}원")
+        else:
+            coin_balances.append((currency, total_amount, float(b.get("avg_buy_price", 0))))
+            tickers_for_price.append(f"KRW-{currency}")
+
+    if tickers_for_price:
+        prices = client.get_prices(tickers_for_price)
+        for currency, amount, avg_price in coin_balances:
+            ticker = f"KRW-{currency}"
+            current_price = prices.get(ticker, 0)
+            value = amount * current_price
+            total_krw += value
+            pnl_pct = ((current_price - avg_price) / avg_price * 100) if avg_price > 0 else 0
+            sign = "+" if pnl_pct >= 0 else ""
+            lines.append(
+                f"  {currency}: {amount:.4f}개 = {value:,.0f}원 "
+                f"(평단 {avg_price:,.0f} / {sign}{pnl_pct:.1f}%)"
+            )
+
+    lines.append(f"\n  📊 총 자산 평가액: {total_krw:,.0f}원")
+    return "\n".join(lines)
+
+
+# ═══════════════════════════════════════════════════
+#  매수 / 매도
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def buy_coin(ticker: str, amount_krw: float) -> str:
+    """코인을 시장가로 매수합니다. ticker: 'KRW-BTC', amount_krw: 원화 금액"""
+    ticker = ticker.upper()
+    if amount_krw < config.MIN_ORDER_AMOUNT:
+        return f"최소 주문 금액: {config.MIN_ORDER_AMOUNT:,.0f}원"
+
+    result = client.buy_market_order(ticker, amount_krw)
+    if result:
+        tracker.log_trade("buy", ticker, amount_krw, 0, "수동 매수", result)
+        dry = " [모의매매]" if config.DRY_RUN else ""
+        return f"✅ {ticker} 매수 완료{dry}: {amount_krw:,.0f}원"
+    return f"❌ {ticker} 매수 실패"
+
+
+@mcp.tool()
+async def sell_coin(ticker: str, volume: float = 0) -> str:
+    """코인을 시장가로 매도합니다. volume=0이면 전량 매도."""
+    ticker = ticker.upper()
+    if volume <= 0:
+        volume = client.get_balance(ticker)
+        if volume <= 0:
+            return f"{ticker} 보유 수량이 없습니다."
+
+    result = client.sell_market_order(ticker, volume)
+    if result:
+        price = client.get_current_price(ticker) or 0
+        tracker.log_trade("sell", ticker, volume * price, price, "수동 매도", result)
+        dry = " [모의매매]" if config.DRY_RUN else ""
+        return f"✅ {ticker} 매도 완료{dry}: {volume}개"
+    return f"❌ {ticker} 매도 실패"
+
+
+@mcp.tool()
+async def cancel_my_order(uuid: str) -> str:
+    """주문을 취소합니다. uuid: 주문 ID"""
+    result = client.cancel_order(uuid)
+    if result:
+        return f"✅ 주문 취소 완료: {uuid}"
+    return f"❌ 주문 취소 실패: {uuid}"
+
+
+@mcp.tool()
+async def pending_orders(ticker: str = "") -> str:
+    """미체결 주문 목록을 조회합니다."""
+    if not ticker:
+        # 전체 관심 목록의 미체결 확인
+        all_orders = []
+        for t in config.DEFAULT_WATCH_LIST:
+            orders = client.get_order(t, state="wait")
+            if orders:
+                all_orders.extend(orders)
+        if not all_orders:
+            return "미체결 주문 없음"
+        lines = ["📋 미체결 주문:"]
+        for o in all_orders:
+            lines.append(f"  {o.get('market')} {o.get('side')} {o.get('price')} x {o.get('volume')} [{o.get('uuid', '')[:8]}]")
+        return "\n".join(lines)
+    else:
+        orders = client.get_order(ticker.upper(), state="wait")
+        if not orders:
+            return f"{ticker} 미체결 주문 없음"
+        lines = [f"📋 {ticker} 미체결 주문:"]
+        for o in orders:
+            lines.append(f"  {o.get('side')} {o.get('price')} x {o.get('volume')} [{o.get('uuid', '')[:8]}]")
+        return "\n".join(lines)
+
+
+# ═══════════════════════════════════════════════════
+#  자동매매
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def start_auto_trade(strategy: str = "smart", tickers: str = "") -> str:
+    """자동매매를 시작합니다. strategy: 'smart'(AI 종합분석), 'volatility_breakout', 'ma_crossover', 'rsi'"""
+    if strategy == "smart":
+        trader.smart_mode = True
+    else:
+        if strategy not in AVAILABLE_STRATEGIES:
+            return f"사용 가능한 전략: smart, {list(AVAILABLE_STRATEGIES.keys())}"
+        trader.smart_mode = False
+        trader.set_strategy(strategy)
+
+    if tickers.strip():
+        ticker_list = [t.strip().upper() for t in tickers.split(",")]
+        trader.set_watch_list(ticker_list)
+
+    msg = trader.start()
+    mode = "스마트 분석" if trader.smart_mode else trader.strategy_name
+    return f"🤖 {msg}\n모드: {mode}\n관심 코인: {', '.join(trader.watch_list)}"
+
+
+@mcp.tool()
+async def stop_auto_trade() -> str:
+    """자동매매를 중지합니다."""
+    msg = trader.stop()
+    return f"🛑 {msg}"
+
+
+@mcp.tool()
+async def auto_trade_status() -> str:
+    """자동매매 현재 상태를 확인합니다."""
+    status = trader.get_status()
+    running = "🟢 실행 중" if status["is_running"] else "🔴 중지됨"
+    dry = "모의매매" if status["dry_run"] else "실전매매"
+    mode = "🧠 스마트 분석" if status.get("smart_mode") else f"📐 {status['strategy']}"
+
+    lines = [
+        f"🤖 자동매매 상태: {running} ({dry})",
+        f"  모드: {mode}",
+        f"  관심 코인: {', '.join(status['watch_list'])}",
+        f"  체크 간격: {status['interval_sec']}초",
+        f"  매수 기준: {status.get('buy_threshold', 30):+d}점 | 매도 기준: {status.get('sell_threshold', -30):+d}점",
+        f"  최대 포지션: {status.get('max_positions', 5)}개 | 쿨다운: {status.get('cooldown_minutes', 30)}분",
+        f"  손절: {status['stop_loss_pct']}% / 익절: {status['take_profit_pct']}%",
+        f"  누적 사이클: {status.get('cycle_count', 0)}회 | 마지막: {status['last_cycle']}",
+    ]
+    if status["last_actions"]:
+        lines.append(f"  최근 액션: {', '.join(status['last_actions'])}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def set_trade_mode(mode: str = "dry") -> str:
+    """매매 모드를 설정합니다. mode: 'dry'(모의매매), 'live'(실전매매)"""
+    if mode.lower() == "live":
+        config.DRY_RUN = False
+        return "⚠️ 실전매매 모드로 전환되었습니다. 실제 주문이 실행됩니다!"
+    else:
+        config.DRY_RUN = True
+        return "✅ 모의매매 모드로 전환되었습니다. 실제 주문은 실행되지 않습니다."
+
+
+@mcp.tool()
+async def set_risk_params(stop_loss: float = -5.0, take_profit: float = 10.0) -> str:
+    """손절/익절 비율을 설정합니다. (예: stop_loss=-5, take_profit=10)"""
+    trader.set_risk_params(stop_loss=stop_loss, take_profit=take_profit)
+    return f"✅ 리스크 설정 변경: 손절 {stop_loss}% / 익절 {take_profit}%"
+
+
+@mcp.tool()
+async def set_watch_list(tickers: str) -> str:
+    """자동매매 관심 코인 목록을 변경합니다. 쉼표로 구분."""
+    ticker_list = [t.strip().upper() for t in tickers.split(",")]
+    trader.set_watch_list(ticker_list)
+    return f"✅ 관심 목록 변경: {', '.join(ticker_list)}"
+
+
+@mcp.tool()
+async def run_trade_cycle() -> str:
+    """자동매매 사이클을 1회 수동으로 실행합니다."""
+    result = trader.run_cycle()
+    lines = [f"🔄 매매 사이클 실행 완료 ({result['strategy']}, {'모의' if result['dry_run'] else '실전'})"]
+    lines.append(f"  KRW 잔고: {result.get('krw_balance', 0):,.0f}원")
+
+    for sig in result.get("signals", []):
+        emoji = "🟢" if sig["signal"] == "buy" else "🔴" if sig["signal"] == "sell" else "⚪"
+        lines.append(f"  {emoji} {sig['ticker']}: {sig['signal']} ({sig['reason']})")
+
+    for action in result.get("actions", []):
+        lines.append(f"  ▶ {action}")
+
+    for err in result.get("errors", []):
+        lines.append(f"  ❌ {err}")
+
+    return "\n".join(lines)
+
+
+# ═══════════════════════════════════════════════════
+#  포트폴리오 / 그래프
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def portfolio_summary() -> str:
+    """포트폴리오 요약 (총 자산, 수익률, 거래 횟수)을 보여줍니다."""
+    summary = tracker.get_summary()
+    if summary.get("status") == "no_data":
+        return summary["message"]
+
+    pnl_sign = "+" if summary["pnl_krw"] >= 0 else ""
+    lines = [
+        "📈 포트폴리오 요약:",
+        f"  현재 총 자산: {summary['total_value_krw']:,.0f}원",
+        f"  초기 자산: {summary['initial_value_krw']:,.0f}원",
+        f"  수익/손실: {pnl_sign}{summary['pnl_krw']:,.0f}원 ({pnl_sign}{summary['pnl_pct']}%)",
+        f"  보유 종목 수: {summary['holdings_count']}개",
+        f"  기록된 스냅샷: {summary['snapshots_count']}회",
+        f"  총 거래 횟수: {summary['trades_count']}회",
+    ]
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def portfolio_graph(days: int = 30) -> str:
+    """보유 자산 추이 그래프를 생성합니다. days: 최근 N일"""
+    # 먼저 현재 상태 스냅샷 기록
+    balances = client.get_balances()
+    tickers_for_price = [f"KRW-{b['currency']}" for b in balances
+                         if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
+    prices = client.get_prices(tickers_for_price) if tickers_for_price else {}
+    tracker.record_snapshot(balances, prices)
+
+    # 그래프 생성
+    path = tracker.generate_portfolio_graph(days=days)
+    if path:
+        return f"📊 포트폴리오 그래프 생성 완료: {path}"
+    return "그래프 생성 실패. 최소 2개의 스냅샷이 필요합니다."
+
+
+@mcp.tool()
+async def holdings_chart() -> str:
+    """보유 자산 비중 파이차트를 생성합니다."""
+    path = tracker.generate_holdings_pie_chart()
+    if path:
+        return f"🥧 보유 비중 차트 생성 완료: {path}"
+    return "차트 생성 실패. 스냅샷 데이터가 필요합니다."
+
+
+@mcp.tool()
+async def recent_trades(count: int = 10) -> str:
+    """최근 거래 내역을 보여줍니다."""
+    trades = tracker.get_recent_trades(count)
+    if not trades:
+        return "거래 내역이 없습니다."
+
+    lines = [f"📜 최근 거래 내역 ({len(trades)}건):"]
+    for t in trades:
+        dry = "[모의]" if t.get("dry_run") else "[실전]"
+        emoji = "🟢" if t["side"] == "buy" else "🔴"
+        lines.append(
+            f"  {emoji} {dry} {t['timestamp'][:16]} {t['side'].upper()} "
+            f"{t['ticker']} {t['amount']:,.0f}원 - {t['reason']}"
+        )
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def record_portfolio_snapshot() -> str:
+    """현재 포트폴리오 스냅샷을 수동으로 기록합니다."""
+    balances = client.get_balances()
+    if not balances:
+        return "잔고 조회 실패"
+
+    tickers_for_price = [f"KRW-{b['currency']}" for b in balances
+                         if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
+    prices = client.get_prices(tickers_for_price) if tickers_for_price else {}
+    snapshot = tracker.record_snapshot(balances, prices)
+    return f"✅ 스냅샷 기록 완료: 총 {snapshot['total_value_krw']:,.0f}원 ({len(snapshot['holdings'])}개 자산)"
+
+
+# ═══════════════════════════════════════════════════
+#  도움말
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def crypto_help() -> str:
+    """사용 가능한 코인 거래 명령어 목록을 보여줍니다."""
+    return """🪙 JARVIS 코인 거래 도움말:
+
+📊 시세 조회:
+  - 비트코인 시세 / 이더리움 가격 → coin_price
+  - 관심 코인 전체 시세 → coin_prices
+  - 호가창 보기 → coin_orderbook
+  - 거래 가능 코인 목록 → market_list
+
+🧠 스마트 분석 (AI 판단):
+  - 시장 종합 분석 → analyze_market
+  - 개별 코인 상세 분석 → analyze_coin_detail
+  - 분석 후 자동 매매 실행 → smart_trade_now
+  - 스마트 모드 설정 → set_smart_mode
+  - 고급 파라미터 (포지션/쿨다운) → set_smart_params
+
+💰 잔고:
+  - 내 잔고 / 보유 자산 → my_balance
+
+🛒 매매:
+  - 비트코인 10만원어치 매수 → buy_coin
+  - 이더리움 전량 매도 → sell_coin
+  - 미체결 주문 확인 → pending_orders
+  - 주문 취소 → cancel_my_order
+
+🤖 자동매매:
+  - 자동매매 시작 (기본=스마트) → start_auto_trade
+  - 자동매매 중지 → stop_auto_trade
+  - 자동매매 상태 → auto_trade_status
+  - 1회 수동 실행 → run_trade_cycle
+  - 실전/모의 전환 → set_trade_mode
+  - 손절/익절 설정 → set_risk_params
+  - 관심 코인 변경 → set_watch_list
+
+📈 포트폴리오:
+  - 자산 요약 → portfolio_summary
+  - 자산 추이 그래프 → portfolio_graph
+  - 보유 비중 차트 → holdings_chart
+  - 거래 내역 → recent_trades
+  - 스냅샷 기록 → record_portfolio_snapshot
+
+🔒 보안:
+  - 5중 보안 점검 → security_status
+  - 거래 안전 한도 설정 → set_safety_limits
+
+⚙️ 전략: smart(AI종합분석), volatility_breakout(변동성돌파), ma_crossover(이동평균), rsi
+"""
+
+
+@mcp.tool()
+async def security_status() -> str:
+    """보안 상태를 점검하고 보고합니다."""
+    from crypto_trading.security import initialize_security, trade_safety
+    report = initialize_security()
+    daily = trade_safety.get_daily_summary()
+    lines = [
+        f"🔒 5중 보안 체계 점검 결과:",
+        report,
+        "",
+        f"📊 일일 거래 안전 현황:",
+        f"  오늘 거래: {daily['trade_count']}회 / 잔여: {daily['remaining_trades']}회",
+        f"  오늘 거래액: {daily['total_volume_krw']:,.0f}원 / 잔여: {daily['remaining_volume_krw']:,.0f}원",
+    ]
+    if daily['recent_alerts']:
+        lines.append("  최근 경고:")
+        for ts, msg in daily['recent_alerts']:
+            lines.append(f"    {ts[:16]} {msg}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def set_safety_limits(max_daily_trades: int = 50, max_single_order_krw: float = 1000000,
+                             max_daily_volume_krw: float = 5000000) -> str:
+    """거래 안전 한도를 설정합니다. 일일 최대 거래 횟수, 1회 최대 금액, 일일 최대 총액."""
+    from crypto_trading.security import trade_safety
+    trade_safety.set_limits(
+        max_daily_trades=max_daily_trades,
+        max_single_order_krw=max_single_order_krw,
+        max_daily_volume_krw=max_daily_volume_krw,
+    )
+    return (
+        f"🛡️ 거래 안전 한도 설정 완료:\n"
+        f"  일일 최대 거래: {max_daily_trades}회\n"
+        f"  1회 최대 금액: {max_single_order_krw:,.0f}원\n"
+        f"  일일 최대 총액: {max_daily_volume_krw:,.0f}원"
+    )
+
+
+if __name__ == "__main__":
+    mcp.run()

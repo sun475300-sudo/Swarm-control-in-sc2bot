@@ -46,6 +46,9 @@ class CombatExecution:
         self.targeting = targeting
         self.micro_combat = micro_combat
 
+        # ★ Phase 22: Cache FormationManager instance ★
+        self._formation_manager = None
+
     async def execute_combat(self, units, enemy_units):
         """
         전투 실행
@@ -110,7 +113,10 @@ class CombatExecution:
         try:
             from combat.formation_manager import FormationManager
 
-            formation_manager = FormationManager(self.bot)
+            # ★ Phase 22: Reuse cached instance ★
+            if self._formation_manager is None:
+                self._formation_manager = FormationManager(self.bot)
+            formation_manager = self._formation_manager
 
             if not self._has_units(enemy_units) or not self._has_units(units):
                 return
@@ -131,8 +137,8 @@ class CombatExecution:
                     ranged_units, enemy_center, formation_radius=8.0
                 )
 
-                # 유닛들을 진형 위치로 이동
-                for unit, target_pos in formation_positions[:10]:  # 최대 10개만
+                # ★ Phase 22: Increased formation limit 10 -> 30 ★
+                for unit, target_pos in formation_positions[:30]:
                     try:
                         self.bot.do(unit.move(target_pos))
                     except Exception:
@@ -147,7 +153,7 @@ class CombatExecution:
                     # 넓은 곳으로 후퇴
                     retreat_pos = formation_manager.get_retreat_position(units, enemy_units, our_base)
                     if retreat_pos:
-                        for unit in units[:10]:  # 최대 10개만
+                        for unit in units[:30]:  # ★ Phase 22: 10 -> 30 ★
                             try:
                                 self.bot.do(unit.move(retreat_pos))
                             except Exception:

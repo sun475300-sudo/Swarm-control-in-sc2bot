@@ -56,6 +56,7 @@ class AntiSplashAwareness:
                     self.extreme_threats.add(unit_type)
 
     def get_threats(self, enemy_units: Iterable) -> List:
+        """Get splash threat units. Phase 22: Uses set lookup for O(1) type check."""
         if not self.threat_types or not enemy_units:
             return []
         return [enemy for enemy in enemy_units if enemy.type_id in self.threat_types]
@@ -328,11 +329,16 @@ class MicroCombat:
 
         # If close enough to engage (within 3 range)
         if distance < 3.0:
-            # Check if there are friendly units already attacking this target
-            nearby_allies = [
-                u for u in getattr(self.bot, "units", [])
-                if u.type_id == UnitTypeId.ZERGLING and u.distance_to(target) < 2.0 and u.tag != zergling.tag
-            ]
+            # ★ Phase 22: Use closer_than() instead of manual loop ★
+            all_units = getattr(self.bot, "units", [])
+            if hasattr(all_units, "closer_than"):
+                nearby_allies = all_units.of_type(UnitTypeId.ZERGLING).closer_than(2.0, target.position)
+                nearby_allies = [u for u in nearby_allies if u.tag != zergling.tag]
+            else:
+                nearby_allies = [
+                    u for u in all_units
+                    if u.type_id == UnitTypeId.ZERGLING and u.distance_to(target) < 2.0 and u.tag != zergling.tag
+                ]
 
             # If 2+ allies already engaging, create circular surround instead of stacking
             # OPTIMIZED: 4 → 2 (more aggressive surround)
@@ -377,7 +383,11 @@ class MicroCombat:
         if not enemy_units:
             return False
 
-        nearby_enemies = [e for e in enemy_units if e.distance_to(baneling) < 10]
+        # ★ Phase 22: Use closer_than() if available ★
+        if hasattr(enemy_units, "closer_than"):
+            nearby_enemies = enemy_units.closer_than(10, baneling.position)
+        else:
+            nearby_enemies = [e for e in enemy_units if e.distance_to(baneling) < 10]
         if not nearby_enemies:
             return False
 
