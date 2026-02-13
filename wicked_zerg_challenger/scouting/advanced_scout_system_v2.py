@@ -2,11 +2,16 @@
 """
 Advanced Scouting System V2 - 고급 정찰 시스템 V2
 
-Phase 10 구현 사항:
+Phase 10 기반, Phase 22 고도화:
 1. 정찰 유닛 다양화 (일꾼, 저글링, 대군주, 감시군주+변신수)
 2. 동적 정찰 주기 (기본 25초, 긴급 15초)
 3. 지능형 목표 설정 (우선순위 기반)
 4. Unit Authority Manager 연동
+5. ★ Phase 22: 순찰 경로 시스템 (다중 웨이포인트) ★
+6. ★ Phase 22: 젤나가 감시탑 확보 ★
+7. ★ Phase 22: 드롭 경로 감시 ★
+8. ★ Phase 22: 백과사전 연동 (상성 기반 정찰 우선순위) ★
+9. ★ Phase 22: 변신수 분산 배치 ★
 """
 
 import math
@@ -25,40 +30,70 @@ except ImportError:
 
 from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
 
+# 백과사전 임포트 (상성 데이터 활용)
+try:
+    from sc2_encyclopedia import get_counter, COUNTER_MATRIX
+except ImportError:
+    get_counter = None
+    COUNTER_MATRIX = {}
+
+
 class AdvancedScoutingSystemV2:
     def __init__(self, bot: BotAI):
         self.bot = bot
         self.logger = get_logger("AdvScoutV2")
 
-        # Scouting timers - ★ Phase 21: Separate timers for Overlords and Zerglings ★
+        # Scouting timers
         self.last_scout_times = {
             "OVERLORD": 0.0,
             "ZERGLING": 0.0,
-            "GENERAL": 0.0
+            "GENERAL": 0.0,
+            "PATROL": 0.0,        # ★ Phase 22: 순찰 타이머
+            "WATCHTOWER": 0.0,    # ★ Phase 22: 감시탑 타이머
+            "DROP_WATCH": 0.0,    # ★ Phase 22: 드롭 감시 타이머
         }
 
         # 정찰 유닛 상태
-        # {tag: {"type": str, "target": Point2, "start_time": float}}
+        # {tag: {"type": str, "target": Point2, "start_time": float, "mode": str}}
         self.active_scouts = {}
 
         # 정찰 목표 기록 (위치 -> 마지막 정찰 시간)
         self.last_scouted_at: Dict[Point2, float] = {}
 
-        # 유닛별 최대 정찰 수 - ★ Phase 17: 정찰 유닛 수 증가 ★
+        # 유닛별 최대 정찰 수
         self.MAX_SCOUTS = {
-            "WORKER": 1,      # 초반용
-            "ZERGLING": 4,    # 주력 (3 -> 4)
-            "OVERLORD": 3,    # 보조 (2 -> 3, 속업 후 더 적극적)
-            "OVERSEER": 3     # 탐지/변신수 (2 -> 3)
+            "WORKER": 1,
+            "ZERGLING": 4,
+            "OVERLORD": 3,
+            "OVERSEER": 3
         }
 
-        # ★ Phase 17: 정찰 통계 ★
+        # ★ Phase 22: 순찰 경로 시스템 ★
+        self._patrol_routes: Dict[str, List[Point2]] = {}  # route_name -> waypoints
+        self._patrol_index: Dict[int, int] = {}  # unit_tag -> current waypoint index
+        self._patrol_units: Set[int] = set()  # 순찰 임무 중인 유닛 태그
+
+        # ★ Phase 22: 젤나가 감시탑 ★
+        self._watchtower_positions: List[Point2] = []
+        self._watchtower_claimers: Dict[Point2, int] = {}  # pos -> zergling tag
+
+        # ★ Phase 22: 드롭 감시 포인트 ★
+        self._drop_watch_positions: List[Point2] = []
+
+        # ★ Phase 22: 우선 정찰 대상 (백과사전 기반) ★
+        self._priority_scout_targets: List[str] = []  # 현재 찾아야 할 적 테크
+
+        # 정찰 통계
         self.scouts_sent = 0
         self.scouts_returned = 0
         self.scouts_lost = 0
-        self.intel_updates = 0  # IntelManager로 전달한 정보 수
+        self.intel_updates = 0
 
     async def on_step(self, iteration: int):
+        # 0. 초기화 (한 번만)
+        if not self._patrol_routes:
+            self._initialize_routes()
+
         # 1. 활성 정찰 유닛 관리 (사망/임무완료 체크)
         self._manage_active_scouts()
 
@@ -83,6 +118,25 @@ class AdvancedScoutingSystemV2:
 
         # 3. 감시군주 변신수 활용
         await self._manage_changelings()
+
+        # ★ Phase 22: 순찰 경로 업데이트 (매 5초) ★
+        if current_time - self.last_scout_times["PATROL"] >= 5.0:
+            self._update_patrol_units()
+            self.last_scout_times["PATROL"] = current_time
+
+        # ★ Phase 22: 젤나가 감시탑 확보 (매 20초) ★
+        if current_time - self.last_scout_times["WATCHTOWER"] >= 20.0:
+            self._claim_watchtowers()
+            self.last_scout_times["WATCHTOWER"] = current_time
+
+        # ★ Phase 22: 드롭 경로 감시 (중반 이후, 매 30초) ★
+        if current_time > 300 and current_time - self.last_scout_times["DROP_WATCH"] >= 30.0:
+            self._monitor_drop_paths()
+            self.last_scout_times["DROP_WATCH"] = current_time
+
+        # ★ Phase 22: 백과사전 기반 우선 정찰 대상 갱신 (매 60초) ★
+        if iteration % 1320 == 0:
+            self._update_priority_targets()
 
         # 4. 메모리 누수 방지: 오래된 정찰 데이터 정리 (50초마다)
         if iteration % 1100 == 0:
@@ -158,14 +212,22 @@ class AdvancedScoutingSystemV2:
                 self.scouts_lost += 1  # ★ Phase 17: 정찰 유닛 손실 추적 ★
                 continue
 
-            # ★ NEW: Scout Safety Check - 위협 감지 및 회피 ★
+            # 순찰/감시탑/드롭감시 모드 유닛은 별도 관리
+            mode = info.get("mode", "scout")
+            if mode in ("patrol", "watchtower", "drop_watch"):
+                # 위협 시만 철수, 그 외에는 _update_patrol_units가 관리
+                if self._scout_is_threatened(unit) and mode != "watchtower":
+                    if hasattr(self.bot, "start_location"):
+                        unit.move(self.bot.start_location)
+                        to_remove.append(tag)
+                continue
+
+            # Scout Safety Check - 위협 감지 및 회피
             if self._scout_is_threatened(unit):
-                # Retreat to main base immediately
                 if hasattr(self.bot, "start_location"):
                     retreat_pos = self.bot.start_location
                     unit.move(retreat_pos)
                     self.logger.info(f"[SCOUT_RETREAT] {unit.type_id.name} retreating from threat (HP: {unit.health_percentage*100:.0f}%)")
-                    # Remove from active scouts to allow reassignment
                     to_remove.append(tag)
                     continue
                 
@@ -198,7 +260,10 @@ class AdvancedScoutingSystemV2:
             del self.active_scouts[tag]
 
     def _send_new_scout(self) -> bool:
-        """★ Phase 17: 새로운 정찰 유닛 파견 (통계 추적) ★"""
+        """새로운 정찰 유닛 파견 + 중반 이후 순찰 트리거"""
+        # ★ Phase 22: 중반 이후 순찰 경로 자동 활성화
+        if self.bot.time > 300:
+            self._trigger_midgame_patrols()
         return self._send_specific_scout()
 
     def _send_specific_scout(self, force_unit_type: Optional[UnitTypeId] = None) -> bool:
@@ -280,29 +345,37 @@ class AdvancedScoutingSystemV2:
         if self.bot.time - self.last_scouted_at.get(target, 0) > 60:
             return target
             
-        # 3. ★ Race-Specific Strategic Scouting (Phase 17) ★
-        # 적 종족에 따라 특정 테크 건물이 있을만한 곳(본진 구석 등) 정찰
+        # 3. ★ Phase 22: 백과사전 기반 우선 정찰 (테크 건물 숨김 탐지) ★
+        if self._priority_scout_targets and self.bot.enemy_start_locations:
+            enemy_main = self.bot.enemy_start_locations[0]
+            corners = [
+                enemy_main.offset((10, 10)),
+                enemy_main.offset((-10, 10)),
+                enemy_main.offset((10, -10)),
+                enemy_main.offset((-10, -10))
+            ]
+            for corner in corners:
+                last_time = self.last_scouted_at.get(corner, 0)
+                if self.bot.time - last_time > 45:
+                    return corner
+
+        # 4. Race-Specific Strategic Scouting
         enemy_race = self.bot.enemy_race
         if enemy_race:
-             # 적 본진 찾기
              if self.bot.enemy_start_locations:
                  enemy_main = self.bot.enemy_start_locations[0]
-                 
-                 # 테란/프로토스: 본진 구석구석 (테크 건물 숨기는 곳)
                  if enemy_race in {self.bot.Race.Terran, self.bot.Race.Protoss}:
-                     # 본진 주변 4방향 (10~15 거리)
                      corners = [
                          enemy_main.offset((10, 10)),
                          enemy_main.offset((-10, 10)),
                          enemy_main.offset((10, -10)),
                          enemy_main.offset((-10, -10))
                      ]
-                     # 아직 안 가본 구석 확인
                      for corner in corners:
                          if corner not in self.last_scouted_at:
                              return corner
-         
-        # 4. 맵 중앙/감시탑 (Low) - 룰렛 방식이나 상황에 따라 추가
+
+        # 5. 맵 중앙/감시탑
         return self.bot.game_info.map_center
 
     def _is_path_unsafe(self, unit, target) -> bool:
@@ -422,14 +495,15 @@ class AdvancedScoutingSystemV2:
         )
 
     async def _manage_changelings(self):
-        """감시군주 변신수 생성 및 활용"""
+        """
+        ★ Phase 22: 변신수 분산 배치 ★
+        모든 변신수를 적 본진으로 보내지 않고, 각각 다른 정찰 목표로 분산.
+        """
         overseers = self.bot.units(UnitTypeId.OVERSEER)
         for overseer in overseers:
             if overseer.energy >= 50:
-                 # TODO: 적 기지 근처일 때만 사용하도록 최적화 가능
-                 self.bot.do(overseer(AbilityId.SPAWNCHANGELING_SPAWNCHANGELING))
+                self.bot.do(overseer(AbilityId.SPAWNCHANGELING_SPAWNCHANGELING))
 
-        # 변신수 정찰 (기본적으로 적 본진으로)
         changelings = self.bot.units(UnitTypeId.CHANGELING) | \
                       self.bot.units(UnitTypeId.CHANGELINGZEALOT) | \
                       self.bot.units(UnitTypeId.CHANGELINGMARINESHIELD) | \
@@ -440,15 +514,39 @@ class AdvancedScoutingSystemV2:
         if not changelings:
             return
 
-        # 정찰 타겟 선택: 적 본진 또는 맵 중앙
-        if self.bot.enemy_start_locations:
-            target = self.bot.enemy_start_locations[0]
-        elif hasattr(self.bot, "game_info") and self.bot.game_info.map_center:
-            target = self.bot.game_info.map_center
-        else:
-            return  # 타겟이 없으면 정찰 중단
+        # ★ Phase 22: 분산 정찰 대상 목록 구성 ★
+        targets = []
 
-        for changeling in changelings:
+        # 1순위: 적 확장 지역 (미정찰 우선)
+        if self.bot.enemy_start_locations:
+            enemy_base = self.bot.enemy_start_locations[0]
+            enemy_exps = sorted(
+                self.bot.expansion_locations_list,
+                key=lambda p: p.distance_to(enemy_base)
+            )
+            for exp in enemy_exps[:5]:
+                targets.append(exp)
+
+        # 2순위: 맵 중앙
+        if hasattr(self.bot, "game_info"):
+            targets.append(self.bot.game_info.map_center)
+
+        # 3순위: 우선 정찰 대상 위치 (백과사전 기반으로 테크 건물 있을 법한 곳)
+        if self._priority_scout_targets and self.bot.enemy_start_locations:
+            corners = [
+                enemy_base.offset((12, 12)),
+                enemy_base.offset((-12, 12)),
+                enemy_base.offset((12, -12)),
+                enemy_base.offset((-12, -12)),
+            ]
+            targets.extend(corners)
+
+        if not targets:
+            return
+
+        # 각 변신수를 다른 목표로 분산 배치
+        for i, changeling in enumerate(changelings):
+            target = targets[i % len(targets)]
             self.bot.do(changeling.move(target))
 
     def _scout_is_threatened(self, unit) -> bool:
@@ -564,20 +662,412 @@ class AdvancedScoutingSystemV2:
             self.logger.warning(f"Failed to report scouted intel: {e}")
 
     def _print_report(self):
-        """★ Phase 17: 정찰 상태 리포트 (통계 추가) ★"""
+        """정찰 상태 리포트"""
         types = [info['type'] for info in self.active_scouts.values()]
         counts = {t: types.count(t) for t in set(types)}
 
         game_time = self.bot.time
         interval = self._get_dynamic_interval()
 
-        # 정찰 성공률 계산
         total_scouts = self.scouts_sent
         success_rate = (self.scouts_returned / total_scouts * 100) if total_scouts > 0 else 0
 
         self.logger.info(f"=== Advanced Scouting V2 Report [{int(game_time)}s] ===")
         self.logger.info(f"Interval: {interval:.1f}s")
         self.logger.info(f"Active Scouts: {len(self.active_scouts)} {counts}")
+        self.logger.info(f"Patrol Units: {len(self._patrol_units)}, Watchtowers: {len(self._watchtower_claimers)}")
         self.logger.info(f"Scouted Locations: {len(self.last_scouted_at)}/{len(self.bot.expansion_locations_list)}")
-        self.logger.info(f"Scout Stats: Sent={self.scouts_sent}, Returned={self.scouts_returned}, Lost={self.scouts_lost} (Success: {success_rate:.1f}%)")
-        self.logger.info(f"Intel Updates: {self.intel_updates}")
+        self.logger.info(f"Stats: Sent={self.scouts_sent}, Ret={self.scouts_returned}, Lost={self.scouts_lost} ({success_rate:.1f}%)")
+        if self._priority_scout_targets:
+            self.logger.info(f"Priority Targets: {self._priority_scout_targets[:3]}")
+
+    # ================================================================
+    # ★ Phase 22: 순찰 경로 시스템 ★
+    # ================================================================
+
+    def _initialize_routes(self):
+        """게임 시작 시 순찰 경로 및 감시 포인트 초기화"""
+        if not self.bot.enemy_start_locations:
+            return
+
+        our_base = self.bot.start_location
+        enemy_base = self.bot.enemy_start_locations[0]
+        map_center = self.bot.game_info.map_center
+
+        # 1. 적진 순환 순찰 경로 (적 확장 지역 순회)
+        enemy_expansions = sorted(
+            self.bot.expansion_locations_list,
+            key=lambda p: p.distance_to(enemy_base)
+        )
+        # 적 본진 + 가까운 확장 3개를 순환
+        enemy_patrol = [loc for loc in enemy_expansions[:4]]
+        if enemy_patrol:
+            self._patrol_routes["enemy_bases"] = enemy_patrol
+
+        # 2. 맵 중앙 순찰 경로 (중앙 + 양쪽 길목)
+        mid_route = [map_center]
+        # 맵 중앙에서 양쪽으로 오프셋한 감시 지점
+        dx = (enemy_base.x - our_base.x)
+        dy = (enemy_base.y - our_base.y)
+        length = max(math.sqrt(dx*dx + dy*dy), 1)
+        perp_x, perp_y = -dy/length * 15, dx/length * 15
+        mid_route.append(Point2((map_center.x + perp_x, map_center.y + perp_y)))
+        mid_route.append(Point2((map_center.x - perp_x, map_center.y - perp_y)))
+        self._patrol_routes["mid_map"] = mid_route
+
+        # 3. 아군 방어 순찰 (우리 확장 외곽)
+        our_expansions = sorted(
+            self.bot.expansion_locations_list,
+            key=lambda p: p.distance_to(our_base)
+        )
+        defense_patrol = []
+        for exp in our_expansions[1:4]:  # 2~4번째 확장
+            # 확장에서 맵 외곽 방향으로 약간 벗어난 감시 지점
+            watch = exp.towards(map_center, -8)
+            defense_patrol.append(watch)
+        if defense_patrol:
+            self._patrol_routes["defense"] = defense_patrol
+
+        # 4. 젤나가 감시탑 위치 수집
+        if hasattr(self.bot, "watchtowers"):
+            self._watchtower_positions = [t.position for t in self.bot.watchtowers]
+        # 감시탑이 없는 맵이면 주요 교차로를 감시탑 대용으로
+        if not self._watchtower_positions:
+            quarter_1 = Point2(((our_base.x + map_center.x) / 2, (our_base.y + map_center.y) / 2))
+            quarter_3 = Point2(((enemy_base.x + map_center.x) / 2, (enemy_base.y + map_center.y) / 2))
+            self._watchtower_positions = [quarter_1, quarter_3]
+
+        # 5. 드롭 감시 포인트 (우리 본진 뒤편, 자원라인 접근로)
+        # 본진에서 적 반대 방향 가장자리
+        behind_x = our_base.x + (our_base.x - enemy_base.x) * 0.3
+        behind_y = our_base.y + (our_base.y - enemy_base.y) * 0.3
+        # 맵 경계 내로 클램프
+        map_w = self.bot.game_info.map_size[0]
+        map_h = self.bot.game_info.map_size[1]
+        behind_x = max(5, min(map_w - 5, behind_x))
+        behind_y = max(5, min(map_h - 5, behind_y))
+        self._drop_watch_positions = [
+            Point2((behind_x, behind_y)),
+            Point2(((our_base.x + behind_x) / 2, (our_base.y + behind_y) / 2)),
+        ]
+        # 양쪽 측면도 추가
+        self._drop_watch_positions.append(
+            Point2((our_base.x + perp_x * 0.8, our_base.y + perp_y * 0.8))
+        )
+        self._drop_watch_positions.append(
+            Point2((our_base.x - perp_x * 0.8, our_base.y - perp_y * 0.8))
+        )
+
+        self.logger.info(f"[INIT] Routes: enemy_bases={len(self._patrol_routes.get('enemy_bases', []))}, "
+                         f"mid_map={len(self._patrol_routes.get('mid_map', []))}, "
+                         f"defense={len(self._patrol_routes.get('defense', []))}")
+        self.logger.info(f"[INIT] Watchtowers: {len(self._watchtower_positions)}, "
+                         f"Drop watch: {len(self._drop_watch_positions)}")
+
+    def _update_patrol_units(self):
+        """
+        순찰 중인 유닛의 다음 웨이포인트로 이동 명령.
+        단일 목표 도착 시 다음 웨이포인트로 자동 전환.
+        """
+        to_remove = []
+        for tag in list(self._patrol_units):
+            unit = self.bot.units.find_by_tag(tag)
+            if not unit:
+                to_remove.append(tag)
+                continue
+
+            # 현재 웨이포인트 인덱스
+            idx = self._patrol_index.get(tag, 0)
+
+            # 이 유닛의 순찰 경로 찾기
+            route = self._get_unit_patrol_route(tag)
+            if not route:
+                to_remove.append(tag)
+                continue
+
+            target = route[idx % len(route)]
+
+            # 목표 근처 도달 시 다음 웨이포인트로
+            if unit.distance_to(target) < 5:
+                self.last_scouted_at[target] = self.bot.time
+                idx = (idx + 1) % len(route)
+                self._patrol_index[tag] = idx
+                next_target = route[idx]
+                unit.move(next_target)
+
+            # 위협 감지 시 후퇴
+            if self._scout_is_threatened(unit):
+                if hasattr(self.bot, "start_location"):
+                    unit.move(self.bot.start_location)
+                    to_remove.append(tag)
+
+        for tag in to_remove:
+            self._patrol_units.discard(tag)
+            self._patrol_index.pop(tag, None)
+            # active_scouts에서도 제거
+            self.active_scouts.pop(tag, None)
+            if hasattr(self.bot, "unit_authority"):
+                self.bot.unit_authority.release_unit(tag, "AdvancedScoutingV2")
+
+    def _get_unit_patrol_route(self, tag: int) -> Optional[List[Point2]]:
+        """유닛 태그에서 순찰 경로 찾기"""
+        info = self.active_scouts.get(tag)
+        if not info:
+            return None
+        route_name = info.get("patrol_route")
+        if route_name:
+            return self._patrol_routes.get(route_name)
+        return None
+
+    def _assign_patrol(self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD) -> bool:
+        """
+        특정 순찰 경로에 유닛 배정.
+        중반 이후 오버로드/감시군주를 적진 순환 순찰에 투입.
+        """
+        route = self._patrol_routes.get(route_name)
+        if not route:
+            return False
+
+        # 이미 이 경로에 배정된 유닛이 있으면 스킵
+        for tag in self._patrol_units:
+            info = self.active_scouts.get(tag)
+            if info and info.get("patrol_route") == route_name:
+                return False
+
+        # 유닛 선택
+        available = self.bot.units(unit_type).filter(
+            lambda u: u.tag not in self.active_scouts and u.tag not in self._patrol_units
+        )
+        # 오버로드는 다른 시스템이 관리하지 않는 것만
+        if unit_type == UnitTypeId.OVERLORD:
+            available = available.idle
+
+        if not available:
+            return False
+
+        scout = available.closest_to(route[0])
+        if not self._request_authority(scout):
+            return False
+
+        scout.move(route[0])
+        self.active_scouts[scout.tag] = {
+            "type": scout.type_id.name,
+            "target": route[0],
+            "start_time": self.bot.time,
+            "mode": "patrol",
+            "patrol_route": route_name,
+        }
+        self._patrol_units.add(scout.tag)
+        self._patrol_index[scout.tag] = 0
+        self.scouts_sent += 1
+
+        self.logger.info(f"[{int(self.bot.time)}s] ★ PATROL assigned: {scout.type_id.name} -> route '{route_name}' ({len(route)} waypoints)")
+        return True
+
+    # ================================================================
+    # ★ Phase 22: 젤나가 감시탑 확보 ★
+    # ================================================================
+
+    def _claim_watchtowers(self):
+        """저글링으로 젤나가 감시탑 점령 시도"""
+        game_time = self.bot.time
+        if game_time < 120:  # 2분 이전에는 스킵
+            return
+
+        # 사망한 감시탑 수비병 정리
+        for pos in list(self._watchtower_claimers.keys()):
+            tag = self._watchtower_claimers[pos]
+            unit = self.bot.units.find_by_tag(tag)
+            if not unit:
+                del self._watchtower_claimers[pos]
+
+        # 미점령 감시탑에 저글링 파견
+        for tower_pos in self._watchtower_positions:
+            if tower_pos in self._watchtower_claimers:
+                continue
+
+            # 이미 아군 유닛이 근처에 있으면 스킵
+            nearby_units = self.bot.units.closer_than(3, tower_pos)
+            if nearby_units:
+                # 가장 가까운 유닛을 수비병으로 등록
+                self._watchtower_claimers[tower_pos] = nearby_units.first.tag
+                continue
+
+            # 저글링 파견
+            zerglings = self.bot.units(UnitTypeId.ZERGLING).filter(
+                lambda u: u.tag not in self.active_scouts
+                and u.tag not in self._patrol_units
+                and not u.is_burrowed
+            )
+            if not zerglings:
+                continue
+
+            ling = zerglings.closest_to(tower_pos)
+            # 너무 멀면 스킵 (전선에 있는 저글링 뺏지 않기)
+            if ling.distance_to(tower_pos) > 50:
+                continue
+
+            if self._request_authority(ling):
+                ling.move(tower_pos)
+                self._watchtower_claimers[tower_pos] = ling.tag
+                self.active_scouts[ling.tag] = {
+                    "type": "ZERGLING",
+                    "target": tower_pos,
+                    "start_time": game_time,
+                    "mode": "watchtower",
+                }
+                self.logger.info(f"[{int(game_time)}s] ★ WATCHTOWER claim: Zergling -> {tower_pos}")
+
+    # ================================================================
+    # ★ Phase 22: 드롭 경로 감시 ★
+    # ================================================================
+
+    def _monitor_drop_paths(self):
+        """
+        오버로드를 드롭 접근 경로에 배치하여 조기 경보.
+        중반 이후(5분+) 테란/프로토스 상대로 활성화.
+        """
+        enemy_race = getattr(self.bot, "enemy_race", None)
+        if not enemy_race:
+            return
+
+        # 테란(메디백 드롭), 프로토스(프리즘 드롭)일 때만
+        is_drop_race = False
+        try:
+            if enemy_race in {self.bot.Race.Terran, self.bot.Race.Protoss}:
+                is_drop_race = True
+        except (AttributeError, TypeError):
+            pass
+
+        if not is_drop_race:
+            return
+
+        # 드롭 감시에 오버로드 최대 2기 배정
+        assigned_count = sum(
+            1 for info in self.active_scouts.values()
+            if info.get("mode") == "drop_watch"
+        )
+        if assigned_count >= 2:
+            return
+
+        for watch_pos in self._drop_watch_positions:
+            # 이미 감시 중이면 스킵
+            already_watched = any(
+                info.get("mode") == "drop_watch" and info["target"].distance_to(watch_pos) < 10
+                for info in self.active_scouts.values()
+            )
+            if already_watched:
+                continue
+
+            overlords = self.bot.units(UnitTypeId.OVERLORD).idle.filter(
+                lambda u: u.tag not in self.active_scouts and u.tag not in self._patrol_units
+            )
+            if not overlords:
+                break
+
+            ol = overlords.closest_to(watch_pos)
+            if self._request_authority(ol):
+                ol.move(watch_pos)
+                self.active_scouts[ol.tag] = {
+                    "type": "OVERLORD",
+                    "target": watch_pos,
+                    "start_time": self.bot.time,
+                    "mode": "drop_watch",
+                }
+                self.logger.info(f"[{int(self.bot.time)}s] ★ DROP WATCH: Overlord -> {watch_pos}")
+                assigned_count += 1
+                if assigned_count >= 2:
+                    break
+
+    # ================================================================
+    # ★ Phase 22: 백과사전 연동 - 상성 기반 정찰 우선순위 ★
+    # ================================================================
+
+    def _update_priority_targets(self):
+        """
+        IntelManager의 적 조합 정보 + 백과사전 데이터를 조합하여
+        현재 가장 찾아야 할 적 테크/유닛을 결정.
+        """
+        if not get_counter:
+            return
+
+        intel = getattr(self.bot, "intel", None)
+        if not intel:
+            return
+
+        enemy_comp = getattr(intel, "enemy_unit_counts", {})
+        enemy_tech = getattr(intel, "enemy_tech_buildings", set())
+
+        self._priority_scout_targets = []
+
+        # 현재 발견된 적 유닛 기반으로 "아직 안 보인 위험 유닛" 추론
+        # 예: FACTORY 보였지만 SIEGETANK 안 보임 → 탱크 숨기고 있을 수 있음
+        tech_unit_map = {
+            "FACTORY": ["SIEGETANK", "HELLION", "CYCLONE", "THOR"],
+            "STARPORT": ["MEDIVAC", "LIBERATOR", "BATTLECRUISER", "BANSHEE", "VIKINGFIGHTER"],
+            "ROBOTICSFACILITY": ["IMMORTAL", "COLOSSUS", "DISRUPTOR", "OBSERVER"],
+            "STARGATE": ["ORACLE", "VOIDRAY", "CARRIER", "TEMPEST", "PHOENIX"],
+            "DARKSHRINE": ["DARKTEMPLAR"],
+            "TEMPLARARCHIVE": ["HIGHTEMPLAR", "ARCHON"],
+            "SPIRE": ["MUTALISK", "CORRUPTOR"],
+            "GREATERSPIRE": ["BROODLORD"],
+        }
+
+        for tech_building in enemy_tech:
+            possible_units = tech_unit_map.get(tech_building, [])
+            for unit_name in possible_units:
+                if unit_name not in enemy_comp or enemy_comp.get(unit_name, 0) == 0:
+                    # 테크는 있지만 유닛이 안 보임 → 우선 정찰 대상
+                    counter_info = get_counter(unit_name)
+                    if counter_info and counter_info.get("priority", "") == "high":
+                        self._priority_scout_targets.append(unit_name)
+
+        if self._priority_scout_targets:
+            self.logger.info(f"[{int(self.bot.time)}s] Priority scout targets: {self._priority_scout_targets[:5]}")
+
+    # ================================================================
+    # ★ Phase 22: 중후반 자동 순찰 트리거 ★
+    # ================================================================
+
+    def _trigger_midgame_patrols(self):
+        """
+        중반(5분+) 이후 자동으로 순찰 경로 활성화.
+        on_step에서 호출하지 않고 _send_specific_scout 등에서 조건부 호출.
+        """
+        game_time = self.bot.time
+
+        # 5분 이후: 적진 순환 순찰 (오버로드 속업 시)
+        if game_time > 300:
+            has_speed = UpgradeId.OVERLORDSPEED in self.bot.state.upgrades
+            if has_speed:
+                self._assign_patrol("enemy_bases", UnitTypeId.OVERLORD)
+
+        # 8분 이후: 맵 중앙 순찰 (감시군주)
+        if game_time > 480:
+            overseers = self.bot.units(UnitTypeId.OVERSEER)
+            if overseers.amount >= 2:
+                self._assign_patrol("mid_map", UnitTypeId.OVERSEER)
+
+        # 10분 이후: 아군 방어 순찰 (저글링)
+        if game_time > 600:
+            self._assign_patrol("defense", UnitTypeId.ZERGLING)
+
+    def get_scout_report(self) -> dict:
+        """외부 시스템용 정찰 상태 리포트"""
+        ling_count = sum(1 for i in self.active_scouts.values() if i["type"] == "ZERGLING")
+        ol_count = sum(1 for i in self.active_scouts.values() if i["type"] == "OVERLORD")
+        os_count = sum(1 for i in self.active_scouts.values() if i["type"] == "OVERSEER")
+        patrol_count = len(self._patrol_units)
+        watchtower_count = len(self._watchtower_claimers)
+
+        return {
+            "zergling_patrol_count": ling_count,
+            "overlord_scout_count": ol_count,
+            "overseer_scout_count": os_count,
+            "patrol_units": patrol_count,
+            "watchtowers_held": watchtower_count,
+            "total_active": len(self.active_scouts),
+            "scouts_sent": self.scouts_sent,
+            "scouts_lost": self.scouts_lost,
+            "priority_targets": self._priority_scout_targets[:3],
+        }

@@ -200,6 +200,60 @@
         }
       ]
     },
+    "HATCH_FIRST_16": {
+      "name": "16 Hatch First (1-min Multi)",
+      "description": "16 Hatch before Pool - fastest natural (sub-60s)",
+      "steps": [
+        {
+          "supply": 13,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "13 Overlord"
+        },
+        {
+          "supply": 16,
+          "action": "expand",
+          "unit_type": "HATCHERY",
+          "description": "16 Hatchery (1-min multi target)"
+        },
+        {
+          "supply": 16,
+          "action": "build",
+          "unit_type": "SPAWNINGPOOL",
+          "description": "16 Pool (after Hatch)"
+        },
+        {
+          "supply": 17,
+          "action": "build",
+          "unit_type": "EXTRACTOR",
+          "description": "17 Gas"
+        },
+        {
+          "supply": 18,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "18 Queen (Main)"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "20 Queen (Natural)"
+        },
+        {
+          "supply": 20,
+          "action": "train",
+          "unit_type": "ZERGLING",
+          "description": "20 Zergling x2 (Safety)"
+        },
+        {
+          "supply": 24,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "24 Overlord"
+        }
+      ]
+    },
     "ROACH_RUSH": {
       "name": "Roach Rush",
       "description": "19 Roach Warren Rush",

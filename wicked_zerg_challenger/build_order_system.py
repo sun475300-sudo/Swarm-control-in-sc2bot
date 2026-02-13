@@ -41,6 +41,7 @@ class BuildOrderType(Enum):
     SAFE_14POOL = "SAFE_14POOL"      # Need to add to JSON
     AGGRESSIVE_10POOL = "AGGRESSIVE_10POOL"
     ECONOMY_15HATCH = "ECONOMY_15HATCH"
+    HATCH_FIRST_16 = "HATCH_FIRST_16"  # ★ Phase 22: 1분 멀티 빌드 ★
     ROACH_RUSH = "ROACH_RUSH"               # Matches JSON key
     MUTALISK_RUSH = "MUTALISK_RUSH"
     HYDRA_TIMING = "HYDRA_TIMING"
@@ -92,6 +93,7 @@ class BuildOrderSystem:
             BuildOrderType.SAFE_14POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.AGGRESSIVE_10POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.ECONOMY_15HATCH: {"games": 0, "wins": 0, "avg_timing": 0.0},
+            BuildOrderType.HATCH_FIRST_16: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.ROACH_RUSH: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.MUTALISK_RUSH: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.HYDRA_TIMING: {"games": 0, "wins": 0, "avg_timing": 0.0},
@@ -100,6 +102,11 @@ class BuildOrderSystem:
 
         # Build Order End Time
         self.build_order_end_time = 300.0  # 5 minutes
+
+        # ★ Phase 22: 확장 타이밍 검증 ★
+        self.expansion_timing_target = 60.0  # 1분 멀티 목표
+        self.expansion_actual_time = 0.0     # 실제 확장 시작 시간
+        self.expansion_timing_verified = False
 
         # Initialization
         self._setup_build_order()
@@ -356,15 +363,26 @@ class BuildOrderSystem:
         return False
 
     async def _expand(self, structure_type: UnitTypeId) -> bool:
-        """Expand Base"""
+        """
+        Expand Base
+        ★ Phase 22: 확장 타이밍 기록 + 1분 멀티 검증 ★
+        """
         # Skip if already expanded
         if self.bot.townhalls.amount >= 2:
+            if not self.expansion_timing_verified:
+                self._verify_expansion_timing()
             return True
         if self.bot.already_pending(UnitTypeId.HATCHERY) > 0:
+            if self.expansion_actual_time == 0:
+                self.expansion_actual_time = self.bot.time
+                print(f"[BUILD_ORDER] ★ Natural expansion started at {int(self.bot.time)}s ★")
             return True
 
         # Check Resources
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
+            # ★ Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 ★
+            if self.bot.time > self.expansion_timing_target and self.expansion_actual_time == 0:
+                print(f"[BUILD_ORDER] ⚠ WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
             return False
 
         # Find Expansion Location
@@ -372,24 +390,50 @@ class BuildOrderSystem:
         if location:
             # Use TechCoordinator if available
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            PRIORITY_BUILD_ORDER = 50
-            
+            PRIORITY_EXPANSION = 55  # ★ Phase 22: 확장 우선순위 상향 (50 → 55)
+
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
                     tech_coordinator.request_structure(
                         UnitTypeId.HATCHERY,
                         location,
-                        PRIORITY_BUILD_ORDER,
+                        PRIORITY_EXPANSION,
                         "BuildOrderSystem"
                     )
+                    self.expansion_actual_time = self.bot.time
+                    print(f"[BUILD_ORDER] ★ Natural expansion ordered at {int(self.bot.time)}s ★")
                     return True
             else:
                 worker = self.bot.workers.random
                 if worker:
                     worker.build(UnitTypeId.HATCHERY, location)
+                    self.expansion_actual_time = self.bot.time
+                    print(f"[BUILD_ORDER] ★ Natural expansion ordered at {int(self.bot.time)}s ★")
                     return True
 
         return False
+
+    def _verify_expansion_timing(self):
+        """★ Phase 22: 확장 타이밍 검증 ★"""
+        if self.expansion_timing_verified:
+            return
+
+        self.expansion_timing_verified = True
+        actual = self.expansion_actual_time
+
+        if actual == 0:
+            print(f"[BUILD_ORDER] ⚠ Expansion timing: NOT RECORDED")
+            return
+
+        target = self.expansion_timing_target
+        diff = actual - target
+
+        if diff <= 5:
+            print(f"[BUILD_ORDER] ✓ EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME")
+        elif diff <= 15:
+            print(f"[BUILD_ORDER] △ EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)")
+        else:
+            print(f"[BUILD_ORDER] ✗ EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)")
 
     def select_build_order_by_win_rate(self) -> BuildOrderType:
         """Auto-select Build Order by Win Rate"""

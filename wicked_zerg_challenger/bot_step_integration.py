@@ -254,6 +254,18 @@ try:
 except ImportError:
     AdvancedScoutSystemV2 = None
 
+# Game Data Logger (Phase 22 - 게임 데이터 수집)
+try:
+    from game_data_logger import GameDataLogger
+except ImportError:
+    GameDataLogger = None
+
+# Game Result Reporter (Phase 22 - 경기 결과 보고서)
+try:
+    from game_result_reporter import GameResultReporter
+except ImportError:
+    GameResultReporter = None
+
 class BotStepIntegrator:
     """
     Bot의 on_step 메서드를 구현하는 통합 클래스
@@ -430,6 +442,20 @@ class BotStepIntegrator:
             print("[INIT] ★ AdvancedScoutSystemV2 initialized (Overseer + Changeling) ★")
         else:
             self.bot.advanced_scout_v2 = None
+
+        # Game Data Logger (Phase 22 - 경기 데이터 수집)
+        if GameDataLogger:
+            self.bot.game_data_logger = GameDataLogger(bot)
+            print("[INIT] GameDataLogger initialized (Phase 22)")
+        else:
+            self.bot.game_data_logger = None
+
+        # Game Result Reporter (Phase 22 - 경기 결과 보고서)
+        if GameResultReporter:
+            self.bot.game_result_reporter = GameResultReporter(bot)
+            print("[INIT] GameResultReporter initialized (Phase 22)")
+        else:
+            self.bot.game_result_reporter = None
 
     async def initialize_managers(self):
         """
@@ -629,6 +655,14 @@ class BotStepIntegrator:
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+
+            # ★★★ Building Destroyer (건물 파괴 전문) ★★★
+            if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
+                try:
+                    await self.bot.building_destroyer.on_step(iteration)
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -1047,12 +1081,12 @@ class BotStepIntegrator:
                     # 주기적으로 정찰 리포트 출력
                     if iteration % 660 == 0:  # ~30초마다
                         report = self.bot.advanced_scout_v2.get_scout_report()
-                        print(f"[ADVANCED_SCOUT_V2] Ling:{report['zergling_patrol_count']}, "
-                              f"Overlord:{report['overlord_scout_count']}, "
-                              f"Overseer:{report['overseer_count']}, "
-                              f"Changeling:{report['changeling_count']}, "
-                              f"Interval:{report['current_interval']:.0f}s, "
-                              f"InfoAge:{report['enemy_info_age']:.0f}s")
+                        print(f"[ADVANCED_SCOUT_V2] Ling:{report.get('zergling_patrol_count',0)}, "
+                              f"OL:{report.get('overlord_scout_count',0)}, "
+                              f"OS:{report.get('overseer_scout_count',0)}, "
+                              f"Patrol:{report.get('patrol_units',0)}, "
+                              f"WT:{report.get('watchtowers_held',0)}, "
+                              f"Lost:{report.get('scouts_lost',0)}")
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -1793,6 +1827,18 @@ class BotStepIntegrator:
 
             # NOTE: Scouting과 Creep Manager는 이미 위에서 실행됨 (Line 303, 306)
             # 중복 실행 방지를 위해 제거됨 (2026-01-25)
+
+            # 13.5 ★ Game Data Logger (Phase 22 - 매 프레임 데이터 수집) ★
+            if hasattr(self.bot, "game_data_logger") and self.bot.game_data_logger:
+                try:
+                    # 첫 호출 시 메타 정보 초기화
+                    if not getattr(self.bot.game_data_logger, '_meta_initialized', False):
+                        self.bot.game_data_logger.initialize_game_meta()
+                        self.bot.game_data_logger._meta_initialized = True
+                    await self.bot.game_data_logger.on_step(iteration)
+                except Exception as e:
+                    if iteration % 660 == 0:
+                        print(f"[WARN] GameDataLogger error: {e}")
 
             # 14. 실시간 로직 활성화 보고
             game_time = getattr(self.bot, "time", 0)

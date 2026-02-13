@@ -570,6 +570,32 @@ class WickedZergBotProImpl(BotAI):
             except Exception as e:
                 print(f"[WARNING] Game analytics error: {e}")
 
+        # ★★★ Phase 22: Game Result Reporter - 경기 결과 자동 보고서 ★★★
+        try:
+            # GameDataLogger 종료 처리
+            if hasattr(self, 'game_data_logger') and self.game_data_logger:
+                result_str = str(game_result)
+                self.game_data_logger.finalize_game(result_str)
+
+                # GameResultReporter로 보고서 생성
+                if hasattr(self, 'game_result_reporter') and self.game_result_reporter:
+                    report_text = self.game_result_reporter.generate_report(
+                        self.game_data_logger.game_data
+                    )
+                    print("\n" + report_text)
+
+                    # Discord용 한줄 요약도 생성
+                    quick_summary = self.game_result_reporter.generate_quick_summary(
+                        self.game_data_logger.game_data
+                    )
+                    print(f"\n[QUICK SUMMARY] {quick_summary}")
+
+                    # 봇에 요약 저장 (JARVIS Discord 전송용)
+                    self._game_quick_summary = quick_summary
+                    self._game_report_text = report_text
+        except Exception as e:
+            print(f"[WARNING] Game result reporter error: {e}")
+
         # Store training result for run_with_training.py
         self._training_result = {
             "game_result": str(game_result),
