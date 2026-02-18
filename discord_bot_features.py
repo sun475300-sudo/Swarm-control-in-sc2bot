@@ -48,7 +48,7 @@ logger = logging.getLogger("jarvis.discord")
 
 # ── 환경변수 ──
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
-CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
+CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "") or os.environ.get("ANTHROPIC_API_KEY", "")
 TRADER_ROLE_NAME = os.environ.get("TRADER_ROLE_NAME", "Trader")
 
 # ── 전역 인스턴스 ──
