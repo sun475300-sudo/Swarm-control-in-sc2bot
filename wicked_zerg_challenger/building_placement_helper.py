@@ -49,6 +49,47 @@ def requires_creep(building_type: UnitTypeId) -> bool:
     return building_type in CREEP_REQUIRED
 
 
+def is_too_close_to_resources(position: Point2, bot, min_distance: float = 3.0) -> bool:
+    """
+    ★ 건물 위치가 광물이나 가스 근처인지 확인하는 모듈 레벨 함수 ★
+
+    광물/가스 근처에 건물을 지으면 일꾼 동선이 막혀서 채집 효율이 떨어집니다.
+    다른 매니저에서도 임포트하여 사용 가능합니다:
+        from building_placement_helper import is_too_close_to_resources
+
+    Args:
+        position: 확인할 위치
+        bot: BotAI 인스턴스
+        min_distance: 최소 거리 (기본값: 3타일)
+
+    Returns:
+        bool: 광물/가스 근처이면 True (건물 배치 금지), 아니면 False
+    """
+    try:
+        # 광물 필드 체크
+        if hasattr(bot, "mineral_field") and bot.mineral_field:
+            for mineral in bot.mineral_field:
+                if position.distance_to(mineral.position) < min_distance:
+                    return True
+
+        # 가스 간헐천 체크
+        if hasattr(bot, "vespene_geyser") and bot.vespene_geyser:
+            for geyser in bot.vespene_geyser:
+                if position.distance_to(geyser.position) < min_distance:
+                    return True
+
+        # 추출장 체크 (건설 중인 것 포함)
+        if hasattr(bot, "gas_buildings") and bot.gas_buildings:
+            for extractor in bot.gas_buildings:
+                if position.distance_to(extractor.position) < min_distance:
+                    return True
+
+        return False
+    except Exception:
+        return False  # 에러 시 안전하게 False 반환 (배치 허용)
+
+
+
 def can_build_off_creep(building_type: UnitTypeId) -> bool:
     """
     건물을 점막 없이 지을 수 있는지 확인합니다.
