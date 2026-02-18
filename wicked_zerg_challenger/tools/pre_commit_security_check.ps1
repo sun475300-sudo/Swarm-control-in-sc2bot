@@ -1,10 +1,11 @@
 ﻿# ═══════════════════════════════════════════════════════════
-# JARVIS Pre-Commit Security Check
-# - API 키/시크릿 유출 방지
+# JARVIS Pre-Commit Security Check v2.0 (강화판)
+# - API 키/시크릿/토큰 유출 방지
+# - Anthropic, Discord, Google, AWS, Upbit, OpenAI 등 포함
 # - 스테이징된 파일만 검사
 # ═══════════════════════════════════════════════════════════
 
-Write-Host "🔒 Pre-commit 보안 스캔 시작..." -ForegroundColor Cyan
+Write-Host "🔒 Pre-commit 보안 스캔 시작 (v2.0)..." -ForegroundColor Cyan
 
 $ErrorFound = $false
 
@@ -15,40 +16,97 @@ if (-not $StagedFiles) {
     exit 0
 }
 
-# 검사할 확장자
-$CheckExtensions = @('.py', '.js', '.ts', '.json', '.yaml', '.yml', '.toml',
-                     '.cfg', '.ini', '.bat', '.cmd', '.sh', '.ps1', '.md', '.txt', '.env')
-
-# 제외할 파일 패턴
-$ExcludePatterns = @('*.example', '.gitignore', 'pre_commit_security_check*', 'security.py')
-
-# ── .env에서 키 prefix 동적 로드 ──
-$DangerPatterns = @(
-    # 일반적인 API 키 할당 패턴 (하드코딩)
-    @{ Pattern = '(?i)(UPBIT_ACCESS_KEY|UPBIT_SECRET_KEY)\s*=\s*"[A-Za-z0-9]{20,}"'; Description = 'Upbit 키 하드코딩' }
-    @{ Pattern = '(?i)(access_key|secret_key|api_key)\s*=\s*"[A-Za-z0-9]{25,}"'; Description = 'API 키 하드코딩' }
-    @{ Pattern = '(?i)Upbit\(\s*"[A-Za-z0-9]{20,}"'; Description = 'Upbit() 생성자에 키 직접 전달' }
-
-    # 바이낸스 등 다른 거래소
-    @{ Pattern = '(?i)(binance|coinbase|bithumb).*key\s*=\s*"[A-Za-z0-9]{20,}"'; Description = '거래소 API 키 하드코딩' }
-
-    # 일반 시크릿
-    @{ Pattern = '(?i)password\s*=\s*"[^"]{8,}"'; Description = '비밀번호 하드코딩' }
-    @{ Pattern = '(?i)token\s*=\s*"[A-Za-z0-9_\-\.]{20,}"'; Description = '토큰 하드코딩' }
+# ── 검사할 확장자 ──
+$CheckExtensions = @(
+    '.py', '.js', '.ts', '.jsx', '.tsx',
+    '.json', '.yaml', '.yml', '.toml',
+    '.cfg', '.ini', '.bat', '.cmd', '.sh', '.ps1',
+    '.md', '.txt', '.env', '.conf', '.config'
 )
 
-# .env에서 실제 키의 prefix를 읽어 동적 패턴 추가 (하드코딩 방지)
-$EnvPaths = @("wicked_zerg_challenger\.env", ".env")
+# ── 제외할 파일 패턴 (보안 도구 자체, 예시 파일) ──
+$ExcludePatterns = @(
+    'pre_commit_security_check*',
+    'check_api_key*',
+    'check_all_api_keys*',
+    'remove_api_key*',
+    'rotate_api_key*',
+    'api_key_security_hardening*',
+    '*.example',
+    '*.sample',
+    '.gitignore',
+    'REMOVE_API_KEY_FROM_GIT_HISTORY.md',
+    'TOMORROW_TODO.md',
+    'CRITICAL_ISSUES_SUMMARY.md'
+)
+
+# ── 위험 패턴 정의 ──
+$DangerPatterns = @(
+
+    # ════ Anthropic / Claude ════
+    @{ Pattern = 'sk-ant-[a-zA-Z0-9\-_]{20,}'; Description = 'Anthropic API 키 감지' }
+    @{ Pattern = '(?i)ANTHROPIC_API_KEY\s*=\s*[''"][a-zA-Z0-9\-_]{20,}[''"]'; Description = 'Anthropic API 키 하드코딩' }
+
+    # ════ OpenAI ════
+    @{ Pattern = 'sk-[a-zA-Z0-9]{48}'; Description = 'OpenAI API 키 감지' }
+    @{ Pattern = '(?i)OPENAI_API_KEY\s*=\s*[''"][a-zA-Z0-9\-_]{20,}[''"]'; Description = 'OpenAI API 키 하드코딩' }
+
+    # ════ Google / GCP ════
+    @{ Pattern = 'AIza[0-9A-Za-z\-_]{35}'; Description = 'Google API 키 감지' }
+    @{ Pattern = '(?i)"type"\s*:\s*"service_account"'; Description = 'Google 서비스 계정 JSON 감지' }
+    @{ Pattern = '(?i)GOOGLE_API_KEY\s*=\s*[''"][a-zA-Z0-9\-_]{20,}[''"]'; Description = 'Google API 키 하드코딩' }
+
+    # ════ AWS ════
+    @{ Pattern = 'AKIA[0-9A-Z]{16}'; Description = 'AWS Access Key ID 감지' }
+    @{ Pattern = '(?i)aws_secret_access_key\s*=\s*[''"][a-zA-Z0-9/+]{40}[''"]'; Description = 'AWS Secret Key 하드코딩' }
+
+    # ════ Discord ════
+    @{ Pattern = '(?i)discord.*token\s*=\s*[''"][A-Za-z0-9\.\-_]{50,}[''"]'; Description = 'Discord 봇 토큰 하드코딩' }
+    @{ Pattern = 'MTI[0-9A-Za-z\-_]{50,}'; Description = 'Discord 토큰 패턴 감지' }
+    @{ Pattern = '(?i)DISCORD_TOKEN\s*=\s*[''"][A-Za-z0-9\.\-_]{50,}[''"]'; Description = 'Discord 토큰 하드코딩' }
+
+    # ════ Upbit / 거래소 ════
+    @{ Pattern = '(?i)(UPBIT_ACCESS_KEY|UPBIT_SECRET_KEY)\s*=\s*[''"][A-Za-z0-9]{20,}[''"]'; Description = 'Upbit 키 하드코딩' }
+    @{ Pattern = '(?i)Upbit\(\s*[''"][A-Za-z0-9]{20,}[''"]'; Description = 'Upbit() 생성자에 키 직접 전달' }
+    @{ Pattern = '(?i)(access_key|secret_key)\s*=\s*[''"][A-Za-z0-9]{25,}[''"]'; Description = '거래소 API 키 하드코딩' }
+    @{ Pattern = '(?i)(binance|coinbase|bithumb|bybit).*key\s*=\s*[''"][A-Za-z0-9]{20,}[''"]'; Description = '거래소 API 키 하드코딩' }
+
+    # ════ GitHub ════
+    @{ Pattern = 'ghp_[a-zA-Z0-9]{36}'; Description = 'GitHub Personal Access Token 감지' }
+    @{ Pattern = 'ghs_[a-zA-Z0-9]{36}'; Description = 'GitHub Server Token 감지' }
+    @{ Pattern = 'github_pat_[a-zA-Z0-9_]{82}'; Description = 'GitHub Fine-grained Token 감지' }
+
+    # ════ Slack ════
+    @{ Pattern = 'xox[baprs]-[0-9]{12}-[0-9]{12}-[a-zA-Z0-9]{24}'; Description = 'Slack 토큰 감지' }
+
+    # ════ 일반 패턴 ════
+    @{ Pattern = '(?i)password\s*=\s*[''"][^''"]{8,}[''"]'; Description = '비밀번호 하드코딩' }
+    @{ Pattern = '(?i)secret\s*=\s*[''"][a-zA-Z0-9\-_\.]{16,}[''"]'; Description = '시크릿 하드코딩' }
+    @{ Pattern = '(?i)private_key\s*=\s*[''"][a-zA-Z0-9\-_\.]{20,}[''"]'; Description = '프라이빗 키 하드코딩' }
+    @{ Pattern = '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'; Description = 'Private Key 파일 내용 감지' }
+    @{ Pattern = '(?i)bearer\s+[a-zA-Z0-9\-_\.]{30,}'; Description = 'Bearer 토큰 하드코딩' }
+)
+
+# ── .env에서 실제 키 prefix 동적 로드 (키 값 자체를 패턴으로 추가) ──
+$EnvPaths = @(".env", ".env.jarvis", "wicked_zerg_challenger\.env", "crypto_trading\.env")
 foreach ($envPath in $EnvPaths) {
     if (Test-Path $envPath) {
         $envContent = Get-Content $envPath -ErrorAction SilentlyContinue
         foreach ($line in $envContent) {
-            if ($line -match '^(UPBIT_ACCESS_KEY|UPBIT_SECRET_KEY)\s*=\s*(.{10})') {
-                $prefix = $Matches[2]
-                $DangerPatterns += @{ Pattern = [regex]::Escape($prefix); Description = "Upbit API 키 값 감지 ($($Matches[1]))" }
+            # KEY=VALUE 형식에서 값이 20자 이상인 경우 prefix 10자를 패턴으로 추가
+            if ($line -match '^([A-Z_]+)\s*=\s*(.{20,})$') {
+                $keyName = $Matches[1]
+                $keyValue = $Matches[2].Trim('"').Trim("'")
+                if ($keyValue.Length -ge 20) {
+                    $prefix = $keyValue.Substring(0, [Math]::Min(12, $keyValue.Length))
+                    $escapedPrefix = [regex]::Escape($prefix)
+                    $DangerPatterns += @{
+                        Pattern = $escapedPrefix
+                        Description = "실제 키 값 감지 ($keyName 의 prefix)"
+                    }
+                }
             }
         }
-        break
     }
 }
 
@@ -62,27 +120,42 @@ foreach ($file in $StagedFiles) {
 
     # 제외 파일 체크
     $skip = $false
+    $fileName = [System.IO.Path]::GetFileName($file)
     foreach ($excl in $ExcludePatterns) {
-        if ($file -like $excl) { $skip = $true; break }
+        if ($fileName -like $excl -or $file -like "*$excl*") {
+            $skip = $true; break
+        }
     }
     if ($skip) { continue }
 
-    # .env 파일은 이미 .gitignore에 있어야 하지만 혹시 모르니 경고
-    if ($file -match '\.env$' -or $file -match '\.env\.') {
-        $IssuesFound += "⚠️  .env 파일이 커밋에 포함됨: $file"
+    # .env 파일 자체가 커밋에 포함되면 즉시 차단
+    if ($file -match '(^|/)\.env(\.|$)' -or $file -match '\.env\.jarvis') {
+        $IssuesFound += "⛔ .env 파일이 커밋에 포함됨: $file"
+        $ErrorFound = $true
+        continue
+    }
+
+    # credentials JSON 파일 차단
+    if ($file -match '(service.account|credentials|client.secret).*\.json$') {
+        $IssuesFound += "⛔ 인증 JSON 파일이 커밋에 포함됨: $file"
         $ErrorFound = $true
         continue
     }
 
     $FilesChecked++
 
-    # 파일 내용에서 위험 패턴 검색 (스테이징된 내용)
+    # 스테이징된 파일 내용 가져오기
     $content = git show ":$file" 2>$null
     if (-not $content) { continue }
 
     $lineNum = 0
     foreach ($line in $content -split "`n") {
         $lineNum++
+
+        # 주석 줄 스킵 (# 또는 // 로 시작하는 줄)
+        $trimmed = $line.Trim()
+        if ($trimmed -match '^(#|//)') { continue }
+
         foreach ($dp in $DangerPatterns) {
             if ($line -match $dp.Pattern) {
                 $IssuesFound += "❌ $($dp.Description): ${file}:${lineNum}"
@@ -103,12 +176,15 @@ if ($IssuesFound.Count -gt 0) {
         Write-Host "  $issue" -ForegroundColor Yellow
     }
     Write-Host ""
+    Write-Host "═══════════════════════════════════════" -ForegroundColor DarkGray
     Write-Host "해결 방법:" -ForegroundColor White
-    Write-Host "  1. API 키를 .env 파일로 이동하세요 (이미 .gitignore에 포함)" -ForegroundColor White
-    Write-Host "  2. os.getenv() 또는 config.py를 통해 키를 로드하세요" -ForegroundColor White
-    Write-Host "  3. 강제 커밋: git commit --no-verify (비추천)" -ForegroundColor DarkGray
+    Write-Host "  1. API 키를 .env 또는 .env.jarvis 파일로 이동" -ForegroundColor White
+    Write-Host "  2. 코드에서 os.getenv() / process.env 로 로드" -ForegroundColor White
+    Write-Host "  3. 이미 커밋된 키는 즉시 폐기하고 재발급 필요" -ForegroundColor White
+    Write-Host "  4. 강제 커밋 (비추천): git commit --no-verify" -ForegroundColor DarkGray
+    Write-Host "═══════════════════════════════════════" -ForegroundColor DarkGray
     exit 1
 }
 
-Write-Host "✅ 보안 스캔 통과 - 민감 정보 미검출" -ForegroundColor Green
+Write-Host "✅ 보안 스캔 통과 ($FilesChecked 개 파일 검사) - 민감 정보 미검출" -ForegroundColor Green
 exit 0
