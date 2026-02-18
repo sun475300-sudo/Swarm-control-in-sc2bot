@@ -139,11 +139,11 @@ class ZerglingHarassmentTrainer:
             
             # ★ Unit Authority Check ★
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                from unit_authority_manager import Authority
+                from unit_authority_manager import AuthorityLevel
                 ling_tags = {l.tag for l in squad_lings}
                 # COMBAT 권한 요청 (괴롭힘 임무)
                 granted = self.bot.unit_authority.request_authority(
-                    ling_tags, Authority.COMBAT, "ZerglingHarass", self.bot.state.game_loop
+                    ling_tags, AuthorityLevel.HARASSMENT, "ZerglingHarass", self.bot.state.game_loop
                 )
                 # 권한 못 받은 유닛 제외
                 squad_lings = [l for l in squad_lings if l.tag in granted]

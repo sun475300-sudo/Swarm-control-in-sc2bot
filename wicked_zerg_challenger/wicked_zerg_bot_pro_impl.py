@@ -290,8 +290,8 @@ class WickedZergBotProImpl(BotAI):
         - AggressiveStrategies: 초반 공격 전략 (12풀, 맹독충 올인 등)
         중복 호출 방지를 위해 여기서는 호출하지 않음
         """
-        # ★★★ 시간 제한: 5분(300초) 강제 종료 (빠른 학습) - train_mode일 때만 ★★★
-        if self.train_mode and self.time > 300:
+        # ★★★ 시간 제한: 30분(1800초) 강제 종료 (충분한 학습 시간 확보) - train_mode일 때만 ★★★
+        if self.train_mode and self.time > 1800:
             if not hasattr(self, '_game_ended'):
                 self._game_ended = True
                 print(f"[GAME] Time limit reached ({int(self.time)}s). Surrendering for fast training.")

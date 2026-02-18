@@ -8,7 +8,8 @@ set GEMINI_API_KEY=YOUR_API_KEY_HERE
 start "JARVIS Brain (CLIProxy)" python "C:\Users\sun47\.openclaw\run_proxy.py"
 
 echo [2/3] Starting Chatbot (Text Gateway)...
-start "JARVIS Chatbot (Gateway)" cmd /c "set ANTHROPIC_BASE_URL=http://127.0.0.1:8317 && set ANTHROPIC_API_KEY=dummy && node C:\Users\sun47\AppData\Roaming\npm\node_modules\openclaw\dist\index.js gateway --port 18789"
+rem start "JARVIS Chatbot (Gateway)" cmd /c "set ANTHROPIC_BASE_URL=http://127.0.0.1:8317 && set ANTHROPIC_API_KEY=dummy && node C:\Users\sun47\AppData\Roaming\npm\node_modules\openclaw\dist\index.js gateway --port 18789"
+echo Skiping Node.js Gateway (Deprecated)
 
 echo [3/3] Starting Voice Bot System...
 start "JARVIS Voice Bridge" python "C:\Users\sun47\.openclaw\mcp_gateway_proxy.py"

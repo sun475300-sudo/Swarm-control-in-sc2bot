@@ -7,6 +7,7 @@ Bot Step Integration - on_step 구현 통합 모듈
 """
 
 import asyncio
+import logging
 import time
 from typing import Any, Dict, List, Optional
 
@@ -51,6 +52,11 @@ class LogicActivityTracker:
         if name in self.active_logics:
             self.active_logics[name]["status"] = "done" if success else "error"
             self.active_logics[name]["elapsed"] = elapsed
+
+        # 성능 경고: 10ms 초과 시 로그
+        if elapsed > 0.010:
+            logger = logging.getLogger("PerfMonitor")
+            logger.warning(f"[PERF] {name} took {elapsed*1000:.1f}ms (>10ms threshold)")
 
         # 통계 업데이트
         self.execution_counts[name] = self.execution_counts.get(name, 0) + 1
@@ -533,9 +539,13 @@ class BotStepIntegrator:
         if not getattr(self.bot, "_glhf_sent", False):
             if self.bot.time < 10.0:
                 await self.bot.chat_send("gl hf")
-            self.bot._glhf_sent = True
+                self.bot._glhf_sent = True
 
         try:
+            # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
+            if hasattr(self.bot, "blackboard") and self.bot.blackboard:
+                await self._update_blackboard_state(iteration)
+
             # 0. Performance Optimizer 프레임 시작
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
                 self.bot.performance_optimizer.start_frame()
@@ -548,24 +558,9 @@ class BotStepIntegrator:
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 await self.bot.unit_authority.on_step(iteration)
 
-            # 0.0065 ★★★ Early Defense System (초반 러시 방어) - USER ADDED ★★★
-            if hasattr(self.bot, "early_defense") and self.bot.early_defense:
-                start_time = self._logic_tracker.start_logic("EarlyDefense")
-                try:
-                    await self.bot.early_defense.execute(iteration)
-                except Exception as e:
-                    if error_handler.debug_mode: raise
-                    print(f"[ERROR] EarlyDefense error: {e}")
-                finally:
-                    self._logic_tracker.end_logic("EarlyDefense", start_time)
-
-            # 0.0066 ★★★ Idle Unit Manager - REMOVED EARLY CALL ★★★
-            # ★ IdleUnits는 8.03에서만 실행 (다른 시스템이 유닛 할당 완료 후 실행해야 함)
-            # ★ 이 위치에서 실행하면 견제/스카우트 유닛을 강제 복귀시키는 문제 발생
-
-                # ★ 죽은 유닛의 권한 해제 (2초마다) ★
-                if iteration % 44 == 0:
-                    self._cleanup_dead_unit_authorities()
+            # 0.0065 ★ 죽은 유닛의 권한 해제 (2초마다) ★
+            if iteration % 44 == 0:
+                self._cleanup_dead_unit_authorities()
 
             # 0.007 ★★★ Map Memory System (맵 기억 - 적 건물 추적) ★★★
             if hasattr(self.bot, "map_memory") and self.bot.map_memory:
@@ -631,9 +626,6 @@ class BotStepIntegrator:
             if hasattr(self.bot, "hive_tech") and self.bot.hive_tech:
                 await self.bot.hive_tech.on_step(iteration)
 
-            # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
-            if hasattr(self.bot, "blackboard") and self.bot.blackboard:
-                await self._update_blackboard_state(iteration)
 
             # 0.02 ★★★ Spatial Optimizer & Data Cache (최우선 최적화) ★★★
             # 다른 모든 시스템보다 먼저 실행하여 캐시 준비 (항상 실행)
@@ -940,12 +932,15 @@ class BotStepIntegrator:
                     enemy_structures = getattr(self.bot, "enemy_structures", None)
 
                     if enemy_units and enemy_structures:
+                        # ★ Blackboard 경유 긴급 생산 (ProductionController와 자원 충돌 방지) ★
+                        blackboard = getattr(self.bot, "blackboard", None)
+
                         # Carrier 감지 → 즉시 Corruptor 생산
                         if enemy_units(UnitTypeId.CARRIER).exists:
-                            if self.bot.can_afford(UnitTypeId.CORRUPTOR) and self.bot.larva.exists:
-                                larva = self.bot.larva.first
-                                self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
-                                print(f"[INSTANT_AIR] Carrier detected! Building Corruptor")
+                            if blackboard:
+                                blackboard.request_production(UnitTypeId.CORRUPTOR, count=2, requester="AirThreat_URGENT")
+                            elif self.bot.can_afford(UnitTypeId.CORRUPTOR) and self.bot.larva.exists:
+                                self.bot.do(self.bot.larva.first.train(UnitTypeId.CORRUPTOR))
 
                         # Stargate 감지 → Hydralisk Den 건설 준비
                         elif enemy_structures(UnitTypeId.STARGATE).exists:
@@ -955,15 +950,16 @@ class BotStepIntegrator:
                                     lair_or_hive = self.bot.structures.of_type([UnitTypeId.LAIR, UnitTypeId.HIVE])
                                     if lair_or_hive.ready.exists:
                                         await self.bot.build(UnitTypeId.HYDRALISKDEN, near=lair_or_hive.ready.first)
-                                        print(f"[INSTANT_AIR] Stargate detected! Building Hydralisk Den")
 
                         # Battlecruiser 감지 → 즉시 Corruptor 대량 생산
                         elif enemy_units(UnitTypeId.BATTLECRUISER).exists:
                             corruptor_count = self.bot.units(UnitTypeId.CORRUPTOR).amount
-                            if corruptor_count < 12 and self.bot.can_afford(UnitTypeId.CORRUPTOR):
-                                for larva in self.bot.larva[:3]:  # 최대 3마리 동시 생산
-                                    self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
-                                print(f"[INSTANT_AIR] Battlecruiser detected! Mass Corruptor production")
+                            if corruptor_count < 12:
+                                if blackboard:
+                                    blackboard.request_production(UnitTypeId.CORRUPTOR, count=3, requester="AirThreat_URGENT")
+                                elif self.bot.can_afford(UnitTypeId.CORRUPTOR):
+                                    for larva in self.bot.larva[:3]:
+                                        self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
                 except Exception as e:
                     # Silent fail - 즉각 대응이므로 에러가 critical하지 않음
                     pass
@@ -1179,30 +1175,9 @@ class BotStepIntegrator:
                 try:
                     defeat_status = await self.bot.defeat_detection.on_step(iteration)
 
-                    # ★★★ 패배 불가피 시 게임 포기 (훈련 효율 향상) ★★★
-                    if defeat_status.get("should_surrender", False):
-                        game_time = getattr(self.bot, "time", 0)
-                        reason = defeat_status.get("defeat_reason", "알 수 없음")
-                        print(f"\n[SURRENDER] ★★★ 게임 포기! ★★★")
-                        print(f"  - 게임 시간: {int(game_time)}초")
-                        print(f"  - 이유: {reason}")
-                        print(f"  - 다음 게임으로 이동...\n")
-
-                        # ★ SC2 매너 채팅: GG 선언 ★
-                        await self.bot.chat_send("gg")
-                        await asyncio.sleep(1.0) # 채팅 전송 대기
-
-                        # SC2 게임 종료
-                        try:
-                            await self.bot.client.leave()
-                        except Exception as leave_error:
-                            print(f"[ERROR] 게임 종료 실패: {leave_error}")
-
-                        return  # on_step 즉시 종료
-
-                    # 패배 직전이면 마지막 방어 시도
+                    # 패배 직전이면 마지막 방어 시도 (항복보다 우선)
                     if defeat_status.get("last_stand_required", False):
-                        if iteration % 200 == 0:  # 주기적으로 출력
+                        if iteration % 200 == 0:
                             print(f"[DEFEAT DETECTION] ★ 패배 직전! 마지막 방어 시도! ★")
                             print(f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}")
                             print(f"  - 이유: {defeat_status.get('defeat_reason', '알 수 없음')}")
@@ -1214,10 +1189,23 @@ class BotStepIntegrator:
                                 self.bot.combat._defense_rally_point = last_stand_pos
                                 self.bot.combat._base_defense_active = True
 
-                    # 패배 불가피하면 항복 고려 (훈련 모드에서는 빠른 게임 종료)
+                    # ★★★ 패배 불가피 시 게임 포기 (훈련 효율 향상) ★★★
                     elif defeat_status.get("should_surrender", False):
-                        if iteration % 200 == 0:
-                            print(f"[DEFEAT DETECTION] 패배 불가피 - {defeat_status.get('defeat_reason', '알 수 없음')}")
+                        game_time = getattr(self.bot, "time", 0)
+                        reason = defeat_status.get("defeat_reason", "알 수 없음")
+                        print(f"\n[SURRENDER] ★★★ 게임 포기! ★★★")
+                        print(f"  - 게임 시간: {int(game_time)}초")
+                        print(f"  - 이유: {reason}")
+                        print(f"  - 다음 게임으로 이동...\n")
+
+                        await self.bot.chat_send("gg")
+
+                        try:
+                            await self.bot.client.leave()
+                        except Exception as leave_error:
+                            print(f"[ERROR] 게임 종료 실패: {leave_error}")
+
+                        return  # on_step 즉시 종료
 
                     # 위기 상황이면 경고
                     elif defeat_status.get("defeat_level", 0) >= 2:  # CRITICAL
@@ -1380,8 +1368,15 @@ class BotStepIntegrator:
             await self._safe_manager_step(self.bot.economy, iteration, "Economy")
 
             # ★ Phase 21: 확장 타이밍 모니터링 (50초마다) ★
-            if iteration % 1100 == 0:  # Every 50 seconds
-                self._check_expansion_status()
+            if iteration % 1100 == 0:
+                try:
+                    base_count = self.bot.townhalls.ready.amount if self.bot.townhalls else 0
+                    game_min = self.bot.time / 60.0
+                    expected = min(int(game_min / 2.5) + 1, 5)  # 2.5분당 1기지, 최대 5
+                    if base_count < expected and self.bot.minerals > 300:
+                        print(f"[EXPANSION] 확장 지연: {base_count}기지 (목표: {expected}, {game_min:.1f}분)")
+                except Exception:
+                    pass
 
             # 5.1 ★★★ Queen Inject Optimizer (Phase 8 - 완벽한 Inject) ★★★
             if hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt:
@@ -2107,16 +2102,36 @@ class BotStepIntegrator:
                     training = getattr(self.bot, 'train_mode', True)
                     action_idx, action_label, prob = self.bot.rl_agent.get_action(game_state, training=training)
 
-                    # ★ SHADOW MODE: Force Rule-based decision (User Request) ★
-                    # Always use rule-based decision, but keep RLAgent running for training
+                    # ★ SHADOW MODE: Dynamic Rule (5-minute priority) ★
+                    # 1. 5분 이전: AggressiveStrategy 우선 (RL은 Shadow Mode)
+                    # 2. 5분 이후: RLAgent가 지휘 (단, Emergency 모드는 예외)
+                    
+                    is_shadow_mode = False
+                    reason = ""
+                    
+                    # 1. 시간 체크 (5분)
+                    if self.bot.time < 300.0:
+                        is_shadow_mode = True
+                        reason = "Early Game (< 5min)"
+                        
+                    # 2. Emergency 모드 체크
+                    if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
+                         from strategy_manager import StrategyMode
+                         if self.bot.strategy_manager.current_mode == StrategyMode.EMERGENCY:
+                             is_shadow_mode = True
+                             reason = "Emergency Mode"
+
+                    # 3. 상태 오버라이드 (Shadow Mode일 때만)
                     override_strategy = None
                     rl_decision_used = False
-                    is_shadow_mode = True  # Flag for conflict resolution
                     
-                    if iteration % 220 == 0:
-                        mode = "TRAINING" if training else "INFERENCE"
-                        # Log what RLAgent WOULD have done
-                        print(f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Prob: {prob:.3f}, ε={self.bot.rl_agent.epsilon:.3f}) - IGNORED")
+                    if is_shadow_mode:
+                        if iteration % 220 == 0:
+                            print(f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Ignored due to {reason})")
+                    else:
+                        # ★ RL 결정 적용 ★
+                        override_strategy = action_label
+                        rl_decision_used = True
 
                 except Exception as e:
                     if error_handler.debug_mode:
@@ -2540,6 +2555,22 @@ class BotStepIntegrator:
             # RL 에이전트 업데이트
             if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
                 self.bot.rl_agent.update_reward(step_reward)
+
+                # ★ 중간 보상: 기지/군대/보급차단 상태 기반 보상 ★
+                if iteration % 44 == 0:  # 2초마다
+                    try:
+                        base_count = self.bot.townhalls.ready.amount if self.bot.townhalls else 0
+                        army_supply = sum(getattr(u, "supply_cost", 1) for u in self.bot.units
+                                         if not u.is_structure and u.type_id != UnitTypeId.DRONE
+                                         and u.type_id != UnitTypeId.OVERLORD and u.type_id != UnitTypeId.LARVA)
+                        supply_blocked = self.bot.supply_left <= 0 and self.bot.supply_cap < 200
+                        self.bot.rl_agent.calculate_intermediate_rewards(
+                            base_count=base_count,
+                            army_supply=army_supply,
+                            supply_blocked=supply_blocked
+                        )
+                    except Exception:
+                        pass
 
             # 주기적으로 보상 로그 출력
             if iteration % 500 == 0:

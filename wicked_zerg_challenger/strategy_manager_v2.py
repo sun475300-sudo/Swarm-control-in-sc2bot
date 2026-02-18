@@ -80,7 +80,7 @@ class StrategyManagerV2(StrategyManager):
 
         # Smart Surrender (Phase 18)
         self.surrender_trigger_time = 0
-        self.surrender_threshold = 30 # seconds of strong losing
+        self.surrender_threshold = 120 # seconds of strong losing (Relaxed from 30s)
 
 
         # Build order system
@@ -1115,8 +1115,8 @@ class StrategyManagerV2(StrategyManager):
         # 1. Strong Losing Economy AND Strong Losing Army
         is_hopeless = (
             self.current_win_condition in [WinCondition.LOSING_ECONOMY, WinCondition.LOSING_ARMY] 
-            and self._calculate_economy_score() <= -3.0 # Very bad eco
-            and self._calculate_army_score() <= -3.0    # Very bad army
+            and self._calculate_economy_score() <= -5.0 # Very bad eco (Reasonable threshold)
+            and self._calculate_army_score() <= -5.0    # Very bad army (Reasonable threshold)
         )
         
         if is_hopeless:

@@ -202,22 +202,25 @@ class BackgroundParallelLearner:
                             pass
                         continue
 
-                    data = self._safe_file_op(lambda: np.load(str(file_path)))
-                    experiences.append({
-                        "states": data['states'],
-                        "actions": data['actions'],
-                        "rewards": data['rewards']
-                    })
+                    # ★ FIX: Use context manager to ensure file is closed ★
+                    loaded_data = {}
+                    with np.load(str(file_path)) as data:
+                        loaded_data["states"] = np.copy(data['states'])
+                        loaded_data["actions"] = np.copy(data['actions'])
+                        loaded_data["rewards"] = np.copy(data['rewards'])
+                    
+                    experiences.append(loaded_data)
                     files_to_archive.append(file_path)
+                    
                     if self.verbose:
-                        total_reward = np.sum(data['rewards'])
-                        print(f"  [OK] Loaded: {file_path.name} (Steps: {len(data['states'])}, Reward: {total_reward:.2f})")
+                        total_reward = np.sum(loaded_data['rewards'])
+                        print(f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
                 except Exception as e:
                     print(f"[BG_LEARNER] [ERROR] Corrupt file {file_path.name}: {e}")
                     # 손상된 파일은 별도 이동 또는 삭제
                     try:
                         file_path.rename(file_path.with_suffix(".corrupt"))
-                    except:
+                    except Exception:
                         pass
 
             # 건너뛴 파일 통계 업데이트

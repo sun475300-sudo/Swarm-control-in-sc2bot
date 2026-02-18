@@ -183,6 +183,10 @@ class EconomyManager:
         if iteration % 22 == 0:
             await self._redistribute_mineral_workers()
 
+        # ★ Distance Mining: 드론을 가장 가까운 미네랄 패치에 재배정 (30초마다) ★
+        if iteration % 660 == 0:
+            await self._optimize_mineral_assignments()
+
         # Check for macro hatchery needs periodically
         if iteration - self.last_macro_hatch_check >= self.macro_hatch_check_interval:
             self.last_macro_hatch_check = iteration
@@ -243,28 +247,26 @@ class EconomyManager:
                     self._last_gas_cut_time = 0
 
                 if self.bot.time - self._last_gas_cut_time < 30:
-                    return  # 30초 이내에 이미 실행됨
+                    pass  # 30초 이내에 이미 실행됨
+                elif hasattr(self.bot, "smart_balancer") and self.bot.smart_balancer:
+                    pass  # SmartResourceBalancer가 처리
+                else:
+                    # ★ 일부 가스 일꾼만 이동 (50%만) ★
+                    if hasattr(self.bot, "gas_buildings"):
+                        for extractor in self.bot.gas_buildings.ready:
+                            if extractor.assigned_harvesters > 0:
+                                workers = self.bot.workers.filter(
+                                    lambda w: w.is_carrying_vespene or w.order_target == extractor.tag
+                                )
+                                # 50%만 이동 (최대 3마리)
+                                workers_to_move = min(len(workers) // 2 + 1, 3)
+                                for w in workers[:workers_to_move]:
+                                    nearby_minerals = self.bot.mineral_field.closer_than(10, w)
+                                    if nearby_minerals:
+                                        self.bot.do(w.gather(nearby_minerals.closest_to(w)))
 
-                # ★ SmartResourceBalancer가 있으면 이 레거시 로직은 실행하지 않음 ★
-                if hasattr(self.bot, "smart_balancer") and self.bot.smart_balancer:
-                    return
-
-                # ★ 일부 가스 일꾼만 이동 (50%만) ★
-                if hasattr(self.bot, "gas_buildings"):
-                    for extractor in self.bot.gas_buildings.ready:
-                        if extractor.assigned_harvesters > 0:
-                            workers = self.bot.workers.filter(
-                                lambda w: w.is_carrying_vespene or w.order_target == extractor.tag
-                            )
-                            # 50%만 이동 (최대 3마리)
-                            workers_to_move = min(len(workers) // 2 + 1, 3)
-                            for w in workers[:workers_to_move]:
-                                nearby_minerals = self.bot.mineral_field.closer_than(10, w)
-                                if nearby_minerals:
-                                    self.bot.do(w.gather(nearby_minerals.closest_to(w)))
-
-                    self._last_gas_cut_time = self.bot.time
-                    print(f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})")
+                        self._last_gas_cut_time = self.bot.time
+                        print(f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})")
 
     async def _optimize_early_worker_split(self) -> None:
         """
@@ -337,22 +339,29 @@ class EconomyManager:
              return
         self._overlord_checked_frame = self.bot.iteration
 
-        # [FIX] UnitFactory Conflict Prevention with global pending check
-        if self.bot.already_pending(UnitTypeId.OVERLORD) > 0:
-            return
-
         if not hasattr(self.bot, "supply_left"):
             return
+
+        # ★ 실효 보급 계산: pending 유닛이 소비할 보급 고려 ★
+        pending_supply_cost = 0
+        try:
+            pending_supply_cost += self.bot.already_pending(UnitTypeId.DRONE) * 1
+            pending_supply_cost += self.bot.already_pending(UnitTypeId.ZERGLING) * 1  # 2마리=1보급
+            pending_supply_cost += self.bot.already_pending(UnitTypeId.ROACH) * 2
+            pending_supply_cost += self.bot.already_pending(UnitTypeId.HYDRALISK) * 2
+            pending_supply_cost += self.bot.already_pending(UnitTypeId.QUEEN) * 2
+        except Exception:
+            pending_supply_cost = 0
+        effective_supply_left = self.bot.supply_left - pending_supply_cost
+
+        # 이미 오버로드 생산 중이면 필요한 수만큼만 추가
+        pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
+        pending_overlord_supply = pending_overlords * 8
 
         # ★ Blackboard 기반 생산 (ProductionController가 자동 처리) ★
         # ProductionController가 이미 Overlord를 자동 생산하므로
         # EconomyManager는 추가 요청만 처리
         if self.blackboard:
-            # Blackboard를 통해 이미 pending 확인됨
-            overlord_count = self.blackboard.get_unit_count(UnitTypeId.OVERLORD)
-            if overlord_count.pending > 0:
-                return  # 이미 생산 중
-
             # Config 기반 보급 여유분 계산
             if self.config:
                 game_time = self.bot.time
@@ -367,31 +376,33 @@ class EconomyManager:
                 if self.bot.vespene > self.config.GAS_CRITICAL:
                     supply_threshold = self.config.SUPPLY_BUFFER_HIGH_GAS
             else:
-                # Config 없을 때 기본값
                 gas = getattr(self.bot, "vespene", 0)
                 supply_threshold = 6 if gas < 1000 else 10
 
-            # 보급 체크
-            if self.bot.supply_left >= supply_threshold:
+            # ★ 실효 보급 기반 체크 (pending 유닛 보급 포함) ★
+            adjusted_supply = effective_supply_left + pending_overlord_supply
+            if adjusted_supply >= supply_threshold:
                 return
 
-            # Blackboard에 생산 요청 (낮은 우선순위 - 경제)
+            # ★ 필요한 오버로드 수 계산 (1개가 아닌 부족분만큼) ★
+            deficit = supply_threshold - adjusted_supply
+            overlords_needed = max(1, (deficit + 7) // 8)  # 8보급당 1오버로드
+            overlords_needed = min(overlords_needed, 3)  # 최대 3마리
+
             self.blackboard.request_production(
                 unit_type=UnitTypeId.OVERLORD,
-                count=1,
+                count=overlords_needed,
                 requester="EconomyManager"
             )
             return
 
         # ★ Blackboard 없을 때 폴백 (기존 로직) ★
-        pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
-        if pending_overlords > 0:
-            return
-
         gas = getattr(self.bot, "vespene", 0)
         supply_threshold = 6 if gas < 1000 else 10
 
-        if self.bot.supply_left >= supply_threshold:
+        # ★ 실효 보급 기반 체크 ★
+        adjusted_supply = effective_supply_left + pending_overlord_supply
+        if adjusted_supply >= supply_threshold:
             return
 
         if not self.bot.can_afford(UnitTypeId.OVERLORD):
@@ -416,6 +427,10 @@ class EconomyManager:
         if hasattr(self.bot, "workers"):
             workers = self.bot.workers
             worker_count = workers.amount if hasattr(workers, "amount") else len(list(workers))
+
+        # ★ 드론 절대 상한: 80마리 초과 금지 ★
+        if worker_count >= 80:
+            return
 
         # 기지 수 확인
         townhalls = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
@@ -665,6 +680,43 @@ class EconomyManager:
             pass
 
         return None
+
+    async def _optimize_mineral_assignments(self) -> None:
+        """
+        Distance Mining: 각 기지에서 드론을 가장 가까운 미네랄 패치에 재배정.
+
+        고갈 중인 패치(100 미네랄 미만)에서 드론을 재배치.
+        """
+        try:
+            for townhall in self.bot.townhalls.ready:
+                nearby_minerals = self.bot.mineral_field.closer_than(10, townhall)
+                if not nearby_minerals:
+                    continue
+
+                # 고갈된 패치 감지 및 드론 재배정
+                depleted = [m for m in nearby_minerals if m.mineral_contents < 100]
+                if not depleted:
+                    continue
+
+                healthy = [m for m in nearby_minerals if m.mineral_contents >= 100]
+                if not healthy:
+                    continue
+
+                # 가까운 순으로 정렬
+                healthy_sorted = sorted(healthy, key=lambda m: m.distance_to(townhall))
+
+                workers = self.bot.workers.closer_than(10, townhall)
+                for worker in workers:
+                    # 고갈된 패치로 가고 있는 드론만 재배정
+                    if hasattr(worker, 'order_target') and worker.order_target:
+                        for dep in depleted:
+                            if worker.order_target == dep.tag:
+                                # 가장 가까운 건강한 패치로 이동
+                                closest = min(healthy_sorted, key=lambda m: m.distance_to(worker))
+                                self.bot.do(worker.gather(closest))
+                                break
+        except Exception:
+            pass
 
     async def _redistribute_mineral_workers(self) -> None:
         """
@@ -1371,7 +1423,7 @@ class EconomyManager:
             if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
                 try:
                     await self.bot.resource_manager.release("EconomyManager_Expansion")
-                except:
+                except Exception:
                     pass
 
         return False

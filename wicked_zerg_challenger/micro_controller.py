@@ -166,6 +166,22 @@ class BoidsController:
         self._build_spatial_index(units, iteration)
 
         enemy_units = getattr(self.bot, "enemy_units", [])
+
+        # ★ NEW: Auto-enable Focus Mode (High Performance) during combat ★
+        # Combat detection: If any enemy is close to our units
+        if enemy_units and units:
+            # Optimization: Check distance between centers first? Or just simple check.
+            # Using cached threat info from blackboard would be best, but for now:
+            # Check if any enemy is within 15 units of our center (approx)
+            center = self._centroid(units)
+            if enemy_units.closer_than(20, center).exists:
+               if not self.focus_mode_active:
+                   self.set_focus_mode(True, duration=44) # Enable for ~2 seconds
+            
+            # Also extend focus mode if already active and fighting continues
+            elif self.focus_mode_active:
+                self.focus_mode_end_frame = iteration + 22 # Keep alive
+
         
         # ★ NEW: Priority-based Unit Selection ★
         # 1. Identify high-priority units (near enemies or in danger)

@@ -62,6 +62,10 @@ def initialize_combat_state(manager):
     manager._roach_rush_min_count = 12  # 최소 12 바퀴
     manager._roach_rush_sent = False
 
+    # === ★ ARMY UNITS CACHE (per-frame) ★ ===
+    manager._cached_army = None
+    manager._cached_army_frame = -1
+
     # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
     manager._base_defense_active = False
     manager._defense_rally_point = None
@@ -133,6 +137,15 @@ def initialize_managers(manager):
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Boids controller not available")
 
+    # ★ Formation Manager (Concave + Choke Control) ★
+    try:
+        from combat.formation_manager import FormationManager
+        manager.formation_manager = FormationManager(manager.bot)
+    except ImportError:
+        manager.formation_manager = None
+        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+            manager.logger.warning("Formation manager not available")
+
     # ★ NEW: Mutalisk Micro Controller (Regen Dance + Magic Box) ★
     try:
         from combat.mutalisk_micro import MutaliskMicroController
@@ -186,3 +199,12 @@ def initialize_managers(manager):
         manager.smart_consume = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Smart consume system not available")
+
+    # ★★★ Phase 20: Overlord Hunter ★★★
+    try:
+        from combat.overlord_hunter import OverlordHunter
+        manager.overlord_hunter = OverlordHunter(manager.bot)
+    except ImportError:
+        manager.overlord_hunter = None
+        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+            manager.logger.warning("Overlord hunter not available")

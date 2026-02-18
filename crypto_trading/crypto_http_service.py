@@ -655,7 +655,7 @@ async def handle_auto_status(request):
 
 async def handle_auto_cycle(request):
     """POST /auto/cycle - 수동으로 1회 사이클 실행"""
-    result = trader.run_cycle()
+    result = await asyncio.to_thread(trader.run_cycle)
     return web.json_response(result)
 
 
