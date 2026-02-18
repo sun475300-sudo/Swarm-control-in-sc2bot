@@ -10,13 +10,10 @@ Manager Factory - 중앙화된 매니저 초기화 시스템
 - 실패한 매니저 추적
 """
 
-import logging
 from typing import Dict, List, Optional, Set, Any, Callable
 from dataclasses import dataclass
 from enum import IntEnum
 import importlib
-
-logger = logging.getLogger(__name__)
 
 
 class ManagerPriority(IntEnum):
@@ -72,9 +69,6 @@ class ManagerFactory:
         Args:
             config: 매니저 설정
         """
-        if config is None:
-            logger.warning("register_manager: config is None, skipping")
-            return
         self.managers[config.attribute_name] = config
 
     def register_managers(self, configs: List[ManagerConfig]) -> None:
@@ -84,9 +78,6 @@ class ManagerFactory:
         Args:
             configs: 매니저 설정 리스트
         """
-        if configs is None:
-            logger.warning("register_managers: configs is None, skipping")
-            return
         for config in configs:
             self.register_manager(config)
 
@@ -117,7 +108,7 @@ class ManagerFactory:
         stats = self._get_statistics()
 
         if verbose:
-            self._log_summary(stats)
+            self._print_summary(stats)
 
         return stats
 
@@ -149,7 +140,7 @@ class ManagerFactory:
 
                 # 의존성을 먼저 초기화
                 dep_config = self.managers.get(dep)
-                if dep_config is not None:
+                if dep_config:
                     self._initialize_manager(dep_config, verbose)
 
         # 매니저 초기화 시도
@@ -183,7 +174,7 @@ class ManagerFactory:
             setattr(self.bot, attr_name, manager_instance)
 
             # 4. post_init 실행
-            if config.post_init is not None:
+            if config.post_init:
                 config.post_init(self.bot, manager_instance)
 
             # 5. 성공 기록
@@ -193,7 +184,7 @@ class ManagerFactory:
             # 6. 로그 출력
             if verbose:
                 star = "★ " if "NEW" in config.name or "Advanced" in config.name else ""
-                logger.info("[BOT] %s%s initialized", star, config.name)
+                print(f"[BOT] {star}{config.name} initialized")
 
             return True
 
@@ -203,7 +194,7 @@ class ManagerFactory:
             setattr(self.bot, attr_name, None)
 
             if verbose:
-                logger.warning("[BOT_WARN] %s not available: %s", config.name, e)
+                print(f"[BOT_WARN] {config.name} not available: {e}")
 
             return False
 
@@ -213,7 +204,7 @@ class ManagerFactory:
             setattr(self.bot, attr_name, None)
 
             if verbose:
-                logger.error("[BOT_ERROR] %s initialization failed: %s", config.name, e, exc_info=True)
+                print(f"[BOT_ERROR] {config.name} initialization failed: {e}")
 
             return False
 
@@ -232,8 +223,8 @@ class ManagerFactory:
             "initialization_order": self.initialization_order
         }
 
-    def _log_summary(self, stats: Dict[str, Any]) -> None:
-        """초기화 결과 요약 로그 출력"""
+    def _print_summary(self, stats: Dict[str, Any]) -> None:
+        """초기화 결과 요약 출력"""
         print("\n" + "="*70)
         print("MANAGER INITIALIZATION SUMMARY")
         print("="*70)

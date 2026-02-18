@@ -9,6 +9,7 @@ Handles map rotation, selection, and performance tracking.
 from __future__ import annotations
 
 import json
+import logging
 import random
 import time
 from pathlib import Path
@@ -70,6 +71,7 @@ class MapManager:
         self.stats_file = Path(stats_file)
         self.stats: Dict[str, Dict[str, int]] = self._load_stats()
         self.current_map_index = 0
+        self.logger = logging.getLogger(__name__)
 
     def _load_stats(self) -> Dict[str, Dict[str, int]]:
         if not self.stats_file.exists():
@@ -81,7 +83,7 @@ class MapManager:
             if isinstance(data, dict):
                 return data
         except (OSError, json.JSONDecodeError) as exc:
-            print(f"[WARNING] Map stats file read error: {exc}")
+            self.logger.warning("Map stats file read error: %s", exc)
         return {}
 
     def _save_stats(self) -> None:
@@ -97,7 +99,7 @@ class MapManager:
                 if attempt < max_retries - 1:
                     time.sleep(0.1 * (attempt + 1))
                     continue
-                print(f"[WARNING] Failed to save map stats: {exc}")
+                self.logger.warning("Failed to save map stats: %s", exc)
                 return
 
     def get_available_maps(self) -> List[str]:

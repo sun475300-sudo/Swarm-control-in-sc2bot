@@ -13,6 +13,22 @@ Fundamentals Manager - 기본기 학습 단계 관리
 """
 
 import json
+import sys
+from pathlib import Path as _Path
+
+# logger 설정
+sys.path.insert(0, str(_Path(__file__).parent.parent.parent))
+try:
+    from wicked_zerg_challenger.utils.logger import get_logger as _get_logger
+except ImportError:
+    try:
+        from utils.logger import get_logger as _get_logger
+    except ImportError:
+        import logging as _logging
+        def _get_logger(name='WickedZergBot'):
+            return _logging.getLogger(name)
+
+logger = _get_logger('FundamentalsManager')
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -260,7 +276,7 @@ class FundamentalsManager:
                             break
 
         except Exception as e:
-            print(f"[FUNDAMENTALS] Failed to load progress: {e}")
+            logger.error(f"[FUNDAMENTALS] Failed to load progress: {e}")
 
     def _save_progress(self) -> None:
         """진행도 파일에 저장"""
@@ -296,7 +312,7 @@ class FundamentalsManager:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            print(f"[FUNDAMENTALS] Failed to save progress: {e}")
+            logger.error(f"[FUNDAMENTALS] Failed to save progress: {e}")
 
     def check_level_progress(self, bot) -> None:
         """
@@ -341,8 +357,8 @@ class FundamentalsManager:
                 break
 
         if all_passed:
-            print(f"\n[FUNDAMENTALS] [OK] Level {self.current_level} completed!")
-            print(f"[FUNDAMENTALS] Advancing to Level {self.current_level + 1}")
+            logger.info(f"[FUNDAMENTALS] [OK] Level {self.current_level} completed!")
+            logger.info(f"[FUNDAMENTALS] Advancing to Level {self.current_level + 1}")
             self.current_level += 1
             self._save_progress()
 
@@ -379,24 +395,24 @@ class FundamentalsManager:
 
     def print_progress(self) -> None:
         """현재 진행도 출력"""
-        print("\n" + "=" * 70)
-        print("[FUNDAMENTALS] PROGRESS REPORT")
-        print("=" * 70)
-        print(f"Current Level: {self.current_level}")
+        logger.info("=" * 70)
+        logger.info("[FUNDAMENTALS] PROGRESS REPORT")
+        logger.info("=" * 70)
+        logger.info(f"Current Level: {self.current_level}")
 
         if self.current_level < len(self.levels):
             level_info = self.levels[self.current_level]
-            print(f"Level Name: {level_info['name']}")
-            print(f"Description: {level_info['description']}")
-            print(f"Success Threshold: {level_info['success_threshold']:.0%}")
-            print("-" * 70)
+            logger.info(f"Level Name: {level_info['name']}")
+            logger.info(f"Description: {level_info['description']}")
+            logger.info(f"Success Threshold: {level_info['success_threshold']:.0%}")
+        logger.info("-" * 70)
 
             for skill in level_info["skills"]:
-                print(f"  Skill: {skill.name}")
-                print(f"    Attempts: {skill.attempts}")
-                print(f"    Successes: {skill.successes}")
-                print(f"    Success Rate: {skill.get_success_rate():.2%}")
+                logger.info(f"  Skill: {skill.name}")
+                logger.info(f"    Attempts: {skill.attempts}")
+                logger.info(f"    Successes: {skill.successes}")
+                logger.info(f"    Success Rate: {skill.get_success_rate():.2%}")
         else:
-            print("Status: All fundamentals mastered!")
+            logger.info("Status: All fundamentals mastered!")
 
-        print("=" * 70)
+        logger.info("=" * 70)

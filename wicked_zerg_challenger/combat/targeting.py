@@ -5,7 +5,10 @@ Targeting utilities for combat logic.
 Provides basic prioritization for high-threat or low-health targets.
 """
 
+import logging
 from typing import Iterable, List, Optional, Sequence
+
+logger = logging.getLogger(__name__)
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -21,6 +24,8 @@ def _unit_type_ids(names: Sequence[str]) -> List[object]:
         unit_type = getattr(UnitTypeId, name, None)
         if unit_type is not None:
             ids.append(unit_type)
+        else:
+            logger.debug("UnitTypeId has no attribute %r -- skipped", name)
     return ids
 
 
@@ -40,9 +45,9 @@ HIGH_VALUE_TYPES = set(
             "CARRIER",
             "TEMPEST",
             "GHOST",
-            "VOIDRAY",    # Added VoidRay
-            "BANSHEE",    # Added Banshee
-            "LIBERATOR",  # Added Liberator
+            "VOIDRAY",
+            "BANSHEE",
+            "LIBERATOR",
             "LIBERATORAG",
         ]
     )
@@ -65,10 +70,12 @@ LOW_PRIORITY_TYPES = set(
     )
 )
 
+
 def _health_ratio(unit) -> float:
     health = getattr(unit, "health", None)
     health_max = getattr(unit, "health_max", None)
-    if not health_max:
+    # None check: health or health_max 가 None/0이면 안전 기본값 반환
+    if health is None or health_max is None or health_max <= 0:
         return 1.0
     return max(0.0, min(1.0, health / health_max))
 
@@ -76,19 +83,26 @@ def _health_ratio(unit) -> float:
 def _shield_ratio(unit) -> float:
     shield = getattr(unit, "shield", None)
     shield_max = getattr(unit, "shield_max", None)
-    if not shield_max:
+    # None check: shield 또는 shield_max 가 None/0이면 안전 기본값 반환
+    if shield is None or shield_max is None or shield_max <= 0:
         return 1.0
     return max(0.0, min(1.0, shield / shield_max))
 
 
 def _score_target(unit) -> float:
-    # ★ LOW PRIORITY CHECK ★
-    if unit.type_id in LOW_PRIORITY_TYPES:
-        return -100.0  # Do not target unless nothing else exists
+    """단일 유닛에 대한 우선순위 점수 계산 (높을수록 우선 공격)."""
+    if unit is None:
+        return -999.0
+
+    type_id = getattr(unit, "type_id", None)
+
+    # LOW PRIORITY: 교전 가치가 낮은 유닛
+    if type_id is not None and type_id in LOW_PRIORITY_TYPES:
+        return -100.0
 
     base = 1.0
-    if unit.type_id in HIGH_VALUE_TYPES:
-        base += 5.0  # Increased from 3.0 to 5.0 for better focus fire
+    if type_id is not None and type_id in HIGH_VALUE_TYPES:
+        base += 5.0  # 고가치 유닛 보너스
 
     base += (1.0 - _health_ratio(unit)) * 2.0
     base += (1.0 - _shield_ratio(unit)) * 1.0
@@ -102,32 +116,41 @@ def _score_target(unit) -> float:
     return base
 
 
-# ★ Phase 22: Frame-level cache for sorted targets ★
-_prioritized_cache = {"frame": -1, "enemies_id": None, "result": []}
+# 프레임 단위 캐시: 동일 적 집합에 대한 중복 정렬 방지
+_prioritized_cache: dict = {"enemies_id": None, "result": []}
 
 
 def prioritize_targets(enemies: Iterable) -> List:
     """Return enemies sorted by priority (highest first).
 
-    Phase 22: Caches result per enemy set to avoid redundant sorts.
+    동일 적 집합(tag frozenset 기준)에 대한 결과를 캐싱하여
+    같은 프레임 내 반복 호출 시 중복 정렬을 방지합니다.
     """
-    enemy_list = list(enemies) if enemies else []
+    if enemies is None:
+        return []
+
+    enemy_list = list(enemies)
     if not enemy_list:
         return []
 
-    # Cache key: use frozenset of tags for identity
+    # None 유닛 필터링
+    enemy_list = [e for e in enemy_list if e is not None]
+    if not enemy_list:
+        return []
+
+    # 캐시 키: 태그 frozenset
     cache_id = None
     try:
         cache_id = frozenset(e.tag for e in enemy_list)
     except (AttributeError, TypeError):
-        pass
+        logger.debug("prioritize_targets: tag 추출 실패, 캐시 생략")
 
-    if cache_id and cache_id == _prioritized_cache.get("enemies_id"):
+    if cache_id is not None and cache_id == _prioritized_cache.get("enemies_id"):
         return _prioritized_cache["result"]
 
     enemy_list.sort(key=_score_target, reverse=True)
 
-    if cache_id:
+    if cache_id is not None:
         _prioritized_cache["enemies_id"] = cache_id
         _prioritized_cache["result"] = enemy_list
 
@@ -135,14 +158,20 @@ def prioritize_targets(enemies: Iterable) -> List:
 
 
 def select_target(unit, enemies: Iterable, max_range: float = 12.0) -> Optional[object]:
-    """Pick the best target near the unit."""
-    if not enemies:
+    """유닛 근처에서 최적의 공격 대상을 선택합니다."""
+    if unit is None:
+        logger.debug("select_target: unit is None")
+        return None
+    if enemies is None:
         return None
 
-    if hasattr(enemies, "closer_than") and hasattr(unit, "position"):
+    position = getattr(unit, "position", None)
+
+    if hasattr(enemies, "closer_than") and position is not None:
         try:
-            enemy_list = list(enemies.closer_than(max_range, unit.position))
+            enemy_list = list(enemies.closer_than(max_range, position))
         except Exception:
+            logger.debug("closer_than 호출 실패 -- 전체 목록 사용")
             enemy_list = list(enemies)
     else:
         enemy_list = list(enemies)
@@ -150,13 +179,18 @@ def select_target(unit, enemies: Iterable, max_range: float = 12.0) -> Optional[
     if not enemy_list:
         return None
 
-    return prioritize_targets(enemy_list)[0]
+    prioritized = prioritize_targets(enemy_list)
+    if not prioritized:
+        return None
+    return prioritized[0]
 
 
 class Targeting:
     """Wrapper class for targeting functions (used by combat/initialization.py)."""
 
     def __init__(self, bot):
+        if bot is None:
+            logger.warning("Targeting: bot is None -- 일부 기능이 제한될 수 있습니다")
         self.bot = bot
 
     def prioritize(self, enemies: Iterable) -> List:
@@ -166,4 +200,6 @@ class Targeting:
         return select_target(unit, enemies, max_range)
 
     def score(self, unit) -> float:
+        if unit is None:
+            return -999.0
         return _score_target(unit)
