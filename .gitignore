@@ -71,14 +71,36 @@ quick_test*.log
 *.pem
 *.p12
 *.pfx
+*.cer
+*.crt
 api_keys/
 secrets/
 **/api_keys/
 **/secrets/
 *_api_key.txt
 *_API_KEY.txt
+*_secret.txt
+*_token.txt
 client_secret.json
 **/client_secret.json
+
+# 거래소 설정 파일 (키 포함 가능)
+**/upbit_config*.json
+**/binance_config*.json
+**/exchange_config*.json
+**/trading_config*.json
+
+# 로컬 설정 (개인 경로/키 포함 가능)
+local_config.py
+local_settings.py
+**/local_config*.py
+config.local.*
+
+# Private keys
+*.ppk
+id_dsa
+id_ecdsa
+*.private
 
 # Google Cloud / Service Account credentials
 google_credentials.json
