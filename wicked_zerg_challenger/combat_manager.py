@@ -11,18 +11,21 @@ if TYPE_CHECKING:
     from sc2.units import Units
     from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.ids.unit_typeid import UnitTypeId
 else:
     try:
         from sc2.units import Units
         from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.ids.unit_typeid import UnitTypeId
     except ImportError:
         Units = object
         Unit = object
         Point2 = tuple
+        UnitTypeId = None
 
 from utils.logger import get_logger
-from combat.initialization import initialize_combat_state, initialize_managers
+from combat.initialization import initialize_combat_state, initialize_managers, reset_combat_state
 from combat.enemy_tracking import (
     track_enemy_expansions, get_anti_air_threats, find_densest_enemy_position,
     detect_nearby_enemies, get_closest_enemy, track_enemy_army_composition
@@ -46,6 +49,13 @@ try:
 except ImportError:
     HELPERS_AVAILABLE = False
 
+try:
+    from combat.formation_manager import FormationManager as _FormationManager
+    _FORMATION_MANAGER_AVAILABLE = True
+except ImportError:
+    _FormationManager = None
+    _FORMATION_MANAGER_AVAILABLE = False
+
 
 class CombatManager:
     """
@@ -68,6 +78,10 @@ class CombatManager:
         initialize_combat_state(self)
         initialize_managers(self)
     
+    def reset(self):
+        """게임 간 전투 상태 초기화"""
+        reset_combat_state(self)
+
     async def on_step(self, iteration: int):
         """
         ★ Phase 17: 매 프레임 호출되는 전투 로직 (성능 최적화 적용) ★
@@ -180,7 +194,7 @@ class CombatManager:
             await self._execute_multitasking(army_units, air_units, enemy_units, iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 # 유니코드 에러 방지 - ASCII로 변환
                 error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
                 self.logger.error(f"Combat manager error: {error_msg}")
@@ -259,12 +273,16 @@ class CombatManager:
                 from sc2.ids.unit_typeid import UnitTypeId
                 targets = self.bot.enemy_units.filter(lambda u: u.type_id in {UnitTypeId.OBSERVER, UnitTypeId.OVERSEER})
                 if targets:
-                    hunters = [u for u in air_units if u.tag in available_air and u.type_id in {UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK}]
+                    # ★ FIX: available_air 미정의 방지 - 잠금된 유닛 제외하여 사전 계산 ★
+                    _locked = set()
+                    if hasattr(self.bot, 'harassment_coordinator') and self.bot.harassment_coordinator:
+                        _locked = getattr(self.bot.harassment_coordinator, 'locked_units', set())
+                    hunters = [u for u in air_units if u.tag not in _locked and u.type_id in {UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK}]
                     if hunters:
                         target = targets.closest_to(hunters[0])
                         # Priority 60 (Main Attack(50)보다 높음)
                         tasks_to_execute.append(("kill_squad", target, 60))
-                        if iteration % 200 == 0:
+                        if iteration % 50 == 0:
                             self.logger.info(f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}")
             except ImportError:
                  pass
@@ -318,7 +336,7 @@ class CombatManager:
                     if enemy_base:
                         # Priority 75
                         tasks_to_execute.append(("early_pressure", enemy_base, 75))
-                        if iteration % 200 == 0:
+                        if iteration % 50 == 0:
                             self.logger.info(f"[{int(game_time)}s] ★ EARLY PRESSURE: {len(zerglings)} lings! ★")
             except ImportError:
                 pass
@@ -356,7 +374,7 @@ class CombatManager:
                     if enemy_base:
                         # Priority 75 (main_attack보다 높지만 80은 아님)
                         tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
-                        if iteration % 200 == 0:
+                        if iteration % 50 == 0:
                             self.logger.info(f"[{int(game_time)}s] ★★★ MAJOR TIMING ATTACK: {army_supply} supply army! ★★★")
             except ImportError:
                 pass
@@ -391,7 +409,7 @@ class CombatManager:
                         # Priority 90 (매우 높음)
                         tasks_to_execute.append(("deny_expansion", target_expansion.position, 90))
                         
-                        if iteration % 200 == 0:
+                        if iteration % 50 == 0:
                              self.logger.info(f"[{int(game_time)}s] ★ EXPANSION DETECTED: Sending squad! ★")
 
         # === TASK 2.9: ★ CREEP DENIAL (점막 제거) ★ ===
@@ -471,8 +489,10 @@ class CombatManager:
                 )
 
         # Assign units to tasks (exclude locked units)
-        available_ground = set(u.tag for u in ground_army if u.tag not in locked_units) if ground_army else set()
-        available_air = set(u.tag for u in air_units if u.tag not in locked_units) if air_units else set()
+        # ★ FIX: locked_units 스냅샷 복사 (레이스 컨디션 방지)
+        locked_snapshot = frozenset(locked_units) if locked_units else frozenset()
+        available_ground = set(u.tag for u in ground_army if u.tag not in locked_snapshot) if ground_army else set()
+        available_air = set(u.tag for u in air_units if u.tag not in locked_snapshot) if air_units else set()
 
         for task_name, target, priority in tasks_to_execute:
             if task_name == "complete_destruction":
@@ -502,9 +522,6 @@ class CombatManager:
                         elif unit.distance_to(target) > 5:
                             self.bot.do(unit.move(target))
                     
-                    for u in rally_units:
-                        available_ground.discard(u.tag)
-
                     for u in rally_units:
                         available_ground.discard(u.tag)
 
@@ -555,7 +572,7 @@ class CombatManager:
                         for u in harass_zerglings:
                             available_ground.discard(u.tag)
                 except Exception as e:
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         self.logger.warning(f"Early harass error: {e}")
 
             elif task_name == "early_pressure":
@@ -642,7 +659,9 @@ class CombatManager:
                 attack_target = target  # 기본 타겟(확장 기지 위치)
                 
                 # 주변 적 유닛/건물 검색
-                nearby_enemies = self.bot.enemy_units.closer_than(15, target) | self.bot.enemy_structures.closer_than(15, target)
+                nearby_enemy_units = self.bot.enemy_units.closer_than(15, target)
+                nearby_enemy_structs = self.bot.enemy_structures.closer_than(15, target)
+                nearby_enemies = nearby_enemy_units + nearby_enemy_structs
                 
                 if nearby_enemies:
                     # 우선순위 1: 일꾼 (자원 채취 방해)
@@ -697,11 +716,11 @@ class CombatManager:
                         await self._offensive_attack(attack_units, iteration)
 
                     # ★ DEBUG: 공격 실행 로그
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         self.logger.info(f"[{int(game_time)}s] MAIN_ATTACK executed with {len(attack_units)} units")
 
         # Log multitasking status periodically
-        if iteration % 200 == 0 and tasks_to_execute:
+        if iteration % 50 == 0 and tasks_to_execute:
             active_tasks = [t[0] for t in tasks_to_execute]
             self.logger.info(f"[{int(game_time)}s] Active tasks: {active_tasks}")
 
@@ -849,7 +868,8 @@ class CombatManager:
 
         # 퀸을 먼저 보내기 (가장 빠른 방어 유닛)
         queens = [u for u in units if hasattr(u, 'type_id') and u.type_id == UnitTypeId.QUEEN]
-        other_units = [u for u in units if u not in queens]
+        queen_tags = {u.tag for u in queens}
+        other_units = [u for u in units if u.tag not in queen_tags]
 
         # 퀸 방어 우선
         for queen in queens:
@@ -886,9 +906,12 @@ class CombatManager:
                             if getattr(e.type_id, "name", "").upper() in high_priority_targets
                         ]
                         if priority_enemies:
-                            target = spine.position.closest(priority_enemies)
+                            target = min(priority_enemies, key=lambda e: e.distance_to(spine))
                         else:
-                            target = spine.position.closest(enemies_near)
+                            if hasattr(enemies_near, "closest_to"):
+                                target = enemies_near.closest_to(spine)
+                            else:
+                                target = min(enemies_near, key=lambda e: e.distance_to(spine))
                         self.bot.do(spine.attack(target))
                 except (AttributeError, TypeError) as e:
                     # Spine crawler attack failed
@@ -922,11 +945,12 @@ class CombatManager:
             await self._form_formation(units, enemy_units)
             
             # 1. 오버킬 분산 타겟 할당
-            if self.targeting and self.micro_combat:
+            if self.targeting and self.micro_combat and hasattr(self.targeting, "assign_targets"):
                 assignments = self.targeting.assign_targets(units, enemy_units)
                 if assignments:
-                    await self.micro_combat.attack_assigned_targets(units, assignments)
-                    return
+                    if hasattr(self.micro_combat, "attack_assigned_targets"):
+                        await self.micro_combat.attack_assigned_targets(units, assignments)
+                        return
 
             # 2. 집중 사격 (타겟팅 시스템 사용)
             if self.targeting:
@@ -935,6 +959,8 @@ class CombatManager:
                     focus_target = self.targeting.get_focus_fire_target(units, enemy_units)
                 elif hasattr(self.targeting, "select_focus_fire_target"):
                     focus_target = self.targeting.select_focus_fire_target(units, enemy_units)
+                elif hasattr(self.targeting, "select_target"):
+                    focus_target = self.targeting.select_target(units, enemy_units)
                 if focus_target:
                     if self.micro_combat:
                         await self.micro_combat.focus_fire(units, focus_target)
@@ -948,7 +974,7 @@ class CombatManager:
                 await self._basic_attack(units, enemy_units)
         
         except Exception as e:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 200 == 0:
+            if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Combat execution error: {e}")
             # 에러 발생 시 기본 공격
             await self._basic_attack(units, enemy_units)
@@ -965,9 +991,8 @@ class CombatManager:
         """
         try:
             formation_manager = getattr(self, 'formation_manager', None)
-            if formation_manager is None:
-                from combat.formation_manager import FormationManager
-                formation_manager = FormationManager(self.bot)
+            if formation_manager is None and _FORMATION_MANAGER_AVAILABLE:
+                formation_manager = _FormationManager(self.bot)
             
             if not self._has_units(enemy_units) or not self._has_units(units):
                 return
@@ -1013,7 +1038,7 @@ class CombatManager:
                                 pass
         
         except Exception as e:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 200 == 0:
+            if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Formation error: {e}")
     
     async def _basic_attack(self, units: Units, enemy_units):
@@ -1174,7 +1199,7 @@ class CombatManager:
                             # Unit command failed
                             continue
 
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     self.logger.info(f"[{int(self.bot.time)}s] ★ MULTI-ATTACK: {num_groups} groups attacking {len(attack_targets)} targets (army: {army_supply} supply)")
             else:
                 # 단일 타겟 공격 (기존 로직)
@@ -1189,12 +1214,12 @@ class CombatManager:
                         # Unit command failed
                         continue
 
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     target_name = getattr(attack_target, "name", str(attack_target)[:30])
                     self.logger.info(f"[{int(self.bot.time)}s] Attacking {target_name} with {army_supply} supply army ({attack_count} units ordered)")
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.warning(f"Offensive attack error: {e}")
 
     def _find_multiple_attack_targets(self):
@@ -1301,7 +1326,7 @@ class CombatManager:
                 close_rocks = [rock for rock in destructible_rocks if rock.distance_to(our_base) < 50]
                 if close_rocks:
                     closest_rock = min(close_rocks, key=lambda r: r.distance_to(our_base))
-                    if self.bot.iteration % 200 == 0:
+                    if self.bot.iteration % 50 == 0:
                         self.logger.info(f"[{int(game_time)}s] Targeting destructible rock for expansion")
                     return closest_rock.position
 
@@ -1797,7 +1822,7 @@ class CombatManager:
         # 방어 병력이 3기 이상이면 후퇴
         if len(enemy_combat_units) >= 3:
             await self._retreat_to_base(zerglings)
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] Zerglings retreating from defense")
             return
 
@@ -1817,7 +1842,7 @@ class CombatManager:
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
                     continue
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] {len(zerglings)} Zerglings harassing workers")
         else:
             # 일꾼이 없으면 타겟 위치로 이동
@@ -2295,7 +2320,7 @@ class CombatManager:
                     )
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.warning(f"[WARNING] Baneling burrow error: {e}")
 
     # ============================================================
@@ -2988,6 +3013,13 @@ class CombatManager:
 
         # Initialize state if needed
         self.__init_harassment_state()
+
+        # Clean dead unit tags from harassment state
+        if hasattr(self, 'bot') and hasattr(self.bot, 'units'):
+            alive_tags = self.bot.units.tags
+            for key in ['active_units', 'retreating_units', 'healing_units']:
+                if key in self.harassment_state:
+                    self.harassment_state[key] = self.harassment_state[key] & alive_tags
 
         game_time = getattr(self.bot, 'time', 0)
 

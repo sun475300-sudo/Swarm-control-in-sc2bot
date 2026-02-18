@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  jarvis-proxy:
+    build: .
+    ports:
+      - "8765:8765"
+    env_file: .env.jarvis
+    depends_on:
+      - crypto-service
+    restart: unless-stopped
+
+  crypto-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    ports:
+      - "8766:8766"
+    env_file: .env.jarvis
+    restart: unless-stopped

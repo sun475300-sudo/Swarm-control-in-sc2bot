@@ -61,7 +61,7 @@ class TestDifficultyProgressionBasics(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_initialization(self):
@@ -92,7 +92,7 @@ class TestGameRecording(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_record_single_win(self):
@@ -157,7 +157,7 @@ class TestDifficultyRecommendation(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_recommend_default_difficulty(self):
@@ -209,7 +209,7 @@ class TestProgressionChecking(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_no_progression_with_few_games(self):
@@ -270,7 +270,7 @@ class TestStatsSerDe(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_save_and_load_stats(self):
@@ -322,7 +322,7 @@ class TestStatsSummary(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_summary_for_new_map(self):
@@ -362,7 +362,7 @@ class TestHelperMethods(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_get_next_difficulty(self):

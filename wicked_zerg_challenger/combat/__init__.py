@@ -69,6 +69,48 @@ try:
 except ImportError:
     RoachBurrowHeal = None
 
+# Feature #91: Nydus Worm 전술
+try:
+    from .nydus_tactics import NydusTacticsManager
+except ImportError:
+    NydusTacticsManager = None
+
+# Feature #92: Queen Walk 러시
+try:
+    from .queen_walk import QueenWalkManager
+except ImportError:
+    QueenWalkManager = None
+
+# Feature #93: 바네 폭탄 전술
+try:
+    from .baneling_bomb import BanelingTacticsManager
+except ImportError:
+    BanelingTacticsManager = None
+
+# Feature #94: Doom Drop 전술
+try:
+    from .doom_drop import DoomDropManager
+except ImportError:
+    DoomDropManager = None
+
+# Feature #95: 럴커 포지셔닝
+try:
+    from .lurker_positioning import LurkerPositionManager
+except ImportError:
+    LurkerPositionManager = None
+
+# Feature #96: 바이퍼 활용
+try:
+    from .viper_tactics import ViperTacticsManager
+except ImportError:
+    ViperTacticsManager = None
+
+# Feature #98: 멀티프롱 공격
+try:
+    from .multiprong_attack import MultiprongAttackManager
+except ImportError:
+    MultiprongAttackManager = None
+
 __all__ = [
     'BaseDefenseSystem',
     'RallyPointManager',
@@ -81,4 +123,12 @@ __all__ = [
     'ExpansionDefense',
     'OverlordTransport',
     'RoachBurrowHeal',
+    # Feature #91-#98
+    'NydusTacticsManager',
+    'QueenWalkManager',
+    'BanelingTacticsManager',
+    'DoomDropManager',
+    'LurkerPositionManager',
+    'ViperTacticsManager',
+    'MultiprongAttackManager',
 ]

@@ -91,7 +91,7 @@ class SmartResourceBalancer:
                 self.total_rebalances += 1
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[SMART_BALANCE] Error: {e}")
 
     def _calculate_target_ratio(self, minerals: int, gas: int, game_time: float) -> float:

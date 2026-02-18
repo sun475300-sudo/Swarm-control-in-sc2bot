@@ -91,7 +91,7 @@ class AirThreatResponseTrainer:
                 self._print_statistics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[AIR_THREAT] Error: {e}")
 
     def _analyze_air_threat(self) -> int:

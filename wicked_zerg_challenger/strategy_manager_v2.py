@@ -81,6 +81,7 @@ class StrategyManagerV2(StrategyManager):
         # Smart Surrender (Phase 18)
         self.surrender_trigger_time = 0
         self.surrender_threshold = 120 # seconds of strong losing (Relaxed from 30s)
+        self._should_surrender = False  # Flag checked by async callers
 
 
         # Build order system
@@ -120,6 +121,30 @@ class StrategyManagerV2(StrategyManager):
 
         self.logger.info("[STRATEGY_V2] Initialized with enhanced decision-making")
 
+    def reset(self):
+        """게임 간 상태 초기화"""
+        self.current_win_condition = WinCondition.UNKNOWN
+        self.win_condition_history.clear()
+        self.last_win_condition_check = 0.0
+        self.surrender_trigger_time = 0
+        self._should_surrender = False
+        self.current_build_phase = BuildOrderPhase.OPENING
+        self.build_transition_complete = False
+        self.planned_expansions.clear()
+        self.expansion_targets.clear()
+        self.strategy_scores.clear()
+        self.active_strategies.clear()
+        self.strategy_queue.clear()
+        self.target_unit_ratios.clear()
+        self.last_composition_update = 0
+        # V1 상태도 초기화
+        if hasattr(self, 'current_mode'):
+            self.current_mode = StrategyMode.NORMAL
+        if hasattr(self, 'current_phase'):
+            self.current_phase = GamePhase.EARLY
+        if hasattr(self, 'defense_mode_start_time'):
+            self.defense_mode_start_time = 0
+
     def update(self) -> None:
         """Enhanced update with V2 features"""
         # Call parent update first
@@ -137,17 +162,13 @@ class StrategyManagerV2(StrategyManager):
         # Phase 18: Adaptive Composition
         self._update_unit_composition(game_time)
 
-        # Phase 18: Smart Surrender
-        # await self._check_smart_surrender(game_time) # Async call needs await
-
-
         if self.blackboard:
             self.blackboard.set("win_condition", self.current_win_condition.name)
             self.blackboard.set("build_phase", self.current_build_phase.name)
             self.blackboard.set("resource_priorities", self.resource_priorities)
             self.blackboard.set("active_strategies", len(self.active_strategies))
 
-        # Phase 18: Smart Surrender
+        # Phase 18: Smart Surrender (sync 메서드)
         self._check_smart_surrender(game_time)
 
         # Stage 5: Decision Logic (Situational Overrides)
@@ -1106,39 +1127,36 @@ class StrategyManagerV2(StrategyManager):
     # ========== SMART SURRENDER (Phase 18/17) ==========
     
     def _check_smart_surrender(self, game_time: float) -> bool:
-        """Surrender if game is hopeless to save training time"""
+        """Surrender if game is hopeless to save training time.
+
+        Sets self._should_surrender flag instead of calling async operations,
+        since update() is synchronous.
+        """
         # Only surrender after 4 minutes (was 5)
         if game_time < 240:
              return False
-             
+
         # Conditions for hopeless state:
         # 1. Strong Losing Economy AND Strong Losing Army
         is_hopeless = (
-            self.current_win_condition in [WinCondition.LOSING_ECONOMY, WinCondition.LOSING_ARMY] 
+            self.current_win_condition in [WinCondition.LOSING_ECONOMY, WinCondition.LOSING_ARMY]
             and self._calculate_economy_score() <= -5.0 # Very bad eco (Reasonable threshold)
             and self._calculate_army_score() <= -5.0    # Very bad army (Reasonable threshold)
         )
-        
+
         if is_hopeless:
              if self.surrender_trigger_time == 0:
                  self.surrender_trigger_time = game_time
-                 
-             # If hopeless for 30 seconds
+
+             # If hopeless for threshold seconds
              duration = game_time - self.surrender_trigger_time
              if duration > self.surrender_threshold:
-                 self.logger.warning(f"[SURRENDER] Game is hopeless for {int(duration)}s. Surrendering to speed up training.")
-                 
-                 # Force async leave
-                 import asyncio
-                 try:
-                    asyncio.create_task(self.bot.client.leave())
-                 except Exception as e:
-                    self.logger.error(f"Failed to trigger leave: {e}")
-                 
+                 self.logger.warning(f"[SURRENDER] Game is hopeless for {int(duration)}s. Setting surrender flag.")
+                 self._should_surrender = True
                  return True
         else:
              self.surrender_trigger_time = 0
-             
+
         return False
 
 
@@ -1181,3 +1199,91 @@ class StrategyManagerV2(StrategyManager):
         }
 
         return v2_report
+
+    # ==========================================
+    # #114: 실시간 전략 조정 스텁 메서드들
+    # ==========================================
+
+    def adjust_strategy_realtime(self) -> None:
+        """
+        실시간 전략 조정 (스텁 #114)
+
+        게임 진행 중 실시간으로 전략을 미세 조정합니다.
+
+        TODO: 구현 예정
+        - 적 행동 패턴 기반 동적 전략 변경
+        - 전략 전환 비용 계산
+        - 전략 안정성 유지 (과도한 전환 방지)
+        """
+        pass
+
+    def get_meta_strategy(self) -> Dict[str, Any]:
+        """
+        메타 전략 분석 (스텁 #114)
+
+        현재 게임 메타에 기반한 전략 추천을 반환합니다.
+
+        Returns:
+            메타 전략 정보 딕셔너리
+
+        TODO: 구현 예정
+        - 최근 게임 결과 기반 메타 분석
+        - 상대 종족별 최적 전략 매핑
+        - 맵별 전략 추천
+        """
+        return {
+            "recommended_strategy": "balanced",
+            "confidence": 0.0,
+            "reasoning": "스텁 - 미구현",
+        }
+
+    def evaluate_strategy_effectiveness(self) -> float:
+        """
+        현재 전략 효과 평가 (스텁 #114)
+
+        Returns:
+            전략 효과 점수 (0.0 ~ 1.0)
+
+        TODO: 구현 예정
+        - 군대 교환비, 경제 성장률, 테크 달성도 종합 평가
+        - 시간대별 벤치마크 대비 점수
+        """
+        return 0.5
+
+    def suggest_strategy_pivot(self) -> Optional[Dict[str, Any]]:
+        """
+        전략 피봇(전환) 제안 (스텁 #114)
+
+        현재 전략이 비효율적일 때 대안 전략을 제안합니다.
+
+        Returns:
+            피봇 제안 딕셔너리 또는 None
+
+        TODO: 구현 예정
+        - 현재 전략 효과 점수 기반 피봇 필요성 판단
+        - 전환 가능한 전략 후보 리스트
+        - 전환 비용/리스크 계산
+        """
+        return None
+
+    def get_opponent_tendency(self) -> Dict[str, Any]:
+        """
+        상대 성향 분석 (스텁 #114)
+
+        현재 게임에서 관측된 상대의 플레이 성향을 분석합니다.
+
+        Returns:
+            상대 성향 딕셔너리
+
+        TODO: 구현 예정
+        - 공격적/방어적 성향 판단
+        - 확장 타이밍 패턴
+        - 테크 선호도 분석
+        """
+        return {
+            "aggression": 0.5,
+            "expansion_tendency": 0.5,
+            "tech_preference": "unknown",
+            "confidence": 0.0,
+        }
+

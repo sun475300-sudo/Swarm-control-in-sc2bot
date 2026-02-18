@@ -96,7 +96,7 @@ class RogueTacticsManager:
             self._update_larva_saving_mode(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] RogueTacticsManager error: {e}")
 
     def _check_overlord_speed_upgrade(self) -> bool:

@@ -88,7 +88,7 @@ class ProtossCounterSystem:
             await self._priority_target_support_units(iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Protoss counter error: {e}")
 
     async def _detect_protoss_threats(self):

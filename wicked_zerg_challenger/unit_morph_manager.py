@@ -106,7 +106,7 @@ class UnitMorphManager:
                 await self._morph_broodlords(enemy_race, iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Morph manager error: {e}")
 
     async def _morph_banelings(self, enemy_race: str, iteration: int):

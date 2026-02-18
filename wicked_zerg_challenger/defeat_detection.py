@@ -57,10 +57,21 @@ class DefeatDetection:
         self.min_minerals_for_recovery = 100  # 최소 미네랄 (200 -> 100)
 
         # ★★★ 추가: 빠른 포기를 위한 새로운 조건 ★★★
-        self.max_critical_duration = 120  # 위기 상태 최대 지속 시간 (40초 -> 120초)
+        self.max_critical_duration = 60  # 위기 상태 최대 지속 시간 (120초 -> 60초, 훈련 효율 향상)
         self.critical_start_time = None  # 위기 상태 시작 시간
 
         # 통계
+        self.defeat_warnings = 0
+        self.critical_moments = 0
+
+    def reset(self):
+        """Reset defeat detection state between games"""
+        self.defeat_level = DefeatLevel.SAFE
+        self.defeat_reason = None
+        self.last_check_iteration = 0
+        self.last_stand_active = False
+        self.last_stand_position = None
+        self.critical_start_time = None
         self.defeat_warnings = 0
         self.critical_moments = 0
 
@@ -96,9 +107,11 @@ class DefeatDetection:
             self.critical_moments += 1
         elif defeat_level >= DefeatLevel.CRITICAL:
             self.defeat_warnings += 1
+            self.critical_moments = 0  # Reset when below IMMINENT
         else:
             self.last_stand_active = False
             self.last_stand_position = None
+            self.critical_moments = 0  # Reset when below IMMINENT
 
         return self._get_current_status()
 
@@ -291,7 +304,7 @@ class DefeatDetection:
             else:
                 return DefeatLevel.DISADVANTAGE, "병력 없음"
 
-        ratio = enemy_military_value / our_military_value
+        ratio = enemy_military_value / max(our_military_value, 1)  # ★ FIX: division by zero 방어
 
         if ratio >= self.military_ratio_imminent:
             return DefeatLevel.IMMINENT, f"병력 비율 1:{ratio:.1f} (적 압도적 우세)"
@@ -437,9 +450,11 @@ class DefeatDetection:
 
         # ★★★ 추가: 위기 상황이 오래 지속되면 항복 (시간 절약) ★★★
         if self.defeat_level >= DefeatLevel.IMMINENT:
-            # 패배 직전 상태가 30초 이상 지속되면 항복
+            # 패배 직전 상태가 threshold 이상 지속되면 항복
+            # ★ Feature 90: Use dynamic threshold (default 112 ticks ~40s) ★
+            surrender_ticks = getattr(self, '_surrender_threshold_ticks', 112)
             game_time = getattr(self.bot, "time", 0)
-            if self.critical_moments > 5:  # ~40초 지속
+            if self.critical_moments > surrender_ticks:
                 should_surrender = True
                 self.defeat_reason = "장기간 패배 직전 상태 (항복)"
 
@@ -452,6 +467,31 @@ class DefeatDetection:
             "defeat_warnings": self.defeat_warnings,
             "critical_moments": self.critical_moments,
         }
+
+    # =========================================================================
+    # Feature 90: Surrender Threshold via JARVIS
+    # =========================================================================
+    def set_surrender_threshold(self, seconds: float) -> None:
+        """
+        Allow JARVIS to dynamically change the critical_moments threshold.
+
+        The critical_moments counter increments roughly once per check interval
+        (~0.36 seconds per tick). This method converts a desired seconds value
+        to the equivalent tick count.
+
+        Args:
+            seconds: Number of seconds the IMMINENT state should persist
+                     before triggering surrender. Default is ~40 seconds (112 ticks).
+        """
+        # Each critical_moments tick is roughly 0.36 seconds
+        tick_duration = 0.36
+        new_threshold = max(1, int(seconds / tick_duration))
+
+        old_threshold_seconds = getattr(self, '_surrender_threshold_ticks', 112) * tick_duration
+        self._surrender_threshold_ticks = new_threshold
+
+        print(f"[DEFEAT] Surrender threshold changed: {old_threshold_seconds:.0f}s -> {seconds:.0f}s "
+              f"({new_threshold} ticks)")
 
     def get_defeat_level_name(self) -> str:
         """패배 수준 이름 반환"""

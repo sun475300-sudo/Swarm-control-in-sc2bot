@@ -57,7 +57,7 @@ class CreepAutomationV2:
                 await self._spread_creep()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[CREEP_V2] Error: {e}")
 
     def _update_creep_targets(self):

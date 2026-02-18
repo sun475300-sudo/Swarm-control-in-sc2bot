@@ -101,7 +101,7 @@ class ComprehensiveUnitAbilities:
                 self._print_stats(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[ABILITIES] Error: {e}")
 
     # ========================================

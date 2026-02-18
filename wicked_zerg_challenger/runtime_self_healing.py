@@ -79,7 +79,7 @@ class RuntimeSelfHealing:
                 self._print_recovery_report(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[SELF_HEALING] Error: {e}")
 
     async def _check_metric(self, metric_name: str, game_time: float):

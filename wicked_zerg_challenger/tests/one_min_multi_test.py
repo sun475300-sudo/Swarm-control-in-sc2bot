@@ -68,7 +68,7 @@ class OneMinMultiTest:
         try:
             hatcheries = self.bot.structures(UnitTypeId.HATCHERY)
             self.initial_hatchery_count = len(hatcheries)
-        except:
+        except Exception:
             self.initial_hatchery_count = 1
 
         self.test_start_time = getattr(self.bot, "time", 0)

@@ -81,8 +81,8 @@ def get_all_manager_configs():
 
         ManagerConfig(
             name="StrategyManager",
-            module_path="strategy_manager",
-            class_name="StrategyManager",
+            module_path="strategy_manager_v2",
+            class_name="StrategyManagerV2",
             attribute_name="strategy_manager",
             priority=ManagerPriority.HIGH,
             post_init=lambda bot, manager: setattr(manager, "blackboard", getattr(bot, "blackboard", None)),

@@ -125,7 +125,7 @@ class MapMemorySystem:
                 self._print_status(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[MAP_MEMORY] Error: {e}")
 
     async def _discover_enemy_structures(self, game_time: float):

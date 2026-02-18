@@ -95,7 +95,7 @@ class CombatExecution:
                 await self.basic_attack(units, enemy_units)
 
         except Exception as e:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 200 == 0:
+            if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Combat execution error: {e}")
             # 에러 발생 시 기본 공격
             await self.basic_attack(units, enemy_units)
@@ -160,7 +160,7 @@ class CombatExecution:
                                 pass
 
         except Exception as e:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 200 == 0:
+            if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Formation error: {e}")
 
     async def basic_attack(self, units, enemy_units):

@@ -111,7 +111,7 @@ class EnhancedScoutSystem:
                 self._analyze_scout_data()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[ENHANCED_SCOUT] Error: {e}")
 
     # ========================================

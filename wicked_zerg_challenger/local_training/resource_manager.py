@@ -84,7 +84,7 @@ class ResourceManager:
             await self._auto_build_extractors()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Resource manager error: {e}")
 
     def _track_income(self) -> None:

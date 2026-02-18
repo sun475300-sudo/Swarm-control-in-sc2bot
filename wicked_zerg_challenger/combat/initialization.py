@@ -109,6 +109,37 @@ def initialize_combat_state(manager):
     manager._last_emergency_check = 0  # 마지막 긴급 상황 체크
 
 
+def reset_combat_state(manager):
+    """게임 간 전투 상태 초기화 (훈련 에피소드 간 호출 필수)"""
+    manager._active_tasks = {}
+    manager._unit_assignments = {}
+    manager._task_cooldowns = {}
+    manager._air_harass_target = None
+    manager._last_air_harass_time = 0
+    manager._last_combat_time = 0
+    manager._rally_point = None
+    manager._last_rally_update = 0
+    manager._roach_rush_active = False
+    manager._roach_rush_sent = False
+    manager._cached_army = None
+    manager._cached_army_frame = -1
+    manager._base_defense_active = False
+    manager._defense_rally_point = None
+    manager._last_defense_check = 0
+    manager._victory_push_active = False
+    manager._last_enemy_structure_count = 0
+    manager._enemy_structures_destroyed = 0
+    manager._last_victory_check = 0
+    manager._known_enemy_expansions = set()
+    manager._last_expansion_check = 0
+    manager._expansion_under_attack = {}
+    manager._expansion_destroyed_positions = []
+    manager._last_expansion_defense_check = 0
+    manager._last_combat_frame = 0
+    manager._combat_is_emergency = False
+    manager._last_emergency_check = 0
+
+
 def initialize_managers(manager):
     """
     전투 관련 매니저들을 초기화

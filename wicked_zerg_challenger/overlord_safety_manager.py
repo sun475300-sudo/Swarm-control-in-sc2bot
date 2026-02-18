@@ -35,6 +35,13 @@ class OverlordSafetyManager:
         self.SAFETY_DISTANCE = 15.0  # 대공 유닛과의 안전 거리
         self.RETREAT_DISTANCE = 10.0 # 후퇴 거리
 
+    def reset(self):
+        """게임 간 상태 초기화"""
+        self.safe_spots.clear()
+        self._pillars_calculated = False
+        self.overlord_assignments.clear()
+        self.fleeing_overlords.clear()
+
     async def on_start(self):
         """게임 시작 시 실행"""
         self._calculate_safe_spots()
@@ -55,7 +62,7 @@ class OverlordSafetyManager:
                 await self._check_threats()
                 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[OVERLORD_SAFETY] Error: {e}")
 
     def _calculate_safe_spots(self):
@@ -263,6 +270,13 @@ class OverlordSafetyManager:
 
     async def _manage_overlords(self):
         """대군주 분산 배치"""
+        # ★ 죽은 오버로드 태그 정리
+        alive_tags = {ov.tag for ov in self.bot.units(UnitTypeId.OVERLORD)}
+        dead_tags = [tag for tag in self.overlord_assignments if tag not in alive_tags]
+        for tag in dead_tags:
+            del self.overlord_assignments[tag]
+        self.fleeing_overlords -= self.fleeing_overlords - alive_tags
+
         overlords = self.bot.units(UnitTypeId.OVERLORD).idle
         if not overlords:
             return
@@ -308,10 +322,12 @@ class OverlordSafetyManager:
         overlords = self.bot.units(UnitTypeId.OVERLORD)
         enemy_anti_air = self.bot.enemy_units.filter(lambda u: u.can_attack_air)
         
-        # 대공 구조물
+        # 대공 구조물 (★ SHIELDBATTERY, PYLON(오버차지) 추가)
         enemy_structures = self.bot.enemy_structures.filter(
             lambda s: s.type_id in {
-                UnitTypeId.MISSILETURRET, UnitTypeId.SPORECRAWLER, UnitTypeId.PHOTONCANNON, UnitTypeId.BUNKER
+                UnitTypeId.MISSILETURRET, UnitTypeId.SPORECRAWLER,
+                UnitTypeId.PHOTONCANNON, UnitTypeId.BUNKER,
+                UnitTypeId.SHIELDBATTERY,
             }
         )
         
@@ -349,3 +365,72 @@ class OverlordSafetyManager:
                 if ov.tag in self.fleeing_overlords:
                     self.fleeing_overlords.remove(ov.tag)
                     # 다시 원래 자리로 복귀는 _manage_overlords가 처리
+
+    # =========================================================================
+    # Feature 87: Scout Timing - Optimal Scout Positions
+    # =========================================================================
+    def get_optimal_scout_positions(self) -> List[Point2]:
+        """
+        Return a list of key map positions for overlord scouting.
+
+        Includes:
+        - Enemy natural expansion location
+        - Enemy third base location
+        - Map center
+        - Xel'Naga watchtowers (if found)
+
+        Returns:
+            List of Point2 positions for scouting.
+        """
+        positions: List[Point2] = []
+
+        # 1. Map center
+        if hasattr(self.bot, "game_info") and hasattr(self.bot.game_info, "map_center"):
+            positions.append(self.bot.game_info.map_center)
+
+        # 2. Enemy start location area
+        enemy_start = None
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            enemy_start = self.bot.enemy_start_locations[0]
+
+            # Enemy natural: the closest expansion to enemy start that isn't enemy start
+            if hasattr(self.bot, "expansion_locations_list"):
+                try:
+                    expansions = sorted(
+                        self.bot.expansion_locations_list,
+                        key=lambda loc: loc.distance_to(enemy_start)
+                    )
+                    # First is enemy main, second is enemy natural, third is enemy third
+                    if len(expansions) >= 2:
+                        enemy_natural = expansions[1]
+                        positions.append(enemy_natural)
+                    if len(expansions) >= 3:
+                        enemy_third = expansions[2]
+                        positions.append(enemy_third)
+                except Exception:
+                    pass
+
+        # 3. Xel'Naga watchtowers
+        try:
+            if hasattr(self.bot, "watchtowers") and self.bot.watchtowers:
+                for tower in self.bot.watchtowers:
+                    positions.append(tower.position)
+        except Exception:
+            pass
+
+        # 4. If no watchtowers found, add midpoints between bases
+        if len(positions) < 4 and enemy_start:
+            try:
+                our_start = self.bot.start_location if hasattr(self.bot, "start_location") else None
+                if our_start:
+                    # Midpoint between our base and enemy base
+                    mid = Point2(
+                        ((our_start.x + enemy_start.x) / 2,
+                         (our_start.y + enemy_start.y) / 2)
+                    )
+                    positions.append(mid)
+            except Exception:
+                pass
+
+        self.logger.info(f"[SCOUT] Optimal scout positions: {len(positions)} locations identified")
+        return positions

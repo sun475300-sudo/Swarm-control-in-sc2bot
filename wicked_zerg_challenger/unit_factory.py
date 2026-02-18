@@ -242,7 +242,7 @@ class UnitFactory:
         # 전투 중이면 더 많은 라바 소비
         if in_combat:
             self.max_larva_spend_per_step = self._combat_larva_spend
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 game_time = getattr(self.bot, "time", 0)
                 print(f"[UNIT_FACTORY] [{int(game_time)}s] COMBAT MODE: Increased production rate")
         else:
@@ -365,7 +365,7 @@ class UnitFactory:
                 )
 
             # 디버그 로그
-            if iteration % 200 == 0 and unit_requests:
+            if iteration % 50 == 0 and unit_requests:
                 print(f"[UNIT_FACTORY] Production requested: {unit_requests}")
 
         else:
@@ -596,7 +596,7 @@ class UnitFactory:
 
         for unit_type, threshold in threat_units.items():
             if unit_counts.get(unit_type, 0) >= threshold:
-                if self.bot.iteration % 200 == 0:
+                if self.bot.iteration % 50 == 0:
                     print(f"[UNIT_FACTORY] Threat: {unit_type} x{unit_counts[unit_type]} → Gas Boost!")
                 return True
 

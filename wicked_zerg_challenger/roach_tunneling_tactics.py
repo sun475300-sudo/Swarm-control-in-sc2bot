@@ -54,7 +54,7 @@ class RoachTunnelingTactics:
                 await self._use_tunneling_tactics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[TUNNELING] Error: {e}")
 
     async def _request_tunneling_upgrade(self):

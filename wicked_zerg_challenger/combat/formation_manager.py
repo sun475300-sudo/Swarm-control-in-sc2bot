@@ -27,8 +27,11 @@ class FormationManager:
         self.ranged_units = {
             UnitTypeId.HYDRALISK,
             UnitTypeId.ROACH,
+            UnitTypeId.RAVAGER,
             UnitTypeId.CORRUPTOR,
             UnitTypeId.MUTALISK,
+            UnitTypeId.BROODLORD,
+            UnitTypeId.QUEEN,
         }
 
         # 근접 유닛 타입
@@ -36,6 +39,7 @@ class FormationManager:
             UnitTypeId.ZERGLING,
             UnitTypeId.ULTRALISK,
             UnitTypeId.BANELING,
+            UnitTypeId.LURKER,
         }
 
     def form_concave(

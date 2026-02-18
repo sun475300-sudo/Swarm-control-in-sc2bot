@@ -1,0 +1,53 @@
+# ================================================
+# JARVIS Claude Proxy 서비스 (#168)
+#
+# 설치 방법:
+#   sudo cp jarvis-proxy.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable jarvis-proxy
+#   sudo systemctl start jarvis-proxy
+#
+# 로그 확인:
+#   journalctl -u jarvis-proxy -f
+# ================================================
+[Unit]
+Description=JARVIS Claude AI Proxy Server
+Documentation=https://github.com/your-org/Swarm-contol-in-sc2bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jarvis
+Group=jarvis
+WorkingDirectory=/opt/jarvis/sc2bot
+ExecStart=/usr/bin/node claude_proxy.js
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# 환경변수 파일에서 로드
+EnvironmentFile=-/opt/jarvis/sc2bot/.env
+Environment=NODE_ENV=production
+Environment=PORT=3456
+Environment=LOG_LEVEL=info
+
+# 로그 설정
+StandardOutput=append:/var/log/jarvis/proxy-stdout.log
+StandardError=append:/var/log/jarvis/proxy-stderr.log
+SyslogIdentifier=jarvis-proxy
+
+# 보안 강화 옵션
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/jarvis/sc2bot/logs /var/log/jarvis
+PrivateTmp=true
+
+# 리소스 제한
+LimitNOFILE=65536
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

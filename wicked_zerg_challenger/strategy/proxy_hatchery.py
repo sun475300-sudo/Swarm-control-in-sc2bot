@@ -55,7 +55,7 @@ class ProxyHatchery:
                 await self._attempt_proxy_hatchery()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[PROXY_HATCH] Error: {e}")
 
     async def _attempt_proxy_hatchery(self):

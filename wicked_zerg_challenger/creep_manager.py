@@ -366,3 +366,368 @@ class CreepManager:
             UnitTypeId.CREEPTUMORQUEEN,
         }
         return sum(1 for t in self.bot.structures if t.type_id in tumor_types)
+
+
+# =============================================================================
+# Feature #97: CreepSpreadManager - BFS/그리드 기반 크립 스프레드 최적화
+# =============================================================================
+
+import math
+from collections import deque
+from typing import Set, Tuple
+
+
+class CreepSpreadManager:
+    """
+    크립 스프레드 최적화 매니저 (Feature #97)
+
+    기존 CreepManager의 벡터 기반 확산에 BFS/그리드 패턴 기반
+    최적화를 추가한 고급 크립 관리 시스템입니다.
+
+    핵심 기능:
+    - BFS 알고리즘 기반 크립 종양 목표 위치 생성
+    - 그리드 패턴으로 균등한 크립 커버리지
+    - 퀸 자동 크립 종양 생성 (에너지 >= 50)
+    - 크립 커버리지 추적 및 보고
+    - 확장/적 방향 우선 확산
+    """
+
+    # 크립 종양 관련 상수
+    TUMOR_SPREAD_RANGE = 10.0     # 종양 확산 반경
+    TUMOR_MIN_DISTANCE = 8.0      # 종양 간 최소 거리
+    QUEEN_TUMOR_ENERGY = 25       # 퀸 종양 생성 에너지
+    GRID_CELL_SIZE = 9.0          # 그리드 셀 크기
+
+    def __init__(self, bot):
+        """
+        크립 스프레드 최적화 매니저 초기화
+
+        Args:
+            bot: SC2 봇 인스턴스
+        """
+        self.bot = bot
+
+        # 크립 종양 추적
+        self.tumor_positions: Set[Tuple[float, float]] = set()
+        self.pending_tumor_positions: Set[Tuple[float, float]] = set()
+        self.queen_tumor_cooldowns: Dict[int, float] = {}
+
+        # 크립 그리드 (BFS 기반)
+        self._target_grid: List[Point2] = []
+        self._grid_generated: bool = False
+
+        # 퀸 관리
+        self.creep_queen_tags: Set[int] = set()
+        self.queen_tumor_interval: float = 5.0
+
+        # 확산 방향 우선순위
+        self._expansion_directions: List[Point2] = []
+        self._enemy_direction: Optional[Point2] = None
+
+        # 통계
+        self.total_tumors_created: int = 0
+        self.queen_tumors_created: int = 0
+        self.tumor_spread_created: int = 0
+        self._creep_coverage_percent: float = 0.0
+        self._last_coverage_check: float = 0.0
+
+    async def on_step(self, iteration: int):
+        """
+        매 프레임 크립 스프레드 최적화 업데이트
+
+        Args:
+            iteration: 현재 게임 반복 횟수
+        """
+        try:
+            if not UnitTypeId:
+                return
+
+            game_time = getattr(self.bot, "time", 0.0)
+
+            # 크립 그리드 생성 (한 번만)
+            if not self._grid_generated and game_time > 30:
+                self._generate_creep_grid()
+                self._update_priority_directions()
+
+            # 기존 종양 위치 업데이트
+            if iteration % 44 == 0:
+                self._update_tumor_positions()
+
+            # 퀸으로 크립 종양 생성
+            if iteration % 22 == 0:
+                await self._queen_spread_creep(game_time)
+
+            # 기존 종양에서 새 종양 확산
+            if iteration % 33 == 0:
+                await self._spread_from_tumors(game_time)
+
+            # 크립 커버리지 업데이트 (30초마다)
+            if game_time - self._last_coverage_check > 30:
+                self._update_coverage(game_time)
+                self._last_coverage_check = game_time
+
+        except Exception:
+            pass
+
+    def _generate_creep_grid(self):
+        """BFS/그리드 패턴으로 크립 종양 목표 위치 생성"""
+        if not hasattr(self.bot, "start_location") or not hasattr(self.bot, "game_info"):
+            return
+
+        if not Point2:
+            return
+
+        start = self.bot.start_location
+        map_size = self.bot.game_info.map_size
+
+        visited: Set[Tuple[int, int]] = set()
+        queue: deque = deque()
+        targets: List[Point2] = []
+
+        start_gx = int(start.x / self.GRID_CELL_SIZE)
+        start_gy = int(start.y / self.GRID_CELL_SIZE)
+        queue.append((start_gx, start_gy))
+        visited.add((start_gx, start_gy))
+
+        directions = [
+            (1, 0), (-1, 0), (0, 1), (0, -1),
+            (1, 1), (-1, 1), (1, -1), (-1, -1),
+        ]
+
+        while queue:
+            gx, gy = queue.popleft()
+            real_x = gx * self.GRID_CELL_SIZE + self.GRID_CELL_SIZE / 2
+            real_y = gy * self.GRID_CELL_SIZE + self.GRID_CELL_SIZE / 2
+
+            if real_x < 5 or real_x > map_size.x - 5:
+                continue
+            if real_y < 5 or real_y > map_size.y - 5:
+                continue
+
+            pos = Point2((real_x, real_y))
+            try:
+                if hasattr(self.bot.game_info, "pathing_grid"):
+                    grid = self.bot.game_info.pathing_grid
+                    px, py = int(real_x), int(real_y)
+                    if 0 <= px < grid.width and 0 <= py < grid.height:
+                        if grid[px, py] == 0:
+                            continue
+            except (IndexError, AttributeError, TypeError):
+                pass
+
+            targets.append(pos)
+
+            for dx, dy in directions:
+                nx, ny = gx + dx, gy + dy
+                if (nx, ny) not in visited:
+                    visited.add((nx, ny))
+                    queue.append((nx, ny))
+
+        self._target_grid = targets
+        self._grid_generated = True
+
+    def _update_priority_directions(self):
+        """확산 우선순위 방향 업데이트"""
+        if not hasattr(self.bot, "start_location"):
+            return
+        start = self.bot.start_location
+        expansions = getattr(self.bot, "expansion_locations_list", [])
+        for exp in expansions:
+            if exp.distance_to(start) < 50:
+                self._expansion_directions.append(exp)
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            self._enemy_direction = self.bot.enemy_start_locations[0]
+
+    def _update_tumor_positions(self):
+        """현재 크립 종양 위치 업데이트"""
+        if not hasattr(self.bot, "structures"):
+            return
+        self.tumor_positions.clear()
+        for tid in [UnitTypeId.CREEPTUMOR, UnitTypeId.CREEPTUMORBURROWED, UnitTypeId.CREEPTUMORQUEEN]:
+            for tumor in self.bot.structures(tid):
+                pos = (round(tumor.position.x, 1), round(tumor.position.y, 1))
+                self.tumor_positions.add(pos)
+
+    async def _queen_spread_creep(self, game_time: float):
+        """퀸을 사용한 크립 종양 생성 (에너지 >= 50 시)"""
+        if not hasattr(self.bot, "units"):
+            return
+        queens = self.bot.units(UnitTypeId.QUEEN)
+        if not queens.exists:
+            return
+
+        for queen in queens:
+            if queen.energy < self.QUEEN_TUMOR_ENERGY + 25:
+                continue
+            last_tumor = self.queen_tumor_cooldowns.get(queen.tag, 0)
+            if game_time - last_tumor < self.queen_tumor_interval:
+                continue
+            if not queen.is_idle and queen.tag not in self.creep_queen_tags:
+                continue
+
+            tumor_pos = self._find_best_tumor_position(queen.position)
+            if not tumor_pos:
+                continue
+
+            try:
+                if hasattr(self.bot, "has_creep"):
+                    if not self.bot.has_creep(tumor_pos):
+                        continue
+            except (TypeError, AttributeError):
+                pass
+
+            try:
+                self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, tumor_pos))
+                self.queen_tumor_cooldowns[queen.tag] = game_time
+                self.queen_tumors_created += 1
+                self.total_tumors_created += 1
+                pos_tuple = (round(tumor_pos.x, 1), round(tumor_pos.y, 1))
+                self.pending_tumor_positions.add(pos_tuple)
+            except Exception:
+                pass
+
+    async def _spread_from_tumors(self, game_time: float):
+        """기존 크립 종양에서 새 종양 확산"""
+        if not hasattr(self.bot, "structures"):
+            return
+        burrowed_tumors = self.bot.structures(UnitTypeId.CREEPTUMORBURROWED)
+        if not burrowed_tumors.exists:
+            return
+
+        for tumor in burrowed_tumors:
+            try:
+                abilities = await self.bot.get_available_abilities(tumor)
+                if AbilityId.BUILD_CREEPTUMOR_TUMOR not in abilities:
+                    continue
+            except Exception:
+                continue
+
+            spread_pos = self._find_best_tumor_position(
+                tumor.position, is_tumor_spread=True
+            )
+            if not spread_pos:
+                continue
+            try:
+                self.bot.do(tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_pos))
+                self.tumor_spread_created += 1
+                self.total_tumors_created += 1
+                pos_tuple = (round(spread_pos.x, 1), round(spread_pos.y, 1))
+                self.pending_tumor_positions.add(pos_tuple)
+            except Exception:
+                pass
+
+    def _find_best_tumor_position(
+        self,
+        source_pos,
+        is_tumor_spread: bool = False,
+    ) -> Optional[Point2]:
+        """
+        최적 크립 종양 배치 위치 계산 (BFS 그리드 기반)
+
+        우선순위:
+        1. 확장 기지 방향
+        2. 적 방향
+        3. 더 먼 곳 (넓게 확산)
+
+        Args:
+            source_pos: 원점 위치
+            is_tumor_spread: 종양 확산인 경우 True
+
+        Returns:
+            최적 배치 위치 또는 None
+        """
+        if not Point2:
+            return None
+
+        spread_range = self.TUMOR_SPREAD_RANGE if is_tumor_spread else 8.0
+        candidates: List[Tuple[Point2, float]] = []
+
+        for target in self._target_grid:
+            dist = source_pos.distance_to(target)
+            if dist > spread_range or dist < 2:
+                continue
+
+            pos_tuple = (round(target.x, 1), round(target.y, 1))
+            if pos_tuple in self.tumor_positions or pos_tuple in self.pending_tumor_positions:
+                continue
+
+            too_close = False
+            for existing in self.tumor_positions:
+                ex_dist = math.sqrt(
+                    (target.x - existing[0]) ** 2 + (target.y - existing[1]) ** 2
+                )
+                if ex_dist < self.TUMOR_MIN_DISTANCE:
+                    too_close = True
+                    break
+            if too_close:
+                continue
+
+            score = 0.0
+            for exp_dir in self._expansion_directions:
+                if target.distance_to(exp_dir) < source_pos.distance_to(exp_dir):
+                    score += 2.0
+            if self._enemy_direction:
+                if target.distance_to(self._enemy_direction) < source_pos.distance_to(self._enemy_direction):
+                    score += 1.0
+            score += dist * 0.1
+            candidates.append((target, score))
+
+        if not candidates:
+            return None
+        candidates.sort(key=lambda c: c[1], reverse=True)
+        return candidates[0][0]
+
+    def _update_coverage(self, game_time: float):
+        """크립 커버리지 추정 (샘플링)"""
+        if not hasattr(self.bot, "game_info") or not Point2:
+            return
+        try:
+            map_size = self.bot.game_info.map_size
+            total_cells = 0
+            creep_cells = 0
+            step = 5
+            for x in range(5, int(map_size.x) - 5, step):
+                for y in range(5, int(map_size.y) - 5, step):
+                    pos = Point2((x, y))
+                    try:
+                        if hasattr(self.bot.game_info, "pathing_grid"):
+                            grid = self.bot.game_info.pathing_grid
+                            if grid[x, y] == 0:
+                                continue
+                    except (IndexError, AttributeError, TypeError):
+                        pass
+                    total_cells += 1
+                    try:
+                        if hasattr(self.bot, "has_creep") and self.bot.has_creep(pos):
+                            creep_cells += 1
+                    except (TypeError, AttributeError):
+                        pass
+            if total_cells > 0:
+                self._creep_coverage_percent = (creep_cells / total_cells) * 100
+        except Exception:
+            pass
+
+    def assign_creep_queen(self, queen_tag: int):
+        """크립 전용 퀸 지정"""
+        self.creep_queen_tags.add(queen_tag)
+
+    def unassign_creep_queen(self, queen_tag: int):
+        """크립 전용 퀸 해제"""
+        self.creep_queen_tags.discard(queen_tag)
+
+    def get_creep_stats(self) -> Dict:
+        """
+        크립 스프레드 최적화 통계 반환
+
+        Returns:
+            통계 딕셔너리
+        """
+        return {
+            "tumor_count": len(self.tumor_positions),
+            "total_created": self.total_tumors_created,
+            "queen_created": self.queen_tumors_created,
+            "spread_created": self.tumor_spread_created,
+            "coverage_percent": round(self._creep_coverage_percent, 1),
+            "creep_queens": len(self.creep_queen_tags),
+            "grid_targets": len(self._target_grid),
+        }

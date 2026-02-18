@@ -31,6 +31,14 @@ except ImportError:
         pass
 
 
+# O(n^2) -> O(1) 변환: 가스 건물 type_id 집합 (set 멤버십은 O(1))
+GAS_BUILDING_TYPES: Set[object] = {
+    UnitTypeId.EXTRACTOR,
+    UnitTypeId.ASSIMILATOR,
+    UnitTypeId.REFINERY,
+}
+
+
 class EarlyScoutSystem:
     """
     초반 정찰 시스템 (Zergling + Overlord)
@@ -278,7 +286,7 @@ class EarlyScoutSystem:
                         print(f"[EARLY_SCOUT] [!] 조기 러시 의심! (치즈 가능성)")
 
                 # Gas 발견
-                if structure.type_id in [UnitTypeId.EXTRACTOR, UnitTypeId.ASSIMILATOR, UnitTypeId.REFINERY]:
+                if structure.type_id in GAS_BUILDING_TYPES:
                     if not self.enemy_gas_timing:
                         self.enemy_gas_timing = self.bot.time
                         print(f"[EARLY_SCOUT] [GAS] 적 가스 발견! (타이밍: {int(self.bot.time)}초)")
@@ -299,7 +307,8 @@ class EarlyScoutSystem:
 
         # Zergling 정찰
         if self.ling_scouts_assigned:
-            alive_scouts = len([tag for tag in self.scout_ling_tags if tag in [u.tag for u in self.bot.units(UnitTypeId.ZERGLING)]])
+            zergling_tags: Set[int] = {u.tag for u in self.bot.units(UnitTypeId.ZERGLING)}
+            alive_scouts = len([tag for tag in self.scout_ling_tags if tag in zergling_tags])
             status_parts.append(f"Lings: {alive_scouts}/{self.max_scout_lings}")
         else:
             status_parts.append("Lings: 대기")

@@ -67,7 +67,7 @@ class LateGameOptimizer:
                 self._plan_tech_transitions()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[LATE_GAME_OPT] Error: {e}")
 
     def _analyze_enemy_composition(self):

@@ -150,7 +150,7 @@ class RLTechAdapter:
             await self._execute_adaptation(iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[RL_TECH] Error: {e}")
 
     async def _scan_enemy_tech(self) -> Set[str]:

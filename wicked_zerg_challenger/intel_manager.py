@@ -68,7 +68,7 @@ class IntelManager:
             return
         except Exception as e:
             # Log unexpected errors
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[INTEL] Unexpected error in on_step: {type(e).__name__} - {e}")
             return
 

@@ -110,6 +110,11 @@ class StrategyManager:
         self.emergency_spine_requested = False
         self.emergency_spore_requested = False
 
+        # Defense mode tracking (auto-exit after no attack for 120s)
+        self.defense_mode_start_time = 0.0
+        self.last_major_attack_time = 0.0
+        self.defense_mode_timeout = 120.0  # seconds with no attack before exiting
+
         # Rogue Tactics 연동
         self.rogue_tactics_active = False
         self.larva_saving_mode = False
@@ -121,6 +126,14 @@ class StrategyManager:
         self.learned_priorities = {}
         self.learned_expansion_timings = {}
         self.learned_army_ratios = {}
+
+        # ★ Feature 83: Extended JARVIS command fields ★
+        self.target_priority: str = "military"  # "economy" | "military" | "tech"
+        self.expansion_timing: str = "normal"   # "fast" | "normal" | "slow"
+        self.preferred_comp: str = "balanced"    # "zergling_heavy" | "roach_heavy" | "muta_heavy" | "balanced"
+
+        # ★ Feature 89: Custom unit weights from JARVIS ★
+        self.custom_unit_weights: Optional[Dict[str, float]] = None
 
     def _load_ratios(self, race_name: str) -> Dict[GamePhase, Dict[str, float]]:
         """KnowledgeManager에서 유닛 비율 로드"""
@@ -159,6 +172,7 @@ class StrategyManager:
         self._detect_enemy_race()
         self._update_game_phase()
         self._check_rush_detection()
+        self._check_defense_mode_timeout()  # Auto-exit defense mode
         self._check_early_harassment()  # ★ 1-4분 견제 시스템 ★
         self._check_rogue_tactics()
         self._update_strategy_mode()
@@ -174,15 +188,17 @@ class StrategyManager:
             self.blackboard.set("is_rush_detected", self.emergency_active)
 
     def _check_jarvis_commands(self) -> None:
-        """자비스로부터 받은 외부 명령어 체크 (aggression_level 등)"""
+        """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
         if self.bot.iteration % 22 != 0: # 1초마다만 체크
             return
-            
+
         cmd_path = Path("jarvis_command.json")
         if cmd_path.exists():
             try:
                 with open(cmd_path, "r", encoding="utf-8") as f:
                     cmd_data = json.load(f)
+
+                    # --- Aggression Level (existing) ---
                     level = cmd_data.get("aggression_level")
                     if level:
                         if level == "passive":
@@ -193,10 +209,38 @@ class StrategyManager:
                             self.current_mode = StrategyMode.AGGRESSIVE
                         elif level == "all_in":
                             self.current_mode = StrategyMode.ALL_IN
-                        
                         self.logger.info(f"[JARVIS] Aggression level updated to: {level}")
-                        # 한번 처리한 명령어는 삭제하거나 플래그 처리 (여기서는 계속 읽어도 무방하나 삭제 권장)
-                        # cmd_path.unlink() 
+
+                    # ★ Feature 83: target_priority ★
+                    tp = cmd_data.get("target_priority")
+                    if tp and tp in ("economy", "military", "tech"):
+                        self.target_priority = tp
+                        self.logger.info(f"[JARVIS] Target priority set to: {tp}")
+
+                    # ★ Feature 83: expansion_timing ★
+                    et = cmd_data.get("expansion_timing")
+                    if et and et in ("fast", "normal", "slow"):
+                        self.expansion_timing = et
+                        self.logger.info(f"[JARVIS] Expansion timing set to: {et}")
+
+                    # ★ Feature 83: unit_composition ★
+                    uc = cmd_data.get("unit_composition")
+                    if uc and uc in ("zergling_heavy", "roach_heavy", "muta_heavy", "balanced"):
+                        self.preferred_comp = uc
+                        self.logger.info(f"[JARVIS] Preferred composition set to: {uc}")
+
+                    # ★ Feature 89: unit_weights ★
+                    uw = cmd_data.get("unit_weights")
+                    if uw and isinstance(uw, dict):
+                        # Validate all values are numeric
+                        valid = all(isinstance(v, (int, float)) for v in uw.values())
+                        if valid:
+                            self.custom_unit_weights = {k.lower(): float(v) for k, v in uw.items()}
+                            self.logger.info(f"[JARVIS] Custom unit weights set: {self.custom_unit_weights}")
+                        else:
+                            self.logger.warning("[JARVIS] Invalid unit_weights (values must be numeric)")
+
+                cmd_path.unlink(missing_ok=True)
             except Exception as e:
                 self.logger.warning(f"Failed to read jarvis command: {e}")
 
@@ -264,15 +308,21 @@ class StrategyManager:
                 self.detected_enemy_race = EnemyRace.RANDOM
 
     def _update_game_phase(self) -> None:
-        """게임 페이즈 업데이트"""
+        """
+        게임 페이즈 업데이트 (forward-only with hysteresis)
+
+        Phase transitions only move forward: EARLY -> MID -> LATE.
+        This prevents flicker at time boundaries (e.g., lag spikes causing
+        game_time to appear to jump back briefly).
+        """
         game_time = getattr(self.bot, "time", 0.0)
 
-        if game_time < 240:  # 4분
-            self.game_phase = GamePhase.EARLY
-        elif game_time < 600:  # 10분
+        if self.game_phase == GamePhase.EARLY and game_time >= 240:
             self.game_phase = GamePhase.MID
-        else:
+            self.logger.info(f"[{int(game_time)}s] Game phase: EARLY -> MID")
+        elif self.game_phase == GamePhase.MID and game_time >= 600:
             self.game_phase = GamePhase.LATE
+            self.logger.info(f"[{int(game_time)}s] Game phase: MID -> LATE")
 
     def _check_rush_detection(self) -> None:
         """러시/치즈 감지 (초반 + 중후반)"""
@@ -432,11 +482,14 @@ class StrategyManager:
         2. 군대 집결 우선
         3. 방어 건물 추가 건설
         """
-        # 이미 방어 모드면 스킵
+        # 이미 방어 모드면 타이머만 갱신
         if self.current_mode == StrategyMode.DEFENSIVE:
+            self.last_major_attack_time = game_time
             return
 
         self.current_mode = StrategyMode.DEFENSIVE
+        self.defense_mode_start_time = game_time
+        self.last_major_attack_time = game_time
 
         # ★★★ 로그 스팸 방지: 모드 전환 시에만 출력 ★★★
         self.logger.warning(f"[{int(game_time)}s] DEFENSE MODE ACTIVATED - Major attack incoming!")
@@ -457,6 +510,33 @@ class StrategyManager:
                     self.emergency_spore_requested = True
                     break
 
+    def _check_defense_mode_timeout(self) -> None:
+        """
+        Defense mode auto-exit: if no major attack detected for 120 seconds,
+        return to NORMAL mode. This prevents the bot from staying stuck in
+        DEFENSIVE mode indefinitely after a threat has passed.
+        """
+        if self.current_mode != StrategyMode.DEFENSIVE:
+            return
+
+        game_time = getattr(self.bot, "time", 0.0)
+
+        # Check if a major attack is currently happening
+        if self._detect_major_attack(game_time):
+            # Attack still ongoing - reset the timer
+            self.last_major_attack_time = game_time
+            return
+
+        # No major attack right now - check if timeout has elapsed
+        if game_time - self.last_major_attack_time >= self.defense_mode_timeout:
+            self.current_mode = StrategyMode.NORMAL
+            self._reset_min_army_for_attack()
+            self.emergency_spine_requested = False
+            self.logger.info(
+                f"[{int(game_time)}s] DEFENSE MODE AUTO-EXIT: "
+                f"No major attack for {int(self.defense_mode_timeout)}s, returning to NORMAL"
+            )
+
     def _request_army_rally(self) -> None:
         """군대 집결 요청"""
         # Combat Manager에 집결 신호 전송
@@ -465,7 +545,6 @@ class StrategyManager:
             # 집결 포인트를 위협받는 기지 근처로 설정
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 rally_pos = self.bot.townhalls.first.position
-                combat._rally_point = rally_pos
                 combat._rally_point = rally_pos
                 combat._min_army_for_attack = 999  # 공격 중지, 방어 우선
                 self.logger.info("Army rallying to defend base!")
@@ -628,7 +707,7 @@ class StrategyManager:
                             print(f"[STRATEGY] [{int(game_time)}s] ★ Building Spire for Corruptors ★")
 
             except Exception as e:
-                if self.bot.iteration % 200 == 0:
+                if self.bot.iteration % 50 == 0:
                     self.logger.warning(f"Air threat handling error: {e}")
 
         # ★ 대공 유닛 비율 강제 조정 ★
@@ -996,7 +1075,21 @@ class StrategyManager:
             race = EnemyRace.UNKNOWN
 
         phase_ratios = self.race_unit_ratios.get(race, self.race_unit_ratios[EnemyRace.UNKNOWN])
-        return phase_ratios.get(self.game_phase, phase_ratios[GamePhase.EARLY])
+        base_ratios = phase_ratios.get(self.game_phase, phase_ratios[GamePhase.EARLY])
+
+        # ★ Feature 89: Apply custom unit weights from JARVIS when set ★
+        if self.custom_unit_weights:
+            merged = dict(base_ratios)
+            for unit, weight in self.custom_unit_weights.items():
+                merged[unit] = weight
+            # Normalize
+            total = sum(merged.values())
+            if total > 0:
+                for k in merged:
+                    merged[k] /= total
+            return merged
+
+        return base_ratios
 
     def should_produce_drone(self) -> bool:
         """
@@ -1057,6 +1150,129 @@ class StrategyManager:
             "unit_ratios": self.get_unit_ratios(),
         }
 
+    # ========== #110: 게임 페이즈 관리 ==========
+
+    def get_game_phase_details(self) -> Dict[str, Any]:
+        """
+        게임 페이즈 상세 정보 반환 (#110)
+
+        초반/중반/후반 전환을 감지하고 페이즈별 전략 정보를 제공합니다.
+
+        Returns:
+            페이즈 상세 정보 딕셔너리
+        """
+        game_time = getattr(self.bot, "time", 0.0)
+        supply_used = getattr(self.bot, "supply_used", 0)
+        base_count = 0
+        if hasattr(self.bot, "townhalls"):
+            base_count = self.bot.townhalls.amount
+
+        # 페이즈별 특성
+        phase_config = {
+            GamePhase.EARLY: {
+                "name": "초반 (Early Game)",
+                "time_range": "0~4분",
+                "priority": "경제 확장, 정찰, 기본 방어",
+                "drone_target": min(22, base_count * 16),
+                "army_focus": "저글링 소수 (정찰/방어)",
+                "expansion_goal": 2,
+                "tech_goal": "스포닝풀 + 가스",
+            },
+            GamePhase.MID: {
+                "name": "중반 (Mid Game)",
+                "time_range": "4~10분",
+                "priority": "군대 확충, 테크업, 타이밍 공격",
+                "drone_target": min(55, base_count * 16),
+                "army_focus": "주력 유닛 생산 (바퀴/히드라)",
+                "expansion_goal": 3,
+                "tech_goal": "레어 + 진화실 + 유닛 업그레이드",
+            },
+            GamePhase.LATE: {
+                "name": "후반 (Late Game)",
+                "time_range": "10분+",
+                "priority": "맥스아웃, 고급 유닛, 멀티 전선",
+                "drone_target": min(80, base_count * 16),
+                "army_focus": "고급 유닛 (울트라/바이퍼/커럽터)",
+                "expansion_goal": 5,
+                "tech_goal": "하이브 + 3/3 업그레이드",
+            },
+        }
+
+        current_config = phase_config.get(self.game_phase, phase_config[GamePhase.EARLY])
+
+        return {
+            "phase": self.game_phase.value,
+            "game_time": game_time,
+            "supply_used": supply_used,
+            "base_count": base_count,
+            **current_config,
+        }
+
+    def detect_phase_transition(self) -> Optional[str]:
+        """
+        페이즈 전환 감지 (#110)
+
+        시간 기반뿐만 아니라 상황 기반 전환도 감지합니다.
+
+        Returns:
+            전환 설명 문자열 (전환 없으면 None)
+        """
+        game_time = getattr(self.bot, "time", 0.0)
+        supply_used = getattr(self.bot, "supply_used", 0)
+
+        # 강제 전환 조건 (시간보다 상황 우선)
+
+        # 서플라이 100 이상이면 후반으로 강제 전환
+        if self.game_phase == GamePhase.MID and supply_used >= 100:
+            self.game_phase = GamePhase.LATE
+            return f"서플라이 {supply_used} 도달 -> 후반 전환"
+
+        # 3기지 이상이고 40서플라이 이상이면 중반으로 강제 전환
+        base_count = 0
+        if hasattr(self.bot, "townhalls"):
+            base_count = self.bot.townhalls.amount
+
+        if self.game_phase == GamePhase.EARLY and base_count >= 3 and supply_used >= 40:
+            self.game_phase = GamePhase.MID
+            return f"3기지 + 서플라이 {supply_used} -> 중반 전환"
+
+        return None
+
+    def get_phase_strategy_recommendation(self) -> Dict[str, Any]:
+        """
+        현재 페이즈에 맞는 전략 추천 (#110)
+
+        Returns:
+            전략 추천 딕셔너리
+        """
+        if self.game_phase == GamePhase.EARLY:
+            return {
+                "economy_weight": 0.7,
+                "army_weight": 0.2,
+                "tech_weight": 0.1,
+                "should_expand": True,
+                "should_attack": False,
+                "recommended_action": "드론 생산 우선, 2기지 확장",
+            }
+        elif self.game_phase == GamePhase.MID:
+            return {
+                "economy_weight": 0.3,
+                "army_weight": 0.5,
+                "tech_weight": 0.2,
+                "should_expand": True,
+                "should_attack": True,
+                "recommended_action": "군대 확충 + 타이밍 공격 준비",
+            }
+        else:  # LATE
+            return {
+                "economy_weight": 0.2,
+                "army_weight": 0.6,
+                "tech_weight": 0.2,
+                "should_expand": True,
+                "should_attack": True,
+                "recommended_action": "맥스아웃 후 총공격",
+            }
+
     def check_surrender(self, game_time: float) -> bool:
         """
         ★ Smart Surrender Logic ★
@@ -1100,5 +1316,289 @@ class StrategyManager:
                      if enemy_bases >= 4:
                         self.logger.warning(f"[{int(game_time)}s] SURRENDER: Economic collapse (1 vs {enemy_bases} bases).")
                         return True
-                        
+
         return False
+
+    # =========================================================================
+    # Feature #100: 테크 전환 감지
+    # =========================================================================
+
+    def detect_tech_switch(self) -> Optional[Dict[str, Any]]:
+        """
+        Feature #100: 적 테크 경로 변경 감지
+
+        적의 건물 및 유닛 조합 변화를 추적하여 테크 전환을 감지합니다.
+
+        감지 패턴:
+        - 테란: 바이오 -> 메카 (배럭 중심 -> 팩토리/스타포트)
+        - 테란: 메카 -> 바이오 (팩토리 -> 배럭 추가)
+        - 프로토스: 게이트웨이 -> 로보틱스 (콜로서스/불멸자)
+        - 프로토스: 지상 -> 공중 (스타게이트 추가)
+        - 저그: 저글링 -> 로치/히드라 (워렌/덴 건설)
+        - 저그: 지상 -> 공중 (스파이어 건설)
+
+        Returns:
+            테크 전환 정보 딕셔너리 또는 None
+            {
+                "detected": True/False,
+                "from_tech": str,
+                "to_tech": str,
+                "confidence": float (0.0~1.0),
+                "recommended_comp": str
+            }
+        """
+        if not hasattr(self.bot, "enemy_structures"):
+            return None
+
+        enemy_structures = self.bot.enemy_structures
+        if not enemy_structures.exists:
+            return None
+
+        race = self.detected_enemy_race
+
+        if race == EnemyRace.TERRAN:
+            return self._detect_terran_tech_switch(enemy_structures)
+        elif race == EnemyRace.PROTOSS:
+            return self._detect_protoss_tech_switch(enemy_structures)
+        elif race == EnemyRace.ZERG:
+            return self._detect_zerg_tech_switch(enemy_structures)
+
+        return None
+
+    def _detect_terran_tech_switch(self, enemy_structures) -> Optional[Dict[str, Any]]:
+        """
+        테란 테크 전환 감지: 바이오/메카/공중 전환 패턴 분석
+        """
+        barracks_count = 0
+        factory_count = 0
+        starport_count = 0
+        armory_count = 0
+
+        for s in enemy_structures:
+            name = s.name.lower() if hasattr(s, "name") else ""
+            if "barracks" in name:
+                barracks_count += 1
+            elif "factory" in name:
+                factory_count += 1
+            elif "starport" in name:
+                starport_count += 1
+            elif "armory" in name:
+                armory_count += 1
+
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        bio_count = 0
+        mech_count = 0
+        air_count = 0
+
+        if enemy_units:
+            for u in enemy_units:
+                name = u.name.lower() if hasattr(u, "name") else ""
+                if any(n in name for n in ["marine", "marauder", "ghost", "reaper"]):
+                    bio_count += 1
+                elif any(n in name for n in ["hellion", "hellbat", "siegetank", "cyclone", "thor"]):
+                    mech_count += 1
+                elif any(n in name for n in ["viking", "liberator", "banshee", "raven", "battlecruiser", "medivac"]):
+                    air_count += 1
+
+        result = {
+            "detected": False,
+            "from_tech": "unknown",
+            "to_tech": "unknown",
+            "confidence": 0.0,
+            "recommended_comp": "balanced",
+        }
+
+        # 바이오 -> 메카 전환 감지
+        if barracks_count >= 2 and factory_count >= 2 and armory_count >= 1:
+            if mech_count > bio_count:
+                result["detected"] = True
+                result["from_tech"] = "bio"
+                result["to_tech"] = "mech"
+                result["confidence"] = min(1.0, mech_count / max(bio_count + mech_count, 1))
+                result["recommended_comp"] = "roach_ravager_heavy"
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] [TECH_SWITCH] 테란 바이오->메카 전환 감지! "
+                    f"신뢰도: {result['confidence']:.1%}"
+                )
+
+        # 공중 전환 감지
+        elif starport_count >= 2 and air_count > bio_count + mech_count:
+            result["detected"] = True
+            result["from_tech"] = "ground"
+            result["to_tech"] = "air"
+            result["confidence"] = min(1.0, air_count / max(bio_count + mech_count + air_count, 1))
+            result["recommended_comp"] = "hydra_corruptor"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 테란 공중 전환 감지! "
+                f"신뢰도: {result['confidence']:.1%}"
+            )
+
+        # 메카 -> 바이오 전환 감지
+        elif factory_count >= 1 and barracks_count >= 3 and bio_count > mech_count * 2:
+            result["detected"] = True
+            result["from_tech"] = "mech"
+            result["to_tech"] = "bio"
+            result["confidence"] = min(1.0, bio_count / max(bio_count + mech_count, 1))
+            result["recommended_comp"] = "baneling_zergling_heavy"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 테란 메카->바이오 전환 감지! "
+                f"신뢰도: {result['confidence']:.1%}"
+            )
+
+        return result if result["detected"] else None
+
+    def _detect_protoss_tech_switch(self, enemy_structures) -> Optional[Dict[str, Any]]:
+        """
+        프로토스 테크 전환 감지: 게이트웨이/로보틱스/공중 전환 패턴 분석
+        """
+        gateway_count = 0
+        robo_count = 0
+        stargate_count = 0
+        templar_archives = False
+        fleet_beacon = False
+
+        for s in enemy_structures:
+            name = s.name.lower() if hasattr(s, "name") else ""
+            if "gateway" in name or "warpgate" in name:
+                gateway_count += 1
+            elif "robotics" in name and "bay" not in name:
+                robo_count += 1
+            elif "stargate" in name:
+                stargate_count += 1
+            elif "templar" in name:
+                templar_archives = True
+            elif "fleet" in name:
+                fleet_beacon = True
+
+        result = {
+            "detected": False,
+            "from_tech": "unknown",
+            "to_tech": "unknown",
+            "confidence": 0.0,
+            "recommended_comp": "balanced",
+        }
+
+        # 게이트웨이 -> 로보틱스 전환 (콜로서스/불멸자)
+        if robo_count >= 2:
+            result["detected"] = True
+            result["from_tech"] = "gateway"
+            result["to_tech"] = "robotics"
+            result["confidence"] = 0.8
+            result["recommended_comp"] = "corruptor_roach"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 프로토스 로보틱스 집중 감지!"
+            )
+
+        # 공중 전환 (캐리어/보이드레이)
+        elif stargate_count >= 2 or fleet_beacon:
+            result["detected"] = True
+            result["from_tech"] = "ground"
+            result["to_tech"] = "air"
+            result["confidence"] = 0.9 if fleet_beacon else 0.7
+            result["recommended_comp"] = "hydra_corruptor"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 프로토스 공중 전환 감지!"
+            )
+
+        # 하이템플러 전환
+        elif templar_archives:
+            result["detected"] = True
+            result["from_tech"] = "gateway"
+            result["to_tech"] = "templar"
+            result["confidence"] = 0.85
+            result["recommended_comp"] = "zergling_ultra_surround"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 프로토스 하이템플러 감지!"
+            )
+
+        return result if result["detected"] else None
+
+    def _detect_zerg_tech_switch(self, enemy_structures) -> Optional[Dict[str, Any]]:
+        """
+        저그 테크 전환 감지: 지상/공중 전환 패턴 분석
+        """
+        spire = False
+        greater_spire = False
+        lurker_den = False
+        ultra_cavern = False
+
+        for s in enemy_structures:
+            name = s.name.lower() if hasattr(s, "name") else ""
+            if "greaterspire" in name:
+                greater_spire = True
+            elif "spire" in name:
+                spire = True
+            elif "lurker" in name:
+                lurker_den = True
+            elif "ultralisk" in name:
+                ultra_cavern = True
+
+        result = {
+            "detected": False,
+            "from_tech": "unknown",
+            "to_tech": "unknown",
+            "confidence": 0.0,
+            "recommended_comp": "balanced",
+        }
+
+        # 공중 전환 (뮤탈/브루드로드)
+        if greater_spire:
+            result["detected"] = True
+            result["from_tech"] = "ground"
+            result["to_tech"] = "broodlord"
+            result["confidence"] = 0.9
+            result["recommended_comp"] = "corruptor_hydra"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 저그 그레이터 스파이어 감지!"
+            )
+        elif spire:
+            result["detected"] = True
+            result["from_tech"] = "ground"
+            result["to_tech"] = "mutalisk"
+            result["confidence"] = 0.75
+            result["recommended_comp"] = "hydra_spore"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 저그 스파이어 감지!"
+            )
+
+        # 울트라 전환
+        elif ultra_cavern:
+            result["detected"] = True
+            result["from_tech"] = "ground"
+            result["to_tech"] = "ultralisk"
+            result["confidence"] = 0.85
+            result["recommended_comp"] = "roach_ravager_bile"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 저그 울트라리스크 전환 감지!"
+            )
+
+        # 럴커 전환
+        elif lurker_den:
+            result["detected"] = True
+            result["from_tech"] = "hydra"
+            result["to_tech"] = "lurker"
+            result["confidence"] = 0.8
+            result["recommended_comp"] = "roach_ravager_bile"
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [TECH_SWITCH] 저그 럴커 전환 감지!"
+            )
+
+        return result if result["detected"] else None
+
+    def get_tech_switch_status(self) -> Dict[str, Any]:
+        """
+        Feature #100: 적 테크 전환 상태 조회
+
+        Returns:
+            테크 전환 현황 딕셔너리
+        """
+        tech_info = self.detect_tech_switch()
+        if tech_info:
+            return tech_info
+        return {
+            "detected": False,
+            "from_tech": "unknown",
+            "to_tech": "unknown",
+            "confidence": 0.0,
+            "recommended_comp": "balanced",
+        }

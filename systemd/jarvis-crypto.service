@@ -1,0 +1,54 @@
+# ================================================
+# JARVIS 암호화폐 HTTP 서비스 (#168)
+#
+# 설치 방법:
+#   sudo cp jarvis-crypto.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable jarvis-crypto
+#   sudo systemctl start jarvis-crypto
+#
+# 로그 확인:
+#   journalctl -u jarvis-crypto -f
+# ================================================
+[Unit]
+Description=JARVIS Crypto Trading HTTP Service
+Documentation=https://github.com/your-org/Swarm-contol-in-sc2bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jarvis
+Group=jarvis
+WorkingDirectory=/opt/jarvis/sc2bot
+ExecStart=/opt/jarvis/venv/bin/python -u crypto_trading/crypto_http_service.py
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+# 환경변수 파일에서 로드
+EnvironmentFile=-/opt/jarvis/sc2bot/.env
+Environment=PYTHONPATH=/opt/jarvis/sc2bot
+Environment=CRYPTO_PORT=8766
+Environment=LOG_LEVEL=INFO
+Environment=DRY_RUN=false
+
+# 로그 설정
+StandardOutput=append:/var/log/jarvis/crypto-stdout.log
+StandardError=append:/var/log/jarvis/crypto-stderr.log
+SyslogIdentifier=jarvis-crypto
+
+# 보안 강화 옵션
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/jarvis/sc2bot/crypto_trading/data /opt/jarvis/sc2bot/logs /var/log/jarvis
+PrivateTmp=true
+
+# 리소스 제한
+LimitNOFILE=4096
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

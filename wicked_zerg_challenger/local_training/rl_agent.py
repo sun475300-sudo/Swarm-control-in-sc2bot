@@ -318,8 +318,23 @@ class RLAgent:
 
     def end_episode(self, final_reward: float = 0.0, save_experience: bool = True) -> Dict[str, float]:
         """에피소드 종료 및 학습"""
+        # ★★★ FIX: 남은 reward_buffer 마지막 리워드에 추가 ★★★
+        if self.reward_buffer != 0.0 and self.rewards:
+            self.rewards[-1] += self.reward_buffer
+            self.reward_buffer = 0.0
+
         if not self.rewards:
             return {"loss": 0.0, "avg_reward": 0.0, "epsilon": self.epsilon}
+
+        # ★★★ FIX: 차원 불일치 방지 (NaN 그래디언트 스킵 등으로 발생 가능) ★★★
+        min_len = min(len(self.states), len(self.actions), len(self.rewards), len(self.caches))
+        if min_len < len(self.states):
+            print(f"[RL_AGENT] Dimension mismatch detected: states={len(self.states)}, "
+                  f"actions={len(self.actions)}, rewards={len(self.rewards)}, caches={len(self.caches)}")
+            self.states = self.states[:min_len]
+            self.actions = self.actions[:min_len]
+            self.rewards = self.rewards[:min_len]
+            self.caches = self.caches[:min_len]
 
         if final_reward != 0.0:
             self.rewards[-1] += final_reward
@@ -373,10 +388,8 @@ class RLAgent:
         # 경험 데이터 저장 (Background Learning용)
         if save_experience and len(self.states) > 0:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            # CRITICAL FIX: Use absolute path to ensure correct save location
-            from pathlib import Path
-            # use absolute path based on known project structure
-            buffer_dir = Path("d:/Swarm-contol-in-sc2bot/wicked_zerg_challenger/local_training/data/buffer")
+            # Use relative path based on this file's location
+            buffer_dir = Path(__file__).parent / "data" / "buffer"
             try:
                 buffer_dir.mkdir(parents=True, exist_ok=True)
                 exp_path = buffer_dir / f"exp_{timestamp}_ep{self.episode_count}.npz"
@@ -388,8 +401,17 @@ class RLAgent:
             except Exception as e:
                 print(f"[RL_AGENT] [ERROR] Exception during save: {e}")
 
-        # Epsilon 감쇠
+        # Epsilon 감쇠 + ★ 적응형 탐색 (plateau 감지 시 탐색률 복원) ★
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+        # Plateau 감지: 최근 20 에피소드 평균 보상이 정체 시 탐색 증가
+        if len(self.training_history) >= 20:
+            recent_20 = [h.get("avg_reward", 0) for h in self.training_history[-20:]]
+            older_20 = [h.get("avg_reward", 0) for h in self.training_history[-40:-20]] if len(self.training_history) >= 40 else recent_20
+            if abs(sum(recent_20) / 20 - sum(older_20) / 20) < 0.1:
+                # 정체 → 탐색률 부분 복원
+                self.epsilon = min(0.3, self.epsilon * 1.5)
+                print(f"[RL_AGENT] Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
 
         self._clear_buffers()
         self.episode_count += 1
@@ -409,30 +431,16 @@ class RLAgent:
         self.actions.clear()
         self.rewards.clear()
         self.caches.clear()
+        # ★ FIX: reward_buffer 에피소드 간 누수 방지
+        self.reward_buffer = 0.0
+        # ★ FIX: baseline 리셋 (에피소드 간 drift 방지)
+        self.baseline = 0.0
         # 중간 보상 추적 상태 리셋
         self.prev_base_count = 0
         self.prev_army_supply = 0.0
         self.prev_supply_blocked = False
 
-    def save_model(self, path: Optional[str] = None) -> bool:
-        """모델 저장"""
-        save_path = Path(path) if path else self.model_path
-        try:
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            weights = self.policy.get_weights()
-            np.savez(
-                str(save_path),
-                W1=weights['W1'], b1=weights['b1'],
-                W2=weights['W2'], b2=weights['b2'],
-                W3=weights['W3'], b3=weights['b3'],
-                baseline=np.array([self.baseline]),
-                episode_count=np.array([self.episode_count])
-            )
-            print(f"[RL_AGENT] Model saved to {save_path}")
-            return True
-        except Exception as e:
-            print(f"[RL_AGENT] Failed to save model: {e}")
-            return False
+    # NOTE: save_model() 은 아래에 Atomic Write 버전으로 단일 정의됨 (중복 제거)
 
     def _load_model(self) -> bool:
         try:

@@ -125,7 +125,7 @@ class UpgradeCoordinationSystem:
                 await self._execute_timing_attack()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[UPGRADE_COORD] Error: {e}")
 
     async def _check_upgrade_completions(self) -> List[str]:

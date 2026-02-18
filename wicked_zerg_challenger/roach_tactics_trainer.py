@@ -102,7 +102,7 @@ class RoachTacticsTrainer:
                 self._print_statistics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[ROACH_TACTICS] Error: {e}")
 
     def _check_upgrades(self):

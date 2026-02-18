@@ -125,6 +125,12 @@ class UnitAuthorityManager:
                 granted.add(tag)
         return granted
 
+    def reset(self):
+        """게임 간 상태 초기화 (훈련 에피소드 간 호출 필수)"""
+        self.authorities.clear()
+        self.system_units.clear()
+        self.total_conflicts = 0
+
     def _cleanup_expired_authorities(self):
         game_time = getattr(self.bot, "time", 0)
         expired = [(tag, auth.owner) for tag, auth in self.authorities.items()

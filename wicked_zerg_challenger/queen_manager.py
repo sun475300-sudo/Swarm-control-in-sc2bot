@@ -54,7 +54,7 @@ class QueenManager:
 
         # Injection settings - ★ OPTIMIZED ★
         self.inject_energy_threshold = 25
-        self.inject_cooldown = 30.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 (29초 + 1초 여유) ★
+        self.inject_cooldown = 29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★
         self.max_inject_distance = 4.0
         self.max_queen_travel_distance = 10.0
 
@@ -150,7 +150,7 @@ class QueenManager:
                     await self._utilize_idle_queens_for_creep(queens, iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Queen manager error: {e}")
 
     async def _train_queens(self, iteration: int) -> None:
@@ -208,7 +208,7 @@ class QueenManager:
                 if await self._safe_train(hatch, UnitTypeId.QUEEN):
                     pending += 1
             except Exception as e:
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     print(f"[WARNING] Queen train error: {e}")
                 continue
 
@@ -539,7 +539,7 @@ class QueenManager:
         # ★ 인젝트 퀸은 계속 인젝트 수행 ★
         if inject_queens and hatcheries:
             await self._inject_larva(hatcheries, inject_queens)
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[QUEEN DEFENSE] [{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement")
 
         # Send defense queens to defend
@@ -712,7 +712,7 @@ class QueenManager:
                             await result
                         self.last_transfuse_time[best_queen.tag] = current_time
                 except Exception as e:
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         print(f"[WARNING] Transfuse error: {e}")
                     continue
 
@@ -770,7 +770,7 @@ class QueenManager:
                         await result
                     self.last_creep_time[queen.tag] = current_time
             except Exception as e:
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     print(f"[WARNING] Creep spread error: {e}")
                 continue
 
@@ -1034,11 +1034,12 @@ class QueenManager:
         try:
             # 점막 위인지 확인
             if hasattr(self.bot, "has_creep"):
-                return self.bot.has_creep(target)
+                result = self.bot.has_creep(target)
+                return bool(result)
         except Exception:
-            pass
+            return False
 
-        # ★ 수정: 확인 불가하면 False 반환 (잘못된 위치 방지)
+        # ★ 수정: has_creep 메서드 없으면 False 반환 (잘못된 위치 방지)
         return False
 
     async def _position_creep_queen_forward(self, queen, enemy_start) -> None:

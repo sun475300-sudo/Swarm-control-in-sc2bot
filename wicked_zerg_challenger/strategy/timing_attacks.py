@@ -53,7 +53,7 @@ class TimingAttacks:
                 self._check_timing_windows()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[TIMING_ATTACKS] Error: {e}")
 
     def _check_timing_windows(self):

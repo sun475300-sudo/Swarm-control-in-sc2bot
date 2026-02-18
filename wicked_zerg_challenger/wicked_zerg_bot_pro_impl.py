@@ -19,12 +19,17 @@ except ImportError:
 
 from bot_step_integration import BotStepIntegrator
 from utils.logger import setup_logger
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from pathlib import Path
 from blackboard import Blackboard
 from difficulty_progression import DifficultyProgression
 from personality_module import PersonalityModule, PersonalityMode
 import traceback
+import json
+import time
+import os
+import shutil
+import glob as glob_mod
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -76,6 +81,15 @@ class WickedZergBotProImpl(BotAI):
 
         # Step integrator initialization
         self._step_integrator = None
+
+        # ★ Feature 85: Build Order Timing Log ★
+        self._build_order_log: List[Dict[str, Any]] = []
+        self._tracked_structure_tags: set = set()
+
+        # ★ Feature 86: Unit Lost Tracking ★
+        self._units_lost: List[Dict[str, Any]] = []
+        self._workers_created: int = 0
+        self._expansions_built: int = 0
 
     async def on_start(self):
         """
@@ -187,9 +201,9 @@ class WickedZergBotProImpl(BotAI):
                 elif "silent" in p_type:
                     mode = PersonalityMode.SILENT
             
-            self.personality = PersonalityModule(self, mode=mode, 
-                                               knowledge_manager=self.knowledge_manager,
-                                               opponent_modeling=self.opponent_modeling)
+            self.personality = PersonalityModule(self, mode=mode,
+                                               knowledge_manager=getattr(self, 'knowledge_manager', None),
+                                               opponent_modeling=getattr(self, 'opponent_modeling', None))
             print(f"[BOT] ★ PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
         except Exception as e:
             print(f"[BOT_WARN] Failed to initialize PersonalityModule: {e}")
@@ -301,6 +315,20 @@ class WickedZergBotProImpl(BotAI):
         # Store iteration as attribute for other modules to access
         self.iteration = iteration
 
+        # ★ Feature 86: Cache our unit tags for unit lost tracking ★
+        if iteration % 22 == 0:
+            if not hasattr(self, '_known_unit_tags'):
+                self._known_unit_tags = {}
+            if hasattr(self, 'units'):
+                for unit in self.units:
+                    self._known_unit_tags[unit.tag] = {
+                        "type": unit.type_id.name,
+                        "position": {"x": round(unit.position.x, 1), "y": round(unit.position.y, 1)},
+                    }
+                    # Track workers created
+                    if unit.type_id.name == "DRONE" and unit.tag not in self._known_unit_tags:
+                        self._workers_created = getattr(self, '_workers_created', 0) + 1
+
         # 전략 선택 (한 번만 실행)
         if self.aggressive_strategies and not self.aggressive_strategies._strategy_decided:
             enemy_race = str(getattr(self, "enemy_race", "Unknown"))
@@ -309,12 +337,14 @@ class WickedZergBotProImpl(BotAI):
         if self._step_integrator is None:
             self._step_integrator = BotStepIntegrator(self)
 
+        # ★ Feature 85: Track key building/upgrade completions ★
+        if iteration % 22 == 0:
+            self._track_build_order()
+
         # Execute integrated on_step (모든 핵심 매니저 포함)
         await self._step_integrator.on_step(iteration)
 
-        # ★ Execute Personality Module (Chat)
-        if self.personality:
-            await self.personality.on_step(iteration)
+        # Personality module is called in bot_step_integration.py; do not call here.
 
     async def on_end(self, game_result):
         """
@@ -401,9 +431,6 @@ class WickedZergBotProImpl(BotAI):
                 # CRITICAL FIX: Initialize parameters_updated counter
                 self.parameters_updated = 0
 
-                # Determine if we won
-                game_won = "VICTORY" in result_str or "WIN" in result_str
-
                 # ★★★ Adaptive Learning Rate Update (최우선) ★★★
                 if hasattr(self, 'adaptive_lr') and self.adaptive_lr:
                     new_lr = self.adaptive_lr.update(game_won)
@@ -457,6 +484,9 @@ class WickedZergBotProImpl(BotAI):
                 print(f"[WARNING] Training end logic error: {e}")
                 import traceback
                 traceback.print_exc()
+
+        # ★★★ 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ★★★
+        self._reset_all_managers()
 
         # ★★★ 커리큘럼 매니저: 승리/패배 기록 (종족별 추적 포함) ★★★
         try:
@@ -596,6 +626,24 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             print(f"[WARNING] Game result reporter error: {e}")
 
+        # ★ Feature 81: Structured Game Result Logging ★
+        try:
+            self._save_structured_game_result(game_result)
+        except Exception as e:
+            print(f"[WARNING] Structured game result logging error: {e}")
+
+        # ★ Feature 84: Replay Auto-Organization ★
+        try:
+            self._organize_replay(game_result)
+        except Exception as e:
+            print(f"[WARNING] Replay organization error: {e}")
+
+        # ★ Feature 85: Save Build Order Timing Log ★
+        try:
+            self._save_build_order_log()
+        except Exception as e:
+            print(f"[WARNING] Build order log save error: {e}")
+
         # Store training result for run_with_training.py
         self._training_result = {
             "game_result": str(game_result),
@@ -604,6 +652,281 @@ class WickedZergBotProImpl(BotAI):
             "loss_reason": getattr(self, 'loss_reason', None),
             "parameters_updated": getattr(self, 'parameters_updated', 0)
         }
+
+    # =========================================================================
+    # Feature 81: Structured Game Result Logging
+    # =========================================================================
+    def _save_structured_game_result(self, game_result) -> None:
+        """Save a structured game result dict to logs/game_results.json."""
+        result_str = str(game_result).upper()
+        if "VICTORY" in result_str or "WIN" in result_str:
+            result_label = "win"
+        elif "DEFEAT" in result_str or "LOSS" in result_str:
+            result_label = "loss"
+        else:
+            result_label = "unknown"
+
+        # Gather opponent race
+        opp_race = "Unknown"
+        try:
+            if hasattr(self, 'enemy_race') and self.enemy_race:
+                opp_race = str(self.enemy_race).replace("Race.", "")
+        except Exception:
+            pass
+
+        # Gather stats
+        game_duration = getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0
+        final_supply = getattr(self, 'supply_used', 0) if hasattr(self, 'supply_used') else 0
+        final_minerals = getattr(self, 'minerals', 0) if hasattr(self, 'minerals') else 0
+        final_vespene = getattr(self, 'vespene', 0) if hasattr(self, 'vespene') else 0
+        workers_created = getattr(self, '_workers_created', 0)
+        expansions_built = getattr(self, '_expansions_built', 0)
+
+        # Units killed / lost counts
+        units_killed = 0
+        units_lost_count = len(getattr(self, '_units_lost', []))
+        try:
+            if hasattr(self, 'state') and hasattr(self.state, 'score'):
+                score = self.state.score
+                units_killed = getattr(score, 'killed_value_units', 0)
+        except Exception:
+            pass
+
+        game_result_entry = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "result": result_label,
+            "opponent_race": opp_race,
+            "game_duration_seconds": round(game_duration, 1),
+            "final_supply": final_supply,
+            "final_minerals": final_minerals,
+            "final_vespene": final_vespene,
+            "units_killed": units_killed,
+            "units_lost": units_lost_count,
+            "workers_created": workers_created,
+            "expansions_built": expansions_built,
+            "units_lost_details": getattr(self, '_units_lost', []),
+        }
+
+        logs_dir = Path(__file__).parent / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        results_file = logs_dir / "game_results.json"
+
+        # Load existing or create new list
+        existing = []
+        if results_file.exists():
+            try:
+                with open(results_file, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                if not isinstance(existing, list):
+                    existing = []
+            except (json.JSONDecodeError, IOError):
+                existing = []
+
+        existing.append(game_result_entry)
+
+        with open(results_file, "w", encoding="utf-8") as f:
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+
+        print(f"[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)")
+
+    # =========================================================================
+    # Feature 84: Replay Auto-Organization
+    # =========================================================================
+    def _organize_replay(self, game_result) -> None:
+        """Find the most recent .SC2Replay and copy it to an organized directory."""
+        try:
+            # Common replay directories
+            replay_dirs = [
+                Path.home() / "Documents" / "StarCraft II" / "Replays",
+                Path.home() / "Documents" / "StarCraft II" / "Accounts",
+                Path("replays"),
+                Path("."),
+            ]
+
+            recent_replay = None
+            recent_time = 0
+
+            for replay_dir in replay_dirs:
+                if not replay_dir.exists():
+                    continue
+                # Search recursively for .SC2Replay files
+                for replay_path in replay_dir.rglob("*.SC2Replay"):
+                    try:
+                        mtime = replay_path.stat().st_mtime
+                        # Only consider replays modified in the last 5 minutes
+                        if mtime > time.time() - 300 and mtime > recent_time:
+                            recent_time = mtime
+                            recent_replay = replay_path
+                    except OSError:
+                        continue
+
+            if not recent_replay:
+                return
+
+            # Build destination path
+            result_str = str(game_result).upper()
+            result_label = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
+
+            opp_race = "Unknown"
+            try:
+                if hasattr(self, 'enemy_race') and self.enemy_race:
+                    opp_race = str(self.enemy_race).replace("Race.", "")
+            except Exception:
+                pass
+
+            date_str = time.strftime("%Y-%m-%d")
+            timestamp_str = time.strftime("%H%M%S")
+
+            dest_dir = Path(__file__).parent / "logs" / "replays" / date_str
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            dest_name = f"{opp_race}_{result_label}_{timestamp_str}.SC2Replay"
+            dest_path = dest_dir / dest_name
+
+            shutil.copy2(str(recent_replay), str(dest_path))
+            print(f"[REPLAY] Organized replay: {dest_path}")
+
+        except Exception as e:
+            # Never crash the bot
+            print(f"[REPLAY_WARN] Replay organization failed (non-critical): {e}")
+
+    # =========================================================================
+    # Feature 85: Build Order Timing Log
+    # =========================================================================
+    def _track_build_order(self) -> None:
+        """Track key building/upgrade completions with game time."""
+        if not hasattr(self, 'structures'):
+            return
+
+        # Key structures to track
+        key_structures = {
+            "SPAWNINGPOOL", "LAIR", "HIVE", "ROACHWARREN", "BANELINGNEST",
+            "HYDRALISKDEN", "SPIRE", "GREATERSPIRE", "INFESTATIONPIT",
+            "ULTRALISKCAVERN", "LURKERDENMP", "EVOLUTIONCHAMBER",
+            "NYDUSNETWORK", "EXTRACTOR", "HATCHERY",
+        }
+
+        game_time = getattr(self, 'time', 0.0)
+
+        for structure in self.structures:
+            try:
+                if structure.tag in self._tracked_structure_tags:
+                    continue
+                if not structure.is_ready:
+                    continue
+
+                struct_name = structure.type_id.name.upper()
+
+                if struct_name in key_structures:
+                    self._tracked_structure_tags.add(structure.tag)
+                    self._build_order_log.append({
+                        "structure": struct_name,
+                        "game_time_seconds": round(game_time, 1),
+                        "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
+                        "position": {"x": round(structure.position.x, 1), "y": round(structure.position.y, 1)},
+                    })
+
+                    # Track expansions
+                    if struct_name == "HATCHERY":
+                        self._expansions_built = getattr(self, '_expansions_built', 0) + 1
+
+            except Exception:
+                continue
+
+    def _save_build_order_log(self) -> None:
+        """Save build order log to JSON at game end."""
+        if not self._build_order_log:
+            return
+
+        logs_dir = Path(__file__).parent / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        game_id = getattr(self, 'game_count', 0)
+        timestamp_str = time.strftime("%Y%m%d_%H%M%S")
+        filepath = logs_dir / f"build_order_{game_id}_{timestamp_str}.json"
+
+        build_data = {
+            "game_id": game_id,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "build_order": self._build_order_log,
+        }
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(build_data, f, indent=2, ensure_ascii=False)
+
+        print(f"[BUILD_ORDER] Saved {len(self._build_order_log)} entries to {filepath.name}")
+
+    # =========================================================================
+    # Feature 86: Unit Lost Tracking
+    # =========================================================================
+    async def on_unit_destroyed(self, unit_tag: int):
+        """Track which of our units died, what type, and when."""
+        try:
+            # Check if the destroyed unit was one of ours by checking known tags
+            # The bot framework calls this for ALL destroyed units, so we need to
+            # filter for our own units only.
+            game_time = getattr(self, 'time', 0.0)
+
+            # Try to find unit info from our cached data
+            unit_info = None
+            if hasattr(self, '_known_unit_tags') and unit_tag in self._known_unit_tags:
+                unit_info = self._known_unit_tags[unit_tag]
+
+            # If we don't have cached info, try to identify if it was ours
+            # by checking if the tag was in our previous units
+            if unit_info is None:
+                # Fallback: we can't determine unit type without caching
+                # but we still record the tag loss
+                return
+
+            self._units_lost.append({
+                "unit_type": unit_info.get("type", "UNKNOWN"),
+                "game_time_seconds": round(game_time, 1),
+                "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
+                "position": unit_info.get("position", None),
+            })
+        except Exception:
+            pass
+
+    def _reset_all_managers(self):
+        """★ 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) ★"""
+        reset_targets = [
+            ("unit_authority", "UnitAuthority"),
+            ("combat", "CombatManager"),
+            ("strategy_manager", "StrategyManager"),
+            ("economy", "EconomyManager"),
+            ("personality", "Personality"),
+            ("defeat_detection", "DefeatDetection"),
+            ("defense_coordinator", "DefenseCoordinator"),
+            ("overlord_safety", "OverlordSafety"),
+            ("micro_v3", "MicroController"),
+        ]
+        for attr, name in reset_targets:
+            mgr = getattr(self, attr, None)
+            if mgr and hasattr(mgr, "reset"):
+                try:
+                    mgr.reset()
+                except Exception as e:
+                    print(f"[RESET_WARN] {name}.reset() failed: {e}")
+
+        # ★ 누적 가능한 dict/set/list 직접 초기화
+        for attr in ["_step_integrator"]:
+            if hasattr(self, attr):
+                setattr(self, attr, None)
+
+        # DataCacheManager 초기화
+        if hasattr(self, "data_cache") and self.data_cache:
+            if hasattr(self.data_cache, "cache"):
+                self.data_cache.cache.clear()
+
+        # ★ 로거 핸들러 누적 방지
+        try:
+            from utils.logger import reset_all_loggers
+            reset_all_loggers()
+        except Exception:
+            pass
+
+        print("[RESET] All managers reset for next episode")
 
 
 # How to integrate into existing WickedZergBotPro class:

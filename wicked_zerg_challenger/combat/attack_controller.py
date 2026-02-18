@@ -114,7 +114,7 @@ class AttackController:
                         except Exception:
                             continue
 
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     self.logger.info(f"[{int(game_time)}s] ★ MULTI-ATTACK: {num_groups} groups attacking {len(attack_targets)} targets")
             else:
                 # 단일 타겟 공격
@@ -127,12 +127,12 @@ class AttackController:
                     except Exception:
                         continue
 
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     target_name = getattr(attack_target, "name", str(attack_target)[:30])
                     self.logger.info(f"[{int(game_time)}s] Attacking {target_name} with {army_supply} supply army ({attack_count} units ordered)")
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.warning(f"Offensive attack error: {e}")
 
     def find_multiple_attack_targets(self) -> List:

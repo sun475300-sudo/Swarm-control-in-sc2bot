@@ -84,7 +84,7 @@ class HiveTechMaximizer:
                 self._print_statistics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[HIVE_TECH] Error: {e}")
 
     def _check_hive_status(self, game_time: float):

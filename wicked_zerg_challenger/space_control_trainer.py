@@ -83,7 +83,7 @@ class SpaceControlTrainer:
                 self._print_statistics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[SPACE_CONTROL] Error: {e}")
 
     def _discover_destructibles(self):

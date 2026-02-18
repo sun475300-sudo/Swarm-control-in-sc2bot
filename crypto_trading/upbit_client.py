@@ -3,6 +3,7 @@ Upbit API Client Wrapper
 - pyupbit 라이브러리 위에 안전한 래핑 레이어
 - 에러 핸들링, 로깅, rate-limit 보호
 """
+import math
 import time
 import logging
 import threading
@@ -43,6 +44,18 @@ class UpbitClient:
                 time.sleep(self._min_interval - elapsed)
             self._last_request_time = time.time()
 
+    def _retry(self, fn, *args, max_attempts: int = 3, **kwargs):
+        """재시도 래퍼 — 최대 max_attempts회, 지수 백오프"""
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return fn(*args, **kwargs)
+            except Exception as e:
+                if attempt == max_attempts:
+                    raise
+                wait = 0.5 * (2 ** (attempt - 1))
+                logger.warning(f"API 재시도 {attempt}/{max_attempts} ({fn.__name__}): {e}, {wait:.1f}s 후 재시도")
+                time.sleep(wait)
+
     # ─────────── 시세 조회 (공개 API) ───────────
 
     def get_tickers(self, fiat: str = "KRW") -> list:
@@ -55,7 +68,7 @@ class UpbitClient:
         """단일 코인 현재가 조회"""
         self._throttle()
         try:
-            price = pyupbit.get_current_price(ticker)
+            price = self._retry(pyupbit.get_current_price, ticker)
             return float(price) if price else None
         except Exception as e:
             logger.error(f"시세 조회 실패 ({ticker}): {e}")
@@ -75,7 +88,7 @@ class UpbitClient:
         """OHLCV 캔들 데이터 (DataFrame 반환)"""
         self._throttle()
         try:
-            df = pyupbit.get_ohlcv(ticker, interval=interval, count=count)
+            df = self._retry(pyupbit.get_ohlcv, ticker, interval=interval, count=count)
             return df
         except Exception as e:
             logger.error(f"OHLCV 조회 실패 ({ticker}): {e}")
@@ -97,7 +110,7 @@ class UpbitClient:
         """전체 잔고 조회"""
         self._throttle()
         try:
-            result = self._get_upbit().get_balances()
+            result = self._retry(self._get_upbit().get_balances)
             if not result:
                 logger.warning("잔고 조회 결과가 비어있음 - API 키 또는 네트워크 확인 필요")
             return result if result else []
@@ -129,6 +142,7 @@ class UpbitClient:
         """총 보유 자산 KRW 환산 가치"""
         balances = self.get_balances()
         total = 0.0
+        coin_amounts = {}
         for b in balances:
             currency = b.get("currency", "")
             balance = float(b.get("balance", 0))
@@ -140,7 +154,11 @@ class UpbitClient:
                 total += amount
             else:
                 ticker = f"KRW-{currency}"
-                price = self.get_current_price(ticker)
+                coin_amounts[ticker] = amount
+        if coin_amounts:
+            prices = self.get_prices(list(coin_amounts.keys()))
+            for ticker, amount in coin_amounts.items():
+                price = prices.get(ticker, 0)
                 if price:
                     total += amount * price
         return total
@@ -149,6 +167,7 @@ class UpbitClient:
 
     def buy_market_order(self, ticker: str, krw_amount: float) -> Optional[dict]:
         """시장가 매수 (KRW 금액 지정)"""
+        krw_amount = math.floor(krw_amount)  # #37 주문 금액 정수 내림
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 시장가 매수: {ticker} / {krw_amount:,.0f}원")
             return {"dry_run": True, "side": "bid", "ticker": ticker, "price": krw_amount}

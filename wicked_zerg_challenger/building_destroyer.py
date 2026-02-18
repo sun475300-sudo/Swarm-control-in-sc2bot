@@ -87,7 +87,7 @@ class BuildingDestroyer:
                 self._log_status()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Building destroyer error: {e}")
 
     def _update_known_buildings(self):
@@ -260,7 +260,7 @@ class RapidVictorySystem:
                 await self._execute_rapid_victory()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Rapid victory error: {e}")
 
     async def _execute_rapid_victory(self):

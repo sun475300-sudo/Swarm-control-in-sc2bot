@@ -97,7 +97,7 @@ class BuildOrderOptimizer:
                 self._track_milestones()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[BUILD_ORDER] Error: {e}")
 
     # ========================================

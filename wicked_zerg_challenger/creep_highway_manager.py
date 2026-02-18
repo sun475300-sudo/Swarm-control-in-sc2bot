@@ -77,7 +77,7 @@ class CreepHighwayManager:
                 await self._expand_toward_enemy(iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[CREEP_HIGHWAY] Error: {e}")
 
     async def _update_highway_plan(self):
