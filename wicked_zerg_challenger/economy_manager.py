@@ -20,6 +20,7 @@ except ImportError:  # Fallbacks for tooling environments
 
 from local_training.economy_combat_balancer import EconomyCombatBalancer
 from config.unit_configs import EconomyConfig
+from utils.logger import get_logger
 
 
 class EconomyManager:
@@ -40,6 +41,7 @@ class EconomyManager:
     def __init__(self, bot):
         self.bot = bot
         self.balancer = EconomyCombatBalancer(bot)
+        self.logger = get_logger("EconomyManager")
 
         # ★ Blackboard 연동 ★
         self.blackboard = getattr(bot, "blackboard", None)
@@ -157,10 +159,10 @@ class EconomyManager:
 
         # Log warning on over-reservation (Logic Bug Detection)
         if available_mins < 0 and self.bot.iteration % 100 == 0:
-            print(f"[ECONOMY_WARN] Negative minerals detected! ({available_mins}) Reserved: {self._reserved_minerals}")
+            self.logger.warning(f"[ECONOMY_WARN] Negative minerals detected! ({available_mins}) Reserved: {self._reserved_minerals}")
         
         if available_gas < 0 and self.bot.iteration % 100 == 0:
-             print(f"[ECONOMY_WARN] Negative gas detected! ({available_gas}) Reserved: {self._reserved_gas}")
+             self.logger.warning(f"[ECONOMY_WARN] Negative gas detected! ({available_gas}) Reserved: {self._reserved_gas}")
 
         return max(0, available_mins), max(0, available_gas)
 
@@ -283,7 +285,7 @@ class EconomyManager:
                                         self.bot.do(w.gather(nearby_minerals.closest_to(w)))
 
                         self._last_gas_cut_time = self.bot.time
-                        print(f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})")
+                        self.logger.info(f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})")
 
     async def _optimize_early_worker_split(self) -> None:
         """
@@ -345,10 +347,10 @@ class EconomyManager:
                     assigned_count += 1
 
             self._early_split_done = True
-            print(f"[ECONOMY] Early worker split completed: {assigned_count} workers distributed")
+            self.logger.info(f"[ECONOMY] Early worker split completed: {assigned_count} workers distributed")
 
         except Exception as e:
-            print(f"[ECONOMY_WARN] Early worker split failed: {e}")
+            self.logger.warning(f"[ECONOMY_WARN] Early worker split failed: {e}")
 
     async def _train_overlord_if_needed(self) -> None:
         # [FIX] Prevent execution multiple times per frame
@@ -513,7 +515,7 @@ class EconomyManager:
                 self.bot.do(larva_unit.train(UnitTypeId.DRONE))
         except Exception as e:
             game_time = getattr(self.bot, "time", 0.0)
-            print(f"[ECONOMY_WARN] [{int(game_time)}s] Drone train failed: {e}")
+            self.logger.warning(f"[ECONOMY_WARN] [{int(game_time)}s] Drone train failed: {e}")
             return
 
     async def _distribute_workers_to_gas(self) -> None:
@@ -656,9 +658,9 @@ class EconomyManager:
                     )
                     game_time = getattr(self.bot, "time", 0)
                     reason = "COMBAT/GAS_OVERFLOW" if (in_combat or gas_overflow) else "normal"
-                    print(f"[ECONOMY] [{int(game_time)}s] Building MACRO HATCHERY ({reason}, gas: {gas}, larva: {total_larva})")
+                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] Building MACRO HATCHERY ({reason}, gas: {gas}, larva: {total_larva})")
             except (AttributeError, TypeError, ValueError) as e:
-                print(f"[ECONOMY_WARN] Macro hatchery placement failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Macro hatchery placement failed: {e}")
 
     async def _find_macro_hatch_location(self, main_base):
         """Find safe location for macro hatchery near main base."""
@@ -692,7 +694,7 @@ class EconomyManager:
                         continue
 
         except (AttributeError, TypeError, ValueError) as e:
-            print(f"[ECONOMY_WARN] Macro hatch location search failed: {e}")
+            self.logger.warning(f"[ECONOMY_WARN] Macro hatch location search failed: {e}")
 
         return None
 
@@ -732,7 +734,7 @@ class EconomyManager:
                                 break
         except Exception as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Mineral optimization failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Mineral optimization failed: {e}")
 
     async def _redistribute_mineral_workers(self) -> None:
         """
@@ -833,7 +835,7 @@ class EconomyManager:
                             continue
 
                 if workers_moved > 0:
-                    print(f"[ECONOMY] [{int(current_time)}s] Moved {workers_moved} workers from depleted base")
+                    self.logger.info(f"[ECONOMY] [{int(current_time)}s] Moved {workers_moved} workers from depleted base")
 
             # Second: Normal redistribution for over/under-saturated bases
             over_saturated = []
@@ -886,7 +888,7 @@ class EconomyManager:
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
 
     async def _prevent_resource_banking(self) -> None:
         """
@@ -945,7 +947,7 @@ class EconomyManager:
                                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
                                         minerals -= 75
                                     except Exception as e:
-                                        print(f"[ECONOMY_WARN] Spore build failed: {e}")
+                                        self.logger.warning(f"[ECONOMY_WARN] Spore build failed: {e}")
 
                         # 기지 당 가시촉수 1개 유지 (미네랄 2000+ 일 때만)
                         if minerals > 2000:
@@ -961,7 +963,7 @@ class EconomyManager:
                                             await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
                                             minerals -= 100
                                         except Exception as e:
-                                            print(f"[ECONOMY_WARN] Spine build failed: {e}")
+                                            self.logger.warning(f"[ECONOMY_WARN] Spine build failed: {e}")
 
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
@@ -1049,7 +1051,7 @@ class EconomyManager:
 
         except (AttributeError, TypeError) as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Idle worker assignment failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Idle worker assignment failed: {e}")
 
     async def _unified_expansion_check(self, iteration: int) -> None:
         """
@@ -1147,7 +1149,7 @@ class EconomyManager:
 
         if minerals < min_minerals:
             if int(game_time) % 30 == 0:
-                print(f"[FORCE EXPAND] ★ {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) ★")
+                self.logger.info(f"[FORCE EXPAND] ★ {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) ★")
             return
 
         # ★ OPTIMIZED: 동시 확장 허용 (Config 기반) ★
@@ -1165,7 +1167,7 @@ class EconomyManager:
         # 이미 건설 중인 해처리가 max_pending 이상이면 중단
         if pending >= max_pending:
             if int(game_time) % 30 == 0:
-                print(f"[FORCE EXPAND] {reason} but already expanding (pending: {pending}/{max_pending})")
+                self.logger.info(f"[FORCE EXPAND] {reason} but already expanding (pending: {pending}/{max_pending})")
             return
 
         # ★ 2026-01-26 FIX: 쿨다운 체크 (중복 시도 방지) ★
@@ -1174,7 +1176,7 @@ class EconomyManager:
             return  # 너무 최근에 시도했으면 스킵
 
         # ★ 강제 확장 실행 ★
-        print(f"[FORCE EXPAND] ★★★ {reason} - FORCING EXPANSION NOW! ★★★")
+        self.logger.info(f"[FORCE EXPAND] ★★★ {reason} - FORCING EXPANSION NOW! ★★★")
 
         # ★ 2026-01-26 FIX: 확장 시도 시간 기록 ★
         self._last_expansion_attempt_time = game_time
@@ -1184,10 +1186,10 @@ class EconomyManager:
             if hasattr(self.bot, "expand_now"):
                 result = await self.bot.expand_now()
                 if result is not False:
-                    print(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
+                    self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
                     expansion_success = True
                 else:
-                    print(f"[FORCE EXPAND] expand_now returned False")
+                    self.logger.info(f"[FORCE EXPAND] expand_now returned False")
             else:
                 # expand_now가 없으면 직접 위치 찾아서 건설
                 # ★★★ USE GOLD PRIORITY ★★★
@@ -1198,13 +1200,13 @@ class EconomyManager:
                         is_gold = self._is_gold_expansion(expansion_locations)
                         gold_marker = "💰 GOLD" if is_gold else ""
                         self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
-                        print(f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS")
+                        self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS")
                         expansion_success = True
         except Exception as e:
-            print(f"[FORCE EXPAND] Failed: {e}")
+            self.logger.info(f"[FORCE EXPAND] Failed: {e}")
 
         if not expansion_success:
-            print(f"[FORCE EXPAND] ALL METHODS FAILED")
+            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
 
     async def _check_proactive_expansion(self) -> None:
         """
@@ -1226,7 +1228,7 @@ class EconomyManager:
             # 위협이 높으면 확장 시도 중단 (안정성 우선)
             if self.blackboard.threat.level >= ThreatLevel.HIGH:
                 if self.bot.iteration % 100 == 0:
-                    print(f"[ECONOMY] Proactive expansion paused due to HIGH THREAT")
+                    self.logger.info(f"[ECONOMY] Proactive expansion paused due to HIGH THREAT")
                 return
 
         game_time = self.bot.time  # 게임 시간 (초)
@@ -1242,7 +1244,7 @@ class EconomyManager:
         if base_count < 4 and game_time >= 120 and minerals >= 250:
             should_expand = True
             expand_reason = f"CRITICAL: Maintain 4+ bases! (current: {base_count}, time: {int(game_time)}s)"
-            print(f"[ECONOMY_CRITICAL] {expand_reason}")
+            self.logger.error(f"[ECONOMY_CRITICAL] {expand_reason}")
             # 바로 확장 실행 로직으로 이동 (아래 타이밍 조건 스킵)
 
         # 1베이스 → 2베이스 (내츄럴): ★★★ 빠르지만 안정적 (FAST & STABLE) ★★★
@@ -1317,7 +1319,7 @@ class EconomyManager:
             return  # 너무 최근에 시도했으면 스킵
 
         # ★ DEBUG: 확장 시도 로그 ★
-        print(f"[EXPANSION] [{int(game_time)}s] Trying to expand: {expand_reason}")
+        self.logger.info(f"[EXPANSION] [{int(game_time)}s] Trying to expand: {expand_reason}")
 
         # ★ 2026-01-26 FIX: 확장 시도 시간 기록 (시도할 때마다) ★
         self._last_expansion_attempt_time = game_time
@@ -1332,7 +1334,7 @@ class EconomyManager:
             else:
                 max_pending = 3 if minerals > 1000 else 2 if minerals > 600 else 1
             if pending >= max_pending:
-                print(f"[EXPANSION] [{int(game_time)}s] Already {pending} pending, max is {max_pending}")
+                self.logger.info(f"[EXPANSION] [{int(game_time)}s] Already {pending} pending, max is {max_pending}")
                 return
 
         # 비용 확인
@@ -1341,7 +1343,7 @@ class EconomyManager:
             self._last_expansion_attempt_time = game_time + 14.0  # 6초 기본 + 14초 = 20초 총 대기
             # ★ 로그 스팸 방지: 30초마다만 출력 ★
             if int(game_time) % 30 < 2:  # 30초 주기로 2초 이내에만 출력
-                print(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals}) - waiting 20s")
+                self.logger.info(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals}) - waiting 20s")
             return
 
         # ★ MACRO ECONOMY: 비상 모드여도 확장 계속 (매크로 최우선) ★
@@ -1354,7 +1356,7 @@ class EconomyManager:
                 # ★ 극심한 위협만 확장 차단 (적 15명 이상) ★
                 if nearby_enemies.amount >= 15:
                     if int(game_time) % 30 == 0:  # 30초마다만 로그
-                        print(f"[EXPANSION] [{int(game_time)}s] ★ SEVERE THREAT: {nearby_enemies.amount} enemies - expansion blocked ★")
+                        self.logger.info(f"[EXPANSION] [{int(game_time)}s] ★ SEVERE THREAT: {nearby_enemies.amount} enemies - expansion blocked ★")
                     return  # 심각한 위협: 확장 중단
 
         # ★ 그 외 모든 경우: 확장 계속 (매크로 경제 우선) ★
@@ -1368,12 +1370,12 @@ class EconomyManager:
                 result = await self.bot.expand_now()
                 # expand_now()가 성공하면 None 또는 True 반환
                 if result is not False:  # False가 아니면 성공으로 간주
-                    print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS")
+                    self.logger.info(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS")
                     expansion_success = True
                 else:
-                    print(f"[EXPAND] expand_now returned False (no valid location?)")
+                    self.logger.info(f"[EXPAND] expand_now returned False (no valid location?)")
         except Exception as e:
-            print(f"[EXPAND] expand_now failed: {e}")
+            self.logger.info(f"[EXPAND] expand_now failed: {e}")
 
         if not expansion_success:
             try:
@@ -1385,13 +1387,13 @@ class EconomyManager:
                         worker.build(UnitTypeId.HATCHERY, gold_pos)
                         is_gold = self._is_gold_expansion(gold_pos)
                         gold_tag = " [GOLD!]" if is_gold else ""
-                        print(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS")
+                        self.logger.info(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS")
                         expansion_success = True
             except Exception as e:
-                print(f"[EXPAND] Gold expansion failed: {e}")
+                self.logger.info(f"[EXPAND] Gold expansion failed: {e}")
 
         if not expansion_success:
-            print(f"[EXPAND] ALL METHODS FAILED - Check bot state")
+            self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
 
     async def _get_hidden_expansion_location(self) -> Optional[Point2]:
         """
@@ -1483,7 +1485,7 @@ class EconomyManager:
                             self.bot.do(worker.build(UnitTypeId.HATCHERY, target_pos))
                     
                     game_time = getattr(self.bot, "time", 0)
-                    print(f"[ECONOMY] [{int(game_time)}s] ★ Expanding ({method}): {reason} @ {target_pos} ★")
+                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] ★ Expanding ({method}): {reason} @ {target_pos} ★")
 
                     # ★ Release resources after successful build command ★
                     if reserved and hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
@@ -1496,7 +1498,7 @@ class EconomyManager:
                         await self.bot.resource_manager.release("EconomyManager_Expansion")
 
         except Exception as e:
-            print(f"[ECONOMY] Smart expansion failed: {e}")
+            self.logger.info(f"[ECONOMY] Smart expansion failed: {e}")
             # ★ Release resources on exception ★
             if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
                 try:
@@ -1589,13 +1591,13 @@ class EconomyManager:
 
             # 2분 지났는데 앞마당 없으면 즉시 확장 (미네랄 600+ - 안정적 확장)
             if townhalls.amount < 2 and game_time > 120 and minerals >= 600:
-                print(f"[ECONOMY] ★ CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) ★")
+                self.logger.error(f"[ECONOMY] ★ CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) ★")
                 if hasattr(self.bot, "expand_now"):
                     try:
                         await self.bot.expand_now()
-                        print(f"[ECONOMY] ★ Natural expansion started successfully! ★")
+                        self.logger.info(f"[ECONOMY] ★ Natural expansion started successfully! ★")
                     except Exception as e:
-                        print(f"[ECONOMY] ★ Expansion failed: {e} ★")
+                        self.logger.info(f"[ECONOMY] ★ Expansion failed: {e} ★")
                 return
 
             # ★ FAST EXPANSION: 동시 확장 허용 ★
@@ -1631,7 +1633,7 @@ class EconomyManager:
             await self._perform_smart_expansion(expand_reason, force_hidden=force_hidden)
 
         except (AttributeError, TypeError, ValueError) as e:
-            print(f"[ECONOMY_WARN] Expansion on depletion check failed: {e}")
+            self.logger.warning(f"[ECONOMY_WARN] Expansion on depletion check failed: {e}")
 
     async def _manual_expansion(self, game_time: float, reason: str) -> None:
         """
@@ -1641,7 +1643,7 @@ class EconomyManager:
         ★★★ IMPROVED: Gold base priority ★★★
         """
         if not hasattr(self.bot, "workers") or not self.bot.workers:
-            print(f"[MANUAL EXPAND] No workers available!")
+            self.logger.info(f"[MANUAL EXPAND] No workers available!")
             return
 
         # 확장 가능한 위치 찾기
@@ -1649,23 +1651,23 @@ class EconomyManager:
             # ★★★ USE GOLD PRIORITY ★★★
             expansion_locations = await self._get_best_expansion_with_gold_priority()
             if not expansion_locations:
-                print(f"[MANUAL EXPAND] No expansion locations found!")
+                self.logger.info(f"[MANUAL EXPAND] No expansion locations found!")
                 return
 
             # 가장 가까운 일꾼 찾기
             worker = self.bot.workers.closest_to(expansion_locations)
             if not worker:
-                print(f"[MANUAL EXPAND] No worker found!")
+                self.logger.info(f"[MANUAL EXPAND] No worker found!")
                 return
 
             # 해처리 건설 명령
             is_gold = self._is_gold_expansion(expansion_locations)
             gold_marker = "💰 GOLD" if is_gold else ""
             self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
-            print(f"[MANUAL EXPAND] [{int(game_time)}s] ★ {reason} {gold_marker} ★ (Manual expansion)")
+            self.logger.info(f"[MANUAL EXPAND] [{int(game_time)}s] ★ {reason} {gold_marker} ★ (Manual expansion)")
 
         except Exception as e:
-            print(f"[MANUAL EXPAND] Exception: {e}")
+            self.logger.info(f"[MANUAL EXPAND] Exception: {e}")
 
     def _is_gold_expansion(self, position) -> bool:
         """
@@ -1870,8 +1872,8 @@ class EconomyManager:
 
                 # 미네랄 과잉 로그 (30초마다)
                 if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                    print(f"[ECONOMY] [{int(game_time)}s] Resource banking: {minerals}M / {gas}G")
-                    print(f"[ECONOMY]   Larva: {larva_count}, Avg per base: {avg_larva:.1f}")
+                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] Resource banking: {minerals}M / {gas}G")
+                    self.logger.info(f"[ECONOMY]   Larva: {larva_count}, Avg per base: {avg_larva:.1f}")
 
                 # ★★★ IMPROVED: 미네랄 과잉 → 스마트 확장 ★★★
                 # 2000+ → 1500+ 로 완화하여 더 빨리 확장
@@ -1902,7 +1904,7 @@ class EconomyManager:
 
         except Exception as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Resource banking prevention error: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Resource banking prevention error: {e}")
 
     def _update_resource_reservations(self) -> None:
         """
@@ -1952,7 +1954,7 @@ class EconomyManager:
 
         except (AttributeError, TypeError) as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""
@@ -1977,12 +1979,12 @@ class EconomyManager:
                     if workers:
                         worker = workers.closest_to(geyser)
                         self.bot.do(worker.build_gas(geyser))
-                        print(f"[ECONOMY] Building extractor (gas shortage)")
+                        self.logger.info(f"[ECONOMY] Building extractor (gas shortage)")
                         return  # 한 번에 하나만
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Extractor building failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Extractor building failed: {e}")
 
     async def _optimize_gas_timing(self) -> None:
         """
@@ -2019,7 +2021,7 @@ class EconomyManager:
                     if self.bot.already_pending(UnitTypeId.EXTRACTOR) == 0:
                         if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                             await self._build_extractors()
-                            print(f"[ECONOMY] [{int(game_time)}s] ★ First gas timing (vs {race_name}) ★")
+                            self.logger.info(f"[ECONOMY] [{int(game_time)}s] ★ First gas timing (vs {race_name}) ★")
 
             # ★ 두 번째 가스 타이밍 (2분) ★
             elif game_time >= 120 and game_time < 150:  # 2분-2분30초
@@ -2029,7 +2031,7 @@ class EconomyManager:
                 if gas_count + pending_gas < 2:
                     if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                         await self._build_extractors()
-                        print(f"[ECONOMY] [{int(game_time)}s] ★ Second gas timing ★")
+                        self.logger.info(f"[ECONOMY] [{int(game_time)}s] ★ Second gas timing ★")
 
             # ★ 확장 가스 (4분 이후) ★
             elif game_time >= 240:
@@ -2052,7 +2054,7 @@ class EconomyManager:
 
         except Exception as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Gas timing optimization failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Gas timing optimization failed: {e}")
 
     def get_resource_status(self) -> dict:
         """현재 자원 상태 반환"""
@@ -2108,9 +2110,9 @@ class EconomyManager:
             self._target_drone_count = min(ideal_workers, 75)
 
             if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
-                print(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Worker deficit: {worker_deficit} ★")
-                print(f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}")
-                print(f"[ECONOMY RECOVERY]   Prioritizing drone production...")
+                self.logger.info(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Worker deficit: {worker_deficit} ★")
+                self.logger.info(f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}")
+                self.logger.info(f"[ECONOMY RECOVERY]   Prioritizing drone production...")
 
         elif worker_deficit <= 0:
             # 드론 포화 → unified expansion이 처리
@@ -2149,9 +2151,9 @@ class EconomyManager:
                     gold_marker = "💰 GOLD" if is_gold else "Normal"
 
                     await self.bot.build(UnitTypeId.HATCHERY, exp_pos)
-                    print(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Expanding for growth ({gold_marker}, bases: {base_count}) ★")
+                    self.logger.info(f"[ECONOMY RECOVERY] [{int(game_time)}s] ★ Expanding for growth ({gold_marker}, bases: {base_count}) ★")
         except (AttributeError, TypeError, ValueError) as e:
-            print(f"[ECONOMY_WARN] Expansion for growth failed: {e}")
+            self.logger.warning(f"[ECONOMY_WARN] Expansion for growth failed: {e}")
 
     async def _predict_and_expand(self) -> None:
         """
@@ -2194,16 +2196,16 @@ class EconomyManager:
 
                     if pending == 0 and base_count < 5:
                         if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                            print(f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min")
-                            print(f"[ECONOMY PREDICTION]   Remaining minerals: {total_remaining}")
-                            print(f"[ECONOMY PREDICTION]   Triggering pre-emptive expansion...")
+                            self.logger.info(f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min")
+                            self.logger.info(f"[ECONOMY PREDICTION]   Remaining minerals: {total_remaining}")
+                            self.logger.info(f"[ECONOMY PREDICTION]   Triggering pre-emptive expansion...")
 
                         await self._trigger_expansion_for_growth()
                         break  # 한 번에 하나만
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
-                print(f"[ECONOMY_WARN] Predictive expansion failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Predictive expansion failed: {e}")
 
     def is_economy_recovery_mode(self) -> bool:
         """경제 회복 모드 여부"""
@@ -2255,7 +2257,7 @@ class EconomyManager:
                         worker = workers.closest_to(pos)
                         if worker:
                             self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, pos))
-                            print(f"[DEFENSE] ★ Anti-Air Detected! Building Spore Crawler at {th.position} ★")
+                            self.logger.info(f"[DEFENSE] ★ Anti-Air Detected! Building Spore Crawler at {th.position} ★")
                             return # 한 번에 하나씩
 
         # 2. 히드라리스크 덴 테크 올리기 (지상 대공 핵심)
@@ -2265,7 +2267,7 @@ class EconomyManager:
                 if self.bot.structures(UnitTypeId.LAIR).ready.exists or self.bot.structures(UnitTypeId.HIVE).ready.exists:
                      if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
                         await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first)
-                        print(f"[DEFENSE] ★ Anti-Air Tech: Building Hydralisk Den! ★")
+                        self.logger.info(f"[DEFENSE] ★ Anti-Air Tech: Building Hydralisk Den! ★")
 
     async def _check_maynarding(self) -> None:
         """
@@ -2327,7 +2329,7 @@ class EconomyManager:
                 else:
                     self.bot.do(worker.move(target_hatch.position))
 
-            print(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base (safe)")
+            self.logger.info(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base (safe)")
             self.transferred_hatcheries.add(target_hatch.tag)
 
     # ========================================
@@ -2356,7 +2358,7 @@ class EconomyManager:
             
             # 로그 출력
             status = "SUCCESS" if start_time < 70 else "DELAYED"
-            print(f"[ECONOMY_TELEMETRY] First Expansion Started at {start_time:.2f}s ({status})")
+            self.logger.info(f"[ECONOMY_TELEMETRY] First Expansion Started at {start_time:.2f}s ({status})")
 
     async def _manage_expansion_blocking(self):
         """
@@ -2390,7 +2392,7 @@ class EconomyManager:
                  worker = candidates.first
                  self.expansion_block_worker_tag = worker.tag
                  self.expansion_block_active = True
-                 print(f"[ECONOMY] Sending Expansion Blocker Drone (Tag: {worker.tag})")
+                 self.logger.info(f"[ECONOMY] Sending Expansion Blocker Drone (Tag: {worker.tag})")
         
         # 3. 방해 실행
         if self.expansion_block_active and self.expansion_block_worker_tag:
@@ -2465,7 +2467,7 @@ class EconomyManager:
                 if workers:
                     worker = workers.first
                     self.bot.do(worker.gather(extractor))
-                    print(f"[ECONOMY] Boosting gas workers (Gas: {self.bot.vespene})")
+                    self.logger.info(f"[ECONOMY] Boosting gas workers (Gas: {self.bot.vespene})")
                     return
 
     async def _reduce_gas_workers(self):
@@ -2490,7 +2492,7 @@ class EconomyManager:
                         minerals = self.bot.mineral_field.closer_than(10, closest_th)
                         if minerals:
                             self.bot.do(worker.gather(minerals.closest_to(worker)))
-                            print(f"[ECONOMY] Reducing gas workers (Gas: {self.bot.vespene}, Min: {self.bot.minerals})")
+                            self.logger.info(f"[ECONOMY] Reducing gas workers (Gas: {self.bot.vespene}, Min: {self.bot.minerals})")
                             return
 
     async def _prevent_gas_overflow(self):
@@ -2508,7 +2510,7 @@ class EconomyManager:
             return
 
         # 가스가 넘침 - 가스 일꾼을 미네랄로 이동
-        print(f"[ECONOMY] ★ GAS OVERFLOW: {gas} (moving gas workers to minerals) ★")
+        self.logger.info(f"[ECONOMY] ★ GAS OVERFLOW: {gas} (moving gas workers to minerals) ★")
 
         extractors = self.bot.gas_buildings.ready
 
@@ -2550,12 +2552,12 @@ class EconomyManager:
         self.gas_boost_start_time = self.bot.time
         self.gas_boost_duration = duration
 
-        print(f"[ECONOMY] ★ GAS BOOST MODE ACTIVATED (duration: {duration}s) ★")
+        self.logger.info(f"[ECONOMY] ★ GAS BOOST MODE ACTIVATED (duration: {duration}s) ★")
 
     def disable_gas_boost_mode(self):
         """가스 부스트 모드 비활성화"""
         self.gas_boost_mode = False
-        print(f"[ECONOMY] Gas boost mode deactivated")
+        self.logger.info(f"[ECONOMY] Gas boost mode deactivated")
 
     def get_gas_stats(self) -> dict:
         """★ Phase 18: 가스 통계 반환 ★"""
@@ -2717,11 +2719,9 @@ class EconomyManager:
 
                 if transferred > 0:
                     game_time = getattr(self.bot, "time", 0.0)
-                    print(
-                        f"[ECONOMY] [{int(game_time)}s] 일꾼 재분배: "
+                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] 일꾼 재분배: "
                         f"{transferred}기 이전 "
-                        f"({source_th.position} -> {target_th.position})"
-                    )
+                        f"({source_th.position} -> {target_th.position})")
 
     def get_worker_distribution_stats(self) -> dict:
         """

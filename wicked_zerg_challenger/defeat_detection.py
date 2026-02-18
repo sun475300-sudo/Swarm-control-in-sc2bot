@@ -12,6 +12,7 @@ Defeat Detection System - 패배 직감 로직
 5. 기지 전멸 (townhalls == 0 and 건설 중인 해처리 없음)
 """
 
+import logging
 from typing import Dict, Optional, Tuple
 from sc2.position import Point2
 
@@ -63,6 +64,9 @@ class DefeatDetection:
         # 통계
         self.defeat_warnings = 0
         self.critical_moments = 0
+
+        # Logger
+        self.logger = logging.getLogger(__name__)
 
     def reset(self):
         """Reset defeat detection state between games"""
@@ -490,8 +494,10 @@ class DefeatDetection:
         old_threshold_seconds = getattr(self, '_surrender_threshold_ticks', 112) * tick_duration
         self._surrender_threshold_ticks = new_threshold
 
-        print(f"[DEFEAT] Surrender threshold changed: {old_threshold_seconds:.0f}s -> {seconds:.0f}s "
-              f"({new_threshold} ticks)")
+        self.logger.info(
+            "[DEFEAT] Surrender threshold changed: %.0fs -> %.0fs (%d ticks)",
+            old_threshold_seconds, seconds, new_threshold
+        )
 
     def get_defeat_level_name(self) -> str:
         """패배 수준 이름 반환"""
