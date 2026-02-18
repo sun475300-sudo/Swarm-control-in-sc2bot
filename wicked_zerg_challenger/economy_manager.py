@@ -154,19 +154,9 @@ class EconomyManager:
         if iteration < 50:
             await self._optimize_early_worker_split()
 
-        # ★★★ PRIORITY: 확장 체크를 가장 먼저 실행 (병력 생산보다 우선) ★★★
-        # ★ CRITICAL: 강제 확장 체크 (5초마다) ★
-        if iteration % 110 == 0:  # 5초마다 (10초 → 5초, 더 자주)
-            await self._force_expansion_if_stuck()
-
-        # PROACTIVE expansion check (every 33 frames = ~1.5 seconds)
-        # 10분(600초) 안에 3베이스 확보를 위한 사전 예방적 확장
-        if iteration % 33 == 0:
-            await self._check_proactive_expansion()
-
-        # Check for expansion needs when resources depleting (every 66 frames = ~3 seconds)
-        if iteration % 66 == 0:
-            await self._check_expansion_on_depletion()
+        # ★★★ UNIFIED EXPANSION CHECK: 단일 진입점으로 모든 확장 의사결정 ★★★
+        if iteration % 33 == 0:  # ~1.5초마다
+            await self._unified_expansion_check(iteration)
 
         # 확장 체크 후 드론/오버로드 생산 (자원 확보 후 생산)
         await self._train_overlord_if_needed()
@@ -331,7 +321,7 @@ class EconomyManager:
             print(f"[ECONOMY] Early worker split completed: {assigned_count} workers distributed")
 
         except Exception as e:
-            pass
+            print(f"[ECONOMY_WARN] Early worker split failed: {e}")
 
     async def _train_overlord_if_needed(self) -> None:
         # [FIX] Prevent execution multiple times per frame
@@ -1034,6 +1024,57 @@ class EconomyManager:
         except (AttributeError, TypeError) as e:
             # Idle worker assignment failed
             pass
+
+    async def _unified_expansion_check(self, iteration: int) -> None:
+        """
+        ★★★ UNIFIED EXPANSION DECISION POINT ★★★
+
+        모든 확장 로직을 단일 진입점으로 통합:
+        1. 강제 확장 (타이밍 기반 - 최고 우선순위)
+        2. 사전 확장 (타이밍 + 자원 기반)
+        3. 자원 고갈 확장 (미네랄 부족 기반)
+        4. 자원 과잉 확장 (미네랄 뱅킹 방지)
+
+        쿨다운: 6초 (중복 확장 방지)
+        """
+        if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
+            return
+
+        game_time = self.bot.time
+        base_count = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
+
+        # ★ 공통 쿨다운 체크 (모든 확장 시스템 공유) ★
+        time_since_last = game_time - self._last_expansion_attempt_time
+        if time_since_last < self._expansion_cooldown:
+            return
+
+        # ★ Blackboard 위협 체크: CRITICAL 위협 시 확장 중단 ★
+        if self.blackboard:
+            from blackboard import ThreatLevel
+            if self.blackboard.threat.level >= ThreatLevel.CRITICAL:
+                return
+
+        # ★ PRIORITY 1: 강제 확장 (타이밍 초과 시) ★
+        # 5초마다 한 번 (iteration % 110 ≈ 5초)
+        if iteration % 110 == 0:
+            await self._force_expansion_if_stuck()
+            return  # 강제 확장 시도했으면 다른 확장 스킵
+
+        # ★ PRIORITY 2: 타이밍 기반 사전 확장 ★
+        await self._check_proactive_expansion()
+        # proactive가 실제로 확장을 시도했는지 확인
+        if game_time - self._last_expansion_attempt_time < 1.0:
+            return  # 방금 확장 시도함
+
+        # ★ PRIORITY 3: 자원 고갈 대비 확장 (3초마다) ★
+        if iteration % 66 == 0:
+            await self._check_expansion_on_depletion()
+            if game_time - self._last_expansion_attempt_time < 1.0:
+                return
+
+        # ★ PRIORITY 4: 미래 자원 예측 확장 ★
+        if iteration % 66 == 0:
+            await self._predict_and_expand()
 
     async def _force_expansion_if_stuck(self) -> None:
         """
@@ -2046,15 +2087,8 @@ class EconomyManager:
                 print(f"[ECONOMY RECOVERY]   Prioritizing drone production...")
 
         elif worker_deficit <= 0:
-            # 드론 포화 → 확장 필요
+            # 드론 포화 → unified expansion이 처리
             self._economy_recovery_mode = False
-
-            # 확장 여부 체크
-            if worker_count >= base_count * 20:  # 기지당 20명 이상
-                await self._trigger_expansion_for_growth()
-
-        # ★ 자원 수입 예측 및 사전 확장 ★
-        await self._predict_and_expand()
 
     async def _trigger_expansion_for_growth(self) -> None:
         """
@@ -2238,22 +2272,37 @@ class EconomyManager:
             # Closest source base
             source_base = ready_bases.closest_to(target_hatch)
             
-            # Select workers to transfer - ★ OPTIMIZED: 6-8 → 10-16 (더 많은 일꾼) ★
+            # ★ SAFE MAYNARDING: 적정 인원만 이동 + 안전 체크 ★
             workers = self.bot.workers.filter(
                 lambda w: w.distance_to(source_base) < 10 and w.is_gathering
             )
 
-            if workers.amount < 10:  # ★ 6 → 10 (최소 인원 증가) ★
+            if workers.amount < 8:  # ★ 소스 기지에 최소 8명은 유지 ★
                 continue
 
-            transfer_count = min(workers.amount, 16)  # ★ 8 → 16 (ideal_harvesters 만큼) ★
-            # 2026-01-26 FIX: allow_less parameter not supported in this python-sc2 version
+            # ★ 안전 체크: 목적지 근처 적 확인 ★
+            enemies_near_target = self.bot.enemy_units.closer_than(15, target_hatch.position) if self.bot.enemy_units else []
+            if len(enemies_near_target) > 0:
+                continue  # 적이 있으면 이동 취소
+
+            # ★ 적정 인원: 소스 기지 포화도 유지하면서 이동 (최대 6명) ★
+            source_ideal = source_base.ideal_harvesters
+            excess = max(0, workers.amount - source_ideal)
+            transfer_count = min(excess, 6)  # ★ 16 → 6 (과도한 이동 방지) ★
+            if transfer_count < 2:
+                continue  # 이동할 일꾼이 2명 미만이면 스킵
+
             transfer_group = workers.take(transfer_count) if workers.amount >= transfer_count else workers
-            
+
+            # ★ 미네랄 gather 명령으로 이동 (도착 후 바로 채취) ★
+            target_minerals = self.bot.mineral_field.closer_than(10, target_hatch.position)
             for worker in transfer_group:
-                self.bot.do(worker.move(target_hatch.position))
-                
-            print(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base")
+                if target_minerals:
+                    self.bot.do(worker.gather(target_minerals.closest_to(target_hatch.position)))
+                else:
+                    self.bot.do(worker.move(target_hatch.position))
+
+            print(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base (safe)")
             self.transferred_hatcheries.add(target_hatch.tag)
 
     # ========================================
