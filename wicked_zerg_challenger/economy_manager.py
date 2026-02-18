@@ -909,32 +909,43 @@ class EconomyManager:
             # 2. 방어 건물 건설 (본진/멀티) - ★ 3베이스 이후에만! ★
             if can_build_defense and minerals > 1500 and hasattr(self.bot, "workers") and self.bot.workers:
                 for th in self.bot.townhalls.ready:
-                    # 기지 당 포자촉수 1개, 가시촉수 1개 유지
-                    spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
-                    if not spores.exists and self.bot.can_afford(UnitTypeId.SPORECRAWLER):
-                        pos = th.position.towards(self.bot.game_info.map_center, 5)
-                        worker = self.bot.workers.closest_to(pos)
-                        if worker:
-                            try:
-                                await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
-                                minerals -= 75
-                            except Exception as e:
-                                print(f"[ERROR] Spore build failed: {e}")
+                    # ★ 안전한 건설 위치: 미네랄 라인 근처 (맵 중앙 방향 X → 기지 뒤쪽) ★
+                    mineral_fields = self.bot.mineral_field.closer_than(10, th)
+                    if mineral_fields:
+                        mineral_center = mineral_fields.center
+                        base_pos = th.position
 
-                    if minerals > 2000:
-                        pass # 너무 많이 쌓이면 패스 (기존 로직 유지)
+                        # 기지 당 포자촉수 1개 유지
+                        spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
+                        if not spores.exists and self.bot.can_afford(UnitTypeId.SPORECRAWLER):
+                            # ★ 미네랄 라인 방향으로 건설 (안전한 위치) ★
+                            pos = base_pos.towards(mineral_center, 4)
+                            # ★ 안전 체크: 근처 적이 없는지 확인 ★
+                            enemies_near = self.bot.enemy_units.closer_than(15, pos) if self.bot.enemy_units else []
+                            if not enemies_near:
+                                worker = self.bot.workers.closest_to(pos)
+                                if worker:
+                                    try:
+                                        await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
+                                        minerals -= 75
+                                    except Exception as e:
+                                        print(f"[ECONOMY_WARN] Spore build failed: {e}")
 
-
-                        spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th)
-                        if not spines.exists and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
-                             pos = th.position.towards(self.bot.game_info.map_center, 6)
-                             worker = self.bot.workers.closest_to(pos)
-                             if worker:
-                                 try:
-                                     await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
-                                     minerals -= 100
-                                 except Exception as e:
-                                     print(f"[ERROR] Spine build failed: {e}")
+                        # 기지 당 가시촉수 1개 유지 (미네랄 2000+ 일 때만)
+                        if minerals > 2000:
+                            spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th)
+                            if not spines.exists and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
+                                # ★ 맵 중앙 방향으로 건설 (방어 최전방) ★
+                                pos = base_pos.towards(self.bot.game_info.map_center, 6)
+                                enemies_near = self.bot.enemy_units.closer_than(15, pos) if self.bot.enemy_units else []
+                                if not enemies_near:
+                                    worker = self.bot.workers.closest_to(pos)
+                                    if worker:
+                                        try:
+                                            await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
+                                            minerals -= 100
+                                        except Exception as e:
+                                            print(f"[ECONOMY_WARN] Spine build failed: {e}")
 
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
@@ -2169,11 +2180,19 @@ class EconomyManager:
                 # 기지 근처 10거리 내에 포자 촉수가 없으면 건설
                 spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
                 if not spores.exists and self.bot.already_pending(UnitTypeId.SPORECRAWLER) == 0:
-                    # 일꾼 찾기
+                    # ★ 안전한 위치에서 건설 (적이 없는 곳) ★
+                    enemies_near_base = self.bot.enemy_units.closer_than(10, th) if self.bot.enemy_units else []
+                    if len(enemies_near_base) > 3:
+                        continue  # 적이 너무 많으면 이 기지 건설 스킵 (일꾼 안전 우선)
+
                     workers = self.bot.workers.closer_than(20, th)
                     if workers:
-                        # 미네랄 쪽으로 약간 붙여서 건설 (일꾼 보호)
-                        pos = th.position.towards(self.bot.game_info.map_center, 4)
+                        # ★ 미네랄 라인 방향으로 건설 (안전한 위치) ★
+                        mineral_fields = self.bot.mineral_field.closer_than(10, th)
+                        if mineral_fields:
+                            pos = th.position.towards(mineral_fields.center, 4)
+                        else:
+                            pos = th.position.towards(self.bot.game_info.map_center, 4)
                         worker = workers.closest_to(pos)
                         if worker:
                             self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, pos))
