@@ -101,7 +101,7 @@ class SmartConsumeSystem:
                 self._print_report()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[SMART_CONSUME] Error: {e}")
 
     # ========================================

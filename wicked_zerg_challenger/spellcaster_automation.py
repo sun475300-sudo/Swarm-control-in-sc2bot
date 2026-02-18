@@ -155,7 +155,7 @@ class SpellCasterAutomation:
             self._cleanup_authorities()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[SPELLCASTER] Error: {e}")
 
     async def _queen_transfuse(self):

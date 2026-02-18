@@ -346,7 +346,7 @@ async def auto_trade_status() -> str:
         f"🤖 자동매매 상태: {running} ({dry})",
         f"  모드: {mode}",
         f"  관심 코인: {', '.join(status['watch_list'])}",
-        f"  체크 간격: {status['interval_sec']}초",
+        f"  체크 간격: {status['interval_seconds']}초",
         f"  매수 기준: {status.get('buy_threshold', 30):+d}점 | 매도 기준: {status.get('sell_threshold', -30):+d}점",
         f"  최대 포지션: {status.get('max_positions', 5)}개 | 쿨다운: {status.get('cooldown_minutes', 30)}분",
         f"  손절: {status['stop_loss_pct']}% / 익절: {status['take_profit_pct']}%",
@@ -360,11 +360,14 @@ async def auto_trade_status() -> str:
 @mcp.tool()
 async def set_trade_mode(mode: str = "dry") -> str:
     """매매 모드를 설정합니다. mode: 'dry'(모의매매), 'live'(실전매매)"""
+    prev_mode = "실전" if not config.DRY_RUN else "모의"
     if mode.lower() == "live":
         config.DRY_RUN = False
+        logger.warning(f"[감사] 매매 모드 변경: {prev_mode} → 실전매매")
         return "⚠️ 실전매매 모드로 전환되었습니다. 실제 주문이 실행됩니다!"
     else:
         config.DRY_RUN = True
+        logger.info(f"[감사] 매매 모드 변경: {prev_mode} → 모의매매")
         return "✅ 모의매매 모드로 전환되었습니다. 실제 주문은 실행되지 않습니다."
 
 
@@ -488,6 +491,112 @@ async def record_portfolio_snapshot() -> str:
 # ═══════════════════════════════════════════════════
 #  도움말
 # ═══════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════
+#  새 도구 (#29-#42)
+# ═══════════════════════════════════════════════════
+
+@mcp.tool()
+async def kimchi_premium(symbol: str = "KRW-BTC") -> str:
+    """김치 프리미엄(업비트 vs 글로벌 가격 차이)을 조회합니다."""
+    result = analyzer.get_kimchi_premium(symbol)
+    if "error" in result:
+        return f"김치 프리미엄 조회 실패: {result['error']}"
+    return (
+        f"김치 프리미엄 ({result['ticker']}):\n"
+        f"  업비트 KRW: {result['krw_price']:,.0f}원\n"
+        f"  글로벌 USD: ${result['global_usd_price']:,.2f}\n"
+        f"  환율 적용: {result['estimated_global_krw']:,.0f}원 (1USD={result['usd_krw_rate']}원)\n"
+        f"  프리미엄: {result['premium_pct']:+.2f}%"
+    )
+
+
+@mcp.tool()
+async def fear_greed_index() -> str:
+    """암호화폐 공포/탐욕 지수를 조회합니다."""
+    result = analyzer.get_fear_greed_index()
+    if result.get("error"):
+        return f"공포/탐욕 지수 조회 실패: {result.get('error')}"
+    return (
+        f"공포/탐욕 지수:\n"
+        f"  값: {result['value']}/100\n"
+        f"  분류: {result['classification']}\n"
+        f"  시점: {result['timestamp']}"
+    )
+
+
+@mcp.tool()
+async def market_summary_tool() -> str:
+    """전체 암호화폐 시장 요약 정보를 조회합니다."""
+    result = analyzer.get_market_summary()
+    if "error" in result:
+        return f"시장 요약 조회 실패: {result['error']}"
+    lines = [
+        f"시장 요약:",
+        f"  총 코인 수: {result['total_coins']}",
+        f"  상승: {result['rising_count']}  하락: {result['falling_count']}  보합: {result['flat_count']}",
+        f"  평균 변동률: {result['avg_change_pct']:+.2f}%",
+        f"  총 거래대금: {result['total_volume_krw']:,.0f}원",
+        "",
+        "  상승 상위 5:",
+    ]
+    for g in result.get("top_gainers", []):
+        lines.append(f"    {g['ticker']}: {g['price']:,.0f}원 ({g['change_pct']:+.2f}%)")
+    lines.append("  하락 상위 5:")
+    for l in result.get("top_losers", []):
+        lines.append(f"    {l['ticker']}: {l['price']:,.0f}원 ({l['change_pct']:+.2f}%)")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def trade_statistics(period: str = "all") -> str:
+    """거래 통계를 조회합니다. period: 'day', 'week', 'month', 'all'"""
+    stats = tracker.get_trade_statistics(period)
+    if stats.get("total_trades", 0) == 0:
+        return f"해당 기간({period}) 거래 내역이 없습니다."
+    return (
+        f"거래 통계 ({stats['period']}):\n"
+        f"  총 거래: {stats['total_trades']}회 (매수:{stats['buy_count']} / 매도:{stats['sell_count']})\n"
+        f"  승률: {stats['win_rate']}%\n"
+        f"  평균 수익률: {stats['avg_profit_pct']:+.2f}%\n"
+        f"  최대 연속 수익: {stats['max_consecutive_wins']}회\n"
+        f"  최대 연속 손실: {stats['max_consecutive_losses']}회\n"
+        f"  총 매수: {stats['total_buy_krw']:,.0f}원\n"
+        f"  총 매도: {stats['total_sell_krw']:,.0f}원\n"
+        f"  손익: {stats['pnl_krw']:+,.0f}원"
+    )
+
+
+@mcp.tool()
+async def set_price_alert(symbol: str, above: float = 0, below: float = 0) -> str:
+    """가격 알림을 설정합니다. above: 상한 가격, below: 하한 가격 (0이면 미설정)"""
+    above_val = above if above > 0 else None
+    below_val = below if below > 0 else None
+    result = trader.set_price_alert(symbol, above=above_val, below=below_val)
+    if "error" in result:
+        return f"알림 설정 실패: {result['error']}"
+    alert = result['alert']
+    parts = [f"가격 알림 설정 완료: {result['ticker']}"]
+    if 'above' in alert:
+        parts.append(f"  상한: {alert['above']:,.0f}원 이상 시 알림")
+    if 'below' in alert:
+        parts.append(f"  하한: {alert['below']:,.0f}원 이하 시 알림")
+    return "\n".join(parts)
+
+
+@mcp.tool()
+async def set_trailing_stop_tool(symbol: str, trail_pct: float = 5.0) -> str:
+    """트레일링 스탑을 설정합니다. 최고가 대비 trail_pct% 하락 시 자동 매도."""
+    result = trader.set_trailing_stop(symbol, trail_pct)
+    if "error" in result:
+        return f"트레일링 스탑 설정 실패: {result['error']}"
+    return (
+        f"트레일링 스탑 설정 완료:\n"
+        f"  코인: {result['ticker']}\n"
+        f"  하락률: {result['trail_pct']}%\n"
+        f"  기준 최고가: {result['highest_price']:,.0f}원"
+    )
+
 
 @mcp.tool()
 async def crypto_help() -> str:

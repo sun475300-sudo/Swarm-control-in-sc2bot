@@ -65,7 +65,7 @@ class MultiBaseDefense:
             await self._emergency_base_defense(iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Multi-base defense error: {e}")
 
     async def _update_base_defense_status(self):

@@ -85,5 +85,67 @@ async def set_aggression_level(level: str) -> str:
     except Exception as e:
         return f"Failed to set aggression: {str(e)}"
 
+# ──────────────────────────────────────────────
+# #122  SC2 Bot Stats
+# ──────────────────────────────────────────────
+@mcp.tool()
+async def sc2_bot_stats() -> str:
+    """SC2 봇 전적 및 통계를 조회합니다. 로그 파일에서 승리/패배 기록을 집계합니다."""
+    try:
+        log_dir = os.path.join(SC2_DIR, "logs")
+        results_dir = os.path.join(SC2_DIR, "wicked_zerg_challenger", "logs")
+
+        wins = 0
+        losses = 0
+        draws = 0
+        games = 0
+        details = []
+
+        # Search multiple possible log locations
+        search_dirs = [log_dir, results_dir]
+        for sdir in search_dirs:
+            if not os.path.exists(sdir):
+                continue
+            for fname in os.listdir(sdir):
+                fpath = os.path.join(sdir, fname)
+                if not os.path.isfile(fpath):
+                    continue
+                try:
+                    with open(fpath, 'r', encoding='utf-8', errors='replace') as f:
+                        content = f.read()
+                    # Look for common result patterns in log files
+                    content_lower = content.lower()
+                    if 'result' in content_lower or 'victory' in content_lower or 'defeat' in content_lower:
+                        w = content_lower.count('victory') + content_lower.count('result.victory') + content_lower.count('result: win')
+                        l = content_lower.count('defeat') + content_lower.count('result.defeat') + content_lower.count('result: loss')
+                        d = content_lower.count('result.tie') + content_lower.count('result: draw')
+                        if w + l + d > 0:
+                            wins += w
+                            losses += l
+                            draws += d
+                            games += w + l + d
+                            details.append(f"  {fname}: {w}W / {l}L / {d}D")
+                except Exception:
+                    continue
+
+        if games == 0:
+            return "전적 데이터를 찾을 수 없습니다. 게임을 실행한 후 다시 확인하세요."
+
+        winrate = (wins / games * 100) if games > 0 else 0
+        summary = (
+            f"SC2 봇 전적 요약\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"총 게임: {games}판\n"
+            f"승리: {wins} | 패배: {losses} | 무승부: {draws}\n"
+            f"승률: {winrate:.1f}%\n"
+            f"━━━━━━━━━━━━━━━━━━━━"
+        )
+        if details:
+            summary += "\n\n파일별 상세:\n" + "\n".join(details[:20])
+        return summary
+    except Exception as e:
+        return f"전적 조회 실패: {e}"
+
+
 if __name__ == "__main__":
     mcp.run()

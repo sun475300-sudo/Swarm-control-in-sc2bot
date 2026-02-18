@@ -31,7 +31,7 @@ class SpatialOptimizer:
         self.logger = get_logger("SpatialOptimizer")
 
         # ★ 그리드 설정 ★
-        self.grid_size = grid_size  # 각 그리드 크기 (10x10)
+        self.grid_size = max(grid_size, 1)  # 각 그리드 크기 (10x10), 0 방지
         self.grids: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
 
         # ★ 유닛 위치 캐시 ★
@@ -58,7 +58,7 @@ class SpatialOptimizer:
             self._update_grids()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[SPATIAL_OPT] Error: {e}")
 
     def _update_grids(self):
@@ -236,8 +236,9 @@ class SpatialOptimizer:
 
             if len(nearby) >= min_cluster_size:
                 # 클러스터 중심 계산
-                center_x = sum(self.unit_positions[t].x for t in nearby) / len(nearby)
-                center_y = sum(self.unit_positions[t].y for t in nearby) / len(nearby)
+                _nearby_count = len(nearby)
+                center_x = sum(self.unit_positions[t].x for t in nearby) / _nearby_count if _nearby_count else 0
+                center_y = sum(self.unit_positions[t].y for t in nearby) / _nearby_count if _nearby_count else 0
                 center = Point2((center_x, center_y))
 
                 clusters.append((center, nearby))

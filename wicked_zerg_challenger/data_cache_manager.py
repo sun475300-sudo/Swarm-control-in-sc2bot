@@ -162,7 +162,7 @@ class DataCacheManager:
                 self.last_cleanup = current_time
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[DATA_CACHE] Error: {e}")
 
     def _cleanup_expired(self):

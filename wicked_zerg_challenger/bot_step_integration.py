@@ -352,10 +352,10 @@ class BotStepIntegrator:
             self.bot.queen_transfusion = None
 
         # Resource Manager (Thread-safe resource reservation)
-        if ResourceManager:
+        if ResourceManager and (not hasattr(self.bot, 'resource_manager') or self.bot.resource_manager is None):
             self.bot.resource_manager = ResourceManager(bot)
             print("[INIT] ResourceManager initialized (Phase 21 - Race condition fix)")
-        else:
+        elif not hasattr(self.bot, 'resource_manager'):
             self.bot.resource_manager = None
 
         # Spatial Query Optimizer (Performance optimization)
@@ -1177,7 +1177,7 @@ class BotStepIntegrator:
 
                     # 패배 직전이면 마지막 방어 시도 (항복보다 우선)
                     if defeat_status.get("last_stand_required", False):
-                        if iteration % 200 == 0:
+                        if iteration % 50 == 0:
                             print(f"[DEFEAT DETECTION] ★ 패배 직전! 마지막 방어 시도! ★")
                             print(f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}")
                             print(f"  - 이유: {defeat_status.get('defeat_reason', '알 수 없음')}")
@@ -1213,7 +1213,7 @@ class BotStepIntegrator:
                             print(f"[DEFEAT DETECTION] 위기 상황! - {defeat_status.get('defeat_reason', '알 수 없음')}")
 
                 except Exception as e:
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         print(f"[WARNING] Defeat Detection error: {e}")
                 finally:
                     self._logic_tracker.end_logic("DefeatDetection", start_time)
@@ -1271,8 +1271,7 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("TechCoordinator", start_time)
 
             # 2.9 Unit Authority Manager (Phase 10)
-            if hasattr(self.bot, "unit_authority"):
-                await self.bot.unit_authority.on_step(iteration)
+            # ★ REMOVED: 이미 0.006에서 실행됨 (중복 호출 방지) ★
 
             # 3. ProductionController (통합 생산 관리 - Dynamic Authority) ★★★
             # Blackboard 생산 큐를 우선순위에 따라 처리
@@ -1282,7 +1281,7 @@ class BotStepIntegrator:
                     await self.bot.production_controller.execute(iteration)
 
                     # 주기적으로 통계 출력
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         stats = self.bot.production_controller.get_production_stats()
                         print(f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}")
                 except Exception as e:
@@ -1304,7 +1303,7 @@ class BotStepIntegrator:
                     # 실제 생산은 ProductionController가 처리
                     await self.bot.unit_factory.on_step(iteration)
                 except Exception as e:
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         print(f"[WARNING] Unit factory error: {e}")
                 finally:
                     self._logic_tracker.end_logic("UnitFactory", start_time)
@@ -1544,7 +1543,7 @@ class BotStepIntegrator:
                             await self.bot.advanced_building_manager.build_defense_buildings_optimally()
                 except Exception as e:
                     success = False
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         print(f"[WARNING] Advanced Building Manager error: {e}")
                 finally:
                     self._logic_tracker.end_logic("AdvancedBuilding", start_time, success)
@@ -1572,7 +1571,7 @@ class BotStepIntegrator:
                                 )
                 except Exception as e:
                     success = False
-                    if iteration % 200 == 0:
+                    if iteration % 50 == 0:
                         print(f"[WARNING] Aggressive Tech Builder error: {e}")
                 finally:
                     self._logic_tracker.end_logic("AggressiveTech", start_time, success)
@@ -1735,6 +1734,9 @@ class BotStepIntegrator:
                         error_handler.error_counts["MicroV3"] = error_handler.error_counts.get("MicroV3", 0) + 1
                         if error_handler.error_counts["MicroV3"] <= error_handler.max_error_logs:
                             print(f"[ERROR] MicroV3 error: {e}")
+                        if error_handler.error_counts.get("MicroV3", 0) >= 5:
+                            print("[RECOVERY] MicroV3 disabled after 5 consecutive errors")
+                            self.bot.micro_v3 = None
                 finally:
                     self._logic_tracker.end_logic("MicroV3", start_time)
 
@@ -1994,7 +1996,11 @@ class BotStepIntegrator:
         success = True
 
         try:
-            await method(iteration)
+            # ★ FIX: sync 메서드도 안전하게 호출 (TypeError 방지)
+            if asyncio.iscoroutinefunction(method):
+                await method(iteration)
+            else:
+                method(iteration)
         except Exception as e:
             success = False
             if error_handler.debug_mode:
@@ -2194,7 +2200,7 @@ class BotStepIntegrator:
                     
         except Exception as e:
             success = False
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Hierarchical RL error: {e}")
         finally:
             self._logic_tracker.end_logic("HierarchicalRL", start_time, success)
@@ -2217,7 +2223,7 @@ class BotStepIntegrator:
                     self.bot._transformer_prediction = prediction
         except Exception as e:
             success = False
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Transformer model error: {e}")
         finally:
             self._logic_tracker.end_logic("Transformer", start_time, success)
@@ -2372,7 +2378,7 @@ class BotStepIntegrator:
                 await self._build_anti_air_tech(iteration, game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Emergency defense error: {e}")
 
     async def _build_anti_air_tech(self, iteration: int, game_time: float) -> None:
@@ -2476,7 +2482,7 @@ class BotStepIntegrator:
                     self.bot.queen_manager.creep_queen_bonus = 4  # 3 → 4
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Anti-air tech build error: {e}")
 
     def _calculate_air_threat_level(self) -> int:

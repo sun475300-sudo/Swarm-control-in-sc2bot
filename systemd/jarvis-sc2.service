@@ -1,0 +1,53 @@
+# ================================================
+# JARVIS SC2 MCP 서버 (#168)
+#
+# 설치 방법:
+#   sudo cp jarvis-sc2.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable jarvis-sc2
+#   sudo systemctl start jarvis-sc2
+#
+# 로그 확인:
+#   journalctl -u jarvis-sc2 -f
+# ================================================
+[Unit]
+Description=JARVIS StarCraft II MCP Server
+Documentation=https://github.com/your-org/Swarm-contol-in-sc2bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jarvis
+Group=jarvis
+WorkingDirectory=/opt/jarvis/sc2bot
+ExecStart=/opt/jarvis/venv/bin/python -u sc2_mcp_server.py
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+# 환경변수 파일에서 로드
+EnvironmentFile=-/opt/jarvis/sc2bot/.env
+Environment=PYTHONPATH=/opt/jarvis/sc2bot
+Environment=LOG_LEVEL=INFO
+Environment=SC2_DIR=/opt/jarvis/sc2bot
+
+# 로그 설정
+StandardOutput=append:/var/log/jarvis/sc2-stdout.log
+StandardError=append:/var/log/jarvis/sc2-stderr.log
+SyslogIdentifier=jarvis-sc2
+
+# 보안 강화 옵션
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/jarvis/sc2bot/logs /opt/jarvis/sc2bot/wicked_zerg_challenger/logs /var/log/jarvis
+PrivateTmp=true
+
+# 리소스 제한
+LimitNOFILE=4096
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

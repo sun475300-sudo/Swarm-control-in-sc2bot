@@ -167,3 +167,122 @@ class GameStatistics:
             print(f"  {key:40} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
 
         print("="*80 + "\n")
+
+    # =========================================================================
+    # Feature 82: Enhanced statistics from logs/game_results.json
+    # =========================================================================
+    def load(self) -> bool:
+        """
+        Load game results from logs/game_results.json (structured results).
+
+        Returns:
+            True if loaded successfully, False otherwise.
+        """
+        results_path = Path(__file__).parent / "logs" / "game_results.json"
+        if not results_path.exists():
+            self._structured_results = []
+            return False
+
+        try:
+            with open(results_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                self._structured_results = data
+            else:
+                self._structured_results = []
+            return True
+        except (json.JSONDecodeError, IOError, OSError) as e:
+            print(f"[GAME_STATS] Failed to load structured results: {e}")
+            self._structured_results = []
+            return False
+
+    def get_summary(self) -> dict:
+        """
+        Return a summary of all structured game results.
+
+        Returns:
+            Dictionary with:
+            - total_games, wins, losses, win_rate
+            - avg_game_duration
+            - win_rate_by_race (dict)
+            - recent_10_win_rate
+        """
+        results = getattr(self, '_structured_results', [])
+        total = len(results)
+        if total == 0:
+            return {
+                "total_games": 0,
+                "wins": 0,
+                "losses": 0,
+                "win_rate": 0.0,
+                "avg_game_duration": 0.0,
+                "win_rate_by_race": {},
+                "recent_10_win_rate": 0.0,
+            }
+
+        wins = sum(1 for r in results if r.get("result") == "win")
+        losses = sum(1 for r in results if r.get("result") == "loss")
+        win_rate = (wins / total * 100) if total > 0 else 0.0
+
+        # Average game duration
+        durations = [r.get("game_duration_seconds", 0) for r in results]
+        avg_duration = sum(durations) / len(durations) if durations else 0.0
+
+        # Win rate by race
+        race_stats = {}
+        for r in results:
+            race = r.get("opponent_race", "Unknown")
+            if race not in race_stats:
+                race_stats[race] = {"wins": 0, "total": 0}
+            race_stats[race]["total"] += 1
+            if r.get("result") == "win":
+                race_stats[race]["wins"] += 1
+
+        win_rate_by_race = {}
+        for race, st in race_stats.items():
+            if st["total"] > 0:
+                win_rate_by_race[race] = round(st["wins"] / st["total"] * 100, 1)
+
+        # Recent 10 win rate
+        recent_10 = results[-10:]
+        recent_wins = sum(1 for r in recent_10 if r.get("result") == "win")
+        recent_10_win_rate = (recent_wins / len(recent_10) * 100) if recent_10 else 0.0
+
+        return {
+            "total_games": total,
+            "wins": wins,
+            "losses": losses,
+            "win_rate": round(win_rate, 1),
+            "avg_game_duration": round(avg_duration, 1),
+            "win_rate_by_race": win_rate_by_race,
+            "recent_10_win_rate": round(recent_10_win_rate, 1),
+        }
+
+    def get_streak(self) -> dict:
+        """
+        Get the current win/loss streak.
+
+        Returns:
+            Dictionary with:
+            - streak_type: "win" or "loss" or "none"
+            - streak_count: int
+        """
+        results = getattr(self, '_structured_results', [])
+        if not results:
+            return {"streak_type": "none", "streak_count": 0}
+
+        # Walk backwards from the most recent game
+        current_result = results[-1].get("result", "unknown")
+        if current_result not in ("win", "loss"):
+            return {"streak_type": "none", "streak_count": 0}
+
+        streak_type = current_result
+        streak_count = 0
+
+        for r in reversed(results):
+            if r.get("result") == streak_type:
+                streak_count += 1
+            else:
+                break
+
+        return {"streak_type": streak_type, "streak_count": streak_count}

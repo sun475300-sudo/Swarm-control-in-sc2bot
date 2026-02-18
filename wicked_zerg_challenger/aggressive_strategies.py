@@ -235,7 +235,7 @@ class AggressiveStrategyExecutor:
             if self.bot.time > 180:
                 await self._execute_multi_harass()
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Aggressive strategy error: {e}")
 
     # ========== 12 Pool 저글링 러시 ==========

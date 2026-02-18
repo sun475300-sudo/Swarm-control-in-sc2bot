@@ -62,6 +62,15 @@ class PersonalityModule:
         # 메시지 데이터베이스
         self._init_messages()
 
+    def reset(self):
+        """게임 간 상태 초기화"""
+        self.messages_sent.clear()
+        self.last_message_time = 0
+        self.game_start_greeted = False
+        self.good_game_sent = False
+        self.victory_declared = False
+        self.taunt_count = 0
+
     def _init_messages(self):
         """메시지 초기화"""
         self.messages = {
@@ -187,7 +196,7 @@ class PersonalityModule:
                 await self._check_game_situation(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[PERSONALITY] Error: {e}")
 
     async def _send_greeting(self, game_time: float):

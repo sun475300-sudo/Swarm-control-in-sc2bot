@@ -54,7 +54,7 @@ class CreepExpansionSystem:
                 self._update_statistics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[CREEP] Error: {e}")
 
     def _calculate_creep_targets(self):

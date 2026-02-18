@@ -124,7 +124,7 @@ class CompleteDestructionTrainer:
                 self._print_status(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[COMPLETE_DESTRUCTION] Error: {e}")
 
     def _discover_enemy_buildings(self, game_time: float):

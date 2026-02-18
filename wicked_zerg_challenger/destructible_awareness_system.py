@@ -91,7 +91,7 @@ class DestructibleAwarenessSystem:
                 self._print_status()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[DESTRUCTIBLE] Error: {e}")
 
     async def _discover_all_destructibles(self):

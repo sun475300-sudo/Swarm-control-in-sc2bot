@@ -90,7 +90,7 @@ class ScoutingSystem:
             await self._move_scouts()
             self._log_sensor_snapshot(iteration)
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Scouting system error: {e}")
 
     async def _sacrifice_overlord_scout(self):

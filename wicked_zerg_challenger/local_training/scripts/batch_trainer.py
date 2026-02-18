@@ -40,10 +40,10 @@ class BatchTrainer:
         try:
             # 입력: 15차원 특징 벡터
             # 은닉층: 64 유닛
-            # 출력: 4가지 전략 확률
+            # 출력: 5가지 전략 확률 (ECONOMY, AGGRESSIVE, DEFENSIVE, TECH, ALL_IN)
             input_size = 15
             hidden_size = 64
-            output_size = 4
+            output_size = 5
 
             self.model = nn.Sequential(
                 nn.Linear(input_size, hidden_size),
@@ -100,6 +100,7 @@ class BatchTrainer:
             total_samples = 0
 
             self.model.train()
+            loss_fn = nn.CrossEntropyLoss()  # ★ FIX: 루프 외부에서 1회만 생성
 
             for epoch in range(epochs):
                 epoch_loss = 0.0
@@ -115,11 +116,12 @@ class BatchTrainer:
                     outputs = self.model(batch_inputs)
 
                     # 손실 계산
-                    loss_fn = nn.CrossEntropyLoss()
                     loss = loss_fn(outputs, batch_targets.argmax(dim=1))
 
                     # Backward pass
                     loss.backward()
+                    # ★ FIX: Gradient clipping (폭발 방지)
+                    nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                     self.optimizer.step()
 
                     epoch_loss += loss.item()

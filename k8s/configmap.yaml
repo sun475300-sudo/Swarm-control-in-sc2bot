@@ -1,0 +1,42 @@
+# ================================================================
+# JARVIS Kubernetes ConfigMap (#172)
+#
+# 민감하지 않은 설정값을 관리한다.
+# API 키 등 민감 정보는 Secret 리소스를 사용할 것.
+#
+# Secret 생성 예시:
+#   kubectl create secret generic jarvis-secrets \
+#     --from-literal=anthropic-api-key=sk-ant-... \
+#     --from-literal=upbit-access-key=... \
+#     --from-literal=upbit-secret-key=... \
+#     -n jarvis
+# ================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-config
+  namespace: jarvis
+  labels:
+    app: jarvis
+data:
+  # 공통 설정
+  LOG_LEVEL: "INFO"
+  PYTHONPATH: "/app"
+
+  # 프록시 설정
+  PROXY_PORT: "3456"
+  NODE_ENV: "production"
+
+  # 암호화폐 서비스 설정
+  CRYPTO_PORT: "8766"
+  DEFAULT_FIAT: "KRW"
+  DRY_RUN: "false"
+  AUTO_TRADE_INTERVAL: "60"
+
+  # SC2 봇 설정
+  SC2_DIR: "/app"
+  BOT_NAME: "WickedZergChallenger"
+
+  # 메트릭 설정
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"

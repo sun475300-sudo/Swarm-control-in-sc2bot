@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 # .env 파일 로드 (프로젝트 내 여러 위치 탐색)
 _env_paths = [
+    Path(__file__).parent.parent / ".env.jarvis",
     Path(__file__).parent.parent / "wicked_zerg_challenger" / ".env",
     Path(__file__).parent.parent / ".env",
     Path(__file__).parent / ".env",
@@ -40,9 +41,12 @@ PORTFOLIO_HISTORY_FILE = DATA_DIR / "portfolio_history.json"
 TRADE_LOG_FILE = DATA_DIR / "trade_log.json"
 GRAPH_OUTPUT_DIR = DATA_DIR / "graphs"
 
+REPORTS_DIR = DATA_DIR / "reports"
+
 # 디렉토리 생성
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 GRAPH_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── 관심 코인 기본 목록 ──
 DEFAULT_WATCH_LIST = [
@@ -52,3 +56,12 @@ DEFAULT_WATCH_LIST = [
     "KRW-SOL",     # 솔라나
     "KRW-DOGE",    # 도지코인
 ]
+
+# ── 관심 코인 프리셋 (#34) ──
+WATCHLIST_PRESETS = {
+    "major": ["KRW-BTC", "KRW-ETH", "KRW-XRP", "KRW-SOL"],
+    "alt": ["KRW-ADA", "KRW-DOT", "KRW-AVAX", "KRW-MATIC", "KRW-LINK"],
+    "defi": ["KRW-AAVE", "KRW-UNI", "KRW-COMP", "KRW-MKR"],
+    "meme": ["KRW-DOGE", "KRW-SHIB"],
+    "default": list(DEFAULT_WATCH_LIST),
+}

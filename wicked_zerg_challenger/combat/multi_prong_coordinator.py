@@ -78,7 +78,7 @@ class MultiProngCoordinator:
                     await self._execute_multi_prong()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[MULTI_PRONG] Error: {e}")
 
     def _should_initiate_attack(self) -> bool:

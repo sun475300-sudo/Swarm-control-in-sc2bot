@@ -76,6 +76,8 @@ class RiskManager:
             return False, f"최소 주문 금액 미달: {order_amount:,.0f} < {config.MIN_ORDER_AMOUNT:,.0f}"
         if order_amount > krw_balance:
             return False, f"잔고 부족: 주문 {order_amount:,.0f} > 잔고 {krw_balance:,.0f}"
-        if order_amount > krw_balance * self.max_single_order_ratio * 2:
-            return False, f"1회 주문 한도 초과"
+        # 1회 주문 한도: 잔고의 50% 또는 MIN_ORDER_AMOUNT 중 큰 값
+        max_single = max(krw_balance * self.max_single_order_ratio * 2, config.MIN_ORDER_AMOUNT)
+        if order_amount > max_single:
+            return False, f"1회 주문 한도 초과: {order_amount:,.0f} > {max_single:,.0f}"
         return True, "OK"

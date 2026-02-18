@@ -33,13 +33,13 @@ class SpatialGrid:
             cell_size: Size of each grid cell (should match typical query radius)
             map_size: (width, height) of the map
         """
-        self.cell_size = cell_size
+        self.cell_size = max(cell_size, 0.001)  # 0 나눗셈 방지
         self.map_width = map_size[0]
         self.map_height = map_size[1]
 
         # Calculate grid dimensions
-        self.grid_width = int(math.ceil(self.map_width / cell_size))
-        self.grid_height = int(math.ceil(self.map_height / cell_size))
+        self.grid_width = int(math.ceil(self.map_width / self.cell_size))
+        self.grid_height = int(math.ceil(self.map_height / self.cell_size))
 
         # Grid storage: cell_key -> list of (position, data)
         self.grid: Dict[Tuple[int, int], List[Tuple[Tuple[float, float], Any]]] = {}
@@ -57,8 +57,9 @@ class SpatialGrid:
 
     def _get_cell(self, x: float, y: float) -> Tuple[int, int]:
         """Get grid cell coordinates for a position."""
-        cell_x = int(x / self.cell_size)
-        cell_y = int(y / self.cell_size)
+        _safe_cell_size = self.cell_size if self.cell_size else 0.001
+        cell_x = int(x / _safe_cell_size)
+        cell_y = int(y / _safe_cell_size)
         # Clamp to grid bounds
         cell_x = max(0, min(cell_x, self.grid_width - 1))
         cell_y = max(0, min(cell_y, self.grid_height - 1))
@@ -133,7 +134,7 @@ class SpatialGrid:
         results = []
 
         # Calculate cells to check
-        cells_to_check = int(math.ceil(radius / self.cell_size)) + 1
+        cells_to_check = int(math.ceil(radius / self.cell_size)) + 1 if self.cell_size else int(radius) + 1
         center_cell = self._get_cell(center[0], center[1])
 
         # Check all cells within radius
@@ -245,7 +246,7 @@ class DynamicSpatialPartition:
             cell_size: Grid cell size
             density_threshold: Minimum units to use grid (below this, use brute force)
         """
-        self.cell_size = cell_size
+        self.cell_size = max(cell_size, 0.001)  # 0 나눗셈 방지
         self.density_threshold = density_threshold
         self.grid: Optional[SpatialGrid] = None
         self.points: List[Tuple[Tuple[float, float], Any]] = []

@@ -100,7 +100,7 @@ class IdleUnitManager:
             await self._retreat_wounded_units()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Idle unit manager error: {e}")
 
     def _update_rally_point(self):
@@ -302,7 +302,7 @@ class HarassmentManager:
             await self._manage_harassment_units()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"Harassment manager error: {e}")
 
     async def _send_harassment_squad(self):

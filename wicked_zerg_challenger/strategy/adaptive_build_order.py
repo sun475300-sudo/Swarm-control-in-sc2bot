@@ -61,7 +61,7 @@ class AdaptiveBuildOrder:
                 self._adapt_build_order()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[ADAPTIVE_BUILD] Error: {e}")
 
     def _detect_enemy_race(self):

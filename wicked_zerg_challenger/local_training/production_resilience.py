@@ -290,7 +290,7 @@ class ProductionResilience:
             try:
                 await self.resource_manager.optimize_resource_gathering()
             except Exception as e:
-                if b.iteration % 200 == 0:
+                if b.iteration % 50 == 0:
                     print(f"[WARNING] Resource manager error: {e}")
 
         # === EARLY GAME BOOSTER: First 3 minutes - Maximum priority ===
@@ -1385,7 +1385,7 @@ class ProductionResilience:
             print(f"[TECH UPGRADE] [{int(b.time)}s] Morphing Hatchery to Lair")
             return True
         except Exception as e:
-            if b.iteration % 200 == 0:
+            if b.iteration % 50 == 0:
                 print(f"[WARNING] Lair morph error: {e}")
             return False
 
@@ -1415,7 +1415,7 @@ class ProductionResilience:
                 print(f"[TECH BUILD] [{int(b.time)}s] Building Spire for Mutalisks")
                 return True
             except Exception as e:
-                if b.iteration % 200 == 0:
+                if b.iteration % 50 == 0:
                     print(f"[WARNING] Spire build error: {e}")
         return False
 
@@ -1877,7 +1877,7 @@ class ProductionResilience:
             scout_state["enemy_base_scouted"] = True
 
             # Log enemy composition periodically
-            if b.iteration % 200 == 0 and enemy_info:
+            if b.iteration % 50 == 0 and enemy_info:
                 enemy_summary = {}
                 for e in enemy_info:
                     t = e["type"]

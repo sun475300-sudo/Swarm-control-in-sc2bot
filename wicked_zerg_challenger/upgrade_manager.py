@@ -564,7 +564,7 @@ class EvolutionUpgradeManager:
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(f"[{int(game_time)}s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★")
             except Exception as e:
-                if iteration % 200 == 0:
+                if iteration % 50 == 0:
                     self.logger.warning(f"Zergling speed research error: {e}")
 
     async def _research_overlord_speed(self, iteration: int) -> None:
@@ -994,7 +994,7 @@ class EvolutionUpgradeManager:
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(f"[{int(game_time)}s] ★★★ 레어 (Lair) 변이 시작! (목표: 3:30) ★★★")
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.warning(f"Lair upgrade error: {e}")
 
     async def _upgrade_to_hive(self, iteration: int) -> None:
@@ -1043,7 +1043,7 @@ class EvolutionUpgradeManager:
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(f"[{int(game_time)}s] ★★★ 군락 (Hive) 변이 시작! ★★★")
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.warning(f"Hive upgrade error: {e}")
 
     async def _build_infestation_pit(self, iteration: int) -> None:

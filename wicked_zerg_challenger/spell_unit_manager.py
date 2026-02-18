@@ -119,7 +119,7 @@ class SpellUnitManager:
             # ★ UPDATE OVERSEERS (오염)
             await self._update_overseers()
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] SpellUnitManager.update() error: {e}")
 
     async def _update_infestors(self):
@@ -525,7 +525,7 @@ class SpellUnitManager:
                         try:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                             self.ravager_last_bile[ravager_tag] = current_time
-                            if b.iteration % 200 == 0:
+                            if b.iteration % 50 == 0:
                                 print(f"[RAVAGER] [{int(current_time)}s] Bile targeting enemy base!")
                             continue
                         except Exception:

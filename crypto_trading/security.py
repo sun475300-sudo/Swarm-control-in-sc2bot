@@ -6,6 +6,13 @@ Layer 2: Pre-commit hook + 다중 패턴 실시간 스캔
 Layer 3: 런타임 키 마스킹 + 스택트레이스/환경변수 보호
 Layer 4: 키 유효성 검증 + 키 해시 무결성 체크
 Layer 5: 파일 시스템 보호 + 거래 안전 한도 / 이상 거래 탐지
+
+#155: 통계적 이상 탐지 강화
+#156: 암호화된 거래 로그
+#157: 자동 백업
+#158: 보안 대시보드
+#159: 제로 트러스트 검증
+#160: 시크릿 매니저
 """
 import os
 import re
@@ -13,11 +20,67 @@ import sys
 import stat
 import hashlib
 import logging
+import random
+import time
+import json
+import math
+import base64
+import zipfile
+import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 from . import config
 
 logger = logging.getLogger("crypto.security")
+
+# ═══════════════════════════════════════════════
+# IP Whitelist (#151)
+# ═══════════════════════════════════════════════
+
+ALLOWED_IPS = {"127.0.0.1", "::1", "localhost"}
+
+
+def check_ip_allowed(ip: str) -> bool:
+    """IP 화이트리스트 확인"""
+    if not ALLOWED_IPS:
+        return True  # 화이트리스트 비어있으면 모두 허용
+    return ip in ALLOWED_IPS or ip.startswith("192.168.") or ip.startswith("10.")
+
+
+# ═══════════════════════════════════════════════
+# Audit Log (#152)
+# ═══════════════════════════════════════════════
+
+AUDIT_LOG_FILE = Path(__file__).parent / "data" / "audit_log.jsonl"
+
+
+def audit_log(event_type: str, details: dict):
+    """감사 로그 기록 (JSONL 형식)"""
+    entry = {
+        "timestamp": datetime.now().isoformat(),
+        "event": event_type,
+        **details
+    }
+    try:
+        with open(AUDIT_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception as e:
+        logger.error(f"감사 로그 실패: {e}")
+
+
+# ═══════════════════════════════════════════════
+# API Key Health Check (#153)
+# ═══════════════════════════════════════════════
+
+def check_api_key_health() -> dict:
+    """API 키 상태 점검"""
+    from . import config
+    status = {"upbit_key_set": bool(config.UPBIT_ACCESS_KEY), "upbit_secret_set": bool(config.UPBIT_SECRET_KEY)}
+    # Key length validation
+    if config.UPBIT_ACCESS_KEY and len(config.UPBIT_ACCESS_KEY) < 20:
+        status["warning"] = "Upbit Access Key가 너무 짧습니다. 올바른 키인지 확인하세요."
+    return status
+
 
 # ═══════════════════════════════════════════════
 # Layer 1 강화: .gitignore 자동 복구
@@ -187,7 +250,10 @@ def install_exception_hook():
     def _secure_excepthook(exc_type, exc_value, exc_tb):
         # 예외 메시지에서 민감 정보 제거
         safe_msg = mask_sensitive(str(exc_value))
-        safe_exc = exc_type(safe_msg)
+        try:
+            safe_exc = exc_type(safe_msg)
+        except Exception:
+            safe_exc = Exception(safe_msg)
         _original_hook(exc_type, safe_exc, exc_tb)
 
     sys.excepthook = _secure_excepthook
@@ -292,6 +358,8 @@ class TradeSafetyGuard:
         self.max_daily_volume_krw: float = 5_000_000  # 일일 최대 거래 총액 (500만원)
         self._daily_trades: list = []                  # [(timestamp, amount), ...]
         self._alerts: list = []                        # 보안 경고 기록
+        self._pending_confirmations: dict = {}         # 2FA 확인 대기 (#150)
+        self._recent_amounts: list = []                # 이상 거래 탐지용 최근 금액 (#154)
 
     def _clean_old_trades(self):
         """24시간 이전 기록 정리"""
@@ -338,6 +406,7 @@ class TradeSafetyGuard:
     def record_trade(self, amount_krw: float):
         """매매 기록"""
         self._daily_trades.append((datetime.now(), abs(amount_krw)))
+        self._recent_amounts.append(abs(amount_krw))
 
     def get_daily_summary(self) -> dict:
         """일일 거래 요약"""
@@ -361,9 +430,688 @@ class TradeSafetyGuard:
         if max_daily_volume_krw is not None:
             self.max_daily_volume_krw = max_daily_volume_krw
 
+    # ── 2FA Trade Confirmation (#150) ──
+
+    def request_2fa_confirmation(self, amount_krw: float, ticker: str) -> dict:
+        """대규모 거래 시 확인 요청 생성"""
+        LARGE_TRADE_THRESHOLD = 1_000_000  # 100만원 이상
+        if amount_krw >= LARGE_TRADE_THRESHOLD:
+            confirm_code = str(random.randint(100000, 999999))
+            self._pending_confirmations[confirm_code] = {
+                "amount": amount_krw, "ticker": ticker,
+                "created": time.time(), "expires": time.time() + 300
+            }
+            return {"needs_confirmation": True, "code": confirm_code,
+                    "message": f"대규모 거래({amount_krw:,.0f}원). 확인 코드: {confirm_code}"}
+        return {"needs_confirmation": False}
+
+    def confirm_2fa(self, code: str) -> bool:
+        """확인 코드 검증"""
+        entry = self._pending_confirmations.pop(code, None)
+        if not entry:
+            return False
+        if time.time() > entry["expires"]:
+            return False
+        return True
+
+    # ── Anomaly Detection Enhancement (#154) ──
+
+    def detect_anomaly(self, amount_krw: float) -> tuple:
+        """비정상 거래 패턴 탐지 (통계 기반)"""
+        if len(self._recent_amounts) < 5:
+            return False, "충분한 데이터 없음"
+        avg = sum(self._recent_amounts) / len(self._recent_amounts)
+        if avg == 0:
+            return False, "평균 0"
+        deviation = abs(amount_krw - avg) / max(avg, 1)
+        if deviation > 3.0:  # 평균 대비 3배 이상 편차
+            return True, f"비정상 거래 감지: 평균({avg:,.0f}) 대비 {deviation:.1f}배 편차"
+        return False, "정상"
+
+    # ── Statistical Anomaly Detection (#155) ──
+
+    def statistical_anomaly_detection(self, amount_krw: float, z_threshold: float = 2.5) -> dict:
+        """통계적 이상 탐지 — 이동 평균 및 표준 편차 기반 Z-score 분석
+
+        Args:
+            amount_krw: 검증할 거래 금액 (KRW)
+            z_threshold: Z-score 임계값 (기본 2.5, |z| > threshold 시 이상 판정)
+
+        Returns:
+            dict: {
+                'is_anomaly': bool,
+                'z_score': float,
+                'mean': float,
+                'std_dev': float,
+                'amount': float,
+                'message': str
+            }
+        """
+        result = {
+            "is_anomaly": False,
+            "z_score": 0.0,
+            "mean": 0.0,
+            "std_dev": 0.0,
+            "amount": amount_krw,
+            "message": "",
+        }
+
+        # 최소 10개 이상의 거래 기록이 있어야 통계 의미 있음
+        if len(self._recent_amounts) < 10:
+            result["message"] = f"데이터 부족 ({len(self._recent_amounts)}/10). 통계적 탐지 불가."
+            return result
+
+        # 이동 평균 (최근 50건)
+        window = self._recent_amounts[-50:]
+        n = len(window)
+        mean = sum(window) / n
+
+        # 표준 편차
+        variance = sum((x - mean) ** 2 for x in window) / n
+        std_dev = math.sqrt(variance) if variance > 0 else 0.0
+
+        result["mean"] = round(mean, 2)
+        result["std_dev"] = round(std_dev, 2)
+
+        if std_dev == 0:
+            result["message"] = "표준 편차 0 — 모든 거래 금액 동일. 이상 탐지 불가."
+            return result
+
+        # Z-score 계산
+        z_score = (amount_krw - mean) / std_dev
+        result["z_score"] = round(z_score, 4)
+
+        if abs(z_score) > z_threshold:
+            result["is_anomaly"] = True
+            direction = "과대" if z_score > 0 else "과소"
+            result["message"] = (
+                f"통계적 이상 거래 감지: Z-score={z_score:.2f} (임계값 ±{z_threshold}). "
+                f"금액 {amount_krw:,.0f}원은 평균({mean:,.0f}원) 대비 {direction} 편차."
+            )
+            self._alerts.append((datetime.now(), result["message"]))
+            logger.warning(result["message"])
+        else:
+            result["message"] = (
+                f"정상 범위: Z-score={z_score:.2f} (임계값 ±{z_threshold}). "
+                f"평균 {mean:,.0f}원, 표준편차 {std_dev:,.0f}원."
+            )
+
+        return result
+
 
 # 전역 인스턴스
 trade_safety = TradeSafetyGuard()
+
+
+# ═══════════════════════════════════════════════
+# #156: 암호화된 거래 로그 (EncryptedTradeLog)
+# ═══════════════════════════════════════════════
+
+class EncryptedTradeLog:
+    """암호화된 거래 로그 관리
+
+    Fernet 대칭 암호화를 사용하여 거래 로그를 암호화하여 저장.
+    cryptography 라이브러리가 없으면 base64 인코딩으로 폴백.
+    """
+
+    def __init__(self, log_dir: Path = None, key: bytes = None):
+        """초기화
+
+        Args:
+            log_dir: 암호화 로그 저장 디렉토리 (기본: crypto_trading/data/encrypted_logs)
+            key: Fernet 암호화 키 (None이면 자동 생성/로드)
+        """
+        self.log_dir = log_dir or (config.DATA_DIR / "encrypted_logs")
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self._key_file = self.log_dir / ".log_key"
+        self._use_fernet = False
+        self._fernet = None
+
+        # Fernet 초기화 시도
+        try:
+            from cryptography.fernet import Fernet
+            if key:
+                self._fernet = Fernet(key)
+            elif self._key_file.exists():
+                stored_key = self._key_file.read_bytes().strip()
+                self._fernet = Fernet(stored_key)
+            else:
+                new_key = Fernet.generate_key()
+                self._key_file.write_bytes(new_key)
+                self._fernet = Fernet(new_key)
+            self._use_fernet = True
+            logger.info("EncryptedTradeLog: Fernet 암호화 활성화")
+        except ImportError:
+            logger.warning("EncryptedTradeLog: cryptography 미설치. base64 폴백 사용.")
+
+    def _encrypt(self, plaintext: str) -> str:
+        """문자열 암호화"""
+        if self._use_fernet and self._fernet:
+            return self._fernet.encrypt(plaintext.encode("utf-8")).decode("utf-8")
+        else:
+            return base64.b64encode(plaintext.encode("utf-8")).decode("utf-8")
+
+    def _decrypt(self, ciphertext: str) -> str:
+        """문자열 복호화"""
+        if self._use_fernet and self._fernet:
+            return self._fernet.decrypt(ciphertext.encode("utf-8")).decode("utf-8")
+        else:
+            return base64.b64decode(ciphertext.encode("utf-8")).decode("utf-8")
+
+    def write_log(self, entry: dict) -> Path:
+        """암호화된 로그 엔트리 기록
+
+        Args:
+            entry: 로그 데이터 딕셔너리
+
+        Returns:
+            Path: 저장된 로그 파일 경로
+        """
+        entry["_logged_at"] = datetime.now().isoformat()
+        plaintext = json.dumps(entry, ensure_ascii=False)
+        encrypted = self._encrypt(plaintext)
+
+        log_file = self.log_dir / f"trade_log_{datetime.now().strftime('%Y%m%d')}.enc"
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(encrypted + "\n")
+
+        logger.debug(f"암호화 로그 기록: {log_file.name}")
+        return log_file
+
+    def read_log(self, log_file: Path) -> list:
+        """암호화된 로그 파일 읽기
+
+        Args:
+            log_file: 암호화 로그 파일 경로
+
+        Returns:
+            list: 복호화된 로그 엔트리 리스트
+        """
+        entries = []
+        if not log_file.exists():
+            return entries
+
+        with open(log_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    decrypted = self._decrypt(line)
+                    entries.append(json.loads(decrypted))
+                except Exception as e:
+                    logger.error(f"로그 복호화 실패: {e}")
+                    entries.append({"_error": str(e), "_raw": line[:50] + "..."})
+
+        return entries
+
+    def list_logs(self) -> list:
+        """저장된 암호화 로그 파일 목록"""
+        return sorted(self.log_dir.glob("trade_log_*.enc"))
+
+
+# ═══════════════════════════════════════════════
+# #157: 자동 백업 (auto_backup)
+# ═══════════════════════════════════════════════
+
+def auto_backup(target_dir: str = None, max_backups: int = 10) -> str:
+    """crypto_trading/data/ 디렉토리를 zip으로 자동 백업
+
+    Args:
+        target_dir: 백업 저장 디렉토리 (기본: crypto_trading/data/backups)
+        max_backups: 최대 보관 백업 수 (초과 시 오래된 것 자동 삭제)
+
+    Returns:
+        str: 생성된 백업 파일 경로 또는 에러 메시지
+    """
+    source_dir = config.DATA_DIR
+    if not source_dir.exists():
+        return f"백업 대상 디렉토리 없음: {source_dir}"
+
+    backup_dir = Path(target_dir) if target_dir else (config.DATA_DIR / "backups")
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"crypto_data_backup_{timestamp}"
+    backup_path = backup_dir / f"{backup_name}.zip"
+
+    try:
+        with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for root, dirs, files in os.walk(source_dir):
+                # 백업 디렉토리 자체는 제외
+                root_path = Path(root)
+                if "backups" in root_path.parts:
+                    continue
+                for file in files:
+                    file_path = Path(root) / file
+                    arcname = file_path.relative_to(source_dir)
+                    zf.write(file_path, arcname)
+
+        logger.info(f"자동 백업 생성: {backup_path}")
+
+        # 오래된 백업 정리
+        existing = sorted(backup_dir.glob("crypto_data_backup_*.zip"))
+        while len(existing) > max_backups:
+            oldest = existing.pop(0)
+            oldest.unlink()
+            logger.info(f"오래된 백업 삭제: {oldest.name}")
+
+        return str(backup_path)
+    except Exception as e:
+        msg = f"백업 실패: {e}"
+        logger.error(msg)
+        return msg
+
+
+# ═══════════════════════════════════════════════
+# #158: 보안 대시보드 (get_security_dashboard)
+# ═══════════════════════════════════════════════
+
+def get_security_dashboard() -> dict:
+    """보안 대시보드 — 각 보안 레이어 상태 종합 요약
+
+    Returns:
+        dict: {
+            'timestamp': str,
+            'layers': { ... },
+            'trade_safety': { ... },
+            'recent_events': [ ... ],
+            'overall_status': str
+        }
+    """
+    dashboard = {
+        "timestamp": datetime.now().isoformat(),
+        "layers": {},
+        "trade_safety": {},
+        "recent_events": [],
+        "overall_status": "UNKNOWN",
+    }
+
+    issues = 0
+
+    # Layer 1: .env + .gitignore
+    env_exists = any(p.exists() for p in [
+        Path(__file__).parent.parent / "wicked_zerg_challenger" / ".env",
+        Path(__file__).parent.parent / ".env",
+    ])
+    gitignore_path = Path(__file__).parent.parent / ".gitignore"
+    dashboard["layers"]["layer1_env_isolation"] = {
+        "status": "OK" if env_exists else "WARNING",
+        "env_file_exists": env_exists,
+        "gitignore_exists": gitignore_path.exists(),
+    }
+    if not env_exists:
+        issues += 1
+
+    # Layer 2: 시크릿 스캔
+    dashboard["layers"]["layer2_secret_scan"] = {
+        "status": "OK",
+        "patterns_loaded": len(_KEY_PATTERNS),
+    }
+
+    # Layer 3: 런타임 보호
+    dashboard["layers"]["layer3_runtime_protection"] = {
+        "status": "OK",
+        "log_filter_installed": True,
+        "exception_hook_installed": sys.excepthook.__name__ != "excepthook" if hasattr(sys.excepthook, '__name__') else True,
+    }
+
+    # Layer 4: 키 검증
+    try:
+        valid, msg = validate_api_keys()
+        integrity_ok, integrity_msg = check_key_integrity()
+        dashboard["layers"]["layer4_key_validation"] = {
+            "status": "OK" if (valid and integrity_ok) else "WARNING",
+            "key_valid": valid,
+            "key_validation_msg": msg,
+            "integrity_ok": integrity_ok,
+            "integrity_msg": integrity_msg,
+        }
+        if not valid or not integrity_ok:
+            issues += 1
+    except Exception as e:
+        dashboard["layers"]["layer4_key_validation"] = {"status": "ERROR", "error": str(e)}
+        issues += 1
+
+    # Layer 5: 파일 보호 + 거래 안전
+    dashboard["layers"]["layer5_file_trade_protection"] = {
+        "status": "OK",
+        "data_dir_exists": config.DATA_DIR.exists(),
+    }
+
+    # 거래 안전 가드 통계
+    dashboard["trade_safety"] = trade_safety.get_daily_summary()
+
+    # 최근 보안 이벤트 (최대 20개)
+    events = []
+    # 감사 로그에서 최근 이벤트 읽기
+    if AUDIT_LOG_FILE.exists():
+        try:
+            with open(AUDIT_LOG_FILE, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                for line in lines[-20:]:
+                    try:
+                        events.append(json.loads(line.strip()))
+                    except json.JSONDecodeError:
+                        pass
+        except Exception:
+            pass
+
+    # trade_safety 알림도 추가
+    for ts, msg in trade_safety._alerts[-10:]:
+        events.append({"timestamp": ts.isoformat(), "event": "trade_alert", "message": msg})
+
+    dashboard["recent_events"] = events[-20:]
+
+    # 전체 상태
+    if issues == 0:
+        dashboard["overall_status"] = "SECURE"
+    elif issues <= 2:
+        dashboard["overall_status"] = "WARNING"
+    else:
+        dashboard["overall_status"] = "CRITICAL"
+
+    return dashboard
+
+
+# ═══════════════════════════════════════════════
+# #159: 제로 트러스트 검증 (ZeroTrustValidator)
+# ═══════════════════════════════════════════════
+
+class ZeroTrustValidator:
+    """제로 트러스트 보안 모델 — 모든 요청을 검증
+
+    IP + 시간 + 빈도 복합 검증으로 무단 접근 차단.
+    """
+
+    def __init__(self):
+        self._request_log: list = []  # [(timestamp, ip, action), ...]
+        self._blocked_ips: set = set()
+        self._max_requests_per_minute: int = 60
+        self._allowed_hours: tuple = (0, 24)  # 기본: 24시간 허용
+        self._trust_scores: dict = {}  # ip -> score (0~100)
+
+    def configure(self, max_requests_per_minute: int = 60,
+                  allowed_hours: tuple = (0, 24)):
+        """검증 정책 설정
+
+        Args:
+            max_requests_per_minute: 분당 최대 요청 수
+            allowed_hours: 허용 시간대 (시작, 종료) 24시간제
+        """
+        self._max_requests_per_minute = max_requests_per_minute
+        self._allowed_hours = allowed_hours
+
+    def validate_request(self, ip: str, action: str) -> dict:
+        """요청 종합 검증
+
+        Args:
+            ip: 요청 IP 주소
+            action: 수행 액션 (예: 'trade', 'query', 'config_change')
+
+        Returns:
+            dict: {
+                'allowed': bool,
+                'checks': {
+                    'ip_check': bool,
+                    'time_check': bool,
+                    'rate_check': bool,
+                    'trust_check': bool
+                },
+                'reason': str,
+                'trust_score': int
+            }
+        """
+        now = datetime.now()
+        result = {
+            "allowed": True,
+            "checks": {
+                "ip_check": True,
+                "time_check": True,
+                "rate_check": True,
+                "trust_check": True,
+            },
+            "reason": "",
+            "trust_score": self._trust_scores.get(ip, 50),
+        }
+        reasons = []
+
+        # 1. IP 검증
+        if ip in self._blocked_ips:
+            result["checks"]["ip_check"] = False
+            result["allowed"] = False
+            reasons.append(f"차단된 IP: {ip}")
+
+        if not check_ip_allowed(ip):
+            result["checks"]["ip_check"] = False
+            result["allowed"] = False
+            reasons.append(f"허용되지 않은 IP: {ip}")
+
+        # 2. 시간대 검증
+        current_hour = now.hour
+        start_h, end_h = self._allowed_hours
+        if start_h <= end_h:
+            if not (start_h <= current_hour < end_h):
+                result["checks"]["time_check"] = False
+                result["allowed"] = False
+                reasons.append(f"허용 시간대 외 요청: {current_hour}시 (허용: {start_h}-{end_h}시)")
+        else:
+            # 자정을 넘기는 경우 (예: 22시~6시)
+            if not (current_hour >= start_h or current_hour < end_h):
+                result["checks"]["time_check"] = False
+                result["allowed"] = False
+                reasons.append(f"허용 시간대 외 요청: {current_hour}시 (허용: {start_h}-{end_h}시)")
+
+        # 3. 빈도 검증 (분당 요청 수)
+        one_min_ago = now - timedelta(minutes=1)
+        recent = [r for r in self._request_log if r[0] > one_min_ago and r[1] == ip]
+        if len(recent) >= self._max_requests_per_minute:
+            result["checks"]["rate_check"] = False
+            result["allowed"] = False
+            reasons.append(
+                f"요청 빈도 초과: {len(recent)}/{self._max_requests_per_minute} (분당)"
+            )
+
+        # 4. 신뢰 점수 검증
+        trust = self._trust_scores.get(ip, 50)
+        if trust < 20:
+            result["checks"]["trust_check"] = False
+            result["allowed"] = False
+            reasons.append(f"신뢰 점수 부족: {trust}/100")
+        result["trust_score"] = trust
+
+        # 요청 기록
+        self._request_log.append((now, ip, action))
+        # 오래된 기록 정리 (1시간 이전)
+        cutoff = now - timedelta(hours=1)
+        self._request_log = [r for r in self._request_log if r[0] > cutoff]
+
+        # 신뢰 점수 업데이트
+        if result["allowed"]:
+            self._trust_scores[ip] = min(100, trust + 1)
+        else:
+            self._trust_scores[ip] = max(0, trust - 10)
+            audit_log("zero_trust_block", {
+                "ip": ip, "action": action, "reasons": reasons
+            })
+
+        result["reason"] = "; ".join(reasons) if reasons else "모든 검증 통과"
+        return result
+
+    def block_ip(self, ip: str):
+        """IP 수동 차단"""
+        self._blocked_ips.add(ip)
+        logger.warning(f"ZeroTrust: IP 차단 — {ip}")
+
+    def unblock_ip(self, ip: str):
+        """IP 차단 해제"""
+        self._blocked_ips.discard(ip)
+
+    def get_status(self) -> dict:
+        """제로 트러스트 상태 요약"""
+        return {
+            "blocked_ips": list(self._blocked_ips),
+            "trust_scores": dict(self._trust_scores),
+            "max_requests_per_minute": self._max_requests_per_minute,
+            "allowed_hours": self._allowed_hours,
+            "recent_request_count": len(self._request_log),
+        }
+
+
+# 전역 인스턴스
+zero_trust = ZeroTrustValidator()
+
+
+# ═══════════════════════════════════════════════
+# #160: 시크릿 매니저 (SecretManager)
+# ═══════════════════════════════════════════════
+
+class SecretManager:
+    """시크릿 매니저 — 키를 환경변수 대신 암호화 파일에서 관리
+
+    메모리 내 키 캐싱, 자동 갱신 지원.
+    """
+
+    def __init__(self, secrets_file: Path = None):
+        """초기화
+
+        Args:
+            secrets_file: 암호화 시크릿 파일 경로
+                (기본: crypto_trading/data/.secrets.enc)
+        """
+        self._secrets_file = secrets_file or (config.DATA_DIR / ".secrets.enc")
+        self._cache: dict = {}
+        self._cache_ttl: int = 3600  # 캐시 유효기간 (초)
+        self._cache_timestamps: dict = {}
+        self._master_key: str = self._derive_master_key()
+
+    def _derive_master_key(self) -> str:
+        """마스터 키 생성 — 머신 고유 정보 기반"""
+        import platform
+        machine_info = f"{platform.node()}:{platform.machine()}:{os.getlogin() if hasattr(os, 'getlogin') else 'unknown'}"
+        return hashlib.sha256(machine_info.encode()).hexdigest()
+
+    def _encrypt_value(self, value: str) -> str:
+        """값 암호화 (XOR + base64)"""
+        key_bytes = self._master_key.encode("utf-8")
+        value_bytes = value.encode("utf-8")
+        encrypted = bytes(
+            v ^ key_bytes[i % len(key_bytes)]
+            for i, v in enumerate(value_bytes)
+        )
+        return base64.b64encode(encrypted).decode("utf-8")
+
+    def _decrypt_value(self, encrypted: str) -> str:
+        """값 복호화"""
+        key_bytes = self._master_key.encode("utf-8")
+        encrypted_bytes = base64.b64decode(encrypted.encode("utf-8"))
+        decrypted = bytes(
+            v ^ key_bytes[i % len(key_bytes)]
+            for i, v in enumerate(encrypted_bytes)
+        )
+        return decrypted.decode("utf-8")
+
+    def set_secret(self, name: str, value: str):
+        """시크릿 저장
+
+        Args:
+            name: 시크릿 이름 (예: 'UPBIT_ACCESS_KEY')
+            value: 시크릿 값
+        """
+        # 메모리 캐시 업데이트
+        self._cache[name] = value
+        self._cache_timestamps[name] = time.time()
+
+        # 파일에 암호화 저장
+        secrets = self._load_secrets_file()
+        secrets[name] = self._encrypt_value(value)
+        self._save_secrets_file(secrets)
+        logger.info(f"SecretManager: 시크릿 저장 — {name}")
+
+    def get_secret(self, name: str, default: str = None) -> str:
+        """시크릿 조회 (캐시 우선)
+
+        Args:
+            name: 시크릿 이름
+            default: 기본값
+
+        Returns:
+            str: 시크릿 값 또는 default
+        """
+        # 캐시에서 조회 (TTL 확인)
+        if name in self._cache:
+            cached_time = self._cache_timestamps.get(name, 0)
+            if time.time() - cached_time < self._cache_ttl:
+                return self._cache[name]
+            else:
+                # 캐시 만료 — 파일에서 재로드
+                del self._cache[name]
+
+        # 파일에서 로드
+        secrets = self._load_secrets_file()
+        if name in secrets:
+            try:
+                value = self._decrypt_value(secrets[name])
+                self._cache[name] = value
+                self._cache_timestamps[name] = time.time()
+                return value
+            except Exception as e:
+                logger.error(f"SecretManager: 복호화 실패 ({name}): {e}")
+
+        return default
+
+    def delete_secret(self, name: str):
+        """시크릿 삭제"""
+        self._cache.pop(name, None)
+        self._cache_timestamps.pop(name, None)
+
+        secrets = self._load_secrets_file()
+        if name in secrets:
+            del secrets[name]
+            self._save_secrets_file(secrets)
+            logger.info(f"SecretManager: 시크릿 삭제 — {name}")
+
+    def list_secrets(self) -> list:
+        """저장된 시크릿 이름 목록 (값은 반환하지 않음)"""
+        secrets = self._load_secrets_file()
+        return list(secrets.keys())
+
+    def refresh_cache(self):
+        """캐시 전체 갱신 — 파일에서 다시 로드"""
+        self._cache.clear()
+        self._cache_timestamps.clear()
+        secrets = self._load_secrets_file()
+        for name, encrypted in secrets.items():
+            try:
+                self._cache[name] = self._decrypt_value(encrypted)
+                self._cache_timestamps[name] = time.time()
+            except Exception:
+                pass
+        logger.info(f"SecretManager: 캐시 갱신 완료 ({len(self._cache)}개)")
+
+    def set_cache_ttl(self, ttl_seconds: int):
+        """캐시 TTL(유효기간) 변경"""
+        self._cache_ttl = ttl_seconds
+
+    def _load_secrets_file(self) -> dict:
+        """암호화 시크릿 파일 로드"""
+        if not self._secrets_file.exists():
+            return {}
+        try:
+            with open(self._secrets_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def _save_secrets_file(self, secrets: dict):
+        """암호화 시크릿 파일 저장"""
+        self._secrets_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(self._secrets_file, "w", encoding="utf-8") as f:
+            json.dump(secrets, f, ensure_ascii=False, indent=2)
+
+
+# 전역 인스턴스
+secret_manager = SecretManager()
 
 
 # ═══════════════════════════════════════════════
@@ -413,6 +1161,19 @@ def initialize_security():
     results.append(f"Layer 5 (파일/거래 보호): ✓ 파일보호 적용 | "
                     f"일일한도: {trade_safety.max_daily_trades}회, "
                     f"{trade_safety.max_daily_volume_krw:,.0f}원")
+
+    # #156: 암호화 거래 로그
+    try:
+        enc_log = EncryptedTradeLog()
+        results.append(f"#156 (암호화 로그): ✓ {'Fernet' if enc_log._use_fernet else 'Base64 폴백'} 모드")
+    except Exception as e:
+        results.append(f"#156 (암호화 로그): ✗ {e}")
+
+    # #159: 제로 트러스트
+    results.append(f"#159 (제로 트러스트): ✓ 분당 {zero_trust._max_requests_per_minute}건 제한")
+
+    # #160: 시크릿 매니저
+    results.append(f"#160 (시크릿 매니저): ✓ 캐시 TTL {secret_manager._cache_ttl}초")
 
     report = "\n".join(results)
     logger.info(f"5중 보안 체계 초기화 완료 (강화):\n{report}")

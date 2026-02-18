@@ -78,7 +78,7 @@ class BattlePreparationSystem:
                 self._print_battle_status(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[BATTLE_PREP] Error: {e}")
 
     async def _detect_battles(self, game_time: float):

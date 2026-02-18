@@ -65,8 +65,6 @@ class BoidsController:
 
         # Update timing - increased interval for performance
         self.last_update = 0
-        # Update timing - increased interval for performance
-        self.last_update = 0
         self.default_interval = 12
         self.focus_interval = 3  # Combat focus mode (4x faster)
         self.update_interval = self.default_interval
@@ -237,15 +235,14 @@ class BoidsController:
         # Combine lists
         active_units = high_priority_units + active_low_priority
         
-        # Limit total processing (increased from 30 -> 80)
-        # Combat units take precedence
-        self.max_units_per_frame = 80
-        if len(active_units) > self.max_units_per_frame:
+        # 전투 중 처리 유닛 수 증가 (기본 30 → 전투 시 80, 종료 후 복원)
+        frame_limit = 80 if high_priority_units else self.max_units_per_frame
+        if len(active_units) > frame_limit:
              # Keep all high priority, trim low priority
-             if len(high_priority_units) >= self.max_units_per_frame:
-                 active_units = high_priority_units[:self.max_units_per_frame]
+             if len(high_priority_units) >= frame_limit:
+                 active_units = high_priority_units[:frame_limit]
              else:
-                 remaining_slots = self.max_units_per_frame - len(high_priority_units)
+                 remaining_slots = frame_limit - len(high_priority_units)
                  active_units = high_priority_units + active_low_priority[:remaining_slots]
 
         try:
@@ -278,7 +275,7 @@ class BoidsController:
             await self._apply_boids(active_units, enemy_units, skip_units=skip_units)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 print(f"[WARNING] Boids micro error: {e}")
             await self._fallback_spread(active_units, enemy_units)
 
@@ -319,7 +316,7 @@ class BoidsController:
                 continue
 
             # Get nearby friendly units for flocking
-            neighbors = self._nearby_units(self.bot.units, unit, 6.0) # Query against ALL units for cohesion
+            neighbors = self._nearby_units(units, unit, 6.0)
 
             # Select target enemy
             target = select_target(unit, enemy_units, max_range=14.0)
@@ -526,6 +523,3 @@ class BoidsController:
                     await result
 
 
-# Backward compatibility aliases
-PotentialFieldController = PotentialFieldController
-ChokePointDetector = ChokePointDetector

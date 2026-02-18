@@ -80,7 +80,7 @@ class BaseDestructionCoordinator:
                 self._print_status(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[BASE_DESTRUCTION] Error: {e}")
 
     def _discover_enemy_bases(self, game_time: float):

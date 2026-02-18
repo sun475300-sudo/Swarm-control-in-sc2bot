@@ -202,7 +202,7 @@ class HarassmentCoordinator:
                 self._track_worker_kills()
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[HARASSMENT] Error: {e}")
 
     # ========================================

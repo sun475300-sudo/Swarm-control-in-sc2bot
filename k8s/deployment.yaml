@@ -1,0 +1,185 @@
+# ================================================================
+# JARVIS Kubernetes Deployment 매니페스트 (#172)
+#
+# 적용 방법:
+#   kubectl apply -f k8s/configmap.yaml
+#   kubectl apply -f k8s/deployment.yaml
+#   kubectl apply -f k8s/service.yaml
+# ================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarvis-proxy
+  namespace: jarvis
+  labels:
+    app: jarvis
+    component: proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: jarvis
+      component: proxy
+  template:
+    metadata:
+      labels:
+        app: jarvis
+        component: proxy
+    spec:
+      containers:
+        - name: claude-proxy
+          image: jarvis/claude-proxy:latest
+          ports:
+            - containerPort: 3456
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-config
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jarvis-secrets
+                  key: anthropic-api-key
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3456
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3456
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      restartPolicy: Always
+
+---
+# 암호화폐 HTTP 서비스 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarvis-crypto
+  namespace: jarvis
+  labels:
+    app: jarvis
+    component: crypto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jarvis
+      component: crypto
+  template:
+    metadata:
+      labels:
+        app: jarvis
+        component: crypto
+    spec:
+      containers:
+        - name: crypto-http
+          image: jarvis/crypto-service:latest
+          ports:
+            - containerPort: 8766
+              name: http
+          envFrom:
+            - configMapRef:
+                name: jarvis-config
+          env:
+            - name: CRYPTO_PORT
+              value: "8766"
+            - name: DRY_RUN
+              value: "false"
+            - name: UPBIT_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jarvis-secrets
+                  key: upbit-access-key
+            - name: UPBIT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jarvis-secrets
+                  key: upbit-secret-key
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8766
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8766
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: crypto-data
+              mountPath: /app/crypto_trading/data
+      volumes:
+        - name: crypto-data
+          persistentVolumeClaim:
+            claimName: jarvis-crypto-data
+      restartPolicy: Always
+
+---
+# SC2 MCP 서버 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarvis-sc2
+  namespace: jarvis
+  labels:
+    app: jarvis
+    component: sc2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jarvis
+      component: sc2
+  template:
+    metadata:
+      labels:
+        app: jarvis
+        component: sc2
+    spec:
+      containers:
+        - name: sc2-mcp
+          image: jarvis/sc2-mcp:latest
+          envFrom:
+            - configMapRef:
+                name: jarvis-config
+          env:
+            - name: LOG_LEVEL
+              value: "INFO"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          volumeMounts:
+            - name: sc2-logs
+              mountPath: /app/logs
+      volumes:
+        - name: sc2-logs
+          emptyDir: {}
+      restartPolicy: Always

@@ -194,10 +194,11 @@ class BackgroundParallelLearner:
                         if self.verbose:
                             print(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
                         files_skipped += 1
-                        # 오래된 파일은 바로 아카이브로 이동
+                        # ★ FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
                         try:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
-                            self._safe_file_op(lambda: shutil.move(str(file_path), str(archive_path)))
+                            import shutil
+                            shutil.copy2(str(file_path), str(archive_path))
                         except Exception:
                             pass
                         continue
@@ -209,6 +210,16 @@ class BackgroundParallelLearner:
                         loaded_data["actions"] = np.copy(data['actions'])
                         loaded_data["rewards"] = np.copy(data['rewards'])
                     
+                    # ★ FIX: NaN/Inf 검증 (오염 데이터 학습 방지)
+                    if (np.any(np.isnan(loaded_data["states"])) or np.any(np.isinf(loaded_data["states"]))
+                            or np.any(np.isnan(loaded_data["rewards"])) or np.any(np.isinf(loaded_data["rewards"]))):
+                        print(f"[BG_LEARNER] [WARN] Corrupted data (NaN/Inf): {file_path.name} - skipped")
+                        continue
+                    # 액션 인덱스 범위 검증 (0-4)
+                    if np.any(loaded_data["actions"] < 0) or np.any(loaded_data["actions"] > 4):
+                        print(f"[BG_LEARNER] [WARN] Invalid action indices in {file_path.name} - skipped")
+                        continue
+
                     experiences.append(loaded_data)
                     files_to_archive.append(file_path)
                     

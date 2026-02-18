@@ -202,7 +202,7 @@ class DynamicCounterSystem:
             await self._update_active_counters(iteration)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[DYNAMIC_COUNTER] Error: {e}")
 
     async def _scan_enemy_threats(self) -> Set[str]:

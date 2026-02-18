@@ -78,7 +78,7 @@ class TradeAnalyzer:
                     )
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[TRADE_ANALYZER] Error: {e}")
 
     def _update_unit_counts(self):

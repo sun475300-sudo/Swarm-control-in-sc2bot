@@ -1,11 +1,15 @@
 ﻿# ═══════════════════════════════════════════════════════════
-# JARVIS Pre-Commit Security Check v2.0 (강화판)
-# - API 키/시크릿/토큰 유출 방지
-# - Anthropic, Discord, Google, AWS, Upbit, OpenAI 등 포함
-# - 스테이징된 파일만 검사
+# JARVIS Pre-Commit Security Check v2.0
+# - Prevents API key/secret/token leaks
+# - Covers: Anthropic, Discord, Google, AWS, Upbit, OpenAI, GitHub
+# - Only scans staged files
 # ═══════════════════════════════════════════════════════════
 
-Write-Host "🔒 Pre-commit 보안 스캔 시작 (v2.0)..." -ForegroundColor Cyan
+# Force UTF-8 output to prevent Korean text garbling
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+Write-Host "[Security] Pre-commit scan starting (v2.0)..." -ForegroundColor Cyan
 
 $ErrorFound = $false
 
@@ -87,22 +91,26 @@ $DangerPatterns = @(
     @{ Pattern = '(?i)bearer\s+[a-zA-Z0-9\-_\.]{30,}'; Description = 'Bearer 토큰 하드코딩' }
 )
 
-# ── .env에서 실제 키 prefix 동적 로드 (키 값 자체를 패턴으로 추가) ──
+# ── Load actual key prefixes from .env files dynamically ──
 $EnvPaths = @(".env", ".env.jarvis", "wicked_zerg_challenger\.env", "crypto_trading\.env")
 foreach ($envPath in $EnvPaths) {
     if (Test-Path $envPath) {
-        $envContent = Get-Content $envPath -ErrorAction SilentlyContinue
+        $envContent = Get-Content $envPath -Encoding UTF8 -ErrorAction SilentlyContinue
         foreach ($line in $envContent) {
-            # KEY=VALUE 형식에서 값이 20자 이상인 경우 prefix 10자를 패턴으로 추가
+            # KEY=VALUE format: only add prefix pattern if value is 20+ chars AND not a URL/path
             if ($line -match '^([A-Z_]+)\s*=\s*(.{20,})$') {
                 $keyName = $Matches[1]
                 $keyValue = $Matches[2].Trim('"').Trim("'")
+                # Skip URLs, file paths, and non-secret values
+                if ($keyValue -match '^(https?://|http://|/|C:\\|\\\\)') { continue }
+                if ($keyValue -match '^(true|false|yes|no|\d+)$') { continue }
+                if ($keyName -match '(URL|PATH|DIR|HOST|PORT|MODE|NAME|TIMEOUT)$') { continue }
                 if ($keyValue.Length -ge 20) {
                     $prefix = $keyValue.Substring(0, [Math]::Min(12, $keyValue.Length))
                     $escapedPrefix = [regex]::Escape($prefix)
                     $DangerPatterns += @{
                         Pattern = $escapedPrefix
-                        Description = "실제 키 값 감지 ($keyName 의 prefix)"
+                        Description = "[Key Leak] Actual key value detected ($keyName prefix)"
                     }
                 }
             }
@@ -112,6 +120,9 @@ foreach ($envPath in $EnvPaths) {
 
 $FilesChecked = 0
 $IssuesFound = @()
+
+# Force UTF-8 when reading staged file content
+$env:PYTHONIOENCODING = 'utf-8'
 
 foreach ($file in $StagedFiles) {
     # 확장자 체크
@@ -165,26 +176,26 @@ foreach ($file in $StagedFiles) {
     }
 }
 
-# ── 결과 출력 ──
-Write-Host "  검사한 파일: $FilesChecked 개" -ForegroundColor Gray
+# ── Results ──
+Write-Host "  Files scanned: $FilesChecked" -ForegroundColor Gray
 
 if ($IssuesFound.Count -gt 0) {
     Write-Host ""
-    Write-Host "⛔ 보안 이슈 발견! 커밋을 차단합니다." -ForegroundColor Red
+    Write-Host "[BLOCKED] Security issue detected! Commit aborted." -ForegroundColor Red
     Write-Host ""
     foreach ($issue in $IssuesFound) {
         Write-Host "  $issue" -ForegroundColor Yellow
     }
     Write-Host ""
-    Write-Host "═══════════════════════════════════════" -ForegroundColor DarkGray
-    Write-Host "해결 방법:" -ForegroundColor White
-    Write-Host "  1. API 키를 .env 또는 .env.jarvis 파일로 이동" -ForegroundColor White
-    Write-Host "  2. 코드에서 os.getenv() / process.env 로 로드" -ForegroundColor White
-    Write-Host "  3. 이미 커밋된 키는 즉시 폐기하고 재발급 필요" -ForegroundColor White
-    Write-Host "  4. 강제 커밋 (비추천): git commit --no-verify" -ForegroundColor DarkGray
-    Write-Host "═══════════════════════════════════════" -ForegroundColor DarkGray
+    Write-Host "======================================" -ForegroundColor DarkGray
+    Write-Host "How to fix:" -ForegroundColor White
+    Write-Host "  1. Move API keys to .env or .env.jarvis file" -ForegroundColor White
+    Write-Host "  2. Load via os.getenv() / process.env in code" -ForegroundColor White
+    Write-Host "  3. If already committed: revoke & rotate the key immediately" -ForegroundColor White
+    Write-Host "  4. Force commit (not recommended): git commit --no-verify" -ForegroundColor DarkGray
+    Write-Host "======================================" -ForegroundColor DarkGray
     exit 1
 }
 
-Write-Host "✅ 보안 스캔 통과 ($FilesChecked 개 파일 검사) - 민감 정보 미검출" -ForegroundColor Green
+Write-Host "[OK] Security scan passed ($FilesChecked files checked) - No secrets detected" -ForegroundColor Green
 exit 0

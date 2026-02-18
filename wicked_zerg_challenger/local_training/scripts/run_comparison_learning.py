@@ -107,8 +107,8 @@ def run_comparison():
                     history = loaded
                 elif isinstance(loaded, list): # Legacy format support if any
                     history["entries"] = loaded
-        except:
-            pass # Use empty defaults
+        except (json.JSONDecodeError, FileNotFoundError, IOError) as e:
+            print(f"[WARN] History load failed, using defaults: {e}")
             
     history["entries"].append(history_entry)
     

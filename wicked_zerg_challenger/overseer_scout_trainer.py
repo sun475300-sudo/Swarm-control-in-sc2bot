@@ -101,7 +101,7 @@ class OverseerScoutTrainer:
                 self._print_statistics(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[OVERSEER_SCOUT] Error: {e}")
 
     def _initialize_scout_zones(self):

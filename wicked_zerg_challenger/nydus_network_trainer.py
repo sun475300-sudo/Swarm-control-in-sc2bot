@@ -84,7 +84,7 @@ class NydusNetworkTrainer:
                 self._print_status(game_time)
 
         except Exception as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[NYDUS_TRAINER] Error: {e}")
 
     async def _manage_nydus_operations(self, network, game_time: float):

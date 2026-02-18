@@ -113,11 +113,11 @@ class ActiveScoutingSystem:
                 self._request_overlord_speed_upgrade(game_time)
 
         except (AttributeError, TypeError, KeyError) as e:
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[ACTIVE_SCOUT] Error in on_step at iteration {iteration}: {type(e).__name__} - {e}")
         except Exception as e:
             # Catch-all for unexpected errors
-            if iteration % 200 == 0:
+            if iteration % 50 == 0:
                 self.logger.error(f"[ACTIVE_SCOUT] Unexpected error in on_step: {type(e).__name__} - {e}")
 
     def _adjust_scout_interval(self, game_time: float):
