@@ -165,10 +165,10 @@ class RoachTacticsTrainer:
 
             # ★ Unit Authority Check ★
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                from unit_authority_manager import Authority
+                from unit_authority_manager import AuthorityLevel
                 # MICRO 권한 요청 (전술적 잠복은 높은 우선순위)
                 granted = self.bot.unit_authority.request_authority(
-                    {roach.tag}, Authority.MICRO, "RoachTactics", self.bot.state.game_loop
+                    {roach.tag}, AuthorityLevel.COMBAT, "RoachTactics", self.bot.state.game_loop
                 )
                 if roach.tag not in granted:
                     continue

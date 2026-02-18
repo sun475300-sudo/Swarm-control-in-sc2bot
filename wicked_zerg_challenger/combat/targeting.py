@@ -151,3 +151,19 @@ def select_target(unit, enemies: Iterable, max_range: float = 12.0) -> Optional[
         return None
 
     return prioritize_targets(enemy_list)[0]
+
+
+class Targeting:
+    """Wrapper class for targeting functions (used by combat/initialization.py)."""
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    def prioritize(self, enemies: Iterable) -> List:
+        return prioritize_targets(enemies)
+
+    def select(self, unit, enemies: Iterable, max_range: float = 12.0) -> Optional[object]:
+        return select_target(unit, enemies, max_range)
+
+    def score(self, unit) -> float:
+        return _score_target(unit)

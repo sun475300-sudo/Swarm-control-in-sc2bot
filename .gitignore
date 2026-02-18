@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -36,13 +37,31 @@ nul
 wicked_zerg_challenger/data/games/nul
 wicked_zerg_challenger/nul
 logs/
+**/logs/
 jarvis_gateway.log
 bot.log
+**/bot.log
 jarvis_state.json
 voice_bot_memory.json
 
+# Crypto logs (민감 정보 포함 가능)
+crypto_log*.txt
+crypto_log_v*.txt
+
+# 디버그/재현 스크립트 (API 키 포함 가능)
+reproduce_crypto_error.py
+debug_*.py
+
+# 훈련 세션 로그
+**/local_training/archived_sessions/
+**/local_training/experience/
+**/local_training/logs/
+
 # Test outputs
 test_output*.log
+quick_test*.log
+batch_test*.log
+training_*.log
 quick_test*.log
 
 # API Keys and Secrets - NEVER commit these!
@@ -141,6 +160,7 @@ _temp_start_jarvis.bat
 security_audit.json
 
 # node_modules 하위 전체
+node_modules/
 **/node_modules/
 
 # 학습 모델/로그

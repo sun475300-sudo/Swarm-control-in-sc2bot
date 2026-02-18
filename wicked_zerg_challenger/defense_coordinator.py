@@ -208,6 +208,32 @@ class DefenseCoordinator:
             if max_enemy_near_base >= mid_rush_count or total_enemy_supply >= mid_rush_supply:
                 is_rushing = True
 
+        # ★ 캐논러시/프록시 건물 감지 (적 건물이 기지 근처에 있으면 CRITICAL) ★
+        proxy_types = {UnitTypeId.PYLON, UnitTypeId.PHOTONCANNON, UnitTypeId.SHIELDBATTERY,
+                       UnitTypeId.BARRACKS, UnitTypeId.BUNKER, UnitTypeId.GATEWAY}
+        if self.bot.enemy_structures:
+            for base in bases:
+                proxy_range = 40 if game_time < 180 else 25
+                nearby_structures = self.bot.enemy_structures.closer_than(proxy_range, base.position)
+                proxy_buildings = [s for s in nearby_structures if s.type_id in proxy_types]
+                if proxy_buildings:
+                    is_rushing = True
+                    total_enemy_supply = max(total_enemy_supply, 20)  # CRITICAL 보장
+                    if not threat_position:
+                        threat_position = proxy_buildings[0].position
+
+        # ★ 드롭/워프프리즘 감지 (수송 유닛이 기지 뒤에 나타나면 위협) ★
+        transport_types = {UnitTypeId.MEDIVAC, UnitTypeId.WARPPRISM, UnitTypeId.WARPPRISMPHASING,
+                          UnitTypeId.OVERLORDTRANSPORT, UnitTypeId.NYDUSCANAL}
+        for base in bases:
+            nearby_transports = [e for e in self.bot.enemy_units.closer_than(20, base.position)
+                                 if e.type_id in transport_types]
+            if nearby_transports:
+                is_air_threat = True
+                total_enemy_supply = max(total_enemy_supply, 10)
+                if not threat_position:
+                    threat_position = nearby_transports[0].position
+
         # 위협 레벨 결정 (설정값 사용)
         threat_level = ThreatLevel.NONE
 
@@ -391,7 +417,11 @@ class DefenseCoordinator:
             )
 
     async def _evacuate_workers(self) -> None:
-        """일꾼 대피 (위험 지역에서)"""
+        """
+        일꾼 대피 또는 전투 (지능형 방어)
+        
+        IMPROVED: 무조건 대피하지 않고 상황에 따라 전투(Fight) 또는 비비기(Drill) 시도
+        """
         if not self.bot.workers:
             return
 
@@ -400,22 +430,88 @@ class DefenseCoordinator:
         if not threat_pos:
             return
 
-        # 위험 근처 일꾼 찾기 (설정값 사용)
+        # 위험 근처 일꾼 찾기
         danger_range = self.config.WORKER_DANGER_RANGE if self.config else 10
         workers_in_danger = self.bot.workers.closer_than(danger_range, threat_pos)
 
-        if workers_in_danger:
-            # 가장 가까운 안전한 기지로 대피 (설정값 사용)
+        if not workers_in_danger:
+            return
+
+        # 위협 분석
+        nearby_enemies = self.bot.enemy_units.closer_than(danger_range, threat_pos)
+        enemy_count = nearby_enemies.amount
+        
+        # 적이 없으면 리턴 (위협 정보가 낡았을 수 있음)
+        if enemy_count == 0:
+            return
+
+        enemy_supply = sum(self.bot.calculate_unit_value(u) for u in nearby_enemies) # supply cost approximation via calculate_cost? No, use config or heuristic
+        # 간단한 보급 계산 (저글링 0.5, 마린 1, 광전사 2 등)
+        enemy_supply = 0
+        for e in nearby_enemies:
+             # Basic heuristic if utility not available
+             if e.type_id == UnitTypeId.ZERGLING: enemy_supply += 0.5
+             elif e.type_id in [UnitTypeId.MARINE, UnitTypeId.DRONE, UnitTypeId.PROBE, UnitTypeId.SCV]: enemy_supply += 1
+             elif e.type_id == UnitTypeId.ROACH: enemy_supply += 2
+             else: enemy_supply += 2
+
+        # 전투 결정 로직 (Fight Decision)
+        # 조건: 적이 소수이고 (보급 4 이하), 우리 일꾼이 적보다 2배 이상 많음
+        should_fight = False
+        if enemy_supply <= 4 and workers_in_danger.amount >= enemy_count * 2:
+            should_fight = True
+        
+        # 벙커/광자포 러시 등 건물 위협은 제외 (싸우면 손해)
+        if nearby_enemies.structure.exists:
+            should_fight = False
+
+        if should_fight:
+            # === FIGHT MODE ===
+            # 포위 공격 (Surround Attack)
+            target = nearby_enemies.closest_to(workers_in_danger.center)
+            for worker in workers_in_danger:
+                # 쿨다운 찼을 때만 공격 (기본적인 카이팅)
+                if worker.weapon_cooldown <= 0:
+                    self.bot.do(worker.attack(target))
+                else:
+                    self.bot.do(worker.attack(target)) # 일꾼은 그냥 어택땅이 나을 수 있음 (비비기 효과)
+            
+            # 일부 로그 출력 (가끔)
+            if self.bot.iteration % 100 == 0:
+                 print(f"[DEFENSE] Workers FIGHTING BACK! ({workers_in_danger.amount} vs {enemy_count} enemies)")
+        
+        else:
+            # === FLEE MODE (Drill / Evacuate) ===
+            # 가장 가까운 안전한 기지로 대피
             safe_distance = self.config.SAFE_DISTANCE if self.config else 20
             safe_bases = [
                 base for base in self.bot.townhalls
                 if base.position.distance_to(threat_pos) > safe_distance
             ]
 
+            target_pos = None
             if safe_bases:
-                safe_base = safe_bases[0]
+                target_pos = safe_bases[0].position
+            else:
+                # 안전한 기지가 없으면 맵 반대편 미네랄로 (Drill 시도)
+                 if self.bot.mineral_field:
+                     # 적과 반대 방향에 있는 미네랄 찾기
+                     far_minerals = self.bot.mineral_field.sorted(lambda m: m.distance_to(threat_pos), reverse=True)
+                     if far_minerals:
+                         target_pos = far_minerals[0].position
+            
+            if target_pos:
                 for worker in workers_in_danger:
-                    worker.move(safe_base.position)
+                    # 미네랄 클릭 (비비기 효과 - 유닛 통과)
+                    # 실제 미네랄 객체를 찾아야 gather가 됨
+                    near_minerals = self.bot.mineral_field.closer_than(5, target_pos)
+                    if near_minerals:
+                        self.bot.do(worker.gather(near_minerals.closest_to(target_pos)))
+                    else:
+                        self.bot.do(worker.move(target_pos))
+                        
+                if self.bot.iteration % 100 == 0:
+                    print(f"[DEFENSE] Workers EVACUATING from threat! ({workers_in_danger.amount} drones)")
 
     # ========== 방어 건물 배치 ==========
 
@@ -440,8 +536,6 @@ class DefenseCoordinator:
         if self.config:
             if threat_level >= ThreatLevel.HIGH:
                 target_spines = self.config.SPINE_TARGET_HIGH
-            elif threat_level >= ThreatLevel.MEDIUM:
-                target_spines = self.config.SPINE_TARGET_MEDIUM
             else:
                 target_spines = self.config.SPINE_TARGET_DEFAULT
         else:
@@ -454,7 +548,17 @@ class DefenseCoordinator:
 
         # 부족하면 건설 요청
         if len(spines_nearby) < target_spines:
-            if self.bot.can_afford(UnitTypeId.SPINECRAWLER):
+            cost = self.bot.calculate_cost(UnitTypeId.SPINECRAWLER)
+            # ★ ResourceManager를 통한 자원 예약 (Race Condition 방지)
+            can_afford = False
+            if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
+                can_afford = await self.bot.resource_manager.try_reserve(
+                    cost.minerals, cost.vespene, "DefenseCoordinator"
+                )
+            else:
+                can_afford = self.bot.can_afford(UnitTypeId.SPINECRAWLER)
+
+            if can_afford:
                 # 건설 위치: 기지 앞쪽 (설정값 사용)
                 spine_distance = self.config.SPINE_BUILD_DISTANCE if self.config else 8
                 build_pos = base.position.towards(self.bot.game_info.map_center, spine_distance)
@@ -464,13 +568,24 @@ class DefenseCoordinator:
                     worker = self.bot.workers.closest_to(build_pos)
                     worker.build(UnitTypeId.SPINECRAWLER, build_pos)
                     print(f"[DEFENSE] Building Spine Crawler at base")
+            else:
+                pass # 자원 부족 또는 예약 실패
 
         # 공중 위협 시 포자 촉수 (Reactive, 설정값 사용)
         if self.blackboard and self.blackboard.threat.is_air_threat:
             spores_nearby = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(defense_range, base.position)
 
             if len(spores_nearby) == 0:
-                if self.bot.can_afford(UnitTypeId.SPORECRAWLER):
+                cost = self.bot.calculate_cost(UnitTypeId.SPORECRAWLER)
+                can_afford = False
+                if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
+                    can_afford = await self.bot.resource_manager.try_reserve(
+                        cost.minerals, cost.vespene, "DefenseCoordinator"
+                    )
+                else:
+                    can_afford = self.bot.can_afford(UnitTypeId.SPORECRAWLER)
+
+                if can_afford:
                     spore_distance = self.config.SPORE_BUILD_DISTANCE if self.config else 6
                     build_pos = base.position.towards(self.bot.game_info.map_center, spore_distance)
 
@@ -513,9 +628,17 @@ class DefenseCoordinator:
             return
 
         # 자원 확인 (설정값 사용)
-        cost = self.config.SPORE_CRAWLER_COST if self.config else 75
-        if not self.bot.can_afford(UnitTypeId.SPORECRAWLER):
-            print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 자원 대기: {self.bot.minerals}m (필요: {cost}m)")
+        cost = self.bot.calculate_cost(UnitTypeId.SPORECRAWLER)
+        can_afford = False
+        if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
+            can_afford = await self.bot.resource_manager.try_reserve(
+                cost.minerals, cost.vespene, "DefenseCoordinator"
+            )
+        else:
+            can_afford = self.bot.can_afford(UnitTypeId.SPORECRAWLER)
+
+        if not can_afford:
+            # print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 자원 대기: {self.bot.minerals}m (필요: {cost.minerals}m)")
             return
 
         # 건설 위치: 본진 기지 앞쪽 (설정값 사용)
@@ -560,18 +683,21 @@ class DefenseCoordinator:
         if not target_base:
             return
 
-        # 방어 병력 모집
+        # 방어 병력 모집 (근처 유닛만, 공격 중인 원거리 유닛은 제외)
         defense_units = []
+        recruit_range = 30  # 기지에서 30 이내 유닛만 소환
 
-        # Zergling
-        zerglings = self.bot.units(UnitTypeId.ZERGLING)
-        if zerglings:
-            defense_units.extend(zerglings)
+        combat_types = {UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.RAVAGER,
+                        UnitTypeId.HYDRALISK, UnitTypeId.LURKER, UnitTypeId.ULTRALISK,
+                        UnitTypeId.BANELING, UnitTypeId.QUEEN}
 
-        # Queen
-        queens = self.bot.units(UnitTypeId.QUEEN).idle
-        if queens:
-            defense_units.extend(queens)
+        for unit_type in combat_types:
+            units = self.bot.units(unit_type)
+            if units:
+                nearby = units.closer_than(recruit_range, target_base.position)
+                if unit_type == UnitTypeId.QUEEN:
+                    nearby = nearby.idle  # 퀸은 유휴 상태만
+                defense_units.extend(nearby)
 
         # 방어 위치: 기지 앞쪽
         defense_pos = target_base.position.towards(self.bot.game_info.map_center, 5)

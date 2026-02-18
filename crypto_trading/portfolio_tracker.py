@@ -6,6 +6,7 @@ Portfolio Tracker
 """
 import json
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -23,6 +24,7 @@ class PortfolioTracker:
         self.graph_dir = config.GRAPH_OUTPUT_DIR
         self._history = self._load_json(self.history_file, [])
         self._trades = self._load_json(self.trade_log_file, [])
+        self._lock = threading.Lock()  # 파일 I/O thread-safe 보호
 
     @staticmethod
     def _load_json(path: Path, default):
@@ -35,12 +37,14 @@ class PortfolioTracker:
         return default
 
     def _save_history(self):
-        with open(self.history_file, "w", encoding="utf-8") as f:
-            json.dump(self._history, f, ensure_ascii=False, indent=2)
+        with self._lock:
+            with open(self.history_file, "w", encoding="utf-8") as f:
+                json.dump(self._history, f, ensure_ascii=False, indent=2)
 
     def _save_trades(self):
-        with open(self.trade_log_file, "w", encoding="utf-8") as f:
-            json.dump(self._trades, f, ensure_ascii=False, indent=2)
+        with self._lock:
+            with open(self.trade_log_file, "w", encoding="utf-8") as f:
+                json.dump(self._trades, f, ensure_ascii=False, indent=2)
 
     # ─────────── 스냅샷 기록 ───────────
 

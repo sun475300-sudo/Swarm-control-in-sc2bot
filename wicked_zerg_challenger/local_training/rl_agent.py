@@ -13,6 +13,7 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 """
 
 import json
+import os
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -56,6 +57,10 @@ class PolicyNetwork:
 
     def forward(self, x: np.ndarray) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
         """순전파"""
+        # NaN/Inf 입력 방어
+        if np.any(np.isnan(x)) or np.any(np.isinf(x)):
+            x = np.nan_to_num(x, nan=0.0, posinf=1.0, neginf=-1.0)
+
         z1 = np.dot(x, self.W1) + self.b1
         a1 = np.maximum(0, z1)  # ReLU
 
@@ -64,6 +69,10 @@ class PolicyNetwork:
 
         z3 = np.dot(a2, self.W3) + self.b3
         probs = self._softmax(z3)
+
+        # NaN/Inf 출력 방어: 균등 분포로 대체
+        if np.any(np.isnan(probs)) or np.any(np.isinf(probs)):
+            probs = np.ones(self.output_dim) / self.output_dim
 
         cache = {
             'x': x, 'z1': z1, 'a1': a1,
@@ -83,23 +92,42 @@ class PolicyNetwork:
         dz3[action_idx] -= 1
         dz3 *= -advantage
 
-        self.dW3 += np.outer(cache['a2'], dz3)
-        self.db3 += dz3
+        dW3 = np.outer(cache['a2'], dz3)
+        db3 = dz3
 
         da2 = np.dot(dz3, self.W3.T)
         dz2 = da2 * (cache['z2'] > 0).astype(float)
-        self.dW2 += np.outer(cache['a1'], dz2)
-        self.db2 += dz2
+        dW2 = np.outer(cache['a1'], dz2)
+        db2 = dz2
 
         da1 = np.dot(dz2, self.W2.T)
         dz1 = da1 * (cache['z1'] > 0).astype(float)
-        self.dW1 += np.outer(cache['x'], dz1)
-        self.db1 += dz1
+        dW1 = np.outer(cache['x'], dz1)
+        db1 = dz1
 
-    def update_weights(self, learning_rate: float = 0.001) -> None:
-        """가중치 업데이트"""
-        for grad in [self.dW1, self.db1, self.dW2, self.db2, self.dW3, self.db3]:
-            np.clip(grad, -1.0, 1.0, out=grad)
+        # NaN/Inf 그래디언트 방어: 해당 업데이트 스킵
+        grads = [dW1, db1, dW2, db2, dW3, db3]
+        if any(np.any(np.isnan(g)) or np.any(np.isinf(g)) for g in grads):
+            return  # 이번 스텝 그래디언트 누적 스킵
+
+        self.dW1 += dW1
+        self.db1 += db1
+        self.dW2 += dW2
+        self.db2 += db2
+        self.dW3 += dW3
+        self.db3 += db3
+
+    def update_weights(self, learning_rate: float = 0.001, max_grad_norm: float = 5.0) -> None:
+        """가중치 업데이트 (Gradient Norm Clipping 적용)"""
+        # 전체 그래디언트의 L2 norm 계산
+        all_grads = [self.dW1, self.db1, self.dW2, self.db2, self.dW3, self.db3]
+        total_norm = np.sqrt(sum(np.sum(g ** 2) for g in all_grads))
+
+        # Norm이 임계값 초과 시 비례적으로 스케일 다운
+        if total_norm > max_grad_norm:
+            scale = max_grad_norm / (total_norm + 1e-8)
+            for grad in all_grads:
+                grad *= scale
 
         self.W1 -= learning_rate * self.dW1
         self.b1 -= learning_rate * self.db1
@@ -178,6 +206,11 @@ class RLAgent:
         # ★★★ FIX: Reward buffer for dimension matching ★★★
         self.reward_buffer: float = 0.0  # Accumulate rewards between state samples
 
+        # 중간 보상 추적용 상태 변수 (Reward Shaping)
+        self.prev_base_count: int = 0
+        self.prev_army_supply: float = 0.0
+        self.prev_supply_blocked: bool = False
+
         self.action_labels = ["ECONOMY", "AGGRESSIVE", "DEFENSIVE", "TECH", "ALL_IN"]
 
         self._load_model()
@@ -234,6 +267,55 @@ class RLAgent:
         self.reward_buffer += reward  # Accumulate to buffer
         self.total_reward += reward
 
+    def calculate_intermediate_rewards(self, base_count: int, army_supply: float,
+                                       supply_blocked: bool) -> float:
+        """
+        중간 보상 계산 (Reward Shaping)
+
+        게임 진행 중 발생하는 이벤트에 대한 보상을 계산합니다.
+        호출 측에서 이 메서드의 반환값을 update_reward()에 전달하세요.
+
+        Args:
+            base_count: 현재 보유 기지 수
+            army_supply: 현재 군대 서플라이
+            supply_blocked: 서플라이 블록 상태 여부
+
+        Returns:
+            중간 보상 합산값
+        """
+        shaped_reward = 0.0
+
+        # 기지 변화 보상
+        base_diff = base_count - self.prev_base_count
+        if self.prev_base_count > 0:  # 초기화 이후에만 적용
+            if base_diff > 0:
+                shaped_reward += 0.3 * base_diff  # 새 기지 확장: +0.3
+            elif base_diff < 0:
+                shaped_reward += 0.3 * base_diff  # 기지 상실: -0.3
+
+        # 전투 보상: 군대 서플라이 변화 기반
+        army_diff = army_supply - self.prev_army_supply
+        if self.prev_army_supply > 0 and abs(army_diff) > 2.0:
+            # 전투 승리 (서플라이 증가): +0.1 ~ +0.5
+            # 전투 패배 (서플라이 감소): -0.1 ~ -0.5
+            fight_reward = np.clip(army_diff / 20.0, -0.5, 0.5)
+            shaped_reward += fight_reward
+
+        # 서플라이 블록 패널티
+        if supply_blocked and not self.prev_supply_blocked:
+            shaped_reward -= 0.1
+
+        # 상태 업데이트
+        self.prev_base_count = base_count
+        self.prev_army_supply = army_supply
+        self.prev_supply_blocked = supply_blocked
+
+        # 중간 보상 적용
+        if shaped_reward != 0.0:
+            self.update_reward(shaped_reward)
+
+        return shaped_reward
+
     def end_episode(self, final_reward: float = 0.0, save_experience: bool = True) -> Dict[str, float]:
         """에피소드 종료 및 학습"""
         if not self.rewards:
@@ -258,11 +340,19 @@ class RLAgent:
             adv_std = np.std(advantages) + 1e-8
             advantages = (advantages - np.mean(advantages)) / adv_std
 
-        # 역전파
+        # 역전파 (엔트로피 정규화 포함)
+        entropy_coeff = 0.01
         total_loss = 0.0
+        total_entropy = 0.0
         for cache, action, advantage in zip(self.caches, self.actions, advantages):
-            self.policy.backward(cache, action, advantage)
-            total_loss += -np.log(cache['probs'][action] + 1e-9) * advantage
+            probs = cache['probs']
+            # 엔트로피 보너스: 정책 붕괴 방지
+            entropy = -np.sum(probs * np.log(probs + 1e-10))
+            total_entropy += entropy
+            # 어드밴티지에 엔트로피 보너스 추가
+            adjusted_advantage = advantage + entropy_coeff * entropy
+            self.policy.backward(cache, action, adjusted_advantage)
+            total_loss += -np.log(probs[action] + 1e-9) * advantage - entropy_coeff * entropy
 
         # 학습률 스케줄링 적용
         current_lr = self._get_scheduled_learning_rate()
@@ -285,12 +375,18 @@ class RLAgent:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             # CRITICAL FIX: Use absolute path to ensure correct save location
             from pathlib import Path
-            buffer_dir = Path(__file__).parent / "data" / "buffer"
-            buffer_dir.mkdir(parents=True, exist_ok=True)
-            exp_path = buffer_dir / f"exp_{timestamp}_ep{self.episode_count}.npz"
-            saved = self.save_experience_data(str(exp_path))
-            if saved:
-                print(f"[RL_AGENT] [OK] Experience data saved: {exp_path.name}")
+            # use absolute path based on known project structure
+            buffer_dir = Path("d:/Swarm-contol-in-sc2bot/wicked_zerg_challenger/local_training/data/buffer")
+            try:
+                buffer_dir.mkdir(parents=True, exist_ok=True)
+                exp_path = buffer_dir / f"exp_{timestamp}_ep{self.episode_count}.npz"
+                saved = self.save_experience_data(str(exp_path))
+                if saved:
+                    print(f"[RL_AGENT] [OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})")
+                else:
+                    print(f"[RL_AGENT] [ERROR] Failed to save experience data")
+            except Exception as e:
+                print(f"[RL_AGENT] [ERROR] Exception during save: {e}")
 
         # Epsilon 감쇠
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
@@ -313,6 +409,10 @@ class RLAgent:
         self.actions.clear()
         self.rewards.clear()
         self.caches.clear()
+        # 중간 보상 추적 상태 리셋
+        self.prev_base_count = 0
+        self.prev_army_supply = 0.0
+        self.prev_supply_blocked = False
 
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장"""
@@ -364,19 +464,29 @@ class RLAgent:
         }
 
     def save_experience_data(self, path: str) -> bool:
-        """현재 에피소드의 경험 데이터를 파일로 저장"""
+        """현재 에피소드의 경험 데이터를 파일로 저장 (Atomic Save 적용)"""
         try:
             path = Path(path)
             path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # 임시 파일 경로 생성
+            temp_path = str(path) + ".tmp"
 
-            # NumPy 배열로 변환하여 저장
+            # NumPy 배열로 변환하여 임시 파일로 저장
             np.savez_compressed(
-                path,
-                states=np.array(self.states),
-                actions=np.array(self.actions),
-                rewards=np.array(self.rewards)
+                temp_path,
+                states=np.array(self.states, dtype=np.float32),
+                actions=np.array(self.actions, dtype=np.int64),
+                rewards=np.array(self.rewards, dtype=np.float32)
             )
-            print(f"[RL_AGENT] Experience saved: {len(self.states)} states, {len(self.rewards)} rewards")
+            
+            # 원자적으로 이름 변경 (Atomic Rename)
+            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
+            if os.path.exists(path):
+                os.remove(path)
+            os.rename(temp_path, path)
+            
+            print(f"[RL_AGENT] [OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards")
             return True
         except Exception as e:
             print(f"[RL_AGENT] Failed to save experience data: {e}")
@@ -413,7 +523,8 @@ class RLAgent:
             if len(advantages) > 1:
                 advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-8)
 
-            # 배치 학습
+            # 배치 학습 (엔트로피 정규화 포함)
+            entropy_coeff = 0.01
             episode_loss = 0.0
             for i in range(len(states)):
                 state = states[i]
@@ -430,11 +541,15 @@ class RLAgent:
                 # Forward
                 probs, cache = self.policy.forward(state_input)
 
+                # 엔트로피 보너스: 정책 붕괴 방지
+                entropy = -np.sum(probs * np.log(probs + 1e-10))
+                adjusted_advantage = advantage + entropy_coeff * entropy
+
                 # Backward
-                self.policy.backward(cache, action, advantage)
+                self.policy.backward(cache, action, adjusted_advantage)
 
                 # Loss logging
-                episode_loss += -np.log(probs[action] + 1e-9) * advantage
+                episode_loss += -np.log(probs[action] + 1e-9) * advantage - entropy_coeff * entropy
 
             total_loss += episode_loss
             total_steps += len(states)
@@ -491,7 +606,7 @@ class RLAgent:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                except:
+                except Exception:
                     pass
             return False
 

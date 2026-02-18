@@ -149,7 +149,14 @@ class CombatManager:
                 if self.smart_consume:
                     await self.smart_consume.on_step(iteration)
 
-                return
+                # ★★★ Phase 20: Overlord Hunter ★★★
+                if getattr(self, "overlord_hunter", None):
+                    await self.overlord_hunter.on_step(iteration)
+
+                # CRITICAL FIX: Do NOT return here!
+                # We want to use MicroController for micro, but CombatManager for macro/strategy (assignments)
+                # The logic below will assign units to tasks, and then _execute_combat will use MicroController if available.
+                # return
 
             # 아군 유닛과 적 유닛 확인
             if not hasattr(self.bot, 'units') or not hasattr(self.bot, 'enemy_units'):
@@ -159,19 +166,15 @@ class CombatManager:
             air_units = self._filter_air_units(getattr(self.bot, "units", []))
             enemy_units = getattr(self.bot, "enemy_units", [])
 
-            # ★ NEW: Unit Authority (유닛 제어 권한 필터링) ★
+            # ★ Unit Authority (유닛 제어 권한 필터링) ★
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                from unit_authority_manager import Authority
-                
-                # Army Units filtering
-                army_units = self.bot.unit_authority.filter_controllable_units(
-                    army_units, Authority.COMBAT, "CombatManager", iteration
-                )
-                
-                # Air Units filtering
-                air_units = self.bot.unit_authority.filter_controllable_units(
-                    air_units, Authority.COMBAT, "CombatManager", iteration
-                )
+                from unit_authority_manager import AuthorityLevel
+
+                # 권한 요청 가능한 유닛만 필터링
+                army_units = [u for u in army_units
+                              if self.bot.unit_authority.request_unit(u.tag, "CombatManager", AuthorityLevel.COMBAT)]
+                air_units = [u for u in air_units
+                             if self.bot.unit_authority.request_unit(u.tag, "CombatManager", AuthorityLevel.COMBAT)]
 
             # === MULTITASKING: Evaluate and assign tasks ===
             await self._execute_multitasking(army_units, air_units, enemy_units, iteration)
@@ -961,9 +964,10 @@ class CombatManager:
             enemy_units: 적 유닛들
         """
         try:
-            from combat.formation_manager import FormationManager
-            
-            formation_manager = FormationManager(self.bot)
+            formation_manager = getattr(self, 'formation_manager', None)
+            if formation_manager is None:
+                from combat.formation_manager import FormationManager
+                formation_manager = FormationManager(self.bot)
             
             if not self._has_units(enemy_units) or not self._has_units(units):
                 return
@@ -1077,7 +1081,7 @@ class CombatManager:
         self._roach_rush_active = True
         self._roach_rush_sent = True
 
-        print(f"[ROACH RUSH] ★★★ 6분 바퀴 러시 발동! ({roaches.amount}마리) ★★★")
+        self.logger.info(f"[ROACH RUSH] ★★★ 6분 바퀴 러시 발동! ({roaches.amount}마리) ★★★")
 
         # 적 본진 찾기
         target = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
@@ -1260,7 +1264,10 @@ class CombatManager:
                 sorted_bases = sorted(enemy_bases, key=lambda b: b.distance_to(our_base))
                 targets.extend([base.position for base in sorted_bases[:3]])  # 최대 3개
 
-            return targets if targets else [self._find_priority_attack_target()]
+            if not targets:
+                single_target = self._find_priority_attack_target()
+                return [single_target] if single_target else []
+            return targets
 
         # 적 건물이 없으면 단일 타겟 찾기
         single_target = self._find_priority_attack_target()
@@ -1435,7 +1442,7 @@ class CombatManager:
             self._last_search_time = game_time
 
             if self.bot.iteration % 100 == 0:
-                print(f"[SEARCH] [{int(game_time)}s] Searching map location {self._search_index + 1}/{len(search_locations)}")
+                self.logger.info(f"[SEARCH] [{int(game_time)}s] Searching map location {self._search_index + 1}/{len(search_locations)}")
 
         return search_locations[self._search_index]
 
@@ -1452,9 +1459,21 @@ class CombatManager:
         return is_army_gathered(self, army_units)
 
     def _filter_army_units(self, units):
-        return self._filter_units_by_type(
+        # Per-frame cache: avoid filtering the same units list multiple times
+        current_frame = getattr(self.bot, "state", None)
+        frame_id = getattr(current_frame, "game_loop", None) if current_frame else None
+        if frame_id is not None and frame_id == self._cached_army_frame and self._cached_army is not None:
+            return self._cached_army
+
+        result = self._filter_units_by_type(
             units, ["ZERGLING", "ROACH", "HYDRALISK", "MUTALISK", "CORRUPTOR", "BROODLORD"]
         )
+
+        if frame_id is not None:
+            self._cached_army = result
+            self._cached_army_frame = frame_id
+
+        return result
 
     def _filter_air_units(self, units):
         """Filter air units (Mutalisks, Corruptors, Brood Lords)"""
@@ -1644,7 +1663,7 @@ class CombatManager:
         if self._air_harass_target:
             await self._execute_harass(mutalisks, enemy_units)
             if iteration % 100 == 0:
-                print(f"[AIR HARASS] [{int(game_time)}s] Mutalisks harassing enemy base")
+                self.logger.info(f"[AIR HARASS] [{int(game_time)}s] Mutalisks harassing enemy base")
         else:
             # No harass target, attack normally
             if self._has_units(enemy_units):
@@ -1779,7 +1798,7 @@ class CombatManager:
         if len(enemy_combat_units) >= 3:
             await self._retreat_to_base(zerglings)
             if iteration % 200 == 0:
-                print(f"[EARLY HARASS] [{int(game_time)}s] Zerglings retreating from defense")
+                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] Zerglings retreating from defense")
             return
 
         # 일꾼 찾기
@@ -1799,7 +1818,7 @@ class CombatManager:
                     # Unit command failed
                     continue
             if iteration % 200 == 0:
-                print(f"[EARLY HARASS] [{int(game_time)}s] {len(zerglings)} Zerglings harassing workers")
+                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] {len(zerglings)} Zerglings harassing workers")
         else:
             # 일꾼이 없으면 타겟 위치로 이동
             for ling in zerglings:
@@ -2041,29 +2060,48 @@ class CombatManager:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # 고위협 유닛 목록 (더 넓은 감지 범위)
-        high_threat_names = {
+        # 전투 유닛 목록 (실제 위협이 되는 유닛)
+        combat_unit_names = {
             "ZERGLING", "MARINE", "ZEALOT", "REAPER", "ADEPT",
             "BANELING", "ROACH", "STALKER", "MARAUDER",
-            "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE"
+            "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE",
+            "HYDRALISK", "MUTALISK", "CORRUPTOR", "BROODLORD",
+            "RAVAGER", "LURKER", "ULTRALISK", "INFESTOR",
+            "COLOSSUS", "DISRUPTOR", "IMMORTAL", "ARCHON",
+            "THOR", "HELLION", "HELLIONTANK", "CYCLONE",
+            "BATTLECRUISER", "LIBERATOR", "VIKING", "MEDIVAC",
+            "VOIDRAY", "CARRIER", "TEMPEST", "PHOENIX"
+        }
+
+        # 비전투 유닛 (정찰용, 위협이 낮음)
+        non_combat_names = {
+            "SCV", "PROBE", "DRONE", "MULE",
+            "OBSERVER", "OVERLORD", "OVERSEER", "WARPPRISM",
+            "RAVEN", "CHANGELING"
         }
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
             base_range = 25 if game_time >= 180 else 30  # 초반 더 민감
 
-            # 일반 적 확인
+            # 근처 적 확인
             nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < base_range]
 
-            # 고위협 적은 더 넓은 범위에서 확인
-            high_threat_enemies = [
-                e for e in enemy_units
-                if getattr(e.type_id, "name", "").upper() in high_threat_names
-                and e.distance_to(th.position) < base_range + 10
+            if not nearby_enemies:
+                continue
+
+            # 전투 유닛과 비전투 유닛 분류
+            nearby_combat = [
+                e for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in combat_unit_names
             ]
 
-            # 조건: 1기 이상의 적, 또는 고위협 적 감지
-            if len(nearby_enemies) >= 1 or high_threat_enemies:
+            # 전투 유닛이 1기 이상이면 위협 (실제 공격 의도)
+            if len(nearby_combat) >= 1:
+                return True
+
+            # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
+            if len(nearby_enemies) >= 3:
                 return True
 
         return False
@@ -2258,7 +2296,7 @@ class CombatManager:
 
         except Exception as e:
             if iteration % 200 == 0:
-                print(f"[WARNING] Baneling burrow error: {e}")
+                self.logger.warning(f"[WARNING] Baneling burrow error: {e}")
 
     # ============================================================
     # ★★★ MANDATORY BASE DEFENSE SYSTEM ★★★
@@ -2336,7 +2374,7 @@ class CombatManager:
         # 위협이 없으면 방어 모드 해제
         if max_threat_score == 0:
             if self._base_defense_active and iteration % 100 == 0:
-                print(f"[BASE DEFENSE] [{int(game_time)}s] Threat cleared - returning to normal")
+                self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] Threat cleared - returning to normal")
             self._base_defense_active = False
             self._defense_rally_point = None
             return None
@@ -2349,7 +2387,7 @@ class CombatManager:
 
         # 로그 출력 (5초마다)
         if iteration % 110 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] ★ MANDATORY DEFENSE ★ "
+            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] ★ MANDATORY DEFENSE ★ "
                   f"Enemies: {enemy_count}, Threat score: {max_threat_score}")
 
         # ★ 모든 군대 즉시 방어 ★
@@ -2451,7 +2489,7 @@ class CombatManager:
                         continue
 
                 if iteration % 220 == 0:
-                    print(f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}")
+                    self.logger.warning(f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}")
                 return
 
         # ★ 일반 방어 모드 ★
@@ -2499,7 +2537,7 @@ class CombatManager:
         # 로그 (10초마다)
         if iteration % 220 == 0:
             defeat_msg = f" [위기도: {defeat_level}]" if defeat_level >= 2 else ""
-            print(f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}")
+            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}")
 
     def _find_densest_enemy_position(self, enemies):
         """가장 밀집된 적 위치 찾기 (맹독충용) - enemy_tracking 모듈 사용"""
@@ -2541,12 +2579,12 @@ class CombatManager:
         if last_stand_mode or defeat_level >= 3:  # IMMINENT
             defense_workers = nearby_workers  # 모든 일꾼
             if iteration % 220 == 0:
-                print(f"[WORKER DEFENSE] ★ 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! ★")
+                self.logger.warning(f"[WORKER DEFENSE] ★ 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! ★")
         # ★ 위기 상황: 일꾼 12명 방어 ★
         elif defeat_level >= 2:  # CRITICAL
             defense_workers = nearby_workers[:12]
             if iteration % 220 == 0:
-                print(f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어")
+                self.logger.warning(f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어")
         # ★ 일반 상황: 일꾼 6명 방어 (경제 보존) ★
         else:
             defense_workers = nearby_workers[:6]
@@ -2587,7 +2625,7 @@ class CombatManager:
                 continue
 
         if iteration % 220 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] ★ {len(defense_workers)} WORKERS DEFENDING ★")
+            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] ★ {len(defense_workers)} WORKERS DEFENDING ★")
 
     # ==================== ★★★ VICTORY CONDITION SYSTEM ★★★ ====================
 
@@ -2616,7 +2654,7 @@ class CombatManager:
         if current_structure_count < self._last_enemy_structure_count:
             destroyed = self._last_enemy_structure_count - current_structure_count
             self._enemy_structures_destroyed += destroyed
-            print(f"[VICTORY] {destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}")
+            self.logger.info(f"[VICTORY] {destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}")
 
         self._last_enemy_structure_count = current_structure_count
 
@@ -2635,12 +2673,12 @@ class CombatManager:
         # 승리 푸시 활성화
         if should_activate_victory_push and not self._victory_push_active:
             self._victory_push_active = True
-            print(f"[VICTORY PUSH] ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}")
+            self.logger.info(f"[VICTORY PUSH] ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}")
 
         # 승리 푸시 비활성화 조건 (적이 다시 건물을 많이 지었거나, 병력이 부족)
         if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
             self._victory_push_active = False
-            print(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:
@@ -2650,7 +2688,7 @@ class CombatManager:
         if iteration % 660 == 0:
             expansion_count = len(self._known_enemy_expansions)
             status = "ACTIVE" if self._victory_push_active else "STANDBY"
-            print(f"[VICTORY] [{int(game_time)}s] Enemy: {current_structure_count} structures, "
+            self.logger.info(f"[VICTORY] [{int(game_time)}s] Enemy: {current_structure_count} structures, "
                   f"{expansion_count} expansions | Status: {status}")
 
     async def _track_enemy_expansions(self):
@@ -2688,7 +2726,7 @@ class CombatManager:
         # 로그 (10초마다)
         if iteration % 220 == 0:
             target_str = f"({attack_target.x:.1f}, {attack_target.y:.1f})" if hasattr(attack_target, 'x') else str(attack_target)
-            print(f"[VICTORY PUSH] [{int(game_time)}s] {len(army_units)} units attacking {target_str}")
+            self.logger.info(f"[VICTORY PUSH] [{int(game_time)}s] {len(army_units)} units attacking {target_str}")
 
     def _get_army_supply(self) -> int:
         """현재 아군 병력의 supply 합계 계산"""
@@ -2700,7 +2738,7 @@ class CombatManager:
 
         for unit in army_units:
             try:
-                supply = getattr(unit, "supply", 0)
+                supply = getattr(unit, "supply_cost", 1)
                 if isinstance(supply, (int, float)):
                     total_supply += supply
             except (AttributeError, TypeError) as e:
@@ -2749,7 +2787,7 @@ class CombatManager:
                 attack_start_time = self._expansion_under_attack.get(base_tag, current_time)
 
                 # 로그 출력
-                print(f"[EXPANSION DESTROYED] [{int(current_time)}s] [WARNING] Expansion base destroyed after {int(current_time - attack_start_time)}s of attack!")
+                self.logger.warning(f"[EXPANSION DESTROYED] [{int(current_time)}s] [WARNING] Expansion base destroyed after {int(current_time - attack_start_time)}s of attack!")
 
                 # 파괴된 기지 정보 제거
                 if base_tag in self._expansion_under_attack:
@@ -2778,7 +2816,7 @@ class CombatManager:
                 if expansion_tag not in self._expansion_under_attack:
                     # 처음 공격받음
                     self._expansion_under_attack[expansion_tag] = current_time
-                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] [WARNING] Expansion under attack! {len(nearby_enemies)} enemies detected")
+                    self.logger.warning(f"[EXPANSION DEFENSE] [{int(current_time)}s] [WARNING] Expansion under attack! {len(nearby_enemies)} enemies detected")
 
                 # ★ 대응: 방어 병력 파견
                 await self._defend_expansion(expansion, nearby_enemies, iteration)
@@ -2787,7 +2825,7 @@ class CombatManager:
                 # 공격받지 않음 - 공격 기록 제거
                 if expansion_tag in self._expansion_under_attack:
                     attack_duration = current_time - self._expansion_under_attack[expansion_tag]
-                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] [OK] Expansion secured after {int(attack_duration)}s")
+                    self.logger.info(f"[EXPANSION DEFENSE] [{int(current_time)}s] [OK] Expansion secured after {int(attack_duration)}s")
                     del self._expansion_under_attack[expansion_tag]
 
     async def _defend_expansion(self, expansion, nearby_enemies, iteration: int):
@@ -2868,7 +2906,7 @@ class CombatManager:
         # 로그 (10초마다)
         if iteration % 220 == 0:
             current_time = getattr(self.bot, "time", 0)
-            print(f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion (enemies: {len(nearby_enemies)})")
+            self.logger.info(f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion (enemies: {len(nearby_enemies)})")
 
     async def _counterattack_after_base_loss(self, destroyed_base_tags, iteration: int):
         """
@@ -2883,7 +2921,7 @@ class CombatManager:
             return
 
         current_time = getattr(self.bot, "time", 0)
-        print(f"[COUNTERATTACK] [{int(current_time)}s] 🔥 Launching counterattack after base loss!")
+        self.logger.info(f"[COUNTERATTACK] [{int(current_time)}s] Launching counterattack after base loss!")
 
         army_units = self._filter_army_units(self.bot.units)
         if not army_units:
@@ -2909,7 +2947,7 @@ class CombatManager:
                     # Unit command failed
                     continue
 
-            print(f"[COUNTERATTACK] [{int(current_time)}s] {len(counterattack_force)} units attacking enemy structure for revenge!")
+            self.logger.info(f"[COUNTERATTACK] [{int(current_time)}s] {len(counterattack_force)} units attacking enemy structure for revenge!")
         else:
             # 적 시작 위치로 공격
             if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
@@ -2920,14 +2958,6 @@ class CombatManager:
                     except (AttributeError, TypeError) as e:
                         # Unit command failed
                         continue
-# -*- coding: utf-8 -*-
-"""
-Harassment System Extension for Combat Manager
-
-Adds intelligent worker harassment with automatic retreat and return mechanics.
-"""
-
-# Add this to the end of combat_manager.py
 
     # ============================================================================
     # HARASSMENT SYSTEM (Worker Targeting + Retreat/Return Logic)

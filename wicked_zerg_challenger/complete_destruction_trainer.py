@@ -335,10 +335,10 @@ class CompleteDestructionTrainer:
                 try:
                     # Unit Authority Manager 통합
                     if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                        from unit_authority_manager import Authority
+                        from unit_authority_manager import AuthorityLevel
                         granted = self.bot.unit_authority.request_authority(
                             {unit.tag},
-                            Authority.COMBAT,
+                            AuthorityLevel.COMBAT,
                             "CompleteDestruction",
                             self.bot.state.game_loop
                         )
@@ -383,10 +383,10 @@ class CompleteDestructionTrainer:
                 try:
                     # Unit Authority Manager 통합
                     if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                        from unit_authority_manager import Authority
+                        from unit_authority_manager import AuthorityLevel
                         granted = self.bot.unit_authority.request_authority(
                             {unit.tag},
-                            Authority.COMBAT,
+                            AuthorityLevel.COMBAT,
                             "CompleteDestruction",
                             self.bot.state.game_loop
                         )

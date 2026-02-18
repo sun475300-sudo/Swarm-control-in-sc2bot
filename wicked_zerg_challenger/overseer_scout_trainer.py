@@ -139,10 +139,10 @@ class OverseerScoutTrainer:
             if overseer.tag not in self.overseers:
                 # ★ Unit Authority Check ★
                 if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
-                    from unit_authority_manager import Authority
+                    from unit_authority_manager import AuthorityLevel
                     # IDLE 권한 요청 (정찰은 전투보다 낮음)
                     granted = self.bot.unit_authority.request_authority(
-                        {overseer.tag}, Authority.IDLE, "OverseerScout", self.bot.state.game_loop
+                        {overseer.tag}, AuthorityLevel.SCOUTING, "OverseerScout", self.bot.state.game_loop
                     )
                     if overseer.tag not in granted:
                         continue

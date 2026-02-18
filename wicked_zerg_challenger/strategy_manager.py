@@ -243,7 +243,8 @@ class StrategyManager:
 
     def _detect_enemy_race(self) -> None:
         """상대 종족 감지"""
-        if self.detected_enemy_race != EnemyRace.UNKNOWN:
+        # Re-check if still UNKNOWN or RANDOM (actual race may have been revealed)
+        if self.detected_enemy_race not in (EnemyRace.UNKNOWN, EnemyRace.RANDOM):
             return
 
         enemy_race = getattr(self.bot, "enemy_race", None)
@@ -258,7 +259,9 @@ class StrategyManager:
         elif "Zerg" in race_name:
             self.detected_enemy_race = EnemyRace.ZERG
         elif "Random" in race_name:
-            self.detected_enemy_race = EnemyRace.RANDOM
+            # Only set RANDOM if not already RANDOM (avoid redundant logging)
+            if self.detected_enemy_race != EnemyRace.RANDOM:
+                self.detected_enemy_race = EnemyRace.RANDOM
 
     def _update_game_phase(self) -> None:
         """게임 페이즈 업데이트"""
@@ -386,11 +389,15 @@ class StrategyManager:
         total_threat_score = 0
         high_threat_count = 0
         enemies_near_base = []
+        counted_tags = set()  # 중복 카운트 방지
 
         for th in self.bot.townhalls:
             for enemy in enemy_units:
                 try:
-                    if enemy.distance_to(th.position) < 40:  # 기지 40 거리 내
+                    if enemy.tag in counted_tags:
+                        continue
+                    if enemy.distance_to(th.position) < 25:  # 기지 25 거리 내 (40→25 축소)
+                        counted_tags.add(enemy.tag)
                         enemies_near_base.append(enemy)
 
                         # 위협 점수 계산
@@ -405,8 +412,8 @@ class StrategyManager:
                     continue
 
         # 대규모 공격 판정
-        # 조건: 위협 점수 20 이상 또는 고위협 유닛 2개 이상
-        if total_threat_score >= 20 or high_threat_count >= 2:
+        # 조건: 위협 점수 30 이상 또는 고위협 유닛 3개 이상 (과민 감지 완화)
+        if total_threat_score >= 30 or high_threat_count >= 3:
             # ★★★ 로그 스팸 방지: 5초마다만 출력 ★★★
             if game_time - self.last_major_attack_log > self.log_cooldown:
                 self.logger.warning(f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
@@ -462,6 +469,13 @@ class StrategyManager:
                 combat._rally_point = rally_pos
                 combat._min_army_for_attack = 999  # 공격 중지, 방어 우선
                 self.logger.info("Army rallying to defend base!")
+
+    def _reset_min_army_for_attack(self) -> None:
+        """방어 모드 종료 시 공격 임계값 복원"""
+        combat = getattr(self.bot, "combat_manager", None)
+        if combat and getattr(combat, "_min_army_for_attack", 0) >= 999:
+            combat._min_army_for_attack = 15
+            self.logger.info("Attack threshold reset to 15 (defense mode ended)")
 
     def _update_counter_build(self) -> None:
         """
@@ -861,6 +875,12 @@ class StrategyManager:
         else:
             current_ratios[unit_type] = target_ratio
 
+        # Normalize so ratios sum to 1.0
+        total = sum(current_ratios.values())
+        if total > 0:
+            for k in current_ratios:
+                current_ratios[k] /= total
+
     def _request_spire_build(self) -> None:
         """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
         pass
@@ -901,6 +921,9 @@ class StrategyManager:
 
         self.logger.info("Emergency mode ended - Returning to normal operations")
 
+        # Reset attack threshold that was set to 999 during defense
+        self._reset_min_army_for_attack()
+
         # Economy Manager 복구
         if hasattr(self.bot, "economy") and self.bot.economy:
             self.bot.economy.set_emergency_mode(False)
@@ -920,25 +943,26 @@ class StrategyManager:
         if self.emergency_active:
             return  # Emergency 유지
 
-        # 군대 우위 계산
+        # 군대 우위 계산 (supply-weighted)
         our_army = 0
         enemy_army = 0
 
         if hasattr(self.bot, "units"):
             for unit in self.bot.units:
                 if unit.can_attack and unit.type_id.name != "DRONE":
-                    our_army += 1
+                    our_army += getattr(unit, "supply_cost", 1)
 
         if hasattr(self.bot, "enemy_units"):
             for unit in self.bot.enemy_units:
                 if unit.can_attack:
-                    enemy_army += 1
+                    enemy_army += getattr(unit, "supply_cost", 1)
 
         # 공급량 기반 공격 (적 정보가 없어도 공격)
         army_supply = getattr(self.bot, "supply_army", 0)
         
         # 전략 결정
         if self.current_mode != StrategyMode.EMERGENCY:
+            prev_mode = self.current_mode
             # 1. 압도적 물량이면 공격 (적 유닛 수와 무관하게)
             if army_supply >= 100:
                 self.current_mode = StrategyMode.ALL_IN
@@ -952,6 +976,10 @@ class StrategyManager:
                 self.current_mode = StrategyMode.DEFENSIVE
             else:
                 self.current_mode = StrategyMode.NORMAL
+
+            # Reset attack threshold when leaving DEFENSIVE mode
+            if prev_mode == StrategyMode.DEFENSIVE and self.current_mode != StrategyMode.DEFENSIVE:
+                self._reset_min_army_for_attack()
 
     def get_unit_ratios(self) -> Dict[str, float]:
         """

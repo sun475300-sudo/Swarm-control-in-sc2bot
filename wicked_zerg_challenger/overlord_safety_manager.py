@@ -273,10 +273,10 @@ class OverlordSafetyManager:
         for ov in unassigned:
             # 권한 체크 (UnitAuthority)
             if hasattr(self.bot, "unit_authority"):
-                from unit_authority_manager import Authority
+                from unit_authority_manager import AuthorityLevel
                 # 대군주는 낮은 우선순위로 제어 (드랍 등에 뺏길 수 있음)
                 granted = self.bot.unit_authority.request_authority(
-                    {ov.tag}, Authority.IDLE, "OverlordSafety", self.bot.state.game_loop
+                    {ov.tag}, AuthorityLevel.IDLE, "OverlordSafety", self.bot.state.game_loop
                 )
                 if ov.tag not in granted:
                     continue

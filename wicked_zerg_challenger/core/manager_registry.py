@@ -85,6 +85,17 @@ def get_all_manager_configs():
             class_name="StrategyManager",
             attribute_name="strategy_manager",
             priority=ManagerPriority.HIGH,
+            post_init=lambda bot, manager: setattr(manager, "blackboard", getattr(bot, "blackboard", None)),
+        ),
+
+        ManagerConfig(
+            name="DefenseCoordinator",
+            module_path="defense_coordinator",
+            class_name="DefenseCoordinator",
+            attribute_name="defense_coordinator",
+            priority=ManagerPriority.HIGH,
+            dependencies=["blackboard"],
+            post_init=lambda bot, manager: setattr(manager, "blackboard", getattr(bot, "blackboard", None)),
         ),
 
         # ========== MEDIUM PRIORITY (일반 시스템) ==========
@@ -155,6 +166,14 @@ def get_all_manager_configs():
         ),
 
         ManagerConfig(
+            name="OverlordSafetyManager",
+            module_path="overlord_safety_manager",
+            class_name="OverlordSafetyManager",
+            attribute_name="overlord_safety",
+            priority=ManagerPriority.MEDIUM,
+        ),
+
+        ManagerConfig(
             name="★ ActiveScoutingSystem",
             module_path="active_scouting_system",
             class_name="ActiveScoutingSystem",
@@ -203,7 +222,7 @@ def get_all_manager_configs():
             name="SpellUnitManager",
             module_path="spell_unit_manager",
             class_name="SpellUnitManager",
-            attribute_name="spell_units",
+            attribute_name="spell_manager",  # Fixed: bot_step_integration uses "spell_manager"
             priority=ManagerPriority.LOW,
         ),
 
@@ -244,6 +263,22 @@ def get_all_manager_configs():
             module_path="building_destroyer",
             class_name="BuildingDestroyer",
             attribute_name="building_destroyer",
+            priority=ManagerPriority.LOW,
+        ),
+
+        ManagerConfig(
+            name="CreepHighwayManager",
+            module_path="creep_highway_manager",
+            class_name="CreepHighwayManager",
+            attribute_name="creep_highway",
+            priority=ManagerPriority.LOW,
+        ),
+
+        ManagerConfig(
+            name="RuntimeSelfHealing",
+            module_path="runtime_self_healing",
+            class_name="RuntimeSelfHealing",
+            attribute_name="self_healing",
             priority=ManagerPriority.LOW,
         ),
 

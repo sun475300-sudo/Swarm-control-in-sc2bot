@@ -5,6 +5,7 @@ Upbit API Client Wrapper
 """
 import time
 import logging
+import threading
 from typing import Optional
 import pyupbit
 from pyupbit import Upbit
@@ -22,21 +23,25 @@ class UpbitClient:
         self._upbit: Optional[Upbit] = None
         self._last_request_time = 0.0
         self._min_interval = 0.12  # rate-limit 보호 (초)
+        self._lock = threading.Lock()  # thread-safe 보호
 
     def _get_upbit(self) -> Upbit:
-        """인증된 Upbit 인스턴스 (lazy init)"""
+        """인증된 Upbit 인스턴스 (lazy init, thread-safe)"""
         if self._upbit is None:
-            if not self.access_key or not self.secret_key:
-                raise ValueError("Upbit API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
-            self._upbit = Upbit(self.access_key, self.secret_key)
+            with self._lock:
+                if self._upbit is None:  # double-check locking
+                    if not self.access_key or not self.secret_key:
+                        raise ValueError("Upbit API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
+                    self._upbit = Upbit(self.access_key, self.secret_key)
         return self._upbit
 
     def _throttle(self):
-        """API 호출 간격 제어"""
-        elapsed = time.time() - self._last_request_time
-        if elapsed < self._min_interval:
-            time.sleep(self._min_interval - elapsed)
-        self._last_request_time = time.time()
+        """API 호출 간격 제어 (thread-safe)"""
+        with self._lock:
+            elapsed = time.time() - self._last_request_time
+            if elapsed < self._min_interval:
+                time.sleep(self._min_interval - elapsed)
+            self._last_request_time = time.time()
 
     # ─────────── 시세 조회 (공개 API) ───────────
 

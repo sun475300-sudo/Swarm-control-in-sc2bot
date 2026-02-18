@@ -39,7 +39,7 @@ class FormationManager:
         }
 
     def form_concave(
-        self, units: Units, enemy_center: Point2
+        self, units: Units, enemy_center: Point2, formation_radius: float = 8.0
     ) -> List[Tuple[Unit, Point2]]:
         """
         오목한 대형(Concave) 형성
@@ -49,6 +49,7 @@ class FormationManager:
         Args:
             units: 아군 유닛 집합
             enemy_center: 적군 중심 위치
+            formation_radius: 부채꼴 반지름 (기본 8.0)
 
         Returns:
             (유닛, 목표 위치) 튜플 리스트
@@ -65,7 +66,7 @@ class FormationManager:
         # 원거리 유닛: 부채꼴 모양으로 배치
         if ranged and enemy_center:
             # 부채꼴의 반지름 (유닛의 사거리)
-            radius = 8.0  # 원거리 유닛의 평균 사거리
+            radius = formation_radius
 
             # 부채꼴의 중심점 (우리 본진)
             if self.bot.townhalls.exists:
