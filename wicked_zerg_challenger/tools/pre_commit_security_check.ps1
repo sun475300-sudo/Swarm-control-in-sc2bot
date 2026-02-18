@@ -28,7 +28,7 @@ $CheckExtensions = @(
     '.md', '.txt', '.env', '.conf', '.config'
 )
 
-# ── 제외할 파일 패턴 (보안 도구 자체, 예시 파일) ──
+# ── 제외할 파일 패턴 (보안 도구 자체, 예시 파일, 검증 스크립트) ──
 $ExcludePatterns = @(
     'pre_commit_security_check*',
     'check_api_key*',
@@ -36,6 +36,11 @@ $ExcludePatterns = @(
     'remove_api_key*',
     'rotate_api_key*',
     'api_key_security_hardening*',
+    # 환경변수 검증 스크립트 (키 이름만 있고 실제 값 없음 - 오탐 방지)
+    'validate_env.py',
+    'validate_env*.py',
+    'check_env*.py',
+    'env_validator*.py',
     '*.example',
     '*.sample',
     '.gitignore',

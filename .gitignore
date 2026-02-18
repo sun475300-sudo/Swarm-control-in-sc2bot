@@ -9,6 +9,12 @@ __pycache__/
 dist/
 build/
 
+# Backup files
+*.bak
+**/*.bak
+*.bak.*
+*.orig
+
 # Virtual environments
 venv/
 env/
