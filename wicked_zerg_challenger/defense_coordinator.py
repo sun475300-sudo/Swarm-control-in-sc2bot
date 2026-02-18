@@ -455,30 +455,51 @@ class DefenseCoordinator:
              elif e.type_id == UnitTypeId.ROACH: enemy_supply += 2
              else: enemy_supply += 2
 
-        # 전투 결정 로직 (Fight Decision)
-        # 조건: 적이 소수이고 (보급 4 이하), 우리 일꾼이 적보다 2배 이상 많음
+        # 전투 결정 로직 (Fight Decision) ★ IMPROVED: 더 보수적 ★
+        # 조건: 적이 극소수(보급 2 이하)이고, 우리 일꾼이 적보다 3배 이상 많음
         should_fight = False
-        if enemy_supply <= 4 and workers_in_danger.amount >= enemy_count * 2:
+        if enemy_supply <= 2 and workers_in_danger.amount >= enemy_count * 3:
             should_fight = True
-        
+
         # 벙커/광자포 러시 등 건물 위협은 제외 (싸우면 손해)
         if nearby_enemies.structure.exists:
             should_fight = False
 
+        # ★ 초반 3분 이전에는 절대 싸우지 않음 (드론 보호 최우선) ★
+        game_time = self.bot.time
+        if game_time < 180:
+            should_fight = False
+
         if should_fight:
-            # === FIGHT MODE ===
-            # 포위 공격 (Surround Attack)
+            # === FIGHT MODE (제한적) ===
+            # 최대 5명만 전투 참여, 나머지는 대피
             target = nearby_enemies.closest_to(workers_in_danger.center)
+            fight_count = 0
             for worker in workers_in_danger:
-                # 쿨다운 찼을 때만 공격 (기본적인 카이팅)
-                if worker.weapon_cooldown <= 0:
-                    self.bot.do(worker.attack(target))
+                # ★ HP 50% 이하면 즉시 대피 ★
+                if worker.health_percentage < 0.5:
+                    near_minerals = self.bot.mineral_field.closest_to(worker)
+                    if near_minerals:
+                        self.bot.do(worker.gather(near_minerals))
+                    continue
+
+                if fight_count < 5:
+                    # 쿨다운 찼을 때만 공격, 아니면 이동 (카이팅)
+                    if worker.weapon_cooldown <= 0:
+                        self.bot.do(worker.attack(target))
+                    else:
+                        # ★ 카이팅: 적에게서 멀어지기 ★
+                        retreat_pos = worker.position.towards(target.position, -3)
+                        self.bot.do(worker.move(retreat_pos))
+                    fight_count += 1
                 else:
-                    self.bot.do(worker.attack(target)) # 일꾼은 그냥 어택땅이 나을 수 있음 (비비기 효과)
-            
-            # 일부 로그 출력 (가끔)
+                    # 5명 초과분은 대피
+                    near_minerals = self.bot.mineral_field.closest_to(worker)
+                    if near_minerals:
+                        self.bot.do(worker.gather(near_minerals))
+
             if self.bot.iteration % 100 == 0:
-                 print(f"[DEFENSE] Workers FIGHTING BACK! ({workers_in_danger.amount} vs {enemy_count} enemies)")
+                 print(f"[DEFENSE] Workers FIGHTING BACK! ({fight_count}/{workers_in_danger.amount} vs {enemy_count} enemies)")
         
         else:
             # === FLEE MODE (Drill / Evacuate) ===
