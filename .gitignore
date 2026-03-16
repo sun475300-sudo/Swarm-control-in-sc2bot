@@ -195,3 +195,34 @@ node_modules/
 **/local_training/logs/
 **/local_training/models/*.npz
 **/local_training/models/*.tmp*
+
+# ── 진단/생성 파일 ──
+proxy_models*.json
+model_diag.txt
+test_ping.json
+spawning_tool_dump.html
+personality_presets.json
+5.9.0
+
+# Session databases
+sessions.db
+sessions.db-shm
+sessions.db-wal
+*.db-shm
+*.db-wal
+
+# User data
+data/memory.json
+data/audit_log.json
+data/levels.json
+
+# Credentials
+credentials.json
+**/credentials.json
+
+# ── 추가 제외 항목 ──
+data/backups/
+utm_demo.png
+
+# ── JARVIS 보안 자동 추가 ──
+*.env
