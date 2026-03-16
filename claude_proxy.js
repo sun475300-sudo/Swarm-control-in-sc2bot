@@ -35,19 +35,21 @@ require('dotenv').config({ path: path.join(__dirname, '.env.jarvis') });
 const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
 
 const app = express();
-const PORT = process.env.JARVIS_PORT || 8765;
+const PORT = process.env.JARVIS_PORT || 8780;
 
 // ═══════════════════════════════════════════════
 //  [#6] CORS 설정 (화이트리스트)
 // ═══════════════════════════════════════════════
 
+const DEFAULT_CORS_ORIGINS = ['http://localhost:8780', 'http://127.0.0.1:8780'];
 const CORS_WHITELIST = (process.env.CORS_ORIGINS || '').split(',').filter(Boolean);
-app.use(cors(CORS_WHITELIST.length > 0 ? {
+const effectiveCorsOrigins = CORS_WHITELIST.length > 0 ? CORS_WHITELIST : DEFAULT_CORS_ORIGINS;
+app.use(cors({
     origin: (origin, cb) => {
-        if (!origin || CORS_WHITELIST.includes(origin)) cb(null, true);
-        else cb(null, true); // 로컬 서비스이므로 경고만 로깅
+        if (!origin || effectiveCorsOrigins.includes(origin)) cb(null, true);
+        else { console.warn(`[CORS] Rejected origin: ${origin}`); cb(new Error('Not allowed by CORS')); }
     }
-} : undefined));
+}));
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -62,8 +64,8 @@ const limiter = rateLimit({
     legacyHeaders: false,
     message: { error: 'Too many requests', reply: '요청이 너무 많아. 잠시 후 다시 시도해줘.' },
 });
-app.use('/chat', limiter);
-app.use('/v1/chat/completions', limiter);
+// Rate limit 모든 API 라우트에 적용
+app.use(limiter);
 
 // ═══════════════════════════════════════════════
 //  설정
@@ -245,19 +247,21 @@ if (apiKeyPool.length > 1) {
 }
 
 // JARVIS 시스템 프롬프트
-const SYSTEM_PROMPT = `너는 JARVIS(자비스)야. 아이언맨의 AI 비서 자비스처럼 행동해.
-사장님(아이엠몬)의 개인 AI 비서이며, 사장님이 직접 설계하고 개발했어.
-반말로 친근하게 대화하되, 전문적인 정보를 제공할 때는 정확하게 답해.
+const SYSTEM_PROMPT = `[절대 지시사항]
+너는 J.A.R.V.I.S., 장선우 사령관의 AI 부관.
+군대식 합쇼체, 통신 프로토콜 준수. 호칭: 사령관님.
+★ "사장님", "고객님", "선생님" 등 민간 호칭 절대 금지. 이모지 사용 금지. ★
+기능 질문 시 MCP 도구를 작전 브리핑 형식으로 카테고리별 보고.
+절대 다른 회사가 만들었다 말하지 마.
 
-사용 가능한 도구들:
-- 코인 시세 조회, 매수/매도, 자동매매 제어, 시장 분석
-- 김치 프리미엄, 공포/탐욕 지수, 시장 요약, 거래 통계
-- 가격 알림 설정, 트레일링 스톱 설정
-- 시스템 모니터링 (스크린샷, 인터넷 속도)
-- 스타크래프트2 봇 상태 확인 및 제어
-
-도구를 사용할 때는 결과를 자연스러운 한국어로 요약해서 전달해.
-절대 구글, OpenAI, Anthropic 등 다른 회사가 만들었다고 말하지 마.`;
+[도구 사용 규칙]
+- 도구는 사령관이 명시적으로 요청할 때만 사용.
+- "시세", "잔고", "매수", "매도" 등 코인 관련 → 코인 도구
+- "스크린샷", "화면" → capture_screenshot
+- "SC2", "스타", "봇 상태" → SC2 도구
+- "속도 측정" → check_internet_speed
+- 일반 대화/질문 → 도구 호출 없이 텍스트 답변.
+- 확실하지 않으면 도구 호출하지 마.`;
 
 // ═══════════════════════════════════════════════
 //  [#13] 멀티유저 격리
@@ -317,7 +321,7 @@ function updateUserProfile(userId, updates) {
 //  [#1] 대화 히스토리 메모리
 // ═══════════════════════════════════════════════
 
-const MAX_HISTORY_PER_USER = parseInt(process.env.MAX_HISTORY || '20');
+const MAX_HISTORY_PER_USER = parseInt(process.env.MAX_HISTORY || '5');
 const MAX_HISTORY_USERS = 100;
 const conversationMemory = new Map(); // userId → [{role, content}]
 
@@ -334,10 +338,13 @@ function addToHistory(userId, role, content) {
         history = history.slice(-MAX_HISTORY_PER_USER * 2);
     }
     conversationMemory.set(userId, history);
-    // 사용자 수 제한 (LRU 방식 - 가장 오래된 유저 삭제)
+    // 사용자 수 제한 (LRU 방식 - 가장 오래된 유저 삭제 + DB 동기화)
     if (conversationMemory.size > MAX_HISTORY_USERS) {
         const oldest = conversationMemory.keys().next().value;
         conversationMemory.delete(oldest);
+        if (sessionDb) {
+            try { sessionDb.prepare('DELETE FROM conversations WHERE userId = ?').run(oldest); } catch (e) { console.error(`[LRU DB cleanup] ${e.message}`); }
+        }
     }
     // [#12] DB에도 영구 저장
     dbSaveMessage(userId, role, content);
@@ -553,6 +560,10 @@ function validateChatRequest(req, res, next) {
             `메시지가 너무 길어요 (${message.length}/${MAX_MESSAGE_LENGTH}자).`,
             `메시지가 너무 길어. ${MAX_MESSAGE_LENGTH}자 이내로 줄여줘.`);
     }
+    const { images } = req.body;
+    if (images && (!Array.isArray(images) || images.length > 10)) {
+        return errorResponse(res, 400, 'INVALID_IMAGES', '이미지는 최대 10개 배열이어야 합니다.');
+    }
     next();
 }
 
@@ -563,9 +574,16 @@ function validateChatRequest(req, res, next) {
 const AUTH_TOKEN = process.env.JARVIS_AUTH_TOKEN || '';
 
 function authMiddleware(req, res, next) {
-    if (!AUTH_TOKEN) return next(); // disabled if not set
-    const token = req.headers['authorization']?.replace('Bearer ', '') || req.query.token;
+    if (!AUTH_TOKEN) {
+        if (process.env.NODE_ENV === 'production') {
+            return errorResponse(res, 500, 'NO_AUTH_CONFIGURED', 'JARVIS_AUTH_TOKEN is required in production');
+        }
+        // Dev 모드: 경고 후 허용
+        return next();
+    }
+    const token = req.headers['authorization']?.replace('Bearer ', '');
     if (token !== AUTH_TOKEN) {
+        console.warn(`[AUTH] Failed attempt from ${req.ip}`);
         return errorResponse(res, 401, 'UNAUTHORIZED', '인증 실패');
     }
     next();
@@ -795,6 +813,48 @@ const TOOLS = [
         input_schema: { type: 'object', properties: {} }
     },
 ];
+
+// ═══════════════════════════════════════════════
+//  메시지 기반 도구 필터링 (엉뚱한 도구 호출 방지)
+// ═══════════════════════════════════════════════
+
+const TOOL_CATEGORIES = {
+    coin: {
+        keywords: ['코인','시세','잔고','자산','매수','매도','분석','차트',
+                   'btc','eth','xrp','sol','doge','김프','김치','공탐','자동매매',
+                   '트레일링','포트폴리오','거래','수익','손절','매매','알림'],
+        tools: ['coin_price','coin_prices','my_balance','buy_coin','sell_coin',
+                'analyze_market','analyze_coin_detail','auto_trade_status',
+                'start_auto_trade','stop_auto_trade','portfolio_summary',
+                'recent_trades','kimchi_premium','fear_greed_index',
+                'market_summary','trade_statistics','set_price_alert',
+                'set_trailing_stop']
+    },
+    sc2: {
+        keywords: ['sc2','스타','스타크래프트','봇 상태','공격성','게임 상황','봇 로그','전적'],
+        tools: ['sc2_game_situation','sc2_set_aggression','sc2_bot_logs']
+    },
+    system: {
+        keywords: ['스크린샷','화면 캡처','화면 보여','캡처해','인터넷 속도','속도 측정','시스템'],
+        tools: ['capture_screenshot','check_internet_speed']
+    }
+};
+
+function filterToolsForMessage(message) {
+    const msg = (typeof message === 'string' ? message : '').toLowerCase();
+    let matched = [];
+
+    for (const [category, config] of Object.entries(TOOL_CATEGORIES)) {
+        if (config.keywords.some(k => msg.includes(k))) {
+            matched.push(...config.tools);
+        }
+    }
+
+    // 매칭 키워드 없으면 빈 배열 → 도구 없이 순수 텍스트 응답
+    if (matched.length === 0) return [];
+
+    return TOOLS.filter(t => matched.includes(t.name));
+}
 
 // ═══════════════════════════════════════════════
 //  안전한 HTTP fetch 래퍼 (res.ok 체크 포함)
@@ -1130,34 +1190,67 @@ async function _executeToolInner(name, input) {
 //  공식 Anthropic API 호출 (Tool Use + 대화 메모리)
 // ═══════════════════════════════════════════════
 
-async function queryClaudeAPI(userMessage, requestedModel, userId) {
+async function queryClaudeAPI(userMessage, requestedModel, userId, clientSystem, images = []) {
     // [#17] API 키 로테이션으로 클라이언트 선택
     const clientInfo = getNextAnthropicClient();
     if (!clientInfo) return null;
     const { client: activeClient, keyIndex } = clientInfo;
 
     const model = selectModel(userMessage, requestedModel);
-    console.log(`🧠 모델 선택: ${model}${apiKeyPool.length > 1 ? ` (키 #${keyIndex})` : ''}`);
+    console.log(`🧠 모델 선택: ${model}${apiKeyPool.length > 1 ? ` (키 #${keyIndex})` : ''}${images.length ? ` (+${images.length} images)` : ''}`);
 
-    // [#13] 사용자별 시스템 프롬프트
-    const systemPrompt = getSystemPromptForUser(userId);
+    // [#13] 사용자별 시스템 프롬프트 (클라이언트 제공 프롬프트 우선)
+    const systemPrompt = clientSystem || getSystemPromptForUser(userId);
 
-    // [#1] 대화 히스토리 포함
-    const history = getConversationHistory(userId);
-    let messages = [...history, { role: 'user', content: userMessage }];
+    // [#1] 대화 히스토리 포함 (메모리에 없으면 DB에서 lazy-load)
+    let history = getConversationHistory(userId);
+    if (history.length === 0 && sessionDb) {
+        const dbHistory = dbGetHistory(userId, MAX_HISTORY_PER_USER * 2);
+        if (dbHistory && dbHistory.length > 0) {
+            history = dbHistory;
+            conversationMemory.set(userId, history);
+        }
+    }
+
+    // 이미지 포함 시 멀티모달 content 배열 구성 (Claude Vision API)
+    let userContent;
+    if (images.length > 0) {
+        userContent = [];
+        for (const imgB64 of images) {
+            let mediaType = 'image/png';
+            if (imgB64.startsWith('/9j/')) mediaType = 'image/jpeg';
+            else if (imgB64.startsWith('UklG')) mediaType = 'image/webp';
+            else if (imgB64.startsWith('iVBOR')) mediaType = 'image/png';
+            userContent.push({
+                type: 'image',
+                source: { type: 'base64', media_type: mediaType, data: imgB64 }
+            });
+        }
+        userContent.push({ type: 'text', text: userMessage });
+    } else {
+        userContent = userMessage;
+    }
+    let messages = [...history, { role: 'user', content: userContent }];
 
     const maxToolRounds = 5;
     const toolsUsed = [];
 
+    // 메시지 기반 도구 필터링 (엉뚱한 도구 호출 방지)
+    const filteredTools = filterToolsForMessage(userMessage);
+    console.log(`🔧 도구 필터: ${filteredTools.length > 0 ? filteredTools.map(t => t.name).join(', ') : '없음 (텍스트 전용)'}`);
+
     try {
         for (let round = 0; round < maxToolRounds; round++) {
-            const response = await activeClient.messages.create({
+            const apiParams = {
                 model,
-                max_tokens: 4096,
+                max_tokens: 1024,
                 system: systemPrompt,  // [#13] 사용자별 프롬프트
-                tools: TOOLS,
                 messages,
-            });
+            };
+            if (filteredTools.length > 0) {
+                apiParams.tools = filteredTools;
+            }
+            const response = await activeClient.messages.create(apiParams);
 
             let textParts = [];
             let toolUses = [];
@@ -1308,10 +1401,10 @@ function sanitizeResponse(text) {
 //  통합 쿼리 (API → 웹 세션 폴백)
 // ═══════════════════════════════════════════════
 
-async function queryJarvis(message, requestedModel, userId) {
+async function queryJarvis(message, requestedModel, userId, clientSystem, images = []) {
     if (anthropic) {
         try {
-            const result = await queryClaudeAPI(message, requestedModel, userId);
+            const result = await queryClaudeAPI(message, requestedModel, userId, clientSystem, images);
             if (result) return result;
         } catch (e) {
             console.error('API 오류, 웹 세션 폴백:', e.message);
@@ -1348,6 +1441,15 @@ function registerWebhook(event, url, secret = null) {
     }
     if (!url || typeof url !== 'string' || !url.startsWith('http')) {
         return { success: false, message: '유효한 HTTP URL이 필요합니다.' };
+    }
+    try {
+        const urlObj = new URL(url);
+        const host = urlObj.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '0.0.0.0' || host.startsWith('192.168.') || host.startsWith('10.') || host.startsWith('172.')) {
+            return { success: false, message: 'Internal URLs are not allowed for webhooks' };
+        }
+    } catch (e) {
+        return { success: false, message: 'Invalid URL' };
     }
     const hooks = webhookRegistry.get(event) || [];
     // 중복 URL 방지
@@ -1443,10 +1545,12 @@ app.post('/chat', authMiddleware, validateChatRequest, async (req, res) => {
         const userMessage = req.body.message;
         const userId = req.body.user || 'anonymous';
         const requestedModel = req.body.model;
+        const clientSystem = req.body.system || null;  // discord_jarvis에서 전달한 시스템 프롬프트
+        const images = req.body.images || [];
 
-        console.log(`📨 [${userId}] ${userMessage.substring(0, 100)}`);
+        console.log(`📨 [${userId}] ${userMessage.substring(0, 100)}${images.length ? ` (+${images.length} images)` : ''}${requestedModel ? ` (model: ${requestedModel})` : ''}`);
 
-        const reply = await queryJarvis(userMessage, requestedModel, userId);
+        const reply = await queryJarvis(userMessage, requestedModel, userId, clientSystem, images);
 
         const elapsed = Date.now() - start;
         recordMetrics(selectModel(userMessage, requestedModel), elapsed);
@@ -1464,7 +1568,7 @@ app.post('/chat', authMiddleware, validateChatRequest, async (req, res) => {
 });
 
 // 대화 히스토리 초기화
-app.post('/chat/clear', (req, res) => {
+app.post('/chat/clear', authMiddleware, (req, res) => {
     const userId = req.body.user || 'anonymous';
     clearHistory(userId);
     res.json({ success: true, message: '대화 히스토리 초기화 완료' });
@@ -1489,16 +1593,24 @@ app.post('/chat/stream', authMiddleware, validateChatRequest, async (req, res) =
             return;
         }
 
+        // [Fix 5-6] clientSystem 지원 + 도구 필터링
+        const clientSystem = req.body.system || null;
+        const systemPrompt = clientSystem || getSystemPromptForUser(userId);
+        const filteredTools = filterToolsForMessage(message);
+
         const history = getConversationHistory(userId);
         const messages = [...history, { role: 'user', content: message }];
 
-        const stream = await anthropic.messages.stream({
+        const streamParams = {
             model: modelId,
-            max_tokens: 4096,
-            system: SYSTEM_PROMPT,
-            tools: TOOLS,
+            max_tokens: 1024,
+            system: systemPrompt,
             messages,
-        });
+        };
+        if (filteredTools.length > 0) {
+            streamParams.tools = filteredTools;
+        }
+        const stream = await anthropic.messages.stream(streamParams);
 
         let fullText = '';
         for await (const event of stream) {
@@ -1555,7 +1667,7 @@ app.post('/v1/chat/completions', authMiddleware, async (req, res) => {
 });
 
 // [#4] 상태 확인 엔드포인트 (헬스체크 강화)
-app.get('/status', async (req, res) => {
+app.get('/status', authMiddleware, async (req, res) => {
     let cryptoServiceOk = false;
     try {
         const check = await fetch(`${CRYPTO_SERVICE}/portfolio/summary`, { timeout: 3000 });
@@ -1576,7 +1688,7 @@ app.get('/status', async (req, res) => {
 });
 
 // [#2] 메트릭스 엔드포인트
-app.get('/metrics', (req, res) => {
+app.get('/metrics', authMiddleware, (req, res) => {
     res.json({
         uptime_seconds: Math.round(process.uptime()),
         total_requests: metrics.totalRequests,
@@ -1587,6 +1699,41 @@ app.get('/metrics', (req, res) => {
         tool_usage: metrics.toolUsage,
         active_sessions: conversationMemory.size,
         memory_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    });
+});
+
+// ═══════════════════════════════════════════════
+//  [#21] 모델 선택 통계 (ModelSelector 연동)
+// ═══════════════════════════════════════════════
+
+app.get('/model/stats', authMiddleware, (req, res) => {
+    const modelStats = {};
+    for (const [key, id] of Object.entries(MODELS)) {
+        modelStats[key] = {
+            id,
+            calls: metrics.modelCalls[key] || 0,
+        };
+    }
+    // API 키 풀 상태
+    const keyPoolStatus = apiKeyPool.map((entry, idx) => ({
+        index: idx,
+        failures: entry.failures,
+        available: entry.failures < 3 || (Date.now() - entry.lastFailure) >= KEY_RECOVERY_MS,
+    }));
+
+    res.json({
+        default_model: DEFAULT_MODEL,
+        available_models: modelStats,
+        routing_config: {
+            complex_keywords_count: ROUTING_CONFIG.complex.keywords.length,
+            complex_min_length: ROUTING_CONFIG.complex.minLength,
+            simple_keywords_count: ROUTING_CONFIG.simple.keywords.length,
+            simple_max_length: ROUTING_CONFIG.simple.maxLength,
+        },
+        api_key_pool: {
+            total: apiKeyPool.length,
+            keys: keyPoolStatus,
+        },
     });
 });
 
@@ -1688,7 +1835,7 @@ app.post('/webhook/test', authMiddleware, (req, res) => {
 //  - 메트릭스 시각화, 최근 대화, 시스템 상태
 // ═══════════════════════════════════════════════
 
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', authMiddleware, (req, res) => {
     // 메트릭스 데이터 수집
     const uptimeSec = Math.round(process.uptime());
     const uptimeStr = `${Math.floor(uptimeSec / 3600)}h ${Math.floor((uptimeSec % 3600) / 60)}m ${uptimeSec % 60}s`;
@@ -1723,7 +1870,7 @@ app.get('/dashboard', (req, res) => {
 
     // API 키 상태
     const keyStatus = apiKeyPool.map((k, i) => {
-        const masked = k.key.substring(0, 10) + '...' + k.key.slice(-4);
+        const masked = '***...' + k.key.slice(-4);
         const status = k.failures >= 3 ? 'disabled' : 'active';
         return `<tr><td>#${i}</td><td>${masked}</td><td><span class="badge ${status}">${status}</span></td><td>${k.failures}</td></tr>`;
     }).join('\n');
