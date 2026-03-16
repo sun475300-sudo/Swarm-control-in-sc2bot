@@ -290,17 +290,19 @@ class ReplayBuildOrderLearner:
                 "Queen": 100.0,
                 "Zergling": 110.0,
                 "RoachWarren": 180.0,
-                "Lair": 300.0,
-                "HydraliskDen": 360.0
+                "Lair": 270.0,
+                "HydraliskDen": 330.0
             },
             "unit_priorities": {
                 "Drone": 0.3,
-                "Zergling": 0.25,
+                "Zergling": 0.2,
                 "Roach": 0.15,
                 "Hydralisk": 0.1,
                 "Queen": 0.1,
+                "Ravager": 0.05,
                 "Baneling": 0.05,
-                "Mutalisk": 0.05
+                "Mutalisk": 0.03,
+                "Lurker": 0.02
             },
             "expansion_timings": {
                 "second_base": 90.0,

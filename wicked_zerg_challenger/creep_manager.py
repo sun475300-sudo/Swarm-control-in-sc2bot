@@ -6,7 +6,10 @@ Creep Manager - vector-driven creep expansion targeting with tumor relay.
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, Iterable, List, Optional
+
+logger = logging.getLogger(__name__)
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -134,6 +137,13 @@ class CreepManager:
     def _get_attack_path_targets(self) -> List[object]:
         if not Point2:
             return []
+
+        # ★ A* 고속도로 웨이포인트 우선 사용 ★
+        astar_highway = getattr(self.bot, "creep_highway_astar", None)
+        if astar_highway and astar_highway.highway_waypoints:
+            return list(astar_highway.highway_waypoints)
+
+        # Fallback: 직선 경로
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
             return []
         origin = self.bot.townhalls.first.position
@@ -233,7 +243,8 @@ class CreepManager:
                 # Prefer tumors far from base and close to enemy
                 score = dist_to_base - dist_to_enemy * 0.5
                 scored_tumors.append((tumor, score))
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[CreepManager] tumor scoring suppressed: {e}")
                 continue
 
         if not scored_tumors:
@@ -264,7 +275,8 @@ class CreepManager:
                         if spread_target.distance_to(exp_loc) < 7.0:
                             too_close_to_expansion = True
                             break
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"[CreepManager] expansion distance check suppressed: {e}")
                         continue
 
                 # 확장 기지 근처면 이 종양은 스킵
@@ -285,7 +297,8 @@ class CreepManager:
                         tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target)
                     )
                     self.tumor_spread_cooldowns[tumor.tag] = iteration
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[CreepManager] tumor spread suppressed: {e}")
                 continue
 
         if actions:
@@ -299,8 +312,8 @@ class CreepManager:
                         result = self.bot.do(action)
                         if hasattr(result, "__await__"):
                             await result
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[CreepManager] do_actions suppressed: {e}")
 
     @staticmethod
     def _score_target(origin, candidate, direction_target) -> float:
@@ -347,13 +360,14 @@ class CreepManager:
                         dist = tumor.position.distance_to(our_base)
                         if dist > farthest_dist:
                             farthest_dist = dist
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"[CreepManager] tumor distance check suppressed: {e}")
                         continue
 
             print(f"[CREEP] [{int(game_time)}s] Tumors: {tumor_count}, Farthest: {int(farthest_dist)} from base")
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"[CreepManager] log_creep_progress suppressed: {e}")
 
     def get_tumor_count(self) -> int:
         """현재 종양 수 반환"""
@@ -466,8 +480,8 @@ class CreepSpreadManager:
                 self._update_coverage(game_time)
                 self._last_coverage_check = game_time
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"[CreepSpreadManager] on_step suppressed: {e}")
 
     def _generate_creep_grid(self):
         """BFS/그리드 패턴으로 크립 종양 목표 위치 생성"""
@@ -583,8 +597,8 @@ class CreepSpreadManager:
                 self.total_tumors_created += 1
                 pos_tuple = (round(tumor_pos.x, 1), round(tumor_pos.y, 1))
                 self.pending_tumor_positions.add(pos_tuple)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[CreepSpreadManager] queen tumor creation suppressed: {e}")
 
     async def _spread_from_tumors(self, game_time: float):
         """기존 크립 종양에서 새 종양 확산"""
@@ -599,7 +613,8 @@ class CreepSpreadManager:
                 abilities = await self.bot.get_available_abilities(tumor)
                 if AbilityId.BUILD_CREEPTUMOR_TUMOR not in abilities:
                     continue
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[CreepSpreadManager] get_abilities suppressed: {e}")
                 continue
 
             spread_pos = self._find_best_tumor_position(
@@ -613,8 +628,8 @@ class CreepSpreadManager:
                 self.total_tumors_created += 1
                 pos_tuple = (round(spread_pos.x, 1), round(spread_pos.y, 1))
                 self.pending_tumor_positions.add(pos_tuple)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[CreepSpreadManager] tumor spread action suppressed: {e}")
 
     def _find_best_tumor_position(
         self,
@@ -704,8 +719,8 @@ class CreepSpreadManager:
                         pass
             if total_cells > 0:
                 self._creep_coverage_percent = (creep_cells / total_cells) * 100
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"[CreepSpreadManager] update_coverage suppressed: {e}")
 
     def assign_creep_queen(self, queen_tag: int):
         """크립 전용 퀸 지정"""

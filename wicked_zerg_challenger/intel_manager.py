@@ -7,7 +7,10 @@ Intel Manager - lightweight information manager with update/on_step bridge.
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class IntelManager:
@@ -48,6 +51,8 @@ class IntelManager:
         # Build pattern confidence tracking
         self._build_pattern_confidence = 0.0  # 0.0 ~ 1.0
         self._build_pattern_status = "unknown"  # "unknown", "suspected", "confirmed"
+        self._enemy_build_pattern = "unknown"
+        self._recommended_response = []
 
         # ★ NEW: Destructible structures tracking
         self.destructible_rocks = []  # 파괴 가능한 중립 구조물
@@ -64,7 +69,7 @@ class IntelManager:
             if asyncio.iscoroutine(result):
                 await result
         except (AttributeError, TypeError) as e:
-            # Expected errors from missing bot attributes or type mismatches
+            logger.warning(f"[IntelManager] on_step suppressed: {e}")
             return
         except Exception as e:
             # Log unexpected errors
@@ -98,6 +103,9 @@ class IntelManager:
         """Track enemy army composition."""
         enemy_units = getattr(self.bot, "enemy_units", [])
         enemy_structures = getattr(self.bot, "enemy_structures", [])
+
+        # ★ Update enemy main base location ★
+        self._update_enemy_main_base(enemy_structures)
 
         # Count enemy units by type
         self.enemy_unit_counts = {}
@@ -140,6 +148,44 @@ class IntelManager:
         # Detect enemy build pattern
         self._detect_enemy_build_pattern(enemy_structures, enemy_units)
 
+    def _update_enemy_main_base(self, enemy_structures) -> None:
+        """
+        Update enemy main base location from visible structures or start locations.
+
+        Priority:
+        1. Visible enemy townhalls (closest to known start location)
+        2. bot.enemy_start_locations[0] as fallback
+        """
+        base_types = {'COMMANDCENTER', 'COMMANDCENTERFLYING', 'ORBITALCOMMAND',
+                      'ORBITALCOMMANDFLYING', 'PLANETARYFORTRESS',
+                      'NEXUS', 'HATCHERY', 'LAIR', 'HIVE'}
+
+        # Try to find from visible enemy structures
+        enemy_bases = []
+        for s in enemy_structures:
+            try:
+                type_name = getattr(s.type_id, "name", "").upper()
+                if type_name in base_types:
+                    enemy_bases.append(s)
+            except (AttributeError, TypeError) as e:
+                logger.warning(f"[IntelManager] Enemy base detection suppressed: {e}")
+                continue
+
+        if enemy_bases:
+            # Use the enemy base closest to their start location
+            start_locs = getattr(self.bot, "enemy_start_locations", [])
+            if start_locs:
+                ref = start_locs[0]
+                closest = min(enemy_bases, key=lambda b: b.distance_to(ref))
+                self.enemy_main_base_location = closest.position
+            else:
+                self.enemy_main_base_location = enemy_bases[0].position
+        elif self.enemy_main_base_location is None:
+            # Fallback: use enemy start location
+            start_locs = getattr(self.bot, "enemy_start_locations", [])
+            if start_locs:
+                self.enemy_main_base_location = start_locs[0]
+
     def _update_threat_status(self) -> None:
         """Check if we're under attack with improved detection."""
         enemy_units = getattr(self.bot, "enemy_units", [])
@@ -164,41 +210,41 @@ class IntelManager:
             'SIEGETANK', 'SIEGETANKSIEGED', 'LIBERATOR', 'WIDOWMINE'
         }
 
-        # Check for enemies near our bases with dynamic range
-        for th in townhalls:
-            for enemy in enemy_units:
-                try:
-                    enemy_type = getattr(enemy.type_id, "name", "").upper()
+        # ★ O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 ★
+        th_positions = [th.position for th in townhalls]
+        base_detection_range = 40 if current_time < 180 else 30
+        found_critical = False
 
-                    # Dynamic detection range based on threat level
-                    # High-threat units: 35 range (detect earlier)
-                    # Normal units: 30 range
-                    detection_range = 35 if enemy_type in high_threat_units else 30
+        for enemy in enemy_units:
+            try:
+                enemy_type = getattr(enemy.type_id, "name", "").upper()
+                detection_range = base_detection_range if current_time < 180 else (
+                    35 if enemy_type in high_threat_units else 30
+                )
 
-                    # Early game (< 3min): Even more sensitive detection
-                    if current_time < 180:
-                        detection_range = 40
-
-                    if enemy.distance_to(th.position) < detection_range:
-                        self._under_attack = True
-                        self._attack_position = enemy.position
-                        self._last_attack_time = current_time
-
-                        # Check if high threat unit
-                        if enemy_type in self._high_threat_types:
-                            self._high_threat_units_detected = True
-                            self._threat_level = "critical"
-                        elif self._threat_level not in ["critical", "heavy"]:
-                            self._threat_level = "medium"
-
-                        # Log early attack detection
-                        if current_time < 180 and self.bot.iteration % 100 == 0:
-                            print(f"[INTEL] [{int(current_time)}s] EARLY ATTACK: {enemy_type} detected at {detection_range} range!")
-
-                        # Continue checking other enemies to properly assess threat level
-                except (AttributeError, TypeError) as e:
-                    # Expected errors from missing unit attributes
+                near_base = any(
+                    enemy.distance_to(pos) < detection_range for pos in th_positions
+                )
+                if not near_base:
                     continue
+
+                self._under_attack = True
+                self._attack_position = enemy.position
+                self._last_attack_time = current_time
+
+                if enemy_type in self._high_threat_types:
+                    self._high_threat_units_detected = True
+                    self._threat_level = "critical"
+                    found_critical = True
+                elif not found_critical and self._threat_level not in ["critical", "heavy"]:
+                    self._threat_level = "medium"
+
+                if current_time < 180 and self.bot.iteration % 100 == 0:
+                    print(f"[INTEL] [{int(current_time)}s] EARLY ATTACK: {enemy_type} detected!")
+
+            except (AttributeError, TypeError) as e:
+                logger.warning(f"[IntelManager] Threat detection suppressed: {e}")
+                continue
 
         # Clear attack flag after 10 seconds of no enemies
         if current_time - self._last_attack_time > 10:
@@ -488,8 +534,7 @@ class IntelManager:
             blackboard.set("enemy_worker_count", self.enemy_worker_count)
 
         except (AttributeError, TypeError) as e:
-            # Silently fail if blackboard doesn't support set operation
-            pass
+            logger.warning(f"[IntelManager] Blackboard update suppressed: {e}")
 
     def record_scouted_location(self, location) -> None:
         """Record a location that has been scouted."""
@@ -535,7 +580,7 @@ class IntelManager:
                     if any(dest_type in type_name for dest_type in destructible_types):
                         destructible_list.append(unit)
                 except (AttributeError, TypeError) as e:
-                    # Expected errors from missing unit attributes
+                    logger.warning(f"[IntelManager] Destructible unit check suppressed: {e}")
                     continue
 
             self.destructible_rocks = destructible_list
@@ -545,8 +590,7 @@ class IntelManager:
                 print(f"[INTEL] [{int(current_time)}s] ★ {len(destructible_list)} destructible rocks detected!")
 
         except (AttributeError, TypeError) as e:
-            # Expected errors from missing bot attributes
-            pass
+            logger.warning(f"[IntelManager] Destructible structure scan suppressed: {e}")
 
     def _update_all_enemy_structures(self) -> None:
         """
@@ -565,8 +609,7 @@ class IntelManager:
                 if len(self.all_enemy_structures) > 0:
                     print(f"[INTEL] [{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}")
         except (AttributeError, TypeError) as e:
-            # Expected errors from missing bot attributes
-            pass
+            logger.warning(f"[IntelManager] Enemy structure tracking suppressed: {e}")
 
     def get_destructible_rocks(self) -> list:
         """파괴 가능한 중립 구조물 목록 반환."""
@@ -579,7 +622,8 @@ class IntelManager:
 
         try:
             return min(self.destructible_rocks, key=lambda rock: rock.distance_to(position))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[IntelManager] Closest destructible rock suppressed: {e}")
             return None
 
     def get_all_enemy_structures(self) -> list:

@@ -222,6 +222,55 @@ class GameConfig:
     LEARNING_RATE_DEFAULT = 0.001
     DISCOUNT_FACTOR = 0.95
 
+    # ========== 거리 채굴 & 황금 기지 (1순위 경제) ==========
+
+    DISTANCE_MINING_INTERVAL = 330         # 15초마다 최적 배정
+    WORKERS_PER_CLOSE_PATCH = 2            # 가까운 패치: 2명
+    WORKERS_PER_FAR_PATCH = 1              # 먼 패치: 1명
+    DEPLETED_PATCH_THRESHOLD = 100         # 고갈 판정 미네랄 잔량
+    DEPLETED_BASE_TOTAL_THRESHOLD = 300    # 똥땅 판정 총 잔량
+    GOLD_MINERAL_THRESHOLD = 1200          # 황금 미네랄 판정 기준
+    GOLD_BASE_PRIORITY_BONUS = 80          # 황금 기지 우선순위 보너스
+
+    # ========== 여왕 전문 분담 (Phase 1) ==========
+
+    QUEEN_PUMP_ENERGY_RESERVE = 25      # PUMP 퀸 에너지 예약
+    QUEEN_CREEP_PER_BASES = 2           # CREEP 퀸 기지 비율 (2기지당 1마리)
+    QUEEN_CREEP_ENERGY_THRESHOLD = 25   # CREEP 퀸 최소 에너지
+    QUEEN_TRANSFUSE_HP_THRESHOLD = 0.5  # 수혈 HP 비율 임계값
+
+    # ========== A* 점막 고속도로 (Phase 1) ==========
+
+    CREEP_HIGHWAY_GRID_RESOLUTION = 4      # A* 그리드 셀 크기
+    CREEP_HIGHWAY_WAYPOINT_SPACING = 9.0   # 종양 확산 간격
+
+    # ========== 양각 포위 전술 (2순위-A) ==========
+
+    FLANKING_MIN_ARMY_SUPPLY = 15          # 포위 최소 보급
+    FLANKING_NUM_GROUPS = 2                # 분할 그룹 수
+    FLANKING_ANGLE_OFFSET_DEG = 60         # 편향 각도
+    FLANKING_APPROACH_DISTANCE = 15.0      # 접근 웨이포인트 거리
+    FLANKING_COOLDOWN = 30.0               # 재시도 쿨다운(초)
+
+    # ========== 살모사/감염충 마이크로 (2순위-B) ==========
+
+    VIPER_ABDUCT_SAFETY_RADIUS = 5         # 납치 안전 반경
+    VIPER_ABDUCT_MIN_FRIENDLY = 5          # 납치 최소 아군 수
+    VIPER_CONSUME_BUILDING_MIN_HP = 250    # 건물 흡수 최소 HP
+    INFESTOR_FUNGAL_RADIUS = 2.0           # 진균 반경
+    INFESTOR_FUNGAL_LEAD_TIME = 0.5        # 예측 시간(초)
+
+    # ========== 대군주 Pillars (2순위-C) ==========
+
+    OVERLORD_PILLAR_MAX = 3                # 최대 Pillar 대군주 수
+
+    # ========== ML 훈련 파이프라인 (3순위) ==========
+
+    TRAINING_GAMES_PER_CYCLE = 5           # 사이클당 훈련 게임 수
+    TRAINING_DEPLOY_THRESHOLD = 0.05       # 자동 배포 win_rate 향상 기준 (5%)
+    TRAINING_HOT_RELOAD_INTERVAL = 30.0    # 핫 리로드 확인 주기 (초)
+    TRAINING_MAX_VERSIONS = 50             # 최대 버전 보관 수
+
     # ========== 설정 로드/저장 ==========
 
     @classmethod
@@ -234,10 +283,12 @@ class GameConfig:
     @classmethod
     def to_dict(cls) -> Dict[str, Any]:
         """설정을 딕셔너리로 변환"""
+        # Bug fix #8: Filter for JSON-serializable types only
+        _JSON_TYPES = (bool, int, float, str, list, dict, type(None))
         return {
             key: value
             for key, value in vars(cls).items()
-            if not key.startswith('_') and not callable(value)
+            if not key.startswith('_') and not callable(value) and isinstance(value, _JSON_TYPES)
         }
 
     @classmethod
@@ -273,7 +324,10 @@ class GameConfig:
 
         config_dict = cls.to_dict()
 
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        # Bug fix #7: os.makedirs("") crashes on filename-only paths
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
 
         with open(filepath, 'w') as f:
             json.dump(config_dict, f, indent=2)

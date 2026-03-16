@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm-Net Airspace Manager — 3D Simulator</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0e17; font-family:'Segoe UI',sans-serif; color:#e0e0e0; overflow:hidden; }
+  #canvas-container { width:100vw; height:100vh; position:relative; }
+  canvas { display:block; }
+
+  /* HUD Overlay */
+  #hud { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+  #hud > * { pointer-events:auto; }
+
+  #title-bar {
+    position:absolute; top:20px; left:50%; transform:translateX(-50%);
+    background:rgba(10,14,23,0.85); border:1px solid rgba(0,150,255,0.3);
+    border-radius:12px; padding:12px 32px; text-align:center;
+    backdrop-filter:blur(10px);
+  }
+  #title-bar h1 { font-size:18px; color:#4fc3f7; letter-spacing:2px; margin-bottom:4px; }
+  #title-bar p { font-size:11px; color:#90a4ae; }
+
+  #status-panel {
+    position:absolute; top:20px; right:20px;
+    background:rgba(10,14,23,0.9); border:1px solid rgba(0,150,255,0.2);
+    border-radius:10px; padding:16px; width:260px;
+    backdrop-filter:blur(10px);
+  }
+  #status-panel h3 { font-size:13px; color:#4fc3f7; margin-bottom:10px; border-bottom:1px solid rgba(0,150,255,0.15); padding-bottom:6px; }
+  .stat-row { display:flex; justify-content:space-between; margin:5px 0; font-size:12px; }
+  .stat-label { color:#78909c; }
+  .stat-value { color:#e0e0e0; font-weight:600; }
+  .stat-value.green { color:#4caf50; }
+  .stat-value.orange { color:#ff9800; }
+  .stat-value.red { color:#f44336; }
+  .stat-value.blue { color:#42a5f5; }
+
+  #drone-list {
+    position:absolute; bottom:20px; left:20px;
+    background:rgba(10,14,23,0.9); border:1px solid rgba(0,150,255,0.2);
+    border-radius:10px; padding:14px; width:320px; max-height:220px; overflow-y:auto;
+    backdrop-filter:blur(10px);
+  }
+  #drone-list h3 { font-size:13px; color:#4fc3f7; margin-bottom:8px; }
+  .drone-entry {
+    display:flex; align-items:center; gap:8px; padding:6px 8px;
+    border-radius:6px; margin:3px 0; font-size:11px;
+    background:rgba(255,255,255,0.03);
+  }
+  .drone-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .drone-name { flex:1; color:#cfd8dc; }
+  .drone-timer { font-family:'Consolas',monospace; font-size:12px; font-weight:700; }
+
+  #controls {
+    position:absolute; bottom:20px; right:20px;
+    background:rgba(10,14,23,0.9); border:1px solid rgba(0,150,255,0.2);
+    border-radius:10px; padding:14px; width:260px;
+    backdrop-filter:blur(10px);
+  }
+  #controls h3 { font-size:13px; color:#4fc3f7; margin-bottom:10px; }
+  .ctrl-btn {
+    width:100%; padding:8px; margin:4px 0; border:1px solid rgba(0,150,255,0.3);
+    background:rgba(0,150,255,0.1); color:#4fc3f7; border-radius:6px;
+    cursor:pointer; font-size:12px; transition:all 0.2s;
+  }
+  .ctrl-btn:hover { background:rgba(0,150,255,0.25); border-color:#4fc3f7; }
+  .ctrl-btn.active { background:rgba(0,150,255,0.3); border-color:#4fc3f7; }
+  .ctrl-btn.danger { border-color:rgba(255,60,60,0.4); color:#ef5350; background:rgba(255,60,60,0.08); }
+  .ctrl-btn.danger:hover { background:rgba(255,60,60,0.2); }
+
+  #event-log {
+    position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+    display:flex; gap:6px; flex-direction:column; align-items:center;
+  }
+  .event-toast {
+    background:rgba(10,14,23,0.92); border:1px solid rgba(0,150,255,0.3);
+    border-radius:8px; padding:8px 18px; font-size:12px;
+    animation: fadeInUp 0.4s ease, fadeOut 0.5s ease 4s forwards;
+    backdrop-filter:blur(8px);
+  }
+  .event-toast.warn { border-color:rgba(255,152,0,0.5); color:#ffb74d; }
+  .event-toast.danger { border-color:rgba(244,67,54,0.5); color:#ef5350; }
+  .event-toast.success { border-color:rgba(76,175,80,0.5); color:#81c784; }
+
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeOut { to { opacity:0; } }
+  @keyframes pulse { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
+</style>
+</head>
+<body>
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div id="title-bar">
+    <h1>SWARM-NET AIRSPACE MANAGER</h1>
+    <p>Real-time 3D Airspace Control Simulator</p>
+  </div>
+
+  <div id="status-panel">
+    <h3>SYSTEM STATUS</h3>
+    <div class="stat-row"><span class="stat-label">Sentinel Drones</span><span class="stat-value blue" id="s-count">7 / 7 Online</span></div>
+    <div class="stat-row"><span class="stat-label">Mesh Network</span><span class="stat-value green" id="s-mesh">Active</span></div>
+    <div class="stat-row"><span class="stat-label">Coverage Area</span><span class="stat-value">314 m&sup2;</span></div>
+    <div class="stat-row"><span class="stat-label">Detected Drones</span><span class="stat-value" id="s-detected">0</span></div>
+    <div class="stat-row"><span class="stat-label">Active Warnings</span><span class="stat-value orange" id="s-warnings">0</span></div>
+    <div class="stat-row"><span class="stat-label">Sim Time</span><span class="stat-value" id="s-time">00:00</span></div>
+  </div>
+
+  <div id="drone-list">
+    <h3>USER DRONES</h3>
+    <div id="drone-entries"></div>
+  </div>
+
+  <div id="controls">
+    <h3>SIMULATION CONTROL</h3>
+    <button class="ctrl-btn" onclick="addUserDrone()">+ Add User Drone</button>
+    <button class="ctrl-btn" onclick="togglePause()">Pause / Resume</button>
+    <button class="ctrl-btn" onclick="toggleMeshVis()">Toggle Mesh Lines</button>
+    <button class="ctrl-btn" onclick="toggleRadarVis()">Toggle Radar Dome</button>
+    <button class="ctrl-btn danger" onclick="resetSim()">Reset Simulation</button>
+  </div>
+
+  <div id="event-log"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script>
+// ─── CONFIG ──────────────────────────────────────────
+const CFG = {
+  SENTINEL_COUNT: 7,
+  SENTINEL_RADIUS: 10,     // formation radius
+  SENTINEL_ALT: 12,        // altitude
+  DOME_RADIUS: 12,         // radar dome radius
+  USER_ALT_MIN: 3,
+  USER_ALT_MAX: 9,
+  TIMER_SECONDS: 60,       // demo: 60s per user drone
+  WARN_SECONDS: 15,        // warning at 15s remaining
+  MESH_COLOR: 0x0096ff,
+  DOME_COLOR: 0x0066cc,
+};
+
+// ─── THREE.JS SETUP ──────────────────────────────────
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0e17, 0.012);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
+camera.position.set(22, 18, 22);
+camera.lookAt(0, 5, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+container.appendChild(renderer.domElement);
+
+// Orbit controls (simple drag rotation)
+let isDragging = false, prevMouse = {x:0, y:0}, camAngle = {theta: Math.PI/4, phi: Math.PI/5}, camDist = 32;
+container.addEventListener('mousedown', e => { isDragging = true; prevMouse = {x:e.clientX, y:e.clientY}; });
+container.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  camAngle.theta -= (e.clientX - prevMouse.x) * 0.005;
+  camAngle.phi = Math.max(0.05, Math.min(Math.PI/2.2, camAngle.phi - (e.clientY - prevMouse.y) * 0.005));
+  prevMouse = {x:e.clientX, y:e.clientY};
+});
+container.addEventListener('mouseup', () => isDragging = false);
+container.addEventListener('wheel', e => { camDist = Math.max(10, Math.min(60, camDist + e.deltaY * 0.02)); });
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── LIGHTING ────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x334466, 0.6));
+const dirLight = new THREE.DirectionalLight(0x88bbff, 0.8);
+dirLight.position.set(10, 20, 10);
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x0088ff, 1.5, 40);
+pointLight.position.set(0, CFG.SENTINEL_ALT, 0);
+scene.add(pointLight);
+
+// ─── GROUND GRID ─────────────────────────────────────
+const gridHelper = new THREE.GridHelper(40, 40, 0x1a2a3a, 0x0d1520);
+scene.add(gridHelper);
+
+// Ground plane (subtle)
+const groundGeo = new THREE.PlaneGeometry(60, 60);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x0a0e17, roughness: 0.9 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -0.01;
+scene.add(ground);
+
+// Coverage circle on ground
+const coverCircleGeo = new THREE.RingGeometry(CFG.DOME_RADIUS - 0.05, CFG.DOME_RADIUS + 0.05, 64);
+const coverCircleMat = new THREE.MeshBasicMaterial({ color: 0xff6600, side: THREE.DoubleSide, transparent: true, opacity: 0.3 });
+const coverCircle = new THREE.Mesh(coverCircleGeo, coverCircleMat);
+coverCircle.rotation.x = -Math.PI/2;
+coverCircle.position.y = 0.02;
+scene.add(coverCircle);
+
+// ─── SENTINEL DRONES ─────────────────────────────────
+const sentinels = [];
+const sentinelGroup = new THREE.Group();
+scene.add(sentinelGroup);
+
+function createSentinel(x, y, z) {
+  const group = new THREE.Group();
+
+  // Body
+  const bodyGeo = new THREE.OctahedronGeometry(0.35, 0);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0xff1111, emissiveIntensity: 0.4, metalness: 0.7, roughness: 0.3 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  group.add(body);
+
+  // Glow
+  const glowGeo = new THREE.SphereGeometry(0.5, 16, 16);
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0.15 });
+  group.add(new THREE.Mesh(glowGeo, glowMat));
+
+  // Radar cone (downward)
+  const coneGeo = new THREE.ConeGeometry(3, 8, 16, 1, true);
+  const coneMat = new THREE.MeshBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.04, side: THREE.DoubleSide });
+  const cone = new THREE.Mesh(coneGeo, coneMat);
+  cone.position.y = -4;
+  group.add(cone);
+
+  group.position.set(x, y, z);
+  sentinelGroup.add(group);
+  return { group, body, basePos: {x, y, z} };
+}
+
+// Hexagonal formation + center
+for (let i = 0; i < CFG.SENTINEL_COUNT; i++) {
+  let x, z;
+  if (i === 0) { x = 0; z = 0; }
+  else {
+    const ang = ((i-1) / 6) * Math.PI * 2;
+    x = CFG.SENTINEL_RADIUS * Math.cos(ang);
+    z = CFG.SENTINEL_RADIUS * Math.sin(ang);
+  }
+  sentinels.push(createSentinel(x, CFG.SENTINEL_ALT, z));
+}
+
+// ─── MESH NETWORK LINES ─────────────────────────────
+const meshLines = [];
+const meshGroup = new THREE.Group();
+scene.add(meshGroup);
+let meshVisible = true;
+
+function buildMeshLines() {
+  meshGroup.clear();
+  meshLines.length = 0;
+  for (let i = 0; i < sentinels.length; i++) {
+    for (let j = i+1; j < sentinels.length; j++) {
+      const pi = sentinels[i].group.position;
+      const pj = sentinels[j].group.position;
+      const dist = pi.distanceTo(pj);
+      if (dist < CFG.SENTINEL_RADIUS * 1.3) {
+        const geo = new THREE.BufferGeometry().setFromPoints([pi.clone(), pj.clone()]);
+        const mat = new THREE.LineBasicMaterial({ color: CFG.MESH_COLOR, transparent: true, opacity: 0.35 });
+        const line = new THREE.Line(geo, mat);
+        meshGroup.add(line);
+        meshLines.push({ line, i, j });
+      }
+    }
+  }
+}
+buildMeshLines();
+
+// ─── RADAR DOME ──────────────────────────────────────
+let domeVisible = true;
+const domeGeo = new THREE.SphereGeometry(CFG.DOME_RADIUS, 32, 24, 0, Math.PI*2, 0, Math.PI/2);
+const domeMat = new THREE.MeshBasicMaterial({
+  color: CFG.DOME_COLOR, transparent: true, opacity: 0.06, side: THREE.DoubleSide, wireframe: true,
+});
+const dome = new THREE.Mesh(domeGeo, domeMat);
+scene.add(dome);
+
+// Dome wireframe ring at sentinel altitude
+const domeRingGeo = new THREE.RingGeometry(CFG.DOME_RADIUS-0.05, CFG.DOME_RADIUS+0.05, 64);
+const domeRingMat = new THREE.MeshBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+const domeRing = new THREE.Mesh(domeRingGeo, domeRingMat);
+domeRing.rotation.x = -Math.PI/2;
+domeRing.position.y = CFG.SENTINEL_ALT;
+scene.add(domeRing);
+
+// ─── USER DRONES ─────────────────────────────────────
+const userDrones = [];
+let droneIdCounter = 0;
+
+function createUserDrone() {
+  const id = ++droneIdCounter;
+  const angle = Math.random() * Math.PI * 2;
+  const r = 3 + Math.random() * 6;
+  const x = r * Math.cos(angle);
+  const z = r * Math.sin(angle);
+  const y = CFG.USER_ALT_MIN + Math.random() * (CFG.USER_ALT_MAX - CFG.USER_ALT_MIN);
+
+  const group = new THREE.Group();
+
+  // Body
+  const bodyGeo = new THREE.SphereGeometry(0.25, 12, 12);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x42a5f5, emissive: 0x2196f3, emissiveIntensity: 0.3, metalness: 0.5, roughness: 0.3 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  group.add(body);
+
+  // Propeller arms
+  for (let a = 0; a < 4; a++) {
+    const armAng = (a/4) * Math.PI * 2;
+    const armGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.4);
+    const armMat = new THREE.MeshStandardMaterial({ color: 0x78909c });
+    const arm = new THREE.Mesh(armGeo, armMat);
+    arm.rotation.z = Math.PI/2;
+    arm.position.set(0.2*Math.cos(armAng), 0, 0.2*Math.sin(armAng));
+    group.add(arm);
+  }
+
+  // Warning ring (initially invisible)
+  const ringGeo = new THREE.TorusGeometry(0.6, 0.04, 8, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xff9800, transparent: true, opacity: 0 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI/2;
+  group.add(ring);
+
+  // Altitude line
+  const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,-y,0)]);
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x42a5f5, transparent: true, opacity: 0.15 });
+  const altLine = new THREE.Line(lineGeo, lineMat);
+  group.add(altLine);
+
+  group.position.set(x, y, z);
+  scene.add(group);
+
+  // Movement params
+  const moveSpeed = 0.3 + Math.random() * 0.5;
+  const moveAngle = Math.random() * Math.PI * 2;
+
+  const drone = {
+    id, group, body, ring, ringMat, altLine, bodyMat,
+    timer: CFG.TIMER_SECONDS,
+    status: 'AUTHORIZED',  // AUTHORIZED -> WARNING -> EXPIRED -> EVICTING
+    moveSpeed, moveDir: {x: Math.cos(moveAngle), z: Math.sin(moveAngle)},
+    bobOffset: Math.random() * Math.PI * 2,
+  };
+  userDrones.push(drone);
+  addEventToast(`User Drone #${id} detected in airspace`, 'success');
+  return drone;
+}
+
+// ─── LABELS (CSS2D alternative: HTML overlay positioned via projection) ──
+function updateDroneLabels() {
+  const entries = document.getElementById('drone-entries');
+  entries.innerHTML = '';
+  let warnings = 0;
+
+  userDrones.forEach(d => {
+    const pct = d.timer / CFG.TIMER_SECONDS;
+    let color, statusText;
+    if (d.status === 'AUTHORIZED') { color = '#42a5f5'; statusText = 'ACTIVE'; }
+    else if (d.status === 'WARNING') { color = '#ff9800'; statusText = 'WARNING'; warnings++; }
+    else if (d.status === 'EXPIRED') { color = '#f44336'; statusText = 'EXPIRED'; warnings++; }
+    else { color = '#f44336'; statusText = 'EVICTING'; warnings++; }
+
+    const mins = Math.floor(d.timer / 60);
+    const secs = Math.floor(d.timer % 60);
+    const timeStr = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+    entries.innerHTML += `
+      <div class="drone-entry">
+        <div class="drone-dot" style="background:${color}"></div>
+        <span class="drone-name">Drone #${d.id}</span>
+        <span class="drone-timer" style="color:${color}">${timeStr}</span>
+        <span style="font-size:10px;color:${color}">${statusText}</span>
+      </div>`;
+  });
+
+  document.getElementById('s-detected').textContent = userDrones.length;
+  document.getElementById('s-warnings').textContent = warnings;
+}
+
+// ─── EVENT TOASTS ────────────────────────────────────
+function addEventToast(msg, type='info') {
+  const log = document.getElementById('event-log');
+  const toast = document.createElement('div');
+  toast.className = `event-toast ${type}`;
+  toast.textContent = msg;
+  log.appendChild(toast);
+  setTimeout(() => toast.remove(), 5000);
+  // Keep max 5
+  while (log.children.length > 5) log.firstChild.remove();
+}
+
+// ─── SIMULATION STATE ────────────────────────────────
+let paused = false;
+let simTime = 0;
+const clock = new THREE.Clock();
+
+// ─── ANIMATION LOOP ──────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  // Camera orbit
+  camera.position.x = camDist * Math.sin(camAngle.theta) * Math.cos(camAngle.phi);
+  camera.position.y = camDist * Math.sin(camAngle.phi);
+  camera.position.z = camDist * Math.cos(camAngle.theta) * Math.cos(camAngle.phi);
+  camera.lookAt(0, 5, 0);
+
+  if (!paused) {
+    simTime += dt;
+
+    // Sentinel hover animation
+    sentinels.forEach((s, i) => {
+      s.group.position.y = s.basePos.y + Math.sin(t * 0.8 + i * 0.9) * 0.15;
+      s.body.rotation.y = t * 0.5;
+    });
+
+    // Update mesh lines
+    meshLines.forEach(ml => {
+      const pi = sentinels[ml.i].group.position;
+      const pj = sentinels[ml.j].group.position;
+      const positions = ml.line.geometry.attributes.position.array;
+      positions[0] = pi.x; positions[1] = pi.y; positions[2] = pi.z;
+      positions[3] = pj.x; positions[4] = pj.y; positions[5] = pj.z;
+      ml.line.geometry.attributes.position.needsUpdate = true;
+      // Pulse effect
+      ml.line.material.opacity = 0.2 + 0.15 * Math.sin(t * 2 + ml.i);
+    });
+
+    // Dome pulse
+    domeMat.opacity = 0.04 + 0.02 * Math.sin(t * 1.5);
+
+    // Point light pulse
+    pointLight.intensity = 1.2 + 0.5 * Math.sin(t * 1.2);
+
+    // User drone updates
+    for (let i = userDrones.length - 1; i >= 0; i--) {
+      const d = userDrones[i];
+
+      // Movement (wander inside dome)
+      const pos = d.group.position;
+      pos.x += d.moveDir.x * d.moveSpeed * dt;
+      pos.z += d.moveDir.z * d.moveSpeed * dt;
+
+      // Bob
+      pos.y = (CFG.USER_ALT_MIN + CFG.USER_ALT_MAX) / 2 + Math.sin(t * 0.6 + d.bobOffset) * 1.5;
+
+      // Update altitude line
+      const linePositions = d.altLine.geometry.attributes.position.array;
+      linePositions[4] = -pos.y;
+      d.altLine.geometry.attributes.position.needsUpdate = true;
+
+      // Boundary bounce
+      const distFromCenter = Math.sqrt(pos.x*pos.x + pos.z*pos.z);
+      if (distFromCenter > CFG.DOME_RADIUS * 0.85) {
+        // Reflect inward
+        d.moveDir.x = -pos.x / distFromCenter + (Math.random()-0.5)*0.3;
+        d.moveDir.z = -pos.z / distFromCenter + (Math.random()-0.5)*0.3;
+        const len = Math.sqrt(d.moveDir.x**2 + d.moveDir.z**2);
+        d.moveDir.x /= len; d.moveDir.z /= len;
+      }
+
+      // Random direction change
+      if (Math.random() < 0.005) {
+        const newAng = Math.random() * Math.PI * 2;
+        d.moveDir.x = Math.cos(newAng);
+        d.moveDir.z = Math.sin(newAng);
+      }
+
+      // Timer countdown
+      d.timer -= dt;
+
+      // Status transitions
+      if (d.timer <= 0 && d.status !== 'EVICTING') {
+        if (d.status !== 'EXPIRED') {
+          d.status = 'EXPIRED';
+          d.bodyMat.color.setHex(0xf44336);
+          d.bodyMat.emissive.setHex(0xff0000);
+          d.ringMat.color.setHex(0xf44336);
+          addEventToast(`Drone #${d.id}: TIME EXPIRED! Eviction initiated`, 'danger');
+          // After 5s in expired, start evicting
+          setTimeout(() => {
+            if (d.status === 'EXPIRED') {
+              d.status = 'EVICTING';
+              addEventToast(`Drone #${d.id}: Forced landing initiated`, 'danger');
+            }
+          }, 5000);
+        }
+        d.timer = 0;
+      } else if (d.timer <= CFG.WARN_SECONDS && d.status === 'AUTHORIZED') {
+        d.status = 'WARNING';
+        d.bodyMat.color.setHex(0xff9800);
+        d.bodyMat.emissive.setHex(0xff6600);
+        d.ringMat.color.setHex(0xff9800);
+        addEventToast(`Drone #${d.id}: Warning — ${CFG.WARN_SECONDS}s remaining`, 'warn');
+      }
+
+      // Warning ring animation
+      if (d.status === 'WARNING') {
+        d.ringMat.opacity = 0.4 + 0.3 * Math.sin(t * 4);
+        d.ring.scale.setScalar(1 + 0.15 * Math.sin(t * 3));
+      } else if (d.status === 'EXPIRED' || d.status === 'EVICTING') {
+        d.ringMat.opacity = 0.7 + 0.3 * Math.sin(t * 8);
+        d.ring.scale.setScalar(1 + 0.3 * Math.sin(t * 5));
+      }
+
+      // Eviction: move drone up and out
+      if (d.status === 'EVICTING') {
+        pos.y += 2 * dt;
+        const outDir = {x: pos.x / (distFromCenter||1), z: pos.z / (distFromCenter||1)};
+        pos.x += outDir.x * 3 * dt;
+        pos.z += outDir.z * 3 * dt;
+        if (distFromCenter > CFG.DOME_RADIUS * 1.5 || pos.y > 20) {
+          // Remove drone
+          scene.remove(d.group);
+          userDrones.splice(i, 1);
+          addEventToast(`Drone #${d.id}: Evicted from airspace`, 'success');
+        }
+      }
+    }
+
+    // Update HUD
+    const simMins = Math.floor(simTime / 60);
+    const simSecs = Math.floor(simTime % 60);
+    document.getElementById('s-time').textContent = `${String(simMins).padStart(2,'0')}:${String(simSecs).padStart(2,'0')}`;
+    updateDroneLabels();
+  }
+
+  renderer.render(scene, camera);
+}
+
+// ─── CONTROLS ────────────────────────────────────────
+function addUserDrone() {
+  if (userDrones.length >= 8) { addEventToast('Max 8 user drones in simulation', 'warn'); return; }
+  createUserDrone();
+}
+
+function togglePause() { paused = !paused; addEventToast(paused ? 'Simulation paused' : 'Simulation resumed'); }
+function toggleMeshVis() { meshVisible = !meshVisible; meshGroup.visible = meshVisible; }
+function toggleRadarVis() { domeVisible = !domeVisible; dome.visible = domeVisible; domeRing.visible = domeVisible; coverCircle.visible = domeVisible; }
+
+function resetSim() {
+  userDrones.forEach(d => scene.remove(d.group));
+  userDrones.length = 0;
+  droneIdCounter = 0;
+  simTime = 0;
+  paused = false;
+  addEventToast('Simulation reset', 'success');
+}
+
+// ─── INIT ────────────────────────────────────────────
+// Start with 3 user drones
+setTimeout(() => createUserDrone(), 500);
+setTimeout(() => createUserDrone(), 1200);
+setTimeout(() => createUserDrone(), 2000);
+
+animate();
+</script>
+</body>
+</html>

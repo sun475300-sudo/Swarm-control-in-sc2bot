@@ -9,7 +9,10 @@ Consolidated version combining features from original and improved versions:
 - Better error handling and distance-based reassignment
 """
 
+import logging
 from typing import Dict, Optional, Set
+
+logger = logging.getLogger(__name__)
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -78,6 +81,7 @@ class QueenManager:
         self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
         self.assigned_queen_tags: Set[int] = set()
         self.dedicated_creep_queens: Set[int] = set()
+        self.secondary_inject_assignments: Dict[int, int] = {}  # hatchery_tag -> queen_tag (2차)
 
         # Transfuse settings
         self.transfuse_energy_threshold = 50
@@ -109,6 +113,13 @@ class QueenManager:
             if not queens or not hatcheries:
                 return
 
+            # ★★★ NEW: QueenSpecializationManager가 있으면 전문 분담 시스템 사용 ★★★
+            spec_mgr = getattr(self.bot, "queen_specialization", None)
+            if spec_mgr:
+                await self._run_specialization_system(spec_mgr, queens, hatcheries, iteration)
+                return
+
+            # === 기존 로직 (fallback) ===
             self._assign_queen_roles(queens, hatcheries)
 
             # === DEFENSE PRIORITY: Check if base is under attack ===
@@ -152,6 +163,51 @@ class QueenManager:
         except Exception as e:
             if iteration % 50 == 0:
                 print(f"[WARNING] Queen manager error: {e}")
+
+    async def _run_specialization_system(self, spec_mgr, queens, hatcheries, iteration: int) -> None:
+        """
+        ★ 전문 분담 시스템으로 퀸 관리 ★
+
+        PUMP/CREEP/COMBAT 역할별 독립 실행.
+        방어 모드에서도 PUMP은 인젝트, CREEP은 점막 계속.
+        """
+        from economy.queen_specialization import QueenSpecialization
+
+        spec_mgr.assign_roles(queens, hatcheries)
+
+        # 고속도로 웨이포인트 가져오기
+        highway = getattr(self.bot, "creep_highway_astar", None)
+        highway_waypoints = highway.highway_waypoints if highway else []
+
+        # 본대 중심 계산
+        army_center = None
+        if hasattr(self.bot, "units"):
+            combat_units = self.bot.units.filter(
+                lambda u: u.can_attack and u.type_id != UnitTypeId.QUEEN
+            )
+            if combat_units:
+                army_center = combat_units.center
+
+        # 역할별 실행
+        for queen in queens:
+            spec = spec_mgr.get_role(queen.tag)
+            if spec == QueenSpecialization.PUMP:
+                await spec_mgr.execute_pump_queen(queen, hatcheries)
+            elif spec == QueenSpecialization.CREEP:
+                await spec_mgr.execute_creep_queen(queen, highway_waypoints)
+            elif spec == QueenSpecialization.COMBAT:
+                await spec_mgr.execute_combat_queen(queen, army_center)
+
+        # 30초마다 역할 분포 로그
+        game_time = getattr(self.bot, "time", 0)
+        if int(game_time) % 30 == 0 and iteration % 22 == 0:
+            counts = spec_mgr.get_role_counts()
+            progress = f"{highway.get_highway_progress():.0%}" if highway else "N/A"
+            print(
+                f"[QUEEN_SPEC] [{int(game_time)}s] "
+                f"PUMP:{counts['pump']} CREEP:{counts['creep']} COMBAT:{counts['combat']} "
+                f"| Highway: {progress}"
+            )
 
     async def _train_queens(self, iteration: int) -> None:
         """Train queens based on base count and need."""
@@ -262,8 +318,8 @@ class QueenManager:
                             # Reassign if too far
                             del self.inject_assignments[hatch.tag]
                             assigned_queens.discard(queen_tag)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"[QueenManager] Inject queen distance check suppressed: {e}")
 
             if hatch.tag not in self.inject_assignments:
                 candidate = self._find_closest_queen(
@@ -284,8 +340,8 @@ class QueenManager:
                         if dist > self.max_queen_travel_distance:
                             del self.secondary_inject_assignments[hatch.tag]
                             assigned_queens.discard(queen_tag)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"[QueenManager] Secondary queen distance check suppressed: {e}")
 
             if hatch.tag not in self.secondary_inject_assignments:
                 candidate = self._find_closest_queen(
@@ -403,7 +459,8 @@ class QueenManager:
                         queen = min(
                             nearby, key=lambda q: q.distance_to(hatch.position)
                         )
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"[QueenManager] Nearby queen search suppressed: {e}")
                     continue
 
             if not queen:
@@ -422,10 +479,11 @@ class QueenManager:
                             result = self.bot.do(queen.move(hatch.position))
                             if hasattr(result, "__await__"):
                                 await result
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"[QueenManager] Queen move-to-hatch suppressed: {e}")
                     continue
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[QueenManager] Queen inject distance check suppressed: {e}")
                 continue
 
             # Execute inject (queen is close enough)
@@ -441,7 +499,8 @@ class QueenManager:
                     if hasattr(result, "__await__"):
                         await result
                     self.last_inject_time[hatch_tag] = current_time
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[QueenManager] Inject execute suppressed: {e}")
                 continue
 
     def _is_base_under_attack(self) -> bool:
@@ -472,7 +531,7 @@ class QueenManager:
         Queens will:
         1. Move to defend threatened bases
         2. Attack nearby enemies
-        3. ★ Prioritize air units (Queens have good anti-air) ★
+        3. ★ Prioritize air units (Queens have good anti-air) ���
         4. ★ IMPROVED: Keep some queens injecting for reinforcements ★
         """
         if not hasattr(self.bot, "enemy_units") or not hasattr(self.bot, "townhalls"):
@@ -519,7 +578,7 @@ class QueenManager:
             print(f"[QUEEN DEFENSE] [{int(game_time)}s] Queens defending! Air: {air_count}, Ground: {ground_count}")
 
         # ★ IMPROVED: Keep 1-2 queens injecting for reinforcement ★
-        # 전투 중에도 최소 1명의 퀸은 라바 인젝트를 계속해야 병력 충원 가능
+        # 전투 중에도 최소 1명의 퀸은 라바 ���젝트를 계속해야 병력 충원 가능
         inject_queens = []
         defense_queens = []
 
@@ -592,7 +651,8 @@ class QueenManager:
                     result = self.bot.do(queen.attack(threat_position))
                     if hasattr(result, "__await__"):
                         await result
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[QueenManager] Queen combat attack suppressed: {e}")
                 continue
 
     async def _transfuse_injured_units(self, queens, iteration: int, include_structures: bool = False) -> None:
@@ -660,8 +720,8 @@ class QueenManager:
                     if health_ratio < 0.7:  # Heal spines below 70% health
                         priority = health_ratio - 0.2  # High priority during defense
                         injured_targets.append((spine, priority))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[QueenManager] Spine crawler detection suppressed: {e}")
 
         if not injured_targets:
             return
@@ -691,7 +751,8 @@ class QueenManager:
                     if dist <= 7 and dist < best_distance:
                         best_distance = dist
                         best_queen = queen
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"[QueenManager] Transfuse distance check suppressed: {e}")
                     continue
 
             if best_queen:
@@ -826,7 +887,8 @@ class QueenManager:
                         if hasattr(result, "__await__"):
                             await result
                         self.last_creep_time[queen.tag] = current_time
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[QueenManager] Creep spread suppressed: {e}")
                 continue
 
     async def _utilize_idle_queens_for_creep(self, queens, iteration: int) -> None:
@@ -913,7 +975,8 @@ class QueenManager:
                     self.last_creep_time[queen.tag] = current_time
                     tumors_placed += 1
 
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[QueenManager] Idle queen creep suppressed: {e}")
                 continue
 
     def _get_aggressive_creep_target(self, queen):
@@ -959,7 +1022,8 @@ class QueenManager:
             # 모든 시도 실패 시 None 반환
             return None
 
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Aggressive creep target suppressed: {e}")
             return None
 
     def _get_base_creep_target(self, queen):
@@ -970,7 +1034,8 @@ class QueenManager:
         # 퀸에서 가장 가까운 기지 찾기
         try:
             closest_base = min(self.bot.townhalls, key=lambda th: queen.distance_to(th.position))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Closest base lookup suppressed: {e}")
             return None
 
         # ★ 확장 기지 위치 가져오기
@@ -1006,7 +1071,8 @@ class QueenManager:
 
                 if not too_close:
                     return target
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Creep target computation suppressed: {e}")
             return base_pos
 
         return base_pos
@@ -1023,7 +1089,8 @@ class QueenManager:
                 UnitTypeId.CREEPTUMORQUEEN,
             }
             return sum(1 for s in self.bot.structures if s.type_id in tumor_types)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Tumor count suppressed: {e}")
             return 0
 
     def _is_valid_creep_position(self, target) -> bool:
@@ -1036,7 +1103,8 @@ class QueenManager:
             if hasattr(self.bot, "has_creep"):
                 result = self.bot.has_creep(target)
                 return bool(result)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Creep position check suppressed: {e}")
             return False
 
         # ★ 수정: has_creep 메서드 없으면 False 반환 (잘못된 위치 방지)
@@ -1065,7 +1133,8 @@ class QueenManager:
                             if dist > max_dist:
                                 max_dist = dist
                                 farthest_tumor = structure
-                        except Exception:
+                        except Exception as e:
+                            logger.warning(f"[QueenManager] Tumor distance calc suppressed: {e}")
                             continue
 
             # Move queen toward farthest tumor or enemy base
@@ -1079,8 +1148,8 @@ class QueenManager:
                 result = self.bot.do(queen.move(forward_pos))
                 if hasattr(result, "__await__"):
                     await result
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"[QueenManager] Position creep queen forward suppressed: {e}")
 
     def _get_creep_target_position(self, queen):
         """Pick a creep spread target along the main attack path."""
@@ -1090,8 +1159,8 @@ class QueenManager:
                 target = creep_manager.get_creep_target(queen)
                 if target:
                     return target
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[QueenManager] Creep target from manager suppressed: {e}")
 
         enemy_starts = getattr(self.bot, "enemy_start_locations", [])
         origin = queen.position
@@ -1157,7 +1226,8 @@ class QueenManager:
             return None
         try:
             return min(candidates, key=lambda q: q.distance_to(position))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Find closest queen suppressed: {e}")
             return candidates[0] if candidates else None
 
     @staticmethod
@@ -1180,7 +1250,8 @@ class QueenManager:
                 # bot.do() is NOT async in python-sc2
                 self.bot.do(result)
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[QueenManager] Safe train suppressed: {e}")
             return False
 
 

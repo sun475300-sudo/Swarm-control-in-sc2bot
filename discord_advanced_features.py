@@ -19,6 +19,7 @@ import asyncio
 import io
 import logging
 import os
+import threading
 from datetime import datetime, time, timezone, timedelta
 from typing import Optional, Callable, Any
 
@@ -207,8 +208,9 @@ class CoinSelectView(discord.ui.View):
 # 스레드 자동 생성 임계값 (메시지 수)
 THREAD_MESSAGE_THRESHOLD = 5
 
-# 채널별 메시지 카운터 (channel_id → count)
+# 채널별 메시지 카운터 (channel_id → count) — 스레드 안전
 _channel_message_counters: dict[int, int] = {}
+_counter_lock = threading.Lock()
 
 
 async def create_thread_for_long_conversation(
@@ -233,14 +235,15 @@ async def create_thread_for_long_conversation(
         생성된 Thread 객체. 임계값 미만이면 None.
     """
     channel_id = message.channel.id
-    _channel_message_counters[channel_id] = _channel_message_counters.get(channel_id, 0) + 1
-    count = _channel_message_counters[channel_id]
+    with _counter_lock:
+        _channel_message_counters[channel_id] = _channel_message_counters.get(channel_id, 0) + 1
+        count = _channel_message_counters[channel_id]
 
-    if count < threshold:
-        return None
+        if count < threshold:
+            return None
 
-    # 임계값 도달 시 카운터 초기화 후 스레드 생성
-    _channel_message_counters[channel_id] = 0
+        # 임계값 도달 시 카운터 초기화 후 스레드 생성
+        _channel_message_counters[channel_id] = 0
 
     name = thread_name or f"대화 계속 - {message.author.display_name} ({datetime.now().strftime('%H:%M')})"
     # 이름 길이 제한 (Discord 최대 100자)
@@ -268,7 +271,8 @@ def reset_thread_counter(channel_id: int) -> None:
     Args:
         channel_id: 초기화할 채널 ID.
     """
-    _channel_message_counters.pop(channel_id, None)
+    with _counter_lock:
+        _channel_message_counters.pop(channel_id, None)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -435,29 +439,76 @@ class ScheduledReporter(commands.Cog):
 
     @staticmethod
     def _default_portfolio_data() -> dict:
-        """포트폴리오 더미 데이터를 반환한다."""
-        return {
-            "total_value": 10_000_000,
-            "daily_pnl": 150_000,
-            "daily_return": 1.52,
-            "holdings": [
-                {"symbol": "BTC", "pnl": 2.3},
-                {"symbol": "ETH", "pnl": -0.5},
-                {"symbol": "XRP", "pnl": 1.1},
-            ],
-        }
+        """실제 포트폴리오 데이터 조회 (더미 데이터 대체)."""
+        try:
+            import json, os
+            # portfolio_history.json에서 실제 데이터 조회
+            base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            hist_path = os.path.join(base, "crypto_trading", "data", "portfolio_history.json")
+            if os.path.exists(hist_path):
+                with open(hist_path, "r", encoding="utf-8") as f:
+                    history = json.load(f)
+                if history:
+                    latest = history[-1] if isinstance(history, list) else history
+                    return {
+                        "total_value": latest.get("total_krw", 0),
+                        "daily_pnl": latest.get("daily_pnl", 0),
+                        "daily_return": latest.get("daily_pnl_pct", 0),
+                        "holdings": latest.get("holdings", []),
+                    }
+            # Upbit API 직접 조회 폴백
+            try:
+                from crypto_trading.upbit_client import UpbitClient
+                client = UpbitClient()
+                accounts = client.get_balances()
+                total = 0
+                holdings = []
+                for acc in accounts:
+                    curr = acc.get("currency", "")
+                    bal = float(acc.get("balance", 0))
+                    if curr == "KRW":
+                        total += bal
+                    elif bal > 0:
+                        price = client.get_current_price(f"KRW-{curr}") or 0
+                        value = bal * price
+                        total += value
+                        avg = float(acc.get("avg_buy_price", 0))
+                        pnl_pct = ((price - avg) / avg * 100) if avg > 0 else 0
+                        holdings.append({"symbol": curr, "pnl": round(pnl_pct, 2), "value": value})
+                return {"total_value": total, "daily_pnl": 0, "daily_return": 0, "holdings": holdings}
+            except Exception as e:
+                logger.debug("포트폴리오 API 조회 실패: %s", e)
+        except Exception as e:
+            logger.debug("포트폴리오 데이터 로드 실패: %s", e)
+        return {"total_value": 0, "daily_pnl": 0, "daily_return": 0, "holdings": []}
 
     @staticmethod
     def _default_market_data() -> dict:
-        """시장 요약 더미 데이터를 반환한다."""
-        return {
-            "tickers": [
-                {"symbol": "BTC", "price": 135_000_000, "change_pct": 2.3},
-                {"symbol": "ETH", "price": 5_200_000, "change_pct": -0.5},
-                {"symbol": "XRP", "price": 3_400, "change_pct": 1.1},
-                {"symbol": "SOL", "price": 280_000, "change_pct": 4.2},
-            ],
-        }
+        """실제 시장 데이터 조회 (더미 데이터 대체)."""
+        try:
+            from crypto_trading.upbit_client import UpbitClient
+            client = UpbitClient()
+            tickers_data = []
+            for coin in ["BTC", "ETH", "XRP", "SOL", "DOGE"]:
+                ticker = f"KRW-{coin}"
+                try:
+                    price = client.get_current_price(ticker) or 0
+                    # 24h 변동률 조회
+                    import requests
+                    r = requests.get(f"https://api.upbit.com/v1/ticker?markets={ticker}", timeout=5)
+                    if r.status_code == 200:
+                        data = r.json()
+                        change_pct = data[0].get("signed_change_rate", 0) * 100 if data else 0
+                    else:
+                        change_pct = 0
+                    tickers_data.append({"symbol": coin, "price": price, "change_pct": round(change_pct, 2)})
+                except Exception as e:
+                    logger.debug("코인 %s 시세 조회 실패: %s", coin, e)
+                    tickers_data.append({"symbol": coin, "price": 0, "change_pct": 0})
+            return {"tickers": tickers_data}
+        except Exception as e:
+            logger.debug("시장 데이터 조회 실패: %s", e)
+        return {"tickers": []}
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -664,7 +715,7 @@ class VoiceManager:
         return False
 
     async def play_audio(self, guild_id: int, source: str) -> bool:
-        """음성 채널에서 오디오를 재생한다 (스텁).
+        """음성 채널에서 오디오를 재생한다.
 
         Args:
             guild_id: 서버(길드) ID.
@@ -677,10 +728,34 @@ class VoiceManager:
         if vc is None or not vc.is_connected():
             logger.warning("음성 클라이언트가 연결되어 있지 않음 (guild=%d)", guild_id)
             return False
-
-        # 스텁: 실제 오디오 재생은 FFmpegPCMAudio 등 필요
-        logger.info("오디오 재생 요청 (스텁): source=%s, guild=%d", source, guild_id)
-        return True
+        try:
+            if vc.is_playing():
+                vc.stop()
+            # URL인 경우 FFmpeg 스트리밍 (https만 허용)
+            if source.startswith("https://"):
+                audio_source = discord.FFmpegPCMAudio(
+                    source,
+                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                    options="-vn",
+                )
+            elif source.startswith("http://"):
+                logger.warning("HTTP URL은 보안상 차단: %s", source[:50])
+                return False
+            else:
+                # 로컬 파일 — 경로 검증
+                import pathlib
+                real_path = pathlib.Path(source).resolve()
+                allowed_exts = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".opus"}
+                if ".." in source or real_path.suffix.lower() not in allowed_exts:
+                    logger.warning("차단된 오디오 경로: %s", source[:80])
+                    return False
+                audio_source = discord.FFmpegPCMAudio(str(real_path))
+            vc.play(audio_source)
+            logger.info("오디오 재생 시작: source=%s, guild=%d", source[:50], guild_id)
+            return True
+        except Exception as exc:
+            logger.error("오디오 재생 실패: %s", exc)
+            return False
 
     def is_connected(self, guild_id: int) -> bool:
         """지정 서버에서 음성 연결 여부를 확인한다.
@@ -720,24 +795,45 @@ class TTSManager:
         logger.info("TTSManager 초기화 완료 (스텁, lang=%s)", default_lang)
 
     async def synthesize(self, text: str, *, lang: Optional[str] = None) -> Optional[io.BytesIO]:
-        """텍스트를 음성으로 변환한다 (스텁).
-
-        Args:
-            text: 변환할 텍스트.
-            lang: 언어 코드. None이면 기본 언어 사용.
-
-        Returns:
-            오디오 데이터가 담긴 BytesIO. 스텁이므로 현재 None 반환.
-        """
+        """텍스트를 음성으로 변환한다."""
         target_lang = lang or self.default_lang
-        logger.info("TTS 합성 요청 (스텁): lang=%s, text_len=%d", target_lang, len(text))
-        # 스텁: 실제 구현 시 gTTS나 edge-tts 사용
-        # from gtts import gTTS
-        # tts = gTTS(text=text, lang=target_lang)
-        # buf = io.BytesIO()
-        # tts.write_to_fp(buf)
-        # buf.seek(0)
-        # return buf
+        logger.info("TTS 합성 요청: lang=%s, text_len=%d", target_lang, len(text))
+        # edge-tts 시도
+        try:
+            import edge_tts
+            voice_map = {
+                "ko": "ko-KR-SunHiNeural",
+                "en": "en-US-AriaNeural",
+                "ja": "ja-JP-NanamiNeural",
+                "zh": "zh-CN-XiaoxiaoNeural",
+            }
+            voice = voice_map.get(target_lang, "ko-KR-SunHiNeural")
+            communicate = edge_tts.Communicate(text, voice)
+            buf = io.BytesIO()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    buf.write(chunk["data"])
+            buf.seek(0)
+            if buf.getbuffer().nbytes > 0:
+                self._engine = "edge-tts"
+                return buf
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning("edge-tts 실패: %s", e)
+        # gTTS 폴백
+        try:
+            from gtts import gTTS
+            tts = gTTS(text=text, lang=target_lang)
+            buf = io.BytesIO()
+            tts.write_to_fp(buf)
+            buf.seek(0)
+            self._engine = "gTTS"
+            return buf
+        except ImportError:
+            logger.warning("TTS 라이브러리 없음: pip install edge-tts 또는 pip install gtts")
+        except Exception as e:
+            logger.warning("gTTS 실패: %s", e)
         return None
 
     async def speak_in_channel(
@@ -748,23 +844,29 @@ class TTSManager:
         *,
         lang: Optional[str] = None,
     ) -> bool:
-        """음성 채널에서 TTS 메시지를 재생한다 (스텁).
-
-        Args:
-            voice_manager: VoiceManager 인스턴스.
-            guild_id: 서버(길드) ID.
-            text: 읽을 텍스트.
-            lang: 언어 코드.
-
-        Returns:
-            재생 시작 성공 여부.
-        """
+        """음성 채널에서 TTS 메시지를 재생한다."""
         audio = await self.synthesize(text, lang=lang)
         if audio is None:
-            logger.warning("TTS 합성 결과 없음 (스텁)")
+            logger.warning("TTS 합성 결과 없음")
             return False
-
-        return await voice_manager.play_audio(guild_id, "tts_buffer")
+        # 임시 파일에 저장 후 재생
+        import tempfile, os
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False, dir=self.cache_dir if os.path.isdir(self.cache_dir) else None) as tmp:
+                tmp.write(audio.read())
+                tmp_path = tmp.name
+            result = await voice_manager.play_audio(guild_id, tmp_path)
+            # 재생 후 정리 (5초 대기)
+            import asyncio
+            await asyncio.sleep(5)
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            return result
+        except Exception as e:
+            logger.error("TTS 재생 실패: %s", e)
+            return False
 
     async def send_tts_message(
         self,
@@ -1162,6 +1264,19 @@ class VoiceHistoryLogger:
                 "channel_before": before.channel.name,
                 "channel_after": after.channel.name,
             }
+
+        # 뮤트/디펜 상태 변경 감지
+        channel_name = (after.channel or before.channel).name if (after.channel or before.channel) else None
+        if channel_name:
+            if not before.self_mute and after.self_mute:
+                return {"type": "mute", "channel_after": channel_name}
+            if before.self_mute and not after.self_mute:
+                return {"type": "unmute", "channel_after": channel_name}
+            if not before.self_deaf and after.self_deaf:
+                return {"type": "deafen", "channel_after": channel_name}
+            if before.self_deaf and not after.self_deaf:
+                return {"type": "undeafen", "channel_after": channel_name}
+
         return None
 
     async def _send_log(self, bot: commands.Bot, record: dict[str, Any]) -> None:
@@ -1176,10 +1291,10 @@ class VoiceHistoryLogger:
             return
 
         event_type = record["event"]
-        event_emojis = {"join": "\U0001F7E2", "leave": "\U0001F534", "move": "\U0001F7E1"}
+        event_emojis = {"join": "\U0001F7E2", "leave": "\U0001F534", "move": "\U0001F7E1", "mute": "\U0001F507", "unmute": "\U0001F50A", "deafen": "\U0001F6D1", "undeafen": "\U0001F3A7"}
         emoji = event_emojis.get(event_type, "\u2753")
 
-        event_labels = {"join": "입장", "leave": "퇴장", "move": "이동"}
+        event_labels = {"join": "입장", "leave": "퇴장", "move": "이동", "mute": "음소거", "unmute": "음소거 해제", "deafen": "헤드셋 끔", "undeafen": "헤드셋 켬"}
         label = event_labels.get(event_type, event_type)
 
         ch_before = record.get("channel_before") or "-"
@@ -1266,8 +1381,12 @@ async def setup_advanced_features(
     # #147: Activity 매니저
     activity_manager = ActivityManager(bot)
     managers["activity_manager"] = activity_manager
-    # 기본 Activity 설정
-    await activity_manager.set_playing("StarCraft II")
+    # 기본 Activity 설정 (setup_hook에서는 bot.ws가 없으므로 on_ready 이후 실행)
+    try:
+        if bot.ws is not None:
+            await activity_manager.set_playing("StarCraft II")
+    except Exception:
+        pass  # on_ready에서 change_presence가 재설정됨
 
     # #143: 스케줄 리포트 (채널 ID가 주어진 경우)
     if report_channel_id:
@@ -1313,7 +1432,7 @@ class AdvancedCommandsCog(commands.Cog, name="고급 기능"):
         self.bot = bot
         self.managers = managers
 
-    @app_commands.command(name="trade", description="코인 매매 UI를 표시합니다")
+    @app_commands.command(name="trade_advanced", description="코인 매매 UI를 표시합니다")
     @app_commands.describe(ticker="거래 티커 (예: KRW-BTC)", amount="거래 금액 (원)")
     async def trade_command(
         self, interaction: discord.Interaction, ticker: str, amount: float
@@ -1426,7 +1545,7 @@ class AdvancedCommandsCog(commands.Cog, name="고급 기능"):
             await interaction.response.send_message("음성 활동 기록이 없습니다.", ephemeral=True)
             return
 
-        event_labels = {"join": "입장", "leave": "퇴장", "move": "이동"}
+        event_labels = {"join": "입장", "leave": "퇴장", "move": "이동", "mute": "음소거", "unmute": "음소거 해제", "deafen": "헤드셋 끔", "undeafen": "헤드셋 켬"}
         lines = []
         for r in records:
             label = event_labels.get(r["event"], r["event"])

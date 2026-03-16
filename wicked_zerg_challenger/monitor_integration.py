@@ -35,7 +35,7 @@ class IntegrationMonitor:
         print("=" * 70)
 
         if not self.data_dir.exists():
-            print("[\!]  Data directory not found. No games played yet.")
+            print("[!]  Data directory not found. No games played yet.")
             return {"status": "no_data"}
 
         # Find all opponent model files
@@ -115,7 +115,7 @@ class IntegrationMonitor:
         print("=" * 70)
 
         if not self.log_file.exists():
-            print("\n[\!]  Log file not found. System may not have run yet.")
+            print("\n[!]  Log file not found. System may not have run yet.")
             return {"status": "no_logs"}
 
         # Read recent log entries
@@ -167,7 +167,7 @@ class IntegrationMonitor:
         print("=" * 70)
 
         if not self.log_file.exists():
-            print("\n[\!]  Log file not found.")
+            print("\n[!]  Log file not found.")
             return {"status": "no_logs"}
 
         try:
@@ -188,7 +188,7 @@ class IntegrationMonitor:
                 print("\n[OK] No errors found in recent logs!")
                 return {"status": "no_errors", "error_count": 0}
 
-            print(f"\n[\!]  Found {len(errors)} error(s) in recent logs:\n")
+            print(f"\n[!]  Found {len(errors)} error(s) in recent logs:\n")
 
             # Group by error type
             om_errors = [e for e in errors if "OpponentModeling" in e]
@@ -229,7 +229,7 @@ class IntegrationMonitor:
         print("=" * 70)
 
         if not self.log_file.exists():
-            print("\n[\!]  Log file not found.")
+            print("\n[!]  Log file not found.")
             return {"status": "no_logs"}
 
         try:
@@ -262,7 +262,7 @@ class IntegrationMonitor:
             # Check for frame rate issues
             lag_indicators = [line for line in lines[-1000:] if "lag" in line.lower() or "slow" in line.lower()]
             if lag_indicators:
-                print(f"\n  [\!]  Performance warnings: {len(lag_indicators)}")
+                print(f"\n  [!]  Performance warnings: {len(lag_indicators)}")
             else:
                 print(f"\n  [OK] No performance warnings detected")
 
@@ -301,28 +301,28 @@ class IntegrationMonitor:
 
         # Check each subsystem
         if summary["opponent_modeling"]["status"] == "no_data":
-            health_issues.append("[\!]  No opponent data - play some games")
+            health_issues.append("[!]  No opponent data - play some games")
         elif summary["opponent_modeling"]["status"] == "active":
             print("[OK] OpponentModeling: Active")
         else:
             health_issues.append(f"[X] OpponentModeling: {summary['opponent_modeling']['status']}")
 
         if summary["micro_v3"]["status"] == "no_activity":
-            health_issues.append("[\!]  No Micro V3 activity - check integration")
+            health_issues.append("[!]  No Micro V3 activity - check integration")
         elif summary["micro_v3"]["status"] == "active":
             print("[OK] AdvancedMicroV3: Active")
         else:
             health_issues.append(f"[X] AdvancedMicroV3: {summary['micro_v3']['status']}")
 
         if summary["errors"]["error_count"] > 0:
-            health_issues.append(f"[\!]  {summary['errors']['error_count']} errors detected")
+            health_issues.append(f"[!]  {summary['errors']['error_count']} errors detected")
         else:
             print("[OK] Error Check: Clean")
 
         if summary["performance"]["status"] == "ok":
             print("[OK] Performance: OK")
         else:
-            health_issues.append(f"[\!]  Performance: {summary['performance']['status']}")
+            health_issues.append(f"[!]  Performance: {summary['performance']['status']}")
 
         if health_issues:
             print("\n[SEARCH] Issues Found:")

@@ -7,9 +7,10 @@
  *   pm2 start ecosystem.config.js --env production
  *
  * 정의된 앱:
- *   1. claude-proxy      — Claude AI 프록시 서버 (Node.js, 포트 3456)
+ *   1. claude-proxy      — Claude AI 프록시 서버 (Node.js, 포트 8765)
  *   2. crypto-http        — 암호화폐 HTTP 서비스 (Python, 포트 8766)
  *   3. sc2-mcp-server     — StarCraft II MCP 서버 (Python)
+ *   4. jarvis-mcp-server  — JARVIS Ops Commander MCP 서버 (Python)
  */
 module.exports = {
   apps: [
@@ -38,13 +39,13 @@ module.exports = {
       // 환경변수 (기본)
       env: {
         NODE_ENV: 'development',
-        PORT: 3456,
+        JARVIS_PORT: 8780,
         LOG_LEVEL: 'debug',
       },
       // 환경변수 (프로덕션: --env production)
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3456,
+        JARVIS_PORT: 8780,
         LOG_LEVEL: 'info',
       },
     },
@@ -74,13 +75,13 @@ module.exports = {
       // 환경변수
       env: {
         PYTHONPATH: '.',
-        CRYPTO_PORT: 8766,
+        CRYPTO_SERVICE_PORT: 8766,
         LOG_LEVEL: 'DEBUG',
         DRY_RUN: 'true',
       },
       env_production: {
         PYTHONPATH: '.',
-        CRYPTO_PORT: 8766,
+        CRYPTO_SERVICE_PORT: 8766,
         LOG_LEVEL: 'INFO',
         DRY_RUN: 'false',
       },
@@ -118,6 +119,40 @@ module.exports = {
         PYTHONPATH: '.',
         LOG_LEVEL: 'INFO',
         SC2_DIR: '/opt/jarvis/sc2bot',
+      },
+    },
+
+    // ───────────────────────────────────────────
+    // 4) JARVIS Ops Commander MCP 서버 (Python)
+    //    OpenClaw 연동: Swarm-Net 기동, SC2 RL 훈련, 시스템 모니터링
+    // ───────────────────────────────────────────
+    {
+      name: 'jarvis-mcp-server',
+      script: 'jarvis_mcp_server.py',
+      interpreter: 'python',
+      interpreter_args: '-u',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '256M',
+      // 로그 설정
+      log_file: './logs/pm2-jarvis-mcp-combined.log',
+      out_file: './logs/pm2-jarvis-mcp-out.log',
+      error_file: './logs/pm2-jarvis-mcp-error.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      // 재시작 정책
+      autorestart: true,
+      max_restarts: 5,
+      restart_delay: 5000,
+      // 환경변수
+      env: {
+        PYTHONPATH: '.',
+        LOG_LEVEL: 'DEBUG',
+      },
+      env_production: {
+        PYTHONPATH: '.',
+        LOG_LEVEL: 'INFO',
       },
     },
   ],

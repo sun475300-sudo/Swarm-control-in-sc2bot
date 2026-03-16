@@ -1,14 +1,14 @@
-# ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ ¿¾ Å° Á¦°Å ½ºÅ©¸³Æ®
+# ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®
 # Remove Old Keys from Deployment Pipelines
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $KeysToRemove = @(
-    "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo",
-    "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
-)
+    $env:OLD_GOOGLE_KEY_1,
+    $env:OLD_GOOGLE_KEY_2
+) | Where-Object { $_ -ne $null }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ ¿¾ Å° Á¦°Å" -ForegroundColor Cyan
+Write-Host "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Cyan
 Write-Host "Remove Old Keys from Deployment Pipelines" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
@@ -16,7 +16,7 @@ Write-Host ""
 # ============================================================================
 # GitHub Actions
 # ============================================================================
-Write-Host "[1/5] GitHub Actions Á¤¸®..." -ForegroundColor Green
+Write-Host "[1/5] GitHub Actions ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $githubWorkflows = Get-ChildItem -Path $ProjectRoot -Recurse -Filter ".github\workflows\*.yml" -ErrorAction SilentlyContinue
 if ($githubWorkflows) {
@@ -31,12 +31,12 @@ if ($githubWorkflows) {
             if ($content -ne $originalContent) {
                 Set-Content -Path $workflow.FullName -Value $content -NoNewline
                 $relPath = $workflow.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? $relPath Á¤¸®µÊ" -ForegroundColor Green
+                Write-Host "  ? $relPath ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
             }
         }
     }
 } else {
-    Write-Host "  ? GitHub Actions ÆÄÀÏÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? GitHub Actions ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -44,7 +44,7 @@ Write-Host ""
 # ============================================================================
 # GitLab CI
 # ============================================================================
-Write-Host "[2/5] GitLab CI Á¤¸®..." -ForegroundColor Green
+Write-Host "[2/5] GitLab CI ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $gitlabCI = Join-Path $ProjectRoot ".gitlab-ci.yml"
 if (Test-Path $gitlabCI) {
@@ -57,11 +57,11 @@ if (Test-Path $gitlabCI) {
         
         if ($content -ne $originalContent) {
             Set-Content -Path $gitlabCI -Value $content -NoNewline
-            Write-Host "  ? .gitlab-ci.yml Á¤¸®µÊ" -ForegroundColor Green
+            Write-Host "  ? .gitlab-ci.yml ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
         }
     }
 } else {
-    Write-Host "  ? GitLab CI ÆÄÀÏÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? GitLab CI ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -69,7 +69,7 @@ Write-Host ""
 # ============================================================================
 # Azure DevOps
 # ============================================================================
-Write-Host "[3/5] Azure DevOps Á¤¸®..." -ForegroundColor Green
+Write-Host "[3/5] Azure DevOps ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $azurePipelines = Get-ChildItem -Path $ProjectRoot -Recurse -Filter "azure-pipelines.yml" -ErrorAction SilentlyContinue
 if ($azurePipelines) {
@@ -84,12 +84,12 @@ if ($azurePipelines) {
             if ($content -ne $originalContent) {
                 Set-Content -Path $pipeline.FullName -Value $content -NoNewline
                 $relPath = $pipeline.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? $relPath Á¤¸®µÊ" -ForegroundColor Green
+                Write-Host "  ? $relPath ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
             }
         }
     }
 } else {
-    Write-Host "  ? Azure DevOps ÆÄÀÏÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? Azure DevOps ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -97,7 +97,7 @@ Write-Host ""
 # ============================================================================
 # Docker
 # ============================================================================
-Write-Host "[4/5] Dockerfile Á¤¸®..." -ForegroundColor Green
+Write-Host "[4/5] Dockerfile ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $dockerfiles = Get-ChildItem -Path $ProjectRoot -Recurse -Filter "Dockerfile*" -ErrorAction SilentlyContinue
 if ($dockerfiles) {
@@ -106,19 +106,19 @@ if ($dockerfiles) {
         if ($content) {
             $originalContent = $content
             foreach ($key in $KeysToRemove) {
-                # ENV º¯¼ö·Î º¯°æ
+                # ENV ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 $content = $content -replace [regex]::Escape($key), "`$GEMINI_API_KEY"
             }
             
             if ($content -ne $originalContent) {
                 Set-Content -Path $dockerfile.FullName -Value $content -NoNewline
                 $relPath = $dockerfile.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? $relPath Á¤¸®µÊ" -ForegroundColor Green
+                Write-Host "  ? $relPath ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
             }
         }
     }
 } else {
-    Write-Host "  ? DockerfileÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? Dockerfileï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -126,7 +126,7 @@ Write-Host ""
 # ============================================================================
 # Kubernetes
 # ============================================================================
-Write-Host "[5/5] Kubernetes ÆÄÀÏ Á¤¸®..." -ForegroundColor Green
+Write-Host "[5/5] Kubernetes ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $k8sFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Include "*.yaml", "*.yml" | 
     Where-Object { 
@@ -141,32 +141,32 @@ if ($k8sFiles) {
         if ($content) {
             $originalContent = $content
             foreach ($key in $KeysToRemove) {
-                # Secret ÂüÁ¶·Î º¯°æ
+                # Secret ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 $content = $content -replace [regex]::Escape($key), "`$(GEMINI_API_KEY)"
             }
             
             if ($content -ne $originalContent) {
                 Set-Content -Path $k8sFile.FullName -Value $content -NoNewline
                 $relPath = $k8sFile.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? $relPath Á¤¸®µÊ" -ForegroundColor Green
+                Write-Host "  ? $relPath ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
             }
         }
     }
 } else {
-    Write-Host "  ? Kubernetes ÆÄÀÏÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? Kubernetes ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 
 Write-Host ""
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "¿Ï·á!" -ForegroundColor Green
+Write-Host "ï¿½Ï·ï¿½!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "´ÙÀ½ ´Ü°è:" -ForegroundColor Cyan
-Write-Host "  1. GitHub Secrets¿¡ »õ Å° ¼³Á¤" -ForegroundColor White
-Write-Host "  2. GitLab CI/CD Variables¿¡ »õ Å° ¼³Á¤" -ForegroundColor White
-Write-Host "  3. Azure DevOps Variables¿¡ »õ Å° ¼³Á¤" -ForegroundColor White
-Write-Host "  4. Docker È¯°æ º¯¼ö¿¡ »õ Å° ¼³Á¤" -ForegroundColor White
-Write-Host "  5. Kubernetes Secrets¿¡ »õ Å° ¼³Á¤" -ForegroundColor White
+Write-Host "ï¿½ï¿½ï¿½ï¿½ ï¿½Ü°ï¿½:" -ForegroundColor Cyan
+Write-Host "  1. GitHub Secretsï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
+Write-Host "  2. GitLab CI/CD Variablesï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
+Write-Host "  3. Azure DevOps Variablesï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
+Write-Host "  4. Docker È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
+Write-Host "  5. Kubernetes Secretsï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
 Write-Host ""

@@ -12,27 +12,106 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from mcp.server.fastmcp import FastMCP
-from crypto_trading.upbit_client import UpbitClient
-from crypto_trading.auto_trader import AutoTrader
-from crypto_trading.portfolio_tracker import PortfolioTracker
-from crypto_trading import config
-from crypto_trading.strategies import AVAILABLE_STRATEGIES
-from crypto_trading.market_analyzer import MarketAnalyzer
+
+# Bug fix #24: Wrap all crypto_trading imports in try/except to avoid crash if missing
+try:
+    from crypto_trading.upbit_client import UpbitClient
+except ImportError:
+    UpbitClient = None
+try:
+    from crypto_trading.auto_trader import AutoTrader
+except ImportError:
+    AutoTrader = None
+try:
+    from crypto_trading.portfolio_tracker import PortfolioTracker
+except ImportError:
+    PortfolioTracker = None
+try:
+    from crypto_trading import config
+except ImportError:
+    config = None
+try:
+    from crypto_trading.strategies import AVAILABLE_STRATEGIES
+except ImportError:
+    AVAILABLE_STRATEGIES = {}
+try:
+    from crypto_trading.market_analyzer import MarketAnalyzer
+except ImportError:
+    MarketAnalyzer = None
+try:
+    from crypto_trading.utils import normalize_ticker
+except ImportError:
+    def normalize_ticker(t):
+        t = t.upper().strip()
+        return t if t.startswith("KRW-") else f"KRW-{t}"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("crypto_mcp")
 
+# ── 분석 쿨다운 관리 (스레드 안전) ──
+import time as _time
+import threading as _threading
+
+_analysis_cooldowns: dict = {}  # tool_name -> last_call_timestamp
+_cooldown_lock = _threading.Lock()
+_COOLDOWN_MAX_ENTRIES = 100  # 메모리 누수 방지
+
+
+def _check_cooldown(tool_name: str, seconds: int = 30) -> str | None:
+    """도구 호출 쿨다운을 확인합니다. 쿨다운 중이면 메시지를 반환, 아니면 None."""
+    now = _time.time()
+    with _cooldown_lock:
+        last = _analysis_cooldowns.get(tool_name, 0)
+        if now - last < seconds:
+            remaining = int(seconds - (now - last))
+            return f"쿨다운 중 ({remaining}초 남음). 잠시 후 다시 시도해주세요."
+        _analysis_cooldowns[tool_name] = now
+        # 만료된 항목 정리 (메모리 누수 방지)
+        if len(_analysis_cooldowns) > _COOLDOWN_MAX_ENTRIES:
+            expired = [k for k, v in _analysis_cooldowns.items() if now - v > 3600]
+            for k in expired:
+                _analysis_cooldowns.pop(k, None)
+    return None
+
 # ── 5중 보안 체계 초기화 ──
-from crypto_trading.security import initialize_security
-_security_report = initialize_security()
-logger.info(f"보안 초기화 완료")
+try:
+    from crypto_trading.security import initialize_security
+    _security_report = initialize_security()
+    logger.info("보안 초기화 완료")
+except ImportError:
+    initialize_security = None
+    _security_report = None
+    logger.warning("crypto_trading.security 모듈을 찾을 수 없습니다.")
 
 # ── 전역 인스턴스 ──
 mcp = FastMCP("JARVIS-Crypto-Trader")
-client = UpbitClient()
-trader = AutoTrader()
-tracker = PortfolioTracker()
-analyzer = MarketAnalyzer(client)
+client = UpbitClient() if UpbitClient else None
+trader = AutoTrader() if AutoTrader else None
+tracker = PortfolioTracker() if PortfolioTracker else None
+analyzer = MarketAnalyzer(client) if (MarketAnalyzer and client) else None
+
+_UNAVAILABLE_MSG = "crypto_trading 모듈이 초기화되지 않았습니다. 의존성을 확인하세요."
+
+
+def _require_client() -> str | None:
+    """client가 None이면 에러 메시지 반환, 아니면 None."""
+    return _UNAVAILABLE_MSG if client is None else None
+
+
+def _require_trader() -> str | None:
+    return _UNAVAILABLE_MSG if trader is None else None
+
+
+def _require_tracker() -> str | None:
+    return _UNAVAILABLE_MSG if tracker is None else None
+
+
+def _require_analyzer() -> str | None:
+    return _UNAVAILABLE_MSG if analyzer is None else None
+
+
+def _require_config() -> str | None:
+    return "config 모듈이 로드되지 않았습니다." if config is None else None
 
 
 # ═══════════════════════════════════════════════════
@@ -42,6 +121,8 @@ analyzer = MarketAnalyzer(client)
 @mcp.tool()
 async def coin_price(ticker: str = "KRW-BTC") -> str:
     """코인 현재가를 조회합니다. 예: 'KRW-BTC', 'KRW-ETH', 'KRW-XRP'"""
+    if err := _require_client():
+        return err
     price = client.get_current_price(ticker)
     if price is None:
         return f"'{ticker}' 시세 조회 실패. 티커 형식: KRW-BTC"
@@ -51,9 +132,13 @@ async def coin_price(ticker: str = "KRW-BTC") -> str:
 @mcp.tool()
 async def coin_prices(tickers: str = "") -> str:
     """여러 코인의 현재가를 한번에 조회합니다. 쉼표로 구분. 비워두면 관심 목록 조회."""
+    if err := _require_client():
+        return err
     if tickers.strip():
         ticker_list = [t.strip().upper() for t in tickers.split(",")]
     else:
+        if err := _require_config():
+            return err
         ticker_list = config.DEFAULT_WATCH_LIST
 
     prices = client.get_prices(ticker_list)
@@ -71,10 +156,15 @@ async def coin_prices(tickers: str = "") -> str:
 @mcp.tool()
 async def coin_orderbook(ticker: str = "KRW-BTC") -> str:
     """코인 호가창(매수/매도 호가)을 조회합니다."""
+    if err := _require_client():
+        return err
     ob = client.get_orderbook(ticker)
     if not ob:
         return f"'{ticker}' 호가 조회 실패"
 
+    # pyupbit returns a list; extract the first element
+    if isinstance(ob, list):
+        ob = ob[0] if ob else {}
     units = ob.get("orderbook_units", [])[:5]
     lines = [f"📋 {ticker} 호가 (상위 5개):"]
     lines.append("  [매도]                    [매수]")
@@ -90,6 +180,8 @@ async def coin_orderbook(ticker: str = "KRW-BTC") -> str:
 @mcp.tool()
 async def market_list(fiat: str = "KRW") -> str:
     """거래 가능한 전체 코인 목록을 보여줍니다. fiat: KRW, BTC, USDT"""
+    if err := _require_client():
+        return err
     tickers = client.get_tickers(fiat=fiat.upper())
     if not tickers:
         return "마켓 목록 조회 실패"
@@ -104,6 +196,13 @@ async def market_list(fiat: str = "KRW") -> str:
 @mcp.tool()
 async def analyze_market(tickers: str = "") -> str:
     """관심 코인의 시장을 종합 분석합니다. RSI, 이동평균, 볼린저, 거래량, 호가 등 다중 지표를 분석하고 매수/매도 추천을 제공합니다."""
+    if err := _require_analyzer():
+        return err
+    if err := _require_trader():
+        return err
+    cd = _check_cooldown("analyze_market", 30)
+    if cd:
+        return cd
     if tickers.strip():
         ticker_list = [t.strip().upper() for t in tickers.split(",")]
     else:
@@ -116,6 +215,8 @@ async def analyze_market(tickers: str = "") -> str:
 @mcp.tool()
 async def analyze_coin_detail(ticker: str = "KRW-BTC") -> str:
     """특정 코인을 상세 분석합니다. 종합 점수(-100~+100), 지표별 판단 근거를 보여줍니다."""
+    if err := _require_analyzer():
+        return err
     ticker = ticker.upper()
     a = analyzer.analyze_coin(ticker)
     return analyzer.format_analysis(a)
@@ -124,6 +225,8 @@ async def analyze_coin_detail(ticker: str = "KRW-BTC") -> str:
 @mcp.tool()
 async def smart_trade_now(tickers: str = "") -> str:
     """시장을 분석하고 조건이 맞으면 자동으로 매수/매도를 실행합니다. 스마트 모드 1회 실행."""
+    if err := _require_trader():
+        return err
     if tickers.strip():
         ticker_list = [t.strip().upper() for t in tickers.split(",")]
         trader.set_watch_list(ticker_list)
@@ -133,6 +236,9 @@ async def smart_trade_now(tickers: str = "") -> str:
     trader.smart_mode = True
     result = trader.run_cycle()
     trader.smart_mode = old_mode
+
+    if result.get("skipped"):
+        return json.dumps({"status": "skipped", "reason": result.get("reason", "Cycle already running")}, ensure_ascii=False)
 
     lines = [f"🧠 스마트 매매 실행 완료 ({'모의' if result['dry_run'] else '실전'})"]
     lines.append(f"  KRW 잔고: {result.get('krw_balance', 0):,.0f}원")
@@ -157,8 +263,10 @@ async def smart_trade_now(tickers: str = "") -> str:
 
 
 @mcp.tool()
-async def set_smart_mode(enabled: bool = True, buy_threshold: int = 30, sell_threshold: int = -30) -> str:
+async def set_smart_mode(enabled: bool = True, buy_threshold: int = 20, sell_threshold: int = -20) -> str:
     """스마트 모드 설정. enabled=True면 종합 분석 기반, False면 단일 전략 기반. threshold는 자동매매 실행 기준 점수."""
+    if err := _require_trader():
+        return err
     trader.smart_mode = enabled
     trader.buy_threshold = buy_threshold
     trader.sell_threshold = sell_threshold
@@ -173,6 +281,8 @@ async def set_smart_mode(enabled: bool = True, buy_threshold: int = 30, sell_thr
 @mcp.tool()
 async def set_smart_params(max_positions: int = 5, cooldown_minutes: int = 30) -> str:
     """스마트 모드 고급 파라미터 설정. max_positions: 동시 보유 최대 종목 수, cooldown_minutes: 같은 코인 재매매 대기 시간."""
+    if err := _require_trader():
+        return err
     trader.max_positions = max_positions
     trader.cooldown_minutes = cooldown_minutes
     return (
@@ -189,6 +299,8 @@ async def set_smart_params(max_positions: int = 5, cooldown_minutes: int = 30) -
 @mcp.tool()
 async def my_balance() -> str:
     """내 전체 보유 자산을 조회합니다."""
+    if err := _require_client():
+        return err
     balances = client.get_balances()
     if not balances:
         return "잔고 조회 실패. API 키를 확인하세요."
@@ -238,12 +350,38 @@ async def my_balance() -> str:
 @mcp.tool()
 async def buy_coin(ticker: str, amount_krw: float) -> str:
     """코인을 시장가로 매수합니다. ticker: 'KRW-BTC', amount_krw: 원화 금액"""
-    ticker = ticker.upper()
+    if err := _require_client():
+        return err
+    if err := _require_config():
+        return err
+    if err := _require_tracker():
+        return err
+    try:
+        from crypto_trading.security import trade_safety
+    except ImportError:
+        return json.dumps({"error": "security module not available"}, ensure_ascii=False)
+    if not ticker or not isinstance(ticker, str):
+        return "티커를 지정하세요 (예: BTC 또는 KRW-BTC)"
+    ticker = ticker.upper().strip()
+    if not ticker.startswith("KRW-"):
+        ticker = f"KRW-{ticker}"
+    try:
+        amount_krw = float(amount_krw)
+        if amount_krw <= 0:
+            return "주문 금액은 0보다 커야 합니다"
+    except (ValueError, TypeError):
+        return f"유효하지 않은 금액: {amount_krw}"
     if amount_krw < config.MIN_ORDER_AMOUNT:
         return f"최소 주문 금액: {config.MIN_ORDER_AMOUNT:,.0f}원"
 
+    # 거래 안전 검증
+    allowed, safety_msg = trade_safety.check_trade(amount_krw)
+    if not allowed:
+        return f"❌ {ticker} 매수 차단 — {safety_msg}"
+
     result = client.buy_market_order(ticker, amount_krw)
     if result:
+        trade_safety.record_trade(amount_krw)
         tracker.log_trade("buy", ticker, amount_krw, 0, "수동 매수", result)
         dry = " [모의매매]" if config.DRY_RUN else ""
         return f"✅ {ticker} 매수 완료{dry}: {amount_krw:,.0f}원"
@@ -253,16 +391,45 @@ async def buy_coin(ticker: str, amount_krw: float) -> str:
 @mcp.tool()
 async def sell_coin(ticker: str, volume: float = 0) -> str:
     """코인을 시장가로 매도합니다. volume=0이면 전량 매도."""
-    ticker = ticker.upper()
+    if err := _require_client():
+        return err
+    if err := _require_tracker():
+        return err
+    if err := _require_config():
+        return err
+    try:
+        from crypto_trading.security import trade_safety
+    except ImportError:
+        return json.dumps({"error": "security module not available"}, ensure_ascii=False)
+    if not ticker or not isinstance(ticker, str):
+        return "티커를 지정하세요 (예: BTC 또는 KRW-BTC)"
+    ticker = ticker.upper().strip()
+    if not ticker.startswith("KRW-"):
+        ticker = f"KRW-{ticker}"
+    try:
+        volume = float(volume)
+    except (ValueError, TypeError):
+        return f"유효하지 않은 수량: {volume}"
     if volume <= 0:
         volume = client.get_balance(ticker)
         if volume <= 0:
             return f"{ticker} 보유 수량이 없습니다."
 
+    # 거래 안전 검증 (매도 금액 추정)
+    est_price = client.get_current_price(ticker) or 0
+    if est_price <= 0:
+        return f"❌ {ticker} 매도 차단 — 현재가 조회 실패. 가격을 확인할 수 없어 매도를 진행할 수 없습니다."
+    est_amount_krw = volume * est_price
+    allowed, safety_msg = trade_safety.check_trade(est_amount_krw)
+    if not allowed:
+        return f"❌ {ticker} 매도 차단 — {safety_msg}"
+
     result = client.sell_market_order(ticker, volume)
     if result:
         price = client.get_current_price(ticker) or 0
-        tracker.log_trade("sell", ticker, volume * price, price, "수동 매도", result)
+        sell_amount_krw = volume * price
+        trade_safety.record_trade(sell_amount_krw)
+        tracker.log_trade("sell", ticker, sell_amount_krw, price, "수동 매도", result)
         dry = " [모의매매]" if config.DRY_RUN else ""
         return f"✅ {ticker} 매도 완료{dry}: {volume}개"
     return f"❌ {ticker} 매도 실패"
@@ -271,6 +438,8 @@ async def sell_coin(ticker: str, volume: float = 0) -> str:
 @mcp.tool()
 async def cancel_my_order(uuid: str) -> str:
     """주문을 취소합니다. uuid: 주문 ID"""
+    if err := _require_client():
+        return err
     result = client.cancel_order(uuid)
     if result:
         return f"✅ 주문 취소 완료: {uuid}"
@@ -280,7 +449,11 @@ async def cancel_my_order(uuid: str) -> str:
 @mcp.tool()
 async def pending_orders(ticker: str = "") -> str:
     """미체결 주문 목록을 조회합니다."""
+    if err := _require_client():
+        return err
     if not ticker:
+        if err := _require_config():
+            return err
         # 전체 관심 목록의 미체결 확인
         all_orders = []
         for t in config.DEFAULT_WATCH_LIST:
@@ -310,6 +483,8 @@ async def pending_orders(ticker: str = "") -> str:
 @mcp.tool()
 async def start_auto_trade(strategy: str = "smart", tickers: str = "") -> str:
     """자동매매를 시작합니다. strategy: 'smart'(AI 종합분석), 'volatility_breakout', 'ma_crossover', 'rsi'"""
+    if err := _require_trader():
+        return err
     if strategy == "smart":
         trader.smart_mode = True
     else:
@@ -330,6 +505,8 @@ async def start_auto_trade(strategy: str = "smart", tickers: str = "") -> str:
 @mcp.tool()
 async def stop_auto_trade() -> str:
     """자동매매를 중지합니다."""
+    if err := _require_trader():
+        return err
     msg = trader.stop()
     return f"🛑 {msg}"
 
@@ -337,6 +514,8 @@ async def stop_auto_trade() -> str:
 @mcp.tool()
 async def auto_trade_status() -> str:
     """자동매매 현재 상태를 확인합니다."""
+    if err := _require_trader():
+        return err
     status = trader.get_status()
     running = "🟢 실행 중" if status["is_running"] else "🔴 중지됨"
     dry = "모의매매" if status["dry_run"] else "실전매매"
@@ -360,6 +539,8 @@ async def auto_trade_status() -> str:
 @mcp.tool()
 async def set_trade_mode(mode: str = "dry") -> str:
     """매매 모드를 설정합니다. mode: 'dry'(모의매매), 'live'(실전매매)"""
+    if err := _require_config():
+        return err
     prev_mode = "실전" if not config.DRY_RUN else "모의"
     if mode.lower() == "live":
         config.DRY_RUN = False
@@ -373,7 +554,11 @@ async def set_trade_mode(mode: str = "dry") -> str:
 
 @mcp.tool()
 async def set_risk_params(stop_loss: float = -5.0, take_profit: float = 10.0) -> str:
-    """손절/익절 비율을 설정합니다. (예: stop_loss=-5, take_profit=10)"""
+    """손절/익절 비율을 설정합니다. stop_loss는 음수여야 합니다. (예: stop_loss=-5, take_profit=10)"""
+    if err := _require_trader():
+        return err
+    if stop_loss > 0:
+        stop_loss = -abs(stop_loss)  # 양수 입력 시 자동 음수 변환
     trader.set_risk_params(stop_loss=stop_loss, take_profit=take_profit)
     return f"✅ 리스크 설정 변경: 손절 {stop_loss}% / 익절 {take_profit}%"
 
@@ -381,6 +566,8 @@ async def set_risk_params(stop_loss: float = -5.0, take_profit: float = 10.0) ->
 @mcp.tool()
 async def set_watch_list(tickers: str) -> str:
     """자동매매 관심 코인 목록을 변경합니다. 쉼표로 구분."""
+    if err := _require_trader():
+        return err
     ticker_list = [t.strip().upper() for t in tickers.split(",")]
     trader.set_watch_list(ticker_list)
     return f"✅ 관심 목록 변경: {', '.join(ticker_list)}"
@@ -389,7 +576,13 @@ async def set_watch_list(tickers: str) -> str:
 @mcp.tool()
 async def run_trade_cycle() -> str:
     """자동매매 사이클을 1회 수동으로 실행합니다."""
+    if err := _require_trader():
+        return err
     result = trader.run_cycle()
+
+    if result.get("skipped"):
+        return json.dumps({"status": "skipped", "reason": result.get("reason", "Cycle already running")}, ensure_ascii=False)
+
     lines = [f"🔄 매매 사이클 실행 완료 ({result['strategy']}, {'모의' if result['dry_run'] else '실전'})"]
     lines.append(f"  KRW 잔고: {result.get('krw_balance', 0):,.0f}원")
 
@@ -413,6 +606,8 @@ async def run_trade_cycle() -> str:
 @mcp.tool()
 async def portfolio_summary() -> str:
     """포트폴리오 요약 (총 자산, 수익률, 거래 횟수)을 보여줍니다."""
+    if err := _require_tracker():
+        return err
     summary = tracker.get_summary()
     if summary.get("status") == "no_data":
         return summary["message"]
@@ -433,9 +628,13 @@ async def portfolio_summary() -> str:
 @mcp.tool()
 async def portfolio_graph(days: int = 30) -> str:
     """보유 자산 추이 그래프를 생성합니다. days: 최근 N일"""
+    if err := _require_client():
+        return err
+    if err := _require_tracker():
+        return err
     # 먼저 현재 상태 스냅샷 기록
     balances = client.get_balances()
-    tickers_for_price = [f"KRW-{b['currency']}" for b in balances
+    tickers_for_price = [normalize_ticker(b['currency']) for b in balances
                          if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
     prices = client.get_prices(tickers_for_price) if tickers_for_price else {}
     tracker.record_snapshot(balances, prices)
@@ -450,6 +649,8 @@ async def portfolio_graph(days: int = 30) -> str:
 @mcp.tool()
 async def holdings_chart() -> str:
     """보유 자산 비중 파이차트를 생성합니다."""
+    if err := _require_tracker():
+        return err
     path = tracker.generate_holdings_pie_chart()
     if path:
         return f"🥧 보유 비중 차트 생성 완료: {path}"
@@ -459,6 +660,8 @@ async def holdings_chart() -> str:
 @mcp.tool()
 async def recent_trades(count: int = 10) -> str:
     """최근 거래 내역을 보여줍니다."""
+    if err := _require_tracker():
+        return err
     trades = tracker.get_recent_trades(count)
     if not trades:
         return "거래 내역이 없습니다."
@@ -477,11 +680,15 @@ async def recent_trades(count: int = 10) -> str:
 @mcp.tool()
 async def record_portfolio_snapshot() -> str:
     """현재 포트폴리오 스냅샷을 수동으로 기록합니다."""
+    if err := _require_client():
+        return err
+    if err := _require_tracker():
+        return err
     balances = client.get_balances()
     if not balances:
         return "잔고 조회 실패"
 
-    tickers_for_price = [f"KRW-{b['currency']}" for b in balances
+    tickers_for_price = [normalize_ticker(b['currency']) for b in balances
                          if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
     prices = client.get_prices(tickers_for_price) if tickers_for_price else {}
     snapshot = tracker.record_snapshot(balances, prices)
@@ -499,6 +706,8 @@ async def record_portfolio_snapshot() -> str:
 @mcp.tool()
 async def kimchi_premium(symbol: str = "KRW-BTC") -> str:
     """김치 프리미엄(업비트 vs 글로벌 가격 차이)을 조회합니다."""
+    if err := _require_analyzer():
+        return err
     result = analyzer.get_kimchi_premium(symbol)
     if "error" in result:
         return f"김치 프리미엄 조회 실패: {result['error']}"
@@ -514,6 +723,8 @@ async def kimchi_premium(symbol: str = "KRW-BTC") -> str:
 @mcp.tool()
 async def fear_greed_index() -> str:
     """암호화폐 공포/탐욕 지수를 조회합니다."""
+    if err := _require_analyzer():
+        return err
     result = analyzer.get_fear_greed_index()
     if result.get("error"):
         return f"공포/탐욕 지수 조회 실패: {result.get('error')}"
@@ -528,6 +739,8 @@ async def fear_greed_index() -> str:
 @mcp.tool()
 async def market_summary_tool() -> str:
     """전체 암호화폐 시장 요약 정보를 조회합니다."""
+    if err := _require_analyzer():
+        return err
     result = analyzer.get_market_summary()
     if "error" in result:
         return f"시장 요약 조회 실패: {result['error']}"
@@ -551,6 +764,8 @@ async def market_summary_tool() -> str:
 @mcp.tool()
 async def trade_statistics(period: str = "all") -> str:
     """거래 통계를 조회합니다. period: 'day', 'week', 'month', 'all'"""
+    if err := _require_tracker():
+        return err
     stats = tracker.get_trade_statistics(period)
     if stats.get("total_trades", 0) == 0:
         return f"해당 기간({period}) 거래 내역이 없습니다."
@@ -570,6 +785,8 @@ async def trade_statistics(period: str = "all") -> str:
 @mcp.tool()
 async def set_price_alert(symbol: str, above: float = 0, below: float = 0) -> str:
     """가격 알림을 설정합니다. above: 상한 가격, below: 하한 가격 (0이면 미설정)"""
+    if err := _require_trader():
+        return err
     above_val = above if above > 0 else None
     below_val = below if below > 0 else None
     result = trader.set_price_alert(symbol, above=above_val, below=below_val)
@@ -587,6 +804,8 @@ async def set_price_alert(symbol: str, above: float = 0, below: float = 0) -> st
 @mcp.tool()
 async def set_trailing_stop_tool(symbol: str, trail_pct: float = 5.0) -> str:
     """트레일링 스탑을 설정합니다. 최고가 대비 trail_pct% 하락 시 자동 매도."""
+    if err := _require_trader():
+        return err
     result = trader.set_trailing_stop(symbol, trail_pct)
     if "error" in result:
         return f"트레일링 스탑 설정 실패: {result['error']}"
@@ -652,7 +871,10 @@ async def crypto_help() -> str:
 @mcp.tool()
 async def security_status() -> str:
     """보안 상태를 점검하고 보고합니다."""
-    from crypto_trading.security import initialize_security, trade_safety
+    try:
+        from crypto_trading.security import initialize_security, trade_safety
+    except ImportError:
+        return json.dumps({"error": "security module not available"}, ensure_ascii=False)
     report = initialize_security()
     daily = trade_safety.get_daily_summary()
     lines = [
@@ -674,7 +896,10 @@ async def security_status() -> str:
 async def set_safety_limits(max_daily_trades: int = 50, max_single_order_krw: float = 1000000,
                              max_daily_volume_krw: float = 5000000) -> str:
     """거래 안전 한도를 설정합니다. 일일 최대 거래 횟수, 1회 최대 금액, 일일 최대 총액."""
-    from crypto_trading.security import trade_safety
+    try:
+        from crypto_trading.security import trade_safety
+    except ImportError:
+        return json.dumps({"error": "security module not available"}, ensure_ascii=False)
     trade_safety.set_limits(
         max_daily_trades=max_daily_trades,
         max_single_order_krw=max_single_order_krw,

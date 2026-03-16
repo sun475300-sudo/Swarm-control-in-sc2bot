@@ -76,8 +76,10 @@ class ErrorHandler:
                 # 처음 3회만 로그 (스팸 방지)
                 if self.error_counts[log_key] <= self.max_error_logs:
                     print(f"[ERROR] {log_key} failed: {e}")
-                    # ★ ADDED: Traceback for debugging even in production
-                    traceback.print_exc()
+                    # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
+                    import logging as _logging
+                    _logger = _logging.getLogger(__name__)
+                    _logger.debug(traceback.format_exc())
                     if self.error_counts[log_key] == self.max_error_logs:
                         print(f"[ERROR] {log_key}: Suppressing further error logs for this key")
 
@@ -117,8 +119,10 @@ class ErrorHandler:
 
                         if self.error_counts[key] <= self.max_error_logs:
                             print(f"[ERROR] {key} failed: {e}")
-                            # ★ ADDED: Traceback for debugging even in production
-                            traceback.print_exc()
+                            # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
+                            import logging as _logging
+                            _logger = _logging.getLogger(__name__)
+                            _logger.debug(traceback.format_exc())
                             if self.error_counts[key] == self.max_error_logs:
                                 print(f"[ERROR] {key}: Suppressing further error logs")
 

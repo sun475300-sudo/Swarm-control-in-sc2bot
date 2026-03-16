@@ -202,8 +202,8 @@ class EconomyManager:
         if iteration % 22 == 0:
             await self._redistribute_mineral_workers()
 
-        # ★ Distance Mining: 드론을 가장 가까운 미네랄 패치에 재배정 (30초마다) ★
-        if iteration % 660 == 0:
+        # ★ Distance Mining: 프로급 거리 기반 채굴 최적화 (15초마다) ★
+        if iteration % 330 == 0:
             await self._optimize_mineral_assignments()
 
         # Check for macro hatchery needs periodically
@@ -369,7 +369,8 @@ class EconomyManager:
             pending_supply_cost += self.bot.already_pending(UnitTypeId.ROACH) * 2
             pending_supply_cost += self.bot.already_pending(UnitTypeId.HYDRALISK) * 2
             pending_supply_cost += self.bot.already_pending(UnitTypeId.QUEEN) * 2
-        except Exception:
+        except Exception as e:
+            self.logger.warning(f"[EconomyManager] Pending supply calc suppressed: {e}")
             pending_supply_cost = 0
         effective_supply_left = self.bot.supply_left - pending_supply_cost
 
@@ -437,7 +438,7 @@ class EconomyManager:
             else:
                 self.bot.do(larva_unit.train(UnitTypeId.OVERLORD))
         except (AttributeError, TypeError) as e:
-            # Overlord production failed
+            self.logger.warning(f"[EconomyManager] Overlord production suppressed: {e}")
             return
 
     async def _train_drone_if_needed(self) -> None:
@@ -573,7 +574,7 @@ class EconomyManager:
                                     lambda w: w.tag != worker.tag
                                 )
                 except (AttributeError, TypeError) as e:
-                    # Worker filtering failed
+                    self.logger.warning(f"[EconomyManager] Worker filtering suppressed: {e}")
                     continue
 
     async def _build_macro_hatchery_if_needed(self) -> None:
@@ -690,7 +691,7 @@ class EconomyManager:
                         if await self.bot.can_place(UnitTypeId.HATCHERY, test_pos):
                             return test_pos
                     except (AttributeError, TypeError, ValueError) as e:
-                        # Position check failed
+                        self.logger.warning(f"[EconomyManager] Hatch position check suppressed: {e}")
                         continue
 
         except (AttributeError, TypeError, ValueError) as e:
@@ -700,41 +701,175 @@ class EconomyManager:
 
     async def _optimize_mineral_assignments(self) -> None:
         """
-        Distance Mining: 각 기지에서 드론을 가장 가까운 미네랄 패치에 재배정.
+        ★★★ Pro-level Distance Mining ★★★
 
-        고갈 중인 패치(100 미네랄 미만)에서 드론을 재배치.
+        프로게이머 수준의 드론 배치 최적화:
+        1. 기지별 미네랄 패치를 거리순 정렬
+        2. 가까운 패치에 2명, 먼 패치에 1명 배정
+        3. 고갈 패치(< 100) 드론을 즉시 재배치
+        4. 자원 운반 중인 드론은 건너뜀 (효율 손실 방지)
+        5. 똥땅(총량 < 300) 감지 → 단체 이주
         """
         try:
+            if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
+                return
+
             for townhall in self.bot.townhalls.ready:
                 nearby_minerals = self.bot.mineral_field.closer_than(10, townhall)
                 if not nearby_minerals:
+                    # ★ 미네랄 0개 = 완전 고갈 → 단체 이주 ★
+                    await self._evacuate_depleted_base(townhall)
                     continue
 
-                # 고갈된 패치 감지 및 드론 재배정
-                depleted = [m for m in nearby_minerals if m.mineral_contents < 100]
-                if not depleted:
+                # 총 잔여량 체크 (똥땅 감지)
+                total_remaining = sum(m.mineral_contents for m in nearby_minerals)
+                if total_remaining < 300:
+                    await self._evacuate_depleted_base(townhall)
                     continue
 
-                healthy = [m for m in nearby_minerals if m.mineral_contents >= 100]
+                # ★ 거리순 정렬: 가까운 패치 우선 ★
+                sorted_minerals = sorted(
+                    nearby_minerals,
+                    key=lambda m: m.distance_to(townhall)
+                )
+
+                # 건강한 패치 / 고갈 패치 분리
+                healthy = [m for m in sorted_minerals if m.mineral_contents >= 100]
+                depleted = [m for m in sorted_minerals if m.mineral_contents < 100]
+
                 if not healthy:
+                    await self._evacuate_depleted_base(townhall)
                     continue
 
-                # 가까운 순으로 정렬
-                healthy_sorted = sorted(healthy, key=lambda m: m.distance_to(townhall))
+                # ★ 최적 배정 계산: 가까운 패치 2명, 먼 패치 1명 ★
+                # 패치별 목표 일꾼 수 계산
+                half = len(healthy) // 2
+                patch_targets = {}
+                for i, mineral in enumerate(healthy):
+                    if i < half:
+                        patch_targets[mineral.tag] = 2  # 가까운 패치: 2명
+                    else:
+                        patch_targets[mineral.tag] = 1  # 먼 패치: 1명
 
+                # 현재 각 패치에 배정된 일꾼 수 집계
                 workers = self.bot.workers.closer_than(10, townhall)
+                patch_assigned = {m.tag: 0 for m in healthy}
+
+                idle_workers = []
+                misassigned_workers = []
+
                 for worker in workers:
-                    # 고갈된 패치로 가고 있는 드론만 재배정
-                    if hasattr(worker, 'order_target') and worker.order_target:
-                        for dep in depleted:
-                            if worker.order_target == dep.tag:
-                                # 가장 가까운 건강한 패치로 이동
-                                closest = min(healthy_sorted, key=lambda m: m.distance_to(worker))
-                                self.bot.do(worker.gather(closest))
-                                break
+                    # 자원 운반 중이면 건너뜀
+                    if worker.is_carrying_minerals or worker.is_carrying_vespene:
+                        continue
+
+                    # 가스 채취 중이면 건너뜀
+                    if worker.is_carrying_vespene:
+                        continue
+
+                    target_tag = getattr(worker, 'order_target', None)
+
+                    # 고갈 패치로 가는 드론 → 재배정 대상
+                    if target_tag and any(d.tag == target_tag for d in depleted):
+                        misassigned_workers.append(worker)
+                        continue
+
+                    # 건강한 패치로 가는 드론 → 집계
+                    if target_tag and target_tag in patch_assigned:
+                        patch_assigned[target_tag] += 1
+                    elif worker.is_idle:
+                        idle_workers.append(worker)
+
+                # ★ 과잉 패치에서 부족 패치로 재배정 ★
+                surplus_workers = []
+                deficit_patches = []
+
+                for mineral in healthy:
+                    target = patch_targets.get(mineral.tag, 1)
+                    current = patch_assigned.get(mineral.tag, 0)
+                    if current > target:
+                        surplus_workers.extend([mineral] * (current - target))
+                    elif current < target:
+                        deficit_patches.extend([mineral] * (target - current))
+
+                # 고갈 패치 드론 + 대기 드론 + 과잉 드론 → 부족 패치로 이동
+                available = misassigned_workers + idle_workers
+                for mineral in deficit_patches:
+                    if not available:
+                        break
+                    worker = available.pop(0)
+                    self.bot.do(worker.gather(mineral))
+
         except Exception as e:
             if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Mineral optimization failed: {e}")
+                self.logger.warning(f"[ECONOMY_WARN] Distance mining failed: {e}")
+
+    async def _evacuate_depleted_base(self, depleted_townhall) -> None:
+        """
+        ★ 똥땅 단체 이주 ★
+
+        미네랄 고갈된 기지의 일꾼을 가장 가까운 건강한 기지로 단체 이주.
+        가스 채취 일꾼은 남겨둠.
+        """
+        try:
+            if not hasattr(self.bot, "townhalls") or self.bot.townhalls.ready.amount < 2:
+                return
+
+            # 건강한 기지 찾기 (미네랄 패치 3개+ 남은 곳)
+            healthy_bases = []
+            for th in self.bot.townhalls.ready:
+                if th.tag == depleted_townhall.tag:
+                    continue
+                nearby = self.bot.mineral_field.closer_than(10, th)
+                if nearby and nearby.amount >= 3:
+                    total = sum(m.mineral_contents for m in nearby)
+                    if total > 500:
+                        healthy_bases.append((th, total))
+
+            if not healthy_bases:
+                return
+
+            # 가장 가깝고 여유 있는 기지 선택
+            target_base = min(
+                healthy_bases,
+                key=lambda x: x[0].distance_to(depleted_townhall) - x[1] * 0.01
+            )[0]
+
+            # 고갈 기지의 미네랄 일꾼 이주 (가스 일꾼 제외)
+            workers = self.bot.workers.closer_than(10, depleted_townhall)
+            gas_tags = set()
+            if hasattr(self.bot, "gas_buildings"):
+                for gas in self.bot.gas_buildings.closer_than(10, depleted_townhall):
+                    gas_tags.add(gas.tag)
+
+            transferred = 0
+            target_minerals = self.bot.mineral_field.closer_than(10, target_base)
+
+            if not target_minerals:
+                return
+
+            for worker in workers:
+                # 가스 채취 중이면 남겨둠
+                if worker.is_carrying_vespene:
+                    continue
+                target_tag = getattr(worker, 'order_target', None)
+                if target_tag and target_tag in gas_tags:
+                    continue
+
+                # 가장 가까운 건강한 미네랄로 이주
+                closest_mineral = target_minerals.closest_to(target_base)
+                self.bot.do(worker.gather(closest_mineral))
+                transferred += 1
+
+            if transferred > 0:
+                game_time = getattr(self.bot, "time", 0)
+                self.logger.info(
+                    f"[ECONOMY] [{int(game_time)}s] ★ EVACUATED {transferred} workers "
+                    f"from depleted base to {target_base.position}"
+                )
+        except Exception as e:
+            if self.bot.iteration % 50 == 0:
+                self.logger.warning(f"[ECONOMY_WARN] Evacuation failed: {e}")
 
     async def _redistribute_mineral_workers(self) -> None:
         """
@@ -831,7 +966,7 @@ class EconomyManager:
                             self.bot.do(worker.gather(minerals.closest_to(best_target)))
                             workers_moved += 1
                         except (AttributeError, TypeError) as e:
-                            # Worker command failed
+                            self.logger.warning(f"[EconomyManager] Worker command suppressed: {e}")
                             continue
 
                 if workers_moved > 0:
@@ -974,7 +1109,7 @@ class EconomyManager:
         try:
             return next(iter(larva))
         except (StopIteration, AttributeError, TypeError) as e:
-            # No larva available
+            self.logger.warning(f"[EconomyManager] Larva retrieval suppressed: {e}")
             return None
 
     async def _assign_idle_workers(self) -> None:
@@ -1503,8 +1638,8 @@ class EconomyManager:
             if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
                 try:
                     await self.bot.resource_manager.release("EconomyManager_Expansion")
-                except Exception:
-                    pass
+                except Exception as e2:
+                    self.logger.warning(f"[EconomyManager] Resource release suppressed: {e2}")
 
         return False
 
@@ -1689,7 +1824,7 @@ class EconomyManager:
                     return True
             return False
         except (AttributeError, TypeError) as e:
-            # Gold mineral check failed
+            self.logger.warning(f"[EconomyManager] Gold mineral check suppressed: {e}")
             return False
 
     def _get_gold_expansion_locations(self) -> list:
@@ -1759,16 +1894,17 @@ class EconomyManager:
             return gold_expansions
 
         except (AttributeError, TypeError, ValueError) as e:
-            # Finding gold expansions failed
+            self.logger.warning(f"[EconomyManager] Gold expansion search suppressed: {e}")
             return []
 
     async def _get_best_expansion_with_gold_priority(self):
         """
-        Get the best expansion location, prioritizing gold bases.
+        ★★★ 황금 기지 1순위 확장 시스템 ★★★
 
         Priority order:
-        1. Gold base closest to our main base (safe gold)
-        2. Normal expansion from get_next_expansion()
+        1. 안전한 황금 기지 (1500 미네랄) - 1순위
+        2. 점수 기반 일반 확장 (거리, 안전, 자원량 종합)
+        3. Fallback: get_next_expansion()
         """
         if not hasattr(self.bot, "start_location"):
             return None
@@ -1779,51 +1915,92 @@ class EconomyManager:
             if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
                 enemy_base = self.bot.enemy_start_locations[0]
 
-            # Get gold expansion locations
+            game_time = getattr(self.bot, "time", 0)
+
+            # ★ Phase 1: 황금 기지 최우선 확인 ★
             gold_expansions = self._get_gold_expansion_locations()
 
             if gold_expansions:
-                # Calculate safety score for each gold base
                 best_gold = None
                 best_score = float('-inf')
 
                 for exp_pos, gold_count, total_minerals, _ in gold_expansions:
-                    # Safety score: closer to our base is safer
                     dist_to_us = exp_pos.distance_to(our_base)
                     dist_to_enemy = exp_pos.distance_to(enemy_base) if enemy_base else 100
 
-                    # Score: prefer closer to us, farther from enemy
-                    # Gold count bonus: +50 per gold patch
-                    safety_score = (dist_to_enemy - dist_to_us) + (gold_count * 50)
+                    # ★ 골드 패치 보너스 대폭 강화 (+80 per gold) ★
+                    safety_score = (dist_to_enemy - dist_to_us) + (gold_count * 80)
 
-                    # Early game (< 5 minutes): prioritize safety more
-                    game_time = getattr(self.bot, "time", 0)
-                    if game_time < 300:  # 5분 이전
-                        # Only consider if closer to us than enemy
-                        if dist_to_us < dist_to_enemy:
+                    # ★ 총 자원량 보너스 (1500 미네랄 = +15) ★
+                    safety_score += total_minerals * 0.01
+
+                    # 초반(< 4분): 안전한 것만
+                    if game_time < 240:
+                        if dist_to_us < dist_to_enemy * 0.8:
                             if safety_score > best_score:
                                 best_score = safety_score
                                 best_gold = exp_pos
                     else:
-                        # After 5 minutes: can take riskier gold bases
+                        # 4분+: 적극적 황금기지 확보
                         if safety_score > best_score:
                             best_score = safety_score
                             best_gold = exp_pos
 
                 if best_gold:
-                    # Verify we can place hatchery there
                     if hasattr(self.bot, "can_place"):
                         if await self.bot.can_place(UnitTypeId.HATCHERY, best_gold):
+                            self.logger.info(
+                                f"[ECONOMY] [{int(game_time)}s] ★ GOLD BASE TARGET: "
+                                f"{best_gold} (score: {best_score:.0f})"
+                            )
                             return best_gold
 
-            # Fallback: use standard expansion
+            # ★ Phase 2: 점수 기반 일반 확장 ★
+            if hasattr(self.bot, "expansion_locations_list"):
+                taken = set()
+                if hasattr(self.bot, "townhalls"):
+                    for th in self.bot.townhalls:
+                        taken.add(th.position)
+
+                best_exp = None
+                best_exp_score = float('-inf')
+
+                for exp_pos in self.bot.expansion_locations_list:
+                    if any(exp_pos.distance_to(t) < 5 for t in taken):
+                        continue
+
+                    dist_to_us = exp_pos.distance_to(our_base)
+                    dist_to_enemy = exp_pos.distance_to(enemy_base) if enemy_base else 100
+
+                    # 자원량 계산
+                    nearby = self.bot.mineral_field.closer_than(10, exp_pos)
+                    mineral_total = sum(m.mineral_contents for m in nearby) if nearby else 0
+
+                    # 적 근처는 페널티
+                    if hasattr(self.bot, "enemy_structures"):
+                        if self.bot.enemy_structures.closer_than(15, exp_pos):
+                            continue
+
+                    # 종합 점수: 가까울수록 + 자원 많을수록 + 적으로부터 멀수록
+                    score = -dist_to_us * 1.5 + dist_to_enemy * 0.5 + mineral_total * 0.005
+
+                    if score > best_exp_score:
+                        best_exp_score = score
+                        best_exp = exp_pos
+
+                if best_exp:
+                    if hasattr(self.bot, "can_place"):
+                        if await self.bot.can_place(UnitTypeId.HATCHERY, best_exp):
+                            return best_exp
+
+            # Fallback: get_next_expansion()
             if hasattr(self.bot, "get_next_expansion"):
                 return await self.bot.get_next_expansion()
 
             return None
 
         except (AttributeError, TypeError, ValueError) as e:
-            # Finding safe expansion failed - fallback on error
+            self.logger.warning(f"[EconomyManager] Best expansion lookup suppressed: {e}")
             if hasattr(self.bot, "get_next_expansion"):
                 return await self.bot.get_next_expansion()
             return None

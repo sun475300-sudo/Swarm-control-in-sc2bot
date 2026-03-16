@@ -28,11 +28,22 @@ from crypto_trading.portfolio_tracker import PortfolioTracker
 from crypto_trading.market_analyzer import MarketAnalyzer
 from crypto_trading import config
 from crypto_trading.security import trade_safety
+from crypto_trading.utils import normalize_ticker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("crypto_http")
 
 PORT = int(os.environ.get("CRYPTO_SERVICE_PORT", 8766))
+
+# ── Bug #1 Fix: API Key Authentication ──
+_API_KEY = os.environ.get("CRYPTO_HTTP_API_KEY", "")
+_BIND_HOST = os.environ.get("CRYPTO_HTTP_BIND", "127.0.0.1")
+if not _API_KEY:
+    logger.warning(
+        "CRYPTO_HTTP_API_KEY 환경변수 미설정 — localhost(127.0.0.1)에서만 접근 허용됩니다. "
+        "외부 접근이 필요하면 반드시 API 키를 설정하세요."
+    )
+    _BIND_HOST = "127.0.0.1"  # 인증 미설정 시 localhost 강제
 
 # ── 전역 인스턴스 ──
 client = UpbitClient()
@@ -45,6 +56,11 @@ _pending_trades = {}
 
 # ── Discord Webhook (#176-178) ──
 DISCORD_WEBHOOK_URL = os.environ.get("CRYPTO_WEBHOOK_URL", "")
+if DISCORD_WEBHOOK_URL:
+    _masked_url = DISCORD_WEBHOOK_URL[:20] + "***" if len(DISCORD_WEBHOOK_URL) > 20 else "***"
+    logger.info(f"Discord Webhook URL 설정됨: {_masked_url}")
+else:
+    logger.info("Discord Webhook URL 미설정 (CRYPTO_WEBHOOK_URL 환경변수 없음)")
 
 
 async def send_discord_notification(title: str, message: str, color: int = 0x2196F3):
@@ -60,8 +76,8 @@ async def send_discord_notification(title: str, message: str, color: int = 0x219
                 "timestamp": datetime.now().isoformat()
             }]
         }
-        async with aiohttp.ClientSession() as session:
-            await session.post(DISCORD_WEBHOOK_URL, json=payload, timeout=aiohttp.ClientTimeout(total=5))
+        async with aiohttp.ClientSession() as _session:
+            await _session.post(DISCORD_WEBHOOK_URL, json=payload, timeout=aiohttp.ClientTimeout(total=5))
     except Exception as e:
         logger.warning(f"Discord 알림 실패: {e}")
 
@@ -81,7 +97,8 @@ async def cors_middleware(request, handler):
     else:
         response = await handler(request)
 
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    _allowed_origin = os.environ.get("CORS_ALLOWED_ORIGIN", "http://localhost:3000")
+    response.headers["Access-Control-Allow-Origin"] = _allowed_origin
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
     response.headers["Access-Control-Max-Age"] = "3600"
@@ -194,6 +211,49 @@ async def cache_header_middleware(request, handler):
     # 기본: 캐시하지 않음
     response.headers.setdefault("Cache-Control", "no-cache")
     return response
+
+
+# ── Bug #1 Fix: API Key 인증 미들웨어 ──
+
+@web.middleware
+async def api_key_auth_middleware(request, handler):
+    """비-GET 엔드포인트에 API 키 인증을 적용하는 미들웨어.
+
+    CRYPTO_HTTP_API_KEY 환경변수가 설정되면 GET/OPTIONS 이외 요청에
+    Authorization: Bearer <key> 헤더를 요구한다.
+    환경변수 미설정 시 모든 요청을 허용 (하위 호환).
+    """
+    if not _API_KEY:
+        # 인증 미설정 시 localhost만 허용
+        peername = request.transport.get_extra_info("peername")
+        remote_ip = peername[0] if peername else ""
+        if remote_ip not in ("127.0.0.1", "::1", "localhost"):
+            return web.json_response(
+                {"error": "API 키 미설정 — localhost 외 접근이 차단됩니다."},
+                status=403,
+            )
+        return await handler(request)
+
+    # OPTIONS(Preflight)만 인증 면제, GET도 민감 데이터이므로 인증 필요
+    if request.method == "OPTIONS":
+        return await handler(request)
+
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header == f"Bearer {_API_KEY}":
+        return await handler(request)
+
+    return web.json_response(
+        {"error": "Unauthorized — 유효한 API 키가 필요합니다."},
+        status=401,
+    )
+
+
+def _check_api_key(request) -> bool:
+    """개별 핸들러에서 사용할 수 있는 API 키 검증 헬퍼."""
+    if not _API_KEY:
+        return True
+    auth_header = request.headers.get("Authorization", "")
+    return auth_header == f"Bearer {_API_KEY}"
 
 
 # ═══════════════════════════════════════════════════
@@ -389,7 +449,7 @@ def generate_portfolio_chart_image(balances: list, prices: dict) -> str:
             pnl_list.append(0)
             total_krw += balance
         else:
-            ticker = f"KRW-{currency}"
+            ticker = normalize_ticker(currency)
             price = prices.get(ticker, 0)
             value = balance * price
             avg_price = float(b.get("avg_buy_price", 0))
@@ -548,7 +608,7 @@ async def handle_health(request):
 async def handle_price(request):
     """GET /market/price/<symbol>"""
     symbol = request.match_info.get("symbol", "BTC").upper()
-    ticker = f"KRW-{symbol}" if not symbol.startswith("KRW-") else symbol
+    ticker = normalize_ticker(symbol)
     try:
         price = await asyncio.to_thread(client.get_current_price, ticker)
         if price is None:
@@ -631,7 +691,7 @@ async def handle_balance(request):
                 total_krw += balance
                 assets.append({"currency": "KRW", "balance": balance, "value_krw": balance})
             else:
-                tickers_for_price.append(f"KRW-{currency}")
+                tickers_for_price.append(normalize_ticker(currency))
                 try:
                     avg_pay_price = float(b.get("avg_buy_price") or b.get("avg_buy_price_unit") or 0)
                 except (ValueError, TypeError):
@@ -640,7 +700,7 @@ async def handle_balance(request):
 
         prices = (await asyncio.to_thread(client.get_prices, tickers_for_price)) if tickers_for_price else {}
         for currency, balance, avg_price in coin_data:
-            ticker = f"KRW-{currency}"
+            ticker = normalize_ticker(currency)
             price = prices.get(ticker, 0)
             value = balance * price
             total_krw += value
@@ -679,15 +739,14 @@ async def handle_trade(request):
     side = request.match_info.get("side", "")
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in trade request: {e}")
         return web.json_response({"error": "Invalid JSON"}, status=400)
 
-    market = data.get("market", "").upper()
-    if not market.startswith("KRW-"):
-        market = f"KRW-{market}"
+    market = normalize_ticker(data.get("market", ""))
 
     trade_id = str(uuid.uuid4())[:8]
-    current_price = client.get_current_price(market) or 0
+    current_price = await asyncio.to_thread(client.get_current_price, market) or 0
 
     if side == "buy":
         amount_krw = float(data.get("amount_krw", 0))
@@ -701,11 +760,11 @@ async def handle_trade(request):
             return web.json_response({"error": f"안전 가드 차단: {safe_msg}"}, status=403)
 
         volume = amount_krw / current_price if current_price > 0 else 0
-        result = client.buy_market_order(market, amount_krw)
+        result = await asyncio.to_thread(client.buy_market_order, market, amount_krw)
         if result:
             trade_safety.record_trade(amount_krw)
             # 분석 결과 가져오기
-            analysis = analyzer.analyze_coin(market)
+            analysis = await asyncio.to_thread(analyzer.analyze_coin, market)
 
             trade_info = {
                 "side": "buy", "ticker": market,
@@ -741,7 +800,7 @@ async def handle_trade(request):
         coin = market.replace("KRW-", "")
 
         if percent > 0:
-            total = client.get_balance(coin)
+            total = await asyncio.to_thread(client.get_balance, coin)
             volume = total * (percent / 100)
 
         if volume <= 0:
@@ -752,10 +811,10 @@ async def handle_trade(request):
         if not safe:
             return web.json_response({"error": f"안전 가드 차단: {safe_msg}"}, status=403)
 
-        result = client.sell_market_order(market, volume)
+        result = await asyncio.to_thread(client.sell_market_order, market, volume)
         if result:
             trade_safety.record_trade(value_krw)
-            analysis = analyzer.analyze_coin(market)
+            analysis = await asyncio.to_thread(analyzer.analyze_coin, market)
 
             trade_info = {
                 "side": "sell", "ticker": market,
@@ -794,7 +853,8 @@ async def handle_auto_start(request):
     """POST /auto/start - 자동매매 시작"""
     try:
         data = await request.json() if request.content_length else {}
-    except Exception:
+    except Exception as e:
+        logger.debug(f"No JSON body in auto/start request, using defaults: {e}")
         data = {}
 
     # 옵션 설정
@@ -864,7 +924,7 @@ async def handle_trade_history(request):
 async def handle_kimchi_premium(request):
     """GET /market/premium/<symbol> - 김치 프리미엄"""
     symbol = request.match_info.get("symbol", "BTC").upper()
-    ticker = f"KRW-{symbol}" if not symbol.startswith("KRW-") else symbol
+    ticker = normalize_ticker(symbol)
     try:
         result = await asyncio.to_thread(analyzer.get_kimchi_premium, ticker)
         return web.json_response(result)
@@ -893,7 +953,7 @@ async def handle_market_summary(request):
 async def handle_spread_analysis(request):
     """GET /market/spread/<symbol> - 스프레드 분석"""
     symbol = request.match_info.get("symbol", "BTC").upper()
-    ticker = f"KRW-{symbol}" if not symbol.startswith("KRW-") else symbol
+    ticker = normalize_ticker(symbol)
     try:
         result = await asyncio.to_thread(analyzer.analyze_spread, ticker)
         return web.json_response(result)
@@ -930,7 +990,8 @@ async def handle_set_alert(request):
     """POST /alert/set - 가격 알림 설정"""
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in alert/set request: {e}")
         return web.json_response({"error": "Invalid JSON"}, status=400)
     ticker = data.get("ticker", "").upper()
     above = data.get("above")
@@ -953,7 +1014,8 @@ async def handle_dca(request):
     """POST /auto/dca - DCA 시작"""
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in auto/dca request: {e}")
         return web.json_response({"error": "Invalid JSON"}, status=400)
     ticker = data.get("ticker", "")
     total_amount = float(data.get("total_amount", 0))
@@ -967,7 +1029,8 @@ async def handle_trailing_stop(request):
     """POST /auto/trailing-stop - 트레일링 스탑 설정"""
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in auto/trailing-stop request: {e}")
         return web.json_response({"error": "Invalid JSON"}, status=400)
     ticker = data.get("ticker", "")
     trail_pct = float(data.get("trail_pct", 5.0))
@@ -979,13 +1042,13 @@ async def handle_trailing_stop(request):
 
 async def handle_chart_portfolio(request):
     """GET /chart/portfolio - 포트폴리오 차트 이미지 생성"""
-    balances = client.get_balances()
+    balances = await asyncio.to_thread(client.get_balances)
     if not balances:
         return web.json_response({"error": "잔고 조회 실패"}, status=500)
 
-    tickers = [f"KRW-{b['currency']}" for b in balances
+    tickers = [normalize_ticker(b['currency']) for b in balances
                if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
-    prices = client.get_prices(tickers) if tickers else {}
+    prices = await asyncio.to_thread(client.get_prices, tickers) if tickers else {}
 
     chart_b64 = generate_portfolio_chart_image(balances, prices)
     if not chart_b64:
@@ -997,13 +1060,13 @@ async def handle_chart_portfolio(request):
 
 async def handle_chart_portfolio_png(request):
     """GET /chart/portfolio.png - 포트폴리오 차트 PNG 이미지 직접 반환"""
-    balances = client.get_balances()
+    balances = await asyncio.to_thread(client.get_balances)
     if not balances:
         return web.Response(text="잔고 조회 실패", status=500)
 
-    tickers = [f"KRW-{b['currency']}" for b in balances
+    tickers = [normalize_ticker(b['currency']) for b in balances
                if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
-    prices = client.get_prices(tickers) if tickers else {}
+    prices = await asyncio.to_thread(client.get_prices, tickers) if tickers else {}
 
     chart_b64 = generate_portfolio_chart_image(balances, prices)
     if not chart_b64:
@@ -1081,18 +1144,29 @@ async def handle_set_log_level(request):
     """PUT /admin/log-level - 런타임에 로그 레벨 변경
 
     요청 본문: {"level": "DEBUG"}
-    지원 레벨: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    지원 레벨: DEBUG, INFO, WARNING, ERROR
+    Bug #3 Fix: API 키 인증 필수 + 허용 레벨 제한
     """
+    # Bug #3 Fix: 관리자 엔드포인트에 API 키 인증 적용
+    if not _check_api_key(request):
+        return web.json_response(
+            {"error": "Unauthorized — 관리자 API 키가 필요합니다."},
+            status=401,
+        )
+
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in admin/log-level request: {e}")
         return web.json_response({"error": "유효하지 않은 JSON"}, status=400)
 
+    # Bug #3 Fix: 허용 레벨을 INFO/WARNING/ERROR/DEBUG로 제한
+    ALLOWED_ADMIN_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR"}
     level = data.get("level", "").upper()
-    if level not in VALID_LOG_LEVELS:
+    if level not in ALLOWED_ADMIN_LEVELS:
         return web.json_response({
             "error": f"유효하지 않은 로그 레벨: {level}",
-            "available_levels": sorted(VALID_LOG_LEVELS),
+            "available_levels": sorted(ALLOWED_ADMIN_LEVELS),
         }, status=400)
 
     previous_level = logging.getLevelName(logging.getLogger().getEffectiveLevel())
@@ -1119,7 +1193,7 @@ async def handle_set_log_level(request):
 async def handle_candle_chart(request):
     """GET /chart/candle/{symbol}?count=100 - pyupbit OHLCV 캔들 데이터를 반환한다."""
     symbol = request.match_info.get("symbol", "BTC").upper()
-    ticker = f"KRW-{symbol}" if not symbol.startswith("KRW-") else symbol
+    ticker = normalize_ticker(symbol)
     count = min(int(request.query.get("count", 100)), 500)
     interval = request.query.get("interval", "day")  # day, minute1, minute5 등
 
@@ -1156,7 +1230,7 @@ async def handle_candle_chart(request):
 async def handle_rsi_chart(request):
     """GET /chart/rsi/{symbol}?period=14 - RSI 값 시계열을 반환한다."""
     symbol = request.match_info.get("symbol", "BTC").upper()
-    ticker = f"KRW-{symbol}" if not symbol.startswith("KRW-") else symbol
+    ticker = normalize_ticker(symbol)
     period = int(request.query.get("period", 14))
     count = min(int(request.query.get("count", 200)), 500)
 
@@ -1175,8 +1249,11 @@ async def handle_rsi_chart(request):
         loss = (-delta).where(delta < 0, 0.0)
         avg_gain = gain.rolling(window=period, min_periods=period).mean()
         avg_loss = loss.rolling(window=period, min_periods=period).mean()
-        rs = avg_gain / avg_loss.replace(0, float("inf"))
+        # Bug #5 Fix: avg_loss가 0이면 RSI = 100 (순수 상승)
+        rs = avg_gain / avg_loss.replace(0, float("nan"))
         rsi = 100 - (100 / (1 + rs))
+        # avg_loss == 0인 위치는 RSI = 100으로 설정
+        rsi = rsi.fillna(100.0)
 
         rsi_data = []
         for idx, val in rsi.dropna().items():
@@ -1263,10 +1340,7 @@ async def handle_sse_prices(request):
     """
     tickers_param = request.query.get("tickers", "")
     if tickers_param:
-        ticker_list = [t.strip().upper() for t in tickers_param.split(",")]
-        ticker_list = [
-            f"KRW-{t}" if not t.startswith("KRW-") else t for t in ticker_list
-        ]
+        ticker_list = [normalize_ticker(t.strip()) for t in tickers_param.split(",")]
     else:
         ticker_list = list(config.DEFAULT_WATCH_LIST)
 
@@ -1315,9 +1389,7 @@ async def _trade_queue_worker():
             logger.info(f"거래 큐 처리 중: {order_id}")
 
             side = order.get("side", "buy")
-            market = order.get("market", "")
-            if not market.startswith("KRW-"):
-                market = f"KRW-{market}"
+            market = normalize_ticker(order.get("market", ""))
 
             try:
                 current_price = await asyncio.to_thread(
@@ -1358,6 +1430,11 @@ async def _trade_queue_worker():
                     "error": str(e),
                 }
             finally:
+                # Bug #4 Fix: 결과 딕셔너리가 무한 증가하지 않도록 최근 100건만 유지
+                if len(_trade_queue_results) > 100:
+                    oldest_keys = sorted(_trade_queue_results.keys())[:-100]
+                    for k in oldest_keys:
+                        _trade_queue_results.pop(k, None)
                 _trade_queue.task_done()
         except asyncio.CancelledError:
             break
@@ -1374,7 +1451,8 @@ async def handle_trade_queue(request):
     """
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in trade/queue request: {e}")
         return web.json_response({"error": "Invalid JSON"}, status=400)
 
     side = data.get("side", "").lower()
@@ -1421,7 +1499,8 @@ async def handle_put_chart_theme(request):
     """
     try:
         data = await request.json()
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Invalid JSON in settings/chart-theme request: {e}")
         return web.json_response({"error": "Invalid JSON"}, status=400)
 
     valid_modes = {"dark", "light", "system"}
@@ -1494,7 +1573,7 @@ async def handle_portfolio_returns(request):
                 total_current += balance
                 total_invested += balance
             else:
-                tickers_for_price.append(f"KRW-{currency}")
+                tickers_for_price.append(normalize_ticker(currency))
                 try:
                     avg_price = float(b.get("avg_buy_price", 0))
                 except (ValueError, TypeError):
@@ -1506,7 +1585,7 @@ async def handle_portfolio_returns(request):
         ) if tickers_for_price else {}
 
         for currency, balance, avg_price in coin_data_list:
-            ticker = f"KRW-{currency}"
+            ticker = normalize_ticker(currency)
             cur_price = prices.get(ticker, 0)
             cur_value = balance * cur_price
             invested_value = balance * avg_price
@@ -1531,7 +1610,8 @@ async def handle_portfolio_returns(request):
                         period_return = round(
                             (cur_price - past_price) / past_price * 100, 2
                         )
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to fetch OHLCV for period return ({ticker}): {e}")
                     period_return = None
 
             coin_returns.append({
@@ -1575,6 +1655,7 @@ def create_app():
             cors_middleware,              # #67: CORS
             request_logging_middleware,   # #68: 요청 로깅
             error_handler_middleware,     # #69: 통합 에러 핸들러
+            api_key_auth_middleware,      # Bug #1: API 키 인증
             gzip_middleware,              # #73: Gzip 압축
             cache_header_middleware,      # #74: 캐시 헤더
         ]
@@ -1587,6 +1668,10 @@ def create_app():
     app.router.add_get("/market/price/{symbol}", handle_price)
     app.router.add_get("/market/prices", handle_prices)
     app.router.add_get("/market/top-movers", handle_top_movers)
+    app.router.add_get("/market/premium/{symbol}", handle_kimchi_premium)
+    app.router.add_get("/market/fear-greed", handle_fear_greed)
+    app.router.add_get("/market/summary", handle_market_summary)
+    app.router.add_get("/market/spread/{symbol}", handle_spread_analysis)
 
     # Portfolio
     app.router.add_get("/portfolio/balance", handle_balance)
@@ -1626,10 +1711,6 @@ def create_app():
     app.router.add_get("/api-docs", handle_api_docs)
 
     # New endpoints (#29-#42)
-    app.router.add_get("/market/premium/{symbol}", handle_kimchi_premium)
-    app.router.add_get("/market/fear-greed", handle_fear_greed)
-    app.router.add_get("/market/summary", handle_market_summary)
-    app.router.add_get("/market/spread/{symbol}", handle_spread_analysis)
     app.router.add_get("/portfolio/statistics", handle_trade_statistics)
     app.router.add_get("/portfolio/export-csv", handle_export_csv)
     app.router.add_post("/alert/set", handle_set_alert)
@@ -1666,4 +1747,4 @@ if __name__ == "__main__":
     logger.info(f"Starting JARVIS Crypto HTTP Service on port {PORT}")
     logger.info(f"DRY_RUN: {config.DRY_RUN} | Watch: {config.DEFAULT_WATCH_LIST}")
     app = create_app()
-    web.run_app(app, host="127.0.0.1", port=PORT, print=None)
+    web.run_app(app, host=_BIND_HOST, port=PORT, print=None)

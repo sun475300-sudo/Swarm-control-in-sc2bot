@@ -1574,8 +1574,9 @@ class CombatManager:
 
             return False
 
-        except Exception:
-            return False  # 에러 발생 시 안전하게 False 반환
+        except Exception as e:
+            self.logger.warning(f"[CombatManager] emergency check suppressed: {e}")
+            return False
 
     async def _handle_air_units_separately(self, iteration: int):
         """

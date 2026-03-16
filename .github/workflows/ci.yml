@@ -73,11 +73,43 @@ jobs:
           python -m py_compile metrics_exporter.py
           python -m py_compile migrations/migrate.py
           python -m py_compile migrations/001_initial.py
+          python -m py_compile tool_registry.py
+          python -m py_compile system_prompts.py
+          python -m py_compile agentic_mcp_server.py
+
+      - name: 보안 스캔 (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit --strict --desc 2>&1 || echo "::warning::pip-audit에서 취약점 발견됨"
+        continue-on-error: true
+
+      - name: 시크릿 검사 (detect-secrets)
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --all-files \
+            --exclude-files 'node_modules|\.git|__pycache__|package-lock\.json|\.pyc' \
+            --exclude-lines 'CRYPTO_WEBHOOK_URL|example|sample|placeholder' \
+            > .secrets-results.json
+          python -c "
+          import json, sys
+          with open('.secrets-results.json') as f:
+              data = json.load(f)
+          results = data.get('results', {})
+          total = sum(len(v) for v in results.values())
+          if total > 0:
+              print(f'::warning::잠재적 시크릿 {total}건 발견')
+              for fpath, secrets in results.items():
+                  for s in secrets:
+                      print(f'  {fpath}:{s.get(\"line_number\", \"?\")} - {s.get(\"type\", \"unknown\")}')
+          else:
+              print('시크릿 검사 통과: 의심 항목 없음')
+          "
+        continue-on-error: true
 
       - name: pytest 실행
         run: |
-          pytest tests/ -v --tb=short --co -q 2>/dev/null || true
-          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short || true
+          pytest tests/ -v --tb=short --co -q 2>/dev/null
+          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"

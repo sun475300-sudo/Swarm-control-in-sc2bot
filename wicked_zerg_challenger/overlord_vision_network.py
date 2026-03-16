@@ -60,9 +60,17 @@ class OverlordVisionNetwork:
         if not hasattr(self.bot, "expansion_locations_list"):
             return
 
+        import math
+
         self.vision_positions = []
         our_base = self.bot.start_location
         enemy_base = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
+
+        # ★ PRIORITY 0: Highground Pillars (대공 유닛 도달 불가 벼랑) ★
+        # 적 본진 주변 지상 이동 불가 고지대에 대군주 배치 → 반영구 시야
+        pillar_positions = self._find_highground_pillars(enemy_base)
+        for pos in pillar_positions[:3]:  # 최대 3개
+            self.vision_positions.append(pos)
 
         # ★ PRIORITY 1: Watchtowers (best vision, defensible)
         if hasattr(self.bot, "watchtowers"):
@@ -71,9 +79,7 @@ class OverlordVisionNetwork:
 
         # ★ PRIORITY 2: Enemy base perimeter (drop detection + tech scouting)
         if enemy_base:
-            # 적 본진 주변 4방향 감시
             for angle in [0, 90, 180, 270]:
-                import math
                 rad = math.radians(angle)
                 offset_x = 15 * math.cos(rad)
                 offset_y = 15 * math.sin(rad)
@@ -86,11 +92,58 @@ class OverlordVisionNetwork:
             self.vision_positions.append(midpoint)
 
         # ★ PRIORITY 4: Expansion paths (우리 확장 + 적 예상 확장)
-        for exp_pos in self.bot.expansion_locations_list[1:4]:  # Skip main base
+        for exp_pos in self.bot.expansion_locations_list[1:4]:
             self.vision_positions.append(exp_pos.towards(self.bot.game_info.map_center, 5))
 
         # ★ PRIORITY 5: Map center (general awareness)
         self.vision_positions.append(self.bot.game_info.map_center)
+
+    def _find_highground_pillars(self, enemy_base) -> List[Point2]:
+        """
+        ★★★ 대군주 절대 안전지대(Pillars) 탐색 ★★★
+
+        pathing_grid에서 지상 이동 불가(=0) 위치를 탐색하여
+        대공 유닛이 도달할 수 없는 벼랑 끝 사각지대를 찾음.
+
+        적 본진 주변 10/15/20 거리, 45도 간격 8방향 샘플링.
+        지상 도달 불가한 위치만 반환.
+        """
+        import math
+
+        if not enemy_base or not hasattr(self.bot, "game_info"):
+            return []
+
+        pathing = getattr(self.bot.game_info, "pathing_grid", None)
+        if pathing is None:
+            return []
+
+        pillars = []
+
+        # 적 본진 주변 여러 거리/각도에서 지상 이동 불가 지점 탐색
+        for distance in [10, 15, 20]:
+            for angle_deg in range(0, 360, 45):
+                rad = math.radians(angle_deg)
+                x = enemy_base.x + distance * math.cos(rad)
+                y = enemy_base.y + distance * math.sin(rad)
+
+                # 맵 경계 체크
+                px, py = int(x), int(y)
+                if px < 2 or py < 2:
+                    continue
+                if px >= pathing.width - 2 or py >= pathing.height - 2:
+                    continue
+
+                try:
+                    # 지상 이동 불가 = 대공 유닛 도달 불가 = 안전
+                    if pathing[px, py] == 0:
+                        # 근처에 이미 찾은 pillar가 없는지 확인
+                        pos = Point2((x, y))
+                        if all(pos.distance_to(p) > 5 for p in pillars):
+                            pillars.append(pos)
+                except (IndexError, Exception):
+                    continue
+
+        return pillars
 
     def _is_overlord_managed(self, overlord_tag: int) -> bool:
         """다른 시스템이 관리 중인 오버로드인지 확인"""

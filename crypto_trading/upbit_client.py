@@ -3,7 +3,6 @@ Upbit API Client Wrapper
 - pyupbit 라이브러리 위에 안전한 래핑 레이어
 - 에러 핸들링, 로깅, rate-limit 보호
 """
-import math
 import time
 import logging
 import threading
@@ -11,6 +10,7 @@ from typing import Optional
 import pyupbit
 from pyupbit import Upbit
 from . import config
+from .utils import normalize_ticker
 
 logger = logging.getLogger("crypto.upbit_client")
 
@@ -21,6 +21,13 @@ class UpbitClient:
     def __init__(self, access_key: str = "", secret_key: str = ""):
         self.access_key = access_key or config.UPBIT_ACCESS_KEY
         self.secret_key = secret_key or config.UPBIT_SECRET_KEY
+
+        # 빈 문자열 API 키 경고
+        if not self.access_key or not self.access_key.strip():
+            logger.warning("Upbit access_key가 빈 문자열입니다. 인증이 필요한 API는 사용할 수 없습니다.")
+        if not self.secret_key or not self.secret_key.strip():
+            logger.warning("Upbit secret_key가 빈 문자열입니다. 인증이 필요한 API는 사용할 수 없습니다.")
+
         self._upbit: Optional[Upbit] = None
         self._last_request_time = 0.0
         self._min_interval = 0.12  # rate-limit 보호 (초)
@@ -153,7 +160,7 @@ class UpbitClient:
             if currency == "KRW":
                 total += amount
             else:
-                ticker = f"KRW-{currency}"
+                ticker = normalize_ticker(currency)
                 coin_amounts[ticker] = amount
         if coin_amounts:
             prices = self.get_prices(list(coin_amounts.keys()))
@@ -167,13 +174,14 @@ class UpbitClient:
 
     def buy_market_order(self, ticker: str, krw_amount: float) -> Optional[dict]:
         """시장가 매수 (KRW 금액 지정)"""
-        krw_amount = math.floor(krw_amount)  # #37 주문 금액 정수 내림
-        if config.DRY_RUN:
-            logger.info(f"[DRY-RUN] 시장가 매수: {ticker} / {krw_amount:,.0f}원")
-            return {"dry_run": True, "side": "bid", "ticker": ticker, "price": krw_amount}
+        krw_amount = round(krw_amount)  # #37 주문 금액 정수 반올림
+        # Bug #11 Fix: 최소 주문 금액 검증을 DRY_RUN 분기보다 먼저 실행
         if krw_amount < config.MIN_ORDER_AMOUNT:
             logger.warning(f"최소 주문 금액 미달: {krw_amount} < {config.MIN_ORDER_AMOUNT}")
             return None
+        if config.DRY_RUN:
+            logger.info(f"[DRY-RUN] 시장가 매수: {ticker} / {krw_amount:,.0f}원")
+            return {"dry_run": True, "side": "bid", "ticker": ticker, "price": krw_amount}
         self._throttle()
         try:
             result = self._get_upbit().buy_market_order(ticker, krw_amount)
@@ -185,6 +193,11 @@ class UpbitClient:
 
     def sell_market_order(self, ticker: str, volume: float) -> Optional[dict]:
         """시장가 매도 (수량 지정)"""
+        # 최소 주문 금액 검증
+        current_price = self.get_current_price(ticker) or 0
+        if current_price > 0 and volume * current_price < config.MIN_ORDER_AMOUNT:
+            logger.warning(f"매도 금액 최소 미달: {ticker} {volume * current_price:,.0f}원 < {config.MIN_ORDER_AMOUNT:,.0f}원")
+            return None
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 시장가 매도: {ticker} / {volume}")
             return {"dry_run": True, "side": "ask", "ticker": ticker, "volume": volume}

@@ -57,6 +57,10 @@ class RuntimeSelfHealing:
         self.recovery_actions: List[Dict] = []
         self.total_recoveries = 0
 
+        # 체크 시작 시간 추적
+        self._worker_check_start = 0.0
+        self._supply_check_start = 0.0
+
         # 임계값 설정
         self.MINERAL_WASTE_THRESHOLD = 2000  # 미네랄 2000 이상이면 낭비
         self.GAS_WASTE_THRESHOLD = 1500  # 가스 1500 이상이면 낭비
@@ -280,9 +284,9 @@ class RuntimeSelfHealing:
                 self.bot.economy_manager = EconomyManager(self.bot)
                 self.logger.info(f"[RECOVERY] Reinitialized EconomyManager")
             elif manager_name == "strategy_manager":
-                from strategy_manager import StrategyManager
-                self.bot.strategy_manager = StrategyManager(self.bot)
-                self.logger.info(f"[RECOVERY] Reinitialized StrategyManager")
+                from strategy_manager_v2 import StrategyManagerV2
+                self.bot.strategy_manager = StrategyManagerV2(self.bot)
+                self.logger.info(f"[RECOVERY] Reinitialized StrategyManagerV2")
             # 다른 매니저들도 필요시 추가
         except Exception as e:
             self.logger.error(f"[RECOVERY] Failed to reinitialize {manager_name}: {e}")

@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 
 def analyze_stats():
-    file_path = r"d:\Swarm-contol-in-sc2bot\wicked_zerg_challenger\local_training\scripts\training_session_stats.json"
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "local_training", "scripts", "training_session_stats.json")
     
     if not os.path.exists(file_path):
         print("Stats file not found.")

@@ -431,7 +431,14 @@ class BoidsSwarmController:
                     break
 
         # 스플래시 위협 시 분리 가중치 증가
-        separation_mult = 2.5 if has_splash_threat else 1.5
+        if has_splash_threat and enemy_units:
+            nearby_enemies = enemy_units
+            # ★ Dynamic dispersal based on splash unit count ★
+            splash_count = sum(1 for e in nearby_enemies
+                              if getattr(e.type_id, "name", "").upper() in self.SPLASH_UNITS)
+            separation_mult = min(2.5 + splash_count * 0.3, 4.0)
+        else:
+            separation_mult = 1.5
 
         for i, unit in enumerate(units):
             neighbors = units.closer_than(self.neighbor_radius, unit.position)
@@ -489,67 +496,59 @@ class BoidsSwarmController:
 
         return results
 
-    def get_priority_target(
-        self, unit: Unit, enemy_units: Units
-    ) -> Optional[Any]:
+    def get_priority_target(self, unit, enemy_units) -> "Optional[Unit]":
         """
-        우선순위 타겟 선정 (방어 시)
+        ★ Enhanced: Threat-based priority targeting ★
 
-        우선순위:
-        1. 가장 가까운 고위협 유닛 (시즈탱크, 콜로서스)
-        2. 가장 약한 적 (낮은 체력)
-        3. 가장 가까운 적
-
-        Args:
-            unit: 공격할 유닛
-            enemy_units: 적 유닛들
-
-        Returns:
-            우선순위 타겟 또는 None
+        Priority:
+        1. Spell casters (High Templar, Infestor, Viper) - game-changing abilities
+        2. Splash units (Colossus, Siege Tank, Disruptor) - most dangerous
+        3. Support units (Medivac, Warp Prism, Observer) - force multipliers
+        4. High-threat units from original list
+        5. Lowest HP target within range
+        6. Closest enemy
         """
         if not enemy_units:
             return None
 
-        unit_pos = np.array(_get_pos(unit))
+        SPELL_CASTERS = {"HIGHTEMPLAR", "INFESTOR", "VIPER", "GHOST", "RAVEN", "ORACLE"}
+        SPLASH_PRIORITY = {"COLOSSUS", "SIEGETANKSIEGED", "DISRUPTOR", "DISRUPTORPHASED",
+                          "LIBERATORAG", "WIDOWMINEBURROWED"}
+        SUPPORT_UNITS = {"MEDIVAC", "WARPPRISM", "WARPPRISMPHASING", "OBSERVER",
+                        "OVERLORDTRANSPORT", "OVERSEER"}
 
-        # 1. 고위협 유닛 찾기
-        high_threat_targets = []
+        best_target = None
+        best_priority = 999
+        best_distance = 999
+
         for enemy in enemy_units:
-            enemy_type = getattr(enemy.type_id, "name", "").upper()
-            if enemy_type in self.HIGH_THREAT_UNITS:
-                enemy_pos = np.array(_get_pos(enemy))
-                distance = np.linalg.norm(enemy_pos - unit_pos)
-                if distance < 15:  # 공격 범위 내
-                    high_threat_targets.append((enemy, distance))
+            try:
+                enemy_type = getattr(enemy.type_id, "name", "").upper()
+                dist = unit.distance_to(enemy.position)
 
-        if high_threat_targets:
-            # 가장 가까운 고위협 유닛
-            high_threat_targets.sort(key=lambda x: x[1])
-            return high_threat_targets[0][0]
+                # Skip targets too far away (max engagement range)
+                if dist > 15:
+                    continue
 
-        # 2. 가장 약한 적 (낮은 체력)
-        low_hp_targets = []
-        for enemy in enemy_units:
-            if hasattr(enemy, "health") and hasattr(enemy, "health_max"):
-                hp_ratio = enemy.health / max(enemy.health_max, 1)
-                if hp_ratio < 0.3:  # 30% 이하 체력
-                    enemy_pos = np.array(_get_pos(enemy))
-                    distance = np.linalg.norm(enemy_pos - unit_pos)
-                    if distance < 10:
-                        low_hp_targets.append((enemy, hp_ratio))
+                priority = 5  # Default
 
-        if low_hp_targets:
-            low_hp_targets.sort(key=lambda x: x[1])
-            return low_hp_targets[0][0]
+                if enemy_type in SPELL_CASTERS:
+                    priority = 1
+                elif enemy_type in SPLASH_PRIORITY:
+                    priority = 2
+                elif enemy_type in SUPPORT_UNITS:
+                    priority = 3
+                elif enemy_type in self.HIGH_THREAT_UNITS:
+                    priority = 4
 
-        # 3. 가장 가까운 적
-        closest = None
-        closest_dist = float('inf')
-        for enemy in enemy_units:
-            enemy_pos = np.array(_get_pos(enemy))
-            distance = np.linalg.norm(enemy_pos - unit_pos)
-            if distance < closest_dist:
-                closest_dist = distance
-                closest = enemy
+                # Select by: priority (lower = better), then distance
+                if (priority < best_priority or
+                    (priority == best_priority and dist < best_distance)):
+                    best_priority = priority
+                    best_distance = dist
+                    best_target = enemy
 
-        return closest
+            except (AttributeError, TypeError):
+                continue
+
+        return best_target

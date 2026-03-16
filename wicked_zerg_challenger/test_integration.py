@@ -90,7 +90,7 @@ class IntegrationTester:
         print("\n[VALIDATION] Checking data directory...")
 
         if not self.data_dir.exists():
-            print(f"  [\!]  Creating data directory: {self.data_dir}")
+            print(f"  [!]  Creating data directory: {self.data_dir}")
             self.data_dir.mkdir(parents=True, exist_ok=True)
             self.results["opponent_modeling"]["data_dir"] = "created"
         else:
@@ -331,7 +331,7 @@ class IntegrationTester:
             try:
                 if not test_func():
                     all_passed = False
-                    print(f"\n[\!]  Test '{test_name}' failed!")
+                    print(f"\n[!]  Test '{test_name}' failed!")
             except Exception as e:
                 all_passed = False
                 print(f"\n[X] Test '{test_name}' crashed: {e}")

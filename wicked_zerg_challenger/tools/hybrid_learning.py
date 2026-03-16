@@ -59,7 +59,7 @@ class ReplayPipeline:
         
         links = []
         try:
-            response = requests.get(url, headers=self.headers, verify=False, timeout=30)
+            response = requests.get(url, headers=self.headers, verify=True, timeout=30)
             if response.status_code != 200:
                 self._log(f"Scraping failed: Status {response.status_code}")
                 return []
@@ -107,7 +107,7 @@ class ReplayPipeline:
             save_path = self.download_dir / filename
             
             self._log(f"Downloading {url}...")
-            response = requests.get(url, headers=self.headers, verify=False, stream=True, timeout=60)
+            response = requests.get(url, headers=self.headers, verify=True, stream=True, timeout=60)
             response.raise_for_status()
             
             # Use final URL (after redirects) to guess extension
@@ -216,7 +216,7 @@ def main():
     # Disable HTTPS warnings for verify=False
     import urllib3
     import argparse
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    # SSL verification is now enabled; no need to suppress warnings
     
     parser = argparse.ArgumentParser(description="MLOps Pipeline for SC2 Bot")
     parser.add_argument("--limit", type=int, default=10, help="Number of replays to download")

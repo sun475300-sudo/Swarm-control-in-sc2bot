@@ -1,63 +1,63 @@
-# Å° Á¦°Å È®ÀÎ ½ºÅ©¸³Æ®
+# Å° ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®
 # Verify Key Removal Script
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 
 $KeysToCheck = @(
-    "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo",
-    "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
-)
+    $env:OLD_GOOGLE_KEY_1,
+    $env:OLD_GOOGLE_KEY_2
+) | Where-Object { $_ -ne $null }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Å° Á¦°Å È®ÀÎ" -ForegroundColor Cyan
+Write-Host "Å° ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½" -ForegroundColor Cyan
 Write-Host "Key Removal Verification" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $allClean = $true
 
-# 1. È¯°æ º¯¼ö È®ÀÎ
-Write-Host "[1/4] È¯°æ º¯¼ö È®ÀÎ..." -ForegroundColor Green
+# 1. È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+Write-Host "[1/4] È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½..." -ForegroundColor Green
 $envKeys = @("GEMINI_API_KEY", "GOOGLE_API_KEY")
 foreach ($envKey in $envKeys) {
     $value = [System.Environment]::GetEnvironmentVariable($envKey, "User")
     if ($value) {
         foreach ($oldKey in $KeysToCheck) {
             if ($value -eq $oldKey) {
-                Write-Host "  ? ¹ß°ßµÊ: $envKey = $($oldKey.Substring(0, 10))..." -ForegroundColor Yellow
+                Write-Host "  ? ï¿½ß°ßµï¿½: $envKey = $($oldKey.Substring(0, 10))..." -ForegroundColor Yellow
                 $allClean = $false
             }
         }
     }
 }
 if ($allClean) {
-    Write-Host "  ? È¯°æ º¯¼ö¿¡ ¿À·¡µÈ Å°°¡ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 Write-Host ""
 
-# 2. .env ÆÄÀÏ È®ÀÎ
-Write-Host "[2/4] .env ÆÄÀÏ È®ÀÎ..." -ForegroundColor Green
+# 2. .env ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+Write-Host "[2/4] .env ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½..." -ForegroundColor Green
 $envFile = Join-Path $ProjectRoot ".env"
 if (Test-Path $envFile) {
     $content = Get-Content $envFile -ErrorAction SilentlyContinue
     foreach ($line in $content) {
         foreach ($oldKey in $KeysToCheck) {
             if ($line -match [regex]::Escape($oldKey)) {
-                Write-Host "  ? ¹ß°ßµÊ: .env ÆÄÀÏ¿¡ ¿À·¡µÈ Å°" -ForegroundColor Yellow
+                Write-Host "  ? ï¿½ß°ßµï¿½: .env ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°" -ForegroundColor Yellow
                 $allClean = $false
             }
         }
     }
     if ($allClean) {
-        Write-Host "  ? .env ÆÄÀÏ¿¡ ¿À·¡µÈ Å°°¡ ¾ø½À´Ï´Ù" -ForegroundColor Green
+        Write-Host "  ? .env ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
     }
 } else {
-    Write-Host "  ? .env ÆÄÀÏÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? .env ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 Write-Host ""
 
-# 3. ÇÁ·ÎÁ§Æ® ÆÄÀÏ °Ë»ö
-Write-Host "[3/4] ÇÁ·ÎÁ§Æ® ÆÄÀÏ °Ë»ö..." -ForegroundColor Green
+# 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½
+Write-Host "[3/4] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½..." -ForegroundColor Green
 $foundInFiles = @()
 foreach ($oldKey in $KeysToCheck) {
     $results = Select-String -Path "$ProjectRoot\*" -Pattern ([regex]::Escape($oldKey)) -Recurse -ErrorAction SilentlyContinue | 
@@ -73,7 +73,7 @@ foreach ($oldKey in $KeysToCheck) {
     
     if ($results) {
         $foundInFiles += $oldKey
-        Write-Host "  ? ¹ß°ßµÊ: $($oldKey.Substring(0, 10))..." -ForegroundColor Yellow
+        Write-Host "  ? ï¿½ß°ßµï¿½: $($oldKey.Substring(0, 10))..." -ForegroundColor Yellow
         foreach ($result in $results | Select-Object -First 3) {
             $relPath = $result.Path.Replace($ProjectRoot, "").TrimStart("\")
             Write-Host "    - $relPath : $($result.LineNumber)" -ForegroundColor Yellow
@@ -83,42 +83,42 @@ foreach ($oldKey in $KeysToCheck) {
 }
 
 if ($foundInFiles.Count -eq 0) {
-    Write-Host "  ? ÇÁ·ÎÁ§Æ® ÆÄÀÏ¿¡ ¿À·¡µÈ Å°°¡ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 }
 Write-Host ""
 
-# 4. Git History °Ë»ö
-Write-Host "[4/4] Git History °Ë»ö..." -ForegroundColor Green
+# 4. Git History ï¿½Ë»ï¿½
+Write-Host "[4/4] Git History ï¿½Ë»ï¿½..." -ForegroundColor Green
 Push-Location $ProjectRoot
 try {
     foreach ($oldKey in $KeysToCheck) {
         $gitResults = git log -p --all -S $oldKey --source --all 2>$null | Select-String -Pattern ([regex]::Escape($oldKey))
         if ($gitResults) {
-            Write-Host "  ? ¹ß°ßµÊ: Git history¿¡ $($oldKey.Substring(0, 10))..." -ForegroundColor Yellow
-            Write-Host "    ¡æ git-filter-repo ¶Ç´Â BFG·Î Á¦°Å ÇÊ¿ä" -ForegroundColor Yellow
+            Write-Host "  ? ï¿½ß°ßµï¿½: Git historyï¿½ï¿½ $($oldKey.Substring(0, 10))..." -ForegroundColor Yellow
+            Write-Host "    ï¿½ï¿½ git-filter-repo ï¿½Ç´ï¿½ BFGï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½" -ForegroundColor Yellow
             $allClean = $false
         }
     }
     
     if ($allClean) {
-        Write-Host "  ? Git history¿¡ ¿À·¡µÈ Å°°¡ ¾ø½À´Ï´Ù" -ForegroundColor Green
+        Write-Host "  ? Git historyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
     }
 } catch {
-    Write-Host "  ? Git history °Ë»ö ½ÇÆÐ: $_" -ForegroundColor Yellow
+    Write-Host "  ? Git history ï¿½Ë»ï¿½ ï¿½ï¿½ï¿½ï¿½: $_" -ForegroundColor Yellow
 } finally {
     Pop-Location
 }
 
 Write-Host ""
 
-# ÃÖÁ¾ °á°ú
+# ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 Write-Host "========================================" -ForegroundColor Cyan
 if ($allClean) {
-    Write-Host "? ¿Ï·á! ¸ðµç ¿À·¡µÈ Å°°¡ Á¦°ÅµÇ¾ú½À´Ï´Ù." -ForegroundColor Green
-    Write-Host "? '°ú°Å Å°°¡ ¾øÀ½' »óÅÂÀÔ´Ï´Ù." -ForegroundColor Green
+    Write-Host "? ï¿½Ï·ï¿½! ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ÅµÇ¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½." -ForegroundColor Green
+    Write-Host "? 'ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½." -ForegroundColor Green
 } else {
-    Write-Host "? ÀÏºÎ ¿À·¡µÈ Å°°¡ ³²¾ÆÀÖ½À´Ï´Ù." -ForegroundColor Yellow
-    Write-Host "  ¡æ tools/complete_key_removal.ps1 ½ÇÇà ±ÇÀå" -ForegroundColor Yellow
+    Write-Host "? ï¿½Ïºï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½Ï´ï¿½." -ForegroundColor Yellow
+    Write-Host "  ï¿½ï¿½ tools/complete_key_removal.ps1 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Yellow
 }
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""

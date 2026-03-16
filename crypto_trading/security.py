@@ -14,19 +14,18 @@ Layer 5: 파일 시스템 보호 + 거래 안전 한도 / 이상 거래 탐지
 #159: 제로 트러스트 검증
 #160: 시크릿 매니저
 """
+import math
 import os
 import re
 import sys
 import stat
 import hashlib
 import logging
-import random
+import threading
 import time
 import json
-import math
 import base64
 import zipfile
-import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 from . import config
@@ -162,8 +161,8 @@ def scan_file_for_secrets(filepath: str) -> list:
                             "type": "ACTUAL_KEY_DETECTED",
                             "snippet": mask_sensitive(line.strip()),
                         })
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Could not scan file {filepath} for secrets: {e}")
     return findings
 
 
@@ -252,7 +251,8 @@ def install_exception_hook():
         safe_msg = mask_sensitive(str(exc_value))
         try:
             safe_exc = exc_type(safe_msg)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Could not reconstruct exception type {exc_type}: {e}")
             safe_exc = Exception(safe_msg)
         _original_hook(exc_type, safe_exc, exc_tb)
 
@@ -360,6 +360,7 @@ class TradeSafetyGuard:
         self._alerts: list = []                        # 보안 경고 기록
         self._pending_confirmations: dict = {}         # 2FA 확인 대기 (#150)
         self._recent_amounts: list = []                # 이상 거래 탐지용 최근 금액 (#154)
+        self._guard_lock = threading.Lock()            # 스레드 안전 보호
 
     def _clean_old_trades(self):
         """24시간 이전 기록 정리"""
@@ -368,45 +369,50 @@ class TradeSafetyGuard:
 
     def check_trade(self, amount_krw: float) -> tuple[bool, str]:
         """매매 전 안전 검증"""
-        self._clean_old_trades()
+        with self._guard_lock:
+            self._clean_old_trades()
 
-        # 1. 1회 금액 한도
-        if amount_krw > self.max_single_order_krw:
-            msg = f"⛔ 1회 주문 한도 초과: {amount_krw:,.0f}원 > {self.max_single_order_krw:,.0f}원"
-            self._alerts.append((datetime.now(), msg))
-            logger.warning(msg)
-            return False, msg
+            # 1. 1회 금액 한도 — Bug #8 Fix: >= 로 변경하여 2FA가 먼저 트리거될 수 있도록 함
+            if amount_krw >= self.max_single_order_krw:
+                msg = f"⛔ 1회 주문 한도 초과: {amount_krw:,.0f}원 > {self.max_single_order_krw:,.0f}원"
+                self._alerts.append((datetime.now(), msg))
+                logger.warning(msg)
+                return False, msg
 
-        # 2. 일일 거래 횟수
-        if len(self._daily_trades) >= self.max_daily_trades:
-            msg = f"⛔ 일일 거래 횟수 초과: {len(self._daily_trades)} >= {self.max_daily_trades}"
-            self._alerts.append((datetime.now(), msg))
-            logger.warning(msg)
-            return False, msg
+            # 2. 일일 거래 횟수
+            if len(self._daily_trades) >= self.max_daily_trades:
+                msg = f"⛔ 일일 거래 횟수 초과: {len(self._daily_trades)} >= {self.max_daily_trades}"
+                self._alerts.append((datetime.now(), msg))
+                logger.warning(msg)
+                return False, msg
 
-        # 3. 일일 총 거래액
-        daily_total = sum(amt for _, amt in self._daily_trades) + amount_krw
-        if daily_total > self.max_daily_volume_krw:
-            msg = f"⛔ 일일 거래 총액 초과: {daily_total:,.0f}원 > {self.max_daily_volume_krw:,.0f}원"
-            self._alerts.append((datetime.now(), msg))
-            logger.warning(msg)
-            return False, msg
+            # 3. 일일 총 거래액
+            daily_total = sum(amt for _, amt in self._daily_trades) + amount_krw
+            if daily_total > self.max_daily_volume_krw:
+                msg = f"⛔ 일일 거래 총액 초과: {daily_total:,.0f}원 > {self.max_daily_volume_krw:,.0f}원"
+                self._alerts.append((datetime.now(), msg))
+                logger.warning(msg)
+                return False, msg
 
-        # 4. 이상 패턴 감지: 최근 5분간 5회 이상 매매
-        five_min_ago = datetime.now() - timedelta(minutes=5)
-        recent = [t for t in self._daily_trades if t[0] > five_min_ago]
-        if len(recent) >= 5:
-            msg = f"⚠️ 이상 거래 감지: 5분 내 {len(recent)}회 매매 (봇 오작동 의심)"
-            self._alerts.append((datetime.now(), msg))
-            logger.warning(msg)
-            return False, msg
+            # 4. 이상 패턴 감지: 최근 5분간 5회 이상 매매
+            five_min_ago = datetime.now() - timedelta(minutes=5)
+            recent = [t for t in self._daily_trades if t[0] > five_min_ago]
+            if len(recent) >= 5:
+                msg = f"⚠️ 이상 거래 감지: 5분 내 {len(recent)}회 매매 (봇 오작동 의심)"
+                self._alerts.append((datetime.now(), msg))
+                logger.warning(msg)
+                return False, msg
 
-        return True, "OK"
+            return True, "OK"
 
     def record_trade(self, amount_krw: float):
         """매매 기록"""
-        self._daily_trades.append((datetime.now(), abs(amount_krw)))
-        self._recent_amounts.append(abs(amount_krw))
+        with self._guard_lock:
+            self._daily_trades.append((datetime.now(), abs(amount_krw)))
+            self._recent_amounts.append(abs(amount_krw))
+            # Bug #10 Fix: _recent_amounts 무한 증가 방지 — 최근 100건만 유지
+            if len(self._recent_amounts) > 100:
+                self._recent_amounts = self._recent_amounts[-100:]
 
     def get_daily_summary(self) -> dict:
         """일일 거래 요약"""
@@ -436,7 +442,8 @@ class TradeSafetyGuard:
         """대규모 거래 시 확인 요청 생성"""
         LARGE_TRADE_THRESHOLD = 1_000_000  # 100만원 이상
         if amount_krw >= LARGE_TRADE_THRESHOLD:
-            confirm_code = str(random.randint(100000, 999999))
+            import secrets as _secrets
+            confirm_code = str(_secrets.randbelow(900000) + 100000)
             self._pending_confirmations[confirm_code] = {
                 "amount": amount_krw, "ticker": ticker,
                 "created": time.time(), "expires": time.time() + 300
@@ -506,9 +513,12 @@ class TradeSafetyGuard:
         n = len(window)
         mean = sum(window) / n
 
-        # 표준 편차
-        variance = sum((x - mean) ** 2 for x in window) / n
-        std_dev = math.sqrt(variance) if variance > 0 else 0.0
+        # 표준 편차 — Bug #9 Fix: 표본 표준편차 사용 (n-1), n<=1이면 0
+        if n <= 1:
+            std_dev = 0.0
+        else:
+            variance = sum((x - mean) ** 2 for x in window) / (n - 1)
+            std_dev = math.sqrt(variance) if variance > 0 else 0.0
 
         result["mean"] = round(mean, 2)
         result["std_dev"] = round(std_dev, 2)
@@ -794,8 +804,8 @@ def get_security_dashboard() -> dict:
                         events.append(json.loads(line.strip()))
                     except json.JSONDecodeError:
                         pass
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to read audit log file: {e}")
 
     # trade_safety 알림도 추가
     for ts, msg in trade_safety._alerts[-10:]:
@@ -984,32 +994,51 @@ class SecretManager:
         self._cache_ttl: int = 3600  # 캐시 유효기간 (초)
         self._cache_timestamps: dict = {}
         self._master_key: str = self._derive_master_key()
+        # Bug #7 Fix: Fernet 초기화
+        self._fernet = None
+        self._use_fernet = False
+        self._init_fernet()
 
     def _derive_master_key(self) -> str:
         """마스터 키 생성 — 머신 고유 정보 기반"""
         import platform
-        machine_info = f"{platform.node()}:{platform.machine()}:{os.getlogin() if hasattr(os, 'getlogin') else 'unknown'}"
+        try:
+            login_name = os.getlogin()
+        except OSError:
+            login_name = os.environ.get("USERNAME", os.environ.get("USER", "unknown"))
+        machine_info = f"{platform.node()}:{platform.machine()}:{login_name}"
         return hashlib.sha256(machine_info.encode()).hexdigest()
 
+    def _init_fernet(self):
+        """Bug #7 Fix: Fernet 대칭 암호화 초기화. cryptography 미설치 시 base64 폴백."""
+        try:
+            from cryptography.fernet import Fernet
+            # 마스터 키에서 Fernet 호환 키 파생 (32바이트 -> url-safe base64)
+            import hashlib
+            key_hash = hashlib.sha256(self._master_key.encode("utf-8")).digest()
+            fernet_key = base64.urlsafe_b64encode(key_hash)
+            self._fernet = Fernet(fernet_key)
+            self._use_fernet = True
+        except ImportError:
+            logger.warning(
+                "SecretManager: cryptography 라이브러리 미설치 — "
+                "시크릿이 암호화되지 않고 base64 인코딩만 적용됩니다. "
+                "보안을 위해 'pip install cryptography'를 실행하세요."
+            )
+            self._fernet = None
+            self._use_fernet = False
+
     def _encrypt_value(self, value: str) -> str:
-        """값 암호화 (XOR + base64)"""
-        key_bytes = self._master_key.encode("utf-8")
-        value_bytes = value.encode("utf-8")
-        encrypted = bytes(
-            v ^ key_bytes[i % len(key_bytes)]
-            for i, v in enumerate(value_bytes)
-        )
-        return base64.b64encode(encrypted).decode("utf-8")
+        """값 암호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""
+        if self._use_fernet and self._fernet:
+            return self._fernet.encrypt(value.encode("utf-8")).decode("utf-8")
+        return base64.b64encode(value.encode("utf-8")).decode("utf-8")
 
     def _decrypt_value(self, encrypted: str) -> str:
-        """값 복호화"""
-        key_bytes = self._master_key.encode("utf-8")
-        encrypted_bytes = base64.b64decode(encrypted.encode("utf-8"))
-        decrypted = bytes(
-            v ^ key_bytes[i % len(key_bytes)]
-            for i, v in enumerate(encrypted_bytes)
-        )
-        return decrypted.decode("utf-8")
+        """값 복호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""
+        if self._use_fernet and self._fernet:
+            return self._fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
+        return base64.b64decode(encrypted.encode("utf-8")).decode("utf-8")
 
     def set_secret(self, name: str, value: str):
         """시크릿 저장
@@ -1085,8 +1114,8 @@ class SecretManager:
             try:
                 self._cache[name] = self._decrypt_value(encrypted)
                 self._cache_timestamps[name] = time.time()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"SecretManager: failed to decrypt secret '{name}': {e}")
         logger.info(f"SecretManager: 캐시 갱신 완료 ({len(self._cache)}개)")
 
     def set_cache_ttl(self, ttl_seconds: int):
@@ -1100,7 +1129,8 @@ class SecretManager:
         try:
             with open(self._secrets_file, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to load secrets file {self._secrets_file}: {e}")
             return {}
 
     def _save_secrets_file(self, secrets: dict):

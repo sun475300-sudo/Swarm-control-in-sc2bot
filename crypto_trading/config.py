@@ -5,7 +5,10 @@ Crypto Trading Configuration
 """
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = lambda *a, **k: None
 
 # .env 파일 로드 (프로젝트 내 여러 위치 탐색)
 _env_paths = [
@@ -33,7 +36,7 @@ DEFAULT_TAKE_PROFIT_PCT = 10.0          # 기본 익절 (%)
 
 # ── 자동매매 설정 ──
 AUTO_TRADE_INTERVAL = 60                # 자동매매 체크 간격 (초)
-DRY_RUN = False                         # False = 실제 매매 (Upbit API로 실주문)
+DRY_RUN = True                          # True = 모의매매 (안전 기본값)
 
 # ── 포트폴리오 추적 ──
 DATA_DIR = Path(__file__).parent / "data"

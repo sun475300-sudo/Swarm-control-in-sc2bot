@@ -260,6 +260,24 @@ try:
 except ImportError:
     AdvancedScoutSystemV2 = None
 
+# Flanking Coordinator (2순위 - 양각 포위 전술)
+try:
+    from combat.flanking_coordinator import FlankingCoordinator
+except ImportError:
+    FlankingCoordinator = None
+
+# Queen Specialization Manager (Phase 1 - 여왕 전문 분담)
+try:
+    from economy.queen_specialization import QueenSpecializationManager
+except ImportError:
+    QueenSpecializationManager = None
+
+# A* Creep Highway (Phase 1 - A* 점막 고속도로)
+try:
+    from combat.creep_highway import CreepHighway
+except ImportError:
+    CreepHighway = None
+
 # Game Data Logger (Phase 22 - 게임 데이터 수집)
 try:
     from game_data_logger import GameDataLogger
@@ -436,11 +454,11 @@ class BotStepIntegrator:
         else:
             self.bot.multi_test = None
 
-        # Unit Authority Manager
-        if UnitAuthorityManager:
+        # Unit Authority Manager (skip if already initialized by ManagerFactory)
+        if UnitAuthorityManager and not getattr(self.bot, 'unit_authority', None):
             self.bot.unit_authority = UnitAuthorityManager(bot)
             self.logger.info("[INIT] ★ UnitAuthorityManager initialized ★")
-        else:
+        elif not hasattr(self.bot, 'unit_authority'):
             self.bot.unit_authority = None
 
         # Advanced Scout System V2 (개선판)
@@ -449,6 +467,29 @@ class BotStepIntegrator:
             self.logger.info("[INIT] ★ AdvancedScoutSystemV2 initialized (Overseer + Changeling) ★")
         else:
             self.bot.advanced_scout_v2 = None
+
+        # ★★★ 2순위: Flanking Coordinator (양각 포위 전술) ★★★
+        if FlankingCoordinator:
+            self.bot.flanking_coord = FlankingCoordinator(bot)
+            self.logger.info("[INIT] FlankingCoordinator initialized (2순위 - 양각 포위)")
+        else:
+            self.bot.flanking_coord = None
+
+        # ★★★ PHASE 1: 여왕 전문 분담 & A* 점막 고속도로 ★★★
+
+        # Queen Specialization Manager (여왕 PUMP/CREEP/COMBAT 분담)
+        if QueenSpecializationManager:
+            self.bot.queen_specialization = QueenSpecializationManager(bot)
+            self.logger.info("[INIT] QueenSpecializationManager initialized (Phase 1 - PUMP/CREEP/COMBAT)")
+        else:
+            self.bot.queen_specialization = None
+
+        # A* Creep Highway (적진 방향 A* 최단 경로 점막 고속도로)
+        if CreepHighway:
+            self.bot.creep_highway_astar = CreepHighway(bot)
+            self.logger.info("[INIT] CreepHighway (A*) initialized (Phase 1)")
+        else:
+            self.bot.creep_highway_astar = None
 
         # Game Data Logger (Phase 22 - 경기 데이터 수집)
         if GameDataLogger:
@@ -962,8 +1003,7 @@ class BotStepIntegrator:
                                     for larva in self.bot.larva[:3]:
                                         self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
                 except Exception as e:
-                    # Silent fail - 즉각 대응이므로 에러가 critical하지 않음
-                    pass
+                    self.logger.warning(f"[BotStepIntegrator] Air threat response suppressed: {e}")
 
             # 0.060 ★★★ Dynamic Counter System (적 유닛 즉시 카운터) ★★★
             if hasattr(self.bot, "dynamic_counter") and self.bot.dynamic_counter:
@@ -980,6 +1020,23 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("DynamicCounter", start_time)
 
+            # 0.0605 ★★★ A* Creep Highway (적진 방향 A* 경로 계산 + 진행 체크) ★★★
+            if hasattr(self.bot, "creep_highway_astar") and self.bot.creep_highway_astar:
+                astar_hw = self.bot.creep_highway_astar
+                try:
+                    if not astar_hw._computed and self.bot.time > 10:
+                        astar_hw.compute_highway()
+                        if astar_hw.highway_waypoints:
+                            self.logger.info(
+                                f"[CREEP_HIGHWAY_ASTAR] A* 경로 계산 완료: "
+                                f"{len(astar_hw.highway_waypoints)} waypoints"
+                            )
+                    elif iteration % 110 == 0:
+                        astar_hw.update_progress()
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+
             # 0.061 ★★★ Creep Highway Manager (기지 간 연결) ★★★
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
                 start_time = self._logic_tracker.start_logic("CreepHighway")
@@ -994,6 +1051,21 @@ class BotStepIntegrator:
                             self.logger.error(f"[ERROR] CreepHighway error: {e}")
                 finally:
                     self._logic_tracker.end_logic("CreepHighway", start_time)
+
+            # 0.0615 ★★★ Flanking Coordinator (양각 포위 전술) ★★★
+            if hasattr(self.bot, "flanking_coord") and self.bot.flanking_coord:
+                start_time = self._logic_tracker.start_logic("FlankingCoord")
+                try:
+                    await self.bot.flanking_coord.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["FlankingCoord"] = error_handler.error_counts.get("FlankingCoord", 0) + 1
+                        if error_handler.error_counts["FlankingCoord"] <= error_handler.max_error_logs:
+                            self.logger.error(f"[ERROR] FlankingCoord error: {e}")
+                finally:
+                    self._logic_tracker.end_logic("FlankingCoord", start_time)
 
             # 0.062 ★★★ SpellCaster Automation (마법 유닛 자동화) ★★★
             if hasattr(self.bot, "spellcaster") and self.bot.spellcaster:
@@ -1375,8 +1447,8 @@ class BotStepIntegrator:
                     expected = min(int(game_min / 2.5) + 1, 5)  # 2.5분당 1기지, 최대 5
                     if base_count < expected and self.bot.minerals > 300:
                         self.logger.info(f"[EXPANSION] 확장 지연: {base_count}기지 (목표: {expected}, {game_min:.1f}분)")
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.warning(f"[BotStepIntegrator] Expansion timing check suppressed: {e}")
 
             # 5.1 ★★★ Queen Inject Optimizer (Phase 8 - 완벽한 Inject) ★★★
             if hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt:
@@ -1862,8 +1934,7 @@ class BotStepIntegrator:
                 try:
                     self.bot.performance_optimizer.end_frame()
                 except (AttributeError, TypeError, RuntimeError) as e:
-                    # Silently ignore end_frame errors - performance tracking is non-critical
-                    pass
+                    self.logger.warning(f"[BotStepIntegrator] Perf optimizer end_frame suppressed: {e}")
 
     def _cleanup_dead_unit_authorities(self):
         """죽은 유닛의 권한 자동 해제"""
@@ -1899,8 +1970,7 @@ class BotStepIntegrator:
                             del system.active_scouts[unit_tag]
 
         except Exception as e:
-            # Silent fail - 권한 해제는 critical하지 않음
-            pass
+            self.logger.warning(f"[BotStepIntegrator] Dead unit authority cleanup suppressed: {e}")
 
     async def draw_debug_info(self):
         """화면 좌측 상단에 봇 상태 디버그 정보 표시"""
@@ -1967,8 +2037,7 @@ class BotStepIntegrator:
             if hasattr(client, "debug_send"):
                 await client.debug_send()
         except (AttributeError, TypeError, RuntimeError) as e:
-            # 디버그 정보 표시 실패는 조용히 무시 (debug display is non-critical)
-            pass
+            self.logger.warning(f"[BotStepIntegrator] Debug display suppressed: {e}")
 
     async def _safe_manager_step(
         self, manager, iteration: int, label: str, method_name: str = "on_step"
@@ -2265,7 +2334,7 @@ class BotStepIntegrator:
 
             return sequence
         except (AttributeError, TypeError, ValueError, KeyError) as e:
-            # Return empty sequence if state observation fails
+            self.logger.warning(f"[BotStepIntegrator] State observation suppressed: {e}")
             return []
 
     def _is_defense_mode(self) -> bool:
@@ -2512,7 +2581,7 @@ class BotStepIntegrator:
                     if enemy_type in high_threat_air:
                         high_threat_air_count += 1
             except (AttributeError, TypeError) as e:
-                # Skip enemy unit if attributes unavailable
+                self.logger.warning(f"[BotStepIntegrator] Enemy unit attribute check suppressed: {e}")
                 continue
 
         # 위협 레벨 결정
@@ -2544,7 +2613,7 @@ class BotStepIntegrator:
                 near=main_base.position.towards(map_center, 5),
             )
         except (AttributeError, TypeError, ValueError) as e:
-            # Building placement failed - return False to retry later
+            self.logger.warning(f"[BotStepIntegrator] Building placement suppressed: {e}")
             return False
 
     @error_handler.safe_coroutine(log_key="TrainingLogic", default_return=None)
@@ -2576,12 +2645,21 @@ class BotStepIntegrator:
                             army_supply=army_supply,
                             supply_blocked=supply_blocked
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.warning(f"[BotStepIntegrator] RL intermediate rewards suppressed: {e}")
 
             # 주기적으로 보상 로그 출력
             if iteration % 500 == 0:
                 self.logger.info(f"[TRAINING] Step reward: {step_reward:.3f}")
+
+        # ★★★ Model Hot Reload (30초마다 배포 모델 변경 감지) ★★★
+        if iteration % 660 == 0:  # ~30초
+            hot_reloader = getattr(self.bot, "hot_reloader", None)
+            if hot_reloader:
+                try:
+                    hot_reloader.check_and_reload()
+                except Exception as e:
+                    self.logger.warning(f"[BotStepIntegrator] Hot reloader suppressed: {e}")
 
     async def on_step(self, iteration: int):
         """

@@ -18,6 +18,7 @@ from typing import Optional
 import numpy as np
 
 from . import config
+from .utils import normalize_ticker
 
 logger = logging.getLogger("crypto.portfolio_tracker")
 
@@ -40,17 +41,46 @@ class PortfolioTracker:
                 with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
-                logger.error(f"JSON 로드 실패 ({path}): {e}. 데이터 손상 가능. 빈 기본값 사용.")
+                logger.error(f"JSON 로드 실패 ({path}): {e}. 백업에서 복구 시도.")
+                # 손상 파일을 .corrupted로 보존
+                corrupted_path = path.with_suffix(path.suffix + ".corrupted")
+                try:
+                    import shutil
+                    shutil.copy2(path, corrupted_path)
+                    logger.info(f"손상 파일 보존: {corrupted_path}")
+                except Exception as copy_err:
+                    logger.error(f"손상 파일 보존 실패: {copy_err}")
+                # 백업 파일에서 복구 시도
+                backup_path = path.with_suffix(path.suffix + ".bak")
+                if backup_path.exists():
+                    try:
+                        with open(backup_path, "r", encoding="utf-8") as bf:
+                            data = json.load(bf)
+                        logger.info(f"백업 파일에서 복구 성공: {backup_path}")
+                        return data
+                    except Exception as bak_err:
+                        logger.error(f"백업 파일 복구도 실패 ({backup_path}): {bak_err}. 빈 기본값 사용.")
+                else:
+                    logger.warning(f"백업 파일 없음 ({backup_path}). 빈 기본값 사용.")
         return default
 
     def _atomic_write(self, filepath: Path, data):
         """원자적 파일 쓰기 (크래시 시 데이터 손실 방지)"""
+        # 기존 파일이 있으면 .bak 백업 생성 (복구용)
+        if filepath.exists():
+            backup_path = filepath.with_suffix(filepath.suffix + ".bak")
+            try:
+                import shutil
+                shutil.copy2(filepath, backup_path)
+            except Exception as bak_err:
+                logger.warning(f"백업 파일 생성 실패 ({backup_path}): {bak_err}")
         tmp_fd, tmp_path = tempfile.mkstemp(dir=filepath.parent, suffix='.tmp')
         try:
             with os.fdopen(tmp_fd, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             os.replace(tmp_path, filepath)  # 원자적 교체
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Atomic write failed for {filepath}: {e}")
             try:
                 os.unlink(tmp_path)
             except OSError:
@@ -84,7 +114,7 @@ class PortfolioTracker:
                 total_krw += amount
                 holdings["KRW"] = {"amount": amount, "value_krw": amount}
             else:
-                ticker = f"KRW-{currency}"
+                ticker = normalize_ticker(currency)
                 price = prices.get(ticker, 0)
                 value = amount * price
                 total_krw += value
@@ -151,7 +181,8 @@ class PortfolioTracker:
                 ts = datetime.fromisoformat(snap["timestamp"])
                 timestamps.append(ts)
                 values.append(snap["total_value_krw"])
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Skipping malformed snapshot entry: {e}")
                 continue
 
         if len(timestamps) < 2:
@@ -159,7 +190,6 @@ class PortfolioTracker:
 
         # 최근 days일만
         cutoff = datetime.now().replace(hour=0, minute=0, second=0)
-        from datetime import timedelta
         cutoff = cutoff - timedelta(days=days)
         filtered = [(t, v) for t, v in zip(timestamps, values) if t >= cutoff]
         if len(filtered) < 2:
@@ -195,8 +225,13 @@ class PortfolioTracker:
         # 저장
         filename = f"portfolio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         filepath = self.graph_dir / filename
-        fig.savefig(filepath, dpi=150, bbox_inches="tight")
-        plt.close(fig)
+        try:
+            fig.savefig(filepath, dpi=150, bbox_inches="tight")
+        except Exception as e:
+            logger.error(f"포트폴리오 그래프 저장 실패: {e}")
+            return None
+        finally:
+            plt.close(fig)
 
         logger.info(f"포트폴리오 그래프 저장: {filepath}")
         return str(filepath)
@@ -249,8 +284,13 @@ class PortfolioTracker:
 
         filename = f"holdings_pie_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         filepath = self.graph_dir / filename
-        fig.savefig(filepath, dpi=150, bbox_inches="tight")
-        plt.close(fig)
+        try:
+            fig.savefig(filepath, dpi=150, bbox_inches="tight")
+        except Exception as e:
+            logger.error(f"파이차트 저장 실패: {e}")
+            return None
+        finally:
+            plt.close(fig)
         return str(filepath)
 
     # ─────────── 요약 ───────────
@@ -346,6 +386,9 @@ class PortfolioTracker:
                 max_losses = max(max_losses, current_losses)
 
         # PnL by period
+        # Bug #15 Note: `amount` 필드는 항상 KRW 금액을 나타냅니다.
+        # 매수 시 amount = 투입 KRW, 매도 시 amount = 회수 KRW.
+        # 코인 수량과 혼동하지 마세요. log_trade() 호출 시 KRW 값을 전달해야 합니다.
         buy_total = sum(t.get("amount", 0) for t in buys)
         sell_total = sum(t.get("amount", 0) for t in sells)
         pnl = sell_total - buy_total
@@ -502,24 +545,35 @@ class PortfolioTracker:
             }
 
             # 일간 수익률 기반 Sharpe Ratio
+            # Bug #14 Fix: 포트폴리오 가치가 0인 구간을 필터링하여 ZeroDivisionError 방지
             if len(values) >= 3:
-                returns = np.diff(values) / np.array(values[:-1])
-                daily_rf = (1.035) ** (1 / 365) - 1  # 연간 3.5% 무위험수익률
-                excess_returns = returns - daily_rf
-                mean_excess = float(np.mean(excess_returns))
-                std_excess = float(np.std(excess_returns, ddof=1))
+                values_arr = np.array(values, dtype=float)
+                # 0이 아닌 연속 쌍만 사용하여 수익률 계산
+                prev_values = values_arr[:-1]
+                next_values = values_arr[1:]
+                nonzero_mask = prev_values != 0
+                if nonzero_mask.sum() >= 2:
+                    returns = (next_values[nonzero_mask] - prev_values[nonzero_mask]) / prev_values[nonzero_mask]
+                    daily_rf = (1.035) ** (1 / 365) - 1  # 연간 3.5% 무위험수익률
+                    excess_returns = returns - daily_rf
+                    mean_excess = float(np.mean(excess_returns))
+                    std_excess = float(np.std(excess_returns, ddof=1))
 
-                if std_excess > 0:
-                    sharpe = (mean_excess / std_excess) * np.sqrt(365)
-                    report["risk"]["sharpe_ratio"] = round(float(sharpe), 4)
+                    if std_excess > 0:
+                        sharpe = (mean_excess / std_excess) * np.sqrt(365)
+                        report["risk"]["sharpe_ratio"] = round(float(sharpe), 4)
+                    else:
+                        report["risk"]["sharpe_ratio"] = 0.0
+
+                    # 변동성 (연간화)
+                    daily_vol = float(np.std(returns, ddof=1))
+                    annual_vol = daily_vol * np.sqrt(365)
+                    report["risk"]["daily_volatility_pct"] = round(daily_vol * 100, 4)
+                    report["risk"]["annual_volatility_pct"] = round(float(annual_vol) * 100, 2)
                 else:
                     report["risk"]["sharpe_ratio"] = 0.0
-
-                # 변동성 (연간화)
-                daily_vol = float(np.std(returns, ddof=1))
-                annual_vol = daily_vol * np.sqrt(365)
-                report["risk"]["daily_volatility_pct"] = round(daily_vol * 100, 4)
-                report["risk"]["annual_volatility_pct"] = round(float(annual_vol) * 100, 2)
+                    report["risk"]["daily_volatility_pct"] = 0.0
+                    report["risk"]["annual_volatility_pct"] = 0.0
             else:
                 report["risk"]["sharpe_ratio"] = 0.0
                 report["risk"]["daily_volatility_pct"] = 0.0
@@ -579,8 +633,8 @@ class PortfolioTracker:
                 try:
                     ts = datetime.fromisoformat(t["timestamp"])
                     hourly_dist[ts.hour] += 1
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Skipping malformed trade timestamp: {e}")
 
             # 가장 활발한 시간대
             most_active_hour = max(hourly_dist, key=hourly_dist.get) if hourly_dist else 0

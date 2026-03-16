@@ -51,10 +51,24 @@ DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "") or os.environ.get("ANTHROPIC_API_KEY", "")
 TRADER_ROLE_NAME = os.environ.get("TRADER_ROLE_NAME", "Trader")
 
-# ── 전역 인스턴스 ──
-upbit_client = UpbitClient()
-auto_trader = AutoTrader()
-portfolio_tracker = PortfolioTracker()
+# ── 전역 인스턴스 (초기화 실패 시 None으로 대체) ──
+try:
+    upbit_client = UpbitClient()
+except Exception as _e:
+    logger.error(f"UpbitClient 초기화 실패: {_e}")
+    upbit_client = None
+
+try:
+    auto_trader = AutoTrader()
+except Exception as _e:
+    logger.error(f"AutoTrader 초기화 실패: {_e}")
+    auto_trader = None
+
+try:
+    portfolio_tracker = PortfolioTracker()
+except Exception as _e:
+    logger.error(f"PortfolioTracker 초기화 실패: {_e}")
+    portfolio_tracker = None
 
 # ── 코인 이모지 매핑 ──
 COIN_EMOJI = {
@@ -328,6 +342,16 @@ class JarvisCryptoBot(commands.Bot):
         )
         # 리액션으로 보낸 메시지를 추적 (message_id -> 원본 데이터)
         self._reaction_context: dict = {}
+        self._reaction_context_order: list = []  # FIFO 순서 추적
+        self._reaction_context_max = 100
+
+    def _store_reaction_context(self, msg_id: int, context: dict):
+        """리액션 컨텍스트를 저장하고 오래된 항목을 정리한다."""
+        self._reaction_context[msg_id] = context
+        self._reaction_context_order.append(msg_id)
+        while len(self._reaction_context_order) > self._reaction_context_max:
+            old_id = self._reaction_context_order.pop(0)
+            self._reaction_context.pop(old_id, None)
 
     async def setup_hook(self):
         """봇 시작 시 슬래시 명령 등록 및 백그라운드 태스크 시작."""
@@ -407,15 +431,18 @@ class JarvisCryptoBot(commands.Bot):
         Args:
             message: Discord 메시지 객체
         """
+        if upbit_client is None:
+            await message.channel.send(embed=_error_embed("Upbit 클라이언트 미초기화"))
+            return
         try:
             prices = upbit_client.get_prices(list(config.DEFAULT_WATCH_LIST))
             embed = _multi_price_embed(prices, "관심 코인 시세")
             sent = await message.channel.send(embed=embed)
             # 리액션 컨텍스트 저장 (#136)
-            self._reaction_context[sent.id] = {
+            self._store_reaction_context(sent.id, {
                 "type": "price_multi",
                 "tickers": list(config.DEFAULT_WATCH_LIST),
-            }
+            })
             await sent.add_reaction("\U0001F44D")  # 상세보기
             await sent.add_reaction("\U0001F4CA")  # 차트
         except Exception as e:
@@ -428,6 +455,9 @@ class JarvisCryptoBot(commands.Bot):
         Args:
             message: Discord 메시지 객체
         """
+        if upbit_client is None:
+            await message.channel.send(embed=_error_embed("Upbit 클라이언트 미초기화"))
+            return
         try:
             balances = upbit_client.get_balances()
             total = upbit_client.get_total_balance_krw()
@@ -539,7 +569,7 @@ class JarvisCryptoBot(commands.Bot):
                 "anthropic-version": "2023-06-01",
             }
             payload = {
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-5-20250929",
                 "max_tokens": 1024,
                 "messages": [
                     {"role": "user", "content": question}
@@ -613,6 +643,9 @@ class JarvisCryptoBot(commands.Bot):
             channel: Discord 채널 객체
             context: 리액션 컨텍스트 딕셔너리
         """
+        if upbit_client is None:
+            await channel.send(embed=_error_embed("Upbit 클라이언트 미초기화"))
+            return
         tickers = context.get("tickers", [])
         if context.get("type") == "price_single":
             tickers = [context.get("ticker", "KRW-BTC")]
@@ -659,6 +692,9 @@ class JarvisCryptoBot(commands.Bot):
             channel: Discord 채널 객체
             context: 리액션 컨텍스트 딕셔너리
         """
+        if upbit_client is None:
+            await channel.send(embed=_error_embed("Upbit 클라이언트 미초기화"))
+            return
         ticker = "KRW-BTC"
         if context.get("type") == "price_single":
             ticker = context.get("ticker", "KRW-BTC")
@@ -689,7 +725,7 @@ class JarvisCryptoBot(commands.Bot):
 
                 color = "#ED4245" if closes[-1] >= closes[0] else "#5865F2"
                 ax.plot(dates, closes, color=color, linewidth=2, marker="o", markersize=4)
-                ax.fill_between(range(len(closes)), closes, alpha=0.1, color=color)
+                ax.fill_between(dates, closes, alpha=0.1, color=color)
 
                 ax.set_title(f"{coin} 7-Day Price", color="white", fontsize=14)
                 ax.tick_params(colors="white")
@@ -820,6 +856,10 @@ async def price_command(interaction: discord.Interaction, coin: Optional[str] = 
     """
     await interaction.response.defer()
 
+    if upbit_client is None:
+        await interaction.followup.send(embed=_error_embed("Upbit 클라이언트 미초기화"))
+        return
+
     try:
         if coin:
             # 단일 코인 조회
@@ -851,11 +891,11 @@ async def price_command(interaction: discord.Interaction, coin: Optional[str] = 
             # #136: 리액션 추가
             bot_instance = interaction.client
             if isinstance(bot_instance, JarvisCryptoBot):
-                bot_instance._reaction_context[sent.id] = {
+                bot_instance._store_reaction_context(sent.id, {
                     "type": "price_single",
                     "ticker": ticker,
                     "tickers": [ticker],
-                }
+                })
             await sent.add_reaction("\U0001F44D")  # 상세보기
             await sent.add_reaction("\U0001F4CA")  # 차트
         else:
@@ -867,10 +907,10 @@ async def price_command(interaction: discord.Interaction, coin: Optional[str] = 
             # #136: 리액션 추가
             bot_instance = interaction.client
             if isinstance(bot_instance, JarvisCryptoBot):
-                bot_instance._reaction_context[sent.id] = {
+                bot_instance._store_reaction_context(sent.id, {
                     "type": "price_multi",
                     "tickers": list(config.DEFAULT_WATCH_LIST),
-                }
+                })
             await sent.add_reaction("\U0001F44D")
             await sent.add_reaction("\U0001F4CA")
 
@@ -890,6 +930,13 @@ async def balance_command(interaction: discord.Interaction):
         interaction: Discord 인터랙션 객체
     """
     await interaction.response.defer(ephemeral=True)  # 잔고는 본인만 보이게
+
+    if upbit_client is None:
+        await interaction.followup.send(
+            embed=_error_embed("Upbit 클라이언트 미초기화"),
+            ephemeral=True,
+        )
+        return
 
     try:
         balances = upbit_client.get_balances()
@@ -935,6 +982,10 @@ async def trade_command(
     """
     await interaction.response.defer()
 
+    if upbit_client is None:
+        await interaction.followup.send(embed=_error_embed("Upbit 클라이언트 미초기화"))
+        return
+
     ticker = coin.upper()
     if not ticker.startswith("KRW-"):
         ticker = f"KRW-{ticker}"
@@ -961,14 +1012,15 @@ async def trade_command(
             embed.add_field(name="매도 수량", value=f"{amount:.8g}", inline=True)
 
         # 거래 기록
-        side = "bid" if action.value == "buy" else "ask"
-        portfolio_tracker.log_trade(
-            side=side,
-            ticker=ticker,
-            amount=amount,
-            reason=f"Discord /trade by {interaction.user}",
-            order_result=result,
-        )
+        if portfolio_tracker is not None:
+            side = "bid" if action.value == "buy" else "ask"
+            portfolio_tracker.log_trade(
+                side=side,
+                ticker=ticker,
+                amount=amount,
+                reason=f"Discord /trade by {interaction.user}",
+                order_result=result,
+            )
 
         await interaction.followup.send(embed=embed)
 
@@ -1015,6 +1067,14 @@ async def update_bot_presence(bot: JarvisCryptoBot):
     Args:
         bot: JarvisCryptoBot 인스턴스
     """
+    if upbit_client is None:
+        await bot.change_presence(
+            activity=discord.Activity(
+                type=discord.ActivityType.playing,
+                name="JARVIS Crypto",
+            )
+        )
+        return
     try:
         price = upbit_client.get_current_price("KRW-BTC")
         if price:
@@ -1061,6 +1121,30 @@ def main():
 
     DISCORD_BOT_TOKEN 환경변수가 설정되어 있어야 한다.
     """
+    # ⚠️ 중복 실행 경고: discord_jarvis.py가 메인 봇이므로, 같은 토큰으로 동시 실행 금지
+    # discord_jarvis.py를 실행 중이라면 이 파일은 단독 실행하지 말 것.
+    # 이 파일은 crypto 전용 독립 봇 또는 테스트 용도로만 사용.
+    import psutil
+    _current_pid = os.getpid()
+    _conflict_procs = []
+    for _proc in psutil.process_iter(['pid', 'cmdline']):
+        try:
+            _cmd = ' '.join(_proc.info.get('cmdline') or [])
+            if _proc.info['pid'] != _current_pid and 'discord_jarvis.py' in _cmd:
+                _conflict_procs.append(_proc.info['pid'])
+        except Exception:
+            pass
+    if _conflict_procs:
+        print(f"[⚠️ 경고] discord_jarvis.py가 이미 실행 중입니다 (PID: {_conflict_procs}).")
+        print("  같은 DISCORD_BOT_TOKEN으로 두 봇을 동시에 실행하면 연결 충돌이 발생합니다.")
+        print("  계속하려면 Ctrl+C를 눌러 취소하거나, 5초 후 자동으로 시작됩니다...")
+        import time
+        try:
+            time.sleep(5)
+        except KeyboardInterrupt:
+            print("취소됨.")
+            sys.exit(0)
+
     if not DISCORD_BOT_TOKEN:
         print("[ERROR] DISCORD_BOT_TOKEN 환경변수가 설정되지 않았습니다.")
         print("  .env 파일 또는 환경변수에 DISCORD_BOT_TOKEN을 설정하세요.")

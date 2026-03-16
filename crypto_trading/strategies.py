@@ -37,9 +37,13 @@ def _calc_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     loss = -delta.where(delta < 0, 0.0)
     avg_gain = gain.rolling(window=period, min_periods=period).mean()
     avg_loss = loss.rolling(window=period, min_periods=period).mean()
+    # gain=0, loss=0 → 변동 없음 → RSI=50 (중립)
+    both_zero = (avg_gain == 0) & (avg_loss == 0)
     avg_loss = avg_loss.replace(0, 1e-10)
     rs = avg_gain / avg_loss
-    return 100 - (100 / (1 + rs))
+    rsi = 100 - (100 / (1 + rs))
+    rsi = rsi.mask(both_zero, 50.0)
+    return rsi
 
 
 class VolatilityBreakout:

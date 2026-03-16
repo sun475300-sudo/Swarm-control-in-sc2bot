@@ -19,7 +19,16 @@ from typing import Any, Dict, List, Optional, Tuple
 import json
 from pathlib import Path
 from utils.logger import get_logger
-from knowledge_manager import KnowledgeManager # NEW
+
+try:
+    from knowledge_manager import KnowledgeManager
+except ImportError:
+    class KnowledgeManager:
+        """Fallback stub when knowledge_manager module is unavailable."""
+        def __init__(self):
+            self.knowledge = {}
+        def get(self, key, default=None):
+            return default
 
 class GamePhase(Enum):
     """게임 페이즈"""
@@ -143,42 +152,47 @@ class StrategyManager:
         # Convert string keys to GamePhase enum
         for phase_str, unit_data in race_data.items():
             try:
-                # normalize keys to lowercase for internal usage if needed
                 normalized_data = {k.lower(): v for k, v in unit_data.items()}
-                
+
                 if phase_str == "early":
                     ratios[GamePhase.EARLY] = normalized_data
                 elif phase_str == "mid":
                     ratios[GamePhase.MID] = normalized_data
                 elif phase_str == "late":
                     ratios[GamePhase.LATE] = normalized_data
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(f"Failed to load ratios for {race_name}/{phase_str}: {e}")
         
         # Fill missing phases with defaults if empty (Safe Fallback)
         if not ratios:
             self.logger.warning(f"No ratios found for {race_name}, using fallback.")
             return {
-                GamePhase.EARLY: {"zergling": 1.0},
-                GamePhase.MID: {"zergling": 1.0},
-                GamePhase.LATE: {"zergling": 1.0},
+                GamePhase.EARLY: {"zergling": 0.6, "queen": 0.2, "roach": 0.2},
+                GamePhase.MID: {"roach": 0.25, "hydralisk": 0.2, "zergling": 0.2,
+                                "ravager": 0.1, "baneling": 0.1, "queen": 0.1, "lurker": 0.05},
+                GamePhase.LATE: {"hydralisk": 0.25, "roach": 0.15, "corruptor": 0.15,
+                                 "ravager": 0.1, "lurker": 0.1, "zergling": 0.1,
+                                 "broodlord": 0.1, "viper": 0.05},
             }
             
         return ratios
 
     def update(self) -> None:
         """매 스텝마다 호출하여 전략 업데이트"""
-        self._check_jarvis_commands() # NEW: Check for external commands
+        # ★ 적 유닛 정보 1회 캐시 (매 프레임 반복 조회 방지) ★
+        self._cached_enemy_composition = self._cache_enemy_composition()
+
+        self._check_jarvis_commands()
         self._detect_enemy_race()
         self._update_game_phase()
         self._check_rush_detection()
-        self._check_defense_mode_timeout()  # Auto-exit defense mode
-        self._check_early_harassment()  # ★ 1-4분 견제 시스템 ★
+        self._check_defense_mode_timeout()
+        self._check_early_harassment()
         self._check_rogue_tactics()
         self._update_strategy_mode()
-        self._update_counter_build()  # 적 빌드에 따른 대응
-        self._detect_direct_air_threat()  # ★ 직접 공중 유닛 감지 ★
-        self._counter_protoss_units()  # ★ 프로토스 유닛 카운터 ★
+        self._update_counter_build()
+        self._detect_direct_air_threat()
+        self._counter_protoss_units()
         
         # ★ Write State to Blackboard ★
         if self.blackboard:
@@ -186,6 +200,20 @@ class StrategyManager:
             self.blackboard.set("game_phase", self.game_phase.name)
             self.blackboard.set("enemy_race", self.detected_enemy_race.name)
             self.blackboard.set("is_rush_detected", self.emergency_active)
+
+    def _cache_enemy_composition(self) -> Dict[str, int]:
+        """적 유닛 구성을 1회 캐시 (매 프레임 반복 조회 방지)"""
+        composition: Dict[str, int] = {}
+        if not hasattr(self.bot, "enemy_units"):
+            return composition
+        for enemy in self.bot.enemy_units:
+            try:
+                etype = getattr(enemy.type_id, "name", "").upper()
+                if etype:
+                    composition[etype] = composition.get(etype, 0) + 1
+            except (AttributeError, TypeError):
+                continue
+        return composition
 
     def _check_jarvis_commands(self) -> None:
         """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
@@ -439,27 +467,28 @@ class StrategyManager:
         total_threat_score = 0
         high_threat_count = 0
         enemies_near_base = []
-        counted_tags = set()  # 중복 카운트 방지
+        counted_tags = set()
 
-        for th in self.bot.townhalls:
-            for enemy in enemy_units:
-                try:
-                    if enemy.tag in counted_tags:
-                        continue
-                    if enemy.distance_to(th.position) < 25:  # 기지 25 거리 내 (40→25 축소)
+        # ★ O(n) 최적화: 적 유닛 1회 순회, 각 타운홀 거리 체크 ★
+        th_positions = [th.position for th in self.bot.townhalls]
+        for enemy in enemy_units:
+            try:
+                if enemy.tag in counted_tags:
+                    continue
+                for th_pos in th_positions:
+                    if enemy.distance_to(th_pos) < 25:
                         counted_tags.add(enemy.tag)
                         enemies_near_base.append(enemy)
 
-                        # 위협 점수 계산
                         enemy_type = getattr(enemy.type_id, "name", "").upper()
-
                         if enemy_type in high_threat_units:
                             high_threat_count += 1
-                            total_threat_score += 10  # 고위협 유닛
+                            total_threat_score += 10
                         elif enemy.can_attack:
-                            total_threat_score += 2  # 일반 전투 유닛
-                except Exception:
-                    continue
+                            total_threat_score += 2
+                        break  # 이미 카운트됨, 다음 적으로
+            except (AttributeError, TypeError):
+                continue
 
         # 대규모 공격 판정
         # 조건: 위협 점수 30 이상 또는 고위협 유닛 3개 이상 (과민 감지 완화)
@@ -479,6 +508,7 @@ class StrategyManager:
 
         Emergency Mode와 다르게:
         1. 드론 생산은 계속 (경제 유지)
+        2. 로그 스팸 방지: 최소 10초 쿨다운
         2. 군대 집결 우선
         3. 방어 건물 추가 건설
         """
@@ -487,12 +517,17 @@ class StrategyManager:
             self.last_major_attack_time = game_time
             return
 
+        # ★ 로그 스팸 방지: 10초 쿨다운 ★
+        last_log = getattr(self, "_last_defense_log_time", 0.0)
+        should_log = (game_time - last_log) >= 10.0
+
         self.current_mode = StrategyMode.DEFENSIVE
         self.defense_mode_start_time = game_time
         self.last_major_attack_time = game_time
 
-        # ★★★ 로그 스팸 방지: 모드 전환 시에만 출력 ★★★
-        self.logger.warning(f"[{int(game_time)}s] DEFENSE MODE ACTIVATED - Major attack incoming!")
+        if should_log:
+            self._last_defense_log_time = game_time
+            self.logger.warning(f"[{int(game_time)}s] DEFENSE MODE ACTIVATED - Major attack incoming!")
 
         # 군대 집결 신호
         self._request_army_rally()
@@ -759,18 +794,14 @@ class StrategyManager:
             "MUTALISK", "CORRUPTOR", "BROODLORD", "VIPER"
         }
 
-        # 공중 유닛 카운트
+        # ★ 캐시된 적 구성 사용 ★
+        comp = self._cached_enemy_composition
         air_unit_count = 0
         detected_air_types = set()
-
-        for enemy in self.bot.enemy_units:
-            try:
-                enemy_type = getattr(enemy.type_id, "name", "").upper()
-                if enemy_type in air_threat_units or getattr(enemy, "is_flying", False):
-                    air_unit_count += 1
-                    detected_air_types.add(enemy_type)
-            except Exception:
-                continue
+        for etype, count in comp.items():
+            if etype in air_threat_units:
+                air_unit_count += count
+                detected_air_types.add(etype)
 
         # ★★★ IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) ★★★
         if air_unit_count >= 1:
@@ -852,36 +883,16 @@ class StrategyManager:
 
         # 프로토스 핵심 유닛 카운트
         immortal_count = 0
-        colossus_count = 0
-        voidray_count = 0
-        disruptor_count = 0
-        high_templar_count = 0
-        archon_count = 0
-        carrier_count = 0
-        stalker_count = 0
-
-        for enemy in self.bot.enemy_units:
-            try:
-                enemy_type = getattr(enemy.type_id, "name", "").upper()
-
-                if enemy_type == "IMMORTAL":
-                    immortal_count += 1
-                elif enemy_type == "COLOSSUS":
-                    colossus_count += 1
-                elif enemy_type == "VOIDRAY":
-                    voidray_count += 1
-                elif enemy_type == "DISRUPTOR":
-                    disruptor_count += 1
-                elif enemy_type == "HIGHTEMPLAR":
-                    high_templar_count += 1
-                elif enemy_type == "ARCHON":
-                    archon_count += 1
-                elif enemy_type == "CARRIER":
-                    carrier_count += 1
-                elif enemy_type == "STALKER":
-                    stalker_count += 1
-            except Exception:
-                continue
+        # ★ 캐시된 적 구성 사용 (별도 루프 불필요) ★
+        comp = self._cached_enemy_composition
+        immortal_count = comp.get("IMMORTAL", 0)
+        colossus_count = comp.get("COLOSSUS", 0)
+        voidray_count = comp.get("VOIDRAY", 0)
+        disruptor_count = comp.get("DISRUPTOR", 0)
+        high_templar_count = comp.get("HIGHTEMPLAR", 0)
+        archon_count = comp.get("ARCHON", 0)
+        carrier_count = comp.get("CARRIER", 0)
+        stalker_count = comp.get("STALKER", 0)
 
         # ★ 유닛별 대응 전략 ★
 
@@ -1022,6 +1033,12 @@ class StrategyManager:
         if self.emergency_active:
             return  # Emergency 유지
 
+        # ★ 방어 모드가 활성화된 직후에는 덮어쓰지 않음 (oscillation 방지) ★
+        game_time = getattr(self.bot, "time", 0.0)
+        if (self.current_mode == StrategyMode.DEFENSIVE
+                and game_time - self.defense_mode_start_time < 15.0):
+            return  # 방어 모드 전환 후 15초간 유지
+
         # 군대 우위 계산 (supply-weighted)
         our_army = 0
         enemy_army = 0
@@ -1038,7 +1055,7 @@ class StrategyManager:
 
         # 공급량 기반 공격 (적 정보가 없어도 공격)
         army_supply = getattr(self.bot, "supply_army", 0)
-        
+
         # 전략 결정
         if self.current_mode != StrategyMode.EMERGENCY:
             prev_mode = self.current_mode

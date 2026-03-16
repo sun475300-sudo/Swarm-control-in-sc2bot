@@ -405,7 +405,7 @@ class FundamentalsManager:
             logger.info(f"Level Name: {level_info['name']}")
             logger.info(f"Description: {level_info['description']}")
             logger.info(f"Success Threshold: {level_info['success_threshold']:.0%}")
-        logger.info("-" * 70)
+            logger.info("-" * 70)
 
             for skill in level_info["skills"]:
                 logger.info(f"  Skill: {skill.name}")

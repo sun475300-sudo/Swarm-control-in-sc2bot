@@ -38,6 +38,8 @@ class RiskManager:
         # 총 투자 한도 초과 방지
         max_allowed = total_krw * self.max_total_investment_ratio
         amount = min(amount, max_allowed)
+        if amount < config.MIN_ORDER_AMOUNT:
+            return 0
         return round(amount, 0)
 
     def should_stop_loss(self, avg_buy_price: float, current_price: float) -> bool:
@@ -76,8 +78,8 @@ class RiskManager:
             return False, f"최소 주문 금액 미달: {order_amount:,.0f} < {config.MIN_ORDER_AMOUNT:,.0f}"
         if order_amount > krw_balance:
             return False, f"잔고 부족: 주문 {order_amount:,.0f} > 잔고 {krw_balance:,.0f}"
-        # 1회 주문 한도: 잔고의 50% 또는 MIN_ORDER_AMOUNT 중 큰 값
-        max_single = max(krw_balance * self.max_single_order_ratio * 2, config.MIN_ORDER_AMOUNT)
+        # 1회 주문 한도: 잔고의 max_single_order_ratio 또는 MIN_ORDER_AMOUNT 중 큰 값
+        max_single = max(krw_balance * self.max_single_order_ratio, config.MIN_ORDER_AMOUNT)
         if order_amount > max_single:
             return False, f"1회 주문 한도 초과: {order_amount:,.0f} > {max_single:,.0f}"
         return True, "OK"

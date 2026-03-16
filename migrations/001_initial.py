@@ -157,9 +157,10 @@ def downgrade(conn) -> None:
     """
     cursor = conn.cursor()
 
-    tables = ["settings", "bot_sessions", "api_logs", "portfolio_snapshots", "trades", "migrations"]
-    for table in tables:
-        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+    _ALLOWED_TABLES = {"settings", "bot_sessions", "api_logs", "portfolio_snapshots", "trades", "migrations"}
+    for table in _ALLOWED_TABLES:
+        if table.isidentifier():
+            cursor.execute(f"DROP TABLE IF EXISTS [{table}]")
 
     conn.commit()
     print(f"[마이그레이션 001] 롤백 완료 - 모든 테이블 삭제됨")

@@ -34,7 +34,7 @@ class LLMTradeAdvisor:
         "- 시장 변동성 고려"
     )
 
-    def __init__(self, api_key: str = None, model: str = "claude-sonnet-4-20250514"):
+    def __init__(self, api_key: str = None, model: str = "claude-sonnet-4-5-20250929"):
         """초기화
 
         Args:

@@ -7,6 +7,7 @@ aiohttp 기반 간단한 웹 대시보드.
 import json
 import logging
 from datetime import datetime
+from html import escape
 from pathlib import Path
 
 logger = logging.getLogger("web_dashboard")
@@ -175,11 +176,12 @@ class WebDashboard:
                     history = json.load(f)
                 if isinstance(history, list) and history:
                     latest = history[-1]
-                    data["total_krw"] = latest.get("total_krw", 0)
+                    data["total_krw"] = latest.get("total_value_krw", latest.get("total_krw", 0))
                     data["holdings"] = latest.get("holdings", [])
                     if len(history) >= 2:
                         prev = history[-2]
-                        data["daily_pnl"] = data["total_krw"] - prev.get("total_krw", 0)
+                        prev_total = prev.get("total_value_krw", prev.get("total_krw", 0))
+                        data["daily_pnl"] = data["total_krw"] - prev_total
 
             tl = self._project_root / "crypto_trading" / "data" / "trade_log.json"
             if tl.exists():
@@ -246,10 +248,13 @@ class WebDashboard:
             holdings_rows = ""
             for h in pf.get("holdings", []):
                 if isinstance(h, dict):
+                    _ticker = escape(str(h.get('ticker', 'N/A')))
+                    _amount = escape(str(h.get('amount', 0)))
+                    _value = escape(f"{h.get('value_krw', 0):,.0f}")
                     holdings_rows += (
-                        f"<tr><td>{h.get('ticker', 'N/A')}</td>"
-                        f"<td>{h.get('amount', 0)}</td>"
-                        f"<td>{h.get('value_krw', 0):,.0f}</td></tr>"
+                        f"<tr><td>{_ticker}</td>"
+                        f"<td>{_amount}</td>"
+                        f"<td>{_value}</td></tr>"
                     )
             if not holdings_rows:
                 holdings_rows = "<tr><td colspan='3'>No holdings data</td></tr>"
@@ -277,7 +282,9 @@ class WebDashboard:
             rows = ""
             for key, val in sys_data.items():
                 badge_cls = "ok" if val not in ("Missing",) else "error"
-                rows += f"<tr><td>{key}</td><td><span class='badge {badge_cls}'>{val}</span></td></tr>"
+                _key = escape(str(key))
+                _val = escape(str(val))
+                rows += f"<tr><td>{_key}</td><td><span class='badge {badge_cls}'>{_val}</span></td></tr>"
             content = _SYSTEM_CONTENT.format(system_rows=rows)
         else:
             content = "<div class='card'><h2>404</h2><p>Page not found</p></div>"

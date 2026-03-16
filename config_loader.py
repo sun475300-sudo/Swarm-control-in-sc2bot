@@ -322,6 +322,36 @@ def get_all() -> Dict[str, Any]:
 
 
 # ═══════════════════════════════════════════════════════
+# .env.jarvis 로더 (환경변수 주입)
+# ═══════════════════════════════════════════════════════
+
+def load_dotenv_jarvis(env_path: Optional[str] = None) -> Dict[str, str]:
+    """Parse .env.jarvis and inject into os.environ. Returns loaded key-value pairs."""
+    if env_path is None:
+        env_path = str(Path(__file__).parent / ".env.jarvis")
+    loaded: Dict[str, str] = {}
+    p = Path(env_path)
+    if not p.exists():
+        return loaded
+    try:
+        content = p.read_bytes().decode("utf-8", errors="ignore")
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip()
+            if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
+                val = val[1:-1]
+            loaded[key] = val
+            os.environ[key] = val
+    except Exception:
+        pass
+    return loaded
+
+
+# ═══════════════════════════════════════════════════════
 # 직접 실행 시 테스트
 # ═══════════════════════════════════════════════════════
 

@@ -216,8 +216,12 @@ class TournamentRunner:
         """SC2 프로세스 정리"""
         if sys.platform == "win32":
             try:
-                os.system("taskkill /f /im SC2_x64.exe >nul 2>&1")
-                os.system("taskkill /f /im SC2.exe >nul 2>&1")
+                # Bug fix #10: Replace os.system() with subprocess.run()
+                import subprocess
+                subprocess.run(["taskkill", "/f", "/im", "SC2_x64.exe"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(["taskkill", "/f", "/im", "SC2.exe"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except Exception:
                 pass
 

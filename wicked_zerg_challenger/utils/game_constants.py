@@ -17,7 +17,7 @@ class GameFrequencies:
     """프레임 기반 실행 주기 상수"""
 
     # Base timing
-    GAME_FPS = 22  # Approximate SC2 FPS
+    GAME_FPS = 22.4  # SC2 Faster speed = 22.4 FPS
 
     # Sub-second timings
     EVERY_HALF_SECOND = 11      # ~0.5초마다
@@ -103,7 +103,7 @@ class UpgradeConstants:
     """업그레이드 관련 상수"""
 
     # Cooldowns (초 단위)
-    INJECT_COOLDOWN = 29.0          # Spawn Larva 쿨다운 (정확한 SC2 값)
+    INJECT_COOLDOWN = 28.57         # Spawn Larva 쿨다운 (SC2 정확값: 640 frames / 22.4 fps)
     TRANSFUSION_COOLDOWN = 1.0      # 수혈 쿨다운
     CREEP_SPREAD_COOLDOWN = 4.0     # 점막 확산 쿨다운
 
@@ -133,7 +133,7 @@ class StrategyConstants:
     # Build order timing
     POOL_TIMING = 24                # 산란못 타이밍 (인구수)
     GAS_TIMING = 17                 # 가스 타이밍 (인구수)
-    LAIR_TIMING = 240               # 레어 업그레이드 타이밍 (초)
+    LAIR_TIMING = 270               # 레어 업그레이드 타이밍 (초) ★ 프로 기준 270s ★
 
     # Supply management
     SUPPLY_BUFFER = 2               # 보급 버퍼

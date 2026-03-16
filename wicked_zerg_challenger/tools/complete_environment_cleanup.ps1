@@ -1,4 +1,4 @@
-# ¿ÏÀüÇÑ È¯°æ º¯¼ö Ä³½Ã ¹× Å° Á¦°Å ½ºÅ©¸³Æ®
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®
 # Complete Environment Variable Cache and Key Removal Script
 
 param(
@@ -9,22 +9,22 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "¿ÏÀüÇÑ È¯°æ º¯¼ö Ä³½Ã ¹× Å° Á¦°Å" -ForegroundColor Cyan
+Write-Host "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Cyan
 Write-Host "Complete Environment Cleanup" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $KeysToRemove = @(
-    "AIzaSyC_CiEZ6CtVz9e1kAK0Ymbt1br4tGGMIIo",
-    "AIzaSyD-c6nmOLolncIrcZ8DIvKCkzib_-iUZrc"
-)
+    $env:OLD_GOOGLE_KEY_1,
+    $env:OLD_GOOGLE_KEY_2
+) | Where-Object { $_ -ne $null }
 
 # ============================================================================
-# 1. IDE È¯°æ º¯¼ö Ä³½Ã »èÁ¦
+# 1. IDE È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 # ============================================================================
 if (-not $SkipIDE) {
-    Write-Host "[1/6] IDE È¯°æ º¯¼ö Ä³½Ã »èÁ¦..." -ForegroundColor Green
+    Write-Host "[1/6] IDE È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
     
     # Visual Studio Code
     $vscodeCachePaths = @(
@@ -37,9 +37,9 @@ if (-not $SkipIDE) {
         if (Test-Path $path) {
             try {
                 Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Host "  ? VS Code Ä³½Ã »èÁ¦: $path" -ForegroundColor Green
+                Write-Host "  ? VS Code Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $path" -ForegroundColor Green
             } catch {
-                Write-Host "  ? VS Code Ä³½Ã »èÁ¦ ½ÇÆÐ: $path" -ForegroundColor Yellow
+                Write-Host "  ? VS Code Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $path" -ForegroundColor Yellow
             }
         }
     }
@@ -56,9 +56,9 @@ if (-not $SkipIDE) {
         foreach ($path in $paths) {
             try {
                 Remove-Item -Path $path.FullName -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Host "  ? Android Studio Ä³½Ã »èÁ¦: $($path.FullName)" -ForegroundColor Green
+                Write-Host "  ? Android Studio Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $($path.FullName)" -ForegroundColor Green
             } catch {
-                Write-Host "  ? Android Studio Ä³½Ã »èÁ¦ ½ÇÆÐ: $($path.FullName)" -ForegroundColor Yellow
+                Write-Host "  ? Android Studio Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $($path.FullName)" -ForegroundColor Yellow
             }
         }
     }
@@ -74,9 +74,9 @@ if (-not $SkipIDE) {
         foreach ($path in $paths) {
             try {
                 Remove-Item -Path $path.FullName -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Host "  ? IntelliJ IDEA Ä³½Ã »èÁ¦: $($path.FullName)" -ForegroundColor Green
+                Write-Host "  ? IntelliJ IDEA Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $($path.FullName)" -ForegroundColor Green
             } catch {
-                Write-Host "  ? IntelliJ IDEA Ä³½Ã »èÁ¦ ½ÇÆÐ: $($path.FullName)" -ForegroundColor Yellow
+                Write-Host "  ? IntelliJ IDEA Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $($path.FullName)" -ForegroundColor Yellow
             }
         }
     }
@@ -92,9 +92,9 @@ if (-not $SkipIDE) {
         foreach ($path in $paths) {
             try {
                 Remove-Item -Path $path.FullName -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Host "  ? PyCharm Ä³½Ã »èÁ¦: $($path.FullName)" -ForegroundColor Green
+                Write-Host "  ? PyCharm Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $($path.FullName)" -ForegroundColor Green
             } catch {
-                Write-Host "  ? PyCharm Ä³½Ã »èÁ¦ ½ÇÆÐ: $($path.FullName)" -ForegroundColor Yellow
+                Write-Host "  ? PyCharm Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $($path.FullName)" -ForegroundColor Yellow
             }
         }
     }
@@ -103,9 +103,9 @@ if (-not $SkipIDE) {
 }
 
 # ============================================================================
-# 2. ÅÍ¹Ì³Î/¹èÄ¡ ÆÄÀÏ¿¡¼­ ÀÌÀü Å° Á¦°Å
+# 2. ï¿½Í¹Ì³ï¿½/ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½
 # ============================================================================
-Write-Host "[2/6] ÅÍ¹Ì³Î/¹èÄ¡ ÆÄÀÏ¿¡¼­ ÀÌÀü Å° Á¦°Å..." -ForegroundColor Green
+Write-Host "[2/6] ï¿½Í¹Ì³ï¿½/ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $batchFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Include "*.bat", "*.cmd", "*.ps1", "*.sh" | 
     Where-Object { 
@@ -120,7 +120,7 @@ foreach ($file in $batchFiles) {
     if ($content) {
         $originalContent = $content
         foreach ($key in $KeysToRemove) {
-            # È¯°æ º¯¼ö ¼³Á¤ ¶óÀÎ Á¦°Å ¶Ç´Â ÁÖ¼® Ã³¸®
+            # È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ ï¿½Ö¼ï¿½ Ã³ï¿½ï¿½
             $patterns = @(
                 "set\s+.*$([regex]::Escape($key))",
                 "\$env:.*$([regex]::Escape($key))",
@@ -129,7 +129,7 @@ foreach ($file in $batchFiles) {
             )
             
             foreach ($pattern in $patterns) {
-                # ÁÖ¼® Ã³¸®
+                # ï¿½Ö¼ï¿½ Ã³ï¿½ï¿½
                 $content = $content -replace "($pattern)", "# REMOVED: `$1"
             }
         }
@@ -138,54 +138,54 @@ foreach ($file in $batchFiles) {
             Set-Content -Path $file.FullName -Value $content -NoNewline
             $cleanedBatchCount++
             $relPath = $file.FullName.Replace($ProjectRoot, "").TrimStart("\")
-            Write-Host "  ? $relPath Á¤¸®µÊ" -ForegroundColor Green
+            Write-Host "  ? $relPath ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
         }
     }
 }
 
 if ($cleanedBatchCount -eq 0) {
-    Write-Host "  ? Á¤¸®ÇÒ ¹èÄ¡ ÆÄÀÏÀÌ ¾ø½À´Ï´Ù" -ForegroundColor Green
+    Write-Host "  ? ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½" -ForegroundColor Green
 } else {
-    Write-Host "  ? $cleanedBatchCount °³ ¹èÄ¡ ÆÄÀÏ Á¤¸® ¿Ï·á" -ForegroundColor Green
+    Write-Host "  ? $cleanedBatchCount ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½" -ForegroundColor Green
 }
 
 Write-Host ""
 
 # ============================================================================
-# 3. È¯°æ º¯¼ö ¿ÏÀü Á¦°Å
+# 3. È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 # ============================================================================
-Write-Host "[3/6] È¯°æ º¯¼ö ¿ÏÀü Á¦°Å..." -ForegroundColor Green
+Write-Host "[3/6] È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
-# ÇöÀç ¼¼¼Ç
+# ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 Remove-Item Env:\GEMINI_API_KEY -ErrorAction SilentlyContinue
 Remove-Item Env:\GOOGLE_API_KEY -ErrorAction SilentlyContinue
-Write-Host "  ? ÇöÀç ¼¼¼Ç È¯°æ º¯¼ö Á¦°ÅµÊ" -ForegroundColor Green
+Write-Host "  ? ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Åµï¿½" -ForegroundColor Green
 
-# »ç¿ëÀÚ È¯°æ º¯¼ö
+# ï¿½ï¿½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 try {
     [System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", $null, "User")
     [System.Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", $null, "User")
-    Write-Host "  ? »ç¿ëÀÚ È¯°æ º¯¼ö Á¦°ÅµÊ" -ForegroundColor Green
+    Write-Host "  ? ï¿½ï¿½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Åµï¿½" -ForegroundColor Green
 } catch {
-    Write-Host "  ? »ç¿ëÀÚ È¯°æ º¯¼ö Á¦°Å ½ÇÆÐ: $_" -ForegroundColor Yellow
+    Write-Host "  ? ï¿½ï¿½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $_" -ForegroundColor Yellow
 }
 
-# ½Ã½ºÅÛ È¯°æ º¯¼ö (°ü¸®ÀÚ ±ÇÇÑ ÇÊ¿ä)
+# ï¿½Ã½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½)
 try {
     [System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", $null, "Machine")
     [System.Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", $null, "Machine")
-    Write-Host "  ? ½Ã½ºÅÛ È¯°æ º¯¼ö Á¦°ÅµÊ" -ForegroundColor Green
+    Write-Host "  ? ï¿½Ã½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Åµï¿½" -ForegroundColor Green
 } catch {
-    Write-Host "  ? ½Ã½ºÅÛ È¯°æ º¯¼ö Á¦°Å ½ÇÆÐ (°ü¸®ÀÚ ±ÇÇÑ ÇÊ¿ä): $_" -ForegroundColor Yellow
+    Write-Host "  ? ï¿½Ã½ï¿½ï¿½ï¿½ È¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½): $_" -ForegroundColor Yellow
 }
 
 Write-Host ""
 
 # ============================================================================
-# 4. ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ ¿¾ Å° Á¦°Å
+# 4. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½
 # ============================================================================
 if (-not $SkipDeployment) {
-    Write-Host "[4/6] ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ ¿¾ Å° Á¦°Å..." -ForegroundColor Green
+    Write-Host "[4/6] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
     
     # GitHub Actions
     $githubWorkflows = Get-ChildItem -Path $ProjectRoot -Recurse -Filter ".github\workflows\*.yml" -ErrorAction SilentlyContinue
@@ -194,14 +194,14 @@ if (-not $SkipDeployment) {
         if ($content) {
             $originalContent = $content
             foreach ($key in $KeysToRemove) {
-                # Secrets¿¡¼­ Å° Á¦°Å ¶Ç´Â ¸¶½ºÅ·
+                # Secretsï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½Å·
                 $content = $content -replace [regex]::Escape($key), "REDACTED"
             }
             
             if ($content -ne $originalContent) {
                 Set-Content -Path $workflow.FullName -Value $content -NoNewline
                 $relPath = $workflow.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? GitHub Actions Á¤¸®: $relPath" -ForegroundColor Green
+                Write-Host "  ? GitHub Actions ï¿½ï¿½ï¿½ï¿½: $relPath" -ForegroundColor Green
             }
         }
     }
@@ -218,7 +218,7 @@ if (-not $SkipDeployment) {
             
             if ($content -ne $originalContent) {
                 Set-Content -Path $gitlabCI -Value $content -NoNewline
-                Write-Host "  ? GitLab CI Á¤¸®µÊ" -ForegroundColor Green
+                Write-Host "  ? GitLab CI ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
             }
         }
     }
@@ -236,7 +236,7 @@ if (-not $SkipDeployment) {
             if ($content -ne $originalContent) {
                 Set-Content -Path $pipeline.FullName -Value $content -NoNewline
                 $relPath = $pipeline.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? Azure DevOps Á¤¸®: $relPath" -ForegroundColor Green
+                Write-Host "  ? Azure DevOps ï¿½ï¿½ï¿½ï¿½: $relPath" -ForegroundColor Green
             }
         }
     }
@@ -254,7 +254,7 @@ if (-not $SkipDeployment) {
             if ($content -ne $originalContent) {
                 Set-Content -Path $dockerfile.FullName -Value $content -NoNewline
                 $relPath = $dockerfile.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? Dockerfile Á¤¸®: $relPath" -ForegroundColor Green
+                Write-Host "  ? Dockerfile ï¿½ï¿½ï¿½ï¿½: $relPath" -ForegroundColor Green
             }
         }
     }
@@ -277,7 +277,7 @@ if (-not $SkipDeployment) {
             if ($content -ne $originalContent) {
                 Set-Content -Path $k8sFile.FullName -Value $content -NoNewline
                 $relPath = $k8sFile.FullName.Replace($ProjectRoot, "").TrimStart("\")
-                Write-Host "  ? Kubernetes ÆÄÀÏ Á¤¸®: $relPath" -ForegroundColor Green
+                Write-Host "  ? Kubernetes ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: $relPath" -ForegroundColor Green
             }
         }
     }
@@ -286,9 +286,9 @@ if (-not $SkipDeployment) {
 }
 
 # ============================================================================
-# 5. .env ÆÄÀÏ Á¤¸®
+# 5. .env ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 # ============================================================================
-Write-Host "[5/6] .env ÆÄÀÏ Á¤¸®..." -ForegroundColor Green
+Write-Host "[5/6] .env ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½..." -ForegroundColor Green
 
 $envFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Filter ".env*" -ErrorAction SilentlyContinue | 
     Where-Object { $_.FullName -notmatch "\.git" }
@@ -305,7 +305,7 @@ foreach ($envFile in $envFiles) {
         if ($newContent.Count -lt $content.Count) {
             $newContent | Set-Content $envFile.FullName
             $relPath = $envFile.FullName.Replace($ProjectRoot, "").TrimStart("\")
-            Write-Host "  ? $relPath Á¤¸®µÊ" -ForegroundColor Green
+            Write-Host "  ? $relPath ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor Green
         }
     }
 }
@@ -313,26 +313,26 @@ foreach ($envFile in $envFiles) {
 Write-Host ""
 
 # ============================================================================
-# 6. ÇÁ·Î¼¼½º Àç½ÃÀÛ ¾È³»
+# 6. ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½È³ï¿½
 # ============================================================================
-Write-Host "[6/6] ÇÁ·Î¼¼½º Àç½ÃÀÛ ¾È³»..." -ForegroundColor Green
-Write-Host "  ? ´ÙÀ½ ÇÁ·Î¼¼½º¸¦ Àç½ÃÀÛÇÏ¼¼¿ä:" -ForegroundColor Yellow
-Write-Host "    1. IDE (VS Code, Android Studio, IntelliJ µî)" -ForegroundColor White
-Write-Host "    2. ÅÍ¹Ì³Î ¼¼¼Ç (»õ ÅÍ¹Ì³Î ¿­±â)" -ForegroundColor White
-Write-Host "    3. ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ (GitHub Actions, GitLab CI µî)" -ForegroundColor White
+Write-Host "[6/6] ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½È³ï¿½..." -ForegroundColor Green
+Write-Host "  ? ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½:" -ForegroundColor Yellow
+Write-Host "    1. IDE (VS Code, Android Studio, IntelliJ ï¿½ï¿½)" -ForegroundColor White
+Write-Host "    2. ï¿½Í¹Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ ï¿½Í¹Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½)" -ForegroundColor White
+Write-Host "    3. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (GitHub Actions, GitLab CI ï¿½ï¿½)" -ForegroundColor White
 Write-Host ""
 
 # ============================================================================
-# ÃÖÁ¾ È®ÀÎ
+# ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 # ============================================================================
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "¿Ï·á!" -ForegroundColor Green
+Write-Host "ï¿½Ï·ï¿½!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "´ÙÀ½ ´Ü°è:" -ForegroundColor Cyan
-Write-Host "  1. IDE Àç½ÃÀÛ" -ForegroundColor White
-Write-Host "  2. »õ ÅÍ¹Ì³Î ¿­±â" -ForegroundColor White
-Write-Host "  3. »õ Å° ¼³Á¤ È®ÀÎ: secrets/gemini_api.txt" -ForegroundColor White
-Write-Host "  4. ¹èÆ÷ ÆÄÀÌÇÁ¶óÀÎ¿¡¼­ »õ Å° ¼³Á¤" -ForegroundColor White
+Write-Host "ï¿½ï¿½ï¿½ï¿½ ï¿½Ü°ï¿½:" -ForegroundColor Cyan
+Write-Host "  1. IDE ï¿½ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
+Write-Host "  2. ï¿½ï¿½ ï¿½Í¹Ì³ï¿½ ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
+Write-Host "  3. ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½: secrets/gemini_api.txt" -ForegroundColor White
+Write-Host "  4. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½" -ForegroundColor White
 Write-Host ""

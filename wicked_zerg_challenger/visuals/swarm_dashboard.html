@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm-Net Airspace Manager — Control Center</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #060a13;
+    color: #c8d6e5;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ===== Radar Scan Pulse Animation ===== */
+  @keyframes radar-pulse {
+    0% { r: 20; opacity: 0.5; stroke-width: 2; }
+    100% { r: 200; opacity: 0; stroke-width: 0.5; }
+  }
+  .radar-pulse-ring {
+    animation: radar-pulse 3s ease-out infinite;
+    fill: none;
+    stroke: #00e5ff;
+  }
+  .radar-pulse-ring:nth-child(2) { animation-delay: 1s; }
+  .radar-pulse-ring:nth-child(3) { animation-delay: 2s; }
+
+  /* ===== Radar Sweep Line ===== */
+  @keyframes radar-sweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .radar-sweep {
+    animation: radar-sweep 4s linear infinite;
+    transform-origin: center;
+  }
+
+  /* ===== Expired Drone Blink ===== */
+  @keyframes blink-alert {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.15; }
+  }
+  .blink-alert {
+    animation: blink-alert 0.6s ease-in-out infinite;
+  }
+
+  /* ===== Warning Drone Pulse ===== */
+  @keyframes warning-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .warning-pulse {
+    animation: warning-pulse 1.2s ease-in-out infinite;
+  }
+
+  /* ===== Mesh Network Line Flow ===== */
+  @keyframes dash-flow {
+    to { stroke-dashoffset: -24; }
+  }
+  .mesh-line {
+    stroke-dasharray: 8 4;
+    animation: dash-flow 1.5s linear infinite;
+  }
+
+  /* ===== Drone Hover Effect ===== */
+  @keyframes drone-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  .drone-float {
+    animation: drone-float 2s ease-in-out infinite;
+  }
+
+  /* ===== Hexagon Glow ===== */
+  @keyframes hex-glow {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.3)); }
+    50% { filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.6)); }
+  }
+  .hex-glow {
+    animation: hex-glow 3s ease-in-out infinite;
+  }
+
+  /* ===== Status Bar Animations ===== */
+  @keyframes slide-in {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+
+  /* ===== Card Glow on Hover ===== */
+  .card-hover:hover {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+    border-color: rgba(0, 229, 255, 0.4) !important;
+  }
+
+  /* ===== Scrollbar Styling ===== */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0e17; }
+  ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a5080; }
+
+  /* ===== Grid Overlay for Radar ===== */
+  @keyframes grid-fade {
+    0%, 100% { opacity: 0.05; }
+    50% { opacity: 0.1; }
+  }
+</style>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          cyber: {
+            bg: '#060a13',
+            panel: '#0a1628',
+            border: '#1a2d4a',
+            accent: '#00e5ff',
+            green: '#10b981',
+            yellow: '#f59e0b',
+            red: '#ef4444',
+            text: '#c8d6e5',
+            dim: '#4a6785',
+          }
+        },
+        fontFamily: {
+          mono: ['JetBrains Mono', 'monospace'],
+          sans: ['Inter', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+// ===== Data Configuration =====
+const SWARM_DRONES = [
+  { id: 'SW-01', angle: 0 },
+  { id: 'SW-02', angle: 60 },
+  { id: 'SW-03', angle: 120 },
+  { id: 'SW-04', angle: 180 },
+  { id: 'SW-05', angle: 240 },
+  { id: 'SW-06', angle: 300 },
+];
+
+const INITIAL_USER_DRONES = [
+  { id: 'UD-1001', name: 'Delivery-Alpha', timeLeft: 540, totalTime: 600, x: 0.15, y: -0.1 },
+  { id: 'UD-1002', name: 'Survey-Bravo', timeLeft: 180, totalTime: 900, x: -0.2, y: 0.25 },
+  { id: 'UD-1003', name: 'Medical-Charlie', timeLeft: 90, totalTime: 600, x: 0.3, y: 0.15 },
+  { id: 'UD-1004', name: 'Patrol-Delta', timeLeft: 30, totalTime: 300, x: -0.1, y: -0.3 },
+  { id: 'UD-1005', name: 'Cargo-Echo', timeLeft: 0, totalTime: 600, x: 0.05, y: 0.35 },
+  { id: 'UD-1006', name: 'Recon-Foxtrot', timeLeft: 420, totalTime: 900, x: -0.3, y: -0.05 },
+  { id: 'UD-1007', name: 'Express-Golf', timeLeft: 15, totalTime: 300, x: 0.25, y: -0.25 },
+];
+
+// ===== Utility Functions =====
+function getStatus(timeLeft) {
+  if (timeLeft <= 0) return 'expired';
+  if (timeLeft <= 120) return 'warning';
+  return 'normal';
+}
+
+function getStatusColor(status) {
+  switch (status) {
+    case 'normal': return '#10b981';
+    case 'warning': return '#f59e0b';
+    case 'expired': return '#ef4444';
+    default: return '#4a6785';
+  }
+}
+
+function getStatusLabel(status) {
+  switch (status) {
+    case 'normal': return '정상 비행';
+    case 'warning': return '시간 임박';
+    case 'expired': return '비행 종료';
+    default: return '알 수 없음';
+  }
+}
+
+function formatTime(seconds) {
+  if (seconds <= 0) return '00:00';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function hexPoint(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+// ===== Header Component =====
+function Header({ stats }) {
+  return (
+    <div className="bg-cyber-panel border-b border-cyber-border px-6 py-3 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a10 10 0 0 1 0 20"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-base font-bold text-white tracking-wide font-mono">SWARM-NET AIRSPACE MANAGER</h1>
+          <p className="text-[10px] text-cyber-dim tracking-widest uppercase">Control Center v2.0 — Real-Time Monitoring</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-6">
+        <StatBadge label="SWARM NODES" value={stats.swarmCount} color="cyan" />
+        <StatBadge label="USER DRONES" value={stats.userCount} color="green" />
+        <StatBadge label="WARNINGS" value={stats.warningCount} color="yellow" />
+        <StatBadge label="ALERTS" value={stats.alertCount} color="red" />
+        <div className="flex items-center gap-2 ml-4 px-3 py-1.5 rounded-md bg-green-500/10 border border-green-500/30">
+          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+          <span className="text-[11px] font-mono text-green-400">SYSTEM ONLINE</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatBadge({ label, value, color }) {
+  const colors = {
+    cyan: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10',
+    green: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+    yellow: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10',
+    red: 'text-red-400 border-red-500/30 bg-red-500/10',
+  };
+  return (
+    <div className={`px-3 py-1.5 rounded-md border ${colors[color]}`}>
+      <div className="text-[10px] tracking-wider opacity-70">{label}</div>
+      <div className="text-lg font-bold font-mono leading-tight">{value}</div>
+    </div>
+  );
+}
+
+// ===== Radar Map Component =====
+function RadarMap({ swarmDrones, userDrones, selectedDrone, onSelectDrone, hoveredSwarm, onHoverSwarm }) {
+  const cx = 250, cy = 250, radius = 180;
+
+  // Hexagon vertices for swarm drones
+  const hexVertices = swarmDrones.map(d => hexPoint(cx, cy, radius, d.angle));
+  const hexPath = hexVertices.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+
+  // Inner hex for grid effect
+  const innerHex1 = swarmDrones.map(d => hexPoint(cx, cy, radius * 0.6, d.angle));
+  const innerPath1 = innerHex1.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+  const innerHex2 = swarmDrones.map(d => hexPoint(cx, cy, radius * 0.3, d.angle));
+  const innerPath2 = innerHex2.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+
+  // Mesh network lines (connect every drone to its neighbors + cross connections)
+  const meshLines = [];
+  for (let i = 0; i < hexVertices.length; i++) {
+    for (let j = i + 1; j < hexVertices.length; j++) {
+      if (j - i <= 2 || (i === 0 && j >= hexVertices.length - 2)) {
+        meshLines.push({ from: hexVertices[i], to: hexVertices[j], key: `${i}-${j}` });
+      }
+    }
+  }
+
+  return (
+    <div className="relative">
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+        <div className="px-2 py-1 rounded bg-cyber-panel/90 border border-cyber-border">
+          <span className="text-[10px] font-mono text-cyan-400 tracking-wider">RADAR VIEW</span>
+        </div>
+      </div>
+      <svg viewBox="0 0 500 500" className="w-full h-full" style={{ filter: 'drop-shadow(0 0 30px rgba(0,229,255,0.05))' }}>
+        <defs>
+          <radialGradient id="radarBg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.03" />
+            <stop offset="100%" stopColor="#060a13" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="sweepGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.15" />
+            <stop offset="70%" stopColor="#00e5ff" stopOpacity="0.05" />
+            <stop offset="100%" stopColor="#00e5ff" stopOpacity="0" />
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="glowStrong">
+            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Background */}
+        <rect width="500" height="500" fill="#060a13" />
+        <circle cx={cx} cy={cy} r="220" fill="url(#radarBg)" />
+
+        {/* Grid rings */}
+        {[60, 120, 180].map(r => (
+          <circle key={r} cx={cx} cy={cy} r={r} fill="none" stroke="#1a2d4a" strokeWidth="0.5" opacity="0.4" />
+        ))}
+        {/* Grid cross lines */}
+        <line x1={cx} y1={cy-200} x2={cx} y2={cy+200} stroke="#1a2d4a" strokeWidth="0.5" opacity="0.3" />
+        <line x1={cx-200} y1={cy} x2={cx+200} y2={cy} stroke="#1a2d4a" strokeWidth="0.5" opacity="0.3" />
+
+        {/* Radar pulse rings */}
+        <circle className="radar-pulse-ring" cx={cx} cy={cy} r="20" />
+        <circle className="radar-pulse-ring" cx={cx} cy={cy} r="20" style={{ animationDelay: '1s' }} />
+        <circle className="radar-pulse-ring" cx={cx} cy={cy} r="20" style={{ animationDelay: '2s' }} />
+
+        {/* Radar sweep line */}
+        <g className="radar-sweep" style={{ transformOrigin: `${cx}px ${cy}px` }}>
+          <line x1={cx} y1={cy} x2={cx} y2={cy - 200}
+            stroke="url(#sweepGrad)" strokeWidth="2" opacity="0.6" />
+          <path d={`M ${cx} ${cy} L ${cx-15} ${cy-200} A 200 200 0 0 1 ${cx+15} ${cy-200} Z`}
+            fill="url(#sweepGrad)" opacity="0.15" />
+        </g>
+
+        {/* Hexagonal airspace boundary */}
+        <path d={hexPath} fill="rgba(0, 229, 255, 0.03)" stroke="#00e5ff" strokeWidth="1.5" opacity="0.6" className="hex-glow" />
+        <path d={innerPath1} fill="none" stroke="#00e5ff" strokeWidth="0.5" opacity="0.2" />
+        <path d={innerPath2} fill="none" stroke="#00e5ff" strokeWidth="0.5" opacity="0.15" />
+
+        {/* Mesh network lines */}
+        {meshLines.map(line => (
+          <line key={line.key}
+            x1={line.from.x} y1={line.from.y}
+            x2={line.to.x} y2={line.to.y}
+            stroke="#00e5ff" strokeWidth="0.8" opacity="0.25"
+            className="mesh-line" />
+        ))}
+
+        {/* Swarm drone nodes */}
+        {hexVertices.map((p, i) => {
+          const drone = swarmDrones[i];
+          const isHovered = hoveredSwarm === drone.id;
+          return (
+            <g key={drone.id}
+              onMouseEnter={() => onHoverSwarm(drone.id)}
+              onMouseLeave={() => onHoverSwarm(null)}
+              style={{ cursor: 'pointer' }}>
+              {isHovered && (
+                <circle cx={p.x} cy={p.y} r="40" fill="rgba(0,229,255,0.05)" stroke="#00e5ff" strokeWidth="0.5" opacity="0.5" />
+              )}
+              <circle cx={p.x} cy={p.y} r="14" fill="#0a1628" stroke="#00e5ff" strokeWidth="2" filter="url(#glow)" />
+              <circle cx={p.x} cy={p.y} r="5" fill="#00e5ff" opacity="0.8" />
+              <text x={p.x} y={p.y + 26} textAnchor="middle" fill="#00e5ff" fontSize="8" fontFamily="JetBrains Mono" opacity="0.7">
+                {drone.id}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* User drones */}
+        {userDrones.map(drone => {
+          const status = getStatus(drone.timeLeft);
+          const color = getStatusColor(status);
+          const dx = cx + drone.x * radius * 0.85;
+          const dy = cy + drone.y * radius * 0.85;
+          const isSelected = selectedDrone === drone.id;
+          const blinkClass = status === 'expired' ? 'blink-alert' : status === 'warning' ? 'warning-pulse' : '';
+
+          return (
+            <g key={drone.id}
+              onClick={() => onSelectDrone(drone.id)}
+              style={{ cursor: 'pointer' }}
+              className={blinkClass}>
+              {/* Selection ring */}
+              {isSelected && (
+                <circle cx={dx} cy={dy} r="22" fill="none" stroke={color} strokeWidth="1.5" strokeDasharray="4 2" opacity="0.8">
+                  <animateTransform attributeName="transform" type="rotate"
+                    from={`0 ${dx} ${dy}`} to={`360 ${dx} ${dy}`} dur="6s" repeatCount="indefinite" />
+                </circle>
+              )}
+              {/* Drone body */}
+              <g className="drone-float" style={{ animationDelay: `${Math.random() * 2}s` }}>
+                {/* Drone icon - quadcopter shape */}
+                <circle cx={dx} cy={dy} r="10" fill={`${color}22`} stroke={color} strokeWidth="1.5" />
+                <line x1={dx-6} y1={dy-6} x2={dx+6} y2={dy+6} stroke={color} strokeWidth="1" opacity="0.6" />
+                <line x1={dx+6} y1={dy-6} x2={dx-6} y2={dy+6} stroke={color} strokeWidth="1" opacity="0.6" />
+                <circle cx={dx} cy={dy} r="3" fill={color} />
+                {/* Small motor dots */}
+                <circle cx={dx-6} cy={dy-6} r="2" fill={color} opacity="0.7" />
+                <circle cx={dx+6} cy={dy-6} r="2" fill={color} opacity="0.7" />
+                <circle cx={dx-6} cy={dy+6} r="2" fill={color} opacity="0.7" />
+                <circle cx={dx+6} cy={dy+6} r="2" fill={color} opacity="0.7" />
+              </g>
+              {/* ID label */}
+              <text x={dx} y={dy - 16} textAnchor="middle" fill={color} fontSize="7" fontFamily="JetBrains Mono" fontWeight="600">
+                {drone.id}
+              </text>
+              {/* Timer label */}
+              <text x={dx} y={dy + 20} textAnchor="middle" fill={color} fontSize="7" fontFamily="JetBrains Mono" opacity="0.8">
+                {formatTime(drone.timeLeft)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Center indicator */}
+        <circle cx={cx} cy={cy} r="4" fill="#00e5ff" opacity="0.5" />
+        <circle cx={cx} cy={cy} r="1.5" fill="#fff" opacity="0.8" />
+      </svg>
+    </div>
+  );
+}
+
+// ===== Fleet Management Panel =====
+function FleetPanel({ userDrones, selectedDrone, onSelectDrone }) {
+  const sorted = [...userDrones].sort((a, b) => a.timeLeft - b.timeLeft);
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 border-b border-cyber-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span className="text-xs font-mono text-cyan-400 tracking-wider">FLEET MANAGEMENT</span>
+        </div>
+        <span className="text-[10px] font-mono text-cyber-dim">{userDrones.length} DRONES TRACKED</span>
+      </div>
+
+      {/* Legend */}
+      <div className="px-4 py-2 flex gap-4 border-b border-cyber-border/50">
+        <LegendItem color="#10b981" label="정상 비행" />
+        <LegendItem color="#f59e0b" label="시간 임박" />
+        <LegendItem color="#ef4444" label="비행 종료" />
+      </div>
+
+      {/* Drone list */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+        {sorted.map(drone => (
+          <DroneCard
+            key={drone.id}
+            drone={drone}
+            isSelected={selectedDrone === drone.id}
+            onClick={() => onSelectDrone(drone.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LegendItem({ color, label }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></div>
+      <span className="text-[10px] text-cyber-dim">{label}</span>
+    </div>
+  );
+}
+
+function DroneCard({ drone, isSelected, onClick }) {
+  const status = getStatus(drone.timeLeft);
+  const color = getStatusColor(status);
+  const label = getStatusLabel(status);
+  const pct = drone.totalTime > 0 ? ((drone.totalTime - drone.timeLeft) / drone.totalTime * 100) : 100;
+  const isExpired = status === 'expired';
+  const isWarning = status === 'warning';
+
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        relative rounded-lg border px-3 py-2.5 cursor-pointer transition-all duration-200 card-hover slide-in
+        ${isSelected ? 'border-opacity-60' : 'border-opacity-30'}
+        ${isExpired ? 'blink-alert' : ''}
+      `}
+      style={{
+        backgroundColor: isSelected ? `${color}11` : '#0c1a2e',
+        borderColor: isSelected ? color : '#1a2d4a',
+      }}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></div>
+          <span className="text-xs font-mono font-bold text-white">{drone.id}</span>
+          <span className="text-[10px] text-cyber-dim">{drone.name}</span>
+        </div>
+        <span
+          className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full ${isExpired ? 'blink-alert' : ''}`}
+          style={{ color, backgroundColor: `${color}20`, border: `1px solid ${color}40` }}
+        >
+          {label}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span className="text-sm font-mono font-bold" style={{ color }}>
+            {formatTime(drone.timeLeft)}
+          </span>
+          <span className="text-[10px] text-cyber-dim">/ {formatTime(drone.totalTime)}</span>
+        </div>
+        {isExpired && (
+          <div className="flex items-center gap-1 blink-alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span className="text-[10px] font-mono text-red-400 font-bold">복귀 명령</span>
+          </div>
+        )}
+        {isWarning && (
+          <div className="flex items-center gap-1 warning-pulse">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span className="text-[10px] font-mono text-yellow-400">주의</span>
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="mt-2 h-1 rounded-full bg-gray-800 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-1000"
+          style={{
+            width: `${pct}%`,
+            backgroundColor: color,
+            boxShadow: `0 0 6px ${color}`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ===== Communication Flow Panel =====
+function CommFlow() {
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep(prev => (prev + 1) % 4);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    { icon: '📡', label: 'Swarm Scan', desc: '공역 스캔 중', color: '#00e5ff' },
+    { icon: '🖥️', label: 'Server Process', desc: '데이터 분석 중', color: '#a78bfa' },
+    { icon: '⏱️', label: 'Timer Check', desc: '허가 시간 확인', color: '#f59e0b' },
+    { icon: '📢', label: 'Notify User', desc: '알림 전송 중', color: '#10b981' },
+  ];
+
+  return (
+    <div className="px-4 py-3 border-t border-cyber-border">
+      <div className="flex items-center gap-2 mb-2">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span className="text-[10px] font-mono text-purple-400 tracking-wider">COMMUNICATION FLOW</span>
+      </div>
+      <div className="flex items-center gap-1">
+        {steps.map((step, i) => (
+          <React.Fragment key={i}>
+            <div
+              className="flex-1 rounded-md px-2 py-1.5 text-center transition-all duration-500"
+              style={{
+                backgroundColor: activeStep === i ? `${step.color}20` : '#0a1220',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: activeStep === i ? `${step.color}60` : '#1a2d4a30',
+                boxShadow: activeStep === i ? `0 0 12px ${step.color}20` : 'none',
+              }}
+            >
+              <div className="text-sm">{step.icon}</div>
+              <div className="text-[9px] font-mono font-semibold" style={{ color: activeStep === i ? step.color : '#4a6785' }}>
+                {step.label}
+              </div>
+              <div className="text-[8px]" style={{ color: activeStep === i ? step.color : '#2a3f5f' }}>
+                {step.desc}
+              </div>
+            </div>
+            {i < steps.length - 1 && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke={activeStep === i ? steps[i].color : '#1a2d4a'} strokeWidth="2" className="flex-shrink-0 transition-colors duration-500">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== Selected Drone Detail =====
+function DroneDetail({ drone }) {
+  if (!drone) return null;
+  const status = getStatus(drone.timeLeft);
+  const color = getStatusColor(status);
+
+  return (
+    <div className="px-4 py-3 border-t border-cyber-border slide-in">
+      <div className="flex items-center gap-2 mb-2">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+        </svg>
+        <span className="text-[10px] font-mono tracking-wider" style={{ color }}>DRONE DETAIL</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <InfoRow label="ID" value={drone.id} color={color} />
+        <InfoRow label="Name" value={drone.name} color={color} />
+        <InfoRow label="Status" value={getStatusLabel(status)} color={color} />
+        <InfoRow label="Remaining" value={formatTime(drone.timeLeft)} color={color} />
+        <InfoRow label="Position" value={`X:${(drone.x*100).toFixed(0)} Y:${(drone.y*100).toFixed(0)}`} color={color} />
+        <InfoRow label="Total Time" value={formatTime(drone.totalTime)} color={color} />
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, color }) {
+  return (
+    <div className="rounded px-2 py-1 bg-black/30">
+      <div className="text-[9px] text-cyber-dim tracking-wider">{label}</div>
+      <div className="text-xs font-mono font-semibold" style={{ color }}>{value}</div>
+    </div>
+  );
+}
+
+// ===== Main App =====
+function App() {
+  const [userDrones, setUserDrones] = useState(INITIAL_USER_DRONES);
+  const [selectedDrone, setSelectedDrone] = useState(null);
+  const [hoveredSwarm, setHoveredSwarm] = useState(null);
+
+  // Countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setUserDrones(prev => prev.map(d => ({
+        ...d,
+        timeLeft: Math.max(0, d.timeLeft - 1),
+        // Subtle position drift
+        x: d.x + (Math.random() - 0.5) * 0.005,
+        y: d.y + (Math.random() - 0.5) * 0.005,
+      })));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const stats = useMemo(() => ({
+    swarmCount: SWARM_DRONES.length,
+    userCount: userDrones.length,
+    warningCount: userDrones.filter(d => getStatus(d.timeLeft) === 'warning').length,
+    alertCount: userDrones.filter(d => getStatus(d.timeLeft) === 'expired').length,
+  }), [userDrones]);
+
+  const selectedDroneData = userDrones.find(d => d.id === selectedDrone);
+
+  return (
+    <div className="h-screen flex flex-col bg-cyber-bg">
+      <Header stats={stats} />
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left: Radar Map (60%) */}
+        <div className="w-[60%] flex flex-col border-r border-cyber-border">
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="w-full max-w-[560px]">
+              <RadarMap
+                swarmDrones={SWARM_DRONES}
+                userDrones={userDrones}
+                selectedDrone={selectedDrone}
+                onSelectDrone={setSelectedDrone}
+                hoveredSwarm={hoveredSwarm}
+                onHoverSwarm={setHoveredSwarm}
+              />
+            </div>
+          </div>
+          <CommFlow />
+        </div>
+
+        {/* Right: Fleet Panel (40%) */}
+        <div className="w-[40%] flex flex-col bg-cyber-panel/50">
+          <FleetPanel
+            userDrones={userDrones}
+            selectedDrone={selectedDrone}
+            onSelectDrone={setSelectedDrone}
+          />
+          {selectedDroneData && <DroneDetail drone={selectedDroneData} />}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-1.5 bg-cyber-panel border-t border-cyber-border flex items-center justify-between">
+        <span className="text-[10px] font-mono text-cyber-dim">
+          Swarm-Net Airspace Manager — Capstone Project: SC2 Swarm Control → Drone ATC
+        </span>
+        <span className="text-[10px] font-mono text-cyber-dim">
+          Mesh: {SWARM_DRONES.length} nodes | Latency: &lt;50ms | Uptime: 99.97%
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

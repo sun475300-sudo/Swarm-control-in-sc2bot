@@ -114,19 +114,25 @@ class SpellCasterAutomation:
         return (getattr(self.bot, "time", 0) - last_used) > 1.0
 
     async def _request_authority(self, unit, ability_name: str) -> bool:
-        """Request authority for unit"""
+        """Request authority for unit (SPELL_UNIT > COMBAT priority)"""
         if not hasattr(self.bot, "unit_authority"):
             return True  # No authority manager, allow
-            
+
         if self.bot.unit_authority.request_unit(
-            unit.tag, 
-            "SpellCaster", 
-            AuthorityLevel.TACTICAL
+            unit.tag,
+            "SpellCaster",
+            AuthorityLevel.SPELL_UNIT  # ★ 80 > COMBAT(70) - 스펠캐스터 우선권 ★
         ):
             self.active_casters[unit.tag] = ability_name
             return True
-            
+
         return False
+
+    def _release_authority(self, unit_tag: int) -> None:
+        """Release authority after spell cast"""
+        if hasattr(self.bot, "unit_authority"):
+            self.bot.unit_authority.release_unit(unit_tag, "SpellCaster")
+        self.active_casters.pop(unit_tag, None)
 
     async def on_step(self, iteration: int) -> None:
         """매 프레임 실행"""
@@ -205,6 +211,7 @@ class SpellCasterAutomation:
             if AbilityId.TRANSFUSION_TRANSFUSION in abilities:
                 self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, target))
                 self._record_skill_use(queen.tag, "transfuse")
+                self._release_authority(queen.tag)  # ★ 즉시 해제 ★
                 self.skills_used["transfuse"] += 1
 
                 game_time = getattr(self.bot, "time", 0)
@@ -212,7 +219,7 @@ class SpellCasterAutomation:
                     f"[{int(game_time)}s] ★ TRANSFUSE: {target.type_id.name} "
                     f"({target.health}/{target.health_max}) ★"
                 )
-                break  # 한 프레임에 하나만
+                break
 
     async def _ravager_bile(self):
         """
@@ -252,13 +259,14 @@ class SpellCasterAutomation:
             if AbilityId.EFFECT_CORROSIVEBILE in abilities:
                 self.bot.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_target))
                 self._record_skill_use(ravager.tag, "bile")
+                self._release_authority(ravager.tag)  # ★ 즉시 해제 ★
                 self.skills_used["bile"] += 1
 
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(
                     f"[{int(game_time)}s] ★ BILE: {target_count} targets ★"
                 )
-                break  # 한 프레임에 하나만
+                break
 
     def _find_bile_target(self, enemies: List) -> tuple:
         """
@@ -319,30 +327,65 @@ class SpellCasterAutomation:
 
     async def _viper_abduct(self, viper, enemies):
         """
-        살모사 납치 - 고가치 적 유닛 납치
+        ★★★ 살모사 납치 - 안전 검사 + 우선순위 점수 기반 ★★★
+
+        안전 검사:
+        1. 착지 지점(살모사 위치) 주변 적 5명 이상이면 거부
+        2. 착지 주변 아군 5명 미만이면 거부
+        3. 적 진형 가장자리 유닛 보너스
         """
-        # 고가치 유닛 우선순위
-        high_value_units = {
-            "SIEGETANK", "SIEGETANKSIEGED", "THOR", "BATTLECRUISER",
-            "COLOSSUS", "IMMORTAL", "CARRIER", "TEMPEST",
-            "RAVAGER", "LURKER", "BROODLORD", "ULTRALISK"
+        # 고가치 유닛 점수 (높을수록 우선)
+        UNIT_VALUE = {
+            "COLOSSUS": 10, "CARRIER": 10, "BATTLECRUISER": 10,
+            "SIEGETANKSIEGED": 9, "SIEGETANK": 9, "TEMPEST": 9,
+            "THOR": 8, "IMMORTAL": 8, "MOTHERSHIP": 10,
+            "BROODLORD": 7, "ULTRALISK": 7,
+            "LURKER": 6, "RAVAGER": 5, "DISRUPTOR": 8,
         }
 
-        # 사거리 내 고가치 유닛 찾기
-        targets = []
+        # ★ 안전 검사 1: 살모사 주변 적이 너무 많으면 납치 금지 ★
+        enemies_near_viper = sum(
+            1 for e in enemies if viper.distance_to(e) < 5
+        )
+        if enemies_near_viper >= 5:
+            return
+
+        # ★ 안전 검사 2: 살모사 주변 아군이 부족하면 납치 금지 ★
+        friendlies_near = 0
+        if hasattr(self.bot, "units"):
+            friendlies_near = sum(
+                1 for u in self.bot.units
+                if u.can_attack and u.tag != viper.tag and viper.distance_to(u) < 5
+            )
+        if friendlies_near < 5:
+            return
+
+        # 사거리 내 고가치 유닛 점수 계산
+        scored_targets = []
         for enemy in enemies:
             if viper.distance_to(enemy) > self.viper_abduct_range:
                 continue
 
             type_name = getattr(enemy.type_id, "name", "").upper()
-            if type_name in high_value_units:
-                targets.append(enemy)
+            base_score = UNIT_VALUE.get(type_name, 0)
+            if base_score == 0:
+                continue
 
-        if not targets:
+            # ★ 진형 가장자리 보너스: 주변 4범위 내 적 적을수록 + ★
+            nearby_allies_of_target = sum(
+                1 for e in enemies if e.tag != enemy.tag and enemy.distance_to(e) < 4
+            )
+            edge_bonus = max(0, 5 - nearby_allies_of_target)
+
+            total_score = base_score + edge_bonus
+            scored_targets.append((enemy, total_score))
+
+        if not scored_targets:
             return
 
-        # 가장 가까운 고가치 유닛 납치
-        target = min(targets, key=lambda e: viper.distance_to(e))
+        # 최고 점수 타겟 납치
+        scored_targets.sort(key=lambda x: x[1], reverse=True)
+        target = scored_targets[0][0]
 
         # 권한 요청
         if not await self._request_authority(viper, "abduct"):
@@ -352,11 +395,13 @@ class SpellCasterAutomation:
         if AbilityId.EFFECT_ABDUCT in abilities:
             self.bot.do(viper(AbilityId.EFFECT_ABDUCT, target))
             self._record_skill_use(viper.tag, "abduct")
+            self._release_authority(viper.tag)
             self.skills_used["abduct"] += 1
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ ABDUCT: {target.type_id.name} ★"
+                f"[{int(game_time)}s] ★ ABDUCT: {target.type_id.name} "
+                f"(score: {scored_targets[0][1]}) ★"
             )
 
     async def _viper_blinding_cloud(self, viper, enemies):
@@ -402,6 +447,7 @@ class SpellCasterAutomation:
         if AbilityId.EFFECT_BLINDINGCLOUD in abilities:
             self.bot.do(viper(AbilityId.EFFECT_BLINDINGCLOUD, best_pos))
             self._record_skill_use(viper.tag, "blinding_cloud")
+            self._release_authority(viper.tag)
             self.skills_used["blinding_cloud"] += 1
 
             game_time = getattr(self.bot, "time", 0)
@@ -411,12 +457,49 @@ class SpellCasterAutomation:
 
     async def _viper_consume(self, viper):
         """
-        살모사 에너지 회복 (Consume) - Overlord를 소비해 에너지 50 획득
+        ★★★ 살모사 에너지 회복 (Consume) - 건물 우선 → 오버로드 fallback ★★★
+
+        우선순위 1: 아군 건물 (HP > 250, 해처리/레어/하이브 제외) consume
+        우선순위 2: Overlord 소비 (기존 방식)
         """
         if not hasattr(self.bot, "units"):
             return
 
-        # 가장 가까운 Overlord 찾기 (수송 중이 아닌 것)
+        # ★ 우선순위 1: 아군 건물에서 흡수 (해처리/레어/하이브 제외) ★
+        if hasattr(self.bot, "structures"):
+            exclude_buildings = set()
+            if UnitTypeId:
+                exclude_buildings = {
+                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
+                }
+
+            consumable_buildings = [
+                b for b in self.bot.structures
+                if b.health > 250
+                and b.type_id not in exclude_buildings
+                and viper.distance_to(b) < 8
+            ]
+
+            if consumable_buildings:
+                target = min(consumable_buildings, key=lambda b: viper.distance_to(b))
+
+                if not await self._request_authority(viper, "consume"):
+                    return
+
+                abilities = await self.bot.get_available_abilities(viper)
+                if AbilityId.EFFECT_VIPERCONSUME in abilities:
+                    self.bot.do(viper(AbilityId.EFFECT_VIPERCONSUME, target))
+                    self._record_skill_use(viper.tag, "consume")
+                    self.skills_used["consume"] = self.skills_used.get("consume", 0) + 1
+
+                    game_time = getattr(self.bot, "time", 0)
+                    self.logger.info(
+                        f"[{int(game_time)}s] ★ CONSUME: Building {target.type_id.name} "
+                        f"(HP: {int(target.health)}) ★"
+                    )
+                    return
+
+        # ★ 우선순위 2: Overlord fallback ★
         overlords = self.bot.units(UnitTypeId.OVERLORD).filter(
             lambda o: not o.has_cargo and o.distance_to(viper) < 8
         )
@@ -426,7 +509,6 @@ class SpellCasterAutomation:
 
         target_overlord = overlords.closest_to(viper)
 
-        # 권한 요청
         if not await self._request_authority(viper, "consume"):
             return
 
@@ -438,7 +520,7 @@ class SpellCasterAutomation:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ CONSUME: Viper energy recovery (Overlord sacrificed) ★"
+                f"[{int(game_time)}s] ★ CONSUME: Overlord sacrificed ★"
             )
 
     async def _viper_safety(self, viper, enemies):
@@ -485,24 +567,77 @@ class SpellCasterAutomation:
 
     async def _infestor_fungal(self, infestor, enemies):
         """
-        감염충 진균 번식 - 적 밀집 지역 묶기
-        """
-        # 밀집 지역 찾기 (2 반경 내 5명 이상)
-        best_pos = None
-        max_count = 0
+        ★★★ 감염충 진균 번식 - 예측 타겟팅 + 가치 합산 ★★★
 
+        1. 적 유닛의 facing + movement_speed로 0.5초 후 예상 위치 계산
+        2. 각 후보 위치 중심으로 2.0 반경 내 히트 가치 합산
+        3. 최대 가치 지점에 시전 (mineral_cost + vespene_cost 가중)
+        4. 최소 3타겟 유지
+        """
+        import math
+
+        FUNGAL_RADIUS = 2.0
+        LEAD_TIME = 0.5  # 0.5초 예측
+
+        # 사거리 내 적 유닛의 예상 위치 계산
+        predicted_positions = []
         for enemy in enemies:
-            if infestor.distance_to(enemy) > 10:  # 사거리
+            if infestor.distance_to(enemy) > 10:
                 continue
 
             pos = enemy.position
-            nearby = sum(1 for e in enemies if e.position.distance_to(pos) < 2)
 
-            if nearby > max_count:
-                max_count = nearby
-                best_pos = pos
+            # ★ 예측 타겟팅: facing + speed로 미래 위치 계산 ★
+            try:
+                facing = getattr(enemy, "facing", None)
+                speed = getattr(enemy, "movement_speed", 0)
+                if facing is not None and speed > 0:
+                    dx = math.cos(facing) * speed * LEAD_TIME
+                    dy = math.sin(facing) * speed * LEAD_TIME
+                    predicted = Point2((pos.x + dx, pos.y + dy))
+                else:
+                    predicted = pos
+            except Exception as e:
+                self.logger.warning(f"[SpellCaster] Predicted position calc suppressed: {e}")
+                predicted = pos
 
-        if max_count < self.infestor_fungal_min_targets:
+            # 유닛 가치 계산 (mineral + vespene cost)
+            try:
+                m_cost = getattr(enemy, "mineral_cost", 50) or 50
+                g_cost = getattr(enemy, "vespene_cost", 0) or 0
+                value = m_cost + g_cost * 1.5  # 가스 유닛 가중
+            except Exception as e:
+                self.logger.warning(f"[SpellCaster] Unit value calc suppressed: {e}")
+                value = 50
+
+            predicted_positions.append((predicted, value, enemy))
+
+        if len(predicted_positions) < self.infestor_fungal_min_targets:
+            return
+
+        # ★ 최적 시전 지점 탐색: 각 후보 중심으로 반경 내 가치 합산 ★
+        best_pos = None
+        best_value = 0
+        best_count = 0
+
+        for pred_pos, _, _ in predicted_positions:
+            total_value = 0
+            hit_count = 0
+            for other_pos, other_value, _ in predicted_positions:
+                try:
+                    if pred_pos.distance_to(other_pos) <= FUNGAL_RADIUS:
+                        total_value += other_value
+                        hit_count += 1
+                except Exception as e:
+                    self.logger.warning(f"[SpellCaster] Fungal target distance suppressed: {e}")
+                    continue
+
+            if hit_count >= self.infestor_fungal_min_targets and total_value > best_value:
+                best_value = total_value
+                best_pos = pred_pos
+                best_count = hit_count
+
+        if not best_pos:
             return
 
         # 권한 요청
@@ -513,11 +648,13 @@ class SpellCasterAutomation:
         if AbilityId.FUNGALGROWTH_FUNGALGROWTH in abilities:
             self.bot.do(infestor(AbilityId.FUNGALGROWTH_FUNGALGROWTH, best_pos))
             self._record_skill_use(infestor.tag, "fungal")
+            self._release_authority(infestor.tag)
             self.skills_used["fungal"] += 1
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ FUNGAL: {max_count} targets ★"
+                f"[{int(game_time)}s] ★ FUNGAL (PREDICTED): "
+                f"{best_count} targets, value: {int(best_value)} ★"
             )
 
     async def _infestor_neural(self, infestor, enemies):
@@ -552,6 +689,7 @@ class SpellCasterAutomation:
         if AbilityId.NEURALPARASITE_NEURALPARASITE in abilities:
             self.bot.do(infestor(AbilityId.NEURALPARASITE_NEURALPARASITE, target))
             self._record_skill_use(infestor.tag, "neural")
+            self._release_authority(infestor.tag)
             self.skills_used["neural"] += 1
 
             game_time = getattr(self.bot, "time", 0)

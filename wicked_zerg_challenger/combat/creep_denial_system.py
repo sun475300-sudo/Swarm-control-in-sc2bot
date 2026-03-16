@@ -195,8 +195,23 @@ class CreepDenialSystem:
 
     def _is_dangerous_position(self, position: Point2) -> bool:
         """
-        해당 위치가 위험한지 판단 (설정값 사용)
+        해당 위치가 위험한지 판단 (IntelManager 연동 + 설정값 사용)
         """
+        # ★ IntelManager 위협 정보 활용 (Phase 17 개선) ★
+        if hasattr(self.bot, "intel_manager"):
+            intel = self.bot.intel_manager
+            # IntelManager가 공격 중으로 판단하면, 공격 위치 근처는 위험
+            if intel.is_under_attack():
+                attack_pos = intel.get_attack_position()
+                if attack_pos and position.distance_to(attack_pos) < 20:
+                    return True
+            # 위협 레벨이 critical/heavy면 적 진영 근처 전체 위험
+            threat_level = getattr(intel, "_threat_level", "none")
+            if threat_level in ("critical", "heavy"):
+                start_locs = getattr(self.bot, "enemy_start_locations", [])
+                if start_locs and position.distance_to(start_locs[0]) < 40:
+                    return True
+
         if not hasattr(self.bot, "enemy_units"):
             return False
 
@@ -204,7 +219,7 @@ class CreepDenialSystem:
         danger_range = self.config.DANGER_DETECTION_RANGE if self.config else 12
         danger_count = self.config.DANGER_ENEMY_COUNT if self.config else 2
 
-        # 무시할 유닛 타입 (설정값 사용)
+        # 무시할 유닛 타입
         if self.config:
             ignore_types = set()
             for unit_name in self.config.IGNORE_UNIT_TYPES:
@@ -225,7 +240,7 @@ class CreepDenialSystem:
         if combat_enemies.amount >= danger_count:
             return True
 
-        # 방어 타워 확인 (설정값 사용)
+        # 방어 타워 확인
         if self.config:
             defense_types = set()
             for unit_name in self.config.STATIC_DEFENSE_TYPES:

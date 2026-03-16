@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm-Net Algorithm Structure</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0f1923; font-family:'Segoe UI',sans-serif; color:#e0e0e0; }
+  .header {
+    text-align:center; padding:30px 20px 10px;
+    background:linear-gradient(180deg, #0a1628 0%, #0f1923 100%);
+    border-bottom:1px solid rgba(0,150,255,0.15);
+  }
+  .header h1 { font-size:24px; color:#4fc3f7; letter-spacing:3px; }
+  .header p { font-size:13px; color:#78909c; margin-top:6px; }
+  .tabs {
+    display:flex; justify-content:center; gap:8px; padding:16px; flex-wrap:wrap;
+    background:rgba(10,14,23,0.9); border-bottom:1px solid rgba(0,150,255,0.1);
+  }
+  .tab {
+    padding:8px 20px; border-radius:8px; cursor:pointer; font-size:13px;
+    border:1px solid rgba(0,150,255,0.2); background:rgba(0,150,255,0.05);
+    color:#78909c; transition:all 0.2s;
+  }
+  .tab:hover { background:rgba(0,150,255,0.1); color:#4fc3f7; }
+  .tab.active { background:rgba(0,150,255,0.2); color:#4fc3f7; border-color:#4fc3f7; }
+  .diagram-container {
+    max-width:1200px; margin:20px auto; padding:20px;
+    background:rgba(255,255,255,0.97); border-radius:12px;
+    min-height:400px;
+  }
+  .diagram-container .mermaid { text-align:center; }
+  .desc {
+    max-width:1200px; margin:0 auto 30px; padding:0 20px;
+    font-size:13px; color:#90a4ae; text-align:center;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>SWARM-NET ALGORITHM STRUCTURE</h1>
+    <p>Military-Grade Airspace Control Algorithm</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showDiagram(0)">System Flowchart</div>
+    <div class="tab" onclick="showDiagram(1)">Sequence Diagram</div>
+    <div class="tab" onclick="showDiagram(2)">Data Flow</div>
+    <div class="tab" onclick="showDiagram(3)">State Machine</div>
+  </div>
+
+  <p class="desc" id="desc-text">4단계 운용 프로토콜: 구역 설정 → 탐지 → 시간 할당 → 퇴각 통제</p>
+
+  <div class="diagram-container">
+    <div class="mermaid" id="diagram"></div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'default',
+  flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+  sequence: { useMaxWidth: true, actorMargin: 60 },
+});
+
+const diagrams = [
+  {
+    desc: '4단계 운용 프로토콜: 구역 설정 → 탐지 → 시간 할당 → 퇴각 통제',
+    code: `flowchart TD
+    subgraph P1["1단계: 통제 구역 설정"]
+        A1["관제 서버: 공역 좌표 지정"] --> A2["군집 드론 N대 이륙"]
+        A2 --> A3["드론 간 위치 동기화"]
+        A3 --> A4{"다각형 진형 완성?"}
+        A4 -- No --> A3
+        A4 -- Yes --> A5["레이더 Mesh Network 전개"]
+        A5 --> A6["가상 돔 형성 완료"]
+    end
+    subgraph P2["2단계: 유저 드론 탐지"]
+        B1["레이더망 경계 감시"] --> B2{"객체 진입 감지?"}
+        B2 -- No --> B1
+        B2 -- Yes --> B3["센서 데이터 수집"]
+        B3 --> B4["삼각측량 위치 특정"]
+        B4 --> B5["고유 식별자 추출"]
+        B5 --> B6{"기존 등록?"}
+        B6 -- Yes --> B7["DB 업데이트"]
+        B6 -- No --> B8["신규 등록"]
+        B7 --> B9["추적 시작"]
+        B8 --> B9
+    end
+    subgraph P3["3단계: 시간 할당 및 추적"]
+        C1["비행 허가 시간 할당"] --> C2["카운트다운 시작"]
+        C2 --> C3["실시간 XYZ 추적"]
+        C3 --> C4["대시보드 표시"]
+        C4 --> C5{"잔여 시간?"}
+        C5 -- "잔여 > 2분" --> C3
+        C5 -- "잔여 2분 이하" --> D1
+    end
+    subgraph P4["4단계: 경고 및 퇴각"]
+        D1["1차 경고 알림 전송"]
+        D1 --> D2{"자발적 이탈?"}
+        D2 -- Yes --> D3["정상 종료"]
+        D2 -- No --> D4{"타이머=0?"}
+        D4 -- No --> D2
+        D4 -- Yes --> D5["2차 경고: 시간 초과!"]
+        D5 --> D6["UNAUTHORIZED 상태"]
+        D6 --> D7["강제 착륙 명령"]
+    end
+    A6 --> B1
+    B9 --> C1
+    D3 --> B1
+    style P1 fill:#e3f2fd,stroke:#1565c0
+    style P2 fill:#e8f5e9,stroke:#2e7d32
+    style P3 fill:#fff3e0,stroke:#ef6c00
+    style P4 fill:#ffebee,stroke:#c62828
+    style A6 fill:#1565c0,color:#fff
+    style D5 fill:#c62828,color:#fff
+    style D3 fill:#4caf50,color:#fff`
+  },
+  {
+    desc: '군집 드론 → 서버 → 사용자 앱 간 통신 시퀀스',
+    code: `sequenceDiagram
+    participant GCS as 지상 관제국
+    participant SW as 군집 드론 (Sentinel)
+    participant RD as 레이더망
+    participant UD as 유저 드론
+    participant BE as 백엔드 서버
+    participant APP as 사용자 앱
+
+    Note over GCS,APP: 1단계 - 통제 구역 설정
+    GCS->>SW: 공역 좌표 전송 (MAVLink)
+    SW->>SW: 편대 진형 이동
+    SW->>RD: Mesh Network 전개
+    RD-->>GCS: 구축 완료 보고
+
+    Note over GCS,APP: 2단계 - 유저 드론 탐지
+    UD->>RD: 공역 경계 진입
+    RD->>SW: 객체 감지 이벤트
+    SW->>SW: 삼각측량 (3+ Sentinel)
+    SW->>BE: 감지 데이터 전송 (MQTT)
+    BE->>BE: DB 등록 + ID 할당
+
+    Note over GCS,APP: 3단계 - 시간 할당 및 추적
+    BE->>APP: 비행 허가 + 타이머 시작
+    BE->>BE: Redis TTL 카운트다운
+    loop 매 1초
+        SW->>BE: 유저 드론 XYZ 좌표
+        BE->>GCS: 대시보드 갱신
+        BE->>APP: 잔여 시간 동기화
+    end
+
+    Note over GCS,APP: 4단계 - 경고 및 퇴각
+    BE->>APP: 1차 경고 (잔여 2분)
+    alt 자발적 이탈
+        UD->>RD: 공역 밖으로 이동
+        SW->>BE: 세션 종료
+        BE->>APP: 정상 종료 알림
+    else 시간 초과
+        BE->>APP: 2차 경고 (적색!)
+        BE->>GCS: UNAUTHORIZED 전환
+        GCS->>SW: 퇴각 유도 명령
+    end`
+  },
+  {
+    desc: '4계층 통신 데이터 흐름: 공중 → 지상 → 서버 → 클라이언트',
+    code: `flowchart LR
+    subgraph AIR["공중 계층"]
+        S1["Sentinel 1"] <-->|"802.11s"| S2["Sentinel 2"]
+        S2 <-->|"802.11s"| S3["Sentinel 3"]
+        S3 <-->|"802.11s"| S1
+        UD(("유저 드론"))
+    end
+    subgraph GND["지상 계층"]
+        GCS["GCS: ROS2 + MAVSDK"]
+        MQTT["MQTT Broker"]
+    end
+    subgraph SRV["서버 계층"]
+        API["FastAPI"]
+        REDIS[("Redis")]
+        PG[("PostgreSQL")]
+    end
+    subgraph CLI["클라이언트"]
+        WEB["관제 대시보드"]
+        MOB["사용자 앱"]
+    end
+    S1 & S2 & S3 -->|"감지 데이터"| GCS
+    UD -.->|"RF 신호"| S1 & S2 & S3
+    GCS -->|"MQTT"| MQTT
+    MQTT -->|"Event"| API
+    API <-->|"R/W"| REDIS
+    API <-->|"CRUD"| PG
+    API -->|"WebSocket"| WEB
+    API -->|"FCM Push"| MOB
+    style AIR fill:#e3f2fd,stroke:#1565c0
+    style GND fill:#e8f5e9,stroke:#2e7d32
+    style SRV fill:#fff3e0,stroke:#ef6c00
+    style CLI fill:#f3e5f5,stroke:#7b1fa2
+    style UD fill:#ff9800,color:#fff`
+  },
+  {
+    desc: '유저 드론 상태 전이: UNDETECTED → AUTHORIZED → WARNING → EXPIRED',
+    code: `stateDiagram-v2
+    [*] --> UNDETECTED: 공역 외부
+    UNDETECTED --> DETECTED: 레이더망 진입
+    DETECTED --> IDENTIFIED: 식별 완료
+    IDENTIFIED --> AUTHORIZED: 시간 할당
+    AUTHORIZED --> TRACKING: 타이머 시작
+    TRACKING --> TRACKING: 위치 갱신 (1Hz)
+    TRACKING --> WARNING: 잔여 2분 이하
+    WARNING --> DEPARTED: 자발적 이탈
+    WARNING --> EXPIRED: 타이머 만료
+    EXPIRED --> UNAUTHORIZED: 적색 경고
+    UNAUTHORIZED --> EVICTING: 퇴각 명령
+    EVICTING --> DEPARTED: 이탈 확인
+    EVICTING --> ESCALATED: 미이행
+    DEPARTED --> UNDETECTED: 공역 이탈
+    ESCALATED --> DEPARTED: 강제 조치`
+  }
+];
+
+const descriptions = diagrams.map(d => d.desc);
+
+async function showDiagram(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.getElementById('desc-text').textContent = descriptions[idx];
+  const container = document.getElementById('diagram');
+  container.innerHTML = '';
+  const { svg } = await mermaid.render('mermaid-' + idx + '-' + Date.now(), diagrams[idx].code);
+  container.innerHTML = svg;
+}
+
+showDiagram(0);
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 FROM python:3.10-slim
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-crypto.txt ./
+RUN pip install --no-cache-dir -r requirements-crypto.txt
 COPY crypto_trading/ ./crypto_trading/
 COPY crypto_mcp_server.py .
 EXPOSE 8766

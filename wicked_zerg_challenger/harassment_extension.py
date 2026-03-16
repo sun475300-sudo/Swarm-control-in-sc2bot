@@ -5,8 +5,7 @@ Harassment System Extension for Combat Manager
 Adds intelligent worker harassment with automatic retreat and return mechanics.
 """
 
-# Add this to the end of combat_manager.py
-
+class HarassmentExtensionMixin:
     # ============================================================================
     # HARASSMENT SYSTEM (Worker Targeting + Retreat/Return Logic)
     # ============================================================================

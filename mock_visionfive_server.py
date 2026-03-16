@@ -12,6 +12,7 @@ Features:
 """
 
 import asyncio
+import time
 import base64
 from aiohttp import web
 from io import BytesIO
@@ -38,7 +39,7 @@ def generate_test_image(width=640, height=480):
     d = ImageDraw.Draw(img)
     
     # Add text
-    text = f"Mock Camera Feed\\nTimestamp: {asyncio.get_event_loop().time():.2f}\\nRandom: {random.randint(1000, 9999)}"
+    text = f"Mock Camera Feed\\nTimestamp: {time.time():.2f}\\nRandom: {random.randint(1000, 9999)}"
     d.text((10, 10), text, fill=(255, 255, 0))
     
     # Add random noise pattern

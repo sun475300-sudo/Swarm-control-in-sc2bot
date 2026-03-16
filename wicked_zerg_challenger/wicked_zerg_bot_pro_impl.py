@@ -30,6 +30,7 @@ import time
 import os
 import shutil
 import glob as glob_mod
+from datetime import datetime
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -227,6 +228,18 @@ class WickedZergBotProImpl(BotAI):
                 print(f"[RL_AGENT] Initialization failed: {e}")
                 traceback.print_exc()
 
+        # === Model Hot Reloader (게임 중 모델 자동 갱신) ===
+        self.hot_reloader = None
+        if self.rl_agent is not None:
+            try:
+                from local_training.hot_reload import ModelHotReloader
+                self.hot_reloader = ModelHotReloader(self.rl_agent)
+                print("[HOT_RELOAD] ★ ModelHotReloader initialized (30s interval)")
+            except ImportError:
+                pass
+            except Exception as e:
+                print(f"[HOT_RELOAD] Initialization failed: {e}")
+
         # === Hierarchical RL System initialization ===
         self.hierarchical_rl = None
         try:
@@ -253,6 +266,13 @@ class WickedZergBotProImpl(BotAI):
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
+
+        # === Curriculum Manager (reused across on_end calls) ===
+        try:
+            from local_training.curriculum_manager import CurriculumManager
+            self.curriculum = CurriculumManager()
+        except ImportError:
+            self.curriculum = None
 
         # ★★★ 학습된 데이터 적용 (모든 매니저 초기화 완료 후) ★★★
         try:
@@ -320,14 +340,20 @@ class WickedZergBotProImpl(BotAI):
             if not hasattr(self, '_known_unit_tags'):
                 self._known_unit_tags = {}
             if hasattr(self, 'units'):
+                # Bug fix #3: Prune tags no longer in self.units to prevent unbounded growth
+                current_tags = {unit.tag for unit in self.units}
+                stale_tags = set(self._known_unit_tags.keys()) - current_tags
+                for stale_tag in stale_tags:
+                    del self._known_unit_tags[stale_tag]
+
                 for unit in self.units:
+                    # Bug fix #1: Check BEFORE assignment so new workers are detected
+                    if unit.type_id.name == "DRONE" and unit.tag not in self._known_unit_tags:
+                        self._workers_created = getattr(self, '_workers_created', 0) + 1
                     self._known_unit_tags[unit.tag] = {
                         "type": unit.type_id.name,
                         "position": {"x": round(unit.position.x, 1), "y": round(unit.position.y, 1)},
                     }
-                    # Track workers created
-                    if unit.type_id.name == "DRONE" and unit.tag not in self._known_unit_tags:
-                        self._workers_created = getattr(self, '_workers_created', 0) + 1
 
         # 전략 선택 (한 번만 실행)
         if self.aggressive_strategies and not self.aggressive_strategies._strategy_decided:
@@ -379,7 +405,7 @@ class WickedZergBotProImpl(BotAI):
                 # Print learning summary every 5 games
                 if self.opponent_modeling.current_opponent:
                     model = self.opponent_modeling.models.get(self.opponent_modeling.current_opponent)
-                    if model and model.games_played % 5 == 0:
+                    if model and model.games_played > 0 and model.games_played % 5 == 0:
                         print(f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}")
                         print(f"  Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}")
                         print(f"  Win rate: {model.games_won / model.games_played * 100:.1f}%")
@@ -490,9 +516,12 @@ class WickedZergBotProImpl(BotAI):
 
         # ★★★ 커리큘럼 매니저: 승리/패배 기록 (종족별 추적 포함) ★★★
         try:
-            from local_training.curriculum_manager import CurriculumManager
-
-            curriculum = CurriculumManager()
+            # Bug fix #2: Reuse self.curriculum instead of creating new instance each game
+            curriculum = getattr(self, 'curriculum', None)
+            if curriculum is None:
+                from local_training.curriculum_manager import CurriculumManager
+                curriculum = CurriculumManager()
+                self.curriculum = curriculum
             result_str = str(game_result).upper()
 
             # ★ 상대 종족 감지 ★
@@ -511,8 +540,8 @@ class WickedZergBotProImpl(BotAI):
                     enemy_struct = self.enemy_structures.first
                     if hasattr(enemy_struct, 'race'):
                         opponent_race = str(enemy_struct.race).replace("Race.", "")
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(f"[WickedZergBot] Opponent race detection suppressed: {e}")
 
             if opponent_race:
                 print(f"[RACE] 상대 종족: {opponent_race}")
@@ -671,8 +700,8 @@ class WickedZergBotProImpl(BotAI):
         try:
             if hasattr(self, 'enemy_race') and self.enemy_race:
                 opp_race = str(self.enemy_race).replace("Race.", "")
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.warning(f"[WickedZergBot] Opp race lookup suppressed: {e}")
 
         # Gather stats
         game_duration = getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0
@@ -689,8 +718,8 @@ class WickedZergBotProImpl(BotAI):
             if hasattr(self, 'state') and hasattr(self.state, 'score'):
                 score = self.state.score
                 units_killed = getattr(score, 'killed_value_units', 0)
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.warning(f"[WickedZergBot] Units killed stat suppressed: {e}")
 
         game_result_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -711,7 +740,8 @@ class WickedZergBotProImpl(BotAI):
         logs_dir.mkdir(parents=True, exist_ok=True)
         results_file = logs_dir / "game_results.json"
 
-        # Load existing or create new list
+        # Load existing or create new list (최대 500게임까지만 보관)
+        MAX_GAME_RESULTS = 500
         existing = []
         if results_file.exists():
             try:
@@ -723,6 +753,13 @@ class WickedZergBotProImpl(BotAI):
                 existing = []
 
         existing.append(game_result_entry)
+
+        # 오래된 기록 로테이션
+        if len(existing) > MAX_GAME_RESULTS:
+            archive_file = logs_dir / f"game_results_archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(archive_file, "w", encoding="utf-8") as f:
+                json.dump(existing[:-MAX_GAME_RESULTS], f, indent=2, ensure_ascii=False)
+            existing = existing[-MAX_GAME_RESULTS:]
 
         with open(results_file, "w", encoding="utf-8") as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
@@ -740,7 +777,7 @@ class WickedZergBotProImpl(BotAI):
                 Path.home() / "Documents" / "StarCraft II" / "Replays",
                 Path.home() / "Documents" / "StarCraft II" / "Accounts",
                 Path("replays"),
-                Path("."),
+                # Bug fix #5: Removed Path(".") to avoid recursive CWD search
             ]
 
             recent_replay = None
@@ -771,8 +808,8 @@ class WickedZergBotProImpl(BotAI):
             try:
                 if hasattr(self, 'enemy_race') and self.enemy_race:
                     opp_race = str(self.enemy_race).replace("Race.", "")
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(f"[WickedZergBot] Replay opp race suppressed: {e}")
 
             date_str = time.strftime("%Y-%m-%d")
             timestamp_str = time.strftime("%H%M%S")
@@ -830,7 +867,8 @@ class WickedZergBotProImpl(BotAI):
                     if struct_name == "HATCHERY":
                         self._expansions_built = getattr(self, '_expansions_built', 0) + 1
 
-            except Exception:
+            except Exception as e:
+                self.logger.warning(f"[WickedZergBot] Build order tracking suppressed: {e}")
                 continue
 
     def _save_build_order_log(self) -> None:
@@ -885,8 +923,8 @@ class WickedZergBotProImpl(BotAI):
                 "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
                 "position": unit_info.get("position", None),
             })
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.warning(f"[WickedZergBot] on_unit_destroyed suppressed: {e}")
 
     def _reset_all_managers(self):
         """★ 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) ★"""
@@ -914,6 +952,10 @@ class WickedZergBotProImpl(BotAI):
             if hasattr(self, attr):
                 setattr(self, attr, None)
 
+        # ★ 게임별 로그/통계 리스트 초기화 (#12)
+        self._units_lost = []
+        self._build_order_log = []
+
         # DataCacheManager 초기화
         if hasattr(self, "data_cache") and self.data_cache:
             if hasattr(self.data_cache, "cache"):
@@ -923,8 +965,8 @@ class WickedZergBotProImpl(BotAI):
         try:
             from utils.logger import reset_all_loggers
             reset_all_loggers()
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.warning(f"[WickedZergBot] Logger reset suppressed: {e}")
 
         print("[RESET] All managers reset for next episode")
 

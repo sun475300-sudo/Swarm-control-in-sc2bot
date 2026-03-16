@@ -117,7 +117,7 @@ class AutoReplayLearner:
                 params=params,
                 headers=headers,
                 timeout=30,
-                verify=False  # SSL 인증서 검증 무시 (인증서 오류 해결)
+                verify=True
             )
 
             if response.status_code != 200:
@@ -189,7 +189,7 @@ class AutoReplayLearner:
             }
 
             # 다운로드
-            response = requests.get(download_url, headers=headers, timeout=60, verify=False)  # SSL 검증 무시
+            response = requests.get(download_url, headers=headers, timeout=60, verify=True)
             if response.status_code != 200:
                 print(f"[AUTO_REPLAY] Download failed: {response.status_code}")
                 return None

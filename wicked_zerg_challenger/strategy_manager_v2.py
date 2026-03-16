@@ -156,6 +156,7 @@ class StrategyManagerV2(StrategyManager):
         self._update_win_condition(game_time)
         self._update_build_phase(game_time)
         self._evaluate_strategy_effectiveness()
+        self._apply_intel_driven_strategy()
         self._adjust_resource_priorities()
         self._execute_multi_strategy()
         
@@ -853,6 +854,52 @@ class StrategyManagerV2(StrategyManager):
             return min(1.0, disruption_points / 10.0)
         else:
             return 0.0
+
+    def _apply_intel_driven_strategy(self) -> None:
+        """
+        ★ Phase 2: Intel → Strategy 연동 ★
+
+        IntelManager의 빌드 패턴 분석 결과를 전략에 반영
+        """
+        if not self.blackboard:
+            return
+
+        pattern = self.blackboard.get("enemy_build_pattern", "unknown")
+        confidence = self.blackboard.get("enemy_build_confidence", 0.0)
+
+        if confidence < 0.3 or pattern == "unknown":
+            return
+
+        game_time = getattr(self.bot, "time", 0.0)
+
+        # 1. Rush/Proxy → Force defensive
+        if confidence >= 0.5 and ("rush" in pattern or "proxy" in pattern or "12pool" in pattern):
+            if self.current_mode not in [StrategyMode.EMERGENCY, StrategyMode.DEFENSIVE]:
+                self.current_mode = StrategyMode.DEFENSIVE
+                self.resource_priorities["defense"] = 0.4
+                self.resource_priorities["army"] = 0.4
+                self.resource_priorities["economy"] = 0.15
+                self.resource_priorities["tech"] = 0.05
+                if game_time % 30 < 1:
+                    self.logger.info(f"[INTEL→STRATEGY] Rush detected ({pattern}, {confidence:.0%}): DEFENSIVE mode")
+
+        # 2. Mech → Prioritize anti-mech tech
+        elif confidence >= 0.7 and ("mech" in pattern or "factory" in pattern):
+            self.resource_priorities["tech"] = 0.3
+            self.resource_priorities["army"] = 0.4
+            self.resource_priorities["economy"] = 0.25
+            self.resource_priorities["defense"] = 0.05
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Mech confirmed ({pattern}): Prioritizing Viper/Corruptor tech")
+
+        # 3. Stargate → Anti-air priority
+        elif confidence >= 0.7 and "stargate" in pattern:
+            self.resource_priorities["army"] = 0.5
+            self.resource_priorities["defense"] = 0.2
+            self.resource_priorities["economy"] = 0.2
+            self.resource_priorities["tech"] = 0.1
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Stargate confirmed ({pattern}): Anti-air priority")
 
     # ========== RESOURCE ALLOCATION ==========
 

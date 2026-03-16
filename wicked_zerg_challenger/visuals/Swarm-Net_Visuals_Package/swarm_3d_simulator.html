@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm-Net 3D Airspace Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #030508; overflow: hidden; font-family: 'Inter', sans-serif; }
+
+  #canvas-container {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+  }
+
+  /* ===== HUD Overlay ===== */
+  .hud-overlay {
+    position: fixed; z-index: 10; pointer-events: none;
+  }
+  .hud-interactive { pointer-events: auto; }
+
+  /* Top bar */
+  .hud-top {
+    top: 0; left: 0; right: 0;
+    padding: 16px 24px;
+    background: linear-gradient(to bottom, rgba(3,5,8,0.95), transparent);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .hud-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 700;
+    color: #00e5ff; letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0,229,255,0.4);
+  }
+  .hud-subtitle {
+    font-size: 10px; color: #4a6785;
+    letter-spacing: 2px; margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Stats bar */
+  .hud-stats {
+    display: flex; gap: 16px;
+  }
+  .stat-box {
+    padding: 6px 14px;
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 6px;
+    background: rgba(0,229,255,0.05);
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 9px; color: #4a6785;
+    letter-spacing: 1.5px; font-family: 'JetBrains Mono', monospace;
+  }
+  .stat-value {
+    font-size: 18px; font-weight: 700; color: #00e5ff;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Right panel — Fleet list */
+  .hud-right {
+    top: 70px; right: 16px; bottom: 80px;
+    width: 280px;
+  }
+  .fleet-panel {
+    background: rgba(6,10,19,0.92);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 100%;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(12px);
+  }
+  .fleet-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,229,255,0.1);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .fleet-header-dot { width: 6px; height: 6px; border-radius: 50%; background: #00e5ff; }
+  .fleet-header-text {
+    font-size: 11px; font-weight: 600; color: #00e5ff;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1.5px;
+  }
+  .fleet-list {
+    flex: 1; overflow-y: auto; padding: 8px;
+  }
+  .fleet-list::-webkit-scrollbar { width: 4px; }
+  .fleet-list::-webkit-scrollbar-thumb { background: #1a2d4a; border-radius: 2px; }
+
+  .drone-card {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 6px;
+    background: rgba(255,255,255,0.02);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .drone-card:hover {
+    background: rgba(0,229,255,0.05);
+    border-color: rgba(0,229,255,0.2);
+  }
+  .drone-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .drone-id {
+    font-size: 11px; font-weight: 700; color: #e0e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .drone-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .drone-badge {
+    font-size: 9px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .drone-timer {
+    font-size: 16px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .drone-progress {
+    height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.05);
+    margin-top: 6px; overflow: hidden;
+  }
+  .drone-progress-bar {
+    height: 100%; border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  /* Blink for expired drones */
+  @keyframes blink-card {
+    0%, 100% { opacity: 1; border-color: rgba(239,68,68,0.4); }
+    50% { opacity: 0.5; border-color: rgba(239,68,68,0.8); }
+  }
+  .drone-card-expired {
+    animation: blink-card 0.7s ease-in-out infinite;
+    background: rgba(239,68,68,0.06) !important;
+  }
+
+  /* Warning pulse */
+  @keyframes warning-card {
+    0%, 100% { border-color: rgba(245,158,11,0.2); }
+    50% { border-color: rgba(245,158,11,0.5); }
+  }
+  .drone-card-warning {
+    animation: warning-card 1.5s ease-in-out infinite;
+    background: rgba(245,158,11,0.03) !important;
+  }
+
+  /* Bottom bar */
+  .hud-bottom {
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 24px;
+    background: linear-gradient(to top, rgba(3,5,8,0.95), transparent);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hud-info-text {
+    font-size: 10px; color: #3a5575;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* Comm flow indicator */
+  .comm-flow {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .comm-step {
+    padding: 4px 10px; border-radius: 4px;
+    font-size: 9px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid transparent;
+    transition: all 0.4s;
+  }
+  .comm-step-active {
+    border-color: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .comm-arrow {
+    color: #1a2d4a; font-size: 12px;
+  }
+
+  /* Left panel - radar info */
+  .hud-left {
+    top: 70px; left: 16px;
+    width: 200px;
+  }
+  .radar-info {
+    background: rgba(6,10,19,0.92);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 10px;
+    padding: 14px;
+    backdrop-filter: blur(12px);
+  }
+  .radar-info-title {
+    font-size: 10px; color: #00e5ff;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .radar-info-row {
+    display: flex; justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .radar-info-label { font-size: 10px; color: #4a6785; }
+  .radar-info-value { font-size: 10px; color: #c8d6e5; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+  /* Legend */
+  .legend {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 3px 0;
+  }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .legend-text { font-size: 10px; color: #6a8baa; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- HUD: Top Bar -->
+<div class="hud-overlay hud-top">
+  <div>
+    <div class="hud-title">SWARM-NET AIRSPACE MANAGER</div>
+    <div class="hud-subtitle">3D SIMULATION — REAL-TIME MONITORING</div>
+  </div>
+  <div class="hud-stats">
+    <div class="stat-box">
+      <div class="stat-label">SWARM</div>
+      <div class="stat-value" id="stat-swarm">6</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">TRACKED</div>
+      <div class="stat-value" id="stat-tracked">7</div>
+    </div>
+    <div class="stat-box" style="border-color: rgba(245,158,11,0.3);">
+      <div class="stat-label">WARNINGS</div>
+      <div class="stat-value" id="stat-warn" style="color:#f59e0b;">0</div>
+    </div>
+    <div class="stat-box" style="border-color: rgba(239,68,68,0.3);">
+      <div class="stat-label">ALERTS</div>
+      <div class="stat-value" id="stat-alert" style="color:#ef4444;">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- HUD: Left Panel -->
+<div class="hud-overlay hud-left hud-interactive">
+  <div class="radar-info">
+    <div class="radar-info-title">
+      <div style="width:6px;height:6px;border-radius:50%;background:#00e5ff;"></div>
+      RADAR STATUS
+    </div>
+    <div class="radar-info-row">
+      <span class="radar-info-label">Dome Status</span>
+      <span class="radar-info-value" style="color:#10b981;">ACTIVE</span>
+    </div>
+    <div class="radar-info-row">
+      <span class="radar-info-label">Formation</span>
+      <span class="radar-info-value">Hexagon</span>
+    </div>
+    <div class="radar-info-row">
+      <span class="radar-info-label">Radius</span>
+      <span class="radar-info-value">120m</span>
+    </div>
+    <div class="radar-info-row">
+      <span class="radar-info-label">Altitude</span>
+      <span class="radar-info-value">50~80m</span>
+    </div>
+    <div class="radar-info-row">
+      <span class="radar-info-label">Mesh Links</span>
+      <span class="radar-info-value" id="mesh-links">15</span>
+    </div>
+    <div class="radar-info-row">
+      <span class="radar-info-label">Scan Rate</span>
+      <span class="radar-info-value">10 Hz</span>
+    </div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#00e5ff;"></div>
+        <span class="legend-text">군집 드론 (Swarm Node)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#10b981;"></div>
+        <span class="legend-text">정상 비행 (Normal)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#f59e0b;"></div>
+        <span class="legend-text">시간 임박 (Warning)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#ef4444;"></div>
+        <span class="legend-text">시간 초과 (Expired)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HUD: Right Panel (Fleet List) -->
+<div class="hud-overlay hud-right hud-interactive">
+  <div class="fleet-panel">
+    <div class="fleet-header">
+      <div class="fleet-header-dot"></div>
+      <div class="fleet-header-text">FLEET TRACKER</div>
+    </div>
+    <div class="fleet-list" id="fleet-list"></div>
+  </div>
+</div>
+
+<!-- HUD: Bottom Bar -->
+<div class="hud-overlay hud-bottom">
+  <div class="hud-info-text">
+    Swarm-Net Airspace Manager — Capstone: SC2 Swarm Control → Drone ATC
+  </div>
+  <div class="comm-flow" id="comm-flow"></div>
+  <div class="hud-info-text">
+    <span id="fps-counter">60</span> FPS | Drag to rotate | Scroll to zoom
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===== Configuration =====
+const SWARM_COUNT = 6;
+const SWARM_RADIUS = 12;
+const SWARM_HEIGHT = 6;
+
+const USER_DRONES = [
+  { id: 'UD-1001', name: 'Delivery-A', timeLeft: 540, totalTime: 600, pos: [2, 5, 1], vel: [0.01, 0, 0.005] },
+  { id: 'UD-1002', name: 'Survey-B', timeLeft: 180, totalTime: 900, pos: [-3, 4.5, 3], vel: [-0.005, 0, 0.01] },
+  { id: 'UD-1003', name: 'Medical-C', timeLeft: 90, totalTime: 600, pos: [4, 6, -2], vel: [0.008, 0, -0.006] },
+  { id: 'UD-1004', name: 'Patrol-D', timeLeft: 30, totalTime: 300, pos: [-1, 5.5, -4], vel: [-0.003, 0, -0.008] },
+  { id: 'UD-1005', name: 'Cargo-E', timeLeft: 0, totalTime: 600, pos: [0, 4, 5], vel: [0.006, 0, 0.003] },
+  { id: 'UD-1006', name: 'Recon-F', timeLeft: 420, totalTime: 900, pos: [-5, 5, 0], vel: [-0.007, 0, 0.004] },
+  { id: 'UD-1007', name: 'Express-G', timeLeft: 15, totalTime: 300, pos: [3, 6.5, 3], vel: [0.004, 0, -0.009] },
+];
+
+// ===== Three.js Setup =====
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x030508, 0.015);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(20, 18, 20);
+camera.lookAt(0, 4, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.target.set(0, 4, 0);
+controls.minDistance = 10;
+controls.maxDistance = 50;
+controls.maxPolarAngle = Math.PI / 2.1;
+
+// ===== Lighting =====
+const ambientLight = new THREE.AmbientLight(0x112233, 0.5);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0x4488cc, 0.8);
+dirLight.position.set(10, 20, 10);
+scene.add(dirLight);
+
+const pointLight = new THREE.PointLight(0x00e5ff, 1.5, 40);
+pointLight.position.set(0, 8, 0);
+scene.add(pointLight);
+
+// ===== Ground Grid =====
+const gridHelper = new THREE.GridHelper(60, 60, 0x0a1628, 0x0a1628);
+gridHelper.material.opacity = 0.4;
+gridHelper.material.transparent = true;
+scene.add(gridHelper);
+
+// Ground plane (subtle glow)
+const groundGeo = new THREE.CircleGeometry(30, 64);
+const groundMat = new THREE.MeshBasicMaterial({
+  color: 0x00e5ff, transparent: true, opacity: 0.02, side: THREE.DoubleSide
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = 0.01;
+scene.add(ground);
+
+// ===== Swarm Drones (Hexagonal Formation) =====
+const swarmGroup = new THREE.Group();
+const swarmPositions = [];
+
+for (let i = 0; i < SWARM_COUNT; i++) {
+  const angle = (i / SWARM_COUNT) * Math.PI * 2;
+  const x = Math.cos(angle) * SWARM_RADIUS;
+  const z = Math.sin(angle) * SWARM_RADIUS;
+  const y = SWARM_HEIGHT + Math.sin(angle * 2) * 0.5;
+
+  swarmPositions.push(new THREE.Vector3(x, y, z));
+
+  // Drone body
+  const droneGroup = new THREE.Group();
+
+  // Core sphere
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3, 16, 16),
+    new THREE.MeshPhongMaterial({ color: 0x00e5ff, emissive: 0x004466, emissiveIntensity: 0.8 })
+  );
+  droneGroup.add(core);
+
+  // Arms (cross shape)
+  const armGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8);
+  const armMat = new THREE.MeshPhongMaterial({ color: 0x1a3a5a });
+  for (let a = 0; a < 4; a++) {
+    const arm = new THREE.Mesh(armGeo, armMat);
+    arm.rotation.z = Math.PI / 2;
+    arm.rotation.y = (a / 4) * Math.PI;
+    droneGroup.add(arm);
+  }
+
+  // Propeller discs
+  for (let a = 0; a < 4; a++) {
+    const pAngle = (a / 4) * Math.PI * 2;
+    const disc = new THREE.Mesh(
+      new THREE.RingGeometry(0.15, 0.35, 16),
+      new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
+    );
+    disc.position.set(Math.cos(pAngle) * 0.6, 0.1, Math.sin(pAngle) * 0.6);
+    disc.rotation.x = -Math.PI / 2;
+    droneGroup.add(disc);
+  }
+
+  // Glow sprite
+  const glowTexture = createGlowTexture();
+  const glow = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: glowTexture, color: 0x00e5ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending })
+  );
+  glow.scale.set(3, 3, 1);
+  droneGroup.add(glow);
+
+  droneGroup.position.set(x, y, z);
+  droneGroup.userData = { baseY: y, index: i };
+  swarmGroup.add(droneGroup);
+}
+scene.add(swarmGroup);
+
+// ===== Mesh Network Lines =====
+const meshLinesGroup = new THREE.Group();
+for (let i = 0; i < SWARM_COUNT; i++) {
+  for (let j = i + 1; j < SWARM_COUNT; j++) {
+    const dist = swarmPositions[i].distanceTo(swarmPositions[j]);
+    if (dist < SWARM_RADIUS * 2.2) {
+      const geo = new THREE.BufferGeometry().setFromPoints([swarmPositions[i], swarmPositions[j]]);
+      const mat = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.15 });
+      const line = new THREE.Line(geo, mat);
+      meshLinesGroup.add(line);
+    }
+  }
+}
+scene.add(meshLinesGroup);
+document.getElementById('mesh-links').textContent = meshLinesGroup.children.length;
+
+// ===== Hexagonal Boundary (Radar Dome) =====
+// Bottom hex ring
+const hexShape = new THREE.Shape();
+for (let i = 0; i <= SWARM_COUNT; i++) {
+  const angle = (i / SWARM_COUNT) * Math.PI * 2;
+  const x = Math.cos(angle) * SWARM_RADIUS;
+  const z = Math.sin(angle) * SWARM_RADIUS;
+  if (i === 0) hexShape.moveTo(x, z);
+  else hexShape.lineTo(x, z);
+}
+
+// Bottom boundary line
+const hexPoints = [];
+for (let i = 0; i <= SWARM_COUNT; i++) {
+  const angle = (i / SWARM_COUNT) * Math.PI * 2;
+  hexPoints.push(new THREE.Vector3(
+    Math.cos(angle) * SWARM_RADIUS, 0.1, Math.sin(angle) * SWARM_RADIUS
+  ));
+}
+const hexLineGeo = new THREE.BufferGeometry().setFromPoints(hexPoints);
+const hexLine = new THREE.Line(hexLineGeo,
+  new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.3 })
+);
+scene.add(hexLine);
+
+// Top boundary at drone height
+const hexTopPoints = hexPoints.map(p => new THREE.Vector3(p.x, SWARM_HEIGHT, p.z));
+const hexTopGeo = new THREE.BufferGeometry().setFromPoints(hexTopPoints);
+const hexTopLine = new THREE.Line(hexTopGeo,
+  new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.2 })
+);
+scene.add(hexTopLine);
+
+// Vertical pillars at each vertex
+for (let i = 0; i < SWARM_COUNT; i++) {
+  const angle = (i / SWARM_COUNT) * Math.PI * 2;
+  const x = Math.cos(angle) * SWARM_RADIUS;
+  const z = Math.sin(angle) * SWARM_RADIUS;
+  const pillarGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(x, 0.1, z),
+    new THREE.Vector3(x, SWARM_HEIGHT, z)
+  ]);
+  scene.add(new THREE.Line(pillarGeo,
+    new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.1 })
+  ));
+}
+
+// Semi-transparent dome surface
+const domeGeo = new THREE.CylinderGeometry(SWARM_RADIUS, SWARM_RADIUS, SWARM_HEIGHT, SWARM_COUNT, 1, true);
+const domeMat = new THREE.MeshBasicMaterial({
+  color: 0x00e5ff, transparent: true, opacity: 0.02, side: THREE.DoubleSide,
+  wireframe: false
+});
+const dome = new THREE.Mesh(domeGeo, domeMat);
+dome.position.y = SWARM_HEIGHT / 2;
+scene.add(dome);
+
+// ===== Radar Scan Ring (expanding ring on ground) =====
+const scanRings = [];
+for (let i = 0; i < 3; i++) {
+  const ringGeo = new THREE.RingGeometry(0.5, 0.7, 64);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff, transparent: true, opacity: 0.3, side: THREE.DoubleSide
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.05;
+  ring.userData = { phase: i * (Math.PI * 2 / 3) };
+  scene.add(ring);
+  scanRings.push(ring);
+}
+
+// ===== User Drones =====
+const userDroneObjects = [];
+
+USER_DRONES.forEach(drone => {
+  const group = new THREE.Group();
+
+  const status = getStatus(drone.timeLeft);
+  const color = new THREE.Color(getColor(status));
+
+  // Drone body — slightly different shape from swarm
+  const body = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.25, 0),
+    new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.5 })
+  );
+  group.add(body);
+
+  // Rotor ring
+  const rotor = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4, 0.02, 8, 32),
+    new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.4 })
+  );
+  rotor.rotation.x = Math.PI / 2;
+  group.add(rotor);
+
+  // Glow
+  const glowTexture = createGlowTexture();
+  const glow = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: glowTexture, color: color, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending })
+  );
+  glow.scale.set(2, 2, 1);
+  group.add(glow);
+
+  // Timer label (using sprite)
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  const labelTexture = new THREE.CanvasTexture(canvas);
+  const label = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: labelTexture, transparent: true })
+  );
+  label.scale.set(2.5, 0.6, 1);
+  label.position.y = 1.2;
+  group.add(label);
+
+  group.position.set(...drone.pos);
+
+  group.userData = {
+    droneData: { ...drone },
+    body, rotor, glow, label, labelTexture, canvas, ctx,
+    originalColor: color.clone(),
+  };
+
+  scene.add(group);
+  userDroneObjects.push(group);
+});
+
+// ===== Helper Functions =====
+function getStatus(timeLeft) {
+  if (timeLeft <= 0) return 'expired';
+  if (timeLeft <= 120) return 'warning';
+  return 'normal';
+}
+
+function getColor(status) {
+  switch (status) {
+    case 'normal': return 0x10b981;
+    case 'warning': return 0xf59e0b;
+    case 'expired': return 0xef4444;
+  }
+}
+
+function getColorHex(status) {
+  switch (status) {
+    case 'normal': return '#10b981';
+    case 'warning': return '#f59e0b';
+    case 'expired': return '#ef4444';
+  }
+}
+
+function getStatusLabel(status) {
+  switch (status) {
+    case 'normal': return '정상 비행';
+    case 'warning': return '시간 임박';
+    case 'expired': return '비행 종료';
+  }
+}
+
+function formatTime(sec) {
+  if (sec <= 0) return '00:00';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function createGlowTexture() {
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 128;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(255,255,255,0.6)');
+  grad.addColorStop(0.3, 'rgba(255,255,255,0.2)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+function updateDroneLabel(obj) {
+  const { droneData, ctx, canvas, labelTexture } = obj.userData;
+  const status = getStatus(droneData.timeLeft);
+  const color = getColorHex(status);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = 'rgba(6,10,19,0.85)';
+  ctx.beginPath();
+  ctx.roundRect(4, 4, canvas.width - 8, canvas.height - 8, 8);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(4, 4, canvas.width - 8, canvas.height - 8, 8);
+  ctx.stroke();
+
+  // ID text
+  ctx.font = 'bold 18px JetBrains Mono';
+  ctx.fillStyle = '#e0e8f0';
+  ctx.fillText(droneData.id, 14, 28);
+
+  // Timer text
+  ctx.font = 'bold 22px JetBrains Mono';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'right';
+  ctx.fillText(formatTime(droneData.timeLeft), canvas.width - 14, 28);
+  ctx.textAlign = 'left';
+
+  // Status bar
+  ctx.font = '12px Inter';
+  ctx.fillStyle = color;
+  ctx.fillText(getStatusLabel(status), 14, 48);
+
+  // Progress bar background
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(110, 38, 130, 6);
+  // Progress bar fill
+  const pct = droneData.totalTime > 0 ? (droneData.totalTime - droneData.timeLeft) / droneData.totalTime : 1;
+  ctx.fillStyle = color;
+  ctx.fillRect(110, 38, 130 * pct, 6);
+
+  labelTexture.needsUpdate = true;
+}
+
+// ===== Fleet List UI =====
+function updateFleetList() {
+  const list = document.getElementById('fleet-list');
+  const sorted = [...userDroneObjects].sort((a, b) => a.userData.droneData.timeLeft - b.userData.droneData.timeLeft);
+
+  list.innerHTML = sorted.map(obj => {
+    const d = obj.userData.droneData;
+    const status = getStatus(d.timeLeft);
+    const color = getColorHex(status);
+    const label = getStatusLabel(status);
+    const pct = d.totalTime > 0 ? ((d.totalTime - d.timeLeft) / d.totalTime * 100) : 100;
+    const cardClass = status === 'expired' ? 'drone-card-expired' : status === 'warning' ? 'drone-card-warning' : '';
+
+    return `
+      <div class="drone-card ${cardClass}">
+        <div class="drone-card-header">
+          <div class="drone-id">
+            <div class="drone-status-dot" style="background:${color};${status==='expired'?'box-shadow:0 0 6px '+color+';':''}"></div>
+            ${d.id}
+            <span style="font-size:9px;color:#4a6785;font-weight:400;">${d.name}</span>
+          </div>
+          <div class="drone-badge" style="color:${color};background:${color}18;border:1px solid ${color}40;">
+            ${label}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="drone-timer" style="color:${color};">${formatTime(d.timeLeft)}</div>
+          ${status === 'expired' ? '<span style="font-size:10px;color:#ef4444;font-weight:600;">⚠ 복귀 명령</span>' : ''}
+          ${status === 'warning' ? '<span style="font-size:10px;color:#f59e0b;">⏱ 주의</span>' : ''}
+        </div>
+        <div class="drone-progress">
+          <div class="drone-progress-bar" style="width:${pct}%;background:${color};box-shadow:0 0 4px ${color};"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== Comm Flow UI =====
+let commStep = 0;
+function updateCommFlow() {
+  const steps = [
+    { label: 'SCAN', color: '#00e5ff' },
+    { label: 'PROCESS', color: '#a78bfa' },
+    { label: 'TIMER', color: '#f59e0b' },
+    { label: 'NOTIFY', color: '#10b981' },
+  ];
+  const el = document.getElementById('comm-flow');
+  el.innerHTML = steps.map((s, i) => `
+    <div class="comm-step ${i === commStep ? 'comm-step-active' : ''}"
+         style="color:${i === commStep ? s.color : '#1a2d4a'};border-color:${i === commStep ? s.color : 'transparent'};${i===commStep?'background:'+s.color+'12;text-shadow:0 0 6px '+s.color+';':''}">
+      ${s.label}
+    </div>
+    ${i < steps.length - 1 ? '<span class="comm-arrow">›</span>' : ''}
+  `).join('');
+}
+
+// ===== Stats Update =====
+function updateStats() {
+  let warn = 0, alert = 0;
+  userDroneObjects.forEach(obj => {
+    const s = getStatus(obj.userData.droneData.timeLeft);
+    if (s === 'warning') warn++;
+    if (s === 'expired') alert++;
+  });
+  document.getElementById('stat-warn').textContent = warn;
+  document.getElementById('stat-alert').textContent = alert;
+}
+
+// ===== Timer Countdown =====
+setInterval(() => {
+  userDroneObjects.forEach(obj => {
+    if (obj.userData.droneData.timeLeft > 0) {
+      obj.userData.droneData.timeLeft--;
+    }
+  });
+  updateFleetList();
+  updateStats();
+  commStep = (commStep + 1) % 4;
+  updateCommFlow();
+}, 1000);
+
+// Initial UI render
+updateFleetList();
+updateCommFlow();
+updateStats();
+
+// ===== Animation Loop =====
+const clock = new THREE.Clock();
+let frameCount = 0;
+let lastFpsUpdate = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  const dt = clock.getDelta();
+
+  // FPS counter
+  frameCount++;
+  if (t - lastFpsUpdate >= 1) {
+    document.getElementById('fps-counter').textContent = frameCount;
+    frameCount = 0;
+    lastFpsUpdate = t;
+  }
+
+  // Swarm drone hover animation
+  swarmGroup.children.forEach((drone, i) => {
+    drone.position.y = drone.userData.baseY + Math.sin(t * 1.5 + i * 1.2) * 0.15;
+    // Slow rotation
+    drone.rotation.y = t * 0.3 + i;
+  });
+
+  // Mesh line opacity pulsing
+  meshLinesGroup.children.forEach((line, i) => {
+    line.material.opacity = 0.1 + Math.sin(t * 2 + i * 0.5) * 0.08;
+  });
+
+  // Scan rings animation
+  scanRings.forEach(ring => {
+    const phase = (t * 0.5 + ring.userData.phase) % (Math.PI * 2);
+    const progress = phase / (Math.PI * 2);
+    const scale = 1 + progress * SWARM_RADIUS;
+    ring.scale.set(scale, scale, 1);
+    ring.material.opacity = 0.25 * (1 - progress);
+  });
+
+  // Dome pulse
+  domeMat.opacity = 0.015 + Math.sin(t * 0.8) * 0.01;
+
+  // User drone animation
+  userDroneObjects.forEach(obj => {
+    const data = obj.userData.droneData;
+    const status = getStatus(data.timeLeft);
+    const color = new THREE.Color(getColor(status));
+
+    // Move drone within bounds
+    const pos = obj.position;
+    pos.x += data.vel[0] * 60 * 0.016;
+    pos.z += data.vel[2] * 60 * 0.016;
+
+    // Bounce off hexagonal boundary (simplified circular)
+    const dist = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+    if (dist > SWARM_RADIUS * 0.8) {
+      data.vel[0] *= -1;
+      data.vel[2] *= -1;
+      pos.x += data.vel[0] * 2;
+      pos.z += data.vel[2] * 2;
+    }
+
+    // Hover bob
+    pos.y = data.pos[1] + Math.sin(t * 2 + pos.x) * 0.2;
+
+    // Update colors
+    obj.userData.body.material.color.copy(color);
+    obj.userData.body.material.emissive.copy(color);
+    obj.userData.rotor.material.color.copy(color);
+    obj.userData.glow.material.color.copy(color);
+
+    // Expired blink effect
+    if (status === 'expired') {
+      const blink = Math.sin(t * 8) > 0 ? 1 : 0.15;
+      obj.userData.body.material.opacity = blink;
+      obj.userData.glow.material.opacity = blink * 0.4;
+      obj.userData.rotor.material.opacity = blink * 0.4;
+    } else if (status === 'warning') {
+      const pulse = 0.5 + Math.sin(t * 4) * 0.5;
+      obj.userData.glow.material.opacity = 0.2 + pulse * 0.3;
+    } else {
+      obj.userData.glow.material.opacity = 0.4;
+    }
+
+    // Rotate rotor
+    obj.userData.rotor.rotation.z = t * 8;
+
+    // Update label
+    updateDroneLabel(obj);
+
+    // Make label face camera
+    obj.userData.label.quaternion.copy(camera.quaternion);
+  });
+
+  // Slowly rotate point light for dynamic lighting
+  pointLight.position.x = Math.sin(t * 0.2) * 5;
+  pointLight.position.z = Math.cos(t * 0.2) * 5;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ===== Resize Handler =====
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>

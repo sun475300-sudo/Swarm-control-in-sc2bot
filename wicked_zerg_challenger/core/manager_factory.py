@@ -162,8 +162,8 @@ class ManagerFactory:
             init_kwargs = {}
 
             # 특별한 경우 처리
-            if config.attribute_name == "formation_controller":
-                # FormationController는 bot 인자를 받지 않음
+            if config.attribute_name in ("formation_controller", "blackboard"):
+                # FormationController, Blackboard는 bot 인자를 받지 않음
                 pass
             elif config.attribute_name == "opponent_modeling":
                 # OpponentModeling은 bot과 intel_manager를 인자로 받음

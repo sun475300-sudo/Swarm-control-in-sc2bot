@@ -163,7 +163,8 @@ class GameStateBlackboard:
         # === 캐시된 계산 결과 ===
         self._cache: Dict[str, Any] = {}
         self._cache_timestamps: Dict[str, float] = {}
-        self._cache_ttl: float = 1.0  # 캐시 유효 시간 (초)
+        self._default_cache_ttl: float = 1.0  # 기본 캐시 유효 시간 (초)
+        self._cache_ttls: dict = {}  # Bug fix #6: Per-key TTL storage
         
         # === Generic State (Backward Compatibility) ===
         self.state: Dict[str, Any] = {}
@@ -461,18 +462,20 @@ class GameStateBlackboard:
         """캐시에 값 저장"""
         self._cache[key] = value
         self._cache_timestamps[key] = self.game_time
-        if ttl is not None:
-            self._cache_ttl = ttl
+        # Bug fix #6: Store TTL per-key instead of single global variable
+        self._cache_ttls[key] = ttl if ttl is not None else self._default_cache_ttl
 
     def cache_get(self, key: str, default: Any = None) -> Any:
         """캐시에서 값 조회"""
         if key not in self._cache:
             return default
 
-        # TTL 체크
-        if self.game_time - self._cache_timestamps[key] > self._cache_ttl:
+        # Bug fix #6: Use per-key TTL instead of single global TTL
+        ttl = self._cache_ttls.get(key, self._default_cache_ttl)
+        if self.game_time - self._cache_timestamps[key] > ttl:
             del self._cache[key]
             del self._cache_timestamps[key]
+            self._cache_ttls.pop(key, None)
             return default
 
         return self._cache[key]
@@ -481,6 +484,7 @@ class GameStateBlackboard:
         """캐시 전체 삭제"""
         self._cache.clear()
         self._cache_timestamps.clear()
+        self._cache_ttls.clear()
 
     # ========== 상태 조회 헬퍼 ==========
 

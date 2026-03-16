@@ -26,7 +26,6 @@ except ImportError:
 
 class EarlyDefenseSystem:
     """
-    """
     Early Defense System (0-3 minutes)
 
     Key Features:

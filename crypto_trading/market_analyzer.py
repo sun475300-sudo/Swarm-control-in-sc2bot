@@ -12,13 +12,44 @@ from datetime import datetime
 from typing import Optional
 import pandas as pd
 import numpy as np
+import os
 import requests
 
 from . import config
 from .upbit_client import UpbitClient
 from .strategies import VolatilityBreakout, MACrossover, RSIStrategy, Signal
+from .utils import normalize_ticker
 
 logger = logging.getLogger("crypto.analyzer")
+
+# ── 종합 스코어링 가중치/임계값 (#13) ──
+SCORING_WEIGHTS = {
+    "rsi": 25,
+    "ma": 25,
+    "ma_partial": 15,
+    "volatility": 20,
+    "volume_strong": 15,
+    "volume_down": 10,
+    "volume_mild": 8,
+    "bollinger": 12,
+    "bid_ask": 5,
+    "macd": 15,
+    "trend": 10,
+    "ma20_distance": 8,
+}
+
+SCORING_THRESHOLDS = {
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "volume_surge_pct": 100,
+    "volume_increase_pct": 50,
+    "bid_ask_buy": 0.6,
+    "bid_ask_sell": 0.4,
+    "trend_strength_min": 0.5,
+    "consecutive_candles_min": 3,
+    "ma20_distance_low": -8,
+    "ma20_distance_high": 12,
+}
 
 
 @dataclass
@@ -57,11 +88,15 @@ def _calc_rsi(series: pd.Series, period: int = 14) -> float:
     loss = -delta.where(delta < 0, 0.0)
     avg_gain = gain.rolling(window=period, min_periods=period).mean()
     avg_loss = loss.rolling(window=period, min_periods=period).mean()
-    avg_loss = avg_loss.replace(0, 1e-10)
-    rs = avg_gain / avg_loss
+    last_avg_gain = avg_gain.iloc[-1]
+    last_avg_loss = avg_loss.iloc[-1]
+    if pd.isna(last_avg_gain) or pd.isna(last_avg_loss):
+        return 50.0
+    if last_avg_loss == 0:
+        return 100.0 if last_avg_gain > 0 else 50.0
+    rs = last_avg_gain / last_avg_loss
     rsi = 100 - (100 / (1 + rs))
-    val = rsi.iloc[-1]
-    return float(val) if not pd.isna(val) else 50.0
+    return float(rsi)
 
 
 def _calc_bollinger(df: pd.DataFrame, period: int = 20, std_dev: float = 2.0):
@@ -126,6 +161,39 @@ class MarketAnalyzer:
         # Fear & Greed cache (#31)
         self._fng_cache = None
         self._fng_cache_time = 0
+
+    def _get_usd_krw_rate(self) -> float:
+        """Bug #12 Fix: USD/KRW 환율 조회.
+
+        1) 환경변수 USD_KRW_RATE 우선 사용
+        2) 없으면 무료 API 호출 시도
+        3) 실패 시 기본값 1350 사용
+        """
+        env_rate = os.environ.get("USD_KRW_RATE")
+        if env_rate:
+            try:
+                return float(env_rate)
+            except (ValueError, TypeError):
+                pass
+        # 캐시된 환율이 있으면 사용 (10분)
+        if hasattr(self, '_usd_krw_cache') and self._usd_krw_cache:
+            rate, ts = self._usd_krw_cache
+            if time.time() - ts < 600:
+                return rate
+        # 실시간 환율 조회 시도
+        try:
+            resp = requests.get(
+                "https://open.er-api.com/v6/latest/USD",
+                timeout=5,
+            )
+            if resp.status_code == 200:
+                rate = float(resp.json().get("rates", {}).get("KRW", 0))
+                if rate > 0:
+                    self._usd_krw_cache = (rate, time.time())
+                    return rate
+        except Exception as e:
+            logger.debug(f"USD/KRW exchange rate API call failed, using default: {e}")
+        return 1350.0  # 기본값
 
     def analyze_coin(self, ticker: str, timeframes: list = None) -> CoinAnalysis:
         """개별 코인 종합 분석. timeframes: 분석할 타임프레임 목록 (예: ["day", "minute240"])"""
@@ -216,93 +284,106 @@ class MarketAnalyzer:
         score = 0
         reasons = []
 
-        # RSI 기반 (가중치 25)
-        if result.rsi_14 < 30:
-            s = int((30 - result.rsi_14) / 30 * 25)
+        # RSI 기반
+        w_rsi = SCORING_WEIGHTS["rsi"]
+        if result.rsi_14 < SCORING_THRESHOLDS["rsi_oversold"]:
+            s = int((SCORING_THRESHOLDS["rsi_oversold"] - result.rsi_14) / SCORING_THRESHOLDS["rsi_oversold"] * w_rsi)
             score += s
             reasons.append(f"RSI 과매도({result.rsi_14}) +{s}")
-        elif result.rsi_14 > 70:
-            s = int((result.rsi_14 - 70) / 30 * 25)
+        elif result.rsi_14 > SCORING_THRESHOLDS["rsi_overbought"]:
+            s = int((result.rsi_14 - SCORING_THRESHOLDS["rsi_overbought"]) / (100 - SCORING_THRESHOLDS["rsi_overbought"]) * w_rsi)
             score -= s
             reasons.append(f"RSI 과매수({result.rsi_14}) -{s}")
 
-        # 이동평균 배열 (가중치 25)
+        # 이동평균 배열
+        w_ma = SCORING_WEIGHTS["ma"]
+        w_ma_p = SCORING_WEIGHTS["ma_partial"]
         if result.ma5 > result.ma20:
             if result.ma20 > result.ma60 > 0:
-                score += 25
-                reasons.append("정배열(MA5>MA20>MA60) +25")
+                score += w_ma
+                reasons.append(f"정배열(MA5>MA20>MA60) +{w_ma}")
             else:
-                score += 15
-                reasons.append(f"단기 상승(MA5>MA20) +15")
+                score += w_ma_p
+                reasons.append(f"단기 상승(MA5>MA20) +{w_ma_p}")
         elif result.ma5 < result.ma20:
             if result.ma60 > 0 and result.ma20 < result.ma60:
-                score -= 25
-                reasons.append("역배열(MA5<MA20<MA60) -25")
+                score -= w_ma
+                reasons.append(f"역배열(MA5<MA20<MA60) -{w_ma}")
             else:
-                score -= 15
-                reasons.append(f"단기 하락(MA5<MA20) -15")
+                score -= w_ma_p
+                reasons.append(f"단기 하락(MA5<MA20) -{w_ma_p}")
 
-        # 변동성 돌파 (가중치 20)
+        # 변동성 돌파
+        w_vb = SCORING_WEIGHTS["volatility"]
         if vb_sig.signal == Signal.BUY:
-            s = int(vb_sig.strength * 20)
+            s = int(vb_sig.strength * w_vb)
             score += s
             reasons.append(f"변동성 돌파 +{s}")
 
-        # 거래량 (가중치 15)
-        if result.volume_change_pct > 100:
+        # 거래량
+        w_vol = SCORING_WEIGHTS["volume_strong"]
+        w_vol_d = SCORING_WEIGHTS["volume_down"]
+        w_vol_m = SCORING_WEIGHTS["volume_mild"]
+        if result.volume_change_pct > SCORING_THRESHOLDS["volume_surge_pct"]:
             if result.price_change_24h_pct > 0:
-                score += 15
-                reasons.append(f"거래량 급증+상승 +15")
+                score += w_vol
+                reasons.append(f"거래량 급증+상승 +{w_vol}")
             else:
-                score -= 10
-                reasons.append(f"거래량 급증+하락 -10")
-        elif result.volume_change_pct > 50 and result.price_change_24h_pct > 0:
-            score += 8
-            reasons.append(f"거래량 증가+상승 +8")
+                score -= w_vol_d
+                reasons.append(f"거래량 급증+하락 -{w_vol_d}")
+        elif result.volume_change_pct > SCORING_THRESHOLDS["volume_increase_pct"] and result.price_change_24h_pct > 0:
+            score += w_vol_m
+            reasons.append(f"거래량 증가+상승 +{w_vol_m}")
 
-        # 볼린저 밴드 (가중치 15)
+        # 볼린저 밴드
+        w_bb = SCORING_WEIGHTS["bollinger"]
         if result.current_price < result.bb_lower:
-            score += 12
-            reasons.append(f"볼린저 하단 이탈(과매도) +12")
+            score += w_bb
+            reasons.append(f"볼린저 하단 이탈(과매도) +{w_bb}")
         elif result.current_price > result.bb_upper:
-            score -= 12
-            reasons.append(f"볼린저 상단 돌파(과매수) -12")
+            score -= w_bb
+            reasons.append(f"볼린저 상단 돌파(과매수) -{w_bb}")
 
-        # 호가 비율 (가중치 5)
-        if result.bid_ask_ratio > 0.6:
-            score += 5
-            reasons.append(f"매수세 우위({result.bid_ask_ratio:.1%}) +5")
-        elif result.bid_ask_ratio < 0.4:
-            score -= 5
-            reasons.append(f"매도세 우위({result.bid_ask_ratio:.1%}) -5")
+        # 호가 비율
+        w_ba = SCORING_WEIGHTS["bid_ask"]
+        if result.bid_ask_ratio > SCORING_THRESHOLDS["bid_ask_buy"]:
+            score += w_ba
+            reasons.append(f"매수세 우위({result.bid_ask_ratio:.1%}) +{w_ba}")
+        elif result.bid_ask_ratio < SCORING_THRESHOLDS["bid_ask_sell"]:
+            score -= w_ba
+            reasons.append(f"매도세 우위({result.bid_ask_ratio:.1%}) -{w_ba}")
 
-        # MACD (가중치 15)
+        # MACD
+        w_macd = SCORING_WEIGHTS["macd"]
         if result.macd_histogram > 0 and result.macd > result.macd_signal:
-            s = min(15, int(abs(result.macd_histogram) / max(abs(result.macd_signal), 1) * 15))
+            s = min(w_macd, int(abs(result.macd_histogram) / max(abs(result.macd_signal), 1) * w_macd))
             score += s
             reasons.append(f"MACD 상승({result.macd_histogram:+.0f}) +{s}")
         elif result.macd_histogram < 0 and result.macd < result.macd_signal:
-            s = min(15, int(abs(result.macd_histogram) / max(abs(result.macd_signal), 1) * 15))
+            s = min(w_macd, int(abs(result.macd_histogram) / max(abs(result.macd_signal), 1) * w_macd))
             score -= s
             reasons.append(f"MACD 하락({result.macd_histogram:+.0f}) -{s}")
 
-        # 추세 강도 보너스 (가중치 10) - 강한 추세에서 기존 방향 강화
-        if result.trend_strength > 0.5:
-            trend_bonus = int(result.trend_strength * 10)
-            if result.consecutive_candles >= 3:
+        # 추세 강도 보너스 - 강한 추세에서 기존 방향 강화
+        w_trend = SCORING_WEIGHTS["trend"]
+        cc_min = SCORING_THRESHOLDS["consecutive_candles_min"]
+        if result.trend_strength > SCORING_THRESHOLDS["trend_strength_min"]:
+            trend_bonus = int(result.trend_strength * w_trend)
+            if result.consecutive_candles >= cc_min:
                 score += trend_bonus
                 reasons.append(f"강한 상승추세(연속{result.consecutive_candles}양봉) +{trend_bonus}")
-            elif result.consecutive_candles <= -3:
+            elif result.consecutive_candles <= -cc_min:
                 score -= trend_bonus
                 reasons.append(f"강한 하락추세(연속{abs(result.consecutive_candles)}음봉) -{trend_bonus}")
 
-        # MA20 이격률 반전 신호 (가중치 8) - 과도한 이탈 시 평균회귀 기대
-        if result.price_ma20_distance_pct < -8:
-            score += 8
-            reasons.append(f"MA20 대비 과이격 하방({result.price_ma20_distance_pct:+.1f}%) +8")
-        elif result.price_ma20_distance_pct > 12:
-            score -= 8
-            reasons.append(f"MA20 대비 과이격 상방({result.price_ma20_distance_pct:+.1f}%) -8")
+        # MA20 이격률 반전 신호 - 과도한 이탈 시 평균회귀 기대
+        w_dist = SCORING_WEIGHTS["ma20_distance"]
+        if result.price_ma20_distance_pct < SCORING_THRESHOLDS["ma20_distance_low"]:
+            score += w_dist
+            reasons.append(f"MA20 대비 과이격 하방({result.price_ma20_distance_pct:+.1f}%) +{w_dist}")
+        elif result.price_ma20_distance_pct > SCORING_THRESHOLDS["ma20_distance_high"]:
+            score -= w_dist
+            reasons.append(f"MA20 대비 과이격 상방({result.price_ma20_distance_pct:+.1f}%) -{w_dist}")
 
         # 스코어 클램핑
         result.score = max(-100, min(100, score))
@@ -397,10 +478,15 @@ class MarketAnalyzer:
         all_reasons = []
         base_result = None
 
+        # Bug #13 Fix: 현재가를 루프 밖에서 한 번만 조회
+        shared_current_price = self.client.get_current_price(ticker) or 0
+        if shared_current_price == 0:
+            return self.analyze_coin(ticker)
+
         for tf in timeframes:
             try:
                 result = CoinAnalysis(ticker=ticker)
-                result.current_price = self.client.get_current_price(ticker) or 0
+                result.current_price = shared_current_price
                 if result.current_price == 0:
                     continue
 
@@ -471,16 +557,15 @@ class MarketAnalyzer:
 
     def get_kimchi_premium(self, ticker: str = "KRW-BTC") -> dict:
         """업비트 KRW 가격과 글로벌 USD 추정 가격 비교 (김치 프리미엄)"""
-        ticker = ticker.upper()
-        if not ticker.startswith("KRW-"):
-            ticker = f"KRW-{ticker}"
+        ticker = normalize_ticker(ticker)
         coin = ticker.replace("KRW-", "")
 
         krw_price = self.client.get_current_price(ticker)
         if not krw_price:
             return {"error": f"KRW 시세 조회 실패: {ticker}"}
 
-        usd_krw_rate = 1350  # 기본 환율
+        # Bug #12 Fix: 환경변수 또는 실시간 API로 USD/KRW 환율 조회, 실패 시 기본값 사용
+        usd_krw_rate = self._get_usd_krw_rate()
         usdt_ticker = f"USDT-{coin}"
         global_usd_price = None
 
@@ -489,8 +574,8 @@ class MarketAnalyzer:
             usdt_price = pyupbit.get_current_price(usdt_ticker)
             if usdt_price and usdt_price > 0:
                 global_usd_price = usdt_price
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"pyupbit USDT price lookup failed for {usdt_ticker}: {e}")
 
         if global_usd_price is None:
             # Fallback: Binance public API
@@ -501,8 +586,8 @@ class MarketAnalyzer:
                 )
                 if resp.status_code == 200:
                     global_usd_price = float(resp.json().get("price", 0))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Binance USD price lookup failed for {coin}: {e}")
 
         if not global_usd_price or global_usd_price <= 0:
             return {"error": f"글로벌 USD 시세 조회 실패: {coin}", "krw_price": krw_price}
@@ -584,7 +669,8 @@ class MarketAnalyzer:
                 chg = ((cur - prev) / prev * 100) if prev > 0 else 0
                 changes.append({"ticker": t, "price": cur, "change_pct": round(chg, 2), "volume_krw": vol})
                 total_volume += vol
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to fetch market data for {t}: {e}")
                 continue
 
         rising = [c for c in changes if c["change_pct"] > 0.5]
@@ -619,9 +705,7 @@ class MarketAnalyzer:
         Returns:
             이격도 분석 결과 dict
         """
-        ticker = ticker.upper()
-        if not ticker.startswith("KRW-"):
-            ticker = f"KRW-{ticker}"
+        ticker = normalize_ticker(ticker)
 
         df = self.client.get_ohlcv(ticker, interval="day", count=max(period + 10, 60))
         if df is None or len(df) < period:
@@ -696,9 +780,7 @@ class MarketAnalyzer:
         Returns:
             거래량 프로파일 분석 결과 dict
         """
-        ticker = ticker.upper()
-        if not ticker.startswith("KRW-"):
-            ticker = f"KRW-{ticker}"
+        ticker = normalize_ticker(ticker)
 
         df = self.client.get_ohlcv(ticker, interval="day", count=60)
         if df is None or len(df) < 20:
@@ -791,9 +873,7 @@ class MarketAnalyzer:
         Returns:
             감지된 캔들 패턴 dict
         """
-        ticker = ticker.upper()
-        if not ticker.startswith("KRW-"):
-            ticker = f"KRW-{ticker}"
+        ticker = normalize_ticker(ticker)
 
         df = self.client.get_ohlcv(ticker, interval="day", count=10)
         if df is None or len(df) < 3:
@@ -940,12 +1020,8 @@ class MarketAnalyzer:
         Returns:
             상관관계 분석 결과 dict
         """
-        ticker1 = ticker1.upper()
-        ticker2 = ticker2.upper()
-        if not ticker1.startswith("KRW-"):
-            ticker1 = f"KRW-{ticker1}"
-        if not ticker2.startswith("KRW-"):
-            ticker2 = f"KRW-{ticker2}"
+        ticker1 = normalize_ticker(ticker1)
+        ticker2 = normalize_ticker(ticker2)
 
         df1 = self.client.get_ohlcv(ticker1, interval="day", count=period + 5)
         df2 = self.client.get_ohlcv(ticker2, interval="day", count=period + 5)
@@ -1017,9 +1093,7 @@ class MarketAnalyzer:
 
     def analyze_spread(self, ticker: str) -> dict:
         """호가 스프레드 분석"""
-        ticker = ticker.upper()
-        if not ticker.startswith("KRW-"):
-            ticker = f"KRW-{ticker}"
+        ticker = normalize_ticker(ticker)
 
         ob = self.client.get_orderbook(ticker)
         if not ob:

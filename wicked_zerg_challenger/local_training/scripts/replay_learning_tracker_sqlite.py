@@ -70,7 +70,7 @@ class ReplayLearningTrackerSQLite:
             key_input = f"{replay_path.name}_{stat.st_size}_{stat.st_mtime}"
         except OSError:
             key_input = replay_path.name
-        return hashlib.md5(key_input.encode("utf-8")).hexdigest()
+        return hashlib.sha256(key_input.encode("utf-8")).hexdigest()
 
     def get_learning_phase(self, iteration: int) -> LearningPhase:
         if iteration <= 2:

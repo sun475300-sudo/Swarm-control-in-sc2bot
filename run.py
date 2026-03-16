@@ -116,7 +116,7 @@ def main():
         logging.basicConfig(level=logging.INFO)
         logger.info(f"Starting ladder game: host={host}, GamePort={args.GamePort}, StartPort={args.StartPort}")
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             _run_ladder_game(bot, host, args.GamePort, args.StartPort, args.OpponentId)
         )
         logger.info(f"Final result: {result}")

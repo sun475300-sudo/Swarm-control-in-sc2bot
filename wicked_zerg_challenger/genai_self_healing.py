@@ -31,7 +31,7 @@ class GenAISelfHealing:
     """
 
     def __init__(
-        self, api_key: Optional[str] = None, model_name: str = "gemini-1.5-flash"
+        self, api_key: Optional[str] = None, model_name: str = "gemini-2.5-flash"
     ):
         """
         Args:
@@ -307,11 +307,12 @@ class GenAISelfHealing:
             if combat_efficiency < min_combat_efficiency:
                 continue
 
-            # 효율 점수 추가
-            data["resource_efficiency"] = resource_efficiency
-            data["combat_efficiency"] = combat_efficiency
+            # Bug fix #9: Use a copy to avoid mutating input data
+            data_copy = data.copy()
+            data_copy["resource_efficiency"] = resource_efficiency
+            data_copy["combat_efficiency"] = combat_efficiency
 
-            filtered.append(data)
+            filtered.append(data_copy)
 
         return filtered
 
@@ -489,7 +490,7 @@ def get_self_healing() -> Optional[GenAISelfHealing]:
 
 
 def init_self_healing(
-    api_key: Optional[str] = None, model_name: str = "gemini-1.5-flash"
+    api_key: Optional[str] = None, model_name: str = "gemini-2.5-flash"
 ) -> GenAISelfHealing:
     """
     전역 Self-Healing 인스턴스 초기화

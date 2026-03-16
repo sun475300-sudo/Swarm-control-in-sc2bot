@@ -204,13 +204,12 @@ class BacktestEngine:
                 exec_price = close
 
             if signal == Signal.BUY and position == 0 and capital > 0:
-                # 전액 매수
+                # 전액 매수 — Bug #6 Fix: 슬리피지는 exec_price에만 반영, 이중 적용 제거
                 fee = capital * self.fee_rate
                 invest_amount = capital - fee
-                slippage_cost = invest_amount * self.slippage_rate
-                actual_invest = invest_amount - slippage_cost
-                position = actual_invest / exec_price
+                position = invest_amount / exec_price
                 avg_buy_price = exec_price
+                slippage_cost = invest_amount * self.slippage_rate  # 기록용
                 fee_total += fee
                 slippage_total += slippage_cost
                 capital = 0
@@ -225,11 +224,11 @@ class BacktestEngine:
                 })
 
             elif signal == Signal.SELL and position > 0:
-                # 전량 매도
+                # 전량 매도 — Bug #6 Fix: 슬리피지는 exec_price에만 반영, 이중 적용 제거
                 gross_value = position * exec_price
                 fee = gross_value * self.fee_rate
-                slippage_cost = gross_value * self.slippage_rate
-                capital = gross_value - fee - slippage_cost
+                slippage_cost = gross_value * self.slippage_rate  # 기록용
+                capital = gross_value - fee
                 fee_total += fee
                 slippage_total += slippage_cost
 
@@ -255,7 +254,11 @@ class BacktestEngine:
         # 마지막에 포지션이 남아있으면 현재가로 청산
         if position > 0:
             last_close = float(df["close"].iloc[-1])
-            capital = position * last_close * (1 - self.fee_rate - self.slippage_rate)
+            exec_price = last_close * (1 - self.slippage_rate)
+            gross_value = position * exec_price
+            fee = gross_value * self.fee_rate
+            capital = gross_value - fee
+            fee_total += fee
             position = 0
 
         final_capital = capital if capital > 0 else equity_curve[-1] if equity_curve else self.initial_capital
