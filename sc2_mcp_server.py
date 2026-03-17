@@ -30,6 +30,9 @@ async def read_log_content(filename: str) -> str:
     safe_filename = os.path.basename(filename)
     if safe_filename != filename or ".." in filename:
         return "오류: 잘못된 파일명입니다. 파일 이름만 지정하세요."
+    # H-5: 확장자 화이트리스트 (로그/텍스트 파일만 허용)
+    if not safe_filename.lower().endswith(('.log', '.txt', '.csv')):
+        return "오류: 허용되지 않은 파일 형식입니다. (.log, .txt, .csv만 허용)"
 
     log_dir = os.path.join(SC2_DIR, "logs")
     log_path = os.path.join(log_dir, safe_filename)

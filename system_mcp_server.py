@@ -631,12 +631,20 @@ async def run_program(name: str, args: str = "") -> str:
         executable = _ALLOWED_PROGRAMS[key]
         cmd = [executable]
         if args:
-            # Bug fix #13: Validate args to prevent argument injection
-            _dangerous_args = ["--remote", "--user-data-dir", ">", "<", "|", ";", "&"]
+            # Bug fix #13+H-3: 셸 메타문자 + 위험 인자 차단, shlex로 안전 파싱
+            import re as _re_local
+            if _re_local.search(r'[;&|<>`$(){}\\]', args):
+                return "오류: 보안 차단 - 인자에 셸 메타문자가 포함되어 있습니다."
+            _dangerous_args = ["--remote", "--user-data-dir"]
             for dangerous in _dangerous_args:
-                if dangerous in args:
+                if dangerous in args.lower():
                     return f"오류: 보안 차단 - 인자에 허용되지 않은 패턴 '{dangerous}'이(가) 포함되어 있습니다."
-            cmd.extend(args.split())
+            import shlex as _shlex_local
+            try:
+                parsed_args = _shlex_local.split(args)
+            except ValueError as e:
+                return f"오류: 인자 파싱 실패 - {e}"
+            cmd.extend(parsed_args)
 
         proc = subprocess.Popen(
             cmd,
@@ -867,11 +875,10 @@ async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, t
                 f"허용된 명령어: {allowed_list}"
             )
 
-        # 셸 메타문자를 통한 명령어 체이닝 차단 (전체 명령어 문자열 검사)
-        dangerous_patterns = [";", "&&", "||", "|", "`", "$(", "${", "\n", "\r"]
-        for ch in dangerous_patterns:
-            if ch in command:
-                return f"안전 차단: 명령어에 셸 메타문자 '{ch}'가 포함되어 있습니다. 단일 명령만 허용됩니다."
+        # H-4: 셸 메타문자를 통한 명령어 체이닝 차단 (정규식 기반 강화)
+        import re as _re_ssh
+        if _re_ssh.search(r'[;&|<>`$(){}\\]', command) or "\n" in command or "\r" in command:
+            return "안전 차단: 명령어에 셸 메타문자가 포함되어 있습니다. 단일 명령만 허용됩니다."
 
         # 화이트리스트 매칭된 토큰 이후의 나머지 인자에서도 위험 패턴 검사
         # (예: "systemctl status --help && rm -rf /" 같은 3토큰 이상 우회 차단)

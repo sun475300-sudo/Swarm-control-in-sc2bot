@@ -142,6 +142,19 @@ def _validate_python_code(code: str) -> tuple[bool, str]:
             func = node.func
             if isinstance(func, ast.Name) and func.id in ("eval", "exec", "compile", "__import__"):
                 return False, f"Built-in '{func.id}()' is blocked for security"
+            # Block getattr(__builtins__, ...) style bypass
+            if isinstance(func, ast.Name) and func.id == "getattr":
+                if node.args and isinstance(node.args[0], ast.Name) and node.args[0].id in ("__builtins__", "builtins"):
+                    return False, f"getattr() on '{node.args[0].id}' is blocked for security"
+        elif isinstance(node, ast.Attribute):
+            # Block dunder attribute access (sandbox bypass vectors)
+            _BLOCKED_ATTRS = {
+                "__import__", "__builtins__", "__class__", "__subclasses__",
+                "__globals__", "__code__", "__getattribute__", "__bases__",
+                "__mro__", "__dict__",
+            }
+            if node.attr in _BLOCKED_ATTRS:
+                return False, f"Attribute access '{node.attr}' is blocked for security"
 
     return True, "OK"
 

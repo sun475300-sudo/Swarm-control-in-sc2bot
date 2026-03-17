@@ -1010,12 +1010,15 @@ class SecretManager:
         return hashlib.sha256(machine_info.encode()).hexdigest()
 
     def _init_fernet(self):
-        """Bug #7 Fix: Fernet 대칭 암호화 초기화. cryptography 미설치 시 base64 폴백."""
+        """Bug #7 Fix + H-7: Fernet 대칭 암호화 초기화. PBKDF2 키 파생 강화."""
         try:
             from cryptography.fernet import Fernet
-            # 마스터 키에서 Fernet 호환 키 파생 (32바이트 -> url-safe base64)
+            # H-7: PBKDF2로 강화된 키 파생 (salt + 100k iterations)
             import hashlib
-            key_hash = hashlib.sha256(self._master_key.encode("utf-8")).digest()
+            _salt = hashlib.sha256(b"JARVIS_FERNET_SALT_v1").digest()[:16]
+            key_hash = hashlib.pbkdf2_hmac(
+                "sha256", self._master_key.encode("utf-8"), _salt, 100_000
+            )
             fernet_key = base64.urlsafe_b64encode(key_hash)
             self._fernet = Fernet(fernet_key)
             self._use_fernet = True
@@ -1035,9 +1038,20 @@ class SecretManager:
         return base64.b64encode(value.encode("utf-8")).decode("utf-8")
 
     def _decrypt_value(self, encrypted: str) -> str:
-        """값 복호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""
+        """값 복호화 — Bug #7 Fix + H-7: Fernet 사용, 구 키 호환 폴백"""
         if self._use_fernet and self._fernet:
-            return self._fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
+            try:
+                return self._fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
+            except Exception:
+                # H-7: 구 SHA-256 키로 암호화된 데이터 복호화 시도 (마이그레이션 호환)
+                try:
+                    import hashlib as _hlib
+                    from cryptography.fernet import Fernet as _Fernet
+                    old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()
+                    old_fernet = _Fernet(base64.urlsafe_b64encode(old_key))
+                    return old_fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
+                except Exception:
+                    raise
         return base64.b64decode(encrypted.encode("utf-8")).decode("utf-8")
 
     def set_secret(self, name: str, value: str):

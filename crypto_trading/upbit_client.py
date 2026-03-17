@@ -40,7 +40,9 @@ class UpbitClient:
                 if self._upbit is None:  # double-check locking
                     if not self.access_key or not self.secret_key:
                         raise ValueError("Upbit API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
-                    self._upbit = Upbit(self.access_key, self.secret_key)
+                    # H-8: 완전히 생성된 후 할당 (GIL 릴리스 방어)
+                    client = Upbit(self.access_key, self.secret_key)
+                    self._upbit = client
         return self._upbit
 
     def _throttle(self):

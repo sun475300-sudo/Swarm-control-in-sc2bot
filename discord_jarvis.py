@@ -747,7 +747,7 @@ class JarvisBot(commands.Bot):
         self._daily_briefing = DailyBriefing() if DailyBriefing else None
         self._processed_messages: set = set()  # 중복 메시지 처리 방지
         self._processed_messages_order: deque = deque(maxlen=200)  # FIFO 순서 추적 (O(1) popleft)
-        self._agent_locks: set = set()  # 동일 메시지 동시 에이전트 실행 방지
+        self._agent_locks: Dict[str, asyncio.Lock] = {}  # 동일 메시지 동시 에이전트 실행 방지
 
         # ★ Agent Router (도메인 기반 메시지 라우팅) ★
         try:
@@ -2735,12 +2735,15 @@ class JarvisBot(commands.Bot):
     # ── Agent Logic ──
     async def _process_agent_request(self, message: discord.Message, prompt: str):
         """에이전트 루프: 프롬프트 → AI 응답 → 도구 호출 → 결과 반영을 반복."""
-        # 동일 메시지에 대한 동시 실행 방지
+        # 동일 메시지에 대한 동시 실행 방지 (asyncio Lock dict)
         _key = f"agent_{message.id}"
-        if _key in self._agent_locks:
+        if _key not in self._agent_locks:
+            self._agent_locks[_key] = asyncio.Lock()
+        _agent_lock = self._agent_locks[_key]
+        if _agent_lock.locked():
             logger.warning(f"[AGENT] Duplicate agent request ignored for message {message.id}")
             return
-        self._agent_locks.add(_key)
+        await _agent_lock.acquire()
         try:
             async with message.channel.typing():
                 # 0단계: 첨부파일 읽기 (로컬 응답/AI 모두에서 활용)
@@ -2889,7 +2892,8 @@ class JarvisBot(commands.Bot):
             logger.error(f"Agent Error: {e}", exc_info=True)
             await message.reply("❌ 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
         finally:
-            self._agent_locks.discard(_key)
+            _agent_lock.release()
+            self._agent_locks.pop(_key, None)
             if create_thread_for_long_conversation and not isinstance(message.channel, discord.Thread):
                 try:
                     await create_thread_for_long_conversation(message)
@@ -3439,26 +3443,27 @@ class JarvisBot(commands.Bot):
                 parts = args.split("|", 1) if "|" in args else [args.strip(), ""]
                 coin_arg = parts[0].strip().upper()
                 value_arg = parts[1].strip() if len(parts) > 1 else ""
-                if coin_arg == "LIST":
-                    user_alerts = _price_alert_store.get(user_id, {})
-                    if not user_alerts:
-                        return "등록된 가격 알림이 없습니다."
-                    lines = [f"{t.replace('KRW-','')}: {p:,.0f} KRW" for t, p in user_alerts.items()]
-                    return "현재 가격 알림:\n" + "\n".join(lines)
-                ticker = f"KRW-{coin_arg}" if not coin_arg.startswith("KRW-") else coin_arg
-                if value_arg.lower() == "clear":
-                    if user_id in _price_alert_store and ticker in _price_alert_store[user_id]:
-                        del _price_alert_store[user_id][ticker]
-                        if not _price_alert_store[user_id]:
-                            del _price_alert_store[user_id]
-                        return f"{coin_arg} 가격 알림이 해제되었습니다."
-                    return f"{coin_arg} 가격 알림이 없습니다."
-                try:
-                    target_price = float(value_arg.replace(",", ""))
-                except ValueError:
-                    return "형식: TOOL:price_alert:BTC|60000000 (설정) / list (목록) / BTC|clear (해제)"
-                _price_alert_store.setdefault(user_id, {})[ticker] = target_price
-                return f"{coin_arg} 가격 알림 설정: {target_price:,.0f} KRW 도달 시 DM 알림"
+                async with _price_alert_lock:
+                    if coin_arg == "LIST":
+                        user_alerts = _price_alert_store.get(user_id, {})
+                        if not user_alerts:
+                            return "등록된 가격 알림이 없습니다."
+                        lines = [f"{t.replace('KRW-','')}: {p:,.0f} KRW" for t, p in user_alerts.items()]
+                        return "현재 가격 알림:\n" + "\n".join(lines)
+                    ticker = f"KRW-{coin_arg}" if not coin_arg.startswith("KRW-") else coin_arg
+                    if value_arg.lower() == "clear":
+                        if user_id in _price_alert_store and ticker in _price_alert_store[user_id]:
+                            del _price_alert_store[user_id][ticker]
+                            if not _price_alert_store[user_id]:
+                                del _price_alert_store[user_id]
+                            return f"{coin_arg} 가격 알림이 해제되었습니다."
+                        return f"{coin_arg} 가격 알림이 없습니다."
+                    try:
+                        target_price = float(value_arg.replace(",", ""))
+                    except ValueError:
+                        return "형식: TOOL:price_alert:BTC|60000000 (설정) / list (목록) / BTC|clear (해제)"
+                    _price_alert_store.setdefault(user_id, {})[ticker] = target_price
+                    return f"{coin_arg} 가격 알림 설정: {target_price:,.0f} KRW 도달 시 DM 알림"
             elif name == "run_program":
                 if system_mcp_server:
                     return await system_mcp_server.run_program(args.strip())
@@ -4155,6 +4160,7 @@ async def before_portfolio_monitor(bot):
 # ── 가격 알림 체크 (1분 주기) ──
 # 구조: {user_id: {"KRW-BTC": 60000000, "KRW-ETH": 5000000}}
 _price_alert_store: Dict[str, Dict[str, float]] = {}
+_price_alert_lock = asyncio.Lock()
 
 @tasks.loop(minutes=1)
 async def price_alert_check_task(bot):
@@ -4162,23 +4168,25 @@ async def price_alert_check_task(bot):
     if not _price_alert_store or not upbit_client:
         return
     try:
-        all_tickers = set()
-        for alerts in _price_alert_store.values():
-            all_tickers.update(alerts.keys())
-        if not all_tickers:
-            return
+        async with _price_alert_lock:
+            all_tickers = set()
+            for alerts in _price_alert_store.values():
+                all_tickers.update(alerts.keys())
+            if not all_tickers:
+                return
         prices = await asyncio.to_thread(upbit_client.get_prices, list(all_tickers))
         if not prices:
             return
-        triggered = []  # (user_id, ticker, target, current)
-        for user_id, alerts in list(_price_alert_store.items()):
-            for ticker, target_price in list(alerts.items()):
-                current = prices.get(ticker)
-                if current and current >= target_price:
-                    triggered.append((user_id, ticker, target_price, current))
-                    del alerts[ticker]
-            if not alerts:
-                del _price_alert_store[user_id]
+        async with _price_alert_lock:
+            triggered = []  # (user_id, ticker, target, current)
+            for user_id, alerts in list(_price_alert_store.items()):
+                for ticker, target_price in list(alerts.items()):
+                    current = prices.get(ticker)
+                    if current and current >= target_price:
+                        triggered.append((user_id, ticker, target_price, current))
+                        del alerts[ticker]
+                if not alerts:
+                    del _price_alert_store[user_id]
         for user_id, ticker, target, current in triggered:
             try:
                 user = await bot.fetch_user(int(user_id))

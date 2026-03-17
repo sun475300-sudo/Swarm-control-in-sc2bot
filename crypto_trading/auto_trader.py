@@ -729,8 +729,8 @@ class AutoTrader:
         if not self._cycle_lock.acquire(blocking=False):
             logger.warning("이전 사이클이 아직 실행 중 — 스킵")
             return {"skipped": True, "reason": "이전 사이클 실행 중"}
-        # 사이클 시작 시 DRY_RUN 스냅샷 — 중간에 모드가 바뀌어도 이 사이클은 일관성 유지
-        self._cycle_dry_run = config.DRY_RUN
+        # H-6: 사이클 시작 시 DRY_RUN 스냅샷 (명시적 bool 캐스트로 TOCTOU 방어)
+        self._cycle_dry_run = bool(config.DRY_RUN)
         try:
             if self.smart_mode:
                 return self._run_smart_cycle()
