@@ -11,7 +11,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
 import pandas as pd
 
@@ -185,7 +185,8 @@ class AutoTrader:
 
     # ─────────── #35 DCA (Dollar Cost Averaging) ───────────
 
-    def start_dca(self, ticker: str, total_amount: float, num_splits: int, interval_minutes: int) -> dict:
+    def start_dca(self, ticker: str, total_amount: float, num_splits: int, interval_minutes: int,
+                  on_complete: Optional[Callable] = None) -> dict:
         """분할 매수(DCA) 시작"""
         ticker = normalize_ticker(ticker)
         split_amount = total_amount / num_splits
@@ -240,6 +241,12 @@ class AutoTrader:
             with self._dca_lock:
                 task["status"] = "completed"
             logger.info(f"DCA 완료: {task['ticker']} {task['completed_splits']}/{task['num_splits']} splits")
+            # P3-7: 완료/실패 콜백 호출
+            if on_complete:
+                try:
+                    on_complete(task)
+                except Exception as cb_err:
+                    logger.error(f"DCA 콜백 오류: {cb_err}")
 
         t = threading.Thread(target=_run_dca, args=(dca_task,), daemon=True)
         t.start()

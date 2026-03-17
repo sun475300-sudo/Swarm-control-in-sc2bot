@@ -145,8 +145,10 @@ class DailyBriefing:
                         if isinstance(trades, list):
                             cnt = sum(1 for t in trades if isinstance(t, dict) and t.get("timestamp", "").startswith(today))
                             lines.append(f"  오늘 거래: {cnt}건")
-                    except json.JSONDecodeError:
-                        pass
+                    except json.JSONDecodeError as je:
+                        # P3-9: 파싱 실패 경고 — 브리핑에 표시
+                        logger.warning(f"거래 로그 파싱 실패: {je}")
+                        lines.append("  오늘 거래: ⚠️ 데이터 손상")
 
             return "\n".join(lines)
         except Exception as e:

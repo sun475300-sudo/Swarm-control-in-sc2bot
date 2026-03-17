@@ -40,7 +40,7 @@ class UpbitClient:
 
         self._upbit: Optional[Upbit] = None
         self._last_request_time = 0.0
-        self._min_interval = 0.12  # rate-limit 보호 (초)
+        self._min_interval = config.UPBIT_MIN_API_INTERVAL  # P3-4: config에서 로드
         self._lock = threading.Lock()  # thread-safe 보호
 
     def _get_upbit(self) -> Upbit:

@@ -36,6 +36,7 @@ DEFAULT_TAKE_PROFIT_PCT = 10.0          # 기본 익절 (%)
 
 # ── 자동매매 설정 ──
 AUTO_TRADE_INTERVAL = 60                # 자동매매 체크 간격 (초)
+UPBIT_MIN_API_INTERVAL = 0.12           # Upbit API rate-limit 보호 간격 (초) (P3-4)
 DRY_RUN = True                          # True = 모의매매 (안전 기본값)
 
 # ── 포트폴리오 추적 ──

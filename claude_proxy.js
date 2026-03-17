@@ -323,6 +323,7 @@ function updateUserProfile(userId, updates) {
 
 const MAX_HISTORY_PER_USER = parseInt(process.env.MAX_HISTORY || '5');
 const MAX_HISTORY_USERS = 100;
+const MAX_IN_MEMORY_CONVERSATIONS = 10000; // P3-5: 인메모리 DB 최대 저장 건수
 const conversationMemory = new Map(); // userId → [{role, content}]
 
 function getConversationHistory(userId) {
@@ -410,13 +411,21 @@ function dbSaveMessage(userId, role, content) {
                 content,
                 timestamp: new Date().toISOString(),
             });
-            // 메모리 제한 (최대 10000건)
-            if (inMemoryDbStore.length > 10000) {
-                inMemoryDbStore.splice(0, inMemoryDbStore.length - 10000);
+            // P3-5: 메모리 제한 (상수화)
+            if (inMemoryDbStore.length > MAX_IN_MEMORY_CONVERSATIONS) {
+                inMemoryDbStore.splice(0, inMemoryDbStore.length - MAX_IN_MEMORY_CONVERSATIONS);
             }
         }
     } catch (e) {
-        console.error('DB 저장 오류:', e.message);
+        // P3-8: DB 에러 분류
+        const code = e.code || '';
+        if (code === 'SQLITE_BUSY') {
+            console.warn('DB 저장 지연 (SQLITE_BUSY):', e.message);
+        } else if (code === 'SQLITE_FULL') {
+            console.error('DB 저장 실패 — 디스크 공간 부족 (SQLITE_FULL):', e.message);
+        } else {
+            console.error('DB 저장 오류:', e.message);
+        }
     }
 }
 
@@ -435,7 +444,9 @@ function dbGetHistory(userId, limit = 40) {
                 .slice(-limit);
         }
     } catch (e) {
-        console.error('DB 조회 오류:', e.message);
+        // P3-8: DB 에러 분류
+        if ((e.code || '') === 'SQLITE_BUSY') console.warn('DB 조회 지연 (SQLITE_BUSY):', e.message);
+        else console.error('DB 조회 오류:', e.message);
         return [];
     }
 }
@@ -452,7 +463,9 @@ function dbGetRecentConversations(limit = 50) {
             return inMemoryDbStore.slice(-limit);
         }
     } catch (e) {
-        console.error('DB 조회 오류:', e.message);
+        // P3-8: DB 에러 분류
+        if ((e.code || '') === 'SQLITE_BUSY') console.warn('DB 대시보드 조회 지연:', e.message);
+        else console.error('DB 대시보드 조회 오류:', e.message);
         return [];
     }
 }
@@ -861,7 +874,8 @@ function filterToolsForMessage(message) {
 // ═══════════════════════════════════════════════
 
 async function safeFetch(url, options = {}) {
-    const timeout = options.timeout || TOOL_TIMEOUTS.default;
+    // P3-3: timeout 범위 제한 (1초~60초)
+    const timeout = Math.max(1000, Math.min(options.timeout || TOOL_TIMEOUTS.default, 60000));
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {

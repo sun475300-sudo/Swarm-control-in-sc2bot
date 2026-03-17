@@ -42,12 +42,14 @@ def _is_command_allowed(command: str) -> tuple[bool, str]:
             return False, f"Blocked command pattern: '{pattern}'"
 
     # Extract the base command (first word)
-    base_cmd = command.strip().split()[0] if command.strip() else ""
-    # Remove path prefixes
-    base_cmd = base_cmd.replace("\\", "/").split("/")[-1]
+    first_word = command.strip().split()[0] if command.strip() else ""
+    # P3-2: 경로 트래버설 차단
+    if ".." in first_word:
+        return False, f"Path traversal detected in command: '{first_word}'"
+    # 정규화된 basename 추출 (os.path.basename 사용)
+    base_cmd = os.path.basename(first_word)
     # Remove extension
-    if "." in base_cmd:
-        base_cmd = base_cmd.rsplit(".", 1)[0]
+    base_cmd = os.path.splitext(base_cmd)[0] if "." in base_cmd else base_cmd
 
     if base_cmd.lower() not in {c.lower() for c in _ALLOWED_COMMANDS}:
         return False, f"Command '{base_cmd}' is not in the allowed list"

@@ -121,7 +121,12 @@ async def capture_screenshot(
         return f"[{info} 캡처 완료] data:image/jpeg;base64,{img_str}"
     except ImportError:
         return "오류: pyautogui 또는 Pillow가 설치되어 있지 않습니다."
+    except PermissionError:
+        return "오류: 스크린샷 권한이 거부되었습니다 (OS 보안 설정 확인 필요)"
+    except ValueError as ve:
+        return f"오류: 잘못된 좌표/크기 값: {ve}"
     except Exception as e:
+        logger.error(f"스크린샷 캡처 실패: {e}", exc_info=True)
         return f"스크린샷 캡처 실패: {e}"
 
 @mcp.tool()

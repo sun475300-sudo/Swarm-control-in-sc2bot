@@ -302,6 +302,11 @@ def _detect_language_direction(text: str) -> tuple:
     return ("ko", "en")  # 비한국어 텍스트 → 한국어로 번역
 
 
+# ── 보안: SSH 호스트 화이트리스트 (P3-1) ──
+_SSH_ALLOWED_HOSTS = frozenset(
+    h.strip().lower() for h in os.environ.get("SSH_ALLOWED_HOSTS", "").split(",") if h.strip()
+)
+
 # ── 보안: SSH 화이트리스트 (Fix 2-1) ──
 _SSH_ALLOWED_COMMANDS = frozenset({
     "ls", "cat", "head", "tail", "grep", "find", "df", "du",
@@ -2085,6 +2090,16 @@ class JarvisBot(commands.Bot):
                     if not host:
                         await message.reply("SSH 접속 정보를 지정하세요.\n예: `ssh user@host ls -la`")
                         return True
+                    # P3-1: SSH 호스트 화이트리스트 검증
+                    if _SSH_ALLOWED_HOSTS and host.lower() not in _SSH_ALLOWED_HOSTS:
+                        await message.reply(
+                            f"허용되지 않은 SSH 호스트입니다: `{host}`\n"
+                            f"허용 호스트: `{'`, `'.join(sorted(_SSH_ALLOWED_HOSTS))}`"
+                        )
+                        return True
+                    if not _SSH_ALLOWED_HOSTS:
+                        await message.reply("SSH_ALLOWED_HOSTS 환경변수가 설정되지 않았습니다. SSH 접속이 비활성화되어 있습니다.")
+                        return True
                     command = " ".join(cmd_parts) if cmd_parts else "echo connected"
                     # SSH 명령어 화이트리스트 검증 (Fix 2-1)
                     if not _is_ssh_command_safe(command):
@@ -2541,8 +2556,9 @@ class JarvisBot(commands.Bot):
                                 except asyncio.CancelledError:
                                     break
                                 except Exception as e:
-                                    logger.error(f"CCTV loop error: {e}")
                                     _consecutive_failures += 1
+                                    # P3-10: 매 실패마다 개별 로깅
+                                    logger.warning(f"CCTV 캡처 실패 ({_consecutive_failures}/5): {e}")
                                     if _consecutive_failures >= 5:
                                         await self._cctv_channel.send("CCTV 5회 연속 실패 — 자동 중단합니다. `!cctv start`로 재시작하세요.")
                                         break
@@ -2612,6 +2628,9 @@ class JarvisBot(commands.Bot):
                     return f"\n\n--- 📊 첨부파일: {fname} ---\n{text}\n--- 끝 ---\n"
                 except ImportError:
                     return f"\n[첨부파일: {fname} - openpyxl 미설치]"
+                except Exception as e:
+                    logger.warning(f"Excel 파일 파싱 실패 ({fname}): {e}")
+                    return f"\n[첨부파일: {fname} - Excel 파싱 오류: {e}]"
 
             # ── CSV ──
             elif ext == ".csv":
@@ -2653,6 +2672,9 @@ class JarvisBot(commands.Bot):
                     return f"\n\n--- 📝 첨부파일: {fname} ---\n{text}\n--- 끝 ---\n"
                 except ImportError:
                     return f"\n[첨부파일: {fname} - python-docx 미설치]"
+                except Exception as e:
+                    logger.warning(f"Word 파일 파싱 실패 ({fname}): {e}")
+                    return f"\n[첨부파일: {fname} - Word 파싱 오류: {e}]"
 
             # ── PowerPoint (.pptx) ──
             elif ext == ".pptx":
@@ -2683,6 +2705,9 @@ class JarvisBot(commands.Bot):
                     return f"\n\n--- 📊 첨부파일: {fname} ---\n{text}\n--- 끝 ---\n"
                 except ImportError:
                     return f"\n[첨부파일: {fname} - python-pptx 미설치]"
+                except Exception as e:
+                    logger.warning(f"PPT 파일 파싱 실패 ({fname}): {e}")
+                    return f"\n[첨부파일: {fname} - PPT 파싱 오류: {e}]"
 
             # ── JSON ──
             elif ext == ".json":
