@@ -68,3 +68,30 @@ WATCHLIST_PRESETS = {
     "meme": ["KRW-DOGE", "KRW-SHIB"],
     "default": list(DEFAULT_WATCH_LIST),
 }
+
+
+# ── P2-19: 런타임 설정 검증 ──
+def validate_config():
+    """설정값 범위 검증 — import 시 자동 호출"""
+    import logging as _log
+    _logger = _log.getLogger("crypto.config")
+    errors = []
+    if MIN_ORDER_AMOUNT < 5000:
+        errors.append(f"MIN_ORDER_AMOUNT({MIN_ORDER_AMOUNT}) < 5000")
+    if not (0 < MAX_SINGLE_ORDER_RATIO <= 1):
+        errors.append(f"MAX_SINGLE_ORDER_RATIO({MAX_SINGLE_ORDER_RATIO}) 범위 초과 (0~1)")
+    if not (0 < MAX_TOTAL_INVESTMENT_RATIO <= 1):
+        errors.append(f"MAX_TOTAL_INVESTMENT_RATIO({MAX_TOTAL_INVESTMENT_RATIO}) 범위 초과 (0~1)")
+    if DEFAULT_STOP_LOSS_PCT >= 0:
+        errors.append(f"DEFAULT_STOP_LOSS_PCT({DEFAULT_STOP_LOSS_PCT})는 음수여야 합니다")
+    if DEFAULT_TAKE_PROFIT_PCT <= 0:
+        errors.append(f"DEFAULT_TAKE_PROFIT_PCT({DEFAULT_TAKE_PROFIT_PCT})는 양수여야 합니다")
+    if AUTO_TRADE_INTERVAL < 10:
+        errors.append(f"AUTO_TRADE_INTERVAL({AUTO_TRADE_INTERVAL}) < 10초")
+    if errors:
+        for e in errors:
+            _logger.warning(f"설정 검증 실패: {e}")
+    return errors
+
+
+validate_config()

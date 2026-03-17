@@ -452,8 +452,8 @@ def _track_model_result(model: str, success: bool, elapsed_ms: float = 0):
     if _global_model_selector:
         try:
             _global_model_selector.record_result(model, success, elapsed_ms)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"ModelSelector 메트릭 기록 실패: {e}")
 
 def _cleanup_rate_limits():
     """만료된 레이트 리밋 엔트리 정리 (메모리 누수 방지)"""
@@ -680,8 +680,8 @@ class TradeApprovalView(discord.ui.View):
                 color=discord.Color.greyple(),
             )
             await self.message.edit(embed=embed, view=self)
-        except Exception:
-            pass  # 메시지가 삭제된 경우 무시
+        except Exception as e:
+            logger.debug(f"거래 타임아웃 메시지 편집 실패 (삭제됨?): {e}")
 
 
 # ── Voice Control UI ──
@@ -716,8 +716,8 @@ class VoiceControlView(discord.ui.View):
             item.disabled = True
         try:
             await self.message.edit(view=self)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"음성 컨트롤 타임아웃 메시지 편집 실패: {e}")
 
 
 # ── Bot Class ──
@@ -825,6 +825,8 @@ class JarvisBot(commands.Bot):
             portfolio_monitor_task.start(self)
         if not price_alert_check_task.is_running():
             price_alert_check_task.start(self)
+        if not rate_limit_cleanup_task.is_running():
+            rate_limit_cleanup_task.start()
 
         # Setup advanced features
         if ADVANCED_AVAILABLE and setup_advanced_features:
@@ -913,10 +915,13 @@ class JarvisBot(commands.Bot):
         if context.get("type") == "price_single":
             tickers = [context.get("ticker", "KRW-BTC")]
         embed = discord.Embed(title="\U0001F50D 상세 정보", color=discord.Color.teal(), timestamp=datetime.now(timezone.utc))
-        for ticker in tickers[:5]:
+        # P2-5: batch 가격 조회로 N+1 API 호출 최적화
+        batch_tickers = tickers[:5]
+        batch_prices = await asyncio.to_thread(upbit_client.get_prices, batch_tickers) if batch_tickers else {}
+        for ticker in batch_tickers:
             coin = ticker.replace("KRW-", "")
             try:
-                price = await asyncio.to_thread(upbit_client.get_current_price, ticker)
+                price = batch_prices.get(ticker)
                 detail = f"현재가: **{price:,.0f}** KRW" if price else "조회 실패"
                 orderbook = await asyncio.to_thread(upbit_client.get_orderbook, ticker)
                 if orderbook and isinstance(orderbook, list) and len(orderbook) > 0:
@@ -3462,6 +3467,15 @@ class JarvisBot(commands.Bot):
                         target_price = float(value_arg.replace(",", ""))
                     except ValueError:
                         return "형식: TOOL:price_alert:BTC|60000000 (설정) / list (목록) / BTC|clear (해제)"
+                    # P2-14: MAX_ALERTS cap (유저당 50개, 전체 500개)
+                    MAX_ALERTS_PER_USER = 50
+                    MAX_TOTAL_ALERTS = 500
+                    user_alerts = _price_alert_store.get(user_id, {})
+                    if len(user_alerts) >= MAX_ALERTS_PER_USER:
+                        return f"가격 알림 한도 초과: 유저당 최대 {MAX_ALERTS_PER_USER}개"
+                    total_alerts = sum(len(v) for v in _price_alert_store.values())
+                    if total_alerts >= MAX_TOTAL_ALERTS:
+                        return f"전체 가격 알림 한도 초과: 최대 {MAX_TOTAL_ALERTS}개"
                     _price_alert_store.setdefault(user_id, {})[ticker] = target_price
                     return f"{coin_arg} 가격 알림 설정: {target_price:,.0f} KRW 도달 시 DM 알림"
             elif name == "run_program":
@@ -4140,14 +4154,14 @@ async def portfolio_monitor_task(bot):
                 direction = "상승" if current_value > _last_portfolio_value else "하락"
                 if BOT_OWNER_ID:
                     try:
-                        owner = await bot.fetch_user(int(BOT_OWNER_ID))
+                        owner = bot.get_user(int(BOT_OWNER_ID)) or await bot.fetch_user(int(BOT_OWNER_ID))
                         await owner.send(
                             f"**포트폴리오 변동 알림**\n"
                             f"{direction} {change_pct:.1f}% | "
                             f"{_last_portfolio_value:,.0f} → {current_value:,.0f} KRW"
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"포트폴리오 알림 DM 발송 실패: {e}")
         _last_portfolio_value = current_value
     except Exception as e:
         logger.warning(f"[PortfolioMonitor] {e}")
@@ -4189,20 +4203,39 @@ async def price_alert_check_task(bot):
                     del _price_alert_store[user_id]
         for user_id, ticker, target, current in triggered:
             try:
-                user = await bot.fetch_user(int(user_id))
+                # P2-6: 캐시 우선 조회로 API 호출 최소화
+                user = bot.get_user(int(user_id)) or await bot.fetch_user(int(user_id))
                 coin = ticker.replace("KRW-", "")
                 await user.send(
                     f"**가격 알림 도달**\n"
                     f"{coin}: {current:,.0f} KRW (목표: {target:,.0f})"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"가격 알림 DM 발송 실패 (user={user_id}): {e}")
     except Exception as e:
         logger.warning(f"[PriceAlert] {e}")
 
 @price_alert_check_task.before_loop
 async def before_price_alert(bot):
     await bot.wait_until_ready()
+
+
+# ── P2-17: 레이트 리밋 정리 (1시간 주기) ──
+@tasks.loop(hours=1)
+async def rate_limit_cleanup_task():
+    """만료된 레이트 리밋 엔트리 주기적 정리."""
+    cleaned = 0
+    now = datetime.now(timezone.utc)
+    expired = [k for k, v in _rate_limit_cooldowns.items() if v < now]
+    for k in expired:
+        del _rate_limit_cooldowns[k]
+        cleaned += 1
+    if cleaned > 0:
+        logger.debug(f"[RateLimitCleanup] {cleaned}개 만료 엔트리 정리")
+
+@rate_limit_cleanup_task.before_loop
+async def before_rate_limit_cleanup():
+    pass  # 즉시 시작, bot.wait_until_ready() 불필요
 
 
 # ═══════════════════════════════════════════════════════════════

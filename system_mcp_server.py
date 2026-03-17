@@ -32,6 +32,8 @@ mcp = FastMCP("JARVIS-System-Manager")
 # In-memory timer storage
 # ──────────────────────────────────────────────
 _timers: dict[str, dict] = {}  # id -> {message, end_time, timer_obj, done}
+MAX_TIMERS = 100  # P2-12: 타이머 무제한 증가 방지
+_timers_lock = asyncio.Lock()  # P2-15: 비동기 스레드 안전
 
 
 def _cleanup_expired_timers(max_age_seconds: float = 3600) -> int:
@@ -314,32 +316,37 @@ async def network_status() -> str:
 async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
     """N분 후 알림을 설정합니다. 타이머 ID를 반환합니다."""
     try:
-        # 오래된 만료 타이머 자동 정리
-        _cleanup_expired_timers()
+        async with _timers_lock:
+            # 오래된 만료 타이머 자동 정리
+            _cleanup_expired_timers()
 
-        if minutes <= 0:
-            return "시간은 0보다 커야 합니다."
-        if minutes > 1440:
-            return "최대 1440분(24시간)까지 설정할 수 있습니다."
+            # P2-12: 타이머 수 제한
+            if len(_timers) >= MAX_TIMERS:
+                return f"타이머 한도 초과: 최대 {MAX_TIMERS}개까지 설정 가능합니다."
 
-        timer_id = str(uuid.uuid4())[:8]
-        end_time = time.time() + (minutes * 60)
+            if minutes <= 0:
+                return "시간은 0보다 커야 합니다."
+            if minutes > 1440:
+                return "최대 1440분(24시간)까지 설정할 수 있습니다."
 
-        def _on_expire():
-            if timer_id in _timers:
-                _timers[timer_id]['done'] = True
+            timer_id = str(uuid.uuid4())[:8]
+            end_time = time.time() + (minutes * 60)
 
-        t = threading.Timer(minutes * 60, _on_expire)
-        t.daemon = True
-        t.start()
+            def _on_expire():
+                if timer_id in _timers:
+                    _timers[timer_id]['done'] = True
 
-        _timers[timer_id] = {
-            'message': message,
-            'end_time': end_time,
-            'timer_obj': t,
-            'done': False,
-        }
-        return f"타이머 설정 완료 [ID: {timer_id}] - {minutes}분 후 \"{message}\""
+            t = threading.Timer(minutes * 60, _on_expire)
+            t.daemon = True
+            t.start()
+
+            _timers[timer_id] = {
+                'message': message,
+                'end_time': end_time,
+                'timer_obj': t,
+                'done': False,
+            }
+            return f"타이머 설정 완료 [ID: {timer_id}] - {minutes}분 후 \"{message}\""
     except Exception as e:
         return f"타이머 설정 실패: {e}"
 
@@ -348,23 +355,22 @@ async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
 async def list_timers() -> str:
     """활성 타이머 목록을 조회합니다."""
     try:
-        if not _timers:
-            return "설정된 타이머가 없습니다."
+        async with _timers_lock:
+            if not _timers:
+                return "설정된 타이머가 없습니다."
 
-        now = time.time()
-        lines = []
-        # Bug fix #16: list_timers is now read-only; deletion moved to _cleanup_expired_timers()
-        for tid, info in _timers.items():
-            remaining = info['end_time'] - now
-            if info['done'] or remaining <= 0:
-                lines.append(f"[{tid}] 완료됨 - \"{info['message']}\"")
-            else:
-                mins = int(remaining // 60)
-                secs = int(remaining % 60)
-                lines.append(f"[{tid}] 남은 시간 {mins}분 {secs}초 - \"{info['message']}\"")
+            now = time.time()
+            lines = []
+            for tid, info in _timers.items():
+                remaining = info['end_time'] - now
+                if info['done'] or remaining <= 0:
+                    lines.append(f"[{tid}] 완료됨 - \"{info['message']}\"")
+                else:
+                    mins = int(remaining // 60)
+                    secs = int(remaining % 60)
+                    lines.append(f"[{tid}] 남은 시간 {mins}분 {secs}초 - \"{info['message']}\"")
 
-        # Cleanup is handled by _cleanup_expired_timers() called from set_timer()
-        return "\n".join(lines) if lines else "설정된 타이머가 없습니다."
+            return "\n".join(lines) if lines else "설정된 타이머가 없습니다."
     except Exception as e:
         return f"타이머 목록 조회 실패: {e}"
 
@@ -667,6 +673,7 @@ async def run_program(name: str, args: str = "") -> str:
 # #128  Scheduler (간단한 cron 스타일 작업 예약)
 # ──────────────────────────────────────────────
 _scheduled_tasks: dict[str, dict] = {}  # id -> {command, cron, next_run, active, thread}
+MAX_SCHEDULED_TASKS = 50  # P2-12: 예약 작업 무제한 증가 방지
 
 
 def _parse_cron_field(field: str, min_val: int, max_val: int) -> list[int]:
@@ -777,6 +784,10 @@ async def schedule_task(command: str, cron_expression: str) -> str:
                 for token in part.split(","):
                     if not token.isdigit():
                         return f"오류: cron 필드 값이 유효하지 않습니다: '{token}'"
+
+        # P2-12: 예약 작업 수 제한
+        if len(_scheduled_tasks) >= MAX_SCHEDULED_TASKS:
+            return f"예약 작업 한도 초과: 최대 {MAX_SCHEDULED_TASKS}개까지 설정 가능합니다."
 
         task_id = str(uuid.uuid4())[:8]
         task_info = {

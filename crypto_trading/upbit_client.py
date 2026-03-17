@@ -6,13 +6,23 @@ Upbit API Client Wrapper
 import time
 import logging
 import threading
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, Literal
 import pyupbit
 from pyupbit import Upbit
 from . import config
 from .utils import normalize_ticker
 
 logger = logging.getLogger("crypto.upbit_client")
+
+
+@dataclass
+class OrderResult:
+    """주문 결과 구조체 — 성공/실패를 명확히 구분"""
+    success: bool
+    order: Optional[dict] = None
+    error_type: Optional[Literal["network", "api", "validation", "rate_limit"]] = None
+    error_msg: str = ""
 
 
 class UpbitClient:
@@ -174,43 +184,59 @@ class UpbitClient:
 
     # ─────────── 주문 (인증 필요) ───────────
 
-    def buy_market_order(self, ticker: str, krw_amount: float) -> Optional[dict]:
-        """시장가 매수 (KRW 금액 지정)"""
+    def buy_market_order(self, ticker: str, krw_amount: float) -> OrderResult:
+        """시장가 매수 (KRW 금액 지정) — P2-1: OrderResult 반환"""
         krw_amount = round(krw_amount)  # #37 주문 금액 정수 반올림
-        # Bug #11 Fix: 최소 주문 금액 검증을 DRY_RUN 분기보다 먼저 실행
         if krw_amount < config.MIN_ORDER_AMOUNT:
             logger.warning(f"최소 주문 금액 미달: {krw_amount} < {config.MIN_ORDER_AMOUNT}")
-            return None
+            return OrderResult(success=False, error_type="validation",
+                               error_msg=f"Amount {krw_amount} < {config.MIN_ORDER_AMOUNT}")
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 시장가 매수: {ticker} / {krw_amount:,.0f}원")
-            return {"dry_run": True, "side": "bid", "ticker": ticker, "price": krw_amount}
+            return OrderResult(success=True,
+                               order={"dry_run": True, "side": "bid", "ticker": ticker, "price": krw_amount})
         self._throttle()
         try:
             result = self._get_upbit().buy_market_order(ticker, krw_amount)
             logger.info(f"시장가 매수 완료: {ticker} / {krw_amount:,.0f}원 → {result}")
-            return result
+            return OrderResult(success=True, order=result)
         except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "Too Many" in err_str:
+                error_type = "rate_limit"
+            elif "connect" in err_str.lower() or "timeout" in err_str.lower():
+                error_type = "network"
+            else:
+                error_type = "api"
             logger.error(f"매수 실패 ({ticker}): {e}")
-            return None
+            return OrderResult(success=False, error_type=error_type, error_msg=err_str)
 
-    def sell_market_order(self, ticker: str, volume: float) -> Optional[dict]:
-        """시장가 매도 (수량 지정)"""
-        # 최소 주문 금액 검증
+    def sell_market_order(self, ticker: str, volume: float) -> OrderResult:
+        """시장가 매도 (수량 지정) — P2-1: OrderResult 반환"""
         current_price = self.get_current_price(ticker) or 0
         if current_price > 0 and volume * current_price < config.MIN_ORDER_AMOUNT:
             logger.warning(f"매도 금액 최소 미달: {ticker} {volume * current_price:,.0f}원 < {config.MIN_ORDER_AMOUNT:,.0f}원")
-            return None
+            return OrderResult(success=False, error_type="validation",
+                               error_msg=f"Sell value below minimum: {volume * current_price:,.0f}")
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 시장가 매도: {ticker} / {volume}")
-            return {"dry_run": True, "side": "ask", "ticker": ticker, "volume": volume}
+            return OrderResult(success=True,
+                               order={"dry_run": True, "side": "ask", "ticker": ticker, "volume": volume})
         self._throttle()
         try:
             result = self._get_upbit().sell_market_order(ticker, volume)
             logger.info(f"시장가 매도 완료: {ticker} / {volume} → {result}")
-            return result
+            return OrderResult(success=True, order=result)
         except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "Too Many" in err_str:
+                error_type = "rate_limit"
+            elif "connect" in err_str.lower() or "timeout" in err_str.lower():
+                error_type = "network"
+            else:
+                error_type = "api"
             logger.error(f"매도 실패 ({ticker}): {e}")
-            return None
+            return OrderResult(success=False, error_type=error_type, error_msg=err_str)
 
     def buy_limit_order(self, ticker: str, price: float, volume: float) -> Optional[dict]:
         """지정가 매수"""

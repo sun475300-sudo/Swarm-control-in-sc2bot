@@ -26,6 +26,7 @@ import time
 import json
 import base64
 import zipfile
+from collections import deque
 from pathlib import Path
 from datetime import datetime, timedelta
 from . import config
@@ -359,7 +360,7 @@ class TradeSafetyGuard:
         self._daily_trades: list = []                  # [(timestamp, amount), ...]
         self._alerts: list = []                        # 보안 경고 기록
         self._pending_confirmations: dict = {}         # 2FA 확인 대기 (#150)
-        self._recent_amounts: list = []                # 이상 거래 탐지용 최근 금액 (#154)
+        self._recent_amounts: deque = deque(maxlen=100)  # P2-13: 이상 거래 탐지용 최근 금액 (자동 제한)
         self._guard_lock = threading.Lock()            # 스레드 안전 보호
 
     def _clean_old_trades(self):
@@ -409,10 +410,7 @@ class TradeSafetyGuard:
         """매매 기록"""
         with self._guard_lock:
             self._daily_trades.append((datetime.now(), abs(amount_krw)))
-            self._recent_amounts.append(abs(amount_krw))
-            # Bug #10 Fix: _recent_amounts 무한 증가 방지 — 최근 100건만 유지
-            if len(self._recent_amounts) > 100:
-                self._recent_amounts = self._recent_amounts[-100:]
+            self._recent_amounts.append(abs(amount_krw))  # P2-13: deque(maxlen=100) 자동 제한
 
     def get_daily_summary(self) -> dict:
         """일일 거래 요약"""
@@ -428,12 +426,18 @@ class TradeSafetyGuard:
 
     def set_limits(self, max_daily_trades: int = None, max_single_order_krw: float = None,
                    max_daily_volume_krw: float = None):
-        """안전 한도 변경"""
+        """안전 한도 변경 — P2-4: 범위 검증 추가"""
         if max_daily_trades is not None:
+            if not (0 < max_daily_trades <= 1000):
+                raise ValueError(f"max_daily_trades는 1~1000 범위여야 합니다: {max_daily_trades}")
             self.max_daily_trades = max_daily_trades
         if max_single_order_krw is not None:
+            if not (5000 <= max_single_order_krw <= 100_000_000):
+                raise ValueError(f"max_single_order_krw는 5,000~100,000,000 범위여야 합니다: {max_single_order_krw}")
             self.max_single_order_krw = max_single_order_krw
         if max_daily_volume_krw is not None:
+            if not (10_000 <= max_daily_volume_krw <= 1_000_000_000):
+                raise ValueError(f"max_daily_volume_krw는 10,000~1,000,000,000 범위여야 합니다: {max_daily_volume_krw}")
             self.max_daily_volume_krw = max_daily_volume_krw
 
     # ── 2FA Trade Confirmation (#150) ──

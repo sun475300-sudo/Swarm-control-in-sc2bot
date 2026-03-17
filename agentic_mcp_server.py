@@ -99,8 +99,10 @@ async def execute_terminal_command(command: str, timeout: int = 15) -> str:
             return "\n\n".join(out)
             
     except subprocess.TimeoutExpired:
+        logger.warning(f"명령 타임아웃 ({timeout}s): {command}")
         return f"Warning: Command '{command}' timed out after {timeout} seconds."
     except Exception as e:
+        logger.error(f"명령 실행 오류: {command!r} → {e}")
         return f"Error executing command: {e}"
 
 # ── Security: Python code sandbox ──

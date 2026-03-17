@@ -178,6 +178,8 @@ class AgentRouter:
     def __init__(self, memory_manager=None, tool_registry=None):
         self.memory = memory_manager
         self.tool_registry = tool_registry
+        # P2-16: 스레드 안전성 — asyncio 단일 스레드 이벤트 루프에서만 사용.
+        # _routing_count, _domain_stats는 async 컨텍스트 내에서만 접근되므로 별도 Lock 불필요.
         self._routing_count = 0
         self._domain_stats: Dict[str, int] = {}
 

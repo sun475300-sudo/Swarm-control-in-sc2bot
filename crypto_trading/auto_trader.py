@@ -68,6 +68,9 @@ class AutoTrader:
         # #36 Trailing Stop
         self._trailing_stops: dict = {}        # {ticker: {"trail_pct": float, "highest_price": float, "activated": bool}}
         self._trailing_stops_lock = threading.Lock()  # 스레드 안전성 보장
+        # P2-20: 트레일링 스탑 재시도 제한
+        self._trailing_retry_count: dict = {}  # {ticker: int}
+        self._max_trailing_retries: int = 5
 
     # ─────────── 쿨다운 / 포지션 관리 ───────────
 
@@ -213,7 +216,7 @@ class AutoTrader:
                         break
                 try:
                     order = self.client.buy_market_order(task["ticker"], task["split_amount"])
-                    if order is not None:
+                    if order.success:
                         with self._dca_lock:
                             task["completed_splits"] += 1
                             task["total_spent"] += task["split_amount"]
@@ -223,11 +226,11 @@ class AutoTrader:
                             })
                         self.tracker.log_trade(
                             "buy", task["ticker"], task["split_amount"],
-                            0, f"DCA {i+1}/{task['num_splits']}", order
+                            0, f"DCA {i+1}/{task['num_splits']}", order.order
                         )
                         logger.info(f"DCA 매수 {i+1}/{task['num_splits']}: {task['ticker']} {task['split_amount']:,.0f}원")
                     else:
-                        logger.error(f"DCA 매수 실패: {task['ticker']} split {i+1}")
+                        logger.error(f"DCA 매수 실패: {task['ticker']} split {i+1}: {order.error_msg}")
                 except Exception as e:
                     logger.error(f"DCA 오류: {e}")
 
@@ -312,11 +315,11 @@ class AutoTrader:
                     coin_balance = self.client.get_balance(ticker)
                     if coin_balance > 0:
                         order = self.client.sell_market_order(ticker, coin_balance)
-                        if order is not None:
+                        if order.success:
                             sell_value = coin_balance * price
                             self.tracker.log_trade(
                                 "sell", ticker, sell_value, price,
-                                f"트레일링스탑 ({ts['trail_pct']}%, 최고가:{current_highest:,.0f})", order
+                                f"트레일링스탑 ({ts['trail_pct']}%, 최고가:{current_highest:,.0f})", order.order
                             )
                             triggered.append({
                                 "ticker": ticker, "action": "sell",
@@ -326,12 +329,20 @@ class AutoTrader:
                             logger.info(f"트레일링 스탑 실행: {ticker} 매도 (하락 {drop_pct:.1f}%)")
                             to_remove.append(ticker)  # 매도 성공 시에만 제거
                         else:
-                            logger.warning(f"트레일링 스탑 매도 실패: {ticker} — 다음 사이클에 재시도")
+                            # P2-20: 재시도 카운트 증가, 최대 초과 시 비활성화
+                            self._trailing_retry_count[ticker] = self._trailing_retry_count.get(ticker, 0) + 1
+                            retries = self._trailing_retry_count[ticker]
+                            if retries >= self._max_trailing_retries:
+                                logger.error(f"트레일링 스탑 매도 {self._max_trailing_retries}회 실패 — 비활성화: {ticker}")
+                                to_remove.append(ticker)
+                            else:
+                                logger.warning(f"트레일링 스탑 매도 실패 ({retries}/{self._max_trailing_retries}): {ticker} [{order.error_type}] {order.error_msg}")
             except Exception as e:
                 logger.error(f"트레일링 스탑 확인 오류 ({ticker}): {e}")
         with self._trailing_stops_lock:
             for t in to_remove:
                 self._trailing_stops.pop(t, None)
+                self._trailing_retry_count.pop(t, None)
         return triggered
 
     # ─────────── #50 자동 리밸런싱 ───────────
@@ -447,9 +458,9 @@ class AutoTrader:
                     continue
 
                 order = self.client.buy_market_order(ticker, buy_amount)
-                if order is not None:
+                if order.success:
                     self.tracker.log_trade("buy", ticker, buy_amount, 0,
-                                           f"리밸런싱 매수 ({current_pct:.1f}%→{target_pct:.1f}%)", order)
+                                           f"리밸런싱 매수 ({current_pct:.1f}%→{target_pct:.1f}%)", order.order)
                     trade_safety.record_trade(buy_amount)
                     executed.append({
                         "currency": currency, "action": "buy",
@@ -457,7 +468,7 @@ class AutoTrader:
                         "from_pct": current_pct, "to_pct": target_pct,
                     })
                 else:
-                    errors.append(f"매수 실패: {ticker}")
+                    errors.append(f"매수 실패: {ticker} [{order.error_type}] {order.error_msg}")
 
             elif diff_pct < 0:
                 # 비중 초과 → 매도 필요
@@ -480,10 +491,10 @@ class AutoTrader:
                     continue
 
                 order = self.client.sell_market_order(ticker, sell_volume)
-                if order is not None:
+                if order.success:
                     actual_value = sell_volume * price
                     self.tracker.log_trade("sell", ticker, actual_value, price,
-                                           f"리밸런싱 매도 ({current_pct:.1f}%→{target_pct:.1f}%)", order)
+                                           f"리밸런싱 매도 ({current_pct:.1f}%→{target_pct:.1f}%)", order.order)
                     trade_safety.record_trade(actual_value)
                     executed.append({
                         "currency": currency, "action": "sell",
@@ -492,7 +503,7 @@ class AutoTrader:
                         "from_pct": current_pct, "to_pct": target_pct,
                     })
                 else:
-                    errors.append(f"매도 실패: {ticker}")
+                    errors.append(f"매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
 
         logger.info(f"리밸런싱 완료: {len(executed)}건 실행, {len(errors)}건 오류")
 
@@ -769,6 +780,14 @@ class AutoTrader:
             result["krw_balance"] = krw_balance
 
             # 2. 보유 코인 손절/익절 체크 (이중 매도 방지)
+            # P2-7: batch 가격 조회로 N+1 API 호출 최적화
+            held_tickers = []
+            for b in balances:
+                currency = b.get("currency", "")
+                if currency != "KRW" and float(b.get("balance", 0)) > 0:
+                    held_tickers.append(normalize_ticker(currency))
+            current_prices = self.client.get_prices(held_tickers) if held_tickers else {}
+
             for b in balances:
                 currency = b.get("currency", "")
                 if currency == "KRW":
@@ -783,7 +802,7 @@ class AutoTrader:
                         continue  # 주문 진행 중 스킵
 
                 avg_price = float(b.get("avg_buy_price", 0))
-                current_price = self.client.get_current_price(ticker)
+                current_price = current_prices.get(ticker)
                 if not current_price or avg_price <= 0:
                     continue
 
@@ -799,12 +818,12 @@ class AutoTrader:
                     try:
                         reason_text = "손절" if action == "stop_loss" else "익절"
                         order = self.client.sell_market_order(ticker, actual_balance)
-                        if order is not None:
+                        if order.success:
                             self.tracker.log_trade("sell", ticker, actual_balance * current_price,
-                                                   current_price, reason_text, order)
+                                                   current_price, reason_text, order.order)
                             result["actions"].append(f"{reason_text} 매도: {ticker} x {actual_balance}")
                         else:
-                            result["errors"].append(f"{reason_text} 매도 실패: {ticker}")
+                            result["errors"].append(f"{reason_text} 매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
                     finally:
                         with self._in_flight_lock:
                             self._in_flight.discard(ticker)
@@ -871,9 +890,9 @@ class AutoTrader:
                             self._in_flight.add(a.ticker)
                         try:
                             order = self.client.buy_market_order(a.ticker, order_amount)
-                            if order is not None:
+                            if order.success:
                                 reason = f"스마트분석 매수 (점수:{a.score:+d}, {', '.join(a.reasons[:2])})"
-                                self.tracker.log_trade("buy", a.ticker, order_amount, 0, reason, order)
+                                self.tracker.log_trade("buy", a.ticker, order_amount, 0, reason, order.order)
                                 trade_safety.record_trade(order_amount)
                                 with self._budget_lock:
                                     self._total_spent += order_amount
@@ -882,7 +901,7 @@ class AutoTrader:
                                 krw_balance -= order_amount
                                 current_positions += 1
                             else:
-                                result["errors"].append(f"매수 실패: {a.ticker} / {order_amount:,.0f}원")
+                                result["errors"].append(f"매수 실패: {a.ticker} / {order_amount:,.0f}원 [{order.error_type}] {order.error_msg}")
                                 # 실패 시 쿨다운 해제
                                 with self._cooldown_lock:
                                     self._trade_cooldown.pop(a.ticker, None)
@@ -908,17 +927,17 @@ class AutoTrader:
                             self._in_flight.add(a.ticker)
                         try:
                             order = self.client.sell_market_order(a.ticker, sell_amount)
-                            if order is not None:
+                            if order.success:
                                 reason = f"스마트분석 매도 (점수:{a.score:+d}, 비율:{sell_ratio:.0%}, {', '.join(a.reasons[:2])})"
                                 self.tracker.log_trade("sell", a.ticker, sell_value,
-                                                       a.current_price, reason, order)
+                                                       a.current_price, reason, order.order)
                                 trade_safety.record_trade(sell_value)
                                 result["actions"].append(
                                     f"매도: {a.ticker} x {sell_amount:.4f} ({sell_ratio:.0%}) (점수:{a.score:+d})"
                                 )
                                 self._record_cooldown(a.ticker)
                             else:
-                                result["errors"].append(f"매도 실패: {a.ticker}")
+                                result["errors"].append(f"매도 실패: {a.ticker} [{order.error_type}] {order.error_msg}")
                         finally:
                             with self._in_flight_lock:
                                 self._in_flight.discard(a.ticker)
@@ -972,6 +991,14 @@ class AutoTrader:
             result["krw_balance"] = krw_balance
 
             # 2. 보유 코인 손절/익절 체크 (이중 매도 방지)
+            # P2-7: batch 가격 조회로 N+1 API 호출 최적화
+            held_tickers_s = []
+            for b in balances:
+                currency = b.get("currency", "")
+                if currency != "KRW" and float(b.get("balance", 0)) > 0:
+                    held_tickers_s.append(normalize_ticker(currency))
+            current_prices_s = self.client.get_prices(held_tickers_s) if held_tickers_s else {}
+
             for b in balances:
                 currency = b.get("currency", "")
                 if currency == "KRW":
@@ -986,7 +1013,7 @@ class AutoTrader:
                         continue
 
                 avg_price = float(b.get("avg_buy_price", 0))
-                current_price = self.client.get_current_price(ticker)
+                current_price = current_prices_s.get(ticker)
                 if not current_price or avg_price <= 0:
                     continue
 
@@ -1000,12 +1027,12 @@ class AutoTrader:
                     try:
                         reason_text = "손절" if action == "stop_loss" else "익절"
                         order = self.client.sell_market_order(ticker, actual_balance)
-                        if order is not None:
+                        if order.success:
                             self.tracker.log_trade("sell", ticker, actual_balance * current_price,
-                                                   current_price, reason_text, order)
+                                                   current_price, reason_text, order.order)
                             result["actions"].append(f"{reason_text} 매도: {ticker} x {actual_balance}")
                         else:
-                            result["errors"].append(f"{reason_text} 매도 실패: {ticker}")
+                            result["errors"].append(f"{reason_text} 매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
                     finally:
                         with self._in_flight_lock:
                             self._in_flight.discard(ticker)
@@ -1062,9 +1089,9 @@ class AutoTrader:
                                 self._in_flight.add(ticker)
                             try:
                                 order = self.client.buy_market_order(ticker, order_amount)
-                                if order is not None:
+                                if order.success:
                                     self.tracker.log_trade("buy", ticker, order_amount,
-                                                           0, signal.reason, order)
+                                                           0, signal.reason, order.order)
                                     trade_safety.record_trade(order_amount)
                                     with self._budget_lock:
                                         self._total_spent += order_amount
@@ -1073,7 +1100,7 @@ class AutoTrader:
                                     krw_balance -= order_amount
                                     current_positions += 1
                                 else:
-                                    result["errors"].append(f"매수 실패: {ticker}")
+                                    result["errors"].append(f"매수 실패: {ticker} [{order.error_type}] {order.error_msg}")
                                     with self._cooldown_lock:
                                         self._trade_cooldown.pop(ticker, None)
                             finally:
@@ -1095,15 +1122,15 @@ class AutoTrader:
                                 self._in_flight.add(ticker)
                             try:
                                 order = self.client.sell_market_order(ticker, coin_balance)
-                                if order is not None:
+                                if order.success:
                                     price = self.client.get_current_price(ticker) or 0
                                     self.tracker.log_trade("sell", ticker, coin_balance * price,
-                                                           price, signal.reason, order)
+                                                           price, signal.reason, order.order)
                                     trade_safety.record_trade(sell_value)
                                     result["actions"].append(f"매도: {ticker} x {coin_balance}")
                                     self._record_cooldown(ticker)
                                 else:
-                                    result["errors"].append(f"매도 실패: {ticker}")
+                                    result["errors"].append(f"매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
                             finally:
                                 with self._in_flight_lock:
                                     self._in_flight.discard(ticker)

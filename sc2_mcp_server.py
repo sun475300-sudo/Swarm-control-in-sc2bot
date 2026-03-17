@@ -166,7 +166,8 @@ async def sc2_bot_stats() -> str:
                     elif "TIE" in result_str or "DRAW" in result_str:
                         draws += 1
                         recent_games.append((timestamp, opp_race, map_name, "D"))
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"게임 데이터 파싱 오류 ({fname}): {e}")
                     continue
 
         # ── 2차: game_analytics.json (GameAnalytics 시스템) ──
@@ -184,8 +185,8 @@ async def sc2_bot_stats() -> str:
                     losses += rl
                     race_stats[race]["w"] += rw
                     race_stats[race]["l"] += rl
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"game_analytics.json 파싱 오류: {e}")
 
         # ── 3차: 로그 파일 (엄격한 패턴만 — "Match result:" 라인) ──
         if wins + losses + draws == 0:

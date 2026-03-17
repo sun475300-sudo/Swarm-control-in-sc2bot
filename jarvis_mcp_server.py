@@ -62,6 +62,9 @@ _managed_pids: dict[str, int] = {}
 # key: "swarm_net" | "sc2_training"
 # value: PID (int)
 
+# P2-18: 로그 파일 핸들 추적 → 정리 함수
+_active_log_handles: dict[str, object] = {}  # name -> file handle
+
 
 def _register_pid(name: str, pid: int) -> None:
     """프로세스 PID를 레지스트리에 등록."""
@@ -306,7 +309,15 @@ async def run_sc2_zerg_rl(mode: str = "hybrid") -> str:
 
         training_cwd = str(PROJECT_DIR / "wicked_zerg_challenger")
 
+        # P2-18: 기존 로그 핸들이 있으면 먼저 정리
+        old_handle = _active_log_handles.pop("sc2_training", None)
+        if old_handle:
+            try:
+                old_handle.close()
+            except Exception:
+                pass
         f_log = open(log_file, "w", encoding="utf-8")
+        _active_log_handles["sc2_training"] = f_log
         proc = subprocess.Popen(
             [sys.executable, str(script_path)],
             cwd=training_cwd,
@@ -314,7 +325,6 @@ async def run_sc2_zerg_rl(mode: str = "hybrid") -> str:
             stderr=subprocess.STDOUT,
             creationflags=creation_flags,
         )
-        # 로그 파일 핸들은 자식 프로세스가 종료되면 자동 정리됨
 
         _register_pid("sc2_training", proc.pid)
 
@@ -344,6 +354,13 @@ async def stop_sc2_training() -> str:
 
     result = _kill_process_tree(pid)
     _unregister_pid("sc2_training")
+    # P2-18: 로그 파일 핸들 정리
+    log_handle = _active_log_handles.pop("sc2_training", None)
+    if log_handle:
+        try:
+            log_handle.close()
+        except Exception:
+            pass
     return result
 
 
