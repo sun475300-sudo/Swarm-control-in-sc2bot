@@ -71,13 +71,7 @@ def get_all_manager_configs():
             post_init=lambda bot, manager: manager.load_data(),
         ),
 
-        ManagerConfig(
-            name="ScoutingSystem",
-            module_path="scouting_system",
-            class_name="ScoutingSystem",
-            attribute_name="scout",
-            priority=ManagerPriority.HIGH,
-        ),
+        # REMOVED: scouting_system.py (DEPRECATED → AdvancedScoutingSystemV2)
 
         ManagerConfig(
             name="StrategyManager",
@@ -173,13 +167,7 @@ def get_all_manager_configs():
             priority=ManagerPriority.MEDIUM,
         ),
 
-        ManagerConfig(
-            name="★ ActiveScoutingSystem",
-            module_path="active_scouting_system",
-            class_name="ActiveScoutingSystem",
-            attribute_name="active_scout",
-            priority=ManagerPriority.MEDIUM,
-        ),
+        # REMOVED: active_scouting_system.py (DEPRECATED → AdvancedScoutingSystemV2)
 
         ManagerConfig(
             name="★ CreepDenialSystem",

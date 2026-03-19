@@ -64,6 +64,7 @@ class AutoTrader:
         self._load_price_alerts()
         # #35 DCA
         self._dca_tasks: list = []             # DCA 진행 목록
+        self._DCA_MAX_HISTORY = 50             # 완료된 DCA 이력 최대 보관 수
         self._dca_lock = threading.Lock()      # Bug #17 Fix: DCA 작업 목록 동기화
         # #36 Trailing Stop
         self._trailing_stops: dict = {}        # {ticker: {"trail_pct": float, "highest_price": float, "activated": bool}}
@@ -245,6 +246,11 @@ class AutoTrader:
 
             with self._dca_lock:
                 task["status"] = "completed"
+                # 완료/취소된 DCA 이력이 너무 쌓이지 않도록 정리
+                finished = [t for t in self._dca_tasks if t.get("status") in ("completed", "cancelled")]
+                if len(finished) > self._DCA_MAX_HISTORY:
+                    for old in finished[:-self._DCA_MAX_HISTORY]:
+                        self._dca_tasks.remove(old)
             logger.info(f"DCA 완료: {task['ticker']} {task['completed_splits']}/{task['num_splits']} splits")
             # P3-7: 완료/실패 콜백 호출
             if on_complete:
