@@ -160,14 +160,28 @@ try:
 except ImportError:
     pass
 
-# ── Logging Setup ──
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s]JARVIS: %(message)s')
-logger = logging.getLogger("JarvisBot")
-logger.setLevel(logging.DEBUG)
-_jarvis_fh = logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "jarvis_bot.log"), encoding="utf-8")
-_jarvis_fh.setLevel(logging.DEBUG)
-_jarvis_fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
-logger.addHandler(_jarvis_fh)
+# ── Logging Setup (unified_logger 통합: 일별 로테이션 + 30일 보존) ──
+try:
+    from unified_logger import UnifiedLogger
+    UnifiedLogger.setup(
+        log_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs"),
+        json_format=False,
+        log_level="DEBUG",
+        backup_count=30,
+        console_output=True,
+        color_console=True,
+    )
+    UnifiedLogger.add_error_file_handler()
+    logger = UnifiedLogger.get_logger("JarvisBot")
+except ImportError:
+    # fallback: unified_logger 없을 때 기본 설정
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s]JARVIS: %(message)s')
+    logger = logging.getLogger("JarvisBot")
+    logger.setLevel(logging.DEBUG)
+    _jarvis_fh = logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "jarvis_bot.log"), encoding="utf-8")
+    _jarvis_fh.setLevel(logging.DEBUG)
+    _jarvis_fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    logger.addHandler(_jarvis_fh)
 
 class RateLimitError(Exception):
     """API 한도 초과 (429) 에러"""
@@ -1046,6 +1060,21 @@ class JarvisBot(commands.Bot):
             self._command_count += 1
             await self.process_commands(message)
             return
+        # ── !status 빠른 상태 확인 (에이전트 루프 우회) ──
+        if message.content.strip().lower() in ("!status", "!상태"):
+            import psutil as _ps
+            proc = _ps.Process(os.getpid())
+            mem_mb = proc.memory_info().rss / 1024 / 1024
+            uptime = self.get_uptime()
+            embed = discord.Embed(title="JARVIS Status", color=0x00ff88)
+            embed.add_field(name="Uptime", value=uptime, inline=True)
+            embed.add_field(name="Messages", value=f"{self._message_count:,}", inline=True)
+            embed.add_field(name="Commands", value=f"{self._command_count:,}", inline=True)
+            embed.add_field(name="Memory", value=f"{mem_mb:.0f} MB", inline=True)
+            embed.add_field(name="Python", value=f"{sys.version.split()[0]}", inline=True)
+            await message.reply(embed=embed)
+            return
+
         is_dm = isinstance(message.channel, discord.DMChannel)
         is_mention = self.user.mentioned_in(message)
         # "자비스" 키워드도 멘션처럼 처리

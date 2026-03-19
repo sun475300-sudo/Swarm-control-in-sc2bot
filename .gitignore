@@ -127,6 +127,8 @@ id_ed25519
 *.token
 
 # JARVIS Local Scripts (Often contain keys)
+JARVIS_AUTOSTART.ps1
+JARVIS_SILENT_LAUNCHER.vbs
 JARVIS_RECOVERY.bat
 JARVIS_VISIBLE_START.bat
 run_jarvis_full_system.cmd
@@ -202,6 +204,9 @@ test_ping.json
 spawning_tool_dump.html
 personality_presets.json
 5.9.0
+
+# External repos (cloned inside project, separate .git)
+claude_skills/
 
 # Session databases
 sessions.db
