@@ -327,7 +327,12 @@ const MAX_IN_MEMORY_CONVERSATIONS = 10000; // P3-5: 인메모리 DB 최대 저�
 const conversationMemory = new Map(); // userId → [{role, content}]
 
 function getConversationHistory(userId) {
-    return conversationMemory.get(userId) || [];
+    const history = conversationMemory.get(userId);
+    if (!history) return [];
+    // LRU 순서 갱신: 읽기 시에도 최근 사용으로 이동
+    conversationMemory.delete(userId);
+    conversationMemory.set(userId, history);
+    return history;
 }
 
 function addToHistory(userId, role, content) {
@@ -338,6 +343,8 @@ function addToHistory(userId, role, content) {
     if (history.length > MAX_HISTORY_PER_USER * 2) {
         history = history.slice(-MAX_HISTORY_PER_USER * 2);
     }
+    // LRU 순서 갱신: delete → set으로 Map 끝으로 이동
+    conversationMemory.delete(userId);
     conversationMemory.set(userId, history);
     // 사용자 수 제한 (LRU 방식 - 가장 오래된 유저 삭제 + DB 동기화)
     if (conversationMemory.size > MAX_HISTORY_USERS) {

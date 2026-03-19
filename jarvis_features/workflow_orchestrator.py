@@ -152,9 +152,24 @@ class WorkflowOrchestrator:
 
         start_all = time.perf_counter()
 
-        # 모든 스텝을 동시 실행
+        # 모든 스텝을 동시 실행 (return_exceptions=True: 개별 실패가 전체를 크래시하지 않음)
         tasks = [self._execute_step(step, context, round_num=0) for step in steps]
-        results = await asyncio.gather(*tasks, return_exceptions=False)
+        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Exception 인스턴스를 StepResult로 변환
+        results = []
+        for i, r in enumerate(raw_results):
+            if isinstance(r, BaseException):
+                results.append(StepResult(
+                    step_name=steps[i].name,
+                    success=False,
+                    output="",
+                    elapsed_ms=0.0,
+                    error=f"Unhandled: {type(r).__name__}: {r}",
+                    round_label=f"[{steps[i].name.upper()} - EXCEPTION]",
+                ))
+            else:
+                results.append(r)
 
         total_ms = (time.perf_counter() - start_all) * 1000
         succeeded = sum(1 for r in results if r.success)
@@ -181,7 +196,7 @@ class WorkflowOrchestrator:
     ) -> StepResult:
         """단일 스텝 실행 (타임아웃 + 재시도)"""
         attempts = 1 + step.retry
-        last_error = ""
+        all_errors = []
 
         for attempt in range(attempts):
             start = time.perf_counter()
@@ -210,14 +225,16 @@ class WorkflowOrchestrator:
 
             except asyncio.TimeoutError:
                 elapsed_ms = (time.perf_counter() - start) * 1000
-                last_error = f"Timeout ({step.timeout}s)"
+                err_msg = f"Timeout ({step.timeout}s)"
+                all_errors.append(f"attempt {attempt+1}: {err_msg}")
                 logger.warning(
                     f"[ORCHESTRATOR] Step '{step.name}' timeout "
                     f"(attempt {attempt+1}/{attempts})"
                 )
             except Exception as e:
                 elapsed_ms = (time.perf_counter() - start) * 1000
-                last_error = str(e)
+                err_msg = str(e)
+                all_errors.append(f"attempt {attempt+1}: {err_msg}")
                 logger.warning(
                     f"[ORCHESTRATOR] Step '{step.name}' error: {e} "
                     f"(attempt {attempt+1}/{attempts})"
@@ -229,6 +246,7 @@ class WorkflowOrchestrator:
 
         # 모든 시도 실패
         elapsed_ms = (time.perf_counter() - start) * 1000
+        last_error = " | ".join(all_errors)
 
         # tool_registry 실패 기록
         if self.tool_registry:

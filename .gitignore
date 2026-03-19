@@ -127,7 +127,6 @@ id_ed25519
 *.token
 
 # JARVIS Local Scripts (Often contain keys)
-JARVIS_CLEAN_START.bat
 JARVIS_RECOVERY.bat
 JARVIS_VISIBLE_START.bat
 run_jarvis_full_system.cmd

@@ -68,6 +68,11 @@ class ModelPlan:
     hint: str                    # 원본 model_hint
     reason: str = ""             # 선택 사유 (로깅용)
 
+    @property
+    def full_cascade(self) -> list:
+        """크로스 프로바이더 전체 폴백 순서: Claude → Gemini"""
+        return [("claude", m) for m in self.claude_models] + [("gemini", m) for m in self.gemini_models]
+
 
 @dataclass
 class ModelMetrics:

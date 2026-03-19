@@ -92,10 +92,15 @@ class AutoTrader:
         """현재 보유 종목 수"""
         count = 0
         for b in balances:
+            if not isinstance(b, dict):
+                continue
             if b.get("currency") == "KRW":
                 continue
-            if float(b.get("balance", 0)) > 0:
-                count += 1
+            try:
+                if float(b.get("balance", 0)) > 0:
+                    count += 1
+            except (ValueError, TypeError):
+                continue
         return count
 
     def _calc_sell_ratio(self, score: int) -> float:
@@ -382,8 +387,13 @@ class AutoTrader:
         tickers_for_price = []
 
         for b in balances:
+            if not isinstance(b, dict):
+                continue
             currency = b.get("currency", "")
-            balance = float(b.get("balance", 0)) + float(b.get("locked", 0))
+            try:
+                balance = float(b.get("balance", 0)) + float(b.get("locked", 0))
+            except (ValueError, TypeError):
+                continue
             if balance <= 0:
                 continue
             if currency == "KRW":

@@ -268,17 +268,19 @@ class AgentRouter:
 
         for domain, keywords in DOMAIN_KEYWORDS.items():
             matched = []
-            score = 0.0
+            raw_score = 0.0
 
             for i, kw in enumerate(keywords):
                 if kw.lower() in msg_lower:
                     matched.append(kw)
                     # 앞쪽 키워드일수록 높은 가중치 (강한 신호)
                     weight = 1.0 if i < len(keywords) * 0.4 else 0.5
-                    score += weight
+                    raw_score += weight
 
             if matched:
-                scores.append((domain, score, matched))
+                # B8: 도메인 크기 정규화 — 키워드 수가 적은 도메인이 불이익받지 않도록
+                normalized = raw_score / max(len(keywords), 1) * 10
+                scores.append((domain, normalized, matched))
 
         if not scores:
             return self._default_decision()
@@ -294,8 +296,8 @@ class AgentRouter:
         else:
             confidence = min(0.95, 0.5 + best_score * 0.15)
 
-        # 신뢰도가 너무 낮으면 GENERAL_CHAT
-        if confidence < 0.4:
+        # B9: 신뢰도가 너무 낮으면 GENERAL_CHAT (0.4 → 0.55: 약한 단일 키워드 매치 방지)
+        if confidence < 0.55:
             return self._default_decision()
 
         config = DOMAIN_CONFIG[best_domain]

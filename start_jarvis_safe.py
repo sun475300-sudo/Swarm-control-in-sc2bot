@@ -7,8 +7,7 @@ import psutil
 # 1. 파일 경로 설정 (환경변수 우선, 없으면 스크립트 위치 기반)
 BASE_DIR = os.environ.get("SC2_BOT_DIR", os.path.dirname(os.path.abspath(__file__)))
 ENV_PATH = os.path.join(BASE_DIR, ".env.jarvis")
-# BOT_SCRIPT = "discord_jarvis.py"  # 비활성화: JS 봇(discord_voice_chat_jarvis.js)이 주력
-BOT_SCRIPT = None  # Python 봇 비활성화 — 동일 토큰 이중 응답 방지
+BOT_SCRIPT = "discord_jarvis.py"  # Python 봇 활성화
 
 print("[INFO] Starting Safe Jarvis Launcher...")
 

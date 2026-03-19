@@ -775,6 +775,19 @@ class JarvisBot(commands.Bot):
         except ImportError:
             self.model_selector = None
 
+    async def _safe_reply(self, message, content: str, **kwargs):
+        """B5: message.reply() 중 원본 삭제 시 NotFound 방지"""
+        try:
+            return await message.reply(content, **kwargs)
+        except discord.NotFound:
+            logger.warning(f"[_safe_reply] 원본 메시지 삭제됨 (id={message.id})")
+            try:
+                return await message.channel.send(content, **kwargs)
+            except Exception:
+                pass
+        except discord.HTTPException as e:
+            logger.warning(f"[_safe_reply] HTTPException: {e}")
+
     async def _get_http_session(self) -> aiohttp.ClientSession:
         """공유 aiohttp 세션을 반환한다 (지연 생성, 기본 타임아웃 포함)."""
         async with self._session_lock:
@@ -2848,10 +2861,10 @@ class JarvisBot(commands.Bot):
                     )
 
                     if not response:
-                        await message.reply("⚠️ AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.")
+                        await self._safe_reply(message, "⚠️ AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.")
                         return
                     if response.startswith("⚠️") or response.startswith("❌"):
-                        await message.reply(response)
+                        await self._safe_reply(message, response)
                         return
 
                     if "TOOL:" in response:
@@ -2911,16 +2924,16 @@ class JarvisBot(commands.Bot):
 
                         if len(clean_response) > DISCORD_MSG_LIMIT:
                             for i in range(0, len(clean_response), 2000):
-                                await message.reply(clean_response[i:i+2000])
+                                await self._safe_reply(message, clean_response[i:i+2000])
                         else:
-                            await message.reply(clean_response)
+                            await self._safe_reply(message, clean_response)
                     return
 
-                await message.reply("⚠️ 루프 초과 (생각이 너무 많습니다)")
+                await self._safe_reply(message, "⚠️ 루프 초과 (생각이 너무 많습니다)")
 
         except Exception as e:
             logger.error(f"Agent Error: {e}", exc_info=True)
-            await message.reply("❌ 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+            await self._safe_reply(message, "❌ 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
         finally:
             _agent_lock.release()
             self._agent_locks.pop(_key, None)
@@ -2963,7 +2976,8 @@ class JarvisBot(commands.Bot):
                             block_reason = data.get('promptFeedback', {}).get('blockReason', 'UNKNOWN')
                             logger.warning(f"[Gemini] No candidates. blockReason={block_reason}")
                             return f"Gemini 분석 결과 없음 (사유: {block_reason})"
-                        text = candidates[0].get('content', {}).get('parts', [{}])[0].get('text')
+                        parts = candidates[0].get('content', {}).get('parts') or []
+                        text = parts[0].get('text') if parts else None
                         if not text:
                             finish_reason = candidates[0].get('finishReason', 'UNKNOWN')
                             logger.warning(f"[Gemini] Empty text. finishReason={finish_reason}")
