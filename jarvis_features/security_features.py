@@ -163,7 +163,7 @@ class SecurityCog(commands.Cog, name="보안/관리"):
                             ts = int(str(time_str).split("(")[1].split(")")[0]) / 1000
                             event_time = datetime.fromtimestamp(ts, tz=timezone.utc)
                         else:
-                            break
+                            continue  # 파싱 불가 이벤트는 건너뜀
                         if (datetime.now(timezone.utc) - event_time).total_seconds() > 300:
                             continue
                     except Exception:

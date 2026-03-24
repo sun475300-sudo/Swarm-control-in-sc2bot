@@ -1,11 +1,14 @@
 import asyncio
 import json
+import logging
 import os
 import subprocess
 import urllib.parse
 import urllib.request
 import urllib.error
 from mcp.server.fastmcp import FastMCP
+
+logger = logging.getLogger(__name__)
 
 # Create an MCP server for JARVIS
 mcp = FastMCP("JARVIS-SC2-Manager")
@@ -46,16 +49,17 @@ async def read_log_content(filename: str) -> str:
     if not os.path.exists(log_path):
         return f"File {safe_filename} not found."
 
-    with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
-        # Efficiently read only the tail to avoid loading large files into memory
+    with open(log_path, 'rb') as f:
+        # 바이너리 모드로 정확한 바이트 오프셋 계산
         try:
-            f.seek(0, 2)  # Seek to end
+            f.seek(0, 2)
             size = f.tell()
-            read_size = min(size, 4000)  # Read extra for multi-byte char safety
+            read_size = min(size, 4000)
             f.seek(max(0, size - read_size))
-            content = f.read()
+            content = f.read().decode('utf-8', errors='replace')
         except OSError:
-            content = f.read()
+            f.seek(0)
+            content = f.read().decode('utf-8', errors='replace')
         return content[-2000:]
 
 @mcp.tool()

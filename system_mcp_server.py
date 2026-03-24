@@ -33,7 +33,7 @@ mcp = FastMCP("JARVIS-System-Manager")
 # ──────────────────────────────────────────────
 _timers: dict[str, dict] = {}  # id -> {message, end_time, timer_obj, done}
 MAX_TIMERS = 100  # P2-12: 타이머 무제한 증가 방지
-_timers_lock = asyncio.Lock()  # P2-15: 비동기 스레드 안전
+_timers_lock = threading.Lock()  # threading.Timer 콜백도 보호 (asyncio.Lock으로는 불가)
 
 
 def _cleanup_expired_timers(max_age_seconds: float = 3600) -> int:
@@ -170,7 +170,8 @@ async def system_resources() -> str:
     try:
         cpu = psutil.cpu_percent(interval=1)
         ram = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk_path = os.path.splitdrive(os.path.expanduser("~"))[0] + os.sep if sys.platform == "win32" else "/"
+        disk = psutil.disk_usage(disk_path)
         return (
             f"CPU: {cpu}%\n"
             f"RAM: {ram.percent}% ({ram.used // (1024**3)}/{ram.total // (1024**3)} GB)\n"
@@ -321,7 +322,7 @@ async def network_status() -> str:
 async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
     """N분 후 알림을 설정합니다. 타이머 ID를 반환합니다."""
     try:
-        async with _timers_lock:
+        with _timers_lock:
             # 오래된 만료 타이머 자동 정리
             _cleanup_expired_timers()
 
@@ -338,8 +339,13 @@ async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
             end_time = time.time() + (minutes * 60)
 
             def _on_expire():
-                if timer_id in _timers:
-                    _timers[timer_id]['done'] = True
+                import threading as _th
+                # threading.Timer 콜백은 별도 스레드 — asyncio.Lock 보호 불가
+                try:
+                    if timer_id in _timers:
+                        _timers[timer_id]['done'] = True
+                except Exception:
+                    pass
 
             t = threading.Timer(minutes * 60, _on_expire)
             t.daemon = True
@@ -360,7 +366,7 @@ async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
 async def list_timers() -> str:
     """활성 타이머 목록을 조회합니다."""
     try:
-        async with _timers_lock:
+        with _timers_lock:
             if not _timers:
                 return "설정된 타이머가 없습니다."
 
@@ -678,6 +684,7 @@ async def run_program(name: str, args: str = "") -> str:
 # #128  Scheduler (간단한 cron 스타일 작업 예약)
 # ──────────────────────────────────────────────
 _scheduled_tasks: dict[str, dict] = {}  # id -> {command, cron, next_run, active, thread}
+_scheduled_tasks_lock = threading.Lock()  # 스레드/코루틴 동시 접근 보호
 MAX_SCHEDULED_TASKS = 50  # P2-12: 예약 작업 무제한 증가 방지
 
 
@@ -715,9 +722,16 @@ def _cron_matches_now(cron_expr: str) -> bool:
     hour_vals = _parse_cron_field(parts[1], 0, 23)
     day_vals = _parse_cron_field(parts[2], 1, 31)
     month_vals = _parse_cron_field(parts[3], 1, 12)
-    # Bug fix #17: Document that this uses Python's weekday() convention (0=Monday)
-    # which differs from standard cron (0=Sunday). This matches Python's datetime.weekday().
-    dow_vals = _parse_cron_field(parts[4], 0, 6)  # 0=월요일(Monday) ~ 6=일요일(Sunday) (Python weekday convention, NOT standard cron)
+    # 표준 cron: 0=Sunday, 1=Monday, ..., 6=Saturday
+    # Python weekday(): 0=Monday, ..., 6=Sunday
+    # 변환: (cron_val - 1) % 7 → Python weekday
+    raw_dow = _parse_cron_field(parts[4], 0, 7)  # 0,7=Sunday 허용 (표준 cron)
+    dow_vals = set()
+    for v in raw_dow:
+        if v == 0 or v == 7:  # Sunday
+            dow_vals.add(6)  # Python Sunday = 6
+        else:
+            dow_vals.add(v - 1)  # cron 1(Mon)→Python 0(Mon)
 
     return (
         now.minute in minute_vals

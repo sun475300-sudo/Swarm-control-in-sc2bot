@@ -1,0 +1,32 @@
+{
+  "plugins": [
+    {
+      "name": "sc2-bot-controller",
+      "version": "1.0.0",
+      "description": "StarCraft II 봇 제어 플러그인",
+      "author": "JARVIS",
+      "status": "installed"
+    },
+    {
+      "name": "crypto-trader",
+      "version": "0.5.0",
+      "description": "암호화폐 자동 트레이딩 플러그인",
+      "author": "JARVIS",
+      "status": "installed"
+    },
+    {
+      "name": "smart-home-bridge",
+      "version": "1.2.0",
+      "description": "스마트홈 기기 연동 플러그인",
+      "author": "JARVIS",
+      "status": "available"
+    },
+    {
+      "name": "media-controller",
+      "version": "0.8.0",
+      "description": "미디어 재생/제어 플러그인",
+      "author": "JARVIS",
+      "status": "available"
+    }
+  ]
+}

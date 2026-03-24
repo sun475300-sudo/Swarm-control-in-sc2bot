@@ -418,7 +418,7 @@ def _ast_check_python_code(code: str) -> tuple:
     try:
         tree = _ast.parse(code)
     except SyntaxError:
-        return True, ""
+        return False, "파이썬 코드 구문 오류 (SyntaxError)"
     for node in _ast.walk(tree):
         if isinstance(node, _ast.Import):
             for alias in node.names:
@@ -459,13 +459,13 @@ def _redact_sensitive(text: str, max_len: int = 60) -> str:
 # ── Model Performance Tracking ──
 _model_stats: Dict[str, Dict[str, Any]] = {}  # model -> {success, fail, total_ms, last_error}
 _MODEL_STATS_MAX = 50  # ★ 메모리 릭 방지: 최대 50개 모델만 추적 ★
+_model_stats_lock = asyncio.Lock()  # 동시 접근 보호
 _global_model_selector = None  # ModelSelector 인스턴스 (적응형 라우팅 연동)
 
 def _track_model_result(model: str, success: bool, elapsed_ms: float = 0):
-    """모델별 성공/실패율 및 응답시간 추적 + ModelSelector 피드백"""
+    """모델별 성공/실패율 및 응답시간 추적 + ModelSelector 피드백 (event loop 내 호출 전용)"""
     now = time.time()
     if model not in _model_stats:
-        # ★ LRU 정리: 가장 오래 안 쓴 모델 제거 ★
         if len(_model_stats) >= _MODEL_STATS_MAX:
             oldest = min(_model_stats, key=lambda k: _model_stats[k].get("last_used", 0))
             del _model_stats[oldest]
@@ -477,7 +477,6 @@ def _track_model_result(model: str, success: bool, elapsed_ms: float = 0):
         _model_stats[model]["total_ms"] += elapsed_ms
     else:
         _model_stats[model]["fail"] += 1
-    # ★ ModelSelector 적응형 메트릭 피드백 ★
     if _global_model_selector:
         try:
             _global_model_selector.record_result(model, success, elapsed_ms)
@@ -924,8 +923,6 @@ class JarvisBot(commands.Bot):
             modes.append("Claude API")
         if CLAUDE_SESSION_KEY:
             modes.append("Claude Proxy")
-        if GEMINI_API_KEY:
-            modes.append("Gemini")
         if not modes:
             modes.append("Local Only")
 
@@ -933,8 +930,28 @@ class JarvisBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=f"JARVIS | {mode_str}"))
         logger.info(f"Available backends: {mode_str}")
         logger.info(f"  Claude API Key: {'설정됨' if CLAUDE_API_KEY else '미설정'}")
-        logger.info(f"  Gemini API Key: {'설정됨' if GEMINI_API_KEY else '미설정'}")
         logger.info(f"  Claude Session: {'설정됨' if CLAUDE_SESSION_KEY else '미설정'}")
+
+        # 오너에게 온라인 알림 DM 전송 (최초 1회만)
+        if not getattr(self, '_first_ready_done', False):
+            self._first_ready_done = True
+            try:
+                if BOT_OWNER_ID:
+                    from datetime import datetime
+                    owner = await self.fetch_user(int(BOT_OWNER_ID))
+                    if owner:
+                        now = datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
+                        await owner.send(
+                            f"**J.A.R.V.I.S. 시스템 온라인**\n"
+                            f"───────────────────\n"
+                            f"사령관님, J.A.R.V.I.S. 가동 완료되었습니다.\n"
+                            f"현재 시각 {now}, 모든 시스템 정상 작동 중입니다.\n"
+                            f"백엔드: {mode_str}\n"
+                            f"언제든지 명령을 하달해 주십시오."
+                        )
+                        logger.info(f"Startup DM sent to owner ({BOT_OWNER_ID})")
+            except Exception as e:
+                logger.warning(f"Failed to send startup DM: {e}")
 
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         """Reaction 인터랙션 처리 - 상세보기/차트"""
@@ -1531,16 +1548,22 @@ class JarvisBot(commands.Bot):
                                         img_data = base64.b64decode(b64_str)
                                         now_str = datetime.now(timezone(timedelta(hours=9))).strftime("%H:%M:%S")
                                         file = discord.File(io.BytesIO(img_data), filename=f"cctv_{now_str}.jpg")
-                                        await self._cctv_channel.send(content=f"**CCTV [{now_str}]**", file=file)
+                                        ch = self._cctv_channel
+                                        if ch:
+                                            await ch.send(content=f"**CCTV [{now_str}]**", file=file)
                                         _consecutive_failures = 0
                                 except asyncio.CancelledError:
                                     break
                                 except Exception as e:
                                     _consecutive_failures += 1
-                                    # P3-10: 매 실패마다 개별 로깅
                                     logger.warning(f"CCTV 캡처 실패 ({_consecutive_failures}/5): {e}")
                                     if _consecutive_failures >= 5:
-                                        await self._cctv_channel.send("CCTV 5회 연속 실패 — 자동 중단합니다. `!cctv start`로 재시작하세요.")
+                                        ch = self._cctv_channel
+                                        if ch:
+                                            try:
+                                                await ch.send("CCTV 5회 연속 실패 — 자동 중단합니다. `!cctv start`로 재시작하세요.")
+                                            except Exception:
+                                                pass
                                         break
                                 await asyncio.sleep(interval_sec)
 
@@ -2072,24 +2095,7 @@ class JarvisBot(commands.Bot):
             except Exception as e:
                 errors.append(f"Claude Proxy: {e}")
 
-        # 3. Gemini Fallback — ModelSelector 기반 모델 순서 적용
-        gemini_models = (model_plan.gemini_models if model_plan
-                         else ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"])
-        if GEMINI_API_KEY:
-            for model_name in gemini_models:
-                if self._is_rate_limited(f"gemini-{model_name}"):
-                    errors.append(f"{model_name}: 쿨다운 중")
-                    continue
-                try:
-                    return await self._query_gemini(prompt, system_prompt, image_url, model=model_name)
-                except RateLimitError as e:
-                    self._set_rate_limit(f"gemini-{model_name}", e.retry_after or 30)
-                    errors.append(f"{model_name}: 한도 초과")
-                except PermissionError as e:
-                    errors.append(f"Gemini: {e}")
-                    break
-                except Exception as e:
-                    errors.append(f"{model_name}: {e}")
+        # 3. Gemini 제거됨 — Claude API + Claude Proxy만 사용
 
         # 4. Ollama (로컬 - 한도 없음)
         try:
@@ -2161,7 +2167,7 @@ class JarvisBot(commands.Bot):
                 async with session.post(
                     "https://api.anthropic.com/v1/messages",
                     json=data, headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_GEMINI)
+                    timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_DEFAULT)
                 ) as resp:
                     elapsed = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
                     if resp.status == 200:
@@ -2734,12 +2740,17 @@ async def portfolio_monitor_task(bot):
         return
     try:
         summary = await crypto_mcp_server.portfolio_summary()
-        # 총 자산 추출 (첫 번째 숫자)
+        # 총 자산 추출 — "총 자산" 또는 "평가액" 뒤의 숫자
         import re as _re_local
-        m = _re_local.search(r'[\d,]+(?:\.\d+)?', summary.replace(',', ''))
+        m = _re_local.search(r'(?:총\s*자산|평가액)[^\d]*([\d,]+(?:\.\d+)?)', summary)
         if not m:
-            return
-        current_value = float(m.group().replace(',', ''))
+            # fallback: 마지막 큰 숫자 (1000 이상)
+            nums = _re_local.findall(r'[\d,]{4,}', summary)
+            if not nums:
+                return
+            current_value = float(nums[-1].replace(',', ''))
+        else:
+            current_value = float(m.group(1).replace(',', ''))
         if _last_portfolio_value > 0:
             change_pct = abs(current_value - _last_portfolio_value) / _last_portfolio_value * 100
             if change_pct >= 5.0:
@@ -2842,7 +2853,6 @@ def main():
 
     logger.info("JARVIS Discord Bot starting...")
     logger.info(f"  Claude API: {'OK' if CLAUDE_API_KEY else 'N/A'}")
-    logger.info(f"  Gemini API: {'OK' if GEMINI_API_KEY else 'N/A'}")
     logger.info(f"  MCP Modules: {MCP_AVAILABLE} (sc2={sc2_mcp_server is not None}, sys={system_mcp_server is not None}, crypto={crypto_mcp_server is not None})")
     logger.info(f"  Advanced Features: {ADVANCED_AVAILABLE}")
     logger.info(f"  Web Tools: {'OK' if web_tools else 'N/A'}")
@@ -2851,11 +2861,14 @@ def main():
     # ★ Phase 5: Graceful Shutdown ★
     def _graceful_shutdown(sig, frame):
         logger.info(f"[SHUTDOWN] Signal {sig} received. Initiating graceful shutdown...")
-        # Save audit log summary
         if get_tool_registry:
             logger.info(f"[SHUTDOWN] Tool stats:\n{get_tool_registry().get_summary()}")
-        # Close bot
-        asyncio.ensure_future(bot.close())
+        # 안전한 이벤트 루프 스레드 호출
+        try:
+            loop = asyncio.get_event_loop()
+            loop.call_soon_threadsafe(lambda: asyncio.ensure_future(bot.close()))
+        except RuntimeError:
+            pass
 
     signal.signal(signal.SIGINT, _graceful_shutdown)
     signal.signal(signal.SIGTERM, _graceful_shutdown)

@@ -78,13 +78,13 @@ for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             print(f"[INFO] Killing existing process (PID: {proc.info['pid']}, {cmd_str[:60]})")
             proc.kill()
             _killed.append(proc)
-    except (psutil.NoSuchProcess, psutil.AccessDenied):
-        pass
+    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+        print(f"[WARN] Could not terminate PID {proc.info.get('pid', '?')}: {e}")
 if _killed:
     try:
         psutil.wait_procs(_killed, timeout=5)
-    except (psutil.AccessDenied, PermissionError):
-        pass  # Windows에서 권한 문제 무시
+    except (psutil.AccessDenied, PermissionError) as e:
+        print(f"[WARN] Process wait failed (permission): {e}")
     print(f"[OK] {len(_killed)} existing processes terminated")
 
 time.sleep(2)
@@ -126,12 +126,21 @@ for mcp_script in ["sc2_mcp_server.py", "system_mcp_server.py", "crypto_mcp_serv
 
         mcp_proc = subprocess.Popen(
             [sys.executable, mcp_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             **mcp_popen_kwargs,
         )
         time.sleep(1)
         if mcp_proc.poll() is not None:
             mcp_failures.append(mcp_script)
+            stderr_out = ""
+            try:
+                stderr_out = mcp_proc.stderr.read().decode(errors='replace')[:500]
+            except Exception:
+                pass
             print(f"[FAIL] {mcp_script} exited immediately (Code: {mcp_proc.returncode})")
+            if stderr_out:
+                print(f"[FAIL] stderr: {stderr_out}")
         else:
             print(f"[OK] {mcp_script} started (PID: {mcp_proc.pid})")
     except Exception as e:

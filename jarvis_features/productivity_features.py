@@ -415,6 +415,8 @@ class ProductivityCog(commands.Cog, name="생산성"):
                 continue
             try:
                 trigger_at = datetime.fromisoformat(reminder["trigger_at"])
+                if trigger_at.tzinfo is None:
+                    trigger_at = trigger_at.replace(tzinfo=timezone.utc)
             except (ValueError, TypeError):
                 reminder["triggered"] = True
                 continue

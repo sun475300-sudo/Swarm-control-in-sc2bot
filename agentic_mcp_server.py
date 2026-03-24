@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import ast
 import logging
 import os
+import re
 import subprocess
 import tempfile
 from mcp.server.fastmcp import FastMCP
@@ -11,6 +14,9 @@ except ImportError:
     pyautogui = None
 
 logger = logging.getLogger(__name__)
+
+# ── Security: Path traversal detection ──
+_PATH_TRAVERSAL_RE = re.compile(r'(^|[\\/])\.\.($|[\\/])')
 
 # ── Security: Command whitelist/blocklist ──
 _ALLOWED_COMMANDS = {
@@ -43,9 +49,10 @@ def _is_command_allowed(command: str) -> tuple[bool, str]:
 
     # Extract the base command (first word)
     first_word = command.strip().split()[0] if command.strip() else ""
-    # P3-2: 경로 트래버설 차단
-    if ".." in first_word:
-        return False, f"Path traversal detected in command: '{first_word}'"
+    # P3-2: 경로 트래버설 차단 (모든 인자에서 ../ 패턴 검사)
+    for word in command.strip().split():
+        if _PATH_TRAVERSAL_RE.search(word):
+            return False, f"Path traversal detected: '{word}'"
     # 정규화된 basename 추출 (os.path.basename 사용)
     base_cmd = os.path.basename(first_word)
     # Remove extension
@@ -53,6 +60,13 @@ def _is_command_allowed(command: str) -> tuple[bool, str]:
 
     if base_cmd.lower() not in {c.lower() for c in _ALLOWED_COMMANDS}:
         return False, f"Command '{base_cmd}' is not in the allowed list"
+
+    # 절대 경로가 지정된 경우, 실제 시스템 경로와 일치하는지 검증
+    import shutil
+    if os.sep in first_word or "/" in first_word:
+        resolved = shutil.which(base_cmd)
+        if resolved and os.path.normcase(os.path.abspath(first_word)) != os.path.normcase(resolved):
+            return False, f"Command path mismatch: '{first_word}' is not the system '{base_cmd}'"
 
     return True, "OK"
 
@@ -142,9 +156,10 @@ def _validate_python_code(code: str) -> tuple[bool, str]:
                 if module in _BLOCKED_PYTHON_IMPORTS:
                     return False, f"Import from '{node.module}' is blocked for security"
         elif isinstance(node, ast.Call):
-            # Block eval(), exec(), compile(), __import__()
+            # Block eval(), exec(), compile(), __import__(), open()
             func = node.func
-            if isinstance(func, ast.Name) and func.id in ("eval", "exec", "compile", "__import__"):
+            _BLOCKED_CALLS = {"eval", "exec", "compile", "__import__", "open", "globals", "locals", "vars", "dir", "type"}
+            if isinstance(func, ast.Name) and func.id in _BLOCKED_CALLS:
                 return False, f"Built-in '{func.id}()' is blocked for security"
             # Block getattr(__builtins__, ...) style bypass
             if isinstance(func, ast.Name) and func.id == "getattr":
@@ -176,9 +191,24 @@ async def execute_python_code(code: str) -> str:
         logger.warning(f"[SECURITY] Blocked Python code: {reason}")
         return f"Code blocked for security: {reason}"
 
+    # Runtime sandbox preamble: neuter dangerous builtins in child process
+    _SANDBOX_PREAMBLE = (
+        "import builtins as _sb\n"
+        "_SAFE = {" + ",".join(f'"{m}"' for m in _ALLOWED_PYTHON_IMPORTS) + "}\n"
+        "_OI = _sb.__import__\n"
+        "def _si(n, *a, **k):\n"
+        "    if n.split('.')[0] not in _SAFE: raise ImportError(f\"Import '{n}' blocked\")\n"
+        "    return _OI(n, *a, **k)\n"
+        "_sb.__import__ = _si\n"
+        "for _fn in ('eval','exec','compile','open','__import__'):\n"
+        "    if hasattr(_sb, _fn): delattr(_sb, _fn)\n"
+        "del _sb, _SAFE, _OI, _si, _fn\n"
+    )
+
     try:
-        # Save code to a temporary file, then run it
+        # Save code to a temporary file with sandbox preamble, then run it
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+            f.write(_SANDBOX_PREAMBLE)
             f.write(code)
             temp_path = f.name
             

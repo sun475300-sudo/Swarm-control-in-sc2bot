@@ -138,12 +138,15 @@ def start_all() -> None:
 
         # 로그 파일 열기 (append 모드)
         log_path = LOG_DIR / log_name
+        log_file = None
         try:
             log_file = open(log_path, "a", encoding="utf-8")
             log_file.write(f"\n--- {name} started at {datetime.now().isoformat()} ---\n")
             log_file.flush()
         except OSError as e:
             print(f"  [{name}] 로그 파일 생성 실패: {e}")
+            if log_file:
+                log_file.close()
             continue
 
         # 프로세스 시작 — 터미널 창 숨김
@@ -164,11 +167,14 @@ def start_all() -> None:
             )
 
             pids[name] = proc.pid
+            # 로그 핸들은 프로세스가 소유 — 프로세스 종료 시 정리됨
             print(f"  [{name}] 시작 완료 — PID: {proc.pid} | 로그: logs/{log_name}")
 
         except FileNotFoundError:
+            log_file.close()
             print(f"  [{name}] 실행 파일을 찾을 수 없음: {cmd[0]}")
         except Exception as e:
+            log_file.close()
             print(f"  [{name}] 시작 실패: {e}")
 
     if pids:

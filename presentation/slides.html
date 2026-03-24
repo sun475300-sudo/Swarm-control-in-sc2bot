@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Noto Sans KR', 'Segoe UI', sans-serif; background:#0a0a1a; color:#e0e0e0; }
+  .slide {
+    width:1280px; height:720px; padding:60px 80px;
+    position:relative; overflow:hidden;
+    page-break-after: always;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+  }
+  .slide::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:4px;
+    background: linear-gradient(90deg, #00d4ff, #7b2ff7, #ff6b6b, #00d4ff);
+  }
+  .slide::after {
+    content:''; position:absolute; bottom:0; right:0; width:300px; height:300px;
+    background: radial-gradient(circle, rgba(123,47,247,0.08) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  h1 { font-size:42px; font-weight:900; margin-bottom:20px;
+    background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  h2 { font-size:28px; font-weight:700; color:#00d4ff; margin-bottom:16px; }
+  h3 { font-size:20px; font-weight:500; color:#a78bfa; margin-bottom:10px; }
+  p { font-size:18px; line-height:1.7; color:#b0b8c4; }
+  .subtitle { font-size:22px; color:#8b949e; font-weight:300; }
+  .tag { display:inline-block; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:500; margin:3px; }
+  .tag-blue { background:rgba(0,212,255,0.15); color:#00d4ff; border:1px solid rgba(0,212,255,0.3); }
+  .tag-purple { background:rgba(123,47,247,0.15); color:#a78bfa; border:1px solid rgba(123,47,247,0.3); }
+  .tag-green { background:rgba(0,255,136,0.15); color:#00ff88; border:1px solid rgba(0,255,136,0.3); }
+  .tag-red { background:rgba(255,107,107,0.15); color:#ff6b6b; border:1px solid rgba(255,107,107,0.3); }
+  .tag-yellow { background:rgba(255,200,50,0.15); color:#ffc832; border:1px solid rgba(255,200,50,0.3); }
+  .box {
+    background:rgba(22,27,34,0.8); border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px; padding:20px 24px; margin:8px 0;
+  }
+  .box-accent { border-left:3px solid #7b2ff7; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  .grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; }
+  .stat-box { text-align:center; padding:18px; }
+  .stat-num { font-size:36px; font-weight:900; color:#00d4ff; }
+  .stat-label { font-size:13px; color:#8b949e; margin-top:4px; }
+  .formula {
+    font-family:'Courier New',monospace; font-size:16px; color:#00ff88;
+    background:rgba(0,255,136,0.08); padding:14px 20px; border-radius:8px;
+    border:1px solid rgba(0,255,136,0.2); margin:12px 0;
+  }
+  .page-num {
+    position:absolute; bottom:24px; right:40px; font-size:14px; color:#484f58;
+  }
+  .logo-text {
+    position:absolute; bottom:24px; left:40px; font-size:13px; color:#484f58;
+  }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th { background:rgba(123,47,247,0.2); color:#a78bfa; padding:10px 14px; text-align:left; font-weight:600; }
+  td { padding:9px 14px; border-bottom:1px solid rgba(255,255,255,0.06); color:#b0b8c4; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .arrow { color:#7b2ff7; font-weight:700; }
+  .highlight { color:#00d4ff; font-weight:600; }
+  .code-block {
+    font-family:'Courier New',monospace; font-size:14px; color:#c9d1d9;
+    background:#161b22; border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px; padding:16px 20px; line-height:1.6;
+  }
+  .flow-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .flow-box {
+    background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.25);
+    border-radius:8px; padding:8px 16px; font-size:14px; color:#00d4ff; font-weight:500;
+  }
+  .flow-arrow { color:#484f58; font-size:20px; }
+  .center-title {
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    height:100%; text-align:center;
+  }
+  .big-title { font-size:56px; font-weight:900;
+    background: linear-gradient(135deg, #00d4ff, #7b2ff7, #ff6b6b);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .big-sub { font-size:26px; color:#8b949e; margin-top:16px; font-weight:300; }
+  .circle-badge {
+    width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:900; color:#fff; flex-shrink:0;
+  }
+  .badge-blue { background:linear-gradient(135deg,#0077ff,#00d4ff); }
+  .badge-purple { background:linear-gradient(135deg,#7b2ff7,#a78bfa); }
+  .badge-green { background:linear-gradient(135deg,#00aa55,#00ff88); }
+  .badge-red { background:linear-gradient(135deg,#cc3333,#ff6b6b); }
+  ul { padding-left:20px; }
+  li { font-size:16px; color:#b0b8c4; margin:5px 0; line-height:1.6; }
+  li::marker { color:#7b2ff7; }
+  .step-row { display:flex; align-items:flex-start; gap:16px; margin:8px 0; }
+  .step-content { flex:1; }
+  .step-title { font-size:16px; font-weight:600; color:#e0e0e0; }
+  .step-desc { font-size:14px; color:#8b949e; margin-top:2px; }
+  .divider { height:1px; background:rgba(255,255,255,0.06); margin:16px 0; }
+  .force-item { display:flex; align-items:center; gap:12px; margin:6px 0; }
+  .force-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .emoji { font-size:24px; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide" id="slide1">
+  <div class="center-title">
+    <div style="font-size:60px; margin-bottom:16px;">&#x1F41D;</div>
+    <div class="big-title">군집 드론 제어 시스템</div>
+    <div class="big-title" style="font-size:36px; margin-top:4px;">Swarm Control in StarCraft II</div>
+    <div class="big-sub" style="margin-top:24px;">Boids 알고리즘 기반 분산 군집 제어 &amp; 강화학습</div>
+    <div style="margin-top:40px; display:flex; gap:12px; justify-content:center;">
+      <span class="tag tag-blue">Boids Algorithm</span>
+      <span class="tag tag-purple">Reinforcement Learning</span>
+      <span class="tag tag-green">Sim-to-Real</span>
+      <span class="tag tag-red">StarCraft II</span>
+    </div>
+    <div style="margin-top:30px; color:#484f58; font-size:16px;">2026</div>
+  </div>
+  <div class="page-num">1 / 10</div>
+</div>
+
+<!-- SLIDE 2: Project Overview -->
+<div class="slide" id="slide2">
+  <h1>프로젝트 개요</h1>
+  <p style="margin-bottom:20px;">StarCraft II 환경에서 <span class="highlight">Boids 군집 알고리즘</span>과 <span class="highlight">강화학습</span>을 결합하여<br>실시간 전략 게임 AI를 구현하고, 실제 드론 군집 제어로의 전이를 연구합니다.</p>
+  <div class="grid4" style="margin-bottom:24px;">
+    <div class="box stat-box">
+      <div class="stat-num">56K+</div>
+      <div class="stat-label">Lines of Code</div>
+    </div>
+    <div class="box stat-box">
+      <div class="stat-num">45</div>
+      <div class="stat-label">전투 모듈</div>
+    </div>
+    <div class="box stat-box">
+      <div class="stat-num">10+</div>
+      <div class="stat-label">핵심 매니저</div>
+    </div>
+    <div class="box stat-box">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Boids 힘 벡터</div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="box box-accent">
+      <h3>&#x1F3AF; 핵심 목표</h3>
+      <ul>
+        <li>Reynolds Boids 기반 실시간 군집 제어</li>
+        <li>계층적 강화학습 (DQN / PPO)</li>
+        <li>커리큘럼 학습으로 난이도 점진 상승</li>
+        <li>Sim-to-Real 전이 프레임워크 설계</li>
+      </ul>
+    </div>
+    <div class="box box-accent">
+      <h3>&#x1F6E0;&#xFE0F; 기술 스택</h3>
+      <ul>
+        <li><strong>게임 API</strong>: python-sc2</li>
+        <li><strong>ML</strong>: NumPy (DQN/PPO 직접 구현)</li>
+        <li><strong>공간 인덱싱</strong>: KD-Tree, Quadtree</li>
+        <li><strong>테스트</strong>: pytest (249 테스트)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">2 / 10</div>
+</div>
+
+<!-- SLIDE 3: System Architecture -->
+<div class="slide" id="slide3">
+  <h1>시스템 아키텍처</h1>
+  <div style="margin-bottom:16px;">
+    <div class="flow-row" style="justify-content:center; margin:16px 0;">
+      <div class="flow-box" style="background:rgba(255,107,107,0.15); border-color:rgba(255,107,107,0.3); color:#ff6b6b;">SC2 Game State</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="background:rgba(123,47,247,0.15); border-color:rgba(123,47,247,0.3); color:#a78bfa;">BotStepIntegrator</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="background:rgba(255,200,50,0.15); border-color:rgba(255,200,50,0.3); color:#ffc832;">Blackboard (중앙 상태)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="background:rgba(0,255,136,0.15); border-color:rgba(0,255,136,0.3); color:#00ff88;">Actions</div>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="box" style="border-top:3px solid #00d4ff;">
+      <h3 style="color:#00d4ff;">&#x1F9E0; 전략 계층</h3>
+      <div style="font-size:14px; color:#8b949e; line-height:1.7;">
+        <div>&#x25B8; <strong>IntelManager</strong> — 적 정보 수집</div>
+        <div>&#x25B8; <strong>StrategyManager</strong> — 종족별 전략</div>
+        <div>&#x25B8; <strong>EconomyManager</strong> — 자원/일꾼 관리</div>
+        <div>&#x25B8; <strong>UpgradeManager</strong> — 테크 업그레이드</div>
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #ff6b6b;">
+      <h3 style="color:#ff6b6b;">&#x2694;&#xFE0F; 전투 계층</h3>
+      <div style="font-size:14px; color:#8b949e; line-height:1.7;">
+        <div>&#x25B8; <strong>CombatManager</strong> — 전투 오케스트레이션</div>
+        <div>&#x25B8; <strong>BoidsSwarmControl</strong> — 군집 이동</div>
+        <div>&#x25B8; <strong>FormationTactics</strong> — 진형 생성</div>
+        <div>&#x25B8; <strong>45 전술 모듈</strong> — 특수 전투</div>
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #00ff88;">
+      <h3 style="color:#00ff88;">&#x1F3D7;&#xFE0F; 인프라 계층</h3>
+      <div style="font-size:14px; color:#8b949e; line-height:1.7;">
+        <div>&#x25B8; <strong>QueenManager</strong> — 여왕 관리</div>
+        <div>&#x25B8; <strong>CreepManager</strong> — 점막 확산</div>
+        <div>&#x25B8; <strong>SpellCaster</strong> — 스킬 자동화</div>
+        <div>&#x25B8; <strong>EarlyDefense</strong> — 초반 방어</div>
+      </div>
+    </div>
+  </div>
+  <div class="box" style="margin-top:16px;">
+    <h3>&#x23F1;&#xFE0F; 프레임 기반 실행 스케줄링</h3>
+    <div style="display:flex; gap:20px; font-size:14px; margin-top:8px;">
+      <div><span class="tag tag-red">2프레임</span> CombatManager</div>
+      <div><span class="tag tag-blue">4프레임</span> EconomyManager</div>
+      <div><span class="tag tag-purple">8프레임</span> IntelManager</div>
+      <div><span class="tag tag-green">10프레임</span> CreepManager</div>
+      <div><span class="tag tag-yellow">22프레임</span> StrategyManager</div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">3 / 10</div>
+</div>
+
+<!-- SLIDE 4: Boids Algorithm -->
+<div class="slide" id="slide4">
+  <h1>Boids 군집 제어 알고리즘</h1>
+  <p style="margin-bottom:12px;">Reynolds Boids 알고리즘을 확장하여 <span class="highlight">6가지 힘 벡터</span>로 실시간 군집 이동을 제어합니다.</p>
+  <div class="formula" style="text-align:center; font-size:17px;">
+    V<sub>final</sub> = w<sub>1</sub>&middot;Separation + w<sub>2</sub>&middot;Alignment + w<sub>3</sub>&middot;Cohesion + w<sub>4</sub>&middot;Target + w<sub>5</sub>&middot;Avoidance + w<sub>6</sub>&middot;Surrounding
+  </div>
+  <div class="grid2" style="margin-top:12px;">
+    <div>
+      <div class="force-item">
+        <div class="force-dot" style="background:#ff6b6b;"></div>
+        <div><strong style="color:#ff6b6b;">Separation (분리)</strong> <span style="color:#8b949e;">w=1.5</span><br><span style="font-size:13px; color:#8b949e;">유닛 간 최소 거리 유지, 충돌 방지 (반경 2.0)</span></div>
+      </div>
+      <div class="force-item">
+        <div class="force-dot" style="background:#00d4ff;"></div>
+        <div><strong style="color:#00d4ff;">Alignment (정렬)</strong> <span style="color:#8b949e;">w=1.0</span><br><span style="font-size:13px; color:#8b949e;">이웃 유닛과 속도 방향 정렬 (반경 5.0)</span></div>
+      </div>
+      <div class="force-item">
+        <div class="force-dot" style="background:#00ff88;"></div>
+        <div><strong style="color:#00ff88;">Cohesion (응집)</strong> <span style="color:#8b949e;">w=1.0</span><br><span style="font-size:13px; color:#8b949e;">그룹 중심으로 이동, 집단 유지</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="force-item">
+        <div class="force-dot" style="background:#ffc832;"></div>
+        <div><strong style="color:#ffc832;">Target Seeking (목표 추적)</strong> <span style="color:#8b949e;">w=2.0</span><br><span style="font-size:13px; color:#8b949e;">목표 지점으로 군집 이동 (최고 우선순위)</span></div>
+      </div>
+      <div class="force-item">
+        <div class="force-dot" style="background:#a78bfa;"></div>
+        <div><strong style="color:#a78bfa;">Enemy Avoidance (회피)</strong> <span style="color:#8b949e;">w=1.5</span><br><span style="font-size:13px; color:#8b949e;">고위협 유닛 감지 및 동적 회피</span></div>
+      </div>
+      <div class="force-item">
+        <div class="force-dot" style="background:#ff8c00;"></div>
+        <div><strong style="color:#ff8c00;">Surrounding (포위)</strong> <span style="color:#8b949e;">동적</span><br><span style="font-size:13px; color:#8b949e;">적 주변 부채꼴 포위 진형 형성</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="box" style="margin-top:14px;">
+    <h3>&#x26A0;&#xFE0F; 위협 인식 적응 시스템</h3>
+    <div style="display:flex; gap:16px; margin-top:8px; font-size:14px;">
+      <div style="flex:1;">
+        <div style="color:#ff6b6b; font-weight:600; margin-bottom:4px;">HIGH_THREAT (12종)</div>
+        <span style="color:#8b949e;">Siege Tank, Colossus, Lurker, Baneling, High Templar, Disruptor...</span>
+      </div>
+      <div style="flex:1;">
+        <div style="color:#ffc832; font-weight:600; margin-bottom:4px;">SPLASH_UNITS (8종)</div>
+        <span style="color:#8b949e;">감지 시 Separation 배율 증가 &rarr; 범위 피해 최소화</span>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">4 / 10</div>
+</div>
+
+<!-- SLIDE 5: Blackboard Pattern -->
+<div class="slide" id="slide5">
+  <h1>Blackboard 중앙 상태 관리</h1>
+  <p style="margin-bottom:16px;">모든 매니저가 공유하는 <span class="highlight">단일 진실 원천(Single Source of Truth)</span> 패턴</p>
+  <div class="grid2">
+    <div>
+      <div class="box" style="border-left:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">GameStateBlackboard (18K LoC)</h3>
+        <div class="code-block" style="font-size:13px; margin-top:8px;">
+game_phase: GamePhase<br>
+&nbsp;&nbsp;# OPENING &rarr; EARLY &rarr; MID &rarr; LATE<br>
+<br>
+authority_mode: AuthorityMode<br>
+&nbsp;&nbsp;# EMERGENCY &rarr; COMBAT &rarr; STRATEGY &rarr; ECONOMY<br>
+<br>
+threat_info: ThreatInfo<br>
+unit_counts: Dict[UnitType, Count]<br>
+resource_state: ResourceState<br>
+production_queue: PriorityQueue<br>
+cache: TTL_Cache
+        </div>
+      </div>
+      <div class="box" style="margin-top:12px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x23F0; 게임 페이즈 타임라인</h3>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          <span class="tag tag-blue">0~3분</span> OPENING &mdash; 초반 빌드<br>
+          <span class="tag tag-green">3~6분</span> EARLY &mdash; 확장/방어<br>
+          <span class="tag tag-yellow">6~12분</span> MID &mdash; 교전/테크<br>
+          <span class="tag tag-red">12분+</span> LATE &mdash; 후반 결전
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #a78bfa;">
+        <h3 style="color:#a78bfa;">&#x1F3DB;&#xFE0F; Authority Mode (우선순위 FSM)</h3>
+        <table style="margin-top:8px;">
+          <tr><th>모드</th><th>우선도</th><th>초점</th></tr>
+          <tr><td style="color:#ff6b6b; font-weight:600;">EMERGENCY</td><td>P0 (최고)</td><td>즉시 방어 유닛</td></tr>
+          <tr><td style="color:#ffc832; font-weight:600;">COMBAT</td><td>P1</td><td>군대 생산</td></tr>
+          <tr><td style="color:#a78bfa; font-weight:600;">STRATEGY</td><td>P2</td><td>테크/업그레이드</td></tr>
+          <tr><td style="color:#00ff88; font-weight:600;">ECONOMY</td><td>P3</td><td>일꾼/확장</td></tr>
+          <tr><td style="color:#00d4ff; font-weight:600;">BALANCED</td><td>보통</td><td>50:50 균형</td></tr>
+        </table>
+      </div>
+      <div class="box" style="margin-top:12px; border-left:3px solid #00d4ff;">
+        <h3 style="color:#00d4ff;">&#x1F50D; 위협 레벨</h3>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          <span style="color:#00ff88;">NONE</span> &rarr;
+          <span style="color:#00d4ff;">LOW</span> &rarr;
+          <span style="color:#ffc832;">MEDIUM</span> &rarr;
+          <span style="color:#ff8c00;">HIGH</span> &rarr;
+          <span style="color:#ff6b6b;">CRITICAL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">5 / 10</div>
+</div>
+
+<!-- SLIDE 6: Combat System -->
+<div class="slide" id="slide6">
+  <h1>전투 시스템 (45 모듈)</h1>
+  <div class="grid3" style="margin-top:10px;">
+    <div class="box" style="border-top:3px solid #ff6b6b;">
+      <h3 style="color:#ff6b6b;">&#x2694;&#xFE0F; 마이크로 컨트롤</h3>
+      <div style="font-size:13px; color:#8b949e; line-height:1.8;">
+        &#x25B8; BoidsSwarmControl &mdash; 군집 이동<br>
+        &#x25B8; FormationTactics &mdash; 오목진형<br>
+        &#x25B8; MicroCombat &mdash; 개별 유닛 제어<br>
+        &#x25B8; StutterStepKiting &mdash; 카이팅<br>
+        &#x25B8; SpatialQueryOptimizer &mdash; KD-tree<br>
+        &#x25B8; PotentialFields &mdash; 그래디언트 경로
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #ffc832;">
+      <h3 style="color:#ffc832;">&#x1F4A3; 유닛별 전술</h3>
+      <div style="font-size:13px; color:#8b949e; line-height:1.8;">
+        &#x25B8; BanelingBomb &mdash; 맹독충 투하<br>
+        &#x25B8; BanelingTactics &mdash; 자폭 돌격<br>
+        &#x25B8; LurkerAmbush &mdash; 매복 전술<br>
+        &#x25B8; LurkerPositioning &mdash; 배치 최적화<br>
+        &#x25B8; InfestorTactics &mdash; 곰팡이/기생<br>
+        &#x25B8; ViperTactics &mdash; 실명구름/폭탄<br>
+        &#x25B8; MutaliskMicro &mdash; 뮤탈 견제<br>
+        &#x25B8; NydusTactics &mdash; 땅굴 기습
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #00ff88;">
+      <h3 style="color:#00ff88;">&#x1F6E1;&#xFE0F; 공격/방어</h3>
+      <div style="font-size:13px; color:#8b949e; line-height:1.8;">
+        &#x25B8; AttackController &mdash; 집결/공격<br>
+        &#x25B8; MultiProngCoordinator &mdash; 다각 공격<br>
+        &#x25B8; HarassmentCoordinator &mdash; 견제<br>
+        &#x25B8; DoomDrop &mdash; 운송선 투하<br>
+        &#x25B8; BaseDefense &mdash; 본진 방어<br>
+        &#x25B8; ExpansionDefense &mdash; 확장 방어<br>
+        &#x25B8; FlankingCoordinator &mdash; 측면 포위<br>
+        &#x25B8; QueenWalk &mdash; 여왕 전진 압박
+      </div>
+    </div>
+  </div>
+  <div class="box" style="margin-top:14px;">
+    <h3>&#x1F50E; 핵심 진형 제어 &mdash; Concave Formation</h3>
+    <div class="grid2" style="margin-top:8px;">
+      <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+        <strong style="color:#e0e0e0;">원거리 유닛 (바퀴, 히드라)</strong><br>
+        &rarr; 부채꼴(Arc) 진형으로 화력 집중<br>
+        &rarr; 아군 사격선 겹침 최소화<br>
+        &rarr; 적 범위 공격 피해 분산
+      </div>
+      <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+        <strong style="color:#e0e0e0;">근거리 유닛 (저글링, 맹독충)</strong><br>
+        &rarr; 라인 진형으로 돌격<br>
+        &rarr; Boids Surrounding으로 포위<br>
+        &rarr; 동적 간격 조절 (유닛 수 기반)
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">6 / 10</div>
+</div>
+
+<!-- SLIDE 7: Reinforcement Learning -->
+<div class="slide" id="slide7">
+  <h1>강화학습 시스템</h1>
+  <div class="grid2" style="margin-top:8px;">
+    <div>
+      <div class="box" style="border-left:3px solid #7b2ff7;">
+        <h3 style="color:#a78bfa;">&#x1F9EA; 학습 파이프라인</h3>
+        <div style="margin-top:10px;">
+          <div class="step-row">
+            <div class="circle-badge badge-blue">1</div>
+            <div class="step-content">
+              <div class="step-title">Game Play</div>
+              <div class="step-desc">WickedZergBot이 SC2 경기 수행</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="circle-badge badge-purple">2</div>
+            <div class="step-content">
+              <div class="step-title">Experience Collection</div>
+              <div class="step-desc">상태-행동-보상 데이터 수집</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="circle-badge badge-green">3</div>
+            <div class="step-content">
+              <div class="step-title">Policy Update</div>
+              <div class="step-desc">DQN / PPO 정책 최적화</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="circle-badge badge-red">4</div>
+            <div class="step-content">
+              <div class="step-title">Hot Reload</div>
+              <div class="step-desc">30초마다 모델 실시간 교체</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="box" style="margin-top:12px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x1F3C6; 보상 함수 (Multi-Objective)</h3>
+        <div class="formula" style="font-size:13px;">
+R = w<sub>1</sub>&middot;game_result<br>
+&nbsp;&nbsp;+ w<sub>2</sub>&middot;(army_value - enemy_army)<br>
+&nbsp;&nbsp;+ w<sub>3</sub>&middot;economy_score<br>
+&nbsp;&nbsp;+ w<sub>4</sub>&middot;tech_progression<br>
+&nbsp;&nbsp;+ w<sub>5</sub>&middot;expansion_count<br>
+&nbsp;&nbsp;- penalty
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">&#x1F4C8; 커리큘럼 학습 (6단계)</h3>
+        <div style="margin-top:8px;">
+          <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+            <span class="tag tag-green" style="min-width:90px; text-align:center;">Level 1</span>
+            <span style="font-size:14px; color:#b0b8c4;">VeryEasy &mdash; 5승 필요</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+            <span class="tag tag-green" style="min-width:90px; text-align:center;">Level 2</span>
+            <span style="font-size:14px; color:#b0b8c4;">Easy &mdash; 7승 필요</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+            <span class="tag tag-blue" style="min-width:90px; text-align:center;">Level 3</span>
+            <span style="font-size:14px; color:#b0b8c4;">Medium &mdash; 10승 필요</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+            <span class="tag tag-yellow" style="min-width:90px; text-align:center;">Level 4</span>
+            <span style="font-size:14px; color:#b0b8c4;">Hard &mdash; 12승 필요</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+            <span class="tag tag-red" style="min-width:90px; text-align:center;">Level 5</span>
+            <span style="font-size:14px; color:#b0b8c4;">VeryHard &mdash; 15승 필요</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+            <span class="tag tag-purple" style="min-width:90px; text-align:center;">Level 6</span>
+            <span style="font-size:14px; color:#b0b8c4;">CheatInsane &mdash; 20승 필요</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:13px; color:#8b949e;">
+          &#x26A0; 승률 20% 미만 시 하위 레벨로 회귀<br>
+          &#x26A0; 종족별 (T/P/Z) 개별 승률 추적
+        </div>
+      </div>
+      <div class="box" style="margin-top:12px; border-left:3px solid #00d4ff;">
+        <h3 style="color:#00d4ff;">&#x1F504; 계층적 RL</h3>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          <strong>High-level</strong>: 전략 결정 (공격/방어/확장)<br>
+          <strong>Mid-level</strong>: 유닛 조합 선택<br>
+          <strong>Low-level</strong>: 개별 유닛 마이크로
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">7 / 10</div>
+</div>
+
+<!-- SLIDE 8: Self-Healing -->
+<div class="slide" id="slide8">
+  <h1>자기 복구 &amp; 전략 적응</h1>
+  <div class="grid2" style="margin-top:12px;">
+    <div>
+      <div class="box" style="border-left:3px solid #ff6b6b;">
+        <h3 style="color:#ff6b6b;">&#x1F6E0;&#xFE0F; RuntimeSelfHealing</h3>
+        <p style="font-size:14px; margin-bottom:10px;">게임 중 발생하는 비정상 상태를 자동 감지하고 복구합니다.</p>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          &#x2714; 경제 정체 감지 &rarr; 일꾼 재생산<br>
+          &#x2714; 생산 중단 감지 &rarr; 큐 재개<br>
+          &#x2714; 자원 낭비 감지 &rarr; 소비 촉진<br>
+          &#x2714; 매니저 크래시 &rarr; 개별 복구
+        </div>
+      </div>
+      <div class="box" style="margin-top:12px; border-left:3px solid #a78bfa;">
+        <h3 style="color:#a78bfa;">&#x1F916; GenAI SelfHealing</h3>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          &#x25B8; Gemini API로 코드 패치 생성 요청<br>
+          &#x25B8; <code>ast.parse()</code>로 구문 검증<br>
+          &#x25B8; 유효한 패치만 런타임 적용<br>
+          &#x25B8; 모든 변경 사항 로깅
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">&#x1F3AF; 종족별 전략 적응</h3>
+        <table style="margin-top:8px; font-size:14px;">
+          <tr><th>상대</th><th>유닛 조합</th><th>핵심 전술</th></tr>
+          <tr>
+            <td style="color:#00d4ff; font-weight:600;">vs Terran</td>
+            <td>뮤탈 + 바퀴 + 맹독충</td>
+            <td>뮤탈 견제, 맹독충 돌격</td>
+          </tr>
+          <tr>
+            <td style="color:#ffc832; font-weight:600;">vs Protoss</td>
+            <td>히드라 + 바퀴 + 점막</td>
+            <td>점막 확산, 화력 집중</td>
+          </tr>
+          <tr>
+            <td style="color:#a78bfa; font-weight:600;">vs Zerg</td>
+            <td>저글링 + 맹독충 + 뮤탈</td>
+            <td>맹독충 전쟁, 속도전</td>
+          </tr>
+        </table>
+      </div>
+      <div class="box" style="margin-top:12px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x1F4BB; 성능 최적화</h3>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          &#x25B8; <strong>KD-Tree</strong> &mdash; O(log n) 이웃 탐색<br>
+          &#x25B8; <strong>Grid Partition</strong> &mdash; 경로 탐색 최적화<br>
+          &#x25B8; <strong>TTL Cache</strong> &mdash; 비용 높은 연산 캐싱<br>
+          &#x25B8; <strong>프레임 스케줄링</strong> &mdash; 매니저별 갱신 주기<br>
+          &#x25B8; <strong>Lazy Init</strong> &mdash; 필요 시 초기화
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">8 / 10</div>
+</div>
+
+<!-- SLIDE 9: Sim-to-Real -->
+<div class="slide" id="slide9">
+  <h1>Sim-to-Real 전이 프레임워크</h1>
+  <p style="margin-bottom:16px;">SC2 군집 제어 알고리즘을 <span class="highlight">실제 드론 군집</span>으로 전이하는 3단계 로드맵</p>
+  <div class="grid3" style="margin-bottom:16px;">
+    <div class="box" style="border-top:3px solid #00d4ff; text-align:center;">
+      <div style="font-size:36px; margin-bottom:8px;">&#x1F4D0;</div>
+      <h3 style="color:#00d4ff;">Stage 1: Algorithm</h3>
+      <div style="font-size:14px; color:#8b949e; line-height:1.7; text-align:left; margin-top:8px;">
+        &#x25B8; Boids 수학적 모델 추출<br>
+        &#x25B8; Pure Python 라이브러리화<br>
+        &#x25B8; 파라미터 튜닝 인터페이스<br>
+        &#x25B8; 2D/3D 시각화 검증
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #a78bfa; text-align:center;">
+      <div style="font-size:36px; margin-bottom:8px;">&#x1F3AE;</div>
+      <h3 style="color:#a78bfa;">Stage 2: Simulation</h3>
+      <div style="font-size:14px; color:#8b949e; line-height:1.7; text-align:left; margin-top:8px;">
+        &#x25B8; ROS 2 + Gazebo 물리 시뮬<br>
+        &#x25B8; 바람/장애물 등 환경 변수<br>
+        &#x25B8; 센서 노이즈 모델링<br>
+        &#x25B8; 통신 지연 시뮬레이션
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #00ff88; text-align:center;">
+      <div style="font-size:36px; margin-bottom:8px;">&#x1F681;</div>
+      <h3 style="color:#00ff88;">Stage 3: Real Deploy</h3>
+      <div style="font-size:14px; color:#8b949e; line-height:1.7; text-align:left; margin-top:8px;">
+        &#x25B8; Pixhawk + Raspberry Pi<br>
+        &#x25B8; MAVLink 통신 프로토콜<br>
+        &#x25B8; GPS/LiDAR 센서 융합<br>
+        &#x25B8; 실외 비행 테스트
+      </div>
+    </div>
+  </div>
+  <div class="box">
+    <h3>&#x1F504; SC2 &rarr; 드론 기술 매핑</h3>
+    <table style="margin-top:8px; font-size:14px;">
+      <tr><th>SC2 컴포넌트</th><th>드론 ATC</th><th>전이 신뢰도</th></tr>
+      <tr>
+        <td>Blackboard (중앙 상태)</td>
+        <td>Flight Data Hub</td>
+        <td><span style="color:#00ff88;">&#9733;&#9733;&#9733;&#9733;&#9733; Direct</span></td>
+      </tr>
+      <tr>
+        <td>Boids Algorithm (군집 제어)</td>
+        <td>Formation Flight Control</td>
+        <td><span style="color:#00ff88;">&#9733;&#9733;&#9733;&#9733;&#9733; Direct</span></td>
+      </tr>
+      <tr>
+        <td>Authority Mode (우선순위 FSM)</td>
+        <td>ATC Priority Levels</td>
+        <td><span style="color:#00ff88;">&#9733;&#9733;&#9733;&#9733;&#9733; Direct</span></td>
+      </tr>
+      <tr>
+        <td>IntelManager (적 정보)</td>
+        <td>Sensor Fusion (LiDAR/GPS)</td>
+        <td><span style="color:#00d4ff;">&#9733;&#9733;&#9733;&#9733;&#9734; Adapt</span></td>
+      </tr>
+      <tr>
+        <td>RuntimeSelfHealing</td>
+        <td>Fail-Safe System</td>
+        <td><span style="color:#00ff88;">&#9733;&#9733;&#9733;&#9733;&#9733; Direct</span></td>
+      </tr>
+    </table>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">9 / 10</div>
+</div>
+
+<!-- SLIDE 10: Summary -->
+<div class="slide" id="slide10">
+  <h1>결론 &amp; 핵심 성과</h1>
+  <div class="grid2" style="margin-top:12px;">
+    <div>
+      <div class="box" style="border-left:3px solid #00d4ff;">
+        <h3 style="color:#00d4ff;">&#x2705; 구현 완료 기능</h3>
+        <div style="font-size:14px; color:#b0b8c4; line-height:1.9;">
+          &#x2714; Boids 6-Force 실시간 군집 제어<br>
+          &#x2714; Authority Mode FSM 자원 할당<br>
+          &#x2714; 계층적 강화학습 (DQN + PPO)<br>
+          &#x2714; 6단계 커리큘럼 학습<br>
+          &#x2714; 30초 주기 Hot Model Reload<br>
+          &#x2714; 위협 인식 동적 전술 전환<br>
+          &#x2714; 다각 공격 (DoomDrop, Nydus)<br>
+          &#x2714; 점막 고속도로 네트워크<br>
+          &#x2714; 런타임 자기 복구 시스템<br>
+          &#x2714; GenAI 코드 패칭
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #a78bfa; margin-bottom:12px;">
+        <h3 style="color:#a78bfa;">&#x1F4CA; 프로젝트 규모</h3>
+        <div class="grid2" style="margin-top:8px;">
+          <div class="stat-box" style="padding:10px;">
+            <div class="stat-num" style="font-size:28px;">56K+</div>
+            <div class="stat-label">총 코드 라인</div>
+          </div>
+          <div class="stat-box" style="padding:10px;">
+            <div class="stat-num" style="font-size:28px; color:#a78bfa;">45</div>
+            <div class="stat-label">전투 모듈</div>
+          </div>
+          <div class="stat-box" style="padding:10px;">
+            <div class="stat-num" style="font-size:28px; color:#00ff88;">249</div>
+            <div class="stat-label">테스트 케이스</div>
+          </div>
+          <div class="stat-box" style="padding:10px;">
+            <div class="stat-num" style="font-size:28px; color:#ffc832;">6</div>
+            <div class="stat-label">Boids 힘 벡터</div>
+          </div>
+        </div>
+      </div>
+      <div class="box" style="border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x1F680; 향후 계획</h3>
+        <div style="font-size:14px; color:#8b949e; line-height:1.8;">
+          &#x25B8; ROS 2 + Gazebo 시뮬레이션 연동<br>
+          &#x25B8; 실제 드론 (Pixhawk) 테스트<br>
+          &#x25B8; 3D Boids 확장 (고도 축 추가)<br>
+          &#x25B8; 래더 자동 대전 시스템
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:24px;">
+    <div style="font-size:20px; color:#484f58;">Thank you</div>
+    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+      <span class="tag tag-blue">Python</span>
+      <span class="tag tag-purple">StarCraft II</span>
+      <span class="tag tag-green">Boids</span>
+      <span class="tag tag-red">Reinforcement Learning</span>
+      <span class="tag tag-yellow">Sim-to-Real</span>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Control in SC2</div>
+  <div class="page-num">10 / 10</div>
+</div>
+
+</body>
+</html>

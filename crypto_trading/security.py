@@ -52,18 +52,20 @@ def check_ip_allowed(ip: str) -> bool:
 # ═══════════════════════════════════════════════
 
 AUDIT_LOG_FILE = Path(__file__).parent / "data" / "audit_log.jsonl"
+_audit_log_lock = threading.Lock()
 
 
 def audit_log(event_type: str, details: dict):
-    """감사 로그 기록 (JSONL 형식)"""
+    """감사 로그 기록 (JSONL 형식, 스레드 안전)"""
     entry = {
         "timestamp": datetime.now().isoformat(),
         "event": event_type,
         **details
     }
     try:
-        with open(AUDIT_LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        with _audit_log_lock:
+            with open(AUDIT_LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except Exception as e:
         logger.error(f"감사 로그 실패: {e}")
 
@@ -413,16 +415,17 @@ class TradeSafetyGuard:
             self._recent_amounts.append(abs(amount_krw))  # P2-13: deque(maxlen=100) 자동 제한
 
     def get_daily_summary(self) -> dict:
-        """일일 거래 요약"""
-        self._clean_old_trades()
-        total = sum(amt for _, amt in self._daily_trades)
-        return {
-            "trade_count": len(self._daily_trades),
-            "total_volume_krw": total,
-            "remaining_trades": self.max_daily_trades - len(self._daily_trades),
-            "remaining_volume_krw": max(0, self.max_daily_volume_krw - total),
-            "recent_alerts": [(str(ts), msg) for ts, msg in self._alerts[-5:]],
-        }
+        """일일 거래 요약 (스레드 안전)"""
+        with self._guard_lock:
+            self._clean_old_trades()
+            total = sum(amt for _, amt in self._daily_trades)
+            return {
+                "trade_count": len(self._daily_trades),
+                "total_volume_krw": total,
+                "remaining_trades": self.max_daily_trades - len(self._daily_trades),
+                "remaining_volume_krw": max(0, self.max_daily_volume_krw - total),
+                "recent_alerts": [(str(ts), msg) for ts, msg in self._alerts[-5:]],
+            }
 
     def set_limits(self, max_daily_trades: int = None, max_single_order_krw: float = None,
                    max_daily_volume_krw: float = None):

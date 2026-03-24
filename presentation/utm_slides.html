@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background:#0a0a1a; color:#e0e0e0; }
+  .slide {
+    width:1280px; height:720px; padding:56px 72px;
+    position:relative; overflow:hidden;
+    background: linear-gradient(135deg, #0b1120 0%, #111927 50%, #0b1120 100%);
+  }
+  .slide::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:4px;
+    background: linear-gradient(90deg, #00c8ff, #00ff88, #ffc832, #00c8ff);
+  }
+  /* decorative grid dots */
+  .slide::after {
+    content:''; position:absolute; top:0; left:0; right:0; bottom:0;
+    background-image: radial-gradient(rgba(0,200,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events:none; z-index:0;
+  }
+  .slide > * { position:relative; z-index:1; }
+  h1 { font-size:40px; font-weight:800; margin-bottom:18px;
+    background: linear-gradient(135deg, #00c8ff, #00ff88);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  h2 { font-size:26px; font-weight:700; color:#00c8ff; margin-bottom:14px; }
+  h3 { font-size:18px; font-weight:600; color:#7dd3fc; margin-bottom:8px; }
+  p { font-size:17px; line-height:1.7; color:#94a3b8; }
+  .tag { display:inline-block; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:600; margin:3px; letter-spacing:0.3px; }
+  .tag-cyan { background:rgba(0,200,255,0.12); color:#00c8ff; border:1px solid rgba(0,200,255,0.3); }
+  .tag-green { background:rgba(0,255,136,0.12); color:#00ff88; border:1px solid rgba(0,255,136,0.3); }
+  .tag-yellow { background:rgba(255,200,50,0.12); color:#ffc832; border:1px solid rgba(255,200,50,0.3); }
+  .tag-red { background:rgba(255,100,100,0.12); color:#ff6464; border:1px solid rgba(255,100,100,0.3); }
+  .tag-purple { background:rgba(167,139,250,0.12); color:#a78bfa; border:1px solid rgba(167,139,250,0.3); }
+  .box {
+    background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px; padding:18px 22px; margin:6px 0;
+  }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+  .stat-box { text-align:center; padding:16px 10px; }
+  .stat-num { font-size:34px; font-weight:900; }
+  .stat-label { font-size:13px; color:#94a3b8; margin-top:4px; }
+  .formula {
+    font-family:'Cascadia Code','Courier New',monospace; font-size:15px; color:#00ff88;
+    background:rgba(0,255,136,0.12); padding:12px 18px; border-radius:8px;
+    border:1px solid rgba(0,255,136,0.15); margin:10px 0;
+  }
+  .code {
+    font-family:'Cascadia Code','Courier New',monospace; font-size:13px; color:#c9d1d9;
+    background:#0f172a; border:1px solid rgba(255,255,255,0.06);
+    border-radius:8px; padding:14px 18px; line-height:1.6;
+  }
+  .page-num { position:absolute; bottom:22px; right:36px; font-size:13px; color:#64748b; z-index:2; }
+  .logo-text { position:absolute; bottom:22px; left:36px; font-size:13px; color:#64748b; z-index:2; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { background:rgba(0,200,255,0.1); color:#7dd3fc; padding:9px 12px; text-align:left; font-weight:600; }
+  td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.04); color:#b0bec5; }
+  .center-title { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; text-align:center; }
+  .big-title { font-size:52px; font-weight:900;
+    background: linear-gradient(135deg, #00c8ff, #00ff88);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .big-sub { font-size:24px; color:#94a3b8; margin-top:14px; font-weight:300; }
+  .circle { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:900; color:#fff; flex-shrink:0; }
+  .step-row { display:flex; align-items:flex-start; gap:14px; margin:7px 0; }
+  .step-title { font-size:15px; font-weight:600; color:#e0e0e0; }
+  .step-desc { font-size:13px; color:#94a3b8; margin-top:2px; }
+  .flow-box {
+    background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.2);
+    border-radius:8px; padding:7px 14px; font-size:13px; color:#00c8ff; font-weight:500;
+  }
+  .flow-arrow { color:#64748b; font-size:18px; }
+  .force-row { display:flex; align-items:center; gap:10px; margin:5px 0; }
+  .force-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .divider { height:1px; background:rgba(255,255,255,0.04); margin:12px 0; }
+  .icon-circle {
+    width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:26px; margin:0 auto 10px; border:2px solid;
+  }
+  .accent-line { border-left:3px solid; padding-left:12px; }
+  ul { padding-left:18px; }
+  li { font-size:14px; color:#94a3b8; margin:4px 0; line-height:1.6; }
+  li::marker { color:#00c8ff; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide" id="slide1">
+  <div class="center-title">
+    <div style="font-size:56px; margin-bottom:12px;">&#x1F6E9;&#xFE0F;</div>
+    <div class="big-title">군집드론 활용</div>
+    <div class="big-title" style="font-size:40px; margin-top:2px;">공역 통제 시스템</div>
+    <div style="font-size:22px; color:#7dd3fc; margin-top:12px; font-weight:400;">Swarm Drone Airspace Control System</div>
+    <div class="big-sub" style="margin-top:20px;">Boids 3D 분산 제어 &middot; TTC 충돌 예측 &middot; 가상 비행 회랑</div>
+    <div style="margin-top:36px; display:flex; gap:10px; justify-content:center;">
+      <span class="tag tag-cyan">Boids 3D</span>
+      <span class="tag tag-green">UTM</span>
+      <span class="tag tag-yellow">TTC Collision</span>
+      <span class="tag tag-red">Fail-Safe</span>
+      <span class="tag tag-purple">MAVLink</span>
+    </div>
+    <div style="margin-top:28px; color:#64748b; font-size:15px;">Capstone Design 2026</div>
+  </div>
+  <div class="page-num">1 / 10</div>
+</div>
+
+<!-- SLIDE 2: Problem & Solution -->
+<div class="slide" id="slide2">
+  <h1>프로젝트 개요</h1>
+  <p style="margin-bottom:16px;">기존 게임 AI 지휘관 시스템을 <span style="color:#00c8ff; font-weight:600;">실제 드론 군집 공역 통제</span>로 전환합니다.</p>
+  <div class="grid2" style="margin-bottom:16px;">
+    <div class="box" style="border-top:3px solid #ff6464;">
+      <h3 style="color:#ff6464;">&#x26A0;&#xFE0F; 문제 정의</h3>
+      <ul style="margin-top:8px;">
+        <li>드론 수 증가 &rarr; 충돌·공역 침범 위험 급증</li>
+        <li>중앙 서버 의존 &rarr; 단일 장애점(SPOF)</li>
+        <li>수동 경로 설정 &rarr; 확장성 한계</li>
+        <li>긴급 상황 대응 &rarr; 실시간 판단 부재</li>
+      </ul>
+    </div>
+    <div class="box" style="border-top:3px solid #00ff88;">
+      <h3 style="color:#00ff88;">&#x2705; 해결 방안</h3>
+      <ul style="margin-top:8px;">
+        <li><strong>Boids 3D</strong> &mdash; 분산 자율 군집 제어</li>
+        <li><strong>TTC 예측</strong> &mdash; 시간 기반 선제적 충돌 회피</li>
+        <li><strong>비행 회랑</strong> &mdash; 고도층·방향 분리 교통 규칙</li>
+        <li><strong>Authority FSM</strong> &mdash; 우선순위 기반 긴급 대응</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid4">
+    <div class="box stat-box"><div class="stat-num" style="color:#00c8ff;">8</div><div class="stat-label">Boids 힘 벡터</div></div>
+    <div class="box stat-box"><div class="stat-num" style="color:#00ff88;">3</div><div class="stat-label">고도층 (Low/Med/High)</div></div>
+    <div class="box stat-box"><div class="stat-num" style="color:#ffc832;">5초</div><div class="stat-label">TTC 예측 범위</div></div>
+    <div class="box stat-box"><div class="stat-num" style="color:#a78bfa;">5</div><div class="stat-label">Authority 모드</div></div>
+  </div>
+  <div class="box" style="margin-top:14px; text-align:center;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:12px; font-size:14px;">
+      <div class="flow-box" style="background:rgba(255,100,100,0.1); border-color:rgba(255,100,100,0.3); color:#ff6464;">SC2 지휘관 봇</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="background:rgba(167,139,250,0.1); border-color:rgba(167,139,250,0.3); color:#a78bfa;">알고리즘 추출</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="background:rgba(0,200,255,0.1); border-color:rgba(0,200,255,0.3); color:#00c8ff;">3D 확장</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="background:rgba(0,255,136,0.1); border-color:rgba(0,255,136,0.3); color:#00ff88;">드론 공역 통제</div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">2 / 10</div>
+</div>
+
+<!-- SLIDE 3: System Architecture -->
+<div class="slide" id="slide3">
+  <h1>시스템 아키텍처</h1>
+  <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin:12px 0 18px; font-size:13px;">
+    <div class="flow-box" style="background:rgba(255,200,50,0.1); border-color:rgba(255,200,50,0.3); color:#ffc832;">&#x1F4E1; Sensor Input</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="background:rgba(0,200,255,0.1); border-color:rgba(0,200,255,0.3); color:#00c8ff;">&#x1F9E0; Flight Data Hub</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="background:rgba(167,139,250,0.1); border-color:rgba(167,139,250,0.3); color:#a78bfa;">&#x2699;&#xFE0F; Decision Engine</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="background:rgba(0,255,136,0.1); border-color:rgba(0,255,136,0.3); color:#00ff88;">&#x1F681; MAVLink Cmd</div>
+  </div>
+  <div class="grid3">
+    <div class="box" style="border-top:3px solid #00c8ff;">
+      <h3 style="color:#00c8ff;">Flight Data Hub</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.8;">
+        <strong style="color:#94a3b8;">(= SC2 Blackboard)</strong><br>
+        &#x25B8; DroneState &mdash; 위치/속도/헤딩<br>
+        &#x25B8; 공역 상태 &mdash; 고도층 점유율<br>
+        &#x25B8; 충돌 경보 &mdash; TTC 알림 큐<br>
+        &#x25B8; 회랑 할당 &mdash; 비행 경로 상태<br>
+        &#x25B8; Authority Mode &mdash; 현재 우선순위
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #a78bfa;">
+      <h3 style="color:#a78bfa;">Decision Engine</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.8;">
+        <strong style="color:#94a3b8;">(= SC2 CombatManager)</strong><br>
+        &#x25B8; Boids3DController &mdash; 군집 제어<br>
+        &#x25B8; CollisionPredictor &mdash; TTC 예측<br>
+        &#x25B8; CorridorManager &mdash; 회랑 관리<br>
+        &#x25B8; AuthorityFSM &mdash; 긴급 모드<br>
+        &#x25B8; PathPlanner &mdash; 경로 최적화
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #00ff88;">
+      <h3 style="color:#00ff88;">Communication</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.8;">
+        <strong style="color:#94a3b8;">(= SC2 API Layer)</strong><br>
+        &#x25B8; MAVLink &mdash; 드론 명령 프로토콜<br>
+        &#x25B8; GPS/IMU &mdash; 위치·자세 데이터<br>
+        &#x25B8; LiDAR &mdash; 장애물 감지<br>
+        &#x25B8; Mesh Network &mdash; 드론 간 통신<br>
+        &#x25B8; GCS &mdash; 지상 관제 UI
+      </div>
+    </div>
+  </div>
+  <div class="box" style="margin-top:14px;">
+    <h3>&#x1F504; SC2 &rarr; 드론 ATC 모듈 매핑</h3>
+    <table style="margin-top:6px;">
+      <tr><th style="width:30%;">SC2 봇 모듈</th><th style="width:30%;">드론 ATC 모듈</th><th>역할</th></tr>
+      <tr><td>Blackboard</td><td style="color:#00c8ff;">Flight Data Hub</td><td>중앙 상태 저장소</td></tr>
+      <tr><td>BoidsSwarmControl</td><td style="color:#00c8ff;">Boids3DController</td><td>군집 이동 제어 (8-Force)</td></tr>
+      <tr><td>PotentialFields</td><td style="color:#00c8ff;">CollisionPredictor</td><td>충돌 예측 &amp; 회피</td></tr>
+      <tr><td>CreepHighway</td><td style="color:#00c8ff;">CorridorManager</td><td>비행 회랑 관리</td></tr>
+      <tr><td>AuthorityMode FSM</td><td style="color:#00c8ff;">Authority FSM</td><td>긴급 상황 우선순위</td></tr>
+    </table>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">3 / 10</div>
+</div>
+
+<!-- SLIDE 4: Boids 3D Algorithm -->
+<div class="slide" id="slide4">
+  <h1>Boids 3D 군집 제어</h1>
+  <p style="margin-bottom:8px;">SC2의 6-Force를 3D로 확장하고 <span style="color:#00c8ff; font-weight:600;">고도 관련 2개 힘</span>을 추가하여 총 8개 힘 벡터를 사용합니다.</p>
+  <div class="formula" style="text-align:center; font-size:16px;">
+    F<sub>total</sub> = &Sigma;<sub>i=1</sub><sup>8</sup> w<sub>i</sub> &middot; F<sub>i</sub>(drone, neighbors, environment)
+  </div>
+  <div class="grid2" style="margin-top:8px;">
+    <div>
+      <div class="box" style="border-left:3px solid #00c8ff;">
+        <h3 style="color:#00c8ff;">&#x1F310; 기존 SC2 힘 (3D 확장)</h3>
+        <div class="force-row"><div class="force-dot" style="background:#ff6464;"></div>
+          <div><strong style="color:#ff6464;">1. Separation</strong> <span style="color:#64748b;">w=2.0 / r=5m</span><br><span style="font-size:13px; color:#94a3b8;">역제곱 반발력, 드론 간 안전 거리 유지</span></div></div>
+        <div class="force-row"><div class="force-dot" style="background:#00c8ff;"></div>
+          <div><strong style="color:#00c8ff;">2. Alignment</strong> <span style="color:#64748b;">w=1.0 / r=30m</span><br><span style="font-size:13px; color:#94a3b8;">이웃 속도 벡터 정렬, 편대 방향 통일</span></div></div>
+        <div class="force-row"><div class="force-dot" style="background:#00ff88;"></div>
+          <div><strong style="color:#00ff88;">3. Cohesion</strong> <span style="color:#64748b;">w=1.0 / r=30m</span><br><span style="font-size:13px; color:#94a3b8;">그룹 중심 응집, 편대 유지</span></div></div>
+        <div class="force-row"><div class="force-dot" style="background:#ffc832;"></div>
+          <div><strong style="color:#ffc832;">4. Target Seeking</strong> <span style="color:#64748b;">w=1.5</span><br><span style="font-size:13px; color:#94a3b8;">목표 웨이포인트로 이동, 거리 비례 감쇠</span></div></div>
+        <div class="force-row"><div class="force-dot" style="background:#a78bfa;"></div>
+          <div><strong style="color:#a78bfa;">5. Obstacle Avoid</strong> <span style="color:#64748b;">w=2.5 / r=20m</span><br><span style="font-size:13px; color:#94a3b8;">장애물(건물, 산) 회피, 반발력 기반</span></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x2B06;&#xFE0F; 신규 UTM 힘</h3>
+        <div class="force-row"><div class="force-dot" style="background:#38bdf8;"></div>
+          <div><strong style="color:#38bdf8;">6. Altitude Hold</strong> <span style="color:#64748b;">w=1.0</span><br><span style="font-size:13px; color:#94a3b8;">지정 고도 유지 (PID P항), 수직 복원력</span></div></div>
+        <div class="force-row"><div class="force-dot" style="background:#f97316;"></div>
+          <div><strong style="color:#f97316;">7. Terrain Clearance</strong> <span style="color:#64748b;">w=3.0</span><br><span style="font-size:13px; color:#94a3b8;">최소 안전 고도(5m) 미만 시 강제 상승</span></div></div>
+        <div class="force-row"><div class="force-dot" style="background:#e879f9;"></div>
+          <div><strong style="color:#e879f9;">8. Corridor Follow</strong> <span style="color:#64748b;">동적</span><br><span style="font-size:13px; color:#94a3b8;">회랑 중심선 추적, 이탈 시 복원력</span></div></div>
+        <div class="divider"></div>
+        <h3 style="color:#ffc832; margin-top:8px;">&#x1F3AE; 드론 운동학 제한</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.8;">
+          &#x25B8; max_speed: <span style="color:#94a3b8;">15 m/s</span><br>
+          &#x25B8; max_acceleration: <span style="color:#94a3b8;">5 m/s&sup2;</span><br>
+          &#x25B8; max_force: <span style="color:#94a3b8;">5 m/s&sup2;</span> (클램핑)<br>
+          &#x25B8; altitude: <span style="color:#94a3b8;">5~120m</span> (법적 제한)
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">4 / 10</div>
+</div>
+
+<!-- SLIDE 5: Collision Prediction -->
+<div class="slide" id="slide5">
+  <h1>TTC 충돌 예측 시스템</h1>
+  <p style="margin-bottom:12px;">기존 거리 기반 회피를 <span style="color:#00c8ff; font-weight:600;">시간 기반 궤적 예측</span>으로 업그레이드하여 선제적 충돌 회피를 구현합니다.</p>
+  <div class="grid2">
+    <div>
+      <div class="box" style="border-left:3px solid #ff6464;">
+        <h3 style="color:#ff6464;">기존 방식 (SC2 Boids)</h3>
+        <div style="font-size:14px; color:#94a3b8; line-height:1.8;">
+          <strong>거리 기반 반발력</strong><br>
+          if distance &lt; threshold &rarr; 반발력 적용<br><br>
+          &#x274C; 고속 접근 시 반응 지연<br>
+          &#x274C; 병렬 이동 드론 불필요한 회피<br>
+          &#x274C; 교차 궤적 사전 감지 불가
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">새 방식 (TTC 예측)</h3>
+        <div style="font-size:14px; color:#94a3b8; line-height:1.8;">
+          <strong>시간 기반 궤적 교차 예측</strong><br>
+          미래 위치 계산 &rarr; 최소 이격 거리 평가<br><br>
+          &#x2714; 5초 전 선제적 회피 기동<br>
+          &#x2714; 상대 속도 기반 정밀 판단<br>
+          &#x2714; 3단계 심각도 분류
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #a78bfa;">
+        <h3 style="color:#a78bfa;">&#x1F4D0; TTC 수학 모델</h3>
+        <div class="formula" style="font-size:14px;">
+          rel_pos = B.pos - A.pos<br>
+          rel_vel = B.vel - A.vel<br><br>
+          TTC = -dot(rel_pos, rel_vel)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ dot(rel_vel, rel_vel)<br><br>
+          min_dist = |A.pos + A.vel&middot;TTC<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- (B.pos + B.vel&middot;TTC)|
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-left:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">&#x26A0;&#xFE0F; 3단계 경보 체계</h3>
+        <table style="margin-top:6px;">
+          <tr><th>레벨</th><th>TTC</th><th>대응</th></tr>
+          <tr><td style="color:#ffc832; font-weight:600;">WARNING</td><td>&le; 5.0초</td><td>경로 미세 조정</td></tr>
+          <tr><td style="color:#f97316; font-weight:600;">CRITICAL</td><td>&le; 3.0초</td><td>회피 기동 시작</td></tr>
+          <tr><td style="color:#ff6464; font-weight:600;">IMMINENT</td><td>&le; 1.0초</td><td>긴급 회피 (수직)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">5 / 10</div>
+</div>
+
+<!-- SLIDE 6: Flight Corridor -->
+<div class="slide" id="slide6">
+  <h1>가상 비행 회랑 시스템</h1>
+  <p style="margin-bottom:14px;">SC2 점막 고속도로(CreepHighway)의 A* 경로를 <span style="color:#00c8ff; font-weight:600;">3D 비행 회랑</span>으로 진화시켰습니다.</p>
+  <div class="grid2">
+    <div>
+      <div class="box" style="border-top:3px solid #00c8ff;">
+        <h3>&#x2708;&#xFE0F; 고도층 분리 (3 Layer)</h3>
+        <div style="margin-top:8px;">
+          <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+            <div style="width:100%; height:36px; border-radius:6px; background:linear-gradient(90deg, rgba(0,255,136,0.15), rgba(0,255,136,0.05)); border:1px solid rgba(0,255,136,0.3); display:flex; align-items:center; padding:0 12px; font-size:13px;">
+              <span style="color:#00ff88; font-weight:600; width:80px;">LOW</span>
+              <span style="color:#94a3b8;">5~30m &mdash; 촬영, 농업, 측량</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+            <div style="width:100%; height:36px; border-radius:6px; background:linear-gradient(90deg, rgba(0,200,255,0.15), rgba(0,200,255,0.05)); border:1px solid rgba(0,200,255,0.3); display:flex; align-items:center; padding:0 12px; font-size:13px;">
+              <span style="color:#00c8ff; font-weight:600; width:80px;">MEDIUM</span>
+              <span style="color:#94a3b8;">30~60m &mdash; 배송, 순찰, 감시</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+            <div style="width:100%; height:36px; border-radius:6px; background:linear-gradient(90deg, rgba(167,139,250,0.15), rgba(167,139,250,0.05)); border:1px solid rgba(167,139,250,0.3); display:flex; align-items:center; padding:0 12px; font-size:13px;">
+              <span style="color:#a78bfa; font-weight:600; width:80px;">HIGH</span>
+              <span style="color:#94a3b8;">60~120m &mdash; 장거리 이동, 중계</span>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <h3 style="margin-top:4px;">&#x2194;&#xFE0F; 방향별 고도 분리</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.8; margin-top:6px;">
+          &#x25B8; <strong style="color:#94a3b8;">Eastbound</strong> (0~180&deg;) &rarr; 기본 고도<br>
+          &#x25B8; <strong style="color:#94a3b8;">Westbound</strong> (180~360&deg;) &rarr; +15m 오프셋<br>
+          &#x25B8; 항공 교통 규칙 (ICAO) 모사
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-top:3px solid #ffc832;">
+        <h3>&#x1F6E4;&#xFE0F; 회랑 구조</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.8; margin-top:6px;">
+          <strong style="color:#94a3b8;">FlightCorridor 구성요소:</strong><br>
+          &#x25B8; <span style="color:#ffc832;">waypoints[]</span> &mdash; 3D 웨이포인트 시퀀스<br>
+          &#x25B8; <span style="color:#ffc832;">width</span> &mdash; 회랑 폭 (기본 20m)<br>
+          &#x25B8; <span style="color:#ffc832;">altitude_layer</span> &mdash; 할당 고도층<br>
+          &#x25B8; <span style="color:#ffc832;">bidirectional</span> &mdash; 양방향 여부
+        </div>
+        <div class="divider"></div>
+        <h3>&#x1F4C8; 고도 프로파일</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.8; margin-top:4px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="tag tag-green" style="font-size:11px;">0~15%</span>
+            <span>상승 구간 (이륙 &rarr; 순항 고도)</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <span class="tag tag-cyan" style="font-size:11px;">15~85%</span>
+            <span>순항 구간 (일정 고도 유지)</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <span class="tag tag-yellow" style="font-size:11px;">85~100%</span>
+            <span>하강 구간 (순항 &rarr; 착륙)</span>
+          </div>
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-top:3px solid #ff6464;">
+        <h3 style="color:#ff6464;">&#x1F6AB; 회랑 충돌 검출</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          두 회랑의 웨이포인트 교차점 자동 검출<br>
+          &rarr; 교차 지점에 시간 분리 규칙 적용<br>
+          &rarr; 동적 우회 경로 생성
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">6 / 10</div>
+</div>
+
+<!-- SLIDE 7: Authority Mode -->
+<div class="slide" id="slide7">
+  <h1>Authority Mode &mdash; 긴급 대응 FSM</h1>
+  <p style="margin-bottom:14px;">SC2 봇의 Authority Mode를 드론 공역 통제의 <span style="color:#00c8ff; font-weight:600;">우선순위 기반 상태 머신</span>으로 전환합니다.</p>
+  <div class="grid2">
+    <div>
+      <div class="box" style="border-left:3px solid #ff6464;">
+        <h3 style="color:#ff6464;">&#x1F6A8; EMERGENCY (P0)</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          <strong style="color:#94a3b8;">트리거:</strong> TTC &le; 1초, 배터리 부족, GPS 상실<br>
+          <strong style="color:#94a3b8;">대응:</strong> 즉시 정지, 수직 회피, 자동 귀환<br>
+          <strong style="color:#94a3b8;">SC2 대응:</strong> 적 러시 감지 → 전 유닛 방어
+        </div>
+      </div>
+      <div class="box" style="margin-top:8px; border-left:3px solid #f97316;">
+        <h3 style="color:#f97316;">&#x26A0;&#xFE0F; DECONFLICT (P1)</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          <strong style="color:#94a3b8;">트리거:</strong> TTC &le; 5초, 회랑 교차<br>
+          <strong style="color:#94a3b8;">대응:</strong> 회피 기동, 속도/고도 조정<br>
+          <strong style="color:#94a3b8;">SC2 대응:</strong> 적 근접 → 전투 태세
+        </div>
+      </div>
+      <div class="box" style="margin-top:8px; border-left:3px solid #a78bfa;">
+        <h3 style="color:#a78bfa;">&#x1F4CB; MISSION (P2)</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          <strong style="color:#94a3b8;">트리거:</strong> 임무 수행 중<br>
+          <strong style="color:#94a3b8;">대응:</strong> 촬영/배송/순찰 임무 수행<br>
+          <strong style="color:#94a3b8;">SC2 대응:</strong> 전략 모드 → 테크 업그레이드
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #00c8ff;">
+        <h3 style="color:#00c8ff;">&#x1F6E9;&#xFE0F; CRUISE (P3)</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          <strong style="color:#94a3b8;">트리거:</strong> 이동 중, 위협 없음<br>
+          <strong style="color:#94a3b8;">대응:</strong> Boids 편대 비행, 에너지 최적화<br>
+          <strong style="color:#94a3b8;">SC2 대응:</strong> 경제 모드 → 자원 수집
+        </div>
+      </div>
+      <div class="box" style="margin-top:8px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x2705; IDLE (P4)</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          <strong style="color:#94a3b8;">트리거:</strong> 대기 중, 착륙 상태<br>
+          <strong style="color:#94a3b8;">대응:</strong> 호버링 / 배터리 충전 대기<br>
+          <strong style="color:#94a3b8;">SC2 대응:</strong> BALANCED → 균형 유지
+        </div>
+      </div>
+      <div class="box" style="margin-top:8px; border-top:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">&#x1F504; 상태 전이 규칙</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7;">
+          &#x25B8; 높은 우선순위가 항상 선점<br>
+          &#x25B8; EMERGENCY는 모든 상태에서 즉시 전환<br>
+          &#x25B8; 위협 해제 시 이전 상태로 복귀<br>
+          &#x25B8; 배터리 20% 미만 → 강제 EMERGENCY
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">7 / 10</div>
+</div>
+
+<!-- SLIDE 8: DroneState & Data Model -->
+<div class="slide" id="slide8">
+  <h1>데이터 모델 &amp; 드론 상태</h1>
+  <div class="grid2" style="margin-top:10px;">
+    <div>
+      <div class="box" style="border-left:3px solid #00c8ff;">
+        <h3 style="color:#00c8ff;">&#x1F4E6; DroneState (= SC2 Unit)</h3>
+        <div class="code" style="margin-top:8px; font-size:13px;">
+<span style="color:#7dd3fc;">@dataclass</span><br>
+<span style="color:#c084fc;">class</span> <span style="color:#00ff88;">DroneState</span>:<br>
+&nbsp;&nbsp;id: <span style="color:#ffc832;">int</span><br>
+&nbsp;&nbsp;position: <span style="color:#ffc832;">Point3D</span> &nbsp;<span style="color:#64748b;"># x,y,z (m)</span><br>
+&nbsp;&nbsp;velocity: <span style="color:#ffc832;">np.ndarray</span> <span style="color:#64748b;"># [vx,vy,vz]</span><br>
+&nbsp;&nbsp;heading: <span style="color:#ffc832;">float</span> &nbsp;&nbsp;&nbsp;<span style="color:#64748b;"># rad</span><br>
+&nbsp;&nbsp;drone_type: <span style="color:#ffc832;">str</span> &nbsp;&nbsp;<span style="color:#64748b;"># quadrotor</span><br>
+&nbsp;&nbsp;max_speed: <span style="color:#ffc832;">float</span> = <span style="color:#00ff88;">15.0</span><br>
+&nbsp;&nbsp;max_accel: <span style="color:#ffc832;">float</span> = <span style="color:#00ff88;">5.0</span><br>
+&nbsp;&nbsp;min_alt: <span style="color:#ffc832;">float</span> &nbsp;&nbsp;= <span style="color:#00ff88;">5.0</span><br>
+&nbsp;&nbsp;max_alt: <span style="color:#ffc832;">float</span> &nbsp;&nbsp;= <span style="color:#00ff88;">120.0</span>
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x1F4CD; Point3D (= SC2 Point2)</h3>
+        <div class="code" style="margin-top:8px; font-size:13px;">
+<span style="color:#c084fc;">class</span> <span style="color:#00ff88;">Point3D</span>:<br>
+&nbsp;&nbsp;x, y, z: <span style="color:#ffc832;">float</span><br>
+&nbsp;&nbsp;<span style="color:#64748b;"># distance_to()</span> → 3D 유클리드<br>
+&nbsp;&nbsp;<span style="color:#64748b;"># horizontal_distance_to()</span> → 2D<br>
+&nbsp;&nbsp;<span style="color:#64748b;"># to_array()</span> → numpy 벡터<br>
+&nbsp;&nbsp;<span style="color:#64748b;"># towards()</span> → 방향 이동<br>
+&nbsp;&nbsp;<span style="color:#64748b;"># offset()</span> → 좌표 변위
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #ff6464;">
+        <h3 style="color:#ff6464;">&#x1F6A8; CollisionAlert</h3>
+        <div class="code" style="margin-top:8px; font-size:13px;">
+<span style="color:#c084fc;">class</span> <span style="color:#00ff88;">CollisionAlert</span>:<br>
+&nbsp;&nbsp;drone_a_id: <span style="color:#ffc832;">int</span><br>
+&nbsp;&nbsp;drone_b_id: <span style="color:#ffc832;">int</span><br>
+&nbsp;&nbsp;ttc: <span style="color:#ffc832;">float</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#64748b;"># 충돌까지 시간</span><br>
+&nbsp;&nbsp;min_distance: <span style="color:#ffc832;">float</span> <span style="color:#64748b;"># 최소 접근 거리</span><br>
+&nbsp;&nbsp;conflict_point: <span style="color:#ffc832;">Point3D</span><br>
+&nbsp;&nbsp;severity: <span style="color:#ffc832;">str</span><br>
+&nbsp;&nbsp;&nbsp;<span style="color:#64748b;"># "warning" | "critical" | "imminent"</span>
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-left:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">&#x1F6E4;&#xFE0F; FlightCorridor</h3>
+        <div class="code" style="margin-top:8px; font-size:13px;">
+<span style="color:#c084fc;">class</span> <span style="color:#00ff88;">FlightCorridor</span>:<br>
+&nbsp;&nbsp;corridor_id: <span style="color:#ffc832;">str</span><br>
+&nbsp;&nbsp;waypoints: <span style="color:#ffc832;">List[Point3D]</span><br>
+&nbsp;&nbsp;width: <span style="color:#ffc832;">float</span> = <span style="color:#00ff88;">20.0</span><br>
+&nbsp;&nbsp;altitude_layer: <span style="color:#ffc832;">str</span><br>
+&nbsp;&nbsp;&nbsp;<span style="color:#64748b;"># "low" | "medium" | "high"</span><br>
+&nbsp;&nbsp;bidirectional: <span style="color:#ffc832;">bool</span>
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-left:3px solid #a78bfa;">
+        <h3 style="color:#a78bfa;">&#x1F50D; 공간 인덱싱</h3>
+        <div style="font-size:13px; color:#94a3b8; line-height:1.7; margin-top:4px;">
+          &#x25B8; <strong>KDTree3D</strong> — O(log n) 이웃 탐색<br>
+          &#x25B8; <strong>VoxelGrid</strong> — 3D 공간 분할
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">8 / 10</div>
+</div>
+
+<!-- SLIDE 9: Fail-Safe -->
+<div class="slide" id="slide9">
+  <h1>Fail-Safe &amp; 자기 복구</h1>
+  <p style="margin-bottom:14px;">SC2 봇의 RuntimeSelfHealing을 드론의 <span style="color:#00c8ff; font-weight:600;">안전 필수 시스템</span>으로 전환합니다.</p>
+  <div class="grid3">
+    <div class="box" style="border-top:3px solid #ff6464;">
+      <div style="text-align:center; margin-bottom:8px;">
+        <div class="icon-circle" style="border-color:#ff6464; background:rgba(255,100,100,0.1);">&#x1F50B;</div>
+      </div>
+      <h3 style="color:#ff6464; text-align:center;">배터리 보호</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.7; margin-top:6px;">
+        &#x25B8; 30% → 귀환 경고<br>
+        &#x25B8; 20% → 강제 귀환 (RTH)<br>
+        &#x25B8; 10% → 긴급 착륙<br>
+        &#x25B8; 잔여 비행 시간 계산
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #ffc832;">
+      <div style="text-align:center; margin-bottom:8px;">
+        <div class="icon-circle" style="border-color:#ffc832; background:rgba(255,200,50,0.1);">&#x1F4E1;</div>
+      </div>
+      <h3 style="color:#ffc832; text-align:center;">통신 두절 대응</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.7; margin-top:6px;">
+        &#x25B8; 3초 → 자율 Boids 모드<br>
+        &#x25B8; 10초 → 호버링 대기<br>
+        &#x25B8; 30초 → 자동 귀환<br>
+        &#x25B8; 메쉬 네트워크 우회
+      </div>
+    </div>
+    <div class="box" style="border-top:3px solid #00c8ff;">
+      <div style="text-align:center; margin-bottom:8px;">
+        <div class="icon-circle" style="border-color:#00c8ff; background:rgba(0,200,255,0.1);">&#x1F6F0;&#xFE0F;</div>
+      </div>
+      <h3 style="color:#00c8ff; text-align:center;">GPS 상실 대응</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.7; margin-top:6px;">
+        &#x25B8; IMU 관성 항법 전환<br>
+        &#x25B8; 이웃 드론 상대 위치<br>
+        &#x25B8; 시각적 오도메트리<br>
+        &#x25B8; 안전 착륙 시퀀스
+      </div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="box" style="border-left:3px solid #00ff88;">
+      <h3 style="color:#00ff88;">&#x1F504; SC2 → 드론 Fail-Safe 매핑</h3>
+      <table style="margin-top:6px; font-size:13px;">
+        <tr><th>SC2 SelfHealing</th><th>드론 Fail-Safe</th></tr>
+        <tr><td>경제 정체 감지</td><td>배터리 소진 감지</td></tr>
+        <tr><td>생산 중단 복구</td><td>모터 페일오버</td></tr>
+        <tr><td>매니저 크래시 복구</td><td>센서 이중화 전환</td></tr>
+        <tr><td>자원 낭비 감지</td><td>비효율 경로 재계산</td></tr>
+      </table>
+    </div>
+    <div class="box" style="border-left:3px solid #a78bfa;">
+      <h3 style="color:#a78bfa;">&#x1F6E1;&#xFE0F; 안전 규정 준수</h3>
+      <div style="font-size:13px; color:#94a3b8; line-height:1.8; margin-top:6px;">
+        &#x25B8; <strong style="color:#94a3b8;">KALIS</strong> — 한국 무인기 안전 기준<br>
+        &#x25B8; <strong style="color:#94a3b8;">고도 제한</strong> — 120m 이하 (법적)<br>
+        &#x25B8; <strong style="color:#94a3b8;">비행 금지 구역</strong> — GeoFence 적용<br>
+        &#x25B8; <strong style="color:#94a3b8;">기체 식별</strong> — Remote ID 브로드캐스트<br>
+        &#x25B8; <strong style="color:#94a3b8;">Fail-Safe</strong> — 이중 센서 + 자동 귀환
+      </div>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">9 / 10</div>
+</div>
+
+<!-- SLIDE 10: Conclusion -->
+<div class="slide" id="slide10">
+  <h1>결론 &amp; 개발 로드맵</h1>
+  <div class="grid2" style="margin-top:10px;">
+    <div>
+      <div class="box" style="border-left:3px solid #00c8ff;">
+        <h3 style="color:#00c8ff;">&#x2705; 구현 완료</h3>
+        <div style="font-size:14px; color:#94a3b8; line-height:1.9;">
+          &#x2714; Boids 3D 컨트롤러 (8-Force)<br>
+          &#x2714; TTC 충돌 예측 (3단계 경보)<br>
+          &#x2714; 가상 비행 회랑 (3 고도층)<br>
+          &#x2714; Authority Mode FSM (5 상태)<br>
+          &#x2714; DroneState / Point3D 데이터 모델<br>
+          &#x2714; KDTree3D 공간 인덱싱<br>
+          &#x2714; VoxelGrid 3D 공간 분할<br>
+          &#x2714; 3D 시각화 데모 (Plotly, Ursina)<br>
+          &#x2714; 애니메이션 GIF 5종
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box" style="border-left:3px solid #ffc832;">
+        <h3 style="color:#ffc832;">&#x1F680; 3단계 개발 로드맵</h3>
+        <div style="margin-top:8px;">
+          <div class="step-row">
+            <div class="circle" style="background:linear-gradient(135deg,#00c8ff,#0077ff); font-size:14px;">S1</div>
+            <div>
+              <div class="step-title">Algorithm (현재)</div>
+              <div class="step-desc">Boids 3D + TTC + Corridor<br>Python 시뮬레이션 검증 완료</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="circle" style="background:linear-gradient(135deg,#a78bfa,#7c3aed); font-size:14px;">S2</div>
+            <div>
+              <div class="step-title">Simulation (다음)</div>
+              <div class="step-desc">ROS 2 + Gazebo 물리 시뮬<br>바람·장애물·센서 노이즈 적용</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="circle" style="background:linear-gradient(135deg,#00ff88,#00aa55); font-size:14px;">S3</div>
+            <div>
+              <div class="step-title">Real Deploy (목표)</div>
+              <div class="step-desc">Pixhawk + Raspberry Pi<br>MAVLink 통신, 실외 비행 테스트</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="box" style="margin-top:10px; border-left:3px solid #00ff88;">
+        <h3 style="color:#00ff88;">&#x1F4CA; 프로젝트 규모</h3>
+        <div class="grid2" style="margin-top:8px;">
+          <div class="stat-box" style="padding:8px;"><div class="stat-num" style="font-size:26px; color:#00c8ff;">8</div><div class="stat-label">Boids 힘 벡터</div></div>
+          <div class="stat-box" style="padding:8px;"><div class="stat-num" style="font-size:26px; color:#ffc832;">3</div><div class="stat-label">고도층</div></div>
+          <div class="stat-box" style="padding:8px;"><div class="stat-num" style="font-size:26px; color:#00ff88;">3단계</div><div class="stat-label">경보 체계</div></div>
+          <div class="stat-box" style="padding:8px;"><div class="stat-num" style="font-size:26px; color:#a78bfa;">5</div><div class="stat-label">Authority 모드</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:16px;">
+    <div style="font-size:18px; color:#64748b;">Thank you</div>
+    <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
+      <span class="tag tag-cyan">Boids 3D</span>
+      <span class="tag tag-green">UTM</span>
+      <span class="tag tag-yellow">TTC</span>
+      <span class="tag tag-red">Fail-Safe</span>
+      <span class="tag tag-purple">Sim-to-Real</span>
+    </div>
+  </div>
+  <div class="logo-text">Swarm Drone Airspace Control</div>
+  <div class="page-num">10 / 10</div>
+</div>
+
+</body>
+</html>

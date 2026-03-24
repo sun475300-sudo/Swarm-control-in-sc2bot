@@ -60,6 +60,7 @@ class AutoTrader:
         self._thread: Optional[threading.Thread] = None  # 백그라운드 스레드 참조
         # #30 Price Alerts
         self._price_alerts: dict = {}          # {ticker: {"above": float, "below": float}}
+        self._alerts_lock = threading.Lock()   # 가격 알림 동시 접근 보호
         self._alerts_file = config.DATA_DIR / "price_alerts.json"
         self._load_price_alerts()
         # #35 DCA
@@ -147,8 +148,9 @@ class AutoTrader:
         if not alert:
             return {"error": "above 또는 below 값이 필요합니다"}
         alert["created"] = datetime.now().isoformat()
-        self._price_alerts[ticker] = alert
-        self._save_price_alerts()
+        with self._alerts_lock:
+            self._price_alerts[ticker] = alert
+            self._save_price_alerts()
         logger.info(f"가격 알림 설정: {ticker} {alert}")
         return {"ticker": ticker, "alert": alert, "status": "set"}
 
@@ -310,8 +312,9 @@ class AutoTrader:
         """트레일링 스탑 확인 및 실행"""
         triggered = []
         to_remove = []
+        import copy
         with self._trailing_stops_lock:
-            snapshot = dict(self._trailing_stops)
+            snapshot = copy.deepcopy(self._trailing_stops)
         for ticker, ts in snapshot.items():
             if not ts["activated"]:
                 continue
@@ -758,15 +761,15 @@ class AutoTrader:
 
     # ─────────── 1회 사이클 ───────────
 
-    def run_cycle(self) -> dict:
-        """매매 사이클 1회 실행 (동기, thread-safe)"""
+    def run_cycle(self, force_smart: bool = False) -> dict:
+        """매매 사이클 1회 실행 (동기, thread-safe). force_smart=True면 전역 상태 변경 없이 스마트 모드로 실행."""
         if not self._cycle_lock.acquire(blocking=False):
             logger.warning("이전 사이클이 아직 실행 중 — 스킵")
             return {"skipped": True, "reason": "이전 사이클 실행 중"}
         # H-6: 사이클 시작 시 DRY_RUN 스냅샷 (명시적 bool 캐스트로 TOCTOU 방어)
         self._cycle_dry_run = bool(config.DRY_RUN)
         try:
-            if self.smart_mode:
+            if force_smart or self.smart_mode:
                 return self._run_smart_cycle()
             return self._run_strategy_cycle()
         finally:
@@ -1198,9 +1201,10 @@ class AutoTrader:
 
     def start(self):
         """자동매매 시작"""
-        if self.is_running:
-            return "이미 실행 중입니다."
-        self.is_running = True
+        with self._cycle_lock:
+            if self.is_running:
+                return "이미 실행 중입니다."
+            self.is_running = True
         with self._budget_lock:
             self._total_spent = 0  # 세션 시작 시 사용 금액 초기화
         try:
@@ -1219,7 +1223,8 @@ class AutoTrader:
 
     def stop(self):
         """자동매매 중지"""
-        self.is_running = False
+        with self._cycle_lock:
+            self.is_running = False
         if self._task:
             self._task.cancel()
             self._task = None

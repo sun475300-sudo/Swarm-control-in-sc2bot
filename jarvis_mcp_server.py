@@ -19,6 +19,8 @@ Usage:
   npx @modelcontextprotocol/inspector python jarvis_mcp_server.py
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -156,7 +158,7 @@ def _collect_system_status() -> str:
 
     # Disk
     try:
-        disk_path = "C:\\" if sys.platform == "win32" else "/"
+        disk_path = os.path.splitdrive(os.path.expanduser("~"))[0] + os.sep if sys.platform == "win32" else "/"
         disk = psutil.disk_usage(disk_path)
         result["disk"] = f"{disk.percent}%/{disk.used / (1024 ** 3):.0f}/{disk.total / (1024 ** 3):.0f}GB"
     except Exception:
@@ -317,14 +319,18 @@ async def run_sc2_zerg_rl(mode: str = "hybrid") -> str:
             except Exception:
                 pass
         f_log = open(log_file, "w", encoding="utf-8")
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, str(script_path)],
+                cwd=training_cwd,
+                stdout=f_log,
+                stderr=subprocess.STDOUT,
+                creationflags=creation_flags,
+            )
+        except Exception:
+            f_log.close()
+            raise
         _active_log_handles["sc2_training"] = f_log
-        proc = subprocess.Popen(
-            [sys.executable, str(script_path)],
-            cwd=training_cwd,
-            stdout=f_log,
-            stderr=subprocess.STDOUT,
-            creationflags=creation_flags,
-        )
 
         _register_pid("sc2_training", proc.pid)
 

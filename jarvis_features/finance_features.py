@@ -106,6 +106,10 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             except Exception:
                 pass
 
+        if current_price <= 0:
+            await ctx.send("❌ 현재가를 조회할 수 없습니다. 잠시 후 다시 시도해주세요.")
+            return
+
         direction = "above" if target > current_price else "below"
 
         alert = {

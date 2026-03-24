@@ -3,6 +3,8 @@ JARVIS Crypto Trading MCP Server
 - 모든 기능을 자연어로 제어 가능한 MCP 도구로 노출
 - 시세 조회, 잔고, 매수/매도, 자동매매, 포트폴리오 그래프 등
 """
+from __future__ import annotations
+
 import json
 import logging
 import sys
@@ -231,11 +233,8 @@ async def smart_trade_now(tickers: str = "") -> str:
         ticker_list = [t.strip().upper() for t in tickers.split(",")]
         trader.set_watch_list(ticker_list)
 
-    # 스마트 모드로 강제 전환 후 1회 실행
-    old_mode = trader.smart_mode
-    trader.smart_mode = True
-    result = trader.run_cycle()
-    trader.smart_mode = old_mode
+    # 스마트 모드로 1회 실행 (전역 상태 변경 없이 로컬 오버라이드)
+    result = trader.run_cycle(force_smart=True)
 
     if result.get("skipped"):
         return json.dumps({"status": "skipped", "reason": result.get("reason", "Cycle already running")}, ensure_ascii=False)
@@ -382,7 +381,8 @@ async def buy_coin(ticker: str, amount_krw: float) -> str:
     result = client.buy_market_order(ticker, amount_krw)
     if result:
         trade_safety.record_trade(amount_krw)
-        tracker.log_trade("buy", ticker, amount_krw, 0, "수동 매수", result)
+        buy_price = client.get_current_price(ticker) or 0
+        tracker.log_trade("buy", ticker, amount_krw, buy_price, "수동 매수", result)
         dry = " [모의매매]" if config.DRY_RUN else ""
         return f"✅ {ticker} 매수 완료{dry}: {amount_krw:,.0f}원"
     return f"❌ {ticker} 매수 실패"
@@ -426,7 +426,8 @@ async def sell_coin(ticker: str, volume: float = 0) -> str:
 
     result = client.sell_market_order(ticker, volume)
     if result:
-        price = client.get_current_price(ticker) or 0
+        # 매도 직전 조회한 est_price 사용 (주문 후 재조회보다 정확)
+        price = est_price
         sell_amount_krw = volume * price
         trade_safety.record_trade(sell_amount_krw)
         tracker.log_trade("sell", ticker, sell_amount_krw, price, "수동 매도", result)
