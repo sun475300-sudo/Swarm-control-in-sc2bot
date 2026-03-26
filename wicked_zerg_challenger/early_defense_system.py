@@ -179,7 +179,7 @@ class EarlyDefenseSystem:
 
         for larva in self.bot.larva[:larvae_for_lings]:
             if self.bot.minerals >= 50:
-                larva.train(UnitTypeId.ZERGLING)
+                self.bot.do(larva.train(UnitTypeId.ZERGLING))
 
         if larvae_for_lings > 0:
             print(f"[EARLY_DEFENSE] Producing {larvae_for_lings * 2} Zerglings (Target: {target_zerglings})")
@@ -209,7 +209,7 @@ class EarlyDefenseSystem:
         # Produce Queen
         for hatchery in self.bot.townhalls.ready.idle:
             if self.bot.can_afford(UnitTypeId.QUEEN):
-                hatchery.train(UnitTypeId.QUEEN)
+                self.bot.do(hatchery.train(UnitTypeId.QUEEN))
                 self.queen_started = True
                 print(f"[EARLY_DEFENSE] [OK] Started First Queen Production (Game Time: {int(self.bot.time)}s)")
                 break

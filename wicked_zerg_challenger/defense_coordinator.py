@@ -609,7 +609,7 @@ class DefenseCoordinator:
                 # 건설 (점막 체크 필요)
                 if self.bot.workers.exists:
                     worker = self.bot.workers.closest_to(build_pos)
-                    worker.build(UnitTypeId.SPINECRAWLER, build_pos)
+                    self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
                     self.logger.info(f"[DEFENSE] Building Spine Crawler at base")
             else:
                 pass # 자원 부족 또는 예약 실패
@@ -634,7 +634,7 @@ class DefenseCoordinator:
 
                     if self.bot.workers.exists:
                         worker = self.bot.workers.closest_to(build_pos)
-                        worker.build(UnitTypeId.SPORECRAWLER, build_pos)
+                        self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, build_pos))
                         self.logger.info(f"[DEFENSE] Building Spore Crawler (reactive - air threat)")
 
     # ========== Proactive 공중 방어 ★ NEW ★ ==========
@@ -698,7 +698,7 @@ class DefenseCoordinator:
 
         try:
             worker = self.bot.workers.closest_to(build_pos)
-            worker.build(UnitTypeId.SPORECRAWLER, build_pos)
+            self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, build_pos))
             self.proactive_spore_requested = True
             self.logger.info(f"[DEFENSE] [{int(game_time)}s] Proactive Spore Crawler 건설! (목표: 3:00)")
         except Exception as e:
@@ -748,7 +748,7 @@ class DefenseCoordinator:
         # 병력 이동
         for unit in defense_units:
             if unit.distance_to(defense_pos) > 10:
-                unit.move(defense_pos)
+                self.bot.do(unit.move(defense_pos))
                 self.defending_units.add(unit.tag)
 
     # ========== 상태 조회 ==========

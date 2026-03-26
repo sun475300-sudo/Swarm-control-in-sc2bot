@@ -218,7 +218,7 @@ class AdvancedScoutingSystemV2:
                 # 위협 시만 철수, 그 외에는 _update_patrol_units가 관리
                 if self._scout_is_threatened(unit) and mode != "watchtower":
                     if hasattr(self.bot, "start_location"):
-                        unit.move(self.bot.start_location)
+                        self.bot.do(unit.move(self.bot.start_location))
                         to_remove.append(tag)
                 continue
 
@@ -226,7 +226,7 @@ class AdvancedScoutingSystemV2:
             if self._scout_is_threatened(unit):
                 if hasattr(self.bot, "start_location"):
                     retreat_pos = self.bot.start_location
-                    unit.move(retreat_pos)
+                    self.bot.do(unit.move(retreat_pos))
                     self.logger.info(f"[SCOUT_RETREAT] {unit.type_id.name} retreating from threat (HP: {unit.health_percentage*100:.0f}%)")
                     to_remove.append(tag)
                     continue
@@ -235,7 +235,7 @@ class AdvancedScoutingSystemV2:
             if self._is_path_unsafe(unit, info["target"]):
                 safe_pos = self._find_safe_detour(unit, info["target"])
                 if safe_pos:
-                    unit.move(safe_pos)
+                    self.bot.do(unit.move(safe_pos))
                     continue
 
             # 목표 도달 (시야 범위 내)
@@ -793,12 +793,12 @@ class AdvancedScoutingSystemV2:
                 idx = (idx + 1) % len(route)
                 self._patrol_index[tag] = idx
                 next_target = route[idx]
-                unit.move(next_target)
+                self.bot.do(unit.move(next_target))
 
             # 위협 감지 시 후퇴
             if self._scout_is_threatened(unit):
                 if hasattr(self.bot, "start_location"):
-                    unit.move(self.bot.start_location)
+                    self.bot.do(unit.move(self.bot.start_location))
                     to_remove.append(tag)
 
         for tag in to_remove:

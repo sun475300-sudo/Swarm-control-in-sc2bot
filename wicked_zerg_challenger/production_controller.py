@@ -185,7 +185,7 @@ class ProductionController:
                 break
 
             try:
-                larva.train(unit_type)
+                self.bot.do(larva.train(unit_type))
                 produced += 1
 
                 # 로그 (초반만)
@@ -246,7 +246,7 @@ class ProductionController:
 
         # Overlord 생산
         try:
-            larvae.first.train(UnitTypeId.OVERLORD)
+            self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             print(f"[PRODUCTION] Auto Overlord (supply: {supply_left}/{supply_cap})")
 
         except Exception as e:

@@ -123,7 +123,7 @@ async def build_expansion(bot) -> NodeStatus:
                 if location:
                     worker = bot.workers.random
                     if worker:
-                        worker.build(UnitTypeId.HATCHERY, location)
+                        bot.do(worker.build(UnitTypeId.HATCHERY, location))
                         return NodeStatus.SUCCESS
         return NodeStatus.FAILURE
     except Exception:

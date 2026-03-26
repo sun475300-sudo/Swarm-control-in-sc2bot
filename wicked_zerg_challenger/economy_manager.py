@@ -1519,7 +1519,7 @@ class EconomyManager:
                 if gold_pos and hasattr(self.bot, "workers") and self.bot.workers:
                     worker = self.bot.workers.closest_to(gold_pos)
                     if worker and not worker.is_constructing_scv:
-                        worker.build(UnitTypeId.HATCHERY, gold_pos)
+                        self.bot.do(worker.build(UnitTypeId.HATCHERY, gold_pos))
                         is_gold = self._is_gold_expansion(gold_pos)
                         gold_tag = " [GOLD!]" if is_gold else ""
                         self.logger.info(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS")

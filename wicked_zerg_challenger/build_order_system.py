@@ -271,7 +271,7 @@ class BuildOrderSystem:
                     placement_step=2
                 )
                 if location:
-                    worker.build(UnitTypeId.SPAWNINGPOOL, location)
+                    self.bot.do(worker.build(UnitTypeId.SPAWNINGPOOL, location))
                     return True
 
         # Build Extractor
@@ -327,7 +327,7 @@ class BuildOrderSystem:
         if unit_type == UnitTypeId.OVERLORD:
             if self.bot.larva:
                 larva = self.bot.larva.first
-                larva.train(UnitTypeId.OVERLORD)
+                self.bot.do(larva.train(UnitTypeId.OVERLORD))
                 return True
 
         # Train Queen
@@ -339,7 +339,7 @@ class BuildOrderSystem:
             # Find Idle Hatchery
             for hatchery in self.bot.townhalls.ready.idle:
                 if self.bot.can_afford(UnitTypeId.QUEEN):
-                    hatchery.train(UnitTypeId.QUEEN)
+                    self.bot.do(hatchery.train(UnitTypeId.QUEEN))
                     return True
 
         # Train Zergling
@@ -350,14 +350,14 @@ class BuildOrderSystem:
 
             if self.bot.larva:
                 larva = self.bot.larva.first
-                larva.train(UnitTypeId.ZERGLING)
+                self.bot.do(larva.train(UnitTypeId.ZERGLING))
                 return True
 
         # Train Drone
         elif unit_type == UnitTypeId.DRONE:
             if self.bot.larva:
                 larva = self.bot.larva.first
-                larva.train(UnitTypeId.DRONE)
+                self.bot.do(larva.train(UnitTypeId.DRONE))
                 return True
 
         return False
@@ -406,7 +406,7 @@ class BuildOrderSystem:
             else:
                 worker = self.bot.workers.random
                 if worker:
-                    worker.build(UnitTypeId.HATCHERY, location)
+                    self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
                     self.expansion_actual_time = self.bot.time
                     print(f"[BUILD_ORDER] ★ Natural expansion ordered at {int(self.bot.time)}s ★")
                     return True

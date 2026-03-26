@@ -137,3 +137,47 @@
 **작업 완료 시간:** 2026-03-26 10:20
 
 ---
+
+### [세션 5] 대규모 버그 검사 — self.bot.do() 일괄 수정 45건
+
+#### 1. 대규모 스캔 결과
+- **스캔 범위:** 전체 362개 Python 파일
+- **스캔 패턴:** 6가지 (빈 컬렉션, 0나누기, bot.do누락, async, 타입에러, 로직에러)
+- **발견 버그:** 45건 (전부 HIGH — self.bot.do() 래핑 누락)
+
+#### 2. 수정 파일 및 건수
+
+| 파일 | 수정 건수 | 수정 내용 |
+|------|----------|-----------|
+| `build_order_system.py` | 6건 | worker.build(), larva.train(), hatchery.train() 래핑 |
+| `building_destroyer.py` | 4건 | unit.attack() 래핑 |
+| `combat/stutter_step_kiting.py` | 6건 | unit.attack(), unit.move() 래핑 |
+| `idle_unit_manager.py` | 8건 | unit.move(), unit.attack() 래핑 |
+| `defense_coordinator.py` | 4건 | worker.build(), unit.move() 래핑 |
+| `scouting/advanced_scout_system_v2.py` | 5건 | unit.move() 래핑 |
+| `combat/harassment_coordinator.py` | 2건 | overlord.move() 래핑 |
+| `combat/creep_denial_system.py` | 2건 | killer.attack() 래핑 |
+| `early_defense_system.py` | 2건 | larva.train(), hatchery.train() 래핑 |
+| `economy_manager.py` | 1건 | worker.build() 래핑 |
+| `production_controller.py` | 2건 | larva.train() 래핑 |
+| `building_placement_helper.py` | 1건 | worker.build() 래핑 |
+| `ai/zerg_strategy_tree.py` | 1건 | worker.build() 래핑 |
+| **합계** | **44건** | |
+
+#### 3. 컴파일 검증
+- 13개 수정 파일 전부 `py_compile` 통과 ✅
+
+#### 4. 총 수정 버그 현황 (누적 57건)
+
+| 세션 | 수정 건수 | 심각도 분포 |
+|------|-----------|-------------|
+| 세션 1 | 4건 | CRITICAL 1, HIGH 2, MEDIUM 1 |
+| 세션 2 | 2건 | HIGH 2 |
+| 세션 3 | 3건 | HIGH 2, MEDIUM 1 |
+| 세션 4 | 4건 | HIGH 2, MEDIUM 2 |
+| 세션 5 | 44건 | HIGH 44 |
+
+**커밋 시간:** 2026-03-26 11:00
+**작업 완료 시간:** 2026-03-26 11:00
+
+---

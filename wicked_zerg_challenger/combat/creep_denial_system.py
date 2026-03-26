@@ -134,7 +134,7 @@ class CreepDenialSystem:
                  # 다시 공격 명령 (아직 종양이 있다면)
                  tumor = self.bot.enemy_structures.find_by_tag(tumor_tag)
                  if tumor:
-                     killer.attack(tumor)
+                     self.bot.do(killer.attack(tumor))
                  else:
                      # 종양 사라짐 -> 임무 완료
                      if hasattr(self.bot, "unit_authority"):
@@ -189,7 +189,7 @@ class CreepDenialSystem:
                 level=AuthorityLevel.TACTICAL  # 정찰보다 높고 전투보다 낮음
             ):
                 # 권한 획득 성공 -> 공격 명령
-                killer.attack(tumor)
+                self.bot.do(killer.attack(tumor))
                 self.assignments[tumor.tag] = killer.tag
                 break # 한 프레임에 하나씩만 할당 (부하 방지)
 

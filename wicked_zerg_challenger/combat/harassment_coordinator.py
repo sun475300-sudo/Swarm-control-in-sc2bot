@@ -1014,7 +1014,7 @@ class HarassmentCoordinator:
             self.baneling_drop_baneling_tags.add(baneling.tag)
 
         # 5. Fly to target
-        overlord.move(target)
+        self.bot.do(overlord.move(target))
 
         # 6. Track drop
         self.baneling_drop_active = True
@@ -1048,7 +1048,7 @@ class HarassmentCoordinator:
 
             # Overlord 후퇴
             safe_pos = self.bot.start_location
-            overlord.move(safe_pos)
+            self.bot.do(overlord.move(safe_pos))
 
             self.logger.info(
                 f"[{int(self.bot.time)}s] Baneling drop: UNLOADING at target"

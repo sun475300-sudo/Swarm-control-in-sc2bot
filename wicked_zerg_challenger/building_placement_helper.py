@@ -321,7 +321,7 @@ class BuildingPlacementHelper:
 
         # 건설 명령
         try:
-            worker.build(building_type, location)
+            self.bot.do(worker.build(building_type, location))
             print(f"[BUILD] {building_type.name} at {location} (creep: {self.has_creep(location)})")
             return True
         except Exception as e:

@@ -140,7 +140,7 @@ class BuildingDestroyer:
 
             # 건물 공격 명령
             for unit in available:
-                unit.attack(building.position)
+                self.bot.do(unit.attack(building.position))
 
             assigned_count += units_per_building
 
@@ -156,7 +156,7 @@ class BuildingDestroyer:
             # 첫 번째 목표에 추가 병력
             first_target = target_buildings[0]
             for unit in remaining:
-                unit.attack(first_target.position)
+                self.bot.do(unit.attack(first_target.position))
 
     def _get_available_attack_units(self):
         """공격 가능한 유닛 가져오기"""
@@ -294,12 +294,12 @@ class RapidVictorySystem:
         if self.bot.enemy_structures.exists:
             target = self.bot.enemy_structures.closest_to(army.center)
             for unit in army:
-                unit.attack(target.position)
+                self.bot.do(unit.attack(target.position))
         elif self.bot.enemy_start_locations:
             # 적 시작 위치 공격
             target = self.bot.enemy_start_locations[0]
             for unit in army:
-                unit.attack(target)
+                self.bot.do(unit.attack(target))
 
     def _limit_worker_production(self):
         """드론 생산 제한"""

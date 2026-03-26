@@ -142,7 +142,7 @@ class StutterStepKiting:
 
     def _execute_attack(self, unit: Unit, target: Unit) -> None:
         """공격 실행"""
-        unit.attack(target)
+        self.bot.do(unit.attack(target))
         self.unit_states[unit.tag] = "attacking"
         self.last_attack_frame[unit.tag] = self.bot.iteration
 
@@ -156,7 +156,7 @@ class StutterStepKiting:
         # 맵 경계 체크
         retreat_position = self._clamp_to_map(retreat_position)
 
-        unit.move(retreat_position)
+        self.bot.do(unit.move(retreat_position))
         self.unit_states[unit.tag] = "retreating"
         self.retreat_positions[unit.tag] = retreat_position
 
@@ -167,7 +167,7 @@ class StutterStepKiting:
         optimal_offset = config["attack_range"] - 0.5  # 약간 여유
         approach_position = unit.position + approach_vector * optimal_offset
 
-        unit.move(approach_position)
+        self.bot.do(unit.move(approach_position))
         self.unit_states[unit.tag] = "approaching"
 
     def _maintain_optimal_distance(self, unit: Unit, target: Unit, config: dict) -> None:
@@ -179,16 +179,16 @@ class StutterStepKiting:
             # 너무 가까우면 살짝 후퇴
             retreat_vector = (unit.position - target.position).normalized
             retreat_position = unit.position + retreat_vector * 0.5
-            unit.move(retreat_position)
+            self.bot.do(unit.move(retreat_position))
         elif distance > optimal + 0.5:
             # 너무 멀면 살짝 접근
             approach_vector = (target.position - unit.position).normalized
             approach_position = unit.position + approach_vector * 0.5
-            unit.move(approach_position)
+            self.bot.do(unit.move(approach_position))
         else:
             # 최적 거리 - 공격 준비
             if unit.weapon_cooldown <= 0:
-                unit.attack(target)
+                self.bot.do(unit.attack(target))
 
     def _clamp_to_map(self, position: Point2) -> Point2:
         """위치를 맵 경계 내로 제한"""

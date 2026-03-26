@@ -151,14 +151,14 @@ class IdleUnitManager:
 
             if main_force:
                 # 주력 부대에 합류
-                unit.move(main_force)
+                self.bot.do(unit.move(main_force))
             elif self.bot.enemy_structures.exists:
                 # 적 건물 공격
                 target = self.bot.enemy_structures.closest_to(unit)
-                unit.attack(target.position)
+                self.bot.do(unit.attack(target.position))
             else:
                 # 집결지로 이동
-                unit.move(self.rally_point)
+                self.bot.do(unit.move(self.rally_point))
 
     def _find_main_force(self) -> Optional[Point2]:
         """
@@ -213,7 +213,7 @@ class IdleUnitManager:
                 nearby_enemies = self.bot.enemy_units.closer_than(15, unit)
 
                 if not nearby_enemies.exists:
-                    unit.move(main_force)
+                    self.bot.do(unit.move(main_force))
 
     async def _retreat_wounded_units(self):
         """
@@ -242,7 +242,7 @@ class IdleUnitManager:
                 if nearby_enemies.exists:
                     # 가장 가까운 아군 기지로 후퇴
                     closest_base = self.bot.townhalls.closest_to(unit)
-                    unit.move(closest_base.position)
+                    self.bot.do(unit.move(closest_base.position))
 
                     # 퀸 트랜스퓨전 요청
                     if hasattr(self.bot, 'queen_manager'):
@@ -321,7 +321,7 @@ class HarassmentManager:
             if target:
                 for unit in squad:
                     self.harassment_units.add(unit.tag)
-                    unit.attack(target)
+                    self.bot.do(unit.attack(target))
 
                 self.logger.info(f"[HARASSMENT] Sent 3 Mutalisks to {target}")
                 return
@@ -336,7 +336,7 @@ class HarassmentManager:
             if target:
                 for unit in squad:
                     self.harassment_units.add(unit.tag)
-                    unit.attack(target)
+                    self.bot.do(unit.attack(target))
 
                 self.logger.info(f"[HARASSMENT] Sent 6 Zerglings to {target}")
 
@@ -374,10 +374,10 @@ class HarassmentManager:
                 if unit.health / unit.health_max < 0.5:
                     # HP 낮으면 복귀
                     if self.bot.townhalls.exists:
-                        unit.move(self.bot.townhalls.first.position)
+                        self.bot.do(unit.move(self.bot.townhalls.first.position))
                         self.harassment_units.remove(tag)
                 else:
                     # 계속 견제
                     target = await self._find_harassment_target()
                     if target:
-                        unit.attack(target)
+                        self.bot.do(unit.attack(target))
