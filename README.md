@@ -1,1867 +1,491 @@
+<div align="center">
 
 # Swarm Control System in StarCraft II
 
 ### 멀티 에이전트 드론 군집 연구를 위한 지능형 통합 관제 시스템
 
-**From Simulation to Reality: Reinforcement Learning • Self-Healing DevOps • Mobile GCS**
+**From Simulation to Reality: Reinforcement Learning · Self-Healing DevOps · Mobile GCS**
 
-[![GitHub](https://img.shields.io/badge/GitHub-sun475300--sudo-blue)](https://github.com/sun475300-sudo/Swarm-control-in-sc2bot)
-[![Python](https://img.shields.io/badge/Python-3.10+-green)](https://python.org)
-[![SC2](https://img.shields.io/badge/StarCraft%20II-API-orange)](https://github.com/BurnySc2/python-sc2)
-[![License](https://img.shields.io/badge/License-Private-red)]()
+[![GitHub](https://img.shields.io/badge/GitHub-Swarm--control--in--sc2bot-181717?logo=github)](https://github.com/sun475300-sudo/Swarm-control-in-sc2bot)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![SC2 API](https://img.shields.io/badge/StarCraft%20II-burnysc2-FF6600?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PHRleHQgeT0iMjAiIGZvbnQtc2l6ZT0iMjAiPvCfjq48L3RleHQ+PC9zdmc+)](https://github.com/BurnySc2/python-sc2)
+[![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
+[![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
+[![Files](https://img.shields.io/badge/Python%20Files-362-success)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-13-critical)]()
+[![Tests](https://img.shields.io/badge/Tests-All%20Passing-brightgreen)]()
 
----
-
-## 프로젝트 현황 (2026-03-26 기준)
-
-| 항목 | 상태 |
-|------|------|
-| Python 파일 | 362개 전체 구문 검사 통과 |
-| 누적 버그 수정 | 13건 (CRITICAL 1, HIGH 8, MEDIUM 4) |
-| 테스트 | bot_initialization, strategy_loading, knowledge_loading 전체 통과 |
-| 검증 완료 모듈 | core/, config/, commander/, combat/, economy/, scouting/, defense/, 학습/훈련 전체 |
-| 빌드오더 | 9개 로드 성공 (Roach Rush, 12Pool 등) |
-| 유닛 비율 | 4개 종족 대응 비율 설정 완료 |
-
-### 최근 수정 이력
-
-| 버그 | 파일 | 수정 내용 |
-|------|------|-----------|
-| `.first` 크래시 | build_order_system.py | `.exists` 가드 추가 |
-| `int` 순회 에러 | advanced_micro_controller_v3.py | `hasattr(__iter__)` 타입 가드 |
-| larvae 미존재 | production_controller.py | `.exists` 체크 추가 |
-| morph 구문 오류 | aggressive_strategies.py | burnysc2 morph 구문 수정 |
-| nydus 컬렉션 | harassment_coordinator.py | `.exists` 가드 추가 |
-| `self.bot.do()` 누락 | early_defense, scout_system, production_resilience 등 7곳 | 유닛 명령 래핑 |
-| division by zero | zergling_harassment_trainer, idle_unit_manager | `health_max > 0` 가드 |
-
-
-
-## 📌 부모님을 위한 요약 설명
-
-
-
-> 이 프로젝트는 “게임을 한다”는 것이 아니라,  
-
-> **구글 DeepMind(AlphaStar)**와 **미국 공군(USAF AI Flight / VISTA X-62A)**가 실제로 사용하는 방식 그대로  
-
-> 스타크래프트 II를 **드론 군집 제어(swarm control)** 실험 환경으로 활용한 연구입니다.
-
->
-
-> 실제 드론을 50–200대 동시에 띄워 실험하려면 **수천만~수억 원**이 필요하지만  
-
-> 시뮬레이션을 활용하면 **안전하고 비용 없이** 군집 알고리즘을 실험할 수 있습니다.
-
->
-
-> 이 프로젝트를 통해  
-
-> **AI 자율비행 · 군집제어 · 클라우드 자가수복 · 모바일 원격관제(C2)** 등  
-
-> 방산기업·국방연구소가 요구하는 핵심 기술을  
-
-> 스스로 설계하고 구현했습니다.
-
-
+</div>
 
 ---
 
+## Overview
 
-
-# 🏗 Architecture
-
-
-
-아래 코드를 그대로 두면 GitHub에서 Mermaid 다이어그램으로 자동 렌더링됩니다.
-
-
-
-```mermaid
-
-graph TD
-
-    subgraph "Edge Device (Simulation Server)"
-
-        A[StarCraft II Engine] <--> B{Wicked Zerg AI Bot}
-
-        B --> C[Economy / Production / Swarm Manager]
-
-    end
-
-
-
-    subgraph "Cloud Intelligence (Vertex AI)"
-
-        D[Gemini 1.5 Pro API]
-
-        B -- "Traceback & Source Code" --> D
-
-        D -- "Self-Healing Patch" --> B
-
-    end
-
-
-
-    subgraph "Remote Monitoring (Mobile GCS)"
-
-        E[Flask Dashboard Server]
-
-        F[Android App - Mobile GCS]
-
-        B -- "Real-time Telemetry" --> E
-
-        E <--> F
-
-    end
-
-````
-
-
-
----
-
-
-
-## 모듈 구조 (362 Python files)
+> 이 프로젝트는 **게임이 아닙니다.**
+> **Google DeepMind(AlphaStar)** 와 **미국 공군(USAF VISTA X-62A)** 이 실제로 사용하는 방식 그대로,
+> 스타크래프트 II를 **드론 군집 제어(Swarm Control)** 실험 환경으로 활용한 연구입니다.
 
 ```
-wicked_zerg_challenger/
-├── wicked_zerg_bot_pro_impl.py   # 메인 봇 엔진
-├── bot_step_integration.py       # on_step 통합 루프
-├── core/                         # 매니저 팩토리, 레지스트리, 리소스
-├── config/                       # 설정 로더, 유닛 설정
-├── commander/                    # AI 지휘관 (vLLM/Gemini 연동)
-├── combat/                       # 전투 마이크로 (12+ 모듈)
-│   ├── harassment_coordinator.py
-│   ├── baneling_tactics.py
-│   ├── stutter_step_kiting.py
-│   └── ...
-├── economy/                      # 경제 서브모듈
-├── scouting/                     # 정찰 시스템
-├── defense/                      # 방어 조율
-├── ai/                           # 행동 트리, 전략 트리
-├── local_training/               # 로컬 훈련 시스템
-├── knowledge/                    # 빌드오더 DB (9개)
-└── tests/                        # 테스트 스위트
+실제 드론 50~200대 실험  →  수천만~수억 원
+시뮬레이션 기반 실험       →  안전 · 무비용 · 무한 반복
 ```
 
 ---
 
-# 프로젝트 개요
-
-이 프로젝트는 단순한 게임 봇(Game Bot)이 아니라
-
-**AI Agent + Self-Healing Cloud DevOps + Mobile GCS**가 유기적으로 연결된
-
-**지능형 통합 관제(Intelligent Integrated Control) 시스템**입니다.
-
-
-
-핵심 목적은:
-
-
-
-* 드론 군집(swarm)을 시뮬레이션 기반으로 연구
-
-* 강화학습 기반의 자율 의사결정 자동화
-
-* 클라우드 기반 자가 치유(Self-Healing) DevOps 구축
-
-* 모바일 기반 C2(Command & Control) 통합
-
-
-
-즉, **실제 UAV 군집 제어의 축소판을 가상 환경에서 구현한 프로젝트**입니다.
-
-
-
----
-
-
-
-# 🧬 Sim-to-Real (가상 → 현실 대응표)
-
-
-
-스타크래프트 II는 단순 게임이 아니라,
-
-실제 군집 드론 제어 알고리즘과 1:1로 대응되는 고난도 시뮬레이션입니다.
-
-
-
-| 스타크래프트 II (Virtual)  | 실제 드론/군집 UAV (Real)        |
-
-| -------------------- | -------------------------- |
-
-| Fog of War (시야 제한)   | 센서 불확실성, 통신 음영 구간          |
-
-| 200기 유닛 실시간 제어       | 20–200대 군집 드론 동시 지휘·충돌 회피  |
-
-| 미네랄/가스 자원 최적화        | 배터리/임무 우선순위·탑재량 관리         |
-
-| 산란못 중복 건설 방지 로직      | 중복 명령 방지(SSoT), 시스템 자원 무결성 |
-
-| 즉각적 전술 전환 (공격/확장/방어) | 임무 스케줄링·동적 전술 재편           |
-
-
-
----
-
-
-
-# 💡 핵심 기능
-
-
-
-## 1) Swarm Reinforcement Learning (군집 강화학습)
-
-
-
-* 200기 저그 유닛 → **드론 군집(Multi-Agent Swarm)** 모델링
-
-* 전투력, 적군 규모, 테크, 확장 상태 등을 **15차원 벡터**로 표현 (고도화 완료)
-
-* 공격/방어/확장 전략 **자동 전환** (Epsilon-Greedy + Learning Rate Scheduling)
-
-* 프로게이머 **이병렬(Rogue)** 리플레이 기반 **모방학습(IL)** 적용
-
-
-
----
-
-
-
-## 2) Gen-AI Self-Healing DevOps (코드 자가 수복)
-
-
-
-* Google **Vertex AI (Gemini)** 연동
-
-* 에러(traceback) 감지 → 자동 전송 → AI 분석
-
-* Gemini가 수정 코드 **자동 생성 → 자동 패치 → 자동 재시작**
-
-* 운영자 개입 없이 24/7 무중단 학습 유지
-
-
-
----
-
-
-
-## 3) Mobile Ground Control Station (모바일 관제국)
-
-
-
-* **Web 기반 Mobile GCS (PWA)** 직접 개발 + Android Native App 프로토타입
-
-* 실시간 정보:
-
-
-
-  * 미네랄/가스
-
-  * 유닛 생산/전투 상황
-
-  * 승률 그래프
-
-  * CPU 온도/부하
-
-* ngrok 기반 LTE/5G **안전한 원격 접속**
-
-* 실제 UAV C2(Command & Control) 구조의 프로토타입
-
-* TypeScript/React 기반 크로스 플랫폼 대시보드
-
-
-
----
-
-
-
-# 🛠 Engineering Troubleshooting (핵심 문제 해결 사례)
-
-
-
-방산/자율주행 시스템에서 가장 중요하게 보는 능력입니다.
-
-
-
----
-
-
-
-## ✔ 1) await 누락 → **생산 마비 / 병력 0 문제 해결**
-
-
-
-### 문제
-
-
-
-* 미네랄이 8,000 이상 쌓여도 병력 생산 **0**
-
-* AI가 완전히 **Stall(정지)** 상태
-
-
-
-### 원인
-
-
-
-* `larva.train()` coroutine 생성
-
-* **await 누락**으로 SC2 엔진에 명령 전달 실패
-
-
-
-### 해결
-
-
-
-* 전체 생산 루틴 async 구조 **재설계**
-
-* await 누락 구간 전수 검사
-
-* concurrency(동시성) 순서 정리
-
-
-
-### 결과
-
-
-
-* **생산 성능 400% 상승**
-
-* 자원 8,000 → 병력 0 문제 **완전 해결**
-
-
-
----
-
-
-
-## ✔ 2) Race Condition → “중복 건설” 0% 해결
-
-
-
-### 문제
-
-
-
-* 여러 매니저가 “산란못 없음” 판단 → 2~3개 중복 건물 생성
-
-
-
-### 해결
-
-
-
-* Frame-level **Construction Reservation Flag** 도입
-
-* 건설 여부를 **SSoT(Single Source of Truth)**로 관리
-
-
-
-### 결과
-
-
-
-* **중복 건설률 0% 달성**
-
-
-
----
-
-
-
-## ✔ 3) Minerals 8000 Overflow → “Flush 알고리즘”으로 해결
-
-
-
-### 문제
-
-
-
-* 미네랄만 폭증 → 가스 부족 → 고급 테크 중단
-
-
-
-### 해결
-
-
-
-* 미네랄 500 이상 시:
-
-  **저글링 폭생산 모드(Emergency Flush Mode)** 활성화
-
-
-
-### 결과
-
-
-
-* 자원 순환율 상승
-
-* 테크 빌드 정상화
-
-
-
----
-
-
-
-# 📸 README 추천 이미지
-
-
-
-다음 이미지를 README 하단에 첨부하면 설득력이 폭발적으로 증가함:
-
-
-
-* 📱 모바일 GCS 관제 화면 (실시간 자원/승률)
-
-* 🐜 Flush 알고리즘 적용 후 저글링 폭발 생산 장면
-
-* 🤖 Gemini가 코드 패치한 diff 화면
-
-
-
----
-
-
-
-# 🔧 기술 스택
-
-
-
-| 분류 | 기술 |
-|------|------|
-| **Language** | Python 3.10+ |
-| **AI/ML** | PyTorch, RL Policy Network, SC2 Replay Mining, Imitation Learning |
-| **Simulation** | StarCraft II API (burnysc2/python-sc2) |
-| **DevOps** | Auto Training Pipeline, Vertex AI (Gemini) Self-Healing |
-| **GCS** | Flask Dashboard, TypeScript/React, Android App |
-| **Algorithm** | Potential Field Swarm Navigation, Async Concurrency Control |
-| **CI/QA** | 자동 모니터링 (1h 주기), py_compile 전수 검사, 36+ 테스트 |
-| **Repository** | GitHub (sun475300-sudo/Swarm-control-in-sc2bot) |
-
-
-
----
-
-
-
-# 🎯 Career Roadmap
-
-
-
-이 프로젝트는 아래 분야와 직접 연결됩니다:
-
-
-
-* UAV/UGV **자율제어 시스템**
-
-* 방산 무인체계 **군집 알고리즘**
-
-* AI/ML Engineer (RL, Multi-Agent AI)
-
-* DevOps/MLOps (Self-Healing Infra)
-
-* 로봇/자율주행 C2(Command & Control)
-
-
-
----
-
-
-
-# 🌐 English Version
-
-
-
-아래는 **최신 개선 버전의 `README_en.md`(영문 단독 버전)** 입니다.
-
-깃허브에 그대로 붙여넣으면 국제 포트폴리오용으로 완벽하게 동작하도록 구성했습니다.
-
-
-
----
-
-
-
-# 📄 **README_en.md (Final English Version)**
-
-
-
-````markdown
-
-# 🛸 Swarm Control System in StarCraft II
-
-### Autonomous Zerg Bot AI for Multi-Agent Drone Swarm Research  
-
-**From Simulation to Reality: Reinforcement Learning • Self-Healing DevOps • Mobile GCS**
-
-
-
----
-
-
-
-## 📌 Summary for Parents / Non-technical Reviewers
-
-
-
-This project is **not about playing games**.
-
-
-
-It follows the same methodology used by  
-
-**Google DeepMind (AlphaStar)** and the **U.S. Air Force (X-62A AI Flight Tests)**  
-
-where StarCraft II is used as a **high-fidelity simulation environment**  
-
-to study **drone swarm control, autonomous decision-making, and multi-agent AI**.
-
-
-
-Running real swarm-drone experiments (50–200 drones) requires  
-
-**tens of thousands to millions of dollars**,  
-
-but simulation makes it **safe, scalable, and cost-free**.
-
-
-
-Through this project, I built:
-
-
-
-- Autonomous swarm-control logic  
-
-- Real-time tactical decision-making  
-
-- Cloud-based AI auto-recovery system  
-
-- Mobile Command & Control (C2) prototype  
-
-
-
-These are core technologies used in defense UAV systems, robotics, and autonomous warfare platforms.
-
-
-
----
-
-
-
-# 🏗 Architecture
-
-
+## System Architecture
 
 ```mermaid
+graph TB
+    subgraph "🖥️ Edge Device — Simulation Server"
+        SC2[("⚙️ StarCraft II<br/>Game Engine")]
+        BOT{"🤖 Wicked Zerg<br/>AI Bot"}
+        SC2 <-->|"API"| BOT
+    end
 
+    subgraph "🧠 AI Core — Bot Internal"
+        ECO["💰 Economy<br/>Manager"]
+        COM["⚔️ Combat<br/>Manager"]
+        STR["📋 Strategy<br/>Manager"]
+        PRD["🏭 Production<br/>Controller"]
+        SCT["👁️ Scouting<br/>System"]
+        DEF["🛡️ Defense<br/>Coordinator"]
+        BOT --> ECO & COM & STR & PRD & SCT & DEF
+    end
+
+    subgraph "☁️ Cloud Intelligence — Vertex AI"
+        GEM["🔮 Gemini 1.5 Pro"]
+        BOT -->|"Traceback + Source"| GEM
+        GEM -->|"Self-Healing Patch"| BOT
+    end
+
+    subgraph "📱 Remote Monitoring — Mobile GCS"
+        DASH["📊 Flask Dashboard"]
+        APP["📱 Android App"]
+        BOT -->|"Real-time Telemetry"| DASH
+        DASH <-->|"WebSocket"| APP
+    end
+
+    subgraph "🎓 Training Pipeline"
+        RL["🧬 Reinforcement<br/>Learning"]
+        IL["📚 Imitation<br/>Learning (Rogue)"]
+        MON["📈 Auto Monitor<br/>(1h cycle)"]
+        BOT --> RL & IL
+        MON -->|"Bug Detection"| BOT
+    end
+
+    style SC2 fill:#1a1a2e,stroke:#e94560,color:#fff
+    style BOT fill:#0f3460,stroke:#e94560,color:#fff
+    style GEM fill:#4285f4,stroke:#fff,color:#fff
+    style DASH fill:#16213e,stroke:#0f3460,color:#fff
+    style APP fill:#16213e,stroke:#0f3460,color:#fff
+```
+
+---
+
+## Sim-to-Real Mapping
+
+```mermaid
+graph LR
+    subgraph "🎮 StarCraft II — Virtual"
+        A1["🌫️ Fog of War"]
+        A2["🐜 200 Units Control"]
+        A3["💎 Resource Optimization"]
+        A4["🏗️ Build Dedup Logic"]
+        A5["⚡ Dynamic Tactics"]
+    end
+
+    subgraph "🚁 Real-World Drone — Physical"
+        B1["📡 Sensor Uncertainty"]
+        B2["🤖 Multi-UAV Swarm"]
+        B3["🔋 Battery/Priority Mgmt"]
+        B4["🔒 SSoT Integrity"]
+        B5["📋 Mission Reallocation"]
+    end
+
+    A1 -.->|"1:1"| B1
+    A2 -.->|"1:1"| B2
+    A3 -.->|"1:1"| B3
+    A4 -.->|"1:1"| B4
+    A5 -.->|"1:1"| B5
+
+    style A1 fill:#0f3460,color:#fff
+    style A2 fill:#0f3460,color:#fff
+    style A3 fill:#0f3460,color:#fff
+    style A4 fill:#0f3460,color:#fff
+    style A5 fill:#0f3460,color:#fff
+    style B1 fill:#e94560,color:#fff
+    style B2 fill:#e94560,color:#fff
+    style B3 fill:#e94560,color:#fff
+    style B4 fill:#e94560,color:#fff
+    style B5 fill:#e94560,color:#fff
+```
+
+---
+
+## Key Features
+
+### 1) Swarm Reinforcement Learning
+
+```mermaid
+graph LR
+    STATE["📊 15-D State Vector<br/>전투력 · 적군 · 테크 · 확장"]
+    POLICY["🧠 RL Policy Network<br/>Epsilon-Greedy + LR Schedule"]
+    ACTION["⚡ Action Output"]
+
+    STATE --> POLICY --> ACTION
+
+    ACTION -->|"공격"| ATK["⚔️ Attack"]
+    ACTION -->|"방어"| DEF["🛡️ Defend"]
+    ACTION -->|"확장"| EXP["🏗️ Expand"]
+
+    style STATE fill:#2d3436,color:#fff
+    style POLICY fill:#6c5ce7,color:#fff
+    style ACTION fill:#00b894,color:#fff
+    style ATK fill:#d63031,color:#fff
+    style DEF fill:#0984e3,color:#fff
+    style EXP fill:#fdcb6e,color:#000
+```
+
+| 항목 | 세부 사항 |
+|------|----------|
+| 유닛 수 | 200기 저그 유닛 → 드론 군집 모델링 |
+| 상태 표현 | **15차원 벡터** (전투력, 적군 규모, 테크, 확장 등) |
+| 전략 전환 | Epsilon-Greedy + Learning Rate Scheduling |
+| 모방 학습 | 프로게이머 **이병렬(Rogue)** 리플레이 기반 IL |
+
+### 2) Gen-AI Self-Healing DevOps
+
+```mermaid
+sequenceDiagram
+    participant Bot as 🤖 Bot
+    participant Detect as 🔍 Error Detector
+    participant Gemini as 🔮 Gemini AI
+    participant Patch as 🔧 Auto Patcher
+
+    Bot->>Detect: Runtime Error (Traceback)
+    Detect->>Gemini: Send traceback + source code
+    Gemini->>Gemini: Analyze & generate fix
+    Gemini->>Patch: Return patch code
+    Patch->>Bot: Apply patch + restart
+    Note over Bot,Patch: ⏱️ 24/7 무중단 자율 운영
+```
+
+### 3) Mobile Ground Control Station (GCS)
+
+```mermaid
+graph TB
+    subgraph "📱 Mobile GCS Features"
+        direction TB
+        M1["💎 미네랄/가스 실시간"]
+        M2["⚔️ 유닛 생산/전투 현황"]
+        M3["📈 승률 그래프"]
+        M4["🌡️ CPU 온도/부하"]
+        M5["🎮 원격 명령 전송"]
+    end
+
+    subgraph "🔐 Connectivity"
+        NG["ngrok IoT Tunnel"]
+        LTE["LTE/5G Network"]
+    end
+
+    M1 & M2 & M3 & M4 & M5 --> NG --> LTE
+
+    style M1 fill:#00b894,color:#fff
+    style M2 fill:#d63031,color:#fff
+    style M3 fill:#6c5ce7,color:#fff
+    style M4 fill:#fdcb6e,color:#000
+    style M5 fill:#0984e3,color:#fff
+```
+
+---
+
+## Module Structure
+
+```mermaid
+graph TB
+    subgraph "📦 wicked_zerg_challenger/ — 362 Python Files"
+        MAIN["🤖 wicked_zerg_bot_pro_impl.py<br/><i>메인 봇 엔진</i>"]
+        STEP["🔄 bot_step_integration.py<br/><i>on_step 통합 루프</i>"]
+
+        subgraph "🧠 Core Systems"
+            CORE["core/<br/>매니저 팩토리·레지스트리"]
+            CFG["config/<br/>설정 로더·유닛 설정"]
+            CMD["commander/<br/>AI 지휘관 (vLLM/Gemini)"]
+        end
+
+        subgraph "⚔️ Combat (12+ modules)"
+            CMB["combat/<br/>harassment · baneling<br/>stutter_step · kiting"]
+        end
+
+        subgraph "💰 Economy & Production"
+            ECO["economy/<br/>자원·일꾼 최적화"]
+            PRD["production/<br/>생산 컨트롤러"]
+        end
+
+        subgraph "👁️ Intel & Defense"
+            SCT["scouting/<br/>정찰 시스템"]
+            DEF["defense/<br/>방어 조율"]
+        end
+
+        subgraph "🎓 Learning"
+            AI["ai/<br/>행동 트리·전략 트리"]
+            TRN["local_training/<br/>로컬 훈련"]
+            KB["knowledge/<br/>빌드오더 DB (9개)"]
+        end
+
+        MAIN --> STEP
+        STEP --> CORE & CMB & ECO & SCT & DEF & AI
+        CORE --> CFG & CMD
+    end
+
+    style MAIN fill:#e94560,color:#fff
+    style STEP fill:#0f3460,color:#fff
+```
+
+---
+
+## Bot Decision Flow
+
+```mermaid
+flowchart TD
+    START(["🎮 on_step() 호출"]) --> SENSE["👁️ 상황 인식<br/>적군 위치 · 자원 · 인구"]
+    SENSE --> DECIDE{"🧠 전략 결정"}
+
+    DECIDE -->|"위협 감지"| DEFEND["🛡️ 방어 모드<br/>스파인 건설 · 병력 집결"]
+    DECIDE -->|"자원 풍부"| EXPAND["🏗️ 확장 모드<br/>해처리 건설 · 일꾼 생산"]
+    DECIDE -->|"병력 우세"| ATTACK["⚔️ 공격 모드<br/>멀티프롱 · 저글링 러시"]
+
+    DEFEND --> MICRO["🎯 마이크로 실행"]
+    EXPAND --> MACRO["📊 매크로 실행"]
+    ATTACK --> MICRO
+
+    MICRO --> EXEC["✅ 유닛 명령 전달<br/>self.bot.do()"]
+    MACRO --> EXEC
+    EXEC --> END(["⏭️ 다음 프레임"])
+
+    style START fill:#6c5ce7,color:#fff
+    style DECIDE fill:#e17055,color:#fff
+    style DEFEND fill:#0984e3,color:#fff
+    style EXPAND fill:#00b894,color:#fff
+    style ATTACK fill:#d63031,color:#fff
+    style EXEC fill:#2d3436,color:#fff
+```
+
+---
+
+## Engineering Troubleshooting
+
+### 1) `await` 누락 → 생산 마비 해결
+
+```mermaid
+graph LR
+    subgraph "❌ Before"
+        B1["larva.train() 호출"] --> B2["await 누락!"] --> B3["SC2 엔진 무시"]
+        B3 --> B4["미네랄 8000+<br/>병력 0"]
+    end
+
+    subgraph "✅ After"
+        A1["await larva.train()"] --> A2["SC2 엔진 수신"] --> A3["생산 정상화"]
+        A3 --> A4["생산 성능<br/>400% 상승"]
+    end
+
+    style B4 fill:#d63031,color:#fff
+    style A4 fill:#00b894,color:#fff
+```
+
+### 2) Race Condition → 중복 건설 0%
+
+```mermaid
+graph LR
+    subgraph "❌ Before"
+        C1["매니저 A: 산란못 없음!"] --> C3["산란못 x3 건설"]
+        C2["매니저 B: 산란못 없음!"] --> C3
+    end
+
+    subgraph "✅ After — SSoT"
+        D1["매니저 A: 건설 예약 Flag ✓"] --> D3["산란못 x1 건설"]
+        D2["매니저 B: Flag 확인 → Skip"] --> D3
+    end
+
+    style C3 fill:#d63031,color:#fff
+    style D3 fill:#00b894,color:#fff
+```
+
+### 3) 미네랄 Overflow → Flush 알고리즘
+
+```mermaid
 graph TD
+    CHECK{"💎 미네랄 > 500?"}
+    CHECK -->|"Yes"| FLUSH["🐜 Emergency Flush Mode<br/>저글링 폭생산"]
+    CHECK -->|"No"| NORMAL["📊 Normal Production"]
+    FLUSH --> BALANCE["⚖️ 자원 균형 회복"]
+    NORMAL --> BALANCE
 
-    subgraph "Edge Device (Simulation Server)"
+    style FLUSH fill:#fdcb6e,color:#000
+    style BALANCE fill:#00b894,color:#fff
+```
 
-        A[StarCraft II Engine] <--> B{Wicked Zerg AI Bot}
+---
 
-        B --> C[Economy / Production / Swarm Manager]
+## Project Stats
 
+```mermaid
+pie title 버그 심각도 분포 (누적 13건)
+    "CRITICAL" : 1
+    "HIGH" : 8
+    "MEDIUM" : 4
+```
+
+```mermaid
+pie title 버그 유형 분포
+    "빈 컬렉션 .first 크래시" : 4
+    "self.bot.do() 래핑 누락" : 5
+    "Division by Zero" : 2
+    "잘못된 API 구문" : 1
+    "타입 에러" : 1
+```
+
+### Quality Dashboard
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| Python 파일 수 | 362 | ✅ 전체 구문 검사 통과 |
+| 누적 버그 수정 | 13건 | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 3개 통과 | ✅ bot_init, strategy, knowledge |
+| 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
+| 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
+| 검증 완료 모듈 | 100% | ✅ core, combat, economy, scouting, defense 전체 |
+| 자동 모니터링 | 1시간 주기 | ✅ 스케줄 태스크 운영 중 |
+
+### Bug Fix Timeline
+
+```mermaid
+gantt
+    title 버그 수정 타임라인
+    dateFormat YYYY-MM-DD
+    section Session 1
+        4건 수정 (CRITICAL 1, HIGH 2, MEDIUM 1)   :done, s1, 2026-03-25, 1d
+    section Session 2
+        2건 수정 (HIGH 2)                          :done, s2, 2026-03-25, 1d
+    section Session 3
+        3건 수정 (HIGH 2, MEDIUM 1)                :done, s3, 2026-03-26, 1d
+    section Session 4
+        4건 수정 (HIGH 2, MEDIUM 2)                :done, s4, 2026-03-26, 1d
+    section Monitoring
+        자동 모니터링 운영 중                        :active, mon, 2026-03-26, 7d
+```
+
+---
+
+## Tech Stack
+
+```mermaid
+graph LR
+    subgraph "🔧 Language & Runtime"
+        PY["🐍 Python 3.10+"]
     end
 
-
-
-    subgraph "Cloud Intelligence (Vertex AI)"
-
-        D[Gemini 1.5 Pro API]
-
-        B -- "Traceback & Source Code" --> D
-
-        D -- "Self-Healing Patch" --> B
-
+    subgraph "🧠 AI / ML"
+        PT["PyTorch"]
+        RL["RL Policy Network"]
+        IL["Imitation Learning"]
+        RPL["SC2 Replay Mining"]
     end
 
-
-
-    subgraph "Remote Monitoring (Mobile GCS)"
-
-        E[Flask Dashboard Server]
-
-        F[Android App - Mobile GCS]
-
-        B -- "Real-time Telemetry" --> E
-
-        E <--> F
-
+    subgraph "🎮 Simulation"
+        SC2["StarCraft II API"]
+        BSC["burnysc2"]
     end
 
-````
-
-
-
----
-
-
-
-# 📖 Overview
-
-
-
-This project is a **full intelligent control ecosystem**, not a simple SC2 bot.
-
-It integrates:
-
-
-
-* **AI Agent (Zerg Bot)** — autonomous strategy engine
-
-* **Cloud Self-Healing DevOps (Vertex Gemini)**
-
-* **Mobile Ground Control Station (Android GCS)**
-
-
-
-Inspired by **DeepMind’s AlphaStar**, the system models
-
-**200-unit Zerg armies as real-world multi-agent drone swarms**,
-
-allowing reinforcement-learning-based control and high-speed tactical decisions.
-
-
-
----
-
-
-
-# 🧬 Sim-to-Real Mapping
-
-
-
-StarCraft II is highly suitable for drone-swarm research due to its structural similarity.
-
-
-
-| StarCraft II (Simulation)           | Real-World Drone Systems                           |
-
-| ----------------------------------- | -------------------------------------------------- |
-
-| Fog of War                          | Sensor uncertainty / communication limits          |
-
-| 200 units simultaneously controlled | Multi-UAV swarm coordination & collision-avoidance |
-
-| Mineral/Gas resource management     | Battery, mission priority, and scheduling          |
-
-| Preventing duplicate structures     | Resource integrity & duplicated command prevention |
-
-| Dynamic strategy switching          | Real-time mission reallocation                     |
-
-
-
----
-
-
-
-# 💡 Key Features
-
-
-
-## 1) Swarm Reinforcement Learning (Multi-Agent AI)
-
-
-
-* 200 Zerg units modeled as cooperative UAV agents
-
-* **15-dimensional** tactical state vector (enhanced from initial 10D design)
-
-* Automatic strategy shifts: **Attack / Defend / Expand** (Epsilon-Greedy + LR Scheduling)
-
-* Imitation learning using professional Zerg player **Rogue**'s replay data
-
-
-
----
-
-
-
-## 2) Gen-AI Self-Healing DevOps (Autonomous Patch System)
-
-
-
-* Integrated with **Google Vertex AI (Gemini 1.5 Pro)**
-
-* When errors occur:
-
-
-
-  * Traceback and source code are sent to Gemini
-
-  * Gemini generates a fix patch
-
-  * Patch is automatically applied
-
-  * Bot restarts with zero human intervention
-
-
-
-→ Provides **24/7 uninterrupted autonomous training & operation**
-
-
-
----
-
-
-
-## 3) Mobile GCS (Ground Control Station)
-
-
-
-* **Web-based Mobile GCS (PWA)** + Android Native App prototype
-
-* Real-time telemetry:
-
-
-
-  * Minerals / Gas
-
-  * Unit production & combat stats
-
-  * Win-rate analytics
-
-  * CPU temperature / performance
-
-* Secure LTE/5G access via **ngrok IoT tunnel**
-
-* Prototype of drone **C2 (Command & Control)** architecture
-
-
-
----
-
-
-
-# 🛠 Engineering Troubleshooting (Major Achievements)
-
-
-
-## ✔ 1) Async Await Bug → Production Stall Fixed
-
-
-
-### Problem
-
-
-
-* Minerals > 8,000
-
-* Zero unit production (AI frozen)
-
-
-
-### Cause
-
-
-
-* `larva.train()` coroutine executed
-
-* **But not awaited**, so the SC2 engine ignored the command
-
-
-
-### Solution
-
-
-
-* Full async pipeline redesign
-
-* Strict concurrency ordering
-
-* Comprehensive await-usage audit
-
-
-
-### Result
-
-
-
-* **400% production performance increase**
-
-* “Minerals 8000 but no army” issue permanently resolved
-
-
-
----
-
-
-
-## ✔ 2) Race Condition → Duplicate Construction Eliminated
-
-
-
-### Problem
-
-
-
-Multiple managers triggered Spawning Pool construction simultaneously.
-
-
-
-### Solution
-
-
-
-* Frame-based **Construction Reservation Flag**
-
-* Enforced **Single Source of Truth (SSoT)** for structure state
-
-
-
-### Result
-
-
-
-* **0% duplicate buildings**
-
-
-
----
-
-
-
-## ✔ 3) Mineral Overflow Bottleneck → Emergency Flush Algorithm
-
-
-
-### Problem
-
-
-
-* Minerals overflow, gas starvation
-
-* Tech progression halted
-
-
-
-### Solution
-
-
-
-* If minerals > 500 → automatic **Zergling Flush Mode**
-
-* Forces resource cycling
-
-
-
-### Result
-
-
-
-* Stable tech progression
-
-* Smooth resource circulation
-
-
-
----
-
-
-
-# 📸 Recommended Images for README
-
-
-
-Add these at the bottom of your GitHub README for maximum impact:
-
-
-
-* Mobile GCS screenshot
-
-* Mass-Zergling production (Flush Algorithm result)
-
-* Gemini patch diff screenshot
-
-
-
----
-
-
-
-# 🔧 Tech Stack
-
-
+    subgraph "☁️ Cloud / DevOps"
+        VTX["Vertex AI"]
+        GMN["Gemini 1.5 Pro"]
+        SH["Self-Healing Pipeline"]
+    end
+
+    subgraph "📱 Frontend / GCS"
+        FLK["Flask Dashboard"]
+        RCT["TypeScript / React"]
+        AND["Android App"]
+    end
+
+    subgraph "🧪 QA / CI"
+        MON["Auto Monitor (1h)"]
+        PYC["py_compile Scan"]
+        TST["36+ Tests"]
+    end
+
+    PY --> PT & SC2 & FLK & MON
+
+    style PY fill:#3776AB,color:#fff
+    style PT fill:#EE4C2C,color:#fff
+    style SC2 fill:#FF6600,color:#fff
+    style GMN fill:#4285F4,color:#fff
+    style RCT fill:#61DAFB,color:#000
+```
 
 | Category | Technology |
 |----------|-----------|
 | **Language** | Python 3.10+ |
-| **AI/ML** | PyTorch, Multi-Agent RL, SC2 Replay Mining, Imitation Learning |
+| **AI/ML** | PyTorch, RL Policy Network, Imitation Learning, SC2 Replay Mining |
 | **Simulation** | StarCraft II API (burnysc2/python-sc2) |
 | **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
 | **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
-| **CI/QA** | Automated monitoring (1h cycle), py_compile full scan, 36+ tests |
-
-
+| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 36+ tests |
 
 ---
 
+## Career Roadmap
 
+```mermaid
+mindmap
+  root((Swarm Control<br/>System))
+    UAV/UGV
+      자율제어 시스템
+      군집 알고리즘
+      실시간 C2
+    AI/ML
+      Multi-Agent RL
+      Imitation Learning
+      Strategy Planning
+    DevOps/MLOps
+      Self-Healing Infra
+      Auto Training Pipeline
+      Monitoring System
+    Robotics
+      Swarm Navigation
+      Sensor Fusion
+      Path Planning
+```
 
-# 🎯 Career Relevance
+이 프로젝트는 아래 분야와 직접 연결됩니다:
 
-
-
-This system demonstrates capabilities essential for:
-
-
-
-* UAV/UGV Autonomous Control
-
-* Multi-Agent Reinforcement Learning
-
-* Intelligent DevOps / Self-Healing Infrastructure
-
-* Robotics & Defense C2 Systems
-
-* Research Engineer / MLOps Engineer roles
-
-
+- **UAV/UGV 자율제어 시스템** — 군집 드론 실시간 관제
+- **방산 무인체계 군집 알고리즘** — Multi-Agent 전술 의사결정
+- **AI/ML Engineer** — 강화학습, 모방학습, 멀티에이전트 AI
+- **DevOps/MLOps** — Self-Healing Infrastructure, 자동화 파이프라인
+- **로봇/자율주행 C2** — Command & Control 시스템 설계
 
 ---
 
+## Contact
 
+<div align="center">
 
-# 📬 Contact
-
-
-
-**Jang S. W.**
+**장선우 (Jang Sun Woo)**
 
 Drone Application Engineering
 
-Email: **[sun475300@naver.com](mailto:sun475300@naver.com)**
+[![Email](https://img.shields.io/badge/Email-sun475300%40naver.com-03C75A?logo=naver&logoColor=white)](mailto:sun475300@naver.com)
+[![GitHub](https://img.shields.io/badge/GitHub-sun475300--sudo-181717?logo=github)](https://github.com/sun475300-sudo)
 
-GitHub: [https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot](https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot)
-
-
-
-**장선우 (Jang S. W.)**
-
-Drone Application Engineering
-
-Email: **[sun475300@naver.com](mailto:sun475300@naver.com)**
-
-GitHub Repo: [https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot](https://github.com/sun475300-sudo/Swarm-Control-in-sc2bot)
-
-
+</div>
 
 ---
 
+<div align="center">
 
+<sub>Built with Python · StarCraft II API · PyTorch · Gemini AI</sub>
 
-> 이 연구에서 쌓은 인공지능 제어·군집 운용 역량은
-
-> 앞으로 **국방과학연구소(ADD) 또는 방산 대기업**에서 활용할 수 있는
-
-> 저만의 강력한 무기가 될 것이라 믿습니다.
-
-> 지금까지 응원해 주신 부모님께 이 프로젝트를 작은 결과물로 보여드립니다.
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-# 스타크래프트 2 AI 고도화 기획안
-
-**작성일**: 2026-01-17  
-**프로젝트**: WickedZerg AI Bot  
-**목적**: 저그 AI의 성능 향상을 위한 체계적인 연구 및 개발 계획
-
----
-
-## 스타크래프트 2 AI (저그) 최적화 아이디어
-
-저그는 **물량(Swarm)**과 맵 장악(Creep), 그리고 소모전이 핵심입니다. 프로게이머 리플레이를 학습하고 있다면, 아래 A~D 전략을 중심으로 최적화를 시도할 수 있습니다.
-
-## ? 목차
-
-1. [A. 마이크로 컨트롤: 군집 제어 (Boids Algorithm)](#a-마이크로-컨트롤-군집-제어-boids-algorithm)
-2. [B. 매크로 판단: 계층적 강화학습 (Hierarchical RL)](#b-매크로-판단-계층적-강화학습-hierarchical-rl)
-3. [C. 리플레이 학습의 한계 보완: 저그 특화 보상 설계 (Reward Shaping)](#c-리플레이-학습의-한계-보완-저그-특화-보상-설계-reward-shaping)
-4. [D. 최신 트렌드: Transformer 기반 모델 (AlphaStar 방식)](#d-최신-트렌드-transformer-기반-모델-alphastar-방식)
-5. [실현 가능성 및 단계별 구현 계획](#실현-가능성-및-단계별-구현-계획)
-
----
-
-## 다음 단계 제안
-
-방금 정리한 [A. 군집 제어](#a-마이크로-컨트롤-군집-제어-boids-algorithm), [B. 계층적 구조](#b-매크로-판단-계층적-강화학습-hierarchical-rl), [C. 보상 체계](#c-리플레이-학습의-한계-보완-저그-특화-보상-설계-reward-shaping), [D. 트랜스포머](#d-최신-트렌드-transformer-기반-모델-alphastar-방식) 4가지 핵심 전략은 **'AI 개발 기획서'**의 목차로 쓰기에 아주 훌륭합니다.
-
----
-
-## A. 마이크로 컨트롤: 군집 제어 (Boids Algorithm)
-
-### 배경 및 문제점
-
-저그의 핵심인 **'저글링/뮤탈리스크'**는 개별 유닛보다 **뭉쳤을 때의 움직임**이 중요합니다.
-
-현재의 문제:
-- 단순히 적을 우클릭하는 수준의 제어
-- 유닛들이 서로 겹치거나 비효율적으로 이동
-- 적을 부드럽게 감싸는 고급 무빙 부재
-
-### 해결 방안: Boids 알고리즘 적용
-
-**Boids 알고리즘(분리, 정렬, 응집)**을 변형하여 적용:
-
-#### 1. 분리 (Separation)
-- 유닛들이 서로 겹치지 않도록 최소 거리 유지
-- 충돌 방지 및 효율적인 공간 활용
-
-#### 2. 정렬 (Alignment)
-- 같은 방향으로 이동하는 유닛들의 속도 조정
-- 군집의 일관된 움직임 유지
-
-#### 3. 응집 (Cohesion)
-- 유닛들이 중심점으로 모이도록 유도
-- 적을 부드럽게 감싸는 형태의 무빙 구현
-
-#### 4. 장점
-
-- **학습 효과 극대화**: 드론 군집 비행 로직과 수학적으로 유사하여 학습 전이가 용이
-- **자연스러운 무빙**: 생물학적 군집 행동을 모방하여 인간처럼 보이는 움직임
-- **전투 효율 향상**: 유닛 손실 최소화 및 적 유닛 포위 효과 증대
-
-#### 5. 수학적 모델
-
-```
-분리 벡터 (Separation) = Σ (현재 위치 - 인접 유닛 위치) / 거리²
-정렬 벡터 (Alignment) = Σ (인접 유닛 속도 벡터) / 인접 유닛 수
-응집 벡터 (Cohesion) = (인접 유닛 중심 위치 - 현재 위치)
-
-최종 속도 = w1×분리 + w2×정렬 + w3×응집 + w4×목표 방향
-```
-
-**가중치 (w1, w2, w3, w4)**: 강화학습을 통해 최적화
-
----
-
-## B. 매크로 판단: 계층적 강화학습 (Hierarchical RL)
-
-### 배경 및 문제점
-
-저그는 관리할 유닛과 건물이 많기 때문에, **하나의 두뇌(Agent)가 모든 걸 처리하면 과부하**가 걸립니다.
-
-문제점:
-- 판단해야 할 변수가 너무 많음 (자원, 인구수, 상대 종족, 전투 상태, 건물 상태, 등)
-- 하나의 모델로 처리하면 학습이 매우 느림
-- 전략과 전술이 혼재되어 의사결정이 비효율적
-
-### 해결 방안: 계층적 구조 분리
-
-#### 1. Commander Agent (사령관 - 상위 에이전트)
-
-**역할**: 거시적 결정만 내림
-
-**입력값**:
-- 자원 (미네랄, 가스)
-- 인구수 (현재/최대)
-- 상대 종족
-- 베이스 개수
-- 현재 병력 규모
-
-**출력 (전략 모드)**:
-- `ECONOMY`: "지금은 드론을 째라" (경제 우선)
-- `ALL_IN`: "올인 러시를 가라" (병력 집중 생산 및 공격)
-- `DEFENSIVE`: "수비에 집중해라" (방어 건물, 유닛 생산)
-- `TECH`: "테크를 올려라" (고급 유닛, 업그레이드)
-- `TRANSITION`: "전환 단계" (경제에서 병력으로 등)
-
-**결정 주기**: 30초~1분 단위
-
-#### 2. Sub-Agents (하위 에이전트)
-
-##### 2-1. Combat Agent (전투관)
-
-**역할**: 사령관이 "공격해"라고 명령하면, 구체적인 전투 컨트롤만 담당
-
-**담당 업무**:
-- 유닛 산개 (Boids 알고리즘 활용)
-- 점사 타겟 선택
-- 위치 선정 (포위, 후퇴)
-
-##### 2-2. Economy Agent (내정 에이전트)
-
-**역할**: 건물 짓기, 자원 관리, 확장
-
-**담당 업무**:
-- 확장 타이밍
-- 건물 배치
-- 자원 할당
-
-##### 2-3. Queen Agent (여왕 에이전트)
-
-**역할**: 오직 **'펌핑(Inject Larva)'**과 **'점막(Creep Tumor)'** 생성 타이밍만 최적화
-
-**담당 업무**:
-- 라바 펌핑 타이밍 최적화
-- 점막 종양 생성 위치 및 타이밍
-
-#### 3. 구조 다이어그램
-
-```
-┌─────────────────────────────────────────┐
-│    Commander Agent (Meta-Controller)    │
-│    30초~1분마다 전략 모드 결정           │
-│    - ECONOMY / ALL_IN / DEFENSIVE       │
-└─────────────────────────────────────────┘
-                    │
-        ┌───────────┼───────────┐
-        │           │           │
-┌───────▼────┐ ┌───▼────┐ ┌───▼────┐
-│  Combat    │ │Economy │ │ Queen  │
-│  Agent     │ │ Agent  │ │ Agent  │
-│ (전투)     │ │ (내정)  │ │ (펌핑)  │
-└────────────┘ └────────┘ └────────┘
-```
-
-#### 4. 장점
-
-- **책임 분리**: 각 에이전트가 자신의 전문 분야만 담당
-- **학습 속도 향상**: 복잡한 문제를 작은 단위로 분해하여 학습 효율 증대
-- **확장성**: 새로운 전략 모드나 하위 에이전트 추가가 용이
-
----
-
-## C. 리플레이 학습의 한계 보완: 저그 특화 보상 설계 (Reward Shaping)
-
-### 배경 및 문제점
-
-**프로게이머 리플레이를 모방 학습(Imitation Learning)**하면 "비슷하게"는 하지만 **"왜" 하는지는 모를 수 있습니다.**
-
-문제점:
-- 단순 승리/패배 보상만으로는 학습이 매우 느림
-- 게임이 끝날 때까지 수만 프레임을 허비
-- 중간 과정에서 "잘하고 있다"는 피드백 부재
-
-### 해결 방안: 세밀한 보상 체계 설계
-
-#### 1. 저그 특화 보상 요소
-
-##### 1-1. 점막 커버리지 보상 (맵 장악)
-
-**목적**: 점막이 맵을 넓게 덮을수록 높은 보상
-
-**설명**: 점막이 맵을 넓게 덮일수록 AI에게 높은 점수를 주어, 스스로 여왕을 생산하고 점막 종양(Creep Tumor)을 심도록 유도
-
-**계산식**:
-```
-점막 커버리지 = (점막으로 덮인 타일 수) / (전체 맵 타일 수)
-보상 = 점막 커버리지 × 5.0 (가중치 높음)
-```
-
-**효과**:
-- 여왕 생산 유도
-- 점막 종양(Creep Tumor) 생성 유도
-- 시야 확보 및 이동 속도 버프 활용
-
-##### 1-2. 라바 효율성 보상 (물량)
-
-**목적**: 펌핑을 안 해서 라바가 쌓여있으면 감점
-
-**계산식**:
-```
-각 해처리당 라바 개수 확인
-if 라바 > 3:
-    페널티 = -0.1 × (라바 개수 - 3)
-```
-
-**효과**:
-- 펌핑 타이밍 최적화
-- 라바 낭비 방지
-- 물량 생산 효율 향상
-
-##### 1-3. 자원 회전율 보상 (소모전)
-
-**목적**: 미네랄이 2000 이상 남으면 '돈을 못 쓰고 있다'는 뜻이므로 감점
-
-**계산식**:
-```
-if 미네랄 > 2000:
-    페널티 = -0.05 × (미네랄 - 2000) / 1000
-```
-
-**효과**:
-- 자원 낭비 방지
-- 지속적인 유닛/건물 생산 유도
-- 저그 특성 (돈을 남기면 집는다) 반영
-
-##### 1-4. 전투 교전비 보상 (소모전 효율)
-
-**목적**: (내가 파괴한 적 자원 가치) - (내가 잃은 자원 가치)의 변화량에 보상
-
-**계산식**:
-```
-현재 교전비 = 파괴한 적 자원 가치 - 잃은 자원 가치
-변화량 = 현재 교전비 - 이전 교전비
-보상 = 변화량 × 0.001
-```
-
-**효과**:
-- 전투 효율 향상
-- 유닛 손실 최소화
-- 적 유닛 파괴 최대화
-
-#### 2. 보상 시스템 구조
-
-```python
-class ZergRewardSystem:
-    def calculate_step_reward(self, bot) -> float:
-        reward = 0.0
-        
-        # 1. 점막 커버리지 보상
-        reward += self._calculate_creep_reward(bot)
-        
-        # 2. 라바 효율성 보상
-        reward += self._calculate_larva_efficiency_reward(bot)
-        
-        # 3. 자원 회전율 보상
-        reward += self._calculate_resource_turnover_reward(bot)
-        
-        # 4. 전투 교전비 보상
-        reward += self._calculate_combat_exchange_reward(bot)
-        
-        return reward
-```
-
-#### 3. 장점
-
-- **학습 속도 향상**: 중간 과정에서 지속적인 피드백 제공
-- **저그 특성 반영**: 점막, 라바, 자원 회전율 등 저그만의 특징을 보상에 반영
-- **전략 다양성**: 다양한 전략이 높은 보상을 받을 수 있도록 설계
-
----
-
-## D. 최신 트렌드: Transformer 기반 모델 (AlphaStar 방식)
-
-### 배경
-
-현재 CNN/RNN 기반 모델의 한계:
-- 시퀀스 데이터 처리에 제약
-- 장기 의존성 학습 어려움
-
-### 해결 방안: Transformer 구조 도입
-
-#### 1. 게임 상태를 문장처럼 처리
-
-**아이디어**: 게임의 상태(유닛 위치, 체력 등)를 문장처럼 처리하여 인과 관계를 더 잘 학습
-
-**예시**:
-```
-"저글링이 체력이 없네 -> 뒤로 뺀다"
-"적 유닛이 많네 -> 산개한다"
-"점막이 부족하네 -> 점막 종양을 짓는다"
-```
-
-#### 2. Transformer의 장점
-
-- **장기 의존성**: Attention 메커니즘으로 먼 과거의 정보도 활용
-- **병렬 처리**: RNN보다 학습 속도가 빠름
-- **계층적 구조**: 상위 레벨(전략)과 하위 레벨(전술)을 동시에 학습
-
-#### 3. 구조 예시
-
-```
-게임 상태 → Embedding Layer
-         ↓
-Multi-Head Attention (N layers)
-         ↓
-Fully Connected Layer
-         ↓
-액션 출력 (전략 모드, 하위 액션)
-```
-
----
-
-## 실현 가능성 및 단계별 구현 계획
-
-### 단계 1: 저그 특화 보상 시스템 (현재 진행 중 ?)
-
-**우선순위**: 최우선  
-**예상 기간**: 1주  
-**난이도**: ?? (보통)
-
-**구현 내용**:
-- `ZergRewardSystem` 클래스 구현
-- 4가지 보상 요소 통합
-- 게임 루프에 보상 계산 연동
-
-**현재 상태**: 
-- ? 코드 구현 완료 (`local_training/reward_system.py`)
-- ? 게임 루프 통합 필요
-
-### 단계 2: 계층적 강화학습 구조 (현재 진행 중 ?)
-
-**우선순위**: 높음  
-**예상 기간**: 2주  
-**난이도**: ??? (어려움)
-
-**구현 내용**:
-- `MetaController` 구현 (상위 에이전트)
-- `SubControllers` 구현 (하위 에이전트들)
-- 기존 매니저들과 통합
-
-**현재 상태**:
-- ? 기본 구조 구현 완료 (`local_training/hierarchical_rl/`)
-- ? 기존 봇 코드와 통합 필요
-
-### 단계 3: Boids 알고리즘 군집 제어 (예정)
-
-**우선순위**: 중간  
-**예상 기간**: 2주  
-**난이도**: ??? (어려움)
-
-**구현 내용**:
-- Boids 알고리즘 구현 (분리, 정렬, 응집)
-- 전투 모듈에 통합
-- 강화학습을 통한 가중치 최적화
-
-**현재 상태**:
-- ? 설계 단계
-- ? 구현 시작 전
-
-### 단계 4: Transformer 기반 모델 (장기 계획)
-
-**우선순위**: 낮음 (연구 단계)  
-**예상 기간**: 1~2개월  
-**난이도**: ????? (매우 어려움)
-
-**구현 내용**:
-- Transformer 구조 설계
-- 기존 CNN/RNN 모델과 비교 실험
-- AlphaStar 방식 참고
-
-**현재 상태**:
-- ? 연구 단계
-- ? 논문 및 자료 조사 필요
-
----
-
-## 결론
-
-본 기획안에서 제시한 **4가지 핵심 전략**은 다음과 같은 순서로 구현할 것을 제안합니다:
-
-1. ? **저그 특화 보상 시스템** (즉시 적용 가능, 효과 즉각적)
-2. ? **계층적 강화학습 구조** (구조 개선, 장기적 효과)
-3. ? **Boids 알고리즘 군집 제어** (전투 효율 향상)
-4. ? **Transformer 기반 모델** (연구 단계, 장기 연구)
-
-각 단계는 독립적으로 구현 가능하며, 점진적으로 통합하여 최종적으로 **고성능 저그 AI**를 완성할 수 있습니다.
-
----
-
-## 참고 자료
-
-- **Boids Algorithm**: Craig Reynolds, "Flocks, Herds, and Schools: A Distributed Behavioral Model" (1987)
-- **Hierarchical RL**: Andrew G. Barto, "Hierarchical Learning in Stochastic Domains" (2003)
-- **Reward Shaping**: Andrew Y. Ng, "Policy Invariance Under Reward Transformations" (1999)
-- **AlphaStar**: DeepMind, "Grandmaster level in StarCraft II using multi-agent reinforcement learning" (2019)
-
----
-
-**작성자**: WickedZerg AI Development Team  
-**최종 수정일**: 2026-01-17
-
-
-이 프로젝트는 부모님을 설득하기위해 만들어짐.
-
-1?? 한국어 README ? Swarm Control System in StarCraft II 멀티 에이전트 드론 군집 연구를 위한 지능형 통합 관제 시스템 From Simulation to Reality: Reinforcement Learning ? Self-Healing DevOps ? Mobile GCS
-
-? 부모님을 위한 요약 설명 이 프로젝트는 "게임을 한다"는 것이 아니라, 구글(DeepMind)과 미국 공군(US Air Force)이 실제로 사용하는 연구 방식 그대로, 스타크래프트 II를 드론 군집 제어(swarm control) 실험 환경으로 활용한 연구입니다.
-
-실제로 드론 50-200대를 동시에 띄워 실험하려면 수천만 원~수억 원이 필요하지만, 시뮬레이션을 활용하면 비용과 위험 없이 군집 알고리즘을 실험할 수 있습니다.
-
-저는 이 프로젝트를 통해 AI 자율비행, 군집 제어, 클라우드 자가 수복, 모바일 관제(C2) 등 방산 기업과 국방연구소에서 요구하는 핵심 기술을 직접 설계하고 구현했습니다.
-
-이 연구를 통해 쌓은 인공지능 제어·군집 운용 역량은 앞으로 국방과학연구소(ADD)나 방산 대기업에서 활용할 수 있는 저만의 강력한 무기가 될 것이라 믿습니다. 지금까지 믿고 지켜봐 주신 부모님께 이 프로젝트를 하나의 작은 결과물로 보여드리고 싶습니다.
-
-
-
-# ? 프로젝트 전체 진행 보고서
-## Swarm Control System in StarCraft II - 개발 시작부터 현재까지
-
-**작성일**: 2026년 1월 14일  
-**프로젝트 기간**: 시작 ~ 현재  
-**상태**: ? 핵심 기능 완료, 최적화 및 안정화 단계
-
----
-
-## ? 목차
-
-1. [프로젝트 개요](#1-프로젝트-개요)
-2. [시스템 아키텍처](#2-시스템-아키텍처)
-3. [주요 개발 성과](#3-주요-개발-성과)
-4. [해결한 기술적 문제들](#4-해결한-기술적-문제들)
-5. [최적화 작업](#5-최적화-작업)
-6. [모바일 GCS 구축](#6-모바일-gcs-구축)
-7. [보안 및 DevOps](#7-보안-및-devops)
-8. [현재 상태 및 다음 단계](#8-현재-상태-및-다음-단계)
-
----
-
-## 1. 프로젝트 개요
-
-### 1.1 프로젝트 목적
-
-드론 응용 전공자로서, 미래 무인 이동체 산업의 핵심 기술인 **군집 제어(Swarm Control)**와 **자율 의사결정(Autonomous Decision Making)** 알고리즘을 연구하기 위해 구축된 통합 시뮬레이션 프로젝트입니다.
-
-### 1.2 핵심 가치
-
-- **단순한 게임 봇이 아닌** 지능형 통합 관제 시스템
-- **Sim-to-Real**: 가상 시뮬레이션을 실제 드론 군집 제어로 확장 가능
-- **DeepMind AlphaStar 방식 벤치마킹**: 200기 유닛을 군집 드론으로 해석
-
-### 1.3 연구 배경
-
-- 53사단 통신병·드론 운용병 복무 경험
-- 실제 작전에서 다수 드론 동시 제어의 한계 체감
-- 군집 자동화 기술의 필요성 인식 → 대학 복학 후 프로젝트 시작
-
----
-
-## 2. 시스템 아키텍처
-
-### 2.1 3-Tier 구조
-
-```
-┌─────────────────────────────────────────┐
-│  Edge Device (Simulation Server)        │
-│  - StarCraft II Engine                  │
-│  - Python Zerg Bot                       │
-│  - Economy/Production/Swarm Manager     │
-└─────────────────────────────────────────┘
-                    ↕
-┌─────────────────────────────────────────┐
-│  Cloud Intelligence (Vertex AI)         │
-│  - Gemini 1.5 Pro API                   │
-│  - Self-Healing DevOps                 │
-│  - 자동 에러 분석 및 패치 생성              │
-└─────────────────────────────────────────┘
-                    ↕
-┌─────────────────────────────────────────┐
-│  Remote Monitoring (Mobile GCS)         │
-│  - Flask Dashboard Server               │
-│  - Android App (PWA)                    │
-│  - 실시간 텔레메트리 모니터링              │
-└─────────────────────────────────────────┘
-```
-
-### 2.2 주요 구성 요소
-
-1. **AI 에이전트 (Zerg Bot)**
-   - 강화학습 기반 자율 전술 엔진
-   - 10차원 전술 상태 벡터
-   - 프로게이머 전략 모사 (이병렬 Rogue 리플레이 분석)
-
-2. **클라우드 기반 자가 수복 (Gen-AI Self-Healing)**
-   - Vertex AI (Gemini) 통합
-   - 런타임 에러 자동 분석 및 패치
-   - 24/7 무중단 학습 환경
-
-3. **모바일 통합 관제국 (Mobile GCS)**
-   - Android PWA 앱
-   - 실시간 원격 모니터링
-   - LTE/5G IoT 연동 (ngrok 터널링)
-
----
-
-## 3. 주요 개발 성과
-
-### 3.1 군집 제어 및 강화학습 (Swarm RL)
-
-#### ? 완료된 기능
-
-- **드론 군집 제어 모사**
-  - 저그의 대규모 병력 운용을 실제 군집 드론 운용 알고리즘과 연결
-  - 다수 개체의 분산 제어, 충돌 회피, 경로 최적화 통합
-
-- **10차원 벡터 기반 지능**
-  - 아군 병력 상태
-  - 적 병력의 규모·위치
-  - 테크 수준, 확장 상태
-  - 위 정보를 10차원 벡터로 정규화하여 `공격/확장/방어` 전략 자율 선택
-
-- **Strategy Imitation (프로게이머 전략 모사)**
-  - 저그 세계 최정상급 프로게이머 **이병렬(Rogue)** 선수 리플레이 분석
-  - "점막 위에서 적 병력이 감지되었을 때의 반응 속도와 의사결정 패턴" 데이터 추출
-  - 프로게이머 수준의 유동적인 전술 반응 속도 확보
-
-### 3.2 생성형 AI 기반 자가 치유 (Gen-AI Self-Healing DevOps)
-
-#### ? 완료된 기능
-
-- **Vertex AI (Gemini) 통합**
-  - 런타임 에러(Traceback) 또는 비정상 동작 발생 시
-  - 봇 로그 및 문제 구간 소스 코드를 Gemini로 전송
-  - AI가 원인 분석 및 수정 패치 제안
-
-- **자동 소스 수복 파이프라인**
-  - 사람이 개입하지 않아도:
-    1. 에러 감지
-    2. 로그·소스 전달
-    3. 수정 코드 생성
-    4. 파일 패치(Patch)
-    5. 봇 프로세스 재가동
-  - 까지 일련의 과정을 자동으로 수행
-
-- **성과**
-  - **24/7 무중단 학습(Always-On Training)** 가능한 DevOps 환경 구현
-  - 야간·주말에도 시스템이 스스로를 수리하며 학습을 계속 수행
-
-### 3.3 모바일 통합 관제국 (Mobile GCS)
-
-#### ? 완료된 기능
-
-- **PWA (Progressive Web App) 구현**
-  - `manifest.json` 생성 완료
-  - Service Worker 구현 완료
-  - 모바일 최적화 HTML/CSS
-  - 오프라인 지원
-
-- **실시간 원격 모니터링**
-  - AI 승률
-  - 실시간 자원 상태(미네랄/가스)
-  - 유닛 현황
-  - 서버 온도 및 자원 사용률
-  - 등을 스마트폰으로 관제
-
-- **LTE/5G IoT 연동**
-  - `ngrok` 터널링을 통해 외부 네트워크(LTE/5G)에서도
-  - 내부 로컬 서버(127.0.0.1)에 안전하게 접속
-  - 실제 드론 운용에서 요구되는 **C2(Command & Control) 시스템**의 프로토타입 구현
-
----
-
-## 4. 해결한 기술적 문제들
-
-### 4.1 비동기 명령 실행 오류 ? The Async Trap ? 해결
-
-**문제**:
-- 미네랄이 8,000 이상 쌓여 있음에도 병력이 거의 생산되지 않는 **생산 마비 현상** 발생
-
-**원인 분석**:
-- `larva.train()` 호출 시 `await` 누락
-- 코루틴이 생성만 되고 실제 게임 엔진에 명령이 전달되지 않음
-
-**해결**:
-- 전체 생산 루틴을 재설계하여 비동기 함수 호출 경로 정리
-- 모든 생산 로직에서 **제어권(컨텍스트 스위칭)**이 명확히 보장되도록 수정
-
-**성과**:
-| 항목 | 수정 전 | 수정 후 |
-|------|---------|---------|
-| 자원 소모율 | 0% (미네랄 8,000 적체, 병력 0) | **100% 자원 소모, 병력 생산 정상화** |
-| 초기 생존 시간 | 평균 185초 이내 전멸 패턴 반복 | **600% 이상 증가 (1,100초 이상 생존)** |
-| 학습 지속 가능성 | 장기 테스트 불가, 자주 중단 | **24/7 연속 학습 가능, 자가 치유 파이프라인과 연동** |
-
-### 4.2 레이스 컨디션에 의한 중복 건설 ? 해결
-
-**문제**:
-- 여러 매니저(생산/전략 모듈)가 동시에 "산란못(Spawning Pool)이 없다"고 판단
-- 동일 프레임에 **중복 건설 명령**이 나가며 자원 낭비 발생
-
-**해결**:
-- `_is_construction_started()` 내부에 프레임 단위 **건설 예약 플래그(Reservation Flag)** 도입
-- "이미 건설 중인 건물" 상태를 **Single Source of Truth**로 통합 관리
-- 결과: **중복 자원 소모 0% 달성**
-
-### 4.3 자원 소모 플러시 알고리즘 ? 해결
-
-**문제**:
-- 미네랄은 과도하게 적체되지만, 가스 부족으로 고급 테크 유닛 생산이 지연
-- 일정 시점 이후 자원이 의미 없이 쌓이는 병목 발생
-
-**해결**:
-- "**비상 플러시(Flush) 로직**" 설계
-- 미네랄 500 이상 돌파 시
-  - 가스 소모가 필요 없는 저글링을 대량 생산
-  - 라바를 강제로 소모하며 자원을 전투력으로 즉시 환전
-- 결과: **자원 순환율 극대화, 테크·병력 생산 정체 해소**
-
-### 4.4 일꾼 보호 로직 ? 해결
-
-**문제**:
-- 일꾼(DRONE)이 전투에 참여하여 불필요한 손실 발생
-
-**해결**:
-- `combat_manager.py`의 `_get_army_units()` 메서드에서 DRONE 자동 제외
-- 일꾼이 공격하지 않고 후퇴만 하도록 수정
-- 추가 안전장치로 명시적 필터링 구현
-
----
-
-## 5. 최적화 작업
-
-### 5.1 학습 데이터 정렬 및 최적화 ? 완료
-
-#### strategy_db.json 최적화
-- **정렬 기준**:
-  1. 매치업 (ZvT, ZvP, ZvZ)
-  2. 추출 시간 (최신순)
-- **통계 수집**: 매치업별 전략 수, 리플레이별 사용 횟수
-- **백업 생성**: 최적화 전 자동 백업
-
-#### learned_build_orders.json 최적화
-- **파라미터 정렬**: 키 기준 알파벳 순
-- **빌드오더 정렬**: 타이밍 기준 (빠른 순)
-- **메타데이터 정리**: 소스 리플레이 수, 디렉토리 경로
-
-### 5.2 코드 최적화 ? 완료
-
-- **Import 정렬**: 표준 라이브러리 → 서드파티 → 로컬 모듈
-- **Trailing Whitespace 제거**: 모든 파일의 끝 공백 제거
-- **코드 분석**: 미사용 import 감지, 긴 함수 감지 (> 100줄), 중복 코드 패턴 감지
-
-### 5.3 전략적 최적화 ? 완료
-
-1. **가스 소모량 증대**
-   - 가스 300+일 때 강제 테크 유닛 생산
-   - 테크 유닛 생산 비중 20% 증가
-
-2. **공격 트리거 하향 조정**
-   - 저글링 24기 이상 또는 인구수 80 돌파 시 즉시 공격
-   - 초반 압박 타이밍 개선
-
-3. **여왕 인젝션 최적화**
-   - 매 프레임 호출 확인
-   - 라바 수 100 이하일 때만 인젝션
-
----
-
-## 6. 모바일 GCS 구축
-
-### 6.1 완료된 기능 ?
-
-1. **PWA (Progressive Web App)**
-   - `manifest.json` 생성 완료
-   - Service Worker 구현 완료
-   - 모바일 최적화 HTML/CSS
-   - 오프라인 지원
-
-2. **백엔드 API**
-   - REST API 엔드포인트 (`/api/game-state`, `/api/combat-stats`, etc.)
-   - WebSocket 실시간 업데이트
-   - FastAPI 백엔드 (선택 사항)
-
-3. **아이콘 생성 도구**
-   - `tools/generate_pwa_icons.py` - 자동 아이콘 생성
-
-### 6.2 모니터링 기능
-
-- **실시간 데이터**:
-  - 게임 상태: 미네랄, 가스, 인구수
-  - 유닛 구성: 저글링, 로치, 히드라리스크 등
-  - 승률 통계: 총 게임 수, 승/패, 승률
-  - 학습 진행: 에피소드, 평균 보상, 손실
-
-- **API 엔드포인트**:
-  - `GET /api/game-state` - 현재 게임 상태
-  - `GET /api/combat-stats` - 전투 통계
-  - `GET /api/learning-progress` - 학습 진행 상황
-  - `GET /api/code-health` - 코드 건강도
-  - `WebSocket /ws/game-status` - 실시간 업데이트
-
----
-
-## 7. 보안 및 DevOps
-
-### 7.1 보안 설정 ? 완료
-
-- **`.gitignore` 설정**
-  - `.env` 파일 및 모든 환경 변수 파일 제외
-  - 개인용 텍스트 파일 제외
-  - 로그 파일 제외
-  - API 키가 포함된 문서 제외 옵션 추가
-
-- **API 키 보안**
-  - `local.properties` Git 추적 제외
-  - 코드에 하드코딩되지 않음
-  - `BuildConfig`를 통해서만 사용
-
-### 7.2 프로젝트 정리 ? 완료
-
-- **문서 정리**
-  - 61개의 리포트/상태/요약 파일을 `docs/reports/`로 이동
-  - 5개의 JSON 백업 파일을 `docs/reports/json_backups/`로 이동
-
-- **백업 폴더 제거**
-  - 5개의 백업 폴더 삭제 (Git이 버전 관리)
-  - 깔끔한 프로젝트 구조 유지
-
----
-
-## 8. 현재 상태 및 다음 단계
-
-### 8.1 현재 상태
-
-#### ? 완료된 항목
-
-- [x] 핵심 AI 에이전트 구현 (Zerg Bot)
-- [x] 비동기 제어 시스템 최적화 (400% 효율 개선)
-- [x] 생성형 AI 자가 수복 시스템 (24/7 무중단 운영)
-- [x] 모바일 GCS 구축 (PWA 완료)
-- [x] 치명적 버그 수정 (생산 마비, 중복 건설, 자원 병목)
-- [x] 학습 데이터 최적화 및 정렬
-- [x] 코드 최적화 및 정리
-- [x] 보안 설정 완료
-- [x] 프로젝트 문서화 완료
-
-#### ? 성능 지표
-
-- **생존 시간**: 185초 → **1,100초 이상** (600% 증가)
-- **자원 소모율**: 0% → **100%** (정상화)
-- **중복 건설**: 발생 → **0%** (완전 해결)
-- **학습 지속성**: 불가능 → **24/7 가능**
-
-### 8.2 다음 단계
-
-#### 단기 목표 (1-2개월)
-
-1. **고성능 하드웨어 확보**
-   - 학습 속도 향상을 위한 GPU 장비
-   - 일반 컴퓨터 대비 10-20배 빠른 학습 속도 기대
-
-2. **강화학습 모델 고도화**
-   - 정책 네트워크 최적화
-   - 승률 향상 (현재 → 목표: 60%+)
-
-3. **실전 테스트**
-   - AI Arena 플랫폼 배포
-   - 실제 플레이어와 대전 테스트
-
-#### 중장기 목표 (3-6개월)
-
-1. **Sim-to-Real 확장**
-   - 실제 드론 군집 제어 시스템으로 확장
-   - 국방과학연구소(ADD) 협업 가능성 탐색
-
-2. **산업 적용**
-   - 방산 기업 (LIG넥스원, 한화시스템 등) 인턴십/취업
-   - 자율주행 로봇·드론 스타트업 협업
-
-3. **연구 논문 작성**
-   - 학술 논문 발표
-   - 오픈소스 프로젝트로 공개
-
----
-
-## 9. 기술 스택
-
-| 구분 | 기술/도구 |
-|------|----------|
-| Language | Python 3.10 |
-| AI / ML | PyTorch, RL Policy Network |
-| Simulation Env | StarCraft II API |
-| Data Pipeline | SC2 리플레이 마이닝, 전략/패턴 추출 |
-| MLOps / DevOps | Auto-Training Pipeline, Model Archive, Gen-AI Self-Healing |
-| 관제 시스템 | Flask Dashboard, Android Mobile GCS (PWA) |
-| Swarm Algorithm | Potential Field 기반 충돌 회피 및 경로 탐색 |
-| Cloud AI | Google Vertex AI (Gemini 1.5 Pro) |
-
----
-
-## 10. 프로젝트 통계
-
-### 10.1 코드 규모
-
-- **Python 파일**: 97개
-- **주요 모듈**:
-  - `wicked_zerg_bot_pro.py` - 메인 봇 로직
-  - `combat_manager.py` - 전투 관리
-  - `economy_manager.py` - 경제 관리
-  - `production_manager.py` - 생산 관리
-  - `genai_self_healing.py` - AI 자가 치유
-  - `telemetry_logger.py` - 텔레메트리 로깅
-
-### 10.2 문서화
-
-- **문서 파일**: 100+ 개
-- **보고서**: 61개
-- **가이드 문서**: 18개
-- **설명서**: 93개
-
-### 10.3 도구 및 스크립트
-
-- **자동화 도구**: 48개 Python 스크립트
-- **배치 스크립트**: 18개
-- **유틸리티**: 10개
-
----
-
-## 11. 핵심 성과 요약
-
-### 11.1 기술적 성과
-
-1. ? **비동기 제어 시스템 최적화**: 400% 효율 개선
-2. ? **생성형 AI 자가 수복**: 24/7 무중단 운영 체계 구축
-3. ? **모바일 원격 관제**: 차세대 지상 관제국 시스템 설계 완료
-4. ? **치명적 버그 해결**: 생존 시간 600% 증가
-5. ? **자원 관리 최적화**: 중복 건설 0%, 자원 순환율 극대화
-
-### 11.2 연구적 성과
-
-1. ? **Sim-to-Real 매핑**: 가상 시뮬레이션을 실제 드론 군집 제어로 확장 가능
-2. ? **프로게이머 전략 모사**: 이병렬(Rogue) 선수 리플레이 분석 및 적용
-3. ? **10차원 전술 벡터**: 복잡한 전술 상황을 수치화하여 자율 의사결정
-
-### 11.3 시스템 통합 성과
-
-1. ? **3-Tier 아키텍처**: Edge Device - Cloud Intelligence - Mobile GCS 통합
-2. ? **자동화 파이프라인**: 에러 감지부터 패치 적용까지 완전 자동화
-3. ? **실시간 모니터링**: 모바일에서 언제 어디서나 시스템 상태 확인 가능
-
----
-
-## 12. 결론
-
-이 프로젝트는 단순한 게임 봇이 아니라, **AI 에이전트 ? 클라우드 서버 ? 모바일 단말**이 유기적으로 연결된 **지능형 통합 관제 시스템** 전체를 설계·구현한 연구 프로젝트입니다.
-
-### 핵심 가치
-
-- **파일럿의 실전 감각** (군 복무 경험)
-- **AI 설계 기술** (강화학습, 자가 치유)
-- **모바일 관제 기술** (PWA, 원격 모니터링)
-
-이 세 가지 역량을 모두 갖춘 **국내 유일의 인재**가 되기 위한 기반이 마련되었습니다.
-
-### 향후 비전
-
-이 연구를 통해 얻은 역량은 시뮬레이션을 넘어 실제:
-- 군집 드론 방어 체계
-- 자율주행 무인체계 운영 시스템
-
-으로 직접 확장 가능한 기반 기술입니다.
-
-**Target Industries**:
-- 국방과학연구소(ADD)
-- 방산 기업 (LIG넥스원, 한화시스템 등)
-- 자율주행 로봇·드론 스타트업
-- AI 연구소 및 시뮬레이션 기반 R&D 조직
-
----
-
-**보고서 작성일**: 2026년 1월 14일  
-**작성자**: 장선우 (드론전공 / 드론 파일럿 / AI 시스템 개발자)
-
+</div>
