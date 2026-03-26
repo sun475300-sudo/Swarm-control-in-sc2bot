@@ -150,7 +150,7 @@ class RoachTacticsTrainer:
                 continue
 
             # 체력 확인
-            hp_ratio = roach.health / roach.health_max
+            hp_ratio = roach.health / roach.health_max if roach.health_max > 0 else 0
             if hp_ratio > self.BURROW_HP_THRESHOLD:
                 continue
 
@@ -215,7 +215,7 @@ class RoachTacticsTrainer:
                 continue
 
             # 체력 확인
-            hp_ratio = roach.health / roach.health_max
+            hp_ratio = roach.health / roach.health_max if roach.health_max > 0 else 0
             if hp_ratio < self.UNBURROW_HP_THRESHOLD:
                 # 10초 이상 잠복했으면 강제 해제 (게임 진행을 위해)
                 if burrow_duration < 10.0:
@@ -284,7 +284,7 @@ class RoachTacticsTrainer:
 
             for tank in tanks:
                 # 이미 잠복 중이거나 체력이 낮으면 스킵
-                if tank.is_burrowed or tank.health / tank.health_max < 0.5:
+                if tank.is_burrowed or (tank.health_max > 0 and tank.health / tank.health_max < 0.5):
                     continue
 
                 # 적과의 거리
@@ -319,7 +319,7 @@ class RoachTacticsTrainer:
 
         # 체력이 낮은 바퀴는 후퇴
         for roach in combat_roaches:
-            hp_ratio = roach.health / roach.health_max
+            hp_ratio = roach.health / roach.health_max if roach.health_max > 0 else 0
 
             # 체력 50% 이하면 후퇴
             if hp_ratio < 0.5:

@@ -330,7 +330,7 @@ class HarassmentCoordinator:
             12  # 최대 12마리
         )
         total_runby = max(total_runby, 6)  # 최소 6마리
-        per_squad = total_runby // len(targets)
+        per_squad = total_runby // len(targets) if len(targets) > 0 else total_runby
 
         candidates = zerglings.sorted(lambda u: u.distance_to(self.bot.start_location))
 

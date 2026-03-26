@@ -249,6 +249,8 @@ class BuildOrderSystem:
 
         # Build Spawning Pool
         if structure_type == UnitTypeId.SPAWNINGPOOL:
+            if not self.bot.townhalls.exists:
+                return False
             main_base = self.bot.townhalls.first
             # Calculate approx location
             pos = main_base.position.towards(self.bot.game_info.map_center, 5)
@@ -263,6 +265,8 @@ class BuildOrderSystem:
                     )
                     return True # Request accepted, move to next step
             else:
+                if not self.bot.workers.exists:
+                    return False
                 worker = self.bot.workers.random
                 location = await self.bot.find_placement(
                     UnitTypeId.SPAWNINGPOOL,
@@ -404,6 +408,8 @@ class BuildOrderSystem:
                     print(f"[BUILD_ORDER] ★ Natural expansion ordered at {int(self.bot.time)}s ★")
                     return True
             else:
+                if not self.bot.workers.exists:
+                    return False
                 worker = self.bot.workers.random
                 if worker:
                     self.bot.do(worker.build(UnitTypeId.HATCHERY, location))

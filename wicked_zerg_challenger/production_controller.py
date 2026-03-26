@@ -170,7 +170,7 @@ class ProductionController:
                     break
 
                 if self.bot.can_afford(UnitTypeId.QUEEN):
-                    townhall.train(UnitTypeId.QUEEN)
+                    self.bot.do(townhall.train(UnitTypeId.QUEEN))
                     produced += 1
                     print(f"[PRODUCTION] Queen requested by {requester}")
 

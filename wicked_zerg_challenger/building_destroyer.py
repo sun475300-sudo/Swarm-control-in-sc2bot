@@ -199,7 +199,7 @@ class BuildingDestroyer:
             )
 
             # HP 보너스 (HP 낮을수록 우선)
-            hp_ratio = building.health / building.health_max
+            hp_ratio = building.health / building.health_max if building.health_max > 0 else 0
             hp_bonus = (1 - hp_ratio) * 20  # 최대 +20
 
             # 거리 페널티 (가까울수록 우선)

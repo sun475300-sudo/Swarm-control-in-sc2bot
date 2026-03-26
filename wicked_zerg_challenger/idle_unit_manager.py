@@ -232,7 +232,7 @@ class IdleUnitManager:
 
         for unit in combat_units:
             # HP 비율 계산
-            hp_ratio = unit.health / unit.health_max
+            hp_ratio = unit.health / unit.health_max if unit.health_max > 0 else 0
 
             # HP 30% 이하면 후퇴
             if hp_ratio < 0.3:
@@ -263,7 +263,7 @@ class IdleUnitManager:
         )
 
         idle_units = combat_units.filter(lambda u: u.is_idle)
-        wounded_units = combat_units.filter(lambda u: u.health / u.health_max < 0.5)
+        wounded_units = combat_units.filter(lambda u: u.health_max > 0 and u.health / u.health_max < 0.5)
 
         return {
             "total_combat_units": combat_units.amount,
@@ -371,7 +371,7 @@ class HarassmentManager:
 
             if unit and unit.is_idle:
                 # 견제 재개 또는 복귀
-                if unit.health / unit.health_max < 0.5:
+                if unit.health_max > 0 and unit.health / unit.health_max < 0.5:
                     # HP 낮으면 복귀
                     if self.bot.townhalls.exists:
                         self.bot.do(unit.move(self.bot.townhalls.first.position))

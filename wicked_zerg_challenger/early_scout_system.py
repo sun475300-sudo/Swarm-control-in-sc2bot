@@ -170,7 +170,7 @@ class EarlyScoutSystem:
             self.ling_current_wp[ling.tag] = 0
 
             # 첫 웨이포인트로 이동
-            ling.move(waypoints[0])
+            self.bot.do(ling.move(waypoints[0]))
 
         self.ling_scouts_assigned = True
         print(f"[EARLY_SCOUT] >>> Zergling {len(scout_lings)}마리 정찰 출발! (게임 시간: {int(self.bot.time)}초)")
@@ -209,7 +209,7 @@ class EarlyScoutSystem:
 
                 # 다음 목표로 이동
                 if self.ling_current_wp[ling.tag] < len(waypoints):
-                    ling.move(waypoints[self.ling_current_wp[ling.tag]])
+                    self.bot.do(ling.move(waypoints[self.ling_current_wp[ling.tag]]))
 
     async def _send_overlord_scout(self) -> None:
         """
@@ -238,7 +238,7 @@ class EarlyScoutSystem:
         self.overlord_current_wp = 0
 
         # 이동 명령
-        scout_ol.move(self.overlord_waypoints[0])
+        self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
 
         self.overlord_scout_sent = True
         print(f"[EARLY_SCOUT] <<< Overlord 정찰 출발! (게임 시간: {int(self.bot.time)}초)")
@@ -266,7 +266,7 @@ class EarlyScoutSystem:
 
             # 다음 목표로 이동
             if self.overlord_current_wp < len(self.overlord_waypoints):
-                scout_ol.move(self.overlord_waypoints[self.overlord_current_wp])
+                self.bot.do(scout_ol.move(self.overlord_waypoints[self.overlord_current_wp]))
 
     async def _analyze_enemy_info(self) -> None:
         """

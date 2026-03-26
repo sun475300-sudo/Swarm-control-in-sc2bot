@@ -282,6 +282,8 @@ class AggressiveStrategyExecutor:
         if self.bot.can_afford(UnitTypeId.SPAWNINGPOOL):
             # ★★★ ALWAYS use TechCoordinator (no fallback to direct build) ★★★
             if tech_coordinator and not tech_coordinator.is_planned(UnitTypeId.SPAWNINGPOOL):
+                if not self.bot.townhalls.exists:
+                    return
                 target_pos = self.bot.townhalls.first.position.towards(
                     self.bot.game_info.map_center, 5
                 )

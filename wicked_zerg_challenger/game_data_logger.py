@@ -381,7 +381,7 @@ class GameDataLogger:
                     "enemy_count": nearby_enemies.amount,
                     "base_position": [round(base.position.x, 1), round(base.position.y, 1)],
                     "our_army_nearby": self.bot.units.closer_than(15, base).amount,
-                    "base_health": round(base.health / base.health_max * 100, 1) if hasattr(base, "health") else 100
+                    "base_health": round(base.health / base.health_max * 100, 1) if hasattr(base, "health") and base.health_max > 0 else 100
                 })
 
     def _track_unit_composition(self, game_time: float):

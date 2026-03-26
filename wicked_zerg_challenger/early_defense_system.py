@@ -245,7 +245,7 @@ class EarlyDefenseSystem:
         if zerglings:
             for ling in zerglings:
                 if ling.is_idle or ling.is_moving:
-                    ling.attack(closest_enemy.position)
+                    self.bot.do(ling.attack(closest_enemy.position))
 
         # Worker Defense (Only if enemy is very close)
         if closest_enemy.distance_to(main_base) < 10:
@@ -264,7 +264,7 @@ class EarlyDefenseSystem:
 
                 # Attack only if enemy is near (within 15)
                 if (worker.is_idle or worker.is_gathering) and closest_enemy.distance_to(main_base) < 10:
-                    worker.attack(closest_enemy.position)
+                    self.bot.do(worker.attack(closest_enemy.position))
 
             print(f"[EARLY_DEFENSE] ⚔️ Deployed {defending_workers} workers for defense!")
 

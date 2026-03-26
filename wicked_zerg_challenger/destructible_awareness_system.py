@@ -190,7 +190,7 @@ class DestructibleAwarenessSystem:
                     break
 
             # 2. 본진-확장 경로 차단 여부
-            if self.bot.townhalls.amount > 0:
+            if self.bot.townhalls.exists:
                 main_base = self.bot.townhalls.first.position
                 for townhall in self.bot.townhalls:
                     path_center = (main_base + townhall.position) / 2
@@ -241,7 +241,7 @@ class DestructibleAwarenessSystem:
         if not attacking_units:
             # 유닛이 없으면 일꾼 사용
             workers = self.bot.workers
-            if workers:
+            if workers.exists:
                 worker = workers.closest_to(target.position)
                 if worker.distance_to(target.position) < 50:
                     # 일꾼 5명 정도 보내기

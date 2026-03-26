@@ -435,7 +435,7 @@ class FastVictoryOptimizer:
                 # 미네랄이 500 이상이면 저글링 최대 생산
                 if self.bot.minerals >= 500:
                     for larva_unit in larva.take(5):
-                        larva_unit.train(UnitTypeId.ZERGLING)
+                        self.bot.do(larva_unit.train(UnitTypeId.ZERGLING))
 
     async def _maximize_army_production(self):
         """군대 생산 최대화"""

@@ -180,20 +180,20 @@ class WorkerCombatSystem:
             if distance_to_target <= worker.ground_range + 0.5:
                 # 사거리 내: 공격
                 if can_attack:
-                    worker.attack(target)
+                    self.bot.do(worker.attack(target))
                     self.worker_attack_timings[worker.tag] = current_time
                 else:
                     # 쿨다운 중: 잠시 뒤로 물러남 (드릴 마이크로)
                     retreat_pos = worker.position.towards(target.position, -1.5)
-                    worker.move(retreat_pos)
+                    self.bot.do(worker.move(retreat_pos))
             else:
                 # 사거리 밖: 포위 위치로 이동
                 if i < len(surround_positions):
                     target_pos = surround_positions[i]
-                    worker.move(target_pos)
+                    self.bot.do(worker.move(target_pos))
                 else:
                     # 포위 위치가 부족하면 직접 접근
-                    worker.attack(target)
+                    self.bot.do(worker.attack(target))
 
     def _calculate_surround_positions(
         self,
@@ -231,7 +231,7 @@ class WorkerCombatSystem:
                     self.bot.game_info.map_center,
                     -3
                 )
-                worker.move(retreat_pos)
+                self.bot.do(worker.move(retreat_pos))
 
             # 전투 목록에서 제거
             self.combat_workers.discard(worker.tag)
