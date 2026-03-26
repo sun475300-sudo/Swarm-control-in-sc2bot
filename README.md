@@ -1,11 +1,39 @@
 
-markdown
+# Swarm Control System in StarCraft II
 
-# 🛸 Swarm Control System in StarCraft II
-
-### 멀티 에이전트 드론 군집 연구를 위한 지능형 통합 관제 시스템  
+### 멀티 에이전트 드론 군집 연구를 위한 지능형 통합 관제 시스템
 
 **From Simulation to Reality: Reinforcement Learning • Self-Healing DevOps • Mobile GCS**
+
+[![GitHub](https://img.shields.io/badge/GitHub-sun475300--sudo-blue)](https://github.com/sun475300-sudo/Swarm-control-in-sc2bot)
+[![Python](https://img.shields.io/badge/Python-3.10+-green)](https://python.org)
+[![SC2](https://img.shields.io/badge/StarCraft%20II-API-orange)](https://github.com/BurnySc2/python-sc2)
+[![License](https://img.shields.io/badge/License-Private-red)]()
+
+---
+
+## 프로젝트 현황 (2026-03-26 기준)
+
+| 항목 | 상태 |
+|------|------|
+| Python 파일 | 362개 전체 구문 검사 통과 |
+| 누적 버그 수정 | 13건 (CRITICAL 1, HIGH 8, MEDIUM 4) |
+| 테스트 | bot_initialization, strategy_loading, knowledge_loading 전체 통과 |
+| 검증 완료 모듈 | core/, config/, commander/, combat/, economy/, scouting/, defense/, 학습/훈련 전체 |
+| 빌드오더 | 9개 로드 성공 (Roach Rush, 12Pool 등) |
+| 유닛 비율 | 4개 종족 대응 비율 설정 완료 |
+
+### 최근 수정 이력
+
+| 버그 | 파일 | 수정 내용 |
+|------|------|-----------|
+| `.first` 크래시 | build_order_system.py | `.exists` 가드 추가 |
+| `int` 순회 에러 | advanced_micro_controller_v3.py | `hasattr(__iter__)` 타입 가드 |
+| larvae 미존재 | production_controller.py | `.exists` 체크 추가 |
+| morph 구문 오류 | aggressive_strategies.py | burnysc2 morph 구문 수정 |
+| nydus 컬렉션 | harassment_coordinator.py | `.exists` 가드 추가 |
+| `self.bot.do()` 누락 | early_defense, scout_system, production_resilience 등 7곳 | 유닛 명령 래핑 |
+| division by zero | zergling_harassment_trainer, idle_unit_manager | `health_max > 0` 가드 |
 
 
 
@@ -95,9 +123,32 @@ graph TD
 
 
 
-# 📖 프로젝트 개요
+## 모듈 구조 (362 Python files)
 
+```
+wicked_zerg_challenger/
+├── wicked_zerg_bot_pro_impl.py   # 메인 봇 엔진
+├── bot_step_integration.py       # on_step 통합 루프
+├── core/                         # 매니저 팩토리, 레지스트리, 리소스
+├── config/                       # 설정 로더, 유닛 설정
+├── commander/                    # AI 지휘관 (vLLM/Gemini 연동)
+├── combat/                       # 전투 마이크로 (12+ 모듈)
+│   ├── harassment_coordinator.py
+│   ├── baneling_tactics.py
+│   ├── stutter_step_kiting.py
+│   └── ...
+├── economy/                      # 경제 서브모듈
+├── scouting/                     # 정찰 시스템
+├── defense/                      # 방어 조율
+├── ai/                           # 행동 트리, 전략 트리
+├── local_training/               # 로컬 훈련 시스템
+├── knowledge/                    # 빌드오더 DB (9개)
+└── tests/                        # 테스트 스위트
+```
 
+---
+
+# 프로젝트 개요
 
 이 프로젝트는 단순한 게임 봇(Game Bot)이 아니라
 
@@ -385,17 +436,16 @@ graph TD
 
 
 
-* **Language:** Python 3.10
-
-* **AI:** PyTorch, RL Policy Network, SC2 Replay Mining
-
-* **Simulation:** StarCraft II API
-
-* **DevOps:** Auto Training Pipeline, Vertex AI Self-Healing
-
-* **GCS:** Flask Dashboard, Android App
-
-* **Algorithm:** Potential Field Swarm Navigation, Async Concurrency Control
+| 분류 | 기술 |
+|------|------|
+| **Language** | Python 3.10+ |
+| **AI/ML** | PyTorch, RL Policy Network, SC2 Replay Mining, Imitation Learning |
+| **Simulation** | StarCraft II API (burnysc2/python-sc2) |
+| **DevOps** | Auto Training Pipeline, Vertex AI (Gemini) Self-Healing |
+| **GCS** | Flask Dashboard, TypeScript/React, Android App |
+| **Algorithm** | Potential Field Swarm Navigation, Async Concurrency Control |
+| **CI/QA** | 자동 모니터링 (1h 주기), py_compile 전수 검사, 36+ 테스트 |
+| **Repository** | GitHub (sun475300-sudo/Swarm-control-in-sc2bot) |
 
 
 
@@ -843,17 +893,15 @@ Add these at the bottom of your GitHub README for maximum impact:
 
 
 
-**Language:** Python 3.10
-
-**AI:** PyTorch, Multi-Agent RL, SC2 Replay Mining
-
-**Simulation:** StarCraft II API
-
-**DevOps:** Vertex AI Self-Healing Pipeline
-
-**GCS:** Flask Dashboard + Android App
-
-**Algorithms:** Potential-Field Navigation, Async Concurrency Control
+| Category | Technology |
+|----------|-----------|
+| **Language** | Python 3.10+ |
+| **AI/ML** | PyTorch, Multi-Agent RL, SC2 Replay Mining, Imitation Learning |
+| **Simulation** | StarCraft II API (burnysc2/python-sc2) |
+| **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
+| **GCS** | Flask Dashboard + TypeScript/React + Android App |
+| **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
+| **CI/QA** | Automated monitoring (1h cycle), py_compile full scan, 36+ tests |
 
 
 
