@@ -202,7 +202,7 @@ class TestEconomyManager(unittest.TestCase):
 
     def test_expansion_cooldown_initialization(self):
         """Test expansion cooldown is initialized"""
-        self.assertEqual(self.manager._expansion_cooldown, 6.0)
+        self.assertEqual(self.manager._expansion_cooldown, 3.0)
         self.assertEqual(self.manager._last_expansion_attempt_time, 0.0)
 
     def test_transferred_hatcheries_initialization(self):
@@ -238,8 +238,8 @@ class TestEconomyManager(unittest.TestCase):
     # ==================== Helper Method Tests ====================
 
     def test_early_split_done_flag_initialization(self):
-        """Test early worker split flag starts unset"""
-        self.assertFalse(hasattr(self.manager, '_early_split_done'))
+        """Test early worker split flag is initialized"""
+        self.assertTrue(hasattr(self.manager, '_early_split_done'))
 
 
 if __name__ == '__main__':

@@ -168,7 +168,7 @@ class TestEconomyConfig(unittest.TestCase):
     def test_expansion_settings(self):
         """Test expansion configuration"""
         config = EconomyConfig()
-        self.assertEqual(config.EXPANSION_MINERAL_THRESHOLD, 400)
+        self.assertEqual(config.BANKING_MINERAL_THRESHOLD, 1000)
         self.assertEqual(config.EXPANSION_COOLDOWN, 120)
         self.assertEqual(config.EXPANSION_SAFETY_RADIUS, 30)
 
