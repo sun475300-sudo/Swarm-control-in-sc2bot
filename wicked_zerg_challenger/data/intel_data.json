@@ -1,16 +1,17 @@
 {
   "enemy_race_name": "Protoss",
   "enemy_unit_counts": {
-    "PROBE": 3,
-    "VOIDRAY": 3,
-    "SENTRY": 1,
-    "STALKER": 1
+    "PROBE": 42,
+    "SENTRY": 2,
+    "IMMORTAL": 2,
+    "STALKER": 3,
+    "OBSERVER": 2,
+    "WARPPRISM": 2,
+    "ZEALOT": 2
   },
   "enemy_tech_buildings": [
-    "ROBOTICSFACILITY",
-    "FLEETBEACON",
-    "TEMPLARARCHIVE",
-    "STARGATE"
+    "STARGATE",
+    "ROBOTICSFACILITY"
   ],
   "scouted_locations": [
     [
@@ -222,6 +223,10 @@
       152.5
     ],
     [
+      93.5,
+      156.5
+    ],
+    [
       28.5,
       153.5
     ],
@@ -252,10 +257,6 @@
     [
       42.5,
       93.5
-    ],
-    [
-      165.5,
-      23.5
     ],
     [
       38.5,
@@ -334,8 +335,8 @@
       111.5
     ],
     [
-      93.5,
-      156.5
+      165.5,
+      23.5
     ]
   ],
   "enemy_build_pattern": "protoss_stargate"
