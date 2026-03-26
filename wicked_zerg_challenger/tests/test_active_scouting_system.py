@@ -202,6 +202,7 @@ class TestActiveScoutingSystem(unittest.TestCase):
         self.assertEqual(info["scouted_locations"], 1)
 
 
+@unittest.skipIf(ActiveScoutingSystem is None, "active_scouting_system module removed (replaced by advanced_scout_system_v2)")
 class TestScoutTargetPrioritization(unittest.TestCase):
     """Test suite for scout target prioritization"""
 

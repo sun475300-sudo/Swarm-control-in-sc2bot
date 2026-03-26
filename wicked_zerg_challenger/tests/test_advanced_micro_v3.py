@@ -58,8 +58,11 @@ class TestRavagerMicro(unittest.TestCase):
 
     def test_predict_enemy_position(self):
         """Test enemy position prediction"""
-        mock_enemy = Mock()
+        mock_enemy = Mock(spec=[])
         mock_enemy.position = Point2((50, 50))
+        mock_enemy.movement_speed = 2.5
+        mock_enemy.is_moving = True
+        mock_enemy.facing = 0.0
 
         predicted = self.ravager_micro.predict_enemy_position(mock_enemy, 1.8)
 

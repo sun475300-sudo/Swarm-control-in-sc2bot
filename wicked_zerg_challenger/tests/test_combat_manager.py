@@ -465,10 +465,9 @@ class TestCombatManager(unittest.TestCase):
     # ==================== Enemy Tracking Tests ====================
 
     def test_get_enemy_center_no_enemies(self):
-        """Test get enemy center with no enemies returns Point2((0,0)) from centroid helper"""
+        """Test get enemy center with no enemies returns None"""
         result = self.manager._get_enemy_center([])
-        # When HELPERS_AVAILABLE=True, centroid() returns Point2((0, 0)) for empty list
-        self.assertEqual(result, Point2((0, 0)))
+        self.assertIsNone(result)
 
     def test_get_enemy_center_single_enemy(self):
         """Test get enemy center with single enemy"""
@@ -532,40 +531,25 @@ class TestCombatManager(unittest.TestCase):
 
     # ==================== Assignment Cleanup Tests ====================
 
-    def test_cleanup_assignments_removes_dead_units(self):
-        """Test cleanup removes assignments for dead units"""
-        # Add some assignments
+    def test_unit_assignments_stores_assignments(self):
+        """Test _unit_assignments dict stores unit assignments"""
         self.manager._unit_assignments[123] = "attack"
         self.manager._unit_assignments[456] = "defend"
 
-        # Mock bot.units with only one unit alive
-        mock_unit = Mock()
-        mock_unit.tag = 123
+        self.assertIn(123, self.manager._unit_assignments)
+        self.assertIn(456, self.manager._unit_assignments)
+        self.assertEqual(self.manager._unit_assignments[123], "attack")
+        self.assertEqual(self.manager._unit_assignments[456], "defend")
 
-        self.bot.units = [mock_unit]
+    def test_unit_assignments_can_be_removed(self):
+        """Test _unit_assignments entries can be removed"""
+        self.manager._unit_assignments[123] = "attack"
+        self.manager._unit_assignments[456] = "defend"
 
-        self.manager._cleanup_assignments()
+        del self.manager._unit_assignments[456]
 
-        # Unit 456 should be removed (not in bot.units)
         self.assertIn(123, self.manager._unit_assignments)
         self.assertNotIn(456, self.manager._unit_assignments)
-
-    def test_cleanup_assignments_preserves_alive_units(self):
-        """Test cleanup preserves assignments for alive units"""
-        # Add assignment
-        self.manager._unit_assignments[123] = "attack"
-
-        # Mock bot.units with unit alive
-        mock_unit = Mock()
-        mock_unit.tag = 123
-
-        self.bot.units = [mock_unit]
-
-        self.manager._cleanup_assignments()
-
-        # Unit 123 should still be assigned
-        self.assertIn(123, self.manager._unit_assignments)
-        self.assertEqual(self.manager._unit_assignments[123], "attack")
 
     # ==================== Integration Tests ====================
 

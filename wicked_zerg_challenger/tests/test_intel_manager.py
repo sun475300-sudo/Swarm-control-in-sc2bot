@@ -36,6 +36,8 @@ class TestIntelManager(unittest.TestCase):
         self.bot.enemy_structures = []
         self.bot.townhalls = []
         self.bot.blackboard = Mock()
+        self.bot.data_cache = None
+        self.bot.enemy_start_locations = []
 
         self.intel = IntelManager(self.bot)
 
@@ -208,13 +210,18 @@ class TestIntelManager(unittest.TestCase):
 
     def test_recommended_response_for_terran_bio(self):
         """Test recommended response for Terran bio"""
-        structure_counts = {"BARRACKS": 3}
+        # Set game time >= 180 to avoid early aggression override to "terran_rush"
+        self.bot.time = 300.0
         enemy_units = []
 
-        self.intel._detect_enemy_build_pattern(
-            [Mock(type_id=Mock(name="BARRACKS")) for _ in range(3)],
-            enemy_units
-        )
+        barracks_mocks = []
+        for _ in range(3):
+            b = Mock()
+            b.type_id = Mock()
+            b.type_id.name = "BARRACKS"
+            barracks_mocks.append(b)
+
+        self.intel._detect_enemy_build_pattern(barracks_mocks, enemy_units)
 
         pattern = self.intel.get_enemy_build_pattern()
         response = self.intel.get_recommended_response()
@@ -259,6 +266,8 @@ class TestIntelManagerIntegration(unittest.TestCase):
         self.bot.enemy_structures = []
         self.bot.townhalls = []
         self.bot.blackboard = Mock()
+        self.bot.data_cache = None
+        self.bot.enemy_start_locations = []
 
         self.intel = IntelManager(self.bot)
 

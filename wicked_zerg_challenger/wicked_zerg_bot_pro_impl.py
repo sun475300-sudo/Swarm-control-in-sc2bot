@@ -83,6 +83,10 @@ class WickedZergBotProImpl(BotAI):
         # Step integrator initialization
         self._step_integrator = None
 
+        # ★ Scoring System + Real-time Awareness Engine ★
+        self.scoring_system = None
+        self.awareness_engine = None
+
         # ★ Feature 85: Build Order Timing Log ★
         self._build_order_log: List[Dict[str, Any]] = []
         self._tracked_structure_tags: set = set()
@@ -310,6 +314,21 @@ class WickedZergBotProImpl(BotAI):
                 print(f"[BOT_WARN] OpponentModeling on_start error: {e}")
                 traceback.print_exc()
 
+        # === Scoring System + Real-time Awareness Engine ===
+        try:
+            from scoring_system import ScoringSystem
+            self.scoring_system = ScoringSystem(self)
+            print("[BOT] ★ ScoringSystem initialized (10-domain scoring)")
+        except Exception as e:
+            print(f"[BOT_WARN] ScoringSystem not available: {e}")
+
+        try:
+            from realtime_awareness_engine import RealtimeAwarenessEngine
+            self.awareness_engine = RealtimeAwarenessEngine(self)
+            print("[BOT] ★ RealtimeAwarenessEngine initialized (14-pattern detection)")
+        except Exception as e:
+            print(f"[BOT_WARN] RealtimeAwarenessEngine not available: {e}")
+
         print(f"[BOT] on_start complete. Enemy race: {self.opponent_race}")
 
     async def on_step(self, iteration: int):
@@ -370,6 +389,20 @@ class WickedZergBotProImpl(BotAI):
         # Execute integrated on_step (모든 핵심 매니저 포함)
         await self._step_integrator.on_step(iteration)
 
+        # ★ Scoring System: 실시간 점수 평가 ★
+        if self.scoring_system:
+            try:
+                self.scoring_system.on_step(iteration)
+            except Exception:
+                pass
+
+        # ★ Awareness Engine: 실시간 상황 인식 + 자동 대응 ★
+        if self.awareness_engine:
+            try:
+                self.awareness_engine.on_step(iteration)
+            except Exception:
+                pass
+
         # Personality module is called in bot_step_integration.py; do not call here.
 
     async def on_end(self, game_result):
@@ -378,6 +411,27 @@ class WickedZergBotProImpl(BotAI):
         Handles result logging, reward calculation, and curriculum updates.
         """
         print(f"[BOT] Game ended with result: {game_result}")
+
+        # ★ Scoring System: 게임 종료 점수 계산 ★
+        if self.scoring_system:
+            try:
+                result_str = str(game_result).upper()
+                result_key = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
+                score_report = self.scoring_system.on_game_end(result_key)
+                print(f"\n{self.scoring_system.get_summary()}")
+                print(f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
+                      f"Peak Supply: {score_report.get('peak_supply', 0)} | "
+                      f"Engagements: {score_report.get('engagements_won', 0)}W/"
+                      f"{score_report.get('engagements_lost', 0)}L")
+            except Exception as e:
+                print(f"[BOT_WARN] ScoringSystem on_end error: {e}")
+
+        # ★ Awareness Engine: 최종 상황 요약 ★
+        if self.awareness_engine:
+            try:
+                print(f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}")
+            except Exception:
+                pass
 
         # ★ NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:

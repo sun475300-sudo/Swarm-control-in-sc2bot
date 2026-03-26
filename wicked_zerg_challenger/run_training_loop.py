@@ -104,9 +104,36 @@ def run_single_game(game_num, progression_system):
         return (False, None)
 
 
+def print_block_summary(block_num, block_wins, block_losses, total_wins, total_losses):
+    """10게임 블록 요약 출력"""
+    block_wr = block_wins / 10 * 100
+    total_wr = total_wins / max(total_wins + total_losses, 1) * 100
+
+    # 점수 계산
+    if block_wins >= 7:
+        block_score = +50
+        grade = "S"
+    elif block_wins >= 5:
+        block_score = +20
+        grade = "A"
+    elif block_wins >= 3:
+        block_score = 0
+        grade = "B"
+    else:
+        block_score = -30
+        grade = "F"
+
+    print("\n" + "=" * 70)
+    print(f"  ★★★ BLOCK #{block_num} COMPLETE (10 GAMES) ★★★")
+    print(f"  Block Record: {block_wins}W / {block_losses}L ({block_wr:.0f}%)")
+    print(f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})")
+    print(f"  Cumulative: {total_wins}W / {total_losses}L ({total_wr:.1f}%)")
+    print("=" * 70 + "\n")
+
+
 def main():
     """Run training loop."""
-    total_games = 10  # 30분 동안 약 10게임
+    total_games = 10  # 10게임 1블록 단위
     start_time = time.time()
     games_completed = 0
 
@@ -114,11 +141,11 @@ def main():
     progression_system = DifficultyProgression()
 
     print("\n" + "=" * 70)
-    print("  [TRAINING] CONTINUOUS TRAINING LOOP STARTED")
-    print("  ★ ADAPTIVE DIFFICULTY ENABLED ★")
+    print("  [TRAINING] SCORING-BASED TRAINING LOOP")
+    print("  ★ 10-GAME BLOCK SCORING + ADAPTIVE DIFFICULTY ★")
     print("=" * 70)
-    print(f"  Target: {total_games} games")
-    print(f"  Duration: ~30 minutes")
+    print(f"  Block Size: {total_games} games")
+    print(f"  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
     print(f"  Auto-Progress at: 90% win rate (min 10 games)")
     print("=" * 70)
     print()
@@ -160,9 +187,12 @@ def main():
         # Short delay between games
         time.sleep(2)
 
+    # 10게임 블록 요약
+    print_block_summary(1, wins, losses, wins, losses)
+
     final_duration = time.time() - start_time
     print("\n" + "=" * 70)
-    print("  [COMPLETE] TRAINING LOOP COMPLETE")
+    print("  [COMPLETE] TRAINING BLOCK COMPLETE")
     print("=" * 70)
     print(f"  Total Games: {games_completed}")
     print(f"  Session Results: {wins}W / {losses}L")

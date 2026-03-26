@@ -2149,6 +2149,8 @@ class CombatManager:
 
     @staticmethod
     def _units_amount(units) -> int:
+        if units is None:
+            return 0
         if HELPERS_AVAILABLE:
             return units_amount(units)
         if hasattr(units, "amount"):
