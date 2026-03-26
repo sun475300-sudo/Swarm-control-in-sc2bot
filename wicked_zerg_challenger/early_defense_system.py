@@ -256,7 +256,10 @@ class EarlyDefenseSystem:
                 # ★ CRITICAL: Ensure workers don't go further than 12 distance from base ★
                 if worker.distance_to(main_base) > 12:
                     # Return if too far
-                    worker.gather(self.bot.mineral_field.closest_to(main_base))
+                    if self.bot.mineral_field:
+                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(main_base)))
+                    else:
+                        self.bot.do(worker.move(main_base.position))
                     continue
 
                 # Attack only if enemy is near (within 15)
@@ -293,3 +296,195 @@ class EarlyDefenseSystem:
         status_parts.append(f"Lings: {ling_count}")
 
         return " | ".join(status_parts)
+
+    # =============================================
+    # ★ FIX 4: Zergling Speed Upgrade ASAP ★
+    # =============================================
+    async def _research_zergling_speed_early(self) -> None:
+        """
+        Research Metabolic Boost as soon as spawning pool + 100 gas is available.
+        This makes early zerglings much more effective for defense.
+        """
+        if self._zergling_speed_researched:
+            return
+
+        # Check if already done or pending
+        zergling_speed = getattr(UpgradeId, "ZERGLINGMOVEMENTSPEED", None)
+        if not zergling_speed:
+            return
+
+        if hasattr(self.bot, "already_pending_upgrade"):
+            if self.bot.already_pending_upgrade(zergling_speed) > 0:
+                self._zergling_speed_researched = True
+                return
+
+        # Check if pool is ready and idle
+        pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+        if not pools.exists:
+            return
+
+        pool = pools.first
+        if hasattr(pool, "is_idle") and not pool.is_idle:
+            return
+
+        # Need 100 gas
+        if self.bot.vespene < 100:
+            return
+
+        # Research it
+        try:
+            self.bot.do(pool.research(zergling_speed))
+            self._zergling_speed_researched = True
+            print(f"[EARLY_DEFENSE] ★★★ Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! ★★★")
+        except Exception as e:
+            print(f"[EARLY_DEFENSE] Zergling speed research failed: {e}")
+
+    # =============================================
+    # ★ FIX 3: Early Spine Crawler (2 minutes) ★
+    # =============================================
+    async def _build_early_spine_crawler(self) -> None:
+        """
+        Build a spine crawler near natural at 2 minutes for early defense.
+        Spine crawler provides 25 DPS and 300 HP - crucial before roaches arrive.
+        """
+        # Already built or ordered
+        if self._spine_crawler_built or self._spine_crawler_ordered:
+            # Check if order completed
+            spines = self.bot.structures(UnitTypeId.SPINECRAWLER)
+            if spines.exists or self.bot.already_pending(UnitTypeId.SPINECRAWLER) > 0:
+                self._spine_crawler_built = True
+            return
+
+        # Need spawning pool ready (spine crawler requires pool)
+        if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
+            return
+
+        # Need resources (100 minerals)
+        if self.bot.minerals < 100:
+            return
+
+        # Need workers
+        if not self.bot.workers:
+            return
+
+        # Find location - near natural expansion or main base
+        main_base = None
+        if self.bot.townhalls:
+            main_base = self.bot.townhalls.first
+        if not main_base:
+            return
+
+        # Build between main and natural (defensive position)
+        try:
+            # Position towards map center (where enemies approach)
+            build_pos = main_base.position.towards(self.bot.game_info.map_center, 8)
+
+            tech_coordinator = getattr(self.bot, "tech_coordinator", None)
+            if tech_coordinator:
+                if not tech_coordinator.is_planned(UnitTypeId.SPINECRAWLER):
+                    tech_coordinator.request_structure(
+                        UnitTypeId.SPINECRAWLER,
+                        build_pos,
+                        80,  # High priority
+                        "EarlyDefenseSystem"
+                    )
+                    self._spine_crawler_ordered = True
+                    print(f"[EARLY_DEFENSE] ★ Spine Crawler ordered at {int(self.bot.time)}s (early defense) ★")
+            else:
+                location = await self.bot.find_placement(
+                    UnitTypeId.SPINECRAWLER,
+                    build_pos,
+                    max_distance=10,
+                    placement_step=2
+                )
+                if location:
+                    worker = self.bot.workers.closest_to(location)
+                    if worker:
+                        self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, location))
+                        self._spine_crawler_ordered = True
+                        print(f"[EARLY_DEFENSE] ★ Spine Crawler building at {int(self.bot.time)}s (early defense) ★")
+        except Exception as e:
+            print(f"[EARLY_DEFENSE] Spine crawler build failed: {e}")
+
+    # =============================================
+    # ★ FIX 5: Worker Pull Defense ★
+    # =============================================
+    async def _worker_pull_defense(self) -> None:
+        """
+        Pull 4-6 workers to fight when attacked early with more than 4 enemy units
+        and we have fewer than 6 army units. Workers + zerglings can hold early rushes.
+        """
+        if not self.bot.townhalls:
+            return
+        main_base = self.bot.townhalls.first
+        if not main_base:
+            return
+
+        # Count our army units (zerglings + queens + roaches)
+        army_types = {UnitTypeId.ZERGLING, UnitTypeId.QUEEN, UnitTypeId.ROACH}
+        our_army = 0
+        for unit_type in army_types:
+            our_army += self.bot.units(unit_type).amount
+
+        # Count nearby enemies
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        if not enemy_units:
+            return
+        nearby_enemies = enemy_units.closer_than(15, main_base.position)
+        if not nearby_enemies:
+            return
+
+        enemy_count = nearby_enemies.amount
+
+        # Only pull workers if:
+        # - More than 3 enemy units nearby
+        # - We have fewer than 6 army units
+        # - We have workers to pull
+        if enemy_count > 3 and our_army < 6 and self.bot.workers.amount > 6:
+            # Pull 4-6 workers based on enemy count
+            workers_to_pull = min(6, max(4, enemy_count))
+            workers_to_pull = min(workers_to_pull, self.bot.workers.amount - 4)  # Keep at least 4 mining
+
+            if workers_to_pull <= 0:
+                return
+
+            closest_enemy = nearby_enemies.closest_to(main_base)
+            pulled = self.bot.workers.closest_n_units(closest_enemy.position, workers_to_pull)
+
+            for worker in pulled:
+                self.bot.do(worker.attack(closest_enemy.position))
+                self._pulled_worker_tags.add(worker.tag)
+
+            self._workers_pulled = True
+            print(f"[EARLY_DEFENSE] ★ WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) ★")
+
+    async def _return_pulled_workers(self) -> None:
+        """
+        Return pulled workers to mining after threat is gone.
+        """
+        if not self._pulled_worker_tags:
+            self._workers_pulled = False
+            return
+
+        main_base = None
+        if self.bot.townhalls:
+            main_base = self.bot.townhalls.first
+        if not main_base:
+            self._workers_pulled = False
+            self._pulled_worker_tags.clear()
+            return
+
+        returned = 0
+        for worker in self.bot.workers:
+            if worker.tag in self._pulled_worker_tags:
+                if self.bot.mineral_field:
+                    self.bot.do(worker.gather(self.bot.mineral_field.closest_to(main_base)))
+                else:
+                    self.bot.do(worker.move(main_base.position))
+                returned += 1
+
+        if returned > 0:
+            print(f"[EARLY_DEFENSE] ★ {returned} workers returned to mining ★")
+
+        self._pulled_worker_tags.clear()
+        self._workers_pulled = False

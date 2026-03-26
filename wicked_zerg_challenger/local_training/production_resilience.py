@@ -1793,7 +1793,7 @@ class ProductionResilience:
             target = scout_targets[scouts_sent % len(scout_targets)]
 
             try:
-                ling.move(target)
+                self.bot.do(ling.move(target))
                 scout_state["scout_tags"].add(ling.tag)
                 scouts_sent += 1
             except Exception:
@@ -1848,7 +1848,7 @@ class ProductionResilience:
                 targets = self._get_scout_targets()
                 if targets:
                     try:
-                        ling.move(targets[0])
+                        self.bot.do(ling.move(targets[0]))
                     except Exception:
                         pass
 

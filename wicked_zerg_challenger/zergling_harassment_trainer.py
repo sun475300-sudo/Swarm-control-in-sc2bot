@@ -267,7 +267,7 @@ class ZerglingHarassmentTrainer:
                 continue
 
             # 평균 체력 계산
-            avg_hp_ratio = sum(z.health / z.health_max for z in squad_lings) / len(squad_lings)
+            avg_hp_ratio = sum((z.health / z.health_max if z.health_max > 0 else 1.0) for z in squad_lings) / len(squad_lings)
 
             # 체력이 낮으면 후퇴
             if avg_hp_ratio < self.RETREAT_HP_THRESHOLD:

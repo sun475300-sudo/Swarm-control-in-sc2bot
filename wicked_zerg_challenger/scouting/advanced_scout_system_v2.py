@@ -849,7 +849,7 @@ class AdvancedScoutingSystemV2:
         if not self._request_authority(scout):
             return False
 
-        scout.move(route[0])
+        self.bot.do(scout.move(route[0]))
         self.active_scouts[scout.tag] = {
             "type": scout.type_id.name,
             "target": route[0],
@@ -908,7 +908,7 @@ class AdvancedScoutingSystemV2:
                 continue
 
             if self._request_authority(ling):
-                ling.move(tower_pos)
+                self.bot.do(ling.move(tower_pos))
                 self._watchtower_claimers[tower_pos] = ling.tag
                 self.active_scouts[ling.tag] = {
                     "type": "ZERGLING",
@@ -967,7 +967,7 @@ class AdvancedScoutingSystemV2:
 
             ol = overlords.closest_to(watch_pos)
             if self._request_authority(ol):
-                ol.move(watch_pos)
+                self.bot.do(ol.move(watch_pos))
                 self.active_scouts[ol.tag] = {
                     "type": "OVERLORD",
                     "target": watch_pos,
