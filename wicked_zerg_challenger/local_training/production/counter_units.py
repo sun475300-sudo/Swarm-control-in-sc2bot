@@ -95,9 +95,8 @@ def get_counter_unit(resilience, enemy_units, has_roach_warren: bool, has_hydra_
         # vs Light: Banelings > Roaches
         has_baneling_nest = b.structures(UnitTypeId.BANELINGNEST).ready.exists
         if has_baneling_nest:
-            # Note: Banelings are morphed from Zerglings, not trained from larvae
-            # Return None here; baneling morphing should be handled separately
-            pass
+            # Banelings are morphed from Zerglings, not trained from larvae
+            return None
         if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
             return UnitTypeId.ROACH
 

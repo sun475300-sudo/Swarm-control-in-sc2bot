@@ -155,7 +155,8 @@ class ResourceManager:
                     result = self.bot.do(worker.gather(best_target))
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
+                except Exception as e:
+                    print(f"[WARN] Worker gather failed: {e}")
                     continue
 
     async def _optimize_gas_workers(self) -> None:
@@ -199,7 +200,8 @@ class ResourceManager:
                         nearby_workers = nearby_workers.filter(
                             lambda w: w.tag != worker.tag
                         )
-                    except Exception:
+                    except Exception as e:
+                        print(f"[WARN] Gas worker assign failed: {e}")
                         continue
 
             elif assigned > ideal:
@@ -267,7 +269,8 @@ class ResourceManager:
                         if hasattr(result, "__await__"):
                             await result
                         return
-                    except Exception:
+                    except Exception as e:
+                        print(f"[WARN] Gas build failed: {e}")
                         continue
 
     def get_saturation_status(self) -> Dict[str, int]:
