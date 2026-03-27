@@ -120,43 +120,47 @@ class BuildingDestroyer:
         if not attack_units.exists:
             return
 
+        # ★ BaseDestructionCoordinator 연동: 집중 공격 타겟 우선 ★
+        primary_target = None
+        if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
+            try:
+                primary_target = self.bot.base_destruction.get_target_base_position()
+            except (AttributeError, TypeError):
+                pass
+
         # 공격 대상 건물 (우선순위 정렬)
         target_buildings = self._get_prioritized_buildings()
 
         if not target_buildings:
             return
 
-        # 병력 분산 계산
-        units_per_building = max(3, attack_units.amount // len(target_buildings))
+        # ★ 전략 변경: 분산 → 집중 공격 (2개 타겟까지만) ★
+        # primary_target이 있으면 그 근처 건물을 최우선
+        if primary_target:
+            target_buildings.sort(key=lambda b: b.distance_to(primary_target))
 
+        # 최대 2개 타겟에만 집중 (분산 방지)
+        focused_targets = target_buildings[:2]
+
+        # 첫 번째 타겟에 70%, 두 번째에 30%
+        first_count = max(3, int(attack_units.amount * 0.7))
         assigned_count = 0
 
-        for building in target_buildings:
+        for i, building in enumerate(focused_targets):
             if assigned_count >= attack_units.amount:
                 break
 
-            # 이 건물에 배정할 유닛들
-            available = attack_units[assigned_count:assigned_count + units_per_building]
+            count = first_count if i == 0 else attack_units.amount - assigned_count
+            available = attack_units[assigned_count:assigned_count + count]
 
-            # 건물 공격 명령
             for unit in available:
                 self.bot.do(unit.attack(building.position))
 
-            assigned_count += units_per_building
+            assigned_count += len(available)
 
-            # 로그
             if self.bot.iteration % 220 == 0:
                 building_name = building.type_id.name if hasattr(building.type_id, 'name') else str(building.type_id)
                 print(f"[DESTROYER] {len(available)} units attacking {building_name} at {building.position}")
-
-        # 남은 유닛들 (병력이 많으면)
-        remaining = attack_units[assigned_count:]
-
-        if remaining.exists:
-            # 첫 번째 목표에 추가 병력
-            first_target = target_buildings[0]
-            for unit in remaining:
-                self.bot.do(unit.attack(first_target.position))
 
     def _get_available_attack_units(self):
         """공격 가능한 유닛 가져오기"""

@@ -231,6 +231,12 @@ class DestructibleAwarenessSystem:
         if target.priority < 50:
             return
 
+        # ★ SpaceControlTrainer가 이미 처리 중인지 확인 (이중 할당 방지)
+        if hasattr(self.bot, "space_control") and self.bot.space_control:
+            sc = self.bot.space_control
+            if hasattr(sc, "_assigned_targets") and target.position in getattr(sc, "_assigned_targets", set()):
+                return  # SpaceControl이 이미 담당 중
+
         # 근처에 공격 가능한 유닛 찾기
         attacking_units = self.bot.units.filter(
             lambda u: u.can_attack_ground and
@@ -239,25 +245,39 @@ class DestructibleAwarenessSystem:
         )
 
         if not attacking_units:
-            # 유닛이 없으면 일꾼 사용
+            # 유닛이 없으면 일꾼 사용 (UnitAuthority 체크)
             workers = self.bot.workers
             if workers.exists:
                 worker = workers.closest_to(target.position)
                 if worker.distance_to(target.position) < 50:
-                    # 일꾼 5명 정도 보내기
                     workers_to_send = workers.closest_n_units(target.position, 5)
+                    sent = 0
                     for w in workers_to_send:
+                        # ★ UnitAuthority 체크: 이미 다른 시스템이 사용 중인 일꾼 스킵
+                        if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
+                            try:
+                                from unit_authority_manager import AuthorityLevel
+                                granted = self.bot.unit_authority.request_authority(
+                                    {w.tag}, AuthorityLevel.ECONOMY,
+                                    "DestructibleAwareness", self.bot.state.game_loop
+                                )
+                                if not granted:
+                                    continue
+                            except (ImportError, AttributeError):
+                                pass
                         self.bot.do(w.attack(target.position))
+                        sent += 1
 
-                    reason = "blocks expansion" if target.blocks_expansion else "blocks path"
-                    self.logger.info(
-                        f"[DESTROY] Sending {len(workers_to_send)} workers to destroy "
-                        f"structure at {target.position} ({reason})"
-                    )
+                    if sent > 0:
+                        reason = "blocks expansion" if target.blocks_expansion else "blocks path"
+                        self.logger.info(
+                            f"[DESTROY] Sending {sent} workers to destroy "
+                            f"structure at {target.position} ({reason})"
+                        )
             return
 
-        # 공격 유닛 사용
-        attackers = attacking_units.take(3)  # 3유닛만
+        # 공격 유닛 사용 (최대 3유닛)
+        attackers = attacking_units.take(3)
         for unit in attackers:
             self.bot.do(unit.attack(target.position))
 
