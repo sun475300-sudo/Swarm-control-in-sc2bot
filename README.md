@@ -632,24 +632,22 @@ pie title 테스트 결과 (327건)
 
 ```mermaid
 gantt
-    title 버그 수정 타임라인 (60건)
+    title 버그 수정 타임라인 (87건)
     dateFormat YYYY-MM-DD
-    section Session 1
-        4건 수정 (CRITICAL 1, HIGH 2, MEDIUM 1)   :done, s1, 2026-03-25, 1d
-    section Session 2
-        2건 수정 (HIGH 2)                          :done, s2, 2026-03-25, 1d
-    section Session 3
-        3건 수정 (HIGH 2, MEDIUM 1)                :done, s3, 2026-03-25, 1d
-    section Session 4
-        4건 수정 (HIGH 2, MEDIUM 2)                :done, s4, 2026-03-25, 1d
+    section Session 1-4
+        13건 수정 (CRITICAL 1, HIGH 8, MEDIUM 4)   :done, s1, 2026-03-25, 1d
     section Session 5 — Large Scale
         30건 수정 (HIGH 28, MEDIUM 2)              :done, s5, 2026-03-26, 1d
     section Session 6 — Deep Scan
         17건 수정 (HIGH 16, MEDIUM 1)              :done, s6, 2026-03-26, 1d
-    section Test Fix
-        9건 테스트 수정                             :done, s7, 2026-03-26, 1d
+    section Session 7 — Logic Inspection
+        27건 수정 (do래핑 13 + 0나누기 10 + 가드 4) :done, s7, 2026-03-27, 1d
+    section Session 8 — System Conflict
+        파괴시스템 4개 충돌 해결 + ZvP 빌드 수정    :done, s8, 2026-03-27, 1d
+    section Architecture
+        189개 MD 정리 + 대용량 파일 제거            :done, s9, 2026-03-27, 1d
     section Monitoring
-        자동 모니터링 운영 중                        :active, mon, 2026-03-26, 7d
+        자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
 
 ---
@@ -812,10 +810,10 @@ mindmap
 ```mermaid
 xychart-beta
     title "버그 수정 누적 현황"
-    x-axis ["S1", "S2", "S3", "S4", "S5", "S6", "Test"]
-    y-axis "누적 수정 건수" 0 --> 70
-    bar [4, 6, 9, 13, 43, 60, 69]
-    line [4, 6, 9, 13, 43, 60, 69]
+    x-axis ["S1-4", "S5", "S6", "S7", "S8"]
+    y-axis "누적 수정 건수" 0 --> 90
+    bar [13, 43, 60, 87, 87]
+    line [13, 43, 60, 87, 87]
 ```
 
 ```mermaid
@@ -824,6 +822,45 @@ xychart-beta
     x-axis ["Combat", "Economy", "AI/Strategy", "Scouting", "Defense", "Core", "Tests"]
     y-axis "파일 수" 0 --> 80
     bar [65, 30, 45, 20, 25, 40, 35]
+```
+
+### Win Rate Analysis (100 Games)
+
+```mermaid
+pie title 종족별 승률 분석 (100게임)
+    "vs Protoss 패배" : 40
+    "vs Protoss 승리" : 3
+    "vs Terran 패배" : 17
+    "vs Terran 승리" : 6
+    "vs Zerg 패배" : 29
+    "vs Zerg 승리" : 5
+```
+
+| 매치업 | 승 | 패 | 승률 | 주요 원인 |
+|--------|---|---|------|----------|
+| **vs Terran** | 6 | 17 | 26% | Hatch First 전환 적용 |
+| **vs Zerg** | 5 | 29 | 15% | 미러 매치 기본기 |
+| **vs Protoss** | 3 | 40 | 7% | Roach Rush 전환 적용 중 |
+| **전체** | 14 | 86 | 14% | 가스 뱅킹 + 올인 타이밍 수정 완료 |
+
+### Recent Architecture Improvements (2026-03-27)
+
+```mermaid
+graph LR
+    subgraph "🔧 Session 7-8 수정 사항"
+        direction TB
+        FIX1["⛽ 가스 뱅킹 해결<br/>임계값 1500→500<br/>심각도별 0~2명 유지"]
+        FIX2["⏰ RapidVictory 수정<br/>올인 3분→8분<br/>최소 서플 40 조건"]
+        FIX3["🏗️ 빌드오더 변경<br/>ZvP: Roach Rush<br/>ZvT: Hatch First"]
+        FIX4["🔀 시스템 충돌 해결<br/>4개 파괴시스템 통합<br/>UnitAuthority 연동"]
+        FIX5["📁 코드 정리<br/>189개 MD → archive<br/>zip/log 추적 해제"]
+    end
+
+    style FIX1 fill:#00b894,color:#fff
+    style FIX2 fill:#d63031,color:#fff
+    style FIX3 fill:#6c5ce7,color:#fff
+    style FIX4 fill:#e17055,color:#fff
+    style FIX5 fill:#0984e3,color:#fff
 ```
 
 ---
