@@ -124,13 +124,14 @@ class BuildOrderSystem:
         race_name = str(self.bot.enemy_race).lower()
 
         if "protoss" in race_name:
-            # vs Protoss: 14-pool (Safe opening vs Stargate or Proxies)
-            # Transition to Hydralisk/Roach
-            return BuildOrderType.SAFE_14POOL
+            # vs Protoss: Roach/Ravager timing (Roach Rush)
+            # ★ 14pool은 너무 수동적 → 로치 러쉬로 적극적 대응
+            # Protoss deathball 완성 전에 압박
+            return BuildOrderType.ROACH_RUSH
         elif "terran" in race_name:
-            # vs Terran: 12-pool (Early pressure or Reaper defense)
-            # Delay Terran expansion
-            return BuildOrderType.STANDARD_12POOL
+            # vs Terran: 16 Hatch First (경제 우선)
+            # ★ 12pool은 너무 공격적 → 확장 우선 + 링/바네 전환
+            return BuildOrderType.HATCH_FIRST_16
         else:
             # vs Zerg: 14-pool (Mirror matchup stability)
             # Secure economy while matching pool timing

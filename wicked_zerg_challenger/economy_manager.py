@@ -2624,7 +2624,12 @@ class EconomyManager:
             await self._boost_gas_workers()
 
         # 2. 가스가 넘치고 미네랄이 부족하면 가스 일꾼 감소
-        elif gas > 1500 and minerals < 300:
+        # ★ 임계값 하향: 1500 → 500 (가스 뱅킹 방지)
+        elif gas > 500 and minerals < 300:
+            await self._reduce_gas_workers()
+
+        # 3. 가스가 극심하게 넘치면 (1000+) 미네랄 상태와 무관하게 감소
+        elif gas > 1000:
             await self._reduce_gas_workers()
 
     async def _boost_gas_workers(self):
@@ -2648,14 +2653,31 @@ class EconomyManager:
                     return
 
     async def _reduce_gas_workers(self):
-        """가스 일꾼 감소 (가스 일꾼 → 미네랄 일꾼)"""
+        """가스 일꾼 감소 (가스 일꾼 → 미네랄 일꾼)
+
+        ★ 개선: 가스 뱅킹 심각도에 따라 최소 유지 수 조정
+        - gas > 2000: 최소 0명 (가스 채취 중단)
+        - gas > 1000: 최소 1명
+        - gas > 500: 최소 2명
+        """
         if not hasattr(self.bot, "gas_buildings"):
             return
 
+        gas = getattr(self.bot, "vespene", 0)
+
+        # 가스 뱅킹 심각도에 따라 최소 유지 수 결정
+        if gas > 2000:
+            min_workers = 0
+        elif gas > 1000:
+            min_workers = 1
+        else:
+            min_workers = 2
+
         extractors = self.bot.gas_buildings.ready
+        moved = 0
 
         for extractor in extractors:
-            if extractor.assigned_harvesters > 2:  # 최소 2명 유지
+            if extractor.assigned_harvesters > min_workers:
                 # 가스 일꾼을 미네랄로 이동
                 workers = self.bot.workers.filter(
                     lambda w: w.is_gathering and w.order_target == extractor.tag
@@ -2669,8 +2691,10 @@ class EconomyManager:
                         minerals = self.bot.mineral_field.closer_than(10, closest_th)
                         if minerals:
                             self.bot.do(worker.gather(minerals.closest_to(worker)))
-                            self.logger.info(f"[ECONOMY] Reducing gas workers (Gas: {self.bot.vespene}, Min: {self.bot.minerals})")
-                            return
+                            moved += 1
+
+        if moved > 0:
+            self.logger.info(f"[ECONOMY] Reduced {moved} gas workers (Gas: {gas}, Min: {self.bot.minerals}, min_per_ext: {min_workers})")
 
     async def _prevent_gas_overflow(self):
         """

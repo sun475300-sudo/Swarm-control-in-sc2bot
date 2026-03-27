@@ -243,17 +243,20 @@ class RapidVictorySystem:
 
         # 공격적 모드
         self.aggressive_mode = False
-        self.rush_threshold = 180  # 3분 이후 공격 시작
+        self.rush_threshold = 480  # ★ 8분 이후 공격 시작 (3분 → 8분, 조기 올인 방지)
+        self.min_army_supply_for_rush = 40  # ★ 최소 서플 40 이상이어야 공격
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
             game_time = self.bot.time
 
-            # === 공격적 모드 활성화 ===
+            # === 공격적 모드 활성화 (시간 + 군대 규모 조건) ===
             if not self.aggressive_mode and game_time > self.rush_threshold:
-                self.aggressive_mode = True
-                self.logger.info(f"[{int(game_time)}s] RAPID VICTORY MODE ACTIVATED!")
+                army_supply = getattr(self.bot, "supply_army", 0)
+                if army_supply >= self.min_army_supply_for_rush:
+                    self.aggressive_mode = True
+                    self.logger.info(f"[{int(game_time)}s] RAPID VICTORY MODE ACTIVATED! (army supply: {army_supply})")
 
             # 공격적 모드일 때
             if self.aggressive_mode:

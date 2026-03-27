@@ -58,15 +58,15 @@ class TestBuildOrderRaceSelection(unittest.TestCase):
         system = BuildOrderSystem(bot)
         self.assertEqual(system.current_build_order, BuildOrderType.SAFE_14POOL)
 
-    def test_zvp_selects_safe_14pool(self):
+    def test_zvp_selects_roach_rush(self):
         bot = MockBot("Race.Protoss")
         system = BuildOrderSystem(bot)
-        self.assertEqual(system.current_build_order, BuildOrderType.SAFE_14POOL)
+        self.assertEqual(system.current_build_order, BuildOrderType.ROACH_RUSH)
 
-    def test_zvt_selects_standard_12pool(self):
+    def test_zvt_selects_hatch_first(self):
         bot = MockBot("Race.Terran")
         system = BuildOrderSystem(bot)
-        self.assertEqual(system.current_build_order, BuildOrderType.STANDARD_12POOL)
+        self.assertEqual(system.current_build_order, BuildOrderType.HATCH_FIRST_16)
 
     def test_unknown_race_fallback(self):
         bot = MockBot()  # No enemy_race
