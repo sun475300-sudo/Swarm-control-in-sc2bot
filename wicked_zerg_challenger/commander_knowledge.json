@@ -63,8 +63,8 @@
       ]
     },
     "SAFE_14POOL": {
-      "name": "Safe 14 Pool",
-      "description": "Safe 14 Pool, 16 Hatch (Defensive)",
+      "name": "Safe 14 Pool → Roach Transition",
+      "description": "Safe 14 Pool, 16 Hatch, Roach Warren → Roach/Ravager transition for ZvZ",
       "steps": [
         {
           "supply": 13,
@@ -94,19 +94,49 @@
           "supply": 17,
           "action": "train",
           "unit_type": "QUEEN",
-          "description": "17 Queen"
+          "description": "17 Queen (Main)"
         },
         {
           "supply": 18,
           "action": "train",
           "unit_type": "ZERGLING",
-          "description": "18 Zergling"
+          "description": "18 Zergling x4 (안전 방어)"
         },
         {
           "supply": 20,
           "action": "train",
           "unit_type": "OVERLORD",
           "description": "20 Overlord"
+        },
+        {
+          "supply": 19,
+          "action": "build",
+          "unit_type": "ROACHWARREN",
+          "description": "19 Roach Warren (로치 전환 핵심)"
+        },
+        {
+          "supply": 21,
+          "action": "train",
+          "unit_type": "QUEEN",
+          "description": "21 Queen (Natural)"
+        },
+        {
+          "supply": 22,
+          "action": "train",
+          "unit_type": "ROACH",
+          "description": "22 Roach x2 (초기 로치)"
+        },
+        {
+          "supply": 26,
+          "action": "train",
+          "unit_type": "OVERLORD",
+          "description": "26 Overlord"
+        },
+        {
+          "supply": 26,
+          "action": "train",
+          "unit_type": "ROACH",
+          "description": "26 Roach x3 (추가 로치)"
         }
       ]
     },
@@ -638,9 +668,9 @@
       "description": "Corruptors snipe Colossus"
     },
     "IMMORTAL": {
-      "unit": "ZERGLING",
+      "unit": "HYDRALISK",
       "ratio": 0.5,
-      "description": "Lings surround Immortals"
+      "description": "Hydras kite Immortals at range"
     },
     "MARINE": {
       "unit": "BANELING",

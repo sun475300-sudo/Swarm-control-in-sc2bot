@@ -133,6 +133,10 @@ class CombatManager:
                 await self._check_expansion_defense(iteration)
                 self._last_expansion_defense_check = iteration
 
+            # ★★★ Phase 23: 불리한 전투 후퇴 판단 ★★★
+            if iteration % 22 == 0:
+                await self._evaluate_army_retreat(iteration)
+
             # ★★★ INTEGRATED: MicroController handles all ground combat ★★★
             # NOTE: MicroController.on_step() is called by BotStepIntegrator (single caller)
             # CombatManager only sets defense mode flag, does NOT call on_step() directly
@@ -1853,6 +1857,58 @@ class CombatManager:
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
                     continue
+
+    async def _evaluate_army_retreat(self, iteration: int):
+        """
+        ★ Phase 23: 군대 전력 비교 후 불리하면 후퇴 ★
+
+        조건:
+        - 전투 중인 유닛이 있고
+        - 적 전투 병력 > 아군 전투 병력 * 1.5 (50% 이상 열세)
+        - 승리 푸시 모드가 아닐 때
+        """
+        if self._victory_push_active:
+            return  # 승리 푸시 중에는 후퇴 안함
+
+        try:
+            enemy_units = self.bot.enemy_units
+            if not enemy_units.exists:
+                return
+
+            # 아군 전투 유닛
+            combat_types = {
+                UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
+                UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
+                UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK,
+            }
+            our_army = self.bot.units.filter(lambda u: u.type_id in combat_types)
+            if not our_army.exists:
+                return
+
+            # 적과 교전 중인 아군 유닛 (적 15 거리 이내)
+            engaged_units = our_army.filter(
+                lambda u: enemy_units.closer_than(15, u.position).amount > 0
+            )
+            if not engaged_units.exists:
+                return
+
+            # 전력 비교 (간단한 supply 기반)
+            our_supply = sum(u.supply_cost if hasattr(u, 'supply_cost') else 1 for u in engaged_units)
+            nearby_enemies = enemy_units.closer_than(20, engaged_units.center)
+            enemy_supply = sum(u.supply_cost if hasattr(u, 'supply_cost') else 1 for u in nearby_enemies)
+
+            # 50% 이상 열세면 후퇴
+            if enemy_supply > our_supply * 1.5 and our_supply > 5:
+                game_time = getattr(self.bot, "time", 0)
+                if iteration % 220 == 0:
+                    self.logger.info(
+                        f"[RETREAT] [{int(game_time)}s] Army retreating! "
+                        f"Our supply: {our_supply:.0f}, Enemy: {enemy_supply:.0f}"
+                    )
+                await self._retreat_to_base(engaged_units)
+
+        except Exception:
+            pass
 
     async def _retreat_to_base(self, units):
         """유닛들을 본진으로 후퇴시킵니다."""

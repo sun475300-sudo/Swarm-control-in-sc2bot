@@ -58,7 +58,7 @@ class QueenManager:
         # Injection settings - ★ OPTIMIZED ★
         self.inject_energy_threshold = 25
         self.inject_cooldown = 29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★
-        self.max_inject_distance = 4.0
+        self.max_inject_distance = 8.0  # ★ 4→8: 인젝트 사거리 여유 (SC2 기본 사거리 + 이동 보정)
         self.max_queen_travel_distance = 10.0
 
         # Creep settings - ★ OPTIMIZED: 공격적 점막 확장 ★
@@ -469,36 +469,17 @@ class QueenManager:
             if getattr(queen, "energy", 0) < self.inject_energy_threshold:
                 continue
 
-            # Check distance and issue appropriate command
+            # Execute inject - SC2 API handles range automatically
             try:
                 dist = queen.distance_to(hatch)
-                if dist > self.max_inject_distance:
-                    # Queen too far - move closer first
-                    if dist <= self.max_queen_travel_distance:
-                        try:
-                            result = self.bot.do(queen.move(hatch.position))
-                            if hasattr(result, "__await__"):
-                                await result
-                        except Exception as e:
-                            logger.warning(f"[QueenManager] Queen move-to-hatch suppressed: {e}")
-                    continue
-            except Exception as e:
-                logger.warning(f"[QueenManager] Queen inject distance check suppressed: {e}")
-                continue
+                if dist > self.max_queen_travel_distance:
+                    continue  # 너무 멀면 스킵
 
-            # Execute inject (queen is close enough)
-            try:
-                if hasattr(queen, "can_cast"):
-                    if queen.can_cast(AbilityId.EFFECT_INJECTLARVA):
-                        result = self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
-                        if hasattr(result, "__await__"):
-                            await result
-                        self.last_inject_time[hatch_tag] = current_time
-                else:
-                    result = self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
-                    if hasattr(result, "__await__"):
-                        await result
-                    self.last_inject_time[hatch_tag] = current_time
+                # ★ 개선: 거리 무관하게 인젝트 명령 실행 (SC2 API가 이동+인젝트 자동 처리)
+                result = self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
+                if hasattr(result, "__await__"):
+                    await result
+                self.last_inject_time[hatch_tag] = current_time
             except Exception as e:
                 logger.warning(f"[QueenManager] Inject execute suppressed: {e}")
                 continue

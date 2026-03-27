@@ -137,12 +137,12 @@ class DynamicCounterSystem:
                 "production_boost": 0.3,
             },
             "IMMORTAL": {
-                "threat_value": 45,
-                "counter_units": ["hydralisk", "zergling"],
-                "counter_ratios": [0.70, 0.30],
-                "min_count": 8,
-                "urgency": "MEDIUM",
-                "production_boost": 0.2,
+                "threat_value": 55,
+                "counter_units": ["hydralisk", "roach", "zergling"],
+                "counter_ratios": [0.50, 0.30, 0.20],
+                "min_count": 10,
+                "urgency": "HIGH",
+                "production_boost": 0.3,
             },
             "ARCHON": {
                 "threat_value": 50,
