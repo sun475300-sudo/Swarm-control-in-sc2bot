@@ -221,16 +221,21 @@ class StrategyManagerV2(StrategyManager):
             self.logger.info("[STRATEGY] CLOAK_TECH detected! Prioritizing detection.")
 
         if "AIR_THREAT" in detected_threats:
-            # Prioritize Anti-Air
+            # ★ Prioritize Anti-Air: Blackboard 경유 유닛 요청 + 건설 플래그 ★
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
-                    # Request Hydralisks or Corruptors
+                    # Hydralisk + Corruptor 생산 요청
                     if self.bot.units(UnitTypeId.HYDRALISK).amount < 10:
                         self.bot.blackboard.request_production(UnitTypeId.HYDRALISK, 5, "StrategyManagerV2", priority=1)
+                    if (self.bot.structures(UnitTypeId.SPIRE).ready.exists and
+                            self.bot.units(UnitTypeId.CORRUPTOR).amount < 5):
+                        self.bot.blackboard.request_production(UnitTypeId.CORRUPTOR, 3, "StrategyManagerV2", priority=1)
+                    # ★ 대공 테크 건설 플래그 (on_step에서 async 처리) ★
+                    self._pending_anti_air_tech = True
                 except (ImportError, AttributeError):
                     pass
-            self.logger.info("[STRATEGY] AIR_THREAT detected! Increasing anti-air production.")
+            self.logger.info("[STRATEGY] AIR_THREAT detected! Building anti-air tech + units.")
 
         # 3. HIGH OPPORTUNITY -> ALL_IN / AGGRESSIVE (Only if not in emergency)
         elif self.current_mode != StrategyMode.EMERGENCY:
@@ -892,14 +897,26 @@ class StrategyManagerV2(StrategyManager):
             if game_time % 30 < 1:
                 self.logger.info(f"[INTEL→STRATEGY] Mech confirmed ({pattern}): Prioritizing Viper/Corruptor tech")
 
-        # 3. Stargate → Anti-air priority
+        # 3. Stargate → Anti-air priority + 즉시 대공 테크 건설
         elif confidence >= 0.7 and "stargate" in pattern:
             self.resource_priorities["army"] = 0.5
             self.resource_priorities["defense"] = 0.2
             self.resource_priorities["economy"] = 0.2
             self.resource_priorities["tech"] = 0.1
+
+            # ★ Stargate 감지 시 즉시 Hydra + Spore 요청 (Blackboard 경유) ★
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                if hasattr(self.bot, "blackboard") and self.bot.blackboard:
+                    if self.bot.units(UnitTypeId.HYDRALISK).amount < 8:
+                        self.bot.blackboard.request_production(UnitTypeId.HYDRALISK, 4, "StrategyManagerV2", priority=1)
+                    # Spore Crawler 건설 플래그 (on_step에서 async 처리)
+                    self._pending_spore_request = True
+            except (ImportError, AttributeError):
+                pass
+
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Stargate confirmed ({pattern}): Anti-air priority")
+                self.logger.info(f"[INTEL→STRATEGY] Stargate confirmed ({pattern}): Anti-air priority + tech")
 
     # ========== RESOURCE ALLOCATION ==========
 

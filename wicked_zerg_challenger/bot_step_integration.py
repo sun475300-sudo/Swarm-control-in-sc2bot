@@ -574,6 +574,48 @@ class BotStepIntegrator:
                 # Fallback: 5분 이후면 완료로 간주
                 blackboard.build_order_complete = self.bot.time > 300.0
 
+    async def _build_anti_air_tech_if_needed(self):
+        """★ StrategyManager의 대공 테크 건설 플래그 처리 (async) ★"""
+        sm = getattr(self.bot, "strategy_manager", None)
+        if not sm:
+            return
+
+        try:
+            from sc2.ids.unit_typeid import UnitTypeId
+
+            # 1) Anti-air tech 건설 (AIR_THREAT 감지 시)
+            if getattr(sm, "_pending_anti_air_tech", False):
+                sm._pending_anti_air_tech = False
+                b = self.bot
+                if b.townhalls.exists:
+                    near_pos = b.townhalls.first.position.towards(b.game_info.map_center, 5)
+                    # Hydra Den
+                    if (not b.structures(UnitTypeId.HYDRALISKDEN).exists and
+                            b.already_pending(UnitTypeId.HYDRALISKDEN) == 0 and
+                            b.can_afford(UnitTypeId.HYDRALISKDEN)):
+                        await b.build(UnitTypeId.HYDRALISKDEN, near=near_pos)
+                    # Spire (Lair 이상)
+                    has_lair = (b.structures(UnitTypeId.LAIR).exists or b.structures(UnitTypeId.HIVE).exists)
+                    if (has_lair and
+                            not b.structures(UnitTypeId.SPIRE).exists and
+                            not b.structures(UnitTypeId.GREATERSPIRE).exists and
+                            b.already_pending(UnitTypeId.SPIRE) == 0 and
+                            b.can_afford(UnitTypeId.SPIRE)):
+                        await b.build(UnitTypeId.SPIRE, near=near_pos)
+
+            # 2) Spore Crawler 건설 (Stargate 감지 시)
+            if getattr(sm, "_pending_spore_request", False):
+                sm._pending_spore_request = False
+                b = self.bot
+                for th in b.townhalls.ready:
+                    nearby_spores = b.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th.position)
+                    if nearby_spores.amount < 1 and b.can_afford(UnitTypeId.SPORECRAWLER):
+                        await b.build(UnitTypeId.SPORECRAWLER, near=th.position)
+                        break  # 한 번에 하나씩
+
+        except Exception:
+            pass
+
     async def execute_game_logic(self, iteration: int):
         """게임 로직 실행"""
 
@@ -1204,6 +1246,9 @@ class BotStepIntegrator:
                     if iteration == 1 or iteration % 500 == 0:
                         self.logger.debug(f"[DEBUG] Calling strategy_manager.update() at iteration {iteration}")
                     self.bot.strategy_manager.update()
+
+                    # ★ Anti-Air Tech Building (async 처리 - strategy_manager 플래그 소비) ★
+                    await self._build_anti_air_tech_if_needed()
 
                     # Phase 18: Smart Surrender Check
                     if hasattr(self.bot.strategy_manager, "check_surrender"):

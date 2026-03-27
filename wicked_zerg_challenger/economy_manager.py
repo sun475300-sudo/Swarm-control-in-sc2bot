@@ -495,13 +495,19 @@ class EconomyManager:
             )
             return
 
-        # ★ Blackboard 없을 때 폴백 (기존 로직) ★
-        # ★ Phase 17: Centralized Resource Check ★
-        available_minerals, available_gas = self.safeguard_resources()
-
-        if available_minerals < 50:  # Drone 비용
+        # ★ Blackboard 없을 때: ProductionResilience에 위임 (이중 생산 방지) ★
+        if hasattr(self.bot, 'production') and self.bot.production:
+            # ProductionResilience가 드론 생산을 전담 → EconomyManager는 신호만 전달
+            try:
+                self.bot.production._economy_drone_requested = True
+            except AttributeError:
+                pass
             return
 
+        # ★ ProductionResilience도 없을 때만 직접 생산 (최후 폴백) ★
+        available_minerals, available_gas = self.safeguard_resources()
+        if available_minerals < 50:
+            return
         if not self.bot.can_afford(UnitTypeId.DRONE):
             return
 
@@ -510,10 +516,7 @@ class EconomyManager:
             return
 
         try:
-            if hasattr(self.bot, 'production') and self.bot.production:
-                await self.bot.production._safe_train(larva_unit, UnitTypeId.DRONE)
-            else:
-                self.bot.do(larva_unit.train(UnitTypeId.DRONE))
+            self.bot.do(larva_unit.train(UnitTypeId.DRONE))
         except Exception as e:
             game_time = getattr(self.bot, "time", 0.0)
             self.logger.warning(f"[ECONOMY_WARN] [{int(game_time)}s] Drone train failed: {e}")

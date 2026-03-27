@@ -125,6 +125,9 @@ class ProductionResilience:
         else:
             self.placement_helper = None
 
+        # ★ EconomyManager 연동: 드론 생산 요청 플래그
+        self._economy_drone_requested = False
+
         # Shared build reservation map to block duplicate construction across managers
         if not hasattr(self.bot, "build_reservations"):
             self.bot.build_reservations = {}
@@ -253,6 +256,9 @@ class ProductionResilience:
         """
         b = self.bot
         self._cleanup_build_reservations()
+
+        # ★ EconomyManager 드론 요청 플래그 소비 (매 호출마다 리셋)
+        self._economy_drone_requested = getattr(self, '_economy_drone_requested', False)
 
         # === GAS OVERFLOW PREVENTION: Spend gas when > 1500 ===
         if b.vespene > 1500:
@@ -449,6 +455,9 @@ class ProductionResilience:
                 continue
 
             # Decide: drone or army?
+            # ★ EconomyManager 요청 반영 (이중 생산 방지: 여기서만 실행)
+            economy_wants_drone = getattr(self, '_economy_drone_requested', False)
+
             # Consider strategy preference
             if self.strategy_manager and self.strategy_manager.should_prioritize_drones():
                 # Strategy prefers drones, but still check balancer
@@ -457,7 +466,7 @@ class ProductionResilience:
                 # Strategy prefers early army
                 should_train_drone = False
             else:
-                should_train_drone = self.balancer.should_train_drone()
+                should_train_drone = self.balancer.should_train_drone() or economy_wants_drone
 
             if should_train_drone and drone_count < target_drones:
                 # Make drone
@@ -471,6 +480,9 @@ class ProductionResilience:
             unit_produced = await self._produce_army_unit(larva)
             if unit_produced:
                 army_produced += 1
+
+        # ★ EconomyManager 드론 요청 플래그 리셋 (처리 완료)
+        self._economy_drone_requested = False
 
         if drones_produced > 0 or army_produced > 0:
             if b.iteration % 50 == 0:

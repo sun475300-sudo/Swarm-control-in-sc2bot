@@ -247,6 +247,24 @@ def get_all_manager_configs():
         ),
 
         ManagerConfig(
+            name="TimingAttacks",
+            module_path="strategy.timing_attacks",
+            class_name="TimingAttacks",
+            attribute_name="timing_attacks",
+            priority=ManagerPriority.LOW,
+            dependencies=["blackboard"],
+        ),
+
+        ManagerConfig(
+            name="AdaptiveBuildOrder",
+            module_path="strategy.adaptive_build_order",
+            class_name="AdaptiveBuildOrder",
+            attribute_name="adaptive_build",
+            priority=ManagerPriority.LOW,
+            dependencies=["blackboard"],
+        ),
+
+        ManagerConfig(
             name="★ BuildingDestroyer",
             module_path="building_destroyer",
             class_name="BuildingDestroyer",
