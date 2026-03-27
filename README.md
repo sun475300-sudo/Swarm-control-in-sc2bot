@@ -865,6 +865,71 @@ graph LR
 
 ---
 
+## 한국어 요약 (Korean Summary)
+
+<details>
+<summary><b>클릭하여 한국어 설명 보기 / Click to expand Korean description</b></summary>
+
+### 개요
+
+> 이 프로젝트는 **게임이 아닙니다.**
+> **Google DeepMind(AlphaStar)** 와 **미국 공군(USAF VISTA X-62A)** 이 실제로 사용하는 방식 그대로,
+> 스타크래프트 II를 **드론 군집 제어(Swarm Control)** 실험 환경으로 활용한 연구입니다.
+
+### 주요 기능
+1. **지능형 전략 관리**: 종족별 맞춤 빌드오더 (ZvP 로치 러쉬, ZvT 해처리 퍼스트, ZvZ 14풀)
+2. **경제 최적화**: 동적 가스 일꾼 관리 (뱅킹 500+ 시 자동 감소), 강제 확장 시스템
+3. **고급 전투**: 8종 유닛별 마이크로 (레바저 담즙, 럴커 잠복, 퀸 힐, 살모사 유인)
+4. **정찰 시스템 V2**: 동적 주기 (25초~15초), 순찰 경로, 젤나가 감시탑 확보
+5. **자가치유 DevOps**: Gemini AI 자동 패치 + 1시간 주기 모니터링
+
+### 승률 분석 (100게임)
+
+| 매치업 | 승률 | 대응 전략 |
+|--------|------|----------|
+| vs Terran | 26% | Hatch First 16 → 링/바네 전환 |
+| vs Zerg | 15% | 14풀 안정 오프닝 |
+| vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
+
+### 최근 개선 (2026-03-27)
+- 가스 뱅킹 임계값 1500→500 하향 (심각도별 가스 일꾼 0~2명 유지)
+- RapidVictorySystem 올인 3분→8분 + 최소 서플 40 조건
+- 4개 파괴 시스템 로직 충돌 해결 (UnitAuthority 연동)
+- 189개 MD 리포트 → docs/archive/ 정리
+- 테스트 327 passed, 0 skipped, 0 failed
+
+### 기술 스택
+
+| 카테고리 | 기술 |
+|----------|------|
+| **언어** | Python 3.10+ |
+| **AI/ML** | PyTorch, RL Policy Network, 모방학습, SC2 리플레이 마이닝 |
+| **시뮬레이션** | StarCraft II API (burnysc2/python-sc2) |
+| **DevOps** | Vertex AI (Gemini) 자가치유 파이프라인 |
+| **GCS** | Flask Dashboard + TypeScript/React + Android App |
+| **CI/QA** | GitHub Actions, py_compile, 327+ tests |
+
+### 시뮬레이션-현실 매핑
+
+| StarCraft II (가상) | 실제 드론 (물리) |
+|---------------------|-----------------|
+| 전장의 안개 | 센서 불확실성 |
+| 200기 유닛 제어 | 멀티 UAV 군집 |
+| 자원 최적화 | 배터리/우선순위 관리 |
+| 동적 전술 전환 | 임무 재할당 |
+| 비동기 동시성 | 실시간 C2 |
+
+### 커리어 연결
+- **UAV/UGV 자율제어 시스템** — 군집 드론 실시간 관제
+- **방산 무인체계 군집 알고리즘** — Multi-Agent 전술 의사결정
+- **AI/ML Engineer** — 강화학습, 모방학습, 멀티에이전트 AI
+- **DevOps/MLOps** — Self-Healing Infrastructure, 자동화 파이프라인
+- **방위산업/항공우주** — ISR 임무 계획, 대군집 방어
+
+</details>
+
+---
+
 ## Contact
 
 <div align="center">
