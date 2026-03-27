@@ -12,8 +12,8 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-362-success)]()
-[![Tests](https://img.shields.io/badge/Tests-327%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-87-critical)]()
+[![Tests](https://img.shields.io/badge/Tests-404%20Passing-brightgreen)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-93-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -428,7 +428,7 @@ graph TB
         end
 
         subgraph "🧪 Tests"
-            TST["tests/<br/>327 tests passing<br/>0 skipped"]
+            TST["tests/<br/>404 tests passing<br/>0 skipped"]
         end
 
         MAIN --> STEP
@@ -593,14 +593,14 @@ graph TB
 ## Project Stats
 
 ```mermaid
-pie title 버그 심각도 분포 (누적 87건)
+pie title 버그 심각도 분포 (누적 93건)
     "CRITICAL" : 1
     "HIGH" : 72
     "MEDIUM" : 14
 ```
 
 ```mermaid
-pie title 버그 유형 분포 (87건)
+pie title 버그 유형 분포 (93건)
     "self.bot.do() 래핑 누락" : 57
     "빈 컬렉션 .exists 가드" : 10
     "Division by Zero" : 13
@@ -610,8 +610,8 @@ pie title 버그 유형 분포 (87건)
 ```
 
 ```mermaid
-pie title 테스트 결과 (327건)
-    "Passed" : 327
+pie title 테스트 결과 (404건)
+    "Passed" : 404
     "Skipped" : 0
     "Failed" : 0
 ```
@@ -621,8 +621,8 @@ pie title 테스트 결과 (327건)
 | Metric | Value | Status |
 |--------|-------|--------|
 | Python 파일 수 | 362 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 87건 (8 세션) | ✅ CRITICAL 0건 잔존 |
-| 테스트 스위트 | 327 passed / 0 failed | ✅ 100% 통과 |
+| 누적 버그 수정 | 93건 (8 세션) | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 404 passed / 0 failed | ✅ 100% 통과 |
 | 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
 | 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
 | 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
@@ -632,7 +632,7 @@ pie title 테스트 결과 (327건)
 
 ```mermaid
 gantt
-    title 버그 수정 타임라인 (87건)
+    title 버그 수정 타임라인 (93건)
     dateFormat YYYY-MM-DD
     section Session 1-4
         13건 수정 (CRITICAL 1, HIGH 8, MEDIUM 4)   :done, s1, 2026-03-25, 1d
@@ -735,7 +735,7 @@ graph LR
 | **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
 | **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
-| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 327+ tests, GitHub Actions CI |
+| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 404+ tests, GitHub Actions CI |
 
 ---
 
@@ -896,7 +896,7 @@ graph LR
 - RapidVictorySystem 올인 3분→8분 + 최소 서플 40 조건
 - 4개 파괴 시스템 로직 충돌 해결 (UnitAuthority 연동)
 - 189개 MD 리포트 → docs/archive/ 정리
-- 테스트 327 passed, 0 skipped, 0 failed
+- 테스트 404 passed, 0 skipped, 0 failed
 
 ### 기술 스택
 
@@ -907,7 +907,7 @@ graph LR
 | **시뮬레이션** | StarCraft II API (burnysc2/python-sc2) |
 | **DevOps** | Vertex AI (Gemini) 자가치유 파이프라인 |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
-| **CI/QA** | GitHub Actions, py_compile, 327+ tests |
+| **CI/QA** | GitHub Actions, py_compile, 404+ tests |
 
 ### 시뮬레이션-현실 매핑
 

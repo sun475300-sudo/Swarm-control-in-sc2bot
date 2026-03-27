@@ -79,8 +79,8 @@
 | 지표 | 수치 | 상태 |
 |------|------|------|
 | Python 파일 수 | 362 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 87건 (8 세션) | ✅ CRITICAL 0건 잔존 |
-| 테스트 스위트 | 327 passed / 0 failed | ✅ 100% 통과 |
+| 누적 버그 수정 | 93건 (9 세션) | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 404 passed / 0 failed | ✅ 100% 통과 |
 | 빌드오더 | 9개 | ✅ Roach Rush, Hatch First 등 |
 | 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
 | CI/CD | GitHub Actions | ✅ py_compile + pytest 자동 실행 |
