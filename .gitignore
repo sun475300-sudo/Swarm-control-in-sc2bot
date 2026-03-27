@@ -39,6 +39,10 @@ Thumbs.db
 *.log
 *.tmp
 *.npz
+*.SC2Replay
+**/replays/**/*.SC2Replay
+temp_downloads/
+*.zip
 nul
 wicked_zerg_challenger/data/games/nul
 wicked_zerg_challenger/nul
