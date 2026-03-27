@@ -1,44 +1,155 @@
-# Wicked Zerg Challenger - 스타크래프트 2 저그 AI 봇
+<div align="center">
 
-**Wicked Zerg Challenger**는 Python-SC2 라이브러리를 기반으로 개발된 고급 스타크래프트 2 저그 봇입니다. 이 프로젝트는 단순한 스크립트 기반 AI를 넘어, 전략적 판단과 정교한 마이크로 컨트롤, 그리고 실험적인 강화학습(RL) 모델을 통합하여 강력한 성능을 목표로 합니다.
+# 스타크래프트 II 군집 제어 시스템
 
-## 🚀 주요 기능
+### 멀티 에이전트 드론 군집 연구를 위한 지능형 통합 관제 시스템
 
-### 1. 지능형 전략 관리 (Strategy Manager)
-- **종족별 맞춤 전략**: 테란, 프로토스, 저그 각 상대 종족에 따라 최적화된 유닛 조합과 빌드 오더를 구사합니다.
-- **위협 감지 및 대응**:
-  - **Emergency Mode**: 초반 날빌(Rush)이나 치즈 전략을 감지하면 즉시 방어 태세로 전환하고 드론 생산을 중단합니다.
-  - **대공 방어**: 공중 유닛 위협 감지 시 스포어 크롤러와 히드라리스크/타락귀를 우선 생산합니다.
-  - **프로토스 카운터**: 불멸자, 거신 등 프로토스 주요 유닛에 대한 카운터 유닛(담즙, 타락귀 등)을 자동으로 비율 조절하여 생산합니다.
+**시뮬레이션에서 현실로: 강화학습 · 자가치유 DevOps · 모바일 GCS**
 
-### 2. 경제 및 생산 최적화 (Economy & Production)
-- **스마트 확장**: 자원 상황과 병력 규모를 분석하여 10분 내 3베이스 확보 등 프로게이머 수준의 확장을 목표로 합니다.
-- **매크로 해처리**: 자원이 남거나 라바가 부족할 때 자동으로 매크로 해처리를 건설하여 생산력을 유지합니다.
-- **자원 최적화**: 미네랄/가스 채취 일꾼을 실시간으로 최적 분배하고, 고갈된 기지의 일꾼을 이동시킵니다.
+[![GitHub](https://img.shields.io/badge/GitHub-Swarm--control--in--sc2bot-181717?logo=github)](https://github.com/sun475300-sudo/Swarm-control-in-sc2bot)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![SC2 API](https://img.shields.io/badge/StarCraft%20II-burnysc2-FF6600)](https://github.com/BurnySc2/python-sc2)
+[![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
+[![파일수](https://img.shields.io/badge/Python%20파일-362-success)]()
+[![테스트](https://img.shields.io/badge/테스트-327%20통과-brightgreen)]()
+[![버그수정](https://img.shields.io/badge/버그%20수정-87건-critical)]()
+[![구문검사](https://img.shields.io/badge/구문%20검사-100%25-brightgreen)]()
 
-### 3. 정교한 전투 시스템 (Combat & Micro)
-- **군집 제어 (Boids Algorithm)**: 유닛들이 서로 뭉치거나 퍼지면서 자연스럽게 이동하는 군집 알고리즘을 적용했습니다.
-- **마이크로 컨트롤**:
-  - 맹독충 잠복/해제 전략
-  - 히드라리스크/바퀴의 허리돌리기(Kiting)
-  - 마법 유닛(감염충, 살모사) 자동 활용
-- **특수 전술 (Rogue Tactics)**: 이병렬 선수의 전술을 참고한 맹독충 드랍 등을 구사합니다.
+</div>
 
-### 4. 실험적 AI 기능 (Experimental)
-- **계층적 강화학습 (Hierarchical RL)**: 상위 레벨의 전략적 의사결정을 위한 RL 에이전트 탑재 (훈련 모드)
-- **트랜스포머 모델 (Transformer)**: 게임 상태를 시퀀스로 분석하여 전황을 예측하는 모델
+---
 
-## 📂 프로젝트 구조
+## 개요
 
-- `wicked_zerg_bot_pro_impl.py`: 봇의 메인 진입점 및 매니저 초기화
-- `bot_step_integration.py`: 각 게임 프레임(Step)마다 실행될 로직을 통합 관리
-- `strategy_manager.py`: 전략 판단 및 비상 모드 관리
-- `economy_manager.py`: 자원 채취 및 일꾼/오버로드 생산 관리
-- `combat_manager.py`: 전투 유닛 부대 지정 및 공격/방어 제어
-- `local_training/`: 강화학습 및 모델 훈련(Curriculum Learning) 관련 코드
+> 이 프로젝트는 **게임이 아닙니다.**
+> **Google DeepMind(AlphaStar)** 와 **미국 공군(USAF VISTA X-62A)** 이 실제로 사용하는 방식 그대로,
+> 스타크래프트 II를 **드론 군집 제어(Swarm Control)** 실험 환경으로 활용한 연구입니다.
 
-## 🛠️ 요구 사항
+```
+실제 드론 50~200대 실험  →  수천만~수억 원
+시뮬레이션 기반 실험       →  안전 · 무비용 · 무한 반복
+```
 
-- Python 3.9+
-- Python-SC2
-- NumPy, PyTorch (RL 기능 사용 시)
+---
+
+## 주요 기능
+
+### 1. 지능형 전략 관리 (Strategy Manager V2)
+- **종족별 맞춤 빌드오더**: ZvP 로치 러쉬, ZvT 해처리 퍼스트, ZvZ 14풀
+- **위협 감지 및 대응**: 비상/경고/일반 모드 자동 전환
+- **실시간 빌드 패턴 분석**: Intel Manager 연동 (terran_bio, protoss_stargate 등)
+
+### 2. 경제 및 생산 최적화
+- **동적 가스 일꾼 관리**: 가스 뱅킹 500+ 시 자동 감소 (심각도별 0~2명 유지)
+- **강제 확장 시스템**: 타이밍 테이블 기반 자동 확장 (8초~6분)
+- **매크로 해처리**: 자원 과잉 시 자동 건설
+
+### 3. 고급 전투 시스템
+- **Advanced Micro Controller v3**: 8종 유닛별 전술 (레바저 담즙, 럴커 잠복, 퀸 힐, 살모사 유인)
+- **Focus Fire Coordinator**: 오버킬 방지 집중 사격
+- **Stutter Step Kiting**: 히드라/바퀴 허리돌리기
+
+### 4. 정찰 시스템 V2
+- **동적 정찰 주기**: 초반 25초 → 테크 타이밍 20초 → 중반 40초 → 긴급 15초
+- **순찰 경로 시스템**: 다중 웨이포인트 + 젤나가 감시탑 확보
+- **변신수 분산 배치**: 오버시어 자동 관리
+
+### 5. 자가치유 DevOps
+- **Gemini AI 자동 패치**: 런타임 에러 → AI 분석 → 자동 수정 → 재시작
+- **자동 모니터링**: 1시간 주기 버그 탐지 + 커밋
+
+---
+
+## 프로젝트 구조
+
+| 디렉토리 | 설명 | 파일 수 |
+|----------|------|---------|
+| `wicked_zerg_challenger/` | 메인 봇 엔진 | 362+ |
+| `combat/` | 전투 시스템 (12+ 모듈) | 65 |
+| `scouting/` | 정찰 시스템 V2 | 20 |
+| `local_training/` | 로컬 훈련 (RL/IL) | 45 |
+| `config/` | 설정 관리 | 15 |
+| `tests/` | 테스트 스위트 | 15 |
+| `core/` | 매니저 레지스트리 | 10 |
+
+---
+
+## 품질 대시보드
+
+| 지표 | 수치 | 상태 |
+|------|------|------|
+| Python 파일 수 | 362 | ✅ 전체 구문 검사 통과 |
+| 누적 버그 수정 | 87건 (8 세션) | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 327 passed / 0 failed | ✅ 100% 통과 |
+| 빌드오더 | 9개 | ✅ Roach Rush, Hatch First 등 |
+| 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
+| CI/CD | GitHub Actions | ✅ py_compile + pytest 자동 실행 |
+| 자동 모니터링 | 1시간 주기 | ✅ 스케줄 태스크 운영 중 |
+
+---
+
+## 기술 스택
+
+| 카테고리 | 기술 |
+|----------|------|
+| **언어** | Python 3.10+ |
+| **AI/ML** | PyTorch, RL Policy Network, 모방학습, SC2 리플레이 마이닝 |
+| **시뮬레이션** | StarCraft II API (burnysc2/python-sc2) |
+| **DevOps** | Vertex AI (Gemini) 자가치유 파이프라인 |
+| **GCS** | Flask Dashboard + TypeScript/React + Android App |
+| **알고리즘** | Potential-Field Navigation, 비동기 동시성 제어 |
+| **CI/QA** | GitHub Actions, py_compile, 327+ tests |
+
+---
+
+## 시뮬레이션-현실 매핑
+
+| StarCraft II (가상) | 실제 드론 (물리) |
+|---------------------|-----------------|
+| 전장의 안개 (Fog of War) | 센서 불확실성 |
+| 200기 유닛 제어 | 멀티 UAV 군집 |
+| 자원 최적화 | 배터리/우선순위 관리 |
+| 빌드 중복 방지 | SSoT 무결성 |
+| 동적 전술 전환 | 임무 재할당 |
+| 비동기 동시성 | 실시간 C2 |
+
+---
+
+## 커리어 연결
+
+- **UAV/UGV 자율제어 시스템** — 군집 드론 실시간 관제
+- **방산 무인체계 군집 알고리즘** — Multi-Agent 전술 의사결정
+- **AI/ML Engineer** — 강화학습, 모방학습, 멀티에이전트 AI
+- **DevOps/MLOps** — Self-Healing Infrastructure, 자동화 파이프라인
+- **로봇/자율주행 C2** — Command & Control 시스템 설계
+- **방위산업/항공우주** — ISR 임무 계획, 대군집 방어
+
+---
+
+## 요구 사항
+
+- Python 3.10+
+- StarCraft II (설치 필요)
+- burnysc2 (`pip install burnysc2`)
+- PyTorch (RL 기능 사용 시)
+
+---
+
+<div align="center">
+
+**장선우 (Jang Sun Woo)**
+
+Drone Application Engineering
+
+[![Email](https://img.shields.io/badge/Email-sun475300%40naver.com-03C75A?logo=naver&logoColor=white)](mailto:sun475300@naver.com)
+[![GitHub](https://img.shields.io/badge/GitHub-sun475300--sudo-181717?logo=github)](https://github.com/sun475300-sudo)
+
+</div>
+
+---
+
+<div align="center">
+
+<sub>Built with Python · StarCraft II API · PyTorch · Gemini AI</sub>
+
+</div>

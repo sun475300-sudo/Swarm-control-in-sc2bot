@@ -12,8 +12,8 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-362-success)]()
-[![Tests](https://img.shields.io/badge/Tests-314%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-60-critical)]()
+[![Tests](https://img.shields.io/badge/Tests-327%20Passing-brightgreen)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-87-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -428,7 +428,7 @@ graph TB
         end
 
         subgraph "🧪 Tests"
-            TST["tests/<br/>314 tests passing<br/>11 skipped"]
+            TST["tests/<br/>327 tests passing<br/>0 skipped"]
         end
 
         MAIN --> STEP
@@ -593,27 +593,26 @@ graph TB
 ## Project Stats
 
 ```mermaid
-pie title 버그 심각도 분포 (누적 60건)
+pie title 버그 심각도 분포 (누적 87건)
     "CRITICAL" : 1
-    "HIGH" : 52
-    "MEDIUM" : 7
+    "HIGH" : 72
+    "MEDIUM" : 14
 ```
 
 ```mermaid
-pie title 버그 유형 분포 (60건)
-    "self.bot.do() 래핑 누락" : 44
-    "빈 컬렉션 .exists 가드" : 6
-    "Division by Zero" : 3
+pie title 버그 유형 분포 (87건)
+    "self.bot.do() 래핑 누락" : 57
+    "빈 컬렉션 .exists 가드" : 10
+    "Division by Zero" : 13
     "타입 에러" : 2
     "잘못된 API 구문" : 1
-    "로직 에러" : 2
-    "예외 삼킴 (bare except)" : 2
+    "로직 에러/충돌" : 4
 ```
 
 ```mermaid
-pie title 테스트 결과 (325건)
-    "Passed" : 314
-    "Skipped" : 11
+pie title 테스트 결과 (327건)
+    "Passed" : 327
+    "Skipped" : 0
     "Failed" : 0
 ```
 
@@ -622,8 +621,8 @@ pie title 테스트 결과 (325건)
 | Metric | Value | Status |
 |--------|-------|--------|
 | Python 파일 수 | 362 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 60건 (6 세션) | ✅ CRITICAL 0건 잔존 |
-| 테스트 스위트 | 314 passed / 0 failed | ✅ 100% 통과 |
+| 누적 버그 수정 | 87건 (8 세션) | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 327 passed / 0 failed | ✅ 100% 통과 |
 | 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
 | 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
 | 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
@@ -738,7 +737,7 @@ graph LR
 | **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
 | **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
-| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 314+ tests |
+| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 327+ tests, GitHub Actions CI |
 
 ---
 
