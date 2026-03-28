@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-130-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-140-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -668,6 +668,8 @@ gantt
         공격타이밍 + 적약점감지 + 멀티프롱공격     :done, s19, 2026-03-28, 1d
     section Session 19 — Phase 21
         ZvT카운터 + ZvP바이퍼 + ZvZ럴커전환      :done, s20, 2026-03-28, 1d
+    section Session 20 — Phase 22
+        DeadCode 10대매니저 일괄활성화            :done, s21, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -955,6 +957,13 @@ graph LR
         FIX35["🟢 ZvZ 럴커 전환<br/>6분+ 로치미러 시<br/>럴커 포지셔닝 우위"]
     end
 
+    subgraph "🔧 Session 20 — Phase 22 Dead Code 일괄 활성화"
+        direction TB
+        FIX36["💀 10대 매니저 활성화<br/>CreepExpansion/Denial<br/>Spellcaster/Overlord 등"]
+        FIX37["🔗 CreepHighway 연결<br/>이름 불일치 수정<br/>기지간 크립 고속도로"]
+        FIX38["⚡ 36개 Dead Code 발견<br/>승률 저하 핵심 원인<br/>10개 우선 활성화"]
+    end
+
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
@@ -990,6 +999,9 @@ graph LR
     style FIX33 fill:#0984e3,color:#fff
     style FIX34 fill:#fdcb6e,color:#000
     style FIX35 fill:#00b894,color:#fff
+    style FIX36 fill:#d63031,color:#fff
+    style FIX37 fill:#e17055,color:#fff
+    style FIX38 fill:#636e72,color:#fff
 ```
 
 ---
@@ -1021,6 +1033,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 22] Dead Code 일괄 활성화**: 36개 미활성 매니저 발견, 10대 핵심(크립/주술/오버로드 등) 활성화
 - **[Phase 21] 종족별 특화 대응**: ZvT 바이오/메카/공중 카운터, ZvP 바이퍼 추가, ZvZ 럴커 전환
 - **[Phase 20] 공격 타이밍 최적화**: 점진적 임계값, 적 확장/테크 감지 타이밍공격, 멀티프롱 저글링 견제
 - **[Phase 19] 후반 전환 시스템**: HiveTechMaximizer 활성화, 울트라리스크 비율 추가, 미네랄뱅킹 소비, 자동 재확장

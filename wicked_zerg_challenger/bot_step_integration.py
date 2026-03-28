@@ -296,6 +296,57 @@ try:
 except (ImportError, TypeError):
     HiveTechMaximizer = None
 
+# ★ Phase 22: Dead Code 일괄 활성화 — 10대 핵심 매니저 ★
+try:
+    from creep_expansion_system import CreepExpansionSystem
+except (ImportError, TypeError):
+    CreepExpansionSystem = None
+
+try:
+    from creep_denial_system import CreepDenialSystem
+except (ImportError, TypeError):
+    CreepDenialSystem = None
+
+try:
+    from creep_highway_manager import CreepHighwayManager
+except (ImportError, TypeError):
+    CreepHighwayManager = None
+
+try:
+    from spellcaster_automation import SpellcasterAutomation
+except (ImportError, TypeError):
+    SpellcasterAutomation = None
+
+try:
+    from overlord_safety_manager import OverlordSafetyManager
+except (ImportError, TypeError):
+    OverlordSafetyManager = None
+
+try:
+    from idle_unit_manager import IdleUnitManager
+except (ImportError, TypeError):
+    IdleUnitManager = None
+
+try:
+    from dynamic_counter_system import DynamicCounterSystem
+except (ImportError, TypeError):
+    DynamicCounterSystem = None
+
+try:
+    from defeat_detection import DefeatDetection
+except (ImportError, TypeError):
+    DefeatDetection = None
+
+try:
+    from battle_preparation_system import BattlePreparationSystem
+except (ImportError, TypeError):
+    BattlePreparationSystem = None
+
+try:
+    from upgrade_coordination_system import UpgradeCoordinationSystem
+except (ImportError, TypeError):
+    UpgradeCoordinationSystem = None
+
 # Game Data Logger (Phase 22 - 게임 데이터 수집)
 try:
     from game_data_logger import GameDataLogger
@@ -529,6 +580,67 @@ class BotStepIntegrator:
             self.logger.info("[INIT] HiveTechMaximizer initialized (Phase 19) — 후반 고급유닛 활성화")
         elif not hasattr(self.bot, "hive_tech"):
             self.bot.hive_tech = None
+
+        # ★ Phase 22: Dead Code 일괄 활성화 — 10대 핵심 매니저 초기화 ★
+        if CreepExpansionSystem:
+            self.bot.creep_expansion = CreepExpansionSystem(bot)
+            self.logger.info("[INIT] CreepExpansionSystem (Phase 22) — 전 맵 크립 확장")
+        elif not hasattr(self.bot, "creep_expansion"):
+            self.bot.creep_expansion = None
+
+        if CreepDenialSystem:
+            self.bot.creep_denial = CreepDenialSystem(bot)
+            self.logger.info("[INIT] CreepDenialSystem (Phase 22) — 적 크립 제거")
+        elif not hasattr(self.bot, "creep_denial"):
+            self.bot.creep_denial = None
+
+        if CreepHighwayManager:
+            self.bot.creep_highway = CreepHighwayManager(bot)
+            self.logger.info("[INIT] CreepHighwayManager (Phase 22) — 기지간 크립 연결")
+        elif not hasattr(self.bot, "creep_highway"):
+            self.bot.creep_highway = None
+
+        if SpellcasterAutomation:
+            self.bot.spellcaster = SpellcasterAutomation(bot)
+            self.logger.info("[INIT] SpellcasterAutomation (Phase 22) — 주술사 자동화")
+        elif not hasattr(self.bot, "spellcaster"):
+            self.bot.spellcaster = None
+
+        if OverlordSafetyManager:
+            self.bot.overlord_safety = OverlordSafetyManager(bot)
+            self.logger.info("[INIT] OverlordSafetyManager (Phase 22) — 오버로드 안전")
+        elif not hasattr(self.bot, "overlord_safety"):
+            self.bot.overlord_safety = None
+
+        if IdleUnitManager:
+            self.bot.idle_units = IdleUnitManager(bot)
+            self.logger.info("[INIT] IdleUnitManager (Phase 22) — 유휴 유닛 관리")
+        elif not hasattr(self.bot, "idle_units"):
+            self.bot.idle_units = None
+
+        if DynamicCounterSystem:
+            self.bot.dynamic_counter = DynamicCounterSystem(bot)
+            self.logger.info("[INIT] DynamicCounterSystem (Phase 22) — 동적 카운터")
+        elif not hasattr(self.bot, "dynamic_counter"):
+            self.bot.dynamic_counter = None
+
+        if DefeatDetection:
+            self.bot.defeat_detection = DefeatDetection(bot)
+            self.logger.info("[INIT] DefeatDetection (Phase 22) — 패배 감지")
+        elif not hasattr(self.bot, "defeat_detection"):
+            self.bot.defeat_detection = None
+
+        if BattlePreparationSystem:
+            self.bot.battle_prep = BattlePreparationSystem(bot)
+            self.logger.info("[INIT] BattlePreparationSystem (Phase 22) — 전투 준비")
+        elif not hasattr(self.bot, "battle_prep"):
+            self.bot.battle_prep = None
+
+        if UpgradeCoordinationSystem:
+            self.bot.upgrade_coord = UpgradeCoordinationSystem(bot)
+            self.logger.info("[INIT] UpgradeCoordinationSystem (Phase 22) — 업그레이드 조율")
+        elif not hasattr(self.bot, "upgrade_coord"):
+            self.bot.upgrade_coord = None
 
         # Game Data Logger (Phase 22 - 경기 데이터 수집)
         if GameDataLogger:
