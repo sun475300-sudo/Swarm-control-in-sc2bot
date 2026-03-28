@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 23] - 2026-03-28
+### 퀸/서플라이 최적화
+- 방어 중에도 인젝트 최우선 실행 (이전: 방어 시 인젝트 완전 건너뜀)
+- 오버로드 동적 버퍼 선행생산: 초반4/중반6/후반8/MAX10
+- 필요량 기반 다중 오버로드 생산 (이전: 항상 1기만)
+
 ## [Phase 22] - 2026-03-28
 ### Dead Code 일괄 활성화
 - 36개 미활성 매니저 발견 (bot_step_integration.py 전수 검사)

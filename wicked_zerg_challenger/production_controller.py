@@ -220,27 +220,29 @@ class ProductionController:
         if supply_cap >= 200:
             return
 
-        # Overlord 생산 조건
-        should_build = False
+        # ★ Phase 23: 서플라이 블록 완전 제거 — 선행 생산 ★
+        game_time = getattr(self.bot, "time", 0)
+        supply_used = supply_cap - supply_left
 
-        # 1. 보급 부족 (supply_left < 3)
-        if supply_left < 3:
-            should_build = True
+        # 동적 버퍼: 서플라이 사용량에 비례
+        if supply_used < 30:
+            buffer = 4   # 초반: 4 여유
+        elif supply_used < 80:
+            buffer = 6   # 중반: 6 여유
+        elif supply_used < 150:
+            buffer = 8   # 후반: 8 여유
+        else:
+            buffer = 10  # 200 근접: 10 여유
 
-        # 2. 초반 적극적 생산 (3분 이내)
-        elif self.bot.time < 180 and supply_left < 6:
-            should_build = True
-
-        # 3. 가스 적체 시 여유분 확보
-        elif self.bot.vespene > 1000 and supply_left < 10:
-            should_build = True
+        should_build = supply_left < buffer
 
         if not should_build:
             return
 
-        # 이미 생산 중인지 확인
+        # 이미 생산 중인 오버로드 수 대비 필요량 계산
         pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
-        if pending_overlords > 0:
+        needed = max(1, (buffer - supply_left) // 8 + 1)  # 8 서플당 오버로드 1기
+        if pending_overlords >= needed:
             return
 
         # 자원 확인

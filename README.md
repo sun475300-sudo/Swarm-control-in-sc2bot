@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-140-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-142-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -670,6 +670,8 @@ gantt
         ZvT카운터 + ZvP바이퍼 + ZvZ럴커전환      :done, s20, 2026-03-28, 1d
     section Session 20 — Phase 22
         DeadCode 10대매니저 일괄활성화            :done, s21, 2026-03-28, 1d
+    section Session 21 — Phase 23
+        퀸인젝트우선 + 오버로드선행생산          :done, s22, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1033,6 +1035,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 23] 퀸/서플라이 최적화**: 방어 중 인젝트 유지, 오버로드 동적 버퍼(4/6/8/10) 선행생산
 - **[Phase 22] Dead Code 일괄 활성화**: 36개 미활성 매니저 발견, 10대 핵심(크립/주술/오버로드 등) 활성화
 - **[Phase 21] 종족별 특화 대응**: ZvT 바이오/메카/공중 카운터, ZvP 바이퍼 추가, ZvZ 럴커 전환
 - **[Phase 20] 공격 타이밍 최적화**: 점진적 임계값, 적 확장/테크 감지 타이밍공격, 멀티프롱 저글링 견제

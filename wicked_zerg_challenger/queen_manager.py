@@ -125,13 +125,15 @@ class QueenManager:
             # === DEFENSE PRIORITY: Check if base is under attack ===
             under_attack = self._is_base_under_attack()
 
+            # ★ Phase 23: 인젝트는 항상 최우선 (방어 중에도) ★
+            if not (hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt):
+                await self._inject_larva(hatcheries, queens)
+
             if under_attack:
                 # Defense mode: Queens defend instead of creep spread
                 await self._queen_defense_mode(queens, iteration)
             else:
-                # Normal mode - skip inject if specialized optimizer handles it
-                if not (hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt):
-                    await self._inject_larva(hatcheries, queens)
+                pass  # 인젝트는 위에서 이미 실행됨
 
             # Transfuse injured units - skip if specialized manager handles it
             if not (hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion):
