@@ -163,6 +163,9 @@ class IntelManager:
         # Detect enemy build pattern
         self._detect_enemy_build_pattern(enemy_structures, enemy_units)
 
+        # ★ Phase 20: 적 확장/테크 상태 → Blackboard 전파 (공격 타이밍용) ★
+        self._detect_enemy_vulnerability(enemy_structures)
+
     def _update_enemy_main_base(self, enemy_structures) -> None:
         """
         Update enemy main base location from visible structures or start locations.
@@ -299,6 +302,39 @@ class IntelManager:
     def is_major_attack(self) -> bool:
         """Check if this is a major attack (critical threat level or high-threat units)."""
         return self._threat_level == "critical" or self._high_threat_units_detected
+
+    def _detect_enemy_vulnerability(self, enemy_structures) -> None:
+        """
+        ★ Phase 20: 적 확장/테크 취약 시점 감지 ★
+
+        적이 확장 중이거나 고비용 테크를 올리는 중이면
+        Blackboard에 플래그를 세워 공격 타이밍으로 활용.
+        """
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard or not hasattr(blackboard, "set"):
+            return
+
+        # 적 건설 중인 건물 확인
+        expanding = False
+        teching = False
+
+        base_types = {'COMMANDCENTER', 'NEXUS', 'HATCHERY'}
+        expensive_tech = {'STARPORT', 'ROBOTICSFACILITY', 'STARGATE',
+                         'DARKSHRINE', 'FLEETBEACON', 'FUSIONCORE',
+                         'GREATERSPIRE', 'NYDUSNETWORK'}
+
+        for struct in enemy_structures:
+            type_name = getattr(struct.type_id, "name", "").upper()
+            build_progress = getattr(struct, "build_progress", 1.0)
+
+            if build_progress < 1.0:  # 건설 중
+                if type_name in base_types:
+                    expanding = True
+                if type_name in expensive_tech:
+                    teching = True
+
+        blackboard.set("enemy_expanding", expanding)
+        blackboard.set("enemy_teching", teching)
 
     def _detect_enemy_build_pattern(self, enemy_structures, enemy_units) -> None:
         """

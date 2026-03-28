@@ -1188,8 +1188,24 @@ class CombatManager:
             # 최소 군대 서플라이 확인
             army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
 
-            # ★ HYPER AGGRESSIVE: 집결 시간 최소화
-            min_attack_threshold = self._early_game_min_attack if game_time < 240 else self._min_army_for_attack
+            # ★ Phase 20: 서플라이 기반 점진적 공격 임계값 ★
+            if game_time < 240:
+                min_attack_threshold = self._early_game_min_attack  # 12
+            elif game_time < 480:
+                min_attack_threshold = self._min_army_for_attack  # 20
+            elif game_time < 600:
+                min_attack_threshold = 30  # 10분까지: 30 서플
+            else:
+                min_attack_threshold = 40  # 10분+: 40 서플 (후반은 강력한 공격)
+
+            # ★ Phase 20: 적 약점 감지 시 공격 임계값 하향 ★
+            blackboard = getattr(self.bot, "blackboard", None)
+            if blackboard and hasattr(blackboard, "get"):
+                enemy_expanding = blackboard.get("enemy_expanding", False)
+                enemy_teching = blackboard.get("enemy_teching", False)
+                if enemy_expanding or enemy_teching:
+                    # 적이 확장/테크 중이면 임계값 70%로 하향 (타이밍 공격)
+                    min_attack_threshold = max(12, int(min_attack_threshold * 0.7))
 
             # ★★★ FIX Phase 12: 집결 시스템 복원 — 1~2마리 돌격 방지 ★★★
             if army_supply < min_attack_threshold:
@@ -1222,8 +1238,23 @@ class CombatManager:
             if iteration % 100 == 0:
                 self.logger.info(f"[{int(game_time)}s] OFFENSIVE ATTACK: {len(army_units)} units, {army_supply} supply, {len(attack_targets)} targets")
 
-            # ★★★ FIX Phase 12: 병력 분할 제거 — 한 곳에 집중 공격 ★★★
-            # 병력 분할은 100 서플 이상에서만 허용 (그 이하는 한 곳 집중)
+            # ★ Phase 20: 멀티프롱 공격 — 80서플+ 시 저글링 견제팀 분리 ★
+            if army_supply >= 80 and len(attack_targets) >= 2:
+                # 저글링 6~8마리를 견제팀으로 분리 (적 확장기지 압박)
+                from sc2.ids.unit_typeid import UnitTypeId as _UID
+                harass_lings = [u for u in army_units if getattr(u, "type_id", None) == _UID.ZERGLING][:8]
+                if len(harass_lings) >= 6:
+                    harass_target = attack_targets[1] if len(attack_targets) > 1 else attack_targets[0]
+                    for ling in harass_lings:
+                        try:
+                            self.bot.do(ling.attack(harass_target))
+                        except Exception:
+                            continue
+                    # 견제팀 제외한 메인 병력
+                    harass_tags = {u.tag for u in harass_lings}
+                    army_units = [u for u in army_units if u.tag not in harass_tags]
+
+            # ★★★ FIX Phase 12: 병력 분할 — 100서플+ 시 2그룹 ★★★
             if len(attack_targets) > 1 and army_supply >= 100:
                 num_groups = min(len(attack_targets), 2)  # 최대 2그룹
                 group_size = len(army_units) // num_groups
