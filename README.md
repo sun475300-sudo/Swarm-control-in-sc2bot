@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-321%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-173-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-178-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -700,6 +700,12 @@ gantt
         전투중유닛후퇴방지 + 랠리기준최근접기지   :done, s35, 2026-03-28, 1d
     section Session 35 — Phase 39
         가스일꾼필터버그 + 초반가스보호 + boost동시채우기   :done, s36, 2026-03-28, 1d
+    section Session 36 — Phase 40
+        통합검증 + 아레나패키지재생성 + 167테스트통과   :done, s37, 2026-03-28, 1d
+    section Session 37 — Phase 41
+        HP가중전투력 + supply테이블 + O(N×M)→O(N+M) 최적화   :done, s38, 2026-03-28, 1d
+    section Session 38 — Phase 42
+        Python적AI예측 + TypeScript전투력위젯 다중언어커버   :done, s39, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1042,6 +1048,25 @@ graph LR
     style FIX39 fill:#00b894,color:#fff
     style FIX40 fill:#0984e3,color:#fff
     style FIX41 fill:#fdcb6e,color:#000
+
+    subgraph "🔧 Session 37 — Phase 41 전투 의사결정"
+        direction TB
+        FIX42["⚔️ HP 가중 전투력\nsupply × HP%\n울트라=6×HP% 정확 계산"]
+        FIX43["📊 supply_cost 테이블\n13종 유닛 정확 비용\n(이전: 모두 1로 오계산)"]
+        FIX44["⚡ O(N×M)→O(N+M)\n군집 중심 기반 필터\n후퇴 판단 대폭 최적화"]
+    end
+    subgraph "🔧 Session 38 — Phase 42 다중 언어 커버"
+        direction TB
+        FIX45["🐍 Python 적 예측\n테크건물→공격시점 추정\nBlackboard 전파"]
+        FIX46["📦 Python supply 테이블\n30종 종족별 정확 공급\n(인텔 매니저 동기화)"]
+        FIX47["⚛️ TypeScript 위젯\nKDA + 처치율 바\nMonitor.tsx 전투 분석"]
+    end
+    style FIX42 fill:#e17055,color:#fff
+    style FIX43 fill:#74b9ff,color:#000
+    style FIX44 fill:#55efc4,color:#000
+    style FIX45 fill:#a29bfe,color:#fff
+    style FIX46 fill:#fd79a8,color:#fff
+    style FIX47 fill:#00cec9,color:#000
 ```
 
 ---
@@ -1073,6 +1098,9 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 42] 다중 언어 커버**: Python 적 공격 타이밍 예측(테크→시간 추정→Blackboard), TypeScript 전투력 비율 위젯(KDA/처치율 바)
+- **[Phase 41] 전투 의사결정 고도화**: supply_cost 속성 제거→정확한 테이블, HP 가중 전투력, O(N×M)→O(N+M) 후퇴 판단 최적화
+- **[Phase 40] 통합 검증 + 아레나 패키지**: 전체 구문 OK, 아레나 ZIP 재생성(491 files)
 - **[Phase 39] 경제 고도화**: 가스 일꾼 필터 버그(익스트랙터 내부 일꾼 누락) 수정, 초반 3분 가스 감소 보호, _boost_gas_workers 조기종료 제거
 - **[Phase 38] 전투 집결 시스템**: 전투중 유닛 후퇴 방지(적 12타일 내), 랠리 기준 최전선 기지로 동적 변경
 - **[Phase 37] 후반 유닛 전환 최적화**: GreaterSpire 후 뮤탈/코럽터 허용, Viper-Hive 요구사항 추가
@@ -1143,8 +1171,11 @@ P36    퀸 매크로        탐지거리 30→20 + 0마리 강제생산         
 P37    후반 유닛        GreaterSpire 뮤탈허용 + Viper-Hive 요건  ✅ DONE
 P38    랠리/집결        전투중 후퇴방지 + 최전선 기지 기준       ✅ DONE
 P39    경제 고도화      가스 필터버그 + 초반보호 + boost 수정    ✅ DONE
+P40    통합 검증        아레나 패키지 재생성 + 전체 구문 OK      ✅ DONE
+P41    전투 의사결정    HP가중 전투력 + supply테이블 + O(N+M)    ✅ DONE
+P42    다중언어 커버    Python 예측 + TypeScript 위젯             ✅ DONE
 ─────────────────────────────────────────────────────────────────
-총 완료: 28개 Phase  |  수정 버그: 173개  |  테스트: 321 통과
+총 완료: 31개 Phase  |  수정 버그: 178개  |  테스트: 167 통과 (protobuf 제외)
 ```
 
 ### 경제 시스템 상태 머신 (Phase 39 완성)

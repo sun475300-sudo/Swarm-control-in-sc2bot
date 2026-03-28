@@ -123,13 +123,27 @@ class IntelManager:
         self.enemy_army_supply = 0
         self.enemy_worker_count = 0
 
+        # ★ Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
+        _ENEMY_SUPPLY = {
+            'ZERGLING': 0.5, 'BANELING': 0.5, 'ROACH': 2, 'RAVAGER': 3,
+            'HYDRALISK': 2, 'LURKERMP': 3, 'MUTALISK': 2, 'CORRUPTOR': 2,
+            'ULTRALISK': 6, 'BROODLORD': 4, 'INFESTOR': 2, 'VIPER': 3,
+            'MARINE': 1, 'MARAUDER': 2, 'REAPER': 1, 'GHOST': 2,
+            'HELLION': 2, 'HELLIONTANK': 2, 'SIEGETANK': 3, 'SIEGETANKSIEGED': 3,
+            'THOR': 6, 'BATTLECRUISER': 6, 'VIKING': 2, 'MEDIVAC': 2,
+            'BANSHEE': 3, 'RAVEN': 2, 'LIBERATOR': 3, 'CYCLONE': 3,
+            'ZEALOT': 2, 'STALKER': 2, 'ADEPT': 2, 'IMMORTAL': 4,
+            'COLOSSUS': 6, 'DISRUPTOR': 3, 'ARCHON': 4, 'HIGHTEMPLAR': 2,
+            'DARKTEMPLAR': 2, 'PHOENIX': 2, 'VOIDRAY': 4, 'CARRIER': 6,
+            'ORACLE': 3, 'TEMPEST': 4,
+        }
         worker_names = {'SCV', 'PROBE', 'DRONE'}
         for unit in enemy_units:
             type_name = getattr(unit.type_id, "name", str(unit.type_id))
             self.enemy_unit_counts[type_name] = self.enemy_unit_counts.get(type_name, 0) + 1
 
-            # Estimate supply
-            supply = getattr(unit, "supply_cost", 1)
+            # ★ Phase 42: 룩업 테이블 우선, 없으면 1
+            supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
             if type_name.upper() in worker_names:
                 self.enemy_worker_count += 1
             else:
@@ -165,6 +179,9 @@ class IntelManager:
 
         # ★ Phase 20: 적 확장/테크 상태 → Blackboard 전파 (공격 타이밍용) ★
         self._detect_enemy_vulnerability(enemy_structures)
+
+        # ★ Phase 42: 적 공격 타이밍 예측 → Blackboard 전파 ★
+        self._predict_enemy_attack_timing()
 
     def _update_enemy_main_base(self, enemy_structures) -> None:
         """
@@ -302,6 +319,59 @@ class IntelManager:
     def is_major_attack(self) -> bool:
         """Check if this is a major attack (critical threat level or high-threat units)."""
         return self._threat_level == "critical" or self._high_threat_units_detected
+
+    def _predict_enemy_attack_timing(self) -> None:
+        """
+        ★ Phase 42: 적 테크 건물 기반 공격 타이밍 예측 ★
+
+        관측된 테크 건물 → 예상 공격 시점(초) 추정 → Blackboard 전파
+        전략 매니저가 이를 읽어 방어 준비 타이밍 조정.
+
+        예측 규칙 (보수적 하한 추정):
+          FACTORY / BARRACKS 기반 → 3:30 공격 가능
+          STARGATE / STARPORT   → 4:00 공격 가능
+          ROBOTICSFACILITY      → 5:00 공격 가능 (Immortal/Colossus)
+          DARKSHRINE            → 4:30 공격 가능 (DT)
+          적 supply > 20        → 현재 ~ +60초 내 공격 가능
+        """
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard or not hasattr(blackboard, "set"):
+            return
+
+        game_time = getattr(self.bot, "time", 0)
+        tech = self.enemy_tech_buildings  # already computed set of string names
+
+        predicted_attack_time: float = 999.0  # 기본: 매우 늦음 (예측 불가)
+
+        # 테크 건물 기반 하한 추정
+        if 'DARKSHRINE' in tech:
+            predicted_attack_time = min(predicted_attack_time, 270.0)  # 4:30
+        if 'STARGATE' in tech or 'STARPORT' in tech:
+            predicted_attack_time = min(predicted_attack_time, 240.0)  # 4:00
+        if 'FACTORY' in tech:
+            predicted_attack_time = min(predicted_attack_time, 210.0)  # 3:30
+        if 'ROBOTICSFACILITY' in tech:
+            predicted_attack_time = min(predicted_attack_time, 300.0)  # 5:00
+
+        # 적 병력 규모 기반: supply > 20이면 60초 내 공격 가능
+        if self.enemy_army_supply > 20:
+            predicted_attack_time = min(predicted_attack_time, game_time + 60.0)
+
+        # 적 병력 규모 기반: supply > 40이면 30초 내 공격 가능
+        if self.enemy_army_supply > 40:
+            predicted_attack_time = min(predicted_attack_time, game_time + 30.0)
+
+        # 이미 예측 시점이 지났으면 임박
+        imminent = predicted_attack_time <= game_time + 30.0
+
+        blackboard.set("enemy_attack_predicted_time", predicted_attack_time)
+        blackboard.set("enemy_attack_imminent", imminent)
+
+        if imminent and game_time % 30 < 1:  # 30초마다 로그
+            logger.info(
+                f"[INTEL] [{int(game_time)}s] ★ ENEMY ATTACK IMMINENT "
+                f"(predicted: {int(predicted_attack_time)}s, supply: {self.enemy_army_supply:.0f})"
+            )
 
     def _detect_enemy_vulnerability(self, enemy_structures) -> None:
         """

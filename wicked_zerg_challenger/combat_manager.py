@@ -1951,9 +1951,34 @@ class CombatManager:
                     # Unit command failed
                     continue
 
+    # ★ Phase 41: 정확한 공급 비용 테이블 (supply_cost 속성 없음 → 직접 정의)
+    _SUPPLY_TABLE = {
+        UnitTypeId.ZERGLING: 0.5,   UnitTypeId.BANELING: 0.5,
+        UnitTypeId.ROACH: 2,        UnitTypeId.RAVAGER: 3,
+        UnitTypeId.HYDRALISK: 2,    UnitTypeId.LURKERMP: 3,
+        UnitTypeId.MUTALISK: 2,     UnitTypeId.CORRUPTOR: 2,
+        UnitTypeId.ULTRALISK: 6,    UnitTypeId.BROODLORD: 4,
+        UnitTypeId.INFESTOR: 2,     UnitTypeId.VIPER: 3,
+        UnitTypeId.QUEEN: 2,
+    }
+
+    def _combat_power(self, units) -> float:
+        """
+        ★ Phase 41: HP 가중 전투력 계산 (supply × HP%)
+        공급 비용 × 현재HP/최대HP 로 실질 전투력 산출
+        """
+        total = 0.0
+        for u in units:
+            supply = self._SUPPLY_TABLE.get(u.type_id, 1)
+            hp_ratio = u.health / max(u.health_max, 1) if hasattr(u, 'health') and hasattr(u, 'health_max') else 1.0
+            total += supply * max(0.1, hp_ratio)  # 최소 10%는 인정
+        return total
+
     async def _evaluate_army_retreat(self, iteration: int):
         """
         ★ Phase 15-4: 점진적 전력 비교 후퇴 시스템 ★
+        ★ Phase 41: supply_cost 속성 제거 → HP 가중 전투력(_combat_power) 사용
+                    engaged_units O(N×M) 필터 → 군집 중심 기반 O(N+M) 최적화
 
         3단계 후퇴:
         - 적 > 아군 * 1.3 (30% 열세): 랠리 포인트로 점진적 후퇴
@@ -1969,25 +1994,26 @@ class CombatManager:
             if not enemy_units.exists:
                 return
 
-            combat_types = {
-                UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
-                UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
-                UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK,
-                UnitTypeId.BROODLORD, UnitTypeId.INFESTOR, UnitTypeId.VIPER,
-            }
+            combat_types = set(self._SUPPLY_TABLE.keys())
             our_army = self.bot.units.filter(lambda u: u.type_id in combat_types)
             if not our_army.exists:
                 return
 
-            engaged_units = our_army.filter(
-                lambda u: enemy_units.closer_than(15, u.position).amount > 0
-            )
+            # ★ Phase 41: 중심 기반 O(N+M) — per-unit 루프 O(N×M) 제거
+            army_center = our_army.center
+            nearby_enemies_check = enemy_units.closer_than(18, army_center)
+            if not nearby_enemies_check.exists:
+                return
+
+            # 적이 실제로 가까이 있을 때만 교전 유닛 필터링 (최적화)
+            engaged_units = our_army.closer_than(18, army_center)
             if not engaged_units.exists:
                 return
 
-            our_supply = sum(u.supply_cost if hasattr(u, 'supply_cost') else 1 for u in engaged_units)
+            # ★ Phase 41: HP 가중 전투력
+            our_supply = self._combat_power(engaged_units)
             nearby_enemies = enemy_units.closer_than(20, engaged_units.center)
-            enemy_supply = sum(u.supply_cost if hasattr(u, 'supply_cost') else 1 for u in nearby_enemies)
+            enemy_supply = self._combat_power(nearby_enemies)
 
             if our_supply < 5:
                 return

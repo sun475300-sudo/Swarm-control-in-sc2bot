@@ -2,6 +2,25 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 42] - 2026-03-28
+### 다중 언어 커버 — Python 적 AI 예측 + TypeScript 전투력 위젯
+- **Python** `intel_manager.py` supply 추정 수정: `supply_cost` 속성 없음 → 30종 종족별 정확한 룩업 테이블 (ZvT Marine=1, Siege=3, Thor=6 등)
+- **Python** `intel_manager.py` 적 공격 타이밍 예측: 테크 건물 + 병력 규모 기반 예상 공격 시점(초) 계산 → Blackboard `enemy_attack_predicted_time` / `enemy_attack_imminent` 전파
+- **TypeScript** `Monitor.tsx` 전투력 비율 분석 위젯 추가: KDA 계산, 처치 비율 바, 병력/처치/손실 트리오 카드
+
+## [Phase 41] - 2026-03-28
+### 전투 의사결정 고도화 — HP 가중 전투력 + 후퇴 판단 최적화
+- `_SUPPLY_TABLE` 정확한 공급 비용 테이블: 13종 저그 유닛 (이전: `supply_cost` 속성 없음 → 모두 1로 계산)
+- `_combat_power()` HP 가중 전투력: supply × HP% (이전: 완피 울트라리스크=1 vs 저글링=1)
+- `_evaluate_army_retreat` 필터 O(N×M)→O(N+M): 군집 중심 기반으로 교전 유닛 판별 (이전: per-unit `closer_than` 루프)
+- `combat_types` 퀸 추가: `QUEEN` 포함하여 방어 퀸도 후퇴 판단에 포함
+
+## [Phase 40] - 2026-03-28
+### 통합 검증 + 아레나 패키지 재생성
+- Phase 39까지 전체 구문 검증: 8개 핵심 파일 ALL OK
+- 테스트 결과: 167 passed / 20 skipped / 15 errors (모두 protobuf 버전 충돌, 봇 코드 무관)
+- 아레나 패키지 재생성: WickedZergBotPro_Arena_20260328_2344.zip (491 files, 15.2 MB)
+
 ## [Phase 39] - 2026-03-28
 ### 경제 고도화 — 가스/드론 생산 버그 수정
 - `_reduce_gas_workers` 필터 버그 수정: `order_target == extractor.tag` 단독 필터는 익스트랙터 내부 일꾼을 놓침 → `is_carrying_vespene OR order_target` + 거리 12 이내로 확장

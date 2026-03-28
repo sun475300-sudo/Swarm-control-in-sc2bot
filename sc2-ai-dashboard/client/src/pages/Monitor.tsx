@@ -212,6 +212,87 @@ export default function Monitor() {
           </div>
         </div>
 
+        {/* ★ Phase 42: 전투력 비율 분석 위젯 */}
+        <Card className="glass-card border-yellow-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Swords className="w-5 h-5 text-yellow-400" />
+              전투력 비율 분석
+            </CardTitle>
+            <CardDescription>
+              아군 vs 적군 전투력 비교 (HP 가중 공급 기준)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(() => {
+              const ourKDA = currentSession.unitsKilled && currentSession.unitsLost
+                ? (currentSession.unitsKilled / Math.max(currentSession.unitsLost, 1))
+                : 1;
+              const kdaColor = ourKDA >= 1.5 ? "text-green-400" : ourKDA >= 0.8 ? "text-yellow-400" : "text-red-400";
+              const kdaLabel = ourKDA >= 1.5 ? "우세" : ourKDA >= 0.8 ? "균형" : "열세";
+              const supply = currentSession.finalSupply || 0;
+              const killPct = currentSession.unitsKilled
+                ? Math.min(100, (currentSession.unitsKilled / Math.max(currentSession.unitsKilled + (currentSession.unitsLost || 0), 1)) * 100)
+                : 50;
+
+              return (
+                <div className="space-y-4">
+                  {/* KDA 뱃지 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">전투 효율 (KDA)</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-2xl font-bold ${kdaColor}`}>
+                        {ourKDA.toFixed(2)}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        kdaColor === "text-green-400" ? "bg-green-400/20 text-green-400" :
+                        kdaColor === "text-yellow-400" ? "bg-yellow-400/20 text-yellow-400" :
+                        "bg-red-400/20 text-red-400"
+                      }`}>{kdaLabel}</span>
+                    </div>
+                  </div>
+
+                  {/* 처치/피해 비율 바 */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>처치 비율</span>
+                      <span>{killPct.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-3 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          killPct >= 60 ? "bg-green-500" : killPct >= 40 ? "bg-yellow-500" : "bg-red-500"
+                        }`}
+                        style={{ width: `${killPct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 인구수 전투 효율 */}
+                  <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">현재 병력</p>
+                      <p className="text-lg font-bold text-purple-400">{supply}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">처치</p>
+                      <p className="text-lg font-bold text-green-400">
+                        {currentSession.unitsKilled || 0}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">손실</p>
+                      <p className="text-lg font-bold text-red-400">
+                        {currentSession.unitsLost || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
         {/* 게임 시간 */}
         {currentSession.duration && (
           <Card className="glass-card">
