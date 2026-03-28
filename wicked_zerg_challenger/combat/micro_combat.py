@@ -423,11 +423,14 @@ class MicroCombat:
         return False
 
     def _micro_baneling(self, baneling, enemy_units: Iterable, actions: List) -> bool:
-        """Baneling optimization: avoid single units, target clumps."""
+        """
+        ★ Phase 27: 바네링 자폭 최적화 ★
+        - 경장갑/밀집 타겟에 attack() (이전: move()로 이동만)
+        - 클러스터 없으면 가장 가까운 적에 돌진
+        """
         if not enemy_units:
             return False
 
-        # ★ Phase 22: Use closer_than() if available ★
         if hasattr(enemy_units, "closer_than"):
             nearby_enemies = enemy_units.closer_than(10, baneling.position)
         else:
@@ -435,20 +438,34 @@ class MicroCombat:
         if not nearby_enemies:
             return False
 
-        # 1. Prioritize structures and light units (marines/lings)
-        vital_targets = [
-            e for e in nearby_enemies 
-            if e.is_structure or e.is_light
-        ]
-        
-        if vital_targets:
-            # Find the densest cluster center
-            center = self._find_center_of_mass(vital_targets)
+        # 1. 경장갑(light) 우선 타겟 — 마린/저글링/일꾼 등
+        light_targets = [e for e in nearby_enemies if getattr(e, "is_light", False)]
+
+        if light_targets:
+            # 밀집된 경장갑 클러스터 중심으로 돌진
+            center = self._find_center_of_mass(light_targets)
             if center:
-                 actions.append(baneling.move(center))
-                 return True
-                 
-        return False
+                actions.append(baneling.attack(center))
+                return True
+            # 클러스터 실패 시 가장 가까운 경장갑 직접 공격
+            closest = min(light_targets, key=lambda e: e.distance_to(baneling))
+            actions.append(baneling.attack(closest))
+            return True
+
+        # 2. 경장갑 없으면 가장 가까운 적 돌진 (낭비 방지: 3유닛 이상일 때만)
+        if len(nearby_enemies) >= 3:
+            center = self._find_center_of_mass(list(nearby_enemies) if not isinstance(nearby_enemies, list) else nearby_enemies)
+            if center:
+                actions.append(baneling.attack(center))
+                return True
+
+        # 3. 최후 수단: 가장 가까운 적 공격
+        if hasattr(nearby_enemies, "closest_to"):
+            closest = nearby_enemies.closest_to(baneling)
+        else:
+            closest = min(nearby_enemies, key=lambda e: e.distance_to(baneling))
+        actions.append(baneling.attack(closest))
+        return True
 
     def _micro_roach(self, roach, actions: List) -> bool:
         """

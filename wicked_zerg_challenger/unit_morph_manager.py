@@ -153,8 +153,8 @@ class UnitMorphManager:
         if not baneling_nests.exists:
             return
 
-        # 저글링/베인링 수 확인
-        zerglings = self.bot.units(UnitTypeId.ZERGLING).idle
+        # ★ Phase 27: idle 제한 제거 — 전투 중 저글링도 변이 가능
+        zerglings = self.bot.units(UnitTypeId.ZERGLING)
         banelings = self.bot.units(UnitTypeId.BANELING)
 
         if not zerglings.exists:
@@ -213,7 +213,7 @@ class UnitMorphManager:
             return
 
         # 바퀴/파멸충 수 확인
-        roaches = self.bot.units(UnitTypeId.ROACH).idle
+        roaches = self.bot.units(UnitTypeId.ROACH)
         ravagers = self.bot.units(UnitTypeId.RAVAGER)
 
         if not roaches.exists:
@@ -270,7 +270,7 @@ class UnitMorphManager:
             return
 
         # 히드라/럴커 수 확인
-        hydralisks = self.bot.units(UnitTypeId.HYDRALISK).idle
+        hydralisks = self.bot.units(UnitTypeId.HYDRALISK)
         lurkers = self.bot.units(UnitTypeId.LURKERMP)
 
         if not hydralisks.exists:
