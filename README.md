@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-103-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-107-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -654,6 +654,8 @@ gantt
         자동생산 + MicroV3 + 테스트 0건 달성       :done, s12, 2026-03-28, 1d
     section Session 12 — Phase 14
         변이유닛 활성화 + 테크건물 보장 + 동적비율  :done, s13, 2026-03-28, 1d
+    section Session 13 — Phase 15
+        전투마이크로 강화 + 점진적후퇴 + 포커스파이어 :done, s14, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -878,6 +880,14 @@ graph LR
         FIX11["📊 동적 비율 연동<br/>Blackboard unit_ratios<br/>전략→변이비율 실시간 반영"]
     end
 
+    subgraph "🔧 Session 13 — Phase 15 전투 마이크로 강화"
+        direction TB
+        FIX12["💀 저체력 자동후퇴<br/>HP 30% 이하 유닛<br/>후방 이동 (전멸 방지)"]
+        FIX13["🎯 포커스파이어 개선<br/>가장 약한 적 우선 제거<br/>anti-splash 밸런스 조정"]
+        FIX14["🏹 원거리 카이팅 강화<br/>히드라 사거리 경계 카이팅<br/>쿨다운 기반 접근/후퇴"]
+        FIX15["📉 점진적 후퇴 시스템<br/>1.3x→재집결 1.5x→기지후퇴<br/>2.0x→본진 긴급후퇴"]
+    end
+
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
@@ -889,6 +899,10 @@ graph LR
     style FIX9 fill:#00cec9,color:#000
     style FIX10 fill:#fab1a0,color:#000
     style FIX11 fill:#a29bfe,color:#000
+    style FIX12 fill:#ff7675,color:#fff
+    style FIX13 fill:#74b9ff,color:#000
+    style FIX14 fill:#55efc4,color:#000
+    style FIX15 fill:#636e72,color:#fff
 ```
 
 ---

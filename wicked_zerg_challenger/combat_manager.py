@@ -970,11 +970,15 @@ class CombatManager:
                         await self.micro_combat.focus_fire(units, focus_target)
                     return
             
-            # 3. 타겟팅 시스템 없으면 기본 공격
+            # 3. ★ Phase 15: 타겟팅 시스템 없으면 가장 약한 적 집중 공격 ★
             if self.micro_combat:
-                await self.micro_combat.kiting(units, enemy_units)
+                # 체력 가장 낮은 적 찾기 (포커스 파이어 효율)
+                weak_target = self._find_weakest_enemy(enemy_units)
+                if weak_target:
+                    await self.micro_combat.focus_fire(units, weak_target)
+                else:
+                    await self.micro_combat.kiting(units, enemy_units)
             else:
-                # 마이크로 전투도 없으면 기본 공격
                 await self._basic_attack(units, enemy_units)
         
         except Exception as e:
@@ -1045,6 +1049,35 @@ class CombatManager:
             if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Formation error: {e}")
     
+    def _find_weakest_enemy(self, enemy_units):
+        """
+        ★ Phase 15-2: 가장 약한 적 우선 타겟팅 ★
+        체력 비율이 가장 낮은 전투 유닛을 반환 (일꾼/건물 제외).
+        같은 체력이면 체력 절대값이 낮은 유닛 우선.
+        """
+        if not self._has_units(enemy_units):
+            return None
+        try:
+            best = None
+            best_score = 999
+            worker_types = {"SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"}
+            for e in enemy_units:
+                if not hasattr(e, "health_percentage"):
+                    continue
+                type_name = getattr(e.type_id, "name", "")
+                if type_name in worker_types:
+                    continue
+                if e.is_structure:
+                    continue
+                # 점수 = 체력 비율 (낮을수록 우선) + 체력/1000 (같으면 약한 유닛 우선)
+                score = e.health_percentage + (e.health / 1000.0)
+                if score < best_score:
+                    best_score = score
+                    best = e
+            return best
+        except Exception:
+            return None
+
     async def _basic_attack(self, units: Units, enemy_units):
         """
         기본 공격 (에러 발생 시)
@@ -1856,52 +1889,72 @@ class CombatManager:
 
     async def _evaluate_army_retreat(self, iteration: int):
         """
-        ★ Phase 23: 군대 전력 비교 후 불리하면 후퇴 ★
+        ★ Phase 15-4: 점진적 전력 비교 후퇴 시스템 ★
 
-        조건:
-        - 전투 중인 유닛이 있고
-        - 적 전투 병력 > 아군 전투 병력 * 1.5 (50% 이상 열세)
+        3단계 후퇴:
+        - 적 > 아군 * 1.3 (30% 열세): 랠리 포인트로 점진적 후퇴
+        - 적 > 아군 * 1.5 (50% 열세): 가장 가까운 기지로 후퇴
+        - 적 > 아군 * 2.0 (100% 열세): 본진으로 긴급 후퇴
         - 승리 푸시 모드가 아닐 때
         """
         if self._victory_push_active:
-            return  # 승리 푸시 중에는 후퇴 안함
+            return
 
         try:
             enemy_units = self.bot.enemy_units
             if not enemy_units.exists:
                 return
 
-            # 아군 전투 유닛
             combat_types = {
                 UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
                 UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
                 UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK,
+                UnitTypeId.BROODLORD, UnitTypeId.INFESTOR, UnitTypeId.VIPER,
             }
             our_army = self.bot.units.filter(lambda u: u.type_id in combat_types)
             if not our_army.exists:
                 return
 
-            # 적과 교전 중인 아군 유닛 (적 15 거리 이내)
             engaged_units = our_army.filter(
                 lambda u: enemy_units.closer_than(15, u.position).amount > 0
             )
             if not engaged_units.exists:
                 return
 
-            # 전력 비교 (간단한 supply 기반)
             our_supply = sum(u.supply_cost if hasattr(u, 'supply_cost') else 1 for u in engaged_units)
             nearby_enemies = enemy_units.closer_than(20, engaged_units.center)
             enemy_supply = sum(u.supply_cost if hasattr(u, 'supply_cost') else 1 for u in nearby_enemies)
 
-            # 50% 이상 열세면 후퇴
-            if enemy_supply > our_supply * 1.5 and our_supply > 5:
-                game_time = getattr(self.bot, "time", 0)
+            if our_supply < 5:
+                return
+
+            game_time = getattr(self.bot, "time", 0)
+            ratio = enemy_supply / max(our_supply, 1)
+
+            if ratio >= 2.0:
+                # ★ 긴급 후퇴: 본진으로 (100%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
-                        f"[RETREAT] [{int(game_time)}s] Army retreating! "
-                        f"Our supply: {our_supply:.0f}, Enemy: {enemy_supply:.0f}"
+                        f"[RETREAT-EMERGENCY] [{int(game_time)}s] "
+                        f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
                     )
                 await self._retreat_to_base(engaged_units)
+            elif ratio >= 1.5:
+                # ★ 후퇴: 가장 가까운 기지로 (50%+ 열세)
+                if iteration % 220 == 0:
+                    self.logger.info(
+                        f"[RETREAT] [{int(game_time)}s] "
+                        f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
+                    )
+                await self._retreat_to_closest_base(engaged_units)
+            elif ratio >= 1.3:
+                # ★ Phase 15: 점진적 후퇴 — 랠리 포인트로 재집결 (30%+ 열세)
+                if iteration % 220 == 0:
+                    self.logger.info(
+                        f"[REGROUP] [{int(game_time)}s] "
+                        f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
+                    )
+                await self._retreat_to_rally(engaged_units)
 
         except Exception:
             pass
@@ -1910,20 +1963,52 @@ class CombatManager:
         """유닛들을 본진으로 후퇴시킵니다."""
         if not units:
             return
-
-        # 본진 위치 찾기
         main_base = None
-        if hasattr(self.bot, 'townhalls') and self.bot.townhalls:
-            main_base = self.bot.townhalls[0].position
-        elif hasattr(self.bot, 'start_location'):
+        if hasattr(self.bot, 'start_location'):
             main_base = self.bot.start_location
+        elif hasattr(self.bot, 'townhalls') and self.bot.townhalls:
+            main_base = self.bot.townhalls[0].position
 
         if main_base:
             for unit in units:
                 try:
                     self.bot.do(unit.move(main_base))
-                except (AttributeError, TypeError) as e:
-                    # Unit command failed
+                except (AttributeError, TypeError):
+                    continue
+
+    async def _retreat_to_closest_base(self, units):
+        """★ Phase 15: 가장 가까운 기지로 후퇴 ★"""
+        if not units:
+            return
+        if not hasattr(self.bot, 'townhalls') or not self.bot.townhalls.exists:
+            await self._retreat_to_base(units)
+            return
+
+        for unit in units:
+            try:
+                closest_th = self.bot.townhalls.closest_to(unit.position)
+                self.bot.do(unit.move(closest_th.position))
+            except (AttributeError, TypeError):
+                continue
+
+    async def _retreat_to_rally(self, units):
+        """★ Phase 15: 랠리 포인트로 재집결 (전면 후퇴가 아닌 재편성) ★"""
+        if not units:
+            return
+        rally = getattr(self, '_rally_point', None)
+        if not rally and hasattr(self.bot, 'townhalls') and self.bot.townhalls.exists:
+            # 랠리 포인트 없으면 자연 확장과 본진 중간 지점
+            if self.bot.townhalls.amount >= 2:
+                p1 = self.bot.townhalls[0].position
+                p2 = self.bot.townhalls[1].position
+                rally = p1.towards(p2, p1.distance_to(p2) * 0.5)
+            else:
+                rally = self.bot.townhalls[0].position
+        if rally:
+            for unit in units:
+                try:
+                    self.bot.do(unit.move(rally))
+                except (AttributeError, TypeError):
                     continue
 
     def _get_anti_air_threats(self, enemy_units, position, range_check=15):

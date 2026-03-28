@@ -209,15 +209,36 @@ class MicroCombat:
         self.chokepoint_manager = ChokePointManager(bot)
 
     def focus_fire(self, units: Iterable, target) -> None:
+        """
+        ★ Phase 15-2: 포커스 파이어 개선 ★
+        - anti-splash는 극심한 위협(거리 4 이내)에만 적용
+        - 나머지 유닛은 타겟 집중 공격
+        - 사거리 안에 있으면 무조건 공격 우선
+        """
         actions = []
         enemy_units = getattr(self.bot, "enemy_units", [])
         for unit in units:
+            # anti-splash: 극심한 위협(거리 4 이내)에만 회피
             rep_x, rep_y = self.anti_splash.repulsion_vector(unit, enemy_units)
             if rep_x or rep_y:
-                move_target = self._offset_position(unit, rep_x, rep_y)
-                if move_target:
-                    actions.append(unit.move(move_target))
-                    continue
+                # ★ Phase 15: 스플래시 위협이 매우 가까울 때만 회피 ★
+                splash_threats_close = False
+                for threat_type in self.anti_splash.extreme_threats:
+                    for e in enemy_units:
+                        if (hasattr(e, 'type_id') and e.type_id == threat_type
+                                and hasattr(e, 'distance_to')
+                                and e.distance_to(unit) < 4):
+                            splash_threats_close = True
+                            break
+                    if splash_threats_close:
+                        break
+
+                if splash_threats_close:
+                    move_target = self._offset_position(unit, rep_x, rep_y)
+                    if move_target:
+                        actions.append(unit.move(move_target))
+                        continue
+            # 타겟이 사거리 안이면 무조건 공격
             actions.append(unit.attack(target))
 
         self._issue_actions(actions)
@@ -225,10 +246,23 @@ class MicroCombat:
     def kiting(self, units: Iterable, enemy_units: Iterable) -> None:
         """
         Improved kiting logic: only kite when weapon is on cooldown.
+        ★ Phase 15: 저체력 후퇴 + 원거리 카이팅 강화 ★
         """
         actions = []
         threats = list(enemy_units) if enemy_units else []
         for unit in units:
+            # ★ Phase 15-1: 저체력 유닛 자동 후퇴 (베인링/저글링 제외) ★
+            if (unit.health_percentage < 0.3
+                    and unit.type_id not in (
+                        getattr(UnitTypeId, "BANELING", None),
+                        getattr(UnitTypeId, "ZERGLING", None),
+                    )):
+                closest = self._closest_enemy(unit, threats)
+                if closest:
+                    retreat_pos = unit.position.towards(closest.position, -5)
+                    actions.append(unit.move(retreat_pos))
+                    continue
+
             # 1. Queen Micro (Transfuse)
             if unit.type_id == getattr(UnitTypeId, "QUEEN", None):
                 if self._micro_queen(unit, units, actions):
@@ -243,12 +277,12 @@ class MicroCombat:
             if unit.type_id == getattr(UnitTypeId, "BANELING", None):
                 if self._micro_baneling(unit, threats, actions):
                     continue
-            
+
             # 3.1 Roach Micro (Burrow Heal)
             if unit.type_id == getattr(UnitTypeId, "ROACH", None):
                 if self._micro_roach(unit, actions):
                     continue
-            
+
             # 3.2 Roach Burrowed (Unburrow logic)
             if unit.type_id == getattr(UnitTypeId, "ROACHBURROWED", None):
                 if self._micro_roach_burrowed(unit, actions):
@@ -262,22 +296,32 @@ class MicroCombat:
                     actions.append(unit.move(move_target))
                     continue
 
-            # 5. Kiting Logic
+            # 5. ★ Phase 15-3: 원거리 유닛 카이팅 강화 ★
             target = self._closest_enemy(unit, threats)
             if target:
-                # 무기 쿨다운 중이고 사거리가 닿으면 후퇴 (카이팅)
-                # Kiting only if weapon is on cooldown
                 weapon_cooldown = unit.weapon_cooldown
                 ground_range = unit.ground_range
                 distance = unit.distance_to(target)
 
-                if weapon_cooldown > 0 and distance < ground_range:
-                    # Retreat while cooling down
-                    move_target = unit.position.towards(target.position, -2)
-                    actions.append(unit.move(move_target))
+                # 원거리 유닛 (사거리 5+): 사거리 경계에서 카이팅
+                if ground_range >= 5:
+                    if weapon_cooldown > 0 and distance < ground_range + 1:
+                        # 쿨다운 중 → 사거리 유지하며 후퇴
+                        move_target = unit.position.towards(target.position, -3)
+                        actions.append(unit.move(move_target))
+                    elif distance > ground_range + 2:
+                        # 사거리 밖 → 접근
+                        actions.append(unit.attack(target))
+                    else:
+                        # 사거리 안 + 공격 가능 → 공격
+                        actions.append(unit.attack(target))
                 else:
-                    # Attack if ready or out of range
-                    actions.append(unit.attack(target))
+                    # 근접/단거리 유닛: 기존 로직
+                    if weapon_cooldown > 0 and distance < ground_range:
+                        move_target = unit.position.towards(target.position, -2)
+                        actions.append(unit.move(move_target))
+                    else:
+                        actions.append(unit.attack(target))
 
         self._issue_actions(actions)
 
