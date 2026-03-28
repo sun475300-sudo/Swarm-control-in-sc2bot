@@ -139,17 +139,10 @@ class QueenManager:
             if not (hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion):
                 await self._transfuse_injured_units(queens, iteration, include_structures=under_attack)
 
-            # ★★★ IMPROVED: 점막 전담 퀸은 항상 점막 확장 (방어 중에도) ★★★
-            # Skip creep spread if CreepAutomationV2 handles it
+            # ★ Phase 26: 전투 시 크립 퀸도 방어 투입 (크립은 평시에만) ★
             _creep_v2_active = hasattr(self.bot, "creep_v2") and self.bot.creep_v2
 
             if not _creep_v2_active:
-                # Dedicated creep queens ALWAYS spread creep (even during defense)
-                creep_queens_dedicated = [q for q in queens if q.tag in self.dedicated_creep_queens]
-                if creep_queens_dedicated:
-                    await self._spread_creep(creep_queens_dedicated, iteration)
-
-                # Only non-dedicated queens affected by defense status
                 if not under_attack:
                     # Other creep queens (non-dedicated)
                     creep_queens_other = [q for q in queens if q.tag not in self.assigned_queen_tags and q.tag not in self.dedicated_creep_queens]
@@ -565,7 +558,7 @@ class QueenManager:
         inject_queens = []
         defense_queens = []
 
-        # 해처리 수에 따라 인젝트 퀸 수 결정 (최소 1명, 최대 2명)
+        # ★ Phase 26: 전투 시 인젝트 퀸만 유지, 크립퀸도 방어 투입
         hatcheries = self.bot.townhalls.ready
         num_inject_queens = min(2, max(1, len(hatcheries) // 2))
 

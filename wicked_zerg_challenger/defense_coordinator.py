@@ -209,12 +209,13 @@ class DefenseCoordinator:
             mid_rush_count = self.config.MID_RUSH_ENEMY_COUNT
             mid_rush_supply = self.config.MID_RUSH_SUPPLY
         else:
+            # ★ Phase 26: 초반 위협 임계값 하향 (3→4 유닛이면 러시)
             early_rush_time = 180
-            early_rush_count = 4
-            early_rush_supply = 4
+            early_rush_count = 3   # 이전: 4
+            early_rush_supply = 3  # 이전: 4
             mid_rush_time = 300
-            mid_rush_count = 8
-            mid_rush_supply = 8
+            mid_rush_count = 6     # 이전: 8
+            mid_rush_supply = 6    # 이전: 8
 
         if game_time < early_rush_time:
             if max_enemy_near_base >= early_rush_count or total_enemy_supply >= early_rush_supply:

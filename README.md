@@ -676,6 +676,8 @@ gantt
         멀티드롭방어 + Blackboard전파           :done, s23, 2026-03-28, 1d
     section Session 23 — Phase 25
         빌드오더재시도 + BO전환 + 초반비율     :done, s24, 2026-03-28, 1d
+    section Session 24 — Phase 26
+        포자2분 + 크립퀸방어투입 + 러시감지↓  :done, s25, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1039,6 +1041,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 26] 방어 시스템 강화**: 포자 2분 선행건설, 크립퀸 전투투입, 러시 감지 임계값 하향
 - **[Phase 25] 빌드오더 정밀화**: 스텝 재시도/스킵 시스템, Blackboard 기반 BO→자동생산 전환, 초반 비율 현실화
 - **[Phase 24] 멀티드롭 방어**: 수송선 감지→Blackboard 전파→4~6유닛 즉시 차출 대응
 - **[Phase 23] 퀸/서플라이 최적화**: 방어 중 인젝트 유지, 오버로드 동적 버퍼(4/6/8/10) 선행생산

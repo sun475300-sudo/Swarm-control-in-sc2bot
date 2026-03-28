@@ -152,8 +152,8 @@ class MultiBaseDefense:
                 await self._build_spine_at_base(status["position"], iteration)
                 return  # 한 번에 하나씩만
 
-            # 포자 촉수 건설 (3분 이후, 대공 방어)
-            if game_time >= 180 and status["spore_count"] < self.spore_per_base:
+            # ★ Phase 26: 포자 촉수 2분으로 앞당김 (이전: 3분) — DT/오라클 대비
+            if game_time >= 120 and status["spore_count"] < self.spore_per_base:
                 await self._build_spore_at_base(status["position"], iteration)
                 return
 
