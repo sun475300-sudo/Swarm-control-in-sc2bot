@@ -716,14 +716,12 @@ class BotStepIntegrator:
             blackboard.current_strategy = self.bot.aggressive_strategies.active_strategy.value
 
         # 6. 빌드 오더 완료 여부
+        # ★ Phase 25: build_order_active 기반 (빌드오더 자체가 완료 전파)
         if hasattr(self.bot, "build_order_system") and self.bot.build_order_system:
-            if hasattr(self.bot.build_order_system, "is_finished"):
-                blackboard.build_order_complete = self.bot.build_order_system.is_finished()
-            elif hasattr(self.bot.build_order_system, "finished"):
-                blackboard.build_order_complete = self.bot.build_order_system.finished
-            else:
-                # Fallback: 5분 이후면 완료로 간주
-                blackboard.build_order_complete = self.bot.time > 300.0
+            bos = self.bot.build_order_system
+            blackboard.build_order_complete = not getattr(bos, "build_order_active", True)
+        else:
+            blackboard.build_order_complete = self.bot.time > 300.0
 
     async def _build_anti_air_tech_if_needed(self):
         """★ StrategyManager의 대공 테크 건설 플래그 처리 (async) ★"""

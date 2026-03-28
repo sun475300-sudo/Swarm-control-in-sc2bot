@@ -2,6 +2,14 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 25] - 2026-03-28
+### 빌드오더 정밀화
+- 스텝 실패 자동 재시도: 50프레임 재시도 후 스킵→백그라운드 재실행
+- 연성 종료: 모든 스텝 완료 시 즉시 전환 (이전: 5분 하드컷)
+- Blackboard 기반 BO→자동생산 전환 (build_order_complete 플래그)
+- 일반 유닛 훈련 지원 추가 (Roach/Hydra 등 — 이전: Ling/Drone/Queen만)
+- 초반 유닛 비율 현실화: 빌드 불가 유닛(바네링/레바저) 제거, Queen 추가
+
 ## [Phase 24] - 2026-03-28
 ### 멀티드롭/해커 방어
 - 드롭 감지 Blackboard 전파: 수송선 접근 시 drop_detected + drop_position 즉시 공유

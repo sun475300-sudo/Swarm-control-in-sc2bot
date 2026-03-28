@@ -101,7 +101,12 @@ class BuildOrderSystem:
         }
 
         # Build Order End Time
-        self.build_order_end_time = 300.0  # 5 minutes
+        self.build_order_end_time = 300.0  # 5 minutes hard cutoff
+
+        # ★ Phase 25: 스텝 재시도 시스템 ★
+        self._step_retry_count = 0
+        self._max_retries_before_skip = 50  # ~50프레임(2초) 재시도 후 다음 스텝으로
+        self._skipped_steps: List[BuildOrderStep] = []  # 건너뛴 스텝 (나중에 재실행)
 
         # ★ Phase 22: 확장 타이밍 검증 ★
         self.expansion_timing_target = 60.0  # 1분 멀티 목표
@@ -180,20 +185,37 @@ class BuildOrderSystem:
     async def execute(self, iteration: int) -> None:
         """
         Execute build order every frame
+        ★ Phase 25: 재시도 + 스킵 + 연성 종료 개선 ★
         """
-        # Disable after 3 mins
+        # ★ Phase 25: 연성 종료 — 모든 스텝 완료 시 즉시 종료, 하드컷은 안전장치
+        if self.current_step_index >= len(self.build_steps) and not self._skipped_steps:
+            if self.build_order_active:
+                self.build_order_active = False
+                print(f"[BUILD_ORDER] All steps completed at {int(self.bot.time)}s")
+                self._publish_build_complete()
+            return
+
         if self.bot.time > self.build_order_end_time:
             if self.build_order_active:
                 self.build_order_active = False
-                print(f"[BUILD_ORDER] Build Order Steps Completed (Game Time: {int(self.bot.time)}s)")
+                skipped = len(self._skipped_steps)
+                msg = f"[BUILD_ORDER] Time limit at {int(self.bot.time)}s"
+                if skipped > 0:
+                    msg += f" ({skipped} steps skipped)"
+                print(msg)
+                self._publish_build_complete()
             return
 
         if not self.enabled or not self.build_order_active:
             return
 
+        # ★ Phase 25: 건너뛴 스텝 재시도 (매 16프레임)
+        if iteration % 16 == 0 and self._skipped_steps:
+            await self._retry_skipped_steps()
+
         # Check current supply
         current_supply = int(self.bot.supply_used)
- 
+
         # Check next step
         if self.current_step_index >= len(self.build_steps):
             return
@@ -209,10 +231,19 @@ class BuildOrderSystem:
                 # Record timing
                 self.step_timings[current_step.supply] = self.bot.time
                 print(f"[BUILD_ORDER] [OK] {current_step.supply} Supply: {current_step.description} (Timing: {int(self.bot.time)}s)")
- 
+
                 # Next step
                 current_step.completed = True
                 self.current_step_index += 1
+                self._step_retry_count = 0
+            else:
+                # ★ Phase 25: 재시도 카운터 — 일정 횟수 실패 시 스킵 후 다음 스텝
+                self._step_retry_count += 1
+                if self._step_retry_count >= self._max_retries_before_skip:
+                    print(f"[BUILD_ORDER] [SKIP] {current_step.supply} Supply: {current_step.description} (retried {self._step_retry_count}x)")
+                    self._skipped_steps.append(current_step)
+                    self.current_step_index += 1
+                    self._step_retry_count = 0
 
     async def _execute_step(self, step: BuildOrderStep) -> bool:
         """Execute Build Order Step"""
@@ -365,6 +396,13 @@ class BuildOrderSystem:
                 self.bot.do(larva.train(UnitTypeId.DRONE))
                 return True
 
+        # ★ Phase 25: 일반 라바 유닛 (Roach, Hydra 등) ★
+        else:
+            if self.bot.larva:
+                larva = self.bot.larva.first
+                self.bot.do(larva.train(unit_type))
+                return True
+
         return False
 
     async def _expand(self, structure_type: UnitTypeId) -> bool:
@@ -419,6 +457,27 @@ class BuildOrderSystem:
                     return True
 
         return False
+
+    async def _retry_skipped_steps(self):
+        """★ Phase 25: 건너뛴 스텝 재시도 ★"""
+        still_skipped = []
+        for step in self._skipped_steps:
+            if step.completed:
+                continue
+            success = await self._execute_step(step)
+            if success:
+                step.completed = True
+                print(f"[BUILD_ORDER] [RETRY OK] {step.supply} Supply: {step.description}")
+            else:
+                still_skipped.append(step)
+        self._skipped_steps = still_skipped
+
+    def _publish_build_complete(self):
+        """★ Phase 25: 빌드오더 완료를 Blackboard에 전파 ★"""
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard and hasattr(blackboard, "set"):
+            blackboard.set("build_order_complete", True)
+            blackboard.set("build_order_type", self.current_build_order.value)
 
     def _verify_expansion_timing(self):
         """★ Phase 22: 확장 타이밍 검증 ★"""

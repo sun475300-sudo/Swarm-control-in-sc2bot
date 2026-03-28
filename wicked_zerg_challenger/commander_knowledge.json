@@ -552,9 +552,9 @@
   "unit_ratios": {
     "Terran": {
       "early": {
-        "ZERGLING": 0.3,
-        "ROACH": 0.4,
-        "BANELING": 0.3
+        "ZERGLING": 0.55,
+        "ROACH": 0.35,
+        "QUEEN": 0.10
       },
       "mid": {
         "ZERGLING": 0.2,
@@ -574,10 +574,9 @@
     },
     "Protoss": {
       "early": {
-        "ZERGLING": 0.10,
-        "ROACH": 0.60,
-        "RAVAGER": 0.20,
-        "QUEEN": 0.10
+        "ZERGLING": 0.15,
+        "ROACH": 0.70,
+        "QUEEN": 0.15
       },
       "mid": {
         "ROACH": 0.30,
@@ -596,8 +595,9 @@
     },
     "Zerg": {
       "early": {
-        "ZERGLING": 0.5,
-        "BANELING": 0.5
+        "ZERGLING": 0.70,
+        "ROACH": 0.20,
+        "QUEEN": 0.10
       },
       "mid": {
         "ZERGLING": 0.3,

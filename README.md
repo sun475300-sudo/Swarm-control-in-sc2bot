@@ -674,6 +674,8 @@ gantt
         퀸인젝트우선 + 오버로드선행생산          :done, s22, 2026-03-28, 1d
     section Session 22 — Phase 24
         멀티드롭방어 + Blackboard전파           :done, s23, 2026-03-28, 1d
+    section Session 23 — Phase 25
+        빌드오더재시도 + BO전환 + 초반비율     :done, s24, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1037,6 +1039,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 25] 빌드오더 정밀화**: 스텝 재시도/스킵 시스템, Blackboard 기반 BO→자동생산 전환, 초반 비율 현실화
 - **[Phase 24] 멀티드롭 방어**: 수송선 감지→Blackboard 전파→4~6유닛 즉시 차출 대응
 - **[Phase 23] 퀸/서플라이 최적화**: 방어 중 인젝트 유지, 오버로드 동적 버퍼(4/6/8/10) 선행생산
 - **[Phase 22] Dead Code 일괄 활성화**: 36개 미활성 매니저 발견, 10대 핵심(크립/주술/오버로드 등) 활성화

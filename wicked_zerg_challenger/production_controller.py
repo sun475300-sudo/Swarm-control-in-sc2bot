@@ -271,8 +271,11 @@ class ProductionController:
         빌드오더 종료 후(5분+), 라바가 있고 자원이 있으면
         현재 비율에 맞춰 부족한 유닛을 자동 생산합니다.
         """
-        # 5분 이전에는 빌드오더가 관리
-        if self.bot.time < 300:
+        # ★ Phase 25: Blackboard 기반 전환 (빌드오더 완료 전이면 대기)
+        bo_complete = True  # 기본값: 빌드오더 없으면 항상 생산
+        if self.blackboard:
+            bo_complete = getattr(self.blackboard, "build_order_complete", self.bot.time >= 300)
+        if not bo_complete:
             return
 
         # 라바 확인
