@@ -2,6 +2,11 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 37] - 2026-03-28
+### 후반 유닛 전환 최적화
+- GREATERSPIRE 후 뮤탈/코럽터 생산 수정: SPIRE→GREATERSPIRE 변이 후 생산 차단 해제
+- VIPER tech 요구사항 추가: HIVE 필요 조건 (이전: 없어서 Hive 없이 생산 시도)
+
 ## [Phase 36] - 2026-03-28
 ### 퀸 매크로 강화
 - 방어 탐지 거리 하향: 30/25 → 20/18 타일 (이전: 30타일 밖 적에도 인젝트 포기)

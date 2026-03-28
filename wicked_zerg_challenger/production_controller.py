@@ -316,13 +316,16 @@ class ProductionController:
         }
 
         # 건물 요구사항 매핑
+        # ★ Phase 37: GREATERSPIRE 추가 (SPIRE → GREATERSPIRE 변이 후 뮤탈/코럽터 생산 불가 수정)
+        # ★ Phase 37: VIPER → HIVE 요구사항 추가 (이전: 없어서 Hive 없이 생산 시도)
         tech_requirements = {
             UnitTypeId.ROACH: UnitTypeId.ROACHWARREN,
             UnitTypeId.HYDRALISK: UnitTypeId.HYDRALISKDEN,
-            UnitTypeId.MUTALISK: UnitTypeId.SPIRE,
-            UnitTypeId.CORRUPTOR: UnitTypeId.SPIRE,
+            UnitTypeId.MUTALISK: UnitTypeId.SPIRE,       # GREATERSPIRE도 허용 (아래 별도 체크)
+            UnitTypeId.CORRUPTOR: UnitTypeId.SPIRE,      # GREATERSPIRE도 허용 (아래 별도 체크)
             UnitTypeId.INFESTOR: UnitTypeId.INFESTATIONPIT,
             UnitTypeId.ULTRALISK: UnitTypeId.ULTRALISKCAVERN,
+            UnitTypeId.VIPER: UnitTypeId.HIVE,           # ★ Phase 37: Viper requires Hive
         }
 
         # 현재 유닛 수 계산
@@ -356,7 +359,11 @@ class ProductionController:
             # 테크 건물 확인
             if uid in tech_requirements:
                 req_building = tech_requirements[uid]
-                if not self.bot.structures(req_building).ready.exists:
+                has_building = self.bot.structures(req_building).ready.exists
+                # ★ Phase 37: SPIRE 요구 유닛은 GREATERSPIRE도 허용 (변이 후 생산 차단 수정)
+                if not has_building and req_building == UnitTypeId.SPIRE:
+                    has_building = self.bot.structures(UnitTypeId.GREATERSPIRE).ready.exists
+                if not has_building:
                     continue
 
             # 바네링/럴커는 변이 유닛이라 라바에서 직접 생산 불가

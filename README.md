@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-321%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-166-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-168-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -694,6 +694,8 @@ gantt
         통합검증 + 321테스트 + 아레나패키지재생성   :done, s32, 2026-03-28, 1d
     section Session 32 — Phase 36
         퀸탐지거리하향 + 0마리강제생산 + print제거  :done, s33, 2026-03-28, 1d
+    section Session 33 — Phase 37
+        GREATERSPIRE뮤탈허용 + VIPER-HIVE요구사항  :done, s34, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1057,6 +1059,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 37] 후반 유닛 전환 최적화**: GreaterSpire 후 뮤탈/코럽터 허용, Viper-Hive 요구사항 추가
 - **[Phase 36] 퀸 매크로 강화**: 방어탐지거리 30→20, 퀸 0마리 시 강제생산, print스팸 제거
 - **[Phase 35] 통합 검증 + 아레나 패키지**: 구문 검증 OK, 321 테스트 통과, 아레나 ZIP 재생성 (491 files, 15.2 MB)
 - **[Phase 34] 실전 메타 대응**: ZvZ 저글링시간제한 제거, 헬리온 5분까지, hydra 키오타 수정(321 pass), 추적자 카운터 추가
