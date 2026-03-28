@@ -1232,6 +1232,21 @@ class CombatManager:
                     await self._gather_at_rally_point(army_units, iteration)
                 return
 
+            # ★ Phase 30: 사전 전투력 비교 — 적보다 압도적으로 약하면 공격 자제
+            visible_enemy_supply = sum(
+                getattr(e, "supply_cost", 1) for e in self.bot.enemy_units
+                if hasattr(e, "can_attack") and e.can_attack
+            )
+            if visible_enemy_supply > 0 and army_supply < visible_enemy_supply * 0.6:
+                # 적의 60% 미만이면 공격하지 않음 (재집결)
+                if self._rally_point:
+                    await self._gather_at_rally_point(army_units, iteration)
+                if iteration % 220 == 0:
+                    self.logger.info(
+                        f"[{int(game_time)}s] HOLD: army {army_supply:.0f} < enemy {visible_enemy_supply:.0f}*0.6"
+                    )
+                return
+
             # 공격 타겟 찾기
             attack_targets = self._find_multiple_attack_targets()
 

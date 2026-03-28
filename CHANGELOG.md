@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 30] - 2026-03-28
+### 공격 판단 고도화
+- 사전 전투력 비교: 적 가시 병력의 60% 미만이면 공격 자제 (전멸 방지)
+- 열세 시 랠리포인트 재집결 + 로그 출력
+- 기존 3단계 후퇴(1.3x/1.5x/2.0x)와 시너지 — 공격 전+전투 중 모두 체크
+
 ## [Phase 29] - 2026-03-28
 ### 매니저 충돌 해소
 - defense_coordinator 방어 태그 Blackboard 전파 (이전: 미전파 → combat_manager와 충돌)
