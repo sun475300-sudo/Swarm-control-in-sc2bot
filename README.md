@@ -35,7 +35,7 @@
 
 ## System Architecture — Full Stack
 
-```mermaid
+mermaid
 graph TB
     subgraph "🖥️ Edge Device — Simulation Server"
         SC2[("⚙️ StarCraft II<br/>Game Engine")]
@@ -83,13 +83,13 @@ graph TB
     style APP fill:#16213e,stroke:#0f3460,color:#fff
     style INTEL fill:#533483,stroke:#fff,color:#fff
     style MICRO fill:#b71540,stroke:#fff,color:#fff
-```
+
 
 ---
 
 ## Sim-to-Real Mapping
 
-```mermaid
+mermaid
 graph LR
     subgraph "🎮 StarCraft II — Virtual"
         A1["🌫️ Fog of War"]
@@ -128,7 +128,7 @@ graph LR
     style B4 fill:#e94560,color:#fff
     style B5 fill:#e94560,color:#fff
     style B6 fill:#e94560,color:#fff
-```
+
 
 ---
 
@@ -136,7 +136,7 @@ graph LR
 
 ### 1) Swarm Reinforcement Learning
 
-```mermaid
+mermaid
 graph LR
     STATE["📊 15-D State Vector<br/>전투력 · 적군 · 테크 · 확장"]
     POLICY["🧠 RL Policy Network<br/>Epsilon-Greedy + LR Schedule"]
@@ -156,7 +156,7 @@ graph LR
     style DEF fill:#0984e3,color:#fff
     style EXP fill:#fdcb6e,color:#000
     style TECH fill:#a29bfe,color:#fff
-```
+
 
 | 항목 | 세부 사항 |
 |------|----------|
