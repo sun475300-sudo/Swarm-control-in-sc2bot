@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 36] - 2026-03-28
+### 퀸 매크로 강화
+- 방어 탐지 거리 하향: 30/25 → 20/18 타일 (이전: 30타일 밖 적에도 인젝트 포기)
+- 퀸 0마리 위기 시 강제 생산: 모든 해처리 busy여도 즉시 생산 (이전: 영구 미생산)
+- print 스팸 제거: [QUEEN_DEBUG]/[QUEEN] 매 30초/매 배정 print → logger.debug
+
 ## [Phase 35] - 2026-03-28
 ### 통합 검증 + 아레나 패키지
 - Phase 31~34 모든 변경 파일 구문 검증 완료 (syntax OK)

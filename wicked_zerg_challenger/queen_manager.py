@@ -241,11 +241,15 @@ class QueenManager:
             if len(queens) + pending >= desired:
                 break
 
-            # Check if hatchery is idle
-            if hasattr(hatch, "is_idle") and not hatch.is_idle:
-                continue
-            if hasattr(hatch, "noqueue") and not hatch.noqueue:
-                continue
+            # ★ Phase 36: 퀸 0마리 위기 시 non-idle 해처리에서도 강제 생산
+            # (이전: 모든 해처리 busy면 퀸 영구 미생산)
+            queen_critical = len(queens) + pending == 0
+            if not queen_critical:
+                # Check if hatchery is idle
+                if hasattr(hatch, "is_idle") and not hatch.is_idle:
+                    continue
+                if hasattr(hatch, "noqueue") and not hatch.noqueue:
+                    continue
 
             # Queens cost minerals only - no gas check needed
             if self.bot.minerals < 150:
@@ -350,10 +354,10 @@ class QueenManager:
         # Assign dedicated creep queens - FORCE at least 1 creep queen
         unassigned = [q for q in queens if q.tag not in assigned_queens]
 
-        # DEBUG
+        # ★ Phase 36: print 스팸 제거 → logger.debug (이전: 30초마다 강제 print)
         game_time = getattr(self.bot, "time", 0)
-        if int(game_time) % 30 == 0:  # 30초마다 로그
-            print(f"[QUEEN_DEBUG] Queens: {len(queens)}, Assigned: {len(assigned_queens)}, Unassigned: {len(unassigned)}")
+        if int(game_time) % 60 == 0:
+            logger.debug(f"[QUEEN] Queens:{len(queens)} Assigned:{len(assigned_queens)} Unassigned:{len(unassigned)}")
 
         # ★ 퀸이 3마리 이상이면 최소 1명은 무조건 점막 전담 ★
         if len(queens) >= 3:
@@ -402,7 +406,8 @@ class QueenManager:
             for queen in unassigned_sorted[:target_creep_queens]:
                 self.dedicated_creep_queens.add(queen.tag)
                 assigned_queens.add(queen.tag)
-                print(f"[QUEEN] Assigned creep queen: {queen.tag}")
+                # ★ Phase 36: print 제거 (매 배정마다 로그 스팸 방지)
+                logger.debug(f"[QUEEN] Assigned creep queen: {queen.tag}")
 
         self.assigned_queen_tags = assigned_queens
 
@@ -491,8 +496,8 @@ class QueenManager:
         game_time = getattr(self.bot, "time", 0)
 
         for th in self.bot.townhalls:
-            # Dynamic detection range based on game time
-            detection_range = 30 if game_time < 180 else 25
+            # ★ Phase 36: 탐지 거리 하향 — 30/25 → 20/18 (이전: 30 타일 밖 적에 퀸 인젝트 포기)
+            detection_range = 20 if game_time < 180 else 18
 
             nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < detection_range]
             if nearby_enemies:
