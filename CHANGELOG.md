@@ -2,6 +2,14 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 34] - 2026-03-28
+### 실전 메타 대응
+- ZvZ 저글링 카운터 시간 제한 제거: game_time<300 삭제 → 5분 이후에도 10마리+ 저글링 대응
+- ZvT 헬리온 카운터 시간 연장: 4분→5분 (4:30~5분 헬리온 러시 무반응 수정)
+- ZvZ/ZvP "hydralisk" 키 오타 수정 → "hydra" (내부 비율 딕셔너리 키 통일, 히드라 전혀 생산 안 되던 버그)
+- ZvP 추적자(Stalker) 카운터 추가: 4기+ 시 저글링 포위+바퀴 돌진+담즙 (이전: stalker_count 읽고 미사용)
+- 테스트 통과: 321 passed (이전 320 — ZvZ 뮤탈리스크 테스트 자동 해결)
+
 ## [Phase 33] - 2026-03-28
 ### 정찰/오버로드 강화
 - 정찰 오버로드 재파견: 사망 시 overlord_scout_sent 리셋 → 즉시 새 오버로드 재파견 (이전: 사망 후 정찰 영구 중단)

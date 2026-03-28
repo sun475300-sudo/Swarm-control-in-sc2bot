@@ -933,7 +933,8 @@ class StrategyManager:
                 self.logger.info(f"[{int(game_time)}s] ★ ZvT AIR DETECTED → Hydra+Corruptor+Spore ★")
 
         # 헬리온 러시 (초반): 퀸 + 바퀴
-        if hellion_count >= 3 and game_time < 240:
+        # ★ Phase 34: 4분→5분으로 확장 (4:30~5분 헬리온 러시 대응)
+        if hellion_count >= 3 and game_time < 300:
             self._adjust_unit_ratio("queen", 0.20)
             self._adjust_unit_ratio("roach", 0.40)
             self._adjust_unit_ratio("zergling", 0.30)
@@ -1060,6 +1061,16 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.4)
             self._adjust_unit_ratio("ravager", 0.3)  # 담즙으로 폭풍 지역 회피
 
+        # ★ Phase 34: 추적자(Stalker) 4+ → 저글링 포위 + 바퀴 돌진 (이전: stalker_count 수집만 하고 미사용)
+        if stalker_count >= 4:
+            if not getattr(self, "_zvp_stalker_logged", False):
+                self._zvp_stalker_logged = True
+                self.logger.info(f"[{int(game_time)}s] ★ ZvP STALKER ARMY — Zergling surround + Roach ★")
+            self._adjust_unit_ratio("zergling", 0.35)  # 포위
+            self._adjust_unit_ratio("roach", 0.30)     # 정면 탱킹
+            self._adjust_unit_ratio("ravager", 0.20)   # 담즙으로 추격 저지
+            self._adjust_unit_ratio("baneling", 0.15)  # 집결 시 광역
+
     def _apply_safe_fallback_ratios(self) -> None:
         """
         ★ Phase 12: 정찰 실패 시 종족별 안전 폴백 빌드 ★
@@ -1140,7 +1151,8 @@ class StrategyManager:
         ravager_count = comp.get("RAVAGER", 0)
 
         # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
-        if zergling_count >= 10 and game_time < 300:
+        # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
+        if zergling_count >= 10:
             self._adjust_unit_ratio("roach", 0.4)
             self._adjust_unit_ratio("baneling", 0.3)
             self._adjust_unit_ratio("zergling", 0.2)
@@ -1158,7 +1170,8 @@ class StrategyManager:
 
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
-            self._adjust_unit_ratio("hydralisk", 0.5)
+            # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
+            self._adjust_unit_ratio("hydra", 0.5)
             self.emergency_spore_requested = True
             if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
                 self._last_zvz_muta_log = game_time
@@ -1169,7 +1182,8 @@ class StrategyManager:
             if roach_count >= 5 or hydra_count >= 5:
                 # 로치/히드라 미러 → 럴커가 결정적
                 self._adjust_unit_ratio("lurker", 0.20)
-                self._adjust_unit_ratio("hydralisk", 0.30)
+                # ★ Phase 34: "hydralisk" 오타 수정 → "hydra"
+                self._adjust_unit_ratio("hydra", 0.30)
                 self._adjust_unit_ratio("roach", 0.25)
                 self._adjust_unit_ratio("ravager", 0.15)
                 self._adjust_unit_ratio("zergling", 0.10)
