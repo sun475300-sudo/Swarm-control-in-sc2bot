@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-321%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-170-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-173-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -698,6 +698,8 @@ gantt
         GREATERSPIRE뮤탈허용 + VIPER-HIVE요구사항  :done, s34, 2026-03-28, 1d
     section Session 34 — Phase 38
         전투중유닛후퇴방지 + 랠리기준최근접기지   :done, s35, 2026-03-28, 1d
+    section Session 35 — Phase 39
+        가스일꾼필터버그 + 초반가스보호 + boost동시채우기   :done, s36, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1030,6 +1032,16 @@ graph LR
     style FIX36 fill:#d63031,color:#fff
     style FIX37 fill:#e17055,color:#fff
     style FIX38 fill:#636e72,color:#fff
+
+    subgraph "🔧 Session 35 — Phase 39 경제 고도화"
+        direction TB
+        FIX39["⛽ 가스 일꾼 필터 수정<br/>order_target 단독→<br/>is_carrying_vespene 병행"]
+        FIX40["🛡️ 초반 가스 감소 보호<br/>3분 이내 gas cut 금지<br/>테크 건물 가스 고갈 방지"]
+        FIX41["🔄 boost 동시 채우기<br/>첫 익스트랙터만→<br/>모든 부족 익스트랙터 동시"]
+    end
+    style FIX39 fill:#00b894,color:#fff
+    style FIX40 fill:#0984e3,color:#fff
+    style FIX41 fill:#fdcb6e,color:#000
 ```
 
 ---
@@ -1061,6 +1073,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 39] 경제 고도화**: 가스 일꾼 필터 버그(익스트랙터 내부 일꾼 누락) 수정, 초반 3분 가스 감소 보호, _boost_gas_workers 조기종료 제거
 - **[Phase 38] 전투 집결 시스템**: 전투중 유닛 후퇴 방지(적 12타일 내), 랠리 기준 최전선 기지로 동적 변경
 - **[Phase 37] 후반 유닛 전환 최적화**: GreaterSpire 후 뮤탈/코럽터 허용, Viper-Hive 요구사항 추가
 - **[Phase 36] 퀸 매크로 강화**: 방어탐지거리 30→20, 퀸 0마리 시 강제생산, print스팸 제거
@@ -1088,13 +1101,113 @@ graph LR
 - **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
 - **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
 - **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
-### Test Report (2026-03-28, Phase 35 완료 시점)
+### Test Report (2026-03-28, Phase 39 완료 시점)
 
 ```
 Python 3.10.11 | pytest 9.0.2 | Windows 11
 ============================================
 Total: 329 collected | 321 passed | 1 failed | 7 skipped
 ============================================
+```
+
+### Phase 진행 대시보드 (Phase 12 → 39)
+
+```
+Phase  카테고리         핵심 개선                              상태
+─────────────────────────────────────────────────────────────────
+P12    전투/디컨플릭트   방어-공격 유닛태그 분리 + Hive 가속    ✅ DONE
+P13    자동생산/마이크로 비율기반 자동생산 + MicroV3 활성화    ✅ DONE
+P14    변이 유닛        바네링/레바저/럴커/브루드 4종 활성화    ✅ DONE
+P15    전투 마이크로    저HP 후퇴 3단계 + 포커스파이어         ✅ DONE
+P16    경제 최적화      66드론 컷 + 가스뱅킹 300 임계값        ✅ DONE
+P17    정찰/대응        카운터빌드 0.1 + 치즈 긴급 Blackboard   ✅ DONE
+P18    맵 컨트롤        크립 위 교전 유도 + 전진 스파인         ✅ DONE
+P19    후반 전환        HiveTechMaximizer + 울트라 20% 비율     ✅ DONE
+P20    공격 타이밍      점진적 임계값 + 적 약점 타이밍 러시     ✅ DONE
+P21    종족별 대응      ZvT/ZvP/ZvZ 특화 카운터 전략 추가      ✅ DONE
+P22    Dead Code 제거   36개 미활성 매니저 중 10개 핵심 활성화  ✅ DONE
+P23    퀸/서플라이      방어 중 인젝트 + 오버로드 동적 버퍼     ✅ DONE
+P24    드롭 방어        수송선 감지→Blackboard→차출 대응        ✅ DONE
+P25    빌드오더         스텝 재시도 + Blackboard BO 전환        ✅ DONE
+P26    방어 강화        포자 2분 선행 + 크립퀸 전투투입         ✅ DONE
+P27    유닛 컨트롤      바네링 attack() + 변이 idle 제한 해제   ✅ DONE
+P28    확장 밸런스      3rd 3분30초 / 4th 5분 / 5th 7분 타이밍  ✅ DONE
+P29    매니저 충돌      방어 태그 Blackboard 전파/해제          ✅ DONE
+P30    공격 판단        사전 전투력 비교 60% 미만 공격 자제     ✅ DONE
+P31    테크 트리        레어 3분 + Hive idle 해제 + Cavern 자동  ✅ DONE
+P32    하라스 AI        방어 약한 기지 타겟 + 뮤탈 후퇴 수정    ✅ DONE
+P33    정찰/오버로드    OL 사망 재파견 + 재정찰 attack()        ✅ DONE
+P34    실전 메타        hydra 키오타 수정(321 pass) + 추적자 카운터 ✅ DONE
+P35    통합 검증        321 passed / 아레나 패키지 재생성       ✅ DONE
+P36    퀸 매크로        탐지거리 30→20 + 0마리 강제생산         ✅ DONE
+P37    후반 유닛        GreaterSpire 뮤탈허용 + Viper-Hive 요건  ✅ DONE
+P38    랠리/집결        전투중 후퇴방지 + 최전선 기지 기준       ✅ DONE
+P39    경제 고도화      가스 필터버그 + 초반보호 + boost 수정    ✅ DONE
+─────────────────────────────────────────────────────────────────
+총 완료: 28개 Phase  |  수정 버그: 173개  |  테스트: 321 통과
+```
+
+### 경제 시스템 상태 머신 (Phase 39 완성)
+
+```mermaid
+stateDiagram-v2
+    [*] --> EarlyGame : 게임 시작
+
+    state EarlyGame {
+        [*] --> DronePump : 0~3분
+        DronePump --> FirstGas : 1분15초~1분30초<br/>종족별 가스 타이밍
+        FirstGas --> SecondGas : 2분 2번째 가스
+        SecondGas --> TechBuild : 테크 건물 건설
+        note right of DronePump
+            ★ Phase 39
+            3분 이내 가스 감소 금지
+            (테크 가스 보호)
+        end note
+    }
+
+    EarlyGame --> MidGame : 3분 이후
+
+    state MidGame {
+        [*] --> GasBalance : 가스/미네랄 균형
+        GasBalance --> BoostGas : gas<100 AND mineral>500<br/>가스 일꾼 추가
+        GasBalance --> ReduceGas : gas>500 AND mineral<300<br/>★ Phase 39: 3분+ 이후만
+        BoostGas --> GasBalance : ★ Phase 39<br/>모든 익스트랙터 동시 채우기
+        ReduceGas --> GasBalance : ★ Phase 39<br/>vespene carrier 포착 수정
+        GasBalance --> DroneExpand : 기지당 16드론 목표
+        DroneExpand --> MacroHatch : 미네랄 600+/라바 부족<br/>매크로 해처리 건설
+    }
+
+    MidGame --> LateGame : 8분 이후
+
+    state LateGame {
+        [*] --> HiveTech : Hive 변이
+        HiveTech --> UltraViper : 울트라리스크/바이퍼<br/>후반 전환
+        UltraViper --> ResourceMax : 미네랄 1500+<br/>저글링 스팸 소비
+        ResourceMax --> UltraViper : 순환
+    }
+
+    LateGame --> [*] : 게임 종료
+```
+
+### 가스 일꾼 동적 조정 흐름 (Phase 39 수정)
+
+```mermaid
+flowchart TD
+    A[매 iteration 체크] --> B{game_time < 180?}
+    B -- 예 초반 3분 --> C[가스 감소 금지\n★ Phase 39 보호]
+    B -- 아니오 --> D{gas < 100\nAND mineral > 500?}
+    D -- 예 --> E[_boost_gas_workers]
+    E --> F[익스트랙터 순회\n★ Phase 39: return 제거\n모든 부족 익스트랙터 채우기]
+    D -- 아니오 --> G{gas > 500\nAND mineral < 300?}
+    G -- 예 --> H[_reduce_gas_workers]
+    H --> I[★ Phase 39 필터 수정\norder_target OR\nis_carrying_vespene\n+ 거리 12 이내]
+    G -- 아니오 --> J{gas > 1000?}
+    J -- 예 --> H
+    J -- 아니오 --> K[유지]
+
+    style C fill:#e17055,color:#fff
+    style F fill:#00b894,color:#fff
+    style I fill:#0984e3,color:#fff
 ```
 
 | Test File | Tests | Status |

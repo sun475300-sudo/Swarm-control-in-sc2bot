@@ -2684,9 +2684,11 @@ class EconomyManager:
             await self._boost_gas_workers()
 
         # 2. 가스가 넘치고 미네랄이 부족하면 가스 일꾼 감소
+        # ★ Phase 39: 초반 3분은 가스 감소 금지 — 테크 건물 건설 중
         # ★ 임계값 하향: 1500 → 500 (가스 뱅킹 방지)
         elif gas > 500 and minerals < 300:
-            await self._reduce_gas_workers()
+            if getattr(self.bot, "time", 0) >= 180:
+                await self._reduce_gas_workers()
 
         # 3. 가스가 극심하게 넘치면 (1000+) 미네랄 상태와 무관하게 감소
         elif gas > 1000:
@@ -2709,8 +2711,9 @@ class EconomyManager:
                 if workers:
                     worker = workers.first
                     self.bot.do(worker.gather(extractor))
+                    # ★ Phase 39: return 제거 — 모든 부족한 익스트랙터 채우기
+                    # (이전: 첫 번째 익스트랙터만 보충 후 종료)
                     self.logger.info(f"[ECONOMY] Boosting gas workers (Gas: {self.bot.vespene})")
-                    return
 
     async def _reduce_gas_workers(self):
         """가스 일꾼 감소 (가스 일꾼 → 미네랄 일꾼)
@@ -2738,9 +2741,11 @@ class EconomyManager:
 
         for extractor in extractors:
             if extractor.assigned_harvesters > min_workers:
-                # 가스 일꾼을 미네랄로 이동
+                # ★ Phase 39: order_target 단독 필터는 extractor 내부 일꾼을 놓침
+                # — is_carrying_vespene OR order_target 두 경우 모두 포착
                 workers = self.bot.workers.filter(
-                    lambda w: w.is_gathering and w.order_target == extractor.tag
+                    lambda w: (w.order_target == extractor.tag or w.is_carrying_vespene)
+                    and w.distance_to(extractor) < 12
                 )
 
                 if workers:

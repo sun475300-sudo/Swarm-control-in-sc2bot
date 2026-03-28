@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 39] - 2026-03-28
+### 경제 고도화 — 가스/드론 생산 버그 수정
+- `_reduce_gas_workers` 필터 버그 수정: `order_target == extractor.tag` 단독 필터는 익스트랙터 내부 일꾼을 놓침 → `is_carrying_vespene OR order_target` + 거리 12 이내로 확장
+- 초반 가스 감소 보호: 게임 시작 3분 이내에는 가스 일꾼 감소 금지 (이전: gas>500/mineral<300 조건 충족 시 즉시 감소 → 초반 테크 건물 건설 중 가스 고갈)
+- `_boost_gas_workers` 조기 종료 제거: 첫 번째 익스트랙터 보충 후 `return` 삭제 → 모든 부족한 익스트랙터 동시 채우기 (이전: 익스트랙터 1개만 보충)
+
 ## [Phase 38] - 2026-03-28
 ### 전투 집결 시스템 개선
 - 전투 중 유닛 강제 후퇴 방지: 근처에 적 있으면 랠리 이동 명령 생략 (이전: 20타일 밖이면 전투 중에도 후퇴)
