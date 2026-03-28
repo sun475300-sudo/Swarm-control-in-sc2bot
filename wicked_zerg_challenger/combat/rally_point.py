@@ -47,8 +47,8 @@ class RallyPointManager:
         self._rally_update_interval = 30  # Update every 30 seconds
 
         # Attack thresholds
-        self._min_army_for_attack = 6  # Minimum army size for attack
-        self._early_game_min_attack = 3  # Early game threshold
+        self._min_army_for_attack = 20  # ★ FIX: 6→20 (자살 공격 방지)
+        self._early_game_min_attack = 12  # ★ FIX: 3→12 (최소 24 저글링급)
 
     @property
     def rally_point(self) -> Optional['Point2']:

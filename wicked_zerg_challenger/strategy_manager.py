@@ -589,8 +589,8 @@ class StrategyManager:
         """방어 모드 종료 시 공격 임계값 복원"""
         combat = getattr(self.bot, "combat_manager", None)
         if combat and getattr(combat, "_min_army_for_attack", 0) >= 999:
-            combat._min_army_for_attack = 15
-            self.logger.info("Attack threshold reset to 15 (defense mode ended)")
+            combat._min_army_for_attack = 20
+            self.logger.info("Attack threshold reset to 20 (defense mode ended)")
 
     def _update_counter_build(self) -> None:
         """

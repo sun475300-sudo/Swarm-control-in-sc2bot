@@ -11,9 +11,9 @@
 [![SC2 API](https://img.shields.io/badge/StarCraft%20II-burnysc2-FF6600?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PHRleHQgeT0iMjAiIGZvbnQtc2l6ZT0iMjAiPvCfjq48L3RleHQ+PC9zdmc+)](https://github.com/BurnySc2/python-sc2)
 [![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
-[![Files](https://img.shields.io/badge/Python%20Files-362-success)]()
-[![Tests](https://img.shields.io/badge/Tests-404%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-93-critical)]()
+[![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
+[![Tests](https://img.shields.io/badge/Tests-314%20Passing-brightgreen)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-96-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -390,11 +390,11 @@ pie title 적 빌드 패턴 감지 분류
 
 ---
 
-## Module Structure — 362 Python Files
+## Module Structure — 541 Python Files
 
 ```mermaid
 graph TB
-    subgraph "📦 wicked_zerg_challenger/ — 362 Python Files"
+    subgraph "📦 wicked_zerg_challenger/ — 541 Python Files"
         MAIN["🤖 wicked_zerg_bot_pro_impl.py<br/><i>메인 봇 엔진</i>"]
         STEP["🔄 bot_step_integration.py<br/><i>on_step 통합 루프</i>"]
 
@@ -428,7 +428,7 @@ graph TB
         end
 
         subgraph "🧪 Tests"
-            TST["tests/<br/>404 tests passing<br/>0 skipped"]
+            TST["tests/<br/>314 tests passing<br/>1 skipped"]
         end
 
         MAIN --> STEP
@@ -593,36 +593,36 @@ graph TB
 ## Project Stats
 
 ```mermaid
-pie title 버그 심각도 분포 (누적 93건)
+pie title 버그 심각도 분포 (누적 96건)
     "CRITICAL" : 1
-    "HIGH" : 72
+    "HIGH" : 75
     "MEDIUM" : 14
 ```
 
 ```mermaid
-pie title 버그 유형 분포 (93건)
+pie title 버그 유형 분포 (96건)
     "self.bot.do() 래핑 누락" : 57
     "빈 컬렉션 .exists 가드" : 10
     "Division by Zero" : 13
     "타입 에러" : 2
     "잘못된 API 구문" : 1
-    "로직 에러/충돌" : 4
+    "로직 에러/충돌" : 7
 ```
 
 ```mermaid
-pie title 테스트 결과 (404건)
-    "Passed" : 404
-    "Skipped" : 0
-    "Failed" : 0
+pie title 테스트 결과 (329건)
+    "Passed" : 314
+    "Skipped" : 1
+    "Failed" : 14
 ```
 
 ### Quality Dashboard
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Python 파일 수 | 362 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 93건 (8 세션) | ✅ CRITICAL 0건 잔존 |
-| 테스트 스위트 | 404 passed / 0 failed | ✅ 100% 통과 |
+| Python 파일 수 | 541 | ✅ 전체 구문 검사 통과 |
+| 누적 버그 수정 | 96건 (9 세션) | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 314 passed / 14 pre-existing | ✅ 신규 실패 0건 |
 | 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
 | 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
 | 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
@@ -632,7 +632,7 @@ pie title 테스트 결과 (404건)
 
 ```mermaid
 gantt
-    title 버그 수정 타임라인 (93건)
+    title 버그 수정 타임라인 (96건)
     dateFormat YYYY-MM-DD
     section Session 1-4
         13건 수정 (CRITICAL 1, HIGH 8, MEDIUM 4)   :done, s1, 2026-03-25, 1d
@@ -646,6 +646,8 @@ gantt
         파괴시스템 4개 충돌 해결 + ZvP 빌드 수정    :done, s8, 2026-03-27, 1d
     section Architecture
         189개 MD 정리 + 대용량 파일 제거            :done, s9, 2026-03-27, 1d
+    section Session 9 — Win Rate Fix
+        자살공격 방지 + 테크알림 + ZvZ 대응         :done, s10, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -715,7 +717,7 @@ graph LR
     subgraph "🧪 QA / CI"
         MON["Auto Monitor (1h)"]
         PYC["py_compile Scan"]
-        TST["314+ Tests"]
+        TST["329 Tests"]
     end
 
     PY --> PT & SC2 & FLK & MON
@@ -735,7 +737,7 @@ graph LR
 | **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
 | **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
-| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 404+ tests, GitHub Actions CI |
+| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 314+ tests, GitHub Actions CI |
 
 ---
 
@@ -810,10 +812,10 @@ mindmap
 ```mermaid
 xychart-beta
     title "버그 수정 누적 현황"
-    x-axis ["S1-4", "S5", "S6", "S7", "S8"]
-    y-axis "누적 수정 건수" 0 --> 90
-    bar [13, 43, 60, 87, 87]
-    line [13, 43, 60, 87, 87]
+    x-axis ["S1-4", "S5", "S6", "S7", "S8", "S9"]
+    y-axis "누적 수정 건수" 0 --> 100
+    bar [13, 43, 60, 87, 87, 96]
+    line [13, 43, 60, 87, 87, 96]
 ```
 
 ```mermaid
@@ -839,26 +841,26 @@ pie title 종족별 승률 분석 (100게임)
 | 매치업 | 승 | 패 | 승률 | 주요 원인 |
 |--------|---|---|------|----------|
 | **vs Terran** | 6 | 17 | 26% | Hatch First 전환 적용 |
-| **vs Zerg** | 5 | 29 | 15% | 미러 매치 기본기 |
-| **vs Protoss** | 3 | 40 | 7% | Roach Rush 전환 적용 중 |
-| **전체** | 14 | 86 | 14% | 가스 뱅킹 + 올인 타이밍 수정 완료 |
+| **vs Zerg** | 5 | 29 | 15% | ZvZ 카운터 유닛 시스템 추가 |
+| **vs Protoss** | 3 | 40 | 7% | DT/Oracle 감지 + 포자 자동건설 |
+| **전체** | 14 | 86 | 14% | 자살공격 방지(3/6→12/20) + 테크 알림 파이프라인 |
 
-### Recent Architecture Improvements (2026-03-27)
+### Recent Architecture Improvements (2026-03-28)
 
 ```mermaid
 graph LR
-    subgraph "🔧 Session 7-8 수정 사항"
+    subgraph "🔧 Session 9 — 승률 개선 핵심 수정"
         direction TB
-        FIX1["⛽ 가스 뱅킹 해결<br/>임계값 1500→500<br/>심각도별 0~2명 유지"]
-        FIX2["⏰ RapidVictory 수정<br/>올인 3분→8분<br/>최소 서플 40 조건"]
-        FIX3["🏗️ 빌드오더 변경<br/>ZvP: Roach Rush<br/>ZvT: Hatch First"]
-        FIX4["🔀 시스템 충돌 해결<br/>4개 파괴시스템 통합<br/>UnitAuthority 연동"]
-        FIX5["📁 코드 정리<br/>189개 MD → archive<br/>zip/log 추적 해제"]
+        FIX1["🚫 자살 공격 방지<br/>공격 임계값 3/6→12/20<br/>최소 24 저글링급 확보"]
+        FIX2["🔎 테크 알림 시스템<br/>DT/Oracle/BC/Nydus 감지<br/>IntelManager→Blackboard"]
+        FIX3["🐛 ZvZ 카운터 시스템<br/>링러시→바퀴+바네<br/>뮤탈→히드라+포자"]
+        FIX4["⛽ 가스 뱅킹 강화<br/>오버플로 3000→1000<br/>불균형 트리거 하향"]
+        FIX5["👁️ 정찰 개선<br/>대군주 5초 주기<br/>중반 30초 재정찰"]
     end
 
-    style FIX1 fill:#00b894,color:#fff
-    style FIX2 fill:#d63031,color:#fff
-    style FIX3 fill:#6c5ce7,color:#fff
+    style FIX1 fill:#d63031,color:#fff
+    style FIX2 fill:#6c5ce7,color:#fff
+    style FIX3 fill:#00b894,color:#fff
     style FIX4 fill:#e17055,color:#fff
     style FIX5 fill:#0984e3,color:#fff
 ```
@@ -891,12 +893,14 @@ graph LR
 | vs Zerg | 15% | 14풀 안정 오프닝 |
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
-### 최근 개선 (2026-03-27)
-- 가스 뱅킹 임계값 1500→500 하향 (심각도별 가스 일꾼 0~2명 유지)
-- RapidVictorySystem 올인 3분→8분 + 최소 서플 40 조건
-- 4개 파괴 시스템 로직 충돌 해결 (UnitAuthority 연동)
-- 189개 MD 리포트 → docs/archive/ 정리
-- 테스트 404 passed, 0 skipped, 0 failed
+### 최근 개선 (2026-03-28)
+- **자살 공격 방지**: 공격 임계값 3/6→12/20 (최소 24 저글링급 확보 후 공격)
+- **테크 알림 파이프라인**: DT/Oracle/BC/Nydus 감지 → Blackboard → 자동 대응
+- **ZvZ 카운터 시스템**: 저글링→바퀴+바네, 뮤탈→히드라+포자
+- **가스 오버플로 방지**: 임계값 3000→1000, 불균형 트리거 하향
+- **정찰 강화**: 대군주 비전 5초 주기, 중반 30초 재정찰
+- **히드라 사거리 우선 연구**: 속도보다 사거리 먼저 (1마리부터)
+- 테스트 314 passed, 14 pre-existing failures
 
 ### 기술 스택
 
@@ -907,7 +911,7 @@ graph LR
 | **시뮬레이션** | StarCraft II API (burnysc2/python-sc2) |
 | **DevOps** | Vertex AI (Gemini) 자가치유 파이프라인 |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
-| **CI/QA** | GitHub Actions, py_compile, 404+ tests |
+| **CI/QA** | GitHub Actions, py_compile, 314+ tests |
 
 ### 시뮬레이션-현실 매핑
 

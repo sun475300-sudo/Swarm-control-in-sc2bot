@@ -53,8 +53,8 @@ def initialize_combat_state(manager):
     manager._rally_point = None
     manager._last_rally_update = 0
     manager._rally_update_interval = 30  # Update rally point every 30 seconds
-    manager._min_army_for_attack = 6  # ★ OPTIMIZED: 8 → 6 (더 빠른 공격) ★
-    manager._early_game_min_attack = 3  # ★ OPTIMIZED: 4 → 3 (더 빠른 초반 압박) ★
+    manager._min_army_for_attack = 20  # ★ FIX: 6→20 (자살 공격 방지! 적절한 병력 모은 후 공격)
+    manager._early_game_min_attack = 12  # ★ FIX: 3→12 (최소 저글링 24마리급 이상)
 
     # === ★★★ ROACH RUSH TIMING ATTACK ★★★ ===
     manager._roach_rush_active = False
