@@ -47,7 +47,8 @@ class OverlordVisionNetwork:
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
-            if iteration % 220 == 0:  # ~10초마다
+            # ★ IMPROVED: 220 → 110 프레임 (~5초마다) — 더 빠른 시야 대응
+            if iteration % 110 == 0:
                 self._update_vision_positions()
                 await self._deploy_vision_network()
 

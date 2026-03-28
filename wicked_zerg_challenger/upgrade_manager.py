@@ -506,12 +506,11 @@ class EvolutionUpgradeManager:
             if roaches.amount >= 3:
                 await self._research_roach_speed(iteration)
 
-            # 히드라 발업 (히드라가 있을 때만)
+            # ★ IMPROVED: 히드라 1기부터 발업 시작 (3→1, 사거리가 핵심)
             hydras = self.bot.units(UnitTypeId.HYDRALISK)
-            if hydras.amount >= 3:
+            if hydras.amount >= 1:
+                await self._research_hydra_range(iteration)  # ★ 사거리 먼저! (속도보다 중요)
                 await self._research_hydra_speed(iteration)
-                # ★ NEW: 히드라 사거리 업그레이드 (속도 업 완료 후)
-                await self._research_hydra_range(iteration)
 
             # 잠복 (맹독충 4기 이상일 때)
             banelings = self.bot.units(UnitTypeId.BANELING)

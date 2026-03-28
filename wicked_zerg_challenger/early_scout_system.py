@@ -89,34 +89,38 @@ class EarlyScoutSystem:
     async def execute(self, iteration: int) -> None:
         """
         메인 실행 루프 (매 프레임 호출)
-        """
-        # 5분 이후 비활성화
-        if self.bot.time > self.early_game_threshold:
-            return
 
+        ★ IMPROVED: 5분 이후에도 정찰 결과 분석은 계속 + 재정찰 지원
+        """
         # 성능 최적화: 0.5초마다만 업데이트
         if self.bot.time - self._last_update < self._update_interval:
             return
         self._last_update = self.bot.time
 
-        # 1. Zergling 정찰 할당 (Pool 완성 후)
-        if not self.ling_scouts_assigned:
-            await self._assign_zergling_scouts()
+        # 적 정보 수집은 항상 실행 (5분 이후에도)
+        await self._analyze_enemy_info()
 
-        # 2. Zergling 정찰 관리
-        if self.scout_ling_tags:
-            await self._manage_zergling_scouts()
+        # 5분 이후에는 저글링 정찰만 중단 (오버로드는 계속)
+        if self.bot.time <= self.early_game_threshold:
+            # 1. Zergling 정찰 할당 (Pool 완성 후)
+            if not self.ling_scouts_assigned:
+                await self._assign_zergling_scouts()
 
-        # 3. Overlord 정찰 (게임 시작 즉시 - 5초부터)
+            # 2. Zergling 정찰 관리
+            if self.scout_ling_tags:
+                await self._manage_zergling_scouts()
+
+        # 3. Overlord 정찰 (게임 시작 즉시 - 5초부터) — 시간 제한 없음
         if not self.overlord_scout_sent and self.bot.time > 5:
             await self._send_overlord_scout()
 
-        # 4. Overlord 정찰 관리
+        # 4. Overlord 정찰 관리 — 시간 제한 없음
         if self.scout_overlord_tag:
             await self._manage_overlord_scout()
 
-        # 5. 적 정보 수집 및 분석
-        await self._analyze_enemy_info()
+        # ★ NEW: 5분 이후 재정찰 (enemy build 미확인 시 30초마다 저글링 재파견)
+        if self.bot.time > self.early_game_threshold:
+            await self._mid_game_rescouting()
 
     async def _assign_zergling_scouts(self) -> None:
         """
@@ -296,6 +300,37 @@ class EarlyScoutSystem:
             for unit in self.bot.enemy_units:
                 if unit.tag not in self.enemy_early_units:
                     self.enemy_early_units.add(unit.tag)
+
+    async def _mid_game_rescouting(self) -> None:
+        """
+        ★ NEW: 중반 재정찰 시스템
+
+        5분 이후 30초마다 idle 저글링 1마리를 적 기지로 정찰 파견.
+        적 테크 변화를 지속적으로 추적.
+        """
+        # 30초마다만 실행
+        last_rescout = getattr(self, "_last_rescout_time", 0.0)
+        if self.bot.time - last_rescout < 30.0:
+            return
+        self._last_rescout_time = self.bot.time
+
+        # idle 저글링 찾기
+        zerglings = self.bot.units(UnitTypeId.ZERGLING).idle
+        if not zerglings.exists or zerglings.amount < 4:
+            return  # 최소 4마리 이상 idle 상태여야 1마리 파견
+
+        # 적 기지 위치
+        if not self.bot.enemy_start_locations:
+            return
+
+        enemy_start = self.bot.enemy_start_locations[0]
+
+        # 가장 가까운 idle 저글링 1마리 파견
+        scout_ling = zerglings.closest_to(enemy_start)
+        self.bot.do(scout_ling.move(enemy_start))
+
+        if int(self.bot.time) % 60 < 5:
+            print(f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game rescout: Zergling sent to enemy base")
 
     def is_cheese_detected(self) -> bool:
         """치즈/러시 감지 여부"""

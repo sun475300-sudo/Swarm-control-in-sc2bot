@@ -95,7 +95,7 @@ class EconomyManager:
         self.gas_boost_duration = 120  # 2분간 가스 부스트
 
         self.dynamic_gas_workers_enabled = True  # 생산 큐 기반 가스 일꾼 조정
-        self.gas_overflow_prevention_threshold = 3000  # 가스 3000+ 시 일꾼 회수
+        self.gas_overflow_prevention_threshold = 1000  # ★ IMPROVED: 3000→1000 (더 빠른 가스 뱅킹 방지)
 
         self.last_gas_worker_adjustment = 0
         self.gas_worker_adjustment_interval = 110  # ~5초마다 조정
@@ -258,9 +258,8 @@ class EconomyManager:
             gas = getattr(self.bot, "vespene", 0)
             minerals = getattr(self.bot, "minerals", 0)
 
-            # ★ 조건 완화: 가스 3000+ (2000→3000), 미네랄 200- (500→200) ★
-            # 더 심각한 불균형일 때만 개입
-            if gas > 3000 and minerals < 200:
+            # ★ IMPROVED: 가스 1500+ 이면 개입 (3000→1500) ★
+            if gas > 1500 and minerals < 500:
                 # 쿨다운 체크 (30초에 한 번만)
                 if not hasattr(self, "_last_gas_cut_time"):
                     self._last_gas_cut_time = 0
@@ -2406,9 +2405,14 @@ class EconomyManager:
         if not hasattr(self.bot, "enemy_units") or not self.bot.enemy_units:
             return
 
+        # ★ NEW: Blackboard urgent_spore 신호도 체크 (DT/Oracle 테크 감지)
+        urgent_spore = False
+        if self.blackboard:
+            urgent_spore = self.blackboard.get("urgent_spore_all_bases", False)
+
         # 적 공중 유닛 감지 (오버로드/감시군주 제외)
         air_threats = [u for u in self.bot.enemy_units if getattr(u, "is_flying", False) and u.type_id not in {UnitTypeId.OVERLORD, UnitTypeId.OVERSEER}]
-        if not air_threats:
+        if not air_threats and not urgent_spore:
             return
 
         # 기지가 없으면 리턴

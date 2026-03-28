@@ -244,6 +244,16 @@ class MultiBaseDefense:
                 closest_enemy = nearby_enemies.closest_to(unit)
                 self.bot.do(unit.attack(closest_enemy))
 
+            # ★ NEW: 먼 곳의 idle 군대도 위협 기지로 이동 (중간 이상 위협 시)
+            if threat_level >= 2:
+                idle_army = self.bot.units.idle.exclude_type(
+                    [UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA,
+                     UnitTypeId.QUEEN, UnitTypeId.OVERSEER]
+                ).filter(lambda u: u.can_attack and u.distance_to(base_pos) > 20)
+
+                for unit in idle_army:
+                    self.bot.do(unit.attack(base_pos))
+
             # 2. 심각한 위협이면 일꾼도 투입 (threat_level >= 3)
             if threat_level >= 3:
                 nearby_drones = self.bot.units(UnitTypeId.DRONE).closer_than(8, base_pos)

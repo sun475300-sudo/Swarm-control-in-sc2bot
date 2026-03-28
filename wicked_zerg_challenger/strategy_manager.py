@@ -193,7 +193,8 @@ class StrategyManager:
         self._update_counter_build()
         self._detect_direct_air_threat()
         self._counter_protoss_units()
-        
+        self._counter_zerg_units()
+
         # ★ Write State to Blackboard ★
         if self.blackboard:
             self.blackboard.set("strategy_mode", self.current_mode.name)
@@ -894,6 +895,29 @@ class StrategyManager:
         carrier_count = comp.get("CARRIER", 0)
         stalker_count = comp.get("STALKER", 0)
 
+        # ★ NEW: DarkShrine/Oracle 테크 경고 대응 (IntelManager 연동)
+        intel = getattr(self.bot, "intel", None)
+        if intel and hasattr(intel, "has_tech_alert"):
+            # DT 대응: 스포어 크롤러 + 오버시어 긴급 생산
+            if intel.has_tech_alert("DT_INCOMING"):
+                if not getattr(self, "_dt_response_active", False):
+                    self._dt_response_active = True
+                    self.emergency_spore_requested = True
+                    self.logger.warning(f"[{int(game_time)}s] ★★★ DT INCOMING! Spore + Overseer PRIORITY ★★★")
+                    # Blackboard에 오버시어 긴급 요청
+                    if self.blackboard:
+                        self.blackboard.set("urgent_overseer", True)
+                        self.blackboard.set("urgent_spore_all_bases", True)
+
+            # Oracle 대응: 스포어 크롤러 + 퀸 집중
+            if intel.has_tech_alert("AIR_INCOMING"):
+                if not getattr(self, "_air_response_active", False):
+                    self._air_response_active = True
+                    self.emergency_spore_requested = True
+                    self.logger.warning(f"[{int(game_time)}s] ★★★ STARGATE TECH! Spore + Queen PRIORITY ★★★")
+                    if self.blackboard:
+                        self.blackboard.set("urgent_spore_all_bases", True)
+
         # ★ 유닛별 대응 전략 ★
 
         # 불멸자 2기 이상 → 레이바저 담즙 강화
@@ -951,6 +975,57 @@ class StrategyManager:
                 self.last_high_templar_log = game_time
             self._adjust_unit_ratio("zergling", 0.4)
             self._adjust_unit_ratio("ravager", 0.3)  # 담즙으로 폭풍 지역 회피
+
+    def _counter_zerg_units(self) -> None:
+        """
+        ★ NEW: ZvZ 유닛별 카운터 로직 ★
+
+        - 저글링 다수 → 맹독충 + 바퀴 전환
+        - 맹독충 → 바퀴 (맹독충에 강함)
+        - 뮤탈리스크 → 히드라 + 스포어
+        - 바퀴/히드라 → 레이바저 담즙
+        - 12풀 러시 → 스파인 + 퀸 방어
+        """
+        if self.detected_enemy_race != EnemyRace.ZERG:
+            return
+
+        if not hasattr(self.bot, "enemy_units"):
+            return
+
+        game_time = getattr(self.bot, "time", 0)
+        comp = self._cached_enemy_composition
+
+        zergling_count = comp.get("ZERGLING", 0)
+        baneling_count = comp.get("BANELING", 0)
+        roach_count = comp.get("ROACH", 0)
+        mutalisk_count = comp.get("MUTALISK", 0)
+        hydra_count = comp.get("HYDRALISK", 0)
+        ravager_count = comp.get("RAVAGER", 0)
+
+        # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
+        if zergling_count >= 10 and game_time < 300:
+            self._adjust_unit_ratio("roach", 0.4)
+            self._adjust_unit_ratio("baneling", 0.3)
+            self._adjust_unit_ratio("zergling", 0.2)
+
+        # 맹독충 4+ → 바퀴 전환 (바퀴가 맹독충에 강함)
+        if baneling_count >= 4:
+            self._adjust_unit_ratio("roach", 0.5)
+            self._adjust_unit_ratio("ravager", 0.2)
+
+        # 바퀴 5+ → 레이바저 + 히드라
+        if roach_count >= 5:
+            self._adjust_unit_ratio("ravager", 0.3)
+            self._adjust_unit_ratio("hydra", 0.3)
+            self._adjust_unit_ratio("roach", 0.3)
+
+        # 뮤탈리스크 → 히드라 + 스포어
+        if mutalisk_count >= 3:
+            self._adjust_unit_ratio("hydra", 0.5)
+            self.emergency_spore_requested = True
+            if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
+                self._last_zvz_muta_log = game_time
+                self.logger.warning(f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority")
 
     def _adjust_unit_ratio(self, unit_type: str, target_ratio: float) -> None:
         """유닛 비율 동적 조정"""

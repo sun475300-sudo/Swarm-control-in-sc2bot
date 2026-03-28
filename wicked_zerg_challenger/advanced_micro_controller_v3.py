@@ -1238,6 +1238,7 @@ class AdvancedMicroControllerV3:
         # ★ Phase 18: New micro executions ★
         await self._execute_infestor_micro(current_time, enemy_units)
         await self._execute_baneling_micro(enemy_units)
+        await self._execute_broodlord_micro(enemy_units)
 
         # Cleanup dead assignments
         if iteration % 44 == 0:  # Every ~2 seconds
@@ -1344,6 +1345,64 @@ class AdvancedMicroControllerV3:
                 enemy_units,
                 self.bot
             )
+
+    async def _execute_broodlord_micro(self, enemy_units):
+        """
+        ★ NEW: Broodlord kiting micro ★
+
+        브루드로드 사거리 9.5 유지 + 후퇴 마이크로:
+        - 적이 사거리 7 이내로 접근 → 후퇴
+        - 적이 사거리 9~11 → 공격
+        - 적 대공 유닛 감지 → 즉시 후퇴
+        """
+        if not UnitTypeId:
+            return
+
+        broodlords = self.bot.units(UnitTypeId.BROODLORD)
+        if not broodlords.exists or not enemy_units:
+            return
+
+        actions = []
+        BROODLORD_RANGE = 9.5
+        RETREAT_RANGE = 7.0
+
+        # 대공 위험 유닛
+        anti_air_types = {
+            "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VIKING",
+            "VIKINGFIGHTER", "CORRUPTOR", "THOR", "CYCLONE",
+            "ARCHON", "TEMPEST", "VOIDRAY"
+        }
+
+        for bl in broodlords:
+            # 가장 가까운 적 찾기
+            closest_enemy = enemy_units.closest_to(bl)
+            dist = bl.distance_to(closest_enemy)
+
+            # 적의 대공 능력 확인
+            nearby_aa = [
+                e for e in enemy_units
+                if bl.distance_to(e) < 12
+                and getattr(e.type_id, "name", "").upper() in anti_air_types
+            ]
+
+            if nearby_aa:
+                # 대공 유닛이 가까이 있으면 후퇴
+                retreat_pos = bl.position.towards(self.bot.start_location, 4)
+                actions.append(bl.move(retreat_pos))
+            elif dist < RETREAT_RANGE:
+                # 적이 너무 가까우면 후퇴
+                retreat_pos = bl.position.towards(self.bot.start_location, 3)
+                actions.append(bl.move(retreat_pos))
+            elif dist <= BROODLORD_RANGE + 1:
+                # 사거리 내 → 공격
+                actions.append(bl.attack(closest_enemy))
+            else:
+                # 사거리 밖 → 접근
+                approach_pos = bl.position.towards(closest_enemy.position, 2)
+                actions.append(bl.move(approach_pos))
+
+        if actions:
+            await self.bot.do_actions(actions)
 
     def _cleanup_dead_units(self):
         """Cleanup dead unit assignments."""

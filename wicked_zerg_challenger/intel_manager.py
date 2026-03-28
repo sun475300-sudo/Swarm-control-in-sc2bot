@@ -48,6 +48,17 @@ class IntelManager:
             "LIBERATOR", "LIBERATORAG", "WIDOWMINE", "HIGHTEMPLAR"
         }
 
+        # ★ NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
+        self._hidden_tech_alerts = {
+            "DARKSHRINE": "DT_INCOMING",
+            "STARGATE": "AIR_INCOMING",
+            "FUSIONCORE": "BC_INCOMING",
+            "TEMPLARARCHIVE": "HT_INCOMING",
+            "NYDUSNETWORK": "NYDUS_INCOMING",
+            "FLEETBEACON": "CARRIER_INCOMING",
+        }
+        self._detected_tech_alerts: set = set()  # 이미 경고한 테크
+
         # Build pattern confidence tracking
         self._build_pattern_confidence = 0.0  # 0.0 ~ 1.0
         self._build_pattern_status = "unknown"  # "unknown", "suspected", "confirmed"
@@ -138,12 +149,16 @@ class IntelManager:
                          'ROBOTICSFACILITY', 'STARGATE', 'DARKSHRINE',
                          'TEMPLARARCHIVE', 'FLEETBEACON', 'TWILIGHTCOUNCIL',
                          'SPIRE', 'GREATERSPIRE', 'INFESTATIONPIT',
-                         'BANELINGNEST', 'ROACHWARREN', 'HYDRALISKDEN'}
+                         'BANELINGNEST', 'ROACHWARREN', 'HYDRALISKDEN',
+                         'NYDUSNETWORK', 'NYDUSCANAL'}
         self.enemy_tech_buildings = {
             getattr(s.type_id, "name", "").upper()
             for s in enemy_structures
             if getattr(s.type_id, "name", "").upper() in tech_buildings
         }
+
+        # ★ NEW: Hidden tech alert system
+        self._check_hidden_tech_alerts()
 
         # Detect enemy build pattern
         self._detect_enemy_build_pattern(enemy_structures, enemy_units)
@@ -535,6 +550,36 @@ class IntelManager:
 
         except (AttributeError, TypeError) as e:
             logger.warning(f"[IntelManager] Blackboard update suppressed: {e}")
+
+    def _check_hidden_tech_alerts(self) -> None:
+        """
+        ★ NEW: 위험 테크 건물 발견 시 즉시 경고 + Blackboard 알림
+
+        DarkShrine → 스포어 크롤러 + 오버시어 필요
+        Stargate → 스포어 크롤러 + 퀸/히드라 필요
+        FusionCore → BC 대비 코럽터/히드라 필요
+        """
+        game_time = getattr(self.bot, "time", 0.0)
+
+        for tech_name, alert_type in self._hidden_tech_alerts.items():
+            if tech_name in self.enemy_tech_buildings and alert_type not in self._detected_tech_alerts:
+                self._detected_tech_alerts.add(alert_type)
+                print(f"[INTEL] [{int(game_time)}s] ★★★ ALERT: {tech_name} detected! → {alert_type} ★★★")
+
+                # Push to Blackboard
+                blackboard = getattr(self.bot, "blackboard", None)
+                if blackboard:
+                    blackboard.set(f"alert_{alert_type.lower()}", True)
+                    blackboard.set("latest_tech_alert", alert_type)
+                    blackboard.set("latest_tech_alert_time", game_time)
+
+    def get_tech_alerts(self) -> set:
+        """현재까지 감지된 테크 경고 목록 반환."""
+        return self._detected_tech_alerts.copy()
+
+    def has_tech_alert(self, alert_type: str) -> bool:
+        """특정 테크 경고가 발생했는지 확인."""
+        return alert_type in self._detected_tech_alerts
 
     def record_scouted_location(self, location) -> None:
         """Record a location that has been scouted."""
