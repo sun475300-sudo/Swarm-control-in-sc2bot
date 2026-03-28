@@ -2,19 +2,25 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { Activity, Coins, Droplet, Shield, Swords, Users } from "lucide-react";
-import { useEffect } from "react";
+import { Activity, AlertCircle, AlertTriangle, Coins, Droplet, FileText, Shield, Swords, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Monitor() {
   const { data: currentSession, refetch } = trpc.game.getCurrentSession.useQuery();
+  const [logLevel, setLogLevel] = useState<"ALL" | "WARNING" | "ERROR">("WARNING");
+  const { data: logData, refetch: refetchLogs } = trpc.logs.getRecentErrors.useQuery(
+    { limit: 30, level: logLevel },
+    { refetchInterval: 5000 }  // 5초 자동 새로고침
+  );
 
   // 5초마다 자동 새로고침
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
+      refetchLogs();
     }, 5000);
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [refetch, refetchLogs]);
 
   if (!currentSession) {
     return (
@@ -307,6 +313,93 @@ export default function Monitor() {
             </CardContent>
           </Card>
         )}
+
+        {/* ★ Phase 43: 실시간 로그/버그 추적 위젯 */}
+        <Card className="glass-card border-red-500/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-red-400" />
+                실시간 로그 추적
+                {logData && (logData.errorCount > 0 || logData.warnCount > 0) && (
+                  <span className="ml-2 flex items-center gap-1">
+                    {logData.errorCount > 0 && (
+                      <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">
+                        ERR {logData.errorCount}
+                      </span>
+                    )}
+                    {logData.warnCount > 0 && (
+                      <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-medium">
+                        WARN {logData.warnCount}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </CardTitle>
+              {/* 레벨 필터 버튼 */}
+              <div className="flex gap-1">
+                {(["ALL", "WARNING", "ERROR"] as const).map(lvl => (
+                  <button
+                    key={lvl}
+                    onClick={() => setLogLevel(lvl)}
+                    className={`text-xs px-2 py-1 rounded font-medium transition-colors ${
+                      logLevel === lvl
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <CardDescription>
+              bot.log 실시간 모니터링 — 5초마다 자동 갱신
+              {logData?.totalLines && ` (총 ${logData.totalLines.toLocaleString()}줄)`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {logData?.error ? (
+              <div className="flex items-center gap-2 text-muted-foreground py-4">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">{logData.error}</span>
+              </div>
+            ) : logData?.entries && logData.entries.length > 0 ? (
+              <div className="space-y-1 max-h-64 overflow-y-auto font-mono text-xs">
+                {logData.entries.map((entry, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-2 px-2 py-1 rounded ${
+                      entry.level === "ERROR"
+                        ? "bg-red-500/10 border-l-2 border-red-500"
+                        : entry.level === "WARNING"
+                        ? "bg-yellow-500/10 border-l-2 border-yellow-500"
+                        : "bg-muted/30"
+                    }`}
+                  >
+                    {entry.level === "ERROR" ? (
+                      <AlertCircle className="w-3 h-3 text-red-400 mt-0.5 shrink-0" />
+                    ) : entry.level === "WARNING" ? (
+                      <AlertTriangle className="w-3 h-3 text-yellow-400 mt-0.5 shrink-0" />
+                    ) : (
+                      <Activity className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                    )}
+                    <span className={`shrink-0 ${entry.level === "ERROR" ? "text-red-400" : entry.level === "WARNING" ? "text-yellow-400" : "text-muted-foreground"}`}>
+                      {entry.timestamp}
+                    </span>
+                    <span className="text-blue-400 shrink-0">[{entry.source}]</span>
+                    <span className="text-foreground/80 break-all">{entry.message}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                <Activity className="w-4 h-4 mr-2 animate-pulse" />
+                <span className="text-sm">로그 없음 — 게임 실행 시 자동 표시</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

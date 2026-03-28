@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-321%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-178-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-180-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -1098,6 +1098,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 43] 실시간 로그 추적**: TypeScript 풀스택 — `logs` tRPC 라우터(bot.log 파싱) + Monitor.tsx 실시간 뷰어(5초 갱신, ERROR/WARN 색상 코딩)
 - **[Phase 42] 다중 언어 커버**: Python 적 공격 타이밍 예측(테크→시간 추정→Blackboard), TypeScript 전투력 비율 위젯(KDA/처치율 바)
 - **[Phase 41] 전투 의사결정 고도화**: supply_cost 속성 제거→정확한 테이블, HP 가중 전투력, O(N×M)→O(N+M) 후퇴 판단 최적화
 - **[Phase 40] 통합 검증 + 아레나 패키지**: 전체 구문 OK, 아레나 ZIP 재생성(491 files)
@@ -1174,8 +1175,9 @@ P39    경제 고도화      가스 필터버그 + 초반보호 + boost 수정  
 P40    통합 검증        아레나 패키지 재생성 + 전체 구문 OK      ✅ DONE
 P41    전투 의사결정    HP가중 전투력 + supply테이블 + O(N+M)    ✅ DONE
 P42    다중언어 커버    Python 예측 + TypeScript 위젯             ✅ DONE
+P43    실시간 로그 추적 TypeScript tRPC 라우터 + 로그 뷰어       ✅ DONE
 ─────────────────────────────────────────────────────────────────
-총 완료: 31개 Phase  |  수정 버그: 178개  |  테스트: 167 통과 (protobuf 제외)
+총 완료: 32개 Phase  |  수정 버그: 180개  |  테스트: 167 통과 (protobuf 제외)
 ```
 
 ### 경제 시스템 상태 머신 (Phase 39 완성)

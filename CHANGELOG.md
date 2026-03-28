@@ -2,6 +2,11 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 43] - 2026-03-28
+### 실시간 로그/버그 추적 시스템 (TypeScript 풀스택)
+- **TypeScript** `server/routers.ts` `logs` 라우터 추가: `getRecentErrors` (bot.log 파싱, ERROR/WARNING/ALL 필터, 30종 log 레벨 분류) + `getLogStatus` (로그 파일 존재/크기 확인)
+- **TypeScript** `client/Monitor.tsx` 실시간 로그 뷰어 위젯: 5초 자동 갱신, 레벨별 색상 코딩(빨간=ERROR, 노란=WARNING), 에러/경고 카운트 배지, 최대 30줄 스크롤 뷰
+
 ## [Phase 42] - 2026-03-28
 ### 다중 언어 커버 — Python 적 AI 예측 + TypeScript 전투력 위젯
 - **Python** `intel_manager.py` supply 추정 수정: `supply_cost` 속성 없음 → 30종 종족별 정확한 룩업 테이블 (ZvT Marine=1, Siege=3, Thor=6 등)

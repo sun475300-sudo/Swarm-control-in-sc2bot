@@ -4,9 +4,69 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import * as fs from "fs";
+import * as path from "path";
+
+// ★ Phase 43: 실시간 로그/버그 추적 — appRouter보다 먼저 정의 ★
+const LOG_PATHS_EARLY = [
+  path.join(process.cwd(), "..", "wicked_zerg_challenger", "logs", "bot.log"),
+  path.join(process.cwd(), "..", "logs", "bot.log"),
+  path.join(process.cwd(), "logs", "bot.log"),
+];
+function findLogFileEarly(): string | null {
+  for (const p of LOG_PATHS_EARLY) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+interface LogEntry {
+  timestamp: string;
+  level: "ERROR" | "WARNING" | "INFO" | "DEBUG";
+  source: string;
+  message: string;
+  line: number;
+}
+function parseLogLine(raw: string, lineNum: number): LogEntry | null {
+  const m = raw.match(/^(\d{2}:\d{2}:\d{2})\s+-\s+([\w]+)\s+-\s+(ERROR|WARNING|INFO|DEBUG)\s+-\s+(.+)$/);
+  if (!m) return null;
+  return { timestamp: m[1], level: m[3] as LogEntry["level"], source: m[2], message: m[4].trim(), line: lineNum };
+}
+const logsRouter = router({
+  getRecentErrors: publicProcedure
+    .input(z.object({ limit: z.number().min(1).max(200).default(50), level: z.enum(["ERROR", "WARNING", "ALL"]).default("ALL") }))
+    .query(({ input }) => {
+      const logPath = findLogFileEarly();
+      if (!logPath) return { entries: [], logPath: null, error: "로그 파일 없음", errorCount: 0, warnCount: 0, totalLines: 0 };
+      try {
+        const lines = fs.readFileSync(logPath, "utf-8").split("\n");
+        const all: LogEntry[] = [];
+        lines.forEach((l, i) => { const e = parseLogLine(l, i + 1); if (e) all.push(e); });
+        const filtered = all.filter(e =>
+          input.level === "ALL" ? true :
+          input.level === "ERROR" ? e.level === "ERROR" :
+          ["ERROR", "WARNING"].includes(e.level)
+        );
+        return {
+          entries: filtered.slice(-input.limit).reverse(),
+          logPath,
+          totalLines: lines.length,
+          errorCount: all.filter(e => e.level === "ERROR").length,
+          warnCount: all.filter(e => e.level === "WARNING").length,
+          error: null,
+        };
+      } catch (e) { return { entries: [], logPath, error: String(e), errorCount: 0, warnCount: 0, totalLines: 0 }; }
+    }),
+  getLogStatus: publicProcedure.query(() => {
+    const logPath = findLogFileEarly();
+    if (!logPath) return { exists: false, path: null, sizeKb: 0 };
+    try { const s = fs.statSync(logPath); return { exists: true, path: logPath, sizeKb: Math.round(s.size / 1024) }; }
+    catch { return { exists: false, path: logPath, sizeKb: 0 }; }
+  }),
+});
 
 export const appRouter = router({
   system: systemRouter,
+  logs: logsRouter,  // ★ Phase 43: 실시간 로그 추적
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
