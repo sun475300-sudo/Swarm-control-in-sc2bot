@@ -67,6 +67,10 @@ class MultiBaseDefense:
             # 4. 긴급 방어 (기지가 공격 받고 있을 때)
             await self._emergency_base_defense(iteration)
 
+            # ★ Phase 18: 전진 스파인 방어 (3기지+ & 8분+ & 미네랄 여유) ★
+            if game_time >= 480 and iteration % 176 == 0:  # 8초마다 체크
+                await self._build_forward_spine(game_time, iteration)
+
         except Exception as e:
             if iteration % 50 == 0:
                 self.logger.error(f"Multi-base defense error: {e}")
@@ -309,3 +313,62 @@ class MultiBaseDefense:
     def get_bases_under_attack(self) -> int:
         """공격 받는 기지 수 반환"""
         return sum(1 for status in self.base_defense_status.values() if status["under_attack"])
+
+    async def _build_forward_spine(self, game_time: float, iteration: int):
+        """
+        ★ Phase 18: 전진 스파인 방어 ★
+
+        조건: 3기지+ & 8분+ & 미네랄 400+ & 크립 위
+        위치: 가장 전진된 기지와 맵 센터 사이 (크립 위)
+        최대: 4개 전진 스파인
+        """
+        if not hasattr(self.bot, "townhalls") or self.bot.townhalls.amount < 3:
+            return
+        if self.bot.minerals < 400:
+            return
+
+        # 전진 스파인 수 확인 (기지 근처가 아닌 스파인 = 전진 스파인)
+        all_spines = self.bot.structures(UnitTypeId.SPINECRAWLER)
+        forward_spine_count = 0
+        for spine in all_spines:
+            is_near_base = False
+            for th in self.bot.townhalls:
+                if spine.distance_to(th) < 12:
+                    is_near_base = True
+                    break
+            if not is_near_base:
+                forward_spine_count += 1
+
+        if forward_spine_count >= 4:
+            return  # 전진 스파인 4개 이상이면 충분
+
+        # 이미 건설 중이면 스킵
+        if self.bot.already_pending(UnitTypeId.SPINECRAWLER) >= 2:
+            return
+
+        if not self.bot.can_afford(UnitTypeId.SPINECRAWLER):
+            return
+
+        # 전진 위치 계산: 가장 전진된 기지 → 맵 센터 방향
+        if not hasattr(self.bot, "game_info"):
+            return
+
+        map_center = self.bot.game_info.map_center
+        forward_base = self.bot.townhalls.closest_to(map_center)
+        forward_pos = forward_base.position.towards(map_center, 12)
+
+        # 크립 위에만 건설
+        if hasattr(self.bot, "has_creep") and not self.bot.has_creep(forward_pos):
+            # 크립 없으면 더 가까운 위치 시도
+            forward_pos = forward_base.position.towards(map_center, 8)
+            if hasattr(self.bot, "has_creep") and not self.bot.has_creep(forward_pos):
+                return  # 크립이 없으면 건설 불가
+
+        try:
+            await self.bot.build(UnitTypeId.SPINECRAWLER, near=forward_pos)
+            self.logger.info(
+                f"[{int(game_time)}s] ★ Phase 18: Forward Spine Crawler at "
+                f"({forward_pos.x:.0f}, {forward_pos.y:.0f})"
+            )
+        except Exception:
+            pass

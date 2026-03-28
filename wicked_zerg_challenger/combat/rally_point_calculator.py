@@ -57,21 +57,31 @@ def update_rally_point(manager):
         return
 
     try:
+        from sc2.position import Point2
         our_base = manager.bot.townhalls.first.position
         map_center = manager.bot.game_info.map_center if hasattr(manager.bot, "game_info") else our_base
 
-        # Rally point is 30% of the way from our base to map center
-        rally_x = our_base.x + (map_center.x - our_base.x) * 0.3
-        rally_y = our_base.y + (map_center.y - our_base.y) * 0.3
+        # ★ Phase 18: 크립 위 교전 유도 — 랠리 포인트를 크립 위에 설정 ★
+        # 30%~50% 사이에서 크립이 있는 가장 전진된 위치를 선택
+        best_rally = None
+        for ratio in [0.45, 0.40, 0.35, 0.30, 0.25]:
+            rx = our_base.x + (map_center.x - our_base.x) * ratio
+            ry = our_base.y + (map_center.y - our_base.y) * ratio
+            candidate = Point2((rx, ry))
+            # 크립 체크: has_creep 속성이 있으면 크립 위 우선
+            if hasattr(manager.bot, "has_creep") and manager.bot.has_creep(candidate):
+                best_rally = candidate
+                break  # 가장 전진된 크립 위치 선택
 
-        if hasattr(manager.bot, "Point2"):
-            manager._rally_point = manager.bot.Point2((rally_x, rally_y))
-        else:
-            from sc2.position import Point2
-            manager._rally_point = Point2((rally_x, rally_y))
+        if best_rally is None:
+            # 크립 없으면 기존 30% 위치
+            rally_x = our_base.x + (map_center.x - our_base.x) * 0.3
+            rally_y = our_base.y + (map_center.y - our_base.y) * 0.3
+            best_rally = Point2((rally_x, rally_y))
+
+        manager._rally_point = best_rally
 
     except Exception:
-        # Fallback to main base position
         if hasattr(manager.bot, "start_location"):
             manager._rally_point = manager.bot.start_location
 

@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-114-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-117-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -660,6 +660,8 @@ gantt
         경제최적화 + 66드론컷오프 + 가스밸런스     :done, s15, 2026-03-28, 1d
     section Session 15 — Phase 17
         정찰대응 강화 + 카운터빌드 + 오버로드정찰   :done, s16, 2026-03-28, 1d
+    section Session 16 — Phase 18
+        맵컨트롤 + 크립교전 + 전진스파인 + 공격크립 :done, s17, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -918,6 +920,13 @@ graph LR
         FIX22["🔔 Hidden Tech 경보<br/>DT/공중위협 즉시<br/>스포어/스파인 플래그"]
     end
 
+    subgraph "🔧 Session 16 — Phase 18 맵 컨트롤 시스템"
+        direction TB
+        FIX23["🟢 크립 위 교전 유도<br/>랠리포인트 크립 우선<br/>45%→25% 스캔"]
+        FIX24["🏗️ 전진 스파인 방어<br/>8분+ 3기지+ 크립 위<br/>최대 4개 전진 배치"]
+        FIX25["🔥 공격적 크립 확장<br/>적진 75%까지 다단계<br/>종양 릴레이 자동화"]
+    end
+
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
@@ -940,6 +949,9 @@ graph LR
     style FIX20 fill:#e84393,color:#fff
     style FIX21 fill:#6c5ce7,color:#fff
     style FIX22 fill:#00b894,color:#fff
+    style FIX23 fill:#00b894,color:#fff
+    style FIX24 fill:#d63031,color:#fff
+    style FIX25 fill:#e17055,color:#fff
 ```
 
 ---
@@ -971,20 +983,14 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
-- **자살 공격 방지**: 공격 임계값 3/6→12/20 (최소 24 저글링급 확보 후 공격)
-- **테크 알림 파이프라인**: DT/Oracle/BC/Nydus 감지 → Blackboard → 자동 대응
-- **ZvZ 카운터 시스템**: 저글링→바퀴+바네, 뮤탈→히드라+포자
-- **가스 오버플로 방지**: 임계값 3000→1000, 불균형 트리거 하향
-- **정찰 강화**: 대군주 비전 5초 주기, 중반 30초 재정찰
-- **히드라 사거리 우선 연구**: 속도보다 사거리 먼저 (1마리부터)
-- **공격 집결 시스템 복원**: 즉시공격→70% 집결 후 출격, 분할공격 100서플+만
-- **카운터 폴백 전략**: 정찰 실패 시 종족별 안전 유닛비율 자동 적용
-- **방어-공격 디컨플릭트**: 유닛태그 추적 + Blackboard 연동
-- **Hive ~8분 완성**: 인페핏 5분, 하이브 6분 앞당김
-- **서플라이 버퍼**: MID 3→8, EARLY 4→6 (블록 방지)
-- **비율 기반 자동생산**: 빌드오더 종료 후 unit_ratios에 따라 유닛 자동 생산
-- **MicroV3 초기화**: AdvancedMicroControllerV3 실제 활성화
-- 테스트 322 passed / 0 failed / 7 skipped
+- **[Phase 18] 맵 컨트롤 시스템**: 크립 위 교전 유도, 전진 스파인 방어, 공격적 크립 확장
+- **[Phase 17] 카운터빌드 속도↑**: confidence 0.2→0.1, 폴백 2분30초, 긴급 Blackboard 전파
+- **[Phase 16] 경제 최적화**: 66드론 컷오프, 가스 300 임계값, 매크로해처리 600
+- **[Phase 15] 전투 마이크로 강화**: 저HP 자동후퇴, 3단계 점진후퇴, 포커스파이어
+- **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
+- **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
+- **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
+- 테스트 167 passed / 0 failed / 20 skipped
 
 ### 기술 스택
 
