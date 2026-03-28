@@ -240,16 +240,23 @@ class HarassmentCoordinator:
             self.priority_targets.append(building.position)
 
     def _find_harassment_target(self) -> Optional[Point2]:
-        """견제 타겟 찾기"""
+        """견제 타겟 찾기
+        ★ Phase 32: 방어가 가장 약한 적 기지 선택 (이전: 아군 본진 기준 최근접 → 적 주력 공격하는 역효과)
+        """
         if self.priority_targets:
-            # 적 본진과 가장 먼 곳(확장) 우선? 아니면 가장 가까운 곳?
-            # 견제는 보통 '빈집'이므로 적 주력과 먼 곳이 좋음.
-            # 하지만 단순화를 위해 시작 위치와 가까운 곳(가장 가까운 적 기지) 선택
-            if hasattr(self.bot, "start_location"):
-                return min(
-                    self.priority_targets,
-                    key=lambda pos: pos.distance_to(self.bot.start_location)
-                )
+            # ★ Phase 32: 위협 평가 후 가장 방어가 약한 적 기지 선택
+            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+                enemy_main = self.bot.enemy_start_locations[0]
+                # 방어 약한 순으로 정렬 (동점 시 적 본진과 가까운 곳 = 확장 = 더 취약)
+                scored = []
+                for pos in self.priority_targets:
+                    threat = self._assess_threat_at_position(pos)
+                    dist_to_enemy_main = pos.distance_to(enemy_main)
+                    scored.append((pos, threat, dist_to_enemy_main))
+                # 위협 낮은 것 먼저, 동점 시 적 본진과 가까운 곳(확장) 우선
+                scored.sort(key=lambda x: (x[1], -x[2]))
+                return scored[0][0]
+            return self.priority_targets[0]
 
         # Fallback: 적 본진
         if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
@@ -312,7 +319,8 @@ class HarassmentCoordinator:
         zerglings = self.bot.units(UnitTypeId.ZERGLING).filter(
             lambda u: u.tag not in self.zergling_runby_tags
         )
-        if len(zerglings) < 12:  # 최소 12마리 (본대 유지 위해)
+        # ★ Phase 32: 최소 8마리로 하향 (이전: 12 — 중반 전에 절대 미발동)
+        if len(zerglings) < 8:  # 최소 8마리 (본대 유지 위해)
             return
 
         # ★ Phase 22: 멀티 베이스 동시 타격 ★
@@ -558,9 +566,11 @@ class HarassmentCoordinator:
         # ★ 견제 실행 ★
         for muta in active_mutas:
             # 위협 체크
-            if self._assess_threat_at_position(muta.position) > 5: # 너무 위험하면
-                 self.bot.do(muta.move(self.bot.start_location)) # 일시 후퇴
-                 continue
+            if self._assess_threat_at_position(muta.position) > 5:  # 너무 위험하면
+                # ★ Phase 32: 하드코딩 start_location 대신 가장 가까운 아군 기지로 후퇴
+                safe_spot = self._find_safe_retreat_point(muta.position)
+                self.bot.do(muta.move(safe_spot))
+                continue
 
             # 일꾼 우선 타겟
             workers = self._find_enemy_workers_near(self.mutalisk_harass_target)
@@ -568,7 +578,8 @@ class HarassmentCoordinator:
                 target_worker = min(workers, key=lambda w: w.distance_to(muta))
                 self.bot.do(muta.attack(target_worker))
             else:
-                self.bot.do(muta.move(self.mutalisk_harass_target))
+                # ★ Phase 32: 일꾼 없으면 건물/유닛이라도 attack — move는 교전 없이 이동만
+                self.bot.do(muta.attack(self.mutalisk_harass_target))
 
     def _find_enemy_workers_near(self, position: Point2) -> List:
         """특정 위치 근처의 적 일꾼 찾기"""
