@@ -960,6 +960,18 @@ class EvolutionUpgradeManager:
                             if iteration % 100 == 0:
                                 self.logger.debug(f"Lurker Den build failed: {e}")
 
+        # === ★ Phase 31: Ultralisk Cavern — Hive 완성 후 자동 건설 ===
+        if self._has_hive():
+            ultra_caverns = self.bot.structures(UnitTypeId.ULTRALISKCAVERN)
+            if not ultra_caverns.exists and self.bot.already_pending(UnitTypeId.ULTRALISKCAVERN) == 0:
+                if self.bot.minerals >= 150 and self.bot.vespene >= 200:
+                    try:
+                        await self.bot.build(UnitTypeId.ULTRALISKCAVERN, near=build_pos)
+                        self.logger.info(f"[{int(game_time)}s] ★ Phase 31: Ultralisk Cavern 건설 (Hive 완성)")
+                    except Exception as e:
+                        if iteration % 100 == 0:
+                            self.logger.debug(f"Ultralisk Cavern build failed: {e}")
+
         # === 3. Roach Warren: 2분 30초 이후 보장 (Spawning Pool 필수) ===
         if game_time >= 150:
             roach_warrens = self.bot.structures(UnitTypeId.ROACHWARREN)
@@ -988,10 +1000,9 @@ class EvolutionUpgradeManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★★★ ULTRA-AGGRESSIVE: 20분 공3방3 달성을 위한 초공격적 테크 ★★★
-        # === 레어 (Lair) 변이: 3분 30초 이후 (빠르게) ===
-        # 공2업을 위해 레어가 필수 → 빨리 올려야 함
-        if game_time >= 210:  # 3분 30초 (4분 30초 → 1분 앞당김)
+        # ★ Phase 31: 레어 타이밍 — 2베이스 포화 후 (3분 or 미네랄 500+)
+        # 이전: 3분30초 고정 → 확장과 충돌. 이제: 경제 안정 확인 후 레어
+        if game_time >= 180 or (self.bot.minerals >= 500 and game_time >= 150):
             await self._upgrade_to_lair(iteration)
 
         # === 군락 (Hive) 변이: 6분 이후 (공3방3을 위해) ===
@@ -1080,8 +1091,8 @@ class EvolutionUpgradeManager:
         if self.bot.already_pending(UnitTypeId.HIVE) > 0:
             return
 
-        # 레어가 있어야 함
-        lairs = self.bot.structures(UnitTypeId.LAIR).ready.idle
+        # ★ Phase 31: idle 제한 제거 — 라바 생성 중에도 Hive 변이 가능
+        lairs = self.bot.structures(UnitTypeId.LAIR).ready
         if not lairs.exists:
             return
 

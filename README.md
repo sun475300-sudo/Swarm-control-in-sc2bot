@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-320%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-149-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-152-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -682,6 +682,8 @@ gantt
         바네링attack + 변이idle제거         :done, s26, 2026-03-28, 1d
     section Session 26 — Phase 28~30
         확장타이밍 + 충돌해소 + 공격판단   :done, s27, 2026-03-28, 1d
+    section Session 27 — Phase 31
+        테크트리최적화 + Hive idle제거 + UltraCavern :done, s28, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1045,6 +1047,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 31] 테크 트리 최적화**: 레어 타이밍 3분(경제안정후), Hive idle제한 제거, Ultralisk Cavern 자동건설
 - **[Phase 30] 공격 판단 고도화**: 사전 전투력 비교(적 60% 미만 시 공격자제), 전멸 방지
 - **[Phase 29] 매니저 충돌 해소**: 방어 태그 Blackboard 전파, 위협 해제 시 자동 클리어
 - **[Phase 28] 경제/확장 밸런스**: 확장 타이밍 현실화 (3rd 3분30초, 4th 5분, 5th 7분)
@@ -1064,7 +1067,7 @@ graph LR
 - **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
 - **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
 - **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
-### Test Report (2026-03-28, Phase 30 완료 시점)
+### Test Report (2026-03-28, Phase 31 완료 시점)
 
 ```
 Python 3.10.11 | pytest 9.0.2 | Windows 11
