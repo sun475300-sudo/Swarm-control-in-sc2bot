@@ -619,11 +619,15 @@ class StrategyManager:
         if hasattr(intel, "get_build_pattern_status"):
             build_status = intel.get_build_pattern_status()
 
-        # 패턴이 없거나 신뢰도가 너무 낮으면 스킵
+        # ★★★ FIX Phase 12: 정찰 실패 시 기본 폴백 전략 ★★★
+        # 패턴 unknown이거나 신뢰도 낮아도, 종족별 기본 대응은 유지
+        game_time = getattr(self.bot, "time", 0)
+        if (enemy_pattern == "unknown" or build_confidence < 0.2) and game_time > 180:
+            # 3분 이후에도 정찰 실패 → 종족별 안전 빌드 적용
+            self._apply_safe_fallback_ratios()
+            return
         if enemy_pattern == "unknown" or build_confidence < 0.2:
             return
-
-        game_time = getattr(self.bot, "time", 0)
 
         # === 적 빌드별 대응 유닛 비율 설정 ===
 
@@ -975,6 +979,59 @@ class StrategyManager:
                 self.last_high_templar_log = game_time
             self._adjust_unit_ratio("zergling", 0.4)
             self._adjust_unit_ratio("ravager", 0.3)  # 담즙으로 폭풍 지역 회피
+
+    def _apply_safe_fallback_ratios(self) -> None:
+        """
+        ★ Phase 12: 정찰 실패 시 종족별 안전 폴백 빌드 ★
+
+        정찰 정보가 없을 때 가장 범용적인 유닛 조합을 생산합니다.
+        - vs Terran: 바퀴 + 히드라 (바이오/메카닉 모두 대응)
+        - vs Protoss: 바퀴 + 히드라 (게이트웨이/로보 모두 대응) + 포자 (오라클/공허 대비)
+        - vs Zerg: 바퀴 + 바네링 (범용)
+        - Unknown: 바퀴 + 히드라 (가장 안전)
+        """
+        race = self.detected_enemy_race
+        fallback_ratios = {
+            "zergling": 0.20,
+            "roach": 0.40,
+            "hydralisk": 0.25,
+            "ravager": 0.10,
+            "corruptor": 0.05,
+        }
+
+        if race == EnemyRace.TERRAN:
+            fallback_ratios = {
+                "zergling": 0.15,
+                "baneling": 0.15,
+                "roach": 0.30,
+                "hydralisk": 0.30,
+                "ravager": 0.10,
+            }
+        elif race == EnemyRace.PROTOSS:
+            fallback_ratios = {
+                "zergling": 0.10,
+                "roach": 0.35,
+                "hydralisk": 0.30,
+                "ravager": 0.15,
+                "corruptor": 0.10,
+            }
+            # 포자 건설 요청 (DT/Oracle 대비)
+            if self.blackboard:
+                self.blackboard.set("urgent_spore_all_bases", True)
+        elif race == EnemyRace.ZERG:
+            fallback_ratios = {
+                "zergling": 0.15,
+                "baneling": 0.15,
+                "roach": 0.40,
+                "hydralisk": 0.20,
+                "ravager": 0.10,
+            }
+
+        # 현재 비율에 적용
+        if self.detected_enemy_race in self.race_unit_ratios:
+            self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = fallback_ratios
+        if self.blackboard:
+            self.blackboard.set("unit_ratios", fallback_ratios)
 
     def _counter_zerg_units(self) -> None:
         """

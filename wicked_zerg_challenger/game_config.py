@@ -49,8 +49,8 @@ class GameConfig:
 
     # Overlord 생산 타이밍
     SUPPLY_BUFFER_OPENING = 6          # 초반 보급 여유분 (0-3분)
-    SUPPLY_BUFFER_EARLY = 4            # 초반 보급 여유분 (3-6분)
-    SUPPLY_BUFFER_MID = 3              # 중반 보급 여유분 (6분+)
+    SUPPLY_BUFFER_EARLY = 6            # ★ FIX: 4→6 (초반 보급 여유분, 3-6분)
+    SUPPLY_BUFFER_MID = 8              # ★ FIX: 3→8 (중반 보급 여유분, 6분+ — 블록 방지)
     SUPPLY_BUFFER_HIGH_GAS = 10        # 가스 많을 때 여유분
 
     SUPPLY_CAP = 200                   # 최대 보급

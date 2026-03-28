@@ -1144,49 +1144,55 @@ class CombatManager:
                 self._update_rally_point()
                 self._last_rally_update = game_time
 
+            # ★ Phase 12: 방어 중인 유닛 제외 (디컨플릭트) ★
+            defense_tags = set()
+            blackboard = getattr(self.bot, "blackboard", None)
+            if blackboard and hasattr(blackboard, "get"):
+                defense_tags = blackboard.get("defense_unit_tags", set()) or set()
+            if defense_tags:
+                army_units = [u for u in army_units if u.tag not in defense_tags]
+
             # 최소 군대 서플라이 확인
             army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
 
             # ★ HYPER AGGRESSIVE: 집결 시간 최소화
             min_attack_threshold = self._early_game_min_attack if game_time < 240 else self._min_army_for_attack
 
-            # ★★★ NEW: 집결 시스템 제거 - 즉시 공격 ★★★
-            # 빠른 승부를 위해 병력이 모이기를 기다리지 않음
-            # 유닛이 생산되는 즉시 전선에 투입
+            # ★★★ FIX Phase 12: 집결 시스템 복원 — 1~2마리 돌격 방지 ★★★
             if army_supply < min_attack_threshold:
-                # 최소 병력도 충족 안되면 리턴
+                # 최소 병력 미달 → 랠리 포인트에서 집결 대기
+                if self._rally_point:
+                    await self._gather_at_rally_point(army_units, iteration)
                 return
 
-            # ★★★ IMPROVED: 여러 기지 동시 공격 로직 ★★★
-            # 적 기지/확장 여러 개 찾기
+            # 공격 타겟 찾기
             attack_targets = self._find_multiple_attack_targets()
 
             if not attack_targets:
-                # 적 시작 위치로 공격 (fallback)
                 if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
                     attack_targets = [self.bot.enemy_start_locations[0]]
 
             if not attack_targets:
                 return
 
-            # ★★★ REMOVED: 집결 대기 시스템 제거 (즉시 공격) ★★★
-            # Check if army is gathered (most units near rally point)
-            # if self._rally_point and not self._is_army_gathered(army_units):
-            #     await self._gather_at_rally_point(army_units, iteration)
-            #     return
+            # ★★★ FIX Phase 12: 집결 대기 복원 (최대 30초) ★★★
+            # 70% 이상 병력이 모이면 공격, 아니면 집결
+            if self._rally_point and not self._is_army_gathered(army_units):
+                # 단, 40 서플 이상이면 집결 무시하고 즉시 공격
+                if army_supply < 40:
+                    await self._gather_at_rally_point(army_units, iteration)
+                    return
 
-            # ★★★ FIX: 매 10 프레임마다 공격 명령 갱신 (더 자주) ★★★
             if iteration % 10 != 0:
                 return
 
-            # ★★★ DEBUG: 공격 시작 로그 ★★★
             if iteration % 100 == 0:
                 self.logger.info(f"[{int(game_time)}s] OFFENSIVE ATTACK: {len(army_units)} units, {army_supply} supply, {len(attack_targets)} targets")
 
-            # ★ NEW: 병력 분할 공격 (여러 타겟이 있을 때)
-            if len(attack_targets) > 1 and army_supply >= 20:
-                # 병력을 타겟 수만큼 나눔 (최대 3개 그룹)
-                num_groups = min(len(attack_targets), 3)
+            # ★★★ FIX Phase 12: 병력 분할 제거 — 한 곳에 집중 공격 ★★★
+            # 병력 분할은 100 서플 이상에서만 허용 (그 이하는 한 곳 집중)
+            if len(attack_targets) > 1 and army_supply >= 100:
+                num_groups = min(len(attack_targets), 2)  # 최대 2그룹
                 group_size = len(army_units) // num_groups
 
                 for group_idx in range(num_groups):
@@ -1197,30 +1203,20 @@ class CombatManager:
 
                     for unit in group_units:
                         try:
-                            # ★★★ FIX: 모든 유닛에게 무조건 공격 명령 (is_idle 체크 제거) ★★★
                             self.bot.do(unit.attack(target))
-                        except (AttributeError, TypeError) as e:
-                            # Unit command failed
+                        except (AttributeError, TypeError):
                             continue
-
-                if iteration % 50 == 0:
-                    self.logger.info(f"[{int(self.bot.time)}s] ★ MULTI-ATTACK: {num_groups} groups attacking {len(attack_targets)} targets (army: {army_supply} supply)")
             else:
-                # 단일 타겟 공격 (기존 로직)
+                # 단일 타겟 집중 공격 (기본)
                 attack_target = attack_targets[0]
-                attack_count = 0
                 for unit in list(army_units):
                     try:
-                        # ★★★ FIX: 모든 유닛에게 무조건 공격 명령 (is_idle 체크 제거) ★★★
                         self.bot.do(unit.attack(attack_target))
-                        attack_count += 1
-                    except (AttributeError, TypeError) as e:
-                        # Unit command failed
+                    except (AttributeError, TypeError):
                         continue
 
                 if iteration % 50 == 0:
-                    target_name = getattr(attack_target, "name", str(attack_target)[:30])
-                    self.logger.info(f"[{int(self.bot.time)}s] Attacking {target_name} with {army_supply} supply army ({attack_count} units ordered)")
+                    self.logger.info(f"[{int(self.bot.time)}s] Attacking with {army_supply} supply → target")
 
         except Exception as e:
             if iteration % 50 == 0:

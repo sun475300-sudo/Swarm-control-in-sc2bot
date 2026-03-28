@@ -933,9 +933,9 @@ class EvolutionUpgradeManager:
         if game_time >= 210:  # 3분 30초 (4분 30초 → 1분 앞당김)
             await self._upgrade_to_lair(iteration)
 
-        # === 군락 (Hive) 변이: 7분 이후 (공3방3을 위해) ===
-        # 공3, 방3을 위해 하이브 필수 → 빨리 올려야 함
-        if game_time >= 420:  # 7분 (10분 → 3분 앞당김)
+        # === 군락 (Hive) 변이: 6분 이후 (공3방3을 위해) ===
+        # ★ FIX Phase 12: 7분→6분 앞당김 (인페핏 5분 건설 + 하이브 6분 = ~8분 완성)
+        if game_time >= 360:  # 6분
             await self._upgrade_to_hive(iteration)
 
     async def _upgrade_to_lair(self, iteration: int) -> None:
@@ -1055,8 +1055,8 @@ class EvolutionUpgradeManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # 7분 이후에만 건설
-        if game_time < 420:
+        # ★ FIX Phase 12: 5분 이후 건설 (7분→5분, 하이브 8분 완성 목표)
+        if game_time < 300:
             return
 
         # 이미 있거나 건설 중이면 스킵

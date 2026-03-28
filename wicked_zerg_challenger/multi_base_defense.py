@@ -39,6 +39,9 @@ class MultiBaseDefense:
         # 퀸 할당 (각 기지마다)
         self.queens_per_base = 2  # 기지당 퀸 2마리
 
+        # ★ Phase 12: 방어 유닛 태그 추적 (중복 명령 방지) ★
+        self._defense_unit_tags: set = set()
+
     async def on_step(self, iteration: int):
         """메인 업데이트 루프"""
         if not UnitTypeId:
@@ -223,6 +226,10 @@ class MultiBaseDefense:
         1. 근처 모든 유닛을 방어에 투입
         2. 일꾼도 임시 방어에 참여 (심각한 위협일 때)
         """
+        # ★ Phase 12: 매 프레임 방어 유닛 태그 초기화 ★
+        self._defense_unit_tags.clear()
+        any_base_under_attack = False
+
         for base_tag, status in self.base_defense_status.items():
             if not status["under_attack"]:
                 continue
@@ -235,6 +242,8 @@ class MultiBaseDefense:
             if not nearby_enemies.exists:
                 continue
 
+            any_base_under_attack = True
+
             # 1. 근처 모든 군대 유닛을 방어에 투입
             nearby_army = self.bot.units.closer_than(20, base_pos).exclude_type(
                 [UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA]
@@ -243,6 +252,7 @@ class MultiBaseDefense:
             for unit in nearby_army:
                 closest_enemy = nearby_enemies.closest_to(unit)
                 self.bot.do(unit.attack(closest_enemy))
+                self._defense_unit_tags.add(unit.tag)  # ★ Phase 12: 태그 기록
 
             # ★ NEW: 먼 곳의 idle 군대도 위협 기지로 이동 (중간 이상 위협 시)
             if threat_level >= 2:
@@ -253,6 +263,7 @@ class MultiBaseDefense:
 
                 for unit in idle_army:
                     self.bot.do(unit.attack(base_pos))
+                    self._defense_unit_tags.add(unit.tag)  # ★ Phase 12
 
             # 2. 심각한 위협이면 일꾼도 투입 (threat_level >= 3)
             if threat_level >= 3:
@@ -277,6 +288,12 @@ class MultiBaseDefense:
                 self.logger.warning(
                     f"[{int(self.bot.time)}s] ★ EMERGENCY BASE DEFENSE! Threat: {threat_level} ★"
                 )
+
+        # ★ Phase 12: Blackboard에 방어 상태 저장 (CombatManager 디컨플릭트용) ★
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard and hasattr(blackboard, "set"):
+            blackboard.set("base_under_attack", any_base_under_attack)
+            blackboard.set("defense_unit_tags", self._defense_unit_tags)
 
     def get_total_bases(self) -> int:
         """전체 기지 수 반환"""
