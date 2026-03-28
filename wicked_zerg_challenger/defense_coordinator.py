@@ -248,6 +248,11 @@ class DefenseCoordinator:
                 total_enemy_supply = max(total_enemy_supply, 10)
                 if not threat_position:
                     threat_position = nearby_transports[0].position
+                # ★ Phase 24: 드롭 위치 Blackboard 전파 (즉시 대응용) ★
+                blackboard = getattr(self.bot, "blackboard", None)
+                if blackboard and hasattr(blackboard, "set"):
+                    blackboard.set("drop_detected", True)
+                    blackboard.set("drop_position", nearby_transports[0].position)
 
         # 위협 레벨 결정 (설정값 사용)
         if ThreatLevel is None:

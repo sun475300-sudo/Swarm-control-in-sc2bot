@@ -12,7 +12,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
-[![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-320%20Passing-brightgreen)]()
 [![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-142-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
@@ -672,6 +672,8 @@ gantt
         DeadCode 10대매니저 일괄활성화            :done, s21, 2026-03-28, 1d
     section Session 21 — Phase 23
         퀸인젝트우선 + 오버로드선행생산          :done, s22, 2026-03-28, 1d
+    section Session 22 — Phase 24
+        멀티드롭방어 + Blackboard전파           :done, s23, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1035,6 +1037,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 24] 멀티드롭 방어**: 수송선 감지→Blackboard 전파→4~6유닛 즉시 차출 대응
 - **[Phase 23] 퀸/서플라이 최적화**: 방어 중 인젝트 유지, 오버로드 동적 버퍼(4/6/8/10) 선행생산
 - **[Phase 22] Dead Code 일괄 활성화**: 36개 미활성 매니저 발견, 10대 핵심(크립/주술/오버로드 등) 활성화
 - **[Phase 21] 종족별 특화 대응**: ZvT 바이오/메카/공중 카운터, ZvP 바이퍼 추가, ZvZ 럴커 전환

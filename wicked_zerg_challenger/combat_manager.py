@@ -1177,9 +1177,27 @@ class CombatManager:
                 self._update_rally_point()
                 self._last_rally_update = game_time
 
+            # ★ Phase 24: 드롭 감지 시 가까운 유닛 즉시 파견 ★
+            blackboard = getattr(self.bot, "blackboard", None)
+            if blackboard and hasattr(blackboard, "get"):
+                drop_detected = blackboard.get("drop_detected", False)
+                drop_pos = blackboard.get("drop_position", None)
+                if drop_detected and drop_pos and army_units:
+                    # 드롭 위치에서 가장 가까운 유닛 4~6기 파견
+                    sorted_by_dist = sorted(army_units, key=lambda u: u.distance_to(drop_pos))
+                    defenders = sorted_by_dist[:min(6, len(sorted_by_dist))]
+                    for unit in defenders:
+                        try:
+                            self.bot.do(unit.attack(drop_pos))
+                        except Exception:
+                            continue
+                    # 드롭 플래그 해제
+                    blackboard.set("drop_detected", False)
+                    defender_tags = {u.tag for u in defenders}
+                    army_units = [u for u in army_units if u.tag not in defender_tags]
+
             # ★ Phase 12: 방어 중인 유닛 제외 (디컨플릭트) ★
             defense_tags = set()
-            blackboard = getattr(self.bot, "blackboard", None)
             if blackboard and hasattr(blackboard, "get"):
                 defense_tags = blackboard.get("defense_unit_tags", set()) or set()
             if defense_tags:

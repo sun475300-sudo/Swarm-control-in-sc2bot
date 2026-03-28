@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 24] - 2026-03-28
+### 멀티드롭/해커 방어
+- 드롭 감지 Blackboard 전파: 수송선 접근 시 drop_detected + drop_position 즉시 공유
+- 전투 드롭 대응: 가장 가까운 4~6유닛 즉시 차출 → 드롭 위치 방어
+- 방어 후 drop_detected 자동 리셋 + 잔여 병력 원래 임무 복귀
+
 ## [Phase 23] - 2026-03-28
 ### 퀸/서플라이 최적화
 - 방어 중에도 인젝트 최우선 실행 (이전: 방어 시 인젝트 완전 건너뜀)
