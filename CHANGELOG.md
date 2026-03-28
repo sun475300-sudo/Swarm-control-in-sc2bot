@@ -2,6 +2,13 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 35] - 2026-03-28
+### 통합 검증 + 아레나 패키지
+- Phase 31~34 모든 변경 파일 구문 검증 완료 (syntax OK)
+- 매니저 연결 검증: harassment_coordinator, early_scout, overlord_safety, build_order_system, defense_coordinator 모두 bot_step_integration 정상 연결
+- 테스트 최종 결과: 321 passed / 1 failed (pre-existing) / 7 skipped
+- 아레나 패키지 재생성: WickedZergBotPro_Arena_20260328.zip (491 files, 15.2 MB)
+
 ## [Phase 34] - 2026-03-28
 ### 실전 메타 대응
 - ZvZ 저글링 카운터 시간 제한 제거: game_time<300 삭제 → 5분 이후에도 10마리+ 저글링 대응

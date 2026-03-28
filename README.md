@@ -690,6 +690,8 @@ gantt
         정찰OL재파견 + 재정찰attack + idle2마리    :done, s30, 2026-03-28, 1d
     section Session 30 — Phase 34
         ZvZ저글링시간제거 + hydra키오타 + 추적자카운터 :done, s31, 2026-03-28, 1d
+    section Session 31 — Phase 35
+        통합검증 + 321테스트 + 아레나패키지재생성   :done, s32, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1053,6 +1055,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 35] 통합 검증 + 아레나 패키지**: 구문 검증 OK, 321 테스트 통과, 아레나 ZIP 재생성 (491 files, 15.2 MB)
 - **[Phase 34] 실전 메타 대응**: ZvZ 저글링시간제한 제거, 헬리온 5분까지, hydra 키오타 수정(321 pass), 추적자 카운터 추가
 - **[Phase 33] 정찰/오버로드 강화**: 정찰OL 사망 시 재파견, 재정찰 저글링 attack(), idle 최소 2마리
 - **[Phase 32] 견제/하라스 AI 개선**: 타겟선택 방어약한곳 우선, 저글링 최소 8마리, 뮤탈 후퇴/공격 수정
@@ -1076,12 +1079,12 @@ graph LR
 - **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
 - **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
 - **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
-### Test Report (2026-03-28, Phase 34 완료 시점)
+### Test Report (2026-03-28, Phase 35 완료 시점)
 
 ```
 Python 3.10.11 | pytest 9.0.2 | Windows 11
 ============================================
-Total: 329 collected | 320 passed | 2 failed | 7 skipped
+Total: 329 collected | 321 passed | 1 failed | 7 skipped
 ============================================
 ```
 
