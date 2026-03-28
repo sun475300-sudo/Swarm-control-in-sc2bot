@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 29] - 2026-03-28
+### 매니저 충돌 해소
+- defense_coordinator 방어 태그 Blackboard 전파 (이전: 미전파 → combat_manager와 충돌)
+- 위협 해제 시 방어 태그 자동 클리어 (공격에 즉시 재투입)
+- defense_unit_tags 병합 로직: multi_base + defense_coordinator 태그 통합
+
 ## [Phase 28] - 2026-03-28
 ### 경제/확장 밸런스
 - 확장 타이밍 현실화: 3rd 3분30초/4th 5분/5th 7분 (이전: 90초/120초/180초 — 과도하게 빠름)

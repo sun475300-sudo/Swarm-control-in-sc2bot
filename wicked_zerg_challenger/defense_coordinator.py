@@ -144,8 +144,13 @@ class DefenseCoordinator:
         - CRITICAL: 대규모 공격 또는 올인
         """
         if not self.bot.enemy_units:
-            # 적이 없으면 안전
+            # 적이 없으면 안전 — 방어 유닛 해제
             self.detected_threats.clear()
+            # ★ Phase 29: 위협 없으면 방어 태그 클리어 → 공격에 재투입 가능
+            if self.defending_units:
+                self.defending_units.clear()
+                if self.blackboard and hasattr(self.blackboard, "set"):
+                    self.blackboard.set("defense_unit_tags", set())
             return
 
         # 우리 기지 위치
@@ -756,6 +761,12 @@ class DefenseCoordinator:
             if unit.distance_to(defense_pos) > 10:
                 self.bot.do(unit.move(defense_pos))
                 self.defending_units.add(unit.tag)
+
+        # ★ Phase 29: 방어 유닛 태그를 Blackboard에 전파 (combat_manager 충돌 방지)
+        if self.blackboard and hasattr(self.blackboard, "set"):
+            existing_tags = self.blackboard.get("defense_unit_tags", set()) or set()
+            merged_tags = existing_tags | self.defending_units
+            self.blackboard.set("defense_unit_tags", merged_tags)
 
     # ========== 상태 조회 ==========
 

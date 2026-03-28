@@ -680,8 +680,8 @@ gantt
         포자2분 + 크립퀸방어투입 + 러시감지↓  :done, s25, 2026-03-28, 1d
     section Session 25 — Phase 27
         바네링attack + 변이idle제거         :done, s26, 2026-03-28, 1d
-    section Session 26 — Phase 28
-        확장타이밍현실화 + 포화후확장       :done, s27, 2026-03-28, 1d
+    section Session 26 — Phase 28~29
+        확장타이밍 + 매니저충돌해소        :done, s27, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -1045,6 +1045,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 29] 매니저 충돌 해소**: 방어 태그 Blackboard 전파, 위협 해제 시 자동 클리어
 - **[Phase 28] 경제/확장 밸런스**: 확장 타이밍 현실화 (3rd 3분30초, 4th 5분, 5th 7분)
 - **[Phase 27] 유닛 컨트롤 튜닝**: 바네링 자폭 attack() 수정, 변이 idle 제한 해제(전투 중 변이)
 - **[Phase 26] 방어 시스템 강화**: 포자 2분 선행건설, 크립퀸 전투투입, 러시 감지 임계값 하향
