@@ -290,6 +290,12 @@ try:
 except ImportError:
     CreepHighway = None
 
+# ★ Phase 19: Hive Tech Maximizer (군락 이후 고급 기술 극대화) ★
+try:
+    from hive_tech_maximizer import HiveTechMaximizer
+except (ImportError, TypeError):
+    HiveTechMaximizer = None
+
 # Game Data Logger (Phase 22 - 게임 데이터 수집)
 try:
     from game_data_logger import GameDataLogger
@@ -516,6 +522,13 @@ class BotStepIntegrator:
             self.logger.info("[INIT] CreepHighway (A*) initialized (Phase 1)")
         else:
             self.bot.creep_highway_astar = None
+
+        # ★ Phase 19: Hive Tech Maximizer (군락 이후 울트라/브루드/바이퍼 생산)
+        if HiveTechMaximizer:
+            self.bot.hive_tech = HiveTechMaximizer(bot)
+            self.logger.info("[INIT] HiveTechMaximizer initialized (Phase 19) — 후반 고급유닛 활성화")
+        elif not hasattr(self.bot, "hive_tech"):
+            self.bot.hive_tech = None
 
         # Game Data Logger (Phase 22 - 경기 데이터 수집)
         if GameDataLogger:

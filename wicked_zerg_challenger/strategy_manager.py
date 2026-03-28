@@ -170,9 +170,9 @@ class StrategyManager:
                 GamePhase.EARLY: {"zergling": 0.6, "queen": 0.2, "roach": 0.2},
                 GamePhase.MID: {"roach": 0.25, "hydralisk": 0.2, "zergling": 0.2,
                                 "ravager": 0.1, "baneling": 0.1, "queen": 0.1, "lurker": 0.05},
-                GamePhase.LATE: {"hydralisk": 0.25, "roach": 0.15, "corruptor": 0.15,
-                                 "ravager": 0.1, "lurker": 0.1, "zergling": 0.1,
-                                 "broodlord": 0.1, "viper": 0.05},
+                GamePhase.LATE: {"ultralisk": 0.20, "hydralisk": 0.20, "corruptor": 0.15,
+                                 "broodlord": 0.10, "viper": 0.10, "zergling": 0.10,
+                                 "lurker": 0.10, "ravager": 0.05},
             }
             
         return ratios

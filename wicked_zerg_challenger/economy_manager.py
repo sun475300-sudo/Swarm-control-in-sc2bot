@@ -187,6 +187,10 @@ class EconomyManager:
         if iteration % 33 == 0:  # ~1.5초마다
             await self._unified_expansion_check(iteration)
 
+        # ★ Phase 19: 기지 파괴 시 자동 재확장 ★
+        if iteration % 66 == 0:  # ~3초마다
+            await self._auto_re_expand_if_lost()
+
         # 확장 체크 후 드론/오버로드 생산 (자원 확보 후 생산)
         await self._train_overlord_if_needed()
         await self._train_drone_if_needed()
@@ -1199,6 +1203,45 @@ class EconomyManager:
         except (AttributeError, TypeError) as e:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Idle worker assignment failed: {e}")
+
+    async def _auto_re_expand_if_lost(self):
+        """
+        ★ Phase 19: 기지 파괴 시 자동 재확장 ★
+
+        조건: 기지 수가 2개 이하로 떨어졌고, 5분+ 경과,
+        미네랄 300+, 최근 확장 시도 없음 → 즉시 재확장
+        """
+        game_time = getattr(self.bot, "time", 0)
+        if game_time < 300:
+            return
+
+        base_count = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 0
+        if base_count >= 3:
+            return  # 3기지 이상이면 OK
+
+        minerals = getattr(self.bot, "minerals", 0)
+        if minerals < 300:
+            return
+
+        # 쿨다운 체크
+        time_since_last = game_time - self._last_expansion_attempt_time
+        if time_since_last < self._expansion_cooldown:
+            return
+
+        # 적이 근처에 없을 때만
+        if hasattr(self.bot, "enemy_units"):
+            for th in self.bot.townhalls:
+                nearby = self.bot.enemy_units.closer_than(15, th)
+                if nearby.amount >= 3:
+                    return  # 공격 받는 중이면 재확장 보류
+
+        # 재확장 실행
+        try:
+            self._last_expansion_attempt_time = game_time
+            await self._perform_smart_expansion(f"Re-expand (lost bases, only {base_count} remaining)")
+            self.logger.info(f"[{int(game_time)}s] ★ Phase 19: AUTO RE-EXPAND (bases: {base_count}) ★")
+        except Exception as e:
+            self.logger.warning(f"Re-expand failed: {e}")
 
     async def _unified_expansion_check(self, iteration: int) -> None:
         """

@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-117-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-121-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -662,6 +662,8 @@ gantt
         정찰대응 강화 + 카운터빌드 + 오버로드정찰   :done, s16, 2026-03-28, 1d
     section Session 16 — Phase 18
         맵컨트롤 + 크립교전 + 전진스파인 + 공격크립 :done, s17, 2026-03-28, 1d
+    section Session 17 — Phase 19
+        후반전환 + 울트라 + 미네랄소비 + 재확장    :done, s18, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -927,6 +929,14 @@ graph LR
         FIX25["🔥 공격적 크립 확장<br/>적진 75%까지 다단계<br/>종양 릴레이 자동화"]
     end
 
+    subgraph "🔧 Session 17 — Phase 19 후반 전환 시스템"
+        direction TB
+        FIX26["🦣 HiveTechMaximizer<br/>활성화 (dead code 해결)<br/>울트라/브루드/바이퍼"]
+        FIX27["⚔️ 후반 유닛 비율<br/>울트라 20%+ 추가<br/>3종족 모두 업데이트"]
+        FIX28["💎 미네랄뱅킹 소비<br/>1500+ 저글링 스팸<br/>800+ 울트라 우선"]
+        FIX29["🏠 자동 재확장<br/>기지파괴 시 즉시 재건<br/>2기지 이하 트리거"]
+    end
+
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
@@ -952,6 +962,10 @@ graph LR
     style FIX23 fill:#00b894,color:#fff
     style FIX24 fill:#d63031,color:#fff
     style FIX25 fill:#e17055,color:#fff
+    style FIX26 fill:#fdcb6e,color:#000
+    style FIX27 fill:#0984e3,color:#fff
+    style FIX28 fill:#fab1a0,color:#000
+    style FIX29 fill:#a29bfe,color:#000
 ```
 
 ---
@@ -983,6 +997,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 19] 후반 전환 시스템**: HiveTechMaximizer 활성화, 울트라리스크 비율 추가, 미네랄뱅킹 소비, 자동 재확장
 - **[Phase 18] 맵 컨트롤 시스템**: 크립 위 교전 유도, 전진 스파인 방어, 공격적 크립 확장
 - **[Phase 17] 카운터빌드 속도↑**: confidence 0.2→0.1, 폴백 2분30초, 긴급 Blackboard 전파
 - **[Phase 16] 경제 최적화**: 66드론 컷오프, 가스 300 임계값, 매크로해처리 600

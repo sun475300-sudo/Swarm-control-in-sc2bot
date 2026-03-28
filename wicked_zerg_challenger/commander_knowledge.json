@@ -563,10 +563,13 @@
         "MUTALISK": 0.3
       },
       "late": {
-        "ZERGLING": 0.1,
-        "ROACH": 0.2,
-        "HYDRALISK": 0.3,
-        "MUTALISK": 0.4
+        "ULTRALISK": 0.25,
+        "HYDRALISK": 0.20,
+        "ZERGLING": 0.15,
+        "BANELING": 0.10,
+        "CORRUPTOR": 0.10,
+        "BROODLORD": 0.10,
+        "VIPER": 0.10
       }
     },
     "Protoss": {
@@ -583,10 +586,12 @@
         "CORRUPTOR": 0.20
       },
       "late": {
-        "HYDRALISK": 0.35,
-        "CORRUPTOR": 0.3,
-        "RAVAGER": 0.15,
-        "INFESTOR": 0.2
+        "ULTRALISK": 0.20,
+        "HYDRALISK": 0.20,
+        "CORRUPTOR": 0.20,
+        "BROODLORD": 0.15,
+        "VIPER": 0.10,
+        "RAVAGER": 0.15
       }
     },
     "Zerg": {
@@ -601,10 +606,12 @@
         "MUTALISK": 0.2
       },
       "late": {
-        "ZERGLING": 0.2,
-        "ROACH": 0.2,
-        "HYDRALISK": 0.2,
-        "MUTALISK": 0.4
+        "ULTRALISK": 0.20,
+        "ZERGLING": 0.15,
+        "BANELING": 0.15,
+        "ROACH": 0.15,
+        "HYDRALISK": 0.20,
+        "LURKER": 0.15
       }
     }
   },

@@ -71,6 +71,10 @@ class ProductionController:
         if iteration % 4 == 0:  # 4프레임마다
             await self._auto_produce_army_by_ratio()
 
+        # 5. ★ Phase 19: 미네랄 뱅킹 소비 — 1500+ 시 저글링 스팸 ★
+        if iteration % 8 == 0:
+            await self._consume_mineral_bank()
+
     async def _process_production_queue(self) -> None:
         """
         Blackboard 생산 요청 큐 처리
@@ -365,6 +369,52 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
+                except Exception:
+                    pass
+
+    async def _consume_mineral_bank(self):
+        """
+        ★ Phase 19: 미네랄 뱅킹 소비 ★
+
+        미네랄 1500+ 누적 시:
+        - 저글링 스팸 (라바 있는 만큼)
+        - 추가 스파인 크롤러 건설 (전방)
+        - 추가 확장 시도
+        미네랄 800+ & 가스 200+ 시:
+        - 울트라리스크/히드라 등 고비용 유닛 우선
+        """
+        minerals = getattr(self.bot, "minerals", 0)
+        if minerals < 1000:
+            return
+
+        larvae = self.bot.larva
+        if not larvae or not larvae.exists:
+            return
+
+        # 미네랄 1500+ : 저글링 대량 스팸
+        if minerals >= 1500 and self.bot.supply_left >= 2:
+            # 풀이 있어야 저글링 생산 가능
+            pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+            if not pools.exists:
+                return
+
+            spam_count = min(larvae.amount, 5)  # 한 번에 최대 5라바 사용
+            for i in range(spam_count):
+                if self.bot.can_afford(UnitTypeId.ZERGLING) and self.bot.supply_left >= 1:
+                    try:
+                        larva = larvae[i] if i < larvae.amount else None
+                        if larva:
+                            self.bot.do(larva.train(UnitTypeId.ZERGLING))
+                    except Exception:
+                        break
+
+        # 미네랄 800+ & 가스 200+ : 고비용 유닛 (울트라리스크 우선)
+        elif minerals >= 800 and getattr(self.bot, "vespene", 0) >= 200:
+            cavern = self.bot.structures(UnitTypeId.ULTRALISKCAVERN).ready
+            if cavern.exists and self.bot.can_afford(UnitTypeId.ULTRALISK) and self.bot.supply_left >= 6:
+                try:
+                    larva = larvae.first
+                    self.bot.do(larva.train(UnitTypeId.ULTRALISK))
                 except Exception:
                     pass
 
