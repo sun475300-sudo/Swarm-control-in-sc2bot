@@ -2,6 +2,11 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 38] - 2026-03-28
+### 전투 집결 시스템 개선
+- 전투 중 유닛 강제 후퇴 방지: 근처에 적 있으면 랠리 이동 명령 생략 (이전: 20타일 밖이면 전투 중에도 후퇴)
+- 랠리 포인트 기준 개선: 맵 중앙 최근접 기지 기준 (이전: 항상 본진 — 3+ 베이스 이후에도 본진 앞에 고정)
+
 ## [Phase 37] - 2026-03-28
 ### 후반 유닛 전환 최적화
 - GREATERSPIRE 후 뮤탈/코럽터 생산 수정: SPIRE→GREATERSPIRE 변이 후 생산 차단 해제
