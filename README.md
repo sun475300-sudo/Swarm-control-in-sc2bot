@@ -593,20 +593,20 @@ graph TB
 ## Project Stats
 
 ```mermaid
-pie title 버그 심각도 분포 (누적 96건)
+pie title 버그 심각도 분포 (누적 99건)
     "CRITICAL" : 1
-    "HIGH" : 75
+    "HIGH" : 78
     "MEDIUM" : 14
 ```
 
 ```mermaid
-pie title 버그 유형 분포 (96건)
+pie title 버그 유형 분포 (99건)
     "self.bot.do() 래핑 누락" : 57
     "빈 컬렉션 .exists 가드" : 10
     "Division by Zero" : 13
     "타입 에러" : 2
     "잘못된 API 구문" : 1
-    "로직 에러/충돌" : 7
+    "로직 에러/충돌" : 10
 ```
 
 ```mermaid
@@ -621,7 +621,7 @@ pie title 테스트 결과 (329건)
 | Metric | Value | Status |
 |--------|-------|--------|
 | Python 파일 수 | 541 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 96건 (9 세션) | ✅ CRITICAL 0건 잔존 |
+| 누적 버그 수정 | 99건 (10 세션) | ✅ CRITICAL 0건 잔존 |
 | 테스트 스위트 | 314 passed / 14 pre-existing | ✅ 신규 실패 0건 |
 | 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
 | 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
@@ -632,7 +632,7 @@ pie title 테스트 결과 (329건)
 
 ```mermaid
 gantt
-    title 버그 수정 타임라인 (96건)
+    title 버그 수정 타임라인 (99건)
     dateFormat YYYY-MM-DD
     section Session 1-4
         13건 수정 (CRITICAL 1, HIGH 8, MEDIUM 4)   :done, s1, 2026-03-25, 1d
@@ -648,6 +648,8 @@ gantt
         189개 MD 정리 + 대용량 파일 제거            :done, s9, 2026-03-27, 1d
     section Session 9 — Win Rate Fix
         자살공격 방지 + 테크알림 + ZvZ 대응         :done, s10, 2026-03-28, 1d
+    section Session 10 — Phase 12
+        집결복원 + 폴백전략 + 디컨플릭트 + Hive가속 :done, s11, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -812,10 +814,10 @@ mindmap
 ```mermaid
 xychart-beta
     title "버그 수정 누적 현황"
-    x-axis ["S1-4", "S5", "S6", "S7", "S8", "S9"]
+    x-axis ["S1-4", "S5", "S6", "S7", "S8", "S9", "S10"]
     y-axis "누적 수정 건수" 0 --> 100
-    bar [13, 43, 60, 87, 87, 96]
-    line [13, 43, 60, 87, 87, 96]
+    bar [13, 43, 60, 87, 87, 96, 99]
+    line [13, 43, 60, 87, 87, 96, 99]
 ```
 
 ```mermaid
@@ -843,26 +845,36 @@ pie title 종족별 승률 분석 (100게임)
 | **vs Terran** | 6 | 17 | 26% | Hatch First 전환 적용 |
 | **vs Zerg** | 5 | 29 | 15% | ZvZ 카운터 유닛 시스템 추가 |
 | **vs Protoss** | 3 | 40 | 7% | DT/Oracle 감지 + 포자 자동건설 |
-| **전체** | 14 | 86 | 14% | 자살공격 방지(3/6→12/20) + 테크 알림 파이프라인 |
+| **전체** | 14 | 86 | 14% | 집결시스템 복원 + 폴백전략 + 방어디컨플릭트 |
 
 ### Recent Architecture Improvements (2026-03-28)
 
 ```mermaid
 graph LR
-    subgraph "🔧 Session 9 — 승률 개선 핵심 수정"
+    subgraph "🔧 Session 10 — Phase 12 대규모 승률 개선"
         direction TB
-        FIX1["🚫 자살 공격 방지<br/>공격 임계값 3/6→12/20<br/>최소 24 저글링급 확보"]
-        FIX2["🔎 테크 알림 시스템<br/>DT/Oracle/BC/Nydus 감지<br/>IntelManager→Blackboard"]
-        FIX3["🐛 ZvZ 카운터 시스템<br/>링러시→바퀴+바네<br/>뮤탈→히드라+포자"]
-        FIX4["⛽ 가스 뱅킹 강화<br/>오버플로 3000→1000<br/>불균형 트리거 하향"]
-        FIX5["👁️ 정찰 개선<br/>대군주 5초 주기<br/>중반 30초 재정찰"]
+        FIX1["🛡️ 공격 집결 복원<br/>즉시공격→70% 집결 후 공격<br/>분할공격 100서플+만 허용"]
+        FIX2["🧠 카운터 폴백 전략<br/>정찰 실패 시 종족별<br/>안전 유닛비율 자동 적용"]
+        FIX3["⚔️ 방어-공격 디컨플릭트<br/>유닛태그 추적+Blackboard<br/>방어유닛 공격명령 제외"]
+        FIX4["📦 서플라이 버퍼 강화<br/>MID 3→8 EARLY 4→6<br/>서플블록 방지"]
+        FIX5["🏗️ Hive 8분 완성<br/>인페핏 7분→5분<br/>하이브 7분→6분"]
+    end
+
+    subgraph "🔧 Session 9 — 핵심 버그 수정"
+        direction TB
+        FIX6["🚫 자살 공격 방지<br/>공격 임계값 3/6→12/20"]
+        FIX7["🔎 테크 알림 시스템<br/>DT/Oracle/BC/Nydus 감지"]
+        FIX8["🐛 ZvZ 카운터 시스템<br/>링러시→바퀴+바네"]
     end
 
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
-    style FIX4 fill:#e17055,color:#fff
+    style FIX4 fill:#fdcb6e,color:#000
     style FIX5 fill:#0984e3,color:#fff
+    style FIX6 fill:#e17055,color:#fff
+    style FIX7 fill:#533483,color:#fff
+    style FIX8 fill:#b71540,color:#fff
 ```
 
 ---
@@ -900,6 +912,11 @@ graph LR
 - **가스 오버플로 방지**: 임계값 3000→1000, 불균형 트리거 하향
 - **정찰 강화**: 대군주 비전 5초 주기, 중반 30초 재정찰
 - **히드라 사거리 우선 연구**: 속도보다 사거리 먼저 (1마리부터)
+- **공격 집결 시스템 복원**: 즉시공격→70% 집결 후 출격, 분할공격 100서플+만
+- **카운터 폴백 전략**: 정찰 실패 시 종족별 안전 유닛비율 자동 적용
+- **방어-공격 디컨플릭트**: 유닛태그 추적 + Blackboard 연동
+- **Hive ~8분 완성**: 인페핏 5분, 하이브 6분 앞당김
+- **서플라이 버퍼**: MID 3→8, EARLY 4→6 (블록 방지)
 - 테스트 314 passed, 14 pre-existing failures
 
 ### 기술 스택
