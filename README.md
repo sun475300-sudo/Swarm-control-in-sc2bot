@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-320%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-142-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-149-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -1064,7 +1064,53 @@ graph LR
 - **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
 - **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
 - **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
-- 테스트 167 passed / 0 failed / 20 skipped
+### Test Report (2026-03-28, Phase 30 완료 시점)
+
+```
+Python 3.10.11 | pytest 9.0.2 | Windows 11
+============================================
+Total: 329 collected | 320 passed | 2 failed | 7 skipped
+============================================
+```
+
+| Test File | Tests | Status |
+|-----------|-------|--------|
+| test_advanced_scout_system_v2.py | 15 | ALL PASS |
+| test_agent_builder.py | 10 | ALL PASS |
+| test_agent_router.py | 10 | ALL PASS |
+| test_combat_components.py | 20 | ALL PASS |
+| test_combat_manager.py | 16 | ALL PASS |
+| test_command_dispatcher.py | 8 | ALL PASS |
+| test_crypto_trading.py | 25 | 19 pass / 6 skip |
+| test_economy_manager.py | 26 | 25 pass / **1 fail** |
+| test_expansion_manager.py | 24 | ALL PASS |
+| test_harassment_coordinator.py | 22 | ALL PASS |
+| test_intel_manager.py | 16 | ALL PASS |
+| test_model_selector.py | 10 | ALL PASS |
+| test_phase10_improvements.py | 25 | 24 pass / **1 fail** |
+| test_production_resilience.py | 25 | ALL PASS |
+| test_queen_transfusion_manager.py | 8 | ALL PASS |
+| test_resource_manager.py | 10 | ALL PASS |
+| test_security.py | 13 | 12 pass / 1 skip |
+| test_spatial_query_optimizer.py | 10 | ALL PASS |
+| test_tool_dispatcher.py | 6 | ALL PASS |
+| test_tool_executor.py | 9 | ALL PASS |
+| test_trade_orchestrator.py | 12 | ALL PASS |
+| test_workflow_orchestrator.py | 9 | ALL PASS |
+
+**Failed Tests (2건 — Phase 변경으로 인한 기존 테스트 불일치):**
+
+| Test | Reason | Impact |
+|------|--------|--------|
+| `test_initialization_with_config` | Phase 16에서 매크로해처리 임계값 1500→600 변경, 테스트는 옛 값(1500) 기대 | LOW — 설정값 변경 반영 필요 |
+| `test_counter_zerg_mutalisk` | Phase 21 ZvZ 뮤탈 카운터 로직 변경, 테스트 기대값 불일치 | LOW — 테스트 업데이트 필요 |
+
+**Skipped Tests (7건):**
+
+| Test | Reason |
+|------|--------|
+| `test_import_config_loader` 외 5건 | crypto_trading 의존성 미설치 |
+| `test_no_hardcoded_keys_in_yaml` | YAML 설정 파일 미존재 |
 
 ### 기술 스택
 
