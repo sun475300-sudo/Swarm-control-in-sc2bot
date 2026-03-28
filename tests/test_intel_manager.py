@@ -13,6 +13,7 @@ class MockUnit:
         self.type_id = Mock()
         self.type_id.name = type_id
         self.supply_cost = supply_cost
+        self.position = Mock()  # ★ FIX: position 속성 추가
 
 
 class MockBot:

@@ -163,6 +163,12 @@ try:
 except ImportError:
     HarassmentCoordinator = None
 
+# ★ Phase 13: Advanced Micro Controller V3
+try:
+    from advanced_micro_controller_v3 import AdvancedMicroControllerV3
+except (ImportError, TypeError):
+    AdvancedMicroControllerV3 = None
+
 # Queen Inject Optimizer
 try:
     from economy.queen_inject_optimizer import QueenInjectOptimizer
@@ -362,6 +368,13 @@ class BotStepIntegrator:
             self.logger.info("[INIT] QueenInjectOptimizer initialized (Phase 8)")
         else:
             self.bot.queen_inject_opt = None
+
+        # ★ Phase 13: Advanced Micro Controller V3 초기화
+        if AdvancedMicroControllerV3:
+            self.bot.micro_v3 = AdvancedMicroControllerV3(bot)
+            self.logger.info("[INIT] AdvancedMicroControllerV3 initialized (Phase 13)")
+        elif not hasattr(self.bot, "micro_v3"):
+            self.bot.micro_v3 = None
 
         # Queen Transfusion Manager
         if QueenTransfusionManager:

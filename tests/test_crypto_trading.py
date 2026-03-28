@@ -103,6 +103,10 @@ class TestCryptoConfig:
         assert DATA_DIR.exists(), f"데이터 디렉토리가 없습니다: {DATA_DIR}"
 
 
+@pytest.mark.skipif(
+    not os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'config.yaml')),
+    reason="config.yaml not found"
+)
 class TestConfigLoader:
     """config_loader 모듈의 기능을 테스트한다."""
 

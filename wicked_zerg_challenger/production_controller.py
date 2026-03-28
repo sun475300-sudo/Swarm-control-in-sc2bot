@@ -67,6 +67,10 @@ class ProductionController:
         # 3. Overlord 자동 생산 (보급 차단 방지)
         await self._auto_produce_overlords()
 
+        # 4. ★ Phase 13: 비율 기반 군대 자동 생산 ★
+        if iteration % 4 == 0:  # 4프레임마다
+            await self._auto_produce_army_by_ratio()
+
     async def _process_production_queue(self) -> None:
         """
         Blackboard 생산 요청 큐 처리
@@ -251,6 +255,118 @@ class ProductionController:
 
         except Exception as e:
             self.production_failures += 1
+
+    # ========== ★ Phase 13: 비율 기반 군대 자동 생산 ★ ==========
+
+    async def _auto_produce_army_by_ratio(self) -> None:
+        """
+        StrategyManager의 유닛 비율을 기반으로 군대 자동 생산.
+
+        빌드오더 종료 후(5분+), 라바가 있고 자원이 있으면
+        현재 비율에 맞춰 부족한 유닛을 자동 생산합니다.
+        """
+        # 5분 이전에는 빌드오더가 관리
+        if self.bot.time < 300:
+            return
+
+        # 라바 확인
+        larvae = self.bot.larva
+        if not larvae or len(larvae) < 1:
+            return
+
+        # 서플라이 여유 확인
+        if self.bot.supply_left < 2:
+            return
+
+        # Blackboard에서 unit_ratios 가져오기
+        ratios = self.blackboard.get("unit_ratios", None) if self.blackboard else None
+
+        # Strategy Manager에서도 시도
+        if not ratios:
+            strategy = getattr(self.bot, "strategy_manager", None)
+            if strategy and hasattr(strategy, "get_unit_ratios"):
+                ratios = strategy.get_unit_ratios()
+
+        if not ratios:
+            return
+
+        # 유닛 타입 매핑
+        unit_type_map = {
+            "zergling": UnitTypeId.ZERGLING,
+            "roach": UnitTypeId.ROACH,
+            "hydralisk": UnitTypeId.HYDRALISK,
+            "mutalisk": UnitTypeId.MUTALISK,
+            "baneling": UnitTypeId.BANELING,
+            "ravager": UnitTypeId.RAVAGER,
+            "corruptor": UnitTypeId.CORRUPTOR,
+            "lurker": UnitTypeId.LURKERMP,
+            "infestor": UnitTypeId.INFESTOR,
+            "ultralisk": UnitTypeId.ULTRALISK,
+            "broodlord": UnitTypeId.BROODLORD,
+            "viper": UnitTypeId.VIPER,
+        }
+
+        # 건물 요구사항 매핑
+        tech_requirements = {
+            UnitTypeId.ROACH: UnitTypeId.ROACHWARREN,
+            UnitTypeId.HYDRALISK: UnitTypeId.HYDRALISKDEN,
+            UnitTypeId.MUTALISK: UnitTypeId.SPIRE,
+            UnitTypeId.CORRUPTOR: UnitTypeId.SPIRE,
+            UnitTypeId.INFESTOR: UnitTypeId.INFESTATIONPIT,
+            UnitTypeId.ULTRALISK: UnitTypeId.ULTRALISKCAVERN,
+        }
+
+        # 현재 유닛 수 계산
+        total_army = 0
+        current_counts = {}
+        for name, uid in unit_type_map.items():
+            try:
+                count = self.bot.units(uid).amount
+                current_counts[name] = count
+                total_army += count
+            except Exception:
+                current_counts[name] = 0
+
+        if total_army < 1:
+            total_army = 1  # 0으로 나누기 방지
+
+        # 가장 부족한 유닛 찾기
+        max_deficit = -1.0
+        best_unit = None
+        best_uid = None
+
+        for name, target_ratio in ratios.items():
+            if name not in unit_type_map or target_ratio <= 0:
+                continue
+
+            uid = unit_type_map[name]
+            current_ratio = current_counts.get(name, 0) / total_army
+
+            deficit = target_ratio - current_ratio
+
+            # 테크 건물 확인
+            if uid in tech_requirements:
+                req_building = tech_requirements[uid]
+                if not self.bot.structures(req_building).ready.exists:
+                    continue
+
+            # 바네링/럴커는 변이 유닛이라 라바에서 직접 생산 불가
+            if uid in (UnitTypeId.BANELING, UnitTypeId.LURKERMP, UnitTypeId.BROODLORD, UnitTypeId.RAVAGER):
+                continue  # 이들은 별도 변이 로직이 필요
+
+            if deficit > max_deficit:
+                max_deficit = deficit
+                best_unit = name
+                best_uid = uid
+
+        # 가장 부족한 유닛 생산
+        if best_uid and max_deficit > -0.05:
+            if self.bot.can_afford(best_uid) and self.bot.supply_left >= 2:
+                try:
+                    larva = larvae.first
+                    self.bot.do(larva.train(best_uid))
+                except Exception:
+                    pass
 
     # ========== 상태 조회 ==========
 

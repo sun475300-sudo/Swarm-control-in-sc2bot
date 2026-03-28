@@ -58,8 +58,8 @@ def initialize_combat_state(manager):
 
     # === ★★★ ROACH RUSH TIMING ATTACK ★★★ ===
     manager._roach_rush_active = False
-    manager._roach_rush_timing = 360  # 6:00 (6분)
-    manager._roach_rush_min_count = 12  # 최소 12 바퀴
+    manager._roach_rush_timing = 300  # ★ FIX: 6분→5분 (빌드오더 종료 즉시)
+    manager._roach_rush_min_count = 8  # ★ FIX: 12→8 (바퀴 8마리면 초반 압박 가능)
     manager._roach_rush_sent = False
 
     # === ★ ARMY UNITS CACHE (per-frame) ★ ===
