@@ -96,6 +96,9 @@ class EvolutionUpgradeManager:
         # === ★★★ 테크 변이: 해처리 → 레어 → 군락 ★★★ ===
         await self._upgrade_tech_buildings(iteration)
 
+        # === ★ Phase 14: 변이 유닛 테크 건물 보장 ★ ===
+        await self._ensure_morph_tech_buildings(iteration)
+
         # === ★ IMPROVED: Evolution Chamber 2분 30초부터 건설 ★ ===
         await self._build_evolution_chamber()
 
@@ -911,6 +914,64 @@ class EvolutionUpgradeManager:
     # ============================================================
     # ★★★ TECH BUILDING UPGRADES: Hatchery → Lair → Hive ★★★
     # ============================================================
+
+    async def _ensure_morph_tech_buildings(self, iteration: int) -> None:
+        """
+        ★ Phase 14: 변이 유닛 테크 건물 자동 건설 보장 ★
+
+        UnitMorphManager가 작동하려면 테크 건물이 필수:
+        - Baneling Nest: 3분 이후 (저글링→베인링)
+        - Roach Warren: 빌드오더에서 이미 건설 (2:30~)
+        - Lurker Den: 7분 이후 (히드라→럴커, Hydra Den 필요)
+        - Greater Spire: hive_tech_maximizer에서 처리 (Spire→Greater Spire 변이)
+        """
+        game_time = getattr(self.bot, "time", 0)
+        if not hasattr(self.bot, "structures") or not hasattr(self.bot, "townhalls"):
+            return
+        if not self.bot.townhalls.exists:
+            return
+
+        build_pos = self.bot.townhalls.first.position
+
+        # === 1. Baneling Nest: 3분 이후 보장 (Spawning Pool 필수) ===
+        if game_time >= 180:
+            baneling_nests = self.bot.structures(UnitTypeId.BANELINGNEST)
+            if not baneling_nests.exists and self.bot.already_pending(UnitTypeId.BANELINGNEST) == 0:
+                pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+                if pools.exists and self.bot.minerals >= 100 and self.bot.vespene >= 50:
+                    try:
+                        await self.bot.build(UnitTypeId.BANELINGNEST, near=build_pos)
+                        self.logger.info(f"[{int(game_time)}s] ★ Phase 14: Baneling Nest 건설 (변이 유닛 보장)")
+                    except Exception as e:
+                        if iteration % 100 == 0:
+                            self.logger.debug(f"Baneling Nest build failed: {e}")
+
+        # === 2. Lurker Den: 7분 이후 보장 (Hydralisk Den + Lair 필수) ===
+        if game_time >= 420:
+            lurker_dens = self.bot.structures(UnitTypeId.LURKERDENMP)
+            if not lurker_dens.exists and self.bot.already_pending(UnitTypeId.LURKERDENMP) == 0:
+                hydra_dens = self.bot.structures(UnitTypeId.HYDRALISKDEN).ready
+                if hydra_dens.exists and self._has_lair():
+                    if self.bot.minerals >= 150 and self.bot.vespene >= 150:
+                        try:
+                            await self.bot.build(UnitTypeId.LURKERDENMP, near=build_pos)
+                            self.logger.info(f"[{int(game_time)}s] ★ Phase 14: Lurker Den 건설 (변이 유닛 보장)")
+                        except Exception as e:
+                            if iteration % 100 == 0:
+                                self.logger.debug(f"Lurker Den build failed: {e}")
+
+        # === 3. Roach Warren: 2분 30초 이후 보장 (Spawning Pool 필수) ===
+        if game_time >= 150:
+            roach_warrens = self.bot.structures(UnitTypeId.ROACHWARREN)
+            if not roach_warrens.exists and self.bot.already_pending(UnitTypeId.ROACHWARREN) == 0:
+                pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+                if pools.exists and self.bot.minerals >= 150 and self.bot.vespene >= 100:
+                    try:
+                        await self.bot.build(UnitTypeId.ROACHWARREN, near=build_pos)
+                        self.logger.info(f"[{int(game_time)}s] ★ Phase 14: Roach Warren 건설 (변이 유닛 보장)")
+                    except Exception as e:
+                        if iteration % 100 == 0:
+                            self.logger.debug(f"Roach Warren build failed: {e}")
 
     async def _upgrade_tech_buildings(self, iteration: int) -> None:
         """

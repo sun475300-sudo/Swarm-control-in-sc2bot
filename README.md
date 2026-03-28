@@ -12,8 +12,8 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-RL%20Engine-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
-[![Tests](https://img.shields.io/badge/Tests-314%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-96-critical)]()
+[![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-103-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -652,6 +652,8 @@ gantt
         집결복원 + 폴백전략 + 디컨플릭트 + Hive가속 :done, s11, 2026-03-28, 1d
     section Session 11 — Phase 13
         자동생산 + MicroV3 + 테스트 0건 달성       :done, s12, 2026-03-28, 1d
+    section Session 12 — Phase 14
+        변이유닛 활성화 + 테크건물 보장 + 동적비율  :done, s13, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -869,6 +871,13 @@ graph LR
         FIX8["✅ 테스트 전체 통과<br/>14 failed → 0 failed<br/>322 passed / 7 skipped"]
     end
 
+    subgraph "🔧 Session 12 — Phase 14 변이유닛 활성화"
+        direction TB
+        FIX9["🦎 UnitMorphManager 활성화<br/>4종 변이 유닛 시스템<br/>베인/래버저/럴커/브루드로드"]
+        FIX10["🏗️ 테크건물 자동보장<br/>Baneling Nest 3분<br/>Lurker Den 7분 자동건설"]
+        FIX11["📊 동적 비율 연동<br/>Blackboard unit_ratios<br/>전략→변이비율 실시간 반영"]
+    end
+
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
@@ -877,6 +886,9 @@ graph LR
     style FIX6 fill:#e17055,color:#fff
     style FIX7 fill:#533483,color:#fff
     style FIX8 fill:#b71540,color:#fff
+    style FIX9 fill:#00cec9,color:#000
+    style FIX10 fill:#fab1a0,color:#000
+    style FIX11 fill:#a29bfe,color:#000
 ```
 
 ---

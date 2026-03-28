@@ -169,6 +169,12 @@ try:
 except (ImportError, TypeError):
     AdvancedMicroControllerV3 = None
 
+# ★ Phase 14: Unit Morph Manager (Baneling/Ravager/Lurker/Broodlord)
+try:
+    from unit_morph_manager import UnitMorphManager
+except (ImportError, TypeError):
+    UnitMorphManager = None
+
 # Queen Inject Optimizer
 try:
     from economy.queen_inject_optimizer import QueenInjectOptimizer
@@ -375,6 +381,13 @@ class BotStepIntegrator:
             self.logger.info("[INIT] AdvancedMicroControllerV3 initialized (Phase 13)")
         elif not hasattr(self.bot, "micro_v3"):
             self.bot.micro_v3 = None
+
+        # ★ Phase 14: Unit Morph Manager 초기화 (Baneling/Ravager/Lurker/Broodlord)
+        if UnitMorphManager:
+            self.bot.morph_manager = UnitMorphManager(bot)
+            self.logger.info("[INIT] UnitMorphManager initialized (Phase 14) — 4종 변이 유닛 활성화")
+        elif not hasattr(self.bot, "morph_manager"):
+            self.bot.morph_manager = None
 
         # Queen Transfusion Manager
         if QueenTransfusionManager:
