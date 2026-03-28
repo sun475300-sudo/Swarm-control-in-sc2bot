@@ -192,6 +192,7 @@ class StrategyManager:
         self._update_strategy_mode()
         self._update_counter_build()
         self._detect_direct_air_threat()
+        self._counter_terran_units()
         self._counter_protoss_units()
         self._counter_zerg_units()
 
@@ -866,6 +867,78 @@ class StrategyManager:
 
         return enemy_pattern in ["protoss_stargate", "zerg_muta", "terran_mech"]
 
+    def _counter_terran_units(self) -> None:
+        """
+        ★ Phase 21: 테란 유닛별 카운터 로직 ★
+
+        - 바이오 (마린/마라우더/메딕): 바네링 돌진 + 저글링 포위
+        - 메카닉 (탱크/토르): 레바저 담즙 + 뮤탈 견제
+        - 공중 (바이킹/밴시/배틀크루저): 히드라 + 코럽터
+        - 헬리온 러시: 퀸 + 바퀴 즉시
+        """
+        if self.detected_enemy_race != EnemyRace.TERRAN:
+            return
+
+        if not hasattr(self.bot, "enemy_units"):
+            return
+
+        game_time = getattr(self.bot, "time", 0)
+        comp = self._cached_enemy_composition
+
+        marine_count = comp.get("MARINE", 0)
+        marauder_count = comp.get("MARAUDER", 0)
+        medivac_count = comp.get("MEDIVAC", 0)
+        tank_count = comp.get("SIEGETANK", 0) + comp.get("SIEGETANKSIEGED", 0)
+        thor_count = comp.get("THOR", 0) + comp.get("THORAP", 0)
+        hellion_count = comp.get("HELLION", 0) + comp.get("HELLIONTANK", 0)
+        banshee_count = comp.get("BANSHEE", 0)
+        battlecruiser_count = comp.get("BATTLECRUISER", 0)
+        liberator_count = comp.get("LIBERATOR", 0) + comp.get("LIBERATORAG", 0)
+
+        bio_count = marine_count + marauder_count
+
+        # 바이오 (마린 6+ 또는 마라우더 3+): 바네링 + 저글링 돌진
+        if bio_count >= 6 or (medivac_count >= 2 and bio_count >= 4):
+            self._adjust_unit_ratio("baneling", 0.25)
+            self._adjust_unit_ratio("zergling", 0.30)
+            self._adjust_unit_ratio("roach", 0.20)
+            self._adjust_unit_ratio("hydralisk", 0.15)
+            self._adjust_unit_ratio("ravager", 0.10)
+            if game_time > 300 and not getattr(self, "_zvt_bio_logged", False):
+                self._zvt_bio_logged = True
+                self.logger.info(f"[{int(game_time)}s] ★ ZvT BIO DETECTED → Baneling+Ling priority ★")
+
+        # 메카닉 (탱크 2+ 또는 토르 1+): 레바저 담즙 + 우회 기동
+        if tank_count >= 2 or thor_count >= 1:
+            self._adjust_unit_ratio("ravager", 0.30)  # 담즙으로 탱크 파괴
+            self._adjust_unit_ratio("roach", 0.25)
+            self._adjust_unit_ratio("hydralisk", 0.20)
+            self._adjust_unit_ratio("zergling", 0.15)
+            self._adjust_unit_ratio("corruptor", 0.10)  # 토르+메디 대응
+            if game_time > 300 and not getattr(self, "_zvt_mech_logged", False):
+                self._zvt_mech_logged = True
+                self.logger.info(f"[{int(game_time)}s] ★ ZvT MECH DETECTED → Ravager bile + Roach ★")
+
+        # 공중 (밴시/배틀크루저/리버레이터): 히드라 + 코럽터
+        if banshee_count >= 1 or battlecruiser_count >= 1 or liberator_count >= 2:
+            self._adjust_unit_ratio("hydralisk", 0.35)
+            self._adjust_unit_ratio("corruptor", 0.25)
+            self._adjust_unit_ratio("roach", 0.20)
+            self._adjust_unit_ratio("queen", 0.10)
+            self._adjust_unit_ratio("zergling", 0.10)
+            if self.blackboard:
+                self.blackboard.set("urgent_spore_all_bases", True)
+            if game_time > 300 and not getattr(self, "_zvt_air_logged", False):
+                self._zvt_air_logged = True
+                self.logger.info(f"[{int(game_time)}s] ★ ZvT AIR DETECTED → Hydra+Corruptor+Spore ★")
+
+        # 헬리온 러시 (초반): 퀸 + 바퀴
+        if hellion_count >= 3 and game_time < 240:
+            self._adjust_unit_ratio("queen", 0.20)
+            self._adjust_unit_ratio("roach", 0.40)
+            self._adjust_unit_ratio("zergling", 0.30)
+            self._adjust_unit_ratio("ravager", 0.10)
+
     def _counter_protoss_units(self) -> None:
         """
         ★★★ 프로토스 유닛별 카운터 로직 ★★★
@@ -954,12 +1027,19 @@ class StrategyManager:
 
             # 스파이어 긴급 건설 - AggressiveTechBuilder로 통합됨
 
-        # 공허 포격기/캐리어 → 대공 강화
+        # 공허 포격기/캐리어 → 대공 강화 + ★ Phase 21: 바이퍼 추가 ★
         if voidray_count >= 2 or carrier_count >= 1:
-            self.logger.warning(f"[{int(game_time)}s] ★ AIR THREAT - VoidRay/Carrier detected ★")
+            if not getattr(self, "_zvp_air_logged", False):
+                self._zvp_air_logged = True
+                self.logger.warning(f"[{int(game_time)}s] ★ AIR THREAT - VoidRay/Carrier detected ★")
             self._handle_air_threat()
-            self._adjust_unit_ratio("hydra", 0.5)
-            self._adjust_unit_ratio("corruptor", 0.3)
+            self._adjust_unit_ratio("hydralisk", 0.35)
+            self._adjust_unit_ratio("corruptor", 0.30)
+            # ★ Phase 21: 캐리어 3+ 시 바이퍼 추가 (어둠 집어삼키기로 캐리어 잡기)
+            if carrier_count >= 3:
+                self._adjust_unit_ratio("viper", 0.10)
+                self._adjust_unit_ratio("corruptor", 0.25)
+                self._adjust_unit_ratio("hydralisk", 0.30)
 
         # 디스럽터 → 분산 필요, 빠른 공격
         if disruptor_count >= 1:
@@ -1078,11 +1158,24 @@ class StrategyManager:
 
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
-            self._adjust_unit_ratio("hydra", 0.5)
+            self._adjust_unit_ratio("hydralisk", 0.5)
             self.emergency_spore_requested = True
             if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
                 self._last_zvz_muta_log = game_time
                 self.logger.warning(f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority")
+
+        # ★ Phase 21: ZvZ 중반 안정화 — 로치→히드라→럴커 전환 ★
+        if game_time >= 360:  # 6분+
+            if roach_count >= 5 or hydra_count >= 5:
+                # 로치/히드라 미러 → 럴커가 결정적
+                self._adjust_unit_ratio("lurker", 0.20)
+                self._adjust_unit_ratio("hydralisk", 0.30)
+                self._adjust_unit_ratio("roach", 0.25)
+                self._adjust_unit_ratio("ravager", 0.15)
+                self._adjust_unit_ratio("zergling", 0.10)
+                if not getattr(self, "_zvz_lurker_logged", False):
+                    self._zvz_lurker_logged = True
+                    self.logger.info(f"[{int(game_time)}s] ★ ZvZ MID: Lurker transition for positional advantage ★")
 
     def _adjust_unit_ratio(self, unit_type: str, target_ratio: float) -> None:
         """유닛 비율 동적 조정"""

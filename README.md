@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-124-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-130-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -666,6 +666,8 @@ gantt
         후반전환 + 울트라 + 미네랄소비 + 재확장    :done, s18, 2026-03-28, 1d
     section Session 18 — Phase 20
         공격타이밍 + 적약점감지 + 멀티프롱공격     :done, s19, 2026-03-28, 1d
+    section Session 19 — Phase 21
+        ZvT카운터 + ZvP바이퍼 + ZvZ럴커전환      :done, s20, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -946,6 +948,13 @@ graph LR
         FIX32["🔱 멀티프롱 공격<br/>80서플+ 저글링 견제팀<br/>확장기지 동시 압박"]
     end
 
+    subgraph "🔧 Session 19 — Phase 21 종족별 특화 대응"
+        direction TB
+        FIX33["🔵 ZvT 카운터 신규<br/>바이오→바네돌진<br/>메카→레바저담즙<br/>공중→히드라코럽터"]
+        FIX34["🟡 ZvP 바이퍼 추가<br/>캐리어 3+→바이퍼<br/>어둠 집어삼키기"]
+        FIX35["🟢 ZvZ 럴커 전환<br/>6분+ 로치미러 시<br/>럴커 포지셔닝 우위"]
+    end
+
     style FIX1 fill:#d63031,color:#fff
     style FIX2 fill:#6c5ce7,color:#fff
     style FIX3 fill:#00b894,color:#fff
@@ -978,6 +987,9 @@ graph LR
     style FIX30 fill:#ff7675,color:#fff
     style FIX31 fill:#74b9ff,color:#000
     style FIX32 fill:#55efc4,color:#000
+    style FIX33 fill:#0984e3,color:#fff
+    style FIX34 fill:#fdcb6e,color:#000
+    style FIX35 fill:#00b894,color:#fff
 ```
 
 ---
@@ -1009,6 +1021,7 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-28)
+- **[Phase 21] 종족별 특화 대응**: ZvT 바이오/메카/공중 카운터, ZvP 바이퍼 추가, ZvZ 럴커 전환
 - **[Phase 20] 공격 타이밍 최적화**: 점진적 임계값, 적 확장/테크 감지 타이밍공격, 멀티프롱 저글링 견제
 - **[Phase 19] 후반 전환 시스템**: HiveTechMaximizer 활성화, 울트라리스크 비율 추가, 미네랄뱅킹 소비, 자동 재확장
 - **[Phase 18] 맵 컨트롤 시스템**: 크립 위 교전 유도, 전진 스파인 방어, 공격적 크립 확장
