@@ -593,27 +593,27 @@ graph TB
 ## Project Stats
 
 ```mermaid
-pie title 버그 심각도 분포 (누적 99건)
+pie title 버그 심각도 분포 (누적 103건)
     "CRITICAL" : 1
-    "HIGH" : 78
+    "HIGH" : 82
     "MEDIUM" : 14
 ```
 
 ```mermaid
-pie title 버그 유형 분포 (99건)
+pie title 버그 유형 분포 (103건)
     "self.bot.do() 래핑 누락" : 57
     "빈 컬렉션 .exists 가드" : 10
     "Division by Zero" : 13
     "타입 에러" : 2
     "잘못된 API 구문" : 1
-    "로직 에러/충돌" : 10
+    "로직 에러/충돌" : 14
 ```
 
 ```mermaid
 pie title 테스트 결과 (329건)
-    "Passed" : 314
-    "Skipped" : 1
-    "Failed" : 14
+    "Passed" : 322
+    "Skipped" : 7
+    "Failed" : 0
 ```
 
 ### Quality Dashboard
@@ -621,8 +621,8 @@ pie title 테스트 결과 (329건)
 | Metric | Value | Status |
 |--------|-------|--------|
 | Python 파일 수 | 541 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 99건 (10 세션) | ✅ CRITICAL 0건 잔존 |
-| 테스트 스위트 | 314 passed / 14 pre-existing | ✅ 신규 실패 0건 |
+| 누적 버그 수정 | 103건 (11 세션) | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 322 passed / 0 failed / 7 skipped | ✅ 전체 통과 |
 | 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
 | 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
 | 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
@@ -632,7 +632,7 @@ pie title 테스트 결과 (329건)
 
 ```mermaid
 gantt
-    title 버그 수정 타임라인 (99건)
+    title 버그 수정 타임라인 (103건)
     dateFormat YYYY-MM-DD
     section Session 1-4
         13건 수정 (CRITICAL 1, HIGH 8, MEDIUM 4)   :done, s1, 2026-03-25, 1d
@@ -650,6 +650,8 @@ gantt
         자살공격 방지 + 테크알림 + ZvZ 대응         :done, s10, 2026-03-28, 1d
     section Session 10 — Phase 12
         집결복원 + 폴백전략 + 디컨플릭트 + Hive가속 :done, s11, 2026-03-28, 1d
+    section Session 11 — Phase 13
+        자동생산 + MicroV3 + 테스트 0건 달성       :done, s12, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -814,10 +816,10 @@ mindmap
 ```mermaid
 xychart-beta
     title "버그 수정 누적 현황"
-    x-axis ["S1-4", "S5", "S6", "S7", "S8", "S9", "S10"]
-    y-axis "누적 수정 건수" 0 --> 100
-    bar [13, 43, 60, 87, 87, 96, 99]
-    line [13, 43, 60, 87, 87, 96, 99]
+    x-axis ["S1-4", "S5", "S6", "S7", "S8", "S9-10", "S11"]
+    y-axis "누적 수정 건수" 0 --> 110
+    bar [13, 43, 60, 87, 87, 99, 103]
+    line [13, 43, 60, 87, 87, 99, 103]
 ```
 
 ```mermaid
@@ -860,11 +862,11 @@ graph LR
         FIX5["🏗️ Hive 8분 완성<br/>인페핏 7분→5분<br/>하이브 7분→6분"]
     end
 
-    subgraph "🔧 Session 9 — 핵심 버그 수정"
+    subgraph "🔧 Session 11 — Phase 13 실전 검증"
         direction TB
-        FIX6["🚫 자살 공격 방지<br/>공격 임계값 3/6→12/20"]
-        FIX7["🔎 테크 알림 시스템<br/>DT/Oracle/BC/Nydus 감지"]
-        FIX8["🐛 ZvZ 카운터 시스템<br/>링러시→바퀴+바네"]
+        FIX6["🏭 비율 기반 자동생산<br/>빌드오더 후 unit_ratios<br/>부족 유닛 자동 생산"]
+        FIX7["🎯 MicroV3 활성화<br/>8종 유닛 마이크로<br/>초기화 코드 추가"]
+        FIX8["✅ 테스트 전체 통과<br/>14 failed → 0 failed<br/>322 passed / 7 skipped"]
     end
 
     style FIX1 fill:#d63031,color:#fff
@@ -917,7 +919,9 @@ graph LR
 - **방어-공격 디컨플릭트**: 유닛태그 추적 + Blackboard 연동
 - **Hive ~8분 완성**: 인페핏 5분, 하이브 6분 앞당김
 - **서플라이 버퍼**: MID 3→8, EARLY 4→6 (블록 방지)
-- 테스트 314 passed, 14 pre-existing failures
+- **비율 기반 자동생산**: 빌드오더 종료 후 unit_ratios에 따라 유닛 자동 생산
+- **MicroV3 초기화**: AdvancedMicroControllerV3 실제 활성화
+- 테스트 322 passed / 0 failed / 7 skipped
 
 ### 기술 스택
 
