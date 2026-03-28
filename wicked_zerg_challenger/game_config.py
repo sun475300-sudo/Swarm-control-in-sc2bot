@@ -39,8 +39,8 @@ class GameConfig:
     MINERAL_OVERFLOW = 1500            # 미네랄 넘침 (확장 필요)
     MINERAL_CRITICAL = 2000            # 미네랄 심각 (긴급 소비)
 
-    GAS_OVERFLOW_THRESHOLD = 500       # 가스 넘침
-    GAS_CRITICAL = 1000                # 가스 심각 (테크/유닛 소비)
+    GAS_OVERFLOW_THRESHOLD = 300       # ★ Phase 16: 500→300 (가스 뱅킹 조기 감지)
+    GAS_CRITICAL = 800                 # ★ Phase 16: 1000→800 (가스 심각 — 더 빠른 대응)
 
     # 자원 비율
     MINERAL_TO_GAS_RATIO = 2.0         # 미네랄:가스 = 2:1 목표

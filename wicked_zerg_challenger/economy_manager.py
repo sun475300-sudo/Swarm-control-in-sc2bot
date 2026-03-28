@@ -53,12 +53,12 @@ class EconomyManager:
         except ImportError:
             self.config = None
 
-        # ★ Resource thresholds for macro hatchery (Config 기반) ★
+        # ★ Phase 16: 매크로 해처리 임계값 하향 (라바 부족 시 더 빠르게 건설) ★
         if self.config:
-            self.macro_hatchery_mineral_threshold = self.config.MINERAL_OVERFLOW
+            self.macro_hatchery_mineral_threshold = 600  # ★ Phase 16: OVERFLOW→600 (더 빠른 매크로 해처리)
             self.macro_hatchery_larva_threshold = self.config.LARVA_CRITICAL
         else:
-            self.macro_hatchery_mineral_threshold = 1500
+            self.macro_hatchery_mineral_threshold = 600
             self.macro_hatchery_larva_threshold = 3
 
         self.last_macro_hatch_check = 0
@@ -450,6 +450,16 @@ class EconomyManager:
         # ★ 드론 절대 상한: 80마리 초과 금지 ★
         if worker_count >= 80:
             return
+
+        # ★ Phase 16: 66 드론 하드 컷오프 — 3기지 포화 후 군대 전환 ★
+        # 66 드론 이상이고 6분 이후면 군대 생산 우선 (드론 스킵)
+        game_time = getattr(self.bot, "time", 0)
+        if worker_count >= 66 and game_time > 360:
+            # 예외: 새 기지 건설 직후 (포화 안 됨) → 드론 허용
+            townhalls_ready = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
+            base_count_r = townhalls_ready.amount if hasattr(townhalls_ready, "amount") else 1
+            if base_count_r <= 3:
+                return  # 3기지 이하에서 66드론이면 충분 → 군대 전환
 
         # 기지 수 확인
         townhalls = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
