@@ -12,6 +12,7 @@ Composition Optimizer - 유닛 조합 최적화 시스템 (#105)
 5. 가스/미네랄 비율 최적화
 """
 
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 
@@ -169,7 +170,7 @@ class CompositionOptimizer:
         # 적 유닛 정보
         self.enemy_composition: Dict[str, int] = {}
 
-        print("[COMPOSITION] 유닛 조합 최적화기 초기화 완료")
+        logging.getLogger(__name__).debug("[COMPOSITION] 유닛 조합 최적화기 초기화 완료")
 
     def analyze_enemy_composition(self) -> Dict[str, int]:
         """
@@ -190,6 +191,14 @@ class CompositionOptimizer:
                     composition[unit_name] = composition.get(unit_name, 0) + 1
             except Exception:
                 continue
+
+        # ★ Phase 44: intel_manager 역사적 누적 데이터 병합
+        # 화면 밖으로 이동한 유닛도 추적 (현재값 vs 누적값 중 최댓값)
+        intel = getattr(self.bot, "intel_manager", None)
+        if intel is not None:
+            historical = getattr(intel, "enemy_unit_counts", None) or {}
+            for unit_name, count in historical.items():
+                composition[unit_name] = max(composition.get(unit_name, 0), count)
 
         self.enemy_composition = composition
         return composition

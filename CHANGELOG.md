@@ -2,6 +2,14 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 44] - 2026-03-29
+### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정
+- **Python** `upgrade_manager.py` `UnitTypeId.LURKER` → `LURKERMP` 수정: `LURKER`는 python-sc2에 존재하지 않아 러커 업그레이드 영구 미실행 → `LURKERMP` 1기 이상 시 즉시 트리거
+- **Python** `upgrade_manager.py` `_ranged_unit_types()` 내 `LURKER` → `LURKERMP` 수정: 러커를 근거리로 잘못 분류하던 버그 제거
+- **Python** `upgrade_manager.py` 울트라리스크 근접 계열 편입: melee_count에 `ULTRALISK` 추가 → 근접 업그레이드 우선도 정확 계산
+- **Python** `composition_optimizer.py` `print()` → `logging.getLogger(__name__).debug()` 교체: stdout 스팸 제거
+- **Python** `composition_optimizer.py` `analyze_enemy_composition()` intel_manager 역사 데이터 병합: 화면 밖 이탈 유닛도 `enemy_unit_counts` 최댓값 기준으로 추적 유지
+
 ## [Phase 43] - 2026-03-28
 ### 실시간 로그/버그 추적 시스템 (TypeScript 풀스택)
 - **TypeScript** `server/routers.ts` `logs` 라우터 추가: `getRecentErrors` (bot.log 파싱, ERROR/WARNING/ALL 필터, 30종 log 레벨 분류) + `getLogStatus` (로그 파일 존재/크기 확인)

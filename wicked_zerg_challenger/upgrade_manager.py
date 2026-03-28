@@ -227,8 +227,10 @@ class EvolutionUpgradeManager:
         roach_count = composition.get("roach", 0)
         hydra_count = composition.get("hydralisk", 0)
         mutalisk_count = composition.get("mutalisk", 0)
+        # ★ Phase 44: 울트라리스크도 근접 계열 (melee attack upgrade 적용)
+        ultralisk_count = self.bot.units(UnitTypeId.ULTRALISK).amount if hasattr(self.bot, "units") else 0
 
-        total_melee = zergling_count + baneling_count
+        total_melee = zergling_count + baneling_count + ultralisk_count
         total_ranged = roach_count + hydra_count
 
         # === 체제 판단 ===
@@ -354,7 +356,7 @@ class EvolutionUpgradeManager:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,  # ★ Phase 44: LURKER → LURKERMP
         ]
 
     @staticmethod
@@ -529,9 +531,9 @@ class EvolutionUpgradeManager:
             if self.bot.units(UnitTypeId.ULTRALISK).amount >= 1:
                 await self._research_ultra_upgrades(iteration)
 
-        # 럴커 업그레이드 (Lair or Hive)
-        if self.bot.units(UnitTypeId.LURKER).amount >= 2:
-             await self._research_lurker_upgrades(iteration)
+        # ★ Phase 44: LURKER → LURKERMP 수정 (이전: UnitTypeId.LURKER = 존재하지 않는 ID → 항상 0)
+        if self.bot.units(UnitTypeId.LURKERMP).amount >= 1:
+            await self._research_lurker_upgrades(iteration)
 
     async def _research_zergling_speed(self, iteration: int) -> None:
         """대사 촉진 (Metabolic Boost) 연구 - 저글링 속도"""
