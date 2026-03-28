@@ -266,6 +266,8 @@ class EarlyScoutSystem:
         overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in([self.scout_overlord_tag])
         if not overlords:
             self.scout_overlord_tag = None
+            # ★ Phase 33: 정찰 오버로드 사망 시 재파견 허용 (이전: overlord_scout_sent=True 유지 → 영구 재정찰 없음)
+            self.overlord_scout_sent = False
             return
 
         scout_ol = overlords.first
@@ -328,8 +330,9 @@ class EarlyScoutSystem:
 
         # idle 저글링 찾기
         zerglings = self.bot.units(UnitTypeId.ZERGLING).idle
-        if not zerglings.exists or zerglings.amount < 4:
-            return  # 최소 4마리 이상 idle 상태여야 1마리 파견
+        # ★ Phase 33: 최소 2마리로 하향 (이전: 4 — 중반에 idle 저글링 4마리가 없어 미발동)
+        if not zerglings.exists or zerglings.amount < 2:
+            return  # 최소 2마리 이상 idle 상태여야 1마리 파견
 
         # 적 기지 위치
         if not self.bot.enemy_start_locations:
@@ -339,7 +342,8 @@ class EarlyScoutSystem:
 
         # 가장 가까운 idle 저글링 1마리 파견
         scout_ling = zerglings.closest_to(enemy_start)
-        self.bot.do(scout_ling.move(enemy_start))
+        # ★ Phase 33: move() → attack() — 적 만나도 도망 안 하고 정찰 유지
+        self.bot.do(scout_ling.attack(enemy_start))
 
         if int(self.bot.time) % 60 < 5:
             print(f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game rescout: Zergling sent to enemy base")

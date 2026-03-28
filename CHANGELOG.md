@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 33] - 2026-03-28
+### 정찰/오버로드 강화
+- 정찰 오버로드 재파견: 사망 시 overlord_scout_sent 리셋 → 즉시 새 오버로드 재파견 (이전: 사망 후 정찰 영구 중단)
+- 중반 재정찰 저글링 move→attack: 적 만나도 도망 안 하고 정찰 유지
+- 중반 재정찰 최소 수 하향: idle 2마리 (이전: 4 — 발동 조건 너무 엄격)
+
 ## [Phase 32] - 2026-03-28
 ### 견제/하라스 AI 개선
 - 하라스 타겟 선택 수정: 방어 가장 약한 적 기지 선택 (이전: 아군 본진 최근접 → 적 주력 공격 역효과)
