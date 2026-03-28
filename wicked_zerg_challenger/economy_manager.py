@@ -1457,36 +1457,36 @@ class EconomyManager:
                 should_expand = True
                 expand_reason = f"Timed Natural @{int(game_time)}s (min 280+, workers: {worker_count})"
 
-        # ★ OPTIMIZED: 2베이스 → 3베이스 (1분 30초, 초공격적) ★
+        # ★ Phase 28: 확장 타이밍 현실화 — 포화 후 확장 원칙 ★
         elif not should_expand and base_count == 2:
-            if game_time >= 90 or minerals >= 400:  # ★ 120→90, 500→400 ★
+            # 3rd: 3분30초 또는 미네랄 넘침 (이전: 90초 → 너무 빨라서 미포화)
+            if game_time >= 210 or minerals >= 500:
                 should_expand = True
-                expand_reason = f"3rd base ULTRA-FAST (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"3rd base (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ CRITICAL: 3베이스 → 4베이스 (최소 4개 필수 - 자원 균형 유지) ★
         elif not should_expand and base_count == 3:
-            # ★ 4베이스는 반드시 확보: 더 빠르고 공격적으로 ★
-            if game_time >= 120 or minerals >= 400:  # ★ 135→120, 450→400 (더 빠르게) ★
+            # 4th: 5분 또는 미네랄 넘침 (이전: 120초)
+            if game_time >= 300 or minerals >= 600:
                 should_expand = True
-                expand_reason = f"4th base CRITICAL (MINIMUM 4 BASES FOR BALANCE - time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"4th base (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ OPTIMIZED: 4베이스 → 5베이스 (3분, 5베이스 경제) ★
         elif not should_expand and base_count == 4:
-            if game_time >= 180 or minerals >= 500:  # ★ 240→180, 700→500 ★
+            # 5th: 7분 또는 미네랄 넘침 (이전: 180초)
+            if game_time >= 420 or minerals >= 700:
                 should_expand = True
-                expand_reason = f"5th base FAST (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"5th base (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ OPTIMIZED: 5베이스 → 6베이스 (3분 30초) ★
         elif not should_expand and base_count == 5:
-            if game_time >= 210 or minerals >= 550:  # ★ 270→210, 700→550 ★
+            # 6th: 9분 (이전: 210초)
+            if game_time >= 540 or minerals >= 800:
                 should_expand = True
-                expand_reason = f"6th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"6th base (time: {int(game_time)}s, minerals: {minerals})"
 
-        # ★ OPTIMIZED: 6베이스 → 7베이스 (4분) ★
         elif not should_expand and base_count == 6:
-            if game_time >= 240 or minerals >= 600:  # ★ 330→240, 800→600 ★
+            # 7th: 11분 (이전: 240초)
+            if game_time >= 660 or minerals >= 900:
                 should_expand = True
-                expand_reason = f"7th base MACRO (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = f"7th base (time: {int(game_time)}s, minerals: {minerals})"
 
         # ★ 7베이스 이상: 무한 확장 (60초마다 또는 미네랄 900+ 저장) ★
         elif not should_expand and base_count >= 7:
