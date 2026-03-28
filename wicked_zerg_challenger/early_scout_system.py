@@ -231,13 +231,25 @@ class EarlyScoutSystem:
         scout_ol = overlords.first
         self.scout_overlord_tag = scout_ol.tag
 
-        # 경로: 맵 센터 → 적 기지 근처 (안전 거리)
+        # ★ Phase 17: 오버로드 정찰 경로 개선 — 적 자연확장 정찰 ★
         map_center = self.bot.game_info.map_center
         enemy_start = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else map_center
 
+        # 적 자연 확장 추정 위치 (적 본진에서 가장 가까운 확장)
+        enemy_natural = map_center.towards(enemy_start, map_center.distance_to(enemy_start) * 0.65)
+        if hasattr(self.bot, "expansion_locations_list") and self.bot.expansion_locations_list:
+            # 적 본진에서 가장 가까운 확장 = 적 자연
+            sorted_exps = sorted(
+                self.bot.expansion_locations_list,
+                key=lambda p: p.distance_to(enemy_start)
+            )
+            if len(sorted_exps) >= 2:
+                enemy_natural = sorted_exps[1]  # [0]은 적 본진, [1]이 자연
+
         self.overlord_waypoints = [
             map_center,
-            map_center.towards(enemy_start, 10)
+            enemy_natural,  # ★ Phase 17: 적 자연확장 정찰 (확장 여부 확인)
+            map_center.towards(enemy_start, 15)  # 적 본진 근처 (안전거리)
         ]
         self.overlord_current_wp = 0
 

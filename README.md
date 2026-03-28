@@ -13,7 +13,7 @@
 [![Gemini](https://img.shields.io/badge/Google-Gemini%20AI-4285F4?logo=google&logoColor=white)](https://cloud.google.com/vertex-ai)
 [![Files](https://img.shields.io/badge/Python%20Files-541-success)]()
 [![Tests](https://img.shields.io/badge/Tests-167%20Passing-brightgreen)]()
-[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-110-critical)]()
+[![Bugs Fixed](https://img.shields.io/badge/Bugs%20Fixed-114-critical)]()
 [![Coverage](https://img.shields.io/badge/Syntax%20Check-100%25-brightgreen)]()
 
 </div>
@@ -658,6 +658,8 @@ gantt
         전투마이크로 강화 + 점진적후퇴 + 포커스파이어 :done, s14, 2026-03-28, 1d
     section Session 14 — Phase 16
         경제최적화 + 66드론컷오프 + 가스밸런스     :done, s15, 2026-03-28, 1d
+    section Session 15 — Phase 17
+        정찰대응 강화 + 카운터빌드 + 오버로드정찰   :done, s16, 2026-03-28, 1d
     section Monitoring
         자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
 ```
@@ -901,10 +903,43 @@ graph LR
     style FIX9 fill:#00cec9,color:#000
     style FIX10 fill:#fab1a0,color:#000
     style FIX11 fill:#a29bfe,color:#000
+    subgraph "🔧 Session 14 — Phase 16 경제 최적화"
+        direction TB
+        FIX16["💰 66드론 하드 컷오프<br/>3기지 포화 시 군대 전환<br/>명시적 전환점 설정"]
+        FIX17["⛽ 가스 뱅킹 조기감지<br/>500→300 임계값<br/>과잉 자원 방지"]
+        FIX18["🏠 매크로 해처리 강화<br/>미네랄 1500→600<br/>라바 부족 즉시 대응"]
+    end
+
+    subgraph "🔧 Session 15 — Phase 17 정찰/대응 강화"
+        direction TB
+        FIX19["⚡ 카운터빌드 속도↑<br/>confidence 0.2→0.1<br/>폴백 3분→2분30초"]
+        FIX20["🚨 치즈 즉시 대응<br/>Blackboard 긴급전파<br/>저글링60% 비상비율"]
+        FIX21["👁️ 오버로드 정찰 개선<br/>맵센터→적 자연확장<br/>확장여부 즉시 확인"]
+        FIX22["🔔 Hidden Tech 경보<br/>DT/공중위협 즉시<br/>스포어/스파인 플래그"]
+    end
+
+    style FIX1 fill:#d63031,color:#fff
+    style FIX2 fill:#6c5ce7,color:#fff
+    style FIX3 fill:#00b894,color:#fff
+    style FIX4 fill:#fdcb6e,color:#000
+    style FIX5 fill:#0984e3,color:#fff
+    style FIX6 fill:#e17055,color:#fff
+    style FIX7 fill:#533483,color:#fff
+    style FIX8 fill:#b71540,color:#fff
+    style FIX9 fill:#00cec9,color:#000
+    style FIX10 fill:#fab1a0,color:#000
+    style FIX11 fill:#a29bfe,color:#000
     style FIX12 fill:#ff7675,color:#fff
     style FIX13 fill:#74b9ff,color:#000
     style FIX14 fill:#55efc4,color:#000
     style FIX15 fill:#636e72,color:#fff
+    style FIX16 fill:#ffeaa7,color:#000
+    style FIX17 fill:#dfe6e9,color:#000
+    style FIX18 fill:#81ecec,color:#000
+    style FIX19 fill:#fd79a8,color:#fff
+    style FIX20 fill:#e84393,color:#fff
+    style FIX21 fill:#6c5ce7,color:#fff
+    style FIX22 fill:#00b894,color:#fff
 ```
 
 ---

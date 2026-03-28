@@ -619,14 +619,14 @@ class StrategyManager:
         if hasattr(intel, "get_build_pattern_status"):
             build_status = intel.get_build_pattern_status()
 
-        # ★★★ FIX Phase 12: 정찰 실패 시 기본 폴백 전략 ★★★
-        # 패턴 unknown이거나 신뢰도 낮아도, 종족별 기본 대응은 유지
+        # ★ Phase 17: 카운터빌드 반응속도 개선 — 폴백 타이밍 + 임계값 하향 ★
         game_time = getattr(self.bot, "time", 0)
-        if (enemy_pattern == "unknown" or build_confidence < 0.2) and game_time > 180:
-            # 3분 이후에도 정찰 실패 → 종족별 안전 빌드 적용
+        if (enemy_pattern == "unknown" or build_confidence < 0.1) and game_time > 150:
+            # ★ Phase 17: 2분30초 이후 정찰 실패 → 즉시 폴백 (기존 3분)
             self._apply_safe_fallback_ratios()
             return
-        if enemy_pattern == "unknown" or build_confidence < 0.2:
+        if enemy_pattern == "unknown" or build_confidence < 0.1:
+            # ★ Phase 17: 0.2→0.1 (더 낮은 confidence에서도 대응 시작)
             return
 
         # === 적 빌드별 대응 유닛 비율 설정 ===
@@ -1112,7 +1112,10 @@ class StrategyManager:
         return getattr(self, "_force_hydra_production", False)
 
     def _activate_emergency_mode(self, game_time: float) -> None:
-        """Emergency Mode 활성화"""
+        """
+        Emergency Mode 활성화
+        ★ Phase 17: Blackboard 연동 + 즉시 저글링 생산 요청 ★
+        """
         self.emergency_active = True
         self.emergency_start_time = game_time
         self.current_mode = StrategyMode.EMERGENCY
@@ -1125,7 +1128,7 @@ class StrategyManager:
 
         # 긴급 방어 건물 건설 요청
         self.emergency_spine_requested = True
-        self.emergency_spore_requested = False  # 지상 러쉬면 스파인 우선
+        self.emergency_spore_requested = False
 
         # 적 공중 유닛이 있으면 스포어도 요청
         if hasattr(self.bot, "enemy_units"):
@@ -1133,6 +1136,17 @@ class StrategyManager:
                 if getattr(enemy, "is_flying", False):
                     self.emergency_spore_requested = True
                     break
+
+        # ★ Phase 17: Blackboard에 긴급 상태 전파 — 모든 시스템에 즉시 알림 ★
+        if self.blackboard:
+            self.blackboard.set("is_rush_detected", True)
+            self.blackboard.set("emergency_mode", True)
+            self.blackboard.set("emergency_start_time", game_time)
+            # 저글링 우선 생산 비율 즉시 적용 (방어 우선)
+            emergency_ratios = {"zergling": 0.60, "roach": 0.25, "queen": 0.15}
+            if self.emergency_spore_requested:
+                emergency_ratios = {"zergling": 0.30, "hydralisk": 0.40, "roach": 0.20, "queen": 0.10}
+            self.blackboard.set("unit_ratios", emergency_ratios)
 
         self.logger.info(f"Emergency defense requested: Spine={self.emergency_spine_requested}, Spore={self.emergency_spore_requested}")
 

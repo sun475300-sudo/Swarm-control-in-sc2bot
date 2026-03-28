@@ -573,6 +573,12 @@ class IntelManager:
                     blackboard.set("latest_tech_alert", alert_type)
                     blackboard.set("latest_tech_alert_time", game_time)
 
+                    # ★ Phase 17: 위협 테크 감지 시 즉시 방어 플래그 설정 ★
+                    if alert_type in ("DT_INCOMING", "AIR_INCOMING", "BC_INCOMING", "CARRIER_INCOMING"):
+                        blackboard.set("urgent_spore_all_bases", True)
+                    if alert_type == "NYDUS_INCOMING":
+                        blackboard.set("urgent_spine_all_bases", True)
+
     def get_tech_alerts(self) -> set:
         """현재까지 감지된 테크 경고 목록 반환."""
         return self._detected_tech_alerts.copy()
