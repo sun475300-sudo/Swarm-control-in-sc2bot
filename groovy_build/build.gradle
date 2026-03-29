@@ -1,0 +1,41 @@
+// P94: Groovy - Build Automation
+// Gradle build script for SC2 Bot automation
+
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.github.zerocool:sc2-client:1.0.0'
+    implementation 'org.apache.commons:commons-math3:3.6.1'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+application {
+    mainClass = 'com.sc2ai.wicked.Main'
+}
+
+task buildBot(type: GradleBuild) {
+    tasks = ['clean', 'compileJava', 'shadowJar']
+}
+
+task runGame << {
+    println "Starting SC2 game..."
+    exec {
+        executable = 'python'
+        args = ['run_single_game.py', '--map', 'AbyssalReefLE']
+    }
+}
+
+task analyzeReplays << {
+    file('replays').eachFile { replay ->
+        println "Analyzing: ${replay.name}"
+    }
+}
+
+build.dependsOn buildBot
