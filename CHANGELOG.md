@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 49] - 2026-03-29 (In Progress)
+### OpenCL 가속 경로 착수
+- **Python** `wicked_zerg_challenger/opencl_accel.py` 추가: `pyopencl` 기반 `nearest_point_index_opencl()` 구현 (환경 미지원 시 CPU fallback)
+- **Python** `wicked_zerg_challenger/rust_accel.py` 확장: Rust -> OpenCL -> Python 계층 fallback으로 nearest-point 계산 안정화
+- **Python** `wicked_zerg_challenger/creep_expansion_system.py` 연동 유지: 기존 nearest-point 호출 경로에서 OpenCL 가속 자동 활용
+
 ## [Phase 44] - 2026-03-29 (In Progress)
 ### 훈련 자동화 착수
 - **Python** `training_automation.py` 추가: 다회 단일게임 실행 자동화, 승/패/무 및 경고/에러 집계, JSON 리포트 저장
