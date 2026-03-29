@@ -391,3 +391,91 @@ jobs:
           else:
             print('::error::릴리스 체크리스트 미통과')
           "
+
+  # ─────────────────────────────────────────────
+  # Phase 68: Multi-Language Benchmark
+  # ─────────────────────────────────────────────
+  multi-language-benchmark:
+    name: Phase 68 멀티언어 벤치마크
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 소스코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 성능 벤치마크 실행
+        run: |
+          pip install pytest
+          python scripts/performance_benchmark_suite.py
+
+      - name: 통합 Hub 상태 확인
+        run: |
+          python -c "
+          from integration_hub import IntegrationHub
+          hub = IntegrationHub()
+          status = hub.get_status()
+          print('System Integration Status:')
+          print(f'  Rust: {status[\"rust\"]}')
+          print(f'  Go: {status[\"go\"]}')
+          print(f'  Julia: {status[\"julia\"]}')
+          print(f'  C++: {status[\"cpp\"]}')
+          print(f'  Kotlin: {status[\"kotlin\"]}')
+          print(f'  Android App: {status[\"android_app\"]}')
+          "
+
+      - name: 벤치마크 결과 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.sha }}
+          path: benchmark_results.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ─────────────────────────────────────────────
+  # Phase 68: Rust 체크 (조건부)
+  # ─────────────────────────────────────────────
+  rust-check:
+    name: Rust 체크
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'rust') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 소스코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Rust 설치
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 체크 실행
+        working-directory: rust_accel
+        run: cargo check
+
+      - name: Rust 빌드
+        working-directory: rust_accel
+        run: cargo build --release
+
+  # ─────────────────────────────────────────────
+  # Phase 68: Go 체크 (조건부)
+  # ─────────────────────────────────────────────
+  go-check:
+    name: Go 체크
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'go') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 소스코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Go 설정
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Go 모듈 확인
+        working-directory: go_backend
+        run: go mod verify
