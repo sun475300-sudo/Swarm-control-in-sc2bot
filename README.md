@@ -171,6 +171,7 @@ mindmap
     - `python phase54_quality_gate.py --router-base-ref HEAD~1`
     - `python phase55_language_router.py --base-ref HEAD~1`
     - `python phase55_language_router.py --base-ref HEAD~1 --execute`
+    - `python phase55_language_router.py --base-ref HEAD~1 --execute` (go/protobuf 변경 시 포맷/컴파일 검증)
     - `ARENA_OUTPUT_DIR=dist python create_arena_package.py`
     - `python wicked_zerg_challenger/replay_feedback_loop.py --input local_training/replay_summaries --output local_training/replay_feedback/latest.json`
 

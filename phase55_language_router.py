@@ -219,6 +219,57 @@ def route_perl(files: list[str], execute: bool) -> CommandResult:
     return CommandResult(f"{perl_exe} -c <changed perl>", str(ROOT), False, ok, "\n\n".join(outputs))
 
 
+def route_go(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult("gofmt -l <changed go>", str(ROOT), True, True, "", "no_go_changes")
+
+    gofmt_exe = find_executable(["gofmt", "gofmt.exe"])
+    if gofmt_exe is None:
+        return CommandResult("gofmt -l <changed go>", str(ROOT), True, True, "", "gofmt_not_found")
+
+    cmd = [gofmt_exe, "-l", *[str(ROOT / f) for f in files]]
+    if not execute:
+        return CommandResult(" ".join(cmd), str(ROOT), True, True, "", "dry_run")
+
+    code, out = run_cmd(cmd)
+    # gofmt -l prints files needing formatting; non-empty output is treated as failed check.
+    needs_format = bool(out.strip())
+    ok = (code == 0) and (not needs_format)
+    return CommandResult(" ".join(cmd), str(ROOT), False, ok, out)
+
+
+def route_protobuf(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult("protoc --descriptor_set_out", str(ROOT), True, True, "", "no_protobuf_changes")
+
+    protoc_exe = find_executable(["protoc", "protoc.exe"])
+    if protoc_exe is None:
+        return CommandResult("protoc --descriptor_set_out", str(ROOT), True, True, "", "protoc_not_found")
+
+    if not execute:
+        return CommandResult(f"{protoc_exe} --proto_path {ROOT} ...", str(ROOT), True, True, "", "dry_run")
+
+    outputs: list[str] = []
+    ok = True
+    for f in files:
+        out_file = REPORT_DIR / (Path(f).stem + ".desc")
+        cmd = [
+            protoc_exe,
+            f"--proto_path={ROOT}",
+            f"--descriptor_set_out={out_file}",
+            str(ROOT / f),
+        ]
+        code, out = run_cmd(cmd, cwd=ROOT)
+        if code != 0:
+            ok = False
+        if out:
+            outputs.append(f"[{f}]\n{out}")
+
+    return CommandResult(f"{protoc_exe} --proto_path {ROOT} <changed proto>", str(ROOT), False, ok, "\n\n".join(outputs))
+
+
 def route_policy_stub(language: str, files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
@@ -242,7 +293,7 @@ def main() -> int:
         route_typescript(buckets["typescript"], execute=args.execute),
         route_rust(buckets["rust"], execute=args.execute),
         route_policy_stub("cpp", buckets["cpp"], execute=args.execute),
-        route_policy_stub("go", buckets["go"], execute=args.execute),
+        route_go(buckets["go"], execute=args.execute),
         route_policy_stub("java", buckets["java"], execute=args.execute),
         route_policy_stub("kotlin", buckets["kotlin"], execute=args.execute),
         route_policy_stub("swift", buckets["swift"], execute=args.execute),
@@ -256,7 +307,7 @@ def main() -> int:
         route_policy_stub("haskell", buckets["haskell"], execute=args.execute),
         route_policy_stub("elixir", buckets["elixir"], execute=args.execute),
         route_policy_stub("sql", buckets["sql"], execute=args.execute),
-        route_policy_stub("protobuf", buckets["protobuf"], execute=args.execute),
+        route_protobuf(buckets["protobuf"], execute=args.execute),
         route_shell(buckets["shell"], execute=args.execute),
         route_perl(buckets["perl"], execute=args.execute),
         route_policy_stub("docs", buckets["docs"], execute=args.execute),
