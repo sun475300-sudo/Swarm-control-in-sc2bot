@@ -15,7 +15,7 @@ from datetime import datetime
 
 # 설정
 PROJECT_DIR = Path(__file__).parent
-OUTPUT_DIR = Path(os.path.expanduser("~")) / "Desktop"
+OUTPUT_DIR = Path(os.getenv("ARENA_OUTPUT_DIR", str(Path(os.path.expanduser("~")) / "Desktop")))
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M")
 ZIP_NAME = f"WickedZergBotPro_Arena_{TIMESTAMP}.zip"
 ZIP_PATH = OUTPUT_DIR / ZIP_NAME
@@ -82,6 +82,9 @@ def create_arena_zip():
     print(f"  프로젝트: {PROJECT_DIR}")
     print(f"  출력: {ZIP_PATH}")
     print(f"=" * 60)
+
+    # CI/Linux 환경에서도 동작하도록 출력 디렉토리를 보장
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     file_count = 0
     total_size = 0
@@ -155,5 +158,6 @@ def create_arena_zip():
 
 if __name__ == "__main__":
     result = create_arena_zip()
-    # Windows에서 생성된 파일 열기
-    os.startfile(str(Path(result).parent))
+    # Windows 환경에서만 생성된 파일 위치 열기
+    if hasattr(os, "startfile"):
+        os.startfile(str(Path(result).parent))

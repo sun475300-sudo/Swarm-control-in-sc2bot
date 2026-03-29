@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 51] - 2026-03-29 (In Progress)
+### 배포 자동화 착수 (CI Arena 패키지)
+- **YAML** `.github/workflows/ci.yml` 확장: `workflow_dispatch` 트리거 추가
+- **YAML** `.github/workflows/ci.yml` 신규 `arena-package` job 추가: `phase50_integrated_validation.py` 빠른 검증 후 Arena ZIP 생성/아티팩트 업로드
+- **Python** `create_arena_package.py` CI 호환성 개선: `ARENA_OUTPUT_DIR` 환경변수 지원, 출력 디렉토리 자동 생성, 비Windows `os.startfile` 안전 처리
+
 ## [Phase 50] - 2026-03-29 (In Progress)
 ### 통합 최종 검증 자동화 착수
 - **Python** `phase50_integrated_validation.py` 추가: 핵심 파일 `py_compile` + 선택적 `pytest` + 선택적 아레나 패키지 생성 실행

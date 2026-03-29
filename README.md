@@ -33,7 +33,7 @@
 
 ---
 
-## Latest Status — Phase 40~50 In Progress
+## Latest Status — Phase 40~51 In Progress
 
 ### 완료 요약
 | Phase | 언어 | 핵심 작업 |
@@ -43,18 +43,18 @@
 | P42 | Python + TypeScript | `intel_manager.py` 30종 supply 테이블 + 공격 타이밍 예측, `Monitor.tsx` KDA/처치율 위젯 |
 | P43 | TypeScript | `routers.ts` logs tRPC + `Monitor.tsx` 5초 자동갱신 로그 뷰어 |
 
-### 다음 대규모 계획 (Phase 50~56)
+### 다음 대규모 계획 (Phase 51~57)
 | Phase | 카테고리 | 언어 | 핵심 작업 |
 |---|---|---|---|
-| P50 | 통합 최종 검증 | Python + Shell | 통합 검증 러너/리포트 자동화 + 아레나 패키지 최종 생성 |
-| P51 | 배포 자동화 | Shell/CI | GitHub Actions 자동 테스트 + 아레나 업로드 파이프라인 |
+| P51 | 배포 자동화 | Shell/CI | GitHub Actions 아레나 패키지 자동 생성 + 아티팩트 업로드 |
 | P52 | 리플레이 학습 루프 | Python | 리플레이 기반 승패/손실 패턴 자동 피드백 |
 | P53 | 운영 대시보드 고도화 | TypeScript | 훈련 리포트/전투 지표/알림 통합 대시보드 |
 | P54 | 안정화/품질 게이트 | All | 회귀 테스트 + 타입검사 + 릴리스 체크리스트 자동화 |
 | P55 | 멀티언어 운영 고도화 | All | phase별 언어 정책 기반 자동 빌드/검증 라우팅 |
 | P56 | 릴리스 준비 | All | 릴리스 노트/체크리스트/패키지 검증 고정 파이프라인 |
+| P57 | 운영 자동화 | All | 배포 결과 자동 보고/실패 재시도/품질 메트릭 집계 |
 
-### 작업 시작 상태 (P44, P45, P46, P47, P48, P49, P50)
+### 작업 시작 상태 (P44, P45, P46, P47, P48, P49, P50, P51)
 - 신규 파일: `wicked_zerg_challenger/training_automation.py`
 - `run_single_game.py` CLI 인자 지원 추가 (`--map`, `--enemy-race`, `--difficulty`)
 - `composition_optimizer.py` 시너지 매트릭스 기반 조합 보너스 1차 적용
@@ -65,11 +65,14 @@
 - `wicked_zerg_challenger/rust_accel.py` 확장: Rust 확장 + OpenCL + Python fallback 계층 브리지
 - 신규 파일: `wicked_zerg_challenger/opencl_accel.py` (OpenCL optional nearest-point 가속)
 - 신규 파일: `phase50_integrated_validation.py` (통합 구문/pytest/패키지 검증 + JSON 리포트)
+- `.github/workflows/ci.yml` 확장: `workflow_dispatch` + `arena-package` 잡(통합검증 빠른모드 + 아레나 ZIP 업로드)
+- `create_arena_package.py` CI 친화 개선: `ARENA_OUTPUT_DIR` 지원 및 비Windows 안전 실행
 - `config.yaml` 다중언어 정책 활성화: Python/TypeScript/Rust/Shell phase 매핑
 - 예시 실행:
     - `python wicked_zerg_challenger/training_automation.py --games 5`
     - `python wicked_zerg_challenger/run_single_game.py --map AbyssalReefLE --enemy-race Protoss --difficulty Easy`
     - `python phase50_integrated_validation.py --skip-pytest --skip-package`
+    - `ARENA_OUTPUT_DIR=dist python create_arena_package.py`
 
 ---
 

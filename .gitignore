@@ -73,6 +73,7 @@ quick_test*.log
 batch_test*.log
 training_*.log
 quick_test*.log
+test_results/
 
 # API Keys and Secrets - NEVER commit these!
 .env
