@@ -143,6 +143,10 @@ class StrategyManager:
 
         # ★ Feature 89: Custom unit weights from JARVIS ★
         self.custom_unit_weights: Optional[Dict[str, float]] = None
+        self.early_scout_pressure_active = False
+        self.early_scout_greed_suppressed = False
+        self.early_scout_fast_gas = False
+        self.early_scout_cheese_active = False
 
     def _load_ratios(self, race_name: str) -> Dict[GamePhase, Dict[str, float]]:
         """KnowledgeManager에서 유닛 비율 로드"""
@@ -189,6 +193,7 @@ class StrategyManager:
         self._check_defense_mode_timeout()
         self._check_early_harassment()
         self._check_rogue_tactics()
+        self._apply_early_scout_signals()
         self._update_strategy_mode()
         self._update_counter_build()
         self._detect_direct_air_threat()
@@ -201,7 +206,10 @@ class StrategyManager:
             self.blackboard.set("strategy_mode", self.current_mode.name)
             self.blackboard.set("game_phase", self.game_phase.name)
             self.blackboard.set("enemy_race", self.detected_enemy_race.name)
-            self.blackboard.set("is_rush_detected", self.emergency_active)
+            self.blackboard.set(
+                "is_rush_detected",
+                self.emergency_active or self.early_scout_pressure_active,
+            )
 
     def _cache_enemy_composition(self) -> Dict[str, int]:
         """적 유닛 구성을 1회 캐시 (매 프레임 반복 조회 방지)"""
@@ -216,6 +224,93 @@ class StrategyManager:
             except (AttributeError, TypeError):
                 continue
         return composition
+
+    def _get_early_scout_signal_state(self) -> Dict[str, Any]:
+        if self.early_scout_pressure_active:
+            self.current_mode = StrategyMode.DEFENSIVE
+            return
+
+        game_time = getattr(self.bot, "time", 0.0)
+        state: Dict[str, Any] = {
+            "fresh": False,
+            "gas_time": None,
+            "natural_confirmed": False,
+            "cheese_suspected": False,
+            "cheese_active": False,
+            "fast_gas": False,
+            "greed_suppressed": False,
+            "pressure_active": False,
+            "drone_floor": 20,
+        }
+        if not self.blackboard:
+            return state
+
+        last_report = self.blackboard.get("early_scout_last_report_time", 0.0) or 0.0
+        try:
+            last_report = float(last_report)
+        except (TypeError, ValueError):
+            last_report = 0.0
+
+        gas_time = self.blackboard.get("early_scout_gas_time", None)
+        try:
+            gas_time = float(gas_time) if gas_time is not None else None
+        except (TypeError, ValueError):
+            gas_time = None
+
+        natural_confirmed = bool(
+            self.blackboard.get("early_scout_natural_confirmed", False)
+        )
+        cheese_suspected = bool(
+            self.blackboard.get("early_scout_cheese_suspected", False)
+        )
+        fresh = last_report > 0 and (game_time - last_report) <= 75.0
+        early_window = game_time <= 240.0
+        cheese_active = fresh and cheese_suspected
+        fast_gas = fresh and gas_time is not None and gas_time < 90.0
+        greed_suppressed = fresh and early_window and not natural_confirmed
+
+        state.update(
+            {
+                "fresh": fresh,
+                "gas_time": gas_time,
+                "natural_confirmed": natural_confirmed,
+                "cheese_suspected": cheese_suspected,
+                "cheese_active": cheese_active,
+                "fast_gas": fast_gas,
+                "greed_suppressed": greed_suppressed,
+                "pressure_active": cheese_active or greed_suppressed or fast_gas,
+                "drone_floor": 16 if cheese_active else 20,
+            }
+        )
+        return state
+
+    def _apply_early_scout_signals(self) -> None:
+        state = self._get_early_scout_signal_state()
+        self.early_scout_pressure_active = bool(state["pressure_active"])
+        self.early_scout_greed_suppressed = bool(state["greed_suppressed"])
+        self.early_scout_fast_gas = bool(state["fast_gas"])
+        self.early_scout_cheese_active = bool(state["cheese_active"])
+
+        if not self.early_scout_pressure_active:
+            return
+
+        game_time = getattr(self.bot, "time", 0.0)
+        if self.current_mode != StrategyMode.DEFENSIVE:
+            self.defense_mode_start_time = game_time
+        self.current_mode = StrategyMode.DEFENSIVE
+        self.emergency_spine_requested = True
+
+        self._adjust_unit_ratio("queen", 0.20)
+        self._adjust_unit_ratio("zergling", 0.35)
+        self._adjust_unit_ratio("roach", 0.15)
+
+        if self.blackboard and self.early_scout_cheese_active:
+            self.blackboard.set("is_rush_detected", True)
+
+        if self.early_scout_fast_gas:
+            self.emergency_spore_requested = True
+            if self.blackboard:
+                self.blackboard.set("urgent_spore_all_bases", True)
 
     def _check_jarvis_commands(self) -> None:
         """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
@@ -1375,6 +1470,14 @@ class StrategyManager:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 drone_count = drones.amount if hasattr(drones, "amount") else len(drones)
             return drone_count < 12  # 최소 12기만 유지
+
+        if self.early_scout_greed_suppressed:
+            drone_count = 0
+            if hasattr(self.bot, "units"):
+                drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
+                drone_count = drones.amount if hasattr(drones, "amount") else len(drones)
+            drone_floor = 16 if self.early_scout_cheese_active else 20
+            return drone_count < drone_floor
 
         return True
 

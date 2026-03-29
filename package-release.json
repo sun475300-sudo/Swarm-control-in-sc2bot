@@ -1,0 +1,11 @@
+{
+  "name": "release-integration",
+  "version": "1.0.0",
+  "description": "Multi-language release integration for Phase 60",
+  "scripts": {
+    "release:check": "node scripts/release_check_node.js",
+    "release:build": "node scripts/release_build.js",
+    "release:all": "npm run release:check && npm run release:build"
+  },
+  "dependencies": {}
+}

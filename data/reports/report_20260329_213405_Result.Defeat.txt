@@ -1,0 +1,61 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Protoss
+  Duration: 11:27
+  Date: 2026-03-29 21:34
+
+--- TIMELINE ---
+  [1:03] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:03] Build: UnitTypeId.EXTRACTOR (Supply 15)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:52] Build: UnitTypeId.SPINECRAWLER (Supply 20)
+  [3:45] Build: UnitTypeId.ROACHWARREN (Supply 33)
+  [3:49] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 33)
+  [4:06] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 32)
+  [4:09] Build: UnitTypeId.HATCHERY (Supply 31)
+  [4:20] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 34)
+  [4:21] Build: UnitTypeId.CREEPTUMOR (Supply 34)
+  [4:28] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [4:47] Build: UnitTypeId.EXTRACTOR (Supply 42)
+  [4:52] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 44)
+  [4:52] Build: UnitTypeId.CREEPTUMOR (Supply 44)
+  [4:59] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 48)
+  [7:55] Harassment: UnitTypeId.NEXUS
+  [8:08] Harassment: UnitTypeId.PYLON
+  [8:13] Harassment: UnitTypeId.PYLON
+  [8:27] Harassment: UnitTypeId.PYLON
+  [10:14] Harassment: UnitTypeId.NEXUS
+
+--- ECONOMY ---
+  Peak Minerals: 190
+  Peak Vespene: 2690
+  Peak Workers: 41
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 3:45
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:06
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 36 produced
+  UnitTypeId.ROACH: 27 produced
+
+--- RESULT ANALYSIS ---
+  Economy collapsed - workers lost
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Worker count below optimal - prioritize drone production
+  2. Late game loss - check tech transitions and army composition
+
+--- FINAL STATS ---
+  Workers: 0
+  Army Supply: 4
+  Bases: 1
+  Minerals: 10
+  Vespene: 2690
+
+============================================================

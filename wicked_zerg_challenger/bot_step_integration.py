@@ -1305,7 +1305,7 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("UpgradeCoord", start_time)
 
             # 0.06 ★★★ Early Scout System (초반 정찰) ★★★
-            if self.bot.time < 300.0:  # 5분 이내
+            if True:  # Keep scout state alive; execute() handles early vs. mid-game work.
                 if not hasattr(self.bot, "early_scout"):
                     try:
                         from early_scout_system import EarlyScoutSystem

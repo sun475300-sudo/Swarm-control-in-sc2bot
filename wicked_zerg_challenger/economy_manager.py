@@ -166,6 +166,73 @@ class EconomyManager:
 
         return max(0, available_mins), max(0, available_gas)
 
+    def _get_early_scout_pressure_state(self) -> dict:
+        game_time = getattr(self.bot, "time", 0.0)
+        state = {
+            "fresh": False,
+            "natural_confirmed": False,
+            "cheese_active": False,
+            "fast_gas": False,
+            "pressure_active": False,
+            "drone_floor": 20,
+        }
+        if not self.blackboard:
+            return state
+
+        last_report = self.blackboard.get("early_scout_last_report_time", 0.0) or 0.0
+        try:
+            last_report = float(last_report)
+        except (TypeError, ValueError):
+            last_report = 0.0
+
+        gas_time = self.blackboard.get("early_scout_gas_time", None)
+        try:
+            gas_time = float(gas_time) if gas_time is not None else None
+        except (TypeError, ValueError):
+            gas_time = None
+
+        natural_confirmed = bool(
+            self.blackboard.get("early_scout_natural_confirmed", False)
+        )
+        cheese_suspected = bool(
+            self.blackboard.get("early_scout_cheese_suspected", False)
+        )
+        fresh = last_report > 0 and (game_time - last_report) <= 75.0
+        early_window = game_time <= 240.0
+        cheese_active = fresh and cheese_suspected
+        fast_gas = fresh and gas_time is not None and gas_time < 90.0
+        pressure_active = cheese_active or fast_gas or (
+            fresh and early_window and not natural_confirmed
+        )
+
+        state.update(
+            {
+                "fresh": fresh,
+                "natural_confirmed": natural_confirmed,
+                "cheese_active": cheese_active,
+                "fast_gas": fast_gas,
+                "pressure_active": pressure_active,
+                "drone_floor": 16 if cheese_active else 20,
+            }
+        )
+        return state
+
+    def _should_suppress_drone_greed(self, worker_count: int) -> bool:
+        state = self._get_early_scout_pressure_state()
+        if not state["pressure_active"]:
+            return False
+        return worker_count >= int(state["drone_floor"])
+
+    def _should_delay_opening_expansion(self, base_count: int) -> bool:
+        if base_count != 1:
+            return False
+
+        state = self._get_early_scout_pressure_state()
+        if not state["pressure_active"]:
+            return False
+
+        return getattr(self.bot, "time", 0.0) <= 240.0
+
     async def on_step(self, iteration: int) -> None:
         if not hasattr(self.bot, "larva"):
             return
@@ -488,6 +555,10 @@ class EconomyManager:
             # 일꾼이 충분하면 밸런서 판단 따름
             if not self.balancer.should_train_drone():
                 return
+
+        scout_pressure = self._get_early_scout_pressure_state()
+        if scout_pressure["pressure_active"] and worker_count >= int(scout_pressure["drone_floor"]):
+            return
 
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
@@ -1426,6 +1497,13 @@ class EconomyManager:
         base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
 
         # ★★★ MAXIMUM FAST EXPANSION: 최대한 빠르고 많은 멀티 ★★★
+        if self._should_delay_opening_expansion(base_count):
+            if getattr(self.bot, "iteration", 0) % 44 == 0:
+                self.logger.info(
+                    f"[EXPANSION] [{int(game_time)}s] Delaying opening expansion due to scout pressure"
+                )
+            return
+
         should_expand = False
         expand_reason = ""
         minerals = self.bot.minerals if hasattr(self.bot, "minerals") else 0

@@ -332,3 +332,62 @@ jobs:
             data/replay_feedback/summary.md
           if-no-files-found: warn
           retention-days: 14
+
+  # ─────────────────────────────────────────────
+  # Release Checklist (Phase 57)
+  # ─────────────────────────────────────────────
+  release-check:
+    name: 릴리스 체크리스트
+    runs-on: ubuntu-latest
+    needs: [python-lint-test, node-lint-test, sc2-bot-test]
+    if: github.event_name == 'workflow_dispatch' || contains(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 소스코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python ${{ env.PYTHON_VERSION }} 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Node.js ${{ env.NODE_VERSION }} 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml aiohttp pytest
+          npm ci --ignore-scripts || npm install --ignore-scripts
+
+      - name: 릴리스 체크리스트 실행
+        run: |
+          python scripts/release_checklist.py
+
+      - name: 체크리스트 결과 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-checklist-${{ github.sha }}
+          path: data/reports/latest.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: 릴리스 가능 여부 출력
+        run: |
+          python -c "
+          import json
+          with open('data/reports/latest.json') as f:
+              data = json.load(f)
+          ready = data.get('ready_for_release', False)
+          rate = data['summary']['pass_rate']
+          print(f'Pass Rate: {rate}')
+          print(f'Ready for Release: {ready}')
+          if ready:
+            print('::notice::릴리스 준비 완료!')
+          else:
+            print('::error::릴리스 체크리스트 미통과')
+          "
