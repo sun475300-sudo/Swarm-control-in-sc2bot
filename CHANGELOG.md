@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 45] - 2026-03-29 (In Progress)
+### 크립 확산 최적화 착수
+- **Python** `creep_expansion_system.py` 목표 점막 위치 우선순위 로직 추가
+- **Python** `creep_expansion_system.py` 좌표 중복 제거 및 배치 상한(`target_batch_size`) 도입
+- **Python** `creep_expansion_system.py` 초중반 적 시작 위치 근처 위험 지역 회피(`enemy_avoid_radius`) 적용
+
 ## [Phase 44] - 2026-03-29
 ### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정
 - **Python** `upgrade_manager.py` `UnitTypeId.LURKER` → `LURKERMP` 수정: `LURKER`는 python-sc2에 존재하지 않아 러커 업그레이드 영구 미실행 → `LURKERMP` 1기 이상 시 즉시 트리거

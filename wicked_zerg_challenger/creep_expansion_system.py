@@ -30,6 +30,10 @@ class CreepExpansionSystem:
         self.tumors_created = 0
         self.map_coverage = 0.0
 
+        # ★ Phase 45: 점막 목표 우선순위/안전 제약 ★
+        self.target_batch_size = 80
+        self.enemy_avoid_radius = 14.0
+
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
@@ -101,6 +105,43 @@ class CreepExpansionSystem:
                 ))
                 if self.bot.in_map_bounds(pos):
                     self.target_creep_positions.append(pos)
+
+        # ★ Phase 45: 중복 제거 + 우선순위 정렬(안전/확장 효율 기반) ★
+        self.target_creep_positions = self._prioritize_targets(self.target_creep_positions)
+
+    def _prioritize_targets(self, positions: List[Point2]) -> List[Point2]:
+        """Deduplicate and prioritize creep targets for safer/faster spread."""
+        if not positions:
+            return []
+
+        # 격자 단위로 중복 제거
+        unique: Dict[tuple, Point2] = {}
+        for p in positions:
+            key = (int(p.x), int(p.y))
+            if key not in unique:
+                unique[key] = p
+
+        candidates = list(unique.values())
+
+        # 적 시작 위치를 기준으로 너무 위험한 지점 제외
+        enemy_start = None
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            enemy_start = self.bot.enemy_start_locations[0]
+
+        safe_candidates: List[Point2] = []
+        for p in candidates:
+            if enemy_start and p.distance_to(enemy_start) < self.enemy_avoid_radius and self.bot.time < 420:
+                continue
+            safe_candidates.append(p)
+
+        if not safe_candidates:
+            safe_candidates = candidates
+
+        # 본진/확장 경로 중심으로 가까운 지점을 우선 배치
+        anchor = self.bot.townhalls.first.position if self.bot.townhalls.exists else self.bot.start_location
+        safe_candidates.sort(key=lambda p: anchor.distance_to(p))
+
+        return safe_candidates[: self.target_batch_size]
 
     async def _queen_creep_tumors(self):
         """Queen으로 점막 종양 생성"""
