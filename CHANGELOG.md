@@ -14,6 +14,10 @@ All notable changes to WickedZergBotPro are documented here.
   - shell/perl 실검증 라우트 추가
   - 나머지 언어군 정책 스텁 라우트(Phase56 시작점) 추가
   - 보고서 phase 값을 56으로 상향
+- **Python** `phase54_quality_gate.py` 확장:
+  - 언어 라우터 dry-run 핸드오프 체크 추가
+  - `--router-base-ref` 인자 추가
+  - 품질 게이트 리포트에 라우터 연동 결과 포함
 
 ## [Phase 55] - 2026-03-29
 ### 멀티언어 운영 라우팅 착수

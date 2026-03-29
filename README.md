@@ -129,7 +129,7 @@ mindmap
 | P53 | Python + Rust + TypeScript | replay feedback 우선순위 점수(Rust) + 대시보드 조회/시각화 연동 |
 | P54 | Python + TypeScript + Rust | 통합 품질 게이트 스크립트(`phase54_quality_gate.py`)로 멀티언어 점검 자동화 |
 | P55 | Python | 변경 파일 기반 언어 라우팅 검증(`phase55_language_router.py`) |
-| P56 | Docs + Python | README 목차/시각화 대규모 개편 + 21언어 라우팅 확장 착수 |
+| P56 | Docs + Python | README 목차/시각화 대규모 개편 + 21언어 라우팅 확장 + 품질게이트 연동 시작 |
 
 ### 다음 대규모 계획 (Phase 52~58)
 | Phase | 카테고리 | 언어 | 핵심 작업 |
@@ -161,12 +161,14 @@ mindmap
 - `sc2-ai-dashboard/client/src/pages/Monitor.tsx` 확장: Replay Feedback Priority 위젯 추가(15초 자동 갱신)
 - 신규 파일: `phase54_quality_gate.py` (Python 문법 + TypeScript check + Rust cargo check 통합 리포트)
 - 신규 파일: `phase55_language_router.py` (변경 파일 감지 + 언어별 검증 커맨드 라우팅)
+- `phase54_quality_gate.py` 확장: `phase55_language_router.py` dry-run 연동(`--router-base-ref`)
 - `config.yaml` 다중언어 정책 활성화: Python/TypeScript/Rust/Shell phase 매핑
 - 예시 실행:
     - `python wicked_zerg_challenger/training_automation.py --games 5`
     - `python wicked_zerg_challenger/run_single_game.py --map AbyssalReefLE --enemy-race Protoss --difficulty Easy`
     - `python phase50_integrated_validation.py --skip-pytest --skip-package`
     - `python phase54_quality_gate.py`
+    - `python phase54_quality_gate.py --router-base-ref HEAD~1`
     - `python phase55_language_router.py --base-ref HEAD~1`
     - `python phase55_language_router.py --base-ref HEAD~1 --execute`
     - `ARENA_OUTPUT_DIR=dist python create_arena_package.py`

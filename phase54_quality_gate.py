@@ -5,6 +5,7 @@ Runs cross-language quality checks and writes a JSON report:
 1) Python syntax compile for core files
 2) TypeScript dashboard type check (npm run check)
 3) Rust cargo check for rust_accel
+4) Language router dry-run handoff (phase55_language_router.py)
 """
 
 from __future__ import annotations
@@ -134,6 +135,27 @@ def rust_cargo_check() -> dict[str, Any]:
     }
 
 
+def language_router_check(base_ref: str) -> dict[str, Any]:
+    router_script = ROOT / "phase55_language_router.py"
+    if not router_script.exists():
+        return {
+            "name": "language_router_dry_run",
+            "skipped": True,
+            "reason": "phase55_language_router_not_found",
+        }
+
+    cmd = [sys.executable, str(router_script), "--base-ref", base_ref]
+    code, out = run_cmd(cmd, cwd=ROOT)
+    return {
+        "name": "language_router_dry_run",
+        "skipped": False,
+        "ok": code == 0,
+        "command": " ".join(cmd),
+        "cwd": str(ROOT),
+        "output": out,
+    }
+
+
 def _is_success(result: dict[str, Any]) -> bool:
     if result.get("skipped", False):
         return True
@@ -147,6 +169,11 @@ def main() -> int:
         action="store_true",
         help="Treat skipped checks as failure",
     )
+    parser.add_argument(
+        "--router-base-ref",
+        default="HEAD~1",
+        help="Base ref for language router dry-run",
+    )
     args = parser.parse_args()
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -156,6 +183,7 @@ def main() -> int:
         python_compile_check(),
         dashboard_ts_check(),
         rust_cargo_check(),
+        language_router_check(args.router_base_ref),
     ]
 
     all_ok = True
@@ -171,6 +199,7 @@ def main() -> int:
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),
         "all_ok": all_ok,
         "fail_on_skipped": args.fail_on_skipped,
+        "router_base_ref": args.router_base_ref,
         "checks": checks,
     }
 
