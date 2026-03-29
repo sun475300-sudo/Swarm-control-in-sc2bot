@@ -33,6 +33,30 @@
 
 ---
 
+## Latest Status — Phase 44 Completed
+
+### 완료된 핵심 수정 (2026-03-29)
+- `upgrade_manager.py`: `UnitTypeId.LURKER` -> `UnitTypeId.LURKERMP` 교체로 럴커 업그레이드 트리거 복구
+- `upgrade_manager.py`: 근접 업그레이드 계산에 `ULTRALISK` 포함
+- `composition_optimizer.py`: `print` 제거 후 `logger.debug` 전환
+- `composition_optimizer.py`: `intel_manager.enemy_unit_counts` 누적 데이터 병합으로 시야 밖 적 유닛 추정 유지
+
+### 다음 대규모 계획 (Phase 45-50)
+| Phase | 트랙 | 작업 |
+|---|---|---|
+| 45 | Creep Control | 크립 확산 경로/우선순위 최적화 |
+| 46 | Upgrade AI | 종족/상황별 업그레이드 우선순위 고도화 |
+| 47 | Mobile API | `sc2-mobile-app` REST API 엔드포인트 확장 |
+| 48 | Rust Acceleration | PyO3 기반 거리 계산/필터링 핫루프 가속 |
+| 49 | Integration | 통합 검증 + 아레나 패키지 자동 재생성 |
+| 50 | CI/CD | GitHub Actions 파이프라인 + 자동 아티팩트 업로드 |
+
+### 작업 시작 상태
+- Phase 44 코드 반영 및 문서 동기화 완료
+- 다음 실행 단위는 Phase 45 크립 최적화 구현
+
+---
+
 ## System Architecture — Full Stack
 
 mermaid

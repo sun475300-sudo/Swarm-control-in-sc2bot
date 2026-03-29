@@ -356,7 +356,7 @@ class EvolutionUpgradeManager:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKERMP,  # ★ Phase 44: LURKER → LURKERMP
+            UnitTypeId.LURKERMP,
         ]
 
     @staticmethod
@@ -531,7 +531,7 @@ class EvolutionUpgradeManager:
             if self.bot.units(UnitTypeId.ULTRALISK).amount >= 1:
                 await self._research_ultra_upgrades(iteration)
 
-        # ★ Phase 44: LURKER → LURKERMP 수정 (이전: UnitTypeId.LURKER = 존재하지 않는 ID → 항상 0)
+    # 럴커 업그레이드 (Lair or Hive)
         if self.bot.units(UnitTypeId.LURKERMP).amount >= 1:
             await self._research_lurker_upgrades(iteration)
 

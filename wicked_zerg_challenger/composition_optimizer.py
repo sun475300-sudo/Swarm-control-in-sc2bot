@@ -22,6 +22,9 @@ except ImportError:
     UnitTypeId = None
 
 
+logger = logging.getLogger(__name__)
+
+
 class UnitRole(Enum):
     """유닛 역할 분류"""
     GROUND_MELEE = "ground_melee"       # 근접 지상
@@ -170,7 +173,7 @@ class CompositionOptimizer:
         # 적 유닛 정보
         self.enemy_composition: Dict[str, int] = {}
 
-        logging.getLogger(__name__).debug("[COMPOSITION] 유닛 조합 최적화기 초기화 완료")
+        logger.debug("[COMPOSITION] 유닛 조합 최적화기 초기화 완료")
 
     def analyze_enemy_composition(self) -> Dict[str, int]:
         """
@@ -192,13 +195,18 @@ class CompositionOptimizer:
             except Exception:
                 continue
 
-        # ★ Phase 44: intel_manager 역사적 누적 데이터 병합
-        # 화면 밖으로 이동한 유닛도 추적 (현재값 vs 누적값 중 최댓값)
+        # Use IntelManager historical data to keep units that moved out of vision.
         intel = getattr(self.bot, "intel_manager", None)
-        if intel is not None:
-            historical = getattr(intel, "enemy_unit_counts", None) or {}
+        historical = getattr(intel, "enemy_unit_counts", None) if intel else None
+        if isinstance(historical, dict):
             for unit_name, count in historical.items():
-                composition[unit_name] = max(composition.get(unit_name, 0), count)
+                key = str(unit_name).upper()
+                if key in ("SCV", "PROBE", "DRONE", "MULE"):
+                    continue
+                try:
+                    composition[key] = max(composition.get(key, 0), int(count))
+                except Exception:
+                    continue
 
         self.enemy_composition = composition
         return composition
