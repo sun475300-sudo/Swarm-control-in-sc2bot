@@ -14,6 +14,11 @@ from sc2.ids.ability_id import AbilityId
 from sc2.position import Point2
 from utils.logger import get_logger
 
+try:
+    from wicked_zerg_challenger.rust_accel import nearest_point_index, points_to_xy_tuples
+except Exception:
+    from rust_accel import nearest_point_index, points_to_xy_tuples
+
 
 class CreepExpansionSystem:
     """전 맵 점막 확장 시스템"""
@@ -208,11 +213,12 @@ class CreepExpansionSystem:
             if not self.target_creep_positions:
                 break
 
-            # 가장 가까운 목표 위치
-            closest_target = min(
-                self.target_creep_positions,
-                key=lambda p: queen.distance_to(p)
-            )
+            # 가장 가까운 목표 위치 (Rust 가속 fallback)
+            target_xy = points_to_xy_tuples(self.target_creep_positions)
+            idx = nearest_point_index((float(queen.position.x), float(queen.position.y)), target_xy)
+            if idx is None:
+                break
+            closest_target = self.target_creep_positions[idx]
 
             # 이미 점막이 있는 위치는 스킵
             if self.bot.has_creep(closest_target):
@@ -239,11 +245,12 @@ class CreepExpansionSystem:
             if not self.target_creep_positions:
                 break
 
-            # 가장 가까운 목표 위치
-            closest_target = min(
-                self.target_creep_positions,
-                key=lambda p: tumor.distance_to(p)
-            )
+            # 가장 가까운 목표 위치 (Rust 가속 fallback)
+            target_xy = points_to_xy_tuples(self.target_creep_positions)
+            idx = nearest_point_index((float(tumor.position.x), float(tumor.position.y)), target_xy)
+            if idx is None:
+                break
+            closest_target = self.target_creep_positions[idx]
 
             # 이미 점막이 있는 위치는 스킵
             if self.bot.has_creep(closest_target):

@@ -30,6 +30,16 @@ All notable changes to WickedZergBotPro are documented here.
 - **TypeScript** `sc2-mobile-app/src/pages/Dashboard.tsx` 로그 상태 카드 추가: log 파일 존재/크기, 에러/경고 집계 표시
 - 대시보드 데이터 fetch 병렬화 확장: 게임/훈련/arena + 로그 상태/로그 요약 동시 수집
 
+## [Phase 48] - 2026-03-29 (In Progress)
+### Rust 고성능 유틸 착수
+- **Rust** `rust_accel/Cargo.toml` 추가: PyO3 기반 확장 모듈 빌드 설정
+- **Rust** `rust_accel/src/lib.rs` 추가: `nearest_point_index()` 구현 (최근접 포인트 인덱스 계산)
+- **Python** `wicked_zerg_challenger/rust_accel.py` 추가: Rust 확장 호출 + Python fallback 브리지
+- **Python** `wicked_zerg_challenger/creep_expansion_system.py` 통합: Queen/Tumor 타깃 선택 시 Rust 가속 nearest-point 루틴 사용
+
+### 다중언어 사용 설정 명시
+- **YAML** `config.yaml` `development.language_policy` 추가: multi-language 활성화 및 phase별 언어 매핑(P47~P49)
+
 ## [Phase 44] - 2026-03-29
 ### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정
 - **Python** `upgrade_manager.py` `UnitTypeId.LURKER` → `LURKERMP` 수정: `LURKER`는 python-sc2에 존재하지 않아 러커 업그레이드 영구 미실행 → `LURKERMP` 1기 이상 시 즉시 트리거
