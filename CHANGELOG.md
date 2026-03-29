@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 52] - 2026-03-29 (In Progress)
+### 리플레이 학습 루프 착수
+- **Python** `wicked_zerg_challenger/replay_feedback_loop.py` 추가: 리플레이 요약(JSON) 집계 후 승률/손실 비중 기반 학습 우선순위 자동 추천
+- 출력 산출물: `focus_areas`, `priority`, `next_actions`를 포함한 피드백 JSON 생성
+- 실행 예시: `python wicked_zerg_challenger/replay_feedback_loop.py --input local_training/replay_summaries --output local_training/replay_feedback/latest.json`
+
 ## [Phase 51] - 2026-03-29 (In Progress)
 ### 배포 자동화 착수 (CI Arena 패키지)
 - **YAML** `.github/workflows/ci.yml` 확장: `workflow_dispatch` 트리거 추가
