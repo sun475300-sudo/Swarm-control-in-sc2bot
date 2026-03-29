@@ -5,7 +5,7 @@ Runs cross-language quality checks and writes a JSON report:
 1) Python syntax compile for core files
 2) TypeScript dashboard type check (npm run check)
 3) Rust cargo check for rust_accel
-4) Language router dry-run handoff (phase55_language_router.py)
+4) Language router handoff (phase55_language_router.py)
 """
 
 from __future__ import annotations
@@ -75,6 +75,19 @@ def python_compile_check() -> dict[str, Any]:
     }
 
 
+def _find_typescript_cli(dashboard_dir: Path) -> Path | None:
+    candidates = [
+        dashboard_dir / "node_modules" / ".bin" / "tsc.cmd",
+        dashboard_dir / "node_modules" / ".bin" / "tsc",
+        ROOT / "node_modules" / ".bin" / "tsc.cmd",
+        ROOT / "node_modules" / ".bin" / "tsc",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def dashboard_ts_check() -> dict[str, Any]:
     dashboard_dir = ROOT / "sc2-ai-dashboard"
     package_json = dashboard_dir / "package.json"
@@ -84,6 +97,14 @@ def dashboard_ts_check() -> dict[str, Any]:
             "name": "typescript_check",
             "skipped": True,
             "reason": "dashboard_package_json_not_found",
+        }
+
+    tsc_cli = _find_typescript_cli(dashboard_dir)
+    if tsc_cli is None:
+        return {
+            "name": "typescript_check",
+            "skipped": True,
+            "reason": "typescript_cli_not_found",
         }
 
     npm_exe = shutil.which("npm") or shutil.which("npm.cmd")
@@ -101,6 +122,7 @@ def dashboard_ts_check() -> dict[str, Any]:
         "ok": code == 0,
         "command": "npm run check",
         "cwd": str(dashboard_dir),
+        "typescript_cli": str(tsc_cli),
         "output": out,
     }
 
@@ -135,23 +157,29 @@ def rust_cargo_check() -> dict[str, Any]:
     }
 
 
-def language_router_check(base_ref: str) -> dict[str, Any]:
+def language_router_check(base_ref: str, change_mode: str, execute: bool) -> dict[str, Any]:
     router_script = ROOT / "phase55_language_router.py"
     if not router_script.exists():
         return {
-            "name": "language_router_dry_run",
+            "name": "language_router_execute" if execute else "language_router_dry_run",
             "skipped": True,
             "reason": "phase55_language_router_not_found",
         }
 
-    cmd = [sys.executable, str(router_script), "--base-ref", base_ref]
+    cmd = [sys.executable, str(router_script), "--change-mode", change_mode]
+    if change_mode == "range":
+        cmd.extend(["--base-ref", base_ref])
+    if execute:
+        cmd.append("--execute")
     code, out = run_cmd(cmd, cwd=ROOT)
     return {
-        "name": "language_router_dry_run",
+        "name": "language_router_execute" if execute else "language_router_dry_run",
         "skipped": False,
         "ok": code == 0,
         "command": " ".join(cmd),
         "cwd": str(ROOT),
+        "change_mode": change_mode,
+        "execute": execute,
         "output": out,
     }
 
@@ -174,6 +202,17 @@ def main() -> int:
         default="HEAD~1",
         help="Base ref for language router dry-run",
     )
+    parser.add_argument(
+        "--router-change-mode",
+        choices=["range", "staged", "worktree", "local"],
+        default="range",
+        help="Change source forwarded to phase55_language_router.py",
+    )
+    parser.add_argument(
+        "--router-execute",
+        action="store_true",
+        help="Run routed language checks instead of dry-run routing",
+    )
     args = parser.parse_args()
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -183,7 +222,11 @@ def main() -> int:
         python_compile_check(),
         dashboard_ts_check(),
         rust_cargo_check(),
-        language_router_check(args.router_base_ref),
+        language_router_check(
+            args.router_base_ref,
+            change_mode=args.router_change_mode,
+            execute=args.router_execute,
+        ),
     ]
 
     all_ok = True
@@ -200,6 +243,8 @@ def main() -> int:
         "all_ok": all_ok,
         "fail_on_skipped": args.fail_on_skipped,
         "router_base_ref": args.router_base_ref,
+        "router_change_mode": args.router_change_mode,
+        "router_execute": args.router_execute,
         "checks": checks,
     }
 

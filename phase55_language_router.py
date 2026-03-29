@@ -77,11 +77,47 @@ def run_cmd(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
         return 127, str(exc)
 
 
-def get_changed_files(base_ref: str) -> list[str]:
-    code, out = run_cmd(["git", "diff", "--name-only", f"{base_ref}..HEAD"])
+def _parse_file_lines(output: str) -> list[str]:
+    return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def _git_name_only(*args: str) -> list[str]:
+    code, out = run_cmd(["git", "diff", "--name-only", *args])
     if code != 0:
         return []
-    return [line.strip() for line in out.splitlines() if line.strip()]
+    return _parse_file_lines(out)
+
+
+def _get_untracked_files() -> list[str]:
+    code, out = run_cmd(["git", "ls-files", "--others", "--exclude-standard"])
+    if code != 0:
+        return []
+    return _parse_file_lines(out)
+
+
+def _unique_preserve_order(files: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for file_path in files:
+        if file_path in seen:
+            continue
+        seen.add(file_path)
+        ordered.append(file_path)
+    return ordered
+
+
+def get_changed_files(base_ref: str, change_mode: str) -> list[str]:
+    if change_mode == "range":
+        return _git_name_only(f"{base_ref}..HEAD")
+    if change_mode == "staged":
+        return _git_name_only("--cached")
+    if change_mode == "worktree":
+        return _unique_preserve_order(_git_name_only() + _get_untracked_files())
+    if change_mode == "local":
+        return _unique_preserve_order(
+            _git_name_only("--cached") + _git_name_only() + _get_untracked_files()
+        )
+    raise ValueError(f"unsupported change_mode: {change_mode}")
 
 
 def existing_files(files: list[str]) -> list[str]:
@@ -336,10 +372,16 @@ def route_policy_stub(language: str, files: list[str], execute: bool) -> Command
 def main() -> int:
     parser = argparse.ArgumentParser(description="Phase 55 language-aware router")
     parser.add_argument("--base-ref", default="HEAD~1", help="Git base ref for changed-file detection")
+    parser.add_argument(
+        "--change-mode",
+        choices=["range", "staged", "worktree", "local"],
+        default="range",
+        help="Change source: committed range, staged diff, worktree diff, or local union",
+    )
     parser.add_argument("--execute", action="store_true", help="Run routed commands")
     args = parser.parse_args()
 
-    changed = get_changed_files(args.base_ref)
+    changed = get_changed_files(args.base_ref, args.change_mode)
     buckets = classify_files(changed)
 
     results = [
@@ -374,6 +416,7 @@ def main() -> int:
         "phase": 56,
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),
         "base_ref": args.base_ref,
+        "change_mode": args.change_mode,
         "execute": args.execute,
         "changed_files": changed,
         "buckets": buckets,
@@ -388,6 +431,7 @@ def main() -> int:
 
     print("=" * 70)
     print("Phase 56 Language Router")
+    print(f"CHANGE_MODE: {args.change_mode}")
     print(f"EXECUTE: {args.execute}")
     print(f"ALL_OK: {all_ok}")
     print(f"REPORT: {report_path}")
