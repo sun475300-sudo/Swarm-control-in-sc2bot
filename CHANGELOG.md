@@ -2,6 +2,15 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 54] - 2026-03-29
+### 안정화/품질 게이트 착수 (Cross-language)
+- **Python** `phase54_quality_gate.py` 추가:
+  - Python 핵심 파일 `py_compile` 검사
+  - TypeScript 대시보드 `npm run check` 실행
+  - Rust `cargo check` 실행
+  - `test_results/phase54_quality_gate_*.json` 리포트 생성
+- **운영 목적**: Python/TypeScript/Rust 변경이 섞여도 단일 명령으로 기본 품질 상태를 확인하도록 표준화
+
 ## [Phase 53] - 2026-03-29
 ### 다중언어 운영 고도화 착수 (Python + Rust + TypeScript)
 - **Rust** `rust_accel/src/lib.rs` 확장: `compute_feedback_priority(size_kb, player_count, winner_count, note_count)` 추가 및 PyO3 export 등록

@@ -49,7 +49,7 @@
 |---|---|---|---|
 | P52 | 리플레이 학습 루프 | Python | 리플레이 기반 승패/손실 패턴 자동 피드백 |
 | P53 | 운영 대시보드 고도화 | TypeScript | 훈련 리포트/전투 지표/알림 통합 대시보드 |
-| P54 | 안정화/품질 게이트 | All | 회귀 테스트 + 타입검사 + 릴리스 체크리스트 자동화 |
+| P54 | 안정화/품질 게이트 | Python + TypeScript + Rust | 통합 품질 게이트 스크립트로 멀티언어 검증 자동화 |
 | P55 | 멀티언어 운영 고도화 | All | phase별 언어 정책 기반 자동 빌드/검증 라우팅 |
 | P56 | 릴리스 준비 | All | 릴리스 노트/체크리스트/패키지 검증 고정 파이프라인 |
 | P57 | 운영 자동화 | All | 배포 결과 자동 보고/실패 재시도/품질 메트릭 집계 |
@@ -72,11 +72,13 @@
 - `scripts/replay_feedback_loop.py` 확장: Rust `compute_feedback_priority()` 연동 + 요약표 Priority 컬럼 추가
 - `sc2-ai-dashboard/server/routers.ts` 확장: `replay.getLatest` tRPC 라우터 추가(우선순위 정렬)
 - `sc2-ai-dashboard/client/src/pages/Monitor.tsx` 확장: Replay Feedback Priority 위젯 추가(15초 자동 갱신)
+- 신규 파일: `phase54_quality_gate.py` (Python 문법 + TypeScript check + Rust cargo check 통합 리포트)
 - `config.yaml` 다중언어 정책 활성화: Python/TypeScript/Rust/Shell phase 매핑
 - 예시 실행:
     - `python wicked_zerg_challenger/training_automation.py --games 5`
     - `python wicked_zerg_challenger/run_single_game.py --map AbyssalReefLE --enemy-race Protoss --difficulty Easy`
     - `python phase50_integrated_validation.py --skip-pytest --skip-package`
+    - `python phase54_quality_gate.py`
     - `ARENA_OUTPUT_DIR=dist python create_arena_package.py`
     - `python wicked_zerg_challenger/replay_feedback_loop.py --input local_training/replay_summaries --output local_training/replay_feedback/latest.json`
 
