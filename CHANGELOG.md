@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 50] - 2026-03-29 (In Progress)
+### 통합 최종 검증 자동화 착수
+- **Python** `phase50_integrated_validation.py` 추가: 핵심 파일 `py_compile` + 선택적 `pytest` + 선택적 아레나 패키지 생성 실행
+- **Python** `phase50_integrated_validation.py` 리포트 출력: `test_results/phase50_validation_*.json` 자동 저장
+- 실행 예시: `python phase50_integrated_validation.py --skip-pytest --skip-package`
+
 ## [Phase 49] - 2026-03-29 (In Progress)
 ### OpenCL 가속 경로 착수
 - **Python** `wicked_zerg_challenger/opencl_accel.py` 추가: `pyopencl` 기반 `nearest_point_index_opencl()` 구현 (환경 미지원 시 CPU fallback)
