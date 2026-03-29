@@ -33,7 +33,91 @@
 
 ---
 
-## Latest Status — Phase 40~53 In Progress
+## Quick Navigation (TOC)
+
+### 핵심 섹션
+- [Latest Status — Phase 40~56 In Progress](#latest-status--phase-4056-in-progress)
+- [System Architecture — Full Stack](#system-architecture--full-stack)
+- [Sim-to-Real Mapping](#sim-to-real-mapping)
+- [Key Features](#key-features)
+- [Bot Decision Flow — State Machine](#bot-decision-flow--state-machine)
+- [Combat Micro System](#combat-micro-system)
+- [Intel & Scouting Pipeline](#intel--scouting-pipeline)
+- [Module Structure — 541 Python Files](#module-structure--541-python-files)
+
+### 운영/품질 섹션
+- [Engineering Troubleshooting](#engineering-troubleshooting)
+- [Blackboard Architecture — 공유 상태 관리](#blackboard-architecture--공유-상태-관리)
+- [Potential Field Navigation](#potential-field-navigation)
+- [Project Stats](#project-stats)
+- [Build Order Database](#build-order-database)
+- [Tech Stack](#tech-stack)
+- [Data Flow — Real-time Processing](#data-flow--real-time-processing)
+
+### 확장/요약 섹션
+- [Career Roadmap](#career-roadmap)
+- [Project Metrics Summary](#project-metrics-summary)
+- [한국어 요약 (Korean Summary)](#한국어-요약-korean-summary)
+- [Contact](#contact)
+
+---
+
+## Visual Atlas
+
+| 시각 자료 | 위치 | 목적 |
+|---|---|---|
+| 시스템 전반 아키텍처 | [System Architecture](#system-architecture--full-stack) | 엔드투엔드 컴포넌트/데이터 경로 파악 |
+| 시뮬레이션-현실 대응 | [Sim-to-Real Mapping](#sim-to-real-mapping) | 연구 결과의 실세계 전이성 설명 |
+| 의사결정/상태기계 | [Bot Decision Flow](#bot-decision-flow--state-machine) | 게임 루프 내 전략 전환 흐름 파악 |
+| 전투 마이크로/카운터 | [Combat Micro System](#combat-micro-system) | 종족/유닛별 미시 전술 시각화 |
+| 인텔 파이프라인 | [Intel & Scouting Pipeline](#intel--scouting-pipeline) | 정찰-분석-전략 반영 체인 설명 |
+| 품질/버그 타임라인 | [Project Stats](#project-stats) | 안정화 진행 상황을 정량 지표로 추적 |
+| 빌드오더/데이터 플로우 | [Build Order Database](#build-order-database), [Data Flow](#data-flow--real-time-processing) | 운영 실행 경로와 생산 전략 구조화 |
+
+---
+
+## Multi-Language Operations Map (Phase 56 Start)
+
+```mermaid
+mindmap
+    root((Multi-Language Ops))
+        Core Runtime
+            Python
+            Rust
+            TypeScript
+        Systems
+            C++
+            Go
+            Java
+            Kotlin
+            Swift
+            C#
+            Scala
+        Data/Modeling
+            R
+            Julia
+            SQL
+            Protobuf
+        Automation/Scripting
+            Shell
+            Perl
+            Ruby
+            Lua
+            Dart
+            Haskell
+            Elixir
+```
+
+| 영역 | 언어 | 운영 목적 |
+|---|---|---|
+| Core Runtime | Python, Rust, TypeScript | 메인 봇 로직, 가속 모듈, 대시보드/운영 UI |
+| Systems | C++, Go, Java, Kotlin, Swift, C#, Scala | 성능 모듈/서브시스템/클라이언트 확장 준비 |
+| Data/Modeling | R, Julia, SQL, Protobuf | 분석 실험, 데이터 질의, 스키마/메시지 표준화 |
+| Automation/Scripting | Shell, Perl, Ruby, Lua, Dart, Haskell, Elixir | 운영 자동화, 스크립트 검증, 툴 체인 다양화 |
+
+---
+
+## Latest Status — Phase 40~56 In Progress
 
 ### 완료 요약
 | Phase | 언어 | 핵심 작업 |
@@ -43,6 +127,9 @@
 | P42 | Python + TypeScript | `intel_manager.py` 30종 supply 테이블 + 공격 타이밍 예측, `Monitor.tsx` KDA/처치율 위젯 |
 | P43 | TypeScript | `routers.ts` logs tRPC + `Monitor.tsx` 5초 자동갱신 로그 뷰어 |
 | P53 | Python + Rust + TypeScript | replay feedback 우선순위 점수(Rust) + 대시보드 조회/시각화 연동 |
+| P54 | Python + TypeScript + Rust | 통합 품질 게이트 스크립트(`phase54_quality_gate.py`)로 멀티언어 점검 자동화 |
+| P55 | Python | 변경 파일 기반 언어 라우팅 검증(`phase55_language_router.py`) |
+| P56 | Docs + Python | README 목차/시각화 대규모 개편 + 21언어 라우팅 확장 착수 |
 
 ### 다음 대규모 계획 (Phase 52~58)
 | Phase | 카테고리 | 언어 | 핵심 작업 |

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Phase 55 language-aware validation router.
+"""Phase 55/56 language-aware validation router.
 
 Detects changed files and routes quality checks by language domain.
 
 Default behavior:
 - Collect changed files via `git diff --name-only HEAD~1..HEAD`
-- Map files to language buckets (python/typescript/rust/docs)
+- Map files to language buckets (21-language coverage)
 - Build an execution plan and optionally run checks
 
 Outputs:
@@ -26,6 +26,31 @@ from typing import Any
 
 ROOT = Path(__file__).parent
 REPORT_DIR = ROOT / "test_results"
+
+LANGUAGE_BUCKETS: dict[str, tuple[str, ...]] = {
+    "python": (".py",),
+    "typescript": (".ts", ".tsx", ".js", ".jsx"),
+    "rust": (".rs",),
+    "cpp": (".c", ".cc", ".cpp", ".cxx", ".h", ".hpp", ".hh", ".hxx"),
+    "go": (".go",),
+    "java": (".java",),
+    "kotlin": (".kt", ".kts"),
+    "swift": (".swift",),
+    "csharp": (".cs",),
+    "scala": (".scala",),
+    "r_lang": (".r",),
+    "julia": (".jl",),
+    "lua": (".lua",),
+    "dart": (".dart",),
+    "ruby": (".rb",),
+    "haskell": (".hs",),
+    "elixir": (".ex", ".exs"),
+    "sql": (".sql",),
+    "protobuf": (".proto",),
+    "shell": (".sh", ".bash", ".zsh", ".ps1", ".cmd", ".bat"),
+    "perl": (".pl", ".pm"),
+    "docs": (".md",),
+}
 
 
 @dataclass
@@ -59,32 +84,38 @@ def get_changed_files(base_ref: str) -> list[str]:
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 
+def existing_files(files: list[str]) -> list[str]:
+    return [f for f in files if (ROOT / f).exists()]
+
+
+def find_executable(candidates: list[str]) -> str | None:
+    for exe in candidates:
+        path = shutil.which(exe)
+        if path:
+            return path
+    return None
+
+
 def classify_files(files: list[str]) -> dict[str, list[str]]:
-    buckets: dict[str, list[str]] = {
-        "python": [],
-        "typescript": [],
-        "rust": [],
-        "docs": [],
-        "other": [],
-    }
+    buckets: dict[str, list[str]] = {key: [] for key in LANGUAGE_BUCKETS}
+    buckets["other"] = []
 
     for f in files:
         lower = f.lower()
-        if lower.endswith(".py"):
-            buckets["python"].append(f)
-        elif lower.endswith(".ts") or lower.endswith(".tsx"):
-            buckets["typescript"].append(f)
-        elif lower.endswith(".rs"):
-            buckets["rust"].append(f)
-        elif lower.endswith(".md"):
-            buckets["docs"].append(f)
-        else:
+        matched = False
+        for bucket, exts in LANGUAGE_BUCKETS.items():
+            if lower.endswith(exts):
+                buckets[bucket].append(f)
+                matched = True
+                break
+        if not matched:
             buckets["other"].append(f)
 
     return buckets
 
 
 def route_python(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
     if not files:
         return CommandResult("python -m py_compile <changed .py>", str(ROOT), True, True, "", "no_python_changes")
 
@@ -97,6 +128,7 @@ def route_python(files: list[str], execute: bool) -> CommandResult:
 
 
 def route_typescript(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
     if not files:
         return CommandResult("npm run check", str(ROOT / "sc2-ai-dashboard"), True, True, "", "no_typescript_changes")
 
@@ -104,7 +136,7 @@ def route_typescript(files: list[str], execute: bool) -> CommandResult:
     if not (dash_dir / "package.json").exists():
         return CommandResult("npm run check", str(dash_dir), True, True, "", "dashboard_not_found")
 
-    npm_exe = shutil.which("npm") or shutil.which("npm.cmd")
+    npm_exe = find_executable(["npm", "npm.cmd"])
     if npm_exe is None:
         return CommandResult("npm run check", str(dash_dir), True, False, "", "npm_not_found")
 
@@ -117,6 +149,7 @@ def route_typescript(files: list[str], execute: bool) -> CommandResult:
 
 
 def route_rust(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
     if not files:
         return CommandResult("cargo check", str(ROOT / "rust_accel"), True, True, "", "no_rust_changes")
 
@@ -124,7 +157,7 @@ def route_rust(files: list[str], execute: bool) -> CommandResult:
     if not (rust_dir / "Cargo.toml").exists():
         return CommandResult("cargo check", str(rust_dir), True, True, "", "cargo_toml_not_found")
 
-    cargo_exe = shutil.which("cargo") or shutil.which("cargo.exe")
+    cargo_exe = find_executable(["cargo", "cargo.exe"])
     if cargo_exe is None:
         return CommandResult("cargo check", str(rust_dir), True, False, "", "cargo_not_found")
 
@@ -136,6 +169,65 @@ def route_rust(files: list[str], execute: bool) -> CommandResult:
     return CommandResult(" ".join(cmd), str(rust_dir), False, code == 0, out)
 
 
+def route_shell(files: list[str], execute: bool) -> CommandResult:
+    files = [f for f in existing_files(files) if Path(f).suffix.lower() in {".sh", ".bash", ".zsh"}]
+    if not files:
+        return CommandResult("bash -n <changed shell>", str(ROOT), True, True, "", "no_shell_script_changes")
+
+    shell_exe = find_executable(["bash", "sh"])
+    if shell_exe is None:
+        return CommandResult("bash -n <changed shell>", str(ROOT), True, True, "", "shell_not_found")
+
+    if not execute:
+        return CommandResult(f"{shell_exe} -n <changed shell>", str(ROOT), True, True, "", "dry_run")
+
+    outputs: list[str] = []
+    ok = True
+    for f in files:
+        cmd = [shell_exe, "-n", str(ROOT / f)]
+        code, out = run_cmd(cmd)
+        if code != 0:
+            ok = False
+        if out:
+            outputs.append(f"[{f}]\n{out}")
+
+    return CommandResult(f"{shell_exe} -n <changed shell>", str(ROOT), False, ok, "\n\n".join(outputs))
+
+
+def route_perl(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult("perl -c <changed perl>", str(ROOT), True, True, "", "no_perl_changes")
+
+    perl_exe = find_executable(["perl", "perl.exe"])
+    if perl_exe is None:
+        return CommandResult("perl -c <changed perl>", str(ROOT), True, True, "", "perl_not_found")
+
+    if not execute:
+        return CommandResult(f"{perl_exe} -c <changed perl>", str(ROOT), True, True, "", "dry_run")
+
+    outputs: list[str] = []
+    ok = True
+    for f in files:
+        cmd = [perl_exe, "-c", str(ROOT / f)]
+        code, out = run_cmd(cmd)
+        if code != 0:
+            ok = False
+        if out:
+            outputs.append(f"[{f}]\n{out}")
+
+    return CommandResult(f"{perl_exe} -c <changed perl>", str(ROOT), False, ok, "\n\n".join(outputs))
+
+
+def route_policy_stub(language: str, files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult(f"policy:{language}", str(ROOT), True, True, "", f"no_{language}_changes")
+
+    reason = "phase56_policy_stub_execute_pending" if execute else "dry_run"
+    return CommandResult(f"policy:{language}", str(ROOT), True, True, "", reason)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Phase 55 language-aware router")
     parser.add_argument("--base-ref", default="HEAD~1", help="Git base ref for changed-file detection")
@@ -145,15 +237,36 @@ def main() -> int:
     changed = get_changed_files(args.base_ref)
     buckets = classify_files(changed)
 
-    python_result = route_python(buckets["python"], execute=args.execute)
-    ts_result = route_typescript(buckets["typescript"], execute=args.execute)
-    rust_result = route_rust(buckets["rust"], execute=args.execute)
+    results = [
+        route_python(buckets["python"], execute=args.execute),
+        route_typescript(buckets["typescript"], execute=args.execute),
+        route_rust(buckets["rust"], execute=args.execute),
+        route_policy_stub("cpp", buckets["cpp"], execute=args.execute),
+        route_policy_stub("go", buckets["go"], execute=args.execute),
+        route_policy_stub("java", buckets["java"], execute=args.execute),
+        route_policy_stub("kotlin", buckets["kotlin"], execute=args.execute),
+        route_policy_stub("swift", buckets["swift"], execute=args.execute),
+        route_policy_stub("csharp", buckets["csharp"], execute=args.execute),
+        route_policy_stub("scala", buckets["scala"], execute=args.execute),
+        route_policy_stub("r_lang", buckets["r_lang"], execute=args.execute),
+        route_policy_stub("julia", buckets["julia"], execute=args.execute),
+        route_policy_stub("lua", buckets["lua"], execute=args.execute),
+        route_policy_stub("dart", buckets["dart"], execute=args.execute),
+        route_policy_stub("ruby", buckets["ruby"], execute=args.execute),
+        route_policy_stub("haskell", buckets["haskell"], execute=args.execute),
+        route_policy_stub("elixir", buckets["elixir"], execute=args.execute),
+        route_policy_stub("sql", buckets["sql"], execute=args.execute),
+        route_policy_stub("protobuf", buckets["protobuf"], execute=args.execute),
+        route_shell(buckets["shell"], execute=args.execute),
+        route_perl(buckets["perl"], execute=args.execute),
+        route_policy_stub("docs", buckets["docs"], execute=args.execute),
+        route_policy_stub("other", buckets["other"], execute=args.execute),
+    ]
 
-    results = [python_result, ts_result, rust_result]
     all_ok = all(r.ok for r in results if not r.skipped)
 
     payload: dict[str, Any] = {
-        "phase": 55,
+        "phase": 56,
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),
         "base_ref": args.base_ref,
         "execute": args.execute,
@@ -169,7 +282,7 @@ def main() -> int:
     report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("=" * 70)
-    print("Phase 55 Language Router")
+    print("Phase 56 Language Router")
     print(f"EXECUTE: {args.execute}")
     print(f"ALL_OK: {all_ok}")
     print(f"REPORT: {report_path}")
