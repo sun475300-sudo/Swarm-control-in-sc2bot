@@ -2,6 +2,15 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 55] - 2026-03-29
+### 멀티언어 운영 라우팅 착수
+- **Python** `phase55_language_router.py` 추가:
+  - `git diff --name-only <base>..HEAD` 기반 변경 파일 감지
+  - 언어 버킷 분류(Python/TypeScript/Rust/Docs/Other)
+  - 언어별 검증 커맨드 라우팅(`py_compile`, `npm run check`, `cargo check`)
+  - dry-run/execute 모드 및 `test_results/phase55_language_router_*.json` 리포트 생성
+- **운영 목적**: 멀티언어 변경에 대해 필요한 검증만 선택 실행해 CI/로컬 점검 효율 향상
+
 ## [Phase 54] - 2026-03-29
 ### 안정화/품질 게이트 착수 (Cross-language)
 - **Python** `phase54_quality_gate.py` 추가:
