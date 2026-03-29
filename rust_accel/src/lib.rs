@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CombatUnit {
@@ -12,6 +13,7 @@ pub struct CombatUnit {
     pub damage: f64,
     pub attack_range: f64,
     pub speed: f64,
+    pub team: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,6 +22,38 @@ pub struct CombatResult {
     pub surviving_units: Vec<u64>,
     pub total_damage_dealt: f64,
     pub battle_duration: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationConfig {
+    pub max_steps: usize,
+    pub dt: f64,
+    pub collision_radius: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationFrame {
+    pub step: usize,
+    pub units: Vec<CombatUnit>,
+    pub events: Vec<SimulationEvent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationEvent {
+    pub step: usize,
+    pub event_type: String,
+    pub unit_id: u64,
+    pub details: String,
+}
+
+impl Default for SimulationConfig {
+    fn default() -> Self {
+        Self {
+            max_steps: 1000,
+            dt: 0.1,
+            collision_radius: 1.0,
+        }
+    }
 }
 
 #[pyfunction]
