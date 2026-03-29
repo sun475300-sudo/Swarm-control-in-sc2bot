@@ -64,9 +64,72 @@ const logsRouter = router({
   }),
 });
 
+const REPLAY_FEEDBACK_PATHS = [
+  path.join(process.cwd(), "..", "data", "replay_feedback", "latest_feedback.json"),
+  path.join(process.cwd(), "data", "replay_feedback", "latest_feedback.json"),
+];
+
+function findReplayFeedbackFile(): string | null {
+  for (const p of REPLAY_FEEDBACK_PATHS) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+const replayRouter = router({
+  getLatest: publicProcedure
+    .input(z.object({ limit: z.number().min(1).max(50).default(10) }))
+    .query(({ input }) => {
+      const feedbackPath = findReplayFeedbackFile();
+      if (!feedbackPath) {
+        return {
+          found: false,
+          path: null,
+          generatedAt: null,
+          count: 0,
+          items: [] as Array<Record<string, unknown>>,
+          error: "replay feedback artifact not found",
+        };
+      }
+
+      try {
+        const raw = JSON.parse(fs.readFileSync(feedbackPath, "utf-8")) as {
+          generated_at?: string;
+          count?: number;
+          items?: Array<Record<string, unknown>>;
+        };
+        const allItems = Array.isArray(raw.items) ? raw.items : [];
+        const sorted = [...allItems].sort((a, b) => {
+          const ap = typeof a.priority_score === "number" ? a.priority_score : 0;
+          const bp = typeof b.priority_score === "number" ? b.priority_score : 0;
+          return bp - ap;
+        });
+
+        return {
+          found: true,
+          path: feedbackPath,
+          generatedAt: raw.generated_at ?? null,
+          count: typeof raw.count === "number" ? raw.count : allItems.length,
+          items: sorted.slice(0, input.limit),
+          error: null,
+        };
+      } catch (e) {
+        return {
+          found: false,
+          path: feedbackPath,
+          generatedAt: null,
+          count: 0,
+          items: [] as Array<Record<string, unknown>>,
+          error: String(e),
+        };
+      }
+    }),
+});
+
 export const appRouter = router({
   system: systemRouter,
   logs: logsRouter,  // ★ Phase 43: 실시간 로그 추적
+  replay: replayRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

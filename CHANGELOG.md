@@ -2,6 +2,20 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 53] - 2026-03-29
+### 다중언어 운영 고도화 착수 (Python + Rust + TypeScript)
+- **Rust** `rust_accel/src/lib.rs` 확장: `compute_feedback_priority(size_kb, player_count, winner_count, note_count)` 추가 및 PyO3 export 등록
+- **Python** `scripts/replay_feedback_loop.py` 확장:
+  - Rust 모듈(`swarm_rust_accel`) 우선 호출 + Python fallback 우선순위 계산 함수 추가
+  - `ReplayFeedback` 스키마에 `priority_score` 필드 추가
+  - `summary.md` 테이블에 Priority 컬럼 추가
+- **TypeScript(Server)** `sc2-ai-dashboard/server/routers.ts` 확장:
+  - `replay.getLatest` tRPC 라우터 추가
+  - `data/replay_feedback/latest_feedback.json` 자동 탐색 + 우선순위 내림차순 정렬 반환
+- **TypeScript(Client)** `sc2-ai-dashboard/client/src/pages/Monitor.tsx` 확장:
+  - Replay Feedback Priority 위젯 추가
+  - 15초 주기 자동 갱신 및 우선순위 점수 색상 구분 표시
+
 ## [Phase 52] - 2026-03-29
 ### Replay Feedback Loop 고도화
 - **Python** `scripts/replay_feedback_loop.py` 추가: 최신 `.SC2Replay` 자동 탐색, sc2reader 기반 메타데이터/승패 피드백 수집

@@ -12,15 +12,20 @@ export default function Monitor() {
     { limit: 30, level: logLevel },
     { refetchInterval: 5000 }  // 5초 자동 새로고침
   );
+  const { data: replayData, refetch: refetchReplay } = trpc.replay.getLatest.useQuery(
+    { limit: 6 },
+    { refetchInterval: 15000 }
+  );
 
   // 5초마다 자동 새로고침
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
       refetchLogs();
+      refetchReplay();
     }, 5000);
     return () => clearInterval(interval);
-  }, [refetch, refetchLogs]);
+  }, [refetch, refetchLogs, refetchReplay]);
 
   if (!currentSession) {
     return (
@@ -396,6 +401,60 @@ export default function Monitor() {
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 <Activity className="w-4 h-4 mr-2 animate-pulse" />
                 <span className="text-sm">로그 없음 — 게임 실행 시 자동 표시</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ★ Phase 53: 리플레이 피드백 우선순위 위젯 */}
+        <Card className="glass-card border-cyan-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-400" />
+              Replay Feedback Priority
+            </CardTitle>
+            <CardDescription>
+              Rust 우선순위 점수 기반 학습 대상 리플레이 추천
+              {replayData?.generatedAt && ` · ${new Date(replayData.generatedAt).toLocaleTimeString()}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {replayData?.error ? (
+              <div className="flex items-center gap-2 text-muted-foreground py-3">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">{replayData.error}</span>
+              </div>
+            ) : replayData?.items && replayData.items.length > 0 ? (
+              <div className="space-y-2">
+                {replayData.items.map((item, i) => {
+                  const fileName = typeof item.file_name === "string" ? item.file_name : "Unknown";
+                  const mapName = typeof item.map_name === "string" && item.map_name ? item.map_name : "Unknown";
+                  const length = typeof item.game_length === "string" && item.game_length ? item.game_length : "Unknown";
+                  const score = typeof item.priority_score === "number" ? item.priority_score : 0;
+                  const scoreColor = score >= 2.2 ? "text-green-400" : score >= 1.5 ? "text-yellow-400" : "text-red-400";
+
+                  return (
+                    <div
+                      key={`${fileName}-${i}`}
+                      className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold truncate">{fileName}</p>
+                        <span className={`text-sm font-bold ${scoreColor}`}>{score.toFixed(3)}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
+                        <span>{mapName}</span>
+                        <span>•</span>
+                        <span>{length}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-6 text-muted-foreground">
+                <Activity className="w-4 h-4 mr-2 animate-pulse" />
+                <span className="text-sm">피드백 데이터 없음 - 스크립트 실행 후 자동 표시</span>
               </div>
             )}
           </CardContent>

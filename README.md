@@ -33,7 +33,7 @@
 
 ---
 
-## Latest Status — Phase 40~52 In Progress
+## Latest Status — Phase 40~53 In Progress
 
 ### 완료 요약
 | Phase | 언어 | 핵심 작업 |
@@ -42,6 +42,7 @@
 | P41 | Python | `combat_manager.py`: HP 가중 전투력(`supply×HP%`), O(N×M) -> O(N+M) 최적화 |
 | P42 | Python + TypeScript | `intel_manager.py` 30종 supply 테이블 + 공격 타이밍 예측, `Monitor.tsx` KDA/처치율 위젯 |
 | P43 | TypeScript | `routers.ts` logs tRPC + `Monitor.tsx` 5초 자동갱신 로그 뷰어 |
+| P53 | Python + Rust + TypeScript | replay feedback 우선순위 점수(Rust) + 대시보드 조회/시각화 연동 |
 
 ### 다음 대규모 계획 (Phase 52~58)
 | Phase | 카테고리 | 언어 | 핵심 작업 |
@@ -68,6 +69,9 @@
 - `.github/workflows/ci.yml` 확장: `workflow_dispatch` + `arena-package` 잡(통합검증 빠른모드 + 아레나 ZIP 업로드)
 - `create_arena_package.py` CI 친화 개선: `ARENA_OUTPUT_DIR` 지원 및 비Windows 안전 실행
 - 신규 파일: `wicked_zerg_challenger/replay_feedback_loop.py` (리플레이 요약 기반 학습 포커스 추천)
+- `scripts/replay_feedback_loop.py` 확장: Rust `compute_feedback_priority()` 연동 + 요약표 Priority 컬럼 추가
+- `sc2-ai-dashboard/server/routers.ts` 확장: `replay.getLatest` tRPC 라우터 추가(우선순위 정렬)
+- `sc2-ai-dashboard/client/src/pages/Monitor.tsx` 확장: Replay Feedback Priority 위젯 추가(15초 자동 갱신)
 - `config.yaml` 다중언어 정책 활성화: Python/TypeScript/Rust/Shell phase 매핑
 - 예시 실행:
     - `python wicked_zerg_challenger/training_automation.py --games 5`

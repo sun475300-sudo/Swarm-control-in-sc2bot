@@ -42,7 +42,33 @@ class ReplayFeedback:
     players: list[dict[str, str]]
     player_count: int
     winner_names: list[str]
+    priority_score: float
     notes: list[str]
+
+
+def _calculate_priority_score(size_kb: float, player_count: int, winner_count: int, note_count: int) -> float:
+    """Compute replay training priority using Rust when available, else Python fallback."""
+    try:
+        import swarm_rust_accel  # type: ignore
+
+        return round(
+            float(
+                swarm_rust_accel.compute_feedback_priority(
+                    size_kb,
+                    player_count,
+                    winner_count,
+                    note_count,
+                )
+            ),
+            3,
+        )
+    except Exception:
+        score = 1.0
+        score += min(size_kb / 1024.0, 1.5)
+        score += min(player_count * 0.25, 1.0)
+        score += min(winner_count * 0.3, 0.6)
+        score -= min(note_count * 0.2, 0.8)
+        return round(max(0.1, score), 3)
 
 
 def parse_args() -> argparse.Namespace:
@@ -170,6 +196,12 @@ def load_replay_feedback(path: Path) -> ReplayFeedback:
         players=players,
         player_count=len(players),
         winner_names=winners,
+        priority_score=_calculate_priority_score(
+            size_kb=round(stat.st_size / 1024.0, 2),
+            player_count=len(players),
+            winner_count=len(winners),
+            note_count=len(notes),
+        ),
         notes=notes,
     )
 
@@ -227,13 +259,13 @@ def write_artifacts(output_dir: Path, feedbacks: list[ReplayFeedback], history_m
     if feedbacks:
         summary_lines.append("## Latest Replays")
         summary_lines.append("")
-        summary_lines.append("| File | Map | Length | Winners | Notes |")
-        summary_lines.append("|---|---|---|---|---|")
+        summary_lines.append("| File | Map | Length | Priority | Winners | Notes |")
+        summary_lines.append("|---|---|---|---:|---|---|")
         for fb in feedbacks:
             winners = ", ".join(fb.winner_names) if fb.winner_names else "N/A"
             notes = "; ".join(fb.notes) if fb.notes else "-"
             summary_lines.append(
-                f"| {fb.file_name} | {fb.map_name or 'Unknown'} | {fb.game_length or 'Unknown'} | {winners} | {notes} |"
+                f"| {fb.file_name} | {fb.map_name or 'Unknown'} | {fb.game_length or 'Unknown'} | {fb.priority_score:.3f} | {winners} | {notes} |"
             )
 
     summary_path.write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
