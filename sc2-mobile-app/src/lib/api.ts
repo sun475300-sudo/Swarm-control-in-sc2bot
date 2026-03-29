@@ -103,6 +103,29 @@ export interface ArenaStats {
   highestElo: number;
 }
 
+export interface MobileLogStatus {
+  exists: boolean;
+  path: string | null;
+  sizeKb: number;
+}
+
+export interface MobileLogEntry {
+  timestamp: string;
+  level: "ERROR" | "WARNING" | "INFO" | "DEBUG";
+  source: string;
+  message: string;
+  line: number;
+}
+
+export interface MobileRecentLogs {
+  entries: MobileLogEntry[];
+  logPath: string | null;
+  error: string | null;
+  errorCount: number;
+  warnCount: number;
+  totalLines: number;
+}
+
 // 현재 게임 세션 조회
 export async function getCurrentGameSession(): Promise<GameSession | null> {
   try {
@@ -250,6 +273,37 @@ export async function getArenaStats(): Promise<ArenaStats | null> {
     return response.data.result.data;
   } catch (error) {
     console.error("Failed to fetch arena stats:", error);
+    return null;
+  }
+}
+
+export async function getLogStatus(): Promise<MobileLogStatus | null> {
+  try {
+    const response = await api.post<ApiResponse<MobileLogStatus>>(
+      "logs.getLogStatus",
+      { json: {} }
+    );
+    return response.data.result.data;
+  } catch (error) {
+    console.error("Failed to fetch log status:", error);
+    return null;
+  }
+}
+
+export async function getRecentLogs(
+  limit: number = 30,
+  level: "ERROR" | "WARNING" | "ALL" = "ALL"
+): Promise<MobileRecentLogs | null> {
+  try {
+    const response = await api.post<ApiResponse<MobileRecentLogs>>(
+      "logs.getRecentErrors",
+      {
+        json: { limit, level },
+      }
+    );
+    return response.data.result.data;
+  } catch (error) {
+    console.error("Failed to fetch recent logs:", error);
     return null;
   }
 }

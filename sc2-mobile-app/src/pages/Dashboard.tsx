@@ -17,10 +17,14 @@ import {
   getTrainingStats,
   getArenaStats,
   getRecentGames,
+  getLogStatus,
+  getRecentLogs,
   GameStats,
   TrainingStats,
   ArenaStats,
   GameSession,
+  MobileLogStatus,
+  MobileRecentLogs,
 } from "@/lib/api";
 import {
   getRepositoryStats,
@@ -35,6 +39,8 @@ export default function Dashboard() {
   );
   const [arenaStats, setArenaStats] = useState<ArenaStats | null>(null);
   const [recentGames, setRecentGames] = useState<GameSession[]>([]);
+  const [logStatus, setLogStatus] = useState<MobileLogStatus | null>(null);
+  const [recentLogs, setRecentLogs] = useState<MobileRecentLogs | null>(null);
   const [recentCommits, setRecentCommits] = useState<GitHubCommit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -56,11 +62,13 @@ export default function Dashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [games, training, arena, recent, githubStats] = await Promise.all([
+      const [games, training, arena, recent, log, logs, githubStats] = await Promise.all([
         getGameStats(),
         getTrainingStats(),
         getArenaStats(),
         getRecentGames(5),
+        getLogStatus(),
+        getRecentLogs(20, "ALL"),
         getRepositoryStats().catch(() => ({ recentCommits: [] })),
       ]);
 
@@ -68,6 +76,8 @@ export default function Dashboard() {
       setTrainingStats(training);
       setArenaStats(arena);
       setRecentGames(recent);
+      setLogStatus(log);
+      setRecentLogs(logs);
       setRecentCommits(githubStats.recentCommits?.slice(0, 3) || []);
       setLastUpdate(new Date());
     } catch (error) {
@@ -124,6 +134,39 @@ export default function Dashboard() {
               className={`h-4 w-4 text-muted-foreground ${loading ? "animate-spin" : ""}`}
             />
           </button>
+        </div>
+      </div>
+
+      {/* 로그 상태 */}
+      <div className="glass rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-semibold">
+            <Activity className="h-4 w-4 text-orange-400" />
+            로그 상태
+          </h3>
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              logStatus?.exists
+                ? "bg-green-500/20 text-green-400"
+                : "bg-red-500/20 text-red-400"
+            }`}
+          >
+            {logStatus?.exists ? "활성" : "없음"}
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+          <div className="rounded-lg bg-white/5 p-3">
+            <p className="text-xs text-muted-foreground">파일 크기</p>
+            <p className="mt-1 text-sm font-semibold">{logStatus?.sizeKb ?? 0} KB</p>
+          </div>
+          <div className="rounded-lg bg-red-500/10 p-3">
+            <p className="text-xs text-muted-foreground">에러</p>
+            <p className="mt-1 text-sm font-semibold text-red-400">{recentLogs?.errorCount ?? 0}</p>
+          </div>
+          <div className="rounded-lg bg-yellow-500/10 p-3">
+            <p className="text-xs text-muted-foreground">경고</p>
+            <p className="mt-1 text-sm font-semibold text-yellow-400">{recentLogs?.warnCount ?? 0}</p>
+          </div>
         </div>
       </div>
 

@@ -24,6 +24,12 @@ All notable changes to WickedZergBotPro are documented here.
 - **Python** `composition_optimizer.py` `_apply_synergy_bonus()` 추가: 현재 조합 + 추천 조합 내부 시너지 동시 반영
 - **Python** `composition_optimizer.py` `get_optimal_composition()`에 시너지 점수 보정 파이프라인 연결
 
+## [Phase 47] - 2026-03-29 (In Progress)
+### 모바일 API 확장 착수
+- **TypeScript** `sc2-mobile-app/src/lib/api.ts` 로그 API 확장: `getLogStatus()`, `getRecentLogs()` 및 타입(`MobileLogStatus`, `MobileRecentLogs`) 추가
+- **TypeScript** `sc2-mobile-app/src/pages/Dashboard.tsx` 로그 상태 카드 추가: log 파일 존재/크기, 에러/경고 집계 표시
+- 대시보드 데이터 fetch 병렬화 확장: 게임/훈련/arena + 로그 상태/로그 요약 동시 수집
+
 ## [Phase 44] - 2026-03-29
 ### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정
 - **Python** `upgrade_manager.py` `UnitTypeId.LURKER` → `LURKERMP` 수정: `LURKER`는 python-sc2에 존재하지 않아 러커 업그레이드 영구 미실행 → `LURKERMP` 1기 이상 시 즉시 트리거
