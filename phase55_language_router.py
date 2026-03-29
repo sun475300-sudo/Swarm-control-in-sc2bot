@@ -270,6 +270,60 @@ def route_protobuf(files: list[str], execute: bool) -> CommandResult:
     return CommandResult(f"{protoc_exe} --proto_path {ROOT} <changed proto>", str(ROOT), False, ok, "\n\n".join(outputs))
 
 
+def route_java(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult("javac -d <tmp> <changed java>", str(ROOT), True, True, "", "no_java_changes")
+
+    javac_exe = find_executable(["javac", "javac.exe"])
+    if javac_exe is None:
+        return CommandResult("javac -d <tmp> <changed java>", str(ROOT), True, True, "", "javac_not_found")
+
+    out_dir = REPORT_DIR / "java_classes"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cmd = [javac_exe, "-Xlint:none", "-d", str(out_dir), *[str(ROOT / f) for f in files]]
+    if not execute:
+        return CommandResult(" ".join(cmd), str(ROOT), True, True, "", "dry_run")
+
+    code, out = run_cmd(cmd, cwd=ROOT)
+    return CommandResult(" ".join(cmd), str(ROOT), False, code == 0, out)
+
+
+def route_kotlin(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult("kotlinc -d <tmp.jar> <changed kotlin>", str(ROOT), True, True, "", "no_kotlin_changes")
+
+    kotlinc_exe = find_executable(["kotlinc", "kotlinc.bat", "kotlinc.cmd"])
+    if kotlinc_exe is None:
+        return CommandResult("kotlinc -d <tmp.jar> <changed kotlin>", str(ROOT), True, True, "", "kotlinc_not_found")
+
+    out_jar = REPORT_DIR / "kotlin_check.jar"
+    cmd = [kotlinc_exe, *[str(ROOT / f) for f in files], "-d", str(out_jar)]
+    if not execute:
+        return CommandResult(" ".join(cmd), str(ROOT), True, True, "", "dry_run")
+
+    code, out = run_cmd(cmd, cwd=ROOT)
+    return CommandResult(" ".join(cmd), str(ROOT), False, code == 0, out)
+
+
+def route_sql(files: list[str], execute: bool) -> CommandResult:
+    files = existing_files(files)
+    if not files:
+        return CommandResult("sqlfluff lint <changed sql>", str(ROOT), True, True, "", "no_sql_changes")
+
+    sqlfluff_exe = find_executable(["sqlfluff", "sqlfluff.exe"])
+    if sqlfluff_exe is None:
+        return CommandResult("sqlfluff lint <changed sql>", str(ROOT), True, True, "", "sqlfluff_not_found")
+
+    cmd = [sqlfluff_exe, "lint", *[str(ROOT / f) for f in files]]
+    if not execute:
+        return CommandResult(" ".join(cmd), str(ROOT), True, True, "", "dry_run")
+
+    code, out = run_cmd(cmd, cwd=ROOT)
+    return CommandResult(" ".join(cmd), str(ROOT), False, code == 0, out)
+
+
 def route_policy_stub(language: str, files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
@@ -294,8 +348,8 @@ def main() -> int:
         route_rust(buckets["rust"], execute=args.execute),
         route_policy_stub("cpp", buckets["cpp"], execute=args.execute),
         route_go(buckets["go"], execute=args.execute),
-        route_policy_stub("java", buckets["java"], execute=args.execute),
-        route_policy_stub("kotlin", buckets["kotlin"], execute=args.execute),
+        route_java(buckets["java"], execute=args.execute),
+        route_kotlin(buckets["kotlin"], execute=args.execute),
         route_policy_stub("swift", buckets["swift"], execute=args.execute),
         route_policy_stub("csharp", buckets["csharp"], execute=args.execute),
         route_policy_stub("scala", buckets["scala"], execute=args.execute),
@@ -306,7 +360,7 @@ def main() -> int:
         route_policy_stub("ruby", buckets["ruby"], execute=args.execute),
         route_policy_stub("haskell", buckets["haskell"], execute=args.execute),
         route_policy_stub("elixir", buckets["elixir"], execute=args.execute),
-        route_policy_stub("sql", buckets["sql"], execute=args.execute),
+        route_sql(buckets["sql"], execute=args.execute),
         route_protobuf(buckets["protobuf"], execute=args.execute),
         route_shell(buckets["shell"], execute=args.execute),
         route_perl(buckets["perl"], execute=args.execute),

@@ -129,7 +129,7 @@ mindmap
 | P53 | Python + Rust + TypeScript | replay feedback 우선순위 점수(Rust) + 대시보드 조회/시각화 연동 |
 | P54 | Python + TypeScript + Rust | 통합 품질 게이트 스크립트(`phase54_quality_gate.py`)로 멀티언어 점검 자동화 |
 | P55 | Python | 변경 파일 기반 언어 라우팅 검증(`phase55_language_router.py`) |
-| P56 | Docs + Python | README 목차/시각화 대규모 개편 + 21언어 라우팅 확장 + 품질게이트 연동 시작 |
+| P56 | Docs + Python | README 목차/시각화 대규모 개편 + 21언어 라우팅 확장 + 품질게이트 연동 + java/kotlin/sql 실검증 시작 |
 
 ### 다음 대규모 계획 (Phase 52~58)
 | Phase | 카테고리 | 언어 | 핵심 작업 |
@@ -171,9 +171,18 @@ mindmap
     - `python phase54_quality_gate.py --router-base-ref HEAD~1`
     - `python phase55_language_router.py --base-ref HEAD~1`
     - `python phase55_language_router.py --base-ref HEAD~1 --execute`
-    - `python phase55_language_router.py --base-ref HEAD~1 --execute` (go/protobuf 변경 시 포맷/컴파일 검증)
+    - `python phase55_language_router.py --base-ref HEAD~1 --execute` (go/protobuf/java/kotlin/sql 변경 시 포맷/컴파일/린트 검증)
     - `ARENA_OUTPUT_DIR=dist python create_arena_package.py`
     - `python wicked_zerg_challenger/replay_feedback_loop.py --input local_training/replay_summaries --output local_training/replay_feedback/latest.json`
+
+### Phase 56 Execution Focus
+- Current router coverage: 21 language buckets
+- Concrete execute routes: Python, TypeScript, Rust, Shell, Perl, Go, Protobuf, Java, Kotlin, SQL
+- Immediate next work:
+  - add worktree/staged diff support for pre-commit validation
+  - connect quality gate execute mode to routed language checks
+  - aggregate router outputs into CI-friendly summaries
+  - lock release/package verification into a repeatable checklist
 
 ---
 

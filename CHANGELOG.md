@@ -13,6 +13,7 @@ All notable changes to WickedZergBotPro are documented here.
   - 21개 언어군 버킷 분류 체계 추가
   - shell/perl 실검증 라우트 추가
   - go(`gofmt -l`) / protobuf(`protoc`) 실검증 라우트 추가
+  - java(`javac`) / kotlin(`kotlinc`) / sql(`sqlfluff lint`) 실검증 라우트 추가
   - 나머지 언어군 정책 스텁 라우트(Phase56 시작점) 추가
   - 보고서 phase 값을 56으로 상향
 - **Python** `phase54_quality_gate.py` 확장:

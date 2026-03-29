@@ -364,7 +364,7 @@ class CreepManager:
                         logger.warning(f"[CreepManager] tumor distance check suppressed: {e}")
                         continue
 
-            print(f"[CREEP] [{int(game_time)}s] Tumors: {tumor_count}, Farthest: {int(farthest_dist)} from base")
+            logger.info(f"[CREEP] [{int(game_time)}s] Tumors: {tumor_count}, Farthest: {int(farthest_dist)} from base")
 
         except Exception as e:
             logger.warning(f"[CreepManager] log_creep_progress suppressed: {e}")
