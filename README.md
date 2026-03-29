@@ -837,9 +837,10 @@ graph LR
 
 | Category | Technology |
 |----------|-----------|
-| **Language** | Python 3.10+ |
+| **Language** | Python 3.10+, Rust (acceleration path) |
 | **AI/ML** | PyTorch, RL Policy Network, Imitation Learning, SC2 Replay Mining |
 | **Simulation** | StarCraft II API (burnysc2/python-sc2) |
+| **Acceleration** | Rust/OpenCL/CPU fallback hybrid path |
 | **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
 | **GCS** | Flask Dashboard + TypeScript/React + Android App |
 | **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
@@ -1146,6 +1147,14 @@ graph LR
 | vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
 
 ### 최근 개선 (2026-03-29)
+- **[Phase 52] Replay Feedback Loop 착수/고도화**: `scripts/replay_feedback_loop.py` 추가(최신 리플레이 탐색, sc2reader 기반 메타/승패 피드백 수집, `data/replay_feedback` 아티팩트 JSON/Markdown 생성, 히스토리 롤링 저장)
+- **[Phase 51] CI Arena 패키지 파이프라인 고도화**: `.github/workflows/ci.yml`에 Arena 패키지 생성 + artifact 업로드 잡 추가(`arena-package`), replay feedback artifact 업로드 잡 추가(`replay-feedback`)
+- **[Phase 50] 통합 검증 자동화**: 전체 파이프라인 기준 구문/테스트/빌드 검증 사이클 정착
+- **[Phase 49] OpenCL 브리지 확장**: Rust 가속 경로에서 OpenCL 연동을 준비하고 CPU fallback 경로 유지
+- **[Phase 48] Rust 모듈 골격 통합**: Python 중심 아키텍처에 Rust 경량 가속 레이어 도입 시작
+- **[Phase 47] 모바일 대시보드/로그 API 확장**: 실시간 관측/운영 가시성 강화
+- **[Phase 46] 크립 확장 고도화**: 전장 제어 품질 개선을 위한 크립 시스템 안정화
+- **[Phase 45] 훈련 자동화·조합 최적화 강화**: 학습 루프와 조합 의사결정 정밀도 향상
 - **[Phase 44] 유닛 시너지 AI 고도화**: LURKER→LURKERMP 치명적 타입ID 버그(러커 업그레이드 영구 미실행) 수정, 울트라리스크 근접계열 편입, composition_optimizer print→logger 교체 + intel_manager 역사 데이터 병합(화면 밖 유닛 추적)
 - **[Phase 43] 실시간 로그 추적**: TypeScript 풀스택 — `logs` tRPC 라우터(bot.log 파싱) + Monitor.tsx 실시간 뷰어(5초 갱신, ERROR/WARN 색상 코딩)
 - **[Phase 42] 다중 언어 커버**: Python 적 공격 타이밍 예측(테크→시간 추정→Blackboard), TypeScript 전투력 비율 위젯(KDA/처치율 바)
@@ -1179,6 +1188,15 @@ graph LR
 - **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
 - **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
 - **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
+
+### 다음 대규모 계획 (Phase 53 ~ 56)
+
+| Phase | 목표 | 핵심 산출물 |
+|------|------|-------------|
+| **53** | Replay feedback를 학습 파이프라인에 직접 연결 | 리플레이 피드백 기반 학습 파라미터 자동 반영(안전 가드 포함) |
+| **54** | Rust/OpenCL 성능 계측 자동화 | CPU 대비 가속 비율 리포트 + 실패 시 자동 fallback 검증 |
+| **55** | 모바일 운영 관제 고도화 | 모바일 대시보드에 학습/피드백 루프 상태 위젯 추가 |
+| **56** | 릴리스 품질 게이트 강화 | CI 품질 게이트(패키징/피드백/검증) 통합 배지 및 릴리스 체크리스트 |
 ### Test Report (2026-03-28, Phase 39 완료 시점)
 
 ```

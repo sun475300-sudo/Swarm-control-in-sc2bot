@@ -2,17 +2,25 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
-## [Phase 52] - 2026-03-29 (In Progress)
-### 리플레이 학습 루프 착수
-- **Python** `wicked_zerg_challenger/replay_feedback_loop.py` 추가: 리플레이 요약(JSON) 집계 후 승률/손실 비중 기반 학습 우선순위 자동 추천
-- 출력 산출물: `focus_areas`, `priority`, `next_actions`를 포함한 피드백 JSON 생성
-- 실행 예시: `python wicked_zerg_challenger/replay_feedback_loop.py --input local_training/replay_summaries --output local_training/replay_feedback/latest.json`
+## [Phase 52] - 2026-03-29
+### Replay Feedback Loop 고도화
+- **Python** `scripts/replay_feedback_loop.py` 추가: 최신 `.SC2Replay` 자동 탐색, sc2reader 기반 메타데이터/승패 피드백 수집
+- **Artifacts** `data/replay_feedback/latest_feedback.json`, `history.json`, `summary.md` 자동 생성
+- **History** 롤링 보존(`--history-max`) 및 빈 리플레이 환경에서의 안전 실행 옵션(`--allow-empty`) 지원
 
-## [Phase 51] - 2026-03-29 (In Progress)
-### 배포 자동화 착수 (CI Arena 패키지)
-- **YAML** `.github/workflows/ci.yml` 확장: `workflow_dispatch` 트리거 추가
-- **YAML** `.github/workflows/ci.yml` 신규 `arena-package` job 추가: `phase50_integrated_validation.py` 빠른 검증 후 Arena ZIP 생성/아티팩트 업로드
-- **Python** `create_arena_package.py` CI 호환성 개선: `ARENA_OUTPUT_DIR` 환경변수 지원, 출력 디렉토리 자동 생성, 비Windows `os.startfile` 안전 처리
+## [Phase 51] - 2026-03-29
+### CI Arena 패키지 + Artifact 파이프라인
+- **Python** `create_arena_package.py` CI 호환 개선:
+  - CLI 옵션 추가(`--output-dir`, `--name`, `--no-open`)
+  - Windows 외 환경 기본 출력 디렉토리 `./dist`로 자동 전환
+  - Linux CI에서 `os.startfile` 호출 없이 안전 실행
+- **CI** `.github/workflows/ci.yml`에 `arena-package` 잡 추가:
+  - `phase50_integrated_validation.py` 빠른 검증(존재 시)
+  - Arena ZIP 생성(`dist/WickedZergBotPro_Arena_CI.zip`)
+  - GitHub Actions artifact 업로드 자동화
+- **CI** `replay-feedback` 잡 추가:
+  - `scripts/replay_feedback_loop.py` 실행
+  - replay feedback JSON/Markdown artifact 업로드
 
 ## [Phase 50] - 2026-03-29 (In Progress)
 ### 통합 최종 검증 자동화 착수
@@ -25,44 +33,6 @@ All notable changes to WickedZergBotPro are documented here.
 - **Python** `wicked_zerg_challenger/opencl_accel.py` 추가: `pyopencl` 기반 `nearest_point_index_opencl()` 구현 (환경 미지원 시 CPU fallback)
 - **Python** `wicked_zerg_challenger/rust_accel.py` 확장: Rust -> OpenCL -> Python 계층 fallback으로 nearest-point 계산 안정화
 - **Python** `wicked_zerg_challenger/creep_expansion_system.py` 연동 유지: 기존 nearest-point 호출 경로에서 OpenCL 가속 자동 활용
-
-## [Phase 44] - 2026-03-29 (In Progress)
-### 훈련 자동화 착수
-- **Python** `training_automation.py` 추가: 다회 단일게임 실행 자동화, 승/패/무 및 경고/에러 집계, JSON 리포트 저장
-- **Python** `run_single_game.py` CLI 인자 지원 추가: `--map`, `--enemy-race`, `--difficulty`
-- 로컬 훈련 예시: `python wicked_zerg_challenger/training_automation.py --games 5`
-
-## [Phase 45] - 2026-03-29 (In Progress)
-### 크립 확산 최적화 착수
-- **Python** `creep_expansion_system.py` 목표 점막 위치 우선순위 로직 추가
-- **Python** `creep_expansion_system.py` 좌표 중복 제거 및 배치 상한(`target_batch_size`) 도입
-- **Python** `creep_expansion_system.py` 초중반 적 시작 위치 근처 위험 지역 회피(`enemy_avoid_radius`) 적용
-
-### 크립 퍼짐 최적화 2차 (Phase 46 kickoff)
-- **Python** `creep_expansion_system.py` 경로 점수 기반 우선순위 추가: 확장 멀티 라인/맵 중앙 진출/안전도 가중 합산
-- **Python** `creep_expansion_system.py` `_score_target()` 추가: 목표 지점별 정량 점수 계산 후 정렬
-- **Python** `creep_expansion_system.py` Phase 46 파라미터 추가: `path_step_distance`, `expansion_lane_weight`, `center_lane_weight`, `safety_weight`
-
-### 유닛 시너지 AI 착수
-- **Python** `composition_optimizer.py` `UNIT_SYNERGY_MATRIX` 추가: 조합별 시너지 가중치 정의
-- **Python** `composition_optimizer.py` `_apply_synergy_bonus()` 추가: 현재 조합 + 추천 조합 내부 시너지 동시 반영
-- **Python** `composition_optimizer.py` `get_optimal_composition()`에 시너지 점수 보정 파이프라인 연결
-
-## [Phase 47] - 2026-03-29 (In Progress)
-### 모바일 API 확장 착수
-- **TypeScript** `sc2-mobile-app/src/lib/api.ts` 로그 API 확장: `getLogStatus()`, `getRecentLogs()` 및 타입(`MobileLogStatus`, `MobileRecentLogs`) 추가
-- **TypeScript** `sc2-mobile-app/src/pages/Dashboard.tsx` 로그 상태 카드 추가: log 파일 존재/크기, 에러/경고 집계 표시
-- 대시보드 데이터 fetch 병렬화 확장: 게임/훈련/arena + 로그 상태/로그 요약 동시 수집
-
-## [Phase 48] - 2026-03-29 (In Progress)
-### Rust 고성능 유틸 착수
-- **Rust** `rust_accel/Cargo.toml` 추가: PyO3 기반 확장 모듈 빌드 설정
-- **Rust** `rust_accel/src/lib.rs` 추가: `nearest_point_index()` 구현 (최근접 포인트 인덱스 계산)
-- **Python** `wicked_zerg_challenger/rust_accel.py` 추가: Rust 확장 호출 + Python fallback 브리지
-- **Python** `wicked_zerg_challenger/creep_expansion_system.py` 통합: Queen/Tumor 타깃 선택 시 Rust 가속 nearest-point 루틴 사용
-
-### 다중언어 사용 설정 명시
-- **YAML** `config.yaml` `development.language_policy` 추가: multi-language 활성화 및 phase별 언어 매핑(P47~P49)
 
 ## [Phase 44] - 2026-03-29
 ### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정

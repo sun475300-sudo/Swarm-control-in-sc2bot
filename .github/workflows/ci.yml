@@ -246,12 +246,12 @@ jobs:
           echo "시간: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
   # ─────────────────────────────────────────────
-  # SC2 Arena 패키지 생성 + 아티팩트 업로드
+  # Arena 패키지 생성 + 아티팩트 업로드 (Phase 51)
   # ─────────────────────────────────────────────
   arena-package:
     name: SC2 Arena 패키지
     runs-on: ubuntu-latest
-    needs: [sc2-bot-test]
+    needs: [python-lint-test, sc2-bot-test]
     if: github.event_name != 'pull_request'
 
     steps:
@@ -264,7 +264,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
 
-      - name: Python 의존성 설치
+      - name: 패키징 의존성 설치
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -272,18 +272,63 @@ jobs:
 
       - name: 통합 검증(빠른 모드)
         run: |
-          python phase50_integrated_validation.py --skip-pytest --skip-package
+          if [ -f phase50_integrated_validation.py ]; then
+            python phase50_integrated_validation.py --skip-pytest --skip-package
+          else
+            echo "phase50_integrated_validation.py가 없어 빠른 검증 단계를 건너뜁니다."
+          fi
 
-      - name: Arena 패키지 생성
-        env:
-          ARENA_OUTPUT_DIR: dist
+      - name: Arena ZIP 생성
         run: |
-          python create_arena_package.py
-          ls -al dist
+          mkdir -p dist
+          python create_arena_package.py \
+            --output-dir dist \
+            --name WickedZergBotPro_Arena_CI.zip \
+            --no-open
 
       - name: Arena ZIP 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: sc2-arena-package-${{ github.run_number }}
-          path: dist/*.zip
+          name: arena-package-${{ github.sha }}
+          path: dist/WickedZergBotPro_Arena_CI.zip
           if-no-files-found: error
+          retention-days: 14
+
+  # ─────────────────────────────────────────────
+  # Replay Feedback Loop (Phase 52)
+  # ─────────────────────────────────────────────
+  replay-feedback:
+    name: Replay 피드백 루프
+    runs-on: ubuntu-latest
+    needs: [python-lint-test]
+
+    steps:
+      - name: 소스코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python ${{ env.PYTHON_VERSION }} 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: 피드백 루프 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install sc2reader || true
+
+      - name: Replay 피드백 생성
+        run: |
+          python scripts/replay_feedback_loop.py --limit 5 --allow-empty
+
+      - name: Replay 피드백 아티팩트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-feedback-${{ github.sha }}
+          path: |
+            data/replay_feedback/latest_feedback.json
+            data/replay_feedback/history.json
+            data/replay_feedback/summary.md
+          if-no-files-found: warn
+          retention-days: 14

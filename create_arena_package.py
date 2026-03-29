@@ -12,13 +12,10 @@ import zipfile
 import shutil
 from pathlib import Path
 from datetime import datetime
+import argparse
 
 # 설정
 PROJECT_DIR = Path(__file__).parent
-OUTPUT_DIR = Path(os.getenv("ARENA_OUTPUT_DIR", str(Path(os.path.expanduser("~")) / "Desktop")))
-TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M")
-ZIP_NAME = f"WickedZergBotPro_Arena_{TIMESTAMP}.zip"
-ZIP_PATH = OUTPUT_DIR / ZIP_NAME
 
 # Arena에 필요한 파일/폴더
 INCLUDE_FILES = [
@@ -75,21 +72,22 @@ def should_exclude(path_str: str) -> bool:
     return False
 
 
-def create_arena_zip():
+def create_arena_zip(output_dir: Path, zip_name: str):
     """Arena 업로드용 ZIP 생성"""
+    zip_path = output_dir / zip_name
     print(f"=" * 60)
     print(f"  SC2 AI Arena 패키지 생성기")
     print(f"  프로젝트: {PROJECT_DIR}")
-    print(f"  출력: {ZIP_PATH}")
+    print(f"  출력: {zip_path}")
     print(f"=" * 60)
 
     # CI/Linux 환경에서도 동작하도록 출력 디렉토리를 보장
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     file_count = 0
     total_size = 0
 
-    with zipfile.ZipFile(ZIP_PATH, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         # 1. 루트 파일 추가
         for fname in INCLUDE_FILES:
             fpath = PROJECT_DIR / fname
@@ -139,25 +137,69 @@ def create_arena_zip():
                         file_count += 1
 
     # 결과 출력
-    zip_size = ZIP_PATH.stat().st_size
+    zip_size = zip_path.stat().st_size
     print(f"\n{'=' * 60}")
     print(f"  DONE! Package created!")
     print(f"  Files: {file_count}")
     print(f"  Original: {total_size / 1024 / 1024:.1f} MB")
     print(f"  ZIP: {zip_size / 1024 / 1024:.1f} MB")
-    print(f"  Path: {ZIP_PATH}")
+    print(f"  Path: {zip_path}")
     print(f"{'=' * 60}")
     print(f"\n  SC2 AI Arena Upload:")
     print(f"  1. https://aiarena.net")
     print(f"  2. My Bots > Upload Bot")
     print(f"  3. Race: Zerg, Type: Python")
-    print(f"  4. Upload: {ZIP_NAME}")
+    print(f"  4. Upload: {zip_name}")
 
-    return str(ZIP_PATH)
+    return str(zip_path)
+
+
+def _default_output_dir() -> Path:
+    env_dir = os.getenv("ARENA_OUTPUT_DIR")
+    if env_dir:
+        return Path(env_dir)
+    if os.name == "nt":
+        return Path(os.path.expanduser("~")) / "Desktop"
+    return PROJECT_DIR / "dist"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="SC2 AI Arena 업로드용 패키지 생성")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=str(_default_output_dir()),
+        help="ZIP 출력 디렉토리 (기본: Windows=Desktop, 그 외=./dist)",
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        default="",
+        help="ZIP 파일명 (미지정 시 타임스탬프 기반 자동 생성)",
+    )
+    parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="생성 후 폴더 자동 열기 비활성화",
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    result = create_arena_zip()
-    # Windows 환경에서만 생성된 파일 위치 열기
-    if hasattr(os, "startfile"):
+    args = parse_args()
+    out_dir = Path(args.output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.name:
+        zip_name = args.name
+        if not zip_name.lower().endswith(".zip"):
+            zip_name += ".zip"
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        zip_name = f"WickedZergBotPro_Arena_{timestamp}.zip"
+
+    result = create_arena_zip(out_dir, zip_name)
+
+    # CI/Linux 환경에서는 자동 열기를 생략하고, Windows 로컬 실행 시에만 연다.
+    if os.name == "nt" and not args.no_open:
         os.startfile(str(Path(result).parent))
