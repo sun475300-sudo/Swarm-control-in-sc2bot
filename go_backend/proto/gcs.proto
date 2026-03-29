@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package gcs;
+
+option go_package = "github.com/sun475300/go_backend/proto";
+
+service GCSServer {
+    rpc GetBotStatus(StatusRequest) returns (StatusResponse) {}
+    rpc GetGameState(GameStateRequest) returns (GameStateResponse) {}
+    rpc SendCommand(CommandRequest) returns (CommandResponse) {}
+    rpc StreamTelemetry(StreamRequest) returns (stream TelemetryEvent) {}
+    rpc GetReplayList(ReplayListRequest) returns (ReplayListResponse) {}
+}
+
+message StatusRequest {
+    string bot_id = 1;
+}
+
+message StatusResponse {
+    string bot_name = 1;
+    string phase = 2;
+    string win_rate = 3;
+    int32 games_played = 4;
+    int32 games_won = 5;
+    bool is_running = 6;
+    int64 uptime_seconds = 7;
+    double cpu_usage = 8;
+    double memory_usage = 9;
+}
+
+message GameStateRequest {
+    string bot_id = 1;
+}
+
+message Unit {
+    int64 unit_id = 1;
+    string unit_type = 2;
+    float x = 3;
+    float y = 4;
+    float hp = 5;
+    float max_hp = 6;
+    int32 count = 7;
+}
+
+message GameStateResponse {
+    string map_name = 1;
+    int32 game_time_seconds = 2;
+    string enemy_race = 3;
+    int32 my_supply = 4;
+    int32 enemy_supply = 5;
+    repeated Unit my_units = 6;
+    repeated Unit enemy_units = 7;
+    string current_phase = 8;
+    float estimated_win_probability = 9;
+}
+
+message CommandRequest {
+    string command = 1;
+    map<string, string> parameters = 2;
+}
+
+message CommandResponse {
+    bool success = 1;
+    string message = 2;
+    int64 execution_time_ms = 3;
+}
+
+message StreamRequest {
+    string bot_id = 1;
+    repeated string events = 2;
+}
+
+message TelemetryEvent {
+    int64 timestamp = 1;
+    string event_type = 2;
+    map<string, string> data = 3;
+    int32 game_time = 4;
+}
+
+message ReplayListRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+message ReplayInfo {
+    string replay_id = 1;
+    string map_name = 2;
+    string enemy_race = 3;
+    string result = 4;
+    int32 duration_seconds = 5;
+    string timestamp = 6;
+    float priority_score = 7;
+}
+
+message ReplayListResponse {
+    repeated ReplayInfo replays = 1;
+    int32 total_count = 2;
+}

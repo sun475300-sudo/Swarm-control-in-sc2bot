@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#00b894</color>
+    <color name="primary_dark">#009688</color>
+    <color name="accent">#FF6600</color>
+    <color name="background">#1a1a2e</color>
+    <color name="surface">#16213e</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="victory">#00FF00</color>
+    <color name="defeat">#FF0000</color>
+</resources>
