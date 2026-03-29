@@ -14,6 +14,11 @@ All notable changes to WickedZergBotPro are documented here.
 - **Python** `creep_expansion_system.py` 좌표 중복 제거 및 배치 상한(`target_batch_size`) 도입
 - **Python** `creep_expansion_system.py` 초중반 적 시작 위치 근처 위험 지역 회피(`enemy_avoid_radius`) 적용
 
+### 크립 퍼짐 최적화 2차 (Phase 46 kickoff)
+- **Python** `creep_expansion_system.py` 경로 점수 기반 우선순위 추가: 확장 멀티 라인/맵 중앙 진출/안전도 가중 합산
+- **Python** `creep_expansion_system.py` `_score_target()` 추가: 목표 지점별 정량 점수 계산 후 정렬
+- **Python** `creep_expansion_system.py` Phase 46 파라미터 추가: `path_step_distance`, `expansion_lane_weight`, `center_lane_weight`, `safety_weight`
+
 ### 유닛 시너지 AI 착수
 - **Python** `composition_optimizer.py` `UNIT_SYNERGY_MATRIX` 추가: 조합별 시너지 가중치 정의
 - **Python** `composition_optimizer.py` `_apply_synergy_bonus()` 추가: 현재 조합 + 추천 조합 내부 시너지 동시 반영

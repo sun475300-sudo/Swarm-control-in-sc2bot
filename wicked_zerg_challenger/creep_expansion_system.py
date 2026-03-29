@@ -34,6 +34,12 @@ class CreepExpansionSystem:
         self.target_batch_size = 80
         self.enemy_avoid_radius = 14.0
 
+        # ★ Phase 46: 경로 점수 기반 목표 선택 ★
+        self.path_step_distance = 7.0
+        self.expansion_lane_weight = 0.55
+        self.center_lane_weight = 0.30
+        self.safety_weight = 0.15
+
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
@@ -137,11 +143,55 @@ class CreepExpansionSystem:
         if not safe_candidates:
             safe_candidates = candidates
 
-        # 본진/확장 경로 중심으로 가까운 지점을 우선 배치
         anchor = self.bot.townhalls.first.position if self.bot.townhalls.exists else self.bot.start_location
-        safe_candidates.sort(key=lambda p: anchor.distance_to(p))
+        map_center = self.bot.game_info.map_center
+        expansion_points = list(getattr(self.bot, "expansion_locations_list", []))
+
+        # ★ Phase 46: 확장 경로/중앙 진출/안전도 기반 점수로 정렬 ★
+        safe_candidates.sort(
+            key=lambda p: self._score_target(
+                anchor=anchor,
+                target=p,
+                expansion_points=expansion_points,
+                map_center=map_center,
+                enemy_start=enemy_start,
+            ),
+            reverse=True,
+        )
 
         return safe_candidates[: self.target_batch_size]
+
+    def _score_target(
+        self,
+        anchor: Point2,
+        target: Point2,
+        expansion_points: List[Point2],
+        map_center: Point2,
+        enemy_start: Point2 | None,
+    ) -> float:
+        """크립 목표의 확장 경로 적합도/중앙 압박/안전도를 합산 점수화한다."""
+        # 확장 멀티 라인 근접도 (가까울수록 높음)
+        exp_dist = 50.0
+        if expansion_points:
+            exp_dist = min(target.distance_to(exp) for exp in expansion_points)
+        expansion_lane_score = 1.0 / (1.0 + exp_dist / 18.0)
+
+        # 맵 중앙 진출도 (본진에서 중앙 방향으로 진행될수록 가점)
+        anchor_to_center = max(1.0, anchor.distance_to(map_center))
+        center_progress = min(1.0, anchor.distance_to(target) / anchor_to_center)
+        center_lane_score = center_progress
+
+        # 안전도 (초중반엔 적 시작점과 거리 확보)
+        safety_score = 1.0
+        if enemy_start is not None and self.bot.time < 480:
+            enemy_dist = target.distance_to(enemy_start)
+            safety_score = min(1.0, enemy_dist / max(1.0, self.enemy_avoid_radius * 2.0))
+
+        return (
+            expansion_lane_score * self.expansion_lane_weight
+            + center_lane_score * self.center_lane_weight
+            + safety_score * self.safety_weight
+        )
 
     async def _queen_creep_tumors(self):
         """Queen으로 점막 종양 생성"""
