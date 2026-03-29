@@ -1,0 +1,50 @@
+% Wicked Zerg - Battle Simulation
+% Phase 125: PostScript
+
+/battle-sim {
+  /units exch def
+  0
+  units {
+    5 add
+  } forall
+} def
+
+/swarm-formation {
+  /radius exch def
+  /count exch def
+  /centerY exch def
+  /centerX exch def
+  
+  0 1 count 1 sub {
+    /i exch def
+    /angle 2 3.14159 mul count div i mul def
+    /x centerX radius angle cos mul add def
+    /y centerY radius angle sin mul add def
+    x y
+  } for
+} def
+
+/unit-strength {
+  /armor exch def
+  /damage exch def
+  /health exch def
+  /effective damage health 100 div mul def
+  effective 1 armor 0.01 mul sub mul
+} def
+
+/battle-outcome {
+  /defense exch def
+  /attack exch def
+  attack defense gt
+} def
+
+% Draw battle visualization
+/swarm-viz {
+  /radius exch def
+  /y exch def
+  /x exch def
+  
+  newpath
+  x y radius 0 360 arc
+  stroke
+} def
