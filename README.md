@@ -33,27 +33,33 @@
 
 ---
 
-## Latest Status — Phase 44 Completed
+## Latest Status — Phase 40~43 Completed
 
-### 완료된 핵심 수정 (2026-03-29)
-- `upgrade_manager.py`: `UnitTypeId.LURKER` -> `UnitTypeId.LURKERMP` 교체로 럴커 업그레이드 트리거 복구
-- `upgrade_manager.py`: 근접 업그레이드 계산에 `ULTRALISK` 포함
-- `composition_optimizer.py`: `print` 제거 후 `logger.debug` 전환
-- `composition_optimizer.py`: `intel_manager.enemy_unit_counts` 누적 데이터 병합으로 시야 밖 적 유닛 추정 유지
-
-### 다음 대규모 계획 (Phase 45-50)
-| Phase | 트랙 | 작업 |
+### 완료 요약
+| Phase | 언어 | 핵심 작업 |
 |---|---|---|
-| 45 | Creep Control | 크립 확산 경로/우선순위 최적화 |
-| 46 | Upgrade AI | 종족/상황별 업그레이드 우선순위 고도화 |
-| 47 | Mobile API | `sc2-mobile-app` REST API 엔드포인트 확장 |
-| 48 | Rust Acceleration | PyO3 기반 거리 계산/필터링 핫루프 가속 |
-| 49 | Integration | 통합 검증 + 아레나 패키지 자동 재생성 |
-| 50 | CI/CD | GitHub Actions 파이프라인 + 자동 아티팩트 업로드 |
+| P40 | Python | 통합 검증 + 아레나 패키지 재생성 (491 files, 15.2 MB) |
+| P41 | Python | `combat_manager.py`: HP 가중 전투력(`supply×HP%`), O(N×M) -> O(N+M) 최적화 |
+| P42 | Python + TypeScript | `intel_manager.py` 30종 supply 테이블 + 공격 타이밍 예측, `Monitor.tsx` KDA/처치율 위젯 |
+| P43 | TypeScript | `routers.ts` logs tRPC + `Monitor.tsx` 5초 자동갱신 로그 뷰어 |
 
-### 작업 시작 상태
-- Phase 44 코드 반영 및 문서 동기화 완료
-- Phase 45 크립 최적화 1차 착수: 점막 목표 우선순위/중복제거/초중반 위험지역 회피 로직 반영
+### 다음 대규모 계획 (Phase 44~50)
+| Phase | 카테고리 | 언어 | 핵심 작업 |
+|---|---|---|---|
+| P44 | 훈련 자동화 | Python | SC2 테스트 게임 자동 실행 + 결과 로그 분석 |
+| P45 | 유닛 시너지 AI | Python | 유닛 조합 점수화 (조합별 상성 점수) |
+| P46 | 크립 퍼짐 최적화 | Python | 종양 배치 경로 최적화, 적진 75% 크립 가속 |
+| P47 | 모바일 API | TypeScript | `sc2-mobile-app` REST API 엔드포인트 확장 |
+| P48 | Rust 고성능 유틸 | Rust | 거리 계산/유닛 필터링 핫루프 PyO3 바인딩 |
+| P49 | 통합 최종 검증 | All | 전체 구문 검증 + 아레나 패키지 최종 생성 |
+| P50 | 배포 자동화 | Shell/CI | GitHub Actions 자동 테스트 + 아레나 업로드 파이프라인 |
+
+### 작업 시작 상태 (P44)
+- 신규 파일: `wicked_zerg_challenger/training_automation.py`
+- `run_single_game.py` CLI 인자 지원 추가 (`--map`, `--enemy-race`, `--difficulty`)
+- 예시 실행:
+    - `python wicked_zerg_challenger/training_automation.py --games 5`
+    - `python wicked_zerg_challenger/run_single_game.py --map AbyssalReefLE --enemy-race Protoss --difficulty Easy`
 
 ---
 

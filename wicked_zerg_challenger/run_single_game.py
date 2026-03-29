@@ -9,6 +9,7 @@ from sc2.player import Bot, Computer
 from sc2.main import run_game
 from sc2.data import Race, Difficulty
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
+import argparse
 import sys
 import os
 
@@ -50,8 +51,34 @@ def _ensure_sc2_path():
             return
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run a single SC2 game for test/training.")
+    parser.add_argument("--map", dest="map_name", default="AbyssalReefLE")
+    parser.add_argument("--enemy-race", default="Protoss", choices=["Terran", "Protoss", "Zerg", "Random"])
+    parser.add_argument("--difficulty", default="Easy")
+    return parser.parse_args()
+
+
+def _parse_race(name: str):
+    lookup = {
+        "TERRAN": Race.Terran,
+        "PROTOSS": Race.Protoss,
+        "ZERG": Race.Zerg,
+        "RANDOM": Race.Random,
+    }
+    return lookup.get(name.upper(), Race.Protoss)
+
+
+def _parse_difficulty(name: str):
+    for attr in dir(Difficulty):
+        if attr.lower() == name.lower():
+            return getattr(Difficulty, attr)
+    return Difficulty.Easy
+
+
 def main():
     """Run a single test game."""
+    args = _parse_args()
     _ensure_sc2_path()
 
     print("\n" + "=" * 60)
@@ -59,9 +86,9 @@ def main():
     print("=" * 60)
 
     # Settings
-    map_name = "AbyssalReefLE"
-    opponent_race = Race.Protoss  # vs Protoss (이전 게임 상대)
-    difficulty = Difficulty.Easy  # Easy 난이도로 변경
+    map_name = args.map_name
+    opponent_race = _parse_race(args.enemy_race)
+    difficulty = _parse_difficulty(args.difficulty)
 
     print(f"  Map: {map_name}")
     print(f"  Opponent: {opponent_race.name}")

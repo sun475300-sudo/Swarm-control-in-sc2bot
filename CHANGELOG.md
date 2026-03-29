@@ -2,6 +2,12 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Phase 44] - 2026-03-29 (In Progress)
+### 훈련 자동화 착수
+- **Python** `training_automation.py` 추가: 다회 단일게임 실행 자동화, 승/패/무 및 경고/에러 집계, JSON 리포트 저장
+- **Python** `run_single_game.py` CLI 인자 지원 추가: `--map`, `--enemy-race`, `--difficulty`
+- 로컬 훈련 예시: `python wicked_zerg_challenger/training_automation.py --games 5`
+
 ## [Phase 45] - 2026-03-29 (In Progress)
 ### 크립 확산 최적화 착수
 - **Python** `creep_expansion_system.py` 목표 점막 위치 우선순위 로직 추가
