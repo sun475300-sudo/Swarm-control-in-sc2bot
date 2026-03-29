@@ -75,7 +75,7 @@
 
 ## System Architecture — Full Stack
 
-mermaid
+```mermaid
 graph TB
     subgraph "🖥️ Edge Device — Simulation Server"
         SC2[("⚙️ StarCraft II<br/>Game Engine")]
@@ -124,12 +124,12 @@ graph TB
     style INTEL fill:#533483,stroke:#fff,color:#fff
     style MICRO fill:#b71540,stroke:#fff,color:#fff
 
-
+```
 ---
 
 ## Sim-to-Real Mapping
 
-mermaid
+``` mermaid
 graph LR
     subgraph "🎮 StarCraft II — Virtual"
         A1["🌫️ Fog of War"]
@@ -171,7 +171,7 @@ graph LR
 
 
 ---
-
+```
 ## Key Features
 
 ### 1) Swarm Reinforcement Learning
