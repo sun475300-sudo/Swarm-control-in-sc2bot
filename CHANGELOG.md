@@ -14,6 +14,11 @@ All notable changes to WickedZergBotPro are documented here.
 - **Python** `creep_expansion_system.py` 좌표 중복 제거 및 배치 상한(`target_batch_size`) 도입
 - **Python** `creep_expansion_system.py` 초중반 적 시작 위치 근처 위험 지역 회피(`enemy_avoid_radius`) 적용
 
+### 유닛 시너지 AI 착수
+- **Python** `composition_optimizer.py` `UNIT_SYNERGY_MATRIX` 추가: 조합별 시너지 가중치 정의
+- **Python** `composition_optimizer.py` `_apply_synergy_bonus()` 추가: 현재 조합 + 추천 조합 내부 시너지 동시 반영
+- **Python** `composition_optimizer.py` `get_optimal_composition()`에 시너지 점수 보정 파이프라인 연결
+
 ## [Phase 44] - 2026-03-29
 ### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정
 - **Python** `upgrade_manager.py` `UnitTypeId.LURKER` → `LURKERMP` 수정: `LURKER`는 python-sc2에 존재하지 않아 러커 업그레이드 영구 미실행 → `LURKERMP` 1기 이상 시 즉시 트리거

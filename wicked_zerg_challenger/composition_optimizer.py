@@ -143,6 +143,19 @@ COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
 }
 
 
+# 유닛 시너지 매트릭스: synergy_matrix[유닛A][유닛B] = 조합 보너스
+UNIT_SYNERGY_MATRIX: Dict[str, Dict[str, float]] = {
+    "zergling": {"baneling": 0.18, "hydralisk": 0.08, "ultralisk": 0.06},
+    "baneling": {"zergling": 0.20, "lurker": 0.05},
+    "roach": {"ravager": 0.22, "hydralisk": 0.09},
+    "ravager": {"roach": 0.20, "lurker": 0.06},
+    "hydralisk": {"lurker": 0.18, "viper": 0.12, "roach": 0.08},
+    "lurker": {"hydralisk": 0.20, "viper": 0.15, "zergling": 0.05},
+    "corruptor": {"viper": 0.22, "brood_lord": 0.12},
+    "brood_lord": {"corruptor": 0.15, "viper": 0.10},
+}
+
+
 class CompositionOptimizer:
     """
     유닛 조합 최적화기
@@ -283,6 +296,9 @@ class CompositionOptimizer:
                 cost_eff = ZERG_UNITS[unit_name].cost_efficiency
                 counter_scores[unit_name] *= (1.0 + cost_eff * 0.1)
 
+        # 유닛 시너지 점수 반영 (현재 보유 조합 + 추천 조합 내부 조합)
+        self._apply_synergy_bonus(counter_scores)
+
         # 대공 유닛 필요 여부 체크
         has_air_threat = any(
             unit_name in ("MUTALISK", "VOIDRAY", "CARRIER", "BATTLECRUISER",
@@ -316,6 +332,39 @@ class CompositionOptimizer:
 
         self._cached_recommendation = filtered
         return filtered
+
+    def _apply_synergy_bonus(self, counter_scores: Dict[str, float]) -> None:
+        """추천 점수에 유닛 간 시너지 보너스를 적용한다."""
+        if not counter_scores:
+            return
+
+        current_comp = self.analyze_current_composition()
+        current_total = max(1, sum(current_comp.values()))
+        current_ratio = {
+            unit_name.lower(): count / current_total
+            for unit_name, count in current_comp.items()
+        }
+
+        base_scores = dict(counter_scores)
+
+        for unit_name, base_score in base_scores.items():
+            partners = UNIT_SYNERGY_MATRIX.get(unit_name, {})
+            if not partners:
+                continue
+
+            pair_bonus = 0.0
+
+            # 추천 조합 내부 시너지
+            for partner_name, weight in partners.items():
+                pair_bonus += base_scores.get(partner_name, 0.0) * weight
+
+            # 현재 조합과의 시너지
+            for partner_name, weight in partners.items():
+                pair_bonus += current_ratio.get(partner_name, 0.0) * weight
+
+            # 과도한 쏠림 방지
+            pair_bonus = min(pair_bonus, 0.35)
+            counter_scores[unit_name] *= (1.0 + pair_bonus)
 
     def get_production_recommendation(self) -> List[Tuple[str, int]]:
         """

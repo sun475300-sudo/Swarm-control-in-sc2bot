@@ -54,9 +54,10 @@
 | P49 | 통합 최종 검증 | All | 전체 구문 검증 + 아레나 패키지 최종 생성 |
 | P50 | 배포 자동화 | Shell/CI | GitHub Actions 자동 테스트 + 아레나 업로드 파이프라인 |
 
-### 작업 시작 상태 (P44)
+### 작업 시작 상태 (P44, P45)
 - 신규 파일: `wicked_zerg_challenger/training_automation.py`
 - `run_single_game.py` CLI 인자 지원 추가 (`--map`, `--enemy-race`, `--difficulty`)
+- `composition_optimizer.py` 시너지 매트릭스 기반 조합 보너스 1차 적용
 - 예시 실행:
     - `python wicked_zerg_challenger/training_automation.py --games 5`
     - `python wicked_zerg_challenger/run_single_game.py --map AbyssalReefLE --enemy-race Protoss --difficulty Easy`
