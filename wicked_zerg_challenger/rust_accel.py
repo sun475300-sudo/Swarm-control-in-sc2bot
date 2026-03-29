@@ -12,12 +12,20 @@ try:
 except Exception:
     _nearest_point_index_rust = None
 
+try:
+    from wicked_zerg_challenger.opencl_accel import nearest_point_index_opencl as _nearest_point_index_opencl
+except Exception:
+    try:
+        from opencl_accel import nearest_point_index_opencl as _nearest_point_index_opencl
+    except Exception:
+        _nearest_point_index_opencl = None
+
 
 def nearest_point_index(
     origin: Tuple[float, float],
     points: Sequence[Tuple[float, float]],
 ) -> Optional[int]:
-    """Return nearest point index from origin, using Rust when available."""
+    """Return nearest point index from origin via Rust/OpenCL/CPU fallback."""
     if not points:
         return None
 
@@ -26,6 +34,12 @@ def nearest_point_index(
     if _nearest_point_index_rust is not None:
         try:
             return _nearest_point_index_rust(ox, oy, list(points))
+        except Exception:
+            pass
+
+    if _nearest_point_index_opencl is not None:
+        try:
+            return _nearest_point_index_opencl((ox, oy), points)
         except Exception:
             pass
 

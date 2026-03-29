@@ -33,7 +33,7 @@
 
 ---
 
-## Latest Status — Phase 40~47 Completed
+## Latest Status — Phase 40~49 In Progress
 
 ### 완료 요약
 | Phase | 언어 | 핵심 작업 |
@@ -43,18 +43,18 @@
 | P42 | Python + TypeScript | `intel_manager.py` 30종 supply 테이블 + 공격 타이밍 예측, `Monitor.tsx` KDA/처치율 위젯 |
 | P43 | TypeScript | `routers.ts` logs tRPC + `Monitor.tsx` 5초 자동갱신 로그 뷰어 |
 
-### 다음 대규모 계획 (Phase 48~54)
+### 다음 대규모 계획 (Phase 49~55)
 | Phase | 카테고리 | 언어 | 핵심 작업 |
 |---|---|---|---|
-| P48 | Rust 고성능 유틸 | Rust | 거리 계산/유닛 필터링 핫루프 PyO3 바인딩 |
-| P49 | 통합 최종 검증 | All | 전체 구문 검증 + 아레나 패키지 최종 생성 |
-| P50 | 배포 자동화 | Shell/CI | GitHub Actions 자동 테스트 + 아레나 업로드 파이프라인 |
-| P51 | 리플레이 학습 루프 | Python | 리플레이 기반 승패/손실 패턴 자동 피드백 |
-| P52 | 운영 대시보드 고도화 | TypeScript | 훈련 리포트/전투 지표/알림 통합 대시보드 |
-| P53 | 안정화/품질 게이트 | All | 회귀 테스트 + 타입검사 + 릴리스 체크리스트 자동화 |
-| P54 | 멀티언어 운영 고도화 | All | phase별 언어 정책 기반 자동 빌드/검증 라우팅 |
+| P49 | OpenCL 가속 경로 | Python + OpenCL | nearest-point OpenCL 커널 + Rust/OpenCL/CPU 계층 fallback |
+| P50 | 통합 최종 검증 | All | 전체 구문 검증 + 아레나 패키지 최종 생성 |
+| P51 | 배포 자동화 | Shell/CI | GitHub Actions 자동 테스트 + 아레나 업로드 파이프라인 |
+| P52 | 리플레이 학습 루프 | Python | 리플레이 기반 승패/손실 패턴 자동 피드백 |
+| P53 | 운영 대시보드 고도화 | TypeScript | 훈련 리포트/전투 지표/알림 통합 대시보드 |
+| P54 | 안정화/품질 게이트 | All | 회귀 테스트 + 타입검사 + 릴리스 체크리스트 자동화 |
+| P55 | 멀티언어 운영 고도화 | All | phase별 언어 정책 기반 자동 빌드/검증 라우팅 |
 
-### 작업 시작 상태 (P44, P45, P46, P47, P48)
+### 작업 시작 상태 (P44, P45, P46, P47, P48, P49)
 - 신규 파일: `wicked_zerg_challenger/training_automation.py`
 - `run_single_game.py` CLI 인자 지원 추가 (`--map`, `--enemy-race`, `--difficulty`)
 - `composition_optimizer.py` 시너지 매트릭스 기반 조합 보너스 1차 적용
@@ -62,7 +62,8 @@
 - `sc2-mobile-app/src/lib/api.ts` 로그 상태/최근 로그 조회 API 확장
 - `sc2-mobile-app/src/pages/Dashboard.tsx` 로그 상태 카드 및 에러/경고 집계 위젯 추가
 - `rust_accel/Cargo.toml`, `rust_accel/src/lib.rs` 추가: PyO3 기반 Rust 가속 모듈 골격
-- `wicked_zerg_challenger/rust_accel.py` 추가: Rust 확장 + Python fallback 브리지
+- `wicked_zerg_challenger/rust_accel.py` 확장: Rust 확장 + OpenCL + Python fallback 계층 브리지
+- 신규 파일: `wicked_zerg_challenger/opencl_accel.py` (OpenCL optional nearest-point 가속)
 - `config.yaml` 다중언어 정책 활성화: Python/TypeScript/Rust/Shell phase 매핑
 - 예시 실행:
     - `python wicked_zerg_challenger/training_automation.py --games 5`
