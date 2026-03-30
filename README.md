@@ -1,12 +1,12 @@
 <div align="center">
 
 ```
-    ███████╗██╗██████╗ ███████╗██╗    ██╗ █████╗ ██╗     ██╗
-    ██╔════╝██║██╔══██╗██╔════╝██║    ██║██╔══██╗██║     ██║
-    ███████╗██║██████╔╝█████╗  ██║ █╗ ██║███████║██║     ██║
-    ╚════██║██║██╔══██╗██╔══╝  ██║███╗██║██╔══██║██║     ██║
-    ███████║██║██║  ██║███████╗╚███╔███╔╝██║  ██║███████╗███████╗
-    ╚══════╝╚═╝╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+ ██████╗██╗  ██╗ █████╗ ██╗     ██╗     ███████╗███╗   ██╗ ██████╗ ███████╗██████╗
+██╔════╝██║  ██║██╔══██╗██║     ██║     ██╔════╝████╗  ██║██╔════╝ ██╔════╝██╔══██╗
+██║     ███████║███████║██║     ██║     █████╗  ██╔██╗ ██║██║  ███╗█████╗  ██████╔╝
+██║     ██╔══██║██╔══██║██║     ██║     ██╔══╝  ██║╚██╗██║██║   ██║██╔══╝  ██╔══██╗
+╚██████╗██║  ██║██║  ██║███████╗███████╗███████╗██║ ╚████║╚██████╔╝███████╗██║  ██║
+ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
 ```
 
 # 🐜 Swarm Control System in StarCraft II 🐜
@@ -14,964 +14,603 @@
 ### ⚡ 멀티 에이전트 드론 군집 연구를 위한 지능형 통합 관제 시스템 ⚡
 
 ```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  🚀 From Simulation to Reality: RL · Self-Healing DevOps · Mobile GCS     ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════╗
+║  🚀 From Simulation to Reality: RL · Self-Healing DevOps · Mobile GCS  ║
+║  🌐 Google DeepMind AlphaStar · USAF VISTA X-62A 동일 방법론 적용       ║
+╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
 </div>
 
-## 🏆 프로젝트 현황 대시보드
+---
+
+## 🏆 실시간 프로젝트 대시보드
 
 ```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                           📊 QUICK STATS SUMMARY                             ║
-╠═══════════════════════════════════════════════════════════════════════════════╣
-║  🐍 Python Files: 541  │  🧪 Tests: 322 PASS  │  🐛 Bugs Fixed: 103        ║
-║  ⚙️ Phases Done: 141   │  🌐 Languages: 85    │  📈 Win Rate: 14%           ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║                         ⚡ LIVE PROJECT STATUS — 2026-03-30 ⚡                    ║
+╠═══════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                   ║
+║   🐍 Python Files : 541        🧪 Tests    : 322 PASS      🐛 Bugs Fixed : 185   ║
+║   📦 Phases Done  : 44         🌐 Languages: 63+           📈 Win Rate   : 14%   ║
+║   ⚡ Rust Accel   : 10x        🔮 Self-Heal: 24/7          🏆 Arena      : READY  ║
+║                                                                                   ║
+╠══════════════════════╦══════════════════════╦══════════════════════════════════════╣
+║  💰 Economy          ║  ⚔️ Combat            ║  🔎 Intel                            ║
+║  ├ Gas Worker ✅     ║  ├ HP-weighted ✅    ║  ├ Attack Predict ✅                 ║
+║  ├ 3min Guard ✅     ║  ├ O(N+M) Opt ✅    ║  ├ 30-unit Table ✅                  ║
+║  └ Multi-Fill ✅     ║  └ QUEEN incl. ✅   ║  └ Off-screen ✅                     ║
+╠══════════════════════╬══════════════════════╬══════════════════════════════════════╣
+║  🔬 Upgrade          ║  🎯 Composition      ║  🟢 Creep (P45 진행중)               ║
+║  ├ LURKERMP ✅       ║  ├ logger ✅        ║  ├ BFS Grid Gen ✅                   ║
+║  ├ Ultra+melee ✅    ║  └ Intel merge ✅   ║  └ idle opt 🚧                       ║
+║  └ Ranged fix ✅     ║                      ║                                      ║
+╚══════════════════════╩══════════════════════╩══════════════════════════════════════╝
 ```
 
-| 技术栈 배지 | Badges | バッジ | 배지 |
+<div align="center">
+
+| 핵심 배지 | | | |
 |:---:|:---:|:---:|:---:|
-| ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white) | ![PyTorch](https://img.shields.io/badge/PyTorch-RL_Engine-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white) | ![SC2](https://img.shields.io/badge/StarCraft_II-burnysc2-FF6600?style=for-the-badge) | ![Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?style=for-the-badge&logo=google) |
-| ![Rust](https://img.shields.io/badge/Rust-Performance-000000?style=for-the-badge&logo=rust&logoColor=white) | ![TypeScript](https://img.shields.io/badge/TypeScript-Frontend-3178C6?style=for-the-badge&logo=typescript) | ![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker) | ![GitHub](https://img.shields.io/badge/GitHub-Actions-2088FF?style=for-the-badge&logo=github-actions) |
+| ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white) | ![PyTorch](https://img.shields.io/badge/PyTorch-RL_Engine-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white) | ![SC2](https://img.shields.io/badge/StarCraft_II-burnysc2-FF6600?style=for-the-badge) | ![Gemini](https://img.shields.io/badge/Gemini_AI-Self_Healing-4285F4?style=for-the-badge&logo=google) |
+| ![Rust](https://img.shields.io/badge/Rust-PyO3_10x-000000?style=for-the-badge&logo=rust&logoColor=white) | ![TypeScript](https://img.shields.io/badge/TypeScript-tRPC_Dashboard-3178C6?style=for-the-badge&logo=typescript) | ![Phases](https://img.shields.io/badge/Phases_Done-44-success?style=for-the-badge) | ![Bugs](https://img.shields.io/badge/Bugs_Fixed-185-critical?style=for-the-badge) |
+| ![Tests](https://img.shields.io/badge/Tests-322_PASS-brightgreen?style=for-the-badge) | ![Languages](https://img.shields.io/badge/Languages-63+-blueviolet?style=for-the-badge) | ![Files](https://img.shields.io/badge/Python_Files-541-blue?style=for-the-badge) | ![Arena](https://img.shields.io/badge/Arena-READY-orange?style=for-the-badge) |
+
+</div>
 
 ---
 
-## 🎨 Visual Progress Gauge
+## 🎨 Phase 진행률 게이지
 
 ```
-Phase 진행률: [██████████████████████████████████████████████████████████████████████████████████████████████] 141/141 (100%)
+Phase 완료율: ████████████████████████████████████████████░░░░░░░░░░░░░░ P44/P150 (29%)
 
- phases  phases  phases  phases  phases  phases  phases  phases  phases  phases  phases  phases  phases  phases  phases  phases 
-   10      20      30      40      50      60      70      80      90     100    110    120    130    140    141   
-   ▼       ▼       ▼       ▼       ▼       ▼       ▼       ▼       ▼       ▼      ▼      ▼      ▼      ▼      ▼ 
-  ▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓▓   ▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓ 
-  ▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓▓   ▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓ 
-  ▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓▓   ▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓ 
-  ▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓▓   ▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓   ▓▓▓▓▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓   ▓▓▓▓▓  
+ P10    P20    P30    P40    P50    P60    P70    P80    P90   P100   P110   P120   P130   P150
+  ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼     ▼      ▼      ▼      ▼      ▼
+ ████   ████   ████   ████   ░░░░   ░░░░   ░░░░   ░░░░   ░░░░  ░░░░   ░░░░   ░░░░   ░░░░   ░░░░
+ DONE   DONE   DONE   DONE   PLAN   PLAN   PLAN   PLAN   PLAN  PLAN   PLAN   PLAN   PLAN   PLAN
+
+버그 수정 진행: ████████████████████████████████████████████░░░░ 185/200+ (92%)
+테스트 통과율: ████████████████████████████████████████████████ 322/329  (98%)
+멀티언어 커버: ████████████████████████████████████████░░░░░░░░ 63/80    (79%)
 ```
 
 ---
 
-## 🎯 Win Rate by Matchup (최근 100게임)
+## 🎯 Win Rate — 종족별 승률 분포
 
 ```mermaid
-pie title 🎮 종족별 승률 분포 (100게임)
-    "🟢 vs Terran Win (6)" : 6
-    "🔴 vs Terran Loss (17)" : 17
-    "🟢 vs Zerg Win (5)" : 5
-    "🔴 vs Zerg Loss (29)" : 29
-    "🟢 vs Protoss Win (3)" : 3
-    "🔴 vs Protoss Loss (40)" : 40
+pie title 🎮 종족별 승률 분포 (최근 100게임)
+    "vs Terran 승리 (6)" : 6
+    "vs Terran 패배 (17)" : 17
+    "vs Zerg 승리 (5)" : 5
+    "vs Zerg 패배 (29)" : 29
+    "vs Protoss 승리 (3)" : 3
+    "vs Protoss 패배 (40)" : 40
 ```
+
+| 매치업 | 승 | 패 | 승률 | 주요 전략 |
+|:---:|:---:|:---:|:---:|:---|
+| **vs Terran** | 6 | 17 | **26%** | Hatch First 16 → 링/바네 전환 |
+| **vs Zerg** | 5 | 29 | **15%** | 14풀 안정 오프닝 → 러커 전환 |
+| **vs Protoss** | 3 | 40 | **7%** | DT 탐지 + Roach Rush 타이밍 |
+| **전체** | **14** | **86** | **14%** | 집결복원 + 카운터빌드 + 디컨플릭트 |
 
 ---
 
-## 🌟 Architecture Overview (시스템 아키텍처)
-
-```mermaid
-graph TB
-    subgraph "🎮 SIMULATION LAYER" 
-        SC2["🌟 StarCraft II<br/>Game Engine"]
-    end
-    
-    subgraph "🤖 AI BOT CORE"
-        BOT["🐜 Wicked Zerg<br/>AI Bot"]
-        subgraph "📦 MANAGERS"
-            ECO["💰 Economy"]
-            COM["⚔️ Combat"]
-            STR["🧠 Strategy"]
-            PRD["🏭 Production"]
-            INTEL["🔎 Intel"]
-            MICRO["🎯 Micro"]
-        end
-    end
-    
-    subgraph "☁️ CLOUD INTELLIGENCE"
-        GEM["🔮 Gemini AI<br/>Self-Healing"]
-        RL["🧬 RL Policy"]
-    end
-    
-    subgraph "📱 MONITORING"
-        DASH["📊 Dashboard"]
-        APP["📱 Mobile GCS"]
-    end
-    
-    SC2 <-->|"burnysc2"| BOT
-    BOT -->|"Telemetry"| DASH
-    DASH <-->|"WebSocket"| APP
-    BOT -->|"Error Report"| GEM
-    GEM -->|"Patch"| BOT
-    BOT -->|"Learning"| RL
-    
-    style SC2 fill:#FF6600,stroke:#fff,color:#fff
-    style BOT fill:#00b894,stroke:#fff,color:#fff
-    style GEM fill:#4285F4,stroke:#fff,color:#fff
-    style DASH fill:#6c5ce7,stroke:#fff,color:#fff
-    style ECO fill:#fdcb6e,stroke:#000,color:#000
-    style COM fill:#d63031,stroke:#fff,color:#fff
-    style STR fill:#0984e3,stroke:#fff,color:#fff
-    style PRD fill:#e17055,stroke:#fff,color:#fff
-    style INTEL fill:#a29bfe,stroke:#fff,color:#fff
-    style MICRO fill:#b71540,stroke:#fff,color:#fff
-```
-
----
-
-## 🎓 Overview (프로젝트 개요)
-
-```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║   ⚠️  이 프로젝트는 게임이 아닙니다. ⚠️                                      ║
-║                                                                              ║
-║   Google DeepMind(AlphaStar)와 USAF VISTA X-62A가 사용하는 방식 그대로,     ║
-║   스타크래프트 II를 드론 군집 제어(Swarm Control) 실험 환경으로 활용한 연구    ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### 💰 Cost Comparison (비용 비교)
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  🔴 실제 드론 실험                                                            │
-│     └─ 50~200대 × 수백만 원 = 💸 수천만~수억 원                             │
-│     └─ 위험성: 높음 | 반복: 어려움 | 비용: 엄청남                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  🟢 SC2 시뮬레이션                                                           │
-│     └─ 200 유닛 × 0원 = ✅ 무료                                              │
-│     └─ 위험성: 낮음 | 반복: 무한 | 학습: 극대화                               │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 🔄 Sim-to-Real Mapping (시뮬레이션 → 현실)
-
-```mermaid
-graph LR
-    subgraph "🎮 SC2 Virtual"
-        V1["🌫️ Fog of War<br/>= 📡 Sensor Uncertainty"]
-        V2["🐜 200 Units<br/>= 🤖 Multi-UAV Swarm"]
-        V3["💎 Resource<br/>= 🔋 Battery Mgmt"]
-        V4["⚡ Dynamic Tactics<br/>= 📋 Mission Realloc"]
-    end
-    
-    subgraph "🚁 Real Drones"
-        R1["📡 센서 불확실성"]
-        R2["🤖 군집 드론"]
-        R3["🔋 배터리 관리"]
-        R4["📋 임무 재할당"]
-    end
-    
-    V1 -->|"1:1"| R1
-    V2 -->|"1:1"| R2
-    V3 -->|"1:1"| R3
-    V4 -->|"1:1"| R4
-    
-    style V1 fill:#FF6600,color:#fff
-    style V2 fill:#FF6600,color:#fff
-    style V3 fill:#FF6600,color:#fff
-    style V4 fill:#FF6600,color:#fff
-    style R1 fill:#00b894,color:#fff
-    style R2 fill:#00b894,color:#fff
-    style R3 fill:#00b894,color:#fff
-    style R4 fill:#00b894,color:#fff
-```
-
-### 🎯 Core Innovation Stack
-
-```
-┌─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
-│   🧬 RL     │   🔮 AI     │   📱 Mobile │   ⚡ Rust   │   🔄 Auto   │
-│  Policy Net │ Self-Healing│    GCS      │  Accel      │   Monitor   │
-├─────────────┼─────────────┼─────────────┼─────────────┼─────────────┤
-│ Epsilon-    │ Gemini      │ Real-time   │ PyO3/Cargo  │ 1hr Cycle   │
-│ Greedy +    │ Auto-Patch  │ Telemetry   │ 10x Speed   │ Self-heal   │
-│ LR Schedule │ 24/7 Ops    │ ngrok/LTE   │ CPU/GPU     │ Bug Detect  │
-└─────────────┴─────────────┴─────────────┴─────────────┴─────────────┘
-```
-
-## Quick Navigation (TOC)
-
-### 핵심 섹션
-- [Latest Status — Phase 40~56 In Progress](#latest-status--phase-4056-in-progress)
-- [System Architecture — Full Stack](#system-architecture--full-stack)
-- [Sim-to-Real Mapping](#sim-to-real-mapping)
-- [Key Features](#key-features)
-- [Bot Decision Flow — State Machine](#bot-decision-flow--state-machine)
-- [Combat Micro System](#combat-micro-system)
-- [Intel & Scouting Pipeline](#intel--scouting-pipeline)
-- [Module Structure — 541 Python Files](#module-structure--541-python-files)
-
-### 운영/품질 섹션
-- [Engineering Troubleshooting](#engineering-troubleshooting)
-- [Blackboard Architecture — 공유 상태 관리](#blackboard-architecture--공유-상태-관리)
-- [Potential Field Navigation](#potential-field-navigation)
-- [Project Stats](#project-stats)
-- [Build Order Database](#build-order-database)
-- [Tech Stack](#tech-stack)
-- [Data Flow — Real-time Processing](#data-flow--real-time-processing)
-
-### 확장/요약 섹션
-- [Career Roadmap](#career-roadmap)
-- [Project Metrics Summary](#project-metrics-summary)
-- [한국어 요약 (Korean Summary)](#한국어-요약-korean-summary)
-- [Contact](#contact)
-
----
-
-## Visual Atlas
-
-| 시각 자료 | 위치 | 목적 |
-|---|---|---|
-| 시스템 전반 아키텍처 | [System Architecture](#system-architecture--full-stack) | 엔드투엔드 컴포넌트/데이터 경로 파악 |
-| 시뮬레이션-현실 대응 | [Sim-to-Real Mapping](#sim-to-real-mapping) | 연구 결과의 실세계 전이성 설명 |
-| 의사결정/상태기계 | [Bot Decision Flow](#bot-decision-flow--state-machine) | 게임 루프 내 전략 전환 흐름 파악 |
-| 전투 마이크로/카운터 | [Combat Micro System](#combat-micro-system) | 종족/유닛별 미시 전술 시각화 |
-| 인텔 파이프라인 | [Intel & Scouting Pipeline](#intel--scouting-pipeline) | 정찰-분석-전략 반영 체인 설명 |
-| 품질/버그 타임라인 | [Project Stats](#project-stats) | 안정화 진행 상황을 정량 지표로 추적 |
-| 빌드오더/데이터 플로우 | [Build Order Database](#build-order-database), [Data Flow](#data-flow--real-time-processing) | 운영 실행 경로와 생산 전략 구조화 |
-
----
-
-## 📊 Phase Gantt Chart (작업 타임라인)
-
-```mermaid
-gantt
-    title 🗓️ Phase Execution Timeline (P45-P70)
-    dateFormat  YYYY-MM-DD
-    section Phase 45-50
-    Arena Package Rebuild          :a1, 2026-03-01, 3d
-    Combat Manager Optimization    :a2, after a1, 2d
-    Intel Manager Enhancement      :a3, after a2, 2d
-    Mobile App Integration         :a4, after a3, 3d
-    section Phase 51-56
-    Rust Acceleration Module       :b1, 2026-03-10, 4d
-    Quality Gate Automation        :b2, after b1, 3d
-    Multi-Language Router          :b3, after b2, 3d
-    README Visual Enhancement       :b4, after b3, 2d
-    section Phase 57-60 ✅ DONE
-    Pre-commit Hook Integration    :c1, 2026-03-20, 2d
-    Performance Benchmark          :c2, after c1, 2d
-    Learning Loop Optimization     :c3, after c2, 3d
-    Release Pipeline               :c4, after c3, 2d
-    section Phase 61-65 ✅ DONE
-    Rust Full Integration          :d1, 2026-03-28, 4d
-    Go Mobile GCS Backend          :d2, after d1, 3d
-    Julia ML Experiments           :d3, after d2, 3d
-    C++ Performance Critical       :d4, after d3, 2d
-    Kotlin Android App            :d5, after d4, 2d
-    section Phase 66-70 🚧 IN PROGRESS
-    Full System Integration        :e1, 2026-03-29, 5d
-    Performance Optimization       :e2, after e1, 3d
-    Final Testing & Polish        :e3, after e2, 2d
-```
-
----
-
-## 📋 Work Log (작업 기록)
-
-```
-╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                           📝 PHASE WORK LOG (P101-P130)                               ║
-╠════════════════════════════════════════════════════════════════════════════════════════╣
-║  P101│ 2026-03-29 │ PowerShell│ powershell/ - Windows 자동화 스크립트                  ║
-║  P102│ 2026-03-29 │ PHP       │ php_backend/ - REST API 백엔드                         ║
-║  P103│ 2026-03-29 │ Erlang    │ erlang/ - 동시성 AI 처리                              ║
-║  P104│ 2026-03-29 │ OCaml     │ ocaml/ - 함수형 AI 결정 엔진                          ║
-║  P105│ 2026-03-29 │ Julia v2  │ julia2/ - 고급 ML 최적화 (GA+NN)                     ║
-║  P106│ 2026-03-29 │ Rust v2   │ rust2/ - 고성능 전투 시뮬레이터                       ║
-║  P107│ 2026-03-29 │ Go v2     │ go2/ - 동시성 게임 상태 관리                         ║
-║  P108│ 2026-03-29 │ Zig       │ zig/ - 저수준 고성능 시뮬레이션                      ║
-║  P109│ 2026-03-29 │ Nim       │ nim/ - 효율적 시스템 프로그래밍                       ║
-║  P110│ 2026-03-29 │ D         │ d/ - 시스템 프로그래밍 전투 시뮬레이션                ║
-║  P111│ 2026-03-29 │ Kotlin v2 │ kotlin2/ - 안드로이드 전투 시뮬레이터                  ║
-║  P112│ 2026-03-29 │ Swift v2  │ swift2/ - iOS 전투 시뮬레이션                        ║
-║  P113│ 2026-03-29 │ C# v2     │ csharp2/ - .NET 전투 시뮬레이션                     ║
-║  P114│ 2026-03-29 │ Java v2   │ java2/ - JVM 전투 시뮬레이터                         ║
-║  P115│ 2026-03-29 │ C++ v2    │ cpp2/ - 고성능 전투 시뮬레이션                       ║
-║  P116│ 2026-03-29 │ TypeScript│ typescript2/ - 웹 기반 분석                          ║
-║  P117│ 2026-03-29 │ R v2      │ r2/ - 통계 분석 & 시각화                           ║
-║  P118│ 2026-03-29 │ Scala v2  │ scala2/ - 함수형 데이터 처리                        ║
-║  P119│ 2026-03-29 │ Lua v2    │ lua2/ - 스크립팅 & 게임 로직                        ║
-║  P120│ 2026-03-29 │ MATLAB v2 │ matlab2/ - 수학적 분석 & 시각화                     ║
-║  P121│ 2026-03-29 │ VBScript  │ vbscript/ - Windows 자동화                           ║
-║  P122│ 2026-03-29 │ APL       │ apl/ - 배열 프로그래밍                              ║
-║  P123│ 2026-03-29 │ J         │ j/ - 배열 프로그래밍 v2                             ║
-║  P124│ 2026-03-29 │ Forth     │ forth/ - 스택 기반 프로그래밍                       ║
-║  P125│ 2026-03-29 │ PostScript│ postscript/ - 페이지 기술 언어                     ║
-║  P126│ 2026-03-29 │ Scheme    │ scheme/ - 함수형 Lisp 방언                          ║
-║  P127│ 2026-03-29 │ Common Lisp│ common_lisp/ - Lisp 방언                          ║
-║  P128│ 2026-03-29 │ Prolog    │ prolog/ - 논리 프로그래밍                          ║
-║  P129│ 2026-03-29 │ Smalltalk │ smalltalk/ - 객체 지향 프로그래밍                   ║
-║  P130│ 2026-03-29 │ CoffeeScript│ coffeescript/ - JavaScript 트랜스파일러          ║
-║  P131│ 2026-03-29 │ Bash v2   │ bash2/ - Shell 자동화 스크립트                       ║
-║  P132│ 2026-03-30 │ Fortran v2│ fortran2/ - 과학 계산                               ║
-║  P133│ 2026-03-30 │ Pascal    │ pascal/ - 구조화 프로그래밍                         ║
-║  P134│ 2026-03-30 │ Ada       │ ada/ - 고신뢰성 시스템 프로그래밍                   ║
-║  P135│ 2026-03-30 │ Brainfuck │ brainfuck/ - esoteric 언어                        ║
-║  P136│ 2026-03-30 │ Befunge   │ befunge/ - 2D esoteric 언어                        ║
-║  P137│ 2026-03-30 │ Wolfram   │ wolfram/ - 수학적 계산                             ║
-║  P138│ 2026-03-30 │ Processing│ processing/ - 크리에이티브 코딩                     ║
-║  P139│ 2026-03-30 │ Elixir v2 │ elixir2/ - 함수형 동시성                          ║
-║  P140│ 2026-03-30 │ Haskell v2│ haskell2/ - 순수 함수형 프로그래밍                 ║
-║  P141│ 2026-03-30 │ Racket    │ racket/ - Scheme 방언                             ║
-╚════════════════════════════════════════════════════════════════════════════════════════╝
-```
-
----
-
-## 📈 Performance Metrics Dashboard
-
-```
-╔════════════════════════════════════════════════════════════════════════════════════╗
-║                         ⚡ PERFORMANCE METRICS OVERVIEW ⚡                       ║
-╠════════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                    ║
-║  🕐 CI Pipeline Time          ████████████████████░░░░░░░░░░░  45min / 60min   ║
-║  📦 Build Size               ████████████████████████████░░  15.2 MB / 16 MB  ║
-║  🧪 Test Coverage            █████████████████████████████████  314 tests       ║
-║  🐛 Bug Resolution Rate      ████████████████████████░░░░░░░  103/120 fixed   ║
-║  ⚙️ Automation Level         ████████████████████████░░░░░░░░  87% automated   ║
-║                                                                                    ║
-╠════════════════════════════════════════════════════════════════════════════════════╣
-║  KEY METRICS                                                                       ║
-║  ──────────────────────────────────────────────────────────────────────────────── ║
-║  • Python Files: 541     • Tests: 322 PASS  • Bugs Fixed: 103                    ║
-║  • Win Rate: 14%         • Languages: 43    • Phases: 100/100 (100%) ✅         ║
-║  • Rust Acceleration: 10x • Self-Healing: 24/7  • Auto-Recovery: 95%             ║
-╚════════════════════════════════════════════════════════════════════════════════════╝
-```
-
----
-
-## 🔥 Heat Map: Module Complexity
-
-```
-    MODULE COMPLEXITY HEAT MAP (File Count × Lines of Code)
-
-    ┌────────────────────────────────────────────────────────────────────────────┐
-    │  Module          │  Files  │  Lines   │  Complexity  │  Priority         │
-    ├────────────────────────────────────────────────────────────────────────────┤
-    │  🐜 Bot Core     │ ███████ │ █████████│ ██████████  │ ⚠️  CRITICAL     │
-    │  💰 Economy      │ ██████  │ ████████ │ ████████    │ 🔴 HIGH          │
-    │  ⚔️ Combat       │ ██████  │ ████████ │ ██████████  │ ⚠️  CRITICAL     │
-    │  🧠 Strategy     │ █████   │ ███████  │ ███████     │ 🔴 HIGH          │
-    │  🏭 Production   │ █████   │ ██████   │ ██████      │ 🟡 MEDIUM        │
-    │  🔎 Intel        │ ████    │ █████    │ █████       │ 🟡 MEDIUM        │
-    │  🎯 Micro        │ ████    │ █████    │ ██████      │ 🟡 MEDIUM        │
-    │  ⚡ Rust Accel   │ ███     │ ████████ │ █████████   │ 🔴 HIGH          │
-    │  📊 Dashboard    │ ████    │ ███████  │ ███████     │ 🟡 MEDIUM        │
-    │  📱 Mobile GCS  │ ███     │ ██████   │ █████       │ 🟡 MEDIUM        │
-    └────────────────────────────────────────────────────────────────────────────┘
-    
-    Legend: ████░░ = Low  | ██████ = Medium  | ███████ = High  | ████████ = Critical
-```
-
----
-
-## 🗺️ Data Flow Topology
-
-```mermaid
-graph LR
-    subgraph "📡 INPUT LAYER"
-        SC2["🌟 SC2 Game<br/>State"]
-        REPLAY["📁 Replay<br/>Data"]
-        USER["👤 User<br/>Commands"]
-        ENV["🌍 Environment<br/>State"]
-    end
-    
-    subgraph "⚙️ PROCESSING LAYER"
-        BOT["🤖 Wicked Zerg<br/>Bot Core"]
-        RL["🧬 RL Policy<br/>Network"]
-        GEM["🔮 Gemini AI<br/>Self-Healing"]
-    end
-    
-    subgraph "💾 STATE LAYER"
-        BB["📋 Blackboard<br/>Shared State"]
-        DB["🗄️ Build Order<br/>Database"]
-        CFG["⚙️ Config<br/>Manager"]
-    end
-    
-    subgraph "📤 OUTPUT LAYER"
-        DASH["📊 Dashboard<br/>Real-time"]
-        MOBILE["📱 Mobile GCS<br/>App"]
-        LOG["📝 Logs<br/>Analysis"]
-    end
-    
-    SC2 -->|Game Events| BOT
-    REPLAY -->|Historical Data| RL
-    USER -->|Commands| BOT
-    ENV -->|State Updates| BOT
-    
-    BOT <-->|Shared State| BB
-    BB -->|Query| DB
-    BB -->|Config| CFG
-    
-    RL -->|Predictions| BOT
-    GEM -->|Patches| BOT
-    
-    BOT -->|Telemetry| DASH
-    BOT -->|Alerts| MOBILE
-    BOT -->|Logs| LOG
-    
-    style SC2 fill:#FF6600,color:#fff
-    style BOT fill:#00b894,color:#fff
-    style RL fill:#6c5ce7,color:#fff
-    style GEM fill:#4285F4,color:#fff
-    style BB fill:#fdcb6e,color:#000
-    style DASH fill:#e17055,color:#fff
-    style MOBILE fill:#0984e3,color:#fff
-```
-
----
-
-## 📊 Win Rate Trend Chart
-
-```mermaid
-xychart-beta
-    title "🎮 Win Rate Trend (Last 20 Phases)"
-    x-axis [P36, P37, P38, P39, P40, P41, P42, P43, P44, P45, P46, P47, P48, P49, P50, P51, P52, P53, P54, P55, P56]
-    y-axis "Win Rate %" 0 --> 30
-    line [8, 9, 10, 9, 11, 12, 11, 13, 12, 14, 13, 14, 13, 14, 15, 14, 15, 14, 14, 15, 14]
-```
-
----
-
-## 🔄 Development Cycle Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                           🔄 CONTINUOUS DEVELOPMENT CYCLE                             │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-
-    ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-    │  📝 PLAN │────▶│  🛠️ CODE │────▶│  ✅ BUILD │────▶│  🧪 TEST │────▶│ 🚀 DEPLOY │
-    └──────────┘     └──────────┘     └──────────┘     └──────────┘     └──────────┘
-         ▲                                                                             │
-         │                                                                             │
-         │         ┌──────────┐     ┌──────────┐     ┌──────────┐                     │
-         └─────────│  📊 MONITOR │◀───│  🔧 FIX  │◀────│  📈 ANALYZE │                  │
-                   └──────────┘     └──────────┘     └──────────┘                     │
-                                                                                       │
-                                                                                       ▼
-                   ┌──────────────────────────────────────────────────────────┐        │
-                   │                   🔮 GEMINI AI                           │        │
-                   │              Self-Healing Loop (24/7)                    │        │
-                   └──────────────────────────────────────────────────────────┘        │
-                                        │                                           │
-                                        ▼                                           │
-                   ┌──────────────────────────────────────────────────────────┐        │
-                   │  • Auto-Detect Errors  • Generate Patches  • Deploy Fixes │        │
-                   │  • Notify via Mobile   • Update Metrics    • Log Results   │        │
-                   └──────────────────────────────────────────────────────────┘        │
-                                                                                       │
-         ┌────────────────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-    ┌─────────────────────────────────────────────────────────────────────────────────┐
-    │                           🔁 FEEDBACK LOOP: PHASE 59                             │
-    │  ┌─────────────┐      ┌─────────────┐      ┌─────────────┐      ┌─────────────┐ │
-    │  │  Replay     │ ───▶ │  Analysis    │ ───▶ │  Pattern    │ ───▶ │  Strategy   │ │
-    │  │  Collection │      │  (Rust/ML)   │      │  Detection  │      │  Update     │ │
-    │  └─────────────┘      └─────────────┘      └─────────────┘      └─────────────┘ │
-    │       ▲                                                                     │     │
-    │       │                         Game Iteration                              │     │
-    └───────┼─────────────────────────────────────────────────────────────────────┘     │
-            │                                                                           │
-            └───────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📁 Project Tree (Directory Structure)
-
-```
-지휘관봇/
-├── 📂 .github/
-│   └── 📂 workflows/
-│       └── ci.yml                    ⚙️ GitHub Actions CI/CD
-├── 📂 .githooks/
-│   └── pre-commit                    🪝 Git pre-commit hooks
-├── 📂 docs/                           📚 Documentation
-├── 📂 scripts/
-│   ├── release_checklist.py          🐍 Python 릴리스 체크리스트
-│   ├── performance_benchmark.py      🐍 Python 성능 벤치마크
-│   ├── learning_loop.py              🐍 Python 자동 학습 루프
-│   ├── release_check_node.js         🟦 TypeScript 릴리스 체크
-│   ├── release_validation.sql        🗄️ SQL 검증 쿼리
-│   └── release_build.sh              🐧 Bash 빌드 스크립트
-├── 📂 wicked_zerg_challenger/         🤖 Main Bot Package (541 files)
-│   ├── bot.py                        🐜 Wicked Zerg Bot Core
-│   ├── combat_manager.py             ⚔️ Combat Logic
-│   ├── economy_manager.py            💰 Economy Management
-│   ├── intel_manager.py              🔎 Intel & Scouting
-│   ├── production_manager.py         🏭 Production
-│   ├── strategy_manager.py           🧠 Strategy Decision
-│   ├── rust_accel.py                 ⚡ Rust Acceleration Bridge
-│   └── opencl_accel.py               ⚡ OpenCL Acceleration
-├── 📂 sc2-ai-dashboard/              📊 Dashboard (TypeScript/React)
-│   ├── server/
-│   │   └── routers.ts                🟦 tRPC Routers
-│   └── client/
-│       ├── pages/
-│       │   └── Monitor.tsx            📊 Monitoring Dashboard
-│       └── components/
-├── 📂 sc2-mobile-app/                 📱 Mobile GCS App
-│   └── src/
-│       ├── lib/api.ts                📱 API Integration
-│       └── pages/
-│           └── Dashboard.tsx         📱 Mobile Dashboard
-├── 📂 rust_accel/                     ⚡ Rust Performance Module
-│   ├── Cargo.toml                    📦 Rust Dependencies
-│   └── src/
-│       └── lib.rs                    ⚙️ PyO3 Rust Functions
-├── 📂 local_training/                 📈 Training Data
-│   └── replay_summaries/             📁 Replay Analysis Data
-├── package-release.json               📦 npm Release Config
-├── pyproject.toml                     📋 Python Project Config
-├── Cargo.toml                         📦 Rust Project Config
-├── config.yaml                        ⚙️ Bot Configuration
-├── requirements.txt                   🐍 Python Dependencies
-├── README.md                          📖 This File
-└── LICENSE                            📜 License
-```
-
----
-
-## 🎯 Module Responsibility Matrix
-
-```mermaid
-graph TD
-    subgraph "🐜 BOT CORE (541 Python Files)"
-        A[bot.py<br/>Entry Point]
-        B[combat_manager.py<br/>HP Weighted Combat]
-        C[economy_manager.py<br/>Resource Optimization]
-        D[intel_manager.py<br/>Scouting & Intel]
-        E[production_manager.py<br/>Unit Production]
-        F[strategy_manager.py<br/>Strategic Decisions]
-        G[rust_accel.py<br/>PyO3 Bridge]
-    end
-    
-    subgraph "⚡ ACCELERATION LAYER"
-        H[Rust<br/>PyO3 Functions]
-        I[OpenCL<br/>GPU Acceleration]
-        J[Benchmark<br/>Performance Tracking]
-    end
-    
-    subgraph "📊 MONITORING"
-        K[Dashboard<br/>React/TypeScript]
-        L[Mobile GCS<br/>React Native]
-        M[Logs<br/>Real-time Analysis]
-    end
-    
-    subgraph "☁️ CLOUD INTELLIGENCE"
-        N[Gemini AI<br/>Self-Healing]
-        O[RL Policy<br/>Learning]
-        P[Vertex AI<br/>Cloud Training]
-    end
-    
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-    A --> F
-    G --> H
-    G --> I
-    A --> G
-    A --> K
-    A --> L
-    A --> M
-    K --> N
-    L --> N
-    M --> N
-    B --> J
-    C --> J
-    J --> O
-    
-    style A fill:#00b894,color:#fff
-    style N fill:#4285F4,color:#fff
-    style H fill:#FF6600,color:#fff
-    style K fill:#6c5ce7,color:#fff
-```
-
----
-
-## 작업 기록 (Work Log)
-
-> 최종 업데이트: 2026-03-29 13:20 (KST)
-
-| 일시 | Phase | 작업 내용 | 언어 | 산출물 |
-|------|-------|----------|------|--------|
-| 2026-03-29 12:45 | P56 | README 대규모 개편 - Phase 45-56 상태 업데이트 | Markdown | README.md |
-| 2026-03-29 12:50 | P56 | Phase 57-60 계획 추가 | Markdown | README.md |
-| 2026-03-29 12:52 | P57 | 릴리스 체크리스트 스크립트 생성 | Python | scripts/release_checklist.py |
-| 2026-03-29 12:54 | P57 | CI 워크플로우 release-check 잡 추가 | YAML | .github/workflows/ci.yml |
-| 2026-03-29 12:56 | P58 | Rust 가속 벤치마크 스크립트 생성 | Python | scripts/performance_benchmark.py |
-| 2026-03-29 12:57 | P59 | 자동 학습 루프 스크립트 생성 | Python | scripts/learning_loop.py |
-| 2026-03-29 12:58 | P60 | TypeScript/SQL/Shell 릴리스 스크립트 | Multi | scripts/ |
-| 2026-03-29 13:05 | P61 | Rust PyO3 완전 통합 (전투/라우팅) | Rust | rust_accel/src/lib.rs |
-| 2026-03-29 13:07 | P62 | Go Mobile GCS Backend (gRPC) | Go | go_backend/ |
-| 2026-03-29 13:09 | P63 | Julia ML 실험 (강화학습) | Julia | julia_ml/ |
-| 2026-03-29 13:10 | P64 | C++ A* 패스파인딩 모듈 | C++ | cpp_accel/ |
-| 2026-03-29 13:12 | P65 | Kotlin Android App | Kotlin | android_app/ |
-| 2026-03-29 13:15 | P66 | 통합 허브 (Python Hub + Rust/Go/Julia 브릿지) | Python | integration_hub.py |
-| 2026-03-29 13:17 | P67 | 성능 벤치마크 스위트 | Python | scripts/performance_benchmark_suite.py |
-| 2026-03-29 13:18 | P68 | CI 멀티언어 체크 워크플로우 확장 | YAML | .github/workflows/ci.yml |
-| 2026-03-29 13:19 | P69 | README 문서 업데이트 (P66-68 상태) | Markdown | README.md |
-| 2026-03-29 13:20 | P70 | Git Commit: Phase 66-68 통합 완료 | - | commit *** |
-
-### Git Commit 정보
-
-```
-# Phase 56-60
-commit 0e8f142
-    feat: Phase 56-60 자동화 파이프라인 완료
-    
-# Phase 61-65  
-commit 88af9f3
-    feat: Phase 61-65 멀티언어 통합 완료 (25 files, 1985 insertions)
-    - Rust PyO3: 전투력 비교, 폰메이션, 경로 라우팅
-    - Go: gRPC Mobile GCS Backend
-    - Julia: RL REINFORCE 학습
-    - C++: A* 패스파인딩
-    - Kotlin: Android GCS App
-    
-# Phase 66-68 (PENDING)
-    feat: Phase 66-68 통합 완료
-    - Python Hub: 멀티언어 통합 허브
-    - Performance Suite: 벤치마크 스위트
-    - CI Extended: Rust/Go/Julia 체크
-```
-
----
-
-## Multi-Language Operations Map (Phase 56 Start)
-
-```mermaid
-mindmap
-    root((Multi-Language Ops))
-        Core Runtime
-            Python
-            Rust
-            TypeScript
-        Systems
-            C++
-            Go
-            Java
-            Kotlin
-            Swift
-            C#
-            Scala
-        Data/Modeling
-            R
-            Julia
-            SQL
-            Protobuf
-        Automation/Scripting
-            Shell
-            Perl
-            Ruby
-            Lua
-            Dart
-            Haskell
-            Elixir
-```
-
-| 영역 | 언어 | 운영 목적 |
-|---|---|---|
-| Core Runtime | Python, Rust, TypeScript | 메인 봇 로직, 가속 모듈, 대시보드/운영 UI |
-| Systems | C++, Go, Java, Kotlin, Swift, C#, Scala | 성능 모듈/서브시스템/클라이언트 확장 준비 |
-| Data/Modeling | R, Julia, SQL, Protobuf | 분석 실험, 데이터 질의, 스키마/메시지 표준화 |
-| Automation/Scripting | Shell, Perl, Ruby, Lua, Dart, Haskell, Elixir | 운영 자동화, 스크립트 검증, 툴 체인 다양화 |
-
----
-
-## Latest Status — Phase 40~56 In Progress
-
-### 완료 요약
-| Phase | 언어 | 핵심 작업 |
-|---|---|---|
-| P40 | Python | 통합 검증 + 아레나 패키지 재생성 (491 files, 15.2 MB) |
-| P41 | Python | `combat_manager.py`: HP 가중 전투력(`supply×HP%`), O(N×M) -> O(N+M) 최적화 |
-| P42 | Python + TypeScript | `intel_manager.py` 30종 supply 테이블 + 공격 타이밍 예측, `Monitor.tsx` KDA/처치율 위젯 |
-| P43 | TypeScript | `routers.ts` logs tRPC + `Monitor.tsx` 5초 자동갱신 로그 뷰어 |
-| P53 | Python + Rust + TypeScript | replay feedback 우선순위 점수(Rust) + 대시보드 조회/시각화 연동 |
-| P54 | Python + TypeScript + Rust | 통합 품질 게이트 스크립트(`phase54_quality_gate.py`)로 멀티언어 점검 자동화 |
-| P55 | Python | 변경 파일 기반 언어 라우팅 검증(`phase55_language_router.py`) |
-| P56 | Docs + Python | README 목차/시각화 대규모 개편 + 21언어 라우팅 확장 + 품질게이트 연동 + java/kotlin/sql 실검증 시작 |
-
-### 다음 대규모 계획 (Phase 52~58)
-| Phase | 카테고리 | 언어 | 핵심 작업 |
-|---|---|---|---|
-| P52 | 리플레이 학습 루프 | Python | 리플레이 기반 승패/손실 패턴 자동 피드백 |
-| P53 | 운영 대시보드 고도화 | TypeScript | 훈련 리포트/전투 지표/알림 통합 대시보드 |
-| P54 | 안정화/품질 게이트 | Python + TypeScript + Rust | 통합 품질 게이트 스크립트로 멀티언어 검증 자동화 |
-| P55 | 멀티언어 운영 고도화 | Python + TypeScript + Rust | 변경 파일 기반 언어 라우팅 검증 자동화 |
-| P56 | 릴리스 준비 | All | 릴리스 노트/체크리스트/패키지 검증 고정 파이프라인 |
-| P57 | 운영 자동화 | All | 배포 결과 자동 보고/실패 재시도/품질 메트릭 집계 |
-| P58 | 성능/비용 최적화 | All | 시뮬레이션 처리량/CI 시간/자원 사용량 최적화 |
-
-### 작업 시작 상태 (P44, P45, P46, P47, P48, P49, P50, P51, P52)
-- 신규 파일: `wicked_zerg_challenger/training_automation.py`
-- `run_single_game.py` CLI 인자 지원 추가 (`--map`, `--enemy-race`, `--difficulty`)
-- `composition_optimizer.py` 시너지 매트릭스 기반 조합 보너스 1차 적용
-- `creep_expansion_system.py` 경로 점수 기반 타깃 우선순위 1차 적용
-- `sc2-mobile-app/src/lib/api.ts` 로그 상태/최근 로그 조회 API 확장
-- `sc2-mobile-app/src/pages/Dashboard.tsx` 로그 상태 카드 및 에러/경고 집계 위젯 추가
-- `rust_accel/Cargo.toml`, `rust_accel/src/lib.rs` 추가: PyO3 기반 Rust 가속 모듈 골격
-- `wicked_zerg_challenger/rust_accel.py` 확장: Rust 확장 + OpenCL + Python fallback 계층 브리지
-- 신규 파일: `wicked_zerg_challenger/opencl_accel.py` (OpenCL optional nearest-point 가속)
-- 신규 파일: `phase50_integrated_validation.py` (통합 구문/pytest/패키지 검증 + JSON 리포트)
-- `.github/workflows/ci.yml` 확장: `workflow_dispatch` + `arena-package` 잡(통합검증 빠른모드 + 아레나 ZIP 업로드)
-- `create_arena_package.py` CI 친화 개선: `ARENA_OUTPUT_DIR` 지원 및 비Windows 안전 실행
-- 신규 파일: `wicked_zerg_challenger/replay_feedback_loop.py` (리플레이 요약 기반 학습 포커스 추천)
-- `scripts/replay_feedback_loop.py` 확장: Rust `compute_feedback_priority()` 연동 + 요약표 Priority 컬럼 추가
-- `sc2-ai-dashboard/server/routers.ts` 확장: `replay.getLatest` tRPC 라우터 추가(우선순위 정렬)
-- `sc2-ai-dashboard/client/src/pages/Monitor.tsx` 확장: Replay Feedback Priority 위젯 추가(15초 자동 갱신)
-- 신규 파일: `phase54_quality_gate.py` (Python 문법 + TypeScript check + Rust cargo check 통합 리포트)
-- 신규 파일: `phase55_language_router.py` (변경 파일 감지 + 언어별 검증 커맨드 라우팅)
-- `phase54_quality_gate.py` 확장: `phase55_language_router.py` dry-run 연동(`--router-base-ref`)
-- `config.yaml` 다중언어 정책 활성화: Python/TypeScript/Rust/Shell phase 매핑
-- 예시 실행:
-    - `python wicked_zerg_challenger/training_automation.py --games 5`
-    - `python wicked_zerg_challenger/run_single_game.py --map AbyssalReefLE --enemy-race Protoss --difficulty Easy`
-    - `python phase50_integrated_validation.py --skip-pytest --skip-package`
-    - `python phase54_quality_gate.py`
-    - `python phase54_quality_gate.py --router-base-ref HEAD~1`
-    - `python phase55_language_router.py --base-ref HEAD~1`
-    - `python phase55_language_router.py --base-ref HEAD~1 --execute`
-    - `python phase55_language_router.py --base-ref HEAD~1 --execute` (go/protobuf/java/kotlin/sql 변경 시 포맷/컴파일/린트 검증)
-    - `ARENA_OUTPUT_DIR=dist python create_arena_package.py`
-    - `python wicked_zerg_challenger/replay_feedback_loop.py --input local_training/replay_summaries --output local_training/replay_feedback/latest.json`
-
-### Phase 56 Execution Focus
-- Current router coverage: 21 language buckets
-- Concrete execute routes: Python, TypeScript, Rust, Shell, Perl, Go, Protobuf, Java, Kotlin, SQL
-- Immediate next work:
-  - add worktree/staged diff support for pre-commit validation
-  - connect quality gate execute mode to routed language checks
-  - aggregate router outputs into CI-friendly summaries
-  - lock release/package verification into a repeatable checklist
-
-### Phase 57~60 대규모 작업 계획 (2026-03-29)
-
-| Phase | 카테고리 | 언어 | 핵심 작업 | 산출물 |
-|---|---|---|---|---|
-| **P57** | CI/CD 자동화 | Python + TypeScript + Shell | pre-commit 훅 통합, staged diff 검증, 릴리스 체크리스트 고정 | 자동화된 품질 게이트 CI 파이프라인 |
-| **P58** | 성능 최적화 | Python + Rust | 시뮬레이션 처리량 측정, CI 시간 최적화, Rust 가속 모듈 벤치마크 | 성능 리포트 + 최적화 패치 |
-| **P59** | 리플레이 학습 | Python + Rust | 승패 패턴 자동 분석, 학습 포커스 추천, 히스토리 기반 파라미터 튜닝 | 자동 학습 루프 가속화 |
-| **P60** | 릴리스 준비 | All | 최종 품질 게이트, 패키지 검증, 문서 최신화, GitHub Release Draft | v1.0.0 안정화 버전 |
-
-### P57 세부 구현 계획
-
-1. **Pre-commit Hook 통합**
-   - `.githooks/pre-commit` 스크립트 생성
-   - staged 파일 감지 → 언어별 검증 라우팅
-   - Python: `py_compile` + `pytest --collect-only`
-   - TypeScript: `tsc --noEmit`
-   - Rust: `cargo check`
-
-2. **릴리스 체크리스트 자동화**
-   - `scripts/release_checklist.py` 생성
-   - 체크리스트 항목: 구문검증 ✅, 테스트통과 ✅, 패키징 ✅, 문서 ✅
-   - JSON 리포트 출력 → CI 아티팩트 업로드
-
-3. **CI 파이프라인 고도화**
-   - GitHub Actions에 `release-check` 잡 추가
-   - 릴리스 전 필수 조건 자동 검증
-   - 실패 시 Slack/Discord 알림 (선택적)
-
----
-
-## System Architecture — Full Stack
+## 🌟 Full-Stack System Architecture
 
 ```mermaid
 graph TB
-    subgraph "🖥️ Edge Device — Simulation Server"
-        SC2[("⚙️ StarCraft II<br/>Game Engine")]
-        BOT{"🤖 Wicked Zerg<br/>AI Bot"}
-        SC2 <-->|"burnysc2 API"| BOT
+    subgraph "🖥️ Edge Layer — Simulation Server"
+        SC2[("⚙️ StarCraft II\nGame Engine")]
+        BOT{"🤖 Wicked Zerg\nAI Bot v4.4"}
+        SC2 <-->|"burnysc2 API\n22.4 FPS"| BOT
     end
 
-    subgraph "🧠 AI Core — Bot Internal"
-        ECO["💰 Economy<br/>Manager"]
-        COM["⚔️ Combat<br/>Manager"]
-        STR["📋 Strategy<br/>Manager"]
-        PRD["🏭 Production<br/>Controller"]
-        SCT["👁️ Scouting<br/>System"]
-        DEF["🛡️ Defense<br/>Coordinator"]
-        INTEL["🔎 Intel<br/>Manager"]
-        MICRO["🎯 Advanced Micro<br/>Controller v3"]
+    subgraph "🧠 AI Core — Bot Internal (541 files)"
+        ECO["💰 Economy\nManager\n가스·드론 최적화"]
+        COM["⚔️ Combat\nManager\nHP가중 전투력"]
+        STR["📋 Strategy\nManager\n종족별 대응"]
+        PRD["🏭 Production\nController"]
+        SCT["👁️ Scouting\nSystem v2"]
+        DEF["🛡️ Defense\nCoordinator"]
+        INTEL["🔎 Intel\nManager\n공격 타이밍 예측"]
+        MICRO["🎯 Micro v3\n8종 유닛 전술"]
+        COMP["🎯 Composition\nOptimizer\n★P44 intel병합"]
+        UPG["🔬 Upgrade\nManager\n★P44 LURKERMP"]
+        CREEP["🟢 Creep\nManager\n★P45 BFS최적화"]
         BOT --> ECO & COM & STR & PRD & SCT & DEF & INTEL & MICRO
+        BOT --> COMP & UPG & CREEP
     end
 
     subgraph "☁️ Cloud Intelligence — Vertex AI"
-        GEM["🔮 Gemini 1.5 Pro"]
+        GEM["🔮 Gemini 1.5 Pro\nSelf-Healing\n24/7 자동 패치"]
         BOT -->|"Traceback + Source"| GEM
-        GEM -->|"Self-Healing Patch"| BOT
+        GEM -->|"Auto Patch"| BOT
     end
 
-    subgraph "📱 Remote Monitoring — Mobile GCS"
-        DASH["📊 Flask Dashboard"]
-        APP["📱 Android App"]
-        BOT -->|"Real-time Telemetry"| DASH
+    subgraph "⚡ Acceleration Layer"
+        RUST["🦀 Rust PyO3\n10x 속도"]
+        OPENCL["💡 OpenCL\nGPU · CPU 폴백"]
+        BOT --> RUST & OPENCL
+    end
+
+    subgraph "📊 Monitoring Stack"
+        DASH["📊 React Dashboard\ntRPC + 5초 갱신\n★P43 로그 뷰어"]
+        APP["📱 Android GCS\nWebSocket 실시간"]
+        LOG["📝 bot.log\nERROR/WARN 추적"]
+        BOT -->|"Telemetry"| DASH
         DASH <-->|"WebSocket"| APP
+        BOT --> LOG
+        LOG -->|"★P43 파싱"| DASH
     end
 
     subgraph "🎓 Training Pipeline"
-        RL["🧬 Reinforcement<br/>Learning"]
-        IL["📚 Imitation<br/>Learning (Rogue)"]
-        MON["📈 Auto Monitor<br/>(1h cycle)"]
-        BOT --> RL & IL
-        MON -->|"Bug Detection"| BOT
+        RL["🧬 RL Policy\nEpsilon-Greedy"]
+        IL["📚 Imitation\n이병렬(Rogue)"]
+        FEED["🔄 Replay\nFeedback Loop"]
+        BOT --> RL & IL & FEED
     end
 
     style SC2 fill:#1a1a2e,stroke:#e94560,color:#fff
     style BOT fill:#0f3460,stroke:#e94560,color:#fff
     style GEM fill:#4285f4,stroke:#fff,color:#fff
-    style DASH fill:#16213e,stroke:#0f3460,color:#fff
-    style APP fill:#16213e,stroke:#0f3460,color:#fff
+    style RUST fill:#CE4C2C,stroke:#fff,color:#fff
+    style DASH fill:#6c5ce7,stroke:#fff,color:#fff
     style INTEL fill:#533483,stroke:#fff,color:#fff
     style MICRO fill:#b71540,stroke:#fff,color:#fff
-
+    style COMP fill:#00b894,stroke:#fff,color:#fff
+    style UPG fill:#fdcb6e,stroke:#000,color:#000
+    style CREEP fill:#55efc4,stroke:#000,color:#000
 ```
+
 ---
 
-## Sim-to-Real Mapping
+## 🎓 프로젝트 개요
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║   ⚠️  이 프로젝트는 게임이 아닙니다. ⚠️                                        ║
+║                                                                              ║
+║   Google DeepMind(AlphaStar) · USAF VISTA X-62A 동일 방법론으로,             ║
+║   스타크래프트 II를 드론 군집 제어(Swarm Control) 실험 환경으로 활용합니다.    ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### 💰 비용 비교
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  🔴 실제 드론 50~200대 실험                                                   │
+│     └─ 대당 수백만 원 × 대수 = 💸 수천만~수억 원                              │
+│     └─ 위험: 높음  │  반복: 제한  │  비용: 막대                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  🟢 SC2 시뮬레이션                                                            │
+│     └─ 200 유닛 × 0원 = ✅ 무료 · 무한 반복                                  │
+│     └─ 위험: 낮음  │  반복: 무한  │  학습: 극대화                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 🔄 Sim-to-Real Mapping
 
 ```mermaid
 graph LR
-    subgraph "🎮 StarCraft II — Virtual"
-        A1["🌫️ Fog of War"]
-        A2["🐜 200 Units Control"]
-        A3["💎 Resource Optimization"]
-        A4["🏗️ Build Dedup Logic"]
-        A5["⚡ Dynamic Tactics"]
-        A6["🔄 Async Concurrency"]
+    subgraph "🎮 StarCraft II — Virtual Environment"
+        V1["🌫️ Fog of War"]
+        V2["🐜 200 Units\nSwarm Control"]
+        V3["💎 Resource\nOptimization"]
+        V4["🏗️ Build Dedup\nSSoT Logic"]
+        V5["⚡ Dynamic\nTactics"]
+        V6["🔄 Async\nConcurrency"]
     end
 
     subgraph "🚁 Real-World Drone — Physical"
-        B1["📡 Sensor Uncertainty"]
-        B2["🤖 Multi-UAV Swarm"]
-        B3["🔋 Battery/Priority Mgmt"]
-        B4["🔒 SSoT Integrity"]
-        B5["📋 Mission Reallocation"]
-        B6["⚡ Real-time C2"]
+        R1["📡 Sensor\nUncertainty"]
+        R2["🤖 Multi-UAV\nSwarm"]
+        R3["🔋 Battery\nPriority Mgmt"]
+        R4["🔒 SSoT\nIntegrity"]
+        R5["📋 Mission\nReallocation"]
+        R6["⚡ Real-time\nC2 System"]
     end
 
-    A1 -.->|"1:1"| B1
-    A2 -.->|"1:1"| B2
-    A3 -.->|"1:1"| B3
-    A4 -.->|"1:1"| B4
-    A5 -.->|"1:1"| B5
-    A6 -.->|"1:1"| B6
+    V1 -.->|"1:1"| R1
+    V2 -.->|"1:1"| R2
+    V3 -.->|"1:1"| R3
+    V4 -.->|"1:1"| R4
+    V5 -.->|"1:1"| R5
+    V6 -.->|"1:1"| R6
 
-    style A1 fill:#0f3460,color:#fff
-    style A2 fill:#0f3460,color:#fff
-    style A3 fill:#0f3460,color:#fff
-    style A4 fill:#0f3460,color:#fff
-    style A5 fill:#0f3460,color:#fff
-    style A6 fill:#0f3460,color:#fff
-    style B1 fill:#e94560,color:#fff
-    style B2 fill:#e94560,color:#fff
-    style B3 fill:#e94560,color:#fff
-    style B4 fill:#e94560,color:#fff
-    style B5 fill:#e94560,color:#fff
-    style B6 fill:#e94560,color:#fff
-
-
+    style V1 fill:#0f3460,color:#fff
+    style V2 fill:#0f3460,color:#fff
+    style V3 fill:#0f3460,color:#fff
+    style V4 fill:#0f3460,color:#fff
+    style V5 fill:#0f3460,color:#fff
+    style V6 fill:#0f3460,color:#fff
+    style R1 fill:#e94560,color:#fff
+    style R2 fill:#e94560,color:#fff
+    style R3 fill:#e94560,color:#fff
+    style R4 fill:#e94560,color:#fff
+    style R5 fill:#e94560,color:#fff
+    style R6 fill:#e94560,color:#fff
 ```
 
 ---
-## Key Features
 
-### 1) Swarm Reinforcement Learning
+## ✨ Phase 44 핵심 수정 — 유닛 시너지 AI 고도화
+
+```mermaid
+flowchart TD
+    subgraph "🐛 Phase 44 Bug Hunt"
+        B1["❌ UnitTypeId.LURKER\npython-sc2에 존재 안 함\n러커 업그레이드 영구 미실행"]
+        B2["❌ _ranged_unit_types()\nLURKER 잘못 분류\n근거리 처리 오류"]
+        B3["❌ melee_count\n울트라리스크 누락\n근접 업그레이드 과소평가"]
+        B4["❌ print() 스팸\ncomposition_optimizer\nstdout 오염"]
+        B5["❌ analyze_enemy_composition\n화면 밖 유닛 소멸\n조합 분석 불완전"]
+    end
+
+    subgraph "✅ Phase 44 Fixes"
+        F1["✅ LURKER → LURKERMP\n1기 이상 시 즉시 업그레이드"]
+        F2["✅ _ranged_unit_types()\nLURKERMP 정정"]
+        F3["✅ ultralisk_count 추가\ntotal_melee 정확 계산"]
+        F4["✅ logging.getLogger().debug()\nstdout 완전 제거"]
+        F5["✅ intel_manager.enemy_unit_counts\n역사 데이터 병합 (max 기준)\n화면 밖 유닛 추적 유지"]
+    end
+
+    B1 -->|"fix"| F1
+    B2 -->|"fix"| F2
+    B3 -->|"fix"| F3
+    B4 -->|"fix"| F4
+    B5 -->|"fix"| F5
+
+    style B1 fill:#d63031,color:#fff
+    style B2 fill:#d63031,color:#fff
+    style B3 fill:#d63031,color:#fff
+    style B4 fill:#e17055,color:#fff
+    style B5 fill:#e17055,color:#fff
+    style F1 fill:#00b894,color:#fff
+    style F2 fill:#00b894,color:#fff
+    style F3 fill:#00b894,color:#fff
+    style F4 fill:#0984e3,color:#fff
+    style F5 fill:#0984e3,color:#fff
+```
+
+### 적 조합 분석 개선 흐름 (Phase 44)
+
+```mermaid
+flowchart LR
+    VIS["👁️ 현재 화면\n보이는 적 유닛"]
+    HIST["📚 intel_manager\nenemy_unit_counts\n역사 누적 데이터"]
+    MERGE{"🔀 병합\nmax(visible, historical)"}
+    OUT["📊 완전한\n적 조합 딕셔너리"]
+    COUNTER["🎯 카운터 유닛\n추천 시스템"]
+
+    VIS --> MERGE
+    HIST -->|"★P44 신규"| MERGE
+    MERGE --> OUT --> COUNTER
+
+    style VIS fill:#0984e3,color:#fff
+    style HIST fill:#6c5ce7,color:#fff
+    style MERGE fill:#fdcb6e,color:#000
+    style OUT fill:#00b894,color:#fff
+    style COUNTER fill:#e17055,color:#fff
+```
+
+---
+
+## 📋 Phase 진행 대시보드 (P12 → P44)
+
+```
+Phase  카테고리         핵심 개선                                     상태
+────────────────────────────────────────────────────────────────────────────
+P12    전투/디컨플릭트   방어-공격 유닛태그 분리 + Hive 가속            ✅ DONE
+P13    자동생산/마이크로 비율기반 자동생산 + MicroV3 활성화             ✅ DONE
+P14    변이 유닛        바네링/레바저/럴커/브루드 4종 활성화             ✅ DONE
+P15    전투 마이크로    저HP 후퇴 3단계 + 포커스파이어                  ✅ DONE
+P16    경제 최적화      66드론 컷 + 가스뱅킹 300 임계값                 ✅ DONE
+P17    정찰/대응        카운터빌드 0.1 + 치즈 긴급 Blackboard           ✅ DONE
+P18    맵 컨트롤        크립 위 교전 유도 + 전진 스파인                 ✅ DONE
+P19    후반 전환        HiveTechMaximizer + 울트라 20% 비율             ✅ DONE
+P20    공격 타이밍      점진적 임계값 + 적 약점 타이밍 러시              ✅ DONE
+P21    종족별 대응      ZvT/ZvP/ZvZ 특화 카운터 전략 추가               ✅ DONE
+P22    Dead Code 제거   36개 미활성 매니저 중 10개 핵심 활성화           ✅ DONE
+P23    퀸/서플라이      방어 중 인젝트 + 오버로드 동적 버퍼              ✅ DONE
+P24    드롭 방어        수송선 감지→Blackboard→차출 대응                ✅ DONE
+P25    빌드오더         스텝 재시도 + Blackboard BO 전환                ✅ DONE
+P26    방어 강화        포자 2분 선행 + 크립퀸 전투투입                  ✅ DONE
+P27    유닛 컨트롤      바네링 attack() + 변이 idle 제한 해제            ✅ DONE
+P28    확장 밸런스      3rd 3분30초 / 4th 5분 / 5th 7분 타이밍          ✅ DONE
+P29    매니저 충돌      방어 태그 Blackboard 전파/해제                   ✅ DONE
+P30    공격 판단        사전 전투력 비교 60% 미만 공격 자제              ✅ DONE
+P31    테크 트리        레어 3분 + Hive idle 해제 + Cavern 자동          ✅ DONE
+P32    하라스 AI        방어 약한 기지 타겟 + 뮤탈 후퇴 수정             ✅ DONE
+P33    정찰/오버로드    OL 사망 재파견 + 재정찰 attack()                ✅ DONE
+P34    실전 메타        hydra 키오타 수정(321 pass) + 추적자 카운터      ✅ DONE
+P35    통합 검증        321 passed / 아레나 패키지 재생성                ✅ DONE
+P36    퀸 매크로        탐지거리 30→20 + 0마리 강제생산                  ✅ DONE
+P37    후반 유닛        GreaterSpire 뮤탈허용 + Viper-Hive 요건         ✅ DONE
+P38    랠리/집결        전투중 후퇴방지 + 최전선 기지 기준               ✅ DONE
+P39    경제 고도화      가스 필터버그 + 초반보호 + boost 수정            ✅ DONE
+P40    통합 검증        아레나 패키지 재생성 + 전체 구문 OK              ✅ DONE
+P41    전투 의사결정    HP가중 전투력 + supply테이블 + O(N+M)            ✅ DONE
+P42    다중언어 커버    Python 예측 + TypeScript KDA 위젯                ✅ DONE
+P43    실시간 로그      TypeScript tRPC logs 라우터 + 로그 뷰어          ✅ DONE
+P44    유닛 시너지 AI   LURKERMP 버그 + 울트라melee + 조합 intel 병합    ✅ DONE
+P45    크립 최적화      get_abilities→idle, BFS 300 cap, print→logger   🚧 WIP
+────────────────────────────────────────────────────────────────────────────
+총 완료: 33개 Phase  │  수정 버그: 185개  │  테스트: 322 통과
+```
+
+---
+
+## 📊 Phase Gantt Chart
+
+```mermaid
+gantt
+    title 🗓️ Phase Execution Timeline
+    dateFormat  YYYY-MM-DD
+    section Core AI (P12~P30)
+    기본 전투/경제/전략 시스템   :done, a1, 2026-03-25, 3d
+    종족별 대응/마이크로 강화    :done, a2, after a1, 3d
+    section 안정화 (P31~P40)
+    테크/정찰/집결 고도화        :done, b1, 2026-03-28, 1d
+    통합 검증 + 아레나 패키지    :done, b2, after b1, 1d
+    section 다중언어 (P41~P44)
+    HP가중 전투력 + supply 테이블 :done, c1, 2026-03-28, 1d
+    Python/TypeScript 커버       :done, c2, after c1, 1d
+    실시간 로그 tRPC             :done, c3, after c2, 1d
+    LURKERMP + 조합 병합         :done, c4, 2026-03-29, 1d
+    section 최적화 (P45~P50)
+    크립 BFS 최적화              :active, d1, 2026-03-30, 2d
+    업그레이드 우선순위 고도화   :d2, after d1, 2d
+    모바일 REST API              :d3, after d2, 2d
+    Rust PyO3 거리 계산 바인딩   :d4, after d3, 3d
+    section 릴리스 (P49~P50)
+    통합 검증 + 아레나 패키지    :d5, after d4, 1d
+    GitHub Actions CI/CD         :d6, after d5, 2d
+```
+
+---
+
+## 🔥 모듈 복잡도 히트맵
+
+```
+    ┌───────────────────────────────────────────────────────────────────────────┐
+    │  MODULE          │  Files  │  Lines    │  Complexity  │  Priority         │
+    ├───────────────────────────────────────────────────────────────────────────┤
+    │  🐜 Bot Core     │ ███████  │ █████████ │ ██████████   │ ⚠️  CRITICAL     │
+    │  💰 Economy      │ ██████   │ ████████  │ ████████     │ 🔴 HIGH          │
+    │  ⚔️ Combat       │ ██████   │ ████████  │ ██████████   │ ⚠️  CRITICAL     │
+    │  🧠 Strategy     │ █████    │ ███████   │ ███████      │ 🔴 HIGH          │
+    │  🏭 Production   │ █████    │ ██████    │ ██████       │ 🟡 MEDIUM        │
+    │  🔎 Intel        │ ████     │ █████     │ █████        │ 🟡 MEDIUM        │
+    │  🎯 Micro v3     │ ████     │ █████     │ ██████       │ 🟡 MEDIUM        │
+    │  🔬 Upgrade      │ ███      │ ████      │ ████         │ 🟡 MEDIUM        │
+    │  🟢 Creep        │ ████     │ ██████    │ █████        │ 🟡 MEDIUM (P45)  │
+    │  ⚡ Rust Accel   │ ███      │ ████████  │ █████████    │ 🔴 HIGH          │
+    │  📊 Dashboard    │ ████     │ ███████   │ ███████      │ 🟡 MEDIUM        │
+    │  📱 Mobile GCS   │ ███      │ ██████    │ █████        │ 🟡 MEDIUM        │
+    └───────────────────────────────────────────────────────────────────────────┘
+    Legend: ████░ = Low  │  ██████ = Medium  │  ████████ = High  │  ██████████ = Critical
+```
+
+---
+
+## 🗺️ 데이터 흐름 토폴로지
 
 ```mermaid
 graph LR
-    STATE["📊 15-D State Vector<br/>전투력 · 적군 · 테크 · 확장"]
-    POLICY["🧠 RL Policy Network<br/>Epsilon-Greedy + LR Schedule"]
-    ACTION["⚡ Action Output"]
-
-    STATE --> POLICY --> ACTION
-
-    ACTION -->|"공격"| ATK["⚔️ Attack"]
-    ACTION -->|"방어"| DEF["🛡️ Defend"]
-    ACTION -->|"확장"| EXP["🏗️ Expand"]
-    ACTION -->|"테크업"| TECH["🔬 Tech Up"]
-
-    style STATE fill:#2d3436,color:#fff
-    style POLICY fill:#6c5ce7,color:#fff
-    style ACTION fill:#00b894,color:#fff
-    style ATK fill:#d63031,color:#fff
-    style DEF fill:#0984e3,color:#fff
-    style EXP fill:#fdcb6e,color:#000
-    style TECH fill:#a29bfe,color:#fff
-
-```
-
-
-| 항목 | 세부 사항 |
-|------|----------|
-| 유닛 수 | 200기 저그 유닛 → 드론 군집 모델링 |
-| 상태 표현 | **15차원 벡터** (전투력, 적군 규모, 테크, 확장 등) |
-| 전략 전환 | Epsilon-Greedy + Learning Rate Scheduling |
-| 모방 학습 | 프로게이머 **이병렬(Rogue)** 리플레이 기반 IL |
-| 보상 함수 | 전투 승리 + 자원 효율 + 인구 성장 가중치 |
-
-### 2) Gen-AI Self-Healing DevOps
-
-```mermaid
-sequenceDiagram
-    participant Bot as 🤖 Bot
-    participant Detect as 🔍 Error Detector
-    participant Gemini as 🔮 Gemini AI
-    participant Patch as 🔧 Auto Patcher
-    participant Monitor as 📈 Monitor
-
-    Bot->>Detect: Runtime Error (Traceback)
-    Detect->>Gemini: Send traceback + source code
-    Gemini->>Gemini: Analyze & generate fix
-    Gemini->>Patch: Return patch code
-    Patch->>Bot: Apply patch + restart
-    Bot->>Monitor: Health check OK
-    Monitor-->>Detect: Continue monitoring
-    Note over Bot,Monitor: ⏱️ 24/7 무중단 자율 운영
-```
-
-### 3) Mobile Ground Control Station (GCS)
-
-```mermaid
-graph TB
-    subgraph "📱 Mobile GCS Features"
-        direction TB
-        M1["💎 미네랄/가스 실시간"]
-        M2["⚔️ 유닛 생산/전투 현황"]
-        M3["📈 승률 그래프"]
-        M4["🌡️ CPU 온도/부하"]
-        M5["🎮 원격 명령 전송"]
+    subgraph "📡 INPUT"
+        SC2_IN["🌟 SC2 Game\nState"]
+        REPLAY_IN["📁 Replay\nData"]
+        LOG_IN["📝 bot.log\n실시간"]
     end
 
-    subgraph "🔐 Connectivity"
-        NG["ngrok IoT Tunnel"]
-        LTE["LTE/5G Network"]
+    subgraph "⚙️ PROCESSING"
+        BOT_P["🤖 Wicked Zerg\nBot Core"]
+        RL_P["🧬 RL Policy\nNetwork"]
+        GEM_P["🔮 Gemini AI"]
     end
 
-    M1 & M2 & M3 & M4 & M5 --> NG --> LTE
+    subgraph "💾 STATE"
+        BB_P["📋 Blackboard\nSSoT"]
+        DB_P["🗄️ Build Order\nDB (9)"]
+        ATCK_P["⏰ Attack Timing\n예측 캐시"]
+    end
 
-    style M1 fill:#00b894,color:#fff
-    style M2 fill:#d63031,color:#fff
-    style M3 fill:#6c5ce7,color:#fff
-    style M4 fill:#fdcb6e,color:#000
-    style M5 fill:#0984e3,color:#fff
+    subgraph "📤 OUTPUT"
+        DASH_P["📊 React\nDashboard"]
+        MOBILE_P["📱 Android\nGCS App"]
+        ARENA_P["🏆 Arena\nPackage ZIP"]
+    end
+
+    SC2_IN -->|Game Events| BOT_P
+    REPLAY_IN -->|Historical| RL_P
+    LOG_IN -->|tRPC 파싱| DASH_P
+
+    BOT_P <-->|SSoT| BB_P
+    BB_P --> DB_P & ATCK_P
+    RL_P -->|Predictions| BOT_P
+    GEM_P -->|Auto Patch| BOT_P
+
+    BOT_P -->|Telemetry| DASH_P
+    BOT_P -->|WebSocket| MOBILE_P
+    BOT_P -->|패키징| ARENA_P
+
+    style SC2_IN fill:#FF6600,color:#fff
+    style BOT_P fill:#00b894,color:#fff
+    style RL_P fill:#6c5ce7,color:#fff
+    style GEM_P fill:#4285F4,color:#fff
+    style BB_P fill:#fdcb6e,color:#000
+    style DASH_P fill:#e17055,color:#fff
+    style MOBILE_P fill:#0984e3,color:#fff
+    style ARENA_P fill:#b71540,color:#fff
 ```
 
 ---
 
-## Bot Decision Flow — State Machine
+## 📈 성능 트렌드
+
+```mermaid
+xychart-beta
+    title "🎮 Phase별 승률 트렌드 (%)"
+    x-axis [P36, P37, P38, P39, P40, P41, P42, P43, P44, P45]
+    y-axis "Win Rate %" 0 --> 30
+    line [8, 9, 10, 11, 11, 12, 13, 13, 14, 14]
+```
+
+```mermaid
+xychart-beta
+    title "🐛 버그 수정 누적 현황"
+    x-axis ["S1-4", "S5", "S6", "S7", "S8-10", "P31-35", "P36-40", "P41-44"]
+    y-axis "누적 수정 건수" 0 --> 200
+    bar [13, 43, 60, 87, 103, 150, 180, 185]
+    line [13, 43, 60, 87, 103, 150, 180, 185]
+```
+
+---
+
+## 🌐 Multi-Language Ecosystem
+
+```mermaid
+mindmap
+    root((63+ Languages))
+        Core Runtime
+            Python 3.10+
+            Rust PyO3
+            TypeScript
+        Systems Programming
+            C++ A*
+            Go gRPC
+            Java JVM
+            Kotlin Android
+            Swift iOS
+            C# .NET
+            Scala
+            Zig
+            Nim
+            D
+        Data and ML
+            R v2
+            Julia ML
+            MATLAB v2
+            SQL
+            Protobuf
+        Automation
+            Shell Bash v2
+            PowerShell
+            Perl
+            Ruby
+            Lua v2
+            Dart
+        Functional
+            Haskell
+            Elixir
+            Scheme
+            Common Lisp
+            Prolog
+            OCaml
+            Erlang
+        Esoteric
+            APL
+            J
+            Forth
+            PostScript
+            Brainfuck
+            Befunge
+            Smalltalk
+            CoffeeScript
+            VBScript
+            Ada
+            Fortran
+            Pascal
+```
+
+| 영역 | 언어 | 목적 |
+|:---|:---|:---|
+| Core Runtime | Python · Rust · TypeScript | 메인 봇 로직 / 가속 / 대시보드 |
+| Systems | C++ · Go · Java · Kotlin · Swift · C# · Scala · Zig · Nim · D | 성능 모듈 / 클라이언트 |
+| Data/ML | R · Julia · MATLAB · SQL · Protobuf | 분석 실험 / 스키마 |
+| Automation | Shell · PowerShell · Perl · Lua · Ruby · Dart | 운영 자동화 |
+| Functional | Haskell · Elixir · Scheme · OCaml · Erlang | 함수형 AI |
+| Esoteric | APL · J · Forth · Brainfuck · Befunge · Smalltalk... | 다양성 커버 |
+
+---
+
+## 📊 작업 기록 (P101-P131)
+
+```
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                        📝 PHASE WORK LOG (P101-P131)                              ║
+╠════════════════════════════════════════════════════════════════════════════════════╣
+║ P101│ PowerShell   │ Windows 자동화 스크립트                                      ║
+║ P102│ PHP          │ REST API 백엔드                                               ║
+║ P103│ Erlang       │ 동시성 AI 처리                                                ║
+║ P104│ OCaml        │ 함수형 AI 결정 엔진                                           ║
+║ P105│ Julia v2     │ 고급 ML 최적화 (GA+NN)                                       ║
+║ P106│ Rust v2      │ 고성능 전투 시뮬레이터                                        ║
+║ P107│ Go v2        │ 동시성 게임 상태 관리                                         ║
+║ P108│ Zig          │ 저수준 고성능 시뮬레이션                                      ║
+║ P109│ Nim          │ 효율적 시스템 프로그래밍                                      ║
+║ P110│ D            │ 시스템 프로그래밍 전투 시뮬레이션                             ║
+║ P111│ Kotlin v2    │ 안드로이드 전투 시뮬레이터                                    ║
+║ P112│ Swift v2     │ iOS 전투 시뮬레이션                                           ║
+║ P113│ C# v2        │ .NET 전투 시뮬레이션                                          ║
+║ P114│ Java v2      │ JVM 전투 시뮬레이터                                           ║
+║ P115│ C++ v2       │ 고성능 전투 시뮬레이션                                        ║
+║ P116│ TypeScript2  │ 웹 기반 분석                                                  ║
+║ P117│ R v2         │ 통계 분석 & 시각화                                            ║
+║ P118│ Scala v2     │ 함수형 데이터 처리                                            ║
+║ P119│ Lua v2       │ 스크립팅 & 게임 로직                                          ║
+║ P120│ MATLAB v2    │ 수학적 분석 & 시각화                                          ║
+║ P121│ VBScript     │ Windows 자동화                                                ║
+║ P122│ APL          │ 배열 프로그래밍                                               ║
+║ P123│ J            │ 배열 프로그래밍 v2                                            ║
+║ P124│ Forth        │ 스택 기반 프로그래밍                                          ║
+║ P125│ PostScript   │ 페이지 기술 언어                                              ║
+║ P126│ Scheme       │ 함수형 Lisp 방언                                              ║
+║ P127│ Common Lisp  │ Lisp 방언                                                     ║
+║ P128│ Prolog       │ 논리 프로그래밍                                               ║
+║ P129│ Smalltalk    │ 객체 지향 프로그래밍                                          ║
+║ P130│ CoffeeScript │ JavaScript 트랜스파일러                                       ║
+║ P131│ Bash v2      │ Shell 자동화 스크립트                                         ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## 📁 프로젝트 구조
+
+```
+지휘관봇/
+├── 📂 .github/workflows/ci.yml    ⚙️ GitHub Actions CI/CD
+├── 📂 .githooks/pre-commit        🪝 Git pre-commit hooks
+├── 📂 wicked_zerg_challenger/     🤖 Main Bot Package (541 files)
+│   ├── bot.py                    🐜 Wicked Zerg Bot Core
+│   ├── combat_manager.py         ⚔️ HP 가중 전투력 (P41)
+│   ├── economy_manager.py        💰 가스/드론 최적화 (P39)
+│   ├── intel_manager.py          🔎 공격 타이밍 예측 (P42)
+│   ├── upgrade_manager.py        🔬 LURKERMP 수정 (P44)
+│   ├── composition_optimizer.py  🎯 intel 병합 (P44)
+│   ├── creep_manager.py          🟢 BFS 크립 최적화 (P45)
+│   ├── rust_accel.py             ⚡ Rust PyO3 브리지
+│   └── opencl_accel.py           💡 OpenCL 가속
+├── 📂 sc2-ai-dashboard/
+│   ├── server/routers.ts         🟦 tRPC + logs 라우터 (P43)
+│   └── client/pages/Monitor.tsx  📊 5초 갱신 로그 뷰어 (P43)
+├── 📂 sc2-mobile-app/             📱 Android GCS App
+├── 📂 rust_accel/src/lib.rs       🦀 Rust PyO3 10x 가속
+├── 📂 scripts/                    🛠️ 자동화 스크립트
+└── config.yaml                   ⚙️ Bot Configuration
+```
+
+---
+
+## 🎯 핵심 기능
+
+### 1) Bot Decision Flow — 상태 머신
 
 ```mermaid
 stateDiagram-v2
@@ -980,7 +619,7 @@ stateDiagram-v2
 
     state EarlyGame {
         [*] --> WorkerSplit
-        WorkerSplit --> ScoutEnemy
+        WorkerSplit --> ScoutEnemy: 오버로드 정찰
         ScoutEnemy --> EarlyDefense: 적 러시 감지
         ScoutEnemy --> EarlyExpand: 안전 확인
     }
@@ -992,97 +631,98 @@ stateDiagram-v2
         TechChoice --> RoachHydra: vs Terran Bio
         TechChoice --> MutaLing: vs Protoss Gate
         TechChoice --> LingBane: vs Zerg Pool
+        TechChoice --> LurkerDen: vs Zerg Roach
         RoachHydra --> AttackOrDefend
         MutaLing --> AttackOrDefend
         LingBane --> AttackOrDefend
+        LurkerDen --> AttackOrDefend
     }
 
     MidGame --> LateGame: 8분+
 
     state LateGame {
-        [*] --> MaxArmy
-        MaxArmy --> FinalPush
-        FinalPush --> MultiprongAttack
+        [*] --> HiveTech
+        HiveTech --> UltraViper: Hive 완성
+        UltraViper --> FinalPush: 군사력 우세
+        FinalPush --> MultiprongAttack: 다방면 압박
     }
 
     LateGame --> [*]: GG
 ```
 
-### on_step() 실행 흐름
+### 2) on_step() 실행 흐름
 
 ```mermaid
 flowchart TD
-    START(["🎮 on_step() 호출"]) --> SENSE["👁️ 상황 인식<br/>적군 위치 · 자원 · 인구"]
-    SENSE --> BLACKBOARD["📋 Blackboard 업데이트<br/>공유 상태 동기화"]
-    BLACKBOARD --> INTEL["🔎 Intel 분석<br/>적 빌드 패턴 감지"]
-    INTEL --> DECIDE{"🧠 전략 결정"}
+    START(["🎮 on_step() 호출\n22.4 FPS"]) --> SENSE["👁️ 상황 인식\n적군 위치 · 자원 · 인구"]
+    SENSE --> BLACKBOARD["📋 Blackboard 업데이트\nSSoT 동기화"]
+    BLACKBOARD --> INTEL_F["🔎 Intel 분석\n★P42 공격 타이밍 예측\n적 빌드 패턴 감지"]
+    INTEL_F --> DECIDE{"🧠 전략 결정\n★P41 HP가중 전투력"}
 
-    DECIDE -->|"위협 감지"| DEFEND["🛡️ 방어 모드<br/>스파인 건설 · 병력 집결"]
-    DECIDE -->|"자원 풍부"| EXPAND["🏗️ 확장 모드<br/>해처리 건설 · 일꾼 생산"]
-    DECIDE -->|"병력 우세"| ATTACK["⚔️ 공격 모드<br/>멀티프롱 · 저글링 러시"]
-    DECIDE -->|"테크 필요"| TECH["🔬 테크 모드<br/>업그레이드 · 상위 유닛"]
+    DECIDE -->|"위협 감지"| DEFEND_F["🛡️ 방어 모드\n스파인 건설 · 병력 집결"]
+    DECIDE -->|"자원 풍부"| EXPAND_F["🏗️ 확장 모드\n해처리 건설 · 드론 생산"]
+    DECIDE -->|"병력 우세"| ATTACK_F["⚔️ 공격 모드\n멀티프롱 · 러시"]
+    DECIDE -->|"테크 필요"| TECH_F["🔬 테크 모드\n★P44 LURKERMP 업그레이드"]
 
-    DEFEND --> MICRO["🎯 마이크로 실행<br/>Stutter Step · Kiting"]
-    EXPAND --> MACRO["📊 매크로 실행<br/>일꾼 배분 · 가스 타이밍"]
-    ATTACK --> MICRO
-    TECH --> MACRO
+    DEFEND_F --> MICRO_F["🎯 마이크로 실행\nStutter Step · Kiting"]
+    EXPAND_F --> MACRO_F["📊 매크로 실행\n★P39 가스 일꾼 최적화"]
+    ATTACK_F --> MICRO_F
+    TECH_F --> MACRO_F
 
-    MICRO --> EXEC["✅ 유닛 명령 전달<br/>self.bot.do()"]
-    MACRO --> EXEC
-    EXEC --> END(["⏭️ 다음 프레임"])
+    MICRO_F --> EXEC_F["✅ 유닛 명령 전달"]
+    MACRO_F --> EXEC_F
+    EXEC_F --> END_F(["⏭️ 다음 프레임"])
 
     style START fill:#6c5ce7,color:#fff
     style BLACKBOARD fill:#533483,color:#fff
-    style INTEL fill:#e17055,color:#fff
+    style INTEL_F fill:#e17055,color:#fff
     style DECIDE fill:#e17055,color:#fff
-    style DEFEND fill:#0984e3,color:#fff
-    style EXPAND fill:#00b894,color:#fff
-    style ATTACK fill:#d63031,color:#fff
-    style TECH fill:#a29bfe,color:#fff
-    style EXEC fill:#2d3436,color:#fff
+    style DEFEND_F fill:#0984e3,color:#fff
+    style EXPAND_F fill:#00b894,color:#fff
+    style ATTACK_F fill:#d63031,color:#fff
+    style TECH_F fill:#a29bfe,color:#fff
+    style EXEC_F fill:#2d3436,color:#fff
 ```
 
----
-
-## Combat Micro System
+### 3) 전투 마이크로 시스템
 
 ```mermaid
 graph TB
     subgraph "🎯 Advanced Micro Controller v3"
-        direction TB
-        RAVAGER["💥 Ravager<br/>Corrosive Bile 예측 사격"]
-        LURKER["🕳️ Lurker<br/>Burrow 타이밍 최적화"]
-        QUEEN["👸 Queen<br/>Transfuse 자동 힐"]
-        VIPER["🐍 Viper<br/>Abduct 고가치 타겟"]
-        CORRUPTOR["🦅 Corruptor<br/>Caustic Spray 집중"]
-        BANELING["💣 Baneling<br/>최적 폭발 위치"]
-        MUTA["🦇 Mutalisk<br/>Magic Box + 견제"]
-        INFESTOR["🧠 Infestor<br/>Fungal + Neural"]
+        direction LR
+        RAVAGER_M["💥 Ravager\nCorrosive Bile 예측 사격"]
+        LURKER_M["🕳️ LurkerMP\n★P44 LURKERMP 수정\nBurrow 타이밍 최적화"]
+        QUEEN_M["👸 Queen\nTransfuse 자동 힐"]
+        VIPER_M["🐍 Viper\nAbduct 고가치 타겟"]
+        CORRUPTOR_M["🦅 Corruptor\nCaustic Spray 집중"]
+        BANELING_M["💣 Baneling\n최적 폭발 위치"]
+        MUTA_M["🦇 Mutalisk\nMagic Box + 견제"]
+        INFESTOR_M["🧠 Infestor\nFungal + Neural"]
     end
 
-    subgraph "🔥 Focus Fire Coordinator"
-        FF["타겟 집중 사격<br/>Overkill 방지"]
+    subgraph "🔥 Focus Fire + HP 가중 전투력"
+        FF_M["★P41 supply × HP%\n울트라=6×HP%\nHP가중 정확 계산"]
     end
 
     subgraph "💃 Movement Tactics"
-        STUTTER["Stutter Step Kiting"]
-        FLANK["Multiprong Flanking"]
-        RETREAT["Dynamic Retreat"]
+        STUTTER_M["Stutter Step Kiting"]
+        FLANK_M["Multiprong Flanking"]
+        RETREAT_M["Dynamic Retreat\n★P41 O(N+M) 최적화"]
     end
 
-    RAVAGER & LURKER & QUEEN & VIPER & CORRUPTOR & BANELING & MUTA & INFESTOR --> FF
-    FF --> STUTTER & FLANK & RETREAT
+    RAVAGER_M & LURKER_M & QUEEN_M & VIPER_M & CORRUPTOR_M & BANELING_M & MUTA_M & INFESTOR_M --> FF_M
+    FF_M --> STUTTER_M & FLANK_M & RETREAT_M
 
-    style RAVAGER fill:#d63031,color:#fff
-    style LURKER fill:#636e72,color:#fff
-    style QUEEN fill:#6c5ce7,color:#fff
-    style VIPER fill:#00b894,color:#fff
-    style BANELING fill:#fdcb6e,color:#000
-    style MUTA fill:#0984e3,color:#fff
-    style FF fill:#e17055,color:#fff
+    style RAVAGER_M fill:#d63031,color:#fff
+    style LURKER_M fill:#636e72,color:#fff
+    style QUEEN_M fill:#6c5ce7,color:#fff
+    style VIPER_M fill:#00b894,color:#fff
+    style BANELING_M fill:#fdcb6e,color:#000
+    style MUTA_M fill:#0984e3,color:#fff
+    style FF_M fill:#e17055,color:#fff
 ```
 
-### Counter Unit Matrix
+### 4) 카운터 유닛 매트릭스
 
 ```mermaid
 graph LR
@@ -1095,12 +735,12 @@ graph LR
     subgraph "🔵 vs Protoss"
         P1["Zealot/Stalker"] -->|"counter"| PC1["🐛 바퀴 + 히드라"]
         P2["Void Ray"] -->|"counter"| PC2["🐛 히드라 + 포자"]
-        P3["Immortal"] -->|"counter"| PC3["🐜 저글링 물량"]
+        P3["Dark Templar"] -->|"counter"| PC3["🔎 탐지기 + 포자"]
     end
 
     subgraph "🟣 vs Zerg"
         Z1["Zergling Rush"] -->|"counter"| ZC1["💣 바네 + 스파인"]
-        Z2["Roach/Ravager"] -->|"counter"| ZC2["🐛 히드라 + 럴커"]
+        Z2["Roach/Ravager"] -->|"counter"| ZC2["🕳️ 히드라 + LurkerMP"]
     end
 
     style T1 fill:#d63031,color:#fff
@@ -1111,9 +751,29 @@ graph LR
     style ZC1 fill:#00b894,color:#fff
 ```
 
----
+### 5) Gen-AI Self-Healing Pipeline
 
-## Intel & Scouting Pipeline
+```mermaid
+sequenceDiagram
+    participant Bot as 🤖 Bot
+    participant Log as 📝 bot.log
+    participant Detect as 🔍 Error Detector
+    participant Gemini as 🔮 Gemini AI
+    participant Patch as 🔧 Auto Patcher
+    participant Dash as 📊 Dashboard
+
+    Bot->>Log: Runtime Error (Traceback)
+    Log->>Detect: ★P43 tRPC 파싱 (5초 갱신)
+    Detect->>Dash: ERROR/WARNING 실시간 표시
+    Detect->>Gemini: Traceback + Source Code
+    Gemini->>Gemini: Analyze and Generate Fix
+    Gemini->>Patch: Return Patch Code
+    Patch->>Bot: Apply Patch + Restart
+    Bot->>Dash: Health Check OK
+    Note over Bot,Dash: ⏱️ 24/7 무중단 자율 운영
+```
+
+### 6) Intel & Scouting Pipeline
 
 ```mermaid
 sequenceDiagram
@@ -1124,12 +784,13 @@ sequenceDiagram
     participant Combat as ⚔️ Combat
 
     Scout->>Intel: 적 건물/유닛 발견
-    Intel->>Intel: 빌드 패턴 분석<br/>(terran_bio / protoss_stargate / ...)
-    Intel->>Intel: 위협 수준 판정<br/>(none → light → medium → heavy → critical)
-    Intel->>BB: 패턴 + 신뢰도 + 위협 저장
+    Intel->>Intel: enemy_unit_counts 누적 저장
+    Intel->>Intel: 빌드 패턴 분석
+    Intel->>Intel: ★P42 공격 타이밍 예측
+    Intel->>BB: 패턴 + 신뢰도 + 예측 공격 시간 저장
     BB->>Strategy: 전략 결정 요청
     Strategy->>Combat: 카운터 유닛 생산 지시
-    Note over Scout,Combat: 실시간 정보 → 즉시 전략 반영
+    Note over Scout,Combat: ★P44 화면 밖 이탈 유닛도 추적 유지
 ```
 
 ```mermaid
@@ -1146,455 +807,352 @@ pie title 적 빌드 패턴 감지 분류
 
 ---
 
-## Module Structure — 541 Python Files
+## 🟢 크립 시스템 (Phase 45 최적화)
 
 ```mermaid
-graph TB
-    subgraph "📦 wicked_zerg_challenger/ — 541 Python Files"
-        MAIN["🤖 wicked_zerg_bot_pro_impl.py<br/><i>메인 봇 엔진</i>"]
-        STEP["🔄 bot_step_integration.py<br/><i>on_step 통합 루프</i>"]
+flowchart TD
+    QN_C["👸 퀸\nenergy >= 50"]
+    TUM_C["🟢 기존 크립 종양\nBurrowed"]
 
-        subgraph "🧠 Core Systems"
-            CORE["core/<br/>매니저 팩토리·레지스트리"]
-            CFG["config/<br/>설정 로더·유닛 설정"]
-            CMD["commander/<br/>AI 지휘관 (vLLM/Gemini)"]
-        end
+    QN_C -->|"BUILD_CREEPTUMOR_QUEEN"| POS1_C["📍 최적 위치 계산\n_find_best_tumor_position()"]
+    TUM_C -->|"★P45: is_idle 체크\n(이전: get_available_abilities\nO(n) API 호출 제거)"| POS2_C["📍 최적 확산 위치\n★P45 BFS 300 cap"]
 
-        subgraph "⚔️ Combat (12+ modules)"
-            CMB["combat/<br/>harassment · baneling<br/>stutter_step · kiting<br/>creep_denial · focus_fire"]
-        end
+    POS1_C & POS2_C --> SCORE_C["🎯 위치 스코어링\n1. 확장 기지 방향\n2. 적 방향\n3. 거리 x 0.1"]
+    SCORE_C --> DEDUP_C["🔄 중복 제거\nTUMOR_MIN_DISTANCE 8.0"]
+    DEDUP_C --> SPREAD_C["🌱 크립 확산 ACTION"]
+    SPREAD_C --> COVER_C["📊 커버리지 추적\n30초마다 샘플링"]
 
-        subgraph "💰 Economy & Production"
-            ECO["economy_manager<br/>자원·일꾼 최적화"]
-            PRD["production_controller<br/>유닛 생산 큐"]
-            RES["resource_manager<br/>가스/미네랄 비율"]
-        end
-
-        subgraph "👁️ Intel & Defense"
-            SCT["scouting/<br/>정찰 시스템 v2"]
-            INTL["intel_manager<br/>적 빌드 분석"]
-            DEFS["defense_coordinator<br/>방어 조율"]
-            EARLY["early_defense_system<br/>초반 방어"]
-        end
-
-        subgraph "🎓 Learning"
-            AI["ai/<br/>행동 트리·전략 트리"]
-            TRN["local_training/<br/>로컬 훈련"]
-            KB["knowledge/<br/>빌드오더 DB (9개)"]
-        end
-
-        subgraph "🧪 Tests"
-            TST["tests/<br/>314 tests passing<br/>1 skipped"]
-        end
-
-        MAIN --> STEP
-        STEP --> CORE & CMB & ECO & SCT & DEFS & AI
-        CORE --> CFG & CMD
-        ECO --> RES
-        SCT --> INTL
-    end
-
-    style MAIN fill:#e94560,color:#fff
-    style STEP fill:#0f3460,color:#fff
-    style TST fill:#00b894,color:#fff
+    style QN_C fill:#6c5ce7,color:#fff
+    style TUM_C fill:#00b894,color:#fff
+    style POS2_C fill:#e17055,color:#fff
+    style SCORE_C fill:#fdcb6e,color:#000
+    style COVER_C fill:#0984e3,color:#fff
 ```
 
 ---
 
-## Engineering Troubleshooting
-
-### 1) `self.bot.do()` 래핑 누락 → 유닛 명령 불발 해결
+## 🔧 엔지니어링 핵심 수정 이력
 
 ```mermaid
 graph LR
-    subgraph "❌ Before — 44건 발견"
-        B1["unit.attack(target)"] --> B2["반환값 무시"] --> B3["SC2 엔진 미수신"]
-        B3 --> B4["유닛 멈춤<br/>미네랄 축적"]
+    subgraph "❌ Before (버그)"
+        BUG1["unit.attack(target)\n반환값 무시"]
+        BUG2["units.first\n빈 컬렉션?"]
+        BUG3["health / health_max\nhealth_max=0?"]
+        BUG4["O(N×M) 유닛 루프"]
+        BUG5["supply_cost 속성\n없음 → 모두 1"]
+        BUG6["UnitTypeId.LURKER\n존재 안 함"]
     end
 
-    subgraph "✅ After — self.bot.do() 래핑"
-        A1["result = self.bot.do(<br/>unit.attack(target))"] --> A2["await 체크"] --> A3["SC2 엔진 수신"]
-        A3 --> A4["유닛 정상 작동"]
+    subgraph "✅ After (수정)"
+        FIX1["self.bot.do(\nunit.attack(target))"]
+        FIX2["if units.exists:\nunits.first"]
+        FIX3["health / max(\nhealth_max, 1)"]
+        FIX4["★P41 O(N+M)\n군집 중심 기반 필터"]
+        FIX5["★P41 _SUPPLY_TABLE\n13종 정확한 공급 비용"]
+        FIX6["★P44 LURKERMP\n즉시 업그레이드 트리거"]
     end
 
-    style B4 fill:#d63031,color:#fff
-    style A4 fill:#00b894,color:#fff
-```
+    BUG1 --> FIX1
+    BUG2 --> FIX2
+    BUG3 --> FIX3
+    BUG4 --> FIX4
+    BUG5 --> FIX5
+    BUG6 --> FIX6
 
-### 2) `.exists` 가드 누락 → 빈 컬렉션 크래시 방지
-
-```mermaid
-graph LR
-    subgraph "❌ Before — 6건"
-        C1["units.first"] --> C2["units가 비었으면?"] --> C3["💥 IndexError<br/>크래시"]
-    end
-
-    subgraph "✅ After — .exists 가드"
-        D1["if units.exists:"] --> D2["units.first"] --> D3["안전 접근"]
-    end
-
-    style C3 fill:#d63031,color:#fff
-    style D3 fill:#00b894,color:#fff
-```
-
-### 3) Division by Zero → health_max 가드
-
-```mermaid
-graph LR
-    subgraph "❌ Before — 3건"
-        E1["health / health_max"] --> E2["health_max == 0?"] --> E3["💥 ZeroDivisionError"]
-    end
-
-    subgraph "✅ After"
-        F1["if health_max > 0:"] --> F2["health / health_max"] --> F3["안전 계산"]
-    end
-
-    style E3 fill:#d63031,color:#fff
-    style F3 fill:#00b894,color:#fff
-```
-
-### 4) Race Condition → 중복 건설 0%
-
-```mermaid
-graph LR
-    subgraph "❌ Before"
-        C1["매니저 A: 산란못 없음!"] --> C3["산란못 x3 건설"]
-        C2["매니저 B: 산란못 없음!"] --> C3
-    end
-
-    subgraph "✅ After — SSoT"
-        D1["매니저 A: 건설 예약 Flag"] --> D3["산란못 x1 건설"]
-        D2["매니저 B: Flag 확인 → Skip"] --> D3
-    end
-
-    style C3 fill:#d63031,color:#fff
-    style D3 fill:#00b894,color:#fff
-```
-
-### 5) 미네랄 Overflow → Flush 알고리즘
-
-```mermaid
-graph TD
-    CHECK{"💎 미네랄 > 500?"}
-    CHECK -->|"Yes"| FLUSH["🐜 Emergency Flush Mode<br/>저글링 폭생산"]
-    CHECK -->|"No"| NORMAL["📊 Normal Production"]
-    FLUSH --> BALANCE["⚖️ 자원 균형 회복"]
-    NORMAL --> BALANCE
-
-    style FLUSH fill:#fdcb6e,color:#000
-    style BALANCE fill:#00b894,color:#fff
+    style BUG1 fill:#d63031,color:#fff
+    style BUG2 fill:#d63031,color:#fff
+    style BUG3 fill:#d63031,color:#fff
+    style BUG4 fill:#d63031,color:#fff
+    style BUG5 fill:#d63031,color:#fff
+    style BUG6 fill:#d63031,color:#fff
+    style FIX1 fill:#00b894,color:#fff
+    style FIX2 fill:#00b894,color:#fff
+    style FIX3 fill:#00b894,color:#fff
+    style FIX4 fill:#00b894,color:#fff
+    style FIX5 fill:#00b894,color:#fff
+    style FIX6 fill:#00b894,color:#fff
 ```
 
 ---
 
-## Blackboard Architecture — 공유 상태 관리
+## 📋 Blackboard Architecture — SSoT
 
 ```mermaid
 graph TB
     subgraph "📋 Blackboard (Single Source of Truth)"
         direction LR
-        THREAT["threat_level<br/><i>none~critical</i>"]
-        PATTERN["enemy_build_pattern<br/><i>terran_bio, protoss_robo...</i>"]
-        ARMY["army_supply<br/><i>아군/적군 전투력</i>"]
-        ECON["economy_status<br/><i>미네랄/가스/일꾼수</i>"]
-        SCOUT["scout_data<br/><i>정찰 결과</i>"]
+        THREAT_BB["threat_level\nnone~critical"]
+        PATTERN_BB["enemy_build_pattern\nterran_bio, protoss_robo..."]
+        ARMY_BB["army_supply\nHP 가중 전투력 ★P41"]
+        ECON_BB["economy_status\n미네랄/가스/일꾼수"]
+        SCOUT_BB["scout_data\n정찰 결과"]
+        ATCK_BB["enemy_attack_predicted_time\n★P42 공격 타이밍 예측"]
+        IMMINENT_BB["enemy_attack_imminent\n★P42 30초 이내 공격?"]
     end
 
-    INTEL_W["🔎 Intel Manager"] -->|"write"| THREAT & PATTERN
-    ECON_W["💰 Economy Manager"] -->|"write"| ECON
-    SCOUT_W["👁️ Scout System"] -->|"write"| SCOUT
-    COMBAT_W["⚔️ Combat Manager"] -->|"write"| ARMY
+    INTEL_BB["🔎 Intel Manager\n★P42 타이밍 예측"] -->|"write"| THREAT_BB & PATTERN_BB & ATCK_BB & IMMINENT_BB
+    ECON_BB2["💰 Economy Manager\n★P39 가스 최적화"] -->|"write"| ECON_BB
+    SCOUT_BB2["👁️ Scout System"] -->|"write"| SCOUT_BB
+    COMBAT_BB["⚔️ Combat Manager\n★P41 HP가중"] -->|"write"| ARMY_BB
 
-    THREAT -->|"read"| STRAT_R["🧠 Strategy"]
-    PATTERN -->|"read"| PROD_R["🏭 Production"]
-    ARMY -->|"read"| DEF_R["🛡️ Defense"]
-    ECON -->|"read"| PROD_R
-    SCOUT -->|"read"| STRAT_R
+    THREAT_BB -->|"read"| STRAT_BB["🧠 Strategy"]
+    PATTERN_BB -->|"read"| PROD_BB["🏭 Production"]
+    ARMY_BB -->|"read"| DEF_BB["🛡️ Defense"]
+    ECON_BB -->|"read"| PROD_BB
+    ATCK_BB -->|"read"| STRAT_BB
+    IMMINENT_BB -->|"read"| DEF_BB
 
-    style THREAT fill:#d63031,color:#fff
-    style PATTERN fill:#6c5ce7,color:#fff
-    style ARMY fill:#e17055,color:#fff
-    style ECON fill:#00b894,color:#fff
-    style SCOUT fill:#0984e3,color:#fff
+    style THREAT_BB fill:#d63031,color:#fff
+    style PATTERN_BB fill:#6c5ce7,color:#fff
+    style ARMY_BB fill:#e17055,color:#fff
+    style ECON_BB fill:#00b894,color:#fff
+    style SCOUT_BB fill:#0984e3,color:#fff
+    style ATCK_BB fill:#fdcb6e,color:#000
+    style IMMINENT_BB fill:#b71540,color:#fff
 ```
 
 ---
 
-## Potential Field Navigation
+## ⚡ Potential Field Navigation
 
 ```mermaid
 graph TB
     subgraph "🗺️ Potential Field System"
-        direction TB
-        ALLY["🟢 Ally Units<br/>Weight: 1.0 · Radius: 4.0<br/><i>인력 (Attraction)</i>"]
-        ENEMY["🔴 Enemy Units<br/>Weight: 1.4 · Radius: 6.0<br/><i>척력 (Repulsion)</i>"]
-        STRUCT["🏗️ Structures<br/>Weight: 6.0 · Radius: 8.0<br/><i>고가치 목표</i>"]
-        TERRAIN["🌍 Terrain<br/>Weight: 8.0 · Radius: 5.0<br/><i>지형 장벽</i>"]
-        SPLASH["💥 Splash Zone<br/>Weight: 3.0<br/><i>범위 피해 회피</i>"]
+        ALLY_PF["🟢 Ally Units\nWeight: 1.0 · Radius: 4.0\n인력 (Attraction)"]
+        ENEMY_PF["🔴 Enemy Units\nWeight: 1.4 · Radius: 6.0\n척력 (Repulsion)"]
+        STRUCT_PF["🏗️ Structures\nWeight: 6.0 · Radius: 8.0\n고가치 목표"]
+        TERRAIN_PF["🌍 Terrain\nWeight: 8.0 · Radius: 5.0\n지형 장벽"]
+        SPLASH_PF["💥 Splash Zone\nWeight: 3.0\n범위 피해 회피"]
     end
 
-    ALLY & ENEMY & STRUCT & TERRAIN & SPLASH --> FIELD["⚡ Combined Field Vector"]
-    FIELD --> MOVE["🎯 Optimal Movement Direction"]
+    ALLY_PF & ENEMY_PF & STRUCT_PF & TERRAIN_PF & SPLASH_PF --> FIELD_PF["⚡ Combined Field Vector"]
+    FIELD_PF --> MOVE_PF["🎯 Optimal Movement Direction"]
 
-    style ALLY fill:#00b894,color:#fff
-    style ENEMY fill:#d63031,color:#fff
-    style STRUCT fill:#fdcb6e,color:#000
-    style TERRAIN fill:#636e72,color:#fff
-    style SPLASH fill:#e17055,color:#fff
-    style FIELD fill:#6c5ce7,color:#fff
+    style ALLY_PF fill:#00b894,color:#fff
+    style ENEMY_PF fill:#d63031,color:#fff
+    style STRUCT_PF fill:#fdcb6e,color:#000
+    style TERRAIN_PF fill:#636e72,color:#fff
+    style SPLASH_PF fill:#e17055,color:#fff
+    style FIELD_PF fill:#6c5ce7,color:#fff
 ```
 
 ---
 
-## Project Stats
+## 📊 프로젝트 통계
 
 ```mermaid
-pie title 버그 심각도 분포 (누적 103건)
-    "CRITICAL" : 1
-    "HIGH" : 82
-    "MEDIUM" : 14
-```
-
-```mermaid
-pie title 버그 유형 분포 (103건)
+pie title 버그 유형 분포 (185건)
     "self.bot.do() 래핑 누락" : 57
     "빈 컬렉션 .exists 가드" : 10
     "Division by Zero" : 13
-    "타입 에러" : 2
-    "잘못된 API 구문" : 1
-    "로직 에러/충돌" : 14
+    "supply/타입 ID 오류" : 15
+    "로직/충돌 에러" : 45
+    "print 스팸 제거" : 20
+    "기타 API 오류" : 25
 ```
 
 ```mermaid
 pie title 테스트 결과 (329건)
-    "Passed" : 322
-    "Skipped" : 7
-    "Failed" : 0
+    "Passed (322)" : 322
+    "Skipped (7)" : 7
+```
+
+```mermaid
+xychart-beta
+    title "모듈별 파일 수"
+    x-axis ["Combat", "Economy", "AI/Strat", "Scouting", "Defense", "Core", "Tests", "Creep"]
+    y-axis "파일 수" 0 --> 80
+    bar [65, 30, 45, 20, 25, 40, 35, 12]
 ```
 
 ### Quality Dashboard
 
 | Metric | Value | Status |
-|--------|-------|--------|
+|:---|:---:|:---:|
 | Python 파일 수 | 541 | ✅ 전체 구문 검사 통과 |
-| 누적 버그 수정 | 103건 (11 세션) | ✅ CRITICAL 0건 잔존 |
-| 테스트 스위트 | 322 passed / 0 failed / 7 skipped | ✅ 전체 통과 |
+| 누적 버그 수정 | **185건** | ✅ CRITICAL 0건 잔존 |
+| 테스트 스위트 | 322 passed / 7 skipped | ✅ 전체 통과 |
+| 완료 Phase | **44개** | ✅ P45 WIP |
+| 지원 언어 | **63+** | ✅ 에소테릭 포함 |
 | 빌드오더 | 9개 | ✅ Roach Rush, 12Pool 등 |
-| 종족 대응 비율 | 4개 종족 | ✅ Terran, Protoss, Zerg, Random |
-| 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, Lurker, Queen, Viper... |
-| 자동 모니터링 | 1시간 주기 | ✅ 스케줄 태스크 운영 중 |
+| 마이크로 컨트롤러 | 8종 유닛별 전술 | ✅ Ravager, LurkerMP, Queen, Viper... |
+| 자동 모니터링 | 1시간 주기 | ✅ Gemini 24/7 |
 
-### Bug Fix Timeline
+---
+
+## 📊 버그 수정 타임라인
 
 ```mermaid
 gantt
-    title 버그 수정 타임라인 (103건)
+    title 버그 수정 타임라인 (185건)
     dateFormat YYYY-MM-DD
     section Session 1-4
-        13건 수정 (CRITICAL 1, HIGH 8, MEDIUM 4)   :done, s1, 2026-03-25, 1d
-    section Session 5 — Large Scale
-        30건 수정 (HIGH 28, MEDIUM 2)              :done, s5, 2026-03-26, 1d
-    section Session 6 — Deep Scan
-        17건 수정 (HIGH 16, MEDIUM 1)              :done, s6, 2026-03-26, 1d
-    section Session 7 — Logic Inspection
-        27건 수정 (do래핑 13 + 0나누기 10 + 가드 4) :done, s7, 2026-03-27, 1d
-    section Session 8 — System Conflict
-        파괴시스템 4개 충돌 해결 + ZvP 빌드 수정    :done, s8, 2026-03-27, 1d
-    section Architecture
-        189개 MD 정리 + 대용량 파일 제거            :done, s9, 2026-03-27, 1d
-    section Session 9 — Win Rate Fix
-        자살공격 방지 + 테크알림 + ZvZ 대응         :done, s10, 2026-03-28, 1d
-    section Session 10 — Phase 12
-        집결복원 + 폴백전략 + 디컨플릭트 + Hive가속 :done, s11, 2026-03-28, 1d
-    section Session 11 — Phase 13
-        자동생산 + MicroV3 + 테스트 0건 달성       :done, s12, 2026-03-28, 1d
-    section Session 12 — Phase 14
-        변이유닛 활성화 + 테크건물 보장 + 동적비율  :done, s13, 2026-03-28, 1d
-    section Session 13 — Phase 15
-        전투마이크로 강화 + 점진적후퇴 + 포커스파이어 :done, s14, 2026-03-28, 1d
-    section Session 14 — Phase 16
-        경제최적화 + 66드론컷오프 + 가스밸런스     :done, s15, 2026-03-28, 1d
-    section Session 15 — Phase 17
-        정찰대응 강화 + 카운터빌드 + 오버로드정찰   :done, s16, 2026-03-28, 1d
-    section Session 16 — Phase 18
-        맵컨트롤 + 크립교전 + 전진스파인 + 공격크립 :done, s17, 2026-03-28, 1d
-    section Session 17 — Phase 19
-        후반전환 + 울트라 + 미네랄소비 + 재확장    :done, s18, 2026-03-28, 1d
-    section Session 18 — Phase 20
-        공격타이밍 + 적약점감지 + 멀티프롱공격     :done, s19, 2026-03-28, 1d
-    section Session 19 — Phase 21
-        ZvT카운터 + ZvP바이퍼 + ZvZ럴커전환      :done, s20, 2026-03-28, 1d
-    section Session 20 — Phase 22
-        DeadCode 10대매니저 일괄활성화            :done, s21, 2026-03-28, 1d
-    section Session 21 — Phase 23
-        퀸인젝트우선 + 오버로드선행생산          :done, s22, 2026-03-28, 1d
-    section Session 22 — Phase 24
-        멀티드롭방어 + Blackboard전파           :done, s23, 2026-03-28, 1d
-    section Session 23 — Phase 25
-        빌드오더재시도 + BO전환 + 초반비율     :done, s24, 2026-03-28, 1d
-    section Session 24 — Phase 26
-        포자2분 + 크립퀸방어투입 + 러시감지↓  :done, s25, 2026-03-28, 1d
-    section Session 25 — Phase 27
-        바네링attack + 변이idle제거         :done, s26, 2026-03-28, 1d
-    section Session 26 — Phase 28~30
-        확장타이밍 + 충돌해소 + 공격판단   :done, s27, 2026-03-28, 1d
-    section Session 27 — Phase 31
-        테크트리최적화 + Hive idle제거 + UltraCavern :done, s28, 2026-03-28, 1d
-    section Session 28 — Phase 32
-        하라스타겟수정 + 저글링8마리 + 뮤탈후퇴개선  :done, s29, 2026-03-28, 1d
-    section Session 29 — Phase 33
-        정찰OL재파견 + 재정찰attack + idle2마리    :done, s30, 2026-03-28, 1d
-    section Session 30 — Phase 34
-        ZvZ저글링시간제거 + hydra키오타 + 추적자카운터 :done, s31, 2026-03-28, 1d
-    section Session 31 — Phase 35
-        통합검증 + 321테스트 + 아레나패키지재생성   :done, s32, 2026-03-28, 1d
-    section Session 32 — Phase 36
-        퀸탐지거리하향 + 0마리강제생산 + print제거  :done, s33, 2026-03-28, 1d
-    section Session 33 — Phase 37
-        GREATERSPIRE뮤탈허용 + VIPER-HIVE요구사항  :done, s34, 2026-03-28, 1d
-    section Session 34 — Phase 38
-        전투중유닛후퇴방지 + 랠리기준최근접기지   :done, s35, 2026-03-28, 1d
-    section Session 35 — Phase 39
-        가스일꾼필터버그 + 초반가스보호 + boost동시채우기   :done, s36, 2026-03-28, 1d
-    section Session 36 — Phase 40
-        통합검증 + 아레나패키지재생성 + 167테스트통과   :done, s37, 2026-03-28, 1d
-    section Session 37 — Phase 41
-        HP가중전투력 + supply테이블 + O(N×M)→O(N+M) 최적화   :done, s38, 2026-03-28, 1d
-    section Session 38 — Phase 42
-        Python적AI예측 + TypeScript전투력위젯 다중언어커버   :done, s39, 2026-03-28, 1d
-    section Monitoring
-        자동 모니터링 운영 중                        :active, mon, 2026-03-25, 7d
+        13건 (CRITICAL 1, HIGH 8)     :done, s1, 2026-03-25, 1d
+    section Session 5-6
+        47건 (HIGH 44, MEDIUM 3)      :done, s2, 2026-03-26, 1d
+    section Session 7-8
+        27건 (do래핑 + 로직충돌)       :done, s3, 2026-03-27, 1d
+    section Session 9-11
+        16건 (자살공격+집결+자동생산)  :done, s4, 2026-03-28, 1d
+    section Phase 12-30
+        47건 (전 시스템 고도화)       :done, s5, 2026-03-28, 1d
+    section Phase 31-40
+        30건 (안정화+아레나 패키지)   :done, s6, 2026-03-28, 1d
+    section Phase 41-44
+        5건 (LURKERMP + supply)       :done, s7, 2026-03-29, 1d
+    section Phase 45+ 진행중
+        크립/업그레이드 최적화         :active, s8, 2026-03-30, 3d
 ```
 
 ---
 
-## Build Order Database
+## 🏗️ 빌드오더 데이터베이스
 
 ```mermaid
 graph LR
     subgraph "🏗️ 9 Build Orders"
         direction TB
-        BO1["🐜 12 Pool Rush<br/><i>초반 저글링 러시</i>"]
-        BO2["🐛 Roach Rush<br/><i>바퀴 타이밍 공격</i>"]
-        BO3["🏭 Macro Hatch<br/><i>확장 우선</i>"]
-        BO4["🦇 Muta Ling Bane<br/><i>뮤탈 견제 + 바네링</i>"]
-        BO5["🐍 Hydra Lurker<br/><i>히드라/럴커 조합</i>"]
-        BO6["🐛 Roach Hydra<br/><i>바퀴/히드라 올인</i>"]
-        BO7["💣 Baneling Bust<br/><i>바네링 벽파괴</i>"]
-        BO8["🔬 Lair Tech<br/><i>레어 테크업 빌드</i>"]
-        BO9["⚡ Speed Ling<br/><i>스피드 저글링 물량</i>"]
+        BO1["🐜 12 Pool Rush\n초반 저글링 러시"]
+        BO2["🐛 Roach Rush\n바퀴 타이밍 공격"]
+        BO3["🏭 Macro Hatch\n확장 우선"]
+        BO4["🦇 Muta Ling Bane\n뮤탈 견제 + 바네링"]
+        BO5["🕳️ Hydra Lurker\n히드라/LurkerMP 조합\n★P44 업그레이드 수정"]
+        BO6["🐛 Roach Hydra\n바퀴/히드라 올인"]
+        BO7["💣 Baneling Bust\n바네링 벽파괴"]
+        BO8["🔬 Lair Tech\n레어 테크업 빌드"]
+        BO9["⚡ Speed Ling\n스피드 저글링 물량"]
     end
 
-    BO1 & BO2 & BO7 --> AGGRO["🔴 Aggressive"]
-    BO3 & BO8 --> MACRO["🟢 Macro"]
-    BO4 & BO5 & BO6 & BO9 --> MID["🟡 Midgame"]
+    BO1 & BO2 & BO7 --> AGGRO_BO["🔴 Aggressive"]
+    BO3 & BO8 --> MACRO_BO["🟢 Macro"]
+    BO4 & BO5 & BO6 & BO9 --> MID_BO["🟡 Midgame"]
 
-    style AGGRO fill:#d63031,color:#fff
-    style MACRO fill:#00b894,color:#fff
-    style MID fill:#fdcb6e,color:#000
+    style AGGRO_BO fill:#d63031,color:#fff
+    style MACRO_BO fill:#00b894,color:#fff
+    style MID_BO fill:#fdcb6e,color:#000
+    style BO5 fill:#636e72,color:#fff
 ```
 
 ---
 
-## Tech Stack
-
-```mermaid
-graph LR
-    subgraph "🔧 Language & Runtime"
-        PY["🐍 Python 3.10+"]
-    end
-
-    subgraph "🧠 AI / ML"
-        PT["PyTorch"]
-        RL["RL Policy Network"]
-        IL["Imitation Learning"]
-        RPL["SC2 Replay Mining"]
-    end
-
-    subgraph "🎮 Simulation"
-        SC2["StarCraft II API"]
-        BSC["burnysc2"]
-    end
-
-    subgraph "☁️ Cloud / DevOps"
-        VTX["Vertex AI"]
-        GMN["Gemini 1.5 Pro"]
-        SH["Self-Healing Pipeline"]
-    end
-
-    subgraph "📱 Frontend / GCS"
-        FLK["Flask Dashboard"]
-        RCT["TypeScript / React"]
-        AND["Android App"]
-    end
-
-    subgraph "🧪 QA / CI"
-        MON["Auto Monitor (1h)"]
-        PYC["py_compile Scan"]
-        TST["329 Tests"]
-    end
-
-    PY --> PT & SC2 & FLK & MON
-
-    style PY fill:#3776AB,color:#fff
-    style PT fill:#EE4C2C,color:#fff
-    style SC2 fill:#FF6600,color:#fff
-    style GMN fill:#4285F4,color:#fff
-    style RCT fill:#61DAFB,color:#000
-```
+## 🔧 Tech Stack
 
 | Category | Technology |
-|----------|-----------|
-| **Language** | Python 3.10+, Rust (acceleration path) |
-| **AI/ML** | PyTorch, RL Policy Network, Imitation Learning, SC2 Replay Mining |
+|:---|:---|
+| **Core Language** | Python 3.10+, Rust (PyO3 10x), TypeScript (tRPC) |
+| **AI/ML** | PyTorch, RL Policy Network, Imitation Learning (Rogue), Replay Mining |
 | **Simulation** | StarCraft II API (burnysc2/python-sc2) |
-| **Acceleration** | Rust/OpenCL/CPU fallback hybrid path |
-| **DevOps** | Vertex AI (Gemini) Self-Healing Pipeline |
-| **GCS** | Flask Dashboard + TypeScript/React + Android App |
-| **Algorithms** | Potential-Field Navigation, Async Concurrency Control |
-| **CI/QA** | Auto Monitoring (1h cycle), py_compile full scan, 314+ tests, GitHub Actions CI |
+| **Acceleration** | Rust PyO3 / OpenCL / CPU fallback hybrid |
+| **DevOps** | Vertex AI (Gemini 1.5 Pro) Self-Healing Pipeline |
+| **Dashboard** | React + tRPC + 5s auto-refresh log viewer (★P43) |
+| **GCS** | Android App + WebSocket 실시간 |
+| **CI/QA** | GitHub Actions, py_compile, pytest 322+, Arena ZIP |
 
 ---
 
-## Data Flow — Real-time Processing
+## ⏱️ Data Flow — Real-time Processing
 
 ```mermaid
 graph LR
-    subgraph "⏱️ Every Game Frame (~22.4 FPS)"
-        FRAME["🎮 Game Frame"] --> OBSERVE["👁️ Observe<br/>Units · Resources · Map"]
-        OBSERVE --> CACHE["💾 Data Cache<br/>1s TTL"]
-        CACHE --> ANALYZE["🔎 Analyze<br/>Threat · Pattern · Income"]
-        ANALYZE --> DECIDE["🧠 Decide<br/>Strategy · Targets"]
-        DECIDE --> EXECUTE["⚡ Execute<br/>Unit Commands"]
-        EXECUTE --> FRAME
+    subgraph "⏱️ Every Game Frame (22.4 FPS)"
+        FRAME_DF["🎮 Game Frame"] --> OBSERVE_DF["👁️ Observe\nUnits · Resources · Map"]
+        OBSERVE_DF --> CACHE_DF["💾 Data Cache\n1s TTL"]
+        CACHE_DF --> ANALYZE_DF["🔎 Analyze\n★P42 Attack Timing Predict"]
+        ANALYZE_DF --> DECIDE_DF["🧠 Decide\n★P41 HP-weighted Power"]
+        DECIDE_DF --> EXECUTE_DF["⚡ Execute\nUnit Commands"]
+        EXECUTE_DF --> FRAME_DF
     end
 
-    style FRAME fill:#2d3436,color:#fff
-    style OBSERVE fill:#0984e3,color:#fff
-    style CACHE fill:#636e72,color:#fff
-    style ANALYZE fill:#6c5ce7,color:#fff
-    style DECIDE fill:#e17055,color:#fff
-    style EXECUTE fill:#00b894,color:#fff
+    style FRAME_DF fill:#2d3436,color:#fff
+    style OBSERVE_DF fill:#0984e3,color:#fff
+    style CACHE_DF fill:#636e72,color:#fff
+    style ANALYZE_DF fill:#6c5ce7,color:#fff
+    style DECIDE_DF fill:#e17055,color:#fff
+    style EXECUTE_DF fill:#00b894,color:#fff
 ```
 
 ---
 
-## Career Roadmap
+## 🎓 경제 시스템 상태 머신
+
+```mermaid
+stateDiagram-v2
+    [*] --> EarlyGame : 게임 시작
+
+    state EarlyGame {
+        [*] --> DronePump : 0~3분
+        DronePump --> FirstGas : 1분15초~1분30초
+        FirstGas --> SecondGas : 2분 2번째 가스
+        SecondGas --> TechBuild : 테크 건물 건설
+        note right of DronePump
+            ★ Phase 39
+            3분 이내 가스 감소 금지
+            (테크 가스 보호)
+        end note
+    }
+
+    EarlyGame --> MidGame : 3분 이후
+
+    state MidGame {
+        [*] --> GasBalance
+        GasBalance --> BoostGas : gas<100 AND mineral>500
+        GasBalance --> ReduceGas : gas>500 AND mineral<300
+        BoostGas --> GasBalance : ★P39 모든 익스트랙터 동시
+        ReduceGas --> GasBalance : ★P39 vespene carrier 수정
+    }
+
+    MidGame --> LateGame : 8분 이후
+
+    state LateGame {
+        [*] --> HiveTech3 : Hive 변이
+        HiveTech3 --> UltraViper3 : 후반 전환
+        UltraViper3 --> ResourceMax3 : 미네랄 1500+
+        ResourceMax3 --> UltraViper3 : 순환
+    }
+
+    LateGame --> [*] : 게임 종료
+```
+
+---
+
+## 📋 다음 대규모 계획 (Phase 45 → 50)
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                        🚀 NEXT PHASE ROADMAP (P45-P50)                             │
+├───────┬───────────────────┬──────────────────────┬───────────────────────────────┤
+│ Phase │ 카테고리          │ 언어                 │ 핵심 작업                      │
+├───────┼───────────────────┼──────────────────────┼───────────────────────────────┤
+│  P45  │ 크립 최적화       │ Python               │ idle opt, BFS cap, print→log  │
+│  P46  │ 업그레이드 AI     │ Python               │ 업그레이드 우선순위 동적 시스템 │
+│  P47  │ 모바일 REST API   │ TypeScript           │ sc2-mobile-app 엔드포인트 완성 │
+│  P48  │ Rust 바인딩       │ Rust + Python        │ 거리계산/유닛필터 PyO3 바인딩  │
+│  P49  │ 통합 검증         │ All                  │ 최종 구문검증 + 아레나 패키지   │
+│  P50  │ CI/CD 파이프라인  │ GitHub Actions       │ 자동 아레나 업로드             │
+└───────┴───────────────────┴──────────────────────┴───────────────────────────────┘
+
+목표: P150+  │  90+ Languages  │  200+ Bug Fixes  │  Win Rate 20%+
+```
+
+---
+
+## 🗺️ Career Roadmap
 
 ```mermaid
 mindmap
-  root((Swarm Control<br/>System))
-    UAV/UGV
+  root((Swarm Control\nSystem))
+    UAV and UGV
       자율제어 시스템
       군집 알고리즘
       실시간 C2
       경로 계획
-    AI/ML
+    AI and ML
       Multi-Agent RL
       Imitation Learning
       Strategy Planning
       Behavior Tree
-    DevOps/MLOps
+    DevOps and MLOps
       Self-Healing Infra
       Auto Training Pipeline
       Monitoring System
@@ -1604,10 +1162,10 @@ mindmap
       Sensor Fusion
       Path Planning
       Formation Control
-    Defense/Aerospace
+    Defense and Aerospace
       무인체계 군집 전술
       ISR Mission Planning
-      Command & Control
+      Command and Control
       Anti-Swarm Defense
 ```
 
@@ -1622,233 +1180,10 @@ mindmap
 
 ---
 
-## 📋 Phase Planning (다음 대규모 계획)
-
-### 🎯 Phase 132-150 (차기 목표)
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│  다음 단계 작업 계획                                                                   │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│  P142-P150: 추가 언어 (Clojure v2, Erlang v2, F# v2, VB v2, Groovy v2)            │
-│  P151-P160: ML/Data 엔지니어링 도구 (Julia v3, R v3, Python parallel)             │
-│  P161-P170: DevOps 도구 (Terraform, Ansible, Puppet, Chef)                        │
-│                                                                                     │
-│  목표: 170+ phases, 100+ languages 달성                                             │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Project Metrics Summary
-
-```mermaid
-xychart-beta
-    title "버그 수정 누적 현황"
-    x-axis ["S1-4", "S5", "S6", "S7", "S8", "S9-10", "S11"]
-    y-axis "누적 수정 건수" 0 --> 110
-    bar [13, 43, 60, 87, 87, 99, 103]
-    line [13, 43, 60, 87, 87, 99, 103]
-```
-
-```mermaid
-xychart-beta
-    title "모듈별 코드 규모"
-    x-axis ["Combat", "Economy", "AI/Strategy", "Scouting", "Defense", "Core", "Tests"]
-    y-axis "파일 수" 0 --> 80
-    bar [65, 30, 45, 20, 25, 40, 35]
-```
-
-### Win Rate Analysis (100 Games)
-
-```mermaid
-pie title 종족별 승률 분석 (100게임)
-    "vs Protoss 패배" : 40
-    "vs Protoss 승리" : 3
-    "vs Terran 패배" : 17
-    "vs Terran 승리" : 6
-    "vs Zerg 패배" : 29
-    "vs Zerg 승리" : 5
-```
-
-| 매치업 | 승 | 패 | 승률 | 주요 원인 |
-|--------|---|---|------|----------|
-| **vs Terran** | 6 | 17 | 26% | Hatch First 전환 적용 |
-| **vs Zerg** | 5 | 29 | 15% | ZvZ 카운터 유닛 시스템 추가 |
-| **vs Protoss** | 3 | 40 | 7% | DT/Oracle 감지 + 포자 자동건설 |
-| **전체** | 14 | 86 | 14% | 집결시스템 복원 + 폴백전략 + 방어디컨플릭트 |
-
-### Recent Architecture Improvements (2026-03-28)
-
-```mermaid
-graph LR
-    subgraph "🔧 Session 10 — Phase 12 대규모 승률 개선"
-        direction TB
-        FIX1["🛡️ 공격 집결 복원<br/>즉시공격→70% 집결 후 공격<br/>분할공격 100서플+만 허용"]
-        FIX2["🧠 카운터 폴백 전략<br/>정찰 실패 시 종족별<br/>안전 유닛비율 자동 적용"]
-        FIX3["⚔️ 방어-공격 디컨플릭트<br/>유닛태그 추적+Blackboard<br/>방어유닛 공격명령 제외"]
-        FIX4["📦 서플라이 버퍼 강화<br/>MID 3→8 EARLY 4→6<br/>서플블록 방지"]
-        FIX5["🏗️ Hive 8분 완성<br/>인페핏 7분→5분<br/>하이브 7분→6분"]
-    end
-
-    subgraph "🔧 Session 11 — Phase 13 실전 검증"
-        direction TB
-        FIX6["🏭 비율 기반 자동생산<br/>빌드오더 후 unit_ratios<br/>부족 유닛 자동 생산"]
-        FIX7["🎯 MicroV3 활성화<br/>8종 유닛 마이크로<br/>초기화 코드 추가"]
-        FIX8["✅ 테스트 전체 통과<br/>14 failed → 0 failed<br/>322 passed / 7 skipped"]
-    end
-
-    subgraph "🔧 Session 12 — Phase 14 변이유닛 활성화"
-        direction TB
-        FIX9["🦎 UnitMorphManager 활성화<br/>4종 변이 유닛 시스템<br/>베인/래버저/럴커/브루드로드"]
-        FIX10["🏗️ 테크건물 자동보장<br/>Baneling Nest 3분<br/>Lurker Den 7분 자동건설"]
-        FIX11["📊 동적 비율 연동<br/>Blackboard unit_ratios<br/>전략→변이비율 실시간 반영"]
-    end
-
-    subgraph "🔧 Session 13 — Phase 15 전투 마이크로 강화"
-        direction TB
-        FIX12["💀 저체력 자동후퇴<br/>HP 30% 이하 유닛<br/>후방 이동 (전멸 방지)"]
-        FIX13["🎯 포커스파이어 개선<br/>가장 약한 적 우선 제거<br/>anti-splash 밸런스 조정"]
-        FIX14["🏹 원거리 카이팅 강화<br/>히드라 사거리 경계 카이팅<br/>쿨다운 기반 접근/후퇴"]
-        FIX15["📉 점진적 후퇴 시스템<br/>1.3x→재집결 1.5x→기지후퇴<br/>2.0x→본진 긴급후퇴"]
-    end
-
-    style FIX1 fill:#d63031,color:#fff
-    style FIX2 fill:#6c5ce7,color:#fff
-    style FIX3 fill:#00b894,color:#fff
-    style FIX4 fill:#fdcb6e,color:#000
-    style FIX5 fill:#0984e3,color:#fff
-    style FIX6 fill:#e17055,color:#fff
-    style FIX7 fill:#533483,color:#fff
-    style FIX8 fill:#b71540,color:#fff
-    style FIX9 fill:#00cec9,color:#000
-    style FIX10 fill:#fab1a0,color:#000
-    style FIX11 fill:#a29bfe,color:#000
-    subgraph "🔧 Session 14 — Phase 16 경제 최적화"
-        direction TB
-        FIX16["💰 66드론 하드 컷오프<br/>3기지 포화 시 군대 전환<br/>명시적 전환점 설정"]
-        FIX17["⛽ 가스 뱅킹 조기감지<br/>500→300 임계값<br/>과잉 자원 방지"]
-        FIX18["🏠 매크로 해처리 강화<br/>미네랄 1500→600<br/>라바 부족 즉시 대응"]
-    end
-
-    subgraph "🔧 Session 15 — Phase 17 정찰/대응 강화"
-        direction TB
-        FIX19["⚡ 카운터빌드 속도↑<br/>confidence 0.2→0.1<br/>폴백 3분→2분30초"]
-        FIX20["🚨 치즈 즉시 대응<br/>Blackboard 긴급전파<br/>저글링60% 비상비율"]
-        FIX21["👁️ 오버로드 정찰 개선<br/>맵센터→적 자연확장<br/>확장여부 즉시 확인"]
-        FIX22["🔔 Hidden Tech 경보<br/>DT/공중위협 즉시<br/>스포어/스파인 플래그"]
-    end
-
-    subgraph "🔧 Session 16 — Phase 18 맵 컨트롤 시스템"
-        direction TB
-        FIX23["🟢 크립 위 교전 유도<br/>랠리포인트 크립 우선<br/>45%→25% 스캔"]
-        FIX24["🏗️ 전진 스파인 방어<br/>8분+ 3기지+ 크립 위<br/>최대 4개 전진 배치"]
-        FIX25["🔥 공격적 크립 확장<br/>적진 75%까지 다단계<br/>종양 릴레이 자동화"]
-    end
-
-    subgraph "🔧 Session 17 — Phase 19 후반 전환 시스템"
-        direction TB
-        FIX26["🦣 HiveTechMaximizer<br/>활성화 (dead code 해결)<br/>울트라/브루드/바이퍼"]
-        FIX27["⚔️ 후반 유닛 비율<br/>울트라 20%+ 추가<br/>3종족 모두 업데이트"]
-        FIX28["💎 미네랄뱅킹 소비<br/>1500+ 저글링 스팸<br/>800+ 울트라 우선"]
-        FIX29["🏠 자동 재확장<br/>기지파괴 시 즉시 재건<br/>2기지 이하 트리거"]
-    end
-
-    subgraph "🔧 Session 18 — Phase 20 공격 타이밍 최적화"
-        direction TB
-        FIX30["📊 점진적 공격 임계값<br/>4분12/8분20/10분30/40<br/>후반 강력 공격"]
-        FIX31["🎯 적 약점 감지 공격<br/>확장/테크 중 임계값 70%<br/>타이밍 러시"]
-        FIX32["🔱 멀티프롱 공격<br/>80서플+ 저글링 견제팀<br/>확장기지 동시 압박"]
-    end
-
-    subgraph "🔧 Session 19 — Phase 21 종족별 특화 대응"
-        direction TB
-        FIX33["🔵 ZvT 카운터 신규<br/>바이오→바네돌진<br/>메카→레바저담즙<br/>공중→히드라코럽터"]
-        FIX34["🟡 ZvP 바이퍼 추가<br/>캐리어 3+→바이퍼<br/>어둠 집어삼키기"]
-        FIX35["🟢 ZvZ 럴커 전환<br/>6분+ 로치미러 시<br/>럴커 포지셔닝 우위"]
-    end
-
-    subgraph "🔧 Session 20 — Phase 22 Dead Code 일괄 활성화"
-        direction TB
-        FIX36["💀 10대 매니저 활성화<br/>CreepExpansion/Denial<br/>Spellcaster/Overlord 등"]
-        FIX37["🔗 CreepHighway 연결<br/>이름 불일치 수정<br/>기지간 크립 고속도로"]
-        FIX38["⚡ 36개 Dead Code 발견<br/>승률 저하 핵심 원인<br/>10개 우선 활성화"]
-    end
-
-    style FIX1 fill:#d63031,color:#fff
-    style FIX2 fill:#6c5ce7,color:#fff
-    style FIX3 fill:#00b894,color:#fff
-    style FIX4 fill:#fdcb6e,color:#000
-    style FIX5 fill:#0984e3,color:#fff
-    style FIX6 fill:#e17055,color:#fff
-    style FIX7 fill:#533483,color:#fff
-    style FIX8 fill:#b71540,color:#fff
-    style FIX9 fill:#00cec9,color:#000
-    style FIX10 fill:#fab1a0,color:#000
-    style FIX11 fill:#a29bfe,color:#000
-    style FIX12 fill:#ff7675,color:#fff
-    style FIX13 fill:#74b9ff,color:#000
-    style FIX14 fill:#55efc4,color:#000
-    style FIX15 fill:#636e72,color:#fff
-    style FIX16 fill:#ffeaa7,color:#000
-    style FIX17 fill:#dfe6e9,color:#000
-    style FIX18 fill:#81ecec,color:#000
-    style FIX19 fill:#fd79a8,color:#fff
-    style FIX20 fill:#e84393,color:#fff
-    style FIX21 fill:#6c5ce7,color:#fff
-    style FIX22 fill:#00b894,color:#fff
-    style FIX23 fill:#00b894,color:#fff
-    style FIX24 fill:#d63031,color:#fff
-    style FIX25 fill:#e17055,color:#fff
-    style FIX26 fill:#fdcb6e,color:#000
-    style FIX27 fill:#0984e3,color:#fff
-    style FIX28 fill:#fab1a0,color:#000
-    style FIX29 fill:#a29bfe,color:#000
-    style FIX30 fill:#ff7675,color:#fff
-    style FIX31 fill:#74b9ff,color:#000
-    style FIX32 fill:#55efc4,color:#000
-    style FIX33 fill:#0984e3,color:#fff
-    style FIX34 fill:#fdcb6e,color:#000
-    style FIX35 fill:#00b894,color:#fff
-    style FIX36 fill:#d63031,color:#fff
-    style FIX37 fill:#e17055,color:#fff
-    style FIX38 fill:#636e72,color:#fff
-
-    subgraph "🔧 Session 35 — Phase 39 경제 고도화"
-        direction TB
-        FIX39["⛽ 가스 일꾼 필터 수정<br/>order_target 단독→<br/>is_carrying_vespene 병행"]
-        FIX40["🛡️ 초반 가스 감소 보호<br/>3분 이내 gas cut 금지<br/>테크 건물 가스 고갈 방지"]
-        FIX41["🔄 boost 동시 채우기<br/>첫 익스트랙터만→<br/>모든 부족 익스트랙터 동시"]
-    end
-    style FIX39 fill:#00b894,color:#fff
-    style FIX40 fill:#0984e3,color:#fff
-    style FIX41 fill:#fdcb6e,color:#000
-
-    subgraph "🔧 Session 37 — Phase 41 전투 의사결정"
-        direction TB
-        FIX42["⚔️ HP 가중 전투력\nsupply × HP%\n울트라=6×HP% 정확 계산"]
-        FIX43["📊 supply_cost 테이블\n13종 유닛 정확 비용\n(이전: 모두 1로 오계산)"]
-        FIX44["⚡ O(N×M)→O(N+M)\n군집 중심 기반 필터\n후퇴 판단 대폭 최적화"]
-    end
-    subgraph "🔧 Session 38 — Phase 42 다중 언어 커버"
-        direction TB
-        FIX45["🐍 Python 적 예측\n테크건물→공격시점 추정\nBlackboard 전파"]
-        FIX46["📦 Python supply 테이블\n30종 종족별 정확 공급\n(인텔 매니저 동기화)"]
-        FIX47["⚛️ TypeScript 위젯\nKDA + 처치율 바\nMonitor.tsx 전투 분석"]
-    end
-    style FIX42 fill:#e17055,color:#fff
-    style FIX43 fill:#74b9ff,color:#000
-    style FIX44 fill:#55efc4,color:#000
-    style FIX45 fill:#a29bfe,color:#fff
-    style FIX46 fill:#fd79a8,color:#fff
-    style FIX47 fill:#00cec9,color:#000
-```
-
----
-
-## 한국어 요약 (Korean Summary)
+## 한국어 요약
 
 <details>
-<summary><b>클릭하여 한국어 설명 보기 / Click to expand Korean description</b></summary>
+<summary><b>클릭하여 한국어 전체 설명 보기</b></summary>
 
 ### 개요
 
@@ -1858,262 +1193,44 @@ graph LR
 
 ### 주요 기능
 1. **지능형 전략 관리**: 종족별 맞춤 빌드오더 (ZvP 로치 러쉬, ZvT 해처리 퍼스트, ZvZ 14풀)
-2. **경제 최적화**: 동적 가스 일꾼 관리 (뱅킹 500+ 시 자동 감소), 강제 확장 시스템
-3. **고급 전투**: 8종 유닛별 마이크로 (레바저 담즙, 럴커 잠복, 퀸 힐, 살모사 유인)
-4. **정찰 시스템 V2**: 동적 주기 (25초~15초), 순찰 경로, 젤나가 감시탑 확보
-5. **자가치유 DevOps**: Gemini AI 자동 패치 + 1시간 주기 모니터링
+2. **경제 최적화**: 동적 가스 일꾼 관리 (3분 보호 + 전체 익스트랙터 동시 채우기)
+3. **고급 전투**: 8종 유닛별 마이크로 (★LurkerMP 업그레이드 수정, HP 가중 전투력)
+4. **정찰 시스템 V2**: 동적 주기 + 적 공격 타이밍 예측 (테크 건물 기반)
+5. **자가치유 DevOps**: Gemini AI 자동 패치 + 실시간 로그 추적 (tRPC)
 
-### 승률 분석 (100게임)
+### 최근 개선 (2026-03-30)
+- **[Phase 44] 유닛 시너지 AI 고도화**: LURKER→LURKERMP 치명적 타입ID 버그 수정, 울트라리스크 근접계열 편입, composition_optimizer intel_manager 역사 데이터 병합
+- **[Phase 43] 실시간 로그 추적**: TypeScript tRPC logs 라우터 + Monitor.tsx 5초 갱신 뷰어
+- **[Phase 42] 다중 언어 커버**: Python 공격 타이밍 예측 + TypeScript KDA 위젯
+- **[Phase 41] 전투 의사결정 고도화**: supply_cost 테이블 + HP 가중 전투력 + O(N+M) 최적화
+- **[Phase 40] 통합 검증**: 아레나 패키지 재생성 (491 files, 15.2 MB)
+- **[Phase 39] 경제 고도화**: 가스 일꾼 필터 버그 수정, 3분 가스 보호, boost 동시 채우기
+
+### 승률 분석
 
 | 매치업 | 승률 | 대응 전략 |
-|--------|------|----------|
-| vs Terran | 26% | Hatch First 16 → 링/바네 전환 |
-| vs Zerg | 15% | 14풀 안정 오프닝 |
-| vs Protoss | 7% | Roach Rush 타이밍 전환 적용 |
+|:---|:---:|:---|
+| vs Terran | **26%** | Hatch First 16 → 링/바네 전환 |
+| vs Zerg | **15%** | 14풀 안정 오프닝 → LurkerMP 전환 |
+| vs Protoss | **7%** | DT 탐지 + Roach Rush 타이밍 |
 
-### 최근 개선 (2026-03-29)
-- **[Phase 52] Replay Feedback Loop 착수/고도화**: `scripts/replay_feedback_loop.py` 추가(최신 리플레이 탐색, sc2reader 기반 메타/승패 피드백 수집, `data/replay_feedback` 아티팩트 JSON/Markdown 생성, 히스토리 롤링 저장)
-- **[Phase 51] CI Arena 패키지 파이프라인 고도화**: `.github/workflows/ci.yml`에 Arena 패키지 생성 + artifact 업로드 잡 추가(`arena-package`), replay feedback artifact 업로드 잡 추가(`replay-feedback`)
-- **[Phase 50] 통합 검증 자동화**: 전체 파이프라인 기준 구문/테스트/빌드 검증 사이클 정착
-- **[Phase 49] OpenCL 브리지 확장**: Rust 가속 경로에서 OpenCL 연동을 준비하고 CPU fallback 경로 유지
-- **[Phase 48] Rust 모듈 골격 통합**: Python 중심 아키텍처에 Rust 경량 가속 레이어 도입 시작
-- **[Phase 47] 모바일 대시보드/로그 API 확장**: 실시간 관측/운영 가시성 강화
-- **[Phase 46] 크립 확장 고도화**: 전장 제어 품질 개선을 위한 크립 시스템 안정화
-- **[Phase 45] 훈련 자동화·조합 최적화 강화**: 학습 루프와 조합 의사결정 정밀도 향상
-- **[Phase 44] 유닛 시너지 AI 고도화**: LURKER→LURKERMP 치명적 타입ID 버그(러커 업그레이드 영구 미실행) 수정, 울트라리스크 근접계열 편입, composition_optimizer print→logger 교체 + intel_manager 역사 데이터 병합(화면 밖 유닛 추적)
-- **[Phase 43] 실시간 로그 추적**: TypeScript 풀스택 — `logs` tRPC 라우터(bot.log 파싱) + Monitor.tsx 실시간 뷰어(5초 갱신, ERROR/WARN 색상 코딩)
-- **[Phase 42] 다중 언어 커버**: Python 적 공격 타이밍 예측(테크→시간 추정→Blackboard), TypeScript 전투력 비율 위젯(KDA/처치율 바)
-- **[Phase 41] 전투 의사결정 고도화**: supply_cost 속성 제거→정확한 테이블, HP 가중 전투력, O(N×M)→O(N+M) 후퇴 판단 최적화
-- **[Phase 40] 통합 검증 + 아레나 패키지**: 전체 구문 OK, 아레나 ZIP 재생성(491 files)
-- **[Phase 39] 경제 고도화**: 가스 일꾼 필터 버그(익스트랙터 내부 일꾼 누락) 수정, 초반 3분 가스 감소 보호, _boost_gas_workers 조기종료 제거
-- **[Phase 38] 전투 집결 시스템**: 전투중 유닛 후퇴 방지(적 12타일 내), 랠리 기준 최전선 기지로 동적 변경
-- **[Phase 37] 후반 유닛 전환 최적화**: GreaterSpire 후 뮤탈/코럽터 허용, Viper-Hive 요구사항 추가
-- **[Phase 36] 퀸 매크로 강화**: 방어탐지거리 30→20, 퀸 0마리 시 강제생산, print스팸 제거
-- **[Phase 35] 통합 검증 + 아레나 패키지**: 구문 검증 OK, 321 테스트 통과, 아레나 ZIP 재생성 (491 files, 15.2 MB)
-- **[Phase 34] 실전 메타 대응**: ZvZ 저글링시간제한 제거, 헬리온 5분까지, hydra 키오타 수정(321 pass), 추적자 카운터 추가
-- **[Phase 33] 정찰/오버로드 강화**: 정찰OL 사망 시 재파견, 재정찰 저글링 attack(), idle 최소 2마리
-- **[Phase 32] 견제/하라스 AI 개선**: 타겟선택 방어약한곳 우선, 저글링 최소 8마리, 뮤탈 후퇴/공격 수정
-- **[Phase 31] 테크 트리 최적화**: 레어 타이밍 3분(경제안정후), Hive idle제한 제거, Ultralisk Cavern 자동건설
-- **[Phase 30] 공격 판단 고도화**: 사전 전투력 비교(적 60% 미만 시 공격자제), 전멸 방지
-- **[Phase 29] 매니저 충돌 해소**: 방어 태그 Blackboard 전파, 위협 해제 시 자동 클리어
-- **[Phase 28] 경제/확장 밸런스**: 확장 타이밍 현실화 (3rd 3분30초, 4th 5분, 5th 7분)
-- **[Phase 27] 유닛 컨트롤 튜닝**: 바네링 자폭 attack() 수정, 변이 idle 제한 해제(전투 중 변이)
-- **[Phase 26] 방어 시스템 강화**: 포자 2분 선행건설, 크립퀸 전투투입, 러시 감지 임계값 하향
-- **[Phase 25] 빌드오더 정밀화**: 스텝 재시도/스킵 시스템, Blackboard 기반 BO→자동생산 전환, 초반 비율 현실화
-- **[Phase 24] 멀티드롭 방어**: 수송선 감지→Blackboard 전파→4~6유닛 즉시 차출 대응
-- **[Phase 23] 퀸/서플라이 최적화**: 방어 중 인젝트 유지, 오버로드 동적 버퍼(4/6/8/10) 선행생산
-- **[Phase 22] Dead Code 일괄 활성화**: 36개 미활성 매니저 발견, 10대 핵심(크립/주술/오버로드 등) 활성화
-- **[Phase 21] 종족별 특화 대응**: ZvT 바이오/메카/공중 카운터, ZvP 바이퍼 추가, ZvZ 럴커 전환
-- **[Phase 20] 공격 타이밍 최적화**: 점진적 임계값, 적 확장/테크 감지 타이밍공격, 멀티프롱 저글링 견제
-- **[Phase 19] 후반 전환 시스템**: HiveTechMaximizer 활성화, 울트라리스크 비율 추가, 미네랄뱅킹 소비, 자동 재확장
-- **[Phase 18] 맵 컨트롤 시스템**: 크립 위 교전 유도, 전진 스파인 방어, 공격적 크립 확장
-- **[Phase 17] 카운터빌드 속도↑**: confidence 0.2→0.1, 폴백 2분30초, 긴급 Blackboard 전파
-- **[Phase 16] 경제 최적화**: 66드론 컷오프, 가스 300 임계값, 매크로해처리 600
-- **[Phase 15] 전투 마이크로 강화**: 저HP 자동후퇴, 3단계 점진후퇴, 포커스파이어
-- **[Phase 14] 변이유닛 활성화**: 바네링/레바저/럴커/브루드로드 4종 모프 + 동적비율
-- **[Phase 13] 자동생산 + MicroV3**: 비율기반 자동생산, AdvancedMicroControllerV3 활성화
-- **[Phase 12] 디컨플릭트**: 방어-공격 유닛태그 추적, Blackboard 연동, Hive 가속
-
-### 다음 대규모 계획 (Phase 53 ~ 56)
-
-| Phase | 목표 | 핵심 산출물 |
-|------|------|-------------|
-| **53** | Replay feedback를 학습 파이프라인에 직접 연결 | 리플레이 피드백 기반 학습 파라미터 자동 반영(안전 가드 포함) |
-| **54** | Rust/OpenCL 성능 계측 자동화 | CPU 대비 가속 비율 리포트 + 실패 시 자동 fallback 검증 |
-| **55** | 모바일 운영 관제 고도화 | 모바일 대시보드에 학습/피드백 루프 상태 위젯 추가 |
-| **56** | 릴리스 품질 게이트 강화 | CI 품질 게이트(패키징/피드백/검증) 통합 배지 및 릴리스 체크리스트 |
-### Test Report (2026-03-28, Phase 39 완료 시점)
+### Phase 진행 현황
 
 ```
-Python 3.10.11 | pytest 9.0.2 | Windows 11
-============================================
-Total: 329 collected | 321 passed | 1 failed | 7 skipped
-============================================
+총 완료: 33개 Phase  |  수정 버그: 185개  |  테스트: 322 통과  |  언어: 63+
 ```
-
-### Phase 진행 대시보드 (Phase 12 → 56)
-
-```
-Phase  카테고리         핵심 개선                              상태
-─────────────────────────────────────────────────────────────────
-P12    전투/디컨플릭트   방어-공격 유닛태그 분리 + Hive 가속    ✅ DONE
-P13    자동생산/마이크로 비율기반 자동생산 + MicroV3 활성화    ✅ DONE
-P14    변이 유닛        바네링/레바저/럴커/브루드 4종 활성화    ✅ DONE
-P15    전투 마이크로    저HP 후퇴 3단계 + 포커스파이어         ✅ DONE
-P16    경제 최적화      66드론 컷 + 가스뱅킹 300 임계값        ✅ DONE
-P17    정찰/대응        카운터빌드 0.1 + 치즈 긴급 Blackboard   ✅ DONE
-P18    맵 컨트롤        크립 위 교전 유도 + 전진 스파인         ✅ DONE
-P19    후반 전환        HiveTechMaximizer + 울트라 20% 비율     ✅ DONE
-P20    공격 타이밍      점진적 임계값 + 적 약점 타이밍 러시     ✅ DONE
-P21    종족별 대응      ZvT/ZvP/ZvZ 특화 카운터 전략 추가      ✅ DONE
-P22    Dead Code 제거   36개 미활성 매니저 중 10개 핵심 활성화  ✅ DONE
-P23    퀸/서플라이      방어 중 인젝트 + 오버로드 동적 버퍼     ✅ DONE
-P24    드롭 방어        수송선 감지→Blackboard→차출 대응        ✅ DONE
-P25    빌드오더         스텝 재시도 + Blackboard BO 전환        ✅ DONE
-P26    방어 강화        포자 2분 선행 + 크립퀸 전투투입         ✅ DONE
-P27    유닛 컨트롤      바네링 attack() + 변이 idle 제한 해제   ✅ DONE
-P28    확장 밸런스      3rd 3분30초 / 4th 5분 / 5th 7분 타이밍  ✅ DONE
-P29    매니저 충돌      방어 태그 Blackboard 전파/해제          ✅ DONE
-P30    공격 판단        사전 전투력 비교 60% 미만 공격 자제     ✅ DONE
-P31    테크 트리        레어 3분 + Hive idle 해제 + Cavern 자동  ✅ DONE
-P32    하라스 AI        방어 약한 기지 타겟 + 뮤탈 후퇴 수정    ✅ DONE
-P33    정찰/오버로드    OL 사망 재파견 + 재정찰 attack()        ✅ DONE
-P34    실전 메타        hydra 키오타 수정(321 pass) + 추적자 카운터 ✅ DONE
-P35    통합 검증        321 passed / 아레나 패키지 재생성       ✅ DONE
-P36    퀸 매크로        탐지거리 30→20 + 0마리 강제생산         ✅ DONE
-P37    후반 유닛        GreaterSpire 뮤탈허용 + Viper-Hive 요건  ✅ DONE
-P38    랠리/집결        전투중 후퇴방지 + 최전선 기지 기준       ✅ DONE
-P39    경제 고도화      가스 필터버그 + 초반보호 + boost 수정    ✅ DONE
-P40    통합 검증        아레나 패키지 재생성 + 전체 구문 OK      ✅ DONE
-P41    전투 의사결정    HP가중 전투력 + supply테이블 + O(N+M)    ✅ DONE
-P42    다중언어 커버    Python 예측 + TypeScript 위젯             ✅ DONE
-P43    실시간 로그 추적 TypeScript tRPC 라우터 + 로그 뷰어       ✅ DONE
-P44    유닛 시너지 AI   LURKERMP 버그 + 울트라melee + 조합병합   ✅ DONE
-P45    모바일 대시보드  로그 상태 카드 + 에러/경고 집계 위젯       ✅ DONE
-P46    Rust 가속       PyO3 골격 + OpenCL 브리지 + CPU 폴백       ✅ DONE
-P47    통합 검증       phase50_integrated_validation.py          ✅ DONE
-P48    CI 확장        arena-package 잡 + workflow_dispatch       ✅ DONE
-P49    리플레이 피드백  Rust 우선순위 점수 + 대시보드 연동         ✅ DONE
-P50    품질 게이트     phase54_quality_gate.py 통합              ✅ DONE
-P51    언어 라우팅     phase55_language_router.py dry-run        ✅ DONE
-P52    언어 라우팅 실행 변경 파일 기반 검증 자동화                    ✅ DONE
-P53    리플레이 학습    승패 패턴 자동 피드백                        ✅ DONE
-P54    운영 대시보드    훈련 리포트/전투 지표 통합                  ✅ DONE
-P55    품질 자동화     멀티언어 검증 자동화                        ✅ DONE
-P56    릴리스 준비     README 대규모 개편 + 21언어 라우팅          ✅ DONE
-─────────────────────────────────────────────────────────────────────
-총 완료: 45개 Phase  |  수정 버그: 185개  |  테스트: 322 통과
-```
-
-### 경제 시스템 상태 머신 (Phase 39 완성)
-
-```mermaid
-stateDiagram-v2
-    [*] --> EarlyGame : 게임 시작
-
-    state EarlyGame {
-        [*] --> DronePump : 0~3분
-        DronePump --> FirstGas : 1분15초~1분30초<br/>종족별 가스 타이밍
-        FirstGas --> SecondGas : 2분 2번째 가스
-        SecondGas --> TechBuild : 테크 건물 건설
-        note right of DronePump
-            ★ Phase 39
-            3분 이내 가스 감소 금지
-            (테크 가스 보호)
-        end note
-    }
-
-    EarlyGame --> MidGame : 3분 이후
-
-    state MidGame {
-        [*] --> GasBalance : 가스/미네랄 균형
-        GasBalance --> BoostGas : gas<100 AND mineral>500<br/>가스 일꾼 추가
-        GasBalance --> ReduceGas : gas>500 AND mineral<300<br/>★ Phase 39: 3분+ 이후만
-        BoostGas --> GasBalance : ★ Phase 39<br/>모든 익스트랙터 동시 채우기
-        ReduceGas --> GasBalance : ★ Phase 39<br/>vespene carrier 포착 수정
-        GasBalance --> DroneExpand : 기지당 16드론 목표
-        DroneExpand --> MacroHatch : 미네랄 600+/라바 부족<br/>매크로 해처리 건설
-    }
-
-    MidGame --> LateGame : 8분 이후
-
-    state LateGame {
-        [*] --> HiveTech : Hive 변이
-        HiveTech --> UltraViper : 울트라리스크/바이퍼<br/>후반 전환
-        UltraViper --> ResourceMax : 미네랄 1500+<br/>저글링 스팸 소비
-        ResourceMax --> UltraViper : 순환
-    }
-
-    LateGame --> [*] : 게임 종료
-```
-
-### 가스 일꾼 동적 조정 흐름 (Phase 39 수정)
-
-```mermaid
-flowchart TD
-    A[매 iteration 체크] --> B{game_time < 180?}
-    B -- 예 초반 3분 --> C[가스 감소 금지\n★ Phase 39 보호]
-    B -- 아니오 --> D{gas < 100\nAND mineral > 500?}
-    D -- 예 --> E[_boost_gas_workers]
-    E --> F[익스트랙터 순회\n★ Phase 39: return 제거\n모든 부족 익스트랙터 채우기]
-    D -- 아니오 --> G{gas > 500\nAND mineral < 300?}
-    G -- 예 --> H[_reduce_gas_workers]
-    H --> I[★ Phase 39 필터 수정\norder_target OR\nis_carrying_vespene\n+ 거리 12 이내]
-    G -- 아니오 --> J{gas > 1000?}
-    J -- 예 --> H
-    J -- 아니오 --> K[유지]
-
-    style C fill:#e17055,color:#fff
-    style F fill:#00b894,color:#fff
-    style I fill:#0984e3,color:#fff
-```
-
-| Test File | Tests | Status |
-|-----------|-------|--------|
-| test_advanced_scout_system_v2.py | 15 | ALL PASS |
-| test_agent_builder.py | 10 | ALL PASS |
-| test_agent_router.py | 10 | ALL PASS |
-| test_combat_components.py | 20 | ALL PASS |
-| test_combat_manager.py | 16 | ALL PASS |
-| test_command_dispatcher.py | 8 | ALL PASS |
-| test_crypto_trading.py | 25 | 19 pass / 6 skip |
-| test_economy_manager.py | 26 | 25 pass / **1 fail** |
-| test_expansion_manager.py | 24 | ALL PASS |
-| test_harassment_coordinator.py | 22 | ALL PASS |
-| test_intel_manager.py | 16 | ALL PASS |
-| test_model_selector.py | 10 | ALL PASS |
-| test_phase10_improvements.py | 25 | 24 pass / **1 fail** |
-| test_production_resilience.py | 25 | ALL PASS |
-| test_queen_transfusion_manager.py | 8 | ALL PASS |
-| test_resource_manager.py | 10 | ALL PASS |
-| test_security.py | 13 | 12 pass / 1 skip |
-| test_spatial_query_optimizer.py | 10 | ALL PASS |
-| test_tool_dispatcher.py | 6 | ALL PASS |
-| test_tool_executor.py | 9 | ALL PASS |
-| test_trade_orchestrator.py | 12 | ALL PASS |
-| test_workflow_orchestrator.py | 9 | ALL PASS |
-
-**Failed Tests (2건 — Phase 변경으로 인한 기존 테스트 불일치):**
-
-| Test | Reason | Impact |
-|------|--------|--------|
-| `test_initialization_with_config` | Phase 16에서 매크로해처리 임계값 1500→600 변경, 테스트는 옛 값(1500) 기대 | LOW — 설정값 변경 반영 필요 |
-| `test_counter_zerg_mutalisk` | Phase 21 ZvZ 뮤탈 카운터 로직 변경, 테스트 기대값 불일치 | LOW — 테스트 업데이트 필요 |
-
-**Skipped Tests (7건):**
-
-| Test | Reason |
-|------|--------|
-| `test_import_config_loader` 외 5건 | crypto_trading 의존성 미설치 |
-| `test_no_hardcoded_keys_in_yaml` | YAML 설정 파일 미존재 |
 
 ### 기술 스택
 
 | 카테고리 | 기술 |
-|----------|------|
-| **언어** | Python 3.10+ |
-| **AI/ML** | PyTorch, RL Policy Network, 모방학습, SC2 리플레이 마이닝 |
+|:---|:---|
+| **언어** | Python 3.10+, Rust PyO3, TypeScript, 63+ 언어 |
+| **AI/ML** | PyTorch, RL Policy Network, 모방학습(이병렬), 리플레이 마이닝 |
 | **시뮬레이션** | StarCraft II API (burnysc2/python-sc2) |
-| **DevOps** | Vertex AI (Gemini) 자가치유 파이프라인 |
-| **GCS** | Flask Dashboard + TypeScript/React + Android App |
-| **CI/QA** | GitHub Actions, py_compile, 314+ tests |
-
-### 시뮬레이션-현실 매핑
-
-| StarCraft II (가상) | 실제 드론 (물리) |
-|---------------------|-----------------|
-| 전장의 안개 | 센서 불확실성 |
-| 200기 유닛 제어 | 멀티 UAV 군집 |
-| 자원 최적화 | 배터리/우선순위 관리 |
-| 동적 전술 전환 | 임무 재할당 |
-| 비동기 동시성 | 실시간 C2 |
-
-### 커리어 연결
-- **UAV/UGV 자율제어 시스템** — 군집 드론 실시간 관제
-- **방산 무인체계 군집 알고리즘** — Multi-Agent 전술 의사결정
-- **AI/ML Engineer** — 강화학습, 모방학습, 멀티에이전트 AI
-- **DevOps/MLOps** — Self-Healing Infrastructure, 자동화 파이프라인
-- **방위산업/항공우주** — ISR 임무 계획, 대군집 방어
+| **가속** | Rust PyO3 10x / OpenCL / CPU 폴백 |
+| **DevOps** | Vertex AI Gemini 1.5 Pro 자가치유 파이프라인 |
+| **GCS** | React tRPC 대시보드 + Android WebSocket 앱 |
+| **CI/QA** | GitHub Actions, py_compile, pytest 322+, Arena ZIP |
 
 </details>
 
@@ -2125,10 +1242,11 @@ flowchart TD
 
 **장선우 (Jang Sun Woo)**
 
-Drone Application Engineering
+Drone Application Engineering · AI Swarm Control Research
 
-[![Email](https://img.shields.io/badge/Email-sun475300%40naver.com-03C75A?logo=naver&logoColor=white)](mailto:sun475300@naver.com)
-[![GitHub](https://img.shields.io/badge/GitHub-sun475300--sudo-181717?logo=github)](https://github.com/sun475300-sudo)
+[![Email](https://img.shields.io/badge/Email-sun475300%40naver.com-03C75A?style=for-the-badge&logo=naver&logoColor=white)](mailto:sun475300@naver.com)
+[![GitHub](https://img.shields.io/badge/GitHub-sun475300--sudo-181717?style=for-the-badge&logo=github)](https://github.com/sun475300-sudo)
+[![Repo](https://img.shields.io/badge/Repo-Swarm--control--in--sc2bot-FF6600?style=for-the-badge&logo=github)](https://github.com/sun475300-sudo/Swarm-control-in-sc2bot)
 
 </div>
 
@@ -2136,6 +1254,9 @@ Drone Application Engineering
 
 <div align="center">
 
-<sub>Built with Python · StarCraft II API · PyTorch · Gemini AI</sub>
+```
+Built with Python · Rust · TypeScript · StarCraft II API · PyTorch · Gemini AI
+Phase 44 Complete · 185 Bugs Fixed · 63+ Languages · Arena Ready
+```
 
 </div>
