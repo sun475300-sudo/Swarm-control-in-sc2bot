@@ -1,0 +1,75 @@
+// Gradle build file for SC2 Zerg Bot – Kotlin/Java components
+// Covers: ladder client, combat stats reporter, and replay analyzer
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.23'
+    id 'application'
+    id 'jacoco'
+}
+
+group   = 'com.sc2bot'
+version = '1.0.0'
+
+kotlin {
+    jvmToolchain(17)
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Kotlin standard library + coroutines
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0'
+
+    // Ktor HTTP client for SC2 ladder API calls
+    implementation 'io.ktor:ktor-client-core:2.3.9'
+    implementation 'io.ktor:ktor-client-cio:2.3.9'
+    implementation 'io.ktor:ktor-client-content-negotiation:2.3.9'
+    implementation 'io.ktor:ktor-serialization-kotlinx-json:2.3.9'
+
+    // JSON serialization for battle result payloads
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+
+    // SQLite for local battle stats storage
+    implementation 'org.xerial:sqlite-jdbc:3.45.2.0'
+
+    // Logging
+    implementation 'ch.qos.logback:logback-classic:1.5.3'
+
+    // Testing
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testImplementation 'io.mockk:mockk:1.13.10'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass = 'com.sc2bot.ladder.MainKt'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    reports {
+        xml.required  = true
+        html.required = true
+    }
+}
+
+// Custom task: upload latest battle results to remote stats server
+tasks.register('uploadBattleStats') {
+    group       = 'sc2bot'
+    description = 'Upload latest battle stats JSON to the dashboard API'
+    doLast {
+        exec {
+            commandLine 'curl', '-s', '-X', 'POST',
+                'http://localhost:8766/api/stats/upload',
+                '-H', 'Content-Type: application/json',
+                '-d', '@data/latest_battle_stats.json'
+        }
+    }
+}

@@ -1,0 +1,74 @@
+# Bazel BUILD file for the SC2 Zerg bot multi-language project.
+# Covers Python bot core, C++ acceleration module, and Kotlin ladder client.
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
+
+# ── Python: Zerg bot core ─────────────────────────────────────────────────────
+py_library(
+    name = "zerg_bot_lib",
+    srcs = glob(["src/**/*.py"]),
+    deps = [
+        "@pip//burnysc2",
+        "@pip//loguru",
+        "@pip//numpy",
+        "@pip//aiohttp",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "run_bot",
+    srcs = ["run.py"],
+    main = "run.py",
+    deps = [":zerg_bot_lib"],
+)
+
+py_test(
+    name = "zerg_bot_tests",
+    srcs = glob(["tests/**/*.py"]),
+    deps = [
+        ":zerg_bot_lib",
+        "@pip//pytest",
+    ],
+    size = "medium",
+)
+
+# ── C++: Combat acceleration module ──────────────────────────────────────────
+cc_library(
+    name = "combat_sim_lib",
+    srcs = [
+        "cpp_accel/combat_sim.cpp",
+        "cpp_accel/threat_map.cpp",
+        "cpp_accel/pathfinder.cpp",
+    ],
+    hdrs = glob(["cpp_accel/include/**/*.h"]),
+    copts = ["-std=c++20", "-O3", "-march=native"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "combat_sim_tests",
+    srcs = ["cpp_accel/tests/test_combat_sim.cpp"],
+    deps = [
+        ":combat_sim_lib",
+        "@googletest//:gtest_main",
+    ],
+)
+
+# ── Kotlin: Ladder client and stats uploader ─────────────────────────────────
+kt_jvm_library(
+    name = "ladder_client_lib",
+    srcs = glob(["kotlin2/**/*.kt"]),
+    deps = [
+        "@maven//:io_ktor_ktor_client_core",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
+    ],
+)
+
+kt_jvm_binary(
+    name = "ladder_client",
+    main_class = "sc2bot.ladder.MainKt",
+    deps = [":ladder_client_lib"],
+)
