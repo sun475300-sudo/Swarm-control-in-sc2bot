@@ -1,0 +1,72 @@
+# Dockerfile for SC2 Zerg Bot Container
+# Deploys python-sc2 bot with full StarCraft II headless environment
+
+FROM python:3.11-slim-bullseye
+
+LABEL maintainer="sc2bot@jarvis"
+LABEL description="StarCraft 2 Zerg AI Bot - ZergCommander deployment image"
+LABEL version="2.0.0"
+
+# Environment configuration
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    SC2_BOT_NAME="ZergCommander" \
+    SC2_RACE="Zerg" \
+    SC2_DIFFICULTY="VeryHard" \
+    SC2_MAP="Equilibrium513" \
+    BOT_LOG_LEVEL="INFO" \
+    LADDER_SERVER="ladder.sc2ai.net" \
+    LADDER_PORT=5690
+
+# Install system dependencies required for SC2 headless and python-sc2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    unzip \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgl1-mesa-glx \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /sc2bot
+
+# Copy requirements first for Docker layer caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        burnysc2==5.0.12 \
+        numpy==1.26.4 \
+        scipy==1.12.0 \
+        loguru==0.7.2 \
+        aiohttp==3.9.3 \
+        pydantic==2.6.1
+
+# Copy bot source code
+COPY src/ ./src/
+COPY wicked_zerg_challenger/ ./wicked_zerg_challenger/
+COPY ladderbots.json .
+COPY run.py .
+
+# Create directories for logs, replays and models
+RUN mkdir -p /sc2bot/logs /sc2bot/replays /sc2bot/models /sc2bot/data
+
+# SC2 binary path (mounted at runtime via volume)
+ENV SC2PATH=/root/StarCraftII
+
+# Health check: verify bot process responds
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import sc2; print('SC2 OK')" || exit 1
+
+# Expose ladder port
+EXPOSE 5690
+
+# Volume mounts for game data, replays, and SC2 installation
+VOLUME ["/root/StarCraftII", "/sc2bot/logs", "/sc2bot/replays"]
+
+# Default entrypoint: run bot in ladder mode
+CMD ["python", "run.py", "--ladder", "--ComputerOpponent", "--ComputerRace", "random", "--ComputerDifficulty", "VeryHard"]

@@ -1,0 +1,101 @@
+# StarCraft 2 Zerg Strategy Configuration
+# ZergCommander v2.0 - YAML strategy parameters
+# Controls build orders, unit composition ratios, and timing thresholds
+
+bot:
+  name: "ZergCommander"
+  race: Zerg
+  version: "2.0.0"
+  log_level: INFO
+
+# ─── Economy Thresholds ────────────────────────────────────────────────────
+economy:
+  worker_per_base: 16          # Ideal workers per base (2 per mineral, 3 per gas)
+  max_workers: 70              # Hard cap on drone production
+  mineral_float_warning: 400   # Alert when minerals exceed this (too much float)
+  gas_float_warning: 300
+  expand_mineral_threshold: 350  # Expand when minerals exceed this value
+  saturation_ratio: 0.85        # Trigger new expansion at 85% saturation
+
+# ─── Build Orders ──────────────────────────────────────────────────────────
+build_orders:
+  zvt_standard_ling_bane_hydra:
+    description: "Standard ZvT Ling-Bane-Hydra opener"
+    opener:
+      - { supply: 13, action: "overlord" }
+      - { supply: 17, action: "hatchery" }  # natural expansion
+      - { supply: 17, action: "spawning_pool" }
+      - { supply: 20, action: "overlord" }
+      - { supply: 20, action: "queen" }
+      - { supply: 22, action: "zergling x4" }
+      - { supply: 24, action: "baneling_nest" }
+      - { supply: 28, action: "lair" }
+    mid_game:
+      - "hydralisk_den"
+      - "evolution_chamber x2"
+      - "missile_attack_1"
+      - "ground_carapace_1"
+
+  zvz_roach_ravager_rush:
+    description: "Aggressive ZvZ Roach-Ravager all-in"
+    opener:
+      - { supply: 13, action: "overlord" }
+      - { supply: 16, action: "spawning_pool" }
+      - { supply: 18, action: "hatchery" }
+      - { supply: 18, action: "extractor" }
+      - { supply: 20, action: "roach_warren" }
+      - { supply: 22, action: "roach x4" }
+    timing_attack: 4.5  # minutes
+
+  zvp_mass_roach_lair_tech:
+    description: "Safe ZvP into Roach-Hydra-Lurker"
+    opener:
+      - { supply: 13, action: "overlord" }
+      - { supply: 17, action: "hatchery" }
+      - { supply: 18, action: "spawning_pool" }
+      - { supply: 20, action: "extractor x2" }
+      - { supply: 24, action: "roach_warren" }
+      - { supply: 30, action: "lair" }
+    mid_game:
+      - "hydralisk_den"
+      - "lurker_den"
+      - "lurker_aspect"
+
+# ─── Unit Composition Ratios ───────────────────────────────────────────────
+unit_composition:
+  zvt_late_game:
+    zergling: 0.30
+    baneling: 0.20
+    hydralisk: 0.30
+    infestor: 0.10
+    broodlord: 0.10
+
+  zvz_mid_game:
+    zergling: 0.25
+    roach: 0.45
+    ravager: 0.20
+    overseer: 0.10
+
+  zvp_late_game:
+    hydralisk: 0.35
+    lurker: 0.25
+    zergling: 0.20
+    corruptor: 0.10
+    infestor: 0.10
+
+# ─── Timing Windows (seconds) ──────────────────────────────────────────────
+timing:
+  first_scout: 60          # Scout with drone at 1:00
+  early_aggression: 240    # First zergling pressure at 4:00
+  third_base: 300          # Take third base by 5:00
+  lair_timing: 240         # Lair must start by 4:00
+  hive_timing: 600         # Hive by 10:00 in macro games
+  max_creep_spread: 480    # Creep highways established by 8:00
+
+# ─── Defense Parameters ────────────────────────────────────────────────────
+defense:
+  spine_crawler_count: 2
+  spore_crawler_count: 2
+  queen_inject_interval: 29   # Queen inject every ~29 seconds
+  worker_pull_threshold: 5    # Pull workers when fewer than 5 defenders remain
+  retreat_hp_ratio: 0.25      # Retreat units below 25% HP
