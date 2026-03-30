@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package wicked_zerg;
+
+message BattleUnit {
+    int32 unit_type = 1;
+    double health = 2;
+    double damage = 3;
+    double armor = 4;
+    Position position = 5;
+}
+
+message Position {
+    double x = 1;
+    double y = 2;
+}
+
+message SwarmConfig {
+    int32 max_units = 1;
+    double formation_radius = 2;
+    double attack_distance = 3;
+}
+
+message BattleResult {
+    repeated BattleUnit attackers = 1;
+    repeated BattleUnit defenders = 2;
+    bool attacker_wins = 3;
+    double damage_dealt = 4;
+}

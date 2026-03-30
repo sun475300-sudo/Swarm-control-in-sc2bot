@@ -1,0 +1,179 @@
+// Protocol Buffer definitions for SC2 Bot game state messages
+// Used for high-performance serialization between bot processes,
+// the dashboard, and the replay analyzer service.
+//
+// Compile: protoc --python_out=src/proto game_state.proto
+
+syntax = "proto3";
+
+package sc2bot;
+
+option java_package = "net.sc2ai.zergcommander.proto";
+option go_package = "sc2ai.net/zergcommander/proto";
+
+// ─── Enums ─────────────────────────────────────────────────────────────
+
+enum Race {
+  RACE_UNKNOWN  = 0;
+  RACE_ZERG     = 1;
+  RACE_TERRAN   = 2;
+  RACE_PROTOSS  = 3;
+  RACE_RANDOM   = 4;
+}
+
+enum GameResult {
+  RESULT_UNKNOWN   = 0;
+  RESULT_VICTORY   = 1;
+  RESULT_DEFEAT    = 2;
+  RESULT_TIE       = 3;
+  RESULT_IN_PROGRESS = 4;
+}
+
+enum UnitTypeId {
+  UNIT_UNKNOWN      = 0;
+  UNIT_DRONE        = 104;
+  UNIT_ZERGLING     = 105;
+  UNIT_BANELING     = 9;
+  UNIT_ROACH        = 110;
+  UNIT_RAVAGER      = 688;
+  UNIT_HYDRALISK    = 107;
+  UNIT_LURKER       = 502;
+  UNIT_INFESTOR     = 111;
+  UNIT_MUTALISK     = 108;
+  UNIT_CORRUPTOR    = 112;
+  UNIT_BROODLORD    = 114;
+  UNIT_QUEEN        = 126;
+  UNIT_ULTRALISK    = 109;
+  UNIT_OVERLORD     = 106;
+  UNIT_OVERSEER     = 129;
+}
+
+// ─── Coordinate ────────────────────────────────────────────────────────
+
+message Point2D {
+  float x = 1;
+  float y = 2;
+}
+
+message Point3D {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// ─── Unit ──────────────────────────────────────────────────────────────
+
+message Unit {
+  uint64 tag              = 1;  // SC2 unit tag (unique ID)
+  UnitTypeId type         = 2;
+  float hp                = 3;
+  float max_hp            = 4;
+  float shield            = 5;
+  float energy            = 6;
+  Point2D position        = 7;
+  bool is_burrowed        = 8;
+  bool is_flying          = 9;
+  float weapon_cooldown   = 10;
+  float build_progress    = 11; // 0.0–1.0 for buildings under construction
+  repeated UnitOrder orders = 12;
+}
+
+message UnitOrder {
+  uint32 ability_id       = 1;
+  uint64 target_unit_tag  = 2;
+  Point2D target_pos      = 3;
+  float progress          = 4;
+}
+
+// ─── Economy ───────────────────────────────────────────────────────────
+
+message EconomyState {
+  int32 minerals          = 1;
+  int32 gas               = 2;
+  int32 supply_used       = 3;
+  int32 supply_cap        = 4;
+  int32 worker_count      = 5;
+  int32 base_count        = 6;
+  float minerals_per_min  = 7;
+  float gas_per_min       = 8;
+  int32 larvae_count      = 9;
+}
+
+// ─── Army ──────────────────────────────────────────────────────────────
+
+message UnitCount {
+  UnitTypeId unit_type = 1;
+  int32 count          = 2;
+}
+
+message ArmyState {
+  int32 total_supply         = 1;
+  int32 attacking_supply     = 2;
+  repeated UnitCount composition = 3;
+  float average_hp_percent   = 4;
+  repeated uint64 attacking_tags  = 5;
+}
+
+// ─── Upgrades ──────────────────────────────────────────────────────────
+
+message UpgradeState {
+  repeated uint32 completed_upgrade_ids = 1;  // SC2 upgrade IDs
+  repeated uint32 in_progress_ids       = 2;
+}
+
+// ─── Full Game State ───────────────────────────────────────────────────
+
+message GameState {
+  int32 iteration          = 1;
+  float game_time_seconds  = 2;
+  Race bot_race            = 3;
+  Race enemy_race          = 4;
+  GameResult result        = 5;
+  EconomyState economy     = 6;
+  ArmyState army           = 7;
+  UpgradeState upgrades    = 8;
+  repeated Unit units      = 9;
+  float creep_coverage     = 10; // Fraction of map covered by creep [0.0, 1.0]
+}
+
+// ─── Battle Report ─────────────────────────────────────────────────────
+
+message EngagementEvent {
+  float timestamp_seconds  = 1;
+  Point2D location         = 2;
+  int32 units_lost         = 3;
+  int32 enemy_units_killed = 4;
+  int32 supply_lost        = 5;
+  int32 supply_killed      = 6;
+  float efficiency_ratio   = 7;
+}
+
+message BattleReport {
+  string game_id                       = 1;
+  GameResult result                    = 2;
+  float duration_seconds               = 3;
+  EconomyState final_economy           = 4;
+  ArmyState peak_army                  = 5;
+  repeated EngagementEvent engagements = 6;
+  int32 total_units_produced           = 7;
+  int32 total_units_lost               = 8;
+  int32 total_kills                    = 9;
+}
+
+// ─── Service Definition ────────────────────────────────────────────────
+
+service SC2BotService {
+  // Stream live game state to connected clients
+  rpc StreamGameState (StreamRequest) returns (stream GameState);
+
+  // Get final battle report after game ends
+  rpc GetBattleReport (BattleReportRequest) returns (BattleReport);
+}
+
+message StreamRequest {
+  int32 step_interval = 1; // Emit every N game iterations (default: 1)
+}
+
+message BattleReportRequest {
+  string game_id = 1;
+}

@@ -1,0 +1,199 @@
+# StarCraft 2 Bot GraphQL Schema
+# Provides queries and subscriptions over live SC2 game state
+# Used by the sc2-ai-dashboard and external monitoring tools
+
+scalar GameTime   # "MM:SS" formatted game time string
+scalar MapCoord   # Floating-point coordinate pair as "x,y"
+
+# ─── Enums ────────────────────────────────────────────────────────────────
+
+enum Race {
+  ZERG
+  TERRAN
+  PROTOSS
+  RANDOM
+}
+
+enum UnitType {
+  DRONE
+  ZERGLING
+  BANELING
+  ROACH
+  RAVAGER
+  HYDRALISK
+  LURKER
+  INFESTOR
+  MUTALISK
+  CORRUPTOR
+  BROODLORD
+  QUEEN
+  ULTRALISK
+  OVERLORD
+  OVERSEER
+}
+
+enum BuildingType {
+  HATCHERY
+  LAIR
+  HIVE
+  SPAWNING_POOL
+  ROACH_WARREN
+  BANELING_NEST
+  HYDRALISK_DEN
+  LURKER_DEN
+  INFESTATION_PIT
+  SPIRE
+  EVOLUTION_CHAMBER
+  EXTRACTOR
+  SPINE_CRAWLER
+  SPORE_CRAWLER
+  NYDUS_NETWORK
+}
+
+enum GameResult {
+  VICTORY
+  DEFEAT
+  TIE
+  IN_PROGRESS
+}
+
+enum TechUpgrade {
+  ZERGLING_SPEED
+  ZERGLING_ATTACK_SPEED
+  BANELING_SPEED
+  ROACH_SPEED
+  TUNNELING_CLAWS
+  LURKER_ASPECT
+  MELEE_ATTACK_1
+  MELEE_ATTACK_2
+  MELEE_ATTACK_3
+  GROUND_CARAPACE_1
+  GROUND_CARAPACE_2
+  GROUND_CARAPACE_3
+}
+
+# ─── Types ────────────────────────────────────────────────────────────────
+
+type Unit {
+  tag: ID!
+  type: UnitType!
+  hp: Float!
+  maxHp: Float!
+  shield: Float
+  position: MapCoord!
+  isBurrowed: Boolean!
+  isSelected: Boolean!
+  weapon_cooldown: Float
+  orders: [UnitOrder!]
+}
+
+type UnitOrder {
+  ability: String!
+  targetTag: ID
+  targetPosition: MapCoord
+  progress: Float
+}
+
+type Building {
+  tag: ID!
+  type: BuildingType!
+  hp: Float!
+  maxHp: Float!
+  position: MapCoord!
+  buildProgress: Float!
+  isReady: Boolean!
+  rallyPoint: MapCoord
+}
+
+type ResourceNode {
+  tag: ID!
+  mineralContents: Int
+  isVespeneGeyser: Boolean!
+  assignedWorkers: Int!
+  idealWorkers: Int!
+}
+
+type Base {
+  hatchery: Building!
+  queen: Unit
+  assignedDrones: Int!
+  mineralFields: [ResourceNode!]!
+  geysers: [ResourceNode!]!
+  creepCoverage: Float!
+}
+
+type ArmyStats {
+  totalSupply: Int!
+  attackingSupply: Int!
+  composition: [UnitCount!]!
+  averageHpPercent: Float!
+}
+
+type UnitCount {
+  unitType: UnitType!
+  count: Int!
+}
+
+type EconomyStats {
+  minerals: Int!
+  gas: Int!
+  supply: Int!
+  maxSupply: Int!
+  workers: Int!
+  bases: Int!
+  income_per_min_minerals: Float!
+  income_per_min_gas: Float!
+}
+
+type GameState {
+  gameTime: GameTime!
+  iteration: Int!
+  result: GameResult!
+  botRace: Race!
+  enemyRace: Race!
+  economy: EconomyStats!
+  army: ArmyStats!
+  bases: [Base!]!
+  units: [Unit!]!
+  buildings: [Building!]!
+  completedUpgrades: [TechUpgrade!]!
+  creepMapCoverage: Float!
+}
+
+# ─── Queries ──────────────────────────────────────────────────────────────
+
+type Query {
+  "Get current full game state snapshot"
+  gameState: GameState!
+
+  "Get economy stats only (lightweight)"
+  economy: EconomyStats!
+
+  "Get army composition and strength"
+  army: ArmyStats!
+
+  "Get all units of a specific type"
+  unitsByType(type: UnitType!): [Unit!]!
+
+  "Get base information for a given hatchery tag"
+  base(hatcheryTag: ID!): Base
+
+  "List all completed tech upgrades"
+  upgrades: [TechUpgrade!]!
+}
+
+# ─── Subscriptions ────────────────────────────────────────────────────────
+
+type Subscription {
+  "Emits every game step with current state"
+  onGameStep: GameState!
+
+  "Fires when a unit is destroyed"
+  onUnitDestroyed: Unit!
+
+  "Fires when an attack wave is launched"
+  onAttackWave: ArmyStats!
+
+  "Fires when game ends with final result"
+  onGameEnd: GameResult!
+}
