@@ -283,6 +283,13 @@ class CreepManager:
                 if too_close_to_expansion:
                     continue
 
+                # ★ Phase 45: has_creep 검증으로 크립 없는 곳 배치 방지
+                try:
+                    if hasattr(self.bot, "has_creep") and not self.bot.has_creep(spread_target):
+                        continue
+                except (TypeError, AttributeError):
+                    pass
+
                 # Check if tumor can spread (has ability)
                 if hasattr(tumor, "can_cast") and hasattr(
                     AbilityId, "BUILD_CREEPTUMOR_TUMOR"
@@ -537,6 +544,9 @@ class CreepSpreadManager:
                     visited.add((nx, ny))
                     queue.append((nx, ny))
 
+        # ★ Phase 45: BFS 그리드 최대 300개 cap (성능 보호)
+        if len(targets) > 300:
+            targets = targets[:300]
         self._target_grid = targets
         self._grid_generated = True
 
@@ -609,12 +619,13 @@ class CreepSpreadManager:
             return
 
         for tumor in burrowed_tumors:
+            # ★ Phase 45: get_available_abilities() API 호출 제거 (O(n) 비용)
+            # CREEPTUMORBURROWED는 is_idle 상태일 때 확산 가능
             try:
-                abilities = await self.bot.get_available_abilities(tumor)
-                if AbilityId.BUILD_CREEPTUMOR_TUMOR not in abilities:
+                if not tumor.is_idle:
                     continue
             except Exception as e:
-                logger.warning(f"[CreepSpreadManager] get_abilities suppressed: {e}")
+                logger.warning(f"[CreepSpreadManager] tumor.is_idle suppressed: {e}")
                 continue
 
             spread_pos = self._find_best_tumor_position(

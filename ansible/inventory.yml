@@ -1,0 +1,42 @@
+# Wicked Zerg - Battle Simulation Deployment
+# Phase 152: Ansible
+
+---
+all:
+  children:
+    sc2_bots:
+      hosts:
+        bot-server-1:
+          ansible_host: 192.168.1.10
+        bot-server-2:
+          ansible_host: 192.168.1.11
+    monitoring:
+      hosts:
+        grafana:
+          ansible_host: 192.168.1.20
+
+  vars:
+    ansible_user: ubuntu
+    ansible_python_interpreter: /usr/bin/python3
+
+sc2_bot:
+  vars:
+    sc2_install_path: /opt/starcraft2
+    bot_log_level: INFO
+    training_epochs: 1000
+  tasks:
+    - name: Install SC2 dependencies
+      apt:
+        name:
+          - python3-pip
+          - wine
+        state: present
+    - name: Deploy bot
+      git:
+        repo: https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git
+        dest: /opt/wicked-zerg
+    - name: Start bot service
+      systemd:
+        name: wicked-zerg
+        state: started
+        enabled: yes
