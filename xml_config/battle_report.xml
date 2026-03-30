@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ZergCommander Battle Report Schema & Sample Data -->
+<!-- Generated after each completed game for performance analysis -->
+<BattleReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              version="2.0"
+              generated="2026-03-30T14:22:00Z">
+
+  <GameInfo>
+    <GameID>sc2bot-20260330-142200</GameID>
+    <Map>Equilibrium513</Map>
+    <Duration unit="seconds">1248</Duration>
+    <DurationFormatted>20:48</DurationFormatted>
+    <Result>Victory</Result>
+    <BotRace>Zerg</BotRace>
+    <EnemyRace>Terran</EnemyRace>
+    <Matchup>ZvT</Matchup>
+    <Difficulty>VeryHard</Difficulty>
+  </GameInfo>
+
+  <EconomySummary>
+    <PeakWorkers>62</PeakWorkers>
+    <PeakBases>4</PeakBases>
+    <TotalMineralsCollected>12480</TotalMineralsCollected>
+    <TotalGasCollected>6240</TotalGasCollected>
+    <WorkersLost>14</WorkersLost>
+    <WorkerKills>0</WorkerKills>
+    <AverageMineralSaturation unit="percent">88</AverageMineralSaturation>
+  </EconomySummary>
+
+  <CombatSummary>
+    <ArmyPeakSupply>130</ArmyPeakSupply>
+    <TotalUnitsProduced>247</TotalUnitsProduced>
+    <TotalUnitsLost>89</TotalUnitsLost>
+    <TotalKills>134</TotalKills>
+    <ArmyValueLost unit="minerals_equivalent">4350</ArmyValueLost>
+    <ArmyValueDealt unit="minerals_equivalent">7220</ArmyValueDealt>
+    <EfficiencyRatio>1.66</EfficiencyRatio>
+  </CombatSummary>
+
+  <Engagements>
+    <Engagement id="1">
+      <Timestamp>04:22</Timestamp>
+      <Location x="52" y="78"/>
+      <Type>ZerglingHarass</Type>
+      <UnitsInvolved>
+        <Unit name="Zergling" count="12"/>
+      </UnitsInvolved>
+      <UnitsLost>4</UnitsLost>
+      <EnemyUnitsKilled>6</EnemyUnitsKilled>
+      <Outcome>Partial_Success</Outcome>
+    </Engagement>
+    <Engagement id="2">
+      <Timestamp>09:15</Timestamp>
+      <Location x="88" y="102"/>
+      <Type>MainAttackWave</Type>
+      <UnitsInvolved>
+        <Unit name="Roach" count="18"/>
+        <Unit name="Ravager" count="6"/>
+        <Unit name="Zergling" count="20"/>
+      </UnitsInvolved>
+      <UnitsLost>11</UnitsLost>
+      <EnemyUnitsKilled>24</EnemyUnitsKilled>
+      <Outcome>Victory</Outcome>
+    </Engagement>
+    <Engagement id="3">
+      <Timestamp>15:40</Timestamp>
+      <Location x="120" y="48"/>
+      <Type>FinalPush</Type>
+      <UnitsInvolved>
+        <Unit name="Hydralisk" count="24"/>
+        <Unit name="Lurker" count="8"/>
+        <Unit name="Infestor" count="4"/>
+        <Unit name="Zergling" count="30"/>
+      </UnitsInvolved>
+      <UnitsLost>22</UnitsLost>
+      <EnemyUnitsKilled>41</EnemyUnitsKilled>
+      <Outcome>Decisive_Victory</Outcome>
+    </Engagement>
+  </Engagements>
+
+  <Upgrades>
+    <Upgrade name="ZerglingMovementSpeed" completedAt="03:45"/>
+    <Upgrade name="ZergMeleeAttacks1" completedAt="07:20"/>
+    <Upgrade name="ZergGroundArmor1" completedAt="08:05"/>
+    <Upgrade name="GlialReconstitution" completedAt="06:30"/>
+    <Upgrade name="TunnelingClaws" completedAt="10:12"/>
+    <Upgrade name="LurkerAspect" completedAt="11:48"/>
+  </Upgrades>
+
+  <CreepSpread>
+    <TotalTumorCount>22</TotalTumorCount>
+    <MapCoveragePercent>38</MapCoveragePercent>
+    <HighwaysEstablished>4</HighwaysEstablished>
+  </CreepSpread>
+
+</BattleReport>

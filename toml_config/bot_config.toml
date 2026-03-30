@@ -1,0 +1,82 @@
+# ZergCommander Bot Configuration
+# TOML format — bot runtime settings, aggression levels, timing windows
+# Edit these values to tune bot behavior without recompiling
+
+[bot]
+name        = "ZergCommander"
+race        = "Zerg"
+version     = "2.0.0"
+debug_mode  = false
+log_file    = "logs/zerg_bot.log"
+replay_save = true
+replay_dir  = "replays/"
+
+[server]
+host             = "127.0.0.1"
+port             = 5000
+ladder_port      = 5690
+timeout_seconds  = 120
+reconnect_tries  = 3
+
+# ─── Aggression Settings ───────────────────────────────────────────────────
+[aggression]
+# Scale 0.0 (passive) to 1.0 (full aggression)
+base_level          = 0.6
+zvt_modifier        = 0.7   # More aggressive vs Terran bio
+zvz_modifier        = 0.5   # Reactive vs Zerg mirror
+zvp_modifier        = 0.65  # Controlled aggression vs Protoss
+
+# Triggers for switching to all-in mode
+supply_behind_threshold = 20     # If this far behind in supply, go all-in
+all_in_supply_trigger   = 150    # Go all-in when at max supply if no tech
+worker_kill_threshold   = 8      # Harass when enemy has fewer than N workers
+
+# ─── Economy Thresholds ───────────────────────────────────────────────────
+[economy]
+initial_workers        = 12
+max_workers_per_hatch  = 16
+max_total_workers      = 70
+expand_at_supply       = 40       # Expand when supply reaches 40
+expand_mineral_bank    = 350      # Or when bank exceeds 350 minerals
+gas_workers_per_geyser = 3
+emergency_pull_ratio   = 0.5      # Pull 50% of workers during base attack
+
+# ─── Timing Windows (game seconds) ───────────────────────────────────────
+[timing]
+drone_scout              = 60     # 1:00 — Scout with drone
+zergling_scout_fallback  = 100    # 1:40 — Ling scout if drone recalled
+pool_latest              = 210    # 3:30 — Spawning pool must finish by
+lair_start               = 240    # 4:00 — Begin Lair upgrade
+natural_hatch            = 170    # 2:50 — Natural expansion timing
+third_hatch              = 310    # 5:10 — Third hatchery
+first_attack_wave        = 270    # 4:30 — First significant attack
+
+# ─── Unit Production Weights ─────────────────────────────────────────────
+[production]
+# Priority weights (higher = produced sooner)
+zergling_weight   = 8
+roach_weight      = 9
+hydralisk_weight  = 8
+ravager_weight    = 6
+baneling_weight   = 7
+infestor_weight   = 5
+lurker_weight     = 6
+broodlord_weight  = 4
+corruptor_weight  = 5
+queen_weight      = 10   # Queens always high priority for injects + creep
+
+# ─── Creep Spread ────────────────────────────────────────────────────────
+[creep]
+enable_spread        = true
+queen_spread_radius  = 12    # Queens walk within this range to spread
+tumor_spacing        = 10    # Min tiles between creep tumors
+highway_angles       = [0, 45, 90, 135, 180, 225, 270, 315]  # Spread directions
+
+# ─── Tech Paths ──────────────────────────────────────────────────────────
+[tech]
+default_path         = "ling_bane_hydra"
+zvt_tech_path        = "ling_bane_hydra_infestor"
+zvz_tech_path        = "roach_ravager_hydra"
+zvp_tech_path        = "hydra_lurker_broodlord"
+enable_spire         = true    # Build Spire for air transition if needed
+enable_ultralisk     = false   # Ultralisk tech disabled by default (slow)
