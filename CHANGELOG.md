@@ -85,6 +85,13 @@ All notable changes to WickedZergBotPro are documented here.
 - **Python** `wicked_zerg_challenger/rust_accel.py` 확장: Rust -> OpenCL -> Python 계층 fallback으로 nearest-point 계산 안정화
 - **Python** `wicked_zerg_challenger/creep_expansion_system.py` 연동 유지: 기존 nearest-point 호출 경로에서 OpenCL 가속 자동 활용
 
+## [Phase 45] - 2026-03-30
+### 크립 BFS 성능 최적화 — 종양 확산 비용 4종 수정
+- **Python** `creep_manager.py` `_log_creep_progress()` `print()` → `logger.info()` 교체: stdout 스팸 제거
+- **Python** `creep_manager.py` `_spread_from_tumors()` `get_available_abilities()` → `tumor.is_idle` 교체: O(n) 비동기 API 호출 제거 → 로컬 상태 체크로 대체 (매 33프레임 × 종양 수 만큼 비용 절감)
+- **Python** `creep_manager.py` `_generate_creep_grid()` BFS 결과 300개 cap 추가: 무제한 확장 방지 → 메모리/CPU 보호
+- **Python** `creep_manager.py` `_handle_tumor_relay()` `has_creep()` 검증 추가: 크립 없는 위치에 종양 배치 방지
+
 ## [Phase 44] - 2026-03-29
 ### 유닛 시너지 AI 고도화 — 업그레이드/조합 정확도 버그 3종 수정
 - **Python** `upgrade_manager.py` `UnitTypeId.LURKER` → `LURKERMP` 수정: `LURKER`는 python-sc2에 존재하지 않아 러커 업그레이드 영구 미실행 → `LURKERMP` 1기 이상 시 즉시 트리거
