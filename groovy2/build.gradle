@@ -1,0 +1,40 @@
+// Wicked Zerg - Battle Simulation
+// Phase 146: Groovy v2
+
+class BattleUnit {
+    int unitType
+    double health
+    double damage
+    double armor
+    double posX
+    double posY
+    
+    double getStrength() {
+        double effective = damage * health / 100
+        effective * (1 - armor * 0.01)
+    }
+}
+
+def calculateSwarmDamage(int count) {
+    count * 5
+}
+
+def swarmFormation(double centerX, double centerY, int count, double radius) {
+    (0..<count).collect { i ->
+        double angle = 2 * Math.PI * i / count
+        [centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle)]
+    }
+}
+
+def unitStrength(double health, double damage, double armor) {
+    double effective = damage * health / 100
+    effective * (1 - armor * 0.01)
+}
+
+def battleOutcome(List attackers, List defenders) {
+    double attackPower = attackers.sum { unitStrength(it[0], it[1], it[2]) }
+    double defensePower = defenders.sum { unitStrength(it[0], it[1], it[2]) }
+    attackPower > defensePower
+}
+
+println "Battle Simulation Initialized - Groovy v2"
