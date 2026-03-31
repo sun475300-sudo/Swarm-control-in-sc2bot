@@ -1,0 +1,61 @@
+# Phase 492: Knative Serving for Serverless SC2 Model Inference
+# Traffic split between revisions, scale-to-zero, custom domain mapping
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: sc2-model-inference
+  namespace: sc2bot
+spec:
+  template:
+    metadata:
+      name: sc2-model-inference-v2
+      annotations:
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+        autoscaling.knative.dev/metric: rps
+        autoscaling.knative.dev/target: "50"
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+        autoscaling.knative.dev/scaleDownDelay: "30s"
+    spec:
+      containerConcurrency: 10
+      timeoutSeconds: 30
+      containers:
+        - image: sc2bot/model-inference:v2
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: MODEL_PATH
+              value: /models/sc2_strategy_v2
+            - name: BATCH_SIZE
+              value: "16"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+  traffic:
+    - revisionName: sc2-model-inference-v2
+      percent: 80
+      tag: current
+    - revisionName: sc2-model-inference-v1
+      percent: 20
+      tag: previous
+    - latestRevision: true
+      percent: 0
+      tag: latest
+
+---
+apiVersion: serving.knative.dev/v1
+kind: DomainMapping
+metadata:
+  name: inference.sc2bot.io
+  namespace: sc2bot
+spec:
+  ref:
+    name: sc2-model-inference
+    kind: Service
+    apiVersion: serving.knative.dev/v1
