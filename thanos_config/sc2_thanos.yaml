@@ -1,0 +1,99 @@
+# SC2 Bot - Thanos Configuration
+# Highly available Prometheus with long-term object storage
+
+# --- Object Store: S3 ---
+objstore:
+  type: S3
+  config:
+    bucket: sc2-metrics
+    endpoint: s3.amazonaws.com
+    region: us-east-1
+    access_key: "${AWS_ACCESS_KEY_ID}"
+    secret_key: "${AWS_SECRET_ACCESS_KEY}"
+    insecure: false
+    signature_version2: false
+    put_user_metadata: {}
+    http_config:
+      idle_conn_timeout: 90s
+      insecure_skip_verify: false
+    trace:
+      enable: false
+
+# --- Thanos Sidecar (runs alongside Prometheus) ---
+sidecar:
+  prometheus_url: http://prometheus:9090
+  tsdb_path: /var/prometheus/data
+  grpc_address: 0.0.0.0:10901
+  http_address: 0.0.0.0:10902
+  objstore:
+    type: S3
+  reloader:
+    config_file: /etc/prometheus/prometheus.yml
+    config_envsubst_file: /etc/prometheus/prometheus.yml.tmpl
+
+# --- Thanos Store Gateway (serves historical data from object store) ---
+store:
+  grpc_address: 0.0.0.0:10905
+  http_address: 0.0.0.0:10906
+  data_dir: /var/thanos/store
+  objstore:
+    type: S3
+  index_cache:
+    type: IN-MEMORY
+    config:
+      max_size: 512MB
+  chunk_pool_size: 2GB
+  min_time: -1d
+  max_time: 0d
+
+# --- Thanos Querier (fan-out query layer) ---
+querier:
+  grpc_address: 0.0.0.0:10903
+  http_address: 0.0.0.0:10904
+  store_addresses:
+    - sidecar-0:10901
+    - sidecar-1:10901
+    - store:10905
+    - ruler:10907
+  query_replica_label: prometheus_replica
+  deduplication:
+    enabled: true
+    replica_labels:
+      - prometheus_replica
+      - ruler_replica
+  web:
+    prefix_header: X-Forwarded-Prefix
+
+# --- Thanos Compactor (downsampling + retention) ---
+compactor:
+  data_dir: /var/thanos/compact
+  objstore:
+    type: S3
+  retention:
+    resolution_raw: 30d
+    resolution_5m: 90d
+    resolution_1h: 365d
+  downsampling:
+    disable: false
+  consistency_delay: 30m
+  compact:
+    concurrency: 2
+
+# --- Thanos Ruler (alerting + recording rules) ---
+ruler:
+  grpc_address: 0.0.0.0:10907
+  http_address: 0.0.0.0:10908
+  data_dir: /var/thanos/rules
+  objstore:
+    type: S3
+  query_addresses:
+    - querier:10903
+  rule_files:
+    - /etc/thanos/rules/sc2_recording_rules.yaml
+    - /etc/thanos/rules/sc2_alert_rules.yaml
+  alertmanagers:
+    - http://alertmanager:9093
+  eval_interval: 1m
+  labels:
+    ruler_cluster: sc2-prod
+    ruler_replica: ruler-0
