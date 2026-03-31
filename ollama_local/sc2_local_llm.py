@@ -181,3 +181,5 @@ async def demo_sc2_ollama():
 
 if __name__ == "__main__":
     asyncio.run(demo_sc2_ollama())
+
+# Phase 434: Ollama registered
