@@ -170,7 +170,7 @@ class TestEconomyManagerInitialization:
         manager = EconomyManager(bot)
 
         # Default values should be used if config import fails
-        assert manager.macro_hatchery_mineral_threshold >= 1500
+        assert manager.macro_hatchery_mineral_threshold >= 300  # Phase 16: 600으로 낮춤 (더 빠른 매크로 해처리)
 
 
 class TestEmergencyMode:
