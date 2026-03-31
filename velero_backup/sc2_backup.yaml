@@ -1,0 +1,89 @@
+# Phase 489: Velero K8s Backup for SC2 Infrastructure
+# Schedule: daily backup, S3 storage, EBS snapshots, restore procedures
+
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: sc2-s3-backup
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: sc2bot-velero-backups
+    prefix: k8s-backups
+  config:
+    region: us-east-1
+    s3ForcePathStyle: "false"
+  credential:
+    name: velero-aws-credentials
+    key: cloud
+
+---
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: sc2-ebs-snapshots
+  namespace: velero
+spec:
+  provider: aws
+  config:
+    region: us-east-1
+  credential:
+    name: velero-aws-credentials
+    key: cloud
+
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: sc2bot-daily-backup
+  namespace: velero
+spec:
+  schedule: "0 2 * * *"   # Daily at 02:00 UTC
+  template:
+    includedNamespaces:
+      - sc2bot
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    storageLocation: sc2-s3-backup
+    volumeSnapshotLocations:
+      - sc2-ebs-snapshots
+    ttl: 720h   # Retain 30 days
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false
+    hooks:
+      resources:
+        - name: postgres-pre-backup
+          includedNamespaces:
+            - sc2bot
+          labelSelector:
+            matchLabels:
+              app: sc2-postgres
+          pre:
+            - exec:
+                container: postgres
+                command:
+                  - /bin/sh
+                  - -c
+                  - pg_dump -U sc2bot sc2botdb > /backup/pre-backup.sql
+                timeout: 60s
+
+---
+# Restore procedure (apply manually when needed)
+# velero restore create --from-backup sc2bot-daily-backup-<timestamp>
+#   --include-namespaces sc2bot
+#   --restore-volumes true
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: sc2bot-restore-template
+  namespace: velero
+  annotations:
+    note: "Template only — do not apply automatically"
+spec:
+  backupName: ""    # Fill in backup name
+  includedNamespaces:
+    - sc2bot
+  restorePVs: true
+  existingResourcePolicy: update
