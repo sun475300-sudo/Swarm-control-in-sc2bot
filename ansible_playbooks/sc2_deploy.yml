@@ -1,0 +1,152 @@
+---
+# SC2 Bot - Ansible Deployment Playbook
+# Roles: common, docker, kubernetes, monitoring
+# Tasks: install_dependencies, configure_services, deploy_bot, health_check
+
+- name: SC2 Bot Full Deployment
+  hosts: sc2_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    sc2_bot_version: "{{ lookup('env', 'SC2_BOT_VERSION') | default('latest') }}"
+    sc2_bot_image: "registry.example.com/sc2-bot:{{ sc2_bot_version }}"
+    sc2_bot_namespace: sc2-bot
+    sc2_data_dir: /opt/sc2bot
+    prometheus_port: 9090
+    grafana_port: 3000
+    sc2_bot_replicas: 3
+
+  vars_files:
+    - vars/common.yml
+    - vars/secrets.yml        # ansible-vault encrypted
+
+  pre_tasks:
+    - name: Check target host OS
+      ansible.builtin.assert:
+        that: ansible_os_family in ["Debian", "RedHat"]
+        fail_msg: "Unsupported OS: {{ ansible_os_family }}"
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+  roles:
+    - role: common
+      tags: [common, always]
+    - role: docker
+      tags: [docker]
+    - role: kubernetes
+      tags: [kubernetes, k8s]
+    - role: monitoring
+      tags: [monitoring]
+
+  tasks:
+
+    # ---------- Install Dependencies ----------
+    - name: Install Python dependencies
+      ansible.builtin.pip:
+        name:
+          - burnysc2
+          - aiohttp
+          - prometheus-client
+        state: present
+        virtualenv: "{{ sc2_data_dir }}/venv"
+      tags: [install_dependencies]
+
+    # ---------- Configure Services ----------
+    - name: Create SC2 bot data directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: sc2bot
+        group: sc2bot
+        mode: "0755"
+      loop:
+        - "{{ sc2_data_dir }}"
+        - "{{ sc2_data_dir }}/replays"
+        - "{{ sc2_data_dir }}/logs"
+        - "{{ sc2_data_dir }}/models"
+      tags: [configure_services]
+
+    - name: Deploy SC2 bot configuration file
+      ansible.builtin.template:
+        src: templates/sc2bot_config.yml.j2
+        dest: "{{ sc2_data_dir }}/config.yml"
+        owner: sc2bot
+        group: sc2bot
+        mode: "0644"
+      notify: restart sc2bot
+      tags: [configure_services]
+
+    - name: Deploy systemd service file
+      ansible.builtin.template:
+        src: templates/sc2bot.service.j2
+        dest: /etc/systemd/system/sc2bot.service
+        mode: "0644"
+      notify:
+        - reload systemd
+        - restart sc2bot
+      tags: [configure_services]
+
+    # ---------- Deploy Bot ----------
+    - name: Pull SC2 bot Docker image
+      community.docker.docker_image:
+        name: "{{ sc2_bot_image }}"
+        source: pull
+        force_source: true
+      tags: [deploy_bot]
+
+    - name: Apply Kubernetes deployment
+      kubernetes.core.k8s:
+        state: present
+        template: templates/sc2bot_deployment.yml.j2
+        namespace: "{{ sc2_bot_namespace }}"
+      vars:
+        replicas: "{{ sc2_bot_replicas }}"
+        image:    "{{ sc2_bot_image }}"
+      tags: [deploy_bot]
+
+    - name: Wait for SC2 bot rollout
+      kubernetes.core.k8s_rollout_status:
+        name: sc2-bot
+        namespace: "{{ sc2_bot_namespace }}"
+        timeout: 300
+      tags: [deploy_bot]
+
+    # ---------- Health Check ----------
+    - name: Check SC2 bot health endpoint
+      ansible.builtin.uri:
+        url: "http://{{ ansible_default_ipv4.address }}:8080/health"
+        method: GET
+        status_code: 200
+        timeout: 30
+      retries: 5
+      delay: 10
+      register: health_result
+      tags: [health_check]
+
+    - name: Report health check result
+      ansible.builtin.debug:
+        msg: "SC2 Bot health: {{ health_result.json.status | default('unknown') }}"
+      tags: [health_check]
+
+  handlers:
+    - name: reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: restart sc2bot
+      ansible.builtin.systemd:
+        name: sc2bot
+        state: restarted
+        enabled: true
+
+  post_tasks:
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg: >
+          SC2 Bot {{ sc2_bot_version }} deployed successfully to
+          {{ inventory_hostname }} ({{ ansible_default_ipv4.address }})
