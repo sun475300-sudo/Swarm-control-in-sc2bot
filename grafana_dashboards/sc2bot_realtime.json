@@ -1,0 +1,241 @@
+{
+  "title": "SC2 Bot Real-time Combat Stats",
+  "uid": "sc2bot-realtime-v1",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-6h", "to": "now" },
+  "tags": ["sc2", "combat", "realtime", "bot"],
+  "templating": {
+    "list": [
+      {
+        "name": "matchup",
+        "type": "custom",
+        "label": "Matchup",
+        "current": { "text": "All", "value": ".*" },
+        "options": [
+          { "text": "All", "value": ".*" },
+          { "text": "ZvT", "value": "ZvT" },
+          { "text": "ZvZ", "value": "ZvZ" },
+          { "text": "ZvP", "value": "ZvP" }
+        ]
+      },
+      {
+        "name": "map",
+        "type": "query",
+        "label": "Map",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(sc2bot_games_played_total, map)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Current MMR",
+      "description": "Live ladder MMR pulled from the sc2bot_ladder_mmr gauge",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sc2bot_ladder_mmr",
+          "legendFormat": "MMR",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue",   "value": null },
+              { "color": "green",  "value": 3500 },
+              { "color": "gold",   "value": 4200 }
+            ]
+          },
+          "mappings": []
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Games Today",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "increase(sc2bot_games_played_total[24h])",
+          "legendFormat": "Games",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Win Rate Over Time (6h)",
+      "description": "Rolling 5-minute win rate percentage per matchup",
+      "gridPos": { "x": 0, "y": 4, "w": 16, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "100 * sum by (matchup) (rate(sc2bot_games_won_total{matchup=~\"$matchup\"}[5m])) / sum by (matchup) (rate(sc2bot_games_played_total{matchup=~\"$matchup\"}[5m]))",
+          "legendFormat": "Win% {{matchup}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "yellow", "value": 40 },
+              { "color": "green",  "value": 55 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "last"] }
+      }
+    },
+    {
+      "id": 4,
+      "type": "bargauge",
+      "title": "Race Matchup Win Stats",
+      "description": "Win count and win rate per race matchup as a bar gauge",
+      "gridPos": { "x": 16, "y": 4, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (matchup) (increase(sc2bot_games_won_total[6h]))",
+          "legendFormat": "Wins {{matchup}}"
+        },
+        {
+          "expr": "sum by (matchup) (increase(sc2bot_games_played_total[6h]))",
+          "legendFormat": "Played {{matchup}}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "showUnfilled": true,
+        "minVizHeight": 10,
+        "minVizWidth": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue",  "value": null },
+              { "color": "green", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Recent Matches",
+      "description": "Last 6 hours of match results with map, matchup, duration, and outcome",
+      "gridPos": { "x": 0, "y": 12, "w": 16, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "topk(20, sc2bot_last_game_result{matchup=~\"$matchup\", map=~\"$map\"})",
+          "legendFormat": "{{matchup}} | {{map}} | {{result}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "result" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "1": { "text": "WIN",  "color": "green" }, "0": { "text": "LOSS", "color": "red" } } }
+                ]
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": false, "__name__": true }, "renameByName": { "matchup": "Matchup", "map": "Map", "result": "Result" } } }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "heatmap",
+      "title": "APM Distribution Heatmap",
+      "description": "Distribution of actions-per-minute across all games over the selected time range",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (le) (increase(sc2bot_apm_bucket[5m]))",
+          "legendFormat": "{{le}}",
+          "format": "heatmap"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": { "unit": "apm", "decimals": 0 },
+        "color": {
+          "mode": "scheme",
+          "scheme": "Spectral",
+          "steps": 64,
+          "reverse": false
+        },
+        "tooltip": { "show": true, "yHistogram": true },
+        "legend": { "show": true }
+      },
+      "fieldConfig": { "defaults": { "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false } } } }
+    }
+  ]
+}
