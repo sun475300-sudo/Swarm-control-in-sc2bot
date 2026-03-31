@@ -178,3 +178,5 @@ if __name__ == "__main__":
     print(f"  Assets: raw_replays, processed_features, trained_model, model_metrics")
     print(f"  Checks: check_replay_count, check_win_rate")
     print(f"  Job: {sc2_ml_job.name}")
+
+# Phase 425: Dagster registered
