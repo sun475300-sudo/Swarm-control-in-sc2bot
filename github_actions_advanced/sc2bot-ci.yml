@@ -1,0 +1,295 @@
+# Phase 569: GitHub Actions Advanced
+# SC2 Bot CI/CD 워크플로우 — 빌드/테스트/배포 자동화
+
+name: SC2 Bot CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # 매주 월요일 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: "배포 환경"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      run_training:
+        description: "PPO 학습 실행"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.11"
+  BOT_NAME: sc2_zerg_bot
+  BOT_VERSION: "565.0"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Lint & Type Check ────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install lint tools
+        run: pip install ruff mypy black
+
+      - name: Run Ruff linter
+        run: ruff check . --exclude .venv --output-format=github
+
+      - name: Check formatting (Black)
+        run: black --check --diff . --exclude '.venv|node_modules'
+
+      - name: Run MyPy type check
+        run: mypy . --ignore-missing-imports --exclude '.venv'
+        continue-on-error: true
+
+  # ─── Unit Tests ───────────────────────
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+        run: |
+          python -m pytest tests/ \
+            -v \
+            --tb=short \
+            --cov=. \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            -p no:warnings \
+            --junitxml=junit-results.xml
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: junit-results.xml
+
+  # ─── Security Scan ───────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Check for hardcoded secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+  # ─── Build Docker Image ──────────────
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=${{ env.BOT_VERSION }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BOT_VERSION=${{ env.BOT_VERSION }}
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+
+  # ─── Deploy ──────────────────────────
+  deploy:
+    name: Deploy to ${{ github.event.inputs.deploy_env || 'staging' }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: ${{ github.event.inputs.deploy_env || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Set kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ env.BOT_NAME }} \
+            ./helm_charts/sc2bot \
+            --namespace ${{ github.event.inputs.deploy_env || 'staging' }} \
+            --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --set bot.version=${{ env.BOT_VERSION }} \
+            --set bot.race=zerg \
+            --wait \
+            --timeout 300s
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/${{ env.BOT_NAME }} \
+            -n ${{ github.event.inputs.deploy_env || 'staging' }} \
+            --timeout=120s
+
+      - name: Run smoke tests
+        run: |
+          ENDPOINT=$(kubectl get svc ${{ env.BOT_NAME }} \
+            -n ${{ github.event.inputs.deploy_env || 'staging' }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          curl -sf "http://${ENDPOINT}:8080/health" || exit 1
+          echo "Smoke test passed!"
+
+  # ─── PPO Training (Optional) ─────────
+  train:
+    name: PPO Self-Play Training
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event.inputs.run_training == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install training deps
+        run: |
+          pip install torch numpy gymnasium
+          pip install -r requirements.txt || true
+
+      - name: Run quick training
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+        run: |
+          python ppo_selfplay/train.py \
+            --timesteps 10000 \
+            --save-path /tmp/models \
+            --log-dir /tmp/training-logs
+
+      - name: Upload trained model
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model-${{ github.sha }}
+          path: /tmp/models/
+          retention-days: 30
+
+  # ─── Notification ────────────────────
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+
+    steps:
+      - name: Pipeline result
+        run: |
+          echo "═══════════════════════════════════════"
+          echo "SC2 Bot CI/CD Pipeline Complete"
+          echo "Version:     ${{ env.BOT_VERSION }}"
+          echo "Commit:      ${{ github.sha }}"
+          echo "Deploy:      ${{ needs.deploy.result }}"
+          echo "Branch:      ${{ github.ref_name }}"
+          echo "═══════════════════════════════════════"

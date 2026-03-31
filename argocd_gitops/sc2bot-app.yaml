@@ -1,0 +1,283 @@
+# Phase 570: ArgoCD GitOps Advanced
+# SC2 Bot 선언적 배포 — ArgoCD Application + ApplicationSet
+---
+# ─── ArgoCD Project ─────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: sc2bot
+  namespace: argocd
+  annotations:
+    description: "SC2 Zerg Bot - Phase 570 GitOps"
+spec:
+  description: SC2 Bot GitOps Project
+  sourceRepos:
+    - "https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git"
+  destinations:
+    - namespace: "sc2bot-*"
+      server: "https://kubernetes.default.svc"
+    - namespace: monitoring
+      server: "https://kubernetes.default.svc"
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: Ingress
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: ResourceQuota
+  roles:
+    - name: deployer
+      description: "SC2 Bot deployment role"
+      policies:
+        - p, proj:sc2bot:deployer, applications, sync, sc2bot/*, allow
+        - p, proj:sc2bot:deployer, applications, get, sc2bot/*, allow
+      groups:
+        - sc2bot-team
+
+---
+# ─── Main Bot Application ──────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sc2bot-core
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: sc2bot
+    app.kubernetes.io/part-of: sc2bot-system
+    phase: "570"
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: sc2bot-deploys
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: sc2bot-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: sc2bot
+  source:
+    repoURL: https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git
+    targetRevision: main
+    path: helm_charts/sc2bot
+    helm:
+      releaseName: sc2bot
+      values: |
+        replicaCount: 3
+        image:
+          repository: ghcr.io/sun475300-sudo/sc2bot
+          tag: "565.0"
+          pullPolicy: IfNotPresent
+        bot:
+          name: sc2_zerg_bot
+          race: zerg
+          version: "565.0"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        service:
+          type: ClusterIP
+          port: 8080
+          grpcPort: 50051
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: sc2bot.local
+              paths:
+                - path: /
+                  pathType: Prefix
+        autoscaling:
+          enabled: true
+          minReplicas: 2
+          maxReplicas: 10
+          targetCPUUtilizationPercentage: 70
+        monitoring:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+            interval: 15s
+        env:
+          - name: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
+            value: python
+          - name: PYTHONUNBUFFERED
+            value: "1"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sc2bot-production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+---
+# ─── Monitoring Stack ──────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sc2bot-monitoring
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: sc2bot-system
+spec:
+  project: sc2bot
+  source:
+    repoURL: https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git
+    targetRevision: main
+    path: helm_charts/monitoring
+    helm:
+      values: |
+        prometheus:
+          enabled: true
+          retention: 30d
+          resources:
+            requests:
+              memory: 1Gi
+            limits:
+              memory: 4Gi
+          scrapeInterval: 15s
+          alerting:
+            rules:
+              - alert: SC2BotDown
+                expr: up{job="sc2bot"} == 0
+                for: 2m
+                labels:
+                  severity: critical
+                annotations:
+                  summary: "SC2 Bot is down"
+              - alert: HighLatency
+                expr: sc2bot_decision_latency_seconds > 0.1
+                for: 5m
+                labels:
+                  severity: warning
+              - alert: LowWinRate
+                expr: sc2bot_win_rate < 0.3
+                for: 1h
+                labels:
+                  severity: info
+        grafana:
+          enabled: true
+          adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
+          dashboards:
+            sc2bot:
+              url: https://raw.githubusercontent.com/sun475300-sudo/Swarm-control-in-sc2bot/main/grafana_dashboards/sc2bot.json
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+---
+# ─── ApplicationSet (멀티 환경) ────────
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: sc2bot-environments
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            replicas: "1"
+            cpu_limit: "1000m"
+            memory_limit: "1Gi"
+            autoscale: "false"
+          - env: staging
+            replicas: "2"
+            cpu_limit: "2000m"
+            memory_limit: "2Gi"
+            autoscale: "true"
+          - env: production
+            replicas: "3"
+            cpu_limit: "4000m"
+            memory_limit: "4Gi"
+            autoscale: "true"
+  template:
+    metadata:
+      name: "sc2bot-{{env}}"
+      namespace: argocd
+      labels:
+        environment: "{{env}}"
+        app.kubernetes.io/part-of: sc2bot-system
+    spec:
+      project: sc2bot
+      source:
+        repoURL: https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git
+        targetRevision: main
+        path: helm_charts/sc2bot
+        helm:
+          releaseName: "sc2bot-{{env}}"
+          values: |
+            replicaCount: {{replicas}}
+            bot:
+              name: sc2_zerg_bot
+              race: zerg
+              version: "565.0"
+            resources:
+              limits:
+                cpu: {{cpu_limit}}
+                memory: {{memory_limit}}
+            autoscaling:
+              enabled: {{autoscale}}
+            environment: {{env}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "sc2bot-{{env}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
+---
+# ─── Rollback CronJob ──────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sc2bot-rollback-monitor
+  namespace: argocd
+  annotations:
+    description: "자동 롤백 — 승률 30% 미만 시 이전 버전으로 복구"
+spec:
+  project: sc2bot
+  source:
+    repoURL: https://github.com/sun475300-sudo/Swarm-control-in-sc2bot.git
+    targetRevision: main
+    path: helm_charts/rollback-monitor
+    helm:
+      values: |
+        schedule: "*/30 * * * *"
+        winRateThreshold: 0.3
+        metricsEndpoint: http://prometheus.monitoring:9090
+        argocdServer: argocd-server.argocd:443
+        targetApp: sc2bot-core
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sc2bot-production
+  syncPolicy:
+    automated:
+      selfHeal: true
