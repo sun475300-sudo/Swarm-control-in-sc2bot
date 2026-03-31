@@ -139,3 +139,5 @@ def run_sc2_monitoring(output_dir: str = "ml_monitoring/reports") -> None:
 
 if __name__ == "__main__":
     run_sc2_monitoring()
+
+# Phase 428: Evidently registered
