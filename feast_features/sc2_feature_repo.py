@@ -192,3 +192,5 @@ if __name__ == "__main__":
     print(f"  Feature Views: unit_features, game_context_features, player_history_features")
     print(f"  On-demand: compute_derived_features (supply_ratio, resource_efficiency)")
     generate_sample_feature_data()
+
+# Phase 429: Feast registered
