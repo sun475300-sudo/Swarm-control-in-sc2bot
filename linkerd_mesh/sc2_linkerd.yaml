@@ -1,0 +1,76 @@
+# Phase 484: Linkerd Service Mesh for SC2 Bot (Lightweight Istio Alternative)
+# TrafficSplit canary, Server mTLS, ServiceProfile retry/timeout budgets
+
+apiVersion: split.smi-spec.io/v1alpha1
+kind: TrafficSplit
+metadata:
+  name: sc2-bot-canary
+  namespace: sc2bot
+spec:
+  service: sc2-bot-service
+  backends:
+    - service: sc2-bot-stable
+      weight: 900m
+    - service: sc2-bot-canary
+      weight: 100m
+
+---
+apiVersion: policy.linkerd.io/v1beta1
+kind: Server
+metadata:
+  name: sc2-bot-server
+  namespace: sc2bot
+spec:
+  podSelector:
+    matchLabels:
+      app: sc2-bot
+  port: 8000
+  proxyProtocol: HTTP/2
+
+---
+apiVersion: policy.linkerd.io/v1beta1
+kind: ServerAuthorization
+metadata:
+  name: sc2-bot-authz
+  namespace: sc2bot
+spec:
+  server:
+    name: sc2-bot-server
+  client:
+    meshTLS:
+      serviceAccounts:
+        - name: sc2-frontend
+          namespace: sc2bot
+        - name: sc2-api-gateway
+          namespace: sc2bot
+
+---
+apiVersion: linkerd.io/v1alpha2
+kind: ServiceProfile
+metadata:
+  name: sc2-bot-service.sc2bot.svc.cluster.local
+  namespace: sc2bot
+spec:
+  retryBudget:
+    retryRatio: 0.2
+    minRetriesPerSecond: 10
+    ttl: 10s
+  routes:
+    - name: GET /api/game
+      condition:
+        method: GET
+        pathRegex: /api/game.*
+      isRetryable: true
+      timeout: 5s
+    - name: POST /api/action
+      condition:
+        method: POST
+        pathRegex: /api/action
+      isRetryable: false
+      timeout: 10s
+    - name: GET /health
+      condition:
+        method: GET
+        pathRegex: /health
+      isRetryable: true
+      timeout: 2s
