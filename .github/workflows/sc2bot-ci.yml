@@ -1,0 +1,173 @@
+name: SC2 Bot CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * 0"   # Weekly Sunday 02:00 UTC
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/sc2bot
+  PYTHON_DEFAULT: "3.11"
+
+jobs:
+  # ── Lint ──────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install lint dependencies
+        run: pip install flake8 mypy black isort bandit
+
+      - name: Run black (format check)
+        run: black --check --diff .
+
+      - name: Run isort (import order)
+        run: isort --check-only --diff .
+
+      - name: Run flake8
+        run: flake8 . --max-line-length=100 --exclude=.git,__pycache__,venv
+
+      - name: Run mypy
+        run: mypy . --ignore-missing-imports --strict
+
+      - name: Run bandit (security)
+        run: bandit -r . -ll --exclude ./tests
+
+  # ── Test ──────────────────────────────────────────────────────────────────
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+
+      - name: Run unit tests
+        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+
+      - name: Run integration tests
+        run: pytest tests/integration -v --timeout=120
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.xml
+          fail_ci_if_error: false
+
+  # ── Build Docker ──────────────────────────────────────────────────────────
+  build_docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Build Docker image (no push)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Push to Registry ──────────────────────────────────────────────────────
+  push_to_registry:
+    name: Push to GHCR
+    runs-on: ubuntu-latest
+    needs: build_docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ needs.build_docker.outputs.image_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Deploy to Kubernetes ──────────────────────────────────────────────────
+  deploy_to_k8s:
+    name: Deploy Rolling Update
+    runs-on: ubuntu-latest
+    needs: push_to_registry
+    environment: production
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Set image tag in manifests
+        run: |
+          IMAGE_TAG=$(echo "${{ needs.build_docker.outputs.image_tag }}" | head -1)
+          sed -i "s|IMAGE_TAG_PLACEHOLDER|${IMAGE_TAG}|g" helm_charts/sc2bot/values.yaml
+
+      - name: Helm upgrade (rolling update)
+        run: |
+          helm upgrade --install sc2bot ./helm_charts/sc2bot \
+            --namespace sc2bot \
+            --create-namespace \
+            --atomic \
+            --timeout 5m \
+            --set image.tag=$(git rev-parse --short HEAD)
+
+      - name: Verify rollout
+        run: kubectl rollout status deployment/sc2bot -n sc2bot --timeout=300s
