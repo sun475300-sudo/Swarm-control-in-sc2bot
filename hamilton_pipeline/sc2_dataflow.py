@@ -156,3 +156,5 @@ def run_sc2_hamilton_dataflow(data_path: str = "data/replays/") -> None:
 if __name__ == "__main__":
     print("[Hamilton] Building SC2 feature engineering graph...")
     run_sc2_hamilton_dataflow()
+
+# Phase 430: Hamilton registered
