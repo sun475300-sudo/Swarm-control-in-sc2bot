@@ -185,3 +185,5 @@ if __name__ == "__main__":
     print("  Signatures: GameStateToAction, ReplayToInsight, ThreatToResponse")
     print("  Modules: SC2TacticalAdvisor (CoT), SC2ReplayAnalyzer (PoT), SC2ThreatResponder (ReAct)")
     print("  Optimizer: BootstrapFewShot with 3 SC2 demonstrations")
+
+# Phase 436: DSPy registered
