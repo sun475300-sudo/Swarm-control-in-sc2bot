@@ -1,0 +1,416 @@
+# Phase 571: Prometheus Rules — SC2 Bot Alert & Recording Rules
+# StarCraft II Commander Bot — Prometheus alerting and recording rule definitions
+# Compatible with Prometheus 2.x and Alertmanager
+
+groups:
+
+  # ─────────────────────────────────────────────
+  # Recording rules: pre-compute expensive queries
+  # ─────────────────────────────────────────────
+  - name: sc2bot_recording_rules
+    interval: 30s
+    rules:
+
+      # 5-minute rolling win rate (wins / total games over 5m window)
+      - record: sc2bot:win_rate_5m
+        expr: |
+          sum(increase(sc2bot_games_won_total[5m]))
+          /
+          clamp_min(sum(increase(sc2bot_games_played_total[5m])), 1)
+        labels:
+          scope: rolling
+
+      # 1-hour rolling win rate for trend comparison
+      - record: sc2bot:win_rate_1h
+        expr: |
+          sum(increase(sc2bot_games_won_total[1h]))
+          /
+          clamp_min(sum(increase(sc2bot_games_played_total[1h])), 1)
+        labels:
+          scope: rolling
+
+      # Average decision latency over the last 5 minutes (milliseconds)
+      - record: sc2bot:avg_decision_latency_ms_5m
+        expr: |
+          rate(sc2bot_decision_latency_seconds_sum[5m])
+          /
+          clamp_min(rate(sc2bot_decision_latency_seconds_count[5m]), 1e-9)
+          * 1000
+        labels:
+          scope: rolling
+
+      # P99 decision latency approximation via histogram
+      - record: sc2bot:p99_decision_latency_ms_5m
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(sc2bot_decision_latency_seconds_bucket[5m])) by (le)
+          ) * 1000
+
+      # Economy efficiency: minerals mined per supply used
+      - record: sc2bot:economy_efficiency_5m
+        expr: |
+          rate(sc2bot_minerals_mined_total[5m])
+          /
+          clamp_min(avg(sc2bot_supply_used), 1)
+
+      # Army value ratio: army supply vs total supply cap
+      - record: sc2bot:army_supply_ratio
+        expr: |
+          avg(sc2bot_army_supply)
+          /
+          clamp_min(avg(sc2bot_supply_cap), 1)
+
+      # Training throughput: steps per second
+      - record: sc2bot:training_steps_per_second_1m
+        expr: rate(sc2bot_training_steps_total[1m])
+
+      # Mean training loss over 5m
+      - record: sc2bot:mean_policy_loss_5m
+        expr: avg_over_time(sc2bot_policy_loss[5m])
+
+
+  # ─────────────────────────────────────────────
+  # Group: bot_health — liveness and availability
+  # ─────────────────────────────────────────────
+  - name: bot_health
+    rules:
+
+      - alert: SC2BotDown
+        expr: up{job="sc2bot"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot instance is down ({{ $labels.instance }})"
+          description: >
+            The SC2 commander bot process on {{ $labels.instance }} has stopped
+            reporting metrics for more than 1 minute. The bot may have crashed
+            or lost connection to the StarCraft II game client.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/bot-down"
+
+      - alert: SC2BotRestartLooping
+        expr: |
+          increase(sc2bot_restarts_total[15m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot is restart-looping ({{ $labels.instance }})"
+          description: >
+            The bot on {{ $labels.instance }} has restarted {{ $value | printf "%.0f" }}
+            times in the last 15 minutes. This may indicate a persistent crash
+            or an unrecoverable game state.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/restart-loop"
+
+      - alert: SC2BotGameClientDisconnected
+        expr: sc2bot_game_client_connected == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot lost connection to game client"
+          description: >
+            The bot on {{ $labels.instance }} has been disconnected from the
+            StarCraft II game client for more than 2 minutes. Check that the
+            SC2 process is running and the API port is reachable.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/client-disconnect"
+
+      - alert: SC2BotHighMemoryUsage
+        expr: |
+          process_resident_memory_bytes{job="sc2bot"}
+          > 2.5 * 1024 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot memory usage is high ({{ $labels.instance }})"
+          description: >
+            The bot process on {{ $labels.instance }} is using
+            {{ $value | humanize1024 }}B of resident memory, exceeding the
+            2.5 GiB warning threshold for 5 minutes. Possible memory leak in
+            observation buffer or replay storage.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/high-memory"
+
+      - alert: SC2BotCriticalMemoryUsage
+        expr: |
+          process_resident_memory_bytes{job="sc2bot"}
+          > 4 * 1024 * 1024 * 1024
+        for: 2m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot memory usage is critical ({{ $labels.instance }})"
+          description: >
+            The bot process on {{ $labels.instance }} is consuming more than
+            4 GiB of memory. Immediate intervention required to prevent OOM kill.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/high-memory"
+
+
+  # ─────────────────────────────────────────────
+  # Group: performance — latency and throughput
+  # ─────────────────────────────────────────────
+  - name: performance
+    rules:
+
+      - alert: SC2BotHighDecisionLatency
+        expr: sc2bot:avg_decision_latency_ms_5m > 150
+        for: 3m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot decision latency is high"
+          description: >
+            Average decision latency is {{ $value | printf "%.1f" }}ms over the
+            last 5 minutes, exceeding the 150ms warning threshold. The bot may
+            miss APM windows or react too slowly to enemy aggression.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/high-latency"
+
+      - alert: SC2BotCriticalDecisionLatency
+        expr: sc2bot:avg_decision_latency_ms_5m > 400
+        for: 1m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot decision latency is critically high"
+          description: >
+            Average decision latency is {{ $value | printf "%.1f" }}ms — more
+            than 400ms. The bot is likely stalling in the neural network
+            inference step. Check GPU/CPU utilisation.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/high-latency"
+
+      - alert: SC2BotLowAPM
+        expr: avg(sc2bot_actions_per_minute) < 20
+        for: 5m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot APM has dropped below minimum threshold"
+          description: >
+            The bot's actions-per-minute has averaged {{ $value | printf "%.1f" }}
+            over the last 5 minutes, below the expected minimum of 20. This
+            typically indicates a frozen decision loop or game state parsing error.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/low-apm"
+
+      - alert: SC2BotStepRateDegraded
+        expr: |
+          rate(sc2bot_game_steps_total[2m]) < 5
+        for: 2m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot game step rate is degraded"
+          description: >
+            The bot is processing fewer than 5 game steps per second
+            (current: {{ $value | printf "%.2f" }} steps/s). Expected minimum
+            is ~22.4 steps/s (real-time speed). The game may be paused or
+            the step callback is blocking.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/step-rate"
+
+
+  # ─────────────────────────────────────────────
+  # Group: training — RL training pipeline health
+  # ─────────────────────────────────────────────
+  - name: training
+    rules:
+
+      - alert: SC2BotTrainingDivergence
+        expr: sc2bot_policy_loss > 10
+        for: 5m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot training policy loss has diverged"
+          description: >
+            Policy loss is {{ $value | printf "%.3f" }}, far above the healthy
+            range of 0–2. This indicates training instability — likely caused by
+            a learning-rate spike, reward explosion, or corrupted replay buffer.
+            Training should be halted and rolled back to the last stable checkpoint.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/training-divergence"
+
+      - alert: SC2BotValueLossHigh
+        expr: sc2bot_value_loss > 5
+        for: 10m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot value loss is elevated"
+          description: >
+            Value (critic) loss is {{ $value | printf "%.3f" }} — above the 5.0
+            warning threshold sustained for 10 minutes. The value function may
+            be under-fitting. Consider adjusting the value coefficient or
+            increasing critic network capacity.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/value-loss"
+
+      - alert: SC2BotTrainingStalled
+        expr: |
+          rate(sc2bot_training_steps_total[10m]) == 0
+        for: 10m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot training has stalled — no steps in 10 minutes"
+          description: >
+            The training pipeline on {{ $labels.instance }} has not incremented
+            the training step counter in 10 minutes. The data collection workers
+            may have hung or the replay buffer may be empty.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/training-stalled"
+
+      - alert: SC2BotEntropyCollapse
+        expr: sc2bot_policy_entropy < 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot policy entropy has collapsed"
+          description: >
+            Policy entropy is {{ $value | printf "%.4f" }}, below the 0.05
+            threshold. The policy has become overly deterministic and may have
+            converged to a suboptimal strategy. Consider increasing the entropy
+            coefficient or resetting the policy head.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/entropy-collapse"
+
+      - alert: SC2BotGradientNormExplosion
+        expr: sc2bot_gradient_norm > 50
+        for: 2m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot gradient norm explosion detected"
+          description: >
+            Gradient norm is {{ $value | printf "%.2f" }}, exceeding the
+            explosion threshold of 50. Gradient clipping may have failed.
+            Check the clip_range hyperparameter and learning rate schedule.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/gradient-explosion"
+
+
+  # ─────────────────────────────────────────────
+  # Group: game_metrics — in-game performance
+  # ─────────────────────────────────────────────
+  - name: game_metrics
+    rules:
+
+      - alert: SC2BotLowWinRate
+        expr: sc2bot:win_rate_5m < 0.30
+        for: 15m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot win rate has dropped below 30%"
+          description: >
+            The bot's 5-minute rolling win rate is {{ $value | printf "%.1%%" }},
+            below the 30% warning floor. Recent win rate may have regressed due
+            to a bad model deployment, map pool change, or opponent strategy shift.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/low-win-rate"
+
+      - alert: SC2BotCriticalWinRate
+        expr: sc2bot:win_rate_5m < 0.15
+        for: 10m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot win rate is critically low (< 15%)"
+          description: >
+            The bot's 5-minute rolling win rate is {{ $value | printf "%.1%%" }}.
+            The model is performing near random. Immediately roll back to the
+            last production checkpoint and investigate recent training changes.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/low-win-rate"
+
+      - alert: SC2BotEconomyStall
+        expr: |
+          rate(sc2bot_minerals_mined_total[5m]) < 50
+          and
+          sc2bot_game_phase == 1
+        for: 3m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot economy has stalled (low mineral income)"
+          description: >
+            Mineral income rate is {{ $value | printf "%.1f" }}/min during the
+            economy phase (game_phase=1). The bot may have lost its workers,
+            failed to build harvesters, or is saturating on a blocked expansion.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/economy-stall"
+
+      - alert: SC2BotSupplyBlocked
+        expr: |
+          (sc2bot_supply_cap - sc2bot_supply_used) < 4
+          and
+          sc2bot_supply_cap < 200
+        for: 2m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot is supply-blocked"
+          description: >
+            Available supply headroom is {{ $value | printf "%.0f" }} with a
+            cap of {{ with query "avg(sc2bot_supply_cap)" }}{{ . | first | value | printf "%.0f" }}{{ end }}.
+            The bot is not building supply structures (pylons/depots/overlords)
+            fast enough. This will halt unit production.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/supply-blocked"
+
+      - alert: SC2BotHighWorkerLoss
+        expr: |
+          increase(sc2bot_workers_lost_total[5m]) > 12
+        for: 0m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot lost {{ $value | printf \"%.0f\" }} workers in 5 minutes"
+          description: >
+            The bot has lost {{ $value | printf "%.0f" }} workers in the last
+            5 minutes. This indicates the bot is failing to react to worker
+            harassment (e.g. proxy rush, cannon rush, zergling runby). Economy
+            will be severely impacted.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/worker-loss"
+
+      - alert: SC2BotArmyWipedOut
+        expr: sc2bot_army_supply == 0 and sc2bot_game_phase == 2
+        for: 1m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot army has been wiped out during combat phase"
+          description: >
+            Army supply has dropped to 0 while the game is in combat phase
+            (game_phase=2). The bot's army engagement logic may have sent
+            units into an unfavourable fight. Check the army value ratio
+            recording rule and combat micro logs.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/army-wipe"
+
+      - alert: SC2BotGasStarved
+        expr: |
+          sc2bot_vespene_stored < 20
+          and
+          sc2bot_tech_tier >= 2
+        for: 5m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot is gas-starved at tech tier >= 2"
+          description: >
+            Stored vespene gas is {{ $value | printf "%.0f" }} while the bot
+            is at tech tier {{ with query "avg(sc2bot_tech_tier)" }}{{ . | first | value | printf "%.0f" }}{{ end }}.
+            High-tier units (Colossus, Brood Lord, Siege Tank) require
+            significant gas. The bot may not be saturating gas geysers.
+          runbook_url: "https://wiki.internal/sc2bot/runbooks/gas-starved"
