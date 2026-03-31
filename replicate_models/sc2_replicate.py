@@ -149,3 +149,5 @@ if __name__ == "__main__":
         minerals=350, gas=150, army_supply=30,
     )
     print(f"\n[Sample Input]\n{sample.model_dump_json(indent=2)}")
+
+# Phase 440: Replicate registered
