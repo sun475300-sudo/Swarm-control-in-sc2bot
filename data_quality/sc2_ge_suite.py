@@ -162,3 +162,5 @@ def run_sc2_data_quality() -> None:
 
 if __name__ == "__main__":
     run_sc2_data_quality()
+
+# Phase 423: Great Expectations registered
