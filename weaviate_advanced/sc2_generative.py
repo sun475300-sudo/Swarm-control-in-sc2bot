@@ -1,5 +1,6 @@
 # SC2 Bot - Weaviate Advanced: Generative Search & Hybrid Search
 # Strategy Q&A with nearText, generative modules, and GraphQL
+# Phase 472: Weaviate generative + hybrid search for SC2 strategy Q&A
 
 import weaviate
 from weaviate.classes.init import Auth
