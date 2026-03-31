@@ -154,3 +154,5 @@ if __name__ == "__main__":
     print("[ZenML] Running SC2 training pipeline...")
     sc2_zenml_pipeline(n_samples=2000, model_type="gradient_boost", min_accuracy=0.60)
     print("[ZenML] Pipeline complete.")
+
+# Phase 426: ZenML registered
