@@ -1,121 +1,430 @@
-# Default values for sc2bot Helm chart
-# This file is the default configuration; override with -f or --set flags.
+# Phase 581: Helm Charts
+# SC2 Bot Kubernetes Helm values.yaml
+# Production-ready configuration for StarCraft II bot deployment
 
+# ---------------------------------------------------------------------------
+# Replica configuration
+# ---------------------------------------------------------------------------
 replicaCount: 2
 
+# ---------------------------------------------------------------------------
+# Container image
+# ---------------------------------------------------------------------------
 image:
-  repository: sc2bot/zerg-ai
-  tag: "1.0.0"
+  repository: ghcr.io/sc2bot/commander-bot
   pullPolicy: IfNotPresent
-  # pullSecret: regcred  # Uncomment if using private registry
+  tag: "1.5.0"
 
+imagePullSecrets:
+  - name: ghcr-registry-secret
+
+nameOverride: ""
+fullnameOverride: "sc2bot"
+
+# ---------------------------------------------------------------------------
+# SC2 Bot core configuration
+# ---------------------------------------------------------------------------
+bot:
+  name: "지휘관봇"
+  race: "Zerg"           # Terran | Zerg | Protoss | Random
+  difficulty: "VeryHard" # Easy | Medium | Hard | VeryHard | Elite | CheatVision
+  version: "1.5.0"
+  ladder:
+    enabled: true
+    host: "sc2ai-ladder.com"
+    port: 8642
+    apiKeySecret: "sc2bot-ladder-api-key"   # k8s Secret name
+    apiKeyKey: "api-key"
+  config:
+    maxStepTime: 2000          # ms per step before timeout
+    realtime: false
+    mapPool:
+      - "Gresvan LE"
+      - "Altitude LE"
+      - "Goldenaura LE"
+      - "Neohumanity LE"
+      - "Radhuset Station LE"
+    strategyWeights:
+      early_aggression: 0.25
+      macro_economy:    0.40
+      tech_rush:        0.20
+      defensive_turtle: 0.15
+    modelPath: "/models/sc2bot_policy.pt"
+    replayPath: "/replays"
+    logLevel: "INFO"           # DEBUG | INFO | WARNING | ERROR
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
 service:
   type: ClusterIP
-  port: 8765
-  metricsPort: 9090
+  ports:
+    bot:
+      port: 8642
+      targetPort: 8642
+      protocol: TCP
+    metrics:
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+    health:
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
 
-resources:
-  requests:
-    cpu: "500m"
-    memory: "512Mi"
-  limits:
-    cpu: "2000m"
-    memory: "2Gi"
-
-# SC2 bot environment configuration (non-sensitive)
-env:
-  SC2_HOST: "127.0.0.1"
-  SC2_PORT: "8168"
-  SC2_RACE: "Zerg"
-  BOT_DIFFICULTY: "VeryHard"
-  BOT_LOG_LEVEL: "INFO"
-  LADDER_SERVER: "ladder.sc2ai.net"
-  LADDER_PORT: "8090"
-  REALTIME: "false"
-  MAX_GAMES_PER_HOUR: "10"
-
-# Sensitive values loaded from Kubernetes Secrets (base64-encoded in Secret manifest)
-# These are injected via envFrom.secretRef in the deployment template.
-secrets:
-  # SC2_API_KEY: <base64-encoded>
-  # LADDER_TOKEN: <base64-encoded>
-  # DB_PASSWORD: <base64-encoded>
-  # DISCORD_WEBHOOK_URL: <base64-encoded>
-  secretName: ""  # Override to use an existing secret instead of creating one
-
-# Liveness and readiness probe config
-probes:
-  liveness:
-    path: /healthz
-    initialDelaySeconds: 15
-    periodSeconds: 20
-    failureThreshold: 3
-    timeoutSeconds: 5
-  readiness:
-    path: /ready
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 2
-    timeoutSeconds: 3
-
-# ConfigMap values mounted as files
-config:
-  strategyFile: "zerg_strategy.json"
-  buildOrderFile: "build_orders.yaml"
-  logFormat: "json"
-  metricsEnabled: "true"
-
-# Autoscaling (disabled by default)
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 70
-  targetMemoryUtilizationPercentage: 80
-
-# Ingress configuration
+# ---------------------------------------------------------------------------
+# Ingress
+# ---------------------------------------------------------------------------
 ingress:
-  enabled: false
+  enabled: true
   className: "nginx"
-  annotations: {}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
-    - host: sc2bot.local
+    - host: sc2bot.example.com
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+          servicePort: 8080
+        - path: /metrics
+          pathType: Prefix
+          servicePort: 9090
+  tls:
+    - secretName: sc2bot-tls
+      hosts:
+        - sc2bot.example.com
 
-# Persistence for replays and logs
-persistence:
+# ---------------------------------------------------------------------------
+# Resource requests and limits
+# ---------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2000m"
+    memory: "4Gi"
+
+# ---------------------------------------------------------------------------
+# Horizontal Pod Autoscaler
+# ---------------------------------------------------------------------------
+autoscaling:
   enabled: true
-  storageClass: ""
-  accessMode: ReadWriteOnce
-  size: 10Gi
-  mountPath: /app/replays
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
 
-# ServiceAccount
+# ---------------------------------------------------------------------------
+# Monitoring (Prometheus / Grafana)
+# ---------------------------------------------------------------------------
+monitoring:
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 30s
+    scrapeTimeout: 10s
+    path: /metrics
+    labels:
+      release: kube-prometheus-stack
+    relabelings:
+      - sourceLabels: [__meta_kubernetes_pod_name]
+        targetLabel: pod
+  prometheusRule:
+    enabled: true
+    namespace: monitoring
+    labels:
+      release: kube-prometheus-stack
+    groups:
+      - name: sc2bot.alerts
+        rules:
+          - alert: SC2BotHighStepLatency
+            expr: sc2bot_step_duration_seconds{quantile="0.99"} > 1.5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "SC2 Bot step latency is high"
+              description: "P99 step latency {{ $value }}s exceeds 1.5s threshold."
+          - alert: SC2BotPodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total{container="sc2bot"}[15m]) > 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "SC2 Bot pod is crash-looping"
+              description: "Pod {{ $labels.pod }} has restarted recently."
+          - alert: SC2BotWinRateLow
+            expr: sc2bot_win_rate_1h < 0.30
+            for: 30m
+            labels:
+              severity: warning
+            annotations:
+              summary: "SC2 Bot win rate dropped below 30%"
+              description: "Current win rate: {{ $value | humanizePercentage }}"
+          - alert: SC2BotNoGamesPlayed
+            expr: increase(sc2bot_games_total[1h]) == 0
+            for: 1h
+            labels:
+              severity: warning
+            annotations:
+              summary: "SC2 Bot has not played any games in the last hour"
+
+# ---------------------------------------------------------------------------
+# Persistent volumes
+# ---------------------------------------------------------------------------
+persistence:
+  models:
+    enabled: true
+    storageClass: "fast-ssd"
+    accessMode: ReadWriteMany
+    size: 20Gi
+    mountPath: /models
+    annotations: {}
+  logs:
+    enabled: true
+    storageClass: "standard"
+    accessMode: ReadWriteMany
+    size: 50Gi
+    mountPath: /logs
+    annotations:
+      helm.sh/resource-policy: keep
+  replays:
+    enabled: true
+    storageClass: "standard"
+    accessMode: ReadWriteMany
+    size: 100Gi
+    mountPath: /replays
+    annotations:
+      helm.sh/resource-policy: keep
+
+# ---------------------------------------------------------------------------
+# Environment variables
+# ---------------------------------------------------------------------------
+env:
+  # Game engine connection
+  SC2_HOST: "sc2-engine-service"
+  SC2_PORT: "5000"
+  SC2_TIMEOUT: "60"
+  # Bot identification
+  BOT_RACE: "Zerg"
+  BOT_NAME: "지휘관봇"
+  BOT_VERSION: "1.5.0"
+  # Training / inference
+  TORCH_NUM_THREADS: "4"
+  OMP_NUM_THREADS: "4"
+  # Python
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  # Paths
+  MODEL_DIR: "/models"
+  REPLAY_DIR: "/replays"
+  LOG_DIR: "/logs"
+
+envFromSecrets:
+  - secretName: sc2bot-ladder-api-key
+    envKey: LADDER_API_KEY
+    secretKey: api-key
+  - secretName: sc2bot-db-credentials
+    envKey: DATABASE_URL
+    secretKey: url
+
+# ---------------------------------------------------------------------------
+# Node scheduling
+# ---------------------------------------------------------------------------
+nodeSelector:
+  kubernetes.io/os: linux
+  node-role.sc2bot/game: "true"
+
+tolerations:
+  - key: "sc2bot/dedicated"
+    operator: "Equal"
+    value: "game"
+    effect: "NoSchedule"
+  - key: "sc2bot/gpu"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - sc2bot
+          topologyKey: kubernetes.io/hostname
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.sc2bot/game
+              operator: In
+              values:
+                - "true"
+
+# ---------------------------------------------------------------------------
+# Security context
+# ---------------------------------------------------------------------------
+securityContext:
+  pod:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  container:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+
+# ---------------------------------------------------------------------------
+# Health probes
+# ---------------------------------------------------------------------------
+livenessProbe:
+  httpGet:
+    path: /healthz/live
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /healthz/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+startupProbe:
+  httpGet:
+    path: /healthz/startup
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+# ---------------------------------------------------------------------------
+# Training job configuration (GPU workers)
+# ---------------------------------------------------------------------------
+training:
+  enabled: false   # set true to spin up a training Job
+  gpu:
+    enabled: true
+    count: 1
+    type: "nvidia.com/gpu"
+    memoryRequest: "8Gi"
+  worker:
+    replicaCount: 4
+    image:
+      repository: ghcr.io/sc2bot/commander-bot-trainer
+      tag: "1.5.0"
+    resources:
+      requests:
+        cpu: "2000m"
+        memory: "8Gi"
+        nvidia.com/gpu: "1"
+      limits:
+        cpu: "8000m"
+        memory: "32Gi"
+        nvidia.com/gpu: "1"
+    config:
+      batchSize: 256
+      learningRate: 3.0e-4
+      totalTimesteps: 10000000
+      nEnvs: 8
+      nSteps: 128
+      nEpochs: 4
+      gamma: 0.99
+      lambdaGae: 0.95
+      clipRange: 0.2
+      entropyCoef: 0.01
+      valueLossCoef: 0.5
+      maxGradNorm: 0.5
+      checkpointInterval: 100000
+      checkpointPath: "/models/checkpoints"
+    tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+    nodeSelector:
+      accelerator: "nvidia-gpu"
+
+# ---------------------------------------------------------------------------
+# Service account
+# ---------------------------------------------------------------------------
 serviceAccount:
   create: true
-  annotations: {}
-  name: ""
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/sc2bot-role"
+  name: "sc2bot-sa"
 
+# ---------------------------------------------------------------------------
 # Pod disruption budget
+# ---------------------------------------------------------------------------
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
+# ---------------------------------------------------------------------------
 # Network policy
+# ---------------------------------------------------------------------------
 networkPolicy:
-  enabled: false
-  ingress: []
-  egress: []
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
-
-# Extra labels applied to all resources
-commonLabels: {}
-
-# Extra annotations applied to all resources
-commonAnnotations: {}
+  enabled: true
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nginx-ingress
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: sc2-engine
+      ports:
+        - protocol: TCP
+          port: 5000
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8642
