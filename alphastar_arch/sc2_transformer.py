@@ -175,6 +175,7 @@ class SC2Transformer(nn.Module):
 
     def init_lstm_state(self, batch_size: int, hidden_dim: int = 384,
                         n_layers: int = 3) -> Tuple:
+        """Initialize zero LSTM hidden/cell state tensors."""
         h = torch.zeros(n_layers, batch_size, hidden_dim)
         c = torch.zeros(n_layers, batch_size, hidden_dim)
         return (h, c)
