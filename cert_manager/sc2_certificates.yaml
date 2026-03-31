@@ -1,0 +1,105 @@
+# Phase 487: cert-manager TLS Certificate Automation for SC2
+# ClusterIssuer Let's Encrypt, Certificate resources, IngressTLS, rotation
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@sc2bot.io
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@sc2bot.io
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: sc2-portal-tls
+  namespace: sc2bot
+spec:
+  secretName: sc2-portal-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - portal.sc2bot.io
+    - www.portal.sc2bot.io
+  duration: 2160h   # 90 days
+  renewBefore: 360h # 15 days before expiry
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: sc2-api-tls
+  namespace: sc2bot
+spec:
+  secretName: sc2-api-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - api.sc2bot.io
+  duration: 2160h
+  renewBefore: 360h
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sc2-ingress-tls
+  namespace: sc2bot
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - portal.sc2bot.io
+      secretName: sc2-portal-tls-secret
+    - hosts:
+        - api.sc2bot.io
+      secretName: sc2-api-tls-secret
+  rules:
+    - host: portal.sc2bot.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sc2-frontend
+                port:
+                  number: 80
+    - host: api.sc2bot.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sc2-api
+                port:
+                  number: 8000
