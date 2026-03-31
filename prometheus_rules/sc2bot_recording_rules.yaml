@@ -1,4 +1,4 @@
-# SC2 Bot Prometheus Recording Rules
+# SC2 Bot Prometheus Recording Rules — Phase 344
 # Pre-computed PromQL expressions for performance metrics dashboards and alerts.
 # Recording rules reduce query load by materializing expensive computations.
 
