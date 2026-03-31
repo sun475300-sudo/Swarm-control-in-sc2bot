@@ -1,0 +1,121 @@
+# Phase 497: AsyncAPI Specification for SC2 Event-Driven Architecture
+# Channels: game/started, game/ended, unit/killed
+# Messages, Kafka/AMQP/WebSocket bindings
+
+asyncapi: 3.0.0
+info:
+  title: SC2 Bot Event API
+  version: 1.0.0
+  description: Event-driven architecture specification for SC2 bot microservices
+
+servers:
+  kafka-broker:
+    host: kafka.sc2bot.io:9092
+    protocol: kafka
+    security:
+      - saslScram: []
+  amqp-broker:
+    host: rabbitmq.sc2bot.io:5672
+    protocol: amqp
+  websocket:
+    host: ws.sc2bot.io
+    protocol: ws
+    pathname: /events
+
+channels:
+  sc2GameStarted:
+    address: sc2/game/started
+    messages:
+      GameStartedEvent:
+        $ref: "#/components/messages/GameStartedEvent"
+    bindings:
+      kafka:
+        topic: sc2-game-started
+        partitions: 12
+        replicas: 3
+        retention: 604800000
+
+  sc2GameEnded:
+    address: sc2/game/ended
+    messages:
+      GameEndedEvent:
+        $ref: "#/components/messages/GameEndedEvent"
+    bindings:
+      kafka:
+        topic: sc2-game-ended
+        partitions: 12
+        replicas: 3
+      amqp:
+        exchange:
+          name: sc2-events
+          type: topic
+          durable: true
+        routingKey: game.ended
+
+  sc2UnitKilled:
+    address: sc2/unit/killed
+    messages:
+      UnitKilledEvent:
+        $ref: "#/components/messages/UnitKilledEvent"
+    bindings:
+      kafka:
+        topic: sc2-unit-killed
+        partitions: 24
+      websocket:
+        bindingVersion: 0.1.0
+
+components:
+  messages:
+    GameStartedEvent:
+      name: GameStartedEvent
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/GameStartedPayload"
+      headers:
+        type: object
+        properties:
+          correlationId: { type: string }
+          timestamp:     { type: string, format: date-time }
+
+    GameEndedEvent:
+      name: GameEndedEvent
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/GameEndedPayload"
+
+    UnitKilledEvent:
+      name: UnitKilledEvent
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/UnitKilledPayload"
+
+  schemas:
+    GameStartedPayload:
+      type: object
+      properties:
+        gameId:    { type: string }
+        map:       { type: string }
+        players:   { type: array, items: { type: string } }
+        startedAt: { type: string, format: date-time }
+
+    GameEndedPayload:
+      type: object
+      properties:
+        gameId:   { type: string }
+        winner:   { type: string }
+        duration: { type: integer }
+        endedAt:  { type: string, format: date-time }
+
+    UnitKilledPayload:
+      type: object
+      properties:
+        gameId:     { type: string }
+        unitType:   { type: string }
+        killedBy:   { type: string }
+        position:   { type: object, properties: { x: { type: number }, y: { type: number } } }
+        gameLoop:   { type: integer }
+
+  securitySchemes:
+    saslScram:
+      type: scramSha256
+      description: Kafka SASL/SCRAM authentication
