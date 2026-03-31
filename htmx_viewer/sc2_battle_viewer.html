@@ -1,0 +1,1401 @@
+<!--
+  ============================================================================
+  Phase 602: HTMX - SC2 Battle Viewer
+  ============================================================================
+  Lightweight, real-time StarCraft II Zerg battle viewer built with HTMX.
+  Features:
+    - Dynamic battle stats loading via hx-get
+    - Strategy submission via hx-post
+    - Periodic polling (5s) for live game data
+    - SSE + WebSocket for real-time updates
+    - Out-of-band swaps for multi-element updates
+    - Hyperscript micro-interactions
+    - Responsive CSS Grid layout
+    - ASCII-art resource graphs and unit composition display
+  ============================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SC2 Zerg Battle Viewer</title>
+
+  <!-- HTMX Core -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <!-- HTMX SSE Extension -->
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
+  <!-- HTMX WebSocket Extension -->
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+  <!-- Hyperscript -->
+  <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+
+  <style>
+    /* ====================================================================
+       CSS Variables & Reset
+       ==================================================================== */
+    :root {
+      --zerg-primary: #8b1a1a;
+      --zerg-secondary: #4a0e4e;
+      --zerg-accent: #c9a820;
+      --zerg-creep: #3d1f00;
+      --bg-dark: #0a0a0f;
+      --bg-panel: #12121a;
+      --bg-panel-hover: #1a1a28;
+      --text-primary: #e0ddd4;
+      --text-secondary: #8a8878;
+      --text-highlight: #ffd700;
+      --border-color: #2a2a3a;
+      --success: #22c55e;
+      --warning: #eab308;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --font-mono: 'Courier New', 'Consolas', monospace;
+      --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      --transition-speed: 0.3s;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ====================================================================
+       HTMX Loading Indicator
+       ==================================================================== */
+    .htmx-indicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: var(--zerg-accent);
+      font-size: 0.85rem;
+    }
+
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator {
+      display: inline-flex;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--zerg-accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ====================================================================
+       HTMX CSS Transitions
+       ==================================================================== */
+    .htmx-added {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .htmx-settling {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity var(--transition-speed) ease-out,
+                  transform var(--transition-speed) ease-out;
+    }
+
+    .htmx-swapping {
+      opacity: 0;
+      transition: opacity 0.15s ease-in;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transition: opacity 0.4s ease-in;
+    }
+
+    .fade-in.htmx-settling {
+      opacity: 1;
+    }
+
+    /* ====================================================================
+       Layout - CSS Grid
+       ==================================================================== */
+    .app-header {
+      background: linear-gradient(135deg, var(--zerg-primary), var(--zerg-secondary));
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--zerg-accent);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .app-header h1 {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      color: var(--text-highlight);
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+      letter-spacing: 2px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--danger);
+      transition: background 0.3s;
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "resources  battlefield  strategy"
+        "units      battlefield  strategy"
+        "units      battlelog    battlelog";
+      gap: 1px;
+      padding: 1px;
+      min-height: calc(100vh - 60px);
+      background: var(--border-color);
+    }
+
+    @media (max-width: 1200px) {
+      .main-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "resources  strategy"
+          "battlefield battlefield"
+          "units      units"
+          "battlelog  battlelog";
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "resources"
+          "battlefield"
+          "strategy"
+          "units"
+          "battlelog";
+      }
+    }
+
+    /* ====================================================================
+       Panel Base Styles
+       ==================================================================== */
+    .panel {
+      background: var(--bg-panel);
+      padding: 1rem;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-header h2 {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--zerg-accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .panel-header .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--zerg-primary);
+      color: var(--text-primary);
+    }
+
+    /* ====================================================================
+       Resource Panel
+       ==================================================================== */
+    .resources-panel {
+      grid-area: resources;
+    }
+
+    .resource-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .resource-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .resource-value {
+      font-family: var(--font-mono);
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .resource-value.minerals { color: #4fc3f7; }
+    .resource-value.vespene  { color: #81c784; }
+    .resource-value.supply   { color: var(--warning); }
+    .resource-value.larvae   { color: #ce93d8; }
+
+    .ascii-graph {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      line-height: 1.2;
+      color: var(--text-secondary);
+      white-space: pre;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+
+    /* ====================================================================
+       Battlefield Panel
+       ==================================================================== */
+    .battlefield-panel {
+      grid-area: battlefield;
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .minimap {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      line-height: 1.1;
+      white-space: pre;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 0.75rem;
+      border-radius: 4px;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .minimap .zerg-unit  { color: #e040fb; }
+    .minimap .enemy-unit { color: #f44336; }
+    .minimap .structure  { color: var(--zerg-accent); }
+    .minimap .terrain    { color: #2e7d32; }
+
+    .battle-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      transition: border-color var(--transition-speed);
+    }
+
+    .stat-card:hover {
+      border-color: var(--zerg-accent);
+    }
+
+    .stat-card .stat-num {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--text-highlight);
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    /* ====================================================================
+       Unit Composition Panel
+       ==================================================================== */
+    .units-panel {
+      grid-area: units;
+    }
+
+    .unit-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .unit-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.3rem 0;
+      font-size: 0.85rem;
+    }
+
+    .unit-icon {
+      font-family: var(--font-mono);
+      width: 24px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .unit-name {
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .unit-count {
+      font-family: var(--font-mono);
+      color: var(--text-highlight);
+      min-width: 30px;
+      text-align: right;
+    }
+
+    .unit-bar {
+      width: 80px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .unit-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--zerg-primary), var(--zerg-accent));
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    /* ====================================================================
+       Strategy Panel
+       ==================================================================== */
+    .strategy-panel {
+      grid-area: strategy;
+    }
+
+    .strategy-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group select,
+    .form-group input[type="range"],
+    .form-group textarea {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      transition: border-color var(--transition-speed);
+    }
+
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--zerg-accent);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .range-display {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .btn {
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all var(--transition-speed);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--zerg-primary), var(--zerg-secondary));
+      color: var(--text-highlight);
+      border: 1px solid var(--zerg-accent);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 15px rgba(201, 168, 32, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.4);
+    }
+
+    .strategy-response {
+      margin-top: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      min-height: 40px;
+    }
+
+    .strategy-response.success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+
+    .strategy-response.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+
+    /* ====================================================================
+       Battle Log Panel
+       ==================================================================== */
+    .battlelog-panel {
+      grid-area: battlelog;
+      max-height: 300px;
+    }
+
+    .log-entry {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-left: 3px solid transparent;
+      margin-bottom: 2px;
+      transition: background 0.2s;
+    }
+
+    .log-entry:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .log-entry .timestamp {
+      color: var(--text-secondary);
+      margin-right: 8px;
+    }
+
+    .log-entry.combat     { border-left-color: var(--danger); }
+    .log-entry.build      { border-left-color: var(--info); }
+    .log-entry.economy    { border-left-color: var(--success); }
+    .log-entry.upgrade    { border-left-color: var(--warning); }
+    .log-entry.strategic  { border-left-color: var(--zerg-accent); }
+
+    .log-filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .log-filter {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .log-filter.active {
+      background: rgba(201, 168, 32, 0.2);
+      border-color: var(--zerg-accent);
+      color: var(--text-highlight);
+    }
+
+    .log-container {
+      max-height: 220px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-color) transparent;
+    }
+
+    .log-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .log-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .log-container::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    /* ====================================================================
+       Notifications / Toasts
+       ==================================================================== */
+    .toast-container {
+      position: fixed;
+      top: 70px;
+      right: 1rem;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .toast.info    { background: var(--bg-panel); border-left: 4px solid var(--info); }
+    .toast.warning { background: var(--bg-panel); border-left: 4px solid var(--warning); }
+    .toast.danger  { background: var(--bg-panel); border-left: 4px solid var(--danger); }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    /* ====================================================================
+       Footer
+       ==================================================================== */
+    .app-footer {
+      background: var(--bg-panel);
+      padding: 0.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <!-- ====================================================================
+       Header
+       ==================================================================== -->
+  <header class="app-header">
+    <h1>&#9776; SC2 ZERG BATTLE VIEWER</h1>
+    <div class="connection-status">
+      <span class="htmx-indicator" id="global-indicator">
+        <span class="spinner"></span> Updating...
+      </span>
+      <span id="ws-status-label">Disconnected</span>
+      <span class="status-dot" id="ws-status-dot"></span>
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       Toast Notifications (out-of-band target)
+       ==================================================================== -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ====================================================================
+       Main Grid Layout
+       ==================================================================== -->
+  <main class="main-grid">
+
+    <!-- ================================================================
+         Resources Panel - Polled every 5 seconds
+         ================================================================ -->
+    <section class="panel resources-panel"
+             hx-get="/api/game/resources"
+             hx-trigger="load, every 5s"
+             hx-target="#resources-content"
+             hx-swap="innerHTML transition:true"
+             hx-indicator="#resources-indicator">
+      <div class="panel-header">
+        <h2>Resources</h2>
+        <span class="htmx-indicator" id="resources-indicator">
+          <span class="spinner"></span>
+        </span>
+      </div>
+      <div id="resources-content">
+        <!-- Dynamic content loaded via hx-get /api/game/resources -->
+        <div class="resource-row">
+          <span class="resource-label">Minerals</span>
+          <span class="resource-value minerals" id="minerals-val">--</span>
+        </div>
+        <div class="resource-row">
+          <span class="resource-label">Vespene Gas</span>
+          <span class="resource-value vespene" id="vespene-val">--</span>
+        </div>
+        <div class="resource-row">
+          <span class="resource-label">Supply</span>
+          <span class="resource-value supply" id="supply-val">--/--</span>
+        </div>
+        <div class="resource-row">
+          <span class="resource-label">Larvae</span>
+          <span class="resource-value larvae" id="larvae-val">--</span>
+        </div>
+        <div class="resource-row">
+          <span class="resource-label">Workers</span>
+          <span class="resource-value" id="workers-val">--</span>
+        </div>
+        <div class="resource-row">
+          <span class="resource-label">Bases</span>
+          <span class="resource-value" id="bases-val">--</span>
+        </div>
+
+        <!-- ASCII Resource Graph -->
+        <div class="ascii-graph" id="resource-graph">
+Minerals Over Time (last 120s)
+2000|
+1500|          *
+1000|     *  *   *  *
+ 500|  *        *     *  *
+   0|*________________________
+    0s   30s   60s   90s  120s
+
+Vespene Over Time (last 120s)
+1000|
+ 750|               *
+ 500|        *  *     *
+ 250|  *  *              *
+   0|*________________________
+    0s   30s   60s   90s  120s
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         Battlefield Panel - SSE for real-time map updates
+         ================================================================ -->
+    <section class="panel battlefield-panel"
+             hx-ext="sse"
+             sse-connect="/api/game/stream"
+             sse-swap="map-update"
+             hx-target="#minimap-display"
+             hx-swap="innerHTML">
+      <div class="panel-header">
+        <h2>Battlefield</h2>
+        <div>
+          <span class="badge" id="game-time-badge">00:00</span>
+          <span class="htmx-indicator" id="battlefield-indicator">
+            <span class="spinner"></span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Battle stats bar - loaded via hx-get -->
+      <div class="battle-stats-bar"
+           id="battle-stats"
+           hx-get="/api/game/battle-stats"
+           hx-trigger="load, every 5s"
+           hx-swap="innerHTML"
+           hx-indicator="#battlefield-indicator">
+        <div class="stat-card">
+          <div class="stat-num" id="army-supply">--</div>
+          <div class="stat-label">Army Supply</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="kill-count">--</div>
+          <div class="stat-label">Kills</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="loss-count">--</div>
+          <div class="stat-label">Losses</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="apm-count">--</div>
+          <div class="stat-label">APM</div>
+        </div>
+      </div>
+
+      <!-- Minimap ASCII display -->
+      <div class="minimap" id="minimap-display">
++--------------------------------------------------+
+|  H  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . |
+|  .  D  D  .  .  .  .  .  .  .  .  .  .  .  .  . |
+|  .  .  .  .  ~  ~  .  .  .  .  .  .  .  .  .  . |
+|  .  .  .  ~  ~  ~  ~  .  .  .  .  .  .  .  .  . |
+|  .  .  .  .  ~  ~  .  .  .  z  z  .  .  .  .  . |
+|  .  .  .  .  .  .  .  .  z  z  z  z  .  .  .  . |
+|  .  .  .  .  .  .  .  .  .  z  z  .  .  .  .  . |
+|  .  .  .  .  .  .  #  #  .  .  .  .  .  .  .  . |
+|  .  .  .  .  .  #  #  #  #  .  .  .  .  .  .  . |
+|  .  .  .  .  .  .  #  #  .  .  .  .  .  .  .  . |
+|  .  .  .  .  .  .  .  .  .  .  .  e  e  .  .  . |
+|  .  .  .  .  .  .  .  .  .  .  e  e  e  e  .  . |
+|  .  .  .  .  .  .  .  .  .  .  .  e  e  .  .  . |
+|  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  E |
++--------------------------------------------------+
+  Legend: H=Hatchery D=Drone z=Zerg e=Enemy E=EnemyBase
+          #=Xel'Naga ~=Water .=Empty
+      </div>
+    </section>
+
+    <!-- ================================================================
+         Strategy Panel - hx-post for submitting commands
+         ================================================================ -->
+    <section class="panel strategy-panel">
+      <div class="panel-header">
+        <h2>Strategy Control</h2>
+        <span class="badge">LIVE</span>
+      </div>
+
+      <!-- Strategy submission form -->
+      <form class="strategy-form"
+            hx-post="/api/game/strategy"
+            hx-target="#strategy-response"
+            hx-swap="innerHTML transition:true"
+            hx-indicator="#strategy-indicator"
+            hx-on::after-request="this.classList.add('submitted')"
+            _="on submit wait 200ms then remove .submitted from me">
+
+        <div class="form-group">
+          <label for="build-order">Build Order</label>
+          <select id="build-order" name="build_order">
+            <option value="hatch_first">Hatch First (Macro)</option>
+            <option value="pool_first">Pool First (Aggro)</option>
+            <option value="gas_first">Gas First (Tech)</option>
+            <option value="twelve_pool">12 Pool Rush</option>
+            <option value="roach_ravager">Roach/Ravager Timing</option>
+            <option value="ling_bane_muta">Ling/Bane/Muta</option>
+            <option value="hydra_lurker">Hydra/Lurker</option>
+            <option value="swarm_host">Swarm Host Contain</option>
+            <option value="brood_lord">Brood Lord Late Game</option>
+            <option value="ultra_ling">Ultra/Cracklings</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="aggression">Aggression Level</label>
+          <input type="range" id="aggression" name="aggression"
+                 min="0" max="100" value="50"
+                 _="on input set #aggression-display.innerText to my.value + '%'">
+          <div class="range-display">
+            <span>Passive</span>
+            <span id="aggression-display">50%</span>
+            <span>All-In</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expansion-priority">Expansion Priority</label>
+          <select id="expansion-priority" name="expansion_priority">
+            <option value="greedy">Greedy (3+ Hatch)</option>
+            <option value="standard" selected>Standard (2 Hatch)</option>
+            <option value="conservative">Conservative (1 Hatch)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="scout-mode">Scout Mode</label>
+          <select id="scout-mode" name="scout_mode">
+            <option value="overlord">Overlord Scout</option>
+            <option value="ling" selected>Ling Runby</option>
+            <option value="overseer">Overseer (Detector)</option>
+            <option value="changeling">Changeling Spam</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="custom-notes">Custom Notes</label>
+          <textarea id="custom-notes" name="custom_notes"
+                    placeholder="e.g., Focus on 3rd base timing, harass mineral line..."
+                    rows="3"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;"
+                  _="on click add .pulse to me then wait 500ms then remove .pulse from me">
+            Apply Strategy
+          </button>
+          <button type="button" class="btn btn-secondary"
+                  hx-post="/api/game/strategy/reset"
+                  hx-target="#strategy-response"
+                  hx-swap="innerHTML"
+                  _="on click toggle .active on me">
+            Reset
+          </button>
+        </div>
+
+        <span class="htmx-indicator" id="strategy-indicator">
+          <span class="spinner"></span> Applying strategy...
+        </span>
+      </form>
+
+      <div id="strategy-response" class="strategy-response"></div>
+
+      <!-- Quick Actions with hx-post and hyperscript -->
+      <div style="margin-top: 1rem;">
+        <div class="panel-header">
+          <h2>Quick Actions</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <button class="btn btn-secondary"
+                  hx-post="/api/game/action/inject"
+                  hx-target="#strategy-response"
+                  hx-swap="innerHTML"
+                  _="on click put 'Injecting...' into me
+                     wait 1s then put 'Inject All' into me">
+            Inject All
+          </button>
+          <button class="btn btn-secondary"
+                  hx-post="/api/game/action/spread-creep"
+                  hx-target="#strategy-response"
+                  hx-swap="innerHTML"
+                  _="on click add .active to me
+                     wait 1s then remove .active from me">
+            Spread Creep
+          </button>
+          <button class="btn btn-secondary"
+                  hx-post="/api/game/action/rally"
+                  hx-target="#strategy-response"
+                  hx-swap="innerHTML">
+            Set Rally
+          </button>
+          <button class="btn btn-danger"
+                  hx-post="/api/game/action/attack-all"
+                  hx-target="#strategy-response"
+                  hx-swap="innerHTML"
+                  hx-confirm="Send all army to attack? This cannot be undone."
+                  _="on click add @disabled to me
+                     wait 3s then remove @disabled from me">
+            ATTACK ALL
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         Unit Composition Panel - Polled every 5s
+         ================================================================ -->
+    <section class="panel units-panel"
+             hx-get="/api/game/units"
+             hx-trigger="load, every 5s"
+             hx-target="#units-content"
+             hx-swap="outerHTML"
+             hx-indicator="#units-indicator">
+      <div class="panel-header">
+        <h2>Unit Composition</h2>
+        <span class="htmx-indicator" id="units-indicator">
+          <span class="spinner"></span>
+        </span>
+      </div>
+      <div id="units-content">
+        <!-- Tier 1 -->
+        <div class="unit-group">
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:4px; text-transform:uppercase;">
+            Tier 1
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128027;</span>
+            <span class="unit-name">Zergling</span>
+            <span class="unit-count">24</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:60%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128126;</span>
+            <span class="unit-name">Baneling</span>
+            <span class="unit-count">8</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:20%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128375;</span>
+            <span class="unit-name">Roach</span>
+            <span class="unit-count">12</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:30%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#9733;</span>
+            <span class="unit-name">Queen</span>
+            <span class="unit-count">4</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:10%"></div></div>
+          </div>
+        </div>
+
+        <!-- Tier 2 -->
+        <div class="unit-group">
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:4px; text-transform:uppercase;">
+            Tier 2
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128013;</span>
+            <span class="unit-name">Hydralisk</span>
+            <span class="unit-count">16</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:40%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128030;</span>
+            <span class="unit-name">Mutalisk</span>
+            <span class="unit-count">6</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:15%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#9878;</span>
+            <span class="unit-name">Ravager</span>
+            <span class="unit-count">4</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:10%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#9760;</span>
+            <span class="unit-name">Lurker</span>
+            <span class="unit-count">4</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:10%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#9681;</span>
+            <span class="unit-name">Infestor</span>
+            <span class="unit-count">2</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:5%"></div></div>
+          </div>
+        </div>
+
+        <!-- Tier 3 -->
+        <div class="unit-group">
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:4px; text-transform:uppercase;">
+            Tier 3
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128025;</span>
+            <span class="unit-name">Ultralisk</span>
+            <span class="unit-count">2</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:5%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#9992;</span>
+            <span class="unit-name">Brood Lord</span>
+            <span class="unit-count">0</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:0%"></div></div>
+          </div>
+          <div class="unit-row">
+            <span class="unit-icon">&#128123;</span>
+            <span class="unit-name">Viper</span>
+            <span class="unit-count">0</span>
+            <div class="unit-bar"><div class="unit-bar-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- ASCII Unit Composition Chart -->
+        <div class="ascii-graph">
+Army Composition (by supply)
+  Ling  [############........] 24  30%
+  Roach [########............] 12  15%
+  Hydra [##########..........] 16  20%
+  Muta  [###.................] 06  7.5%
+  Bane  [####................] 08  10%
+  Queen [##..................] 04   5%
+  Ultra [#...................] 02  2.5%
+  Other [###.................] 08  10%
+        ~~~~~~~~~~~~~~~~~~~~
+        Total Army: 80 supply
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         Battle Log Panel - SSE for live log events, beforeend swap
+         ================================================================ -->
+    <section class="panel battlelog-panel">
+      <div class="panel-header">
+        <h2>Battle Log</h2>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.7rem;"
+                  hx-get="/api/game/logs/clear"
+                  hx-target="#log-entries"
+                  hx-swap="innerHTML"
+                  _="on click put '' into #log-entries">
+            Clear
+          </button>
+          <span class="htmx-indicator" id="log-indicator">
+            <span class="spinner"></span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Log filter bar with hyperscript toggle -->
+      <div class="log-filter-bar">
+        <button class="log-filter active"
+                _="on click toggle .active on me
+                   then if I match .active send filterOn(type:'all') to #log-entries
+                   else send filterOff(type:'all') to #log-entries">
+          All
+        </button>
+        <button class="log-filter active"
+                _="on click toggle .active on me">
+          Combat
+        </button>
+        <button class="log-filter active"
+                _="on click toggle .active on me">
+          Build
+        </button>
+        <button class="log-filter active"
+                _="on click toggle .active on me">
+          Economy
+        </button>
+        <button class="log-filter active"
+                _="on click toggle .active on me">
+          Upgrade
+        </button>
+      </div>
+
+      <!-- Log entries container - SSE appends new entries -->
+      <div class="log-container"
+           hx-ext="sse"
+           sse-connect="/api/game/log-stream"
+           sse-swap="log-event"
+           hx-target="#log-entries"
+           hx-swap="beforeend scroll:#log-entries:bottom"
+           hx-indicator="#log-indicator">
+        <div id="log-entries">
+          <div class="log-entry combat">
+            <span class="timestamp">[00:00:00]</span>
+            <span>Game started - GL HF!</span>
+          </div>
+          <div class="log-entry build">
+            <span class="timestamp">[00:00:12]</span>
+            <span>Drone produced from Hatchery</span>
+          </div>
+          <div class="log-entry economy">
+            <span class="timestamp">[00:00:15]</span>
+            <span>Drone sent to mineral patch</span>
+          </div>
+          <div class="log-entry build">
+            <span class="timestamp">[00:00:45]</span>
+            <span>Spawning Pool construction started</span>
+          </div>
+          <div class="log-entry economy">
+            <span class="timestamp">[00:01:10]</span>
+            <span>Second Hatchery started at natural expansion</span>
+          </div>
+          <div class="log-entry upgrade">
+            <span class="timestamp">[00:02:30]</span>
+            <span>Metabolic Boost (Zergling Speed) researching...</span>
+          </div>
+          <div class="log-entry combat">
+            <span class="timestamp">[00:03:15]</span>
+            <span>6 Zerglings produced - moving to map control positions</span>
+          </div>
+          <div class="log-entry strategic">
+            <span class="timestamp">[00:03:45]</span>
+            <span>Overlord scout detects enemy expansion at natural</span>
+          </div>
+          <div class="log-entry combat">
+            <span class="timestamp">[00:04:20]</span>
+            <span>Zergling runby: 2 kills, 1 loss at enemy mineral line</span>
+          </div>
+          <div class="log-entry build">
+            <span class="timestamp">[00:05:00]</span>
+            <span>Evolution Chamber started - preparing upgrades</span>
+          </div>
+          <div class="log-entry upgrade">
+            <span class="timestamp">[00:05:30]</span>
+            <span>+1 Melee Attack researching at Evolution Chamber</span>
+          </div>
+          <div class="log-entry economy">
+            <span class="timestamp">[00:06:00]</span>
+            <span>Third base started at 3rd expansion location</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       WebSocket Live Game Feed
+       ==================================================================== -->
+  <div hx-ext="ws"
+       ws-connect="/api/game/ws"
+       style="display:none;">
+    <!--
+      WebSocket messages from the server can include hx-swap-oob
+      attributes for out-of-band updates to any element on the page.
+
+      Example server message (HTML fragment):
+        <div id="minerals-val" hx-swap-oob="true" class="resource-value minerals">1250</div>
+        <div id="vespene-val" hx-swap-oob="true" class="resource-value vespene">680</div>
+        <div id="game-time-badge" hx-swap-oob="true" class="badge">07:32</div>
+        <div id="army-supply" hx-swap-oob="true" class="stat-num">72</div>
+        <div id="ws-status-label" hx-swap-oob="true">Connected</div>
+    -->
+    <div id="ws-messages"></div>
+  </div>
+
+  <!-- ====================================================================
+       Footer
+       ==================================================================== -->
+  <footer class="app-footer">
+    <span>SC2 Zerg Battle Viewer | Phase 602: HTMX</span>
+    <span id="footer-game-time">Game Time: 00:00</span>
+    <span>Polling: 5s | SSE: Active | WS: <span id="footer-ws-status">Pending</span></span>
+  </footer>
+
+  <!-- ====================================================================
+       Client-Side HTMX Event Handlers & Configuration
+       ==================================================================== -->
+  <script>
+    // ====================================================================
+    // HTMX Configuration
+    // ====================================================================
+    document.body.addEventListener('htmx:configRequest', function(event) {
+      // Add authentication header to all HTMX requests
+      event.detail.headers['X-SC2-Viewer'] = 'zerg-commander';
+      event.detail.headers['X-Game-Session'] = sessionStorage.getItem('gameSessionId') || 'default';
+    });
+
+    // ====================================================================
+    // HTMX After-Swap Transition Handler
+    // ====================================================================
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+      // Trigger CSS transitions on newly swapped content
+      const target = event.detail.target;
+      target.querySelectorAll('.fade-in').forEach(function(el) {
+        // Force reflow to trigger transition
+        void el.offsetHeight;
+        el.classList.add('visible');
+      });
+
+      // Auto-scroll log container to bottom on new entries
+      if (target.id === 'log-entries' || target.closest('#log-entries')) {
+        const logContainer = document.querySelector('.log-container');
+        if (logContainer) {
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+      }
+    });
+
+    // ====================================================================
+    // HTMX After-Settle Handler (post-transition)
+    // ====================================================================
+    document.body.addEventListener('htmx:afterSettle', function(event) {
+      // Update game time in footer whenever battle-stats settle
+      const gameTimeBadge = document.getElementById('game-time-badge');
+      if (gameTimeBadge) {
+        const footerTime = document.getElementById('footer-game-time');
+        if (footerTime) {
+          footerTime.textContent = 'Game Time: ' + gameTimeBadge.textContent;
+        }
+      }
+    });
+
+    // ====================================================================
+    // HTMX Error Handling
+    // ====================================================================
+    document.body.addEventListener('htmx:responseError', function(event) {
+      console.error('HTMX Response Error:', event.detail);
+      showToast('Connection error - retrying...', 'warning');
+    });
+
+    document.body.addEventListener('htmx:sendError', function(event) {
+      console.error('HTMX Send Error:', event.detail);
+      showToast('Server unreachable - check connection', 'danger');
+    });
+
+    // ====================================================================
+    // HTMX Before-Request Hook (rate limiting)
+    // ====================================================================
+    let requestCount = 0;
+    document.body.addEventListener('htmx:beforeRequest', function(event) {
+      requestCount++;
+      // Prevent request storms (more than 20 active requests)
+      if (requestCount > 20) {
+        event.preventDefault();
+        console.warn('Request throttled - too many active requests');
+      }
+    });
+
+    document.body.addEventListener('htmx:afterRequest', function(event) {
+      requestCount = Math.max(0, requestCount - 1);
+    });
+
+    // ====================================================================
+    // WebSocket Connection Status
+    // ====================================================================
+    document.body.addEventListener('htmx:wsOpen', function(event) {
+      document.getElementById('ws-status-dot').classList.add('connected');
+      document.getElementById('ws-status-label').textContent = 'Connected';
+      document.getElementById('footer-ws-status').textContent = 'Connected';
+      showToast('WebSocket connected - live feed active', 'info');
+    });
+
+    document.body.addEventListener('htmx:wsClose', function(event) {
+      document.getElementById('ws-status-dot').classList.remove('connected');
+      document.getElementById('ws-status-label').textContent = 'Disconnected';
+      document.getElementById('footer-ws-status').textContent = 'Disconnected';
+      showToast('WebSocket disconnected - falling back to polling', 'warning');
+    });
+
+    document.body.addEventListener('htmx:wsError', function(event) {
+      console.error('WebSocket Error:', event.detail);
+      showToast('WebSocket error - reconnecting...', 'danger');
+    });
+
+    // ====================================================================
+    // SSE Connection Events
+    // ====================================================================
+    document.body.addEventListener('htmx:sseOpen', function(event) {
+      console.log('SSE connection established');
+    });
+
+    document.body.addEventListener('htmx:sseError', function(event) {
+      console.error('SSE Error:', event.detail);
+    });
+
+    // ====================================================================
+    // Out-of-Band Update Handler
+    // ====================================================================
+    document.body.addEventListener('htmx:oobAfterSwap', function(event) {
+      // Flash effect on OOB-updated elements
+      const target = event.detail.target;
+      if (target) {
+        target.style.transition = 'background 0.3s';
+        target.style.background = 'rgba(201, 168, 32, 0.2)';
+        setTimeout(function() {
+          target.style.background = '';
+        }, 300);
+      }
+    });
+
+    // ====================================================================
+    // Toast Notification System
+    // ====================================================================
+    function showToast(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toast-container');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      // Auto-remove after 4 seconds
+      setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease-in';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 4000);
+    }
+
+    // ====================================================================
+    // Keyboard Shortcuts (hyperscript-compatible)
+    // ====================================================================
+    document.addEventListener('keydown', function(event) {
+      // Ctrl+Shift+A: Attack all (with confirmation)
+      if (event.ctrlKey && event.shiftKey && event.key === 'A') {
+        event.preventDefault();
+        if (confirm('Send all army to attack?')) {
+          htmx.ajax('POST', '/api/game/action/attack-all', {
+            target: '#strategy-response',
+            swap: 'innerHTML'
+          });
+        }
+      }
+      // Ctrl+I: Inject all hatcheries
+      if (event.ctrlKey && event.key === 'i') {
+        event.preventDefault();
+        htmx.ajax('POST', '/api/game/action/inject', {
+          target: '#strategy-response',
+          swap: 'innerHTML'
+        });
+      }
+      // Ctrl+R: Refresh all panels
+      if (event.ctrlKey && !event.shiftKey && event.key === 'r') {
+        event.preventDefault();
+        htmx.trigger(document.querySelector('.resources-panel'), 'htmx:trigger');
+        htmx.trigger(document.querySelector('.units-panel'), 'htmx:trigger');
+      }
+    });
+
+    // ====================================================================
+    // Session Management
+    // ====================================================================
+    (function() {
+      // Generate or retrieve session ID
+      if (!sessionStorage.getItem('gameSessionId')) {
+        sessionStorage.setItem('gameSessionId',
+          'sc2-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9)
+        );
+      }
+      console.log('[SC2 Viewer] Session:', sessionStorage.getItem('gameSessionId'));
+      console.log('[SC2 Viewer] HTMX version:', htmx.version);
+      console.log('[SC2 Viewer] Polling interval: 5s');
+      console.log('[SC2 Viewer] SSE endpoint: /api/game/stream');
+      console.log('[SC2 Viewer] WS endpoint: /api/game/ws');
+    })();
+  </script>
+</body>
+</html>

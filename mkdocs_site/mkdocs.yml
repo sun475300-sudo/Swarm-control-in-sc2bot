@@ -1,0 +1,389 @@
+# =============================================================================
+# Phase 605: MkDocs - SC2 Zerg Commander Bot Project Documentation
+# =============================================================================
+# Production MkDocs configuration with Material theme, multi-language support,
+# advanced Markdown extensions, and full plugin ecosystem.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Site Metadata
+# ---------------------------------------------------------------------------
+site_name: "SC2 Zerg Commander Bot - Documentation"
+site_url: https://sc2-zerg-commander.github.io/docs/
+site_author: SC2 Zerg Commander Team
+site_description: >-
+  Comprehensive documentation for the SC2 Zerg Commander Bot (지휘관봇),
+  a competitive StarCraft II Zerg AI built with python-sc2 (burnysc2).
+
+repo_name: sc2-zerg-commander/bot
+repo_url: https://github.com/sc2-zerg-commander/bot
+edit_uri: edit/main/mkdocs_site/docs/
+
+copyright: Copyright &copy; 2024-2026 SC2 Zerg Commander Team
+
+# ---------------------------------------------------------------------------
+# Theme: Material for MkDocs
+# ---------------------------------------------------------------------------
+theme:
+  name: material
+  language: en
+  custom_dir: docs/overrides
+
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  font:
+    text: Noto Sans KR
+    code: JetBrains Mono
+
+  icon:
+    logo: material/bug
+    repo: fontawesome/brands/github
+
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+# ---------------------------------------------------------------------------
+# Navigation Structure
+# ---------------------------------------------------------------------------
+nav:
+  - Home: index.md
+
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
+    - Running Your First Game: getting-started/first-game.md
+    - Development Environment: getting-started/dev-environment.md
+
+  - Architecture:
+    - architecture/index.md
+    - System Overview: architecture/overview.md
+    - Module Diagram: architecture/module-diagram.md
+    - Decision Engine: architecture/decision-engine.md
+    - Economy Manager: architecture/economy-manager.md
+    - Combat System: architecture/combat-system.md
+    - Scouting & Intel: architecture/scouting-intel.md
+    - Build Order Engine: architecture/build-order-engine.md
+    - Data Flow: architecture/data-flow.md
+
+  - Bot Modules:
+    - modules/index.md
+    - Core Bot Loop: modules/core-loop.md
+    - Zerg Macro:
+      - modules/zerg-macro/index.md
+      - Injection Manager: modules/zerg-macro/injection.md
+      - Creep Spread: modules/zerg-macro/creep-spread.md
+      - Larva Management: modules/zerg-macro/larva.md
+      - Queen Control: modules/zerg-macro/queen-control.md
+    - Army Control:
+      - modules/army-control/index.md
+      - Unit Micro: modules/army-control/unit-micro.md
+      - Army Composition: modules/army-control/army-composition.md
+      - Engagement Logic: modules/army-control/engagement-logic.md
+      - Spell Casters: modules/army-control/spell-casters.md
+    - Economy:
+      - modules/economy/index.md
+      - Worker Distribution: modules/economy/worker-distribution.md
+      - Expansion Timing: modules/economy/expansion-timing.md
+      - Gas Management: modules/economy/gas-management.md
+    - Build Orders:
+      - modules/build-orders/index.md
+      - ZvT Builds: modules/build-orders/zvt.md
+      - ZvP Builds: modules/build-orders/zvp.md
+      - ZvZ Builds: modules/build-orders/zvz.md
+    - Upgrades & Tech: modules/upgrades-tech.md
+
+  - API Reference:
+    - api/index.md
+    - Bot Core: api/bot-core.md
+    - Combat Manager: api/combat-manager.md
+    - Economy Manager: api/economy-manager.md
+    - Decision Engine: api/decision-engine.md
+    - Scouting System: api/scouting-system.md
+    - Build Order Parser: api/build-order-parser.md
+    - Telemetry (OTel): api/telemetry.md
+    - Configuration Schema: api/config-schema.md
+    - Utility Functions: api/utilities.md
+
+  - Strategies & Guides:
+    - guides/index.md
+    - Matchup Guides:
+      - guides/matchups/zvt.md
+      - guides/matchups/zvp.md
+      - guides/matchups/zvz.md
+    - Tuning Aggression: guides/tuning-aggression.md
+    - Replay Analysis: guides/replay-analysis.md
+    - Ladder Performance: guides/ladder-performance.md
+    - Training ML Models: guides/ml-training.md
+
+  - Deployment:
+    - deployment/index.md
+    - Docker Setup: deployment/docker.md
+    - Kubernetes / Helm: deployment/kubernetes.md
+    - CI/CD Pipeline: deployment/ci-cd.md
+    - Monitoring & Observability: deployment/monitoring.md
+    - Grafana Dashboards: deployment/grafana.md
+    - Prometheus Metrics: deployment/prometheus.md
+    - Production Checklist: deployment/production-checklist.md
+
+  - Contributing:
+    - contributing/index.md
+    - Code of Conduct: contributing/code-of-conduct.md
+    - Development Workflow: contributing/workflow.md
+    - Code Style Guide: contributing/code-style.md
+    - Testing Guidelines: contributing/testing.md
+    - Pull Request Process: contributing/pr-process.md
+
+  - Changelog: changelog.md
+
+# ---------------------------------------------------------------------------
+# Plugins
+# ---------------------------------------------------------------------------
+plugins:
+  - search:
+      lang:
+        - en
+        - ko
+      separator: '[\s\-\.]+'
+
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+      cache_safe: true
+
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
+
+  - social:
+      cards_layout_options:
+        background_color: "#4a148c"
+        color: "#ffffff"
+
+  - tags:
+      tags_file: tags.md
+
+  - i18n:
+      default_language: en
+      docs_structure: suffix
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ko
+          name: 한국어
+          build: true
+          nav_translations:
+            Home: 홈
+            Getting Started: 시작하기
+            Architecture: 아키텍처
+            Bot Modules: 봇 모듈
+            API Reference: API 레퍼런스
+            Strategies & Guides: 전략 및 가이드
+            Deployment: 배포
+            Contributing: 기여하기
+            Changelog: 변경 이력
+
+# ---------------------------------------------------------------------------
+# Markdown Extensions
+# ---------------------------------------------------------------------------
+markdown_extensions:
+  # Python-Markdown built-in
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+
+  - pymdownx.betterem:
+      smart_enable: all
+
+  - pymdownx.caret
+
+  - pymdownx.details
+
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      use_pygments: true
+      auto_title: true
+
+  - pymdownx.inlinehilite
+
+  - pymdownx.keys
+
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: sc2-zerg-commander
+      repo: bot
+
+  - pymdownx.mark
+
+  - pymdownx.smartsymbols
+
+  - pymdownx.snippets:
+      auto_append:
+        - docs/includes/abbreviations.md
+
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+  - pymdownx.tilde
+
+# ---------------------------------------------------------------------------
+# Extra Configuration
+# ---------------------------------------------------------------------------
+extra:
+  analytics:
+    provider: google
+    property: G-SC2ZERGBOT01
+
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/sc2-zerg-commander/bot
+      name: GitHub Repository
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/sc2-zerg-commander
+      name: Discord Community
+    - icon: fontawesome/brands/youtube
+      link: https://youtube.com/@sc2-zerg-commander
+      name: YouTube Channel
+
+  consent:
+    title: Cookie Consent
+    description: >-
+      We use cookies to measure the effectiveness of our documentation and
+      whether users find what they're searching for. Your consent helps us
+      improve the docs.
+
+  generator: false
+
+  alternate:
+    - name: English
+      link: /en/
+      lang: en
+    - name: 한국어
+      link: /ko/
+      lang: ko
+
+  version:
+    provider: mike
+    default: latest
+
+  tags:
+    SC2: sc2
+    Zerg: zerg
+    Bot: bot
+    AI: ai
+    Python: python
+
+# ---------------------------------------------------------------------------
+# Extra CSS & JavaScript
+# ---------------------------------------------------------------------------
+extra_css:
+  - stylesheets/custom.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# ---------------------------------------------------------------------------
+# Validation & Strict Mode
+# ---------------------------------------------------------------------------
+strict: true
+
+validation:
+  nav:
+    omitted_files: info
+    not_found: warn
+    absolute_links: info
+  links:
+    not_found: warn
+    absolute_links: info
+    unrecognized_links: info
+
+# ---------------------------------------------------------------------------
+# Watch (for mkdocs serve)
+# ---------------------------------------------------------------------------
+watch:
+  - docs
+  - docs/overrides

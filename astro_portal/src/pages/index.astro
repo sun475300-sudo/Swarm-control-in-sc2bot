@@ -1,0 +1,1109 @@
+---
+// ============================================================================
+// Phase 601: Astro — SC2 Bot Analysis Portal
+// ============================================================================
+// astro_portal/src/pages/index.astro
+// Static site generation with island architecture for interactive SC2 bot
+// statistics, match history, and strategy analysis.
+// ============================================================================
+
+// --- Frontmatter: Server-side data fetching & component imports ---
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Island components — hydrated client-side for interactivity
+// These would be Svelte/React components in a real project
+// import MmrChart from '../components/MmrChart.svelte';
+// import WinRateDonut from '../components/WinRateDonut.svelte';
+// import ApmTimeline from '../components/ApmTimeline.svelte';
+
+// Content Collections for strategy guides
+// import { getCollection } from 'astro:content';
+// const strategyGuides = await getCollection('strategies');
+
+// --- Astro.props for component data passing ---
+interface Props {
+  botName?: string;
+  season?: string;
+}
+
+const {
+  botName = 'ZergCommander',
+  season = 'Season 12',
+} = Astro.props;
+
+// --- Static data for SSG (would come from API/DB in production) ---
+
+interface MatchRecord {
+  id: string;
+  opponent: string;
+  opponentRace: 'Terran' | 'Protoss' | 'Zerg';
+  result: 'WIN' | 'LOSS';
+  map: string;
+  duration: string;
+  apm: number;
+  buildOrder: string;
+  date: string;
+}
+
+interface BotStats {
+  name: string;
+  race: string;
+  mmr: number;
+  mmrPeak: number;
+  mmrTrend: number[];
+  totalGames: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  avgApm: number;
+  apmHistory: number[];
+  winRateByMatchup: Record<string, number>;
+  winRateByMap: Record<string, number>;
+  recentStreak: string;
+  avgGameLength: string;
+  favoriteOpening: string;
+  currentLeague: string;
+}
+
+const botStats: BotStats = {
+  name: botName,
+  race: 'Zerg',
+  mmr: 4850,
+  mmrPeak: 5120,
+  mmrTrend: [4200, 4350, 4500, 4480, 4620, 4700, 4680, 4750, 4830, 4850],
+  totalGames: 1247,
+  wins: 734,
+  losses: 513,
+  winRate: 58.9,
+  avgApm: 312,
+  apmHistory: [280, 295, 310, 305, 320, 315, 330, 325, 312, 318],
+  winRateByMatchup: { ZvT: 62.3, ZvP: 55.1, ZvZ: 59.8 },
+  winRateByMap: {
+    'Blackburn LE': 64.2,
+    'Berlingrad LE': 58.7,
+    'Goldenaura LE': 52.1,
+    'Oceanborn LE': 61.5,
+    'Post-Youth LE': 55.9,
+  },
+  recentStreak: 'W5',
+  avgGameLength: '12:34',
+  favoriteOpening: '16 Hatch → Pool → Gas',
+  currentLeague: 'Diamond 1',
+};
+
+const recentMatches: MatchRecord[] = [
+  { id: 'm001', opponent: 'MarineKing', opponentRace: 'Terran', result: 'WIN', map: 'Blackburn LE', duration: '14:22', apm: 328, buildOrder: 'Ling-Bane into Hydra', date: '2026-03-30' },
+  { id: 'm002', opponent: 'StalkerMaster', opponentRace: 'Protoss', result: 'WIN', map: 'Berlingrad LE', duration: '11:05', apm: 305, buildOrder: 'Roach-Ravager All-in', date: '2026-03-30' },
+  { id: 'm003', opponent: 'QueenRush99', opponentRace: 'Zerg', result: 'LOSS', map: 'Goldenaura LE', duration: '08:42', apm: 290, buildOrder: '12 Pool Speed', date: '2026-03-29' },
+  { id: 'm004', opponent: 'TankPusher', opponentRace: 'Terran', result: 'WIN', map: 'Oceanborn LE', duration: '18:31', apm: 342, buildOrder: 'Muta-Ling-Bane', date: '2026-03-29' },
+  { id: 'm005', opponent: 'VoidraySpam', opponentRace: 'Protoss', result: 'WIN', map: 'Post-Youth LE', duration: '09:55', apm: 315, buildOrder: 'Queen Walk', date: '2026-03-28' },
+  { id: 'm006', opponent: 'BioStorm', opponentRace: 'Terran', result: 'WIN', map: 'Blackburn LE', duration: '13:10', apm: 330, buildOrder: 'Ling-Bane into Ultra', date: '2026-03-28' },
+  { id: 'm007', opponent: 'NydusLord', opponentRace: 'Zerg', result: 'LOSS', map: 'Berlingrad LE', duration: '10:20', apm: 298, buildOrder: 'Roach-Hydra', date: '2026-03-27' },
+  { id: 'm008', opponent: 'CannonMan', opponentRace: 'Protoss', result: 'WIN', map: 'Goldenaura LE', duration: '06:48', apm: 275, buildOrder: 'Ravager Rush', date: '2026-03-27' },
+];
+
+// Dynamic route helpers for match history pages
+// In a full Astro project these would be in src/pages/match/[id].astro
+// export async function getStaticPaths() {
+//   return recentMatches.map(m => ({ params: { id: m.id } }));
+// }
+
+const pageTitle = `${botStats.name} — SC2 Bot Analysis Portal`;
+const pageDescription = `Performance analytics for ${botStats.name}, a ${botStats.race} bot at ${botStats.mmr} MMR. Win rate: ${botStats.winRate}% across ${botStats.totalGames} games.`;
+const siteUrl = 'https://sc2bot.example.com';
+const ogImage = `${siteUrl}/og-card.png`;
+
+// Helper functions
+function getRaceIcon(race: string): string {
+  const icons: Record<string, string> = { Terran: 'T', Protoss: 'P', Zerg: 'Z' };
+  return icons[race] || '?';
+}
+
+function getMatchupColor(matchup: string): string {
+  const colors: Record<string, string> = {
+    ZvT: '#3b82f6',
+    ZvP: '#a855f7',
+    ZvZ: '#22c55e',
+  };
+  return colors[matchup] || '#6b7280';
+}
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="generator" content={Astro.generator} />
+  <title>{pageTitle}</title>
+  <meta name="description" content={pageDescription} />
+
+  <!-- SEO Meta Tags -->
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href={siteUrl} />
+  <meta name="author" content={botStats.name} />
+  <meta name="keywords" content="StarCraft 2, SC2, Zerg, bot, AI, analysis, MMR, APM" />
+
+  <!-- OpenGraph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={siteUrl} />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={pageDescription} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:site_name" content="SC2 Bot Portal" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={pageDescription} />
+  <meta name="twitter:image" content={ogImage} />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": pageTitle,
+    "description": pageDescription,
+    "url": siteUrl,
+    "applicationCategory": "GameApplication",
+  })} />
+</head>
+
+<body>
+  <!-- Skip nav for accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">Z</span>
+        <h1>{botStats.name}</h1>
+        <span class="badge">{botStats.currentLeague}</span>
+      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="/" class="nav-link active">Dashboard</a>
+        <a href="/matches" class="nav-link">Match History</a>
+        <a href="/strategies" class="nav-link">Strategies</a>
+        <a href="/replays" class="nav-link">Replays</a>
+        <a href="/docs" class="nav-link">Docs</a>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" type="button">
+        <span class="theme-icon-dark">&#9790;</span>
+        <span class="theme-icon-light">&#9728;</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="container">
+
+    <!-- Hero Stats Bar -->
+    <section class="hero-stats" aria-label="Key statistics">
+      <div class="stat-card primary">
+        <span class="stat-label">MMR</span>
+        <span class="stat-value">{botStats.mmr}</span>
+        <span class="stat-sub">Peak: {botStats.mmrPeak}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Win Rate</span>
+        <span class="stat-value">{botStats.winRate}%</span>
+        <span class="stat-sub">{botStats.wins}W / {botStats.losses}L</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Avg APM</span>
+        <span class="stat-value">{botStats.avgApm}</span>
+        <span class="stat-sub">Actions/min</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Games</span>
+        <span class="stat-value">{botStats.totalGames}</span>
+        <span class="stat-sub">Streak: {botStats.recentStreak}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Avg Length</span>
+        <span class="stat-value">{botStats.avgGameLength}</span>
+        <span class="stat-sub">{botStats.favoriteOpening}</span>
+      </div>
+    </section>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+
+      <!-- MMR Trend Chart (Island Component) -->
+      <section class="card chart-card" aria-label="MMR trend">
+        <h2 class="card-title">MMR Trend — {season}</h2>
+        <div class="chart-container" id="mmr-chart">
+          <!--
+            Island architecture: This would be a client-hydrated Svelte component:
+            <MmrChart client:visible data={botStats.mmrTrend} />
+          -->
+          <div class="chart-placeholder">
+            <svg viewBox="0 0 400 200" class="sparkline-svg" aria-label="MMR trend line chart">
+              <polyline
+                fill="none"
+                stroke="var(--color-accent)"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                points={botStats.mmrTrend.map((v, i) => {
+                  const x = (i / (botStats.mmrTrend.length - 1)) * 380 + 10;
+                  const minV = Math.min(...botStats.mmrTrend);
+                  const maxV = Math.max(...botStats.mmrTrend);
+                  const y = 190 - ((v - minV) / (maxV - minV)) * 170;
+                  return `${x},${y}`;
+                }).join(' ')}
+              />
+              {botStats.mmrTrend.map((v, i) => {
+                const x = (i / (botStats.mmrTrend.length - 1)) * 380 + 10;
+                const minV = Math.min(...botStats.mmrTrend);
+                const maxV = Math.max(...botStats.mmrTrend);
+                const y = 190 - ((v - minV) / (maxV - minV)) * 170;
+                return <circle cx={x} cy={y} r="4" fill="var(--color-accent)" />;
+              })}
+            </svg>
+            <div class="chart-labels">
+              <span>{Math.min(...botStats.mmrTrend)}</span>
+              <span>{Math.max(...botStats.mmrTrend)}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Win Rate by Matchup -->
+      <section class="card" aria-label="Win rate by matchup">
+        <h2 class="card-title">Win Rate by Matchup</h2>
+        <div class="matchup-bars">
+          {Object.entries(botStats.winRateByMatchup).map(([matchup, rate]) => (
+            <div class="matchup-row">
+              <span class="matchup-label">{matchup}</span>
+              <div class="bar-track">
+                <div
+                  class="bar-fill"
+                  style={`width: ${rate}%; background: ${getMatchupColor(matchup)};`}
+                  role="progressbar"
+                  aria-valuenow={rate}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <span class="bar-value">{rate}%</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Win Rate by Map -->
+      <section class="card" aria-label="Win rate by map">
+        <h2 class="card-title">Win Rate by Map</h2>
+        <div class="map-stats">
+          {Object.entries(botStats.winRateByMap).map(([map, rate]) => (
+            <div class="map-row">
+              <span class="map-name">{map}</span>
+              <div class="bar-track small">
+                <div
+                  class="bar-fill"
+                  style={`width: ${rate}%; background: ${rate >= 60 ? 'var(--color-success)' : rate >= 50 ? 'var(--color-warning)' : 'var(--color-danger)'};`}
+                />
+              </div>
+              <span class="map-rate">{rate}%</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- APM Timeline (Island Component) -->
+      <section class="card chart-card" aria-label="APM timeline">
+        <h2 class="card-title">APM Over Recent Games</h2>
+        <div class="chart-container" id="apm-chart">
+          <!--
+            Island architecture: <ApmTimeline client:idle data={botStats.apmHistory} />
+          -->
+          <div class="chart-placeholder">
+            <svg viewBox="0 0 400 150" class="sparkline-svg" aria-label="APM bar chart">
+              {botStats.apmHistory.map((v, i) => {
+                const barW = 30;
+                const gap = (400 - barW * botStats.apmHistory.length) / (botStats.apmHistory.length + 1);
+                const x = gap + i * (barW + gap);
+                const maxV = Math.max(...botStats.apmHistory);
+                const h = (v / maxV) * 120;
+                const y = 140 - h;
+                return (
+                  <g>
+                    <rect x={x} y={y} width={barW} height={h} rx="3" fill="var(--color-secondary)" opacity="0.85" />
+                    <text x={x + barW / 2} y={y - 5} text-anchor="middle" fill="var(--color-text-muted)" font-size="10">{v}</text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Recent Matches Table -->
+    <section class="card matches-section" aria-label="Recent matches">
+      <h2 class="card-title">Recent Matches</h2>
+      <div class="table-wrapper">
+        <table class="matches-table">
+          <thead>
+            <tr>
+              <th>Result</th>
+              <th>Opponent</th>
+              <th>Race</th>
+              <th>Map</th>
+              <th>Duration</th>
+              <th>APM</th>
+              <th>Build</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentMatches.map((match) => (
+              <tr class={`match-row ${match.result.toLowerCase()}`}>
+                <td>
+                  <span class={`result-badge ${match.result.toLowerCase()}`}>
+                    {match.result}
+                  </span>
+                </td>
+                <td>
+                  <a href={`/match/${match.id}`} class="opponent-link">{match.opponent}</a>
+                </td>
+                <td>
+                  <span class={`race-icon ${match.opponentRace.toLowerCase()}`}>
+                    {getRaceIcon(match.opponentRace)}
+                  </span>
+                </td>
+                <td>{match.map}</td>
+                <td>{match.duration}</td>
+                <td class="apm-cell">{match.apm}</td>
+                <td class="build-cell">{match.buildOrder}</td>
+                <td class="date-cell">{match.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <a href="/matches" class="view-all-link">View all {botStats.totalGames} matches &rarr;</a>
+      </div>
+    </section>
+
+    <!-- Strategy Guides (Content Collections) -->
+    <section class="card strategies-section" aria-label="Strategy guides">
+      <h2 class="card-title">Strategy Guides</h2>
+      <p class="section-desc">
+        Browse community and AI-generated strategy guides curated via
+        Astro Content Collections with full Markdown support.
+      </p>
+      <!--
+        Content Collections integration:
+        {strategyGuides.map(guide => (
+          <article class="guide-card">
+            <h3><a href={`/strategies/${guide.slug}`}>{guide.data.title}</a></h3>
+            <p>{guide.data.summary}</p>
+            <span class="guide-matchup">{guide.data.matchup}</span>
+          </article>
+        ))}
+      -->
+      <div class="guides-grid">
+        <article class="guide-card">
+          <h3><a href="/strategies/zvt-ling-bane">ZvT: Ling-Bane Aggression</a></h3>
+          <p>Aggressive ling-bane timing attack hitting before siege tanks are out. Transitions into hydra-lurker.</p>
+          <div class="guide-meta">
+            <span class="guide-matchup zvt">ZvT</span>
+            <span class="guide-difficulty">Intermediate</span>
+          </div>
+        </article>
+        <article class="guide-card">
+          <h3><a href="/strategies/zvp-roach-ravager">ZvP: Roach-Ravager Pressure</a></h3>
+          <p>Bile-focused midgame pressure that denies the Protoss third while teching to hive.</p>
+          <div class="guide-meta">
+            <span class="guide-matchup zvp">ZvP</span>
+            <span class="guide-difficulty">Advanced</span>
+          </div>
+        </article>
+        <article class="guide-card">
+          <h3><a href="/strategies/zvz-12pool">ZvZ: 12 Pool Speed</a></h3>
+          <p>Standard aggressive opener for the mirror matchup. Relies on micro advantage with speed zerglings.</p>
+          <div class="guide-meta">
+            <span class="guide-matchup zvz">ZvZ</span>
+            <span class="guide-difficulty">Beginner</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 {botStats.name} Analysis Portal &middot; Phase 601 &middot; Built with Astro</p>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="/docs">Documentation</a>
+        <a href="/api">API</a>
+        <a href="https://github.com">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
+
+<!-- Dark Mode Toggle Script (inline island) -->
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+
+  function getPreferredTheme(): string {
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme: string): void {
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }
+
+  // Apply on load
+  applyTheme(getPreferredTheme());
+
+  toggle?.addEventListener('click', () => {
+    const current = html.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // Respond to system preference changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('theme')) {
+      applyTheme(e.matches ? 'dark' : 'light');
+    }
+  });
+</script>
+
+<!-- Scoped Styles -->
+<style>
+  /* ================================================================
+     CSS Custom Properties — Theme System
+     ================================================================ */
+  :root {
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --max-width: 1200px;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --transition: 0.2s ease;
+  }
+
+  [data-theme='dark'] {
+    --color-bg: #0f1117;
+    --color-surface: #1a1d28;
+    --color-surface-hover: #22263a;
+    --color-border: #2a2e3e;
+    --color-text: #e4e6ef;
+    --color-text-muted: #8b8fa3;
+    --color-accent: #7c3aed;
+    --color-secondary: #6366f1;
+    --color-success: #22c55e;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-header-bg: #141620;
+  }
+
+  [data-theme='light'] {
+    --color-bg: #f5f5f9;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f0f0f5;
+    --color-border: #e2e4ea;
+    --color-text: #1a1d28;
+    --color-text-muted: #6b7080;
+    --color-accent: #7c3aed;
+    --color-secondary: #6366f1;
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-danger: #dc2626;
+    --color-header-bg: #ffffff;
+  }
+
+  /* ================================================================
+     Reset & Base
+     ================================================================ */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+
+  a:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    background: var(--color-accent);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    z-index: 1000;
+    border-radius: 0 0 var(--radius) 0;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* ================================================================
+     Header
+     ================================================================ */
+  .site-header {
+    background: var(--color-header-bg);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .header-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--color-accent);
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    border-radius: var(--radius);
+  }
+
+  .logo h1 {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .badge {
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .main-nav {
+    display: flex;
+    gap: 0.25rem;
+    flex: 1;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    transition: all var(--transition);
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .theme-toggle {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--color-text);
+    transition: all var(--transition);
+  }
+
+  .theme-toggle:hover {
+    background: var(--color-surface-hover);
+  }
+
+  [data-theme='dark'] .theme-icon-light { display: none; }
+  [data-theme='light'] .theme-icon-dark { display: none; }
+
+  /* ================================================================
+     Container & Layout
+     ================================================================ */
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ================================================================
+     Hero Stats Bar
+     ================================================================ */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-align: center;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .stat-card.primary {
+    border-color: var(--color-accent);
+    background: linear-gradient(135deg, var(--color-surface), rgba(124, 58, 237, 0.08));
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--color-text);
+    line-height: 1.2;
+  }
+
+  .stat-sub {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
+  }
+
+  /* ================================================================
+     Cards
+     ================================================================ */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* ================================================================
+     Charts
+     ================================================================ */
+  .chart-card {
+    min-height: 280px;
+  }
+
+  .chart-container {
+    position: relative;
+  }
+
+  .sparkline-svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    margin-top: 0.5rem;
+  }
+
+  /* ================================================================
+     Matchup Bars
+     ================================================================ */
+  .matchup-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .matchup-label {
+    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    width: 3rem;
+    flex-shrink: 0;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 28px;
+    background: var(--color-surface-hover);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-track.small {
+    height: 8px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.75rem;
+    transition: width 0.6s ease;
+    min-width: 2rem;
+  }
+
+  .bar-value {
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+  }
+
+  /* ================================================================
+     Map Stats
+     ================================================================ */
+  .map-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .map-name {
+    font-size: 0.85rem;
+    width: 130px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .map-rate {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    width: 3.5rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ================================================================
+     Matches Table
+     ================================================================ */
+  .matches-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .matches-table th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .matches-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+  }
+
+  .match-row:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .result-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .result-badge.win {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--color-success);
+  }
+
+  .result-badge.loss {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-danger);
+  }
+
+  .opponent-link {
+    font-weight: 600;
+  }
+
+  .race-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: #fff;
+  }
+
+  .race-icon.terran { background: #3b82f6; }
+  .race-icon.protoss { background: #a855f7; }
+  .race-icon.zerg { background: #22c55e; }
+
+  .apm-cell {
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  .build-cell {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+  }
+
+  .date-cell {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .table-footer {
+    padding-top: 1rem;
+    text-align: center;
+  }
+
+  .view-all-link {
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  /* ================================================================
+     Strategy Guides
+     ================================================================ */
+  .section-desc {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .guide-card {
+    background: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+
+  .guide-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .guide-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .guide-card p {
+    font-size: 0.825rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .guide-meta {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .guide-matchup {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .guide-matchup.zvt { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+  .guide-matchup.zvp { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+  .guide-matchup.zvz { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+  .guide-difficulty {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  /* ================================================================
+     Footer
+     ================================================================ */
+  .site-footer {
+    border-top: 1px solid var(--color-border);
+    margin-top: 2rem;
+  }
+
+  .footer-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .footer-nav {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-nav a {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+  }
+
+  /* ================================================================
+     Responsive
+     ================================================================ */
+  @media (max-width: 900px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .header-inner {
+      flex-wrap: wrap;
+    }
+
+    .main-nav {
+      order: 3;
+      width: 100%;
+      overflow-x: auto;
+      padding-top: 0.5rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+    }
+
+    .matches-table {
+      font-size: 0.8rem;
+    }
+
+    .matches-table th,
+    .matches-table td {
+      padding: 0.4rem 0.5rem;
+    }
+
+    .footer-inner {
+      flex-direction: column;
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    .guides-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
