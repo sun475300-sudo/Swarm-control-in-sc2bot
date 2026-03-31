@@ -144,3 +144,5 @@ if __name__ == "__main__":
     print(f"  Features: Pydantic validation, retry on failure, async batch extraction")
     print(f"\nSample commentary (would be sent to OpenAI):")
     print(SAMPLE_COMMENTARY[:200] + "...")
+
+# Phase 431: Instructor registered
