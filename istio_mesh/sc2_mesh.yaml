@@ -1,0 +1,105 @@
+# Phase 482: Istio Service Mesh for SC2 Microservices
+# Traffic splitting, circuit breaker, mTLS authorization
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: sc2-bot-vs
+  namespace: sc2bot
+spec:
+  hosts:
+    - sc2-bot-service
+  http:
+    - name: canary-split
+      route:
+        - destination:
+            host: sc2-bot-service
+            subset: stable
+          weight: 90
+        - destination:
+            host: sc2-bot-service
+            subset: canary
+          weight: 10
+      timeout: 30s
+      retries:
+        attempts: 3
+        perTryTimeout: 10s
+        retryOn: gateway-error,connect-failure,retriable-4xx
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: sc2-bot-dr
+  namespace: sc2bot
+spec:
+  host: sc2-bot-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 1000
+    loadBalancer:
+      simple: LEAST_CONN
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  subsets:
+    - name: stable
+      labels:
+        version: stable
+    - name: canary
+      labels:
+        version: canary
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: sc2-bot-authz
+  namespace: sc2bot
+spec:
+  selector:
+    matchLabels:
+      app: sc2-bot
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/sc2bot/sa/sc2-frontend
+              - cluster.local/ns/sc2bot/sa/sc2-api-gateway
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/api/*"]
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: sc2-mtls
+  namespace: sc2bot
+spec:
+  mtls:
+    mode: STRICT
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: sc2-external-api
+  namespace: sc2bot
+spec:
+  hosts:
+    - api.blizzard.com
+  ports:
+    - number: 443
+      name: https
+      protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
