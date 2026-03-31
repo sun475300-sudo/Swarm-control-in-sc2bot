@@ -1,0 +1,112 @@
+// Phase 500: Advanced gRPC for SC2 Bot — 500 Phases Milestone!
+// Bidirectional streaming, server streaming, client streaming
+// Deadline propagation, metadata, interceptors
+
+syntax = "proto3";
+
+package sc2.advanced.v1;
+
+option go_package = "github.com/sc2bot/proto/advanced/v1";
+option java_package = "io.sc2bot.grpc.advanced";
+option python_package = "sc2bot.grpc.advanced";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+// ─────────────────────────────────────────
+// Common message types
+// ─────────────────────────────────────────
+
+message GameState {
+  string game_id       = 1;
+  int32  game_loop     = 2;
+  int32  minerals      = 3;
+  int32  vespene       = 4;
+  int32  supply_used   = 5;
+  int32  supply_cap    = 6;
+  repeated Unit units  = 7;
+  google.protobuf.Timestamp timestamp = 8;
+}
+
+message Unit {
+  string unit_type   = 1;
+  int32  unit_tag    = 2;
+  float  health      = 3;
+  float  shield      = 4;
+  float  pos_x       = 5;
+  float  pos_y       = 6;
+  bool   is_selected = 7;
+}
+
+message Action {
+  string action_type  = 1;
+  int32  ability_id   = 2;
+  repeated int32 unit_tags = 3;
+  float  target_x     = 4;
+  float  target_y     = 5;
+  float  confidence   = 6;
+}
+
+message LeaderboardEntry {
+  string player_id    = 1;
+  string player_name  = 2;
+  string race         = 3;
+  int32  mmr          = 4;
+  int32  wins         = 5;
+  int32  losses       = 6;
+  int32  rank         = 7;
+}
+
+message ReplayChunk {
+  string replay_id  = 1;
+  int32  chunk_seq  = 2;
+  bytes  data       = 3;
+  bool   is_last    = 4;
+}
+
+message ReplayUploadResponse {
+  string replay_id   = 1;
+  bool   success     = 2;
+  string message     = 3;
+  int64  total_bytes = 4;
+}
+
+message WatchRequest {
+  string race_filter = 1;  // optional race filter
+  int32  top_n       = 2;  // number of top entries to stream
+}
+
+// ─────────────────────────────────────────
+// Service definition
+// ─────────────────────────────────────────
+
+service SC2BotAdvancedService {
+
+  // Bidirectional streaming: real-time game state <-> action exchange
+  // Client streams game states; server streams back predicted actions
+  rpc StreamGame(stream GameState) returns (stream Action) {}
+
+  // Server streaming: watch leaderboard for live updates
+  // Client sends a watch request; server streams updates until cancelled
+  rpc WatchLeaderboard(WatchRequest) returns (stream LeaderboardEntry) {}
+
+  // Client streaming: upload replay file in chunks
+  // Client streams chunks; server returns upload result
+  rpc UploadReplay(stream ReplayChunk) returns (ReplayUploadResponse) {}
+
+  // Unary: predict single action (for comparison / testing)
+  rpc PredictAction(GameState) returns (Action) {}
+}
+
+// ─────────────────────────────────────────
+// Metadata keys (used by interceptors)
+// ─────────────────────────────────────────
+// authorization: Bearer <JWT>         — auth token
+// x-sc2bot-request-id: <uuid>         — request tracing
+// x-sc2bot-client-version: <version>  — client version negotiation
+// x-sc2bot-deadline-ms: <ms>          — deadline hint
+//
+// Deadlines are propagated via gRPC context timeout, e.g.:
+//   ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+//   defer cancel()
+//   stream, err := client.StreamGame(ctx)
