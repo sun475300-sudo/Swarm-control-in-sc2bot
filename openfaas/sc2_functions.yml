@@ -1,0 +1,80 @@
+# Phase 493: OpenFaaS Functions for SC2 Bot Serverless Tasks
+# Functions: analyze-replay, predict-strategy, generate-report
+
+version: 1.0
+provider:
+  name: openfaas
+  gateway: https://gateway.sc2bot.io
+
+functions:
+
+  analyze-replay:
+    lang: python3-http
+    handler: ./analyze-replay
+    image: sc2bot/fn-analyze-replay:latest
+    environment:
+      replay_bucket: sc2bot-replays
+      aws_region: us-east-1
+      model_endpoint: http://sc2-model-service:8000
+    secrets:
+      - aws-credentials
+    limits:
+      memory: 512Mi
+      cpu: 500m
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    labels:
+      com.openfaas.scale.min: "1"
+      com.openfaas.scale.max: "20"
+      com.openfaas.scale.factor: "5"
+      com.openfaas.scale.type: capacity
+    annotations:
+      topic: sc2.replay.uploaded
+
+  predict-strategy:
+    lang: python3-http
+    handler: ./predict-strategy
+    image: sc2bot/fn-predict-strategy:latest
+    environment:
+      model_path: /models/strategy_v2
+      inference_timeout: "10"
+      batch_enabled: "true"
+    secrets:
+      - model-signing-key
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    labels:
+      com.openfaas.scale.min: "2"
+      com.openfaas.scale.max: "50"
+      com.openfaas.scale.factor: "10"
+    annotations:
+      topic: sc2.game.state
+
+  generate-report:
+    lang: python3-http
+    handler: ./generate-report
+    image: sc2bot/fn-generate-report:latest
+    environment:
+      report_bucket: sc2bot-reports
+      report_format: pdf
+      smtp_host: smtp.sc2bot.io
+    secrets:
+      - aws-credentials
+      - smtp-password
+    limits:
+      memory: 256Mi
+      cpu: 250m
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    labels:
+      com.openfaas.scale.min: "0"
+      com.openfaas.scale.max: "5"
+    annotations:
+      topic: sc2.game.ended
+      schedule: "0 6 * * *"
