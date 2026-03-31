@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SC2 Bot Project — 390-Phase AI Journey</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --danger: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ── */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.75rem 2rem; display: flex; align-items: center; gap: 2rem; position: sticky; top: 0; z-index: 100; }
+    nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+    nav a { color: var(--muted); font-size: 0.9rem; }
+    nav a:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 5rem 2rem 3rem; background: linear-gradient(180deg, #0d1117 0%, #1a1f2e 100%); }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.02em; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { color: var(--muted); margin: 1rem auto; max-width: 600px; font-size: 1.1rem; }
+    .badges { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }
+    .badge { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 0.9rem; font-size: 0.8rem; color: var(--accent2); }
+    .cta { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn { padding: 0.65rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; }
+    .btn-primary { background: var(--accent); color: #0d1117; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+    /* ── Stats ── */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; max-width: 900px; margin: 3rem auto; padding: 0 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; text-align: center; }
+    .stat-card .num { font-size: 2.2rem; font-weight: 800; color: var(--accent); }
+    .stat-card .label { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+    /* ── Section ── */
+    section { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+    section h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+
+    /* ── Architecture ── */
+    .arch-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; overflow-x: auto; }
+    .arch-box pre { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--accent2); line-height: 1.5; }
+
+    /* ── Tech grid ── */
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+    .tech-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.9rem; font-size: 0.85rem; text-align: center; }
+
+    /* ── Phase timeline ── */
+    .timeline { display: grid; gap: 0.5rem; }
+    .phase-row { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0.75rem; background: var(--surface); border-radius: 6px; border-left: 3px solid var(--accent); }
+    .phase-row .range { font-weight: 700; color: var(--accent); min-width: 90px; font-size: 0.85rem; }
+    .phase-row .desc { color: var(--muted); font-size: 0.85rem; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">SC2 Bot Project</span>
+  <a href="#stats">Stats</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#phases">Phases</a>
+  <a href="#skills">Skills</a>
+  <a href="https://github.com" target="_blank">GitHub</a>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>StarCraft II<br /><span>AI Bot Project</span></h1>
+  <p>A 390-phase journey building a deep reinforcement learning bot capable of autonomous StarCraft II play — from raw observations to hierarchical multi-scale strategies.</p>
+  <div class="badges">
+    <span class="badge">PPO + IMPALA</span>
+    <span class="badge">AlphaStar-inspired</span>
+    <span class="badge">Zerg AI</span>
+    <span class="badge">python-sc2</span>
+    <span class="badge">PyTorch</span>
+  </div>
+  <div class="cta">
+    <button class="btn btn-primary">View on GitHub</button>
+    <button class="btn btn-secondary">Read Paper</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats" id="stats">
+  <div class="stat-card"><div class="num">390</div><div class="label">Development Phases</div></div>
+  <div class="stat-card"><div class="num">200+</div><div class="label">Technologies Used</div></div>
+  <div class="stat-card"><div class="num">50M+</div><div class="label">Training Steps</div></div>
+  <div class="stat-card"><div class="num">95%</div><div class="label">Win Rate (Easy AI)</div></div>
+  <div class="stat-card"><div class="num">180</div><div class="label">Average APM</div></div>
+</div>
+
+<!-- Architecture Diagram -->
+<section id="architecture">
+  <h2>Architecture Overview</h2>
+  <div class="arch-box">
+    <pre>
+SC2 Game API (python-sc2)
+        |
+        v
++-------+--------+------------------+
+| Scalar Encoder | Spatial CNN (84x84)| Entity Transformer |
+|   MLP 128→256  | ResNet-18 → 512   |  8-head, dim=512   |
++-------+--------+------------------+
+        |              |                     |
+        +──────────────+─────────────────────+
+                       |
+              [Core LSTM  512 hidden]
+                       |
+         +─────────────+─────────────+
+         |             |             |
+   [Macro Head]  [Meso Head]   [Micro Head]
+   Build Order   Squad Cmds    Unit Control
+         |             |             |
+         +─────────────+─────────────+
+                       |
+              SC2 Action Output
+    </pre>
+  </div>
+</section>
+
+<!-- Phase Timeline -->
+<section id="phases">
+  <h2>Development Timeline</h2>
+  <div class="timeline">
+    <div class="phase-row"><span class="range">001 – 050</span><span class="desc">Foundations: python-sc2, observation encoding, basic scripted bot</span></div>
+    <div class="phase-row"><span class="range">051 – 100</span><span class="desc">Neural Networks: CNN, LSTM, basic policy gradient</span></div>
+    <div class="phase-row"><span class="range">101 – 150</span><span class="desc">RL Algorithms: PPO, A2C, reward shaping, curriculum</span></div>
+    <div class="phase-row"><span class="range">151 – 200</span><span class="desc">Infrastructure: Docker, Kubernetes, MLflow, Prometheus</span></div>
+    <div class="phase-row"><span class="range">201 – 250</span><span class="desc">Multi-race support: Terran, Protoss; unit micro specialisation</span></div>
+    <div class="phase-row"><span class="range">251 – 300</span><span class="desc">Distributed training: IMPALA actors, Ray, gRPC</span></div>
+    <div class="phase-row"><span class="range">301 – 350</span><span class="desc">Tooling: WebAssembly, Rust core, GraphQL API, event sourcing</span></div>
+    <div class="phase-row"><span class="range">351 – 390</span><span class="desc">Polish: CI/CD, benchmarks, security audit, runbooks, portfolio</span></div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section id="skills">
+  <h2>Technologies & Skills</h2>
+  <div class="tech-grid">
+    <div class="tech-item">Python</div>
+    <div class="tech-item">PyTorch</div>
+    <div class="tech-item">JAX / Flax</div>
+    <div class="tech-item">TensorFlow</div>
+    <div class="tech-item">Rust</div>
+    <div class="tech-item">WebAssembly</div>
+    <div class="tech-item">gRPC / Proto</div>
+    <div class="tech-item">GraphQL</div>
+    <div class="tech-item">Docker</div>
+    <div class="tech-item">Kubernetes</div>
+    <div class="tech-item">Helm</div>
+    <div class="tech-item">GitHub Actions</div>
+    <div class="tech-item">MLflow</div>
+    <div class="tech-item">Prometheus</div>
+    <div class="tech-item">Grafana</div>
+    <div class="tech-item">Apache Spark</div>
+    <div class="tech-item">dbt</div>
+    <div class="tech-item">Airflow</div>
+    <div class="tech-item">Pinecone</div>
+    <div class="tech-item">InfluxDB</div>
+    <div class="tech-item">Svelte</div>
+    <div class="tech-item">SolidJS</div>
+    <div class="tech-item">HuggingFace</div>
+    <div class="tech-item">Locust</div>
+  </div>
+</section>
+
+<footer>
+  <p>SC2 Bot Project &mdash; 390 Phases of Deep Reinforcement Learning</p>
+  <p style="margin-top:0.5rem;"><a href="https://github.com">GitHub</a> &middot; <a href="portfolio/research_abstract.md">Research Abstract</a></p>
+</footer>
+
+</body>
+</html>
