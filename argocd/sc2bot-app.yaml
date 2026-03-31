@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sc2bot
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: sc2bot
+    app.kubernetes.io/part-of: sc2bot-platform
+    environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: sc2bot-deploys
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: sc2bot-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: sc2bot
+
+  source:
+    repoURL: https://github.com/sc2bot/zerg-ai
+    targetRevision: main
+    path: helm_charts/sc2bot
+    helm:
+      releaseName: sc2bot
+      valueFiles:
+        - values.yaml
+        - values-production.yaml
+      parameters:
+        - name: replicaCount
+          value: "2"
+        - name: image.tag
+          value: "latest"
+      version: v3
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sc2bot-prod
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: ServiceAccount
+      jsonPointers:
+        - /secrets
+
+  info:
+    - name: "Documentation"
+      value: "https://docs.sc2bot.local/deployment"
+    - name: "Runbook"
+      value: "https://runbook.sc2bot.local/sc2bot"
+
+  revisionHistoryLimit: 10

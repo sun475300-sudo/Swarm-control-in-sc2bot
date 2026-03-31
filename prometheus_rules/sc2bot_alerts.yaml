@@ -1,0 +1,80 @@
+groups:
+  - name: sc2bot.performance
+    interval: 30s
+    rules:
+
+      # Alert: Bot action latency exceeds 100ms threshold
+      - alert: BotHighLatency
+        expr: histogram_quantile(0.95, rate(sc2bot_action_latency_seconds_bucket[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot p95 action latency is above 100ms"
+          description: >
+            The 95th-percentile action latency for sc2bot has exceeded 100ms
+            for more than 2 minutes. Current value: {{ $value | humanizeDuration }}.
+            Check CPU throttling or game-loop blocking calls.
+
+      # Alert: Win rate drops below 10% over the last hour
+      - alert: LowWinRate
+        expr: >
+          (sum(increase(sc2bot_games_won_total[1h])) /
+           sum(increase(sc2bot_games_played_total[1h]))) * 100 < 10
+        for: 1h
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot win rate critically low (< 10% over 1 h)"
+          description: >
+            Win rate over the last hour has fallen below 10%.
+            Current win rate: {{ $value | printf "%.1f" }}%.
+            Investigate strategy regressions or opponent tier mismatches.
+
+      # Alert: Game crash rate is elevated
+      - alert: GameCrashRate
+        expr: rate(sc2bot_game_crashes_total[10m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot experiencing high crash rate"
+          description: >
+            More than 3 crashes per minute (rate > 0.05/s) detected over the
+            last 10 minutes. Current rate: {{ $value | printf "%.3f" }}/s.
+            Inspect sc2bot pod logs and python-sc2 exception traces.
+
+      # Alert: Bot process memory usage is high
+      - alert: HighMemoryUsage
+        expr: >
+          container_memory_working_set_bytes{pod=~"sc2bot-.*"}
+          / container_spec_memory_limit_bytes{pod=~"sc2bot-.*"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot container memory usage above 85%"
+          description: >
+            Memory working set for pod {{ $labels.pod }} has exceeded 85% of
+            its limit for more than 5 minutes.
+            Current usage ratio: {{ $value | printf "%.2f" }}.
+            Consider increasing memory limits or investigating memory leaks.
+
+      # Alert: Creep coverage drops significantly
+      - alert: CreepCoverageDecline
+        expr: >
+          (sc2bot_creep_coverage_percent offset 10m) - sc2bot_creep_coverage_percent > 15
+        for: 3m
+        labels:
+          severity: warning
+          team: sc2bot
+        annotations:
+          summary: "SC2 bot creep coverage declined by more than 15%"
+          description: >
+            Creep coverage has dropped by more than 15 percentage points in
+            the last 10 minutes. Current coverage: {{ $value | printf "%.1f" }}%.
+            Verify queen inject cycles and creep-spread overlord placement logic.
