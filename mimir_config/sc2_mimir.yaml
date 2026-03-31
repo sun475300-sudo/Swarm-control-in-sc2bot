@@ -1,0 +1,103 @@
+# SC2 Bot - Grafana Mimir Configuration
+# Scalable long-term metrics storage backend for Prometheus
+
+# Run as single binary (monolithic mode) for simplicity
+target: all
+
+# --- Multi-tenancy ---
+multitenancy_enabled: false
+
+# --- Server ---
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+  log_level: info
+  log_format: logfmt
+
+# --- Common storage config (S3) ---
+common:
+  storage:
+    backend: s3
+    s3:
+      bucket_name: sc2-mimir-blocks
+      endpoint: s3.amazonaws.com
+      region: us-east-1
+      access_key_id: "${AWS_ACCESS_KEY_ID}"
+      secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+
+# --- Blocks Storage (TSDB) ---
+blocks_storage:
+  backend: s3
+  s3:
+    bucket_name: sc2-mimir-blocks
+  tsdb:
+    dir: /var/mimir/tsdb
+    retention_period: 13h
+    wal_compression_enabled: true
+  bucket_store:
+    sync_dir: /var/mimir/tsdb-sync
+    index_cache:
+      backend: inmemory
+      inmemory:
+        max_size_bytes: 536870912  # 512MB
+
+# --- Memberlist ring (peer discovery) ---
+memberlist:
+  join_members:
+    - mimir-0:7946
+    - mimir-1:7946
+    - mimir-2:7946
+  bind_port: 7946
+  gossip_interval: 200ms
+  gossip_nodes: 3
+
+# --- Ingester ---
+ingester:
+  ring:
+    replication_factor: 1   # single binary mode
+  instance_addr: 0.0.0.0
+
+# --- Compactor ---
+compactor:
+  data_dir: /var/mimir/compactor
+  sharding_ring:
+    wait_stability_min_duration: 1m
+
+# --- Ruler ---
+ruler:
+  enable_api: true
+  rule_path: /var/mimir/rules
+  alertmanager_url: http://alertmanager:9093
+
+# --- Alertmanager ---
+alertmanager:
+  data_dir: /var/mimir/alertmanager
+  enable_api: true
+  external_url: http://mimir:9009/alertmanager
+
+# --- Limits: SC2 Bot ---
+limits:
+  # Ingestion limits
+  ingestion_rate: 50000
+  ingestion_burst_size: 100000
+  # Series limits
+  max_global_series_per_user: 500000
+  max_global_series_per_metric: 50000
+  # Query limits
+  max_fetched_chunks_per_query: 2000000
+  max_query_parallelism: 32
+  # Ruler limits
+  ruler_max_rules_per_rule_group: 50
+  ruler_max_rule_groups_per_tenant: 100
+  # Retention
+  compactor_blocks_retention_period: 90d
+
+# --- Query Frontend ---
+frontend:
+  log_queries_longer_than: 10s
+  compress_responses: true
+
+query_range:
+  align_queries_with_step: true
+  cache_results: true
+  split_queries_by_interval: 24h
