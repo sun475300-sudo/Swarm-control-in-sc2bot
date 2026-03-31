@@ -1,0 +1,141 @@
+# SC2 Bot - Vespa.ai Schema Definition
+# Strategy document with BM25, semantic, and hybrid rank profiles
+
+schema sc2_strategy {
+
+    document sc2_strategy {
+
+        field id type string {
+            indexing: attribute | summary
+        }
+
+        field strategy_name type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        field race type string {
+            indexing: attribute | summary
+            attribute: fast-search
+        }
+
+        field matchup type string {
+            indexing: attribute | summary
+            attribute: fast-search
+        }
+
+        field description type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        field build_order_text type string {
+            indexing: index | summary
+            index: enable-bm25
+        }
+
+        field tags type array<string> {
+            indexing: attribute | summary
+            attribute: fast-search
+        }
+
+        field win_rate type double {
+            indexing: attribute | summary
+            attribute: fast-search
+        }
+
+        field difficulty type string {
+            indexing: attribute | summary
+            attribute: fast-search
+        }
+
+        field is_meta type bool {
+            indexing: attribute | summary
+        }
+
+        # Semantic embedding (384-dim sentence-transformers)
+        field embedding type tensor<float>(x[384]) {
+            indexing: attribute | index
+            attribute {
+                distance-metric: angular
+            }
+            index {
+                hnsw {
+                    max-links-per-node: 16
+                    neighbors-to-explore-at-insert: 200
+                }
+            }
+        }
+
+    }
+
+    # --- BM25 Rank Profile ---
+    rank-profile bm25 inherits default {
+        first-phase {
+            expression: bm25(strategy_name) * 2 + bm25(description) + bm25(build_order_text)
+        }
+        summary-features {
+            bm25(strategy_name)
+            bm25(description)
+        }
+    }
+
+    # --- Semantic Rank Profile ---
+    rank-profile semantic_rank inherits default {
+        inputs {
+            query(q_embedding) tensor<float>(x[384])
+        }
+        first-phase {
+            expression: closeness(field, embedding)
+        }
+    }
+
+    # --- Hybrid Rank Profile: BM25 + ANN ---
+    rank-profile hybrid_rank inherits default {
+        inputs {
+            query(q_embedding) tensor<float>(x[384])
+            query(bm25_weight)  double: 0.5
+            query(vector_weight) double: 0.5
+        }
+        first-phase {
+            expression {
+                query(bm25_weight)  * (bm25(strategy_name) + bm25(description)) +
+                query(vector_weight) * closeness(field, embedding)
+            }
+        }
+        match-features {
+            bm25(strategy_name)
+            bm25(description)
+            closeness(field, embedding)
+        }
+    }
+
+    # --- Fieldsets for multi-field queries ---
+    fieldset default {
+        fields: strategy_name, description, build_order_text
+    }
+
+    # --- Document Summary ---
+    document-summary minimal {
+        summary id {}
+        summary strategy_name {}
+        summary win_rate {}
+        summary race {}
+        summary matchup {}
+    }
+
+}
+
+# --- YQL Query Examples ---
+# BM25 search:
+#   select * from sc2_strategy where ({targetHits:10} userQuery()) AND race contains "Zerg";
+#
+# ANN semantic search:
+#   select * from sc2_strategy where
+#     ({targetHits:10} nearestNeighbor(embedding, q_embedding)) AND matchup contains "ZvT";
+#
+# Hybrid search:
+#   select * from sc2_strategy where
+#     ({targetHits:10} nearestNeighbor(embedding, q_embedding)) AND
+#     ({defaultIndex:"default"} userQuery())
+#   order by win_rate desc;
