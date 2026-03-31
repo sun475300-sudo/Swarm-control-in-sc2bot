@@ -169,3 +169,5 @@ if __name__ == "__main__":
     print("  Endpoints: /predict_action, /batch_predict, /health")
     print("  Runner: sc2_model_runner (batch_size=32, latency=100ms)")
     print("  Run: bentoml serve sc2_service:svc --port 3000")
+
+# Phase 427: BentoML registered
