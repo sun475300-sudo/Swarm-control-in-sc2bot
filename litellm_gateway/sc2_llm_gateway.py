@@ -169,3 +169,5 @@ if __name__ == "__main__":
     print(f"\n[Sample batch: {len(SAMPLE_GAME_STATES)} game states]")
     for gs in SAMPLE_GAME_STATES:
         print(f"  {gs['race']} vs {gs['opponent_race']} @ {gs['game_time']}s")
+
+# Phase 435: LiteLLM registered
