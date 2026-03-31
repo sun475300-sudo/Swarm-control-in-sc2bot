@@ -1,0 +1,86 @@
+# Phase 485: Cilium eBPF-based Network Policies for SC2 K8s
+# L7 HTTP policy, frontend->backend, DB access control, egress rules
+
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sc2-frontend-to-backend
+  namespace: sc2bot
+spec:
+  endpointSelector:
+    matchLabels:
+      app: sc2-backend
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: sc2-frontend
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: /api/.*
+              - method: POST
+                path: /api/.*
+              - method: GET
+                path: /health
+
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sc2-database-policy
+  namespace: sc2bot
+spec:
+  endpointSelector:
+    matchLabels:
+      app: sc2-postgres
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: sc2-bot
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+  # Deny all other ingress (implicit deny)
+
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sc2-bot-egress
+  namespace: sc2bot
+spec:
+  endpointSelector:
+    matchLabels:
+      app: sc2-bot
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: sc2-postgres
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: sc2-kafka
+      toPorts:
+        - ports:
+            - port: "9092"
+              protocol: TCP
+    - toFQDNs:
+        - matchName: api.blizzard.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
