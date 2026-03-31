@@ -1,0 +1,141 @@
+# SC2 Bot Loki LogQL Queries — Phase 346
+# Structured log aggregation queries for SC2 bot observability.
+# All queries target the sc2bot job label and use LogQL pipeline syntax.
+# Usage: paste into Grafana Explore (Loki datasource) or lokictl query.
+
+# ---------------------------------------------------------------------------
+# 1. Win / Loss log stream filter
+#    Streams all game result lines tagged with outcome=win or outcome=loss.
+# ---------------------------------------------------------------------------
+{job="sc2bot"} |= "game_result" | logfmt | outcome != ""
+
+# Win stream only
+{job="sc2bot"} |= "game_result" | logfmt | outcome = "win"
+
+# Loss stream only
+{job="sc2bot"} |= "game_result" | logfmt | outcome = "loss"
+
+# ---------------------------------------------------------------------------
+# 2. Error rate by game phase (early / mid / late)
+#    Counts ERROR log lines per phase using label_format and rate().
+# ---------------------------------------------------------------------------
+sum by (phase) (
+  rate(
+    {job="sc2bot"} |= "ERROR" | logfmt | phase != "" [1m]
+  )
+)
+
+# Breakdown: early-game errors only
+rate(
+  {job="sc2bot"} |= "ERROR" | logfmt | phase = "early" [5m]
+)
+
+# Breakdown: mid-game errors only
+rate(
+  {job="sc2bot"} |= "ERROR" | logfmt | phase = "mid" [5m]
+)
+
+# Breakdown: late-game errors only
+rate(
+  {job="sc2bot"} |= "ERROR" | logfmt | phase = "late" [5m]
+)
+
+# ---------------------------------------------------------------------------
+# 3. Build order execution timing
+#    Extracts elapsed_ms from build-order log lines and computes percentiles.
+# ---------------------------------------------------------------------------
+# Raw stream — build order step completions
+{job="sc2bot"} |= "build_order_step" | logfmt | elapsed_ms > 0
+
+# 99th-percentile build step latency (ms) over 5-minute windows
+quantile_over_time(0.99,
+  {job="sc2bot"}
+    |= "build_order_step"
+    | logfmt
+    | unwrap elapsed_ms [5m]
+) by (step_name)
+
+# Average build order step duration by step
+avg_over_time(
+  {job="sc2bot"}
+    |= "build_order_step"
+    | logfmt
+    | unwrap elapsed_ms [10m]
+) by (step_name)
+
+# ---------------------------------------------------------------------------
+# 4. Supply block detection
+#    Finds log lines where supply_blocked=true and counts occurrences per minute.
+# ---------------------------------------------------------------------------
+# Raw supply block events
+{job="sc2bot"} |= "supply_blocked=true" | logfmt | supply_blocked = "true"
+
+# Rate of supply-block events (events per second, 1m window)
+rate(
+  {job="sc2bot"} |= "supply_blocked=true" | logfmt | supply_blocked = "true" [1m]
+)
+
+# Total supply block count in last hour
+sum_over_time(
+  {job="sc2bot"}
+    |= "supply_blocked=true"
+    | logfmt
+    | supply_blocked = "true"
+    | unwrap supply_blocked_duration_s [1h]
+)
+
+# ---------------------------------------------------------------------------
+# 5. Crash / exception log extraction
+#    Filters for Python tracebacks and unhandled exceptions in sc2bot logs.
+# ---------------------------------------------------------------------------
+# All lines containing Python traceback header
+{job="sc2bot"} |~ "Traceback \\(most recent call last\\)"
+
+# Unhandled exceptions with exception type label extraction
+{job="sc2bot"} |= "Exception" | regexp `(?P<exc_type>[A-Z][a-zA-Z]+Error|[A-Z][a-zA-Z]+Exception): (?P<exc_msg>.+)`
+
+# Critical crash events (process exit or segfault)
+{job="sc2bot"} |~ "CRITICAL|Segmentation fault|process exited"
+
+# Rate of exception lines per minute
+rate(
+  {job="sc2bot"} |~ "Exception|Traceback" [1m]
+)
+
+# ---------------------------------------------------------------------------
+# 6. metric_query — rate of specific game events
+#    Converts log streams to metrics using unwrap for numeric field extraction.
+# ---------------------------------------------------------------------------
+# Rate of worker killed events per second
+rate(
+  {job="sc2bot"} |= "worker_killed" | logfmt [1m]
+)
+
+# Rate of inject larva completions per minute
+60 * rate(
+  {job="sc2bot"} |= "inject_complete" | logfmt [1m]
+)
+
+# Total resources harvested (minerals + gas) per 5-minute window
+sum(
+  sum_over_time(
+    {job="sc2bot"}
+      |= "resources_harvested"
+      | logfmt
+      | unwrap amount [5m]
+  ) by (resource_type)
+) by (resource_type)
+
+# Action latency metric derived from logs (ms unwrapped)
+histogram_quantile(0.95,
+  sum by (le) (
+    rate(
+      {job="sc2bot"}
+        |= "action_latency"
+        | logfmt
+        | unwrap latency_ms
+        | __error__ = ""
+        [5m]
+    )
+  )
+)
