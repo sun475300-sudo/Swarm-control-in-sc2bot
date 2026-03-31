@@ -1,0 +1,98 @@
+# SC2 Bot - GCP Deployment Manager
+# Templates: GKE cluster, Cloud SQL, Cloud Storage, Artifact Registry
+
+imports:
+  - path: templates/gke_cluster.jinja
+    name: gke_cluster.jinja
+  - path: templates/cloud_sql.jinja
+    name: cloud_sql.jinja
+  - path: templates/cloud_storage.jinja
+    name: cloud_storage.jinja
+  - path: templates/artifact_registry.jinja
+    name: artifact_registry.jinja
+
+resources:
+
+  # --- GKE Cluster ---
+  - name: sc2-bot-gke
+    type: gke_cluster.jinja
+    properties:
+      cluster_name: sc2-bot-cluster
+      region: us-central1
+      node_count: 3
+      machine_type: n2-standard-4
+      disk_size_gb: 50
+      min_nodes: 1
+      max_nodes: 10
+      enable_autoscaling: true
+      kubernetes_version: "1.30"
+      labels:
+        project: sc2-bot
+        env: production
+
+  # --- Cloud SQL (PostgreSQL) ---
+  - name: sc2-bot-db
+    type: cloud_sql.jinja
+    properties:
+      instance_name: sc2-bot-postgres
+      region: us-central1
+      database_version: POSTGRES_16
+      tier: db-n1-standard-2
+      disk_size: 100
+      disk_type: PD_SSD
+      availability_type: REGIONAL  # HA
+      database_name: sc2bot
+      user_name: sc2admin
+      deletion_protection: true
+      labels:
+        project: sc2-bot
+
+  # --- Cloud Storage: Replay Bucket ---
+  - name: sc2-bot-replays
+    type: cloud_storage.jinja
+    properties:
+      bucket_name: sc2-bot-replays-prod
+      location: US
+      storage_class: STANDARD
+      versioning: true
+      lifecycle_rules:
+        - action:
+            type: Delete
+          condition:
+            age: 365
+      labels:
+        project: sc2-bot
+        data_type: replays
+
+  # --- Cloud Storage: ML Models ---
+  - name: sc2-bot-models
+    type: cloud_storage.jinja
+    properties:
+      bucket_name: sc2-bot-models-prod
+      location: US
+      storage_class: NEARLINE
+      versioning: true
+      labels:
+        project: sc2-bot
+        data_type: models
+
+  # --- Artifact Registry: Docker repository ---
+  - name: sc2-bot-registry
+    type: artifact_registry.jinja
+    properties:
+      repository_id: sc2-bot
+      format: DOCKER
+      location: us-central1
+      description: SC2 Bot Docker image repository
+      labels:
+        project: sc2-bot
+
+outputs:
+  - name: gke_endpoint
+    value: $(ref.sc2-bot-gke.endpoint)
+  - name: db_connection_name
+    value: $(ref.sc2-bot-db.connectionName)
+  - name: replay_bucket_url
+    value: $(ref.sc2-bot-replays.selfLink)
+  - name: registry_url
+    value: $(ref.sc2-bot-registry.name)
