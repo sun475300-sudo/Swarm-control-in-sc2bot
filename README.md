@@ -1743,55 +1743,164 @@ mindmap
 
 ---
 
-## 한국어 요약
+## 📖 전체 시스템 정밀 설명
 
-<details>
-<summary><b>클릭하여 한국어 전체 설명 보기</b></summary>
-
-### 개요
 > 이 프로젝트는 **게임이 아닙니다.**
-> Google DeepMind(AlphaStar)와 USAF VISTA X-62A가 실제로 사용하는 방식 그대로,
-> 스타크래프트 II를 **드론 군집 제어** 실험 환경으로 활용한 연구입니다.
+> Google DeepMind(AlphaStar)와 미 공군 VISTA X-62A가 실제로 사용하는 방식 그대로,
+> 스타크래프트 II를 **드론 군집 제어 연구 플랫폼**으로 활용한 지능형 AI 시스템입니다.
 
-### 주요 기능
+### 1. 봇 코어 시스템 (P1-P100)
 
-1. **지능형 전략 관리**: 종족별 맞춤 빌드오더 + 공격 타이밍 예측 + 적응형 전략 선택
-2. **경제 최적화**: 동적 가스 일꾼 관리 (3분 보호 + 전체 익스트랙터 동시 채우기) + 드론 포화도 최적화
-3. **고급 전투**: 8종 유닛별 마이크로 + HP 가중 전투력 + LurkerMP 업그레이드 + 포위/집중사격
-4. **크립 최적화**: BFS 그리드 + is_idle 체크 + has_creep 검증 (P45 완료)
-5. **PPO 자기대전 AI**: IMPALA 분산학습 + AlphaStar 트랜스포머 아키텍처 (P348-360 완료)
-6. **래더 엔진**: 오프닝북 + 위협탐지 + 지도분석 + 자동 업데이터 (P361-375 완료)
-7. **자가치유 DevOps**: Gemini AI 자동 패치 + tRPC 실시간 로그 + GitHub Actions CI/CD
-8. **프로덕션 인프라**: Kubernetes + ArgoCD + Prometheus + Grafana + Vault + OPA + Falco
+SC2 봇의 핵심 두뇌입니다. `burnysc2` 라이브러리를 통해 SC2 게임 엔진과 22.4 FPS로 통신하며, 매 프레임마다 수백 개의 유닛을 동시 제어합니다.
 
-### 프로젝트 완성 달성 내역 (P565)
+| 모듈 | 역할 | 핵심 알고리즘 |
+|:---|:---|:---|
+| **경제 매니저** | 미네랄/가스 수입 극대화 | 드론 포화도 최적화, 3분 가스 가드, 동적 확장 타이밍 |
+| **전투 매니저** | 유닛 교전 최적화 | HP 가중 전투력, O(N+M) 군집 중심 필터, 포위/집중사격 |
+| **정찰 시스템** | 적 빌드 패턴 인식 | 8종 빌드 패턴 분류, 공격 타이밍 예측 (30초 전 경고) |
+| **오프닝 북** | 초반 전략 자동 선택 | 9가지 빌드오더 DB (12풀, 로치러시, 럴커MP 등) |
+| **크립 확산** | 지도 시야 확보 | BFS 그리드 탐색, is_idle O(1) 체크, has_creep 검증 |
+| **마이크로 컨트롤러** | 유닛별 전술 제어 | 8종 유닛 전용 AI (저글링 서라운드, 바네링 자폭, 럴커 버로우) |
+| **블랙보드** | 중앙 상태 저장소 | SSoT(Single Source of Truth) 패턴, 모듈 간 데이터 공유 |
 
-- **P565**: Nix Flakes 재현 가능 빌드 환경 (P564), Bazel 멀티언어 빌드 (P565)
-- **P541-564**: Gymnasium RL 환경 · SB3 · Tianshou · RLlib · CleanRL PPO · JAX+Flax RL · PyTorch Lightning · HuggingFace Transformers · TRL RLHF · Elixir Nx · Gleam · Qiskit · Cirq · PennyLane QML · ROS2 · Isaac Sim · WASM · Wasmer · Wasmtime · Makefile · PowerShell · Bash
-- **P521-540**: Crystal · Racket · Scheme · OCaml GADTs · F# CE · C# Records · Java 21 Virtual Threads · Go Generics · Scala Akka · Ruby DSL · Julia · Lua · V-lang · Prolog · COBOL · Fortran · NASM · ABAP · MATLAB · R
-- **P500**: 500 페이즈 마일스톤 달성
-- **P400**: 포트폴리오 완성 마일스톤 문서 작성, MLOps 파이프라인 완성
-- **P398**: 유전 알고리즘 기반 최종 최적화 (40%+ 승률 목표)
-- **P395**: MLOps 파이프라인 (MLflow + DVC + W&B + Seldon Core)
-- **P376**: Rust 봇 코어 (tokio 비동기 런타임)
-- **P360**: Triton 추론 서버 통합 (TensorRT FP16 최적화)
-- **P357**: AlphaStar 영감 SC2 트랜스포머 (Scatter + CoreLSTM + PointerNet)
-- **P348**: PPO 훈련기 완성 (GAE + ActorCritic + 행동 마스킹)
-- **P347**: Jaeger OTEL 분산 트레이싱
-- **P341**: HashiCorp Vault 시크릿 관리
-- **P329**: SolidJS 반응형 래더 통계 UI
-- **P45**: 크립 `get_available_abilities` → `is_idle` 교체, BFS 300 cap, `has_creep` 검증
-- **P44**: `LURKER`→`LURKERMP` 치명적 버그, 울트라melee 편입, intel 역사 병합
+### 2. 강화학습 AI (P301-P360, P541-P584)
 
-### 승률 목표
+PPO(Proximal Policy Optimization) 기반 자기대전 학습 시스템입니다.
 
-| 매치업 | 현재 승률 | PPO 목표 승률 | 전략 |
+```
+입력 관측(16차원): [미네랄, 가스, 서플라이, 최대서플라이, 일꾼수, 군대수,
+                    위협도, 프레임, 해처리수, 가스일꾼, 업그레이드수,
+                    적군대, 라바수, 게임페이즈, 승률, APM]
+                    ↓
+         ┌─── 정책 네트워크 (Actor) ───→ 7개 이산 행동 확률
+관측 인코더 ─┤
+         └─── 가치 네트워크 (Critic) ──→ 상태 가치 V(s)
+                    ↓
+         GAE (Generalized Advantage Estimation)
+                    ↓
+         PPO Clipped Objective Loss → 경사하강법 업데이트
+```
+
+**지원 프레임워크:** Stable Baselines3 · Tianshou · RLlib · CleanRL · JAX+Flax · PyTorch Lightning · Keras
+
+**AlphaStar 아키텍처:** Scatter Encoder + Core LSTM + Pointer Network + V-trace 보정
+
+### 3. 다중 언어 가속 엔진 (P51-P100, P521-P540)
+
+성능 병목을 해소하기 위해 핵심 연산을 다른 언어로 구현합니다.
+
+| 기술 | 용도 | 성능 향상 |
+|:---|:---|:---|
+| **Rust PyO3** | 전투 계산, 경로탐색 | 10x 속도 (C급 성능 + 메모리 안전) |
+| **CUDA C** | GPU 병렬 전투 시뮬레이션 | 100x 배치 시뮬레이션 |
+| **WebAssembly** | 브라우저 내 시뮬레이션 | 네이티브 90% 성능, 격리 실행 |
+| **TensorRT FP16** | AI 추론 가속 | 3-5x (Triton 서버 서빙) |
+| **x86-64 NASM** | 극한 성능 루프 | 시스콜 직접 호출 |
+
+### 4. 양자 컴퓨팅 최적화 (P558-P560)
+
+양자 알고리즘으로 조합 최적화 문제(자원 배분, 유닛 라우팅)를 해결합니다.
+
+- **Qiskit QAOA:** 자원 배분 문제를 QUBO 행렬로 변환 → 양자 근사 최적화
+- **Cirq:** 최대 컷 문제로 유닛 라우팅 최적화 → 상태벡터 시뮬레이션
+- **PennyLane QML:** 양자 정책 네트워크 + REINFORCE 알고리즘 학습
+
+### 5. 프로덕션 인프라 (P329-P347, P566-P572)
+
+실제 서비스 운영 가능한 프로덕션 인프라를 완비합니다.
+
+```
+                      ┌─ Terraform HCL ─→ AWS VPC/EKS/RDS/S3/ECR
+                      │
+GitHub Push ─→ GitHub Actions CI/CD ─→ Docker Build ─→ GHCR Push
+                      │
+                      └─→ ArgoCD GitOps ─→ Helm Chart ─→ K8s Deploy
+                              │
+                    ┌─────────┼─────────┐
+                    ▼         ▼         ▼
+               Prometheus  Grafana    Jaeger
+               (메트릭)   (대시보드)  (트레이싱)
+                    │
+              ┌─────┼─────┐
+              ▼     ▼     ▼
+           Vault   OPA   Falco
+          (시크릿) (정책) (런타임보안)
+```
+
+| 도구 | 역할 |
+|:---|:---|
+| **Terraform** | AWS 풀스택 IaC (VPC, EKS, RDS, ElastiCache, S3, ECR) |
+| **Ansible** | 멀티호스트 배포 자동화 (systemd, nginx, logrotate) |
+| **Docker Compose** | 9개 서비스 로컬 오케스트레이션 |
+| **GitHub Actions** | 6-job CI/CD (lint→test→security→build→deploy→notify) |
+| **ArgoCD** | ApplicationSet 멀티환경 GitOps + 자동 롤백 |
+| **Helm** | K8s 패키지 (HPA, PDB, NetworkPolicy, ServiceMonitor) |
+| **Prometheus** | 19개 알림 규칙 + 8개 기록 규칙 |
+| **Grafana** | 12패널 실시간 대시보드 |
+
+### 6. 자가치유 DevOps (P43)
+
+Gemini AI가 24시간 봇 로그를 모니터링하여, 오류 발생 시 자동으로 패치를 생성하고 적용합니다.
+
+```
+Bot Runtime Error → tRPC 5초마다 로그 파싱 → Gemini AI 분석
+    → 패치 코드 생성 → 자동 적용 → 재시작 → Health OK
+```
+
+### 7. 데이터 파이프라인 (P576-P578)
+
+대규모 리플레이 데이터를 처리하고 분석합니다.
+
+- **Airflow:** TaskFlow API DAG (extract→preprocess→train→evaluate→promote)
+- **Spark:** PySpark 리플레이 대규모 분석 (윈도우 함수, 집계)
+- **dbt:** 7개 SQL 모델 (staging→intermediate→fact→dimension)
+- **InfluxDB:** 시계열 메트릭 수집 + Flux 쿼리
+- **MLflow:** 실험 추적 + 모델 레지스트리 + 프로덕션 승격
+
+### 8. 260+ 언어/도구 커버리지 (P1-P585)
+
+모든 구현은 SC2 봇 경제/전투 로직을 해당 언어의 관용적(idiomatic) 방식으로 작성합니다.
+
+| 카테고리 | 언어/도구 |
+|:---|:---|
+| **시스템** | Rust, C++, Zig, Carbon, Mojo, Fortran, NASM x86-64, COBOL |
+| **함수형** | Haskell, OCaml, F#, Elixir, Racket, Scheme, Gleam, Clojure |
+| **OOP/범용** | Java 21, C#, Go, Scala, Ruby, Julia, Lua, V-lang, Kotlin, Swift |
+| **AI/ML** | PyTorch, TensorFlow, JAX, Keras, HuggingFace, TRL RLHF |
+| **RL** | Gymnasium, SB3, Tianshou, RLlib, CleanRL, PPO, IMPALA |
+| **양자** | Qiskit, Cirq, PennyLane (QAOA, QML) |
+| **로보틱스** | ROS2, NVIDIA Isaac Sim, A* 경로탐색 |
+| **WASM** | WAT, Wasmer, Wasmtime (WASI 컴포넌트 모델) |
+| **웹** | React, Svelte, SolidJS, Vue, Next.js, tRPC |
+| **DevOps** | Terraform, Ansible, Docker, K8s, ArgoCD, GitHub Actions |
+| **데이터** | Spark, Airflow, dbt, InfluxDB, Pinecone, MLflow |
+| **레거시** | ABAP, MATLAB, R, Perl, Tcl, Prolog, APL, Brainfuck |
+| **빌드** | Make, Nix Flakes, Bazel, CMake, Gradle, Maven |
+
+### 9. 승률 목표
+
+| 매치업 | 현재 승률 | PPO 목표 | 전략 |
 |:---|:---:|:---:|:---|
 | vs 테란 | **26%** | **40%+** | 해처리 퍼스트 → 링/바네 전환 |
 | vs 저그 | **15%** | **40%+** | 14풀 → LurkerMP 전환 |
 | vs 프로토스 | **7%** | **40%+** | DT 탐지 + 로치 러시 |
 
-</details>
+### 10. 프로젝트 마일스톤
+
+| 페이즈 | 달성 |
+|:---:|:---|
+| **P45** | 크립 is_idle 최적화, LURKER→LURKERMP 버그 수정 |
+| **P100** | 다중 언어 가속 엔진 (Rust PyO3 10x) |
+| **P200** | 모바일 GCS (Flutter, React Native) |
+| **P300** | 데이터베이스 40종 통합 |
+| **P348** | PPO 훈련기 완성 (GAE + ActorCritic) |
+| **P360** | TensorRT FP16 + Triton 서버 |
+| **P400** | 포트폴리오 완성 마일스톤 |
+| **P440** | AI 에이전트 프레임워크 (AutoGen, CrewAI, DSPy) |
+| **P500** | 500 페이즈 마일스톤 |
+| **P540** | 레거시 언어 완성 (COBOL, Fortran, NASM) |
+| **P565** | RL 프레임워크 + 양자컴퓨팅 + WASM |
+| **P585** | 프로덕션 인프라 완성 (Terraform, ArgoCD, Helm) |
 
 ---
 
@@ -1815,7 +1924,7 @@ mindmap
 
 ```
 Python · Rust · TypeScript · 260+ 언어/도구 · StarCraft II API · Gemini AI로 제작
-🎉 P565 완성 · 185개 버그 수정 · 260+ 언어/도구 · 342개 테스트 통과 · 838 커밋 · 2026-03-31
+🏆 P585 완성 · 185개 버그 수정 · 260+ 언어/도구 · 342개 테스트 통과 · 2026-03-31
 ```
 
 </div>
