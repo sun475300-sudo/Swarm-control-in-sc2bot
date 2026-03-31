@@ -160,3 +160,5 @@ def run_sc2_analytics(data_dir: str = "data/replays") -> None:
 
 if __name__ == "__main__":
     run_sc2_analytics()
+
+# Phase 421: Polars registered
