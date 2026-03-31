@@ -139,3 +139,5 @@ def run_sc2_ibis_analytics(backend: str = "duckdb") -> None:
 
 if __name__ == "__main__":
     run_sc2_ibis_analytics("duckdb")
+
+# Phase 422: Ibis registered
