@@ -1,0 +1,249 @@
+---
+# CompositeResourceDefinition (XRD) for SC2BotInfra
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xsc2botinfras.sc2bot.io
+  labels:
+    app.kubernetes.io/part-of: sc2bot-platform
+    crossplane.io/xrd: "true"
+spec:
+  group: sc2bot.io
+  names:
+    kind: XSC2BotInfra
+    plural: xsc2botinfras
+  claimNames:
+    kind: SC2BotInfra
+    plural: sc2botinfras
+  connectionSecretKeys:
+    - kubeconfig
+    - db-endpoint
+    - db-password
+    - bucket-name
+    - registry-url
+  defaultCompositionRef:
+    name: sc2bot-infra-composition
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  required:
+                    - region
+                    - environment
+                    - nodeCount
+                  properties:
+                    region:
+                      type: string
+                      description: Primary AWS region for deployment
+                      enum:
+                        - us-east-1
+                        - us-west-2
+                        - eu-west-1
+                        - ap-northeast-2
+                    gcpRegion:
+                      type: string
+                      description: GCP region for GKE fallback cluster
+                      default: us-central1
+                    environment:
+                      type: string
+                      description: Deployment environment
+                      enum:
+                        - dev
+                        - staging
+                        - prod
+                    nodeCount:
+                      type: integer
+                      description: Number of Kubernetes worker nodes
+                      minimum: 1
+                      maximum: 20
+                      default: 3
+                    dbInstanceClass:
+                      type: string
+                      description: RDS instance class for replay database
+                      default: db.t3.medium
+                    replayBucketPrefix:
+                      type: string
+                      description: S3 bucket name prefix for replay storage
+                      default: sc2bot-replays
+            status:
+              type: object
+              properties:
+                clusterEndpoint:
+                  type: string
+                dbEndpoint:
+                  type: string
+                replayBucketARN:
+                  type: string
+                registryURL:
+                  type: string
+
+---
+# Composition: patches AWS RDS + GCP GKE resources
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: sc2bot-infra-composition
+  labels:
+    app.kubernetes.io/part-of: sc2bot-platform
+    crossplane.io/composition: "true"
+spec:
+  compositeTypeRef:
+    apiVersion: sc2bot.io/v1alpha1
+    kind: XSC2BotInfra
+
+  writeConnectionSecretsToNamespace: sc2bot-system
+
+  resources:
+    # AWS EKS Cluster for SC2 bot workloads
+    - name: eks-cluster
+      base:
+        apiVersion: eks.aws.crossplane.io/v1beta1
+        kind: Cluster
+        spec:
+          forProvider:
+            region: us-east-1
+            version: "1.29"
+            roleArnSelector:
+              matchControllerRef: true
+            resourcesVpcConfig:
+              - subnetIdSelector:
+                  matchControllerRef: true
+                endpointPrivateAccess: true
+                endpointPublicAccess: true
+          writeConnectionSecretToRef:
+            namespace: sc2bot-system
+            name: eks-connection
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.nodeCount
+          toFieldPath: spec.forProvider.initialNodeCount
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.endpoint
+          toFieldPath: status.clusterEndpoint
+
+    # AWS RDS PostgreSQL for replay database
+    - name: rds-postgres
+      base:
+        apiVersion: rds.aws.crossplane.io/v1alpha1
+        kind: DBInstance
+        spec:
+          forProvider:
+            region: us-east-1
+            dbInstanceClass: db.t3.medium
+            engine: postgres
+            engineVersion: "15.4"
+            dbName: sc2bot_replays
+            masterUsername: sc2bot_admin
+            allocatedStorage: 100
+            storageType: gp3
+            storageEncrypted: true
+            multiAZ: false
+            publiclyAccessible: false
+            deletionProtection: true
+            backupRetentionPeriod: 7
+            tags:
+              - key: Project
+                value: sc2bot
+              - key: ManagedBy
+                value: crossplane
+          writeConnectionSecretToRef:
+            namespace: sc2bot-system
+            name: rds-connection
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.dbInstanceClass
+          toFieldPath: spec.forProvider.dbInstanceClass
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.environment
+          toFieldPath: spec.forProvider.tags[0].value
+          transforms:
+            - type: string
+              string:
+                fmt: "sc2bot-%s"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.endpoint.address
+          toFieldPath: status.dbEndpoint
+
+    # GCP GKE Cluster as multi-cloud fallback
+    - name: gke-cluster
+      base:
+        apiVersion: container.gcp.crossplane.io/v1beta2
+        kind: Cluster
+        spec:
+          forProvider:
+            location: us-central1
+            initialClusterVersion: "1.29"
+            networkConfig:
+              - enableIntraNodeVisibility: true
+            addonsConfig:
+              - httpLoadBalancing:
+                  - disabled: false
+                horizontalPodAutoscaling:
+                  - disabled: false
+            loggingService: logging.googleapis.com/kubernetes
+            monitoringService: monitoring.googleapis.com/kubernetes
+          writeConnectionSecretToRef:
+            namespace: sc2bot-system
+            name: gke-connection
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.gcpRegion
+          toFieldPath: spec.forProvider.location
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.endpoint
+          toFieldPath: status.gcpClusterEndpoint
+
+    # AWS S3 Bucket for SC2 replay storage
+    - name: s3-replay-bucket
+      base:
+        apiVersion: s3.aws.crossplane.io/v1beta1
+        kind: Bucket
+        spec:
+          forProvider:
+            region: us-east-1
+            acl: private
+            serverSideEncryptionConfiguration:
+              rules:
+                - applyServerSideEncryptionByDefault:
+                    sseAlgorithm: aws:kms
+            versioningConfiguration:
+              status: Enabled
+            lifecycleConfiguration:
+              rules:
+                - id: archive-old-replays
+                  status: Enabled
+                  transitions:
+                    - days: 90
+                      storageClass: GLACIER
+          writeConnectionSecretToRef:
+            namespace: sc2bot-system
+            name: s3-connection
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.replayBucketPrefix
+          toFieldPath: metadata.annotations[crossplane.io/external-name]
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-crossplane"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.replayBucketARN
