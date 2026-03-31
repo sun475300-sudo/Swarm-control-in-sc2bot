@@ -1,0 +1,223 @@
+# Falco Runtime Security Rules for SC2 Bot
+# Monitors the sc2bot container workload for suspicious or anomalous activity.
+# Load with: falco -r sc2bot-security.yaml
+# Falco version: >= 0.37.0
+
+# ─── Macros ───────────────────────────────────────────────────────────────────
+
+- macro: sc2bot_container
+  condition: container.image.repository contains "sc2bot/zerg-ai"
+
+- macro: sc2bot_process
+  condition: proc.name in (sc2bot, python3, python, uvicorn, gunicorn)
+
+- macro: sc2bot_namespace
+  condition: k8s.ns.name in (sc2bot-prod, sc2bot-staging, sc2bot-dev)
+
+- macro: sc2bot_allowed_outbound_hosts
+  condition: >
+    fd.sip.name in (
+      "ladder.sc2ai.net",
+      "api.sc2ai.net",
+      "discord.com",
+      "discordapp.com",
+      "vault.sc2bot-system.svc.cluster.local"
+    )
+
+- macro: sc2bot_allowed_ports
+  condition: fd.sport in (8765, 8168, 9090, 8200, 443, 80)
+
+- macro: sensitive_etc_files
+  condition: >
+    fd.name startswith /etc/passwd or
+    fd.name startswith /etc/shadow or
+    fd.name startswith /etc/sudoers or
+    fd.name startswith /etc/ssh or
+    fd.name startswith /etc/cron
+
+- macro: container_drift_detected
+  condition: >
+    (evt.type = execve or evt.type = open) and
+    container and
+    not proc.exepath glob "/usr/bin/*" and
+    not proc.exepath glob "/usr/local/bin/*" and
+    not proc.exepath glob "/app/*" and
+    not proc.exepath glob "/opt/*" and
+    proc.exepath != ""
+
+# ─── Lists ────────────────────────────────────────────────────────────────────
+
+- list: sc2bot_allowed_write_dirs
+  items:
+    - /app/logs
+    - /app/replays
+    - /tmp
+    - /var/tmp
+    - /app/data
+
+- list: privilege_escalation_binaries
+  items:
+    - sudo
+    - su
+    - newgrp
+    - sg
+    - pkexec
+    - runuser
+    - bash
+    - sh
+    - dash
+    - zsh
+
+# ─── Rules ────────────────────────────────────────────────────────────────────
+
+# Rule 1: Unauthorized outbound network connection from SC2 bot container
+- rule: SC2Bot Unauthorized Outbound Network Connection
+  desc: >
+    Detects an outbound TCP/UDP connection from the SC2 bot container to a
+    host that is not in the approved whitelist. Could indicate C2 beaconing,
+    data exfiltration, or a compromised SC2 API key being used externally.
+  condition: >
+    sc2bot_container and
+    (evt.type = connect or evt.type = sendto) and
+    fd.typechar = 4 and
+    fd.sip != "" and
+    not sc2bot_allowed_outbound_hosts and
+    not fd.sip in (127.0.0.1, "::1") and
+    not fd.sip startswith "10." and
+    not fd.sip startswith "172.16." and
+    not fd.sip startswith "192.168."
+  output: >
+    Unauthorized outbound connection from SC2 bot container
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name proc=%proc.name pid=%proc.pid
+     src=%fd.cip:%fd.cport dst=%fd.sip:%fd.sport
+     k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: WARNING
+  tags: [network, sc2bot, exfiltration]
+  enabled: true
+
+# Rule 2: Suspicious file access in /etc within SC2 bot container
+- rule: SC2Bot Suspicious /etc File Read
+  desc: >
+    The SC2 bot process is reading sensitive system configuration files in /etc.
+    Legitimate SC2 bot processes have no need to read /etc/passwd, /etc/shadow,
+    or SSH configuration. This may indicate privilege discovery or lateral movement.
+  condition: >
+    sc2bot_container and
+    open_read and
+    sensitive_etc_files and
+    not proc.name in (sshd, login, su)
+  output: >
+    Sensitive /etc file accessed inside SC2 bot container
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name proc=%proc.name pid=%proc.pid
+     file=%fd.name k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: ERROR
+  tags: [file, sc2bot, reconnaissance]
+  enabled: true
+
+# Rule 3: Privilege escalation attempt in SC2 bot container
+- rule: SC2Bot Privilege Escalation Attempt
+  desc: >
+    A privilege escalation binary (sudo, su, pkexec, etc.) was executed inside
+    the SC2 bot container. The container runs as a non-root user and should
+    never require escalation. This is a strong indicator of container compromise.
+  condition: >
+    sc2bot_container and
+    evt.type = execve and
+    proc.name in (privilege_escalation_binaries) and
+    not proc.pname in (sc2bot, python3, python)
+  output: >
+    Privilege escalation attempt detected in SC2 bot container
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name uid=%user.uid proc=%proc.name pid=%proc.pid
+     parent=%proc.pname cmdline=%proc.cmdline
+     k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: CRITICAL
+  tags: [process, sc2bot, privilege_escalation]
+  enabled: true
+
+# Rule 4: Container drift detection — new executable not in original image
+- rule: SC2Bot Container Drift Detected
+  desc: >
+    An executable was run from a path not included in the original SC2 bot
+    container image layer. This indicates a binary was written and executed
+    at runtime, a classic sign of container compromise or supply-chain attack.
+  condition: >
+    sc2bot_container and
+    container_drift_detected and
+    sc2bot_process
+  output: >
+    Container drift detected in SC2 bot pod — unknown executable executed
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name proc=%proc.exepath pid=%proc.pid
+     parent=%proc.pname k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: CRITICAL
+  tags: [process, sc2bot, drift, supply_chain]
+  enabled: true
+
+# Rule 5: Anomalous outbound connection from bot container on unusual port
+- rule: SC2Bot Anomalous Outbound Port
+  desc: >
+    The SC2 bot container is making an outbound connection on a port that is
+    not part of its normal operating profile. Unusual ports may indicate
+    tunneling, reverse shells, or exfiltration channels.
+  condition: >
+    sc2bot_container and
+    (evt.type = connect or evt.type = sendto) and
+    fd.typechar = 4 and
+    not sc2bot_allowed_ports and
+    fd.sport > 1024 and
+    not fd.sport in (5432, 6379, 9200)
+  output: >
+    SC2 bot container making connection on anomalous port
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name proc=%proc.name pid=%proc.pid
+     dst=%fd.sip:%fd.sport src=%fd.cip:%fd.cport
+     k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: WARNING
+  tags: [network, sc2bot, anomaly]
+  enabled: true
+
+# Rule 6: Write to unexpected directory inside SC2 bot container
+- rule: SC2Bot Unexpected File Write
+  desc: >
+    The SC2 bot process wrote a file to a directory outside its approved
+    writable paths. Legitimate sc2bot writes only to /app/logs, /app/replays,
+    and /tmp. Writes elsewhere may indicate log tampering or dropper activity.
+  condition: >
+    sc2bot_container and
+    open_write and
+    not fd.directory in (sc2bot_allowed_write_dirs) and
+    not fd.name startswith /proc and
+    not fd.name startswith /dev
+  output: >
+    Unexpected file write in SC2 bot container
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name proc=%proc.name pid=%proc.pid
+     file=%fd.name directory=%fd.directory
+     k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: WARNING
+  tags: [file, sc2bot, tampering]
+  enabled: true
+
+# Rule 7: Shell spawned inside SC2 bot container
+- rule: SC2Bot Interactive Shell Spawned
+  desc: >
+    An interactive shell was spawned inside the SC2 bot container. The bot
+    process should never open a shell. This could indicate an attacker
+    gaining interactive access via a web shell, RCE, or misconfigured exec.
+  condition: >
+    sc2bot_container and
+    evt.type = execve and
+    proc.name in (bash, sh, zsh, dash, fish, tcsh, csh) and
+    proc.pname in (sc2bot, python3, python, uvicorn, gunicorn)
+  output: >
+    Interactive shell spawned inside SC2 bot container
+    (container=%container.name image=%container.image.repository:%container.image.tag
+     user=%user.name proc=%proc.name pid=%proc.pid
+     parent=%proc.pname cmdline=%proc.cmdline
+     terminal=%proc.tty k8s_pod=%k8s.pod.name k8s_ns=%k8s.ns.name)
+  priority: CRITICAL
+  tags: [process, sc2bot, shell, rce]
+  enabled: true
