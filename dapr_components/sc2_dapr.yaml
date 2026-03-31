@@ -1,0 +1,105 @@
+# Phase 494: Dapr Distributed Application Runtime for SC2
+# State store (Redis), pub/sub (Kafka), bindings (S3), resiliency policies
+
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: sc2-state-store
+  namespace: sc2bot
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: redis.sc2bot.svc.cluster.local:6379
+    - name: redisPassword
+      secretKeyRef:
+        name: redis-secret
+        key: password
+    - name: actorStateStore
+      value: "true"
+    - name: keyPrefix
+      value: sc2bot
+
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: sc2-pubsub
+  namespace: sc2bot
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+    - name: brokers
+      value: kafka.sc2bot.svc.cluster.local:9092
+    - name: consumerGroup
+      value: sc2-dapr-consumers
+    - name: authType
+      value: none
+    - name: initialOffset
+      value: newest
+    - name: maxMessageBytes
+      value: "1048576"
+
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: sc2-s3-binding
+  namespace: sc2bot
+spec:
+  type: bindings.aws.s3
+  version: v1
+  metadata:
+    - name: bucket
+      value: sc2bot-replays
+    - name: region
+      value: us-east-1
+    - name: accessKey
+      secretKeyRef:
+        name: aws-secret
+        key: accessKey
+    - name: secretKey
+      secretKeyRef:
+        name: aws-secret
+        key: secretKey
+
+---
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: sc2-resiliency
+  namespace: sc2bot
+spec:
+  policies:
+    retries:
+      sc2-default-retry:
+        policy: exponential
+        maxInterval: 30s
+        maxRetries: 5
+    circuitBreakers:
+      sc2-circuit-breaker:
+        maxRequests: 1
+        interval: 15s
+        timeout: 30s
+        trip: consecutiveFailures >= 5
+    timeouts:
+      sc2-default-timeout: 10s
+  targets:
+    apps:
+      sc2-bot:
+        retry: sc2-default-retry
+        circuitBreaker: sc2-circuit-breaker
+        timeout: sc2-default-timeout
+      sc2-frontend:
+        retry: sc2-default-retry
+        timeout: sc2-default-timeout
+    components:
+      sc2-state-store:
+        outbound:
+          retry: sc2-default-retry
+          circuitBreaker: sc2-circuit-breaker
+      sc2-pubsub:
+        outbound:
+          retry: sc2-default-retry
