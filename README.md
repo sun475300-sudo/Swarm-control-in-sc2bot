@@ -377,59 +377,61 @@ graph LR
 ```mermaid
 graph TB
     subgraph "게임 시작"
-        MAP["🗺️ 지도 분석기\n거점/지름길 탐지"]
-        OPP["🔍 상대 프로파일\n과거 게임 통계"]
-        OPEN2["📖 오프닝 북\n빌드오더 선택"]
+        MAP["🗺️ 지도 분석\n거점·지름길 탐지"]
+        OPP["🔍 상대 프로파일\nMMR·전력·빌드"]
+        OPEN["📖 오프닝 북\n9개 빌드오더 DB"]
     end
 
-    subgraph "초반전 (0~5분)"
-        ECO2["💰 경제 매니저\n드론 포화도 최적화"]
-        SCOUT2["🔎 정찰 시스템\n상대 빌드 탐지"]
-        TECH2["🔬 기술 트리\n업그레이드 우선순위"]
+    subgraph "초반 (0~5분)"
+        ECO["💰 경제 관리\n드론·가스 최적화"]
+        SCOUT["🔎 정찰 파이프라인\n빌드 탐지·분석"]
+        TECH["🔬 기술 트리\n업그레이드 우선순위"]
     end
 
-    subgraph "중반전 (5~12분)"
-        PLAN["📋 중반 플래너\n타이밍 어택/확장"]
-        THREAT["⚠️ 위협 탐지기\n올인/드랍 탐지"]
-        ADAPT["🔄 적응형 전략\nBayesian 상대 모델"]
+    subgraph "중반 (5~12분)"
+        PLAN["📋 전략 플래너\n타이밍 어택·확장"]
+        THREAT["⚠️ 위협 탐지\n올인·드랍·치즈"]
+        ADAPT["🔄 적응형 대응\nBayesian 상대 모델"]
     end
 
-    subgraph "전투"
-        MICRO2["⚔️ 군대 마이크로\n포위/집중사격/연막"]
-        MULTI["🤝 멀티태스킹\n전문가 혼합 네트워크"]
+    subgraph "전투 시스템"
+        MICRO["🎯 군대 마이크로\n8종 유닛 전술"]
+        COMBAT["⚔️ 전투 엔진\nHP가중·포위·집중"]
     end
 
     subgraph "지속 학습"
-        REPLAY["🎬 리플레이 분석기\n실수 자동 식별"]
-        LADDER["📊 래더 트래커\nMMR/승률 추적"]
-        AUTO["🔄 자동 업데이터\n무중단 모델 교체"]
+        REPLAY["🎬 리플레이 분석\n실수 자동 식별"]
+        TRACK["📊 래더 트래커\nMMR·승률 추적"]
+        UPDATE["🔄 자동 업데이트\n무중단 모델 교체"]
     end
 
-    MAP --> OPEN2 --> ECO2
+    MAP --> OPEN --> ECO
     OPP --> ADAPT
-    SCOUT2 --> THREAT --> PLAN
-    PLAN --> MICRO2
-    MULTI --> MICRO2
-    MICRO2 --> REPLAY --> AUTO
-
+    SCOUT --> THREAT --> PLAN
+    PLAN --> MICRO
+    COMBAT --> MICRO
+    MICRO --> REPLAY --> UPDATE
+    
     style MAP fill:#1a1a2e,color:#fff
-    style MICRO2 fill:#e94560,color:#fff
+    style MICRO fill:#e94560,color:#fff
     style REPLAY fill:#0f3460,color:#fff
-    style AUTO fill:#4285f4,color:#fff
+    style UPDATE fill:#4285f4,color:#fff
 ```
-
----
 
 ---
 
 ## 🎓 프로젝트 개요
 
 ```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  ⚠️ 이 프로젝트는 단순 게임 봇이 아닙니다 ⚠️                                  ║
-║  Google DeepMind(AlphaStar) · 미 공군 VISTA X-62A 동일 방법론으로             ║
-║  SC2를 드론 군집 제어(Swarm Control) 실험 환경으로 활용한 연구입니다.           ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║  ⚠️ 이 프로젝트는 단순 게임 봇이 아닙니다 ⚠️                                           ║
+║                                                                                      ║
+║  Google DeepMind(AlphaStar) · 미 공군 VISTA X-62A와 동일한 방법론으로                  ║
+║  스타크래프트 II를 '드론 군집 제어(Swarm Control)' 실험 환경으로 활용한 연구입니다.     ║
+║                                                                                      ║
+║  Sim-to-Real 전이 학습을 통해 UAV/UGV 군집 제어 알고리즘을 개발하며,                   ║
+║  이를 통해 자율비행체, 무인시스템, 군사 응용 분야에 적용 가능성을 검증합니다.            ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ```mermaid
@@ -464,41 +466,35 @@ graph LR
 
 ---
 
-## ✨ 핵심 버그 수정 이력 (Phase 44~45)
+## 🔧 핵심 버그 수정 이력
+
+```
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║                         🔧 핵심 버그 수정 이력 — 185건 수정 완료                      ║
+╠══════════════════════════════════════════════════════════════════════════════════════╣
+║  ❌ 버그 유형                    │  ✅ 수정 내용                    │  영향도       ║
+╠══════════════════════════════════════════════════════════════════════════════════════╣
+║  self.bot.do() 래핑 누락 (57건)  │  bot.do(unit.attack()) 래핑 완료 │  🔴 Critical  ║
+║  units.first 빌드 오류           │  if units.exists: 가드 추가     │  🔴 Critical  ║
+║  health/health_max = 0 나누기    │  max(health_max, 1) 보호        │  🔴 Critical  ║
+║  O(N×M) 전투 루프 성능 버그      │  P41 O(N+M) 군집 중심 필터      │  🟡 High      ║
+║  supply_cost 속성 없음           │  P41 _SUPPLY_TABLE 13종 정확값  │  🟡 High      ║
+║  UnitTypeId.LURKER 미존재        │  P44 LURKERMP 즉시 업그레이드   │  🔴 Critical  ║
+║  get_available_abilities() O(n)  │  P45 tumor.is_idle 로컬 체크    │  🟡 High      ║
+║  print() 스팸 로그              │  logger.debug() 통일            │  🟢 Medium    ║
+║  BFS 무제한 그리드 생성          │  P45 max 300 cap 성능 보호       │  🟡 High      ║
+║  크립 없는 곳 종양 배치          │  P45 has_creep() 검증 추가      │  🟡 High      ║
+║  melee 울트라 유닛 누락          │  P44 ultralisk_count 정확 계산   │  🟡 High      ║
+║  화면 밖 유닛 소멸               │  P44 intel_manager 역사 병합    │  🟡 High      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
 
 ```mermaid
-flowchart LR
-    subgraph "P44 — 유닛 시너지 AI"
-        direction TB
-        B1["❌ LURKER\n존재 안 함"] --> F1["✅ LURKERMP\n즉시 업그레이드"]
-        B2["❌ melee 울트라\n누락"] --> F2["✅ ultralisk_count\n정확 계산"]
-        B3["❌ 화면 밖 유닛\n소멸"] --> F3["✅ intel_manager\n역사 데이터 병합"]
-        B4["❌ print() 스팸"] --> F4["✅ logger.debug()"]
-    end
-    subgraph "P45 — 크립 BFS 최적화"
-        direction TB
-        C1["❌ get_available\n_abilities() 매 호출\nO(n) API 비용"] --> G1["✅ tumor.is_idle\n로컬 체크"]
-        C2["❌ BFS 무제한\n그리드 생성"] --> G2["✅ max 300 cap\n성능 보호"]
-        C3["❌ 크립 없는 곳에\n종양 배치"] --> G3["✅ has_creep()\n검증 추가"]
-        C4["❌ print() 로그"] --> G4["✅ logger.info()"]
-    end
-
-    style B1 fill:#d63031,color:#fff
-    style B2 fill:#d63031,color:#fff
-    style B3 fill:#d63031,color:#fff
-    style B4 fill:#e17055,color:#fff
-    style F1 fill:#00b894,color:#fff
-    style F2 fill:#00b894,color:#fff
-    style F3 fill:#0984e3,color:#fff
-    style F4 fill:#0984e3,color:#fff
-    style C1 fill:#d63031,color:#fff
-    style C2 fill:#d63031,color:#fff
-    style C3 fill:#d63031,color:#fff
-    style C4 fill:#e17055,color:#fff
-    style G1 fill:#00b894,color:#fff
-    style G2 fill:#00b894,color:#fff
-    style G3 fill:#00b894,color:#fff
-    style G4 fill:#0984e3,color:#fff
+pie title 버그 수정 카테고리 분포
+    "Critical (치명적)" : 35
+    "High (높음)" : 62
+    "Medium (중간)" : 53
+    "Low (낮음)" : 35
 ```
 
 ---
