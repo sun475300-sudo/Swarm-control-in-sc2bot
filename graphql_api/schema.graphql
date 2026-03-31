@@ -1,0 +1,155 @@
+"""SC2 Bot Statistics GraphQL Schema"""
+
+# ── Scalars ──────────────────────────────────────────────────────────────────
+scalar DateTime
+scalar JSON
+
+# ── Types ────────────────────────────────────────────────────────────────────
+
+type PlayerStats {
+  playerId: ID!
+  username: String!
+  race: String!
+  wins: Int!
+  losses: Int!
+  winRate: Float!
+  avgApm: Int!
+  avgGameDuration: Int!
+  peakRating: Int!
+  currentRating: Int!
+  totalGames: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type MatchRecord {
+  matchId: ID!
+  playerId: ID!
+  opponentId: ID!
+  result: MatchResult!
+  race: String!
+  opponentRace: String!
+  mapName: String!
+  gameDuration: Int!
+  apm: Int!
+  score: Float!
+  replayPath: String
+  playedAt: DateTime!
+}
+
+type LeaderboardEntry {
+  rank: Int!
+  playerId: ID!
+  username: String!
+  race: String!
+  rating: Int!
+  wins: Int!
+  losses: Int!
+  winRate: Float!
+  streak: Int!
+}
+
+type LiveStats {
+  playerId: ID!
+  gameLoop: Int!
+  minerals: Int!
+  vespene: Int!
+  supplyUsed: Int!
+  supplyCap: Int!
+  armyValue: Float!
+  phase: GamePhase!
+  timestamp: DateTime!
+}
+
+type MatchMutationResult {
+  success: Boolean!
+  matchId: ID
+  message: String!
+}
+
+type ProfileUpdateResult {
+  success: Boolean!
+  player: PlayerStats
+  message: String!
+}
+
+# ── Enums ────────────────────────────────────────────────────────────────────
+
+enum MatchResult {
+  WIN
+  LOSS
+  TIE
+}
+
+enum GamePhase {
+  EARLY
+  MID
+  LATE
+}
+
+enum Race {
+  ZERG
+  TERRAN
+  PROTOSS
+  RANDOM
+}
+
+# ── Inputs ───────────────────────────────────────────────────────────────────
+
+input RecordMatchInput {
+  playerId: ID!
+  opponentId: ID!
+  result: MatchResult!
+  race: String!
+  opponentRace: String!
+  mapName: String!
+  gameDuration: Int!
+  apm: Int!
+  score: Float!
+  replayPath: String
+}
+
+input UpdateProfileInput {
+  playerId: ID!
+  username: String
+  race: Race
+  avatarUrl: String
+}
+
+input LeaderboardFilter {
+  race: Race
+  minGames: Int
+  limit: Int
+  offset: Int
+}
+
+# ── Root Types ───────────────────────────────────────────────────────────────
+
+type Query {
+  """Fetch statistics for a single player"""
+  playerStats(playerId: ID!): PlayerStats
+
+  """Fetch match history with optional filters"""
+  matchHistory(
+    playerId: ID!
+    limit: Int = 20
+    offset: Int = 0
+    result: MatchResult
+  ): [MatchRecord!]!
+
+  """Fetch global leaderboard"""
+  leaderboard(filter: LeaderboardFilter): [LeaderboardEntry!]!
+}
+
+type Mutation {
+  """Record a completed match result"""
+  recordMatch(input: RecordMatchInput!): MatchMutationResult!
+
+  """Update player profile information"""
+  updateProfile(input: UpdateProfileInput!): ProfileUpdateResult!
+}
+
+type Subscription {
+  """Subscribe to live stats for an active game"""
+  liveStats(playerId: ID!): LiveStats!
+}
