@@ -1,7 +1,7 @@
 """
 Phase 354: Training Loop
 Main training loop orchestrating PPO self-play for SC2 bot.
-Supports distributed training and Wandb experiment tracking.
+Supports distributed training (Ray / multiprocessing) and Wandb experiment tracking.
 """
 
 import os
