@@ -1,5 +1,6 @@
 # SC2 Bot - Cortex Configuration
 # Horizontally scalable, highly available Prometheus with multi-tenancy
+# Phase 464: Extended with sc2bot tenant limits and ruler config
 
 target: all
 
