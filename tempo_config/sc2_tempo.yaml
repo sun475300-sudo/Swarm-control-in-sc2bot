@@ -1,0 +1,125 @@
+# SC2 Bot - Grafana Tempo Configuration
+# Distributed tracing backend with OTLP and Jaeger support
+
+# --- Server ---
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+  log_level: info
+
+# --- Distributor: Receivers ---
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+        grpc:
+          endpoint: 0.0.0.0:14250
+    zipkin:
+      endpoint: 0.0.0.0:9411
+  log_received_spans:
+    enabled: false
+
+# --- Ingester ---
+ingester:
+  trace_idle_period: 10s
+  max_block_bytes: 1_000_000
+  max_block_duration: 5m
+  lifecycler:
+    ring:
+      kvstore:
+        store: memberlist
+      replication_factor: 1
+    address: 0.0.0.0
+
+# --- Compactor ---
+compactor:
+  compaction:
+    block_retention: 336h   # 14 days
+    compacted_block_retention: 1h
+    compaction_window: 1h
+    max_block_bytes: 100_000_000
+    retention_concurrency: 10
+  ring:
+    kvstore:
+      store: memberlist
+
+# --- Storage Backend (local for dev, S3 for prod) ---
+storage:
+  trace:
+    backend: local         # Change to "s3" for production
+    local:
+      path: /var/tempo/traces
+    # S3 production config:
+    # backend: s3
+    # s3:
+    #   bucket: sc2-tempo-traces
+    #   endpoint: s3.amazonaws.com
+    #   region: us-east-1
+    #   access_key: "${AWS_ACCESS_KEY_ID}"
+    #   secret_key: "${AWS_SECRET_ACCESS_KEY}"
+    wal:
+      path: /var/tempo/wal
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+# --- Querier ---
+querier:
+  frontend_worker:
+    frontend_address: tempo-query-frontend:9095
+  max_concurrent_queries: 20
+  search:
+    prefer_self: 10
+
+# --- Query Frontend ---
+query_frontend:
+  search:
+    concurrent_jobs: 1000
+    target_bytes_per_job: 104857600  # 100MB
+    default_result_limit: 20
+    max_result_limit: 100
+  trace_by_id:
+    query_shards: 50
+
+# --- Memberlist ---
+memberlist:
+  join_members:
+    - tempo:7946
+  bind_port: 7946
+
+# --- TraceQL Examples for SC2 Bot ---
+# Find slow SC2 game steps:
+#   { .sc2.component = "bot_core" && duration > 50ms }
+# Find attack waves:
+#   { span.sc2.attack.unit_count >= 20 }
+# Find strategy decisions with low confidence:
+#   { span.name = "sc2.strategy.decision" && span.sc2.strategy.confidence < 0.5 }
+# Aggregate by strategy:
+#   { span.name = "sc2.strategy.decision" } | by(span.sc2.strategy.name)
+
+# --- Metrics Generator (span metrics + service graphs) ---
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: sc2-prod
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+  processor:
+    service_graphs:
+      histogram_buckets: [0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8]
+    span_metrics:
+      histogram_buckets: [0.002, 0.004, 0.008, 0.016, 0.032, 0.064, 0.128, 0.256, 0.512, 1.024]
+      dimensions:
+        - sc2.component
+        - sc2.strategy.name
