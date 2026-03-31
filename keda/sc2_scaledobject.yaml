@@ -1,0 +1,69 @@
+# Phase 491: KEDA Event-Driven Autoscaling for SC2
+# ScaledObject: Kafka lag, TriggerAuthentication, ScaledJob: batch replay
+
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: sc2-aws-trigger-auth
+  namespace: sc2bot
+spec:
+  podIdentity:
+    provider: aws-eks
+
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sc2-bot-kafka-scaler
+  namespace: sc2bot
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sc2-bot-worker
+  minReplicaCount: 1
+  maxReplicaCount: 20
+  pollingInterval: 15
+  cooldownPeriod: 60
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka.sc2bot.svc.cluster.local:9092
+        consumerGroup: sc2-bot-consumer-group
+        topic: sc2-game-events
+        lagThreshold: "100"
+        offsetResetPolicy: latest
+      authenticationRef:
+        name: sc2-aws-trigger-auth
+
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: sc2-replay-processor
+  namespace: sc2bot
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+          - name: replay-processor
+            image: sc2bot/replay-processor:latest
+            env:
+              - name: QUEUE_URL
+                value: https://sqs.us-east-1.amazonaws.com/123456789012/sc2-replay-queue
+        restartPolicy: OnFailure
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  pollingInterval: 30
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: sc2-aws-trigger-auth
+      metadata:
+        queueURL: https://sqs.us-east-1.amazonaws.com/123456789012/sc2-replay-queue
+        queueLength: "5"
+        awsRegion: us-east-1
+        identityOwner: operator
