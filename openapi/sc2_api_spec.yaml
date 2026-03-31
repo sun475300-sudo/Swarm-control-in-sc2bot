@@ -1,0 +1,249 @@
+# Phase 499: OpenAPI 3.1 Specification for SC2 Bot REST API
+# Paths: /games, /players/{id}, /replays, /leaderboard, /predict
+# Schemas, bearerAuth, apiKey, Webhooks
+
+openapi: 3.1.0
+info:
+  title: SC2 Bot REST API
+  version: 1.0.0
+  description: |
+    REST API for the SC2 Bot platform providing game data, player stats,
+    replay analysis and AI-powered strategy prediction.
+  contact:
+    name: SC2 Bot Team
+    url: https://sc2bot.io
+    email: api@sc2bot.io
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.sc2bot.io/v1
+    description: Production
+  - url: https://staging-api.sc2bot.io/v1
+    description: Staging
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Game:
+      type: object
+      required: [id, map, players]
+      properties:
+        id:        { type: string, format: uuid }
+        map:       { type: string }
+        players:   { type: array, items: { type: string } }
+        winner:    { type: string, nullable: true }
+        duration:  { type: integer, description: "Game duration in seconds" }
+        startedAt: { type: string, format: date-time }
+        endedAt:   { type: string, format: date-time, nullable: true }
+        metadata:  { type: object, additionalProperties: true }
+
+    Player:
+      type: object
+      required: [id, name]
+      properties:
+        id:     { type: string, format: uuid }
+        name:   { type: string }
+        race:
+          type: string
+          enum: [Zerg, Terran, Protoss, Random]
+        mmr:    { type: integer, minimum: 0 }
+        wins:   { type: integer, minimum: 0 }
+        losses: { type: integer, minimum: 0 }
+        winRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    Replay:
+      type: object
+      properties:
+        id:       { type: string, format: uuid }
+        gameId:   { type: string, format: uuid }
+        fileUrl:  { type: string, format: uri }
+        analyzed: { type: boolean, default: false }
+        insights: { type: object, additionalProperties: true }
+        uploadedAt: { type: string, format: date-time }
+
+    ActionPrediction:
+      type: object
+      properties:
+        action:
+          type: string
+          description: Predicted next action
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        alternatives:
+          type: array
+          items: { type: string }
+        reasoning: { type: string }
+
+    Error:
+      type: object
+      properties:
+        code:    { type: integer }
+        message: { type: string }
+        details: { type: string }
+
+paths:
+  /games:
+    get:
+      summary: List all games
+      operationId: listGames
+      tags: [Games]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Games list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Game" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /players/{id}:
+    get:
+      summary: Get player by ID
+      operationId: getPlayer
+      tags: [Players]
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Player details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Player" }
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /replays:
+    get:
+      summary: List replays
+      operationId: listReplays
+      tags: [Replays]
+      responses:
+        "200":
+          description: Replay list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Replay" }
+    post:
+      summary: Upload a replay file
+      operationId: uploadReplay
+      tags: [Replays]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:   { type: string, format: binary }
+                gameId: { type: string, format: uuid }
+      responses:
+        "202":
+          description: Replay accepted for analysis
+
+  /leaderboard:
+    get:
+      summary: Get leaderboard
+      operationId: getLeaderboard
+      tags: [Leaderboard]
+      security: []
+      parameters:
+        - name: race
+          in: query
+          schema:
+            type: string
+            enum: [Zerg, Terran, Protoss]
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Player" }
+
+  /predict:
+    post:
+      summary: Predict next action for a game state
+      operationId: predictAction
+      tags: [AI]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:    { type: string }
+                gameState: { type: object }
+      responses:
+        "200":
+          description: Action prediction
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActionPrediction" }
+
+webhooks:
+  game_ended:
+    post:
+      summary: Webhook fired when a game ends
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Game" }
+      responses:
+        "200":
+          description: Webhook received
+
+  mmr_changed:
+    post:
+      summary: Webhook fired when a player MMR changes
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Player" }
+      responses:
+        "200":
+          description: Webhook received
