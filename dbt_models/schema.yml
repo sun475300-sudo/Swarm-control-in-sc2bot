@@ -1,0 +1,86 @@
+# dbt_models/schema.yml
+# dbt schema definitions and data quality tests for SC2 stats models
+
+version: 2
+
+sources:
+  - name: sc2_raw
+    description: "Raw SC2 battle data loaded from the game log pipeline"
+    tables:
+      - name: raw_battles
+        description: "One row per completed SC2 game with replay metadata"
+        columns:
+          - name: game_id
+            description: "Unique identifier for each game"
+            tests:
+              - not_null
+              - unique
+          - name: matchup
+            description: "Race matchup (ZvT, ZvZ, ZvP)"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['ZvT', 'ZvZ', 'ZvP', 'zvt', 'zvz', 'zvp']
+          - name: result
+            description: "Game outcome (win or loss)"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['win', 'loss', 'Win', 'Loss']
+          - name: duration_sec
+            description: "Game duration in seconds"
+            tests:
+              - not_null
+
+models:
+  - name: stg_battles
+    description: >
+      Staging model that cleans and type-casts raw battle records.
+      Normalises matchup to uppercase and converts result to a boolean.
+    columns:
+      - name: game_id
+        description: "Unique game identifier (carried from source)"
+        tests:
+          - not_null
+          - unique
+      - name: matchup
+        description: "Uppercase race matchup (ZVT / ZVZ / ZVP)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['ZVT', 'ZVZ', 'ZVP']
+      - name: is_win
+        description: "Boolean win flag derived from result column"
+        tests:
+          - not_null
+      - name: duration_sec
+        description: "Game duration in seconds (must be positive)"
+        tests:
+          - not_null
+      - name: game_date
+        description: "Date the game was played"
+        tests:
+          - not_null
+
+  - name: mart_win_rates
+    description: >
+      Final mart table combining matchup win rates, unit cost efficiency,
+      and top build order timing stats for the SC2 Zerg bot dashboard.
+    columns:
+      - name: matchup
+        description: "Race matchup (ZVT / ZVZ / ZVP)"
+        tests:
+          - not_null
+          - unique
+      - name: total_games
+        description: "Total games played for this matchup"
+        tests:
+          - not_null
+      - name: win_rate_pct
+        description: "Win rate percentage (0–100)"
+        tests:
+          - not_null
+      - name: avg_resource_efficiency
+        description: "Army value per total resource spent"
+      - name: best_build_order
+        description: "Highest win-rate build order with >= 5 games played"

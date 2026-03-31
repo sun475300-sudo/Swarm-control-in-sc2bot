@@ -1,0 +1,168 @@
+{
+  "title": "SC2 Zerg Bot Performance",
+  "uid": "sc2bot-perf-v1",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "tags": ["sc2", "zerg", "bot", "gaming"],
+  "templating": {
+    "list": [
+      {
+        "name": "matchup",
+        "type": "custom",
+        "label": "Matchup",
+        "current": { "text": "All", "value": ".*" },
+        "options": [
+          { "text": "All",  "value": ".*" },
+          { "text": "ZvT",  "value": "ZvT" },
+          { "text": "ZvZ",  "value": "ZvZ" },
+          { "text": "ZvP",  "value": "ZvP" }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Win Rate Over Time",
+      "gridPos": { "x": 0, "y": 0, "w": 16, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "100 * rate(sc2bot_games_won_total{matchup=~\"$matchup\"}[5m]) / rate(sc2bot_games_played_total{matchup=~\"$matchup\"}[5m])",
+          "legendFormat": "Win Rate % ({{matchup}})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "yellow", "value": 40 },
+              { "color": "green",  "value": 55 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Current Game Phase",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sc2bot_current_game_phase",
+          "legendFormat": "Phase"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Early" }, "1": { "text": "Mid" }, "2": { "text": "Late" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "bargauge",
+      "title": "Unit Efficiency (kills / supply)",
+      "gridPos": { "x": 16, "y": 4, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sc2bot_unit_kills_total / sc2bot_army_supply",
+          "legendFormat": "{{unit_type}}"
+        }
+      ],
+      "options": { "orientation": "horizontal", "displayMode": "gradient" },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 } }
+    },
+    {
+      "id": 4,
+      "type": "piechart",
+      "title": "Matchup Breakdown",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (matchup) (sc2bot_games_played_total)",
+          "legendFormat": "{{matchup}}"
+        }
+      ],
+      "options": {
+        "pieType": "pie",
+        "displayLabels": ["name", "percent"],
+        "legend": { "displayMode": "table", "placement": "right" }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Resource Curve (Minerals / Gas / Workers)",
+      "gridPos": { "x": 8, "y": 8, "w": 16, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sc2bot_minerals",
+          "legendFormat": "Minerals"
+        },
+        {
+          "expr": "sc2bot_vespene_gas",
+          "legendFormat": "Vespene Gas"
+        },
+        {
+          "expr": "sc2bot_worker_count",
+          "legendFormat": "Workers"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Minerals" }, "properties": [{ "id": "color", "value": { "fixedColor": "#1f77b4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Vespene Gas" }, "properties": [{ "id": "color", "value": { "fixedColor": "#2ca02c", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Workers" }, "properties": [{ "id": "color", "value": { "fixedColor": "#ff7f0e", "mode": "fixed" } }] }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "gauge",
+      "title": "Creep Coverage (%)",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sc2bot_creep_coverage_percent",
+          "legendFormat": "Creep %"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": true },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "green",  "value": 40 }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
