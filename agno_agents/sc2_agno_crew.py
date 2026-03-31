@@ -154,3 +154,5 @@ if __name__ == "__main__":
     print("\n[Sample questions this agent can answer:]")
     for q in sample_questions:
         print(f"  - {q}")
+
+# Phase 438: Agno registered
