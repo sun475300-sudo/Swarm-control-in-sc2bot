@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package sc2bot;
+
+// SC2 Bot gRPC Service definition
+service SC2BotService {
+  // Get the next action for a given game state
+  rpc GetAction (GameStateRequest) returns (ActionResponse);
+
+  // Stream live game state updates to the client
+  rpc StreamGameUpdates (StreamRequest) returns (stream GameStateUpdate);
+
+  // Report the final result of a completed game
+  rpc ReportResult (GameResultRequest) returns (ResultAck);
+}
+
+// Request containing the full serialized game state
+message GameStateRequest {
+  int32 player_id = 1;
+  int32 game_loop = 2;
+  repeated Unit units = 3;
+  repeated Unit enemy_units = 4;
+  Resources resources = 5;
+  string race = 6;
+  string enemy_race = 7;
+  string map_name = 8;
+}
+
+// Response containing the chosen action
+message ActionResponse {
+  string action_type = 1;      // "attack", "move", "build", "train", "noop"
+  int64 unit_tag = 2;
+  int64 target_tag = 3;
+  float target_x = 4;
+  float target_y = 5;
+  int32 ability_id = 6;
+  float confidence = 7;
+}
+
+// Request to subscribe to game stream
+message StreamRequest {
+  string session_id = 1;
+  int32 player_id = 2;
+}
+
+// A single game state update in the stream
+message GameStateUpdate {
+  int32 game_loop = 1;
+  int32 minerals = 2;
+  int32 vespene = 3;
+  int32 supply_used = 4;
+  int32 supply_cap = 5;
+  int32 unit_count = 6;
+  int32 enemy_count = 7;
+  float army_value = 8;
+  string phase = 9;           // "early", "mid", "late"
+}
+
+// Final game result report
+message GameResultRequest {
+  string session_id = 1;
+  int32 player_id = 2;
+  string result = 3;          // "win", "loss", "tie"
+  int32 game_loops = 4;
+  float score = 5;
+  string opponent_id = 6;
+  string map_name = 7;
+  int32 apm = 8;
+}
+
+// Acknowledgement of result receipt
+message ResultAck {
+  bool success = 1;
+  string message = 2;
+  string match_id = 3;
+}
+
+// Unit on the map
+message Unit {
+  int64 tag = 1;
+  int32 unit_type = 2;
+  float pos_x = 3;
+  float pos_y = 4;
+  float health = 5;
+  float max_health = 6;
+  float shield = 7;
+  bool is_flying = 8;
+  bool is_burrowed = 9;
+}
+
+// Player resource state
+message Resources {
+  int32 minerals = 1;
+  int32 vespene = 2;
+  int32 supply_used = 3;
+  int32 supply_cap = 4;
+  int32 larva_count = 5;
+}

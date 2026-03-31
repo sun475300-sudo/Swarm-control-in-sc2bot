@@ -1,0 +1,268 @@
+# ============================================================
+# SC2 Bot - Kubernetes Production Manifests
+# Phase 392: Full K8s deployment stack
+# ============================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sc2bot
+  labels:
+    app.kubernetes.io/name: sc2bot
+    environment: production
+
+---
+# ConfigMap - Non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sc2bot-config
+  namespace: sc2bot
+data:
+  ENV: "production"
+  LOG_LEVEL: "INFO"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "sc2bot"
+  REDIS_URL: "redis://redis-service:6379/0"
+  TRITON_URL: "triton-service:8000"
+  MODEL_CHECKPOINT_DIR: "/checkpoints"
+  REPLAY_DIR: "/replays"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger-service:4317"
+
+---
+# Secret - Sensitive credentials (sealed in production via Sealed Secrets)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sc2bot-secrets
+  namespace: sc2bot
+  annotations:
+    sealedsecrets.bitnami.com/managed: "true"
+type: Opaque
+data:
+  DB_PASSWORD: c2MyYm90X3NlY3VyZV9wYXNz  # base64: sc2bot_secure_pass
+  GRAFANA_PASSWORD: YWRtaW4xMjM=            # base64: admin123
+  WANDB_API_KEY: ""
+  MLFLOW_TRACKING_TOKEN: ""
+
+---
+# PersistentVolumeClaim - Model checkpoints
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sc2bot-checkpoints-pvc
+  namespace: sc2bot
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# PersistentVolumeClaim - Replays storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sc2bot-replays-pvc
+  namespace: sc2bot
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+# Deployment - SC2 Bot Core
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sc2bot
+  namespace: sc2bot
+  labels:
+    app: sc2bot
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sc2bot
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: sc2bot
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: sc2bot-sa
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: sc2bot
+          image: sc2bot:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: sc2bot-config
+            - secretRef:
+                name: sc2bot-secrets
+          volumeMounts:
+            - name: checkpoints
+              mountPath: /checkpoints
+            - name: replays
+              mountPath: /replays
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: sc2bot-checkpoints-pvc
+        - name: replays
+          persistentVolumeClaim:
+            claimName: sc2bot-replays-pvc
+
+---
+# Service - SC2 Bot
+apiVersion: v1
+kind: Service
+metadata:
+  name: sc2bot-service
+  namespace: sc2bot
+  labels:
+    app: sc2bot
+spec:
+  selector:
+    app: sc2bot
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+
+---
+# HorizontalPodAutoscaler - Auto-scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sc2bot-hpa
+  namespace: sc2bot
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sc2bot
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+---
+# PodDisruptionBudget - High availability guarantee
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sc2bot-pdb
+  namespace: sc2bot
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sc2bot
+
+---
+# NetworkPolicy - Restrict traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sc2bot-netpol
+  namespace: sc2bot
+spec:
+  podSelector:
+    matchLabels:
+      app: sc2bot
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: sc2bot
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: sc2bot
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
