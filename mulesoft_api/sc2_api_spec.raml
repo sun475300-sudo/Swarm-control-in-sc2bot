@@ -1,0 +1,138 @@
+#%RAML 1.0
+# Phase 496: MuleSoft RAML API Specification for SC2 Bot
+# Resources: /games, /players, /replays, /leaderboard
+# Data types, traits, OAuth 2.0 security
+
+title: SC2 Bot API
+version: v1
+baseUri: https://api.sc2bot.io/{version}
+mediaType: application/json
+
+securitySchemes:
+  oauth2:
+    type: OAuth 2.0
+    settings:
+      authorizationUri: https://auth.sc2bot.io/oauth2/authorize
+      accessTokenUri: https://auth.sc2bot.io/oauth2/token
+      authorizationGrants: [authorization_code, client_credentials]
+      scopes: [read:games, write:games, read:players, admin]
+
+types:
+  Game:
+    type: object
+    properties:
+      id:         { type: string, required: true }
+      map:        { type: string }
+      players:    { type: array, items: string }
+      winner:     { type: string }
+      duration:   { type: integer, description: "seconds" }
+      startedAt:  { type: datetime }
+      endedAt:    { type: datetime }
+
+  Player:
+    type: object
+    properties:
+      id:       { type: string, required: true }
+      name:     { type: string, required: true }
+      race:     { type: string, enum: [Zerg, Terran, Protoss, Random] }
+      mmr:      { type: integer }
+      wins:     { type: integer }
+      losses:   { type: integer }
+
+  Replay:
+    type: object
+    properties:
+      id:       { type: string }
+      gameId:   { type: string }
+      fileUrl:  { type: string }
+      analyzed: { type: boolean }
+      insights: { type: object }
+
+  ActionPrediction:
+    type: object
+    properties:
+      action:       { type: string }
+      confidence:   { type: number, minimum: 0, maximum: 1 }
+      alternatives: { type: array, items: string }
+
+traits:
+  pageable:
+    queryParameters:
+      page:  { type: integer, default: 1, minimum: 1 }
+      limit: { type: integer, default: 20, maximum: 100 }
+  sortable:
+    queryParameters:
+      sortBy:    { type: string }
+      sortOrder: { type: string, enum: [asc, desc], default: desc }
+  secured:
+    securedBy: [oauth2]
+
+/games:
+  is: [pageable, sortable, secured]
+  get:
+    description: List all SC2 games
+    queryParameters:
+      map:    { type: string }
+      winner: { type: string }
+    responses:
+      200:
+        body:
+          application/json:
+            type: Game[]
+  post:
+    description: Record a new game
+    body:
+      application/json:
+        type: Game
+    responses:
+      201:
+        body:
+          application/json:
+            type: Game
+
+/players:
+  is: [pageable, secured]
+  /{id}:
+    get:
+      description: Get player by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: Player
+        404:
+          body:
+            application/json:
+              example: { "error": "Player not found" }
+
+/replays:
+  is: [pageable, secured]
+  get:
+    description: List replays
+    responses:
+      200:
+        body:
+          application/json:
+            type: Replay[]
+  post:
+    description: Upload a replay file
+    body:
+      multipart/form-data:
+        properties:
+          file: { type: file }
+          gameId: { type: string }
+    responses:
+      202:
+        description: Replay accepted for processing
+
+/leaderboard:
+  is: [pageable]
+  get:
+    description: Get SC2 bot leaderboard
+    queryParameters:
+      race: { type: string }
+    responses:
+      200:
+        body:
+          application/json:
+            type: Player[]
