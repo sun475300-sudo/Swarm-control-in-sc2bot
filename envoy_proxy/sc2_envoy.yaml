@@ -1,0 +1,100 @@
+# Phase 483: Envoy Proxy Configuration for SC2 Bot API Gateway
+# Listeners, clusters, gRPC-JSON transcoding, rate limiting, health checks
+
+static_resources:
+  listeners:
+    - name: sc2_api_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8080
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: sc2_api
+                codec_type: AUTO
+                route_config:
+                  name: sc2_routes
+                  virtual_hosts:
+                    - name: sc2_backend
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            prefix: "/sc2.BotService/"
+                          route:
+                            cluster: sc2_grpc_service
+                        - match:
+                            prefix: "/api/"
+                          route:
+                            cluster: sc2_rest_service
+                            timeout: 15s
+                http_filters:
+                  - name: envoy.filters.http.grpc_json_transcoder
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
+                      proto_descriptor: "/etc/envoy/sc2_api.pb"
+                      services: ["sc2.BotService"]
+                      print_options:
+                        add_whitespace: true
+                        always_print_primitive_fields: true
+                  - name: envoy.filters.http.local_ratelimit
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                      stat_prefix: sc2_rate_limit
+                      token_bucket:
+                        max_tokens: 1000
+                        tokens_per_fill: 100
+                        fill_interval: 1s
+                      filter_enabled:
+                        runtime_key: local_rate_limit_enabled
+                        default_value:
+                          numerator: 100
+                          denominator: HUNDRED
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: sc2_grpc_service
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      http2_protocol_options: {}
+      load_assignment:
+        cluster_name: sc2_grpc_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: sc2-bot-service
+                      port_value: 50051
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 1
+          grpc_health_check: {}
+
+    - name: sc2_rest_service
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      load_assignment:
+        cluster_name: sc2_rest_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: sc2-api-service
+                      port_value: 8000
+      health_checks:
+        - timeout: 5s
+          interval: 15s
+          unhealthy_threshold: 2
+          healthy_threshold: 1
+          http_health_check:
+            path: /health
