@@ -142,3 +142,5 @@ if __name__ == "__main__":
     print("  - generate.choice(model, CHOICES)    → Constrained choice selection")
     print("  - generate.regex(model, pattern)     → Regex-constrained text")
     print("  - generate.json(model, UnitComposition) → Army composition JSON")
+
+# Phase 432: Outlines registered
