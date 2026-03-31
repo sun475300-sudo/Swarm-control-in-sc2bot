@@ -1,0 +1,102 @@
+# Pre-commit hook configuration for SC2 Bot project
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+default_language_version:
+  python: python3.11
+
+default_stages: [commit, push]
+
+repos:
+  # ── Formatting ────────────────────────────────────────────────────────────
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        name: black (code formatter)
+        language_version: python3.11
+        args: [--line-length=100]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (import sorter)
+        args: [--profile=black, --line-length=100]
+
+  # ── Linting ───────────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        name: flake8 (style linter)
+        args:
+          - --max-line-length=100
+          - --extend-ignore=E203,W503
+          - --per-file-ignores=tests/*:S101
+
+  # ── Type Checking ─────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        name: mypy (type checker)
+        args:
+          - --strict
+          - --ignore-missing-imports
+          - --no-error-summary
+        additional_dependencies:
+          - types-requests
+          - types-PyYAML
+          - types-redis
+
+  # ── Security ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        name: bandit (security linter)
+        args: [-ll, --exclude, tests]
+        exclude: ^tests/
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets (credential scanner)
+        args: [--baseline, .secrets.baseline]
+        exclude: ^(poetry\.lock|\.secrets\.baseline)$
+
+  # ── General file hygiene ──────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # ── Rust (for rust_bot_core and wasm_bot) ─────────────────────────────────
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt (Rust formatter)
+        language: system
+        entry: cargo fmt --all --
+        types: [rust]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: cargo clippy (Rust linter)
+        language: system
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        types: [rust]
+        pass_filenames: false
