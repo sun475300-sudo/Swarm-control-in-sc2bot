@@ -1,0 +1,121 @@
+# Default values for sc2bot Helm chart
+# This file is the default configuration; override with -f or --set flags.
+
+replicaCount: 2
+
+image:
+  repository: sc2bot/zerg-ai
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+  # pullSecret: regcred  # Uncomment if using private registry
+
+service:
+  type: ClusterIP
+  port: 8765
+  metricsPort: 9090
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "2000m"
+    memory: "2Gi"
+
+# SC2 bot environment configuration (non-sensitive)
+env:
+  SC2_HOST: "127.0.0.1"
+  SC2_PORT: "8168"
+  SC2_RACE: "Zerg"
+  BOT_DIFFICULTY: "VeryHard"
+  BOT_LOG_LEVEL: "INFO"
+  LADDER_SERVER: "ladder.sc2ai.net"
+  LADDER_PORT: "8090"
+  REALTIME: "false"
+  MAX_GAMES_PER_HOUR: "10"
+
+# Sensitive values loaded from Kubernetes Secrets (base64-encoded in Secret manifest)
+# These are injected via envFrom.secretRef in the deployment template.
+secrets:
+  # SC2_API_KEY: <base64-encoded>
+  # LADDER_TOKEN: <base64-encoded>
+  # DB_PASSWORD: <base64-encoded>
+  # DISCORD_WEBHOOK_URL: <base64-encoded>
+  secretName: ""  # Override to use an existing secret instead of creating one
+
+# Liveness and readiness probe config
+probes:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    failureThreshold: 3
+    timeoutSeconds: 5
+  readiness:
+    path: /ready
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 2
+    timeoutSeconds: 3
+
+# ConfigMap values mounted as files
+config:
+  strategyFile: "zerg_strategy.json"
+  buildOrderFile: "build_orders.yaml"
+  logFormat: "json"
+  metricsEnabled: "true"
+
+# Autoscaling (disabled by default)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: sc2bot.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Persistence for replays and logs
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  mountPath: /app/replays
+
+# ServiceAccount
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network policy
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Extra labels applied to all resources
+commonLabels: {}
+
+# Extra annotations applied to all resources
+commonAnnotations: {}

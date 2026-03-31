@@ -1,0 +1,119 @@
+# SC2 Bot Prometheus Recording Rules
+# Pre-computed PromQL expressions for performance metrics dashboards and alerts.
+# Recording rules reduce query load by materializing expensive computations.
+
+groups:
+  - name: sc2bot.recording.winrate
+    interval: 1m
+    rules:
+
+      # sc2bot:win_rate:5m — rolling 5-minute win rate per matchup
+      - record: sc2bot:win_rate:5m
+        expr: >
+          sum by (matchup) (rate(sc2bot_games_won_total[5m]))
+          /
+          sum by (matchup) (rate(sc2bot_games_played_total[5m]))
+        labels:
+          window: "5m"
+
+      # sc2bot:win_rate:1h — rolling 1-hour win rate per matchup (used by alerts)
+      - record: sc2bot:win_rate:1h
+        expr: >
+          sum by (matchup) (rate(sc2bot_games_won_total[1h]))
+          /
+          sum by (matchup) (rate(sc2bot_games_played_total[1h]))
+        labels:
+          window: "1h"
+
+  - name: sc2bot.recording.game_duration
+    interval: 5m
+    rules:
+
+      # sc2bot:avg_game_duration:1h — average game length in seconds over 1 hour
+      - record: sc2bot:avg_game_duration:1h
+        expr: >
+          avg_over_time(sc2bot_game_duration_seconds[1h])
+        labels:
+          aggregation: "avg"
+          window: "1h"
+
+      # sc2bot:avg_game_duration:1h by matchup
+      - record: sc2bot:avg_game_duration_by_matchup:1h
+        expr: >
+          avg by (matchup) (
+            avg_over_time(sc2bot_game_duration_seconds[1h])
+          )
+        labels:
+          aggregation: "avg"
+          window: "1h"
+
+  - name: sc2bot.recording.apm
+    interval: 1m
+    rules:
+
+      # sc2bot:apm_percentile:99th — 99th-percentile APM via histogram_quantile
+      - record: sc2bot:apm_percentile:99th
+        expr: >
+          histogram_quantile(
+            0.99,
+            sum by (le) (rate(sc2bot_apm_bucket[5m]))
+          )
+        labels:
+          quantile: "0.99"
+          window: "5m"
+
+      # sc2bot:apm_percentile:50th — median APM
+      - record: sc2bot:apm_percentile:50th
+        expr: >
+          histogram_quantile(
+            0.50,
+            sum by (le) (rate(sc2bot_apm_bucket[5m]))
+          )
+        labels:
+          quantile: "0.50"
+          window: "5m"
+
+  - name: sc2bot.recording.economy
+    interval: 30s
+    rules:
+
+      # sc2bot:supply_efficiency — ratio of army supply to total supply used
+      # Higher values indicate more army investment relative to economy supply
+      - record: sc2bot:supply_efficiency
+        expr: >
+          sc2bot_army_supply
+          /
+          clamp_min(sc2bot_supply_used, 1)
+        labels:
+          metric: "supply_efficiency"
+
+      # sc2bot:worker_saturation — workers vs. optimal worker count
+      - record: sc2bot:worker_saturation
+        expr: >
+          clamp_max(
+            sc2bot_worker_count / clamp_min(sc2bot_ideal_worker_count, 1),
+            1.0
+          )
+        labels:
+          metric: "worker_saturation"
+
+  - name: sc2bot.recording.ladder
+    interval: 5m
+    rules:
+
+      # sc2bot:ladder_mmr_change — net MMR change rate per hour
+      - record: sc2bot:ladder_mmr_change
+        expr: >
+          deriv(sc2bot_ladder_mmr[1h])
+        labels:
+          metric: "mmr_change_rate"
+          window: "1h"
+
+      # sc2bot:ladder_mmr_change:delta_24h — absolute MMR change over 24 hours
+      - record: sc2bot:ladder_mmr_change:delta_24h
+        expr: >
+          sc2bot_ladder_mmr
+          - sc2bot_ladder_mmr offset 24h
+        labels:
+          metric: "mmr_delta"
+          window: "24h"
