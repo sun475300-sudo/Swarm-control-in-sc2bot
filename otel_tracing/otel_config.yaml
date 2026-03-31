@@ -1,0 +1,143 @@
+# otel_config.yaml — Phase 347: OpenTelemetry Collector configuration
+# Receives traces from sc2bot microservices, processes them, and exports
+# to a Jaeger backend and optionally to an OTLP endpoint (e.g. Grafana Tempo).
+
+# ---------------------------------------------------------------------------
+# Receivers: accept spans from sc2bot via OTLP gRPC and HTTP
+# ---------------------------------------------------------------------------
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+        cors:
+          allowed_origins:
+            - "http://localhost:3000"   # Grafana UI
+
+  # Jaeger receiver for legacy agents that use Thrift/UDP
+  jaeger:
+    protocols:
+      thrift_compact:
+        endpoint: "0.0.0.0:6831"
+      thrift_binary:
+        endpoint: "0.0.0.0:6832"
+      grpc:
+        endpoint: "0.0.0.0:14250"
+      thrift_http:
+        endpoint: "0.0.0.0:14268"
+
+# ---------------------------------------------------------------------------
+# Processors: enrich and batch spans before export
+# ---------------------------------------------------------------------------
+processors:
+  # Add Kubernetes pod/node metadata to every span
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    extract:
+      metadata:
+        - k8s.pod.name
+        - k8s.namespace.name
+        - k8s.node.name
+        - k8s.deployment.name
+      labels:
+        - tag_name: sc2bot.version
+          key: app.kubernetes.io/version
+          from: pod
+
+  # Attach static resource attributes for the sc2bot service
+  resource:
+    attributes:
+      - key: service.name
+        value: sc2bot
+        action: upsert
+      - key: deployment.environment
+        value: production
+        action: insert
+
+  # Batch spans to reduce export overhead
+  batch:
+    send_batch_size: 512
+    timeout: 5s
+    send_batch_max_size: 1024
+
+  # Drop health-check / liveness probe spans to reduce noise
+  filter/drop_health:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.route"] == "/healthz"'
+        - 'attributes["http.route"] == "/readyz"'
+
+  # Tail-based sampling: keep 100% of error traces, 10% of success traces
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 200
+    policies:
+      - name: keep-errors
+        type: status_code
+        status_code: { status_codes: [ERROR] }
+      - name: keep-slow-spans
+        type: latency
+        latency: { threshold_ms: 500 }
+      - name: probabilistic-10pct
+        type: probabilistic
+        probabilistic: { sampling_percentage: 10 }
+
+# ---------------------------------------------------------------------------
+# Exporters: send processed spans to Jaeger and Grafana Tempo
+# ---------------------------------------------------------------------------
+exporters:
+  # Jaeger all-in-one (for development / staging)
+  jaeger:
+    endpoint: "jaeger-collector.monitoring.svc.cluster.local:14250"
+    tls:
+      insecure: true
+
+  # OTLP to Grafana Tempo (for production)
+  otlp/tempo:
+    endpoint: "tempo.monitoring.svc.cluster.local:4317"
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: sc2bot
+
+  # Debug exporter for local troubleshooting (logs spans to stdout)
+  debug:
+    verbosity: basic
+
+# ---------------------------------------------------------------------------
+# Extensions: health check and zPages
+# ---------------------------------------------------------------------------
+extensions:
+  health_check:
+    endpoint: "0.0.0.0:13133"
+  zpages:
+    endpoint: "0.0.0.0:55679"
+  pprof:
+    endpoint: "0.0.0.0:1777"
+
+# ---------------------------------------------------------------------------
+# Service pipelines
+# ---------------------------------------------------------------------------
+service:
+  extensions: [health_check, zpages, pprof]
+  pipelines:
+    traces/sc2bot:
+      receivers:  [otlp, jaeger]
+      processors: [k8sattributes, resource, filter/drop_health, tail_sampling, batch]
+      exporters:  [jaeger, otlp/tempo]
+
+    traces/debug:
+      receivers:  [otlp]
+      processors: [batch]
+      exporters:  [debug]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: "0.0.0.0:8888"
