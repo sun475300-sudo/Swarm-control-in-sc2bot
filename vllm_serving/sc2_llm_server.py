@@ -193,3 +193,5 @@ if __name__ == "__main__":
         army_supply=30,
     )
     print(f"\n[Sample prompt]\n{sample_query.to_prompt()}")
+
+# Phase 433: vLLM registered
