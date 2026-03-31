@@ -1,0 +1,252 @@
+version: "3.9"
+
+# ============================================================
+# SC2 Bot Full Stack - Docker Compose
+# Phase 391: Complete production stack
+# ============================================================
+
+networks:
+  sc2_frontend:
+    driver: bridge
+  sc2_backend:
+    driver: bridge
+  sc2_monitoring:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  loki_data:
+    driver: local
+  jaeger_data:
+    driver: local
+  triton_model_repo:
+    driver: local
+  argocd_data:
+    driver: local
+  sc2bot_replays:
+    driver: local
+  sc2bot_checkpoints:
+    driver: local
+
+services:
+  # ----------------------------------------------------------
+  # Core SC2 Bot Service
+  # ----------------------------------------------------------
+  sc2bot:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: sc2bot:latest
+    container_name: sc2bot_core
+    restart: unless-stopped
+    environment:
+      - ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=sc2bot
+      - DB_USER=sc2bot
+      - DB_PASSWORD=${DB_PASSWORD:-sc2bot_secure_pass}
+      - REDIS_URL=redis://redis:6379/0
+      - TRITON_URL=triton-inference:8000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - PROMETHEUS_PUSHGATEWAY=http://prometheus:9091
+      - LOG_LEVEL=INFO
+      - MODEL_CHECKPOINT_DIR=/checkpoints
+      - REPLAY_DIR=/replays
+    volumes:
+      - sc2bot_replays:/replays
+      - sc2bot_checkpoints:/checkpoints
+    networks:
+      - sc2_backend
+      - sc2_monitoring
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      triton-inference:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8G
+        reservations:
+          cpus: "2.0"
+          memory: 4G
+
+  # ----------------------------------------------------------
+  # PostgreSQL - Primary Database
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: sc2bot_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=sc2bot
+      - POSTGRES_USER=sc2bot
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-sc2bot_secure_pass}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sc2_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sc2bot -d sc2bot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  # ----------------------------------------------------------
+  # Redis - Cache & Message Queue
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: sc2bot_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - sc2_backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+
+  # ----------------------------------------------------------
+  # Prometheus - Metrics Collection
+  # ----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: sc2bot_prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - prometheus_data:/prometheus
+      - ../prometheus_rules:/etc/prometheus
+    networks:
+      - sc2_monitoring
+    ports:
+      - "9090:9090"
+
+  # ----------------------------------------------------------
+  # Grafana - Metrics Visualization
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: sc2bot_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../grafana_dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - sc2_monitoring
+      - sc2_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+
+  # ----------------------------------------------------------
+  # Loki - Log Aggregation
+  # ----------------------------------------------------------
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: sc2bot_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    networks:
+      - sc2_monitoring
+    ports:
+      - "3100:3100"
+
+  # ----------------------------------------------------------
+  # Jaeger - Distributed Tracing
+  # ----------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    container_name: sc2bot_jaeger
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=badger
+    volumes:
+      - jaeger_data:/badger
+    networks:
+      - sc2_monitoring
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+  # ----------------------------------------------------------
+  # Triton Inference Server - ML Model Serving
+  # ----------------------------------------------------------
+  triton-inference:
+    image: nvcr.io/nvidia/tritonserver:23.07-py3
+    container_name: sc2bot_triton
+    restart: unless-stopped
+    command: tritonserver --model-repository=/models --strict-model-config=false
+    volumes:
+      - triton_model_repo:/models
+    networks:
+      - sc2_backend
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ----------------------------------------------------------
+  # ArgoCD - GitOps Continuous Delivery
+  # ----------------------------------------------------------
+  argocd:
+    image: quay.io/argoproj/argocd:v2.8.0
+    container_name: sc2bot_argocd
+    restart: unless-stopped
+    command: argocd-server --insecure
+    environment:
+      - ARGOCD_SERVER_INSECURE=true
+    volumes:
+      - argocd_data:/app/config
+    networks:
+      - sc2_frontend
+      - sc2_backend
+    ports:
+      - "8080:8080"
