@@ -158,3 +158,5 @@ if __name__ == "__main__":
     print(f"  Volume: sc2-checkpoints (persistent)")
     print(f"\nDeploy: modal deploy modal_serverless/sc2_modal_train.py")
     print(f"Train now: modal run modal_serverless/sc2_modal_train.py::train_sc2_model")
+
+# Phase 439: Modal registered
