@@ -735,11 +735,11 @@ class SC2ConcurrentBot:
                 logger.info("Initiating graceful shutdown...")
                 nursery.cancel_scope.cancel()
 
-        except* trio.Cancelled:
+        except trio.Cancelled:
             logger.info("Nursery cancelled (clean shutdown)")
-        except* OSError as eg:
+        except OSError as eg:
             self._handle_errors(eg)
-        except* Exception as eg:
+        except Exception as eg:
             self._handle_errors(eg)
         finally:
             self._running = False
