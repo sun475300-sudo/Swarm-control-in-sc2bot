@@ -92,6 +92,37 @@
    - Astro SSG 포털 + HTMX 하이퍼미디어 전투 뷰어
    - OpenTelemetry 분산 추적, Playwright E2E 테스트 자동화
 
+5. **JARVIS Discord AI 비서 (MCP Multi-Server Architecture)**
+   - Claude AI 기반 Discord 봇 — 자연어 대화로 전체 시스템 제어
+   - 6개 MCP 서버 분산 아키텍처 (SC2, System, Crypto, Agentic, Location, JARVIS Core)
+   - 55개 키워드 핸들러 + 23개 MCP 도구 + 자동 모델 라우팅 (Haiku/Sonnet/Opus)
+   - 암호화폐 자동매매 (Upbit API, 스마트 트레이딩, 리스크 관리)
+   - PC 원격 제어, 스마트홈 연동, SSH, 스케줄링, 웹캠/스크린샷
+   - Windows 부팅 시 자동 시작 (Task Scheduler), 온라인 알림 DM
+   - 5계층 보안 체계 (Fernet 암호화, API 키 순환, 거래 한도, 감사 로그)
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  JARVIS Discord Bot                  │
+│         discord_jarvis.py (JarvisBot Core)           │
+│  ┌───────────┐ ┌───────────┐ ┌───────────────────┐  │
+│  │ 55 Keyword│ │ Model     │ │ Feature Cogs      │  │
+│  │ Handlers  │ │ Router    │ │ (AI/SC2/System/   │  │
+│  │           │ │ H/S/O     │ │  Finance/Security)│  │
+│  └─────┬─────┘ └─────┬─────┘ └────────┬──────────┘  │
+├────────┴─────────────┴────────────────┴──────────────┤
+│              Claude Proxy (claude_proxy.js)           │
+│         Port 8780 | Session DB | Rate Limiting       │
+├──────────────────────────────────────────────────────┤
+│                    MCP Server Layer                   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │
+│  │ SC2 MCP  │ │ System   │ │ Crypto   │ │Agentic │  │
+│  │ Replays  │ │ PC Ctrl  │ │ Trading  │ │Terminal │  │
+│  │ Stats    │ │ SSH/IoT  │ │ Upbit    │ │Python  │  │
+│  └──────────┘ └──────────┘ └──────────┘ └────────┘  │
+└──────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## System Architecture
@@ -265,7 +296,9 @@ helm status sc2bot -n swarm-control
 | **모델 학습 시간 (1M steps)** | 48h | 6h | -87.5% (Rust 가속) |
 | **배포 소요 시간** | 수동 2h | 자동 8min | -93% (ArgoCD) |
 | **테스트 통과율** | — | 100% (342/342) | Zero Failure |
-| **Python 구문 검사** | — | 757/757 통과 | Zero Error |
+| **Python 구문 검사** | — | 71/71 통과 (root) | Zero Error |
+| **JARVIS 통합 테스트** | — | 43/43 모듈 통과 | Zero Failure |
+| **MCP 서버 가동률** | — | 6/6 서버 정상 | 100% Uptime |
 
 ### 기능 커버리지 (Feature Coverage)
 
