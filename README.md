@@ -297,8 +297,10 @@ helm status sc2bot -n swarm-control
 | **배포 소요 시간** | 수동 2h | 자동 8min | -93% (ArgoCD) |
 | **테스트 통과율** | — | 100% (342/342) | Zero Failure |
 | **Python 구문 검사** | — | 71/71 통과 (root) | Zero Error |
-| **JARVIS 통합 테스트** | — | 43/43 모듈 통과 | Zero Failure |
-| **MCP 서버 가동률** | — | 6/6 서버 정상 | 100% Uptime |
+| **JARVIS 통합 테스트** | — | 117/117 통과 (4차) | Zero Failure |
+| **자비스봇 구문 검사** | — | 234/234 통과 | Zero Error |
+| **MCP 서버 가동률** | — | 5/5 서버 정상 | 100% Uptime |
+| **JARVIS 키워드 핸들러** | — | 55개 등록 완료 | Full Coverage |
 
 ### 기능 커버리지 (Feature Coverage)
 
