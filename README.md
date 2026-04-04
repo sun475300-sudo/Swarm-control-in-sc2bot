@@ -26,10 +26,10 @@
 
 | Metric | Value | Status |
 |:---:|:---:|:---:|
-| ![Phases](https://img.shields.io/badge/Phases-625_Completed-success?style=flat-square) | ![Tests](https://img.shields.io/badge/Tests-342_Passed-brightgreen?style=flat-square) | ![Bugs](https://img.shields.io/badge/Bug_Fixes-187-critical?style=flat-square) |
-| ![Languages](https://img.shields.io/badge/Languages_&_Tools-300+-blueviolet?style=flat-square) | ![Python Files](https://img.shields.io/badge/Python_Files-757-blue?style=flat-square) | ![Commits](https://img.shields.io/badge/Commits-857+-orange?style=flat-square) |
+| ![Phases](https://img.shields.io/badge/Phases-645_Completed-success?style=flat-square) | ![Tests](https://img.shields.io/badge/Tests-342_Passed-brightgreen?style=flat-square) | ![Bugs](https://img.shields.io/badge/Bug_Fixes-187-critical?style=flat-square) |
+| ![Languages](https://img.shields.io/badge/Languages_&_Tools-320+-blueviolet?style=flat-square) | ![Python Files](https://img.shields.io/badge/Python_Files-797-blue?style=flat-square) | ![Commits](https://img.shields.io/badge/Commits-860+-orange?style=flat-square) |
 
-[여기에 게임 플레이 GIF 삽입]
+![SC2 Swarm Control Demo](assets/sc2_swarm_demo.gif)
 
 </div>
 
@@ -127,7 +127,7 @@
 
 ## System Architecture
 
-[여기에 아키텍처 다이어그램 삽입]
+![System Architecture](assets/architecture_diagram.png)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -357,13 +357,14 @@ xychart-beta
 | **P600** | **600 Phase 마일스톤** — Trio 구조적 동시성 |
 | **P605** | ML/XAI/엣지/문서화 완성 (scikit-learn → MkDocs) |
 | **P625** | **Advanced MARL 완성** — MAPPO, QMIX, MADDPG, PBT, League Training, World Model, LangChain RAG 등 20개 |
+| **P645** | **LLM 통합 + 엣지 배포 완성** — LlamaIndex, Claude API, Semantic Kernel, Vector DB, TFLite, CoreML, Jetson, AutoML 등 20개 |
 
 ---
 
-## Phase Log (P101~P625)
+## Phase Log (P101~P645)
 
 <details>
-<summary><b>전체 페이즈 작업 로그 펼치기 (525 Phases)</b></summary>
+<summary><b>전체 페이즈 작업 로그 펼치기 (545 Phases)</b></summary>
 
 ```
 ╔════════════════════════════════════════════════════════════════════════════════════╗
@@ -439,6 +440,27 @@ xychart-beta
 ║ P623 │ AutoGPT      │ 자율 플래너 (사고-행동-관찰 루프, 자기 프롬프팅)             ║
 ║ P624 │ FineTune     │ LLM 미세조정 (LoRA 파이프라인, 전략 토크나이저, 평가)        ║
 ║ P625 │ Embeddings   │ 게임 임베딩 (대조 학습, 시간 대조, 최근접 이웃) ★P625 완료★  ║
+║──────│──────────────│────────────────────────────────────────────────────────────── ║
+║ P626 │ LlamaIndex   │ 전략 지식 베이스 (벡터 인덱스, 메타데이터 필터, 문서 파싱)   ║
+║ P627 │ Claude API   │ 전략 코치 (멀티턴 코칭, 게임 상태 직렬화, 타이밍 경보)       ║
+║ P628 │ Semantic K.  │ 스킬 플래너 (스킬 체인, 순차 계획, 메모리 저장/회상)          ║
+║ P629 │ Vector DB    │ 게임 상태 벡터 DB (LSH, HNSW, 브루트포스, 유사도 검색)        ║
+║ P630 │ Agent Chain  │ 에이전트 체인 (순차/병렬/조건부 체인, 마스터 전략)            ║
+║ P631 │ Tool-Use     │ 도구 사용 에이전트 (ReAct 루프, 4종 SC2 도구, 파서)           ║
+║ P632 │ Memory       │ 장기 기억 (일화/의미/작업 메모리, 망각 곡선, 통합)            ║
+║ P633 │ Multimodal   │ 멀티모달 (비전+텍스트+구조화, 게이트 퓨전, 12 액션)          ║
+║ P634 │ Code Gen     │ 코드 생성 (7종 템플릿, NL→코드, 구문/안전성 검증)            ║
+║ P635 │ StrategyEval │ 전략 평가 (7차원 스코링, Elo 랭킹, 개선 제안)                ║
+║ P636 │ TFLite       │ 엣지 추론 (float32/16/int8 변환, 양자화 벤치마크)            ║
+║ P637 │ CoreML       │ iOS 배포 (mlmodel 변환, Neural Engine, 동반 앱)               ║
+║ P638 │ ONNX Mobile  │ 크로스플랫폼 (NNAPI/CoreML EP/WASM, 모바일 최적화)           ║
+║ P639 │ Jetson       │ Jetson Nano (TensorRT FP16/INT8, CUDA 스트림, 전력 관리)      ║
+║ P640 │ ESP32        │ IoT 텔레메트리 (MQTT, LED 상태, OLED 디스플레이)              ║
+║ P641 │ Web Deploy   │ 브라우저 추론 (ONNX.js, WebWorker, WASM 컴파일)              ║
+║ P642 │ Compress     │ 모델 압축 (프루닝, 증류, 양자화 인식, 50MB→5MB)              ║
+║ P643 │ Federated    │ 연합학습 (FedAvg, 차등 프라이버시, 그래디언트 압축)           ║
+║ P644 │ A/B Testing  │ 전략 비교 (빈도/베이지안, 다중무장 밴딧, 조기중단)           ║
+║ P645 │ AutoML       │ 자동ML (HPO, NAS, 특성 공학, 파이프라인 선택) ★P645 완료★    ║
 ╚════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -553,8 +575,9 @@ gantt
 | 구간 | 주제 | 핵심 도구/기술 |
 |:---|:---|:---|
 | **P606-625** | 고급 RL 및 멀티에이전트 | MAPPO, QMIX, MADDPG, PettingZoo, League Training, PBT ✅ |
-| **P626-635** | LLM 통합 및 자율 에이전트 | LlamaIndex, Claude API, Semantic Kernel |
-| **P636-650** | 엣지/임베디드 배포 | TFLite, CoreML, ONNX Mobile, Jetson Nano, ESP32 |
+| **P626-635** | LLM 통합 및 자율 에이전트 | LlamaIndex, Claude API, Semantic Kernel, Vector DB, Agent Chain ✅ |
+| **P636-645** | 엣지/임베디드 배포 + AutoML | TFLite, CoreML, ONNX Mobile, Jetson, ESP32, Federated, AutoML ✅ |
+| **P646-650** | 시뮬레이션 고도화 (시작) | Unity ML-Agents, CARLA, AirSim, Gazebo, 디지털 트윈 |
 | **P651-665** | 시뮬레이션 고도화 | Unity ML-Agents, CARLA, AirSim, Gazebo, 디지털 트윈 |
 | **P666-680** | 보안 및 신뢰성 | Chaos Engineering, eBPF 관측성, mTLS, SBOM, 퍼징 |
 | **P681-700** | 데이터 플랫폼 + **700 마일스톤** | Kafka Streams, Flink, Iceberg, Delta Lake, DataFusion |
@@ -581,6 +604,49 @@ gantt
 - [ ] PX4 실물 드론 군집 제어 데모
 - [ ] 국제 SC2 AI 토너먼트 출전
 - [ ] 오픈소스 릴리즈 및 컨퍼런스 데모
+
+---
+
+## Test Results
+
+### Testing Infrastructure
+
+| Module | Description | Status |
+|:---|:---|:---|
+| `test_dashboard.py` | Real-time dashboard with charts/graphs | [READY] |
+| `test_scheduler.py` | Automated test scheduling (cron-like) | [READY] |
+| `test_comparison.py` | Before/after comparison analysis | [READY] |
+| `test_scenario_def.py` | Custom test scenario definitions | [READY] |
+| `unit_combo_test.py` | Unit combination analysis | [READY] |
+
+### Unit Combination Test Results
+
+```
+Scenario        Player Combo              Enemy Combo                 Win Rate
+--------------------------------------------------------------------------------
+rush_defense    Zergling+Baneling         Zergling+Zergling+Zergling   54.0%
+macro_battle    Roach+Hydralisk           Marine+Marauder+Marauder     47.0%
+harassment      Mutalisk+Mutalisk+Mutalisk Probe+Probe+Probe+Pylon    95.0%
+team_fight      Ultralisk+BroodLord       Thor+Thor+Battlecruiser      57.0%
+mid_game        Roach+Hydralisk+Mutalisk Marine+Marauder+Tank         58.0%
+defensive       Queen+Roach+Roach         Zealot+Zealot+Stalker        70.0%
+tech_push       Viper+BroodLord+Ultralisk Immortal+VoidRay+VoidRay    76.0%
+```
+
+### Key Synergy Combos
+
+- **Zergling+Baneling**: +10% synergy bonus (rush defense)
+- **Roach+Hydralisk**: +8% synergy bonus (mid-game)
+- **Mutalisk+Corruptor**: +12% synergy bonus (anti-air)
+- **Ultralisk+BroodLord**: +15% synergy bonus (late game)
+
+### Test Dashboard
+
+Generated: `test_dashboard/dashboard.html` - Interactive charts for:
+- Unit combination win rates
+- Scenario performance
+- Test history timeline
+- Unit synergy heatmap
 
 ---
 
@@ -623,8 +689,8 @@ This project is distributed under the MIT License. See `LICENSE` for more inform
 <div align="center">
 
 ```
-Built with Python · Rust · TypeScript · 300+ Languages & Tools · StarCraft II API · Gemini AI
-P625 Completed · 187 Bug Fixes · 300+ Languages/Tools · 342 Tests Passed · 857+ Commits
+Built with Python · Rust · TypeScript · 320+ Languages & Tools · StarCraft II API · Gemini AI
+P645 Completed · 187 Bug Fixes · 320+ Languages/Tools · 342 Tests Passed · 860+ Commits
 ```
 
 **Star this repo if you find it interesting!**

@@ -394,23 +394,24 @@ class IntegrationValidator:
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
+        status_icon = "[PASS]" if failed == 0 else "[FAIL]"
         print(f"\n{'=' * 70}")
-        print(f"  Phase 71: 통합 검증 자동화 리포트")
+        print(f"  Phase 71: Integration Validation Report")
         print(f"{'=' * 70}")
-        print(f"  Overall Status: {'✅ PASS' if failed == 0 else '❌ FAIL'}")
+        print(f"  Overall Status: {status_icon}")
         print(f"  Passed: {passed}/{len(self.results)}")
         print(f"  Duration: {total_duration:.0f}ms")
         print(f"{'=' * 70}\n")
 
         for r in self.results:
-            status = "✅" if r.passed else "❌"
+            status = "[PASS]" if r.passed else "[FAIL]"
             print(f"  {status} {r.language:12} ({r.tool:15}) - {r.duration_ms:.0f}ms")
             if r.errors:
                 for e in r.errors[:3]:
-                    print(f"      🔴 {e}")
+                    print(f"      [ERR] {e}")
             if r.warnings:
                 for w in r.warnings[:3]:
-                    print(f"      🟡 {w}")
+                    print(f"      [WARN] {w}")
 
         print(f"\n📄 Full report: {report_path}")
         return report
