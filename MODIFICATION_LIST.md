@@ -33,7 +33,7 @@
 
 | # | 파일 | 문제 | 수정 제안 | 상태 |
 |:---:|:---|:---|:---|:---|
-| 1 | `agent_inspector.py:100` | Bare except clause | `except Exception:`로 구체적 예외 처리 | ✅ 완료 |
+| 1 | `agent_inspector.py:100` | Bare except clause (검색 패턴) | 검색 전용, 실제 예외 아님 | ✅ 확인됨 |
 | 2-5 | `modification_finder.py` | Bare except clause 4건 | `except Exception:`로 구체적 예외 처리 | ✅ 완료 |
 | 6 | `task_discovery.py` | Bare except clause 5건 | `except (IOError, OSError)` | ✅ 완료 |
 | 7 | `nn_prediction.py` | Bare except clause | `except (IOError, json.JSONDecodeError)` | ✅ 완료 |
