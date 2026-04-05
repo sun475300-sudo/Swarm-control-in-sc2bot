@@ -100,7 +100,7 @@ class TestAndModificationFinder:
                                     priority=5,
                                 )
                             )
-            except:
+            except (IOError, OSError) as e:
                 pass
 
         return {"todo_fixme_count": len(items), "items": items}
@@ -136,7 +136,7 @@ class TestAndModificationFinder:
                                     priority=2,
                                 )
                             )
-            except:
+            except (IOError, OSError) as e:
                 pass
 
         return {"bare_except_count": len(items), "items": items}
@@ -163,7 +163,7 @@ class TestAndModificationFinder:
                                     "type": "print_statement",
                                 }
                             )
-            except:
+            except (IOError, OSError) as e:
                 pass
 
         return {"print_statements": len(items), "items": items}

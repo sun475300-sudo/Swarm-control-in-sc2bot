@@ -55,7 +55,7 @@ class FeatureTaskDiscoverer:
                                         effort_hours=2.0,
                                     )
                                 )
-            except:
+            except (IOError, OSError) as e:
                 pass
         return self.tasks
 
@@ -88,7 +88,7 @@ class FeatureTaskDiscoverer:
                                         effort_hours=0.5,
                                     )
                                 )
-            except:
+            except (IOError, OSError) as e:
                 pass
         return self.tasks
 
@@ -115,7 +115,7 @@ class FeatureTaskDiscoverer:
                                     effort_hours=0.25,
                                 )
                             )
-            except:
+            except (IOError, OSError) as e:
                 pass
         return self.tasks
 
@@ -154,7 +154,7 @@ class FeatureTaskDiscoverer:
                                     effort_hours=4.0,
                                 )
                             )
-            except:
+            except (IOError, OSError) as e:
                 pass
         return self.tasks
 
@@ -179,7 +179,7 @@ class FeatureTaskDiscoverer:
                                 effort_hours=1.0,
                             )
                         )
-            except:
+            except (IOError, OSError) as e:
                 pass
         return self.tasks
 
