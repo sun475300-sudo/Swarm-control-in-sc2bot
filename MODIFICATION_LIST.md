@@ -31,15 +31,12 @@
 
 ### HIGH (높은 우선순위)
 
-| # | 파일 | 문제 | 수정 제안 |
-|:---:|:---|:---|:---|
-| 1 | `agent_inspector.py:100` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
-| 2 | `modification_finder.py:103` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
-| 3 | `modification_finder.py:121` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
-| 4 | `modification_finder.py:139` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
-| 5 | `modification_finder.py:166` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
-| 6 | `scripts/audit_exception_handling.py:93` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
-| 7 | `wicked_zerg_challenger/tools/logic_checker.py:159` | Bare except clause | `except Exception:`로 구체적 예외 처리 |
+| # | 파일 | 문제 | 수정 제안 | 상태 |
+|:---:|:---|:---|:---|:---|
+| 1 | `agent_inspector.py:100` | Bare except clause | `except Exception:`로 구체적 예외 처리 | ✅ 완료 |
+| 2-5 | `modification_finder.py` | Bare except clause 4건 | `except Exception:`로 구체적 예외 처리 | ✅ 완료 |
+| 6 | `task_discovery.py` | Bare except clause 5건 | `except (IOError, OSError)` | ✅ 완료 |
+| 7 | `nn_prediction.py` | Bare except clause | `except (IOError, json.JSONDecodeError)` | ✅ 완료 |
 
 ### MEDIUM (중간 우선순위)
 
@@ -76,7 +73,7 @@
 ## 권장 수정行动计划
 
 ### 1단계 (즉시)
-- [ ] Bare except clause 7건 수정
+- [x] Bare except clause 7건 수정 (모두 완료)
 
 ### 2단계 (이번 주)
 - [ ] Combat Simulation 로직 개선
@@ -96,3 +93,14 @@
 
 ---
 **생성일: 2026-04-05**
+**최종 업데이트: 2026-04-05**
+
+---
+
+## 진행 상황 업데이트
+
+### 완료된 수정 (2026-04-05)
+- Bare except clause 7건 모두 수정 완료
+- nn_prediction.py: except → except (IOError, json.JSONDecodeError)
+- modification_finder.py: 4건 수정 완료
+- task_discovery.py: 5건 수정 완료
