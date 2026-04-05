@@ -1,0 +1,6 @@
+// Phase 241: gRPC
+syntax = "proto3";
+
+service BattleBot {
+    rpc Simulate(SimRequest) returns (SimResponse);
+}

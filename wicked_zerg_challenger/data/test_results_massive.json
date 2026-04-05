@@ -1,0 +1,99 @@
+{
+  "total": 10,
+  "wins": 0,
+  "losses": 0,
+  "errors": 10,
+  "win_rate": 0,
+  "results": [
+    {
+      "game": 1,
+      "map": "RomanticideLE",
+      "race": "Protoss",
+      "diff": "MediumHard",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 2,
+      "map": "EphemeronLE",
+      "race": "Protoss",
+      "diff": "Hard",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 3,
+      "map": "SimulacrumLE",
+      "race": "Protoss",
+      "diff": "Medium",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 4,
+      "map": "SimulacrumLE",
+      "race": "Zerg",
+      "diff": "Medium",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 5,
+      "map": "SimulacrumLE",
+      "race": "Protoss",
+      "diff": "Harder",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 6,
+      "map": "EphemeronLE",
+      "race": "Zerg",
+      "diff": "MediumHard",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 7,
+      "map": "EphemeronLE",
+      "race": "Zerg",
+      "diff": "MediumHard",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 8,
+      "map": "SimulacrumLE",
+      "race": "Zerg",
+      "diff": "Hard",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 9,
+      "map": "ThunderbirdLE",
+      "race": "Terran",
+      "diff": "Hard",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    },
+    {
+      "game": 10,
+      "map": "EphemeronLE",
+      "race": "Zerg",
+      "diff": "Harder",
+      "result": "Error",
+      "workers": "?",
+      "army": "?"
+    }
+  ]
+}

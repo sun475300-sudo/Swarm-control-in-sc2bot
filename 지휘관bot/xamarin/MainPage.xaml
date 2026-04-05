@@ -1,0 +1,4 @@
+<!-- Phase 226: Xamarin -->
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms">
+    <Label Text="Swarm"/>
+</ContentPage>

@@ -1,0 +1,9 @@
+{
+  "test_name": "harassment_test",
+  "scenario": "harassment",
+  "unit_combo": [
+    "Mutalisk"
+  ],
+  "interval_minutes": 45,
+  "enabled": true
+}

@@ -1,0 +1,37 @@
+# -*- mode: org -*-
+#+TITLE: Wicked Zerg Battle Simulation
+#+PHASE: 155 - Org Mode
+
+* Battle Unit Structure
+| Property   | Type    | Description        |
+|------------|---------|-------------------|
+| unit_type  | integer | Type of unit      |
+| health     | float   | Health points     |
+| damage     | float   | Attack damage     |
+| armor      | float   | Armor value       |
+| pos_x      | float   | X position        |
+| pos_y      | float   | Y position        |
+
+* Functions
+
+** calculate-swarm-damage
+#+BEGIN_SRC python
+def calculate_swarm_damage(count):
+    return count * 5
+#+END_SRC
+
+** swarm-formation
+#+BEGIN_SRC python
+def swarm_formation(center_x, center_y, count, radius):
+    import math
+    return [(center_x + radius * math.cos(2*math.pi*i/count),
+             center_y + radius * math.sin(2*math.pi*i/count))
+            for i in range(count)]
+#+END_SRC
+
+** unit-strength
+#+BEGIN_SRC python
+def unit_strength(health, damage, armor):
+    effective = damage * health / 100
+    return effective * (1 - armor * 0.01)
+#+END_SRC

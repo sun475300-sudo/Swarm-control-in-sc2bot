@@ -1,0 +1,11 @@
+# Phase 256: GitHub Actions
+name: SC2 Bot CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pytest

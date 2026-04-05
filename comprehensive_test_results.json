@@ -1,0 +1,54 @@
+{
+  "unit_tests": {
+    "tests": 7,
+    "passed": 7,
+    "duration": 125
+  },
+  "stress_tests": {
+    "tests": 5,
+    "passed": 5,
+    "duration": 89
+  },
+  "edge_case_tests": {
+    "tests": 10,
+    "passed": 10,
+    "duration": 45
+  },
+  "integration_tests": {
+    "tests": 5,
+    "passed": 5,
+    "duration": 12
+  },
+  "benchmark_tests": {
+    "tests": 6,
+    "passed": 6,
+    "duration": 234
+  },
+  "multi_env_tests": {
+    "tests": 6,
+    "passed": 6,
+    "duration": 89
+  },
+  "matchup_tests": {
+    "tests": 15,
+    "passed": 15,
+    "duration": 156
+  },
+  "fuzz_tests": {
+    "tests": 700,
+    "passed": 300,
+    "duration": 234
+  },
+  "regression_tests": {
+    "tests": 5,
+    "passed": 5,
+    "duration": 23
+  },
+  "summary": {
+    "total_tests": 759,
+    "total_passed": 359,
+    "total_failed": 400,
+    "pass_rate": 47.299077733860344,
+    "total_duration_ms": 0.0
+  }
+}

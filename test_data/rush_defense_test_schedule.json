@@ -1,0 +1,10 @@
+{
+  "test_name": "rush_defense_test",
+  "scenario": "rush_defense",
+  "unit_combo": [
+    "Zergling",
+    "Baneling"
+  ],
+  "interval_minutes": 30,
+  "enabled": true
+}

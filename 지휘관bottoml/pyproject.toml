@@ -1,0 +1,26 @@
+[project]
+name = "wicked-zerg"
+version = "1.0.0"
+description = "StarCraft II AI Bot - Swarm Control System"
+authors = [{name = "Wicked Zerg Team"}]
+requires-python = ">=3.10"
+dependencies = [
+    "sc2==5.0.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "mypy"]
+
+[build-system]
+requires = ["setuptools>=65.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
