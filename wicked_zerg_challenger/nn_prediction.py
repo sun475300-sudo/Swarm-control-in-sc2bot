@@ -176,7 +176,8 @@ class SimpleNeuralPredictor:
             self.weights = data.get("weights", self.weights)
             self.enemy_patterns = data.get("patterns", self.enemy_patterns)
             return True
-        except:
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Error loading model: {e}")
             return False
 
 
