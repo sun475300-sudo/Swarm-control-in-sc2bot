@@ -801,7 +801,7 @@ def slide_20(prs):
     info = [
         ("프로젝트", "광주 드론 UTM"),
         ("책임자", "선우 (군집 저그봇 프로 창립자)"),
-        ("이메일", "sunwoo@gwangjudrone.kr"),
+        ("이메일", os.environ.get("CONTACT_EMAIL", "contact@example.com")),
         ("위치", "광주광역시, 대한민국"),
         ("기간", "2026–2036 (10년)"),
     ]

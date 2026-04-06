@@ -3,6 +3,7 @@ Phase 481: Keycloak Identity & Access Management for SC2 Bot Portal
 python-keycloak client: token exchange, user management
 Roles: admin, player, spectator
 """
+import os
 
 from keycloak import KeycloakOpenID, KeycloakAdmin
 from keycloak.exceptions import KeycloakAuthenticationError, KeycloakGetError
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 KEYCLOAK_SERVER_URL = "https://auth.sc2bot.local/auth/"
 REALM_NAME = "sc2bot"
 CLIENT_ID = "sc2-portal"
-CLIENT_SECRET = "sc2-portal-secret"
+CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "")
 
 # Roles
 ROLE_ADMIN = "admin"

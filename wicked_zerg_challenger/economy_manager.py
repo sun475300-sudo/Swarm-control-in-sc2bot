@@ -347,8 +347,10 @@ class EconomyManager:
                                 workers = self.bot.workers.filter(
                                     lambda w: w.is_carrying_vespene or w.order_target == extractor.tag
                                 )
+                                if not workers:
+                                    continue
                                 # 50%만 이동 (최대 3마리)
-                                workers_to_move = min(len(workers) // 2 + 1, 3)
+                                workers_to_move = min(max(1, len(workers) // 2), 3)
                                 for w in workers[:workers_to_move]:
                                     nearby_minerals = self.bot.mineral_field.closer_than(10, w)
                                     if nearby_minerals:

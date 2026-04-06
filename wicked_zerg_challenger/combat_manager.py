@@ -1301,6 +1301,8 @@ class CombatManager:
                     start_idx = group_idx * group_size
                     end_idx = start_idx + group_size if group_idx < num_groups - 1 else len(army_units)
                     group_units = army_units[start_idx:end_idx]
+                    if group_idx >= len(attack_targets):
+                        break
                     target = attack_targets[group_idx]
 
                     for unit in group_units:

@@ -731,6 +731,9 @@ class QueenManager:
         # Assign queens to heal targets
         used_queen_tags = set()
         for target, _ in injured_targets:
+            # Skip dead/invalid targets
+            if getattr(target, "health", 0) <= 0:
+                continue
             # Find closest queen with enough energy
             best_queen = None
             best_distance = 999
