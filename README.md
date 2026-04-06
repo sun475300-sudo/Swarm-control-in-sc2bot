@@ -127,7 +127,7 @@
 ## System Architecture
 
 <p align="center">
-  <img src="assets/architecture_diagram.svg" alt="System Architecture" width="100%"/>
+  <img src="assets/architecture_diagram.png" alt="System Architecture" width="100%"/>
 </p>
 
 ```
