@@ -277,14 +277,17 @@ class TestIntelManagerIntegration(unittest.TestCase):
         barracks1 = Mock()
         barracks1.type_id = Mock()
         barracks1.type_id.name = "BARRACKS"
+        barracks1.build_progress = 1.0
 
         barracks2 = Mock()
         barracks2.type_id = Mock()
         barracks2.type_id.name = "BARRACKS"
+        barracks2.build_progress = 1.0
 
         barracks3 = Mock()
         barracks3.type_id = Mock()
         barracks3.type_id.name = "BARRACKS"
+        barracks3.build_progress = 1.0
 
         enemy_structures = [barracks1, barracks2, barracks3]
 

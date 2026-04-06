@@ -28,7 +28,7 @@
 |:---:|:---:|:---:|
 | ![Phases](https://img.shields.io/badge/Phases-645_Completed-success?style=flat-square) | ![Tests](https://img.shields.io/badge/Tests-342_Passed-brightgreen?style=flat-square) | ![Bugs](https://img.shields.io/badge/Bug_Fixes-187-critical?style=flat-square) |
 | ![Languages](https://img.shields.io/badge/Languages_&_Tools-320+-blueviolet?style=flat-square) | ![Python Files](https://img.shields.io/badge/Python_Files-797-blue?style=flat-square) | ![Commits](https://img.shields.io/badge/Commits-860+-orange?style=flat-square) |
-
+| ![Tests](https://img.shields.io/badge/Tests-404_Passed-brightgreen?style=flat-square) | ![Vulnerabilities](https://img.shields.io/badge/Vulnerabilities-0-success?style=flat-square) | ![Pass Rate](https://img.shields.io/badge/Pass_Rate-100%25-brightgreen?style=flat-square) |
 
 </div>
 
@@ -125,6 +125,10 @@
 ---
 
 ## System Architecture
+
+<p align="center">
+  <img src="assets/architecture_diagram.svg" alt="System Architecture" width="100%"/>
+</p>
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
