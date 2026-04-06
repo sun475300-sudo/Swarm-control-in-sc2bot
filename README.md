@@ -29,7 +29,6 @@
 | ![Phases](https://img.shields.io/badge/Phases-645_Completed-success?style=flat-square) | ![Tests](https://img.shields.io/badge/Tests-342_Passed-brightgreen?style=flat-square) | ![Bugs](https://img.shields.io/badge/Bug_Fixes-187-critical?style=flat-square) |
 | ![Languages](https://img.shields.io/badge/Languages_&_Tools-320+-blueviolet?style=flat-square) | ![Python Files](https://img.shields.io/badge/Python_Files-797-blue?style=flat-square) | ![Commits](https://img.shields.io/badge/Commits-860+-orange?style=flat-square) |
 
-![SC2 Swarm Control Demo](assets/sc2_swarm_demo.gif)
 
 </div>
 
@@ -126,8 +125,6 @@
 ---
 
 ## System Architecture
-
-![System Architecture](assets/architecture_diagram.png)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐

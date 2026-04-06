@@ -12,6 +12,9 @@
 # ================================================================
 name: JARVIS CI/CD
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]

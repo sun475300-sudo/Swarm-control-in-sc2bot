@@ -1,5 +1,9 @@
 name: SC2 Bot CI/CD Pipeline
 
+permissions:
+  contents: read
+  packages: write
+
 on:
   push:
     branches: [main, develop]

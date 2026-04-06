@@ -596,7 +596,7 @@ class RealtimeAwarenessEngine:
             print(f"[AWARENESS] {len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 print(f"  [{p.severity.upper()}] {p.description}")
-                print(f"    → {p.prescription}")
+                print(f"    → action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""
