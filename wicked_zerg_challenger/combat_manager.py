@@ -1960,7 +1960,7 @@ class CombatManager:
         UnitTypeId.ULTRALISK: 6,    UnitTypeId.BROODLORD: 4,
         UnitTypeId.INFESTOR: 2,     UnitTypeId.VIPER: 3,
         UnitTypeId.QUEEN: 2,
-    }
+    } if UnitTypeId is not None else {}
 
     def _combat_power(self, units) -> float:
         """
