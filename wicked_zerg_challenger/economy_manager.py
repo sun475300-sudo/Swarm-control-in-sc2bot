@@ -486,11 +486,15 @@ class EconomyManager:
             )
             return
 
-        # ★ Blackboard 없을 때 폴백 (기존 로직) ★
-        gas = getattr(self.bot, "vespene", 0)
-        supply_threshold = 6 if gas < 1000 else 10
+        # ★ Blackboard 없을 때 폴백: CreepyBot 동적 공식 ★
+        # larvaPerSecond = hatcheries * (1/11) + queens * (3/40)
+        # Build overlords when supply_left + pending*8 < 2 * larvaPer18Seconds
+        hatch_count = self.bot.townhalls.ready.amount if hasattr(self.bot, "townhalls") else 0
+        queen_count = self.bot.units(UnitTypeId.QUEEN).ready.amount if hasattr(self.bot, "units") else 0
+        larva_per_second = hatch_count * (1 / 11) + queen_count * (3 / 40)
+        larva_per_18s = larva_per_second * 18
+        supply_threshold = max(6, int(2 * larva_per_18s))
 
-        # ★ 실효 보급 기반 체크 ★
         adjusted_supply = effective_supply_left + pending_overlord_supply
         if adjusted_supply >= supply_threshold:
             return

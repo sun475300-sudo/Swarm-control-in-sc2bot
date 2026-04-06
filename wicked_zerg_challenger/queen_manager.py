@@ -638,15 +638,45 @@ class QueenManager:
 
     async def _transfuse_injured_units(self, queens, iteration: int, include_structures: bool = False) -> None:
         """
-        Transfuse injured biological units.
+        Transfuse injured biological units (CreepyBot-inspired priority system).
 
-        Priority targets:
-        1. Queens (preserve queens first)
-        2. High-value units (Ultralisks, Broodlords)
-        3. Low-health combat units
-        4. Spine Crawlers (if include_structures=True during defense)
+        CreepyBot conditions: health_max - health >= 125 OR health < 25%
+        Priority order (from CreepyBot):
+        1. Queens (self-preservation)
+        2. Broodlords (highest value army unit)
+        3. Corruptors (air support)
+        4. Spine Crawlers (defense structures)
+        5. Overseers (detection)
+        6. Ultralisks / Roaches / Ravagers
         """
         current_time = getattr(self.bot, "time", 0.0)
+
+        # CreepyBot-style priority map (lower = higher priority)
+        TRANSFUSE_PRIORITY = {}
+        priority_defs = [
+            ("QUEEN", 0),
+            ("BROODLORD", 1),
+            ("CORRUPTOR", 2),
+            ("SPINECRAWLER", 3),
+            ("OVERSEER", 4),
+            ("ULTRALISK", 5),
+            ("RAVAGER", 6),
+            ("ROACH", 7),
+            ("HYDRALISK", 8),
+            ("LURKERMP", 9),
+            ("INFESTOR", 10),
+            ("SWARMHOSTMP", 11),
+            ("MUTALISK", 12),
+            ("VIPER", 2),  # Vipers same priority as corruptors (spell utility)
+        ]
+        for name, prio in priority_defs:
+            unit_type = getattr(UnitTypeId, name, None)
+            if unit_type is not None:
+                TRANSFUSE_PRIORITY[unit_type] = prio
+
+        UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
+        if hasattr(UnitTypeId, "LOCUSTMP"):
+            UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
 
         # Find injured units to heal
         injured_targets = []
@@ -657,37 +687,24 @@ class QueenManager:
                 if unit.health_max == 0:
                     continue
 
+                # CreepyBot condition: health_max - health >= 125 OR health < 25%
+                health_deficit = unit.health_max - unit.health
                 health_ratio = unit.health / unit.health_max
-                if health_ratio >= self.transfuse_health_threshold:
+                if health_deficit < 125 and health_ratio >= 0.25:
                     continue
 
-                # Skip non-biological units
                 if not getattr(unit, "is_biological", True):
                     continue
-
-                # Skip unhealable units (suicidal/temporary units)
-                UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
-                if hasattr(UnitTypeId, "LOCUSTMP"):
-                    UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
                 if unit.type_id in UNHEALABLE_UNITS:
                     continue
 
-                # Calculate priority (lower = higher priority)
-                priority = health_ratio  # Base priority on health
-                if unit.type_id == UnitTypeId.QUEEN:
-                    priority -= 0.5  # Queens highest priority
-                elif hasattr(UnitTypeId, "ULTRALISK") and unit.type_id == UnitTypeId.ULTRALISK:
-                    priority -= 0.3  # Ultralisk very high priority (300/200)
-                elif hasattr(UnitTypeId, "BROODLORD") and unit.type_id == UnitTypeId.BROODLORD:
-                    priority -= 0.3  # Broodlord very high priority (150/150)
-                elif hasattr(UnitTypeId, "RAVAGER") and unit.type_id == UnitTypeId.RAVAGER:
-                    priority -= 0.2  # Ravager high priority (100/100)
-                elif hasattr(UnitTypeId, "ROACH") and unit.type_id == UnitTypeId.ROACH:
-                    priority -= 0.1  # Roach medium priority (75/25)
-
+                # Priority from table, fallback to health ratio
+                type_priority = TRANSFUSE_PRIORITY.get(unit.type_id, 15)
+                # Combine type priority with health urgency
+                priority = type_priority + health_ratio * 0.5
                 injured_targets.append((unit, priority))
 
-        # Include Spine Crawlers during defense (they are biological)
+        # Include Spine Crawlers during defense
         if include_structures and hasattr(self.bot, "structures"):
             try:
                 spines = self.bot.structures(UnitTypeId.SPINECRAWLER)
@@ -697,9 +714,10 @@ class QueenManager:
                     if spine.health_max == 0:
                         continue
 
+                    health_deficit = spine.health_max - spine.health
                     health_ratio = spine.health / spine.health_max
-                    if health_ratio < 0.7:  # Heal spines below 70% health
-                        priority = health_ratio - 0.2  # High priority during defense
+                    if health_deficit >= 125 or health_ratio < 0.25:
+                        priority = 3 + health_ratio * 0.5  # Same as spine priority
                         injured_targets.append((spine, priority))
             except Exception as e:
                 logger.warning(f"[QueenManager] Spine crawler detection suppressed: {e}")
@@ -711,12 +729,15 @@ class QueenManager:
         injured_targets.sort(key=lambda x: x[1])
 
         # Assign queens to heal targets
+        used_queen_tags = set()
         for target, _ in injured_targets:
             # Find closest queen with enough energy
             best_queen = None
             best_distance = 999
 
             for queen in queens:
+                if queen.tag in used_queen_tags:
+                    continue
                 # Check energy
                 if getattr(queen, "energy", 0) < self.transfuse_energy_threshold:
                     continue
@@ -746,6 +767,7 @@ class QueenManager:
                             if hasattr(result, "__await__"):
                                 await result
                             self.last_transfuse_time[best_queen.tag] = current_time
+                            used_queen_tags.add(best_queen.tag)
                     else:
                         result = self.bot.do(
                             best_queen(AbilityId.TRANSFUSION_TRANSFUSION, target)
@@ -753,10 +775,37 @@ class QueenManager:
                         if hasattr(result, "__await__"):
                             await result
                         self.last_transfuse_time[best_queen.tag] = current_time
+                        used_queen_tags.add(best_queen.tag)
                 except Exception as e:
                     if iteration % 50 == 0:
                         print(f"[WARNING] Transfuse error: {e}")
                     continue
+
+        # CreepyBot: Queens with 190+ energy also transfuse damaged buildings
+        if hasattr(self.bot, "structures"):
+            for queen in queens:
+                if getattr(queen, "energy", 0) < 190:
+                    continue
+                last_t = self.last_transfuse_time.get(queen.tag, 0.0)
+                if current_time - last_t < self.transfuse_cooldown:
+                    continue
+                for building in self.bot.structures:
+                    if not hasattr(building, "health") or not hasattr(building, "health_max"):
+                        continue
+                    if building.health_max == 0:
+                        continue
+                    if building.health_max - building.health < 125:
+                        continue
+                    try:
+                        if queen.distance_to(building) > 7:
+                            continue
+                        result = self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, building))
+                        if hasattr(result, "__await__"):
+                            await result
+                        self.last_transfuse_time[queen.tag] = current_time
+                        break  # One transfuse per queen per cycle
+                    except Exception:
+                        continue
 
     async def _spread_creep(self, creep_queens, iteration: int) -> None:
         """

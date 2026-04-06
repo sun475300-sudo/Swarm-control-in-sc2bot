@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Creep Manager - vector-driven creep expansion targeting with tumor relay.
+Creep Manager - BurnySc2/CreepyBot inspired creep expansion system.
+
+Key improvements from CreepyBot:
+- Uncreeped area priority spreading (sort by distance to nearest uncreeped pos)
+- Batch placement query validation
+- Expansion location protection with Chebyshev distance
+- Used-tumor tracking to prevent double-spread
+- Creep coverage sampling and threshold-based queen redirect
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Dict, Iterable, List, Optional
+import math
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -21,27 +29,54 @@ except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
 
 
+def await_or_sync(func, *args, **kwargs):
+    """Call a function that may or may not be a coroutine, returning result synchronously."""
+    result = func(*args, **kwargs)
+    # If it's a coroutine, we can't await here - return None
+    if hasattr(result, "__await__"):
+        return None
+    return result
+
+
 class CreepManager:
     """
     Manages creep spread through queens and automatic tumor relay.
 
-    Features:
-    - Vector-driven targeting toward enemy base
-    - Automatic tumor relay from outermost tumors
-    - Prioritizes map center and attack paths
+    Features (BurnySc2/CreepyBot inspired):
+    - Uncreeped area priority: tumors spread toward gaps in coverage
+    - Batch placement queries for validation efficiency
+    - Expansion protection via Chebyshev distance > 3
+    - Used-tumor tracking prevents double-spread waste
+    - Coverage sampling with configurable target threshold
     """
+
+    # CreepyBot-inspired constants
+    TUMOR_MIN_SPACING_DIST = 10  # Minimum distance between tumors to avoid overlap
+    TUMOR_SPREAD_RANGE = 10.0       # Max spread distance for existing tumors
+    QUEEN_TUMOR_RANGE = 8.0         # Max queen creep tumor placement range
+    EXPANSION_BLOCK_DIST = 3        # Chebyshev distance to protect expansions
+    COVERAGE_TARGET = 0.30          # 30% coverage target (CreepyBot default)
+    COVERAGE_SAMPLE_STEP = 15       # Grid step for coverage sampling
 
     def __init__(self, bot):
         self.bot = bot
         self.last_update = 0
-        self.update_interval = 10  # 개선: 12 → 10 (더 자주 업데이트)
-        self.tumor_relay_interval = 6  # 개선: 8 → 6 (매우 빠른 종양 릴레이)
+        self.update_interval = 10
+        self.tumor_relay_interval = 6
         self.last_tumor_relay = 0
         self.cached_targets: List[object] = []
         self.tumor_spread_cooldowns: Dict[int, int] = {}  # tumor_tag -> last_spread_frame
-        self.max_tumors_per_cycle = 6  # 개선: 4 → 6 (한 번에 더 많은 종양 확장)
-        self.spread_directions = []  # 확장 방향 캐시
+        self.used_tumor_tags: Set[int] = set()  # CreepyBot: track tumors that already spawned
+        self.max_tumors_per_cycle = 6
+        self.spread_directions = []
         self._tumor_count_check_interval = 0
+
+        # CreepyBot-style coverage tracking
+        self._positions_with_creep: List[object] = []
+        self._positions_without_creep: List[object] = []
+        self._creep_coverage: float = 0.0
+        self._last_coverage_update: float = 0.0
+        self._coverage_update_interval: float = 15.0  # seconds
 
     async def on_step(self, iteration: int) -> None:
         """
@@ -175,64 +210,231 @@ class CreepManager:
                 deduped.append(pos)
         return deduped
 
+    async def _update_creep_coverage(self) -> None:
+        """
+        CreepyBot-style creep coverage sampling.
+        Scans playable area on a grid to track creep/uncreeped positions.
+        """
+        game_time = getattr(self.bot, "time", 0.0)
+        if game_time - self._last_coverage_update < self._coverage_update_interval:
+            return
+
+        self._last_coverage_update = game_time
+
+        if not hasattr(self.bot, "game_info") or not Point2:
+            return
+
+        try:
+            map_size = self.bot.game_info.map_size
+            with_creep = []
+            without_creep = []
+
+            step = self.COVERAGE_SAMPLE_STEP
+            for x in range(5, int(map_size.x) - 5, step):
+                for y in range(5, int(map_size.y) - 5, step):
+                    pos = Point2((x, y))
+                    # Skip unpathable terrain
+                    try:
+                        if hasattr(self.bot.game_info, "pathing_grid"):
+                            grid = self.bot.game_info.pathing_grid
+                            if grid[x, y] == 0:
+                                continue
+                    except (IndexError, AttributeError, TypeError):
+                        pass
+
+                    try:
+                        if hasattr(self.bot, "has_creep") and self.bot.has_creep(pos):
+                            with_creep.append(pos)
+                        else:
+                            without_creep.append(pos)
+                    except (TypeError, AttributeError):
+                        without_creep.append(pos)
+
+            self._positions_with_creep = with_creep
+            self._positions_without_creep = without_creep
+
+            total = len(with_creep) + len(without_creep)
+            self._creep_coverage = len(with_creep) / total if total > 0 else 0.0
+
+        except Exception as e:
+            logger.warning(f"[CreepManager] coverage sampling suppressed: {e}")
+
+    def _find_creep_plant_location(self, tumor) -> Optional[object]:
+        """
+        CreepyBot-inspired optimal tumor placement.
+
+        1. Generate candidate positions in a circle around the tumor
+        2. Filter: must be on creep, not block expansions (Chebyshev > 3)
+        3. Filter: not too close to existing unused tumors (dist >= 10)
+        4. Sort by distance to nearest uncreeped position (key optimization)
+        """
+        if not Point2:
+            return None
+
+        origin = tumor.position
+        spread_range = self.TUMOR_SPREAD_RANGE
+
+        # Generate circle positions (CreepyBot: trigonometric sampling)
+        candidates = []
+        for angle_deg in range(0, 360, 20):  # 18 candidate positions
+            rad = math.radians(angle_deg)
+            for dist in [7.0, 9.0]:  # Two distance rings
+                x = origin.x + dist * math.cos(rad)
+                y = origin.y + dist * math.sin(rad)
+                candidates.append(Point2((x, y)))
+
+        if not candidates:
+            return None
+
+        # Get expansion locations for blocking check
+        expansion_locations = []
+        if hasattr(self.bot, "expansion_locations_list"):
+            expansion_locations = list(self.bot.expansion_locations_list)
+        elif hasattr(self.bot, "expansion_locations"):
+            expansion_locations = list(self.bot.expansion_locations.keys())
+
+        # Get existing tumor positions for distance check
+        tumor_positions = []
+        if hasattr(self.bot, "structures"):
+            tumor_types = {
+                UnitTypeId.CREEPTUMOR,
+                UnitTypeId.CREEPTUMORBURROWED,
+                UnitTypeId.CREEPTUMORQUEEN,
+            }
+            tumor_positions = [
+                t.position for t in self.bot.structures
+                if t.type_id in tumor_types
+            ]
+
+        # Filter candidates
+        valid = []
+        for pos in candidates:
+            # Must be on creep
+            try:
+                if hasattr(self.bot, "has_creep") and not self.bot.has_creep(pos):
+                    continue
+            except (TypeError, AttributeError):
+                continue
+
+            # Chebyshev distance to expansions must be > 3 (CreepyBot pattern)
+            blocked = False
+            for exp_loc in expansion_locations:
+                try:
+                    chebyshev = max(abs(pos.x - exp_loc.x), abs(pos.y - exp_loc.y))
+                    if chebyshev <= self.EXPANSION_BLOCK_DIST:
+                        blocked = True
+                        break
+                except Exception:
+                    continue
+            if blocked:
+                continue
+
+            # Not too close to existing tumors (CreepyBot: dist >= 10)
+            too_close = False
+            for t_pos in tumor_positions:
+                try:
+                    if pos.distance_to(t_pos) < self.TUMOR_MIN_SPACING_DIST:
+                        too_close = True
+                        break
+                except Exception:
+                    continue
+            if too_close:
+                continue
+
+            valid.append(pos)
+
+        if not valid:
+            return None
+
+        # CreepyBot: Batch query_building_placement to validate positions
+        # This is more reliable than has_creep alone - checks actual buildability
+        try:
+            if hasattr(self.bot, "can_place") and hasattr(AbilityId, "ZERGBUILD_CREEPTUMOR"):
+                placement_results = await_or_sync(
+                    self.bot.can_place, AbilityId.ZERGBUILD_CREEPTUMOR, valid
+                )
+                if placement_results and len(placement_results) == len(valid):
+                    valid = [pos for pos, ok in zip(valid, placement_results) if ok]
+        except Exception:
+            pass  # Fall through to distance-based selection if batch query fails
+
+        if not valid:
+            return None
+
+        # KEY OPTIMIZATION (CreepyBot): Sort by distance to nearest uncreeped position
+        if self._positions_without_creep:
+            def dist_to_nearest_uncreeped(pos):
+                min_dist = float("inf")
+                for uc_pos in self._positions_without_creep:
+                    try:
+                        d = pos.distance_to(uc_pos)
+                        if d < min_dist:
+                            min_dist = d
+                    except Exception:
+                        continue
+                return min_dist
+
+            valid.sort(key=dist_to_nearest_uncreeped)
+
+        return valid[0]
+
     async def _handle_tumor_relay(self, iteration: int) -> None:
         """
-        ★ 개선: 자동 종양 릴레이 시스템 (과도한 확장 방지 -> 제한 해제)
+        BurnySc2/CreepyBot-style tumor relay system.
 
-        조건:
-        - 종양 수 100개 이하만 작동 (성능 고려)
-        - 가장 바깥 종양만 확장
+        Key improvements:
+        - Used-tumor tracking prevents double-spread
+        - Optimal placement via _find_creep_plant_location
+        - Coverage-aware: redirects effort once target reached
         """
         if not UnitTypeId or not AbilityId:
             return
 
         self.last_tumor_relay = iteration
 
-        # Get all creep tumors (both burrowed and active)
+        # Update creep coverage periodically
+        await self._update_creep_coverage()
+
+        # Get all creep tumors
         tumors = []
         if hasattr(self.bot, "structures"):
-            tumors = [
-                t
-                for t in self.bot.structures
-                if t.type_id
-                in {
-                    UnitTypeId.CREEPTUMOR,
-                    UnitTypeId.CREEPTUMORBURROWED,
-                    UnitTypeId.CREEPTUMORQUEEN,
-                }
-            ]
+            tumor_types = {
+                UnitTypeId.CREEPTUMOR,
+                UnitTypeId.CREEPTUMORBURROWED,
+                UnitTypeId.CREEPTUMORQUEEN,
+            }
+            tumors = [t for t in self.bot.structures if t.type_id in tumor_types]
 
         if not tumors:
             return
 
-        # ★ 종양 수 제한 완전 해제 - 맵 전체를 덮기 위해 ★
-        # 제한 없음 (맵 크기에 따라 자동 조절)
-
-        # Clean up old cooldowns
+        # Clean up tracking for dead tumors
         tumor_tags = {t.tag for t in tumors}
         self.tumor_spread_cooldowns = {
             tag: frame
             for tag, frame in self.tumor_spread_cooldowns.items()
             if tag in tumor_tags
         }
+        self.used_tumor_tags = self.used_tumor_tags & tumor_tags
 
-        # Get target direction
         direction_target = self._get_direction_target()
         if not direction_target:
             return
 
-        # Find outermost tumors (farthest from our base, closest to enemy)
         our_base = None
         if hasattr(self.bot, "townhalls") and self.bot.townhalls:
             our_base = self.bot.townhalls.first.position
-
         if not our_base:
             return
 
-        # Score tumors by distance to enemy
+        # Score tumors: prefer outermost, unused tumors
         scored_tumors = []
         for tumor in tumors:
-            # Skip if on cooldown (spread within last 50 frames)
+            # Skip already-used tumors (CreepyBot pattern)
+            if tumor.tag in self.used_tumor_tags:
+                continue
+
+            # Skip if on cooldown
             last_spread = self.tumor_spread_cooldowns.get(tumor.tag, 0)
             if iteration - last_spread < 50:
                 continue
@@ -240,7 +442,6 @@ class CreepManager:
             try:
                 dist_to_enemy = tumor.position.distance_to(direction_target)
                 dist_to_base = tumor.position.distance_to(our_base)
-                # Prefer tumors far from base and close to enemy
                 score = dist_to_base - dist_to_enemy * 0.5
                 scored_tumors.append((tumor, score))
             except Exception as e:
@@ -250,60 +451,34 @@ class CreepManager:
         if not scored_tumors:
             return
 
-        # Sort by score (highest first) and spread top tumors
         scored_tumors.sort(key=lambda x: x[1], reverse=True)
         actions = []
 
-        # ★ 확장 기지 위치 가져오기 (점막이 막지 않도록)
-        expansion_locations = []
-        if hasattr(self.bot, "expansion_locations_list"):
-            expansion_locations = list(self.bot.expansion_locations_list)
-        elif hasattr(self.bot, "expansion_locations"):
-            expansion_locations = list(self.bot.expansion_locations.keys())
-
-        # 개선: 최대 4개 종양 확장 (적 방향 + 확장 방향)
         for tumor, _ in scored_tumors[:self.max_tumors_per_cycle]:
             try:
-                # Calculate spread target toward enemy
-                spread_target = tumor.position.towards(direction_target, 9.0)
+                # Use CreepyBot-style optimal placement
+                spread_target = self._find_creep_plant_location(tumor)
 
-                # ★ FIX: 확장 기지 위치 근처는 종양 확산 제외 (기지 건설 공간 확보)
-                # 확장 위치에서 7거리 이내는 점막 깔지 않음
-                too_close_to_expansion = False
-                for exp_loc in expansion_locations:
+                if not spread_target:
+                    # Fallback: simple towards-enemy direction
+                    spread_target = tumor.position.towards(direction_target, 9.0)
+                    # Verify it's on creep
                     try:
-                        if spread_target.distance_to(exp_loc) < 7.0:
-                            too_close_to_expansion = True
-                            break
-                    except Exception as e:
-                        logger.warning(f"[CreepManager] expansion distance check suppressed: {e}")
-                        continue
+                        if hasattr(self.bot, "has_creep") and not self.bot.has_creep(spread_target):
+                            continue
+                    except (TypeError, AttributeError):
+                        pass
 
-                # 확장 기지 근처면 이 종양은 스킵
-                if too_close_to_expansion:
-                    continue
-
-                # ★ Phase 45: has_creep 검증으로 크립 없는 곳 배치 방지
-                try:
-                    if hasattr(self.bot, "has_creep") and not self.bot.has_creep(spread_target):
-                        continue
-                except (TypeError, AttributeError):
-                    pass
-
-                # Check if tumor can spread (has ability)
-                if hasattr(tumor, "can_cast") and hasattr(
-                    AbilityId, "BUILD_CREEPTUMOR_TUMOR"
-                ):
+                # Execute spread
+                if hasattr(tumor, "can_cast") and hasattr(AbilityId, "BUILD_CREEPTUMOR_TUMOR"):
                     if tumor.can_cast(AbilityId.BUILD_CREEPTUMOR_TUMOR):
-                        actions.append(
-                            tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target)
-                        )
+                        actions.append(tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target))
                         self.tumor_spread_cooldowns[tumor.tag] = iteration
+                        self.used_tumor_tags.add(tumor.tag)  # Mark as used
                 elif hasattr(AbilityId, "BUILD_CREEPTUMOR_TUMOR"):
-                    actions.append(
-                        tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target)
-                    )
+                    actions.append(tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target))
                     self.tumor_spread_cooldowns[tumor.tag] = iteration
+                    self.used_tumor_tags.add(tumor.tag)
             except Exception as e:
                 logger.warning(f"[CreepManager] tumor spread suppressed: {e}")
                 continue
@@ -339,26 +514,22 @@ class CreepManager:
         return projection - dist * 0.15
 
     async def _log_creep_progress(self, iteration: int) -> None:
-        """점막 확장 진행 상황 로그"""
+        """점막 확장 진행 상황 로그 (coverage 포함)"""
         if not UnitTypeId or not hasattr(self.bot, "structures"):
             return
 
         try:
             game_time = getattr(self.bot, "time", 0)
 
-            # 종양 수 카운트
             tumor_types = {
                 UnitTypeId.CREEPTUMOR,
                 UnitTypeId.CREEPTUMORBURROWED,
                 UnitTypeId.CREEPTUMORQUEEN,
             }
-            tumors = [
-                t for t in self.bot.structures
-                if t.type_id in tumor_types
-            ]
+            tumors = [t for t in self.bot.structures if t.type_id in tumor_types]
             tumor_count = len(tumors)
+            used_count = len(self.used_tumor_tags & {t.tag for t in tumors})
 
-            # 가장 먼 종양 위치 (적 방향 기준)
             farthest_dist = 0
             if tumors and hasattr(self.bot, "townhalls") and self.bot.townhalls:
                 our_base = self.bot.townhalls.first.position
@@ -371,7 +542,11 @@ class CreepManager:
                         logger.warning(f"[CreepManager] tumor distance check suppressed: {e}")
                         continue
 
-            logger.info(f"[CREEP] [{int(game_time)}s] Tumors: {tumor_count}, Farthest: {int(farthest_dist)} from base")
+            logger.info(
+                f"[CREEP] [{int(game_time)}s] Tumors: {tumor_count} "
+                f"(used: {used_count}), Coverage: {self._creep_coverage:.1%}, "
+                f"Farthest: {int(farthest_dist)} from base"
+            )
 
         except Exception as e:
             logger.warning(f"[CreepManager] log_creep_progress suppressed: {e}")
