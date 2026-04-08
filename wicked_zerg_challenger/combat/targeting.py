@@ -145,14 +145,15 @@ def _score_target(unit) -> float:
 
 
 # 프레임 단위 캐시: 동일 적 집합에 대한 중복 정렬 방지
-_prioritized_cache: dict = {"enemies_id": None, "result": []}
+_prioritized_cache: dict = {"enemies_id": None, "result": [], "frame": -1}
 
 
-def prioritize_targets(enemies: Iterable) -> List:
+def prioritize_targets(enemies: Iterable, *, current_frame: int = -1) -> List:
     """Return enemies sorted by priority (highest first).
 
     동일 적 집합(tag frozenset 기준)에 대한 결과를 캐싱하여
     같은 프레임 내 반복 호출 시 중복 정렬을 방지합니다.
+    프레임이 바뀌면 캐시를 무효화합니다.
     """
     if enemies is None:
         return []
@@ -173,7 +174,8 @@ def prioritize_targets(enemies: Iterable) -> List:
     except (AttributeError, TypeError):
         logger.debug("prioritize_targets: tag 추출 실패, 캐시 생략")
 
-    if cache_id is not None and cache_id == _prioritized_cache.get("enemies_id"):
+    same_frame = current_frame >= 0 and current_frame == _prioritized_cache.get("frame")
+    if same_frame and cache_id is not None and cache_id == _prioritized_cache.get("enemies_id"):
         return _prioritized_cache["result"]
 
     enemy_list.sort(key=_score_target, reverse=True)
@@ -181,6 +183,7 @@ def prioritize_targets(enemies: Iterable) -> List:
     if cache_id is not None:
         _prioritized_cache["enemies_id"] = cache_id
         _prioritized_cache["result"] = enemy_list
+        _prioritized_cache["frame"] = current_frame
 
     return enemy_list
 

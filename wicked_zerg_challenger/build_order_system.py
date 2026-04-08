@@ -315,24 +315,25 @@ class BuildOrderSystem:
             if self.bot.townhalls:
                 main_base = self.bot.townhalls.first
                 geysers = self.bot.vespene_geyser.closer_than(10, main_base)
+                built_any = False
 
                 for geyser in geysers:
                     if not self.bot.structures(UnitTypeId.EXTRACTOR).closer_than(1, geyser):
                         if tech_coordinator:
-                             # Request on this specific geyser
-                             # TechCoordinator handles duplication checks but we check here too
                              tech_coordinator.request_structure(
                                 UnitTypeId.EXTRACTOR,
-                                geyser, # Pass Unit object as location
+                                geyser,
                                 PRIORITY_BUILD_ORDER,
                                 "BuildOrderSystem"
                             )
-                             return True
+                             built_any = True
                         else:
                             worker = self.bot.workers.closest_to(geyser)
                             if worker:
                                 worker.build_gas(geyser)
-                                return True
+                                built_any = True
+                if built_any:
+                    return True
         
         # General Structure Fallback (e.g. Roach Warren)
         else:
