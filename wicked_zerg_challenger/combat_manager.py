@@ -22,7 +22,20 @@ else:
         Units = object
         Unit = object
         Point2 = tuple
-        UnitTypeId = None
+        class UnitTypeId:
+            ZERGLING = "ZERGLING"
+            BANELING = "BANELING"
+            ROACH = "ROACH"
+            RAVAGER = "RAVAGER"
+            HYDRALISK = "HYDRALISK"
+            LURKERMP = "LURKERMP"
+            MUTALISK = "MUTALISK"
+            CORRUPTOR = "CORRUPTOR"
+            ULTRALISK = "ULTRALISK"
+            BROODLORD = "BROODLORD"
+            INFESTOR = "INFESTOR"
+            VIPER = "VIPER"
+            QUEEN = "QUEEN"
 
 from utils.logger import get_logger
 from utils.frame_cache import FrameCache, cached_per_frame
