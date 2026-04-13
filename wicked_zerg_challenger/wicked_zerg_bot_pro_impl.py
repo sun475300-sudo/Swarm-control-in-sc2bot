@@ -110,22 +110,22 @@ class WickedZergBotProImpl(BotAI):
         """
         await super().on_start()
 
-        print("[BOT] on_start: Initializing all managers...")
+        self.logger.info("on_start: Initializing all managers...")
         self.logger = setup_logger("WickedZergBot")
         self.logger.info("Bot started. Initializing managers...")
 
         # === 0. Blackboard (Central State) ===
         # Already initialized in __init__, but logging here
         if self.blackboard:
-             print("[BOT] ★ Blackboard active")
+             self.logger.info("★ Blackboard active")
 
         # === 0.1 Resource Manager (Thread-safe resource reservation) ===
         try:
             from core.resource_manager import ResourceManager
             self.resource_manager = ResourceManager(self)
-            print("[BOT] ★ ResourceManager initialized (thread-safe reservation system)")
+            self.logger.info("★ ResourceManager initialized (thread-safe reservation system)")
         except ImportError as e:
-            print(f"[BOT_WARN] ResourceManager not available: {e}")
+            self.logger.warning(f"ResourceManager not available: {e}")
             self.resource_manager = None
 
         # === 0.05 Difficulty Progression ===
@@ -137,23 +137,23 @@ class WickedZergBotProImpl(BotAI):
                 self.current_difficulty = self.difficulty_progression.get_recommended_difficulty(
                     map_name, opponent_race
                 )
-                print(f"[DIFFICULTY] Map: {map_name}, Opponent: {opponent_race.name}")
-                print(f"[DIFFICULTY] Recommended Difficulty: {self.current_difficulty.name}")
+                self.logger.info(f"[DIFFICULTY] Map: {map_name}, Opponent: {opponent_race.name}")
+                self.logger.info(f"[DIFFICULTY] Recommended Difficulty: {self.current_difficulty.name}")
 
                 # Print stats summary if available
                 stats_summary = self.difficulty_progression.get_stats_summary(map_name, opponent_race)
                 if "No stats" not in stats_summary:
-                    print(stats_summary)
+                    self.logger.info(stats_summary)
             else:
                 # Fallback
                 try:
                     from sc2.data import Difficulty
                     self.current_difficulty = Difficulty.Easy
-                    print("[DIFFICULTY] Using fallback difficulty: Easy")
+                    self.logger.info("[DIFFICULTY] Using fallback difficulty: Easy")
                 except ImportError:
                     self.current_difficulty = None
         except Exception as e:
-            print(f"[DIFFICULTY] Error getting recommended difficulty: {e}")
+            self.logger.info(f"[DIFFICULTY] Error getting recommended difficulty: {e}")
             try:
                 from sc2.data import Difficulty
                 self.current_difficulty = Difficulty.Easy
@@ -179,17 +179,17 @@ class WickedZergBotProImpl(BotAI):
             print(f"\n[BOT] ★ Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded ★\n")
 
         except ImportError as e:
-            print(f"[BOT_ERROR] ManagerFactory not available: {e}")
-            print("[BOT_ERROR] ManagerFactory is required! Cannot continue without it.")
+            self.logger.error(f"ManagerFactory not available: {e}")
+            self.logger.error("ManagerFactory is required! Cannot continue without it.")
             raise ImportError("ManagerFactory is required for bot initialization") from e
 
         # === Map Memory System 시작 ===
         if hasattr(self, "map_memory") and self.map_memory:
             try:
                 await self.map_memory.on_start()
-                print("[BOT] MapMemorySystem started - Enemy tracking active")
+                self.logger.info("MapMemorySystem started - Enemy tracking active")
             except Exception as e:
-                print(f"[BOT_WARN] MapMemorySystem on_start failed: {e}")
+                self.logger.warning(f"MapMemorySystem on_start failed: {e}")
                 traceback.print_exc()
 
         # === Personality Module (Jarvis) ===
@@ -209,9 +209,9 @@ class WickedZergBotProImpl(BotAI):
             self.personality = PersonalityModule(self, mode=mode,
                                                knowledge_manager=getattr(self, 'knowledge_manager', None),
                                                opponent_modeling=getattr(self, 'opponent_modeling', None))
-            print(f"[BOT] ★ PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
+            self.logger.info(f"★ PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
         except Exception as e:
-            print(f"[BOT_WARN] Failed to initialize PersonalityModule: {e}")
+            self.logger.warning(f"Failed to initialize PersonalityModule: {e}")
             traceback.print_exc()
 
         # === RL Agent initialization (train_mode only) ===
@@ -224,12 +224,12 @@ class WickedZergBotProImpl(BotAI):
                 model_path = str(Path(__file__).parent / "local_training" / "models" / "rl_agent_model.npz")
                 self.rl_agent = RLAgent(learning_rate=initial_lr, model_path=model_path)
                 if _os.path.exists(model_path):
-                    print(f"[RL_AGENT] Loaded existing model from {model_path}")
-                print(f"[RL_AGENT] Initialized (lr={initial_lr}, train_mode=True)")
+                    self.logger.info(f"[RL_AGENT] Loaded existing model from {model_path}")
+                self.logger.info(f"[RL_AGENT] Initialized (lr={initial_lr}, train_mode=True)")
             except ImportError as e:
-                print(f"[RL_AGENT] Not available: {e}")
+                self.logger.info(f"[RL_AGENT] Not available: {e}")
             except Exception as e:
-                print(f"[RL_AGENT] Initialization failed: {e}")
+                self.logger.info(f"[RL_AGENT] Initialization failed: {e}")
                 traceback.print_exc()
 
         # === Model Hot Reloader (게임 중 모델 자동 갱신) ===
@@ -238,22 +238,22 @@ class WickedZergBotProImpl(BotAI):
             try:
                 from local_training.hot_reload import ModelHotReloader
                 self.hot_reloader = ModelHotReloader(self.rl_agent)
-                print("[HOT_RELOAD] ★ ModelHotReloader initialized (30s interval)")
+                self.logger.info("[HOT_RELOAD] ★ ModelHotReloader initialized (30s interval)")
             except ImportError:
                 pass
             except Exception as e:
-                print(f"[HOT_RELOAD] Initialization failed: {e}")
+                self.logger.info(f"[HOT_RELOAD] Initialization failed: {e}")
 
         # === Hierarchical RL System initialization ===
         self.hierarchical_rl = None
         try:
             from local_training.hierarchical_rl.improved_hierarchical_rl import HierarchicalRLSystem
             self.hierarchical_rl = HierarchicalRLSystem()
-            print(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
+            self.logger.info(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
         except ImportError as e:
-            print(f"[HIERARCHICAL_RL] Not available: {e}")
+            self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
-            print(f"[HIERARCHICAL_RL] Initialization failed: {e}")
+            self.logger.info(f"[HIERARCHICAL_RL] Initialization failed: {e}")
             traceback.print_exc()
 
         # === Situational Awareness Module Integration (Stage 5) ===
@@ -261,11 +261,11 @@ class WickedZergBotProImpl(BotAI):
         try:
             from core.situational_awareness import SituationalAwareness
             self.situational_awareness = SituationalAwareness(self)
-            print(f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)")
+            self.logger.info(f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)")
         except ImportError as e:
-            print(f"[SITUATIONAL_AWARENESS] Not available: {e}")
+            self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
         except Exception as e:
-            print(f"[SITUATIONAL_AWARENESS] Initialization failed: {e}")
+            self.logger.info(f"[SITUATIONAL_AWARENESS] Initialization failed: {e}")
             traceback.print_exc()
 
         # === Step integrator initialization ===
@@ -282,9 +282,9 @@ class WickedZergBotProImpl(BotAI):
         try:
             if hasattr(self, 'economy') and hasattr(self.economy, 'balancer'):
                 self.economy.balancer.apply_learned_economy_weights()
-                print("[BOT] [OK] Applied learned economy fundamentals to EconomyCombatBalancer")
+                self.logger.info("[OK] Applied learned economy fundamentals to EconomyCombatBalancer")
         except Exception as e:
-            print(f"[BOT] [WARNING] Failed to apply learned economy weights: {e}")
+            self.logger.info(f"[WARNING] Failed to apply learned economy weights: {e}")
             traceback.print_exc()
 
         # ★★★ Opponent Modeling - Load previous data and start tracking ★★★
@@ -302,34 +302,34 @@ class WickedZergBotProImpl(BotAI):
 
                 # Start tracking
                 self.opponent_modeling.on_game_start(opponent_id, self.enemy_race if hasattr(self, 'enemy_race') else None)
-                print(f"[OPPONENT_MODELING] Started tracking opponent: {opponent_id}")
+                self.logger.info(f"[OPPONENT_MODELING] Started tracking opponent: {opponent_id}")
 
                 # Get strategy prediction
                 predicted_strategy, confidence = self.opponent_modeling.get_predicted_strategy()
                 if predicted_strategy:
-                    print(f"[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})")
+                    self.logger.info(f"[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})")
                     counter_units = self.opponent_modeling.get_counter_recommendations()
-                    print(f"[OPPONENT_MODELING] Recommended counters: {counter_units}")
+                    self.logger.info(f"[OPPONENT_MODELING] Recommended counters: {counter_units}")
             except Exception as e:
-                print(f"[BOT_WARN] OpponentModeling on_start error: {e}")
+                self.logger.warning(f"OpponentModeling on_start error: {e}")
                 traceback.print_exc()
 
         # === Scoring System + Real-time Awareness Engine ===
         try:
             from scoring_system import ScoringSystem
             self.scoring_system = ScoringSystem(self)
-            print("[BOT] ★ ScoringSystem initialized (10-domain scoring)")
+            self.logger.info("★ ScoringSystem initialized (10-domain scoring)")
         except Exception as e:
-            print(f"[BOT_WARN] ScoringSystem not available: {e}")
+            self.logger.warning(f"ScoringSystem not available: {e}")
 
         try:
             from realtime_awareness_engine import RealtimeAwarenessEngine
             self.awareness_engine = RealtimeAwarenessEngine(self)
-            print("[BOT] ★ RealtimeAwarenessEngine initialized (14-pattern detection)")
+            self.logger.info("★ RealtimeAwarenessEngine initialized (14-pattern detection)")
         except Exception as e:
-            print(f"[BOT_WARN] RealtimeAwarenessEngine not available: {e}")
+            self.logger.warning(f"RealtimeAwarenessEngine not available: {e}")
 
-        print(f"[BOT] on_start complete. Enemy race: {self.opponent_race}")
+        self.logger.info(f"on_start complete. Enemy race: {self.opponent_race}")
 
     async def on_step(self, iteration: int):
         """
@@ -347,7 +347,7 @@ class WickedZergBotProImpl(BotAI):
         if self.train_mode and self.time > 1800:
             if not hasattr(self, '_game_ended'):
                 self._game_ended = True
-                print(f"[GAME] Time limit reached ({int(self.time)}s). Surrendering for fast training.")
+                self.logger.info(f"[GAME] Time limit reached ({int(self.time)}s). Surrendering for fast training.")
                 await self.client.leave()
             return
 
@@ -410,7 +410,7 @@ class WickedZergBotProImpl(BotAI):
         Called when the game ends.
         Handles result logging, reward calculation, and curriculum updates.
         """
-        print(f"[BOT] Game ended with result: {game_result}")
+        self.logger.info(f"Game ended with result: {game_result}")
 
         # ★ Scoring System: 게임 종료 점수 계산 ★
         if self.scoring_system:
@@ -419,17 +419,17 @@ class WickedZergBotProImpl(BotAI):
                 result_key = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
                 score_report = self.scoring_system.on_game_end(result_key)
                 print(f"\n{self.scoring_system.get_summary()}")
-                print(f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
+                self.logger.info(f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
                       f"Peak Supply: {score_report.get('peak_supply', 0)} | "
                       f"Engagements: {score_report.get('engagements_won', 0)}W/"
                       f"{score_report.get('engagements_lost', 0)}L")
             except Exception as e:
-                print(f"[BOT_WARN] ScoringSystem on_end error: {e}")
+                self.logger.warning(f"ScoringSystem on_end error: {e}")
 
         # ★ Awareness Engine: 최종 상황 요약 ★
         if self.awareness_engine:
             try:
-                print(f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}")
+                self.logger.info(f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}")
             except Exception:
                 pass
 
@@ -454,17 +454,17 @@ class WickedZergBotProImpl(BotAI):
 
                 # Record game outcome
                 self.opponent_modeling.on_game_end(won, lost)
-                print(f"[OPPONENT_MODELING] Game data saved. Opponent model updated.")
+                self.logger.info(f"[OPPONENT_MODELING] Game data saved. Opponent model updated.")
 
                 # Print learning summary every 5 games
                 if self.opponent_modeling.current_opponent:
                     model = self.opponent_modeling.models.get(self.opponent_modeling.current_opponent)
                     if model and model.games_played > 0 and model.games_played % 5 == 0:
-                        print(f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}")
-                        print(f"  Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}")
-                        print(f"  Win rate: {model.games_won / model.games_played * 100:.1f}%")
+                        self.logger.info(f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}")
+                        self.logger.info(f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}")
+                        self.logger.info(f"Win rate: {model.games_won / model.games_played * 100:.1f}%")
             except Exception as e:
-                print(f"[BOT_WARN] OpponentModeling on_end error: {e}")
+                self.logger.warning(f"OpponentModeling on_end error: {e}")
                 traceback.print_exc()
 
         # Performance Optimizer cleanup
@@ -490,12 +490,12 @@ class WickedZergBotProImpl(BotAI):
                         conditions, reward = self._victory_learner.analyze_game_result(self, "Victory")
                         game_outcome_reward = reward
                         print(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
-                        print(f"[VICTORY] Total reward: {reward:.1f}")
+                        self.logger.info(f"[VICTORY] Total reward: {reward:.1f}")
                     elif game_lost:
                         conditions, penalty = self._victory_learner.analyze_game_result(self, "Defeat")
                         game_outcome_reward = penalty
                         print(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
-                        print(f"[DEFEAT] Total penalty: {penalty:.1f}")
+                        self.logger.info(f"[DEFEAT] Total penalty: {penalty:.1f}")
 
                     # 통계 출력 (10게임마다)
                     total_games = len(self._victory_learner.victory_patterns) + len(self._victory_learner.defeat_patterns)
@@ -518,11 +518,11 @@ class WickedZergBotProImpl(BotAI):
                     # 학습률이 조정되었으면 RL Agent에 적용
                     if new_lr and hasattr(self, 'rl_agent') and self.rl_agent:
                         self.rl_agent.learning_rate = new_lr
-                        print(f"[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}")
+                        self.logger.info(f"[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}")
 
                     # 10게임마다 통계 출력
                     if self.adaptive_lr.total_games % 10 == 0:
-                        print(self.adaptive_lr.get_summary())
+                        self.logger.info(self.adaptive_lr.get_summary())
 
                 # RL agent: end episode and perform learning (CRITICAL!)
                 if hasattr(self, 'rl_agent') and self.rl_agent:
@@ -533,11 +533,11 @@ class WickedZergBotProImpl(BotAI):
                     # Check if learning occurred (steps > 0 means rewards were collected)
                     if training_stats.get('steps', 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
-                        print(f"[TRAINING] [OK] Neural network updated!")
-                        print(f"  Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}")
-                        print(f"  Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}")
+                        self.logger.info(f"[TRAINING] [OK] Neural network updated!")
+                        self.logger.info(f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}")
+                        self.logger.info(f"Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}")
                     else:
-                        print(f"[TRAINING] No learning this episode (no rewards collected)")
+                        self.logger.info(f"[TRAINING] No learning this episode (no rewards collected)")
 
                     # 모델 검증 (게임 결과 기록)
                     game_time = getattr(self, 'time', 0)
@@ -547,9 +547,9 @@ class WickedZergBotProImpl(BotAI):
                     if self.rl_agent.episode_count % 10 == 0:
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
-                            print(f"[RL_AGENT] ★ MODEL READY FOR DEPLOYMENT ★")
+                            self.logger.info(f"[RL_AGENT] ★ MODEL READY FOR DEPLOYMENT ★")
                         else:
-                            print(f"[RL_AGENT] Training progress: {reason}")
+                            self.logger.info(f"[RL_AGENT] Training progress: {reason}")
 
                     # Save model
                     if hasattr(self.rl_agent, 'save_model'):
@@ -561,7 +561,7 @@ class WickedZergBotProImpl(BotAI):
                     self._reward_system.reset()
 
             except Exception as e:
-                print(f"[WARNING] Training end logic error: {e}")
+                self.logger.info(f"[WARNING] Training end logic error: {e}")
                 import traceback
                 traceback.print_exc()
 
@@ -598,28 +598,28 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.warning(f"[WickedZergBot] Opponent race detection suppressed: {e}")
 
             if opponent_race:
-                print(f"[RACE] 상대 종족: {opponent_race}")
+                self.logger.info(f"[RACE] 상대 종족: {opponent_race}")
 
             if "VICTORY" in result_str or "WIN" in result_str:
                 promoted = curriculum.record_win(opponent_race)
                 if promoted:
-                    print("[CURRICULUM] ★★★ 다음 단계로 승격! ★★★")
+                    self.logger.info("[CURRICULUM] ★★★ 다음 단계로 승격! ★★★")
             elif "DEFEAT" in result_str or "LOSS" in result_str:
                 demoted = curriculum.record_loss(opponent_race)
                 if demoted:
-                    print("[CURRICULUM] 난이도 하향 - 연습 더 필요")
+                    self.logger.info("[CURRICULUM] 난이도 하향 - 연습 더 필요")
 
             # 현재 진행 상황 출력
             progress = curriculum.get_progress_info()
-            print(f"[CURRICULUM] 현재 단계: {progress['level_name']} "
+            self.logger.info(f"[CURRICULUM] 현재 단계: {progress['level_name']} "
                   f"({progress['wins_at_current_level']}/{progress['wins_required']}승)")
-            print(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
+            self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
             # ★ 종족별 승률 출력 ★
             curriculum.print_race_stats()
 
         except Exception as e:
-            print(f"[WARNING] Curriculum manager error: {e}")
+            self.logger.info(f"[WARNING] Curriculum manager error: {e}")
 
         # ★★★ Game Analytics - 게임 결과 상세 분석 ★★★
         if hasattr(self, 'game_analytics') and self.game_analytics and self.train_mode:
@@ -665,23 +665,23 @@ class WickedZergBotProImpl(BotAI):
                                 difficulty=self.current_difficulty,
                                 won=won
                             )
-                            print(f"[DIFFICULTY] Recorded: {map_name} vs {opponent_race.name} ({self.current_difficulty.name}): {'WIN' if won else 'LOSS'}")
+                            self.logger.info(f"[DIFFICULTY] Recorded: {map_name} vs {opponent_race.name} ({self.current_difficulty.name}): {'WIN' if won else 'LOSS'}")
                     except Exception as e:
-                        print(f"[DIFFICULTY] Error recording to progression system: {e}")
+                        self.logger.info(f"[DIFFICULTY] Error recording to progression system: {e}")
 
                 # 10게임마다 통계 요약 출력
                 if self.game_analytics.total_games % 10 == 0:
-                    print(self.game_analytics.get_summary())
+                    self.logger.info(self.game_analytics.get_summary())
 
                 # 종족별 조언 (20게임마다)
                 if self.game_analytics.total_games % 20 == 0:
                     opponent_race = str(getattr(self, 'enemy_race', 'Unknown')).replace('Race.', '')
                     advice = self.game_analytics.get_race_specific_advice(opponent_race)
                     if advice:
-                        print(advice)
+                        self.logger.info(advice)
 
             except Exception as e:
-                print(f"[WARNING] Game analytics error: {e}")
+                self.logger.info(f"[WARNING] Game analytics error: {e}")
 
         # ★★★ Phase 22: Game Result Reporter - 경기 결과 자동 보고서 ★★★
         try:
@@ -707,25 +707,25 @@ class WickedZergBotProImpl(BotAI):
                     self._game_quick_summary = quick_summary
                     self._game_report_text = report_text
         except Exception as e:
-            print(f"[WARNING] Game result reporter error: {e}")
+            self.logger.info(f"[WARNING] Game result reporter error: {e}")
 
         # ★ Feature 81: Structured Game Result Logging ★
         try:
             self._save_structured_game_result(game_result)
         except Exception as e:
-            print(f"[WARNING] Structured game result logging error: {e}")
+            self.logger.info(f"[WARNING] Structured game result logging error: {e}")
 
         # ★ Feature 84: Replay Auto-Organization ★
         try:
             self._organize_replay(game_result)
         except Exception as e:
-            print(f"[WARNING] Replay organization error: {e}")
+            self.logger.info(f"[WARNING] Replay organization error: {e}")
 
         # ★ Feature 85: Save Build Order Timing Log ★
         try:
             self._save_build_order_log()
         except Exception as e:
-            print(f"[WARNING] Build order log save error: {e}")
+            self.logger.info(f"[WARNING] Build order log save error: {e}")
 
         # Store training result for run_with_training.py
         self._training_result = {
@@ -818,7 +818,7 @@ class WickedZergBotProImpl(BotAI):
         with open(results_file, "w", encoding="utf-8") as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
 
-        print(f"[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)")
+        self.logger.info(f"[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)")
 
     # =========================================================================
     # Feature 84: Replay Auto-Organization
@@ -875,11 +875,11 @@ class WickedZergBotProImpl(BotAI):
             dest_path = dest_dir / dest_name
 
             shutil.copy2(str(recent_replay), str(dest_path))
-            print(f"[REPLAY] Organized replay: {dest_path}")
+            self.logger.info(f"[REPLAY] Organized replay: {dest_path}")
 
         except Exception as e:
             # Never crash the bot
-            print(f"[REPLAY_WARN] Replay organization failed (non-critical): {e}")
+            self.logger.info(f"[REPLAY_WARN] Replay organization failed (non-critical): {e}")
 
     # =========================================================================
     # Feature 85: Build Order Timing Log
@@ -946,7 +946,7 @@ class WickedZergBotProImpl(BotAI):
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(build_data, f, indent=2, ensure_ascii=False)
 
-        print(f"[BUILD_ORDER] Saved {len(self._build_order_log)} entries to {filepath.name}")
+        self.logger.info(f"[BUILD_ORDER] Saved {len(self._build_order_log)} entries to {filepath.name}")
 
     # =========================================================================
     # Feature 86: Unit Lost Tracking
@@ -999,7 +999,7 @@ class WickedZergBotProImpl(BotAI):
                 try:
                     mgr.reset()
                 except Exception as e:
-                    print(f"[RESET_WARN] {name}.reset() failed: {e}")
+                    self.logger.info(f"[RESET_WARN] {name}.reset() failed: {e}")
 
         # ★ 누적 가능한 dict/set/list 직접 초기화
         for attr in ["_step_integrator"]:
@@ -1022,7 +1022,7 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] Logger reset suppressed: {e}")
 
-        print("[RESET] All managers reset for next episode")
+        self.logger.info("[RESET] All managers reset for next episode")
 
 
 # How to integrate into existing WickedZergBotPro class:
