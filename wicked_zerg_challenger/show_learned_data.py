@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import numpy as np
-import os
 from pathlib import Path
 
 def print_header(title):

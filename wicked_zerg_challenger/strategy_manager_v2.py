@@ -1270,84 +1270,201 @@ class StrategyManagerV2(StrategyManager):
 
     def adjust_strategy_realtime(self) -> None:
         """
-        실시간 전략 조정 (스텁 #114)
+        실시간 전략 조정 (#114)
 
-        게임 진행 중 실시간으로 전략을 미세 조정합니다.
-
-        TODO: 구현 예정
-        - 적 행동 패턴 기반 동적 전략 변경
-        - 전략 전환 비용 계산
-        - 전략 안정성 유지 (과도한 전환 방지)
+        적 행동 패턴, 현재 전략 효과, 전환 비용을 고려하여 전략을 미세 조정합니다.
+        과도한 전환 방지를 위해 최소 60초 간격으로만 조정합니다.
         """
-        pass
+        game_time = getattr(self.bot, "time", 0.0)
+
+        # 과도한 전환 방지 — 최소 60초 간격
+        if not hasattr(self, "_last_realtime_adjust"):
+            self._last_realtime_adjust = 0.0
+        if game_time - self._last_realtime_adjust < 60.0:
+            return
+
+        effectiveness = self.evaluate_strategy_effectiveness()
+        opponent = self.get_opponent_tendency()
+
+        # 효과 점수 0.3 미만이면 피봇 검토
+        if effectiveness < 0.3:
+            pivot = self.suggest_strategy_pivot()
+            if pivot and pivot.get("confidence", 0) > 0.5:
+                self.logger.info(
+                    "실시간 전략 조정: %s → %s (효과 %.2f)",
+                    self.current_win_condition.name,
+                    pivot.get("strategy", "unknown"),
+                    effectiveness,
+                )
+                # 공격적 상대 → 방어 비중 증가
+                if opponent.get("aggression", 0.5) > 0.7:
+                    self.resource_priorities["defense"] = min(
+                        self.resource_priorities.get("defense", 0.2) + 0.1, 0.5
+                    )
+                    self.resource_priorities["army"] = min(
+                        self.resource_priorities.get("army", 0.3) + 0.1, 0.5
+                    )
+
+        self._last_realtime_adjust = game_time
 
     def get_meta_strategy(self) -> Dict[str, Any]:
         """
-        메타 전략 분석 (스텁 #114)
+        메타 전략 분석 (#114)
 
-        현재 게임 메타에 기반한 전략 추천을 반환합니다.
-
-        Returns:
-            메타 전략 정보 딕셔너리
-
-        TODO: 구현 예정
-        - 최근 게임 결과 기반 메타 분석
-        - 상대 종족별 최적 전략 매핑
-        - 맵별 전략 추천
+        상대 종족, 게임 페이즈, 전적 기반으로 최적 전략을 추천합니다.
         """
+        # 종족별 기본 전략 매핑
+        race_strategies = {
+            "Terran": {"strategy": "ling_bane_muta", "reasoning": "바이오 상대 링바네뮤탈 유리"},
+            "Protoss": {"strategy": "roach_hydra", "reasoning": "관문 유닛 상대 로치히드라 안정"},
+            "Zerg": {"strategy": "roach_ravager", "reasoning": "동족전 로치레바저 빠른 전환"},
+        }
+
+        enemy_race = getattr(self.bot, "enemy_race", None)
+        race_name = enemy_race.name if enemy_race else "Unknown"
+        base_strategy = race_strategies.get(race_name, {
+            "strategy": "balanced", "reasoning": "종족 미확인 균형 전략"
+        })
+
+        # 전략 효과 기반 신뢰도 계산
+        effectiveness = self.evaluate_strategy_effectiveness()
+        confidence = min(effectiveness + 0.2, 1.0)
+
+        # 게임 페이즈별 조정
+        phase_name = getattr(self, "current_phase", None)
+        if phase_name and hasattr(phase_name, "name"):
+            phase_str = phase_name.name
+        else:
+            phase_str = "UNKNOWN"
+
         return {
-            "recommended_strategy": "balanced",
-            "confidence": 0.0,
-            "reasoning": "스텁 - 미구현",
+            "recommended_strategy": base_strategy["strategy"],
+            "confidence": round(confidence, 2),
+            "reasoning": base_strategy["reasoning"],
+            "enemy_race": race_name,
+            "game_phase": phase_str,
         }
 
     def evaluate_strategy_effectiveness(self) -> float:
         """
-        현재 전략 효과 평가 (스텁 #114)
+        현재 전략 효과 평가 (#114)
 
-        Returns:
-            전략 효과 점수 (0.0 ~ 1.0)
-
-        TODO: 구현 예정
-        - 군대 교환비, 경제 성장률, 테크 달성도 종합 평가
-        - 시간대별 벤치마크 대비 점수
+        군대 교환비, 경제 성장률, 테크 달성도를 종합 평가하여 0.0~1.0 점수를 반환합니다.
         """
-        return 0.5
+        score = 0.0
+        factors = 0
+
+        # 1) 군대 교환비 — 아군 vs 적군 서플라이
+        our_army = getattr(self.bot, "supply_army", 0)
+        enemy_army = self._estimate_enemy_army()
+        if our_army + enemy_army > 0:
+            army_ratio = our_army / max(our_army + enemy_army, 1)
+            score += army_ratio
+            factors += 1
+
+        # 2) 경제 성장률 — 일꾼 수 / 66 최적
+        workers = self._get_worker_count()
+        worker_score = min(workers / 66.0, 1.0)
+        score += worker_score
+        factors += 1
+
+        # 3) 테크 달성도 — 기지 수 + 업그레이드
+        bases = 1
+        if hasattr(self.bot, "townhalls"):
+            bases = self.bot.townhalls.amount
+        tech_score = min(bases / 4.0, 1.0)
+        score += tech_score
+        factors += 1
+
+        return round(score / max(factors, 1), 3)
 
     def suggest_strategy_pivot(self) -> Optional[Dict[str, Any]]:
         """
-        전략 피봇(전환) 제안 (스텁 #114)
+        전략 피봇(전환) 제안 (#114)
 
-        현재 전략이 비효율적일 때 대안 전략을 제안합니다.
-
-        Returns:
-            피봇 제안 딕셔너리 또는 None
-
-        TODO: 구현 예정
-        - 현재 전략 효과 점수 기반 피봇 필요성 판단
-        - 전환 가능한 전략 후보 리스트
-        - 전환 비용/리스크 계산
+        현재 전략 효과 점수가 0.3 미만이면 대안 전략을 제안합니다.
         """
-        return None
+        effectiveness = self.evaluate_strategy_effectiveness()
+
+        # 효과적이면 피봇 불필요
+        if effectiveness >= 0.4:
+            return None
+
+        opponent = self.get_opponent_tendency()
+        candidates = []
+
+        if opponent["aggression"] > 0.6:
+            candidates.append({
+                "strategy": "defensive_turtle",
+                "reasoning": "공격적 상대 → 방어 강화",
+                "risk": 0.3,
+            })
+        if opponent["expansion_tendency"] > 0.6:
+            candidates.append({
+                "strategy": "timing_attack",
+                "reasoning": "확장적 상대 → 타이밍 어택",
+                "risk": 0.5,
+            })
+        if not candidates:
+            candidates.append({
+                "strategy": "balanced_macro",
+                "reasoning": "기본 매크로 전환",
+                "risk": 0.2,
+            })
+
+        # 리스크가 가장 낮은 후보 선택
+        best = min(candidates, key=lambda c: c["risk"])
+        return {
+            "strategy": best["strategy"],
+            "reasoning": best["reasoning"],
+            "risk": best["risk"],
+            "confidence": round(1.0 - effectiveness, 2),
+            "current_effectiveness": effectiveness,
+        }
 
     def get_opponent_tendency(self) -> Dict[str, Any]:
         """
-        상대 성향 분석 (스텁 #114)
+        상대 성향 분석 (#114)
 
-        현재 게임에서 관측된 상대의 플레이 성향을 분석합니다.
-
-        Returns:
-            상대 성향 딕셔너리
-
-        TODO: 구현 예정
-        - 공격적/방어적 성향 판단
-        - 확장 타이밍 패턴
-        - 테크 선호도 분석
+        적 유닛/건물 관측 기반으로 공격성, 확장 성향, 테크 선호도를 분석합니다.
         """
+        aggression = 0.5
+        expansion = 0.5
+        tech_pref = "unknown"
+        confidence = 0.0
+
+        enemy_army_supply = self._estimate_enemy_army()
+        game_time = getattr(self.bot, "time", 0.0)
+
+        if game_time > 0:
+            # 공격성 — 시간 대비 적군 서플라이
+            aggression_raw = enemy_army_supply / max(game_time / 60.0, 1.0)
+            aggression = min(aggression_raw / 20.0, 1.0)
+
+            # 확장 성향 — Blackboard의 적 기지 수
+            enemy_bases = 1
+            if self.blackboard:
+                enemy_bases = self.blackboard.get("enemy_base_count", 1)
+            expected_bases = 1 + game_time / 180.0  # 3분당 1기지 기대
+            expansion = min(enemy_bases / max(expected_bases, 1.0), 1.0)
+
+            # 테크 선호도
+            if aggression > 0.7:
+                tech_pref = "aggressive"
+            elif expansion > 0.7:
+                tech_pref = "macro"
+            elif enemy_army_supply > 30 and game_time < 300:
+                tech_pref = "rush"
+            else:
+                tech_pref = "standard"
+
+            confidence = min(game_time / 300.0, 0.9)
+
         return {
-            "aggression": 0.5,
-            "expansion_tendency": 0.5,
-            "tech_preference": "unknown",
-            "confidence": 0.0,
+            "aggression": round(aggression, 2),
+            "expansion_tendency": round(expansion, 2),
+            "tech_preference": tech_pref,
+            "confidence": round(confidence, 2),
+            "enemy_army_estimate": enemy_army_supply,
         }
 

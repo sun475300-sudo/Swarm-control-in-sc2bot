@@ -6,7 +6,6 @@ python-pptx로 텍스트 + 도형 기반의 편집 가능한 슬라이드 생성
 """
 
 import os
-import sys
 from pathlib import Path
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu, Cm

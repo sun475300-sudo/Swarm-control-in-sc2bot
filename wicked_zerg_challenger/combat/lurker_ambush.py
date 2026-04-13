@@ -26,13 +26,15 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
     from sc2.position import Point2
+    SC2_AVAILABLE = True
 except ImportError:
     BotAI = object
-    UnitTypeId = object
-    AbilityId = object
+    UnitTypeId = None
+    AbilityId = None
     Unit = object
     Units = list
     Point2 = tuple
+    SC2_AVAILABLE = False
 
 
 class LurkerAmbushSystem:
@@ -63,25 +65,28 @@ class LurkerAmbushSystem:
         self.SAFETY_DISTANCE = 12  # Distance to maintain from enemies
 
         # Priority targets (high-value units)
-        self.HIGH_PRIORITY_TARGETS = {
-            # Terran
-            UnitTypeId.SIEGETANK,
-            UnitTypeId.SIEGETANKSIEGED,
-            UnitTypeId.THOR,
-            UnitTypeId.MARAUDER,
+        if UnitTypeId is not None:
+            self.HIGH_PRIORITY_TARGETS = {
+                # Terran
+                UnitTypeId.SIEGETANK,
+                UnitTypeId.SIEGETANKSIEGED,
+                UnitTypeId.THOR,
+                UnitTypeId.MARAUDER,
 
-            # Protoss
-            UnitTypeId.COLOSSUS,
-            UnitTypeId.IMMORTAL,
-            UnitTypeId.DISRUPTOR,
-            UnitTypeId.ARCHON,
-            UnitTypeId.HIGHTEMPLAR,
+                # Protoss
+                UnitTypeId.COLOSSUS,
+                UnitTypeId.IMMORTAL,
+                UnitTypeId.DISRUPTOR,
+                UnitTypeId.ARCHON,
+                UnitTypeId.HIGHTEMPLAR,
 
-            # Zerg
-            UnitTypeId.ULTRALISK,
-            UnitTypeId.BROODLORD,
-            UnitTypeId.INFESTOR,
-        }
+                # Zerg
+                UnitTypeId.ULTRALISK,
+                UnitTypeId.BROODLORD,
+                UnitTypeId.INFESTOR,
+            }
+        else:
+            self.HIGH_PRIORITY_TARGETS = set()
 
         # Statistics
         self.ambushes_executed = 0

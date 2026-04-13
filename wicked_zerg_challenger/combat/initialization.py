@@ -150,21 +150,21 @@ def initialize_managers(manager):
     try:
         from combat.targeting import Targeting
         manager.targeting = Targeting(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Targeting system not available")
 
     try:
         from combat.micro_combat import MicroCombat
         manager.micro_combat = MicroCombat(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Micro combat not available")
 
     try:
         from combat.boids_swarm_control import BoidsSwarmController
         manager.boids = BoidsSwarmController()
-    except ImportError:
+    except (ImportError, AttributeError):
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Boids controller not available")
 
@@ -172,7 +172,7 @@ def initialize_managers(manager):
     try:
         from combat.formation_manager import FormationManager
         manager.formation_manager = FormationManager(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.formation_manager = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Formation manager not available")
@@ -181,7 +181,7 @@ def initialize_managers(manager):
     try:
         from combat.mutalisk_micro import MutaliskMicroController
         manager.mutalisk_micro = MutaliskMicroController()
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.mutalisk_micro = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Mutalisk micro controller not available")
@@ -190,7 +190,7 @@ def initialize_managers(manager):
     try:
         from combat.baneling_tactics import BanelingTacticsController
         manager.baneling_tactics = BanelingTacticsController()
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.baneling_tactics = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Baneling tactics controller not available")
@@ -199,7 +199,7 @@ def initialize_managers(manager):
     try:
         from combat.overlord_transport import OverlordTransport
         manager.overlord_transport = OverlordTransport(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.overlord_transport = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Overlord transport not available")
@@ -208,7 +208,7 @@ def initialize_managers(manager):
     try:
         from combat.roach_burrow_heal import RoachBurrowHeal
         manager.roach_burrow_heal = RoachBurrowHeal(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.roach_burrow_heal = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Roach burrow heal not available")
@@ -217,7 +217,7 @@ def initialize_managers(manager):
     try:
         from combat.lurker_ambush import LurkerAmbushSystem
         manager.lurker_ambush = LurkerAmbushSystem(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.lurker_ambush = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Lurker ambush system not available")
@@ -226,7 +226,7 @@ def initialize_managers(manager):
     try:
         from combat.smart_consume import SmartConsumeSystem
         manager.smart_consume = SmartConsumeSystem(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.smart_consume = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Smart consume system not available")
@@ -235,7 +235,7 @@ def initialize_managers(manager):
     try:
         from combat.overlord_hunter import OverlordHunter
         manager.overlord_hunter = OverlordHunter(manager.bot)
-    except ImportError:
+    except (ImportError, AttributeError):
         manager.overlord_hunter = None
         if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Overlord hunter not available")

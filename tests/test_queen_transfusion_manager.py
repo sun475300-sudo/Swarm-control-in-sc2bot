@@ -6,7 +6,11 @@ Tests the smart transfusion priority system.
 
 import pytest
 from unittest.mock import Mock, MagicMock
-from sc2.ids.unit_typeid import UnitTypeId
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 # Mock imports for testing

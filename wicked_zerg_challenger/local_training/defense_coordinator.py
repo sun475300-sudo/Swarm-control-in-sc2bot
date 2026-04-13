@@ -70,7 +70,13 @@ class DefenseCoordinator:
             else:
                  self.threat_level = "SAFE"
         
-        # TODO: Add more independent threat assessment here
+        # Independent threat assessment: check enemy army proximity
+        if hasattr(self.bot, "enemy_units") and self.bot.enemy_units:
+            nearby_enemies = self.bot.enemy_units.closer_than(40, self.bot.start_location) if hasattr(self.bot, "start_location") else []
+            if len(list(nearby_enemies)) > 5:
+                self.threat_level = "HIGH"
+            elif len(list(nearby_enemies)) > 0 and self.threat_level == "SAFE":
+                self.threat_level = "MODERATE"
 
     async def _ensure_early_defense(self) -> None:
         """
@@ -418,7 +424,11 @@ class DefenseCoordinator:
             )
             
             if not defenders.exists:
-                # [TODO] Global request if local defense fails?
+                # Global defense request via Blackboard when local defense fails
+                if hasattr(b, "blackboard") and b.blackboard:
+                    b.blackboard.set("global_defense_needed", True)
+                    b.blackboard.set("defense_target", base.position)
+                    self.logger.warning("Local defense failed at %s — requesting global reinforcement", base.position)
                 continue
                 
             # Attack command

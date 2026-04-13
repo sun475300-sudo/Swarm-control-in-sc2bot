@@ -301,8 +301,13 @@ class RLTechAdapter:
         # 가장 성공률이 높은 전략 선택
         best_response = max(tech_memory.items(), key=lambda x: x[1], default=None)
         if best_response and best_response[1] > 0.5:  # 50% 이상 승률
-            # TODO: best_response[0]에서 카운터 룰 재구성
-            return None  # 임시로 None (추후 구현)
+            strategy_name = best_response[0]
+            return {
+                "counter_strategy": strategy_name,
+                "win_rate": best_response[1],
+                "source": "learned",
+                "tech_countered": tech,
+            }
 
         return None
 

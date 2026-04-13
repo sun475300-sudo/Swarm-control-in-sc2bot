@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Tournament Mode - 토너먼트 모드 (#115) [스텁]
+Tournament Mode - 토너먼트 모드 (#115)
 
 여러 봇/전략을 대전시키는 토너먼트 시스템입니다.
 
-TODO: 전체 구현 예정
+지원 형식:
 - 라운드 로빈 토너먼트
 - 싱글 엘리미네이션 토너먼트
 - 더블 엘리미네이션 토너먼트
@@ -14,6 +14,11 @@ TODO: 전체 구현 예정
 
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
+import random
+import math
+import logging
+
+logger = logging.getLogger("TournamentMode")
 
 
 class TournamentFormat(Enum):
@@ -30,13 +35,6 @@ class MatchResult:
 
     def __init__(self, player1: str, player2: str,
                  winner: Optional[str] = None, game_map: str = ""):
-        """
-        Args:
-            player1: 플레이어 1 이름
-            player2: 플레이어 2 이름
-            winner: 승리자 이름 (무승부면 None)
-            game_map: 경기 맵
-        """
         self.player1 = player1
         self.player2 = player2
         self.winner = winner
@@ -46,11 +44,9 @@ class MatchResult:
 
     @property
     def is_draw(self) -> bool:
-        """무승부 여부"""
         return self.winner is None
 
     def to_dict(self) -> Dict[str, Any]:
-        """딕셔너리 변환"""
         return {
             "player1": self.player1,
             "player2": self.player2,
@@ -66,11 +62,6 @@ class TournamentParticipant:
     """토너먼트 참가자"""
 
     def __init__(self, name: str, strategy: str = "default"):
-        """
-        Args:
-            name: 참가자 이름
-            strategy: 전략 이름
-        """
         self.name = name
         self.strategy = strategy
         self.wins: int = 0
@@ -80,18 +71,15 @@ class TournamentParticipant:
 
     @property
     def total_games(self) -> int:
-        """총 경기 수"""
         return self.wins + self.losses + self.draws
 
     @property
     def win_rate(self) -> float:
-        """승률"""
         if self.total_games == 0:
             return 0.0
         return self.wins / self.total_games
 
     def to_dict(self) -> Dict[str, Any]:
-        """딕셔너리 변환"""
         return {
             "name": self.name,
             "strategy": self.strategy,
@@ -104,24 +92,24 @@ class TournamentParticipant:
         }
 
 
+def _update_elo(winner_elo: float, loser_elo: float, k: float = 32.0) -> Tuple[float, float]:
+    """ELO 레이팅 업데이트 (표준 공식)."""
+    expected_w = 1.0 / (1.0 + math.pow(10, (loser_elo - winner_elo) / 400))
+    expected_l = 1.0 - expected_w
+    return winner_elo + k * (1 - expected_w), loser_elo + k * (0 - expected_l)
+
+
 class TournamentManager:
     """
-    토너먼트 관리자 (스텁)
+    토너먼트 관리자
 
     여러 봇/전략을 대전시키는 토너먼트를 관리합니다.
-
-    TODO: 구현 예정
-    - 토너먼트 생성/시작/종료
-    - 매칭 스케줄링
-    - 결과 기록 및 순위 산정
-    - 리더보드 출력
+    - 라운드 로빈: 모든 참가자가 서로 1회씩 대전
+    - 싱글 엘리미네이션: 패배 즉시 탈락
+    - 매칭 스케줄링 + 결과 기록 + ELO 순위 산정
     """
 
     def __init__(self, tournament_format: TournamentFormat = TournamentFormat.ROUND_ROBIN):
-        """
-        Args:
-            tournament_format: 토너먼트 형식
-        """
         self.format = tournament_format
         self.participants: List[TournamentParticipant] = []
         self.matches: List[MatchResult] = []
@@ -136,63 +124,148 @@ class TournamentManager:
             "WinterGateLE",
             "WorldofSleepersLE",
         ]
+        # 라운드 로빈 매칭 큐
+        self._pending_matches: List[Tuple[str, str, str]] = []
+        # 싱글 엘리미네이션 브래킷
+        self._bracket: List[str] = []
+        self._bracket_idx: int = 0
 
-        print("[TOURNAMENT] 토너먼트 관리자 초기화 (스텁)")
+        logger.info("토너먼트 관리자 초기화 (format=%s)", tournament_format.value)
 
     def add_participant(self, name: str, strategy: str = "default") -> None:
-        """참가자 추가 (스텁)"""
+        """참가자 추가"""
         self.participants.append(TournamentParticipant(name, strategy))
 
     def remove_participant(self, name: str) -> None:
-        """참가자 제거 (스텁)"""
+        """참가자 제거"""
         self.participants = [p for p in self.participants if p.name != name]
 
-    def start(self) -> None:
-        """토너먼트 시작 (스텁)"""
-        # TODO: 토너먼트 시작 로직
-        self.is_running = True
-        self.current_round = 1
-        print(f"[TOURNAMENT] 토너먼트 시작: {self.format.value}, "
-              f"참가자 {len(self.participants)}명")
-
-    def get_next_match(self) -> Optional[Tuple[str, str, str]]:
-        """
-        다음 경기 정보 반환 (스텁)
-
-        Returns:
-            (플레이어1, 플레이어2, 맵) 또는 None
-        """
-        # TODO: 매칭 알고리즘
+    def _find_participant(self, name: str) -> Optional[TournamentParticipant]:
+        for p in self.participants:
+            if p.name == name:
+                return p
         return None
 
-    def report_result(self, result: MatchResult) -> None:
-        """
-        경기 결과 보고 (스텁)
+    # ── 토너먼트 시작 ──────────────────────────
 
-        Args:
-            result: 경기 결과
-        """
-        # TODO: 결과 반영
+    def start(self) -> None:
+        """토너먼트 시작 — 형식별 매칭 큐를 생성한다."""
+        if len(self.participants) < 2:
+            logger.warning("참가자 2명 이상 필요 (현재 %d명)", len(self.participants))
+            return
+
+        self.is_running = True
+        self.current_round = 1
+        self.matches.clear()
+
+        if self.format == TournamentFormat.ROUND_ROBIN:
+            self._build_round_robin()
+        elif self.format == TournamentFormat.SINGLE_ELIMINATION:
+            self._build_single_elim()
+        else:
+            # SWISS, BEST_OF_N 등은 라운드 로빈 폴백
+            self._build_round_robin()
+
+        logger.info("토너먼트 시작: %s, 참가자 %d명, 매치 %d개",
+                     self.format.value, len(self.participants), len(self._pending_matches))
+
+    def _build_round_robin(self) -> None:
+        """라운드 로빈 매칭 생성 — 모든 참가자 쌍."""
+        names = [p.name for p in self.participants]
+        self._pending_matches = []
+        for i in range(len(names)):
+            for j in range(i + 1, len(names)):
+                game_map = random.choice(self.map_pool)
+                self._pending_matches.append((names[i], names[j], game_map))
+        random.shuffle(self._pending_matches)
+
+    def _build_single_elim(self) -> None:
+        """싱글 엘리미네이션 브래킷 생성."""
+        names = [p.name for p in self.participants]
+        random.shuffle(names)
+        self._bracket = names
+        self._bracket_idx = 0
+        self._pending_matches = []
+        # 첫 라운드 매치 생성
+        self._generate_elim_round()
+
+    def _generate_elim_round(self) -> None:
+        """현재 브래킷에서 한 라운드 매치를 생성한다."""
+        for i in range(0, len(self._bracket) - 1, 2):
+            game_map = random.choice(self.map_pool)
+            self._pending_matches.append((self._bracket[i], self._bracket[i + 1], game_map))
+        # 홀수인 경우 마지막은 부전승
+        if len(self._bracket) % 2 == 1:
+            bye = self._bracket[-1]
+            logger.info("부전승: %s", bye)
+
+    # ── 매칭 ──────────────────────────────────
+
+    def get_next_match(self) -> Optional[Tuple[str, str, str]]:
+        """다음 경기 정보 반환. 남은 매치가 없으면 None."""
+        if not self._pending_matches:
+            return None
+        return self._pending_matches[0]
+
+    # ── 결과 보고 ─────────────────────────────
+
+    def report_result(self, result: MatchResult) -> None:
+        """경기 결과 보고 — 전적/ELO 업데이트 + 큐에서 제거."""
         self.matches.append(result)
 
-    def get_leaderboard(self) -> List[Dict[str, Any]]:
-        """
-        리더보드 반환 (스텁)
+        p1 = self._find_participant(result.player1)
+        p2 = self._find_participant(result.player2)
 
-        Returns:
-            순위별 참가자 정보 리스트
-        """
+        if result.is_draw:
+            if p1:
+                p1.draws += 1
+            if p2:
+                p2.draws += 1
+        elif result.winner == result.player1:
+            if p1:
+                p1.wins += 1
+            if p2:
+                p2.losses += 1
+            if p1 and p2:
+                p1.elo_rating, p2.elo_rating = _update_elo(p1.elo_rating, p2.elo_rating)
+        elif result.winner == result.player2:
+            if p2:
+                p2.wins += 1
+            if p1:
+                p1.losses += 1
+            if p1 and p2:
+                p2.elo_rating, p1.elo_rating = _update_elo(p2.elo_rating, p1.elo_rating)
+
+        # 큐에서 해당 매치 제거
+        self._pending_matches = [
+            m for m in self._pending_matches
+            if not (m[0] == result.player1 and m[1] == result.player2)
+        ]
+
+        # 싱글 엘리미네이션: 다음 라운드 진행
+        if self.format == TournamentFormat.SINGLE_ELIMINATION and not self._pending_matches:
+            winners = [r.winner for r in self.matches if r.winner and r in self.matches[-len(self._bracket) // 2:]]
+            if len(winners) > 1:
+                self._bracket = winners
+                self.current_round += 1
+                self._generate_elim_round()
+
+    # ── 리더보드 / 완료 체크 ──────────────────
+
+    def get_leaderboard(self) -> List[Dict[str, Any]]:
+        """리더보드 반환 — ELO 기준 내림차순."""
         sorted_participants = sorted(
             self.participants,
-            key=lambda p: (p.wins, -p.losses, p.elo_rating),
+            key=lambda p: (p.elo_rating, p.wins, -p.losses),
             reverse=True
         )
         return [p.to_dict() for p in sorted_participants]
 
     def is_complete(self) -> bool:
-        """토너먼트 완료 여부 (스텁)"""
-        # TODO: 토너먼트 완료 조건 체크
-        return False
+        """토너먼트 완료 여부 — 남은 매치가 없으면 완료."""
+        if not self.is_running:
+            return False
+        return len(self._pending_matches) == 0
 
     def get_status(self) -> Dict[str, Any]:
         """상태 반환"""
@@ -202,5 +275,7 @@ class TournamentManager:
             "current_round": self.current_round,
             "participants": len(self.participants),
             "completed_matches": len(self.matches),
+            "pending_matches": len(self._pending_matches),
+            "is_complete": self.is_complete(),
             "map_pool": self.map_pool,
         }

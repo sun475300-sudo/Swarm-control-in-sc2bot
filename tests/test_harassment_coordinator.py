@@ -6,8 +6,12 @@ Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 
 import pytest
 from unittest.mock import Mock, MagicMock
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class MockState:

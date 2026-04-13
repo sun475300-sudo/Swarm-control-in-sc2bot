@@ -26,7 +26,10 @@ from __future__ import annotations
 
 import logging
 from typing import Optional
-from discord.ext import commands
+try:
+    from discord.ext import commands
+except ImportError:
+    commands = None
 
 logger = logging.getLogger("jarvis.features")
 
@@ -50,7 +53,7 @@ ALL_COGS = [
 ]
 
 
-async def load_all_features(bot: commands.Bot) -> list[str]:
+async def load_all_features(bot: "commands.Bot") -> list[str]:
     """모든 확장 기능 Cog를 로드한다.
 
     Returns:
