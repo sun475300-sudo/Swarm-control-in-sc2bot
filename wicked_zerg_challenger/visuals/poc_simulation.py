@@ -214,8 +214,8 @@ class NotificationService:
     @staticmethod
     async def send_eviction(drone_id: str):
         """강제 퇴각 명령"""
-        print(f"  [EVICT] XXX Drone {drone_id}: 강제 퇴각 명령 발행!")
-        print(f"          XXX 착륙 유도 경로 전송 완료")
+        print(f"  [EVICT] Drone {drone_id}: 강제 퇴각 명령 발행")
+        print(f"          착륙 유도 경로 전송 완료")
 
 
 # ═══════════════════════════════════════════════════════
