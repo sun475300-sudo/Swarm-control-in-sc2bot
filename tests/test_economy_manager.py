@@ -109,6 +109,10 @@ class MockUnits:
     def filter(self, func):
         return MockUnits([u for u in self._units if func(u)])
 
+    def __call__(self, type_id):
+        """Support bot.units(UnitTypeId.X) pattern"""
+        return MockUnits([u for u in self._units if u.type_id == type_id])
+
     def of_type(self, type_id):
         return MockUnits([u for u in self._units if u.type_id == type_id])
 

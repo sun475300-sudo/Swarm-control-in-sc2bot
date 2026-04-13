@@ -14,6 +14,14 @@ except ImportError:  # Fallbacks for tooling environments
         DRONE = "DRONE"
         OVERLORD = "OVERLORD"
         HATCHERY = "HATCHERY"
+        QUEEN = "QUEEN"
+        ZERGLING = "ZERGLING"
+        ROACH = "ROACH"
+        HYDRALISK = "HYDRALISK"
+        LAIR = "LAIR"
+        EXTRACTOR = "EXTRACTOR"
+        LARVA = "LARVA"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
 
     Point2 = tuple  # Fallback for tooling
 
