@@ -6,6 +6,7 @@ This script starts a game and trains the neural network model in real-time.
 Model will be saved to: local_training/models/zerg_net_model.pt
 """
 
+import logging
 from sc2 import maps  # type: ignore
 from sc2.player import Bot, Computer  # type: ignore
 from sc2.main import run_game  # type: ignore
@@ -18,6 +19,8 @@ import random
 import time
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Set, Any, Union
+
+logger = logging.getLogger(__name__)
 
 # SC2 path auto-setup function
 
@@ -47,10 +50,10 @@ def _ensure_sc2_path():
 
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
-            print(f"[SC2] Found via Registry: {install_path}")
+            logger.info(f"[SC2] Found via Registry: {install_path}")
             return
     except Exception as e:
-        print(f"[WARNING] Failed to read SC2 path from registry: {e}")
+        logger.warning(f"[WARNING] Failed to read SC2 path from registry: {e}")
 
     # 2. Search common installation paths
     common_paths = [
@@ -62,10 +65,10 @@ def _ensure_sc2_path():
     for path in common_paths:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
-            print(f"[SC2] Found at common path: {path}")
+            logger.info(f"[SC2] Found at common path: {path}")
             return
 
-    print("[WARNING] SC2 installation not found automatically")
+    logger.warning("[WARNING] SC2 installation not found automatically")
 
 
 # Setup SC2 path before sc2 import
@@ -93,24 +96,24 @@ def main():
     import time
     import random
 
-    print("\n" + "=" * 70)
-    print("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
-    print("=" * 70)
-    print()
-    print("? Training Configuration:")
-    print("   ? 15-dimensional state vector (Self 5 + Enemy 10)")
-    print("   ? REINFORCE algorithm for policy learning")
-    print("   ? Model auto-saves after each game")
-    print("   ? Continuous training: Games run continuously without stopping")
-    print("   ? Build order comparison with pro gamer baseline")
-    print("   ? Auto-update learned parameters on victory")
-    print()
-    print("? Model save location: local_training/models/zerg_net_model.pt")
-    print("? Build order data: local_training/scripts/learned_build_orders.json")
-    print()
-    print("??  Press Ctrl+C to stop training")
-    print("=" * 70)
-    print()
+    logger.info("\n" + "=" * 70)
+    logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
+    logger.info("=" * 70)
+    logger.info()
+    logger.info("? Training Configuration:")
+    logger.info("   ? 15-dimensional state vector (Self 5 + Enemy 10)")
+    logger.info("   ? REINFORCE algorithm for policy learning")
+    logger.info("   ? Model auto-saves after each game")
+    logger.info("   ? Continuous training: Games run continuously without stopping")
+    logger.info("   ? Build order comparison with pro gamer baseline")
+    logger.info("   ? Auto-update learned parameters on victory")
+    logger.info()
+    logger.info("? Model save location: local_training/models/zerg_net_model.pt")
+    logger.info("? Build order data: local_training/scripts/learned_build_orders.json")
+    logger.info()
+    logger.info("??  Press Ctrl+C to stop training")
+    logger.info("=" * 70)
+    logger.info()
 
     # 1. Run on AI Arena server (when --LadderServer flag is present)
     if "--LadderServer" in sys.argv:
@@ -123,21 +126,21 @@ def main():
             from monitoring.server_manager import start_arena_monitoring
             arena_server_manager = start_arena_monitoring(background=True)
             if arena_server_manager:
-                print("[OK] Arena monitoring server started")
-                print(
+                logger.info("[OK] Arena monitoring server started")
+                logger.info(
                     f"     Server URL: {arena_server_manager.get_server_url()}")
-                print(f"     Mobile/Web Access: Available")
+                logger.info(f"     Mobile/Web Access: Available")
             else:
-                print("[WARNING] Failed to start arena monitoring server")
+                logger.warning("[WARNING] Failed to start arena monitoring server")
         except Exception as e:
-            print(f"[WARNING] Arena monitoring server not available: {e}")
-            print("[INFO] Continuing without monitoring server...")
+            logger.warning(f"[WARNING] Arena monitoring server not available: {e}")
+            logger.info("[INFO] Continuing without monitoring server...")
 
-        print("\n[STEP 2] ? Connecting to AI Arena Server...")
-        print("=" * 70)
+        logger.info("\n[STEP 2] ? Connecting to AI Arena Server...")
+        logger.info("=" * 70)
         bot = create_bot_with_training(personality="serral") # Ladder server doesn't support custom LR yet
-        print("[OK] Bot created with training enabled")
-        print("[INFO] Joining Ladder Game...")
+        logger.info("[OK] Bot created with training enabled")
+        logger.info("[INFO] Joining Ladder Game...")
         try:
             run_ladder_game(bot)
         finally:
@@ -156,18 +159,18 @@ def main():
         # Try to load latest checkpoint
         latest_checkpoint = checkpoint_manager.load_latest_checkpoint()
         if latest_checkpoint:
-            print("\n[CHECKPOINT] Found previous training checkpoint")
-            print(f"  Iteration: {latest_checkpoint['iteration']}")
-            print(f"  Timestamp: {latest_checkpoint['timestamp']}")
-            print("[INFO] Auto-resuming from checkpoint...")
+            logger.info("\n[CHECKPOINT] Found previous training checkpoint")
+            logger.info(f"  Iteration: {latest_checkpoint['iteration']}")
+            logger.info(f"  Timestamp: {latest_checkpoint['timestamp']}")
+            logger.info("[INFO] Auto-resuming from checkpoint...")
             # Checkpoint data will be used when creating bot
     except Exception as e:
-        print(f"[WARNING] Checkpoint manager not available: {e}")
+        logger.warning(f"[WARNING] Checkpoint manager not available: {e}")
         checkpoint_manager = None
 
     # 2. Run on local machine for continuous training
-    print("\n[STEP 2] ? Initializing Continuous Training Loop...")
-    print("=" * 70)
+    logger.info("\n[STEP 2] ? Initializing Continuous Training Loop...")
+    logger.info("=" * 70)
 
     # Start Local Monitoring Server
     local_server_manager = None
@@ -176,25 +179,25 @@ def main():
         from monitoring.server_manager import start_local_monitoring
         local_server_manager = start_local_monitoring(background=True)
         if local_server_manager:
-            print("[OK] Local monitoring server started")
-            print(f"     Server URL: {local_server_manager.get_server_url()}")
-            print(f"     Mobile/Web Access: Available")
-            print(f"     Web UI: {local_server_manager.get_server_url()}/ui")
-            print(
+            logger.info("[OK] Local monitoring server started")
+            logger.info(f"     Server URL: {local_server_manager.get_server_url()}")
+            logger.info(f"     Mobile/Web Access: Available")
+            logger.info(f"     Web UI: {local_server_manager.get_server_url()}/ui")
+            logger.info(
                 f"     API Docs: {local_server_manager.get_server_url()}/docs")
         else:
-            print("[WARNING] Failed to start local monitoring server")
+            logger.warning("[WARNING] Failed to start local monitoring server")
     except Exception as e:
-        print(f"[WARNING] Monitoring server not available: {e}")
-        print("[INFO] Continuing without monitoring server...")
+        logger.warning(f"[WARNING] Monitoring server not available: {e}")
+        logger.info("[INFO] Continuing without monitoring server...")
 
     # Initialize Training Session Manager
     try:
         from tools.training_session_manager import TrainingSessionManager
         session_manager = TrainingSessionManager()
-        print("[OK] Training session manager initialized")
+        logger.info("[OK] Training session manager initialized")
     except ImportError as e:
-        print(f"[WARNING] Training session manager not available: {e}")
+        logger.warning(f"[WARNING] Training session manager not available: {e}")
         session_manager = None
 
     # Initialize Background Parallel Learner (NEW: Experience Replay System)
@@ -207,26 +210,26 @@ def main():
             enable_model_training=True  # 경험 데이터 기반 학습 활성화
         )
         background_learner.start()
-        print("[OK] Background parallel learner initialized and started")
-        print("[INFO] Experience replay training will run in background")
-        print(f"[INFO] Monitoring directory: {background_learner.data_dir}")
+        logger.info("[OK] Background parallel learner initialized and started")
+        logger.info("[INFO] Experience replay training will run in background")
+        logger.info(f"[INFO] Monitoring directory: {background_learner.data_dir}")
     except ImportError as e:
-        print(f"[WARNING] Background parallel learner not available: {e}")
+        logger.warning(f"[WARNING] Background parallel learner not available: {e}")
     except Exception as e:
-        print(f"[WARNING] Failed to start background learner: {e}")
+        logger.warning(f"[WARNING] Failed to start background learner: {e}")
 
     # Initialize Auto Replay Learner (NEW: Learn from pro replays)
     auto_replay_learner = None
     try:
         from tools.auto_replay_learner import AutoReplayLearner
         auto_replay_learner = AutoReplayLearner()
-        print("[OK] Auto replay learner initialized")
-        print("[INFO] Will automatically download and learn from pro replays")
-        print(f"[INFO] Replay learning every 10 games")
+        logger.info("[OK] Auto replay learner initialized")
+        logger.info("[INFO] Will automatically download and learn from pro replays")
+        logger.info(f"[INFO] Replay learning every 10 games")
     except ImportError as e:
-        print(f"[WARNING] Auto replay learner not available: {e}")
+        logger.warning(f"[WARNING] Auto replay learner not available: {e}")
     except Exception as e:
-        print(f"[WARNING] Failed to initialize auto replay learner: {e}")
+        logger.warning(f"[WARNING] Failed to initialize auto replay learner: {e}")
 
     game_count = 0
     max_consecutive_failures = 5
@@ -245,15 +248,15 @@ def main():
     # Progression: Easy -> Medium -> Hard -> VeryHard (gradual increase)
     difficulties = [Difficulty.Easy, Difficulty.Medium]  # Changed from Hard/VeryHard
 
-    print(f"[INFO] Available maps: {len(available_maps)} maps")
-    print(f"[INFO] Available opponent races: {len(opponent_races)} races")
-    print(f"[INFO] Available difficulties: {len(difficulties)} levels")
-    print()
-    print("[OK] Continuous training loop initialized")
-    print("[INFO] Game windows will open - you can watch the games in real-time!")
-    print("[INFO] Neural network is learning from your gameplay...")
-    print("=" * 70)
-    print()
+    logger.info(f"[INFO] Available maps: {len(available_maps)} maps")
+    logger.info(f"[INFO] Available opponent races: {len(opponent_races)} races")
+    logger.info(f"[INFO] Available difficulties: {len(difficulties)} levels")
+    logger.info()
+    logger.info("[OK] Continuous training loop initialized")
+    logger.info("[INFO] Game windows will open - you can watch the games in real-time!")
+    logger.info("[INFO] Neural network is learning from your gameplay...")
+    logger.info("=" * 70)
+    logger.info()
 
     # Parse max games from arguments
     max_games = float('inf')
@@ -261,9 +264,9 @@ def main():
         if arg == "--max_games":
             try:
                 max_games = int(sys.argv[i+1])
-                print(f"[CONFIG] Max games set to: {max_games}")
+                logger.info(f"[CONFIG] Max games set to: {max_games}")
             except (IndexError, ValueError) as e:
-                print(f"[WARNING] Invalid --max_games argument: {e}")
+                logger.warning(f"[WARNING] Invalid --max_games argument: {e}")
     
     # Parse learning rate from arguments
     learning_rate = None
@@ -271,9 +274,9 @@ def main():
         if arg == "--learning_rate" or arg == "--lr":
             try:
                 learning_rate = float(sys.argv[i+1])
-                print(f"[CONFIG] Learning Rate manually set to: {learning_rate}")
+                logger.info(f"[CONFIG] Learning Rate manually set to: {learning_rate}")
             except (IndexError, ValueError) as e:
-                print(f"[WARNING] Invalid --learning_rate argument: {e}")
+                logger.warning(f"[WARNING] Invalid --learning_rate argument: {e}")
 
     # Parse opponent race filter (--race zerg/protoss/terran/all)
     opponent_race_filter = None
@@ -283,20 +286,20 @@ def main():
                 race_str = sys.argv[i+1].lower()
                 if race_str == "zerg":
                     opponent_race_filter = [Race.Zerg]
-                    print(f"[CONFIG] Opponent race filter: Zerg only (ZvZ)")
+                    logger.info(f"[CONFIG] Opponent race filter: Zerg only (ZvZ)")
                 elif race_str == "protoss":
                     opponent_race_filter = [Race.Protoss]
-                    print(f"[CONFIG] Opponent race filter: Protoss only (ZvP)")
+                    logger.info(f"[CONFIG] Opponent race filter: Protoss only (ZvP)")
                 elif race_str == "terran":
                     opponent_race_filter = [Race.Terran]
-                    print(f"[CONFIG] Opponent race filter: Terran only (ZvT)")
+                    logger.info(f"[CONFIG] Opponent race filter: Terran only (ZvT)")
                 elif race_str == "all":
                     opponent_race_filter = None
-                    print(f"[CONFIG] Opponent race filter: All races")
+                    logger.info(f"[CONFIG] Opponent race filter: All races")
                 else:
-                    print(f"[WARNING] Unknown race '{race_str}'. Using all races.")
+                    logger.warning(f"[WARNING] Unknown race '{race_str}'. Using all races.")
             except (IndexError, ValueError) as e:
-                print(f"[WARNING] Invalid --race argument: {e}")
+                logger.warning(f"[WARNING] Invalid --race argument: {e}")
 
     # Parse personality (--personality serral/maru/dark/silent)
     personality_setting = "serral"  # Default
@@ -304,30 +307,30 @@ def main():
         if arg == "--personality":
             try:
                 personality_setting = sys.argv[i+1].lower()
-                print(f"[CONFIG] Bot Personality set to: {personality_setting}")
+                logger.info(f"[CONFIG] Bot Personality set to: {personality_setting}")
             except IndexError:
-                print(f"[WARNING] Missing value for --personality")
+                logger.warning(f"[WARNING] Missing value for --personality")
 
     while True:
         try:
             if game_count >= max_games:
-                 print(f"\n[INFO] Reached maximum number of games ({max_games}). Stopping training.")
+                 logger.info(f"\n[INFO] Reached maximum number of games ({max_games}). Stopping training.")
                  break
 
             game_count += 1
 
             if consecutive_failures > 0:
-                print(
+                logger.info(
                     f"\n??  [RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}")
                 if consecutive_failures >= max_consecutive_failures:
-                    print(
+                    logger.error(
                         f"? [ERROR] Too many consecutive failures ({consecutive_failures}). Stopping training.")
                     break
 
  # [STEP 3] Select random map, opponent race, and adaptive difficulty
-            print(f"\n{'='*70}")
-            print(f"? [STEP 3] GAME #{game_count} - Random Selection")
-            print("=" * 70)
+            logger.info(f"\n{'='*70}")
+            logger.info(f"? [STEP 3] GAME #{game_count} - Random Selection")
+            logger.info("=" * 70)
 
             # IMPROVED: Random Map Selection with Retry
             # Try up to 3 times to find a valid map
@@ -361,13 +364,13 @@ def main():
                 if not hasattr(main, "race_bag") or not main.race_bag:
                     main.race_bag = list(opponent_race_filter)
                     random.shuffle(main.race_bag)
-                    print(f"[RACE_LOGIC] Filtered race bag: {[r.name for r in main.race_bag]}")
+                    logger.info(f"[RACE_LOGIC] Filtered race bag: {[r.name for r in main.race_bag]}")
             else:
                 # Default: all races
                 if not hasattr(main, "race_bag") or not main.race_bag:
                     main.race_bag = [Race.Terran, Race.Protoss, Race.Zerg]
                     random.shuffle(main.race_bag)
-                    print(f"[RACE_LOGIC] Refilled race bag: {[r.name for r in main.race_bag]}")
+                    logger.info(f"[RACE_LOGIC] Refilled race bag: {[r.name for r in main.race_bag]}")
 
             # Pick from bag
             opponent_race = main.race_bag.pop()
@@ -387,20 +390,20 @@ def main():
                 else:
                     # Fallback to random choice from difficulties list
                     difficulty = random.choice(difficulties)
-                print(
+                logger.info(
                     f"[ADAPTIVE] Recommended difficulty: {recommended_difficulty_str} "
                     f"(based on {session_manager.session_stats.win_rate:.1f}% win rate)")
             else:
                 # No session manager: use random choice from difficulties list (Easy/Medium)
                 difficulty = random.choice(difficulties)
 
-            print(f"[SELECTED] Map: {map_name}")
-            print(f"[SELECTED] Opponent Race: {opponent_race.name}")
-            print(f"[SELECTED] Difficulty: {difficulty.name}")
-            print()
-            print("[INFO] Starting game...")
-            print("=" * 70)
-            print()
+            logger.info(f"[SELECTED] Map: {map_name}")
+            logger.info(f"[SELECTED] Opponent Race: {opponent_race.name}")
+            logger.info(f"[SELECTED] Difficulty: {difficulty.name}")
+            logger.info()
+            logger.info("[INFO] Starting game...")
+            logger.info("=" * 70)
+            logger.info()
 
             # Create new bot instance for each game
             bot = create_bot_with_training(learning_rate=learning_rate, personality=personality_setting)
@@ -413,13 +416,13 @@ def main():
             try:
                 map_instance = maps.get(map_name)
                 if map_instance is None:
-                    print(
+                    logger.info(
                         f"[WARNING] Map '{map_name}' not found, using default: AbyssalReefLE")
                     map_name = "AbyssalReefLE"
                     map_instance = maps.get(map_name)
 
                 if map_instance is None:
-                    print(f"[ERROR] Default map not found. Skipping this game.")
+                    logger.error(f"[ERROR] Default map not found. Skipping this game.")
                     consecutive_failures += 1
                     time.sleep(5)
                     continue
@@ -466,7 +469,7 @@ def main():
                         loss_reason = result.get("loss_reason")
                         parameters_updated = result.get(
                             "parameters_updated", 0)
-                        print(
+                        logger.info(
                             f"[INFO] Retrieved training result: {game_result_str}, "
                             f"Time: {game_time:.1f}s, Score: {build_order_score}, "
                             f"Params: {parameters_updated}")
@@ -476,13 +479,13 @@ def main():
                             game_result_str = str(bot.ai.last_result)
                         if hasattr(bot.ai, 'time'):
                             game_time = float(bot.ai.time)
-                        print(
+                        logger.info(
                             f"[WARNING] _training_result not found, using fallback values")
 
                 # Record game result in session manager
                 if session_manager:
                     try:
-                        print(f"[TRAINING] Recording game result: Game #{game_count}, Result: {game_result_str}, Time: {game_time:.1f}s")
+                        logger.info(f"[TRAINING] Recording game result: Game #{game_count}, Result: {game_result_str}, Time: {game_time:.1f}s")
                         session_manager.record_game_result(
                             game_id=game_count,
                             map_name=map_name,
@@ -494,28 +497,28 @@ def main():
                             loss_reason=loss_reason,
                             parameters_updated=parameters_updated
                         )
-                        print(f"[TRAINING] Game result recorded successfully")
+                        logger.info(f"[TRAINING] Game result recorded successfully")
                     except Exception as e:
-                        print(f"[ERROR] Failed to record game result: {e}")
+                        logger.error(f"[ERROR] Failed to record game result: {e}")
                         import traceback
                         traceback.print_exc()
 
-                print(f"\n{'='*70}")
-                print(f"? [GAME #{game_count}] COMPLETED SUCCESSFULLY")
-                print("=" * 70)
-                print("[INFO] Neural network model saved")
-                print(
+                logger.info(f"\n{'='*70}")
+                logger.info(f"? [GAME #{game_count}] COMPLETED SUCCESSFULLY")
+                logger.info("=" * 70)
+                logger.info("[INFO] Neural network model saved")
+                logger.info(
                     "[INFO] Build order comparison analysis will be displayed above")
-                print()
+                logger.info()
 
                 # IMPROVED: Longer wait time between games to ensure SC2 client
                 # fully closes
                 wait_between_games = 10  # Increased from 3 to 10 seconds
-                print(
+                logger.info(
                     f"[NEXT] Automatically starting next game in {wait_between_games} seconds...")
-                print(
+                logger.info(
                     f"[INFO] Waiting for SC2 client to fully close before next game")
-                print("=" * 70)
+                logger.info("=" * 70)
 
                 # IMPROVED: Check if SC2 processes are still running before
                 # next game
@@ -538,7 +541,7 @@ def main():
 
                         time.sleep(1)
                         # Force kill if still running (Windows only)
-                        print(f"[WARNING] SC2 process stuck. Forcing termination...")
+                        logger.warning(f"[WARNING] SC2 process stuck. Forcing termination...")
                         try:
                             import subprocess
                             if sys.platform == "win32":
@@ -563,26 +566,26 @@ def main():
                 # IMPROVED: Print background learning stats periodically
                 if background_learner and game_count % 5 == 0:
                     stats = background_learner.get_stats()
-                    print(f"\n{'='*70}")
-                    print("? [BACKGROUND LEARNING] STATISTICS")
-                    print("=" * 70)
-                    print(f"Experience Files Processed: {stats['files_processed']}")
-                    print(f"Batch Training Runs: {stats['batches_trained']}")
-                    print(f"Total Training Samples: {stats['total_samples']}")
-                    print(f"Average Loss: {stats['avg_loss']:.4f}")
-                    print(
+                    logger.info(f"\n{'='*70}")
+                    logger.info("? [BACKGROUND LEARNING] STATISTICS")
+                    logger.info("=" * 70)
+                    logger.info(f"Experience Files Processed: {stats['files_processed']}")
+                    logger.info(f"Batch Training Runs: {stats['batches_trained']}")
+                    logger.info(f"Total Training Samples: {stats['total_samples']}")
+                    logger.info(f"Average Loss: {stats['avg_loss']:.4f}")
+                    logger.info(
                         f"Total Processing Time: {stats['total_processing_time']:.2f}s")
-                    print(
+                    logger.info(
                         f"Active Workers: {stats['active_workers']}/{stats['max_workers']}")
-                    print(f"Errors: {stats['errors']}")
-                    print("=" * 70)
-                    print()
+                    logger.info(f"Errors: {stats['errors']}")
+                    logger.info("=" * 70)
+                    logger.info()
 
                 # ★ NEW: Auto Replay Learning (every 10 games) ★
                 if auto_replay_learner and game_count % 10 == 0:
-                    print(f"\n{'='*70}")
-                    print("🎮 [AUTO REPLAY LEARNING] Downloading and learning from pro replays...")
-                    print("=" * 70)
+                    logger.info(f"\n{'='*70}")
+                    logger.info("🎮 [AUTO REPLAY LEARNING] Downloading and learning from pro replays...")
+                    logger.info("=" * 70)
                     try:
                         # 3개 리플레이 다운로드, 각 5회 학습
                         auto_replay_learner.run_auto_learning_cycle(
@@ -590,28 +593,28 @@ def main():
                             learning_iterations=5,
                             min_mmr=4000
                         )
-                        print("[AUTO_REPLAY] [OK] Replay learning cycle completed")
+                        logger.info("[AUTO_REPLAY] [OK] Replay learning cycle completed")
                     except Exception as replay_error:
-                        print(f"[AUTO_REPLAY] [FAILED] Replay learning failed: {replay_error}")
+                        logger.info(f"[AUTO_REPLAY] [FAILED] Replay learning failed: {replay_error}")
                         import traceback
                         traceback.print_exc()
-                    print("=" * 70)
-                    print()
+                    logger.info("=" * 70)
+                    logger.info()
 
             except Exception as game_error:
                 consecutive_failures += 1
 
                 # ★ CRITICAL FIX: Save experience data even when game fails ★
-                print(f"\n[RECOVERY] Attempting to save experience data from failed game...")
+                logger.info(f"\n[RECOVERY] Attempting to save experience data from failed game...")
                 try:
                     if hasattr(bot, 'ai') and bot.ai and hasattr(bot.ai, 'rl_agent') and bot.ai.rl_agent:
                         # Try to save whatever experience data was collected before failure
                         bot.ai.rl_agent.end_episode(final_reward=-10.0, save_experience=True)
-                        print(f"[RECOVERY] [OK] Successfully saved experience data from failed game #{game_count}")
+                        logger.info(f"[RECOVERY] [OK] Successfully saved experience data from failed game #{game_count}")
                     else:
-                        print(f"[RECOVERY] [FAILED] No RLAgent found - cannot save experience data")
+                        logger.info(f"[RECOVERY] [FAILED] No RLAgent found - cannot save experience data")
                 except Exception as save_error:
-                    print(f"[RECOVERY] [FAILED] Failed to save experience data: {save_error}")
+                    logger.info(f"[RECOVERY] [FAILED] Failed to save experience data: {save_error}")
                     import traceback
                     traceback.print_exc()
 
@@ -632,22 +635,22 @@ def main():
 
                 if is_connection_error:
                     wait_time = 15  # Longer wait for connection errors
-                    print(
+                    logger.error(
                         f"\n[ERROR] Game #{game_count} failed: Connection error")
-                    print(
+                    logger.error(
                         f"[ERROR] StarCraft II client connection was closed unexpectedly")
-                    print(f"[INFO] This usually happens when:")
-                    print(f"   - Previous game session didn't fully close")
-                    print(f"   - SC2 client crashed or was terminated")
-                    print(f"   - Network/WebSocket connection was interrupted")
-                    print(
+                    logger.info(f"[INFO] This usually happens when:")
+                    logger.info(f"   - Previous game session didn't fully close")
+                    logger.info(f"   - SC2 client crashed or was terminated")
+                    logger.info(f"   - Network/WebSocket connection was interrupted")
+                    logger.info(
                         f"[RETRY] Waiting {wait_time} seconds for SC2 client to fully close...")
-                    print(
+                    logger.info(
                         f"[INFO] Please ensure no SC2 game windows are still open")
                 else:
                     wait_time = 10  # Standard wait for other errors
-                    print(f"\n[ERROR] Game #{game_count} failed: {game_error}")
-                    print(f"[RETRY] Will retry after {wait_time} seconds...")
+                    logger.error(f"\n[ERROR] Game #{game_count} failed: {game_error}")
+                    logger.info(f"[RETRY] Will retry after {wait_time} seconds...")
 
                 import traceback
                 traceback.print_exc()
@@ -666,9 +669,9 @@ def main():
                             pass
 
                     if sc2_processes:
-                        print(
+                        logger.info(
                             f"[WARNING] Found {len(sc2_processes)} SC2 process(es) still running")
-                        print(
+                        logger.info(
                             f"[INFO] Waiting additional 5 seconds for processes to close...")
                         time.sleep(5)
                 except ImportError:
@@ -676,18 +679,18 @@ def main():
                     pass
                 except Exception as proc_error:
                     # Process check failed, continue anyway
-                    print(
+                    logger.info(
                         f"[WARNING] Could not check SC2 processes: {proc_error}")
 
                 continue
         except KeyboardInterrupt:
-            print("\n[STOP] Training stopped by user.")
+            logger.info("\n[STOP] Training stopped by user.")
             
             # ★ MANUAL FEEDBACK FOR INTERRUPTED GAME ★
             try:
-                print("\n" + "="*50)
-                print("MANUAL TERMINATION DETECTED")
-                print("="*50)
+                logger.info("\n" + "="*50)
+                logger.info("MANUAL TERMINATION DETECTED")
+                logger.info("="*50)
                 feedback = input("Did you stop the game to record a result? (y/n): ").strip().lower()
                 
                 if feedback == 'y':
@@ -713,13 +716,13 @@ def main():
                             loss_reason=f"Manual: {reason}",
                             parameters_updated=0
                         )
-                        print(f"[MANUAL] Recorded result: {game_result_str} ({reason})")
+                        logger.info(f"[MANUAL] Recorded result: {game_result_str} ({reason})")
             except Exception:
                 pass
 
             # Stop local monitoring server on interrupt
             if local_server_manager:
-                print("[INFO] Stopping local monitoring server...")
+                logger.info("[INFO] Stopping local monitoring server...")
                 local_server_manager.stop_server()
             break
         except Exception as e:
@@ -731,8 +734,8 @@ def main():
                 error_message = str(e)
                 session_manager.record_error(error_type, error_message)
 
-            print(f"\n[ERROR] Unexpected error in training loop: {e}")
-            print(f"[RETRY] Will retry after 5 seconds...")
+            logger.error(f"\n[ERROR] Unexpected error in training loop: {e}")
+            logger.info(f"[RETRY] Will retry after 5 seconds...")
             import traceback
             traceback.print_exc()
             time.sleep(5)
@@ -740,43 +743,43 @@ def main():
 
     # IMPROVED: Stop background learner before exiting
     if background_learner:
-        print("\n[INFO] Stopping background parallel learner...")
+        logger.info("\n[INFO] Stopping background parallel learner...")
         background_learner.stop()
         stats = background_learner.get_stats()
-        print(f"[BACKGROUND LEARNER] Final stats:")
-        print(f"  - Experience Files Processed: {stats['files_processed']}")
-        print(f"  - Batch Training Runs: {stats['batches_trained']}")
-        print(f"  - Total Training Samples: {stats['total_samples']}")
-        print(f"  - Average Loss: {stats['avg_loss']:.4f}")
-        print(
+        logger.info(f"[BACKGROUND LEARNER] Final stats:")
+        logger.info(f"  - Experience Files Processed: {stats['files_processed']}")
+        logger.info(f"  - Batch Training Runs: {stats['batches_trained']}")
+        logger.info(f"  - Total Training Samples: {stats['total_samples']}")
+        logger.info(f"  - Average Loss: {stats['avg_loss']:.4f}")
+        logger.info(
             f"  - Total Processing Time: {stats['total_processing_time']:.2f}s")
-        print(f"  - Errors: {stats['errors']}")
+        logger.info(f"  - Errors: {stats['errors']}")
 
     # Stop local monitoring server
     if local_server_manager:
-        print("\n[INFO] Stopping local monitoring server...")
+        logger.info("\n[INFO] Stopping local monitoring server...")
         local_server_manager.stop_server()
 
     # IMPROVED: Print final training summary
-    print()
-    print("=" * 70)
-    print("TRAINING STOPPED")
-    print("=" * 70)
-    print(f"Total games completed: {game_count}")
-    print("Model saved to: local_training/models/zerg_net_model.pt")
-    print("You can now use this trained model in future games!")
+    logger.info()
+    logger.info("=" * 70)
+    logger.info("TRAINING STOPPED")
+    logger.info("=" * 70)
+    logger.info(f"Total games completed: {game_count}")
+    logger.info("Model saved to: local_training/models/zerg_net_model.pt")
+    logger.info("You can now use this trained model in future games!")
 
     if session_manager:
-        print(session_manager.get_training_summary())
+        logger.info(session_manager.get_training_summary())
 
-    print("=" * 70)
+    logger.info("=" * 70)
 
     # ? NEW: Auto-extract and learn from training data after training ends
     # NOTE: Disabled due to missing TrainingDataExtractor module (2026-01-25)
     if False and game_count > 0:
-        print("\n" + "=" * 70)
-        print("AUTO-EXTRACTING AND LEARNING FROM TRAINING DATA")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("AUTO-EXTRACTING AND LEARNING FROM TRAINING DATA")
+        logger.info("=" * 70)
         try:
             # Import extractor module - add parent directory to path
             script_dir = Path(__file__).parent
@@ -789,18 +792,18 @@ def main():
             extractor = TrainingDataExtractor()
 
             # Extract data
-            print("\n[STEP 1] Extracting training data...")
+            logger.info("\n[STEP 1] Extracting training data...")
             training_data = extractor.extract_training_stats()
             comparisons = extractor.extract_build_order_comparisons()
             session_stats = extractor.extract_session_stats()
 
             if training_data or comparisons:
                 # Analyze data
-                print("\n[STEP 2] Analyzing training data...")
+                logger.info("\n[STEP 2] Analyzing training data...")
                 analysis = extractor.analyze_training_data(training_data)
 
                 # Learn from data
-                print("\n[STEP 3] Learning from training data...")
+                logger.info("\n[STEP 3] Learning from training data...")
                 learned_params = extractor.learn_from_training_data(
                     training_data,
                     comparisons,
@@ -808,7 +811,7 @@ def main():
                 )
 
                 # Save extracted data
-                print("\n[STEP 4] Saving extracted data...")
+                logger.info("\n[STEP 4] Saving extracted data...")
                 extractor.save_extracted_data(
                     training_data,
                     comparisons,
@@ -817,27 +820,27 @@ def main():
                 )
 
                 # Generate and print report
-                print("\n[STEP 5] Generating report...")
+                logger.info("\n[STEP 5] Generating report...")
                 report = extractor.generate_report(analysis, learned_params)
-                print("\n" + report)
+                logger.info("\n" + report)
 
                 # Save report
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 report_file = extractor.output_dir / f"report_{timestamp}.txt"
                 with open(report_file, 'w', encoding='utf-8') as f:
                     f.write(report)
-                print(f"\n[SAVED] Report: {report_file}")
+                logger.info(f"\n[SAVED] Report: {report_file}")
 
-                print("\n" + "=" * 70)
-                print("EXTRACTION AND LEARNING COMPLETE")
-                print("=" * 70)
+                logger.info("\n" + "=" * 70)
+                logger.info("EXTRACTION AND LEARNING COMPLETE")
+                logger.info("=" * 70)
             else:
-                print(
+                logger.info(
                     "[INFO] No training data found to extract. Skipping extraction.")
         except Exception as e:
-            print(
+            logger.info(
                 f"\n[WARNING] Failed to extract and learn from training data: {e}")
-            print(
+            logger.info(
                 "[INFO] You can manually run: python -m wicked_zerg_challenger.tools.extract_and_train_from_training")
             import traceback
             traceback.print_exc()

@@ -4,6 +4,7 @@
 종합 테스트 - 모든 난이도에서 승률 측정
 """
 
+import logging
 from sc2 import maps
 from sc2.player import Bot, Computer
 from sc2.main import run_game
@@ -14,6 +15,8 @@ import os
 import time
 import json
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_sc2_path():
@@ -36,7 +39,7 @@ def _ensure_sc2_path():
 
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
-            print(f"[SC2] Found via Registry: {install_path}")
+            logger.info(f"[SC2] Found via Registry: {install_path}")
             return
     except Exception:
         pass
@@ -49,25 +52,25 @@ def _ensure_sc2_path():
     for path in common_paths:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
-            print(f"[SC2] Using: {path}")
+            logger.info(f"[SC2] Using: {path}")
             return
 
 
 def run_single_game(difficulty, game_num, total_games):
     """Run a single game and return result."""
-    print("\n" + "=" * 70)
-    print(f"  GAME #{game_num}/{total_games} - {difficulty.name}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"  GAME #{game_num}/{total_games} - {difficulty.name}")
+    logger.info("=" * 70)
 
     # Settings
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
 
-    print(f"  Map: {map_name}")
-    print(f"  Opponent: {opponent_race.name}")
-    print(f"  Difficulty: {difficulty.name}")
-    print("=" * 70)
-    print()
+    logger.info(f"  Map: {map_name}")
+    logger.info(f"  Opponent: {opponent_race.name}")
+    logger.info(f"  Difficulty: {difficulty.name}")
+    logger.info("=" * 70)
+    logger.info()
 
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
@@ -76,7 +79,7 @@ def run_single_game(difficulty, game_num, total_games):
     try:
         map_instance = maps.get(map_name)
         if map_instance is None:
-            print(f"[ERROR] Map '{map_name}' not found!")
+            logger.error(f"[ERROR] Map '{map_name}' not found!")
             return None
 
         result = run_game(
@@ -89,14 +92,14 @@ def run_single_game(difficulty, game_num, total_games):
         if result is not None:
             # run_game returns Result directly, not a list
             is_victory = (result == Result.Victory)
-            print(f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}")
+            logger.info(f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}")
             return is_victory
         else:
-            print(f"\n[RESULT] Game #{game_num}: UNKNOWN")
+            logger.info(f"\n[RESULT] Game #{game_num}: UNKNOWN")
             return None
 
     except Exception as e:
-        print(f"[ERROR] Game #{game_num} failed: {e}")
+        logger.error(f"[ERROR] Game #{game_num} failed: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -108,13 +111,13 @@ def test_difficulty(difficulty, games_per_difficulty=20):
     losses = 0
     errors = 0
 
-    print("\n" + "=" * 70)
-    print(f"  TESTING {difficulty.name} DIFFICULTY")
-    print("=" * 70)
-    print(f"  Target Games: {games_per_difficulty}")
-    print(f"  Target Win Rate: 90%+")
-    print("=" * 70)
-    print()
+    logger.info("\n" + "=" * 70)
+    logger.info(f"  TESTING {difficulty.name} DIFFICULTY")
+    logger.info("=" * 70)
+    logger.info(f"  Target Games: {games_per_difficulty}")
+    logger.info(f"  Target Win Rate: 90%+")
+    logger.info("=" * 70)
+    logger.info()
 
     start_time = time.time()
 
@@ -137,13 +140,13 @@ def test_difficulty(difficulty, games_per_difficulty=20):
         total_completed = wins + losses
         win_rate = (wins / total_completed * 100) if total_completed > 0 else 0
 
-        print("\n" + "-" * 70)
-        print(f"  Game Duration: {game_duration:.1f}s")
-        print(f"  Current Score: {wins}W - {losses}L - {errors}E")
-        print(f"  Win Rate: {win_rate:.1f}%")
-        print(f"  Total Time: {total_duration/60:.1f} min")
-        print("-" * 70)
-        print()
+        logger.info("\n" + "-" * 70)
+        logger.info(f"  Game Duration: {game_duration:.1f}s")
+        logger.info(f"  Current Score: {wins}W - {losses}L - {errors}E")
+        logger.info(f"  Win Rate: {win_rate:.1f}%")
+        logger.info(f"  Total Time: {total_duration/60:.1f} min")
+        logger.info("-" * 70)
+        logger.info()
 
         # Short delay between games
         time.sleep(1)
@@ -177,15 +180,15 @@ def main():
         (Difficulty.CheatVision, 20),  # Cheater difficulty
     ]
 
-    print("\n" + "=" * 70)
-    print("  COMPREHENSIVE WIN RATE TEST")
-    print("=" * 70)
-    print(f"  Total Difficulties: {len(difficulties_to_test)}")
-    print(f"  Games per Difficulty: 20")
-    print(f"  Total Games: {sum(count for _, count in difficulties_to_test)}")
-    print(f"  Target: 90%+ win rate on all difficulties")
-    print("=" * 70)
-    print()
+    logger.info("\n" + "=" * 70)
+    logger.info("  COMPREHENSIVE WIN RATE TEST")
+    logger.info("=" * 70)
+    logger.info(f"  Total Difficulties: {len(difficulties_to_test)}")
+    logger.info(f"  Games per Difficulty: 20")
+    logger.info(f"  Total Games: {sum(count for _, count in difficulties_to_test)}")
+    logger.info(f"  Target: 90%+ win rate on all difficulties")
+    logger.info("=" * 70)
+    logger.info()
 
     overall_start = time.time()
     results = []
@@ -195,22 +198,22 @@ def main():
         results.append(result)
 
         # Print summary
-        print("\n" + "=" * 70)
-        print(f"  {difficulty.name} COMPLETE")
-        print("=" * 70)
-        print(f"  Win Rate: {result['win_rate']:.1f}%")
-        print(f"  Score: {result['wins']}W - {result['losses']}L")
-        print(f"  Status: {'PASS' if result['win_rate'] >= 90 else 'FAIL'}")
-        print("=" * 70)
-        print()
+        logger.info("\n" + "=" * 70)
+        logger.info(f"  {difficulty.name} COMPLETE")
+        logger.info("=" * 70)
+        logger.info(f"  Win Rate: {result['win_rate']:.1f}%")
+        logger.info(f"  Score: {result['wins']}W - {result['losses']}L")
+        logger.info(f"  Status: {'PASS' if result['win_rate'] >= 90 else 'FAIL'}")
+        logger.info("=" * 70)
+        logger.info()
 
     overall_duration = time.time() - overall_start
 
     # Final report
-    print("\n" + "=" * 70)
-    print("  FINAL REPORT")
-    print("=" * 70)
-    print()
+    logger.info("\n" + "=" * 70)
+    logger.info("  FINAL REPORT")
+    logger.info("=" * 70)
+    logger.info()
 
     total_wins = sum(r['wins'] for r in results)
     total_games = sum(r['total_games'] for r in results)
@@ -218,12 +221,12 @@ def main():
 
     for result in results:
         status = "PASS" if result['win_rate'] >= 90 else "FAIL"
-        print(f"  {result['difficulty']:12} | {result['win_rate']:5.1f}% | {result['wins']:2}W-{result['losses']:2}L | {status}")
+        logger.info(f"  {result['difficulty']:12} | {result['win_rate']:5.1f}% | {result['wins']:2}W-{result['losses']:2}L | {status}")
 
-    print("-" * 70)
-    print(f"  Overall Win Rate: {overall_win_rate:.1f}%")
-    print(f"  Total Time: {overall_duration/60:.1f} minutes")
-    print("=" * 70)
+    logger.info("-" * 70)
+    logger.info(f"  Overall Win Rate: {overall_win_rate:.1f}%")
+    logger.info(f"  Total Time: {overall_duration/60:.1f} minutes")
+    logger.info("=" * 70)
 
     # Save results to JSON
     report = {
@@ -239,14 +242,14 @@ def main():
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
-    print(f"\n[SAVED] Results saved to: {report_file}")
+    logger.info(f"\n[SAVED] Results saved to: {report_file}")
 
     # Check if target achieved
     passed_all = all(r['win_rate'] >= 90 for r in results)
     if passed_all:
-        print("\n[SUCCESS] All difficulties passed with 90%+ win rate!")
+        logger.info("\n[SUCCESS] All difficulties passed with 90%+ win rate!")
     else:
-        print("\n[INCOMPLETE] Some difficulties did not reach 90% win rate.")
+        logger.info("\n[INCOMPLETE] Some difficulties did not reach 90% win rate.")
 
 
 if __name__ == "__main__":
