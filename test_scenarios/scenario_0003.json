@@ -1,0 +1,40 @@
+{
+  "id": "scenario_0003",
+  "config": {
+    "name": "Mutalisk Harassment",
+    "description": "Harass enemy economy with mutalisks",
+    "scenario_type": "harassment",
+    "player_units": [
+      {
+        "unit_type": "Mutalisk",
+        "count": 12,
+        "upgrades": [],
+        "position": "default"
+      }
+    ],
+    "enemy_units": [
+      {
+        "unit_type": "Probe",
+        "count": 20,
+        "upgrades": [],
+        "position": "default"
+      },
+      {
+        "unit_type": "Pylon",
+        "count": 3,
+        "upgrades": [],
+        "position": "default"
+      }
+    ],
+    "map_name": "AI Arena",
+    "difficulty": 2,
+    "time_limit_seconds": 600,
+    "win_conditions": {},
+    "metadata": {}
+  },
+  "created_at": "2026-04-05T22:28:07.696461",
+  "updated_at": "2026-04-05T22:28:07.696461",
+  "version": "1.0",
+  "enabled": true,
+  "tags": []
+}

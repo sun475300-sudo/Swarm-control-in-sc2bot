@@ -1136,7 +1136,7 @@ class SecretManager:
                 self._cache[name] = self._decrypt_value(encrypted)
                 self._cache_timestamps[name] = time.time()
             except Exception as e:
-                logger.warning(f"SecretManager: failed to decrypt secret '{name}': {e}")
+                logger.warning(f"SecretManager: failed to decrypt secret: {type(e).__name__}")
         logger.info(f"SecretManager: 캐시 갱신 완료 ({len(self._cache)}개)")
 
     def set_cache_ttl(self, ttl_seconds: int):
@@ -1227,7 +1227,7 @@ def initialize_security():
     results.append(f"#160 (시크릿 매니저): ✓ 캐시 TTL {secret_manager._cache_ttl}초")
 
     report = "\n".join(results)
-    logger.info(f"5중 보안 체계 초기화 완료 (강화):\n{report}")
+    logger.info("5중 보안 체계 초기화 완료 (강화): %d개 항목 확인", len(results))
     return report
 
 
@@ -1299,8 +1299,8 @@ def install_pre_commit_hook():
         hook_path.rename(backup)
 
     hook_content = _generate_hook_content()
-    with open(hook_path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(hook_content)
+    with open(hook_path, 'w', encoding='utf-8', newline='\n') as f:  # noqa: S108
+        f.write(hook_content)  # pre-commit hook script, not sensitive data
 
     if sys.platform != "win32":
         os.chmod(hook_path, 0o755)

@@ -22,9 +22,23 @@ else:
         Units = object
         Unit = object
         Point2 = tuple
-        UnitTypeId = None
+        class UnitTypeId:
+            ZERGLING = "ZERGLING"
+            BANELING = "BANELING"
+            ROACH = "ROACH"
+            RAVAGER = "RAVAGER"
+            HYDRALISK = "HYDRALISK"
+            LURKERMP = "LURKERMP"
+            MUTALISK = "MUTALISK"
+            CORRUPTOR = "CORRUPTOR"
+            ULTRALISK = "ULTRALISK"
+            BROODLORD = "BROODLORD"
+            INFESTOR = "INFESTOR"
+            VIPER = "VIPER"
+            QUEEN = "QUEEN"
 
 from utils.logger import get_logger
+from utils.frame_cache import FrameCache, cached_per_frame
 from combat.initialization import initialize_combat_state, initialize_managers, reset_combat_state
 from combat.enemy_tracking import (
     track_enemy_expansions, get_anti_air_threats, find_densest_enemy_position,
@@ -73,6 +87,7 @@ class CombatManager:
     def __init__(self, bot):
         """전투 매니저 초기화"""
         self.bot = bot
+        self._frame_cache = FrameCache()  # BurnySc2-style per-frame cache
 
         # Initialize combat state and managers using extracted modules
         initialize_combat_state(self)
@@ -100,6 +115,9 @@ class CombatManager:
             iteration: 현재 게임 반복 횟수
         """
         try:
+            # BurnySc2: Clear per-frame cache at start of each step
+            self._frame_cache.clear_if_new_frame(iteration)
+
             # ★ Phase 17: 긴급 상황 체크 (매 3프레임마다) ★
             if iteration - self._last_emergency_check >= 3:
                 self._combat_is_emergency = self._check_emergency_situation()
@@ -1296,6 +1314,8 @@ class CombatManager:
                     start_idx = group_idx * group_size
                     end_idx = start_idx + group_size if group_idx < num_groups - 1 else len(army_units)
                     group_units = army_units[start_idx:end_idx]
+                    if group_idx >= len(attack_targets):
+                        break
                     target = attack_targets[group_idx]
 
                     for unit in group_units:

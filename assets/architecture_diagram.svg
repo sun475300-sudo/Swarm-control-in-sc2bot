@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" font-family="Consolas, monospace" font-size="12">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="620" fill="url(#bg)" rx="12"/>
+
+  <!-- Title -->
+  <text x="450" y="35" fill="#58a6ff" font-size="18" font-weight="bold" text-anchor="middle">Wicked Zerg Challenger - System Architecture</text>
+
+  <!-- Client Layer -->
+  <rect x="20" y="55" width="860" height="65" rx="8" fill="none" stroke="#30363d" stroke-width="1.5"/>
+  <text x="40" y="75" fill="#8b949e" font-size="10">CLIENT LAYER</text>
+  <rect x="40" y="82" width="120" height="28" rx="5" fill="#1f2937" stroke="#06b6d4" stroke-width="1"/>
+  <text x="100" y="100" fill="#06b6d4" text-anchor="middle" font-size="10">SC2 Dashboard</text>
+  <rect x="180" y="82" width="120" height="28" rx="5" fill="#1f2937" stroke="#06b6d4" stroke-width="1"/>
+  <text x="240" y="100" fill="#06b6d4" text-anchor="middle" font-size="10">Mobile PWA</text>
+  <rect x="320" y="82" width="120" height="28" rx="5" fill="#1f2937" stroke="#06b6d4" stroke-width="1"/>
+  <text x="380" y="100" fill="#06b6d4" text-anchor="middle" font-size="10">Discord Bot</text>
+  <rect x="460" y="82" width="120" height="28" rx="5" fill="#1f2937" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="520" y="100" fill="#8b5cf6" text-anchor="middle" font-size="10">Claude Proxy</text>
+  <rect x="600" y="82" width="130" height="28" rx="5" fill="#1f2937" stroke="#06b6d4" stroke-width="1"/>
+  <text x="665" y="100" fill="#06b6d4" text-anchor="middle" font-size="10">Ladder Engine</text>
+  <rect x="750" y="82" width="110" height="28" rx="5" fill="#1f2937" stroke="#06b6d4" stroke-width="1"/>
+  <text x="805" y="100" fill="#06b6d4" text-anchor="middle" font-size="10">Crypto Service</text>
+
+  <!-- Bot Core -->
+  <rect x="20" y="140" width="860" height="200" rx="8" fill="none" stroke="#f0883e" stroke-width="1.5"/>
+  <text x="40" y="160" fill="#f0883e" font-size="11" font-weight="bold">BOT CORE - WickedZergBotProImpl (burnysc2)</text>
+
+  <!-- Managers Row 1 -->
+  <rect x="40" y="170" width="130" height="35" rx="5" fill="#1c2333" stroke="#f97316" stroke-width="1"/>
+  <text x="105" y="192" fill="#f97316" text-anchor="middle" font-size="10">Strategy Manager</text>
+  <rect x="185" y="170" width="130" height="35" rx="5" fill="#1c2333" stroke="#ef4444" stroke-width="1"/>
+  <text x="250" y="192" fill="#ef4444" text-anchor="middle" font-size="10">Combat Manager</text>
+  <rect x="330" y="170" width="130" height="35" rx="5" fill="#1c2333" stroke="#22c55e" stroke-width="1"/>
+  <text x="395" y="192" fill="#22c55e" text-anchor="middle" font-size="10">Economy Manager</text>
+  <rect x="475" y="170" width="130" height="35" rx="5" fill="#1c2333" stroke="#a855f7" stroke-width="1"/>
+  <text x="540" y="192" fill="#a855f7" text-anchor="middle" font-size="10">Queen Manager</text>
+  <rect x="620" y="170" width="130" height="35" rx="5" fill="#1c2333" stroke="#14b8a6" stroke-width="1"/>
+  <text x="685" y="192" fill="#14b8a6" text-anchor="middle" font-size="10">Creep Manager</text>
+  <rect x="765" y="170" width="100" height="35" rx="5" fill="#1c2333" stroke="#eab308" stroke-width="1"/>
+  <text x="815" y="192" fill="#eab308" text-anchor="middle" font-size="10">Intel Manager</text>
+
+  <!-- Managers Row 2 -->
+  <rect x="40" y="215" width="160" height="35" rx="5" fill="#1c2333" stroke="#ec4899" stroke-width="1"/>
+  <text x="120" y="237" fill="#ec4899" text-anchor="middle" font-size="10">Opponent Modeling</text>
+  <rect x="215" y="215" width="160" height="35" rx="5" fill="#1c2333" stroke="#06b6d4" stroke-width="1"/>
+  <text x="295" y="237" fill="#06b6d4" text-anchor="middle" font-size="10">Realtime Awareness</text>
+  <rect x="390" y="215" width="140" height="35" rx="5" fill="#1c2333" stroke="#84cc16" stroke-width="1"/>
+  <text x="460" y="237" fill="#84cc16" text-anchor="middle" font-size="10">Build Order System</text>
+  <rect x="545" y="215" width="140" height="35" rx="5" fill="#1c2333" stroke="#f59e0b" stroke-width="1"/>
+  <text x="615" y="237" fill="#f59e0b" text-anchor="middle" font-size="10">Active Scouting</text>
+  <rect x="700" y="215" width="165" height="35" rx="5" fill="#1c2333" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="782" y="237" fill="#8b5cf6" text-anchor="middle" font-size="10">NN Prediction Engine</text>
+
+  <!-- Combat subsystems -->
+  <rect x="40" y="260" width="825" height="35" rx="5" fill="#1c2333" stroke="#ef4444" stroke-width="0.8" stroke-dasharray="4"/>
+  <text x="55" y="282" fill="#8b949e" font-size="9">Combat:</text>
+  <text x="110" y="282" fill="#fb7185" font-size="9">Targeting</text>
+  <text x="175" y="282" fill="#fb7185" font-size="9">Boids Swarm</text>
+  <text x="260" y="282" fill="#fb7185" font-size="9">Formation</text>
+  <text x="335" y="282" fill="#fb7185" font-size="9">Viper Tactics</text>
+  <text x="425" y="282" fill="#fb7185" font-size="9">Micro Controller</text>
+  <text x="535" y="282" fill="#fb7185" font-size="9">Baneling AI</text>
+  <text x="620" y="282" fill="#fb7185" font-size="9">Lurker Siege</text>
+  <text x="710" y="282" fill="#fb7185" font-size="9">Nydus</text>
+  <text x="760" y="282" fill="#fb7185" font-size="9">Drop Harass</text>
+
+  <!-- Shared -->
+  <rect x="40" y="305" width="825" height="25" rx="5" fill="#1c2333" stroke="#30363d" stroke-width="0.8"/>
+  <text x="55" y="322" fill="#8b949e" font-size="9">Shared:</text>
+  <text x="105" y="322" fill="#7dd3fc" font-size="9">Blackboard</text>
+  <text x="180" y="322" fill="#7dd3fc" font-size="9">FrameCache</text>
+  <text x="260" y="322" fill="#7dd3fc" font-size="9">UnitHelpers</text>
+  <text x="345" y="322" fill="#7dd3fc" font-size="9">EconomyCombatBalancer</text>
+  <text x="500" y="322" fill="#7dd3fc" font-size="9">DifficultyProgression</text>
+  <text x="650" y="322" fill="#7dd3fc" font-size="9">ManagerFactory</text>
+
+  <!-- Infrastructure Layer -->
+  <rect x="20" y="355" width="860" height="80" rx="8" fill="none" stroke="#30363d" stroke-width="1.5"/>
+  <text x="40" y="375" fill="#8b949e" font-size="10">INFRASTRUCTURE</text>
+  <rect x="40" y="385" width="100" height="35" rx="5" fill="#1f2937" stroke="#3b82f6" stroke-width="1"/>
+  <text x="90" y="407" fill="#3b82f6" text-anchor="middle" font-size="10">Docker</text>
+  <rect x="155" y="385" width="100" height="35" rx="5" fill="#1f2937" stroke="#3b82f6" stroke-width="1"/>
+  <text x="205" y="407" fill="#3b82f6" text-anchor="middle" font-size="10">gRPC</text>
+  <rect x="270" y="385" width="100" height="35" rx="5" fill="#1f2937" stroke="#3b82f6" stroke-width="1"/>
+  <text x="320" y="407" fill="#3b82f6" text-anchor="middle" font-size="10">PostgreSQL</text>
+  <rect x="385" y="385" width="100" height="35" rx="5" fill="#1f2937" stroke="#3b82f6" stroke-width="1"/>
+  <text x="435" y="407" fill="#3b82f6" text-anchor="middle" font-size="10">Redis</text>
+  <rect x="500" y="385" width="100" height="35" rx="5" fill="#1f2937" stroke="#3b82f6" stroke-width="1"/>
+  <text x="550" y="407" fill="#3b82f6" text-anchor="middle" font-size="10">Prometheus</text>
+  <rect x="615" y="385" width="100" height="35" rx="5" fill="#1f2937" stroke="#3b82f6" stroke-width="1"/>
+  <text x="665" y="407" fill="#3b82f6" text-anchor="middle" font-size="10">Grafana</text>
+  <rect x="730" y="385" width="135" height="35" rx="5" fill="#1f2937" stroke="#f97316" stroke-width="1"/>
+  <text x="797" y="407" fill="#f97316" text-anchor="middle" font-size="10">Rust PyO3 Accel</text>
+
+  <!-- BurnySc2 Patterns -->
+  <rect x="20" y="450" width="860" height="65" rx="8" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="6"/>
+  <text x="40" y="470" fill="#22c55e" font-size="10" font-weight="bold">BURNYSC2 PATTERNS APPLIED</text>
+  <text x="40" y="498" fill="#86efac" font-size="9">CreepyBot Creep Spread</text>
+  <text x="200" y="498" fill="#86efac" font-size="9">Transfusion Priority</text>
+  <text x="345" y="498" fill="#86efac" font-size="9">DPS-based Targeting</text>
+  <text x="500" y="498" fill="#86efac" font-size="9">Dynamic Overlord Formula</text>
+  <text x="680" y="498" fill="#86efac" font-size="9">Viper Spell Priority</text>
+
+  <!-- Test Stats -->
+  <rect x="20" y="530" width="860" height="75" rx="8" fill="#0d1f0d" stroke="#22c55e" stroke-width="1"/>
+  <text x="450" y="555" fill="#22c55e" font-size="14" font-weight="bold" text-anchor="middle">Test Results</text>
+  <text x="150" y="580" fill="#86efac" font-size="12" text-anchor="middle">404 Tests</text>
+  <text x="350" y="580" fill="#86efac" font-size="12" text-anchor="middle">100% Pass Rate</text>
+  <text x="550" y="580" fill="#86efac" font-size="12" text-anchor="middle">0 Vulnerabilities</text>
+  <text x="750" y="580" fill="#86efac" font-size="12" text-anchor="middle">0 Open Alerts</text>
+</svg>

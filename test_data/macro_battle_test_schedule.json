@@ -1,0 +1,10 @@
+{
+  "test_name": "macro_battle_test",
+  "scenario": "macro_battle",
+  "unit_combo": [
+    "Roach",
+    "Hydralisk"
+  ],
+  "interval_minutes": 60,
+  "enabled": true
+}

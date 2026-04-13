@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sc2_bot>
+  <name>Wicked Zerg</name>
+  <version>1.0.0</version>
+  <race>Zerg</race>
+  <server>
+    <host>0.0.0.0</host>
+    <port>8080</port>
+  </server>
+  <training>
+    <epochs>1000</epochs>
+    <batch_size>32</batch_size>
+  </training>
+</sc2_bot>

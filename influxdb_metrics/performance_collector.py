@@ -1,6 +1,7 @@
 # influxdb_metrics/performance_collector.py
 # InfluxDB time-series metrics collection for SC2 Zerg bot performance
 
+import os
 import time
 import random
 import datetime
@@ -11,7 +12,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 # InfluxDB configuration
 # ---------------------------------------------------------------------------
 INFLUX_URL    = "http://localhost:8086"
-INFLUX_TOKEN  = "sc2-bot-super-secret-token"
+INFLUX_TOKEN  = os.environ.get("INFLUX_TOKEN", "")
 INFLUX_ORG    = "zerg_bot"
 INFLUX_BUCKET = "sc2_metrics"
 

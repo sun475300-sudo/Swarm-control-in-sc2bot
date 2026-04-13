@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-04-05T02:12:17.517602",
+  "summary": {
+    "total_validations": 7,
+    "passed": 7,
+    "failed": 0,
+    "total_duration_ms": 123.04282188415527,
+    "overall_status": "PASS"
+  },
+  "results": [
+    {
+      "language": "go",
+      "tool": "go",
+      "passed": true,
+      "duration_ms": 0,
+      "errors": [],
+      "warnings": [
+        "No go_backend directory"
+      ],
+      "artifacts": {}
+    },
+    {
+      "language": "rust",
+      "tool": "cargo",
+      "passed": true,
+      "duration_ms": 0,
+      "errors": [],
+      "warnings": [
+        "No rust_accel directory"
+      ],
+      "artifacts": {}
+    },
+    {
+      "language": "protobuf",
+      "tool": "protoc",
+      "passed": true,
+      "duration_ms": 0,
+      "errors": [],
+      "warnings": [
+        "No proto files"
+      ],
+      "artifacts": {}
+    },
+    {
+      "language": "sql",
+      "tool": "sql_linter",
+      "passed": true,
+      "duration_ms": 10.38,
+      "errors": [],
+      "warnings": [],
+      "artifacts": {
+        "total_sql_files": "2"
+      }
+    },
+    {
+      "language": "typescript",
+      "tool": "tsc",
+      "passed": true,
+      "duration_ms": 0,
+      "errors": [],
+      "warnings": [
+        "No TypeScript files"
+      ],
+      "artifacts": {}
+    },
+    {
+      "language": "shell",
+      "tool": "shellcheck",
+      "passed": true,
+      "duration_ms": 83.51,
+      "errors": [],
+      "warnings": [],
+      "artifacts": {}
+    },
+    {
+      "language": "python",
+      "tool": "ast_parser",
+      "passed": true,
+      "duration_ms": 112.23,
+      "errors": [],
+      "warnings": [
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\audit_exception_handling.py:16 - __init__ has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\integration_validator.py:420 - main has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\integration_validator.py:32 - __init__ has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\learning_loop.py:287 - main has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\learning_loop.py:23 - __init__ has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\performance_benchmark.py:253 - main has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\performance_benchmark.py:20 - __init__ has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\performance_benchmark_suite.py:118 - nearest_point_python has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\performance_benchmark_suite.py:134 - batch_nearest_python has no docstring",
+        "C:\\Users\\sun47\\Desktop\\지휘관봇\\scripts\\performance_benchmark_suite.py:140 - run_full_benchmark has no docstring"
+      ],
+      "artifacts": {
+        "total_files": "27",
+        "total_lines": "2644"
+      }
+    }
+  ]
+}

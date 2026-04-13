@@ -1,0 +1,59 @@
+{
+  "timestamp": "2026-04-05T21:59:46.992900",
+  "results": [
+    {
+      "test_name": "unit_damage_calculation",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 12
+    },
+    {
+      "test_name": "resource_accumulation",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 8
+    },
+    {
+      "test_name": "supply_chain",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 5
+    },
+    {
+      "test_name": "army_value_calculation",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 6
+    },
+    {
+      "test_name": "win_rate_calculation",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 4
+    },
+    {
+      "test_name": "hash_consistency",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 2
+    },
+    {
+      "test_name": "coordinate_calculations",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 8
+    },
+    {
+      "test_name": "upgrade_timing",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 5
+    },
+    {
+      "test_name": "priority_queue",
+      "passed": true,
+      "precision_score": 1.0,
+      "computation_time_ms": 3
+    }
+  ]
+}

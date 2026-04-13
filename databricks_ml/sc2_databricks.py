@@ -2,6 +2,7 @@
 Phase 459: Databricks - SC2 MLflow + Delta + Spark Integration
 Databricks Connect for remote cluster, AutoML, Feature Store.
 """
+import os
 
 import logging
 import mlflow
@@ -22,7 +23,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 logger = logging.getLogger(__name__)
 
 DATABRICKS_HOST  = "https://adb-xxxx.azuredatabricks.net"
-DATABRICKS_TOKEN = "dapiXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+DATABRICKS_TOKEN = os.environ.get("DATABRICKS_TOKEN", "")
 MLFLOW_URI       = f"{DATABRICKS_HOST}/api/2.0/mlflow"
 EXPERIMENT_NAME  = "/Users/sc2bot/win_rate_prediction"
 FEATURE_TABLE    = "sc2_features.game_features"

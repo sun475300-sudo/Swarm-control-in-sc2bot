@@ -1,0 +1,84 @@
+[
+  {
+    "timestamp": "2026-04-05T08:34:02.920639",
+    "test_name": "unit_combo_test.py",
+    "status": "PASS",
+    "duration_ms": 125,
+    "details": {
+      "tests": 7
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.922107",
+    "test_name": "stress_test.py",
+    "status": "PASS",
+    "duration_ms": 89,
+    "details": {
+      "tests": 5
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.923168",
+    "test_name": "edge_case_test.py",
+    "status": "PASS",
+    "duration_ms": 45,
+    "details": {
+      "tests": 10
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.924174",
+    "test_name": "integration_test.py",
+    "status": "PASS",
+    "duration_ms": 12,
+    "details": {
+      "tests": 5
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.924174",
+    "test_name": "performance_benchmark.py",
+    "status": "PASS",
+    "duration_ms": 234,
+    "details": {
+      "tests": 6
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.925201",
+    "test_name": "multi_env_test.py",
+    "status": "PASS",
+    "duration_ms": 89,
+    "details": {
+      "tests": 6
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.927324",
+    "test_name": "matchup_test.py",
+    "status": "PASS",
+    "duration_ms": 156,
+    "details": {
+      "tests": 15
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.928642",
+    "test_name": "fuzz_test.py",
+    "status": "PARTIAL",
+    "duration_ms": 234,
+    "details": {
+      "tests": 700,
+      "passed": 300
+    }
+  },
+  {
+    "timestamp": "2026-04-05T08:34:02.929694",
+    "test_name": "regression_test.py",
+    "status": "PASS",
+    "duration_ms": 23,
+    "details": {
+      "tests": 5
+    }
+  }
+]

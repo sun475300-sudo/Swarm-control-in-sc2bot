@@ -104,8 +104,9 @@ async def recommend_action(
     if supply_blocked:
         return f"CRITICAL: Supply blocked at {deps.supply_used}/{deps.supply_cap}! Build Overlords immediately."
 
-    if deps.workers_needed := max(0, 22 * deps.expansion_count - deps.worker_count):
-        return f"Economy: Build {deps.workers_needed} more workers (have {deps.worker_count}, target {22 * deps.expansion_count})"
+    workers_needed = max(0, 22 * deps.expansion_count - deps.worker_count)
+    if workers_needed:
+        return f"Economy: Build {workers_needed} more workers (have {deps.worker_count}, target {22 * deps.expansion_count})"
 
     if game_phase == "early" and deps.minerals > 400:
         return "Macro: Expand to new base - floating too many minerals in early game."

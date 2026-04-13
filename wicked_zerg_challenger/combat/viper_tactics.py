@@ -188,25 +188,28 @@ class ViperTacticsManager:
         if not enemy_units or not enemy_units.exists:
             return
 
-        # 1. 어브덕트 시도
-        if viper.energy >= self.ABDUCT_ENERGY:
-            target = self._find_abduct_target(viper, enemy_units)
+        # CreepyBot priority: Parasitic Bomb > Blinding Cloud > Abduct
+        # Rationale: PB is fire-and-forget AoE, BC disables groups, Abduct is single-target
+
+        # 1. 패러사이틱 밤 시도 (공중 유닛 그룹에 최우선)
+        if viper.energy >= self.PARASITIC_BOMB_ENERGY:
+            target = self._find_parasitic_bomb_target(viper, enemy_units)
             if target:
-                await self._cast_abduct(viper, target, game_time)
+                await self._cast_parasitic_bomb(viper, target, game_time)
                 return
 
-        # 2. 블라인딩 클라우드 시도
+        # 2. 블라인딩 클라우드 시도 (지상 원거리 유닛 무력화)
         if viper.energy >= self.BLINDING_CLOUD_ENERGY:
             target_pos = self._find_blinding_cloud_target(viper, enemy_units)
             if target_pos:
                 await self._cast_blinding_cloud(viper, target_pos, game_time)
                 return
 
-        # 3. 패러사이틱 밤 시도
-        if viper.energy >= self.PARASITIC_BOMB_ENERGY:
-            target = self._find_parasitic_bomb_target(viper, enemy_units)
+        # 3. 어브덕트 시도 (고가치 단일 타겟)
+        if viper.energy >= self.ABDUCT_ENERGY:
+            target = self._find_abduct_target(viper, enemy_units)
             if target:
-                await self._cast_parasitic_bomb(viper, target, game_time)
+                await self._cast_abduct(viper, target, game_time)
                 return
 
         # 안전 거리 유지
@@ -354,8 +357,8 @@ class ViperTacticsManager:
         아군 건물을 소비하여 에너지를 충전합니다.
         체력이 충분하고 에너지가 부족할 때만 실행합니다.
         """
-        if viper.energy > 150:
-            return  # 에너지 충분
+        if viper.energy > 125:
+            return  # CreepyBot: consume when below 125 energy
 
         if viper.health_percentage < self.consume_hp:
             return  # 체력 부족

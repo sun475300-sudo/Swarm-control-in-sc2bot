@@ -16,6 +16,7 @@ from .pid_controller import (
     UnitMovementController,
     FormationController,
 )
+from .frame_cache import FrameCache, cached_per_frame
 
 __all__ = [
     "KDTree",
@@ -28,4 +29,6 @@ __all__ = [
     "PID2D",
     "UnitMovementController",
     "FormationController",
+    "FrameCache",
+    "cached_per_frame",
 ]

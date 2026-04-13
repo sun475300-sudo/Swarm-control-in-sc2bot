@@ -1,0 +1,9 @@
+{
+  "total_runs": 200,
+  "passed": 200,
+  "failed": 0,
+  "pass_rate": "100.0%",
+  "total_time": "1134.1s",
+  "avg_per_run": "5.67s",
+  "errors": []
+}

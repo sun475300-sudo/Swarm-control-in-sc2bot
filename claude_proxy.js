@@ -1406,14 +1406,19 @@ async function queryClaudeWeb(prompt) {
 function sanitizeResponse(text) {
     if (!text) return text;
     let cleaned = text;
-    cleaned = cleaned.replace(/<function_calls>[\s\S]*?<\/function_calls>/g, '');
-    cleaned = cleaned.replace(/<function_calls>[\s\S]*$/g, '');
-    cleaned = cleaned.replace(/<[^>]*>[\s\S]*?<\/antml:[^>]*>/g, '');
-    cleaned = cleaned.replace(/<artifact[\s\S]*?<\/artifact>/g, '');
-    cleaned = cleaned.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
-    cleaned = cleaned.replace(/<\/?response>/g, '');
-    cleaned = cleaned.replace(/<\/?invoke[^>]*>/g, '');
-    cleaned = cleaned.replace(/<\/?parameter[^>]*>/g, '');
+    // Repeat to handle nested/overlapping tags that a single pass may miss
+    let prev;
+    do {
+        prev = cleaned;
+        cleaned = cleaned.replace(/<function_calls>[\s\S]*?<\/function_calls>/g, '');
+        cleaned = cleaned.replace(/<function_calls>[\s\S]*$/g, '');
+        cleaned = cleaned.replace(/<[^>]*>[\s\S]*?<\/antml:[^>]*>/g, '');
+        cleaned = cleaned.replace(/<artifact[\s\S]*?<\/artifact>/g, '');
+        cleaned = cleaned.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+        cleaned = cleaned.replace(/<\/?response>/g, '');
+        cleaned = cleaned.replace(/<\/?invoke[^>]*>/g, '');
+        cleaned = cleaned.replace(/<\/?parameter[^>]*>/g, '');
+    } while (cleaned !== prev);
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
     return cleaned || '(응답을 처리할 수 없었습니다)';
 }

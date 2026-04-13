@@ -2,6 +2,7 @@
 Phase 500: gRPC Auth Interceptor for SC2 Bot — 500 Phases Milestone!
 Server-side interceptor: JWT validation, metadata extraction, rate limiting
 """
+import os
 
 import grpc
 import jwt
@@ -12,7 +13,7 @@ from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 
-JWT_SECRET      = "sc2bot-jwt-secret"
+JWT_SECRET      = os.environ.get("JWT_SECRET", "change-me-in-production")
 JWT_ALGORITHM   = "HS256"
 PUBLIC_METHODS  = {"/sc2.advanced.v1.SC2BotAdvancedService/WatchLeaderboard"}
 RATE_LIMIT_RPS  = 100

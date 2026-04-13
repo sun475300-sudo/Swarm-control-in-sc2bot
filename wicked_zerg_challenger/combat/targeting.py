@@ -89,8 +89,25 @@ def _shield_ratio(unit) -> float:
     return max(0.0, min(1.0, shield / shield_max))
 
 
+def _estimate_threat_dps(unit) -> float:
+    """
+    BurnySc2-inspired DPS estimation for target priority.
+
+    Uses ground_dps/air_dps properties from burnysc2 Unit class.
+    Higher DPS targets should be killed first to reduce incoming damage.
+    """
+    ground_dps = max(0, getattr(unit, "ground_dps", 0) or 0)
+    air_dps = max(0, getattr(unit, "air_dps", 0) or 0)
+    return max(ground_dps, air_dps)
+
+
 def _score_target(unit) -> float:
-    """단일 유닛에 대한 우선순위 점수 계산 (높을수록 우선 공격)."""
+    """
+    단일 유닛에 대한 우선순위 점수 계산 (높을수록 우선 공격).
+
+    BurnySc2-inspired: DPS 기반 위협도를 점수에 반영.
+    높은 DPS 유닛을 먼저 처치하면 교전에서 유리해짐.
+    """
     if unit is None:
         return -999.0
 
@@ -104,8 +121,19 @@ def _score_target(unit) -> float:
     if type_id is not None and type_id in HIGH_VALUE_TYPES:
         base += 5.0  # 고가치 유닛 보너스
 
+    # BurnySc2: DPS 기반 위협도 (높은 DPS 유닛 우선 제거)
+    dps = _estimate_threat_dps(unit)
+    if dps > 0:
+        base += min(dps / 10.0, 3.0)  # DPS 보너스, 최대 3.0
+
+    # 낮은 체력 유닛 우선 (빠른 킬 확보)
     base += (1.0 - _health_ratio(unit)) * 2.0
     base += (1.0 - _shield_ratio(unit)) * 1.0
+
+    # 킬 확보 보너스: 체력이 매우 낮은 유닛 (30% 이하)
+    health_pct = _health_ratio(unit)
+    if health_pct < 0.3 and health_pct > 0:
+        base += 2.0  # 마무리 가능한 유닛 우선
 
     if getattr(unit, "is_flying", False):
         base += 0.2
@@ -117,14 +145,15 @@ def _score_target(unit) -> float:
 
 
 # 프레임 단위 캐시: 동일 적 집합에 대한 중복 정렬 방지
-_prioritized_cache: dict = {"enemies_id": None, "result": []}
+_prioritized_cache: dict = {"enemies_id": None, "result": [], "frame": -1}
 
 
-def prioritize_targets(enemies: Iterable) -> List:
+def prioritize_targets(enemies: Iterable, *, current_frame: int = -1) -> List:
     """Return enemies sorted by priority (highest first).
 
     동일 적 집합(tag frozenset 기준)에 대한 결과를 캐싱하여
     같은 프레임 내 반복 호출 시 중복 정렬을 방지합니다.
+    프레임이 바뀌면 캐시를 무효화합니다.
     """
     if enemies is None:
         return []
@@ -145,7 +174,8 @@ def prioritize_targets(enemies: Iterable) -> List:
     except (AttributeError, TypeError):
         logger.debug("prioritize_targets: tag 추출 실패, 캐시 생략")
 
-    if cache_id is not None and cache_id == _prioritized_cache.get("enemies_id"):
+    same_frame = current_frame >= 0 and current_frame == _prioritized_cache.get("frame")
+    if same_frame and cache_id is not None and cache_id == _prioritized_cache.get("enemies_id"):
         return _prioritized_cache["result"]
 
     enemy_list.sort(key=_score_target, reverse=True)
@@ -153,6 +183,7 @@ def prioritize_targets(enemies: Iterable) -> List:
     if cache_id is not None:
         _prioritized_cache["enemies_id"] = cache_id
         _prioritized_cache["result"] = enemy_list
+        _prioritized_cache["frame"] = current_frame
 
     return enemy_list
 

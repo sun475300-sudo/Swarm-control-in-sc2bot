@@ -1,0 +1,4 @@
+# Phase 237: GraphQL
+query GetBattle {
+  units { id, type, health }
+}

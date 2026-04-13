@@ -1,0 +1,215 @@
+{
+  "timestamp": "2026-04-05T22:00:06.796344",
+  "total_scenarios": 7,
+  "results": [
+    {
+      "scenario": "rush_defense",
+      "player_combo": "Zergling+Baneling",
+      "enemy_combo": "Zergling+Zergling+Zergling",
+      "player_units": [
+        "Zergling",
+        "Baneling"
+      ],
+      "enemy_units": [
+        "Zergling",
+        "Zergling",
+        "Zergling"
+      ],
+      "wins": 62,
+      "losses": 38,
+      "win_rate": 62.0,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 43.934760448521914,
+          "synergy_bonus": 10,
+          "counter_bonus": 0,
+          "final_win_rate": 53.934760448521914,
+          "player_power": 431.0,
+          "enemy_power": 450.0
+        },
+        "iterations": 100
+      }
+    },
+    {
+      "scenario": "macro_battle",
+      "player_combo": "Roach+Hydralisk",
+      "enemy_combo": "Marine+Marauder+Marine+Marauder",
+      "player_units": [
+        "Roach",
+        "Hydralisk"
+      ],
+      "enemy_units": [
+        "Marine",
+        "Marauder",
+        "Marine",
+        "Marauder"
+      ],
+      "wins": 53,
+      "losses": 47,
+      "win_rate": 53.0,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 39.19852602487333,
+          "synergy_bonus": 8,
+          "counter_bonus": 5,
+          "final_win_rate": 52.19852602487333,
+          "player_power": 851.0,
+          "enemy_power": 1220.0
+        },
+        "iterations": 100
+      }
+    },
+    {
+      "scenario": "harassment",
+      "player_combo": "Mutalisk+Mutalisk+Mutalisk",
+      "enemy_combo": "Probe+Probe+Probe+Pylon",
+      "player_units": [
+        "Mutalisk",
+        "Mutalisk",
+        "Mutalisk"
+      ],
+      "enemy_units": [
+        "Probe",
+        "Probe",
+        "Probe",
+        "Pylon"
+      ],
+      "wins": 89,
+      "losses": 11,
+      "win_rate": 89.0,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 92.6953981008035,
+          "synergy_bonus": 0,
+          "counter_bonus": 0,
+          "final_win_rate": 92.6953981008035,
+          "player_power": 1269.0,
+          "enemy_power": 0
+        },
+        "iterations": 100
+      }
+    },
+    {
+      "scenario": "team_fight",
+      "player_combo": "Ultralisk+BroodLord",
+      "enemy_combo": "Thor+Thor+Battlecruiser",
+      "player_units": [
+        "Ultralisk",
+        "BroodLord"
+      ],
+      "enemy_units": [
+        "Thor",
+        "Thor",
+        "Battlecruiser"
+      ],
+      "wins": 55,
+      "losses": 45,
+      "win_rate": 55.00000000000001,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 37.6871524311992,
+          "synergy_bonus": 15,
+          "counter_bonus": 5,
+          "final_win_rate": 57.6871524311992,
+          "player_power": 2643.0,
+          "enemy_power": 4270.0
+        },
+        "iterations": 100
+      }
+    },
+    {
+      "scenario": "mid_game",
+      "player_combo": "Roach+Hydralisk+Mutalisk",
+      "enemy_combo": "Marine+Marauder+Tank",
+      "player_units": [
+        "Roach",
+        "Hydralisk",
+        "Mutalisk"
+      ],
+      "enemy_units": [
+        "Marine",
+        "Marauder",
+        "Tank"
+      ],
+      "wins": 65,
+      "losses": 35,
+      "win_rate": 65.0,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 49.18918918918919,
+          "synergy_bonus": 8,
+          "counter_bonus": 5,
+          "final_win_rate": 62.18918918918919,
+          "player_power": 1274.0,
+          "enemy_power": 1216.0
+        },
+        "iterations": 100
+      }
+    },
+    {
+      "scenario": "defensive",
+      "player_combo": "Queen+Roach+Roach",
+      "enemy_combo": "Zealot+Zealot+Stalker",
+      "player_units": [
+        "Queen",
+        "Roach",
+        "Roach"
+      ],
+      "enemy_units": [
+        "Zealot",
+        "Zealot",
+        "Stalker"
+      ],
+      "wins": 57,
+      "losses": 43,
+      "win_rate": 56.99999999999999,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 60.2158273381295,
+          "synergy_bonus": 0,
+          "counter_bonus": 5,
+          "final_win_rate": 65.2158273381295,
+          "player_power": 1674.0,
+          "enemy_power": 1006.0
+        },
+        "iterations": 100
+      }
+    },
+    {
+      "scenario": "tech_push",
+      "player_combo": "Viper+BroodLord+Ultralisk",
+      "enemy_combo": "Immortal+VoidRay+VoidRay",
+      "player_units": [
+        "Viper",
+        "BroodLord",
+        "Ultralisk"
+      ],
+      "enemy_units": [
+        "Immortal",
+        "VoidRay",
+        "VoidRay"
+      ],
+      "wins": 80,
+      "losses": 20,
+      "win_rate": 80.0,
+      "avg_duration_ms": 0.0,
+      "details": {
+        "synergy": {
+          "base_win_rate": 62.74664561957379,
+          "synergy_bonus": 15,
+          "counter_bonus": 5,
+          "final_win_rate": 82.7466456195738,
+          "player_power": 3180.0,
+          "enemy_power": 1788.0
+        },
+        "iterations": 100
+      }
+    }
+  ]
+}

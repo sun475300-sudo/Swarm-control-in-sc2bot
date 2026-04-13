@@ -1,0 +1,462 @@
+{
+  "timestamp": "2026-04-05T21:33:38.071726",
+  "total_modifications": 57,
+  "modifications": [
+    {
+      "file_path": "agent_inspector.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 100",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 103",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 121",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 139",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 166",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "scripts\\audit_exception_handling.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 93",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\logic_checker.py",
+      "issue_type": "BARE_EXCEPT",
+      "severity": "HIGH",
+      "description": "Bare except at line 159",
+      "fix_suggestion": "Use 'except Exception:' with specific handling",
+      "priority": 2
+    },
+    {
+      "file_path": "agent_inspector.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 19: issue_type: str  # BUG, TODO, FIXME, ERROR, WARNIN",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "agent_inspector.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 86: if \"TODO\" in line or \"FIXME\" in line or \"XXX\" in l",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "agent_inspector.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 87: severity = \"MEDIUM\" if \"FIXME\" in line else \"LOW\"",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "agent_inspector.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 92: issue_type=\"TODO\" if \"TODO\" in line else \"FIXME\",",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "agent_inspector.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 94: description=f\"Marked as TODO/FIXME\",",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 75: \"\"\"Find TODO and FIXME items\"\"\"",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 76: print(\"[Check] Finding TODO/FIXME...\")",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 85: if \"TODO\" in line or \"FIXME\" in line or \"XXX\" in l",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 96: issue_type=\"TODO_FIXME\",",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "modification_finder.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 214: print(f\"  TODO/FIXME: {results['todo_fixme']['todo",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "code_gen_agent\\sc2_code_generator.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 812: # TODO: Implement strategy logic",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "databricks_ml\\sc2_databricks.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 25: DATABRICKS_TOKEN = \"dapiXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 27: TODO_FILE = os.path.join(DATA_DIR, \"todos.json\")",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 54: data = _load_json(TODO_FILE)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 215: _save_json(TODO_FILE, self.todos)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 233: _save_json(TODO_FILE, self.todos)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 246: _save_json(TODO_FILE, self.todos)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 256: _save_json(TODO_FILE, self.todos)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 305: _save_json(TODO_FILE, self.todos)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "jarvis_features\\productivity_features.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 323: _save_json(TODO_FILE, self.todos)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "tests\\test_crypto_trading.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 95: \"\"\"관심 코인 목록의 형식이 'KRW-XXX'인지 확인한다.\"\"\"",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\bot_step_integration.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 1565: # TODO: 점진적으로 ProductionController로 이관",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\rl_tech_adapter.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 304: # TODO: best_response[0]에서 카운터 룰 재구성",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\strategy_manager_v2.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 1277: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\strategy_manager_v2.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 1293: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\strategy_manager_v2.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 1311: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\strategy_manager_v2.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 1326: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\strategy_manager_v2.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 1342: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tournament_mode.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 7: TODO: 전체 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tournament_mode.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 113: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tournament_mode.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 152: # TODO: 토너먼트 시작 로직",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tournament_mode.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 165: # TODO: 매칭 알고리즘",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tournament_mode.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 175: # TODO: 결과 반영",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tournament_mode.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 194: # TODO: 토너먼트 완료 조건 체크",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\advanced_building_manager.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 738: # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\defense_coordinator.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 73: # TODO: Add more independent threat assessment her",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\defense_coordinator.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 421: # [TODO] Global request if local defense fails?",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\reward_shaping.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 8: TODO: 전체 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\reward_shaping.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 58: # TODO: 상태 기반 잠재 값 계산",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\reward_shaping.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 83: TODO: 구현 예정",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\reward_shaping.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 134: # TODO: 잠재 함수 기반 셰이핑 적용",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\local_training\\reward_shaping.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 159: # TODO: 각 구성요소별 세부 보상 계산",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\check_missing_logic.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 5: ȣ������� ���ǵ��� ���� �޼���, pass ���� �ִ� �޼���, ",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\check_missing_logic.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 88: \"\"\"TODO �ּ� ã��\"\"\"",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\check_missing_logic.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 95: if 'TODO' in line.upper() or 'FIXME' in line.upper",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\check_missing_logic.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 178: print(f\"  - TODO �ּ��� �ִ� ����: {results['files_w",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\check_missing_logic.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 215: # TODO �ּ� ���",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\tools\\check_missing_logic.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 218: print(\"TODO �ּ� (���� 20��):\")",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\visuals\\poc_simulation.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 217: print(f\"  [EVICT] XXX Drone {drone_id}: 강제 퇴각 명령 발",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    },
+    {
+      "file_path": "wicked_zerg_challenger\\visuals\\poc_simulation.py",
+      "issue_type": "TODO_FIXME",
+      "severity": "MEDIUM",
+      "description": "Line 218: print(f\"          XXX 착륙 유도 경로 전송 완료\")",
+      "fix_suggestion": "Implement or remove",
+      "priority": 5
+    }
+  ]
+}

@@ -38,7 +38,8 @@ self.addEventListener('activate', (event) => {
 // Fetch 이벤트 - Network First, Cache Fallback
 self.addEventListener('fetch', (event) => {
   // GitHub API 요청은 항상 네트워크 사용
-  if (event.request.url.includes('api.github.com')) {
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.hostname === 'api.github.com') {
     event.respondWith(fetch(event.request));
     return;
   }

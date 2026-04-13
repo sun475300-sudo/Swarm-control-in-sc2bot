@@ -1,0 +1,138 @@
+{
+  "timestamp": "2026-04-05T22:05:08.176312",
+  "results": [
+    {
+      "name": "unit_combinations_extended",
+      "iterations": 1000,
+      "passed": 824,
+      "failed": 176,
+      "pass_rate": 82.39999999999999,
+      "duration_ms": 234,
+      "details": {
+        "combos_tested": 8
+      }
+    },
+    {
+      "name": "map_strategies_extended",
+      "iterations": 500,
+      "passed": 397,
+      "failed": 103,
+      "pass_rate": 79.4,
+      "duration_ms": 189,
+      "details": {
+        "maps": 6,
+        "strategies": 5
+      }
+    },
+    {
+      "name": "timing_attacks_extended",
+      "iterations": 300,
+      "passed": 300,
+      "failed": 0,
+      "pass_rate": 100.0,
+      "duration_ms": 156,
+      "details": {
+        "timings": 5
+      }
+    },
+    {
+      "name": "micro_control_extended",
+      "iterations": 800,
+      "passed": 697,
+      "failed": 103,
+      "pass_rate": 87.125,
+      "duration_ms": 312,
+      "details": {
+        "scenarios": 6
+      }
+    },
+    {
+      "name": "economy_optimization_extended",
+      "iterations": 600,
+      "passed": 525,
+      "failed": 75,
+      "pass_rate": 87.5,
+      "duration_ms": 245,
+      "details": {
+        "strategies": 5
+      }
+    },
+    {
+      "name": "build_order_extended",
+      "iterations": 400,
+      "passed": 400,
+      "failed": 0,
+      "pass_rate": 100.0,
+      "duration_ms": 198,
+      "details": {
+        "builds": 8
+      }
+    },
+    {
+      "name": "combat_simulation_extended",
+      "iterations": 1200,
+      "passed": 616,
+      "failed": 584,
+      "pass_rate": 51.33333333333333,
+      "duration_ms": 445,
+      "details": {
+        "army_compositions": 5
+      }
+    },
+    {
+      "name": "resource_management_extended",
+      "iterations": 700,
+      "passed": 650,
+      "failed": 50,
+      "pass_rate": 92.85714285714286,
+      "duration_ms": 178,
+      "details": {
+        "resources_tracked": 3
+      }
+    },
+    {
+      "name": "scouting_logic_extended",
+      "iterations": 350,
+      "passed": 241,
+      "failed": 109,
+      "pass_rate": 68.85714285714286,
+      "duration_ms": 167,
+      "details": {
+        "scout_types": 4
+      }
+    },
+    {
+      "name": "defense_response_extended",
+      "iterations": 450,
+      "passed": 281,
+      "failed": 169,
+      "pass_rate": 62.44444444444445,
+      "duration_ms": 234,
+      "details": {
+        "threat_types": 5
+      }
+    },
+    {
+      "name": "upgrade_priority_extended",
+      "iterations": 500,
+      "passed": 345,
+      "failed": 155,
+      "pass_rate": 69.0,
+      "duration_ms": 189,
+      "details": {
+        "upgrades": 5
+      }
+    },
+    {
+      "name": "multi_tasking_extended",
+      "iterations": 600,
+      "passed": 499,
+      "failed": 101,
+      "pass_rate": 83.16666666666667,
+      "duration_ms": 312,
+      "details": {
+        "max_tasks": 8
+      }
+    }
+  ]
+}

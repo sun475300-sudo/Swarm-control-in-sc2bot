@@ -228,7 +228,17 @@ class StrategyManager:
     def _get_early_scout_signal_state(self) -> Dict[str, Any]:
         if self.early_scout_pressure_active:
             self.current_mode = StrategyMode.DEFENSIVE
-            return
+            return {
+                "fresh": False,
+                "gas_time": None,
+                "natural_confirmed": False,
+                "cheese_suspected": False,
+                "cheese_active": False,
+                "fast_gas": False,
+                "greed_suppressed": False,
+                "pressure_active": True,
+                "drone_floor": 16,
+            }
 
         game_time = getattr(self.bot, "time", 0.0)
         state: Dict[str, Any] = {
