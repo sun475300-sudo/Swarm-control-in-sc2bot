@@ -146,13 +146,56 @@ def run_training_loop(cfg: TrainConfig, ppo_cfg: PPOConfig, env_factory) -> None
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="PPO Self-Play Training for SC2 Zerg Bot")
     parser.add_argument("--total_steps", type=int, default=10_000_000)
     parser.add_argument("--use_wandb", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--eval_interval", type=int, default=50_000)
+    parser.add_argument("--checkpoint_interval", type=int, default=100_000)
+    parser.add_argument("--n_workers", type=int, default=4)
     args = parser.parse_args()
 
-    train_cfg = TrainConfig(total_steps=args.total_steps,
-                            use_wandb=args.use_wandb, seed=args.seed)
+    train_cfg = TrainConfig(
+        total_steps=args.total_steps,
+        use_wandb=args.use_wandb,
+        seed=args.seed,
+        eval_interval=args.eval_interval,
+        checkpoint_interval=args.checkpoint_interval,
+        n_workers=args.n_workers,
+    )
     ppo_cfg = PPOConfig()
+
+    # Gymnasium 환경 팩토리 연결
+    try:
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+        from gymnasium_env.sc2_gym_env import SC2ZergEnv
+
+        def env_factory(**kwargs):
+            return SC2ZergEnv(max_frames=kwargs.get("max_frames", 20000))
+    except ImportError:
+        print("[WARN] SC2ZergEnv not found. Using fallback dummy environment.")
+
+        class _DummyEnv:
+            """Minimal fallback env for testing the training loop."""
+            def __init__(self, **kw):
+                import numpy as np
+                self._np = np
+                self.observation_space_n = 16
+                self.action_space_n = 7
+            def reset(self):
+                return self._np.zeros(self.observation_space_n, dtype="float32")
+            def step(self, action):
+                obs = self._np.random.rand(self.observation_space_n).astype("float32")
+                reward = self._np.random.uniform(-1, 1)
+                done = self._np.random.random() < 0.005
+                info = {"winner": "self"} if done and self._np.random.random() > 0.5 else {}
+                return obs, reward, done, info
+
+        def env_factory(**kwargs):
+            return _DummyEnv(**kwargs)
+
     print("[Train] Config:", asdict(train_cfg))
+    print("[Train] PPO Config:", asdict(ppo_cfg))
+    print("[Train] Starting training loop...")
+    run_training_loop(train_cfg, ppo_cfg, env_factory)

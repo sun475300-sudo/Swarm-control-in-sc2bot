@@ -204,8 +204,24 @@ def simulate_training(total_timesteps: int) -> dict:
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Phase 533: SB3 SC2 Bot RL Training")
+    parser.add_argument("--algo", choices=["ppo", "a2c", "sim"], default="ppo",
+                        help="Training algorithm: ppo, a2c, or sim(ulation)")
+    parser.add_argument("--timesteps", type=int, default=100_000)
+    parser.add_argument("--save_path", type=str, default="./models")
+    args = parser.parse_args()
+
     print("Phase 533: Stable Baselines 3 — SC2 Bot RL Training")
     print(f"SB3 available: {SB3_AVAILABLE}")
+    print(f"Algorithm: {args.algo} | Timesteps: {args.timesteps}")
 
-    result = simulate_training(total_timesteps=5000)
+    if args.algo == "ppo":
+        result = train_ppo(total_timesteps=args.timesteps, save_path=args.save_path)
+    elif args.algo == "a2c":
+        result = train_a2c(total_timesteps=args.timesteps, save_path=args.save_path)
+    else:
+        result = simulate_training(total_timesteps=args.timesteps)
+
     print(f"\nTraining result: {result}")

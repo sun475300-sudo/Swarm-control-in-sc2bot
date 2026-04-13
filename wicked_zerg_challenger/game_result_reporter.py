@@ -13,7 +13,6 @@ Features:
 - 개선 제안
 """
 
-import json
 import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime

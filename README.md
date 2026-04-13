@@ -1866,19 +1866,74 @@ graph LR
     style C3 fill:#e17055,color:#fff
 ```
 
+#### 코드 품질 현황 (2026-04-13 정밀 분석)
+
+```mermaid
+pie title 코드 품질 분석 결과
+    "통과 (6개 카테고리)" : 6
+    "주의 (4개 카테고리)" : 4
+    "심각 (0개 카테고리)" : 0
+```
+
+| 카테고리 | 상태 | 수치 | 비고 |
+|:---|:---:|:---:|:---|
+| 구문 오류 | ✅ | 0건 | 전체 718개 파일 검증 |
+| 보안/시크릿 | ✅ | 0건 | 하드코딩된 키 없음 |
+| bare except | ✅ | 0건 | 모든 예외 명시적 처리 |
+| eval()/exec() | ✅ | 0건 | 안전 (PyTorch eval만) |
+| TODO/FIXME | ⚠️ | 37건 | tournament_mode(6), reward_shaping(5) |
+| 미사용 임포트 | ⚠️ | 13건 | 9개 파일 (제거 진행 중) |
+| print→logger | ⚠️ | 2,955건 | 194개 파일 (마이그레이션 필요) |
+| 장문 라인 | ⚠️ | 254건 | Black 88자 기준 초과 |
+
+#### 훈련 파이프라인 현황
+
+```mermaid
+graph TB
+    subgraph "✅ 완성된 컴포넌트"
+        PPO["PPO Trainer\nppo_trainer.py"]
+        PPOA["PPO Agent\nppo_agent.py"]
+        RL["RL Agent\nrl_agent.py (REINFORCE)"]
+        GYM["Gymnasium Env\nSC2ZergEnv 시뮬레이터"]
+    end
+    subgraph "🔧 수정 완료 (2026-04-13)"
+        TRAIN["train.py\nenv_factory 연결 ✅"]
+        SB3["train_agent.py\n실제 훈련 호출 ✅"]
+    end
+    subgraph "❌ 미완성"
+        MODEL["저장된 모델\n.pt/.pth 없음"]
+        REAL["실제 SC2 연결\nburnysc2 래퍼 필요"]
+    end
+    PPO --> TRAIN
+    GYM --> TRAIN
+    PPOA --> SB3
+    GYM --> SB3
+    TRAIN --> MODEL
+    REAL --> MODEL
+    style TRAIN fill:#00b894,color:#fff
+    style SB3 fill:#00b894,color:#fff
+    style MODEL fill:#d63031,color:#fff
+    style REAL fill:#d63031,color:#fff
+```
+
 #### 단기 목표 (P606-P620) — 즉시 착수
+- [x] ppo_selfplay/train.py 메인 블록 완성 (env_factory 연결)
+- [x] stable_baselines/train_agent.py 실제 훈련 호출 추가
+- [x] 57개 테스트 버그 수정 (263 통과 / 0 실패 달성)
+- [x] 미사용 임포트 13건 제거
+- [ ] 핵심 모듈 테스트 추가 (upgrade_manager, production_controller, micro_controller)
 - [ ] MAPPO 멀티에이전트 자기대전 구현
 - [ ] PettingZoo 환경 래퍼 개발
 - [ ] Population-Based Training (PBT) 하이퍼파라미터 자동 탐색
 - [ ] 승률 40%+ 달성 (vs 모든 종족)
 - [ ] 테스트 커버리지 400+ 확대 (현재 263 → 400 목표)
-- [ ] pytest-asyncio 기반 async 테스트 표준화 완료
 
 #### 중기 목표 (P621-P650)
 - [ ] LLM 기반 전략 코칭 시스템 (리플레이 분석 → 자연어 피드백)
 - [ ] RAG 파이프라인: 과거 리플레이 벡터 검색 → 상황별 전략 추천
 - [ ] 엣지 디바이스 실시간 추론 (Jetson Nano < 10ms 레이턴시)
 - [ ] 디지털 트윈 기반 Sim-to-Real 전이학습 파이프라인
+- [ ] print() → logger 전면 마이그레이션 (2,955건)
 
 #### 장기 목표 (P651-P700)
 - [ ] Chaos Engineering 기반 자가치유 인프라 검증
@@ -1908,7 +1963,7 @@ graph LR
 
 ```
 Python · Rust · TypeScript · 280+ 언어/도구 · StarCraft II API · Gemini AI로 제작
-🏆 P605 완성 · 242개 버그 수정 · 280+ 언어/도구 · 263개 테스트 통과 (0 실패) · 2026-04-06
+🏆 P605 완성 · 242개 버그 수정 · 280+ 언어/도구 · 263개 테스트 통과 (0 실패) · 2026-04-13
 ```
 
 </div>

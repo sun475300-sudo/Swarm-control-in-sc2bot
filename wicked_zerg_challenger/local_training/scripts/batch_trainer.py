@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 from pathlib import Path
 from typing import List, Dict, Optional, Any
-from datetime import datetime
 
 
 class BatchTrainer:
