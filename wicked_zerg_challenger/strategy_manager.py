@@ -95,7 +95,7 @@ class StrategyManager:
         # 4분 이전 견제 시스템
         self.early_harassment_active = False
         self.last_harassment_time = 0
-        self.harassment_interval = 30.0
+        self.harassment_interval = 15.0  # ★ 30s → 15s: more aggressive harassment
 
         # ★ Load Unit Ratios from KnowledgeManager ★
         self.race_unit_ratios = {
@@ -519,7 +519,7 @@ class StrategyManager:
         """
         1-4분 견제 시스템
 
-        1분부터 시작하여 30초마다 적 본진을 견제
+        1분부터 시작하여 15초마다 적 본진을 견제
         저글링, 뮤탈리스크 등 빠른 유닛으로 적 일꾼 견제 및 정보 수집
         """
         game_time = getattr(self.bot, "time", 0.0)
@@ -529,8 +529,7 @@ class StrategyManager:
             self.early_harassment_active = False
             return
 
-        # 30초마다 견제
-        # 30초마다 견제
+        # 15초마다 견제 (more aggressive)
         if game_time - self.last_harassment_time < self.harassment_interval:
             return
 

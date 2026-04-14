@@ -326,10 +326,10 @@ class GameAnalytics:
             lines.append(f"  - {opponent_race}에 대한 카운터 전략 개발")
 
         elif win_rate < 60:
-            lines.append(f"  ⚪ 승률 보통 ({win_rate:.1f}%) - 추가 연습 필요")
+            lines.append(f"  [O] 승률 보통 ({win_rate:.1f}%) - 추가 연습 필요")
 
         else:
-            lines.append(f"  ✅ 승률 양호 ({win_rate:.1f}%) - 현재 전략 유지")
+            lines.append(f"  [OK] 승률 양호 ({win_rate:.1f}%) - 현재 전략 유지")
 
         return "\n".join(lines)
 

@@ -335,7 +335,7 @@ class EarlyDefenseSystem:
         try:
             self.bot.do(pool.research(zergling_speed))
             self._zergling_speed_researched = True
-            print(f"[EARLY_DEFENSE] ★★★ Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! ★★★")
+            print(f"[EARLY_DEFENSE] [*][*][*] Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! [*][*][*]")
         except Exception as e:
             print(f"[EARLY_DEFENSE] Zergling speed research failed: {e}")
 
@@ -389,7 +389,7 @@ class EarlyDefenseSystem:
                         "EarlyDefenseSystem"
                     )
                     self._spine_crawler_ordered = True
-                    print(f"[EARLY_DEFENSE] ★ Spine Crawler ordered at {int(self.bot.time)}s (early defense) ★")
+                    print(f"[EARLY_DEFENSE] [*] Spine Crawler ordered at {int(self.bot.time)}s (early defense) [*]")
             else:
                 location = await self.bot.find_placement(
                     UnitTypeId.SPINECRAWLER,
@@ -402,7 +402,7 @@ class EarlyDefenseSystem:
                     if worker:
                         self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, location))
                         self._spine_crawler_ordered = True
-                        print(f"[EARLY_DEFENSE] ★ Spine Crawler building at {int(self.bot.time)}s (early defense) ★")
+                        print(f"[EARLY_DEFENSE] [*] Spine Crawler building at {int(self.bot.time)}s (early defense) [*]")
         except Exception as e:
             print(f"[EARLY_DEFENSE] Spine crawler build failed: {e}")
 
@@ -456,7 +456,7 @@ class EarlyDefenseSystem:
                 self._pulled_worker_tags.add(worker.tag)
 
             self._workers_pulled = True
-            print(f"[EARLY_DEFENSE] ★ WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) ★")
+            print(f"[EARLY_DEFENSE] [*] WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) [*]")
 
     async def _return_pulled_workers(self) -> None:
         """
@@ -484,7 +484,7 @@ class EarlyDefenseSystem:
                 returned += 1
 
         if returned > 0:
-            print(f"[EARLY_DEFENSE] ★ {returned} workers returned to mining ★")
+            print(f"[EARLY_DEFENSE] [*] {returned} workers returned to mining [*]")
 
         self._pulled_worker_tags.clear()
         self._workers_pulled = False

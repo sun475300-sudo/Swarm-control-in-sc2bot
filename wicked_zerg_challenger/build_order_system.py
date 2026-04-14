@@ -419,14 +419,14 @@ class BuildOrderSystem:
         if self.bot.already_pending(UnitTypeId.HATCHERY) > 0:
             if self.expansion_actual_time == 0:
                 self.expansion_actual_time = self.bot.time
-                print(f"[BUILD_ORDER] ★ Natural expansion started at {int(self.bot.time)}s ★")
+                print(f"[BUILD_ORDER] [*] Natural expansion started at {int(self.bot.time)}s [*]")
             return True
 
         # Check Resources
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
             # ★ Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 ★
             if self.bot.time > self.expansion_timing_target and self.expansion_actual_time == 0:
-                print(f"[BUILD_ORDER] ⚠ WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
+                print(f"[BUILD_ORDER] [!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
             return False
 
         # Find Expansion Location
@@ -445,7 +445,7 @@ class BuildOrderSystem:
                         "BuildOrderSystem"
                     )
                     self.expansion_actual_time = self.bot.time
-                    print(f"[BUILD_ORDER] ★ Natural expansion ordered at {int(self.bot.time)}s ★")
+                    print(f"[BUILD_ORDER] [*] Natural expansion ordered at {int(self.bot.time)}s [*]")
                     return True
             else:
                 if not self.bot.workers.exists:
@@ -454,7 +454,7 @@ class BuildOrderSystem:
                 if worker:
                     self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
                     self.expansion_actual_time = self.bot.time
-                    print(f"[BUILD_ORDER] ★ Natural expansion ordered at {int(self.bot.time)}s ★")
+                    print(f"[BUILD_ORDER] [*] Natural expansion ordered at {int(self.bot.time)}s [*]")
                     return True
 
         return False
@@ -489,18 +489,18 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            print(f"[BUILD_ORDER] ⚠ Expansion timing: NOT RECORDED")
+            print(f"[BUILD_ORDER] [!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target
         diff = actual - target
 
         if diff <= 5:
-            print(f"[BUILD_ORDER] ✓ EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME")
+            print(f"[BUILD_ORDER] [OK] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME")
         elif diff <= 15:
-            print(f"[BUILD_ORDER] △ EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)")
+            print(f"[BUILD_ORDER] [~] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)")
         else:
-            print(f"[BUILD_ORDER] ✗ EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)")
+            print(f"[BUILD_ORDER] [X] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)")
 
     def select_build_order_by_win_rate(self) -> BuildOrderType:
         """Auto-select Build Order by Win Rate"""

@@ -1529,25 +1529,21 @@ class EconomyManager:
             self.logger.error(f"[ECONOMY_CRITICAL] {expand_reason}")
             # 바로 확장 실행 로직으로 이동 (아래 타이밍 조건 스킵)
 
-        # 1베이스 → 2베이스 (내츄럴): ★★★ 빠르지만 안정적 (FAST & STABLE) ★★★
+        # 1베이스 → 2베이스 (내츄럴): ★★★ HATCH FIRST (최대한 빠른 확장) ★★★
         if not should_expand and base_count == 1:
             worker_count = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
-            # ★★★ TARGET: 안정적인 확장 (자원 확보 후) ★★★
-            # 해처리 건설 시간: 100초 (1분 40초)
-            # 목표: 30초 안에 건설 시작 → 130초(2:10) 완성
+            # ★★★ TARGET: ~1분 확장 (해처리 300 미네랄 모이면 즉시) ★★★
+            # 해처리 건설 시간: 71초 (fastest) / 100초 (normal)
+            # 목표: 미네랄 300 도달 즉시 건설 시작 → ~1:00 시작
 
-            # ★ 개선: 미네랄 여유분 확보 후 확장 (350+ 또는 15드론+) ★
-            if minerals >= 350:
+            # ★ HATCH FIRST: 미네랄 300 모이면 즉시 확장 (버퍼 불필요) ★
+            if minerals >= 300:
                 should_expand = True
-                expand_reason = f"Natural with buffer @{int(game_time)}s (min 350+, workers: {worker_count})"
-            # ★ 15드론 이상 + 미네랄 300+ (안정적 확장) ★
-            elif worker_count >= 15 and minerals >= 300:
+                expand_reason = f"Hatch First @{int(game_time)}s (min {minerals}, workers: {worker_count})"
+            # ★ 45초 이후 미네랄 부족해도 예약 (곧 모일 것) ★
+            elif game_time >= 45 and minerals >= 250:
                 should_expand = True
-                expand_reason = f"15-Drone Natural @{int(game_time)}s (workers: {worker_count}, min 300+)"
-            # ★ 30초 이후 + 미네랄 280+ (시간 기반 확장) ★
-            elif game_time >= 30 and minerals >= 280:
-                should_expand = True
-                expand_reason = f"Timed Natural @{int(game_time)}s (min 280+, workers: {worker_count})"
+                expand_reason = f"Early Natural @{int(game_time)}s (min {minerals}, workers: {worker_count})"
 
         # ★ Phase 28: 확장 타이밍 현실화 — 포화 후 확장 원칙 ★
         elif not should_expand and base_count == 2:
@@ -1621,11 +1617,14 @@ class EconomyManager:
 
         # 비용 확인
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
-            # ★ 미네랄 부족 시 더 긴 쿨다운 설정 (20초) ★
-            self._last_expansion_attempt_time = game_time + 14.0  # 6초 기본 + 14초 = 20초 총 대기
+            # ★ FIX: 초반 확장은 짧은 쿨다운 (5초), 이후는 10초 ★
+            if base_count <= 1 and game_time < 120:
+                self._last_expansion_attempt_time = game_time + 2.0  # 3초 쿨다운 + 2초 = 5초 총 대기
+            else:
+                self._last_expansion_attempt_time = game_time + 7.0  # 3초 쿨다운 + 7초 = 10초 총 대기
             # ★ 로그 스팸 방지: 30초마다만 출력 ★
             if int(game_time) % 30 < 2:  # 30초 주기로 2초 이내에만 출력
-                self.logger.info(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals}) - waiting 20s")
+                self.logger.info(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals})")
             return
 
         # ★ MACRO ECONOMY: 비상 모드여도 확장 계속 (매크로 최우선) ★

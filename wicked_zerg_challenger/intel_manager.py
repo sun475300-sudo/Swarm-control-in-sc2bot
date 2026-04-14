@@ -670,7 +670,7 @@ class IntelManager:
         for tech_name, alert_type in self._hidden_tech_alerts.items():
             if tech_name in self.enemy_tech_buildings and alert_type not in self._detected_tech_alerts:
                 self._detected_tech_alerts.add(alert_type)
-                print(f"[INTEL] [{int(game_time)}s] ★★★ ALERT: {tech_name} detected! → {alert_type} ★★★")
+                print(f"[INTEL] [{int(game_time)}s] [*][*][*] ALERT: {tech_name} detected! -> {alert_type} [*][*][*]")
 
                 # Push to Blackboard
                 blackboard = getattr(self.bot, "blackboard", None)
@@ -744,7 +744,7 @@ class IntelManager:
 
             # 로그 (처음 발견 시만)
             if destructible_list and current_time < 60 and self.bot.iteration % 100 == 0:
-                print(f"[INTEL] [{int(current_time)}s] ★ {len(destructible_list)} destructible rocks detected!")
+                print(f"[INTEL] [{int(current_time)}s] [*] {len(destructible_list)} destructible rocks detected!")
 
         except (AttributeError, TypeError) as e:
             logger.warning(f"[IntelManager] Destructible structure scan suppressed: {e}")

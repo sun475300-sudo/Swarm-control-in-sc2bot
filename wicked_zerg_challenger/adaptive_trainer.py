@@ -30,7 +30,7 @@ LOCK_FILE = Path("game_running.lock")
 MAPS = [
     "AbyssalReefLE",
     "AscensiontoAiurLE",
-    "BelShirVestigeLE"
+    "OdysseyLE"
 ]
 
 DIFFICULTIES = [

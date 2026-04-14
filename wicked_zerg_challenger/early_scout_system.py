@@ -82,6 +82,8 @@ class EarlyScoutSystem:
         self._update_interval = 0.5
         self._last_report_time = 0.0
         self._last_rescout_time = 0.0
+        self._overlord_rescout_interval = 30.0  # Re-scout enemy base every 30s
+        self._last_overlord_rescout_time = 0.0
 
     def _get_blackboard(self) -> Any:
         return getattr(self.bot, "blackboard", None)
@@ -161,6 +163,10 @@ class EarlyScoutSystem:
 
         if not self.overlord_scout_sent and self.bot.time > 5:
             await self._send_overlord_scout()
+        elif (self.bot.time - self._last_overlord_rescout_time
+              >= self._overlord_rescout_interval):
+            # Periodic overlord re-scout of enemy base every 30s
+            await self._send_overlord_rescout()
         if self.scout_overlord_tag:
             await self._manage_overlord_scout()
 
@@ -281,6 +287,39 @@ class EarlyScoutSystem:
             if self.overlord_current_wp < len(self.overlord_waypoints):
                 next_target = self.overlord_waypoints[self.overlord_current_wp]
                 self.bot.do(scout_ol.move(next_target))
+
+    async def _send_overlord_rescout(self) -> None:
+        """Periodically re-send an overlord to scout the enemy base every 30s."""
+        overlords = self.bot.units(UnitTypeId.OVERLORD)
+        if not overlords or not self.bot.enemy_start_locations:
+            return
+
+        # Pick an overlord that isn't already actively scouting
+        available = overlords.filter(
+            lambda u: u.tag != self.scout_overlord_tag
+        )
+        if not available:
+            available = overlords
+
+        enemy_start = self.bot.enemy_start_locations[0]
+        map_center = self.bot.game_info.map_center
+        enemy_natural = self._get_enemy_natural_location() or map_center
+
+        scout_ol = available.closest_to(enemy_start)
+        self.scout_overlord_tag = scout_ol.tag
+
+        self.overlord_waypoints = [
+            enemy_natural,
+            enemy_start,
+            map_center,
+        ]
+        self.overlord_current_wp = 0
+
+        self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
+        self._last_overlord_rescout_time = self.bot.time
+        print(
+            f"[EARLY_SCOUT] Overlord re-scout sent at {int(self.bot.time)}s"
+        )
 
     async def _analyze_enemy_info(self) -> None:
         structures = getattr(self.bot, "enemy_structures", None)

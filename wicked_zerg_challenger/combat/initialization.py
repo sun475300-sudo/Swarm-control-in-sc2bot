@@ -66,6 +66,11 @@ def initialize_combat_state(manager):
     manager._cached_army = None
     manager._cached_army_frame = -1
 
+    # === ★ EARLY HARASS RETREAT & KILL TRACKING ★ ===
+    manager._harass_worker_kills = 0          # Total workers killed during harassment
+    manager._harass_last_enemy_workers = None  # Snapshot of enemy worker count for kill tracking
+    manager._harass_retreating_tags = set()   # Units currently retreating from harassment
+
     # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
     manager._base_defense_active = False
     manager._defense_rally_point = None
@@ -103,10 +108,15 @@ def initialize_combat_state(manager):
 
     # === ★★★ Phase 17: PERFORMANCE OPTIMIZATION - FRAME SKIP ★★★ ===
     manager._last_combat_frame = 0  # 마지막 전투 로직 실행 프레임
-    manager._combat_frame_skip = 4  # 4프레임마다 실행 (약 0.18초)
+    manager._combat_frame_skip = 4  # 기본 4프레임마다 실행 (약 0.18초)
+    manager._combat_base_skip = 4  # 기본 프레임 스킵 (동적 스케일링 기준)
+    manager._combat_max_skip = 8  # 최대 프레임 스킵 (유닛 많을 때)
     manager._combat_emergency_skip = 1  # 긴급 상황에서는 매 프레임
     manager._combat_is_emergency = False  # 긴급 상황 여부
     manager._last_emergency_check = 0  # 마지막 긴급 상황 체크
+    manager._last_frame_skip_update = 0  # 마지막 프레임 스킵 스케일링 업데이트
+    manager._frame_skip_update_interval = 44  # ~2초마다 스킵 값 재계산
+    manager._prev_unit_health_tags = {}  # tag -> health (유닛 피격 감지용)
 
 
 def reset_combat_state(manager):
@@ -136,8 +146,11 @@ def reset_combat_state(manager):
     manager._expansion_destroyed_positions = []
     manager._last_expansion_defense_check = 0
     manager._last_combat_frame = 0
+    manager._combat_frame_skip = manager._combat_base_skip
     manager._combat_is_emergency = False
     manager._last_emergency_check = 0
+    manager._last_frame_skip_update = 0
+    manager._prev_unit_health_tags = {}
 
 
 def initialize_managers(manager):

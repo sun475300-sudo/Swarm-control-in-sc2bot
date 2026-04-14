@@ -102,8 +102,8 @@ class CombatManager:
         ★ Phase 17: 매 프레임 호출되는 전투 로직 (성능 최적화 적용) ★
 
         성능 최적화:
-        - 일반 상황: 4프레임마다 실행 (~0.18초)
-        - 긴급 상황: 매 프레임 실행 (기지 공격, 대규모 전투)
+        - 일반 상황: 4~8프레임마다 실행 (유닛 수에 따라 동적 스케일링)
+        - 긴급 상황: 매 프레임 실행 (기지 공격, 대규모 전투, 유닛 피격)
 
         Priority:
         1. ★ MANDATORY BASE DEFENSE - Always check first ★
@@ -122,6 +122,11 @@ class CombatManager:
             if iteration - self._last_emergency_check >= 3:
                 self._combat_is_emergency = self._check_emergency_situation()
                 self._last_emergency_check = iteration
+
+            # ★ 유닛 수 기반 동적 프레임 스킵 스케일링 ★
+            if iteration - self._last_frame_skip_update >= self._frame_skip_update_interval:
+                self._update_dynamic_frame_skip()
+                self._last_frame_skip_update = iteration
 
             # ★ Phase 17: 프레임 스킵 적용 ★
             current_skip = self._combat_emergency_skip if self._combat_is_emergency else self._combat_frame_skip
@@ -582,15 +587,83 @@ class CombatManager:
 
             elif task_name == "early_harass":
                 # Use zerglings for early harassment (Smart Worker Hunt)
+                # ★ With retreat logic and kill tracking ★
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
                     harass_zerglings = [u for u in ground_army
                                        if u.tag in available_ground
                                        and hasattr(u, 'type_id')
                                        and u.type_id == UnitTypeId.ZERGLING]
-                    if harass_zerglings and self.micro_combat:
-                        # ★ Use Smart Worker Hunting Logic ★
-                        self.micro_combat.harass_workers(harass_zerglings, enemy_units)
+                    if harass_zerglings:
+                        # --- Kill tracking: snapshot enemy worker count ---
+                        if not hasattr(self, '_harass_worker_kills'):
+                            self._harass_worker_kills = 0
+                            self._harass_last_enemy_workers = None
+                            self._harass_retreating_tags = set()
+
+                        current_enemy_workers = len([
+                            e for e in enemy_units
+                            if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
+                        ]) if enemy_units else 0
+                        if self._harass_last_enemy_workers is not None and current_enemy_workers < self._harass_last_enemy_workers:
+                            kills = self._harass_last_enemy_workers - current_enemy_workers
+                            self._harass_worker_kills += kills
+                            if iteration % 50 == 0:
+                                self.logger.info(f"[EARLY HARASS] Worker kills tracked: +{kills} (total: {self._harass_worker_kills})")
+                        self._harass_last_enemy_workers = current_enemy_workers
+
+                        # --- Retreat logic: low HP or enemy army nearby ---
+                        retreat_units = []
+                        fight_units = []
+                        # Clean dead tags from retreating set
+                        alive_tags = {u.tag for u in harass_zerglings}
+                        self._harass_retreating_tags &= alive_tags
+
+                        for u in harass_zerglings:
+                            # Already retreating? Keep retreating until safe
+                            if u.tag in self._harass_retreating_tags:
+                                if u.health_percentage > 0.5:
+                                    self._harass_retreating_tags.discard(u.tag)
+                                    fight_units.append(u)
+                                else:
+                                    retreat_units.append(u)
+                                continue
+                            # Low HP -> retreat
+                            if u.health_percentage < 0.30:
+                                self._harass_retreating_tags.add(u.tag)
+                                retreat_units.append(u)
+                                continue
+                            # Enemy army approaching (3+ combat units within 10 range)
+                            nearby_combat = [
+                                e for e in (enemy_units or [])
+                                if hasattr(e, 'can_attack') and e.can_attack
+                                and getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"]
+                                and e.distance_to(u) < 10
+                            ]
+                            if len(nearby_combat) >= 3:
+                                self._harass_retreating_tags.add(u.tag)
+                                retreat_units.append(u)
+                                continue
+                            fight_units.append(u)
+
+                        # Retreat low-HP / threatened units to nearest base
+                        if retreat_units:
+                            await self._retreat_to_closest_base(retreat_units)
+                            if iteration % 50 == 0:
+                                self.logger.info(f"[EARLY HARASS] {len(retreat_units)} zerglings retreating (low HP / enemy army)")
+
+                        # Active harass units: attack workers or move to enemy base
+                        if fight_units:
+                            if self.micro_combat:
+                                self.micro_combat.harass_workers(fight_units, enemy_units)
+                            else:
+                                # Fallback: move to target if no micro_combat
+                                for u in fight_units:
+                                    try:
+                                        self.bot.do(u.attack(target))
+                                    except (AttributeError, TypeError):
+                                        continue
+
                         for u in harass_zerglings:
                             available_ground.discard(u.tag)
                 except Exception as e:
@@ -1629,6 +1702,45 @@ class CombatManager:
             units, ["ZERGLING", "ROACH", "HYDRALISK", "RAVAGER", "ULTRALISK", "LURKER", "BANELING"]
         )
 
+    def _update_dynamic_frame_skip(self):
+        """
+        ★ 유닛 수 기반 동적 프레임 스킵 스케일링 ★
+
+        유닛이 많을수록 프레임 스킵을 늘려 성능 최적화.
+        - 유닛 0~30: 기본 스킵 (4프레임)
+        - 유닛 30~60: 스킵 5~6프레임
+        - 유닛 60+: 최대 스킵 (8프레임)
+        """
+        try:
+            if not hasattr(self.bot, "units"):
+                return
+
+            army = self._filter_army_units(self.bot.units)
+            army_count = len(army) if army else 0
+
+            if army_count <= 30:
+                self._combat_frame_skip = self._combat_base_skip  # 4
+            elif army_count <= 60:
+                # 30~60 유닛: 선형 보간 4 -> 6
+                ratio = (army_count - 30) / 30.0
+                self._combat_frame_skip = int(self._combat_base_skip + ratio * 2)
+            else:
+                # 60+ 유닛: 최대 스킵
+                self._combat_frame_skip = min(
+                    self._combat_base_skip + 4,
+                    self._combat_max_skip
+                )
+
+            # 유닛 체력 스냅샷 업데이트 (피격 감지용)
+            new_health_tags = {}
+            if army:
+                for unit in army:
+                    new_health_tags[unit.tag] = unit.health + unit.shield if hasattr(unit, "shield") else unit.health
+            self._prev_unit_health_tags = new_health_tags
+
+        except Exception as e:
+            self.logger.warning(f"[CombatManager] dynamic frame skip update error: {e}")
+
     def _check_emergency_situation(self) -> bool:
         """
         ★ Phase 17: 긴급 상황 감지 ★
@@ -1637,6 +1749,7 @@ class CombatManager:
         1. 기지가 공격받고 있음 (적이 25거리 이내)
         2. 대규모 전투 (아군/적 전투 유닛 10마리 이상, 15거리 이내 교전)
         3. 일꾼이 공격받고 있음 (적이 10거리 이내)
+        4. 유닛 피격 감지 (2마리 이상 체력 감소 = 전투 중)
 
         Returns:
             bool: 긴급 상황 여부
@@ -1688,6 +1801,20 @@ class CombatManager:
 
                         if nearby_enemies:
                             return True  # 일꾼 공격 = 긴급 상황
+
+            # 4. 유닛 피격 감지 (체력 감소 = 전투 중)
+            if self._prev_unit_health_tags and hasattr(self.bot, "units"):
+                army = self._filter_army_units(self.bot.units)
+                if army:
+                    units_hit = 0
+                    for unit in army[:10]:  # 샘플링 (10마리만 체크)
+                        prev_hp = self._prev_unit_health_tags.get(unit.tag)
+                        if prev_hp is not None:
+                            current_hp = unit.health + (unit.shield if hasattr(unit, "shield") else 0)
+                            if current_hp < prev_hp:
+                                units_hit += 1
+                    if units_hit >= 2:
+                        return True  # 다수 유닛 피격 = 긴급 상황
 
             return False
 

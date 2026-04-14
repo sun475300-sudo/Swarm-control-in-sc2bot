@@ -316,7 +316,7 @@ class BaseDefenseSystem:
 
         # 로그 출력
         if iteration % 110 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] ★ MANDATORY DEFENSE ★ "
+            print(f"[BASE DEFENSE] [{int(game_time)}s] [*] MANDATORY DEFENSE [*] "
                   f"Enemies: {enemy_count}, Threat score: {max_threat_score}")
 
         # 모든 군대 즉시 방어
@@ -472,7 +472,7 @@ class BaseDefenseSystem:
         if last_stand_mode or defeat_level >= 3:
             defense_workers = nearby_workers  # 모든 일꾼
             if iteration % 220 == 0:
-                print(f"[WORKER DEFENSE] ★ 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! ★")
+                print(f"[WORKER DEFENSE] [*] 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! [*]")
         elif defeat_level >= 2:
             defense_workers = nearby_workers[:12]
             if iteration % 220 == 0:
@@ -509,7 +509,7 @@ class BaseDefenseSystem:
                 continue
 
         if iteration % 220 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] ★ {len(defense_workers)} WORKERS DEFENDING ★")
+            print(f"[BASE DEFENSE] [{int(game_time)}s] [*] {len(defense_workers)} WORKERS DEFENDING [*]")
 
     def find_densest_enemy_position(self, enemies):
         """가장 밀집된 적 위치 찾기 (맹독충용)"""

@@ -348,4 +348,4 @@ class AttackController:
                         continue
 
                 if iteration % 22 == 0:
-                    print(f"[ROACH RUSH] [{int(game_time)}s] ★★★ {len(roaches)} ROACHES ATTACKING! ★★★")
+                    print(f"[ROACH RUSH] [{int(game_time)}s] [*][*][*] {len(roaches)} ROACHES ATTACKING! [*][*][*]")

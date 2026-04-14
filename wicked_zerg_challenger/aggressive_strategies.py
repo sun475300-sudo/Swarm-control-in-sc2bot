@@ -643,6 +643,8 @@ class AggressiveStrategyExecutor:
             nearby_workers = workers.closer_than(20, position)
             if nearby_workers.exists:
                 worker = nearby_workers.first
+                if not self.bot.enemy_start_locations:
+                    return
                 build_pos = position.towards(self.bot.enemy_start_locations[0], 3)
                 self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
 
@@ -711,6 +713,8 @@ class AggressiveStrategyExecutor:
                 self._nydus_worm_tag = worm.tag
 
                 # 6. 유닛 지속 투입
+                if not nydus_network.exists:
+                    return
                 await self._load_units_into_nydus(nydus_network.first)
 
                 # 7. ★★★ Worm에서 나온 유닛들 공격 명령 ★★★
@@ -1046,7 +1050,7 @@ class AggressiveStrategyExecutor:
                         enemy_expansions.append(structure.position)
 
         # 적 확장이 없으면 예상 위치로
-        if not enemy_expansions and hasattr(self.bot, "enemy_start_locations"):
+        if not enemy_expansions and hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
             enemy_base = self.bot.enemy_start_locations[0]
             map_center = self.bot.game_info.map_center
             # 자연 확장 예상 위치
