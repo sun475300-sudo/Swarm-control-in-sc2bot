@@ -133,7 +133,7 @@ def print_block_summary(block_num, block_wins, block_losses, total_wins, total_l
 
 def main():
     """Run training loop."""
-    total_games = 10  # 10게임 1블록 단위
+    total_games = 20  # 20게임 훈련
     start_time = time.time()
     games_completed = 0
 
@@ -179,8 +179,8 @@ def main():
         print("-" * 70)
         print()
 
-        # Break if 30 minutes passed
-        if total_duration > 1800:  # 30 minutes
+        # Break if 60 minutes passed
+        if total_duration > 3600:  # 60 minutes
             print(f"\n[TIME] Time limit reached ({total_duration/60:.1f} min)")
             break
 

@@ -110,9 +110,8 @@ class WickedZergBotProImpl(BotAI):
         """
         await super().on_start()
 
-        self.logger.info("on_start: Initializing all managers...")
         self.logger = setup_logger("WickedZergBot")
-        self.logger.info("Bot started. Initializing managers...")
+        self.logger.info("on_start: Initializing all managers...")
 
         # === 0. Blackboard (Central State) ===
         # Already initialized in __init__, but logging here
