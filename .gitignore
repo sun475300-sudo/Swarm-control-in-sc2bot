@@ -235,3 +235,4 @@ utm_demo.png
 
 # ── JARVIS 보안 자동 추가 ──
 *.env
+data/models/transformer_strategy.pt
