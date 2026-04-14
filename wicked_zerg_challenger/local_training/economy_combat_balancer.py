@@ -51,12 +51,12 @@ class EconomyCombatBalancer:
         self.resource_bank_threshold = 3000
         self.min_drone_count = 12
 
-        # ★★★ MAXIMUM EXPANSION: 최대 멀티를 위한 일꾼 목표 ★★★
+        # ★★★ FIX: 현실적 일꾼 목표 (이전값은 군대 생산을 완전히 차단) ★★★
         # Drone targets by game phase (base values)
         self.base_drone_targets = {
-            "early": 44,   # 0-6 min (2-3베이스 완전 포화)
-            "mid": 88,     # 6-12 min (4-5베이스 완전 포화)
-            "late": 110,   # 12+ min (6-7베이스 완전 포화)
+            "early": 22,   # 0-6 min (1-2베이스: 16+6=22 → 이후 군대 전환)
+            "mid": 44,     # 6-12 min (3베이스 포화: 16*3=48, 가스 포함 ~44)
+            "late": 66,    # 12+ min (4베이스 포화: 16*4=64, 가스 포함 ~66)
         }
 
         # ★★★ 학습된 데이터 반영: 동적 조정 ★★★
@@ -230,14 +230,26 @@ class EconomyCombatBalancer:
                 return True
 
             # Priority 0.5: ★ CRITICAL FIX - 1베이스 expansion 비용 확보 ★
-            # 1베이스만 있으면 무조건 28마리까지 생산 (다른 모든 로직 무시)
+            # 1베이스만 있으면 22마리까지만 (이전 28은 과도함)
             base_count = 0
             if hasattr(self.bot, "townhalls"):
                 bases = self.bot.townhalls
                 base_count = bases.amount if hasattr(bases, "amount") else len(list(bases))
 
-            if base_count <= 1 and drones < 28:
-                return True  # 1베이스는 expansion 비용 확보를 위해 무조건 생산
+            if base_count <= 1 and drones < 22:
+                return True  # 1베이스는 expansion 비용 확보를 위해 생산
+
+            # ★★★ CRITICAL FIX: After 22 drones, strongly favor army ★★★
+            # With 2+ bases and 22+ drones, the economy is sufficient.
+            # Only allow more drones if bases are severely under-saturated.
+            game_time = getattr(self.bot, "time", 0.0)
+            if drones >= 22 and game_time > 180:
+                saturation = self._check_base_saturation()
+                if saturation == "SEVERELY_UNDER":
+                    return True  # Still need drones badly
+                # With 22+ drones and not severely under, favor army 80% of the time
+                import random
+                return random.random() < 0.20  # Only 20% chance to make drone
 
             # Priority 1: ★ 기지 포화도 체크 ★
             saturation_status = self._check_base_saturation()
@@ -336,13 +348,16 @@ class EconomyCombatBalancer:
             game_time = getattr(self.bot, "time", 0.0)
             game_time_minutes = game_time / 60.0
 
-            # ★ MACRO ECONOMY: 경제 비중 증가 (빠른 멀티 지원) ★
-            if game_time_minutes < 6:
-                base_ratio = 0.75  # Early: 75% economy (빠른 드론 생산)
+            # ★ FIX: Drone ratios reduced to ensure army production ★
+            # Previous values (0.75/0.6/0.4) caused massive over-droning
+            if game_time_minutes < 3:
+                base_ratio = 0.75  # Very early: 75% economy (initial droning)
+            elif game_time_minutes < 6:
+                base_ratio = 0.50  # Early: 50% economy (transition to army)
             elif game_time_minutes < 12:
-                base_ratio = 0.6   # Mid: 60% economy (멀티 포화)
+                base_ratio = 0.30  # Mid: 30% economy (army focus)
             else:
-                base_ratio = 0.4   # Late: 40% economy (여전히 드론 필요)
+                base_ratio = 0.20  # Late: 20% economy (army-heavy)
 
             # ★ 포화 상태면 병력 비중 증가 ★
             saturation = self._check_base_saturation()

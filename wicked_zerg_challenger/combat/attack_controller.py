@@ -115,7 +115,7 @@ class AttackController:
                             continue
 
                 if iteration % 50 == 0:
-                    self.logger.info(f"[{int(game_time)}s] ★ MULTI-ATTACK: {num_groups} groups attacking {len(attack_targets)} targets")
+                    self.logger.info(f"[{int(game_time)}s] [*] MULTI-ATTACK: {num_groups} groups attacking {len(attack_targets)} targets")
             else:
                 # 단일 타겟 공격
                 attack_target = attack_targets[0]

@@ -78,6 +78,9 @@ def can_expand_safely(resilience) -> tuple:
          else:
              min_drones_limit = 12 # Minimum functional saturation
 
+    # 1기지 → 2기지는 드론 요구 최소화 (확장이 최우선)
+    if bases == 1:
+        min_drones_limit = 0  # 1기지에서는 드론 수 무관하게 확장 허용
     if drones < bases * min_drones_limit:
         return False, f"low_drones ({drones}/{bases*min_drones_limit})"
 

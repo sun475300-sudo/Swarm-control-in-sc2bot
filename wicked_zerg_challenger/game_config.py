@@ -29,8 +29,8 @@ class GameConfig:
     # ========== 경제 설정 ==========
 
     # 드론 제한
-    DRONE_LIMIT_PER_BASE = 20       # ★ OPTIMIZED: 16 → 20 (초과 포화) ★
-    DRONE_LIMIT_PER_BASE_GAS = 26   # ★ OPTIMIZED: 22 → 26 (가스 포함) ★
+    DRONE_LIMIT_PER_BASE = 16       # ★ FIX: 20 → 16 (미네랄 포화 = 16, 초과 포화는 자원 낭비) ★
+    DRONE_LIMIT_PER_BASE_GAS = 22   # ★ FIX: 26 → 22 (16 미네랄 + 6 가스 = 22) ★
     MIN_DRONES = 22                 # 최소 드론 수 (절대값)
     MAX_DRONES = 80                 # 최대 드론 수
 

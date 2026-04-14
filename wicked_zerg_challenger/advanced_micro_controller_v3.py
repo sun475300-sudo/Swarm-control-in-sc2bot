@@ -211,7 +211,7 @@ class RavagerMicro:
                         continue
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return shot_tags
 
@@ -373,7 +373,7 @@ class LurkerMicro:
                         pass
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return acted_tags
 
@@ -495,7 +495,7 @@ class QueenMicro:
                             pass
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return acted_tags
 
@@ -625,7 +625,7 @@ class ViperMicro:
                             pass
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return acted_tags
 
@@ -752,7 +752,7 @@ class CorruptorMicro:
                             continue
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return acted_tags
 
@@ -915,7 +915,7 @@ class InfestorMicro:
                             pass
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return acted_tags
 
@@ -1057,7 +1057,7 @@ class BanelingMicro:
                     pass
 
         if actions:
-            await bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(bot, actions)
 
         return acted_tags
 
@@ -1210,6 +1210,19 @@ class AdvancedMicroControllerV3:
 
         self.logger.info("[MICRO_V3] Advanced Micro Controller V3 initialized (Phase 18)")
 
+    @staticmethod
+    async def _do_actions(bot, actions):
+        """Issue actions individually via bot.do() (burnysc2 7.x compatible)."""
+        if not actions:
+            return
+        for action in actions:
+            try:
+                result = bot.do(action)
+                if hasattr(result, "__await__"):
+                    await result
+            except Exception:
+                pass
+
     async def on_step(self, iteration: int):
         """
         Main update loop.
@@ -1323,7 +1336,7 @@ class AdvancedMicroControllerV3:
                     continue
 
         if actions:
-            await self.bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(self.bot, actions)
 
     async def _execute_infestor_micro(self, current_time: float, enemy_units):
         """★ Phase 18: Execute Infestor Fungal/Neural micro."""
@@ -1402,7 +1415,7 @@ class AdvancedMicroControllerV3:
                 actions.append(bl.move(approach_pos))
 
         if actions:
-            await self.bot.do_actions(actions)
+            await AdvancedMicroControllerV3._do_actions(self.bot, actions)
 
     def _cleanup_dead_units(self):
         """Cleanup dead unit assignments."""

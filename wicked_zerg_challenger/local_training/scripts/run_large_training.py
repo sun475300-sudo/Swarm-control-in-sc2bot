@@ -89,7 +89,7 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         value_losses.append(vl)
 
         # 출력
-        result_str = "✅ WIN " if won else "❌ LOSS"
+        result_str = "[OK] WIN " if won else "[X] LOSS"
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
         print(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
@@ -182,7 +182,7 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
             wins += 1
 
         total_rewards.append(ep_reward)
-        result_str = "✅ WIN " if won else "❌ LOSS"
+        result_str = "[OK] WIN " if won else "[X] LOSS"
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
         loss = metrics.get("loss", 0) if isinstance(metrics, dict) else 0

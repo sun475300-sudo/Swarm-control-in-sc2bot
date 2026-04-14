@@ -540,7 +540,7 @@ class CreepDenialSystem:
                 if not self._tumor_exists(tumor.unit_tag):
                     to_remove.append(tumor_id)
                     self.tumors_destroyed += 1
-                    self.logger.info(f"[CREEP_DENIAL] ★ Tumor destroyed at {tumor.position}! ★")
+                    self.logger.info(f"[CREEP_DENIAL] [*] Tumor destroyed at {tumor.position}! [*]")
 
                     # ★ 할당된 유닛들 반환 ★
                     self._release_tumor_units(tumor)

@@ -92,7 +92,7 @@ class OverlordTransport:
             if not self._ventral_sacs_completed:
                 self._ventral_sacs_completed = True
                 game_time = getattr(self.bot, "time", 0)
-                print(f"[OVERLORD TRANSPORT] [{int(game_time)}s] ✓ Ventral Sacs upgrade completed!")
+                print(f"[OVERLORD TRANSPORT] [{int(game_time)}s] [OK] Ventral Sacs upgrade completed!")
             return
 
         # 업그레이드 진행 중 확인
@@ -173,7 +173,7 @@ class OverlordTransport:
             self._loaded_overlords[overlord.tag] = [u.tag for u in units_to_load]
 
         game_time = getattr(self.bot, "time", 0)
-        print(f"[OVERLORD DROP] [{int(game_time)}s] ★ Initiating drop with {len(transport_units)} units! ★")
+        print(f"[OVERLORD DROP] [{int(game_time)}s] [*] Initiating drop with {len(transport_units)} units! [*]")
 
         # 대군주 이동
         await self.move_overlords_to_drop(overlord_list, drop_target)
@@ -221,7 +221,7 @@ class OverlordTransport:
                 try:
                     self.bot.do(overlord(AbilityId.UNLOADALLAT, drop_target))
                     game_time = getattr(self.bot, "time", 0)
-                    print(f"[OVERLORD DROP] [{int(game_time)}s] ★ DROPPING UNITS! ★")
+                    print(f"[OVERLORD DROP] [{int(game_time)}s] [*] DROPPING UNITS! [*]")
 
                     # 드랍 완료 후 정리
                     del self._drop_targets[overlord.tag]

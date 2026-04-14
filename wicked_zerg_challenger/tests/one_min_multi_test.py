@@ -140,7 +140,7 @@ class OneMinMultiTest:
                     self.expansion_location = new_hatcheries[0].position
 
                 if self.enable_logging:
-                    print(f"[1-MIN-MULTI-TEST] ★ EXPANSION PLACED at {game_time:.1f}s ★")
+                    print(f"[1-MIN-MULTI-TEST] [*] EXPANSION PLACED at {game_time:.1f}s [*]")
                     print(f"[1-MIN-MULTI-TEST] Minerals at placement: {self.minerals_at_placement}")
                     print(f"[1-MIN-MULTI-TEST] Location: {self.expansion_location}")
 
@@ -161,7 +161,7 @@ class OneMinMultiTest:
 
         if self.enable_logging:
             print("=" * 60)
-            print("[1-MIN-MULTI-TEST] ★★★ TEST PASSED ★★★")
+            print("[1-MIN-MULTI-TEST] [*][*][*] TEST PASSED [*][*][*]")
             print(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
             print(f"  Target timing: {self.target_timing:.1f}s (±{self.timing_tolerance:.1f}s)")
             print(f"  Minerals at placement: {self.minerals_at_placement}")
@@ -176,7 +176,7 @@ class OneMinMultiTest:
 
         if self.enable_logging:
             print("=" * 60)
-            print("[1-MIN-MULTI-TEST] ✗✗✗ TEST FAILED ✗✗✗")
+            print("[1-MIN-MULTI-TEST] [X][X][X] TEST FAILED [X][X][X]")
             print(f"  Reason: {reason}")
             if self.expansion_placed_time:
                 print(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
@@ -202,7 +202,7 @@ class OneMinMultiTest:
         print("\n" + "=" * 60)
         print("1-MINUTE MULTI TIMING TEST RESULTS")
         print("=" * 60)
-        print(f"Status: {'PASS ✓' if results['test_passed'] else 'FAIL ✗'}")
+        print(f"Status: {'PASS [OK]' if results['test_passed'] else 'FAIL [X]'}")
         print(f"Target Timing: {results['target_timing']:.1f}s (±{results['timing_tolerance']:.1f}s)")
 
         if results['expansion_placed_time']:

@@ -297,7 +297,7 @@ class DefenseCoordinator:
                     main_base = b.townhalls.first
                     await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4))
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] ★★★ Spore Crawler #1 건설! (목표: 3:00) ★★★")
+                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] [*][*][*] Spore Crawler #1 건설! (목표: 3:00) [*][*][*]")
                     return
                 except Exception as e:
                     self.logger.warning(f"[DEFENSE] Spore build failed: {e}")

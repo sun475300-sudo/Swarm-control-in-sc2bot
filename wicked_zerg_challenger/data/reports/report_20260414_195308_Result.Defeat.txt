@@ -1,0 +1,57 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Protoss
+  Duration: 2:09
+  Date: 2026-04-14 19:53
+
+--- TIMELINE ---
+  [1:02] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:11] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:41] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [2:00] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:05] Build: UnitTypeId.SPINECRAWLER (Supply 18)
+  [2:16] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:36] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 19)
+  [2:59] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [4:03] Build: UnitTypeId.BANELINGNEST (Supply 28)
+  [4:32] Build: UnitTypeId.SPORECRAWLER (Supply 32)
+  [9:18] Harassment: UnitTypeId.NEXUS
+  [11:15] Harassment: UnitTypeId.PYLON
+
+--- ECONOMY ---
+  Peak Minerals: 180
+  Peak Vespene: 2006
+  Peak Workers: 40
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 2:36
+  Tech: UnitTypeId.ROACHWARREN at 5:08
+  Tech: UnitTypeId.LAIR at 5:52
+  Tech: UnitTypeId.HYDRALISKDEN at 6:23
+  Tech: UnitTypeId.INFESTATIONPIT at 6:52
+  Tech: UnitTypeId.SPIRE at 7:08
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 52 produced
+  UnitTypeId.ROACH: 10 produced
+  UnitTypeId.HYDRALISK: 2 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 10
+  Army Supply: 4
+  Bases: 1
+  Minerals: 10
+  Vespene: 2042
+
+============================================================

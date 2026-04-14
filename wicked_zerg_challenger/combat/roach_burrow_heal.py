@@ -101,14 +101,14 @@ class RoachBurrowHeal:
             if not self._burrow_available:
                 self._burrow_available = True
                 game_time = getattr(self.bot, "time", 0)
-                print(f"[ROACH BURROW] [{int(game_time)}s] ✓ Burrow upgrade completed!")
+                print(f"[ROACH BURROW] [{int(game_time)}s] [OK] Burrow upgrade completed!")
 
         # Tunneling Claws 확인 (바퀴 전용)
         if UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades:
             if not self._tunneling_claws_available:
                 self._tunneling_claws_available = True
                 game_time = getattr(self.bot, "time", 0)
-                print(f"[ROACH BURROW] [{int(game_time)}s] ✓ Tunneling Claws upgrade completed!")
+                print(f"[ROACH BURROW] [{int(game_time)}s] [OK] Tunneling Claws upgrade completed!")
 
     async def manage_roach_healing(self, iteration: int):
         """

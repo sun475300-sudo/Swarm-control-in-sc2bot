@@ -260,7 +260,7 @@ class DifficultyProgression:
                 total = wins + losses
                 win_rate = (wins / total * 100) if total > 0 else 0
 
-                status = "✅" if win_rate >= self.win_rate_threshold * 100 else "🔄"
+                status = "[OK]" if win_rate >= self.win_rate_threshold * 100 else "[~]"
                 lines.append(
                     f"  {status} {diff.name:15s}: {wins:3d}W / {losses:3d}L "
                     f"= {win_rate:5.1f}% ({total} games)"

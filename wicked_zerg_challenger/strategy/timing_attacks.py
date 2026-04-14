@@ -145,13 +145,13 @@ class TimingAttacks:
         """Roach 타이밍 공격 시작"""
         self.timing_attack_active = True
         self.timing_attack_type = "roach_ravager"
-        self.logger.info(f"[{int(self.bot.time)}s] ★★★ ROACH/RAVAGER TIMING ATTACK! ★★★")
+        self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] ROACH/RAVAGER TIMING ATTACK! [*][*][*]")
 
     def _initiate_muta_timing(self):
         """Mutalisk 타이밍 공격 시작"""
         self.timing_attack_active = True
         self.timing_attack_type = "mutalisk"
-        self.logger.info(f"[{int(self.bot.time)}s] ★★★ MUTALISK TIMING ATTACK! ★★★")
+        self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] MUTALISK TIMING ATTACK! [*][*][*]")
 
     def _assess_enemy_defense(self) -> int:
         """

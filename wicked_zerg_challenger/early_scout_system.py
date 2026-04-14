@@ -268,6 +268,7 @@ class EarlyScoutSystem:
 
         self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
         self.overlord_scout_sent = True
+        self._last_overlord_rescout_time = self.bot.time
         print(f"[EARLY_SCOUT] Sent Overlord scout at {int(self.bot.time)}s")
 
     async def _manage_overlord_scout(self) -> None:
@@ -361,7 +362,8 @@ class EarlyScoutSystem:
                     self.enemy_early_units.add(unit_tag)
 
     async def _mid_game_rescouting(self) -> None:
-        if self.bot.time - self._last_rescout_time < 30.0:
+        """Mid-game: Zergling patrols the whole map every 60 seconds."""
+        if self.bot.time - self._last_rescout_time < 60.0:
             return
         self._last_rescout_time = self.bot.time
 
@@ -372,11 +374,35 @@ class EarlyScoutSystem:
             return
 
         enemy_start = self.bot.enemy_start_locations[0]
-        scout_ling = zerglings.closest_to(enemy_start)
-        self.bot.do(scout_ling.attack(enemy_start))
+        our_base = self.bot.start_location
+        map_center = self.bot.game_info.map_center
 
-        if int(self.bot.time) % 60 < 5:
-            print(f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game rescout sent")
+        # Build patrol waypoints covering the whole map
+        patrol_targets = [enemy_start, map_center]
+
+        # Add expansion locations sorted by distance to enemy
+        expansions = getattr(self.bot, "expansion_locations_list", [])
+        if expansions:
+            sorted_exps = sorted(
+                expansions,
+                key=lambda p: p.distance_to(enemy_start),
+            )
+            for exp in sorted_exps[:5]:
+                if exp.distance_to(our_base) > 5:
+                    patrol_targets.append(exp)
+
+        # Send a zergling on patrol through all waypoints
+        scout_ling = zerglings.closest_to(enemy_start)
+        for i, target in enumerate(patrol_targets):
+            if i == 0:
+                self.bot.do(scout_ling.move(target))
+            else:
+                self.bot.do(scout_ling.move(target, queue=True))
+
+        print(
+            f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game zergling map "
+            f"patrol sent ({len(patrol_targets)} waypoints)"
+        )
 
     def is_cheese_detected(self) -> bool:
         return self.cheese_suspected

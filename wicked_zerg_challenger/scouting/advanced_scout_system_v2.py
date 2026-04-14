@@ -145,6 +145,10 @@ class AdvancedScoutingSystemV2:
             self._monitor_drop_paths()
             self.last_scout_times["DROP_WATCH"] = current_time
 
+        # Late game: Overseer detection sweep for cloaked/burrowed units
+        if current_time > 480:  # 8 minutes+
+            await self._overseer_detection_sweep()
+
         # ★ Phase 22: 백과사전 기반 우선 정찰 대상 갱신 (매 60초) ★
         if iteration % 1320 == 0:
             self._update_priority_targets()
@@ -872,7 +876,7 @@ class AdvancedScoutingSystemV2:
         self._patrol_index[scout.tag] = 0
         self.scouts_sent += 1
 
-        self.logger.info(f"[{int(self.bot.time)}s] ★ PATROL assigned: {scout.type_id.name} -> route '{route_name}' ({len(route)} waypoints)")
+        self.logger.info(f"[{int(self.bot.time)}s] [*] PATROL assigned: {scout.type_id.name} -> route '{route_name}' ({len(route)} waypoints)")
         return True
 
     # ================================================================
@@ -927,7 +931,7 @@ class AdvancedScoutingSystemV2:
                     "start_time": game_time,
                     "mode": "watchtower",
                 }
-                self.logger.info(f"[{int(game_time)}s] ★ WATCHTOWER claim: Zergling -> {tower_pos}")
+                self.logger.info(f"[{int(game_time)}s] [*] WATCHTOWER claim: Zergling -> {tower_pos}")
 
     # ================================================================
     # ★ Phase 22: 드롭 경로 감시 ★
@@ -985,7 +989,7 @@ class AdvancedScoutingSystemV2:
                     "start_time": self.bot.time,
                     "mode": "drop_watch",
                 }
-                self.logger.info(f"[{int(self.bot.time)}s] ★ DROP WATCH: Overlord -> {watch_pos}")
+                self.logger.info(f"[{int(self.bot.time)}s] [*] DROP WATCH: Overlord -> {watch_pos}")
                 assigned_count += 1
                 if assigned_count >= 2:
                     break
@@ -1062,6 +1066,56 @@ class AdvancedScoutingSystemV2:
         # 10분 이후: 아군 방어 순찰 (저글링)
         if game_time > 600:
             self._assign_patrol("defense", UnitTypeId.ZERGLING)
+
+    # ================================================================
+    # Late-game: Overseer detection sweep for cloaked/burrowed units
+    # ================================================================
+
+    async def _overseer_detection_sweep(self):
+        """
+        Late-game Overseer detection: position Overseers near the army
+        and key locations to detect cloaked/burrowed enemy units.
+
+        Overseers are detectors -- keeping them with the army ensures
+        Dark Templars, Banshees, Lurkers, etc. are revealed in combat.
+        """
+        overseers = self.bot.units(UnitTypeId.OVERSEER).filter(
+            lambda u: u.tag not in self.active_scouts
+            and u.tag not in self._patrol_units
+        )
+        if not overseers:
+            return
+
+        # 1. Attach one overseer to the main army group for detection
+        army_units = self.bot.units.filter(
+            lambda u: u.can_attack and not u.is_worker
+        )
+        if army_units.amount >= 5:
+            army_center = army_units.center
+            # Find the overseer farthest from the army
+            for overseer in overseers:
+                if overseer.distance_to(army_center) > 15:
+                    self.bot.do(overseer.move(army_center))
+                    break
+
+        # 2. Send remaining overseers toward known enemy positions
+        #    to pre-detect cloaked units approaching our bases
+        if overseers.amount >= 2:
+            our_bases = self.bot.townhalls
+            if our_bases:
+                for base in our_bases:
+                    # Check if there's already an overseer near this base
+                    nearby_overseers = self.bot.units(UnitTypeId.OVERSEER).closer_than(
+                        15, base.position
+                    )
+                    if not nearby_overseers:
+                        available = overseers.filter(
+                            lambda u: u.distance_to(base.position) > 15
+                        )
+                        if available:
+                            closest = available.closest_to(base.position)
+                            self.bot.do(closest.move(base.position))
+                            break
 
     def get_scout_report(self) -> dict:
         """외부 시스템용 정찰 상태 리포트"""

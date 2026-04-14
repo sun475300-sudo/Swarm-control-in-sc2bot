@@ -116,13 +116,13 @@ class WickedZergBotProImpl(BotAI):
         # === 0. Blackboard (Central State) ===
         # Already initialized in __init__, but logging here
         if self.blackboard:
-             self.logger.info("★ Blackboard active")
+             self.logger.info("[*] Blackboard active")
 
         # === 0.1 Resource Manager (Thread-safe resource reservation) ===
         try:
             from core.resource_manager import ResourceManager
             self.resource_manager = ResourceManager(self)
-            self.logger.info("★ ResourceManager initialized (thread-safe reservation system)")
+            self.logger.info("[*] ResourceManager initialized (thread-safe reservation system)")
         except ImportError as e:
             self.logger.warning(f"ResourceManager not available: {e}")
             self.resource_manager = None
@@ -175,7 +175,7 @@ class WickedZergBotProImpl(BotAI):
             # Factory를 bot에 저장 (나중에 매니저 조회용)
             self.manager_factory = factory
 
-            print(f"\n[BOT] ★ Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded ★\n")
+            print(f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n")
 
         except ImportError as e:
             self.logger.error(f"ManagerFactory not available: {e}")
@@ -208,7 +208,7 @@ class WickedZergBotProImpl(BotAI):
             self.personality = PersonalityModule(self, mode=mode,
                                                knowledge_manager=getattr(self, 'knowledge_manager', None),
                                                opponent_modeling=getattr(self, 'opponent_modeling', None))
-            self.logger.info(f"★ PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
+            self.logger.info(f"[*] PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
         except Exception as e:
             self.logger.warning(f"Failed to initialize PersonalityModule: {e}")
             traceback.print_exc()
@@ -237,7 +237,7 @@ class WickedZergBotProImpl(BotAI):
             try:
                 from local_training.hot_reload import ModelHotReloader
                 self.hot_reloader = ModelHotReloader(self.rl_agent)
-                self.logger.info("[HOT_RELOAD] ★ ModelHotReloader initialized (30s interval)")
+                self.logger.info("[HOT_RELOAD] [*] ModelHotReloader initialized (30s interval)")
             except ImportError:
                 pass
             except Exception as e:
@@ -317,14 +317,14 @@ class WickedZergBotProImpl(BotAI):
         try:
             from scoring_system import ScoringSystem
             self.scoring_system = ScoringSystem(self)
-            self.logger.info("★ ScoringSystem initialized (10-domain scoring)")
+            self.logger.info("[*] ScoringSystem initialized (10-domain scoring)")
         except Exception as e:
             self.logger.warning(f"ScoringSystem not available: {e}")
 
         try:
             from realtime_awareness_engine import RealtimeAwarenessEngine
             self.awareness_engine = RealtimeAwarenessEngine(self)
-            self.logger.info("★ RealtimeAwarenessEngine initialized (14-pattern detection)")
+            self.logger.info("[*] RealtimeAwarenessEngine initialized (14-pattern detection)")
         except Exception as e:
             self.logger.warning(f"RealtimeAwarenessEngine not available: {e}")
 
@@ -546,7 +546,7 @@ class WickedZergBotProImpl(BotAI):
                     if self.rl_agent.episode_count % 10 == 0:
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
-                            self.logger.info(f"[RL_AGENT] ★ MODEL READY FOR DEPLOYMENT ★")
+                            self.logger.info(f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]")
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
 
@@ -602,7 +602,7 @@ class WickedZergBotProImpl(BotAI):
             if "VICTORY" in result_str or "WIN" in result_str:
                 promoted = curriculum.record_win(opponent_race)
                 if promoted:
-                    self.logger.info("[CURRICULUM] ★★★ 다음 단계로 승격! ★★★")
+                    self.logger.info("[CURRICULUM] [*][*][*] 다음 단계로 승격! [*][*][*]")
             elif "DEFEAT" in result_str or "LOSS" in result_str:
                 demoted = curriculum.record_loss(opponent_race)
                 if demoted:

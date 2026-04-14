@@ -279,10 +279,22 @@ class ProductionResilience:
         if b.vespene > 1500:
             await self._spend_excess_gas()
 
+        # ★★★ EXPANSION RESERVE: 기지 부족 시 미네랄 비축 ★★★
+        # FIX: Only block DRONE production, never block army production.
+        # After 300s (5 min), stop blocking entirely to avoid army starvation.
+        time = getattr(b, "time", 0.0)
+        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+        pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY) if hasattr(b, "already_pending") else 0
+        self._expansion_reserve_active = (
+            bases <= 2 and pending_hatcheries == 0 and time > 120 and time < 300 and b.minerals < 300
+        )
+        # NOTE: We no longer return early here. Army production must continue.
+        # The _expansion_reserve_active flag is checked in _balanced_production
+        # to suppress drone production only.
+
         # ★★★ FIX: 확장 체크를 미네랄 소비보다 먼저 실행 ★★★
         # === AGGRESSIVE EXPANSION: Prioritize expansion BEFORE spending minerals ===
         # Zerg needs expansions for macro advantage
-        time = getattr(b, "time", 0.0)
         if time >= 60 and b.minerals > 300:  # 300원부터 확장 고려
             bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
             pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
@@ -328,41 +340,41 @@ class ProductionResilience:
             if b.minerals > 3000:
                 await self._force_emergency_production(b)
                 return
-            
-            # === EXTREME EMERGENCY: Minerals > 500 - Force all larvae to Zerglings
-            # This is the last line of defense against "1,000+ minerals, 0 army" death spiral
-            if b.minerals > 500:
-                larvae = b.units(UnitTypeId.LARVA)
-                if larvae.exists:
-                    # Check Spawning Pool status more reliably
-                    spawning_pools_ready = b.structures(UnitTypeId.SPAWNINGPOOL).ready
-                    spawning_pools_any = b.structures(UnitTypeId.SPAWNINGPOOL)
-                    pending_pools = b.already_pending(UnitTypeId.SPAWNINGPOOL)
 
-                    # Check for duplicate pool builds - only if NO ready pools exist
-                    if not spawning_pools_ready.exists and pending_pools == 0 and b.minerals > 500:
-                        if b.townhalls.exists and b.can_afford(UnitTypeId.SPAWNINGPOOL):
-                            try:
-                                main_base = b.townhalls.first
-                                await b.build(
-                                    UnitTypeId.SPAWNINGPOOL,
-                                    near=main_base.position.towards(b.game_info.map_center, 5),
-                                )
-                                print(f"[PRODUCTION_RESILIENCE] [{int(b.time)}s] EMERGENCY POOL BUILD [Frame:{b.iteration}] Minerals:{int(b.minerals)} Larvae:{len(list(larvae))} Supply:{b.supply_used}/{b.supply_cap}")
-                            except Exception as e:
-                                if b.iteration % 100 == 0:
-                                    print(f"[ERROR] Failed to emergency-build Spawning Pool: {e}")
-                            return  # Exit and wait for Spawning Pool to complete
+            # ★★★ FIX: 미네랄 > 500 조건 제거 — 항상 생산 실행 ★★★
+            # 이전: minerals > 500일 때만 balanced_production 호출
+            # → 미네랄이 0이면 군대 생산이 영원히 안 됨 (치명적 버그)
+            # 수정: 라바가 있으면 항상 balanced production 실행
+            larvae = b.units(UnitTypeId.LARVA)
+            if larvae.exists:
+                # Check Spawning Pool status more reliably
+                spawning_pools_ready = b.structures(UnitTypeId.SPAWNINGPOOL).ready
+                pending_pools = b.already_pending(UnitTypeId.SPAWNINGPOOL)
 
-                    # If Spawning Pool is ready, use balance system to decide drone vs army
-                    if spawning_pools_ready.exists:
-                        # Use Economy-Combat Balancer to decide production
-                        if self.balancer:
-                            await self._balanced_production(larvae)
-                        else:
-                            # Fallback: Original emergency logic
-                            await self._emergency_zergling_production(larvae)
-                        return  # Exit after production decision
+                # Check for duplicate pool builds - only if NO ready pools exist
+                if not spawning_pools_ready.exists and pending_pools == 0 and b.minerals >= 200:
+                    if b.townhalls.exists and b.can_afford(UnitTypeId.SPAWNINGPOOL):
+                        try:
+                            main_base = b.townhalls.first
+                            await b.build(
+                                UnitTypeId.SPAWNINGPOOL,
+                                near=main_base.position.towards(b.game_info.map_center, 5),
+                            )
+                            print(f"[PRODUCTION_RESILIENCE] [{int(b.time)}s] EMERGENCY POOL BUILD [Frame:{b.iteration}] Minerals:{int(b.minerals)} Larvae:{len(list(larvae))} Supply:{b.supply_used}/{b.supply_cap}")
+                        except Exception as e:
+                            if b.iteration % 100 == 0:
+                                print(f"[ERROR] Failed to emergency-build Spawning Pool: {e}")
+                        return  # Exit and wait for Spawning Pool to complete
+
+                # If Spawning Pool is ready, use balance system to decide drone vs army
+                if spawning_pools_ready.exists:
+                    # Use Economy-Combat Balancer to decide production
+                    if self.balancer:
+                        await self._balanced_production(larvae)
+                    else:
+                        # Fallback: Original emergency logic
+                        await self._emergency_zergling_production(larvae)
+                    return  # Exit after production decision
 
         except Exception as e:
             if b.iteration % 100 == 0:
@@ -375,11 +387,23 @@ class ProductionResilience:
         b = self.bot
         if not self.balancer:
             return
-        
+
         larvae_list = list(larvae) if larvae.exists else []
         if not larvae_list:
             return
-        
+
+        # ★ EXPANSION RESERVE: 2기지 이하 + 150초 이후면 확장 비용 예약 ★
+        # FIX: Never block army production. Only suppress drone production when
+        # saving for expansion. After 300s, stop suppressing entirely.
+        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+        pending_hatch = b.already_pending(UnitTypeId.HATCHERY) if hasattr(b, "already_pending") else 0
+        game_time = getattr(b, "time", 0)
+        expansion_reserve_active = (
+            bases <= 2 and pending_hatch == 0 and game_time > 150 and game_time < 300 and b.minerals < 300
+        )
+        # NOTE: We do NOT return here. Army production continues below.
+        # expansion_reserve_active is used below to suppress drone production only.
+
         # RESOURCE FLUSH MODE: When minerals >= 1000, produce units based on available tech
         # IMPROVED: Prioritize tech units over Zerglings to balance composition
         if b.minerals >= 1000:
@@ -473,8 +497,25 @@ class ProductionResilience:
             # ★ EconomyManager 요청 반영 (이중 생산 방지: 여기서만 실행)
             economy_wants_drone = getattr(self, '_economy_drone_requested', False)
 
+            # ★★★ FIX: Enforce army-heavy production when economy is established ★★★
+            # After 22 drones and 180s, at least 70% of larvae should go to army.
+            force_army = False
+            if drone_count >= 22 and game_time > 180:
+                total_this_round = drones_produced + army_produced
+                if total_this_round > 0:
+                    army_ratio_this_round = army_produced / total_this_round
+                    if army_ratio_this_round < 0.70:
+                        force_army = True
+                # With 0 produced so far, allow one drone check below
+
+            # ★★★ FIX: Expansion reserve suppresses drone production only ★★★
+            if expansion_reserve_active:
+                force_army = True
+
             # Consider strategy preference
-            if self.strategy_manager and self.strategy_manager.should_prioritize_drones():
+            if force_army:
+                should_train_drone = False
+            elif self.strategy_manager and self.strategy_manager.should_prioritize_drones():
                 # Strategy prefers drones, but still check balancer
                 should_train_drone = self.balancer.should_train_drone() or (drone_count < target_drones)
             elif self.strategy_manager and self.strategy_manager.should_early_aggression():

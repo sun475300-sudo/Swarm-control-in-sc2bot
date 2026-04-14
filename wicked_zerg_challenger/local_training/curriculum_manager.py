@@ -282,10 +282,10 @@ class CurriculumManager:
     def _promote_to_next_level(self) -> bool:
         """다음 단계로 승격."""
         if self.current_idx >= len(self.levels) - 1:
-            print(f"\n{'★'*35}")
-            print(f"[CURRICULUM] 🏆 최고 난이도 마스터!")
+            print(f"\n{'[*]'*12}")
+            print(f"[CURRICULUM] [TROPHY] 최고 난이도 마스터!")
             print(f"  모든 단계를 완료했습니다!")
-            print(f"{'★'*35}\n")
+            print(f"{'[*]'*12}\n")
             self.save_level()
             return False
 
@@ -303,12 +303,12 @@ class CurriculumManager:
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
-        print(f"\n{'★'*35}")
-        print(f"[CURRICULUM] 🎊 단계 승격!")
+        print(f"\n{'[*]'*12}")
+        print(f"[CURRICULUM] [PROMOTED] 단계 승격!")
         print(f"  {old_difficulty} -> {new_difficulty}")
         print(f"  이전 단계 승리: {old_wins}승")
         print(f"  다음 목표: {wins_required}승 달성하기")
-        print(f"{'★'*35}\n")
+        print(f"{'[*]'*12}\n")
 
         return True
 
@@ -332,7 +332,7 @@ class CurriculumManager:
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
         print(f"\n{'='*70}")
-        print(f"[CURRICULUM] 📉 난이도 하향 (연습 더 필요)")
+        print(f"[CURRICULUM] [DOWN] 난이도 하향 (연습 더 필요)")
         print(f"  {old_difficulty} -> {new_difficulty}")
         print(f"  목표: {wins_required}승 달성하기")
         print(f"{'='*70}\n")
@@ -555,7 +555,7 @@ class CurriculumManager:
         stats = self.get_race_stats()
 
         print(f"\n{'='*70}")
-        print("★★★ 종족별 승률 (Race Win Rates) ★★★")
+        print("[*][*][*] 종족별 승률 (Race Win Rates) [*][*][*]")
         print(f"{'='*70}")
         print(f"{'종족':<10} {'승리':<8} {'패배':<8} {'게임':<8} {'승률':<10}")
         print(f"{'-'*70}")

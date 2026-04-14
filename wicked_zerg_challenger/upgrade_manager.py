@@ -189,7 +189,7 @@ class EvolutionUpgradeManager:
                 try:
                     self.bot.do(evo.research(upgrade_id))
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] ★ {upgrade_name} 시작! ★")
+                    self.logger.info(f"[{int(game_time)}s] [*] {upgrade_name} 시작! [*]")
                 except Exception as e:
                     self.logger.warning(f"Failed to research upgrade {upgrade_id}: {e}")
                     continue
@@ -566,7 +566,7 @@ class EvolutionUpgradeManager:
                 self.bot.do(pool.research(zergling_speed))
                 self._zergling_speed_started = True
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] ★★★ 대사 촉진 (저글링 발업) 연구 시작! ★★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*][*] 대사 촉진 (저글링 발업) 연구 시작! [*][*][*]")
             except Exception as e:
                 if iteration % 50 == 0:
                     self.logger.warning(f"Zergling speed research error: {e}")
@@ -601,7 +601,7 @@ class EvolutionUpgradeManager:
                     self.bot.do(th.research(overlord_speed))
                     self._overlord_speed_started = True
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] ★★★ 기낭 갑피 (대군주 속업) 연구 시작! ★★★")
+                    self.logger.info(f"[{int(game_time)}s] [*][*][*] 기낭 갑피 (대군주 속업) 연구 시작! [*][*][*]")
                     return
                 except Exception:
                     continue
@@ -633,7 +633,7 @@ class EvolutionUpgradeManager:
                 try:
                     self.bot.do(th.research(ventral_sacs))
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] ★★★ 배주머니 (대군주 수송) 연구 시작! ★★★")
+                    self.logger.info(f"[{int(game_time)}s] [*][*][*] 배주머니 (대군주 수송) 연구 시작! [*][*][*]")
                     return
                 except Exception:
                     continue
@@ -665,7 +665,7 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(nest.research(baneling_speed))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] ★★ 원심 고리 (맹독충 발업) 연구 시작! ★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*] 원심 고리 (맹독충 발업) 연구 시작! [*][*]")
             except Exception as e:
                 self.logger.warning(f"Failed to research baneling speed: {e}")
 
@@ -701,7 +701,7 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(warren.research(roach_speed))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] ★★ 신경 재구성 (바퀴 발업) 연구 시작! ★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*] 신경 재구성 (바퀴 발업) 연구 시작! [*][*]")
             except Exception as e:
                 self.logger.warning(f"Failed to research roach speed: {e}")
 
@@ -732,7 +732,7 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(den.research(hydra_speed))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] ★★ 근육 보강 (히드라 발업) 연구 시작! ★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*] 근육 보강 (히드라 발업) 연구 시작! [*][*]")
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra speed: {e}")
 
@@ -765,7 +765,7 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(den.research(hydra_range))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] ★★ 홈 스파인 (히드라 사거리 +2) 연구 시작! ★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*] 홈 스파인 (히드라 사거리 +2) 연구 시작! [*][*]")
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra range: {e}")
 
@@ -810,7 +810,7 @@ class EvolutionUpgradeManager:
                 try:
                     self.bot.do(th.research(burrow))
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] ★★ 잠복 (Burrow) 연구 시작! ★★")
+                    self.logger.info(f"[{int(game_time)}s] [*][*] 잠복 (Burrow) 연구 시작! [*][*]")
                     return
                 except Exception as e:
                     self.logger.warning(f"Failed to research burrow: {e}")
@@ -847,7 +847,7 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(pool.research(adrenal))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] ★★★ 아드레날린 분비선 (Crackling) 연구 시작! ★★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*][*] 아드레날린 분비선 (Crackling) 연구 시작! [*][*][*]")
             except Exception as e:
                 self.logger.warning(f"Failed to research adrenal glands: {e}")
 
@@ -943,7 +943,7 @@ class EvolutionUpgradeManager:
                 if pools.exists and self.bot.minerals >= 100 and self.bot.vespene >= 50:
                     try:
                         await self.bot.build(UnitTypeId.BANELINGNEST, near=build_pos)
-                        self.logger.info(f"[{int(game_time)}s] ★ Phase 14: Baneling Nest 건설 (변이 유닛 보장)")
+                        self.logger.info(f"[{int(game_time)}s] [*] Phase 14: Baneling Nest 건설 (변이 유닛 보장)")
                     except Exception as e:
                         if iteration % 100 == 0:
                             self.logger.debug(f"Baneling Nest build failed: {e}")
@@ -957,7 +957,7 @@ class EvolutionUpgradeManager:
                     if self.bot.minerals >= 150 and self.bot.vespene >= 150:
                         try:
                             await self.bot.build(UnitTypeId.LURKERDENMP, near=build_pos)
-                            self.logger.info(f"[{int(game_time)}s] ★ Phase 14: Lurker Den 건설 (변이 유닛 보장)")
+                            self.logger.info(f"[{int(game_time)}s] [*] Phase 14: Lurker Den 건설 (변이 유닛 보장)")
                         except Exception as e:
                             if iteration % 100 == 0:
                                 self.logger.debug(f"Lurker Den build failed: {e}")
@@ -969,7 +969,7 @@ class EvolutionUpgradeManager:
                 if self.bot.minerals >= 150 and self.bot.vespene >= 200:
                     try:
                         await self.bot.build(UnitTypeId.ULTRALISKCAVERN, near=build_pos)
-                        self.logger.info(f"[{int(game_time)}s] ★ Phase 31: Ultralisk Cavern 건설 (Hive 완성)")
+                        self.logger.info(f"[{int(game_time)}s] [*] Phase 31: Ultralisk Cavern 건설 (Hive 완성)")
                     except Exception as e:
                         if iteration % 100 == 0:
                             self.logger.debug(f"Ultralisk Cavern build failed: {e}")
@@ -982,7 +982,7 @@ class EvolutionUpgradeManager:
                 if pools.exists and self.bot.minerals >= 150 and self.bot.vespene >= 100:
                     try:
                         await self.bot.build(UnitTypeId.ROACHWARREN, near=build_pos)
-                        self.logger.info(f"[{int(game_time)}s] ★ Phase 14: Roach Warren 건설 (변이 유닛 보장)")
+                        self.logger.info(f"[{int(game_time)}s] [*] Phase 14: Roach Warren 건설 (변이 유닛 보장)")
                     except Exception as e:
                         if iteration % 100 == 0:
                             self.logger.debug(f"Roach Warren build failed: {e}")
@@ -1040,7 +1040,7 @@ class EvolutionUpgradeManager:
         spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
         if not spawning_pools.exists:
             if iteration % 100 == 0:
-                self.logger.warning(f"[{int(self.bot.time)}s] ⚠️ Lair 대기 중: Spawning Pool 미완료")
+                self.logger.warning(f"[{int(self.bot.time)}s] [!] Lair 대기 중: Spawning Pool 미완료")
             return
 
         # ★ 최적화: idle 체크 제거 - 모든 ready Hatchery 허용 ★
@@ -1057,18 +1057,25 @@ class EvolutionUpgradeManager:
 
         # 변이 시작 (가장 안전한 해처리 = 본진)
         try:
-            # 본진 해처리 선택 (start_location에 가장 가까운)
-            if hasattr(self.bot, "start_location"):
-                main_hatch = hatcheries.closest_to(self.bot.start_location)
+            # idle 해처리 우선 선택 (busy한 해처리는 error 100 발생)
+            idle_hatcheries = hatcheries.idle
+            if idle_hatcheries.exists:
+                if hasattr(self.bot, "start_location"):
+                    main_hatch = idle_hatcheries.closest_to(self.bot.start_location)
+                else:
+                    main_hatch = idle_hatcheries.first
             else:
-                main_hatch = hatcheries.first
+                # idle 해처리가 없으면 다음 틱에 재시도
+                if iteration % 100 == 0:
+                    self.logger.info(f"[{int(self.bot.time)}s] Lair 대기: 모든 Hatchery가 사용 중")
+                return
 
             self.bot.do(main_hatch(UnitTypeId.LAIR))
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(f"[{int(game_time)}s] ★★★ 레어 (Lair) 변이 시작! (목표: 3:30) ★★★")
+            self.logger.info(f"[{int(game_time)}s] [*][*][*] 레어 (Lair) 변이 시작! (목표: 3:30) [*][*][*]")
         except Exception as e:
             if iteration % 50 == 0:
-                self.logger.warning(f"Lair upgrade error: {e}")
+                self.logger.warning(f"Lair upgrade error: {e} (hatcheries: {hatcheries.amount}, idle: {hatcheries.idle.amount})")
 
     async def _upgrade_to_hive(self, iteration: int) -> None:
         """
@@ -1114,7 +1121,7 @@ class EvolutionUpgradeManager:
             lair = lairs.first
             self.bot.do(lair(UnitTypeId.HIVE))
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(f"[{int(game_time)}s] ★★★ 군락 (Hive) 변이 시작! ★★★")
+            self.logger.info(f"[{int(game_time)}s] [*][*][*] 군락 (Hive) 변이 시작! [*][*][*]")
         except Exception as e:
             if iteration % 50 == 0:
                 self.logger.warning(f"Hive upgrade error: {e}")

@@ -8,6 +8,7 @@ Combat Execution - 전투 실행 시스템
 3. 기본 공격 로직
 """
 
+import inspect
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -71,8 +72,10 @@ class CombatExecution:
             # 1. 오버킬 분산 타겟 할당
             if self.targeting and self.micro_combat:
                 assignments = self.targeting.assign_targets(units, enemy_units)
-                if assignments:
-                    await self.micro_combat.attack_assigned_targets(units, assignments)
+                if assignments and hasattr(self.micro_combat, "attack_assigned_targets"):
+                    result = self.micro_combat.attack_assigned_targets(units, assignments)
+                    if inspect.isawaitable(result):
+                        await result
                     return
 
             # 2. 집중 사격 (타겟팅 시스템 사용)
@@ -84,12 +87,16 @@ class CombatExecution:
                     focus_target = self.targeting.select_focus_fire_target(units, enemy_units)
                 if focus_target:
                     if self.micro_combat:
-                        await self.micro_combat.focus_fire(units, focus_target)
+                        result = self.micro_combat.focus_fire(units, focus_target)
+                        if inspect.isawaitable(result):
+                            await result
                     return
 
             # 3. 타겟팅 시스템 없으면 마이크로 키팅
             if self.micro_combat:
-                await self.micro_combat.kiting(units, enemy_units)
+                result = self.micro_combat.kiting(units, enemy_units)
+                if inspect.isawaitable(result):
+                    await result
             else:
                 # 마이크로 전투도 없으면 기본 공격
                 await self.basic_attack(units, enemy_units)

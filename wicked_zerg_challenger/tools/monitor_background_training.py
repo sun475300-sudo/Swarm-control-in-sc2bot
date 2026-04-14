@@ -129,7 +129,7 @@ class BackgroundTrainingMonitor:
         if buffer_delta > 0:
             print(f"Status:      ? +{buffer_delta} new files detected!")
         elif buffer_delta < 0:
-            print(f"Status:      ✓ {abs(buffer_delta)} files processed")
+            print(f"Status:      [OK] {abs(buffer_delta)} files processed")
         else:
             print(f"Status:      ○ No change")
 
@@ -153,7 +153,7 @@ class BackgroundTrainingMonitor:
         # 아카이브 변화 감지
         archive_delta = archive_info['count'] - self.last_archive_count
         if archive_delta > 0:
-            print(f"Status:      ✓ +{archive_delta} files archived (training completed)")
+            print(f"Status:      [OK] +{archive_delta} files archived (training completed)")
         else:
             print(f"Status:      ○ No change")
 
@@ -173,7 +173,7 @@ class BackgroundTrainingMonitor:
         print(f"Path:        {self.model_path}")
 
         if model_info['exists']:
-            print(f"Status:      ✓ Model exists")
+            print(f"Status:      [OK] Model exists")
             print(f"Size:        {self.format_size(model_info['size'])}")
             print(f"Modified:    {model_info['modified'].strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -185,7 +185,7 @@ class BackgroundTrainingMonitor:
 
             self.last_model_mtime = current_mtime
         else:
-            print(f"Status:      ✗ Model not found")
+            print(f"Status:      [X] Model not found")
 
         # 학습 로그
         print("\n? TRAINING LOG (Last 10 lines)")

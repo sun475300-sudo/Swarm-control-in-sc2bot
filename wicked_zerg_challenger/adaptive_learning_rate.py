@@ -207,8 +207,8 @@ class AdaptiveLearningRate:
         if self.adjustment_history:
             lines.append("\n  최근 조정:")
             for adj in self.adjustment_history[-3:]:
-                action_emoji = "📈" if adj["action"] == "increase" else "📉" if adj["action"] == "decrease" else "🔄"
-                lines.append(f"    {action_emoji} Game {adj['game']}: {adj['old_lr']:.6f} → {adj['new_lr']:.6f}")
+                action_emoji = "[UP]" if adj["action"] == "increase" else "[DN]" if adj["action"] == "decrease" else "[~]"
+                lines.append(f"    {action_emoji} Game {adj['game']}: {adj['old_lr']:.6f} -> {adj['new_lr']:.6f}")
 
         lines.append("=" * 40)
         return "\n".join(lines)

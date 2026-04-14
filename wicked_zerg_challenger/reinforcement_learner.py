@@ -162,7 +162,7 @@ class ReinforcementLearner:
                         "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
                     }
                     self.learning_stats["learned_patterns"] += 1
-                    print(f"  ✓ {key}: {round(avg_time, 1)}s (conf: {round(confidence, 2)})")
+                    print(f"  [OK] {key}: {round(avg_time, 1)}s (conf: {round(confidence, 2)})")
                 else:
                     self.learning_stats["rejected_patterns"] += 1
 
@@ -213,7 +213,7 @@ class ReinforcementLearner:
                         "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
                     }
                     self.learning_stats["learned_patterns"] += 1
-                    print(f"  ✓ {phase}: {len(unit_ratios)} unit types (conf: {round(confidence, 2)})")
+                    print(f"  [OK] {phase}: {len(unit_ratios)} unit types (conf: {round(confidence, 2)})")
 
         return learned_compositions
 
@@ -411,7 +411,7 @@ class ReinforcementLearner:
                     "recommended_counters": best_counters[:3],  # 상위 3개만
                     "total_counter_options": len(best_counters)
                 }
-                print(f"  ✓ {enemy_unit}: {len(best_counters)} effective counters found")
+                print(f"  [OK] {enemy_unit}: {len(best_counters)} effective counters found")
 
         self.learning_stats["total_patterns"] += len(counter_samples)
 

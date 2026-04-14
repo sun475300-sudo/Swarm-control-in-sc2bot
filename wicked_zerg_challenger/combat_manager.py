@@ -5,6 +5,7 @@ Combat Manager - 전투 관리자
 타겟팅 시스템과 마이크로 전투를 통합한 전투 관리자
 """
 
+import inspect
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -364,7 +365,7 @@ class CombatManager:
                         # Priority 75
                         tasks_to_execute.append(("early_pressure", enemy_base, 75))
                         if iteration % 50 == 0:
-                            self.logger.info(f"[{int(game_time)}s] ★ EARLY PRESSURE: {len(zerglings)} lings! ★")
+                            self.logger.info(f"[{int(game_time)}s] [*] EARLY PRESSURE: {len(zerglings)} lings! [*]")
             except ImportError:
                 pass
 
@@ -402,7 +403,7 @@ class CombatManager:
                         # Priority 75 (main_attack보다 높지만 80은 아님)
                         tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
                         if iteration % 50 == 0:
-                            self.logger.info(f"[{int(game_time)}s] ★★★ MAJOR TIMING ATTACK: {army_supply} supply army! ★★★")
+                            self.logger.info(f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]")
             except ImportError:
                 pass
 
@@ -437,7 +438,7 @@ class CombatManager:
                         tasks_to_execute.append(("deny_expansion", target_expansion.position, 90))
                         
                         if iteration % 50 == 0:
-                             self.logger.info(f"[{int(game_time)}s] ★ EXPANSION DETECTED: Sending squad! ★")
+                             self.logger.info(f"[{int(game_time)}s] [*] EXPANSION DETECTED: Sending squad! [*]")
 
         # === TASK 2.9: ★ CREEP DENIAL (점막 제거) ★ ===
         if self.creep_denial:
@@ -706,7 +707,7 @@ class CombatManager:
                             continue
                     # 로그 (30초마다)
                     if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                        self.logger.warning(f"[{int(game_time)}s] ★ MID-GAME TIMING ATTACK! {len(attack_units)} units attacking! ★")
+                        self.logger.warning(f"[{int(game_time)}s] [*] MID-GAME TIMING ATTACK! {len(attack_units)} units attacking! [*]")
                     for u in attack_units:
                         available_ground.discard(u.tag)
 
@@ -1028,13 +1029,14 @@ class CombatManager:
     async def _execute_combat(self, units: Units, enemy_units):
         """
         전투 실행
-        
+
         CRITICAL IMPROVEMENT: 진형 형성 로직 통합
-        
+
         Args:
             units: 아군 유닛들
             enemy_units: 적 유닛들
         """
+        self.is_engaging = bool(units) and bool(enemy_units)
         try:
             # 0. 진형 형성 (원거리 유닛만)
             await self._form_formation(units, enemy_units)
@@ -1044,7 +1046,9 @@ class CombatManager:
                 assignments = self.targeting.assign_targets(units, enemy_units)
                 if assignments:
                     if hasattr(self.micro_combat, "attack_assigned_targets"):
-                        await self.micro_combat.attack_assigned_targets(units, assignments)
+                        result = self.micro_combat.attack_assigned_targets(units, assignments)
+                        if inspect.isawaitable(result):
+                            await result
                         return
 
             # 2. 집중 사격 (타겟팅 시스템 사용)
@@ -1058,17 +1062,23 @@ class CombatManager:
                     focus_target = self.targeting.select_target(units, enemy_units)
                 if focus_target:
                     if self.micro_combat:
-                        await self.micro_combat.focus_fire(units, focus_target)
+                        result = self.micro_combat.focus_fire(units, focus_target)
+                        if inspect.isawaitable(result):
+                            await result
                     return
-            
+
             # 3. ★ Phase 15: 타겟팅 시스템 없으면 가장 약한 적 집중 공격 ★
             if self.micro_combat:
                 # 체력 가장 낮은 적 찾기 (포커스 파이어 효율)
                 weak_target = self._find_weakest_enemy(enemy_units)
                 if weak_target:
-                    await self.micro_combat.focus_fire(units, weak_target)
+                    result = self.micro_combat.focus_fire(units, weak_target)
+                    if inspect.isawaitable(result):
+                        await result
                 else:
-                    await self.micro_combat.kiting(units, enemy_units)
+                    result = self.micro_combat.kiting(units, enemy_units)
+                    if inspect.isawaitable(result):
+                        await result
             else:
                 await self._basic_attack(units, enemy_units)
         
@@ -1234,7 +1244,7 @@ class CombatManager:
         self._roach_rush_active = True
         self._roach_rush_sent = True
 
-        self.logger.info(f"[ROACH RUSH] ★★★ 6분 바퀴 러시 발동! ({roaches.amount}마리) ★★★")
+        self.logger.info(f"[ROACH RUSH] [*][*][*] 6분 바퀴 러시 발동! ({roaches.amount}마리) [*][*][*]")
 
         # 적 본진 찾기
         target = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
@@ -1298,14 +1308,38 @@ class CombatManager:
             army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
 
             # ★ Phase 20: 서플라이 기반 점진적 공격 임계값 ★
-            if game_time < 240:
-                min_attack_threshold = self._early_game_min_attack  # 12
-            elif game_time < 480:
-                min_attack_threshold = self._min_army_for_attack  # 20
-            elif game_time < 600:
-                min_attack_threshold = 30  # 10분까지: 30 서플
+            # ★ Anti-Protoss: Protoss shields regenerate, so small attacks are wasted.
+            # Need larger army before engaging to overwhelm shields in one push.
+            _is_vs_protoss = False
+            try:
+                from sc2.data import Race as _Race
+                _enemy_race = getattr(self.bot, "enemy_race", None)
+                if _enemy_race == _Race.Protoss:
+                    _is_vs_protoss = True
+            except ImportError:
+                _enemy_race_str = str(getattr(self.bot, "enemy_race", ""))
+                if "Protoss" in _enemy_race_str or "protoss" in _enemy_race_str:
+                    _is_vs_protoss = True
+
+            if _is_vs_protoss:
+                # ★ vs Protoss: higher thresholds — shields make small attacks useless
+                if game_time < 240:
+                    min_attack_threshold = 16  # Early game: need 16+ supply vs Protoss
+                elif game_time < 480:
+                    min_attack_threshold = 25  # Mid game: 25+ supply (was 20)
+                elif game_time < 600:
+                    min_attack_threshold = 35  # 10 min: 35+ supply (was 30)
+                else:
+                    min_attack_threshold = 45  # Late game: 45+ supply (was 40)
             else:
-                min_attack_threshold = 40  # 10분+: 40 서플 (후반은 강력한 공격)
+                if game_time < 240:
+                    min_attack_threshold = self._early_game_min_attack  # 12
+                elif game_time < 480:
+                    min_attack_threshold = self._min_army_for_attack  # 20
+                elif game_time < 600:
+                    min_attack_threshold = 30  # 10분까지: 30 서플
+                else:
+                    min_attack_threshold = 40  # 10분+: 40 서플 (후반은 강력한 공격)
 
             # ★ Phase 20: 적 약점 감지 시 공격 임계값 하향 ★
             blackboard = getattr(self.bot, "blackboard", None)
@@ -2022,10 +2056,11 @@ class CombatManager:
 
     async def _zergling_early_harass(self, zerglings, enemy_units, iteration: int):
         """
-        초반 저글링 견제 로직 (3-5분)
+        초반 저글링 견제 로직 (1-7분)
 
-        게임 초반에 6-12 저글링으로 적 일꾼을 견제합니다.
-        방어 병력이 많으면 후퇴합니다.
+        게임 초반에 6-24 저글링으로 적 일꾼을 견제합니다.
+        HP 30% 이하 또는 적 방어 병력이 많으면 가장 가까운 기지로 후퇴합니다.
+        일꾼 처치를 추적합니다.
         """
         try:
             from sc2.ids.unit_typeid import UnitTypeId
@@ -2034,21 +2069,75 @@ class CombatManager:
 
         game_time = getattr(self.bot, 'time', 0)
 
-        # 게임 시간 확인 (3-5분)
-        if game_time < 180 or game_time > 300:
+        # 게임 시간 확인 (1-7분)
+        if game_time < 60 or game_time > 420:
             return
 
-        # 저글링 수 확인 (6-12기)
+        # 저글링 수 확인 (6-24기)
         if len(zerglings) < 6 or len(zerglings) > 24:
             return
 
-        # 견제 타겟 찾기
+        # --- Initialize retreat tracking ---
+        if not hasattr(self, '_harass_retreating_tags'):
+            self._harass_retreating_tags = set()
+            self._harass_worker_kills = 0
+            self._harass_last_enemy_workers = None
+
+        # 견제 타겟 찾기 - fall back to enemy start location
         harass_target = self._find_harass_target()
         if not harass_target:
+            # Ensure units still move to enemy base even without visible target
+            if hasattr(self.bot, 'enemy_start_locations') and self.bot.enemy_start_locations:
+                harass_target = self.bot.enemy_start_locations[0]
+            else:
+                return
+
+        # --- HP-based retreat: split into retreat/fight groups ---
+        alive_tags = {u.tag for u in zerglings}
+        self._harass_retreating_tags &= alive_tags
+
+        retreat_units = []
+        fight_units = []
+
+        for ling in zerglings:
+            # Already retreating -> stay retreating until healed above 50%
+            if ling.tag in self._harass_retreating_tags:
+                if ling.health_percentage > 0.5:
+                    self._harass_retreating_tags.discard(ling.tag)
+                    fight_units.append(ling)
+                else:
+                    retreat_units.append(ling)
+                continue
+            # Low HP -> retreat
+            if ling.health_percentage < 0.30:
+                self._harass_retreating_tags.add(ling.tag)
+                retreat_units.append(ling)
+                continue
+            fight_units.append(ling)
+
+        # Retreat damaged units to nearest base
+        if retreat_units:
+            await self._retreat_to_closest_base(retreat_units)
+            if iteration % 50 == 0:
+                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] {len(retreat_units)} zerglings retreating (low HP)")
+
+        # If no fight-capable units left, skip the rest
+        if not fight_units:
             return
 
+        # --- Worker kill tracking ---
+        current_enemy_workers = len([
+            e for e in enemy_units
+            if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
+        ]) if enemy_units else 0
+        if self._harass_last_enemy_workers is not None and current_enemy_workers < self._harass_last_enemy_workers:
+            kills = self._harass_last_enemy_workers - current_enemy_workers
+            self._harass_worker_kills += kills
+            if iteration % 50 == 0:
+                self.logger.info(f"[EARLY HARASS] Worker kills: +{kills} (total: {self._harass_worker_kills})")
+        self._harass_last_enemy_workers = current_enemy_workers
+
         # 적 방어 병력 확인 (타겟 근처 15 거리)
-        # ★ OPTIMIZATION: Use closer_than for distance filtering
         if hasattr(enemy_units, "closer_than"):
             nearby_enemies = enemy_units.closer_than(15, harass_target)
             enemy_combat_units = [
@@ -2062,13 +2151,16 @@ class CombatManager:
                 if hasattr(e, 'can_attack') and e.can_attack
                 and getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE"]
                 and e.distance_to(harass_target) < 15
-        ]
+            ]
 
-        # 방어 병력이 3기 이상이면 후퇴
+        # 방어 병력이 3기 이상이면 전체 후퇴 (nearest base)
         if len(enemy_combat_units) >= 3:
-            await self._retreat_to_base(zerglings)
+            await self._retreat_to_closest_base(fight_units)
+            # Mark all as retreating
+            for u in fight_units:
+                self._harass_retreating_tags.add(u.tag)
             if iteration % 50 == 0:
-                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] Zerglings retreating from defense")
+                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] Zerglings retreating from {len(enemy_combat_units)} defenders")
             return
 
         # 일꾼 찾기
@@ -2080,22 +2172,20 @@ class CombatManager:
 
         if enemy_workers:
             # 일꾼 공격
-            for ling in zerglings:
+            for ling in fight_units:
                 closest_worker = min(enemy_workers, key=lambda w: w.distance_to(ling))
                 try:
                     self.bot.do(ling.attack(closest_worker))
-                except (AttributeError, TypeError) as e:
-                    # Unit command failed
+                except (AttributeError, TypeError):
                     continue
             if iteration % 50 == 0:
-                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] {len(zerglings)} Zerglings harassing workers")
+                self.logger.info(f"[EARLY HARASS] [{int(game_time)}s] {len(fight_units)} Zerglings harassing workers (kills: {self._harass_worker_kills})")
         else:
-            # 일꾼이 없으면 타겟 위치로 이동
-            for ling in zerglings:
+            # 일꾼이 없으면 적 기지로 이동 (attack-move)
+            for ling in fight_units:
                 try:
                     self.bot.do(ling.attack(harass_target))
-                except (AttributeError, TypeError) as e:
-                    # Unit command failed
+                except (AttributeError, TypeError):
                     continue
 
     # ★ Phase 41: 정확한 공급 비용 테이블 (supply_cost 속성 없음 → 직접 정의)
@@ -2692,8 +2782,16 @@ class CombatManager:
             # BurrowController로 기본 잠복 처리 (전투 중)
             if hasattr(self.bot, 'micro') and self.bot.micro:
                 if hasattr(self.bot.micro, 'burrow_controller'):
+                    async def _do_actions_compat(actions):
+                        for action in actions:
+                            try:
+                                result = self.bot.do(action)
+                                if hasattr(result, "__await__"):
+                                    await result
+                            except Exception:
+                                pass
                     await self.bot.micro.burrow_controller.handle_burrow(
-                        banelings, enemy_units, iteration, self.bot.do_actions, bot=self.bot
+                        banelings, enemy_units, iteration, _do_actions_compat, bot=self.bot
                     )
 
         except Exception as e:
@@ -2789,7 +2887,7 @@ class CombatManager:
 
         # 로그 출력 (5초마다)
         if iteration % 110 == 0:
-            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] ★ MANDATORY DEFENSE ★ "
+            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] [*] MANDATORY DEFENSE [*] "
                   f"Enemies: {enemy_count}, Threat score: {max_threat_score}")
 
         # ★ 모든 군대 즉시 방어 ★
@@ -2981,7 +3079,7 @@ class CombatManager:
         if last_stand_mode or defeat_level >= 3:  # IMMINENT
             defense_workers = nearby_workers  # 모든 일꾼
             if iteration % 220 == 0:
-                self.logger.warning(f"[WORKER DEFENSE] ★ 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! ★")
+                self.logger.warning(f"[WORKER DEFENSE] [*] 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! [*]")
         # ★ 위기 상황: 일꾼 12명 방어 ★
         elif defeat_level >= 2:  # CRITICAL
             defense_workers = nearby_workers[:12]
@@ -3027,7 +3125,7 @@ class CombatManager:
                 continue
 
         if iteration % 220 == 0:
-            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] ★ {len(defense_workers)} WORKERS DEFENDING ★")
+            self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] [*] {len(defense_workers)} WORKERS DEFENDING [*]")
 
     # ==================== ★★★ VICTORY CONDITION SYSTEM ★★★ ====================
 

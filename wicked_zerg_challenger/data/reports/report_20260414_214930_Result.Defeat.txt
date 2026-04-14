@@ -1,0 +1,61 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Terran
+  Duration: 5:07
+  Date: 2026-04-14 21:49
+
+--- TIMELINE ---
+  [0:29] Build: UnitTypeId.EXTRACTOR (Supply 13)
+  [1:10] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [2:15] Build: UnitTypeId.SPINECRAWLER (Supply 22)
+  [2:24] Build: UnitTypeId.BANELINGNEST (Supply 21)
+  [3:33] Build: UnitTypeId.ROACHWARREN (Supply 26)
+  [3:43] Build: UnitTypeId.SPINECRAWLER (Supply 25)
+  [4:11] Build: UnitTypeId.HATCHERY (Supply 28)
+  [4:20] Build: UnitTypeId.EXTRACTOR (Supply 29)
+  [4:29] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 31)
+  [4:49] Build: UnitTypeId.EXTRACTOR (Supply 34)
+  [5:03] Harassment: UnitTypeId.FACTORY
+  [5:09] Harassment: UnitTypeId.FACTORY
+  [6:20] Harassment: UnitTypeId.FACTORY
+  [6:25] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:31] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:42] Harassment: UnitTypeId.FACTORY
+  [7:05] Harassment: UnitTypeId.COMMANDCENTER
+  [7:19] Harassment: UnitTypeId.COMMANDCENTER
+  [7:24] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 250
+  Peak Vespene: 2108
+  Peak Workers: 46
+
+--- TIMINGS ---
+  Expansion #1: 15:31 
+  Tech: UnitTypeId.ROACHWARREN at 3:33
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 5:38
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 64 produced
+  UnitTypeId.ROACH: 37 produced
+
+--- RESULT ANALYSIS ---
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 931s - aim for sub-60s with Hatch First build
+  2. Worker count below optimal - prioritize drone production
+
+--- FINAL STATS ---
+  Workers: 46
+  Army Supply: 27
+  Bases: 3
+  Minerals: 35
+  Vespene: 2244
+
+============================================================

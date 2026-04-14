@@ -124,7 +124,7 @@ def print_block_summary(block_num, block_wins, block_losses, total_wins, total_l
         grade = "F"
 
     print("\n" + "=" * 70)
-    print(f"  ★★★ BLOCK #{block_num} COMPLETE (10 GAMES) ★★★")
+    print(f"  [*][*][*] BLOCK #{block_num} COMPLETE (10 GAMES) [*][*][*]")
     print(f"  Block Record: {block_wins}W / {block_losses}L ({block_wr:.0f}%)")
     print(f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})")
     print(f"  Cumulative: {total_wins}W / {total_losses}L ({total_wr:.1f}%)")
@@ -142,7 +142,7 @@ def main():
 
     print("\n" + "=" * 70)
     print("  [TRAINING] SCORING-BASED TRAINING LOOP")
-    print("  ★ 10-GAME BLOCK SCORING + ADAPTIVE DIFFICULTY ★")
+    print("  [*] 10-GAME BLOCK SCORING + ADAPTIVE DIFFICULTY [*]")
     print("=" * 70)
     print(f"  Block Size: {total_games} games")
     print(f"  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")

@@ -1,0 +1,64 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Odyssey LE
+  Opponent: Zerg
+  Duration: 3:06
+  Date: 2026-04-14 20:26
+
+--- TIMELINE ---
+  [0:52] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:14] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:03] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:13] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:34] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 20)
+  [2:42] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [2:52] Build: UnitTypeId.SPINECRAWLER (Supply 19)
+  [3:54] Build: UnitTypeId.SPINECRAWLER (Supply 28)
+  [4:26] Build: UnitTypeId.BANELINGNEST (Supply 28)
+  [5:00] Harassment: UnitTypeId.EXTRACTOR
+  [7:48] Harassment: UnitTypeId.HATCHERY
+  [8:22] Harassment: UnitTypeId.HATCHERY
+  [8:27] Harassment: UnitTypeId.HATCHERY
+  [8:56] Harassment: UnitTypeId.HATCHERY
+  [9:01] Harassment: UnitTypeId.HATCHERY
+  [9:14] Harassment: UnitTypeId.HATCHERY
+  [9:20] Harassment: UnitTypeId.HATCHERY
+  [9:25] Harassment: UnitTypeId.HATCHERY
+  [9:50] Harassment: UnitTypeId.HATCHERY
+
+--- ECONOMY ---
+  Peak Minerals: 130
+  Peak Vespene: 2364
+  Peak Workers: 34
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 2:34
+  Tech: UnitTypeId.ROACHWARREN at 5:50
+  Tech: UnitTypeId.LAIR at 6:33
+  Tech: UnitTypeId.HYDRALISKDEN at 6:50
+  Tech: UnitTypeId.INFESTATIONPIT at 10:16
+  Tech: UnitTypeId.SPIRE at 14:31
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 54 produced
+  UnitTypeId.ROACH: 30 produced
+
+--- RESULT ANALYSIS ---
+  Army wiped out - need better engagements
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 34
+  Army Supply: 4
+  Bases: 2
+  Minerals: 30
+  Vespene: 2404
+
+============================================================

@@ -18,6 +18,15 @@ from strategy_manager import StrategyManager, GamePhase, StrategyMode, EnemyRace
 from utils.logger import get_logger
 
 try:
+    from sc2.data import Race
+except ImportError:
+    class Race:
+        Terran = "Terran"
+        Protoss = "Protoss"
+        Zerg = "Zerg"
+        Random = "Random"
+
+try:
     from config.unit_configs import StrategyConfig
 except ImportError:
     StrategyConfig = None
@@ -1172,13 +1181,15 @@ class StrategyManagerV2(StrategyManager):
             return {"roach": 0.5, "hydra": 0.3, "ravager": 0.2}
             
         race = self.bot.enemy_race
-        if race == self.bot.Race.Terran:
+        if race == Race.Terran:
             # Roach/Ravager/Ling
             return {"roach": 0.4, "ravager": 0.2, "hydra": 0.2, "zergling": 0.2}
-        elif race == self.bot.Race.Protoss:
-            # Roach/Hydra/Lurker
-            return {"roach": 0.4, "hydra": 0.4, "lurker": 0.1, "viper": 0.1}
-        elif race == self.bot.Race.Zerg:
+        elif race == Race.Protoss:
+            # ★ Anti-Protoss: Roach/Ravager core + Hydra ranged DPS
+            # Roaches/Ravagers tank stalker/zealot damage; Hydras provide ranged DPS
+            # Ravager bile breaks force fields and hits shield batteries
+            return {"roach": 0.30, "ravager": 0.25, "hydra": 0.30, "lurker": 0.10, "viper": 0.05}
+        elif race == Race.Zerg:
             # Roach/Ravager
             return {"roach": 0.6, "ravager": 0.3, "hydra": 0.1}
         else:

@@ -398,7 +398,7 @@ class OpponentModeling:
         signal_name = signal.value
         if signal_name not in self.observed_signals:
             self.observed_signals.add(signal_name)
-            self.logger.info(f"[{int(self.bot.time)}s] ★ SIGNAL DETECTED: {signal_name}")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] SIGNAL DETECTED: {signal_name}")
 
     async def _make_strategy_prediction(self, game_time: float):
         """전략 예측 수행 (초반 종료 시)"""
@@ -486,7 +486,7 @@ class OpponentModeling:
             # Check if this is a new attack (not within 30s of previous)
             if not self.timing_attacks_detected or game_time - self.timing_attacks_detected[-1] > 30:
                 self.timing_attacks_detected.append(game_time)
-                self.logger.info(f"[{int(game_time)}s] ★ TIMING ATTACK DETECTED")
+                self.logger.info(f"[{int(game_time)}s] [*] TIMING ATTACK DETECTED")
 
     async def _track_tech_progression(self, game_time: float):
         """기술 진행 추적"""

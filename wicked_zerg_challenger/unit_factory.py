@@ -222,7 +222,7 @@ class UnitFactory:
                         priority=0  # URGENT
                     )
                     if iteration % 100 == 0:
-                        print(f"[UNIT_FACTORY] ★ Preemptive Overlord (supply_left={self.bot.supply_left}) ★")
+                        print(f"[UNIT_FACTORY] [*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
                 else:
                     # Fallback: 직접 생산
                     try:
@@ -232,7 +232,7 @@ class UnitFactory:
                             else:
                                 self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
                             if iteration % 100 == 0:
-                                print(f"[UNIT_FACTORY] ★ Preemptive Overlord (supply_left={self.bot.supply_left}) ★")
+                                print(f"[UNIT_FACTORY] [*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
                     except Exception:
                         pass
 

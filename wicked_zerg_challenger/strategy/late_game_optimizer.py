@@ -107,13 +107,13 @@ class LateGameOptimizer:
 
         if air > 10:
             self.recommended_comp = "corruptor"
-            self.logger.info(f"[{int(self.bot.time)}s] ★ RECOMMENDED: Mass Corruptor vs Air ★")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] RECOMMENDED: Mass Corruptor vs Air [*]")
         elif mech > bio:
             self.recommended_comp = "brood_lord"
-            self.logger.info(f"[{int(self.bot.time)}s] ★ RECOMMENDED: Brood Lord + Viper vs Mech ★")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] RECOMMENDED: Brood Lord + Viper vs Mech [*]")
         elif bio > 15:
             self.recommended_comp = "ultralisk"
-            self.logger.info(f"[{int(self.bot.time)}s] ★ RECOMMENDED: Ultralisk + Banelings vs Bio ★")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] RECOMMENDED: Ultralisk + Banelings vs Bio [*]")
 
     def _plan_tech_transitions(self):
         """테크 전환 계획"""

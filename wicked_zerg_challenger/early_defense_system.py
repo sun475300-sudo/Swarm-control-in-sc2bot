@@ -266,7 +266,7 @@ class EarlyDefenseSystem:
                 if (worker.is_idle or worker.is_gathering) and closest_enemy.distance_to(main_base) < 10:
                     self.bot.do(worker.attack(closest_enemy.position))
 
-            print(f"[EARLY_DEFENSE] ⚔️ Deployed {defending_workers} workers for defense!")
+            print(f"[EARLY_DEFENSE] [FIGHT] Deployed {defending_workers} workers for defense!")
 
     def get_status(self) -> str:
         """

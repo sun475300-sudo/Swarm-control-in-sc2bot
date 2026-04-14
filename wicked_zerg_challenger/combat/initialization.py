@@ -53,8 +53,9 @@ def initialize_combat_state(manager):
     manager._rally_point = None
     manager._last_rally_update = 0
     manager._rally_update_interval = 30  # Update rally point every 30 seconds
-    manager._min_army_for_attack = 20  # ★ FIX: 6→20 (자살 공격 방지! 적절한 병력 모은 후 공격)
-    manager._early_game_min_attack = 12  # ★ FIX: 3→12 (최소 저글링 24마리급 이상)
+    manager._min_army_for_attack = 12  # ★ FIX: 20→12 (faster aggression, 20 was too passive)
+    manager._early_game_min_attack = 8  # ★ FIX: 12→8 (earlier pressure with fewer units)
+    manager._winning_state_start_time = 0.0  # Track when WINNING state began
 
     # === ★★★ ROACH RUSH TIMING ATTACK ★★★ ===
     manager._roach_rush_active = False
@@ -65,6 +66,9 @@ def initialize_combat_state(manager):
     # === ★ ARMY UNITS CACHE (per-frame) ★ ===
     manager._cached_army = None
     manager._cached_army_frame = -1
+
+    # === ★ COMBAT ENGAGEMENT STATE ★ ===
+    manager.is_engaging = False  # True when actively fighting enemy units
 
     # === ★ EARLY HARASS RETREAT & KILL TRACKING ★ ===
     manager._harass_worker_kills = 0          # Total workers killed during harassment

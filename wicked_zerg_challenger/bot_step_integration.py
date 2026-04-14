@@ -540,14 +540,14 @@ class BotStepIntegrator:
         # Unit Authority Manager (skip if already initialized by ManagerFactory)
         if UnitAuthorityManager and not getattr(self.bot, 'unit_authority', None):
             self.bot.unit_authority = UnitAuthorityManager(bot)
-            self.logger.info("[INIT] ★ UnitAuthorityManager initialized ★")
+            self.logger.info("[INIT] [*] UnitAuthorityManager initialized [*]")
         elif not hasattr(self.bot, 'unit_authority'):
             self.bot.unit_authority = None
 
         # Advanced Scout System V2 (개선판)
         if AdvancedScoutSystemV2:
             self.bot.advanced_scout_v2 = AdvancedScoutSystemV2(bot)
-            self.logger.info("[INIT] ★ AdvancedScoutSystemV2 initialized (Overseer + Changeling) ★")
+            self.logger.info("[INIT] [*] AdvancedScoutSystemV2 initialized (Overseer + Changeling) [*]")
         else:
             self.bot.advanced_scout_v2 = None
 
@@ -1445,7 +1445,7 @@ class BotStepIntegrator:
                     # 패배 직전이면 마지막 방어 시도 (항복보다 우선)
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 50 == 0:
-                            self.logger.info(f"[DEFEAT DETECTION] ★ 패배 직전! 마지막 방어 시도! ★")
+                            self.logger.info(f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]")
                             self.logger.info(f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}")
                             self.logger.info(f"  - 이유: {defeat_status.get('defeat_reason', '알 수 없음')}")
 
@@ -1460,7 +1460,7 @@ class BotStepIntegrator:
                     elif defeat_status.get("should_surrender", False):
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
-                        self.logger.info(f"\n[SURRENDER] ★★★ 게임 포기! ★★★")
+                        self.logger.info(f"\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]")
                         self.logger.info(f"  - 게임 시간: {int(game_time)}초")
                         self.logger.info(f"  - 이유: {reason}")
                         self.logger.info(f"  - 다음 게임으로 이동...\n")
@@ -1991,9 +1991,9 @@ class BotStepIntegrator:
                     # Log micro status every 60 seconds
                     if iteration % 1320 == 0:  # ~60 seconds at 22 FPS
                         status = self.bot.micro_v3.get_status()
-                        self.logger.info(f"[MICRO_V3] Ravagers: {len(status.get('ravager_cooldowns', {}))}, "
-                              f"Lurkers burrowed: {len(status.get('lurker_burrowed', {}))}, "
-                              f"Focus fire: {len(status.get('focus_fire_assignments', {}))} assignments")
+                        self.logger.info(f"[MICRO_V3] Ravagers: {status.get('ravager_cooldowns', 0)}, "
+                              f"Lurkers burrowed: {status.get('lurker_burrowed', 0)}, "
+                              f"Focus fire: {status.get('focus_fire_assignments', 0)} assignments")
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -2294,6 +2294,9 @@ class BotStepIntegrator:
             rl_decision_used = False
 
             # ★★★ RLAgent 최우선: 게임 상태와 선택된 전략을 기록 ★★★
+            is_shadow_mode = True  # Default: shadow mode (safe fallback)
+            override_strategy = None
+            rl_decision_used = False
             if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
                 try:
                     import numpy as np
@@ -2435,7 +2438,7 @@ class BotStepIntegrator:
                             if self.bot.strategy_manager.current_mode != mode_enum:
                                 self.bot.strategy_manager.current_mode = mode_enum
                                 if iteration % 100 == 0:
-                                    self.logger.info(f"[COMMANDER] ★ 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})")
+                                    self.logger.info(f"[COMMANDER] [*] 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})")
                         else:
                             # Shadow Mode: 단순히 Commander의 의견을 로그로만 남김 (디버깅용)
                             if self.bot.strategy_manager.current_mode != mode_enum:
@@ -2451,7 +2454,7 @@ class BotStepIntegrator:
                 # ★ 결정 로깅 (10초마다) ★
                 if iteration % 220 == 0:  # 10초마다
                     if rl_decision_used:
-                        self.logger.info(f"[STRATEGY] ★★★ RLAgent 결정 적용: {new_mode} ★★★")
+                        self.logger.info(f"[STRATEGY] [*][*][*] RLAgent 결정 적용: {new_mode} [*][*][*]")
                     elif not is_shadow_mode:
                         self.logger.info(f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)")
                     else:
@@ -2460,7 +2463,7 @@ class BotStepIntegrator:
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
                 if hasattr(self.bot, "rl_agent") and self.bot.rl_agent and not rl_decision_used:
                     if iteration % 220 == 0:
-                        self.logger.warning(f"[WARNING] ★ RLAgent가 있지만 결정이 사용되지 않음! ★")
+                        self.logger.warning(f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]")
                     
         except Exception as e:
             success = False
@@ -2613,7 +2616,7 @@ class BotStepIntegrator:
                             await self.bot.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
 
                             if last_stand_mode:
-                                self.logger.info(f"[LAST STAND] [{int(game_time)}s] ★ 긴급 스파인 크롤러 건설! ({spine_count + pending + 1}/{max_spines}) ★")
+                                self.logger.info(f"[LAST STAND] [{int(game_time)}s] [*] 긴급 스파인 크롤러 건설! ({spine_count + pending + 1}/{max_spines}) [*]")
                             else:
                                 self.logger.error(f"[EMERGENCY] [{int(game_time)}s] Building emergency Spine Crawler ({spine_count + pending + 1}/{max_spines})")
 
@@ -2689,7 +2692,7 @@ class BotStepIntegrator:
                             defense_pos = th.position
 
                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=defense_pos)
-                        self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] ★ Building Spore Crawler (threat level: {air_threat_level}) ★")
+                        self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*] Building Spore Crawler (threat level: {air_threat_level}) [*]")
                         return
 
             # === 2. 레어 진화 확인 (히드라 굴 전제 조건) ===
@@ -2707,7 +2710,7 @@ class BotStepIntegrator:
                     for hatch in hatcheries:
                         if hasattr(hatch, "is_idle") and hatch.is_idle:
                             self.bot.do(hatch(UnitTypeId.LAIR))
-                            self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] ★ Upgrading to Lair for Hydralisk Den ★")
+                            self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*] Upgrading to Lair for Hydralisk Den [*]")
                             return
 
             # === 3. 히드라리스크 굴 건설 ===
@@ -2725,12 +2728,12 @@ class BotStepIntegrator:
                                 max_distance=15.0
                             )
                             if success:
-                                self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] ★★ Building Hydralisk Den for anti-air! ★★")
+                                self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*][*] Building Hydralisk Den for anti-air! [*][*]")
                                 return
                         else:
                             # 폴백: 기존 방식
                             await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first.position)
-                            self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] ★★ Building Hydralisk Den for anti-air! ★★")
+                            self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*][*] Building Hydralisk Den for anti-air! [*][*]")
                             return
 
             # === 4. 히드라 우선 생산 플래그 설정 ===

@@ -265,7 +265,7 @@ class AutoReplayLearner:
                         print(f"[AUTO_REPLAY] [OK] Iteration {i+1} successful")
                         self.stats["total_learning_runs"] += 1
                     else:
-                        print(f"[AUTO_REPLAY] ✗ Iteration {i+1} failed")
+                        print(f"[AUTO_REPLAY] [X] Iteration {i+1} failed")
                         # 한 번 실패해도 계속 시도
                         continue
 

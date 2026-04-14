@@ -355,7 +355,7 @@ class HiveTechMaximizer:
                         abilities = await self.bot.get_available_abilities(pool.first)
                         if AbilityId.RESEARCH_ZERGLINGADRENALGLANDS in abilities:
                             self.bot.do(pool.first(AbilityId.RESEARCH_ZERGLINGADRENALGLANDS))
-                            self.logger.info("[HIVE] ★ Researching Adrenal Glands! (Zergling attack speed +20%) ★")
+                            self.logger.info("[HIVE] [*] Researching Adrenal Glands! (Zergling attack speed +20%) [*]")
                             return  # 한 번에 하나씩
 
         # Chitinous Plating (Ultralisk 방어력)

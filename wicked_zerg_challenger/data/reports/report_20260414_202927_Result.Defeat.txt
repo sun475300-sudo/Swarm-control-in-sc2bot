@@ -1,0 +1,66 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Zerg
+  Duration: 2:26
+  Date: 2026-04-14 20:29
+
+--- TIMELINE ---
+  [0:51] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:10] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:04] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:08] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:37] Build: UnitTypeId.BANELINGNEST (Supply 20)
+  [2:47] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [3:32] Build: UnitTypeId.ROACHWARREN (Supply 24)
+  [4:41] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 35)
+  [8:05] Harassment: UnitTypeId.HATCHERY
+  [8:10] Harassment: UnitTypeId.HATCHERY
+  [8:21] Harassment: UnitTypeId.HATCHERY
+  [8:27] Harassment: UnitTypeId.HATCHERY
+  [8:42] Harassment: UnitTypeId.EXTRACTOR
+  [8:48] Harassment: UnitTypeId.HATCHERY
+  [8:53] Harassment: UnitTypeId.HATCHERY
+  [9:25] Harassment: UnitTypeId.HATCHERY
+  [9:30] Harassment: UnitTypeId.HATCHERY
+  [9:38] Harassment: UnitTypeId.HATCHERY
+  [9:48] Harassment: UnitTypeId.HATCHERY
+
+--- ECONOMY ---
+  Peak Minerals: 150
+  Peak Vespene: 2097
+  Peak Workers: 30
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 3:32
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:41
+  Tech: UnitTypeId.LAIR at 7:09
+  Tech: UnitTypeId.HYDRALISKDEN at 7:45
+  Tech: UnitTypeId.INFESTATIONPIT at 12:05
+  Tech: UnitTypeId.SPIRE at 15:04
+  Tech: UnitTypeId.LURKERDENMP at 15:34
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 82 produced
+  UnitTypeId.ROACH: 23 produced
+  UnitTypeId.HYDRALISK: 1 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 10
+  Army Supply: 2
+  Bases: 1
+  Minerals: 20
+  Vespene: 2129
+
+============================================================
