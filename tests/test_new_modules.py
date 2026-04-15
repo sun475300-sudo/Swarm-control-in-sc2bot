@@ -26,19 +26,19 @@ class TestPettingZooEnv:
 
     def test_env_creation(self):
         from pettingzoo_env.sc2_multiagent_env import SC2ParallelEnv
-        env = SC2ParallelEnv(num_agents=4, map_size=64)
-        assert env.num_agents == 4
+        env = SC2ParallelEnv(agent_types=["zergling"] * 4, map_size=64)
+        assert len(env.possible_agents) == 4
 
     def test_env_reset(self):
         from pettingzoo_env.sc2_multiagent_env import SC2ParallelEnv
-        env = SC2ParallelEnv(num_agents=3, map_size=32)
+        env = SC2ParallelEnv(agent_types=["zergling"] * 3, map_size=32)
         obs, infos = env.reset()
         assert isinstance(obs, dict)
         assert len(obs) > 0
 
     def test_env_step(self):
         from pettingzoo_env.sc2_multiagent_env import SC2ParallelEnv
-        env = SC2ParallelEnv(num_agents=2, map_size=32)
+        env = SC2ParallelEnv(agent_types=["zergling"] * 2, map_size=32)
         obs, _ = env.reset()
         actions = {agent: env.action_space(agent).sample() for agent in env.agents}
         next_obs, rewards, terms, truncs, infos = env.step(actions)

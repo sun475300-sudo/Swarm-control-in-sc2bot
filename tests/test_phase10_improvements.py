@@ -42,7 +42,7 @@ class MockUnit:
             return ((self._position[0] - other._position[0]) ** 2 + (self._position[1] - other._position[1]) ** 2) ** 0.5
         return 10.0
 
-    def move(self, target):
+    def move(self, target, queue=False):
         return Mock()
 
     def attack(self, target):

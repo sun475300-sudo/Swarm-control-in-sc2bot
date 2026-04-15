@@ -73,7 +73,7 @@ class MacroCycleManager:
     """
 
     # 인젝트 쿨다운 (초)
-    INJECT_COOLDOWN = 25.0
+    INJECT_COOLDOWN = 29.0  # SC2 Spawn Larva 정확한 쿨다운 (28.57초 + 여유)
 
     # 기지당 최적 드론 수
     OPTIMAL_DRONES_PER_BASE = 16

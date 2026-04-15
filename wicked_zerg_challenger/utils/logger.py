@@ -52,8 +52,15 @@ def setup_logger(
         except Exception as e:
             print(f"[LOGGER_ERROR] Failed to setup file logging: {e}")
 
-    # Console Handler
+    # Console Handler (Windows UTF-8 safe)
     if log_to_console:
+        try:
+            # Windows 콘솔에서 UTF-8 출력 지원
+            if sys.platform == 'win32':
+                import io
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        except (AttributeError, Exception):
+            pass
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
