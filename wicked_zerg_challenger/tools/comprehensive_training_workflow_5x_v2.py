@@ -26,8 +26,6 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
     logger.info(f"{description}")
     logger.info(f"{'='*70}")
     logger.info(f"Command: {' '.join(cmd)}")
-    logger.info()
-    
     try:
         result = subprocess.run(
             cmd,

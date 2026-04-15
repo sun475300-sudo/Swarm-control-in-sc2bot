@@ -278,8 +278,6 @@ class IterativeReplayLearningWorkflow:
         logger.info(f"Project root: {self.project_root}")
         logger.info(f"Max iterations: {max_iterations}")
         logger.info(f"Max replays per iteration: {max_replays}")
-        logger.info()
-        
         workflow_start = datetime.now()
         
         # Clear iteration history for this run
@@ -334,24 +332,17 @@ class IterativeReplayLearningWorkflow:
         logger.info(f"Successful: {successful_iterations}")
         logger.error(f"Failed: {failed_iterations}")
         logger.info(f"Total duration: {workflow_duration:.1f} seconds ({workflow_duration/60:.1f} minutes)")
-        logger.info()
         logger.info(f"")
         for param, value in final_params.items():
             logger.info(f"  - {param}: {value}")
-        logger.info()
         logger.info(f"Iteration history saved to: {self.history_path}")
-        logger.info()
         logger.info("")
         logger.info("1. Learned parameters are ready in: local_training/scripts/learned_build_orders.json")
         logger.info("2. These parameters are automatically used in production_resilience.py")
         logger.info("3. Start game training to apply the learned build orders:")
         logger.info("   python run_with_training.py")
-        logger.info()
         logger.info("Game training runs continuously and automatically applies learned parameters.")
         logger.info("           Run game training in a separate terminal to see the improvements!")
-        logger.info()
-
-
 def main():
     """Main entry point"""
     import argparse

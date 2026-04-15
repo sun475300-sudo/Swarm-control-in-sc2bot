@@ -97,7 +97,6 @@ def main():
     logger.info(f"  Opponent: {opponent_race.name}")
     logger.info(f"  Difficulty: {difficulty.name}")
     logger.info("=" * 60)
-    logger.info()
 
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))

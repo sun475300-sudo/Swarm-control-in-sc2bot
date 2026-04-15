@@ -1,0 +1,74 @@
+{
+  "map_statistics": {
+    "어비설 리프 - 래더": {
+      "wins": 0,
+      "losses": 0,
+      "games": 1,
+      "winrate": 0.0
+    },
+    "Test_Map": {
+      "wins": 3,
+      "losses": 2,
+      "games": 5,
+      "winrate": 60.0
+    }
+  },
+  "learned_timings": {
+    "expansion_avg": {
+      "base_2": {
+        "avg": 60.0,
+        "min": 60.0,
+        "max": 60.0,
+        "samples": 5
+      },
+      "base_3": {
+        "avg": 90.0,
+        "min": 90.0,
+        "max": 90.0,
+        "samples": 5
+      }
+    },
+    "tech_avg": {
+      "UnitTypeId.ROACHWARREN": {
+        "avg": 225.2,
+        "min": 225.2,
+        "max": 225.2,
+        "samples": 1
+      },
+      "UnitTypeId.EVOLUTIONCHAMBER": {
+        "avg": 246.1,
+        "min": 246.1,
+        "max": 246.1,
+        "samples": 1
+      },
+      "EVOLUTIONCHAMBER": {
+        "avg": 150.0,
+        "min": 150.0,
+        "max": 150.0,
+        "samples": 5
+      },
+      "LAIR": {
+        "avg": 240.0,
+        "min": 240.0,
+        "max": 240.0,
+        "samples": 5
+      }
+    }
+  },
+  "expansion_patterns": {
+    "winning_pattern": {
+      "avg_bases_at_10min": 2,
+      "avg_2nd_base_timing": 60.0,
+      "avg_3rd_base_timing": 90.0,
+      "samples": 3
+    }
+  },
+  "learned_builds": {
+    "successful_patterns": []
+  },
+  "engagement_statistics": {
+    "total_engagements": 5,
+    "avg_supply_lost_per_engagement": 15.0,
+    "total_games_analyzed": 6
+  }
+}

@@ -169,8 +169,6 @@ def main():
     logger.info("=" * 70)
     logger.info("������ ���� �˻� ����")
     logger.info("=" * 70)
-    logger.info()
-    
     checker = MissingLogicChecker()
     logger.info("��ĵ ��...")
     results = checker.scan_all()
@@ -179,8 +177,6 @@ def main():
     logger.info(f"  - ������ �޼���: {results['total_missing']}��")
     logger.info(f"  - pass ���� �ִ� ����: {results['files_with_pass']}��")
     logger.info(f"  - TODO �ּ��� �ִ� ����: {results['files_with_todos']}��")
-    logger.info()
-    
     # ������ �޼��� ���
     if results['missing_implementations']:
         logger.info("=" * 70)

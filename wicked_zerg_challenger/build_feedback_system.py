@@ -320,5 +320,3 @@ class BuildFeedbackSystem:
                 for unit, counts in sorted(unit_usage.items(), key=lambda x: sum(x[1]), reverse=True)[:3]:
                     avg = sum(counts) / len(counts)
                     logger.info(f"    → {unit}: 평균 {avg:.1f}마리")
-
-        logger.info()

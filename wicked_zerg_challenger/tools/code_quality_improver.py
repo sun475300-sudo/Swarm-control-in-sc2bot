@@ -225,14 +225,10 @@ def main():
     logger.info("=" * 70)
     logger.info("코드 품질 개선 도구")
     logger.info("=" * 70)
-    logger.info()
-
     improver = CodeQualityImprover()
     python_files = find_all_python_files()
 
     logger.info(f"총 {len(python_files)}개의 Python 파일을 찾았습니다.")
-    logger.info()
-
     if args.all or args.remove_unused:
         logger.info("사용하지 않는 import 제거 중...")
         removed_count = 0
@@ -245,8 +241,6 @@ def main():
                 rel_path = file_path.relative_to(PROJECT_ROOT)
                 logger.info(f"  [FIXED] {rel_path}: {len(unused)}개 import 제거")
         logger.info(f"총 {removed_count}개의 사용하지 않는 import를 제거했습니다.")
-        logger.info()
-
     if args.all or args.check_style:
         logger.info("코드 스타일 검사 중...")
         total_issues = 0
@@ -259,8 +253,6 @@ def main():
                 rel_path = file_path.relative_to(PROJECT_ROOT)
                 logger.info(f"  [ISSUES] {rel_path}: {len(issues)}개 문제 발견")
         logger.info(f"총 {total_issues}개의 스타일 문제를 발견했습니다.")
-        logger.info()
-
     if args.all or args.fix_style:
         logger.info("코드 스타일 자동 수정 중...")
         fixed_count = 0
@@ -270,8 +262,6 @@ def main():
             if improver.fix_code_style(file_path):
                 fixed_count += 1
         logger.info(f"총 {fixed_count}개 파일의 스타일을 수정했습니다.")
-        logger.info()
-
     logger.info("=" * 70)
     logger.info("작업 완료!")
     logger.info("=" * 70)

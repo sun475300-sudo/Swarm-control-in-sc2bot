@@ -60,8 +60,6 @@ class IntegratedReplayLearningWorkflow:
             logger.info(f"Learning from up to {max_replays} replays...")
             logger.info(f"Replay directory: D:\\replays\\replays")
             logger.info(f"Running: {self.replay_learner_path.name}")
-            logger.info()
-            
             # Run replay learner
             result = subprocess.run(
                 [sys.executable, str(self.replay_learner_path)],
@@ -106,8 +104,6 @@ class IntegratedReplayLearningWorkflow:
         try:
             logger.info(f"Running training data collection...")
             logger.info(f"This will analyze existing training_stats.json")
-            logger.info()
-            
             result = subprocess.run(
                 [sys.executable, str(self.collect_data_path)],
                 cwd=str(self.project_root),
@@ -138,8 +134,6 @@ class IntegratedReplayLearningWorkflow:
         
         try:
             logger.info(f"Extracting training data and comparing with pro replays...")
-            logger.info()
-            
             result = subprocess.run(
                 [sys.executable, str(self.extract_train_path)],
                 cwd=str(self.project_root),
@@ -175,8 +169,6 @@ class IntegratedReplayLearningWorkflow:
             logger.info(f"  - spawning_pool_supply: {learned_params.get('spawning_pool_supply', 'N/A')}")
             logger.info(f"  - gas_supply: {learned_params.get('gas_supply', 'N/A')}")
             logger.info(f"  - natural_expansion_supply: {learned_params.get('natural_expansion_supply', 'N/A')}")
-            logger.info()
-            
             # Verify parameters are in expected ranges
             pro_baseline = {
                 "spawning_pool_supply": 17.0,
@@ -193,8 +185,6 @@ class IntegratedReplayLearningWorkflow:
                     logger.info(f"  {status} {param}: {learned_value} (baseline: {value}, diff: {diff:.1f})")
                 else:
                     logger.info(f"  ? {param}: Not found")
-            
-            logger.info()
             logger.info(f"Learned parameters are ready for game training")
             logger.info(f"These parameters will be automatically used by:")
             logger.info(f"  - production_resilience.py (via get_learned_parameter())")
@@ -217,8 +207,6 @@ class IntegratedReplayLearningWorkflow:
         logger.info(f"Project root: {self.project_root}")
         logger.info(f"Max replays: {max_replays}")
         logger.info(f"Skip training data collection: {skip_training_data}")
-        logger.info()
-        
         start_time = datetime.now()
         
         # Step 1: Learn from replays (required)
@@ -247,14 +235,11 @@ class IntegratedReplayLearningWorkflow:
         logger.info("")
         logger.info("=" * 70)
         logger.info(f"Integrated replay learning workflow completed in {duration:.1f} seconds")
-        logger.info()
         logger.info("")
         logger.info("1. Learned parameters are saved to: local_training/scripts/learned_build_orders.json")
         logger.info("2. These parameters are automatically used in production_resilience.py")
         logger.info("3. Start game training to apply the learned build orders:")
         logger.info("   python run_with_training.py")
-        logger.info()
-        
         return True
 
 

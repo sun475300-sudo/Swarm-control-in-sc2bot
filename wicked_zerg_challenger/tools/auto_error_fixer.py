@@ -143,8 +143,6 @@ def main():
     logger.info("=" * 70)
     logger.info("자동 에러 수정 도구")
     logger.info("=" * 70)
-    logger.info()
-
     fixer = AutoErrorFixer()
 
     if args.file:

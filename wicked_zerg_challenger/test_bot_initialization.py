@@ -199,8 +199,6 @@ def main():
         logger.error("SOME TESTS FAILED")
         logger.info("=" * 60)
         logger.error("\nPlease review the errors above.")
-    logger.info()
-
     return 0 if success else 1
 
 if __name__ == "__main__":

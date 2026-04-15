@@ -224,8 +224,6 @@ def main():
     logger.info("=" * 70)
     logger.info("LOGIC CHECKER")
     logger.info("=" * 70)
-    logger.info()
-
     checker = LogicChecker()
 
     if args.file:

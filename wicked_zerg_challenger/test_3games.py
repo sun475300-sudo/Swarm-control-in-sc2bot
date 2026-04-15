@@ -61,7 +61,6 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("  3-GAME TEST SESSION")
     logger.info("=" * 70)
-    logger.info()
     logger.info("  Testing improvements:")
     logger.info("    [OK] Creep expansion system (target: 3min=5, 5min=15 tumors)")
     logger.error("    [OK] is_flying error fixes")
@@ -69,8 +68,6 @@ def main():
     logger.info("    [OK] Expansion timing improvements")
     logger.error("    [OK] Curriculum manager error fixes")
     logger.info("=" * 70)
-    logger.info()
-
     # Test configuration (using available maps)
     map_pool = ["AbyssalReefLE", "AbyssalReefLE", "AbyssalReefLE"]
     opponent_races = [Race.Protoss, Race.Terran, Race.Zerg]
@@ -90,8 +87,6 @@ def main():
         logger.info(f"  Opponent: {opponent_race.name}")
         logger.info(f"  Difficulty: {difficulty.name}")
         logger.info("=" * 70)
-        logger.info()
-
         # Create bot with training mode disabled for pure testing
         bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False, instance_id=game_num))
 
@@ -131,7 +126,6 @@ def main():
     for result in results:
         logger.info(f"  {result}")
     logger.info("=" * 70)
-    logger.info()
     logger.info("  Check logs for:")
     logger.info("    - [CREEP] Tumor counts at 3min and 5min")
     logger.error("    - is_flying errors (should be 0)")
@@ -139,8 +133,5 @@ def main():
     logger.info("    - [EXPANSION] Expansion timing and success")
     logger.error("    - [CURRICULUM] No NoneType errors")
     logger.info("=" * 70)
-    logger.info()
-
-
 if __name__ == "__main__":
     main()

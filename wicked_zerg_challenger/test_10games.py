@@ -63,15 +63,12 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("  10-GAME PERFORMANCE TEST")
     logger.info("=" * 70)
-    logger.info()
     logger.info("  Monitoring:")
     logger.info("    - Win rate vs Protoss Easy")
     logger.info("    - Memory usage and leaks")
     logger.info("    - Crash stability")
     logger.info("    - Logic performance")
     logger.info("=" * 70)
-    logger.info()
-
     # Test configuration
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
@@ -97,8 +94,6 @@ def main():
         logger.info(f"  Map: {map_name}")
         logger.info(f"  Opponent: {opponent_race.name} {difficulty.name}")
         logger.info("=" * 70)
-        logger.info()
-
         # Memory before game
         mem_before = process.memory_info().rss / 1024 / 1024
         logger.info(f"Before game {game_num}: {mem_before:.1f} MB")
@@ -164,8 +159,6 @@ def main():
         logger.info(f"  {result}")
 
     logger.info("=" * 70)
-    logger.info()
-
     # Memory snapshot
     current, peak = tracemalloc.get_traced_memory()
     logger.info(f"Peak: {peak / 1024 / 1024:.1f} MB")

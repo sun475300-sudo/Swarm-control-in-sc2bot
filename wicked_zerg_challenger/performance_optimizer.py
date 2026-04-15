@@ -230,8 +230,6 @@ class PerformanceOptimizer:
                   f"Total: {stats['total_time_ms']:8.2f}ms")
 
         logger.info("=" * 60)
-        logger.info()
-
     def optimize_intervals(self):
         """
         실행 간격 자동 최적화

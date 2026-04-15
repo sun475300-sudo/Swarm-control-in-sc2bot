@@ -70,8 +70,6 @@ def run_single_game(game_num, total_games):
     logger.info(f"  Opponent: {opponent_race.name}")
     logger.info(f"  Difficulty: {difficulty.name}")
     logger.info("=" * 70)
-    logger.info()
-
     # Create bot (train_mode=False for testing)
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
 
@@ -118,14 +116,11 @@ def main():
     logger.info(f"  Difficulty: Easy")
     logger.info(f"  Total Games: {total_games}")
     logger.info(f"  Target Win Rate: {target_win_rate}%+")
-    logger.info()
     logger.info("  New Features:")
     logger.info("  - Logic Optimizer (47 systems -> 28 active avg)")
     logger.info("  - Unit Authority Manager (conflict resolution)")
     logger.info("  - Map Memory System (full map awareness)")
     logger.info("=" * 70)
-    logger.info()
-
     wins = 0
     losses = 0
     errors = 0
@@ -165,8 +160,6 @@ def main():
             logger.info(f"  STATUS: {diff:.1f}% away from target")
 
         logger.info("-" * 70)
-        logger.info()
-
         # Short delay between games
         time.sleep(1)
 

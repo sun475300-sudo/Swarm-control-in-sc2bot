@@ -106,9 +106,5 @@ def main():
         logger.info("\n[PASS] Test passed! Multitask destruction system working correctly.")
     else:
         logger.error("\n[FAIL] Test failed. System check required.")
-
-    logger.info()
-
-
 if __name__ == "__main__":
     main()

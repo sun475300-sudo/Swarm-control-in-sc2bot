@@ -27,8 +27,6 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
     logger.info(f"{description}")
     logger.info(f"{'='*70}")
     logger.info(f"Command: {' '.join(cmd)}")
-    logger.info()
-    
     try:
         result = subprocess.run(
             cmd,
@@ -210,8 +208,6 @@ def main():
     logger.info(f"\n[INFO] ���� �н��� �����մϴ�...")
     logger.info(f"������ ���� �۵��ϴ��� Ȯ���ϼ���.")
     logger.info(f"Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
-    logger.info()
-    
     success_training, _ = run_command(
         [sys.executable, str(run_training)],
         project_root,

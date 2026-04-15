@@ -75,8 +75,6 @@ def run_single_game(game_num, progression_system):
     logger.info(f"  Opponent: {opponent_race.name}")
     logger.info(f"  Difficulty: {difficulty.name}")
     logger.info("=" * 60)
-    logger.info()
-
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
 
@@ -151,8 +149,6 @@ def main():
     logger.info(f"  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
     logger.info(f"  Auto-Progress at: 90% win rate (min 10 games)")
     logger.info("=" * 70)
-    logger.info()
-
     wins = 0
     losses = 0
 
@@ -180,8 +176,6 @@ def main():
             current_win_rate = (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0
             logger.info(f"  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)")
         logger.info("-" * 70)
-        logger.info()
-
         # Break if 60 minutes passed
         if total_duration > 3600:  # 60 minutes
             logger.info(f"\n[TIME] Time limit reached ({total_duration/60:.1f} min)")

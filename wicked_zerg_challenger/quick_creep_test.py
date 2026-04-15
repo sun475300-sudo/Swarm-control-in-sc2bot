@@ -59,14 +59,11 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("  QUICK CREEP TEST (1 minute)")
     logger.info("=" * 70)
-    logger.info()
     logger.info("  Testing:")
     logger.info("    - Dedicated creep queen assignment")
     logger.info("    - Creep spread during defense")
     logger.info("    - Target: 3min = 5 tumors minimum")
     logger.info("=" * 70)
-    logger.info()
-
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
     difficulty = Difficulty.Easy
@@ -75,8 +72,6 @@ def main():
     logger.info(f"  Opponent: {opponent_race.name}")
     logger.info(f"  Difficulty: {difficulty.name}")
     logger.info("=" * 70)
-    logger.info()
-
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
 
