@@ -311,14 +311,14 @@ class GameConfig:
                     import yaml
                     config_dict = yaml.safe_load(f)
                 except ImportError:
-                    print("[CONFIG] PyYAML not installed, skipping YAML config")
+                    _config_logger.warning("PyYAML not installed, skipping YAML config")
                     return
             else:
-                print(f"[CONFIG] Unsupported file format: {filepath}")
+                _config_logger.warning(f"Unsupported file format: {filepath}")
                 return
 
         cls.load_from_dict(config_dict)
-        print(f"[CONFIG] Loaded configuration from {filepath}")
+        _config_logger.info(f"Loaded configuration from {filepath}")
 
     @classmethod
     def save_to_file(cls, filepath: str):
