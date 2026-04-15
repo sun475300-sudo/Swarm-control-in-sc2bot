@@ -479,22 +479,25 @@ class RLAgent:
             path = Path(path)
             path.parent.mkdir(parents=True, exist_ok=True)
             
-            # 임시 파일 경로 생성
-            temp_path = str(path) + ".tmp"
+            # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 — savez_compressed가 .npz를 자동 추가)
+            path_str = str(path)
+            base_no_ext = path_str[:-4] if path_str.endswith('.npz') else path_str
+            temp_base = base_no_ext + ".tmp"
 
             # NumPy 배열로 변환하여 임시 파일로 저장
             np.savez_compressed(
-                temp_path,
+                temp_base,
                 states=np.array(self.states, dtype=np.float32),
                 actions=np.array(self.actions, dtype=np.int64),
                 rewards=np.array(self.rewards, dtype=np.float32)
             )
-            
+            temp_actual = temp_base + ".npz"
+
             # 원자적으로 이름 변경 (Atomic Rename)
             # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path):
-                os.remove(path)
-            os.rename(temp_path, path)
+            if os.path.exists(path_str):
+                os.remove(path_str)
+            os.rename(temp_actual, path_str)
             
             logger.info(f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards")
             return True
