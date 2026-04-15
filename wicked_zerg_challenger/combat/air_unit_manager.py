@@ -137,7 +137,7 @@ class AirUnitManager:
         if self._air_harass_target:
             await self.execute_harass(mutalisks, enemy_units)
             if iteration % 100 == 0:
-                print(f"[AIR HARASS] [{int(game_time)}s] Mutalisks harassing enemy base")
+                self.logger.info(f"[{int(game_time)}s] Mutalisks harassing enemy base")
         else:
             if self._has_units(enemy_units):
                 await self.mutalisk_attack(mutalisks, enemy_units)

@@ -305,7 +305,7 @@ class AttackController:
             self._last_search_time = game_time
 
             if self.bot.iteration % 100 == 0:
-                print(f"[SEARCH] [{int(game_time)}s] Searching map location {self._search_index + 1}/{len(search_locations)}")
+                self.logger.info(f"[{int(game_time)}s] Searching map location {self._search_index + 1}/{len(search_locations)}")
 
         return search_locations[self._search_index]
 
@@ -348,4 +348,4 @@ class AttackController:
                         continue
 
                 if iteration % 22 == 0:
-                    print(f"[ROACH RUSH] [{int(game_time)}s] [*][*][*] {len(roaches)} ROACHES ATTACKING! [*][*][*]")
+                    self.logger.warning(f"[{int(game_time)}s] {len(roaches)} ROACHES ATTACKING!")

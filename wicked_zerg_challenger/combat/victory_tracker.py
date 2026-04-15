@@ -84,7 +84,7 @@ class VictoryTracker:
         if current_structure_count < self._last_enemy_structure_count:
             destroyed = self._last_enemy_structure_count - current_structure_count
             self._enemy_structures_destroyed += destroyed
-            print(f"[VICTORY] {destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}")
+            self.logger.info(f"{destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}")
 
         self._last_enemy_structure_count = current_structure_count
 
@@ -100,18 +100,18 @@ class VictoryTracker:
         # 승리 푸시 활성화
         if should_activate_victory_push and not self._victory_push_active:
             self._victory_push_active = True
-            print(f"[VICTORY PUSH] ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}")
+            self.logger.info(f"Victory push ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}")
 
         # 승리 푸시 비활성화 조건
         if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
             self._victory_push_active = False
-            print(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info(f"Victory push deactivated - regroup needed")
 
         # 로그 (30초마다)
         if iteration % 660 == 0:
             expansion_count = len(self._known_enemy_expansions)
             status = "ACTIVE" if self._victory_push_active else "STANDBY"
-            print(f"[VICTORY] [{int(game_time)}s] Enemy: {current_structure_count} structures, "
+            self.logger.info(f"[{int(game_time)}s] Enemy: {current_structure_count} structures, "
                   f"{expansion_count} expansions | Status: {status}")
 
     async def track_enemy_expansions(self):
@@ -140,7 +140,7 @@ class VictoryTracker:
                 pos = struct.position
                 if pos not in self._known_enemy_expansions:
                     self._known_enemy_expansions.add(pos)
-                    print(f"[VICTORY] New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
+                    self.logger.info(f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
 
     async def execute_victory_push(self, iteration: int, attack_target_finder):
         """
@@ -175,7 +175,7 @@ class VictoryTracker:
         # 로그 (10초마다)
         if iteration % 220 == 0:
             target_str = f"({attack_target.x:.1f}, {attack_target.y:.1f})" if hasattr(attack_target, 'x') else str(attack_target)
-            print(f"[VICTORY PUSH] [{int(game_time)}s] {len(army_units)} units attacking {target_str}")
+            self.logger.info(f"[{int(game_time)}s] {len(army_units)} units attacking {target_str}")
 
     def get_army_supply(self) -> int:
         """현재 아군 병력의 supply 합계 계산"""

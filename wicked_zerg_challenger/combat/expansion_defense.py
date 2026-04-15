@@ -78,7 +78,7 @@ class ExpansionDefense:
             for base_tag in destroyed_bases:
                 attack_start_time = self._expansion_under_attack.get(base_tag, current_time)
 
-                print(f"[EXPANSION DESTROYED] [{int(current_time)}s] [*] WARNING [*] Expansion destroyed after {int(current_time - attack_start_time)}s!")
+                self.logger.warning(f"[{int(current_time)}s] Expansion destroyed after {int(current_time - attack_start_time)}s!")
 
                 # 파괴된 기지 정보 제거
                 if base_tag in self._expansion_under_attack:
@@ -106,7 +106,7 @@ class ExpansionDefense:
                 if expansion_tag not in self._expansion_under_attack:
                     # 처음 공격받음
                     self._expansion_under_attack[expansion_tag] = current_time
-                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] [*] WARNING [*] Expansion under attack! {len(nearby_enemies)} enemies detected")
+                    self.logger.warning(f"[{int(current_time)}s] Expansion under attack! {len(nearby_enemies)} enemies detected")
 
                 # 방어 병력 파견
                 await self.defend_expansion(expansion, nearby_enemies, iteration)
@@ -115,7 +115,7 @@ class ExpansionDefense:
                 # 공격받지 않음
                 if expansion_tag in self._expansion_under_attack:
                     attack_duration = current_time - self._expansion_under_attack[expansion_tag]
-                    print(f"[EXPANSION DEFENSE] [{int(current_time)}s] [OK] Expansion secured after {int(attack_duration)}s")
+                    self.logger.info(f"[{int(current_time)}s] Expansion secured after {int(attack_duration)}s")
                     del self._expansion_under_attack[expansion_tag]
 
     async def defend_expansion(self, expansion, nearby_enemies, iteration: int):
@@ -194,7 +194,7 @@ class ExpansionDefense:
         # 로그 (5초마다)
         if iteration % 110 == 0:
             current_time = getattr(self.bot, "time", 0)
-            print(f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion")
+            self.logger.info(f"[{int(current_time)}s] {len(defense_force)} units defending expansion")
 
     async def counterattack_after_base_loss(self, destroyed_base_tags: Set[int], iteration: int):
         """
@@ -226,7 +226,7 @@ class ExpansionDefense:
                 continue
 
         current_time = getattr(self.bot, "time", 0)
-        print(f"[COUNTERATTACK] [{int(current_time)}s] [*] REVENGE! [*] {len(army_units)} units counterattacking after base loss!")
+        self.logger.warning(f"[{int(current_time)}s] COUNTERATTACK - {len(army_units)} units counterattacking after base loss!")
 
     # ===== Helper Methods =====
 

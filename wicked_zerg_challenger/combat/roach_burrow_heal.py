@@ -101,14 +101,14 @@ class RoachBurrowHeal:
             if not self._burrow_available:
                 self._burrow_available = True
                 game_time = getattr(self.bot, "time", 0)
-                print(f"[ROACH BURROW] [{int(game_time)}s] [OK] Burrow upgrade completed!")
+                self.logger.info(f"[{int(game_time)}s] Burrow upgrade completed!")
 
         # Tunneling Claws 확인 (바퀴 전용)
         if UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades:
             if not self._tunneling_claws_available:
                 self._tunneling_claws_available = True
                 game_time = getattr(self.bot, "time", 0)
-                print(f"[ROACH BURROW] [{int(game_time)}s] [OK] Tunneling Claws upgrade completed!")
+                self.logger.info(f"[{int(game_time)}s] Tunneling Claws upgrade completed!")
 
     async def manage_roach_healing(self, iteration: int):
         """
@@ -183,7 +183,7 @@ class RoachBurrowHeal:
             self._burrow_start_time[roach.tag] = game_time
 
             if self.bot.iteration % 22 == 0:  # 1초마다 로그
-                print(f"[ROACH BURROW] [{int(game_time)}s] Roach burrowing to heal ({int(roach.health_percentage * 100)}% HP)")
+                self.logger.info(f"[{int(game_time)}s] Roach burrowing to heal ({int(roach.health_percentage * 100)}% HP)")
 
         except AttributeError as e:
             self.logger.warning(f"Failed to burrow roach: {e}")
@@ -212,7 +212,7 @@ class RoachBurrowHeal:
                 del self._burrow_start_time[roach.tag]
 
                 if self.bot.iteration % 22 == 0:
-                    print(f"[ROACH BURROW] [{int(game_time)}s] Roach healed and returning to combat! "
+                    self.logger.info(f"[{int(game_time)}s] Roach healed and returning to combat! "
                           f"({int(roach.health_percentage * 100)}% HP, {int(heal_duration)}s heal time)")
 
         except AttributeError as e:
@@ -268,7 +268,7 @@ class RoachBurrowHeal:
                     game_time = getattr(self.bot, "time", 0)
 
                     if self.bot.iteration % 22 == 0:
-                        print(f"[ROACH BURROW] [{int(game_time)}s] Detector detected! Roach retreating while burrowed")
+                        self.logger.warning(f"[{int(game_time)}s] Detector detected! Roach retreating while burrowed")
 
                 except AttributeError as e:
                     self.logger.warning(f"Failed to move burrowed roach: {e}")

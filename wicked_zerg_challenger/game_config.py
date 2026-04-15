@@ -13,6 +13,9 @@ Game Configuration - 중앙 설정 관리
 
 from typing import Dict, Any
 import os
+import logging
+
+_config_logger = logging.getLogger("GameConfig")
 
 
 class GameConfig:
@@ -297,7 +300,7 @@ class GameConfig:
         import json
 
         if not os.path.exists(filepath):
-            print(f"[CONFIG] Config file not found: {filepath}")
+            _config_logger.warning(f"Config file not found: {filepath}")
             return
 
         with open(filepath, 'r') as f:

@@ -303,7 +303,7 @@ class BaseDefenseSystem:
         # 위협이 없으면 방어 모드 해제
         if max_threat_score == 0:
             if self._base_defense_active and iteration % 100 == 0:
-                print(f"[BASE DEFENSE] [{int(game_time)}s] Threat cleared - returning to normal")
+                self.logger.info(f"[{int(game_time)}s] Threat cleared - returning to normal")
             self._base_defense_active = False
             self._defense_rally_point = None
             return None
@@ -316,7 +316,7 @@ class BaseDefenseSystem:
 
         # 로그 출력
         if iteration % 110 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] [*] MANDATORY DEFENSE [*] "
+            self.logger.warning(f"[{int(game_time)}s] MANDATORY DEFENSE - "
                   f"Enemies: {enemy_count}, Threat score: {max_threat_score}")
 
         # 모든 군대 즉시 방어
@@ -400,7 +400,7 @@ class BaseDefenseSystem:
                         continue
 
                 if iteration % 220 == 0:
-                    print(f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}")
+                    self.logger.warning(f"[{int(game_time)}s] LAST STAND - {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}")
                 return
 
         # 일반 방어 모드
@@ -441,7 +441,7 @@ class BaseDefenseSystem:
 
         if iteration % 220 == 0:
             defeat_msg = f" [위기도: {defeat_level}]" if defeat_level >= 2 else ""
-            print(f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}")
+            self.logger.info(f"[{int(game_time)}s] {len(army_units)} units defending{defeat_msg}")
 
     async def worker_defense(self, threat_position, threat_enemies, iteration: int):
         """일꾼 방어 참여"""
@@ -472,11 +472,11 @@ class BaseDefenseSystem:
         if last_stand_mode or defeat_level >= 3:
             defense_workers = nearby_workers  # 모든 일꾼
             if iteration % 220 == 0:
-                print(f"[WORKER DEFENSE] [*] 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! [*]")
+                self.logger.warning(f"패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여!")
         elif defeat_level >= 2:
             defense_workers = nearby_workers[:12]
             if iteration % 220 == 0:
-                print(f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어")
+                self.logger.warning(f"위기 상황 - {len(defense_workers)} 일꾼 방어")
         else:
             defense_workers = nearby_workers[:6]
 
@@ -509,7 +509,7 @@ class BaseDefenseSystem:
                 continue
 
         if iteration % 220 == 0:
-            print(f"[BASE DEFENSE] [{int(game_time)}s] [*] {len(defense_workers)} WORKERS DEFENDING [*]")
+            self.logger.warning(f"[{int(game_time)}s] {len(defense_workers)} WORKERS DEFENDING")
 
     def find_densest_enemy_position(self, enemies):
         """가장 밀집된 적 위치 찾기 (맹독충용)"""

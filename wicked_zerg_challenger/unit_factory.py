@@ -369,7 +369,8 @@ class UnitFactory:
                 print(f"[UNIT_FACTORY] Production requested: {unit_requests}")
 
         else:
-            # Fallback: 직접 생산 (Blackboard 없을 때)
+            # Fallback: ProductionController에 위임 (���접 생산 방지로 중복 제거)
+            prod_ctrl = getattr(self.bot, "production_controller", None)
             to_spend = 0
             for larva_unit in larva:
                 if to_spend >= self.max_larva_spend_per_step:
@@ -380,11 +381,11 @@ class UnitFactory:
                     break
 
                 try:
-                    # ProductionResilience의 _safe_train 사용 (있을 경우)
-                    if hasattr(self.bot, 'production') and self.bot.production:
+                    if prod_ctrl and hasattr(prod_ctrl, "request_unit"):
+                        prod_ctrl.request_unit(unit_type, requester="UnitFactory")
+                    elif hasattr(self.bot, 'production') and self.bot.production:
                         await self.bot.production._safe_train(larva_unit, unit_type)
                     else:
-                        # Fallback: 직접 train 호출
                         self.bot.do(larva_unit.train(unit_type))
                     to_spend += 1
                 except Exception:

@@ -618,10 +618,9 @@ class BotStepIntegrator:
         elif not hasattr(self.bot, "idle_units"):
             self.bot.idle_units = None
 
-        if DynamicCounterSystem:
-            self.bot.dynamic_counter = DynamicCounterSystem(bot)
-            self.logger.info("[INIT] DynamicCounterSystem (Phase 22) — 동적 카운터")
-        elif not hasattr(self.bot, "dynamic_counter"):
+        # DynamicCounterSystem -> RacialCounterManager로 병합됨 (Phase 22+)
+        # 위협 감지는 StrategyManager.counter_manager에서 통합 처리
+        if not hasattr(self.bot, "dynamic_counter"):
             self.bot.dynamic_counter = None
 
         if DefeatDetection:
@@ -1196,20 +1195,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     self.logger.warning(f"[BotStepIntegrator] Air threat response suppressed: {e}")
 
-            # 0.060 ★★★ Dynamic Counter System (적 유닛 즉시 카운터) ★★★
-            if hasattr(self.bot, "dynamic_counter") and self.bot.dynamic_counter:
-                start_time = self._logic_tracker.start_logic("DynamicCounter")
-                try:
-                    await self.bot.dynamic_counter.on_step(iteration)
-                except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["DynamicCounter"] += 1
-                        if error_handler.error_counts["DynamicCounter"] <= error_handler.max_error_logs:
-                            self.logger.error(f"[ERROR] DynamicCounter error: {e}")
-                finally:
-                    self._logic_tracker.end_logic("DynamicCounter", start_time)
+            # 0.060 DynamicCounterSystem -> RacialCounterManager로 병합됨
+            # 위협 감지 및 카운터 로직은 StrategyManager.counter_manager.update()에서 처리
 
             # 0.0605 ★★★ A* Creep Highway (적진 방향 A* 경로 계산 + 진행 체크) ★★★
             if hasattr(self.bot, "creep_highway_astar") and self.bot.creep_highway_astar:
@@ -1561,8 +1548,8 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("ProductionController", start_time)
 
-            # 3.5 Unit Factory (기존 시스템 - ProductionController와 협력)
-            # TODO: 점진적으로 ProductionController로 이관
+            # 3.5 Unit Factory (ProductionController에 생산 요청 위임)
+            # UnitFactory는 생산 큐만 관리, 실제 생산은 ProductionController가 처리
             if hasattr(self.bot, "unit_factory") and self.bot.unit_factory:
                 start_time = self._logic_tracker.start_logic("UnitFactory")
                 try:

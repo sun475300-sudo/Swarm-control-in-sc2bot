@@ -19,6 +19,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import json
 from pathlib import Path
 from utils.logger import get_logger
+from config.config_loader import ConfigLoader
+from racial_counter_manager import RacialCounterManager
 
 try:
     from knowledge_manager import KnowledgeManager
@@ -76,14 +78,15 @@ class StrategyManager:
         self.detected_enemy_race = EnemyRace.UNKNOWN
         self.game_phase = GamePhase.EARLY
 
-        # Emergency Mode 설정
+        # Emergency Mode 설정 (config-driven)
+        rush_cfg = ConfigLoader.get_rush_detection_config()
         self.emergency_active = False
         self.emergency_start_time = 0.0
-        self.emergency_duration = 120.0  # 2분 지속
+        self.emergency_duration = rush_cfg.get("emergency_duration_seconds", 120.0)
 
-        # 러시 감지 설정
-        self.rush_detection_threshold = 150.0  # 2:30 이전 공격 = 러시
-        self.cheese_detection_threshold = 120.0  # 2분 이전 공격 = 치즈
+        # 러시 감지 설정 (config-driven)
+        self.rush_detection_threshold = rush_cfg.get("rush_threshold_seconds", 150.0)
+        self.cheese_detection_threshold = rush_cfg.get("cheese_threshold_seconds", 120.0)
 
         # 로그 스팸 방지
         self.last_air_threat_log = 0
@@ -107,13 +110,23 @@ class StrategyManager:
         
         self.logger.info(f"[STRATEGY] Loaded unit ratios for {len(self.race_unit_ratios)} races from Knowledge Base")
 
-        # Emergency Mode 비율 (방어 우선)
-        self.emergency_ratios = {
+        # Emergency Mode 비율 (config-driven)
+        emergency_cfg = ConfigLoader.get_emergency_config()
+        self.emergency_ratios = emergency_cfg.get("default_ratios", {
             "zergling": 0.5,
             "roach": 0.25,
             "baneling": 0.15,
             "queen": 0.1,
-        }
+        })
+        self.emergency_air_ratios = emergency_cfg.get("air_threat_ratios", {
+            "zergling": 0.30,
+            "hydralisk": 0.40,
+            "roach": 0.20,
+            "queen": 0.10,
+        })
+
+        # Racial Counter Manager (extracted from this class)
+        self.counter_manager = RacialCounterManager(bot, blackboard, self.logger)
 
         # 방어 건물 긴급 건설 플래그
         self.emergency_spine_requested = False
@@ -197,9 +210,8 @@ class StrategyManager:
         self._update_strategy_mode()
         self._update_counter_build()
         self._detect_direct_air_threat()
-        self._counter_terran_units()
-        self._counter_protoss_units()
-        self._counter_zerg_units()
+        # Delegated to RacialCounterManager
+        self._apply_racial_counters()
 
         # ★ Write State to Blackboard ★
         if self.blackboard:
@@ -812,36 +824,30 @@ class StrategyManager:
 
     def _handle_air_threat(self) -> None:
         """
-        ★★★ 공중 위협 대응 강화 ★★★
+        공중 위협 대응 강화
 
-        적 공중 유닛 감지 시:
-        1. 스포어 크롤러 긴급 건설 요청 (BuildingCoordination에 위임)
-        2. 히드라리스크 굴 / 스파이어 건설 요청 (BuildingCoordination에 위임)
-        3. 퀸 추가 생산 (대공 + 트랜스퓨전)
-        4. 커럽터/히드라 우선 생산
+        스포어/카운터 유닛 요청은 RacialCounterManager에서 처리.
+        여기서는 스파이어 건설 + 대공 비율 강제만 담당.
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ 스포어 크롤러 긴급 건설 요청 ★
-        self._request_defensive_building(spore=True)
-
-        # ★ 기지 수만큼 스포어 필요 ★
+        # 기지 수만큼 스포어 필요 (스포어 건설 자체는 racial_counter_manager에서 요청)
         if not hasattr(self, "_spore_count_needed"):
             self._spore_count_needed = 0
         if hasattr(self.bot, "townhalls"):
             self._spore_count_needed = max(2, self.bot.townhalls.amount)
 
-        # ★ 스파이어 건설 요청 → BuildingCoordination에 위임 ★
+        # 스파이어 건설 요청 -> BuildingCoordination에 위임
         self._request_spire_via_coordinator(game_time)
 
-        # ★ 대공 유닛 비율 강제 조정 ★
+        # 대공 유닛 비율 강제 조정
         self._force_anti_air_ratios()
 
         # 로그 쿨다운 (10초마다만 출력)
         if not hasattr(self, "_last_air_log_time"):
             self._last_air_log_time = 0
         if game_time - self._last_air_log_time >= 10:
-            self.logger.warning(f"[{int(game_time)}s] [*][*] AIR THREAT ACTIVE - Anti-air priority [*][*]")
+            self.logger.warning(f"[{int(game_time)}s] AIR THREAT ACTIVE - Anti-air priority")
             self._last_air_log_time = game_time
 
     def _force_anti_air_ratios(self) -> None:
@@ -1035,6 +1041,37 @@ class StrategyManager:
             enemy_pattern = intel.get_enemy_build_pattern()
 
         return enemy_pattern in ["protoss_stargate", "zerg_muta", "terran_mech"]
+
+    def _apply_racial_counters(self) -> None:
+        """Delegate counter logic to RacialCounterManager."""
+        if not hasattr(self.bot, "enemy_units"):
+            return
+
+        race_map = {
+            EnemyRace.TERRAN: "Terran",
+            EnemyRace.PROTOSS: "Protoss",
+            EnemyRace.ZERG: "Zerg",
+        }
+        race_str = race_map.get(self.detected_enemy_race)
+        if not race_str:
+            return
+
+        current_ratios = self.race_unit_ratios.get(
+            self.detected_enemy_race, {}
+        ).get(self.game_phase, {})
+
+        updated = self.counter_manager.update(
+            enemy_race=race_str,
+            game_phase=self.game_phase.name if hasattr(self.game_phase, 'name') else str(self.game_phase),
+            game_time=getattr(self.bot, "time", 0),
+            enemy_composition=self._cached_enemy_composition,
+            current_ratios=current_ratios,
+            request_building_fn=self._request_defensive_building,
+        )
+
+        # Write back updated ratios
+        if self.detected_enemy_race in self.race_unit_ratios:
+            self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = updated
 
     def _counter_terran_units(self) -> None:
         """
@@ -1416,10 +1453,11 @@ class StrategyManager:
             self.blackboard.set("is_rush_detected", True)
             self.blackboard.set("emergency_mode", True)
             self.blackboard.set("emergency_start_time", game_time)
-            # 저글링 우선 생산 비율 즉시 적용 (방어 우선)
-            emergency_ratios = {"zergling": 0.60, "roach": 0.25, "queen": 0.15}
+            # 저글링 우선 생산 비율 즉시 적용 (config-driven)
             if self.emergency_spore_requested:
-                emergency_ratios = {"zergling": 0.30, "hydralisk": 0.40, "roach": 0.20, "queen": 0.10}
+                emergency_ratios = dict(self.emergency_air_ratios)
+            else:
+                emergency_ratios = dict(self.emergency_ratios)
             self.blackboard.set("unit_ratios", emergency_ratios)
 
         self.logger.info(f"Emergency defense requested: Spine={self.emergency_spine_requested}, Spore={self.emergency_spore_requested}")

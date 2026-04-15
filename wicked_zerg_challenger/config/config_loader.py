@@ -84,6 +84,30 @@ class ConfigLoader:
         return config.get("timing", {})
 
     @staticmethod
+    def get_rush_detection_config() -> Dict[str, Any]:
+        """Get rush detection configuration"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("rush_detection", {})
+
+    @staticmethod
+    def get_emergency_config() -> Dict[str, Any]:
+        """Get emergency mode configuration"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("emergency_mode", {})
+
+    @staticmethod
+    def get_counter_build_config() -> Dict[str, Any]:
+        """Get counter build configuration"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("counter_build", {})
+
+    @staticmethod
+    def get_race_fallback_config() -> Dict[str, Any]:
+        """Get race-specific fallback unit ratios"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("race_specific_fallback", {})
+
+    @staticmethod
     def get_value(section: str, key: str, default: Any = None) -> Any:
         """
         Get a specific configuration value

@@ -31,11 +31,11 @@ class PerformanceOptimizer:
             "production": 2,
             "queen_manager": 3,
 
-            # 저빈도 (10프레임+)
-            "scouting": 10,
-            "intel": 10,
-            "creep": 15,
-            "upgrade": 20,
+            # 저빈도 (5-11프레임)
+            "scouting": 8,     # 10→8: 정찰 정보 수집 25% 향상
+            "intel": 7,        # 10→7: 적 유닛 감지 반응 30% 향상
+            "creep": 11,       # 15→11: 점막 확장 타이밍 27% 향상
+            "upgrade": 10,     # 20→10: 업그레이드 체크 2배 빈도
             "strategy": 5,
 
             # 매우 저빈도 (30프레임+)
