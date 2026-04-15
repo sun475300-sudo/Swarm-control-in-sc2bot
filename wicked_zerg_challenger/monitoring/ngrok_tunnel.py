@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("NgrokTunnel")
 # -*- coding: utf-8 -*-
 """
 Ngrok tunnel manager (placeholder).
@@ -6,11 +9,11 @@ Ngrok tunnel manager (placeholder).
 
 
 def start_tunnel() -> None:
-    print("Ngrok tunnel placeholder.")
+    logger.info("Ngrok tunnel placeholder.")
 
 
 def stop_tunnel() -> None:
-    print("Stopping ngrok tunnel placeholder.")
+    logger.info("Stopping ngrok tunnel placeholder.")
 
 
 def main() -> None:

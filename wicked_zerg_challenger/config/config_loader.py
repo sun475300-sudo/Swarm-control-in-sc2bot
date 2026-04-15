@@ -8,6 +8,9 @@ type-safe access to configuration values.
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional
+import logging
+
+logger = logging.getLogger("ConfigLoader")
 
 
 class ConfigLoader:
@@ -41,10 +44,10 @@ class ConfigLoader:
                 ConfigLoader._config_cache["strategy"] = config
                 return config
         except FileNotFoundError:
-            print(f"[WARNING] Strategy config not found: {config_path}")
+            logger.warning(f"Strategy config not found: {config_path}")
             return ConfigLoader._get_default_config()
         except json.JSONDecodeError as e:
-            print(f"[ERROR] Invalid JSON in strategy config: {e}")
+            logger.error(f"Invalid JSON in strategy config: {e}")
             return ConfigLoader._get_default_config()
 
     @staticmethod

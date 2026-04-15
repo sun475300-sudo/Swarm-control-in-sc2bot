@@ -4,6 +4,9 @@ Unit Production Module
 
 유닛 생산 로직을 담당하는 모듈
 """
+import logging
+
+logger = logging.getLogger("UnitProduction")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -37,7 +40,7 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
         try:
             # Validate unit is still valid
             if not unit or not hasattr(unit, 'train'):
-                print(f"[TRAIN_ERROR] Invalid unit for training {unit_type}")
+                logger.info(f"Invalid unit for training {unit_type}")
                 return False
 
             # Create train action and execute it via bot.do()
@@ -51,9 +54,9 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
 
             # Always log errors (not just every 200 iterations)
             if attempt == retry_count:  # Final attempt failed
-                print(f"[TRAIN_ERROR] [{int(game_time)}s] Failed to train {unit_type}: {e}")
+                logger.error(f"[{int(game_time)}s] Failed to train {unit_type}: {e}")
             else:
-                print(f"[TRAIN_WARN] [{int(game_time)}s] Retry {attempt + 1}/{retry_count} for {unit_type}: {e}")
+                logger.info(f"[{int(game_time)}s] Retry {attempt + 1}/{retry_count} for {unit_type}: {e}")
 
     return False
 

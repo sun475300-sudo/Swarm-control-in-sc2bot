@@ -1,6 +1,9 @@
 from typing import Dict, Optional, Tuple, Any
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
+import logging
+
+logger = logging.getLogger("TechCoordinator")
 
 class TechCoordinator:
     """
@@ -98,7 +101,7 @@ class TechCoordinator:
                 if not built:
                     await self.bot.build(stype, near=location)
                 
-                print(f"[TECH] Executing {stype.name} for {requester} (P{priority})")
+                logger.info(f"Executing {stype.name} for {requester} (P{priority})")
                 
                 # Remove from queue immediately to avoid double build in same frame
                 # (Though async build might take a moment to register pending)
@@ -109,4 +112,4 @@ class TechCoordinator:
                 break 
 
             except Exception as e:
-                print(f"[TECH] Failed to build {stype}: {e}")
+                logger.error(f"Failed to build {stype}: {e}")

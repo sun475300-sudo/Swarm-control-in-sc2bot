@@ -7,6 +7,9 @@ opening decisions can consume the scout state reliably.
 """
 
 from typing import Any, Dict, List, Optional, Set
+import logging
+
+logger = logging.getLogger("EarlyScoutSystem")
 
 try:
     from sc2.bot_ai import BotAI
@@ -215,7 +218,7 @@ class EarlyScoutSystem:
             self.bot.do(ling.move(waypoints[0]))
 
         self.ling_scouts_assigned = True
-        print(
+        logger.info(
             f"[EARLY_SCOUT] Sent {len(scout_lings)} Zergling scouts "
             f"at {int(self.bot.time)}s"
         )
@@ -269,7 +272,7 @@ class EarlyScoutSystem:
         self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
         self.overlord_scout_sent = True
         self._last_overlord_rescout_time = self.bot.time
-        print(f"[EARLY_SCOUT] Sent Overlord scout at {int(self.bot.time)}s")
+        logger.info(f"Sent Overlord scout at {int(self.bot.time)}s")
 
     async def _manage_overlord_scout(self) -> None:
         overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in([self.scout_overlord_tag])
@@ -318,7 +321,7 @@ class EarlyScoutSystem:
 
         self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
         self._last_overlord_rescout_time = self.bot.time
-        print(
+        logger.info(
             f"[EARLY_SCOUT] Overlord re-scout sent at {int(self.bot.time)}s"
         )
 
@@ -332,17 +335,17 @@ class EarlyScoutSystem:
 
                 if not self.enemy_pool_timing and type_name == "SPAWNINGPOOL":
                     self.enemy_pool_timing = self.bot.time
-                    print(f"[EARLY_SCOUT] Enemy pool spotted at {int(self.bot.time)}s")
+                    logger.info(f"Enemy pool spotted at {int(self.bot.time)}s")
                     if self.bot.time < 90:
                         self.cheese_suspected = True
-                        print("[EARLY_SCOUT] Early pool detected, cheese suspected")
+                        logger.info("Early pool detected, cheese suspected")
 
                 if not self.enemy_gas_timing and (
                     type_id in GAS_BUILDING_TYPES
                     or type_name in {"EXTRACTOR", "ASSIMILATOR", "REFINERY"}
                 ):
                     self.enemy_gas_timing = self.bot.time
-                    print(f"[EARLY_SCOUT] Enemy gas spotted at {int(self.bot.time)}s")
+                    logger.info(f"Enemy gas spotted at {int(self.bot.time)}s")
 
                 if (
                     enemy_natural is not None
@@ -352,7 +355,7 @@ class EarlyScoutSystem:
                 ):
                     self.enemy_natural_timing = self.bot.time
                     self.natural_scouted = True
-                    print(f"[EARLY_SCOUT] Enemy natural confirmed at {int(self.bot.time)}s")
+                    logger.info(f"Enemy natural confirmed at {int(self.bot.time)}s")
 
         enemy_units = getattr(self.bot, "enemy_units", None)
         if enemy_units:
@@ -399,7 +402,7 @@ class EarlyScoutSystem:
             else:
                 self.bot.do(scout_ling.move(target, queue=True))
 
-        print(
+        logger.info(
             f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game zergling map "
             f"patrol sent ({len(patrol_targets)} waypoints)"
         )

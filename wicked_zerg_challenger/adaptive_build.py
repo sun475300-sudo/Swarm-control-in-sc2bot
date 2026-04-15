@@ -15,6 +15,9 @@ Adaptive Build Order Manager - 적응형 빌드오더 시스템 (#104)
 
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
+import logging
+
+logger = logging.getLogger("AdaptiveBuild")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -141,7 +144,7 @@ class AdaptiveBuildOrderManager:
         self.air_response_active: bool = False
         self.rush_defense_active: bool = False
 
-        print("[ADAPTIVE_BUILD] 적응형 빌드오더 관리자 초기화 완료")
+        logger.info("적응형 빌드오더 관리자 초기화 완료")
 
     def select_initial_build(self, enemy_race: str = "Unknown") -> BuildOrderType:
         """
@@ -162,7 +165,7 @@ class AdaptiveBuildOrderManager:
         self.current_build_type = build_type
         self.build_steps = self._create_build_steps(build_type)
 
-        print(f"[ADAPTIVE_BUILD] 초기 빌드 선택: {build_type.value} (vs {enemy_race})")
+        logger.info(f"초기 빌드 선택: {build_type.value} (vs {enemy_race})")
         return build_type
 
     def update(self, scout_info: Optional[Dict[str, Any]] = None) -> None:
@@ -250,7 +253,7 @@ class AdaptiveBuildOrderManager:
             "reason": reason,
         })
 
-        print(f"[ADAPTIVE_BUILD] 빌드 전환: {old_build.value} -> {new_build_type.value} "
+        logger.info(f"빌드 전환: {old_build.value} -> {new_build_type.value} "
               f"(사유: {reason})")
         return True
 

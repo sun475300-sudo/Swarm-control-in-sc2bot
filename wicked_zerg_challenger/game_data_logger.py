@@ -9,6 +9,9 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, List, Optional, Any
+import logging
+
+logger = logging.getLogger("GameDataLogger")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -304,7 +307,7 @@ class GameDataLogger:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(self.game_data, f, indent=2, ensure_ascii=False)
 
-        print(f"[GAME_LOGGER] Game data saved: {filename}")
+        logger.info(f"Game data saved: {filename}")
 
     # ============================================================
     # ★ 추가 학습 항목 추적 메서드 ★

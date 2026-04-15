@@ -12,6 +12,9 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 from sc2.data import Difficulty, Race
+import logging
+
+logger = logging.getLogger("DifficultyProgression")
 
 
 class DifficultyProgression:
@@ -54,13 +57,13 @@ class DifficultyProgression:
                     data = json.load(f)
                     # Convert string keys back to enums
                     self.stats = self._deserialize_stats(data)
-                    print(f"[DIFFICULTY] Loaded progression data: {len(self.stats)} maps")
+                    logger.info(f"Loaded progression data: {len(self.stats)} maps")
             except Exception as e:
-                print(f"[DIFFICULTY] Error loading stats: {e}")
+                logger.info(f"Error loading stats: {e}")
                 self.stats = {}
         else:
             self.stats = {}
-            print(f"[DIFFICULTY] No existing progression data, starting fresh")
+            logger.info(f"No existing progression data, starting fresh")
 
     def _save_stats(self) -> None:
         """통계 데이터 저장"""
@@ -70,9 +73,9 @@ class DifficultyProgression:
             serialized = self._serialize_stats(self.stats)
             with open(self.data_file, 'w', encoding='utf-8') as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
-            print(f"[DIFFICULTY] Saved progression data")
+            logger.info(f"Saved progression data")
         except Exception as e:
-            print(f"[DIFFICULTY] Error saving stats: {e}")
+            logger.info(f"Error saving stats: {e}")
 
     def _serialize_stats(self, stats: Dict) -> Dict:
         """Enum을 문자열로 변환"""
@@ -161,15 +164,15 @@ class DifficultyProgression:
         if win_rate >= self.win_rate_threshold:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
-                print(f"\n{'='*70}")
-                print(f"🎉 DIFFICULTY PROGRESSION! 🎉")
-                print(f"{'='*70}")
-                print(f"  Map: {map_name}")
-                print(f"  Opponent: {opponent_race.name}")
-                print(f"  Current: {difficulty.name}")
-                print(f"  Win Rate: {win_rate*100:.1f}% ({wins}W/{losses}L)")
-                print(f"  >>> ADVANCING TO: {next_diff.name} <<<")
-                print(f"{'='*70}\n")
+                logger.info(f"\n{'='*70}")
+                logger.info(f"🎉 DIFFICULTY PROGRESSION! 🎉")
+                logger.info(f"{'='*70}")
+                logger.info(f"  Map: {map_name}")
+                logger.info(f"  Opponent: {opponent_race.name}")
+                logger.info(f"  Current: {difficulty.name}")
+                logger.info(f"  Win Rate: {win_rate*100:.1f}% ({wins}W/{losses}L)")
+                logger.info(f"  >>> ADVANCING TO: {next_diff.name} <<<")
+                logger.info(f"{'='*70}\n")
 
     def _get_next_difficulty(self, current: Difficulty) -> Optional[Difficulty]:
         """다음 난이도 반환"""

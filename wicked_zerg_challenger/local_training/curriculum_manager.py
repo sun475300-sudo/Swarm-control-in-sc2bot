@@ -4,6 +4,9 @@ import json
 import os
 from pathlib import Path
 import time
+import logging
+
+logger = logging.getLogger("CurriculumManager")
 
 try:
     from sc2.difficulty import Difficulty
@@ -154,7 +157,7 @@ class CurriculumManager:
             with open(race_stats_file, "w", encoding="utf-8") as f:
                 json.dump(stats_with_rates, f, indent=2, ensure_ascii=False)
         except IOError as e:
-            print(f"[WARNING] Failed to save race stats: {e}")
+            logger.error(f"Failed to save race stats: {e}")
 
     def save_level(self):
         """Save current curriculum level and win/loss data to stats file."""
@@ -217,16 +220,16 @@ class CurriculumManager:
             race_wins = self.race_stats[opponent_race]["wins"]
             race_games = self.race_stats[opponent_race]["games"]
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
-            print(f"[RACE STATS] vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
+            logger.info(f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
         elif not opponent_race:
-            print(f"[RACE STATS] Opponent race unknown (None) - stats not recorded")
+            logger.info(f"Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
-        print(f"\n{'='*70}")
-        print(f"[CURRICULUM] 🎉 승리! ({self.wins_at_current_level}/{wins_required})")
-        print(f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"🎉 승리! ({self.wins_at_current_level}/{wins_required})")
+        logger.info(f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})")
+        logger.info(f"{'='*70}\n")
 
         # 승격 체크: 필요한 승리 횟수 달성
         if self.wins_at_current_level >= wins_required:
@@ -259,16 +262,16 @@ class CurriculumManager:
             race_wins = self.race_stats[opponent_race]["wins"]
             race_games = self.race_stats[opponent_race]["games"]
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
-            print(f"[RACE STATS] vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
+            logger.info(f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
         elif not opponent_race:
-            print(f"[RACE STATS] Opponent race unknown (None) - stats not recorded")
+            logger.info(f"Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
-        print(f"\n{'='*70}")
-        print(f"[CURRICULUM] 패배 (승리: {self.wins_at_current_level}/{wins_required})")
-        print(f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"패배 (승리: {self.wins_at_current_level}/{wins_required})")
+        logger.info(f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})")
+        logger.info(f"{'='*70}\n")
 
         # 강등 체크: 10게임 이상 & 승률 20% 미만
         if self.games_at_current_level >= 10:
@@ -282,10 +285,10 @@ class CurriculumManager:
     def _promote_to_next_level(self) -> bool:
         """다음 단계로 승격."""
         if self.current_idx >= len(self.levels) - 1:
-            print(f"\n{'[*]'*12}")
-            print(f"[CURRICULUM] [TROPHY] 최고 난이도 마스터!")
-            print(f"  모든 단계를 완료했습니다!")
-            print(f"{'[*]'*12}\n")
+            logger.info(f"\n{'[*]'*12}")
+            logger.info(f"[TROPHY] 최고 난이도 마스터!")
+            logger.info(f"  모든 단계를 완료했습니다!")
+            logger.info(f"{'[*]'*12}\n")
             self.save_level()
             return False
 
@@ -303,12 +306,12 @@ class CurriculumManager:
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
-        print(f"\n{'[*]'*12}")
-        print(f"[CURRICULUM] [PROMOTED] 단계 승격!")
-        print(f"  {old_difficulty} -> {new_difficulty}")
-        print(f"  이전 단계 승리: {old_wins}승")
-        print(f"  다음 목표: {wins_required}승 달성하기")
-        print(f"{'[*]'*12}\n")
+        logger.info(f"\n{'[*]'*12}")
+        logger.info(f"[PROMOTED] 단계 승격!")
+        logger.info(f"  {old_difficulty} -> {new_difficulty}")
+        logger.info(f"  이전 단계 승리: {old_wins}승")
+        logger.info(f"  다음 목표: {wins_required}승 달성하기")
+        logger.info(f"{'[*]'*12}\n")
 
         return True
 
@@ -331,11 +334,11 @@ class CurriculumManager:
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
-        print(f"\n{'='*70}")
-        print(f"[CURRICULUM] [DOWN] 난이도 하향 (연습 더 필요)")
-        print(f"  {old_difficulty} -> {new_difficulty}")
-        print(f"  목표: {wins_required}승 달성하기")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"[DOWN] 난이도 하향 (연습 더 필요)")
+        logger.info(f"  {old_difficulty} -> {new_difficulty}")
+        logger.info(f"  목표: {wins_required}승 달성하기")
+        logger.info(f"{'='*70}\n")
 
         return True
 
@@ -369,12 +372,12 @@ class CurriculumManager:
                 self.losses_at_current_level = 0
                 self.save_level()
 
-                print(f"\n{'='*70}")
-                print(f"[CURRICULUM] Difficulty increased by ONE level")
-                print(f"  {old_difficulty} -> {new_difficulty}")
-                print(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.promotion_threshold*100}%)")
-                print(f"  Games at previous level: {total_games}")
-                print(f"{'='*70}\n")
+                logger.info(f"\n{'='*70}")
+                logger.info(f"Difficulty increased by ONE level")
+                logger.info(f"  {old_difficulty} -> {new_difficulty}")
+                logger.info(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.promotion_threshold*100}%)")
+                logger.info(f"  Games at previous level: {total_games}")
+                logger.info(f"{'='*70}\n")
 
                 return True
 
@@ -401,12 +404,12 @@ class CurriculumManager:
                 self.games_at_current_level = 0
                 self.save_level()
 
-                print(f"\n{'='*70}")
-                print(f"[CURRICULUM] Difficulty decreased by ONE level")
-                print(f"  {old_difficulty} -> {new_difficulty}")
-                print(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.demotion_threshold*100}%)")
-                print(f"  Games at previous level: {total_games}")
-                print(f"{'='*70}\n")
+                logger.info(f"\n{'='*70}")
+                logger.info(f"Difficulty decreased by ONE level")
+                logger.info(f"  {old_difficulty} -> {new_difficulty}")
+                logger.info(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.demotion_threshold*100}%)")
+                logger.info(f"  Games at previous level: {total_games}")
+                logger.info(f"{'='*70}\n")
 
                 return True
 
@@ -473,9 +476,9 @@ class CurriculumManager:
             priority_file = self.data_dir / "building_priorities.json"
             with open(priority_file, 'w', encoding='utf-8') as f:
                 json.dump(self.building_priorities, f, indent=2, ensure_ascii=False)
-            print(f"[CURRICULUM] Updated priority for {building_name}: {priority}")
+            logger.info(f"Updated priority for {building_name}: {priority}")
         except Exception as e:
-            print(f"[WARNING] Failed to save building priority: {e}")
+            logger.error(f"Failed to save building priority: {e}")
 
     def get_priority(self, building_name: str) -> str:
         """
@@ -554,20 +557,20 @@ class CurriculumManager:
         """★ 종족별 승률 출력 ★"""
         stats = self.get_race_stats()
 
-        print(f"\n{'='*70}")
-        print("[*][*][*] 종족별 승률 (Race Win Rates) [*][*][*]")
-        print(f"{'='*70}")
-        print(f"{'종족':<10} {'승리':<8} {'패배':<8} {'게임':<8} {'승률':<10}")
-        print(f"{'-'*70}")
+        logger.info(f"\n{'='*70}")
+        logger.info("[*][*][*] 종족별 승률 (Race Win Rates) [*][*][*]")
+        logger.info(f"{'='*70}")
+        logger.info(f"{'종족':<10} {'승리':<8} {'패배':<8} {'게임':<8} {'승률':<10}")
+        logger.info(f"{'-'*70}")
 
         for race in ["Terran", "Protoss", "Zerg"]:
             r = stats[race]
-            print(f"{race:<10} {r['wins']:<8} {r['losses']:<8} {r['games']:<8} {r['win_rate']:.2f}%")
+            logger.info(f"{race:<10} {r['wins']:<8} {r['losses']:<8} {r['games']:<8} {r['win_rate']:.2f}%")
 
-        print(f"{'-'*70}")
+        logger.info(f"{'-'*70}")
         t = stats["total"]
-        print(f"{'전체':<10} {t['wins']:<8} {t['losses']:<8} {t['games']:<8} {t['win_rate']:.2f}%")
-        print(f"{'='*70}\n")
+        logger.info(f"{'전체':<10} {t['wins']:<8} {t['losses']:<8} {t['games']:<8} {t['win_rate']:.2f}%")
+        logger.info(f"{'='*70}\n")
 
     def get_weakest_race(self) -> str:
         """

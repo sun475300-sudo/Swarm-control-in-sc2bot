@@ -15,6 +15,9 @@ import subprocess
 import os
 from pathlib import Path
 from game_statistics import GameStatistics
+import logging
+
+logger = logging.getLogger("AdaptiveTrainer")
 
 # 프로젝트 루트
 project_root = Path(__file__).parent
@@ -87,10 +90,10 @@ def run_single_game(map_name: str, difficulty: Difficulty, difficulty_name: str,
         create_lock()
         kill_all_sc2()
 
-        print(f"\n{'='*70}")
-        print(f"Game {game_num}/{total}")
-        print(f"Map: {map_name} | Difficulty: {difficulty_name} | Enemy: {enemy_race.name}")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"Game {game_num}/{total}")
+        logger.info(f"Map: {map_name} | Difficulty: {difficulty_name} | Enemy: {enemy_race.name}")
+        logger.info(f"{'='*70}\n")
 
         result = run_game(
             maps.get(map_name),
@@ -107,14 +110,14 @@ def run_single_game(map_name: str, difficulty: Difficulty, difficulty_name: str,
         stats.record_game(map_name, difficulty_name, enemy_race.name, victory)
 
         if victory:
-            print("[WIN]")
+            logger.info("")
         else:
-            print("[LOSS]")
+            logger.info("")
 
         return victory
 
     except Exception as e:
-        print(f"[ERROR] {e}")
+        logger.error(f"{e}")
         return False
 
     finally:
@@ -139,22 +142,22 @@ def calculate_win_rate(stats: GameStatistics, difficulty_name: str, race_name: s
 def train_difficulty_with_random_races(difficulty: Difficulty, difficulty_name: str,
                                        stats: GameStatistics):
     """특정 난이도에서 랜덤 종족으로 학습 (각 종족 90% 유지)"""
-    print("\n" + "="*80)
-    print(f"TRAINING: {difficulty_name} with RANDOM races")
-    print(f"Target: {TARGET_WIN_RATE}% win rate per race in {GAMES_PER_COMBINATION} games")
-    print("="*80)
+    logger.info("\n" + "="*80)
+    logger.info(f"TRAINING: {difficulty_name} with RANDOM races")
+    logger.info(f"Target: {TARGET_WIN_RATE}% win rate per race in {GAMES_PER_COMBINATION} games")
+    logger.info("="*80)
 
     # 각 종족별로 학습
     race_results = {}
 
     for enemy_race in RACES:
-        print(f"\n--- Training vs {enemy_race.name} ---")
+        logger.info(f"\n--- Training vs {enemy_race.name} ---")
 
         attempt = 1
         max_attempts = 3  # 종족당 최대 3번 시도
 
         while attempt <= max_attempts:
-            print(f"  Attempt {attempt}/{max_attempts}")
+            logger.info(f"  Attempt {attempt}/{max_attempts}")
 
             # 게임 실행
             wins = 0
@@ -172,33 +175,33 @@ def train_difficulty_with_random_races(difficulty: Difficulty, difficulty_name: 
 
                 # 현재 승률 출력
                 current_wr = (wins / game_num) * 100
-                print(f"    Game {game_num}: {wins}/{game_num} ({current_wr:.1f}%)")
+                logger.info(f"    Game {game_num}: {wins}/{game_num} ({current_wr:.1f}%)")
 
             # 최종 승률 계산
             final_wr = (wins / GAMES_PER_COMBINATION) * 100
 
-            print(f"  [RESULT] vs {enemy_race.name}: {wins}/{GAMES_PER_COMBINATION} ({final_wr:.1f}%)")
+            logger.info(f"  [RESULT] vs {enemy_race.name}: {wins}/{GAMES_PER_COMBINATION} ({final_wr:.1f}%)")
 
             if final_wr >= TARGET_WIN_RATE:
-                print(f"  [SUCCESS] Target achieved for {enemy_race.name}!")
+                logger.info(f"  [SUCCESS] Target achieved for {enemy_race.name}!")
                 race_results[enemy_race.name] = final_wr
                 break  # 다음 종족으로
             else:
-                print(f"  [RETRY] Below target ({final_wr:.1f}% < {TARGET_WIN_RATE}%)")
+                logger.info(f"  [RETRY] Below target ({final_wr:.1f}% < {TARGET_WIN_RATE}%)")
                 attempt += 1
 
         if enemy_race.name not in race_results:
             race_results[enemy_race.name] = final_wr
-            print(f"  [WARNING] Could not achieve target for {enemy_race.name} after {max_attempts} attempts")
+            logger.warning(f"  [WARNING] Could not achieve target for {enemy_race.name} after {max_attempts} attempts")
 
     # 전체 결과 출력
-    print(f"\n{'='*80}")
-    print(f"{difficulty_name} RESULTS:")
-    print(f"{'='*80}")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"{difficulty_name} RESULTS:")
+    logger.info(f"{'='*80}")
     all_success = True
     for race_name, wr in race_results.items():
         status = "OK" if wr >= TARGET_WIN_RATE else "FAIL"
-        print(f"  vs {race_name:10} : {wr:5.1f}% [{status}]")
+        logger.info(f"  vs {race_name:10} : {wr:5.1f}% [{status}]")
         if wr < TARGET_WIN_RATE:
             all_success = False
 
@@ -209,20 +212,20 @@ def main():
     """적응형 반복 학습 메인"""
     stats = GameStatistics()
 
-    print("\n" + "="*80)
-    print("ADAPTIVE TRAINER - 90% WIN RATE FOR ALL COMBINATIONS")
-    print("="*80)
-    print(f"Difficulties: {len(DIFFICULTIES)}")
-    print(f"Races: {len(RACES)}")
-    print(f"Total Combinations: {len(DIFFICULTIES) * len(RACES)}")
-    print(f"Target Win Rate: {TARGET_WIN_RATE}%")
-    print("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("ADAPTIVE TRAINER - 90% WIN RATE FOR ALL COMBINATIONS")
+    logger.info("="*80)
+    logger.info(f"Difficulties: {len(DIFFICULTIES)}")
+    logger.info(f"Races: {len(RACES)}")
+    logger.info(f"Total Combinations: {len(DIFFICULTIES) * len(RACES)}")
+    logger.info(f"Target Win Rate: {TARGET_WIN_RATE}%")
+    logger.info("="*80 + "\n")
 
     # 각 난이도에 대해
     for difficulty, difficulty_name in DIFFICULTIES:
-        print(f"\n{'#'*80}")
-        print(f"DIFFICULTY: {difficulty_name}")
-        print(f"{'#'*80}")
+        logger.info(f"\n{'#'*80}")
+        logger.info(f"DIFFICULTY: {difficulty_name}")
+        logger.info(f"{'#'*80}")
 
         # 랜덤 종족으로 학습 (각 종족별 90% 유지)
         success = train_difficulty_with_random_races(
@@ -230,19 +233,19 @@ def main():
         )
 
         if not success:
-            print(f"\n[WARNING] Some races did not achieve target for {difficulty_name}")
-            print("Continuing to next difficulty...")
+            logger.warning(f"\n[WARNING] Some races did not achieve target for {difficulty_name}")
+            logger.info("Continuing to next difficulty...")
 
         # 난이도별 통계 출력
-        print(f"\n{'='*80}")
-        print(f"{difficulty_name} SUMMARY")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info(f"{difficulty_name} SUMMARY")
+        logger.info(f"{'='*80}")
         stats.print_statistics()
 
     # 최종 통계
-    print("\n" + "="*80)
-    print("FINAL STATISTICS")
-    print("="*80)
+    logger.info("\n" + "="*80)
+    logger.info("FINAL STATISTICS")
+    logger.info("="*80)
     stats.print_statistics()
 
 

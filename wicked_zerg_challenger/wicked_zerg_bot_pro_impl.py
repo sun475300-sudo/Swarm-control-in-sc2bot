@@ -1,3 +1,6 @@
+import logging
+
+logger = logging.getLogger("WickedZergBotProImpl")
 
 
 
@@ -175,7 +178,7 @@ class WickedZergBotProImpl(BotAI):
             # Factory를 bot에 저장 (나중에 매니저 조회용)
             self.manager_factory = factory
 
-            print(f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n")
+            logger.info(f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n")
 
         except ImportError as e:
             self.logger.error(f"ManagerFactory not available: {e}")
@@ -417,7 +420,7 @@ class WickedZergBotProImpl(BotAI):
                 result_str = str(game_result).upper()
                 result_key = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
                 score_report = self.scoring_system.on_game_end(result_key)
-                print(f"\n{self.scoring_system.get_summary()}")
+                logger.info(f"\n{self.scoring_system.get_summary()}")
                 self.logger.info(f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
                       f"Peak Supply: {score_report.get('peak_supply', 0)} | "
                       f"Engagements: {score_report.get('engagements_won', 0)}W/"
@@ -488,12 +491,12 @@ class WickedZergBotProImpl(BotAI):
                     if game_won:
                         conditions, reward = self._victory_learner.analyze_game_result(self, "Victory")
                         game_outcome_reward = reward
-                        print(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
+                        logger.info(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
                         self.logger.info(f"[VICTORY] Total reward: {reward:.1f}")
                     elif game_lost:
                         conditions, penalty = self._victory_learner.analyze_game_result(self, "Defeat")
                         game_outcome_reward = penalty
-                        print(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
+                        logger.info(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
                         self.logger.info(f"[DEFEAT] Total penalty: {penalty:.1f}")
 
                     # 통계 출력 (10게임마다)
@@ -694,13 +697,13 @@ class WickedZergBotProImpl(BotAI):
                     report_text = self.game_result_reporter.generate_report(
                         self.game_data_logger.game_data
                     )
-                    print("\n" + report_text)
+                    logger.info("\n" + report_text)
 
                     # Discord용 한줄 요약도 생성
                     quick_summary = self.game_result_reporter.generate_quick_summary(
                         self.game_data_logger.game_data
                     )
-                    print(f"\n[QUICK SUMMARY] {quick_summary}")
+                    logger.info(f"\n[QUICK SUMMARY] {quick_summary}")
 
                     # 봇에 요약 저장 (JARVIS Discord 전송용)
                     self._game_quick_summary = quick_summary

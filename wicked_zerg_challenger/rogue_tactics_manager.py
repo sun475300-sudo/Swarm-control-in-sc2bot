@@ -11,6 +11,9 @@
 
 from typing import List, Optional, Set, Tuple
 import math
+import logging
+
+logger = logging.getLogger("RogueTacticsManager")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -97,7 +100,7 @@ class RogueTacticsManager:
 
         except Exception as e:
             if iteration % 50 == 0:
-                print(f"[WARNING] RogueTacticsManager error: {e}")
+                logger.error(f"RogueTacticsManager error: {e}")
 
     def _check_overlord_speed_upgrade(self) -> bool:
         """대군주 속업 상태 확인"""
@@ -362,10 +365,10 @@ class RogueTacticsManager:
                 self._last_drop_time = getattr(self.bot, 'time', 0)
 
                 game_time = getattr(self.bot, 'time', 0)
-                print(f"[ROGUE DROP] [{int(game_time)}s] Baneling drop initiated with {cargo} banelings")
+                logger.info(f"[{int(game_time)}s] Baneling drop initiated with {cargo} banelings")
 
         except Exception as e:
-            print(f"[WARNING] Baneling drop execution error: {e}")
+            logger.error(f"Baneling drop execution error: {e}")
 
     async def _manage_active_drops(self) -> None:
         """진행 중인 드랍 관리"""
@@ -400,7 +403,7 @@ class RogueTacticsManager:
                 self._drop_cooldown = self._drop_cooldown_duration
 
         except Exception as e:
-            print(f"[WARNING] Active drop management error: {e}")
+            logger.error(f"Active drop management error: {e}")
 
     def _update_larva_saving_mode(self, game_time: float) -> None:
         """라바 세이빙 모드 업데이트"""
@@ -408,13 +411,13 @@ class RogueTacticsManager:
         if self._can_execute_drop() and not self._larva_saving_mode:
             self._larva_saving_mode = True
             self._larva_save_start_time = game_time
-            print(f"[ROGUE] [{int(game_time)}s] Larva saving mode activated")
+            logger.info(f"[{int(game_time)}s] Larva saving mode activated")
 
         # 드랍 후 또는 시간 초과 시 라바 저장 해제
         if self._larva_saving_mode:
             if game_time - self._larva_save_start_time > self._larva_save_duration:
                 self._larva_saving_mode = False
-                print(f"[ROGUE] [{int(game_time)}s] Larva saving mode deactivated")
+                logger.info(f"[{int(game_time)}s] Larva saving mode deactivated")
 
     def should_save_larva(self) -> bool:
         """라바 세이빙 모드 여부 반환"""

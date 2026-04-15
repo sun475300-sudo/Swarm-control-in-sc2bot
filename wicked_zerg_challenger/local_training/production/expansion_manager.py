@@ -4,6 +4,9 @@ Expansion Manager Module
 
 확장 관련 로직을 담당하는 모듈
 """
+import logging
+
+logger = logging.getLogger("ExpansionManager")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -147,7 +150,7 @@ def log_expand_block(resilience, reason: str) -> None:
         return
     resilience.last_expand_log_time = now
     if reason:
-        print(f"[EXPAND BLOCK] {reason} at {int(now)}s")
+        logger.info(f"{reason} at {int(now)}s")
 
 
 def cleanup_build_reservations(resilience) -> None:

@@ -11,6 +11,9 @@ Adaptive Learning Rate System - 적응형 학습률 시스템
 from typing import List, Dict, Optional
 import json
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("AdaptiveLearningRate")
 
 
 class AdaptiveLearningRate:
@@ -91,7 +94,7 @@ class AdaptiveLearningRate:
                 # 학습률 증가 (더 공격적으로 학습)
                 new_lr = self._increase_learning_rate()
                 if new_lr:
-                    print(f"[ADAPTIVE_LR] [OK] 승률 개선! ({recent_avg:.1%}) - 학습률 증가: {self.learning_rate:.6f}")
+                    logger.info(f"[OK] 승률 개선! ({recent_avg:.1%}) - 학습률 증가: {self.learning_rate:.6f}")
                     self._save_stats()
                     return new_lr
 
@@ -103,7 +106,7 @@ class AdaptiveLearningRate:
                 if self.games_without_improvement >= self.patience:
                     new_lr = self._decrease_learning_rate()
                     if new_lr:
-                        print(f"[ADAPTIVE_LR] [WARNING] {self.patience}게임 개선 없음 - 학습률 감소: {self.learning_rate:.6f}")
+                        logger.warning(f"[WARNING] {self.patience}게임 개선 없음 - 학습률 감소: {self.learning_rate:.6f}")
                         self.games_without_improvement = 0
                         self._save_stats()
                         return new_lr
@@ -154,7 +157,7 @@ class AdaptiveLearningRate:
 
         # 최소값에 도달했으면 best_learning_rate로 리셋
         if self.learning_rate <= self.min_lr:
-            print(f"[ADAPTIVE_LR] 최소 학습률 도달 - 최적값으로 리셋: {self.best_learning_rate:.6f}")
+            logger.info(f"최소 학습률 도달 - 최적값으로 리셋: {self.best_learning_rate:.6f}")
             old_lr = self.learning_rate
             self.learning_rate = self.best_learning_rate
 
@@ -233,7 +236,7 @@ class AdaptiveLearningRate:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            print(f"[ADAPTIVE_LR] 저장 실패: {e}")
+            logger.info(f"저장 실패: {e}")
 
     def _load_stats(self) -> None:
         """통계 로드"""
@@ -251,13 +254,13 @@ class AdaptiveLearningRate:
                 self.games_without_improvement = data.get("games_without_improvement", 0)
                 self.adjustment_history = data.get("adjustment_history", [])
 
-                print(f"[ADAPTIVE_LR] 통계 로드 완료 - 현재 학습률: {self.learning_rate:.6f}")
+                logger.info(f"통계 로드 완료 - 현재 학습률: {self.learning_rate:.6f}")
 
         except Exception as e:
-            print(f"[ADAPTIVE_LR] 로드 실패 (새로 시작): {e}")
+            logger.info(f"로드 실패 (새로 시작): {e}")
 
     def reset(self) -> None:
         """통계 리셋"""
         self.learning_rate = self.best_learning_rate if self.best_learning_rate > 0 else self.learning_rate
         self.games_without_improvement = 0
-        print(f"[ADAPTIVE_LR] 리셋 완료 - 학습률: {self.learning_rate:.6f}")
+        logger.info(f"리셋 완료 - 학습률: {self.learning_rate:.6f}")

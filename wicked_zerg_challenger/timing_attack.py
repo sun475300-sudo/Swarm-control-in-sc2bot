@@ -14,6 +14,9 @@ Timing Attack Planner - 타이밍 공격 플래너 (#107)
 
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
+import logging
+
+logger = logging.getLogger("TimingAttack")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -189,7 +192,7 @@ class TimingAttackPlanner:
         self.consecutive_failures: int = 0
         self.max_failures_before_pause: int = 3
 
-        print("[TIMING_ATTACK] 타이밍 공격 플래너 초기화 완료")
+        logger.info("타이밍 공격 플래너 초기화 완료")
 
     def update(self) -> None:
         """매 스텝 업데이트"""
@@ -248,7 +251,7 @@ class TimingAttackPlanner:
         self.active_plan = plan
         self.attack_ready = False
 
-        print(f"[TIMING_ATTACK] 공격 개시: {timing.name} "
+        logger.info(f"공격 개시: {timing.name} "
               f"(supply={plan.army_supply_at_start})")
         return plan
 
@@ -256,7 +259,7 @@ class TimingAttackPlanner:
         """공격 철수"""
         if self.active_plan:
             self.active_plan.phase = AttackPhase.RETREATING
-            print(f"[TIMING_ATTACK] 철수: {self.active_plan.timing.name}")
+            logger.info(f"철수: {self.active_plan.timing.name}")
 
     def _check_timing_windows(self, game_time: float) -> None:
         """타이밍 윈도우 조건 체크"""
@@ -385,7 +388,7 @@ class TimingAttackPlanner:
         })
 
         result_str = "성공" if success else "실패"
-        print(f"[TIMING_ATTACK] 공격 종료 ({result_str}): {plan.timing.name} - {reason}")
+        logger.info(f"공격 종료 ({result_str}): {plan.timing.name} - {reason}")
 
         self.active_plan = None
         self.attack_ready = False

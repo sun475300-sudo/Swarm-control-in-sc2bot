@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("ManusSync")
 # -*- coding: utf-8 -*-
 """
 Manus sync placeholder.
@@ -6,7 +9,7 @@ Manus sync placeholder.
 
 
 def sync() -> None:
-    print("Manus sync placeholder.")
+    logger.info("Manus sync placeholder.")
 
 
 def main() -> None:

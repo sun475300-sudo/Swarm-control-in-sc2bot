@@ -12,6 +12,9 @@ Purpose: Stable and optimized automated build order execution
 from typing import Optional, List, Dict, Tuple
 from enum import Enum
 from knowledge_manager import KnowledgeManager # NEW
+import logging
+
+logger = logging.getLogger("BuildOrderSystem")
 
 try:
     from sc2.bot_ai import BotAI
@@ -149,14 +152,14 @@ class BuildOrderSystem:
 
         if build_data:
             self.build_steps = self._parse_build_steps(build_data.get("steps", []))
-            print(f"[BUILD_ORDER] Loaded '{build_data.get('name')}' from KnowledgeManager")
+            logger.info(f"Loaded '{build_data.get('name')}' from KnowledgeManager")
         else:
-            print(f"[BUILD_ORDER] Error: '{build_key}' not found in KnowledgeManager.")
+            logger.error(f"Error: '{build_key}' not found in KnowledgeManager.")
             self.build_steps = []
 
         self.current_step_index = 0
-        print(f"[BUILD_ORDER] Build Order Set: {self.current_build_order.value}")
-        print(f"[BUILD_ORDER] Total {len(self.build_steps)} steps")
+        logger.info(f"Build Order Set: {self.current_build_order.value}")
+        logger.info(f"Total {len(self.build_steps)} steps")
 
     def _parse_build_steps(self, steps_data: List[Dict]) -> List[BuildOrderStep]:
         """Parse JSON steps into objects"""
@@ -179,7 +182,7 @@ class BuildOrderSystem:
                     description=step["description"]
                 ))
             except Exception as e:
-                print(f"[BUILD_ORDER] Error parsing step {step}: {e}")
+                logger.info(f"Error parsing step {step}: {e}")
         return parsed_steps
 
     async def execute(self, iteration: int) -> None:
@@ -191,7 +194,7 @@ class BuildOrderSystem:
         if self.current_step_index >= len(self.build_steps) and not self._skipped_steps:
             if self.build_order_active:
                 self.build_order_active = False
-                print(f"[BUILD_ORDER] All steps completed at {int(self.bot.time)}s")
+                logger.info(f"All steps completed at {int(self.bot.time)}s")
                 self._publish_build_complete()
             return
 
@@ -202,7 +205,7 @@ class BuildOrderSystem:
                 msg = f"[BUILD_ORDER] Time limit at {int(self.bot.time)}s"
                 if skipped > 0:
                     msg += f" ({skipped} steps skipped)"
-                print(msg)
+                logger.info(msg)
                 self._publish_build_complete()
             return
 
@@ -230,7 +233,7 @@ class BuildOrderSystem:
             if success:
                 # Record timing
                 self.step_timings[current_step.supply] = self.bot.time
-                print(f"[BUILD_ORDER] [OK] {current_step.supply} Supply: {current_step.description} (Timing: {int(self.bot.time)}s)")
+                logger.info(f"[OK] {current_step.supply} Supply: {current_step.description} (Timing: {int(self.bot.time)}s)")
 
                 # Next step
                 current_step.completed = True
@@ -240,7 +243,7 @@ class BuildOrderSystem:
                 # ★ Phase 25: 재시도 카운터 — 일정 횟수 실패 시 스킵 후 다음 스텝
                 self._step_retry_count += 1
                 if self._step_retry_count >= self._max_retries_before_skip:
-                    print(f"[BUILD_ORDER] [SKIP] {current_step.supply} Supply: {current_step.description} (retried {self._step_retry_count}x)")
+                    logger.info(f"[SKIP] {current_step.supply} Supply: {current_step.description} (retried {self._step_retry_count}x)")
                     self._skipped_steps.append(current_step)
                     self.current_step_index += 1
                     self._step_retry_count = 0
@@ -256,7 +259,7 @@ class BuildOrderSystem:
                 return await self._expand(step.unit_type)
             return False
         except Exception as e:
-            print(f"[BUILD_ORDER] Step Execution Failed: {e}")
+            logger.error(f"Step Execution Failed: {e}")
             return False
 
     async def _build_structure(self, structure_type: UnitTypeId) -> bool:
@@ -419,14 +422,14 @@ class BuildOrderSystem:
         if self.bot.already_pending(UnitTypeId.HATCHERY) > 0:
             if self.expansion_actual_time == 0:
                 self.expansion_actual_time = self.bot.time
-                print(f"[BUILD_ORDER] [*] Natural expansion started at {int(self.bot.time)}s [*]")
+                logger.info(f"[*] Natural expansion started at {int(self.bot.time)}s [*]")
             return True
 
         # Check Resources
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
             # ★ Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 ★
             if self.bot.time > self.expansion_timing_target and self.expansion_actual_time == 0:
-                print(f"[BUILD_ORDER] [!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
+                logger.warning(f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
             return False
 
         # Find Expansion Location
@@ -445,7 +448,7 @@ class BuildOrderSystem:
                         "BuildOrderSystem"
                     )
                     self.expansion_actual_time = self.bot.time
-                    print(f"[BUILD_ORDER] [*] Natural expansion ordered at {int(self.bot.time)}s [*]")
+                    logger.info(f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]")
                     return True
             else:
                 if not self.bot.workers.exists:
@@ -454,7 +457,7 @@ class BuildOrderSystem:
                 if worker:
                     self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
                     self.expansion_actual_time = self.bot.time
-                    print(f"[BUILD_ORDER] [*] Natural expansion ordered at {int(self.bot.time)}s [*]")
+                    logger.info(f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]")
                     return True
 
         return False
@@ -468,7 +471,7 @@ class BuildOrderSystem:
             success = await self._execute_step(step)
             if success:
                 step.completed = True
-                print(f"[BUILD_ORDER] [RETRY OK] {step.supply} Supply: {step.description}")
+                logger.info(f"[RETRY OK] {step.supply} Supply: {step.description}")
             else:
                 still_skipped.append(step)
         self._skipped_steps = still_skipped
@@ -489,18 +492,18 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            print(f"[BUILD_ORDER] [!] Expansion timing: NOT RECORDED")
+            logger.info(f"[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target
         diff = actual - target
 
         if diff <= 5:
-            print(f"[BUILD_ORDER] [OK] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME")
+            logger.info(f"[OK] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME")
         elif diff <= 15:
-            print(f"[BUILD_ORDER] [~] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)")
+            logger.info(f"[~] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)")
         else:
-            print(f"[BUILD_ORDER] [X] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)")
+            logger.info(f"[X] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)")
 
     def select_build_order_by_win_rate(self) -> BuildOrderType:
         """Auto-select Build Order by Win Rate"""

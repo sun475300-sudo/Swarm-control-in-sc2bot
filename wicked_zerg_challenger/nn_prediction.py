@@ -8,6 +8,9 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 import json
+import logging
+
+logger = logging.getLogger("NnPrediction")
 
 
 @dataclass
@@ -177,7 +180,7 @@ class SimpleNeuralPredictor:
             self.enemy_patterns = data.get("patterns", self.enemy_patterns)
             return True
         except (IOError, json.JSONDecodeError) as e:
-            print(f"Error loading model: {e}")
+            logger.info(f"Error loading model: {e}")
             return False
 
 

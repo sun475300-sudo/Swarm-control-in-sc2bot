@@ -19,6 +19,9 @@ import functools
 import traceback
 from typing import Callable, Any, Optional
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger("ErrorHandler")
 
 
 class ErrorHandler:
@@ -64,9 +67,9 @@ class ErrorHandler:
         except Exception as e:
             if self.debug_mode:
                 # 개발 모드: 즉시 크래시
-                print(f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging")
-                print(f"[ERROR] Exception: {e}")
-                print(f"[ERROR] Traceback:")
+                logger.error(f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging")
+                logger.error(f"Exception: {e}")
+                logger.error(f"Traceback:")
                 traceback.print_exc()
                 raise  # 즉시 예외 발생
             else:
@@ -75,13 +78,13 @@ class ErrorHandler:
 
                 # 처음 3회만 로그 (스팸 방지)
                 if self.error_counts[log_key] <= self.max_error_logs:
-                    print(f"[ERROR] {log_key} failed: {e}")
+                    logger.error(f"{log_key} failed: {e}")
                     # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
                     import logging as _logging
                     _logger = _logging.getLogger(__name__)
                     _logger.debug(traceback.format_exc())
                     if self.error_counts[log_key] == self.max_error_logs:
-                        print(f"[ERROR] {log_key}: Suppressing further error logs for this key")
+                        logger.error(f"{log_key}: Suppressing further error logs for this key")
 
                 return default_return
 
@@ -108,9 +111,9 @@ class ErrorHandler:
                 except Exception as e:
                     if self.debug_mode:
                         # 개발 모드: 즉시 크래시
-                        print(f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging")
-                        print(f"[ERROR] Exception: {e}")
-                        print(f"[ERROR] Traceback:")
+                        logger.error(f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging")
+                        logger.error(f"Exception: {e}")
+                        logger.error(f"Traceback:")
                         traceback.print_exc()
                         raise
                     else:
@@ -118,13 +121,13 @@ class ErrorHandler:
                         self.error_counts[key] += 1
 
                         if self.error_counts[key] <= self.max_error_logs:
-                            print(f"[ERROR] {key} failed: {e}")
+                            logger.error(f"{key} failed: {e}")
                             # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
                             import logging as _logging
                             _logger = _logging.getLogger(__name__)
                             _logger.debug(traceback.format_exc())
                             if self.error_counts[key] == self.max_error_logs:
-                                print(f"[ERROR] {key}: Suppressing further error logs")
+                                logger.error(f"{key}: Suppressing further error logs")
 
                         return default_return
 
@@ -153,7 +156,7 @@ except ImportError:
 # 전역 에러 핸들러 인스턴스
 error_handler = ErrorHandler(debug_mode=DEBUG_MODE)
 
-print(f"[ERROR_HANDLER] Initialized with DEBUG_MODE={DEBUG_MODE}")
+logger.info(f"Initialized with DEBUG_MODE={DEBUG_MODE}")
 
 
 # ========== 편의 함수 ==========

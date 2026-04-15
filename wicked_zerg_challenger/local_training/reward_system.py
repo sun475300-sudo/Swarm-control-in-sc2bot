@@ -14,6 +14,9 @@ Zerg Specialized Reward System (Reward Shaping)
 
 from typing import Optional
 import numpy as np
+import logging
+
+logger = logging.getLogger("RewardSystem")
 
 
 class ZergRewardSystem:
@@ -102,7 +105,7 @@ class ZergRewardSystem:
 
         except Exception as e:
             # ���� �߻� �� ���� 0 ��ȯ
-            print(f"[WARNING] Reward calculation error: {e}")
+            logger.error(f"Reward calculation error: {e}")
             return 0.0
 
         return reward

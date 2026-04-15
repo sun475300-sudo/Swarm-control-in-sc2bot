@@ -19,6 +19,9 @@ import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("SelfPlay")
 
 
 class OpponentSnapshot:
@@ -144,7 +147,7 @@ class SelfPlayTrainer:
         # 메타데이터 로드
         self._load_pool_metadata()
 
-        print(f"[SELF_PLAY] 초기화 완료 (pool_size={len(self.opponent_pool)}, "
+        logger.info(f"초기화 완료 (pool_size={len(self.opponent_pool)}, "
               f"current_elo={self.current_elo:.0f})")
 
     def add_snapshot(self, model_path: str, episode: int) -> Optional[OpponentSnapshot]:
@@ -180,12 +183,12 @@ class SelfPlayTrainer:
             # 메타데이터 저장
             self._save_pool_metadata()
 
-            print(f"[SELF_PLAY] 스냅샷 추가: ep={episode}, elo={self.current_elo:.0f}, "
+            logger.info(f"스냅샷 추가: ep={episode}, elo={self.current_elo:.0f}, "
                   f"pool_size={len(self.opponent_pool)}")
             return snapshot
 
         except Exception as e:
-            print(f"[SELF_PLAY] 스냅샷 추가 실패: {e}")
+            logger.info(f"스냅샷 추가 실패: {e}")
             return None
 
     def select_opponent(self) -> Optional[OpponentSnapshot]:
@@ -272,7 +275,7 @@ class SelfPlayTrainer:
         self._save_pool_metadata()
 
         result_str = "승리" if won else "패배"
-        print(f"[SELF_PLAY] {result_str} vs ep{opponent.episode}: "
+        logger.info(f"{result_str} vs ep{opponent.episode}: "
               f"ELO {old_elo:.0f} -> {self.current_elo:.0f} ({elo_change:+.1f})")
 
         return {
@@ -312,7 +315,7 @@ class SelfPlayTrainer:
             with open(str(meta_path), "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"[SELF_PLAY] 메타데이터 저장 실패: {e}")
+            logger.info(f"메타데이터 저장 실패: {e}")
 
     def _load_pool_metadata(self) -> None:
         """상대 풀 메타데이터 로드"""
@@ -334,10 +337,10 @@ class SelfPlayTrainer:
                     if Path(snapshot.model_path).exists():
                         self.opponent_pool.append(snapshot)
 
-                print(f"[SELF_PLAY] 메타데이터 로드 완료: "
+                logger.info(f"메타데이터 로드 완료: "
                       f"pool_size={len(self.opponent_pool)}, elo={self.current_elo:.0f}")
         except Exception as e:
-            print(f"[SELF_PLAY] 메타데이터 로드 실패: {e}")
+            logger.info(f"메타데이터 로드 실패: {e}")
 
     def get_stats(self) -> Dict[str, Any]:
         """Self-Play 통계 반환"""

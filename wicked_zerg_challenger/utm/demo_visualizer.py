@@ -20,6 +20,9 @@ from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 from wicked_zerg_challenger.utm.boids3d import Boids3DController
 from wicked_zerg_challenger.utm.collision_predictor import CollisionPredictor
 from wicked_zerg_challenger.utm.corridor import CorridorManager
+import logging
+
+logger = logging.getLogger("DemoVisualizer")
 
 
 def create_demo_drones(n: int = 10, spread: float = 100.0) -> List[DroneState]:
@@ -93,7 +96,7 @@ def visualize(
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
     except ImportError:
-        print("matplotlib 필요: pip install matplotlib")
+        logger.info("matplotlib 필요: pip install matplotlib")
         return
 
     fig = plt.figure(figsize=(14, 10))
@@ -149,7 +152,7 @@ def visualize(
 
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"저장 완료: {save_path}")
+        logger.info(f"저장 완료: {save_path}")
     else:
         plt.show()
 
@@ -158,14 +161,14 @@ def visualize(
 
 def main():
     """데모 실행."""
-    print("=" * 60)
-    print("  SC2 Swarm AI → UTM Drone Control Demo")
-    print("  3D Boids + TTC Collision Prediction + Flight Corridors")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("  SC2 Swarm AI → UTM Drone Control Demo")
+    logger.info("  3D Boids + TTC Collision Prediction + Flight Corridors")
+    logger.info("=" * 60)
 
     # 드론 편대 생성
     drones = create_demo_drones(n=10, spread=200.0)
-    print(f"\n드론 {len(drones)}대 편대 생성 완료")
+    logger.info(f"\n드론 {len(drones)}대 편대 생성 완료")
 
     # 비행 회랑 생성
     corridor_mgr = CorridorManager()
@@ -181,35 +184,35 @@ def main():
         Point3D(20.0, 180.0, 5.0),
         altitude_layer="high",
     )
-    print(f"비행 회랑 {len(corridor_mgr.corridors)}개 생성")
+    logger.info(f"비행 회랑 {len(corridor_mgr.corridors)}개 생성")
 
     # 목표 지점 설정
     target = Point3D(150.0, 150.0, 45.0)
-    print(f"목표 지점: {target}")
+    logger.info(f"목표 지점: {target}")
 
     # 시뮬레이션 실행
-    print("\n시뮬레이션 진행 중 (200 스텝)...")
+    logger.info("\n시뮬레이션 진행 중 (200 스텝)...")
     trajectories = run_simulation(drones, steps=200, dt=0.1, target=target)
-    print("시뮬레이션 완료!")
+    logger.info("시뮬레이션 완료!")
 
     # 최종 위치 출력
-    print("\n--- 최종 드론 위치 ---")
+    logger.info("\n--- 최종 드론 위치 ---")
     for d in drones:
-        print(f"  Drone {d.id}: pos={d.position}, speed={d.speed:.1f} m/s")
+        logger.info(f"  Drone {d.id}: pos={d.position}, speed={d.speed:.1f} m/s")
 
     # 충돌 검사 결과
     predictor = CollisionPredictor()
     alerts = predictor.check_all_pairs(drones)
     if alerts:
-        print(f"\n경고: {len(alerts)}건의 충돌 위험 감지")
+        logger.info(f"\n경고: {len(alerts)}건의 충돌 위험 감지")
         for a in alerts[:3]:
-            print(f"  D{a.drone_a_id}↔D{a.drone_b_id}: TTC={a.ttc:.1f}s, "
+            logger.info(f"  D{a.drone_a_id}↔D{a.drone_b_id}: TTC={a.ttc:.1f}s, "
                   f"min_dist={a.min_distance:.1f}m [{a.severity}]")
     else:
-        print("\n충돌 위험 없음 — 모든 드론 안전 분리 유지")
+        logger.info("\n충돌 위험 없음 — 모든 드론 안전 분리 유지")
 
     # 시각화
-    print("\n3D 시각화 렌더링 중...")
+    logger.info("\n3D 시각화 렌더링 중...")
     save_file = None
     if "--save" in sys.argv:
         save_file = "utm_demo.png"

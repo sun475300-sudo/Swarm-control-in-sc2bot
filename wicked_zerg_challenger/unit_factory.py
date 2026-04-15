@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("UnitFactory")
 # -*- coding: utf-8 -*-
 """
 Unit factory - larva production with gas reservation logic.
@@ -182,14 +185,14 @@ class UnitFactory:
         if base_count < 2 and game_time > 60 and pending_hatch == 0 and not under_attack:
             if 200 <= self.bot.minerals < 350: # 200 미만이면 유닛 생산 계속
                  if iteration % 100 == 0:
-                     print(f"[UNIT_FACTORY] Saving minerals for Natural Expansion (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
+                     logger.info(f"Saving minerals for Natural Expansion (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
                  return # 라바 소비 중단
 
         # 2. 3멀티 체크 (빠른 3멀티: 3분 30초 목표 -> 3분 10초부터 자원 보존)
         if base_count < 3 and game_time > 190 and pending_hatch == 0 and not under_attack:
              if 200 <= self.bot.minerals < 350:
                  if iteration % 100 == 0:
-                     print(f"[UNIT_FACTORY] Saving minerals for 3rd Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
+                     logger.info(f"Saving minerals for 3rd Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
                  return
 
         # 3. 4멀티 체크 (빠른 4멀티: 5분 목표 -> 4분 40초부터 자원 보존)
@@ -197,7 +200,7 @@ class UnitFactory:
         if base_count < 4 and game_time > 280 and pending_hatch == 0 and not under_attack:
              if 250 <= self.bot.minerals < 350:
                  if iteration % 100 == 0:
-                     print(f"[UNIT_FACTORY] Saving minerals for 4th Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
+                     logger.info(f"Saving minerals for 4th Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
                  return
 
         larva = self.bot.larva
@@ -222,7 +225,7 @@ class UnitFactory:
                         priority=0  # URGENT
                     )
                     if iteration % 100 == 0:
-                        print(f"[UNIT_FACTORY] [*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
+                        logger.info(f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
                 else:
                     # Fallback: 직접 생산
                     try:
@@ -232,7 +235,7 @@ class UnitFactory:
                             else:
                                 self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
                             if iteration % 100 == 0:
-                                print(f"[UNIT_FACTORY] [*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
+                                logger.info(f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
                     except Exception:
                         pass
 
@@ -244,7 +247,7 @@ class UnitFactory:
             self.max_larva_spend_per_step = self._combat_larva_spend
             if iteration % 50 == 0:
                 game_time = getattr(self.bot, "time", 0)
-                print(f"[UNIT_FACTORY] [{int(game_time)}s] COMBAT MODE: Increased production rate")
+                logger.info(f"[{int(game_time)}s] COMBAT MODE: Increased production rate")
         else:
             self.max_larva_spend_per_step = 3  # 기본값
 
@@ -289,13 +292,13 @@ class UnitFactory:
                         if iteration % 100 == 0:
                             race = getattr(strategy, "detected_enemy_race", None)
                             race_name = race.value if hasattr(race, "value") else str(race)
-                            print(f"[UNIT_FACTORY] vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}")
+                            logger.info(f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}")
 
         # Rogue Tactics 라바 세이빙 체크
         if self._should_save_larva():
             # 라바 세이빙 모드: 최소 라바만 사용 (오버로드 등 필수 유닛만)
             if iteration % 100 == 0:
-                print("[UNIT_FACTORY] Larva saving mode - minimal production")
+                logger.info("Larva saving mode - minimal production")
             # 오버로드가 필요하면 생산, 아니면 스킵
             if self.bot.supply_left < 2 and self.bot.can_afford(UnitTypeId.OVERLORD):
                 if self.blackboard:
@@ -366,7 +369,7 @@ class UnitFactory:
 
             # 디버그 로그
             if iteration % 50 == 0 and unit_requests:
-                print(f"[UNIT_FACTORY] Production requested: {unit_requests}")
+                logger.info(f"Production requested: {unit_requests}")
 
         else:
             # Fallback: ProductionController에 위임 (���접 생산 방지로 중복 제거)
@@ -598,7 +601,7 @@ class UnitFactory:
         for unit_type, threshold in threat_units.items():
             if unit_counts.get(unit_type, 0) >= threshold:
                 if self.bot.iteration % 50 == 0:
-                    print(f"[UNIT_FACTORY] Threat: {unit_type} x{unit_counts[unit_type]} → Gas Boost!")
+                    logger.info(f"Threat: {unit_type} x{unit_counts[unit_type]} → Gas Boost!")
                 return True
 
         return False

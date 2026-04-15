@@ -17,6 +17,9 @@ import os
 import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("PpoAgent")
 
 try:
     import torch
@@ -288,7 +291,7 @@ class PPOAgent:
         # 모델 로드 시도
         self._load_model()
 
-        print(f"[PPO_AGENT] 초기화 완료 (device={self.device}, "
+        logger.info(f"초기화 완료 (device={self.device}, "
               f"state_dim={STATE_DIM}, action_dim={ACTION_DIM})")
 
     def get_state_from_bot(self, bot) -> np.ndarray:
@@ -367,7 +370,7 @@ class PPOAgent:
             return state
 
         except Exception as e:
-            print(f"[PPO_AGENT] 상태 추출 실패: {e}")
+            logger.info(f"상태 추출 실패: {e}")
             return np.zeros(STATE_DIM, dtype=np.float32)
 
     def get_action(self, state: np.ndarray, training: bool = True) -> Tuple[int, str, float]:
@@ -599,7 +602,7 @@ class PPOAgent:
         self.memory.clear()
         self.episode_count += 1
 
-        print(f"[PPO_AGENT] Episode {self.episode_count}: "
+        logger.info(f"Episode {self.episode_count}: "
               f"return={stats['episode_return']:.3f}, "
               f"policy_loss={avg_policy_loss:.4f}, "
               f"value_loss={avg_value_loss:.4f}")
@@ -626,10 +629,10 @@ class PPOAgent:
                 "total_reward": self.total_reward,
                 "training_history": self.training_history[-100:],  # 최근 100개만
             }, str(save_path))
-            print(f"[PPO_AGENT] 모델 저장 완료: {save_path}")
+            logger.info(f"모델 저장 완료: {save_path}")
             return True
         except Exception as e:
-            print(f"[PPO_AGENT] 모델 저장 실패: {e}")
+            logger.info(f"모델 저장 실패: {e}")
             return False
 
     def _load_model(self) -> bool:
@@ -642,10 +645,10 @@ class PPOAgent:
                 self.episode_count = checkpoint.get("episode_count", 0)
                 self.total_reward = checkpoint.get("total_reward", 0.0)
                 self.training_history = checkpoint.get("training_history", [])
-                print(f"[PPO_AGENT] 모델 로드 완료: {self.model_path} (episode={self.episode_count})")
+                logger.info(f"모델 로드 완료: {self.model_path} (episode={self.episode_count})")
                 return True
         except Exception as e:
-            print(f"[PPO_AGENT] 모델 로드 실패: {e}")
+            logger.info(f"모델 로드 실패: {e}")
         return False
 
     def get_stats(self) -> Dict[str, Any]:

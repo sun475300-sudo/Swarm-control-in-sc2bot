@@ -234,21 +234,21 @@ class ManagerFactory:
 
     def _log_summary(self, stats: Dict[str, Any]) -> None:
         """초기화 결과 요약 로그 출력"""
-        print("\n" + "="*70)
-        print("MANAGER INITIALIZATION SUMMARY")
-        print("="*70)
-        print(f"Total Managers: {stats['total']}")
-        print(f"Succeeded: {stats['succeeded']}")
-        print(f"Failed: {stats['failed']}")
-        print(f"Success Rate: {stats['success_rate']:.1f}%")
+        logger.info("\n" + "="*70)
+        logger.info("MANAGER INITIALIZATION SUMMARY")
+        logger.info("="*70)
+        logger.info(f"Total Managers: {stats['total']}")
+        logger.info(f"Succeeded: {stats['succeeded']}")
+        logger.error(f"Failed: {stats['failed']}")
+        logger.info(f"Success Rate: {stats['success_rate']:.1f}%")
 
         if stats['failed_managers']:
-            print(f"\nFailed Managers ({len(stats['failed_managers'])}):")
+            logger.error(f"\nFailed Managers ({len(stats['failed_managers'])}):")
             for attr_name in stats['failed_managers']:
                 error = self.failed[attr_name]
-                print(f"  - {attr_name}: {error}")
+                logger.info(f"  - {attr_name}: {error}")
 
-        print("="*70 + "\n")
+        logger.info("="*70 + "\n")
 
     def get_manager(self, attribute_name: str) -> Optional[Any]:
         """

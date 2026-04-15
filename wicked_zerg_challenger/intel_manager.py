@@ -85,7 +85,7 @@ class IntelManager:
         except Exception as e:
             # Log unexpected errors
             if iteration % 50 == 0:
-                print(f"[INTEL] Unexpected error in on_step: {type(e).__name__} - {e}")
+                logger.info(f"Unexpected error in on_step: {type(e).__name__} - {e}")
             return
 
     def update(self, iteration: int) -> None:
@@ -275,7 +275,7 @@ class IntelManager:
                     self._threat_level = "medium"
 
                 if current_time < 180 and self.bot.iteration % 100 == 0:
-                    print(f"[INTEL] [{int(current_time)}s] EARLY ATTACK: {enemy_type} detected!")
+                    logger.info(f"[{int(current_time)}s] EARLY ATTACK: {enemy_type} detected!")
 
             except (AttributeError, TypeError) as e:
                 logger.warning(f"[IntelManager] Threat detection suppressed: {e}")
@@ -527,8 +527,8 @@ class IntelManager:
         if game_time > 0 and int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
             if detected_pattern != "unknown":
                 confidence_pct = int(self._build_pattern_confidence * 100)
-                print(f"[INTEL] [{int(game_time)}s] Enemy build: {detected_pattern} ({self._build_pattern_status}, {confidence_pct}%)")
-                print(f"[INTEL] Recommended counter: {recommended_response}")
+                logger.info(f"[{int(game_time)}s] Enemy build: {detected_pattern} ({self._build_pattern_status}, {confidence_pct}%)")
+                logger.info(f"Recommended counter: {recommended_response}")
 
     def _calculate_build_confidence(self, pattern: str, structure_counts: dict,
                                     enemy_units, game_time: float) -> float:
@@ -670,7 +670,7 @@ class IntelManager:
         for tech_name, alert_type in self._hidden_tech_alerts.items():
             if tech_name in self.enemy_tech_buildings and alert_type not in self._detected_tech_alerts:
                 self._detected_tech_alerts.add(alert_type)
-                print(f"[INTEL] [{int(game_time)}s] [*][*][*] ALERT: {tech_name} detected! -> {alert_type} [*][*][*]")
+                logger.info(f"[{int(game_time)}s] [*][*][*] ALERT: {tech_name} detected! -> {alert_type} [*][*][*]")
 
                 # Push to Blackboard
                 blackboard = getattr(self.bot, "blackboard", None)
@@ -744,7 +744,7 @@ class IntelManager:
 
             # 로그 (처음 발견 시만)
             if destructible_list and current_time < 60 and self.bot.iteration % 100 == 0:
-                print(f"[INTEL] [{int(current_time)}s] [*] {len(destructible_list)} destructible rocks detected!")
+                logger.info(f"[{int(current_time)}s] [*] {len(destructible_list)} destructible rocks detected!")
 
         except (AttributeError, TypeError) as e:
             logger.warning(f"[IntelManager] Destructible structure scan suppressed: {e}")
@@ -764,7 +764,7 @@ class IntelManager:
             # 10초마다 적 구조물 수 로그
             if int(current_time) % 30 == 0 and self.bot.iteration % 22 == 0:
                 if len(self.all_enemy_structures) > 0:
-                    print(f"[INTEL] [{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}")
+                    logger.info(f"[{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}")
         except (AttributeError, TypeError) as e:
             logger.warning(f"[IntelManager] Enemy structure tracking suppressed: {e}")
 
@@ -828,14 +828,14 @@ class IntelManager:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             
-            print(f"[INTEL] Data saved to {file_path}")
+            logger.info(f"Data saved to {file_path}")
             return True
 
         except (IOError, OSError) as e:
-            print(f"[INTEL] Failed to save data (I/O error): {e}")
+            logger.error(f"Failed to save data (I/O error): {e}")
             return False
         except (TypeError, ValueError) as e:
-            print(f"[INTEL] Failed to save data (serialization error): {e}")
+            logger.error(f"Failed to save data (serialization error): {e}")
             return False
 
     def load_data(self, file_path: str = "data/intel_data.json") -> bool:
@@ -869,16 +869,16 @@ class IntelManager:
             scouted = data.get("scouted_locations", [])
             self.scouted_locations = {Point2(loc) for loc in scouted}
             
-            print(f"[INTEL] Data loaded from {file_path}")
-            print(f"  - Enemy Race: {self.enemy_race_name}")
-            print(f"  - Build Pattern: {self._enemy_build_pattern}")
-            print(f"  - Scouted Locations: {len(self.scouted_locations)}")
+            logger.info(f"Data loaded from {file_path}")
+            logger.info(f"  - Enemy Race: {self.enemy_race_name}")
+            logger.info(f"  - Build Pattern: {self._enemy_build_pattern}")
+            logger.info(f"  - Scouted Locations: {len(self.scouted_locations)}")
             
             return True
 
         except (IOError, OSError) as e:
-            print(f"[INTEL] Failed to load data (I/O error): {e}")
+            logger.error(f"Failed to load data (I/O error): {e}")
             return False
         except (TypeError, ValueError, KeyError) as e:
-            print(f"[INTEL] Failed to load data (parsing error): {e}")
+            logger.error(f"Failed to load data (parsing error): {e}")
             return False

@@ -12,6 +12,9 @@ This module does when resources overflow:
 """
 
 from typing import Optional, Dict, List, Tuple
+import logging
+
+logger = logging.getLogger("AggressiveTechBuilder")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
@@ -163,12 +166,12 @@ class AggressiveTechBuilder:
             result = await build_func()
             if result:
                 excess_info = f"M:{int(mineral_excess)}+ G:{int(gas_excess)}+" if has_excess else ""
-                print(f"[AGGRESSIVE TECH] [{int(self.bot.time)}s] Building {tech_type} "
+                logger.info(f"[{int(self.bot.time)}s] Building {tech_type} "
                       f"at supply {self.bot.supply_used:.1f} (excess resources: {excess_info})")
                 return True
         except Exception as e:
             if self.bot.iteration % 100 == 0:
-                print(f"[AGGRESSIVE TECH] Failed to build {tech_type}: {e}")
+                logger.error(f"Failed to build {tech_type}: {e}")
         
         return False
     

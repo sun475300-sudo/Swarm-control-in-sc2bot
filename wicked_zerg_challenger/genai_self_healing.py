@@ -12,6 +12,9 @@ import ast
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("GenaiSelfHealing")
 
 try:
     import google.generativeai as genai
@@ -19,7 +22,7 @@ try:
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
-    print("[WARNING] google.generativeai not available")
+    logger.warning("google.generativeai not available")
 
 
 class GenAISelfHealing:
@@ -56,7 +59,7 @@ class GenAISelfHealing:
                     genai.configure(api_key=api_key)
                     self.model = genai.GenerativeModel(model_name)
             except Exception as e:
-                print(f"[WARNING] Failed to initialize Gemini: {e}")
+                logger.error(f"Failed to initialize Gemini: {e}")
 
     def analyze_error(
         self, error: Exception, context: Dict, source_code: Optional[str] = None
@@ -474,7 +477,7 @@ class GenAISelfHealing:
                         line_hashes[line_hash] = i
 
         except Exception as e:
-            print(f"[STATIC_ANALYSIS] Error analyzing {file_path}: {e}")
+            logger.info(f"Error analyzing {file_path}: {e}")
 
         return suggestions
 

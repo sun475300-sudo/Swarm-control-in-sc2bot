@@ -12,6 +12,9 @@
 
 from typing import Dict, Any, Set, Optional
 import time
+import logging
+
+logger = logging.getLogger("PerformanceOptimizer")
 
 
 class PerformanceOptimizer:
@@ -210,8 +213,8 @@ class PerformanceOptimizer:
         if not report:
             return
 
-        print("\n[PERFORMANCE REPORT]")
-        print("=" * 60)
+        logger.info("\n[PERFORMANCE REPORT]")
+        logger.info("=" * 60)
 
         # 총 실행 시간 기준으로 정렬
         sorted_report = sorted(
@@ -221,13 +224,13 @@ class PerformanceOptimizer:
         )
 
         for logic_name, stats in sorted_report[:10]:  # 상위 10개
-            print(f"{logic_name:20s} | "
+            logger.info(f"{logic_name:20s} | "
                   f"Avg: {stats['avg_time_ms']:6.2f}ms | "
                   f"Count: {stats['count']:5d} | "
                   f"Total: {stats['total_time_ms']:8.2f}ms")
 
-        print("=" * 60)
-        print()
+        logger.info("=" * 60)
+        logger.info()
 
     def optimize_intervals(self):
         """
@@ -248,7 +251,7 @@ class PerformanceOptimizer:
 
                 if new_interval != current_interval:
                     self.execution_intervals[logic_name] = new_interval
-                    print(f"[OPTIMIZER] {logic_name} interval: {current_interval} → {new_interval}")
+                    logger.info(f"{logic_name} interval: {current_interval} → {new_interval}")
 
     # ========== 거리 계산 캐싱 시스템 ==========
 

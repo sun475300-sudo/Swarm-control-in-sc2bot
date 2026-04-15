@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 from datetime import datetime
 from sc2.data import Race, Difficulty
+import logging
+
+logger = logging.getLogger("GameStatistics")
 
 
 class GameStatistics:
@@ -107,9 +110,9 @@ class GameStatistics:
 
     def print_statistics(self):
         """통계 출력"""
-        print("\n" + "="*80)
-        print("GAME STATISTICS")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.info("GAME STATISTICS")
+        logger.info("="*80)
 
         # 전체 통계
         total = self.stats["total_games"]
@@ -117,56 +120,56 @@ class GameStatistics:
         losses = self.stats["total_losses"]
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        print(f"\nTotal Games: {total}")
-        print(f"Wins: {wins} | Losses: {losses}")
-        print(f"Overall Win Rate: {win_rate:.1f}%")
+        logger.info(f"\nTotal Games: {total}")
+        logger.info(f"Wins: {wins} | Losses: {losses}")
+        logger.info(f"Overall Win Rate: {win_rate:.1f}%")
 
         # 맵별 통계
-        print("\n" + "-"*80)
-        print("BY MAP:")
-        print("-"*80)
+        logger.info("\n" + "-"*80)
+        logger.info("BY MAP:")
+        logger.info("-"*80)
         for map_name, stats in sorted(self.stats["by_map"].items()):
             total_map = stats["wins"] + stats["losses"]
             wr = (stats["wins"] / total_map * 100) if total_map > 0 else 0
-            print(f"  {map_name:30} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
+            logger.info(f"  {map_name:30} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
 
         # 난이도별 통계
-        print("\n" + "-"*80)
-        print("BY DIFFICULTY:")
-        print("-"*80)
+        logger.info("\n" + "-"*80)
+        logger.info("BY DIFFICULTY:")
+        logger.info("-"*80)
         for diff, stats in sorted(self.stats["by_difficulty"].items()):
             total_diff = stats["wins"] + stats["losses"]
             wr = (stats["wins"] / total_diff * 100) if total_diff > 0 else 0
-            print(f"  {diff:20} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
+            logger.info(f"  {diff:20} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
 
         # 종족별 통계
-        print("\n" + "-"*80)
-        print("BY ENEMY RACE:")
-        print("-"*80)
+        logger.info("\n" + "-"*80)
+        logger.info("BY ENEMY RACE:")
+        logger.info("-"*80)
         for race, stats in sorted(self.stats["by_race"].items()):
             total_race = stats["wins"] + stats["losses"]
             wr = (stats["wins"] / total_race * 100) if total_race > 0 else 0
-            print(f"  vs {race:15} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
+            logger.info(f"  vs {race:15} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
 
         # 맵+난이도 통계
-        print("\n" + "-"*80)
-        print("BY MAP + DIFFICULTY:")
-        print("-"*80)
+        logger.info("\n" + "-"*80)
+        logger.info("BY MAP + DIFFICULTY:")
+        logger.info("-"*80)
         for key, stats in sorted(self.stats["by_map_difficulty"].items()):
             total_md = stats["wins"] + stats["losses"]
             wr = (stats["wins"] / total_md * 100) if total_md > 0 else 0
-            print(f"  {key:40} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
+            logger.info(f"  {key:40} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
 
         # 맵+종족 통계
-        print("\n" + "-"*80)
-        print("BY MAP + RACE:")
-        print("-"*80)
+        logger.info("\n" + "-"*80)
+        logger.info("BY MAP + RACE:")
+        logger.info("-"*80)
         for key, stats in sorted(self.stats["by_map_race"].items()):
             total_mr = stats["wins"] + stats["losses"]
             wr = (stats["wins"] / total_mr * 100) if total_mr > 0 else 0
-            print(f"  {key:40} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
+            logger.info(f"  {key:40} | {stats['wins']:3}W {stats['losses']:3}L ({wr:5.1f}%)")
 
-        print("="*80 + "\n")
+        logger.info("="*80 + "\n")
 
     # =========================================================================
     # Feature 82: Enhanced statistics from logs/game_results.json
@@ -192,7 +195,7 @@ class GameStatistics:
                 self._structured_results = []
             return True
         except (json.JSONDecodeError, IOError, OSError) as e:
-            print(f"[GAME_STATS] Failed to load structured results: {e}")
+            logger.error(f"Failed to load structured results: {e}")
             self._structured_results = []
             return False
 

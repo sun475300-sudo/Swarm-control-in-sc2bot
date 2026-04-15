@@ -10,6 +10,9 @@ import os
 from typing import Dict, List, Any
 from collections import defaultdict
 import statistics
+import logging
+
+logger = logging.getLogger("ReinforcementLearner")
 
 
 class ReinforcementLearner:
@@ -51,15 +54,15 @@ class ReinforcementLearner:
                         game = json.load(f)
                         self.games_data.append(game)
                 except Exception as e:
-                    print(f"[REINFORCE] Error loading {filename}: {e}")
+                    logger.info(f"Error loading {filename}: {e}")
 
-        print(f"[REINFORCE] Loaded {len(self.games_data)} games for reinforcement learning")
+        logger.info(f"Loaded {len(self.games_data)} games for reinforcement learning")
         return self.games_data
 
     def learn_with_reinforcement(self) -> Dict:
         """강화 학습 실행 - 모든 패턴을 3번씩 반복 확인"""
         if len(self.games_data) < self.MIN_SAMPLES:
-            print(f"[REINFORCE] Not enough games ({len(self.games_data)}/{self.MIN_SAMPLES})")
+            logger.info(f"Not enough games ({len(self.games_data)}/{self.MIN_SAMPLES})")
             return {}
 
         learned_knowledge = {
@@ -76,8 +79,8 @@ class ReinforcementLearner:
             "enemy_counter_patterns": {}
         }
 
-        print("\n[REINFORCE] Starting reinforcement learning...")
-        print("="*60)
+        logger.info("\n[REINFORCE] Starting reinforcement learning...")
+        logger.info("="*60)
 
         # 1. 타이밍 강화 학습
         timing_knowledge = self._reinforce_timings()
@@ -110,7 +113,7 @@ class ReinforcementLearner:
 
     def _reinforce_timings(self) -> Dict:
         """타이밍 강화 학습 (3번 이상 반복 확인)"""
-        print("\n[TIMING] Reinforcement learning for timings...")
+        logger.info("\n[TIMING] Reinforcement learning for timings...")
 
         timing_samples = defaultdict(lambda: {"values": [], "wins": 0, "losses": 0})
 
@@ -162,7 +165,7 @@ class ReinforcementLearner:
                         "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
                     }
                     self.learning_stats["learned_patterns"] += 1
-                    print(f"  [OK] {key}: {round(avg_time, 1)}s (conf: {round(confidence, 2)})")
+                    logger.info(f"  [OK] {key}: {round(avg_time, 1)}s (conf: {round(confidence, 2)})")
                 else:
                     self.learning_stats["rejected_patterns"] += 1
 
@@ -171,7 +174,7 @@ class ReinforcementLearner:
 
     def _reinforce_compositions(self) -> Dict:
         """유닛 구성비 강화 학습"""
-        print("\n[COMPOSITION] Reinforcement learning for unit compositions...")
+        logger.info("\n[COMPOSITION] Reinforcement learning for unit compositions...")
 
         composition_samples = defaultdict(lambda: {"samples": [], "wins": 0, "losses": 0})
 
@@ -213,13 +216,13 @@ class ReinforcementLearner:
                         "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
                     }
                     self.learning_stats["learned_patterns"] += 1
-                    print(f"  [OK] {phase}: {len(unit_ratios)} unit types (conf: {round(confidence, 2)})")
+                    logger.info(f"  [OK] {phase}: {len(unit_ratios)} unit types (conf: {round(confidence, 2)})")
 
         return learned_compositions
 
     def _reinforce_harassment(self) -> Dict:
         """하라스 패턴 강화 학습"""
-        print("\n[HARASSMENT] Reinforcement learning for harassment...")
+        logger.info("\n[HARASSMENT] Reinforcement learning for harassment...")
 
         harassment_data = {"attempts": 0, "successes": 0, "avg_timing": []}
 
@@ -250,7 +253,7 @@ class ReinforcementLearner:
 
     def _reinforce_defense(self) -> Dict:
         """방어 패턴 강화 학습"""
-        print("\n[DEFENSE] Reinforcement learning for defense...")
+        logger.info("\n[DEFENSE] Reinforcement learning for defense...")
 
         defense_samples = {"events": 0, "successful": 0, "failed": 0}
 
@@ -278,7 +281,7 @@ class ReinforcementLearner:
 
     def _reinforce_map_control(self) -> Dict:
         """맵 장악 패턴 강화 학습"""
-        print("\n[MAP_CONTROL] Reinforcement learning for map control...")
+        logger.info("\n[MAP_CONTROL] Reinforcement learning for map control...")
 
         map_control_data = {"samples": [], "wins": 0, "losses": 0}
 
@@ -322,7 +325,7 @@ class ReinforcementLearner:
         3. 높은 효율을 보인 카운터 조합 학습
         4. 신뢰도 기반 필터링 (MIN_SAMPLES 적용)
         """
-        print("\n[COUNTERS] Reinforcement learning for enemy counters...")
+        logger.info("\n[COUNTERS] Reinforcement learning for enemy counters...")
 
         # 카운터 데이터 수집: {enemy_unit: {our_unit: [trade_efficiency_samples]}}
         counter_samples = defaultdict(lambda: defaultdict(lambda: {
@@ -411,14 +414,14 @@ class ReinforcementLearner:
                     "recommended_counters": best_counters[:3],  # 상위 3개만
                     "total_counter_options": len(best_counters)
                 }
-                print(f"  [OK] {enemy_unit}: {len(best_counters)} effective counters found")
+                logger.info(f"  [OK] {enemy_unit}: {len(best_counters)} effective counters found")
 
         self.learning_stats["total_patterns"] += len(counter_samples)
 
         # 추가 통계
         if learned_counters:
-            print(f"\n  Total enemy units analyzed: {len(counter_samples)}")
-            print(f"  Counter patterns learned: {len(learned_counters)}")
+            logger.info(f"\n  Total enemy units analyzed: {len(counter_samples)}")
+            logger.info(f"  Counter patterns learned: {len(learned_counters)}")
 
         return learned_counters
 
@@ -456,18 +459,18 @@ class ReinforcementLearner:
 
     def _print_learning_stats(self):
         """학습 통계 출력"""
-        print("\n" + "="*60)
-        print("REINFORCEMENT LEARNING STATISTICS")
-        print("="*60)
-        print(f"Total patterns analyzed: {self.learning_stats['total_patterns']}")
-        print(f"Patterns learned (>=60% confidence): {self.learning_stats['learned_patterns']}")
-        print(f"Patterns rejected (<60% confidence): {self.learning_stats['rejected_patterns']}")
+        logger.info("\n" + "="*60)
+        logger.info("REINFORCEMENT LEARNING STATISTICS")
+        logger.info("="*60)
+        logger.info(f"Total patterns analyzed: {self.learning_stats['total_patterns']}")
+        logger.info(f"Patterns learned (>=60% confidence): {self.learning_stats['learned_patterns']}")
+        logger.info(f"Patterns rejected (<60% confidence): {self.learning_stats['rejected_patterns']}")
 
         if self.learning_stats['total_patterns'] > 0:
             learn_rate = self.learning_stats['learned_patterns'] / self.learning_stats['total_patterns'] * 100
-            print(f"Learning rate: {round(learn_rate, 1)}%")
+            logger.info(f"Learning rate: {round(learn_rate, 1)}%")
 
-        print("="*60 + "\n")
+        logger.info("="*60 + "\n")
 
 
 def main():
@@ -481,7 +484,7 @@ def main():
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(learned_knowledge, f, indent=2, ensure_ascii=False)
 
-    print(f"\n[REINFORCE] Learned knowledge saved to: {output_file}")
+    logger.info(f"\n[REINFORCE] Learned knowledge saved to: {output_file}")
 
 
 if __name__ == "__main__":

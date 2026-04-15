@@ -50,7 +50,7 @@ def setup_logger(
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         except Exception as e:
-            print(f"[LOGGER_ERROR] Failed to setup file logging: {e}")
+            logger.error(f"Failed to setup file logging: {e}")
 
     # Console Handler (Windows UTF-8 safe)
     if log_to_console:

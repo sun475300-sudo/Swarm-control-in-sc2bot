@@ -15,6 +15,9 @@ Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 from enum import Enum
+import logging
+
+logger = logging.getLogger("UpgradeTiming")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -84,7 +87,7 @@ class UpgradeTimingManager:
         self._last_analysis_time: float = 0.0
         self._analysis_interval: float = 10.0
 
-        print("[UPGRADE_TIMING] 업그레이드 타이밍 관리자 초기화 완료")
+        logger.info("업그레이드 타이밍 관리자 초기화 완료")
 
     def update(self) -> None:
         """매 스텝 업데이트"""
@@ -178,7 +181,7 @@ class UpgradeTimingManager:
         if benchmark > 0:
             diff = game_time - benchmark
             status = "정시" if abs(diff) < 15 else ("지연" if diff > 0 else "빠름")
-            print(f"[UPGRADE_TIMING] {upgrade_name} 완료: {int(game_time)}초 "
+            logger.info(f"{upgrade_name} 완료: {int(game_time)}초 "
                   f"(벤치마크: {benchmark}초, {status}: {diff:+.0f}초)")
 
     def _analyze_and_recommend(self, game_time: float) -> None:

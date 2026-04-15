@@ -16,6 +16,9 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import time
+import logging
+
+logger = logging.getLogger("RealtimeAwarenessEngine")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -593,10 +596,10 @@ class RealtimeAwarenessEngine:
             return
         critical = [p for p in self.active_problems if p.severity == "critical"]
         if critical:
-            print(f"[AWARENESS] {len(critical)} CRITICAL problems:")
+            logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
-                print(f"  [{p.severity.upper()}] {p.description}")
-                print(f"    → action required (see logs)")
+                logger.info(f"  [{p.severity.upper()}] {p.description}")
+                logger.info(f"    → action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

@@ -11,6 +11,9 @@ Consolidated version combining original and improved features:
 """
 
 from typing import Dict
+import logging
+
+logger = logging.getLogger("EconomyCombatBalancer")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -118,13 +121,13 @@ class EconomyCombatBalancer:
 
             self.learned_weights_applied = True
 
-            print(f"[ECONOMY_BALANCER] [LEARNING] Applied learned economy weight: {economy_weight:.2%}")
-            print(f"[ECONOMY_BALANCER] [LEARNING] Drone targets adjusted {adjustment_desc}")
-            print(f"[ECONOMY_BALANCER] [LEARNING] New targets: Early={self.drone_targets['early']}, "
+            logger.info(f"[LEARNING] Applied learned economy weight: {economy_weight:.2%}")
+            logger.info(f"[LEARNING] Drone targets adjusted {adjustment_desc}")
+            logger.info(f"[LEARNING] New targets: Early={self.drone_targets['early']}, "
                   f"Mid={self.drone_targets['mid']}, Late={self.drone_targets['late']}")
 
         except Exception as e:
-            print(f"[ECONOMY_BALANCER] [WARNING] Failed to apply learned economy weights: {e}")
+            logger.error(f"[WARNING] Failed to apply learned economy weights: {e}")
 
     def get_drone_target(self) -> int:
         """

@@ -16,6 +16,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger("DefeatAnalysis")
 
 
 class DefeatReason:
@@ -76,7 +79,7 @@ class DefeatAnalysis:
             self.defeat_history = data.get("history", [])
             self.reason_counts = data.get("reason_counts", {})
         except Exception as e:
-            print(f"[DEFEAT_ANALYSIS] Failed to load history: {e}")
+            logger.error(f"Failed to load history: {e}")
 
     def _save_history(self) -> None:
         """패배 히스토리 저장"""
@@ -90,7 +93,7 @@ class DefeatAnalysis:
             with open(self.analysis_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"[DEFEAT_ANALYSIS] Failed to save history: {e}")
+            logger.error(f"Failed to save history: {e}")
 
     def analyze_defeat(self, bot, game_result: str = "Defeat") -> List[str]:
         """
@@ -238,32 +241,32 @@ class DefeatAnalysis:
 
     def print_analysis(self) -> None:
         """패배 분석 출력"""
-        print("\n" + "=" * 70)
-        print("[DEFEAT_ANALYSIS] FAILURE PATTERN ANALYSIS")
-        print("=" * 70)
-        print(f"Total Defeats Analyzed: {len(self.defeat_history)}")
+        logger.info("\n" + "=" * 70)
+        logger.error("FAILURE PATTERN ANALYSIS")
+        logger.info("=" * 70)
+        logger.info(f"Total Defeats Analyzed: {len(self.defeat_history)}")
 
         if not self.reason_counts:
-            print("No defeats recorded yet.")
-            print("=" * 70)
+            logger.info("No defeats recorded yet.")
+            logger.info("=" * 70)
             return
 
-        print("\nTop Failure Reasons:")
+        logger.error("\nTop Failure Reasons:")
         top_reasons = self.get_top_failure_reasons(top_n=5)
 
         for idx, (reason, count) in enumerate(top_reasons, 1):
             percentage = (count / len(self.defeat_history)) * 100
-            print(f"  {idx}. {reason}: {count} times ({percentage:.1f}%)")
+            logger.info(f"  {idx}. {reason}: {count} times ({percentage:.1f}%)")
 
-        print("\n" + "-" * 70)
-        print("Recommended Focus Areas:")
+        logger.info("\n" + "-" * 70)
+        logger.info("Recommended Focus Areas:")
         feedback = self.get_feedback_for_next_game()
 
         for area, weight in feedback.items():
             boost = (weight - 1.0) * 100
-            print(f"  - {area}: +{boost:.0f}% priority")
+            logger.info(f"  - {area}: +{boost:.0f}% priority")
 
-        print("=" * 70)
+        logger.info("=" * 70)
 
     def get_penalty_multiplier_for_reason(self, reason: str) -> float:
         """

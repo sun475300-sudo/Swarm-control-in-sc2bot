@@ -15,6 +15,9 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 from utils.logger import get_logger
 import math
+import logging
+
+logger = logging.getLogger("BuildingDestroyer")
 
 
 class BuildingDestroyer:
@@ -160,7 +163,7 @@ class BuildingDestroyer:
 
             if self.bot.iteration % 220 == 0:
                 building_name = building.type_id.name if hasattr(building.type_id, 'name') else str(building.type_id)
-                print(f"[DESTROYER] {len(available)} units attacking {building_name} at {building.position}")
+                logger.info(f"{len(available)} units attacking {building_name} at {building.position}")
 
     def _get_available_attack_units(self):
         """공격 가능한 유닛 가져오기"""

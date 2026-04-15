@@ -5,6 +5,10 @@
 복잡한 if-else 로직을 명확한 트리 구조로 변환합니다.
 """
 
+import logging
+
+logger = logging.getLogger("ZergStrategyTree")
+
 from .behavior_tree import (
     BehaviorTree,
     NodeStatus,
@@ -350,4 +354,4 @@ async def execute_strategy(bot) -> None:
 
     # 디버그 로그 (옵션)
     if bot.iteration % 220 == 0:  # 10초마다
-        print(f"[BEHAVIOR TREE] Status: {status.value}")
+        logger.info(f"Status: {status.value}")

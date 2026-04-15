@@ -12,6 +12,9 @@ integrating separate modules for:
 """
 
 from typing import List, Set
+import logging
+
+logger = logging.getLogger("MicroController")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -276,7 +279,7 @@ class BoidsController:
 
         except Exception as e:
             if iteration % 50 == 0:
-                print(f"[WARNING] Boids micro error: {e}")
+                logger.error(f"Boids micro error: {e}")
             await self._fallback_spread(active_units, enemy_units)
 
     def _get_combat_units(self):
