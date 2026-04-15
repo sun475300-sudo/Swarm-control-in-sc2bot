@@ -7,6 +7,9 @@ Verifies the correctness of modified production logic.
 
 import sys
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("ProductionLogicVerification")
 
 # Add project root to path
 project_root = Path(__file__).resolve().parents[1]
@@ -15,16 +18,16 @@ sys.path.insert(0, str(project_root))
 
 def verify_production_enhancements():
     """Verify ProductionEnhancements class"""
-    print("=" * 70)
-    print("Production Enhancements Verification")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("Production Enhancements Verification")
+    logger.info("=" * 70)
 
     try:
         from local_training.production_enhancements import ProductionEnhancements
 
         # Check class existence
-        print("\n[1] Class existence check: OK")
-        print("   - ProductionEnhancements class loaded successfully")
+        logger.info("\n[1] Class existence check: OK")
+        logger.info("   - ProductionEnhancements class loaded successfully")
 
         # Check method existence
         required_methods = [
@@ -37,15 +40,15 @@ def verify_production_enhancements():
             '_check_unit_requirements',
         ]
 
-        print("\n[2] Required methods check:")
+        logger.info("\n[2] Required methods check:")
         for method_name in required_methods:
             if hasattr(ProductionEnhancements, method_name):
-                print(f"   OK {method_name}")
+                logger.info(f"   OK {method_name}")
             else:
-                print(f"   MISSING {method_name}")
+                logger.info(f"   MISSING {method_name}")
 
         # Check attributes
-        print("\n[3] Required attributes check:")
+        logger.info("\n[3] Required attributes check:")
         # Create mock bot object
         class MockBot:
             def __init__(self):
@@ -82,24 +85,24 @@ def verify_production_enhancements():
 
         for attr_name in required_attrs:
             if hasattr(enhancer, attr_name):
-                print(f"   OK {attr_name}")
+                logger.info(f"   OK {attr_name}")
             else:
-                print(f"   MISSING {attr_name}")
+                logger.info(f"   MISSING {attr_name}")
 
         # Check priority
-        print("\n[4] Production priority check:")
+        logger.info("\n[4] Production priority check:")
         priorities = enhancer.production_priority
         sorted_priorities = sorted(priorities.items(), key=lambda x: x[1], reverse=True)
         for unit_type, priority in sorted_priorities:
-            print(f"   {unit_type}: {priority}")
+            logger.info(f"   {unit_type}: {priority}")
 
-        print("\n" + "=" * 70)
-        print("Verification complete: All items loaded successfully.")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("Verification complete: All items loaded successfully.")
+        logger.info("=" * 70)
         return True
 
     except Exception as e:
-        print(f"\n[ERROR] Verification failed: {e}")
+        logger.error(f"\n[ERROR] Verification failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -107,9 +110,9 @@ def verify_production_enhancements():
 
 def verify_indentation_fixes():
     """Verify indentation fixes"""
-    print("\n" + "=" * 70)
-    print("Indentation Fixes Verification")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("Indentation Fixes Verification")
+    logger.info("=" * 70)
 
     files_to_check = [
         "wicked_zerg_challenger/spell_unit_manager.py",
@@ -124,20 +127,20 @@ def verify_indentation_fixes():
         if full_path.exists():
             try:
                 py_compile.compile(str(full_path), doraise=True)
-                print(f"OK {file_path}: Syntax check passed")
+                logger.info(f"OK {file_path}: Syntax check passed")
             except py_compile.PyCompileError as e:
-                print(f"ERROR {file_path}: Syntax error - {e}")
+                logger.error(f"ERROR {file_path}: Syntax error - {e}")
                 all_passed = False
         else:
-            print(f"MISSING {file_path}: File not found")
+            logger.info(f"MISSING {file_path}: File not found")
             all_passed = False
 
-    print("\n" + "=" * 70)
+    logger.info("\n" + "=" * 70)
     if all_passed:
-        print("Indentation verification complete: All files are valid.")
+        logger.info("Indentation verification complete: All files are valid.")
     else:
-        print("Indentation verification failed: Some files have errors.")
-    print("=" * 70)
+        logger.error("Indentation verification failed: Some files have errors.")
+    logger.info("=" * 70)
 
     return all_passed
 

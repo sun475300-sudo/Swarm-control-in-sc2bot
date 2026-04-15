@@ -3,10 +3,13 @@
 """
 Generate PWA icons (placeholder).
 """
+import logging
+
+logger = logging.getLogger("GeneratePwaIcons")
 
 
 def main() -> None:
-    print("generate_pwa_icons placeholder.")
+    logger.info("generate_pwa_icons placeholder.")
 
 
 if __name__ == "__main__":

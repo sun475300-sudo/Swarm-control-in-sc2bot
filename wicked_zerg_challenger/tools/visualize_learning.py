@@ -13,14 +13,17 @@ import sys
 import random
 from datetime import datetime
 from typing import Dict, List, Any
+import logging
+
+logger = logging.getLogger("VisualizeLearning")
 
 # matplotlib 설치 확인
 try:
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
 except ImportError:
-    print("[ERROR] matplotlib is not installed.")
-    print("Please install it using: pip install matplotlib")
+    logger.error("matplotlib is not installed.")
+    logger.info("Please install it using: pip install matplotlib")
     sys.exit(1)
 
 
@@ -36,14 +39,14 @@ class TrainingVisualizer:
         if self.data_path.exists():
             try:
                 with open(self.data_path, 'r', encoding='utf-8') as f:
-                    print(f"[INFO] Loading real data from {self.data_path}")
+                    logger.info(f"Loading real data from {self.data_path}")
                     return json.load(f)
             except Exception as e:
-                print(f"[WARNING] Failed to load data: {e}")
+                logger.error(f"Failed to load data: {e}")
         else:
-            print(f"[WARNING] Data file not found: {self.data_path}")
+            logger.warning(f"Data file not found: {self.data_path}")
             
-        print("[INFO] Generating mock data for demonstration...")
+        logger.info("Generating mock data for demonstration...")
         return self._generate_mock_data()
 
     def _generate_mock_data(self) -> Dict[str, Any]:
@@ -162,21 +165,21 @@ class TrainingVisualizer:
         plt.savefig(output_path, dpi=100)
         plt.savefig(latest_path, dpi=100) # 덮어쓰기용 최신 파일
         
-        print(f"[SUCCESS] Charts saved to:")
-        print(f"  - {output_path}")
-        print(f"  - {latest_path}")
+        logger.info(f"Charts saved to:")
+        logger.info(f"  - {output_path}")
+        logger.info(f"  - {latest_path}")
         
         plt.close()
 
 def main():
-    print("="*60)
-    print(" Learning Progress Visualizer")
-    print("="*60)
+    logger.info("="*60)
+    logger.info(" Learning Progress Visualizer")
+    logger.info("="*60)
     
     visualizer = TrainingVisualizer()
     visualizer.plot_progress()
     
-    print("\nVisualization Complete.")
+    logger.info("\nVisualization Complete.")
 
 if __name__ == "__main__":
     main()

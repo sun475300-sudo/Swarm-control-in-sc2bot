@@ -22,6 +22,9 @@ import time
 from pathlib import Path
 
 import numpy as np
+import logging
+
+logger = logging.getLogger("RunTrainingPipeline")
 
 # 프로젝트 루트 경로 설정
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -45,39 +48,39 @@ def load_experience_files(file_paths):
             }
             if len(exp["states"]) > 0:
                 experiences.append(exp)
-                print(f"  Loaded: {fpath.name} ({len(exp['states'])} steps)")
+                logger.info(f"  Loaded: {fpath.name} ({len(exp['states'])} steps)")
         except Exception as e:
-            print(f"  Skip (corrupted): {fpath.name} - {e}")
+            logger.info(f"  Skip (corrupted): {fpath.name} - {e}")
     return experiences
 
 
 def run_training_cycle(pipeline, rl_agent, cycle_num):
     """단일 훈련 사이클 실행"""
-    print(f"\n{'='*60}")
-    print(f"  CYCLE {cycle_num}")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  CYCLE {cycle_num}")
+    logger.info(f"{'='*60}")
 
     # 1. Experience 수집
     exp_files = pipeline.collect_experience_files()
     if not exp_files:
-        print("  No experience files in buffer. Skipping cycle.")
+        logger.info("  No experience files in buffer. Skipping cycle.")
         return None
 
-    print(f"  Found {len(exp_files)} experience files")
+    logger.info(f"  Found {len(exp_files)} experience files")
 
     # 2. 경험 로드
     experiences = load_experience_files(exp_files)
     if not experiences:
-        print("  No valid experience data. Skipping cycle.")
+        logger.info("  No valid experience data. Skipping cycle.")
         return None
 
     total_steps = sum(len(e["states"]) for e in experiences)
-    print(f"  Total training data: {len(experiences)} games, {total_steps} steps")
+    logger.info(f"  Total training data: {len(experiences)} games, {total_steps} steps")
 
     # 3. 학습
-    print("  Training...")
+    logger.info("  Training...")
     train_stats = rl_agent.train_from_batch(experiences)
-    print(
+    logger.info(
         f"  Loss: {train_stats['loss']:.4f}, "
         f"Steps: {train_stats['steps']}, "
         f"LR: {train_stats.get('adjusted_lr', 0):.6f}"
@@ -107,7 +110,7 @@ def run_training_cycle(pipeline, rl_agent, cycle_num):
 
     # 7. 처리 완료 experience 아카이브
     pipeline.archive_processed_experience(exp_files)
-    print(f"  Archived {len(exp_files)} experience files")
+    logger.info(f"  Archived {len(exp_files)} experience files")
 
     return {
         "cycle": cycle_num,
@@ -154,9 +157,9 @@ def main():
     # Summary 모드
     if args.summary:
         summary = pipeline.get_training_summary()
-        print("\n=== Training Pipeline Summary ===")
+        logger.info("\n=== Training Pipeline Summary ===")
         for k, v in summary.items():
-            print(f"  {k}: {v}")
+            logger.info(f"  {k}: {v}")
         return
 
     # RLAgent 초기화
@@ -165,25 +168,25 @@ def main():
         # 배포된 모델이 있으면 그걸로 시작
         if pipeline.deployed_model_path.exists():
             model_path = str(pipeline.deployed_model_path)
-            print(f"Starting from deployed model: {model_path}")
+            logger.info(f"Starting from deployed model: {model_path}")
         else:
             # 기본 모델 경로
             default_model = PROJECT_ROOT / "models" / "rl_agent_model.npz"
             if default_model.exists():
                 model_path = str(default_model)
-                print(f"Starting from default model: {model_path}")
+                logger.info(f"Starting from default model: {model_path}")
 
     rl_agent = RLAgent(
         learning_rate=args.learning_rate,
         model_path=model_path,
     )
 
-    print(f"\n{'='*60}")
-    print(f"  SC2 Bot Training Pipeline")
-    print(f"  Cycles: {args.cycles}")
-    print(f"  Learning Rate: {args.learning_rate}")
-    print(f"  Buffer: {pipeline.buffer_dir}")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  SC2 Bot Training Pipeline")
+    logger.info(f"  Cycles: {args.cycles}")
+    logger.info(f"  Learning Rate: {args.learning_rate}")
+    logger.info(f"  Buffer: {pipeline.buffer_dir}")
+    logger.info(f"{'='*60}")
 
     # 훈련 사이클 실행
     results = []
@@ -197,25 +200,25 @@ def main():
             time.sleep(1)
 
     # 최종 요약
-    print(f"\n{'='*60}")
-    print(f"  TRAINING COMPLETE")
-    print(f"{'='*60}")
-    print(f"  Cycles completed: {len(results)}/{args.cycles}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  TRAINING COMPLETE")
+    logger.info(f"{'='*60}")
+    logger.info(f"  Cycles completed: {len(results)}/{args.cycles}")
 
     if results:
         deployed_versions = [r for r in results if r["deployed"]]
-        print(f"  Models deployed: {len(deployed_versions)}")
+        logger.info(f"  Models deployed: {len(deployed_versions)}")
         best_wr = max(r["metrics"]["win_rate"] for r in results)
-        print(f"  Best win rate: {best_wr:.1%}")
+        logger.info(f"  Best win rate: {best_wr:.1%}")
 
     summary = pipeline.get_training_summary()
-    print(f"\n  Pipeline Status:")
+    logger.info(f"\n  Pipeline Status:")
     for k, v in summary.items():
-        print(f"    {k}: {v}")
+        logger.info(f"    {k}: {v}")
 
     # 최종 모델 저장
     rl_agent.save_model()
-    print(f"\n  Final model saved to: {rl_agent.model_path}")
+    logger.info(f"\n  Final model saved to: {rl_agent.model_path}")
 
 
 if __name__ == "__main__":

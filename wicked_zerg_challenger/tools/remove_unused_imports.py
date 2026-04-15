@@ -3,10 +3,13 @@
 """
 Remove unused imports (placeholder).
 """
+import logging
+
+logger = logging.getLogger("RemoveUnusedImports")
 
 
 def main() -> None:
-    print("remove_unused_imports placeholder.")
+    logger.info("remove_unused_imports placeholder.")
 
 
 if __name__ == "__main__":

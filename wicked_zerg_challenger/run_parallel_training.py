@@ -18,6 +18,9 @@ import random
 import multiprocessing
 from pathlib import Path
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("RunParallelTraining")
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -52,9 +55,9 @@ try:
     GPU = torch.cuda.is_available()
     if GPU:
         GPU_NAME = torch.cuda.get_device_name(0)
-        print(f"[GPU] {GPU_NAME}")
+        logger.info(f"{GPU_NAME}")
 except (ImportError, OSError):
-    print("[GPU] Not available, running on CPU")
+    logger.info("Not available, running on CPU")
     torch = None
 
 # Training config
@@ -76,9 +79,9 @@ def run_training_game(game_num, total, difficulty_idx=0):
     difficulty = DIFFICULTY_LADDER[min(difficulty_idx, len(DIFFICULTY_LADDER) - 1)]
     diff_name = difficulty.name
 
-    print(f"\n{'='*60}")
-    print(f"  TRAIN {game_num}/{total} | {map_name} | {enemy_race.name} | {diff_name}")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  TRAIN {game_num}/{total} | {map_name} | {enemy_race.name} | {diff_name}")
+    logger.info(f"{'='*60}")
 
     bot = Bot(Race.Zerg, WickedZergBotProImpl(train_mode=True))
 
@@ -93,7 +96,7 @@ def run_training_game(game_num, total, difficulty_idx=0):
 
         won = str(result) == "Result.Victory"
         tag = "WIN" if won else "LOSS"
-        print(f"  {tag} in {elapsed:.0f}s | {enemy_race.name} {diff_name}")
+        logger.info(f"  {tag} in {elapsed:.0f}s | {enemy_race.name} {diff_name}")
 
         return {
             "game": game_num,
@@ -104,7 +107,7 @@ def run_training_game(game_num, total, difficulty_idx=0):
             "time": round(elapsed, 1),
         }
     except Exception as e:
-        print(f"  ERROR: {e}")
+        logger.error(f"  ERROR: {e}")
         return {
             "game": game_num,
             "map": map_name,
@@ -119,13 +122,13 @@ def run_training_game(game_num, total, difficulty_idx=0):
 def main():
     start_time = time.time()
 
-    print(f"\n{'='*70}")
-    print(f"  PARALLEL TRAINING: {TOTAL_GAMES} games")
-    print(f"  Maps: {len(MAP_POOL)} | Races: {len(RACE_POOL)}")
-    print(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
-    print(f"  GPU: {GPU_NAME}")
-    print(f"  Mode: Sequential Fast (realtime=False)")
-    print(f"{'='*70}\n")
+    logger.info(f"\n{'='*70}")
+    logger.info(f"  PARALLEL TRAINING: {TOTAL_GAMES} games")
+    logger.info(f"  Maps: {len(MAP_POOL)} | Races: {len(RACE_POOL)}")
+    logger.info(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
+    logger.info(f"  GPU: {GPU_NAME}")
+    logger.info(f"  Mode: Sequential Fast (realtime=False)")
+    logger.info(f"{'='*70}\n")
 
     results = []
     wins = 0
@@ -143,7 +146,7 @@ def main():
             # 3연승 시 난이도 상승
             if streak >= 3:
                 difficulty_idx = min(difficulty_idx + 1, len(DIFFICULTY_LADDER) - 1)
-                print(f"  [LADDER UP] -> {DIFFICULTY_LADDER[difficulty_idx].name}")
+                logger.info(f"  [LADDER UP] -> {DIFFICULTY_LADDER[difficulty_idx].name}")
                 streak = 0
         else:
             losses += 1
@@ -152,30 +155,30 @@ def main():
             recent = results[-3:]
             if len(recent) >= 3 and all(not r.get("won") for r in recent):
                 difficulty_idx = max(difficulty_idx - 1, 0)
-                print(f"  [LADDER DOWN] -> {DIFFICULTY_LADDER[difficulty_idx].name}")
+                logger.info(f"  [LADDER DOWN] -> {DIFFICULTY_LADDER[difficulty_idx].name}")
 
         elapsed = time.time() - start_time
         wr = wins / max(wins + losses, 1) * 100
-        print(f"  [{game_num}/{TOTAL_GAMES}] W:{wins} L:{losses} WR:{wr:.0f}% | "
+        logger.info(f"  [{game_num}/{TOTAL_GAMES}] W:{wins} L:{losses} WR:{wr:.0f}% | "
               f"Diff:{DIFFICULTY_LADDER[difficulty_idx].name} | {elapsed/60:.1f}m")
 
         time.sleep(2)
 
     # Final report
     total_time = time.time() - start_time
-    print(f"\n{'='*70}")
-    print(f"  TRAINING COMPLETE: {TOTAL_GAMES} games in {total_time/60:.1f}min")
-    print(f"{'='*70}")
-    print(f"  Win Rate: {wins}/{wins+losses} ({wins/max(wins+losses,1)*100:.1f}%)")
-    print(f"  Final Difficulty: {DIFFICULTY_LADDER[difficulty_idx].name}")
-    print(f"  Avg Game Time: {sum(r.get('time',0) for r in results)/max(len(results),1):.0f}s")
+    logger.info(f"\n{'='*70}")
+    logger.info(f"  TRAINING COMPLETE: {TOTAL_GAMES} games in {total_time/60:.1f}min")
+    logger.info(f"{'='*70}")
+    logger.info(f"  Win Rate: {wins}/{wins+losses} ({wins/max(wins+losses,1)*100:.1f}%)")
+    logger.info(f"  Final Difficulty: {DIFFICULTY_LADDER[difficulty_idx].name}")
+    logger.info(f"  Avg Game Time: {sum(r.get('time',0) for r in results)/max(len(results),1):.0f}s")
 
     # Per-race stats
-    print(f"\n  --- By Race ---")
+    logger.info(f"\n  --- By Race ---")
     for race in RACE_POOL:
         rr = [r for r in results if r.get("race") == race.name]
         rw = sum(1 for r in rr if r.get("won"))
-        print(f"  {race.name:10s}: {rw}/{len(rr)} ({rw/max(len(rr),1)*100:.0f}%)")
+        logger.info(f"  {race.name:10s}: {rw}/{len(rr)} ({rw/max(len(rr),1)*100:.0f}%)")
 
     # Save
     report_path = Path(__file__).parent / "training_results.json"
@@ -188,8 +191,8 @@ def main():
             "final_difficulty": DIFFICULTY_LADDER[difficulty_idx].name,
             "games": results,
         }, f, indent=2, ensure_ascii=False)
-    print(f"\n  Saved: {report_path}")
-    print(f"{'='*70}")
+    logger.info(f"\n  Saved: {report_path}")
+    logger.info(f"{'='*70}")
 
 
 if __name__ == "__main__":

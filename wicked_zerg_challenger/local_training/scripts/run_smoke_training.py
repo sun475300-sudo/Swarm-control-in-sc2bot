@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from batch_trainer import BatchTrainer
+import logging
+
+logger = logging.getLogger("RunSmokeTraining")
 
 
 def build_fake_batch_results(samples: int) -> List[Dict[str, Any]]:
@@ -94,7 +97,7 @@ def main() -> None:
 
     summary_path = output_dir / "smoke_training_summary.json"
     summary_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    print(f"[SMOKE] Training complete. Summary -> {summary_path}")
+    logger.info(f"Training complete. Summary -> {summary_path}")
 
 
 if __name__ == "__main__":

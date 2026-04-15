@@ -17,14 +17,17 @@ import sys
 import time
 from pathlib import Path
 from typing import List, Tuple, Dict, Any
+import logging
+
+logger = logging.getLogger("ComprehensiveAutoFixWorkflow")
 
 def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600) -> Tuple[bool, str]:
     """Run a command and return success status and output"""
-    print(f"\n{'='*70}")
-    print(f"[STEP] {description}")
-    print(f"{'='*70}")
-    print(f"Command: {' '.join(cmd)}")
-    print()
+    logger.info(f"\n{'='*70}")
+    logger.info(f"{description}")
+    logger.info(f"{'='*70}")
+    logger.info(f"Command: {' '.join(cmd)}")
+    logger.info()
     
     try:
         result = subprocess.run(
@@ -39,31 +42,31 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
         )
         
         if result.stdout:
-            print(result.stdout)
+            logger.info(result.stdout)
         if result.stderr:
-            print(result.stderr, file=sys.stderr)
+            logger.info(result.stderr, file=sys.stderr)
         
         success = result.returncode == 0
         return success, result.stdout + result.stderr
     except subprocess.TimeoutExpired:
-        print(f"[WARNING] Command timed out after {timeout} seconds")
+        logger.warning(f"Command timed out after {timeout} seconds")
         return False, "Timeout"
     except Exception as e:
-        print(f"[ERROR] Failed to run command: {e}")
+        logger.error(f"Failed to run command: {e}")
         return False, str(e)
 
 
 def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool:
     """���� ������ �ݺ������� ���� (������ ���� �۵��� ������)"""
-    print(f"\n{'#'*70}")
-    print("# PHASE 1: ���� ���� �� ���� ���� (�ݺ�)")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 1: ���� ���� �� ���� ���� (�ݺ�)")
+    logger.info(f"{'#'*70}\n")
     
     auto_error_fixer = project_root / "tools" / "auto_error_fixer.py"
     logic_checker = project_root / "tools" / "logic_checker.py"
     
     for iteration in range(1, max_iterations + 1):
-        print(f"\n[ITERATION {iteration}/{max_iterations}] ���� ���� ��...")
+        logger.info(f"\n[ITERATION {iteration}/{max_iterations}] ���� ���� ��...")
         
         # 1. �ڵ� ���� ����
         success1, _ = run_command(
@@ -83,33 +86,33 @@ def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool
         
         # ���� �˻� ��� �м�
         if "�ߺ� ����: 0��" in output2 and "�ߺ� ����: 0��" in output2 and "���� ����: 0��" in output2:
-            print(f"\n[SUCCESS] ��� ������ ���װ� �����Ǿ����ϴ�! (Iteration {iteration})")
+            logger.info(f"\n[SUCCESS] ��� ������ ���װ� �����Ǿ����ϴ�! (Iteration {iteration})")
             return True
         
         if iteration < max_iterations:
-            print(f"\n[INFO] ������ �����ֽ��ϴ�. ��� ���� ��... (Iteration {iteration}/{max_iterations})")
+            logger.info(f"\n[INFO] ������ �����ֽ��ϴ�. ��� ���� ��... (Iteration {iteration}/{max_iterations})")
             time.sleep(2)
     
-    print(f"\n[WARNING] �ִ� �ݺ� Ƚ��({max_iterations})�� �����߽��ϴ�.")
+    logger.warning(f"\n[WARNING] �ִ� �ݺ� Ƚ��({max_iterations})�� �����߽��ϴ�.")
     return False
 
 
 def main():
     project_root = Path(__file__).parent.parent
     
-    print("=" * 70)
-    print("���� �ڵ� ���� �� �Ʒ� ��ũ�÷ο�")
-    print("=" * 70)
-    print("\n�� ��ũ�÷ο�� ���� �ܰ踦 �����մϴ�:")
-    print("  1. ���� ���� �� ���� ���� (�ݺ�)")
-    print("  2. ���� �˻�")
-    print("  3. �ڵ� ��Ÿ�� ����ȭ")
-    print("  4. ���÷��� �н� ���� �� ��ü ���� �˻�")
-    print("  5. ���а˻� �� ���� �н� ����")
-    print("  6. ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
-    print("  7. ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
-    print("  8. ���÷��� �н� ������ �� �м� �� �н� ����")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("���� �ڵ� ���� �� �Ʒ� ��ũ�÷ο�")
+    logger.info("=" * 70)
+    logger.info("\n�� ��ũ�÷ο�� ���� �ܰ踦 �����մϴ�:")
+    logger.info("  1. ���� ���� �� ���� ���� (�ݺ�)")
+    logger.info("  2. ���� �˻�")
+    logger.info("  3. �ڵ� ��Ÿ�� ����ȭ")
+    logger.info("  4. ���÷��� �н� ���� �� ��ü ���� �˻�")
+    logger.info("  5. ���а˻� �� ���� �н� ����")
+    logger.info("  6. ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
+    logger.info("  7. ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
+    logger.info("  8. ���÷��� �н� ������ �� �м� �� �н� ����")
+    logger.info("=" * 70)
     
     # Script paths
     auto_error_fixer = project_root / "tools" / "auto_error_fixer.py"
@@ -131,17 +134,17 @@ def main():
     
     for name, script in scripts.items():
         if not script.exists():
-            print(f"[ERROR] {name} script not found: {script}")
+            logger.error(f"{name} script not found: {script}")
             sys.exit(1)
     
     # PHASE 1: ���� ���� �� ���� ���� (�ݺ�)
     if not fix_errors_iteratively(project_root, max_iterations=10):
-        print("[WARNING] �Ϻ� ������ �������� �� �ֽ��ϴ�. ��� �����մϴ�...")
+        logger.warning("�Ϻ� ������ �������� �� �ֽ��ϴ�. ��� �����մϴ�...")
     
     # PHASE 2: ���� �˻�
-    print(f"\n{'#'*70}")
-    print("# PHASE 2: ���� �˻�")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 2: ���� �˻�")
+    logger.info(f"{'#'*70}\n")
     
     success_logic, output_logic = run_command(
         [sys.executable, str(logic_checker), "--all"],
@@ -151,9 +154,9 @@ def main():
     )
     
     # PHASE 3: �ڵ� ��Ÿ�� ����ȭ
-    print(f"\n{'#'*70}")
-    print("# PHASE 3: �ڵ� ��Ÿ�� ����ȭ")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 3: �ڵ� ��Ÿ�� ����ȭ")
+    logger.info(f"{'#'*70}\n")
     
     success_style, _ = run_command(
         [sys.executable, str(code_quality_improver), "--all"],
@@ -163,9 +166,9 @@ def main():
     )
     
     # PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�
-    print(f"\n{'#'*70}")
-    print("# PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�")
+    logger.info(f"{'#'*70}\n")
     
     # 4-1. ��ü ���� �˻�
     success_logic2, _ = run_command(
@@ -184,9 +187,9 @@ def main():
     )
     
     # PHASE 5: ���а˻� �� ���� �н� ����
-    print(f"\n{'#'*70}")
-    print("# PHASE 5: ���а˻� �� ���� �н� ����")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 5: ���а˻� �� ���� �н� ����")
+    logger.info(f"{'#'*70}\n")
     
     # 5-1. ���а˻� (���� ���� + �ڵ� ǰ��)
     success_precise1, _ = run_command(
@@ -204,10 +207,10 @@ def main():
     )
     
     # 5-2. ���� �н� ����
-    print(f"\n[INFO] ���� �н��� �����մϴ�...")
-    print(f"[INFO] ������ ���� �۵��ϴ��� Ȯ���ϼ���.")
-    print(f"[INFO] Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
-    print()
+    logger.info(f"\n[INFO] ���� �н��� �����մϴ�...")
+    logger.info(f"������ ���� �۵��ϴ��� Ȯ���ϼ���.")
+    logger.info(f"Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
+    logger.info()
     
     success_training, _ = run_command(
         [sys.executable, str(run_training)],
@@ -217,9 +220,9 @@ def main():
     )
     
     # PHASE 6: ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����
-    print(f"\n{'#'*70}")
-    print("# PHASE 6: ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 6: ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
+    logger.info(f"{'#'*70}\n")
     
     # 6-1. ���� �˻�
     success_logic3, output_logic3 = run_command(
@@ -246,9 +249,9 @@ def main():
     )
     
     # PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����
-    print(f"\n{'#'*70}")
-    print("# PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
+    logger.info(f"{'#'*70}\n")
     
     # 7-1. ���÷��� �� �н�
     success_replay2, _ = run_command(
@@ -260,8 +263,8 @@ def main():
     
     # 7-2. ������ ���� �� �Ʒ� ����
     if success_replay2:
-        print(f"\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
-        print(f"[INFO] �߰� �Ʒ��� �����մϴ�...")
+        logger.info(f"\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
+        logger.info(f"�߰� �Ʒ��� �����մϴ�...")
         
         success_training2, _ = run_command(
             [sys.executable, str(run_training)],
@@ -271,9 +274,9 @@ def main():
         )
     
     # PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����
-    print(f"\n{'#'*70}")
-    print("# PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n{'#'*70}")
+    logger.info("# PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����")
+    logger.info(f"{'#'*70}\n")
     
     success_audit, _ = run_command(
         [sys.executable, str(strategy_audit)],
@@ -283,20 +286,20 @@ def main():
     )
     
     # ���� ���
-    print(f"\n\n{'#'*70}")
-    print("# ��ü ��ũ�÷ο� �Ϸ�")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n\n{'#'*70}")
+    logger.info("# ��ü ��ũ�÷ο� �Ϸ�")
+    logger.info(f"{'#'*70}\n")
     
-    print("���� ���:")
-    print(f"  - ���� ����: {'?' if success_error_fix else '?'}")
-    print(f"  - �ڵ� ��Ÿ�� ����ȭ: {'?' if success_style else '?'}")
-    print(f"  - ���� �˻�: {'?' if success_logic else '?'}")
-    print(f"  - ���÷��� �н�: {'?' if success_replay1 else '?'}")
-    print(f"  - ���� �н�: {'?' if success_training else '?'}")
-    print(f"  - ���÷��� �� �н�: {'?' if success_replay2 else '?'}")
-    print(f"  - �� �м�: {'?' if success_audit else '?'}")
+    logger.info("���� ���:")
+    logger.error(f"  - ���� ����: {'?' if success_error_fix else '?'}")
+    logger.info(f"  - �ڵ� ��Ÿ�� ����ȭ: {'?' if success_style else '?'}")
+    logger.info(f"  - ���� �˻�: {'?' if success_logic else '?'}")
+    logger.info(f"  - ���÷��� �н�: {'?' if success_replay1 else '?'}")
+    logger.info(f"  - ���� �н�: {'?' if success_training else '?'}")
+    logger.info(f"  - ���÷��� �� �н�: {'?' if success_replay2 else '?'}")
+    logger.info(f"  - �� �м�: {'?' if success_audit else '?'}")
     
-    print(f"\n{'#'*70}")
+    logger.info(f"\n{'#'*70}")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,9 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
+import logging
+
+logger = logging.getLogger("MakePptx")
 
 
 # ===== Color Constants =====
@@ -815,45 +818,45 @@ def build_slide_8(prs):
 
 
 def main():
-    print("[1/2] Building slides...")
+    logger.info("[1/2] Building slides...")
 
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
 
     build_slide_1(prs)
-    print("  [OK] Slide 1: Title")
+    logger.info("  [OK] Slide 1: Title")
     build_slide_2(prs)
-    print("  [OK] Slide 2: Problem")
+    logger.info("  [OK] Slide 2: Problem")
     build_slide_3(prs)
-    print("  [OK] Slide 3: Solution")
+    logger.info("  [OK] Slide 3: Solution")
     build_slide_4(prs)
-    print("  [OK] Slide 4: Sim-to-Real")
+    logger.info("  [OK] Slide 4: Sim-to-Real")
     build_slide_5(prs)
-    print("  [OK] Slide 5: 3D Simulation")
+    logger.info("  [OK] Slide 5: 3D Simulation")
     build_slide_6(prs)
-    print("  [OK] Slide 6: Dashboard")
+    logger.info("  [OK] Slide 6: Dashboard")
     build_slide_7(prs)
-    print("  [OK] Slide 7: Impact & Applications")
+    logger.info("  [OK] Slide 7: Impact & Applications")
     build_slide_8(prs)
-    print("  [OK] Slide 8: Conclusion & Q&A")
+    logger.info("  [OK] Slide 8: Conclusion & Q&A")
 
-    print("[2/2] Saving PPTX...")
+    logger.info("[2/2] Saving PPTX...")
     output_path = Path(__file__).parent / "Swarm_Net_Presentation.pptx"
     try:
         prs.save(str(output_path))
     except PermissionError:
         output_path = Path(__file__).parent / "Swarm_Net_Presentation_v2.pptx"
         prs.save(str(output_path))
-        print(f"  (Original locked, saved as v2)")
+        logger.info(f"  (Original locked, saved as v2)")
 
-    print(f"\n{'='*60}")
-    print(f"PPTX CREATED SUCCESSFULLY!")
-    print(f"   File: {output_path}")
-    print(f"   Slides: 8")
-    print(f"   Speaker notes: included")
-    print(f"   Theme: Dark Navy + Cyan/Green accents")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"PPTX CREATED SUCCESSFULLY!")
+    logger.info(f"   File: {output_path}")
+    logger.info(f"   Slides: 8")
+    logger.info(f"   Speaker notes: included")
+    logger.info(f"   Theme: Dark Navy + Cyan/Green accents")
+    logger.info(f"{'='*60}")
 
 
 if __name__ == "__main__":

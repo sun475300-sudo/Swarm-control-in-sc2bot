@@ -12,6 +12,9 @@ import time
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger("MonitorBackgroundTraining")
 
 # 프로젝트 루트 추가
 script_dir = Path(__file__).parent
@@ -108,104 +111,104 @@ class BackgroundTrainingMonitor:
         self.clear_screen()
 
         # 헤더
-        print("="*80)
-        print(" " * 20 + "? BACKGROUND TRAINING LIVE MONITOR")
-        print("="*80)
-        print(f"Monitoring Started: {datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Current Time:       {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Uptime:             {self.format_time_delta(time.time() - self.start_time)}")
-        print("="*80)
+        logger.info("="*80)
+        logger.info(" " * 20 + "? BACKGROUND TRAINING LIVE MONITOR")
+        logger.info("="*80)
+        logger.info(f"Monitoring Started: {datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(f"Current Time:       {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(f"Uptime:             {self.format_time_delta(time.time() - self.start_time)}")
+        logger.info("="*80)
 
         # 버퍼 디렉토리 상태
         buffer_info = self.get_directory_info(self.buffer_dir)
-        print("\n? BUFFER DIRECTORY (Pending Training)")
-        print("-"*80)
-        print(f"Path:        {self.buffer_dir}")
-        print(f"File Count:  {buffer_info['count']} files")
-        print(f"Total Size:  {self.format_size(buffer_info['total_size'])}")
+        logger.info("\n? BUFFER DIRECTORY (Pending Training)")
+        logger.info("-"*80)
+        logger.info(f"Path:        {self.buffer_dir}")
+        logger.info(f"File Count:  {buffer_info['count']} files")
+        logger.info(f"Total Size:  {self.format_size(buffer_info['total_size'])}")
 
         # 버퍼 변화 감지
         buffer_delta = buffer_info['count'] - self.last_buffer_count
         if buffer_delta > 0:
-            print(f"Status:      ? +{buffer_delta} new files detected!")
+            logger.info(f"Status:      ? +{buffer_delta} new files detected!")
         elif buffer_delta < 0:
-            print(f"Status:      [OK] {abs(buffer_delta)} files processed")
+            logger.info(f"Status:      [OK] {abs(buffer_delta)} files processed")
         else:
-            print(f"Status:      ○ No change")
+            logger.info(f"Status:      ○ No change")
 
         if buffer_info['files']:
-            print("\nRecent Files:")
+            logger.info("\nRecent Files:")
             for f in buffer_info['files'][:3]:
                 mtime = datetime.fromtimestamp(f.stat().st_mtime)
                 size = self.format_size(f.stat().st_size)
-                print(f"  - {f.name} ({size}, {mtime.strftime('%H:%M:%S')})")
+                logger.info(f"  - {f.name} ({size}, {mtime.strftime('%H:%M:%S')})")
 
         self.last_buffer_count = buffer_info['count']
 
         # 아카이브 디렉토리 상태
         archive_info = self.get_directory_info(self.archive_dir)
-        print("\n? ARCHIVE DIRECTORY (Processed)")
-        print("-"*80)
-        print(f"Path:        {self.archive_dir}")
-        print(f"File Count:  {archive_info['count']} files")
-        print(f"Total Size:  {self.format_size(archive_info['total_size'])}")
+        logger.info("\n? ARCHIVE DIRECTORY (Processed)")
+        logger.info("-"*80)
+        logger.info(f"Path:        {self.archive_dir}")
+        logger.info(f"File Count:  {archive_info['count']} files")
+        logger.info(f"Total Size:  {self.format_size(archive_info['total_size'])}")
 
         # 아카이브 변화 감지
         archive_delta = archive_info['count'] - self.last_archive_count
         if archive_delta > 0:
-            print(f"Status:      [OK] +{archive_delta} files archived (training completed)")
+            logger.info(f"Status:      [OK] +{archive_delta} files archived (training completed)")
         else:
-            print(f"Status:      ○ No change")
+            logger.info(f"Status:      ○ No change")
 
         if archive_info['files']:
-            print("\nRecently Archived:")
+            logger.info("\nRecently Archived:")
             for f in archive_info['files'][:3]:
                 mtime = datetime.fromtimestamp(f.stat().st_mtime)
                 size = self.format_size(f.stat().st_size)
-                print(f"  - {f.name} ({size}, {mtime.strftime('%H:%M:%S')})")
+                logger.info(f"  - {f.name} ({size}, {mtime.strftime('%H:%M:%S')})")
 
         self.last_archive_count = archive_info['count']
 
         # 모델 정보
         model_info = self.get_model_info()
-        print("\n? MODEL STATUS")
-        print("-"*80)
-        print(f"Path:        {self.model_path}")
+        logger.info("\n? MODEL STATUS")
+        logger.info("-"*80)
+        logger.info(f"Path:        {self.model_path}")
 
         if model_info['exists']:
-            print(f"Status:      [OK] Model exists")
-            print(f"Size:        {self.format_size(model_info['size'])}")
-            print(f"Modified:    {model_info['modified'].strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"Status:      [OK] Model exists")
+            logger.info(f"Size:        {self.format_size(model_info['size'])}")
+            logger.info(f"Modified:    {model_info['modified'].strftime('%Y-%m-%d %H:%M:%S')}")
 
             # 모델 업데이트 감지
             current_mtime = model_info['modified'].timestamp()
             if self.last_model_mtime > 0 and current_mtime > self.last_model_mtime:
                 time_since_update = time.time() - current_mtime
-                print(f"Update:      ? Model updated {self.format_time_delta(time_since_update)} ago!")
+                logger.info(f"Update:      ? Model updated {self.format_time_delta(time_since_update)} ago!")
 
             self.last_model_mtime = current_mtime
         else:
-            print(f"Status:      [X] Model not found")
+            logger.info(f"Status:      [X] Model not found")
 
         # 학습 로그
-        print("\n? TRAINING LOG (Last 10 lines)")
-        print("-"*80)
+        logger.info("\n? TRAINING LOG (Last 10 lines)")
+        logger.info("-"*80)
         log_lines = self.get_log_tail(10)
         if log_lines:
             for line in log_lines:
-                print(line.rstrip())
+                logger.info(line.rstrip())
         else:
-            print("(No log entries)")
+            logger.info("(No log entries)")
 
         # 푸터
-        print("\n" + "="*80)
-        print("Refresh Rate: 2 seconds | Press Ctrl+C to stop monitoring")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.info("Refresh Rate: 2 seconds | Press Ctrl+C to stop monitoring")
+        logger.info("="*80)
 
     def run(self):
         """모니터링 실행"""
-        print("Starting Background Training Monitor...")
-        print("Press Ctrl+C to stop")
+        logger.info("Starting Background Training Monitor...")
+        logger.info("Press Ctrl+C to stop")
         time.sleep(2)
 
         try:
@@ -213,8 +216,8 @@ class BackgroundTrainingMonitor:
                 self.print_dashboard()
                 time.sleep(2)
         except KeyboardInterrupt:
-            print("\n\nMonitoring stopped by user.")
-            print(f"Total monitoring time: {self.format_time_delta(time.time() - self.start_time)}")
+            logger.info("\n\nMonitoring stopped by user.")
+            logger.info(f"Total monitoring time: {self.format_time_delta(time.time() - self.start_time)}")
 
 
 def main():

@@ -3,10 +3,13 @@
 """
 Check win rate (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckWinRate")
 
 
 def main() -> None:
-    print("check_win_rate placeholder.")
+    logger.info("check_win_rate placeholder.")
 
 
 if __name__ == "__main__":

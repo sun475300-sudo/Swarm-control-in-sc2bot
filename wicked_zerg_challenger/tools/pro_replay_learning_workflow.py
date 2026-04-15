@@ -15,14 +15,17 @@ import time
 import json
 from pathlib import Path
 from typing import List, Tuple, Dict, Any, Optional
+import logging
+
+logger = logging.getLogger("ProReplayLearningWorkflow")
 
 def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600) -> Tuple[bool, str]:
     """Run a command and return success status and output"""
-    print(f"\n{'='*70}")
-    print(f"[STEP] {description}")
-    print(f"{'='*70}")
-    print(f"Command: {' '.join(cmd)}")
-    print()
+    logger.info(f"\n{'='*70}")
+    logger.info(f"{description}")
+    logger.info(f"{'='*70}")
+    logger.info(f"Command: {' '.join(cmd)}")
+    logger.info()
     
     try:
         result = subprocess.run(
@@ -37,17 +40,17 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
         )
         
         if result.stdout:
-            print(result.stdout)
+            logger.info(result.stdout)
         if result.stderr:
-            print(result.stderr, file=sys.stderr)
+            logger.info(result.stderr, file=sys.stderr)
         
         success = result.returncode == 0
         return success, result.stdout + result.stderr
     except subprocess.TimeoutExpired:
-        print(f"[WARNING] Command timed out after {timeout} seconds")
+        logger.warning(f"Command timed out after {timeout} seconds")
         return False, "Timeout"
     except Exception as e:
-        print(f"[ERROR] Failed to run command: {e}")
+        logger.error(f"Failed to run command: {e}")
         return False, str(e)
 
 
@@ -63,46 +66,46 @@ def check_learned_parameters(project_root: Path) -> Dict[str, Any]:
             data = json.load(f)
         return data
     except Exception as e:
-        print(f"[WARNING] Failed to load learned parameters: {e}")
+        logger.error(f"Failed to load learned parameters: {e}")
         return {}
 
 
 def print_learned_parameters(learned_params: Dict[str, Any]):
     """�н��� �Ķ���� ���"""
     if not learned_params:
-        print("[INFO] No learned parameters found")
+        logger.info("No learned parameters found")
         return
     
-    print(f"\n{'='*70}")
-    print("�н��� ������� �Ķ����")
-    print(f"{'='*70}")
+    logger.info(f"\n{'='*70}")
+    logger.info("�н��� ������� �Ķ����")
+    logger.info(f"{'='*70}")
     
     if isinstance(learned_params, dict):
         for key, value in learned_params.items():
             if isinstance(value, (int, float)):
-                print(f"  {key}: {value}")
+                logger.info(f"  {key}: {value}")
             elif isinstance(value, dict):
-                print(f"  {key}:")
+                logger.info(f"  {key}:")
                 for sub_key, sub_value in value.items():
                     if isinstance(sub_value, (int, float)):
-                        print(f"    {sub_key}: {sub_value}")
+                        logger.info(f"    {sub_key}: {sub_value}")
     
-    print(f"{'='*70}\n")
+    logger.info(f"{'='*70}\n")
 
 
 def main():
     project_root = Path(__file__).parent.parent
     
-    print("=" * 70)
-    print("���ΰ��̸� ���÷��� �н� �� ���� �Ʒ� ���� ��ũ�÷ο�")
-    print("=" * 70)
-    print("\n�� ��ũ�÷ο�� ���� �ܰ踦 �����մϴ�:")
-    print("  1. ���ΰ��̸� ���÷��̿��� ������� �н�")
-    print("  2. �н��� ��������� config.py�� ����")
-    print("  3. ���� �Ʒ� ���� (�н��� ������� ����)")
-    print("  4. ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м�")
-    print("  5. ���� ���� ���� �� �ݺ�")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("���ΰ��̸� ���÷��� �н� �� ���� �Ʒ� ���� ��ũ�÷ο�")
+    logger.info("=" * 70)
+    logger.info("\n�� ��ũ�÷ο�� ���� �ܰ踦 �����մϴ�:")
+    logger.info("  1. ���ΰ��̸� ���÷��̿��� ������� �н�")
+    logger.info("  2. �н��� ��������� config.py�� ����")
+    logger.info("  3. ���� �Ʒ� ���� (�н��� ������� ����)")
+    logger.info("  4. ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м�")
+    logger.info("  5. ���� ���� ���� �� �ݺ�")
+    logger.info("=" * 70)
     
     # Script paths
     replay_learner = project_root / "local_training" / "scripts" / "replay_build_order_learner.py"
@@ -118,7 +121,7 @@ def main():
     
     for name, script in scripts.items():
         if not script.exists():
-            print(f"[ERROR] {name} script not found: {script}")
+            logger.error(f"{name} script not found: {script}")
             sys.exit(1)
     
     iteration = 0
@@ -126,14 +129,14 @@ def main():
     
     while iteration < max_iterations:
         iteration += 1
-        print(f"\n\n{'#'*70}")
-        print(f"# ITERATION {iteration} / {max_iterations}")
-        print(f"{'#'*70}\n")
+        logger.info(f"\n\n{'#'*70}")
+        logger.info(f"# ITERATION {iteration} / {max_iterations}")
+        logger.info(f"{'#'*70}\n")
         
         # STEP 1: ���ΰ��̸� ���÷��̿��� ������� �н�
-        print(f"\n{'='*70}")
-        print(f"[STEP 1] ���ΰ��̸� ���÷��̿��� ������� �н� (Iteration {iteration})")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"���ΰ��̸� ���÷��̿��� ������� �н� (Iteration {iteration})")
+        logger.info(f"{'='*70}\n")
         
         success_learn, output_learn = run_command(
             [sys.executable, str(replay_learner)],
@@ -143,28 +146,28 @@ def main():
         )
         
         if not success_learn:
-            print(f"[WARNING] Replay learning failed in iteration {iteration}")
-            print("[INFO] Continuing with existing learned parameters...")
+            logger.error(f"Replay learning failed in iteration {iteration}")
+            logger.info("Continuing with existing learned parameters...")
         else:
-            print(f"[SUCCESS] Replay learning completed for iteration {iteration}")
+            logger.info(f"Replay learning completed for iteration {iteration}")
         
         # �н��� �Ķ���� Ȯ��
         learned_params = check_learned_parameters(project_root)
         if learned_params:
             print_learned_parameters(learned_params)
-            print("[INFO] Learned parameters have been automatically applied to config.py")
+            logger.info("Learned parameters have been automatically applied to config.py")
         else:
-            print("[WARNING] No learned parameters found. Using default parameters.")
+            logger.warning("No learned parameters found. Using default parameters.")
         
         # STEP 2: ���� �Ʒ� ���� (�н��� ������� ����)
-        print(f"\n{'='*70}")
-        print(f"[STEP 2] ���� �Ʒ� ���� (�н��� ������� ����) (Iteration {iteration})")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"���� �Ʒ� ���� (�н��� ������� ����) (Iteration {iteration})")
+        logger.info(f"{'='*70}\n")
         
-        print("[INFO] ���� �Ʒ��� �����մϴ�...")
-        print("[INFO] �н��� ��������� �ڵ����� ����˴ϴ�.")
-        print("[INFO] Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
-        print()
+        logger.info("���� �Ʒ��� �����մϴ�...")
+        logger.info("�н��� ��������� �ڵ����� ����˴ϴ�.")
+        logger.info("Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
+        logger.info()
         
         success_training, output_training = run_command(
             [sys.executable, str(run_training)],
@@ -174,15 +177,15 @@ def main():
         )
         
         if success_training:
-            print(f"[SUCCESS] Game training completed for iteration {iteration}")
+            logger.info(f"Game training completed for iteration {iteration}")
         else:
-            print(f"[WARNING] Game training had issues in iteration {iteration}")
-            print("[INFO] Continuing with comparison analysis...")
+            logger.warning(f"Game training had issues in iteration {iteration}")
+            logger.info("Continuing with comparison analysis...")
         
         # STEP 3: ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м�
-        print(f"\n{'='*70}")
-        print(f"[STEP 3] ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м� (Iteration {iteration})")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м� (Iteration {iteration})")
+        logger.info(f"{'='*70}\n")
         
         success_audit, output_audit = run_command(
             [sys.executable, str(strategy_audit)],
@@ -192,24 +195,24 @@ def main():
         )
         
         if success_audit:
-            print(f"[SUCCESS] Comparison analysis completed for iteration {iteration}")
+            logger.info(f"Comparison analysis completed for iteration {iteration}")
             
             # �м� ��� ��� ���
             if "critical_issues" in output_audit.lower() or "recommendations" in output_audit.lower():
-                print("\n[INFO] Analysis results:")
-                print("  - Check local_training/comparison_reports/ for detailed reports")
+                logger.info("\n[INFO] Analysis results:")
+                logger.info("  - Check local_training/comparison_reports/ for detailed reports")
         else:
-            print(f"[WARNING] Comparison analysis had issues in iteration {iteration}")
+            logger.warning(f"Comparison analysis had issues in iteration {iteration}")
         
         # STEP 4: ���� ���� Ȯ�� �� ���
-        print(f"\n{'='*70}")
-        print(f"[STEP 4] ���� ���� Ȯ�� �� ��� (Iteration {iteration})")
-        print(f"{'='*70}\n")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"���� ���� Ȯ�� �� ��� (Iteration {iteration})")
+        logger.info(f"{'='*70}\n")
         
         # �н��� �Ķ���� ��Ȯ��
         learned_params_after = check_learned_parameters(project_root)
         if learned_params_after:
-            print("[INFO] Updated learned parameters:")
+            logger.info("Updated learned parameters:")
             print_learned_parameters(learned_params_after)
         
         # �� ����Ʈ Ȯ��
@@ -218,39 +221,39 @@ def main():
             report_files = list(comparison_dir.glob("*.md"))
             if report_files:
                 latest_report = max(report_files, key=lambda p: p.stat().st_mtime)
-                print(f"[INFO] Latest comparison report: {latest_report}")
+                logger.info(f"Latest comparison report: {latest_report}")
         
-        print(f"\n{'='*70}")
-        print(f"? ITERATION {iteration} / {max_iterations} COMPLETED")
-        print(f"{'='*70}")
-        print(f"   Replay Learning: {'?' if success_learn else '?'}")
-        print(f"   Game Training: {'?' if success_training else '?'}")
-        print(f"   Comparison Analysis: {'?' if success_audit else '?'}")
-        print(f"{'='*70}")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"? ITERATION {iteration} / {max_iterations} COMPLETED")
+        logger.info(f"{'='*70}")
+        logger.info(f"   Replay Learning: {'?' if success_learn else '?'}")
+        logger.info(f"   Game Training: {'?' if success_training else '?'}")
+        logger.info(f"   Comparison Analysis: {'?' if success_audit else '?'}")
+        logger.info(f"{'='*70}")
         
         if iteration < max_iterations:
-            print(f"\n[INFO] Waiting 10 seconds before next iteration...")
+            logger.info(f"\n[INFO] Waiting 10 seconds before next iteration...")
             time.sleep(10)
     
     # ���� ���
-    print(f"\n\n{'#'*70}")
-    print("# ��ü ��ũ�÷ο� �Ϸ�")
-    print(f"{'#'*70}\n")
+    logger.info(f"\n\n{'#'*70}")
+    logger.info("# ��ü ��ũ�÷ο� �Ϸ�")
+    logger.info(f"{'#'*70}\n")
     
     # ���� �н��� �Ķ���� Ȯ��
     final_learned_params = check_learned_parameters(project_root)
     if final_learned_params:
-        print("���� �н��� ������� �Ķ����:")
+        logger.info("���� �н��� ������� �Ķ����:")
         print_learned_parameters(final_learned_params)
     
-    print("\n��� Ȯ��:")
-    print("  - �н��� �������: local_training/scripts/learned_build_orders.json")
-    print("  - �� ����Ʈ: local_training/comparison_reports/")
-    print("  - ���� ���: local_training/scripts/training_session_stats.json")
-    print("\n�߰� ����:")
-    print("  python tools\\show_learning_rate.py")
-    print("  python tools\\monitor_training_progress.py")
-    print(f"\n{'#'*70}")
+    logger.info("\n��� Ȯ��:")
+    logger.info("  - �н��� �������: local_training/scripts/learned_build_orders.json")
+    logger.info("  - �� ����Ʈ: local_training/comparison_reports/")
+    logger.info("  - ���� ���: local_training/scripts/training_session_stats.json")
+    logger.info("\n�߰� ����:")
+    logger.info("  python tools\\show_learning_rate.py")
+    logger.info("  python tools\\monitor_training_progress.py")
+    logger.info(f"\n{'#'*70}")
 
 
 if __name__ == "__main__":

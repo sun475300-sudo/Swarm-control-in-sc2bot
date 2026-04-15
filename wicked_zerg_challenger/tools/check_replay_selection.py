@@ -3,10 +3,13 @@
 """
 Check replay selection (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckReplaySelection")
 
 
 def main() -> None:
-    print("check_replay_selection placeholder.")
+    logger.info("check_replay_selection placeholder.")
 
 
 if __name__ == "__main__":

@@ -3,10 +3,13 @@
 """
 Apply code improvements (placeholder).
 """
+import logging
+
+logger = logging.getLogger("ApplyCodeImprovements")
 
 
 def main() -> None:
-    print("apply_code_improvements placeholder.")
+    logger.info("apply_code_improvements placeholder.")
 
 
 if __name__ == "__main__":

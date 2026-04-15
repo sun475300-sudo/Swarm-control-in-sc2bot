@@ -3,10 +3,13 @@
 """
 Auto classify drive (placeholder).
 """
+import logging
+
+logger = logging.getLogger("AutoClassifyDrive")
 
 
 def main() -> None:
-    print("auto_classify_drive placeholder.")
+    logger.info("auto_classify_drive placeholder.")
 
 
 if __name__ == "__main__":

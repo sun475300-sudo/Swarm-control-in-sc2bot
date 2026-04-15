@@ -8,6 +8,9 @@ Learning System Test - 학습 시스템 검증
 import json
 import os
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("TestLearningSystem")
 
 
 def create_dummy_game_data(game_id: int, result: str) -> dict:
@@ -84,7 +87,7 @@ def create_dummy_game_data(game_id: int, result: str) -> dict:
 
 def test_learning_system():
     """학습 시스템 테스트"""
-    print("[TEST] Creating dummy game data...")
+    logger.info("Creating dummy game data...")
 
     # 더미 데이터 생성 (3번 승리, 2번 패배)
     games_dir = "data/games"
@@ -102,7 +105,7 @@ def test_learning_system():
         filepath = os.path.join(games_dir, filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(game_data, f, indent=2, ensure_ascii=False)
-        print(f"  [OK] Created {filename}")
+        logger.info(f"  [OK] Created {filename}")
 
     # 2번 패배 게임
     for i in range(2):
@@ -111,16 +114,16 @@ def test_learning_system():
         filepath = os.path.join(games_dir, filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(game_data, f, indent=2, ensure_ascii=False)
-        print(f"  [OK] Created {filename}")
+        logger.info(f"  [OK] Created {filename}")
 
-    print("\n[TEST] Running knowledge updater...")
+    logger.info("\n[TEST] Running knowledge updater...")
     from knowledge_updater import KnowledgeUpdater
 
     updater = KnowledgeUpdater()
     updater.load_all_games()
     updater.analyze_and_update()
 
-    print("\n[TEST] Running reinforcement learner...")
+    logger.info("\n[TEST] Running reinforcement learner...")
     from reinforcement_learner import ReinforcementLearner
 
     learner = ReinforcementLearner()
@@ -128,19 +131,19 @@ def test_learning_system():
     learned = learner.learn_with_reinforcement()
 
     # 결과 검증
-    print("\n[TEST] Verification:")
-    print(f"  Total games: {len(learner.games_data)}")
-    print(f"  Learned patterns: {learner.learning_stats['learned_patterns']}")
-    print(f"  Rejected patterns: {learner.learning_stats['rejected_patterns']}")
+    logger.info("\n[TEST] Verification:")
+    logger.info(f"  Total games: {len(learner.games_data)}")
+    logger.info(f"  Learned patterns: {learner.learning_stats['learned_patterns']}")
+    logger.info(f"  Rejected patterns: {learner.learning_stats['rejected_patterns']}")
 
     # 학습된 타이밍 확인
     if "learned_timings" in learned and learned["learned_timings"]:
-        print("\n[TEST] Sample learned timing:")
+        logger.info("\n[TEST] Sample learned timing:")
         sample_key = list(learned["learned_timings"].keys())[0]
         sample_value = learned["learned_timings"][sample_key]
-        print(f"  {sample_key}: {sample_value}")
+        logger.info(f"  {sample_key}: {sample_value}")
 
-    print("\n[TEST] All tests passed!")
+    logger.info("\n[TEST] All tests passed!")
 
 
 if __name__ == "__main__":

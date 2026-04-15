@@ -12,6 +12,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("ReplayQualityFilter")
 
 try:
     import sc2reader
@@ -235,14 +238,14 @@ def main() -> None:
     filterer = ReplayQualityFilter(min_apm=args.min_apm)
     valid = filterer.filter_directory(Path(args.source))
 
-    print(f"Total checked: {filterer.stats.total_checked}")
-    print(f"Passed: {filterer.stats.passed_all}")
-    print(f"Failed integrity: {filterer.stats.failed_integrity}")
-    print(f"Failed duration: {filterer.stats.failed_duration}")
-    print(f"Failed APM: {filterer.stats.failed_apm}")
-    print(f"Failed opponent: {filterer.stats.failed_opponent}")
-    print(f"Failed map: {filterer.stats.failed_map}")
-    print(f"Valid replays: {len(valid)}")
+    logger.info(f"Total checked: {filterer.stats.total_checked}")
+    logger.info(f"Passed: {filterer.stats.passed_all}")
+    logger.error(f"Failed integrity: {filterer.stats.failed_integrity}")
+    logger.error(f"Failed duration: {filterer.stats.failed_duration}")
+    logger.error(f"Failed APM: {filterer.stats.failed_apm}")
+    logger.error(f"Failed opponent: {filterer.stats.failed_opponent}")
+    logger.error(f"Failed map: {filterer.stats.failed_map}")
+    logger.info(f"Valid replays: {len(valid)}")
 
 
 if __name__ == "__main__":

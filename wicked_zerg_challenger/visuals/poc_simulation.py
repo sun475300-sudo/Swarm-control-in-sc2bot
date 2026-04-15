@@ -16,6 +16,9 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger("PocSimulation")
 
 # Windows 콘솔 UTF-8 설정
 if sys.platform == "win32":
@@ -118,9 +121,9 @@ class RadarMeshNetwork:
                 position=Position(x, self.center.y, z),
                 radar_range=self.radius * 0.6,
             ))
-        print(f"  [MESH] {n}대 Sentinel 배치 완료 (반경 {self.radius}m)")
+        logger.info(f"  [MESH] {n}대 Sentinel 배치 완료 (반경 {self.radius}m)")
         for s in self.sentinels:
-            print(f"    {s.id} @ {s.position} (감지 반경: {s.radar_range:.0f}m)")
+            logger.info(f"    {s.id} @ {s.position} (감지 반경: {s.radar_range:.0f}m)")
 
     def detect(self, target_pos: Position) -> List[str]:
         """타겟 위치를 감지할 수 있는 Sentinel ID 목록 반환"""
@@ -165,7 +168,7 @@ class SessionManager:
         drone.timer_start = time.time()
         drone.status = DroneStatus.AUTHORIZED
         self.sessions[drone.id] = drone
-        print(f"  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초")
+        logger.info(f"  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초")
 
     def check_timers(self) -> List[dict]:
         """모든 세션 타이머 체크 → 이벤트 리스트 반환"""
@@ -201,21 +204,21 @@ class NotificationService:
     @staticmethod
     async def send_warning(drone_id: str, remaining: float):
         """1차 경고 알림"""
-        print(f"  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초")
-        print(f"         >>> FCM/MQTT Push 전송 완료")
+        logger.info(f"  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초")
+        logger.info(f"         >>> FCM/MQTT Push 전송 완료")
 
     @staticmethod
     async def send_expiry(drone_id: str):
         """2차 만료 알림"""
-        print(f"  [ALERT] !!! Drone {drone_id}: 비행 시간 만료! 즉시 착륙/복귀하세요!")
-        print(f"          !!! 상태: UNAUTHORIZED (적색 경고)")
-        print(f"          !!! FCM 강제 알림 전송 완료")
+        logger.info(f"  [ALERT] !!! Drone {drone_id}: 비행 시간 만료! 즉시 착륙/복귀하세요!")
+        logger.info(f"          !!! 상태: UNAUTHORIZED (적색 경고)")
+        logger.info(f"          !!! FCM 강제 알림 전송 완료")
 
     @staticmethod
     async def send_eviction(drone_id: str):
         """강제 퇴각 명령"""
-        print(f"  [EVICT] Drone {drone_id}: 강제 퇴각 명령 발행")
-        print(f"          착륙 유도 경로 전송 완료")
+        logger.info(f"  [EVICT] Drone {drone_id}: 강제 퇴각 명령 발행")
+        logger.info(f"          착륙 유도 경로 전송 완료")
 
 
 # ═══════════════════════════════════════════════════════
@@ -248,13 +251,13 @@ class AirspaceController:
                 if detecting:
                     drone.status = DroneStatus.DETECTED
                     drone.detected_by = detecting
-                    print(f"\n  [DETECT] Drone {drone.id} 감지! ({len(detecting)}대 Sentinel)")
+                    logger.info(f"\n  [DETECT] Drone {drone.id} 감지! ({len(detecting)}대 Sentinel)")
 
                     # 삼각측량
                     estimated_pos = self.mesh.triangulate(drone.position, detecting)
                     if estimated_pos:
                         drone.status = DroneStatus.IDENTIFIED
-                        print(f"  [LOCATE] 삼각측량 위치: {estimated_pos} (실제: {drone.position})")
+                        logger.info(f"  [LOCATE] 삼각측량 위치: {estimated_pos} (실제: {drone.position})")
 
                     # 세션 등록 + 타이머
                     self.session_mgr.register(drone)
@@ -265,7 +268,7 @@ class AirspaceController:
                 drone.status = DroneStatus.DEPARTED
                 self.session_mgr.remove(drone.id)
                 del self.tracked_drones[drone.id]
-                print(f"\n  [DEPART] Drone {drone.id} 공역 이탈 - 세션 종료")
+                logger.info(f"\n  [DEPART] Drone {drone.id} 공역 이탈 - 세션 종료")
 
         # (2) 타이머 체크 + 알림
         events = self.session_mgr.check_timers()
@@ -313,12 +316,12 @@ class AirspaceController:
 
 async def run_simulation():
     """전체 시나리오 시뮬레이션"""
-    print("=" * 65)
-    print("  SWARM-NET AIRSPACE MANAGER — PoC Simulation")
-    print("=" * 65)
+    logger.info("=" * 65)
+    logger.info("  SWARM-NET AIRSPACE MANAGER — PoC Simulation")
+    logger.info("=" * 65)
 
     # ── 1단계: 레이더 망 구축 ──
-    print("\n[PHASE 1] 레이더 Mesh Network 구축")
+    logger.info("\n[PHASE 1] 레이더 Mesh Network 구축")
     mesh = RadarMeshNetwork(
         center=Position(0, 100, 0),  # 중심 좌표, 고도 100m
         radius=50.0,                 # 반경 50m
@@ -352,12 +355,12 @@ async def run_simulation():
     ]
 
     # ── 2단계: 초기 탐지 ──
-    print("\n[PHASE 2] 유저 드론 탐지 및 식별")
+    logger.info("\n[PHASE 2] 유저 드론 탐지 및 식별")
     await controller.scan_cycle(user_drones)
 
     # ── 3단계: 실시간 추적 + 타이머 ──
-    print("\n[PHASE 3] 실시간 추적 및 타이머 카운트다운")
-    print("-" * 65)
+    logger.info("\n[PHASE 3] 실시간 추적 및 타이머 카운트다운")
+    logger.info("-" * 65)
 
     sim_ticks = 0
     eviction_triggered = {}
@@ -368,12 +371,12 @@ async def run_simulation():
 
         # UD-003: 10초에 공역 진입
         if sim_ticks == 8:
-            print(f"\n  --- [t={sim_ticks:3d}s] UD-003 공역 진입 ---")
+            logger.info(f"\n  --- [t={sim_ticks:3d}s] UD-003 공역 진입 ---")
             user_drones[2].position = Position(5, 85, -10)
 
         # UD-001: 20초에 자발적 이탈
         if sim_ticks == 22:
-            print(f"\n  --- [t={sim_ticks:3d}s] UD-001 자발적 이탈 ---")
+            logger.info(f"\n  --- [t={sim_ticks:3d}s] UD-001 자발적 이탈 ---")
             user_drones[0].position = Position(200, 80, 200)
 
         # 드론 위치 미세 변동 (실제로는 GPS 갱신)
@@ -398,17 +401,17 @@ async def run_simulation():
 
         # 5초마다 상태 요약 출력
         if sim_ticks % 5 == 0:
-            print(f"\n  === [t={sim_ticks:3d}s] 상태 요약 ===")
-            print(controller.get_status_summary())
+            logger.info(f"\n  === [t={sim_ticks:3d}s] 상태 요약 ===")
+            logger.info(controller.get_status_summary())
 
     # ── 최종 결과 ──
-    print("\n" + "=" * 65)
-    print("  SIMULATION COMPLETE")
-    print("=" * 65)
-    print(f"  총 이벤트: {len(controller.event_log)}건")
+    logger.info("\n" + "=" * 65)
+    logger.info("  SIMULATION COMPLETE")
+    logger.info("=" * 65)
+    logger.info(f"  총 이벤트: {len(controller.event_log)}건")
     for evt in controller.event_log:
-        print(f"    {evt['type']:10s} | Drone {evt['drone_id']} | 잔여 {evt.get('remaining', 0):.0f}s")
-    print("=" * 65)
+        logger.info(f"    {evt['type']:10s} | Drone {evt['drone_id']} | 잔여 {evt.get('remaining', 0):.0f}s")
+    logger.info("=" * 65)
 
 
 if __name__ == "__main__":

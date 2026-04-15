@@ -4,14 +4,17 @@ import sys
 from pathlib import Path
 import numpy as np
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("RunComparisonLearning")
 
 # Add project root
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 def run_comparison():
-    print("="*60)
-    print("COMPARISON LEARNING: BOT vs PRO REPLAYS")
-    print("="*60)
+    logger.info("="*60)
+    logger.info("COMPARISON LEARNING: BOT vs PRO REPLAYS")
+    logger.info("="*60)
     
     # Paths
     base_dir = Path("local_training/scripts")
@@ -19,8 +22,8 @@ def run_comparison():
     history_path = base_dir / "build_order_comparison_history.json"
     
     if not learned_builds_path.exists():
-        print(f"[ERROR] Learned data not found: {learned_builds_path}")
-        print("Please run replay_build_order_learner.py first.")
+        logger.error(f"Learned data not found: {learned_builds_path}")
+        logger.info("Please run replay_build_order_learner.py first.")
         return
 
     with open(learned_builds_path, 'r', encoding='utf-8') as f:
@@ -28,7 +31,7 @@ def run_comparison():
         
     pro_timings = pro_data.get("build_order_timings", {})
     if not pro_timings:
-        print("[WARNING] No pro timings found in learned data.")
+        logger.warning("No pro timings found in learned data.")
         return
 
     # Define Bot's "Standard" targets (Mock data or loaded from config)
@@ -44,13 +47,13 @@ def run_comparison():
         "RoachWarren": 180
     }
     
-    print(f"[INFO] Analyzed {pro_data['stats']['total_replays']} pro replays for baseline.")
+    logger.info(f"Analyzed {pro_data['stats']['total_replays']} pro replays for baseline.")
     
     comparisons = []
     
-    print("\n[COMPARISON REPORT]")
-    print(f"{'Unit/Structure':<20} | {'Pro Avg (s)':<12} | {'Bot Target (s)':<12} | {'Diff':<10} | {'Status'}")
-    print("-" * 75)
+    logger.info("\n[COMPARISON REPORT]")
+    logger.info(f"{'Unit/Structure':<20} | {'Pro Avg (s)':<12} | {'Bot Target (s)':<12} | {'Diff':<10} | {'Status'}")
+    logger.info("-" * 75)
     
     score_sum = 0
     count = 0
@@ -74,7 +77,7 @@ def run_comparison():
                 status = "POOR"
                 score = 0.2
                 
-            print(f"{unit:<20} | {pro_time:<12.1f} | {bot_time:<12.1f} | {diff:<+10.1f} | {status}")
+            logger.info(f"{unit:<20} | {pro_time:<12.1f} | {bot_time:<12.1f} | {diff:<+10.1f} | {status}")
             
             comparisons.append({
                 "unit": unit,
@@ -87,8 +90,8 @@ def run_comparison():
             count += 1
             
     avg_score = (score_sum / count) if count > 0 else 0
-    print("-" * 75)
-    print(f"OVERALL SIMILARITY SCORE: {avg_score:.1%}")
+    logger.info("-" * 75)
+    logger.info(f"OVERALL SIMILARITY SCORE: {avg_score:.1%}")
     
     # Save History
     history_entry = {
@@ -108,14 +111,14 @@ def run_comparison():
                 elif isinstance(loaded, list): # Legacy format support if any
                     history["entries"] = loaded
         except (json.JSONDecodeError, FileNotFoundError, IOError) as e:
-            print(f"[WARN] History load failed, using defaults: {e}")
+            logger.error(f"History load failed, using defaults: {e}")
             
     history["entries"].append(history_entry)
     
     with open(history_path, 'w') as f:
         json.dump(history, f, indent=2)
         
-    print(f"\n[INFO] Comparison saved to {history_path}")
+    logger.info(f"\n[INFO] Comparison saved to {history_path}")
 
 if __name__ == "__main__":
     run_comparison()

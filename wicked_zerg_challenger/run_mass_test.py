@@ -13,6 +13,9 @@ import time
 import json
 from pathlib import Path
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("RunMassTest")
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -47,7 +50,7 @@ try:
     GPU_AVAILABLE = torch.cuda.is_available()
     if GPU_AVAILABLE:
         torch.set_default_device('cuda')
-        print(f"[GPU] {torch.cuda.get_device_name(0)} - CUDA {torch.version.cuda}")
+        logger.info(f"{torch.cuda.get_device_name(0)} - CUDA {torch.version.cuda}")
 except ImportError:
     GPU_AVAILABLE = False
 
@@ -67,17 +70,17 @@ GAMES_PER_MATCHUP = 1  # 1 game per combination = 36 total games
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
     race_name = race.name
-    print(f"\n{'='*60}")
-    print(f"  GAME {game_num}/{total}")
-    print(f"  Map: {map_name} | Race: {race_name} | Difficulty: {diff_name}")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  GAME {game_num}/{total}")
+    logger.info(f"  Map: {map_name} | Race: {race_name} | Difficulty: {diff_name}")
+    logger.info(f"{'='*60}")
 
     bot = Bot(Race.Zerg, WickedZergBotProImpl(train_mode=False))
 
     try:
         map_instance = maps.get(map_name)
         if map_instance is None:
-            print(f"  [ERROR] Map '{map_name}' not found!")
+            logger.error(f"  [ERROR] Map '{map_name}' not found!")
             return {"result": "error", "error": "map_not_found"}
 
         start = time.time()
@@ -90,7 +93,7 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
 
         won = str(result) == "Result.Victory"
         result_str = "WIN" if won else "LOSS"
-        print(f"  Result: {result_str} | Time: {elapsed:.1f}s")
+        logger.info(f"  Result: {result_str} | Time: {elapsed:.1f}s")
 
         return {
             "result": result_str,
@@ -101,7 +104,7 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
             "won": won,
         }
     except Exception as e:
-        print(f"  [ERROR] {e}")
+        logger.error(f"  [ERROR] {e}")
         return {
             "result": "error",
             "map": map_name,
@@ -124,11 +127,11 @@ def main():
                     test_cases.append((map_name, race, difficulty, diff_name))
 
     total = len(test_cases)
-    print(f"\n{'='*70}")
-    print(f"  MASS TEST: {total} games")
-    print(f"  Maps: {len(MAPS)} | Races: {len(RACES)} | Difficulties: {len(DIFFICULTIES)}")
-    print(f"  GPU: {'YES - ' + torch.cuda.get_device_name(0) if GPU_AVAILABLE else 'CPU only'}")
-    print(f"{'='*70}\n")
+    logger.info(f"\n{'='*70}")
+    logger.info(f"  MASS TEST: {total} games")
+    logger.info(f"  Maps: {len(MAPS)} | Races: {len(RACES)} | Difficulties: {len(DIFFICULTIES)}")
+    logger.info(f"  GPU: {'YES - ' + torch.cuda.get_device_name(0) if GPU_AVAILABLE else 'CPU only'}")
+    logger.info(f"{'='*70}\n")
 
     results = []
     wins = 0
@@ -149,41 +152,41 @@ def main():
         # Progress
         elapsed = time.time() - start_time
         wr = wins / max(wins + losses, 1) * 100
-        print(f"  Progress: {i}/{total} | W:{wins} L:{losses} E:{errors} | WR:{wr:.0f}% | Time:{elapsed/60:.1f}m")
+        logger.error(f"  Progress: {i}/{total} | W:{wins} L:{losses} E:{errors} | WR:{wr:.0f}% | Time:{elapsed/60:.1f}m")
 
         time.sleep(2)
 
     # Final summary
     total_time = time.time() - start_time
-    print(f"\n{'='*70}")
-    print(f"  MASS TEST COMPLETE")
-    print(f"{'='*70}")
-    print(f"  Total Games: {total}")
-    print(f"  Results: {wins}W / {losses}L / {errors}E")
+    logger.info(f"\n{'='*70}")
+    logger.info(f"  MASS TEST COMPLETE")
+    logger.info(f"{'='*70}")
+    logger.info(f"  Total Games: {total}")
+    logger.error(f"  Results: {wins}W / {losses}L / {errors}E")
     if wins + losses > 0:
-        print(f"  Win Rate: {wins/(wins+losses)*100:.1f}%")
-    print(f"  Total Time: {total_time/60:.1f} minutes")
-    print(f"  Avg Time/Game: {total_time/max(len(results),1):.1f}s")
+        logger.info(f"  Win Rate: {wins/(wins+losses)*100:.1f}%")
+    logger.info(f"  Total Time: {total_time/60:.1f} minutes")
+    logger.info(f"  Avg Time/Game: {total_time/max(len(results),1):.1f}s")
 
     # Per-difficulty breakdown
-    print(f"\n  --- By Difficulty ---")
+    logger.info(f"\n  --- By Difficulty ---")
     for _, diff_name in DIFFICULTIES:
         d_results = [r for r in results if r.get("difficulty") == diff_name]
         d_wins = sum(1 for r in d_results if r.get("won"))
         d_total = sum(1 for r in d_results if r.get("result") != "error")
         wr = d_wins / max(d_total, 1) * 100
-        print(f"  {diff_name:12s}: {d_wins}W/{d_total-d_wins}L ({wr:.0f}%)")
+        logger.info(f"  {diff_name:12s}: {d_wins}W/{d_total-d_wins}L ({wr:.0f}%)")
 
     # Per-race breakdown
-    print(f"\n  --- By Race ---")
+    logger.info(f"\n  --- By Race ---")
     for race in RACES:
         r_results = [r for r in results if r.get("race") == race.name]
         r_wins = sum(1 for r in r_results if r.get("won"))
         r_total = sum(1 for r in r_results if r.get("result") != "error")
         wr = r_wins / max(r_total, 1) * 100
-        print(f"  {race.name:12s}: {r_wins}W/{r_total-r_wins}L ({wr:.0f}%)")
+        logger.info(f"  {race.name:12s}: {r_wins}W/{r_total-r_wins}L ({wr:.0f}%)")
 
-    print(f"{'='*70}")
+    logger.info(f"{'='*70}")
 
     # Save results to JSON
     report = {
@@ -201,7 +204,7 @@ def main():
     report_path = Path(__file__).parent / "mass_test_results.json"
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
-    print(f"\n  Results saved to: {report_path}")
+    logger.info(f"\n  Results saved to: {report_path}")
 
 
 if __name__ == "__main__":

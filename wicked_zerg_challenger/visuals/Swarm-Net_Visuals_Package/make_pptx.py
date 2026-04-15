@@ -9,14 +9,17 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("MakePptx")
 
 def main():
     # --- 1) Playwright로 HTML 슬라이드 8장 캡처 ---
-    print("[1/3] Capturing HTML slides with Playwright...")
+    logger.info("[1/3] Capturing HTML slides with Playwright...")
 
     html_path = Path(__file__).parent / "ppt_slide_deck.html"
     if not html_path.exists():
-        print(f"ERROR: {html_path} 파일을 찾을 수 없습니다.")
+        logger.error(f"ERROR: {html_path} 파일을 찾을 수 없습니다.")
         sys.exit(1)
 
     html_url = html_path.as_uri()
@@ -46,14 +49,14 @@ def main():
             img_path = os.path.join(tmp_dir, f"slide_{i+1}.png")
             page.screenshot(path=img_path, full_page=False)
             screenshot_paths.append(img_path)
-            print(f"  [OK] Slide {i+1} captured")
+            logger.info(f"  [OK] Slide {i+1} captured")
 
         browser.close()
 
-    print(f"  -> Screenshots saved to: {tmp_dir}")
+    logger.info(f"  -> Screenshots saved to: {tmp_dir}")
 
     # --- 2) 발표자 노트 데이터 ---
-    print("[2/3] Preparing slide data + speaker notes...")
+    logger.info("[2/3] Preparing slide data + speaker notes...")
 
     slides_data = [
         {
@@ -160,7 +163,7 @@ def main():
     ]
 
     # --- 3) python-pptx로 PPTX 생성 ---
-    print("[3/3] Building PPTX with python-pptx...")
+    logger.info("[3/3] Building PPTX with python-pptx...")
 
     from pptx import Presentation
     from pptx.util import Inches, Pt, Emu
@@ -199,17 +202,17 @@ def main():
     output_path = output_dir / "Swarm_Net_Presentation.pptx"
     prs.save(str(output_path))
 
-    print(f"\n{'='*60}")
-    print(f"PPTX CREATED SUCCESSFULLY!")
-    print(f"   File: {output_path}")
-    print(f"   Slides: {len(slides_data)}")
-    print(f"   Speaker notes included in each slide")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"PPTX CREATED SUCCESSFULLY!")
+    logger.info(f"   File: {output_path}")
+    logger.info(f"   Slides: {len(slides_data)}")
+    logger.info(f"   Speaker notes included in each slide")
+    logger.info(f"{'='*60}")
 
     # 임시 파일 정리
     import shutil
     shutil.rmtree(tmp_dir, ignore_errors=True)
-    print(f"  Temp files cleaned up")
+    logger.info(f"  Temp files cleaned up")
 
 if __name__ == "__main__":
     main()

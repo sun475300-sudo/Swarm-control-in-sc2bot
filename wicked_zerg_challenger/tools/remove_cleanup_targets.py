@@ -3,10 +3,13 @@
 """
 Remove cleanup targets (placeholder).
 """
+import logging
+
+logger = logging.getLogger("RemoveCleanupTargets")
 
 
 def main() -> None:
-    print("remove_cleanup_targets placeholder.")
+    logger.info("remove_cleanup_targets placeholder.")
 
 
 if __name__ == "__main__":

@@ -1,24 +1,27 @@
 import json
 import os
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger("AnalyzeStats")
 
 def analyze_stats():
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "local_training", "scripts", "training_session_stats.json")
     
     if not os.path.exists(file_path):
-        print("Stats file not found.")
+        logger.info("Stats file not found.")
         return
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
     except Exception as e:
-        print(f"Error reading file: {e}")
+        logger.error(f"Error reading file: {e}")
         return
 
     history = data.get("game_history", [])
     if not history:
-        print("No game history found.")
+        logger.info("No game history found.")
         return
 
     # Initialize counters
@@ -46,23 +49,23 @@ def analyze_stats():
         by_map[map_name]["total"] += 1
         if is_win: by_map[map_name]["wins"] += 1
 
-    print("\n=== Statistics Breakdown ===")
-    print(f"Total Games Analyzed: {len(history)}")
+    logger.info("\n=== Statistics Breakdown ===")
+    logger.info(f"Total Games Analyzed: {len(history)}")
 
-    print("\n[vs Race]")
+    logger.info("\n[vs Race]")
     for race, stats in sorted(by_race.items()):
         win_rate = (stats["wins"] / stats["total"]) * 100 if stats["total"] > 0 else 0
-        print(f"  {race:<10}: {stats['wins']:>3}W {stats['total']-stats['wins']:>3}L ({win_rate:.1f}%)")
+        logger.info(f"  {race:<10}: {stats['wins']:>3}W {stats['total']-stats['wins']:>3}L ({win_rate:.1f}%)")
 
-    print("\n[vs Difficulty]")
+    logger.info("\n[vs Difficulty]")
     for diff, stats in sorted(by_difficulty.items()):
         win_rate = (stats["wins"] / stats["total"]) * 100 if stats["total"] > 0 else 0
-        print(f"  {diff:<15}: {stats['wins']:>3}W {stats['total']-stats['wins']:>3}L ({win_rate:.1f}%)")
+        logger.info(f"  {diff:<15}: {stats['wins']:>3}W {stats['total']-stats['wins']:>3}L ({win_rate:.1f}%)")
 
-    print("\n[on Map]")
+    logger.info("\n[on Map]")
     for map_name, stats in sorted(by_map.items()):
         win_rate = (stats["wins"] / stats["total"]) * 100 if stats["total"] > 0 else 0
-        print(f"  {map_name:<20}: {stats['wins']:>3}W {stats['total']-stats['wins']:>3}L ({win_rate:.1f}%)")
+        logger.info(f"  {map_name:<20}: {stats['wins']:>3}W {stats['total']-stats['wins']:>3}L ({win_rate:.1f}%)")
 
 if __name__ == "__main__":
     analyze_stats()

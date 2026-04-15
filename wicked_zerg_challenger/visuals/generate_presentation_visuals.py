@@ -11,6 +11,9 @@ import os
 import math
 import numpy as np
 import plotly.graph_objects as go
+import logging
+
+logger = logging.getLogger("GeneratePresentationVisuals")
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 DESKTOP_DIR = r"c:\Users\sun47\Desktop\캡스톤 디자인\visuals"
@@ -19,7 +22,7 @@ DESKTOP_DIR = r"c:\Users\sun47\Desktop\캡스톤 디자인\visuals"
 def save(fig, name):
     path = os.path.join(OUTPUT_DIR, f"{name}.html")
     fig.write_html(path, include_plotlyjs="cdn")
-    print(f"  -> {path}")
+    logger.info(f"  -> {path}")
     if os.path.isdir(DESKTOP_DIR):
         desktop_path = os.path.join(DESKTOP_DIR, f"{name}.html")
         fig.write_html(desktop_path, include_plotlyjs="cdn")
@@ -39,7 +42,7 @@ def capstone_cost_comparison():
     실물 드론 R&D vs SC2 시뮬레이션 비용/위험/시간 비교
     드라마틱한 스케일 차이를 3D 막대 차트로 강조
     """
-    print("[캡스톤 1] 비용/위험 비교 인포그래픽")
+    logger.info("비용/위험 비교 인포그래픽")
 
     fig = go.Figure()
 
@@ -171,7 +174,7 @@ def capstone_digital_twin():
     SC2 엔진의 시뮬레이션 역량을 레이더(spider) 차트로 비교
     SC2 vs 전용 시뮬레이터(Gazebo) vs 실제 환경
     """
-    print("[캡스톤 2] SC2 = Digital Twin 레이더 차트")
+    logger.info("SC2 = Digital Twin 레이더 차트")
 
     fig = go.Figure()
 
@@ -265,7 +268,7 @@ def capstone_llm_integration():
     자연어 지휘관(Commander) → AgentRouter → 각 모듈 제어
     3D 계층 다이어그램 + 데이터 흐름 곡선
     """
-    print("[캡스톤 3] LLM + SC2 통합 아키텍처")
+    logger.info("LLM + SC2 통합 아키텍처")
 
     fig = go.Figure()
 
@@ -459,7 +462,7 @@ def capstone_self_healing():
     Authority Mode 5단계 상태 전이 + 자가 복구 순환
     BALANCED → ECONOMY → STRATEGY → COMBAT → EMERGENCY → 복구 → BALANCED
     """
-    print("[캡스톤 4] 자가 복구 로직 흐름도")
+    logger.info("자가 복구 로직 흐름도")
 
     fig = go.Figure()
 
@@ -644,7 +647,7 @@ def ir_market_painpoint():
     드론 군집 R&D의 3대 난제를 3D 인포그래픽으로 시각화
     비용 / 시간 / 위험
     """
-    print("[IR 1] 시장 페인포인트 시각화")
+    logger.info("시장 페인포인트 시각화")
 
     fig = go.Figure()
 
@@ -786,7 +789,7 @@ def ir_virtual_testbed():
     비즈니스 친화적 3블록 아키텍처:
     Virtual Testbed → AI Brain (C2) → Real Deployment
     """
-    print("[IR 2] Virtual Testbed + AI C2 솔루션 개요")
+    logger.info("Virtual Testbed + AI C2 솔루션 개요")
 
     fig = go.Figure()
 
@@ -952,7 +955,7 @@ def ir_roi_analysis():
     기존 방식 vs 우리 솔루션 비용/기간 비교 + 절감률
     깔끔한 2D 그룹 바 차트 (투자자가 보기 편하게)
     """
-    print("[IR 3] ROI 분석 차트")
+    logger.info("ROI 분석 차트")
 
     from plotly.subplots import make_subplots
 
@@ -1106,7 +1109,7 @@ def ir_business_roadmap():
     3단계 비즈니스 확장 타임라인
     Phase 1: B2B SaaS → Phase 2: 군 납품 → Phase 3: 글로벌 확장
     """
-    print("[IR 4] 비즈니스 모델 & 로드맵")
+    logger.info("비즈니스 모델 & 로드맵")
 
     fig = go.Figure()
 
@@ -1289,7 +1292,7 @@ def ir_business_roadmap():
 
 def section2_drone_growth():
     """드론 등록 수 증가 추이 + 성장률 이중축 차트"""
-    print("[섹션2-1] 드론 등록 수 폭발적 증가 추이")
+    logger.info("[섹션2-1] 드론 등록 수 폭발적 증가 추이")
 
     from plotly.subplots import make_subplots
 
@@ -1373,7 +1376,7 @@ def section2_drone_growth():
 
 def section2_problem_heatmap():
     """4대 문제 × 4대 환경 심각도 히트맵"""
-    print("[섹션2-2] 문제 심각도 히트맵")
+    logger.info("[섹션2-2] 문제 심각도 히트맵")
 
     problems = [
         "수동 운용\n(인적 오류)",
@@ -1444,7 +1447,7 @@ def section2_problem_heatmap():
 
 def section2_approval_flow():
     """현행 수동 프로세스 vs Swarm-Net 자동화 비교 타임라인"""
-    print("[섹션2-3] 비행 승인 절차 Before/After")
+    logger.info("[섹션2-3] 비행 승인 절차 Before/After")
 
     fig = go.Figure()
 
@@ -1535,7 +1538,7 @@ def section2_approval_flow():
 
 def section3_kpi_dashboard():
     """4개 핵심 성과 지표 게이지 대시보드"""
-    print("[섹션3-1] KPI 대시보드")
+    logger.info("[섹션3-1] KPI 대시보드")
 
     from plotly.subplots import make_subplots
 
@@ -1655,7 +1658,7 @@ def section3_kpi_dashboard():
 
 def section3_gantt_timeline():
     """Phase 1~3 구현 일정 + 산출물 마일스톤"""
-    print("[섹션3-2] 구현 일정 간트 차트")
+    logger.info("[섹션3-2] 구현 일정 간트 차트")
 
     import plotly.figure_factory as ff
 
@@ -1746,7 +1749,7 @@ def section3_gantt_timeline():
 
 def section3_e2e_pipeline():
     """탐지 → 식별 → 시간 할당 → 경고 → 퇴각 유도 5단계 자동화 파이프라인"""
-    print("[섹션3-3] End-to-End 자동화 관제 파이프라인")
+    logger.info("[섹션3-3] End-to-End 자동화 관제 파이프라인")
 
     fig = go.Figure()
 
@@ -1845,7 +1848,7 @@ def section3_e2e_pipeline():
 
 def section3_sensor_fusion():
     """RF + Remote ID + Vision AI → Kalman Filter → 통합 탐지 Sankey 다이어그램"""
-    print("[섹션3-4] 3중 센서 퓨전 파이프라인")
+    logger.info("[섹션3-4] 3중 센서 퓨전 파이프라인")
 
     fig = go.Figure(data=[go.Sankey(
         arrangement="snap",
@@ -1928,7 +1931,7 @@ def section3_sensor_fusion():
 
 def section3_4layer_architecture():
     """공중-지상-백엔드-사용자 4계층 시스템 3D 아키텍처"""
-    print("[섹션3-5] 4계층 시스템 아키텍처")
+    logger.info("[섹션3-5] 4계층 시스템 아키텍처")
 
     fig = go.Figure()
 
@@ -2083,7 +2086,7 @@ def section3_4layer_architecture():
 
 def section5_expected_effects():
     """현행 시스템 vs Swarm-Net 4대 효과 비교 수평 막대"""
-    print("[섹션5-0] 기대 효과 Before/After 비교")
+    logger.info("[섹션5-0] 기대 효과 Before/After 비교")
 
     metrics = [
         "확장 비용\n(배율)",
@@ -2180,7 +2183,7 @@ def section5_expected_effects():
 
 def section5_application_matrix():
     """4대 적용 분야 × 5대 역량 히트맵"""
-    print("[섹션5-1] 적용 분야 히트맵")
+    logger.info("[섹션5-1] 적용 분야 히트맵")
 
     domains = ["법 집행", "상업/민간", "국방/방산", "공공 안전"]
     capabilities = ["탐지 정확도", "실시간 통제", "자동 대응",
@@ -2251,7 +2254,7 @@ def section5_application_matrix():
 
 def section5_market_tam():
     """글로벌 드론 시장 + 국내 시장 + Swarm-Net TAM"""
-    print("[섹션5-2] 글로벌 시장 규모 및 TAM 성장")
+    logger.info("[섹션5-2] 글로벌 시장 규모 및 TAM 성장")
 
     from plotly.subplots import make_subplots
 

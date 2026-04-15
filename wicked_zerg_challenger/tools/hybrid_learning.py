@@ -21,6 +21,9 @@ import zipfile
 from pathlib import Path
 from datetime import datetime
 from typing import List, Optional
+import logging
+
+logger = logging.getLogger("HybridLearning")
 
 # Add project root to path for imports
 script_dir = Path(__file__).parent
@@ -50,7 +53,7 @@ class ReplayPipeline:
         
     def _log(self, msg: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
-        print(f"[{timestamp}] [MLOps] {msg}")
+        logger.info(f"[{timestamp}] [MLOps] {msg}")
 
     def scrape_replay_links(self, limit: int = 5) -> List[str]:
         """Scrape replay detail URLs from Spawning Tool"""

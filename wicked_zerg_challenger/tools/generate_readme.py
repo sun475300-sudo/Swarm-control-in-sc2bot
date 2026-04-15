@@ -3,10 +3,13 @@
 """
 Generate README (placeholder).
 """
+import logging
+
+logger = logging.getLogger("GenerateReadme")
 
 
 def main() -> None:
-    print("generate_readme placeholder.")
+    logger.info("generate_readme placeholder.")
 
 
 if __name__ == "__main__":

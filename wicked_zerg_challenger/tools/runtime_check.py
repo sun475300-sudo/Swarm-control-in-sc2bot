@@ -3,10 +3,13 @@
 """
 Runtime check (placeholder).
 """
+import logging
+
+logger = logging.getLogger("RuntimeCheck")
 
 
 def main() -> None:
-    print("runtime_check placeholder.")
+    logger.info("runtime_check placeholder.")
 
 
 if __name__ == "__main__":

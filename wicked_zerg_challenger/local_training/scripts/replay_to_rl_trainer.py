@@ -5,6 +5,9 @@ Replay to RL Trainer
 """
 
 import sc2reader
+import logging
+
+logger = logging.getLogger("ReplayToRlTrainer")
 # from sc2reader.events.game import UnitBornEvent, UnitInitEvent, UnitDiedEvent, PlayerStatsEvent
 import numpy as np
 import os
@@ -133,11 +136,11 @@ STRATEGY_MAP = {
 }
 
 def train_from_replays(replay_dir, model_path=None):
-    print("Initializing RLAgent...")
+    logger.info("Initializing RLAgent...")
     agent = RLAgent(model_path=model_path)
     
     replay_files = list(Path(replay_dir).glob("*.SC2Replay"))
-    print(f"Found {len(replay_files)} replays.")
+    logger.info(f"Found {len(replay_files)} replays.")
     
     experiences = []
     processed_replays = []
@@ -166,10 +169,10 @@ def train_from_replays(replay_dir, model_path=None):
                 
             if winner is None: continue
             
-            print(f"Processing {r_path.name} (Winner: {winner.name})...")
+            logger.info(f"Processing {r_path.name} (Winner: {winner.name})...")
             tracker = None
             tracker = ReplayStateTracker(winner.pid)
-            print(f"  [DEBUG] Tracker initialized: {tracker}")
+            logger.debug(f"  [DEBUG] Tracker initialized: {tracker}")
             
             states = []
             actions = []
@@ -194,7 +197,7 @@ def train_from_replays(replay_dir, model_path=None):
             stats_events = [e for e in replay.events if 'PlayerStatsEvent' in type(e).__name__ and e.player.pid == winner.pid]
             
             if not stats_events:
-                print("  -> No stats events, skipping.")
+                logger.info("  -> No stats events, skipping.")
                 continue
                 
             for stat in stats_events:
@@ -226,18 +229,18 @@ def train_from_replays(replay_dir, model_path=None):
             processed_replays.append(r_path)
             
         except Exception as e:
-            print(f"Error processing {r_path.name}: {e}")
+            logger.error(f"Error processing {r_path.name}: {e}")
             
     # Train
     if experiences:
-        print(f"Training on {len(experiences)} games...")
+        logger.info(f"Training on {len(experiences)} games...")
         
         # User request: Train each replay 5 times
         epochs = 5
         for i in range(epochs):
-            print(f"--- Epoch {i+1}/{epochs} ---")
+            logger.info(f"--- Epoch {i+1}/{epochs} ---")
             result = agent.train_from_batch(experiences)
-            print(f"  Result: {result}")
+            logger.info(f"  Result: {result}")
             
         agent.save_model()
         
@@ -247,7 +250,7 @@ def train_from_replays(replay_dir, model_path=None):
             completed_dir.mkdir(parents=True, exist_ok=True)
             import shutil
             
-            print(f"Moving {len(processed_replays)} processed replays to {completed_dir}...")
+            logger.info(f"Moving {len(processed_replays)} processed replays to {completed_dir}...")
             for r_path in processed_replays:
                 try:
                     dest = completed_dir / r_path.name
@@ -259,15 +262,15 @@ def train_from_replays(replay_dir, model_path=None):
                         dest = completed_dir / f"{stem}_{int(timestamp)}{suffix}"
                         
                     shutil.move(str(r_path), str(dest))
-                    print(f"  Moved: {r_path.name}")
+                    logger.info(f"  Moved: {r_path.name}")
                 except Exception as e:
-                    print(f"  Failed to move {r_path.name}: {e}")
+                    logger.error(f"  Failed to move {r_path.name}: {e}")
                     
         except Exception as e:
-            print(f"Error creating completed directory: {e}")
+            logger.error(f"Error creating completed directory: {e}")
             
     else:
-        print("No valid experiences extracted.")
+        logger.info("No valid experiences extracted.")
 
 if __name__ == "__main__":
     import argparse

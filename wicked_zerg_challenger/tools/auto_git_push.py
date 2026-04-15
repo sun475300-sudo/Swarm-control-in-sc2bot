@@ -3,10 +3,13 @@
 """
 Auto git push helper (placeholder).
 """
+import logging
+
+logger = logging.getLogger("AutoGitPush")
 
 
 def main() -> None:
-    print("auto_git_push placeholder.")
+    logger.info("auto_git_push placeholder.")
 
 
 if __name__ == "__main__":

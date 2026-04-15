@@ -11,6 +11,9 @@ import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
+import logging
+
+logger = logging.getLogger("LogicChecker")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -218,10 +221,10 @@ def main():
 
     args = parser.parse_args()
 
-    print("=" * 70)
-    print("LOGIC CHECKER")
-    print("=" * 70)
-    print()
+    logger.info("=" * 70)
+    logger.info("LOGIC CHECKER")
+    logger.info("=" * 70)
+    logger.info()
 
     checker = LogicChecker()
 
@@ -232,50 +235,50 @@ def main():
             duplicate = checker.check_duplicate_logic(file_path)
             bugs = checker.check_bug_patterns(file_path)
 
-            print(f"[FILE] {args.file}")
-            print(f"  overlapping commands: {len(overlapping)}")
-            print(f"  duplicate logic: {len(duplicate)}")
-            print(f"  bug patterns: {len(bugs)}")
+            logger.info(f"{args.file}")
+            logger.info(f"  overlapping commands: {len(overlapping)}")
+            logger.info(f"  duplicate logic: {len(duplicate)}")
+            logger.info(f"  bug patterns: {len(bugs)}")
 
             if overlapping:
-                print("\nOverlapping commands:")
+                logger.info("\nOverlapping commands:")
                 for issue in overlapping:
-                    print(f"  - {issue['message']}")
+                    logger.info(f"  - {issue['message']}")
 
             if duplicate:
-                print("\nDuplicate logic:")
+                logger.info("\nDuplicate logic:")
                 for issue in duplicate:
-                    print(f"  - {issue['message']}")
+                    logger.info(f"  - {issue['message']}")
 
             if bugs:
-                print("\nBug patterns:")
+                logger.info("\nBug patterns:")
                 for issue in bugs:
-                    print(f"  - {issue['message']}")
+                    logger.info(f"  - {issue['message']}")
 
         else:
-            print(f"[ERROR] File not found: {args.file}")
+            logger.error(f"File not found: {args.file}")
     elif args.all:
-        print("Scanning all files...")
+        logger.info("Scanning all files...")
         results = checker.scan_all()
-        print(f"\nScan complete: {results['total_files']} files")
-        print(f"overlapping commands: {len(results['overlapping_commands'])}")
-        print(f"duplicate logic: {len(results['duplicate_logic'])}")
-        print(f"bug patterns: {len(results['bug_patterns'])}")
+        logger.info(f"\nScan complete: {results['total_files']} files")
+        logger.info(f"overlapping commands: {len(results['overlapping_commands'])}")
+        logger.info(f"duplicate logic: {len(results['duplicate_logic'])}")
+        logger.info(f"bug patterns: {len(results['bug_patterns'])}")
 
         if results["overlapping_commands"]:
-            print("\nOverlapping command findings:")
+            logger.info("\nOverlapping command findings:")
             for issue in results["overlapping_commands"][:10]:
-                print(f"  - {issue['file']}: {issue['message']}")
+                logger.info(f"  - {issue['file']}: {issue['message']}")
 
         if results["duplicate_logic"]:
-            print("\nDuplicate logic findings:")
+            logger.info("\nDuplicate logic findings:")
             for issue in results["duplicate_logic"][:10]:
-                print(f"  - {issue['file']}: {issue['message']}")
+                logger.info(f"  - {issue['file']}: {issue['message']}")
 
         if results["bug_patterns"]:
-            print("\nBug pattern findings:")
+            logger.info("\nBug pattern findings:")
             for issue in results["bug_patterns"][:10]:
-                print(f"  - {issue['file']}: {issue['message']}")
+                logger.info(f"  - {issue['file']}: {issue['message']}")
     else:
         parser.print_help()
 

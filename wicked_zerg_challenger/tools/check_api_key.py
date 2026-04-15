@@ -3,10 +3,13 @@
 """
 Check API key (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckApiKey")
 
 
 def main() -> None:
-    print("check_api_key placeholder.")
+    logger.info("check_api_key placeholder.")
 
 
 if __name__ == "__main__":

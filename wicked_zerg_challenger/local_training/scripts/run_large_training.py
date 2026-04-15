@@ -19,6 +19,9 @@ import sys
 import time
 
 import numpy as np
+import logging
+
+logger = logging.getLogger("RunLargeTraining")
 
 # 프로젝트 루트를 path에 추가
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -37,9 +40,9 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     agent = PPOAgent(learning_rate=3e-4, gamma=0.99, ppo_epochs=4, batch_size=64)
     env = SC2ZergEnv(max_frames=max_frames)
 
-    print("╔══════════════════════════════════════════════════════════════════════╗")
-    print(f"║  PPO Agent Training — {n_episodes} Episodes (max_frames={max_frames})")
-    print("╠══════════════════════════════════════════════════════════════════════╣")
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗")
+    logger.info(f"║  PPO Agent Training — {n_episodes} Episodes (max_frames={max_frames})")
+    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
 
     wins = 0
     total_rewards = []
@@ -92,7 +95,7 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         result_str = "[OK] WIN " if won else "[X] LOSS"
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
-        print(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
+        logger.info(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
               f"AvgR={avg_r:6.1f} │ VL={vl:7.2f} │ WR={wr:4.1f}% │ {result_str} ║")
 
         # 10에피소드마다 체크포인트
@@ -101,18 +104,18 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
             agent.save_model(cp_path)
             elapsed = time.time() - t0
             eps_per_sec = ep / elapsed
-            print(f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s, {eps_per_sec:.1f} ep/s) ──")
+            logger.info(f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s, {eps_per_sec:.1f} ep/s) ──")
 
     # 최종 저장
     final_path = os.path.join(save_dir, f"ppo_{n_episodes}ep.npz")
     agent.save_model(final_path)
 
     elapsed = time.time() - t0
-    print("╠══════════════════════════════════════════════════════════════════════╣")
-    print(f"║  PPO 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)")
-    print(f"║  is_trained={agent.is_trained()}, deployment={agent.is_ready_for_deployment()}")
-    print(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
-    print("╚══════════════════════════════════════════════════════════════════════╝")
+    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
+    logger.info(f"║  PPO 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)")
+    logger.info(f"║  is_trained={agent.is_trained()}, deployment={agent.is_ready_for_deployment()}")
+    logger.info(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝")
 
     return {
         "agent": "PPO",
@@ -135,9 +138,9 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     agent = RLAgent(learning_rate=0.001)
     env = SC2ZergEnv(max_frames=max_frames)
 
-    print("╔══════════════════════════════════════════════════════════════════════╗")
-    print(f"║  RL Agent (REINFORCE) Training — {n_episodes} Episodes")
-    print("╠══════════════════════════════════════════════════════════════════════╣")
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗")
+    logger.info(f"║  RL Agent (REINFORCE) Training — {n_episodes} Episodes")
+    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
 
     wins = 0
     total_rewards = []
@@ -186,25 +189,25 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
         loss = metrics.get("loss", 0) if isinstance(metrics, dict) else 0
-        print(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
+        logger.info(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
               f"AvgR={avg_r:6.1f} │ L={loss:7.4f} │ WR={wr:4.1f}% │ {result_str} ║")
 
         if ep % 10 == 0:
             cp_path = os.path.join(save_dir, f"rl_ep{ep}.npz")
             agent.save_model(cp_path)
             elapsed = time.time() - t0
-            print(f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s) ──")
+            logger.info(f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s) ──")
 
     final_path = os.path.join(save_dir, f"rl_{n_episodes}ep.npz")
     agent.save_model(final_path)
 
     elapsed = time.time() - t0
     ready = agent.is_ready_for_deployment()
-    print("╠══════════════════════════════════════════════════════════════════════╣")
-    print(f"║  RL 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)")
-    print(f"║  is_trained={agent.is_trained()}, deployment={ready}")
-    print(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
-    print("╚══════════════════════════════════════════════════════════════════════╝")
+    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
+    logger.info(f"║  RL 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)")
+    logger.info(f"║  is_trained={agent.is_trained()}, deployment={ready}")
+    logger.info(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝")
 
     return {
         "agent": "RL",

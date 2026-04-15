@@ -3,10 +3,13 @@
 """
 Setup verification (placeholder).
 """
+import logging
+
+logger = logging.getLogger("SetupVerify")
 
 
 def main() -> None:
-    print("setup_verify placeholder.")
+    logger.info("setup_verify placeholder.")
 
 
 if __name__ == "__main__":

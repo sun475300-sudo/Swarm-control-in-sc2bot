@@ -14,6 +14,9 @@ import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple
+import logging
+
+logger = logging.getLogger("CleanupPycache")
 
 
 def find_pycache_dirs(root_dir: str) -> List[Path]:
@@ -65,85 +68,85 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     Returns:
         (삭제된 디렉토리 수, 삭제된 파일 수, 총 바이트 수)
     """
-    print(f"\n{'='*60}")
-    print(f"{'[DRY RUN] ' if dry_run else ''}Cleanup Report for: {root_dir}")
-    print(f"{'='*60}\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"{'[DRY RUN] ' if dry_run else ''}Cleanup Report for: {root_dir}")
+    logger.info(f"{'='*60}\n")
 
     dirs_deleted = 0
     files_deleted = 0
     total_bytes = 0
 
     # 1. __pycache__ 디렉토리
-    print("1. __pycache__ 디렉토리:")
-    print("-" * 40)
+    logger.info("1. __pycache__ 디렉토리:")
+    logger.info("-" * 40)
     pycache_dirs = find_pycache_dirs(root_dir)
     for d in pycache_dirs:
         size = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
         total_bytes += size
-        print(f"  [DIR] {d} ({size:,} bytes)")
+        logger.info(f"  [DIR] {d} ({size:,} bytes)")
         if not dry_run:
             try:
                 shutil.rmtree(d)
                 dirs_deleted += 1
             except Exception as e:
-                print(f"    [ERROR] Failed to delete: {e}")
+                logger.error(f"    [ERROR] Failed to delete: {e}")
         else:
             dirs_deleted += 1
-    print(f"  Total: {len(pycache_dirs)} directories\n")
+    logger.info(f"  Total: {len(pycache_dirs)} directories\n")
 
     # 2. .pyc 파일 (pycache 외부에 있는 것들)
-    print("2. Standalone .pyc files:")
-    print("-" * 40)
+    logger.info("2. Standalone .pyc files:")
+    logger.info("-" * 40)
     pyc_files = find_pyc_files(root_dir)
     # pycache 내부 파일은 이미 삭제되었으므로 제외
     standalone_pyc = [f for f in pyc_files if "__pycache__" not in str(f)]
     for f in standalone_pyc:
         size = f.stat().st_size
         total_bytes += size
-        print(f"  [FILE] {f} ({size:,} bytes)")
+        logger.info(f"  [FILE] {f} ({size:,} bytes)")
         if not dry_run:
             try:
                 f.unlink()
                 files_deleted += 1
             except Exception as e:
-                print(f"    [ERROR] Failed to delete: {e}")
+                logger.error(f"    [ERROR] Failed to delete: {e}")
         else:
             files_deleted += 1
-    print(f"  Total: {len(standalone_pyc)} files\n")
+    logger.info(f"  Total: {len(standalone_pyc)} files\n")
 
     # 3. 임시 파일
-    print("3. Temporary files (.tmp, .bak, .old, .swp):")
-    print("-" * 40)
+    logger.info("3. Temporary files (.tmp, .bak, .old, .swp):")
+    logger.info("-" * 40)
     temp_files = find_temp_files(root_dir)
     for f in temp_files:
         size = f.stat().st_size
         total_bytes += size
-        print(f"  [FILE] {f} ({size:,} bytes)")
+        logger.info(f"  [FILE] {f} ({size:,} bytes)")
         if not dry_run:
             try:
                 f.unlink()
                 files_deleted += 1
             except Exception as e:
-                print(f"    [ERROR] Failed to delete: {e}")
+                logger.error(f"    [ERROR] Failed to delete: {e}")
         else:
             files_deleted += 1
-    print(f"  Total: {len(temp_files)} files\n")
+    logger.info(f"  Total: {len(temp_files)} files\n")
 
     # 요약
-    print(f"{'='*60}")
-    print("SUMMARY:")
-    print(f"{'='*60}")
-    print(f"  Directories to delete: {len(pycache_dirs)}")
-    print(f"  Files to delete: {len(standalone_pyc) + len(temp_files)}")
-    print(f"  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)")
+    logger.info(f"{'='*60}")
+    logger.info("SUMMARY:")
+    logger.info(f"{'='*60}")
+    logger.info(f"  Directories to delete: {len(pycache_dirs)}")
+    logger.info(f"  Files to delete: {len(standalone_pyc) + len(temp_files)}")
+    logger.info(f"  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)")
 
     if dry_run:
-        print(f"\n[DRY RUN] No files were actually deleted.")
-        print(f"Run with --execute to perform actual cleanup.")
+        logger.info(f"\n[DRY RUN] No files were actually deleted.")
+        logger.info(f"Run with --execute to perform actual cleanup.")
     else:
-        print(f"\n[COMPLETED] Cleanup finished!")
-        print(f"  Directories deleted: {dirs_deleted}")
-        print(f"  Files deleted: {files_deleted}")
+        logger.info(f"\n[COMPLETED] Cleanup finished!")
+        logger.info(f"  Directories deleted: {dirs_deleted}")
+        logger.info(f"  Files deleted: {files_deleted}")
 
     return dirs_deleted, files_deleted, total_bytes
 

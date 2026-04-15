@@ -3,10 +3,13 @@
 """
 Download and train (placeholder).
 """
+import logging
+
+logger = logging.getLogger("DownloadAndTrain")
 
 
 def main() -> None:
-    print("download_and_train placeholder.")
+    logger.info("download_and_train placeholder.")
 
 
 if __name__ == "__main__":

@@ -16,14 +16,17 @@ import sys
 import time
 from pathlib import Path
 from typing import List, Tuple
+import logging
+
+logger = logging.getLogger("ComprehensiveTrainingWorkflow5xV2")
 
 def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600) -> Tuple[bool, str]:
     """Run a command and return success status and output"""
-    print(f"\n{'='*70}")
-    print(f"[STEP] {description}")
-    print(f"{'='*70}")
-    print(f"Command: {' '.join(cmd)}")
-    print()
+    logger.info(f"\n{'='*70}")
+    logger.info(f"{description}")
+    logger.info(f"{'='*70}")
+    logger.info(f"Command: {' '.join(cmd)}")
+    logger.info()
     
     try:
         result = subprocess.run(
@@ -38,33 +41,33 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
         )
         
         if result.stdout:
-            print(result.stdout)
+            logger.info(result.stdout)
         if result.stderr:
-            print(result.stderr, file=sys.stderr)
+            logger.info(result.stderr, file=sys.stderr)
         
         success = result.returncode == 0
         return success, result.stdout + result.stderr
     except subprocess.TimeoutExpired:
-        print(f"[WARNING] Command timed out after {timeout} seconds")
+        logger.warning(f"Command timed out after {timeout} seconds")
         return False, "Timeout"
     except Exception as e:
-        print(f"[ERROR] Failed to run command: {e}")
+        logger.error(f"Failed to run command: {e}")
         return False, str(e)
 
 def main():
     project_root = Path(__file__).parent.parent
     
-    print("=" * 70)
-    print("COMPREHENSIVE TRAINING WORKFLOW - 5 ITERATIONS (VERSION 2)")
-    print("=" * 70)
-    print("\nThis workflow will execute:")
-    print("  1. Auto error fixing (tools/auto_error_fixer.py)")
-    print("  2. Code quality check (tools/code_quality_improver.py)")
-    print("  3. Game training (run_with_training.py)")
-    print("  4. Replay build order learning (replay_build_order_learner.py)")
-    print("  5. Replay comparison analysis (strategy_audit.py)")
-    print("  6. Repeat 5 times")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("COMPREHENSIVE TRAINING WORKFLOW - 5 ITERATIONS (VERSION 2)")
+    logger.info("=" * 70)
+    logger.info("\nThis workflow will execute:")
+    logger.error("  1. Auto error fixing (tools/auto_error_fixer.py)")
+    logger.info("  2. Code quality check (tools/code_quality_improver.py)")
+    logger.info("  3. Game training (run_with_training.py)")
+    logger.info("  4. Replay build order learning (replay_build_order_learner.py)")
+    logger.info("  5. Replay comparison analysis (strategy_audit.py)")
+    logger.info("  6. Repeat 5 times")
+    logger.info("=" * 70)
     
     # Script paths
     auto_error_fixer = project_root / "tools" / "auto_error_fixer.py"
@@ -84,20 +87,20 @@ def main():
     
     for name, script in scripts.items():
         if not script.exists():
-            print(f"[ERROR] {name} script not found: {script}")
+            logger.error(f"{name} script not found: {script}")
             sys.exit(1)
     
     successful_iterations = 0
     
     for iteration in range(1, 6):
-        print(f"\n\n{'#'*70}")
-        print(f"# ITERATION {iteration} / 5")
-        print(f"{'#'*70}\n")
+        logger.info(f"\n\n{'#'*70}")
+        logger.info(f"# ITERATION {iteration} / 5")
+        logger.info(f"{'#'*70}\n")
         
         iteration_success = True
         
         # Step 1: Auto error fixing
-        print(f"\n[STEP 1] Running auto error fixing...")
+        logger.error(f"\n[STEP 1] Running auto error fixing...")
         success1, _ = run_command(
             [sys.executable, str(auto_error_fixer)],
             project_root,
@@ -106,13 +109,13 @@ def main():
         )
         
         if success1:
-            print(f"[SUCCESS] Auto error fixing completed for iteration {iteration}")
+            logger.error(f"Auto error fixing completed for iteration {iteration}")
         else:
-            print(f"[WARNING] Auto error fixing had issues in iteration {iteration}, continuing...")
+            logger.error(f"Auto error fixing had issues in iteration {iteration}, continuing...")
             iteration_success = False
         
         # Step 2: Code quality check
-        print(f"\n[STEP 2] Running code quality check...")
+        logger.info(f"\n[STEP 2] Running code quality check...")
         success2, _ = run_command(
             [sys.executable, str(code_quality_improver)],
             project_root,
@@ -121,13 +124,13 @@ def main():
         )
         
         if success2:
-            print(f"[SUCCESS] Code quality check completed for iteration {iteration}")
+            logger.info(f"Code quality check completed for iteration {iteration}")
         else:
-            print(f"[WARNING] Code quality check had issues in iteration {iteration}, continuing...")
+            logger.warning(f"Code quality check had issues in iteration {iteration}, continuing...")
             iteration_success = False
         
         # Step 3: Game training
-        print(f"\n[STEP 3] Running game training...")
+        logger.info(f"\n[STEP 3] Running game training...")
         success3, _ = run_command(
             [sys.executable, str(run_training)],
             project_root,
@@ -136,13 +139,13 @@ def main():
         )
         
         if success3:
-            print(f"[SUCCESS] Game training completed for iteration {iteration}")
+            logger.info(f"Game training completed for iteration {iteration}")
         else:
-            print(f"[WARNING] Game training had issues in iteration {iteration}, continuing...")
+            logger.warning(f"Game training had issues in iteration {iteration}, continuing...")
             iteration_success = False
         
         # Step 4: Replay build order learning
-        print(f"\n[STEP 4] Running replay build order learning...")
+        logger.info(f"\n[STEP 4] Running replay build order learning...")
         success4, _ = run_command(
             [sys.executable, str(replay_learner)],
             project_root,
@@ -151,14 +154,14 @@ def main():
         )
         
         if success4:
-            print(f"[SUCCESS] Replay build order learning completed for iteration {iteration}")
-            print("[INFO] Learned parameters will be automatically applied via config.py")
+            logger.info(f"Replay build order learning completed for iteration {iteration}")
+            logger.info("Learned parameters will be automatically applied via config.py")
         else:
-            print(f"[WARNING] Replay build order learning had issues in iteration {iteration}, continuing...")
+            logger.warning(f"Replay build order learning had issues in iteration {iteration}, continuing...")
             iteration_success = False
         
         # Step 5: Replay comparison analysis
-        print(f"\n[STEP 5] Running replay comparison analysis...")
+        logger.info(f"\n[STEP 5] Running replay comparison analysis...")
         success5, _ = run_command(
             [sys.executable, str(strategy_audit)],
             project_root,
@@ -167,38 +170,38 @@ def main():
         )
         
         if success5:
-            print(f"[SUCCESS] Replay comparison analysis completed for iteration {iteration}")
+            logger.info(f"Replay comparison analysis completed for iteration {iteration}")
         else:
-            print(f"[WARNING] Replay comparison analysis had issues in iteration {iteration}, continuing...")
+            logger.warning(f"Replay comparison analysis had issues in iteration {iteration}, continuing...")
             iteration_success = False
         
         if iteration_success:
             successful_iterations += 1
         
-        print(f"\n{'='*70}")
-        print(f"? ITERATION {iteration} / 5 COMPLETED")
-        print(f"   Auto Error Fixing: {'?' if success1 else '?'}")
-        print(f"   Code Quality Check: {'?' if success2 else '?'}")
-        print(f"   Game Training: {'?' if success3 else '?'}")
-        print(f"   Replay Build Order Learning: {'?' if success4 else '?'}")
-        print(f"   Replay Comparison Analysis: {'?' if success5 else '?'}")
-        print(f"{'='*70}")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"? ITERATION {iteration} / 5 COMPLETED")
+        logger.error(f"   Auto Error Fixing: {'?' if success1 else '?'}")
+        logger.info(f"   Code Quality Check: {'?' if success2 else '?'}")
+        logger.info(f"   Game Training: {'?' if success3 else '?'}")
+        logger.info(f"   Replay Build Order Learning: {'?' if success4 else '?'}")
+        logger.info(f"   Replay Comparison Analysis: {'?' if success5 else '?'}")
+        logger.info(f"{'='*70}")
         
         if iteration < 5:
-            print(f"\nWaiting 10 seconds before next iteration...")
+            logger.info(f"\nWaiting 10 seconds before next iteration...")
             time.sleep(10)
     
-    print(f"\n\n{'#'*70}")
-    print("# ALL 5 ITERATIONS COMPLETED")
-    print(f"{'#'*70}")
-    print(f"\nSummary:")
-    print(f"  - Successful iterations: {successful_iterations} / 5")
-    print(f"  - Learned build orders: local_training/scripts/learned_build_orders.json")
-    print(f"  - Comparison reports: local_training/comparison_reports/")
-    print(f"\nCheck results:")
-    print(f"  python tools\\show_learning_rate.py")
-    print(f"  python tools\\monitor_training_progress.py")
-    print(f"\n{'#'*70}")
+    logger.info(f"\n\n{'#'*70}")
+    logger.info("# ALL 5 ITERATIONS COMPLETED")
+    logger.info(f"{'#'*70}")
+    logger.info(f"\nSummary:")
+    logger.info(f"  - Successful iterations: {successful_iterations} / 5")
+    logger.info(f"  - Learned build orders: local_training/scripts/learned_build_orders.json")
+    logger.info(f"  - Comparison reports: local_training/comparison_reports/")
+    logger.info(f"\nCheck results:")
+    logger.info(f"  python tools\\show_learning_rate.py")
+    logger.info(f"  python tools\\monitor_training_progress.py")
+    logger.info(f"\n{'#'*70}")
 
 if __name__ == "__main__":
     try:

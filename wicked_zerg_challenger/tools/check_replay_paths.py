@@ -3,10 +3,13 @@
 """
 Check replay paths (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckReplayPaths")
 
 
 def main() -> None:
-    print("check_replay_paths placeholder.")
+    logger.info("check_replay_paths placeholder.")
 
 
 if __name__ == "__main__":

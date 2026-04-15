@@ -3,10 +3,13 @@
 """
 Check all sources (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckAllSources")
 
 
 def main() -> None:
-    print("check_all_sources placeholder.")
+    logger.info("check_all_sources placeholder.")
 
 
 if __name__ == "__main__":

@@ -3,10 +3,13 @@
 """
 Check learning progress (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckLearningProgress")
 
 
 def main() -> None:
-    print("check_learning_progress placeholder.")
+    logger.info("check_learning_progress placeholder.")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,9 @@ import random
 import subprocess
 import os
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("SingleGameOnly")
 
 # 프로젝트 루트
 project_root = Path(__file__).parent
@@ -80,8 +83,8 @@ def kill_all_sc2():
 def main():
     # ★ 1. 다른 게임이 실행 중이면 즉시 종료 ★
     if is_game_running():
-        print("ERROR: Another game is already running!")
-        print("Please wait for it to finish.")
+        logger.error("ERROR: Another game is already running!")
+        logger.info("Please wait for it to finish.")
         return
 
     try:
@@ -89,9 +92,9 @@ def main():
         create_lock()
 
         # ★ 3. 모든 기존 SC2 프로세스 종료 ★
-        print("\n" + "="*70)
-        print("CLEANING UP OLD PROCESSES...")
-        print("="*70)
+        logger.info("\n" + "="*70)
+        logger.info("CLEANING UP OLD PROCESSES...")
+        logger.info("="*70)
         kill_all_sc2()
 
         # ★ 4. 맵/종족 선택 (사용 가능한 맵만) ★
@@ -105,13 +108,13 @@ def main():
         selected_map = random.choice(maps_list)
         enemy_race = random.choice(races)
 
-        print("\n" + "="*70)
-        print("SINGLE GAME - ONE WINDOW ONLY")
-        print("="*70)
-        print(f"Map: {selected_map}")
-        print(f"Enemy: {enemy_race.name}")
-        print(f"Difficulty: Easy")
-        print("="*70 + "\n")
+        logger.info("\n" + "="*70)
+        logger.info("SINGLE GAME - ONE WINDOW ONLY")
+        logger.info("="*70)
+        logger.info(f"Map: {selected_map}")
+        logger.info(f"Enemy: {enemy_race.name}")
+        logger.info(f"Difficulty: Easy")
+        logger.info("="*70 + "\n")
 
         # ★ 5. 게임 실행 (하나만) ★
         result = run_game(
@@ -131,26 +134,26 @@ def main():
         stats.record_game(selected_map, "Easy", enemy_race.name, victory)
 
         if victory:
-            print("\n[VICTORY] Game won!")
+            logger.info("\n[VICTORY] Game won!")
         elif result == Result.Tie:
-            print("\n[TIE] Game ended in a tie (time limit)")
+            logger.info("\n[TIE] Game ended in a tie (time limit)")
         else:
-            print("\n[DEFEAT] Game lost.")
+            logger.info("\n[DEFEAT] Game lost.")
 
         # ★ 7. 통계 출력 ★
         stats.print_statistics()
 
     except Exception as e:
-        print(f"\n[ERROR] {e}")
+        logger.error(f"\n[ERROR] {e}")
 
     finally:
         # ★ 8. 정리 (항상 실행) ★
-        print("\n" + "="*70)
-        print("CLEANUP...")
-        print("="*70)
+        logger.info("\n" + "="*70)
+        logger.info("CLEANUP...")
+        logger.info("="*70)
         kill_all_sc2()
         remove_lock()
-        print("Done.\n")
+        logger.info("Done.\n")
 
 
 if __name__ == "__main__":

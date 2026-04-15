@@ -3,10 +3,13 @@
 """
 Comprehensive code improvement (placeholder).
 """
+import logging
+
+logger = logging.getLogger("ComprehensiveCodeImprovement")
 
 
 def main() -> None:
-    print("comprehensive_code_improvement placeholder.")
+    logger.info("comprehensive_code_improvement placeholder.")
 
 
 if __name__ == "__main__":

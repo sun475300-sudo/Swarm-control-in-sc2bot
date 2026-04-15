@@ -3,6 +3,9 @@
 """
 Import test for local training scripts.
 """
+import logging
+
+logger = logging.getLogger("TestImports")
 
 
 def main() -> None:
@@ -14,9 +17,9 @@ def main() -> None:
     for module in modules:
         try:
             __import__(module)
-            print(f"[OK] Imported {module}")
+            logger.info(f"Imported {module}")
         except Exception as exc:
-            print(f"[ERROR] Failed to import {module}: {exc}")
+            logger.error(f"Failed to import {module}: {exc}")
 
 
 if __name__ == "__main__":

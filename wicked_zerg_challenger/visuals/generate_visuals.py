@@ -7,6 +7,9 @@ PPTX 텍스트와 겹침 방지 — 장식용 배경 그래픽 전용
 
 import numpy as np
 import matplotlib
+import logging
+
+logger = logging.getLogger("GenerateVisuals")
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, Polygon
@@ -36,7 +39,7 @@ def save_fig(fig, name, dpi=200):
                 facecolor=fig.get_facecolor(), edgecolor='none',
                 transparent=False)
     plt.close(fig)
-    print(f"  [OK] {name}")
+    logger.info(f"  [OK] {name}")
 
 
 # ===================================================================
@@ -447,7 +450,7 @@ def gen_slide8():
 
 # ===================================================================
 def main():
-    print(f"Generating visuals in: {OUT_DIR}")
+    logger.info(f"Generating visuals in: {OUT_DIR}")
     gen_slide1()
     gen_slide2()
     gen_slide3()
@@ -455,7 +458,7 @@ def main():
     gen_slide6()
     gen_slide7()
     gen_slide8()
-    print(f"\nAll visual assets generated in {OUT_DIR}")
+    logger.info(f"\nAll visual assets generated in {OUT_DIR}")
 
 
 if __name__ == "__main__":
