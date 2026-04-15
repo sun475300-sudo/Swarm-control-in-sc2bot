@@ -1,0 +1,56 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Protoss
+  Duration: 1:13
+  Date: 2026-04-15 21:03
+
+--- TIMELINE ---
+  [1:04] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:13] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:35] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [1:59] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:07] Build: UnitTypeId.SPINECRAWLER (Supply 19)
+  [2:13] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [2:39] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 19)
+  [2:52] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [3:20] Build: UnitTypeId.SPORECRAWLER (Supply 23)
+  [4:10] Build: UnitTypeId.SPORECRAWLER (Supply 30)
+  [4:34] Harassment: UnitTypeId.PYLON
+  [10:12] Harassment: UnitTypeId.PYLON
+  [10:27] Harassment: UnitTypeId.PYLON
+  [10:32] Harassment: UnitTypeId.PYLON
+  [10:38] Harassment: UnitTypeId.PYLON
+  [11:15] Harassment: UnitTypeId.DARKSHRINE
+  [11:21] Harassment: UnitTypeId.DARKSHRINE
+  [11:26] Harassment: UnitTypeId.NEXUS
+
+--- ECONOMY ---
+  Peak Minerals: 175
+  Peak Vespene: 1982
+  Peak Workers: 24
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 2:39
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 120 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 24
+  Army Supply: 5
+  Bases: 2
+  Minerals: 10
+  Vespene: 2002
+
+============================================================

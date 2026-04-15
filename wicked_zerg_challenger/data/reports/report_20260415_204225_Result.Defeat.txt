@@ -1,0 +1,56 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Protoss
+  Duration: 0:58
+  Date: 2026-04-15 20:42
+
+--- TIMELINE ---
+  [1:03] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:11] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:41] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [2:02] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:18] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [2:28] Build: UnitTypeId.SPINECRAWLER (Supply 20)
+  [2:58] Build: UnitTypeId.EXTRACTOR (Supply 23)
+  [4:22] Harassment: UnitTypeId.PYLON
+  [4:38] Harassment: UnitTypeId.PYLON
+  [4:54] Harassment: UnitTypeId.PYLON
+  [5:00] Harassment: UnitTypeId.PYLON
+  [5:05] Harassment: UnitTypeId.WARPGATE
+  [5:42] Harassment: UnitTypeId.PYLON
+  [5:47] Harassment: UnitTypeId.FORGE
+  [5:53] Harassment: UnitTypeId.PYLON
+  [5:58] Harassment: UnitTypeId.PYLON
+  [6:16] Harassment: UnitTypeId.PYLON
+  [6:37] Harassment: UnitTypeId.PYLON
+
+--- ECONOMY ---
+  Peak Minerals: 175
+  Peak Vespene: 1580
+  Peak Workers: 25
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 6:57
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 120 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 1
+  Army Supply: 0
+  Bases: 1
+  Minerals: 5
+  Vespene: 1580
+
+============================================================

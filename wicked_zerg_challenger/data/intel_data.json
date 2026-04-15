@@ -1,25 +1,14 @@
 {
   "enemy_race_name": "Protoss",
   "enemy_unit_counts": {
-    "ADEPT": 1,
-    "PHOENIX": 2,
-    "STALKER": 2,
-    "SENTRY": 2,
-    "DISRUPTOR": 2,
-    "IMMORTAL": 1,
-    "OBSERVER": 1,
-    "VOIDRAY": 1,
-    "ZEALOT": 3,
-    "DISRUPTORPHASED": 1,
-    "TEMPEST": 1
+    "ADEPT": 5,
+    "OBSERVER": 2,
+    "ZEALOT": 2
   },
   "enemy_tech_buildings": [
     "ROBOTICSFACILITY",
-    "FLEETBEACON",
-    "TEMPLARARCHIVE",
-    "STARGATE",
-    "DARKSHRINE",
-    "TWILIGHTCOUNCIL"
+    "TWILIGHTCOUNCIL",
+    "STARGATE"
   ],
   "scouted_locations": [
     [
@@ -231,10 +220,6 @@
       152.5
     ],
     [
-      93.5,
-      156.5
-    ],
-    [
       28.5,
       153.5
     ],
@@ -265,6 +250,10 @@
     [
       42.5,
       93.5
+    ],
+    [
+      165.5,
+      23.5
     ],
     [
       38.5,
@@ -343,8 +332,8 @@
       111.5
     ],
     [
-      165.5,
-      23.5
+      93.5,
+      156.5
     ]
   ],
   "enemy_build_pattern": "protoss_stargate"
