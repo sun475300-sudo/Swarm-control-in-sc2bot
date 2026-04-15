@@ -335,7 +335,7 @@ class GameConfig:
         with open(filepath, 'w') as f:
             json.dump(config_dict, f, indent=2)
 
-        print(f"[CONFIG] Saved configuration to {filepath}")
+        _config_logger.info(f"Saved configuration to {filepath}")
 
 
 # ========== 프리셋 설정 ==========
@@ -384,5 +384,5 @@ CONFIG_FILE = os.environ.get("CONFIG_FILE")
 if CONFIG_FILE:
     config.load_from_file(CONFIG_FILE)
 
-print(f"[CONFIG] Using configuration profile: {CONFIG_PROFILE}")
-print(f"[CONFIG] DEBUG_MODE: {config.DEBUG_MODE}")
+_config_logger.info(f"Using configuration profile: {CONFIG_PROFILE}")
+_config_logger.info(f"DEBUG_MODE: {config.DEBUG_MODE}")
