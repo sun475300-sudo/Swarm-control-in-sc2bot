@@ -144,6 +144,51 @@ class EconomyManager:
         self._inject_attempts = 0
         self._inject_successes = 0
 
+    def get_saturation_info(self) -> dict:
+        """기지별 미네랄/가스 포화도 계산 및 Blackboard 게시"""
+        result = {"bases": [], "total_workers": 0, "ideal_workers": 0, "oversaturated": False}
+        if not hasattr(self.bot, "townhalls"):
+            return result
+
+        for th in self.bot.townhalls.ready:
+            nearby_minerals = self.bot.mineral_field.closer_than(10, th)
+            mineral_patches = nearby_minerals.amount if hasattr(nearby_minerals, 'amount') else 0
+            ideal_mineral = mineral_patches * 2  # 패치당 2명
+
+            nearby_gas = self.bot.gas_buildings.closer_than(10, th).ready
+            gas_count = nearby_gas.amount if hasattr(nearby_gas, 'amount') else 0
+            ideal_gas = gas_count * 3  # 가스당 3명
+
+            actual_workers = self.bot.workers.closer_than(10, th).amount
+            ideal_total = ideal_mineral + ideal_gas
+
+            base_info = {
+                "position": (th.position.x, th.position.y),
+                "actual": actual_workers,
+                "ideal": ideal_total,
+                "mineral_patches": mineral_patches,
+                "gas_buildings": gas_count,
+            }
+            result["bases"].append(base_info)
+            result["total_workers"] += actual_workers
+            result["ideal_workers"] += ideal_total
+
+        result["oversaturated"] = result["total_workers"] > result["ideal_workers"] + 4
+
+        # Blackboard에 게시
+        bb = getattr(self.bot, 'blackboard', None)
+        if bb:
+            bb.set("saturation_info", result)
+            bb.set("all_bases_saturated", result["oversaturated"])
+            bb.set("ideal_drone_count", result["ideal_workers"])
+
+        return result
+
+    def on_building_complete(self, unit_type) -> None:
+        """건물 완성 시 경제 조정 (해처리 완성 → 일꾼 재분배 트리거)"""
+        if unit_type == UnitTypeId.HATCHERY:
+            self._last_redistribute_time = 0  # 즉시 재분배
+
     def set_emergency_mode(self, active: bool) -> None:
         """Set emergency mode validation."""
         self._emergency_mode = active

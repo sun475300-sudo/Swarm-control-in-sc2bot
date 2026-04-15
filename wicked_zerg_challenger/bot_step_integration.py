@@ -761,8 +761,8 @@ class BotStepIntegrator:
                         await b.build(UnitTypeId.SPORECRAWLER, near=th.position)
                         break  # 한 번에 하나씩
 
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.warning(f"Anti-air tech build error: {e}")
 
     async def execute_game_logic(self, iteration: int):
         """게임 로직 실행"""

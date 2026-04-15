@@ -643,25 +643,50 @@ class StrategyManagerV2(StrategyManager):
             self._transition_to_maxout()
 
     def _transition_to_midgame(self) -> None:
-        """Transition actions for mid-game (3-6 min)"""
+        """Transition actions for mid-game (3-6 min): Lair + Warren/Den + 3rd base"""
         self.logger.info("[BUILD] Transitioning to mid-game: Lair + Warren/Den")
 
-        # Priority: Lair, Roach Warren or Hydra Den
-        # Economy manager handles actual construction
+        # Blackboard에 빌드 우선순위 전달 → EconomyManager가 실행
+        if self.blackboard:
+            self.blackboard.set("build_priority", [
+                "LAIR", "ROACHWARREN", "EVOLUTIONCHAMBER"
+            ])
+            self.blackboard.set("desired_drone_count", 44)
+            self.blackboard.set("desired_gas_count", 2)
+
+        # 3번째 기지 계획
+        expansion_time = self.config.TRANSITION_EXPANSION_TIME if self.config else 240
+        self._plan_expansion(target_time=expansion_time)
 
     def _transition_to_aggressive(self) -> None:
-        """Transition to aggressive mid-game (6-10 min) (설정값 사용)"""
+        """Transition to aggressive mid-game (6-10 min): Multi-base + 대규모 군대 생산"""
         self.logger.info("[BUILD] Transitioning to aggressive: Multi-base + Army production")
 
-        # Plan 3rd base (설정값 사용)
+        if self.blackboard:
+            self.blackboard.set("build_priority", [
+                "HYDRALISKDEN", "INFESTATIONPIT", "SPIRE"
+            ])
+            self.blackboard.set("desired_drone_count", 66)
+            self.blackboard.set("desired_gas_count", 4)
+            self.blackboard.set("army_production_ratio", 0.7)
+
+        # 4번째 기지 계획
         expansion_time = self.config.TRANSITION_EXPANSION_TIME if self.config else 380
         self._plan_expansion(target_time=expansion_time)
 
     def _transition_to_maxout(self) -> None:
-        """Transition to late-game maxout (10+ min) (설정값 사용)"""
+        """Transition to late-game maxout (10+ min): Hive 테크 + 최대 서플라이"""
         self.logger.info("[BUILD] Transitioning to late-game: Max out army")
 
-        # Plan 4th+ bases (설정값 사용)
+        if self.blackboard:
+            self.blackboard.set("build_priority", [
+                "HIVE", "GREATERSPIRE", "ULTRALISKCAVERN"
+            ])
+            self.blackboard.set("desired_drone_count", 80)
+            self.blackboard.set("desired_gas_count", 6)
+            self.blackboard.set("army_production_ratio", 0.85)
+
+        # 5번째+ 기지 계획
         expansion_time = self.config.LATEGAME_EXPANSION_TIME if self.config else 650
         self._plan_expansion(target_time=expansion_time)
 
@@ -926,6 +951,87 @@ class StrategyManagerV2(StrategyManager):
 
             if game_time % 30 < 1:
                 self.logger.info(f"[INTEL→STRATEGY] Stargate confirmed ({pattern}): Anti-air priority + tech")
+
+        # 4. Barracks Aggression (Terran) → 저글링+바퀴 방어
+        elif confidence >= 0.5 and ("barracks" in pattern or "bio" in pattern or "marine" in pattern):
+            self.resource_priorities["army"] = 0.5
+            self.resource_priorities["defense"] = 0.25
+            self.resource_priorities["economy"] = 0.2
+            self.resource_priorities["tech"] = 0.05
+            if self.blackboard:
+                self.blackboard.set("counter_composition", ["ROACH", "BANELING"])
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Bio aggression ({pattern}): Roach+Baneling counter")
+
+        # 5. Warp Prism Harassment (Protoss) → 기지별 스포어+스파인
+        elif confidence >= 0.5 and ("warpprism" in pattern or "prism" in pattern or "dt" in pattern):
+            self.resource_priorities["defense"] = 0.35
+            self.resource_priorities["army"] = 0.35
+            self.resource_priorities["economy"] = 0.2
+            self.resource_priorities["tech"] = 0.1
+            if self.blackboard:
+                self.blackboard.set("need_base_defense", True)
+                self.blackboard.set("counter_composition", ["HYDRALISK", "QUEEN"])
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Warp Prism/DT ({pattern}): Base defense priority")
+
+        # 6. Baneling Bust (Zerg) → 바퀴 위주 + 벽막기
+        elif confidence >= 0.5 and ("baneling" in pattern or "bust" in pattern):
+            self.current_mode = StrategyMode.DEFENSIVE
+            self.resource_priorities["defense"] = 0.4
+            self.resource_priorities["army"] = 0.35
+            self.resource_priorities["economy"] = 0.2
+            self.resource_priorities["tech"] = 0.05
+            if self.blackboard:
+                self.blackboard.set("counter_composition", ["ROACH"])
+                self.blackboard.set("need_wall", True)
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Baneling bust ({pattern}): Roach wall defense")
+
+        # 7. Carrier/Tempest (Protoss late) → 부패귀+타락귀
+        elif confidence >= 0.6 and ("carrier" in pattern or "tempest" in pattern or "skytoss" in pattern):
+            self.resource_priorities["tech"] = 0.35
+            self.resource_priorities["army"] = 0.4
+            self.resource_priorities["economy"] = 0.2
+            self.resource_priorities["defense"] = 0.05
+            if self.blackboard:
+                self.blackboard.set("counter_composition", ["CORRUPTOR", "VIPER"])
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Skytoss ({pattern}): Corruptor+Viper counter")
+
+        # 8. Battlecruiser (Terran late) → 타락귀+감염충
+        elif confidence >= 0.6 and ("battlecruiser" in pattern or "bc" in pattern):
+            self.resource_priorities["tech"] = 0.3
+            self.resource_priorities["army"] = 0.45
+            self.resource_priorities["economy"] = 0.2
+            self.resource_priorities["defense"] = 0.05
+            if self.blackboard:
+                self.blackboard.set("counter_composition", ["CORRUPTOR", "INFESTOR"])
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Battlecruiser ({pattern}): Corruptor+Infestor counter")
+
+        # 9. Fast Expand / Greedy → 공격적 타이밍 어택
+        elif confidence >= 0.6 and ("expand" in pattern or "greedy" in pattern or "macro" in pattern):
+            if self.current_mode != StrategyMode.EMERGENCY:
+                self.current_mode = StrategyMode.AGGRESSIVE
+            self.resource_priorities["army"] = 0.55
+            self.resource_priorities["economy"] = 0.25
+            self.resource_priorities["tech"] = 0.1
+            self.resource_priorities["defense"] = 0.1
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Greedy play ({pattern}): Timing attack")
+
+        # 10. Cloak/Dark Templar → 감지 건물 긴급 건설
+        elif confidence >= 0.4 and ("cloak" in pattern or "dark" in pattern or "banshee" in pattern):
+            self.resource_priorities["defense"] = 0.3
+            self.resource_priorities["army"] = 0.35
+            self.resource_priorities["economy"] = 0.25
+            self.resource_priorities["tech"] = 0.1
+            if self.blackboard:
+                self.blackboard.set("need_detection", True)
+            self._pending_spore_request = True
+            if game_time % 30 < 1:
+                self.logger.info(f"[INTEL→STRATEGY] Cloak ({pattern}): Detection priority")
 
     # ========== RESOURCE ALLOCATION ==========
 

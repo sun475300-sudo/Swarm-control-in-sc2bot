@@ -982,9 +982,95 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] on_unit_destroyed suppressed: {e}")
 
+    async def on_building_construction_complete(self, unit):
+        """건물 완성 이벤트 핸들러 — 종속 생산/업그레이드 트리거"""
+        try:
+            unit_type = unit.type_id
+            game_time = getattr(self, 'time', 0.0)
+            self.logger.info(
+                f"[BUILD_COMPLETE] {unit_type.name} at "
+                f"{int(game_time // 60)}:{int(game_time % 60):02d}"
+            )
+
+            # 전략 매니저에 건물 완성 알림
+            sm = getattr(self, 'strategy_manager', None)
+            if sm and hasattr(sm, 'on_building_complete'):
+                sm.on_building_complete(unit_type)
+
+            # 경제 매니저에 해처리 완성 알림 → 일꾼 분배
+            eco = getattr(self, 'economy', None)
+            if eco and hasattr(eco, 'on_building_complete'):
+                eco.on_building_complete(unit_type)
+
+            # Blackboard에 최신 건물 목록 업데이트
+            bb = getattr(self, 'blackboard', None)
+            if bb:
+                bb.set("last_building_complete", unit_type.name)
+                bb.set("last_building_complete_time", game_time)
+
+        except Exception as e:
+            self.logger.warning(f"on_building_construction_complete error: {e}")
+
+    async def on_upgrade_complete(self, upgrade):
+        """업그레이드 완료 이벤트 핸들러 — 전략 전환 및 후속 업그레이드 트리거"""
+        try:
+            game_time = getattr(self, 'time', 0.0)
+            self.logger.info(
+                f"[UPGRADE_COMPLETE] {upgrade.name} at "
+                f"{int(game_time // 60)}:{int(game_time % 60):02d}"
+            )
+
+            # 전략 매니저에 업그레이드 완료 알림
+            sm = getattr(self, 'strategy_manager', None)
+            if sm and hasattr(sm, 'on_upgrade_complete'):
+                sm.on_upgrade_complete(upgrade)
+
+            # Blackboard 업데이트
+            bb = getattr(self, 'blackboard', None)
+            if bb:
+                completed = bb.get("completed_upgrades", [])
+                completed.append(upgrade.name)
+                bb.set("completed_upgrades", completed)
+
+        except Exception as e:
+            self.logger.warning(f"on_upgrade_complete error: {e}")
+
+    async def on_enemy_unit_entered_vision(self, unit):
+        """적 유닛 시야 진입 — 정찰 정보 업데이트 + 방어 트리거"""
+        try:
+            # Intel 매니저에 적 유닛 정보 전달
+            intel = getattr(self, 'intel_manager', None)
+            if intel and hasattr(intel, 'on_enemy_spotted'):
+                intel.on_enemy_spotted(unit)
+
+            # 방어 시스템에 알림
+            dc = getattr(self, 'defense_coordinator', None)
+            if dc and hasattr(dc, 'on_enemy_spotted'):
+                dc.on_enemy_spotted(unit)
+
+            # Blackboard에 마지막 발견 적 기록
+            bb = getattr(self, 'blackboard', None)
+            if bb:
+                bb.set("last_enemy_spotted", unit.type_id.name)
+                bb.set("last_enemy_spotted_pos", (unit.position.x, unit.position.y))
+
+        except Exception as e:
+            self.logger.debug(f"on_enemy_unit_entered_vision error: {e}")
+
     def _reset_all_managers(self):
         """★ 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) ★"""
-        reset_targets = [
+        # ManagerFactory에 등록된 모든 매니저를 자동 리셋
+        factory = getattr(self, 'manager_factory', None)
+        if factory and hasattr(factory, 'get_all_managers'):
+            for name, mgr in factory.get_all_managers().items():
+                if mgr and hasattr(mgr, 'reset'):
+                    try:
+                        mgr.reset()
+                    except Exception as e:
+                        self.logger.info(f"[RESET_WARN] {name}.reset() failed: {e}")
+
+        # Factory에 포함되지 않은 매니저들 수동 리셋
+        extra_reset_targets = [
             ("unit_authority", "UnitAuthority"),
             ("combat", "CombatManager"),
             ("strategy_manager", "StrategyManager"),
@@ -994,8 +1080,23 @@ class WickedZergBotProImpl(BotAI):
             ("defense_coordinator", "DefenseCoordinator"),
             ("overlord_safety", "OverlordSafety"),
             ("micro_v3", "MicroController"),
+            ("micro", "MicroControllerLegacy"),
+            ("intel_manager", "IntelManager"),
+            ("build_order_system", "BuildOrderSystem"),
+            ("early_defense", "EarlyDefenseSystem"),
+            ("early_scout", "EarlyScoutSystem"),
+            ("queen_manager", "QueenManager"),
+            ("creep_automation", "CreepAutomation"),
+            ("aggressive_strategies", "AggressiveStrategies"),
+            ("scoring_system", "ScoringSystem"),
+            ("resource_manager", "ResourceManager"),
+            ("awareness_engine", "AwarenessEngine"),
+            ("map_memory", "MapMemory"),
+            ("situational_awareness", "SituationalAwareness"),
+            ("complete_destruction", "CompleteDestruction"),
+            ("battle_prep", "BattlePreparation"),
         ]
-        for attr, name in reset_targets:
+        for attr, name in extra_reset_targets:
             mgr = getattr(self, attr, None)
             if mgr and hasattr(mgr, "reset"):
                 try:

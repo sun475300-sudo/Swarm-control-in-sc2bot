@@ -1010,8 +1010,7 @@ class CombatManager:
                                 target = min(enemies_near, key=lambda e: e.distance_to(spine))
                         self.bot.do(spine.attack(target))
                 except (AttributeError, TypeError) as e:
-                    # Spine crawler attack failed
-                    pass
+                    self.logger.debug(f"Spine crawler attack failed: {e}")
 
         # 다른 유닛들 방어 (우선순위 타겟 집중)
         for unit in other_units:
@@ -1127,8 +1126,7 @@ class CombatManager:
                     try:
                         self.bot.do(unit.move(target_pos))
                     except (AttributeError, TypeError) as e:
-                        # Formation move failed
-                        pass
+                        self.logger.debug(f"Formation move failed: {e}")
             
             # 길목 회피 확인
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -1143,8 +1141,7 @@ class CombatManager:
                             try:
                                 self.bot.do(unit.move(retreat_pos))
                             except (AttributeError, TypeError) as e:
-                                # Retreat move failed
-                                pass
+                                self.logger.debug(f"Retreat move failed: {e}")
         
         except Exception as e:
             if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
@@ -2283,8 +2280,8 @@ class CombatManager:
                     )
                 await self._retreat_to_rally(engaged_units)
 
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.warning(f"Army retreat evaluation error: {e}")
 
     async def _retreat_to_base(self, units):
         """유닛들을 본진으로 후퇴시킵니다."""
@@ -2788,8 +2785,8 @@ class CombatManager:
                                 result = self.bot.do(action)
                                 if hasattr(result, "__await__"):
                                     await result
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"Burrow action failed: {e}")
                     await self.bot.micro.burrow_controller.handle_burrow(
                         banelings, enemy_units, iteration, _do_actions_compat, bot=self.bot
                     )
