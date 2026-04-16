@@ -429,7 +429,9 @@ class BuildOrderSystem:
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
             # ★ Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 ★
             if self.bot.time > self.expansion_timing_target and self.expansion_actual_time == 0:
-                logger.warning(f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
+                # ★ FIX: 스팸 방지 - 10초마다 1회만 출력
+                if int(self.bot.time) % 10 == 0:
+                    logger.warning(f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
             return False
 
         # Find Expansion Location

@@ -531,6 +531,13 @@ class QueenInjectOptimizer:
         if not hasattr(self.bot, "townhalls"):
             return
 
+        # ★ FIX: 퀸이 없으면 미스 감지 스킵 (퀸 없이는 인젝트 불가)
+        if hasattr(self.bot, "units"):
+            from sc2.ids.unit_typeid import UnitTypeId as UID
+            queens = self.bot.units(UID.QUEEN).ready
+            if not queens:
+                return
+
         hatcheries = self.bot.townhalls.ready
 
         for hatchery in hatcheries:

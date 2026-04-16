@@ -646,7 +646,21 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
-        self.current_game_history = GameHistory(opponent_id=opponent_id)
+        # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
+        race_name = opponent_race.name if opponent_race and hasattr(opponent_race, 'name') else "Unknown"
+        self.current_game_history = GameHistory(
+            game_id=f"game_{opponent_id}",
+            opponent_race=race_name,
+            opponent_style="unknown",
+            detected_strategy="unknown",
+            build_order_observed=[],
+            timing_attacks=[],
+            final_composition={},
+            game_result="unknown",
+            game_duration=0.0,
+            early_signals=[],
+            tech_progression=[],
+        )
         self.observed_signals.clear()
 
         # Load opponent model if exists

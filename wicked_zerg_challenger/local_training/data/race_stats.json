@@ -1,20 +1,20 @@
 {
   "Terran": {
     "wins": 10,
-    "losses": 24,
-    "games": 34,
-    "win_rate": 29.41
+    "losses": 26,
+    "games": 36,
+    "win_rate": 27.78
   },
   "Protoss": {
     "wins": 27,
-    "losses": 110,
-    "games": 137,
-    "win_rate": 19.71
+    "losses": 112,
+    "games": 139,
+    "win_rate": 19.42
   },
   "Zerg": {
     "wins": 8,
-    "losses": 22,
-    "games": 30,
-    "win_rate": 26.67
+    "losses": 23,
+    "games": 31,
+    "win_rate": 25.81
   }
 }

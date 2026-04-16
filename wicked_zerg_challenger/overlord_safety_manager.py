@@ -99,7 +99,8 @@ class OverlordSafetyManager:
             self._pillars_calculated = True
 
         except Exception as e:
-            self.logger.error(f"[OVERLORD_SAFETY] Pillar calculation failed: {e}")
+            # ★ FIX: 로그 레벨 완화 (폴백 위치 사용하므로 치명적이지 않음)
+            self.logger.warning(f"[OVERLORD_SAFETY] Pillar calculation skipped, using fallback: {e}")
             self._use_fallback_positions()
             self._pillars_calculated = True
 
@@ -240,7 +241,7 @@ class OverlordSafetyManager:
 
                 if cell_pillars:
                     # 셀 중앙에 가장 가까운 것 선택
-                    cell_center = Point2((min_x + max_x) / 2, (min_y + max_y) / 2)
+                    cell_center = Point2(((min_x + max_x) / 2, (min_y + max_y) / 2))
                     best = min(cell_pillars, key=lambda p: p.distance_to(cell_center))
                     selected.append(best)
 

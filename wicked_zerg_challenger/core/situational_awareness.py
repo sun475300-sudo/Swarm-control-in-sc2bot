@@ -208,8 +208,19 @@ class SituationalAwareness:
         air_tech = {
             "STARGATE", "STARPORT", "SPIRE", "GREATERSPIRE", "FLEETBEACON"
         }
-        if any(s.type_id.name.upper() in air_tech for s in enemy_structures) or \
-           any(u.is_flying and not u.is_structure for u in enemy_units):
+        # ★ FIX: 오버로드/오버시어 등 비전투 비행유닛 제외
+        non_threat_flyers = {
+            "OVERLORD", "OVERLORDTRANSPORT", "OVERSEER", "OVERSEERSIEGEMODE",
+            "OBSERVER", "OBSERVERSIEGEMODE", "MEDIVAC", "WARPPRISM",
+            "WARPPRISMPHASING",
+        }
+        has_air_tech = any(s.type_id.name.upper() in air_tech for s in enemy_structures)
+        has_air_combat_units = any(
+            u.is_flying and not u.is_structure
+            and u.type_id.name.upper() not in non_threat_flyers
+            for u in enemy_units
+        )
+        if has_air_tech or has_air_combat_units:
             detected_threats.append("AIR_THREAT")
 
         # 3. Splash Damage

@@ -244,7 +244,10 @@ class StrategyManagerV2(StrategyManager):
                     self._pending_anti_air_tech = True
                 except (ImportError, AttributeError):
                     pass
-            self.logger.info("[STRATEGY] AIR_THREAT detected! Building anti-air tech + units.")
+            # ★ FIX: 로그 스팸 방지 - 최초 1회만 출력
+            if not getattr(self, "_air_threat_logged", False):
+                self.logger.info("[STRATEGY] AIR_THREAT detected! Building anti-air tech + units.")
+                self._air_threat_logged = True
 
         # 3. HIGH OPPORTUNITY -> ALL_IN / AGGRESSIVE (Only if not in emergency)
         elif self.current_mode != StrategyMode.EMERGENCY:
