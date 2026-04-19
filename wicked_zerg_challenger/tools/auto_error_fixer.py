@@ -10,6 +10,9 @@ import re
 import time
 from pathlib import Path
 from typing import List, Dict, Tuple, Any, Optional
+import logging
+
+logger = logging.getLogger("AutoErrorFixer")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -137,11 +140,9 @@ def main():
 
     args = parser.parse_args()
 
-    print("=" * 70)
-    print("자동 에러 수정 도구")
-    print("=" * 70)
-    print()
-
+    logger.info("=" * 70)
+    logger.info("자동 에러 수정 도구")
+    logger.info("=" * 70)
     fixer = AutoErrorFixer()
 
     if args.file:
@@ -149,24 +150,24 @@ def main():
         if file_path.exists():
             success, fixes = fixer.fix_common_errors(file_path)
             if success:
-                print(f"[FIXED] {args.file}")
+                logger.info(f"{args.file}")
                 for fix in fixes:
-                    print(f"  - {fix}")
+                    logger.info(f"  - {fix}")
             else:
-                print(f"[NO FIXES] {args.file}")
+                logger.info(f"{args.file}")
         else:
-            print(f"[ERROR] File not found: {args.file}")
+            logger.error(f"File not found: {args.file}")
     elif args.all:
-        print("모든 파일 스캔 및 수정 중...")
+        logger.info("모든 파일 스캔 및 수정 중...")
         results = fixer.scan_and_fix()
-        print(f"\n스캔 완료: {results['scanned']}개 파일")
-        print(f"수정 완료: {results['fixed']}개 파일")
+        logger.info(f"\n스캔 완료: {results['scanned']}개 파일")
+        logger.info(f"수정 완료: {results['fixed']}개 파일")
         if results["fixes"]:
-            print("\n수정된 파일:")
+            logger.info("\n수정된 파일:")
             for fix_info in results["fixes"][:10]:  # 상위 10개만
-                print(f"  - {fix_info['file']}")
+                logger.info(f"  - {fix_info['file']}")
                 for fix in fix_info["fixes"]:
-                    print(f"    - {fix}")
+                    logger.info(f"    - {fix}")
     else:
         parser.print_help()
 

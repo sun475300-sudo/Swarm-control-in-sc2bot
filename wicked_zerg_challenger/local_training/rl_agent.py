@@ -19,6 +19,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import logging
+
+logger = logging.getLogger("RlAgent")
 
 
 class PolicyNetwork:
@@ -328,7 +331,7 @@ class RLAgent:
         # ★★★ FIX: 차원 불일치 방지 (NaN 그래디언트 스킵 등으로 발생 가능) ★★★
         min_len = min(len(self.states), len(self.actions), len(self.rewards), len(self.caches))
         if min_len < len(self.states):
-            print(f"[RL_AGENT] Dimension mismatch detected: states={len(self.states)}, "
+            logger.info(f"Dimension mismatch detected: states={len(self.states)}, "
                   f"actions={len(self.actions)}, rewards={len(self.rewards)}, caches={len(self.caches)}")
             self.states = self.states[:min_len]
             self.actions = self.actions[:min_len]
@@ -394,11 +397,11 @@ class RLAgent:
                 exp_path = buffer_dir / f"exp_{timestamp}_ep{self.episode_count}.npz"
                 saved = self.save_experience_data(str(exp_path))
                 if saved:
-                    print(f"[RL_AGENT] [OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})")
+                    logger.info(f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})")
                 else:
-                    print(f"[RL_AGENT] [ERROR] Failed to save experience data")
+                    logger.error(f"[ERROR] Failed to save experience data")
             except Exception as e:
-                print(f"[RL_AGENT] [ERROR] Exception during save: {e}")
+                logger.error(f"[ERROR] Exception during save: {e}")
 
         # Epsilon 감쇠 + ★ 적응형 탐색 (plateau 감지 시 탐색률 복원) ★
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
@@ -410,7 +413,7 @@ class RLAgent:
             if abs(sum(recent_20) / 20 - sum(older_20) / 20) < 0.1:
                 # 정체 → 탐색률 부분 복원
                 self.epsilon = min(0.3, self.epsilon * 1.5)
-                print(f"[RL_AGENT] Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
+                logger.info(f"Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
 
         self._clear_buffers()
         self.episode_count += 1
@@ -453,10 +456,10 @@ class RLAgent:
                 self.policy.set_weights(weights)
                 self.baseline = float(data['baseline'][0])
                 self.episode_count = int(data['episode_count'][0])
-                print(f"[RL_AGENT] Model loaded from {self.model_path}")
+                logger.info(f"Model loaded from {self.model_path}")
                 return True
         except Exception as e:
-            print(f"[RL_AGENT] Could not load model: {e}")
+            logger.info(f"Could not load model: {e}")
         return False
 
     def get_stats(self) -> Dict[str, Any]:
@@ -476,27 +479,30 @@ class RLAgent:
             path = Path(path)
             path.parent.mkdir(parents=True, exist_ok=True)
             
-            # 임시 파일 경로 생성
-            temp_path = str(path) + ".tmp"
+            # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 — savez_compressed가 .npz를 자동 추가)
+            path_str = str(path)
+            base_no_ext = path_str[:-4] if path_str.endswith('.npz') else path_str
+            temp_base = base_no_ext + ".tmp"
 
             # NumPy 배열로 변환하여 임시 파일로 저장
             np.savez_compressed(
-                temp_path,
+                temp_base,
                 states=np.array(self.states, dtype=np.float32),
                 actions=np.array(self.actions, dtype=np.int64),
                 rewards=np.array(self.rewards, dtype=np.float32)
             )
-            
+            temp_actual = temp_base + ".npz"
+
             # 원자적으로 이름 변경 (Atomic Rename)
             # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path):
-                os.remove(path)
-            os.rename(temp_path, path)
+            if os.path.exists(path_str):
+                os.remove(path_str)
+            os.rename(temp_actual, path_str)
             
-            print(f"[RL_AGENT] [OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards")
+            logger.info(f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards")
             return True
         except Exception as e:
-            print(f"[RL_AGENT] Failed to save experience data: {e}")
+            logger.error(f"Failed to save experience data: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -602,14 +608,14 @@ class RLAgent:
                     shutil.move(str(tmp_path), str(save_path))
                 except Exception as move_error:
                     # Fallback: copy + delete
-                    print(f"[RL_AGENT] Move failed, trying copy: {move_error}")
+                    logger.error(f"Move failed, trying copy: {move_error}")
                     shutil.copy(str(tmp_path), str(save_path))
                     tmp_path.unlink()
 
-            print(f"[RL_AGENT] Model saved to {save_path}")
+            logger.info(f"Model saved to {save_path}")
             return True
         except Exception as e:
-            print(f"[RL_AGENT] Failed to save model: {e}")
+            logger.error(f"Failed to save model: {e}")
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()

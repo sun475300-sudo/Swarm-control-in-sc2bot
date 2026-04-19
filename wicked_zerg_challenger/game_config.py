@@ -13,6 +13,9 @@ Game Configuration - 중앙 설정 관리
 
 from typing import Dict, Any
 import os
+import logging
+
+_config_logger = logging.getLogger("GameConfig")
 
 
 class GameConfig:
@@ -29,8 +32,8 @@ class GameConfig:
     # ========== 경제 설정 ==========
 
     # 드론 제한
-    DRONE_LIMIT_PER_BASE = 20       # ★ OPTIMIZED: 16 → 20 (초과 포화) ★
-    DRONE_LIMIT_PER_BASE_GAS = 26   # ★ OPTIMIZED: 22 → 26 (가스 포함) ★
+    DRONE_LIMIT_PER_BASE = 16       # ★ FIX: 20 → 16 (미네랄 포화 = 16, 초과 포화는 자원 낭비) ★
+    DRONE_LIMIT_PER_BASE_GAS = 22   # ★ FIX: 26 → 22 (16 미네랄 + 6 가스 = 22) ★
     MIN_DRONES = 22                 # 최소 드론 수 (절대값)
     MAX_DRONES = 80                 # 최대 드론 수
 
@@ -297,7 +300,7 @@ class GameConfig:
         import json
 
         if not os.path.exists(filepath):
-            print(f"[CONFIG] Config file not found: {filepath}")
+            _config_logger.warning(f"Config file not found: {filepath}")
             return
 
         with open(filepath, 'r') as f:
@@ -308,14 +311,14 @@ class GameConfig:
                     import yaml
                     config_dict = yaml.safe_load(f)
                 except ImportError:
-                    print("[CONFIG] PyYAML not installed, skipping YAML config")
+                    _config_logger.warning("PyYAML not installed, skipping YAML config")
                     return
             else:
-                print(f"[CONFIG] Unsupported file format: {filepath}")
+                _config_logger.warning(f"Unsupported file format: {filepath}")
                 return
 
         cls.load_from_dict(config_dict)
-        print(f"[CONFIG] Loaded configuration from {filepath}")
+        _config_logger.info(f"Loaded configuration from {filepath}")
 
     @classmethod
     def save_to_file(cls, filepath: str):
@@ -332,7 +335,7 @@ class GameConfig:
         with open(filepath, 'w') as f:
             json.dump(config_dict, f, indent=2)
 
-        print(f"[CONFIG] Saved configuration to {filepath}")
+        _config_logger.info(f"Saved configuration to {filepath}")
 
 
 # ========== 프리셋 설정 ==========
@@ -381,5 +384,5 @@ CONFIG_FILE = os.environ.get("CONFIG_FILE")
 if CONFIG_FILE:
     config.load_from_file(CONFIG_FILE)
 
-print(f"[CONFIG] Using configuration profile: {CONFIG_PROFILE}")
-print(f"[CONFIG] DEBUG_MODE: {config.DEBUG_MODE}")
+_config_logger.info(f"Using configuration profile: {CONFIG_PROFILE}")
+_config_logger.info(f"DEBUG_MODE: {config.DEBUG_MODE}")

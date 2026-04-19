@@ -10,6 +10,9 @@ Usage:
 import sys
 import os
 import unittest
+import logging
+
+logger = logging.getLogger("RunScoutingTests")
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -32,14 +35,14 @@ def run_tests():
     result = runner.run(suite)
 
     # Print summary
-    print("\n" + "="*70)
-    print("SCOUTING & INTEL SYSTEM TEST SUMMARY")
-    print("="*70)
-    print(f"Tests run: {result.testsRun}")
-    print(f"Successes: {result.testsRun - len(result.failures) - len(result.errors)}")
-    print(f"Failures: {len(result.failures)}")
-    print(f"Errors: {len(result.errors)}")
-    print("="*70)
+    logger.info("\n" + "="*70)
+    logger.info("SCOUTING & INTEL SYSTEM TEST SUMMARY")
+    logger.info("="*70)
+    logger.info(f"Tests run: {result.testsRun}")
+    logger.error(f"Successes: {result.testsRun - len(result.failures) - len(result.errors)}")
+    logger.error(f"Failures: {len(result.failures)}")
+    logger.error(f"Errors: {len(result.errors)}")
+    logger.info("="*70)
 
     # Return exit code
     return 0 if result.wasSuccessful() else 1

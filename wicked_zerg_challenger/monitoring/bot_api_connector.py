@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("BotApiConnector")
 # -*- coding: utf-8 -*-
 """
 Bot API connector (placeholder).
@@ -17,7 +20,7 @@ class BotAPIConnector:
 
 
 def main() -> None:
-    print("Bot API connector placeholder. Implement actual API calls here.")
+    logger.info("Bot API connector placeholder. Implement actual API calls here.")
 
 
 if __name__ == "__main__":

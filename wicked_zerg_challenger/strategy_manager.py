@@ -19,6 +19,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import json
 from pathlib import Path
 from utils.logger import get_logger
+from config.config_loader import ConfigLoader
+from racial_counter_manager import RacialCounterManager
 
 try:
     from knowledge_manager import KnowledgeManager
@@ -76,14 +78,15 @@ class StrategyManager:
         self.detected_enemy_race = EnemyRace.UNKNOWN
         self.game_phase = GamePhase.EARLY
 
-        # Emergency Mode 설정
+        # Emergency Mode 설정 (config-driven)
+        rush_cfg = ConfigLoader.get_rush_detection_config()
         self.emergency_active = False
         self.emergency_start_time = 0.0
-        self.emergency_duration = 120.0  # 2분 지속
+        self.emergency_duration = rush_cfg.get("emergency_duration_seconds", 120.0)
 
-        # 러시 감지 설정
-        self.rush_detection_threshold = 150.0  # 2:30 이전 공격 = 러시
-        self.cheese_detection_threshold = 120.0  # 2분 이전 공격 = 치즈
+        # 러시 감지 설정 (config-driven)
+        self.rush_detection_threshold = rush_cfg.get("rush_threshold_seconds", 150.0)
+        self.cheese_detection_threshold = rush_cfg.get("cheese_threshold_seconds", 120.0)
 
         # 로그 스팸 방지
         self.last_air_threat_log = 0
@@ -95,7 +98,7 @@ class StrategyManager:
         # 4분 이전 견제 시스템
         self.early_harassment_active = False
         self.last_harassment_time = 0
-        self.harassment_interval = 30.0
+        self.harassment_interval = 15.0  # ★ 30s → 15s: more aggressive harassment
 
         # ★ Load Unit Ratios from KnowledgeManager ★
         self.race_unit_ratios = {
@@ -107,13 +110,23 @@ class StrategyManager:
         
         self.logger.info(f"[STRATEGY] Loaded unit ratios for {len(self.race_unit_ratios)} races from Knowledge Base")
 
-        # Emergency Mode 비율 (방어 우선)
-        self.emergency_ratios = {
+        # Emergency Mode 비율 (config-driven)
+        emergency_cfg = ConfigLoader.get_emergency_config()
+        self.emergency_ratios = emergency_cfg.get("default_ratios", {
             "zergling": 0.5,
             "roach": 0.25,
             "baneling": 0.15,
             "queen": 0.1,
-        }
+        })
+        self.emergency_air_ratios = emergency_cfg.get("air_threat_ratios", {
+            "zergling": 0.30,
+            "hydralisk": 0.40,
+            "roach": 0.20,
+            "queen": 0.10,
+        })
+
+        # Racial Counter Manager (extracted from this class)
+        self.counter_manager = RacialCounterManager(bot, blackboard, self.logger)
 
         # 방어 건물 긴급 건설 플래그
         self.emergency_spine_requested = False
@@ -197,9 +210,8 @@ class StrategyManager:
         self._update_strategy_mode()
         self._update_counter_build()
         self._detect_direct_air_threat()
-        self._counter_terran_units()
-        self._counter_protoss_units()
-        self._counter_zerg_units()
+        # Delegated to RacialCounterManager
+        self._apply_racial_counters()
 
         # ★ Write State to Blackboard ★
         if self.blackboard:
@@ -308,7 +320,7 @@ class StrategyManager:
         if self.current_mode != StrategyMode.DEFENSIVE:
             self.defense_mode_start_time = game_time
         self.current_mode = StrategyMode.DEFENSIVE
-        self.emergency_spine_requested = True
+        self._request_defensive_building(spine=True)
 
         self._adjust_unit_ratio("queen", 0.20)
         self._adjust_unit_ratio("zergling", 0.35)
@@ -318,9 +330,7 @@ class StrategyManager:
             self.blackboard.set("is_rush_detected", True)
 
         if self.early_scout_fast_gas:
-            self.emergency_spore_requested = True
-            if self.blackboard:
-                self.blackboard.set("urgent_spore_all_bases", True)
+            self._request_defensive_building(spore=True)
 
     def _check_jarvis_commands(self) -> None:
         """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
@@ -519,7 +529,7 @@ class StrategyManager:
         """
         1-4분 견제 시스템
 
-        1분부터 시작하여 30초마다 적 본진을 견제
+        1분부터 시작하여 15초마다 적 본진을 견제
         저글링, 뮤탈리스크 등 빠른 유닛으로 적 일꾼 견제 및 정보 수집
         """
         game_time = getattr(self.bot, "time", 0.0)
@@ -529,8 +539,7 @@ class StrategyManager:
             self.early_harassment_active = False
             return
 
-        # 30초마다 견제
-        # 30초마다 견제
+        # 15초마다 견제 (more aggressive)
         if game_time - self.last_harassment_time < self.harassment_interval:
             return
 
@@ -639,17 +648,17 @@ class StrategyManager:
         # 군대 집결 신호
         self._request_army_rally()
 
-        # 확장 기지 방어 건물 추가 요청
-        self.emergency_spine_requested = True
+        # 확장 기지 방어 건물 추가 요청 (BuildingCoordination에 위임)
+        self._request_defensive_building(spine=True)
 
-        # 적 공중 유닛 체크
+        # 적 공중 유닛 체크 → 스포어 요청도 위임
         if hasattr(self.bot, "enemy_units"):
-            air_threats = ["MUTALISK", "VOIDRAY", "ORACLE", "PHOENIX",
-                         "BATTLECRUISER", "CARRIER", "LIBERATOR", "BROODLORD"]
+            air_threats = {"MUTALISK", "VOIDRAY", "ORACLE", "PHOENIX",
+                         "BATTLECRUISER", "CARRIER", "LIBERATOR", "BROODLORD"}
             for enemy in self.bot.enemy_units:
                 enemy_type = getattr(enemy.type_id, "name", "").upper()
                 if enemy_type in air_threats:
-                    self.emergency_spore_requested = True
+                    self._request_defensive_building(spore=True)
                     break
 
     def _check_defense_mode_timeout(self) -> None:
@@ -807,7 +816,7 @@ class StrategyManager:
         # 5. Apply to current state
         if self.detected_enemy_race in self.race_unit_ratios:
             self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = current_ratios
-        self.emergency_spine_requested = True
+        self._request_defensive_building(spine=True)
 
         # 로그 출력 (30초마다)
         if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -815,55 +824,30 @@ class StrategyManager:
 
     def _handle_air_threat(self) -> None:
         """
-        ★★★ 공중 위협 대응 강화 ★★★
+        공중 위협 대응 강화
 
-        적 공중 유닛 감지 시:
-        1. 스포어 크롤러 긴급 건설 (모든 기지에)
-        2. 히드라리스크 굴 최우선 건설
-        3. 퀸 추가 생산 (대공 + 트랜스퓨전)
-        4. 커럽터/히드라 우선 생산
+        스포어/카운터 유닛 요청은 RacialCounterManager에서 처리.
+        여기서는 스파이어 건설 + 대공 비율 강제만 담당.
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ 스포어 크롤러 긴급 건설 ★
-        self.emergency_spore_requested = True
-
-        # ★ 기지 수만큼 스포어 필요 ★
+        # 기지 수만큼 스포어 필요 (스포어 건설 자체는 racial_counter_manager에서 요청)
         if not hasattr(self, "_spore_count_needed"):
             self._spore_count_needed = 0
         if hasattr(self.bot, "townhalls"):
             self._spore_count_needed = max(2, self.bot.townhalls.amount)
 
-        # ★ 히드라 굴 긴급 건설 ★
-        if hasattr(self.bot, "structures"):
-            try:
-                from sc2.ids.unit_typeid import UnitTypeId
+        # 스파이어 건설 요청 -> BuildingCoordination에 위임
+        self._request_spire_via_coordinator(game_time)
 
-                # 히드라 굴 체크 - BotStepIntegrator에서 통합 관리하므로 제거
-                # (중복 건설 방지)
-
-                # ★ 스파이어 체크 (커럽터 생산용) ★
-                spires = self.bot.structures(UnitTypeId.SPIRE)
-                greater_spires = self.bot.structures(UnitTypeId.GREATERSPIRE)
-                if not spires.exists and not greater_spires.exists:
-                    if self.bot.already_pending(UnitTypeId.SPIRE) == 0:
-                        lairs = self.bot.structures(UnitTypeId.LAIR)
-                        hives = self.bot.structures(UnitTypeId.HIVE)
-                        if (lairs.exists or hives.exists) and self.bot.can_afford(UnitTypeId.SPIRE):
-                            print(f"[STRATEGY] [{int(game_time)}s] ★ Building Spire for Corruptors ★")
-
-            except Exception as e:
-                if self.bot.iteration % 50 == 0:
-                    self.logger.warning(f"Air threat handling error: {e}")
-
-        # ★ 대공 유닛 비율 강제 조정 ★
+        # 대공 유닛 비율 강제 조정
         self._force_anti_air_ratios()
 
         # 로그 쿨다운 (10초마다만 출력)
         if not hasattr(self, "_last_air_log_time"):
             self._last_air_log_time = 0
         if game_time - self._last_air_log_time >= 10:
-            self.logger.warning(f"[{int(game_time)}s] ★★ AIR THREAT ACTIVE - Anti-air priority ★★")
+            self.logger.warning(f"[{int(game_time)}s] AIR THREAT ACTIVE - Anti-air priority")
             self._last_air_log_time = game_time
 
     def _force_anti_air_ratios(self) -> None:
@@ -881,6 +865,92 @@ class StrategyManager:
     def get_spore_count_needed(self) -> int:
         """필요한 스포어 크롤러 수 반환"""
         return getattr(self, "_spore_count_needed", 2)
+
+    # ========== Delegation Helpers ==========
+
+    def _request_defensive_building(self, spine: bool = False, spore: bool = False) -> None:
+        """
+        방어 건물 건설 요청을 중앙화하는 헬퍼.
+
+        BuildingCoordination이 있으면 위임하고, 없으면 기존 플래그 방식 사용.
+        Blackboard에도 긴급 상태를 전파합니다.
+
+        Args:
+            spine: 스파인 크롤러 요청
+            spore: 스포어 크롤러 요청
+        """
+        if spine:
+            self.emergency_spine_requested = True
+        if spore:
+            self.emergency_spore_requested = True
+            if self.blackboard:
+                self.blackboard.set("urgent_spore_all_bases", True)
+
+        # BuildingCoordination이 있으면 요청 등록
+        building_coord = getattr(self.bot, "building_coord", None)
+        if building_coord:
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                if spine:
+                    building_coord.request_building(UnitTypeId.SPINECRAWLER, "StrategyManager")
+                if spore:
+                    building_coord.request_building(UnitTypeId.SPORECRAWLER, "StrategyManager")
+            except Exception:
+                pass  # Fallback to flag-based system
+
+    def _request_spire_via_coordinator(self, game_time: float) -> None:
+        """
+        스파이어 건설 요청을 BuildingCoordination에 위임합니다.
+
+        직접 구조물을 조회하는 대신, BuildingCoordination의 can_build/request_building을 사용합니다.
+        BuildingCoordination이 없으면 로그만 남깁니다.
+        """
+        building_coord = getattr(self.bot, "building_coord", None)
+        if building_coord:
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+                if building_coord.can_build(UnitTypeId.SPIRE):
+                    building_coord.request_building(UnitTypeId.SPIRE, "StrategyManager-AirThreat")
+                    self.logger.info(f"[{int(game_time)}s] Spire build requested via BuildingCoordination")
+            except Exception:
+                pass
+        else:
+            # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
+            if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                self.logger.info(f"[{int(game_time)}s] Spire needed for anti-air (no BuildingCoord)")
+
+    def _get_drone_count(self) -> int:
+        """
+        현재 드론 수를 반환합니다.
+
+        EconomyManager가 있으면 위임하고, 없으면 직접 조회합니다.
+
+        Returns:
+            현재 드론 수
+        """
+        # EconomyManager 위임
+        economy = getattr(self.bot, "economy", None)
+        if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
+            try:
+                return economy.bot.workers.amount
+            except Exception:
+                pass
+
+        # Fallback: 직접 조회
+        if hasattr(self.bot, "workers"):
+            try:
+                return self.bot.workers.amount
+            except Exception:
+                pass
+
+        if hasattr(self.bot, "units"):
+            try:
+                drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
+                return drones.amount if hasattr(drones, "amount") else len(drones)
+            except Exception:
+                pass
+
+        return 0
 
     def _detect_direct_air_threat(self) -> None:
         """
@@ -917,11 +987,11 @@ class StrategyManager:
         # ★★★ IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) ★★★
         if air_unit_count >= 1:
             self._air_threat_active = True
-            self.emergency_spore_requested = True
+            self._request_defensive_building(spore=True)
 
             # 30초마다 로그
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                self.logger.warning(f"[{int(game_time)}s] ★★★ AIR THREAT ACTIVE: {air_unit_count} air units detected! ★★★")
+                self.logger.warning(f"[{int(game_time)}s] [*][*][*] AIR THREAT ACTIVE: {air_unit_count} air units detected! [*][*][*]")
                 self.logger.info(f"Air types: {detected_air_types}")
 
             # 히드라 우선 생산 설정
@@ -972,6 +1042,37 @@ class StrategyManager:
 
         return enemy_pattern in ["protoss_stargate", "zerg_muta", "terran_mech"]
 
+    def _apply_racial_counters(self) -> None:
+        """Delegate counter logic to RacialCounterManager."""
+        if not hasattr(self.bot, "enemy_units"):
+            return
+
+        race_map = {
+            EnemyRace.TERRAN: "Terran",
+            EnemyRace.PROTOSS: "Protoss",
+            EnemyRace.ZERG: "Zerg",
+        }
+        race_str = race_map.get(self.detected_enemy_race)
+        if not race_str:
+            return
+
+        current_ratios = self.race_unit_ratios.get(
+            self.detected_enemy_race, {}
+        ).get(self.game_phase, {})
+
+        updated = self.counter_manager.update(
+            enemy_race=race_str,
+            game_phase=self.game_phase.name if hasattr(self.game_phase, 'name') else str(self.game_phase),
+            game_time=getattr(self.bot, "time", 0),
+            enemy_composition=self._cached_enemy_composition,
+            current_ratios=current_ratios,
+            request_building_fn=self._request_defensive_building,
+        )
+
+        # Write back updated ratios
+        if self.detected_enemy_race in self.race_unit_ratios:
+            self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = updated
+
     def _counter_terran_units(self) -> None:
         """
         ★ Phase 21: 테란 유닛별 카운터 로직 ★
@@ -1011,7 +1112,7 @@ class StrategyManager:
             self._adjust_unit_ratio("ravager", 0.10)
             if game_time > 300 and not getattr(self, "_zvt_bio_logged", False):
                 self._zvt_bio_logged = True
-                self.logger.info(f"[{int(game_time)}s] ★ ZvT BIO DETECTED → Baneling+Ling priority ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ZvT BIO DETECTED -> Baneling+Ling priority [*]")
 
         # 메카닉 (탱크 2+ 또는 토르 1+): 레바저 담즙 + 우회 기동
         if tank_count >= 2 or thor_count >= 1:
@@ -1022,7 +1123,7 @@ class StrategyManager:
             self._adjust_unit_ratio("corruptor", 0.10)  # 토르+메디 대응
             if game_time > 300 and not getattr(self, "_zvt_mech_logged", False):
                 self._zvt_mech_logged = True
-                self.logger.info(f"[{int(game_time)}s] ★ ZvT MECH DETECTED → Ravager bile + Roach ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ZvT MECH DETECTED -> Ravager bile + Roach [*]")
 
         # 공중 (밴시/배틀크루저/리버레이터): 히드라 + 코럽터
         if banshee_count >= 1 or battlecruiser_count >= 1 or liberator_count >= 2:
@@ -1031,11 +1132,10 @@ class StrategyManager:
             self._adjust_unit_ratio("roach", 0.20)
             self._adjust_unit_ratio("queen", 0.10)
             self._adjust_unit_ratio("zergling", 0.10)
-            if self.blackboard:
-                self.blackboard.set("urgent_spore_all_bases", True)
+            self._request_defensive_building(spore=True)
             if game_time > 300 and not getattr(self, "_zvt_air_logged", False):
                 self._zvt_air_logged = True
-                self.logger.info(f"[{int(game_time)}s] ★ ZvT AIR DETECTED → Hydra+Corruptor+Spore ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ZvT AIR DETECTED -> Hydra+Corruptor+Spore [*]")
 
         # 헬리온 러시 (초반): 퀸 + 바퀴
         # ★ Phase 34: 4분→5분으로 확장 (4:30~5분 헬리온 러시 대응)
@@ -1085,21 +1185,18 @@ class StrategyManager:
             if intel.has_tech_alert("DT_INCOMING"):
                 if not getattr(self, "_dt_response_active", False):
                     self._dt_response_active = True
-                    self.emergency_spore_requested = True
-                    self.logger.warning(f"[{int(game_time)}s] ★★★ DT INCOMING! Spore + Overseer PRIORITY ★★★")
+                    self._request_defensive_building(spore=True)
+                    self.logger.warning(f"[{int(game_time)}s] [*][*][*] DT INCOMING! Spore + Overseer PRIORITY [*][*][*]")
                     # Blackboard에 오버시어 긴급 요청
                     if self.blackboard:
                         self.blackboard.set("urgent_overseer", True)
-                        self.blackboard.set("urgent_spore_all_bases", True)
 
             # Oracle 대응: 스포어 크롤러 + 퀸 집중
             if intel.has_tech_alert("AIR_INCOMING"):
                 if not getattr(self, "_air_response_active", False):
                     self._air_response_active = True
-                    self.emergency_spore_requested = True
-                    self.logger.warning(f"[{int(game_time)}s] ★★★ STARGATE TECH! Spore + Queen PRIORITY ★★★")
-                    if self.blackboard:
-                        self.blackboard.set("urgent_spore_all_bases", True)
+                    self._request_defensive_building(spore=True)
+                    self.logger.warning(f"[{int(game_time)}s] [*][*][*] STARGATE TECH! Spore + Queen PRIORITY [*][*][*]")
 
         # ★ 유닛별 대응 전략 ★
 
@@ -1110,7 +1207,7 @@ class StrategyManager:
 
             if not self._immortal_counter_active:
                 self._immortal_counter_active = True
-                self.logger.info(f"[{int(game_time)}s] ★ IMMORTAL DETECTED ({immortal_count}) - Ravager bile priority ★")
+                self.logger.info(f"[{int(game_time)}s] [*] IMMORTAL DETECTED ({immortal_count}) - Ravager bile priority [*]")
 
             # 레이바저 비율 증가
             self._adjust_unit_ratio("ravager", 0.35)
@@ -1124,7 +1221,7 @@ class StrategyManager:
 
             if not self._colossus_counter_active:
                 self._colossus_counter_active = True
-                self.logger.info(f"[{int(game_time)}s] ★★★ COLOSSUS DETECTED ({colossus_count}) - Corruptor PRIORITY ★★★")
+                self.logger.info(f"[{int(game_time)}s] [*][*][*] COLOSSUS DETECTED ({colossus_count}) - Corruptor PRIORITY [*][*][*]")
 
             # 커럽터 + 레이바저 담즙
             self._adjust_unit_ratio("corruptor", 0.4)
@@ -1137,7 +1234,7 @@ class StrategyManager:
         if voidray_count >= 2 or carrier_count >= 1:
             if not getattr(self, "_zvp_air_logged", False):
                 self._zvp_air_logged = True
-                self.logger.warning(f"[{int(game_time)}s] ★ AIR THREAT - VoidRay/Carrier detected ★")
+                self.logger.warning(f"[{int(game_time)}s] [*] AIR THREAT - VoidRay/Carrier detected [*]")
             self._handle_air_threat()
             self._adjust_unit_ratio("hydralisk", 0.35)
             self._adjust_unit_ratio("corruptor", 0.30)
@@ -1170,7 +1267,7 @@ class StrategyManager:
         if stalker_count >= 4:
             if not getattr(self, "_zvp_stalker_logged", False):
                 self._zvp_stalker_logged = True
-                self.logger.info(f"[{int(game_time)}s] ★ ZvP STALKER ARMY — Zergling surround + Roach ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ZvP STALKER ARMY -- Zergling surround + Roach [*]")
             self._adjust_unit_ratio("zergling", 0.35)  # 포위
             self._adjust_unit_ratio("roach", 0.30)     # 정면 탱킹
             self._adjust_unit_ratio("ravager", 0.20)   # 담즙으로 추격 저지
@@ -1212,8 +1309,7 @@ class StrategyManager:
                 "corruptor": 0.10,
             }
             # 포자 건설 요청 (DT/Oracle 대비)
-            if self.blackboard:
-                self.blackboard.set("urgent_spore_all_bases", True)
+            self._request_defensive_building(spore=True)
         elif race == EnemyRace.ZERG:
             fallback_ratios = {
                 "zergling": 0.15,
@@ -1277,7 +1373,7 @@ class StrategyManager:
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
             self._adjust_unit_ratio("hydra", 0.5)
-            self.emergency_spore_requested = True
+            self._request_defensive_building(spore=True)
             if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
                 self._last_zvz_muta_log = game_time
                 self.logger.warning(f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority")
@@ -1294,7 +1390,7 @@ class StrategyManager:
                 self._adjust_unit_ratio("zergling", 0.10)
                 if not getattr(self, "_zvz_lurker_logged", False):
                     self._zvz_lurker_logged = True
-                    self.logger.info(f"[{int(game_time)}s] ★ ZvZ MID: Lurker transition for positional advantage ★")
+                    self.logger.info(f"[{int(game_time)}s] [*] ZvZ MID: Lurker transition for positional advantage [*]")
 
     def _adjust_unit_ratio(self, unit_type: str, target_ratio: float) -> None:
         """유닛 비율 동적 조정"""
@@ -1338,26 +1434,30 @@ class StrategyManager:
         if hasattr(self.bot, "economy") and self.bot.economy:
             self.bot.economy.set_emergency_mode(True)
 
-        # 긴급 방어 건물 건설 요청
-        self.emergency_spine_requested = True
+        # 긴급 방어 건물 건설 요청 (BuildingCoordination에 위임)
+        self._request_defensive_building(spine=True)
         self.emergency_spore_requested = False
 
         # 적 공중 유닛이 있으면 스포어도 요청
+        has_air_enemy = False
         if hasattr(self.bot, "enemy_units"):
             for enemy in self.bot.enemy_units:
                 if getattr(enemy, "is_flying", False):
-                    self.emergency_spore_requested = True
+                    has_air_enemy = True
                     break
+        if has_air_enemy:
+            self._request_defensive_building(spore=True)
 
         # ★ Phase 17: Blackboard에 긴급 상태 전파 — 모든 시스템에 즉시 알림 ★
         if self.blackboard:
             self.blackboard.set("is_rush_detected", True)
             self.blackboard.set("emergency_mode", True)
             self.blackboard.set("emergency_start_time", game_time)
-            # 저글링 우선 생산 비율 즉시 적용 (방어 우선)
-            emergency_ratios = {"zergling": 0.60, "roach": 0.25, "queen": 0.15}
+            # 저글링 우선 생산 비율 즉시 적용 (config-driven)
             if self.emergency_spore_requested:
-                emergency_ratios = {"zergling": 0.30, "hydralisk": 0.40, "roach": 0.20, "queen": 0.10}
+                emergency_ratios = dict(self.emergency_air_ratios)
+            else:
+                emergency_ratios = dict(self.emergency_ratios)
             self.blackboard.set("unit_ratios", emergency_ratios)
 
         self.logger.info(f"Emergency defense requested: Spine={self.emergency_spine_requested}, Spore={self.emergency_spore_requested}")
@@ -1475,17 +1575,11 @@ class StrategyManager:
         """
         # Emergency Mode에서는 드론 생산 최소화
         if self.emergency_active:
-            drone_count = 0
-            if hasattr(self.bot, "units"):
-                drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
-                drone_count = drones.amount if hasattr(drones, "amount") else len(drones)
+            drone_count = self._get_drone_count()
             return drone_count < 12  # 최소 12기만 유지
 
         if self.early_scout_greed_suppressed:
-            drone_count = 0
-            if hasattr(self.bot, "units"):
-                drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
-                drone_count = drones.amount if hasattr(drones, "amount") else len(drones)
+            drone_count = self._get_drone_count()
             drone_floor = 16 if self.early_scout_cheese_active else 20
             return drone_count < drone_floor
 

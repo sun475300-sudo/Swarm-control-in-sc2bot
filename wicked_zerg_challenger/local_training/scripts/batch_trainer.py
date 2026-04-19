@@ -10,6 +10,9 @@ import torch
 import torch.nn as nn
 from pathlib import Path
 from typing import List, Dict, Optional, Any
+import logging
+
+logger = logging.getLogger("BatchTrainer")
 
 
 class BatchTrainer:
@@ -57,15 +60,15 @@ class BatchTrainer:
             if self.model_path.exists():
                 try:
                     self.model.load_state_dict(torch.load(self.model_path, map_location=self.device))
-                    print(f"[INFO] Loaded existing model from {self.model_path}")
+                    logger.info(f"Loaded existing model from {self.model_path}")
                 except Exception as e:
-                    print(f"[WARNING] Failed to load model: {e}, using new model")
+                    logger.error(f"Failed to load model: {e}, using new model")
 
             # 옵티마이저 설정
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
         except Exception as e:
-            print(f"[ERROR] Model initialization failed: {e}")
+            logger.error(f"Model initialization failed: {e}")
             raise
 
     def train_from_batch_results(self, batch_results: List[Dict[str, Any]], epochs: int = 10) -> Dict[str, float]:
@@ -82,7 +85,7 @@ class BatchTrainer:
             학습 결과 딕셔너리
         """
         if not batch_results:
-            print("[WARNING] No batch results to train on")
+            logger.warning("No batch results to train on")
             return {"loss": 0.0, "accuracy": 0.0}
 
         try:
@@ -90,7 +93,7 @@ class BatchTrainer:
             inputs, targets = self._prepare_training_data(batch_results)
 
             if len(inputs) == 0:
-                print("[WARNING] No valid training data")
+                logger.warning("No valid training data")
                 return {"loss": 0.0, "accuracy": 0.0}
 
             # 학습 루프
@@ -136,7 +139,7 @@ class BatchTrainer:
                 if (epoch + 1) % 5 == 0:
                     avg_loss = epoch_loss / (len(inputs) // batch_size + 1)
                     accuracy = correct_predictions / total_samples if total_samples > 0 else 0.0
-                    print(f"[EPOCH {epoch+1}/{epochs}] Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2%}")
+                    logger.info(f"[EPOCH {epoch+1}/{epochs}] Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2%}")
 
             # 최종 통계 계산
             avg_loss = total_loss / epochs
@@ -145,7 +148,7 @@ class BatchTrainer:
             # 모델 저장
             self._save_model()
 
-            print(f"[SUCCESS] Batch training completed - Avg Loss: {avg_loss:.4f}, Accuracy: {final_accuracy:.2%}")
+            logger.info(f"Batch training completed - Avg Loss: {avg_loss:.4f}, Accuracy: {final_accuracy:.2%}")
 
             return {
                 "loss": avg_loss,
@@ -154,7 +157,7 @@ class BatchTrainer:
             }
 
         except Exception as e:
-            print(f"[ERROR] Batch training failed: {e}")
+            logger.error(f"Batch training failed: {e}")
             import traceback
             traceback.print_exc()
             return {"loss": 0.0, "accuracy": 0.0, "error": str(e)}
@@ -188,7 +191,7 @@ class BatchTrainer:
                 targets.append(target_data)
 
             except Exception as e:
-                print(f"[WARNING] Failed to process result: {e}")
+                logger.error(f"Failed to process result: {e}")
                 continue
 
         if not inputs:
@@ -231,7 +234,7 @@ class BatchTrainer:
             return features
 
         except Exception as e:
-            print(f"[WARNING] Feature extraction failed: {e}")
+            logger.error(f"Feature extraction failed: {e}")
             return None
 
     def _extract_target_features(self, result: Dict[str, Any]) -> Optional[List[float]]:
@@ -268,7 +271,7 @@ class BatchTrainer:
             return [attack_prob, defense_prob, economy_prob, tech_prob]
 
         except Exception as e:
-            print(f"[WARNING] Target extraction failed: {e}")
+            logger.error(f"Target extraction failed: {e}")
             return None
 
     def _save_model(self):
@@ -276,9 +279,9 @@ class BatchTrainer:
         try:
             self.model_path.parent.mkdir(parents=True, exist_ok=True)
             torch.save(self.model.state_dict(), self.model_path)
-            print(f"[INFO] Model saved to {self.model_path}")
+            logger.info(f"Model saved to {self.model_path}")
         except Exception as e:
-            print(f"[ERROR] Failed to save model: {e}")
+            logger.error(f"Failed to save model: {e}")
 
 
 def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, epochs: int = 10) -> Dict[str, float]:
@@ -296,7 +299,7 @@ def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, e
     try:
         # 매니페스트 파일 확인
         if not manifest_path.exists():
-            print(f"[ERROR] Manifest file not found: {manifest_path}")
+            logger.error(f"Manifest file not found: {manifest_path}")
             return {"loss": 0.0, "accuracy": 0.0}
 
         with open(manifest_path, 'r', encoding='utf-8') as f:
@@ -309,7 +312,7 @@ def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, e
             batch_results = manifest_data.get("replays", [])
 
         if not batch_results:
-            print(f"[WARNING] No results found in manifest: {manifest_path}")
+            logger.warning(f"No results found in manifest: {manifest_path}")
             return {"loss": 0.0, "accuracy": 0.0}
 
         # 배치 학습 수행
@@ -319,7 +322,7 @@ def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, e
         return stats
 
     except Exception as e:
-        print(f"[ERROR] Training from manifest failed: {e}")
+        logger.error(f"Training from manifest failed: {e}")
         import traceback
         traceback.print_exc()
         return {"loss": 0.0, "accuracy": 0.0, "error": str(e)}

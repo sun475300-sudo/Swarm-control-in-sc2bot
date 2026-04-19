@@ -16,6 +16,9 @@ Features:
 import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("GameResultReporter")
 
 
 class GameResultReporter:
@@ -501,9 +504,9 @@ class GameResultReporter:
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(report_text)
 
-            print(f"[REPORT] Saved to {filepath}")
+            logger.info(f"Saved to {filepath}")
         except (IOError, OSError) as e:
-            print(f"[REPORT] Failed to save: {e}")
+            logger.error(f"Failed to save: {e}")
 
     def generate_quick_summary(self, game_data: Dict) -> str:
         """

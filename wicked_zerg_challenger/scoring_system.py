@@ -24,6 +24,9 @@ import time
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("ScoringSystem")
 
 
 @dataclass
@@ -606,13 +609,13 @@ class ScoringSystem:
         self._cumulative_score["blocks"].append(block_report)
         self._save_cumulative_score()
 
-        print(f"\n{'='*60}")
-        print(f"  [SCORING] 10-GAME BLOCK #{block_report['block_number']} COMPLETE")
-        print(f"  Record: {wins}W / {losses}L ({wins*10}% WR)")
-        print(f"  Avg Score: {avg_score:.1f} | Avg Peak Supply: {avg_peak_supply:.0f}")
-        print(f"  Cumulative Adjustment: {block_report['adjustment']}")
-        print(f"  Total Cumulative Score: {self._cumulative_score['total']}")
-        print(f"{'='*60}\n")
+        logger.info(f"\n{'='*60}")
+        logger.info(f"  [SCORING] 10-GAME BLOCK #{block_report['block_number']} COMPLETE")
+        logger.info(f"  Record: {wins}W / {losses}L ({wins*10}% WR)")
+        logger.info(f"  Avg Score: {avg_score:.1f} | Avg Peak Supply: {avg_peak_supply:.0f}")
+        logger.info(f"  Cumulative Adjustment: {block_report['adjustment']}")
+        logger.info(f"  Total Cumulative Score: {self._cumulative_score['total']}")
+        logger.info(f"{'='*60}\n")
 
     # =========================================================================
     # 실시간 상황 인식 + 자동 대응 권고

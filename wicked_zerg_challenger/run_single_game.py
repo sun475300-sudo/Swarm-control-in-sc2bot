@@ -12,6 +12,9 @@ from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 import argparse
 import sys
 import os
+import logging
+
+logger = logging.getLogger("RunSingleGame")
 
 
 def _ensure_sc2_path():
@@ -34,7 +37,7 @@ def _ensure_sc2_path():
 
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
-            print(f"[SC2] Found via Registry: {install_path}")
+            logger.info(f"Found via Registry: {install_path}")
             return
     except Exception:
         pass
@@ -47,7 +50,7 @@ def _ensure_sc2_path():
     for path in common_paths:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
-            print(f"[SC2] Using: {path}")
+            logger.info(f"Using: {path}")
             return
 
 
@@ -81,20 +84,19 @@ def main():
     args = _parse_args()
     _ensure_sc2_path()
 
-    print("\n" + "=" * 60)
-    print("  SINGLE GAME TEST")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("  SINGLE GAME TEST")
+    logger.info("=" * 60)
 
     # Settings
     map_name = args.map_name
     opponent_race = _parse_race(args.enemy_race)
     difficulty = _parse_difficulty(args.difficulty)
 
-    print(f"  Map: {map_name}")
-    print(f"  Opponent: {opponent_race.name}")
-    print(f"  Difficulty: {difficulty.name}")
-    print("=" * 60)
-    print()
+    logger.info(f"  Map: {map_name}")
+    logger.info(f"  Opponent: {opponent_race.name}")
+    logger.info(f"  Difficulty: {difficulty.name}")
+    logger.info("=" * 60)
 
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
@@ -102,7 +104,7 @@ def main():
     # Run game
     map_instance = maps.get(map_name)
     if map_instance is None:
-        print(f"[ERROR] Map '{map_name}' not found!")
+        logger.error(f"Map '{map_name}' not found!")
         return
 
     run_game(
@@ -111,7 +113,7 @@ def main():
         realtime=False  # False = 빠른 속도로 훈련
     )
 
-    print("\n[GAME FINISHED]")
+    logger.info("\n[GAME FINISHED]")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,9 @@ import sys
 import os
 import time
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("QuickTest")
 
 
 def _ensure_sc2_path():
@@ -35,7 +38,7 @@ def _ensure_sc2_path():
 
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
-            print(f"[SC2] Found via Registry: {install_path}")
+            logger.info(f"Found via Registry: {install_path}")
             return
     except Exception:
         pass
@@ -48,27 +51,25 @@ def _ensure_sc2_path():
     for path in common_paths:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
-            print(f"[SC2] Using: {path}")
+            logger.info(f"Using: {path}")
             return
 
 
 def run_single_game(game_num, total_games):
     """Run a single game and return result."""
-    print("\n" + "=" * 70)
-    print(f"  OPTIMIZATION TEST - GAME #{game_num}/{total_games}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"  OPTIMIZATION TEST - GAME #{game_num}/{total_games}")
+    logger.info("=" * 70)
 
     # Settings
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
     difficulty = Difficulty.Easy
 
-    print(f"  Map: {map_name}")
-    print(f"  Opponent: {opponent_race.name}")
-    print(f"  Difficulty: {difficulty.name}")
-    print("=" * 70)
-    print()
-
+    logger.info(f"  Map: {map_name}")
+    logger.info(f"  Opponent: {opponent_race.name}")
+    logger.info(f"  Difficulty: {difficulty.name}")
+    logger.info("=" * 70)
     # Create bot (train_mode=False for testing)
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
 
@@ -76,7 +77,7 @@ def run_single_game(game_num, total_games):
     try:
         map_instance = maps.get(map_name)
         if map_instance is None:
-            print(f"[ERROR] Map '{map_name}' not found!")
+            logger.error(f"Map '{map_name}' not found!")
             return None
 
         result = run_game(
@@ -88,14 +89,14 @@ def run_single_game(game_num, total_games):
         # Get result
         if result is not None:
             is_victory = (result == Result.Victory)
-            print(f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}")
+            logger.info(f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}")
             return is_victory
         else:
-            print(f"\n[RESULT] Game #{game_num}: UNKNOWN")
+            logger.info(f"\n[RESULT] Game #{game_num}: UNKNOWN")
             return None
 
     except Exception as e:
-        print(f"[ERROR] Game #{game_num} failed: {e}")
+        logger.error(f"Game #{game_num} failed: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -109,20 +110,17 @@ def main():
     total_games = 20
     target_win_rate = 90.0
 
-    print("\n" + "=" * 70)
-    print("  OPTIMIZATION VERIFICATION TEST")
-    print("=" * 70)
-    print(f"  Difficulty: Easy")
-    print(f"  Total Games: {total_games}")
-    print(f"  Target Win Rate: {target_win_rate}%+")
-    print()
-    print("  New Features:")
-    print("  - Logic Optimizer (47 systems -> 28 active avg)")
-    print("  - Unit Authority Manager (conflict resolution)")
-    print("  - Map Memory System (full map awareness)")
-    print("=" * 70)
-    print()
-
+    logger.info("\n" + "=" * 70)
+    logger.info("  OPTIMIZATION VERIFICATION TEST")
+    logger.info("=" * 70)
+    logger.info(f"  Difficulty: Easy")
+    logger.info(f"  Total Games: {total_games}")
+    logger.info(f"  Target Win Rate: {target_win_rate}%+")
+    logger.info("  New Features:")
+    logger.info("  - Logic Optimizer (47 systems -> 28 active avg)")
+    logger.info("  - Unit Authority Manager (conflict resolution)")
+    logger.info("  - Map Memory System (full map awareness)")
+    logger.info("=" * 70)
     wins = 0
     losses = 0
     errors = 0
@@ -148,22 +146,20 @@ def main():
         total_completed = wins + losses
         win_rate = (wins / total_completed * 100) if total_completed > 0 else 0
 
-        print("\n" + "-" * 70)
-        print(f"  Game Duration: {game_duration:.1f}s")
-        print(f"  Current Score: {wins}W - {losses}L - {errors}E")
-        print(f"  Win Rate: {win_rate:.1f}% (Target: {target_win_rate}%)")
-        print(f"  Total Time: {total_duration/60:.1f} min")
+        logger.info("\n" + "-" * 70)
+        logger.info(f"  Game Duration: {game_duration:.1f}s")
+        logger.error(f"  Current Score: {wins}W - {losses}L - {errors}E")
+        logger.info(f"  Win Rate: {win_rate:.1f}% (Target: {target_win_rate}%)")
+        logger.info(f"  Total Time: {total_duration/60:.1f} min")
 
         # Check if target achieved early
         if win_rate >= target_win_rate and total_completed >= 10:
-            print(f"  STATUS: Target achieved with {total_completed} games!")
+            logger.info(f"  STATUS: Target achieved with {total_completed} games!")
         elif total_completed >= 10:
             diff = target_win_rate - win_rate
-            print(f"  STATUS: {diff:.1f}% away from target")
+            logger.info(f"  STATUS: {diff:.1f}% away from target")
 
-        print("-" * 70)
-        print()
-
+        logger.info("-" * 70)
         # Short delay between games
         time.sleep(1)
 
@@ -172,29 +168,29 @@ def main():
     final_win_rate = (wins / total_completed * 100) if total_completed > 0 else 0
 
     # Final report
-    print("\n" + "=" * 70)
-    print("  FINAL RESULTS")
-    print("=" * 70)
-    print(f"  Score: {wins}W - {losses}L - {errors}E")
-    print(f"  Win Rate: {final_win_rate:.1f}%")
-    print(f"  Target: {target_win_rate}%")
-    print(f"  Total Time: {total_duration/60:.1f} minutes")
-    print(f"  Avg Game Time: {total_duration/max(total_completed, 1):.1f}s")
-    print("-" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  FINAL RESULTS")
+    logger.info("=" * 70)
+    logger.error(f"  Score: {wins}W - {losses}L - {errors}E")
+    logger.info(f"  Win Rate: {final_win_rate:.1f}%")
+    logger.info(f"  Target: {target_win_rate}%")
+    logger.info(f"  Total Time: {total_duration/60:.1f} minutes")
+    logger.info(f"  Avg Game Time: {total_duration/max(total_completed, 1):.1f}s")
+    logger.info("-" * 70)
 
     if final_win_rate >= target_win_rate:
-        print(f"  STATUS: SUCCESS - Target achieved!")
-        print(f"  Ready for next difficulty: Medium")
+        logger.info(f"  STATUS: SUCCESS - Target achieved!")
+        logger.info(f"  Ready for next difficulty: Medium")
     else:
         diff = target_win_rate - final_win_rate
-        print(f"  STATUS: INCOMPLETE - {diff:.1f}% away from target")
-        print(f"  Action: Further optimization needed")
+        logger.info(f"  STATUS: INCOMPLETE - {diff:.1f}% away from target")
+        logger.info(f"  Action: Further optimization needed")
 
-    print("=" * 70)
+    logger.info("=" * 70)
 
     # Save timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"\n[TEST COMPLETE] {timestamp}")
+    logger.info(f"\n[TEST COMPLETE] {timestamp}")
 
 
 if __name__ == "__main__":

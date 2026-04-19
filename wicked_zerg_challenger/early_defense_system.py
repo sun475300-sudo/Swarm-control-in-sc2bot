@@ -8,6 +8,9 @@ Purpose: Counter early rushes and improve initial survival rate
 """
 
 from typing import Optional, Set
+import logging
+
+logger = logging.getLogger("EarlyDefenseSystem")
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
@@ -97,8 +100,8 @@ class EarlyDefenseSystem:
             self.emergency_mode = True
             self.early_threats = set(nearby_enemies.tags)
 
-            print(f"[EARLY_DEFENSE] [WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)")
-            print(f"[EARLY_DEFENSE] Emergency Defense Mode ACTIVATED!")
+            logger.warning(f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)")
+            logger.info(f"Emergency Defense Mode ACTIVATED!")
 
     async def _build_early_pool(self) -> None:
         """
@@ -139,11 +142,11 @@ class EarlyDefenseSystem:
                     "EarlyDefenseSystem"
                 )
                 self.pool_started = True
-                print(f"[EARLY_DEFENSE] [OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)")
+                logger.info(f"[OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)")
             elif not tech_coordinator:
-                print(f"[EARLY_DEFENSE] [WARNING] TechCoordinator not available")
+                logger.warning(f"[WARNING] TechCoordinator not available")
         except Exception as e:
-            print(f"[EARLY_DEFENSE] Failed to request Pool construction: {e}")
+            logger.error(f"Failed to request Pool construction: {e}")
 
     async def _produce_early_zerglings(self) -> None:
         """
@@ -182,7 +185,7 @@ class EarlyDefenseSystem:
                 self.bot.do(larva.train(UnitTypeId.ZERGLING))
 
         if larvae_for_lings > 0:
-            print(f"[EARLY_DEFENSE] Producing {larvae_for_lings * 2} Zerglings (Target: {target_zerglings})")
+            logger.info(f"Producing {larvae_for_lings * 2} Zerglings (Target: {target_zerglings})")
 
     async def _produce_first_queen(self) -> None:
         """
@@ -211,7 +214,7 @@ class EarlyDefenseSystem:
             if self.bot.can_afford(UnitTypeId.QUEEN):
                 self.bot.do(hatchery.train(UnitTypeId.QUEEN))
                 self.queen_started = True
-                print(f"[EARLY_DEFENSE] [OK] Started First Queen Production (Game Time: {int(self.bot.time)}s)")
+                logger.info(f"[OK] Started First Queen Production (Game Time: {int(self.bot.time)}s)")
                 break
 
     async def _emergency_defense(self) -> None:
@@ -234,7 +237,7 @@ class EarlyDefenseSystem:
             # Threat cleared
             self.early_threats.clear()
             self.emergency_mode = False
-            print(f"[EARLY_DEFENSE] Early threat cleared. Returning to normal mode.")
+            logger.info(f"Early threat cleared. Returning to normal mode.")
             return
 
         # Closest enemy
@@ -266,7 +269,7 @@ class EarlyDefenseSystem:
                 if (worker.is_idle or worker.is_gathering) and closest_enemy.distance_to(main_base) < 10:
                     self.bot.do(worker.attack(closest_enemy.position))
 
-            print(f"[EARLY_DEFENSE] ⚔️ Deployed {defending_workers} workers for defense!")
+            logger.info(f"[FIGHT] Deployed {defending_workers} workers for defense!")
 
     def get_status(self) -> str:
         """
@@ -335,9 +338,9 @@ class EarlyDefenseSystem:
         try:
             self.bot.do(pool.research(zergling_speed))
             self._zergling_speed_researched = True
-            print(f"[EARLY_DEFENSE] ★★★ Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! ★★★")
+            logger.info(f"[*][*][*] Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! [*][*][*]")
         except Exception as e:
-            print(f"[EARLY_DEFENSE] Zergling speed research failed: {e}")
+            logger.error(f"Zergling speed research failed: {e}")
 
     # =============================================
     # ★ FIX 3: Early Spine Crawler (2 minutes) ★
@@ -389,7 +392,7 @@ class EarlyDefenseSystem:
                         "EarlyDefenseSystem"
                     )
                     self._spine_crawler_ordered = True
-                    print(f"[EARLY_DEFENSE] ★ Spine Crawler ordered at {int(self.bot.time)}s (early defense) ★")
+                    logger.info(f"[*] Spine Crawler ordered at {int(self.bot.time)}s (early defense) [*]")
             else:
                 location = await self.bot.find_placement(
                     UnitTypeId.SPINECRAWLER,
@@ -402,9 +405,9 @@ class EarlyDefenseSystem:
                     if worker:
                         self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, location))
                         self._spine_crawler_ordered = True
-                        print(f"[EARLY_DEFENSE] ★ Spine Crawler building at {int(self.bot.time)}s (early defense) ★")
+                        logger.info(f"[*] Spine Crawler building at {int(self.bot.time)}s (early defense) [*]")
         except Exception as e:
-            print(f"[EARLY_DEFENSE] Spine crawler build failed: {e}")
+            logger.error(f"Spine crawler build failed: {e}")
 
     # =============================================
     # ★ FIX 5: Worker Pull Defense ★
@@ -456,7 +459,7 @@ class EarlyDefenseSystem:
                 self._pulled_worker_tags.add(worker.tag)
 
             self._workers_pulled = True
-            print(f"[EARLY_DEFENSE] ★ WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) ★")
+            logger.info(f"[*] WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) [*]")
 
     async def _return_pulled_workers(self) -> None:
         """
@@ -484,7 +487,7 @@ class EarlyDefenseSystem:
                 returned += 1
 
         if returned > 0:
-            print(f"[EARLY_DEFENSE] ★ {returned} workers returned to mining ★")
+            logger.info(f"[*] {returned} workers returned to mining [*]")
 
         self._pulled_worker_tags.clear()
         self._workers_pulled = False

@@ -8,6 +8,9 @@ type-safe access to configuration values.
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional
+import logging
+
+logger = logging.getLogger("ConfigLoader")
 
 
 class ConfigLoader:
@@ -41,10 +44,10 @@ class ConfigLoader:
                 ConfigLoader._config_cache["strategy"] = config
                 return config
         except FileNotFoundError:
-            print(f"[WARNING] Strategy config not found: {config_path}")
+            logger.warning(f"Strategy config not found: {config_path}")
             return ConfigLoader._get_default_config()
         except json.JSONDecodeError as e:
-            print(f"[ERROR] Invalid JSON in strategy config: {e}")
+            logger.error(f"Invalid JSON in strategy config: {e}")
             return ConfigLoader._get_default_config()
 
     @staticmethod
@@ -82,6 +85,30 @@ class ConfigLoader:
         """Get timing configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("timing", {})
+
+    @staticmethod
+    def get_rush_detection_config() -> Dict[str, Any]:
+        """Get rush detection configuration"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("rush_detection", {})
+
+    @staticmethod
+    def get_emergency_config() -> Dict[str, Any]:
+        """Get emergency mode configuration"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("emergency_mode", {})
+
+    @staticmethod
+    def get_counter_build_config() -> Dict[str, Any]:
+        """Get counter build configuration"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("counter_build", {})
+
+    @staticmethod
+    def get_race_fallback_config() -> Dict[str, Any]:
+        """Get race-specific fallback unit ratios"""
+        config = ConfigLoader.load_strategy_config()
+        return config.get("race_specific_fallback", {})
 
     @staticmethod
     def get_value(section: str, key: str, default: Any = None) -> Any:

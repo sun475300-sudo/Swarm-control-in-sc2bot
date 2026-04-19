@@ -173,7 +173,7 @@ class RLTechAdapter:
             game_time = getattr(self.bot, "time", 0)
             for tech in new_tech:
                 self.tech_first_seen[tech] = game_time
-                self.logger.info(f"[RL_TECH] [{int(game_time)}s] ★ NEW ENEMY TECH: {tech} ★")
+                self.logger.info(f"[RL_TECH] [{int(game_time)}s] [*] NEW ENEMY TECH: {tech} [*]")
 
         # 관찰 상태 업데이트
         self.observed_enemy_tech = current_enemy_tech.copy()

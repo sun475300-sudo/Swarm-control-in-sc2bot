@@ -12,6 +12,9 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
+import logging
+
+logger = logging.getLogger("MakeInvestorPptx")
 
 # ===== Colors =====
 BG       = RGBColor(0x0B, 0x10, 0x1F)
@@ -821,7 +824,7 @@ def slide_20(prs):
 
 # ===================================================================
 def main():
-    print("[1/2] Building 20 slides...")
+    logger.info("[1/2] Building 20 slides...")
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -850,21 +853,21 @@ def main():
     ]
     for fn, label in builders:
         fn(prs)
-        print(f"  [OK] {label}")
+        logger.info(f"  [OK] {label}")
 
-    print("[2/2] Saving PPTX...")
+    logger.info("[2/2] Saving PPTX...")
     out = Path(__file__).parent / "Gwangju_Drone_UTM_Pitch.pptx"
     try:
         prs.save(str(out))
     except PermissionError:
         out = Path(__file__).parent / "Gwangju_Drone_UTM_Pitch_v2.pptx"
         prs.save(str(out))
-        print("  (Original locked, saved as v2)")
+        logger.info("  (Original locked, saved as v2)")
 
-    print(f"\n{'='*60}")
-    print(f"PPTX CREATED: {out}")
-    print(f"  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"PPTX CREATED: {out}")
+    logger.info(f"  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
+    logger.info(f"{'='*60}")
 
 
 if __name__ == "__main__":

@@ -15,6 +15,9 @@ import numpy as np
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import logging
+
+logger = logging.getLogger("Generate3dVisuals")
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 EXPORT_PNG = "--png" in sys.argv
@@ -24,11 +27,11 @@ def save(fig, name, width=1200, height=800):
     """HTML 저장 + 선택적 PNG 내보내기"""
     html_path = os.path.join(OUTPUT_DIR, f"{name}.html")
     fig.write_html(html_path, include_plotlyjs="cdn")
-    print(f"  [HTML] {html_path}")
+    logger.info(f"  [HTML] {html_path}")
     if EXPORT_PNG:
         png_path = os.path.join(OUTPUT_DIR, f"{name}.png")
         fig.write_image(png_path, width=width, height=height, scale=2)
-        print(f"  [PNG]  {png_path}")
+        logger.info(f"  [PNG]  {png_path}")
 
 
 # ═══════════════════════════════════════════════════════
@@ -37,7 +40,7 @@ def save(fig, name, width=1200, height=800):
 
 def part1_fsm_3d():
     """1-1. Game Phase FSM을 3D 타임라인으로 표현"""
-    print("[Part 1-1] FSM Game Phase 3D Timeline")
+    logger.info("[Part 1-1] FSM Game Phase 3D Timeline")
 
     phases = ["OPENING", "EARLY GAME", "MID GAME", "LATE GAME"]
     times = [0, 3, 6, 12]  # 분
@@ -120,7 +123,7 @@ def part1_fsm_3d():
 
 def part1_authority_3d():
     """1-2. Authority Mode를 3D 상태 전이 그래프로 표현"""
-    print("[Part 1-2] Authority Mode 3D State Graph")
+    logger.info("[Part 1-2] Authority Mode 3D State Graph")
 
     modes = ["EMERGENCY", "COMBAT", "ECONOMY", "BALANCED"]
     positions = {
@@ -206,7 +209,7 @@ def part1_authority_3d():
 
 def part1_hybrid_3d():
     """1-3. Rule-Based + RL Hybrid Architecture를 3D 레이어로 표현"""
-    print("[Part 1-3] Rule + RL Hybrid Architecture 3D")
+    logger.info("[Part 1-3] Rule + RL Hybrid Architecture 3D")
 
     fig = go.Figure()
 
@@ -315,7 +318,7 @@ def part1_hybrid_3d():
 
 def part2_tactical_3d():
     """2-1. 전술 의사결정 5단계를 3D 나선형으로 표현"""
-    print("[Part 2-1] Tactical Decision Chain 3D Spiral")
+    logger.info("[Part 2-1] Tactical Decision Chain 3D Spiral")
 
     phases = [
         ("SCOUT", "#2196F3", ["Overlord Scout", "Identify Race", "Threat Assess"]),
@@ -416,7 +419,7 @@ def part2_tactical_3d():
 
 def part2_engagement_3d():
     """2-2. 교전 의사결정 플로우차트를 3D 트리로 표현"""
-    print("[Part 2-2] Engagement Decision Tree 3D")
+    logger.info("[Part 2-2] Engagement Decision Tree 3D")
 
     fig = go.Figure()
 
@@ -502,7 +505,7 @@ def part2_engagement_3d():
 
 def part3_boids_3d():
     """3-1. Boids 알고리즘 3D 시뮬레이션 (실제 입자 시스템)"""
-    print("[Part 3-1] Boids Swarm 3D Simulation")
+    logger.info("[Part 3-1] Boids Swarm 3D Simulation")
 
     np.random.seed(42)
     N = 60  # 유닛 수
@@ -674,7 +677,7 @@ def part3_boids_3d():
 
 def part3_forces_3d():
     """3-2. Boids 3대 힘 벡터 시각화"""
-    print("[Part 3-2] Boids Force Vectors 3D")
+    logger.info("[Part 3-2] Boids Force Vectors 3D")
 
     fig = go.Figure()
 
@@ -772,7 +775,7 @@ def part3_forces_3d():
 
 def part4_concept_mapping_3d():
     """4-1. SC2 → Drone ATC 개념 매핑을 3D 브릿지로 표현"""
-    print("[Part 4-1] SC2 → Drone ATC Concept Mapping 3D Bridge")
+    logger.info("[Part 4-1] SC2 → Drone ATC Concept Mapping 3D Bridge")
 
     sc2_modules = [
         ("Blackboard", "#42A5F5"),
@@ -889,7 +892,7 @@ def part4_concept_mapping_3d():
 
 def part4_drone_atc_3d():
     """4-2. Drone ATC 시스템 3D 공역 시각화"""
-    print("[Part 4-2] Drone ATC 3D Airspace")
+    logger.info("[Part 4-2] Drone ATC 3D Airspace")
 
     np.random.seed(123)
     fig = go.Figure()
@@ -974,7 +977,7 @@ def part4_drone_atc_3d():
 
 def part4_roadmap_3d():
     """4-3. End-to-End Vision 로드맵 3D"""
-    print("[Part 4-3] Vision Roadmap 3D")
+    logger.info("[Part 4-3] Vision Roadmap 3D")
 
     fig = go.Figure()
 

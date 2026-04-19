@@ -1,0 +1,65 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Terran
+  Duration: 2:09
+  Date: 2026-04-16 08:41
+
+--- TIMELINE ---
+  [0:56] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:10] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [2:24] Build: UnitTypeId.SPINECRAWLER (Supply 22)
+  [2:43] Build: UnitTypeId.ROACHWARREN (Supply 23)
+  [4:02] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 31)
+  [4:09] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:42] Harassment: UnitTypeId.COMMANDCENTER
+  [6:48] Harassment: UnitTypeId.COMMANDCENTER
+  [6:53] Harassment: UnitTypeId.COMMANDCENTER
+  [6:59] Harassment: UnitTypeId.COMMANDCENTER
+  [7:10] Harassment: UnitTypeId.COMMANDCENTER
+  [7:15] Harassment: UnitTypeId.COMMANDCENTER
+  [7:21] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [7:27] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [7:32] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [7:38] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [8:16] Harassment: UnitTypeId.COMMANDCENTER
+  [8:22] Harassment: UnitTypeId.REFINERY
+  [8:27] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 170
+  Peak Vespene: 2018
+  Peak Workers: 25
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 2:43
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:02
+  Tech: UnitTypeId.LAIR at 8:06
+  Tech: UnitTypeId.HYDRALISKDEN at 8:49
+  Tech: UnitTypeId.INFESTATIONPIT at 9:17
+  Tech: UnitTypeId.SPIRE at 9:52
+  Tech: UnitTypeId.LURKERDENMP at 12:44
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 114 produced
+  UnitTypeId.ROACH: 3 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 18
+  Army Supply: 4
+  Bases: 1
+  Minerals: 35
+  Vespene: 2092
+
+============================================================

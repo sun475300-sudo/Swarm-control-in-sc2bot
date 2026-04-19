@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("StartWithNgrok")
 # -*- coding: utf-8 -*-
 """
 Start services with ngrok (placeholder).
@@ -6,7 +9,7 @@ Start services with ngrok (placeholder).
 
 
 def main() -> None:
-    print("Start with ngrok placeholder.")
+    logger.info("Start with ngrok placeholder.")
 
 
 if __name__ == "__main__":

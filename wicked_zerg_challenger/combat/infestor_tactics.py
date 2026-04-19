@@ -327,7 +327,13 @@ class InfestorTacticsController:
                             pass
 
         if actions:
-            await bot.do_actions(actions)
+            for action in actions:
+                try:
+                    result = bot.do(action)
+                    if hasattr(result, "__await__"):
+                        await result
+                except Exception:
+                    pass
 
         return acted_tags
 

@@ -3,10 +3,13 @@
 """
 Optimize and sort learning data (placeholder).
 """
+import logging
+
+logger = logging.getLogger("OptimizeAndSortLearningData")
 
 
 def main() -> None:
-    print("optimize_and_sort_learning_data placeholder.")
+    logger.info("optimize_and_sort_learning_data placeholder.")
 
 
 if __name__ == "__main__":

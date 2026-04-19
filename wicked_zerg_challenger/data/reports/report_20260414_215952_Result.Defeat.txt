@@ -1,0 +1,64 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Ascension to Aiur LE
+  Opponent: Protoss
+  Duration: 5:17
+  Date: 2026-04-14 21:59
+
+--- TIMELINE ---
+  [0:57] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:11] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:00] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:09] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:32] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 20)
+  [2:37] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [2:55] Build: UnitTypeId.SPORECRAWLER (Supply 19)
+  [3:38] Build: UnitTypeId.SPORECRAWLER (Supply 22)
+  [4:04] Build: UnitTypeId.SPINECRAWLER (Supply 26)
+  [4:12] Build: UnitTypeId.SPINECRAWLER (Supply 26)
+  [4:44] Harassment: UnitTypeId.WARPGATE
+  [4:50] Build: UnitTypeId.SPORECRAWLER (Supply 34)
+  [4:58] Build: UnitTypeId.SPINECRAWLER (Supply 33)
+  [7:26] Harassment: UnitTypeId.NEXUS
+  [7:31] Harassment: UnitTypeId.WARPGATE
+  [8:23] Harassment: UnitTypeId.NEXUS
+  [8:48] Harassment: UnitTypeId.NEXUS
+  [9:33] Harassment: UnitTypeId.PYLON
+  [9:39] Harassment: UnitTypeId.PYLON
+
+--- ECONOMY ---
+  Peak Minerals: 140
+  Peak Vespene: 4088
+  Peak Workers: 55
+
+--- TIMINGS ---
+  Expansion #1: 12:52 
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 2:32
+  Tech: UnitTypeId.ROACHWARREN at 5:15
+  Tech: UnitTypeId.LAIR at 15:16
+  Tech: UnitTypeId.HYDRALISKDEN at 15:44
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 62 produced
+  UnitTypeId.ROACH: 28 produced
+
+--- RESULT ANALYSIS ---
+  Army wiped out - need better engagements
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 772s - aim for sub-60s with Hatch First build
+  2. Worker count below optimal - prioritize drone production
+
+--- FINAL STATS ---
+  Workers: 29
+  Army Supply: 2
+  Bases: 3
+  Minerals: 37
+  Vespene: 4112
+
+============================================================

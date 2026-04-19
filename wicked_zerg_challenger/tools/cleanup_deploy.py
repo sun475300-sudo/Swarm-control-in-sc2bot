@@ -3,10 +3,13 @@
 """
 Cleanup deploy artifacts (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CleanupDeploy")
 
 
 def main() -> None:
-    print("cleanup_deploy placeholder.")
+    logger.info("cleanup_deploy placeholder.")
 
 
 if __name__ == "__main__":

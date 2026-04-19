@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import List, Tuple
 
 from replay_learning_tracker_sqlite import ReplayLearningTrackerSQLite
+import logging
+
+logger = logging.getLogger("MoveCompletedReplays")
 
 
 def move_completed_replays(
@@ -46,7 +49,7 @@ def move_completed_replays(
             continue
 
         if dry_run:
-            print(f"[WOULD MOVE] {replay_path.name}")
+            logger.info(f"{replay_path.name}")
             moved += 1
             continue
 
@@ -54,7 +57,7 @@ def move_completed_replays(
             replay_path.replace(dest_path)
             moved += 1
         except Exception as exc:
-            print(f"[ERROR] Failed to move {replay_path.name}: {exc}")
+            logger.error(f"Failed to move {replay_path.name}: {exc}")
             failed += 1
 
     return moved, failed
@@ -76,14 +79,14 @@ def force_move_all(
         if dest_path.exists():
             continue
         if dry_run:
-            print(f"[WOULD MOVE] {replay_path.name}")
+            logger.info(f"{replay_path.name}")
             moved += 1
             continue
         try:
             replay_path.replace(dest_path)
             moved += 1
         except Exception as exc:
-            print(f"[ERROR] Failed to move {replay_path.name}: {exc}")
+            logger.error(f"Failed to move {replay_path.name}: {exc}")
             failed += 1
     return moved, failed
 
@@ -109,11 +112,11 @@ def main() -> None:
     completed_dir = Path(args.completed) if args.completed else replay_dir / "completed"
 
     if not replay_dir.exists():
-        print(f"[ERROR] Source directory does not exist: {replay_dir}")
+        logger.error(f"Source directory does not exist: {replay_dir}")
         return
 
     if args.force:
-        print("[WARNING] Force mode: moving all replays")
+        logger.warning("Force mode: moving all replays")
         moved, failed = force_move_all(replay_dir, completed_dir, args.dry_run)
     else:
         moved, failed = move_completed_replays(
@@ -123,11 +126,11 @@ def main() -> None:
             dry_run=args.dry_run,
         )
 
-    print("\n" + "=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
-    print(f"Moved: {moved}")
-    print(f"Failed: {failed}")
+    logger.info("\n" + "=" * 70)
+    logger.info("SUMMARY")
+    logger.info("=" * 70)
+    logger.info(f"Moved: {moved}")
+    logger.error(f"Failed: {failed}")
 
 
 if __name__ == "__main__":

@@ -157,7 +157,7 @@ class QueenManager:
 
         except Exception as e:
             if iteration % 50 == 0:
-                print(f"[WARNING] Queen manager error: {e}")
+                logger.error(f"Queen manager error: {e}")
 
     async def _run_specialization_system(self, spec_mgr, queens, hatcheries, iteration: int) -> None:
         """
@@ -198,7 +198,7 @@ class QueenManager:
         if int(game_time) % 30 == 0 and iteration % 22 == 0:
             counts = spec_mgr.get_role_counts()
             progress = f"{highway.get_highway_progress():.0%}" if highway else "N/A"
-            print(
+            logger.info(
                 f"[QUEEN_SPEC] [{int(game_time)}s] "
                 f"PUMP:{counts['pump']} CREEP:{counts['creep']} COMBAT:{counts['combat']} "
                 f"| Highway: {progress}"
@@ -264,7 +264,7 @@ class QueenManager:
                     pending += 1
             except Exception as e:
                 if iteration % 50 == 0:
-                    print(f"[WARNING] Queen train error: {e}")
+                    logger.error(f"Queen train error: {e}")
                 continue
 
     def _assign_queen_roles(self, queens, hatcheries) -> None:
@@ -556,7 +556,7 @@ class QueenManager:
         if iteration % 100 == 0:
             air_count = len(air_enemies)
             ground_count = len(ground_enemies)
-            print(f"[QUEEN DEFENSE] [{int(game_time)}s] Queens defending! Air: {air_count}, Ground: {ground_count}")
+            logger.info(f"[{int(game_time)}s] Queens defending! Air: {air_count}, Ground: {ground_count}")
 
         # ★ IMPROVED: Keep 1-2 queens injecting for reinforcement ★
         # 전투 중에도 최소 1명의 퀸은 라바 ���젝트를 계속해야 병력 충원 가능
@@ -580,7 +580,7 @@ class QueenManager:
         if inject_queens and hatcheries:
             await self._inject_larva(hatcheries, inject_queens)
             if iteration % 50 == 0:
-                print(f"[QUEEN DEFENSE] [{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement")
+                logger.info(f"[{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement")
 
         # Send defense queens to defend
         for queen in defense_queens:
@@ -781,7 +781,7 @@ class QueenManager:
                         used_queen_tags.add(best_queen.tag)
                 except Exception as e:
                     if iteration % 50 == 0:
-                        print(f"[WARNING] Transfuse error: {e}")
+                        logger.error(f"Transfuse error: {e}")
                     continue
 
         # CreepyBot: Queens with 190+ energy also transfuse damaged buildings
@@ -865,7 +865,7 @@ class QueenManager:
                     self.last_creep_time[queen.tag] = current_time
             except Exception as e:
                 if iteration % 50 == 0:
-                    print(f"[WARNING] Creep spread error: {e}")
+                    logger.error(f"Creep spread error: {e}")
                 continue
 
     async def _inject_queens_spread_creep(self, queens, iteration: int) -> None:
@@ -969,7 +969,7 @@ class QueenManager:
 
         # 로그 (30초마다)
         if game_time % 30 == 0 and iteration % 22 == 0:
-            print(f"[QUEEN CREEP] [{game_time}s] {len(available_queens)} idle/high-energy queens spreading creep (Tumors: {tumor_count}/1000)")
+            logger.info(f"[{game_time}s] {len(available_queens)} idle/high-energy queens spreading creep (Tumors: {tumor_count}/1000)")
 
         # 각 여유 퀸으로 점막 확장 (최대 4개로 증가)
         tumors_placed = 0

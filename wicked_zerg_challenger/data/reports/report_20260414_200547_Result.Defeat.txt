@@ -1,0 +1,65 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Terran
+  Duration: 3:53
+  Date: 2026-04-14 20:05
+
+--- TIMELINE ---
+  [1:00] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:10] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:02] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:11] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:40] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [2:50] Build: UnitTypeId.ROACHWARREN (Supply 19)
+  [3:09] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 20)
+  [6:02] Harassment: UnitTypeId.COMMANDCENTER
+  [6:08] Harassment: UnitTypeId.COMMANDCENTER
+  [6:13] Harassment: UnitTypeId.COMMANDCENTER
+  [6:31] Harassment: UnitTypeId.COMMANDCENTER
+  [6:37] Harassment: UnitTypeId.COMMANDCENTER
+  [6:56] Harassment: UnitTypeId.COMMANDCENTER
+  [8:24] Harassment: UnitTypeId.REFINERY
+  [8:41] Harassment: UnitTypeId.COMMANDCENTER
+  [10:52] Harassment: UnitTypeId.REFINERY
+  [11:00] Harassment: UnitTypeId.COMMANDCENTER
+  [11:05] Harassment: UnitTypeId.REFINERY
+  [11:11] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 165
+  Peak Vespene: 1590
+  Peak Workers: 31
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 2:50
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 3:09
+  Tech: UnitTypeId.LAIR at 10:57
+  Tech: UnitTypeId.HYDRALISKDEN at 11:22
+  Tech: UnitTypeId.INFESTATIONPIT at 11:57
+  Tech: UnitTypeId.SPIRE at 13:14
+  Tech: UnitTypeId.LURKERDENMP at 13:55
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 34 produced
+  UnitTypeId.ROACH: 25 produced
+
+--- RESULT ANALYSIS ---
+  Army wiped out - need better engagements
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 13
+  Army Supply: 5
+  Bases: 1
+  Minerals: 5
+  Vespene: 1614
+
+============================================================

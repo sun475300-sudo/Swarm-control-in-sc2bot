@@ -42,6 +42,13 @@ class FormationManager:
             UnitTypeId.LURKER,
         }
 
+    @staticmethod
+    def _check_exists(units) -> bool:
+        """Check if units exist, handling both Units objects and plain lists."""
+        if hasattr(units, 'exists'):
+            return bool(units.exists)
+        return bool(units)
+
     def form_concave(
         self, units: Units, enemy_center: Point2, formation_radius: float = 8.0
     ) -> List[Tuple[Unit, Point2]]:
@@ -58,7 +65,10 @@ class FormationManager:
         Returns:
             (유닛, 목표 위치) 튜플 리스트
         """
-        if not units.exists:
+        if hasattr(units, 'exists'):
+            if not units.exists:
+                return []
+        elif not units:
             return []
 
         # 원거리 유닛과 근접 유닛 분리
@@ -135,7 +145,7 @@ class FormationManager:
     def find_chokepoint(self, enemy_units: Units, our_base: Point2) -> Optional[Point2]:
         """단일 길목 찾기 (CombatManager 호환용)"""
         # 적군과 아군 본진 사이의 중간 지점
-        if enemy_units.exists:
+        if self._check_exists(enemy_units):
              enemy_center = enemy_units.center
              return our_base.towards(enemy_center, 15.0)
         return None
@@ -153,7 +163,7 @@ class FormationManager:
         Returns:
             회피가 필요하면 True
         """
-        if not units.exists or not enemy_units.exists:
+        if not self._check_exists(units) or not self._check_exists(enemy_units):
             return False
 
         # 아군과 적군의 병력 확인
@@ -163,7 +173,7 @@ class FormationManager:
         # 적이 병력 우위 상황이면 회피해야 함
         if enemy_count > our_count * 1.5:
             # 적군이 모여있는지 확인
-            if enemy_units.exists:
+            if self._check_exists(enemy_units):
                 enemy_positions = [e.position for e in enemy_units]
                 avg_enemy_pos = Point2(
                     (

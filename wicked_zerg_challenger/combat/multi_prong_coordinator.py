@@ -111,7 +111,7 @@ class MultiProngCoordinator:
 
     async def _plan_multi_prong_attack(self):
         """다방향 공격 계획"""
-        self.logger.info(f"[{int(self.bot.time)}s] ★ MULTI-PRONG ATTACK INITIATED ★")
+        self.logger.info(f"[{int(self.bot.time)}s] [*] MULTI-PRONG ATTACK INITIATED [*]")
 
         # Assign units to prongs
         self._assign_units_to_prongs()

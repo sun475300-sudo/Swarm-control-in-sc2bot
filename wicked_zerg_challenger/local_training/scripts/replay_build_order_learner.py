@@ -17,6 +17,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("ReplayBuildOrderLearner")
 
 # 프로젝트 루트 추가
 script_dir = Path(__file__).parent
@@ -70,7 +73,7 @@ class ReplayBuildOrderLearner:
         if self.replay_dir.exists():
             for ext in ["*.SC2Replay", "*.sc2replay"]:
                 replays.extend(self.replay_dir.glob(f"**/{ext}"))
-        print(f"[REPLAY] Found {len(replays)} replay files")
+        logger.info(f"Found {len(replays)} replay files")
         return replays
 
     def parse_replay(self, replay_path: Path) -> Optional[Dict[str, Any]]:
@@ -88,7 +91,7 @@ class ReplayBuildOrderLearner:
             return self._extract_basic_metadata(replay_path)
 
         except Exception as e:
-            print(f"[REPLAY] Failed to parse {replay_path.name}: {e}")
+            logger.error(f"Failed to parse {replay_path.name}: {e}")
             return None
 
     def _extract_from_sc2reader(self, replay) -> Dict[str, Any]:
@@ -111,10 +114,10 @@ class ReplayBuildOrderLearner:
             data["players"].append(player_data)
 
             # 저그 플레이어의 빌드 오더 추출
-            print(f"[DEBUG] Player {player.name} Race: '{player_data['race']}'") # DEBUG
+            logger.debug(f"Player {player.name} Race: '{player_data['race']}'") # DEBUG
             if "Zerg" in player_data["race"]:
                 build_order = self._extract_build_order(replay, player)
-                print(f"[DEBUG]  - Extracted {len(build_order)} actions") # DEBUG
+                logger.debug(f"- Extracted {len(build_order)} actions") # DEBUG
                 if build_order:
                     data["build_orders"].append({
                         "player": player.name,
@@ -133,7 +136,7 @@ class ReplayBuildOrderLearner:
         build_order = []
 
         try:
-            print(f"[DEBUG] Total events: {len(replay.events)}") # DEBUG
+            logger.debug(f"Total events: {len(replay.events)}") # DEBUG
             debug_count = 0
             
             # 이벤트에서 유닛/건물 생산 추출
@@ -153,7 +156,7 @@ class ReplayBuildOrderLearner:
                                      "supply": getattr(event, 'supply', 0)
                                  })
         except Exception as e:
-            print(f"[REPLAY] Build order extraction error: {e}")
+            logger.error(f"Build order extraction error: {e}")
 
         # 시간순 정렬
         build_order.sort(key=lambda x: x["time"])
@@ -175,7 +178,7 @@ class ReplayBuildOrderLearner:
         replays = self.scan_replays()[:max_replays]
 
         if not replays:
-            print("[REPLAY] No replays found, using default build orders")
+            logger.info("No replays found, using default build orders")
             return self._get_default_build_orders()
 
         processed = 0
@@ -186,7 +189,7 @@ class ReplayBuildOrderLearner:
                 processed += 1
 
         self.build_stats["total_replays"] = processed
-        print(f"[REPLAY] Processed {processed} replays")
+        logger.info(f"Processed {processed} replays")
 
         return self._generate_learned_parameters()
 
@@ -326,17 +329,17 @@ class ReplayBuildOrderLearner:
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
-            print(f"[REPLAY] Saved learned data to {output_path}")
+            logger.info(f"Saved learned data to {output_path}")
             return True
         except Exception as e:
-            print(f"[REPLAY] Failed to save: {e}")
+            logger.error(f"Failed to save: {e}")
             return False
 
     def run(self) -> Dict[str, Any]:
         """메인 실행"""
-        print("=" * 60)
-        print("REPLAY BUILD ORDER LEARNER")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("REPLAY BUILD ORDER LEARNER")
+        logger.info("=" * 60)
 
         # 학습 실행
         learned_params = self.learn_from_replays()
@@ -345,12 +348,12 @@ class ReplayBuildOrderLearner:
         self.save_learned_data(learned_params)
 
         # 결과 출력
-        print("\n[RESULTS]")
-        print(f"  - Total replays processed: {learned_params['stats'].get('total_replays', 0)}")
-        print(f"  - Zerg wins analyzed: {learned_params['stats'].get('zerg_wins', 0)}")
-        print(f"  - Build timings learned: {len(learned_params.get('build_order_timings', {}))}")
-        print(f"  - Unit priorities: {len(learned_params.get('unit_priorities', {}))}")
-        print("=" * 60)
+        logger.info("\n[RESULTS]")
+        logger.info(f"  - Total replays processed: {learned_params['stats'].get('total_replays', 0)}")
+        logger.info(f"  - Zerg wins analyzed: {learned_params['stats'].get('zerg_wins', 0)}")
+        logger.info(f"  - Build timings learned: {len(learned_params.get('build_order_timings', {}))}")
+        logger.info(f"  - Unit priorities: {len(learned_params.get('unit_priorities', {}))}")
+        logger.info("=" * 60)
 
         return learned_params
 

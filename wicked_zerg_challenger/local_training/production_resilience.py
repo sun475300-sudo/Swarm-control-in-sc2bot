@@ -1,6 +1,9 @@
 from typing import Any, Dict
 import random
 from config.unit_configs import EconomyConfig
+import logging
+
+logger = logging.getLogger("ProductionResilience")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -104,7 +107,7 @@ class ProductionResilience:
             try:
                 self.balancer = EconomyCombatBalancer(bot)
             except Exception as e:
-                print(f"[WARNING] Failed to initialize EconomyCombatBalancer: {e}")
+                logger.error(f"Failed to initialize EconomyCombatBalancer: {e}")
                 self.balancer = None
         else:
             self.balancer = None
@@ -114,7 +117,7 @@ class ProductionResilience:
             try:
                 self.resource_manager = ResourceManager(bot)
             except Exception as e:
-                print(f"[WARNING] Failed to initialize ResourceManager: {e}")
+                logger.error(f"Failed to initialize ResourceManager: {e}")
                 self.resource_manager = None
         else:
             self.resource_manager = None
@@ -125,7 +128,7 @@ class ProductionResilience:
                 # Select random strategy for variety
                 self.strategy_manager = OpeningStrategyManager(bot, OpeningStrategy.RANDOM if OpeningStrategy else None)
             except Exception as e:
-                print(f"[WARNING] Failed to initialize OpeningStrategyManager: {e}")
+                logger.error(f"Failed to initialize OpeningStrategyManager: {e}")
                 self.strategy_manager = None
         else:
             self.strategy_manager = None
@@ -135,7 +138,7 @@ class ProductionResilience:
             try:
                 self.placement_helper = BuildingPlacementHelper(bot)
             except Exception as e:
-                print(f"[WARNING] Failed to initialize BuildingPlacementHelper: {e}")
+                logger.error(f"Failed to initialize BuildingPlacementHelper: {e}")
                 self.placement_helper = None
         else:
             self.placement_helper = None
@@ -252,7 +255,7 @@ class ProductionResilience:
             return
         self.last_expand_log_time = now
         if reason:
-            print(f"[EXPAND BLOCK] {reason} at {int(now)}s")
+            logger.info(f"{reason} at {int(now)}s")
 
     def _cleanup_build_reservations(self) -> None:
         """Drop stale reservations to avoid permanent blocks."""
@@ -279,10 +282,22 @@ class ProductionResilience:
         if b.vespene > 1500:
             await self._spend_excess_gas()
 
+        # ★★★ EXPANSION RESERVE: 기지 부족 시 미네랄 비축 ★★★
+        # FIX: Only block DRONE production, never block army production.
+        # After 300s (5 min), stop blocking entirely to avoid army starvation.
+        time = getattr(b, "time", 0.0)
+        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+        pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY) if hasattr(b, "already_pending") else 0
+        self._expansion_reserve_active = (
+            bases <= 2 and pending_hatcheries == 0 and time > 120 and time < 300 and b.minerals < 300
+        )
+        # NOTE: We no longer return early here. Army production must continue.
+        # The _expansion_reserve_active flag is checked in _balanced_production
+        # to suppress drone production only.
+
         # ★★★ FIX: 확장 체크를 미네랄 소비보다 먼저 실행 ★★★
         # === AGGRESSIVE EXPANSION: Prioritize expansion BEFORE spending minerals ===
         # Zerg needs expansions for macro advantage
-        time = getattr(b, "time", 0.0)
         if time >= 60 and b.minerals > 300:  # 300원부터 확장 고려
             bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
             pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
@@ -292,7 +307,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.HATCHERY):
                     try:
                         if await self._try_expand():
-                            print(f"[EARLY_EXPAND] [{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})")
+                            logger.info(f"[{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})")
                     except Exception:
                         pass
 
@@ -312,7 +327,7 @@ class ProductionResilience:
                 await self.resource_manager.optimize_resource_gathering()
             except Exception as e:
                 if b.iteration % 50 == 0:
-                    print(f"[WARNING] Resource manager error: {e}")
+                    logger.error(f"Resource manager error: {e}")
 
         # === EARLY GAME BOOSTER: First 3 minutes - Maximum priority ===
         time = getattr(b, "time", 0.0)
@@ -328,45 +343,45 @@ class ProductionResilience:
             if b.minerals > 3000:
                 await self._force_emergency_production(b)
                 return
-            
-            # === EXTREME EMERGENCY: Minerals > 500 - Force all larvae to Zerglings
-            # This is the last line of defense against "1,000+ minerals, 0 army" death spiral
-            if b.minerals > 500:
-                larvae = b.units(UnitTypeId.LARVA)
-                if larvae.exists:
-                    # Check Spawning Pool status more reliably
-                    spawning_pools_ready = b.structures(UnitTypeId.SPAWNINGPOOL).ready
-                    spawning_pools_any = b.structures(UnitTypeId.SPAWNINGPOOL)
-                    pending_pools = b.already_pending(UnitTypeId.SPAWNINGPOOL)
 
-                    # Check for duplicate pool builds - only if NO ready pools exist
-                    if not spawning_pools_ready.exists and pending_pools == 0 and b.minerals > 500:
-                        if b.townhalls.exists and b.can_afford(UnitTypeId.SPAWNINGPOOL):
-                            try:
-                                main_base = b.townhalls.first
-                                await b.build(
-                                    UnitTypeId.SPAWNINGPOOL,
-                                    near=main_base.position.towards(b.game_info.map_center, 5),
-                                )
-                                print(f"[PRODUCTION_RESILIENCE] [{int(b.time)}s] EMERGENCY POOL BUILD [Frame:{b.iteration}] Minerals:{int(b.minerals)} Larvae:{len(list(larvae))} Supply:{b.supply_used}/{b.supply_cap}")
-                            except Exception as e:
-                                if b.iteration % 100 == 0:
-                                    print(f"[ERROR] Failed to emergency-build Spawning Pool: {e}")
-                            return  # Exit and wait for Spawning Pool to complete
+            # ★★★ FIX: 미네랄 > 500 조건 제거 — 항상 생산 실행 ★★★
+            # 이전: minerals > 500일 때만 balanced_production 호출
+            # → 미네랄이 0이면 군대 생산이 영원히 안 됨 (치명적 버그)
+            # 수정: 라바가 있으면 항상 balanced production 실행
+            larvae = b.units(UnitTypeId.LARVA)
+            if larvae.exists:
+                # Check Spawning Pool status more reliably
+                spawning_pools_ready = b.structures(UnitTypeId.SPAWNINGPOOL).ready
+                pending_pools = b.already_pending(UnitTypeId.SPAWNINGPOOL)
 
-                    # If Spawning Pool is ready, use balance system to decide drone vs army
-                    if spawning_pools_ready.exists:
-                        # Use Economy-Combat Balancer to decide production
-                        if self.balancer:
-                            await self._balanced_production(larvae)
-                        else:
-                            # Fallback: Original emergency logic
-                            await self._emergency_zergling_production(larvae)
-                        return  # Exit after production decision
+                # Check for duplicate pool builds - only if NO ready pools exist
+                if not spawning_pools_ready.exists and pending_pools == 0 and b.minerals >= 200:
+                    if b.townhalls.exists and b.can_afford(UnitTypeId.SPAWNINGPOOL):
+                        try:
+                            main_base = b.townhalls.first
+                            await b.build(
+                                UnitTypeId.SPAWNINGPOOL,
+                                near=main_base.position.towards(b.game_info.map_center, 5),
+                            )
+                            logger.info(f"[{int(b.time)}s] EMERGENCY POOL BUILD [Frame:{b.iteration}] Minerals:{int(b.minerals)} Larvae:{len(list(larvae))} Supply:{b.supply_used}/{b.supply_cap}")
+                        except Exception as e:
+                            if b.iteration % 100 == 0:
+                                logger.error(f"Failed to emergency-build Spawning Pool: {e}")
+                        return  # Exit and wait for Spawning Pool to complete
+
+                # If Spawning Pool is ready, use balance system to decide drone vs army
+                if spawning_pools_ready.exists:
+                    # Use Economy-Combat Balancer to decide production
+                    if self.balancer:
+                        await self._balanced_production(larvae)
+                    else:
+                        # Fallback: Original emergency logic
+                        await self._emergency_zergling_production(larvae)
+                    return  # Exit after production decision
 
         except Exception as e:
             if b.iteration % 100 == 0:
-                print(f"[WARNING] fix_production_bottleneck emergency error: {e}")
+                logger.error(f"fix_production_bottleneck emergency error: {e}")
 
     async def _balanced_production(self, larvae) -> None:
         """
@@ -375,11 +390,23 @@ class ProductionResilience:
         b = self.bot
         if not self.balancer:
             return
-        
+
         larvae_list = list(larvae) if larvae.exists else []
         if not larvae_list:
             return
-        
+
+        # ★ EXPANSION RESERVE: 2기지 이하 + 150초 이후면 확장 비용 예약 ★
+        # FIX: Never block army production. Only suppress drone production when
+        # saving for expansion. After 300s, stop suppressing entirely.
+        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+        pending_hatch = b.already_pending(UnitTypeId.HATCHERY) if hasattr(b, "already_pending") else 0
+        game_time = getattr(b, "time", 0)
+        expansion_reserve_active = (
+            bases <= 2 and pending_hatch == 0 and game_time > 150 and game_time < 300 and b.minerals < 300
+        )
+        # NOTE: We do NOT return here. Army production continues below.
+        # expansion_reserve_active is used below to suppress drone production only.
+
         # RESOURCE FLUSH MODE: When minerals >= 1000, produce units based on available tech
         # IMPROVED: Prioritize tech units over Zerglings to balance composition
         if b.minerals >= 1000:
@@ -411,7 +438,7 @@ class ProductionResilience:
                         zergling_count += 1
 
             if units_produced > 0:
-                print(f"[RESOURCE_FLUSH] [{int(b.time)}s] Produced {units_produced} units (Minerals: {int(b.minerals)})")
+                logger.info(f"[{int(b.time)}s] Produced {units_produced} units (Minerals: {int(b.minerals)})")
             return
         
         # Get current counts
@@ -425,7 +452,7 @@ class ProductionResilience:
 
         # Log balance decision periodically
         if b.iteration % 100 == 0:
-            print(f"[BALANCE] Mode: {balance_mode}, Drone: {stats.get('drone_ratio', 0):.1%}, "
+            logger.info(f"Mode: {balance_mode}, Drone: {stats.get('drone_ratio', 0):.1%}, "
                   f"Army: {stats.get('army_ratio', 0):.1%}, "
                   f"Current: {drone_count}, Target: {target_drones}")
         
@@ -441,7 +468,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
-                        print(f"[BALANCE] Produced Overlord for supply")
+                        logger.info(f"Produced Overlord for supply")
                     break
                 continue
             
@@ -473,8 +500,25 @@ class ProductionResilience:
             # ★ EconomyManager 요청 반영 (이중 생산 방지: 여기서만 실행)
             economy_wants_drone = getattr(self, '_economy_drone_requested', False)
 
+            # ★★★ FIX: Enforce army-heavy production when economy is established ★★★
+            # After 22 drones and 180s, at least 70% of larvae should go to army.
+            force_army = False
+            if drone_count >= 22 and game_time > 180:
+                total_this_round = drones_produced + army_produced
+                if total_this_round > 0:
+                    army_ratio_this_round = army_produced / total_this_round
+                    if army_ratio_this_round < 0.70:
+                        force_army = True
+                # With 0 produced so far, allow one drone check below
+
+            # ★★★ FIX: Expansion reserve suppresses drone production only ★★★
+            if expansion_reserve_active:
+                force_army = True
+
             # Consider strategy preference
-            if self.strategy_manager and self.strategy_manager.should_prioritize_drones():
+            if force_army:
+                should_train_drone = False
+            elif self.strategy_manager and self.strategy_manager.should_prioritize_drones():
                 # Strategy prefers drones, but still check balancer
                 should_train_drone = self.balancer.should_train_drone() or (drone_count < target_drones)
             elif self.strategy_manager and self.strategy_manager.should_early_aggression():
@@ -501,7 +545,7 @@ class ProductionResilience:
 
         if drones_produced > 0 or army_produced > 0:
             if b.iteration % 50 == 0:
-                print(f"[BALANCE] Produced {drones_produced} drones, {army_produced} army units "
+                logger.info(f"Produced {drones_produced} drones, {army_produced} army units "
                       f"(Total drones: {drone_count}, Target: {target_drones})")
 
     def _check_min_defense_met(self, game_time: float) -> bool:
@@ -637,7 +681,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
                     if await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD):
-                        print(f"[EMERGENCY] Produced Overlord for supply")
+                        logger.info(f"Produced Overlord for supply")
                     if not flush_mode:
                         break
                 continue
@@ -660,7 +704,7 @@ class ProductionResilience:
 
         if units_produced > 0:
             mode_str = "[RESOURCE_FLUSH]" if flush_mode else "[EMERGENCY]"
-            print(f"{mode_str} Produced {units_produced} units (Minerals: {int(b.minerals)})")
+            logger.info(f"{mode_str} Produced {units_produced} units (Minerals: {int(b.minerals)})")
 
     async def _force_emergency_production(self, b: Any) -> None:
         """
@@ -709,7 +753,7 @@ class ProductionResilience:
                     continue
         
         if produced_count > 0:
-            print(f"[FORCE_EMERGENCY] [{int(b.time)}s] Forced production of {produced_count} units (Minerals: {int(b.minerals)})")
+            logger.info(f"[{int(b.time)}s] Forced production of {produced_count} units (Minerals: {int(b.minerals)})")
         
         # Also try to build structures if we still have too many minerals
         if b.minerals > EconomyConfig.MINERAL_OVERFLOW_THRESHOLD:
@@ -718,7 +762,7 @@ class ProductionResilience:
                 if b.townhalls.exists and len(b.townhalls) < 3:
                     try:
                         if await self._try_expand():
-                            print(f"[FORCE_EMERGENCY] Building expansion to dump minerals")
+                            logger.info(f"Building expansion to dump minerals")
                     except Exception:
                         pass
 
@@ -793,10 +837,10 @@ class ProductionResilience:
                             PRIORITY_PRODUCTION,
                             "ProductionResilience"
                         )
-                        print(f"[SPAWNING_POOL] Requested via TechCoordinator at {game_time:.1f}s, Supply: {supply_used}")
+                        logger.info(f"Requested via TechCoordinator at {game_time:.1f}s, Supply: {supply_used}")
                     elif not tech_coordinator:
                         # Fallback only if TechCoordinator not available (should not happen in normal operation)
-                        print(f"[WARNING] TechCoordinator not available, Spawning Pool build skipped")
+                        logger.warning(f"TechCoordinator not available, Spawning Pool build skipped")
                         pass
 
             # Natural Expansion timing
@@ -874,7 +918,7 @@ class ProductionResilience:
 
         except Exception as e:
             game_time = getattr(b, "time", 0.0)
-            print(f"[BOOST_ERROR] [{int(game_time)}s] _boost_early_game error: {e}")
+            logger.error(f"[{int(game_time)}s] _boost_early_game error: {e}")
 
     async def diagnose_production_status(self, iteration: int) -> None:
         """
@@ -968,21 +1012,21 @@ class ProductionResilience:
                     # Non-training mode or no logger: Use print (for debugging)
                     # But reduce frequency - only every 500 iterations instead of 50
                     if iteration % 500 == 0:
-                        print(
+                        logger.info(
                             f"\n[PRODUCTION DIAGNOSIS] [{int(b.time)}s] Iteration: {iteration}")
-                        print(
+                        logger.info(
                             f"Resources: M:{int(b.minerals)} G:{int(b.vespene)} Supply:{b.supply_used}/{b.supply_cap}")
-                        print(
+                        logger.info(
                             f"Larva: {larvae_count} | Tech: Pool:{spawning_pool_ready} Warren:{roach_warren_ready} Den:{hydralisk_den_ready}")
-                        print(f"Units: Z:{zergling_count} R:{roach_count} H:{hydralisk_count}")
+                        logger.info(f"Units: Z:{zergling_count} R:{roach_count} H:{hydralisk_count}")
 
                     if larvae_count == 0:
-                        print(f"[WARNING] NO LARVAE - Production blocked!")
+                        logger.warning(f"NO LARVAE - Production blocked!")
                     elif larvae_count >= 3 and b.minerals > 500 and spawning_pool_ready and can_afford_zergling and b.supply_left >= 2:
-                        print(f"[WARNING] Should produce Zerglings but not producing!")
+                        logger.warning(f"Should produce Zerglings but not producing!")
         except Exception as e:
             if iteration % 100 == 0:
-                print(f"[WARNING] Production diagnosis error: {e}")
+                logger.error(f"Production diagnosis error: {e}")
 
     async def build_army_aggressive(self) -> None:
         b = self.bot
@@ -1169,13 +1213,13 @@ class ProductionResilience:
                                 )
                                 if success:
                                     self._last_tech_build_time = game_time
-                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren (safe placement)")
+                                    logger.info(f"[{int(game_time)}s] Building Roach Warren (safe placement)")
                                     return
                             else:
                                 # 폴백: 기존 방식
                                 await b.build(UnitTypeId.ROACHWARREN, near=build_pos)
                                 self._last_tech_build_time = game_time
-                                print(f"[AUTO TECH] [{int(game_time)}s] Building Roach Warren")
+                                logger.info(f"[{int(game_time)}s] Building Roach Warren")
                                 return
                         except Exception:
                             pass
@@ -1211,13 +1255,13 @@ class ProductionResilience:
                                 )
                                 if success:
                                     self._last_tech_build_time = game_time
-                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber (safe placement)")
+                                    logger.info(f"[{int(game_time)}s] Building Evolution Chamber (safe placement)")
                                     return
                             else:
                                 # 폴백: 기존 방식
                                 await b.build(UnitTypeId.EVOLUTIONCHAMBER, near=build_pos)
                                 self._last_tech_build_time = game_time
-                                print(f"[AUTO TECH] [{int(game_time)}s] Building Evolution Chamber")
+                                logger.info(f"[{int(game_time)}s] Building Evolution Chamber")
                                 return
                         except Exception:
                             pass
@@ -1249,13 +1293,13 @@ class ProductionResilience:
                                     )
                                     if success:
                                         self._last_tech_build_time = game_time
-                                        print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den (safe placement)")
+                                        logger.info(f"[{int(game_time)}s] Building Hydralisk Den (safe placement)")
                                         return
                                 else:
                                     # 폴백: 기존 방식
                                     await b.build(UnitTypeId.HYDRALISKDEN, near=build_pos)
                                     self._last_tech_build_time = game_time
-                                    print(f"[AUTO TECH] [{int(game_time)}s] Building Hydralisk Den")
+                                    logger.info(f"[{int(game_time)}s] Building Hydralisk Den")
                                     return
                             except Exception:
                                 pass
@@ -1278,7 +1322,7 @@ class ProductionResilience:
                             try:
                                 await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
                                 self._last_tech_build_time = game_time
-                                print(f"[AUTO TECH] [{int(game_time)}s] Building Spire")
+                                logger.info(f"[{int(game_time)}s] Building Spire")
                                 return
                             except Exception:
                                 pass
@@ -1359,7 +1403,7 @@ class ProductionResilience:
                 try:
                     await b.build(UnitTypeId.EXTRACTOR, geyser)
                     self._last_extractor_build_time = game_time
-                    print(f"[AUTO TECH] [{int(game_time)}s] Building Extractor #{total_extractors + 1}")
+                    logger.info(f"[{int(game_time)}s] Building Extractor #{total_extractors + 1}")
                     return  # Build one at a time
                 except Exception:
                     continue
@@ -1409,11 +1453,11 @@ class ProductionResilience:
                 if hasattr(result_do, "__await__"):
                     await result_do
             self._last_lair_morph_time = game_time
-            print(f"[TECH UPGRADE] [{int(b.time)}s] Morphing Hatchery to Lair")
+            logger.info(f"[{int(b.time)}s] Morphing Hatchery to Lair")
             return True
         except Exception as e:
             if b.iteration % 50 == 0:
-                print(f"[WARNING] Lair morph error: {e}")
+                logger.error(f"Lair morph error: {e}")
             return False
 
     async def _build_spire(self) -> bool:
@@ -1439,11 +1483,11 @@ class ProductionResilience:
         if b.townhalls.exists:
             try:
                 await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
-                print(f"[TECH BUILD] [{int(b.time)}s] Building Spire for Mutalisks")
+                logger.info(f"[{int(b.time)}s] Building Spire for Mutalisks")
                 return True
             except Exception as e:
                 if b.iteration % 50 == 0:
-                    print(f"[WARNING] Spire build error: {e}")
+                    logger.error(f"Spire build error: {e}")
         return False
 
     async def _produce_mutalisks(self, count: int = 5) -> int:
@@ -1485,7 +1529,7 @@ class ProductionResilience:
                 produced += 1
 
         if produced > 0:
-            print(f"[MUTALISK] [{int(b.time)}s] Produced {produced} Mutalisks")
+            logger.info(f"[{int(b.time)}s] Produced {produced} Mutalisks")
 
         return produced
 
@@ -1828,7 +1872,7 @@ class ProductionResilience:
 
         if scouts_sent > 0:
             game_time = getattr(b, "time", 0)
-            print(f"[SCOUT] [{int(game_time)}s] Sent {scouts_sent} Zerglings to scout enemy base")
+            logger.info(f"[{int(game_time)}s] Sent {scouts_sent} Zerglings to scout enemy base")
 
     def _get_scout_targets(self):
         """Get positions to scout (enemy start locations, expansions)."""
@@ -1909,7 +1953,7 @@ class ProductionResilience:
                 for e in enemy_info:
                     t = e["type"]
                     enemy_summary[t] = enemy_summary.get(t, 0) + 1
-                print(f"[SCOUT] Detected enemies: {enemy_summary}")
+                logger.info(f"Detected enemies: {enemy_summary}")
 
     def get_detected_enemy_composition(self) -> Dict[str, int]:
         """
@@ -1950,7 +1994,7 @@ class ProductionResilience:
 
         # Log gas overflow warning
         if b.iteration % 100 == 0:
-            print(f"[GAS OVERFLOW] [{int(game_time)}s] Gas: {int(gas)} - Spending excess gas")
+            logger.info(f"[{int(game_time)}s] Gas: {int(gas)} - Spending excess gas")
 
         # Check for larvae
         larvae = b.units(UnitTypeId.LARVA)
@@ -1961,7 +2005,7 @@ class ProductionResilience:
             if gas > 2000 and b.minerals > 250 and b.already_pending(UnitTypeId.HATCHERY) < 2:
                 try:
                     await b.expand_now()
-                    print(f"[GAS SINK] Building Macro Hatchery (no larvae, gas: {int(gas)})")
+                    logger.info(f"Building Macro Hatchery (no larvae, gas: {int(gas)})")
                 except Exception:
                     pass
             return
@@ -1983,7 +2027,7 @@ class ProductionResilience:
                         overlords_produced += 1
                         larvae_list = [l for l in larvae_list if l.tag != larva.tag]
             if overlords_produced > 0:
-                print(f"[GAS SINK] Produced {overlords_produced} Overlords (supply: {int(b.supply_left)} -> {int(b.supply_left + overlords_produced * 8)})")
+                logger.info(f"Produced {overlords_produced} Overlords (supply: {int(b.supply_left)} -> {int(b.supply_left + overlords_produced * 8)})")
                 # Continue to produce gas units
 
         if not larvae_list:
@@ -2007,7 +2051,7 @@ class ProductionResilience:
                         larvae_list = [l for l in larvae_list if l.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
-                print(f"[GAS SINK] Produced {produced} Mutalisks")
+                logger.info(f"Produced {produced} Mutalisks")
 
         # Priority 2: Hydralisks (50 gas each)
         has_hydra_den = b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
@@ -2024,7 +2068,7 @@ class ProductionResilience:
                         larvae_list = [l for l in larvae_list if l.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
-                print(f"[GAS SINK] Produced {produced} Hydralisks")
+                logger.info(f"Produced {produced} Hydralisks")
 
         # Priority 3: Roaches (25 gas each)
         has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists
@@ -2041,11 +2085,11 @@ class ProductionResilience:
                         larvae_list = [l for l in larvae_list if l.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
-                print(f"[GAS SINK] Produced {produced} Roaches")
+                logger.info(f"Produced {produced} Roaches")
 
         # Log total production
         if total_produced > 0:
-            print(f"[GAS SINK] Total: {total_produced} units (Gas: {int(gas)} -> {int(b.vespene)})")
+            logger.info(f"Total: {total_produced} units (Gas: {int(gas)} -> {int(b.vespene)})")
             return
 
         # Priority 4: Build gas-heavy tech buildings if no units produced
@@ -2119,7 +2163,7 @@ class ProductionResilience:
                         larvae_list = [l for l in larvae_list if l.tag != larva.tag]
 
         if total_produced > 0 and b.iteration % 100 == 0:
-            print(f"[MINERAL SINK] Produced {total_produced} units (M: {int(minerals)} -> {int(b.minerals)})")
+            logger.info(f"Produced {total_produced} units (M: {int(minerals)} -> {int(b.minerals)})")
 
     async def _spend_minerals_without_larvae(self) -> None:
         """Spend minerals when no larvae available."""
@@ -2185,7 +2229,7 @@ class ProductionResilience:
         if has_lair:
             result = await self._build_spire()
             if result:
-                print(f"[GAS SINK] Building Spire (200 gas)")
+                logger.info(f"Building Spire (200 gas)")
                 return
 
         # Build Hydralisk Den if don't have one (100 gas)
@@ -2194,7 +2238,7 @@ class ProductionResilience:
                 try:
                     result = await b.build(UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position)
                     if result is not None:  # Only print if build actually succeeded
-                        print(f"[GAS SINK] Building Hydralisk Den (100 gas)")
+                        logger.info(f"Building Hydralisk Den (100 gas)")
                         return
                 except Exception:
                     pass
@@ -2206,7 +2250,7 @@ class ProductionResilience:
                     try:
                         result = await b.build(UnitTypeId.INFESTATIONPIT, near=b.townhalls.first.position)
                         if result is not None:
-                            print(f"[GAS SINK] Building Infestation Pit (100 gas)")
+                            logger.info(f"Building Infestation Pit (100 gas)")
                             return
                     except Exception:
                         pass

@@ -17,6 +17,9 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Optional
+import logging
+
+logger = logging.getLogger("ReplayLearningTrackerSqlite")
 
 
 class LearningPhase(Enum):
@@ -188,7 +191,7 @@ class ReplayLearningTrackerSQLite:
                 shutil.move(str(replay_path), str(dest_path))
                 return True
             except Exception as exc:
-                print(
+                logger.info(
                     f"[ERROR] Failed to move completed replay {replay_path.name}: {exc}"
                 )
                 return False

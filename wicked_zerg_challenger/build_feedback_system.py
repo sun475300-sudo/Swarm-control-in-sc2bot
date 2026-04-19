@@ -14,6 +14,9 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("BuildFeedbackSystem")
 
 
 class BuildFeedbackSystem:
@@ -209,10 +212,10 @@ class BuildFeedbackSystem:
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(all_data, f, indent=2, ensure_ascii=False)
 
-            print(f"[BUILD FEEDBACK] Game data saved: {len(all_data['games'])} total games")
+            logger.info(f"Game data saved: {len(all_data['games'])} total games")
 
         except Exception as e:
-            print(f"[BUILD FEEDBACK ERROR] Failed to save: {e}")
+            logger.error(f"Failed to save: {e}")
 
     def _analyze_and_improve(self):
         """
@@ -234,7 +237,7 @@ class BuildFeedbackSystem:
             games = all_data.get("games", [])
 
             if len(games) < 5:
-                print("[BUILD FEEDBACK] Not enough data yet (need 5+ games)")
+                logger.info("Not enough data yet (need 5+ games)")
                 return
 
             # 최근 20게임 분석
@@ -250,9 +253,9 @@ class BuildFeedbackSystem:
             else:
                 avg_victory_time = 0
 
-            print(f"\n[BUILD FEEDBACK] Analysis:")
-            print(f"  Win Rate: {win_rate * 100:.1f}% ({len(victories)}/{len(recent_games)})")
-            print(f"  Avg Victory Time: {avg_victory_time:.0f}s")
+            logger.info(f"\n[BUILD FEEDBACK] Analysis:")
+            logger.info(f"  Win Rate: {win_rate * 100:.1f}% ({len(victories)}/{len(recent_games)})")
+            logger.info(f"  Avg Victory Time: {avg_victory_time:.0f}s")
 
             # 빌드 오더별 분석
             build_stats = {}
@@ -265,27 +268,27 @@ class BuildFeedbackSystem:
                 if game["result"] == "Victory":
                     build_stats[build]["wins"] += 1
 
-            print(f"\n  Build Order Stats:")
+            logger.info(f"\n  Build Order Stats:")
             for build, stats in build_stats.items():
                 wr = stats["wins"] / stats["total"] if stats["total"] > 0 else 0
-                print(f"    {build}: {wr * 100:.1f}% ({stats['wins']}/{stats['total']})")
+                logger.info(f"    {build}: {wr * 100:.1f}% ({stats['wins']}/{stats['total']})")
 
             # 추천 사항
             self._generate_recommendations(recent_games, victories, avg_victory_time)
 
         except Exception as e:
-            print(f"[BUILD FEEDBACK ERROR] Analysis failed: {e}")
+            logger.error(f"Analysis failed: {e}")
 
     def _generate_recommendations(self, recent_games: List, victories: List, avg_victory_time: float):
         """개선 추천 사항 생성"""
-        print(f"\n[BUILD FEEDBACK] Recommendations:")
+        logger.info(f"\n[BUILD FEEDBACK] Recommendations:")
 
         # 1. 승리 시간 분석
         if avg_victory_time > 600:  # 10분 이상
-            print(f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) → 더 공격적인 전략 필요")
-            print(f"    → 제안: 3분 저글링 공격, 5분 바퀴 푸시")
+            logger.info(f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) → 더 공격적인 전략 필요")
+            logger.info(f"    → 제안: 3분 저글링 공격, 5분 바퀴 푸시")
         elif avg_victory_time < 300:  # 5분 미만
-            print(f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) → 현재 전략 유지")
+            logger.info(f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) → 현재 전략 유지")
 
         # 2. 자원 효율성
         if victories:
@@ -298,7 +301,7 @@ class BuildFeedbackSystem:
                     if mid_game:
                         avg_minerals = sum(r["minerals"] for r in mid_game) / len(mid_game)
                         if avg_minerals > 1000:
-                            print(f"  - 미네랄 과잉 ({avg_minerals:.0f}) → 유닛 생산 증가 필요")
+                            logger.info(f"  - 미네랄 과잉 ({avg_minerals:.0f}) → 유닛 생산 증가 필요")
 
         # 3. 유닛 조합
         if victories:
@@ -313,9 +316,7 @@ class BuildFeedbackSystem:
                         unit_usage[unit].append(count)
 
             if unit_usage:
-                print(f"  - 승리 시 주력 유닛:")
+                logger.info(f"  - 승리 시 주력 유닛:")
                 for unit, counts in sorted(unit_usage.items(), key=lambda x: sum(x[1]), reverse=True)[:3]:
                     avg = sum(counts) / len(counts)
-                    print(f"    → {unit}: 평균 {avg:.1f}마리")
-
-        print()
+                    logger.info(f"    → {unit}: 평균 {avg:.1f}마리")

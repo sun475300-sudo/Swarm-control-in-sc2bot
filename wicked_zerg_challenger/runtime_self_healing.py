@@ -154,9 +154,9 @@ class RuntimeSelfHealing:
         """매니저 건강 체크"""
         # 주요 매니저가 None인지 체크
         critical_managers = [
-            "economy_manager",
+            "economy",
             "strategy_manager",
-            "combat_manager",
+            "combat",
             "intel",
         ]
 
@@ -176,7 +176,7 @@ class RuntimeSelfHealing:
         )
 
         # 복구 조치: 강제로 일꾼 생산 요청
-        if hasattr(self.bot, "economy_manager"):
+        if hasattr(self.bot, "economy"):
             recovery_action = {
                 "time": game_time,
                 "type": "economy_stall",
@@ -279,9 +279,9 @@ class RuntimeSelfHealing:
 
         # 재초기화 시도 (위험할 수 있으므로 조심스럽게)
         try:
-            if manager_name == "economy_manager":
+            if manager_name == "economy":
                 from economy_manager import EconomyManager
-                self.bot.economy_manager = EconomyManager(self.bot)
+                self.bot.economy = EconomyManager(self.bot)
                 self.logger.info(f"[RECOVERY] Reinitialized EconomyManager")
             elif manager_name == "strategy_manager":
                 from strategy_manager_v2 import StrategyManagerV2

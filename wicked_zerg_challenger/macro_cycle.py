@@ -14,6 +14,9 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 from enum import Enum
+import logging
+
+logger = logging.getLogger("MacroCycle")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -73,7 +76,7 @@ class MacroCycleManager:
     """
 
     # 인젝트 쿨다운 (초)
-    INJECT_COOLDOWN = 25.0
+    INJECT_COOLDOWN = 29.0  # SC2 Spawn Larva 정확한 쿨다운 (28.57초 + 여유)
 
     # 기지당 최적 드론 수
     OPTIMAL_DRONES_PER_BASE = 16
@@ -110,7 +113,7 @@ class MacroCycleManager:
         self.last_larva_count: int = 0
         self.larva_efficiency: float = 1.0
 
-        print("[MACRO_CYCLE] 매크로 사이클 매니저 초기화 완료")
+        logger.info("매크로 사이클 매니저 초기화 완료")
 
     def update(self) -> None:
         """

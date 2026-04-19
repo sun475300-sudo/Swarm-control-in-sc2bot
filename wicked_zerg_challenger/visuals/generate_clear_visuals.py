@@ -13,6 +13,9 @@ import os
 import math
 import numpy as np
 import plotly.graph_objects as go
+import logging
+
+logger = logging.getLogger("GenerateClearVisuals")
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,7 +23,7 @@ OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 def save(fig, name):
     path = os.path.join(OUTPUT_DIR, f"{name}.html")
     fig.write_html(path, include_plotlyjs="cdn")
-    print(f"  -> {path}")
+    logger.info(f"  -> {path}")
 
 
 # ═══════════════════════════════════════════════════════
@@ -32,7 +35,7 @@ def clear_system_overview():
     캡스톤 핵심 1장: SC2 → 시뮬레이션 → 실제 드론
     3단계 파이프라인을 3D 계단식으로 보여줌
     """
-    print("[1] 시스템 전체 구조도 (3-Stage Pipeline)")
+    logger.info("시스템 전체 구조도 (3-Stage Pipeline)")
 
     fig = go.Figure()
 
@@ -155,7 +158,7 @@ def clear_boids_explained():
     Boids 3대 규칙을 큰 화살표와 라벨로 직관적 표현
     중심에 '나', 주변에 이웃, 3가지 힘 벡터
     """
-    print("[2] Boids 알고리즘 설명도")
+    logger.info("Boids 알고리즘 설명도")
 
     fig = go.Figure()
 
@@ -307,7 +310,7 @@ def clear_tech_transfer():
     SC2 모듈 → 드론 ATC 대응 모듈
     양쪽에 박스, 가운데 연결선 (색상으로 전이 신뢰도)
     """
-    print("[3] SC2 ↔ 드론 기술 전이 매핑")
+    logger.info("SC2 ↔ 드론 기술 전이 매핑")
 
     fig = go.Figure()
 
@@ -434,7 +437,7 @@ def clear_swarm_simulation():
     드론 20대가 V자 편대로 목표지점까지 이동하는 시뮬레이션
     어두운 배경 + 네온 드론 = 미래적 느낌
     """
-    print("[4] 드론 편대 비행 3D 시뮬레이션")
+    logger.info("드론 편대 비행 3D 시뮬레이션")
 
     np.random.seed(42)
     N = 20
@@ -629,7 +632,7 @@ def clear_atc_priority():
     """
     ATC 우선순위를 3D 피라미드로 — 위쪽일수록 높은 우선순위
     """
-    print("[5] ATC 우선순위 피라미드")
+    logger.info("ATC 우선순위 피라미드")
 
     fig = go.Figure()
 

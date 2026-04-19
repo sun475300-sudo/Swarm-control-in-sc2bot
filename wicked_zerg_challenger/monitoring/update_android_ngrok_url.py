@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("UpdateAndroidNgrokUrl")
 # -*- coding: utf-8 -*-
 """
 Update Android ngrok URL placeholder.
@@ -6,7 +9,7 @@ Update Android ngrok URL placeholder.
 
 
 def update_android_ngrok_url(*args, **kwargs) -> None:
-    print("Update Android ngrok URL placeholder.")
+    logger.info("Update Android ngrok URL placeholder.")
 
 
 def main() -> None:

@@ -3,10 +3,13 @@
 """
 Merge training stats (placeholder).
 """
+import logging
+
+logger = logging.getLogger("MergeTrainingStats")
 
 
 def main() -> None:
-    print("merge_training_stats placeholder.")
+    logger.info("merge_training_stats placeholder.")
 
 
 if __name__ == "__main__":

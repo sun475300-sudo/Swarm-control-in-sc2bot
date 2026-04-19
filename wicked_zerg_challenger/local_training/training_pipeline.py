@@ -18,6 +18,9 @@ import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger("TrainingPipeline")
 
 
 @dataclass
@@ -109,7 +112,7 @@ class TrainingPipeline:
         # 오래된 버전 정리
         self._cleanup_old_versions()
 
-        print(f"[PIPELINE] Checkpoint v{version_id}: {metrics}")
+        logger.info(f"Checkpoint v{version_id}: {metrics}")
         return version
 
     def deploy_if_better(self, new_version: ModelVersion) -> bool:
@@ -130,13 +133,13 @@ class TrainingPipeline:
 
         if new_wr >= current_wr + self.DEPLOY_THRESHOLD:
             self._deploy(new_version)
-            print(
+            logger.info(
                 f"[PIPELINE] AUTO-DEPLOY v{new_version.version_id}: "
                 f"win_rate {current_wr:.1%} → {new_wr:.1%} (+{new_wr - current_wr:.1%})"
             )
             return True
 
-        print(
+        logger.info(
             f"[PIPELINE] No deploy: v{new_version.version_id} "
             f"({new_wr:.1%}) vs deployed ({current_wr:.1%})"
         )

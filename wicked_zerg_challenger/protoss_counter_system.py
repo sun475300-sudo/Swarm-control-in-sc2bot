@@ -113,7 +113,7 @@ class ProtossCounterSystem:
                     if not self.dt_detected:
                         self.dt_detected = True
                         self.dt_detection_time = self.bot.time
-                        self.logger.warning(f"[{int(self.bot.time)}s] ★★★ DARK TEMPLAR DETECTED! ★★★")
+                        self.logger.warning(f"[{int(self.bot.time)}s] [*][*][*] DARK TEMPLAR DETECTED! [*][*][*]")
 
                 # 오라클 감지
                 elif enemy_type == "ORACLE":
@@ -127,13 +127,13 @@ class ProtossCounterSystem:
                 elif enemy_type == "DISRUPTOR":
                     if not self.disruptor_detected:
                         self.disruptor_detected = True
-                        self.logger.warning(f"[{int(self.bot.time)}s] ★ DISRUPTOR DETECTED - SPLIT UNITS! ★")
+                        self.logger.warning(f"[{int(self.bot.time)}s] [*] DISRUPTOR DETECTED - SPLIT UNITS! [*]")
 
                 # 차원 분광기 감지
                 elif enemy_type == "WARPPRISM" or enemy_type == "WARPPRISMPHASING":
                     if not self.warp_prism_detected:
                         self.warp_prism_detected = True
-                        self.logger.warning(f"[{int(self.bot.time)}s] ★ WARP PRISM DETECTED! ★")
+                        self.logger.warning(f"[{int(self.bot.time)}s] [*] WARP PRISM DETECTED! [*]")
 
                 # 불멸자 카운트
                 elif enemy_type == "IMMORTAL":
@@ -210,7 +210,7 @@ class ProtossCounterSystem:
 
         try:
             self.bot.do(target_overlord(AbilityId.MORPH_OVERSEER))
-            self.logger.info(f"[{int(self.bot.time)}s] ★ EMERGENCY OVERSEER MORPH vs DT! ★")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] EMERGENCY OVERSEER MORPH vs DT! [*]")
         except Exception as e:
             self.logger.error(f"Emergency overseer morph failed: {e}")
 
@@ -246,7 +246,7 @@ class ProtossCounterSystem:
 
                     try:
                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=placement)
-                        self.logger.info(f"[{int(self.bot.time)}s] ★★★ EMERGENCY SPORE vs DT! ★★★")
+                        self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]")
                         return  # 한 번에 1개씩만
                     except Exception:
                         pass
@@ -274,7 +274,7 @@ class ProtossCounterSystem:
                         self.bot.do(drone.move(safe_base.position))
                     break
 
-        self.logger.warning(f"[{int(self.bot.time)}s] ★ WORKERS PULLED FROM DT THREAT! ★")
+        self.logger.warning(f"[{int(self.bot.time)}s] [*] WORKERS PULLED FROM DT THREAT! [*]")
 
     async def _handle_oracle_harassment(self, game_time: float, iteration: int):
         """
@@ -417,7 +417,7 @@ class ProtossCounterSystem:
                     for unit in nearby_army:
                         self.bot.do(unit.attack(prism))
 
-                    self.logger.warning(f"[{int(self.bot.time)}s] ★ ATTACKING WARP PRISM! ★")
+                    self.logger.warning(f"[{int(self.bot.time)}s] [*] ATTACKING WARP PRISM! [*]")
 
     async def _handle_immortal_counter(self, iteration: int):
         """

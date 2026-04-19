@@ -6,6 +6,9 @@ import io
 from pathlib import Path
 import time
 import random
+import logging
+
+logger = logging.getLogger("ScrapeSpawningtool")
 
 # Configuration
 BASE_URL = "https://lotv.spawningtool.com"
@@ -18,25 +21,25 @@ DELAY_MAX = 3.0
 def setup_directories():
     if not DOWNLOAD_DIR.exists():
         DOWNLOAD_DIR.mkdir(parents=True)
-    print(f"[SETUP] Download directory: {DOWNLOAD_DIR}")
+    logger.info(f"Download directory: {DOWNLOAD_DIR}")
 
 def get_replay_links(page_num):
     url = f"{SEARCH_URL}{page_num}"
     try:
-        print(f"[CRAWL] Fetching page {page_num}...")
+        logger.info(f"Fetching page {page_num}...")
         response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
         if response.status_code != 200:
-            print(f"[ERROR] Failed to fetch page {page_num}: Status {response.status_code}")
+            logger.error(f"Failed to fetch page {page_num}: Status {response.status_code}")
             return []
         
         # Simple regex to find replay links mostly like /12345/
         # Format: <a href="/12345/">
         links = re.findall(r'href="/(\d+)/"', response.text)
         unique_links = list(set(links))
-        print(f"[CRAWL] Found {len(unique_links)} replays on page {page_num}")
+        logger.info(f"Found {len(unique_links)} replays on page {page_num}")
         return unique_links
     except Exception as e:
-        print(f"[ERROR] {e}")
+        logger.error(f"{e}")
         return []
 
 def download_and_extract(replay_id):
@@ -46,11 +49,11 @@ def download_and_extract(replay_id):
     
     download_url = f"{BASE_URL}/{replay_id}/download/"
     try:
-        print(f"[DOWNLOAD] Fetching replay {replay_id}...")
+        logger.info(f"Fetching replay {replay_id}...")
         response = requests.get(download_url, headers={'User-Agent': 'Mozilla/5.0'})
         
         if response.status_code != 200:
-            print(f"[ERROR] Failed download {replay_id}: {response.status_code}")
+            logger.error(f"Failed download {replay_id}: {response.status_code}")
             return
 
         # Check content type
@@ -70,7 +73,7 @@ def download_and_extract(replay_id):
                             
                         with z.open(filename) as source, open(target_path, "wb") as target:
                             target.write(source.read())
-                        print(f"[SUCCESS] Extracted: {target_path.name}")
+                        logger.info(f"Extracted: {target_path.name}")
         except zipfile.BadZipFile:
             # Maybe it's not a zip, just a replay file?
             # Spawning tool usually sends zips, but just in case
@@ -78,12 +81,12 @@ def download_and_extract(replay_id):
                  target_path = DOWNLOAD_DIR / f"{replay_id}.SC2Replay"
                  with open(target_path, "wb") as f:
                      f.write(response.content)
-                 print(f"[SUCCESS] Saved directly: {target_path.name}")
+                 logger.info(f"Saved directly: {target_path.name}")
             else:
-                 print(f"[WARNING] Content is not ZIP nor SC2Replay for {replay_id}")
+                 logger.warning(f"Content is not ZIP nor SC2Replay for {replay_id}")
 
     except Exception as e:
-        print(f"[ERROR] Failed processing {replay_id}: {e}")
+        logger.error(f"Failed processing {replay_id}: {e}")
 
 def main():
     setup_directories()
@@ -93,7 +96,7 @@ def main():
         replay_ids = get_replay_links(page)
         
         if not replay_ids:
-            print("[INFO] No more replays found or error.")
+            logger.error("No more replays found or error.")
             break
             
         for rid in replay_ids:
@@ -101,9 +104,9 @@ def main():
             time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
             total_downloaded += 1
             
-        print(f"[INFO] Page {page} done.")
+        logger.info(f"Page {page} done.")
         
-    print(f"[DONE] Total processed: {total_downloaded}")
+    logger.info(f"Total processed: {total_downloaded}")
 
 if __name__ == "__main__":
     main()

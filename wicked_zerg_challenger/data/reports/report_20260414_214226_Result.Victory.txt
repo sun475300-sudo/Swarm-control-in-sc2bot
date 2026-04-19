@@ -1,0 +1,66 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Odyssey LE
+  Opponent: Terran
+  Duration: 3:22
+  Date: 2026-04-14 21:42
+
+--- TIMELINE ---
+  [0:57] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:09] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:00] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:08] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:37] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 19)
+  [2:44] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [3:52] Build: UnitTypeId.BANELINGNEST (Supply 27)
+  [4:13] Build: UnitTypeId.SPINECRAWLER (Supply 30)
+  [4:21] Build: UnitTypeId.SPINECRAWLER (Supply 30)
+  [4:29] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [4:59] Build: UnitTypeId.ROACHWARREN (Supply 35)
+  [5:36] Harassment: UnitTypeId.ORBITALCOMMAND
+  [5:42] Harassment: UnitTypeId.BARRACKS
+  [7:12] Harassment: UnitTypeId.COMMANDCENTER
+  [7:18] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [7:24] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [7:56] Harassment: UnitTypeId.ORBITALCOMMAND
+  [8:11] Harassment: UnitTypeId.COMMANDCENTER
+  [8:16] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 150
+  Peak Vespene: 631
+  Peak Workers: 45
+
+--- TIMINGS ---
+  Expansion #1: 14:07 
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 2:37
+  Tech: UnitTypeId.ROACHWARREN at 4:59
+  Tech: UnitTypeId.LAIR at 12:39
+  Tech: UnitTypeId.SPIRE at 12:44
+  Tech: UnitTypeId.HYDRALISKDEN at 12:59
+  Tech: UnitTypeId.INFESTATIONPIT at 13:34
+  Tech: UnitTypeId.LURKERDENMP at 13:46
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 52 produced
+  UnitTypeId.ROACH: 41 produced
+
+--- RESULT ANALYSIS ---
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 847s - aim for sub-60s with Hatch First build
+  2. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 40
+  Army Supply: 157
+  Bases: 3
+  Minerals: 45
+  Vespene: 1067
+
+============================================================

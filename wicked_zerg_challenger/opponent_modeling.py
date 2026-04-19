@@ -398,7 +398,7 @@ class OpponentModeling:
         signal_name = signal.value
         if signal_name not in self.observed_signals:
             self.observed_signals.add(signal_name)
-            self.logger.info(f"[{int(self.bot.time)}s] ★ SIGNAL DETECTED: {signal_name}")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] SIGNAL DETECTED: {signal_name}")
 
     async def _make_strategy_prediction(self, game_time: float):
         """전략 예측 수행 (초반 종료 시)"""
@@ -486,7 +486,7 @@ class OpponentModeling:
             # Check if this is a new attack (not within 30s of previous)
             if not self.timing_attacks_detected or game_time - self.timing_attacks_detected[-1] > 30:
                 self.timing_attacks_detected.append(game_time)
-                self.logger.info(f"[{int(game_time)}s] ★ TIMING ATTACK DETECTED")
+                self.logger.info(f"[{int(game_time)}s] [*] TIMING ATTACK DETECTED")
 
     async def _track_tech_progression(self, game_time: float):
         """기술 진행 추적"""
@@ -646,7 +646,21 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
-        self.current_game_history = GameHistory(opponent_id=opponent_id)
+        # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
+        race_name = opponent_race.name if opponent_race and hasattr(opponent_race, 'name') else "Unknown"
+        self.current_game_history = GameHistory(
+            game_id=f"game_{opponent_id}",
+            opponent_race=race_name,
+            opponent_style="unknown",
+            detected_strategy="unknown",
+            build_order_observed=[],
+            timing_attacks=[],
+            final_composition={},
+            game_result="unknown",
+            game_duration=0.0,
+            early_signals=[],
+            tech_progression=[],
+        )
         self.observed_signals.clear()
 
         # Load opponent model if exists

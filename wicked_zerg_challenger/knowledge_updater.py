@@ -10,6 +10,9 @@ import os
 from typing import Dict, List, Tuple
 from collections import defaultdict
 import statistics
+import logging
+
+logger = logging.getLogger("KnowledgeUpdater")
 
 
 class KnowledgeUpdater:
@@ -31,7 +34,7 @@ class KnowledgeUpdater:
     def load_all_games(self):
         """모든 게임 데이터 로드"""
         if not os.path.exists(self.games_dir):
-            print(f"[KNOWLEDGE] Games directory not found: {self.games_dir}")
+            logger.info(f"Games directory not found: {self.games_dir}")
             return
 
         self.games_data = []
@@ -44,17 +47,17 @@ class KnowledgeUpdater:
                         game_data = json.load(f)
                         self.games_data.append(game_data)
                 except Exception as e:
-                    print(f"[KNOWLEDGE] Error loading {filename}: {e}")
+                    logger.info(f"Error loading {filename}: {e}")
 
-        print(f"[KNOWLEDGE] Loaded {len(self.games_data)} games")
+        logger.info(f"Loaded {len(self.games_data)} games")
 
     def analyze_and_update(self):
         """전체 분석 및 업데이트"""
         if not self.games_data:
-            print("[KNOWLEDGE] No games to analyze")
+            logger.info("No games to analyze")
             return
 
-        print("[KNOWLEDGE] Starting analysis...")
+        logger.info("Starting analysis...")
 
         # 지식 베이스 로드
         knowledge = self._load_knowledge()
@@ -82,7 +85,7 @@ class KnowledgeUpdater:
         # 저장
         self._save_knowledge(knowledge)
 
-        print("[KNOWLEDGE] Analysis complete!")
+        logger.info("Analysis complete!")
         self._print_summary(knowledge)
 
     def _load_knowledge(self) -> Dict:
@@ -252,31 +255,31 @@ class KnowledgeUpdater:
 
     def _print_summary(self, knowledge: Dict):
         """분석 결과 요약 출력"""
-        print("\n" + "="*60)
-        print("KNOWLEDGE BASE UPDATE SUMMARY")
-        print("="*60)
+        logger.info("\n" + "="*60)
+        logger.info("KNOWLEDGE BASE UPDATE SUMMARY")
+        logger.info("="*60)
 
         # 맵 통계
         if "map_statistics" in knowledge:
-            print("\nMAP STATISTICS:")
+            logger.info("\nMAP STATISTICS:")
             for map_name, stats in knowledge["map_statistics"].items():
-                print(f"  {map_name}: {stats['winrate']}% ({stats['wins']}W-{stats['losses']}L)")
+                logger.info(f"  {map_name}: {stats['winrate']}% ({stats['wins']}W-{stats['losses']}L)")
 
         # 타이밍 통계
         if "learned_timings" in knowledge:
             expansions = knowledge["learned_timings"].get("expansion_avg", {})
             if expansions:
-                print("\nEXPANSION TIMINGS:")
+                logger.info("\nEXPANSION TIMINGS:")
                 for base, timing in expansions.items():
-                    print(f"  {base}: {timing['avg']}s (avg)")
+                    logger.info(f"  {base}: {timing['avg']}s (avg)")
 
         # 교전 통계
         if "engagement_statistics" in knowledge:
             eng_stats = knowledge["engagement_statistics"]
-            print(f"\nENGAGEMENTS: {eng_stats['total_engagements']} battles analyzed")
-            print(f"  Avg supply lost: {eng_stats['avg_supply_lost_per_engagement']}")
+            logger.info(f"\nENGAGEMENTS: {eng_stats['total_engagements']} battles analyzed")
+            logger.info(f"  Avg supply lost: {eng_stats['avg_supply_lost_per_engagement']}")
 
-        print("="*60 + "\n")
+        logger.info("="*60 + "\n")
 
 
 def main():

@@ -3,10 +3,13 @@
 """
 Prune updates (placeholder).
 """
+import logging
+
+logger = logging.getLogger("PruneUpdates")
 
 
 def main() -> None:
-    print("prune_updates placeholder.")
+    logger.info("prune_updates placeholder.")
 
 
 if __name__ == "__main__":

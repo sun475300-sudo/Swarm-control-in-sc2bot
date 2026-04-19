@@ -394,7 +394,7 @@ class EnhancedScoutSystem:
             )
             if gas_buildings:
                 self.enemy_gas_timing = game_time
-                self.logger.info(f"[{int(game_time)}s] ★ ENEMY GAS detected! ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ENEMY GAS detected! [*]")
 
         # ★ 2. Pool/Barracks/Gateway Timing ★
         if self.enemy_pool_timing is None:
@@ -406,7 +406,7 @@ class EnhancedScoutSystem:
             if production:
                 self.enemy_pool_timing = game_time
                 building_type = getattr(production.first.type_id, "name", "PRODUCTION")
-                self.logger.info(f"[{int(game_time)}s] ★ ENEMY {building_type} detected! ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ENEMY {building_type} detected! [*]")
 
         # ★ 3. Natural Expansion Timing ★
         if self.enemy_natural_timing is None and hasattr(self.bot, "enemy_start_locations"):
@@ -430,7 +430,7 @@ class EnhancedScoutSystem:
                 )
                 if enemy_natural_bases:
                     self.enemy_natural_timing = game_time
-                    self.logger.info(f"[{int(game_time)}s] ★ ENEMY NATURAL EXPANSION detected! ★")
+                    self.logger.info(f"[{int(game_time)}s] [*] ENEMY NATURAL EXPANSION detected! [*]")
 
         # ★ 4. Tech Buildings ★
         tech_buildings = {
@@ -442,7 +442,7 @@ class EnhancedScoutSystem:
             building_type = getattr(building.type_id, "name", "").upper()
             if building_type in tech_buildings and building_type not in self.enemy_tech_buildings:
                 self.enemy_tech_buildings[building_type] = game_time
-                self.logger.info(f"[{int(game_time)}s] ★ ENEMY TECH: {building_type} ★")
+                self.logger.info(f"[{int(game_time)}s] [*] ENEMY TECH: {building_type} [*]")
 
         # ★ 5. Army Composition ★
         if hasattr(self.bot, "enemy_units"):
@@ -463,13 +463,13 @@ class EnhancedScoutSystem:
         if self.enemy_gas_timing and self.enemy_gas_timing < 90:
             if self.enemy_natural_timing is None or self.enemy_natural_timing > 150:
                 self.is_cheese = True
-                self.logger.warning(f"[{int(game_time)}s] ★★★ CHEESE SUSPECTED! ★★★")
+                self.logger.warning(f"[{int(game_time)}s] [*][*][*] CHEESE SUSPECTED! [*][*][*]")
 
         # ★ 2. Fast Expand Detection ★
         # Natural이 1:30 전에 있음 = Fast Expand
         if self.enemy_natural_timing and self.enemy_natural_timing < 90:
             self.is_fast_expand = True
-            self.logger.info(f"[{int(game_time)}s] ★ FAST EXPAND detected ★")
+            self.logger.info(f"[{int(game_time)}s] [*] FAST EXPAND detected [*]")
 
         # ★ 3. Tech Path Analysis ★
         if self.enemy_tech_buildings:

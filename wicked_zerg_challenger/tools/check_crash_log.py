@@ -3,10 +3,13 @@
 """
 Check crash logs (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckCrashLog")
 
 
 def main() -> None:
-    print("check_crash_log placeholder.")
+    logger.info("check_crash_log placeholder.")
 
 
 if __name__ == "__main__":

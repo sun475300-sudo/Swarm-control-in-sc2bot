@@ -3,10 +3,13 @@
 """
 Arena update helper (placeholder).
 """
+import logging
+
+logger = logging.getLogger("ArenaUpdate")
 
 
 def main() -> None:
-    print("arena_update placeholder.")
+    logger.info("arena_update placeholder.")
 
 
 if __name__ == "__main__":

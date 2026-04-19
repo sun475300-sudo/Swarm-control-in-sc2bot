@@ -26,6 +26,9 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from collections import Counter, defaultdict
+import logging
+
+logger = logging.getLogger("LogAnalyzer")
 
 
 class LogAnalyzer:
@@ -41,19 +44,19 @@ class LogAnalyzer:
 
     def load_all_data(self):
         """모든 데이터 소스 로드"""
-        print("[ANALYZER] Loading data sources...")
+        logger.info("Loading data sources...")
 
         # 1. Race stats
         race_path = self.base_dir / "local_training" / "data" / "race_stats.json"
         if race_path.exists():
             self.race_stats = json.loads(race_path.read_text(encoding="utf-8"))
-            print(f"  race_stats.json: {sum(v.get('games', 0) for v in self.race_stats.values())} games")
+            logger.info(f"  race_stats.json: {sum(v.get('games', 0) for v in self.race_stats.values())} games")
 
         # 2. Game stats
         stats_path = self.base_dir / "game_stats.json"
         if stats_path.exists():
             self.game_stats = json.loads(stats_path.read_text(encoding="utf-8"))
-            print(f"  game_stats.json: {self.game_stats.get('total_games', 0)} games")
+            logger.info(f"  game_stats.json: {self.game_stats.get('total_games', 0)} games")
 
         # 3. Game data files (from GameDataLogger)
         game_dir = self.base_dir / "data" / "games"
@@ -65,7 +68,7 @@ class LogAnalyzer:
                     self.game_data_files.append(data)
                 except Exception:
                     pass
-            print(f"  data/games/: {len(self.game_data_files)} game files")
+            logger.info(f"  data/games/: {len(self.game_data_files)} game files")
 
         # 4. Tournament results
         tourney_dir = self.base_dir / "data" / "tournament"
@@ -76,7 +79,7 @@ class LogAnalyzer:
                     self.tournament_results.append(data)
                 except Exception:
                     pass
-            print(f"  data/tournament/: {len(self.tournament_results)} tournaments")
+            logger.info(f"  data/tournament/: {len(self.tournament_results)} tournaments")
 
         # 5. Bot log (last 500 lines)
         log_path = self.base_dir / "logs" / "bot.log"
@@ -84,11 +87,11 @@ class LogAnalyzer:
             try:
                 lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
                 self.bot_log_lines = lines[-500:]
-                print(f"  logs/bot.log: {len(lines)} lines (last 500 loaded)")
+                logger.info(f"  logs/bot.log: {len(lines)} lines (last 500 loaded)")
             except Exception:
                 pass
 
-        print("[ANALYZER] Data loading complete.\n")
+        logger.info("Data loading complete.\n")
 
     def analyze_all(self) -> str:
         """전체 분석 실행"""
@@ -530,9 +533,9 @@ class LogAnalyzer:
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             filepath = report_dir / f"analysis_{ts}.txt"
             filepath.write_text(report, encoding="utf-8")
-            print(f"\n[ANALYZER] Report saved to {filepath}")
+            logger.info(f"\n[ANALYZER] Report saved to {filepath}")
         except Exception as e:
-            print(f"[ANALYZER] Save failed: {e}")
+            logger.error(f"Save failed: {e}")
 
 
 def main():
@@ -554,10 +557,10 @@ def main():
             "errors": analyzer._analyze_log_errors,
         }
         result = sections[args.focus]()
-        print(result)
+        logger.info(result)
     else:
         report = analyzer.analyze_all()
-        print(report)
+        logger.info(report)
 
 
 if __name__ == "__main__":

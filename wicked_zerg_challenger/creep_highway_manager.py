@@ -126,7 +126,7 @@ class CreepHighwayManager:
             self.highways.extend(new_highways)
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ NEW HIGHWAYS PLANNED: {len(new_highways)} ★"
+                f"[{int(game_time)}s] [*] NEW HIGHWAYS PLANNED: {len(new_highways)} [*]"
             )
 
     def _calculate_waypoints(self, start: Point2, end: Point2, spacing: float = 8.0) -> List[Point2]:
@@ -225,7 +225,7 @@ class CreepHighwayManager:
 
                     game_time = getattr(self.bot, "time", 0)
                     self.logger.info(
-                        f"[{int(game_time)}s] ★ HIGHWAY TUMOR: {i+1}/{len(waypoints)} ★"
+                        f"[{int(game_time)}s] [*] HIGHWAY TUMOR: {i+1}/{len(waypoints)} [*]"
                     )
                     break
             else:
@@ -244,7 +244,7 @@ class CreepHighwayManager:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★★★ HIGHWAY COMPLETED! ★★★\n"
+                f"[{int(game_time)}s] [*][*][*] HIGHWAY COMPLETED! [*][*][*]\n"
                 f"  From: {highway['from']}\n"
                 f"  To: {highway['to']}\n"
                 f"  Total Highways: {self.highways_completed}"

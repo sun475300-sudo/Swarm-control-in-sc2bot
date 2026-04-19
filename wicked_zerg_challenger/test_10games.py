@@ -14,6 +14,9 @@ import os
 import time
 import psutil
 import tracemalloc
+import logging
+
+logger = logging.getLogger("Test10games")
 
 
 def _ensure_sc2_path():
@@ -36,7 +39,7 @@ def _ensure_sc2_path():
 
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
-            print(f"[SC2] Found via Registry: {install_path}")
+            logger.info(f"Found via Registry: {install_path}")
             return
     except Exception:
         pass
@@ -49,7 +52,7 @@ def _ensure_sc2_path():
     for path in common_paths:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
-            print(f"[SC2] Using: {path}")
+            logger.info(f"Using: {path}")
             return
 
 
@@ -57,18 +60,15 @@ def main():
     """Run 10-game performance test."""
     _ensure_sc2_path()
 
-    print("\n" + "=" * 70)
-    print("  10-GAME PERFORMANCE TEST")
-    print("=" * 70)
-    print()
-    print("  Monitoring:")
-    print("    - Win rate vs Protoss Easy")
-    print("    - Memory usage and leaks")
-    print("    - Crash stability")
-    print("    - Logic performance")
-    print("=" * 70)
-    print()
-
+    logger.info("\n" + "=" * 70)
+    logger.info("  10-GAME PERFORMANCE TEST")
+    logger.info("=" * 70)
+    logger.info("  Monitoring:")
+    logger.info("    - Win rate vs Protoss Easy")
+    logger.info("    - Memory usage and leaks")
+    logger.info("    - Crash stability")
+    logger.info("    - Logic performance")
+    logger.info("=" * 70)
     # Test configuration
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
@@ -84,21 +84,19 @@ def main():
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
-    print(f"[MEMORY] Initial: {initial_memory:.1f} MB\n")
+    logger.info(f"Initial: {initial_memory:.1f} MB\n")
 
     for game_num in range(1, total_games + 1):
-        print("\n" + "=" * 70)
-        print(f"  GAME {game_num}/{total_games}")
-        print("=" * 70)
-        print(f"  Current Record: {wins}W-{losses}L")
-        print(f"  Map: {map_name}")
-        print(f"  Opponent: {opponent_race.name} {difficulty.name}")
-        print("=" * 70)
-        print()
-
+        logger.info("\n" + "=" * 70)
+        logger.info(f"  GAME {game_num}/{total_games}")
+        logger.info("=" * 70)
+        logger.info(f"  Current Record: {wins}W-{losses}L")
+        logger.info(f"  Map: {map_name}")
+        logger.info(f"  Opponent: {opponent_race.name} {difficulty.name}")
+        logger.info("=" * 70)
         # Memory before game
         mem_before = process.memory_info().rss / 1024 / 1024
-        print(f"[MEMORY] Before game {game_num}: {mem_before:.1f} MB")
+        logger.info(f"Before game {game_num}: {mem_before:.1f} MB")
 
         # Create bot
         bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False, instance_id=game_num))
@@ -106,7 +104,7 @@ def main():
         # Get map
         map_instance = maps.get(map_name)
         if map_instance is None:
-            print(f"[ERROR] Map '{map_name}' not found!")
+            logger.error(f"Map '{map_name}' not found!")
             results.append(f"Game {game_num}: ERROR - Map not found")
             continue
 
@@ -122,22 +120,22 @@ def main():
 
             # Assume result is returned (in real python-sc2, check result)
             # For now, mark as completed
-            print(f"\n[GAME {game_num} FINISHED] Time: {elapsed:.1f}s")
+            logger.info(f"\n[GAME {game_num} FINISHED] Time: {elapsed:.1f}s")
             results.append(f"Game {game_num}: Completed in {elapsed:.1f}s")
 
         except Exception as e:
-            print(f"\n[GAME {game_num} ERROR] {e}")
+            logger.error(f"\n[GAME {game_num} ERROR] {e}")
             results.append(f"Game {game_num}: ERROR - {e}")
             losses += 1
 
         # Memory after game
         mem_after = process.memory_info().rss / 1024 / 1024
         mem_delta = mem_after - mem_before
-        print(f"[MEMORY] After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)")
+        logger.info(f"After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)")
 
         # Short pause between games
         if game_num < total_games:
-            print("\nWaiting 5 seconds before next game...")
+            logger.info("\nWaiting 5 seconds before next game...")
             time.sleep(5)
 
     # Final memory check
@@ -145,27 +143,25 @@ def main():
     total_leak = final_memory - initial_memory
 
     # Print summary
-    print("\n" + "=" * 70)
-    print("  PERFORMANCE TEST SUMMARY")
-    print("=" * 70)
-    print(f"\nGames Completed: {len(results)}/{total_games}")
-    print(f"Win Rate: {wins}W-{losses}L ({wins/total_games*100:.1f}%)" if total_games > 0 else "No games")
-    print(f"\nMemory:")
-    print(f"  Initial: {initial_memory:.1f} MB")
-    print(f"  Final: {final_memory:.1f} MB")
-    print(f"  Total Leak: {total_leak:+.1f} MB")
-    print(f"  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A")
+    logger.info("\n" + "=" * 70)
+    logger.info("  PERFORMANCE TEST SUMMARY")
+    logger.info("=" * 70)
+    logger.info(f"\nGames Completed: {len(results)}/{total_games}")
+    logger.info(f"Win Rate: {wins}W-{losses}L ({wins/total_games*100:.1f}%)" if total_games > 0 else "No games")
+    logger.info(f"\nMemory:")
+    logger.info(f"  Initial: {initial_memory:.1f} MB")
+    logger.info(f"  Final: {final_memory:.1f} MB")
+    logger.info(f"  Total Leak: {total_leak:+.1f} MB")
+    logger.info(f"  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A")
 
-    print(f"\nResults:")
+    logger.info(f"\nResults:")
     for result in results:
-        print(f"  {result}")
+        logger.info(f"  {result}")
 
-    print("=" * 70)
-    print()
-
+    logger.info("=" * 70)
     # Memory snapshot
     current, peak = tracemalloc.get_traced_memory()
-    print(f"[MEMORY] Peak: {peak / 1024 / 1024:.1f} MB")
+    logger.info(f"Peak: {peak / 1024 / 1024:.1f} MB")
     tracemalloc.stop()
 
 

@@ -10,6 +10,9 @@ from sc2.data import Race, Difficulty
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 import sys
 import os
+import logging
+
+logger = logging.getLogger("QuickCreepTest")
 
 
 def _ensure_sc2_path():
@@ -32,7 +35,7 @@ def _ensure_sc2_path():
 
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
-            print(f"[SC2] Found via Registry: {install_path}")
+            logger.info(f"Found via Registry: {install_path}")
             return
     except Exception:
         pass
@@ -45,7 +48,7 @@ def _ensure_sc2_path():
     for path in common_paths:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
-            print(f"[SC2] Using: {path}")
+            logger.info(f"Using: {path}")
             return
 
 
@@ -53,34 +56,29 @@ def main():
     """Run quick creep verification test."""
     _ensure_sc2_path()
 
-    print("\n" + "=" * 70)
-    print("  QUICK CREEP TEST (1 minute)")
-    print("=" * 70)
-    print()
-    print("  Testing:")
-    print("    - Dedicated creep queen assignment")
-    print("    - Creep spread during defense")
-    print("    - Target: 3min = 5 tumors minimum")
-    print("=" * 70)
-    print()
-
+    logger.info("\n" + "=" * 70)
+    logger.info("  QUICK CREEP TEST (1 minute)")
+    logger.info("=" * 70)
+    logger.info("  Testing:")
+    logger.info("    - Dedicated creep queen assignment")
+    logger.info("    - Creep spread during defense")
+    logger.info("    - Target: 3min = 5 tumors minimum")
+    logger.info("=" * 70)
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
     difficulty = Difficulty.Easy
 
-    print(f"  Map: {map_name}")
-    print(f"  Opponent: {opponent_race.name}")
-    print(f"  Difficulty: {difficulty.name}")
-    print("=" * 70)
-    print()
-
+    logger.info(f"  Map: {map_name}")
+    logger.info(f"  Opponent: {opponent_race.name}")
+    logger.info(f"  Difficulty: {difficulty.name}")
+    logger.info("=" * 70)
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
 
     # Get map
     map_instance = maps.get(map_name)
     if map_instance is None:
-        print(f"[ERROR] Map '{map_name}' not found!")
+        logger.error(f"Map '{map_name}' not found!")
         return
 
     # Run game
@@ -90,9 +88,9 @@ def main():
             [bot, Computer(opponent_race, difficulty)],
             realtime=False
         )
-        print("\n[TEST FINISHED]")
+        logger.info("\n[TEST FINISHED]")
     except Exception as e:
-        print(f"\n[TEST ERROR] {e}")
+        logger.error(f"\n[TEST ERROR] {e}")
 
 
 if __name__ == "__main__":

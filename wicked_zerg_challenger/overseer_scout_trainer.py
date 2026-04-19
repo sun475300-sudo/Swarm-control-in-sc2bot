@@ -43,7 +43,7 @@ class OverseerScoutTrainer:
         self.overseers: Dict[int, OverseerScout] = {}  # tag -> OverseerScout
 
         # 정찰 설정
-        self.MIN_OVERSEERS_FOR_SCOUT = 2  # 정찰에 필요한 최소 감시군주
+        self.MIN_OVERSEERS_FOR_SCOUT = 1  # 정찰에 필요한 최소 감시군주 (1로 줄여 조기 활성화)
         self.SCOUT_INTERVAL = 30.0  # 정찰 간격 (초)
 
         # 정찰 존 (맵을 여러 구역으로 나눔)

@@ -3,10 +3,13 @@
 """
 Self diagnosis (placeholder).
 """
+import logging
+
+logger = logging.getLogger("SelfDiagnosis")
 
 
 def main() -> None:
-    print("self_diagnosis placeholder.")
+    logger.info("self_diagnosis placeholder.")
 
 
 if __name__ == "__main__":

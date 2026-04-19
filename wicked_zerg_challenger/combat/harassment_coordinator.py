@@ -845,7 +845,7 @@ class HarassmentCoordinator:
 
         # 동시 실행 가능한 조합이 있을 때만 발동
         if runby_ready and drop_ready:
-            self.logger.info(f"[{int(current_time)}s] ★ SYNCHRONIZED STRIKE ACTIVATED! (Run-by + Drop) ★")
+            self.logger.info(f"[{int(current_time)}s] [*] SYNCHRONIZED STRIKE ACTIVATED! (Run-by + Drop) [*]")
             
             # 강제로 쿨다운 무시하고 실행 요청
             self.zergling_runby_cooldown = 0
@@ -923,7 +923,7 @@ class HarassmentCoordinator:
                  # 건설 명령
                  try:
                      self.bot.do(network(AbilityId.BUILD_NYDUSWORM, valid_target))
-                     self.logger.info(f"[{int(current_time)}s] ★ NYDUS WORM SUMMONED at {valid_target} ★")
+                     self.logger.info(f"[{int(current_time)}s] [*] NYDUS WORM SUMMONED at {valid_target} [*]")
                      self.nydus_active = True
                      self.nydus_cooldown = current_time + 60
                  except AttributeError as e:

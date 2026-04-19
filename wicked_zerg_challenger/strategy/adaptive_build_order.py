@@ -25,7 +25,16 @@ except ImportError:
     class BotAI:
         pass
     class UnitTypeId:
-        pass
+        QUEEN = "QUEEN"
+        ROACH = "ROACH"
+        RAVAGER = "RAVAGER"
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
+        ROACHWARREN = "ROACHWARREN"
+        SPINECRAWLER = "SPINECRAWLER"
+        BANELINGNEST = "BANELINGNEST"
+        LAIR = "LAIR"
+        HYDRALISKDEN = "HYDRALISKDEN"
     class Race:
         Terran = "Terran"
         Protoss = "Protoss"
@@ -99,7 +108,7 @@ class AdaptiveBuildOrder:
         if self.enemy_cheese_detected:
             self.current_build = "anti_cheese"
             self._setup_anti_cheese_build()
-            self.logger.info(f"[{int(self.bot.time)}s] ★ BUILD: Anti-Cheese Defense ★")
+            self.logger.info(f"[{int(self.bot.time)}s] [*] BUILD: Anti-Cheese Defense [*]")
 
         elif self.enemy_fast_expand:
             self.current_build = "timing_attack"

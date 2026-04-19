@@ -10,6 +10,9 @@ Advanced Building Manager - 건설 로직 고도화 모듈
 
 from typing import Optional, List, Tuple, Dict, Callable
 import math
+import logging
+
+logger = logging.getLogger("AdvancedBuildingManager")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -146,7 +149,7 @@ class AdvancedBuildingManager:
                     
             except Exception as e:
                 if self.bot.iteration % 100 == 0:
-                    print(f"[MORPH] Failed to morph {target_unit_type}: {e}")
+                    logger.error(f"Failed to morph {target_unit_type}: {e}")
                 continue
         
         return morphed_count
@@ -353,12 +356,12 @@ class AdvancedBuildingManager:
         try:
             result = await self.bot.build(building_type, near=chokepoint)
             if result:
-                print(f"[DEFENSE BUILD] Built {building_type} at chokepoint "
+                logger.info(f"Built {building_type} at chokepoint "
                       f"(distance: {distance:.1f} from base)")
                 return True
         except Exception as e:
             if self.bot.iteration % 100 == 0:
-                print(f"[DEFENSE BUILD] Failed to build {building_type} at chokepoint: {e}")
+                logger.error(f"Failed to build {building_type} at chokepoint: {e}")
         
         return False
     
@@ -497,11 +500,11 @@ class AdvancedBuildingManager:
                     if await self.build_with_worker_safety(tech_type, target_pos):
                         results[tech_type] = True
                         self._last_aggressive_tech_time = game_time
-                        print(f"[AGGRESSIVE TECH] Built {tech_type} (surplus: M:{int(mineral_surplus)}+ G:{int(gas_surplus)}+)")
+                        logger.info(f"Built {tech_type} (surplus: M:{int(mineral_surplus)}+ G:{int(gas_surplus)}+)")
                         break
                 except Exception as e:
                     if self.bot.iteration % 100 == 0:
-                        print(f"[AGGRESSIVE TECH] Failed to build {tech_type}: {e}")
+                        logger.error(f"Failed to build {tech_type}: {e}")
                     results[tech_type] = False
         
         return results
@@ -702,7 +705,7 @@ class AdvancedBuildingManager:
                 max_distance=15.0
             )
             if success:
-                print(f"[BUILDING] Built {building_type} safely on creep")
+                logger.info(f"Built {building_type} safely on creep")
                 return True
 
         # 폴백: 기존 방식 (일꾼 안전만 체크)
@@ -714,11 +717,11 @@ class AdvancedBuildingManager:
         try:
             result = await self.bot.build(building_type, near=safe_position)
             if result:
-                print(f"[BUILDING] Built {building_type} at safe position")
+                logger.info(f"Built {building_type} at safe position")
                 return True
         except Exception as e:
             if self.bot.iteration % 100 == 0:
-                print(f"[BUILDING] Failed: {e}")
+                logger.error(f"Failed: {e}")
 
         return False
 
@@ -751,7 +754,7 @@ class AdvancedBuildingManager:
                                 self.bot.do(worker.gather(closest_mineral))
                                 
                                 if self.bot.iteration % 100 == 0:
-                                    print(f"[RESCUE] Saved stuck worker {worker.tag}")
+                                    logger.info(f"Saved stuck worker {worker.tag}")
                                 rescued += 1
             except Exception:
                 continue

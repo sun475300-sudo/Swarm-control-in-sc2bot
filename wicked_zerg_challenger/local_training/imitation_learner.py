@@ -16,6 +16,9 @@ import json
 import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("ImitationLearner")
 
 try:
     import torch
@@ -74,7 +77,7 @@ class ReplayActionExtractor:
             self.replay_dir = Path(__file__).parent / "data" / "replays"
 
         self.extracted_data: List[Dict[str, Any]] = []
-        print(f"[IMITATION] ReplayActionExtractor 초기화 (replay_dir={self.replay_dir})")
+        logger.info(f"ReplayActionExtractor 초기화 (replay_dir={self.replay_dir})")
 
     def extract_from_replay(self, replay_path: str) -> List[Dict[str, Any]]:
         """
@@ -100,11 +103,11 @@ class ReplayActionExtractor:
 
             except ImportError:
                 # sc2reader 미설치 시 - 기본 파싱 시도
-                print(f"[IMITATION] sc2reader 미설치, 기본 파싱 모드 사용")
+                logger.info(f"sc2reader 미설치, 기본 파싱 모드 사용")
                 frames = self._basic_parse(replay_path)
 
         except Exception as e:
-            print(f"[IMITATION] 리플레이 추출 실패 ({replay_path}): {e}")
+            logger.info(f"리플레이 추출 실패 ({replay_path}): {e}")
 
         return frames
 
@@ -187,7 +190,7 @@ class ReplayActionExtractor:
         """기본 파싱 (sc2reader 없이)"""
         # 리플레이 파일의 바이너리 데이터에서 최소한의 정보 추출
         # 실제 구현에서는 s2protocol 사용 권장
-        print(f"[IMITATION] 기본 파싱: {replay_path}")
+        logger.info(f"기본 파싱: {replay_path}")
         return []
 
     def extract_all_replays(self) -> int:
@@ -200,24 +203,24 @@ class ReplayActionExtractor:
         total_frames = 0
 
         if not self.replay_dir.exists():
-            print(f"[IMITATION] 리플레이 디렉토리 없음: {self.replay_dir}")
+            logger.info(f"리플레이 디렉토리 없음: {self.replay_dir}")
             return 0
 
         replay_files = list(self.replay_dir.glob("*.SC2Replay"))
-        print(f"[IMITATION] {len(replay_files)}개 리플레이 파일 발견")
+        logger.info(f"{len(replay_files)}개 리플레이 파일 발견")
 
         for replay_file in replay_files:
             frames = self.extract_from_replay(str(replay_file))
             self.extracted_data.extend(frames)
             total_frames += len(frames)
 
-        print(f"[IMITATION] 총 {total_frames}개 프레임 추출 완료")
+        logger.info(f"총 {total_frames}개 프레임 추출 완료")
         return total_frames
 
     def save_dataset(self, output_path: Optional[str] = None) -> bool:
         """추출 데이터를 파일로 저장"""
         if not self.extracted_data:
-            print("[IMITATION] 저장할 데이터 없음")
+            logger.info("저장할 데이터 없음")
             return False
 
         if output_path is None:
@@ -226,10 +229,10 @@ class ReplayActionExtractor:
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(self.extracted_data, f, indent=2, ensure_ascii=False)
-            print(f"[IMITATION] 데이터셋 저장 완료: {output_path} ({len(self.extracted_data)} frames)")
+            logger.info(f"데이터셋 저장 완료: {output_path} ({len(self.extracted_data)} frames)")
             return True
         except Exception as e:
-            print(f"[IMITATION] 데이터셋 저장 실패: {e}")
+            logger.info(f"데이터셋 저장 실패: {e}")
             return False
 
 
@@ -333,7 +336,7 @@ class ImitationLearner:
         # 모델 로드 시도
         self._load_model()
 
-        print(f"[IMITATION] ImitationLearner 초기화 완료 "
+        logger.info(f"ImitationLearner 초기화 완료 "
               f"(state_dim={state_dim}, action_dim={self.action_dim}, device={self.device})")
 
     def add_demonstration(self, state: np.ndarray, action: int) -> None:
@@ -424,7 +427,7 @@ class ImitationLearner:
             results.append(stats)
 
             if verbose and epoch % 10 == 0:
-                print(f"[IMITATION] Epoch {self.epoch_count}: "
+                logger.info(f"Epoch {self.epoch_count}: "
                       f"loss={stats['loss']:.4f}, accuracy={stats['accuracy']:.3f}")
 
         return results
@@ -464,10 +467,10 @@ class ImitationLearner:
                 "epoch_count": self.epoch_count,
                 "training_history": self.training_history[-100:],
             }, str(save_path))
-            print(f"[IMITATION] 모델 저장 완료: {save_path}")
+            logger.info(f"모델 저장 완료: {save_path}")
             return True
         except Exception as e:
-            print(f"[IMITATION] 모델 저장 실패: {e}")
+            logger.info(f"모델 저장 실패: {e}")
             return False
 
     def _load_model(self) -> bool:
@@ -479,10 +482,10 @@ class ImitationLearner:
                 self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 self.epoch_count = checkpoint.get("epoch_count", 0)
                 self.training_history = checkpoint.get("training_history", [])
-                print(f"[IMITATION] 모델 로드 완료: {self.model_path}")
+                logger.info(f"모델 로드 완료: {self.model_path}")
                 return True
         except Exception as e:
-            print(f"[IMITATION] 모델 로드 실패: {e}")
+            logger.info(f"모델 로드 실패: {e}")
         return False
 
     def get_stats(self) -> Dict[str, Any]:

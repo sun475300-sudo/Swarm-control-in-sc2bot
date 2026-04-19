@@ -289,7 +289,7 @@ class UpgradeResourcePlanner:
         # 자원 과다 축적 경고 (업그레이드를 못하고 있는 경우)
         if current_minerals > self.max_bank_threshold and not self.reserved_minerals:
             self.logger.warning(
-                f"[PLANNER] ⚠️ Excessive mineral banking: {current_minerals} "
+                f"[PLANNER] [!] Excessive mineral banking: {current_minerals} "
                 "(Consider increasing unit production)"
             )
 

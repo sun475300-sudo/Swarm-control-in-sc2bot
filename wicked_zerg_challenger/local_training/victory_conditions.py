@@ -21,6 +21,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("VictoryConditions")
 
 
 class VictoryCondition:
@@ -100,7 +103,7 @@ class VictoryConditionsLearner:
             self.victory_counts = data.get("victory_counts", {})
             self.defeat_counts = data.get("defeat_counts", {})
         except Exception as e:
-            print(f"[VICTORY_CONDITIONS] Failed to load data: {e}")
+            logger.error(f"Failed to load data: {e}")
 
     def _save_data(self) -> None:
         """데이터 저장"""
@@ -116,7 +119,7 @@ class VictoryConditionsLearner:
             with open(self.conditions_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"[VICTORY_CONDITIONS] Failed to save data: {e}")
+            logger.error(f"Failed to save data: {e}")
 
     def analyze_game_result(self, bot, game_result: str) -> Tuple[List[str], float]:
         """
@@ -324,74 +327,74 @@ class VictoryConditionsLearner:
 
     def print_analysis(self) -> None:
         """분석 결과 출력"""
-        print("\n" + "=" * 70)
-        print("[VICTORY CONDITIONS] GAME RESULT ANALYSIS")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("GAME RESULT ANALYSIS")
+        logger.info("=" * 70)
 
         total_victories = len(self.victory_patterns)
         total_defeats = len(self.defeat_patterns)
         total_games = total_victories + total_defeats
 
         if total_games == 0:
-            print("No games recorded yet.")
-            print("=" * 70)
+            logger.info("No games recorded yet.")
+            logger.info("=" * 70)
             return
 
         win_rate = self.get_win_rate()
 
-        print(f"Total Games: {total_games}")
-        print(f"Victories: {total_victories}")
-        print(f"Defeats: {total_defeats}")
-        print(f"Win Rate: {win_rate:.1%}")
+        logger.info(f"Total Games: {total_games}")
+        logger.info(f"Victories: {total_victories}")
+        logger.info(f"Defeats: {total_defeats}")
+        logger.info(f"Win Rate: {win_rate:.1%}")
 
-        print("\n" + "-" * 70)
-        print("Top Victory Conditions:")
+        logger.info("\n" + "-" * 70)
+        logger.info("Top Victory Conditions:")
 
         victory_conditions = self.get_most_common_victory_conditions(5)
         if victory_conditions:
             for idx, (condition, count) in enumerate(victory_conditions, 1):
                 percentage = (count / total_victories * 100) if total_victories > 0 else 0
-                print(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
+                logger.info(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
         else:
-            print("  No victories yet.")
+            logger.info("  No victories yet.")
 
-        print("\n" + "-" * 70)
-        print("Top Defeat Conditions:")
+        logger.info("\n" + "-" * 70)
+        logger.info("Top Defeat Conditions:")
 
         defeat_conditions = self.get_most_common_defeat_conditions(5)
         if defeat_conditions:
             for idx, (condition, count) in enumerate(defeat_conditions, 1):
                 percentage = (count / total_defeats * 100) if total_defeats > 0 else 0
-                print(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
+                logger.info(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
         else:
-            print("  No defeats yet (amazing!).")
+            logger.info("  No defeats yet (amazing!).")
 
-        print("\n" + "-" * 70)
-        print("Learning Insights:")
+        logger.info("\n" + "-" * 70)
+        logger.info("Learning Insights:")
 
         # 승리 인사이트
         if victory_conditions:
             top_victory = victory_conditions[0][0]
-            print(f"  - Most common path to victory: {top_victory}")
-            print(f"    -> Keep focusing on this strategy!")
+            logger.info(f"  - Most common path to victory: {top_victory}")
+            logger.info(f"    -> Keep focusing on this strategy!")
 
         # 패배 인사이트
         if defeat_conditions:
             top_defeat = defeat_conditions[0][0]
-            print(f"  - Most common cause of defeat: {top_defeat}")
-            print(f"    -> This needs urgent improvement!")
+            logger.info(f"  - Most common cause of defeat: {top_defeat}")
+            logger.info(f"    -> This needs urgent improvement!")
 
         # 승률 기반 조언
         if win_rate < 0.3:
-            print(f"  - Win rate is low ({win_rate:.1%}). Focus on fundamentals.")
+            logger.info(f"  - Win rate is low ({win_rate:.1%}). Focus on fundamentals.")
         elif win_rate < 0.5:
-            print(f"  - Win rate is improving ({win_rate:.1%}). Keep learning!")
+            logger.info(f"  - Win rate is improving ({win_rate:.1%}). Keep learning!")
         elif win_rate < 0.7:
-            print(f"  - Win rate is good ({win_rate:.1%}). Refine strategies.")
+            logger.info(f"  - Win rate is good ({win_rate:.1%}). Refine strategies.")
         else:
-            print(f"  - Win rate is excellent ({win_rate:.1%}). Mastery achieved!")
+            logger.info(f"  - Win rate is excellent ({win_rate:.1%}). Mastery achieved!")
 
-        print("=" * 70)
+        logger.info("=" * 70)
 
     def get_reward_adjustment_for_conditions(self) -> Dict[str, float]:
         """

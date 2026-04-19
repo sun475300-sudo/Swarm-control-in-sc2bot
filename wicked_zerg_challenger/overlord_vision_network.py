@@ -206,4 +206,4 @@ class OverlordVisionNetwork:
                 # Remove from available pool
                 overlords = overlords.filter(lambda u: u.tag != overlord.tag)
 
-                self.logger.info(f"[{int(self.bot.time)}s] ★ Overlord deployed to vision position {pos} ★")
+                self.logger.info(f"[{int(self.bot.time)}s] [*] Overlord deployed to vision position {pos} [*]")

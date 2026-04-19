@@ -9,6 +9,9 @@ Usage:
 
 import argparse
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("PlotSensorNetwork")
 
 try:
     import pandas as pd
@@ -25,17 +28,17 @@ def main() -> None:
     args = parser.parse_args()
 
     if not PLOT_AVAILABLE:
-        print("[ERROR] pandas/matplotlib not installed. Install them to use this plotter.")
+        logger.error("pandas/matplotlib not installed. Install them to use this plotter.")
         return
 
     csv_path = Path(args.csv)
     if not csv_path.exists():
-        print(f"[ERROR] CSV not found: {csv_path}")
+        logger.error(f"CSV not found: {csv_path}")
         return
 
     df = pd.read_csv(csv_path)
     if df.empty:
-        print("[ERROR] CSV is empty.")
+        logger.error("CSV is empty.")
         return
 
     plt.figure(figsize=(8, 8))
@@ -48,7 +51,7 @@ def main() -> None:
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(out_path, dpi=150)
-    print(f"[OK] Saved plot -> {out_path}")
+    logger.info(f"Saved plot -> {out_path}")
 
 
 if __name__ == "__main__":

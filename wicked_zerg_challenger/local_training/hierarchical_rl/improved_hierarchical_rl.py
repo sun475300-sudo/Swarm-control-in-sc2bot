@@ -13,6 +13,9 @@ Role: Pure Strategic Decision Maker (The Brain)
 
 from typing import Any, Dict, List, Optional
 import numpy as np
+import logging
+
+logger = logging.getLogger("ImprovedHierarchicalRl")
 
 class CommanderAgent:
     """
@@ -166,7 +169,7 @@ class HierarchicalRLSystem:
 
             # 로깅 (오버라이드 발생 시)
             if override_strategy and bot.iteration % 220 == 0 and final_mode != rule_based_decision:
-                 print(f"[RL_OVERRIDE] RL 결정: {final_mode} (Rule: {rule_based_decision})")
+                 logger.info(f"RL 결정: {final_mode} (Rule: {rule_based_decision})")
 
             # 3. 순수 전략 결정 반환 (직접 실행하지 않음)
             return {

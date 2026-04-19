@@ -13,6 +13,9 @@ Behavior Tree (행동 트리) 시스템
 from abc import ABC, abstractmethod
 from typing import Optional, List, Callable, Any
 from enum import Enum
+import logging
+
+logger = logging.getLogger("BehaviorTree")
 
 
 class NodeStatus(Enum):
@@ -268,7 +271,7 @@ class Action(BehaviorNode):
             return NodeStatus.SUCCESS
 
         except Exception as e:
-            print(f"[BT ERROR] Action '{self.name}' failed: {e}")
+            logger.error(f"Action '{self.name}' failed: {e}")
             self.status = NodeStatus.FAILURE
             return NodeStatus.FAILURE
 

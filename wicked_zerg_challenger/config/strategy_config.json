@@ -131,5 +131,73 @@
       "tech_timing_start": 240,
       "tech_timing_end": 420
     }
+  },
+  "rush_detection": {
+    "rush_threshold_seconds": 150,
+    "cheese_threshold_seconds": 120,
+    "emergency_duration_seconds": 120,
+    "defense_mode_timeout_seconds": 120
+  },
+  "emergency_mode": {
+    "default_ratios": {
+      "zergling": 0.50,
+      "roach": 0.25,
+      "baneling": 0.15,
+      "queen": 0.10
+    },
+    "air_threat_ratios": {
+      "zergling": 0.30,
+      "hydralisk": 0.40,
+      "roach": 0.20,
+      "queen": 0.10
+    }
+  },
+  "race_specific_fallback": {
+    "early": {
+      "zergling": 0.60,
+      "queen": 0.20,
+      "roach": 0.20
+    },
+    "mid": {
+      "roach": 0.25,
+      "hydralisk": 0.20,
+      "zergling": 0.20,
+      "ravager": 0.10,
+      "baneling": 0.10,
+      "queen": 0.10,
+      "lurker": 0.05
+    },
+    "late": {
+      "ultralisk": 0.20,
+      "hydralisk": 0.20,
+      "corruptor": 0.15,
+      "broodlord": 0.10,
+      "viper": 0.10,
+      "zergling": 0.10,
+      "lurker": 0.10,
+      "ravager": 0.05
+    }
+  },
+  "counter_build": {
+    "terran": {
+      "marine_marauder": {"baneling": 0.25, "zergling": 0.30, "roach": 0.20, "hydralisk": 0.15},
+      "mech": {"roach": 0.25, "hydralisk": 0.20, "zergling": 0.15},
+      "siege_tank": {"hydralisk": 0.35, "roach": 0.20, "zergling": 0.10},
+      "battlecruiser": {"hydralisk": 0.35, "corruptor": 0.30},
+      "hellion": {"roach": 0.40, "zergling": 0.30}
+    },
+    "protoss": {
+      "immortal": {"zergling": 0.35, "roach": 0.10},
+      "colossus": {"corruptor": 0.30, "hydralisk": 0.25},
+      "void_ray": {"hydralisk": 0.35},
+      "stalker": {"zergling": 0.35, "roach": 0.30, "baneling": 0.15},
+      "zealot": {"baneling": 0.20, "roach": 0.30},
+      "archon": {"zergling": 0.30, "hydralisk": 0.25}
+    },
+    "zerg": {
+      "roach_ravager": {"zergling": 0.20, "roach": 0.40, "hydralisk": 0.15},
+      "zergling_baneling": {"roach": 0.35, "zergling": 0.30},
+      "mutalisk": {"hydralisk": 0.40, "queen": 0.20}
+    }
   }
 }

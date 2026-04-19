@@ -7,6 +7,9 @@ opening decisions can consume the scout state reliably.
 """
 
 from typing import Any, Dict, List, Optional, Set
+import logging
+
+logger = logging.getLogger("EarlyScoutSystem")
 
 try:
     from sc2.bot_ai import BotAI
@@ -82,6 +85,8 @@ class EarlyScoutSystem:
         self._update_interval = 0.5
         self._last_report_time = 0.0
         self._last_rescout_time = 0.0
+        self._overlord_rescout_interval = 30.0  # Re-scout enemy base every 30s
+        self._last_overlord_rescout_time = 0.0
 
     def _get_blackboard(self) -> Any:
         return getattr(self.bot, "blackboard", None)
@@ -161,6 +166,10 @@ class EarlyScoutSystem:
 
         if not self.overlord_scout_sent and self.bot.time > 5:
             await self._send_overlord_scout()
+        elif (self.bot.time - self._last_overlord_rescout_time
+              >= self._overlord_rescout_interval):
+            # Periodic overlord re-scout of enemy base every 30s
+            await self._send_overlord_rescout()
         if self.scout_overlord_tag:
             await self._manage_overlord_scout()
 
@@ -209,7 +218,7 @@ class EarlyScoutSystem:
             self.bot.do(ling.move(waypoints[0]))
 
         self.ling_scouts_assigned = True
-        print(
+        logger.info(
             f"[EARLY_SCOUT] Sent {len(scout_lings)} Zergling scouts "
             f"at {int(self.bot.time)}s"
         )
@@ -262,7 +271,8 @@ class EarlyScoutSystem:
 
         self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
         self.overlord_scout_sent = True
-        print(f"[EARLY_SCOUT] Sent Overlord scout at {int(self.bot.time)}s")
+        self._last_overlord_rescout_time = self.bot.time
+        logger.info(f"Sent Overlord scout at {int(self.bot.time)}s")
 
     async def _manage_overlord_scout(self) -> None:
         overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in([self.scout_overlord_tag])
@@ -282,6 +292,39 @@ class EarlyScoutSystem:
                 next_target = self.overlord_waypoints[self.overlord_current_wp]
                 self.bot.do(scout_ol.move(next_target))
 
+    async def _send_overlord_rescout(self) -> None:
+        """Periodically re-send an overlord to scout the enemy base every 30s."""
+        overlords = self.bot.units(UnitTypeId.OVERLORD)
+        if not overlords or not self.bot.enemy_start_locations:
+            return
+
+        # Pick an overlord that isn't already actively scouting
+        available = overlords.filter(
+            lambda u: u.tag != self.scout_overlord_tag
+        )
+        if not available:
+            available = overlords
+
+        enemy_start = self.bot.enemy_start_locations[0]
+        map_center = self.bot.game_info.map_center
+        enemy_natural = self._get_enemy_natural_location() or map_center
+
+        scout_ol = available.closest_to(enemy_start)
+        self.scout_overlord_tag = scout_ol.tag
+
+        self.overlord_waypoints = [
+            enemy_natural,
+            enemy_start,
+            map_center,
+        ]
+        self.overlord_current_wp = 0
+
+        self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
+        self._last_overlord_rescout_time = self.bot.time
+        logger.info(
+            f"[EARLY_SCOUT] Overlord re-scout sent at {int(self.bot.time)}s"
+        )
+
     async def _analyze_enemy_info(self) -> None:
         structures = getattr(self.bot, "enemy_structures", None)
         if structures:
@@ -292,17 +335,17 @@ class EarlyScoutSystem:
 
                 if not self.enemy_pool_timing and type_name == "SPAWNINGPOOL":
                     self.enemy_pool_timing = self.bot.time
-                    print(f"[EARLY_SCOUT] Enemy pool spotted at {int(self.bot.time)}s")
+                    logger.info(f"Enemy pool spotted at {int(self.bot.time)}s")
                     if self.bot.time < 90:
                         self.cheese_suspected = True
-                        print("[EARLY_SCOUT] Early pool detected, cheese suspected")
+                        logger.info("Early pool detected, cheese suspected")
 
                 if not self.enemy_gas_timing and (
                     type_id in GAS_BUILDING_TYPES
                     or type_name in {"EXTRACTOR", "ASSIMILATOR", "REFINERY"}
                 ):
                     self.enemy_gas_timing = self.bot.time
-                    print(f"[EARLY_SCOUT] Enemy gas spotted at {int(self.bot.time)}s")
+                    logger.info(f"Enemy gas spotted at {int(self.bot.time)}s")
 
                 if (
                     enemy_natural is not None
@@ -312,7 +355,7 @@ class EarlyScoutSystem:
                 ):
                     self.enemy_natural_timing = self.bot.time
                     self.natural_scouted = True
-                    print(f"[EARLY_SCOUT] Enemy natural confirmed at {int(self.bot.time)}s")
+                    logger.info(f"Enemy natural confirmed at {int(self.bot.time)}s")
 
         enemy_units = getattr(self.bot, "enemy_units", None)
         if enemy_units:
@@ -322,7 +365,8 @@ class EarlyScoutSystem:
                     self.enemy_early_units.add(unit_tag)
 
     async def _mid_game_rescouting(self) -> None:
-        if self.bot.time - self._last_rescout_time < 30.0:
+        """Mid-game: Zergling patrols the whole map every 60 seconds."""
+        if self.bot.time - self._last_rescout_time < 60.0:
             return
         self._last_rescout_time = self.bot.time
 
@@ -333,11 +377,35 @@ class EarlyScoutSystem:
             return
 
         enemy_start = self.bot.enemy_start_locations[0]
-        scout_ling = zerglings.closest_to(enemy_start)
-        self.bot.do(scout_ling.attack(enemy_start))
+        our_base = self.bot.start_location
+        map_center = self.bot.game_info.map_center
 
-        if int(self.bot.time) % 60 < 5:
-            print(f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game rescout sent")
+        # Build patrol waypoints covering the whole map
+        patrol_targets = [enemy_start, map_center]
+
+        # Add expansion locations sorted by distance to enemy
+        expansions = getattr(self.bot, "expansion_locations_list", [])
+        if expansions:
+            sorted_exps = sorted(
+                expansions,
+                key=lambda p: p.distance_to(enemy_start),
+            )
+            for exp in sorted_exps[:5]:
+                if exp.distance_to(our_base) > 5:
+                    patrol_targets.append(exp)
+
+        # Send a zergling on patrol through all waypoints
+        scout_ling = zerglings.closest_to(enemy_start)
+        for i, target in enumerate(patrol_targets):
+            if i == 0:
+                self.bot.do(scout_ling.move(target))
+            else:
+                self.bot.do(scout_ling.move(target, queue=True))
+
+        logger.info(
+            f"[EARLY_SCOUT] [{int(self.bot.time)}s] Mid-game zergling map "
+            f"patrol sent ({len(patrol_targets)} waypoints)"
+        )
 
     def is_cheese_detected(self) -> bool:
         return self.cheese_suspected

@@ -14,6 +14,9 @@ from enum import Enum
 import json
 from pathlib import Path
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("GameAnalyticsSystem")
 
 
 class DefeatReason(Enum):
@@ -152,7 +155,7 @@ class GameAnalytics:
 
         # 즉시 분석 출력 (패배 시)
         if not won:
-            print(self._get_defeat_analysis(game_record))
+            logger.info(self._get_defeat_analysis(game_record))
 
     def _analyze_defeat_reason(self, game_time: float, stats: Dict) -> DefeatReason:
         """패배 원인 자동 분석"""
@@ -326,10 +329,10 @@ class GameAnalytics:
             lines.append(f"  - {opponent_race}에 대한 카운터 전략 개발")
 
         elif win_rate < 60:
-            lines.append(f"  ⚪ 승률 보통 ({win_rate:.1f}%) - 추가 연습 필요")
+            lines.append(f"  [O] 승률 보통 ({win_rate:.1f}%) - 추가 연습 필요")
 
         else:
-            lines.append(f"  ✅ 승률 양호 ({win_rate:.1f}%) - 현재 전략 유지")
+            lines.append(f"  [OK] 승률 양호 ({win_rate:.1f}%) - 현재 전략 유지")
 
         return "\n".join(lines)
 
@@ -352,7 +355,7 @@ class GameAnalytics:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            print(f"[GAME_ANALYTICS] 저장 실패: {e}")
+            logger.info(f"저장 실패: {e}")
 
     def _save_detailed_log(self, game_record: Dict) -> None:
         """상세 로그 저장 (JSONL)"""
@@ -363,7 +366,7 @@ class GameAnalytics:
                 f.write(json.dumps(game_record, ensure_ascii=False) + "\n")
 
         except Exception as e:
-            print(f"[GAME_ANALYTICS] 상세 로그 저장 실패: {e}")
+            logger.info(f"상세 로그 저장 실패: {e}")
 
     def _load_stats(self) -> None:
         """통계 로드"""
@@ -380,7 +383,7 @@ class GameAnalytics:
                 self.timing_stats = data.get("timing_stats", self.timing_stats)
                 self.games = data.get("recent_games", [])
 
-                print(f"[GAME_ANALYTICS] 통계 로드 완료 - {self.total_games}게임")
+                logger.info(f"통계 로드 완료 - {self.total_games}게임")
 
         except Exception as e:
-            print(f"[GAME_ANALYTICS] 로드 실패 (새로 시작): {e}")
+            logger.info(f"로드 실패 (새로 시작): {e}")

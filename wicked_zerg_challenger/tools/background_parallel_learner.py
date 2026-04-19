@@ -21,6 +21,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import numpy as np
 import sys
+import logging
+
+logger = logging.getLogger("BackgroundParallelLearner")
 
 # 프로젝트 루트 추가
 script_dir = Path(__file__).parent
@@ -118,11 +121,11 @@ class BackgroundParallelLearner:
             self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
             self.worker_thread.start()
             
-            print(f"[BG_LEARNER] Started (Monitoring {self.data_dir})")
+            logger.info(f"Started (Monitoring {self.data_dir})")
             return True
 
         except Exception as e:
-            print(f"[BG_LEARNER] Failed to start: {e}")
+            logger.error(f"Failed to start: {e}")
             self.running = False
             return False
 
@@ -131,12 +134,12 @@ class BackgroundParallelLearner:
         self.running = False
         if self.worker_thread:
             self.worker_thread.join(timeout=2.0)
-        print("[BG_LEARNER] Stopped")
+        logger.info("Stopped")
 
     def _worker_loop(self) -> None:
         """워커 루프"""
         if self.verbose:
-            print("[BG_LEARNER] Worker thread started")
+            logger.info("Worker thread started")
 
         while self.running:
             try:
@@ -156,12 +159,12 @@ class BackgroundParallelLearner:
                     time.sleep(5)
 
             except Exception as e:
-                print(f"[BG_LEARNER] [ERROR] Worker error: {e}")
+                logger.error(f"[ERROR] Worker error: {e}")
                 self.stats["errors"] += 1
                 time.sleep(5)
 
         if self.verbose:
-            print("[BG_LEARNER] Worker thread stopped")
+            logger.info("Worker thread stopped")
 
     def _process_new_data(self) -> bool:
         """새로운 경험 데이터 처리"""
@@ -184,7 +187,7 @@ class BackgroundParallelLearner:
             files_skipped = 0
 
             if self.verbose:
-                print(f"\n[BG_LEARNER] > Processing batch: {len(files)} files available")
+                logger.info(f"\n[BG_LEARNER] > Processing batch: {len(files)} files available")
 
             for file_path in files[:10]:  # 한 번에 최대 10개 처리
                 try:
@@ -192,7 +195,7 @@ class BackgroundParallelLearner:
                     file_age = current_time - file_path.stat().st_mtime
                     if file_age > self.max_file_age:
                         if self.verbose:
-                            print(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
+                            logger.info(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
                         files_skipped += 1
                         # ★ FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
                         try:
@@ -213,11 +216,11 @@ class BackgroundParallelLearner:
                     # ★ FIX: NaN/Inf 검증 (오염 데이터 학습 방지)
                     if (np.any(np.isnan(loaded_data["states"])) or np.any(np.isinf(loaded_data["states"]))
                             or np.any(np.isnan(loaded_data["rewards"])) or np.any(np.isinf(loaded_data["rewards"]))):
-                        print(f"[BG_LEARNER] [WARN] Corrupted data (NaN/Inf): {file_path.name} - skipped")
+                        logger.warning(f"[WARN] Corrupted data (NaN/Inf): {file_path.name} - skipped")
                         continue
                     # 액션 인덱스 범위 검증 (0-4)
                     if np.any(loaded_data["actions"] < 0) or np.any(loaded_data["actions"] > 4):
-                        print(f"[BG_LEARNER] [WARN] Invalid action indices in {file_path.name} - skipped")
+                        logger.warning(f"[WARN] Invalid action indices in {file_path.name} - skipped")
                         continue
 
                     experiences.append(loaded_data)
@@ -225,9 +228,9 @@ class BackgroundParallelLearner:
                     
                     if self.verbose:
                         total_reward = np.sum(loaded_data['rewards'])
-                        print(f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
+                        logger.info(f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
                 except Exception as e:
-                    print(f"[BG_LEARNER] [ERROR] Corrupt file {file_path.name}: {e}")
+                    logger.error(f"[ERROR] Corrupt file {file_path.name}: {e}")
                     # 손상된 파일은 별도 이동 또는 삭제
                     try:
                         file_path.rename(file_path.with_suffix(".corrupt"))
@@ -243,7 +246,7 @@ class BackgroundParallelLearner:
             # 학습 수행
             if self.verbose:
                 total_steps = sum(len(exp['states']) for exp in experiences)
-                print(f"[BG_LEARNER] ~ Training on {len(experiences)} games ({total_steps} total steps)...")
+                logger.info(f"~ Training on {len(experiences)} games ({total_steps} total steps)...")
 
             # RLAgent 리로드 (최신 모델 반영)
             self.rl_agent = RLAgent(model_path=str(self.model_path))
@@ -262,7 +265,7 @@ class BackgroundParallelLearner:
                         self._safe_file_op(lambda: shutil.move(str(file_path), str(archive_path)))
                         archived_count += 1
                     except Exception as e:
-                        print(f"[BG_LEARNER] [ERROR] Archive error: {e}")
+                        logger.error(f"[ERROR] Archive error: {e}")
 
                 # 통계 업데이트
                 self.stats["files_processed"] += archived_count
@@ -275,23 +278,23 @@ class BackgroundParallelLearner:
 
                 processing_time = time.time() - start_time
                 if self.verbose:
-                    print(f"[BG_LEARNER] [OK] Training complete!")
-                    print(f"  - Loss: {train_stats.get('loss', 0):.4f}")
-                    print(f"  - Games trained: {train_stats.get('games', 0)}")
-                    print(f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
-                    print(f"  - Files archived: {archived_count}")
-                    print(f"  - Processing time: {processing_time:.2f}s")
+                    logger.info(f"[OK] Training complete!")
+                    logger.info(f"  - Loss: {train_stats.get('loss', 0):.4f}")
+                    logger.info(f"  - Games trained: {train_stats.get('games', 0)}")
+                    logger.info(f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
+                    logger.info(f"  - Files archived: {archived_count}")
+                    logger.info(f"  - Processing time: {processing_time:.2f}s")
 
                 # 로그 파일에 기록
                 self._log_training_result(len(experiences), train_stats, processing_time)
 
                 return True
             else:
-                print("[BG_LEARNER] [ERROR] Failed to save model, skipping archive")
+                logger.error("[ERROR] Failed to save model, skipping archive")
                 return False
 
         except Exception as e:
-            print(f"[BG_LEARNER] [ERROR] Processing error: {e}")
+            logger.error(f"[ERROR] Processing error: {e}")
             import traceback
             traceback.print_exc()
             self.stats["errors"] += 1
@@ -319,34 +322,32 @@ class BackgroundParallelLearner:
         if not self.verbose:
             return
 
-        print("\n" + "="*70)
-        print("? [BACKGROUND LEARNER] STATUS REPORT")
-        print("="*70)
-        print(f"? Training Statistics:")
-        print(f"  Files Processed:      {self.stats['files_processed']}")
-        print(f"  Files Skipped (Old):  {self.stats['files_skipped_old']}")
-        print(f"  Batch Training Runs:  {self.stats['batches_trained']}")
-        print(f"  Total Samples:        {self.stats['total_samples']}")
-        print(f"  Average Loss:         {self.stats['avg_loss']:.4f}")
-        print(f"  Last Loss:            {self.stats['last_loss']:.4f}")
-        print(f"  Last Adjusted LR:     {self.stats['last_adjusted_lr']:.6f}")
-        print()
-        print(f"? Directory Status:")
-        print(f"  Buffer Files:         {self.stats['buffer_file_count']}")
-        print(f"  Archived Files:       {self.stats['archive_file_count']}")
-        print(f"  Max File Age:         {self.max_file_age/60:.1f} min")
-        print()
-        print(f"? System Status:")
-        print(f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}")
-        print(f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
-        print(f"  Errors:               {self.stats['errors']}")
+        logger.info("\n" + "="*70)
+        logger.info("? [BACKGROUND LEARNER] STATUS REPORT")
+        logger.info("="*70)
+        logger.info(f"? Training Statistics:")
+        logger.info(f"  Files Processed:      {self.stats['files_processed']}")
+        logger.info(f"  Files Skipped (Old):  {self.stats['files_skipped_old']}")
+        logger.info(f"  Batch Training Runs:  {self.stats['batches_trained']}")
+        logger.info(f"  Total Samples:        {self.stats['total_samples']}")
+        logger.info(f"  Average Loss:         {self.stats['avg_loss']:.4f}")
+        logger.info(f"  Last Loss:            {self.stats['last_loss']:.4f}")
+        logger.info(f"  Last Adjusted LR:     {self.stats['last_adjusted_lr']:.6f}")
+        logger.info(f"? Directory Status:")
+        logger.info(f"  Buffer Files:         {self.stats['buffer_file_count']}")
+        logger.info(f"  Archived Files:       {self.stats['archive_file_count']}")
+        logger.info(f"  Max File Age:         {self.max_file_age/60:.1f} min")
+        logger.info(f"? System Status:")
+        logger.info(f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}")
+        logger.info(f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
+        logger.error(f"  Errors:               {self.stats['errors']}")
 
         if self.stats['last_batch_time']:
             import datetime
             last_time = datetime.datetime.fromtimestamp(self.stats['last_batch_time'])
-            print(f"  Last Training:        {last_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"  Last Training:        {last_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        print("="*70 + "\n")
+        logger.info("="*70 + "\n")
 
     def _log_training_result(self, batch_size: int, train_stats: Dict, processing_time: float) -> None:
         """학습 결과를 로그 파일에 기록"""
@@ -370,7 +371,7 @@ class BackgroundParallelLearner:
                 f.write("-" * 60 + "\n")
         except Exception as e:
             if self.verbose:
-                print(f"[BG_LEARNER] Warning: Could not write log: {e}")
+                logger.warning(f"Warning: Could not write log: {e}")
 
 # 싱글톤 및 헬퍼
 _instance: Optional[BackgroundParallelLearner] = None
@@ -391,7 +392,7 @@ def get_background_learner(**kwargs) -> BackgroundParallelLearner:
     return _instance
 
 def main():
-    print("Testing Background Learner...")
+    logger.info("Testing Background Learner...")
     learner = BackgroundParallelLearner()
     learner.start()
     time.sleep(5)

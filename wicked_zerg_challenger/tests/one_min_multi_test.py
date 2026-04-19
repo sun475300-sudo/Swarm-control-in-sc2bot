@@ -19,6 +19,9 @@ Usage:
 import asyncio
 from typing import Dict, List, Optional
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("OneMinMultiTest")
 
 try:
     from sc2.bot_ai import BotAI
@@ -75,9 +78,9 @@ class OneMinMultiTest:
         self.monitoring_active = True
 
         if self.enable_logging:
-            print(f"[1-MIN-MULTI-TEST] Monitoring started at {self.test_start_time:.1f}s")
-            print(f"[1-MIN-MULTI-TEST] Initial Hatchery count: {self.initial_hatchery_count}")
-            print(f"[1-MIN-MULTI-TEST] Target: Expansion by {self.target_timing:.1f}s")
+            logger.info(f"[1-MIN-MULTI-TEST] Monitoring started at {self.test_start_time:.1f}s")
+            logger.info(f"[1-MIN-MULTI-TEST] Initial Hatchery count: {self.initial_hatchery_count}")
+            logger.info(f"[1-MIN-MULTI-TEST] Target: Expansion by {self.target_timing:.1f}s")
 
     async def on_step(self, iteration: int):
         """매 프레임 체크"""
@@ -140,9 +143,9 @@ class OneMinMultiTest:
                     self.expansion_location = new_hatcheries[0].position
 
                 if self.enable_logging:
-                    print(f"[1-MIN-MULTI-TEST] ★ EXPANSION PLACED at {game_time:.1f}s ★")
-                    print(f"[1-MIN-MULTI-TEST] Minerals at placement: {self.minerals_at_placement}")
-                    print(f"[1-MIN-MULTI-TEST] Location: {self.expansion_location}")
+                    logger.info(f"[1-MIN-MULTI-TEST] [*] EXPANSION PLACED at {game_time:.1f}s [*]")
+                    logger.info(f"[1-MIN-MULTI-TEST] Minerals at placement: {self.minerals_at_placement}")
+                    logger.info(f"[1-MIN-MULTI-TEST] Location: {self.expansion_location}")
 
                 # ★ 타이밍 체크 ★
                 if game_time <= (self.target_timing + self.timing_tolerance):
@@ -152,7 +155,7 @@ class OneMinMultiTest:
 
         except Exception as e:
             if self.enable_logging:
-                print(f"[1-MIN-MULTI-TEST] Error checking expansion: {e}")
+                logger.error(f"[1-MIN-MULTI-TEST] Error checking expansion: {e}")
 
     def _complete_test(self):
         """테스트 성공"""
@@ -160,13 +163,13 @@ class OneMinMultiTest:
         self.test_completed = True
 
         if self.enable_logging:
-            print("=" * 60)
-            print("[1-MIN-MULTI-TEST] ★★★ TEST PASSED ★★★")
-            print(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
-            print(f"  Target timing: {self.target_timing:.1f}s (±{self.timing_tolerance:.1f}s)")
-            print(f"  Minerals at placement: {self.minerals_at_placement}")
-            print(f"  Location: {self.expansion_location}")
-            print("=" * 60)
+            logger.info("=" * 60)
+            logger.info("[1-MIN-MULTI-TEST] [*][*][*] TEST PASSED [*][*][*]")
+            logger.info(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
+            logger.info(f"  Target timing: {self.target_timing:.1f}s (±{self.timing_tolerance:.1f}s)")
+            logger.info(f"  Minerals at placement: {self.minerals_at_placement}")
+            logger.info(f"  Location: {self.expansion_location}")
+            logger.info("=" * 60)
 
     def _fail_test(self, reason: str):
         """테스트 실패"""
@@ -175,12 +178,12 @@ class OneMinMultiTest:
         self.failure_reason = reason
 
         if self.enable_logging:
-            print("=" * 60)
-            print("[1-MIN-MULTI-TEST] ✗✗✗ TEST FAILED ✗✗✗")
-            print(f"  Reason: {reason}")
+            logger.info("=" * 60)
+            logger.error("[1-MIN-MULTI-TEST] [X][X][X] TEST FAILED [X][X][X]")
+            logger.info(f"  Reason: {reason}")
             if self.expansion_placed_time:
-                print(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
-            print("=" * 60)
+                logger.info(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
+            logger.info("=" * 60)
 
     def get_results(self) -> Dict:
         """테스트 결과 반환"""
@@ -199,24 +202,24 @@ class OneMinMultiTest:
         """테스트 결과 출력"""
         results = self.get_results()
 
-        print("\n" + "=" * 60)
-        print("1-MINUTE MULTI TIMING TEST RESULTS")
-        print("=" * 60)
-        print(f"Status: {'PASS ✓' if results['test_passed'] else 'FAIL ✗'}")
-        print(f"Target Timing: {results['target_timing']:.1f}s (±{results['timing_tolerance']:.1f}s)")
+        logger.info("\n" + "=" * 60)
+        logger.info("1-MINUTE MULTI TIMING TEST RESULTS")
+        logger.info("=" * 60)
+        logger.info(f"Status: {'PASS [OK]' if results['test_passed'] else 'FAIL [X]'}")
+        logger.info(f"Target Timing: {results['target_timing']:.1f}s (±{results['timing_tolerance']:.1f}s)")
 
         if results['expansion_placed_time']:
-            print(f"Actual Timing: {results['expansion_placed_time']:.1f}s")
+            logger.info(f"Actual Timing: {results['expansion_placed_time']:.1f}s")
             timing_diff = results['expansion_placed_time'] - results['target_timing']
-            print(f"Difference: {timing_diff:+.1f}s")
-            print(f"Minerals at Placement: {results['minerals_at_placement']}")
+            logger.info(f"Difference: {timing_diff:+.1f}s")
+            logger.info(f"Minerals at Placement: {results['minerals_at_placement']}")
         else:
-            print("Expansion: NOT PLACED")
+            logger.info("Expansion: NOT PLACED")
 
         if results['failure_reason']:
-            print(f"Failure Reason: {results['failure_reason']}")
+            logger.error(f"Failure Reason: {results['failure_reason']}")
 
-        print("=" * 60 + "\n")
+        logger.info("=" * 60 + "\n")
 
 
 # ========================================
@@ -227,9 +230,9 @@ async def run_standalone_test():
     """
     독립 실행 테스트 (봇 없이 시뮬레이션)
     """
-    print("[1-MIN-MULTI-TEST] Standalone test mode")
-    print("[1-MIN-MULTI-TEST] This would normally run with a live bot")
-    print("[1-MIN-MULTI-TEST] See integration example in WickedZergBotPro")
+    logger.info("[1-MIN-MULTI-TEST] Standalone test mode")
+    logger.info("[1-MIN-MULTI-TEST] This would normally run with a live bot")
+    logger.info("[1-MIN-MULTI-TEST] See integration example in WickedZergBotPro")
 
 
 if __name__ == "__main__":

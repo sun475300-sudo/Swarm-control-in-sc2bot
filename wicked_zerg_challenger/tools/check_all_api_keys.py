@@ -3,10 +3,13 @@
 """
 Check all API keys (placeholder).
 """
+import logging
+
+logger = logging.getLogger("CheckAllApiKeys")
 
 
 def main() -> None:
-    print("check_all_api_keys placeholder.")
+    logger.info("check_all_api_keys placeholder.")
 
 
 if __name__ == "__main__":

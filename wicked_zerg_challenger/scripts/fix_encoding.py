@@ -8,6 +8,9 @@ Usage: python fix_encoding.py <file>
 
 import sys
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("FixEncoding")
 
 
 def decode_bytes(data: bytes) -> str:
@@ -26,22 +29,22 @@ def decode_bytes(data: bytes) -> str:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("Usage: fix_encoding.py <file>")
+        logger.info("Usage: fix_encoding.py <file>")
         return 1
 
     path = Path(sys.argv[1])
     if not path.exists():
-        print(f"File not found: {path}")
+        logger.info(f"File not found: {path}")
         return 2
 
     try:
         data = path.read_bytes()
         text = decode_bytes(data)
         path.write_text(text, encoding="utf-8")
-        print(f"Rewrote {path} as UTF-8")
+        logger.info(f"Rewrote {path} as UTF-8")
         return 0
     except OSError as exc:
-        print(f"File error: {exc}")
+        logger.error(f"File error: {exc}")
         return 3
 
 

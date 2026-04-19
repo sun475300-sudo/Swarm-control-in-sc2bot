@@ -1,0 +1,59 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Odyssey LE
+  Opponent: Zerg
+  Duration: 1:28
+  Date: 2026-04-14 21:05
+
+--- TIMELINE ---
+  [0:12] Build: UnitTypeId.EXTRACTOR (Supply 13)
+  [1:20] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [2:28] Build: UnitTypeId.SPINECRAWLER (Supply 23)
+  [2:47] Build: UnitTypeId.ROACHWARREN (Supply 24)
+  [3:43] Build: UnitTypeId.BANELINGNEST (Supply 34)
+  [4:05] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 38)
+  [4:37] Build: UnitTypeId.CREEPTUMOR (Supply 46)
+  [4:52] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 51)
+  [6:19] Harassment: UnitTypeId.ROACHWARREN
+  [6:25] Harassment: UnitTypeId.SPAWNINGPOOL
+  [6:30] Harassment: UnitTypeId.ROACHWARREN
+  [6:36] Harassment: UnitTypeId.ROACHWARREN
+  [6:41] Harassment: UnitTypeId.ROACHWARREN
+  [6:47] Harassment: UnitTypeId.ROACHWARREN
+  [6:52] Harassment: UnitTypeId.ROACHWARREN
+  [6:58] Harassment: UnitTypeId.HATCHERY
+  [7:03] Harassment: UnitTypeId.EXTRACTOR
+  [7:36] Harassment: UnitTypeId.ROACHWARREN
+  [7:42] Harassment: UnitTypeId.HATCHERY
+
+--- ECONOMY ---
+  Peak Minerals: 225
+  Peak Vespene: 272
+  Peak Workers: 24
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 2:47
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ROACH: 43 produced
+  UnitTypeId.ZERGLING: 24 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 22
+  Army Supply: 86
+  Bases: 1
+  Minerals: 50
+  Vespene: 118
+
+============================================================

@@ -1,0 +1,63 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Ascension to Aiur LE
+  Opponent: Terran
+  Duration: 2:21
+  Date: 2026-04-14 21:14
+
+--- TIMELINE ---
+  [0:52] Build: UnitTypeId.EXTRACTOR (Supply 16)
+  [1:11] Build: UnitTypeId.SPAWNINGPOOL (Supply 16)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:01] Build: UnitTypeId.SPINECRAWLER (Supply 19)
+  [2:11] Build: UnitTypeId.ROACHWARREN (Supply 19)
+  [3:55] Build: UnitTypeId.SPINECRAWLER (Supply 32)
+  [6:03] Harassment: UnitTypeId.SUPPLYDEPOT
+  [6:09] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:15] Harassment: UnitTypeId.FACTORY
+  [6:20] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:26] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:31] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:37] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:42] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:48] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [6:53] Harassment: UnitTypeId.BARRACKS
+  [6:59] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [7:04] Harassment: UnitTypeId.BARRACKSTECHLAB
+  [7:10] Harassment: UnitTypeId.BARRACKS
+  [7:15] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+
+--- ECONOMY ---
+  Peak Minerals: 215
+  Peak Vespene: 306
+  Peak Workers: 24
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 2:11
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 9:57
+  Tech: UnitTypeId.LAIR at 12:05
+  Tech: UnitTypeId.SPIRE at 12:12
+  Tech: UnitTypeId.HYDRALISKDEN at 12:23
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ROACH: 35 produced
+  UnitTypeId.ZERGLING: 16 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 24
+  Army Supply: 117
+  Bases: 1
+  Minerals: 5
+  Vespene: 354
+
+============================================================

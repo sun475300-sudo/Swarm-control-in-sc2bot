@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("TelemetryLoggerAtomic")
 # -*- coding: utf-8 -*-
 """
 Telemetry logger (placeholder).
@@ -14,7 +17,7 @@ class TelemetryLoggerAtomic:
 
 
 def main() -> None:
-    print("Telemetry logger placeholder.")
+    logger.info("Telemetry logger placeholder.")
 
 
 if __name__ == "__main__":

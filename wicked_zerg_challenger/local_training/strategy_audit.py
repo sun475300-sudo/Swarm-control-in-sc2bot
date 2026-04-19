@@ -17,6 +17,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("StrategyAudit")
 
 # 프로젝트 루트 추가
 script_dir = Path(__file__).parent
@@ -57,7 +60,7 @@ class StrategyAudit:
                 with open(self.learned_builds_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception as e:
-            print(f"[AUDIT] Failed to load learned builds: {e}")
+            logger.error(f"Failed to load learned builds: {e}")
         return {}
 
     def load_training_stats(self) -> Dict[str, Any]:
@@ -67,7 +70,7 @@ class StrategyAudit:
                 with open(self.training_stats_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception as e:
-            print(f"[AUDIT] Failed to load training stats: {e}")
+            logger.error(f"Failed to load training stats: {e}")
         return {}
 
     def compare_build_timings(self, bot_timings: Dict[str, float]) -> Dict[str, Any]:
@@ -338,20 +341,20 @@ class StrategyAudit:
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(self.audit_results, f, indent=2, ensure_ascii=False)
 
-            print(f"[AUDIT] Report saved to {report_path}")
+            logger.info(f"Report saved to {report_path}")
             return True
         except Exception as e:
-            print(f"[AUDIT] Failed to save report: {e}")
+            logger.error(f"Failed to save report: {e}")
             return False
 
     def run(self) -> str:
         """메인 실행"""
-        print("=" * 60)
-        print("STRATEGY AUDIT")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("STRATEGY AUDIT")
+        logger.info("=" * 60)
 
         report = self.generate_report()
-        print(report)
+        logger.info(report)
 
         return report
 

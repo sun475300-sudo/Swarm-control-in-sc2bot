@@ -13,6 +13,9 @@ import time
 import random
 import subprocess
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("SingleGameTest")
 
 # 프로젝트 루트
 project_root = Path(__file__).parent
@@ -30,20 +33,20 @@ def kill_all_sc2_processes():
         subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
                       capture_output=True, timeout=5)
         time.sleep(2)  # 프로세스 종료 대기
-        print("[CLEANUP] All SC2 processes terminated")
+        logger.info("All SC2 processes terminated")
     except Exception as e:
-        print(f"[CLEANUP] Error: {e}")
+        logger.error(f"Error: {e}")
 
 
 def main():
     # ★★★ 시작 전 모든 SC2 프로세스 종료 ★★★
-    print("\n" + "="*70)
-    print("KILLING ALL EXISTING SC2 PROCESSES...")
-    print("="*70)
+    logger.info("\n" + "="*70)
+    logger.info("KILLING ALL EXISTING SC2 PROCESSES...")
+    logger.info("="*70)
     kill_all_sc2_processes()
-    print("\n" + "="*70)
-    print("SINGLE GAME TEST - ONE WINDOW ONLY")
-    print("="*70)
+    logger.info("\n" + "="*70)
+    logger.info("SINGLE GAME TEST - ONE WINDOW ONLY")
+    logger.info("="*70)
 
     # 맵/종족 다양성 개선: 균등 분배
     available_maps = ["AbyssalReefLE", "(2)CatalystLE", "AscensiontoAiurLE", "BelShirVestigeLE"]
@@ -53,10 +56,10 @@ def main():
     selected_map = random.choice(available_maps)
     enemy_race = random.choice(enemy_races)
 
-    print(f"Map: {selected_map}")
-    print(f"Enemy Race: {enemy_race.name}")
-    print("Difficulty: Easy")
-    print("="*70 + "\n")
+    logger.info(f"Map: {selected_map}")
+    logger.info(f"Enemy Race: {enemy_race.name}")
+    logger.info("Difficulty: Easy")
+    logger.info("="*70 + "\n")
 
     try:
         result = run_game(
@@ -72,19 +75,19 @@ def main():
 
         # 결과 출력
         if result == sc2.Result.Victory:
-            print("\n[VICTORY] Game won!")
+            logger.info("\n[VICTORY] Game won!")
         else:
-            print("\n[DEFEAT] Game lost.")
+            logger.info("\n[DEFEAT] Game lost.")
 
     except Exception as e:
-        print(f"\n[ERROR] {e}")
+        logger.error(f"\n[ERROR] {e}")
 
     # ★★★ 게임 종료 후 프로세스 정리 ★★★
-    print("\n" + "="*70)
-    print("CLEANING UP...")
-    print("="*70)
+    logger.info("\n" + "="*70)
+    logger.info("CLEANING UP...")
+    logger.info("="*70)
     kill_all_sc2_processes()
-    print("\nDone.")
+    logger.info("\nDone.")
 
 
 if __name__ == "__main__":

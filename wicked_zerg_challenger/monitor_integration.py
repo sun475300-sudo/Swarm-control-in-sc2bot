@@ -89,9 +89,6 @@ class IntegrationMonitor:
                     "games_won": games_won,
                     "win_rate": win_rate
                 })
-
-                logger.info()
-
             except Exception as e:
                 logger.info(f"  [X] Error reading {json_file.name}: {e}\n")
 

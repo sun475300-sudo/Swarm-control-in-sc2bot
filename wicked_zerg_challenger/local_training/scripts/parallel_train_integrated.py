@@ -14,6 +14,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("ParallelTrainIntegrated")
 
 
 def get_python_executable() -> str:
@@ -44,7 +47,7 @@ def launch_instances(
 
         cmd = [python_exec, main_file]
         processes.append(subprocess.Popen(cmd, env=env))
-        print(f"[LAUNCH] Instance {idx} -> {main_file}")
+        logger.info(f"Instance {idx} -> {main_file}")
 
         if idx < instances - 1:
             time.sleep(start_interval)

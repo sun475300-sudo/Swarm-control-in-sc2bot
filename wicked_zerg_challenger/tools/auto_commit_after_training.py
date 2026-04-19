@@ -3,10 +3,13 @@
 """
 Auto commit after training (placeholder).
 """
+import logging
+
+logger = logging.getLogger("AutoCommitAfterTraining")
 
 
 def main() -> None:
-    print("auto_commit_after_training placeholder.")
+    logger.info("auto_commit_after_training placeholder.")
 
 
 if __name__ == "__main__":

@@ -16,6 +16,9 @@ import os
 import math
 import numpy as np
 import plotly.graph_objects as go
+import logging
+
+logger = logging.getLogger("GenerateRadarMeshAtc")
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,7 +26,7 @@ OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 def save(fig, name):
     path = os.path.join(OUTPUT_DIR, f"{name}.html")
     fig.write_html(path, include_plotlyjs="cdn")
-    print(f"  -> {path}")
+    logger.info(f"  -> {path}")
 
 
 # ═══════════════════════════════════════════════════════
@@ -35,7 +38,7 @@ def radar_system_overview():
     군집 드론이 레이더 망을 형성하고,
     내부의 유저 드론을 감지/관리하는 전체 그림
     """
-    print("[1] 전체 시스템 개요: 레이더 망 + 유저 드론 관제")
+    logger.info("전체 시스템 개요: 레이더 망 + 유저 드론 관제")
 
     fig = go.Figure()
 
@@ -249,7 +252,7 @@ def radar_mesh_network():
     군집 드론 간 레이더 망이 어떻게 형성되는지,
     각 드론의 감지 반경과 중첩 영역을 보여줌
     """
-    print("[2] 레이더 망 구조 (Mesh Network)")
+    logger.info("레이더 망 구조 (Mesh Network)")
 
     fig = go.Figure()
 
@@ -397,7 +400,7 @@ def radar_user_detection():
     유저 드론 진입 → 감지 → 시간 할당 → 비행 → 알림 → 착륙
     전체 운용 시나리오를 타임라인으로 시각화
     """
-    print("[3] 유저 드론 감지 + 시간 할당 시나리오")
+    logger.info("유저 드론 감지 + 시간 할당 시나리오")
 
     fig = go.Figure()
 
@@ -532,7 +535,7 @@ def radar_operation_concept():
     도시/필드 위에 군집 드론 배치,
     유저 드론들이 비행하는 조감도 (Bird's Eye)
     """
-    print("[4] 전체 운용 개념도 (조감도)")
+    logger.info("전체 운용 개념도 (조감도)")
 
     fig = go.Figure()
 

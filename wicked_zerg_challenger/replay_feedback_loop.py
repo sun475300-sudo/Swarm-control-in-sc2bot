@@ -8,6 +8,9 @@ Reads replay summary JSON files and creates a prioritized training focus report.
 from __future__ import annotations
 
 import argparse
+import logging
+
+logger = logging.getLogger("ReplayFeedbackLoop")
 import json
 from collections import Counter
 from pathlib import Path
@@ -112,7 +115,7 @@ def main() -> int:
     output_path = Path(args.output)
 
     if not input_dir.exists() or not input_dir.is_dir():
-        print(f"Input directory not found: {input_dir}")
+        logger.info(f"Input directory not found: {input_dir}")
         return 1
 
     report = build_feedback(input_dir)
@@ -120,10 +123,10 @@ def main() -> int:
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
 
-    print("Replay feedback generated")
-    print(f"Input: {input_dir}")
-    print(f"Output: {output_path}")
-    print(f"Win rate: {report['win_rate']}")
+    logger.info("Replay feedback generated")
+    logger.info(f"Input: {input_dir}")
+    logger.info(f"Output: {output_path}")
+    logger.info(f"Win rate: {report['win_rate']}")
     return 0
 
 

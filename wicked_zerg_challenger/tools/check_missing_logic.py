@@ -10,6 +10,9 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger("CheckMissingLogic")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -163,41 +166,37 @@ def main():
     """���� �Լ�"""
     import sys
     
-    print("=" * 70)
-    print("������ ���� �˻� ����")
-    print("=" * 70)
-    print()
-    
+    logger.info("=" * 70)
+    logger.info("������ ���� �˻� ����")
+    logger.info("=" * 70)
     checker = MissingLogicChecker()
-    print("��ĵ ��...")
+    logger.info("��ĵ ��...")
     results = checker.scan_all()
     
-    print(f"\n�˻� �Ϸ�!")
-    print(f"  - ������ �޼���: {results['total_missing']}��")
-    print(f"  - pass ���� �ִ� ����: {results['files_with_pass']}��")
-    print(f"  - TODO �ּ��� �ִ� ����: {results['files_with_todos']}��")
-    print()
-    
+    logger.info(f"\n�˻� �Ϸ�!")
+    logger.info(f"  - ������ �޼���: {results['total_missing']}��")
+    logger.info(f"  - pass ���� �ִ� ����: {results['files_with_pass']}��")
+    logger.info(f"  - TODO �ּ��� �ִ� ����: {results['files_with_todos']}��")
     # ������ �޼��� ���
     if results['missing_implementations']:
-        print("=" * 70)
-        print("������ �޼���:")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("������ �޼���:")
+        logger.info("=" * 70)
         
         by_file = defaultdict(list)
         for item in results['missing_implementations']:
             by_file[item['file']].append(item['method'])
         
         for file_path, methods in sorted(by_file.items()):
-            print(f"\n{file_path}:")
+            logger.info(f"\n{file_path}:")
             for method in sorted(set(methods)):
-                print(f"  - {method}")
+                logger.info(f"  - {method}")
     
     # pass ���� ���� ���� ���
     if results['pass_statements']:
-        print("\n" + "=" * 70)
-        print("pass ���� ���� ���� (���� 10��):")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("pass ���� ���� ���� (���� 10��):")
+        logger.info("=" * 70)
         
         sorted_files = sorted(
             results['pass_statements'].items(),
@@ -206,25 +205,25 @@ def main():
         )[:10]
         
         for file_path, lines in sorted_files:
-            print(f"\n{file_path}: {len(lines)}�� pass ��")
+            logger.info(f"\n{file_path}: {len(lines)}�� pass ��")
             if len(lines) <= 20:
-                print(f"  ����: {', '.join(map(str, lines[:20]))}")
+                logger.info(f"  ����: {', '.join(map(str, lines[:20]))}")
             else:
-                print(f"  ����: {', '.join(map(str, lines[:20]))} ... (�� {len(lines)}��)")
+                logger.info(f"  ����: {', '.join(map(str, lines[:20]))} ... (�� {len(lines)}��)")
     
     # TODO �ּ� ���
     if results['todo_comments']:
-        print("\n" + "=" * 70)
-        print("TODO �ּ� (���� 20��):")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("TODO �ּ� (���� 20��):")
+        logger.info("=" * 70)
         
         count = 0
         for file_path, todos in sorted(results['todo_comments'].items()):
             for line_num, comment in todos:
                 if count >= 20:
                     break
-                print(f"\n{file_path}:{line_num}")
-                print(f"  {comment[:100]}")
+                logger.info(f"\n{file_path}:{line_num}")
+                logger.info(f"  {comment[:100]}")
                 count += 1
             if count >= 20:
                 break

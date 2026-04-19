@@ -9,6 +9,9 @@ import ast
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+import logging
+
+logger = logging.getLogger("ProductionLogicChecker")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -116,9 +119,9 @@ class ProductionLogicChecker:
         total_warnings = 0
 
         for file_path in production_files:
-            print(f"\n{'='*70}")
-            print(f"Checking: {file_path.name}")
-            print(f"{'='*70}")
+            logger.info(f"\n{'='*70}")
+            logger.info(f"Checking: {file_path.name}")
+            logger.info(f"{'='*70}")
 
             result = self.check_file(file_path)
             results[str(file_path)] = result
@@ -128,25 +131,25 @@ class ProductionLogicChecker:
             total_warnings += len(result["warnings"])
 
             if result["syntax_ok"]:
-                print("OK: Syntax")
+                logger.info("OK: Syntax")
             else:
-                print("ERROR: Syntax errors found")
+                logger.error("ERROR: Syntax errors found")
                 for error in result["errors"]:
-                    print(f"  - {error}")
+                    logger.error(f"  - {error}")
 
             if result["warnings"]:
-                print(f"\nWARNINGS ({len(result['warnings'])}):")
+                logger.warning(f"\nWARNINGS ({len(result['warnings'])}):")
                 for warning in result["warnings"][:5]:
-                    print(f"  - {warning}")
+                    logger.warning(f"  - {warning}")
 
-        print(f"\n\n{'='*70}")
-        print("PRODUCTION LOGIC CHECK SUMMARY")
-        print(f"{'='*70}")
-        print(f"Files checked: {len(results)}")
-        print(f"Total issues: {total_issues}")
-        print(f"Total errors: {total_errors}")
-        print(f"Total warnings: {total_warnings}")
-        print(f"{'='*70}")
+        logger.info(f"\n\n{'='*70}")
+        logger.info("PRODUCTION LOGIC CHECK SUMMARY")
+        logger.info(f"{'='*70}")
+        logger.info(f"Files checked: {len(results)}")
+        logger.info(f"Total issues: {total_issues}")
+        logger.error(f"Total errors: {total_errors}")
+        logger.warning(f"Total warnings: {total_warnings}")
+        logger.info(f"{'='*70}")
 
         return {
             "results": results,
@@ -161,10 +164,10 @@ class ProductionLogicChecker:
 
 def main():
     """Main function"""
-    print("=" * 70)
-    print("PRODUCTION LOGIC CHECKER")
-    print("=" * 70)
-    print("\nChecking all production-related files...")
+    logger.info("=" * 70)
+    logger.info("PRODUCTION LOGIC CHECKER")
+    logger.info("=" * 70)
+    logger.info("\nChecking all production-related files...")
 
     checker = ProductionLogicChecker()
     results = checker.check_all_production_files()

@@ -601,14 +601,13 @@ class MicroCombat:
     def _issue_actions(self, actions: List) -> None:
         if not actions:
             return
-        if not hasattr(self.bot, "do_actions"):
-            return
-        try:
-            coro = self.bot.do_actions(actions)
-        except Exception:
-            return
-        if asyncio.iscoroutine(coro):
+        for action in actions:
             try:
-                asyncio.create_task(coro)
-            except RuntimeError:
-                pass
+                result = self.bot.do(action)
+                if asyncio.iscoroutine(result):
+                    try:
+                        asyncio.create_task(result)
+                    except RuntimeError:
+                        pass
+            except Exception:
+                continue

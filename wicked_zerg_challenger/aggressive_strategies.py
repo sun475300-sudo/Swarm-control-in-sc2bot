@@ -15,6 +15,9 @@ Aggressive Early Game Strategies - 초반 공격 전략 모음
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 import math
+import logging
+
+logger = logging.getLogger("AggressiveStrategies")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -156,7 +159,7 @@ class AggressiveStrategyExecutor:
         # 50% Chance: Standard Macro (No Aggressive Strategy)
         if roll < 0.5:
             self.active_strategy = AggressiveStrategyType.NONE
-            print(f"[STRATEGY] Selected: STANDARD MACRO (Safe Play)")
+            logger.info(f"Selected: STANDARD MACRO (Safe Play)")
             self._strategy_decided = True
             return self.active_strategy
 
@@ -192,7 +195,7 @@ class AggressiveStrategyExecutor:
 
         self._strategy_decided = True
         self._strategy_decision_time = game_time
-        print(f"[AGGRESSIVE] Selected strategy: {self.active_strategy.value} vs {enemy_race}")
+        logger.info(f"Selected strategy: {self.active_strategy.value} vs {enemy_race}")
 
         return self.active_strategy
 
@@ -236,7 +239,7 @@ class AggressiveStrategyExecutor:
                 await self._execute_multi_harass()
         except Exception as e:
             if iteration % 50 == 0:
-                print(f"[WARNING] Aggressive strategy error: {e}")
+                logger.error(f"Aggressive strategy error: {e}")
 
     # ========== 12 Pool 저글링 러시 ==========
     async def _execute_12pool(self) -> None:
@@ -294,9 +297,9 @@ class AggressiveStrategyExecutor:
                     "AggressiveStrategies"
                 )
                 self._pool_started = True
-                print("[12POOL] Spawning Pool requested via TechCoordinator!")
+                logger.info("Spawning Pool requested via TechCoordinator!")
             elif not tech_coordinator:
-                print("[WARNING] TechCoordinator not available for AggressiveStrategies")
+                logger.warning("TechCoordinator not available for AggressiveStrategies")
                 # No direct build fallback to prevent duplicates
 
     async def _send_lings_to_attack(self, zerglings) -> None:
@@ -314,7 +317,7 @@ class AggressiveStrategyExecutor:
             sent += 1
 
         self._lings_sent = True
-        print(f"[12POOL] Sending {sent} Zerglings to attack!")
+        logger.info(f"Sending {sent} Zerglings to attack!")
 
     # ========== 맹독충 올인 ==========
     async def _execute_baneling_bust(self) -> None:
@@ -394,7 +397,7 @@ class AggressiveStrategyExecutor:
                 if not self._can_command_unit(baneling.tag):
                     continue
                 self.bot.do(baneling.attack(closest_wall.position))
-            print(f"[BANELING BUST] Attacking wall with {banelings.amount} banelings!")
+            logger.info(f"Attacking wall with {banelings.amount} banelings!")
         else:
             # 벽이 없으면 본진 공격
             for baneling in banelings:
@@ -485,7 +488,7 @@ class AggressiveStrategyExecutor:
                 if priority_targets:
                     target = min(priority_targets, key=lambda t: ravager.distance_to(t))
                     self.bot.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
-                    print(f"[RAVAGER] Bile targeting {target.type_id.name}")
+                    logger.info(f"Bile targeting {target.type_id.name}")
                 else:
                     # 타겟 없으면 적 본진 공격
                     target = self.bot.enemy_start_locations[0]
@@ -516,7 +519,7 @@ class AggressiveStrategyExecutor:
                     if self.bot.can_afford(UpgradeId.TUNNELINGCLAWS):
                         self.bot.do(roach_warren.first.research(UpgradeId.TUNNELINGCLAWS))
                         self._tunneling_upgrade_started = True
-                        print("[TUNNELING] Tunneling Claws upgrade started!")
+                        logger.info("Tunneling Claws upgrade started!")
 
         # 4. 바퀴 생산 (★ Blackboard 요청으로 변경 ★)
         roaches = self.bot.units(UnitTypeId.ROACH)
@@ -566,7 +569,7 @@ class AggressiveStrategyExecutor:
                 self.bot.do(roach.move(target))
             sent += 1
 
-        print(f"[TUNNELING] {sent} Roaches burrowing to enemy base!")
+        logger.info(f"{sent} Roaches burrowing to enemy base!")
 
     # ========== 전진 해처리 ==========
     async def _execute_proxy_hatch(self) -> None:
@@ -595,7 +598,7 @@ class AggressiveStrategyExecutor:
                         if drone and drone.tag not in self._proxy_drones:
                             self.bot.do(drone.move(self._proxy_location))
                             self._proxy_drones.add(drone.tag)
-                            print(f"[PROXY] Drone sent to proxy location! (Total sent: {len(self._proxy_drones)})")
+                            logger.info(f"Drone sent to proxy location! (Total sent: {len(self._proxy_drones)})")
 
         # 3. 해처리 건설
         proxy_hatch = None
@@ -610,7 +613,7 @@ class AggressiveStrategyExecutor:
                 if drone and drone.distance_to(self._proxy_location) < 8:  # ★ IMPROVED: 5 → 8 거리 완화 ★
                     if self.bot.can_afford(UnitTypeId.HATCHERY):
                         self.bot.do(drone.build(UnitTypeId.HATCHERY, self._proxy_location))
-                        print(f"[PROXY] Building proxy Hatchery!")
+                        logger.info(f"Building proxy Hatchery!")
                         break  # ★ 한 드론만 건설하면 충분 ★
 
         # 4. 가시 촉수 건설
@@ -643,6 +646,8 @@ class AggressiveStrategyExecutor:
             nearby_workers = workers.closer_than(20, position)
             if nearby_workers.exists:
                 worker = nearby_workers.first
+                if not self.bot.enemy_start_locations:
+                    return
                 build_pos = position.towards(self.bot.enemy_start_locations[0], 3)
                 self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
 
@@ -701,7 +706,7 @@ class AggressiveStrategyExecutor:
                     self.bot.do(network(AbilityId.BUILD_NYDUSWORM, nydus_location))
                     self._nydus_location = nydus_location
                     self._nydus_built = True
-                    print(f"[NYDUS] Building Nydus Worm at enemy base!")
+                    logger.info(f"Building Nydus Worm at enemy base!")
 
         # 5. 땅굴 벌레 확인 및 추적
         nydus_worms = self.bot.structures(UnitTypeId.NYDUSCANAL)
@@ -711,6 +716,8 @@ class AggressiveStrategyExecutor:
                 self._nydus_worm_tag = worm.tag
 
                 # 6. 유닛 지속 투입
+                if not nydus_network.exists:
+                    return
                 await self._load_units_into_nydus(nydus_network.first)
 
                 # 7. ★★★ Worm에서 나온 유닛들 공격 명령 ★★★
@@ -718,7 +725,7 @@ class AggressiveStrategyExecutor:
 
         # 8. Worm이 파괴되면 재건설 (선택적)
         if self._nydus_built and not nydus_worms.exists:
-            print(f"[NYDUS] Worm destroyed! Rebuilding...")
+            logger.info(f"Worm destroyed! Rebuilding...")
             self._nydus_built = False
             self._nydus_worm_tag = None
             self._nydus_attack_started = False
@@ -805,7 +812,7 @@ class AggressiveStrategyExecutor:
                     self.bot.do(unit.attack(target_pos))
 
                 if not self._nydus_attack_started:
-                    print(f"[NYDUS] {our_units.amount} units attacking enemy base!")
+                    logger.info(f"{our_units.amount} units attacking enemy base!")
                     self._nydus_attack_started = True
             return
 
@@ -816,7 +823,7 @@ class AggressiveStrategyExecutor:
             self.bot.do(unit.attack(target.position))
 
         if not self._nydus_attack_started:
-            print(f"[NYDUS] {our_units.amount} units emerging from Worm and attacking!")
+            logger.info(f"{our_units.amount} units emerging from Worm and attacking!")
             self._nydus_attack_started = True
 
     # ========== 공통 유틸리티 ==========
@@ -915,7 +922,7 @@ class AggressiveStrategyExecutor:
                             # Ventral sacs는 OVERLORDTRANSPORT
                             self.bot.do(lairs.first.research(UpgradeId.OVERLORDTRANSPORT))
                             self._ventral_sacs_started = True
-                            print(f"[OVERLORD DROP] Ventral Sacs upgrade started!")
+                            logger.info(f"Ventral Sacs upgrade started!")
                     except Exception as e:
                         pass
 
@@ -928,7 +935,7 @@ class AggressiveStrategyExecutor:
                     self._drop_overlords.add(ol.tag)
 
                 self._overlord_drop_active = True
-                print(f"[OVERLORD DROP] {len(self._drop_overlords)} Overlords designated for drop!")
+                logger.info(f"{len(self._drop_overlords)} Overlords designated for drop!")
 
         # 3. 저글링 탑승 및 드랍 실행
         if self._overlord_drop_active:
@@ -992,9 +999,9 @@ class AggressiveStrategyExecutor:
                     try:
                         # 특정 위치에 모두 하역
                         self.bot.do(overlord(AbilityId.UNLOADALLAT, drop_target))
-                        print(f"[DROP] Unloading units at {drop_target}")
+                        logger.info(f"Unloading units at {drop_target}")
                     except Exception as e:
-                        print(f"[DROP] Unload failed: {e}")
+                        logger.error(f"Unload failed: {e}")
             
         # 드랍된 유닛 제어는 별도 로직이나 기본 공격 로직이 처리할 것임
 
@@ -1046,7 +1053,7 @@ class AggressiveStrategyExecutor:
                         enemy_expansions.append(structure.position)
 
         # 적 확장이 없으면 예상 위치로
-        if not enemy_expansions and hasattr(self.bot, "enemy_start_locations"):
+        if not enemy_expansions and hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
             enemy_base = self.bot.enemy_start_locations[0]
             map_center = self.bot.game_info.map_center
             # 자연 확장 예상 위치
@@ -1066,4 +1073,4 @@ class AggressiveStrategyExecutor:
             self.bot.do(ling.attack(target))
             self._rush_units.add(ling.tag)
 
-        print(f"[MULTI HARASS] [{int(game_time)}s] Sending {harass_lings.amount} Zerglings to harass enemy expansion!")
+        logger.info(f"[{int(game_time)}s] Sending {harass_lings.amount} Zerglings to harass enemy expansion!")

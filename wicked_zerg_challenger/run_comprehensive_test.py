@@ -70,8 +70,6 @@ def run_single_game(difficulty, game_num, total_games):
     logger.info(f"  Opponent: {opponent_race.name}")
     logger.info(f"  Difficulty: {difficulty.name}")
     logger.info("=" * 70)
-    logger.info()
-
     # Create bot
     bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
 
@@ -117,8 +115,6 @@ def test_difficulty(difficulty, games_per_difficulty=20):
     logger.info(f"  Target Games: {games_per_difficulty}")
     logger.info(f"  Target Win Rate: 90%+")
     logger.info("=" * 70)
-    logger.info()
-
     start_time = time.time()
 
     for game_num in range(1, games_per_difficulty + 1):
@@ -146,8 +142,6 @@ def test_difficulty(difficulty, games_per_difficulty=20):
         logger.info(f"  Win Rate: {win_rate:.1f}%")
         logger.info(f"  Total Time: {total_duration/60:.1f} min")
         logger.info("-" * 70)
-        logger.info()
-
         # Short delay between games
         time.sleep(1)
 
@@ -188,8 +182,6 @@ def main():
     logger.info(f"  Total Games: {sum(count for _, count in difficulties_to_test)}")
     logger.info(f"  Target: 90%+ win rate on all difficulties")
     logger.info("=" * 70)
-    logger.info()
-
     overall_start = time.time()
     results = []
 
@@ -205,16 +197,12 @@ def main():
         logger.info(f"  Score: {result['wins']}W - {result['losses']}L")
         logger.info(f"  Status: {'PASS' if result['win_rate'] >= 90 else 'FAIL'}")
         logger.info("=" * 70)
-        logger.info()
-
     overall_duration = time.time() - overall_start
 
     # Final report
     logger.info("\n" + "=" * 70)
     logger.info("  FINAL REPORT")
     logger.info("=" * 70)
-    logger.info()
-
     total_wins = sum(r['wins'] for r in results)
     total_games = sum(r['total_games'] for r in results)
     overall_win_rate = (total_wins / total_games * 100) if total_games > 0 else 0

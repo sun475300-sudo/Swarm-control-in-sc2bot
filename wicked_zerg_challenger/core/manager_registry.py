@@ -146,7 +146,7 @@ def get_all_manager_configs():
         ManagerConfig(
             name="UpgradeManager",
             module_path="upgrade_manager",
-            class_name="UpgradeManager",
+            class_name="EvolutionUpgradeManager",
             attribute_name="upgrade_manager",
             priority=ManagerPriority.MEDIUM,
         ),
@@ -201,7 +201,7 @@ def get_all_manager_configs():
         ManagerConfig(
             name="MicroController",
             module_path="micro_controller",
-            class_name="MicroController",
+            class_name="StutterStepKiting",
             attribute_name="micro",  # Fixed: code accesses bot.micro
             priority=ManagerPriority.LOW,
         ),
@@ -217,7 +217,7 @@ def get_all_manager_configs():
         ManagerConfig(
             name="AggressiveStrategies",
             module_path="aggressive_strategies",
-            class_name="AggressiveStrategies",
+            class_name="AggressiveStrategyExecutor",
             attribute_name="aggressive_strategies",
             priority=ManagerPriority.LOW,
         ),

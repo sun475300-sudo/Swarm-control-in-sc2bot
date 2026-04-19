@@ -11,6 +11,9 @@ Features:
 """
 
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger("ResourceManager")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -85,7 +88,7 @@ class ResourceManager:
 
         except Exception as e:
             if iteration % 50 == 0:
-                print(f"[WARNING] Resource manager error: {e}")
+                logger.error(f"Resource manager error: {e}")
 
     def _track_income(self) -> None:
         """Track resource income over time."""
@@ -156,7 +159,7 @@ class ResourceManager:
                     if hasattr(result, "__await__"):
                         await result
                 except Exception as e:
-                    print(f"[WARN] Worker gather failed: {e}")
+                    logger.error(f"Worker gather failed: {e}")
                     continue
 
     async def _optimize_gas_workers(self) -> None:
@@ -201,7 +204,7 @@ class ResourceManager:
                             lambda w: w.tag != worker.tag
                         )
                     except Exception as e:
-                        print(f"[WARN] Gas worker assign failed: {e}")
+                        logger.error(f"Gas worker assign failed: {e}")
                         continue
 
             elif assigned > ideal:
@@ -270,7 +273,7 @@ class ResourceManager:
                             await result
                         return
                     except Exception as e:
-                        print(f"[WARN] Gas build failed: {e}")
+                        logger.error(f"Gas build failed: {e}")
                         continue
 
     def get_saturation_status(self) -> Dict[str, int]:

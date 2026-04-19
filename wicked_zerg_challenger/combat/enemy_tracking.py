@@ -36,7 +36,7 @@ async def track_enemy_expansions(manager):
             pos = struct.position
             if pos not in manager._known_enemy_expansions:
                 manager._known_enemy_expansions.add(pos)
-                print(f"[VICTORY] New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
+                manager.logger.info(f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
 
 
 def get_anti_air_threats(enemy_units, position, range_check=15):

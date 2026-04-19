@@ -1,0 +1,66 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Odyssey LE
+  Opponent: Terran
+  Duration: 1:41
+  Date: 2026-04-14 21:54
+
+--- TIMELINE ---
+  [0:11] Build: UnitTypeId.EXTRACTOR (Supply 13)
+  [1:23] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:17] Build: UnitTypeId.SPINECRAWLER (Supply 19)
+  [2:34] Build: UnitTypeId.ROACHWARREN (Supply 20)
+  [3:10] Build: UnitTypeId.BANELINGNEST (Supply 24)
+  [3:44] Build: UnitTypeId.SPINECRAWLER (Supply 30)
+  [4:32] Build: UnitTypeId.SPINECRAWLER (Supply 40)
+  [6:38] Expansion #1 started
+  [6:59] Harassment: UnitTypeId.SENSORTOWER
+  [7:23] Harassment: UnitTypeId.SENSORTOWER
+  [7:28] Harassment: UnitTypeId.SENSORTOWER
+  [7:34] Harassment: UnitTypeId.SENSORTOWER
+  [7:39] Harassment: UnitTypeId.REFINERY
+  [7:45] Harassment: UnitTypeId.REFINERY
+  [7:50] Harassment: UnitTypeId.REFINERY
+  [7:56] Harassment: UnitTypeId.COMMANDCENTER
+  [8:01] Harassment: UnitTypeId.BARRACKS
+  [8:07] Harassment: UnitTypeId.COMMANDCENTER
+  [8:12] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 265
+  Peak Vespene: 637
+  Peak Workers: 26
+
+--- TIMINGS ---
+  Expansion #1: 6:38 
+  Tech: UnitTypeId.ROACHWARREN at 2:34
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 5:41
+  Tech: UnitTypeId.LAIR at 6:30
+  Tech: UnitTypeId.HYDRALISKDEN at 7:23
+  Tech: UnitTypeId.INFESTATIONPIT at 8:52
+  Tech: UnitTypeId.SPIRE at 10:40
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 84 produced
+  UnitTypeId.ROACH: 18 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 398s - aim for sub-60s with Hatch First build
+  2. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 21
+  Army Supply: 8
+  Bases: 2
+  Minerals: 40
+  Vespene: 755
+
+============================================================

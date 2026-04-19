@@ -20,6 +20,9 @@ import subprocess
 import sys
 import time
 from typing import Any, Dict, List
+import logging
+
+logger = logging.getLogger("TrainingAutomation")
 
 
 ROOT = Path(__file__).resolve().parent
@@ -376,7 +379,7 @@ def main() -> int:
     started_at = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if not RUN_SINGLE_GAME.exists():
-        print(f"[ERROR] Missing script: {RUN_SINGLE_GAME}")
+        logger.error(f"Missing script: {RUN_SINGLE_GAME}")
         return 1
 
     enemy_race_sequence = build_enemy_race_sequence(
@@ -395,7 +398,7 @@ def main() -> int:
     results: List[GameResult] = []
 
     for index, enemy_race in enumerate(enemy_race_sequence, start=1):
-        print(
+        logger.info(
             f"[TRAIN] Game {index}/{args.games} starting..."
             f" race={enemy_race} difficulty={args.difficulty}"
         )
@@ -407,7 +410,7 @@ def main() -> int:
         )
 
         results.append(result)
-        print(
+        logger.info(
             f"[TRAIN] Game {index} done: outcome={result.outcome}, "
             f"runtime={result.runtime_sec}s, warn={result.warnings}, "
             f"err={result.errors}, rc={result.return_code}"
@@ -425,14 +428,14 @@ def main() -> int:
         started_at=started_at,
         finished_at=finished_at,
     )
-    print(f"[TRAIN] Report saved: {report}")
-    print(
+    logger.info(f"Report saved: {report}")
+    logger.info(
         f"[TRAIN] Summary: games={summary.games}, "
         f"win_rate={summary.overall_win_rate}%, "
         f"timeouts={summary.timeouts}, crashes={summary.crashes}"
     )
     if summary.next_focus_race:
-        print(f"[TRAIN] Next focus race: {summary.next_focus_race}")
+        logger.info(f"Next focus race: {summary.next_focus_race}")
 
     return 0 if summary.benchmark_passed else 1
 

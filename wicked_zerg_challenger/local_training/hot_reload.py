@@ -22,6 +22,9 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import logging
+
+logger = logging.getLogger("HotReload")
 
 
 class ModelHotReloader:
@@ -98,7 +101,7 @@ class ModelHotReloader:
             # 필수 키 확인
             required_keys = {"W1", "b1", "W2", "b2", "W3", "b3"}
             if not required_keys.issubset(set(data.files)):
-                print(
+                logger.info(
                     f"[HOT_RELOAD] Invalid model file: missing keys "
                     f"{required_keys - set(data.files)}"
                 )
@@ -107,7 +110,7 @@ class ModelHotReloader:
             # 차원 검증
             policy = self.rl_agent.policy
             if data["W1"].shape != (policy.input_dim, policy.hidden_dim):
-                print(
+                logger.info(
                     f"[HOT_RELOAD] Shape mismatch W1: "
                     f"expected {(policy.input_dim, policy.hidden_dim)}, "
                     f"got {data['W1'].shape}"
@@ -134,14 +137,14 @@ class ModelHotReloader:
             self._last_mtime = new_mtime
             self._reload_count += 1
 
-            print(
+            logger.info(
                 f"[HOT_RELOAD] ★ Model reloaded (#{self._reload_count}) "
                 f"from {self.model_path.name} ★"
             )
             return True
 
         except Exception as e:
-            print(f"[HOT_RELOAD] Reload failed (keeping old weights): {e}")
+            logger.error(f"Reload failed (keeping old weights): {e}")
             return False
 
     def get_status(self) -> dict:

@@ -16,6 +16,9 @@ import os
 from datetime import datetime
 from pathlib import Path
 import argparse
+import logging
+
+logger = logging.getLogger("IntegratedPipeline")
 
 PYTHON_EXECUTABLE = sys.executable
 
@@ -50,7 +53,7 @@ def validate_replays(replays: list) -> list:
         import sc2reader
         sc2reader_available = True
     except ImportError:
-        print("   [WARNING] sc2reader not installed. Skipping metadata validation.")
+        logger.warning("   [WARNING] sc2reader not installed. Skipping metadata validation.")
         return replays
 
     validated = []
@@ -87,7 +90,7 @@ def validate_replays(replays: list) -> list:
         except Exception:
             continue
 
-    print(f"   [VALIDATE] Valid: {len(validated)}, Skipped: {len(replays) - len(validated)}")
+    logger.info(f"   [VALIDATE] Valid: {len(validated)}, Skipped: {len(replays) - len(validated)}")
     return validated
 
 
@@ -97,7 +100,7 @@ def copy_replays(source_folder: Path, target_dir: Path) -> int:
         return 0
 
     source_files = list(source_folder.glob("*.SC2Replay"))
-    print(f"   [SOURCE] Found {len(source_files)} replays in source. Copying...")
+    logger.info(f"   [SOURCE] Found {len(source_files)} replays in source. Copying...")
 
     count = 0
     for src in source_files:
@@ -109,7 +112,7 @@ def copy_replays(source_folder: Path, target_dir: Path) -> int:
             except (OSError, PermissionError, FileNotFoundError):
                 pass
 
-    print(f"   [OK] Copied {count} new replays to workspace")
+    logger.info(f"   [OK] Copied {count} new replays to workspace")
     return count
 
 
@@ -130,11 +133,11 @@ def run_training(epochs: int) -> bool:
             break
 
     if not hybrid_learning_script:
-        print("   [ERROR] hybrid_learning.py not found!")
+        logger.error("   [ERROR] hybrid_learning.py not found!")
         return False
 
     cmd = [PYTHON_EXECUTABLE, str(hybrid_learning_script), "--epochs", str(epochs)]
-    print(f"   [EXEC] Executing: {' '.join(cmd)}")
+    logger.info(f"   [EXEC] Executing: {' '.join(cmd)}")
 
     script_dir = hybrid_learning_script.parent if hybrid_learning_script.parent != Path(".") else Path.cwd()
     result = subprocess.run(cmd, cwd=str(script_dir))
@@ -183,54 +186,54 @@ def main():
     parser.add_argument("--validate-only", action="store_true", help="Only validate, no training")
     args = parser.parse_args()
 
-    print(f"\n{'='*80}")
-    print("WICKED ZERG TRAINING PIPELINE STARTED")
-    print(f"{'='*80}")
+    logger.info(f"\n{'='*80}")
+    logger.info("WICKED ZERG TRAINING PIPELINE STARTED")
+    logger.info(f"{'='*80}")
 
     # Step 1: Prepare Replays
-    print(f"\n[STEP 1] PREPARE REPLAYS")
+    logger.info(f"\n[STEP 1] PREPARE REPLAYS")
     LOCAL_REPLAY_DIR.mkdir(parents=True, exist_ok=True)
 
     source_folder = Path(args.source_replays).resolve()
     copy_replays(source_folder, LOCAL_REPLAY_DIR)
 
     current_replays = list(LOCAL_REPLAY_DIR.glob("*.SC2Replay"))
-    print(f"   [TARGET] Total replays found: {len(current_replays)}")
+    logger.info(f"   [TARGET] Total replays found: {len(current_replays)}")
 
     # Validate replays
     current_replays = validate_replays(current_replays)
-    print(f"   [TARGET] Total validated replays ready for training: {len(current_replays)}")
+    logger.info(f"   [TARGET] Total validated replays ready for training: {len(current_replays)}")
 
     if len(current_replays) == 0:
-        print(f"   [ERROR] No valid replays found!")
+        logger.error(f"   [ERROR] No valid replays found!")
         if not args.validate_only:
             sys.exit(1)
 
     # Step 2: Run Training
     if not args.validate_only:
-        print(f"\n{'='*80}")
-        print("[STEP 2] RUN TRAINING (SUPERVISED)")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info("RUN TRAINING (SUPERVISED)")
+        logger.info(f"{'='*80}")
 
         if not run_training(args.epochs):
-            print(f"\n   [ERROR] TRAINING FAILED!")
+            logger.error(f"\n   [ERROR] TRAINING FAILED!")
             sys.exit(1)
         else:
-            print(f"\n   [OK] TRAINING COMPLETED SUCCESSFULLY")
+            logger.info(f"\n   [OK] TRAINING COMPLETED SUCCESSFULLY")
 
     # Step 3: Cleanup
     if args.cleanup:
-        print(f"\n{'='*80}")
-        print("[STEP 3] LEARNING TRACKING AND CLEANUP")
-        print(f"{'='*80}")
+        logger.info(f"\n{'='*80}")
+        logger.info("LEARNING TRACKING AND CLEANUP")
+        logger.info(f"{'='*80}")
 
         completed_dir = Path("D:/replays/replays/completed")
         moved_count = cleanup_replays(current_replays, completed_dir)
-        print(f"   [SUMMARY] Moved {moved_count} replays to {completed_dir}")
+        logger.info(f"   [SUMMARY] Moved {moved_count} replays to {completed_dir}")
 
-    print(f"\n{'='*80}")
-    print("PIPELINE COMPLETE")
-    print(f"{'='*80}\n")
+    logger.info(f"\n{'='*80}")
+    logger.info("PIPELINE COMPLETE")
+    logger.info(f"{'='*80}\n")
 
 
 if __name__ == "__main__":

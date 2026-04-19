@@ -17,6 +17,9 @@ import zipfile
 import os
 from pathlib import Path
 from datetime import datetime
+import logging
+
+logger = logging.getLogger("PackageForAiarena")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # repo root
 BOT_DIR = PROJECT_ROOT / "wicked_zerg_challenger"
@@ -81,43 +84,43 @@ def main() -> None:
 
     file_count = 0
 
-    print("=" * 60)
-    print("AI Arena Packaging Tool - WickedZergBotPro")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("AI Arena Packaging Tool - WickedZergBotPro")
+    logger.info("=" * 60)
 
     # Verify required files exist
     run_py = PROJECT_ROOT / "run.py"
     lb_json = PROJECT_ROOT / "ladderbots.json"
 
     if not run_py.exists():
-        print("[ERROR] run.py not found at project root!")
-        print("[INFO]  Run this command first to create it.")
+        logger.error("run.py not found at project root!")
+        logger.info("Run this command first to create it.")
         return
 
     if not lb_json.exists():
-        print("[ERROR] ladderbots.json not found at project root!")
+        logger.error("ladderbots.json not found at project root!")
         return
 
     with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
         # 1. run.py (entry point)
         zf.write(run_py, "run.py")
         file_count += 1
-        print(f"  + run.py")
+        logger.info(f"  + run.py")
 
         # 2. ladderbots.json (AI Arena config)
         zf.write(lb_json, "ladderbots.json")
         file_count += 1
-        print(f"  + ladderbots.json")
+        logger.info(f"  + ladderbots.json")
 
         # 3. requirements.txt
         req = BOT_DIR / "requirements.txt"
         if req.exists():
             zf.write(req, "requirements.txt")
             file_count += 1
-            print(f"  + requirements.txt")
+            logger.info(f"  + requirements.txt")
 
         # 4. Bot code (wicked_zerg_challenger/)
-        print(f"\n  Scanning bot directory: {BOT_DIR}")
+        logger.info(f"\n  Scanning bot directory: {BOT_DIR}")
         for root, dirs, files in os.walk(BOT_DIR):
             # Filter excluded directories in-place
             dirs[:] = [d for d in dirs if should_include_dir(d)]
@@ -146,12 +149,12 @@ def main() -> None:
                     file_count += 1
 
     size_kb = output_path.stat().st_size / 1024
-    print(f"\n{'=' * 60}")
-    print(f"[OK] Package created: {output_path.name}")
-    print(f"[OK] Files: {file_count}")
-    print(f"[OK] Size: {size_kb:.1f} KB")
-    print(f"{'=' * 60}")
-    print(f"\nUpload this file to AI Arena: {output_path}")
+    logger.info(f"\n{'=' * 60}")
+    logger.info(f"Package created: {output_path.name}")
+    logger.info(f"Files: {file_count}")
+    logger.info(f"Size: {size_kb:.1f} KB")
+    logger.info(f"{'=' * 60}")
+    logger.info(f"\nUpload this file to AI Arena: {output_path}")
 
 
 if __name__ == "__main__":

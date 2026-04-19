@@ -27,6 +27,9 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger("RunTournament")
 
 # SC2 path auto-setup
 def _ensure_sc2_path():
@@ -107,16 +110,16 @@ class TournamentRunner:
         total_combos = len(self.races) * len(self.difficulties)
         total_games = total_combos * self.games_per_combo
 
-        print("\n" + "=" * 70)
-        print("  TOURNAMENT SIMULATION - Phase 22")
-        print("=" * 70)
-        print(f"  Races: {', '.join(r.upper() for r in self.races)}")
-        print(f"  Difficulties: {', '.join(d.upper() for d in self.difficulties)}")
-        print(f"  Games per combo: {self.games_per_combo}")
-        print(f"  Total games: {total_games}")
-        print(f"  Personality: {self.personality}")
-        print(f"  Started: {self.start_time.strftime('%Y-%m-%d %H:%M')}")
-        print("=" * 70 + "\n")
+        logger.info("\n" + "=" * 70)
+        logger.info("  TOURNAMENT SIMULATION - Phase 22")
+        logger.info("=" * 70)
+        logger.info(f"  Races: {', '.join(r.upper() for r in self.races)}")
+        logger.info(f"  Difficulties: {', '.join(d.upper() for d in self.difficulties)}")
+        logger.info(f"  Games per combo: {self.games_per_combo}")
+        logger.info(f"  Total games: {total_games}")
+        logger.info(f"  Personality: {self.personality}")
+        logger.info(f"  Started: {self.start_time.strftime('%Y-%m-%d %H:%M')}")
+        logger.info("=" * 70 + "\n")
 
         game_number = 0
 
@@ -129,13 +132,13 @@ class TournamentRunner:
                     game_number += 1
                     map_name = random.choice(TOURNAMENT_MAPS)
 
-                    print(f"\n{'='*60}")
-                    print(f"  GAME {game_number}/{total_games}")
-                    print(f"  vs {race_name.upper()} ({diff_name.upper()}) on {map_name}")
+                    logger.info(f"\n{'='*60}")
+                    logger.info(f"  GAME {game_number}/{total_games}")
+                    logger.info(f"  vs {race_name.upper()} ({diff_name.upper()}) on {map_name}")
                     wins_so_far = sum(1 for r in self.results if r["won"])
                     losses_so_far = len(self.results) - wins_so_far
-                    print(f"  Record: {wins_so_far}W - {losses_so_far}L")
-                    print(f"{'='*60}\n")
+                    logger.info(f"  Record: {wins_so_far}W - {losses_so_far}L")
+                    logger.info(f"{'='*60}\n")
 
                     result = self._run_single_game(
                         game_number, map_name, race, race_name,
@@ -204,11 +207,11 @@ class TournamentRunner:
                 result["bot_game_time"] = tr.get("game_time", 0)
 
             status = "WIN" if result["won"] else "LOSS"
-            print(f"\n[GAME {game_number}] {status} in {elapsed:.0f}s")
+            logger.info(f"\n[GAME {game_number}] {status} in {elapsed:.0f}s")
 
         except Exception as e:
             result["error"] = str(e)
-            print(f"\n[GAME {game_number}] ERROR: {e}")
+            logger.error(f"\n[GAME {game_number}] ERROR: {e}")
 
         return result
 
@@ -298,7 +301,7 @@ class TournamentRunner:
         lines.append("=" * 70)
 
         report_text = "\n".join(lines)
-        print("\n" + report_text)
+        logger.info("\n" + report_text)
 
         # Save to file
         try:
@@ -306,9 +309,9 @@ class TournamentRunner:
             ts = self.start_time.strftime("%Y%m%d_%H%M%S")
             filepath = self.report_dir / f"tournament_{ts}.txt"
             filepath.write_text(report_text, encoding="utf-8")
-            print(f"\n[REPORT] Saved to {filepath}")
+            logger.info(f"\n[REPORT] Saved to {filepath}")
         except Exception as e:
-            print(f"[REPORT] Save failed: {e}")
+            logger.error(f"Save failed: {e}")
 
     def _save_json_results(self):
         """JSON 결과 저장"""
@@ -331,9 +334,9 @@ class TournamentRunner:
             }
 
             filepath.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-            print(f"[JSON] Saved to {filepath}")
+            logger.info(f"Saved to {filepath}")
         except Exception as e:
-            print(f"[JSON] Save failed: {e}")
+            logger.error(f"Save failed: {e}")
 
 
 def main():

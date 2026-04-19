@@ -13,6 +13,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+import logging
+
+logger = logging.getLogger("RunHybridSupervised")
 
 try:
     from .hybrid_trainer import HybridTrainer
@@ -33,7 +36,7 @@ def run_epochs(
 
     latest_manifest = output_dir / "hybrid_learning_manifest.json"
     if not latest_manifest.exists():
-        print(f"[INFO] No existing manifest found at {latest_manifest}")
+        logger.info(f"No existing manifest found at {latest_manifest}")
 
     for epoch in range(1, epochs + 1):
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -54,13 +57,13 @@ def run_epochs(
             json.loads(manifest_content)
             latest_manifest.write_text(manifest_content, encoding="utf-8")
         except Exception as exc:
-            print(f"[WARNING] Failed to update latest manifest: {exc}")
+            logger.error(f"Failed to update latest manifest: {exc}")
 
         # CRITICAL IMPROVEMENT: 배치 학습 수행
         try:
             from batch_trainer import train_from_manifest
             
-            print(f"[EPOCH {epoch}/{epochs}] Starting batch training from manifest...")
+            logger.info(f"[EPOCH {epoch}/{epochs}] Starting batch training from manifest...")
             training_stats = train_from_manifest(
                 manifest_path=latest_manifest,
                 model_path=str(output_dir / "zerg_net_model.pt"),
@@ -68,18 +71,18 @@ def run_epochs(
             )
             
             if training_stats.get("error"):
-                print(f"[WARNING] Batch training had issues: {training_stats.get('error')}")
+                logger.error(f"Batch training had issues: {training_stats.get('error')}")
             else:
-                print(f"[EPOCH {epoch}/{epochs}] Batch training completed - Loss: {training_stats.get('loss', 0):.4f}, Accuracy: {training_stats.get('accuracy', 0):.2%}")
+                logger.info(f"[EPOCH {epoch}/{epochs}] Batch training completed - Loss: {training_stats.get('loss', 0):.4f}, Accuracy: {training_stats.get('accuracy', 0):.2%}")
         
         except ImportError:
-            print("[WARNING] batch_trainer module not available, skipping batch training")
+            logger.warning("batch_trainer module not available, skipping batch training")
         except Exception as e:
-            print(f"[WARNING] Batch training failed: {e}")
+            logger.error(f"Batch training failed: {e}")
             import traceback
             traceback.print_exc()
-        print(f"[EPOCH {epoch}/{epochs}] Selected {count} replays -> {epoch_manifest}")
-        print(f"[EPOCH {epoch}/{epochs}] Latest manifest -> {latest_manifest}")
+        logger.info(f"[EPOCH {epoch}/{epochs}] Selected {count} replays -> {epoch_manifest}")
+        logger.info(f"[EPOCH {epoch}/{epochs}] Latest manifest -> {latest_manifest}")
 
 
 def main() -> None:

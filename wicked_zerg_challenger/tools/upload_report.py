@@ -3,10 +3,13 @@
 """
 Upload report (placeholder).
 """
+import logging
+
+logger = logging.getLogger("UploadReport")
 
 
 def main() -> None:
-    print("upload_report placeholder.")
+    logger.info("upload_report placeholder.")
 
 
 if __name__ == "__main__":

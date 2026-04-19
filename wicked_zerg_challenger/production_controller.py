@@ -53,6 +53,30 @@ class ProductionController:
         self.production_failures: int = 0
         self.max_produced_per_frame = 0  # 프레임당 최대 생산 기록
 
+    def request_unit(self, unit_type: Any, count: int = 1,
+                     requester: str = "External", priority: int = 2) -> bool:
+        """
+        Public method for external systems to request unit production.
+
+        Args:
+            unit_type: UnitTypeId to produce
+            count: How many to produce
+            requester: Name of the requesting system
+            priority: 0=URGENT, 1=HIGH, 2=NORMAL
+
+        Returns:
+            True if request was registered
+        """
+        if self.blackboard and hasattr(self.blackboard, "request_production"):
+            self.blackboard.request_production(
+                unit_type=unit_type,
+                count=count,
+                requester=requester,
+                priority=priority,
+            )
+            return True
+        return False
+
     async def execute(self, iteration: int) -> None:
         """생산 로직 실행"""
         if not self.bot or not self.blackboard:
@@ -180,7 +204,7 @@ class ProductionController:
                 if self.bot.can_afford(UnitTypeId.QUEEN):
                     self.bot.do(townhall.train(UnitTypeId.QUEEN))
                     produced += 1
-                    print(f"[PRODUCTION] Queen requested by {requester}")
+                    self.logger.info(f"Queen requested by {requester}")
 
             return produced
 
@@ -198,7 +222,7 @@ class ProductionController:
 
                 # 로그 (초반만)
                 if self.bot.time < 300:
-                    print(f"[PRODUCTION] {unit_type.name} requested by {requester}")
+                    self.logger.info(f"{unit_type.name} requested by {requester}")
 
             except Exception as e:
                 self.production_failures += 1
@@ -257,7 +281,7 @@ class ProductionController:
         # Overlord 생산
         try:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
-            print(f"[PRODUCTION] Auto Overlord (supply: {supply_left}/{supply_cap})")
+            self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
         except Exception as e:
             self.production_failures += 1

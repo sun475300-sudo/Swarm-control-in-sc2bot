@@ -1,0 +1,61 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: Abyssal Reef LE
+  Opponent: Terran
+  Duration: 1:41
+  Date: 2026-04-16 08:11
+
+--- TIMELINE ---
+  [0:11] Build: UnitTypeId.EXTRACTOR (Supply 13)
+  [1:15] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [2:04] Build: UnitTypeId.HATCHERY (Supply 20)
+  [2:11] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [2:40] Build: UnitTypeId.SPINECRAWLER (Supply 22)
+  [2:50] Build: UnitTypeId.EXTRACTOR (Supply 22)
+  [3:17] Build: UnitTypeId.BANELINGNEST (Supply 24)
+  [3:50] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 24)
+  [4:13] Harassment: UnitTypeId.COMMANDCENTER
+  [4:19] Harassment: UnitTypeId.COMMANDCENTER
+  [4:43] Harassment: UnitTypeId.COMMANDCENTER
+  [4:48] Harassment: UnitTypeId.COMMANDCENTER
+  [5:16] Harassment: UnitTypeId.COMMANDCENTER
+  [5:21] Harassment: UnitTypeId.COMMANDCENTER
+  [6:39] Harassment: UnitTypeId.COMMANDCENTER
+  [6:44] Harassment: UnitTypeId.COMMANDCENTER
+  [6:56] Harassment: UnitTypeId.REFINERY
+  [7:01] Harassment: UnitTypeId.REFINERY
+  [7:07] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 115
+  Peak Vespene: 2128
+  Peak Workers: 23
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 3:50
+  Tech: UnitTypeId.LAIR at 8:50
+  Tech: UnitTypeId.HYDRALISKDEN at 8:59
+  Tech: UnitTypeId.INFESTATIONPIT at 13:28
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 132 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 8
+  Army Supply: 2
+  Bases: 1
+  Minerals: 23
+  Vespene: 2136
+
+============================================================

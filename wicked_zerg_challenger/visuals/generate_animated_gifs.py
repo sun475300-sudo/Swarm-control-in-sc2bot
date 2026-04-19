@@ -18,6 +18,9 @@ import os
 import math
 import numpy as np
 import matplotlib
+import logging
+
+logger = logging.getLogger("GenerateAnimatedGifs")
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -32,7 +35,7 @@ FPS = 15
 def save_gif(anim, name, fps=FPS):
     path = os.path.join(OUTPUT_DIR, f"{name}.gif")
     anim.save(path, writer=PillowWriter(fps=fps), dpi=DPI)
-    print(f"  [GIF] {path}")
+    logger.info(f"  [GIF] {path}")
     plt.close("all")
 
 
@@ -42,7 +45,7 @@ def save_gif(anim, name, fps=FPS):
 
 def gif_boids_swarm():
     """DRONAI 64기 편대처럼 저그 유닛 60기의 Boids 군집 공격"""
-    print("[GIF 1] Boids Swarm Attack Simulation")
+    logger.info("Boids Swarm Attack Simulation")
 
     np.random.seed(42)
     N = 60
@@ -177,7 +180,7 @@ def gif_boids_swarm():
 
 def gif_formation_flight():
     """DRONAI 원형 편대처럼 드론 편대 비행 (V → Circle → Line 전환)"""
-    print("[GIF 2] Drone Formation Flight")
+    logger.info("Drone Formation Flight")
 
     N = 16
     FRAMES_PER_FORMATION = 40
@@ -296,7 +299,7 @@ def gif_formation_flight():
 
 def gif_collision_avoidance():
     """DRONAI 자동회피처럼 드론 간 충돌 회피 시뮬레이션"""
-    print("[GIF 3] Collision Avoidance Simulation")
+    logger.info("Collision Avoidance Simulation")
 
     N = 8
     FRAMES = 100
@@ -444,7 +447,7 @@ def gif_collision_avoidance():
 
 def gif_sim_to_real():
     """Sim-to-Real 파이프라인 단계별 진행 애니메이션"""
-    print("[GIF 4] Sim-to-Real Pipeline")
+    logger.info("Sim-to-Real Pipeline")
 
     FRAMES = 120
 
@@ -538,7 +541,7 @@ def gif_sim_to_real():
 
 def gif_authority_mode():
     """Authority Mode 실시간 전환 시뮬레이션"""
-    print("[GIF 5] Authority Mode Switch")
+    logger.info("Authority Mode Switch")
 
     FRAMES = 120
 

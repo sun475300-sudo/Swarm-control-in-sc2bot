@@ -14,6 +14,9 @@ Map Awareness Manager - 맵 인식 시스템 (#106)
 
 import math
 from typing import Any, Dict, List, Optional, Set, Tuple
+import logging
+
+logger = logging.getLogger("MapAwareness")
 
 try:
     from sc2.position import Point2
@@ -147,7 +150,7 @@ class MapAwarenessManager:
         # 초기화 여부
         self._initialized: bool = False
 
-        print("[MAP_AWARENESS] 맵 인식 관리자 초기화")
+        logger.info("맵 인식 관리자 초기화")
 
     def initialize(self) -> None:
         """
@@ -177,13 +180,13 @@ class MapAwarenessManager:
 
             self._initialized = True
 
-            print(f"[MAP_AWARENESS] 맵 분석 완료: "
+            logger.info(f"맵 분석 완료: "
                   f"chokepoints={len(self.chokepoints)}, "
                   f"bases={len(self.base_locations)}, "
                   f"ramps={len(self.ramps)}")
 
         except Exception as e:
-            print(f"[MAP_AWARENESS] 맵 분석 실패: {e}")
+            logger.info(f"맵 분석 실패: {e}")
 
     def update(self) -> None:
         """매 스텝 업데이트"""
@@ -322,7 +325,7 @@ class MapAwarenessManager:
                         self.chokepoints.append(zone)
                         self.terrain_zones.append(zone)
         except Exception as e:
-            print(f"[MAP_AWARENESS] 초크포인트 분석 실패: {e}")
+            logger.info(f"초크포인트 분석 실패: {e}")
 
     def _analyze_base_locations(self) -> None:
         """기지 위치 분석"""
@@ -337,7 +340,7 @@ class MapAwarenessManager:
                     self.base_locations.append(zone)
                     self.terrain_zones.append(zone)
         except Exception as e:
-            print(f"[MAP_AWARENESS] 기지 위치 분석 실패: {e}")
+            logger.info(f"기지 위치 분석 실패: {e}")
 
     def _analyze_ramps(self) -> None:
         """경사로 분석"""
@@ -350,7 +353,7 @@ class MapAwarenessManager:
                         self.ramps.append(zone)
                         self.terrain_zones.append(zone)
         except Exception as e:
-            print(f"[MAP_AWARENESS] 경사로 분석 실패: {e}")
+            logger.info(f"경사로 분석 실패: {e}")
 
     def _track_enemy_units(self, game_time: float) -> None:
         """적 유닛 위치 트래킹"""

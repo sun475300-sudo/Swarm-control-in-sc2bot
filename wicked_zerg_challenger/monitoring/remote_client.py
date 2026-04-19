@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("RemoteClient")
 # -*- coding: utf-8 -*-
 """
 Remote client placeholder.
@@ -10,7 +13,7 @@ class RemoteClient:
         pass
 
     def connect(self) -> None:
-        print("Remote client connect placeholder.")
+        logger.info("Remote client connect placeholder.")
 
 
 def main() -> None:

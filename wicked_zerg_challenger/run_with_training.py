@@ -99,7 +99,6 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
     logger.info("=" * 70)
-    logger.info()
     logger.info("? Training Configuration:")
     logger.info("   ? 15-dimensional state vector (Self 5 + Enemy 10)")
     logger.info("   ? REINFORCE algorithm for policy learning")
@@ -107,14 +106,10 @@ def main():
     logger.info("   ? Continuous training: Games run continuously without stopping")
     logger.info("   ? Build order comparison with pro gamer baseline")
     logger.info("   ? Auto-update learned parameters on victory")
-    logger.info()
     logger.info("? Model save location: local_training/models/zerg_net_model.pt")
     logger.info("? Build order data: local_training/scripts/learned_build_orders.json")
-    logger.info()
     logger.info("??  Press Ctrl+C to stop training")
     logger.info("=" * 70)
-    logger.info()
-
     # 1. Run on AI Arena server (when --LadderServer flag is present)
     if "--LadderServer" in sys.argv:
         from sc2.main import run_ladder_game  # type: ignore
@@ -251,13 +246,10 @@ def main():
     logger.info(f"[INFO] Available maps: {len(available_maps)} maps")
     logger.info(f"[INFO] Available opponent races: {len(opponent_races)} races")
     logger.info(f"[INFO] Available difficulties: {len(difficulties)} levels")
-    logger.info()
     logger.info("[OK] Continuous training loop initialized")
     logger.info("[INFO] Game windows will open - you can watch the games in real-time!")
     logger.info("[INFO] Neural network is learning from your gameplay...")
     logger.info("=" * 70)
-    logger.info()
-
     # Parse max games from arguments
     max_games = float('inf')
     for i, arg in enumerate(sys.argv):
@@ -400,11 +392,8 @@ def main():
             logger.info(f"[SELECTED] Map: {map_name}")
             logger.info(f"[SELECTED] Opponent Race: {opponent_race.name}")
             logger.info(f"[SELECTED] Difficulty: {difficulty.name}")
-            logger.info()
             logger.info("[INFO] Starting game...")
             logger.info("=" * 70)
-            logger.info()
-
             # Create new bot instance for each game
             bot = create_bot_with_training(learning_rate=learning_rate, personality=personality_setting)
             # bot is already a Bot instance, so we can set attributes on the
@@ -509,8 +498,6 @@ def main():
                 logger.info("[INFO] Neural network model saved")
                 logger.info(
                     "[INFO] Build order comparison analysis will be displayed above")
-                logger.info()
-
                 # IMPROVED: Longer wait time between games to ensure SC2 client
                 # fully closes
                 wait_between_games = 10  # Increased from 3 to 10 seconds
@@ -579,8 +566,6 @@ def main():
                         f"Active Workers: {stats['active_workers']}/{stats['max_workers']}")
                     logger.info(f"Errors: {stats['errors']}")
                     logger.info("=" * 70)
-                    logger.info()
-
                 # ★ NEW: Auto Replay Learning (every 10 games) ★
                 if auto_replay_learner and game_count % 10 == 0:
                     logger.info(f"\n{'='*70}")
@@ -599,8 +584,6 @@ def main():
                         import traceback
                         traceback.print_exc()
                     logger.info("=" * 70)
-                    logger.info()
-
             except Exception as game_error:
                 consecutive_failures += 1
 
@@ -761,7 +744,6 @@ def main():
         local_server_manager.stop_server()
 
     # IMPROVED: Print final training summary
-    logger.info()
     logger.info("=" * 70)
     logger.info("TRAINING STOPPED")
     logger.info("=" * 70)

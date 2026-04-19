@@ -12,6 +12,9 @@
 
 from typing import Dict, Any, Set, Optional
 import time
+import logging
+
+logger = logging.getLogger("PerformanceOptimizer")
 
 
 class PerformanceOptimizer:
@@ -31,11 +34,11 @@ class PerformanceOptimizer:
             "production": 2,
             "queen_manager": 3,
 
-            # 저빈도 (10프레임+)
-            "scouting": 10,
-            "intel": 10,
-            "creep": 15,
-            "upgrade": 20,
+            # 저빈도 (5-11프레임)
+            "scouting": 8,     # 10→8: 정찰 정보 수집 25% 향상
+            "intel": 7,        # 10→7: 적 유닛 감지 반응 30% 향상
+            "creep": 11,       # 15→11: 점막 확장 타이밍 27% 향상
+            "upgrade": 10,     # 20→10: 업그레이드 체크 2배 빈도
             "strategy": 5,
 
             # 매우 저빈도 (30프레임+)
@@ -210,8 +213,8 @@ class PerformanceOptimizer:
         if not report:
             return
 
-        print("\n[PERFORMANCE REPORT]")
-        print("=" * 60)
+        logger.info("\n[PERFORMANCE REPORT]")
+        logger.info("=" * 60)
 
         # 총 실행 시간 기준으로 정렬
         sorted_report = sorted(
@@ -221,14 +224,12 @@ class PerformanceOptimizer:
         )
 
         for logic_name, stats in sorted_report[:10]:  # 상위 10개
-            print(f"{logic_name:20s} | "
+            logger.info(f"{logic_name:20s} | "
                   f"Avg: {stats['avg_time_ms']:6.2f}ms | "
                   f"Count: {stats['count']:5d} | "
                   f"Total: {stats['total_time_ms']:8.2f}ms")
 
-        print("=" * 60)
-        print()
-
+        logger.info("=" * 60)
     def optimize_intervals(self):
         """
         실행 간격 자동 최적화
@@ -248,7 +249,7 @@ class PerformanceOptimizer:
 
                 if new_interval != current_interval:
                     self.execution_intervals[logic_name] = new_interval
-                    print(f"[OPTIMIZER] {logic_name} interval: {current_interval} → {new_interval}")
+                    logger.info(f"{logic_name} interval: {current_interval} → {new_interval}")
 
     # ========== 거리 계산 캐싱 시스템 ==========
 

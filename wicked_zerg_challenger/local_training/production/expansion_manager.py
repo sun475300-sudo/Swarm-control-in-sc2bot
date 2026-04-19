@@ -4,6 +4,9 @@ Expansion Manager Module
 
 확장 관련 로직을 담당하는 모듈
 """
+import logging
+
+logger = logging.getLogger("ExpansionManager")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -78,6 +81,9 @@ def can_expand_safely(resilience) -> tuple:
          else:
              min_drones_limit = 12 # Minimum functional saturation
 
+    # 1기지 → 2기지는 드론 요구 최소화 (확장이 최우선)
+    if bases == 1:
+        min_drones_limit = 0  # 1기지에서는 드론 수 무관하게 확장 허용
     if drones < bases * min_drones_limit:
         return False, f"low_drones ({drones}/{bases*min_drones_limit})"
 
@@ -144,7 +150,7 @@ def log_expand_block(resilience, reason: str) -> None:
         return
     resilience.last_expand_log_time = now
     if reason:
-        print(f"[EXPAND BLOCK] {reason} at {int(now)}s")
+        logger.info(f"{reason} at {int(now)}s")
 
 
 def cleanup_build_reservations(resilience) -> None:

@@ -1,3 +1,6 @@
+import logging
+
+logger = logging.getLogger("WickedZergBotProImpl")
 
 
 
@@ -110,20 +113,19 @@ class WickedZergBotProImpl(BotAI):
         """
         await super().on_start()
 
-        self.logger.info("on_start: Initializing all managers...")
         self.logger = setup_logger("WickedZergBot")
-        self.logger.info("Bot started. Initializing managers...")
+        self.logger.info("on_start: Initializing all managers...")
 
         # === 0. Blackboard (Central State) ===
         # Already initialized in __init__, but logging here
         if self.blackboard:
-             self.logger.info("★ Blackboard active")
+             self.logger.info("[*] Blackboard active")
 
         # === 0.1 Resource Manager (Thread-safe resource reservation) ===
         try:
             from core.resource_manager import ResourceManager
             self.resource_manager = ResourceManager(self)
-            self.logger.info("★ ResourceManager initialized (thread-safe reservation system)")
+            self.logger.info("[*] ResourceManager initialized (thread-safe reservation system)")
         except ImportError as e:
             self.logger.warning(f"ResourceManager not available: {e}")
             self.resource_manager = None
@@ -176,7 +178,7 @@ class WickedZergBotProImpl(BotAI):
             # Factory를 bot에 저장 (나중에 매니저 조회용)
             self.manager_factory = factory
 
-            print(f"\n[BOT] ★ Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded ★\n")
+            logger.info(f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n")
 
         except ImportError as e:
             self.logger.error(f"ManagerFactory not available: {e}")
@@ -209,7 +211,7 @@ class WickedZergBotProImpl(BotAI):
             self.personality = PersonalityModule(self, mode=mode,
                                                knowledge_manager=getattr(self, 'knowledge_manager', None),
                                                opponent_modeling=getattr(self, 'opponent_modeling', None))
-            self.logger.info(f"★ PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
+            self.logger.info(f"[*] PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
         except Exception as e:
             self.logger.warning(f"Failed to initialize PersonalityModule: {e}")
             traceback.print_exc()
@@ -238,7 +240,7 @@ class WickedZergBotProImpl(BotAI):
             try:
                 from local_training.hot_reload import ModelHotReloader
                 self.hot_reloader = ModelHotReloader(self.rl_agent)
-                self.logger.info("[HOT_RELOAD] ★ ModelHotReloader initialized (30s interval)")
+                self.logger.info("[HOT_RELOAD] [*] ModelHotReloader initialized (30s interval)")
             except ImportError:
                 pass
             except Exception as e:
@@ -318,14 +320,14 @@ class WickedZergBotProImpl(BotAI):
         try:
             from scoring_system import ScoringSystem
             self.scoring_system = ScoringSystem(self)
-            self.logger.info("★ ScoringSystem initialized (10-domain scoring)")
+            self.logger.info("[*] ScoringSystem initialized (10-domain scoring)")
         except Exception as e:
             self.logger.warning(f"ScoringSystem not available: {e}")
 
         try:
             from realtime_awareness_engine import RealtimeAwarenessEngine
             self.awareness_engine = RealtimeAwarenessEngine(self)
-            self.logger.info("★ RealtimeAwarenessEngine initialized (14-pattern detection)")
+            self.logger.info("[*] RealtimeAwarenessEngine initialized (14-pattern detection)")
         except Exception as e:
             self.logger.warning(f"RealtimeAwarenessEngine not available: {e}")
 
@@ -418,7 +420,7 @@ class WickedZergBotProImpl(BotAI):
                 result_str = str(game_result).upper()
                 result_key = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
                 score_report = self.scoring_system.on_game_end(result_key)
-                print(f"\n{self.scoring_system.get_summary()}")
+                logger.info(f"\n{self.scoring_system.get_summary()}")
                 self.logger.info(f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
                       f"Peak Supply: {score_report.get('peak_supply', 0)} | "
                       f"Engagements: {score_report.get('engagements_won', 0)}W/"
@@ -489,12 +491,12 @@ class WickedZergBotProImpl(BotAI):
                     if game_won:
                         conditions, reward = self._victory_learner.analyze_game_result(self, "Victory")
                         game_outcome_reward = reward
-                        print(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
+                        logger.info(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
                         self.logger.info(f"[VICTORY] Total reward: {reward:.1f}")
                     elif game_lost:
                         conditions, penalty = self._victory_learner.analyze_game_result(self, "Defeat")
                         game_outcome_reward = penalty
-                        print(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
+                        logger.info(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
                         self.logger.info(f"[DEFEAT] Total penalty: {penalty:.1f}")
 
                     # 통계 출력 (10게임마다)
@@ -547,7 +549,7 @@ class WickedZergBotProImpl(BotAI):
                     if self.rl_agent.episode_count % 10 == 0:
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
-                            self.logger.info(f"[RL_AGENT] ★ MODEL READY FOR DEPLOYMENT ★")
+                            self.logger.info(f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]")
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
 
@@ -603,7 +605,7 @@ class WickedZergBotProImpl(BotAI):
             if "VICTORY" in result_str or "WIN" in result_str:
                 promoted = curriculum.record_win(opponent_race)
                 if promoted:
-                    self.logger.info("[CURRICULUM] ★★★ 다음 단계로 승격! ★★★")
+                    self.logger.info("[CURRICULUM] [*][*][*] 다음 단계로 승격! [*][*][*]")
             elif "DEFEAT" in result_str or "LOSS" in result_str:
                 demoted = curriculum.record_loss(opponent_race)
                 if demoted:
@@ -695,13 +697,13 @@ class WickedZergBotProImpl(BotAI):
                     report_text = self.game_result_reporter.generate_report(
                         self.game_data_logger.game_data
                     )
-                    print("\n" + report_text)
+                    logger.info("\n" + report_text)
 
                     # Discord용 한줄 요약도 생성
                     quick_summary = self.game_result_reporter.generate_quick_summary(
                         self.game_data_logger.game_data
                     )
-                    print(f"\n[QUICK SUMMARY] {quick_summary}")
+                    logger.info(f"\n[QUICK SUMMARY] {quick_summary}")
 
                     # 봇에 요약 저장 (JARVIS Discord 전송용)
                     self._game_quick_summary = quick_summary
@@ -980,9 +982,95 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] on_unit_destroyed suppressed: {e}")
 
+    async def on_building_construction_complete(self, unit):
+        """건물 완성 이벤트 핸들러 — 종속 생산/업그레이드 트리거"""
+        try:
+            unit_type = unit.type_id
+            game_time = getattr(self, 'time', 0.0)
+            self.logger.info(
+                f"[BUILD_COMPLETE] {unit_type.name} at "
+                f"{int(game_time // 60)}:{int(game_time % 60):02d}"
+            )
+
+            # 전략 매니저에 건물 완성 알림
+            sm = getattr(self, 'strategy_manager', None)
+            if sm and hasattr(sm, 'on_building_complete'):
+                sm.on_building_complete(unit_type)
+
+            # 경제 매니저에 해처리 완성 알림 → 일꾼 분배
+            eco = getattr(self, 'economy', None)
+            if eco and hasattr(eco, 'on_building_complete'):
+                eco.on_building_complete(unit_type)
+
+            # Blackboard에 최신 건물 목록 업데이트
+            bb = getattr(self, 'blackboard', None)
+            if bb:
+                bb.set("last_building_complete", unit_type.name)
+                bb.set("last_building_complete_time", game_time)
+
+        except Exception as e:
+            self.logger.warning(f"on_building_construction_complete error: {e}")
+
+    async def on_upgrade_complete(self, upgrade):
+        """업그레이드 완료 이벤트 핸들러 — 전략 전환 및 후속 업그레이드 트리거"""
+        try:
+            game_time = getattr(self, 'time', 0.0)
+            self.logger.info(
+                f"[UPGRADE_COMPLETE] {upgrade.name} at "
+                f"{int(game_time // 60)}:{int(game_time % 60):02d}"
+            )
+
+            # 전략 매니저에 업그레이드 완료 알림
+            sm = getattr(self, 'strategy_manager', None)
+            if sm and hasattr(sm, 'on_upgrade_complete'):
+                sm.on_upgrade_complete(upgrade)
+
+            # Blackboard 업데이트
+            bb = getattr(self, 'blackboard', None)
+            if bb:
+                completed = bb.get("completed_upgrades", [])
+                completed.append(upgrade.name)
+                bb.set("completed_upgrades", completed)
+
+        except Exception as e:
+            self.logger.warning(f"on_upgrade_complete error: {e}")
+
+    async def on_enemy_unit_entered_vision(self, unit):
+        """적 유닛 시야 진입 — 정찰 정보 업데이트 + 방어 트리거"""
+        try:
+            # Intel 매니저에 적 유닛 정보 전달
+            intel = getattr(self, 'intel_manager', None)
+            if intel and hasattr(intel, 'on_enemy_spotted'):
+                intel.on_enemy_spotted(unit)
+
+            # 방어 시스템에 알림
+            dc = getattr(self, 'defense_coordinator', None)
+            if dc and hasattr(dc, 'on_enemy_spotted'):
+                dc.on_enemy_spotted(unit)
+
+            # Blackboard에 마지막 발견 적 기록
+            bb = getattr(self, 'blackboard', None)
+            if bb:
+                bb.set("last_enemy_spotted", unit.type_id.name)
+                bb.set("last_enemy_spotted_pos", (unit.position.x, unit.position.y))
+
+        except Exception as e:
+            self.logger.debug(f"on_enemy_unit_entered_vision error: {e}")
+
     def _reset_all_managers(self):
         """★ 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) ★"""
-        reset_targets = [
+        # ManagerFactory에 등록된 모든 매니저를 자동 리셋
+        factory = getattr(self, 'manager_factory', None)
+        if factory and hasattr(factory, 'get_all_managers'):
+            for name, mgr in factory.get_all_managers().items():
+                if mgr and hasattr(mgr, 'reset'):
+                    try:
+                        mgr.reset()
+                    except Exception as e:
+                        self.logger.info(f"[RESET_WARN] {name}.reset() failed: {e}")
+
+        # Factory에 포함되지 않은 매니저들 수동 리셋
+        extra_reset_targets = [
             ("unit_authority", "UnitAuthority"),
             ("combat", "CombatManager"),
             ("strategy_manager", "StrategyManager"),
@@ -992,8 +1080,23 @@ class WickedZergBotProImpl(BotAI):
             ("defense_coordinator", "DefenseCoordinator"),
             ("overlord_safety", "OverlordSafety"),
             ("micro_v3", "MicroController"),
+            ("micro", "MicroControllerLegacy"),
+            ("intel_manager", "IntelManager"),
+            ("build_order_system", "BuildOrderSystem"),
+            ("early_defense", "EarlyDefenseSystem"),
+            ("early_scout", "EarlyScoutSystem"),
+            ("queen_manager", "QueenManager"),
+            ("creep_automation", "CreepAutomation"),
+            ("aggressive_strategies", "AggressiveStrategies"),
+            ("scoring_system", "ScoringSystem"),
+            ("resource_manager", "ResourceManager"),
+            ("awareness_engine", "AwarenessEngine"),
+            ("map_memory", "MapMemory"),
+            ("situational_awareness", "SituationalAwareness"),
+            ("complete_destruction", "CompleteDestruction"),
+            ("battle_prep", "BattlePreparation"),
         ]
-        for attr, name in reset_targets:
+        for attr, name in extra_reset_targets:
             mgr = getattr(self, attr, None)
             if mgr and hasattr(mgr, "reset"):
                 try:

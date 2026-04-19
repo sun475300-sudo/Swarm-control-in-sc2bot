@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger("ConfigServer")
 # -*- coding: utf-8 -*-
 """
 Configuration server (placeholder).
@@ -10,7 +13,7 @@ class ConfigServer:
         pass
 
     def run(self) -> None:
-        print("ConfigServer placeholder running.")
+        logger.info("ConfigServer placeholder running.")
 
 
 def main() -> None:

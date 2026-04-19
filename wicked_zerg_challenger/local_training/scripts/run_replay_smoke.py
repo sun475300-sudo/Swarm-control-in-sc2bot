@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 from batch_trainer import train_from_manifest
+import logging
+
+logger = logging.getLogger("RunReplaySmoke")
 
 try:
     import sc2reader
@@ -25,7 +28,7 @@ except ImportError:
 def build_results_from_replays(replay_dir: Path, max_files: int) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
     replay_files = sorted(replay_dir.glob("*.SC2Replay"))[:max_files]
-    print(f"[REPLAY] Found {len(replay_files)} replay files")
+    logger.info(f"Found {len(replay_files)} replay files")
 
     for replay_path in replay_files:
         try:
@@ -58,7 +61,7 @@ def build_results_from_replays(replay_dir: Path, max_files: int) -> List[Dict[st
                 apm = 150.0
                 victory = False
 
-            print(f"[REPLAY] Processed: {replay_path.name} - {minutes:.1f}min, APM:{apm:.0f}, Win:{victory}")
+            logger.info(f"Processed: {replay_path.name} - {minutes:.1f}min, APM:{apm:.0f}, Win:{victory}")
 
             # Heuristic feature synthesis for smoke training
             minerals = min(2000, apm * 4 + minutes * 200)
@@ -108,7 +111,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if not SC2READER_AVAILABLE:
-        print("[ERROR] sc2reader is not installed. Install it to use this script.")
+        logger.error("sc2reader is not installed. Install it to use this script.")
         return
 
     replay_dir = Path(args.replay_dir)
@@ -122,7 +125,7 @@ def main() -> None:
     stats = train_from_manifest(manifest_path, model_path=str(output_dir / "zerg_net_model_replay_smoke.pt"), epochs=args.epochs)
     summary_path = output_dir / "replay_smoke_summary.json"
     summary_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    print(f"[SMOKE] Replay smoke complete. Summary -> {summary_path}")
+    logger.info(f"Replay smoke complete. Summary -> {summary_path}")
 
 
 if __name__ == "__main__":

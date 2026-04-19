@@ -15,6 +15,9 @@ Features:
 """
 
 from typing import TYPE_CHECKING, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("SpellUnitManager")
 
 if TYPE_CHECKING:
     from sc2.ids.ability_id import AbilityId
@@ -120,7 +123,7 @@ class SpellUnitManager:
             await self._update_overseers()
         except Exception as e:
             if iteration % 50 == 0:
-                print(f"[WARNING] SpellUnitManager.update() error: {e}")
+                logger.error(f"SpellUnitManager.update() error: {e}")
 
     async def _update_infestors(self):
         """
@@ -526,7 +529,7 @@ class SpellUnitManager:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                             self.ravager_last_bile[ravager_tag] = current_time
                             if b.iteration % 50 == 0:
-                                print(f"[RAVAGER] [{int(current_time)}s] Bile targeting enemy base!")
+                                logger.info(f"[{int(current_time)}s] Bile targeting enemy base!")
                             continue
                         except Exception:
                             pass

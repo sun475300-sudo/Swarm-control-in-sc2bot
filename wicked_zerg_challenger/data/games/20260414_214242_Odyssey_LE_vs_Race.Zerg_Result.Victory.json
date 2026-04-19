@@ -1,0 +1,1340 @@
+{
+  "meta": {
+    "timestamp": "2026-04-14T21:42:42.074503",
+    "map_name": "Odyssey LE",
+    "opponent_race": "Race.Zerg",
+    "bot_race": "Zerg",
+    "game_version": "5.0.12"
+  },
+  "build_order": [
+    {
+      "time": 57.1,
+      "supply": 16,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EXTRACTOR",
+      "position": [
+        17.5,
+        144.5
+      ]
+    },
+    {
+      "time": 70.5,
+      "supply": 16,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPAWNINGPOOL",
+      "position": [
+        27.5,
+        143.5
+      ]
+    },
+    {
+      "time": 91.1,
+      "supply": 17,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EXTRACTOR",
+      "position": [
+        27.5,
+        154.5
+      ]
+    },
+    {
+      "time": 121.4,
+      "supply": 19,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.HATCHERY",
+      "position": [
+        20.5,
+        118.5
+      ]
+    },
+    {
+      "time": 129.3,
+      "supply": 19,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EXTRACTOR",
+      "position": [
+        18.5,
+        125.5
+      ]
+    },
+    {
+      "time": 152.5,
+      "supply": 20,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EVOLUTIONCHAMBER",
+      "position": [
+        24.5,
+        151.5
+      ]
+    },
+    {
+      "time": 166.4,
+      "supply": 20,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EXTRACTOR",
+      "position": [
+        13.5,
+        121.5
+      ]
+    },
+    {
+      "time": 253.2,
+      "supply": 32,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPINECRAWLER",
+      "position": [
+        28.0,
+        115.0
+      ]
+    },
+    {
+      "time": 261.4,
+      "supply": 29,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPINECRAWLER",
+      "position": [
+        30.0,
+        142.0
+      ]
+    },
+    {
+      "time": 276.2,
+      "supply": 30,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.BANELINGNEST",
+      "position": [
+        16.5,
+        122.5
+      ]
+    }
+  ],
+  "expansions": [
+    {
+      "time": 659.3,
+      "expansion_number": 1,
+      "supply": 138,
+      "minerals": 40,
+      "vespene": 126,
+      "position": [
+        133.5,
+        35.5
+      ]
+    }
+  ],
+  "unit_production": [
+    {
+      "time": 142.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 20
+    },
+    {
+      "time": 142.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 20
+    },
+    {
+      "time": 163.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 21
+    },
+    {
+      "time": 163.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 21
+    },
+    {
+      "time": 174.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 21
+    },
+    {
+      "time": 174.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 21
+    },
+    {
+      "time": 185.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 22
+    },
+    {
+      "time": 185.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 22
+    },
+    {
+      "time": 275.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 31
+    },
+    {
+      "time": 275.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 31
+    },
+    {
+      "time": 277.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 30
+    },
+    {
+      "time": 277.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 30
+    },
+    {
+      "time": 282.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 30
+    },
+    {
+      "time": 282.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 30
+    },
+    {
+      "time": 287.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 32
+    },
+    {
+      "time": 287.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 32
+    },
+    {
+      "time": 346.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 45
+    },
+    {
+      "time": 346.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 45
+    },
+    {
+      "time": 349.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 47
+    },
+    {
+      "time": 349.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 47
+    },
+    {
+      "time": 357.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 357.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 362.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 362.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 369.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 52
+    },
+    {
+      "time": 374.3,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 52
+    },
+    {
+      "time": 400.9,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 64
+    },
+    {
+      "time": 403.6,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 65
+    },
+    {
+      "time": 405.9,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 64
+    },
+    {
+      "time": 408.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 65
+    },
+    {
+      "time": 408.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 65
+    },
+    {
+      "time": 408.6,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 65
+    },
+    {
+      "time": 409.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 65
+    },
+    {
+      "time": 409.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 65
+    },
+    {
+      "time": 411.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 67
+    },
+    {
+      "time": 411.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 67
+    },
+    {
+      "time": 412.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 67
+    },
+    {
+      "time": 412.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 67
+    },
+    {
+      "time": 414.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 69
+    },
+    {
+      "time": 414.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 69
+    },
+    {
+      "time": 420.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 69
+    },
+    {
+      "time": 420.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 69
+    },
+    {
+      "time": 425.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 70
+    },
+    {
+      "time": 425.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 70
+    },
+    {
+      "time": 433.0,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 72
+    },
+    {
+      "time": 433.9,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 72
+    },
+    {
+      "time": 437.9,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 74
+    },
+    {
+      "time": 440.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 74
+    },
+    {
+      "time": 444.6,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 75
+    },
+    {
+      "time": 445.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 75
+    },
+    {
+      "time": 445.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 75
+    },
+    {
+      "time": 448.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 80
+    },
+    {
+      "time": 448.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 80
+    },
+    {
+      "time": 449.6,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 80
+    },
+    {
+      "time": 460.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 87
+    },
+    {
+      "time": 460.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 87
+    },
+    {
+      "time": 466.4,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 91
+    },
+    {
+      "time": 469.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 91
+    },
+    {
+      "time": 471.8,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 89
+    },
+    {
+      "time": 473.8,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 91
+    },
+    {
+      "time": 475.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 90
+    },
+    {
+      "time": 475.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 90
+    },
+    {
+      "time": 478.9,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 88
+    },
+    {
+      "time": 482.3,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 89
+    },
+    {
+      "time": 485.2,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 91
+    },
+    {
+      "time": 492.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 92
+    },
+    {
+      "time": 495.2,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 95
+    },
+    {
+      "time": 495.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 95
+    },
+    {
+      "time": 495.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 95
+    },
+    {
+      "time": 497.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 95
+    },
+    {
+      "time": 497.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 95
+    },
+    {
+      "time": 502.0,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 99
+    },
+    {
+      "time": 505.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 100
+    },
+    {
+      "time": 505.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 100
+    },
+    {
+      "time": 507.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 100
+    },
+    {
+      "time": 507.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 100
+    },
+    {
+      "time": 512.7,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 103
+    },
+    {
+      "time": 517.3,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 107
+    },
+    {
+      "time": 520.0,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 104
+    },
+    {
+      "time": 532.3,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 106
+    },
+    {
+      "time": 535.0,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 107
+    },
+    {
+      "time": 540.4,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 107
+    },
+    {
+      "time": 543.2,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 108
+    },
+    {
+      "time": 547.9,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 108
+    },
+    {
+      "time": 550.4,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 108
+    },
+    {
+      "time": 559.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 110
+    },
+    {
+      "time": 559.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 110
+    },
+    {
+      "time": 574.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 116
+    },
+    {
+      "time": 589.6,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 126
+    },
+    {
+      "time": 589.6,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 126
+    },
+    {
+      "time": 594.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 126
+    },
+    {
+      "time": 597.0,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 130
+    },
+    {
+      "time": 599.5,
+      "unit_type": "UnitTypeId.ROACH",
+      "supply": 130
+    }
+  ],
+  "tech_upgrades": [
+    {
+      "time": 152.5,
+      "building": "UnitTypeId.EVOLUTIONCHAMBER",
+      "supply": 20,
+      "minerals": 10,
+      "vespene": 152
+    },
+    {
+      "time": 306.4,
+      "building": "UnitTypeId.ROACHWARREN",
+      "supply": 36,
+      "minerals": 40,
+      "vespene": 494
+    },
+    {
+      "time": 627.5,
+      "building": "UnitTypeId.LAIR",
+      "supply": 137,
+      "minerals": 40,
+      "vespene": 263
+    },
+    {
+      "time": 659.5,
+      "building": "UnitTypeId.HYDRALISKDEN",
+      "supply": 137,
+      "minerals": 40,
+      "vespene": 130
+    }
+  ],
+  "engagements": [],
+  "resource_snapshots": [
+    {
+      "time": 60.0,
+      "minerals": 150,
+      "vespene": 0,
+      "supply_used": 16,
+      "supply_cap": 38,
+      "supply_army": 0,
+      "supply_workers": 15,
+      "bases": 1,
+      "workers": 15
+    },
+    {
+      "time": 120.0,
+      "minerals": 35,
+      "vespene": 104,
+      "supply_used": 20,
+      "supply_cap": 38,
+      "supply_army": 0,
+      "supply_workers": 19,
+      "bases": 1,
+      "workers": 17
+    },
+    {
+      "time": 180.2,
+      "minerals": 30,
+      "vespene": 168,
+      "supply_used": 21,
+      "supply_cap": 38,
+      "supply_army": 4,
+      "supply_workers": 17,
+      "bases": 2,
+      "workers": 14
+    },
+    {
+      "time": 240.2,
+      "minerals": 90,
+      "vespene": 488,
+      "supply_used": 30,
+      "supply_cap": 52,
+      "supply_army": 4,
+      "supply_workers": 24,
+      "bases": 2,
+      "workers": 23
+    },
+    {
+      "time": 300.2,
+      "minerals": 15,
+      "vespene": 378,
+      "supply_used": 37,
+      "supply_cap": 52,
+      "supply_army": 6,
+      "supply_workers": 28,
+      "bases": 2,
+      "workers": 27
+    },
+    {
+      "time": 360.2,
+      "minerals": 50,
+      "vespene": 402,
+      "supply_used": 52,
+      "supply_cap": 52,
+      "supply_army": 16,
+      "supply_workers": 35,
+      "bases": 2,
+      "workers": 35
+    },
+    {
+      "time": 420.2,
+      "minerals": 40,
+      "vespene": 351,
+      "supply_used": 69,
+      "supply_cap": 92,
+      "supply_army": 32,
+      "supply_workers": 36,
+      "bases": 2,
+      "workers": 34
+    },
+    {
+      "time": 480.2,
+      "minerals": 0,
+      "vespene": 240,
+      "supply_used": 89,
+      "supply_cap": 92,
+      "supply_army": 51,
+      "supply_workers": 38,
+      "bases": 2,
+      "workers": 36
+    },
+    {
+      "time": 540.2,
+      "minerals": 105,
+      "vespene": 180,
+      "supply_used": 107,
+      "supply_cap": 108,
+      "supply_army": 63,
+      "supply_workers": 44,
+      "bases": 2,
+      "workers": 40
+    },
+    {
+      "time": 600.2,
+      "minerals": 250,
+      "vespene": 176,
+      "supply_used": 130,
+      "supply_cap": 148,
+      "supply_army": 85,
+      "supply_workers": 45,
+      "bases": 2,
+      "workers": 41
+    },
+    {
+      "time": 660.2,
+      "minerals": 0,
+      "vespene": 88,
+      "supply_used": 137,
+      "supply_cap": 148,
+      "supply_army": 95,
+      "supply_workers": 42,
+      "bases": 3,
+      "workers": 39
+    }
+  ],
+  "decision_log": [],
+  "game_result": {
+    "result": "Result.Victory",
+    "duration": 87.5,
+    "final_supply": 141,
+    "final_minerals": 20,
+    "final_vespene": 260,
+    "final_bases": 3,
+    "end_time": "2026-04-14T21:44:09.565089"
+  },
+  "enemy_scouts": [],
+  "harassment": [
+    {
+      "time": 395.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 415.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 431.1,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 452.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 473.8,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 506.8,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 512.7,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BANELINGNEST",
+      "target_position": [
+        140.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 518.2,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.HYDRALISKDEN",
+      "target_position": [
+        135.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 523.8,
+      "our_units": 5,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 529.3,
+      "our_units": 9,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 534.8,
+      "our_units": 11,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 540.4,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 545.9,
+      "our_units": 11,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 551.4,
+      "our_units": 14,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 557.0,
+      "our_units": 7,
+      "target_structure": "UnitTypeId.BANELINGNEST",
+      "target_position": [
+        140.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 562.5,
+      "our_units": 13,
+      "target_structure": "UnitTypeId.HATCHERY",
+      "target_position": [
+        147.5,
+        53.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 568.0,
+      "our_units": 7,
+      "target_structure": "UnitTypeId.BANELINGNEST",
+      "target_position": [
+        140.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 573.6,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.HYDRALISKDEN",
+      "target_position": [
+        135.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 579.1,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.HYDRALISKDEN",
+      "target_position": [
+        135.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 584.6,
+      "our_units": 9,
+      "target_structure": "UnitTypeId.BANELINGNEST",
+      "target_position": [
+        140.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 590.2,
+      "our_units": 9,
+      "target_structure": "UnitTypeId.ROACHWARREN",
+      "target_position": [
+        138.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 595.7,
+      "our_units": 10,
+      "target_structure": "UnitTypeId.ROACHWARREN",
+      "target_position": [
+        138.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 601.2,
+      "our_units": 8,
+      "target_structure": "UnitTypeId.HYDRALISKDEN",
+      "target_position": [
+        135.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 606.8,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.EVOLUTIONCHAMBER",
+      "target_position": [
+        146.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 612.3,
+      "our_units": 8,
+      "target_structure": "UnitTypeId.EVOLUTIONCHAMBER",
+      "target_position": [
+        146.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 617.9,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.INFESTATIONPIT",
+      "target_position": [
+        137.5,
+        18.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 623.4,
+      "our_units": 12,
+      "target_structure": "UnitTypeId.EVOLUTIONCHAMBER",
+      "target_position": [
+        146.5,
+        30.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 628.9,
+      "our_units": 19,
+      "target_structure": "UnitTypeId.EVOLUTIONCHAMBER",
+      "target_position": [
+        135.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 634.5,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.EXTRACTOR",
+      "target_position": [
+        150.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 640.0,
+      "our_units": 8,
+      "target_structure": "UnitTypeId.SPORECRAWLER",
+      "target_position": [
+        150.0,
+        34.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 645.5,
+      "our_units": 19,
+      "target_structure": "UnitTypeId.LAIR",
+      "target_position": [
+        143.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 651.1,
+      "our_units": 25,
+      "target_structure": "UnitTypeId.LAIR",
+      "target_position": [
+        143.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 656.6,
+      "our_units": 10,
+      "target_structure": "UnitTypeId.SPORECRAWLER",
+      "target_position": [
+        151.0,
+        19.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 662.1,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.EXTRACTOR",
+      "target_position": [
+        150.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 667.7,
+      "our_units": 13,
+      "target_structure": "UnitTypeId.SPIRE",
+      "target_position": [
+        141.0,
+        15.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 673.2,
+      "our_units": 20,
+      "target_structure": "UnitTypeId.SPIRE",
+      "target_position": [
+        141.0,
+        15.0
+      ],
+      "workers_killed": 0
+    }
+  ],
+  "defense_events": [
+    {
+      "time": 668.9,
+      "enemy_count": 9,
+      "base_position": [
+        133.5,
+        35.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 22.2
+    },
+    {
+      "time": 669.1,
+      "enemy_count": 7,
+      "base_position": [
+        133.5,
+        35.5
+      ],
+      "our_army_nearby": 27,
+      "base_health": 22.5
+    },
+    {
+      "time": 669.3,
+      "enemy_count": 7,
+      "base_position": [
+        133.5,
+        35.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 22.7
+    },
+    {
+      "time": 669.5,
+      "enemy_count": 6,
+      "base_position": [
+        133.5,
+        35.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 22.9
+    }
+  ],
+  "unit_composition": [
+    {
+      "time": 120.0,
+      "total_supply": 22,
+      "composition": {
+        "UnitTypeId.DRONE": {
+          "count": 17,
+          "supply": 17,
+          "ratio": 0.773
+        },
+        "UnitTypeId.EGG": {
+          "count": 1,
+          "supply": 1,
+          "ratio": 0.045
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 4,
+          "supply": 4,
+          "ratio": 0.182
+        }
+      }
+    },
+    {
+      "time": 240.0,
+      "total_supply": 39,
+      "composition": {
+        "UnitTypeId.DRONE": {
+          "count": 23,
+          "supply": 23,
+          "ratio": 0.59
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 8,
+          "supply": 8,
+          "ratio": 0.205
+        },
+        "UnitTypeId.LARVA": {
+          "count": 1,
+          "supply": 1,
+          "ratio": 0.026
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.128
+        },
+        "UnitTypeId.EGG": {
+          "count": 2,
+          "supply": 2,
+          "ratio": 0.051
+        }
+      }
+    },
+    {
+      "time": 360.2,
+      "total_supply": 54,
+      "composition": {
+        "UnitTypeId.EGG": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.093
+        },
+        "UnitTypeId.DRONE": {
+          "count": 35,
+          "supply": 35,
+          "ratio": 0.648
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.111
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.093
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 2,
+          "supply": 2,
+          "ratio": 0.037
+        },
+        "UnitTypeId.LARVA": {
+          "count": 1,
+          "supply": 1,
+          "ratio": 0.019
+        }
+      }
+    },
+    {
+      "time": 480.2,
+      "total_supply": 78,
+      "composition": {
+        "UnitTypeId.EGG": {
+          "count": 7,
+          "supply": 7,
+          "ratio": 0.09
+        },
+        "UnitTypeId.LARVA": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.038
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 10,
+          "supply": 10,
+          "ratio": 0.128
+        },
+        "UnitTypeId.DRONE": {
+          "count": 36,
+          "supply": 36,
+          "ratio": 0.462
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 7,
+          "supply": 7,
+          "ratio": 0.09
+        },
+        "UnitTypeId.RAVAGER": {
+          "count": 1,
+          "supply": 1,
+          "ratio": 0.013
+        },
+        "UnitTypeId.ROACH": {
+          "count": 10,
+          "supply": 10,
+          "ratio": 0.128
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 4,
+          "supply": 4,
+          "ratio": 0.051
+        }
+      }
+    },
+    {
+      "time": 600.2,
+      "total_supply": 105,
+      "composition": {
+        "UnitTypeId.RAVAGER": {
+          "count": 4,
+          "supply": 4,
+          "ratio": 0.038
+        },
+        "UnitTypeId.ROACH": {
+          "count": 22,
+          "supply": 22,
+          "ratio": 0.21
+        },
+        "UnitTypeId.DRONE": {
+          "count": 41,
+          "supply": 41,
+          "ratio": 0.39
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 8,
+          "supply": 8,
+          "ratio": 0.076
+        },
+        "UnitTypeId.EGG": {
+          "count": 4,
+          "supply": 4,
+          "ratio": 0.038
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 9,
+          "supply": 9,
+          "ratio": 0.086
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 17,
+          "supply": 17,
+          "ratio": 0.162
+        }
+      }
+    }
+  ],
+  "upgrade_sequence": [],
+  "map_control": [],
+  "enemy_build_detected": {}
+}

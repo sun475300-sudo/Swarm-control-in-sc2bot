@@ -8,6 +8,9 @@ from sc2.position import Point2
 from typing import Optional, List
 import random
 import math
+import logging
+
+logger = logging.getLogger("BuildingPlacementHelper")
 
 
 # 점막 없이 지을 수 있는 저그 건물
@@ -262,7 +265,7 @@ class BuildingPlacementHelper:
 
         if not creep_positions:
             # 점막을 찾지 못한 경우
-            print(f"[WARNING] No creep found near {near} for {building_type.name}")
+            logger.warning(f"No creep found near {near} for {building_type.name}")
             return None
 
         # 각 점막 위치에서 배치 가능 여부 확인
@@ -275,7 +278,7 @@ class BuildingPlacementHelper:
                 return pos
 
         # 배치 가능한 위치를 찾지 못함
-        print(f"[WARNING] No valid placement on creep near {near} for {building_type.name}")
+        logger.warning(f"No valid placement on creep near {near} for {building_type.name}")
         return None
 
     async def build_structure_safely(
@@ -322,10 +325,10 @@ class BuildingPlacementHelper:
         # 건설 명령
         try:
             self.bot.do(worker.build(building_type, location))
-            print(f"[BUILD] {building_type.name} at {location} (creep: {self.has_creep(location)})")
+            logger.info(f"{building_type.name} at {location} (creep: {self.has_creep(location)})")
             return True
         except Exception as e:
-            print(f"[ERROR] Failed to build {building_type.name}: {e}")
+            logger.error(f"Failed to build {building_type.name}: {e}")
             return False
 
     def get_closest_creep_position(self, near: Point2, min_distance: float = 5.0) -> Optional[Point2]:
