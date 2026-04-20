@@ -3105,7 +3105,8 @@ class CombatManager:
             try:
                 # ★ CRITICAL: 일꾼이 기지에서 12거리 이상 벗어나면 즉시 복귀 ★
                 if closest_townhall and worker.distance_to(closest_townhall) > 12:
-                    self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
+                    if self.bot.mineral_field:
+                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
                     continue
 
                 if threat_enemies:

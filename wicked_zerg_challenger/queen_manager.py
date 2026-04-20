@@ -807,7 +807,8 @@ class QueenManager:
                             await result
                         self.last_transfuse_time[queen.tag] = current_time
                         break  # One transfuse per queen per cycle
-                    except Exception:
+                    except Exception as e:
+                        self.logger.debug(f"[QUEEN] transfusion failed: {e}")
                         continue
 
     async def _spread_creep(self, creep_queens, iteration: int) -> None:
@@ -1217,7 +1218,11 @@ class QueenManager:
         if direction_target:
             return origin.towards(direction_target, 7)
 
-        return origin.towards(origin, 3)
+        # direction_target 없으면 맵 중앙 방향으로 이동 (자기 자신 towards 방지)
+        map_center = getattr(getattr(self.bot, "game_info", None), "map_center", None)
+        if map_center:
+            return origin.towards(map_center, 5)
+        return origin
 
     def _collect_creep_targets(self):
         """Collect potential creep target positions."""
