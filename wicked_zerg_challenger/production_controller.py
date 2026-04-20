@@ -405,8 +405,8 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"[PRODUCTION] larva.train({best_uid}) failed: {e}")
 
     async def _consume_mineral_bank(self):
         """

@@ -273,6 +273,14 @@ class EvolutionUpgradeManager:
             priorities.append("air_attack")
             priorities.append("air_armor")
 
+        # === Intel boost 적용: 부스트가 있는 레인을 앞으로 당김 ===
+        if self.intel_based_priority_boost:
+            # stable sort: 같은 부스트 값이면 원래 순서 유지
+            priorities = sorted(
+                priorities,
+                key=lambda lane: -self.intel_based_priority_boost.get(lane, 1.0),
+            )
+
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []
         seen_upgrades = set()
@@ -603,7 +611,8 @@ class EvolutionUpgradeManager:
                     game_time = getattr(self.bot, "time", 0)
                     self.logger.info(f"[{int(game_time)}s] [*][*][*] 기낭 갑피 (대군주 속업) 연구 시작! [*][*][*]")
                     return
-                except Exception:
+                except Exception as e:
+                    self.logger.debug(f"[UPGRADE] overlord_speed research failed on {th}: {e}")
                     continue
 
     async def _research_ventral_sacs(self, iteration: int) -> None:
@@ -635,7 +644,8 @@ class EvolutionUpgradeManager:
                     game_time = getattr(self.bot, "time", 0)
                     self.logger.info(f"[{int(game_time)}s] [*][*][*] 배주머니 (대군주 수송) 연구 시작! [*][*][*]")
                     return
-                except Exception:
+                except Exception as e:
+                    self.logger.debug(f"[UPGRADE] ventral_sacs research failed on {th}: {e}")
                     continue
 
     async def _research_baneling_speed(self, iteration: int) -> None:
@@ -1275,6 +1285,12 @@ class EvolutionUpgradeManager:
             self.intel_based_priority_boost["air_attack"] = 1.8
             self.intel_based_priority_boost["air_armor"] = 1.3
             self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_air} air units → Air upgrade priority boost!")
+
+        # Blackboard 동기화: 다른 매니저가 업그레이드 우선순위 상태를 참조할 수 있도록
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard:
+            blackboard.intel_upgrade_boosts = dict(self.intel_based_priority_boost)
+            blackboard.upgrade_reserved_count = len(self.reserved_upgrades)
 
     # ========================================
     # ★★★ Phase 18: Gas Reservation System ★★★
