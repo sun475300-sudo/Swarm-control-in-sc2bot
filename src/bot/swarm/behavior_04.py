@@ -1,31 +1,31 @@
 """
-Swarm Behavior Module #4 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm Behavior Module #4 - LineAdvance.
+Horizontal line formation perpendicular to the east direction.
 """
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
 
 
 class Behavior04:
-    """Auto-generated swarm behavior module #4."""
+    """LineAdvance: horizontal line formation perpendicular to east direction."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_04"
 
-    def tick(self, positions: list) -> list:
+    def tick(self, positions: List[Position]) -> List[Position]:
         """
-        Execute behavior tick.
-        
+        Arrange units in a horizontal line perpendicular to east (direction=0.0).
+
         Args:
-            positions: Current unit positions
-            
+            positions: Current (x, y) positions for each unit.
+
         Returns:
-            Target positions for units
+            Target positions in a horizontal line.
         """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        return self.controller.line_formation(positions, direction=0.0)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

@@ -1,31 +1,43 @@
 """
-Swarm Behavior Module #14 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm Behavior Module #14 - FlankLeft.
+All units offset 90 degrees counterclockwise from the centroid, shifting
+the entire formation to the left (north when facing east).
 """
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
+
+_FLANK_DISTANCE = 4.0   # lateral offset distance
 
 
 class Behavior14:
-    """Auto-generated swarm behavior module #14."""
+    """FlankLeft: rotate entire formation 90 degrees CCW (offset north) from centroid."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_14"
 
-    def tick(self, positions: list) -> list:
+    def tick(self, positions: List[Position]) -> List[Position]:
         """
-        Execute behavior tick.
-        
+        Maintain a line formation then shift the whole group northward (left flank)
+        by _FLANK_DISTANCE units.
+
         Args:
-            positions: Current unit positions
-            
+            positions: Current (x, y) positions for each unit.
+
         Returns:
-            Target positions for units
+            Target positions of the left-flanking line.
         """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        if not positions:
+            return []
+
+        # Line formation then shift +y (north = left when facing east)
+        formation = self.controller.line_formation(positions, direction=0.0)
+        targets: List[Position] = [
+            (tx, ty + _FLANK_DISTANCE) for tx, ty in formation
+        ]
+        return targets
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

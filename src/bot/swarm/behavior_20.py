@@ -1,31 +1,34 @@
 """
-Swarm Behavior Module #20 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm Behavior Module #20 - AntiAirSpread.
+Units spread wide (radius=10.0) to minimize AoE splash damage from air attacks.
 """
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
+
+_AA_SPREAD = 10.0
 
 
 class Behavior20:
-    """Auto-generated swarm behavior module #20."""
+    """AntiAirSpread: maximize spacing with large circular spread (radius=10.0)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_20"
 
-    def tick(self, positions: list) -> list:
+    def tick(self, positions: List[Position]) -> List[Position]:
         """
-        Execute behavior tick.
-        
+        Distribute units on a large circle of radius 10.0 around the centroid
+        to minimise splash-damage overlap from area attacks.
+
         Args:
-            positions: Current unit positions
-            
+            positions: Current (x, y) positions for each unit.
+
         Returns:
-            Target positions for units
+            Target positions on the wide anti-air spread circle.
         """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        return self.controller.spread_formation(positions, spread=_AA_SPREAD)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

@@ -1,30 +1,18 @@
-"""
-Swarm Behavior Module #1 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
-"""
+"""Swarm Behavior #01 - Circular Formation Hold."""
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
 
 
 class Behavior01:
-    """Auto-generated swarm behavior module #1."""
+    """Maintain a stable circular formation around group centroid."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
-        self.controller = FormationController()
-        self.name = "behavior_01"
+        self.controller = FormationController(formation_radius=3.0)
+        self.name = "circular_formation"
 
-    def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-        
-        Args:
-            positions: Current unit positions
-            
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
+    def tick(self, positions: List[Position]) -> List[Position]:
         return self.controller.maintain_formation(positions)
 
     def __repr__(self) -> str:
