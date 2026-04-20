@@ -6,7 +6,17 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 """
 
 from typing import TYPE_CHECKING, List, Optional, Union
-from sc2.position import Point2
+
+try:
+    from sc2.position import Point2
+except ImportError:
+    class Point2:  # type: ignore[no-redef]
+        def __init__(self, x: float = 0.0, y: float = 0.0):
+            self.x = x
+            self.y = y
+
+        def __repr__(self):
+            return f"Point2({self.x}, {self.y})"
 
 if TYPE_CHECKING:
     from sc2.units import Units

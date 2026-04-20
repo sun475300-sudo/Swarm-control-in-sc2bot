@@ -1489,6 +1489,15 @@ class HarassmentCoordinator:
 
         self.last_worker_kill_count = current_enemy_workers
 
+        # blackboard 동기화
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard:
+            blackboard.harass_workers_killed = self.workers_killed
+            blackboard.harass_raids_executed = self.raids_executed
+            blackboard.harass_active = (
+                self.zergling_runby_active or self.mutalisk_harass_active or self.drop_play_active
+            )
+
     # ================================================================
     # ★ Phase 22: 안전 후퇴 지점 ★
     # ================================================================

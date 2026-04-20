@@ -38,6 +38,20 @@ else:
         AbilityId = None
 
 
+try:
+    from utils.position_utils import get_center_position as _get_center_position
+except ImportError:
+    def _get_center_position(units):
+        if not units:
+            return None
+        total_x = sum(u.position.x for u in units)
+        total_y = sum(u.position.y for u in units)
+        n = len(units)
+        if Point2 and n:
+            return Point2((total_x / n, total_y / n))
+        return None
+
+
 class SpellUnitManager:
     """
     Spell Unit Manager - Optimized spell unit control
@@ -426,12 +440,7 @@ class SpellUnitManager:
         if len(enemies) == 1:
             return enemies[0].position
 
-        # Calculate centroid
-        total_x = sum(e.position.x for e in enemies)
-        total_y = sum(e.position.y for e in enemies)
-        centroid = Point2((total_x / len(enemies), total_y / len(enemies)))
-
-        return centroid
+        return _get_center_position(enemies)
 
     def _find_consume_target(self, viper: Unit) -> Optional[Unit]:
         """Find a safe structure to consume for Viper energy."""

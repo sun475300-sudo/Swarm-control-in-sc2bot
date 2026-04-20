@@ -18,6 +18,79 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+WZC_PATH = str(PROJECT_ROOT / "wicked_zerg_challenger")
+
+
+def _ensure_wzc_path_first():
+    """wicked_zerg_challenger/utils가 root utils보다 먼저 탐색되도록 path를 재정렬한다."""
+    # 기존 WZC_PATH 항목 제거 후 index 0에 재삽입
+    while WZC_PATH in sys.path:
+        sys.path.remove(WZC_PATH)
+    sys.path.insert(0, WZC_PATH)
+    # 루트 utils 패키지 캐시 제거
+    for _mod in list(sys.modules.keys()):
+        if _mod == "utils" or _mod.startswith("utils."):
+            del sys.modules[_mod]
+
+
+def _inject_sc2_stubs():
+    """sc2가 설치되지 않은 테스트 환경에서 WZC utils가 임포트 가능하도록 최소 stub을 주입한다."""
+    if "sc2" not in sys.modules:
+        sc2_stub = MagicMock()
+
+        class _Point2:
+            def __init__(self, x=0.0, y=0.0):
+                if isinstance(x, (tuple, list)):
+                    self.x = float(x[0])
+                    self.y = float(x[1])
+                else:
+                    self.x = float(x)
+                    self.y = float(y)
+            def __repr__(self):
+                return f"Point2({self.x}, {self.y})"
+
+        sc2_stub.position.Point2 = _Point2
+        sys.modules["sc2"] = sc2_stub
+        sys.modules["sc2.position"] = sc2_stub.position
+        sys.modules["sc2.units"] = MagicMock()
+        sys.modules["sc2.unit"] = MagicMock()
+        sys.modules["sc2.bot_ai"] = MagicMock()
+        sys.modules["sc2.ids"] = MagicMock()
+        sys.modules["sc2.ids.unit_typeid"] = MagicMock()
+        sys.modules["sc2.ids.ability_id"] = MagicMock()
+        sys.modules["sc2.ids.upgrade_id"] = MagicMock()
+
+
+# 모듈 로드 시 즉시 실행 (collection 전)
+_inject_sc2_stubs()
+_ensure_wzc_path_first()
+
+
+def pytest_configure(config):
+    """pytest 설정 단계에서 경로 및 sc2 stub을 보장한다."""
+    _inject_sc2_stubs()
+    _ensure_wzc_path_first()
+
+
+def pytest_sessionstart(session):
+    """세션 시작 시점에도 경로를 재보장한다."""
+    _ensure_wzc_path_first()
+
+
+def pytest_runtest_setup(item):
+    """각 테스트 실행 직전: pytest가 rootdir를 sys.path[0]에 추가한 후에도 WZC_PATH를 최우선으로 보장한다."""
+    _ensure_wzc_path_first()
+
+
+def pytest_runtest_call(item):
+    """테스트 함수 호출 직전 최종 경로 보장 (pytest_runtest_setup 이후에도 경로가 바뀌는 경우 방어)."""
+    _ensure_wzc_path_first()
+
+
+def pytest_collect_file(parent, file_path):
+    """각 테스트 파일 수집 직전에도 경로를 보장한다 (collection-time import 보호)."""
+    _ensure_wzc_path_first()
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures

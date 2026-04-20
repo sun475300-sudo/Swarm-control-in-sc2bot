@@ -160,6 +160,11 @@ class GameStateBlackboard:
         self.is_under_attack: bool = False
         self.attacked_bases: Set[int] = set()  # 공격받은 기지 태그
 
+        # === 견제 성과 추적 ===
+        self.harass_workers_killed: int = 0    # 누적 적 일꾼 킬 수
+        self.harass_raids_executed: int = 0    # 누적 견제 횟수
+        self.harass_active: bool = False        # 현재 견제 중 여부
+
         # === 캐시된 계산 결과 ===
         self._cache: Dict[str, Any] = {}
         self._cache_timestamps: Dict[str, float] = {}

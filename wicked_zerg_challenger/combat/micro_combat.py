@@ -21,6 +21,17 @@ except ImportError:  # Fallbacks for tooling environments
     UpgradeId = None
     Point2 = None
 
+try:
+    from utils.position_utils import get_center_position as _get_center_position
+except ImportError:
+    def _get_center_position(units):
+        if not units:
+            return None
+        total_x = sum(u.position.x for u in units)
+        total_y = sum(u.position.y for u in units)
+        n = len(units)
+        return Point2((total_x / n, total_y / n)) if Point2 and n else None
+
 
 class AntiSplashAwareness:
     """Detects splash threats and provides repulsion/separation boosts."""
@@ -569,11 +580,9 @@ class MicroCombat:
         self._issue_actions(actions)
 
     def _find_center_of_mass(self, units) -> Optional[Point2]:
-        if not units or not Point2:
+        if not units:
             return None
-        total_x = sum(u.position.x for u in units)
-        total_y = sum(u.position.y for u in units)
-        return Point2((total_x / len(units), total_y / len(units)))
+        return _get_center_position(units)
 
     @staticmethod
     def _closest_enemy(unit, enemies: Iterable):

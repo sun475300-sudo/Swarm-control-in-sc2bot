@@ -40,6 +40,15 @@ else:
 
 from utils.logger import get_logger
 from utils.frame_cache import FrameCache, cached_per_frame
+try:
+    from game_config import GameConfig as _GameConfig
+    _RETREAT_REGROUP = _GameConfig.RETREAT_RATIO_REGROUP
+    _RETREAT_CLOSEST = _GameConfig.RETREAT_RATIO_CLOSEST_BASE
+    _RETREAT_EMERGENCY = _GameConfig.RETREAT_RATIO_EMERGENCY
+except (ImportError, AttributeError):
+    _RETREAT_REGROUP = 1.3
+    _RETREAT_CLOSEST = 1.5
+    _RETREAT_EMERGENCY = 2.0
 from combat.initialization import initialize_combat_state, initialize_managers, reset_combat_state
 from combat.enemy_tracking import (
     track_enemy_expansions, get_anti_air_threats, find_densest_enemy_position,
@@ -2255,24 +2264,24 @@ class CombatManager:
             game_time = getattr(self.bot, "time", 0)
             ratio = enemy_supply / max(our_supply, 1)
 
-            if ratio >= 2.0:
-                # ★ 긴급 후퇴: 본진으로 (100%+ 열세)
+            if ratio >= _RETREAT_EMERGENCY:
+                # 긴급 후퇴: 본진으로 (100%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[RETREAT-EMERGENCY] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
                     )
                 await self._retreat_to_base(engaged_units)
-            elif ratio >= 1.5:
-                # ★ 후퇴: 가장 가까운 기지로 (50%+ 열세)
+            elif ratio >= _RETREAT_CLOSEST:
+                # 후퇴: 가장 가까운 기지로 (50%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[RETREAT] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
                     )
                 await self._retreat_to_closest_base(engaged_units)
-            elif ratio >= 1.3:
-                # ★ Phase 15: 점진적 후퇴 — 랠리 포인트로 재집결 (30%+ 열세)
+            elif ratio >= _RETREAT_REGROUP:
+                # 점진적 후퇴 — 랠리 포인트로 재집결 (30%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[REGROUP] [{int(game_time)}s] "

@@ -6,9 +6,18 @@ from types import SimpleNamespace
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "wicked_zerg_challenger"
 os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+# WZC path must come BEFORE project root so that `utils` resolves to
+# wicked_zerg_challenger/utils (not the root utils package).
 for candidate in (str(ROOT), str(PACKAGE_ROOT)):
     if candidate not in sys.path:
         sys.path.insert(0, candidate)
+# Force PACKAGE_ROOT at index 0 even if it was already in sys.path elsewhere.
+while str(PACKAGE_ROOT) in sys.path:
+    sys.path.remove(str(PACKAGE_ROOT))
+sys.path.insert(0, str(PACKAGE_ROOT))
+for _m in list(sys.modules):
+    if _m == "utils" or _m.startswith("utils."):
+        del sys.modules[_m]
 
 import pytest
 
