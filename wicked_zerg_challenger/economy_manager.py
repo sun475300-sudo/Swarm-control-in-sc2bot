@@ -122,7 +122,7 @@ class EconomyManager:
         self._inject_attempts: int = 0
         self._inject_successes: int = 0
 
-    def reset(self):
+    def reset(self) -> None:
         """게임 간 상태 초기화 (훈련 에피소드 간 호출 필수)"""
         self._gold_bases_cache = []
         self._gold_cache_time = 0
@@ -1268,7 +1268,7 @@ class EconomyManager:
                                         except Exception as e:
                                             self.logger.warning(f"[ECONOMY_WARN] Spine build failed: {e}")
 
-    def _get_first_larva(self):
+    def _get_first_larva(self) -> "Optional[Any]":
         larva = getattr(self.bot, "larva", None)
         if not larva:
             return None
@@ -2731,7 +2731,7 @@ class EconomyManager:
     # Expansion Optimization & Telemetry (Phase 17)
     # ========================================
 
-    def _check_first_expansion_timing(self):
+    def _check_first_expansion_timing(self) -> bool:
         """1분 확장 타이밍 정밀 측정"""
         if not hasattr(self.bot, "townhalls") or self.bot.townhalls.amount < 2:
             return
@@ -2970,7 +2970,7 @@ class EconomyManager:
                             self.bot.do(worker.gather(minerals.closest_to(worker)))
                             workers_moved += 1
 
-    def enable_gas_boost_mode(self, duration: float = 120):
+    def enable_gas_boost_mode(self, duration: float = 120) -> None:
         """
         ★ Phase 18: 가스 부스트 모드 활성화 ★
 
@@ -2985,7 +2985,7 @@ class EconomyManager:
 
         self.logger.info(f"[ECONOMY] [*] GAS BOOST MODE ACTIVATED (duration: {duration}s) [*]")
 
-    def disable_gas_boost_mode(self):
+    def disable_gas_boost_mode(self) -> None:
         """가스 부스트 모드 비활성화"""
         self.gas_boost_mode = False
         self.logger.info(f"[ECONOMY] Gas boost mode deactivated")
