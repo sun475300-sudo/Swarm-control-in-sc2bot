@@ -223,8 +223,8 @@ class SpellUnitManager:
                                 )
                                 self.infestor_last_spell[infestor_tag] = current_time
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
             # Fungal Growth (area damage)
             if time_since_spell >= self.FUNGAL_GROWTH_COOLDOWN:
@@ -251,8 +251,8 @@ class SpellUnitManager:
                                 )
                             )
                             self.infestor_last_spell[infestor_tag] = current_time
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
     async def _update_vipers(self):
         """Update Viper spell usage"""
@@ -291,8 +291,8 @@ class SpellUnitManager:
                             b.do(viper(consume_ability, consume_target))
                             self.viper_last_consume[viper_tag] = current_time
                             continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
             # Abduct (pull high-value targets)
             if time_since_spell >= self.ABDUCT_COOLDOWN:
@@ -327,8 +327,8 @@ class SpellUnitManager:
                                 b.do(viper(AbilityId.ABDUCT_ABDUCT, target))
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
             # Parasitic Bomb (air units)
             if time_since_spell >= self.PARASITIC_BOMB_COOLDOWN:
@@ -364,8 +364,8 @@ class SpellUnitManager:
                                 )
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
             # Blinding Cloud (ground units)
             if time_since_spell >= self.BLINDING_CLOUD_COOLDOWN:
@@ -407,8 +407,8 @@ class SpellUnitManager:
                                     )
                                 )
                                 self.viper_last_spell[viper_tag] = current_time
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
     def _find_best_fungal_target(
         self, infestor: Unit, enemies: List[Unit]
@@ -540,8 +540,8 @@ class SpellUnitManager:
                             if b.iteration % 50 == 0:
                                 logger.info(f"[{int(current_time)}s] Bile targeting enemy base!")
                             continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
                 # 사거리 내 모든 건물
                 nearby_structures = [s for s in enemy_structures if ravager.distance_to(s) <= 9.0]
@@ -552,8 +552,8 @@ class SpellUnitManager:
                         b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                         self.ravager_last_bile[ravager_tag] = current_time
                         continue
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
             # ★ 우선순위 2: 중갑 고가치 유닛
             if enemy_units:
@@ -573,8 +573,8 @@ class SpellUnitManager:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                             self.ravager_last_bile[ravager_tag] = current_time
                             continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
                 # ★ 우선순위 3: 밀집된 적 병력 (3기 이상)
                 nearby_enemies = [e for e in enemy_units if ravager.distance_to(e) <= 9.0]
@@ -585,8 +585,8 @@ class SpellUnitManager:
                         try:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_position))
                             self.ravager_last_bile[ravager_tag] = current_time
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
     def _find_best_bile_position(self, ravager: Unit, enemies: List[Unit]) -> Optional[Point2]:
         """
@@ -644,8 +644,8 @@ class SpellUnitManager:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
                     continue
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
             # 조건 2: 체력 50% 이하 + 적 2기 이상
             health_ratio = baneling.health / baneling.health_max if baneling.health_max > 0 else 1.0
@@ -653,8 +653,8 @@ class SpellUnitManager:
                 try:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
     async def _update_overseers(self):
         """
@@ -711,8 +711,8 @@ class SpellUnitManager:
                 try:
                     b.do(overseer(AbilityId.CONTAMINATE_CONTAMINATE, target))
                     self.overseer_last_contaminate[overseer_tag] = current_time
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"[SPELL] spell execution failed: {e}")
 
     @staticmethod
     def _unit_type_ids(names: List[str]) -> List[object]:
