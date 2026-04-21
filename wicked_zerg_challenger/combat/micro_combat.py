@@ -16,10 +16,7 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
-    UpgradeId = None
-    Point2 = None
+    from utils.sc2_stubs import UnitTypeId, AbilityId, UpgradeId, Point2
 
 
 class AntiSplashAwareness:

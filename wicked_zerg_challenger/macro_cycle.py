@@ -23,9 +23,7 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
-    UnitTypeId = None
-    AbilityId = None
-    Point2 = None
+    from utils.sc2_stubs import UnitTypeId, AbilityId, Point2
 
 
 class MacroPriority(Enum):

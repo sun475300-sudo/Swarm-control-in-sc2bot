@@ -13,7 +13,7 @@ from utils.logger import get_logger
 try:
     from sc2.position import Point2
 except ImportError:
-    Point2 = tuple
+    from utils.sc2_stubs import Point2
 
 
 class SpatialOptimizer:

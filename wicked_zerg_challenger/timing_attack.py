@@ -22,8 +22,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
 except ImportError:
-    UnitTypeId = None
-    UpgradeId = None
+    from utils.sc2_stubs import UnitTypeId, UpgradeId
 
 
 class AttackPhase(Enum):

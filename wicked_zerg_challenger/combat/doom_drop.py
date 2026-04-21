@@ -25,10 +25,7 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
 except ImportError:
-    AbilityId = None
-    UnitTypeId = None
-    UpgradeId = None
-    Point2 = None
+    from utils.sc2_stubs import AbilityId, UnitTypeId, UpgradeId, Point2
     from utils.sc2_stubs import Unit, Units
 
 from utils.logger import get_logger

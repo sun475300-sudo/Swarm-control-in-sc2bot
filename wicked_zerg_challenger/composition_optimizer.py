@@ -19,9 +19,7 @@ from enum import Enum
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    UnitTypeId = None
-
-
+    from utils.sc2_stubs import UnitTypeId
 logger = logging.getLogger(__name__)
 
 

@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Set, Tuple
 try:
     from sc2.position import Point2
 except ImportError:
-    Point2 = None
+    from utils.sc2_stubs import Point2
 
 
 class CreepHighway:

@@ -20,9 +20,7 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    UnitTypeId = None
-    AbilityId = None
-
+    from utils.sc2_stubs import UnitTypeId, AbilityId
 from utils.logger import get_logger
 
 

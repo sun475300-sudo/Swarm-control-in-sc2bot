@@ -23,11 +23,7 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
-    BotAI = None
-    UnitTypeId = None
-    AbilityId = None
-    Point2 = None
-
+    from utils.sc2_stubs import BotAI, UnitTypeId, AbilityId, Point2
 try:
     from game_state_blackboard import GameStateBlackboard, ThreatLevel, AuthorityMode
 except ImportError:

@@ -20,9 +20,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
-
+    from utils.sc2_stubs import UnitTypeId, Point2
 # Import modular components
 from combat.boids_swarm_control import BoidsSwarmController
 from combat.potential_fields import PotentialFieldController

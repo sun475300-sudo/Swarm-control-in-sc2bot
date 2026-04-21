@@ -16,9 +16,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
-    Unit = None
+    from utils.sc2_stubs import UnitTypeId, Point2, Unit
 
 
 class MutaliskMicroController:

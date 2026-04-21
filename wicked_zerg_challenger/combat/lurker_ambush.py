@@ -28,10 +28,7 @@ try:
     from sc2.position import Point2
     SC2_AVAILABLE = True
 except ImportError:
-    BotAI = object
-    UnitTypeId = None
-    AbilityId = None
-    Unit = object
+    from utils.sc2_stubs import BotAI, UnitTypeId, AbilityId, Unit
     Units = list
     Point2 = tuple
     SC2_AVAILABLE = False

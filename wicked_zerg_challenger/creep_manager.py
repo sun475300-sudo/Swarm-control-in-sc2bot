@@ -24,9 +24,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    Point2 = None
-    AbilityId = None
-    UnitTypeId = None
+    from utils.sc2_stubs import Point2, AbilityId, UnitTypeId
 
 
 def await_or_sync(func, *args, **kwargs):

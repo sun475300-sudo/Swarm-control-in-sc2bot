@@ -21,9 +21,7 @@ try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    BotAI = None
-    UnitTypeId = None
-
+    from utils.sc2_stubs import BotAI, UnitTypeId
 try:
     from blackboard import Blackboard as GameStateBlackboard, AuthorityMode
 except ImportError:
