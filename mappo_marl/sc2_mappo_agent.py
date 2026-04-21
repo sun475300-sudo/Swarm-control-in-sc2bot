@@ -41,8 +41,19 @@ try:
     from torch.distributions import Categorical
 
     HAS_TORCH = True
+    _TorchModuleBase = nn.Module
 except ImportError:
     HAS_TORCH = False
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
+
+    class _TorchModuleBase:
+        """Placeholder base when PyTorch is unavailable."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            raise RuntimeError("PyTorch is not installed; use the NumPy counterpart")
 
 # ===================================================================
 # NumPy fallback helpers
@@ -169,7 +180,7 @@ class NumpyMLP:
 # ===================================================================
 
 
-class SharedObsEncoderTorch(nn.Module):
+class SharedObsEncoderTorch(_TorchModuleBase):
     """Encodes per-agent local observations into a latent vector."""
 
     def __init__(self, obs_dim: int, encoder_dim: int, hidden_dim: int):
@@ -204,7 +215,7 @@ class SharedObsEncoderNumpy:
 # ===================================================================
 
 
-class CentralizedCriticTorch(nn.Module):
+class CentralizedCriticTorch(_TorchModuleBase):
     """Value network that takes the global state and outputs V(s)."""
 
     def __init__(self, state_dim: int, hidden_dim: int):
@@ -239,7 +250,7 @@ class CentralizedCriticNumpy:
 # ===================================================================
 
 
-class DecentralizedActorTorch(nn.Module):
+class DecentralizedActorTorch(_TorchModuleBase):
     """Per-agent policy network with action masking support."""
 
     def __init__(self, encoder_dim: int, action_dim: int, hidden_dim: int):
