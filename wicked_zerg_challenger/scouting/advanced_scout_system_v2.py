@@ -28,14 +28,26 @@ try:
 except ImportError:
     class BotAI:
         pass
+
     class UnitTypeId:
-        pass
+        DRONE = "DRONE"
+        ZERGLING = "ZERGLING"
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+        CHANGELING = "CHANGELING"
+        QUEEN = "QUEEN"
+        ROACH = "ROACH"
+        HYDRALISK = "HYDRALISK"
+
     class AbilityId:
         pass
+
     class UpgradeId:
         pass
+
     class Point2:
         pass
+
     class Unit:
         pass
 
