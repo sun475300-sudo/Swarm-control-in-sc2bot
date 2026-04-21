@@ -59,6 +59,7 @@ class RavagerMicro:
 
         # Cooldown tracking
         self.last_shot_time: Dict[int, float] = {}  # unit_tag -> time
+        self.logger = get_logger("RavagerMicro")
 
     def is_on_cooldown(self, ravager: Unit, current_time: float) -> bool:
         """Check if Ravager ability is on cooldown."""
@@ -238,6 +239,7 @@ class LurkerMicro:
 
         # State tracking
         self.burrowed_lurkers: Set[int] = set()
+        self.logger = get_logger("LurkerMicro")
 
     def should_burrow(self, lurker: Unit, enemy_units) -> bool:
         """Check if Lurker should burrow."""
@@ -412,6 +414,8 @@ class QueenMicro:
                 UnitTypeId.QUEEN,
             }
 
+        self.logger = get_logger("QueenMicro")
+
     def find_transfuse_target(
         self,
         queen: Unit,
@@ -536,6 +540,8 @@ class ViperMicro:
                 UnitTypeId.BATTLECRUISER,
             }
 
+        self.logger = get_logger("ViperMicro")
+
     def find_abduct_target(
         self,
         viper: Unit,
@@ -652,6 +658,7 @@ class CorruptorMicro:
 
         # Cooldown tracking
         self.last_spray_time: Dict[int, float] = {}  # unit_tag -> time
+        self.logger = get_logger("CorruptorMicro")
 
         # High-armor targets (prioritize for Caustic Spray)
         self.priority_targets: Set = set()
@@ -1094,6 +1101,8 @@ class FocusFireCoordinator:
         # ★ Phase 18: Memory leak prevention ★
         self.max_tracked_units = 500  # Maximum tracked entries
         self.last_cleanup_time = 0
+
+        self.logger = get_logger("FocusFire")
 
     def select_focus_target(
         self,
