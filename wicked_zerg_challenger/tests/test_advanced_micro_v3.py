@@ -24,7 +24,10 @@ try:
         RavagerMicro, LurkerMicro, QueenMicro, ViperMicro,
         CorruptorMicro, FocusFireCoordinator
     )
-    from sc2.position import Point2
+    try:
+        from sc2.position import Point2
+    except ImportError:
+        from utils.sc2_stubs import Point2
     SC2_AVAILABLE = True
 except (ImportError, TypeError):
     SC2_AVAILABLE = False
