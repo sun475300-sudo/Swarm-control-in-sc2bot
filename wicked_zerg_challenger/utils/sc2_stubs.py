@@ -69,6 +69,16 @@ class _StringEnumMeta(type):
             cache[name] = _StubMember(name)
         return cache[name]
 
+    def __getitem__(cls, name: str) -> _StubMember:
+        # Enum-style `Race["Zerg"]` lookup. Fails KeyError on non-str
+        # so `isinstance(x, Race)` round-trip code paths are preserved.
+        if not isinstance(name, str):
+            raise KeyError(name)
+        return cls.__getattr__(name)
+
+    def __contains__(cls, item) -> bool:
+        return isinstance(item, _StubMember)
+
     def __iter__(cls):
         cache = cls.__dict__.get("_stub_cache", {})
         return iter(cache.values())

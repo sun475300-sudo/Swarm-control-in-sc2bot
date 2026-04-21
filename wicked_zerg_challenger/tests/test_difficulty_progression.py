@@ -23,18 +23,14 @@ import pytest
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# 이 테스트는 실제 sc2.data.Difficulty/Race enum 동작(해시, __members__, 비교)에 의존한다.
-# sc2가 설치되지 않은 환경에서는 stub의 문자열-기반 값과 타입이 달라지므로 전체 모듈을 skip.
+# sc2가 설치되지 않으면 utils.sc2_stubs의 _StubMember(str) 기반 Difficulty/Race를
+# 사용한다. __getitem__/이름 문자열/해시 모두 실제 sc2 enum과 호환되므로
+# 대부분 테스트가 동작하지만, 일부(난이도 진행/승률 저장/로드 등) 상세 동작에
+# 차이가 있어 세부 케이스가 실패할 수 있음.
 try:
     from sc2.data import Difficulty, Race
-    _HAS_SC2 = True
 except ImportError:
-    _HAS_SC2 = False
-
-pytestmark = pytest.mark.skipif(
-    not _HAS_SC2,
-    reason="sc2 (burnysc2) 미설치 — 실제 Difficulty/Race enum 동작에 의존",
-)
+    from utils.sc2_stubs import Difficulty, Race
 
 from difficulty_progression import DifficultyProgression
 
