@@ -45,6 +45,29 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # Minimal torch shim so the Torch-based class bodies below can be
+    # imported without torch installed. The classes simply become unusable
+    # at runtime (all agent methods branch on ``HAS_TORCH``); module import
+    # must still succeed so NumPy fallback code paths keep working.
+    torch = None  # type: ignore[assignment]
+
+    class _NnModuleShim:
+        """Stand-in for ``torch.nn.Module`` when torch is unavailable."""
+
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "PyTorch is not installed; instantiate the NumPy variant instead."
+            )
+
+    class _NnShim:
+        Module = _NnModuleShim
+
+        def __getattr__(self, name):  # pragma: no cover - defensive only
+            raise RuntimeError(f"PyTorch not installed; nn.{name} unavailable")
+
+    nn = _NnShim()  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback primitives

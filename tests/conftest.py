@@ -18,6 +18,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# sc2(burnysc2) 스텁 설치 — 실제 패키지가 없을 때 collection/import 실패 방지
+from _sc2_testing_stub import install_sc2_stub  # noqa: E402
+
+install_sc2_stub()
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
