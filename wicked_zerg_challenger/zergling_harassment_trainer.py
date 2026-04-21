@@ -45,9 +45,9 @@ class ZerglingHarassmentTrainer:
         self.next_squad_id = 1
 
         # 괴롭힘 설정 (게임 초반 최적화)
-        self.SQUAD_SIZE = 4  # 분대당 저글링 수 (6 → 4, 더 빠른 괴롭힘)
+        self.SQUAD_SIZE = 4  # 분대당 저글링 수 (6 -> 4, 더 빠른 괴롭힘)
         self.MIN_LINGS_FOR_HARASS = 4  # 괴롭힘에 필요한 최소 저글링
-        self.MAX_SQUADS = 6  # 최대 분대 수 (4 → 6, 더 많은 동시 괴롭힘)
+        self.MAX_SQUADS = 6  # 최대 분대 수 (4 -> 6, 더 많은 동시 괴롭힘)
 
         # 타겟 우선순위
         self.WORKER_PRIORITY = 100
@@ -62,7 +62,7 @@ class ZerglingHarassmentTrainer:
 
         # 멀티태스킹 설정 (게임 초반 집중 괴롭힘)
         self.MULTITASK_ENABLED = True
-        self.HARASSMENT_INTERVAL = 3.0  # 괴롭힘 간격 (5초 → 3초, 더 빠른 괴롭힘)
+        self.HARASSMENT_INTERVAL = 3.0  # 괴롭힘 간격 (5초 -> 3초, 더 빠른 괴롭힘)
 
         # 통계
         self.total_worker_kills = 0
@@ -137,7 +137,7 @@ class ZerglingHarassmentTrainer:
             # 새 분대 생성
             squad_lings = idle_lings[:self.SQUAD_SIZE]
             
-            # ★ Unit Authority Check ★
+            # [*] Unit Authority Check [*]
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 from unit_authority_manager import AuthorityLevel
                 ling_tags = {l.tag for l in squad_lings}

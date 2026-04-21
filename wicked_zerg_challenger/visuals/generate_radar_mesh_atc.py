@@ -7,7 +7,7 @@
   1. 군집 드론(Sentinel)이 공역에 배치되어 레이더 망을 형성
   2. 레이더 망 내부로 진입하는 유저 드론을 감지
   3. 유저 드론에게 비행 시간(Time Slot)을 할당
-  4. 시간 만료 시 알림 전송 → 착륙 유도
+  4. 시간 만료 시 알림 전송 -> 착륙 유도
 
 python generate_radar_mesh_atc.py
 """
@@ -95,7 +95,7 @@ def radar_system_overview():
         cy = sp[1] + cone_r * np.sin(cone_angles)
         cz = np.full_like(cone_angles, sentinel_alt - 40)
 
-        # 꼭대기 → 바닥 원
+        # 꼭대기 -> 바닥 원
         fig.add_trace(go.Scatter3d(
             x=np.append(cx, sp[0]),
             y=np.append(cy, sp[1]),
@@ -152,7 +152,7 @@ def radar_system_overview():
         hoverinfo="text",
     ))
 
-    # 유저 드론 → 지면 투영선 (위치 파악용)
+    # 유저 드론 -> 지면 투영선 (위치 파악용)
     for i in range(n_users):
         fig.add_trace(go.Scatter3d(
             x=[user_x[i], user_x[i]],
@@ -312,7 +312,7 @@ def radar_mesh_network():
             showlegend=False, hoverinfo="skip",
         ))
 
-        # 수직 감지 콘 (드론 → 지면)
+        # 수직 감지 콘 (드론 -> 지면)
         for ang_sample in range(0, 360, 60):
             rad = math.radians(ang_sample)
             fig.add_trace(go.Scatter3d(
@@ -369,7 +369,7 @@ def radar_mesh_network():
     fig.add_trace(go.Scatter3d(
         x=[10], y=[0], z=[50],
         mode="text",
-        text=["감지 범위 중첩 →\n빈틈 없는 망 형성"],
+        text=["감지 범위 중첩 ->\n빈틈 없는 망 형성"],
         textfont=dict(size=10, color="#666"),
         showlegend=False,
     ))
@@ -397,14 +397,14 @@ def radar_mesh_network():
 
 def radar_user_detection():
     """
-    유저 드론 진입 → 감지 → 시간 할당 → 비행 → 알림 → 착륙
+    유저 드론 진입 -> 감지 -> 시간 할당 -> 비행 -> 알림 -> 착륙
     전체 운용 시나리오를 타임라인으로 시각화
     """
     logger.info("유저 드론 감지 + 시간 할당 시나리오")
 
     fig = go.Figure()
 
-    # 시나리오 타임라인 (왼→오, 간격 넓힘)
+    # 시나리오 타임라인 (왼->오, 간격 넓힘)
     events = [
         {"time": 0, "label": "공역 진입",
          "icon": "circle", "color": "#4CAF50", "size": 16,
@@ -510,10 +510,10 @@ def radar_user_detection():
         ))
 
     fig.update_layout(
-        title=dict(text="유저 드론 운용 시나리오: 진입 → 감지 → 시간할당 → 알림 → 착륙",
+        title=dict(text="유저 드론 운용 시나리오: 진입 -> 감지 -> 시간할당 -> 알림 -> 착륙",
                    font=dict(size=18, family="Arial Black"), x=0.5),
         scene=dict(
-            xaxis=dict(title="시간 →", range=[-2, 28]),
+            xaxis=dict(title="시간 ->", range=[-2, 28]),
             yaxis=dict(visible=False, range=[-3, 3]),
             zaxis=dict(visible=False, range=[-3, 9]),
             camera=dict(eye=dict(x=0, y=-2.5, z=0.5)),
@@ -666,7 +666,7 @@ def radar_operation_concept():
         name="시간 만료 경고",
     ))
 
-    # 착륙 유도 경로 (User D → 지면)
+    # 착륙 유도 경로 (User D -> 지면)
     land_t = np.linspace(0, 1, 20)
     fig.add_trace(go.Scatter3d(
         x=(-4 + land_t * 2).tolist(),

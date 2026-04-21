@@ -50,14 +50,14 @@ class DefeatDetection:
         self.last_stand_active = False
         self.last_stand_position = None
 
-        # ★★★ 임계값 설정 (패배 판정 기준 강화 - 빠른 게임 종료를 위해) ★★★
+        # [*][*][*] 임계값 설정 (패배 판정 기준 강화 - 빠른 게임 종료를 위해) [*][*][*]
         # 2026-02-15: 승률 0% 이슈 해결을 위해 조건 대폭 완화
         self.military_ratio_critical = 4.0  # 적 병력이 아군의 4.0배 이상 (2.5 -> 4.0)
         self.military_ratio_imminent = 8.0  # 적 병력이 아군의 8.0배 이상 (4.5 -> 8.0)
         self.min_workers_for_recovery = 5   # 최소 일꾼 수 (8 -> 5)
         self.min_minerals_for_recovery = 100  # 최소 미네랄 (200 -> 100)
 
-        # ★★★ 추가: 빠른 포기를 위한 새로운 조건 ★★★
+        # [*][*][*] 추가: 빠른 포기를 위한 새로운 조건 [*][*][*]
         self.max_critical_duration = 60  # 위기 상태 최대 지속 시간 (120초 -> 60초, 훈련 효율 향상)
         self.critical_start_time = None  # 위기 상태 시작 시간
 
@@ -126,7 +126,7 @@ class DefeatDetection:
         Returns:
             (defeat_level, reason)
         """
-        # ★★★ 빠른 포기 조건 추가 ★★★
+        # [*][*][*] 빠른 포기 조건 추가 [*][*][*]
 
         # 1. 기지 전멸 체크
         if await self._check_base_elimination():
@@ -136,7 +136,7 @@ class DefeatDetection:
         if await self._check_structure_elimination():
             return DefeatLevel.INEVITABLE, "모든 건물 파괴됨"
 
-        # ★★★ 3. 일꾼 전멸 + 회복 불가 ★★★
+        # [*][*][*] 3. 일꾼 전멸 + 회복 불가 [*][*][*]
         if await self._check_worker_elimination():
             return DefeatLevel.INEVITABLE, "일꾼 전멸 + 회복 불가능"
 
@@ -155,7 +155,7 @@ class DefeatDetection:
         if production_status[0] >= DefeatLevel.CRITICAL:
             return production_status
 
-        # ★★★ 7. 위기 상태 장기 지속 체크 ★★★
+        # [*][*][*] 7. 위기 상태 장기 지속 체크 [*][*][*]
         duration_status = await self._check_critical_duration()
         if duration_status[0] >= DefeatLevel.INEVITABLE:
             return duration_status
@@ -223,7 +223,7 @@ class DefeatDetection:
 
     async def _check_worker_elimination(self) -> bool:
         """
-        ★★★ 일꾼 전멸 + 회복 불가능 체크 ★★★
+        [*][*][*] 일꾼 전멸 + 회복 불가능 체크 [*][*][*]
 
         조건:
         1. 일꾼 3마리 이하
@@ -256,7 +256,7 @@ class DefeatDetection:
 
     async def _check_critical_duration(self) -> Tuple[int, Optional[str]]:
         """
-        ★★★ 위기 상태 장기 지속 체크 ★★★
+        [*][*][*] 위기 상태 장기 지속 체크 [*][*][*]
 
         위기 상태가 60초 이상 지속되면 패배로 간주
         """
@@ -308,7 +308,7 @@ class DefeatDetection:
             else:
                 return DefeatLevel.DISADVANTAGE, "병력 없음"
 
-        ratio = enemy_military_value / max(our_military_value, 1)  # ★ FIX: division by zero 방어
+        ratio = enemy_military_value / max(our_military_value, 1)  # [*] FIX: division by zero 방어
 
         if ratio >= self.military_ratio_imminent:
             return DefeatLevel.IMMINENT, f"병력 비율 1:{ratio:.1f} (적 압도적 우세)"
@@ -449,13 +449,13 @@ class DefeatDetection:
 
     def _get_current_status(self) -> Dict:
         """현재 패배 감지 상태 반환"""
-        # ★★★ 패배 불가피 시 즉시 항복 (훈련 효율 향상) ★★★
+        # [*][*][*] 패배 불가피 시 즉시 항복 (훈련 효율 향상) [*][*][*]
         should_surrender = self.defeat_level >= DefeatLevel.INEVITABLE
 
-        # ★★★ 추가: 위기 상황이 오래 지속되면 항복 (시간 절약) ★★★
+        # [*][*][*] 추가: 위기 상황이 오래 지속되면 항복 (시간 절약) [*][*][*]
         if self.defeat_level >= DefeatLevel.IMMINENT:
             # 패배 직전 상태가 threshold 이상 지속되면 항복
-            # ★ Feature 90: Use dynamic threshold (default 112 ticks ~40s) ★
+            # [*] Feature 90: Use dynamic threshold (default 112 ticks ~40s) [*]
             surrender_ticks = getattr(self, '_surrender_threshold_ticks', 112)
             game_time = getattr(self.bot, "time", 0)
             if self.critical_moments > surrender_ticks:

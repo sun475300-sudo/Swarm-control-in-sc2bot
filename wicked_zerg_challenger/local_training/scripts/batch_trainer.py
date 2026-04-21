@@ -102,7 +102,7 @@ class BatchTrainer:
             total_samples = 0
 
             self.model.train()
-            loss_fn = nn.CrossEntropyLoss()  # ★ FIX: 루프 외부에서 1회만 생성
+            loss_fn = nn.CrossEntropyLoss()  # [*] FIX: 루프 외부에서 1회만 생성
 
             for epoch in range(epochs):
                 epoch_loss = 0.0
@@ -122,7 +122,7 @@ class BatchTrainer:
 
                     # Backward pass
                     loss.backward()
-                    # ★ FIX: Gradient clipping (폭발 방지)
+                    # [*] FIX: Gradient clipping (폭발 방지)
                     nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                     self.optimizer.step()
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SC2 Swarm Control → Drone ATC: 3D Presentation Visuals Generator
+SC2 Swarm Control -> Drone ATC: 3D Presentation Visuals Generator
 Plotly 기반 인터랙티브 3D 시각화 4파트 생성
 
 사용법:
@@ -48,7 +48,7 @@ def part1_fsm_3d():
 
     # 각 단계별 서브 액션
     sub_actions = {
-        "OPENING": ["Build Pool", "Queen ×2", "Lings ×8", "Natural Exp"],
+        "OPENING": ["Build Pool", "Queen x2", "Lings x8", "Natural Exp"],
         "EARLY GAME": ["Scout Enemy", "Identify Race", "Select Comp", "Drone Up"],
         "MID GAME": ["3rd Base", "Upgrades +1/+1", "Army Build", "Engage"],
         "LATE GAME": ["Max Supply", "Tech Switch", "Multi-Prong", "Final Push"],
@@ -85,7 +85,7 @@ def part1_fsm_3d():
                 textposition="bottom center",
                 textfont=dict(size=9),
                 showlegend=False,
-                hovertext=f"{phase} → {act}",
+                hovertext=f"{phase} -> {act}",
             ))
             # 연결선
             fig.add_trace(go.Scatter3d(
@@ -270,11 +270,11 @@ def part1_hybrid_3d():
 
     # 레이어 간 연결선 (대표)
     connections = [
-        (0, 0, 0, 0, -0.4, 1.5),    # Input → Rule
-        (0, 0, 0, 0, 0.4, 1.5),     # Input → RL
-        (0, -0.4, 1.5, 0, 0, 3),    # Rule → Fusion
-        (0, 0.4, 1.5, 0, 0, 3),     # RL → Fusion
-        (0, 0, 3, 0, 0, 4.5),       # Fusion → Output
+        (0, 0, 0, 0, -0.4, 1.5),    # Input -> Rule
+        (0, 0, 0, 0, 0.4, 1.5),     # Input -> RL
+        (0, -0.4, 1.5, 0, 0, 3),    # Rule -> Fusion
+        (0, 0.4, 1.5, 0, 0, 3),     # RL -> Fusion
+        (0, 0, 3, 0, 0, 4.5),       # Fusion -> Output
     ]
     line_colors = ["#666", "#666", "#2E7D32", "#1565C0", "#E65100"]
 
@@ -388,7 +388,7 @@ def part2_tactical_3d():
                 showlegend=False, hoverinfo="skip",
             ))
 
-    # 순환 화살표 (마지막 → 처음)
+    # 순환 화살표 (마지막 -> 처음)
     angle0 = 0
     anglelast = 4 * (2 * math.pi / 5)
     fig.add_trace(go.Scatter3d(
@@ -398,7 +398,7 @@ def part2_tactical_3d():
         mode="lines",
         line=dict(color="#333", width=3, dash="dash"),
         showlegend=False,
-        hovertext="Cycle: Evaluate → Scout",
+        hovertext="Cycle: Evaluate -> Scout",
     ))
 
     fig.update_layout(
@@ -452,7 +452,7 @@ def part2_engagement_3d():
             hovertext=label.replace("\n", " "),
         ))
 
-    # 연결선 (parent → child)
+    # 연결선 (parent -> child)
     edges = [
         ("start", "ratio"),
         ("ratio", "weakness", "Yes"),
@@ -709,9 +709,9 @@ def part3_forces_3d():
 
     # 힘 벡터들
     forces = [
-        ("Separation (×1.5)", [-0.8, -0.3, 0.1], "#F44336"),
-        ("Alignment (×1.0)", [0.5, 0.7, 0.2], "#2196F3"),
-        ("Cohesion (×1.0)", [0.2, -0.1, 0.3], "#FF9800"),
+        ("Separation (x1.5)", [-0.8, -0.3, 0.1], "#F44336"),
+        ("Alignment (x1.0)", [0.5, 0.7, 0.2], "#2196F3"),
+        ("Cohesion (x1.0)", [0.2, -0.1, 0.3], "#FF9800"),
         ("Threat Avoid", [-0.3, 0.4, 0.5], "#9C27B0"),
         ("Target Seek", [0.6, 0.1, -0.2], "#4CAF50"),
     ]
@@ -770,12 +770,12 @@ def part3_forces_3d():
 
 
 # ═══════════════════════════════════════════════════════
-# Part 4: SC2 → Drone ATC System — 3D
+# Part 4: SC2 -> Drone ATC System — 3D
 # ═══════════════════════════════════════════════════════
 
 def part4_concept_mapping_3d():
-    """4-1. SC2 → Drone ATC 개념 매핑을 3D 브릿지로 표현"""
-    logger.info("[Part 4-1] SC2 → Drone ATC Concept Mapping 3D Bridge")
+    """4-1. SC2 -> Drone ATC 개념 매핑을 3D 브릿지로 표현"""
+    logger.info("[Part 4-1] SC2 -> Drone ATC Concept Mapping 3D Bridge")
 
     sc2_modules = [
         ("Blackboard", "#42A5F5"),
@@ -855,14 +855,14 @@ def part4_concept_mapping_3d():
             line=dict(color=bridge_col, width=width),
             opacity=opacity,
             showlegend=False,
-            hovertext=f"Transfer: {'★' * c} ({sc2_modules[i][0]} → {atc_modules[i][0]})",
+            hovertext=f"Transfer: {'[*]' * c} ({sc2_modules[i][0]} -> {atc_modules[i][0]})",
         ))
 
     # 타이틀 라벨
     fig.add_trace(go.Scatter3d(
         x=[-3], y=[0], z=[8.2],
         mode="text",
-        text=["🎮 SC2 Swarm Control"],
+        text=["[GAME] SC2 Swarm Control"],
         textfont=dict(size=16, color="#1565C0", family="Arial Black"),
         showlegend=False,
     ))
@@ -875,7 +875,7 @@ def part4_concept_mapping_3d():
     ))
 
     fig.update_layout(
-        title=dict(text="SC2 → Drone ATC: Technology Transfer Bridge (3D)",
+        title=dict(text="SC2 -> Drone ATC: Technology Transfer Bridge (3D)",
                    font=dict(size=20)),
         scene=dict(
             xaxis=dict(title="", range=[-5, 5], showticklabels=False, showgrid=False),
@@ -985,7 +985,7 @@ def part4_roadmap_3d():
         ("Stage 1\nSC2 Simulation", 0, "#1565C0",
          ["SC2 게임 환경", "Boids + FSM + RL", "10,000+ 게임 학습"]),
         ("Stage 2\nSim Transfer", 3, "#6A1B9A",
-         ["3D 시뮬레이터", "2D→3D 파라미터", "충돌률 < 0.01%"]),
+         ["3D 시뮬레이터", "2D->3D 파라미터", "충돌률 < 0.01%"]),
         ("Stage 3\nReal Drone", 6, "#2E7D32",
          ["ROS2 + PX4", "Edge Computing", "5대 편대 비행"]),
         ("Stage 4\nATC Scale", 9, "#E65100",
@@ -1042,13 +1042,13 @@ def part4_roadmap_3d():
         fig.add_trace(go.Scatter3d(
             x=[mx], y=[0], z=[2.8],
             mode="text",
-            text=[f"→ {arr}"],
+            text=[f"-> {arr}"],
             textfont=dict(size=10, color="#666"),
             showlegend=False,
         ))
 
     fig.update_layout(
-        title=dict(text="End-to-End Vision: Game → Reality (3D Roadmap)",
+        title=dict(text="End-to-End Vision: Game -> Reality (3D Roadmap)",
                    font=dict(size=20)),
         scene=dict(
             xaxis=dict(title="Development Phase", range=[-1.5, 11]),
@@ -1069,7 +1069,7 @@ def part4_roadmap_3d():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("SC2 → Drone ATC: 3D Presentation Visuals Generator")
+    print("SC2 -> Drone ATC: 3D Presentation Visuals Generator")
     print("=" * 60)
 
     print("\n[Part 1] SC2 Bot Architecture")
@@ -1085,7 +1085,7 @@ if __name__ == "__main__":
     part3_boids_3d()
     part3_forces_3d()
 
-    print("\n[Part 4] SC2 → Drone ATC")
+    print("\n[Part 4] SC2 -> Drone ATC")
     part4_concept_mapping_3d()
     part4_drone_atc_3d()
     part4_roadmap_3d()

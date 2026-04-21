@@ -24,7 +24,7 @@ class Boids3DController:
     3D Boids-based swarm controller for drone fleet management.
 
     SC2 BoidsSwarmController와의 차이:
-    - 모든 벡터: 2D [vx,vy] → 3D [vx,vy,vz]
+    - 모든 벡터: 2D [vx,vy] -> 3D [vx,vy,vz]
     - 신규 힘: altitude_hold (고도 유지), terrain_clearance (지면 이격)
     - 드론 운동학 반영: max_speed, max_acceleration 제한
     """

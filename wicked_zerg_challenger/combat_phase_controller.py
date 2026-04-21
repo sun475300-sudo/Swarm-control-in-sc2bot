@@ -97,7 +97,7 @@ class CombatPhaseController:
         """매 프레임 호출"""
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ MicroV3가 활성이면 직접 유닛 명령 발행 스킵 (분석만 수행) ★
+        # [*] MicroV3가 활성이면 직접 유닛 명령 발행 스킵 (분석만 수행) [*]
         self._skip_commands = hasattr(self.bot, "micro_v3") and self.bot.micro_v3 is not None
 
         # 전투 그룹 업데이트

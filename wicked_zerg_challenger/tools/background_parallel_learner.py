@@ -197,7 +197,7 @@ class BackgroundParallelLearner:
                         if self.verbose:
                             logger.info(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
                         files_skipped += 1
-                        # ★ FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
+                        # [*] FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
                         try:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
                             import shutil
@@ -206,14 +206,14 @@ class BackgroundParallelLearner:
                             pass
                         continue
 
-                    # ★ FIX: Use context manager to ensure file is closed ★
+                    # [*] FIX: Use context manager to ensure file is closed [*]
                     loaded_data = {}
                     with np.load(str(file_path)) as data:
                         loaded_data["states"] = np.copy(data['states'])
                         loaded_data["actions"] = np.copy(data['actions'])
                         loaded_data["rewards"] = np.copy(data['rewards'])
                     
-                    # ★ FIX: NaN/Inf 검증 (오염 데이터 학습 방지)
+                    # [*] FIX: NaN/Inf 검증 (오염 데이터 학습 방지)
                     if (np.any(np.isnan(loaded_data["states"])) or np.any(np.isinf(loaded_data["states"]))
                             or np.any(np.isnan(loaded_data["rewards"])) or np.any(np.isinf(loaded_data["rewards"]))):
                         logger.warning(f"[WARN] Corrupted data (NaN/Inf): {file_path.name} - skipped")

@@ -133,7 +133,7 @@ class ProductionResilience:
         else:
             self.strategy_manager = None
 
-        # ★ Initialize Building Placement Helper ★
+        # [*] Initialize Building Placement Helper [*]
         if PLACEMENT_HELPER_AVAILABLE and BuildingPlacementHelper:
             try:
                 self.placement_helper = BuildingPlacementHelper(bot)
@@ -143,7 +143,7 @@ class ProductionResilience:
         else:
             self.placement_helper = None
 
-        # ★ EconomyManager 연동: 드론 생산 요청 플래그
+        # [*] EconomyManager 연동: 드론 생산 요청 플래그
         self._economy_drone_requested = False
 
         # Shared build reservation map to block duplicate construction across managers
@@ -275,14 +275,14 @@ class ProductionResilience:
         b = self.bot
         self._cleanup_build_reservations()
 
-        # ★ EconomyManager 드론 요청 플래그 소비 (매 호출마다 리셋)
+        # [*] EconomyManager 드론 요청 플래그 소비 (매 호출마다 리셋)
         self._economy_drone_requested = getattr(self, '_economy_drone_requested', False)
 
         # === GAS OVERFLOW PREVENTION: Spend gas when > 1500 ===
         if b.vespene > 1500:
             await self._spend_excess_gas()
 
-        # ★★★ EXPANSION RESERVE: 기지 부족 시 미네랄 비축 ★★★
+        # [*][*][*] EXPANSION RESERVE: 기지 부족 시 미네랄 비축 [*][*][*]
         # FIX: Only block DRONE production, never block army production.
         # After 300s (5 min), stop blocking entirely to avoid army starvation.
         time = getattr(b, "time", 0.0)
@@ -295,7 +295,7 @@ class ProductionResilience:
         # The _expansion_reserve_active flag is checked in _balanced_production
         # to suppress drone production only.
 
-        # ★★★ FIX: 확장 체크를 미네랄 소비보다 먼저 실행 ★★★
+        # [*][*][*] FIX: 확장 체크를 미네랄 소비보다 먼저 실행 [*][*][*]
         # === AGGRESSIVE EXPANSION: Prioritize expansion BEFORE spending minerals ===
         # Zerg needs expansions for macro advantage
         if time >= 60 and b.minerals > 300:  # 300원부터 확장 고려
@@ -312,7 +312,7 @@ class ProductionResilience:
                         pass
 
         # === MINERAL OVERFLOW PREVENTION: Spend minerals when > 600 ===
-        # ★★★ FIX: 임계값 상향 (200->600) + 확장 중엔 소비 금지 ★★★
+        # [*][*][*] FIX: 임계값 상향 (200->600) + 확장 중엔 소비 금지 [*][*][*]
         pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
         bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
 
@@ -344,9 +344,9 @@ class ProductionResilience:
                 await self._force_emergency_production(b)
                 return
 
-            # ★★★ FIX: 미네랄 > 500 조건 제거 — 항상 생산 실행 ★★★
+            # [*][*][*] FIX: 미네랄 > 500 조건 제거 — 항상 생산 실행 [*][*][*]
             # 이전: minerals > 500일 때만 balanced_production 호출
-            # → 미네랄이 0이면 군대 생산이 영원히 안 됨 (치명적 버그)
+            # -> 미네랄이 0이면 군대 생산이 영원히 안 됨 (치명적 버그)
             # 수정: 라바가 있으면 항상 balanced production 실행
             larvae = b.units(UnitTypeId.LARVA)
             if larvae.exists:
@@ -395,7 +395,7 @@ class ProductionResilience:
         if not larvae_list:
             return
 
-        # ★ EXPANSION RESERVE: 2기지 이하 + 150초 이후면 확장 비용 예약 ★
+        # [*] EXPANSION RESERVE: 2기지 이하 + 150초 이후면 확장 비용 예약 [*]
         # FIX: Never block army production. Only suppress drone production when
         # saving for expansion. After 300s, stop suppressing entirely.
         bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
@@ -497,10 +497,10 @@ class ProductionResilience:
                 continue
 
             # Decide: drone or army?
-            # ★ EconomyManager 요청 반영 (이중 생산 방지: 여기서만 실행)
+            # [*] EconomyManager 요청 반영 (이중 생산 방지: 여기서만 실행)
             economy_wants_drone = getattr(self, '_economy_drone_requested', False)
 
-            # ★★★ FIX: Enforce army-heavy production when economy is established ★★★
+            # [*][*][*] FIX: Enforce army-heavy production when economy is established [*][*][*]
             # After 22 drones and 180s, at least 70% of larvae should go to army.
             force_army = False
             if drone_count >= 22 and game_time > 180:
@@ -511,7 +511,7 @@ class ProductionResilience:
                         force_army = True
                 # With 0 produced so far, allow one drone check below
 
-            # ★★★ FIX: Expansion reserve suppresses drone production only ★★★
+            # [*][*][*] FIX: Expansion reserve suppresses drone production only [*][*][*]
             if expansion_reserve_active:
                 force_army = True
 
@@ -540,7 +540,7 @@ class ProductionResilience:
             if unit_produced:
                 army_produced += 1
 
-        # ★ EconomyManager 드론 요청 플래그 리셋 (처리 완료)
+        # [*] EconomyManager 드론 요청 플래그 리셋 (처리 완료)
         self._economy_drone_requested = False
 
         if drones_produced > 0 or army_produced > 0:
@@ -802,18 +802,18 @@ class ProductionResilience:
             # NOTE: Extractor building is now handled by _auto_build_extractors()
             # Called from _auto_build_tech_structures() for consistent timing
 
-            # ★★★ IMPROVED: Spawning Pool timing (TechCoordinator ONLY) ★★★
+            # [*][*][*] IMPROVED: Spawning Pool timing (TechCoordinator ONLY) [*][*][*]
             if self.strategy_manager:
                 spawning_pool_supply = self.strategy_manager.get_pool_supply()
             else:
-                # ★★★ FIX: 17 → 13으로 변경 (13풀 표준) ★★★
+                # [*][*][*] FIX: 17 -> 13으로 변경 (13풀 표준) [*][*][*]
                 spawning_pool_supply = get_learned_parameter("spawning_pool_supply", 13.0)
 
-            # ★★★ NEW: 학습된 시간 기반 타이밍 (94.76초 from learned_build_orders.json) ★★★
+            # [*][*][*] NEW: 학습된 시간 기반 타이밍 (94.76초 from learned_build_orders.json) [*][*][*]
             learned_pool_time = 95.0
             time_based_trigger = time >= learned_pool_time
 
-            # ★★★ NEW: 적 러시 감지 시 12풀로 긴급 전환 ★★★
+            # [*][*][*] NEW: 적 러시 감지 시 12풀로 긴급 전환 [*][*][*]
             if self.strategy_manager and hasattr(self.strategy_manager, 'rush_detection_active'):
                 if self.strategy_manager.rush_detection_active:
                     spawning_pool_supply = 12.0
@@ -824,7 +824,7 @@ class ProductionResilience:
                 emergency_build = supply_used > 20 and b.can_afford(UnitTypeId.SPAWNINGPOOL)
 
                 if (should_build_pool or emergency_build) and b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
-                    # ★★★ USE TECHCOORDINATOR ONLY (No direct build() calls) ★★★
+                    # [*][*][*] USE TECHCOORDINATOR ONLY (No direct build() calls) [*][*][*]
                     tech_coordinator = getattr(b, "tech_coordinator", None)
                     if tech_coordinator and not tech_coordinator.is_planned(UnitTypeId.SPAWNINGPOOL):
                         main_base = b.townhalls.first
@@ -1204,7 +1204,7 @@ class ProductionResilience:
                         try:
                             build_pos = b.townhalls.first.position
 
-                            # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
+                            # [*] BuildingPlacementHelper 사용 (광물/가스 근처 회피) [*]
                             if self.placement_helper:
                                 success = await self.placement_helper.build_structure_safely(
                                     UnitTypeId.ROACHWARREN,
@@ -1246,7 +1246,7 @@ class ProductionResilience:
                         try:
                             build_pos = b.townhalls.first.position
 
-                            # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
+                            # [*] BuildingPlacementHelper 사용 (광물/가스 근처 회피) [*]
                             if self.placement_helper:
                                 success = await self.placement_helper.build_structure_safely(
                                     UnitTypeId.EVOLUTIONCHAMBER,
@@ -1284,7 +1284,7 @@ class ProductionResilience:
                             try:
                                 build_pos = b.townhalls.first.position
 
-                                # ★ BuildingPlacementHelper 사용 (광물/가스 근처 회피) ★
+                                # [*] BuildingPlacementHelper 사용 (광물/가스 근처 회피) [*]
                                 if self.placement_helper:
                                     success = await self.placement_helper.build_structure_safely(
                                         UnitTypeId.HYDRALISKDEN,

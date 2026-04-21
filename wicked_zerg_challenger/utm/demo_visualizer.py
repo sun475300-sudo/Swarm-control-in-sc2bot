@@ -148,7 +148,7 @@ def visualize(
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Y (m)")
     ax.set_zlabel("Altitude (m)")
-    ax.set_title("UTM Drone Swarm — SC2 Boids → 3D Flight Control", fontsize=13)
+    ax.set_title("UTM Drone Swarm — SC2 Boids -> 3D Flight Control", fontsize=13)
 
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -162,7 +162,7 @@ def visualize(
 def main():
     """데모 실행."""
     logger.info("=" * 60)
-    logger.info("  SC2 Swarm AI → UTM Drone Control Demo")
+    logger.info("  SC2 Swarm AI -> UTM Drone Control Demo")
     logger.info("  3D Boids + TTC Collision Prediction + Flight Corridors")
     logger.info("=" * 60)
 

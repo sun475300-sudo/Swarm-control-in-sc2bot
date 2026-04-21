@@ -51,7 +51,7 @@ def get_anti_air_threats(enemy_units, position, range_check=15):
     Returns:
         공중 공격 가능한 적 유닛 리스트
     """
-    # ★ Phase 22: Use set for O(1) lookup + closer_than() ★
+    # [*] Phase 22: Use set for O(1) lookup + closer_than() [*]
     anti_air_names = {
         "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VOIDRAY",
         "VIKINGFIGHTER", "THOR", "CYCLONE", "LIBERATOR",
@@ -89,7 +89,7 @@ def find_densest_enemy_position(enemies):
         # Small group: just return first enemy (no meaningful density)
         return enemy_list[0]
 
-    # ★ Phase 22: Grid-based density (O(N) instead of O(N^2)) ★
+    # [*] Phase 22: Grid-based density (O(N) instead of O(N^2)) [*]
     # Use a spatial grid with 5-unit cells
     cell_size = 5.0
     grid = {}

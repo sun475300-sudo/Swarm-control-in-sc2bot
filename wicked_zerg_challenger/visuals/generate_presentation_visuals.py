@@ -265,7 +265,7 @@ def capstone_digital_twin():
 
 def capstone_llm_integration():
     """
-    자연어 지휘관(Commander) → AgentRouter → 각 모듈 제어
+    자연어 지휘관(Commander) -> AgentRouter -> 각 모듈 제어
     3D 계층 다이어그램 + 데이터 흐름 곡선
     """
     logger.info("LLM + SC2 통합 아키텍처")
@@ -361,21 +361,21 @@ def capstone_llm_integration():
 
     # ── 연결 곡선 (데이터 흐름) ──
     connections = [
-        # 지휘관 → JARVIS
+        # 지휘관 -> JARVIS
         (-3, 0, 9, 3, 0, 9, "#FF6F00"),
-        # JARVIS → AgentRouter
+        # JARVIS -> AgentRouter
         (3, 0, 9, -4, 0, 6, "#FFD600"),
-        # JARVIS → ModelSelector
+        # JARVIS -> ModelSelector
         (3, 0, 9, 0, 0, 6, "#FFD600"),
-        # JARVIS → Orchestrator
+        # JARVIS -> Orchestrator
         (3, 0, 9, 4, 0, 6, "#FFD600"),
-        # Agent층 → Module층
+        # Agent층 -> Module층
         (-4, 0, 6, -6, 0, 3, "#7B1FA2"),
         (-4, 0, 6, -3, 0, 3, "#7B1FA2"),
         (0, 0, 6, 0, 0, 3, "#7B1FA2"),
         (4, 0, 6, 3, 0, 3, "#7B1FA2"),
         (4, 0, 6, 6, 0, 3, "#7B1FA2"),
-        # Module층 → 환경
+        # Module층 -> 환경
         (-6, 0, 3, 0, 0, 0, "#1976D2"),
         (-3, 0, 3, 0, 0, 0, "#1976D2"),
         (0, 0, 3, 0, 0, 0, "#1976D2"),
@@ -460,13 +460,13 @@ def capstone_llm_integration():
 def capstone_self_healing():
     """
     Authority Mode 5단계 상태 전이 + 자가 복구 순환
-    BALANCED → ECONOMY → STRATEGY → COMBAT → EMERGENCY → 복구 → BALANCED
+    BALANCED -> ECONOMY -> STRATEGY -> COMBAT -> EMERGENCY -> 복구 -> BALANCED
     """
     logger.info("자가 복구 로직 흐름도")
 
     fig = go.Figure()
 
-    # 원형 배치의 5개 상태 (시계방향, 아래→위가 긴급도 상승)
+    # 원형 배치의 5개 상태 (시계방향, 아래->위가 긴급도 상승)
     states = [
         {"name": "BALANCED\n(균형 모드)", "angle": 270,
          "color": "#4CAF50", "desc": "모든 시스템\n정상 협업",
@@ -566,7 +566,7 @@ def capstone_self_healing():
             showlegend=False, hoverinfo="skip",
         ))
 
-    # 복구 경로 강조 (EMERGENCY → BALANCED)
+    # 복구 경로 강조 (EMERGENCY -> BALANCED)
     fig.add_trace(go.Scatter3d(
         x=[0], y=[0], z=[3],
         mode="text",
@@ -579,7 +579,7 @@ def capstone_self_healing():
     fig.add_trace(go.Scatter3d(
         x=[2], y=[-3], z=[7.5],
         mode="text",
-        text=["위협 감지 →\n모드 자동 전환"],
+        text=["위협 감지 ->\n모드 자동 전환"],
         textfont=dict(size=12, color="#F44336"),
         showlegend=False,
     ))
@@ -587,7 +587,7 @@ def capstone_self_healing():
     fig.add_trace(go.Scatter3d(
         x=[-3], y=[-2], z=[1],
         mode="text",
-        text=["위협 해소 →\n자동 복구 ↩"],
+        text=["위협 해소 ->\n자동 복구 ↩"],
         textfont=dict(size=12, color="#4CAF50"),
         showlegend=False,
     ))
@@ -726,7 +726,7 @@ def ir_market_painpoint():
         fig.add_trace(go.Scatter3d(
             x=[x], y=[0], z=[-0.8],
             mode="text",
-            text=[f"→ {pp['highlight']}"],
+            text=[f"-> {pp['highlight']}"],
             textfont=dict(size=13, color="#2E7D32", family="Arial Black"),
             showlegend=False,
         ))
@@ -787,7 +787,7 @@ def ir_market_painpoint():
 def ir_virtual_testbed():
     """
     비즈니스 친화적 3블록 아키텍처:
-    Virtual Testbed → AI Brain (C2) → Real Deployment
+    Virtual Testbed -> AI Brain (C2) -> Real Deployment
     """
     logger.info("Virtual Testbed + AI C2 솔루션 개요")
 
@@ -813,7 +813,7 @@ def ir_virtual_testbed():
             "x": 0, "z": 3,
             "color": "#FFD600",
             "features": [
-                "자연어 → 군집 명령 변환",
+                "자연어 -> 군집 명령 변환",
                 "실시간 위협 감지/대응",
                 "자가 복구(Self-Healing)",
                 "관제사 1인 = 수십 대 통제",
@@ -1072,14 +1072,14 @@ def ir_roi_analysis():
                 borderpad=8,
             ),
             dict(
-                text=f"기존: {total_cost_trad}억원 → "
+                text=f"기존: {total_cost_trad}억원 -> "
                      f"Swarm-Net: {total_cost_ours}억원",
                 x=0.22, y=1.08, xref="paper", yref="paper",
                 showarrow=False,
                 font=dict(size=12, color="#1565C0"),
             ),
             dict(
-                text=f"기존: {total_time_trad}개월 → "
+                text=f"기존: {total_time_trad}개월 -> "
                      f"Swarm-Net: {total_time_ours}개월",
                 x=0.78, y=1.08, xref="paper", yref="paper",
                 showarrow=False,
@@ -1107,7 +1107,7 @@ def ir_roi_analysis():
 def ir_business_roadmap():
     """
     3단계 비즈니스 확장 타임라인
-    Phase 1: B2B SaaS → Phase 2: 군 납품 → Phase 3: 글로벌 확장
+    Phase 1: B2B SaaS -> Phase 2: 군 납품 -> Phase 3: 글로벌 확장
     """
     logger.info("비즈니스 모델 & 로드맵")
 
@@ -1191,7 +1191,7 @@ def ir_business_roadmap():
 
         # 상세 정보 (카드 내부)
         details = [
-            (f"🎯 {ph['target']}", 0.3),
+            (f"[TGT] {ph['target']}", 0.3),
             (f"📦 {ph['product']}", -0.5),
             (f"💰 {ph['revenue']}", -1.3),
         ]
@@ -1231,14 +1231,14 @@ def ir_business_roadmap():
     fig.add_trace(go.Scatter3d(
         x=[-3], y=[2.0], z=[2],
         mode="text",
-        text=["기술 검증 완료\n→ 군 시장 진출"],
+        text=["기술 검증 완료\n-> 군 시장 진출"],
         textfont=dict(size=11, color="#FF6F00", family="Arial Black"),
         showlegend=False,
     ))
     fig.add_trace(go.Scatter3d(
         x=[3], y=[2.0], z=[5],
         mode="text",
-        text=["실전 실적 기반\n→ 글로벌 확장"],
+        text=["실전 실적 기반\n-> 글로벌 확장"],
         textfont=dict(size=11, color="#FF6F00", family="Arial Black"),
         showlegend=False,
     ))
@@ -1253,7 +1253,7 @@ def ir_business_roadmap():
     fig.add_trace(go.Scatter3d(
         x=[8.5], y=[0], z=[7.5],
         mode="text",
-        text=["성장 →"],
+        text=["성장 ->"],
         textfont=dict(size=13, color="#999"),
         showlegend=False,
     ))
@@ -1375,7 +1375,7 @@ def section2_drone_growth():
 # ───────────────────────────────────────────────────────────────
 
 def section2_problem_heatmap():
-    """4대 문제 × 4대 환경 심각도 히트맵"""
+    """4대 문제 x 4대 환경 심각도 히트맵"""
     logger.info("[섹션2-2] 문제 심각도 히트맵")
 
     problems = [
@@ -1423,7 +1423,7 @@ def section2_problem_heatmap():
 
     fig.update_layout(
         title=dict(
-            text="공역 통제 문제 심각도 매트릭스 (환경별 × 문제별)",
+            text="공역 통제 문제 심각도 매트릭스 (환경별 x 문제별)",
             font=dict(size=22, family="Arial Black"), x=0.5,
         ),
         xaxis=dict(title="운용 환경", tickfont=dict(size=13, family="Arial Black")),
@@ -1748,7 +1748,7 @@ def section3_gantt_timeline():
 # ───────────────────────────────────────────────────────────────
 
 def section3_e2e_pipeline():
-    """탐지 → 식별 → 시간 할당 → 경고 → 퇴각 유도 5단계 자동화 파이프라인"""
+    """탐지 -> 식별 -> 시간 할당 -> 경고 -> 퇴각 유도 5단계 자동화 파이프라인"""
     logger.info("[섹션3-3] End-to-End 자동화 관제 파이프라인")
 
     fig = go.Figure()
@@ -1813,7 +1813,7 @@ def section3_e2e_pipeline():
     # Redis TTL 라이프사이클 (하단 주석)
     fig.add_annotation(
         x=50, y="기술 스택",
-        text="Redis TTL: 15/30/60분 카운트다운 → Keyspace Notification → 자동 만료 이벤트",
+        text="Redis TTL: 15/30/60분 카운트다운 -> Keyspace Notification -> 자동 만료 이벤트",
         showarrow=False, yshift=-35,
         font=dict(size=12, color="#7B1FA2", family="Arial Black"),
         bgcolor="rgba(243,229,245,0.9)", borderpad=6,
@@ -1847,7 +1847,7 @@ def section3_e2e_pipeline():
 # ───────────────────────────────────────────────────────────────
 
 def section3_sensor_fusion():
-    """RF + Remote ID + Vision AI → Kalman Filter → 통합 탐지 Sankey 다이어그램"""
+    """RF + Remote ID + Vision AI -> Kalman Filter -> 통합 탐지 Sankey 다이어그램"""
     logger.info("[섹션3-4] 3중 센서 퓨전 파이프라인")
 
     fig = go.Figure(data=[go.Sankey(
@@ -1888,15 +1888,15 @@ def section3_sensor_fusion():
             target=[3, 4, 5, 6, 6, 6, 7, 8, 9],
             value= [8, 6, 5, 8, 6, 5, 10, 7, 7],
             color=[
-                "rgba(25,118,210,0.3)",   # RF → 패턴분석
-                "rgba(76,175,80,0.3)",    # RID → 프로토콜파싱
-                "rgba(255,152,0,0.3)",    # YOLO → 객체탐지
-                "rgba(25,118,210,0.3)",   # 패턴분석 → 퓨전
-                "rgba(76,175,80,0.3)",    # 프로토콜파싱 → 퓨전
-                "rgba(255,152,0,0.3)",    # 객체탐지 → 퓨전
-                "rgba(123,31,162,0.3)",   # 퓨전 → 3D위치
-                "rgba(123,31,162,0.3)",   # 퓨전 → 관제DB
-                "rgba(123,31,162,0.3)",   # 퓨전 → 실시간
+                "rgba(25,118,210,0.3)",   # RF -> 패턴분석
+                "rgba(76,175,80,0.3)",    # RID -> 프로토콜파싱
+                "rgba(255,152,0,0.3)",    # YOLO -> 객체탐지
+                "rgba(25,118,210,0.3)",   # 패턴분석 -> 퓨전
+                "rgba(76,175,80,0.3)",    # 프로토콜파싱 -> 퓨전
+                "rgba(255,152,0,0.3)",    # 객체탐지 -> 퓨전
+                "rgba(123,31,162,0.3)",   # 퓨전 -> 3D위치
+                "rgba(123,31,162,0.3)",   # 퓨전 -> 관제DB
+                "rgba(123,31,162,0.3)",   # 퓨전 -> 실시간
             ],
         ),
     )])
@@ -2006,16 +2006,16 @@ def section3_4layer_architecture():
 
     # 계층 간 연결 곡선
     connections = [
-        # 공중 → 지상
+        # 공중 -> 지상
         (-5, 0, -3, 3, "#2E7D32"),
         (-1.5, 0, 0, 3, "#2E7D32"),
         (1.5, 0, 0, 3, "#2E7D32"),
         (5, 0, 3, 3, "#2E7D32"),
-        # 지상 → 백엔드
+        # 지상 -> 백엔드
         (-3, 3, -4, 6, "#1976D2"),
         (0, 3, 0, 6, "#1976D2"),
         (3, 3, 4, 6, "#1976D2"),
-        # 백엔드 → 사용자
+        # 백엔드 -> 사용자
         (-4, 6, -3, 9, "#7B1FA2"),
         (0, 6, -3, 9, "#7B1FA2"),
         (4, 6, 3, 9, "#7B1FA2"),
@@ -2182,7 +2182,7 @@ def section5_expected_effects():
 # ───────────────────────────────────────────────────────────────
 
 def section5_application_matrix():
-    """4대 적용 분야 × 5대 역량 히트맵"""
+    """4대 적용 분야 x 5대 역량 히트맵"""
     logger.info("[섹션5-1] 적용 분야 히트맵")
 
     domains = ["법 집행", "상업/민간", "국방/방산", "공공 안전"]

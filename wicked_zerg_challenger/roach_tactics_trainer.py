@@ -5,7 +5,7 @@ Roach Tactics Trainer - 바퀴 전술 학습 시스템
 바퀴의 특성을 활용한 고급 전술:
 1. 높은 체력 (145 HP) - 탱킹 능력
 2. 잠복 시 빠른 체력 회복 (초당 10 HP)
-3. 히트 앤 런 전술 (공격 → 잠복 회복 → 재공격)
+3. 히트 앤 런 전술 (공격 -> 잠복 회복 -> 재공격)
 4. 탱킹 포지셔닝 (앞줄에서 피해 흡수)
 """
 
@@ -163,7 +163,7 @@ class RoachTacticsTrainer:
             if not self._is_in_combat(roach):
                 continue
 
-            # ★ Unit Authority Check ★
+            # [*] Unit Authority Check [*]
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 from unit_authority_manager import AuthorityLevel
                 # MICRO 권한 요청 (전술적 잠복은 높은 우선순위)
@@ -298,7 +298,7 @@ class RoachTacticsTrainer:
         """
         히트 앤 런 전술
 
-        공격 → 후퇴 → 잠복 회복 → 재공격
+        공격 -> 후퇴 -> 잠복 회복 -> 재공격
         """
         if not self.HIT_AND_RUN_ENABLED:
             return

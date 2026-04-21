@@ -231,7 +231,7 @@ class DestructibleAwarenessSystem:
         if target.priority < 50:
             return
 
-        # ★ SpaceControlTrainer가 이미 처리 중인지 확인 (이중 할당 방지)
+        # [*] SpaceControlTrainer가 이미 처리 중인지 확인 (이중 할당 방지)
         if hasattr(self.bot, "space_control") and self.bot.space_control:
             sc = self.bot.space_control
             if hasattr(sc, "_assigned_targets") and target.position in getattr(sc, "_assigned_targets", set()):
@@ -253,7 +253,7 @@ class DestructibleAwarenessSystem:
                     workers_to_send = workers.closest_n_units(target.position, 5)
                     sent = 0
                     for w in workers_to_send:
-                        # ★ UnitAuthority 체크: 이미 다른 시스템이 사용 중인 일꾼 스킵
+                        # [*] UnitAuthority 체크: 이미 다른 시스템이 사용 중인 일꾼 스킵
                         if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                             try:
                                 from unit_authority_manager import AuthorityLevel

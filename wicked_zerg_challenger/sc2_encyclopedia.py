@@ -74,7 +74,7 @@ ZERG_UNITS = {
         "strong_vs": ["CARRIER", "BATTLECRUISER", "TEMPEST", "VOID_RAY", "COLOSSUS"],
         "weak_vs": ["MARINE", "HYDRALISK", "STALKER", "PHOENIX"],
         "role": "대형 공중유닛 킬러",
-        "upgrade_path": "없음 → 귀부인 변태",
+        "upgrade_path": "없음 -> 귀부인 변태",
     },
     "BROODLORD": {
         "name": "귀부인", "cost": (150, 150, 2),  # morph from corruptor

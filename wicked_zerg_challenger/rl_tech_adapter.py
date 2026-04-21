@@ -29,7 +29,7 @@ except ImportError:
 
 class RLTechAdapter:
     """
-    ★ RL-based Enemy Tech Adaptation System ★
+    [*] RL-based Enemy Tech Adaptation System [*]
 
     적 테크를 관찰하고 최적의 카운터 전략을 선택합니다.
     각 게임 결과를 학습하여 점진적으로 성능을 개선합니다.
@@ -41,22 +41,22 @@ class RLTechAdapter:
         self.knowledge = knowledge_manager or getattr(bot, "knowledge_manager", None)
         self.logger = get_logger("RLTechAdapter")
 
-        # ★ State Observation ★
+        # [*] State Observation [*]
         self.observed_enemy_tech: Set[str] = set()
         self.last_tech_scan = 0
         self.tech_scan_interval = 44  # ~2초마다 스캔
 
-        # ★ Decision State ★
+        # [*] Decision State [*]
         self.current_counter_strategy = "STANDARD"
         self.adaptation_active = False
         self.last_adaptation_time = 0
 
-        # ★ Learning Data ★
+        # [*] Learning Data [*]
         self.game_start_time = 0
         self.adaptations_made: List[Dict] = []  # 이번 게임에서 한 적응들
         self.tech_first_seen: Dict[str, float] = {}  # 각 테크를 처음 본 시간
 
-        # ★ Counter Rules (실시간 조정 가능) ★
+        # [*] Counter Rules (실시간 조정 가능) [*]
         self.counter_priorities = {
             # Terran Tech
             "FACTORY": {
@@ -125,7 +125,7 @@ class RLTechAdapter:
             },
         }
 
-        # ★ Learning Rate ★
+        # [*] Learning Rate [*]
         self.learning_rate = 0.1  # 학습률
         self.success_memory = {}  # {tech_detected: {response: win_rate}}
         self._load_learning_memory()
@@ -139,14 +139,14 @@ class RLTechAdapter:
             self.last_tech_scan = iteration
             game_time = getattr(self.bot, "time", 0)
 
-            # ★ 1. Observe: 적 테크 감지 ★
+            # [*] 1. Observe: 적 테크 감지 [*]
             new_tech_detected = await self._scan_enemy_tech()
 
-            # ★ 2. Decide: 카운터 전략 선택 ★
+            # [*] 2. Decide: 카운터 전략 선택 [*]
             if new_tech_detected:
                 await self._decide_counter_strategy(new_tech_detected, game_time)
 
-            # ★ 3. Act: 전략 실행 ★
+            # [*] 3. Act: 전략 실행 [*]
             await self._execute_adaptation(iteration)
 
         except Exception as e:
@@ -200,7 +200,7 @@ class RLTechAdapter:
                 self.logger.info(f"[RL_TECH] {tech} detected too late ({int(game_time)}s), skipping response")
                 continue
 
-            # ★ 학습된 성공률 확인 ★
+            # [*] 학습된 성공률 확인 [*]
             learned_response = self._get_learned_response(tech)
             if learned_response:
                 counter_rule = learned_response
@@ -215,7 +215,7 @@ class RLTechAdapter:
             self.adaptations_made.append(adaptation)
 
             self.logger.info(
-                f"[RL_TECH] ★★★ ADAPTING to {tech} ★★★\n"
+                f"[RL_TECH] [*][*][*] ADAPTING to {tech} [*][*][*]\n"
                 f"  Counter Units: {counter_rule['counter_units']}\n"
                 f"  Tech Response: {counter_rule['tech_response']}\n"
                 f"  Ratio Boost: +{counter_rule['ratio_boost']*100:.0f}%"
@@ -345,9 +345,9 @@ class RLTechAdapter:
             self.success_memory[tech][response_key] = new_value
 
             self.logger.info(
-                f"[RL_TECH] Learning Update: {tech} → {response_key}\n"
+                f"[RL_TECH] Learning Update: {tech} -> {response_key}\n"
                 f"  Result: {'WIN' if won else 'LOSS'}\n"
-                f"  Win Rate: {old_value:.2%} → {new_value:.2%}"
+                f"  Win Rate: {old_value:.2%} -> {new_value:.2%}"
             )
 
         # 학습 데이터 저장

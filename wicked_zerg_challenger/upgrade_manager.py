@@ -2,7 +2,7 @@
 """
 Evolution Chamber upgrade manager.
 
-★ Phase 18: Enhanced Upgrade System ★
+[*] Phase 18: Enhanced Upgrade System [*]
 - IntelManager integration for counter upgrades
 - Race-specific upgrade priorities
 - Gas reservation system
@@ -37,30 +37,30 @@ class EvolutionUpgradeManager:
     def __init__(self, bot):
         self.bot = bot
         self.last_update = 0
-        self.update_interval = 7  # ★ OPTIMIZED: 11 → 7 (더 자주 체크) ★
-        self.gas_reserve_threshold = 100  # ★ OPTIMIZED: 150 → 100 (가스 자유롭게 사용) ★
+        self.update_interval = 7  # [*] OPTIMIZED: 11 -> 7 (더 자주 체크) [*]
+        self.gas_reserve_threshold = 100  # [*] OPTIMIZED: 150 -> 100 (가스 자유롭게 사용) [*]
 
         # 0순위 업그레이드 상태 추적
         self._zergling_speed_started = False
         self._overlord_speed_started = False
         self.logger = get_logger("UpgradeManager")
-        # ★ StrictUpgradePriority와 중복 연구 방지 플래그 ★
+        # [*] StrictUpgradePriority와 중복 연구 방지 플래그 [*]
         self._strict_priority_active = False
 
         # 2026-01-26 FIX: Evolution Chamber 건설 쿨다운
         self._last_evo_chamber_attempt = 0.0
-        self._evo_chamber_cooldown = 20.0  # ★ OPTIMIZED: 30 → 20초 ★
+        self._evo_chamber_cooldown = 20.0  # [*] OPTIMIZED: 30 -> 20초 [*]
 
-        # ★★★ Phase 18: Gas Reservation System ★★★
+        # [*][*][*] Phase 18: Gas Reservation System [*][*][*]
         self.reserved_upgrades: List[object] = []  # 가스 부족으로 예약된 업그레이드
         self.gas_reservation_threshold = 50  # 가스가 50 이상이면 예약 업그레이드 실행
 
-        # ★★★ Phase 18: IntelManager Integration ★★★
+        # [*][*][*] Phase 18: IntelManager Integration [*][*][*]
         self.intel_based_priority_boost: Dict[str, float] = {}  # {upgrade_type: boost_multiplier}
         self.last_intel_check = 0
         self.intel_check_interval = 110  # ~5초마다
 
-        # ★★★ Phase 18: Timing-Based Upgrades ★★★
+        # [*][*][*] Phase 18: Timing-Based Upgrades [*][*][*]
         self.critical_upgrade_timings = {
             "zergling_speed": 90,  # 1분 30초 - 최우선 (이미 구현됨)
             "melee_attack_1": 180,  # 3분 - 저글링 공격력
@@ -68,7 +68,7 @@ class EvolutionUpgradeManager:
             "melee_attack_2": 360,  # 6분 - 저글링 공격력 2단계
         }
 
-        # ★★★ Phase 18: Race-Specific Priority Modifiers ★★★
+        # [*][*][*] Phase 18: Race-Specific Priority Modifiers [*][*][*]
         self.race_priority_modifiers = {
             "Terran": {"armor": 1.3, "melee": 1.0, "missile": 1.1},  # 테란: 방어력 중요 (마린/해병)
             "Protoss": {"armor": 1.2, "melee": 1.2, "missile": 1.0},  # 프로토스: 근접/방어 균형
@@ -87,36 +87,36 @@ class EvolutionUpgradeManager:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # === ★★★ Phase 18: Process gas reservations ★★★ ===
+        # === [*][*][*] Phase 18: Process gas reservations [*][*][*] ===
         await self._process_gas_reservations()
 
         # === 0순위: 핵심 업그레이드 (생명줄) ===
         await self._research_critical_upgrades(iteration)
 
-        # === ★★★ 테크 변이: 해처리 → 레어 → 군락 ★★★ ===
+        # === [*][*][*] 테크 변이: 해처리 -> 레어 -> 군락 [*][*][*] ===
         await self._upgrade_tech_buildings(iteration)
 
-        # === ★ Phase 14: 변이 유닛 테크 건물 보장 ★ ===
+        # === [*] Phase 14: 변이 유닛 테크 건물 보장 [*] ===
         await self._ensure_morph_tech_buildings(iteration)
 
-        # === ★ IMPROVED: Evolution Chamber 2분 30초부터 건설 ★ ===
+        # === [*] IMPROVED: Evolution Chamber 2분 30초부터 건설 [*] ===
         await self._build_evolution_chamber()
 
         # === 1순위: Evolution Chamber 업그레이드 (2분 30초 이후 즉시 시작) ===
         evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
 
-        # ★★★ IMPROVED: 진화실 완성되면 즉시 업그레이드 시작 (기존: 3분 대기) ★★★
+        # [*][*][*] IMPROVED: 진화실 완성되면 즉시 업그레이드 시작 (기존: 3분 대기) [*][*][*]
         if not evo_chambers.exists:
             return  # 진화실 없으면 리턴
 
         upgrade_order = self._get_upgrade_priority()
         vespene = getattr(self.bot, "vespene", 0)
 
-        # ★★★ CRITICAL: 가스 제약 완화 (업그레이드 우선순위 강화) ★★★
+        # [*][*][*] CRITICAL: 가스 제약 완화 (업그레이드 우선순위 강화) [*][*][*]
         # 가스 50 이상이면 업그레이드 진행 (기존: 150)
         gas_constrained = vespene < 50
 
-        # ★★★ Spire 공중 업그레이드 ★★★
+        # [*][*][*] Spire 공중 업그레이드 [*][*][*]
         spires = self.bot.structures(UnitTypeId.SPIRE).ready | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
         for spire in spires:
             if hasattr(spire, "is_idle") and not spire.is_idle:
@@ -131,7 +131,7 @@ class EvolutionUpgradeManager:
                 if not self._can_research(upgrade_id):
                     continue
 
-                # ★★★ Phase 18: Gas reservation system ★★★
+                # [*][*][*] Phase 18: Gas reservation system [*][*][*]
                 if not self.bot.can_afford(upgrade_id):
                     # 가스가 부족하면 예약
                     vespene_cost = getattr(upgrade_id, "_cost", {}).get("Vespene", 0)
@@ -162,7 +162,7 @@ class EvolutionUpgradeManager:
                 if "FLYER" in upgrade_name:
                     continue
 
-                # ★★★ IMPROVED: 가스 제약 대폭 완화 - 업그레이드 최우선 ★★★
+                # [*][*][*] IMPROVED: 가스 제약 대폭 완화 - 업그레이드 최우선 [*][*][*]
                 # 이제 가스가 부족해도 업그레이드 진행 (최대 3개까지)
                 if gas_constrained:
                     # 상위 3개 업그레이드는 가스 부족해도 진행
@@ -173,7 +173,7 @@ class EvolutionUpgradeManager:
                 if not self._can_research(upgrade_id):
                     continue
 
-                # ★★★ Phase 18: Gas reservation system ★★★
+                # [*][*][*] Phase 18: Gas reservation system [*][*][*]
                 if not self.bot.can_afford(upgrade_id):
                     # 가스가 부족하면 예약
                     vespene_cost = getattr(upgrade_id, "_cost", {}).get("Vespene", 0)
@@ -197,7 +197,7 @@ class EvolutionUpgradeManager:
 
     def _get_upgrade_priority(self) -> List[object]:
         """
-        ★ Phase 18: Get upgrade priority with Intel integration ★
+        [*] Phase 18: Get upgrade priority with Intel integration [*]
 
         Enhanced features:
         - Race-specific priority modifiers
@@ -218,7 +218,7 @@ class EvolutionUpgradeManager:
         composition = self._get_unit_composition()
         enemy_race = self._normalize_enemy_race(getattr(self.bot, "enemy_race", ""))
 
-        # ★★★ Phase 18: IntelManager 연동 - 적 유닛 구성 확인 ★★★
+        # [*][*][*] Phase 18: IntelManager 연동 - 적 유닛 구성 확인 [*][*][*]
         self._update_intel_based_priorities()
 
         # 유닛 수 확인
@@ -227,7 +227,7 @@ class EvolutionUpgradeManager:
         roach_count = composition.get("roach", 0)
         hydra_count = composition.get("hydralisk", 0)
         mutalisk_count = composition.get("mutalisk", 0)
-        # ★ Phase 44: 울트라리스크도 근접 계열 (melee attack upgrade 적용)
+        # [*] Phase 44: 울트라리스크도 근접 계열 (melee attack upgrade 적용)
         ultralisk_count = self.bot.units(UnitTypeId.ULTRALISK).amount if hasattr(self.bot, "units") else 0
 
         total_melee = zergling_count + baneling_count + ultralisk_count
@@ -239,29 +239,29 @@ class EvolutionUpgradeManager:
 
         priorities = []
 
-        # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
+        # [*][*][*] Phase 18: 종족별 우선순위 조정 [*][*][*]
         race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
 
         if is_ranged_main:
-            # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
+            # [*] 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
             # 원거리 공1 -> 공2 -> 공3 -> 방어1...
             # 테크가 막혀있으면(예: 레어 없음) 방어 업그레이드로 넘어감
-            # ★★★ NEW: 바퀴 사용 시 지상 갑피 2단계까지 우선 연구 ★★★
+            # [*][*][*] NEW: 바퀴 사용 시 지상 갑피 2단계까지 우선 연구 [*][*][*]
             if roach_count >= 8:  # 바퀴 8기 이상
                 # 원거리 공1 -> 방어1 -> 방어2 -> 원거리 공2
                 priorities = ["missile", "armor", "armor", "missile", "missile", "armor"]
             else:
                 priorities = ["missile", "missile", "missile", "armor", "armor", "armor"]
         else:
-            # ★ 저글링/맹독충 체제: 근접 공격 + 방어 균형
+            # [*] 저글링/맹독충 체제: 근접 공격 + 방어 균형
             # 근접1 -> 방어1 -> 근접2 -> 방어2...
             priorities = ["melee", "armor", "melee", "armor", "melee", "armor"]
 
-        # ★★★ 공중 유닛이 있으면 공중 업그레이드 추가 ★★★
+        # [*][*][*] 공중 유닛이 있으면 공중 업그레이드 추가 [*][*][*]
         corruptor_count = composition.get("corruptor", 0)
         total_air = mutalisk_count + corruptor_count
 
-        # ★★★ NEW: 뮤탈리스크 사용 시 공중 공격 2단계까지 우선 연구 ★★★
+        # [*][*][*] NEW: 뮤탈리스크 사용 시 공중 공격 2단계까지 우선 연구 [*][*][*]
         if mutalisk_count >= 5:  # 뮤탈리스크 5기 이상
             # 공중 공격을 최우선으로 (level 2까지)
             priorities.insert(0, "air_attack")  # 공중 공1
@@ -287,7 +287,7 @@ class EvolutionUpgradeManager:
 
     def _get_unit_composition(self) -> Dict[str, int]:
         """
-        ★ OPTIMIZED: O(k) instead of O(n*m) using SC2 API's filter
+        [*] OPTIMIZED: O(k) instead of O(n*m) using SC2 API's filter
         Uses C++-optimized units() method instead of manual iteration
         """
         if not hasattr(self.bot, "units"):
@@ -466,7 +466,7 @@ class EvolutionUpgradeManager:
         game_time = getattr(self.bot, "time", 0)
 
         # === 1순위: 저글링 발업 (Metabolic Boost) ===
-        # ★ StrictUpgradePriority가 활성이면 발업은 해당 시스템에 위임 ★
+        # [*] StrictUpgradePriority가 활성이면 발업은 해당 시스템에 위임 [*]
         _strict = getattr(self.bot, "upgrade_priority", None)
         if not self._zergling_speed_started:
             if _strict and not getattr(_strict, "gas_spending_blocked", False):
@@ -511,10 +511,10 @@ class EvolutionUpgradeManager:
             if roaches.amount >= 3:
                 await self._research_roach_speed(iteration)
 
-            # ★ IMPROVED: 히드라 1기부터 발업 시작 (3→1, 사거리가 핵심)
+            # [*] IMPROVED: 히드라 1기부터 발업 시작 (3->1, 사거리가 핵심)
             hydras = self.bot.units(UnitTypeId.HYDRALISK)
             if hydras.amount >= 1:
-                await self._research_hydra_range(iteration)  # ★ 사거리 먼저! (속도보다 중요)
+                await self._research_hydra_range(iteration)  # [*] 사거리 먼저! (속도보다 중요)
                 await self._research_hydra_speed(iteration)
 
             # 잠복 (맹독충 4기 이상일 때)
@@ -855,7 +855,7 @@ class EvolutionUpgradeManager:
         """
         Build Evolution Chamber for upgrades.
 
-        ★★★ ULTRA-AGGRESSIVE: 진화실 2개 건설 (공3방3 20분 달성) ★★★
+        [*][*][*] ULTRA-AGGRESSIVE: 진화실 2개 건설 (공3방3 20분 달성) [*][*][*]
         - 첫 번째: 2분 30초 (150s)
         - 두 번째: 5분 (300s) - 동시 업그레이드 가능
         """
@@ -867,11 +867,11 @@ class EvolutionUpgradeManager:
         pending_evo = self.bot.already_pending(UnitTypeId.EVOLUTIONCHAMBER)
         total_evo = evo_count + pending_evo
 
-        # ★★★ 첫 번째 진화실: 2분 30초 ★★★
+        # [*][*][*] 첫 번째 진화실: 2분 30초 [*][*][*]
         if game_time < 150:
             return False
 
-        # ★★★ 두 번째 진화실: 5분 (동시 업그레이드) ★★★
+        # [*][*][*] 두 번째 진화실: 5분 (동시 업그레이드) [*][*][*]
         if total_evo >= 2:
             return False  # 이미 2개 있음
 
@@ -879,7 +879,7 @@ class EvolutionUpgradeManager:
         if total_evo == 1 and game_time < 300:
             return False
 
-        # ★ 쿨다운 체크 (중복 건설 방지) ★
+        # [*] 쿨다운 체크 (중복 건설 방지) [*]
         time_since_last_attempt = game_time - self._last_evo_chamber_attempt
         if time_since_last_attempt < self._evo_chamber_cooldown:
             return False
@@ -888,7 +888,7 @@ class EvolutionUpgradeManager:
         if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
             return False
 
-        # ★ 2베이스 이상 있어야 진화장 건설 (경제 안정화 후) ★
+        # [*] 2베이스 이상 있어야 진화장 건설 (경제 안정화 후) [*]
         base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
         if base_count < 2:
             return False
@@ -897,7 +897,7 @@ class EvolutionUpgradeManager:
         if not self.bot.can_afford(UnitTypeId.EVOLUTIONCHAMBER):
             return False
 
-        # ★ 2026-01-26 FIX: 건설 시도 시간 기록 ★
+        # [*] 2026-01-26 FIX: 건설 시도 시간 기록 [*]
         self._last_evo_chamber_attempt = game_time
 
         # Build near townhall
@@ -914,18 +914,18 @@ class EvolutionUpgradeManager:
         return False
 
     # ============================================================
-    # ★★★ TECH BUILDING UPGRADES: Hatchery → Lair → Hive ★★★
+    # [*][*][*] TECH BUILDING UPGRADES: Hatchery -> Lair -> Hive [*][*][*]
     # ============================================================
 
     async def _ensure_morph_tech_buildings(self, iteration: int) -> None:
         """
-        ★ Phase 14: 변이 유닛 테크 건물 자동 건설 보장 ★
+        [*] Phase 14: 변이 유닛 테크 건물 자동 건설 보장 [*]
 
         UnitMorphManager가 작동하려면 테크 건물이 필수:
-        - Baneling Nest: 3분 이후 (저글링→베인링)
+        - Baneling Nest: 3분 이후 (저글링->베인링)
         - Roach Warren: 빌드오더에서 이미 건설 (2:30~)
-        - Lurker Den: 7분 이후 (히드라→럴커, Hydra Den 필요)
-        - Greater Spire: hive_tech_maximizer에서 처리 (Spire→Greater Spire 변이)
+        - Lurker Den: 7분 이후 (히드라->럴커, Hydra Den 필요)
+        - Greater Spire: hive_tech_maximizer에서 처리 (Spire->Greater Spire 변이)
         """
         game_time = getattr(self.bot, "time", 0)
         if not hasattr(self.bot, "structures") or not hasattr(self.bot, "townhalls"):
@@ -962,7 +962,7 @@ class EvolutionUpgradeManager:
                             if iteration % 100 == 0:
                                 self.logger.debug(f"Lurker Den build failed: {e}")
 
-        # === ★ Phase 31: Ultralisk Cavern — Hive 완성 후 자동 건설 ===
+        # === [*] Phase 31: Ultralisk Cavern — Hive 완성 후 자동 건설 ===
         if self._has_hive():
             ultra_caverns = self.bot.structures(UnitTypeId.ULTRALISKCAVERN)
             if not ultra_caverns.exists and self.bot.already_pending(UnitTypeId.ULTRALISKCAVERN) == 0:
@@ -989,7 +989,7 @@ class EvolutionUpgradeManager:
 
     async def _upgrade_tech_buildings(self, iteration: int) -> None:
         """
-        테크 건물 변이: 해처리 → 레어 → 군락
+        테크 건물 변이: 해처리 -> 레어 -> 군락
 
         타이밍:
         - 레어 (Lair): 4분 (240초) 이후, 스포닝 풀 있을 때
@@ -1002,19 +1002,19 @@ class EvolutionUpgradeManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ Phase 31: 레어 타이밍 — 2베이스 포화 후 (3분 or 미네랄 500+)
-        # 이전: 3분30초 고정 → 확장과 충돌. 이제: 경제 안정 확인 후 레어
+        # [*] Phase 31: 레어 타이밍 — 2베이스 포화 후 (3분 or 미네랄 500+)
+        # 이전: 3분30초 고정 -> 확장과 충돌. 이제: 경제 안정 확인 후 레어
         if game_time >= 180 or (self.bot.minerals >= 500 and game_time >= 150):
             await self._upgrade_to_lair(iteration)
 
         # === 군락 (Hive) 변이: 6분 이후 (공3방3을 위해) ===
-        # ★ FIX Phase 12: 7분→6분 앞당김 (인페핏 5분 건설 + 하이브 6분 = ~8분 완성)
+        # [*] FIX Phase 12: 7분->6분 앞당김 (인페핏 5분 건설 + 하이브 6분 = ~8분 완성)
         if game_time >= 360:  # 6분
             await self._upgrade_to_hive(iteration)
 
     async def _upgrade_to_lair(self, iteration: int) -> None:
         """
-        해처리 → 레어 변이 (OPTIMIZED: 3:30 달성을 위한 공격적 업그레이드)
+        해처리 -> 레어 변이 (OPTIMIZED: 3:30 달성을 위한 공격적 업그레이드)
 
         조건:
         - 스포닝 풀이 완료되어야 함
@@ -1043,12 +1043,12 @@ class EvolutionUpgradeManager:
                 self.logger.warning(f"[{int(self.bot.time)}s] [!] Lair 대기 중: Spawning Pool 미완료")
             return
 
-        # ★ 최적화: idle 체크 제거 - 모든 ready Hatchery 허용 ★
+        # [*] 최적화: idle 체크 제거 - 모든 ready Hatchery 허용 [*]
         hatcheries = self.bot.structures(UnitTypeId.HATCHERY).ready
         if not hatcheries.exists:
             return
 
-        # ★ 최적화: 자원 여유분 확보 (200 minerals + 100 gas) ★
+        # [*] 최적화: 자원 여유분 확보 (200 minerals + 100 gas) [*]
         # Drone 생산과 겹치지 않도록 버퍼 추가
         if self.bot.minerals < 200 or self.bot.vespene < 100:
             if iteration % 100 == 0:
@@ -1079,7 +1079,7 @@ class EvolutionUpgradeManager:
 
     async def _upgrade_to_hive(self, iteration: int) -> None:
         """
-        레어 → 군락 (Hive) 변이
+        레어 -> 군락 (Hive) 변이
 
         조건:
         - 인페스테이션 핏 (Infestation Pit)이 완료되어야 함
@@ -1100,7 +1100,7 @@ class EvolutionUpgradeManager:
         if self.bot.already_pending(UnitTypeId.HIVE) > 0:
             return
 
-        # ★ Phase 31: idle 제한 제거 — 라바 생성 중에도 Hive 변이 가능
+        # [*] Phase 31: idle 제한 제거 — 라바 생성 중에도 Hive 변이 가능
         lairs = self.bot.structures(UnitTypeId.LAIR).ready
         if not lairs.exists:
             return
@@ -1136,7 +1136,7 @@ class EvolutionUpgradeManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ FIX Phase 12: 5분 이후 건설 (7분→5분, 하이브 8분 완성 목표)
+        # [*] FIX Phase 12: 5분 이후 건설 (7분->5분, 하이브 8분 완성 목표)
         if game_time < 300:
             return
 
@@ -1218,12 +1218,12 @@ class EvolutionUpgradeManager:
 
 
     # ========================================
-    # ★★★ Phase 18: Intel-Based Priorities ★★★
+    # [*][*][*] Phase 18: Intel-Based Priorities [*][*][*]
     # ========================================
 
     def _update_intel_based_priorities(self):
         """
-        ★ Phase 18: IntelManager 연동 - 적 유닛 구성에 따른 업그레이드 우선순위 조정 ★
+        [*] Phase 18: IntelManager 연동 - 적 유닛 구성에 따른 업그레이드 우선순위 조정 [*]
 
         예시:
         - 적이 마린 위주: 방어력 업그레이드 우선
@@ -1256,33 +1256,33 @@ class EvolutionUpgradeManager:
             if unit_type in {"MUTALISK", "CORRUPTOR", "BANSHEE", "VIKING", "PHOENIX", "VOIDRAY"}:
                 enemy_air += 1
 
-        # ★ 우선순위 부스트 결정 ★
+        # [*] 우선순위 부스트 결정 [*]
         self.intel_based_priority_boost.clear()
 
         # Bio가 많으면 방어력 우선 (작은 공격 여러 번)
         if enemy_bio >= 10:
             self.intel_based_priority_boost["armor"] = 1.5
-            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_bio} bio units → Armor priority boost!")
+            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_bio} bio units -> Armor priority boost!")
 
         # Armored가 많으면 공격력 우선 (강한 공격 필요)
         if enemy_armored >= 5:
             self.intel_based_priority_boost["melee"] = 1.3
             self.intel_based_priority_boost["missile"] = 1.3
-            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_armored} armored units → Attack priority boost!")
+            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_armored} armored units -> Attack priority boost!")
 
         # Air가 많으면 공중 업그레이드 우선
         if enemy_air >= 5:
             self.intel_based_priority_boost["air_attack"] = 1.8
             self.intel_based_priority_boost["air_armor"] = 1.3
-            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_air} air units → Air upgrade priority boost!")
+            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_air} air units -> Air upgrade priority boost!")
 
     # ========================================
-    # ★★★ Phase 18: Gas Reservation System ★★★
+    # [*][*][*] Phase 18: Gas Reservation System [*][*][*]
     # ========================================
 
     def _reserve_upgrade(self, upgrade_id: object):
         """
-        ★ Phase 18: 가스 부족 시 업그레이드 예약 ★
+        [*] Phase 18: 가스 부족 시 업그레이드 예약 [*]
 
         Args:
             upgrade_id: 예약할 업그레이드
@@ -1292,12 +1292,12 @@ class EvolutionUpgradeManager:
             upgrade_name = getattr(upgrade_id, "name", "UNKNOWN")
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ UPGRADE RESERVED: {upgrade_name} (waiting for gas) ★"
+                f"[{int(game_time)}s] [*] UPGRADE RESERVED: {upgrade_name} (waiting for gas) [*]"
             )
 
     async def _process_gas_reservations(self):
         """
-        ★ Phase 18: 예약된 업그레이드 처리 ★
+        [*] Phase 18: 예약된 업그레이드 처리 [*]
 
         가스가 충분해지면 예약된 업그레이드를 실행합니다.
         """
@@ -1334,7 +1334,7 @@ class EvolutionUpgradeManager:
                         self.bot.do(building.research(upgrade_id))
                         game_time = getattr(self.bot, "time", 0)
                         self.logger.info(
-                            f"[{int(game_time)}s] ★ RESERVED UPGRADE EXECUTED: {upgrade_name} ★"
+                            f"[{int(game_time)}s] [*] RESERVED UPGRADE EXECUTED: {upgrade_name} [*]"
                         )
                         self.reserved_upgrades.remove(upgrade_id)
                         return
@@ -1343,7 +1343,7 @@ class EvolutionUpgradeManager:
                         continue
 
     def get_upgrade_stats(self) -> Dict:
-        """★ Phase 18: 업그레이드 통계 반환 ★"""
+        """[*] Phase 18: 업그레이드 통계 반환 [*]"""
         return {
             "reserved_upgrades": len(self.reserved_upgrades),
             "intel_boosts": dict(self.intel_based_priority_boost),

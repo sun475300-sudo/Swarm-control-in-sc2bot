@@ -132,9 +132,9 @@ def show_rl_agent():
                      eps = float(data['epsilon'])
                      logger.info(f"  - 현재 탐험률(Epsilon): {eps:.4f} ({eps*100:.1f}%)")
                      if eps > 0.1:
-                         logger.info("    → 아직 다양한 전략을 시도해보는 '탐험 단계'입니다.")
+                         logger.info("    -> 아직 다양한 전략을 시도해보는 '탐험 단계'입니다.")
                      else:
-                         logger.info("    → 학습된 최적 전략을 주로 사용하는 '숙련 단계'입니다.")
+                         logger.info("    -> 학습된 최적 전략을 주로 사용하는 '숙련 단계'입니다.")
 
                 # Learning Rate
                 if 'learning_rate' in data:

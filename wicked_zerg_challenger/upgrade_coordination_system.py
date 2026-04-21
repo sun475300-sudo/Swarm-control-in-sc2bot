@@ -3,9 +3,9 @@
 Upgrade Coordination System - 업그레이드 전략 타이밍
 
 업그레이드 완료 시점에 맞춰 공격을 조율:
-- "공1업 완료 → 5:30 Roach 타이밍 공격"
-- "방1업 완료 → 방어 병력 전선 투입"
-- "공3방3 완료 → 최종 결전"
+- "공1업 완료 -> 5:30 Roach 타이밍 공격"
+- "방1업 완료 -> 방어 병력 전선 투입"
+- "공3방3 완료 -> 최종 결전"
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -35,7 +35,7 @@ except ImportError:
 
 class UpgradeCoordinationSystem:
     """
-    ★ Upgrade Coordination System ★
+    [*] Upgrade Coordination System [*]
 
     업그레이드 완료 타이밍에 맞춰 전략적 공격을 조율합니다.
     """
@@ -44,17 +44,17 @@ class UpgradeCoordinationSystem:
         self.bot = bot
         self.logger = get_logger("UpgradeCoord")
 
-        # ★ 체크 주기 ★
+        # [*] 체크 주기 [*]
         self.last_check = 0
         self.check_interval = 22  # 약 1초마다
 
-        # ★ 업그레이드 완료 추적 ★
+        # [*] 업그레이드 완료 추적 [*]
         self.completed_upgrades: Dict[str, float] = {}
         self.attack_triggers: Dict[str, Dict] = {}  # {upgrade: trigger_info}
 
-        # ★ 타이밍 공격 정의 ★
+        # [*] 타이밍 공격 정의 [*]
         self.timing_attacks = {
-            # 공1업 완료 → 5:30 Roach 타이밍
+            # 공1업 완료 -> 5:30 Roach 타이밍
             "ATTACK_1": {
                 "trigger_upgrade": UpgradeId.ZERGMISSILEWEAPONSLEVEL1,
                 "min_game_time": 270,  # 4:30 이후
@@ -64,14 +64,14 @@ class UpgradeCoordinationSystem:
                 "urgency": "HIGH",
                 "description": "공1업 Roach 타이밍",
             },
-            # 방1업 완료 → 전선 투입
+            # 방1업 완료 -> 전선 투입
             "DEFENSE_1": {
                 "trigger_upgrade": UpgradeId.ZERGGROUNDARMORSLEVEL1,
                 "min_game_time": 300,  # 5:00 이후
                 "action": "PUSH_FRONT",
                 "description": "방1업 전선 투입",
             },
-            # 공2업 완료 → 6:30 Hydra 타이밍
+            # 공2업 완료 -> 6:30 Hydra 타이밍
             "ATTACK_2": {
                 "trigger_upgrade": UpgradeId.ZERGMISSILEWEAPONSLEVEL2,
                 "min_game_time": 360,  # 6:00 이후
@@ -81,7 +81,7 @@ class UpgradeCoordinationSystem:
                 "urgency": "CRITICAL",
                 "description": "공2업 Hydra 타이밍",
             },
-            # 공3방3 완료 → 최종 결전
+            # 공3방3 완료 -> 최종 결전
             "FINAL_PUSH": {
                 "trigger_upgrade": UpgradeId.ZERGMISSILEWEAPONSLEVEL3,
                 "secondary_upgrade": UpgradeId.ZERGGROUNDARMORSLEVEL3,
@@ -91,7 +91,7 @@ class UpgradeCoordinationSystem:
                 "urgency": "ALL_IN",
                 "description": "공3방3 최종 결전",
             },
-            # 공중 업그레이드 → 뮤탈 전환
+            # 공중 업그레이드 -> 뮤탈 전환
             "AIR_TIMING": {
                 "trigger_upgrade": UpgradeId.ZERGFLYERWEAPONSLEVEL1,
                 "min_game_time": 420,  # 7:00 이후
@@ -102,7 +102,7 @@ class UpgradeCoordinationSystem:
             },
         }
 
-        # ★ 활성 타이밍 공격 ★
+        # [*] 활성 타이밍 공격 [*]
         self.active_timing_attack: Optional[str] = None
 
     async def on_step(self, iteration: int):
@@ -113,14 +113,14 @@ class UpgradeCoordinationSystem:
 
             self.last_check = iteration
 
-            # ★ 1. 업그레이드 완료 확인 ★
+            # [*] 1. 업그레이드 완료 확인 [*]
             new_completions = await self._check_upgrade_completions()
 
-            # ★ 2. 타이밍 공격 트리거 ★
+            # [*] 2. 타이밍 공격 트리거 [*]
             if new_completions:
                 await self._trigger_timing_attacks(new_completions)
 
-            # ★ 3. 활성 타이밍 공격 실행 ★
+            # [*] 3. 활성 타이밍 공격 실행 [*]
             if self.active_timing_attack:
                 await self._execute_timing_attack()
 
@@ -151,7 +151,7 @@ class UpgradeCoordinationSystem:
                 new_completions.append(upgrade_name)
 
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ UPGRADE COMPLETE: {upgrade_name} ★"
+                    f"[{int(game_time)}s] [*] UPGRADE COMPLETE: {upgrade_name} [*]"
                 )
 
         return new_completions
@@ -199,7 +199,7 @@ class UpgradeCoordinationSystem:
 
             if current_army_supply < min_supply:
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ TIMING READY BUT WAITING: {attack_id} ★\n"
+                    f"[{int(game_time)}s] [*] TIMING READY BUT WAITING: {attack_id} [*]\n"
                     f"  Army: {current_army_supply}/{min_supply}"
                 )
                 # 병력 대기 중으로 표시
@@ -209,7 +209,7 @@ class UpgradeCoordinationSystem:
                 }
                 continue
 
-            # ★ 타이밍 공격 발동! ★
+            # [*] 타이밍 공격 발동! [*]
             self.active_timing_attack = attack_id
             self.attack_triggers[attack_id] = {
                 "triggered": True,
@@ -218,7 +218,7 @@ class UpgradeCoordinationSystem:
             }
 
             self.logger.info(
-                f"[{int(game_time)}s] ★★★ TIMING ATTACK: {attack_info['description']} ★★★\n"
+                f"[{int(game_time)}s] [*][*][*] TIMING ATTACK: {attack_info['description']} [*][*][*]\n"
                 f"  Army Supply: {current_army_supply}\n"
                 f"  Urgency: {attack_info.get('urgency', 'NORMAL')}"
             )
@@ -257,7 +257,7 @@ class UpgradeCoordinationSystem:
         game_time = getattr(self.bot, "time", 0)
         elapsed = game_time - trigger_info.get("trigger_time", game_time)
 
-        # ★ 병력 대기 중 확인 ★
+        # [*] 병력 대기 중 확인 [*]
         if trigger_info.get("waiting_for_army"):
             min_supply = attack_info.get("min_army_supply", 0)
             current_supply = self._get_army_supply()
@@ -269,16 +269,16 @@ class UpgradeCoordinationSystem:
                 trigger_info["trigger_time"] = game_time
 
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ TIMING ARMY READY: {self.active_timing_attack} ★\n"
+                    f"[{int(game_time)}s] [*] TIMING ARMY READY: {self.active_timing_attack} [*]\n"
                     f"  Army Supply: {current_supply}/{min_supply}"
                 )
 
                 await self._register_timing_attack(self.active_timing_attack, attack_info)
 
-        # ★ 타이밍 공격 지속 시간 (2분) ★
+        # [*] 타이밍 공격 지속 시간 (2분) [*]
         if elapsed > 120:
             self.logger.info(
-                f"[{int(game_time)}s] ★ TIMING COMPLETE: {self.active_timing_attack} ★"
+                f"[{int(game_time)}s] [*] TIMING COMPLETE: {self.active_timing_attack} [*]"
             )
 
             # 타이밍 종료

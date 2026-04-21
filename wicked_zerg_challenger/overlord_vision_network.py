@@ -47,7 +47,7 @@ class OverlordVisionNetwork:
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
-            # ★ IMPROVED: 220 → 110 프레임 (~5초마다) — 더 빠른 시야 대응
+            # [*] IMPROVED: 220 -> 110 프레임 (~5초마다) — 더 빠른 시야 대응
             if iteration % 110 == 0:
                 self._update_vision_positions()
                 await self._deploy_vision_network()
@@ -57,7 +57,7 @@ class OverlordVisionNetwork:
                 self.logger.error(f"[VISION_NETWORK] Error: {e}")
 
     def _update_vision_positions(self):
-        """시야 위치 업데이트 (★ OPTIMIZED: 우선순위 기반 위치 선정 ★)"""
+        """시야 위치 업데이트 ([*] OPTIMIZED: 우선순위 기반 위치 선정 [*])"""
         if not hasattr(self.bot, "expansion_locations_list"):
             return
 
@@ -67,18 +67,18 @@ class OverlordVisionNetwork:
         our_base = self.bot.start_location
         enemy_base = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
 
-        # ★ PRIORITY 0: Highground Pillars (대공 유닛 도달 불가 벼랑) ★
-        # 적 본진 주변 지상 이동 불가 고지대에 대군주 배치 → 반영구 시야
+        # [*] PRIORITY 0: Highground Pillars (대공 유닛 도달 불가 벼랑) [*]
+        # 적 본진 주변 지상 이동 불가 고지대에 대군주 배치 -> 반영구 시야
         pillar_positions = self._find_highground_pillars(enemy_base)
         for pos in pillar_positions[:3]:  # 최대 3개
             self.vision_positions.append(pos)
 
-        # ★ PRIORITY 1: Watchtowers (best vision, defensible)
+        # [*] PRIORITY 1: Watchtowers (best vision, defensible)
         if hasattr(self.bot, "watchtowers"):
             for tower in self.bot.watchtowers[:2]:
                 self.vision_positions.append(tower.position)
 
-        # ★ PRIORITY 2: Enemy base perimeter (drop detection + tech scouting)
+        # [*] PRIORITY 2: Enemy base perimeter (drop detection + tech scouting)
         if enemy_base:
             for angle in [0, 90, 180, 270]:
                 rad = math.radians(angle)
@@ -87,21 +87,21 @@ class OverlordVisionNetwork:
                 watch_pos = Point2((enemy_base.x + offset_x, enemy_base.y + offset_y))
                 self.vision_positions.append(watch_pos)
 
-        # ★ PRIORITY 3: Main attack path (between bases)
+        # [*] PRIORITY 3: Main attack path (between bases)
         if enemy_base:
             midpoint = Point2(((our_base.x + enemy_base.x) / 2, (our_base.y + enemy_base.y) / 2))
             self.vision_positions.append(midpoint)
 
-        # ★ PRIORITY 4: Expansion paths (우리 확장 + 적 예상 확장)
+        # [*] PRIORITY 4: Expansion paths (우리 확장 + 적 예상 확장)
         for exp_pos in self.bot.expansion_locations_list[1:4]:
             self.vision_positions.append(exp_pos.towards(self.bot.game_info.map_center, 5))
 
-        # ★ PRIORITY 5: Map center (general awareness)
+        # [*] PRIORITY 5: Map center (general awareness)
         self.vision_positions.append(self.bot.game_info.map_center)
 
     def _find_highground_pillars(self, enemy_base) -> List[Point2]:
         """
-        ★★★ 대군주 절대 안전지대(Pillars) 탐색 ★★★
+        [*][*][*] 대군주 절대 안전지대(Pillars) 탐색 [*][*][*]
 
         pathing_grid에서 지상 이동 불가(=0) 위치를 탐색하여
         대공 유닛이 도달할 수 없는 벼랑 끝 사각지대를 찾음.
@@ -148,13 +148,13 @@ class OverlordVisionNetwork:
 
     def _is_overlord_managed(self, overlord_tag: int) -> bool:
         """다른 시스템이 관리 중인 오버로드인지 확인"""
-        # ★ UnitAuthority 체크 ★
+        # [*] UnitAuthority 체크 [*]
         authority = getattr(self.bot, "unit_authority", None)
         if authority and overlord_tag in getattr(authority, "authorities", {}):
             owner = authority.authorities[overlord_tag].owner
             if owner != "OverlordVisionNetwork":
                 return True
-        # ★ AdvancedScoutV2 체크 ★
+        # [*] AdvancedScoutV2 체크 [*]
         scout = getattr(self.bot, "advanced_scout_v2", None)
         if scout:
             # 정찰용 오버로드 확인
@@ -164,22 +164,22 @@ class OverlordVisionNetwork:
                 return True
             if overlord_tag in getattr(scout, "assigned_overlords", set()):
                 return True
-        # ★ RogueTactics 드랍 오버로드 체크 ★
+        # [*] RogueTactics 드랍 오버로드 체크 [*]
         rogue = getattr(self.bot, "rogue_tactics", None)
         if rogue and overlord_tag in getattr(rogue, "_drop_overlords", set()):
             return True
         return False
 
     async def _deploy_vision_network(self):
-        """시야 네트워크 배치 (★ OPTIMIZED: 생존 검증 + 재배치 ★)"""
+        """시야 네트워크 배치 ([*] OPTIMIZED: 생존 검증 + 재배치 [*])"""
         if not hasattr(self.bot, "units"):
             return
 
-        # ★ 다른 시스템이 관리하지 않는 idle 오버로드만 사용 ★
+        # [*] 다른 시스템이 관리하지 않는 idle 오버로드만 사용 [*]
         overlords = self.bot.units(UnitTypeId.OVERLORD).idle
         overlords = overlords.filter(lambda u: not self._is_overlord_managed(u.tag))
 
-        # ★ Clean up dead/missing overlords from assignments
+        # [*] Clean up dead/missing overlords from assignments
         positions_to_remove = []
         for pos, tag in self.assigned_overlords.items():
             overlord = self.bot.units.find_by_tag(tag)
@@ -193,7 +193,7 @@ class OverlordVisionNetwork:
         for pos in positions_to_remove:
             del self.assigned_overlords[pos]
 
-        # ★ Deploy overlords to uncovered positions (priority order)
+        # [*] Deploy overlords to uncovered positions (priority order)
         for pos in self.vision_positions:
             if pos in self.assigned_overlords:
                 # Already assigned and validated

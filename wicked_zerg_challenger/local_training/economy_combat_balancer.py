@@ -54,15 +54,15 @@ class EconomyCombatBalancer:
         self.resource_bank_threshold = 3000
         self.min_drone_count = 12
 
-        # ★★★ FIX: 현실적 일꾼 목표 (이전값은 군대 생산을 완전히 차단) ★★★
+        # [*][*][*] FIX: 현실적 일꾼 목표 (이전값은 군대 생산을 완전히 차단) [*][*][*]
         # Drone targets by game phase (base values)
         self.base_drone_targets = {
-            "early": 22,   # 0-6 min (1-2베이스: 16+6=22 → 이후 군대 전환)
+            "early": 22,   # 0-6 min (1-2베이스: 16+6=22 -> 이후 군대 전환)
             "mid": 44,     # 6-12 min (3베이스 포화: 16*3=48, 가스 포함 ~44)
             "late": 66,    # 12+ min (4베이스 포화: 16*4=64, 가스 포함 ~66)
         }
 
-        # ★★★ 학습된 데이터 반영: 동적 조정 ★★★
+        # [*][*][*] 학습된 데이터 반영: 동적 조정 [*][*][*]
         # 초기에는 base targets 사용 (StrategyManager가 아직 초기화 안 됨)
         self.drone_targets = self.base_drone_targets.copy()
         self.learned_weights_applied = False
@@ -79,7 +79,7 @@ class EconomyCombatBalancer:
 
     def apply_learned_economy_weights(self) -> None:
         """
-        ★★★ 학습된 경제 우선순위를 드론 목표치에 반영 ★★★
+        [*][*][*] 학습된 경제 우선순위를 드론 목표치에 반영 [*][*][*]
 
         learned_build_orders.json의 Drone 우선순위가 높으면
         drone_targets를 상향 조정하여 경제 중심 플레이 반영
@@ -133,7 +133,7 @@ class EconomyCombatBalancer:
         """
         Calculate dynamic drone target based on time and expansion count.
 
-        ★ IMPROVED: 실제 기지의 ideal_harvesters 사용 ★
+        [*] IMPROVED: 실제 기지의 ideal_harvesters 사용 [*]
 
         Returns:
             Target number of drones
@@ -150,7 +150,7 @@ class EconomyCombatBalancer:
                 current = self.current_drone_count()
                 return current  # Maintain current level
 
-            # ★ 실제 ideal_harvesters 계산 (기지 + 가스) ★
+            # [*] 실제 ideal_harvesters 계산 (기지 + 가스) [*]
             actual_ideal = self._calculate_actual_ideal_workers()
 
             # Phase-based target (fallback)
@@ -164,7 +164,7 @@ class EconomyCombatBalancer:
             # Multi-base adjustment (old method, fallback)
             multi_target = base_count * self.drones_per_base
 
-            # ★ 실제 ideal이 가장 정확한 목표 ★
+            # [*] 실제 ideal이 가장 정확한 목표 [*]
             # 약간의 여유분 추가 (+4, 이동 중인 일꾼 고려)
             if actual_ideal > 0:
                 target = actual_ideal + 4
@@ -179,7 +179,7 @@ class EconomyCombatBalancer:
 
     def _calculate_actual_ideal_workers(self) -> int:
         """
-        ★ 실제 필요한 일꾼 수 계산 ★
+        [*] 실제 필요한 일꾼 수 계산 [*]
 
         기지의 ideal_harvesters + 가스 건물의 ideal_harvesters
         """
@@ -217,7 +217,7 @@ class EconomyCombatBalancer:
         """
         Deterministic worker production decision.
 
-        ★ IMPROVED: 기지별 포화도 체크 ★
+        [*] IMPROVED: 기지별 포화도 체크 [*]
 
         Uses both target-based and ratio-based logic for balanced decisions.
 
@@ -228,11 +228,11 @@ class EconomyCombatBalancer:
             drones = self.current_drone_count()
             target = self.get_drone_target()
 
-            # Priority 0: ★ CRITICAL - Always maintain minimum workers ★
+            # Priority 0: [*] CRITICAL - Always maintain minimum workers [*]
             if drones < self.min_drone_count:
                 return True
 
-            # Priority 0.5: ★ CRITICAL FIX - 1베이스 expansion 비용 확보 ★
+            # Priority 0.5: [*] CRITICAL FIX - 1베이스 expansion 비용 확보 [*]
             # 1베이스만 있으면 22마리까지만 (이전 28은 과도함)
             base_count = 0
             if hasattr(self.bot, "townhalls"):
@@ -242,7 +242,7 @@ class EconomyCombatBalancer:
             if base_count <= 1 and drones < 22:
                 return True  # 1베이스는 expansion 비용 확보를 위해 생산
 
-            # ★★★ CRITICAL FIX: After 22 drones, strongly favor army ★★★
+            # [*][*][*] CRITICAL FIX: After 22 drones, strongly favor army [*][*][*]
             # With 2+ bases and 22+ drones, the economy is sufficient.
             # Only allow more drones if bases are severely under-saturated.
             game_time = getattr(self.bot, "time", 0.0)
@@ -254,12 +254,12 @@ class EconomyCombatBalancer:
                 import random
                 return random.random() < 0.20  # Only 20% chance to make drone
 
-            # Priority 1: ★ 기지 포화도 체크 ★
+            # Priority 1: [*] 기지 포화도 체크 [*]
             saturation_status = self._check_base_saturation()
             if saturation_status == "FULLY_SATURATED":
                 return False  # 모든 기지가 포화면 드론 불필요
 
-            # Priority 1.5: ★ 기지가 심하게 부족하면 드론 우선 ★
+            # Priority 1.5: [*] 기지가 심하게 부족하면 드론 우선 [*]
             if saturation_status == "SEVERELY_UNDER":
                 return True
 
@@ -277,7 +277,7 @@ class EconomyCombatBalancer:
                 if drone_ratio > target_ratio + 0.1:
                     return False
 
-            # Priority 3: ★ 포화 상태면 드론 생산 감소 ★
+            # Priority 3: [*] 포화 상태면 드론 생산 감소 [*]
             if saturation_status == "NEAR_SATURATED":
                 # 60% 확률로 드론 생산 스킵 (군대 우선)
                 import random
@@ -292,7 +292,7 @@ class EconomyCombatBalancer:
 
     def _check_base_saturation(self) -> str:
         """
-        ★ 기지별 일꾼 포화도 체크 ★
+        [*] 기지별 일꾼 포화도 체크 [*]
 
         Returns:
             "FULLY_SATURATED": 모든 기지가 포화 (ideal에 도달)
@@ -345,13 +345,13 @@ class EconomyCombatBalancer:
         """
         Calculate target drone-to-army ratio based on game phase.
 
-        ★ IMPROVED: 포화 상태면 병력 비중 증가 ★
+        [*] IMPROVED: 포화 상태면 병력 비중 증가 [*]
         """
         try:
             game_time = getattr(self.bot, "time", 0.0)
             game_time_minutes = game_time / 60.0
 
-            # ★ FIX: Drone ratios reduced to ensure army production ★
+            # [*] FIX: Drone ratios reduced to ensure army production [*]
             # Previous values (0.75/0.6/0.4) caused massive over-droning
             if game_time_minutes < 3:
                 base_ratio = 0.75  # Very early: 75% economy (initial droning)
@@ -362,7 +362,7 @@ class EconomyCombatBalancer:
             else:
                 base_ratio = 0.20  # Late: 20% economy (army-heavy)
 
-            # ★ 포화 상태면 병력 비중 증가 ★
+            # [*] 포화 상태면 병력 비중 증가 [*]
             saturation = self._check_base_saturation()
             if saturation == "FULLY_SATURATED":
                 # 포화 상태: 드론 비율 -20%p (병력 우선)

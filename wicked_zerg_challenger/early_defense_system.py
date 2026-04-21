@@ -256,7 +256,7 @@ class EarlyDefenseSystem:
             workers_to_defend = self.bot.workers.closest_n_units(closest_enemy.position, defending_workers)
 
             for worker in workers_to_defend:
-                # ★ CRITICAL: Ensure workers don't go further than 12 distance from base ★
+                # [*] CRITICAL: Ensure workers don't go further than 12 distance from base [*]
                 if worker.distance_to(main_base) > 12:
                     # Return if too far
                     if self.bot.mineral_field:
@@ -301,7 +301,7 @@ class EarlyDefenseSystem:
         return " | ".join(status_parts)
 
     # =============================================
-    # ★ FIX 4: Zergling Speed Upgrade ASAP ★
+    # [*] FIX 4: Zergling Speed Upgrade ASAP [*]
     # =============================================
     async def _research_zergling_speed_early(self) -> None:
         """
@@ -343,7 +343,7 @@ class EarlyDefenseSystem:
             logger.error(f"Zergling speed research failed: {e}")
 
     # =============================================
-    # ★ FIX 3: Early Spine Crawler (2 minutes) ★
+    # [*] FIX 3: Early Spine Crawler (2 minutes) [*]
     # =============================================
     async def _build_early_spine_crawler(self) -> None:
         """
@@ -410,7 +410,7 @@ class EarlyDefenseSystem:
             logger.error(f"Spine crawler build failed: {e}")
 
     # =============================================
-    # ★ FIX 5: Worker Pull Defense ★
+    # [*] FIX 5: Worker Pull Defense [*]
     # =============================================
     async def _worker_pull_defense(self) -> None:
         """

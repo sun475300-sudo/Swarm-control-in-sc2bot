@@ -60,7 +60,7 @@ class MultiProngCoordinator:
         self.attack_active = False
         self.attack_start_time = 0
 
-        # ★ Performance Optimization: 캐싱 변수 ★
+        # [*] Performance Optimization: 캐싱 변수 [*]
         self._cached_army_count = 0
         self._cached_muta_count = 0
         self._last_count_update = 0
@@ -91,14 +91,14 @@ class MultiProngCoordinator:
         if not hasattr(self.bot, "units"):
             return False
 
-        # ★ Harassment가 활성화되어 있으면 Multi-Prong 중단 (충돌 방지) ★
+        # [*] Harassment가 활성화되어 있으면 Multi-Prong 중단 (충돌 방지) [*]
         if hasattr(self.bot, "harassment_coord") and self.bot.harassment_coord:
             # Harassment가 Zergling을 사용 중인지 확인
             if hasattr(self.bot.harassment_coord, "zergling_runby_active"):
                 if self.bot.harassment_coord.zergling_runby_active:
                     return False  # Harassment 우선
 
-        # ★ 캐싱: 2초마다만 병력 수 재계산 ★
+        # [*] 캐싱: 2초마다만 병력 수 재계산 [*]
         current_time = self.bot.time
         if current_time - self._last_count_update >= 2.0:
             self._cached_army_count = self.bot.units(UnitTypeId.ZERGLING).amount + \

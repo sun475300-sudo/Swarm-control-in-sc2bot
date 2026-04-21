@@ -11,7 +11,7 @@ from utils.logger import get_logger
 
 class DynamicResourceBalancer:
     """
-    ★ Dynamic Resource Balancer ★
+    [*] Dynamic Resource Balancer [*]
 
     자원 불균형을 감지하고 유닛 생산 비율을 동적으로 조정하여
     미네랄과 가스를 효율적으로 사용합니다.
@@ -21,25 +21,25 @@ class DynamicResourceBalancer:
         self.bot = bot
         self.logger = get_logger("ResourceBalancer")
 
-        # ★ 자원 분석 주기 ★
+        # [*] 자원 분석 주기 [*]
         self.last_analysis = 0
         self.analysis_interval = 44  # 약 2초마다 분석
 
-        # ★ 자원 불균형 임계값 ★
+        # [*] 자원 불균형 임계값 [*]
         self.mineral_excess_threshold = 1000  # 미네랄 1000+ 과다
         self.gas_shortage_threshold = 100     # 가스 100- 부족
         self.high_mineral_threshold = 1500    # 미네랄 1500+ 심각한 과다
 
-        # ★ 동적 비율 조정 ★
+        # [*] 동적 비율 조정 [*]
         self.base_gas_ratio = 0.50  # 기본 가스 유닛 비율
         self.current_gas_ratio = 0.50
         self.min_gas_ratio = 0.30   # 최소 30%
         self.max_gas_ratio = 0.75   # 최대 75%
 
-        # ★ 조정 속도 ★
+        # [*] 조정 속도 [*]
         self.adjustment_step = 0.05  # 한번에 5% 조정
 
-        # ★ 상태 추적 ★
+        # [*] 상태 추적 [*]
         self.resource_state = "BALANCED"  # BALANCED, MINERAL_EXCESS, GAS_SHORTAGE, CRITICAL
         self.last_state_change = 0
 
@@ -58,7 +58,7 @@ class DynamicResourceBalancer:
 
         self.last_analysis = iteration
 
-        # ★ 1. 자원 상태 분석 ★
+        # [*] 1. 자원 상태 분석 [*]
         minerals = getattr(self.bot, "minerals", 0)
         gas = getattr(self.bot, "vespene", 0)
         game_time = getattr(self.bot, "time", 0)
@@ -66,7 +66,7 @@ class DynamicResourceBalancer:
         old_state = self.resource_state
         old_ratio = self.current_gas_ratio
 
-        # ★ 2. 자원 불균형 감지 ★
+        # [*] 2. 자원 불균형 감지 [*]
         resource_state, target_ratio = self._analyze_resource_imbalance(
             minerals, gas, game_time
         )
@@ -74,12 +74,12 @@ class DynamicResourceBalancer:
         self.resource_state = resource_state
         self.current_gas_ratio = target_ratio
 
-        # ★ 3. 로그 (상태 변화 시에만) ★
+        # [*] 3. 로그 (상태 변화 시에만) [*]
         if old_state != resource_state or abs(old_ratio - target_ratio) > 0.01:
             self.logger.info(
-                f"[{int(game_time)}s] ★ RESOURCE BALANCE: {resource_state} ★\n"
+                f"[{int(game_time)}s] [*] RESOURCE BALANCE: {resource_state} [*]\n"
                 f"  Minerals: {minerals}m, Gas: {gas}g\n"
-                f"  Gas Unit Ratio: {old_ratio:.0%} → {target_ratio:.0%}\n"
+                f"  Gas Unit Ratio: {old_ratio:.0%} -> {target_ratio:.0%}\n"
                 f"  Adjustment: {(target_ratio - old_ratio)*100:+.0f}%"
             )
             self.last_state_change = iteration
@@ -100,29 +100,29 @@ class DynamicResourceBalancer:
         Returns:
             (resource_state, target_gas_ratio)
         """
-        # ★ Early Game (3분 이하): 기본 비율 유지 ★
+        # [*] Early Game (3분 이하): 기본 비율 유지 [*]
         if game_time < 180:
             return "BALANCED", self.base_gas_ratio
 
-        # ★ Critical: 미네랄 폭증 + 가스 고갈 ★
+        # [*] Critical: 미네랄 폭증 + 가스 고갈 [*]
         if minerals >= self.high_mineral_threshold and gas < self.gas_shortage_threshold:
             # 가스 유닛 비율 최대로 증가
             target_ratio = min(self.max_gas_ratio, self.current_gas_ratio + self.adjustment_step * 2)
             return "CRITICAL", target_ratio
 
-        # ★ Mineral Excess: 미네랄만 많음 ★
+        # [*] Mineral Excess: 미네랄만 많음 [*]
         if minerals >= self.mineral_excess_threshold and gas >= self.gas_shortage_threshold:
             # 가스 유닛 비율 증가
             target_ratio = min(self.max_gas_ratio, self.current_gas_ratio + self.adjustment_step)
             return "MINERAL_EXCESS", target_ratio
 
-        # ★ Gas Shortage: 가스만 부족 ★
+        # [*] Gas Shortage: 가스만 부족 [*]
         if gas < self.gas_shortage_threshold and minerals < self.mineral_excess_threshold:
             # 가스 유닛 비율 감소 (미네랄 유닛 늘림)
             target_ratio = max(self.min_gas_ratio, self.current_gas_ratio - self.adjustment_step)
             return "GAS_SHORTAGE", target_ratio
 
-        # ★ Balanced: 정상 범위 ★
+        # [*] Balanced: 정상 범위 [*]
         # 점진적으로 기본 비율로 복귀
         if self.current_gas_ratio > self.base_gas_ratio:
             target_ratio = max(self.base_gas_ratio, self.current_gas_ratio - self.adjustment_step * 0.5)
@@ -146,7 +146,7 @@ class DynamicResourceBalancer:
 
         # 자원 상태에 따른 유닛 구성
         if self.resource_state == "CRITICAL":
-            # 미네랄 과다 → 가스 유닛 최대한
+            # 미네랄 과다 -> 가스 유닛 최대한
             return {
                 "hydralisk": gas_ratio * 0.50,
                 "mutalisk": gas_ratio * 0.30,
@@ -156,7 +156,7 @@ class DynamicResourceBalancer:
             }
 
         elif self.resource_state == "MINERAL_EXCESS":
-            # 미네랄 많음 → 가스 유닛 비중 증가
+            # 미네랄 많음 -> 가스 유닛 비중 증가
             return {
                 "hydralisk": gas_ratio * 0.45,
                 "roach": 0.25,  # 약간의 가스 사용
@@ -165,7 +165,7 @@ class DynamicResourceBalancer:
             }
 
         elif self.resource_state == "GAS_SHORTAGE":
-            # 가스 부족 → 미네랄 유닛 위주
+            # 가스 부족 -> 미네랄 유닛 위주
             return {
                 "zergling": mineral_ratio * 0.60,
                 "roach": 0.30,  # 약간의 가스 사용

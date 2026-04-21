@@ -47,7 +47,7 @@ except ImportError:
 
 class DynamicCounterSystem:
     """
-    ★ Dynamic Counter System ★
+    [*] Dynamic Counter System [*]
 
     IntelManager의 적 유닛 정보를 실시간 분석하여
     위협 유닛 발견 시 즉시 카운터 유닛 생산을 강제합니다.
@@ -58,16 +58,16 @@ class DynamicCounterSystem:
         self.intel = intel_manager or getattr(bot, "intel", None)
         self.logger = get_logger("DynamicCounter")
 
-        # ★ 체크 주기 ★
+        # [*] 체크 주기 [*]
         self.last_check = 0
         self.check_interval = 33  # 약 1.5초마다
 
-        # ★ 감지된 위협 ★
+        # [*] 감지된 위협 [*]
         self.detected_threats: Set[str] = set()
         self.threat_first_seen: Dict[str, float] = {}
         self.active_counters: Dict[str, Dict] = {}  # {threat: counter_info}
 
-        # ★ 카운터 룰 ★
+        # [*] 카운터 룰 [*]
         self.counter_rules = {
             # ===== Terran Threats =====
             "BATTLECRUISER": {
@@ -191,14 +191,14 @@ class DynamicCounterSystem:
             if not self.intel:
                 return
 
-            # ★ 1. 적 고급 유닛 스캔 ★
+            # [*] 1. 적 고급 유닛 스캔 [*]
             new_threats = await self._scan_enemy_threats()
 
-            # ★ 2. 새 위협 감지 시 대응 ★
+            # [*] 2. 새 위협 감지 시 대응 [*]
             if new_threats:
                 await self._activate_counters(new_threats)
 
-            # ★ 3. 활성 카운터 업데이트 ★
+            # [*] 3. 활성 카운터 업데이트 [*]
             await self._update_active_counters(iteration)
 
         except Exception as e:
@@ -232,7 +232,7 @@ class DynamicCounterSystem:
                     self.detected_threats.add(type_name)
 
                     self.logger.warning(
-                        f"[{int(game_time)}s] ★★★ HIGH THREAT DETECTED: {type_name} ★★★"
+                        f"[{int(game_time)}s] [*][*][*] HIGH THREAT DETECTED: {type_name} [*][*][*]"
                     )
 
         # 새로 발견된 위협만 반환
@@ -262,7 +262,7 @@ class DynamicCounterSystem:
             }
 
             self.logger.info(
-                f"[{int(game_time)}s] ★ COUNTER ACTIVATED: {threat} ★\n"
+                f"[{int(game_time)}s] [*] COUNTER ACTIVATED: {threat} [*]\n"
                 f"  Counter Units: {counter_rule['counter_units']}\n"
                 f"  Min Count: {counter_rule['min_count']}\n"
                 f"  Urgency: {counter_rule['urgency']}\n"
@@ -280,7 +280,7 @@ class DynamicCounterSystem:
         if not blackboard:
             return
 
-        # ★ 유닛 구성 오버라이드 ★
+        # [*] 유닛 구성 오버라이드 [*]
         current_override = blackboard.get("unit_composition_override", {})
 
         for unit_name, ratio in zip(counter_rule["counter_units"], counter_rule["counter_ratios"]):
@@ -324,7 +324,7 @@ class DynamicCounterSystem:
             if total_count >= rule["min_count"] and not counter_info["target_met"]:
                 counter_info["target_met"] = True
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ COUNTER TARGET MET: {threat} ★\n"
+                    f"[{int(game_time)}s] [*] COUNTER TARGET MET: {threat} [*]\n"
                     f"  Counter Units: {total_count}/{rule['min_count']}"
                 )
 

@@ -26,7 +26,7 @@ except ImportError:
 
 class SmartResourceBalancer:
     """
-    ★ Smart Resource Balancer ★
+    [*] Smart Resource Balancer [*]
 
     실시간으로 미네랄/가스 비율을 모니터링하고
     일꾼을 동적으로 재배치하여 자원 효율을 극대화합니다.
@@ -36,26 +36,26 @@ class SmartResourceBalancer:
         self.bot = bot
         self.logger = get_logger("SmartResourceBalancer")
 
-        # ★ 재배치 주기 ★
+        # [*] 재배치 주기 [*]
         self.last_rebalance = 0
         self.rebalance_interval = 22  # 약 1초마다 재배치
 
-        # ★ 자원 비율 목표 ★
+        # [*] 자원 비율 목표 [*]
         self.ideal_mineral_gas_ratio = 2.0  # 미네랄:가스 = 2:1 (기본)
         self.current_target_ratio = 2.0
 
-        # ★ 자원 임계값 ★
+        # [*] 자원 임계값 [*]
         self.gas_excess_threshold = 1000  # 가스 1000+ = 과다
         self.gas_critical_threshold = 2000  # 가스 2000+ = 심각
         self.mineral_shortage_threshold = 200  # 미네랄 200- = 부족
         self.mineral_critical_threshold = 100  # 미네랄 100- = 심각
 
-        # ★ 일꾼 재배치 상태 ★
+        # [*] 일꾼 재배치 상태 [*]
         self.gas_workers_target = {}  # {extractor_tag: target_count}
         self.last_worker_moved = 0
         self.worker_move_cooldown = 11  # 0.5초 쿨다운
 
-        # ★ 통계 ★
+        # [*] 통계 [*]
         self.total_rebalances = 0
         self.gas_to_mineral_moves = 0
         self.mineral_to_gas_moves = 0
@@ -68,24 +68,24 @@ class SmartResourceBalancer:
 
             self.last_rebalance = iteration
 
-            # ★ 1. 자원 상태 분석 ★
+            # [*] 1. 자원 상태 분석 [*]
             minerals = getattr(self.bot, "minerals", 0)
             gas = getattr(self.bot, "vespene", 0)
             game_time = getattr(self.bot, "time", 0)
 
-            # ★ 2. 목표 비율 계산 ★
+            # [*] 2. 목표 비율 계산 [*]
             target_ratio = self._calculate_target_ratio(minerals, gas, game_time)
 
-            # ★ 3. 현재 비율 계산 ★
+            # [*] 3. 현재 비율 계산 [*]
             current_ratio = self._get_current_worker_ratio()
 
-            # ★ 4. 재배치 필요 여부 확인 ★
+            # [*] 4. 재배치 필요 여부 확인 [*]
             needs_rebalance, action = self._needs_rebalancing(
                 minerals, gas, target_ratio, current_ratio, game_time
             )
 
             if needs_rebalance and iteration - self.last_worker_moved > self.worker_move_cooldown:
-                # ★ 5. 일꾼 재배치 실행 ★
+                # [*] 5. 일꾼 재배치 실행 [*]
                 await self._rebalance_workers(action, minerals, gas)
                 self.last_worker_moved = iteration
                 self.total_rebalances += 1
@@ -106,11 +106,11 @@ class SmartResourceBalancer:
         Returns:
             목표 미네랄:가스 비율
         """
-        # ★ Early Game (0-4분): 미네랄 우선 ★
+        # [*] Early Game (0-4분): 미네랄 우선 [*]
         if game_time < 240:
             return 3.0  # 미네랄:가스 = 3:1
 
-        # ★ Mid Game (4-8분): 균형 ★
+        # [*] Mid Game (4-8분): 균형 [*]
         elif game_time < 480:
             # 가스가 많이 쌓이면 미네랄 쪽으로 재배치
             if gas > self.gas_excess_threshold:
@@ -120,7 +120,7 @@ class SmartResourceBalancer:
             else:
                 return 2.0  # 균형
 
-        # ★ Late Game (8분+): 가스 우선 ★
+        # [*] Late Game (8분+): 가스 우선 [*]
         else:
             if gas > self.gas_critical_threshold:
                 return 3.0  # 가스 과다, 미네랄로 전환
@@ -175,26 +175,26 @@ class SmartResourceBalancer:
             (needs_rebalance, action)
             action: "gas_to_mineral", "mineral_to_gas", "none"
         """
-        # ★ Critical: 가스 2000+ & 미네랄 부족 ★
+        # [*] Critical: 가스 2000+ & 미네랄 부족 [*]
         if gas > self.gas_critical_threshold and minerals < self.mineral_shortage_threshold:
             return True, "gas_to_mineral"
 
-        # ★ 가스 1000+ & 미네랄 100- ★
+        # [*] 가스 1000+ & 미네랄 100- [*]
         if gas > self.gas_excess_threshold and minerals < self.mineral_critical_threshold:
             return True, "gas_to_mineral"
 
-        # ★ 가스 과다 (목표 비율 대비) ★
+        # [*] 가스 과다 (목표 비율 대비) [*]
         if gas > self.gas_excess_threshold:
             # 현재 비율이 목표보다 낮으면 (가스 일꾼이 너무 많음)
             if current_ratio < target_ratio * 0.8:
                 return True, "gas_to_mineral"
 
-        # ★ 미네랄 과다 & 가스 부족 ★
+        # [*] 미네랄 과다 & 가스 부족 [*]
         if minerals > 1500 and gas < 100 and game_time > 240:  # 4분 이후
             if current_ratio > target_ratio * 1.2:
                 return True, "mineral_to_gas"
 
-        # ★ 비율 차이가 크면 재배치 ★
+        # [*] 비율 차이가 크면 재배치 [*]
         ratio_diff = abs(current_ratio - target_ratio) / target_ratio
         if ratio_diff > 0.3:  # 30% 이상 차이
             if current_ratio < target_ratio:
@@ -214,24 +214,24 @@ class SmartResourceBalancer:
             gas: 현재 가스
         """
         if action == "gas_to_mineral":
-            # 가스 → 미네랄로 일꾼 이동
+            # 가스 -> 미네랄로 일꾼 이동
             moved = await self._move_workers_to_minerals()
             if moved > 0:
                 self.gas_to_mineral_moves += moved
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ REBALANCE: Gas→Mineral ({moved} workers)\n"
+                    f"[{int(game_time)}s] [*] REBALANCE: Gas->Mineral ({moved} workers)\n"
                     f"  Minerals: {minerals}, Gas: {gas}"
                 )
 
         elif action == "mineral_to_gas":
-            # 미네랄 → 가스로 일꾼 이동
+            # 미네랄 -> 가스로 일꾼 이동
             moved = await self._move_workers_to_gas()
             if moved > 0:
                 self.mineral_to_gas_moves += moved
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ REBALANCE: Mineral→Gas ({moved} workers)\n"
+                    f"[{int(game_time)}s] [*] REBALANCE: Mineral->Gas ({moved} workers)\n"
                     f"  Minerals: {minerals}, Gas: {gas}"
                 )
 

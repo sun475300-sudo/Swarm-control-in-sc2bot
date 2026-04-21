@@ -149,7 +149,7 @@ try:
 except ImportError:
     StrictUpgradePriority = None
 
-# ★★★ PHASE 8/9 SYSTEMS ★★★
+# [*][*][*] PHASE 8/9 SYSTEMS [*][*][*]
 
 # Enhanced Scouting System
 try:
@@ -163,13 +163,13 @@ try:
 except ImportError:
     HarassmentCoordinator = None
 
-# ★ Phase 13: Advanced Micro Controller V3
+# [*] Phase 13: Advanced Micro Controller V3
 try:
     from advanced_micro_controller_v3 import AdvancedMicroControllerV3
 except (ImportError, TypeError):
     AdvancedMicroControllerV3 = None
 
-# ★ Phase 14: Unit Morph Manager (Baneling/Ravager/Lurker/Broodlord)
+# [*] Phase 14: Unit Morph Manager (Baneling/Ravager/Lurker/Broodlord)
 try:
     from unit_morph_manager import UnitMorphManager
 except (ImportError, TypeError):
@@ -290,13 +290,13 @@ try:
 except ImportError:
     CreepHighway = None
 
-# ★ Phase 19: Hive Tech Maximizer (군락 이후 고급 기술 극대화) ★
+# [*] Phase 19: Hive Tech Maximizer (군락 이후 고급 기술 극대화) [*]
 try:
     from hive_tech_maximizer import HiveTechMaximizer
 except (ImportError, TypeError):
     HiveTechMaximizer = None
 
-# ★ Phase 22: Dead Code 일괄 활성화 — 10대 핵심 매니저 ★
+# [*] Phase 22: Dead Code 일괄 활성화 — 10대 핵심 매니저 [*]
 try:
     from creep_expansion_system import CreepExpansionSystem
 except (ImportError, TypeError):
@@ -408,10 +408,10 @@ class BotStepIntegrator:
         else:
             self.bot.upgrade_priority = None
 
-        # ★★★ PHASE 8/9 SYSTEMS INITIALIZATION ★★★
+        # [*][*][*] PHASE 8/9 SYSTEMS INITIALIZATION [*][*][*]
 
         # Enhanced Scouting System
-        # ★ Skip if AdvancedScoutSystemV2 is available (it supersedes EnhancedScout)
+        # [*] Skip if AdvancedScoutSystemV2 is available (it supersedes EnhancedScout)
         if EnhancedScoutSystem and not AdvancedScoutSystemV2:
             self.bot.enhanced_scout = EnhancedScoutSystem(bot)
             self.logger.info("[INIT] EnhancedScoutSystem initialized (Phase 9)")
@@ -432,14 +432,14 @@ class BotStepIntegrator:
         else:
             self.bot.queen_inject_opt = None
 
-        # ★ Phase 13: Advanced Micro Controller V3 초기화
+        # [*] Phase 13: Advanced Micro Controller V3 초기화
         if AdvancedMicroControllerV3:
             self.bot.micro_v3 = AdvancedMicroControllerV3(bot)
             self.logger.info("[INIT] AdvancedMicroControllerV3 initialized (Phase 13)")
         elif not hasattr(self.bot, "micro_v3"):
             self.bot.micro_v3 = None
 
-        # ★ Phase 14: Unit Morph Manager 초기화 (Baneling/Ravager/Lurker/Broodlord)
+        # [*] Phase 14: Unit Morph Manager 초기화 (Baneling/Ravager/Lurker/Broodlord)
         if UnitMorphManager:
             self.bot.morph_manager = UnitMorphManager(bot)
             self.logger.info("[INIT] UnitMorphManager initialized (Phase 14) — 4종 변이 유닛 활성화")
@@ -551,14 +551,14 @@ class BotStepIntegrator:
         else:
             self.bot.advanced_scout_v2 = None
 
-        # ★★★ 2순위: Flanking Coordinator (양각 포위 전술) ★★★
+        # [*][*][*] 2순위: Flanking Coordinator (양각 포위 전술) [*][*][*]
         if FlankingCoordinator:
             self.bot.flanking_coord = FlankingCoordinator(bot)
             self.logger.info("[INIT] FlankingCoordinator initialized (2순위 - 양각 포위)")
         else:
             self.bot.flanking_coord = None
 
-        # ★★★ PHASE 1: 여왕 전문 분담 & A* 점막 고속도로 ★★★
+        # [*][*][*] PHASE 1: 여왕 전문 분담 & A* 점막 고속도로 [*][*][*]
 
         # Queen Specialization Manager (여왕 PUMP/CREEP/COMBAT 분담)
         if QueenSpecializationManager:
@@ -574,14 +574,14 @@ class BotStepIntegrator:
         else:
             self.bot.creep_highway_astar = None
 
-        # ★ Phase 19: Hive Tech Maximizer (군락 이후 울트라/브루드/바이퍼 생산)
+        # [*] Phase 19: Hive Tech Maximizer (군락 이후 울트라/브루드/바이퍼 생산)
         if HiveTechMaximizer:
             self.bot.hive_tech = HiveTechMaximizer(bot)
             self.logger.info("[INIT] HiveTechMaximizer initialized (Phase 19) — 후반 고급유닛 활성화")
         elif not hasattr(self.bot, "hive_tech"):
             self.bot.hive_tech = None
 
-        # ★ Phase 22: Dead Code 일괄 활성화 — 10대 핵심 매니저 초기화 ★
+        # [*] Phase 22: Dead Code 일괄 활성화 — 10대 핵심 매니저 초기화 [*]
         if CreepExpansionSystem:
             self.bot.creep_expansion = CreepExpansionSystem(bot)
             self.logger.info("[INIT] CreepExpansionSystem (Phase 22) — 전 맵 크립 확장")
@@ -666,7 +666,7 @@ class BotStepIntegrator:
 
     async def _update_blackboard_state(self, iteration: int):
         """
-        ★★★ Blackboard 게임 상태 업데이트 ★★★
+        [*][*][*] Blackboard 게임 상태 업데이트 [*][*][*]
 
         모든 매니저가 Blackboard를 통해 게임 상태를 조회할 수 있도록
         매 프레임마다 최신 상태로 업데이트
@@ -715,7 +715,7 @@ class BotStepIntegrator:
             blackboard.current_strategy = self.bot.aggressive_strategies.active_strategy.value
 
         # 6. 빌드 오더 완료 여부
-        # ★ Phase 25: build_order_active 기반 (빌드오더 자체가 완료 전파)
+        # [*] Phase 25: build_order_active 기반 (빌드오더 자체가 완료 전파)
         if hasattr(self.bot, "build_order_system") and self.bot.build_order_system:
             bos = self.bot.build_order_system
             blackboard.build_order_complete = not getattr(bos, "build_order_active", True)
@@ -723,7 +723,7 @@ class BotStepIntegrator:
             blackboard.build_order_complete = self.bot.time > 300.0
 
     async def _build_anti_air_tech_if_needed(self):
-        """★ StrategyManager의 대공 테크 건설 플래그 처리 (async) ★"""
+        """[*] StrategyManager의 대공 테크 건설 플래그 처리 (async) [*]"""
         sm = getattr(self.bot, "strategy_manager", None)
         if not sm:
             return
@@ -767,14 +767,14 @@ class BotStepIntegrator:
     async def execute_game_logic(self, iteration: int):
         """게임 로직 실행"""
 
-        # ★ SC2 매너 채팅: GL HF 선언 ★
+        # [*] SC2 매너 채팅: GL HF 선언 [*]
         if not getattr(self.bot, "_glhf_sent", False):
             if self.bot.time < 10.0:
                 await self.bot.chat_send("gl hf")
                 self.bot._glhf_sent = True
 
         try:
-            # 0.01 ★★★ Blackboard 상태 업데이트 (최우선) ★★★
+            # 0.01 [*][*][*] Blackboard 상태 업데이트 (최우선) [*][*][*]
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 await self._update_blackboard_state(iteration)
 
@@ -782,43 +782,43 @@ class BotStepIntegrator:
             if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
                 self.bot.performance_optimizer.start_frame()
 
-            # 0.005 ★★★ Logic Optimizer (시스템 활성화 관리) ★★★
+            # 0.005 [*][*][*] Logic Optimizer (시스템 활성화 관리) [*][*][*]
             if hasattr(self.bot, "logic_optimizer") and self.bot.logic_optimizer:
                 await self.bot.logic_optimizer.on_step(iteration)
 
-            # 0.006 ★★★ Unit Authority Manager (유닛 제어 권한 관리) ★★★
+            # 0.006 [*][*][*] Unit Authority Manager (유닛 제어 권한 관리) [*][*][*]
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 await self.bot.unit_authority.on_step(iteration)
 
-            # 0.0065 ★ 죽은 유닛의 권한 해제 (2초마다) ★
+            # 0.0065 [*] 죽은 유닛의 권한 해제 (2초마다) [*]
             if iteration % 44 == 0:
                 self._cleanup_dead_unit_authorities()
 
-            # 0.007 ★★★ Map Memory System (맵 기억 - 적 건물 추적) ★★★
+            # 0.007 [*][*][*] Map Memory System (맵 기억 - 적 건물 추적) [*][*][*]
             if hasattr(self.bot, "map_memory") and self.bot.map_memory:
                 await self.bot.map_memory.on_step(iteration)
 
-            # 0.008 ★★★ Complete Destruction Trainer (모든 건물 파괴) ★★★
+            # 0.008 [*][*][*] Complete Destruction Trainer (모든 건물 파괴) [*][*][*]
             if hasattr(self.bot, "complete_destruction") and self.bot.complete_destruction:
                 await self.bot.complete_destruction.on_step(iteration)
 
-            # 0.009 ★★★ Roach Tactics Trainer (바퀴 잠복 회복 전술) ★★★
+            # 0.009 [*][*][*] Roach Tactics Trainer (바퀴 잠복 회복 전술) [*][*][*]
             if hasattr(self.bot, "roach_tactics") and self.bot.roach_tactics:
                 await self.bot.roach_tactics.on_step(iteration)
 
-            # 0.010 ★★★ Zergling Harassment Trainer (저글링 괴롭힘 전술) ★★★
+            # 0.010 [*][*][*] Zergling Harassment Trainer (저글링 괴롭힘 전술) [*][*][*]
             if hasattr(self.bot, "zergling_harass") and self.bot.zergling_harass:
                 await self.bot.zergling_harass.on_step(iteration)
 
-            # 0.011 ★★★ Overseer Scout Trainer (감시군주 정찰) ★★★
+            # 0.011 [*][*][*] Overseer Scout Trainer (감시군주 정찰) [*][*][*]
             if hasattr(self.bot, "overseer_scout") and self.bot.overseer_scout:
                 await self.bot.overseer_scout.on_step(iteration)
 
-            # 0.012 ★★★ Air Threat Response Trainer (공중 위협 대응) ★★★
+            # 0.012 [*][*][*] Air Threat Response Trainer (공중 위협 대응) [*][*][*]
             if hasattr(self.bot, "air_threat_response") and self.bot.air_threat_response:
                 await self.bot.air_threat_response.on_step(iteration)
 
-            # 0.013 ★★★ Space Control Trainer (공간 확보) ★★★
+            # 0.013 [*][*][*] Space Control Trainer (공간 확보) [*][*][*]
             if hasattr(self.bot, "space_control") and self.bot.space_control:
                 await self.bot.space_control.on_step(iteration)
 
@@ -834,7 +834,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "creep_expansion") and self.bot.creep_expansion:
                 await self.bot.creep_expansion.on_step(iteration)
 
-            # 0.0165 ★ NEW: Creep Denial System (적 점막 제거) ★
+            # 0.0165 [*] NEW: Creep Denial System (적 점막 제거) [*]
             if hasattr(self.bot, "creep_denial") and self.bot.creep_denial:
                 start_time = self._logic_tracker.start_logic("CreepDenial")
                 try:
@@ -859,7 +859,7 @@ class BotStepIntegrator:
                 await self.bot.hive_tech.on_step(iteration)
 
 
-            # 0.02 ★★★ Spatial Optimizer & Data Cache (최우선 최적화) ★★★
+            # 0.02 [*][*][*] Spatial Optimizer & Data Cache (최우선 최적화) [*][*][*]
             # 다른 모든 시스템보다 먼저 실행하여 캐시 준비 (항상 실행)
             if hasattr(self.bot, "spatial_optimizer") and self.bot.spatial_optimizer:
                 try:
@@ -875,7 +875,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Base Destruction Coordinator (모든 적 기지 파괴) ★★★
+            # [*][*][*] Base Destruction Coordinator (모든 적 기지 파괴) [*][*][*]
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
@@ -883,7 +883,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Building Destroyer (건물 파괴 전문) ★★★
+            # [*][*][*] Building Destroyer (건물 파괴 전문) [*][*][*]
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
@@ -891,7 +891,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Runtime Self-Healing (실행 중 자동 복구) ★★★
+            # [*][*][*] Runtime Self-Healing (실행 중 자동 복구) [*][*][*]
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
                 try:
                     await self.bot.self_healing.on_step(iteration)
@@ -899,7 +899,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Personality Module (채팅/성격) ★★★
+            # [*][*][*] Personality Module (채팅/성격) [*][*][*]
             if hasattr(self.bot, "personality") and self.bot.personality:
                 try:
                     await self.bot.personality.on_step(iteration)
@@ -907,7 +907,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Battle Preparation System (교전 대비) ★★★
+            # [*][*][*] Battle Preparation System (교전 대비) [*][*][*]
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
@@ -915,7 +915,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Destructible Awareness System (파괴 가능 구조물) ★★★
+            # [*][*][*] Destructible Awareness System (파괴 가능 구조물) [*][*][*]
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
                 try:
                     # 게임 시작 시 한 번만 실행
@@ -927,7 +927,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Nydus Network Trainer (땅굴망 학습) ★★★
+            # [*][*][*] Nydus Network Trainer (땅굴망 학습) [*][*][*]
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
@@ -935,7 +935,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # ★★★ Overlord Safety Manager (대군주 안전) ★★★
+            # [*][*][*] Overlord Safety Manager (대군주 안전) [*][*][*]
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
@@ -943,7 +943,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # 0.03 ★★★ Build Order System (빌드 오더 - 최최우선) ★★★
+            # 0.03 [*][*][*] Build Order System (빌드 오더 - 최최우선) [*][*][*]
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
                 if not hasattr(self.bot, "build_order_system"):
                     if BuildOrderSystem is not None:
@@ -951,7 +951,7 @@ class BotStepIntegrator:
                             self.bot.build_order_system = BuildOrderSystem(self.bot)
                             self.logger.info("[BUILD_ORDER] 빌드 오더 시스템 활성화!")
 
-                            # ★ RL Agent에게 오프닝 빌드 조언 구하기 (게임 시작 시 1회) ★
+                            # [*] RL Agent에게 오프닝 빌드 조언 구하기 (게임 시작 시 1회) [*]
                             if self.bot.train_mode and hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
                                 # 초기 상태로 제안 받기 (0 벡터라도 무관 - 초기 성향)
                                 # 간단히 action_labels[0] 등을 쓰는 대신, 랜덤 또는 epsilon 탐험 이용
@@ -1020,7 +1020,7 @@ class BotStepIntegrator:
                     finally:
                         self._logic_tracker.end_logic("BuildOrder", start_time)
 
-            # 0.05 ★★★ DefenseCoordinator (통합 방어 시스템 - 최우선) ★★★
+            # 0.05 [*][*][*] DefenseCoordinator (통합 방어 시스템 - 최우선) [*][*][*]
             if hasattr(self.bot, "defense_coordinator") and self.bot.defense_coordinator:
                 start_time = self._logic_tracker.start_logic("DefenseCoordinator")
                 try:
@@ -1040,7 +1040,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("DefenseCoordinator", start_time)
 
-            # 0.048 ★★★ EarlyDefenseSystem (0-3분 러시 전용 방어) ★★★
+            # 0.048 [*][*][*] EarlyDefenseSystem (0-3분 러시 전용 방어) [*][*][*]
             if self.bot.time < 180 and hasattr(self.bot, "early_defense") and self.bot.early_defense:
                 start_time = self._logic_tracker.start_logic("EarlyDefense")
                 try:
@@ -1055,7 +1055,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("EarlyDefense", start_time)
 
-            # 0.051 ★★★ Worker Combat System (Early Rush Defense) ★★★
+            # 0.051 [*][*][*] Worker Combat System (Early Rush Defense) [*][*][*]
             if hasattr(self.bot, "worker_combat") and self.bot.worker_combat:
                 start_time = self._logic_tracker.start_logic("WorkerCombat")
                 try:
@@ -1070,7 +1070,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("WorkerCombat", start_time)
 
-            # 0.052 ★★★ Strict Upgrade Priority (업그레이드 우선순위) ★★★
+            # 0.052 [*][*][*] Strict Upgrade Priority (업그레이드 우선순위) [*][*][*]
             if hasattr(self.bot, "upgrade_priority") and self.bot.upgrade_priority:
                 start_time = self._logic_tracker.start_logic("UpgradePriority")
                 try:
@@ -1085,7 +1085,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("UpgradePriority", start_time)
 
-            # 0.055 ★★★ RL Tech Adapter (적 테크 기반 적응) ★★★
+            # 0.055 [*][*][*] RL Tech Adapter (적 테크 기반 적응) [*][*][*]
             if hasattr(self.bot, "rl_tech_adapter") and self.bot.rl_tech_adapter:
                 start_time = self._logic_tracker.start_logic("RLTechAdapter")
                 try:
@@ -1100,7 +1100,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
 
-            # 0.057 ★★★ Micro Focus Mode (전투 우선순위 동적 할당) ★★★
+            # 0.057 [*][*][*] Micro Focus Mode (전투 우선순위 동적 할당) [*][*][*]
             micro_interval = 8  # 기본 간격
             if hasattr(self.bot, "micro_focus") and self.bot.micro_focus:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
@@ -1116,13 +1116,13 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("MicroFocusMode", start_time)
 
-            # 0.058 ★★★ Dynamic Resource Balancer (자원 불균형 조정) ★★★
+            # 0.058 [*][*][*] Dynamic Resource Balancer (자원 불균형 조정) [*][*][*]
             if hasattr(self.bot, "resource_balancer") and self.bot.resource_balancer:
                 start_time = self._logic_tracker.start_logic("ResourceBalancer")
                 try:
                     ratio_adjustments = self.bot.resource_balancer.update(iteration)
 
-                    # ★ OPTIMIZED: Store in bot for all systems to use
+                    # [*] OPTIMIZED: Store in bot for all systems to use
                     self.bot.current_gas_ratio = ratio_adjustments.get("gas_unit_ratio", 0.50)
                     self.bot.resource_state = ratio_adjustments.get("state", "BALANCED")
                     self.bot.mineral_excess = ratio_adjustments.get("mineral_excess", False)
@@ -1141,7 +1141,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("ResourceBalancer", start_time)
 
-            # 0.059 ★★★ Smart Resource Balancer (실시간 일꾼 재배치) ★★★
+            # 0.059 [*][*][*] Smart Resource Balancer (실시간 일꾼 재배치) [*][*][*]
             if hasattr(self.bot, "smart_balancer") and self.bot.smart_balancer:
                 start_time = self._logic_tracker.start_logic("SmartBalancer")
                 try:
@@ -1156,7 +1156,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("SmartBalancer", start_time)
 
-            # 0.059 ★★★ INSTANT Air Threat Response (치명적 공중 유닛 즉시 대응) ★★★
+            # 0.059 [*][*][*] INSTANT Air Threat Response (치명적 공중 유닛 즉시 대응) [*][*][*]
             if iteration % 11 == 0:  # 매 0.5초마다 체크 (빠른 반응)
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
@@ -1164,17 +1164,17 @@ class BotStepIntegrator:
                     enemy_structures = getattr(self.bot, "enemy_structures", None)
 
                     if enemy_units and enemy_structures:
-                        # ★ Blackboard 경유 긴급 생산 (ProductionController와 자원 충돌 방지) ★
+                        # [*] Blackboard 경유 긴급 생산 (ProductionController와 자원 충돌 방지) [*]
                         blackboard = getattr(self.bot, "blackboard", None)
 
-                        # Carrier 감지 → 즉시 Corruptor 생산
+                        # Carrier 감지 -> 즉시 Corruptor 생산
                         if enemy_units(UnitTypeId.CARRIER).exists:
                             if blackboard:
                                 blackboard.request_production(UnitTypeId.CORRUPTOR, count=2, requester="AirThreat_URGENT")
                             elif self.bot.can_afford(UnitTypeId.CORRUPTOR) and self.bot.larva.exists:
                                 self.bot.do(self.bot.larva.first.train(UnitTypeId.CORRUPTOR))
 
-                        # Stargate 감지 → Hydralisk Den 건설 준비
+                        # Stargate 감지 -> Hydralisk Den 건설 준비
                         elif enemy_structures(UnitTypeId.STARGATE).exists:
                             hydra_den = self.bot.structures(UnitTypeId.HYDRALISKDEN)
                             if not hydra_den.exists and not self.bot.already_pending(UnitTypeId.HYDRALISKDEN):
@@ -1183,7 +1183,7 @@ class BotStepIntegrator:
                                     if lair_or_hive.ready.exists:
                                         await self.bot.build(UnitTypeId.HYDRALISKDEN, near=lair_or_hive.ready.first)
 
-                        # Battlecruiser 감지 → 즉시 Corruptor 대량 생산
+                        # Battlecruiser 감지 -> 즉시 Corruptor 대량 생산
                         elif enemy_units(UnitTypeId.BATTLECRUISER).exists:
                             corruptor_count = self.bot.units(UnitTypeId.CORRUPTOR).amount
                             if corruptor_count < 12:
@@ -1198,7 +1198,7 @@ class BotStepIntegrator:
             # 0.060 DynamicCounterSystem -> RacialCounterManager로 병합됨
             # 위협 감지 및 카운터 로직은 StrategyManager.counter_manager.update()에서 처리
 
-            # 0.0605 ★★★ A* Creep Highway (적진 방향 A* 경로 계산 + 진행 체크) ★★★
+            # 0.0605 [*][*][*] A* Creep Highway (적진 방향 A* 경로 계산 + 진행 체크) [*][*][*]
             if hasattr(self.bot, "creep_highway_astar") and self.bot.creep_highway_astar:
                 astar_hw = self.bot.creep_highway_astar
                 try:
@@ -1215,7 +1215,7 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
 
-            # 0.061 ★★★ Creep Highway Manager (기지 간 연결) ★★★
+            # 0.061 [*][*][*] Creep Highway Manager (기지 간 연결) [*][*][*]
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
                 start_time = self._logic_tracker.start_logic("CreepHighway")
                 try:
@@ -1230,7 +1230,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("CreepHighway", start_time)
 
-            # 0.0615 ★★★ Flanking Coordinator (양각 포위 전술) ★★★
+            # 0.0615 [*][*][*] Flanking Coordinator (양각 포위 전술) [*][*][*]
             if hasattr(self.bot, "flanking_coord") and self.bot.flanking_coord:
                 start_time = self._logic_tracker.start_logic("FlankingCoord")
                 try:
@@ -1245,7 +1245,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("FlankingCoord", start_time)
 
-            # 0.062 ★★★ SpellCaster Automation (마법 유닛 자동화) ★★★
+            # 0.062 [*][*][*] SpellCaster Automation (마법 유닛 자동화) [*][*][*]
             if hasattr(self.bot, "spellcaster") and self.bot.spellcaster:
                 start_time = self._logic_tracker.start_logic("SpellCaster")
                 try:
@@ -1261,7 +1261,7 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("SpellCaster", start_time)
 
             # DEPRECATED: ActiveScoutingSystem replaced by AdvancedScoutingSystemV2
-            # 0.063 ★★★ Active Scouting System (능동형 정찰) ★★★
+            # 0.063 [*][*][*] Active Scouting System (능동형 정찰) [*][*][*]
             # if hasattr(self.bot, "active_scout") and self.bot.active_scout:
             #     start_time = self._logic_tracker.start_logic("ActiveScout")
             #     try:
@@ -1276,7 +1276,7 @@ class BotStepIntegrator:
             #     finally:
             #         self._logic_tracker.end_logic("ActiveScout", start_time)
 
-            # 0.064 ★★★ Upgrade Coordination System (업그레이드 타이밍) ★★★
+            # 0.064 [*][*][*] Upgrade Coordination System (업그레이드 타이밍) [*][*][*]
             if hasattr(self.bot, "upgrade_coord") and self.bot.upgrade_coord:
                 start_time = self._logic_tracker.start_logic("UpgradeCoord")
                 try:
@@ -1291,7 +1291,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("UpgradeCoord", start_time)
 
-            # 0.06 ★★★ Early Scout System (초반 정찰) ★★★
+            # 0.06 [*][*][*] Early Scout System (초반 정찰) [*][*][*]
             if True:  # Keep scout state alive; execute() handles early vs. mid-game work.
                 if not hasattr(self.bot, "early_scout"):
                     try:
@@ -1320,7 +1320,7 @@ class BotStepIntegrator:
                     finally:
                         self._logic_tracker.end_logic("EarlyScout", start_time)
 
-            # 0.061 ★★★ Advanced Scouting System V2 (개선판 - Overseer + Changeling) ★★★
+            # 0.061 [*][*][*] Advanced Scouting System V2 (개선판 - Overseer + Changeling) [*][*][*]
             if hasattr(self.bot, "advanced_scout_v2") and self.bot.advanced_scout_v2:
                 start_time = self._logic_tracker.start_logic("AdvancedScoutV2")
                 try:
@@ -1344,7 +1344,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("AdvancedScoutV2", start_time)
 
-            # 0.062 ★★★ Build Order Optimizer (Phase 9 - 빌드 최적화) ★★★
+            # 0.062 [*][*][*] Build Order Optimizer (Phase 9 - 빌드 최적화) [*][*][*]
             if hasattr(self.bot, "build_order_opt") and self.bot.build_order_opt:
                 start_time = self._logic_tracker.start_logic("BuildOrderOpt")
                 try:
@@ -1359,7 +1359,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("BuildOrderOpt", start_time)
 
-            # 0.063 ★★★ 1-Min Multi Test (Phase 9 - 타이밍 검증) ★★★
+            # 0.063 [*][*][*] 1-Min Multi Test (Phase 9 - 타이밍 검증) [*][*][*]
             if hasattr(self.bot, "multi_test") and self.bot.multi_test:
                 start_time = self._logic_tracker.start_logic("MultiTest")
                 try:
@@ -1383,7 +1383,7 @@ class BotStepIntegrator:
                         self.logger.debug(f"[DEBUG] Calling strategy_manager.update() at iteration {iteration}")
                     self.bot.strategy_manager.update()
 
-                    # ★ Anti-Air Tech Building (async 처리 - strategy_manager 플래그 소비) ★
+                    # [*] Anti-Air Tech Building (async 처리 - strategy_manager 플래그 소비) [*]
                     await self._build_anti_air_tech_if_needed()
 
                     # Phase 18: Smart Surrender Check
@@ -1407,7 +1407,7 @@ class BotStepIntegrator:
                 if iteration == 1:
                     self.logger.warning(f"[WARNING] strategy_manager not found! hasattr={hasattr(self.bot, 'strategy_manager')}, value={getattr(self.bot, 'strategy_manager', None)}")
 
-            # 0.11 ★★★ Situational Awareness (Stage 5 - SITREP Generation) ★★★
+            # 0.11 [*][*][*] Situational Awareness (Stage 5 - SITREP Generation) [*][*][*]
             # StrategyManager 직후에 실행하여 최신 전략 상태를 반영
             if hasattr(self.bot, "situational_awareness") and self.bot.situational_awareness:
                  start_time = self._logic_tracker.start_logic("SituationalAwareness")
@@ -1423,7 +1423,7 @@ class BotStepIntegrator:
                  finally:
                      self._logic_tracker.end_logic("SituationalAwareness", start_time)
 
-            # 0.15 ★ Defeat Detection (패배 직감 시스템) ★
+            # 0.15 [*] Defeat Detection (패배 직감 시스템) [*]
             if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
                 start_time = self._logic_tracker.start_logic("DefeatDetection")
                 try:
@@ -1443,7 +1443,7 @@ class BotStepIntegrator:
                                 self.bot.combat._defense_rally_point = last_stand_pos
                                 self.bot.combat._base_defense_active = True
 
-                    # ★★★ 패배 불가피 시 게임 포기 (훈련 효율 향상) ★★★
+                    # [*][*][*] 패배 불가피 시 게임 포기 (훈련 효율 향상) [*][*][*]
                     elif defeat_status.get("should_surrender", False):
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
@@ -1472,14 +1472,14 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("DefeatDetection", start_time)
 
-            # ★ NEW: Chat Manager - 상대방 항복/채팅 감지 (10프레임마다) ★
+            # [*] NEW: Chat Manager - 상대방 항복/채팅 감지 (10프레임마다) [*]
             if iteration % 10 == 0:
                 await self._handle_chat_interaction()
 
             # 1. Intel (정보 수집)
             await self._safe_manager_step(self.bot.intel, iteration, "Intel")
 
-            # 1.5 ★★★ Opponent Modeling (Phase 15 - 적 학습 및 전략 예측) ★★★
+            # 1.5 [*][*][*] Opponent Modeling (Phase 15 - 적 학습 및 전략 예측) [*][*][*]
             if hasattr(self.bot, "opponent_modeling") and self.bot.opponent_modeling:
                 start_time = self._logic_tracker.start_logic("OpponentModeling")
                 try:
@@ -1505,7 +1505,7 @@ class BotStepIntegrator:
             # await self._safe_manager_step(self.bot.scout, iteration, "Scouting")
 
             # 2.2. Creep Manager (점막 계획)
-            # ★ Skip if CreepAutomationV2 is active (avoid duplicate creep commands)
+            # [*] Skip if CreepAutomationV2 is active (avoid duplicate creep commands)
             if not (hasattr(self.bot, "creep_v2") and self.bot.creep_v2):
                 await self._safe_manager_step(
                     getattr(self.bot, "creep_manager", None),
@@ -1513,7 +1513,7 @@ class BotStepIntegrator:
                     "Creep manager",
                 )
 
-            # 2.5 Tech Coordinator (테크 건물 건설 조정) ★
+            # 2.5 Tech Coordinator (테크 건물 건설 조정) [*]
             # Production 전에 테크 건설 요청을 처리
             if self.bot.tech_coordinator:
                 start_time = self._logic_tracker.start_logic("TechCoordinator")
@@ -1525,9 +1525,9 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("TechCoordinator", start_time)
 
             # 2.9 Unit Authority Manager (Phase 10)
-            # ★ REMOVED: 이미 0.006에서 실행됨 (중복 호출 방지) ★
+            # [*] REMOVED: 이미 0.006에서 실행됨 (중복 호출 방지) [*]
 
-            # 3. ProductionController (통합 생산 관리 - Dynamic Authority) ★★★
+            # 3. ProductionController (통합 생산 관리 - Dynamic Authority) [*][*][*]
             # Blackboard 생산 큐를 우선순위에 따라 처리
             if hasattr(self.bot, "production_controller") and self.bot.production_controller:
                 start_time = self._logic_tracker.start_logic("ProductionController")
@@ -1584,7 +1584,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("Production", start_time, success)
 
-            # 4.2 Aggressive Strategies (초반 공격 전략) - ★ MOVED AFTER PRODUCTION ★
+            # 4.2 Aggressive Strategies (초반 공격 전략) - [*] MOVED AFTER PRODUCTION [*]
             # Production과 UnitFactory 이후 실행하여 애벌레 경쟁 최소화
             if iteration % 4 == 0:  # 4프레임마다 실행
                 await self._safe_manager_step(
@@ -1594,7 +1594,7 @@ class BotStepIntegrator:
                     method_name="execute",
                 )
 
-            # 4.95 ★ OPTIMIZED: Advanced Worker Optimizer BEFORE Economy ★
+            # 4.95 [*] OPTIMIZED: Advanced Worker Optimizer BEFORE Economy [*]
             # Worker optimization runs FIRST so economy can use saturation data
             if hasattr(self.bot, "worker_optimizer") and self.bot.worker_optimizer:
                 start_time = self._logic_tracker.start_logic("WorkerOptimizer")
@@ -1615,12 +1615,12 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("WorkerOptimizer", start_time)
 
-            # 5. Economy (경제) - ★ MOVED AFTER ARMY PRODUCTION & WORKER OPT ★
+            # 5. Economy (경제) - [*] MOVED AFTER ARMY PRODUCTION & WORKER OPT [*]
             # Worker optimizer가 먼저 실행되어 최적 saturation 계산
             # 전투 병력 생산 후 남은 애벌레로 드론 생산
             await self._safe_manager_step(self.bot.economy, iteration, "Economy")
 
-            # ★ Phase 21: 확장 타이밍 모니터링 (50초마다) ★
+            # [*] Phase 21: 확장 타이밍 모니터링 (50초마다) [*]
             if iteration % 1100 == 0:
                 try:
                     base_count = self.bot.townhalls.ready.amount if self.bot.townhalls else 0
@@ -1631,7 +1631,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     self.logger.warning(f"[BotStepIntegrator] Expansion timing check suppressed: {e}")
 
-            # 5.1 ★★★ Queen Inject Optimizer (Phase 8 - 완벽한 Inject) ★★★
+            # 5.1 [*][*][*] Queen Inject Optimizer (Phase 8 - 완벽한 Inject) [*][*][*]
             if hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt:
                 start_time = self._logic_tracker.start_logic("QueenInjectOpt")
                 try:
@@ -1652,7 +1652,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("QueenInjectOpt", start_time)
 
-            # 5.2 ★★★ Queen Transfusion Manager (Phase 21 - Smart Healing) ★★★
+            # 5.2 [*][*][*] Queen Transfusion Manager (Phase 21 - Smart Healing) [*][*][*]
             if hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion:
                 start_time = self._logic_tracker.start_logic("QueenTransfusion")
                 try:
@@ -1683,7 +1683,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("QueenTransfusion", start_time)
 
-            # 5.3 ★★★ Resource Manager (Phase 21 - Race Condition Prevention) ★★★
+            # 5.3 [*][*][*] Resource Manager (Phase 21 - Race Condition Prevention) [*][*][*]
             if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
                 try:
                     # Log statistics periodically
@@ -1701,7 +1701,7 @@ class BotStepIntegrator:
                         if error_handler.error_counts["ResourceManager"] <= error_handler.max_error_logs:
                             self.logger.error(f"[ERROR] ResourceManager error: {e}")
 
-            # 5.4 ★★★ Spatial Query Optimizer (Phase 21 - Performance) ★★★
+            # 5.4 [*][*][*] Spatial Query Optimizer (Phase 21 - Performance) [*][*][*]
             if hasattr(self.bot, "spatial_query") and self.bot.spatial_query:
                 try:
                     # Clear cache at start of frame
@@ -1718,7 +1718,7 @@ class BotStepIntegrator:
                         if error_handler.error_counts["SpatialQuery"] <= error_handler.max_error_logs:
                             self.logger.error(f"[ERROR] SpatialQuery error: {e}")
 
-            # 5.5 ★★★ Overlord Vision Network (Phase 8 - 시야 네트워크) ★★★
+            # 5.5 [*][*][*] Overlord Vision Network (Phase 8 - 시야 네트워크) [*][*][*]
             if hasattr(self.bot, "vision_network") and self.bot.vision_network:
                 start_time = self._logic_tracker.start_logic("VisionNetwork")
                 try:
@@ -1733,7 +1733,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("VisionNetwork", start_time)
 
-            # 5.3 ★★★ Advanced Creep Automation V2 (Phase 8 - 고급 크립) ★★★
+            # 5.3 [*][*][*] Advanced Creep Automation V2 (Phase 8 - 고급 크립) [*][*][*]
             if hasattr(self.bot, "creep_v2") and self.bot.creep_v2:
                 start_time = self._logic_tracker.start_logic("CreepV2")
                 try:
@@ -1755,7 +1755,7 @@ class BotStepIntegrator:
                 "Upgrade manager",
             )
 
-            # 4.6 ★ NEW: Upgrade Resource Planner (업그레이드 자원 계획) ★
+            # 4.6 [*] NEW: Upgrade Resource Planner (업그레이드 자원 계획) [*]
             if hasattr(self.bot, "upgrade_planner") and self.bot.upgrade_planner:
                 start_time = self._logic_tracker.start_logic("UpgradePlanner")
                 try:
@@ -1788,9 +1788,9 @@ class BotStepIntegrator:
                         if surplus_results and iteration % 100 == 0:
                             self.logger.info(f"[RESOURCE SURPLUS] Handled: {surplus_results}")
 
-                    # 방어 건물 최적 위치에 건설 - ★ 3베이스 이후에만! ★
+                    # 방어 건물 최적 위치에 건설 - [*] 3베이스 이후에만! [*]
                     if iteration % 44 == 0:  # 매 2초마다
-                        # ★ CRITICAL: 초반 확장 우선! 3분 이후 + 3베이스 이후에만 방어 건물 건설 ★
+                        # [*] CRITICAL: 초반 확장 우선! 3분 이후 + 3베이스 이후에만 방어 건물 건설 [*]
                         game_time = getattr(self.bot, "time", 0)
                         base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
                         if game_time >= 180 and base_count >= 3:
@@ -1839,7 +1839,7 @@ class BotStepIntegrator:
             # 8. Combat (전투) - 단일 호출 (방어 모드 자동 감지)
             await self._safe_manager_step(self.bot.combat, iteration, "Combat")
 
-            # 8.03 ★ NEW: Idle Unit Manager (유휴 유닛 괴롭힘) ★
+            # 8.03 [*] NEW: Idle Unit Manager (유휴 유닛 괴롭힘) [*]
             if hasattr(self.bot, "idle_units") and self.bot.idle_units:
                 start_time = self._logic_tracker.start_logic("IdleUnits")
                 try:
@@ -1854,7 +1854,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("IdleUnits", start_time)
 
-            # 8.05 ★ NEW: Combat Phase Controller (전투 단계별 컨트롤) ★
+            # 8.05 [*] NEW: Combat Phase Controller (전투 단계별 컨트롤) [*]
             if hasattr(self.bot, "combat_phase") and self.bot.combat_phase:
                 start_time = self._logic_tracker.start_logic("CombatPhase")
                 try:
@@ -1874,7 +1874,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("CombatPhase", start_time)
 
-            # 8.1 ★★★ Harassment Coordinator (Phase 9 - 견제 시스템) ★★★
+            # 8.1 [*][*][*] Harassment Coordinator (Phase 9 - 견제 시스템) [*][*][*]
             if hasattr(self.bot, "harassment_coord") and self.bot.harassment_coord:
                 start_time = self._logic_tracker.start_logic("HarassmentCoord")
                 try:
@@ -1889,7 +1889,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("HarassmentCoord", start_time)
 
-            # 8.2 ★★★ Multi-Prong Attack (Phase 8 - 다방향 공격) ★★★
+            # 8.2 [*][*][*] Multi-Prong Attack (Phase 8 - 다방향 공격) [*][*][*]
             if hasattr(self.bot, "multi_prong") and self.bot.multi_prong:
                 start_time = self._logic_tracker.start_logic("MultiProng")
                 try:
@@ -1904,7 +1904,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("MultiProng", start_time)
 
-            # 8.3 ★★★ Trade Efficiency Analyzer (Phase 8 - 교환 효율) ★★★
+            # 8.3 [*][*][*] Trade Efficiency Analyzer (Phase 8 - 교환 효율) [*][*][*]
             if hasattr(self.bot, "trade_analyzer") and self.bot.trade_analyzer:
                 start_time = self._logic_tracker.start_logic("TradeAnalyzer")
                 try:
@@ -1927,21 +1927,21 @@ class BotStepIntegrator:
                 method_name="update",
             )
 
-            # ★ NEW: Unit Morph Manager (Baneling/Ravager/Lurker/Broodlord) ★
+            # [*] NEW: Unit Morph Manager (Baneling/Ravager/Lurker/Broodlord) [*]
             await self._safe_manager_step(
                 getattr(self.bot, "morph_manager", None),
                 iteration,
                 "Morph manager",
             )
 
-            # ★ NEW: Protoss Counter System (DT/Oracle/Disruptor/Immortal/Prism) ★
+            # [*] NEW: Protoss Counter System (DT/Oracle/Disruptor/Immortal/Prism) [*]
             await self._safe_manager_step(
                 getattr(self.bot, "protoss_counter", None),
                 iteration,
                 "Protoss counter",
             )
 
-            # ★ NEW: Multi-Base Defense System (모든 확장 기지 방어) ★
+            # [*] NEW: Multi-Base Defense System (모든 확장 기지 방어) [*]
             await self._safe_manager_step(
                 getattr(self.bot, "multi_base_defense", None),
                 iteration,
@@ -1949,7 +1949,7 @@ class BotStepIntegrator:
             )
 
             # 10. Micro Control (마이크로 컨트롤)
-            # ★ NEW: Focus Mode Trigger ★
+            # [*] NEW: Focus Mode Trigger [*]
             if hasattr(self.bot, "micro") and self.bot.micro:
                 is_focused = False
                 # 1. 인텔 매니저 확인 (공격 받는 중)
@@ -1965,11 +1965,11 @@ class BotStepIntegrator:
                 if hasattr(self.bot.micro, "set_focus_mode"):
                     self.bot.micro.set_focus_mode(is_focused)
 
-            # ★ MicroV3가 활성이면 Boids Micro 스킵 (명령 덮어쓰기 방지) ★
+            # [*] MicroV3가 활성이면 Boids Micro 스킵 (명령 덮어쓰기 방지) [*]
             if not (hasattr(self.bot, "micro_v3") and self.bot.micro_v3):
                 await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
-            # 10.1 ★★★ Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) ★★★
+            # 10.1 [*][*][*] Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) [*][*][*]
             if hasattr(self.bot, "micro_v3") and self.bot.micro_v3:
                 start_time = self._logic_tracker.start_logic("MicroV3")
                 try:
@@ -1995,7 +1995,7 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("MicroV3", start_time)
 
             # 10.5 Advanced Scouting V2 (Phase 10)
-            # ★ REMOVED: 0.061에서 이미 실행됨 (중복 호출 방지) ★
+            # [*] REMOVED: 0.061에서 이미 실행됨 (중복 호출 방지) [*]
             # if hasattr(self.bot, "advanced_scout_v2"):
             #     await self._safe_manager_step(self.bot.advanced_scout_v2, iteration, "AdvancedScoutV2")
 
@@ -2012,7 +2012,7 @@ class BotStepIntegrator:
             if iteration % 22 == 0:  # 매 1초마다 전략 결정
                 await self._safe_hierarchical_rl_step(iteration)
 
-            # 12.1 ★★★ Late Game Composition Optimizer (Phase 8 - 후반 조합) ★★★
+            # 12.1 [*][*][*] Late Game Composition Optimizer (Phase 8 - 후반 조합) [*][*][*]
             if hasattr(self.bot, "late_game_opt") and self.bot.late_game_opt:
                 start_time = self._logic_tracker.start_logic("LateGameOpt")
                 try:
@@ -2027,7 +2027,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("LateGameOpt", start_time)
 
-            # 12.2 ★★★ Adaptive Build Order AI (Phase 8 - 적응형 빌드) ★★★
+            # 12.2 [*][*][*] Adaptive Build Order AI (Phase 8 - 적응형 빌드) [*][*][*]
             if hasattr(self.bot, "adaptive_build") and self.bot.adaptive_build:
                 start_time = self._logic_tracker.start_logic("AdaptiveBuild")
                 try:
@@ -2042,7 +2042,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("AdaptiveBuild", start_time)
 
-            # 12.3 ★★★ Timing Attacks Library (Phase 8 - 타이밍 공격) ★★★
+            # 12.3 [*][*][*] Timing Attacks Library (Phase 8 - 타이밍 공격) [*][*][*]
             if hasattr(self.bot, "timing_attacks") and self.bot.timing_attacks:
                 start_time = self._logic_tracker.start_logic("TimingAttacks")
                 try:
@@ -2057,7 +2057,7 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("TimingAttacks", start_time)
 
-            # 12.4 ★★★ Proxy Hatchery Tactics (Phase 8 - 프록시 전술) ★★★
+            # 12.4 [*][*][*] Proxy Hatchery Tactics (Phase 8 - 프록시 전술) [*][*][*]
             if hasattr(self.bot, "proxy_hatch") and self.bot.proxy_hatch:
                 start_time = self._logic_tracker.start_logic("ProxyHatch")
                 try:
@@ -2079,7 +2079,7 @@ class BotStepIntegrator:
             # NOTE: Scouting과 Creep Manager는 이미 위에서 실행됨 (Line 303, 306)
             # 중복 실행 방지를 위해 제거됨 (2026-01-25)
 
-            # 13.5 ★ Game Data Logger (Phase 22 - 매 프레임 데이터 수집) ★
+            # 13.5 [*] Game Data Logger (Phase 22 - 매 프레임 데이터 수집) [*]
             if hasattr(self.bot, "game_data_logger") and self.bot.game_data_logger:
                 try:
                     # 첫 호출 시 메타 정보 초기화
@@ -2097,7 +2097,7 @@ class BotStepIntegrator:
             if report:
                 self.logger.info(report)
 
-            # 15. ★ 화면 디버그 정보 표시 ★
+            # 15. [*] 화면 디버그 정보 표시 [*]
             if iteration % 4 == 0:  # 4프레임마다 갱신
                 await self.draw_debug_info()
 
@@ -2234,7 +2234,7 @@ class BotStepIntegrator:
         if not manager:
             return
 
-        # ★★★ Logic Optimizer: 실행 여부 결정 ★★★
+        # [*][*][*] Logic Optimizer: 실행 여부 결정 [*][*][*]
         if hasattr(self.bot, "logic_optimizer") and self.bot.logic_optimizer:
             if not self.bot.logic_optimizer.should_execute_system(label, iteration):
                 return  # 이번 프레임은 스킵
@@ -2247,7 +2247,7 @@ class BotStepIntegrator:
         success = True
 
         try:
-            # ★ FIX: sync 메서드도 안전하게 호출 (TypeError 방지)
+            # [*] FIX: sync 메서드도 안전하게 호출 (TypeError 방지)
             if asyncio.iscoroutinefunction(method):
                 await method(iteration)
             else:
@@ -2280,7 +2280,7 @@ class BotStepIntegrator:
             override_strategy = None
             rl_decision_used = False
 
-            # ★★★ RLAgent 최우선: 게임 상태와 선택된 전략을 기록 ★★★
+            # [*][*][*] RLAgent 최우선: 게임 상태와 선택된 전략을 기록 [*][*][*]
             is_shadow_mode = True  # Default: shadow mode (safe fallback)
             override_strategy = None
             rl_decision_used = False
@@ -2289,7 +2289,7 @@ class BotStepIntegrator:
                     import numpy as np
 
                     # === 1. Feature Engineering (15차원 상태 벡터) ===
-                    # ★ 모든 필드가 실제 게임 정보로 채워짐 (0.0 없음) ★
+                    # [*] 모든 필드가 실제 게임 정보로 채워짐 (0.0 없음) [*]
 
                     # 적 기지 수
                     enemy_bases = 0
@@ -2338,7 +2338,7 @@ class BotStepIntegrator:
                         len(getattr(self.bot, "enemy_units", [])) / 100.0,
                         len(getattr(self.bot, "townhalls", [])) / 10.0,
                         getattr(self.bot, "time", 0) / 1000.0,
-                        # ★ COMPLETE: Filled Features (6 dims) - NO MORE 0.0! ★
+                        # [*] COMPLETE: Filled Features (6 dims) - NO MORE 0.0! [*]
                         enemy_bases / 5.0,        # 적 기지 수
                         upgrade_count / 10.0,     # 업그레이드 진척도
                         larva_count / 20.0,       # 라바 가용량
@@ -2347,7 +2347,7 @@ class BotStepIntegrator:
                         enemy_army_hp / 5000.0    # 적군 전투력
                     ], dtype=np.float32)
 
-                    # ★ 상태 벡터 로깅 (30초마다) - 실제 값 확인 ★
+                    # [*] 상태 벡터 로깅 (30초마다) - 실제 값 확인 [*]
                     if iteration % 660 == 0:  # 30초
                         self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
                         self.logger.info(f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}")
@@ -2357,12 +2357,12 @@ class BotStepIntegrator:
                         self.logger.info(f"  적 기지: {game_state[9]:.3f}, 업그레이드: {game_state[10]:.3f}, 라바: {game_state[11]:.3f}")
                         self.logger.info(f"  맵 장악: {game_state[12]:.3f}, 아군 HP: {game_state[13]:.3f}, 적군 HP: {game_state[14]:.3f}")
 
-                    # ★★★ CRITICAL: RLAgent에게 행동 결정 요청 (최우선) ★★★
+                    # [*][*][*] CRITICAL: RLAgent에게 행동 결정 요청 (최우선) [*][*][*]
                     # 학습 모드 = train_mode, 추론 모드 = not train_mode
                     training = getattr(self.bot, 'train_mode', True)
                     action_idx, action_label, prob = self.bot.rl_agent.get_action(game_state, training=training)
 
-                    # ★ SHADOW MODE: Dynamic Rule (5-minute priority) ★
+                    # [*] SHADOW MODE: Dynamic Rule (5-minute priority) [*]
                     # 1. 5분 이전: AggressiveStrategy 우선 (RL은 Shadow Mode)
                     # 2. 5분 이후: RLAgent가 지휘 (단, Emergency 모드는 예외)
                     
@@ -2389,7 +2389,7 @@ class BotStepIntegrator:
                         if iteration % 220 == 0:
                             self.logger.info(f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Ignored due to {reason})")
                     else:
-                        # ★ RL 결정 적용 ★
+                        # [*] RL 결정 적용 [*]
                         override_strategy = action_label
                         rl_decision_used = True
 
@@ -2402,7 +2402,7 @@ class BotStepIntegrator:
                         if error_handler.error_counts["RLAgent"] <= error_handler.max_error_logs:
                             self.logger.error(f"[ERROR] RLAgent error: {e}")
 
-            # ★★★ HierarchicalRL 실행 (RL Override 강제 적용) ★★★
+            # [*][*][*] HierarchicalRL 실행 (RL Override 강제 적용) [*][*][*]
             # 이제 순수하게 전략적 결정만 반환함
             result = self.bot.hierarchical_rl.step(self.bot, override_strategy=override_strategy)
 
@@ -2419,7 +2419,7 @@ class BotStepIntegrator:
                         # 문자열(예: "ALL_IN")을 Enum으로 변환
                         mode_enum = StrategyMode[new_mode]
                         
-                        # ★ CONFLICT RESOLUTION: Shadow Mode일 때는 StrategyManager를 덮어쓰지 않음 ★
+                        # [*] CONFLICT RESOLUTION: Shadow Mode일 때는 StrategyManager를 덮어쓰지 않음 [*]
                         if not is_shadow_mode:
                             # 모드가 변경될 때만 로그 출력 및 적용
                             if self.bot.strategy_manager.current_mode != mode_enum:
@@ -2438,7 +2438,7 @@ class BotStepIntegrator:
                 if not is_shadow_mode:
                     self.bot._current_strategy = new_mode
 
-                # ★ 결정 로깅 (10초마다) ★
+                # [*] 결정 로깅 (10초마다) [*]
                 if iteration % 220 == 0:  # 10초마다
                     if rl_decision_used:
                         self.logger.info(f"[STRATEGY] [*][*][*] RLAgent 결정 적용: {new_mode} [*][*][*]")
@@ -2447,7 +2447,7 @@ class BotStepIntegrator:
                     else:
                         self.logger.info(f"[STRATEGY] 현행 유지 (Shadow Mode)")
 
-                # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
+                # [*] 불일치 경고 (RL이 있는데 사용 안 됨) [*]
                 if hasattr(self.bot, "rl_agent") and self.bot.rl_agent and not rl_decision_used:
                     if iteration % 220 == 0:
                         self.logger.warning(f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]")
@@ -2562,7 +2562,7 @@ class BotStepIntegrator:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ 패배 직감 시스템 연동 ★
+        # [*] 패배 직감 시스템 연동 [*]
         defeat_level = 0
         last_stand_mode = False
         if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
@@ -2571,15 +2571,15 @@ class BotStepIntegrator:
             last_stand_mode = defeat_status.get("last_stand_required", False)
 
         try:
-            # ★ 패배 직전: 스파인 크롤러 최대 6개 ★
+            # [*] 패배 직전: 스파인 크롤러 최대 6개 [*]
             if last_stand_mode or defeat_level >= 3:
                 max_spines = 6
                 force_build = True
-            # ★ 위기 상황: 스파인 크롤러 4개 ★
+            # [*] 위기 상황: 스파인 크롤러 4개 [*]
             elif defeat_level >= 2:
                 max_spines = 4
                 force_build = True
-            # ★ 일반: 스파인 크롤러 3개 ★
+            # [*] 일반: 스파인 크롤러 3개 [*]
             else:
                 max_spines = 3
                 force_build = False
@@ -2733,7 +2733,7 @@ class BotStepIntegrator:
             if air_threat_level >= 2:
                 if hasattr(self.bot, "queen_manager"):
                     # 퀸 보너스 증가
-                    self.bot.queen_manager.creep_queen_bonus = 4  # 3 → 4
+                    self.bot.queen_manager.creep_queen_bonus = 4  # 3 -> 4
 
         except Exception as e:
             if iteration % 50 == 0:
@@ -2816,7 +2816,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
                 self.bot.rl_agent.update_reward(step_reward)
 
-                # ★ 중간 보상: 기지/군대/보급차단 상태 기반 보상 ★
+                # [*] 중간 보상: 기지/군대/보급차단 상태 기반 보상 [*]
                 if iteration % 44 == 0:  # 2초마다
                     try:
                         base_count = self.bot.townhalls.ready.amount if self.bot.townhalls else 0
@@ -2836,7 +2836,7 @@ class BotStepIntegrator:
             if iteration % 500 == 0:
                 self.logger.info(f"[TRAINING] Step reward: {step_reward:.3f}")
 
-        # ★★★ Model Hot Reload (30초마다 배포 모델 변경 감지) ★★★
+        # [*][*][*] Model Hot Reload (30초마다 배포 모델 변경 감지) [*][*][*]
         if iteration % 660 == 0:  # ~30초
             hot_reloader = getattr(self.bot, "hot_reloader", None)
             if hot_reloader:
@@ -2851,7 +2851,7 @@ class BotStepIntegrator:
 
         이 메서드는 WickedZergBotPro의 on_step에서 호출됩니다.
         """
-        # ★ PERFORMANCE PROFILING: Start frame timing
+        # [*] PERFORMANCE PROFILING: Start frame timing
         profiler = get_profiler(self.bot.logger) if get_profiler else None
         if profiler:
             profiler.start_frame()
@@ -2873,7 +2873,7 @@ class BotStepIntegrator:
 
                 traceback.print_exc()
         finally:
-            # ★ PERFORMANCE PROFILING: End frame timing
+            # [*] PERFORMANCE PROFILING: End frame timing
             if profiler:
                 profiler.end_frame()
 

@@ -144,7 +144,7 @@ class StrictUpgradePriority:
         if UpgradeId.ZERGLINGMOVEMENTSPEED not in self.completed_upgrades:
             return
 
-        # ★ EvolutionUpgradeManager가 활성이면 고우선순위 업그레이드는 위임 ★
+        # [*] EvolutionUpgradeManager가 활성이면 고우선순위 업그레이드는 위임 [*]
         if hasattr(self.bot, "upgrade_manager") and self.bot.upgrade_manager:
             return  # upgrade_manager가 히드라/바퀴 업그레이드를 이미 처리
 

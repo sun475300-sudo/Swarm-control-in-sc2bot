@@ -76,7 +76,7 @@ def get_logger(name: str = "WickedZergBot") -> logging.Logger:
 
 
 def reset_all_loggers():
-    """★ 게임 간 로거 핸들러 초기화 (훈련 시 핸들러 누적 방지) ★"""
+    """[*] 게임 간 로거 핸들러 초기화 (훈련 시 핸들러 누적 방지) [*]"""
     global _LOGGER_INITIALIZED
     for name in list(logging.Logger.manager.loggerDict.keys()):
         logger = logging.getLogger(name)

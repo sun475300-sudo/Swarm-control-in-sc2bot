@@ -416,7 +416,7 @@ class OpponentModeling:
         self.prediction_made_at = game_time
 
         self.logger.info(
-            f"[{int(game_time)}s] ★★★ STRATEGY PREDICTION ★★★\n"
+            f"[{int(game_time)}s] [*][*][*] STRATEGY PREDICTION [*][*][*]\n"
             f"  Predicted: {predicted}\n"
             f"  Confidence: {confidence*100:.1f}%\n"
             f"  Signals: {list(self.observed_signals)}\n"
@@ -646,7 +646,7 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
-        # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
+        # [*] FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = opponent_race.name if opponent_race and hasattr(opponent_race, 'name') else "Unknown"
         self.current_game_history = GameHistory(
             game_id=f"game_{opponent_id}",

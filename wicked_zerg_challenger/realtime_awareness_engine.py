@@ -78,7 +78,7 @@ class RealtimeAwarenessEngine:
     매 프레임:
     1. 상황 스냅샷 생성
     2. 문제 감지 (14가지 패턴)
-    3. 처방 생성 → 행동 오버라이드
+    3. 처방 생성 -> 행동 오버라이드
     4. 봇에 직접 명령 전달
     """
 
@@ -103,7 +103,7 @@ class RealtimeAwarenessEngine:
 
     def on_step(self, iteration: int) -> List[Override]:
         """
-        매 프레임 호출 — 상황 진단 → 문제 감지 → 자동 대응
+        매 프레임 호출 — 상황 진단 -> 문제 감지 -> 자동 대응
 
         Returns:
             List[Override]: 봇이 즉시 실행해야 할 오버라이드 명령들
@@ -120,7 +120,7 @@ class RealtimeAwarenessEngine:
             # Step 2: 문제 감지
             self.active_problems = self._detect_problems()
 
-            # Step 3: 처방 → 오버라이드
+            # Step 3: 처방 -> 오버라이드
             self.active_overrides = self._generate_overrides(game_time)
 
             # Step 4: 직접 행동 실행
@@ -236,7 +236,7 @@ class RealtimeAwarenessEngine:
         if s.army_supply <= 2 and self._last_army_supply > 15:
             problems.append(Problem(
                 "combat", "critical",
-                f"군대 전멸! (army {self._last_army_supply}→{s.army_supply})",
+                f"군대 전멸! (army {self._last_army_supply}->{s.army_supply})",
                 "모든 라바로 군대 유닛 즉시 생산. 드론 생산 중지.",
                 priority=1
             ))
@@ -366,7 +366,7 @@ class RealtimeAwarenessEngine:
         if s.base_count < self._last_base_count and self._last_base_count > 0:
             problems.append(Problem(
                 "defense", "critical",
-                f"기지 상실! ({self._last_base_count}→{s.base_count})",
+                f"기지 상실! ({self._last_base_count}->{s.base_count})",
                 "방어 강화 + 재확장 준비",
                 priority=1
             ))
@@ -599,7 +599,7 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    → action required (see logs)")
+                logger.info(f"    -> action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

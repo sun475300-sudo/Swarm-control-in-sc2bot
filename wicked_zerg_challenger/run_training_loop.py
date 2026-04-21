@@ -67,7 +67,7 @@ def run_single_game(game_num, progression_system):
     map_name = "AbyssalReefLE"
     opponent_race = Race.Protoss
 
-    # ★★★ SMART DIFFICULTY: Use progression system ★★★
+    # [*][*][*] SMART DIFFICULTY: Use progression system [*][*][*]
     difficulty = progression_system.get_recommended_difficulty(map_name, opponent_race)
     logger.info(f"\n[ADAPTIVE DIFFICULTY] Recommended: {difficulty.name}")
 
@@ -138,7 +138,7 @@ def main():
     start_time = time.time()
     games_completed = 0
 
-    # ★★★ Initialize Difficulty Progression System ★★★
+    # [*][*][*] Initialize Difficulty Progression System [*][*][*]
     progression_system = DifficultyProgression()
 
     logger.info("\n" + "=" * 70)

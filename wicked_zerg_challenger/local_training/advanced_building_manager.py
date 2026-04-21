@@ -60,7 +60,7 @@ class AdvancedBuildingManager:
     1. 중복 코드 제거: 가시지옥 굴, 맹독충 변태 로직 공통화
     2. 방어 건물 위치 최적화: 적 공격 경로 분석
     3. 자원 적체 시 테크 건물 공격적 건설
-    4. ★ 일꾼 충돌 방지 건물 배치 ★
+    4. [*] 일꾼 충돌 방지 건물 배치 [*]
     """
 
     def __init__(self, bot):
@@ -72,13 +72,13 @@ class AdvancedBuildingManager:
         # 방어 건물 건설 관련
         self.defense_buildings_cache = {}  # 캐시된 방어 건물 위치
 
-        # ★ 일꾼 충돌 방지 설정 ★
+        # [*] 일꾼 충돌 방지 설정 [*]
         self.min_distance_from_minerals = 3.0  # 미네랄에서 최소 거리
         self.min_distance_from_gas = 3.0       # 가스에서 최소 거리
         self.min_distance_from_townhall = 5.0  # 해처리에서 최소 거리
         self.worker_path_width = 2.0           # 일꾼 이동 경로 폭
 
-        # ★ 점막 체크 헬퍼 ★
+        # [*] 점막 체크 헬퍼 [*]
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
         else:
@@ -385,7 +385,7 @@ class AdvancedBuildingManager:
                 
                 for building_type in [UnitTypeId.SPINECRAWLER, UnitTypeId.SPORECRAWLER]:
                     if self.bot.can_afford(building_type):
-                        # ★ FIX: Use safe placement instead of raw build ★
+                        # [*] FIX: Use safe placement instead of raw build [*]
                         if await self.build_with_worker_safety(building_type, target_pos):
                              results[building_type] = 1
                              break
@@ -398,7 +398,7 @@ class AdvancedBuildingManager:
                     continue  # 이미 건설됨
                 
                 if self.bot.can_afford(building_type):
-                    # ★ FIX: Use safe placement at chokepoint too ★
+                    # [*] FIX: Use safe placement at chokepoint too [*]
                     if await self.build_with_worker_safety(building_type, chokepoint):
                         results[building_type] = 1
                         break  # 한 번에 하나씩만
@@ -496,7 +496,7 @@ class AdvancedBuildingManager:
                 try:
                     target_pos = main_base.position.towards(self.bot.game_info.map_center, 6)
                     
-                    # ★ FIX: Use safe placement logic ★
+                    # [*] FIX: Use safe placement logic [*]
                     if await self.build_with_worker_safety(tech_type, target_pos):
                         results[tech_type] = True
                         self._last_aggressive_tech_time = game_time
@@ -626,7 +626,7 @@ class AdvancedBuildingManager:
 
     def get_safe_building_position(self, building_type: UnitTypeId, near: Point2, avoid_worker_paths: bool = True) -> Optional[Point2]:
         """
-        ★ 일꾼이 끼지 않는 안전한 건물 배치 위치 찾기 ★
+        [*] 일꾼이 끼지 않는 안전한 건물 배치 위치 찾기 [*]
         """
         candidates = self._generate_spiral_positions(near, max_distance=15, step=2)
 
@@ -659,7 +659,7 @@ class AdvancedBuildingManager:
                 if not (playable.y <= position.y <= playable.y + playable.height):
                     return False
 
-            # ★ NEW: 크립 확인 (해처리/부화장은 제외)
+            # [*] NEW: 크립 확인 (해처리/부화장은 제외)
             if building_type != UnitTypeId.HATCHERY:
                 if hasattr(self.bot, "has_creep"):
                     if not self.bot.has_creep(position):
@@ -693,7 +693,7 @@ class AdvancedBuildingManager:
             return False
 
     async def build_with_worker_safety(self, building_type: UnitTypeId, near: Point2) -> bool:
-        """★ 일꾼 안전을 고려한 건물 건설 (점막 체크 포함) ★"""
+        """[*] 일꾼 안전을 고려한 건물 건설 (점막 체크 포함) [*]"""
         if not self.bot.can_afford(building_type):
             return False
 
@@ -726,7 +726,7 @@ class AdvancedBuildingManager:
         return False
 
     async def rescue_stuck_workers(self) -> int:
-        """★ 끼인 일꾼 구출 (강화됨) ★"""
+        """[*] 끼인 일꾼 구출 (강화됨) [*]"""
         if not hasattr(self.bot, 'workers'):
             return 0
 

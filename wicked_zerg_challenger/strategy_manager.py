@@ -98,9 +98,9 @@ class StrategyManager:
         # 4분 이전 견제 시스템
         self.early_harassment_active = False
         self.last_harassment_time = 0
-        self.harassment_interval = 15.0  # ★ 30s → 15s: more aggressive harassment
+        self.harassment_interval = 15.0  # [*] 30s -> 15s: more aggressive harassment
 
-        # ★ Load Unit Ratios from KnowledgeManager ★
+        # [*] Load Unit Ratios from KnowledgeManager [*]
         self.race_unit_ratios = {
             EnemyRace.TERRAN: self._load_ratios("Terran"),
             EnemyRace.PROTOSS: self._load_ratios("Protoss"),
@@ -149,12 +149,12 @@ class StrategyManager:
         self.learned_expansion_timings = {}
         self.learned_army_ratios = {}
 
-        # ★ Feature 83: Extended JARVIS command fields ★
+        # [*] Feature 83: Extended JARVIS command fields [*]
         self.target_priority: str = "military"  # "economy" | "military" | "tech"
         self.expansion_timing: str = "normal"   # "fast" | "normal" | "slow"
         self.preferred_comp: str = "balanced"    # "zergling_heavy" | "roach_heavy" | "muta_heavy" | "balanced"
 
-        # ★ Feature 89: Custom unit weights from JARVIS ★
+        # [*] Feature 89: Custom unit weights from JARVIS [*]
         self.custom_unit_weights: Optional[Dict[str, float]] = None
         self.early_scout_pressure_active = False
         self.early_scout_greed_suppressed = False
@@ -196,7 +196,7 @@ class StrategyManager:
 
     def update(self) -> None:
         """매 스텝마다 호출하여 전략 업데이트"""
-        # ★ 적 유닛 정보 1회 캐시 (매 프레임 반복 조회 방지) ★
+        # [*] 적 유닛 정보 1회 캐시 (매 프레임 반복 조회 방지) [*]
         self._cached_enemy_composition = self._cache_enemy_composition()
 
         self._check_jarvis_commands()
@@ -213,7 +213,7 @@ class StrategyManager:
         # Delegated to RacialCounterManager
         self._apply_racial_counters()
 
-        # ★ Write State to Blackboard ★
+        # [*] Write State to Blackboard [*]
         if self.blackboard:
             self.blackboard.set("strategy_mode", self.current_mode.name)
             self.blackboard.set("game_phase", self.game_phase.name)
@@ -356,25 +356,25 @@ class StrategyManager:
                             self.current_mode = StrategyMode.ALL_IN
                         self.logger.info(f"[JARVIS] Aggression level updated to: {level}")
 
-                    # ★ Feature 83: target_priority ★
+                    # [*] Feature 83: target_priority [*]
                     tp = cmd_data.get("target_priority")
                     if tp and tp in ("economy", "military", "tech"):
                         self.target_priority = tp
                         self.logger.info(f"[JARVIS] Target priority set to: {tp}")
 
-                    # ★ Feature 83: expansion_timing ★
+                    # [*] Feature 83: expansion_timing [*]
                     et = cmd_data.get("expansion_timing")
                     if et and et in ("fast", "normal", "slow"):
                         self.expansion_timing = et
                         self.logger.info(f"[JARVIS] Expansion timing set to: {et}")
 
-                    # ★ Feature 83: unit_composition ★
+                    # [*] Feature 83: unit_composition [*]
                     uc = cmd_data.get("unit_composition")
                     if uc and uc in ("zergling_heavy", "roach_heavy", "muta_heavy", "balanced"):
                         self.preferred_comp = uc
                         self.logger.info(f"[JARVIS] Preferred composition set to: {uc}")
 
-                    # ★ Feature 89: unit_weights ★
+                    # [*] Feature 89: unit_weights [*]
                     uw = cmd_data.get("unit_weights")
                     if uw and isinstance(uw, dict):
                         # Validate all values are numeric
@@ -511,7 +511,7 @@ class StrategyManager:
         if hasattr(self.bot, "enemy_units") and self.bot.enemy_units:
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 main_base = self.bot.townhalls.first
-                # ★ CRITICAL: 비상 모드 조건 완화 (30 → 15) - 확장 차단 방지 ★
+                # [*] CRITICAL: 비상 모드 조건 완화 (30 -> 15) - 확장 차단 방지 [*]
                 nearby_enemies = [e for e in self.bot.enemy_units
                                  if e.can_attack and e.distance_to(main_base) < 15]
                 # 적 3마리 이상일 때만 러시로 판정 (정찰 유닛 무시)
@@ -585,7 +585,7 @@ class StrategyManager:
         enemies_near_base = []
         counted_tags = set()
 
-        # ★ O(n) 최적화: 적 유닛 1회 순회, 각 타운홀 거리 체크 ★
+        # [*] O(n) 최적화: 적 유닛 1회 순회, 각 타운홀 거리 체크 [*]
         th_positions = [th.position for th in self.bot.townhalls]
         for enemy in enemy_units:
             try:
@@ -609,7 +609,7 @@ class StrategyManager:
         # 대규모 공격 판정
         # 조건: 위협 점수 30 이상 또는 고위협 유닛 3개 이상 (과민 감지 완화)
         if total_threat_score >= 30 or high_threat_count >= 3:
-            # ★★★ 로그 스팸 방지: 5초마다만 출력 ★★★
+            # [*][*][*] 로그 스팸 방지: 5초마다만 출력 [*][*][*]
             if game_time - self.last_major_attack_log > self.log_cooldown:
                 self.logger.warning(f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
                                     f"Threat score: {total_threat_score}, High-threat units: {high_threat_count}")
@@ -633,7 +633,7 @@ class StrategyManager:
             self.last_major_attack_time = game_time
             return
 
-        # ★ 로그 스팸 방지: 10초 쿨다운 ★
+        # [*] 로그 스팸 방지: 10초 쿨다운 [*]
         last_log = getattr(self, "_last_defense_log_time", 0.0)
         should_log = (game_time - last_log) >= 10.0
 
@@ -651,7 +651,7 @@ class StrategyManager:
         # 확장 기지 방어 건물 추가 요청 (BuildingCoordination에 위임)
         self._request_defensive_building(spine=True)
 
-        # 적 공중 유닛 체크 → 스포어 요청도 위임
+        # 적 공중 유닛 체크 -> 스포어 요청도 위임
         if hasattr(self.bot, "enemy_units"):
             air_threats = {"MUTALISK", "VOIDRAY", "ORACLE", "PHOENIX",
                          "BATTLECRUISER", "CARRIER", "LIBERATOR", "BROODLORD"}
@@ -709,7 +709,7 @@ class StrategyManager:
 
     def _update_counter_build(self) -> None:
         """
-        ★ Phase 17: 적 빌드에 따른 실시간 대응 빌드 업데이트 ★
+        [*] Phase 17: 적 빌드에 따른 실시간 대응 빌드 업데이트 [*]
 
         IntelManager에서 감지한 적 빌드 패턴에 따라 아군 유닛 비율을 즉각 조정합니다.
         - 정찰 정보의 신뢰도(confidence)를 고려한 대응 강도 조절
@@ -720,7 +720,7 @@ class StrategyManager:
         if not intel:
             return
 
-        # ★ Phase 17: 적 빌드 패턴 및 신뢰도 확인 ★
+        # [*] Phase 17: 적 빌드 패턴 및 신뢰도 확인 [*]
         enemy_pattern = ""
         build_confidence = 0.0
         build_status = "unknown"
@@ -734,14 +734,14 @@ class StrategyManager:
         if hasattr(intel, "get_build_pattern_status"):
             build_status = intel.get_build_pattern_status()
 
-        # ★ Phase 17: 카운터빌드 반응속도 개선 — 폴백 타이밍 + 임계값 하향 ★
+        # [*] Phase 17: 카운터빌드 반응속도 개선 — 폴백 타이밍 + 임계값 하향 [*]
         game_time = getattr(self.bot, "time", 0)
         if (enemy_pattern == "unknown" or build_confidence < 0.1) and game_time > 150:
-            # ★ Phase 17: 2분30초 이후 정찰 실패 → 즉시 폴백 (기존 3분)
+            # [*] Phase 17: 2분30초 이후 정찰 실패 -> 즉시 폴백 (기존 3분)
             self._apply_safe_fallback_ratios()
             return
         if enemy_pattern == "unknown" or build_confidence < 0.1:
-            # ★ Phase 17: 0.2→0.1 (더 낮은 confidence에서도 대응 시작)
+            # [*] Phase 17: 0.2->0.1 (더 낮은 confidence에서도 대응 시작)
             return
 
         # === 적 빌드별 대응 유닛 비율 설정 ===
@@ -757,7 +757,7 @@ class StrategyManager:
         
         current_ratios = base_ratios.copy()
         
-        # 2. ★ Phase 17: Apply Build Pattern Counters with Confidence-Based Scaling ★
+        # 2. [*] Phase 17: Apply Build Pattern Counters with Confidence-Based Scaling [*]
         recommended = intel.get_recommended_response()
         if recommended:
             # IntelManager recommends a list of units (e.g. ['hydralisk', 'corruptor'])
@@ -783,7 +783,7 @@ class StrategyManager:
 
                 current_ratios[u_key] = current_ratios.get(u_key, 0) + adjusted_boost
 
-                # ★ 로그 출력 (10초마다만) ★
+                # [*] 로그 출력 (10초마다만) [*]
                 if int(game_time) % 10 == 0 and self.bot.iteration % 22 == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] Counter boost: {u_key} +{adjusted_boost:.2f} "
@@ -851,7 +851,7 @@ class StrategyManager:
             self._last_air_log_time = game_time
 
     def _force_anti_air_ratios(self) -> None:
-        """★ 대공 유닛 비율 강제 조정 ★"""
+        """[*] 대공 유닛 비율 강제 조정 [*]"""
         # 모든 페이즈에 대공 유닛 비율 높이기
         anti_air_ratios = {
             GamePhase.EARLY: {"zergling": 0.2, "queen": 0.3, "hydra": 0.5},
@@ -954,7 +954,7 @@ class StrategyManager:
 
     def _detect_direct_air_threat(self) -> None:
         """
-        ★ 직접 공중 유닛 감지 및 대응 ★
+        [*] 직접 공중 유닛 감지 및 대응 [*]
 
         빌드 패턴이 아닌 실제 공중 유닛이 보이면 즉시 대응
         """
@@ -975,7 +975,7 @@ class StrategyManager:
             "MUTALISK", "CORRUPTOR", "BROODLORD", "VIPER"
         }
 
-        # ★ 캐시된 적 구성 사용 ★
+        # [*] 캐시된 적 구성 사용 [*]
         comp = self._cached_enemy_composition
         air_unit_count = 0
         detected_air_types = set()
@@ -984,7 +984,7 @@ class StrategyManager:
                 air_unit_count += count
                 detected_air_types.add(etype)
 
-        # ★★★ IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) ★★★
+        # [*][*][*] IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) [*][*][*]
         if air_unit_count >= 1:
             self._air_threat_active = True
             self._request_defensive_building(spore=True)
@@ -997,16 +997,16 @@ class StrategyManager:
             # 히드라 우선 생산 설정
             self._force_hydra_production = True
 
-            # ★★★ IMPROVED: 공중 유닛 수에 따라 히드라 비율 동적 조정 ★★★
+            # [*][*][*] IMPROVED: 공중 유닛 수에 따라 히드라 비율 동적 조정 [*][*][*]
             current_ratios = self.get_unit_ratios()
 
             # 공중 유닛이 많을수록 히드라 비율 증가
             if air_unit_count >= 10:
-                hydra_ratio = 0.70  # 대규모 공중 병력 → 70% 히드라
+                hydra_ratio = 0.70  # 대규모 공중 병력 -> 70% 히드라
             elif air_unit_count >= 5:
-                hydra_ratio = 0.55  # 중간 규모 → 55% 히드라
+                hydra_ratio = 0.55  # 중간 규모 -> 55% 히드라
             else:
-                hydra_ratio = 0.45  # 소규모 → 45% 히드라 (기존 40%에서 증가)
+                hydra_ratio = 0.45  # 소규모 -> 45% 히드라 (기존 40%에서 증가)
 
             if "hydra" in current_ratios:
                 current_ratios["hydra"] = max(current_ratios.get("hydra", 0), hydra_ratio)
@@ -1028,7 +1028,7 @@ class StrategyManager:
 
     def is_air_threat_detected(self) -> bool:
         """공중 위협 감지 여부"""
-        # ★ 직접 감지 우선 체크 ★
+        # [*] 직접 감지 우선 체크 [*]
         if getattr(self, "_air_threat_active", False):
             return True
 
@@ -1075,7 +1075,7 @@ class StrategyManager:
 
     def _counter_terran_units(self) -> None:
         """
-        ★ Phase 21: 테란 유닛별 카운터 로직 ★
+        [*] Phase 21: 테란 유닛별 카운터 로직 [*]
 
         - 바이오 (마린/마라우더/메딕): 바네링 돌진 + 저글링 포위
         - 메카닉 (탱크/토르): 레바저 담즙 + 뮤탈 견제
@@ -1138,7 +1138,7 @@ class StrategyManager:
                 self.logger.info(f"[{int(game_time)}s] [*] ZvT AIR DETECTED -> Hydra+Corruptor+Spore [*]")
 
         # 헬리온 러시 (초반): 퀸 + 바퀴
-        # ★ Phase 34: 4분→5분으로 확장 (4:30~5분 헬리온 러시 대응)
+        # [*] Phase 34: 4분->5분으로 확장 (4:30~5분 헬리온 러시 대응)
         if hellion_count >= 3 and game_time < 300:
             self._adjust_unit_ratio("queen", 0.20)
             self._adjust_unit_ratio("roach", 0.40)
@@ -1147,7 +1147,7 @@ class StrategyManager:
 
     def _counter_protoss_units(self) -> None:
         """
-        ★★★ 프로토스 유닛별 카운터 로직 ★★★
+        [*][*][*] 프로토스 유닛별 카운터 로직 [*][*][*]
 
         감지된 프로토스 유닛에 따라 유닛 비율 동적 조정:
         - 불멸자(Immortal): 레이바저 담즙, 저글링 포위
@@ -1167,7 +1167,7 @@ class StrategyManager:
 
         # 프로토스 핵심 유닛 카운트
         immortal_count = 0
-        # ★ 캐시된 적 구성 사용 (별도 루프 불필요) ★
+        # [*] 캐시된 적 구성 사용 (별도 루프 불필요) [*]
         comp = self._cached_enemy_composition
         immortal_count = comp.get("IMMORTAL", 0)
         colossus_count = comp.get("COLOSSUS", 0)
@@ -1178,7 +1178,7 @@ class StrategyManager:
         carrier_count = comp.get("CARRIER", 0)
         stalker_count = comp.get("STALKER", 0)
 
-        # ★ NEW: DarkShrine/Oracle 테크 경고 대응 (IntelManager 연동)
+        # [*] NEW: DarkShrine/Oracle 테크 경고 대응 (IntelManager 연동)
         intel = getattr(self.bot, "intel", None)
         if intel and hasattr(intel, "has_tech_alert"):
             # DT 대응: 스포어 크롤러 + 오버시어 긴급 생산
@@ -1198,9 +1198,9 @@ class StrategyManager:
                     self._request_defensive_building(spore=True)
                     self.logger.warning(f"[{int(game_time)}s] [*][*][*] STARGATE TECH! Spore + Queen PRIORITY [*][*][*]")
 
-        # ★ 유닛별 대응 전략 ★
+        # [*] 유닛별 대응 전략 [*]
 
-        # 불멸자 2기 이상 → 레이바저 담즙 강화
+        # 불멸자 2기 이상 -> 레이바저 담즙 강화
         if immortal_count >= 2:
             if not hasattr(self, "_immortal_counter_active"):
                 self._immortal_counter_active = False
@@ -1214,7 +1214,7 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.35)  # 포위용
             self._adjust_unit_ratio("roach", 0.1)  # 바퀴 감소 (불멸자 약점)
 
-        # 콜로서스 1기 이상 → 커럽터 필수
+        # 콜로서스 1기 이상 -> 커럽터 필수
         if colossus_count >= 1:
             if not hasattr(self, "_colossus_counter_active"):
                 self._colossus_counter_active = False
@@ -1230,7 +1230,7 @@ class StrategyManager:
 
             # 스파이어 긴급 건설 - AggressiveTechBuilder로 통합됨
 
-        # 공허 포격기/캐리어 → 대공 강화 + ★ Phase 21: 바이퍼 추가 ★
+        # 공허 포격기/캐리어 -> 대공 강화 + [*] Phase 21: 바이퍼 추가 [*]
         if voidray_count >= 2 or carrier_count >= 1:
             if not getattr(self, "_zvp_air_logged", False):
                 self._zvp_air_logged = True
@@ -1238,13 +1238,13 @@ class StrategyManager:
             self._handle_air_threat()
             self._adjust_unit_ratio("hydralisk", 0.35)
             self._adjust_unit_ratio("corruptor", 0.30)
-            # ★ Phase 21: 캐리어 3+ 시 바이퍼 추가 (어둠 집어삼키기로 캐리어 잡기)
+            # [*] Phase 21: 캐리어 3+ 시 바이퍼 추가 (어둠 집어삼키기로 캐리어 잡기)
             if carrier_count >= 3:
                 self._adjust_unit_ratio("viper", 0.10)
                 self._adjust_unit_ratio("corruptor", 0.25)
                 self._adjust_unit_ratio("hydralisk", 0.30)
 
-        # 디스럽터 → 분산 필요, 빠른 공격
+        # 디스럽터 -> 분산 필요, 빠른 공격
         if disruptor_count >= 1:
             # 로그 스팸 방지
             if game_time - self.last_disruptor_log > self.log_cooldown:
@@ -1254,7 +1254,7 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.3)
             self._adjust_unit_ratio("mutalisk", 0.3)
 
-        # 고위 기사/아콘 → 분산, 빠른 돌진
+        # 고위 기사/아콘 -> 분산, 빠른 돌진
         if high_templar_count >= 1 or archon_count >= 2:
             # 로그 스팸 방지
             if game_time - self.last_high_templar_log > self.log_cooldown:
@@ -1263,7 +1263,7 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.4)
             self._adjust_unit_ratio("ravager", 0.3)  # 담즙으로 폭풍 지역 회피
 
-        # ★ Phase 34: 추적자(Stalker) 4+ → 저글링 포위 + 바퀴 돌진 (이전: stalker_count 수집만 하고 미사용)
+        # [*] Phase 34: 추적자(Stalker) 4+ -> 저글링 포위 + 바퀴 돌진 (이전: stalker_count 수집만 하고 미사용)
         if stalker_count >= 4:
             if not getattr(self, "_zvp_stalker_logged", False):
                 self._zvp_stalker_logged = True
@@ -1275,7 +1275,7 @@ class StrategyManager:
 
     def _apply_safe_fallback_ratios(self) -> None:
         """
-        ★ Phase 12: 정찰 실패 시 종족별 안전 폴백 빌드 ★
+        [*] Phase 12: 정찰 실패 시 종족별 안전 폴백 빌드 [*]
 
         정찰 정보가 없을 때 가장 범용적인 유닛 조합을 생산합니다.
         - vs Terran: 바퀴 + 히드라 (바이오/메카닉 모두 대응)
@@ -1327,13 +1327,13 @@ class StrategyManager:
 
     def _counter_zerg_units(self) -> None:
         """
-        ★ NEW: ZvZ 유닛별 카운터 로직 ★
+        [*] NEW: ZvZ 유닛별 카운터 로직 [*]
 
-        - 저글링 다수 → 맹독충 + 바퀴 전환
-        - 맹독충 → 바퀴 (맹독충에 강함)
-        - 뮤탈리스크 → 히드라 + 스포어
-        - 바퀴/히드라 → 레이바저 담즙
-        - 12풀 러시 → 스파인 + 퀸 방어
+        - 저글링 다수 -> 맹독충 + 바퀴 전환
+        - 맹독충 -> 바퀴 (맹독충에 강함)
+        - 뮤탈리스크 -> 히드라 + 스포어
+        - 바퀴/히드라 -> 레이바저 담즙
+        - 12풀 러시 -> 스파인 + 퀸 방어
         """
         if self.detected_enemy_race != EnemyRace.ZERG:
             return
@@ -1351,39 +1351,39 @@ class StrategyManager:
         hydra_count = comp.get("HYDRALISK", 0)
         ravager_count = comp.get("RAVAGER", 0)
 
-        # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
-        # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
+        # 저글링 10+ -> 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
+        # [*] Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
         if zergling_count >= 10:
             self._adjust_unit_ratio("roach", 0.4)
             self._adjust_unit_ratio("baneling", 0.3)
             self._adjust_unit_ratio("zergling", 0.2)
 
-        # 맹독충 4+ → 바퀴 전환 (바퀴가 맹독충에 강함)
+        # 맹독충 4+ -> 바퀴 전환 (바퀴가 맹독충에 강함)
         if baneling_count >= 4:
             self._adjust_unit_ratio("roach", 0.5)
             self._adjust_unit_ratio("ravager", 0.2)
 
-        # 바퀴 5+ → 레이바저 + 히드라
+        # 바퀴 5+ -> 레이바저 + 히드라
         if roach_count >= 5:
             self._adjust_unit_ratio("ravager", 0.3)
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
-        # 뮤탈리스크 → 히드라 + 스포어
+        # 뮤탈리스크 -> 히드라 + 스포어
         if mutalisk_count >= 3:
-            # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
+            # [*] Phase 34: "hydralisk" 오타 수정 -> "hydra" (내부 키 통일)
             self._adjust_unit_ratio("hydra", 0.5)
             self._request_defensive_building(spore=True)
             if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
                 self._last_zvz_muta_log = game_time
                 self.logger.warning(f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority")
 
-        # ★ Phase 21: ZvZ 중반 안정화 — 로치→히드라→럴커 전환 ★
+        # [*] Phase 21: ZvZ 중반 안정화 — 로치->히드라->럴커 전환 [*]
         if game_time >= 360:  # 6분+
             if roach_count >= 5 or hydra_count >= 5:
-                # 로치/히드라 미러 → 럴커가 결정적
+                # 로치/히드라 미러 -> 럴커가 결정적
                 self._adjust_unit_ratio("lurker", 0.20)
-                # ★ Phase 34: "hydralisk" 오타 수정 → "hydra"
+                # [*] Phase 34: "hydralisk" 오타 수정 -> "hydra"
                 self._adjust_unit_ratio("hydra", 0.30)
                 self._adjust_unit_ratio("roach", 0.25)
                 self._adjust_unit_ratio("ravager", 0.15)
@@ -1422,7 +1422,7 @@ class StrategyManager:
     def _activate_emergency_mode(self, game_time: float) -> None:
         """
         Emergency Mode 활성화
-        ★ Phase 17: Blackboard 연동 + 즉시 저글링 생산 요청 ★
+        [*] Phase 17: Blackboard 연동 + 즉시 저글링 생산 요청 [*]
         """
         self.emergency_active = True
         self.emergency_start_time = game_time
@@ -1448,7 +1448,7 @@ class StrategyManager:
         if has_air_enemy:
             self._request_defensive_building(spore=True)
 
-        # ★ Phase 17: Blackboard에 긴급 상태 전파 — 모든 시스템에 즉시 알림 ★
+        # [*] Phase 17: Blackboard에 긴급 상태 전파 — 모든 시스템에 즉시 알림 [*]
         if self.blackboard:
             self.blackboard.set("is_rush_detected", True)
             self.blackboard.set("emergency_mode", True)
@@ -1491,7 +1491,7 @@ class StrategyManager:
         if self.emergency_active:
             return  # Emergency 유지
 
-        # ★ 방어 모드가 활성화된 직후에는 덮어쓰지 않음 (oscillation 방지) ★
+        # [*] 방어 모드가 활성화된 직후에는 덮어쓰지 않음 (oscillation 방지) [*]
         game_time = getattr(self.bot, "time", 0.0)
         if (self.current_mode == StrategyMode.DEFENSIVE
                 and game_time - self.defense_mode_start_time < 15.0):
@@ -1552,7 +1552,7 @@ class StrategyManager:
         phase_ratios = self.race_unit_ratios.get(race, self.race_unit_ratios[EnemyRace.UNKNOWN])
         base_ratios = phase_ratios.get(self.game_phase, phase_ratios[GamePhase.EARLY])
 
-        # ★ Feature 89: Apply custom unit weights from JARVIS when set ★
+        # [*] Feature 89: Apply custom unit weights from JARVIS when set [*]
         if self.custom_unit_weights:
             merged = dict(base_ratios)
             for unit, weight in self.custom_unit_weights.items():
@@ -1752,7 +1752,7 @@ class StrategyManager:
 
     def check_surrender(self, game_time: float) -> bool:
         """
-        ★ Smart Surrender Logic ★
+        [*] Smart Surrender Logic [*]
         
         Check if the game is hopelessly lost to save time.
         

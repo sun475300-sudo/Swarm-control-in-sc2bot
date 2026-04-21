@@ -142,7 +142,7 @@ class DefenseCoordinator:
             zergling_count = zerglings.amount if hasattr(zerglings, "amount") else 0
             zergling_pending = b.already_pending(UnitTypeId.ZERGLING)
 
-            # ★ 개선: 적 위협 감지 (기지 근처 적 유닛)
+            # [*] 개선: 적 위협 감지 (기지 근처 적 유닛)
             enemy_threat_detected = False
             if hasattr(b, "enemy_units") and hasattr(b, "townhalls"):
                 for th in b.townhalls:
@@ -151,13 +151,13 @@ class DefenseCoordinator:
                         enemy_threat_detected = True
                         break
 
-            # ★ 수정: 조건 완화 (4기/6기) 및 적 위협 또는 시간 조건
-            min_zerglings_150s = 4  # ★ 6 -> 4 (조건 완화)
-            min_zerglings_180s = 6  # ★ 8 -> 6 (조건 완화)
+            # [*] 수정: 조건 완화 (4기/6기) 및 적 위협 또는 시간 조건
+            min_zerglings_150s = 4  # [*] 6 -> 4 (조건 완화)
+            min_zerglings_180s = 6  # [*] 8 -> 6 (조건 완화)
 
             target_zerglings = min_zerglings_150s if game_time < 180 else min_zerglings_180s
 
-            # ★ 개선: 적 위협이 있거나 3분(180초) 이후에만 긴급 생산
+            # [*] 개선: 적 위협이 있거나 3분(180초) 이후에만 긴급 생산
             should_emergency_produce = (
                 game_time >= 150 and
                 (zergling_count + zergling_pending) < target_zerglings and
@@ -238,7 +238,7 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # ★★★ IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ★★★
+        # [*][*][*] IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 [*][*][*]
         if requested_spore and spore_count + pending_spores < 3:  # 긴급 시 3개까지 증가 (기존: 1개)
              if b.can_afford(UnitTypeId.SPORECRAWLER) and b.townhalls.exists:
                 try:
@@ -282,9 +282,9 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # ★★★ OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) ★★★
+        # [*][*][*] OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) [*][*][*]
         if game_time >= 180 and spore_count + pending_spores < 1:  # 정확히 3:00
-            # ★ 자원이 80이상이면 즉시 건설 (75 cost + 5 buffer) ★
+            # [*] 자원이 80이상이면 즉시 건설 (75 cost + 5 buffer) [*]
             if b.minerals >= 80 and b.townhalls.exists:
                 # Spawning Pool 체크
                 pools = b.structures(UnitTypeId.SPAWNINGPOOL).ready
@@ -369,7 +369,7 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-            # ★★★ IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 → 2개) ★★★
+            # [*][*][*] IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 -> 2개) [*][*][*]
             if spore_count < 2 and b.can_afford(UnitTypeId.SPORECRAWLER):  # 확장당 2개로 증가
                 try:
                     offset = spore_count * 6  # 스포어 간격 조정
@@ -382,7 +382,7 @@ class DefenseCoordinator:
 
     async def _handle_drop_defense(self) -> None:
         """
-        ★ Drop Defense System ★
+        [*] Drop Defense System [*]
         Detect enemies near bases and dispatch defense squad.
         """
         b = self.bot
@@ -445,7 +445,7 @@ class DefenseCoordinator:
 
     async def _handle_worker_defense(self) -> None:
         """
-        ★ Worker Defense System (Mineral Walk & Drill) ★
+        [*] Worker Defense System (Mineral Walk & Drill) [*]
         """
         b = self.bot
         if not hasattr(b, "workers"):

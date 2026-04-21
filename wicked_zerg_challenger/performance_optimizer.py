@@ -35,10 +35,10 @@ class PerformanceOptimizer:
             "queen_manager": 3,
 
             # 저빈도 (5-11프레임)
-            "scouting": 8,     # 10→8: 정찰 정보 수집 25% 향상
-            "intel": 7,        # 10→7: 적 유닛 감지 반응 30% 향상
-            "creep": 11,       # 15→11: 점막 확장 타이밍 27% 향상
-            "upgrade": 10,     # 20→10: 업그레이드 체크 2배 빈도
+            "scouting": 8,     # 10->8: 정찰 정보 수집 25% 향상
+            "intel": 7,        # 10->7: 적 유닛 감지 반응 30% 향상
+            "creep": 11,       # 15->11: 점막 확장 타이밍 27% 향상
+            "upgrade": 10,     # 20->10: 업그레이드 체크 2배 빈도
             "strategy": 5,
 
             # 매우 저빈도 (30프레임+)
@@ -61,7 +61,7 @@ class PerformanceOptimizer:
         self.execution_times = {}
         self.execution_counts = {}
 
-        # ★ 거리 계산 캐시 (Distance Calculation Cache) ★
+        # [*] 거리 계산 캐시 (Distance Calculation Cache) [*]
         self._distance_cache = {}
         self._distance_cache_ttl = {}
         self._distance_cache_hits = 0
@@ -249,7 +249,7 @@ class PerformanceOptimizer:
 
                 if new_interval != current_interval:
                     self.execution_intervals[logic_name] = new_interval
-                    logger.info(f"{logic_name} interval: {current_interval} → {new_interval}")
+                    logger.info(f"{logic_name} interval: {current_interval} -> {new_interval}")
 
     # ========== 거리 계산 캐싱 시스템 ==========
 

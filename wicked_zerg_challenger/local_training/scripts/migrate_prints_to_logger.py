@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""print→logger 일괄 마이그레이션 스크립트.
+"""print->logger 일괄 마이그레이션 스크립트.
 
 wicked_zerg_challenger/ 디렉토리의 모든 .py 파일에서
 print() 호출을 logging 호출로 변환합니다.
@@ -68,7 +68,7 @@ def migrate_prints(content: str) -> tuple:
             count += content.count(old)
             content = new_content
 
-    # Generic: logger.info(f"[TAG] → logger.info(f"[TAG]
+    # Generic: logger.info(f"[TAG] -> logger.info(f"[TAG]
     def replace_tagged(m):
         nonlocal count
         count += 1
@@ -83,7 +83,7 @@ def migrate_prints(content: str) -> tuple:
         content,
     )
 
-    # Generic remaining: logger.info(f"... → logger.info(f"...
+    # Generic remaining: logger.info(f"... -> logger.info(f"...
     def replace_generic(m):
         nonlocal count
         count += 1
@@ -95,7 +95,7 @@ def migrate_prints(content: str) -> tuple:
         content,
     )
 
-    # print(variable) → logger.info(variable)
+    # print(variable) -> logger.info(variable)
     content, n2 = re.subn(
         r'print\((\w+[\.\w]*(?:\(.*?\))?)\)$',
         r'logger.info(\1)',
@@ -127,14 +127,14 @@ def process_file(filepath: str) -> None:
             f.write(content)
         STATS["files_modified"] += 1
         STATS["prints_replaced"] += replaced
-        logger.info(f"  ✅ {os.path.relpath(filepath, TARGET_DIR)}: {replaced} prints → logger")
+        logger.info(f"  [OK] {os.path.relpath(filepath, TARGET_DIR)}: {replaced} prints -> logger")
     else:
         STATS["files_skipped"] += 1
 
 
 def main():
     logger.info("=" * 60)
-    logger.info("  print→logger 일괄 마이그레이션")
+    logger.info("  print->logger 일괄 마이그레이션")
     logger.info("=" * 60)
 
     for root, dirs, files in os.walk(TARGET_DIR):

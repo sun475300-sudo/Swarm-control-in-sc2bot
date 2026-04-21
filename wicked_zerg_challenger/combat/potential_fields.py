@@ -49,7 +49,7 @@ class PotentialFieldController:
         self.structure_radius = structure_radius
         self.terrain_radius = terrain_radius
 
-        # ★ NEW: Splash Damage Threats ★
+        # [*] NEW: Splash Damage Threats [*]
         self.splash_unit_types = {
             "THOR", "ARCHON", "WIDOWMINE", "WIDOWMINEBURROWED", "RAVAGER", 
             "INFESTOR", "VIPER", "HIGHTEMPLAR", "LIBERATOR", "LIBERATORAG", "LURKERMP", "LURKER"
@@ -121,7 +121,7 @@ class PotentialFieldController:
             repulsion_x += (dx / (dist + 0.1)) * strength * self.enemy_weight
             repulsion_y += (dy / (dist + 0.1)) * strength * self.enemy_weight
 
-            # ★ NEW: Anti-Clumping (Extra repulsion from Splash Units) ★
+            # [*] NEW: Anti-Clumping (Extra repulsion from Splash Units) [*]
             # If the enemy is a splash damage dealer, add extra repulsion force
             try:
                 type_name = getattr(enemy.type_id, "name", "").upper()

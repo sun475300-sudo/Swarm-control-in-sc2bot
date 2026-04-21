@@ -54,7 +54,7 @@ def requires_creep(building_type: UnitTypeId) -> bool:
 
 def is_too_close_to_resources(position: Point2, bot, min_distance: float = 3.0) -> bool:
     """
-    ★ 건물 위치가 광물이나 가스 근처인지 확인하는 모듈 레벨 함수 ★
+    [*] 건물 위치가 광물이나 가스 근처인지 확인하는 모듈 레벨 함수 [*]
 
     광물/가스 근처에 건물을 지으면 일꾼 동선이 막혀서 채집 효율이 떨어집니다.
     다른 매니저에서도 임포트하여 사용 가능합니다:
@@ -138,7 +138,7 @@ class BuildingPlacementHelper:
         """
         건물 위치가 광물이나 가스 근처인지 확인합니다.
 
-        ★ 광물/가스 근처에 건물을 지으면 일꾼 동선이 막혀서 채집 효율이 떨어집니다.
+        [*] 광물/가스 근처에 건물을 지으면 일꾼 동선이 막혀서 채집 효율이 떨어집니다.
 
         Args:
             position: 확인할 위치
@@ -270,7 +270,7 @@ class BuildingPlacementHelper:
 
         # 각 점막 위치에서 배치 가능 여부 확인
         for pos in creep_positions:
-            # ★ 광물/가스 근처 체크 추가 ★
+            # [*] 광물/가스 근처 체크 추가 [*]
             if self.is_too_close_to_resources(pos):
                 continue  # 광물/가스 근처는 스킵
 

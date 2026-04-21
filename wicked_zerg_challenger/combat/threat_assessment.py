@@ -53,7 +53,7 @@ class ThreatAssessment:
             "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE"
         }
 
-        # ★ Phase 22: Supply calculation cache ★
+        # [*] Phase 22: Supply calculation cache [*]
         self._cached_our_supply = 0
         self._cached_enemy_supply = 0
         self._supply_cache_time = -10  # Force first update
@@ -80,7 +80,7 @@ class ThreatAssessment:
             # 초반에 더 민감
             base_range = 25 if game_time >= 180 else 30
 
-            # ★ Phase 22: Use optimized closer_than() instead of manual loop ★
+            # [*] Phase 22: Use optimized closer_than() instead of manual loop [*]
             if hasattr(enemy_units, "closer_than"):
                 nearby_enemies = enemy_units.closer_than(base_range, th.position)
                 if nearby_enemies.exists:
@@ -121,7 +121,7 @@ class ThreatAssessment:
         if time_since_combat > 5:  # No recent combat in last 5 seconds
             return False
 
-        # ★ Phase 22: Use cached supply calculations (updated every 2s) ★
+        # [*] Phase 22: Use cached supply calculations (updated every 2s) [*]
         if game_time - self._supply_cache_time >= 2.0:
             self._cached_our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
             self._cached_enemy_supply = sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
@@ -157,7 +157,7 @@ class ThreatAssessment:
             return 0
 
         threat_score = 0
-        # ★ Phase 22: Use optimized closer_than() ★
+        # [*] Phase 22: Use optimized closer_than() [*]
         if hasattr(enemy_units, "closer_than"):
             nearby_enemies = enemy_units.closer_than(20, position)
         else:

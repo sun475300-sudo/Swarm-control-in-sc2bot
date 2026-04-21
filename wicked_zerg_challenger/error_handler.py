@@ -79,7 +79,7 @@ class ErrorHandler:
                 # 처음 3회만 로그 (스팸 방지)
                 if self.error_counts[log_key] <= self.max_error_logs:
                     logger.error(f"{log_key} failed: {e}")
-                    # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
+                    # [*] ADDED: Traceback for debugging even in production (logger.debug로 변경)
                     import logging as _logging
                     _logger = _logging.getLogger(__name__)
                     _logger.debug(traceback.format_exc())
@@ -122,7 +122,7 @@ class ErrorHandler:
 
                         if self.error_counts[key] <= self.max_error_logs:
                             logger.error(f"{key} failed: {e}")
-                            # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
+                            # [*] ADDED: Traceback for debugging even in production (logger.debug로 변경)
                             import logging as _logging
                             _logger = _logging.getLogger(__name__)
                             _logger.debug(traceback.format_exc())

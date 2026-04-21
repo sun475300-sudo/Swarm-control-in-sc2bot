@@ -46,31 +46,31 @@ class BuildOrderOptimizer:
         self.bot = bot
         self.logger = get_logger("BuildOrder")
 
-        # ★ Build Order Configuration ★
+        # [*] Build Order Configuration [*]
         self.HATCHERY_SUPPLY = 17  # 17 supply에 Hatchery
         self.GAS_SUPPLY = 18  # 18 supply에 Gas
         self.POOL_SUPPLY = 17  # 17 supply에 Pool
 
-        # ★ Supply Block Prevention ★
+        # [*] Supply Block Prevention [*]
         self.overlord_buffer = 2  # 인구수 여유분
         self.overlord_requested = False
 
-        # ★ Gas Priority System ★
+        # [*] Gas Priority System [*]
         self.gas_reserved_for_queen = False
         self.queens_per_base = 1  # 기지당 Queen 수
         self.first_queen_made = False
 
-        # ★ Drone Saturation ★
+        # [*] Drone Saturation [*]
         self.MINERALS_PER_BASE = 16  # 기지당 미네랄 드론
         self.GAS_PER_EXTRACTOR = 3  # 가스당 드론
 
-        # ★ Build Order State ★
+        # [*] Build Order State [*]
         self.expansion_placed = False
         self.pool_placed = False
         self.gas_placed = False
         self.first_overlord_made = False
 
-        # ★ Milestones ★
+        # [*] Milestones [*]
         self.milestones_completed: Set[str] = set()
 
     async def on_step(self, iteration: int):
@@ -112,24 +112,24 @@ class BuildOrderOptimizer:
         """
         supply = self.bot.supply_used
 
-        # ★ 1. First Overlord (14 supply) ★
+        # [*] 1. First Overlord (14 supply) [*]
         if supply >= 14 and not self.first_overlord_made:
             await self._build_overlord()
             self.first_overlord_made = True
 
-        # ★ 2. Hatchery at 17 supply ★
+        # [*] 2. Hatchery at 17 supply [*]
         if supply >= self.HATCHERY_SUPPLY and not self.expansion_placed:
             await self._build_expansion()
 
-        # ★ 3. Spawning Pool at 17 supply ★
+        # [*] 3. Spawning Pool at 17 supply [*]
         if supply >= self.POOL_SUPPLY and not self.pool_placed:
             await self._build_spawning_pool()
 
-        # ★ 4. Extractor at 18 supply ★
+        # [*] 4. Extractor at 18 supply [*]
         if supply >= self.GAS_SUPPLY and not self.gas_placed:
             await self._build_extractor()
 
-        # ★ 5. Queen from first 100 gas ★
+        # [*] 5. Queen from first 100 gas [*]
         if not self.first_queen_made and self._can_build_queen():
             await self._build_queen()
 
@@ -155,7 +155,7 @@ class BuildOrderOptimizer:
         if not hasattr(self.bot, "expand_now"):
             return
 
-        # ★ 자연 확장 위치 찾기 ★
+        # [*] 자연 확장 위치 찾기 [*]
         await self.bot.expand_now()
         self.expansion_placed = True
 
@@ -175,7 +175,7 @@ class BuildOrderOptimizer:
             self.pool_placed = True
             return
 
-        # ★ Pool 위치 선택 (본진 근처) ★
+        # [*] Pool 위치 선택 (본진 근처) [*]
         if self.bot.townhalls.exists:
             main_base = self.bot.townhalls.first
             position = await self.bot.find_placement(
@@ -205,7 +205,7 @@ class BuildOrderOptimizer:
             self.gas_placed = True
             return
 
-        # ★ Geyser 찾기 (본진) ★
+        # [*] Geyser 찾기 (본진) [*]
         if self.bot.townhalls.exists:
             main_base = self.bot.townhalls.first
             geysers = self.bot.vespene_geyser.closer_than(10, main_base)
@@ -247,7 +247,7 @@ class BuildOrderOptimizer:
         if not hatcheries:
             return
 
-        # ★ Queen 생산 ★
+        # [*] Queen 생산 [*]
         self.bot.do(hatcheries.first.train(UnitTypeId.QUEEN))
         self.first_queen_made = True
 
@@ -259,7 +259,7 @@ class BuildOrderOptimizer:
 
     async def _prevent_supply_block(self):
         """인구수 막힘 방지"""
-        # ★ Supply check ★
+        # [*] Supply check [*]
         supply_left = self.bot.supply_cap - self.bot.supply_used
 
         if supply_left <= self.overlord_buffer and self.bot.supply_cap < 200:
@@ -269,7 +269,7 @@ class BuildOrderOptimizer:
                 if larvae:
                     self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
                     self.logger.info(
-                        f"[{int(self.bot.time)}s] ★ OVERLORD trained (Supply: {self.bot.supply_used}/{self.bot.supply_cap}) ★"
+                        f"[{int(self.bot.time)}s] [*] OVERLORD trained (Supply: {self.bot.supply_used}/{self.bot.supply_cap}) [*]"
                     )
 
     # ========================================
@@ -284,12 +284,12 @@ class BuildOrderOptimizer:
         2순위: Metabolic Boost (Zergling 속업)
         3순위: 유닛 생산
         """
-        # ★ Queen 우선순위 ★
+        # [*] Queen 우선순위 [*]
         if not self.first_queen_made:
             self.gas_reserved_for_queen = True
             return
 
-        # ★ Metabolic Boost 우선순위 ★
+        # [*] Metabolic Boost 우선순위 [*]
         if hasattr(self.bot, "structures"):
             pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
 
@@ -316,15 +316,15 @@ class BuildOrderOptimizer:
         total_bases = self.bot.townhalls.ready.amount
         total_extractors = self.bot.structures(UnitTypeId.EXTRACTOR).ready.amount
 
-        # ★ 목표 드론 수 계산 ★
+        # [*] 목표 드론 수 계산 [*]
         target_mineral_drones = total_bases * self.MINERALS_PER_BASE
         target_gas_drones = total_extractors * self.GAS_PER_EXTRACTOR
         target_total_drones = target_mineral_drones + target_gas_drones
 
-        # ★ 현재 드론 수 ★
+        # [*] 현재 드론 수 [*]
         current_drones = self.bot.units(UnitTypeId.DRONE).amount
 
-        # ★ 드론 생산 필요 여부 ★
+        # [*] 드론 생산 필요 여부 [*]
         if current_drones < target_total_drones:
             # Larvae로 드론 생산
             larvae = self.bot.units(UnitTypeId.LARVA).idle
@@ -343,26 +343,26 @@ class BuildOrderOptimizer:
         """빌드 마일스톤 추적"""
         game_time = self.bot.time
 
-        # ★ Milestone 1: 1분 멀티 ★
+        # [*] Milestone 1: 1분 멀티 [*]
         if game_time >= 60 and "1min_multi" not in self.milestones_completed:
             if self.bot.townhalls.amount >= 2:
                 self.milestones_completed.add("1min_multi")
                 self.logger.info(f"[{int(game_time)}s] [*] MILESTONE: 1-Min Multi [*]")
 
-        # ★ Milestone 2: Queen 생산 ★
+        # [*] Milestone 2: Queen 생산 [*]
         if "first_queen" not in self.milestones_completed:
             queens = self.bot.units(UnitTypeId.QUEEN)
             if queens.amount >= 1:
                 self.milestones_completed.add("first_queen")
                 self.logger.info(f"[{int(game_time)}s] [*] MILESTONE: First Queen [*]")
 
-        # ★ Milestone 3: Metabolic Boost ★
+        # [*] Milestone 3: Metabolic Boost [*]
         if "metabolic_boost" not in self.milestones_completed:
             if UpgradeId.ZERGLINGMOVEMENTSPEED in self.bot.state.upgrades:
                 self.milestones_completed.add("metabolic_boost")
                 self.logger.info(f"[{int(game_time)}s] [*] MILESTONE: Metabolic Boost [*]")
 
-        # ★ Milestone 4: 16 Drones on minerals ★
+        # [*] Milestone 4: 16 Drones on minerals [*]
         if "16_mineral_drones" not in self.milestones_completed:
             # Simplified check
             if self.bot.units(UnitTypeId.DRONE).amount >= 16:

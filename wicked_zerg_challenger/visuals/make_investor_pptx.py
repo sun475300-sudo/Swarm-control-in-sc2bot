@@ -210,7 +210,7 @@ def slide_04(prs):
         ("출처", "군집 저그봇 프로 (SC2 AI, 75% 승률)"),
         ("검증", "200+ 유닛 실시간 군집 제어 (<10ms)"),
         ("알고리즘", "충돌 회피, 순찰 라우팅, 적응형 학습"),
-        ("전환", "가상 → 시뮬레이션 → 실제 하드웨어"),
+        ("전환", "가상 -> 시뮬레이션 -> 실제 하드웨어"),
     ]
     for i, (lbl, desc) in enumerate(items):
         y = Inches(2.5 + i * 0.75)
@@ -286,7 +286,7 @@ def slide_06(prs):
     phases = [
         ("Phase 1", "2026-2027", "SC2 AI 검증\nAI Arena Top 5", GREEN),
         ("Phase 2", "2027-2028", "시뮬레이션\n1,000대 Unity/ROS2", GREEN),
-        ("Phase 3", "2028-2030", "실제 시범\n10→100대 (GIST)", ORANGE),
+        ("Phase 3", "2028-2030", "실제 시범\n10->100대 (GIST)", ORANGE),
         ("Phase 4", "2030-2032", "광주 배치\n100대 도시 전역", CYAN),
         ("Phase 5", "2032-2034", "상용화\n1,000대, 배송 통합", BLUE),
         ("Phase 6", "2034-2036", "전국 규모\n20K-40K대", PURPLE),
@@ -342,7 +342,7 @@ def slide_08(prs):
     items = [
         ("시작", "10대 소비자 쿼드콥터 (DJI Matrice 300)"),
         ("확장", "100대 맞춤형 레이더 드론 (한국 방산업체 협력)"),
-        ("위치", "GIST 캠퍼스 (1 km²) → 광주 과학공원 (10 km²)"),
+        ("위치", "GIST 캠퍼스 (1 km²) -> 광주 과학공원 (10 km²)"),
         ("테스트", "충돌 회피, 순찰 라우팅, 응급 대응"),
         ("규제", "UTM 인증을 위해 국토부와 협력"),
     ]
@@ -503,7 +503,7 @@ def slide_12(prs):
     tb(s, Inches(3.2), Inches(6.33), Inches(7), Inches(0.4),
        "10년차 총 수익: 연 5,500억원  |  수익 마진: 40%", sz=13, c=GOLD, b=True, al=PP_ALIGN.CENTER)
 
-    footer_text(s, "ROI: 10년간 3.9배 (1,400억원 투자 → 연 5,500억원 수익)")
+    footer_text(s, "ROI: 10년간 3.9배 (1,400억원 투자 -> 연 5,500억원 수익)")
     footer(s, 12)
 
 
@@ -618,7 +618,7 @@ def slide_15(prs):
        "우리 우위", sz=16, c=GREEN, b=True)
     advantages = [
         "이동식 레이더 망 (고정 인프라 대비)",
-        "AI 우선 → 벤더 비종속",
+        "AI 우선 -> 벤더 비종속",
         "도시 규모 입증 (소규모 시범 대비)",
         "정부 협력 (민간 전용 대비)",
     ]
@@ -657,7 +657,7 @@ def slide_16(prs):
            risk, sz=12, c=LIGHT)
         # Arrow
         tb(s, Inches(5.9), y + Inches(0.1), Inches(0.5), Inches(0.4),
-           "→", sz=16, c=ac, b=True, fn=MONO, al=PP_ALIGN.CENTER)
+           "->", sz=16, c=ac, b=True, fn=MONO, al=PP_ALIGN.CENTER)
         # Mitigation
         card(s, Inches(6.5), y, Inches(5.8), Inches(0.7), GREEN)
         tb(s, Inches(6.7), y + Inches(0.12), Inches(0.8), Inches(0.4),

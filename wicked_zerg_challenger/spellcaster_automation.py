@@ -9,7 +9,7 @@ SpellCaster Automation - 마법 유닛 스킬 자동화
 - 감염충: 신경 기생충 (Neural Parasite), 진균 번식 (Fungal Growth)
 - 감시군주: 무료 정찰 유닛 생성 (Changeling)
 
-효과: 고급 유닛 활용도 0% → 100%
+효과: 고급 유닛 활용도 0% -> 100%
 """
 
 from typing import List, Dict, Optional
@@ -50,7 +50,7 @@ except ImportError:
 
 class SpellCasterAutomation:
     """
-    ★ SpellCaster Automation ★
+    [*] SpellCaster Automation [*]
 
     마법 유닛들의 스킬을 자동으로 사용하여
     전투 효율을 극대화합니다.
@@ -60,20 +60,20 @@ class SpellCasterAutomation:
         self.bot = bot
         self.logger = get_logger("SpellCaster")
 
-        # ★ 체크 주기 ★
+        # [*] 체크 주기 [*]
         self.last_check = 0
         self.check_interval = 11  # 약 0.5초마다
 
-        # ★ 스킬 쿨다운 추적 ★
+        # [*] 스킬 쿨다운 추적 [*]
         self.last_skill_used = {}  # {unit_tag: {ability: game_time}}
 
-        # ★ 스킬 우선순위 ★
+        # [*] 스킬 우선순위 [*]
         self.queen_transfuse_threshold = 0.35  # 체력 35% 이하
         self.ravager_min_targets = 3  # 최소 3명 이상 밀집
         self.viper_abduct_range = 9
-        self.infestor_fungal_min_targets = 3  # ★ IMPROVED: 5 → 3 (실전에서 5명 밀집은 드뭄)
+        self.infestor_fungal_min_targets = 3  # [*] IMPROVED: 5 -> 3 (실전에서 5명 밀집은 드뭄)
 
-        # ★ 통계 ★
+        # [*] 통계 [*]
         self.skills_used = {
             "transfuse": 0,
             "bile": 0,
@@ -85,7 +85,7 @@ class SpellCasterAutomation:
             "changeling": 0,
         }
 
-        # ★ Authority Tracking ★
+        # [*] Authority Tracking [*]
         self.active_casters: Dict[int, str] = {}  # {tag: ability_name}
 
     def _cleanup_authorities(self):
@@ -121,7 +121,7 @@ class SpellCasterAutomation:
         if self.bot.unit_authority.request_unit(
             unit.tag,
             "SpellCaster",
-            AuthorityLevel.SPELL_UNIT  # ★ 80 > COMBAT(70) - 스펠캐스터 우선권 ★
+            AuthorityLevel.SPELL_UNIT  # [*] 80 > COMBAT(70) - 스펠캐스터 우선권 [*]
         ):
             self.active_casters[unit.tag] = ability_name
             return True
@@ -142,22 +142,22 @@ class SpellCasterAutomation:
 
             self.last_check = iteration
 
-            # ★ 1. 퀸 수혈 (Transfuse) ★
+            # [*] 1. 퀸 수혈 (Transfuse) [*]
             await self._queen_transfuse()
 
-            # ★ 2. 궤멸충 담즙 (Corrosive Bile) ★
+            # [*] 2. 궤멸충 담즙 (Corrosive Bile) [*]
             await self._ravager_bile()
 
-            # ★ 3. 살모사 스킬 (Abduct, Blinding Cloud) ★
+            # [*] 3. 살모사 스킬 (Abduct, Blinding Cloud) [*]
             await self._viper_skills()
 
-            # ★ 4. 감염충 스킬 (Neural, Fungal) ★
+            # [*] 4. 감염충 스킬 (Neural, Fungal) [*]
             await self._infestor_skills()
 
-            # ★ 5. 감시군주 환상 (Changeling) ★
+            # [*] 5. 감시군주 환상 (Changeling) [*]
             await self._overseer_changeling()
 
-            # ★ 6. Authority Cleanup (매 프레임) ★
+            # [*] 6. Authority Cleanup (매 프레임) [*]
             self._cleanup_authorities()
 
         except Exception as e:
@@ -211,13 +211,13 @@ class SpellCasterAutomation:
             if AbilityId.TRANSFUSION_TRANSFUSION in abilities:
                 self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, target))
                 self._record_skill_use(queen.tag, "transfuse")
-                self._release_authority(queen.tag)  # ★ 즉시 해제 ★
+                self._release_authority(queen.tag)  # [*] 즉시 해제 [*]
                 self.skills_used["transfuse"] += 1
 
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ TRANSFUSE: {target.type_id.name} "
-                    f"({target.health}/{target.health_max}) ★"
+                    f"[{int(game_time)}s] [*] TRANSFUSE: {target.type_id.name} "
+                    f"({target.health}/{target.health_max}) [*]"
                 )
                 break
 
@@ -259,12 +259,12 @@ class SpellCasterAutomation:
             if AbilityId.EFFECT_CORROSIVEBILE in abilities:
                 self.bot.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_target))
                 self._record_skill_use(ravager.tag, "bile")
-                self._release_authority(ravager.tag)  # ★ 즉시 해제 ★
+                self._release_authority(ravager.tag)  # [*] 즉시 해제 [*]
                 self.skills_used["bile"] += 1
 
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ BILE: {target_count} targets ★"
+                    f"[{int(game_time)}s] [*] BILE: {target_count} targets [*]"
                 )
                 break
 
@@ -306,13 +306,13 @@ class SpellCasterAutomation:
         enemy_units = self.bot.enemy_units
 
         for viper in vipers:
-            # ★ 0. 에너지 회복 (Consume) - 에너지 < 25 ★
+            # [*] 0. 에너지 회복 (Consume) - 에너지 < 25 [*]
             if viper.energy < 25:
                 if not self._is_on_cooldown(viper.tag, "consume", 30):
                     await self._viper_consume(viper)
                     continue
 
-            # ★ 1. 납치 (Abduct) - 75 에너지 ★
+            # [*] 1. 납치 (Abduct) - 75 에너지 [*]
             if viper.energy >= 75:
                 if not self._is_on_cooldown(viper.tag, "abduct", 15):
                     await self._viper_abduct(viper, enemy_units)
@@ -322,12 +322,12 @@ class SpellCasterAutomation:
                     await self._viper_blinding_cloud(viper, enemy_units)
                     continue
 
-            # ★ 3. 안전 후퇴 (Phase 18) ★
+            # [*] 3. 안전 후퇴 (Phase 18) [*]
             await self._viper_safety(viper, enemy_units)
 
     async def _viper_abduct(self, viper, enemies):
         """
-        ★★★ 살모사 납치 - 안전 검사 + 우선순위 점수 기반 ★★★
+        [*][*][*] 살모사 납치 - 안전 검사 + 우선순위 점수 기반 [*][*][*]
 
         안전 검사:
         1. 착지 지점(살모사 위치) 주변 적 5명 이상이면 거부
@@ -343,14 +343,14 @@ class SpellCasterAutomation:
             "LURKER": 6, "RAVAGER": 5, "DISRUPTOR": 8,
         }
 
-        # ★ 안전 검사 1: 살모사 주변 적이 너무 많으면 납치 금지 ★
+        # [*] 안전 검사 1: 살모사 주변 적이 너무 많으면 납치 금지 [*]
         enemies_near_viper = sum(
             1 for e in enemies if viper.distance_to(e) < 5
         )
         if enemies_near_viper >= 5:
             return
 
-        # ★ 안전 검사 2: 살모사 주변 아군이 부족하면 납치 금지 ★
+        # [*] 안전 검사 2: 살모사 주변 아군이 부족하면 납치 금지 [*]
         friendlies_near = 0
         if hasattr(self.bot, "units"):
             friendlies_near = sum(
@@ -371,7 +371,7 @@ class SpellCasterAutomation:
             if base_score == 0:
                 continue
 
-            # ★ 진형 가장자리 보너스: 주변 4범위 내 적 적을수록 + ★
+            # [*] 진형 가장자리 보너스: 주변 4범위 내 적 적을수록 + [*]
             nearby_allies_of_target = sum(
                 1 for e in enemies if e.tag != enemy.tag and enemy.distance_to(e) < 4
             )
@@ -400,8 +400,8 @@ class SpellCasterAutomation:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ ABDUCT: {target.type_id.name} "
-                f"(score: {scored_targets[0][1]}) ★"
+                f"[{int(game_time)}s] [*] ABDUCT: {target.type_id.name} "
+                f"(score: {scored_targets[0][1]}) [*]"
             )
 
     async def _viper_blinding_cloud(self, viper, enemies):
@@ -452,12 +452,12 @@ class SpellCasterAutomation:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ BLINDING CLOUD: {max_count} targets ★"
+                f"[{int(game_time)}s] [*] BLINDING CLOUD: {max_count} targets [*]"
             )
 
     async def _viper_consume(self, viper):
         """
-        ★★★ 살모사 에너지 회복 (Consume) - 건물 우선 → 오버로드 fallback ★★★
+        [*][*][*] 살모사 에너지 회복 (Consume) - 건물 우선 -> 오버로드 fallback [*][*][*]
 
         우선순위 1: 아군 건물 (HP > 250, 해처리/레어/하이브 제외) consume
         우선순위 2: Overlord 소비 (기존 방식)
@@ -465,7 +465,7 @@ class SpellCasterAutomation:
         if not hasattr(self.bot, "units"):
             return
 
-        # ★ 우선순위 1: 아군 건물에서 흡수 (해처리/레어/하이브 제외) ★
+        # [*] 우선순위 1: 아군 건물에서 흡수 (해처리/레어/하이브 제외) [*]
         if hasattr(self.bot, "structures"):
             exclude_buildings = set()
             if UnitTypeId:
@@ -494,12 +494,12 @@ class SpellCasterAutomation:
 
                     game_time = getattr(self.bot, "time", 0)
                     self.logger.info(
-                        f"[{int(game_time)}s] ★ CONSUME: Building {target.type_id.name} "
-                        f"(HP: {int(target.health)}) ★"
+                        f"[{int(game_time)}s] [*] CONSUME: Building {target.type_id.name} "
+                        f"(HP: {int(target.health)}) [*]"
                     )
                     return
 
-        # ★ 우선순위 2: Overlord fallback ★
+        # [*] 우선순위 2: Overlord fallback [*]
         overlords = self.bot.units(UnitTypeId.OVERLORD).filter(
             lambda o: not o.has_cargo and o.distance_to(viper) < 8
         )
@@ -520,7 +520,7 @@ class SpellCasterAutomation:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ CONSUME: Overlord sacrificed ★"
+                f"[{int(game_time)}s] [*] CONSUME: Overlord sacrificed [*]"
             )
 
     async def _viper_safety(self, viper, enemies):
@@ -551,23 +551,23 @@ class SpellCasterAutomation:
         enemy_units = self.bot.enemy_units
 
         for infestor in infestors:
-            # ★ 1. 진균 번식 (Fungal Growth) - 75 에너지 ★
+            # [*] 1. 진균 번식 (Fungal Growth) - 75 에너지 [*]
             if infestor.energy >= 75:
                 if not self._is_on_cooldown(infestor.tag, "fungal", 10):
                     await self._infestor_fungal(infestor, enemy_units)
                     continue
 
-            # ★ 2. 신경 기생충 (Neural Parasite) - 100 에너지 ★
+            # [*] 2. 신경 기생충 (Neural Parasite) - 100 에너지 [*]
                 if not self._is_on_cooldown(infestor.tag, "neural", 20):
                     await self._infestor_neural(infestor, enemy_units)
                     continue
 
-            # ★ 3. 안전 잠복 (Phase 18) ★
+            # [*] 3. 안전 잠복 (Phase 18) [*]
             await self._infestor_safety(infestor, enemy_units)
 
     async def _infestor_fungal(self, infestor, enemies):
         """
-        ★★★ 감염충 진균 번식 - 예측 타겟팅 + 가치 합산 ★★★
+        [*][*][*] 감염충 진균 번식 - 예측 타겟팅 + 가치 합산 [*][*][*]
 
         1. 적 유닛의 facing + movement_speed로 0.5초 후 예상 위치 계산
         2. 각 후보 위치 중심으로 2.0 반경 내 히트 가치 합산
@@ -587,7 +587,7 @@ class SpellCasterAutomation:
 
             pos = enemy.position
 
-            # ★ 예측 타겟팅: facing + speed로 미래 위치 계산 ★
+            # [*] 예측 타겟팅: facing + speed로 미래 위치 계산 [*]
             try:
                 facing = getattr(enemy, "facing", None)
                 speed = getattr(enemy, "movement_speed", 0)
@@ -615,7 +615,7 @@ class SpellCasterAutomation:
         if len(predicted_positions) < self.infestor_fungal_min_targets:
             return
 
-        # ★ 최적 시전 지점 탐색: 각 후보 중심으로 반경 내 가치 합산 ★
+        # [*] 최적 시전 지점 탐색: 각 후보 중심으로 반경 내 가치 합산 [*]
         best_pos = None
         best_value = 0
         best_count = 0
@@ -653,8 +653,8 @@ class SpellCasterAutomation:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ FUNGAL (PREDICTED): "
-                f"{best_count} targets, value: {int(best_value)} ★"
+                f"[{int(game_time)}s] [*] FUNGAL (PREDICTED): "
+                f"{best_count} targets, value: {int(best_value)} [*]"
             )
 
     async def _infestor_neural(self, infestor, enemies):
@@ -694,7 +694,7 @@ class SpellCasterAutomation:
 
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[{int(game_time)}s] ★ NEURAL: {target.type_id.name} ★"
+                f"[{int(game_time)}s] [*] NEURAL: {target.type_id.name} [*]"
             )
 
     async def _infestor_safety(self, infestor, enemies):
@@ -749,7 +749,7 @@ class SpellCasterAutomation:
 
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(
-                    f"[{int(game_time)}s] ★ CHANGELING: Scout sent to {target_pos} ★"
+                    f"[{int(game_time)}s] [*] CHANGELING: Scout sent to {target_pos} [*]"
                 )
                 break  # 한 프레임에 하나만
 

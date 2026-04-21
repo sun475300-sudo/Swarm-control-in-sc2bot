@@ -81,23 +81,23 @@ def kill_all_sc2():
 
 
 def main():
-    # ★ 1. 다른 게임이 실행 중이면 즉시 종료 ★
+    # [*] 1. 다른 게임이 실행 중이면 즉시 종료 [*]
     if is_game_running():
         logger.error("ERROR: Another game is already running!")
         logger.info("Please wait for it to finish.")
         return
 
     try:
-        # ★ 2. Lock 파일 생성 ★
+        # [*] 2. Lock 파일 생성 [*]
         create_lock()
 
-        # ★ 3. 모든 기존 SC2 프로세스 종료 ★
+        # [*] 3. 모든 기존 SC2 프로세스 종료 [*]
         logger.info("\n" + "="*70)
         logger.info("CLEANING UP OLD PROCESSES...")
         logger.info("="*70)
         kill_all_sc2()
 
-        # ★ 4. 맵/종족 선택 (사용 가능한 맵만) ★
+        # [*] 4. 맵/종족 선택 (사용 가능한 맵만) [*]
         maps_list = [
             "AbyssalReefLE",
             "AscensiontoAiurLE",
@@ -116,7 +116,7 @@ def main():
         logger.info(f"Difficulty: Easy")
         logger.info("="*70 + "\n")
 
-        # ★ 5. 게임 실행 (하나만) ★
+        # [*] 5. 게임 실행 (하나만) [*]
         result = run_game(
             maps.get(selected_map),
             [
@@ -128,7 +128,7 @@ def main():
             game_time_limit=(60*10)  # 10분 제한
         )
 
-        # ★ 6. 결과 기록 및 출력 ★
+        # [*] 6. 결과 기록 및 출력 [*]
         from sc2.data import Result
         victory = (result == Result.Victory)
         stats.record_game(selected_map, "Easy", enemy_race.name, victory)
@@ -140,14 +140,14 @@ def main():
         else:
             logger.info("\n[DEFEAT] Game lost.")
 
-        # ★ 7. 통계 출력 ★
+        # [*] 7. 통계 출력 [*]
         stats.print_statistics()
 
     except Exception as e:
         logger.error(f"\n[ERROR] {e}")
 
     finally:
-        # ★ 8. 정리 (항상 실행) ★
+        # [*] 8. 정리 (항상 실행) [*]
         logger.info("\n" + "="*70)
         logger.info("CLEANUP...")
         logger.info("="*70)

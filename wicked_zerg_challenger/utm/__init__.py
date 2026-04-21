@@ -5,7 +5,7 @@ UTM (Unmanned Traffic Management) Module
 SC2 Zerg 군집 제어 로직을 3D 드론 교통 관제 시스템으로 확장한 모듈.
 기존 2D 공간 분할, KD-트리, Boids 알고리즘을 3D(고도 포함)로 진화.
 
-Portfolio: SC2 Swarm AI → Real-World Drone UTM
+Portfolio: SC2 Swarm AI -> Real-World Drone UTM
 """
 
 from wicked_zerg_challenger.utm.types3d import Point3D, DroneState

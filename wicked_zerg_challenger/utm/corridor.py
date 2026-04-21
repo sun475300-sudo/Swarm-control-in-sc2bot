@@ -23,10 +23,10 @@ ALTITUDE_LAYERS = {
     "high": (60.0, 120.0),    # 고고도: 60~120m (장거리 이동)
 }
 
-# 방향별 고도 분리 (항공 규칙: 동행 → 홀수, 서행 → 짝수)
+# 방향별 고도 분리 (항공 규칙: 동행 -> 홀수, 서행 -> 짝수)
 DIRECTION_ALTITUDE_OFFSETS = {
-    "eastbound": 0.0,    # 0~180° heading
-    "westbound": 15.0,   # 180~360° heading → +15m 오프셋
+    "eastbound": 0.0,    # 0~180deg heading
+    "westbound": 15.0,   # 180~360deg heading -> +15m 오프셋
 }
 
 
@@ -124,7 +124,7 @@ class CorridorManager:
             t = i / steps
             x = start.x + (end.x - start.x) * t
             y = start.y + (end.y - start.y) * t
-            # 이/착륙 고도 프로파일: 상승 → 순항 → 하강
+            # 이/착륙 고도 프로파일: 상승 -> 순항 -> 하강
             if t < 0.15:
                 z = start.z + (cruise_alt - start.z) * (t / 0.15)
             elif t > 0.85:
@@ -145,7 +145,7 @@ class CorridorManager:
     def get_assigned_altitude(self, heading: float, layer: str = "medium") -> float:
         """
         헤딩 기반 고도 할당 (항공 교통 규칙).
-        0~180° → 동행 고도, 180~360° → 서행 고도 (15m 오프셋).
+        0~180deg -> 동행 고도, 180~360deg -> 서행 고도 (15m 오프셋).
         """
         alt_min, alt_max = ALTITUDE_LAYERS.get(layer, (30.0, 60.0))
         base_alt = (alt_min + alt_max) / 2.0

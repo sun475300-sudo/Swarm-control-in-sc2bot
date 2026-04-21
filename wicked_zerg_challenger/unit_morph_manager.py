@@ -45,19 +45,19 @@ class UnitMorphManager:
         self.morph_ratios = {
             "Terran": {
                 "baneling_ratio": 0.2,   
-                "ravager_ratio": 0.3,    # ★ AGGRESSIVE: 15% -> 30%
+                "ravager_ratio": 0.3,    # [*] AGGRESSIVE: 15% -> 30%
                 "lurker_ratio": 0.3,     
                 "broodlord_ratio": 0.4,  
             },
             "Protoss": {
                 "baneling_ratio": 0.25,  
-                "ravager_ratio": 0.35,   # ★ AGGRESSIVE: 25% -> 35%
+                "ravager_ratio": 0.35,   # [*] AGGRESSIVE: 25% -> 35%
                 "lurker_ratio": 0.4,     
                 "broodlord_ratio": 0.3,
             },
             "Zerg": {
                 "baneling_ratio": 0.3,   
-                "ravager_ratio": 0.3,    # ★ AGGRESSIVE: 20% -> 30%
+                "ravager_ratio": 0.3,    # [*] AGGRESSIVE: 20% -> 30%
                 "lurker_ratio": 0.2,
                 "broodlord_ratio": 0.3,
             },
@@ -70,7 +70,7 @@ class UnitMorphManager:
         }
 
     def _get_dynamic_ratios(self, enemy_race: str) -> dict:
-        """★ Phase 14: Blackboard에서 전략 비율을 읽어 변이 비율 동적 조정 ★"""
+        """[*] Phase 14: Blackboard에서 전략 비율을 읽어 변이 비율 동적 조정 [*]"""
         base_ratios = self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"]).copy()
 
         # Blackboard에서 unit_ratios 읽기
@@ -83,9 +83,9 @@ class UnitMorphManager:
             return base_ratios
 
         # unit_ratios에 baneling/ravager/lurker/broodlord가 있으면 그 비율을 반영
-        # 전략에서 baneling 비율이 높으면 → 더 많은 저글링을 변이
+        # 전략에서 baneling 비율이 높으면 -> 더 많은 저글링을 변이
         if "baneling" in unit_ratios and unit_ratios["baneling"] > 0:
-            # 전략 비율 * 2를 변이 목표로 (전략 비율 0.15 → 변이 비율 0.30)
+            # 전략 비율 * 2를 변이 목표로 (전략 비율 0.15 -> 변이 비율 0.30)
             base_ratios["baneling_ratio"] = min(0.5, unit_ratios["baneling"] * 2.0)
 
         if "ravager" in unit_ratios and unit_ratios["ravager"] > 0:
@@ -113,7 +113,7 @@ class UnitMorphManager:
         # 상대 종족 확인
         enemy_race = self._get_enemy_race()
 
-        # ★ Phase 14: 동적 비율 적용 (Blackboard 연동)
+        # [*] Phase 14: 동적 비율 적용 (Blackboard 연동)
         dynamic_ratios = self._get_dynamic_ratios(enemy_race)
 
         try:
@@ -126,7 +126,7 @@ class UnitMorphManager:
                 await self._morph_banelings(enemy_race, iteration, dynamic_ratios)
 
             # 2. 파멸충 변태 (3분 이후, Lair 불필요)
-            # ★ OPTIMIZATION: 레어 조건 삭제 (빠른 파멸충)
+            # [*] OPTIMIZATION: 레어 조건 삭제 (빠른 파멸충)
             if game_time >= 180 and self._has_roach_warren():
                 await self._morph_ravagers(enemy_race, iteration, dynamic_ratios)
 
@@ -153,14 +153,14 @@ class UnitMorphManager:
         if not baneling_nests.exists:
             return
 
-        # ★ Phase 27: idle 제한 제거 — 전투 중 저글링도 변이 가능
+        # [*] Phase 27: idle 제한 제거 — 전투 중 저글링도 변이 가능
         zerglings = self.bot.units(UnitTypeId.ZERGLING)
         banelings = self.bot.units(UnitTypeId.BANELING)
 
         if not zerglings.exists:
             return
 
-        # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
+        # 목표 비율 계산 ([*] Phase 14: 동적 비율 우선)
         ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
         target_ratio = ratios["baneling_ratio"]
 
@@ -219,7 +219,7 @@ class UnitMorphManager:
         if not roaches.exists:
             return
 
-        # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
+        # 목표 비율 계산 ([*] Phase 14: 동적 비율 우선)
         ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
         target_ratio = ratios["ravager_ratio"]
 
@@ -276,7 +276,7 @@ class UnitMorphManager:
         if not hydralisks.exists:
             return
 
-        # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
+        # 목표 비율 계산 ([*] Phase 14: 동적 비율 우선)
         ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
         target_ratio = ratios["lurker_ratio"]
 
@@ -333,7 +333,7 @@ class UnitMorphManager:
         if not corruptors.exists:
             return
 
-        # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
+        # 목표 비율 계산 ([*] Phase 14: 동적 비율 우선)
         ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
         target_ratio = ratios["broodlord_ratio"]
 

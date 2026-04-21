@@ -57,17 +57,17 @@ class WickedZergBotProImpl(BotAI):
         self.learning_rate = learning_rate
 
         # Initialize managers (lazy loading)
-        self.blackboard = Blackboard()     # ★ Blackboard (Single Source of Truth) ★
-        self.defense_coordinator = None    # ★ DefenseCoordinator (Unified Defense) ★
-        self.early_defense = None          # ★ EarlyDefenseSystem (0-3 min rush defense) ★
-        self.production_controller = None  # ★ ProductionController (Dynamic Authority) ★
+        self.blackboard = Blackboard()     # [*] Blackboard (Single Source of Truth) [*]
+        self.defense_coordinator = None    # [*] DefenseCoordinator (Unified Defense) [*]
+        self.early_defense = None          # [*] EarlyDefenseSystem (0-3 min rush defense) [*]
+        self.production_controller = None  # [*] ProductionController (Dynamic Authority) [*]
         self.intel = None
         self.economy = None
         self.production = None
         self.combat = None
         self.scout = None
         self.micro = None
-        self.idle_units = None  # ★ IdleUnitManager (Idle unit harassment) ★
+        self.idle_units = None  # [*] IdleUnitManager (Idle unit harassment) [*]
 
         # Difficulty Progression System
         self.difficulty_progression = DifficultyProgression()
@@ -86,15 +86,15 @@ class WickedZergBotProImpl(BotAI):
         # Step integrator initialization
         self._step_integrator = None
 
-        # ★ Scoring System + Real-time Awareness Engine ★
+        # [*] Scoring System + Real-time Awareness Engine [*]
         self.scoring_system = None
         self.awareness_engine = None
 
-        # ★ Feature 85: Build Order Timing Log ★
+        # [*] Feature 85: Build Order Timing Log [*]
         self._build_order_log: List[Dict[str, Any]] = []
         self._tracked_structure_tags: set = set()
 
-        # ★ Feature 86: Unit Lost Tracking ★
+        # [*] Feature 86: Unit Lost Tracking [*]
         self._units_lost: List[Dict[str, Any]] = []
         self._workers_created: int = 0
         self._expansions_built: int = 0
@@ -280,7 +280,7 @@ class WickedZergBotProImpl(BotAI):
         except ImportError:
             self.curriculum = None
 
-        # ★★★ 학습된 데이터 적용 (모든 매니저 초기화 완료 후) ★★★
+        # [*][*][*] 학습된 데이터 적용 (모든 매니저 초기화 완료 후) [*][*][*]
         try:
             if hasattr(self, 'economy') and hasattr(self.economy, 'balancer'):
                 self.economy.balancer.apply_learned_economy_weights()
@@ -289,7 +289,7 @@ class WickedZergBotProImpl(BotAI):
             self.logger.info(f"[WARNING] Failed to apply learned economy weights: {e}")
             traceback.print_exc()
 
-        # ★★★ Opponent Modeling - Load previous data and start tracking ★★★
+        # [*][*][*] Opponent Modeling - Load previous data and start tracking [*][*][*]
         if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
             try:
                 # Detect opponent ID (player name or ID)
@@ -345,7 +345,7 @@ class WickedZergBotProImpl(BotAI):
         - AggressiveStrategies: 초반 공격 전략 (12풀, 맹독충 올인 등)
         중복 호출 방지를 위해 여기서는 호출하지 않음
         """
-        # ★★★ 시간 제한: 30분(1800초) 강제 종료 (충분한 학습 시간 확보) - train_mode일 때만 ★★★
+        # [*][*][*] 시간 제한: 30분(1800초) 강제 종료 (충분한 학습 시간 확보) - train_mode일 때만 [*][*][*]
         if self.train_mode and self.time > 1800:
             if not hasattr(self, '_game_ended'):
                 self._game_ended = True
@@ -356,7 +356,7 @@ class WickedZergBotProImpl(BotAI):
         # Store iteration as attribute for other modules to access
         self.iteration = iteration
 
-        # ★ Feature 86: Cache our unit tags for unit lost tracking ★
+        # [*] Feature 86: Cache our unit tags for unit lost tracking [*]
         if iteration % 22 == 0:
             if not hasattr(self, '_known_unit_tags'):
                 self._known_unit_tags = {}
@@ -384,21 +384,21 @@ class WickedZergBotProImpl(BotAI):
         if self._step_integrator is None:
             self._step_integrator = BotStepIntegrator(self)
 
-        # ★ Feature 85: Track key building/upgrade completions ★
+        # [*] Feature 85: Track key building/upgrade completions [*]
         if iteration % 22 == 0:
             self._track_build_order()
 
         # Execute integrated on_step (모든 핵심 매니저 포함)
         await self._step_integrator.on_step(iteration)
 
-        # ★ Scoring System: 실시간 점수 평가 ★
+        # [*] Scoring System: 실시간 점수 평가 [*]
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
             except Exception:
                 pass
 
-        # ★ Awareness Engine: 실시간 상황 인식 + 자동 대응 ★
+        # [*] Awareness Engine: 실시간 상황 인식 + 자동 대응 [*]
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
@@ -414,7 +414,7 @@ class WickedZergBotProImpl(BotAI):
         """
         self.logger.info(f"Game ended with result: {game_result}")
 
-        # ★ Scoring System: 게임 종료 점수 계산 ★
+        # [*] Scoring System: 게임 종료 점수 계산 [*]
         if self.scoring_system:
             try:
                 result_str = str(game_result).upper()
@@ -428,14 +428,14 @@ class WickedZergBotProImpl(BotAI):
             except Exception as e:
                 self.logger.warning(f"ScoringSystem on_end error: {e}")
 
-        # ★ Awareness Engine: 최종 상황 요약 ★
+        # [*] Awareness Engine: 최종 상황 요약 [*]
         if self.awareness_engine:
             try:
                 self.logger.info(f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}")
             except Exception:
                 pass
 
-        # ★ NEW: Personality Module - Send GG message
+        # [*] NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:
             result_str = str(game_result).upper()
             if "VICTORY" in result_str or "WIN" in result_str:
@@ -443,11 +443,11 @@ class WickedZergBotProImpl(BotAI):
             elif "DEFEAT" in result_str or "LOSS" in result_str:
                 await self.personality.on_defeat()
 
-        # ★ NEW: Save intel data for next game
+        # [*] NEW: Save intel data for next game
         if self.intel:
              self.intel.save_data()
 
-        # ★★★ Opponent Modeling - Save game data for learning ★★★
+        # [*][*][*] Opponent Modeling - Save game data for learning [*][*][*]
         if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
             try:
                 result_str = str(game_result).upper()
@@ -478,7 +478,7 @@ class WickedZergBotProImpl(BotAI):
         # Training mode: Calculate final reward and save model
         if self.train_mode:
             try:
-                # ★★★ NEW: Analyze victory/defeat conditions for detailed reward ★★★
+                # [*][*][*] NEW: Analyze victory/defeat conditions for detailed reward [*][*][*]
                 result_str = str(game_result).upper()
                 game_won = "VICTORY" in result_str or "WIN" in result_str
                 game_lost = "DEFEAT" in result_str or "LOSS" in result_str
@@ -513,7 +513,7 @@ class WickedZergBotProImpl(BotAI):
                 # CRITICAL FIX: Initialize parameters_updated counter
                 self.parameters_updated = 0
 
-                # ★★★ Adaptive Learning Rate Update (최우선) ★★★
+                # [*][*][*] Adaptive Learning Rate Update (최우선) [*][*][*]
                 if hasattr(self, 'adaptive_lr') and self.adaptive_lr:
                     new_lr = self.adaptive_lr.update(game_won)
 
@@ -567,10 +567,10 @@ class WickedZergBotProImpl(BotAI):
                 import traceback
                 traceback.print_exc()
 
-        # ★★★ 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ★★★
+        # [*][*][*] 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) [*][*][*]
         self._reset_all_managers()
 
-        # ★★★ 커리큘럼 매니저: 승리/패배 기록 (종족별 추적 포함) ★★★
+        # [*][*][*] 커리큘럼 매니저: 승리/패배 기록 (종족별 추적 포함) [*][*][*]
         try:
             # Bug fix #2: Reuse self.curriculum instead of creating new instance each game
             curriculum = getattr(self, 'curriculum', None)
@@ -580,7 +580,7 @@ class WickedZergBotProImpl(BotAI):
                 self.curriculum = curriculum
             result_str = str(game_result).upper()
 
-            # ★ 상대 종족 감지 ★
+            # [*] 상대 종족 감지 [*]
             opponent_race = None
             try:
                 if hasattr(self, 'enemy_race') and self.enemy_race:
@@ -617,13 +617,13 @@ class WickedZergBotProImpl(BotAI):
                   f"({progress['wins_at_current_level']}/{progress['wins_required']}승)")
             self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
-            # ★ 종족별 승률 출력 ★
+            # [*] 종족별 승률 출력 [*]
             curriculum.print_race_stats()
 
         except Exception as e:
             self.logger.info(f"[WARNING] Curriculum manager error: {e}")
 
-        # ★★★ Game Analytics - 게임 결과 상세 분석 ★★★
+        # [*][*][*] Game Analytics - 게임 결과 상세 분석 [*][*][*]
         if hasattr(self, 'game_analytics') and self.game_analytics and self.train_mode:
             try:
                 # 추가 통계 수집
@@ -685,7 +685,7 @@ class WickedZergBotProImpl(BotAI):
             except Exception as e:
                 self.logger.info(f"[WARNING] Game analytics error: {e}")
 
-        # ★★★ Phase 22: Game Result Reporter - 경기 결과 자동 보고서 ★★★
+        # [*][*][*] Phase 22: Game Result Reporter - 경기 결과 자동 보고서 [*][*][*]
         try:
             # GameDataLogger 종료 처리
             if hasattr(self, 'game_data_logger') and self.game_data_logger:
@@ -711,19 +711,19 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             self.logger.info(f"[WARNING] Game result reporter error: {e}")
 
-        # ★ Feature 81: Structured Game Result Logging ★
+        # [*] Feature 81: Structured Game Result Logging [*]
         try:
             self._save_structured_game_result(game_result)
         except Exception as e:
             self.logger.info(f"[WARNING] Structured game result logging error: {e}")
 
-        # ★ Feature 84: Replay Auto-Organization ★
+        # [*] Feature 84: Replay Auto-Organization [*]
         try:
             self._organize_replay(game_result)
         except Exception as e:
             self.logger.info(f"[WARNING] Replay organization error: {e}")
 
-        # ★ Feature 85: Save Build Order Timing Log ★
+        # [*] Feature 85: Save Build Order Timing Log [*]
         try:
             self._save_build_order_log()
         except Exception as e:
@@ -997,7 +997,7 @@ class WickedZergBotProImpl(BotAI):
             if sm and hasattr(sm, 'on_building_complete'):
                 sm.on_building_complete(unit_type)
 
-            # 경제 매니저에 해처리 완성 알림 → 일꾼 분배
+            # 경제 매니저에 해처리 완성 알림 -> 일꾼 분배
             eco = getattr(self, 'economy', None)
             if eco and hasattr(eco, 'on_building_complete'):
                 eco.on_building_complete(unit_type)
@@ -1058,7 +1058,7 @@ class WickedZergBotProImpl(BotAI):
             self.logger.debug(f"on_enemy_unit_entered_vision error: {e}")
 
     def _reset_all_managers(self):
-        """★ 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) ★"""
+        """[*] 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) [*]"""
         # ManagerFactory에 등록된 모든 매니저를 자동 리셋
         factory = getattr(self, 'manager_factory', None)
         if factory and hasattr(factory, 'get_all_managers'):
@@ -1104,12 +1104,12 @@ class WickedZergBotProImpl(BotAI):
                 except Exception as e:
                     self.logger.info(f"[RESET_WARN] {name}.reset() failed: {e}")
 
-        # ★ 누적 가능한 dict/set/list 직접 초기화
+        # [*] 누적 가능한 dict/set/list 직접 초기화
         for attr in ["_step_integrator"]:
             if hasattr(self, attr):
                 setattr(self, attr, None)
 
-        # ★ 게임별 로그/통계 리스트 초기화 (#12)
+        # [*] 게임별 로그/통계 리스트 초기화 (#12)
         self._units_lost = []
         self._build_order_log = []
 
@@ -1118,7 +1118,7 @@ class WickedZergBotProImpl(BotAI):
             if hasattr(self.data_cache, "cache"):
                 self.data_cache.cache.clear()
 
-        # ★ 로거 핸들러 누적 방지
+        # [*] 로거 핸들러 누적 방지
         try:
             from utils.logger import reset_all_loggers
             reset_all_loggers()

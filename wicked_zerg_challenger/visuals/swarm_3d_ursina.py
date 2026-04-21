@@ -24,7 +24,7 @@ app = Ursina(
 )
 
 # ================================================================
-# ★ DARK MODE — 조명 완전 제거, unlit 엔티티만 자체 발광
+# [*] DARK MODE — 조명 완전 제거, unlit 엔티티만 자체 발광
 # ================================================================
 window.color = color.black
 
@@ -33,7 +33,7 @@ for entity in scene.entities[:]:
     if type(entity).__name__ == 'Sky':
         destroy(entity)
 
-# ★ 조명 없음 — 모든 엔티티가 unlit=True 로 자체 발광
+# [*] 조명 없음 — 모든 엔티티가 unlit=True 로 자체 발광
 
 # ================================================================
 # CONFIG
@@ -64,7 +64,7 @@ C_HUD_TITLE = color.rgb(0, 255, 210)
 # ================================================================
 # GROUND — plane 제거, 검은 빈 공간 + 부유 그리드
 # ================================================================
-# ★ 바닥 plane 없음 → window.color=black이 배경
+# [*] 바닥 plane 없음 -> window.color=black이 배경
 
 # 부유 그리드 — 검은 배경 위에서 잘 보이는 어두운 시안
 for i in range(-20, 21, 5):
@@ -113,7 +113,7 @@ for i in range(NUM_SWARM):
     pos = Vec3(x, HEX_HEIGHT, z)
     swarm_positions.append(pos)
 
-    # ★ unlit=True — 조명과 무관하게 시안색 자체 발광
+    # [*] unlit=True — 조명과 무관하게 시안색 자체 발광
     drone = Entity(
         model='diamond', scale=(0.7, 1.0, 0.7),
         color=C_CYAN, position=pos, unlit=True,
@@ -234,7 +234,7 @@ class UserDrone:
             speed * math.sin(va),
         )
 
-        # ★ 드론 본체 — unlit=True 자체 발광
+        # [*] 드론 본체 — unlit=True 자체 발광
         self.entity = Entity(
             model='sphere', scale=0.6,
             color=C_GREEN, position=self.pos,

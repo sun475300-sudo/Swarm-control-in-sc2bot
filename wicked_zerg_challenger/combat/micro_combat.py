@@ -210,7 +210,7 @@ class MicroCombat:
 
     def focus_fire(self, units: Iterable, target) -> None:
         """
-        ★ Phase 15-2: 포커스 파이어 개선 ★
+        [*] Phase 15-2: 포커스 파이어 개선 [*]
         - anti-splash는 극심한 위협(거리 4 이내)에만 적용
         - 나머지 유닛은 타겟 집중 공격
         - 사거리 안에 있으면 무조건 공격 우선
@@ -221,7 +221,7 @@ class MicroCombat:
             # anti-splash: 극심한 위협(거리 4 이내)에만 회피
             rep_x, rep_y = self.anti_splash.repulsion_vector(unit, enemy_units)
             if rep_x or rep_y:
-                # ★ Phase 15: 스플래시 위협이 매우 가까울 때만 회피 ★
+                # [*] Phase 15: 스플래시 위협이 매우 가까울 때만 회피 [*]
                 splash_threats_close = False
                 for threat_type in self.anti_splash.extreme_threats:
                     for e in enemy_units:
@@ -246,12 +246,12 @@ class MicroCombat:
     def kiting(self, units: Iterable, enemy_units: Iterable) -> None:
         """
         Improved kiting logic: only kite when weapon is on cooldown.
-        ★ Phase 15: 저체력 후퇴 + 원거리 카이팅 강화 ★
+        [*] Phase 15: 저체력 후퇴 + 원거리 카이팅 강화 [*]
         """
         actions = []
         threats = list(enemy_units) if enemy_units else []
         for unit in units:
-            # ★ Phase 15-1: 저체력 유닛 자동 후퇴 (베인링/저글링 제외) ★
+            # [*] Phase 15-1: 저체력 유닛 자동 후퇴 (베인링/저글링 제외) [*]
             if (unit.health_percentage < 0.3
                     and unit.type_id not in (
                         getattr(UnitTypeId, "BANELING", None),
@@ -296,7 +296,7 @@ class MicroCombat:
                     actions.append(unit.move(move_target))
                     continue
 
-            # 5. ★ Phase 15-3: 원거리 유닛 카이팅 강화 ★
+            # 5. [*] Phase 15-3: 원거리 유닛 카이팅 강화 [*]
             target = self._closest_enemy(unit, threats)
             if target:
                 weapon_cooldown = unit.weapon_cooldown
@@ -306,14 +306,14 @@ class MicroCombat:
                 # 원거리 유닛 (사거리 5+): 사거리 경계에서 카이팅
                 if ground_range >= 5:
                     if weapon_cooldown > 0 and distance < ground_range + 1:
-                        # 쿨다운 중 → 사거리 유지하며 후퇴
+                        # 쿨다운 중 -> 사거리 유지하며 후퇴
                         move_target = unit.position.towards(target.position, -3)
                         actions.append(unit.move(move_target))
                     elif distance > ground_range + 2:
-                        # 사거리 밖 → 접근
+                        # 사거리 밖 -> 접근
                         actions.append(unit.attack(target))
                     else:
-                        # 사거리 안 + 공격 가능 → 공격
+                        # 사거리 안 + 공격 가능 -> 공격
                         actions.append(unit.attack(target))
                 else:
                     # 근접/단거리 유닛: 기존 로직
@@ -373,7 +373,7 @@ class MicroCombat:
 
         # If close enough to engage (within 3 range)
         if distance < 3.0:
-            # ★ Phase 22: Use closer_than() instead of manual loop ★
+            # [*] Phase 22: Use closer_than() instead of manual loop [*]
             all_units = getattr(self.bot, "units", [])
             if hasattr(all_units, "closer_than"):
                 nearby_allies = all_units.of_type(UnitTypeId.ZERGLING).closer_than(2.0, target.position)
@@ -385,9 +385,9 @@ class MicroCombat:
                 ]
 
             # If 2+ allies already engaging, create circular surround instead of stacking
-            # OPTIMIZED: 4 → 2 (more aggressive surround)
+            # OPTIMIZED: 4 -> 2 (more aggressive surround)
             if len(nearby_allies) >= 2:
-                # ★ Enhanced Surround: Calculate optimal surround position ★
+                # [*] Enhanced Surround: Calculate optimal surround position [*]
                 import math
 
                 # Count allies to determine surround angle
@@ -424,7 +424,7 @@ class MicroCombat:
 
     def _micro_baneling(self, baneling, enemy_units: Iterable, actions: List) -> bool:
         """
-        ★ Phase 27: 바네링 자폭 최적화 ★
+        [*] Phase 27: 바네링 자폭 최적화 [*]
         - 경장갑/밀집 타겟에 attack() (이전: move()로 이동만)
         - 클러스터 없으면 가장 가까운 적에 돌진
         """

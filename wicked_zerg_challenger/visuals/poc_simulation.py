@@ -2,7 +2,7 @@
 """
 Swarm-Net Airspace Manager — PoC Simulation
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-군집 드론 레이더망 내 유저 드론 감지 → 타이머 → 경고 → 퇴각
+군집 드론 레이더망 내 유저 드론 감지 -> 타이머 -> 경고 -> 퇴각
 파이썬 기반 백엔드 로직 시뮬레이션
 
 실행: python poc_simulation.py
@@ -171,7 +171,7 @@ class SessionManager:
         logger.info(f"  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초")
 
     def check_timers(self) -> List[dict]:
-        """모든 세션 타이머 체크 → 이벤트 리스트 반환"""
+        """모든 세션 타이머 체크 -> 이벤트 리스트 반환"""
         events = []
         for drone_id, drone in list(self.sessions.items()):
             remaining = drone.remaining_time()
@@ -236,7 +236,7 @@ class AirspaceController:
         self.event_log: List[dict] = []
 
     async def scan_cycle(self, user_drones: List[UserDrone]):
-        """1회 스캔 사이클: 감지 → 식별 → 등록 → 타이머 체크 → 알림"""
+        """1회 스캔 사이클: 감지 -> 식별 -> 등록 -> 타이머 체크 -> 알림"""
 
         # (1) 탐지
         for drone in user_drones:
@@ -350,7 +350,7 @@ async def run_simulation():
         UserDrone(
             id="UD-003",
             rf_signature="AA:BB:CC:DD:EE:03",
-            position=Position(100, 80, 100), # 레이더 밖 → 나중에 진입
+            position=Position(100, 80, 100), # 레이더 밖 -> 나중에 진입
         ),
     ]
 

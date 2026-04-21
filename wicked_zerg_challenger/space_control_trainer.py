@@ -155,7 +155,7 @@ class SpaceControlTrainer:
                 if position.distance_to(exp_loc) < 15:
                     return True
 
-                # 본진 → 확장 경로상에 있는지 확인
+                # 본진 -> 확장 경로상에 있는지 확인
                 distance_to_main = position.distance_to(main_base)
                 distance_to_exp = position.distance_to(exp_loc)
                 direct_distance = main_base.distance_to(exp_loc)

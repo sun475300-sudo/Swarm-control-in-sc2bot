@@ -44,7 +44,7 @@ class BuildOrderType(Enum):
     SAFE_14POOL = "SAFE_14POOL"      # Need to add to JSON
     AGGRESSIVE_10POOL = "AGGRESSIVE_10POOL"
     ECONOMY_15HATCH = "ECONOMY_15HATCH"
-    HATCH_FIRST_16 = "HATCH_FIRST_16"  # ★ Phase 22: 1분 멀티 빌드 ★
+    HATCH_FIRST_16 = "HATCH_FIRST_16"  # [*] Phase 22: 1분 멀티 빌드 [*]
     ROACH_RUSH = "ROACH_RUSH"               # Matches JSON key
     MUTALISK_RUSH = "MUTALISK_RUSH"
     HYDRA_TIMING = "HYDRA_TIMING"
@@ -106,12 +106,12 @@ class BuildOrderSystem:
         # Build Order End Time
         self.build_order_end_time = 300.0  # 5 minutes hard cutoff
 
-        # ★ Phase 25: 스텝 재시도 시스템 ★
+        # [*] Phase 25: 스텝 재시도 시스템 [*]
         self._step_retry_count = 0
         self._max_retries_before_skip = 50  # ~50프레임(2초) 재시도 후 다음 스텝으로
         self._skipped_steps: List[BuildOrderStep] = []  # 건너뛴 스텝 (나중에 재실행)
 
-        # ★ Phase 22: 확장 타이밍 검증 ★
+        # [*] Phase 22: 확장 타이밍 검증 [*]
         self.expansion_timing_target = 60.0  # 1분 멀티 목표
         self.expansion_actual_time = 0.0     # 실제 확장 시작 시간
         self.expansion_timing_verified = False
@@ -133,12 +133,12 @@ class BuildOrderSystem:
 
         if "protoss" in race_name:
             # vs Protoss: Roach/Ravager timing (Roach Rush)
-            # ★ 14pool은 너무 수동적 → 로치 러쉬로 적극적 대응
+            # [*] 14pool은 너무 수동적 -> 로치 러쉬로 적극적 대응
             # Protoss deathball 완성 전에 압박
             return BuildOrderType.ROACH_RUSH
         elif "terran" in race_name:
             # vs Terran: 16 Hatch First (경제 우선)
-            # ★ 12pool은 너무 공격적 → 확장 우선 + 링/바네 전환
+            # [*] 12pool은 너무 공격적 -> 확장 우선 + 링/바네 전환
             return BuildOrderType.HATCH_FIRST_16
         else:
             # vs Zerg: 14-pool (Mirror matchup stability)
@@ -188,9 +188,9 @@ class BuildOrderSystem:
     async def execute(self, iteration: int) -> None:
         """
         Execute build order every frame
-        ★ Phase 25: 재시도 + 스킵 + 연성 종료 개선 ★
+        [*] Phase 25: 재시도 + 스킵 + 연성 종료 개선 [*]
         """
-        # ★ Phase 25: 연성 종료 — 모든 스텝 완료 시 즉시 종료, 하드컷은 안전장치
+        # [*] Phase 25: 연성 종료 — 모든 스텝 완료 시 즉시 종료, 하드컷은 안전장치
         if self.current_step_index >= len(self.build_steps) and not self._skipped_steps:
             if self.build_order_active:
                 self.build_order_active = False
@@ -212,7 +212,7 @@ class BuildOrderSystem:
         if not self.enabled or not self.build_order_active:
             return
 
-        # ★ Phase 25: 건너뛴 스텝 재시도 (매 16프레임)
+        # [*] Phase 25: 건너뛴 스텝 재시도 (매 16프레임)
         if iteration % 16 == 0 and self._skipped_steps:
             await self._retry_skipped_steps()
 
@@ -240,7 +240,7 @@ class BuildOrderSystem:
                 self.current_step_index += 1
                 self._step_retry_count = 0
             else:
-                # ★ Phase 25: 재시도 카운터 — 일정 횟수 실패 시 스킵 후 다음 스텝
+                # [*] Phase 25: 재시도 카운터 — 일정 횟수 실패 시 스킵 후 다음 스텝
                 self._step_retry_count += 1
                 if self._step_retry_count >= self._max_retries_before_skip:
                     logger.info(f"[SKIP] {current_step.supply} Supply: {current_step.description} (retried {self._step_retry_count}x)")
@@ -400,7 +400,7 @@ class BuildOrderSystem:
                 self.bot.do(larva.train(UnitTypeId.DRONE))
                 return True
 
-        # ★ Phase 25: 일반 라바 유닛 (Roach, Hydra 등) ★
+        # [*] Phase 25: 일반 라바 유닛 (Roach, Hydra 등) [*]
         else:
             if self.bot.larva:
                 larva = self.bot.larva.first
@@ -412,7 +412,7 @@ class BuildOrderSystem:
     async def _expand(self, structure_type: UnitTypeId) -> bool:
         """
         Expand Base
-        ★ Phase 22: 확장 타이밍 기록 + 1분 멀티 검증 ★
+        [*] Phase 22: 확장 타이밍 기록 + 1분 멀티 검증 [*]
         """
         # Skip if already expanded
         if self.bot.townhalls.amount >= 2:
@@ -427,9 +427,9 @@ class BuildOrderSystem:
 
         # Check Resources
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
-            # ★ Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 ★
+            # [*] Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 [*]
             if self.bot.time > self.expansion_timing_target and self.expansion_actual_time == 0:
-                # ★ FIX: 스팸 방지 - 10초마다 1회만 출력
+                # [*] FIX: 스팸 방지 - 10초마다 1회만 출력
                 if int(self.bot.time) % 10 == 0:
                     logger.warning(f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
             return False
@@ -439,7 +439,7 @@ class BuildOrderSystem:
         if location:
             # Use TechCoordinator if available
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            PRIORITY_EXPANSION = 55  # ★ Phase 22: 확장 우선순위 상향 (50 → 55)
+            PRIORITY_EXPANSION = 55  # [*] Phase 22: 확장 우선순위 상향 (50 -> 55)
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
@@ -465,7 +465,7 @@ class BuildOrderSystem:
         return False
 
     async def _retry_skipped_steps(self):
-        """★ Phase 25: 건너뛴 스텝 재시도 ★"""
+        """[*] Phase 25: 건너뛴 스텝 재시도 [*]"""
         still_skipped = []
         for step in self._skipped_steps:
             if step.completed:
@@ -479,14 +479,14 @@ class BuildOrderSystem:
         self._skipped_steps = still_skipped
 
     def _publish_build_complete(self):
-        """★ Phase 25: 빌드오더 완료를 Blackboard에 전파 ★"""
+        """[*] Phase 25: 빌드오더 완료를 Blackboard에 전파 [*]"""
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard and hasattr(blackboard, "set"):
             blackboard.set("build_order_complete", True)
             blackboard.set("build_order_type", self.current_build_order.value)
 
     def _verify_expansion_timing(self):
-        """★ Phase 22: 확장 타이밍 검증 ★"""
+        """[*] Phase 22: 확장 타이밍 검증 [*]"""
         if self.expansion_timing_verified:
             return
 

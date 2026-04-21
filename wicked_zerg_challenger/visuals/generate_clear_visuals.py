@@ -32,7 +32,7 @@ def save(fig, name):
 
 def clear_system_overview():
     """
-    캡스톤 핵심 1장: SC2 → 시뮬레이션 → 실제 드론
+    캡스톤 핵심 1장: SC2 -> 시뮬레이션 -> 실제 드론
     3단계 파이프라인을 3D 계단식으로 보여줌
     """
     logger.info("시스템 전체 구조도 (3-Stage Pipeline)")
@@ -93,8 +93,8 @@ def clear_system_overview():
 
     # ── 스테이지 간 화살표 (큰 화살표) ──
     arrows = [
-        {"from": 0, "to": 5, "z1": 0, "z2": 2, "label": "알고리즘 추출\n(2D → 3D 변환)"},
-        {"from": 5, "to": 10, "z1": 2, "z2": 4, "label": "Sim-to-Real\n(시뮬 → 실제)"},
+        {"from": 0, "to": 5, "z1": 0, "z2": 2, "label": "알고리즘 추출\n(2D -> 3D 변환)"},
+        {"from": 5, "to": 10, "z1": 2, "z2": 4, "label": "Sim-to-Real\n(시뮬 -> 실제)"},
     ]
 
     for a in arrows:
@@ -200,19 +200,19 @@ def clear_boids_explained():
     forces = [
         {
             "name": "① 분리 (Separation)",
-            "desc": "너무 가까우면 밀어냄\n→ 충돌 방지",
+            "desc": "너무 가까우면 밀어냄\n-> 충돌 방지",
             "dir": (-2.5, -1.5, 1.5),
             "color": "#F44336",
         },
         {
             "name": "② 정렬 (Alignment)",
-            "desc": "이웃과 같은 방향\n→ 대형 유지",
+            "desc": "이웃과 같은 방향\n-> 대형 유지",
             "dir": (2.0, 2.5, 0.5),
             "color": "#2196F3",
         },
         {
             "name": "③ 응집 (Cohesion)",
-            "desc": "그룹 중심으로 모임\n→ 흩어짐 방지",
+            "desc": "그룹 중심으로 모임\n-> 흩어짐 방지",
             "dir": (0.5, -2.0, -1.0),
             "color": "#4CAF50",
         },
@@ -278,7 +278,7 @@ def clear_boids_explained():
     fig.add_trace(go.Scatter3d(
         x=[0], y=[0], z=[3.5],
         mode="text",
-        text=["V = Separation × 1.5  +  Alignment × 1.0  +  Cohesion × 1.0"],
+        text=["V = Separation x 1.5  +  Alignment x 1.0  +  Cohesion x 1.0"],
         textfont=dict(size=14, color="#333", family="Courier New"),
         showlegend=False,
     ))
@@ -307,7 +307,7 @@ def clear_boids_explained():
 
 def clear_tech_transfer():
     """
-    SC2 모듈 → 드론 ATC 대응 모듈
+    SC2 모듈 -> 드론 ATC 대응 모듈
     양쪽에 박스, 가운데 연결선 (색상으로 전이 신뢰도)
     """
     logger.info("SC2 ↔ 드론 기술 전이 매핑")
@@ -385,22 +385,22 @@ def clear_tech_transfer():
             mode="lines",
             line=dict(color=col, width=width),
             showlegend=False,
-            hovertext=f"전이 신뢰도: {'★' * conf}",
+            hovertext=f"전이 신뢰도: {'[*]' * conf}",
         ))
 
         # 신뢰도 표시 (가운데)
         fig.add_trace(go.Scatter3d(
             x=[0], y=[1.2], z=[z],
             mode="text",
-            text=["★" * conf],
+            text=["[*]" * conf],
             textfont=dict(size=12, color=col),
             showlegend=False,
         ))
 
     # 범례
-    for conf_val, col, label in [(5, "#4CAF50", "★★★★★ Direct (직접 전이)"),
-                                  (4, "#FFC107", "★★★★☆ Adapt (적응 필요)"),
-                                  (3, "#FF9800", "★★★☆☆ Concept (개념 전이)")]:
+    for conf_val, col, label in [(5, "#4CAF50", "[*][*][*][*][*] Direct (직접 전이)"),
+                                  (4, "#FFC107", "[*][*][*][*]☆ Adapt (적응 필요)"),
+                                  (3, "#FF9800", "[*][*][*]☆☆ Concept (개념 전이)")]:
         fig.add_trace(go.Scatter3d(
             x=[0], y=[0], z=[-2],  # 화면 밖
             mode="markers",
@@ -409,7 +409,7 @@ def clear_tech_transfer():
         ))
 
     fig.update_layout(
-        title=dict(text="SC2 → 드론 ATC: 기술 전이 매핑",
+        title=dict(text="SC2 -> 드론 ATC: 기술 전이 매핑",
                    font=dict(size=22, family="Arial Black"),
                    x=0.5),
         scene=dict(
@@ -543,7 +543,7 @@ def clear_swarm_simulation():
         marker=dict(size=7, color="#00E5FF", opacity=0.85,
                     symbol="circle",
                     line=dict(width=1, color="white")),
-        name=f"팔로워 드론 ×{N - 1}",
+        name=f"팔로워 드론 x{N - 1}",
     ))
 
     # 드론 간 연결선 (편대 형태 시각화)

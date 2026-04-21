@@ -112,7 +112,7 @@ class StutterStepKiting:
 
         distance_to_target = unit.position.distance_to(target.position)
 
-        # ★★★ STUTTER-STEP LOGIC ★★★
+        # [*][*][*] STUTTER-STEP LOGIC [*][*][*]
         # 1. 무기 쿨다운 체크
         weapon_ready = unit.weapon_cooldown <= config["cooldown_buffer"]
 

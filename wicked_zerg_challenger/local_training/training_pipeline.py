@@ -135,7 +135,7 @@ class TrainingPipeline:
             self._deploy(new_version)
             logger.info(
                 f"[PIPELINE] AUTO-DEPLOY v{new_version.version_id}: "
-                f"win_rate {current_wr:.1%} → {new_wr:.1%} (+{new_wr - current_wr:.1%})"
+                f"win_rate {current_wr:.1%} -> {new_wr:.1%} (+{new_wr - current_wr:.1%})"
             )
             return True
 

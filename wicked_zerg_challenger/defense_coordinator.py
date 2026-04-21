@@ -76,7 +76,7 @@ class DefenseCoordinator:
         self.spine_crawler_positions: List[Point2] = []
         self.spore_crawler_positions: List[Point2] = []
 
-        # === Proactive 공중 방어 ★ NEW ★ ===
+        # === Proactive 공중 방어 [*] NEW [*] ===
         self.proactive_spore_requested = False  # 3:00 자동 스포어 요청 여부
         self.proactive_spore_timing = self.config.PROACTIVE_SPORE_TIMING if self.config else 180.0
 
@@ -114,7 +114,7 @@ class DefenseCoordinator:
         if game_time < self.early_game_threshold:
             await self._early_game_defense()
 
-        # 4. ★ Proactive 공중 방어 (3:00 자동 스포어) ★
+        # 4. [*] Proactive 공중 방어 (3:00 자동 스포어) [*]
         if iteration % 22 == 0 and game_time >= self.proactive_spore_timing and not self.proactive_spore_requested:
             await self._proactive_air_defense()
 
@@ -146,7 +146,7 @@ class DefenseCoordinator:
         if not self.bot.enemy_units:
             # 적이 없으면 안전 — 방어 유닛 해제
             self.detected_threats.clear()
-            # ★ Phase 29: 위협 없으면 방어 태그 클리어 → 공격에 재투입 가능
+            # [*] Phase 29: 위협 없으면 방어 태그 클리어 -> 공격에 재투입 가능
             if self.defending_units:
                 self.defending_units.clear()
                 if self.blackboard and hasattr(self.blackboard, "set"):
@@ -214,7 +214,7 @@ class DefenseCoordinator:
             mid_rush_count = self.config.MID_RUSH_ENEMY_COUNT
             mid_rush_supply = self.config.MID_RUSH_SUPPLY
         else:
-            # ★ Phase 26: 초반 위협 임계값 하향 (3→4 유닛이면 러시)
+            # [*] Phase 26: 초반 위협 임계값 하향 (3->4 유닛이면 러시)
             early_rush_time = 180
             early_rush_count = 3   # 이전: 4
             early_rush_supply = 3  # 이전: 4
@@ -229,7 +229,7 @@ class DefenseCoordinator:
             if max_enemy_near_base >= mid_rush_count or total_enemy_supply >= mid_rush_supply:
                 is_rushing = True
 
-        # ★ 캐논러시/프록시 건물 감지 (적 건물이 기지 근처에 있으면 CRITICAL) ★
+        # [*] 캐논러시/프록시 건물 감지 (적 건물이 기지 근처에 있으면 CRITICAL) [*]
         proxy_types = {UnitTypeId.PYLON, UnitTypeId.PHOTONCANNON, UnitTypeId.SHIELDBATTERY,
                        UnitTypeId.BARRACKS, UnitTypeId.BUNKER, UnitTypeId.GATEWAY}
         if self.bot.enemy_structures:
@@ -243,7 +243,7 @@ class DefenseCoordinator:
                     if not threat_position:
                         threat_position = proxy_buildings[0].position
 
-        # ★ 드롭/워프프리즘 감지 (수송 유닛이 기지 뒤에 나타나면 위협) ★
+        # [*] 드롭/워프프리즘 감지 (수송 유닛이 기지 뒤에 나타나면 위협) [*]
         transport_types = {UnitTypeId.MEDIVAC, UnitTypeId.WARPPRISM, UnitTypeId.WARPPRISMPHASING,
                           UnitTypeId.OVERLORDTRANSPORT, UnitTypeId.NYDUSCANAL}
         for base in bases:
@@ -254,7 +254,7 @@ class DefenseCoordinator:
                 total_enemy_supply = max(total_enemy_supply, 10)
                 if not threat_position:
                     threat_position = nearby_transports[0].position
-                # ★ Phase 24: 드롭 위치 Blackboard 전파 (즉시 대응용) ★
+                # [*] Phase 24: 드롭 위치 Blackboard 전파 (즉시 대응용) [*]
                 blackboard = getattr(self.bot, "blackboard", None)
                 if blackboard and hasattr(blackboard, "set"):
                     blackboard.set("drop_detected", True)
@@ -486,7 +486,7 @@ class DefenseCoordinator:
              elif e.type_id == UnitTypeId.ROACH: enemy_supply += 2
              else: enemy_supply += 2
 
-        # 전투 결정 로직 (Fight Decision) ★ IMPROVED: 더 보수적 ★
+        # 전투 결정 로직 (Fight Decision) [*] IMPROVED: 더 보수적 [*]
         # 조건: 적이 극소수(보급 2 이하)이고, 우리 일꾼이 적보다 3배 이상 많음
         should_fight = False
         if enemy_supply <= 2 and workers_in_danger.amount >= enemy_count * 3:
@@ -496,7 +496,7 @@ class DefenseCoordinator:
         if nearby_enemies.structure.exists:
             should_fight = False
 
-        # ★ 초반 3분 이전에는 절대 싸우지 않음 (드론 보호 최우선) ★
+        # [*] 초반 3분 이전에는 절대 싸우지 않음 (드론 보호 최우선) [*]
         game_time = self.bot.time
         if game_time < 180:
             should_fight = False
@@ -507,7 +507,7 @@ class DefenseCoordinator:
             target = nearby_enemies.closest_to(workers_in_danger.center)
             fight_count = 0
             for worker in workers_in_danger:
-                # ★ HP 50% 이하면 즉시 대피 ★
+                # [*] HP 50% 이하면 즉시 대피 [*]
                 if worker.health_percentage < 0.5:
                     near_minerals = self.bot.mineral_field.closest_to(worker)
                     if near_minerals:
@@ -519,7 +519,7 @@ class DefenseCoordinator:
                     if worker.weapon_cooldown <= 0:
                         self.bot.do(worker.attack(target))
                     else:
-                        # ★ 카이팅: 적에게서 멀어지기 ★
+                        # [*] 카이팅: 적에게서 멀어지기 [*]
                         retreat_pos = worker.position.towards(target.position, -3)
                         self.bot.do(worker.move(retreat_pos))
                     fight_count += 1
@@ -603,7 +603,7 @@ class DefenseCoordinator:
         # 부족하면 건설 요청
         if len(spines_nearby) < target_spines:
             cost = self.bot.calculate_cost(UnitTypeId.SPINECRAWLER)
-            # ★ ResourceManager를 통한 자원 예약 (Race Condition 방지)
+            # [*] ResourceManager를 통한 자원 예약 (Race Condition 방지)
             can_afford = False
             if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
                 can_afford = await self.bot.resource_manager.try_reserve(
@@ -648,14 +648,14 @@ class DefenseCoordinator:
                         self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, build_pos))
                         self.logger.info(f"[DEFENSE] Building Spore Crawler (reactive - air threat)")
 
-    # ========== Proactive 공중 방어 ★ NEW ★ ==========
+    # ========== Proactive 공중 방어 [*] NEW [*] ==========
 
     async def _proactive_air_defense(self) -> None:
         """
         Proactive 공중 방어: 3:00에 자동으로 스포어 크롤러 1개 건설
 
         목적:
-        - 적 공중 유닛이 오기 전에 미리 준비 (reactive → proactive)
+        - 적 공중 유닛이 오기 전에 미리 준비 (reactive -> proactive)
         - vs Protoss: 불사조/공허 포격기 대비
         - vs Terran: 의료선/밴시/밴시 대비
         - vs Zerg: 뮤탈리스크 대비
@@ -762,7 +762,7 @@ class DefenseCoordinator:
                 self.bot.do(unit.move(defense_pos))
                 self.defending_units.add(unit.tag)
 
-        # ★ Phase 29: 방어 유닛 태그를 Blackboard에 전파 (combat_manager 충돌 방지)
+        # [*] Phase 29: 방어 유닛 태그를 Blackboard에 전파 (combat_manager 충돌 방지)
         if self.blackboard and hasattr(self.blackboard, "set"):
             existing_tags = self.blackboard.get("defense_unit_tags", set()) or set()
             merged_tags = existing_tags | self.defending_units

@@ -233,7 +233,7 @@ class GameAnalytics:
         # 개선 제안
         suggestions = self._get_improvement_suggestions(game_record)
         if suggestions:
-            lines.append(f"\n💡 개선 제안:")
+            lines.append(f"\n[TIP] 개선 제안:")
             for suggestion in suggestions:
                 lines.append(f"  - {suggestion}")
 

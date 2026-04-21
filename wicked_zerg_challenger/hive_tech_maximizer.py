@@ -98,7 +98,7 @@ class HiveTechMaximizer:
 
     def _analyze_enemy_composition(self) -> str:
         """
-        ★ 적 병력 구성 분석 (Tech Path Selection) ★
+        [*] 적 병력 구성 분석 (Tech Path Selection) [*]
 
         Returns:
             "anti_air": 공중 유닛 카운터 필요
@@ -113,7 +113,7 @@ class HiveTechMaximizer:
         if not enemy_units:
             return "balanced"
 
-        # ★ 공중 유닛 카운트 ★
+        # [*] 공중 유닛 카운트 [*]
         air_units = enemy_units.filter(lambda u: u.is_flying)
         air_count = air_units.amount
 
@@ -124,7 +124,7 @@ class HiveTechMaximizer:
         }
         critical_air = sum(1 for u in air_units if u.type_id in high_value_air)
 
-        # ★ 중장갑 지상 유닛 카운트 ★
+        # [*] 중장갑 지상 유닛 카운트 [*]
         heavy_ground = {
             UnitTypeId.THOR, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED,
             UnitTypeId.IMMORTAL, UnitTypeId.COLOSSUS, UnitTypeId.ULTRALISK,
@@ -132,14 +132,14 @@ class HiveTechMaximizer:
         }
         heavy_count = sum(1 for u in enemy_units if u.type_id in heavy_ground)
 
-        # ★ 경장갑 다수 유닛 카운트 ★
+        # [*] 경장갑 다수 유닛 카운트 [*]
         bio_units = {
             UnitTypeId.MARINE, UnitTypeId.MARAUDER, UnitTypeId.ZEALOT,
             UnitTypeId.ZERGLING, UnitTypeId.HYDRALISK, UnitTypeId.ROACH
         }
         bio_count = sum(1 for u in enemy_units if u.type_id in bio_units)
 
-        # ★ Tech Path 결정 ★
+        # [*] Tech Path 결정 [*]
         total_units = enemy_units.amount
 
         if total_units < 5:
@@ -213,13 +213,13 @@ class HiveTechMaximizer:
 
     async def _produce_advanced_units(self, game_time: float):
         """
-        고급 유닛 생산 (★ IMPROVED: Tech Path Selection ★)
+        고급 유닛 생산 ([*] IMPROVED: Tech Path Selection [*])
         적 병력 구성에 따라 최적의 유닛 선택
         """
-        # ★ 적 병력 구성 분석 ★
+        # [*] 적 병력 구성 분석 [*]
         tech_path = self._analyze_enemy_composition()
 
-        # ★ Tech Path별 우선순위 생산 ★
+        # [*] Tech Path별 우선순위 생산 [*]
         if tech_path == "anti_air":
             # vs Air Heavy (Carrier, BC, Mutalisk)
             await self._produce_vipers()      # Abduct high-value air
@@ -239,7 +239,7 @@ class HiveTechMaximizer:
             await self._produce_ultralisks()  # Splash tank
 
         else:
-            # Balanced / Unknown → Standard production
+            # Balanced / Unknown -> Standard production
             await self._produce_vipers()
             await self._produce_infestors()
             await self._morph_broodlords()
@@ -346,7 +346,7 @@ class HiveTechMaximizer:
 
     async def _research_advanced_upgrades(self):
         """고급 업그레이드 연구"""
-        # ★ Adrenal Glands (Zergling 공속 +20%) - 가장 중요! ★
+        # [*] Adrenal Glands (Zergling 공속 +20%) - 가장 중요! [*]
         if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
             pool = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.idle
             if pool:

@@ -45,7 +45,7 @@ class GameDataLogger:
             "resource_snapshots": [],
             "decision_log": [],
             "game_result": {},
-            # ★ 추가 학습 항목 ★
+            # [*] 추가 학습 항목 [*]
             "enemy_scouts": [],           # 적 정찰 정보
             "harassment": [],             # 하라스 기록
             "defense_events": [],         # 방어 성공/실패
@@ -68,7 +68,7 @@ class GameDataLogger:
         self._last_army_supply = 0
         self._engagement_cooldown = 0
 
-        # ★ 추가 추적 변수 ★
+        # [*] 추가 추적 변수 [*]
         self._last_composition_time = 0
         self._composition_interval = 120  # 2분마다
         self._harassment_cooldown = 0
@@ -112,7 +112,7 @@ class GameDataLogger:
             self._take_resource_snapshot(game_time)
             self.last_snapshot_time = game_time
 
-        # ★ 추가 학습 항목 추적 ★
+        # [*] 추가 학습 항목 추적 [*]
         # 적 정찰 정보
         await self._track_enemy_scouts(game_time)
 
@@ -310,7 +310,7 @@ class GameDataLogger:
         logger.info(f"Game data saved: {filename}")
 
     # ============================================================
-    # ★ 추가 학습 항목 추적 메서드 ★
+    # [*] 추가 학습 항목 추적 메서드 [*]
     # ============================================================
 
     async def _track_enemy_scouts(self, game_time: float):

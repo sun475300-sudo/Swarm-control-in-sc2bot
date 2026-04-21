@@ -208,7 +208,7 @@ class SituationalAwareness:
         air_tech = {
             "STARGATE", "STARPORT", "SPIRE", "GREATERSPIRE", "FLEETBEACON"
         }
-        # ★ FIX: 오버로드/오버시어 등 비전투 비행유닛 제외
+        # [*] FIX: 오버로드/오버시어 등 비전투 비행유닛 제외
         non_threat_flyers = {
             "OVERLORD", "OVERLORDTRANSPORT", "OVERSEER", "OVERSEERSIEGEMODE",
             "OBSERVER", "OBSERVERSIEGEMODE", "MEDIVAC", "WARPPRISM",

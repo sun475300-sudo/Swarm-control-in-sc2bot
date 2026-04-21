@@ -48,7 +48,7 @@ class IntelManager:
             "LIBERATOR", "LIBERATORAG", "WIDOWMINE", "HIGHTEMPLAR"
         }
 
-        # ★ NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
+        # [*] NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
         self._hidden_tech_alerts = {
             "DARKSHRINE": "DT_INCOMING",
             "STARGATE": "AIR_INCOMING",
@@ -65,7 +65,7 @@ class IntelManager:
         self._enemy_build_pattern = "unknown"
         self._recommended_response = []
 
-        # ★ NEW: Destructible structures tracking
+        # [*] NEW: Destructible structures tracking
         self.destructible_rocks = []  # 파괴 가능한 중립 구조물
         self.all_enemy_structures = []  # 모든 적 구조물 (승리 조건용)
         self._last_structure_update = 0.0
@@ -104,10 +104,10 @@ class IntelManager:
         # Update threat status
         self._update_threat_status()
 
-        # ★ NEW: Update destructible structures
+        # [*] NEW: Update destructible structures
         self._update_destructible_structures()
 
-        # ★ NEW: Update all enemy structures
+        # [*] NEW: Update all enemy structures
         self._update_all_enemy_structures()
 
     def _update_enemy_composition(self) -> None:
@@ -115,7 +115,7 @@ class IntelManager:
         enemy_units = getattr(self.bot, "enemy_units", [])
         enemy_structures = getattr(self.bot, "enemy_structures", [])
 
-        # ★ Update enemy main base location ★
+        # [*] Update enemy main base location [*]
         self._update_enemy_main_base(enemy_structures)
 
         # Count enemy units by type
@@ -123,7 +123,7 @@ class IntelManager:
         self.enemy_army_supply = 0
         self.enemy_worker_count = 0
 
-        # ★ Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
+        # [*] Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
         _ENEMY_SUPPLY = {
             'ZERGLING': 0.5, 'BANELING': 0.5, 'ROACH': 2, 'RAVAGER': 3,
             'HYDRALISK': 2, 'LURKERMP': 3, 'MUTALISK': 2, 'CORRUPTOR': 2,
@@ -142,7 +142,7 @@ class IntelManager:
             type_name = getattr(unit.type_id, "name", str(unit.type_id))
             self.enemy_unit_counts[type_name] = self.enemy_unit_counts.get(type_name, 0) + 1
 
-            # ★ Phase 42: 룩업 테이블 우선, 없으면 1
+            # [*] Phase 42: 룩업 테이블 우선, 없으면 1
             supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
             if type_name.upper() in worker_names:
                 self.enemy_worker_count += 1
@@ -171,16 +171,16 @@ class IntelManager:
             if getattr(s.type_id, "name", "").upper() in tech_buildings
         }
 
-        # ★ NEW: Hidden tech alert system
+        # [*] NEW: Hidden tech alert system
         self._check_hidden_tech_alerts()
 
         # Detect enemy build pattern
         self._detect_enemy_build_pattern(enemy_structures, enemy_units)
 
-        # ★ Phase 20: 적 확장/테크 상태 → Blackboard 전파 (공격 타이밍용) ★
+        # [*] Phase 20: 적 확장/테크 상태 -> Blackboard 전파 (공격 타이밍용) [*]
         self._detect_enemy_vulnerability(enemy_structures)
 
-        # ★ Phase 42: 적 공격 타이밍 예측 → Blackboard 전파 ★
+        # [*] Phase 42: 적 공격 타이밍 예측 -> Blackboard 전파 [*]
         self._predict_enemy_attack_timing()
 
     def _update_enemy_main_base(self, enemy_structures) -> None:
@@ -232,7 +232,7 @@ class IntelManager:
 
         current_time = getattr(self.bot, "time", 0.0)
 
-        # ★ 캐시 사용 (1초 TTL) ★
+        # [*] 캐시 사용 (1초 TTL) [*]
         if hasattr(self.bot, "data_cache") and self.bot.data_cache:
             cached_threat = self.bot.data_cache.get_threat_level()
             if cached_threat:
@@ -245,7 +245,7 @@ class IntelManager:
             'SIEGETANK', 'SIEGETANKSIEGED', 'LIBERATOR', 'WIDOWMINE'
         }
 
-        # ★ O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 ★
+        # [*] O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 [*]
         th_positions = [th.position for th in townhalls]
         base_detection_range = 40 if current_time < 180 else 30
         found_critical = False
@@ -322,17 +322,17 @@ class IntelManager:
 
     def _predict_enemy_attack_timing(self) -> None:
         """
-        ★ Phase 42: 적 테크 건물 기반 공격 타이밍 예측 ★
+        [*] Phase 42: 적 테크 건물 기반 공격 타이밍 예측 [*]
 
-        관측된 테크 건물 → 예상 공격 시점(초) 추정 → Blackboard 전파
+        관측된 테크 건물 -> 예상 공격 시점(초) 추정 -> Blackboard 전파
         전략 매니저가 이를 읽어 방어 준비 타이밍 조정.
 
         예측 규칙 (보수적 하한 추정):
-          FACTORY / BARRACKS 기반 → 3:30 공격 가능
-          STARGATE / STARPORT   → 4:00 공격 가능
-          ROBOTICSFACILITY      → 5:00 공격 가능 (Immortal/Colossus)
-          DARKSHRINE            → 4:30 공격 가능 (DT)
-          적 supply > 20        → 현재 ~ +60초 내 공격 가능
+          FACTORY / BARRACKS 기반 -> 3:30 공격 가능
+          STARGATE / STARPORT   -> 4:00 공격 가능
+          ROBOTICSFACILITY      -> 5:00 공격 가능 (Immortal/Colossus)
+          DARKSHRINE            -> 4:30 공격 가능 (DT)
+          적 supply > 20        -> 현재 ~ +60초 내 공격 가능
         """
         blackboard = getattr(self.bot, "blackboard", None)
         if not blackboard or not hasattr(blackboard, "set"):
@@ -369,13 +369,13 @@ class IntelManager:
 
         if imminent and game_time % 30 < 1:  # 30초마다 로그
             logger.info(
-                f"[INTEL] [{int(game_time)}s] ★ ENEMY ATTACK IMMINENT "
+                f"[INTEL] [{int(game_time)}s] [*] ENEMY ATTACK IMMINENT "
                 f"(predicted: {int(predicted_attack_time)}s, supply: {self.enemy_army_supply:.0f})"
             )
 
     def _detect_enemy_vulnerability(self, enemy_structures) -> None:
         """
-        ★ Phase 20: 적 확장/테크 취약 시점 감지 ★
+        [*] Phase 20: 적 확장/테크 취약 시점 감지 [*]
 
         적이 확장 중이거나 고비용 테크를 올리는 중이면
         Blackboard에 플래그를 세워 공격 타이밍으로 활용.
@@ -507,12 +507,12 @@ class IntelManager:
         self._enemy_build_pattern = detected_pattern
         self._recommended_response = recommended_response
 
-        # ★ Calculate confidence score ★
+        # [*] Calculate confidence score [*]
         self._build_pattern_confidence = self._calculate_build_confidence(
             detected_pattern, structure_counts, enemy_units, game_time
         )
 
-        # ★ Determine confidence status ★
+        # [*] Determine confidence status [*]
         if self._build_pattern_confidence >= 0.7:
             self._build_pattern_status = "confirmed"
         elif self._build_pattern_confidence >= 0.3:
@@ -520,7 +520,7 @@ class IntelManager:
         else:
             self._build_pattern_status = "unknown"
 
-        # ★ Push to Blackboard ★
+        # [*] Push to Blackboard [*]
         self._push_intel_to_blackboard(detected_pattern)
 
         # Log detection (every 30 seconds)
@@ -659,11 +659,11 @@ class IntelManager:
 
     def _check_hidden_tech_alerts(self) -> None:
         """
-        ★ NEW: 위험 테크 건물 발견 시 즉시 경고 + Blackboard 알림
+        [*] NEW: 위험 테크 건물 발견 시 즉시 경고 + Blackboard 알림
 
-        DarkShrine → 스포어 크롤러 + 오버시어 필요
-        Stargate → 스포어 크롤러 + 퀸/히드라 필요
-        FusionCore → BC 대비 코럽터/히드라 필요
+        DarkShrine -> 스포어 크롤러 + 오버시어 필요
+        Stargate -> 스포어 크롤러 + 퀸/히드라 필요
+        FusionCore -> BC 대비 코럽터/히드라 필요
         """
         game_time = getattr(self.bot, "time", 0.0)
 
@@ -679,7 +679,7 @@ class IntelManager:
                     blackboard.set("latest_tech_alert", alert_type)
                     blackboard.set("latest_tech_alert_time", game_time)
 
-                    # ★ Phase 17: 위협 테크 감지 시 즉시 방어 플래그 설정 ★
+                    # [*] Phase 17: 위협 테크 감지 시 즉시 방어 플래그 설정 [*]
                     if alert_type in ("DT_INCOMING", "AIR_INCOMING", "BC_INCOMING", "CARRIER_INCOMING"):
                         blackboard.set("urgent_spore_all_bases", True)
                     if alert_type == "NYDUS_INCOMING":
@@ -699,7 +699,7 @@ class IntelManager:
 
     def _update_destructible_structures(self) -> None:
         """
-        ★ NEW: 파괴 가능한 중립 구조물 감지
+        [*] NEW: 파괴 가능한 중립 구조물 감지
 
         Destructible Rocks, Debris 등 확장 경로를 막는 구조물 추적
         """
@@ -751,7 +751,7 @@ class IntelManager:
 
     def _update_all_enemy_structures(self) -> None:
         """
-        ★ NEW: 모든 적 구조물 추적 (승리 조건용)
+        [*] NEW: 모든 적 구조물 추적 (승리 조건용)
 
         모든 적 건물을 파괴해야 승리할 수 있음
         """
@@ -792,7 +792,7 @@ class IntelManager:
         return len(self.all_enemy_structures)
 
     # ==========================================================
-    # ★ NEW: Data Backup System (데이터 백업 및 복구) ★
+    # [*] NEW: Data Backup System (데이터 백업 및 복구) [*]
     # ==========================================================
 
     def save_data(self, file_path: str = "data/intel_data.json") -> bool:

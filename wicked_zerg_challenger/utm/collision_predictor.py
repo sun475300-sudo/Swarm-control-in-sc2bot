@@ -34,8 +34,8 @@ class CollisionPredictor:
     TTC 기반 충돌 예측 시스템.
 
     기존 Boids의 distance-based 회피와의 차이:
-    - 기존: 현재 거리 < threshold → 반발력
-    - TTC: 미래 궤적 교차 예측 → 선제적 회피
+    - 기존: 현재 거리 < threshold -> 반발력
+    - TTC: 미래 궤적 교차 예측 -> 선제적 회피
     """
 
     def __init__(
@@ -67,7 +67,7 @@ class CollisionPredictor:
 
         vel_sq = float(np.dot(rel_vel, rel_vel))
         if vel_sq < 1e-8:
-            # 상대 속도 거의 없음 → 충돌 없음 (병렬 이동)
+            # 상대 속도 거의 없음 -> 충돌 없음 (병렬 이동)
             return None
 
         ttc = -float(np.dot(rel_pos, rel_vel)) / vel_sq
@@ -142,7 +142,7 @@ class CollisionPredictor:
         diff = future_self - future_threat
         dist = float(np.linalg.norm(diff))
         if dist < 0.01:
-            # 정확히 같은 지점 → 수직 회피
+            # 정확히 같은 지점 -> 수직 회피
             diff = np.array([0.0, 0.0, 1.0])
             dist = 1.0
 

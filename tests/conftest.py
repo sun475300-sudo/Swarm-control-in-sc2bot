@@ -13,10 +13,20 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# 프로젝트 루트를 sys.path에 추가
+# BOT_DIR를 sys.path 최우선 위치에 추가 (run.py와 동일한 방식)
+# 프로젝트 루트의 utils/ 패키지가 wicked_zerg_challenger/utils/를 가리지 않도록
+# BOT_DIR이 반드시 PROJECT_ROOT보다 앞에 위치해야 함
 PROJECT_ROOT = Path(__file__).parent.parent
+BOT_DIR = PROJECT_ROOT / "wicked_zerg_challenger"
+
+# BOT_DIR은 항상 position 0에 삽입 (우선순위 보장)
+_bot_dir_str = str(BOT_DIR)
+if _bot_dir_str in sys.path:
+    sys.path.remove(_bot_dir_str)
+sys.path.insert(0, _bot_dir_str)
+
 if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+    sys.path.insert(1, str(PROJECT_ROOT))
 
 
 # ═══════════════════════════════════════════════════════

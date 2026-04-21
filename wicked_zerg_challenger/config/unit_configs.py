@@ -93,10 +93,10 @@ class EconomyConfig:
     # 능동적 확장 (Proactive Expansion) 설정
     # 기지 수별 목표 시간 및 미네랄 임계값
     # Key: 현재 기지 수 (Next Base Index)
-    # ★ Phase 17: 1분 멀티 최적화 ★
+    # [*] Phase 17: 1분 멀티 최적화 [*]
     PROACTIVE_EXPANSION_THRESHOLDS = {
-        1: {"time": 30, "minerals": 300, "workers": 13, "minerals_worker": 250, "minerals_safe": 300}, # 1 -> 2 bases (★ hatch first ~1:00)
-        2: {"time": 180, "minerals": 450},  # 2 -> 3 bases (★ 3분)
+        1: {"time": 30, "minerals": 300, "workers": 13, "minerals_worker": 250, "minerals_safe": 300}, # 1 -> 2 bases ([*] hatch first ~1:00)
+        2: {"time": 180, "minerals": 450},  # 2 -> 3 bases ([*] 3분)
         3: {"time": 120, "minerals": 400},  # 3 -> 4 bases
         4: {"time": 180, "minerals": 500},  # 4 -> 5 bases
         5: {"time": 210, "minerals": 550},  # 5 -> 6 bases
@@ -109,12 +109,12 @@ class EconomyConfig:
 
     # 강제 확장 (Force Expansion) 설정 - 기지 수가 부족할 때 긴급 확장
     # (시간, 최소 미네랄, 목표 기지 수)
-    # ★ Phase 17: 1분 멀티 최적화 - 더 빠른 확장 트리거 ★
+    # [*] Phase 17: 1분 멀티 최적화 - 더 빠른 확장 트리거 [*]
     FORCE_EXPAND_TRIGGERS = [
-        (45, 300, 2),   # ★ 45초 + 300 미네랄 → 즉시 확장 (현실적 최소 시간)
-        (60, 300, 2),   # ★ 1분: 미네랄 300이면 반드시 확장
-        (75, 0, 2),     # ★ 1분15초: 미네랄 무시하고 강제 확장 (can_afford가 걸러줌)
-        (90, 0, 2),     # ★ 1분30초: 아직 1베이스면 긴급
+        (45, 300, 2),   # [*] 45초 + 300 미네랄 -> 즉시 확장 (현실적 최소 시간)
+        (60, 300, 2),   # [*] 1분: 미네랄 300이면 반드시 확장
+        (75, 0, 2),     # [*] 1분15초: 미네랄 무시하고 강제 확장 (can_afford가 걸러줌)
+        (90, 0, 2),     # [*] 1분30초: 아직 1베이스면 긴급
         (120, 250, 3),  # 2분, 미네랄 250, 3기지 미만
         (150, 0, 3),
         (180, 350, 4),

@@ -50,7 +50,7 @@ AVAILABLE_MAPS = [
 # 종족 다양성 (균등 분배)
 ENEMY_RACES = [Race.Terran, Race.Protoss, Race.Zerg]
 
-# 난이도 순서 (쉬움 → 어려움)
+# 난이도 순서 (쉬움 -> 어려움)
 DIFFICULTY_PROGRESSION = [
     (Difficulty.VeryEasy, "VeryEasy", 80.0),
     (Difficulty.Easy, "Easy", 80.0),
@@ -125,7 +125,7 @@ class ProgressiveTrainer:
 
     def run_single_game(self, difficulty: Difficulty, game_num: int, total_games: int):
         """단일 게임 실행"""
-        # ★★★ 게임 시작 전 모든 SC2 프로세스 종료 ★★★
+        # [*][*][*] 게임 시작 전 모든 SC2 프로세스 종료 [*][*][*]
         kill_all_sc2_processes()
 
         # 맵/종족 다양성: 랜덤 선택 (균등 확률)
@@ -152,14 +152,14 @@ class ProgressiveTrainer:
                 game_time_limit=(60*10)  # 10분 제한 (더 빠른 테스트)
             )
 
-            # ★★★ 게임 종료 후 프로세스 정리 ★★★
+            # [*][*][*] 게임 종료 후 프로세스 정리 [*][*][*]
             kill_all_sc2_processes()
 
             return result == sc2.Result.Victory
 
         except Exception as e:
             logger.error(f"Game {game_num} Error: {e}")
-            # ★ 에러 발생 시에도 프로세스 정리 ★
+            # [*] 에러 발생 시에도 프로세스 정리 [*]
             kill_all_sc2_processes()
             return False
 

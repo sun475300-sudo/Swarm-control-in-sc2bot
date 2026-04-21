@@ -18,12 +18,12 @@ except ImportError:
 
 class AuthorityLevel(IntEnum):
     """유닛 제어 권한 레벨"""
-    WORKER_PROTECTED = 125  # ★ 일꾼 보호: 경제 일꾼은 전투 시스템에 빼앗기지 않음
+    WORKER_PROTECTED = 125  # [*] 일꾼 보호: 경제 일꾼은 전투 시스템에 빼앗기지 않음
     DEFENSE = 100
     WORKER_COMBAT = 90
     SPELL_UNIT = 80
     COMBAT = 70
-    TACTICAL = 65       # ★ 견제/드랍 등 전술적 제어 (COMBAT과 HARASSMENT 사이)
+    TACTICAL = 65       # [*] 견제/드랍 등 전술적 제어 (COMBAT과 HARASSMENT 사이)
     HARASSMENT = 60
     MULTI_PRONG = 50
     ECONOMY = 40
@@ -51,7 +51,7 @@ class UnitAuthorityManager:
         self.total_conflicts = 0
 
     async def on_step(self, iteration: int):
-        # ★ 일꾼 보호: 경제 일꾼을 WORKER_PROTECTED 권한으로 등록
+        # [*] 일꾼 보호: 경제 일꾼을 WORKER_PROTECTED 권한으로 등록
         if iteration % 22 == 0:
             self._protect_economy_workers()
 

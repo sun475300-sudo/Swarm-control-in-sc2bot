@@ -26,7 +26,7 @@ class Point3D:
     z: float  # 고도 (meters above ground)
 
     def distance_to(self, other: Point3D) -> float:
-        """3D 유클리드 거리. 기존 sqrt(dx²+dy²) → sqrt(dx²+dy²+dz²)"""
+        """3D 유클리드 거리. 기존 sqrt(dx²+dy²) -> sqrt(dx²+dy²+dz²)"""
         dx = self.x - other.x
         dy = self.y - other.y
         dz = self.z - other.z

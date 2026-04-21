@@ -7,11 +7,11 @@ Phase 10 기반, Phase 22 고도화:
 2. 동적 정찰 주기 (기본 25초, 긴급 15초)
 3. 지능형 목표 설정 (우선순위 기반)
 4. Unit Authority Manager 연동
-5. ★ Phase 22: 순찰 경로 시스템 (다중 웨이포인트) ★
-6. ★ Phase 22: 젤나가 감시탑 확보 ★
-7. ★ Phase 22: 드롭 경로 감시 ★
-8. ★ Phase 22: 백과사전 연동 (상성 기반 정찰 우선순위) ★
-9. ★ Phase 22: 변신수 분산 배치 ★
+5. [*] Phase 22: 순찰 경로 시스템 (다중 웨이포인트) [*]
+6. [*] Phase 22: 젤나가 감시탑 확보 [*]
+7. [*] Phase 22: 드롭 경로 감시 [*]
+8. [*] Phase 22: 백과사전 연동 (상성 기반 정찰 우선순위) [*]
+9. [*] Phase 22: 변신수 분산 배치 [*]
 """
 
 import math
@@ -59,9 +59,9 @@ class AdvancedScoutingSystemV2:
             "OVERLORD": 0.0,
             "ZERGLING": 0.0,
             "GENERAL": 0.0,
-            "PATROL": 0.0,        # ★ Phase 22: 순찰 타이머
-            "WATCHTOWER": 0.0,    # ★ Phase 22: 감시탑 타이머
-            "DROP_WATCH": 0.0,    # ★ Phase 22: 드롭 감시 타이머
+            "PATROL": 0.0,        # [*] Phase 22: 순찰 타이머
+            "WATCHTOWER": 0.0,    # [*] Phase 22: 감시탑 타이머
+            "DROP_WATCH": 0.0,    # [*] Phase 22: 드롭 감시 타이머
         }
 
         # 정찰 유닛 상태
@@ -79,19 +79,19 @@ class AdvancedScoutingSystemV2:
             "OVERSEER": 3
         }
 
-        # ★ Phase 22: 순찰 경로 시스템 ★
+        # [*] Phase 22: 순찰 경로 시스템 [*]
         self._patrol_routes: Dict[str, List[Point2]] = {}  # route_name -> waypoints
         self._patrol_index: Dict[int, int] = {}  # unit_tag -> current waypoint index
         self._patrol_units: Set[int] = set()  # 순찰 임무 중인 유닛 태그
 
-        # ★ Phase 22: 젤나가 감시탑 ★
+        # [*] Phase 22: 젤나가 감시탑 [*]
         self._watchtower_positions: List[Point2] = []
         self._watchtower_claimers: Dict[Point2, int] = {}  # pos -> zergling tag
 
-        # ★ Phase 22: 드롭 감시 포인트 ★
+        # [*] Phase 22: 드롭 감시 포인트 [*]
         self._drop_watch_positions: List[Point2] = []
 
-        # ★ Phase 22: 우선 정찰 대상 (백과사전 기반) ★
+        # [*] Phase 22: 우선 정찰 대상 (백과사전 기반) [*]
         self._priority_scout_targets: List[str] = []  # 현재 찾아야 할 적 테크
 
         # 정찰 통계
@@ -130,17 +130,17 @@ class AdvancedScoutingSystemV2:
         # 3. 감시군주 변신수 활용
         await self._manage_changelings()
 
-        # ★ Phase 22: 순찰 경로 업데이트 (매 5초) ★
+        # [*] Phase 22: 순찰 경로 업데이트 (매 5초) [*]
         if current_time - self.last_scout_times["PATROL"] >= 5.0:
             self._update_patrol_units()
             self.last_scout_times["PATROL"] = current_time
 
-        # ★ Phase 22: 젤나가 감시탑 확보 (매 20초) ★
+        # [*] Phase 22: 젤나가 감시탑 확보 (매 20초) [*]
         if current_time - self.last_scout_times["WATCHTOWER"] >= 20.0:
             self._claim_watchtowers()
             self.last_scout_times["WATCHTOWER"] = current_time
 
-        # ★ Phase 22: 드롭 경로 감시 (중반 이후, 매 30초) ★
+        # [*] Phase 22: 드롭 경로 감시 (중반 이후, 매 30초) [*]
         if current_time > 300 and current_time - self.last_scout_times["DROP_WATCH"] >= 30.0:
             self._monitor_drop_paths()
             self.last_scout_times["DROP_WATCH"] = current_time
@@ -149,7 +149,7 @@ class AdvancedScoutingSystemV2:
         if current_time > 480:  # 8 minutes+
             await self._overseer_detection_sweep()
 
-        # ★ Phase 22: 백과사전 기반 우선 정찰 대상 갱신 (매 60초) ★
+        # [*] Phase 22: 백과사전 기반 우선 정찰 대상 갱신 (매 60초) [*]
         if iteration % 1320 == 0:
             self._update_priority_targets()
 
@@ -163,11 +163,11 @@ class AdvancedScoutingSystemV2:
 
     def _get_dynamic_interval(self) -> float:
         """
-        ★ Phase 21: 향상된 동적 정찰 간격 (더 빈번한 정찰) ★
+        [*] Phase 21: 향상된 동적 정찰 간격 (더 빈번한 정찰) [*]
 
-        - 초반 (0-5분): 25초마다 (30초 → 25초) - 적 빌드 빠른 파악
-        - 중반 (5-10분): 40초마다 (60초 → 40초) - 대폭 개선, 확장/군대 조합 확인
-        - 후반 (10분+): 35초마다 (45초 → 35초) - 멀티 확장 및 테크 빠른 체크
+        - 초반 (0-5분): 25초마다 (30초 -> 25초) - 적 빌드 빠른 파악
+        - 중반 (5-10분): 40초마다 (60초 -> 40초) - 대폭 개선, 확장/군대 조합 확인
+        - 후반 (10분+): 35초마다 (45초 -> 35초) - 멀티 확장 및 테크 빠른 체크
         - 테크 타이밍 (4-7분): 20초마다 (NEW) - 중요 테크 전환 윈도우
         - 긴급 상황: 15초마다 (정보가 60초 이상 오래됨)
 
@@ -185,11 +185,11 @@ class AdvancedScoutingSystemV2:
 
         # 게임 시간대별 간격 (Phase 21 개선)
         if game_time < 300:  # 0-5분 (초반)
-            return 25.0      # 30초 → 25초 (17% 향상)
+            return 25.0      # 30초 -> 25초 (17% 향상)
         elif game_time < 600:  # 5-10분 (중반)
-            return 40.0      # 60초 → 40초 (33% 향상)
+            return 40.0      # 60초 -> 40초 (33% 향상)
         else:  # 10분+ (후반)
-            return 35.0      # 45초 → 35초 (22% 향상)
+            return 35.0      # 45초 -> 35초 (22% 향상)
 
     def _is_emergency_mode(self) -> bool:
         """
@@ -212,7 +212,7 @@ class AdvancedScoutingSystemV2:
         """
         활성 정찰 유닛 모니터링 및 임무 완료 처리
 
-        ★ NEW: Active Scout Safety - 정찰 유닛 생존 본능 ★
+        [*] NEW: Active Scout Safety - 정찰 유닛 생존 본능 [*]
         - 공격받거나 체력 감소 시 즉시 후퇴
         - 적 대공 유닛 근처에서 회피
         """
@@ -224,7 +224,7 @@ class AdvancedScoutingSystemV2:
             # 유닛 사망
             if not unit:
                 to_remove.append(tag)
-                self.scouts_lost += 1  # ★ Phase 17: 정찰 유닛 손실 추적 ★
+                self.scouts_lost += 1  # [*] Phase 17: 정찰 유닛 손실 추적 [*]
                 continue
 
             # 순찰/감시탑/드롭감시 모드 유닛은 별도 관리
@@ -246,7 +246,7 @@ class AdvancedScoutingSystemV2:
                     to_remove.append(tag)
                     continue
                 
-            # ★ NEW: Path Safety Check - 경로상 위험 감지 시 우회 ★
+            # [*] NEW: Path Safety Check - 경로상 위험 감지 시 우회 [*]
             if self._is_path_unsafe(unit, info["target"]):
                 safe_pos = self._find_safe_detour(unit, info["target"])
                 if safe_pos:
@@ -262,7 +262,7 @@ class AdvancedScoutingSystemV2:
                 self.scouts_returned += 1
                 to_remove.append(tag)
 
-                # ★ Phase 17: IntelManager에 정찰 정보 전달 ★
+                # [*] Phase 17: IntelManager에 정찰 정보 전달 [*]
                 self._report_scouted_intel(unit, target)
 
                 # 권한 해제
@@ -276,7 +276,7 @@ class AdvancedScoutingSystemV2:
 
     def _send_new_scout(self) -> bool:
         """새로운 정찰 유닛 파견 + 중반 이후 순찰 트리거"""
-        # ★ Phase 22: 중반 이후 순찰 경로 자동 활성화
+        # [*] Phase 22: 중반 이후 순찰 경로 자동 활성화
         if self.bot.time > 300:
             self._trigger_midgame_patrols()
         return self._send_specific_scout()
@@ -360,7 +360,7 @@ class AdvancedScoutingSystemV2:
         if self.bot.time - self.last_scouted_at.get(target, 0) > 60:
             return target
             
-        # 3. ★ Phase 22: 백과사전 기반 우선 정찰 (테크 건물 숨김 탐지) ★
+        # 3. [*] Phase 22: 백과사전 기반 우선 정찰 (테크 건물 숨김 탐지) [*]
         if self._priority_scout_targets and self.bot.enemy_start_locations:
             enemy_main = self.bot.enemy_start_locations[0]
             corners = [
@@ -511,7 +511,7 @@ class AdvancedScoutingSystemV2:
 
     async def _manage_changelings(self):
         """
-        ★ Phase 22: 변신수 분산 배치 ★
+        [*] Phase 22: 변신수 분산 배치 [*]
         모든 변신수를 적 본진으로 보내지 않고, 각각 다른 정찰 목표로 분산.
         """
         overseers = self.bot.units(UnitTypeId.OVERSEER)
@@ -529,7 +529,7 @@ class AdvancedScoutingSystemV2:
         if not changelings:
             return
 
-        # ★ Phase 22: 분산 정찰 대상 목록 구성 ★
+        # [*] Phase 22: 분산 정찰 대상 목록 구성 [*]
         targets = []
 
         # 1순위: 적 확장 지역 (미정찰 우선)
@@ -623,7 +623,7 @@ class AdvancedScoutingSystemV2:
 
     def _report_scouted_intel(self, unit, target: Point2):
         """
-        ★ Phase 17: IntelManager에 정찰 정보 전달 ★
+        [*] Phase 17: IntelManager에 정찰 정보 전달 [*]
 
         정찰 유닛이 목표 위치에 도착했을 때 발견한 정보를 IntelManager에 전달합니다:
         - 적 건물 발견
@@ -652,7 +652,7 @@ class AdvancedScoutingSystemV2:
                     # 확장 기지 발견
                     if structure_type in {"COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE"}:
                         self.logger.info(
-                            f"[{int(game_time)}s] ★ SCOUT INTEL: Enemy base found at {target} ({structure_type}) ★"
+                            f"[{int(game_time)}s] [*] SCOUT INTEL: Enemy base found at {target} ({structure_type}) [*]"
                         )
 
                     # 테크 건물 발견
@@ -665,7 +665,7 @@ class AdvancedScoutingSystemV2:
                     }
                     if structure_type in tech_buildings:
                         self.logger.info(
-                            f"[{int(game_time)}s] ★ SCOUT INTEL: Enemy tech discovered: {structure_type} ★"
+                            f"[{int(game_time)}s] [*] SCOUT INTEL: Enemy tech discovered: {structure_type} [*]"
                         )
 
             # Blackboard에 마지막 적 발견 시간 업데이트
@@ -697,7 +697,7 @@ class AdvancedScoutingSystemV2:
             self.logger.info(f"Priority Targets: {self._priority_scout_targets[:3]}")
 
     # ================================================================
-    # ★ Phase 22: 순찰 경로 시스템 ★
+    # [*] Phase 22: 순찰 경로 시스템 [*]
     # ================================================================
 
     def _initialize_routes(self):
@@ -834,11 +834,18 @@ class AdvancedScoutingSystemV2:
             return self._patrol_routes.get(route_name)
         return None
 
-    def _assign_patrol(self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD) -> bool:
+    def _assign_patrol(self, route_name: str, unit_type=None) -> bool:
         """
         특정 순찰 경로에 유닛 배정.
         중반 이후 오버로드/감시군주를 적진 순환 순찰에 투입.
         """
+        if unit_type is None:
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId as _UnitTypeId
+                unit_type = _UnitTypeId.OVERLORD
+            except (ImportError, AttributeError):
+                return False
+
         route = self._patrol_routes.get(route_name)
         if not route:
             return False
@@ -854,8 +861,12 @@ class AdvancedScoutingSystemV2:
             lambda u: u.tag not in self.active_scouts and u.tag not in self._patrol_units
         )
         # 오버로드는 다른 시스템이 관리하지 않는 것만
-        if unit_type == UnitTypeId.OVERLORD:
-            available = available.idle
+        try:
+            from sc2.ids.unit_typeid import UnitTypeId as _UnitTypeId
+            if unit_type == _UnitTypeId.OVERLORD:
+                available = available.idle
+        except (ImportError, AttributeError):
+            pass
 
         if not available:
             return False
@@ -880,7 +891,7 @@ class AdvancedScoutingSystemV2:
         return True
 
     # ================================================================
-    # ★ Phase 22: 젤나가 감시탑 확보 ★
+    # [*] Phase 22: 젤나가 감시탑 확보 [*]
     # ================================================================
 
     def _claim_watchtowers(self):
@@ -934,7 +945,7 @@ class AdvancedScoutingSystemV2:
                 self.logger.info(f"[{int(game_time)}s] [*] WATCHTOWER claim: Zergling -> {tower_pos}")
 
     # ================================================================
-    # ★ Phase 22: 드롭 경로 감시 ★
+    # [*] Phase 22: 드롭 경로 감시 [*]
     # ================================================================
 
     def _monitor_drop_paths(self):
@@ -995,7 +1006,7 @@ class AdvancedScoutingSystemV2:
                     break
 
     # ================================================================
-    # ★ Phase 22: 백과사전 연동 - 상성 기반 정찰 우선순위 ★
+    # [*] Phase 22: 백과사전 연동 - 상성 기반 정찰 우선순위 [*]
     # ================================================================
 
     def _update_priority_targets(self):
@@ -1016,7 +1027,7 @@ class AdvancedScoutingSystemV2:
         self._priority_scout_targets = []
 
         # 현재 발견된 적 유닛 기반으로 "아직 안 보인 위험 유닛" 추론
-        # 예: FACTORY 보였지만 SIEGETANK 안 보임 → 탱크 숨기고 있을 수 있음
+        # 예: FACTORY 보였지만 SIEGETANK 안 보임 -> 탱크 숨기고 있을 수 있음
         tech_unit_map = {
             "FACTORY": ["SIEGETANK", "HELLION", "CYCLONE", "THOR"],
             "STARPORT": ["MEDIVAC", "LIBERATOR", "BATTLECRUISER", "BANSHEE", "VIKINGFIGHTER"],
@@ -1032,7 +1043,7 @@ class AdvancedScoutingSystemV2:
             possible_units = tech_unit_map.get(tech_building, [])
             for unit_name in possible_units:
                 if unit_name not in enemy_comp or enemy_comp.get(unit_name, 0) == 0:
-                    # 테크는 있지만 유닛이 안 보임 → 우선 정찰 대상
+                    # 테크는 있지만 유닛이 안 보임 -> 우선 정찰 대상
                     counter_info = get_counter(unit_name)
                     if counter_info and counter_info.get("priority", "") == "high":
                         self._priority_scout_targets.append(unit_name)
@@ -1041,7 +1052,7 @@ class AdvancedScoutingSystemV2:
             self.logger.info(f"[{int(self.bot.time)}s] Priority scout targets: {self._priority_scout_targets[:5]}")
 
     # ================================================================
-    # ★ Phase 22: 중후반 자동 순찰 트리거 ★
+    # [*] Phase 22: 중후반 자동 순찰 트리거 [*]
     # ================================================================
 
     def _trigger_midgame_patrols(self):

@@ -82,7 +82,7 @@ class CombatManager:
     3. Boids 알고리즘 기반 군집 제어
     4. 진형 형성 (Concave, 길목 차단)
     5. 공중 유닛 전용 마이크로 (뮤탈리스크 하라스, 타겟 우선순위)
-    6. ★ 필수 기지 방어 시스템 ★
+    6. [*] 필수 기지 방어 시스템 [*]
     """
 
     def __init__(self, bot):
@@ -100,14 +100,14 @@ class CombatManager:
 
     async def on_step(self, iteration: int):
         """
-        ★ Phase 17: 매 프레임 호출되는 전투 로직 (성능 최적화 적용) ★
+        [*] Phase 17: 매 프레임 호출되는 전투 로직 (성능 최적화 적용) [*]
 
         성능 최적화:
         - 일반 상황: 4~8프레임마다 실행 (유닛 수에 따라 동적 스케일링)
         - 긴급 상황: 매 프레임 실행 (기지 공격, 대규모 전투, 유닛 피격)
 
         Priority:
-        1. ★ MANDATORY BASE DEFENSE - Always check first ★
+        1. [*] MANDATORY BASE DEFENSE - Always check first [*]
         2. Evaluate all possible tasks and their priorities
         3. Assign units to tasks based on priority
         4. Execute all tasks in parallel
@@ -119,17 +119,17 @@ class CombatManager:
             # BurnySc2: Clear per-frame cache at start of each step
             self._frame_cache.clear_if_new_frame(iteration)
 
-            # ★ Phase 17: 긴급 상황 체크 (매 3프레임마다) ★
+            # [*] Phase 17: 긴급 상황 체크 (매 3프레임마다) [*]
             if iteration - self._last_emergency_check >= 3:
                 self._combat_is_emergency = self._check_emergency_situation()
                 self._last_emergency_check = iteration
 
-            # ★ 유닛 수 기반 동적 프레임 스킵 스케일링 ★
+            # [*] 유닛 수 기반 동적 프레임 스킵 스케일링 [*]
             if iteration - self._last_frame_skip_update >= self._frame_skip_update_interval:
                 self._update_dynamic_frame_skip()
                 self._last_frame_skip_update = iteration
 
-            # ★ Phase 17: 프레임 스킵 적용 ★
+            # [*] Phase 17: 프레임 스킵 적용 [*]
             current_skip = self._combat_emergency_skip if self._combat_is_emergency else self._combat_frame_skip
 
             if iteration - self._last_combat_frame < current_skip:
@@ -140,32 +140,32 @@ class CombatManager:
             # Clean up stale unit assignments (using assignment_manager module)
             cleanup_assignments(self)
 
-            # ★★★ 승리 조건 체크 및 승리 푸시 활성화 ★★★
+            # [*][*][*] 승리 조건 체크 및 승리 푸시 활성화 [*][*][*]
             if iteration - self._last_victory_check > self._victory_check_interval:
                 await self._check_victory_conditions(iteration)
                 self._last_victory_check = iteration
 
-            # ★★★ 6분 Roach Rush 타이밍 공격 체크 ★★★
+            # [*][*][*] 6분 Roach Rush 타이밍 공격 체크 [*][*][*]
             if iteration % 22 == 0 and not self._roach_rush_sent:
                 await self._check_roach_rush_timing(iteration)
 
-            # ★ 필수 기지 방어 체크 - 항상 최우선 ★
+            # [*] 필수 기지 방어 체크 - 항상 최우선 [*]
             base_threat = await self._check_mandatory_base_defense(iteration)
 
-            # ★★★ 확장 기지 방어 및 파괴 대응 ★★★
+            # [*][*][*] 확장 기지 방어 및 파괴 대응 [*][*][*]
             if iteration - self._last_expansion_defense_check > self._expansion_defense_check_interval:
                 await self._check_expansion_defense(iteration)
                 self._last_expansion_defense_check = iteration
 
-            # ★★★ Phase 23: 불리한 전투 후퇴 판단 ★★★
+            # [*][*][*] Phase 23: 불리한 전투 후퇴 판단 [*][*][*]
             if iteration % 22 == 0:
                 await self._evaluate_army_retreat(iteration)
 
-            # ★★★ INTEGRATED: MicroController handles all ground combat ★★★
+            # [*][*][*] INTEGRATED: MicroController handles all ground combat [*][*][*]
             # NOTE: MicroController.on_step() is called by BotStepIntegrator (single caller)
             # CombatManager only sets defense mode flag, does NOT call on_step() directly
             if hasattr(self.bot, 'micro') and self.bot.micro is not None:
-                # ★ 기지 위협 시 MicroController도 방어 모드로 전환 ★
+                # [*] 기지 위협 시 MicroController도 방어 모드로 전환 [*]
                 if base_threat and hasattr(self.bot.micro, 'set_defense_mode'):
                     self.bot.micro.set_defense_mode(True, base_threat)
 
@@ -175,23 +175,23 @@ class CombatManager:
                 # Also ensure burrow controller gets called for banelings
                 await self._ensure_baneling_burrow(iteration)
 
-                # ★ NEW: Overlord Transport System ★
+                # [*] NEW: Overlord Transport System [*]
                 if self.overlord_transport:
                     await self.overlord_transport.on_step(iteration)
 
-                # ★ NEW: Roach Burrow Heal System ★
+                # [*] NEW: Roach Burrow Heal System [*]
                 if self.roach_burrow_heal:
                     await self.roach_burrow_heal.on_step(iteration)
 
-                # ★★★ Phase 19: Lurker Ambush System ★★★
+                # [*][*][*] Phase 19: Lurker Ambush System [*][*][*]
                 if self.lurker_ambush:
                     await self.lurker_ambush.on_step(iteration)
 
-                # ★★★ Phase 19: Smart Consume System ★★★
+                # [*][*][*] Phase 19: Smart Consume System [*][*][*]
                 if self.smart_consume:
                     await self.smart_consume.on_step(iteration)
 
-                # ★★★ Phase 20: Overlord Hunter ★★★
+                # [*][*][*] Phase 20: Overlord Hunter [*][*][*]
                 if getattr(self, "overlord_hunter", None):
                     await self.overlord_hunter.on_step(iteration)
 
@@ -208,7 +208,7 @@ class CombatManager:
             air_units = self._filter_air_units(getattr(self.bot, "units", []))
             enemy_units = getattr(self.bot, "enemy_units", [])
 
-            # ★ Unit Authority (유닛 제어 권한 필터링) ★
+            # [*] Unit Authority (유닛 제어 권한 필터링) [*]
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 from unit_authority_manager import AuthorityLevel
 
@@ -240,7 +240,7 @@ class CombatManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ DYNAMIC PRIORITY ADJUSTMENT ★
+        # [*] DYNAMIC PRIORITY ADJUSTMENT [*]
         # 전략 모드에 따라 우선순위 동적 변경
         strategy = getattr(self.bot, "strategy_manager", None)
         current_mode = "normal"
@@ -279,8 +279,8 @@ class CombatManager:
                     if iteration % 660 == 0:  # 30초
                         remaining = len(self.bot.complete_destruction.target_buildings)
                         self.logger.info(
-                            f"[{int(game_time)}s] ★ COMPLETE DESTRUCTION MODE: "
-                            f"{remaining} buildings remaining, ALL FORCES ATTACKING! ★"
+                            f"[{int(game_time)}s] [*] COMPLETE DESTRUCTION MODE: "
+                            f"{remaining} buildings remaining, ALL FORCES ATTACKING! [*]"
                         )
 
         # === TASK 1: Base Defense ===
@@ -301,7 +301,7 @@ class CombatManager:
                 from sc2.ids.unit_typeid import UnitTypeId
                 targets = self.bot.enemy_units.filter(lambda u: u.type_id in {UnitTypeId.OBSERVER, UnitTypeId.OVERSEER})
                 if targets:
-                    # ★ FIX: available_air 미정의 방지 - 잠금된 유닛 제외하여 사전 계산 ★
+                    # [*] FIX: available_air 미정의 방지 - 잠금된 유닛 제외하여 사전 계산 [*]
                     _locked = set()
                     if hasattr(self.bot, 'harassment_coordinator') and self.bot.harassment_coordinator:
                         _locked = getattr(self.bot.harassment_coordinator, 'locked_units', set())
@@ -315,7 +315,7 @@ class CombatManager:
             except ImportError:
                  pass
 
-        # === TASK 2.3: ★ ULTRA-AGGRESSIVE Early Zergling Harass (1분-7분) ★ ===
+        # === TASK 2.3: [*] ULTRA-AGGRESSIVE Early Zergling Harass (1분-7분) [*] ===
         game_time = getattr(self.bot, 'time', 0)
         
         # Check StrategyManager flag
@@ -328,7 +328,7 @@ class CombatManager:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 zerglings = [u for u in army_units if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
-                # ★ 저글링 6마리부터 하라스 시작 (더 빠른 압박)
+                # [*] 저글링 6마리부터 하라스 시작 (더 빠른 압박)
                 if 6 <= len(zerglings) <= 24:
                     harass_target = self._find_harass_target()
                     if harass_target:
@@ -351,14 +351,14 @@ class CombatManager:
                 tasks_to_execute.append(("counter_attack", enemy_base, self.task_priorities["counter_attack"]))
                 self.logger.info("Detected victory - attacking enemy base!")
 
-        # === TASK 2.5: ★ 초반 저글링 압박 (3:00-4:30) ★ ===
+        # === TASK 2.5: [*] 초반 저글링 압박 (3:00-4:30) [*] ===
         # 저글링 8마리 이상이면 압박
         if 180 <= game_time <= 270:  # 3:00-4:30
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
 
-                # ★ 저글링 4마리 이상이면 압박 (기존 8마리 -> 4마리로 완화)
+                # [*] 저글링 4마리 이상이면 압박 (기존 8마리 -> 4마리로 완화)
                 if len(zerglings) >= 4:
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
@@ -369,7 +369,7 @@ class CombatManager:
             except ImportError:
                 pass
 
-        # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-8분) ★ ===
+        # === TASK 2.6: [*] MID-GAME TIMING ATTACK (5-8분) [*] ===
         # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
         if 300 <= game_time <= 480:  # 5-8분
             try:
@@ -379,7 +379,7 @@ class CombatManager:
                 zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
                 banelings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.BANELING]
 
-                # ★ BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
+                # [*] BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
                 if len(roaches) >= 5 or len(zerglings) >= 12 or len(banelings) >= 4:
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
@@ -388,15 +388,15 @@ class CombatManager:
             except ImportError:
                 pass
 
-        # === TASK 2.7: ★★★ 10-15분 강력한 타이밍 공격 ★★★ ===
-        # ★ FIX: 15분까지만 (이후는 main_attack이 처리)
+        # === TASK 2.7: [*][*][*] 10-15분 강력한 타이밍 공격 [*][*][*] ===
+        # [*] FIX: 15분까지만 (이후는 main_attack이 처리)
         # 3베이스 포화 후 강력한 타이밍 공격
-        if 600 <= game_time <= 900:  # 10-15분 (기존 10-20분 → 10-15분)
+        if 600 <= game_time <= 900:  # 10-15분 (기존 10-20분 -> 10-15분)
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
 
-                # ★ 서플라이 40 이상이면 강력한 타이밍 공격
+                # [*] 서플라이 40 이상이면 강력한 타이밍 공격
                 if army_supply >= 40:
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
@@ -407,7 +407,7 @@ class CombatManager:
             except ImportError:
                 pass
 
-        # === TASK 2.8: ★ EXPANSION DENIAL (확장 견제) ★ ===
+        # === TASK 2.8: [*] EXPANSION DENIAL (확장 견제) [*] ===
         # 적의 새로운 확장을 감지하면 저글링 특공대 파견
         if hasattr(self.bot, "enemy_structures") and 180 < game_time: # 3분 이후
             townhall_types = {
@@ -440,24 +440,24 @@ class CombatManager:
                         if iteration % 50 == 0:
                              self.logger.info(f"[{int(game_time)}s] [*] EXPANSION DETECTED: Sending squad! [*]")
 
-        # === TASK 2.9: ★ CREEP DENIAL (점막 제거) ★ ===
+        # === TASK 2.9: [*] CREEP DENIAL (점막 제거) [*] ===
         if self.creep_denial:
             tasks_to_execute.append(("creep_denial", None, 35))  # Priority 35
 
         # === TASK 3: Main Army Attack ===
-        # ★★★ FIX: 항상 공격 태스크 추가 (병력이 있으면 무조건 공격) ★★★
+        # [*][*][*] FIX: 항상 공격 태스크 추가 (병력이 있으면 무조건 공격) [*][*][*]
         if self._has_units(ground_army):
             attack_target = self._get_attack_target(enemy_units)
             if attack_target:
-                # ★ 우선순위를 50으로 올림 (기존 40 → 50, 더 자주 실행)
+                # [*] 우선순위를 50으로 올림 (기존 40 -> 50, 더 자주 실행)
                 tasks_to_execute.append(("main_attack", attack_target, 50))
             else:
-                 # ★ TASK: Clear Rocks (Destructibles) - IMPROVED ★
+                 # [*] TASK: Clear Rocks (Destructibles) - IMPROVED [*]
                  # 확장 경로의 암석을 우선적으로 파괴 (확장 전에 미리 파괴)
                 if hasattr(self.bot, "destructables") and self.bot.destructables:
                     game_time = getattr(self.bot, 'time', 0)
 
-                    # ★ 확장 위치 근처의 암석 우선 파괴 ★
+                    # [*] 확장 위치 근처의 암석 우선 파괴 [*]
                     expansion_rocks = []
                     
                     # 확장 위치 목록 가져오기 (Fallback logic)
@@ -482,21 +482,21 @@ class CombatManager:
                         if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                             main_base = self.bot.townhalls.first
                             closest_rock = min(expansion_rocks, key=lambda r: r.distance_to(main_base))
-                            # ★ 높은 우선순위 (55) - 확장 전에 미리 암석 제거! ★
+                            # [*] 높은 우선순위 (55) - 확장 전에 미리 암석 제거! [*]
                             tasks_to_execute.append(("clear_rocks", closest_rock, 55))
                     else:
                         # 유닛 근처의 일반 암석 파괴
                         nearby_rocks = []
                         for u in ground_army[:10]:  # 처음 10개 유닛만 체크 (성능 최적화)
-                            rocks = self.bot.destructables.closer_than(8, u)  # 거리 확장: 5→8
+                            rocks = self.bot.destructables.closer_than(8, u)  # 거리 확장: 5->8
                             if rocks:
                                  nearby_rocks.extend(rocks)
 
                         if nearby_rocks:
                             rock_target = nearby_rocks[0]
-                            tasks_to_execute.append(("clear_rocks", rock_target, 40))  # 우선순위 상승: 25→40
+                            tasks_to_execute.append(("clear_rocks", rock_target, 40))  # 우선순위 상승: 25->40
 
-                # ★ FALLBACK: RALLY (IDLE UNITS) ★
+                # [*] FALLBACK: RALLY (IDLE UNITS) [*]
                 # 적이 안 보이면 랠리 포인트로 집결
                 rally_pos = self._calculate_rally_point()
                 if rally_pos:
@@ -505,7 +505,7 @@ class CombatManager:
         # Sort tasks by priority (highest first)
         tasks_to_execute.sort(key=lambda x: x[2], reverse=True)
 
-        # ★ CRITICAL: Exclude locked units from harassment missions ★
+        # [*] CRITICAL: Exclude locked units from harassment missions [*]
         # Get locked units from harassment_coordinator to prevent reassignment
         locked_units = set()
         if hasattr(self.bot, 'harassment_coordinator') and self.bot.harassment_coordinator:
@@ -517,14 +517,14 @@ class CombatManager:
                 )
 
         # Assign units to tasks (exclude locked units)
-        # ★ FIX: locked_units 스냅샷 복사 (레이스 컨디션 방지)
+        # [*] FIX: locked_units 스냅샷 복사 (레이스 컨디션 방지)
         locked_snapshot = frozenset(locked_units) if locked_units else frozenset()
         available_ground = set(u.tag for u in ground_army if u.tag not in locked_snapshot) if ground_army else set()
         available_air = set(u.tag for u in air_units if u.tag not in locked_snapshot) if air_units else set()
 
         for task_name, target, priority in tasks_to_execute:
             if task_name == "complete_destruction":
-                # ★ Complete Destruction: 모든 병력을 건물 파괴에 투입 (전투 없을 때)
+                # [*] Complete Destruction: 모든 병력을 건물 파괴에 투입 (전투 없을 때)
                 # Complete Destruction Trainer가 자체적으로 병력 할당 처리
                 # 여기서는 우선순위만 보장하고 실제 실행은 Complete Destruction의 on_step에서 처리
                 pass  # Complete Destruction Trainer가 자체 실행
@@ -588,7 +588,7 @@ class CombatManager:
 
             elif task_name == "early_harass":
                 # Use zerglings for early harassment (Smart Worker Hunt)
-                # ★ With retreat logic and kill tracking ★
+                # [*] With retreat logic and kill tracking [*]
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
                     harass_zerglings = [u for u in ground_army
@@ -672,7 +672,7 @@ class CombatManager:
                         self.logger.warning(f"Early harass error: {e}")
 
             elif task_name == "early_pressure":
-                # ★ 초반 압박: 적 기지 공격 ★
+                # [*] 초반 압박: 적 기지 공격 [*]
                 attack_units = [u for u in ground_army if u.tag in available_ground]
                 if attack_units:
                     # 적 기지 압박
@@ -686,7 +686,7 @@ class CombatManager:
                         available_ground.discard(u.tag)
 
             elif task_name == "creep_denial":
-                # ★ 점막 제거 로직 실행 ★
+                # [*] 점막 제거 로직 실행 [*]
                 if self.creep_denial:
                     await self.creep_denial.on_step(iteration)
                     # Note: CreepDenialSystem handles unit assignment internally
@@ -695,7 +695,7 @@ class CombatManager:
 
 
             elif task_name == "mid_timing_attack":
-                # ★ 중반 타이밍 공격: 모든 지상 유닛 투입 ★
+                # [*] 중반 타이밍 공격: 모든 지상 유닛 투입 [*]
                 attack_units = [u for u in ground_army if u.tag in available_ground]
                 if attack_units:
                     # 적 기지 직접 공격
@@ -727,7 +727,7 @@ class CombatManager:
                         available_ground.discard(u.tag)
 
             elif task_name == "deny_expansion":
-                # ★ 확장 견제 및 자원/테크 차단 ★
+                # [*] 확장 견제 및 자원/테크 차단 [*]
                 # 목표: 적 일꾼(자원) 및 가스통(테크) 파괴
 
                 try:
@@ -786,7 +786,7 @@ class CombatManager:
                         continue
 
             elif task_name == "major_timing_attack":
-                # ★★★ MAJOR TIMING ATTACK: 강력한 타이밍 공격 ★★★
+                # [*][*][*] MAJOR TIMING ATTACK: 강력한 타이밍 공격 [*][*][*]
                 attack_units = [u for u in ground_army if u.tag in available_ground]
                 if attack_units:
                     # 모든 유닛 공격
@@ -801,17 +801,17 @@ class CombatManager:
                         available_ground.discard(u.tag)
 
             elif task_name == "main_attack":
-                # ★★★ FIX: 병력이 있으면 무조건 공격 (적 유닛 여부 상관없음) ★★★
+                # [*][*][*] FIX: 병력이 있으면 무조건 공격 (적 유닛 여부 상관없음) [*][*][*]
                 attack_units = [u for u in ground_army if u.tag in available_ground]
                 if attack_units:
                     # 적 유닛이 보이면 전투, 안 보이면 기지 공격
                     if self._has_units(enemy_units):
                         await self._execute_combat(attack_units, enemy_units)
                     else:
-                        # ★ 적 유닛이 안 보이면 무조건 기지 공격
+                        # [*] 적 유닛이 안 보이면 무조건 기지 공격
                         await self._offensive_attack(attack_units, iteration)
 
-                    # ★ DEBUG: 공격 실행 로그
+                    # [*] DEBUG: 공격 실행 로그
                     if iteration % 50 == 0:
                         self.logger.info(f"[{int(game_time)}s] MAIN_ATTACK executed with {len(attack_units)} units")
 
@@ -851,7 +851,7 @@ class CombatManager:
             # 중후반에는 더 넓은 감지 거리 (40)
             detection_range = 25 if game_time < 300 else 40
 
-            # ★ OPTIMIZATION: Use internal spatial query (closer_than) instead of list comprehension
+            # [*] OPTIMIZATION: Use internal spatial query (closer_than) instead of list comprehension
             if hasattr(enemy_units, "closer_than"):
                  nearby_enemies = enemy_units.closer_than(detection_range, th.position)
             else:
@@ -983,13 +983,13 @@ class CombatManager:
         # 스파인 크롤러 타겟팅 (고위협 유닛 우선)
         if hasattr(self.bot, "structures"):
             spines = self.bot.structures(UnitTypeId.SPINECRAWLER).ready
-            # ★ OPTIMIZATION: Use closer_than for better performance
+            # [*] OPTIMIZATION: Use closer_than for better performance
             spines_in_range = spines.closer_than(20, threat_position) if hasattr(spines, "closer_than") else \
                              [s for s in spines if s.distance_to(threat_position) < 20]
 
             for spine in spines_in_range:
                 try:
-                    # ★ OPTIMIZATION: Use closer_than instead of list comprehension
+                    # [*] OPTIMIZATION: Use closer_than instead of list comprehension
                     if hasattr(enemy_units, "closer_than"):
                         enemies_near = enemy_units.closer_than(12, spine)
                     else:
@@ -1066,7 +1066,7 @@ class CombatManager:
                             await result
                     return
 
-            # 3. ★ Phase 15: 타겟팅 시스템 없으면 가장 약한 적 집중 공격 ★
+            # 3. [*] Phase 15: 타겟팅 시스템 없으면 가장 약한 적 집중 공격 [*]
             if self.micro_combat:
                 # 체력 가장 낮은 적 찾기 (포커스 파이어 효율)
                 weak_target = self._find_weakest_enemy(enemy_units)
@@ -1149,7 +1149,7 @@ class CombatManager:
     
     def _find_weakest_enemy(self, enemy_units):
         """
-        ★ Phase 15-2: 가장 약한 적 우선 타겟팅 ★
+        [*] Phase 15-2: 가장 약한 적 우선 타겟팅 [*]
         체력 비율이 가장 낮은 전투 유닛을 반환 (일꾼/건물 제외).
         같은 체력이면 체력 절대값이 낮은 유닛 우선.
         """
@@ -1184,7 +1184,7 @@ class CombatManager:
             units: 아군 유닛들
             enemy_units: 적 유닛들
         """
-        # ★ OPTIMIZED: Early returns to skip pipeline when no units ★
+        # [*] OPTIMIZED: Early returns to skip pipeline when no units [*]
         if not units or not enemy_units:
             return
 
@@ -1192,7 +1192,7 @@ class CombatManager:
             return
 
         try:
-            # ★ Anti-Air Prioritization for Queens/Hydras ★
+            # [*] Anti-Air Prioritization for Queens/Hydras [*]
             can_shoot_up = {UnitTypeId.QUEEN, UnitTypeId.HYDRALISK, UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK, UnitTypeId.SPORECRAWLER}
             
             for unit in list(units)[:30]:  # 최대 30개만 처리
@@ -1215,7 +1215,7 @@ class CombatManager:
 
     async def _check_roach_rush_timing(self, iteration: int):
         """
-        ★★★ 6분 Roach Rush 타이밍 체크 ★★★
+        [*][*][*] 6분 Roach Rush 타이밍 체크 [*][*][*]
 
         조건:
         - 게임 시간 6분 (360초)
@@ -1237,7 +1237,7 @@ class CombatManager:
         if roaches.amount < self._roach_rush_min_count:
             return
 
-        # ★★★ ROACH RUSH 발동! ★★★
+        # [*][*][*] ROACH RUSH 발동! [*][*][*]
         self._roach_rush_active = True
         self._roach_rush_sent = True
 
@@ -1256,13 +1256,13 @@ class CombatManager:
         """
         선제 공격 로직 - 적 유닛이 보이지 않을 때 적 기지 공격
 
-        ★ IMPROVED: 보이는 모든 적 기지 파괴 우선 ★
+        [*] IMPROVED: 보이는 모든 적 기지 파괴 우선 [*]
 
         Uses rally point system:
         1. Army gathers at rally point until minimum supply reached
         2. Once enough army, attack enemy base together
         3. Rally point is between our natural and center of map
-        4. ★ NEW: 보이는 적 건물(특히 기지) 우선 파괴
+        4. [*] NEW: 보이는 적 건물(특히 기지) 우선 파괴
 
         Args:
             army_units: 아군 유닛들
@@ -1275,7 +1275,7 @@ class CombatManager:
                 self._update_rally_point()
                 self._last_rally_update = game_time
 
-            # ★ Phase 24: 드롭 감지 시 가까운 유닛 즉시 파견 ★
+            # [*] Phase 24: 드롭 감지 시 가까운 유닛 즉시 파견 [*]
             blackboard = getattr(self.bot, "blackboard", None)
             if blackboard and hasattr(blackboard, "get"):
                 drop_detected = blackboard.get("drop_detected", False)
@@ -1294,7 +1294,7 @@ class CombatManager:
                     defender_tags = {u.tag for u in defenders}
                     army_units = [u for u in army_units if u.tag not in defender_tags]
 
-            # ★ Phase 12: 방어 중인 유닛 제외 (디컨플릭트) ★
+            # [*] Phase 12: 방어 중인 유닛 제외 (디컨플릭트) [*]
             defense_tags = set()
             if blackboard and hasattr(blackboard, "get"):
                 defense_tags = blackboard.get("defense_unit_tags", set()) or set()
@@ -1304,8 +1304,8 @@ class CombatManager:
             # 최소 군대 서플라이 확인
             army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
 
-            # ★ Phase 20: 서플라이 기반 점진적 공격 임계값 ★
-            # ★ Anti-Protoss: Protoss shields regenerate, so small attacks are wasted.
+            # [*] Phase 20: 서플라이 기반 점진적 공격 임계값 [*]
+            # [*] Anti-Protoss: Protoss shields regenerate, so small attacks are wasted.
             # Need larger army before engaging to overwhelm shields in one push.
             _is_vs_protoss = False
             try:
@@ -1319,7 +1319,7 @@ class CombatManager:
                     _is_vs_protoss = True
 
             if _is_vs_protoss:
-                # ★ vs Protoss: higher thresholds — shields make small attacks useless
+                # [*] vs Protoss: higher thresholds — shields make small attacks useless
                 if game_time < 240:
                     min_attack_threshold = 16  # Early game: need 16+ supply vs Protoss
                 elif game_time < 480:
@@ -1338,7 +1338,7 @@ class CombatManager:
                 else:
                     min_attack_threshold = 40  # 10분+: 40 서플 (후반은 강력한 공격)
 
-            # ★ Phase 20: 적 약점 감지 시 공격 임계값 하향 ★
+            # [*] Phase 20: 적 약점 감지 시 공격 임계값 하향 [*]
             blackboard = getattr(self.bot, "blackboard", None)
             if blackboard and hasattr(blackboard, "get"):
                 enemy_expanding = blackboard.get("enemy_expanding", False)
@@ -1347,14 +1347,14 @@ class CombatManager:
                     # 적이 확장/테크 중이면 임계값 70%로 하향 (타이밍 공격)
                     min_attack_threshold = max(12, int(min_attack_threshold * 0.7))
 
-            # ★★★ FIX Phase 12: 집결 시스템 복원 — 1~2마리 돌격 방지 ★★★
+            # [*][*][*] FIX Phase 12: 집결 시스템 복원 — 1~2마리 돌격 방지 [*][*][*]
             if army_supply < min_attack_threshold:
-                # 최소 병력 미달 → 랠리 포인트에서 집결 대기
+                # 최소 병력 미달 -> 랠리 포인트에서 집결 대기
                 if self._rally_point:
                     await self._gather_at_rally_point(army_units, iteration)
                 return
 
-            # ★ Phase 30: 사전 전투력 비교 — 적보다 압도적으로 약하면 공격 자제
+            # [*] Phase 30: 사전 전투력 비교 — 적보다 압도적으로 약하면 공격 자제
             visible_enemy_supply = sum(
                 getattr(e, "supply_cost", 1) for e in self.bot.enemy_units
                 if hasattr(e, "can_attack") and e.can_attack
@@ -1379,7 +1379,7 @@ class CombatManager:
             if not attack_targets:
                 return
 
-            # ★★★ FIX Phase 12: 집결 대기 복원 (최대 30초) ★★★
+            # [*][*][*] FIX Phase 12: 집결 대기 복원 (최대 30초) [*][*][*]
             # 70% 이상 병력이 모이면 공격, 아니면 집결
             if self._rally_point and not self._is_army_gathered(army_units):
                 # 단, 40 서플 이상이면 집결 무시하고 즉시 공격
@@ -1393,7 +1393,7 @@ class CombatManager:
             if iteration % 100 == 0:
                 self.logger.info(f"[{int(game_time)}s] OFFENSIVE ATTACK: {len(army_units)} units, {army_supply} supply, {len(attack_targets)} targets")
 
-            # ★ Phase 20: 멀티프롱 공격 — 80서플+ 시 저글링 견제팀 분리 ★
+            # [*] Phase 20: 멀티프롱 공격 — 80서플+ 시 저글링 견제팀 분리 [*]
             if army_supply >= 80 and len(attack_targets) >= 2:
                 # 저글링 6~8마리를 견제팀으로 분리 (적 확장기지 압박)
                 from sc2.ids.unit_typeid import UnitTypeId as _UID
@@ -1409,7 +1409,7 @@ class CombatManager:
                     harass_tags = {u.tag for u in harass_lings}
                     army_units = [u for u in army_units if u.tag not in harass_tags]
 
-            # ★★★ FIX Phase 12: 병력 분할 — 100서플+ 시 2그룹 ★★★
+            # [*][*][*] FIX Phase 12: 병력 분할 — 100서플+ 시 2그룹 [*][*][*]
             if len(attack_targets) > 1 and army_supply >= 100:
                 num_groups = min(len(attack_targets), 2)  # 최대 2그룹
                 group_size = len(army_units) // num_groups
@@ -1437,7 +1437,7 @@ class CombatManager:
                         continue
 
                 if iteration % 50 == 0:
-                    self.logger.info(f"[{int(self.bot.time)}s] Attacking with {army_supply} supply → target")
+                    self.logger.info(f"[{int(self.bot.time)}s] Attacking with {army_supply} supply -> target")
 
         except Exception as e:
             if iteration % 50 == 0:
@@ -1445,7 +1445,7 @@ class CombatManager:
 
     def _find_multiple_attack_targets(self):
         """
-        ★ NEW: 여러 공격 타겟 찾기 - 동시 공격용 ★
+        [*] NEW: 여러 공격 타겟 찾기 - 동시 공격용 [*]
 
         여러 적 기지/확장을 찾아서 동시 공격 가능하도록 리스트로 반환
 
@@ -1466,7 +1466,7 @@ class CombatManager:
             single_target = self._find_priority_attack_target()
             return [single_target] if single_target else []
 
-        # ★★★ 우선순위 타겟팅 시스템 ★★★
+        # [*][*][*] 우선순위 타겟팅 시스템 [*][*][*]
         # 1순위: 적 일꾼 라인 (경제 차단)
         # 2순위: 생산 건물 (병력 생산 차단)
         # 3순위: 타운홀 (본진 파괴)
@@ -1500,12 +1500,12 @@ class CombatManager:
         if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
             our_base = self.bot.townhalls.first.position
 
-            # ★ 우선순위 1: 생산 건물 (병력 차단)
+            # [*] 우선순위 1: 생산 건물 (병력 차단)
             if production_buildings:
                 sorted_production = sorted(production_buildings, key=lambda b: b.distance_to(our_base))
                 targets.extend([p.position for p in sorted_production[:2]])  # 최대 2개
 
-            # ★ 우선순위 2: 적 기지 (경제 차단)
+            # [*] 우선순위 2: 적 기지 (경제 차단)
             if enemy_bases:
                 sorted_bases = sorted(enemy_bases, key=lambda b: b.distance_to(our_base))
                 targets.extend([base.position for base in sorted_bases[:3]])  # 최대 3개
@@ -1521,16 +1521,16 @@ class CombatManager:
 
     def _find_priority_attack_target(self):
         """
-        ★ 우선 공격 타겟 찾기 - 파괴 가능한 구조물 + 적 기지 우선 ★
+        [*] 우선 공격 타겟 찾기 - 파괴 가능한 구조물 + 적 기지 우선 [*]
 
         우선순위:
-        0. ★★★ 파괴 가능한 중립 구조물 (초반 확장 경로 개방) ★★★
-        1. ★★★ 승리 푸시 모드: 가장 가까운 적 건물 (거리 우선) ★★★
+        0. [*][*][*] 파괴 가능한 중립 구조물 (초반 확장 경로 개방) [*][*][*]
+        1. [*][*][*] 승리 푸시 모드: 가장 가까운 적 건물 (거리 우선) [*][*][*]
         2. 적 기지 (타운홀) - 네서스, 사령부, 해처리 등
         3. 적 생산 건물 - 배럭, 게이트웨이, 스포닝풀 등
         4. 적 테크 건물 - 팩토리, 로보, 스파이어 등
         5. 기타 적 건물
-        6. ★ 맵 수색 위치 (적 건물이 없을 때) ★
+        6. [*] 맵 수색 위치 (적 건물이 없을 때) [*]
         7. 적 시작 위치 (fallback)
 
         Returns:
@@ -1538,7 +1538,7 @@ class CombatManager:
         """
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ 0. 파괴 가능한 중립 구조물 (초반 6분, 확장 경로 개방 목적)
+        # [*] 0. 파괴 가능한 중립 구조물 (초반 6분, 확장 경로 개방 목적)
         if game_time < 360 and hasattr(self.bot, "intel") and hasattr(self.bot.intel, "get_destructible_rocks"):
             destructible_rocks = self.bot.intel.get_destructible_rocks()
             if destructible_rocks and hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -1584,7 +1584,7 @@ class CombatManager:
                 else:
                     other_targets.append(struct)
 
-            # ★★★ 승리 푸시 모드: 가장 가까운 건물 공격 (빠른 마무리) ★★★
+            # [*][*][*] 승리 푸시 모드: 가장 가까운 건물 공격 (빠른 마무리) [*][*][*]
             if self._victory_push_active and hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 our_base = self.bot.townhalls.first.position
                 # 모든 적 건물 중 가장 가까운 것
@@ -1610,12 +1610,12 @@ class CombatManager:
                     return min(other_targets, key=lambda s: s.distance_to(self.bot.start_location))
                 return other_targets[0]
 
-        # ★★★ 적 건물이 보이지 않으면 맵 수색 ★★★
+        # [*][*][*] 적 건물이 보이지 않으면 맵 수색 [*][*][*]
         return self._get_map_search_target()
 
     def _get_map_search_target(self):
         """
-        ★ 맵 수색 타겟 - AI 상대 승리를 위해 모든 기지 탐색 ★
+        [*] 맵 수색 타겟 - AI 상대 승리를 위해 모든 기지 탐색 [*]
 
         확장 위치들을 순회하며 적 기지를 찾습니다.
         """
@@ -1735,7 +1735,7 @@ class CombatManager:
 
     def _update_dynamic_frame_skip(self):
         """
-        ★ 유닛 수 기반 동적 프레임 스킵 스케일링 ★
+        [*] 유닛 수 기반 동적 프레임 스킵 스케일링 [*]
 
         유닛이 많을수록 프레임 스킵을 늘려 성능 최적화.
         - 유닛 0~30: 기본 스킵 (4프레임)
@@ -1774,7 +1774,7 @@ class CombatManager:
 
     def _check_emergency_situation(self) -> bool:
         """
-        ★ Phase 17: 긴급 상황 감지 ★
+        [*] Phase 17: 긴급 상황 감지 [*]
 
         긴급 상황 조건:
         1. 기지가 공격받고 있음 (적이 25거리 이내)
@@ -1919,7 +1919,7 @@ class CombatManager:
             return
 
         base = self.bot.townhalls.first
-        # ★ OPTIMIZATION: Use closer_than for better performance
+        # [*] OPTIMIZATION: Use closer_than for better performance
         if hasattr(enemy_units, "closer_than"):
             nearby_enemies = enemy_units.closer_than(25, base.position)
         else:
@@ -2001,7 +2001,7 @@ class CombatManager:
         if not self._air_harass_target:
             return
 
-        # ★ REGEN DANCE: Separate damaged units during harassment ★
+        # [*] REGEN DANCE: Separate damaged units during harassment [*]
         if self.mutalisk_micro:
             current_time = getattr(self.bot, 'time', 0)
             combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
@@ -2019,7 +2019,7 @@ class CombatManager:
         # Check for anti-air threats near harass target
         anti_air_threats = self._get_anti_air_threats(enemy_units, self._air_harass_target)
 
-        # ★ FIX: 뮤탈리스크는 대공 1-2기에도 치명적 → 퇴각 임계값 하향 ★
+        # [*] FIX: 뮤탈리스크는 대공 1-2기에도 치명적 -> 퇴각 임계값 하향 [*]
         if anti_air_threats and len(anti_air_threats) >= 1:
             # Anti-air detected, retreat immediately (Mutalisks are fragile)
             await self._mutalisk_retreat(combat_ready)
@@ -2027,7 +2027,7 @@ class CombatManager:
             return
 
         # Look for workers near harass target
-        # ★ OPTIMIZATION: Filter by type first, then use closer_than
+        # [*] OPTIMIZATION: Filter by type first, then use closer_than
         workers_only = [e for e in enemy_units
                        if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]]
 
@@ -2185,7 +2185,7 @@ class CombatManager:
                 except (AttributeError, TypeError):
                     continue
 
-    # ★ Phase 41: 정확한 공급 비용 테이블 (supply_cost 속성 없음 → 직접 정의)
+    # [*] Phase 41: 정확한 공급 비용 테이블 (supply_cost 속성 없음 -> 직접 정의)
     _SUPPLY_TABLE = {
         UnitTypeId.ZERGLING: 0.5,   UnitTypeId.BANELING: 0.5,
         UnitTypeId.ROACH: 2,        UnitTypeId.RAVAGER: 3,
@@ -2198,8 +2198,8 @@ class CombatManager:
 
     def _combat_power(self, units) -> float:
         """
-        ★ Phase 41: HP 가중 전투력 계산 (supply × HP%)
-        공급 비용 × 현재HP/최대HP 로 실질 전투력 산출
+        [*] Phase 41: HP 가중 전투력 계산 (supply x HP%)
+        공급 비용 x 현재HP/최대HP 로 실질 전투력 산출
         """
         total = 0.0
         for u in units:
@@ -2210,9 +2210,9 @@ class CombatManager:
 
     async def _evaluate_army_retreat(self, iteration: int):
         """
-        ★ Phase 15-4: 점진적 전력 비교 후퇴 시스템 ★
-        ★ Phase 41: supply_cost 속성 제거 → HP 가중 전투력(_combat_power) 사용
-                    engaged_units O(N×M) 필터 → 군집 중심 기반 O(N+M) 최적화
+        [*] Phase 15-4: 점진적 전력 비교 후퇴 시스템 [*]
+        [*] Phase 41: supply_cost 속성 제거 -> HP 가중 전투력(_combat_power) 사용
+                    engaged_units O(NxM) 필터 -> 군집 중심 기반 O(N+M) 최적화
 
         3단계 후퇴:
         - 적 > 아군 * 1.3 (30% 열세): 랠리 포인트로 점진적 후퇴
@@ -2233,7 +2233,7 @@ class CombatManager:
             if not our_army.exists:
                 return
 
-            # ★ Phase 41: 중심 기반 O(N+M) — per-unit 루프 O(N×M) 제거
+            # [*] Phase 41: 중심 기반 O(N+M) — per-unit 루프 O(NxM) 제거
             army_center = our_army.center
             nearby_enemies_check = enemy_units.closer_than(18, army_center)
             if not nearby_enemies_check.exists:
@@ -2244,7 +2244,7 @@ class CombatManager:
             if not engaged_units.exists:
                 return
 
-            # ★ Phase 41: HP 가중 전투력
+            # [*] Phase 41: HP 가중 전투력
             our_supply = self._combat_power(engaged_units)
             nearby_enemies = enemy_units.closer_than(20, engaged_units.center)
             enemy_supply = self._combat_power(nearby_enemies)
@@ -2256,7 +2256,7 @@ class CombatManager:
             ratio = enemy_supply / max(our_supply, 1)
 
             if ratio >= 2.0:
-                # ★ 긴급 후퇴: 본진으로 (100%+ 열세)
+                # [*] 긴급 후퇴: 본진으로 (100%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[RETREAT-EMERGENCY] [{int(game_time)}s] "
@@ -2264,7 +2264,7 @@ class CombatManager:
                     )
                 await self._retreat_to_base(engaged_units)
             elif ratio >= 1.5:
-                # ★ 후퇴: 가장 가까운 기지로 (50%+ 열세)
+                # [*] 후퇴: 가장 가까운 기지로 (50%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[RETREAT] [{int(game_time)}s] "
@@ -2272,7 +2272,7 @@ class CombatManager:
                     )
                 await self._retreat_to_closest_base(engaged_units)
             elif ratio >= 1.3:
-                # ★ Phase 15: 점진적 후퇴 — 랠리 포인트로 재집결 (30%+ 열세)
+                # [*] Phase 15: 점진적 후퇴 — 랠리 포인트로 재집결 (30%+ 열세)
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[REGROUP] [{int(game_time)}s] "
@@ -2301,7 +2301,7 @@ class CombatManager:
                     continue
 
     async def _retreat_to_closest_base(self, units):
-        """★ Phase 15: 가장 가까운 기지로 후퇴 ★"""
+        """[*] Phase 15: 가장 가까운 기지로 후퇴 [*]"""
         if not units:
             return
         if not hasattr(self.bot, 'townhalls') or not self.bot.townhalls.exists:
@@ -2316,7 +2316,7 @@ class CombatManager:
                 continue
 
     async def _retreat_to_rally(self, units):
-        """★ Phase 15: 랠리 포인트로 재집결 (전면 후퇴가 아닌 재편성) ★"""
+        """[*] Phase 15: 랠리 포인트로 재집결 (전면 후퇴가 아닌 재편성) [*]"""
         if not units:
             return
         rally = getattr(self, '_rally_point', None)
@@ -2400,7 +2400,7 @@ class CombatManager:
         if not mutalisks:
             return
 
-        # ★ REGEN DANCE: Separate damaged units ★
+        # [*] REGEN DANCE: Separate damaged units [*]
         if self.mutalisk_micro:
             current_time = getattr(self.bot, 'time', 0)
             combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
@@ -2415,7 +2415,7 @@ class CombatManager:
         if not combat_ready:
             return  # All units regenerating
 
-        # ★ MAGIC BOX: Check for splash damage threats ★
+        # [*] MAGIC BOX: Check for splash damage threats [*]
         use_magic_box = False
         if self.mutalisk_micro:
             use_magic_box = self.mutalisk_micro.should_use_magic_box(enemy_units)
@@ -2687,7 +2687,7 @@ class CombatManager:
         if time_since_last_counter < self._counter_attack_cooldown:
             return False
 
-        # ★ FIX: 카운터 어택 임계값 하향 (2x → 1.4x) ★
+        # [*] FIX: 카운터 어택 임계값 하향 (2x -> 1.4x) [*]
         # 유닛 품질 고려: 저그 유닛이 대부분 저렴하므로 낮은 비율로도 공격 가능
         if our_supply >= 8 and our_supply > enemy_supply * 1.4:
             self._last_counter_attack_time = game_time  # Update cooldown
@@ -2752,7 +2752,7 @@ class CombatManager:
             # 적 유닛
             enemy_units = getattr(self.bot, "enemy_units", [])
 
-            # ★ LAND MINE MODE: Deploy and manage land mines ★
+            # [*] LAND MINE MODE: Deploy and manage land mines [*]
             if self.baneling_tactics:
                 current_time = getattr(self.bot, 'time', 0)
 
@@ -2796,12 +2796,12 @@ class CombatManager:
                 self.logger.warning(f"[WARNING] Baneling burrow error: {e}")
 
     # ============================================================
-    # ★★★ MANDATORY BASE DEFENSE SYSTEM ★★★
+    # [*][*][*] MANDATORY BASE DEFENSE SYSTEM [*][*][*]
     # ============================================================
 
     async def _check_mandatory_base_defense(self, iteration: int):
         """
-        ★ 필수 기지 방어 체크 - 항상 최우선 실행 ★
+        [*] 필수 기지 방어 체크 - 항상 최우선 실행 [*]
 
         기지에 적이 침입하면:
         1. 모든 군대 즉시 귀환
@@ -2876,7 +2876,7 @@ class CombatManager:
             self._defense_rally_point = None
             return None
 
-        # ★ 위협 감지 - 방어 모드 활성화 ★
+        # [*] 위협 감지 - 방어 모드 활성화 [*]
         self._base_defense_active = True
         self._defense_rally_point = threat_position
 
@@ -2887,10 +2887,10 @@ class CombatManager:
             self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] [*] MANDATORY DEFENSE [*] "
                   f"Enemies: {enemy_count}, Threat score: {max_threat_score}")
 
-        # ★ 모든 군대 즉시 방어 ★
+        # [*] 모든 군대 즉시 방어 [*]
         await self._execute_mandatory_defense(threat_position, threat_enemies, iteration)
 
-        # ★ 위험 상황: 일꾼도 방어 참여 ★
+        # [*] 위험 상황: 일꾼도 방어 참여 [*]
         if enemy_count >= self._worker_defense_threshold:
             await self._worker_defense(threat_position, threat_enemies, iteration)
 
@@ -2898,7 +2898,7 @@ class CombatManager:
 
     async def _execute_mandatory_defense(self, threat_position, threat_enemies, iteration: int):
         """
-        ★ 필수 방어 실행 - 모든 군대 귀환 ★
+        [*] 필수 방어 실행 - 모든 군대 귀환 [*]
 
         패배 직감 시스템 연동:
         - 패배 직전이면 더 공격적인 방어
@@ -2914,7 +2914,7 @@ class CombatManager:
         except ImportError:
             return
 
-        # ★ 패배 직감 시스템 연동 ★
+        # [*] 패배 직감 시스템 연동 [*]
         defeat_level = 0
         last_stand_mode = False
         if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
@@ -2935,7 +2935,7 @@ class CombatManager:
         if not army_units:
             return
 
-        # ★ 개선된 타겟 우선순위 시스템 ★
+        # [*] 개선된 타겟 우선순위 시스템 [*]
         # 1순위: 고위협 유닛 (시즈탱크, 콜로서스, 분열기)
         high_priority_targets = []
         # 2순위: 지원 유닛 (메디박, 고위기사, 불멸자)
@@ -2961,7 +2961,7 @@ class CombatManager:
         # 타겟 선택
         priority_targets = high_priority_targets or medium_priority_targets or low_priority_targets
 
-        # ★ 마지막 방어 모드: 더 공격적인 전략 ★
+        # [*] 마지막 방어 모드: 더 공격적인 전략 [*]
         if last_stand_mode:
             # 모든 유닛이 최고 우선순위 타겟에 집중
             if high_priority_targets:
@@ -2989,7 +2989,7 @@ class CombatManager:
                     self.logger.warning(f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}")
                 return
 
-        # ★ 일반 방어 모드 ★
+        # [*] 일반 방어 모드 [*]
         for unit in army_units:
             try:
                 # 맹독충: 밀집된 적에게
@@ -3042,7 +3042,7 @@ class CombatManager:
 
     async def _worker_defense(self, threat_position, threat_enemies, iteration: int):
         """
-        ★ 일꾼 방어 - 위험 상황에서 일꾼도 싸움 ★
+        [*] 일꾼 방어 - 위험 상황에서 일꾼도 싸움 [*]
 
         패배 직감 시스템 연동:
         - 패배 직전: 모든 일꾼 방어 참여
@@ -3058,7 +3058,7 @@ class CombatManager:
         if not workers:
             return
 
-        # ★ 패배 직감 시스템 연동 ★
+        # [*] 패배 직감 시스템 연동 [*]
         defeat_level = 0
         last_stand_mode = False
         if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
@@ -3072,21 +3072,21 @@ class CombatManager:
         if not nearby_workers:
             return
 
-        # ★ 패배 직전: 모든 일꾼 방어 참여 ★
+        # [*] 패배 직전: 모든 일꾼 방어 참여 [*]
         if last_stand_mode or defeat_level >= 3:  # IMMINENT
             defense_workers = nearby_workers  # 모든 일꾼
             if iteration % 220 == 0:
                 self.logger.warning(f"[WORKER DEFENSE] [*] 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! [*]")
-        # ★ 위기 상황: 일꾼 12명 방어 ★
+        # [*] 위기 상황: 일꾼 12명 방어 [*]
         elif defeat_level >= 2:  # CRITICAL
             defense_workers = nearby_workers[:12]
             if iteration % 220 == 0:
                 self.logger.warning(f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어")
-        # ★ 일반 상황: 일꾼 6명 방어 (경제 보존) ★
+        # [*] 일반 상황: 일꾼 6명 방어 (경제 보존) [*]
         else:
             defense_workers = nearby_workers[:6]
 
-        # ★ FIX: 일꾼이 기지를 벗어나지 않도록 제한 ★
+        # [*] FIX: 일꾼이 기지를 벗어나지 않도록 제한 [*]
         # 가장 가까운 타운홀 찾기
         closest_townhall = None
         if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -3094,13 +3094,13 @@ class CombatManager:
 
         for worker in defense_workers:
             try:
-                # ★ CRITICAL: 일꾼이 기지에서 12거리 이상 벗어나면 즉시 복귀 ★
+                # [*] CRITICAL: 일꾼이 기지에서 12거리 이상 벗어나면 즉시 복귀 [*]
                 if closest_townhall and worker.distance_to(closest_townhall) > 12:
                     self.bot.do(worker.gather(self.bot.mineral_field.closest_to(closest_townhall)))
                     continue
 
                 if threat_enemies:
-                    # ★ 적이 기지 근처(12거리)에 있을 때만 공격 ★
+                    # [*] 적이 기지 근처(12거리)에 있을 때만 공격 [*]
                     base_close_threats = [e for e in threat_enemies
                                          if closest_townhall and e.distance_to(closest_townhall) < 12]
                     if base_close_threats:
@@ -3124,11 +3124,11 @@ class CombatManager:
         if iteration % 220 == 0:
             self.logger.info(f"[BASE DEFENSE] [{int(game_time)}s] [*] {len(defense_workers)} WORKERS DEFENDING [*]")
 
-    # ==================== ★★★ VICTORY CONDITION SYSTEM ★★★ ====================
+    # ==================== [*][*][*] VICTORY CONDITION SYSTEM [*][*][*] ====================
 
     async def _check_victory_conditions(self, iteration: int):
         """
-        ★★★ 승리 조건 추적 및 승리 푸시 활성화 ★★★
+        [*][*][*] 승리 조건 추적 및 승리 푸시 활성화 [*][*][*]
 
         기능:
         1. 적 건물 수 추적
@@ -3155,7 +3155,7 @@ class CombatManager:
 
         self._last_enemy_structure_count = current_structure_count
 
-        # ★★★ 승리 푸시 활성화 조건 ★★★
+        # [*][*][*] 승리 푸시 활성화 조건 [*][*][*]
         # 1. 게임 6분 이후
         # 2. 적 건물이 5개 이하
         # 3. 우리 병력이 충분함 (supply > 30)
@@ -3163,7 +3163,7 @@ class CombatManager:
 
         should_activate_victory_push = (
             game_time > self._endgame_push_threshold  # 6분 이후
-            and current_structure_count <= 10  # 적 건물 10개 이하 (개선: 5 → 10)
+            and current_structure_count <= 10  # 적 건물 10개 이하 (개선: 5 -> 10)
             and our_army_supply >= 30  # 우리 병력 충분
         )
 
@@ -3194,7 +3194,7 @@ class CombatManager:
 
     async def _execute_victory_push(self, iteration: int):
         """
-        ★★★ 승리 푸시 실행 ★★★
+        [*][*][*] 승리 푸시 실행 [*][*][*]
 
         승리가 가까워졌을 때 전력을 다해 적 건물 파괴
         """
@@ -3210,7 +3210,7 @@ class CombatManager:
         if not attack_target:
             return
 
-        # ★★★ 승리 푸시: 최소 병력 제한 없이 모든 병력 투입 ★★★
+        # [*][*][*] 승리 푸시: 최소 병력 제한 없이 모든 병력 투입 [*][*][*]
         for unit in army_units:
             try:
                 # idle이거나 공격 중이 아닌 유닛은 목표로 공격
@@ -3250,7 +3250,7 @@ class CombatManager:
 
     async def _check_expansion_defense(self, iteration: int):
         """
-        ★★★ 확장 기지 방어 및 파괴 대응 시스템 ★★★
+        [*][*][*] 확장 기지 방어 및 파괴 대응 시스템 [*][*][*]
 
         기능:
         1. 확장 기지가 공격받는지 감지
@@ -3290,7 +3290,7 @@ class CombatManager:
                 if base_tag in self._expansion_under_attack:
                     del self._expansion_under_attack[base_tag]
 
-            # ★ 대응: 반격 병력 투입 (파괴된 기지 주변 적 섬멸)
+            # [*] 대응: 반격 병력 투입 (파괴된 기지 주변 적 섬멸)
             await self._counterattack_after_base_loss(destroyed_bases, iteration)
 
         # === STEP 2: 확장 기지 공격 감지 ===
@@ -3315,7 +3315,7 @@ class CombatManager:
                     self._expansion_under_attack[expansion_tag] = current_time
                     self.logger.warning(f"[EXPANSION DEFENSE] [{int(current_time)}s] [WARNING] Expansion under attack! {len(nearby_enemies)} enemies detected")
 
-                # ★ 대응: 방어 병력 파견
+                # [*] 대응: 방어 병력 파견
                 await self._defend_expansion(expansion, nearby_enemies, iteration)
 
             else:

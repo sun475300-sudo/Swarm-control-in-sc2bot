@@ -49,9 +49,9 @@ class Sequence(BehaviorNode):
     시퀀스 노드 (AND 로직)
 
     모든 자식 노드를 순서대로 실행:
-    - 모든 자식이 SUCCESS → SUCCESS
-    - 하나라도 FAILURE → FAILURE
-    - 하나라도 RUNNING → RUNNING
+    - 모든 자식이 SUCCESS -> SUCCESS
+    - 하나라도 FAILURE -> FAILURE
+    - 하나라도 RUNNING -> RUNNING
     """
 
     def __init__(self, name: str, children: List[BehaviorNode]):
@@ -79,9 +79,9 @@ class Selector(BehaviorNode):
     셀렉터 노드 (OR 로직)
 
     자식 노드를 순서대로 실행하여 첫 번째 성공을 찾음:
-    - 하나라도 SUCCESS → SUCCESS
-    - 모두 FAILURE → FAILURE
-    - 하나라도 RUNNING → RUNNING
+    - 하나라도 SUCCESS -> SUCCESS
+    - 모두 FAILURE -> FAILURE
+    - 하나라도 RUNNING -> RUNNING
     """
 
     def __init__(self, name: str, children: List[BehaviorNode]):
@@ -109,9 +109,9 @@ class Parallel(BehaviorNode):
     병렬 노드
 
     모든 자식 노드를 동시에 실행:
-    - success_threshold 이상 성공 → SUCCESS
-    - failure_threshold 이상 실패 → FAILURE
-    - 그 외 → RUNNING
+    - success_threshold 이상 성공 -> SUCCESS
+    - failure_threshold 이상 실패 -> FAILURE
+    - 그 외 -> RUNNING
     """
 
     def __init__(
@@ -157,9 +157,9 @@ class Inverter(BehaviorNode):
     인버터 노드
 
     자식 노드의 결과를 반전:
-    - SUCCESS → FAILURE
-    - FAILURE → SUCCESS
-    - RUNNING → RUNNING
+    - SUCCESS -> FAILURE
+    - FAILURE -> SUCCESS
+    - RUNNING -> RUNNING
     """
 
     def __init__(self, name: str, child: BehaviorNode):

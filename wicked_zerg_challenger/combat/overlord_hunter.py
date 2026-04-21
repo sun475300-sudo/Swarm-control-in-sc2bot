@@ -95,7 +95,7 @@ class OverlordHunter:
             for queen in queens:
                 # 이미 다른 중요한 일(펌핑, 수비) 중인지 체크?
                 # 여기서는 간단히 공격 명령
-                # ★ Stutter Step 모듈이 있다면 거기서 처리하겠지만, 
+                # [*] Stutter Step 모듈이 있다면 거기서 처리하겠지만, 
                 # 여기서는 타겟 지정만 해줌
                 
                 # 공격 명령 (이미 공격 중이면 패스)

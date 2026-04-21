@@ -94,13 +94,13 @@ class ZergRewardSystem:
             # 11. 매크로 해처리 보상 (Macro hatchery)
             reward += self._calculate_macro_hatchery_reward(bot)
 
-            # 12. ★★★ NEW: 초반 방어 병력 보상 (Early defense units) ★★★
+            # 12. [*][*][*] NEW: 초반 방어 병력 보상 (Early defense units) [*][*][*]
             reward += self._calculate_early_defense_reward(bot)
 
-            # 13. ★★★ NEW: 적 피해 보상 (Enemy damage reward) ★★★
+            # 13. [*][*][*] NEW: 적 피해 보상 (Enemy damage reward) [*][*][*]
             reward += self._calculate_enemy_damage_reward(bot)
 
-            # 14. ★★★ NEW: 전략적 판단 보상 (Strategic Decision Reward) ★★★
+            # 14. [*][*][*] NEW: 전략적 판단 보상 (Strategic Decision Reward) [*][*][*]
             reward += self._calculate_strategic_decision_reward(bot)
 
         except Exception as e:
@@ -207,9 +207,9 @@ class ZergRewardSystem:
         """
         자원 회전율 기반 보상
 
-        ★★★ FIX: 2분 이후 미네랄 뱅킹 강력 페널티 ★★★
-        - 2분(120초) 이후 미네랄 500+ → 페널티
-        - 미네랄 1000+ → 매우 강한 페널티
+        [*][*][*] FIX: 2분 이후 미네랄 뱅킹 강력 페널티 [*][*][*]
+        - 2분(120초) 이후 미네랄 500+ -> 페널티
+        - 미네랄 1000+ -> 매우 강한 페널티
         - 시간이 지날수록 페널티 증가
 
         Returns:
@@ -222,20 +222,20 @@ class ZergRewardSystem:
             minerals = bot.minerals
             game_time = bot.time  # 게임 시간 (초)
 
-            # ★★★ NEW: 2분(120초) 이후 미네랄 뱅킹 강력 페널티 ★★★
+            # [*][*][*] NEW: 2분(120초) 이후 미네랄 뱅킹 강력 페널티 [*][*][*]
             if game_time >= 120:  # 2분 이후
                 if minerals >= 1500:
-                    # 미네랄 1500+ → 매우 강한 페널티 (초당 증가)
+                    # 미네랄 1500+ -> 매우 강한 페널티 (초당 증가)
                     time_factor = min((game_time - 120) / 60.0, 5.0)  # 최대 5배
                     penalty = -0.5 * (minerals / 1000.0) * (1.0 + time_factor)
                     return penalty
                 elif minerals >= 1000:
-                    # 미네랄 1000-1500 → 강한 페널티
+                    # 미네랄 1000-1500 -> 강한 페널티
                     time_factor = min((game_time - 120) / 60.0, 3.0)  # 최대 3배
                     penalty = -0.3 * (minerals / 1000.0) * (1.0 + time_factor)
                     return penalty
                 elif minerals >= 500:
-                    # 미네랄 500-1000 → 중간 페널티
+                    # 미네랄 500-1000 -> 중간 페널티
                     penalty = -0.1 * ((minerals - 500) / 500.0)
                     return penalty
 
@@ -361,7 +361,7 @@ class ZergRewardSystem:
                         reward += 0.1 * (health_ratio - 0.8) * 10
             
             # 3. ���� ������ ���� ��� ���� (������ - ü�� �ս��� ������)
-            # ���� ü�°� �񱳴� ���� �����ӿ��� ó��
+            # ���� ü�deg� �񱳴� ���� �����ӿ��� ó��
             
             # 4. ���� ���� (NEW: Risk-Aware Reward)
             # ������ ���� �ʰ� ü���� �����ϸ� �������� �� ����
@@ -655,7 +655,7 @@ class ZergRewardSystem:
 
     def _calculate_early_defense_reward(self, bot) -> float:
         """
-        ★★★ NEW: 초반 방어 병력 보상 ★★★
+        [*][*][*] NEW: 초반 방어 병력 보상 [*][*][*]
 
         사용자 요구사항: "1분동안 아무것도 안해서 병력이 3분안으로 뽑혀있지 않음"
 
@@ -690,7 +690,7 @@ class ZergRewardSystem:
             queens = bot.units.filter(lambda u: u.name == "Queen")
             queen_count = len(queens)
 
-            # ★★★ 1분(60초) 이내: 드론 12 목표 ★★★
+            # [*][*][*] 1분(60초) 이내: 드론 12 목표 [*][*][*]
             if game_time <= 60:
                 if drone_count >= 12:
                     reward += 1.0  # 강한 보상
@@ -700,7 +700,7 @@ class ZergRewardSystem:
                     # 페널티: 1분에 드론 10 미만
                     reward -= 0.3
 
-            # ★★★ 2분(120초) 이내: 저글링 4+ 또는 퀸 1 목표 ★★★
+            # [*][*][*] 2분(120초) 이내: 저글링 4+ 또는 퀸 1 목표 [*][*][*]
             elif 60 < game_time <= 120:
                 # 드론 유지 보상
                 if drone_count >= 14:
@@ -713,9 +713,9 @@ class ZergRewardSystem:
                     reward += 0.5
                 else:
                     # 페널티: 2분에 병력 없음
-                    reward -= 2.0  # ★ 강화된 페널티 (1.0 → 2.0) ★
+                    reward -= 2.0  # [*] 강화된 페널티 (1.0 -> 2.0) [*]
 
-            # ★★★ 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표 ★★★
+            # [*][*][*] 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표 [*][*][*]
             elif 120 < game_time <= 180:
                 # 드론 유지 보상
                 if drone_count >= 20:
@@ -730,9 +730,9 @@ class ZergRewardSystem:
                     reward += 0.3
                 else:
                     # 페널티: 3분에 병력 부족
-                    reward -= 2.5  # ★ 강화된 페널티 (1.5 → 2.5) ★
+                    reward -= 2.5  # [*] 강화된 페널티 (1.5 -> 2.5) [*]
 
-            # ★★★ 3분 이후: 지속적인 병력 유지 보상 ★★★
+            # [*][*][*] 3분 이후: 지속적인 병력 유지 보상 [*][*][*]
             elif game_time > 180:
                 total_army = zergling_count + queen_count * 2  # 퀸은 2배 가중치
 
@@ -751,7 +751,7 @@ class ZergRewardSystem:
 
     def _calculate_enemy_damage_reward(self, bot) -> float:
         """
-        ★★★ NEW: 적 피해 보상 ★★★
+        [*][*][*] NEW: 적 피해 보상 [*][*][*]
 
         사용자 요구사항: "상대의 병력과 일꾼손실을 더 일으킬수록 보상"
 
@@ -790,7 +790,7 @@ class ZergRewardSystem:
                 # 기본 유닛 킬 보상
                 reward += unit_kills_delta * 0.001  # 가치 1000당 1.0 보상
 
-                # ★★★ 특별 보상: 적 일꾼 킬 감지 ★★★
+                # [*][*][*] 특별 보상: 적 일꾼 킬 감지 [*][*][*]
                 # 일꾼 가치는 보통 50 정도이므로, 유닛 킬이 50 단위로 증가하면 일꾼 킬로 추정
                 if 40 <= unit_kills_delta <= 70:  # 일꾼 가치 범위
                     reward += 0.5  # 일꾼 킬 특별 보상!
@@ -805,7 +805,7 @@ class ZergRewardSystem:
                 # 건물 파괴 보상
                 reward += structure_kills_delta * 0.002  # 가치 1000당 2.0 보상
 
-                # ★★★ 특별 보상: 적 기지 파괴 감지 ★★★
+                # [*][*][*] 특별 보상: 적 기지 파괴 감지 [*][*][*]
                 # 해처리/넥서스/커맨드센터 가치는 보통 350-450
                 if structure_kills_delta >= 300:  # 기지 파괴
                     reward += 3.0  # 기지 파괴 특별 보상!
@@ -821,7 +821,7 @@ class ZergRewardSystem:
 
     def _calculate_strategic_decision_reward(self, bot) -> float:
         """
-        ★★★ NEW: 전략적 판단 보상 (Strategic Decision Reward) ★★★
+        [*][*][*] NEW: 전략적 판단 보상 (Strategic Decision Reward) [*][*][*]
 
         RL Agent의 "직관"을 날카롭게 하기 위한 보상 셰이핑.
         단순히 이기는 것뿐만 아니라, "유리할 때 싸우고 불리할 때 참는" 판단 자체에 보상을 줌.

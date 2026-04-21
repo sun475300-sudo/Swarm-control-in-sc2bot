@@ -173,7 +173,7 @@ class CreepManager:
         if not Point2:
             return []
 
-        # ★ A* 고속도로 웨이포인트 우선 사용 ★
+        # [*] A* 고속도로 웨이포인트 우선 사용 [*]
         astar_highway = getattr(self.bot, "creep_highway_astar", None)
         if astar_highway and astar_highway.highway_waypoints:
             return list(astar_highway.highway_waypoints)
@@ -719,7 +719,7 @@ class CreepSpreadManager:
                     visited.add((nx, ny))
                     queue.append((nx, ny))
 
-        # ★ Phase 45: BFS 그리드 최대 300개 cap (성능 보호)
+        # [*] Phase 45: BFS 그리드 최대 300개 cap (성능 보호)
         if len(targets) > 300:
             targets = targets[:300]
         self._target_grid = targets
@@ -794,7 +794,7 @@ class CreepSpreadManager:
             return
 
         for tumor in burrowed_tumors:
-            # ★ Phase 45: get_available_abilities() API 호출 제거 (O(n) 비용)
+            # [*] Phase 45: get_available_abilities() API 호출 제거 (O(n) 비용)
             # CREEPTUMORBURROWED는 is_idle 상태일 때 확산 가능
             try:
                 if not tumor.is_idle:

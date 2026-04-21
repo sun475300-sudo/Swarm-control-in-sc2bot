@@ -205,7 +205,7 @@ class RLAgent:
         self.reward_std = 1.0
         self.reward_count = 0
 
-        # ★★★ FIX: Reward buffer for dimension matching ★★★
+        # [*][*][*] FIX: Reward buffer for dimension matching [*][*][*]
         self.reward_buffer: float = 0.0  # Accumulate rewards between state samples
 
         # 중간 보상 추적용 상태 변수 (Reward Shaping)
@@ -252,7 +252,7 @@ class RLAgent:
             self.actions.append(action_idx)
             self.caches.append(cache)
 
-            # ★★★ FIX: Store accumulated reward from buffer ★★★
+            # [*][*][*] FIX: Store accumulated reward from buffer [*][*][*]
             self.rewards.append(self.reward_buffer)
             self.reward_buffer = 0.0  # Reset buffer after storing
 
@@ -262,7 +262,7 @@ class RLAgent:
         """
         보상 업데이트
 
-        ★★★ FIX: Accumulate to buffer instead of appending to list ★★★
+        [*][*][*] FIX: Accumulate to buffer instead of appending to list [*][*][*]
         Rewards are stored only when get_action() is called (state/action sampling)
         This ensures dimension matching: len(states) == len(actions) == len(rewards)
         """
@@ -320,7 +320,7 @@ class RLAgent:
 
     def end_episode(self, final_reward: float = 0.0, save_experience: bool = True) -> Dict[str, float]:
         """에피소드 종료 및 학습"""
-        # ★★★ FIX: 남은 reward_buffer 마지막 리워드에 추가 ★★★
+        # [*][*][*] FIX: 남은 reward_buffer 마지막 리워드에 추가 [*][*][*]
         if self.reward_buffer != 0.0 and self.rewards:
             self.rewards[-1] += self.reward_buffer
             self.reward_buffer = 0.0
@@ -328,7 +328,7 @@ class RLAgent:
         if not self.rewards:
             return {"loss": 0.0, "avg_reward": 0.0, "epsilon": self.epsilon}
 
-        # ★★★ FIX: 차원 불일치 방지 (NaN 그래디언트 스킵 등으로 발생 가능) ★★★
+        # [*][*][*] FIX: 차원 불일치 방지 (NaN 그래디언트 스킵 등으로 발생 가능) [*][*][*]
         min_len = min(len(self.states), len(self.actions), len(self.rewards), len(self.caches))
         if min_len < len(self.states):
             logger.info(f"Dimension mismatch detected: states={len(self.states)}, "
@@ -403,7 +403,7 @@ class RLAgent:
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 
-        # Epsilon 감쇠 + ★ 적응형 탐색 (plateau 감지 시 탐색률 복원) ★
+        # Epsilon 감쇠 + [*] 적응형 탐색 (plateau 감지 시 탐색률 복원) [*]
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
         # Plateau 감지: 최근 20 에피소드 평균 보상이 정체 시 탐색 증가
@@ -411,7 +411,7 @@ class RLAgent:
             recent_20 = [h.get("avg_reward", 0) for h in self.training_history[-20:]]
             older_20 = [h.get("avg_reward", 0) for h in self.training_history[-40:-20]] if len(self.training_history) >= 40 else recent_20
             if abs(sum(recent_20) / 20 - sum(older_20) / 20) < 0.1:
-                # 정체 → 탐색률 부분 복원
+                # 정체 -> 탐색률 부분 복원
                 self.epsilon = min(0.3, self.epsilon * 1.5)
                 logger.info(f"Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
 
@@ -433,9 +433,9 @@ class RLAgent:
         self.actions.clear()
         self.rewards.clear()
         self.caches.clear()
-        # ★ FIX: reward_buffer 에피소드 간 누수 방지
+        # [*] FIX: reward_buffer 에피소드 간 누수 방지
         self.reward_buffer = 0.0
-        # ★ FIX: baseline 리셋 (에피소드 간 drift 방지)
+        # [*] FIX: baseline 리셋 (에피소드 간 drift 방지)
         self.baseline = 0.0
         # 중간 보상 추적 상태 리셋
         self.prev_base_count = 0
@@ -598,7 +598,7 @@ class RLAgent:
                 episode_count=np.array([self.episode_count])
             )
             
-            # ★★★ FIX: Atomic rename with Windows compatibility ★★★
+            # [*][*][*] FIX: Atomic rename with Windows compatibility [*][*][*]
             if tmp_path.exists():
                 try:
                     # Remove old file first on Windows (replace() can fail silently)

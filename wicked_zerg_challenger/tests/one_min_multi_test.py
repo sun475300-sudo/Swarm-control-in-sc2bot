@@ -44,12 +44,12 @@ class OneMinMultiTest:
         self.bot = bot
         self.enable_logging = enable_logging
 
-        # ★ Test Configuration ★
+        # [*] Test Configuration [*]
         self.target_timing = 60.0  # 1:00 목표 타이밍
         self.timing_tolerance = 5.0  # ±5초 허용
         self.min_minerals_required = 300  # 최소 미네랄 요구량
 
-        # ★ Test Results ★
+        # [*] Test Results [*]
         self.test_start_time: Optional[float] = None
         self.expansion_placed_time: Optional[float] = None
         self.expansion_location: Optional[Point2] = None
@@ -58,7 +58,7 @@ class OneMinMultiTest:
         self.test_completed: bool = False
         self.failure_reason: str = ""
 
-        # ★ Monitoring ★
+        # [*] Monitoring [*]
         self.initial_hatchery_count = 0
         self.monitoring_active = False
 
@@ -92,16 +92,16 @@ class OneMinMultiTest:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # ★ Test timeout (2분 경과 시 실패) ★
+        # [*] Test timeout (2분 경과 시 실패) [*]
         if game_time > 120:
             self._fail_test("Test timeout: No expansion placed within 2 minutes")
             return
 
-        # ★ Expansion 확인 ★
+        # [*] Expansion 확인 [*]
         if not self.expansion_placed_time:
             await self._check_expansion_placed()
 
-        # ★ 1:05 시점에 테스트 종료 (1분 + 5초 허용) ★
+        # [*] 1:05 시점에 테스트 종료 (1분 + 5초 허용) [*]
         if game_time > (self.target_timing + self.timing_tolerance):
             if not self.expansion_placed_time:
                 self._fail_test(f"Expansion not placed by {self.target_timing + self.timing_tolerance:.1f}s")
@@ -118,7 +118,7 @@ class OneMinMultiTest:
         game_time = getattr(self.bot, "time", 0)
 
         try:
-            # ★ 현재 Hatchery 수 확인 ★
+            # [*] 현재 Hatchery 수 확인 [*]
             current_hatcheries = self.bot.structures(UnitTypeId.HATCHERY)
 
             # 건설 중인 Hatchery도 포함
@@ -129,7 +129,7 @@ class OneMinMultiTest:
 
             total_hatcheries = len(current_hatcheries)
 
-            # ★ 확장이 배치되었는지 확인 ★
+            # [*] 확장이 배치되었는지 확인 [*]
             if total_hatcheries > self.initial_hatchery_count:
                 # 확장 발견!
                 self.expansion_placed_time = game_time
@@ -147,7 +147,7 @@ class OneMinMultiTest:
                     logger.info(f"[1-MIN-MULTI-TEST] Minerals at placement: {self.minerals_at_placement}")
                     logger.info(f"[1-MIN-MULTI-TEST] Location: {self.expansion_location}")
 
-                # ★ 타이밍 체크 ★
+                # [*] 타이밍 체크 [*]
                 if game_time <= (self.target_timing + self.timing_tolerance):
                     self._complete_test()
                 else:

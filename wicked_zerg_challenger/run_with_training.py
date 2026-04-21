@@ -566,10 +566,10 @@ def main():
                         f"Active Workers: {stats['active_workers']}/{stats['max_workers']}")
                     logger.info(f"Errors: {stats['errors']}")
                     logger.info("=" * 70)
-                # ★ NEW: Auto Replay Learning (every 10 games) ★
+                # [*] NEW: Auto Replay Learning (every 10 games) [*]
                 if auto_replay_learner and game_count % 10 == 0:
                     logger.info(f"\n{'='*70}")
-                    logger.info("🎮 [AUTO REPLAY LEARNING] Downloading and learning from pro replays...")
+                    logger.info("[GAME] [AUTO REPLAY LEARNING] Downloading and learning from pro replays...")
                     logger.info("=" * 70)
                     try:
                         # 3개 리플레이 다운로드, 각 5회 학습
@@ -587,7 +587,7 @@ def main():
             except Exception as game_error:
                 consecutive_failures += 1
 
-                # ★ CRITICAL FIX: Save experience data even when game fails ★
+                # [*] CRITICAL FIX: Save experience data even when game fails [*]
                 logger.info(f"\n[RECOVERY] Attempting to save experience data from failed game...")
                 try:
                     if hasattr(bot, 'ai') and bot.ai and hasattr(bot.ai, 'rl_agent') and bot.ai.rl_agent:
@@ -669,7 +669,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("\n[STOP] Training stopped by user.")
             
-            # ★ MANUAL FEEDBACK FOR INTERRUPTED GAME ★
+            # [*] MANUAL FEEDBACK FOR INTERRUPTED GAME [*]
             try:
                 logger.info("\n" + "="*50)
                 logger.info("MANUAL TERMINATION DETECTED")

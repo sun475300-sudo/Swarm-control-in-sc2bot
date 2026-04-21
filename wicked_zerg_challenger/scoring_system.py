@@ -185,7 +185,7 @@ class ScoringSystem:
                 self._engagements_won += 1
             elif army_supply < self._last_army_supply * 0.5 and enemy_count >= self._last_enemy_count:
                 # 아군 반토막, 적 유지 = 교전 패배
-                self.domains["combat"].add(-5, f"교전 패배 (army {army_supply}→{self._last_army_supply})")
+                self.domains["combat"].add(-5, f"교전 패배 (army {army_supply}->{self._last_army_supply})")
                 self._engagements_lost += 1
 
         # 유닛 교환비
@@ -244,7 +244,7 @@ class ScoringSystem:
         if supply_used > self._peak_supply:
             growth = supply_used - self._peak_supply
             if growth >= 10:
-                self.domains["production"].add(+2, f"서플 성장: {self._peak_supply}→{supply_used}")
+                self.domains["production"].add(+2, f"서플 성장: {self._peak_supply}->{supply_used}")
             self._peak_supply = supply_used
 
         # 서플 목표 미달
@@ -317,7 +317,7 @@ class ScoringSystem:
             self.domains["economy"].add(-2, "5분 경과인데 3확장 미실시")
 
         if base_count > self._last_base_count:
-            self.domains["economy"].add(+5, f"확장 성공! ({self._last_base_count}→{base_count})")
+            self.domains["economy"].add(+5, f"확장 성공! ({self._last_base_count}->{base_count})")
             self._last_base_count = base_count
 
         # 일꾼 과다 생산 vs 군대 부족
@@ -342,7 +342,7 @@ class ScoringSystem:
 
         # 기지 방어 성공/실패
         if base_count < self._last_base_count and self._last_base_count > 0:
-            self.domains["defense"].add(-8, f"기지 파괴됨! ({self._last_base_count}→{base_count})")
+            self.domains["defense"].add(-8, f"기지 파괴됨! ({self._last_base_count}->{base_count})")
         elif base_count >= self._last_base_count and len(enemy_units) > 5:
             # 적이 많은데 기지 유지 = 방어 성공
             near_base_enemies = 0

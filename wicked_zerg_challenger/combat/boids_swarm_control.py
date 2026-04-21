@@ -433,7 +433,7 @@ class BoidsSwarmController:
         # 스플래시 위협 시 분리 가중치 증가
         if has_splash_threat and enemy_units:
             nearby_enemies = enemy_units
-            # ★ Dynamic dispersal based on splash unit count ★
+            # [*] Dynamic dispersal based on splash unit count [*]
             splash_count = sum(1 for e in nearby_enemies
                               if getattr(e.type_id, "name", "").upper() in self.SPLASH_UNITS)
             separation_mult = min(2.5 + splash_count * 0.3, 4.0)
@@ -455,7 +455,7 @@ class BoidsSwarmController:
 
             # 부채꼴 배치를 위한 각도 조정
             if base_position and defense_point:
-                # 기지 → 적 방향
+                # 기지 -> 적 방향
                 defense_x, defense_y = _get_pos(defense_point)
                 base_x, base_y = _get_pos(base_position)
                 base_to_enemy = np.array([
@@ -498,7 +498,7 @@ class BoidsSwarmController:
 
     def get_priority_target(self, unit, enemy_units) -> "Optional[Unit]":
         """
-        ★ Enhanced: Threat-based priority targeting ★
+        [*] Enhanced: Threat-based priority targeting [*]
 
         Priority:
         1. Spell casters (High Templar, Infestor, Viper) - game-changing abilities

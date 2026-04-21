@@ -42,27 +42,27 @@ class EnhancedScoutSystem:
         self.bot = bot
         self.logger = get_logger("EnhancedScout")
 
-        # ★ Worker Scout (13 supply) ★
+        # [*] Worker Scout (13 supply) [*]
         self.worker_scout_tag: Optional[int] = None
         self.worker_scout_sent = False
         self.worker_scout_threshold = 13  # 13 supply에 출발
         self.worker_scout_waypoints: List[Point2] = []
         self.worker_current_wp = 0
 
-        # ★ Overlord Scout ★
+        # [*] Overlord Scout [*]
         self.overlord_scout_tag: Optional[int] = None
         self.overlord_scout_sent = False
         self.overlord_waypoints: List[Point2] = []
         self.overlord_current_wp = 0
 
-        # ★ Zergling Patrol ★
+        # [*] Zergling Patrol [*]
         self.zergling_patrol_tags: List[int] = []
         self.zergling_patrol_assigned = False
         self.zergling_patrol_count = 2  # 2마리의 Zergling 순찰
         self.zergling_waypoints: Dict[int, List[Point2]] = {}
         self.zergling_current_wp: Dict[int, int] = {}
 
-        # ★ Scout Data ★
+        # [*] Scout Data [*]
         self.enemy_pool_timing: Optional[float] = None
         self.enemy_gas_timing: Optional[float] = None
         self.enemy_natural_timing: Optional[float] = None
@@ -70,13 +70,13 @@ class EnhancedScoutSystem:
         self.enemy_tech_buildings: Dict[str, float] = {}
         self.enemy_army_units: Dict[str, int] = {}
 
-        # ★ Analysis Results ★
+        # [*] Analysis Results [*]
         self.is_cheese: bool = False
         self.is_timing_attack: bool = False
         self.is_fast_expand: bool = False
         self.tech_path: str = "UNKNOWN"  # "RUSH", "TECH", "MACRO", "UNKNOWN"
 
-        # ★ Scouted Locations ★
+        # [*] Scouted Locations [*]
         self.main_base_scouted = False
         self.natural_scouted = False
         self.proxy_locations_scouted: Set[Tuple[float, float]] = set()
@@ -132,7 +132,7 @@ class EnhancedScoutSystem:
         self.worker_scout_tag = worker.tag
         self.worker_scout_sent = True
 
-        # ★ Worker Scout 경로 설정 ★
+        # [*] Worker Scout 경로 설정 [*]
         self._plan_worker_scout_path()
 
         if self.worker_scout_waypoints:
@@ -140,7 +140,7 @@ class EnhancedScoutSystem:
             self.bot.do(worker.move(first_target))
 
             self.logger.info(
-                f"[{int(self.bot.time)}s] ★ WORKER SCOUT SENT (13 supply) → {first_target} ★"
+                f"[{int(self.bot.time)}s] [*] WORKER SCOUT SENT (13 supply) -> {first_target} [*]"
             )
 
     def _plan_worker_scout_path(self):
@@ -150,7 +150,7 @@ class EnhancedScoutSystem:
 
         enemy_start = self.bot.enemy_start_locations[0]
 
-        # ★ 경로: 적 자연 확장 → 적 본진 → 귀환 ★
+        # [*] 경로: 적 자연 확장 -> 적 본진 -> 귀환 [*]
         waypoints = []
 
         # 1. 적 자연 확장 위치
@@ -190,7 +190,7 @@ class EnhancedScoutSystem:
                 # Reached waypoint
                 self.worker_current_wp += 1
                 self.logger.info(
-                    f"[{int(self.bot.time)}s] ★ WORKER SCOUT reached waypoint {self.worker_current_wp}/{len(self.worker_scout_waypoints)} ★"
+                    f"[{int(self.bot.time)}s] [*] WORKER SCOUT reached waypoint {self.worker_current_wp}/{len(self.worker_scout_waypoints)} [*]"
                 )
 
                 # Move to next waypoint
@@ -206,7 +206,7 @@ class EnhancedScoutSystem:
                             self.bot.do(worker.gather(minerals.first))
 
                         self.logger.info(
-                            f"[{int(self.bot.time)}s] ★ WORKER SCOUT returning to mining ★"
+                            f"[{int(self.bot.time)}s] [*] WORKER SCOUT returning to mining [*]"
                         )
 
     # ========================================
@@ -227,7 +227,7 @@ class EnhancedScoutSystem:
         self.overlord_scout_tag = overlord.tag
         self.overlord_scout_sent = True
 
-        # ★ Overlord Scout 경로 설정 ★
+        # [*] Overlord Scout 경로 설정 [*]
         self._plan_overlord_scout_path()
 
         if self.overlord_waypoints:
@@ -235,7 +235,7 @@ class EnhancedScoutSystem:
             self.bot.do(overlord.move(first_target))
 
             self.logger.info(
-                f"[{int(self.bot.time)}s] ★ OVERLORD SCOUT SENT → {first_target} ★"
+                f"[{int(self.bot.time)}s] [*] OVERLORD SCOUT SENT -> {first_target} [*]"
             )
 
     def _plan_overlord_scout_path(self):
@@ -246,7 +246,7 @@ class EnhancedScoutSystem:
         map_center = self.bot.game_info.map_center
         playable_area = self.bot.game_info.playable_area
 
-        # ★ 맵 4개 코너 정찰 (프록시 탐지) ★
+        # [*] 맵 4개 코너 정찰 (프록시 탐지) [*]
         waypoints = [
             Point2((playable_area.x, playable_area.y)),  # Top-left
             Point2((playable_area.x + playable_area.width, playable_area.y)),  # Top-right
@@ -305,18 +305,18 @@ class EnhancedScoutSystem:
         if len(zerglings) < self.zergling_patrol_count:
             return
 
-        # ★ 2마리의 Zergling을 순찰에 배치 ★
+        # [*] 2마리의 Zergling을 순찰에 배치 [*]
         for i in range(self.zergling_patrol_count):
             zergling = zerglings[i]
             self.zergling_patrol_tags.append(zergling.tag)
 
         self.zergling_patrol_assigned = True
 
-        # ★ 각 Zergling의 순찰 경로 설정 ★
+        # [*] 각 Zergling의 순찰 경로 설정 [*]
         self._plan_zergling_patrol_paths()
 
         self.logger.info(
-            f"[{int(self.bot.time)}s] ★ ZERGLING PATROL ASSIGNED ({self.zergling_patrol_count} units) ★"
+            f"[{int(self.bot.time)}s] [*] ZERGLING PATROL ASSIGNED ({self.zergling_patrol_count} units) [*]"
         )
 
     def _plan_zergling_patrol_paths(self):
@@ -324,7 +324,7 @@ class EnhancedScoutSystem:
         if not hasattr(self.bot, "expansion_locations_list"):
             return
 
-        # ★ 확장 위치들을 순찰 경로로 설정 ★
+        # [*] 확장 위치들을 순찰 경로로 설정 [*]
         expansion_locs = list(self.bot.expansion_locations_list)
 
         for i, tag in enumerate(self.zergling_patrol_tags):
@@ -385,7 +385,7 @@ class EnhancedScoutSystem:
 
         game_time = self.bot.time
 
-        # ★ 1. Gas Timing ★
+        # [*] 1. Gas Timing [*]
         if self.enemy_gas_timing is None:
             gas_buildings = self.bot.enemy_structures.filter(
                 lambda s: getattr(s.type_id, "name", "").upper() in {
@@ -396,7 +396,7 @@ class EnhancedScoutSystem:
                 self.enemy_gas_timing = game_time
                 self.logger.info(f"[{int(game_time)}s] [*] ENEMY GAS detected! [*]")
 
-        # ★ 2. Pool/Barracks/Gateway Timing ★
+        # [*] 2. Pool/Barracks/Gateway Timing [*]
         if self.enemy_pool_timing is None:
             production = self.bot.enemy_structures.filter(
                 lambda s: getattr(s.type_id, "name", "").upper() in {
@@ -408,7 +408,7 @@ class EnhancedScoutSystem:
                 building_type = getattr(production.first.type_id, "name", "PRODUCTION")
                 self.logger.info(f"[{int(game_time)}s] [*] ENEMY {building_type} detected! [*]")
 
-        # ★ 3. Natural Expansion Timing ★
+        # [*] 3. Natural Expansion Timing [*]
         if self.enemy_natural_timing is None and hasattr(self.bot, "enemy_start_locations"):
             enemy_start = self.bot.enemy_start_locations[0]
 
@@ -432,7 +432,7 @@ class EnhancedScoutSystem:
                     self.enemy_natural_timing = game_time
                     self.logger.info(f"[{int(game_time)}s] [*] ENEMY NATURAL EXPANSION detected! [*]")
 
-        # ★ 4. Tech Buildings ★
+        # [*] 4. Tech Buildings [*]
         tech_buildings = {
             "FACTORY", "STARPORT", "TWILIGHTCOUNCIL", "STARGATE",
             "ROBOTICSFACILITY", "SPIRE", "HYDRALISKDEN", "ROACHWARREN"
@@ -444,7 +444,7 @@ class EnhancedScoutSystem:
                 self.enemy_tech_buildings[building_type] = game_time
                 self.logger.info(f"[{int(game_time)}s] [*] ENEMY TECH: {building_type} [*]")
 
-        # ★ 5. Army Composition ★
+        # [*] 5. Army Composition [*]
         if hasattr(self.bot, "enemy_units"):
             for unit in self.bot.enemy_units:
                 unit_type = getattr(unit.type_id, "name", "").upper()
@@ -458,20 +458,20 @@ class EnhancedScoutSystem:
         """정찰 데이터 분석"""
         game_time = self.bot.time
 
-        # ★ 1. Cheese Detection ★
+        # [*] 1. Cheese Detection [*]
         # 빠른 Gas (1:30 전) + 늦은 Natural (2:30 이후) = Cheese
         if self.enemy_gas_timing and self.enemy_gas_timing < 90:
             if self.enemy_natural_timing is None or self.enemy_natural_timing > 150:
                 self.is_cheese = True
                 self.logger.warning(f"[{int(game_time)}s] [*][*][*] CHEESE SUSPECTED! [*][*][*]")
 
-        # ★ 2. Fast Expand Detection ★
+        # [*] 2. Fast Expand Detection [*]
         # Natural이 1:30 전에 있음 = Fast Expand
         if self.enemy_natural_timing and self.enemy_natural_timing < 90:
             self.is_fast_expand = True
             self.logger.info(f"[{int(game_time)}s] [*] FAST EXPAND detected [*]")
 
-        # ★ 3. Tech Path Analysis ★
+        # [*] 3. Tech Path Analysis [*]
         if self.enemy_tech_buildings:
             tech_count = len(self.enemy_tech_buildings)
 
@@ -484,7 +484,7 @@ class EnhancedScoutSystem:
             else:
                 self.tech_path = "UNKNOWN"
 
-        # ★ 4. Blackboard Update ★
+        # [*] 4. Blackboard Update [*]
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard:
             blackboard.set("enemy_is_cheese", self.is_cheese)

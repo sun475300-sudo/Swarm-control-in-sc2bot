@@ -99,7 +99,7 @@ class OverlordSafetyManager:
             self._pillars_calculated = True
 
         except Exception as e:
-            # ★ FIX: 로그 레벨 완화 (폴백 위치 사용하므로 치명적이지 않음)
+            # [*] FIX: 로그 레벨 완화 (폴백 위치 사용하므로 치명적이지 않음)
             self.logger.warning(f"[OVERLORD_SAFETY] Pillar calculation skipped, using fallback: {e}")
             self._use_fallback_positions()
             self._pillars_calculated = True
@@ -271,7 +271,7 @@ class OverlordSafetyManager:
 
     async def _manage_overlords(self):
         """대군주 분산 배치"""
-        # ★ 죽은 오버로드 태그 정리
+        # [*] 죽은 오버로드 태그 정리
         alive_tags = {ov.tag for ov in self.bot.units(UnitTypeId.OVERLORD)}
         dead_tags = [tag for tag in self.overlord_assignments if tag not in alive_tags]
         for tag in dead_tags:
@@ -323,7 +323,7 @@ class OverlordSafetyManager:
         overlords = self.bot.units(UnitTypeId.OVERLORD)
         enemy_anti_air = self.bot.enemy_units.filter(lambda u: u.can_attack_air)
         
-        # 대공 구조물 (★ SHIELDBATTERY, PYLON(오버차지) 추가)
+        # 대공 구조물 ([*] SHIELDBATTERY, PYLON(오버차지) 추가)
         enemy_structures = self.bot.enemy_structures.filter(
             lambda s: s.type_id in {
                 UnitTypeId.MISSILETURRET, UnitTypeId.SPORECRAWLER,
