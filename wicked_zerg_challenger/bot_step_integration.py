@@ -1967,7 +1967,16 @@ class BotStepIntegrator:
 
             # ★ MicroV3가 활성이면 Boids Micro 스킵 (명령 덮어쓰기 방지) ★
             if not (hasattr(self.bot, "micro_v3") and self.bot.micro_v3):
-                await self._safe_manager_step(self.bot.micro, iteration, "Micro")
+                # ★ MicroFocusMode 가 반환한 동적 interval 반영 (이전: 값 버림) ★
+                # MicroFocusMode 가 활성일 때만 gate 적용: normal=8, alert=4,
+                # combat=2, critical=1 프레임. 비활성 시에는 이전과 동일하게
+                # 매 프레임 실행해 하위 호환성 유지.
+                use_focus_gate = (
+                    hasattr(self.bot, "micro_focus") and self.bot.micro_focus
+                    and micro_interval > 1
+                )
+                if not use_focus_gate or iteration % micro_interval == 0:
+                    await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
             # 10.1 ★★★ Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) ★★★
             if hasattr(self.bot, "micro_v3") and self.bot.micro_v3:
