@@ -43,8 +43,21 @@ try:
     import torch.optim as optim
 
     HAS_TORCH = True
+    _TorchModuleBase = nn.Module
 except ImportError:
     HAS_TORCH = False
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
+    # Module body에서 `nn.Module` 등을 참조해도 import-time 크래시하지 않도록
+    # 최소한의 placeholder를 제공. 실제로 토치 기반 클래스는 HAS_TORCH 가드 뒤에서만 사용.
+    class _TorchModuleBase:
+        """Placeholder base when PyTorch is unavailable — only used as MRO target."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            raise RuntimeError("PyTorch is not installed; cannot instantiate torch-based module")
 
 # ===================================================================
 # NumPy fallback primitives
@@ -169,10 +182,12 @@ class NpMLP:
 # ===================================================================
 
 
-class AgentQNetTorch(nn.Module):
+class AgentQNetTorch(_TorchModuleBase):
     """Individual agent's Q-network: obs -> Q(obs, a) for all actions."""
 
     def __init__(self, obs_dim: int, action_dim: int, hidden_dim: int):
+        if not HAS_TORCH:
+            raise RuntimeError("PyTorch is not installed; use AgentQNetNumpy instead")
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -182,7 +197,7 @@ class AgentQNetTorch(nn.Module):
             nn.Linear(hidden_dim, action_dim),
         )
 
-    def forward(self, obs: torch.Tensor) -> torch.Tensor:
+    def forward(self, obs):  # obs: torch.Tensor
         return self.net(obs)
 
 
@@ -204,7 +219,7 @@ class AgentQNetNumpy:
 # ===================================================================
 
 
-class QMIXMixingNetTorch(nn.Module):
+class QMIXMixingNetTorch(_TorchModuleBase):
     """QMIX mixing network with hyper-network producing state-dependent weights.
 
     The mixing network computes:
@@ -213,6 +228,8 @@ class QMIXMixingNetTorch(nn.Module):
     """
 
     def __init__(self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int):
+        if not HAS_TORCH:
+            raise RuntimeError("PyTorch is not installed; use QMIXMixingNetNumpy instead")
         super().__init__()
         self.n_agents = n_agents
         self.embed_dim = embed_dim
@@ -239,7 +256,7 @@ class QMIXMixingNetTorch(nn.Module):
             nn.Linear(embed_dim, 1),
         )
 
-    def forward(self, agent_qs: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+    def forward(self, agent_qs, state):  # tensors
         """
         Parameters
         ----------
@@ -314,10 +331,15 @@ class QMIXMixingNetNumpy:
         return out2
 
 
-class VDNMixerTorch(nn.Module):
+class VDNMixerTorch(_TorchModuleBase):
     """Value Decomposition Network: Q_tot = sum(q_i)."""
 
-    def forward(self, agent_qs: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+    def __init__(self) -> None:
+        if not HAS_TORCH:
+            raise RuntimeError("PyTorch is not installed; use VDNMixerNumpy instead")
+        super().__init__()
+
+    def forward(self, agent_qs, state):  # tensors
         return agent_qs.sum(dim=-1)
 
 
