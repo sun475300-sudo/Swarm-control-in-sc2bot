@@ -8,13 +8,7 @@ Counter Units Module
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    class UnitTypeId:
-        ZERGLING = "ZERGLING"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
-        MUTALISK = "MUTALISK"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        BANELINGNEST = "BANELINGNEST"
+    from utils.sc2_stubs import UnitTypeId
 
 
 def get_counter_unit(resilience, enemy_units, has_roach_warren: bool, has_hydra_den: bool, has_spire: bool):

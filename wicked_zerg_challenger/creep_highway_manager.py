@@ -16,14 +16,7 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
-    class UnitTypeId:
-        QUEEN = "QUEEN"
-        CREEPTUMOR = "CREEPTUMOR"
-        CREEPTUMORQUEEN = "CREEPTUMORQUEEN"
-        CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
-    class AbilityId:
-        BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
-        BUILD_CREEPTUMOR_TUMOR = "BUILD_CREEPTUMOR_TUMOR"
+    from utils.sc2_stubs import UnitTypeId, AbilityId
     Point2 = tuple
 
 

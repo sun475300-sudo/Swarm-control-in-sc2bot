@@ -18,20 +18,7 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-
-    class UnitTypeId:
-        QUEEN = "QUEEN"
-        HATCHERY = "HATCHERY"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        CREEPTUMOR = "CREEPTUMOR"
-        CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
-
-    class AbilityId:
-        EFFECT_INJECTLARVA = "EFFECT_INJECTLARVA"
-        BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
-        TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
+    from utils.sc2_stubs import UnitTypeId, AbilityId
 
 
 class QueenManager:

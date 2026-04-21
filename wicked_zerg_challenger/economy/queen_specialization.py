@@ -21,15 +21,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
-    class AbilityId:
-        EFFECT_INJECTLARVA = "EFFECT_INJECTLARVA"
-        BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
-        TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
-    class UnitTypeId:
-        QUEEN = "QUEEN"
-        HATCHERY = "HATCHERY"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
+    from utils.sc2_stubs import AbilityId, UnitTypeId
     Point2 = tuple
 
 

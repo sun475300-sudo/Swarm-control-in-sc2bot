@@ -15,12 +15,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
-    class UnitTypeId:
-        DRONE = "DRONE"
-        EXTRACTOR = "EXTRACTOR"
-        HATCHERY = "HATCHERY"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
+    from utils.sc2_stubs import UnitTypeId
     Point2 = tuple
 
 

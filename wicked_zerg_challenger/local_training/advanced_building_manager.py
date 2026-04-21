@@ -20,24 +20,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    class UnitTypeId:
-        LURKERDENMP = "LURKERDENMP"
-        BANELINGNEST = "BANELINGNEST"
-        ULTRALISKCAVERN = "ULTRALISKCAVERN"
-        SPINECRAWLER = "SPINECRAWLER"
-        SPORECRAWLER = "SPORECRAWLER"
-        HYDRA = "HYDRALISK"
-        ZERGLING = "ZERGLING"
-        LURKERMP = "LURKERMP"
-        BANELING = "BANELING"
-        HATCHERY = "HATCHERY"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
-
-    class AbilityId:
-        MORPH_LURKER = "MORPH_LURKER"
-        MORPHZERGLINGTOBANELING_BANELING = "MORPHZERGLINGTOBANELING_BANELING"
-
+    from utils.sc2_stubs import UnitTypeId, AbilityId
     Point2 = tuple
     Unit = object
 

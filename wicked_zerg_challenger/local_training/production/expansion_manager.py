@@ -11,8 +11,7 @@ logger = logging.getLogger("ExpansionManager")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    class UnitTypeId:
-        HATCHERY = "HATCHERY"
+    from utils.sc2_stubs import UnitTypeId
 
 
 def can_expand_safely(resilience) -> tuple:

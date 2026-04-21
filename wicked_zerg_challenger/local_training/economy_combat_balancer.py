@@ -18,15 +18,7 @@ logger = logging.getLogger("EconomyCombatBalancer")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-
-    class UnitTypeId:
-        DRONE = "DRONE"
-        ZERGLING = "ZERGLING"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
-        MUTALISK = "MUTALISK"
-        QUEEN = "QUEEN"
-        OVERLORD = "OVERLORD"
+    from utils.sc2_stubs import UnitTypeId
 
 
 class EconomyCombatBalancer:

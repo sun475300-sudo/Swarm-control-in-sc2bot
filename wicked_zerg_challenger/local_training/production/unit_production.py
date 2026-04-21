@@ -11,14 +11,7 @@ logger = logging.getLogger("UnitProduction")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    class UnitTypeId:
-        ZERGLING = "ZERGLING"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
-        MUTALISK = "MUTALISK"
-        ROACHWARREN = "ROACHWARREN"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        SPIRE = "SPIRE"
+    from utils.sc2_stubs import UnitTypeId
 
 
 async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
