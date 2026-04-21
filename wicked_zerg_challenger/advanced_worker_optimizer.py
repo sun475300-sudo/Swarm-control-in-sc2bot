@@ -20,10 +20,7 @@ try:
     from sc2.position import Point2
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    Unit = object
-    Units = object
-    Point2 = tuple
-    UnitTypeId = None
+    from utils.sc2_stubs import Unit, Units, Point2, UnitTypeId
 
 from utils.logger import get_logger
 

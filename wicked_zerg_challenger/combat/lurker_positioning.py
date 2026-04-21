@@ -28,8 +28,7 @@ except ImportError:
     UnitTypeId = None
     UpgradeId = None
     Point2 = None
-    Unit = None
-    Units = None
+    from utils.sc2_stubs import Unit, Units
 
 from utils.logger import get_logger
 
