@@ -2099,7 +2099,7 @@ class BotStepIntegrator:
 
             # 15. ★ 화면 디버그 정보 표시 ★
             if iteration % 4 == 0:  # 4프레임마다 갱신
-                await self.draw_debug_info()
+                await self.draw_debug_info(iteration)
 
         except Exception as e:
             if error_handler.debug_mode:
@@ -2153,7 +2153,7 @@ class BotStepIntegrator:
         except Exception as e:
             self.logger.warning(f"[BotStepIntegrator] Dead unit authority cleanup suppressed: {e}")
 
-    async def draw_debug_info(self):
+    async def draw_debug_info(self, iteration: int = 0):
         """화면 좌측 상단에 봇 상태 디버그 정보 표시"""
         try:
             b = self.bot
