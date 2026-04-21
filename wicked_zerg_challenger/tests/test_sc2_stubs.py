@@ -54,6 +54,29 @@ class TestEnumLikeStubs(unittest.TestCase):
         # Same name must hash identically
         self.assertEqual(d["ROACH"], 1)  # str equality works
 
+    def test_subscript_lookup(self):
+        # `Race["Zerg"]` 같은 enum-style lookup 지원
+        member = Race["Zerg"]
+        self.assertEqual(member.name, "Zerg")
+        self.assertIs(member, Race.Zerg)
+
+    def test_subscript_non_string_raises(self):
+        with self.assertRaises(KeyError):
+            _ = Race[42]  # type: ignore[misc]
+
+    def test_contains_operator(self):
+        m = Difficulty.Medium
+        self.assertIn(m, Difficulty)
+        # 평범한 문자열은 stub 멤버가 아니므로 False
+        self.assertNotIn("Medium", Difficulty)
+
+    def test_round_trip_serialize_via_name(self):
+        # difficulty_progression.py가 하는 패턴: enum → name → enum
+        original = Difficulty.Harder
+        name = original.name
+        restored = Difficulty[name]
+        self.assertIs(restored, original)
+
 
 class TestPoint2(unittest.TestCase):
     def test_construction_from_iterable(self):
