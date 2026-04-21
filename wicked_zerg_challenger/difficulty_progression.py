@@ -11,7 +11,10 @@ Difficulty Progression System - 난이도 자동 조정
 import json
 from pathlib import Path
 from typing import Dict, Optional
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:
+    from utils.sc2_stubs import Difficulty, Race
 import logging
 
 logger = logging.getLogger("DifficultyProgression")

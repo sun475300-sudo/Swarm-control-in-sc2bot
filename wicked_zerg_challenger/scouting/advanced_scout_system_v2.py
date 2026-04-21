@@ -26,18 +26,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    class BotAI:
-        pass
-    class UnitTypeId:
-        pass
-    class AbilityId:
-        pass
-    class UpgradeId:
-        pass
-    class Point2:
-        pass
-    class Unit:
-        pass
+    from utils.sc2_stubs import BotAI, UnitTypeId, AbilityId, UpgradeId, Point2, Unit
 
 from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
 

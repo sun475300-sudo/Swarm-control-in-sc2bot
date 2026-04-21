@@ -18,34 +18,25 @@ from unittest.mock import Mock, patch
 import sys
 from io import StringIO
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
+# 이 테스트는 실제 sc2.data.Difficulty/Race enum 동작(해시, __members__, 비교)에 의존한다.
+# sc2가 설치되지 않은 환경에서는 stub의 문자열-기반 값과 타입이 달라지므로 전체 모듈을 skip.
 try:
     from sc2.data import Difficulty, Race
+    _HAS_SC2 = True
 except ImportError:
-    # Create mock enums for testing
-    from enum import Enum
+    _HAS_SC2 = False
 
-    class Difficulty(Enum):
-        VeryEasy = 1
-        Easy = 2
-        Medium = 3
-        MediumHard = 4
-        Hard = 5
-        Harder = 6
-        VeryHard = 7
-        CheatVision = 8
-        CheatMoney = 9
-        CheatInsane = 10
+pytestmark = pytest.mark.skipif(
+    not _HAS_SC2,
+    reason="sc2 (burnysc2) 미설치 — 실제 Difficulty/Race enum 동작에 의존",
+)
 
-    class Race(Enum):
-        Terran = 1
-        Protoss = 2
-        Zerg = 3
+from difficulty_progression import DifficultyProgression
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):
