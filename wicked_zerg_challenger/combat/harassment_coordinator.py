@@ -1205,14 +1205,15 @@ class HarassmentCoordinator:
         )
 
     async def _trigger_zergling_runby(self) -> None:
-        """Trigger zergling run-by (placeholder for existing logic)"""
-        # This would call existing zergling run-by logic
-        pass
+        """Trigger zergling run-by via _manage_zergling_runby()."""
+        # Bypass the cooldown window so multi-angle coordination isn't blocked
+        # by the per-vector cooldown already checked by _can_execute_zergling_runby.
+        self.zergling_runby_cooldown = 0
+        await self._manage_zergling_runby()
 
     async def _trigger_mutalisk_harassment(self) -> None:
-        """Trigger mutalisk harassment (placeholder for existing logic)"""
-        # This would call existing mutalisk harassment logic
-        pass
+        """Trigger mutalisk harassment via _manage_mutalisk_harassment()."""
+        await self._manage_mutalisk_harassment()
 
     # ============================================================================
     # Phase 21.3: Unit Persistence System (Squad Lock)
