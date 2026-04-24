@@ -41,8 +41,8 @@ def _ensure_sc2_path():
             os.environ["SC2PATH"] = install_path
             logger.info(f"Found via Registry: {install_path}")
             return
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("%s: %r", "swallowed", exc)
 
     common_paths = [
         "C:\\Program Files (x86)\\StarCraft II",

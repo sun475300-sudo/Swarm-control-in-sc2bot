@@ -87,8 +87,8 @@ def kill_all_sc2_processes():
         subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
                       capture_output=True, timeout=5)
         time.sleep(2)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("%s: %r", "swallowed", exc)
 
 
 class ProgressiveTrainer:

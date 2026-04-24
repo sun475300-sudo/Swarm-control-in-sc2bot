@@ -536,8 +536,8 @@ def main():
                                 subprocess.call(["taskkill", "/F", "/IM", "StarCraft II.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                             else:
                                 subprocess.call(["pkill", "-f", "SC2_x64"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("%s: %r", "swallowed", exc)
                 except (ImportError, Exception):
                     # Fallback: try to kill SC2, then sleep
                     try:
@@ -546,8 +546,8 @@ def main():
                             subprocess.call(["taskkill", "/F", "/IM", "SC2_x64.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         else:
                             subprocess.call(["pkill", "-f", "SC2_x64"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("%s: %r", "swallowed", exc)
                     time.sleep(wait_between_games)
 
                 # IMPROVED: Print background learning stats periodically
@@ -700,8 +700,8 @@ def main():
                             parameters_updated=0
                         )
                         logger.info(f"[MANUAL] Recorded result: {game_result_str} ({reason})")
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
             # Stop local monitoring server on interrupt
             if local_server_manager:

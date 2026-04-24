@@ -64,8 +64,8 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("%s: %r", "swallowed", exc)
 
 
 def kill_all_sc2():
@@ -76,8 +76,8 @@ def kill_all_sc2():
         subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
                       capture_output=True, timeout=5)
         time.sleep(3)  # 충분한 대기 시간
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("%s: %r", "swallowed", exc)
 
 
 def main():

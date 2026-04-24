@@ -485,8 +485,8 @@ class BoidsController:
         if hasattr(units, "closer_than"):
             try:
                 return units.closer_than(radius, unit.position)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
         # Fallback: brute force O(N)
         return [

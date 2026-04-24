@@ -619,8 +619,8 @@ class RLAgent:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
             return False
 
     def _update_reward_stats(self, rewards: List[float]) -> None:

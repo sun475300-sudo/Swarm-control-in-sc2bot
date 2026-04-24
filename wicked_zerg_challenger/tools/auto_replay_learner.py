@@ -69,8 +69,8 @@ class AutoReplayLearner:
                 with open(id_file, 'r') as f:
                     data = json.load(f)
                     return set(data.get("replay_ids", []))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
         return set()
 
     def _save_processed_ids(self):

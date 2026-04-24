@@ -177,8 +177,8 @@ class TrainingPipeline:
             dest = self.archive_dir / f.name
             try:
                 shutil.move(str(f), str(dest))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
     def _cleanup_old_versions(self) -> None:
         """오래된 버전 정리 (MAX_VERSIONS 초과 시)"""
@@ -195,8 +195,8 @@ class TrainingPipeline:
             try:
                 if os.path.exists(v.model_path):
                     os.remove(v.model_path)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
             self.versions.remove(v)
 
         self._save_history()

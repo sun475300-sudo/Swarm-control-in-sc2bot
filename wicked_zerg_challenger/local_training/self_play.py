@@ -297,8 +297,8 @@ class SelfPlayTrainer:
                 removed_path = Path(removed.model_path)
                 if removed_path.exists():
                     removed_path.unlink()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
     def _save_pool_metadata(self) -> None:
         """상대 풀 메타데이터 저장"""

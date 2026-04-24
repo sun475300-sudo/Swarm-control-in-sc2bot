@@ -139,8 +139,8 @@ class ReplayActionExtractor:
                         "action": action,
                         "ability_name": ability,
                     }
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
         return None
 
     def _map_ability_to_action(self, ability_name: str) -> Optional[int]:
