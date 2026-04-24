@@ -246,10 +246,12 @@ if __name__ == "__main__":
         results.append(r)
 
     # 최종 요약
-    print("\n" + "=" * 72)
-    print("  대규모 훈련 최종 요약")
-    print("=" * 72)
+    logger.info("\n" + "=" * 72)
+    logger.info("  대규모 훈련 최종 요약")
+    logger.info("=" * 72)
     for r in results:
-        print(f"  {r['agent']:4s} │ {r['episodes']}ep │ WR={r['win_rate']*100:.1f}% │ "
-              f"AvgR={r['avg_reward']:.1f} │ Trained={r['is_trained']} │ {r['elapsed']:.1f}s")
-    print("=" * 72)
+        logger.info(
+            f"  {r['agent']:4s} │ {r['episodes']}ep │ WR={r['win_rate']*100:.1f}% │ "
+            f"AvgR={r['avg_reward']:.1f} │ Trained={r['is_trained']} │ {r['elapsed']:.1f}s"
+        )
+    logger.info("=" * 72)

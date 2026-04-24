@@ -670,9 +670,10 @@ def gif_authority_mode():
 # ═══════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("SC2-Swarm: Animated GIF Generator (DRONAI Style)")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("=" * 60)
+    logger.info("SC2-Swarm: Animated GIF Generator (DRONAI Style)")
+    logger.info("=" * 60)
 
     gif_boids_swarm()
     gif_formation_flight()
@@ -680,11 +681,11 @@ if __name__ == "__main__":
     gif_sim_to_real()
     gif_authority_mode()
 
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     gifs = [f for f in os.listdir(OUTPUT_DIR) if f.endswith(".gif")]
-    print(f"Complete! {len(gifs)} GIF files generated:")
+    logger.info(f"Complete! {len(gifs)} GIF files generated:")
     for g in sorted(gifs):
         size = os.path.getsize(os.path.join(OUTPUT_DIR, g)) / 1024
-        print(f"  {g} ({size:.0f} KB)")
-    print(f"\nOutput: {OUTPUT_DIR}")
-    print("=" * 60)
+        logger.info(f"  {g} ({size:.0f} KB)")
+    logger.info(f"\nOutput: {OUTPUT_DIR}")
+    logger.info("=" * 60)

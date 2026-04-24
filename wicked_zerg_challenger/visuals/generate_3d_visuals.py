@@ -1068,31 +1068,32 @@ def part4_roadmap_3d():
 # ═══════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("SC2 → Drone ATC: 3D Presentation Visuals Generator")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("=" * 60)
+    logger.info("SC2 → Drone ATC: 3D Presentation Visuals Generator")
+    logger.info("=" * 60)
 
-    print("\n[Part 1] SC2 Bot Architecture")
+    logger.info("\n[Part 1] SC2 Bot Architecture")
     part1_fsm_3d()
     part1_authority_3d()
     part1_hybrid_3d()
 
-    print("\n[Part 2] Operation Flow")
+    logger.info("\n[Part 2] Operation Flow")
     part2_tactical_3d()
     part2_engagement_3d()
 
-    print("\n[Part 3] Boids Swarm")
+    logger.info("\n[Part 3] Boids Swarm")
     part3_boids_3d()
     part3_forces_3d()
 
-    print("\n[Part 4] SC2 → Drone ATC")
+    logger.info("\n[Part 4] SC2 → Drone ATC")
     part4_concept_mapping_3d()
     part4_drone_atc_3d()
     part4_roadmap_3d()
 
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     total = len([f for f in os.listdir(OUTPUT_DIR) if f.endswith(".html")])
-    print(f"Complete! {total} HTML files generated in:")
-    print(f"  {OUTPUT_DIR}")
-    print("\nOpen any .html file in a browser to interact (rotate/zoom/pan)")
-    print("=" * 60)
+    logger.info(f"Complete! {total} HTML files generated in:")
+    logger.info(f"  {OUTPUT_DIR}")
+    logger.info("\nOpen any .html file in a browser to interact (rotate/zoom/pan)")
+    logger.info("=" * 60)

@@ -736,18 +736,19 @@ def radar_operation_concept():
 # ═══════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("군집 드론 레이더 망 + 유저 드론 ATC 시각화")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("=" * 60)
+    logger.info("군집 드론 레이더 망 + 유저 드론 ATC 시각화")
+    logger.info("=" * 60)
 
     radar_system_overview()
     radar_mesh_network()
     radar_user_detection()
     radar_operation_concept()
 
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     files = sorted(f for f in os.listdir(OUTPUT_DIR) if f.startswith("radar_"))
-    print(f"완료! {len(files)}개 파일 생성:")
+    logger.info(f"완료! {len(files)}개 파일 생성:")
     for f in files:
-        print(f"  {f}")
-    print("=" * 60)
+        logger.info(f"  {f}")
+    logger.info("=" * 60)

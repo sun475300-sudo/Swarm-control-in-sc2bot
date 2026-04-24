@@ -2355,23 +2355,24 @@ def section5_market_tam():
 # ═══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("발표 시각화 자료 생성 (캡스톤 4개 + IR 4개 + 보고서 11개)")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("=" * 60)
+    logger.info("발표 시각화 자료 생성 (캡스톤 4개 + IR 4개 + 보고서 11개)")
+    logger.info("=" * 60)
 
-    print("\n── 캡스톤 디자인 발표 시각화 ──")
+    logger.info("\n── 캡스톤 디자인 발표 시각화 ──")
     capstone_cost_comparison()
     capstone_digital_twin()
     capstone_llm_integration()
     capstone_self_healing()
 
-    print("\n── IR/기업 설명회 시각화 ──")
+    logger.info("\n── IR/기업 설명회 시각화 ──")
     ir_market_painpoint()
     ir_virtual_testbed()
     ir_roi_analysis()
     ir_business_roadmap()
 
-    print("\n── 캡스톤 보고서 섹션별 시각화 ──")
+    logger.info("\n── 캡스톤 보고서 섹션별 시각화 ──")
     section2_drone_growth()
     section2_problem_heatmap()
     section2_approval_flow()
@@ -2384,12 +2385,12 @@ if __name__ == "__main__":
     section5_application_matrix()
     section5_market_tam()
 
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     all_html = sorted(f for f in os.listdir(OUTPUT_DIR)
                       if f.endswith(".html") and
                       (f.startswith("capstone_") or f.startswith("ir_")
                        or f.startswith("section")))
-    print(f"완료! 총 {len(all_html)}개 파일 생성:")
+    logger.info(f"완료! 총 {len(all_html)}개 파일 생성:")
     for f in all_html:
-        print(f"  {f}")
-    print("=" * 60)
+        logger.info(f"  {f}")
+    logger.info("=" * 60)

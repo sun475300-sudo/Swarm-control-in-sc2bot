@@ -738,9 +738,10 @@ def clear_atc_priority():
 # ═══════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("이해하기 쉬운 3D 시각화 생성")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("=" * 60)
+    logger.info("이해하기 쉬운 3D 시각화 생성")
+    logger.info("=" * 60)
 
     clear_system_overview()
     clear_boids_explained()
@@ -748,9 +749,9 @@ if __name__ == "__main__":
     clear_swarm_simulation()
     clear_atc_priority()
 
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     files = sorted(f for f in os.listdir(OUTPUT_DIR) if f.startswith("clear_"))
-    print(f"완료! {len(files)}개 파일 생성:")
+    logger.info(f"완료! {len(files)}개 파일 생성:")
     for f in files:
-        print(f"  {f}")
-    print("=" * 60)
+        logger.info(f"  {f}")
+    logger.info("=" * 60)

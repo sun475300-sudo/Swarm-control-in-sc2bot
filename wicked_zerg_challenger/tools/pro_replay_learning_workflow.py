@@ -256,10 +256,9 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n??  Workflow interrupted by user")
+        logger.warning("Workflow interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n? Fatal error: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Fatal error: {e}")
+        logger.exception("Workflow fatal error traceback:")
         sys.exit(1)

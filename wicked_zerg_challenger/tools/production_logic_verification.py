@@ -146,7 +146,8 @@ def verify_indentation_fixes():
 
 
 if __name__ == "__main__":
-    print("\nStarting production logic verification...\n")
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("\nStarting production logic verification...\n")
 
     # 1. ProductionEnhancements verification
     result1 = verify_production_enhancements()
@@ -155,9 +156,9 @@ if __name__ == "__main__":
     result2 = verify_indentation_fixes()
 
     # Final result
-    print("\n" + "=" * 70)
+    logger.info("\n" + "=" * 70)
     if result1 and result2:
-        print("All verifications passed")
+        logger.info("All verifications passed")
     else:
-        print("Some verifications failed")
-    print("=" * 70)
+        logger.error("Some verifications failed")
+    logger.info("=" * 70)
