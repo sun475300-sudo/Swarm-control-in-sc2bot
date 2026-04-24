@@ -110,7 +110,7 @@ except ImportError:
         MUTALISK = "MUTALISK"
         BANELING = "BANELING"
         RAVAGER = "RAVAGER"
-        LURKER = "LURKER"
+        LURKERMP = "LURKERMP"
         CORRUPTOR = "CORRUPTOR"
         ULTRALISK = "ULTRALISK"
         BROODLORD = "BROODLORD"

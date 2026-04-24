@@ -1462,32 +1462,23 @@ class EconomyManager:
 
         force_expand = False
         reason = ""
+        min_minerals = 300  # Default
 
-        # Table-driven check using EconomyConfig
+        # Table-driven check using EconomyConfig. Triggers are sorted by
+        # time ascending; the FIRST matching trigger wins (most urgent
+        # condition that is already due). We keep its min_minerals so the
+        # affordability gate matches the reason reported.
         for time_req, min_req, target_bases in EconomyConfig.FORCE_EXPAND_TRIGGERS:
-            # Check if condition met: Time passed AND Base count below target
             if game_time >= time_req and base_count < target_bases:
-                # Check mineral requirement (0 means ignore minerals/critical)
                 if min_req == 0 or minerals >= min_req:
                     force_expand = True
                     reason = f"{time_req}s Force Expand (Target: {target_bases} bases)"
-                    # Keep checking later triggers? No, finding one valid trigger is enough logic-wise?
-                    # The original code prioritized later (stricter) conditions, so we iterate all and keep the last one or just break?
-                    # Actually, if any trigger matches, we force expand. The specific reason might matter for logging.
-                    # We can pick the most urgent one. Since the list is sorted by time, later ones are more advanced.
-                    # Let's use the matching one.
-                    break 
+                    min_minerals = min_req
+                    break
 
 
         if not force_expand:
             return
-
-        # ★ 비용 체크 (Config 기반) ★
-        triggers = EconomyConfig.FORCE_EXPAND_TRIGGERS
-        min_minerals = 300 # Default
-        for time_req, min_req, target_bases in triggers:
-             if game_time >= time_req and base_count < target_bases:
-                 min_minerals = min_req
 
         if minerals < min_minerals:
             if int(game_time) % 30 == 0:
