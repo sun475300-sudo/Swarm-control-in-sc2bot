@@ -5,9 +5,12 @@ wicked_zerg_challenger/ 디렉토리의 모든 .py 파일에서
 print() 호출을 logging 호출로 변환합니다.
 """
 
+import logging
 import os
 import re
 import sys
+
+logger = logging.getLogger("MigratePrintsToLogger")
 
 TARGET_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "wicked_zerg_challenger")
 SKIP_FILES = {"__pycache__", ".pyc"}
@@ -152,4 +155,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

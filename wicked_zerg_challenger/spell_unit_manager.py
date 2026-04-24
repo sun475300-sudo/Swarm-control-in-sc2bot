@@ -24,6 +24,11 @@ if TYPE_CHECKING:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
     from sc2.unit import Unit
+    # WickedZergBotPro is the legacy alias; the concrete implementation lives in
+    # wicked_zerg_bot_pro_impl. Bring it in under TYPE_CHECKING only so the
+    # string-form annotation below resolves for type checkers but imposes no
+    # runtime import cost or circularity risk.
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 else:
     # Runtime imports
     try:

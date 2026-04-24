@@ -204,7 +204,9 @@ class IntegrationHub:
         return [(cx, cy)] * count
 
     def generate_test_script(self, output_path: Path) -> str:
-        script = f'''#!/usr/bin/env python3
+        # Plain string: braces inside belong to the generated script's own
+        # f-string evaluation at its runtime, not this function's.
+        script = '''#!/usr/bin/env python3
 """Phase 66 Integration Test Script"""
 
 import sys

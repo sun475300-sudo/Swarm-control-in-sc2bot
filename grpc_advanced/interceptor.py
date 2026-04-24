@@ -84,8 +84,13 @@ class SC2AuthInterceptor(grpc.ServerInterceptor):
         try:
             payload = self._validate_token(token)
         except grpc.RpcError as e:
+            # Capture code/details before the except block exits — Python
+            # deletes the `e` binding on block exit, which would make the
+            # closure reference undefined by the time abort() is called.
+            err_code, err_details = e.code(), e.details()
+
             def abort(request, context):
-                context.abort(e.code(), e.details())
+                context.abort(err_code, err_details)
             return grpc.unary_unary_rpc_method_handler(abort)
 
         # Rate limiting per user

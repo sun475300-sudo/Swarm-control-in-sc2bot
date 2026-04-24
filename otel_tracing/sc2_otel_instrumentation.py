@@ -932,7 +932,6 @@ _global_instrumentation: Optional[SC2OTelInstrumentation] = None
 
 def get_instrumentation() -> SC2OTelInstrumentation:
     """Return the global SC2OTelInstrumentation singleton."""
-    global _global_instrumentation
     if _global_instrumentation is None:
         raise RuntimeError(
             "SC2 OTel instrumentation has not been initialised. "
