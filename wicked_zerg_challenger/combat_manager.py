@@ -297,23 +297,19 @@ class CombatManager:
         # === TASK 2.2: Kill Squad (Hunt Observers/Overseers) - Phase 17 ===
         # Corruptors/Mutas로 관측선/감시군주 사냥
         if self._has_units(air_units):
-            try:
-                from sc2.ids.unit_typeid import UnitTypeId
-                targets = self.bot.enemy_units.filter(lambda u: u.type_id in {UnitTypeId.OBSERVER, UnitTypeId.OVERSEER})
-                if targets:
-                    # ★ FIX: available_air 미정의 방지 - 잠금된 유닛 제외하여 사전 계산 ★
-                    _locked = set()
-                    if hasattr(self.bot, 'harassment_coordinator') and self.bot.harassment_coordinator:
-                        _locked = getattr(self.bot.harassment_coordinator, 'locked_units', set())
-                    hunters = [u for u in air_units if u.tag not in _locked and u.type_id in {UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK}]
-                    if hunters:
-                        target = targets.closest_to(hunters[0])
-                        # Priority 60 (Main Attack(50)보다 높음)
-                        tasks_to_execute.append(("kill_squad", target, 60))
-                        if iteration % 50 == 0:
-                            self.logger.info(f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}")
-            except ImportError:
-                 pass
+            targets = self.bot.enemy_units.filter(lambda u: u.type_id in {UnitTypeId.OBSERVER, UnitTypeId.OVERSEER})
+            if targets:
+                # ★ FIX: available_air 미정의 방지 - 잠금된 유닛 제외하여 사전 계산 ★
+                _locked = set()
+                if hasattr(self.bot, 'harassment_coordinator') and self.bot.harassment_coordinator:
+                    _locked = getattr(self.bot.harassment_coordinator, 'locked_units', set())
+                hunters = [u for u in air_units if u.tag not in _locked and u.type_id in {UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK}]
+                if hunters:
+                    target = targets.closest_to(hunters[0])
+                    # Priority 60 (Main Attack(50)보다 높음)
+                    tasks_to_execute.append(("kill_squad", target, 60))
+                    if iteration % 50 == 0:
+                        self.logger.info(f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}")
 
         # === TASK 2.3: ★ ULTRA-AGGRESSIVE Early Zergling Harass (1분-7분) ★ ===
         game_time = getattr(self.bot, 'time', 0)
@@ -325,22 +321,18 @@ class CombatManager:
 
         # Trigger if time is right OR strategy manager requested it
         if (60 <= game_time <= 420) or strategy_active:
-            try:
-                from sc2.ids.unit_typeid import UnitTypeId
-                zerglings = [u for u in army_units if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
-                # ★ 저글링 6마리부터 하라스 시작 (더 빠른 압박)
-                if 6 <= len(zerglings) <= 24:
-                    harass_target = self._find_harass_target()
-                    if harass_target:
-                        # Priority 75 (더 높은 우선순위 - 일꾼 제거가 중요!)
-                        # Strategy requested it? Boost priority
-                        priority = 85 if strategy_active else 75
-                        tasks_to_execute.append(("early_harass", harass_target, priority))
+            zerglings = [u for u in army_units if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
+            # ★ 저글링 6마리부터 하라스 시작 (더 빠른 압박)
+            if 6 <= len(zerglings) <= 24:
+                harass_target = self._find_harass_target()
+                if harass_target:
+                    # Priority 75 (더 높은 우선순위 - 일꾼 제거가 중요!)
+                    # Strategy requested it? Boost priority
+                    priority = 85 if strategy_active else 75
+                    tasks_to_execute.append(("early_harass", harass_target, priority))
                         
-                        if strategy_active and iteration % 100 == 0:
-                             self.logger.info(f"[{int(game_time)}s] EARLY HARASS: StrategyManager triggered!")
-            except ImportError:
-                pass
+                    if strategy_active and iteration % 100 == 0:
+                         self.logger.info(f"[{int(game_time)}s] EARLY HARASS: StrategyManager triggered!")
 
         # === TASK 2.5: Counter Attack (after winning a battle) ===
         ground_army = self._filter_ground_units(army_units)
@@ -354,58 +346,46 @@ class CombatManager:
         # === TASK 2.5: ★ 초반 저글링 압박 (3:00-4:30) ★ ===
         # 저글링 8마리 이상이면 압박
         if 180 <= game_time <= 270:  # 3:00-4:30
-            try:
-                from sc2.ids.unit_typeid import UnitTypeId
-                zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
+            zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
 
-                # ★ 저글링 4마리 이상이면 압박 (기존 8마리 -> 4마리로 완화)
-                if len(zerglings) >= 4:
-                    enemy_base = self._get_enemy_base_location()
-                    if enemy_base:
-                        # Priority 75
-                        tasks_to_execute.append(("early_pressure", enemy_base, 75))
-                        if iteration % 50 == 0:
-                            self.logger.info(f"[{int(game_time)}s] [*] EARLY PRESSURE: {len(zerglings)} lings! [*]")
-            except ImportError:
-                pass
+            # ★ 저글링 4마리 이상이면 압박 (기존 8마리 -> 4마리로 완화)
+            if len(zerglings) >= 4:
+                enemy_base = self._get_enemy_base_location()
+                if enemy_base:
+                    # Priority 75
+                    tasks_to_execute.append(("early_pressure", enemy_base, 75))
+                    if iteration % 50 == 0:
+                        self.logger.info(f"[{int(game_time)}s] [*] EARLY PRESSURE: {len(zerglings)} lings! [*]")
 
         # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-8분) ★ ===
         # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
         if 300 <= game_time <= 480:  # 5-8분
-            try:
-                from sc2.ids.unit_typeid import UnitTypeId
-                # 바퀴 + 저글링 조합 타이밍 공격
-                roaches = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ROACH]
-                zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
-                banelings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.BANELING]
+            # 바퀴 + 저글링 조합 타이밍 공격
+            roaches = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ROACH]
+            zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
+            banelings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.BANELING]
 
-                # ★ BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
-                if len(roaches) >= 5 or len(zerglings) >= 12 or len(banelings) >= 4:
-                    enemy_base = self._get_enemy_base_location()
-                    if enemy_base:
-                        # Priority 75 (higher than counter_attack)
-                        tasks_to_execute.append(("mid_timing_attack", enemy_base, 75))
-            except ImportError:
-                pass
+            # ★ BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
+            if len(roaches) >= 5 or len(zerglings) >= 12 or len(banelings) >= 4:
+                enemy_base = self._get_enemy_base_location()
+                if enemy_base:
+                    # Priority 75 (higher than counter_attack)
+                    tasks_to_execute.append(("mid_timing_attack", enemy_base, 75))
 
         # === TASK 2.7: ★★★ 10-15분 강력한 타이밍 공격 ★★★ ===
         # ★ FIX: 15분까지만 (이후는 main_attack이 처리)
         # 3베이스 포화 후 강력한 타이밍 공격
         if 600 <= game_time <= 900:  # 10-15분 (기존 10-20분 → 10-15분)
-            try:
-                from sc2.ids.unit_typeid import UnitTypeId
-                army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
+            army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
 
-                # ★ 서플라이 40 이상이면 강력한 타이밍 공격
-                if army_supply >= 40:
-                    enemy_base = self._get_enemy_base_location()
-                    if enemy_base:
-                        # Priority 75 (main_attack보다 높지만 80은 아님)
-                        tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
-                        if iteration % 50 == 0:
-                            self.logger.info(f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]")
-            except ImportError:
-                pass
+            # ★ 서플라이 40 이상이면 강력한 타이밍 공격
+            if army_supply >= 40:
+                enemy_base = self._get_enemy_base_location()
+                if enemy_base:
+                    # Priority 75 (main_attack보다 높지만 80은 아님)
+                    tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
+                    if iteration % 50 == 0:
+                        self.logger.info(f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]")
 
         # === TASK 2.8: ★ EXPANSION DENIAL (확장 견제) ★ ===
         # 적의 새로운 확장을 감지하면 저글링 특공대 파견
@@ -3550,22 +3530,18 @@ class CombatManager:
         if not enemy_threats:
             return False
 
-        try:
-            from sc2.ids.unit_typeid import UnitTypeId
             
-            # For Mutalisks: retreat if facing anti-air
-            if unit.type_id == UnitTypeId.MUTALISK:
-                anti_air = enemy_threats.filter(lambda e: e.can_attack_air)
-                if len(anti_air) >= 3:  # 3+ anti-air units
-                    return True
+        # For Mutalisks: retreat if facing anti-air
+        if unit.type_id == UnitTypeId.MUTALISK:
+            anti_air = enemy_threats.filter(lambda e: e.can_attack_air)
+            if len(anti_air) >= 3:  # 3+ anti-air units
+                return True
 
-            # For Zerglings: retreat if outnumbered 2:1
-            if unit.type_id == UnitTypeId.ZERGLING:
-                if len(enemy_threats) >= 6:  # 6+ enemies
-                    return True
+        # For Zerglings: retreat if outnumbered 2:1
+        if unit.type_id == UnitTypeId.ZERGLING:
+            if len(enemy_threats) >= 6:  # 6+ enemies
+                return True
 
-        except ImportError:
-            pass
 
         return False
 
@@ -3623,38 +3599,34 @@ class CombatManager:
         Returns:
             Position of harassment target or None
         """
-        try:
-            from sc2.ids.unit_typeid import UnitTypeId
             
-            # Priority 1: Enemy workers
-            enemy_workers = self.bot.enemy_units.filter(lambda u: u.type_id in {
-                UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE
-            })
+        # Priority 1: Enemy workers
+        enemy_workers = self.bot.enemy_units.filter(lambda u: u.type_id in {
+            UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE
+        })
             
-            if enemy_workers:
-                # Target workers near enemy bases
-                if hasattr(self.bot, 'enemy_start_locations') and self.bot.enemy_start_locations:
-                    enemy_base = self.bot.enemy_start_locations[0]
-                    workers_near_base = enemy_workers.closer_than(20, enemy_base)
-                    if workers_near_base:
-                        return workers_near_base.center
-                return enemy_workers.center
-
-            # Priority 2: Isolated tech buildings
-            tech_buildings = self.bot.enemy_structures.filter(lambda s: s.type_id in {
-                UnitTypeId.TWILIGHTCOUNCIL, UnitTypeId.TEMPLARARCHIVE, UnitTypeId.DARKSHRINE,
-                UnitTypeId.FUSIONCORE, UnitTypeId.GHOSTACADEMY,
-                UnitTypeId.INFESTATIONPIT, UnitTypeId.ULTRALISKCAVERN, UnitTypeId.SPIRE
-            })
-            
-            if tech_buildings:
-                return tech_buildings.first.position
-
-            # Fallback: Enemy base
+        if enemy_workers:
+            # Target workers near enemy bases
             if hasattr(self.bot, 'enemy_start_locations') and self.bot.enemy_start_locations:
-                return self.bot.enemy_start_locations[0]
+                enemy_base = self.bot.enemy_start_locations[0]
+                workers_near_base = enemy_workers.closer_than(20, enemy_base)
+                if workers_near_base:
+                    return workers_near_base.center
+            return enemy_workers.center
 
-        except ImportError:
-            pass
+        # Priority 2: Isolated tech buildings
+        tech_buildings = self.bot.enemy_structures.filter(lambda s: s.type_id in {
+            UnitTypeId.TWILIGHTCOUNCIL, UnitTypeId.TEMPLARARCHIVE, UnitTypeId.DARKSHRINE,
+            UnitTypeId.FUSIONCORE, UnitTypeId.GHOSTACADEMY,
+            UnitTypeId.INFESTATIONPIT, UnitTypeId.ULTRALISKCAVERN, UnitTypeId.SPIRE
+        })
+            
+        if tech_buildings:
+            return tech_buildings.first.position
+
+        # Fallback: Enemy base
+        if hasattr(self.bot, 'enemy_start_locations') and self.bot.enemy_start_locations:
+            return self.bot.enemy_start_locations[0]
+
 
         return None
