@@ -417,7 +417,7 @@ class UnitFactory:
             UnitTypeId.ROACH: UnitTypeId.ROACHWARREN,
             UnitTypeId.RAVAGER: UnitTypeId.ROACHWARREN,
             UnitTypeId.HYDRALISK: UnitTypeId.HYDRALISKDEN,
-            UnitTypeId.LURKER: UnitTypeId.LURKERDENMP,
+            UnitTypeId.LURKERMP: UnitTypeId.LURKERDENMP,
         }
         required = requirements.get(unit_type)
         if not required:
@@ -541,7 +541,7 @@ class UnitFactory:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,
             UnitTypeId.ULTRALISK,
         }
         return sum(1 for unit in units if unit.type_id in combat_types)
@@ -554,7 +554,7 @@ class UnitFactory:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,
             UnitTypeId.ULTRALISK,
         }
         return sum(1 for unit in units if unit.type_id in gas_types)

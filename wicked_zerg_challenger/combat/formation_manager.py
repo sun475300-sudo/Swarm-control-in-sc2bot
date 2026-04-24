@@ -39,7 +39,7 @@ class FormationManager:
             UnitTypeId.ZERGLING,
             UnitTypeId.ULTRALISK,
             UnitTypeId.BANELING,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,
         }
 
     @staticmethod

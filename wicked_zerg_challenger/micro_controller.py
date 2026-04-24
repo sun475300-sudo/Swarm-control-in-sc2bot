@@ -112,7 +112,7 @@ class BoidsController:
                 UnitTypeId.MUTALISK,
                 UnitTypeId.CORRUPTOR,
                 UnitTypeId.ULTRALISK,
-                UnitTypeId.LURKER,
+                UnitTypeId.LURKERMP,
                 UnitTypeId.BROODLORD,
                 UnitTypeId.INFESTOR,
                 UnitTypeId.VIPER,

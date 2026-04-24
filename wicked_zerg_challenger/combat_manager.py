@@ -838,7 +838,7 @@ class CombatManager:
         high_threat_units = {
             "SIEGETANK", "SIEGETANKSIEGED", "THOR", "BATTLECRUISER",
             "COLOSSUS", "DISRUPTOR", "IMMORTAL", "ARCHON",
-            "ULTRALISK", "BROODLORD", "RAVAGER", "LURKER"
+            "ULTRALISK", "BROODLORD", "RAVAGER", "LURKERMP"
         }
 
         # 위협 수준: light (1-2), medium (3-5), heavy (6+), critical (고위협 유닛 포함)
@@ -1730,7 +1730,7 @@ class CombatManager:
     def _filter_ground_units(self, units):
         """Filter ground army units"""
         return self._filter_units_by_type(
-            units, ["ZERGLING", "ROACH", "HYDRALISK", "RAVAGER", "ULTRALISK", "LURKER", "BANELING"]
+            units, ["ZERGLING", "ROACH", "HYDRALISK", "RAVAGER", "ULTRALISK", "LURKERMP", "BANELING"]
         )
 
     def _update_dynamic_frame_skip(self):
@@ -2553,7 +2553,7 @@ class CombatManager:
             "BANELING", "ROACH", "STALKER", "MARAUDER",
             "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE",
             "HYDRALISK", "MUTALISK", "CORRUPTOR", "BROODLORD",
-            "RAVAGER", "LURKER", "ULTRALISK", "INFESTOR",
+            "RAVAGER", "LURKERMP", "ULTRALISK", "INFESTOR",
             "COLOSSUS", "DISRUPTOR", "IMMORTAL", "ARCHON",
             "THOR", "HELLION", "HELLIONTANK", "CYCLONE",
             "BATTLECRUISER", "LIBERATOR", "VIKING", "MEDIVAC",
@@ -2925,7 +2925,7 @@ class CombatManager:
         # 모든 군대 유닛 수집
         army_types = {
             UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
-            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKER,
+            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
             UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK,
             UnitTypeId.BROODLORD, UnitTypeId.INFESTOR, UnitTypeId.VIPER
         }

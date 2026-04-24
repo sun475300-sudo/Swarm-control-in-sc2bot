@@ -468,7 +468,7 @@ class CombatPhaseController:
 
         combat_types = [
             UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
-            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKER,
+            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
             UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK
         ]
 

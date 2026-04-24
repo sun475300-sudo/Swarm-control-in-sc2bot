@@ -742,7 +742,7 @@ class DefenseCoordinator:
         recruit_range = 30  # 기지에서 30 이내 유닛만 소환
 
         combat_types = {UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.RAVAGER,
-                        UnitTypeId.HYDRALISK, UnitTypeId.LURKER, UnitTypeId.ULTRALISK,
+                        UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP, UnitTypeId.ULTRALISK,
                         UnitTypeId.BANELING, UnitTypeId.QUEEN}
 
         for unit_type in combat_types:

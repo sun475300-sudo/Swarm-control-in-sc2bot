@@ -159,7 +159,7 @@ def show_rl_agent():
         logger.info("  [알림] RL 모델 파일을 찾을 수 없습니다. (아직 훈련되지 않았을 수 있습니다)")
 
 def main():
-    logger.info("")
+    logger.info("=== Learned Data Summary ===")
     show_build_orders()
     show_rl_agent()
     logger.info("\n" + "="*60)

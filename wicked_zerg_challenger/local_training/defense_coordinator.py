@@ -482,8 +482,8 @@ class DefenseCoordinator:
             
             # Dangerous enemies to NEVER fight with drones
             dangerous_types = {
-                UnitTypeId.HELLION, UnitTypeId.BANELING, UnitTypeId.ARCHON, 
-                UnitTypeId.COLOSSUS, UnitTypeId.LURKER
+                UnitTypeId.HELLION, UnitTypeId.BANELING, UnitTypeId.ARCHON,
+                UnitTypeId.COLOSSUS, UnitTypeId.LURKERMP
             }
             if any(e.type_id in dangerous_types for e in nearby_enemies):
                 should_fight = False

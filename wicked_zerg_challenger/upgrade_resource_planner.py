@@ -386,7 +386,7 @@ class UpgradeResourcePlanner:
         for unit in self.bot.units:
             if unit.type_id in [UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ULTRALISK]:
                 composition["melee"] += 1
-            elif unit.type_id in [UnitTypeId.ROACH, UnitTypeId.HYDRALISK, UnitTypeId.RAVAGER, UnitTypeId.LURKER]:
+            elif unit.type_id in [UnitTypeId.ROACH, UnitTypeId.HYDRALISK, UnitTypeId.RAVAGER, UnitTypeId.LURKERMP]:
                 composition["ranged"] += 1
             elif unit.type_id in [UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD]:
                 composition["air"] += 1

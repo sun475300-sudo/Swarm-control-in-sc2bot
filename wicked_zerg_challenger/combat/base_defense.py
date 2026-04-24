@@ -351,7 +351,7 @@ class BaseDefenseSystem:
         # 모든 군대 유닛 수집
         army_types = {
             UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
-            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKER,
+            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
             UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK,
             UnitTypeId.BROODLORD, UnitTypeId.INFESTOR, UnitTypeId.VIPER
         }

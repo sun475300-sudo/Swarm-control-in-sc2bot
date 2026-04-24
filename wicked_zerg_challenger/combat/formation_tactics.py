@@ -54,7 +54,7 @@ class ConcaveFormationController:
                 UnitTypeId.ROACH,
                 UnitTypeId.RAVAGER,
                 UnitTypeId.HYDRALISK,
-                UnitTypeId.LURKER,
+                UnitTypeId.LURKERMP,
                 UnitTypeId.QUEEN,
             }
 
@@ -189,7 +189,6 @@ class BurrowController:
             self.burrow_unit_types = {
                 UnitTypeId.ROACH,
                 UnitTypeId.ROACHBURROWED,
-                UnitTypeId.LURKER,  # Likely LURKERMP
                 UnitTypeId.LURKERMP,
                 UnitTypeId.LURKERMPBURROWED,
                 UnitTypeId.BANELING,
