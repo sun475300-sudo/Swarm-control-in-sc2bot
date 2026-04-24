@@ -13,6 +13,10 @@ from sc2.position import Point2
 from sc2.ids.unit_typeid import UnitTypeId
 from utils.logger import get_logger
 import random
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class OverlordSafetyManager:
     """
@@ -408,16 +412,16 @@ class OverlordSafetyManager:
                     if len(expansions) >= 3:
                         enemy_third = expansions[2]
                         positions.append(enemy_third)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         # 3. Xel'Naga watchtowers
         try:
             if hasattr(self.bot, "watchtowers") and self.bot.watchtowers:
                 for tower in self.bot.watchtowers:
                     positions.append(tower.position)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
         # 4. If no watchtowers found, add midpoints between bases
         if len(positions) < 4 and enemy_start:
@@ -430,8 +434,8 @@ class OverlordSafetyManager:
                          (our_start.y + enemy_start.y) / 2)
                     )
                     positions.append(mid)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
         self.logger.info(f"[SCOUT] Optimal scout positions: {len(positions)} locations identified")
         return positions

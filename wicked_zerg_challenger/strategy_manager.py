@@ -21,6 +21,10 @@ from pathlib import Path
 from utils.logger import get_logger
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from knowledge_manager import KnowledgeManager
@@ -912,8 +916,8 @@ class StrategyManager:
                 if building_coord.can_build(UnitTypeId.SPIRE):
                     building_coord.request_building(UnitTypeId.SPIRE, "StrategyManager-AirThreat")
                     self.logger.info(f"[{int(game_time)}s] Spire build requested via BuildingCoordination")
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -933,22 +937,22 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
         return 0
 

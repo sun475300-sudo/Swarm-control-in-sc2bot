@@ -15,6 +15,10 @@ Features:
 """
 
 from typing import Dict, Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -411,8 +415,8 @@ class UnitMorphManager:
             self.bot.do(target_overlord(AbilityId.MORPH_OVERSEER))
             self.last_overseer_morph = self.bot.time
             self.logger.info(f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
     def _get_enemy_race(self) -> str:
         """상대 종족 확인"""

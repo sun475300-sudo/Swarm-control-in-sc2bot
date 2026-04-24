@@ -20,6 +20,10 @@ Integration:
 from typing import Dict, List, Optional, Set, Tuple
 from collections import defaultdict
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -1220,8 +1224,8 @@ class AdvancedMicroControllerV3:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
     async def on_step(self, iteration: int):
         """

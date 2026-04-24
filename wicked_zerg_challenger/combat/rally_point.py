@@ -9,6 +9,10 @@ Rally Point Manager - 랠리 포인트 관리
 """
 
 from typing import Optional, TYPE_CHECKING
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from sc2.units import Units
@@ -122,8 +126,8 @@ class RallyPointManager:
         if self.bot.townhalls.amount > 1 and hasattr(self.bot, "game_info"):
             try:
                 target_base = self.bot.townhalls.closest_to(self.bot.game_info.map_center)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
         # 기지와 맵 중앙 사이 (전진 배치)
         if hasattr(self.bot, "game_info"):

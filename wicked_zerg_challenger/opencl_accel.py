@@ -9,6 +9,10 @@ This module is intentionally dependency-tolerant:
 from __future__ import annotations
 
 from typing import Optional, Sequence, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 try:
@@ -93,8 +97,8 @@ def nearest_point_index_opencl(
             _OPENCL_QUEUE.finish()
 
             return int(np.argmin(out_np))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
     best_idx = None
     best_dist_sq = float("inf")

@@ -10,6 +10,10 @@ Features:
 
 import math
 from typing import Dict, List, Optional, Set, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -291,8 +295,8 @@ class MutaliskMicroController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         return combat_ready, regenerating
 
@@ -337,5 +341,5 @@ class MutaliskMicroController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)

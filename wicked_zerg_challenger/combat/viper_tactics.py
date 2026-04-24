@@ -10,6 +10,10 @@ Feature #96: 바이퍼 활용 매니저
 """
 
 from typing import Dict, List, Optional, Set, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -382,8 +386,8 @@ class ViperTacticsManager:
             target_building = consumable.closest_to(viper)
             try:
                 self.bot.do(viper(AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
     async def _maintain_safe_distance(self, viper: Unit, enemy_units):
         """바이퍼 안전 거리 유지"""

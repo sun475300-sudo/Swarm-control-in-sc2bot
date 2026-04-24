@@ -15,6 +15,10 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.upgrade_id import UpgradeId
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 class RoachTactics:
@@ -110,8 +114,8 @@ class RoachTacticsTrainer:
         try:
             self.has_burrow = UpgradeId.BURROW in self.bot.state.upgrades
             self.has_tunneling_claws = UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
     def _update_roach_tracking(self, roaches, game_time: float):
         """바퀴 추적 업데이트"""
@@ -190,8 +194,8 @@ class RoachTacticsTrainer:
                     self.logger.info(
                         f"[BURROW] Roach {roach.tag} burrowing at {hp_ratio*100:.1f}% HP"
                     )
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
     async def _unburrow_healed_roaches(self, roaches, game_time: float):
         """
@@ -238,8 +242,8 @@ class RoachTacticsTrainer:
                         f"[UNBURROW] Roach {roach.tag} healed {hp_healed:.1f} HP "
                         f"({hp_ratio*100:.1f}% HP) in {burrow_duration:.1f}s"
                     )
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
     def _is_in_combat(self, roach) -> bool:
         """바퀴가 전투 중인지 확인"""

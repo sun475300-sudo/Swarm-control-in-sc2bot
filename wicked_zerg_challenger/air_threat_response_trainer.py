@@ -12,6 +12,10 @@ Air Threat Response Trainer - 공중 위협 대응 학습 시스템
 from typing import Dict, Set, List, Optional
 from sc2.ids.unit_typeid import UnitTypeId
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 class ThreatLevel:
@@ -227,8 +231,8 @@ class AirThreatResponseTrainer:
                 if queens.amount < 5:
                     self.logger.info("[PRODUCTION] Requesting more Queens")
 
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("%s: %r", "swallowed", exc)
 
     def get_current_strategy(self) -> str:
         """현재 전략 반환"""

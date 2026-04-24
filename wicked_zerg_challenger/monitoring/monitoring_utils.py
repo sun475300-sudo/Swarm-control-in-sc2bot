@@ -13,6 +13,10 @@ import json
 from pathlib import Path
 from glob import glob
 from typing import Optional, Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 def get_base_dir() -> Path:
@@ -37,8 +41,8 @@ def load_json(path: Path) -> Optional[Dict[str, Any]]:
         if path.exists():
             with path.open("r", encoding="utf-8") as f:
                 return json.load(f)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("%s: %r", "swallowed", exc)
     return None
 
 
@@ -57,8 +61,8 @@ def find_latest_instance_status(base_dir: Path) -> Optional[Dict[str, Any]]:
         if files:
             latest = max(files, key=lambda p: Path(p).stat().st_mtime)
             return load_json(Path(latest))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("%s: %r", "swallowed", exc)
     return None
 
 

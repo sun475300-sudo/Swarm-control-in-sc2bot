@@ -15,6 +15,10 @@ Feature #95: 럴커 포지셔닝 매니저
 
 from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -391,8 +395,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWDOWN_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWDOWN_LURKER))
                 self.lurker_burrowed[lurker.tag] = True
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
     async def _unburrow_lurker(self, lurker: Unit):
         """럴커 언버로우"""
@@ -404,8 +408,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWUP_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWUP_LURKER))
                 self.lurker_burrowed[lurker.tag] = False
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
     def _check_enemies_nearby(self, lurker: Unit, distance: float) -> bool:
         """주변 적 유닛 확인"""

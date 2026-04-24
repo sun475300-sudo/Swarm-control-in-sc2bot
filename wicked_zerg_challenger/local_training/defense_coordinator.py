@@ -4,6 +4,10 @@ from sc2.ids.ability_id import AbilityId
 from sc2.position import Point2
 from sc2.units import Units
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class DefenseCoordinator:
     """
@@ -112,8 +116,8 @@ class DefenseCoordinator:
                         )
                         self.logger.info(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Spawning Pool build")
                         return
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("%s: %r", "swallowed", exc)
 
             # 스포닝 풀이 완료되지 않았으면 대기
             if not spawning_pool_ready:
@@ -134,8 +138,8 @@ class DefenseCoordinator:
                             b.do(hatchery.train(UnitTypeId.QUEEN))
                             self.logger.info(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Queen production")
                             break
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("%s: %r", "swallowed", exc)
 
             # === 저글링 생산 (최소 방어 병력) ===
             zerglings = b.units(UnitTypeId.ZERGLING) if hasattr(b, "units") else []
@@ -235,8 +239,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPINE REQUESTED (Strat: {requested_spine}, Local: {local_rush})")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         # ★★★ IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ★★★
         if requested_spore and spore_count + pending_spores < 3:  # 긴급 시 3개까지 증가 (기존: 1개)
@@ -249,8 +253,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPORE #{spore_count + 1} REQUESTED (Air threat)")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         # === 4. Proactive Timeline (Standard Play) ===
         if game_time - self._last_defense_build_time < 15: # Respect cooldown for scheduled builds
@@ -266,8 +270,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #1")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         # 3:00+ : Second Spine Crawler
         if game_time >= 180 and spine_count + pending_spines < 2:
@@ -279,8 +283,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #2")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         # ★★★ OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) ★★★
         if game_time >= 180 and spore_count + pending_spores < 1:  # 정확히 3:00
@@ -314,8 +318,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #3")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
         # === 확장 기지 방어 (5분 이후) ===
         if game_time >= 300:
@@ -366,8 +370,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine at expansion")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
             # ★★★ IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 → 2개) ★★★
             if spore_count < 2 and b.can_afford(UnitTypeId.SPORECRAWLER):  # 확장당 2개로 증가
@@ -377,8 +381,8 @@ class DefenseCoordinator:
                     self._last_defense_build_time = game_time
                     self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore #{spore_count + 1} at expansion")
                     return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("%s: %r", "swallowed", exc)
 
     async def _handle_drop_defense(self) -> None:
         """

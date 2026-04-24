@@ -4,6 +4,10 @@ Rally Point Calculator Module
 
 병력 집결지 계산 및 관리를 담당하는 모듈
 """
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 def calculate_rally_point(manager):
@@ -29,8 +33,8 @@ def calculate_rally_point(manager):
     if manager.bot.townhalls.amount > 1 and hasattr(manager.bot, "game_info"):
         try:
             target_base = manager.bot.townhalls.closest_to(manager.bot.game_info.map_center)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("%s: %r", "swallowed", exc)
 
     # 기지와 맵 중앙 사이 (전진 배치)
     if hasattr(manager.bot, "game_info"):
