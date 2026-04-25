@@ -834,11 +834,20 @@ class AdvancedScoutingSystemV2:
             return self._patrol_routes.get(route_name)
         return None
 
-    def _assign_patrol(self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD) -> bool:
+    def _assign_patrol(self, route_name: str, unit_type: Optional[UnitTypeId] = None) -> bool:
         """
         특정 순찰 경로에 유닛 배정.
         중반 이후 오버로드/감시군주를 적진 순환 순찰에 투입.
+
+        Note: unit_type 기본값을 ``None``으로 두고 메서드 내부에서
+        ``UnitTypeId.OVERLORD``로 해석한다. 모듈 임포트 시점에는
+        burnysc2가 없는 환경(테스트/CI 일부)에서 ``UnitTypeId``가
+        빈 stub일 수 있어 클래스 정의 시점에 ``UnitTypeId.OVERLORD``를
+        평가하면 ``AttributeError``가 발생, 모듈 자체가 import 실패한다.
         """
+        if unit_type is None:
+            unit_type = UnitTypeId.OVERLORD
+
         route = self._patrol_routes.get(route_name)
         if not route:
             return False
