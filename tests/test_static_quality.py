@@ -48,6 +48,31 @@ def test_no_f821_or_f822_in_package() -> None:
     )
 
 
+@pytest.mark.skipif(shutil.which("flake8") is None, reason="flake8 not installed")
+def test_no_f811_redefinition_in_package() -> None:
+    """Package must stay free of `F811` (redefinition of unused name).
+
+    Most F811 cases on this codebase have been duplicate `async def` methods
+    where the second definition silently shadowed a richer first one — losing
+    chunks of bot logic without any warning. The other class is duplicate
+    imports inside function bodies, which is harmless but obscures intent.
+    """
+    result = subprocess.run(
+        [
+            "flake8",
+            str(PACKAGE_ROOT),
+            "--select=F811",
+            "--exclude=__pycache__,.venv",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+    )
+    assert result.returncode == 0, (
+        "flake8 found redefinition errors (F811):\n" + result.stdout + result.stderr
+    )
+
+
 def test_check_missing_logic_runs_without_error() -> None:
     """tools/check_missing_logic.py crashed on `Path.rglob` unpacking; guard it."""
     script = PACKAGE_ROOT / "tools" / "check_missing_logic.py"
