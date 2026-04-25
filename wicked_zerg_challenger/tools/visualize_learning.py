@@ -17,14 +17,19 @@ import logging
 
 logger = logging.getLogger("VisualizeLearning")
 
-# matplotlib 설치 확인
+# matplotlib 설치 확인 — import 시점에는 sys.exit 하지 말고, main 진입에서 처리한다
+# (단순 import 만으로 프로세스가 죽으면 다른 도구의 모듈 스캔이 차단됨)
 try:
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
-except ImportError:
-    logger.error("matplotlib is not installed.")
-    logger.info("Please install it using: pip install matplotlib")
-    sys.exit(1)
+
+    _MATPLOTLIB_AVAILABLE = True
+    _MATPLOTLIB_ERROR = None
+except ImportError as _e:
+    plt = None  # type: ignore[assignment]
+    gridspec = None  # type: ignore[assignment]
+    _MATPLOTLIB_AVAILABLE = False
+    _MATPLOTLIB_ERROR = _e
 
 
 class TrainingVisualizer:
@@ -172,14 +177,21 @@ class TrainingVisualizer:
         plt.close()
 
 def main():
-    logger.info("="*60)
+    if not _MATPLOTLIB_AVAILABLE:
+        logger.error("matplotlib is not installed: %s", _MATPLOTLIB_ERROR)
+        logger.info("Please install it using: pip install matplotlib")
+        return 1
+
+    logger.info("=" * 60)
     logger.info(" Learning Progress Visualizer")
-    logger.info("="*60)
-    
+    logger.info("=" * 60)
+
     visualizer = TrainingVisualizer()
     visualizer.plot_progress()
-    
+
     logger.info("\nVisualization Complete.")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
