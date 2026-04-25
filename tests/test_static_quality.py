@@ -49,6 +49,28 @@ def test_no_f821_or_f822_in_package() -> None:
 
 
 @pytest.mark.skipif(shutil.which("flake8") is None, reason="flake8 not installed")
+def test_no_e713_or_e714_in_package() -> None:
+    """`not x in y` parses as `not (x in y)` only by accident; prefer
+    `x not in y` so the intent is impossible to misread (and identical
+    bytecode). E713/E714 must stay clean."""
+    result = subprocess.run(
+        [
+            "flake8",
+            str(PACKAGE_ROOT),
+            "--select=E713,E714",
+            "--exclude=__pycache__,.venv",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+    )
+    assert result.returncode == 0, (
+        "flake8 found 'not x in y' / 'not x is y' (use 'x not in y' / "
+        "'x is not y'):\n" + result.stdout + result.stderr
+    )
+
+
+@pytest.mark.skipif(shutil.which("flake8") is None, reason="flake8 not installed")
 def test_no_f811_redefinition_in_package() -> None:
     """Package must stay free of `F811` (redefinition of unused name).
 

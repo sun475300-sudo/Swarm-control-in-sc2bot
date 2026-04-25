@@ -258,7 +258,7 @@ class InfestorTacticsController:
                 continue
 
             # ★ INFILTRATION MODE: High energy, target available ★
-            if energy >= self.energy_threshold and not unit_tag in self.infiltrating:
+            if energy >= self.energy_threshold and unit_tag not in self.infiltrating:
                 infiltration_target = self.find_infiltration_target(bot)
                 if infiltration_target:
                     # Start infiltration
