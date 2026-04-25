@@ -239,20 +239,16 @@ class CombatExecution:
         """적 유닛들의 중심 위치 계산"""
         if not enemy_units:
             return None
-
-        items = list(enemy_units)
-        if not items:
-            return None
-
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
-
         try:
-            from sc2.position import Point2
-            return Point2((x_sum / count, y_sum / count))
+            from utils.position_utils import get_center_position
         except ImportError:
-            return items[0].position
+            try:
+                items = list(enemy_units)
+                return items[0].position if items else None
+            except (TypeError, AttributeError):
+                return None
+        items = list(enemy_units)
+        return get_center_position(items) if items else None
 
     def _closest_enemy(self, enemy_units, unit):
         """가장 가까운 적 찾기"""

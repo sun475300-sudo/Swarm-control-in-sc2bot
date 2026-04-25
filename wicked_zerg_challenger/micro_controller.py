@@ -31,6 +31,7 @@ from combat.threat_response import SplashThreatHandler
 from combat.formation_tactics import ConcaveFormationController, BurrowController
 from combat.targeting import select_target
 from combat.stutter_step_kiting import StutterStepKiting
+from utils.position_utils import get_center_position
 
 
 class BoidsController:
@@ -505,11 +506,9 @@ class BoidsController:
     @staticmethod
     def _centroid(units):
         """Calculate center of mass for a group of units."""
-        if not units or not Point2:
+        if not Point2:
             return Point2((0, 0))
-        total_x = sum(u.position.x for u in units)
-        total_y = sum(u.position.y for u in units)
-        return Point2((total_x / len(units), total_y / len(units)))
+        return get_center_position(units)
 
     async def _do_actions(self, actions: List) -> None:
         """Execute a batch of unit actions."""

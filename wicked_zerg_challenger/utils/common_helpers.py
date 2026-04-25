@@ -10,6 +10,11 @@ Common Helpers - 공통 유틸리티 함수
 
 from typing import Any, Optional, List
 
+try:
+    from sc2.position import Point2
+except ImportError:
+    Point2 = None
+
 
 def has_units(units: Any) -> bool:
     """
@@ -143,6 +148,72 @@ def clamp(value: float, min_value: float, max_value: float) -> float:
         >>> worker_count = clamp(calculated_workers, 0, 24)
     """
     return max(min_value, min(value, max_value))
+
+
+def units_amount(units: Any) -> int:
+    """Alias of safe_amount for symmetry with SC2 API style."""
+    return safe_amount(units)
+
+
+def filter_by_type(units: Any, unit_type: Any) -> List[Any]:
+    """
+    Filter a unit collection by type id, working with both SC2 Units and lists.
+    """
+    if not has_units(units) or unit_type is None:
+        return []
+
+    try:
+        if hasattr(units, 'of_type'):
+            return units.of_type(unit_type)
+        return [u for u in units if getattr(u, 'type_id', None) == unit_type]
+    except (AttributeError, TypeError):
+        return []
+
+
+def closest_enemy(unit: Any, enemies: Any) -> Optional[Any]:
+    """
+    Closest enemy to a unit, gracefully handling missing positions or
+    SC2 API quirks.
+    """
+    if unit is None or not has_units(enemies):
+        return None
+
+    position = getattr(unit, 'position', None)
+    if position is None:
+        return None
+
+    return safe_closest(enemies, position)
+
+
+def centroid(units: Any) -> Optional[Any]:
+    """
+    Geometric center of a unit collection.
+
+    Returns None when SC2's Point2 is not importable so callers can fall
+    back gracefully without raising.
+    """
+    if not has_units(units) or Point2 is None:
+        return None
+
+    try:
+        items = list(units)
+    except TypeError:
+        return None
+
+    count = len(items)
+    if count == 0:
+        return None
+
+    x_sum = 0.0
+    y_sum = 0.0
+    for u in items:
+        pos = getattr(u, 'position', None)
+        if pos is None:
+            return None
+        x_sum += pos.x
+        y_sum += pos.y
+
+    return Point2((x_sum / count, y_sum / count))
 
 
 def percentage(value: float, total: float) -> float:

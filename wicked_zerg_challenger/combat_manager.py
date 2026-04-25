@@ -2621,15 +2621,10 @@ class CombatManager:
     def _get_enemy_center(self, enemy_units):
         if HELPERS_AVAILABLE:
             return centroid(enemy_units)
-        if not Point2:
+        if not Point2 or not enemy_units:
             return None
-        items = list(enemy_units)
-        if not items:
-            return None
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
-        return Point2((x_sum / count, y_sum / count))
+        from utils.position_utils import get_center_position
+        return get_center_position(list(enemy_units)) or None
 
     def _closest_enemy(self, enemy_units, unit):
         if HELPERS_AVAILABLE:
