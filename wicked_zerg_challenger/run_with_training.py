@@ -93,9 +93,6 @@ def main():
     Main entry point for bot execution with training enabled.
     IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
-    import time
-    import random
-
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
     logger.info("=" * 70)
@@ -769,7 +766,6 @@ def main():
                 sys.path.insert(0, str(script_dir))
 
             from tools.extract_and_train_from_training import TrainingDataExtractor
-            from datetime import datetime
 
             extractor = TrainingDataExtractor()
 
