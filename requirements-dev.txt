@@ -1,0 +1,21 @@
+# ═══════════════════════════════════════════════
+# Development / Test Dependencies
+# ═══════════════════════════════════════════════
+# Install with: pip install -r requirements-dev.txt
+#
+# Keeps CI / local / contributor environments in sync so async tests
+# don't silently fall back to xfail and timeout = N in pytest.ini does
+# not produce "Unknown config option" warnings.
+
+# Core test runner
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
+pytest-timeout>=2.3.0
+pytest-cov>=4.1.0
+
+# Lint / format / static analysis
+flake8>=6.0.0
+mypy>=1.5.0
+black>=24.0.0
+isort>=5.12.0
+bandit>=1.7.0
