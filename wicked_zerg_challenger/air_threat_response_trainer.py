@@ -114,7 +114,6 @@ class AirThreatResponseTrainer:
 
         light_count = light_air.amount
         heavy_count = heavy_air.amount
-        total_air = light_count + heavy_count
 
         # 위협 가중치 (중형 공중은 2배)
         threat_score = light_count + (heavy_count * 2)

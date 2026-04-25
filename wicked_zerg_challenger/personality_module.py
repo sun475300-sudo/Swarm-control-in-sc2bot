@@ -224,7 +224,6 @@ class PersonalityModule:
 
         games = stats["games_played"]
         win_rate = stats["win_rate"] * 100
-        style = stats["dominant_style"]
         
         # Format message based on win rate
         if win_rate > 70:

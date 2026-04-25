@@ -264,7 +264,6 @@ class UnitFactory:
         # 2. Fallback to direct access if Blackboard missing (Backward Compat)
         elif hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             strategy = self.bot.strategy_manager
-            strategy_mode = getattr(strategy, "current_mode", "NORMAL")
             # emergency_active handled below
 
         strategy = getattr(self.bot, "strategy_manager", None) # Still needed for get_unit_ratios until that is moved to Blackboard
