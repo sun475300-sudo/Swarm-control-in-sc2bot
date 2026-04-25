@@ -30,13 +30,14 @@ except ImportError:
 
 class MacroPriority(Enum):
     """매크로 우선순위"""
-    INJECT = 1          # 인젝트 라바 (최우선)
-    SUPPLY = 2          # 서플라이 관리
-    WORKER = 3          # 일꾼 생산
-    ARMY = 4            # 군대 생산
-    CREEP = 5           # 크립 확산
-    UPGRADE = 6         # 업그레이드
-    TECH = 7            # 테크 건물
+
+    INJECT = 1  # 인젝트 라바 (최우선)
+    SUPPLY = 2  # 서플라이 관리
+    WORKER = 3  # 일꾼 생산
+    ARMY = 4  # 군대 생산
+    CREEP = 5  # 크립 확산
+    UPGRADE = 6  # 업그레이드
+    TECH = 7  # 테크 건물
 
 
 class QueenAssignment:
@@ -181,7 +182,9 @@ class MacroCycleManager:
         unassigned = active_queen_tags - assigned_queen_tags - self.creep_queen_tags
 
         # 배정되지 않은 기지 찾기
-        assigned_hatchery_tags = {a.hatchery_tag for a in self.queen_assignments.values()}
+        assigned_hatchery_tags = {
+            a.hatchery_tag for a in self.queen_assignments.values()
+        }
         unassigned_hatcheries = active_hatchery_tags - assigned_hatchery_tags
 
         # 매칭 (가장 가까운 퀸-기지 페어링)
@@ -276,11 +279,14 @@ class MacroCycleManager:
                 # 필요한 오버로드 수 계산
                 needed = max(0, 2 - already_pending)
                 if needed > 0:
-                    self.production_queue.insert(0, {
-                        "unit": "overlord",
-                        "count": needed,
-                        "priority": MacroPriority.SUPPLY.value,
-                    })
+                    self.production_queue.insert(
+                        0,
+                        {
+                            "unit": "overlord",
+                            "count": needed,
+                            "priority": MacroPriority.SUPPLY.value,
+                        },
+                    )
 
     def _update_larva_efficiency(self) -> None:
         """라바 사용 효율 추적"""
@@ -289,7 +295,9 @@ class MacroCycleManager:
                 return
 
             current_larva = self.bot.units(UnitTypeId.LARVA).amount
-            base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
+            base_count = (
+                self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
+            )
 
             # 기지당 최적 라바 수: 3 (인젝트 1회당 3라바)
             optimal_larva = base_count * 3
@@ -392,11 +400,13 @@ class MacroCycleManager:
         # 1. 서플라이 위기 -> 오버로드
         supply_left = getattr(self.bot, "supply_left", 0)
         if supply_left <= 2:
-            priorities.append({
-                "unit": "overlord",
-                "reason": "서플라이 블록 방지",
-                "priority": 1,
-            })
+            priorities.append(
+                {
+                    "unit": "overlord",
+                    "reason": "서플라이 블록 방지",
+                    "priority": 1,
+                }
+            )
 
         # 2. 드론 부족
         drone_count = 0
@@ -408,18 +418,22 @@ class MacroCycleManager:
 
         target_drones = self.get_optimal_drone_target()
         if drone_count < target_drones:
-            priorities.append({
-                "unit": "drone",
-                "reason": f"드론 부족 ({drone_count}/{target_drones})",
-                "priority": 2,
-            })
+            priorities.append(
+                {
+                    "unit": "drone",
+                    "reason": f"드론 부족 ({drone_count}/{target_drones})",
+                    "priority": 2,
+                }
+            )
 
         # 3. 군대 생산
-        priorities.append({
-            "unit": "army",
-            "reason": "군대 확충",
-            "priority": 3,
-        })
+        priorities.append(
+            {
+                "unit": "army",
+                "reason": "군대 확충",
+                "priority": 3,
+            }
+        )
 
         return priorities
 

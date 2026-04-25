@@ -27,7 +27,8 @@ discord.py>=2.3.0
 # ═══════════════════════════════════════════════
 # AI / GenAI
 # ═══════════════════════════════════════════════
-google-generativeai>=0.5.0
+# pip resolution-too-deep 회피: upper bound 추가로 backtracking 깊이 차단
+google-generativeai>=0.7,<1.0
 
 # ═══════════════════════════════════════════════
 # MCP Servers & Claude Agent SDK
@@ -83,6 +84,6 @@ comtypes>=1.2.0; sys_platform == "win32"
 # ═══════════════════════════════════════════════
 # Test / Dev Tooling
 # ═══════════════════════════════════════════════
-pytest>=8.0
-pytest-asyncio>=0.23
-pytest-timeout>=2.3
+pytest>=8.0,<9
+pytest-asyncio>=0.23,<1
+pytest-timeout>=2.3,<3

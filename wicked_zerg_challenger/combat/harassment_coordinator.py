@@ -59,6 +59,7 @@ class AggressiveMode(Enum):
     - AGGRESSIVE: 15% 병력 할당, 공격적 견제 (우세 시)
     - ULTRA_AGGRESSIVE: 25% 병력 할당, 초공격적 견제 (초반 1-4분)
     """
+
     PASSIVE = "passive"
     OPPORTUNISTIC = "opportunistic"
     AGGRESSIVE = "aggressive"
@@ -78,7 +79,9 @@ class HarassmentCoordinator:
         self.zergling_runby_active = False
         self.zergling_runby_tags: Set[int] = set()
         self.zergling_runby_cooldown = 0  # 쿨다운 (초)
-        self.zergling_runby_interval = 60  # ★ Phase 17: 2분 → 1분으로 단축 (더 빈번한 견제) ★
+        self.zergling_runby_interval = (
+            60  # ★ Phase 17: 2분 → 1분으로 단축 (더 빈번한 견제) ★
+        )
 
         # ★ Mutalisk Harassment ★
         self.mutalisk_harass_active = False
@@ -116,7 +119,7 @@ class HarassmentCoordinator:
             "zergling_runby": set(),
             "mutalisk_harass": set(),
             "baneling_drop": set(),
-            "roach_poke": set()
+            "roach_poke": set(),
         }
         self.squad_lock_duration: Dict[str, float] = {}  # {squad_name: lock_until_time}
         self.default_lock_duration = 30.0  # 30초 동안 유닛 고정
@@ -148,7 +151,9 @@ class HarassmentCoordinator:
         self.raids_executed = 0
         self.last_worker_kill_count = 0  # 시작 시점 적 일꾼 수 스냅샷
         self._aggro_mode_last_update = 0  # 마지막 공격모드 자동 갱신 시간
-        self._mineral_line_defense_cache: Dict[Point2, int] = {}  # 미네랄라인별 방어력 캐시
+        self._mineral_line_defense_cache: Dict[Point2, int] = (
+            {}
+        )  # 미네랄라인별 방어력 캐시
         self._defense_cache_time = 0
 
     async def on_step(self, iteration: int):
@@ -217,9 +222,15 @@ class HarassmentCoordinator:
 
         # ★ 1. Enemy Expansions (highest priority) ★
         enemy_bases = self.bot.enemy_structures.filter(
-            lambda s: getattr(s.type_id, "name", "").upper() in {
-                "COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE",
-                "PLANETARYFORTRESS", "ORBITALCOMMAND"
+            lambda s: getattr(s.type_id, "name", "").upper()
+            in {
+                "COMMANDCENTER",
+                "NEXUS",
+                "HATCHERY",
+                "LAIR",
+                "HIVE",
+                "PLANETARYFORTRESS",
+                "ORBITALCOMMAND",
             }
         )
 
@@ -228,10 +239,20 @@ class HarassmentCoordinator:
 
         # ★ 2. Tech Buildings ★
         tech_buildings = self.bot.enemy_structures.filter(
-            lambda s: getattr(s.type_id, "name", "").upper() in {
-                "FACTORY", "STARPORT", "ROBOTICSFACILITY", "STARGATE",
-                "TWILIGHTCOUNCIL", "SPIRE", "HYDRALISKDEN", "TEMPLARARCHIVE", 
-                "DARKSHRINE", "FLEETBEACON", "GHOSTACADEMY", "FUSIONCORE"
+            lambda s: getattr(s.type_id, "name", "").upper()
+            in {
+                "FACTORY",
+                "STARPORT",
+                "ROBOTICSFACILITY",
+                "STARGATE",
+                "TWILIGHTCOUNCIL",
+                "SPIRE",
+                "HYDRALISKDEN",
+                "TEMPLARARCHIVE",
+                "DARKSHRINE",
+                "FLEETBEACON",
+                "GHOSTACADEMY",
+                "FUSIONCORE",
             }
         )
 
@@ -244,7 +265,10 @@ class HarassmentCoordinator:
         """
         if self.priority_targets:
             # ★ Phase 32: 위협 평가 후 가장 방어가 약한 적 기지 선택
-            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
                 enemy_main = self.bot.enemy_start_locations[0]
                 # 방어 약한 순으로 정렬 (동점 시 적 본진과 가까운 곳 = 확장 = 더 취약)
                 scored = []
@@ -258,7 +282,10 @@ class HarassmentCoordinator:
             return self.priority_targets[0]
 
         # Fallback: 적 본진
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             return self.bot.enemy_start_locations[0]
 
         return None
@@ -272,7 +299,7 @@ class HarassmentCoordinator:
         Zergling Run-by 관리 (Unit Authority 적용)
         """
         if not hasattr(self.bot, "unit_authority"):
-            return # Authority Manager 필수
+            return  # Authority Manager 필수
 
         game_time = getattr(self.bot, "time", 0)
 
@@ -283,7 +310,7 @@ class HarassmentCoordinator:
             if not unit:
                 self.zergling_runby_tags.discard(tag)
                 continue
-            
+
             # HP 너무 낮으면 안전 후퇴 후 권한 해제
             if unit.health_percentage < 0.2:
                 retreat = self._find_safe_retreat_point(unit.position)
@@ -291,7 +318,7 @@ class HarassmentCoordinator:
                 self.bot.unit_authority.release_unit(tag, "Harassment_Runby")
                 self.zergling_runby_tags.discard(tag)
                 continue
-                
+
             active_lings.append(unit)
 
         # 런바이 진행 중이면 유지
@@ -334,7 +361,7 @@ class HarassmentCoordinator:
         # 분대 크기 결정 (공격모드에 따라)
         total_runby = min(
             int(len(zerglings) * self.harassment_allocation_percent * 2),
-            12  # 최대 12마리
+            12,  # 최대 12마리
         )
         total_runby = max(total_runby, 6)  # 최소 6마리
         per_squad = total_runby // len(targets) if len(targets) > 0 else total_runby
@@ -344,12 +371,10 @@ class HarassmentCoordinator:
         # ★ Phase 22: 각 타겟에 분대 배정 ★
         assigned_count = 0
         for i, target in enumerate(targets):
-            squad_candidates = candidates[i * per_squad:(i + 1) * per_squad]
+            squad_candidates = candidates[i * per_squad : (i + 1) * per_squad]
             for ling in squad_candidates:
                 if self.bot.unit_authority.request_unit(
-                    ling.tag,
-                    "Harassment_Runby",
-                    AuthorityLevel.TACTICAL
+                    ling.tag, "Harassment_Runby", AuthorityLevel.TACTICAL
                 ):
                     self.bot.do(ling.attack(target))
                     self.zergling_runby_tags.add(ling.tag)
@@ -382,7 +407,8 @@ class HarassmentCoordinator:
 
         # 아군 전투 유닛이 적 근처에 있는지 확인
         army_units = self.bot.units.filter(
-            lambda u: u.type_id in {UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK}
+            lambda u: u.type_id
+            in {UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK}
         )
 
         if not army_units:
@@ -395,7 +421,9 @@ class HarassmentCoordinator:
             if self._has_closer_than:
                 nearby_enemies = self.bot.enemy_units.closer_than(15, unit)
             else:
-                nearby_enemies = [e for e in self.bot.enemy_units if e.distance_to(unit) < 15]
+                nearby_enemies = [
+                    e for e in self.bot.enemy_units if e.distance_to(unit) < 15
+                ]
 
             if nearby_enemies:
                 self._cached_army_fighting = True
@@ -415,9 +443,15 @@ class HarassmentCoordinator:
             return None
 
         enemy_bases = self.bot.enemy_structures.filter(
-            lambda s: getattr(s.type_id, "name", "").upper() in {
-                "COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE",
-                "PLANETARYFORTRESS", "ORBITALCOMMAND"
+            lambda s: getattr(s.type_id, "name", "").upper()
+            in {
+                "COMMANDCENTER",
+                "NEXUS",
+                "HATCHERY",
+                "LAIR",
+                "HIVE",
+                "PLANETARYFORTRESS",
+                "ORBITALCOMMAND",
             }
         )
 
@@ -447,7 +481,9 @@ class HarassmentCoordinator:
             elif defense == min_defense and best_base:
                 # 동점: 아군 본진에 가까운 쪽 (이동시간 단축)
                 if hasattr(self.bot, "start_location"):
-                    if base.distance_to(self.bot.start_location) < best_base.distance_to(self.bot.start_location):
+                    if base.distance_to(
+                        self.bot.start_location
+                    ) < best_base.distance_to(self.bot.start_location):
                         best_base = base
 
         if not best_base:
@@ -470,9 +506,15 @@ class HarassmentCoordinator:
             return []
 
         enemy_bases = self.bot.enemy_structures.filter(
-            lambda s: getattr(s.type_id, "name", "").upper() in {
-                "COMMANDCENTER", "NEXUS", "HATCHERY", "LAIR", "HIVE",
-                "PLANETARYFORTRESS", "ORBITALCOMMAND"
+            lambda s: getattr(s.type_id, "name", "").upper()
+            in {
+                "COMMANDCENTER",
+                "NEXUS",
+                "HATCHERY",
+                "LAIR",
+                "HIVE",
+                "PLANETARYFORTRESS",
+                "ORBITALCOMMAND",
             }
         )
 
@@ -523,7 +565,7 @@ class HarassmentCoordinator:
         active_mutas = []
         for tag in list(self.mutalisk_harass_tags):
             muta = self.bot.units.find_by_tag(tag)
-            
+
             # 유닛 없음 or HP 낮음 -> 해제
             if not muta or muta.health_percentage <= self.mutalisk_retreat_hp_threshold:
                 if muta:
@@ -533,21 +575,19 @@ class HarassmentCoordinator:
                     self.bot.unit_authority.release_unit(tag, "Harassment_Muta")
                 self.mutalisk_harass_tags.discard(tag)
                 continue
-            
+
             active_mutas.append(muta)
 
         # 2. 신규 견제 유닛 모집
         candidates = mutalisks.filter(
-            lambda m: m.tag not in self.mutalisk_harass_tags and 
-                      m.health_percentage > 0.8  # 건강한 뮤탈만
+            lambda m: m.tag not in self.mutalisk_harass_tags
+            and m.health_percentage > 0.8  # 건강한 뮤탈만
         )
 
         for muta in candidates:
             # 권한 요청
             if self.bot.unit_authority.request_unit(
-                muta.tag,
-                "Harassment_Muta",
-                AuthorityLevel.TACTICAL
+                muta.tag, "Harassment_Muta", AuthorityLevel.TACTICAL
             ):
                 self.mutalisk_harass_tags.add(muta.tag)
                 active_mutas.append(muta)
@@ -608,7 +648,7 @@ class HarassmentCoordinator:
         roaches = self.bot.units(UnitTypeId.ROACH)
         ravagers = self.bot.units(UnitTypeId.RAVAGER)
         poke_units = roaches | ravagers
-        
+
         # 1. 기존 유닛 관리
         active_pokes = []
         for tag in list(self.roach_poke_tags):
@@ -616,25 +656,25 @@ class HarassmentCoordinator:
             if not unit:
                 self.roach_poke_tags.discard(tag)
                 continue
-            
+
             # HP 낮으면 해제
             if unit.health_percentage < 0.4:
                 self.bot.unit_authority.release_unit(tag, "Harassment_Poke")
                 self.roach_poke_tags.discard(tag)
                 continue
-                
+
             active_pokes.append(unit)
-            
+
         # 2. 신규 모집 (쿨다운 혹은 조건 필요)
         if len(active_pokes) < 5 and len(poke_units) > 10:
-             # 임의 모집 (개선 필요: 전술적 판단)
-             candidates = poke_units.filter(lambda u: u.tag not in self.roach_poke_tags)
-             for unit in candidates[:5]:
-                 if self.bot.unit_authority.request_unit(
-                     unit.tag, "Harassment_Poke", AuthorityLevel.TACTICAL
-                 ):
-                     self.roach_poke_tags.add(unit.tag)
-                     active_pokes.append(unit)
+            # 임의 모집 (개선 필요: 전술적 판단)
+            candidates = poke_units.filter(lambda u: u.tag not in self.roach_poke_tags)
+            for unit in candidates[:5]:
+                if self.bot.unit_authority.request_unit(
+                    unit.tag, "Harassment_Poke", AuthorityLevel.TACTICAL
+                ):
+                    self.roach_poke_tags.add(unit.tag)
+                    active_pokes.append(unit)
 
         if not active_pokes:
             return
@@ -651,11 +691,11 @@ class HarassmentCoordinator:
         for unit in active_pokes:
             # 안전 거리 유지하며 건물 공격
             distance = unit.distance_to(target)
-            
-            if threat_level > 10: # 위협이 너무 크면 후퇴
+
+            if threat_level > 10:  # 위협이 너무 크면 후퇴
                 self.bot.do(unit.move(self.bot.start_location))
                 continue
-                
+
             buildings = self._find_buildings_near(target)
             if buildings:
                 self.bot.do(unit.attack(buildings[0]))
@@ -666,7 +706,9 @@ class HarassmentCoordinator:
             if unit.type_id == UnitTypeId.RAVAGER and unit.energy >= 25:
                 # 건물이나 밀집지역에 담즙
                 if buildings:
-                     self.bot.do(unit(AbilityId.EFFECT_CORROSIVEBILE, buildings[0].position))
+                    self.bot.do(
+                        unit(AbilityId.EFFECT_CORROSIVEBILE, buildings[0].position)
+                    )
 
     def _assess_threat_at_position(self, position: Point2) -> int:
         """특정 위치의 위협 레벨 평가"""
@@ -677,12 +719,13 @@ class HarassmentCoordinator:
         if hasattr(self.bot.enemy_units, "closer_than"):
             nearby_enemies = self.bot.enemy_units.closer_than(20, position)
         else:
-            nearby_enemies = [e for e in self.bot.enemy_units if e.position.distance_to(position) < 20]
+            nearby_enemies = [
+                e for e in self.bot.enemy_units if e.position.distance_to(position) < 20
+            ]
 
         # 전투 유닛만 카운트
         combat_units = [
-            e for e in nearby_enemies
-            if hasattr(e, "can_attack") and e.can_attack
+            e for e in nearby_enemies if hasattr(e, "can_attack") and e.can_attack
         ]
 
         return len(combat_units)
@@ -690,14 +733,19 @@ class HarassmentCoordinator:
     def _cleanup_dead_unit_tags(self):
         """메모리 누수 방지"""
         # (기존 로직과 유사하지만 authority release 추가 필요)
-        all_tags = self.zergling_runby_tags | self.mutalisk_harass_tags | self.roach_poke_tags | self.drop_unit_tags
-        
+        all_tags = (
+            self.zergling_runby_tags
+            | self.mutalisk_harass_tags
+            | self.roach_poke_tags
+            | self.drop_unit_tags
+        )
+
         dead_tags = []
         if hasattr(self.bot, "units"):
-             for tag in all_tags:
-                 if not self.bot.units.find_by_tag(tag):
-                     dead_tags.append(tag)
-        
+            for tag in all_tags:
+                if not self.bot.units.find_by_tag(tag):
+                    dead_tags.append(tag)
+
         for tag in dead_tags:
             self.zergling_runby_tags.discard(tag)
             self.mutalisk_harass_tags.discard(tag)
@@ -713,7 +761,11 @@ class HarassmentCoordinator:
         if hasattr(self.bot.enemy_structures, "closer_than"):
             return list(self.bot.enemy_structures.closer_than(15, position))
         else:
-            return [b for b in self.bot.enemy_structures if b.position.distance_to(position) < 15]
+            return [
+                b
+                for b in self.bot.enemy_structures
+                if b.position.distance_to(position) < 15
+            ]
 
     # ========================================
     # Drop Play
@@ -728,27 +780,29 @@ class HarassmentCoordinator:
 
         # 1. 진행 중인 드랍 관리
         if self.drop_play_active:
-             # 오버로드 확인
-             overlord = self.bot.units.find_by_tag(self.drop_overlord_tag)
-             if not overlord:
-                 self.drop_play_active = False # 오버로드 사망
-                 return
-             
-             # 목적지 도달 시 하차
-             if self.drop_target and overlord.distance_to(self.drop_target) < 4:
-                 self.bot.do(overlord(AbilityId.UNLOADALLAT, self.drop_target))
-                 self.drop_play_active = False
-                 # 권한 해제 (유닛들은 이제 자유롭게 싸움)
-                 self.bot.unit_authority.release_unit(self.drop_overlord_tag, "Harassment_Drop")
-                 for tag in self.drop_unit_tags:
-                     self.bot.unit_authority.release_unit(tag, "Harassment_Drop")
-                 self.drop_unit_tags.clear()
-                 self.drop_overlord_tag = None
-             else:
-                 # 이동 계속
-                 if self.drop_target:
+            # 오버로드 확인
+            overlord = self.bot.units.find_by_tag(self.drop_overlord_tag)
+            if not overlord:
+                self.drop_play_active = False  # 오버로드 사망
+                return
+
+            # 목적지 도달 시 하차
+            if self.drop_target and overlord.distance_to(self.drop_target) < 4:
+                self.bot.do(overlord(AbilityId.UNLOADALLAT, self.drop_target))
+                self.drop_play_active = False
+                # 권한 해제 (유닛들은 이제 자유롭게 싸움)
+                self.bot.unit_authority.release_unit(
+                    self.drop_overlord_tag, "Harassment_Drop"
+                )
+                for tag in self.drop_unit_tags:
+                    self.bot.unit_authority.release_unit(tag, "Harassment_Drop")
+                self.drop_unit_tags.clear()
+                self.drop_overlord_tag = None
+            else:
+                # 이동 계속
+                if self.drop_target:
                     self.bot.do(overlord.move(self.drop_target))
-             return
+            return
 
         # 2. ★ Phase 17: 새로운 드랍 시작 조건 (더 공격적) ★
         # 전투 중이 아니어도 드랍 가능 (중반 이후)
@@ -768,7 +822,7 @@ class HarassmentCoordinator:
         )
         if not overlords:
             return
-            
+
         drop_overlord = overlords.first
 
         # 유닛 확보 (저글링)
@@ -777,18 +831,22 @@ class HarassmentCoordinator:
         )
         if len(candidates) < 8:
             return
-            
+
         drop_units = candidates[:8]
-        
+
         # 권한 요청
-        if not self.bot.unit_authority.request_unit(drop_overlord.tag, "Harassment_Drop", AuthorityLevel.TACTICAL):
+        if not self.bot.unit_authority.request_unit(
+            drop_overlord.tag, "Harassment_Drop", AuthorityLevel.TACTICAL
+        ):
             return
-            
+
         approved_units = []
         for unit in drop_units:
-            if self.bot.unit_authority.request_unit(unit.tag, "Harassment_Drop", AuthorityLevel.TACTICAL):
+            if self.bot.unit_authority.request_unit(
+                unit.tag, "Harassment_Drop", AuthorityLevel.TACTICAL
+            ):
                 approved_units.append(unit)
-                
+
         if len(approved_units) < 4:
             # 실패 시 모두 반환
             self.bot.unit_authority.release_unit(drop_overlord.tag, "Harassment_Drop")
@@ -800,11 +858,11 @@ class HarassmentCoordinator:
         self.drop_overlord_tag = drop_overlord.tag
         self.drop_unit_tags = {u.tag for u in approved_units}
         self.drop_target = self._find_drop_target()
-        
+
         # 로딩 명령
         for unit in approved_units:
             self.bot.do(drop_overlord(AbilityId.LOAD, unit))
-            
+
         self.drop_play_active = True
         self.logger.info(f"[Harassment] Drop Play Started Target: {self.drop_target}")
 
@@ -817,7 +875,7 @@ class HarassmentCoordinator:
     async def _manage_synchronized_strikes(self):
         """
         합동 견제 코디네이터
-        
+
         서로 다른 견제 수단(Run-by, Drop, Nydus)을 동시에 트리거하여
         적의 멀티태스킹 붕괴를 유도합니다.
         """
@@ -833,24 +891,31 @@ class HarassmentCoordinator:
 
         # 3. 준비 단계 (모든 견제 수단 준비 확인)
         # 이미 개별적으로 로직들이 돌고 있지만, 여기서 강제로 여러 개를 동시에 활성화시킴
-        
+
         # Run-by 가능?
-        runby_ready = not self.zergling_runby_active and len(self.bot.units(UnitTypeId.ZERGLING)) >= 12
-        
+        runby_ready = (
+            not self.zergling_runby_active
+            and len(self.bot.units(UnitTypeId.ZERGLING)) >= 12
+        )
+
         # Drop 가능?
-        drop_ready = not self.drop_play_active and \
-                     UpgradeId.OVERLORDTRANSPORT in self.bot.state.upgrades and \
-                     self.bot.units(UnitTypeId.OVERLORD).exists
+        drop_ready = (
+            not self.drop_play_active
+            and UpgradeId.OVERLORDTRANSPORT in self.bot.state.upgrades
+            and self.bot.units(UnitTypeId.OVERLORD).exists
+        )
 
         # 동시 실행 가능한 조합이 있을 때만 발동
         if runby_ready and drop_ready:
-            self.logger.info(f"[{int(current_time)}s] [*] SYNCHRONIZED STRIKE ACTIVATED! (Run-by + Drop) [*]")
-            
+            self.logger.info(
+                f"[{int(current_time)}s] [*] SYNCHRONIZED STRIKE ACTIVATED! (Run-by + Drop) [*]"
+            )
+
             # 강제로 쿨다운 무시하고 실행 요청
             self.zergling_runby_cooldown = 0
             await self._manage_zergling_runby()
             await self._manage_drop_play()
-            
+
             self.sync_strike_active = True
             self.sync_strike_cooldown = current_time + self.sync_strike_interval
 
@@ -863,7 +928,7 @@ class HarassmentCoordinator:
         땅굴망 견제 시스템
         """
         current_time = self.bot.time
-        
+
         # 1. 쿨다운 및 조건 체크
         if current_time < self.nydus_cooldown:
             return
@@ -883,31 +948,31 @@ class HarassmentCoordinator:
                 # 웜이 파괴되었거나 아직 건설 중
                 return
             self.nydus_worm_tag = worm.first.tag
-            
+
             # 병력 내리기
             if network.cargo_used > 0:
                 self.bot.do(network(AbilityId.UNLOADALL_NYDUSNETWORK))
             elif worm.first.cargo_used > 0:
                 self.bot.do(worm.first(AbilityId.UNLOADALL_NYDUSWORM))
-                
+
             return
 
         # 3. 새로운 땅굴망 공격 시작
-        if self.bot.supply_used < 120: # 충분한 병력 있을 때
+        if self.bot.supply_used < 120:  # 충분한 병력 있을 때
             return
 
         # 타겟 설정
-        target = self._find_drop_target() # 드랍 타겟 로직 재사용
+        target = self._find_drop_target()  # 드랍 타겟 로직 재사용
         if not target:
             return
 
         # 시야가 밝혀져 있어야 땅굴 소환 가능
         # 해당 위치에 감시군주나 오버로드가 있거나, 크립이 있어야 함 (NydusCanal 요구사항은 시야)
         # 하지만 봇 API에서는 AbilityId.BUILD_NYDUSWORM 사용
-        
+
         # 권한 요청 및 병력 로딩 로직은 복잡하므로
         # 여기서는 단순하게 "가능하면 적 기지 근처에 뚫는다"로 구현
-        
+
         # 땅굴 뚫기 (사거리 제한 없음, 시야 必)
         # 시야 확인을 위해 정찰 유닛이나 오버로드 주변 체크
         # 시야가 있는 적 기지 근처 위치 찾기
@@ -916,19 +981,25 @@ class HarassmentCoordinator:
             if unit.distance_to(target) < 15:
                 valid_target = unit.position
                 break
-                
+
         if valid_target:
-             if self.bot.can_afford(UnitTypeId.NYDUSCANAL):
-                 # 건설 명령
-                 try:
-                     self.bot.do(network(AbilityId.BUILD_NYDUSWORM, valid_target))
-                     self.logger.info(f"[{int(current_time)}s] [*] NYDUS WORM SUMMONED at {valid_target} [*]")
-                     self.nydus_active = True
-                     self.nydus_cooldown = current_time + 60
-                 except AttributeError as e:
-                     self.logger.error(f"[HarassmentCoordinator] Nydus worm build failed (AttributeError): {e}")
-                 except Exception as e:
-                     self.logger.error(f"[HarassmentCoordinator] Unexpected error in nydus worm placement: {e}")
+            if self.bot.can_afford(UnitTypeId.NYDUSCANAL):
+                # 건설 명령
+                try:
+                    self.bot.do(network(AbilityId.BUILD_NYDUSWORM, valid_target))
+                    self.logger.info(
+                        f"[{int(current_time)}s] [*] NYDUS WORM SUMMONED at {valid_target} [*]"
+                    )
+                    self.nydus_active = True
+                    self.nydus_cooldown = current_time + 60
+                except AttributeError as e:
+                    self.logger.error(
+                        f"[HarassmentCoordinator] Nydus worm build failed (AttributeError): {e}"
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        f"[HarassmentCoordinator] Unexpected error in nydus worm placement: {e}"
+                    )
 
     def _find_drop_target(self) -> Optional[Point2]:
         """Drop 타겟 선택 (적 확장)"""
@@ -936,19 +1007,25 @@ class HarassmentCoordinator:
             return None
 
         # 가장 먼 기지
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_main = self.bot.enemy_start_locations[0]
             bases = self.bot.enemy_structures.filter(
-                lambda s: s.type_id == UnitTypeId.HATCHERY or
-                          s.type_id == UnitTypeId.NEXUS or
-                          s.type_id == UnitTypeId.COMMANDCENTER
+                lambda s: s.type_id == UnitTypeId.HATCHERY
+                or s.type_id == UnitTypeId.NEXUS
+                or s.type_id == UnitTypeId.COMMANDCENTER
             )
             if bases:
                 # 본진에서 가장 먼 기지
                 return max(bases, key=lambda b: b.distance_to(enemy_main)).position
 
         # Fallback: 적 본진
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             return self.bot.enemy_start_locations[0]
 
         return None
@@ -1098,9 +1175,7 @@ class HarassmentCoordinator:
         Returns:
             List of available banelings
         """
-        banelings = self.bot.units(UnitTypeId.BANELING).filter(
-            lambda b: b.is_idle
-        )
+        banelings = self.bot.units(UnitTypeId.BANELING).filter(lambda b: b.is_idle)
 
         if len(banelings) >= min_count:
             return banelings[:min_count]
@@ -1120,10 +1195,15 @@ class HarassmentCoordinator:
 
         # 적 기지 (TownHall 타입)
         townhalls = self.bot.enemy_structures.filter(
-            lambda s: s.type_id in {
-                UnitTypeId.COMMANDCENTER, UnitTypeId.NEXUS, UnitTypeId.HATCHERY,
-                UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
-                UnitTypeId.LAIR, UnitTypeId.HIVE
+            lambda s: s.type_id
+            in {
+                UnitTypeId.COMMANDCENTER,
+                UnitTypeId.NEXUS,
+                UnitTypeId.HATCHERY,
+                UnitTypeId.ORBITALCOMMAND,
+                UnitTypeId.PLANETARYFORTRESS,
+                UnitTypeId.LAIR,
+                UnitTypeId.HIVE,
             }
         )
 
@@ -1131,7 +1211,10 @@ class HarassmentCoordinator:
             return None
 
         # 본진에서 가장 먼 기지 (확장) 우선
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_main = self.bot.enemy_start_locations[0]
             furthest_base = max(townhalls, key=lambda b: b.distance_to(enemy_main))
             return furthest_base.position
@@ -1196,11 +1279,11 @@ class HarassmentCoordinator:
         has_upgrade = UpgradeId.OVERLORDSPEED in self.bot.state.upgrades
 
         return (
-            len(banelings) >= 4 and
-            len(overlords) >= 1 and
-            has_upgrade and
-            not self.baneling_drop_active and
-            self.bot.time >= self.baneling_drop_cooldown
+            len(banelings) >= 4
+            and len(overlords) >= 1
+            and has_upgrade
+            and not self.baneling_drop_active
+            and self.bot.time >= self.baneling_drop_cooldown
         )
 
     async def _trigger_zergling_runby(self) -> None:
@@ -1217,7 +1300,9 @@ class HarassmentCoordinator:
     # Phase 21.3: Unit Persistence System (Squad Lock)
     # ============================================================================
 
-    def lock_unit_to_squad(self, unit_tag: int, squad_name: str, duration: Optional[float] = None) -> None:
+    def lock_unit_to_squad(
+        self, unit_tag: int, squad_name: str, duration: Optional[float] = None
+    ) -> None:
         """
         ★ Phase 21.3: 유닛을 스쿼드에 고정 ★
 
@@ -1348,13 +1433,13 @@ class HarassmentCoordinator:
         all_units = self.bot.units(unit_type)
 
         # Filter out locked units
-        available = all_units.filter(
-            lambda u: u.tag not in self.locked_units
-        )
+        available = all_units.filter(lambda u: u.tag not in self.locked_units)
 
         return available
 
-    def renew_squad_lock(self, squad_name: str, additional_duration: Optional[float] = None) -> None:
+    def renew_squad_lock(
+        self, squad_name: str, additional_duration: Optional[float] = None
+    ) -> None:
         """
         스쿼드 락 갱신 (임무 연장)
 
@@ -1362,13 +1447,14 @@ class HarassmentCoordinator:
             squad_name: Squad to renew
             additional_duration: Additional time (None = default 30s)
         """
-        duration = additional_duration if additional_duration else self.default_lock_duration
+        duration = (
+            additional_duration if additional_duration else self.default_lock_duration
+        )
 
         if squad_name in self.squad_lock_duration:
             # Extend existing lock
             self.squad_lock_duration[squad_name] = max(
-                self.squad_lock_duration[squad_name],
-                self.bot.time + duration
+                self.squad_lock_duration[squad_name], self.bot.time + duration
             )
         else:
             # Create new lock
@@ -1391,7 +1477,7 @@ class HarassmentCoordinator:
                 status[squad_name] = {
                     "members": len(members),
                     "time_left": time_left,
-                    "active": time_left > 0
+                    "active": time_left > 0,
                 }
 
         return status
@@ -1435,7 +1521,10 @@ class HarassmentCoordinator:
             return
 
         # 위협 체크: 공격받고 있으면 수비 우선
-        if intel.is_under_attack() and intel.get_threat_level() in ("heavy", "critical"):
+        if intel.is_under_attack() and intel.get_threat_level() in (
+            "heavy",
+            "critical",
+        ):
             self.set_aggressive_mode(AggressiveMode.PASSIVE)
             return
 
@@ -1479,7 +1568,11 @@ class HarassmentCoordinator:
         if current_enemy_workers < self.last_worker_kill_count:
             killed = self.last_worker_kill_count - current_enemy_workers
             # 견제가 활성화된 상태에서만 카운트 (자연 감소 제외)
-            if self.zergling_runby_active or self.mutalisk_harass_active or self.drop_play_active:
+            if (
+                self.zergling_runby_active
+                or self.mutalisk_harass_active
+                or self.drop_play_active
+            ):
                 self.workers_killed += killed
                 if killed >= 3:
                     self.logger.info(

@@ -137,11 +137,11 @@ class IntegrationHub:
 
         return {
             "advantage": advantage,
-            "recommendation": "ATTACK"
-            if advantage > 1.2
-            else "RETREAT"
-            if advantage < 0.8
-            else "HOLD",
+            "recommendation": (
+                "ATTACK"
+                if advantage > 1.2
+                else "RETREAT" if advantage < 0.8 else "HOLD"
+            ),
             "analysis": self._get_recommendation_text(advantage),
         }
 

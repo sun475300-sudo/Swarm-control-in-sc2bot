@@ -29,19 +29,19 @@ class StutterStepKiting:
 
     # 카이팅 가능 유닛 타입
     KITING_UNITS = {
-        UnitTypeId.HYDRALISK,   # 히드라 (사거리 6)
-        UnitTypeId.ROACH,       # 바퀴 (사거리 4)
-        UnitTypeId.QUEEN,       # 여왕 (사거리 8 공중, 7 지상)
-        UnitTypeId.RAVAGER,     # 파괴군주 (사거리 9)
+        UnitTypeId.HYDRALISK,  # 히드라 (사거리 6)
+        UnitTypeId.ROACH,  # 바퀴 (사거리 4)
+        UnitTypeId.QUEEN,  # 여왕 (사거리 8 공중, 7 지상)
+        UnitTypeId.RAVAGER,  # 파괴군주 (사거리 9)
     }
 
     # 유닛별 카이팅 설정
     KITING_CONFIG = {
         UnitTypeId.HYDRALISK: {
             "attack_range": 6.0,
-            "kite_distance": 2.0,      # 후퇴 거리
-            "optimal_distance": 5.5,   # 최적 교전 거리
-            "cooldown_buffer": 0.1,    # 쿨다운 버퍼 (약간 여유)
+            "kite_distance": 2.0,  # 후퇴 거리
+            "optimal_distance": 5.5,  # 최적 교전 거리
+            "cooldown_buffer": 0.1,  # 쿨다운 버퍼 (약간 여유)
         },
         UnitTypeId.ROACH: {
             "attack_range": 4.0,
@@ -76,10 +76,7 @@ class StutterStepKiting:
         return unit.type_id in self.KITING_UNITS
 
     def execute_kiting(
-        self,
-        unit: Unit,
-        target: Optional[Unit],
-        enemies: Units
+        self, unit: Unit, target: Optional[Unit], enemies: Units
     ) -> bool:
         """
         스터터 스텝 카이팅 실행
@@ -170,7 +167,9 @@ class StutterStepKiting:
         self.bot.do(unit.move(approach_position))
         self.unit_states[unit.tag] = "approaching"
 
-    def _maintain_optimal_distance(self, unit: Unit, target: Unit, config: dict) -> None:
+    def _maintain_optimal_distance(
+        self, unit: Unit, target: Unit, config: dict
+    ) -> None:
         """최적 거리 유지"""
         distance = unit.position.distance_to(target.position)
         optimal = config["optimal_distance"]
@@ -195,7 +194,9 @@ class StutterStepKiting:
         playable_area = self.bot.game_info.playable_area
 
         x = max(playable_area.x, min(position.x, playable_area.x + playable_area.width))
-        y = max(playable_area.y, min(position.y, playable_area.y + playable_area.height))
+        y = max(
+            playable_area.y, min(position.y, playable_area.y + playable_area.height)
+        )
 
         return Point2((x, y))
 
@@ -206,6 +207,14 @@ class StutterStepKiting:
     def cleanup_dead_units(self, alive_tags: Set[int]) -> None:
         """죽은 유닛 정보 정리"""
         # 살아있는 유닛만 남기기
-        self.unit_states = {tag: state for tag, state in self.unit_states.items() if tag in alive_tags}
-        self.last_attack_frame = {tag: frame for tag, frame in self.last_attack_frame.items() if tag in alive_tags}
-        self.retreat_positions = {tag: pos for tag, pos in self.retreat_positions.items() if tag in alive_tags}
+        self.unit_states = {
+            tag: state for tag, state in self.unit_states.items() if tag in alive_tags
+        }
+        self.last_attack_frame = {
+            tag: frame
+            for tag, frame in self.last_attack_frame.items()
+            if tag in alive_tags
+        }
+        self.retreat_positions = {
+            tag: pos for tag, pos in self.retreat_positions.items() if tag in alive_tags
+        }

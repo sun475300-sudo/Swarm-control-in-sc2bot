@@ -33,11 +33,12 @@ from utils.logger import get_logger
 
 class ProngStatus(Enum):
     """공격조 상태"""
-    ASSEMBLING = "assembling"    # 집결 중
-    READY = "ready"              # 준비 완료
-    ATTACKING = "attacking"      # 공격 중
-    RETREATING = "retreating"    # 후퇴 중
-    DISBANDED = "disbanded"      # 해산
+
+    ASSEMBLING = "assembling"  # 집결 중
+    READY = "ready"  # 준비 완료
+    ATTACKING = "attacking"  # 공격 중
+    RETREATING = "retreating"  # 후퇴 중
+    DISBANDED = "disbanded"  # 해산
 
 
 class AttackProng:
@@ -90,12 +91,12 @@ class MultiprongAttackManager:
         self.attack_start_time: float = 0.0
 
         # 전술 파라미터
-        self.min_army_supply: int = 40          # 최소 군대 서플라이
-        self.main_army_ratio: float = 0.55      # 메인 아미 비율
-        self.harass_ratio: float = 0.25         # 견제조 비율
-        self.flank_ratio: float = 0.20          # 기습조 비율
-        self.sync_timeout: float = 15.0         # 동기화 대기 시간 (초)
-        self.attack_cooldown: float = 90.0      # 공격 쿨다운 (초)
+        self.min_army_supply: int = 40  # 최소 군대 서플라이
+        self.main_army_ratio: float = 0.55  # 메인 아미 비율
+        self.harass_ratio: float = 0.25  # 견제조 비율
+        self.flank_ratio: float = 0.20  # 기습조 비율
+        self.sync_timeout: float = 15.0  # 동기화 대기 시간 (초)
+        self.attack_cooldown: float = 90.0  # 공격 쿨다운 (초)
         self.retreat_loss_threshold: float = 0.6  # 60% 이상 손실 시 후퇴
 
         # 타이밍
@@ -181,12 +182,18 @@ class MultiprongAttackManager:
         combat_types = set()
         if UnitTypeId:
             combat_types = {
-                UnitTypeId.ZERGLING, UnitTypeId.BANELING,
-                UnitTypeId.ROACH, UnitTypeId.RAVAGER,
-                UnitTypeId.HYDRALISK, UnitTypeId.LURKERMP,
-                UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR,
-                UnitTypeId.INFESTOR, UnitTypeId.ULTRALISK,
-                UnitTypeId.BROODLORD, UnitTypeId.VIPER,
+                UnitTypeId.ZERGLING,
+                UnitTypeId.BANELING,
+                UnitTypeId.ROACH,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.LURKERMP,
+                UnitTypeId.MUTALISK,
+                UnitTypeId.CORRUPTOR,
+                UnitTypeId.INFESTOR,
+                UnitTypeId.ULTRALISK,
+                UnitTypeId.BROODLORD,
+                UnitTypeId.VIPER,
                 UnitTypeId.SWARMHOSTMP,
             }
 
@@ -210,10 +217,15 @@ class MultiprongAttackManager:
         if enemy_structures and enemy_structures.exists:
             # 적 기지 (메인 타겟)
             bases = enemy_structures.filter(
-                lambda s: s.type_id in {
-                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-                    UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-                    UnitTypeId.PLANETARYFORTRESS, UnitTypeId.NEXUS,
+                lambda s: s.type_id
+                in {
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
+                    UnitTypeId.COMMANDCENTER,
+                    UnitTypeId.ORBITALCOMMAND,
+                    UnitTypeId.PLANETARYFORTRESS,
+                    UnitTypeId.NEXUS,
                 }
             )
             for base in bases:
@@ -221,11 +233,17 @@ class MultiprongAttackManager:
 
             # 적 생산/테크 시설
             tech_buildings = enemy_structures.filter(
-                lambda s: s.type_id not in {
-                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-                    UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-                    UnitTypeId.PLANETARYFORTRESS, UnitTypeId.NEXUS,
-                    UnitTypeId.SUPPLYDEPOT, UnitTypeId.PYLON,
+                lambda s: s.type_id
+                not in {
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
+                    UnitTypeId.COMMANDCENTER,
+                    UnitTypeId.ORBITALCOMMAND,
+                    UnitTypeId.PLANETARYFORTRESS,
+                    UnitTypeId.NEXUS,
+                    UnitTypeId.SUPPLYDEPOT,
+                    UnitTypeId.PYLON,
                     UnitTypeId.OVERLORD,
                 }
             )
@@ -255,12 +273,18 @@ class MultiprongAttackManager:
         combat_units = []
         if UnitTypeId:
             combat_types = {
-                UnitTypeId.ZERGLING, UnitTypeId.BANELING,
-                UnitTypeId.ROACH, UnitTypeId.RAVAGER,
-                UnitTypeId.HYDRALISK, UnitTypeId.MUTALISK,
-                UnitTypeId.ULTRALISK, UnitTypeId.CORRUPTOR,
-                UnitTypeId.INFESTOR, UnitTypeId.BROODLORD,
-                UnitTypeId.LURKERMP, UnitTypeId.VIPER,
+                UnitTypeId.ZERGLING,
+                UnitTypeId.BANELING,
+                UnitTypeId.ROACH,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.MUTALISK,
+                UnitTypeId.ULTRALISK,
+                UnitTypeId.CORRUPTOR,
+                UnitTypeId.INFESTOR,
+                UnitTypeId.BROODLORD,
+                UnitTypeId.LURKERMP,
+                UnitTypeId.VIPER,
                 UnitTypeId.SWARMHOSTMP,
             }
             for unit in self.bot.units:
@@ -287,10 +311,18 @@ class MultiprongAttackManager:
         if len(targets) > 1:
             harass_prong = AttackProng("harass", targets[1][0])
             # 빠른 유닛 우선 (저글링, 뮤탈)
-            fast_units = [u for u in combat_units[main_count:]
-                          if u.type_id in {UnitTypeId.ZERGLING, UnitTypeId.MUTALISK, UnitTypeId.BANELING}]
-            slow_units = [u for u in combat_units[main_count:]
-                          if u.type_id not in {UnitTypeId.ZERGLING, UnitTypeId.MUTALISK, UnitTypeId.BANELING}]
+            fast_units = [
+                u
+                for u in combat_units[main_count:]
+                if u.type_id
+                in {UnitTypeId.ZERGLING, UnitTypeId.MUTALISK, UnitTypeId.BANELING}
+            ]
+            slow_units = [
+                u
+                for u in combat_units[main_count:]
+                if u.type_id
+                not in {UnitTypeId.ZERGLING, UnitTypeId.MUTALISK, UnitTypeId.BANELING}
+            ]
 
             for unit in fast_units[:harass_count]:
                 harass_prong.unit_tags.add(unit.tag)
@@ -309,7 +341,9 @@ class MultiprongAttackManager:
         if hasattr(self.bot, "start_location") and hasattr(self.bot, "game_info"):
             for prong in self.prongs.values():
                 if prong.target:
-                    prong.rally_point = self.bot.start_location.towards(prong.target, 20)
+                    prong.rally_point = self.bot.start_location.towards(
+                        prong.target, 20
+                    )
 
         self.sync_start_time = getattr(self.bot, "time", 0.0)
 
@@ -332,7 +366,10 @@ class MultiprongAttackManager:
 
             elif prong.status == ProngStatus.READY:
                 # 모든 공격조가 준비되었는지 확인
-                if self._all_prongs_ready() or game_time - self.sync_start_time > self.sync_timeout:
+                if (
+                    self._all_prongs_ready()
+                    or game_time - self.sync_start_time > self.sync_timeout
+                ):
                     await self._launch_synchronized_attack(game_time)
 
             elif prong.status == ProngStatus.ATTACKING:
@@ -373,9 +410,7 @@ class MultiprongAttackManager:
 
     async def _launch_synchronized_attack(self, game_time: float):
         """동기화된 동시 공격 개시"""
-        self.logger.info(
-            f"[{int(game_time)}s] [MULTIPRONG] 동시 공격 개시!"
-        )
+        self.logger.info(f"[{int(game_time)}s] [MULTIPRONG] 동시 공격 개시!")
 
         for name, prong in self.prongs.items():
             if prong.status == ProngStatus.READY:
@@ -387,9 +422,7 @@ class MultiprongAttackManager:
                     if unit and prong.target:
                         self.bot.do(unit.attack(prong.target))
 
-                self.logger.info(
-                    f"  -> [{name}] {prong.size}기 -> {prong.target}"
-                )
+                self.logger.info(f"  -> [{name}] {prong.size}기 -> {prong.target}")
 
     async def _manage_attacking(self, prong: AttackProng, game_time: float):
         """공격 중 관리"""
@@ -462,9 +495,7 @@ class MultiprongAttackManager:
     def _end_attack(self, reason: str):
         """공격 종료"""
         game_time = getattr(self.bot, "time", 0.0)
-        self.logger.info(
-            f"[{int(game_time)}s] [MULTIPRONG] 공격 종료: {reason}"
-        )
+        self.logger.info(f"[{int(game_time)}s] [MULTIPRONG] 공격 종료: {reason}")
         self.attack_active = False
         self.last_attack_time = game_time
         self.prongs.clear()

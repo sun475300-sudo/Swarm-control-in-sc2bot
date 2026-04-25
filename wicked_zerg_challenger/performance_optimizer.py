@@ -28,19 +28,16 @@ class PerformanceOptimizer:
             # 고빈도 (매 프레임)
             "combat": 1,
             "micro": 1,
-
             # 중빈도 (2-5프레임)
             "economy": 2,
             "production": 2,
             "queen_manager": 3,
-
             # 저빈도 (5-11프레임)
-            "scouting": 8,     # 10→8: 정찰 정보 수집 25% 향상
-            "intel": 7,        # 10→7: 적 유닛 감지 반응 30% 향상
-            "creep": 11,       # 15→11: 점막 확장 타이밍 27% 향상
-            "upgrade": 10,     # 20→10: 업그레이드 체크 2배 빈도
+            "scouting": 8,  # 10→8: 정찰 정보 수집 25% 향상
+            "intel": 7,  # 10→7: 적 유닛 감지 반응 30% 향상
+            "creep": 11,  # 15→11: 점막 확장 타이밍 27% 향상
+            "upgrade": 10,  # 20→10: 업그레이드 체크 2배 빈도
             "strategy": 5,
-
             # 매우 저빈도 (30프레임+)
             "build_order": 50,
             "analytics": 100,
@@ -70,7 +67,9 @@ class PerformanceOptimizer:
         # 프레임 관리
         self._frame_start_time = None
 
-    def should_execute(self, logic_name: str, iteration: int, force: bool = False) -> bool:
+    def should_execute(
+        self, logic_name: str, iteration: int, force: bool = False
+    ) -> bool:
         """
         로직 실행 여부 판단
 
@@ -218,18 +217,19 @@ class PerformanceOptimizer:
 
         # 총 실행 시간 기준으로 정렬
         sorted_report = sorted(
-            report.items(),
-            key=lambda x: x[1]["total_time_ms"],
-            reverse=True
+            report.items(), key=lambda x: x[1]["total_time_ms"], reverse=True
         )
 
         for logic_name, stats in sorted_report[:10]:  # 상위 10개
-            logger.info(f"{logic_name:20s} | "
-                  f"Avg: {stats['avg_time_ms']:6.2f}ms | "
-                  f"Count: {stats['count']:5d} | "
-                  f"Total: {stats['total_time_ms']:8.2f}ms")
+            logger.info(
+                f"{logic_name:20s} | "
+                f"Avg: {stats['avg_time_ms']:6.2f}ms | "
+                f"Count: {stats['count']:5d} | "
+                f"Total: {stats['total_time_ms']:8.2f}ms"
+            )
 
         logger.info("=" * 60)
+
     def optimize_intervals(self):
         """
         실행 간격 자동 최적화
@@ -249,7 +249,9 @@ class PerformanceOptimizer:
 
                 if new_interval != current_interval:
                     self.execution_intervals[logic_name] = new_interval
-                    logger.info(f"{logic_name} interval: {current_interval} → {new_interval}")
+                    logger.info(
+                        f"{logic_name} interval: {current_interval} → {new_interval}"
+                    )
 
     # ========== 거리 계산 캐싱 시스템 ==========
 
@@ -280,8 +282,8 @@ class PerformanceOptimizer:
         """
         # 캐시 키 생성 (유닛 태그 또는 위치 기반)
         try:
-            key1 = getattr(unit1, 'tag', None) or str(getattr(unit1, 'position', unit1))
-            key2 = getattr(unit2, 'tag', None) or str(getattr(unit2, 'position', unit2))
+            key1 = getattr(unit1, "tag", None) or str(getattr(unit1, "position", unit1))
+            key2 = getattr(unit2, "tag", None) or str(getattr(unit2, "position", unit2))
             cache_key = f"dist_{key1}_{key2}"
 
             # 캐시 조회
@@ -295,16 +297,16 @@ class PerformanceOptimizer:
             self._distance_cache_misses += 1
 
             # 실제 거리 계산
-            pos1 = getattr(unit1, 'position', unit1)
-            pos2 = getattr(unit2, 'position', unit2)
+            pos1 = getattr(unit1, "position", unit1)
+            pos2 = getattr(unit2, "position", unit2)
 
             # distance_to() 메서드가 있으면 사용, 없으면 수동 계산
-            if hasattr(pos1, 'distance_to'):
+            if hasattr(pos1, "distance_to"):
                 distance = pos1.distance_to(pos2)
             else:
                 # 수동 계산 (x, y 좌표)
-                dx = getattr(pos1, 'x', pos1[0]) - getattr(pos2, 'x', pos2[0])
-                dy = getattr(pos1, 'y', pos1[1]) - getattr(pos2, 'y', pos2[1])
+                dx = getattr(pos1, "x", pos1[0]) - getattr(pos2, "x", pos2[0])
+                dy = getattr(pos1, "y", pos1[1]) - getattr(pos2, "y", pos2[1])
                 distance = (dx**2 + dy**2) ** 0.5
 
             # 캐시에 저장
@@ -316,19 +318,21 @@ class PerformanceOptimizer:
         except Exception:
             # 에러 발생 시 폴백: 직접 계산
             try:
-                pos1 = getattr(unit1, 'position', unit1)
-                pos2 = getattr(unit2, 'position', unit2)
-                if hasattr(pos1, 'distance_to'):
+                pos1 = getattr(unit1, "position", unit1)
+                pos2 = getattr(unit2, "position", unit2)
+                if hasattr(pos1, "distance_to"):
                     return pos1.distance_to(pos2)
                 else:
-                    dx = getattr(pos1, 'x', pos1[0]) - getattr(pos2, 'x', pos2[0])
-                    dy = getattr(pos1, 'y', pos1[1]) - getattr(pos2, 'y', pos2[1])
+                    dx = getattr(pos1, "x", pos1[0]) - getattr(pos2, "x", pos2[0])
+                    dy = getattr(pos1, "y", pos1[1]) - getattr(pos2, "y", pos2[1])
                     return (dx**2 + dy**2) ** 0.5
             except (AttributeError, TypeError, IndexError):
                 # Failed to calculate distance (invalid position objects)
                 return 0.0
 
-    def get_closest_cached(self, unit, candidates, max_distance: Optional[float] = None):
+    def get_closest_cached(
+        self, unit, candidates, max_distance: Optional[float] = None
+    ):
         """
         가장 가까운 유닛 찾기 (캐싱 지원)
 
@@ -344,7 +348,7 @@ class PerformanceOptimizer:
             return None
 
         closest = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         for candidate in candidates:
             distance = self.get_distance_cached(unit, candidate, ttl=0.1)
@@ -380,15 +384,18 @@ class PerformanceOptimizer:
     def get_distance_cache_stats(self) -> dict:
         """거리 캐시 통계 반환"""
         total_requests = self._distance_cache_hits + self._distance_cache_misses
-        hit_rate = (self._distance_cache_hits / total_requests * 100
-                   if total_requests > 0 else 0.0)
+        hit_rate = (
+            self._distance_cache_hits / total_requests * 100
+            if total_requests > 0
+            else 0.0
+        )
 
         return {
             "cache_size": len(self._distance_cache),
             "hits": self._distance_cache_hits,
             "misses": self._distance_cache_misses,
             "hit_rate": f"{hit_rate:.1f}%",
-            "total_requests": total_requests
+            "total_requests": total_requests,
         }
 
     def reset_distance_cache_stats(self):
@@ -398,6 +405,7 @@ class PerformanceOptimizer:
 
 
 # ==================== 빠른 승리를 위한 전략 최적화 ====================
+
 
 class FastVictoryOptimizer:
     """빠른 승리를 위한 전략 최적화"""

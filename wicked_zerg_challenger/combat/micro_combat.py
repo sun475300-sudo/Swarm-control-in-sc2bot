@@ -38,10 +38,22 @@ class AntiSplashAwareness:
         if UnitTypeId:
             # Regular splash threats - use getattr for compatibility
             threat_type_names = [
-                "SIEGETANK", "SIEGETANKSIEGED", "HIGHTEMPLAR", "BANELING",
-                "BANELINGBURROWED", "DISRUPTOR", "COLOSSUS", "HELLION",
-                "HELLBAT", "HELLIONTANK", "LIBERATORAG", "LURKERMP",
-                "LURKERMPBURROWED", "RAVEN", "WIDOWMINE", "WIDOWMINEBURROWED",
+                "SIEGETANK",
+                "SIEGETANKSIEGED",
+                "HIGHTEMPLAR",
+                "BANELING",
+                "BANELINGBURROWED",
+                "DISRUPTOR",
+                "COLOSSUS",
+                "HELLION",
+                "HELLBAT",
+                "HELLIONTANK",
+                "LIBERATORAG",
+                "LURKERMP",
+                "LURKERMPBURROWED",
+                "RAVEN",
+                "WIDOWMINE",
+                "WIDOWMINEBURROWED",
             ]
             for name in threat_type_names:
                 unit_type = getattr(UnitTypeId, name, None)
@@ -86,8 +98,7 @@ class AntiSplashAwareness:
         ratio = max(0.0, 1.0 - (nearest / self.avoid_radius))
         return min(
             self.max_multiplier,
-            self.min_multiplier
-            + ratio * (self.max_multiplier - self.min_multiplier),
+            self.min_multiplier + ratio * (self.max_multiplier - self.min_multiplier),
         )
 
     def repulsion_vector(self, unit, enemy_units: Iterable) -> Tuple[float, float]:
@@ -168,9 +179,7 @@ class ChokePointManager:
         self.chokepoints = []
 
         # Get chokepoints from game_info if available
-        if hasattr(self.bot, "game_info") and hasattr(
-            self.bot.game_info, "map_ramps"
-        ):
+        if hasattr(self.bot, "game_info") and hasattr(self.bot.game_info, "map_ramps"):
             for ramp in self.bot.game_info.map_ramps:
                 if hasattr(ramp, "top_center"):
                     self.chokepoints.append(ramp.top_center)
@@ -225,9 +234,12 @@ class MicroCombat:
                 splash_threats_close = False
                 for threat_type in self.anti_splash.extreme_threats:
                     for e in enemy_units:
-                        if (hasattr(e, 'type_id') and e.type_id == threat_type
-                                and hasattr(e, 'distance_to')
-                                and e.distance_to(unit) < 4):
+                        if (
+                            hasattr(e, "type_id")
+                            and e.type_id == threat_type
+                            and hasattr(e, "distance_to")
+                            and e.distance_to(unit) < 4
+                        ):
                             splash_threats_close = True
                             break
                     if splash_threats_close:
@@ -252,11 +264,10 @@ class MicroCombat:
         threats = list(enemy_units) if enemy_units else []
         for unit in units:
             # ★ Phase 15-1: 저체력 유닛 자동 후퇴 (베인링/저글링 제외) ★
-            if (unit.health_percentage < 0.3
-                    and unit.type_id not in (
-                        getattr(UnitTypeId, "BANELING", None),
-                        getattr(UnitTypeId, "ZERGLING", None),
-                    )):
+            if unit.health_percentage < 0.3 and unit.type_id not in (
+                getattr(UnitTypeId, "BANELING", None),
+                getattr(UnitTypeId, "ZERGLING", None),
+            ):
                 closest = self._closest_enemy(unit, threats)
                 if closest:
                     retreat_pos = unit.position.towards(closest.position, -5)
@@ -329,7 +340,7 @@ class MicroCombat:
         """Queen Transfuse logic."""
         if not hasattr(self.bot, "abilities"):
             return False
-            
+
         transfuse_id = getattr(self.bot.abilities, "TRANSFUSION_TRANSFUSION", None)
         if not transfuse_id:
             return False
@@ -339,16 +350,19 @@ class MicroCombat:
 
         # Find injured biological unit/structure nearby
         low_hp_units = [
-            u for u in friendly_units 
-            if u.is_biological and u.health_percentage < 0.4 and u.distance_to(queen) < 7
+            u
+            for u in friendly_units
+            if u.is_biological
+            and u.health_percentage < 0.4
+            and u.distance_to(queen) < 7
         ]
-        
+
         if low_hp_units:
             # Heal the most injured one
             target = min(low_hp_units, key=lambda u: u.health)
             actions.append(queen(transfuse_id, target))
             return True
-            
+
         return False
 
     def _micro_zergling(self, zergling, enemy_units: Iterable, actions: List) -> bool:
@@ -376,12 +390,17 @@ class MicroCombat:
             # ★ Phase 22: Use closer_than() instead of manual loop ★
             all_units = getattr(self.bot, "units", [])
             if hasattr(all_units, "closer_than"):
-                nearby_allies = all_units.of_type(UnitTypeId.ZERGLING).closer_than(2.0, target.position)
+                nearby_allies = all_units.of_type(UnitTypeId.ZERGLING).closer_than(
+                    2.0, target.position
+                )
                 nearby_allies = [u for u in nearby_allies if u.tag != zergling.tag]
             else:
                 nearby_allies = [
-                    u for u in all_units
-                    if u.type_id == UnitTypeId.ZERGLING and u.distance_to(target) < 2.0 and u.tag != zergling.tag
+                    u
+                    for u in all_units
+                    if u.type_id == UnitTypeId.ZERGLING
+                    and u.distance_to(target) < 2.0
+                    and u.tag != zergling.tag
                 ]
 
             # If 2+ allies already engaging, create circular surround instead of stacking
@@ -395,16 +414,23 @@ class MicroCombat:
 
                 # Distribute units evenly around target (360 degrees)
                 # Add offset to create spiral surround pattern
-                angle_offset = (zergling.tag % 8) * (math.pi / 4)  # 8 positions around circle
+                angle_offset = (zergling.tag % 8) * (
+                    math.pi / 4
+                )  # 8 positions around circle
                 optimal_angle = current_angle + angle_offset
 
                 # Calculate surround position (1.5 units from target center)
                 surround_radius = 1.5
-                surround_x = target.position.x + surround_radius * math.cos(optimal_angle)
-                surround_y = target.position.y + surround_radius * math.sin(optimal_angle)
+                surround_x = target.position.x + surround_radius * math.cos(
+                    optimal_angle
+                )
+                surround_y = target.position.y + surround_radius * math.sin(
+                    optimal_angle
+                )
 
                 try:
                     from sc2.position import Point2
+
                     surround_pos = Point2((surround_x, surround_y))
                     actions.append(zergling.move(surround_pos))
                     return True
@@ -449,7 +475,11 @@ class MicroCombat:
 
         # 2. 경장갑 없으면 가장 가까운 적 돌진 (낭비 방지: 3유닛 이상일 때만)
         if len(nearby_enemies) >= 3:
-            center = self._find_center_of_mass(list(nearby_enemies) if not isinstance(nearby_enemies, list) else nearby_enemies)
+            center = self._find_center_of_mass(
+                list(nearby_enemies)
+                if not isinstance(nearby_enemies, list)
+                else nearby_enemies
+            )
             if center:
                 actions.append(baneling.attack(center))
                 return True
@@ -470,7 +500,7 @@ class MicroCombat:
         # Check if Burrow is researched
         if not self.bot.state.upgrades:
             return False
-            
+
         burrow_upgrade = getattr(UpgradeId, "BURROW", None)
         if not burrow_upgrade or burrow_upgrade not in self.bot.state.upgrades:
             return False
@@ -481,7 +511,7 @@ class MicroCombat:
             if burrow_down:
                 actions.append(roach(burrow_down))
                 return True
-        
+
         return False
 
     def _micro_roach_burrowed(self, roach, actions: List) -> bool:
@@ -495,7 +525,7 @@ class MicroCombat:
             if burrow_up:
                 actions.append(roach(burrow_up))
                 return True
-        
+
         # Otherwise stay burrowed (healing)
         return True
 
@@ -514,13 +544,16 @@ class MicroCombat:
             return
 
         enemy_workers = [
-            e for e in nearby_enemies 
+            e
+            for e in nearby_enemies
             if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE", "MULE"]
         ]
-        
+
         enemy_combat = [
-            e for e in nearby_enemies
-            if getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"]
+            e
+            for e in nearby_enemies
+            if getattr(e.type_id, "name", "")
+            not in ["SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"]
         ]
 
         for unit in units:
@@ -528,15 +561,15 @@ class MicroCombat:
             if unit.health_percentage < 0.3:
                 threats = enemy_combat if enemy_combat else enemy_workers
                 rep_x, rep_y = self.anti_splash.repulsion_vector(unit, threats)
-                
+
                 # If no specific repulsion, just run away from closest threat
                 if not rep_x and not rep_y and threats:
                     closest_threat = self._closest_enemy(unit, threats)
                     if closest_threat:
-                         move_target = unit.position.towards(closest_threat.position, -4)
-                         actions.append(unit.move(move_target))
-                         continue
-                
+                        move_target = unit.position.towards(closest_threat.position, -4)
+                        actions.append(unit.move(move_target))
+                        continue
+
                 if rep_x or rep_y:
                     move_target = self._offset_position(unit, rep_x, rep_y)
                     if move_target:
@@ -549,14 +582,14 @@ class MicroCombat:
                 if target:
                     actions.append(unit.attack(target))
                     continue
-            
+
             # 3. If no workers, fight back or run (Kiting logic)
             if enemy_combat:
                 target = self._closest_enemy(unit, enemy_combat)
                 if target:
-                     # Simple optimization: Attack if close, otherwise maybe run?
-                     # For now, just attack to clear way
-                     actions.append(unit.attack(target))
+                    # Simple optimization: Attack if close, otherwise maybe run?
+                    # For now, just attack to clear way
+                    actions.append(unit.attack(target))
             else:
                 # No workers, no combat units... attack buildings?
                 pass
