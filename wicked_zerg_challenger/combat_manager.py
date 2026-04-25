@@ -2624,7 +2624,10 @@ class CombatManager:
         if not Point2 or not enemy_units:
             return None
         from utils.position_utils import get_center_position
-        return get_center_position(list(enemy_units)) or None
+        items = list(enemy_units)
+        if not items:
+            return None
+        return get_center_position(items)
 
     def _closest_enemy(self, enemy_units, unit):
         if HELPERS_AVAILABLE:
