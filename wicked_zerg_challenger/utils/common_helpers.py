@@ -155,19 +155,48 @@ def units_amount(units: Any) -> int:
     return safe_amount(units)
 
 
-def filter_by_type(units: Any, unit_type: Any) -> List[Any]:
+def filter_by_type(units: Any, unit_types: Any) -> List[Any]:
     """
-    Filter a unit collection by type id, working with both SC2 Units and lists.
+    Filter a unit collection by type, accepting either a single UnitTypeId
+    or a collection of names/UnitTypeIds.
+
+    Supports the existing combat_manager conventions where callers pass a
+    list of string names like ``["MUTALISK", "CORRUPTOR"]`` as well as
+    direct ``UnitTypeId`` values.
     """
-    if not has_units(units) or unit_type is None:
+    if not has_units(units) or unit_types is None:
         return []
 
+    if isinstance(unit_types, (list, set, tuple, frozenset)):
+        targets = unit_types
+    else:
+        targets = (unit_types,)
+
+    string_targets = {t for t in targets if isinstance(t, str)}
+    id_targets = {t for t in targets if not isinstance(t, str)}
+
+    def matches(unit: Any) -> bool:
+        type_id = getattr(unit, 'type_id', None)
+        if type_id is None:
+            return False
+        if id_targets and type_id in id_targets:
+            return True
+        if string_targets:
+            type_name = getattr(type_id, 'name', None)
+            if type_name and type_name in string_targets:
+                return True
+        return False
+
     try:
-        if hasattr(units, 'of_type'):
-            return units.of_type(unit_type)
-        return [u for u in units if getattr(u, 'type_id', None) == unit_type]
+        if id_targets and not string_targets and hasattr(units, 'of_type'):
+            if len(id_targets) == 1:
+                return units.of_type(next(iter(id_targets)))
+            return units.of_type(list(id_targets))
+        if hasattr(units, 'filter'):
+            return units.filter(matches)
+        return [u for u in units if matches(u)]
     except (AttributeError, TypeError):
-        return []
+        return [u for u in units if matches(u)]
 
 
 def closest_enemy(unit: Any, enemies: Any) -> Optional[Any]:
