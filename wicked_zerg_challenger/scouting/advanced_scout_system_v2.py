@@ -834,11 +834,17 @@ class AdvancedScoutingSystemV2:
             return self._patrol_routes.get(route_name)
         return None
 
-    def _assign_patrol(self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD) -> bool:
+    def _assign_patrol(self, route_name: str, unit_type=None) -> bool:
         """
         특정 순찰 경로에 유닛 배정.
         중반 이후 오버로드/감시군주를 적진 순환 순찰에 투입.
+
+        ``unit_type`` 기본값은 ``UnitTypeId.OVERLORD``이지만, sc2 라이브러리가
+        설치되지 않은 환경(폴백 stub)에서도 클래스 정의가 평가될 수 있도록
+        런타임에 lookup한다.
         """
+        if unit_type is None:
+            unit_type = getattr(UnitTypeId, "OVERLORD", None)
         route = self._patrol_routes.get(route_name)
         if not route:
             return False
