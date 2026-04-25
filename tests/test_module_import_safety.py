@@ -50,3 +50,14 @@ def test_advanced_scout_system_v2_imports_without_sc2():
 
     sig = inspect.signature(cls._assign_patrol)
     assert sig.parameters["unit_type"].default is None
+
+
+def test_check_proxy_import_does_not_exit():
+    """check_proxy 는 윈도우 전용 경로 검사 스크립트지만, 단순 import 만으로
+    sys.exit() 를 호출해선 안 된다 (다른 환경에서 모듈 스캔/로딩 시 크래시 방지)."""
+    sys.modules.pop("check_proxy", None)
+    mod = importlib.import_module("check_proxy")
+    assert hasattr(mod, "check_proxy"), "check_proxy() 함수가 export 되어야 함"
+    # 함수가 호출 가능하고 부재 시 비-zero 를 반환하는지만 검증 (sys.exit 금지)
+    rc = mod.check_proxy(proxy_path="/nonexistent/path/cli-proxy-api.exe")
+    assert rc != 0
