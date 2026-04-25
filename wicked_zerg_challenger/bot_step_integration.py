@@ -2187,7 +2187,10 @@ class BotStepIntegrator:
                  except (AttributeError, TypeError, ValueError) as e:
                      # Expansion check failed, use default status
                      expand_status = "Unknown"
-                     if iteration % 1000 == 0:  # Log occasionally
+                     # draw_debug_info has no `iteration` parameter; throttle
+                     # the log on the SC2 game loop instead (~22.4 fps -> ~45s).
+                     game_loop = getattr(getattr(b, "state", None), "game_loop", 0)
+                     if game_loop and game_loop % 1000 == 0:
                          self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시

@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
     from sc2.unit import Unit
+    # Forward-ref target for the constructor's `bot` parameter. The actual
+    # class today is WickedZergBotProImpl; alias for the canonical public name.
+    from .wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 else:
     # Runtime imports
     try:

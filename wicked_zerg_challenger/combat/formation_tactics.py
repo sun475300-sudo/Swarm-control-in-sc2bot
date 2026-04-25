@@ -259,7 +259,7 @@ class BurrowController:
                 skip_units.add(unit.tag)
             else:
                 action = self._handle_unburrowed_unit(
-                    unit, health_ratio, enemy_nearby, down_ability
+                    unit, enemy_units, health_ratio, enemy_nearby, down_ability
                 )
                 if action:
                     actions.append(action)
@@ -297,7 +297,7 @@ class BurrowController:
         return None
 
     def _handle_unburrowed_unit(
-        self, unit, health_ratio: float, enemy_nearby: bool, down_ability
+        self, unit, enemy_units, health_ratio: float, enemy_nearby: bool, down_ability
     ):
         """Handle logic for unburrowed units."""
         # Banelings burrow when enemies nearby and idle (ambush)
