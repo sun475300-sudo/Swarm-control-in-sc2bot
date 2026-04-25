@@ -1,0 +1,15 @@
+# Development / test dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Test runner & plugins (required by tests/* and pytest.ini's asyncio_mode=auto)
+pytest>=8.0
+pytest-asyncio>=0.23
+pytest-timeout>=2.3
+pytest-cov>=4.1
+
+# Lint / format / type checks (used by .github/workflows/sc2bot-ci.yml lint job)
+flake8>=7.0
+black>=24.0
+isort>=5.13
+mypy>=1.8
+bandit>=1.7
