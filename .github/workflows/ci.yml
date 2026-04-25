@@ -113,10 +113,17 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
+          # Diagnostic environment dump — surfaces version skew that's
+          # invisible in the failure log otherwise.
+          python -V
+          pip list 2>&1 | grep -E "(pytest|asyncio|timeout|burny|sc2)" || true
+
           # 컬렉션 단계: 모든 테스트가 검출 가능한지 확인 (실패 시 즉시 종료)
           pytest tests/ --collect-only -q
-          # 실제 실행: 전체 테스트 스위트
-          pytest tests/ -v --tb=short
+
+          # 실제 실행: 전체 테스트 스위트.
+          # `--showlocals` + `-rA` give actionable failure context in CI logs.
+          pytest tests/ -v --tb=short --showlocals -rA
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
