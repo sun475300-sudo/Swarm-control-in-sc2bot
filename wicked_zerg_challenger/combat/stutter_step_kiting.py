@@ -10,10 +10,22 @@ Stutter-Step Kiting - 진정한 스터터 스텝 구현
 """
 
 from typing import Optional, Dict, Set
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.unit import Unit
-from sc2.units import Units
-from sc2.position import Point2
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.unit import Unit
+    from sc2.units import Units
+    from sc2.position import Point2
+except ImportError:
+    Unit = object  # type: ignore[misc,assignment]
+    Units = object  # type: ignore[misc,assignment]
+    Point2 = tuple  # type: ignore[misc,assignment]
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        HYDRALISK = "HYDRALISK"
+        ROACH = "ROACH"
+        QUEEN = "QUEEN"
+        RAVAGER = "RAVAGER"
 
 
 class StutterStepKiting:

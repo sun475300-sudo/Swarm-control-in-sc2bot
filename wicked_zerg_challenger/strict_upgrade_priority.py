@@ -10,8 +10,24 @@ Strict Upgrade Priority System - 엄격한 업그레이드 우선순위
 """
 
 from typing import Optional, Dict, Set
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:
+    # burnysc2가 없는 환경(테스트/CI)에서도 모듈 import는 성공하도록
+    # 본 모듈에서 사용하는 enum 값들을 placeholder 문자열로 stub 처리.
+    class UnitTypeId:  # type: ignore[no-redef]
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        ROACHWARREN = "ROACHWARREN"
+        HYDRALISKDEN = "HYDRALISKDEN"
+
+    class UpgradeId:  # type: ignore[no-redef]
+        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
+        GLIALRECONSTITUTION = "GLIALRECONSTITUTION"
+        EVOLVEGROOVEDSPINES = "EVOLVEGROOVEDSPINES"
+        EVOLVEMUSCULARAUGMENTS = "EVOLVEMUSCULARAUGMENTS"
+
 from utils.logger import get_logger
 
 

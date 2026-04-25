@@ -10,10 +10,27 @@ Worker Combat System - 일꾼 전투 시스템
 """
 
 from typing import Set, Optional, Dict
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.unit import Unit
-from sc2.units import Units
-from sc2.position import Point2
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.unit import Unit
+    from sc2.units import Units
+    from sc2.position import Point2
+except ImportError:
+    Unit = object  # type: ignore[misc,assignment]
+    Units = object  # type: ignore[misc,assignment]
+    Point2 = tuple  # type: ignore[misc,assignment]
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        ZERGLING = "ZERGLING"
+        ZEALOT = "ZEALOT"
+        MARINE = "MARINE"
+        PROBE = "PROBE"
+        SCV = "SCV"
+        DRONE = "DRONE"
+        PHOTONCANNON = "PHOTONCANNON"
+        SPINECRAWLER = "SPINECRAWLER"
+
 from utils.logger import get_logger
 
 
