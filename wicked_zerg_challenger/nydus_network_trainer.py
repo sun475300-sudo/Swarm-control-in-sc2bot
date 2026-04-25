@@ -96,8 +96,10 @@ class NydusNetworkTrainer:
         # 2. 병력 투입
         await self._load_units_into_network(network)
 
-        # 3. 배치된 유닛 관리
-        await self._command_deployed_units()
+        # 3. 배치된 유닛 관리 (per-worm; the broader-pool variant was never
+        # implemented and used to crash with AttributeError each call).
+        # _manage_active_worms below already issues attack orders via
+        # _command_worm_units(worm), so we no longer need a separate hook.
 
     async def _plan_new_worm(self, network, game_time: float):
         """새 Worm 계획"""
