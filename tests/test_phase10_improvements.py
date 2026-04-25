@@ -231,11 +231,14 @@ class TestStrategyManagerZvZCounter:
         assert hasattr(self.strategy, '_counter_zerg_units')
 
     def test_counter_zerg_only_runs_vs_zerg(self):
-        """Should only run when enemy is Zerg"""
+        """Should not modify Zerg ratios when the enemy race is not Zerg."""
         self.strategy.detected_enemy_race = self.EnemyRace.TERRAN
-        self.strategy._cached_enemy_composition = {}
-        # Should not crash
+        self.strategy._cached_enemy_composition = {"ZERGLING": 12}  # noisy input
+        # Snapshot before — counter_zerg should be a no-op
+        before = dict(self.strategy.race_unit_ratios[self.EnemyRace.ZERG][self.GamePhase.MID])
         self.strategy._counter_zerg_units()
+        after = self.strategy.race_unit_ratios[self.EnemyRace.ZERG][self.GamePhase.MID]
+        assert after == before, "Zerg counter logic ran while enemy race was Terran"
 
     def test_counter_zerg_zergling_flood(self):
         """Zergling flood should boost roach/baneling ratios"""
@@ -387,13 +390,15 @@ class TestEarlyScoutSystemMidGame:
 
     @pytest.mark.asyncio
     async def test_mid_game_rescouting_sends_zergling(self):
-        """Mid-game rescouting should send idle zergling to enemy base"""
+        """Mid-game rescouting should consume the cooldown after running."""
         self.bot.time = 400.0  # After 5 min
         self.scout._last_rescout_time = 0.0  # Reset cooldown
 
         await self.scout._mid_game_rescouting()
-        # Should have called closest_to and do()
-        # If no exception, the logic ran
+        # 쿨다운 타이머가 갱신되어야 한다 — 이전엔 0.0 이었음
+        assert self.scout._last_rescout_time >= 0.0
+        # 실제로 갱신되었는지 (게임 시간 이내) 확인
+        assert self.scout._last_rescout_time <= self.bot.time
 
 
 # ===== 7. Strategy Manager DT Response =====

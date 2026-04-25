@@ -128,12 +128,18 @@ class TestProductionController:
     @pytest.mark.asyncio
     async def test_execute_without_blackboard(self, mock_bot):
         ctrl = ProductionController(mock_bot, blackboard=None)
+        # blackboard 가 None 이어도 execute() 가 폭주하지 않아야 한다
         await ctrl.execute(iteration=1)
+        assert ctrl.blackboard is None
+        assert ctrl.bot is mock_bot
 
     @pytest.mark.asyncio
     async def test_execute_without_bot(self, mock_blackboard):
         ctrl = ProductionController(bot=None, blackboard=mock_blackboard)
+        # bot 이 None 이어도 execute() 가 폭주하지 않아야 한다
         await ctrl.execute(iteration=1)
+        assert ctrl.bot is None
+        assert ctrl.blackboard is mock_blackboard
 
     def test_init_without_blackboard(self, mock_bot):
         ctrl = ProductionController(mock_bot)
