@@ -581,9 +581,9 @@ class EconomyManager:
         if worker_count >= 80:
             return
 
-        # ★ HATCH FIRST: 1베이스에서 확장 비용(300) 확보 시에만 일시 중단 ★
-        # ★ FIX: 200→350 (300으론 부족, 350이면 확실히 확장 가능), 16드론 이상일 때만 ★
-        # ★ FIX: 드론 14마리 미만이면 절대 중단하지 않음 (경제 마비 방지) ★
+        # ★ HATCH FIRST: 1베이스에서 60초 이후, 13드론·미네랄 200 이상이면 드론 생산을 일시 중단해
+        #   확장(Hatchery 300m) 자원을 비축한다. 13/200은 확장 직전 임계치 — 너무 빠르면 본진이
+        #   마비되고, 너무 늦으면 확장 타이밍이 밀린다.
         base_count_check = 1
         if hasattr(self.bot, "townhalls"):
             base_count_check = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
@@ -591,7 +591,7 @@ class EconomyManager:
         pending_hatch = getattr(self.bot, "already_pending", lambda x: 0)(UnitTypeId.HATCHERY)
         game_time_check = getattr(self.bot, "time", 0)
         if base_count_check == 1 and pending_hatch == 0 and worker_count >= 13 and current_minerals >= 200 and game_time_check > 60:
-            return  # 확장을 위해 미네랄 비축 (16드론 이상 + 350미네랄이면 즉시 확장 가능)
+            return  # 확장 자원 비축
 
         # ★ Phase 16: 66 드론 하드 컷오프 — 3기지 포화 후 군대 전환 ★
         # 66 드론 이상이고 6분 이후면 군대 생산 우선 (드론 스킵)
