@@ -27,6 +27,12 @@ except ImportError:
     AbilityId = None
     Point2 = None
 
+try:
+    from utils.game_constants import UpgradeConstants
+    _DEFAULT_INJECT_COOLDOWN = UpgradeConstants.INJECT_COOLDOWN_WITH_BUFFER
+except ImportError:
+    _DEFAULT_INJECT_COOLDOWN = 29.0
+
 
 class MacroPriority(Enum):
     """매크로 우선순위"""
@@ -75,8 +81,8 @@ class MacroCycleManager:
         macro.update()  # 매 스텝 호출
     """
 
-    # 인젝트 쿨다운 (초)
-    INJECT_COOLDOWN = 29.0  # SC2 Spawn Larva 정확한 쿨다운 (28.57초 + 여유)
+    # 인젝트 쿨다운 (초) — utils.game_constants.UpgradeConstants에서 단일 진실 공급원으로 관리
+    INJECT_COOLDOWN = _DEFAULT_INJECT_COOLDOWN
 
     # 기지당 최적 드론 수
     OPTIMAL_DRONES_PER_BASE = 16

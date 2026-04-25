@@ -22,6 +22,14 @@ from enum import Enum
 from utils.logger import get_logger
 
 try:
+    from utils.game_constants import UpgradeConstants
+    _DEFAULT_INJECT_COOLDOWN = UpgradeConstants.INJECT_COOLDOWN_WITH_BUFFER
+    _DEFAULT_INJECT_ENERGY = UpgradeConstants.INJECT_ENERGY_THRESHOLD
+except ImportError:
+    _DEFAULT_INJECT_COOLDOWN = 29.0
+    _DEFAULT_INJECT_ENERGY = 25
+
+try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
@@ -66,8 +74,9 @@ class QueenInjectOptimizer:
 
         # ★ Inject Tracking ★
         self.inject_cooldowns: Dict[int, float] = {}  # {hatchery_tag: last_inject_time}
-        self.INJECT_COOLDOWN = 29.0  # 29초 쿨다운
-        self.INJECT_ENERGY_COST = 25  # 에너지 비용
+        # 단일 진실 공급원: utils.game_constants.UpgradeConstants
+        self.INJECT_COOLDOWN = _DEFAULT_INJECT_COOLDOWN
+        self.INJECT_ENERGY_COST = _DEFAULT_INJECT_ENERGY
 
         # ★ Queen Assignment ★
         self.queen_assignments: Dict[int, int] = {}  # {queen_tag: hatchery_tag}

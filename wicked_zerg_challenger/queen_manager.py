@@ -15,6 +15,16 @@ from typing import Dict, Optional, Set
 logger = logging.getLogger(__name__)
 
 try:
+    from utils.game_constants import UpgradeConstants
+    _DEFAULT_INJECT_COOLDOWN = UpgradeConstants.INJECT_COOLDOWN_WITH_BUFFER
+    _DEFAULT_INJECT_ENERGY = UpgradeConstants.INJECT_ENERGY_THRESHOLD
+    _DEFAULT_TRANSFUSION_RANGE = UpgradeConstants.TRANSFUSION_RANGE
+except ImportError:
+    _DEFAULT_INJECT_COOLDOWN = 29.0
+    _DEFAULT_INJECT_ENERGY = 25
+    _DEFAULT_TRANSFUSION_RANGE = 7
+
+try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
@@ -56,8 +66,9 @@ class QueenManager:
         self.bot = bot
 
         # Injection settings - ★ OPTIMIZED ★
-        self.inject_energy_threshold = 25
-        self.inject_cooldown = 29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★
+        # 단일 진실 공급원: utils.game_constants.UpgradeConstants
+        self.inject_energy_threshold = _DEFAULT_INJECT_ENERGY
+        self.inject_cooldown = _DEFAULT_INJECT_COOLDOWN  # 28.57초 + 0.43초 여유
         self.max_inject_distance = 8.0  # ★ 4→8: 인젝트 사거리 여유 (SC2 기본 사거리 + 이동 보정)
         self.max_queen_travel_distance = 10.0
 

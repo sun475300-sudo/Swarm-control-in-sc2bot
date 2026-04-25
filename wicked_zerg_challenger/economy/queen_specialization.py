@@ -17,6 +17,16 @@ from enum import Enum
 from typing import Dict, List, Optional, Set
 
 try:
+    from utils.game_constants import UpgradeConstants
+    _DEFAULT_INJECT_COOLDOWN = UpgradeConstants.INJECT_COOLDOWN_WITH_BUFFER
+    _DEFAULT_CREEP_COOLDOWN = UpgradeConstants.CREEP_SPREAD_COOLDOWN
+    _DEFAULT_TRANSFUSION_COOLDOWN = UpgradeConstants.TRANSFUSION_COOLDOWN
+except ImportError:
+    _DEFAULT_INJECT_COOLDOWN = 29.0
+    _DEFAULT_CREEP_COOLDOWN = 4.0
+    _DEFAULT_TRANSFUSION_COOLDOWN = 1.0
+
+try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
@@ -57,10 +67,10 @@ class QueenSpecializationManager:
         self.last_creep_time: Dict[int, float] = {}  # queen_tag -> time
         self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
 
-        # Config
-        self.inject_cooldown = 29.0
-        self.creep_cooldown = 4.0
-        self.transfuse_cooldown = 1.0
+        # Config — utils.game_constants.UpgradeConstants에서 단일 진실 공급원으로 관리
+        self.inject_cooldown = _DEFAULT_INJECT_COOLDOWN
+        self.creep_cooldown = _DEFAULT_CREEP_COOLDOWN
+        self.transfuse_cooldown = _DEFAULT_TRANSFUSION_COOLDOWN
         self.pump_energy_reserve = 25
         self.creep_energy_threshold = 25
         self.transfuse_energy = 50

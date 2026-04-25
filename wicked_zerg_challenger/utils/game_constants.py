@@ -103,9 +103,10 @@ class UpgradeConstants:
     """업그레이드 관련 상수"""
 
     # Cooldowns (초 단위)
-    INJECT_COOLDOWN = 28.57         # Spawn Larva 쿨다운 (SC2 정확값: 640 frames / 22.4 fps)
-    TRANSFUSION_COOLDOWN = 1.0      # 수혈 쿨다운
-    CREEP_SPREAD_COOLDOWN = 4.0     # 점막 확산 쿨다운
+    INJECT_COOLDOWN = 28.57          # Spawn Larva 쿨다운 (SC2 정확값: 640 frames / 22.4 fps)
+    INJECT_COOLDOWN_WITH_BUFFER = 29.0  # 28.57 + 0.43 여유 (네트워크 지연/타이밍 마진)
+    TRANSFUSION_COOLDOWN = 1.0       # 수혈 쿨다운
+    CREEP_SPREAD_COOLDOWN = 4.0      # 점막 확산 쿨다운
 
     # Energy thresholds
     INJECT_ENERGY_THRESHOLD = 25    # Inject 에너지
