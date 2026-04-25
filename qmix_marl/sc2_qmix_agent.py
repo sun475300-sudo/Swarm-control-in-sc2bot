@@ -45,6 +45,36 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    torch = None  # type: ignore[assignment]
+
+    class _NNStubModule:
+        """Placeholder used when ``torch`` is unavailable.
+
+        Allows ``class Foo(nn.Module):`` definitions to evaluate at import time
+        even without PyTorch installed; instantiation will fail with a clear
+        error.
+        """
+
+        def __init__(self, *_args, **_kwargs):
+            raise RuntimeError(
+                "PyTorch is not installed; this class is only usable with the "
+                "PyTorch backend. Install torch or use the NumPy fallback."
+            )
+
+    class _NNStub:
+        Module = _NNStubModule
+
+        def __getattr__(self, name):
+            def _missing(*_a, **_kw):
+                raise RuntimeError(
+                    f"torch.nn.{name} requires PyTorch; install torch or use the "
+                    "NumPy fallback."
+                )
+            return _missing
+
+    nn = _NNStub()  # type: ignore[assignment]
+    F = _NNStub()   # type: ignore[assignment]
+    optim = _NNStub()  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback primitives
