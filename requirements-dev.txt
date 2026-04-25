@@ -1,0 +1,14 @@
+# Development / test-only dependencies.
+# Install with: pip install -r requirements-dev.txt
+#
+# These are required to run `pytest tests/`. The 83 async tests in this
+# repo silently fail with "async def functions are not natively supported"
+# when pytest-asyncio is missing — and that error class does not flip the
+# CI exit code if pytest is invoked under `|| true`. Keep this file as the
+# single source of truth for test deps.
+
+pytest>=8.0
+pytest-asyncio>=0.23  # asyncio_mode = auto in pytest.ini
+pytest-cov>=5.0
+pytest-timeout>=2.3   # honours `timeout = 60` in pytest.ini
+flake8>=7.0
