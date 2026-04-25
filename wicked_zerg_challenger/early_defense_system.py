@@ -14,12 +14,15 @@ logger = logging.getLogger("EarlyDefenseSystem")
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
     class BotAI:
         pass
     class UnitTypeId:
+        pass
+    class UpgradeId:
         pass
     class AbilityId:
         pass

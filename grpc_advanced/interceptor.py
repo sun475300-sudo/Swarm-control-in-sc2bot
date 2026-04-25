@@ -83,9 +83,14 @@ class SC2AuthInterceptor(grpc.ServerInterceptor):
 
         try:
             payload = self._validate_token(token)
-        except grpc.RpcError as e:
+        except grpc.RpcError as rpc_err:
+            # Re-bind the exception so the inner closure can capture it; the
+            # name from `except ... as e` is auto-deleted when the block exits.
+            err = rpc_err
+
             def abort(request, context):
-                context.abort(e.code(), e.details())
+                context.abort(err.code(), err.details())
+
             return grpc.unary_unary_rpc_method_handler(abort)
 
         # Rate limiting per user
