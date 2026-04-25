@@ -1,0 +1,22 @@
+name: Empty-logger Regression Guard
+
+# Cheap tripwire: fails if any empty `logger.<level>()` calls reappear,
+# the bug class fixed in commit 2e03d2f. Runs in seconds, no deps.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  no-empty-logger-calls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run check
+        run: python scripts/check_no_empty_logger_calls.py
