@@ -67,14 +67,17 @@ async def _run_ladder_game(bot_player: Bot, host: str, game_port: int, start_por
         result = await _play_game(bot_player, client, realtime=False, portconfig=portconfig)
         logger.info(f"Game result: {result}")
 
+        # ``Exception``이 ``ConnectionAlreadyClosed``의 부모이므로
+        # ``(ConnectionAlreadyClosed, Exception)``은 사실상 ``Exception``과 동일.
+        # 의도(소켓 정리는 어차피 실패해도 무방)에 맞게 명시적으로 표기.
         try:
             await client.leave()
-        except (ConnectionAlreadyClosed, Exception):
-            pass
+        except Exception:  # noqa: BLE001 — 정리 단계 예외는 무시
+            logger.debug("client.leave() raised; ignored", exc_info=True)
         try:
             await client.quit()
-        except (ConnectionAlreadyClosed, Exception):
-            pass
+        except Exception:  # noqa: BLE001 — 정리 단계 예외는 무시
+            logger.debug("client.quit() raised; ignored", exc_info=True)
 
         return result
 
