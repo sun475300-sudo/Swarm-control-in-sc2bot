@@ -559,9 +559,11 @@ class QueenInjectOptimizer:
                             self.missed_injects += 1
                             self.inject_retry_attempts[hatchery_tag] += 1
 
+                            delay = max(0.0, game_time - actual_time)
                             self.logger.warning(
                                 f"[{int(game_time)}s] ★ INJECT MISS DETECTED! ★ "
-                                f"Hatchery {hatchery_tag} (Attempt {retry_count + 1}/{self.max_retry_attempts})"
+                                f"Hatchery {hatchery_tag} (Attempt {retry_count + 1}/{self.max_retry_attempts}) "
+                                f"delay={delay:.1f}s expected={expected_time:.1f}s"
                             )
 
                             # ★ 즉시 재시도 ★

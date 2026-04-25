@@ -1335,7 +1335,6 @@ class EconomyManager:
             return
 
         game_time = self.bot.time
-        base_count = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
 
         # ★ 공통 쿨다운 체크 (모든 확장 시스템 공유) ★
         time_since_last = game_time - self._last_expansion_attempt_time
