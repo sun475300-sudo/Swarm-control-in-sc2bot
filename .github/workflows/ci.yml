@@ -148,8 +148,13 @@ jobs:
       - name: SC2 봇 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
+          pip install burnysc2 pytest pytest-asyncio pytest-timeout pyyaml aiohttp
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          # Diagnostic: confirm sc2 is actually importable (the inner test files
+          # do a hard `from sc2.ids.unit_typeid import UnitTypeId` and abort the
+          # whole pytest run if the import fails — make that visible in the log).
+          python -c "import sc2; print(f'sc2 ok: {sc2.__file__}')"
 
       - name: py_compile 전체 구문 검증 (349 파일)
         run: |
@@ -174,7 +179,8 @@ jobs:
 
       - name: pytest SC2 봇 테스트
         run: |
-          pytest wicked_zerg_challenger/tests/ -v --tb=short
+          # Show first failing test in full so we can act on it without log access.
+          pytest wicked_zerg_challenger/tests/ -v --tb=short --maxfail=5 -rA
         env:
           PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
