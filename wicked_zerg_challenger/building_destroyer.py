@@ -9,12 +9,11 @@
 3. 빠른 게임 종료를 위한 공격적 병력 배분
 """
 
-from typing import List, Dict, Set, Optional
+from typing import List, Dict, Set
 from sc2.position import Point2
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 from utils.logger import get_logger
-import math
 import logging
 
 logger = logging.getLogger("BuildingDestroyer")

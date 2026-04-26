@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 import random
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger("VisualizeLearning")

@@ -9,7 +9,7 @@ Logic Optimizer - 전체 시스템 실행 최적화
 4. 중복 작업 제거
 """
 
-from typing import Dict, List, Set, Optional, Callable
+from typing import Dict, Set, Optional, Callable
 from enum import Enum
 from dataclasses import dataclass
 from utils.logger import get_logger

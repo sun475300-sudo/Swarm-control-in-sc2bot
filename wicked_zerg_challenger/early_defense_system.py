@@ -7,7 +7,7 @@ Purpose: Counter early rushes and improve initial survival rate
 - Manage initial unit production priority
 """
 
-from typing import Optional, Set
+from typing import Set
 import logging
 
 logger = logging.getLogger("EarlyDefenseSystem")

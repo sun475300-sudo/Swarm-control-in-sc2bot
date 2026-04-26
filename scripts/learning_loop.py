@@ -11,11 +11,10 @@ Phase 59: 승패 패턴 자동 분석 및 학습 포커스 추천
 """
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from collections import defaultdict
 
 

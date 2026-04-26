@@ -8,7 +8,7 @@ Advanced Building Manager - 건설 로직 고도화 모듈
 3. 자원 적체 시(3000+) 테크 건물 공격적 건설 로직
 """
 
-from typing import Optional, List, Tuple, Dict, Callable
+from typing import Optional, List, Tuple, Dict
 import math
 import logging
 

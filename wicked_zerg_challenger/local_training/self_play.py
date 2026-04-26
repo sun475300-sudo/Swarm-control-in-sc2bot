@@ -11,13 +11,12 @@ Self-Play Trainer - 자기 대전 학습 시스템 (#102)
 4. 모델 스냅샷 저장/로드
 """
 
-import os
 import json
 import shutil
 import random
 import numpy as np
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 import logging
 

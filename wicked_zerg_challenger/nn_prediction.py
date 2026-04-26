@@ -4,7 +4,7 @@ HIGH PRIORITY FEATURE
 """
 
 import random
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 import json

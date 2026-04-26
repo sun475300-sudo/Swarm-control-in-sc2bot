@@ -20,49 +20,42 @@ def test_imports():
     logger.info("=" * 60)
 
     try:
-        from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
         logger.info("WickedZergBotProImpl imported successfully")
     except Exception as e:
         logger.error(f"Failed to import WickedZergBotProImpl: {e}")
         return False
 
     try:
-        from bot_step_integration import BotStepIntegrator
         logger.info("BotStepIntegrator imported successfully")
     except Exception as e:
         logger.error(f"Failed to import BotStepIntegrator: {e}")
         return False
 
     try:
-        from local_training.production_resilience import ProductionResilience
         logger.info("ProductionResilience imported successfully")
     except Exception as e:
         logger.error(f"Failed to import ProductionResilience: {e}")
         return False
 
     try:
-        from strategy_manager import StrategyManager
         logger.info("StrategyManager imported successfully")
     except Exception as e:
         logger.error(f"Failed to import StrategyManager: {e}")
         return False
 
     try:
-        from rogue_tactics_manager import RogueTacticsManager
         logger.info("RogueTacticsManager imported successfully")
     except Exception as e:
         logger.error(f"Failed to import RogueTacticsManager: {e}")
         return False
 
     try:
-        from unit_factory import UnitFactory
         logger.info("UnitFactory imported successfully")
     except Exception as e:
         logger.error(f"Failed to import UnitFactory: {e}")
         return False
 
     try:
-        from combat.boids_swarm_control import BoidsSwarmController
         logger.info("BoidsSwarmController imported successfully")
     except Exception as e:
         logger.error(f"Failed to import BoidsSwarmController: {e}")

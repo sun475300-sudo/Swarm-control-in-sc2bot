@@ -9,7 +9,7 @@ Overlord Transport - 대군주 수송 시스템
 4. 저글링/바퀴 드랍 전술
 """
 
-from typing import Optional, List, Dict, Set, TYPE_CHECKING
+from typing import Optional, List, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.units import Units

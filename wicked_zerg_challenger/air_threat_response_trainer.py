@@ -9,7 +9,7 @@ Air Threat Response Trainer - 공중 위협 대응 학습 시스템
 4. 동적 카운터: 히드라, 퀸, 감염충, 타락귀
 """
 
-from typing import Dict, Set, List, Optional
+from typing import Dict
 from sc2.ids.unit_typeid import UnitTypeId
 from utils.logger import get_logger
 

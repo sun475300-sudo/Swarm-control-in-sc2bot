@@ -15,7 +15,6 @@ Blackboard 기반 아키텍처:
 """
 
 from typing import Optional, Set, List
-import math
 
 try:
     from sc2.bot_ai import BotAI

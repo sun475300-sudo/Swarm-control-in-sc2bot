@@ -13,10 +13,9 @@ Phase 57: CI/CD 자동화 고도화
 import json
 import subprocess
 import sys
-import os
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 
 class ReleaseChecklist:

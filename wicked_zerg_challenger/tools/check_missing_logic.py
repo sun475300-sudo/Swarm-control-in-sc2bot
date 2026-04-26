@@ -164,7 +164,6 @@ class MissingLogicChecker:
 
 def main():
     """���� �Լ�"""
-    import sys
     
     logger.info("=" * 70)
     logger.info("������ ���� �˻� ����")

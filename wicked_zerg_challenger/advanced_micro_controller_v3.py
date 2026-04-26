@@ -17,7 +17,7 @@ Integration:
 - Energy and cooldown management
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Set
 from collections import defaultdict
 from utils.logger import get_logger
 

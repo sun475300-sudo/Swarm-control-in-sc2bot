@@ -14,7 +14,7 @@ Feature #94: Doom Drop 전술 매니저
 - DoomDropManager: 대규모 올인 드롭 (4기+, 유닛 전부 투입)
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 from enum import Enum
 
 try:

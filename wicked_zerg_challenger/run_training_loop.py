@@ -7,7 +7,7 @@
 from sc2 import maps
 from sc2.player import Bot, Computer
 from sc2.main import run_game
-from sc2.data import Race, Difficulty
+from sc2.data import Race
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 from difficulty_progression import DifficultyProgression
 import sys

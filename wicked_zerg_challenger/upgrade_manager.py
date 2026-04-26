@@ -11,7 +11,7 @@ Evolution Chamber upgrade manager.
 Chooses upgrades based on unit composition and opponent race.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

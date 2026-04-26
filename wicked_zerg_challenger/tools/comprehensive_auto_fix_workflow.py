@@ -16,7 +16,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple
 import logging
 
 logger = logging.getLogger("ComprehensiveAutoFixWorkflow")

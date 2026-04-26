@@ -30,9 +30,7 @@ from personality_module import PersonalityModule, PersonalityMode
 import traceback
 import json
 import time
-import os
 import shutil
-import glob as glob_mod
 from datetime import datetime
 
 class WickedZergBotProImpl(BotAI):

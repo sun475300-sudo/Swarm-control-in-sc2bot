@@ -12,7 +12,7 @@ Tests cover:
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 import sys
 import os
 
@@ -20,7 +20,6 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from economy_manager import EconomyManager
-from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 

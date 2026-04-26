@@ -14,7 +14,7 @@ import sys
 import time
 import json
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any
 import logging
 
 logger = logging.getLogger("ProReplayLearningWorkflow")

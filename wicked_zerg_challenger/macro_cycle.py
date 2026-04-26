@@ -12,7 +12,7 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 5. 라바 사용 우선순위 (드론 > 군대 > 오버로드)
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set
 from enum import Enum
 import logging
 

@@ -9,7 +9,7 @@ Combat Phase Controller - 전투 단계별 컨트롤 시스템
 4. Retreat Phase (후퇴 단계): 손실 최소화 후퇴
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 from enum import Enum
 from dataclasses import dataclass
 

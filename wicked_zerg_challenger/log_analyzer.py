@@ -19,13 +19,11 @@ Usage:
 """
 
 import json
-import os
-import glob
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-from collections import Counter, defaultdict
+from typing import Dict, List
+from collections import Counter
 import logging
 
 logger = logging.getLogger("LogAnalyzer")

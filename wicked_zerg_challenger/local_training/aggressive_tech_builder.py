@@ -11,7 +11,7 @@ This module does when resources overflow:
 3. Allow building multiple techs simultaneously
 """
 
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Tuple
 import logging
 
 logger = logging.getLogger("AggressiveTechBuilder")

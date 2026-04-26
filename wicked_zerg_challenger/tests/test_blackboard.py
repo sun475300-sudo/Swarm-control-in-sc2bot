@@ -16,7 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from blackboard import (
     GameStateBlackboard, Blackboard,
     AuthorityMode, GamePhase, ThreatLevel,
-    UnitCounts, ThreatInfo, ResourceState,
 )
 
 

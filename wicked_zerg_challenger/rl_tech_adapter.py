@@ -12,7 +12,7 @@ Features:
 4. Win/loss feedback integration (승/패 피드백 통합)
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 from pathlib import Path
 import json
 from utils.logger import get_logger

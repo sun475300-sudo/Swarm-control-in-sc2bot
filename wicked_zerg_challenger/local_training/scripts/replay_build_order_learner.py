@@ -12,11 +12,10 @@ Replay Build Order Learner
 """
 
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 import logging
 
 logger = logging.getLogger("ReplayBuildOrderLearner")

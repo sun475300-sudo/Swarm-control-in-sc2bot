@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Dict, List, Optional, Tuple, Set
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 from collections import defaultdict
 from utils.logger import get_logger

@@ -14,7 +14,6 @@ import math
 import numpy as np
 
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import logging
 
 logger = logging.getLogger("Generate3dVisuals")

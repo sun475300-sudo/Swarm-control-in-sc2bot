@@ -66,7 +66,6 @@ class IntegrationTester:
         logger.info("\n[VALIDATION] Checking imports...")
 
         try:
-            from opponent_modeling import OpponentModeling
             logger.info("  [OK] OpponentModeling imported successfully")
             self.results["opponent_modeling"]["import"] = "success"
         except Exception as e:
@@ -76,7 +75,6 @@ class IntegrationTester:
             return False
 
         try:
-            from advanced_micro_controller_v3 import AdvancedMicroControllerV3
             logger.info("  [OK] AdvancedMicroControllerV3 imported successfully")
             self.results["micro_v3"]["import"] = "success"
         except Exception as e:

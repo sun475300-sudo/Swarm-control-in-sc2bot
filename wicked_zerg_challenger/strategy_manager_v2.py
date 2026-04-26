@@ -14,7 +14,7 @@ Inherits from StrategyManager and extends functionality.
 
 from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
-from strategy_manager import StrategyManager, GamePhase, StrategyMode, EnemyRace
+from strategy_manager import StrategyManager, GamePhase, StrategyMode
 from utils.logger import get_logger
 
 try:

@@ -13,7 +13,7 @@ import statistics
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 
 class PerformanceBenchmark:
@@ -68,7 +68,6 @@ class PerformanceBenchmark:
     def benchmark_python_syntax(self, iterations: int = 10) -> Dict:
         """Python 구문 검증 성능 측정"""
         import py_compile
-        import glob
 
         py_files = list(self.project_root.glob("wicked_zerg_challenger/**/*.py"))
 

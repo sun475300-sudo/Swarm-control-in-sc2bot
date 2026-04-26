@@ -25,7 +25,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.animation import FuncAnimation, PillowWriter
-from matplotlib.patches import FancyArrowPatch, Circle
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 DPI = 100

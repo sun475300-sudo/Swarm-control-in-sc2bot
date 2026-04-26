@@ -3,7 +3,6 @@
 import json
 import os
 from pathlib import Path
-import time
 import logging
 
 logger = logging.getLogger("CurriculumManager")

@@ -4,14 +4,13 @@ Gwangju Urban Drone UTM — Investor Pitch Deck (20 Slides)
 python-pptx 기반 다크 테마 투자자 프레젠테이션
 """
 
-import os, sys
+import os
 from pathlib import Path
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import qn
 import logging
 
 logger = logging.getLogger("MakeInvestorPptx")

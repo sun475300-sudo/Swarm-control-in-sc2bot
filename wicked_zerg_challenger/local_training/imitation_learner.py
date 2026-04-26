@@ -11,7 +11,6 @@ SC2Replay 파일에서 전문가 행동을 추출하고 모방 학습합니다.
 4. 행동 복제(Behavioral Cloning) + DAgger 지원
 """
 
-import os
 import json
 import numpy as np
 from pathlib import Path

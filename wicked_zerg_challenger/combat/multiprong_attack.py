@@ -15,7 +15,6 @@ Feature #98: 멀티프롱 공격 매니저
 
 from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
-import time as _time
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

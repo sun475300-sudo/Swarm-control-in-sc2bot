@@ -13,12 +13,10 @@ sc2reader를 사용한 부정확한 리플레이 분석 대신,
 4. 처리된 데이터 아카이빙
 """
 
-import os
-import shutil
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import numpy as np
 import sys
 import logging
