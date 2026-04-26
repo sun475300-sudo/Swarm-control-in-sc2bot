@@ -79,14 +79,15 @@ class MultitaskingSystem:
         self.task_priorities["base_defense"] = 100
         self.task_priorities["main_attack"] = 50
 
-        # 공격 모드면 공격 우선순위 상향
+        # 공격 모드면 공격 우선순위 상향 (combat_manager와 동기화)
         if strategy_mode in ["aggressive", "all_in"]:
-            self.task_priorities["main_attack"] = 90
-            self.task_priorities["base_defense"] = 45
+            self.task_priorities["main_attack"] = 95
+            self.task_priorities["base_defense"] = 40
 
-            # ALL_IN이면 방어 더 낮춤
+            # ALL_IN이면 방어 더 낮추고 초반 하라스 강화
             if strategy_mode == "all_in":
-                self.task_priorities["base_defense"] = 20
+                self.task_priorities["base_defense"] = 15
+                self.task_priorities["early_harass"] = 85
 
     def create_task_list(self, army_units, air_units, enemy_units, iteration: int) -> List[Tuple[str, any, int]]:
         """

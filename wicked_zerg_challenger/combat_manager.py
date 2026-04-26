@@ -259,8 +259,8 @@ class CombatManager:
             # ALL_IN이면 방어 더 낮춤
             if current_mode == "all_in":
                 self.task_priorities["base_defense"] = 15
-                # 올인 시 공격 대상 지정 강화
-                self.task_priorities["worker_harass"] = 80
+                # 올인 시 초반 하라스 우선순위 상향 (실제 디스패치되는 키)
+                self.task_priorities["early_harass"] = 85
         
         # Evaluate tasks
         tasks_to_execute = []
