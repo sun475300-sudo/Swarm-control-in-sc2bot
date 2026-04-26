@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 import shutil
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -17,6 +18,83 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+# wicked_zerg_challenger도 path에 추가 (sc2 호환 스텁 사용을 위해)
+_WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if str(_WZC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_WZC_ROOT))
+
+
+def _install_sc2_stub_modules() -> None:
+    """sc2 미설치 환경에서 가짜 sc2 모듈 트리를 sys.modules에 주입.
+
+    tests/test_advanced_scout_system_v2.py 등 5개 파일은 모듈 상단에서
+    `from sc2... import ...`를 시도하고 실패하면 ``pytest.skip(...,
+    allow_module_level=True)`` 로 모듈 전체를 스킵한다. 본 함수는
+    `wicked_zerg_challenger/_sc2_compat.py`의 메타클래스 스텁들을 sys.modules에
+    `sc2`/`sc2.ids.*`/`sc2.position`/`sc2.unit` 등으로 주입하여 import를
+    성공시킨다. 그러면 해당 테스트 파일들이 collection 단계에서 skip되지
+    않고 실제 단위 테스트가 실행된다.
+
+    진짜 burnysc2가 설치되어 있으면 이 함수는 no-op이다.
+    """
+    try:
+        import sc2  # noqa: F401
+        return  # 진짜 sc2 사용
+    except Exception:
+        pass
+
+    try:
+        from _sc2_compat import (  # type: ignore
+            BotAI,
+            UnitTypeId,
+            AbilityId,
+            UpgradeId,
+            Race,
+            Difficulty,
+            Result,
+            Bot,
+            Computer,
+            Point2,
+            Unit,
+            Units,
+            maps,
+            run_game,
+        )
+    except ImportError:
+        # _sc2_compat이 없는 환경 (예: 외부 체크아웃)에서는 조용히 포기.
+        return
+
+    def _mod(name: str, **attrs) -> types.ModuleType:
+        m = types.ModuleType(name)
+        for k, v in attrs.items():
+            setattr(m, k, v)
+        sys.modules[name] = m
+        return m
+
+    sc2_pkg = _mod("sc2", maps=maps)
+    sc2_pkg.__path__ = []
+
+    sc2_ids = _mod("sc2.ids")
+    sc2_ids.__path__ = []
+
+    _mod("sc2.bot_ai", BotAI=BotAI)
+    _mod("sc2.ids.unit_typeid", UnitTypeId=UnitTypeId)
+    _mod("sc2.ids.ability_id", AbilityId=AbilityId)
+    _mod("sc2.ids.upgrade_id", UpgradeId=UpgradeId)
+    _mod("sc2.data", Race=Race, Difficulty=Difficulty, Result=Result)
+    _mod("sc2.player", Bot=Bot, Computer=Computer)
+    _mod("sc2.position", Point2=Point2)
+    _mod("sc2.unit", Unit=Unit)
+    _mod("sc2.units", Units=Units)
+    _mod("sc2.main", run_game=run_game)
+    sys.modules["sc2.maps"] = (
+        maps if hasattr(maps, "__name__") else types.ModuleType("sc2.maps")
+    )
+    sys.modules["sc2.maps"].get = maps.get  # type: ignore[attr-defined]
+
+
+_install_sc2_stub_modules()
 
 
 # ═══════════════════════════════════════════════════════
