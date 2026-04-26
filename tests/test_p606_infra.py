@@ -37,19 +37,24 @@ class TestLoadTesting:
 
 class TestFuzzTesting:
     def test_import(self):
-        cls = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzTarget")
+        # Real exports are FuzzInput / SC2Fuzzer (the older
+        # FuzzTarget/FuzzConfig names never existed → silent skip).
+        cls = _safe_import("fuzz_testing.sc2_fuzzer", "SC2Fuzzer")
         if cls is None:
-            # try alternate class name
-            mod = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzConfig")
-            if mod is None:
-                pytest.skip("not importable")
+            cls = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzInput")
+        if cls is None:
+            pytest.skip("not importable")
+        assert cls is not None
 
 
 class TestContractTesting:
     def test_import(self):
-        cls = _safe_import("contract_testing.sc2_contract_tester", "ContractViolation")
+        # Real exports: Contract / ContractTester / ContractStatus.
+        # The previous ContractViolation/ContractType names don't exist
+        # in the module so this test was silently skipping.
+        cls = _safe_import("contract_testing.sc2_contract_tester", "ContractTester")
         if cls is None:
-            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractType")
+            cls = _safe_import("contract_testing.sc2_contract_tester", "Contract")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
@@ -77,9 +82,11 @@ class TestMTLSSecurity:
 
 class TestSBOMManager:
     def test_import(self):
-        cls = _safe_import("sbom_manager.sc2_sbom_generator", "PackageType")
+        # Real exports: SBOMGenerator / SBOMDocument / Package. The
+        # earlier PackageType/SBOMFormat names don't exist in the module.
+        cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMGenerator")
         if cls is None:
-            cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMFormat")
+            cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMDocument")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
@@ -127,9 +134,11 @@ class TestCQRSPattern:
 
 class TestPerformanceProfiler:
     def test_import(self):
-        cls = _safe_import("performance_profiler.sc2_profiler", "ProfileMetric")
+        # Real exports: SC2Profiler / CPUProfiler / FrameBudget. The
+        # earlier ProfileMetric/ProfilingConfig names don't exist.
+        cls = _safe_import("performance_profiler.sc2_profiler", "SC2Profiler")
         if cls is None:
-            cls = _safe_import("performance_profiler.sc2_profiler", "ProfilingConfig")
+            cls = _safe_import("performance_profiler.sc2_profiler", "FrameBudget")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
