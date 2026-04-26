@@ -47,7 +47,7 @@ jobs:
       - name: Python 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
+          pip install flake8 pytest pytest-cov pytest-asyncio pytest-timeout
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
@@ -112,8 +112,11 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          pytest tests/ -v --tb=short --co -q 2>/dev/null || true
-          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short || true
+          # 컬렉션 사전 점검
+          pytest tests/ --co -q 2>/dev/null || true
+          # 본 실행: pytest-asyncio가 없으면 ~80개 테스트가 실패하므로
+          # requirements.txt 및 위 install 단계에서 명시적으로 설치한다.
+          pytest tests/ -v --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"

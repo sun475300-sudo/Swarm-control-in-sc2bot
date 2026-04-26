@@ -79,3 +79,13 @@ yt-dlp>=2024.1.0
 # ═══════════════════════════════════════════════
 pycaw>=20230407; sys_platform == "win32"
 comtypes>=1.2.0; sys_platform == "win32"
+
+# ═══════════════════════════════════════════════
+# Test (kept here so a one-shot `pip install -r requirements.txt`
+# in CI also installs the async-test plugin; pytest.ini sets
+# asyncio_mode=auto and ~80 tests are async coroutines).
+# Full dev set lives in requirements-dev.txt.
+# ═══════════════════════════════════════════════
+pytest>=8.0
+pytest-asyncio>=0.23
+pytest-timeout>=2.3
