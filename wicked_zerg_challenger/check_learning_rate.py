@@ -1,29 +1,52 @@
 # -*- coding: utf-8 -*-
-"""
-현재 학습률 확인 스크립트
-"""
+"""현재 학습률 / RL agent 모델 / game analytics 상태 점검 CLI.
 
-import logging
-from pathlib import Path
-import json
-import sys
+이전에는 모듈을 ``import`` 하기만 해도 ``sys.stdout`` 을 재바인딩하고
+파일 시스템을 스캔하면서 결과를 로그로 흘려보내는 부작용이 있었다.
+이 부작용 때문에 pytest의 stdout capture가 깨지고 ``smoke_imports`` 류
+도구가 패키지 전체를 import 할 수 없었다.
+
+지금은 모든 동작이 ``main()`` 안으로 들어갔고, 모듈 import 자체는 부작용이
+없다. CLI 로 실행:
+
+    python -m wicked_zerg_challenger.check_learning_rate
+"""
+from __future__ import annotations
+
 import io
+import json
+import logging
+import sys
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# UTF-8 출력 설정 (Windows 콘솔 인코딩 문제 해결)
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# 1. Adaptive Learning Rate 확인
-adaptive_lr_path = Path("local_training/adaptive_lr_stats.json")
+def _ensure_utf8_stdout() -> None:
+    """Windows 콘솔 호환을 위해 stdout 을 UTF-8 로 재바인딩 (CLI 한정)."""
+    try:
+        # 이미 UTF-8 이면 손대지 않는다.
+        if getattr(sys.stdout, "encoding", "").lower() in ("utf-8", "utf8"):
+            return
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    except Exception:
+        # 캡처 환경(pytest 등)에서는 buffer 가 없을 수 있음 — 그대로 둔다.
+        pass
 
-logger.info("=" * 60)
-logger.info("현재 학습률 상태 확인")
-logger.info("=" * 60)
 
-if adaptive_lr_path.exists():
+def _report_adaptive_lr(adaptive_lr_path: Path) -> dict | None:
+    if not adaptive_lr_path.exists():
+        logger.info("\n[INFO] 적응형 학습률 통계 없음 (아직 게임 실행 안 함)")
+        logger.info("\n[INIT] 초기 설정값:")
+        logger.info("  - 초기 학습률: 0.001000")
+        logger.info("  - 최소 학습률: 0.000100")
+        logger.info("  - 최대 학습률: 0.010000")
+        logger.info("  - 조정 배율: 1.2 (±20%)")
+        logger.info("  - Patience: 10게임")
+        return None
+
     logger.info("\n[ADAPTIVE_LR] 적응형 학습률 통계 로드됨")
-    with open(adaptive_lr_path, 'r', encoding='utf-8') as f:
+    with open(adaptive_lr_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     logger.info(f"\n[OK] 현재 학습률: {data['learning_rate']:.6f}")
@@ -31,93 +54,113 @@ if adaptive_lr_path.exists():
     logger.info(f"[OK] 최고 승률: {data['best_win_rate']:.2%}")
     logger.info(f"[OK] 총 게임 수: {data['total_games']}")
     logger.info(f"[OK] 총 승리 수: {data['total_wins']}")
-    if data['total_games'] > 0:
+    if data["total_games"] > 0:
         logger.info(f"[OK] 전체 승률: {data['total_wins']/data['total_games']:.2%}")
     else:
-        logger.info(f"[OK] 전체 승률: 0.00%")
+        logger.info("[OK] 전체 승률: 0.00%")
     logger.info(f"[OK] 개선 없음: {data['games_without_improvement']}/10게임")
 
-    if data.get('adjustment_history'):
+    if data.get("adjustment_history"):
         logger.info(f"\n[HISTORY] 조정 이력 ({len(data['adjustment_history'])}회):")
-        for adj in data['adjustment_history'][-5:]:
-            action_mark = "[UP]" if adj["action"] == "increase" else "[DOWN]" if adj["action"] == "decrease" else "[RESET]"
-            logger.info(f"  {action_mark} Game {adj['game']}: {adj['old_lr']:.6f} -> {adj['new_lr']:.6f} ({adj['action']})")
-else:
-    logger.info("\n[INFO] 적응형 학습률 통계 없음 (아직 게임 실행 안 함)")
-    logger.info(f"\n[INIT] 초기 설정값:")
-    logger.info(f"  - 초기 학습률: 0.001000")
-    logger.info(f"  - 최소 학습률: 0.000100")
-    logger.info(f"  - 최대 학습률: 0.010000")
-    logger.info(f"  - 조정 배율: 1.2 (±20%)")
-    logger.info(f"  - Patience: 10게임")
+        for adj in data["adjustment_history"][-5:]:
+            mark = ("[UP]" if adj["action"] == "increase"
+                    else "[DOWN]" if adj["action"] == "decrease"
+                    else "[RESET]")
+            logger.info(
+                f"  {mark} Game {adj['game']}: "
+                f"{adj['old_lr']:.6f} -> {adj['new_lr']:.6f} ({adj['action']})"
+            )
+    return data
 
-# 2. RL Agent 모델 확인
-model_path = Path("local_training/models/rl_agent_model.npz")
 
-logger.info("\n" + "=" * 60)
-logger.info("RL Agent 모델 상태")
-logger.info("=" * 60)
+def _report_rl_model(model_path: Path) -> None:
+    logger.info("\n" + "=" * 60)
+    logger.info("RL Agent 모델 상태")
+    logger.info("=" * 60)
 
-if model_path.exists():
+    if not model_path.exists():
+        logger.info(f"\n[INFO] RL Agent 모델 없음 (첫 게임 실행 후 생성됨)")
+        logger.info(f"  - 모델 저장 위치: {model_path}")
+        return
+
     import numpy as np
-    data = np.load(str(model_path))
 
+    data = np.load(str(model_path))
     logger.info(f"\n[OK] 모델 파일 존재: {model_path}")
     logger.info(f"[OK] 에피소드 수: {int(data['episode_count'][0])}")
     logger.info(f"[OK] 베이스라인: {float(data['baseline'][0]):.4f}")
-    logger.info(f"\n[MODEL] 모델 파라미터:")
+    logger.info("\n[MODEL] 모델 파라미터:")
     logger.info(f"  - W1 shape: {data['W1'].shape}")
     logger.info(f"  - W2 shape: {data['W2'].shape}")
     logger.info(f"  - W3 shape: {data['W3'].shape}")
-else:
-    logger.info(f"\n[INFO] RL Agent 모델 없음 (첫 게임 실행 후 생성됨)")
-    logger.info(f"  - 모델 저장 위치: {model_path}")
 
-# 3. Game Analytics 확인
-analytics_path = Path("local_training/game_analytics.json")
 
-logger.info("\n" + "=" * 60)
-logger.info("게임 분석 통계")
-logger.info("=" * 60)
+def _report_analytics(analytics_path: Path) -> None:
+    logger.info("\n" + "=" * 60)
+    logger.info("게임 분석 통계")
+    logger.info("=" * 60)
 
-if analytics_path.exists():
-    with open(analytics_path, 'r', encoding='utf-8') as f:
+    if not analytics_path.exists():
+        logger.info(f"\n[INFO] 게임 분석 통계 없음 (첫 게임 실행 후 생성됨)")
+        return
+
+    with open(analytics_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     logger.info(f"\n[OK] 총 게임: {data['total_games']}")
     logger.info(f"[OK] 총 승리: {data['total_wins']}")
-    win_rate = (data['total_wins'] / data['total_games'] * 100) if data['total_games'] > 0 else 0.0
+    win_rate = (data["total_wins"] / data["total_games"] * 100) if data["total_games"] else 0.0
     logger.info(f"[OK] 승률: {win_rate:.2f}%")
     logger.info(f"[OK] 평균 게임 시간: {int(data['timing_stats']['avg_game_time'])}초")
 
-    logger.info(f"\n[RACE] 종족별 승률:")
-    for race, stats in data['race_stats'].items():
-        if stats['games'] > 0:
-            race_wr = (stats['wins'] / stats['games'] * 100)
+    logger.info("\n[RACE] 종족별 승률:")
+    for race, stats in data["race_stats"].items():
+        if stats["games"] > 0:
+            race_wr = stats["wins"] / stats["games"] * 100
             logger.info(f"  vs {race}: {stats['wins']}/{stats['games']}승 ({race_wr:.1f}%)")
-else:
-    logger.info(f"\n[INFO] 게임 분석 통계 없음 (첫 게임 실행 후 생성됨)")
 
-logger.info("\n" + "=" * 60)
-logger.info("요약")
-logger.info("=" * 60)
 
-if adaptive_lr_path.exists():
-    with open(adaptive_lr_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    logger.info(f"\n[CURRENT] 현재 학습률: {data['learning_rate']:.6f}")
-    logger.info(f"[BEST] 최고 성과: {data['best_win_rate']:.2%} (LR: {data['best_learning_rate']:.6f})")
+def _report_summary(adaptive_lr_path: Path) -> None:
+    logger.info("\n" + "=" * 60)
+    logger.info("요약")
+    logger.info("=" * 60)
 
-    # 다음 조정 예측
-    games_until_adjustment = 10 - data['games_without_improvement']
-    if games_until_adjustment > 0:
-        logger.info(f"[NEXT] 다음 조정까지: {games_until_adjustment}게임")
+    if adaptive_lr_path.exists():
+        with open(adaptive_lr_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        logger.info(f"\n[CURRENT] 현재 학습률: {data['learning_rate']:.6f}")
+        logger.info(
+            f"[BEST] 최고 성과: {data['best_win_rate']:.2%} "
+            f"(LR: {data['best_learning_rate']:.6f})"
+        )
+        games_until_adjustment = 10 - data["games_without_improvement"]
+        if games_until_adjustment > 0:
+            logger.info(f"[NEXT] 다음 조정까지: {games_until_adjustment}게임")
+        else:
+            logger.warning("[WARNING] 다음 게임에서 학습률 조정 가능")
     else:
-        logger.warning(f"[WARNING] 다음 게임에서 학습률 조정 가능")
-else:
-    logger.info(f"\n[CURRENT] 초기 학습률: 0.001000 (아직 게임 실행 안 함)")
-    logger.info(f"[INFO] 첫 게임 실행 후 적응형 학습률 시작")
+        logger.info("\n[CURRENT] 초기 학습률: 0.001000 (아직 게임 실행 안 함)")
+        logger.info("[INFO] 첫 게임 실행 후 적응형 학습률 시작")
 
-logger.info("\n" + "=" * 60)
-logger.info("\n게임 실행: python run_with_training.py")
-logger.info("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("\n게임 실행: python run_with_training.py")
+    logger.info("=" * 60)
+
+
+def main() -> int:
+    _ensure_utf8_stdout()
+    adaptive_lr_path = Path("local_training/adaptive_lr_stats.json")
+
+    logger.info("=" * 60)
+    logger.info("현재 학습률 상태 확인")
+    logger.info("=" * 60)
+
+    _report_adaptive_lr(adaptive_lr_path)
+    _report_rl_model(Path("local_training/models/rl_agent_model.npz"))
+    _report_analytics(Path("local_training/game_analytics.json"))
+    _report_summary(adaptive_lr_path)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

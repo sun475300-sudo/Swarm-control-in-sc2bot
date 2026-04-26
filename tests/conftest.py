@@ -19,6 +19,25 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Bot 코어는 ``from utils.logger import get_logger`` 같은 top-level 경로를
+# 가정한다. wicked_zerg_challenger/ 자체를 sys.path 맨 앞에 추가해 정상 import 되도록.
+BOT_DIR = PROJECT_ROOT / "wicked_zerg_challenger"
+if BOT_DIR.is_dir() and str(BOT_DIR) not in sys.path:
+    sys.path.insert(0, str(BOT_DIR))
+
+# 프로젝트 루트에도 동명의 ``utils/`` 디렉터리가 존재한다 (logger.py 없음).
+# pytest의 rootdir 자동 추가 때문에 우선순위가 뒤집히면 ``import utils.logger``가
+# 실패한다. 여기서 두 경로를 병합한 namespace package로 만든다.
+import importlib  # noqa: E402
+
+if "utils" in sys.modules:
+    del sys.modules["utils"]
+import utils  # noqa: E402
+
+_bot_utils_path = str(BOT_DIR / "utils")
+if _bot_utils_path not in utils.__path__:
+    utils.__path__.append(_bot_utils_path)
+
 
 # ═══════════════════════════════════════════════════════
 # python-sc2 lightweight stub (only when the real package is missing)
@@ -120,6 +139,22 @@ def _install_sc2_stub() -> None:
     sc2_units.Units = _StubUnits
     sc2_data.Race = _IdEnum("Race")
     sc2_data.Result = _IdEnum("Result")
+    sc2_data.Difficulty = _IdEnum("Difficulty")
+    sc2_data.AIBuild = _IdEnum("AIBuild")
+
+    # `sc2.maps.get(...)` is used to load map files. Tests don't need the real
+    # map; expose a callable that returns the requested name.
+    sc2_maps = types.ModuleType("sc2.maps")
+    sc2_maps.get = lambda name: name
+    sc2.maps = sc2_maps
+
+    # `sc2.player.{Bot,Computer,Human}` are simple value classes.
+    sc2_player.Bot = type("Bot", (), {"__init__": lambda self, *a, **k: None})
+    sc2_player.Computer = type("Computer", (), {"__init__": lambda self, *a, **k: None})
+    sc2_player.Human = type("Human", (), {"__init__": lambda self, *a, **k: None})
+
+    # `sc2.main.run_game(...)` is the engine entry point. Tests stub a no-op.
+    sc2_main.run_game = lambda *a, **k: None
 
     sys.modules.setdefault("sc2", sc2)
     sys.modules.setdefault("sc2.position", sc2_position)
@@ -135,6 +170,7 @@ def _install_sc2_stub() -> None:
     sys.modules.setdefault("sc2.main", sc2_main)
     sys.modules.setdefault("sc2.player", sc2_player)
     sys.modules.setdefault("sc2.constants", sc2_constants)
+    sys.modules.setdefault("sc2.maps", sc2_maps)
 
 
 _install_sc2_stub()

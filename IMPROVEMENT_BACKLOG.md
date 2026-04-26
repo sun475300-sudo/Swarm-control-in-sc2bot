@@ -6,8 +6,8 @@
 ## Snapshot (현재 상태)
 
 - 브랜치: `claude/stoic-shannon-CG7bM`
-- pytest 결과: **401 passed, 10 skipped, 0 warnings** (시작: 305 passed, 1 failed, 34 skipped, 1 warning)
-- 누적 +96 tests, -1 failure, -24 skips, -1 warning
+- pytest 결과: **402 passed, 10 skipped, 0 warnings** (시작: 305 passed, 1 failed, 34 skipped, 1 warning)
+- 누적 +97 tests, -1 failure, -24 skips, -1 warning
 - 베이스라인: pytest 9.0.3, pytest-asyncio 1.3.0, numpy 2.4.4, cffi 2.0.0
 
 ## ✅ BATCH 1 — 테스트 안정화 (완료)
@@ -19,6 +19,17 @@
 | B1.3  | `mappo_marl/sc2_mappo_agent.py` 동일 fix + `__init__.py` import 안정화       | `mappo_marl/sc2_mappo_agent.py:37`, `mappo_marl/__init__.py`               |
 | B1.4  | `comm_learning/__init__.py` 존재하지 않는 클래스 import 제거                 | `comm_learning/__init__.py`                                                |
 | B1.5  | empty `logger.<level>()` regression guard를 단위 테스트로 추가              | `tests/test_empty_logger_guard.py`                                         |
+
+## ✅ BATCH 4 — import-time 부작용 박멸 + 패키지 import 회귀 가드 (완료)
+
+| #     | 항목                                                                    |
+|-------|-------------------------------------------------------------------------|
+| B4.1  | `wicked_zerg_challenger/check_proxy.py`: import-time `sys.exit(1)` 부작용 제거 — 모든 로직을 `main()` 안으로 이전 |
+| B4.2  | `wicked_zerg_challenger/check_learning_rate.py`: import-time `sys.stdout` 재바인딩 + 디스크 스캔 부작용 제거 — pytest stdout capture 깨짐 해결 |
+| B4.3  | `tests/conftest.py`: sc2 스텁 확장 — `Difficulty/AIBuild/maps.get/Bot/Computer/Human/main.run_game` 추가, 봇 코어가 사용하는 import 경로를 모두 충족 |
+| B4.4  | `tests/conftest.py`: bot 코어가 가정하는 ``from utils.logger import get_logger`` 가 동작하도록 `wicked_zerg_challenger/` 를 sys.path 에 추가 + `utils` 를 namespace package 로 병합 (project root 의 빈 `utils/` 와 충돌 해소) |
+| B4.5  | `scripts/smoke_imports.py`: `wicked_zerg_challenger/*.py` 134개 모듈이 모두 import 되는지 확인하는 CLI |
+| B4.6  | `tests/test_bot_module_imports.py`: 위 smoke 검사를 unit test 로 격상 — 향후 import-time 부작용/dangling import 회귀 자동 감지 |
 
 ## ✅ BATCH 3 — p606 인프라 import 정합성 (완료)
 
