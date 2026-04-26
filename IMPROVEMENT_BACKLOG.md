@@ -6,8 +6,8 @@
 ## Snapshot (현재 상태)
 
 - 브랜치: `claude/stoic-shannon-CG7bM`
-- pytest 결과: **396 passed, 15 skipped, 0 warnings** (시작: 305 passed, 1 failed, 34 skipped, 1 warning)
-- 누적 +91 tests, -1 failure, -19 skips, -1 warning
+- pytest 결과: **401 passed, 10 skipped, 0 warnings** (시작: 305 passed, 1 failed, 34 skipped, 1 warning)
+- 누적 +96 tests, -1 failure, -24 skips, -1 warning
 - 베이스라인: pytest 9.0.3, pytest-asyncio 1.3.0, numpy 2.4.4, cffi 2.0.0
 
 ## ✅ BATCH 1 — 테스트 안정화 (완료)
@@ -19,6 +19,13 @@
 | B1.3  | `mappo_marl/sc2_mappo_agent.py` 동일 fix + `__init__.py` import 안정화       | `mappo_marl/sc2_mappo_agent.py:37`, `mappo_marl/__init__.py`               |
 | B1.4  | `comm_learning/__init__.py` 존재하지 않는 클래스 import 제거                 | `comm_learning/__init__.py`                                                |
 | B1.5  | empty `logger.<level>()` regression guard를 단위 테스트로 추가              | `tests/test_empty_logger_guard.py`                                         |
+
+## ✅ BATCH 3 — p606 인프라 import 정합성 (완료)
+
+| #     | 항목                                                                    |
+|-------|-------------------------------------------------------------------------|
+| B3.1  | `tests/test_p606_infra.py`: FuzzTesting/ContractTesting/SBOMManager/PerformanceProfiler 가 실제 모듈에 존재하는 클래스명으로 import 하도록 수정 |
+| B3.2  | `world_model/__init__.py`: 존재하지 않는 `WorldModel/DreamerAgent/LatentImagination/demo` 제거, 실제 export로 교체 (`SC2WorldModel`, `DreamerActor`, `DreamerCritic`, `LatentVisualizer`, `SC2EnvSimulator`) |
 
 ## ✅ BATCH 2 — 테스트 인프라 (완료)
 
