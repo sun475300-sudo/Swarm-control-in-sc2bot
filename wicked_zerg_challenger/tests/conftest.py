@@ -14,6 +14,7 @@
 진짜 sc2가 설치되어 있으면 _sc2_compat이 진짜 클래스를 그대로 노출하므로
 이 conftest는 본질적으로 no-op이 된다.
 """
+
 import os
 import sys
 import types
@@ -32,6 +33,7 @@ def _install_sc2_stub_modules() -> None:
     """sc2 미설치 환경에서 가짜 sc2 모듈 트리를 sys.modules에 주입."""
     try:
         import sc2  # noqa: F401
+
         return  # 진짜 sc2 사용
     except Exception:
         pass
@@ -77,7 +79,9 @@ def _install_sc2_stub_modules() -> None:
     _mod("sc2.units", Units=Units)
     _mod("sc2.main", run_game=run_game)
     _mod("sc2.maps")  # sc2.maps는 함수도 있으므로 별도 처리
-    sys.modules["sc2.maps"] = maps if hasattr(maps, "__name__") else types.ModuleType("sc2.maps")
+    sys.modules["sc2.maps"] = (
+        maps if hasattr(maps, "__name__") else types.ModuleType("sc2.maps")
+    )
     sys.modules["sc2.maps"].get = maps.get  # type: ignore[attr-defined]
 
 

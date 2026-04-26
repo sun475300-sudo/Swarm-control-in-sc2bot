@@ -102,13 +102,72 @@
 
 ---
 
-## 📝 작업 진행 순서
+## 📝 작업 진행 로그
 
-1. ✅ P0-1, P0-2, P0-3 (test deps in requirements.txt) — **commit 1**
-2. P0-4 (스텁 메타클래스 적용 in `advanced_scout_system_v2.py`) — **commit 2**
-3. P1-1 (`_sc2_compat.py` 단일 모듈화) — **commit 3**
-4. P0-5 (`wicked_zerg_challenger/tests/`도 동일 스텁 사용) — **commit 4**
-5. P3-3 (README 배지/숫자 갱신) — **commit 5**
-6. P2-2 (skipped tests 점검) — **commit 6 이후**
+### Round 1 (commit fe64814)
+- ✅ P0-1, P0-2, P0-3: requirements.txt에 pytest, pytest-asyncio, pytest-timeout, cffi 추가
+- 결과: tests/ + pytest/ 308 passed / 0 failed / 0 warnings (이전 83 fails)
 
-각 commit 후 push, 다음 라운드는 새 테스트 결과 기반으로 재분석.
+### Round 2 (commit d40be81)
+- ✅ P0-4 + P1-1 + P0-5 일괄 처리: `wicked_zerg_challenger/_sc2_compat.py` 단일
+  메타클래스 스텁 + `tests/conftest.py`가 sys.modules에 sc2 모듈 트리 주입
+- ✅ `advanced_scout_system_v2.py` 이그제큐티브 샘플로 `from _sc2_compat import ...` 1줄 적용
+- 결과: wicked_zerg_challenger/tests/ 6 ERROR → 404 passed.
+  통합 767 passed.
+
+---
+
+## 🔵 P3+ — PR #33 CI 결과로 새로 발견된 이슈 (round 3+)
+
+### [P3-CI-1] `black --check .` 가 main에서 이미 실패 — 692 파일 미포맷
+- 워크플로: `.github/workflows/sc2bot-ci.yml`의 `lint` 잡
+- 영향: 모든 PR에서 `Lint & Type Check` 잡이 실패 (3.10/3.11/3.12 매트릭스).
+  내 PR이 도입한 게 아닌 사전 부채.
+- 권장: 별도 정리 PR로 `black .` 일괄 적용 후 main에 병합. 그 이후
+  pre-commit hook 또는 CI에서 강제. (블래스트 반경 692 파일이라 본 PR과 분리)
+
+### [P3-CI-2] `pip install -r requirements.txt` 가 일부 환경에서 실패
+- 워크플로: `.github/workflows/ci.yml`의 `python-lint-test`, `sc2-bot-test`,
+  `arena-package`, `replay-feedback` 모두 동일 패턴.
+- 의심 원인: `pyautogui`, `discord.py`, `torch>=2.0.0` 같은 큰 의존성이
+  빌드 환경에 따라 실패 가능. 특히 `pyaudio`/`gtts`는 시스템 라이브러리 필요.
+- 권장:
+  1. `requirements.txt`를 `core/test/web/audio/etc.`로 분리.
+  2. CI는 `core + test`만 설치하도록 수정.
+  3. 또는 `pip install --prefer-binary` 옵션 추가.
+
+### [P3-CI-3] `Test Suite` 잡이 PR에서 `skipped`
+- 워크플로: `sc2bot-ci.yml`의 `test` 잡은 `lint` 의존성으로 실행되는데
+  `lint`가 실패하므로 `Test Suite`는 의존성 미충족으로 skip.
+- 결과: 본 PR의 핵심 가치(83 → 0 fails)가 CI에서 검증되지 못함.
+- 임시 우회: `test`잡의 `needs: lint`를 `needs: []`로 떼거나
+  black 사전 정리 PR을 먼저 머지.
+
+### [P3-CI-4] `pytest tests/integration` 가 실제로 존재하지 않을 가능성
+- `sc2bot-ci.yml:76`: `pytest tests/integration -v --timeout=120`
+- 로컬 확인: `tests/integration/` 디렉토리 존재 여부 확인 필요.
+- 만약 비어있으면 `pytest`가 exit 5 (no tests collected) 로 실패.
+
+---
+
+## 🟣 P2 보강 — sc2 스텁 활용 확대 (round 3에서 작업)
+
+### [P2-5] `_sc2_compat`을 사용하는 파일 확대
+- 현재: 1개 파일만 마이그레이션 (`advanced_scout_system_v2.py`)
+- 후보 (try/except sc2 보일러플레이트가 남아있는 26개):
+  `creep_automation_v2.py`, `creep_highway_manager.py`, `creep_manager.py`,
+  `combat_manager.py`, `combat_phase_controller.py`, `defense_coordinator.py`,
+  `dynamic_counter_system.py`, `early_defense_system.py`, `early_scout_system.py`,
+  `composition_optimizer.py`, `creep_denial_system.py`, `genai_self_healing.py`,
+  `game_config.py`, `bot_step_integration.py`, `blackboard.py`, `build_order_system.py`,
+  `building_coordination.py`, `building_destroyer.py`, `chat_manager.py`,
+  `aggressive_strategies.py`, `adaptive_build.py`, `advanced_micro_controller_v3.py`,
+  `advanced_worker_optimizer.py`, `queen_manager.py`, `creep_expansion_system.py`,
+  `creep_automation_v2.py`
+- 마이그레이션 시 주의: 기존 보일러플레이트가 클래스 시그니처를 다르게 정의했을
+  수 있으므로 (예: `class Unit: pass`만), 단순 치환 전 import 경로/사용처 확인.
+
+### [P2-6] `_sc2_compat` 자체 단위 테스트
+- 현재: 스텁 동작이 다른 모듈의 import를 통해서만 검증됨
+- 추가: `tests/test_sc2_compat.py` — `Race["Zerg"] == Race.Zerg`, `__bool__ True`,
+  `Point2.distance_to`, `Units(iter, bot).filter(...)` 등 핵심 invariant 직접 검증.
