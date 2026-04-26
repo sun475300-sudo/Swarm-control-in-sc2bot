@@ -208,7 +208,7 @@ class HiveTechMaximizer:
                 self.advanced_buildings_built += 1
                 break  # 한 번에 하나씩
 
-            except Exception as e:
+            except Exception:
                 continue
 
     async def _produce_advanced_units(self, game_time: float):
