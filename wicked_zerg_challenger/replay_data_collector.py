@@ -41,16 +41,16 @@ class ReplayDataCollector:
         try:
             with open(self.knowledge_file, "r") as f:
                 data = json.load(f)
-            
+
             data["build_orders"][build_key] = build_data
-            
+
             with open(self.knowledge_file, "w") as f:
                 json.dump(data, f, indent=2)
-                
+
             self.logger.info(f"Updated commander_knowledge.json with {build_key}")
-            
-        except Exception as e:
-            self.logger.error(f"Failed to update knowledge: {e}")
+
+        except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
+            self.logger.error(f"Failed to update knowledge for {build_key}: {e}")
 
 if __name__ == "__main__":
     collector = ReplayDataCollector()

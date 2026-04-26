@@ -62,15 +62,18 @@ class EconomyManager:
             self.config = None
 
         # ★ Phase 16: 매크로 해처리 임계값 하향 (라바 부족 시 더 빠르게 건설) ★
-        if self.config:
-            self.macro_hatchery_mineral_threshold = 600  # ★ Phase 16: OVERFLOW→600 (더 빠른 매크로 해처리)
-            self.macro_hatchery_larva_threshold = self.config.LARVA_CRITICAL
-        else:
-            self.macro_hatchery_mineral_threshold = 600
-            self.macro_hatchery_larva_threshold = 3
+        cfg = self.config
+        self.macro_hatchery_mineral_threshold = (
+            cfg.MACRO_HATCHERY_MINERAL_THRESHOLD if cfg else 600
+        )
+        self.macro_hatchery_larva_threshold = (
+            cfg.LARVA_CRITICAL if cfg else 3
+        )
 
         self.last_macro_hatch_check = 0
-        self.macro_hatch_check_interval = 50  # Check every 50 frames
+        self.macro_hatch_check_interval = (
+            cfg.MACRO_HATCH_CHECK_INTERVAL if cfg else 50
+        )
         # Gold base tracking
         self._gold_bases_cache = []
         self._gold_cache_time = 0
@@ -80,7 +83,7 @@ class EconomyManager:
         self.transferred_hatcheries = set()
         # 2026-01-26 FIX: Prevent duplicate expansion attempts
         self._last_expansion_attempt_time = 0.0
-        self._expansion_cooldown = 3.0  # ★ FIX: 6초→3초 (확장 타이밍 놓침 방지)
+        self._expansion_cooldown = cfg.EXPANSION_COOLDOWN_SEC if cfg else 3.0
         # ★ 미네랄 예약 시스템 (확장 우선순위) ★
         self._mineral_reserved_for_expansion = 0  # 확장 예약 미네랄
         self._expansion_reserved_until = 0.0  # 예약 만료 시간
@@ -100,19 +103,27 @@ class EconomyManager:
 
         self.gas_boost_mode = False  # 빠른 테크가 필요할 때 활성화
         self.gas_boost_start_time = 0
-        self.gas_boost_duration = 120  # 2분간 가스 부스트
+        self.gas_boost_duration = cfg.GAS_BOOST_DURATION_SEC if cfg else 120
 
-        self.dynamic_gas_workers_enabled = True  # 생산 큐 기반 가스 일꾼 조정
-        self.gas_overflow_prevention_threshold = 800  # ★ IMPROVED: 1000→800 (가스 뱅킹 방지 강화)
+        self.dynamic_gas_workers_enabled = True
+        self.gas_overflow_prevention_threshold = (
+            cfg.GAS_OVERFLOW_PREVENTION_THRESHOLD if cfg else 800
+        )
 
         self.last_gas_worker_adjustment = 0
-        self.gas_worker_adjustment_interval = 33  # ★ FIX: 110→33 (~1.5초마다 조정, 가스 뱅킹 빠른 대응) ★
+        self.gas_worker_adjustment_interval = (
+            cfg.GAS_WORKER_ADJUSTMENT_INTERVAL if cfg else 33
+        )
 
         # ★ Expansion Blocking (Phase 17) ★
         self.expansion_block_active = False
         self.expansion_block_worker_tag = None
-        self.expansion_block_start_time = 50  # 50초에 출발
-        self.expansion_block_duration = 45    # 45초간 방해
+        self.expansion_block_start_time = (
+            cfg.EXPANSION_BLOCK_START_SEC if cfg else 50
+        )
+        self.expansion_block_duration = (
+            cfg.EXPANSION_BLOCK_DURATION_SEC if cfg else 45
+        )
 
         # ★ Expansion Telemetry ★
         self.first_expansion_time = 0.0

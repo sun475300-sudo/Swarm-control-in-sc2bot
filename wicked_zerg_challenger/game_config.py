@@ -122,6 +122,17 @@ class GameConfig:
     TARGET_ARMY_RATIO = 0.5             # 목표 군대 비율 (50%)
     DRONE_ARMY_BALANCE_RATIO = 1.5      # 드론:군대 = 1.5:1
 
+    # ========== 경제 매니저 매직넘버 ==========
+    # economy_manager.EconomyManager 의 __init__ 에서 사용
+    MACRO_HATCHERY_MINERAL_THRESHOLD = 600   # ★ Phase 16: 매크로 해처리 미네랄 임계값
+    MACRO_HATCH_CHECK_INTERVAL = 50          # 매크로 해처리 체크 간격 (frames)
+    EXPANSION_COOLDOWN_SEC = 3.0             # ★ FIX: 확장 시도 쿨다운 (6→3초)
+    GAS_BOOST_DURATION_SEC = 120             # 가스 부스트 지속 시간 (2분)
+    GAS_OVERFLOW_PREVENTION_THRESHOLD = 800  # ★ IMPROVED: 가스 뱅킹 방지 (1000→800)
+    GAS_WORKER_ADJUSTMENT_INTERVAL = 33      # ★ FIX: 110→33 (~1.5초마다)
+    EXPANSION_BLOCK_START_SEC = 50           # 확장 방해 시작
+    EXPANSION_BLOCK_DURATION_SEC = 45        # 확장 방해 지속
+
     # ========== 전투 타이밍 윈도우 (game_time 초) ==========
     # combat_manager 의 작업(Task) 평가 시 사용되는 시간 구간
 

@@ -110,6 +110,39 @@ class TestCombatPriorities:
         assert c.PRIORITY_MAIN_ATTACK_AGGRESSIVE > c.PRIORITY_EARLY_HARASS_STRATEGY
 
 
+class TestEconomyConstants:
+    """Constants now driven by GameConfig instead of inline literals."""
+
+    def test_macro_hatchery_constants(self):
+        gc = _load_game_config()
+        c = gc.config
+        assert c.MACRO_HATCHERY_MINERAL_THRESHOLD == 600
+        assert c.MACRO_HATCH_CHECK_INTERVAL == 50
+
+    def test_expansion_cooldown(self):
+        gc = _load_game_config()
+        assert gc.config.EXPANSION_COOLDOWN_SEC == 3.0
+
+    def test_gas_constants(self):
+        gc = _load_game_config()
+        c = gc.config
+        assert c.GAS_BOOST_DURATION_SEC == 120
+        assert c.GAS_OVERFLOW_PREVENTION_THRESHOLD == 800
+        assert c.GAS_WORKER_ADJUSTMENT_INTERVAL == 33
+
+    def test_expansion_block_constants(self):
+        gc = _load_game_config()
+        c = gc.config
+        assert c.EXPANSION_BLOCK_START_SEC == 50
+        assert c.EXPANSION_BLOCK_DURATION_SEC == 45
+
+    def test_gas_overflow_below_critical(self):
+        """Overflow prevention should trigger before the 'critical' alert."""
+        gc = _load_game_config()
+        c = gc.config
+        assert c.GAS_OVERFLOW_PREVENTION_THRESHOLD <= c.GAS_CRITICAL
+
+
 class TestCombatManagerFallback:
     """combat_manager._CombatTimings is the safety net when game_config is missing."""
 
