@@ -14,10 +14,15 @@ Features:
 - Optimized targeting cycle (12 frames instead of every frame)
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 import logging
 
 logger = logging.getLogger("SpellUnitManager")
+
+if TYPE_CHECKING:
+    # The actual bot class is WickedZergBotProImpl in wicked_zerg_bot_pro_impl.
+    # Used only for static analysis; runtime uses Any.
+    from .wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro  # noqa: F401
 
 if TYPE_CHECKING:
     from sc2.ids.ability_id import AbilityId
