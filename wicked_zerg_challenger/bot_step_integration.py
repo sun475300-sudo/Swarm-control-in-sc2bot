@@ -2187,7 +2187,8 @@ class BotStepIntegrator:
                  except (AttributeError, TypeError, ValueError) as e:
                      # Expansion check failed, use default status
                      expand_status = "Unknown"
-                     if iteration % 1000 == 0:  # Log occasionally
+                     game_loop = getattr(getattr(b, "state", None), "game_loop", 0)
+                     if game_loop and game_loop % 1000 == 0:  # Log occasionally
                          self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시
