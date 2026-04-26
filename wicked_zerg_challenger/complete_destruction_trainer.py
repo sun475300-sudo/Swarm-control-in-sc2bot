@@ -350,7 +350,8 @@ class CompleteDestructionTrainer:
                         # 폴백: 직접 명령
                         self.bot.do(unit.attack(target_pos))
                         assigned_count += 1
-                except Exception:
+                except Exception as exc:
+                    self.logger.debug("[MULTITASK] attack assignment failed for unit %s: %s", getattr(unit, "tag", "?"), exc)
                     continue
 
             target_building.assigned_units = units_for_this_target
@@ -396,7 +397,8 @@ class CompleteDestructionTrainer:
                     else:
                         # 폴백: 직접 명령
                         self.bot.do(unit.attack(target.position))
-                except Exception:
+                except Exception as exc:
+                    self.logger.debug("[LIMITED] attack assignment failed for unit %s: %s", getattr(unit, "tag", "?"), exc)
                     continue
 
             target.assigned_units = units_to_assign.amount
