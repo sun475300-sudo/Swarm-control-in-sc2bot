@@ -324,7 +324,8 @@ class CreepManager:
                     if chebyshev <= self.EXPANSION_BLOCK_DIST:
                         blocked = True
                         break
-                except Exception:
+                except (AttributeError, TypeError):
+                    # exp_loc missing x/y; skip this expansion candidate.
                     continue
             if blocked:
                 continue
@@ -336,7 +337,8 @@ class CreepManager:
                     if pos.distance_to(t_pos) < self.TUMOR_MIN_SPACING_DIST:
                         too_close = True
                         break
-                except Exception:
+                except (AttributeError, TypeError):
+                    # tumor position not Point2-shaped; skip it.
                     continue
             if too_close:
                 continue
@@ -355,8 +357,9 @@ class CreepManager:
                 )
                 if placement_results and len(placement_results) == len(valid):
                     valid = [pos for pos, ok in zip(valid, placement_results) if ok]
-        except Exception:
-            pass  # Fall through to distance-based selection if batch query fails
+        except Exception as exc:
+            # Fall through to distance-based selection if batch query fails.
+            logger.debug("creep batch can_place query failed: %s", exc)
 
         if not valid:
             return None
@@ -370,7 +373,8 @@ class CreepManager:
                         d = pos.distance_to(uc_pos)
                         if d < min_dist:
                             min_dist = d
-                    except Exception:
+                    except (AttributeError, TypeError):
+                        # malformed entry in uncreeped cache; skip it.
                         continue
                 return min_dist
 
