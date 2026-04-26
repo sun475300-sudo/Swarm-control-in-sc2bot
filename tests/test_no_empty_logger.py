@@ -11,6 +11,7 @@ until the change reached CI.
 This test simply re-uses the same script so the same regression is
 caught in the same place developers already run their suite.
 """
+
 from __future__ import annotations
 
 import importlib.util

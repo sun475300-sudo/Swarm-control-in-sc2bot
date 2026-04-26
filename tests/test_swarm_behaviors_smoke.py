@@ -12,6 +12,7 @@ moment it was imported. These tests pin the contract:
 * ``tick(positions)`` is length-preserving (it should not silently
   drop units).
 """
+
 from __future__ import annotations
 
 import importlib

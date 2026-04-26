@@ -16,6 +16,7 @@ same length and shape as the input. The default implementation is an
 identity (units stay where they are), which is a safe no-op until the
 real swarm logic is filled in.
 """
+
 from __future__ import annotations
 
 from typing import Iterable, List, Sequence, Tuple
@@ -34,7 +35,9 @@ class FormationController:
     def __init__(self, name: str = "default") -> None:
         self.name = name
 
-    def maintain_formation(self, positions: Iterable[Position]) -> List[Tuple[float, ...]]:
+    def maintain_formation(
+        self, positions: Iterable[Position]
+    ) -> List[Tuple[float, ...]]:
         """Return target positions for the given units.
 
         The default is identity — preserves length, ordering, and shape.

@@ -15,6 +15,7 @@ These tests pin the contract:
     5. failed save (e.g. unwritable parent) returns ``False`` and does
        not corrupt any pre-existing target file.
 """
+
 from __future__ import annotations
 
 import sys
@@ -91,6 +92,7 @@ class TestAtomicSave:
         # Force the rename step to blow up; save() must catch and return False
         # rather than letting the bot crash mid-game.
         import os
+
         original_rename = os.rename
 
         def boom(*_a, **_kw):
