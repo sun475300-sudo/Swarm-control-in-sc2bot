@@ -103,7 +103,7 @@ class EconomyManager:
         self.gas_boost_duration = 120  # 2분간 가스 부스트
 
         self.dynamic_gas_workers_enabled = True  # 생산 큐 기반 가스 일꾼 조정
-        self.gas_overflow_prevention_threshold = 1000  # ★ IMPROVED: 3000→1000 (더 빠른 가스 뱅킹 방지)
+        self.gas_overflow_prevention_threshold = 800  # ★ IMPROVED: 1000→800 (가스 뱅킹 방지 강화)
 
         self.last_gas_worker_adjustment = 0
         self.gas_worker_adjustment_interval = 33  # ★ FIX: 110→33 (~1.5초마다 조정, 가스 뱅킹 빠른 대응) ★

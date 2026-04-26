@@ -253,12 +253,14 @@ class CombatManager:
 
         # 공격 모드면 공격 우선순위 대폭 상향
         if current_mode in ["aggressive", "all_in"]:
-            self.task_priorities["main_attack"] = 90  # 방어(100)보다는 낮지만 매우 높게
-            self.task_priorities["base_defense"] = 45 # 일반 방어는 무시하고 공격 집중 (크리티컬만 방어)
+            self.task_priorities["main_attack"] = 95  # 공격성 강화
+            self.task_priorities["base_defense"] = 40 # 일반 방어 최소화
             
             # ALL_IN이면 방어 더 낮춤
             if current_mode == "all_in":
-                self.task_priorities["base_defense"] = 20
+                self.task_priorities["base_defense"] = 15
+                # 올인 시 공격 대상 지정 강화
+                self.task_priorities["worker_harass"] = 80
         
         # Evaluate tasks
         tasks_to_execute = []
