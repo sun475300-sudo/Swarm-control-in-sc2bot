@@ -448,5 +448,90 @@ class TestCombatPerformance:
         assert elapsed < 1.0, f"Performance issue: {elapsed:.2f}s for 10 frames"
 
 
+# ============================================================================
+# Phase 41 회귀: _combat_power (HP 가중 전투력 계산)
+# ============================================================================
+class TestCombatPowerCalculation:
+    """공급 비용 × HP% 기반 전투력 산식 회귀"""
+
+    def test_empty_units_returns_zero(self):
+        """빈 입력 → 0.0"""
+        bot = MockBot()
+        combat = CombatManager(bot)
+        assert combat._combat_power([]) == 0.0
+
+    def test_full_health_uses_supply_table(self):
+        """HP 100% 인 경우 supply 가중치 그대로 합산"""
+        bot = MockBot()
+        combat = CombatManager(bot)
+        # supply table 에 없는 type_id 는 1로 fallback
+        u1 = MockUnit(1, "DUMMY", (0, 0), health=100, health_max=100)
+        u2 = MockUnit(2, "DUMMY", (0, 0), health=50, health_max=100)
+        # u1: 1 * 1.0 = 1.0, u2: 1 * 0.5 = 0.5 → 1.5
+        assert combat._combat_power([u1, u2]) == pytest.approx(1.5)
+
+    def test_minimum_hp_floor_10_percent(self):
+        """HP 0% 이라도 최소 10% 는 인정"""
+        bot = MockBot()
+        combat = CombatManager(bot)
+        u = MockUnit(1, "DUMMY", (0, 0), health=0, health_max=100)
+        # supply=1 * max(0.1, 0/100) = 0.1
+        assert combat._combat_power([u]) == pytest.approx(0.1)
+
+    def test_zero_max_health_uses_default_ratio(self):
+        """health_max 가 0/이상치인 경우에도 div-by-zero 없이 처리"""
+        bot = MockBot()
+        combat = CombatManager(bot)
+        u = MockUnit(1, "DUMMY", (0, 0), health=50, health_max=0)
+        # max(health_max, 1) 가드 → 50/1 = 50, max(0.1, 50) = 50, supply=1 → 50
+        result = combat._combat_power([u])
+        assert result > 0  # NaN/divide-by-zero 가 아님
+
+
+# ============================================================================
+# 정적 헬퍼: _has_units / _units_amount
+# ============================================================================
+class TestUnitHelpers:
+    """전투 매니저의 정적 유닛 헬퍼들"""
+
+    def test_has_units_with_empty_list(self):
+        """빈 리스트 → False"""
+        assert CombatManager._has_units([]) is False
+
+    def test_has_units_with_populated_list(self):
+        """비어있지 않은 리스트 → True"""
+        u = MockUnit(1, "DUMMY", (0, 0))
+        assert CombatManager._has_units([u]) is True
+
+    def test_units_amount_none_returns_zero(self):
+        """None 입력 → 0"""
+        assert CombatManager._units_amount(None) == 0
+
+    def test_units_amount_with_amount_attr(self):
+        """amount 속성을 가진 컬렉션은 그 값을 사용"""
+        units = MockUnits([MockUnit(i, "DUMMY", (0, 0)) for i in range(7)])
+        assert CombatManager._units_amount(units) == 7
+
+    def test_units_amount_with_plain_list(self):
+        """리스트도 len 으로 정확히 카운트"""
+        plain = [MockUnit(i, "DUMMY", (0, 0)) for i in range(3)]
+        assert CombatManager._units_amount(plain) == 3
+
+
+# ============================================================================
+# 적 중심점: _get_enemy_center
+# ============================================================================
+class TestEnemyCenter:
+    """_get_enemy_center 가 빈 입력에 안전한지"""
+
+    def test_empty_enemy_returns_none(self):
+        """적이 없으면 None 반환 (NoneType crash 방지)"""
+        bot = MockBot()
+        combat = CombatManager(bot)
+        result = combat._get_enemy_center([])
+        # HELPERS_AVAILABLE 분기에 따라 None 또는 동등한 falsy
+        assert result is None or not result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
