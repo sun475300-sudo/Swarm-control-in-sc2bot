@@ -28,14 +28,32 @@ try:
 except ImportError:
     class BotAI:
         pass
-    class UnitTypeId:
+
+    class _IdEnumStub(type):
+        """Metaclass that returns a stable sentinel for any attribute access.
+
+        Allows ``UnitTypeId.OVERLORD`` (etc.) to evaluate at class-definition
+        time even when python-sc2 isn't installed (e.g. during static
+        analysis or package import smoke tests).
+        """
+
+        def __getattr__(cls, name):  # type: ignore[no-untyped-def]
+            sentinel = type(cls.__name__, (), {"name": name, "value": name})()
+            setattr(cls, name, sentinel)
+            return sentinel
+
+    class UnitTypeId(metaclass=_IdEnumStub):
         pass
-    class AbilityId:
+
+    class AbilityId(metaclass=_IdEnumStub):
         pass
-    class UpgradeId:
+
+    class UpgradeId(metaclass=_IdEnumStub):
         pass
+
     class Point2:
         pass
+
     class Unit:
         pass
 

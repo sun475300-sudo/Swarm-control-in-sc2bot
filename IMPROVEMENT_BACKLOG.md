@@ -20,6 +20,12 @@
 | B1.4  | `comm_learning/__init__.py` 존재하지 않는 클래스 import 제거                 | `comm_learning/__init__.py`                                                |
 | B1.5  | empty `logger.<level>()` regression guard를 단위 테스트로 추가              | `tests/test_empty_logger_guard.py`                                         |
 
+## ✅ BATCH 5 — 봇 모듈 sc2 fallback 강화 (완료)
+
+| #     | 항목                                                                    |
+|-------|-------------------------------------------------------------------------|
+| B5.1  | `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py`: python-sc2 미설치 환경에서 `class UnitTypeId: pass` 빈 fallback이 `UnitTypeId.OVERLORD` 같은 attribute 접근에서 깨졌던 문제. metaclass 기반 sentinel 반환으로 robust 화 → 모듈 import-time 안정성 향상 |
+
 ## ✅ BATCH 4 — import-time 부작용 박멸 + 패키지 import 회귀 가드 (완료)
 
 | #     | 항목                                                                    |
