@@ -10,7 +10,7 @@ from src.sc2_env.mock_env import MockSC2Env
 def main() -> None:
     """Run scenario 8 simulation."""
     print("="*70)
-    print(f"Scenario 8 Simulation")
+    print("Scenario 8 Simulation")
     print("="*70)
     print()
     

@@ -621,7 +621,7 @@ class DefenseCoordinator:
                 if self.bot.workers.exists:
                     worker = self.bot.workers.closest_to(build_pos)
                     self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
-                    self.logger.info(f"[DEFENSE] Building Spine Crawler at base")
+                    self.logger.info("[DEFENSE] Building Spine Crawler at base")
             else:
                 pass # 자원 부족 또는 예약 실패
 
@@ -646,7 +646,7 @@ class DefenseCoordinator:
                     if self.bot.workers.exists:
                         worker = self.bot.workers.closest_to(build_pos)
                         self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, build_pos))
-                        self.logger.info(f"[DEFENSE] Building Spore Crawler (reactive - air threat)")
+                        self.logger.info("[DEFENSE] Building Spore Crawler (reactive - air threat)")
 
     # ========== Proactive 공중 방어 ★ NEW ★ ==========
 

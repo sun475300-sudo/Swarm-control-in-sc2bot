@@ -3177,7 +3177,7 @@ class CombatManager:
         # 승리 푸시 비활성화 조건 (적이 다시 건물을 많이 지었거나, 병력이 부족)
         if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:

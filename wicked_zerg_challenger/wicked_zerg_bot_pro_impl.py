@@ -251,7 +251,7 @@ class WickedZergBotProImpl(BotAI):
         try:
             from local_training.hierarchical_rl.improved_hierarchical_rl import HierarchicalRLSystem
             self.hierarchical_rl = HierarchicalRLSystem()
-            self.logger.info(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
+            self.logger.info("[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
         except ImportError as e:
             self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
@@ -263,7 +263,7 @@ class WickedZergBotProImpl(BotAI):
         try:
             from core.situational_awareness import SituationalAwareness
             self.situational_awareness = SituationalAwareness(self)
-            self.logger.info(f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)")
+            self.logger.info("[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)")
         except ImportError as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
         except Exception as e:
@@ -456,7 +456,7 @@ class WickedZergBotProImpl(BotAI):
 
                 # Record game outcome
                 self.opponent_modeling.on_game_end(won, lost)
-                self.logger.info(f"[OPPONENT_MODELING] Game data saved. Opponent model updated.")
+                self.logger.info("[OPPONENT_MODELING] Game data saved. Opponent model updated.")
 
                 # Print learning summary every 5 games
                 if self.opponent_modeling.current_opponent:
@@ -535,11 +535,11 @@ class WickedZergBotProImpl(BotAI):
                     # Check if learning occurred (steps > 0 means rewards were collected)
                     if training_stats.get('steps', 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
-                        self.logger.info(f"[TRAINING] [OK] Neural network updated!")
+                        self.logger.info("[TRAINING] [OK] Neural network updated!")
                         self.logger.info(f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}")
                         self.logger.info(f"Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}")
                     else:
-                        self.logger.info(f"[TRAINING] No learning this episode (no rewards collected)")
+                        self.logger.info("[TRAINING] No learning this episode (no rewards collected)")
 
                     # 모델 검증 (게임 결과 기록)
                     game_time = getattr(self, 'time', 0)
@@ -549,7 +549,7 @@ class WickedZergBotProImpl(BotAI):
                     if self.rl_agent.episode_count % 10 == 0:
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
-                            self.logger.info(f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]")
+                            self.logger.info("[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]")
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
 
@@ -615,7 +615,7 @@ class WickedZergBotProImpl(BotAI):
             progress = curriculum.get_progress_info()
             self.logger.info(f"[CURRICULUM] 현재 단계: {progress['level_name']} "
                   f"({progress['wins_at_current_level']}/{progress['wins_required']}승)")
-            self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
+            self.logger.info("[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
             # ★ 종족별 승률 출력 ★
             curriculum.print_race_stats()

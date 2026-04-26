@@ -159,7 +159,7 @@ class AggressiveStrategyExecutor:
         # 50% Chance: Standard Macro (No Aggressive Strategy)
         if roll < 0.5:
             self.active_strategy = AggressiveStrategyType.NONE
-            logger.info(f"Selected: STANDARD MACRO (Safe Play)")
+            logger.info("Selected: STANDARD MACRO (Safe Play)")
             self._strategy_decided = True
             return self.active_strategy
 
@@ -613,7 +613,7 @@ class AggressiveStrategyExecutor:
                 if drone and drone.distance_to(self._proxy_location) < 8:  # ★ IMPROVED: 5 → 8 거리 완화 ★
                     if self.bot.can_afford(UnitTypeId.HATCHERY):
                         self.bot.do(drone.build(UnitTypeId.HATCHERY, self._proxy_location))
-                        logger.info(f"Building proxy Hatchery!")
+                        logger.info("Building proxy Hatchery!")
                         break  # ★ 한 드론만 건설하면 충분 ★
 
         # 4. 가시 촉수 건설
@@ -706,7 +706,7 @@ class AggressiveStrategyExecutor:
                     self.bot.do(network(AbilityId.BUILD_NYDUSWORM, nydus_location))
                     self._nydus_location = nydus_location
                     self._nydus_built = True
-                    logger.info(f"Building Nydus Worm at enemy base!")
+                    logger.info("Building Nydus Worm at enemy base!")
 
         # 5. 땅굴 벌레 확인 및 추적
         nydus_worms = self.bot.structures(UnitTypeId.NYDUSCANAL)
@@ -725,7 +725,7 @@ class AggressiveStrategyExecutor:
 
         # 8. Worm이 파괴되면 재건설 (선택적)
         if self._nydus_built and not nydus_worms.exists:
-            logger.info(f"Worm destroyed! Rebuilding...")
+            logger.info("Worm destroyed! Rebuilding...")
             self._nydus_built = False
             self._nydus_worm_tag = None
             self._nydus_attack_started = False
@@ -922,7 +922,7 @@ class AggressiveStrategyExecutor:
                             # Ventral sacs는 OVERLORDTRANSPORT
                             self.bot.do(lairs.first.research(UpgradeId.OVERLORDTRANSPORT))
                             self._ventral_sacs_started = True
-                            logger.info(f"Ventral Sacs upgrade started!")
+                            logger.info("Ventral Sacs upgrade started!")
                     except Exception as e:
                         pass
 

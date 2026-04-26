@@ -69,7 +69,7 @@ class ErrorHandler:
                 # 개발 모드: 즉시 크래시
                 logger.error(f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging")
                 logger.error(f"Exception: {e}")
-                logger.error(f"Traceback:")
+                logger.error("Traceback:")
                 traceback.print_exc()
                 raise  # 즉시 예외 발생
             else:
@@ -113,7 +113,7 @@ class ErrorHandler:
                         # 개발 모드: 즉시 크래시
                         logger.error(f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging")
                         logger.error(f"Exception: {e}")
-                        logger.error(f"Traceback:")
+                        logger.error("Traceback:")
                         traceback.print_exc()
                         raise
                     else:

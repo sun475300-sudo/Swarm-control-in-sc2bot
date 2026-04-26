@@ -205,20 +205,20 @@ class NotificationService:
     async def send_warning(drone_id: str, remaining: float):
         """1차 경고 알림"""
         logger.info(f"  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초")
-        logger.info(f"         >>> FCM/MQTT Push 전송 완료")
+        logger.info("         >>> FCM/MQTT Push 전송 완료")
 
     @staticmethod
     async def send_expiry(drone_id: str):
         """2차 만료 알림"""
         logger.info(f"  [ALERT] !!! Drone {drone_id}: 비행 시간 만료! 즉시 착륙/복귀하세요!")
-        logger.info(f"          !!! 상태: UNAUTHORIZED (적색 경고)")
-        logger.info(f"          !!! FCM 강제 알림 전송 완료")
+        logger.info("          !!! 상태: UNAUTHORIZED (적색 경고)")
+        logger.info("          !!! FCM 강제 알림 전송 완료")
 
     @staticmethod
     async def send_eviction(drone_id: str):
         """강제 퇴각 명령"""
         logger.info(f"  [EVICT] Drone {drone_id}: 강제 퇴각 명령 발행")
-        logger.info(f"          착륙 유도 경로 전송 완료")
+        logger.info("          착륙 유도 경로 전송 완료")
 
 
 # ═══════════════════════════════════════════════════════

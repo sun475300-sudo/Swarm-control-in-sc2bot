@@ -396,7 +396,7 @@ class IntegrationValidator:
 
         status_icon = "[PASS]" if failed == 0 else "[FAIL]"
         print(f"\n{'=' * 70}")
-        print(f"  Phase 71: Integration Validation Report")
+        print("  Phase 71: Integration Validation Report")
         print(f"{'=' * 70}")
         print(f"  Overall Status: {status_icon}")
         print(f"  Passed: {passed}/{len(self.results)}")

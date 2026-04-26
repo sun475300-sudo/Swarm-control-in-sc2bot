@@ -105,7 +105,7 @@ class VictoryTracker:
         # 승리 푸시 비활성화 조건
         if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
             self._victory_push_active = False
-            self.logger.info(f"Victory push deactivated - regroup needed")
+            self.logger.info("Victory push deactivated - regroup needed")
 
         # 로그 (30초마다)
         if iteration % 660 == 0:

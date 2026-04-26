@@ -125,7 +125,7 @@ class WorkerCombatSystem:
             if time_since_threat > self.combat_mode_cooldown:
                 self.combat_mode = False
                 self.combat_workers.clear()
-                self.logger.info(f"[WORKER_COMBAT] 전투 모드 해제")
+                self.logger.info("[WORKER_COMBAT] 전투 모드 해제")
 
     async def _execute_combat_mode(self, threats: Units) -> None:
         """전투 모드 실행"""

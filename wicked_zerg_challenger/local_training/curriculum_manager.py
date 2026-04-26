@@ -222,7 +222,7 @@ class CurriculumManager:
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
             logger.info(f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
         elif not opponent_race:
-            logger.info(f"Opponent race unknown (None) - stats not recorded")
+            logger.info("Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -264,7 +264,7 @@ class CurriculumManager:
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
             logger.info(f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
         elif not opponent_race:
-            logger.info(f"Opponent race unknown (None) - stats not recorded")
+            logger.info("Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -286,8 +286,8 @@ class CurriculumManager:
         """다음 단계로 승격."""
         if self.current_idx >= len(self.levels) - 1:
             logger.info(f"\n{'[*]'*12}")
-            logger.info(f"[TROPHY] 최고 난이도 마스터!")
-            logger.info(f"  모든 단계를 완료했습니다!")
+            logger.info("[TROPHY] 최고 난이도 마스터!")
+            logger.info("  모든 단계를 완료했습니다!")
             logger.info(f"{'[*]'*12}\n")
             self.save_level()
             return False
@@ -307,7 +307,7 @@ class CurriculumManager:
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
         logger.info(f"\n{'[*]'*12}")
-        logger.info(f"[PROMOTED] 단계 승격!")
+        logger.info("[PROMOTED] 단계 승격!")
         logger.info(f"  {old_difficulty} -> {new_difficulty}")
         logger.info(f"  이전 단계 승리: {old_wins}승")
         logger.info(f"  다음 목표: {wins_required}승 달성하기")
@@ -335,7 +335,7 @@ class CurriculumManager:
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
         logger.info(f"\n{'='*70}")
-        logger.info(f"[DOWN] 난이도 하향 (연습 더 필요)")
+        logger.info("[DOWN] 난이도 하향 (연습 더 필요)")
         logger.info(f"  {old_difficulty} -> {new_difficulty}")
         logger.info(f"  목표: {wins_required}승 달성하기")
         logger.info(f"{'='*70}\n")
@@ -373,7 +373,7 @@ class CurriculumManager:
                 self.save_level()
 
                 logger.info(f"\n{'='*70}")
-                logger.info(f"Difficulty increased by ONE level")
+                logger.info("Difficulty increased by ONE level")
                 logger.info(f"  {old_difficulty} -> {new_difficulty}")
                 logger.info(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.promotion_threshold*100}%)")
                 logger.info(f"  Games at previous level: {total_games}")
@@ -405,7 +405,7 @@ class CurriculumManager:
                 self.save_level()
 
                 logger.info(f"\n{'='*70}")
-                logger.info(f"Difficulty decreased by ONE level")
+                logger.info("Difficulty decreased by ONE level")
                 logger.info(f"  {old_difficulty} -> {new_difficulty}")
                 logger.info(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.demotion_threshold*100}%)")
                 logger.info(f"  Games at previous level: {total_games}")
