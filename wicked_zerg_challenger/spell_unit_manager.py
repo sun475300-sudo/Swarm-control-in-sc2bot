@@ -14,7 +14,7 @@ Features:
 - Optimized targeting cycle (12 frames instead of every frame)
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 import logging
 
 logger = logging.getLogger("SpellUnitManager")

@@ -8,7 +8,6 @@ print() 호출을 logging 호출로 변환합니다.
 import logging
 import os
 import re
-import sys
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("migrate_prints_to_logger")

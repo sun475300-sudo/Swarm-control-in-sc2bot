@@ -9,7 +9,7 @@ Air Unit Manager - 공중 유닛 전용 관리
 4. Regen Dance, Magic Box 마이크로
 """
 
-from typing import Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.units import Units

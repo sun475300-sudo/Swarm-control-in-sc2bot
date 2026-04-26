@@ -8,7 +8,7 @@ Game Data Logger - 게임 플레이 데이터 수집 시스템
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger("GameDataLogger")

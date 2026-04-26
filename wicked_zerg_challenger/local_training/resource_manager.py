@@ -10,7 +10,7 @@ Features:
 - Resource spending priority
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 import logging
 
 logger = logging.getLogger("ResourceManager")

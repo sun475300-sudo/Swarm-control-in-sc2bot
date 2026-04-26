@@ -6,7 +6,7 @@ Combat Manager - 전투 관리자
 """
 
 import inspect
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.units import Units
@@ -38,21 +38,17 @@ else:
             VIPER = "VIPER"
             QUEEN = "QUEEN"
 
-from utils.logger import get_logger
-from utils.frame_cache import FrameCache, cached_per_frame
+from utils.frame_cache import FrameCache
 from combat.initialization import initialize_combat_state, initialize_managers, reset_combat_state
 from combat.enemy_tracking import (
-    track_enemy_expansions, get_anti_air_threats, find_densest_enemy_position,
-    detect_nearby_enemies, get_closest_enemy, track_enemy_army_composition
+    track_enemy_expansions, get_anti_air_threats, find_densest_enemy_position
 )
 from combat.assignment_manager import (
-    cleanup_assignments, assign_unit_to_task, unassign_unit, get_unit_task,
-    get_unassigned_units, get_units_by_task, set_task_target, get_task_target,
-    clear_task, get_all_active_tasks, count_units_in_task
+    cleanup_assignments
 )
 from combat.rally_point_calculator import (
     calculate_rally_point, update_rally_point, gather_at_rally_point,
-    is_army_gathered, get_rally_position, set_rally_position, clear_rally_position
+    is_army_gathered
 )
 
 # Import common helpers to reduce code duplication
@@ -3175,7 +3171,7 @@ class CombatManager:
         # 승리 푸시 비활성화 조건 (적이 다시 건물을 많이 지었거나, 병력이 부족)
         if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:

@@ -14,7 +14,6 @@ Defeat Detection System - 패배 직감 로직
 
 import logging
 from typing import Dict, Optional, Tuple
-from sc2.position import Point2
 
 
 class DefeatLevel:

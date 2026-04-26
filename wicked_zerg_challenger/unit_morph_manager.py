@@ -14,7 +14,6 @@ Features:
 - 자원 효율 극대화
 """
 
-from typing import Dict, Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

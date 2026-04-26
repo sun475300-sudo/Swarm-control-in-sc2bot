@@ -14,7 +14,7 @@ import sys
 import time
 import json
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any
 import logging
 
 logger = logging.getLogger("ProReplayLearningWorkflow")
@@ -228,7 +228,7 @@ def main():
         logger.info(f"{'='*70}")
         
         if iteration < max_iterations:
-            logger.info(f"\n[INFO] Waiting 10 seconds before next iteration...")
+            logger.info("\n[INFO] Waiting 10 seconds before next iteration...")
             time.sleep(10)
     
     # ���� ���

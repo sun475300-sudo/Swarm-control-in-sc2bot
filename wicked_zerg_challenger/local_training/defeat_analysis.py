@@ -15,7 +15,7 @@ Defeat Analysis System - 패배 원인 분석 및 학습
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 import logging
 
 logger = logging.getLogger("DefeatAnalysis")

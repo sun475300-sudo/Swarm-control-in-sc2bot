@@ -9,7 +9,7 @@ Worker Combat System - 일꾼 전투 시스템
 - 적이 물러나면 다시 채광으로 복귀
 """
 
-from typing import Set, Optional, Dict
+from typing import Set, Dict
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 from sc2.units import Units
@@ -125,7 +125,7 @@ class WorkerCombatSystem:
             if time_since_threat > self.combat_mode_cooldown:
                 self.combat_mode = False
                 self.combat_workers.clear()
-                self.logger.info(f"[WORKER_COMBAT] 전투 모드 해제")
+                self.logger.info("[WORKER_COMBAT] 전투 모드 해제")
 
     async def _execute_combat_mode(self, threats: Units) -> None:
         """전투 모드 실행"""

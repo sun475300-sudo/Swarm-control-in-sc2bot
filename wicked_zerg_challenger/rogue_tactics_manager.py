@@ -10,7 +10,6 @@
 """
 
 from typing import List, Optional, Set, Tuple
-import math
 import logging
 
 logger = logging.getLogger("RogueTacticsManager")

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Any
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 try:

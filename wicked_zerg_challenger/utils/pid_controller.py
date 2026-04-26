@@ -13,7 +13,7 @@ Features:
 - Configurable gains
 """
 
-from typing import Tuple, Optional
+from typing import Tuple
 import math
 
 

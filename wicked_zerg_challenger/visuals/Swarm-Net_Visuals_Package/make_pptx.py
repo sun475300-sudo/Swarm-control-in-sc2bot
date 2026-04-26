@@ -167,8 +167,6 @@ def main():
 
     from pptx import Presentation
     from pptx.util import Inches, Pt, Emu
-    from pptx.dml.color import RGBColor
-    from pptx.enum.text import PP_ALIGN
 
     prs = Presentation()
     # 16:9 비율 설정
@@ -203,16 +201,16 @@ def main():
     prs.save(str(output_path))
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"PPTX CREATED SUCCESSFULLY!")
+    logger.info("PPTX CREATED SUCCESSFULLY!")
     logger.info(f"   File: {output_path}")
     logger.info(f"   Slides: {len(slides_data)}")
-    logger.info(f"   Speaker notes included in each slide")
+    logger.info("   Speaker notes included in each slide")
     logger.info(f"{'='*60}")
 
     # 임시 파일 정리
     import shutil
     shutil.rmtree(tmp_dir, ignore_errors=True)
-    logger.info(f"  Temp files cleaned up")
+    logger.info("  Temp files cleaned up")
 
 if __name__ == "__main__":
     main()

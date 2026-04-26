@@ -20,7 +20,7 @@ Victory & Defeat Conditions Learning System
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 import logging
 
 logger = logging.getLogger("VictoryConditions")
@@ -376,13 +376,13 @@ class VictoryConditionsLearner:
         if victory_conditions:
             top_victory = victory_conditions[0][0]
             logger.info(f"  - Most common path to victory: {top_victory}")
-            logger.info(f"    -> Keep focusing on this strategy!")
+            logger.info("    -> Keep focusing on this strategy!")
 
         # 패배 인사이트
         if defeat_conditions:
             top_defeat = defeat_conditions[0][0]
             logger.info(f"  - Most common cause of defeat: {top_defeat}")
-            logger.info(f"    -> This needs urgent improvement!")
+            logger.info("    -> This needs urgent improvement!")
 
         # 승률 기반 조언
         if win_rate < 0.3:

@@ -12,7 +12,6 @@ Zerg Specialized Reward System (Reward Shaping)
 4. ���� ������ ���� (�Ҹ��� ȿ��)
 """
 
-from typing import Optional
 import numpy as np
 import logging
 

@@ -10,7 +10,7 @@
 4. 로그 스팸 방지
 """
 
-from typing import Dict, Any, Set, Optional
+from typing import Dict, Any, Optional
 import time
 import logging
 

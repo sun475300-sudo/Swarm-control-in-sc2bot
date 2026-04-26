@@ -13,8 +13,6 @@ Tests DifficultyProgression system:
 import unittest
 import tempfile
 import os
-import json
-from unittest.mock import Mock, patch
 import sys
 from io import StringIO
 

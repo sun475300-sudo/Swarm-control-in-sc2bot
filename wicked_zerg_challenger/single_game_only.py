@@ -3,7 +3,6 @@
 Single Game Only - 절대 하나만 실행 (Lock 파일 사용)
 """
 
-import sc2
 from sc2 import maps
 from sc2.player import Bot, Computer
 from sc2.main import run_game
@@ -113,7 +112,7 @@ def main():
         logger.info("="*70)
         logger.info(f"Map: {selected_map}")
         logger.info(f"Enemy: {enemy_race.name}")
-        logger.info(f"Difficulty: Easy")
+        logger.info("Difficulty: Easy")
         logger.info("="*70 + "\n")
 
         # ★ 5. 게임 실행 (하나만) ★

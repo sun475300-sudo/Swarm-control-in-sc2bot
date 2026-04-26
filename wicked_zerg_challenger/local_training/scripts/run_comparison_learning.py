@@ -2,7 +2,6 @@ import json
 import os
 import sys
 from pathlib import Path
-import numpy as np
 from datetime import datetime
 import logging
 

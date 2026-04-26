@@ -6,7 +6,7 @@ import os
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from core.situational_awareness import SituationalAwareness, ThreatLevel, OpportunityIndex
+from core.situational_awareness import SituationalAwareness, OpportunityIndex
 
 class MockStrategyManagerV2:
     pass

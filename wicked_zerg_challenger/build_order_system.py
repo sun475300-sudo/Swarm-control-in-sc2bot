@@ -9,7 +9,7 @@ Purpose: Stable and optimized automated build order execution
 - Win-rate based adjustment
 """
 
-from typing import Optional, List, Dict, Tuple
+from typing import List, Dict
 from enum import Enum
 from knowledge_manager import KnowledgeManager # NEW
 import logging
@@ -494,7 +494,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

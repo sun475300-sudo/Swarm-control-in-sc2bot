@@ -11,7 +11,7 @@ Features:
 - Dynamic grid sizing
 """
 
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
 import math
 
 

@@ -7,7 +7,7 @@ Knowledge Updater - 학습 데이터 분석 및 지식 베이스 업데이트
 
 import json
 import os
-from typing import Dict, List, Tuple
+from typing import Dict
 from collections import defaultdict
 import statistics
 import logging

@@ -16,7 +16,7 @@ Features:
 - Target prioritization
 """
 
-from typing import Dict, Set, List, Optional
+from typing import Dict, Set, Optional
 from utils.logger import get_logger
 
 try:

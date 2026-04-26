@@ -12,7 +12,7 @@ SpellCaster Automation - 마법 유닛 스킬 자동화
 효과: 고급 유닛 활용도 0% → 100%
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from utils.logger import get_logger
 
 try:

@@ -17,8 +17,7 @@ Usage:
 """
 
 import asyncio
-from typing import Dict, List, Optional
-from datetime import datetime
+from typing import Dict, Optional
 import logging
 
 logger = logging.getLogger("OneMinMultiTest")

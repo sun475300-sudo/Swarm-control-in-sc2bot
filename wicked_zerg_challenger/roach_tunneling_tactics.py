@@ -8,11 +8,10 @@ Roach Tunneling Tactics - 바퀴 땅굴발톱 전술
 3. 포위 기동
 """
 
-from typing import Dict, Set
+from typing import Set
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.upgrade_id import UpgradeId
-from sc2.position import Point2
 from utils.logger import get_logger
 
 
@@ -140,7 +139,7 @@ class RoachTunnelingTactics:
                 if AbilityId.BURROWDOWN_ROACH in abilities:
                     self.bot.do(roach(AbilityId.BURROWDOWN_ROACH))
                     self.tunneling_roaches.add(roach.tag)
-                    self.logger.info(f"[TUNNELING] Roach infiltrating to enemy rear")
+                    self.logger.info("[TUNNELING] Roach infiltrating to enemy rear")
                     self.tunneling_attacks += 1
             else:
                 # 이미 잠복 상태면 이동
@@ -187,7 +186,7 @@ class RoachTunnelingTactics:
                 if AbilityId.BURROWDOWN_ROACH in abilities:
                     self.bot.do(roach(AbilityId.BURROWDOWN_ROACH))
                     self.tunneling_roaches.add(roach.tag)
-                    self.logger.info(f"[TUNNELING] Roach flanking maneuver")
+                    self.logger.info("[TUNNELING] Roach flanking maneuver")
                     self.flanking_maneuvers += 1
             else:
                 # 이미 잠복 상태면 이동

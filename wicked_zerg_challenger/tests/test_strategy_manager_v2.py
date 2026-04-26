@@ -11,7 +11,7 @@ Tests Strategy Manager V2 features:
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 import sys
 import os
 

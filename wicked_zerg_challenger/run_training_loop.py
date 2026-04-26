@@ -7,7 +7,7 @@
 from sc2 import maps
 from sc2.player import Bot, Computer
 from sc2.main import run_game
-from sc2.data import Race, Difficulty
+from sc2.data import Race
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 from difficulty_progression import DifficultyProgression
 import sys
@@ -146,8 +146,8 @@ def main():
     logger.info("  [*] 10-GAME BLOCK SCORING + ADAPTIVE DIFFICULTY [*]")
     logger.info("=" * 70)
     logger.info(f"  Block Size: {total_games} games")
-    logger.info(f"  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
-    logger.info(f"  Auto-Progress at: 90% win rate (min 10 games)")
+    logger.info("  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
+    logger.info("  Auto-Progress at: 90% win rate (min 10 games)")
     logger.info("=" * 70)
     wins = 0
     losses = 0

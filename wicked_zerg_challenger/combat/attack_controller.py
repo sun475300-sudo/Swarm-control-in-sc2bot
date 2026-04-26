@@ -9,7 +9,7 @@ Attack Controller - 공격 제어 시스템
 4. 맵 수색
 """
 
-from typing import Optional, List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.units import Units

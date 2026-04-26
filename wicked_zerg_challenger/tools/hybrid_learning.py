@@ -13,7 +13,6 @@ Features:
 
 import requests
 import re
-import os
 import sys
 import shutil
 import time
@@ -217,7 +216,6 @@ class ReplayPipeline:
 
 def main():
     # Disable HTTPS warnings for verify=False
-    import urllib3
     import argparse
     # SSL verification is now enabled; no need to suppress warnings
     

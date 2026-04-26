@@ -7,7 +7,6 @@ Micro combat utilities with anti-splash awareness.
 from __future__ import annotations
 
 import asyncio
-import math
 from typing import Iterable, List, Optional, Tuple
 
 try:

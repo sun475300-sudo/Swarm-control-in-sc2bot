@@ -12,7 +12,7 @@ Tests cover:
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
+from unittest.mock import Mock
 import sys
 import os
 

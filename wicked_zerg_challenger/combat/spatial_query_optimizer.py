@@ -12,7 +12,6 @@ Performance improvements:
 """
 
 from typing import TYPE_CHECKING, Optional, Dict, Tuple
-from functools import lru_cache
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI

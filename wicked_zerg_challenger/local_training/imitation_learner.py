@@ -11,7 +11,6 @@ SC2Replay 파일에서 전문가 행동을 추출하고 모방 학습합니다.
 4. 행동 복제(Behavioral Cloning) + DAgger 지원
 """
 
-import os
 import json
 import numpy as np
 from pathlib import Path
@@ -103,7 +102,7 @@ class ReplayActionExtractor:
 
             except ImportError:
                 # sc2reader 미설치 시 - 기본 파싱 시도
-                logger.info(f"sc2reader 미설치, 기본 파싱 모드 사용")
+                logger.info("sc2reader 미설치, 기본 파싱 모드 사용")
                 frames = self._basic_parse(replay_path)
 
         except Exception as e:

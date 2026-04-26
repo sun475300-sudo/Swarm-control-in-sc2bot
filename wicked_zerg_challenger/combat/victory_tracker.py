@@ -9,7 +9,7 @@ Victory Tracker - 승리 조건 추적 시스템
 4. 전력 공격 실행
 """
 
-from typing import Optional, Set, TYPE_CHECKING
+from typing import Set, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.units import Units
@@ -105,7 +105,7 @@ class VictoryTracker:
         # 승리 푸시 비활성화 조건
         if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
             self._victory_push_active = False
-            self.logger.info(f"Victory push deactivated - regroup needed")
+            self.logger.info("Victory push deactivated - regroup needed")
 
         # 로그 (30초마다)
         if iteration % 660 == 0:

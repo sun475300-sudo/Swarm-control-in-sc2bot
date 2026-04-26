@@ -9,7 +9,7 @@ Strict Upgrade Priority System - 엄격한 업그레이드 우선순위
 해결: 가스 예약 시스템으로 발업 우선순위 강제
 """
 
-from typing import Optional, Dict, Set
+from typing import Optional, Set
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
 from utils.logger import get_logger

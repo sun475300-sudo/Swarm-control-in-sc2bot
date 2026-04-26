@@ -15,7 +15,7 @@ Features:
 - Safety checks
 """
 
-from typing import List, Set, Optional
+from typing import Optional
 from utils.logger import get_logger
 
 try:

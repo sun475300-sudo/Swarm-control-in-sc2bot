@@ -9,7 +9,7 @@ Feature #92: Queen Walk 러시 매니저
 4. 크립 종양 설치하며 전진 (시야 확보)
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 from enum import Enum
 
 try:

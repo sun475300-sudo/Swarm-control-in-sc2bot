@@ -10,8 +10,7 @@ Advanced Worker Optimizer - 고급 일꾼 최적화 시스템
 5. 동적 자원 밸런싱
 """
 
-from typing import Dict, List, Optional, Set, Tuple
-from collections import defaultdict
+from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
 
 try:

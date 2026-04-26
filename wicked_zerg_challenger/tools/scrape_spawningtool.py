@@ -1,6 +1,5 @@
 import requests
 import re
-import os
 import zipfile
 import io
 from pathlib import Path

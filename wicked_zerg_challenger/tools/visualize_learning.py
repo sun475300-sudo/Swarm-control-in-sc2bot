@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 import random
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger("VisualizeLearning")
@@ -165,7 +165,7 @@ class TrainingVisualizer:
         plt.savefig(output_path, dpi=100)
         plt.savefig(latest_path, dpi=100) # 덮어쓰기용 최신 파일
         
-        logger.info(f"Charts saved to:")
+        logger.info("Charts saved to:")
         logger.info(f"  - {output_path}")
         logger.info(f"  - {latest_path}")
         

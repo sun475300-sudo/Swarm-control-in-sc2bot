@@ -14,7 +14,7 @@ Features:
 - Changelings 정찰 지원
 """
 
-from typing import List, Dict, Set, Optional
+from typing import List, Dict
 from utils.logger import get_logger
 
 try:
