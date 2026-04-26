@@ -28,6 +28,19 @@ except ImportError:
 from utils.logger import get_logger
 
 
+# Iteration intervals (game runs at ~22.4 iterations/second)
+ITERATIONS_PER_SECOND = 22
+INTERVAL_BASE_ECONOMY_UPDATE = 22       # ~1s : 기지 경제 상태 업데이트
+INTERVAL_DEPLETION_CHECK = 66           # ~3s : 미네랄 고갈 감지
+INTERVAL_LONG_DISTANCE_MINING = 44      # ~2s : 장거리 채광 수정
+INTERVAL_GAS_BALANCING = 33             # ~1.5s : 가스 밸런싱
+INTERVAL_LEARNING_DATA = 110            # ~5s : 학습 데이터 수집
+
+# Mineral state thresholds
+MINERAL_DEPLETING_THRESHOLD = 200       # 이하면 고갈 중으로 표시
+MIN_MINERAL_VIABLE = 100                # 이하면 채광 후보에서 제외
+
+
 @dataclass
 class MineralPatchState:
     """미네랄 패치 상태"""
@@ -105,8 +118,8 @@ class AdvancedWorkerOptimizer:
         """매 프레임 호출"""
         game_time = getattr(self.bot, "time", 0)
 
-        # 기지 경제 상태 업데이트 (1초마다)
-        if iteration % 22 == 0:
+        # 기지 경제 상태 업데이트 (~1초마다)
+        if iteration % INTERVAL_BASE_ECONOMY_UPDATE == 0:
             self._update_base_economies()
 
         # 일꾼 최적화 (1초마다)
@@ -114,23 +127,23 @@ class AdvancedWorkerOptimizer:
             await self._optimize_worker_distribution()
             self.last_optimization = iteration
 
-        # 미네랄 고갈 감지 (3초마다)
-        if iteration % 66 == 0:
+        # 미네랄 고갈 감지 (~3초마다)
+        if iteration % INTERVAL_DEPLETION_CHECK == 0:
             self._detect_depleting_minerals()
 
         # 대기 일꾼 즉시 할당 (매 프레임)
         await self._assign_idle_workers()
 
-        # 장거리 채광 감지 및 수정 (2초마다)
-        if iteration % 44 == 0:
+        # 장거리 채광 감지 및 수정 (~2초마다)
+        if iteration % INTERVAL_LONG_DISTANCE_MINING == 0:
             await self._fix_long_distance_mining()
 
-        # 가스 밸런싱 (1.5초마다)
-        if iteration % 33 == 0:
+        # 가스 밸런싱 (~1.5초마다)
+        if iteration % INTERVAL_GAS_BALANCING == 0:
             await self._balance_gas_workers()
 
-        # 학습 데이터 수집 (5초마다)
-        if iteration % 110 == 0:
+        # 학습 데이터 수집 (~5초마다)
+        if iteration % INTERVAL_LEARNING_DATA == 0:
             self._collect_learning_data(game_time)
 
     def _update_base_economies(self) -> None:
@@ -148,7 +161,7 @@ class AdvancedWorkerOptimizer:
                 distance = base.distance_to(mineral)
 
                 # 미네랄이 적으면 고갈 중으로 표시
-                is_depleting = mineral.mineral_contents < 200
+                is_depleting = mineral.mineral_contents < MINERAL_DEPLETING_THRESHOLD
 
                 mineral_patches.append(MineralPatchState(
                     tag=mineral.tag,
@@ -443,7 +456,7 @@ class AdvancedWorkerOptimizer:
         best_score = -1
 
         for mineral in minerals:
-            if mineral.mineral_contents < 100:  # 거의 고갈
+            if mineral.mineral_contents < MIN_MINERAL_VIABLE:  # 거의 고갈
                 continue
 
             assigned = self._count_workers_on_mineral(mineral.tag)
