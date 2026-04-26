@@ -1,0 +1,15 @@
+## Development / testing dependencies
+##
+## Install with:  pip install -r requirements-dev.txt
+##
+## Production runtime deps live in requirements.txt; this file adds the
+## tooling needed to run the test suite locally (the same versions CI
+## installs ad-hoc in .github/workflows/*.yml).
+
+-r requirements.txt
+
+# Test runner + async test support (286/306 tests use pytest-asyncio).
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-timeout>=2.1.0
