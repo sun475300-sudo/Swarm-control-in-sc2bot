@@ -926,7 +926,7 @@ class AggressiveStrategyExecutor:
                             self._ventral_sacs_started = True
                             logger.info(f"Ventral Sacs upgrade started!")
                     except Exception as e:
-                        pass
+                        logger.debug(f"Ventral Sacs upgrade failed: {e}")
 
         # 2. 드랍용 대군주 지정
         if game_time >= config["drop_timing"] and not self._overlord_drop_active:
