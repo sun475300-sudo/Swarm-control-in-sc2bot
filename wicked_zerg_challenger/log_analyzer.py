@@ -66,8 +66,8 @@ class LogAnalyzer:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     data["_filename"] = filepath.name
                     self.game_data_files.append(data)
-                except Exception:
-                    pass
+                except (OSError, json.JSONDecodeError) as exc:
+                    logger.warning("  skipping unreadable game file %s: %s", filepath.name, exc)
             logger.info(f"  data/games/: {len(self.game_data_files)} game files")
 
         # 4. Tournament results
@@ -77,8 +77,8 @@ class LogAnalyzer:
                 try:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     self.tournament_results.append(data)
-                except Exception:
-                    pass
+                except (OSError, json.JSONDecodeError) as exc:
+                    logger.warning("  skipping unreadable tournament file %s: %s", filepath.name, exc)
             logger.info(f"  data/tournament/: {len(self.tournament_results)} tournaments")
 
         # 5. Bot log (last 500 lines)
@@ -88,8 +88,8 @@ class LogAnalyzer:
                 lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
                 self.bot_log_lines = lines[-500:]
                 logger.info(f"  logs/bot.log: {len(lines)} lines (last 500 loaded)")
-            except Exception:
-                pass
+            except OSError as exc:
+                logger.warning("  could not read bot.log: %s", exc)
 
         logger.info("Data loading complete.\n")
 

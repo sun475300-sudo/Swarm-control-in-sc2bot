@@ -3,7 +3,26 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Any
+
+logger = logging.getLogger(__name__)
+
+# Tracks which fallbacks have already been logged so the hot-path doesn't spam.
+_logged_fallbacks: set[str] = set()
+
+
+def _log_fallback_once(name: str, exc: BaseException) -> None:
+    """Log the first failure of a Rust/OpenCL accelerator at debug level."""
+    if name in _logged_fallbacks:
+        return
+    _logged_fallbacks.add(name)
+    logger.debug(
+        "rust_accel: %s failed (%s: %s); using Python fallback for the rest of the run.",
+        name,
+        type(exc).__name__,
+        exc,
+    )
 
 
 try:
@@ -17,7 +36,8 @@ try:
         cluster_points as _cluster_points_rust,
         formation_positions as _formation_positions_rust,
     )
-except Exception:
+except Exception as exc:
+    logger.debug("swarm_rust_accel unavailable (%s): falling back to Python.", exc)
     _nearest_point_index_rust = None
     _compute_feedback_priority_rust = None
     _combat_power_comparison_rust = None
@@ -36,7 +56,8 @@ except Exception:
         from opencl_accel import (
             nearest_point_index_opencl as _nearest_point_index_opencl,
         )
-    except Exception:
+    except Exception as exc:
+        logger.debug("opencl_accel unavailable (%s): no GPU fallback.", exc)
         _nearest_point_index_opencl = None
 
 
@@ -53,14 +74,14 @@ def nearest_point_index(
     if _nearest_point_index_rust is not None:
         try:
             return _nearest_point_index_rust(ox, oy, list(points))
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("nearest_point_index_rust", exc)
 
     if _nearest_point_index_opencl is not None:
         try:
             return _nearest_point_index_opencl((ox, oy), points)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("nearest_point_index_opencl", exc)
 
     best_idx = None
     best_dist_sq = float("inf")
@@ -87,8 +108,8 @@ def compute_feedback_priority(
             return _compute_feedback_priority_rust(
                 size_kb, player_count, winner_count, note_count
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("compute_feedback_priority_rust", exc)
 
     score = 1.0
     score += min(size_kb / 1024.0, 1.5)
@@ -106,8 +127,8 @@ def combat_power_comparison(
     if _combat_power_comparison_rust is not None:
         try:
             return _combat_power_comparison_rust(list(my_units), list(enemy_units))
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("combat_power_comparison_rust", exc)
 
     def calc_power(units):
         return sum(
@@ -128,8 +149,8 @@ def batch_nearest_points(
     if _batch_nearest_points_rust is not None:
         try:
             return _batch_nearest_points_rust(list(origins), list(points))
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("batch_nearest_points_rust", exc)
 
     return [nearest_point_index(o, points) for o in origins]
 
@@ -139,8 +160,8 @@ def path_distance(x1: float, y1: float, x2: float, y2: float) -> float:
     if _path_distance_rust is not None:
         try:
             return _path_distance_rust(x1, y1, x2, y2)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("path_distance_rust", exc)
     return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
 
@@ -149,8 +170,8 @@ def route_distance(steps: Sequence[Tuple[float, float]]) -> float:
     if _route_distance_rust is not None:
         try:
             return _route_distance_rust(list(steps))
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("route_distance_rust", exc)
 
     if len(steps) < 2:
         return 0.0
@@ -165,8 +186,8 @@ def cluster_points(
     if _cluster_points_rust is not None:
         try:
             return _cluster_points_rust(list(points), cluster_size)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("cluster_points_rust", exc)
 
     import math
 
@@ -194,8 +215,8 @@ def formation_positions(
             return _formation_positions_rust(
                 count, spacing, center_x, center_y, formation_type
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            _log_fallback_once("formation_positions_rust", exc)
 
     import math
 

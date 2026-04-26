@@ -177,8 +177,8 @@ class MultiBaseDefense:
                 await self.bot.build(UnitTypeId.SPINECRAWLER, near=placement)
                 if iteration % 100 == 0:
                     self.logger.info(f"[{int(self.bot.time)}s] Building Spine Crawler at expansion")
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("Spine Crawler build at %s failed: %s", placement, exc)
 
     async def _build_spore_at_base(self, base_position, iteration: int):
         """기지에 포자 촉수 건설"""
@@ -198,8 +198,8 @@ class MultiBaseDefense:
             await self.bot.build(UnitTypeId.SPORECRAWLER, near=placement)
             if iteration % 100 == 0:
                 self.logger.info(f"[{int(self.bot.time)}s] Building Spore Crawler at expansion")
-        except Exception:
-            pass
+        except Exception as exc:
+            self.logger.debug("Spore Crawler build at %s failed: %s", placement, exc)
 
     async def _redistribute_queens(self):
         """퀸을 각 기지에 재배치"""
