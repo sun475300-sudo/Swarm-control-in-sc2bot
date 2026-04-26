@@ -55,4 +55,4 @@ class ReplayDataCollector:
 if __name__ == "__main__":
     collector = ReplayDataCollector()
     # collector.scan_replays("./replays")
-    print("ReplayCollector ready. Run scan_replays() to process files.")
+    collector.logger.info("ReplayCollector ready. Run scan_replays() to process files.")

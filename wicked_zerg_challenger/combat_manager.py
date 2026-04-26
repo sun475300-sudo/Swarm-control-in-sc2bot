@@ -1175,7 +1175,8 @@ class CombatManager:
                     best_score = score
                     best = e
             return best
-        except Exception:
+        except Exception as exc:
+            self.logger.debug(f"_select_lowest_health_target failed: {exc}")
             return None
 
     async def _basic_attack(self, units: Units, enemy_units):
@@ -1289,7 +1290,8 @@ class CombatManager:
                     for unit in defenders:
                         try:
                             self.bot.do(unit.attack(drop_pos))
-                        except Exception:
+                        except Exception as exc:
+                            self.logger.debug(f"drop-defender attack failed for {unit.tag}: {exc}")
                             continue
                     # 드롭 플래그 해제
                     blackboard.set("drop_detected", False)
@@ -1405,7 +1407,8 @@ class CombatManager:
                     for ling in harass_lings:
                         try:
                             self.bot.do(ling.attack(harass_target))
-                        except Exception:
+                        except Exception as exc:
+                            self.logger.debug(f"harass attack failed for ling {ling.tag}: {exc}")
                             continue
                     # 견제팀 제외한 메인 병력
                     harass_tags = {u.tag for u in harass_lings}

@@ -1,0 +1,14 @@
+# ═══════════════════════════════════════════════
+# Development / Test dependencies
+# ═══════════════════════════════════════════════
+# Install with: pip install -r requirements-dev.txt
+#
+# These are required for `pytest tests/` to run cleanly.
+# Without pytest-asyncio, ~80 async tests fail with
+# "async def functions are not natively supported."
+
+-r requirements.txt
+
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-timeout>=2.2.0
