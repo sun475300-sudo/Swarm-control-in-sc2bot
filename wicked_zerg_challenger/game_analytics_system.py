@@ -12,6 +12,8 @@ Game Analytics System - 게임 분석 및 통계 시스템
 from typing import Dict, List, Optional
 from enum import Enum
 import json
+import os
+import tempfile
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -337,7 +339,7 @@ class GameAnalytics:
         return "\n".join(lines)
 
     def _save_stats(self) -> None:
-        """통계 저장"""
+        """통계 저장 (atomic: tmp 작성 → fsync → rename)"""
         try:
             self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -351,11 +353,27 @@ class GameAnalytics:
                 "recent_games": self.games[-50:]  # 최근 50게임만 저장
             }
 
-            with open(self.save_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+            # 충돌 시 부분 작성 파일이 남지 않도록 atomic write
+            fd, tmp_path = tempfile.mkstemp(
+                prefix=self.save_path.name + ".",
+                suffix=".tmp",
+                dir=str(self.save_path.parent),
+            )
+            try:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_path, self.save_path)
+            except Exception:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+                raise
 
         except Exception as e:
-            logger.info(f"저장 실패: {e}")
+            logger.warning(f"통계 저장 실패: {e}")
 
     def _save_detailed_log(self, game_record: Dict) -> None:
         """상세 로그 저장 (JSONL)"""

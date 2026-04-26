@@ -83,7 +83,15 @@ class AdvancedBuildingManager:
             self.placement_helper = BuildingPlacementHelper(bot)
         else:
             self.placement_helper = None
-        
+
+        # 일꾼 위치 추적 (제자리에서 막힌 일꾼 감지)
+        # tag -> (last_position, unchanged_iterations)
+        self._worker_position_history: Dict[int, Tuple[Point2, int]] = {}
+        # 같은 위치에서 N번 이상 머물면 stuck 으로 판정
+        self._stuck_position_threshold = 5
+        # 위치 변화 판정 거리 (1.0타일 이하 이동은 정지로 간주)
+        self._stuck_movement_epsilon = 1.0
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
     
     async def morph_unit_safely(
@@ -731,14 +739,34 @@ class AdvancedBuildingManager:
             return 0
 
         rescued = 0
+        live_tags = set()
         for worker in self.bot.workers:
             try:
+                live_tags.add(worker.tag)
                 # 1. Idle 상태인 경우
                 is_stuck = False
                 if hasattr(worker, 'is_idle') and worker.is_idle:
                     is_stuck = True
-                
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+
+                # 2. 움직이지만 제자리인 경우 — 위치 기록 비교
+                pos = getattr(worker, 'position', None)
+                if pos is not None:
+                    prev = self._worker_position_history.get(worker.tag)
+                    if prev is None:
+                        self._worker_position_history[worker.tag] = (pos, 0)
+                    else:
+                        prev_pos, unchanged = prev
+                        try:
+                            moved = pos.distance_to(prev_pos)
+                        except Exception:
+                            moved = self._stuck_movement_epsilon + 1
+                        if moved < self._stuck_movement_epsilon:
+                            unchanged += 1
+                            self._worker_position_history[worker.tag] = (prev_pos, unchanged)
+                            if unchanged >= self._stuck_position_threshold:
+                                is_stuck = True
+                        else:
+                            self._worker_position_history[worker.tag] = (pos, 0)
 
                 if is_stuck:
                     if hasattr(self.bot, 'structures'):
@@ -755,8 +783,17 @@ class AdvancedBuildingManager:
                                 
                                 if self.bot.iteration % 100 == 0:
                                     logger.info(f"Saved stuck worker {worker.tag}")
+                                # 구출 후 위치 캐시 리셋 → 즉시 재트리거 방지
+                                self._worker_position_history.pop(worker.tag, None)
                                 rescued += 1
-            except Exception:
+            except Exception as e:
+                logger.debug(f"rescue_stuck_workers iter failed: {e}")
                 continue
+
+        # 죽었거나 사라진 일꾼 캐시 정리 (메모리 누수 방지)
+        if live_tags:
+            stale = [t for t in self._worker_position_history if t not in live_tags]
+            for t in stale:
+                self._worker_position_history.pop(t, None)
 
         return rescued
