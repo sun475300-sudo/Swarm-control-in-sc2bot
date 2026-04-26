@@ -248,8 +248,8 @@ class ProtossCounterSystem:
                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=placement)
                         self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]")
                         return  # 한 번에 1개씩만
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        self.logger.debug("Emergency Spore build at %s failed: %s", placement, exc)
 
     async def _pull_workers_from_threat(self):
         """일꾼을 위협 지역에서 대피"""

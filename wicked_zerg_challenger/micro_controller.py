@@ -478,15 +478,15 @@ class BoidsController:
                 results = self._spatial_index.query_radius(pos, radius, exclude_data=unit)
                 # results: List of ((x, y), unit, distance)
                 return [r[1] for r in results if r[1].tag != unit.tag]
-            except Exception:
-                pass  # Fall through to standard methods
+            except Exception as exc:
+                logger.debug("spatial query_radius fell back: %s", exc)
 
         # Try SC2 built-in method (faster than manual iteration)
         if hasattr(units, "closer_than"):
             try:
                 return units.closer_than(radius, unit.position)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Units.closer_than fell back: %s", exc)
 
         # Fallback: brute force O(N)
         return [
