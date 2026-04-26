@@ -141,6 +141,96 @@ class TestResourceManager:
         # Should not over-reserve
         assert self.manager._reserved_minerals <= 500
 
+    # ===== 추가 회귀 테스트: release_partial =====
+
+    @pytest.mark.asyncio
+    async def test_release_partial_reduces_reservation(self):
+        """release_partial 이 일부만 해제하고 잔여분은 유지"""
+        await self.manager.try_reserve(300, 150, "ManagerA")
+        await self.manager.release_partial("ManagerA", 100, 50)
+        # 200/100 잔여
+        rem = self.manager.get_manager_reservation("ManagerA")
+        assert rem == (200, 100)
+        assert self.manager._reserved_minerals == 200
+        assert self.manager._reserved_gas == 100
+
+    @pytest.mark.asyncio
+    async def test_release_partial_clamps_at_zero(self):
+        """요청량이 잔여보다 크면 0으로 클램프 + 예약 삭제"""
+        await self.manager.try_reserve(100, 50, "ManagerB")
+        await self.manager.release_partial("ManagerB", 999, 999)
+        # 모두 해제 → 예약 사라짐
+        assert self.manager.get_manager_reservation("ManagerB") is None
+        assert self.manager._reserved_minerals == 0
+        assert self.manager._reserved_gas == 0
+
+    @pytest.mark.asyncio
+    async def test_release_partial_unknown_manager_noop(self):
+        """등록되지 않은 매니저 호출은 noop (에러 없음)"""
+        # 호출해도 예외 안 나야 함
+        await self.manager.release_partial("Ghost", 100, 100)
+        assert self.manager._reserved_minerals == 0
+
+    # ===== get_reserved_resources / get_manager_reservation / has_reservation =====
+
+    @pytest.mark.asyncio
+    async def test_get_reserved_resources_tuple(self):
+        """get_reserved_resources 가 (minerals, gas) 튜플 반환"""
+        await self.manager.try_reserve(123, 45, "M1")
+        m, g = self.manager.get_reserved_resources()
+        assert m == 123
+        assert g == 45
+
+    @pytest.mark.asyncio
+    async def test_get_manager_reservation_unknown_returns_none(self):
+        """등록되지 않은 매니저 → None"""
+        assert self.manager.get_manager_reservation("nope") is None
+
+    @pytest.mark.asyncio
+    async def test_has_reservation_true_after_reserve(self):
+        """예약 후 has_reservation True"""
+        await self.manager.try_reserve(50, 25, "X")
+        assert self.manager.has_reservation("X") is True
+        await self.manager.release("X")
+        assert self.manager.has_reservation("X") is False
+
+    # ===== get_statistics 구조 검증 =====
+
+    @pytest.mark.asyncio
+    async def test_statistics_includes_active_count_and_success_rate(self):
+        """get_statistics 가 active_reservations / success_rate 포함"""
+        await self.manager.try_reserve(100, 50, "S1")
+        await self.manager.try_reserve(100, 50, "S2")
+        stats = self.manager.get_statistics()
+        assert stats["active_reservations"] == 2
+        assert "success_rate" in stats
+        assert 0.0 <= stats["success_rate"] <= 1.0
+
+    @pytest.mark.asyncio
+    async def test_statistics_failed_increments_on_overdraft(self):
+        """자원 부족 시 failed_reservations 증가"""
+        # 1000/500 만 있는데 더 큰 예약 시도 → 실패
+        ok = await self.manager.try_reserve(99999, 99999, "Big")
+        assert ok is False
+        stats = self.manager.get_statistics()
+        assert stats["failed_reservations"] >= 1
+
+    # ===== clear_stale_reservations =====
+
+    @pytest.mark.asyncio
+    async def test_clear_stale_reservations_releases_old(self):
+        """오랫동안 유지된 예약은 stale_threshold 후 자동 해제"""
+        await self.manager.try_reserve(100, 50, "Stale")
+        # iteration=0 시점 등록 후, iteration=300 (>220 stale_threshold)에서 정리
+        await self.manager.clear_stale_reservations(0)
+        # 첫 호출은 단순히 시간 등록만 함
+        assert self.manager.has_reservation("Stale") is True
+
+        await self.manager.clear_stale_reservations(500)
+        # 500 - 0 = 500 > 220 → stale 처리됨
+        assert self.manager.has_reservation("Stale") is False
+        assert self.manager._reserved_minerals == 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
