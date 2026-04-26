@@ -491,6 +491,8 @@ class AggressiveStrategyExecutor:
                     logger.info(f"Bile targeting {target.type_id.name}")
                 else:
                     # 타겟 없으면 적 본진 공격
+                    if not self.bot.enemy_start_locations:
+                        continue
                     target = self.bot.enemy_start_locations[0]
                     self.bot.do(ravager.attack(target))
 

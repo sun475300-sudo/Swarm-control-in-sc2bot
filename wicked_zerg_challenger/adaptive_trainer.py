@@ -64,14 +64,16 @@ def kill_all_sc2():
         subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
                       capture_output=True, timeout=5)
         time.sleep(3)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"kill_all_sc2 failed: {e}")
 
 
 def create_lock():
     """Lock 파일 생성"""
     with open(LOCK_FILE, 'w') as f:
         f.write(str(os.getpid()))
+        f.flush()
+        os.fsync(f.fileno())
 
 
 def remove_lock():
@@ -79,8 +81,8 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"remove_lock failed: {e}")
 
 
 def run_single_game(map_name: str, difficulty: Difficulty, difficulty_name: str,

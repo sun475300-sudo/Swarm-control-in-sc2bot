@@ -295,7 +295,7 @@ class LurkerMicro:
         direction_y = lurker.position.y - enemy_center.y
         length = (direction_x ** 2 + direction_y ** 2) ** 0.5
 
-        if length == 0:
+        if length < 1e-6:
             return None
 
         # Normalize and position at optimal range
