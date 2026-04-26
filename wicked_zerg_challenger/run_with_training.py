@@ -93,8 +93,6 @@ def main():
     Main entry point for bot execution with training enabled.
     IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
-    import time
-    import random
 
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
