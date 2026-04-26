@@ -333,7 +333,8 @@ class GenAISelfHealing:
 
             return efficiency
 
-        except Exception:
+        except (TypeError, ValueError, ZeroDivisionError):
+            # data has non-numeric value or unexpected zero division.
             return 0.5  # 기본값
 
     def _calculate_combat_efficiency(self, data: Dict) -> float:
