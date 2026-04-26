@@ -26,6 +26,23 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
     import numpy as np
+    # Stand-in stubs so that `if TORCH_AVAILABLE: class X(nn.Module): …`
+    # blocks parse without NameError. They're guarded by TORCH_AVAILABLE
+    # at instantiation time, so runtime never touches them.
+    torch = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+
+    class _NnStub:  # pragma: no cover - import-time only
+        Module = object
+
+        def __getattr__(self, _name):
+            def _missing(*_a, **_kw):
+                raise RuntimeError(
+                    "PyTorch is not installed; enable TORCH_AVAILABLE path"
+                )
+            return _missing
+
+    nn = _NnStub()  # type: ignore[assignment]
 
 
 # ============================================================

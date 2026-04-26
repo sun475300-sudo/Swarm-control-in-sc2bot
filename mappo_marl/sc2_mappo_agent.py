@@ -43,6 +43,22 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # Stand-in stubs so module import does not crash with NameError
+    # when the Torch class bodies are parsed below. The classes are
+    # only ever instantiated when HAS_TORCH is True.
+    torch = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
+
+    class _NnStub:  # pragma: no cover - import-time only
+        Module = object
+
+        def __getattr__(self, _name):
+            def _missing(*_a, **_kw):
+                raise RuntimeError("PyTorch is not installed; enable HAS_TORCH path")
+            return _missing
+
+    nn = _NnStub()  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback helpers
