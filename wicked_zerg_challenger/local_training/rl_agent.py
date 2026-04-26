@@ -493,18 +493,16 @@ class RLAgent:
             )
             temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # 원자적으로 이름 변경 (Atomic Rename).
+            # os.replace는 Python 3.3+에서 POSIX와 Windows 모두에서 atomic이며
+            # 기존 파일을 자동으로 덮어쓴다. os.remove + os.rename 조합은
+            # 두 호출 사이에 프로세스가 죽으면 파일이 통째로 사라지므로 사용 금지.
+            os.replace(temp_actual, path_str)
             
             logger.info(f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards")
             return True
         except Exception as e:
-            logger.error(f"Failed to save experience data: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.exception(f"Failed to save experience data: {e}")
             return False
 
     def train_from_batch(self, experiences: List[Dict[str, np.ndarray]]) -> Dict[str, float]:
