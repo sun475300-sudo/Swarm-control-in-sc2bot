@@ -258,7 +258,7 @@ def build_slide_2(prs):
     for i, (title, desc, accent) in enumerate(cards):
         x = Inches(0.8 + i * 4.1)
         y = Inches(3.0)
-        card = add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.2), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.2), BG_CARD, accent)
 
         add_text_box(slide, x + Inches(0.3), y + Inches(0.3), Inches(3.1), Inches(0.4),
                      title, font_size=20, color=accent, bold=True)
@@ -334,7 +334,7 @@ def build_slide_3(prs):
         y = Inches(3.7)
 
         # Gradient-ish card
-        card = add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.4), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.4), BG_CARD, accent)
 
         # Icon circle
         circle = slide.shapes.add_shape(
@@ -380,7 +380,7 @@ def build_slide_4(prs):
                  font_size=32, color=WHITE, bold=True)
 
     # Left box: SC2
-    sc2_card = add_rounded_rect(slide, Inches(0.6), Inches(2.5), Inches(4.8), Inches(1.8),
+    add_rounded_rect(slide, Inches(0.6), Inches(2.5), Inches(4.8), Inches(1.8),
                                  BG_CARD, PURPLE)
     add_text_box(slide, Inches(0.8), Inches(2.6), Inches(4.4), Inches(0.3),
                  "STARCRAFT II", font_size=11, color=PURPLE, bold=True, font_name="Consolas")
@@ -397,7 +397,7 @@ def build_slide_4(prs):
                  "+ Altitude", font_size=11, color=DIM, alignment=PP_ALIGN.CENTER)
 
     # Right box: Drone ATC
-    atc_card = add_rounded_rect(slide, Inches(7.3), Inches(2.5), Inches(4.8), Inches(1.8),
+    add_rounded_rect(slide, Inches(7.3), Inches(2.5), Inches(4.8), Inches(1.8),
                                  BG_CARD, CYAN)
     add_text_box(slide, Inches(7.5), Inches(2.6), Inches(4.4), Inches(0.3),
                  "DRONE ATC", font_size=11, color=CYAN, bold=True, font_name="Consolas")
@@ -510,7 +510,7 @@ def build_slide_5(prs):
         x = Inches(0.5 + i * 3.1)
         y = Inches(2.8)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.0), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.0), BG_CARD, accent)
 
         add_text_box(slide, x + Inches(0.2), y + Inches(0.2), Inches(2.4), Inches(0.3),
                      phase, font_size=10, color=accent, bold=True, font_name="Consolas")
@@ -534,7 +534,7 @@ def build_slide_5(prs):
     for i, (name, file, tech) in enumerate(demos):
         x = Inches(0.8 + i * 5.5)
         y = Inches(5.5)
-        card = add_rounded_rect(slide, x, y, Inches(5.0), Inches(0.9), BG_CARD)
+        add_rounded_rect(slide, x, y, Inches(5.0), Inches(0.9), BG_CARD)
         add_text_box(slide, x + Inches(0.3), y + Inches(0.1), Inches(4.4), Inches(0.35),
                      name, font_size=14, color=WHITE, bold=True)
         add_text_box(slide, x + Inches(0.3), y + Inches(0.45), Inches(4.4), Inches(0.2),
@@ -586,7 +586,7 @@ def build_slide_6(prs):
         x = Inches(0.5 + i * 3.1)
         y = Inches(2.8)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.8), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.8), BG_CARD, accent)
 
         # Status circle
         circle = slide.shapes.add_shape(
@@ -711,7 +711,7 @@ def build_slide_7(prs):
         x = Inches(7.3 + col * 2.8)
         y = Inches(2.2 + row * 1.5)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.4), Inches(1.2), BG_CARD)
+        add_rounded_rect(slide, x, y, Inches(2.4), Inches(1.2), BG_CARD)
         add_text_box(slide, x + Inches(0.2), y + Inches(0.25), Inches(2.0), Inches(0.35),
                      title, font_size=15, color=WHITE, bold=True, alignment=PP_ALIGN.CENTER)
         add_text_box(slide, x + Inches(0.2), y + Inches(0.65), Inches(2.0), Inches(0.3),

@@ -774,7 +774,7 @@ def main():
             logger.info("\n[STEP 1] Extracting training data...")
             training_data = extractor.extract_training_stats()
             comparisons = extractor.extract_build_order_comparisons()
-            session_stats = extractor.extract_session_stats()
+            extractor.extract_session_stats()
 
             if training_data or comparisons:
                 # Analyze data

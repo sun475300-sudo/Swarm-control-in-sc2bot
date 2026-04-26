@@ -313,7 +313,7 @@ class PerformanceOptimizer:
 
             return distance
 
-        except Exception as e:
+        except Exception:
             # 에러 발생 시 폴백: 직접 계산
             try:
                 pos1 = getattr(unit1, 'position', unit1)

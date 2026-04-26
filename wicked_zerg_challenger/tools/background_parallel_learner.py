@@ -79,7 +79,6 @@ class BackgroundParallelLearner:
 
     def _safe_file_op(self, operation: callable, retries: int = 5, delay: float = 0.5) -> Any:
         """파일 작업 재시도 래퍼"""
-        msg = ""
         for i in range(retries):
             try:
                 return operation()

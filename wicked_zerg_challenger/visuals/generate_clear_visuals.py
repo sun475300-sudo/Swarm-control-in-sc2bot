@@ -454,7 +454,7 @@ def clear_swarm_simulation():
             pos[i] = [side * row * 2.0, row * -1.5, 50 + np.random.randn() * 2]
 
     target = np.array([0, 30, 50])
-    vel = np.zeros((N, 3))
+    np.zeros((N, 3))
 
     all_pos = [pos.copy()]
     for _ in range(FRAMES):

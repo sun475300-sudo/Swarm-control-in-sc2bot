@@ -255,7 +255,7 @@ class AggressiveTechBuilder:
             return []
         
         recommendations = []
-        supply_used = getattr(self.bot, "supply_used", 0)
+        getattr(self.bot, "supply_used", 0)
         
         # Spawning Pool (�⺻ ��ũ)
         if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).exists:

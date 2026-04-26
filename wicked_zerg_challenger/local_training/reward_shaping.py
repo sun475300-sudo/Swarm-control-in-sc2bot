@@ -166,7 +166,7 @@ class RewardShaper:
         army = state.get("army_supply", 0)
         enemy_army = state.get("enemy_army", 0)
         minerals = state.get("minerals", 0)
-        gas = state.get("vespene", 0)
+        state.get("vespene", 0)
         tech = state.get("tech_level", 0.0)
         bases = state.get("bases", 1)
         threat = state.get("threat", 0.0)
