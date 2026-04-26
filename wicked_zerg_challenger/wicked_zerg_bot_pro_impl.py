@@ -562,7 +562,6 @@ class WickedZergBotProImpl(BotAI):
 
             except Exception as e:
                 self.logger.info(f"[WARNING] Training end logic error: {e}")
-                import traceback
                 traceback.print_exc()
 
         # ★★★ 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ★★★
