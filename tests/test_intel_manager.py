@@ -198,6 +198,128 @@ class TestIntelManager:
         # Update should only happen every 8 iterations
         assert self.intel.update_interval == 8
 
+    # ===== Public Getter Tests =====
+
+    def test_is_under_attack_returns_bool(self):
+        """is_under_attack 가 bool 반환"""
+        assert isinstance(self.intel.is_under_attack(), bool)
+        assert self.intel.is_under_attack() is False  # 초기 상태
+
+    def test_get_attack_position_initial_none(self):
+        """get_attack_position 초기값은 None"""
+        assert self.intel.get_attack_position() is None
+
+    def test_get_enemy_army_supply_initial_zero(self):
+        """get_enemy_army_supply 초기값은 0"""
+        assert self.intel.get_enemy_army_supply() == 0
+
+    def test_get_enemy_composition_returns_copy(self):
+        """get_enemy_composition 은 dict 사본을 반환 (외부 변경 방어)"""
+        self.intel.enemy_unit_counts = {"MARINE": 5, "MARAUDER": 2}
+        comp = self.intel.get_enemy_composition()
+        assert isinstance(comp, dict)
+        assert comp == {"MARINE": 5, "MARAUDER": 2}
+
+        # 반환된 dict 를 수정해도 내부 상태는 영향 없음
+        comp["NEW_UNIT"] = 999
+        assert "NEW_UNIT" not in self.intel.enemy_unit_counts
+
+    def test_has_enemy_tech_case_insensitive(self):
+        """has_enemy_tech 은 대소문자 구분 없이 일치 검사"""
+        self.intel.enemy_tech_buildings.add("BARRACKS")
+        assert self.intel.has_enemy_tech("BARRACKS") is True
+        assert self.intel.has_enemy_tech("barracks") is True
+        assert self.intel.has_enemy_tech("Barracks") is True
+        assert self.intel.has_enemy_tech("FACTORY") is False
+
+    def test_get_threat_level_initial_none(self):
+        """초기 threat_level 은 'none'"""
+        assert self.intel.get_threat_level() == "none"
+
+    def test_has_high_threat_units_initial_false(self):
+        """초기 _high_threat_units_detected 는 False"""
+        assert self.intel.has_high_threat_units() is False
+
+    def test_is_major_attack_when_critical(self):
+        """critical level 일 때 is_major_attack True"""
+        self.intel._threat_level = "critical"
+        assert self.intel.is_major_attack() is True
+
+    def test_is_major_attack_when_high_threat_unit(self):
+        """high threat unit 감지 시 is_major_attack True"""
+        self.intel._high_threat_units_detected = True
+        assert self.intel.is_major_attack() is True
+
+    def test_is_major_attack_when_quiet(self):
+        """위협 없을 때 is_major_attack False"""
+        self.intel._threat_level = "light"
+        self.intel._high_threat_units_detected = False
+        assert self.intel.is_major_attack() is False
+
+    # ===== Tech Alerts =====
+
+    def test_get_tech_alerts_returns_copy(self):
+        """get_tech_alerts 는 set 사본 반환"""
+        self.intel._detected_tech_alerts.add("NYDUS_INCOMING")
+        alerts = self.intel.get_tech_alerts()
+        assert isinstance(alerts, set)
+        assert "NYDUS_INCOMING" in alerts
+
+        alerts.add("FAKE_ALERT")
+        assert "FAKE_ALERT" not in self.intel._detected_tech_alerts
+
+    def test_has_tech_alert_known(self):
+        """has_tech_alert 정상 등록된 경고 검출"""
+        self.intel._detected_tech_alerts.add("DT_RUSH")
+        assert self.intel.has_tech_alert("DT_RUSH") is True
+        assert self.intel.has_tech_alert("UNKNOWN_ALERT") is False
+
+    # ===== Scouted Locations =====
+
+    def test_record_scouted_location_adds_to_set(self):
+        """record_scouted_location 이 정찰 위치를 set 에 추가"""
+        loc = (100, 100)
+        self.intel.record_scouted_location(loc)
+        assert loc in self.intel.scouted_locations
+
+    def test_record_scouted_location_idempotent(self):
+        """동일 위치 중복 등록은 한 번만 저장 (set 특성)"""
+        loc = (50, 50)
+        self.intel.record_scouted_location(loc)
+        self.intel.record_scouted_location(loc)
+        # set 이므로 중복 없음
+        assert sum(1 for l in self.intel.scouted_locations if l == loc) == 1
+
+    # ===== Enemy Structure Tracking =====
+
+    def test_get_destructible_rocks_returns_copy(self):
+        """get_destructible_rocks 가 list 사본 반환"""
+        self.intel.destructible_rocks = []  # ensure list 형태
+        rocks = self.intel.get_destructible_rocks()
+        assert isinstance(rocks, list)
+
+        rocks.append("FAKE")
+        # 사본이므로 원본에 영향 없음
+        assert "FAKE" not in self.intel.destructible_rocks
+
+    def test_get_closest_destructible_rock_empty_returns_none(self):
+        """파괴 가능한 구조물이 없으면 None 반환"""
+        self.intel.destructible_rocks = []
+        assert self.intel.get_closest_destructible_rock((50, 50)) is None
+
+    def test_get_all_enemy_structures_returns_copy(self):
+        """get_all_enemy_structures 가 list 사본 반환"""
+        self.intel.all_enemy_structures = []
+        structs = self.intel.get_all_enemy_structures()
+        assert isinstance(structs, list)
+
+        structs.append("FAKE")
+        assert "FAKE" not in self.intel.all_enemy_structures
+
+    def test_get_enemy_structure_count_initial(self):
+        """get_enemy_structure_count 초기값"""
+        assert self.intel.get_enemy_structure_count() == 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
