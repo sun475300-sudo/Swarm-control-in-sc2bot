@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 import shutil
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -17,6 +18,126 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# ═══════════════════════════════════════════════════════
+# python-sc2 lightweight stub (only when the real package is missing)
+# ═══════════════════════════════════════════════════════
+# Several tests `from sc2.position import Point2` / `from sc2.ids.unit_typeid
+# import UnitTypeId` only to use them as plain value types. Without
+# python-sc2 installed those modules `pytest.skip(...allow_module_level=True)`
+# at import time. Provide a minimal stub so the tests collect and run.
+def _install_sc2_stub() -> None:
+    try:
+        import sc2  # noqa: F401  (real package available — do nothing)
+        return
+    except ImportError:
+        pass
+
+    sc2 = types.ModuleType("sc2")
+    sc2_position = types.ModuleType("sc2.position")
+    sc2_ids = types.ModuleType("sc2.ids")
+    sc2_ids_unit = types.ModuleType("sc2.ids.unit_typeid")
+    sc2_ids_ability = types.ModuleType("sc2.ids.ability_id")
+    sc2_ids_upgrade = types.ModuleType("sc2.ids.upgrade_id")
+    sc2_ids_buff = types.ModuleType("sc2.ids.buff_id")
+    sc2_bot_ai = types.ModuleType("sc2.bot_ai")
+    sc2_unit = types.ModuleType("sc2.unit")
+    sc2_units = types.ModuleType("sc2.units")
+    sc2_data = types.ModuleType("sc2.data")
+    sc2_main = types.ModuleType("sc2.main")
+    sc2_player = types.ModuleType("sc2.player")
+    sc2_constants = types.ModuleType("sc2.constants")
+
+    class Point2(tuple):
+        """Minimal Point2 stub: 2-tuple with .x / .y / basic geometry."""
+
+        def __new__(cls, xy):
+            x, y = (xy[0], xy[1]) if hasattr(xy, "__getitem__") else (xy.x, xy.y)
+            return super().__new__(cls, (float(x), float(y)))
+
+        @property
+        def x(self) -> float:
+            return self[0]
+
+        @property
+        def y(self) -> float:
+            return self[1]
+
+        def distance_to(self, other) -> float:
+            ox = getattr(other, "x", None)
+            oy = getattr(other, "y", None)
+            if ox is None and len(other) >= 2:
+                ox, oy = other[0], other[1]
+            return ((self.x - ox) ** 2 + (self.y - oy) ** 2) ** 0.5
+
+        def towards(self, other, distance: float):
+            d = self.distance_to(other) or 1.0
+            ox = getattr(other, "x", other[0])
+            oy = getattr(other, "y", other[1])
+            ratio = distance / d
+            return Point2((self.x + (ox - self.x) * ratio,
+                           self.y + (oy - self.y) * ratio))
+
+        @property
+        def position(self):
+            return self
+
+    class _IdEnum:
+        """Enum-like container that returns a stable sentinel for any name."""
+
+        def __init__(self, kind: str):
+            self._kind = kind
+            self._cache: dict[str, object] = {}
+
+        def __getattr__(self, name: str):
+            if name.startswith("_"):
+                raise AttributeError(name)
+            v = self._cache.get(name)
+            if v is None:
+                v = type(self._kind, (), {"name": name, "value": name,
+                                          "__repr__": lambda s, n=name: f"{n}"})()
+                self._cache[name] = v
+            return v
+
+    sc2_position.Point2 = Point2
+
+    class _StubUnit:  # placeholder
+        pass
+
+    class _StubUnits(list):  # behave like a list
+        pass
+
+    class _StubBotAI:  # placeholder
+        pass
+
+    sc2_ids_unit.UnitTypeId = _IdEnum("UnitTypeId")
+    sc2_ids_ability.AbilityId = _IdEnum("AbilityId")
+    sc2_ids_upgrade.UpgradeId = _IdEnum("UpgradeId")
+    sc2_ids_buff.BuffId = _IdEnum("BuffId")
+    sc2_bot_ai.BotAI = _StubBotAI
+    sc2_unit.Unit = _StubUnit
+    sc2_units.Units = _StubUnits
+    sc2_data.Race = _IdEnum("Race")
+    sc2_data.Result = _IdEnum("Result")
+
+    sys.modules.setdefault("sc2", sc2)
+    sys.modules.setdefault("sc2.position", sc2_position)
+    sys.modules.setdefault("sc2.ids", sc2_ids)
+    sys.modules.setdefault("sc2.ids.unit_typeid", sc2_ids_unit)
+    sys.modules.setdefault("sc2.ids.ability_id", sc2_ids_ability)
+    sys.modules.setdefault("sc2.ids.upgrade_id", sc2_ids_upgrade)
+    sys.modules.setdefault("sc2.ids.buff_id", sc2_ids_buff)
+    sys.modules.setdefault("sc2.bot_ai", sc2_bot_ai)
+    sys.modules.setdefault("sc2.unit", sc2_unit)
+    sys.modules.setdefault("sc2.units", sc2_units)
+    sys.modules.setdefault("sc2.data", sc2_data)
+    sys.modules.setdefault("sc2.main", sc2_main)
+    sys.modules.setdefault("sc2.player", sc2_player)
+    sys.modules.setdefault("sc2.constants", sc2_constants)
+
+
+_install_sc2_stub()
 
 
 # ═══════════════════════════════════════════════════════

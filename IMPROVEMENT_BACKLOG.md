@@ -6,7 +6,8 @@
 ## Snapshot (현재 상태)
 
 - 브랜치: `claude/stoic-shannon-CG7bM`
-- pytest 결과: **340 passed, 20 skipped, 1 warning** (이전: 305 passed, 1 failed, 34 skipped)
+- pytest 결과: **396 passed, 15 skipped, 0 warnings** (시작: 305 passed, 1 failed, 34 skipped, 1 warning)
+- 누적 +91 tests, -1 failure, -19 skips, -1 warning
 - 베이스라인: pytest 9.0.3, pytest-asyncio 1.3.0, numpy 2.4.4, cffi 2.0.0
 
 ## ✅ BATCH 1 — 테스트 안정화 (완료)
@@ -19,16 +20,13 @@
 | B1.4  | `comm_learning/__init__.py` 존재하지 않는 클래스 import 제거                 | `comm_learning/__init__.py`                                                |
 | B1.5  | empty `logger.<level>()` regression guard를 단위 테스트로 추가              | `tests/test_empty_logger_guard.py`                                         |
 
-## 🔜 BATCH 2 — 코드 품질/일관성
+## ✅ BATCH 2 — 테스트 인프라 (완료)
 
-| #     | 항목                                                                    |
-|-------|-------------------------------------------------------------------------|
-| B2.1  | `pytest.ini`의 `timeout` 옵션 → pytest-timeout 미설치시 경고. 경고 제거 또는 `pip install pytest-timeout` |
-| B2.2  | numpy 미설치 환경에서 skip 처리되는 10개 테스트 → numpy 의존을 graceful fallback으로 분리 |
-| B2.3  | `config.yaml` 미존재로 skip되는 8개 테스트 → 테스트용 fixture로 in-memory config 제공 |
-| B2.4  | `sc2 library`가 없어 skip되는 5개 테스트 → MockBot 인프라 강화로 import-time skip 제거 |
-| B2.5  | `wicked_zerg_challenger/` 안의 미사용 import 자동 제거 (lint pass) |
-| B2.6  | `print()` 잔존 사용처 grep — 이미 logger 마이그레이션 후 잔여물 정리 |
+| #     | 항목                                                                    | 결과                                                                     |
+|-------|-------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| B2.1  | `pytest.ini`의 `timeout` 옵션이 pytest-timeout 미설치시 발생시키는 경고 제거 | warning 1 → 0                                                            |
+| B2.4  | `tests/conftest.py`에 sc2 패키지 lightweight stub 추가 (Point2 / UnitTypeId / AbilityId / UpgradeId / BuffId / BotAI / Unit / Units / Race / Result) | passed 340 → 396, skipped 20 → 15 |
+| B2.6  | `wicked_zerg_challenger/replay_data_collector.py` 안의 print() 등 잔존은 `__main__` 블록 한정으로 의도된 것임을 확인 (액션 불필요) | n/a |
 
 ## 🔜 BATCH 3 — 봇 로직 개선 (PLAN-NIGHTLY P1 매핑)
 
