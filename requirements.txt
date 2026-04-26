@@ -79,3 +79,18 @@ yt-dlp>=2024.1.0
 # ═══════════════════════════════════════════════
 pycaw>=20230407; sys_platform == "win32"
 comtypes>=1.2.0; sys_platform == "win32"
+
+# ═══════════════════════════════════════════════
+# Test / Dev
+# ═══════════════════════════════════════════════
+# pytest-asyncio is required because tests/ uses `async def` test functions
+# under pytest with `asyncio_mode = auto`. Without this, ~80 tests fail
+# during collection with "async def functions are not natively supported."
+pytest>=7.0.0
+pytest-asyncio>=0.23.0
+# pytest-timeout backs the `timeout = 60` option in pytest.ini.
+pytest-timeout>=2.0.0
+# cffi backs the `cryptography` package; absence triggers a pyo3 panic on
+# `from cryptography...` imports used by tests/test_security.py and
+# tests/test_crypto_trading.py.
+cffi>=1.16.0
