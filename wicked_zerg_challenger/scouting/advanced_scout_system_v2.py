@@ -18,26 +18,10 @@ import math
 from typing import List, Optional, Tuple, Dict, Set
 from utils.logger import get_logger
 
-try:
-    from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.ids.ability_id import AbilityId
-    from sc2.ids.upgrade_id import UpgradeId
-    from sc2.position import Point2
-    from sc2.unit import Unit
-except ImportError:
-    class BotAI:
-        pass
-    class UnitTypeId:
-        pass
-    class AbilityId:
-        pass
-    class UpgradeId:
-        pass
-    class Point2:
-        pass
-    class Unit:
-        pass
+# sc2 패키지가 설치되지 않은 환경에서도 모듈 임포트가 가능하도록
+# 공유 호환 스텁을 사용한다. 진짜 sc2가 설치되어 있으면 그대로 진짜
+# 클래스를 재노출한다. 자세한 배경은 _sc2_compat.py 참고.
+from _sc2_compat import BotAI, UnitTypeId, AbilityId, UpgradeId, Point2, Unit
 
 from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
 
