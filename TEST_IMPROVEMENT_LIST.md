@@ -115,6 +115,35 @@
 - 결과: wicked_zerg_challenger/tests/ 6 ERROR → 404 passed.
   통합 767 passed.
 
+### Round 3 (commit 0c86d6c)
+- ✅ P2-6: `wicked_zerg_challenger/tests/test_sc2_compat.py` 21개 자체 검증 테스트
+  (메타클래스 attribute/subscript 동치성, __bool__, Point2.distance_to,
+   Units 2-arg 생성자 등 invariant 명문화)
+- ✅ TEST_IMPROVEMENT_LIST.md 갱신 + PR #33 CI 분석
+- 통합: 788 passed.
+
+### Round 4 (commit f4152de)
+- ✅ 최상위 `tests/conftest.py`에도 sc2 stub 주입 함수 추가
+  (wicked_zerg_challenger/_sc2_compat을 재사용)
+- 결과: tests/ 306 → 361 passed (+55).
+  - test_advanced_scout_system_v2.py: 15 회수
+  - test_harassment_coordinator.py: 22 회수
+  - test_queen_transfusion_manager.py: 9 회수
+  - test_spatial_query_optimizer.py: 10 회수
+
+### Round 5 (예정 commit)
+- ✅ P3-CI-4 부분 해결: `tests/test_p606_infra.py`의 4개 잘못된 클래스 이름
+  (`FuzzTarget`/`ContractViolation`/`PackageType`/`ProfileMetric`)을
+  실제 존재하는 클래스 이름으로 교체. 4 SKIPPED → 4 PASSED.
+- ✅ pre-existing 버그 수정 (P3-CODE-1):
+  - `mappo_marl/sc2_mappo_agent.py:172` `class SharedObsEncoderTorch(nn.Module)`이
+    PyTorch 부재 시 NameError로 모듈 import를 깨뜨림. `nn` 더미 placeholder
+    추가. NumPy 단위 테스트 회수.
+  - `qmix_marl/sc2_qmix_agent.py:172` 동일 패턴, 동일 처치.
+  - `mappo_marl/__init__.py`, `comm_learning/__init__.py`의 잘못된 re-export
+    이름 (존재하지 않는 클래스) 수정. 패키지 import 정상화.
+- 통합: 826 passed (+38 from round 4).
+
 ---
 
 ## 🔵 P3+ — PR #33 CI 결과로 새로 발견된 이슈 (round 3+)

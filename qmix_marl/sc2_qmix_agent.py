@@ -46,6 +46,20 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # PyTorch가 없을 때도 모듈이 로드 가능하도록 더미 nn placeholder.
+    # 모듈 최상위의 `class FooTorch(nn.Module)` 정의가 torch 부재 시
+    # NameError로 import를 깨뜨려 numpy 기반 단위 테스트도 차단.
+    class _NNStub:
+        Module = type("Module", (object,), {})
+
+        def __getattr__(self, name):
+            return type(name, (object,), {})
+
+    nn = _NNStub()  # type: ignore[assignment]
+    F = _NNStub()  # type: ignore[assignment]
+    torch = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback primitives
 # ===================================================================

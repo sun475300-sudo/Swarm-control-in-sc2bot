@@ -37,19 +37,21 @@ class TestLoadTesting:
 
 class TestFuzzTesting:
     def test_import(self):
-        cls = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzTarget")
+        # 실제 모듈에 존재하는 클래스: FuzzInput, Mutator, SC2Fuzzer
+        cls = _safe_import("fuzz_testing.sc2_fuzzer", "SC2Fuzzer")
         if cls is None:
-            # try alternate class name
-            mod = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzConfig")
-            if mod is None:
-                pytest.skip("not importable")
+            cls = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzInput")
+        if cls is None:
+            pytest.skip("not importable")
+        assert cls is not None
 
 
 class TestContractTesting:
     def test_import(self):
-        cls = _safe_import("contract_testing.sc2_contract_tester", "ContractViolation")
+        # 실제 모듈에 존재하는 클래스: Contract, ContractStatus, ContractTester
+        cls = _safe_import("contract_testing.sc2_contract_tester", "ContractTester")
         if cls is None:
-            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractType")
+            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractStatus")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
@@ -77,9 +79,10 @@ class TestMTLSSecurity:
 
 class TestSBOMManager:
     def test_import(self):
-        cls = _safe_import("sbom_manager.sc2_sbom_generator", "PackageType")
+        # 실제 모듈에 존재하는 클래스: SBOMGenerator, Package, Vulnerability
+        cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMGenerator")
         if cls is None:
-            cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMFormat")
+            cls = _safe_import("sbom_manager.sc2_sbom_generator", "Package")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
@@ -127,9 +130,10 @@ class TestCQRSPattern:
 
 class TestPerformanceProfiler:
     def test_import(self):
-        cls = _safe_import("performance_profiler.sc2_profiler", "ProfileMetric")
+        # 실제 모듈에 존재하는 클래스: SC2Profiler, Timer, MemoryTracker
+        cls = _safe_import("performance_profiler.sc2_profiler", "SC2Profiler")
         if cls is None:
-            cls = _safe_import("performance_profiler.sc2_profiler", "ProfilingConfig")
+            cls = _safe_import("performance_profiler.sc2_profiler", "Timer")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None

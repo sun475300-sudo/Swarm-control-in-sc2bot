@@ -44,6 +44,26 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # PyTorch가 없을 때도 본 모듈이 로드 가능하도록 더미 placeholder를 둔다.
+    # 아래 `class FooTorch(nn.Module)` 정의가 모듈 최상위에 있어, torch 부재
+    # 시 NameError로 import 자체가 깨진다 (NumPy 단위 테스트도 막힘).
+    # NumPy 폴백 경로에서는 *Torch 클래스를 사용하지 않으므로, base만 안전히
+    # 채워주면 충분.
+    class _NNStub:
+        Module = type("Module", (object,), {})
+        Sequential = type("Sequential", (object,), {})
+        Linear = type("Linear", (object,), {})
+        ReLU = type("ReLU", (object,), {})
+        LayerNorm = type("LayerNorm", (object,), {})
+
+        def __getattr__(self, name):
+            return type(name, (object,), {})
+
+    nn = _NNStub()  # type: ignore[assignment]
+    torch = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback helpers
 # ===================================================================
