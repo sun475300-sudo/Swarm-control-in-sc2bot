@@ -64,8 +64,9 @@ def kill_all_sc2():
         subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
                       capture_output=True, timeout=5)
         time.sleep(3)
-    except Exception:
-        pass
+    except Exception as exc:
+        # taskkill missing on non-Windows or already-gone processes — non-fatal.
+        logger.debug("kill_all_sc2 skipped: %s", exc)
 
 
 def create_lock():
@@ -79,8 +80,8 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("remove_lock failed for %s: %s", LOCK_FILE, exc)
 
 
 def run_single_game(map_name: str, difficulty: Difficulty, difficulty_name: str,

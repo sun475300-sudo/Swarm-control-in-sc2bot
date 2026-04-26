@@ -1220,8 +1220,8 @@ class AdvancedMicroControllerV3:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("micro action dispatch failed: %s", exc)
 
     async def on_step(self, iteration: int):
         """
