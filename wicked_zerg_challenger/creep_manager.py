@@ -355,8 +355,8 @@ class CreepManager:
                 )
                 if placement_results and len(placement_results) == len(valid):
                     valid = [pos for pos, ok in zip(valid, placement_results) if ok]
-        except Exception:
-            pass  # Fall through to distance-based selection if batch query fails
+        except Exception as exc:
+            logger.debug("can_place batch query for creep tumor placement failed, falling back to distance heuristic: %s", exc)
 
         if not valid:
             return None

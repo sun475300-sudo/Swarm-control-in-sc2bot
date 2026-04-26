@@ -14,10 +14,20 @@ from sc2.ids.ability_id import AbilityId
 from sc2.position import Point2
 from utils.logger import get_logger
 
+_module_logger = get_logger("CreepExpansion.import")
 try:
     from wicked_zerg_challenger.rust_accel import nearest_point_index, points_to_xy_tuples
-except Exception:
-    from rust_accel import nearest_point_index, points_to_xy_tuples
+except Exception as _wzc_exc:
+    try:
+        from rust_accel import nearest_point_index, points_to_xy_tuples
+        _module_logger.debug("rust_accel imported via top-level fallback (wzc package import failed: %s)", _wzc_exc)
+    except Exception as _top_exc:
+        _module_logger.error(
+            "rust_accel unavailable from both wicked_zerg_challenger.rust_accel (%s) and rust_accel (%s); "
+            "creep expansion will fail when invoked",
+            _wzc_exc, _top_exc,
+        )
+        raise
 
 
 class CreepExpansionSystem:

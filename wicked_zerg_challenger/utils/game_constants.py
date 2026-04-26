@@ -94,6 +94,19 @@ class CombatConstants:
     ROACH_RUSH_TIMING = 360         # Roach Rush 타이밍 (초)
     DEFENSE_CHECK_INTERVAL = 33     # 방어 체크 주기 (1.5초)
 
+    # ── Combat phase thresholds (game seconds) ──
+    # Centralised here so combat_manager.py game_time checks can migrate off
+    # of inline magic numbers (60/180/240/300/420/480/600/900). Add new
+    # phase markers here rather than sprinkling them through the manager.
+    PHASE_VERY_EARLY_GAME = 60      # 60s — first overlord/scout window
+    PHASE_EARLY_GAME = 180          # 180s — pool-saturation, first poke
+    PHASE_EARLY_MID_GAME = 240      # 240s — first contact/skirmishes
+    PHASE_MID_GAME = 300            # 300s — main army composition
+    PHASE_LATE_MID_GAME = 420       # 420s — tech up window
+    PHASE_LATE_MID_TIMING = 480     # 480s — main timing attack threshold
+    PHASE_LATE_GAME = 600           # 600s — hive tech / late army
+    PHASE_VERY_LATE_GAME = 900      # 900s — broodlord/ultra/T3 window
+
 
 # ============================================================================
 # UPGRADE CONSTANTS

@@ -205,7 +205,8 @@ class CompositionOptimizer:
                 unit_name = getattr(unit.type_id, "name", "UNKNOWN").upper()
                 if unit_name not in ("SCV", "PROBE", "DRONE", "MULE"):
                     composition[unit_name] = composition.get(unit_name, 0) + 1
-            except Exception:
+            except Exception as exc:
+                logger.debug("enemy unit composition tally skipped: %s", exc)
                 continue
 
         # Use IntelManager historical data to keep units that moved out of vision.
@@ -218,7 +219,8 @@ class CompositionOptimizer:
                     continue
                 try:
                     composition[key] = max(composition.get(key, 0), int(count))
-                except Exception:
+                except Exception as exc:
+                    logger.debug("historical enemy composition merge skipped for %s: %s", key, exc)
                     continue
 
         self.enemy_composition = composition
@@ -241,7 +243,8 @@ class CompositionOptimizer:
                 unit_name = getattr(unit.type_id, "name", "UNKNOWN").upper()
                 if unit_name != "DRONE" and unit_name != "LARVA":
                     composition[unit_name] = composition.get(unit_name, 0) + 1
-            except Exception:
+            except Exception as exc:
+                logger.debug("own unit composition tally skipped: %s", exc)
                 continue
 
         self.current_composition = composition
