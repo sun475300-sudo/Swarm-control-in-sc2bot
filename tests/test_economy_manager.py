@@ -599,5 +599,152 @@ class TestGasTimingOptimization:
         assert True
 
 
+class TestGasBoostMode:
+    """테스트 19: Phase 18 가스 부스트 모드"""
+
+    def test_default_gas_boost_off(self):
+        """초기에는 가스 부스트 모드 비활성"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        assert manager.gas_boost_mode is False
+
+    def test_enable_gas_boost_mode_default_duration(self):
+        """기본 인자 호출 시 120초 지속 시간"""
+        bot = MockBot()
+        bot.time = 42.0
+        manager = EconomyManager(bot)
+        manager.enable_gas_boost_mode()
+        assert manager.gas_boost_mode is True
+        assert manager.gas_boost_duration == 120
+        assert manager.gas_boost_start_time == 42.0
+
+    def test_enable_gas_boost_mode_custom_duration(self):
+        """커스텀 지속 시간 적용"""
+        bot = MockBot()
+        bot.time = 100.0
+        manager = EconomyManager(bot)
+        manager.enable_gas_boost_mode(duration=180)
+        assert manager.gas_boost_mode is True
+        assert manager.gas_boost_duration == 180
+        assert manager.gas_boost_start_time == 100.0
+
+    def test_disable_gas_boost_mode(self):
+        """가스 부스트 모드 비활성화"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        manager.enable_gas_boost_mode(duration=60)
+        assert manager.gas_boost_mode is True
+        manager.disable_gas_boost_mode()
+        assert manager.gas_boost_mode is False
+
+
+class TestGasStats:
+    """테스트 20: 가스 통계 (get_gas_stats)"""
+
+    def test_gas_stats_structure(self):
+        """get_gas_stats 가 dict 와 필요한 키들을 반환"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        stats = manager.get_gas_stats()
+        assert isinstance(stats, dict)
+        assert "gas" in stats
+        assert "extractors" in stats
+        assert "gas_workers" in stats
+        assert "gas_boost_mode" in stats
+
+    def test_gas_stats_reflects_boost_mode(self):
+        """부스트 모드 상태가 stats 에 반영됨"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        manager.enable_gas_boost_mode()
+        stats = manager.get_gas_stats()
+        assert stats.get("gas_boost_mode") is True
+
+    def test_gas_stats_counts_extractors(self):
+        """추출기 개수와 일꾼 합계 정확히 집계"""
+        bot = MockBot()
+        ex1 = MockUnit(200, "EXTRACTOR", (52, 52))
+        ex1.assigned_harvesters = 3
+        ex2 = MockUnit(201, "EXTRACTOR", (53, 53))
+        ex2.assigned_harvesters = 2
+        bot.gas_buildings = MockUnits([ex1, ex2])
+        bot.vespene = 250
+        manager = EconomyManager(bot)
+        stats = manager.get_gas_stats()
+        assert stats["extractors"] == 2
+        assert stats["gas_workers"] == 5
+        assert stats["gas"] == 250
+
+
+class TestInjectEfficiencyTracking:
+    """테스트 21: Queen Inject Efficiency Tracking (Feature 88)"""
+
+    def test_initial_efficiency_is_zero(self):
+        """초기 시도 없음 → 0.0%"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        assert manager.get_inject_efficiency() == 0.0
+
+    def test_record_success_only(self):
+        """전체 성공 → 100%"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        for _ in range(5):
+            manager.record_inject_attempt(success=True)
+        assert manager.get_inject_efficiency() == 100.0
+
+    def test_record_partial_success(self):
+        """3성공/1실패 = 75%"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        manager.record_inject_attempt(True)
+        manager.record_inject_attempt(True)
+        manager.record_inject_attempt(False)
+        manager.record_inject_attempt(True)
+        assert manager.get_inject_efficiency() == 75.0
+
+    def test_record_default_success(self):
+        """success 인자 생략 시 성공 처리"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        manager.record_inject_attempt()
+        manager.record_inject_attempt()
+        assert manager.get_inject_efficiency() == 100.0
+
+    def test_get_inject_stats_structure(self):
+        """attempts/successes/efficiency 키 반환"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        manager.record_inject_attempt(True)
+        manager.record_inject_attempt(False)
+        stats = manager.get_inject_stats()
+        assert stats["inject_attempts"] == 2
+        assert stats["inject_successes"] == 1
+        assert stats["inject_efficiency"] == 50.0
+
+    def test_efficiency_rounded_in_stats(self):
+        """1/3 = 33.3 (소수점 첫자리 round)"""
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        manager.record_inject_attempt(True)
+        manager.record_inject_attempt(False)
+        manager.record_inject_attempt(False)
+        stats = manager.get_inject_stats()
+        assert stats["inject_efficiency"] == 33.3
+
+
+class TestResourceStatus:
+    """테스트 22: 자원 상태 조회 (get_resource_status)"""
+
+    def test_resource_status_returns_dict(self):
+        """resource_status 가 dict 반환"""
+        bot = MockBot()
+        bot.minerals = 1000
+        bot.vespene = 500
+        manager = EconomyManager(bot)
+        status = manager.get_resource_status()
+        assert isinstance(status, dict)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
