@@ -122,6 +122,47 @@ class GameConfig:
     TARGET_ARMY_RATIO = 0.5             # 목표 군대 비율 (50%)
     DRONE_ARMY_BALANCE_RATIO = 1.5      # 드론:군대 = 1.5:1
 
+    # ========== 전투 타이밍 윈도우 (game_time 초) ==========
+    # combat_manager 의 작업(Task) 평가 시 사용되는 시간 구간
+
+    # Task 2.3: 초반 저글링 하라스 (1분 ~ 7분)
+    EARLY_HARASS_WINDOW_START = 60          # 1분
+    EARLY_HARASS_WINDOW_END = 420           # 7분
+    EARLY_HARASS_MIN_LINGS = 6              # 하라스 시작 최소 저글링 수
+    EARLY_HARASS_MAX_LINGS = 24             # 하라스 종료 저글링 수 (이후 본대 합류)
+
+    # Task 2.5: 초반 저글링 압박 (3:00 ~ 4:30)
+    EARLY_PRESSURE_WINDOW_START = 180       # 3분
+    EARLY_PRESSURE_WINDOW_END = 270         # 4분 30초
+    EARLY_PRESSURE_MIN_LINGS = 4
+
+    # Task 2.6: 중반 타이밍 어택 (5분 ~ 8분)
+    MID_TIMING_WINDOW_START = 300           # 5분
+    MID_TIMING_WINDOW_END = 480             # 8분
+    MID_TIMING_MIN_ROACHES = 5
+    MID_TIMING_MIN_LINGS = 12
+    MID_TIMING_MIN_BANELINGS = 4
+
+    # Task 2.7: 강력한 타이밍 어택 (10분 ~ 15분)
+    MAJOR_TIMING_WINDOW_START = 600         # 10분
+    MAJOR_TIMING_WINDOW_END = 900           # 15분
+    MAJOR_TIMING_MIN_ARMY_SUPPLY = 40       # 본대 supply 임계값
+
+    # 우선순위 (combat_manager._gather_tasks)
+    PRIORITY_BASE_DEFENSE = 100
+    PRIORITY_MAIN_ATTACK_DEFAULT = 40
+    PRIORITY_MAIN_ATTACK_AGGRESSIVE = 95
+    PRIORITY_BASE_DEFENSE_AGGRESSIVE = 40
+    PRIORITY_BASE_DEFENSE_ALL_IN = 15
+    PRIORITY_WORKER_HARASS_ALL_IN = 80
+    PRIORITY_COMPLETE_DESTRUCTION = 95
+    PRIORITY_KILL_SQUAD = 60
+    PRIORITY_EARLY_HARASS = 75
+    PRIORITY_EARLY_HARASS_STRATEGY = 85
+    PRIORITY_EARLY_PRESSURE = 75
+    PRIORITY_MID_TIMING = 75
+    PRIORITY_MAJOR_TIMING = 75
+
     # ========== 성능 최적화 ==========
 
     # 실행 간격 (iteration)

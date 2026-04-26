@@ -71,6 +71,55 @@ except ImportError:
     _FormationManager = None
     _FORMATION_MANAGER_AVAILABLE = False
 
+# Centralised tunables (timing windows, priorities) — see game_config.GameConfig.
+# Imports use the legacy `from game_config import config` path that other
+# modules use; we fall back to a private default if the config module is
+# unavailable so combat_manager remains importable from tests/tools.
+try:
+    from game_config import config as _COMBAT_CONFIG
+except ImportError:
+    _COMBAT_CONFIG = None
+
+
+class _CombatTimings:
+    """Backstop for combat timing/priority constants when game_config is missing."""
+
+    EARLY_HARASS_WINDOW_START = 60
+    EARLY_HARASS_WINDOW_END = 420
+    EARLY_HARASS_MIN_LINGS = 6
+    EARLY_HARASS_MAX_LINGS = 24
+
+    EARLY_PRESSURE_WINDOW_START = 180
+    EARLY_PRESSURE_WINDOW_END = 270
+    EARLY_PRESSURE_MIN_LINGS = 4
+
+    MID_TIMING_WINDOW_START = 300
+    MID_TIMING_WINDOW_END = 480
+    MID_TIMING_MIN_ROACHES = 5
+    MID_TIMING_MIN_LINGS = 12
+    MID_TIMING_MIN_BANELINGS = 4
+
+    MAJOR_TIMING_WINDOW_START = 600
+    MAJOR_TIMING_WINDOW_END = 900
+    MAJOR_TIMING_MIN_ARMY_SUPPLY = 40
+
+    PRIORITY_BASE_DEFENSE = 100
+    PRIORITY_MAIN_ATTACK_DEFAULT = 40
+    PRIORITY_MAIN_ATTACK_AGGRESSIVE = 95
+    PRIORITY_BASE_DEFENSE_AGGRESSIVE = 40
+    PRIORITY_BASE_DEFENSE_ALL_IN = 15
+    PRIORITY_WORKER_HARASS_ALL_IN = 80
+    PRIORITY_COMPLETE_DESTRUCTION = 95
+    PRIORITY_KILL_SQUAD = 60
+    PRIORITY_EARLY_HARASS = 75
+    PRIORITY_EARLY_HARASS_STRATEGY = 85
+    PRIORITY_EARLY_PRESSURE = 75
+    PRIORITY_MID_TIMING = 75
+    PRIORITY_MAJOR_TIMING = 75
+
+
+_CT = _COMBAT_CONFIG if _COMBAT_CONFIG is not None else _CombatTimings
+
 
 class CombatManager:
     """
@@ -248,19 +297,19 @@ class CombatManager:
             current_mode = strategy.current_mode.value
 
         # 기본 우선순위
-        self.task_priorities["base_defense"] = 100
-        self.task_priorities["main_attack"] = 40
+        self.task_priorities["base_defense"] = _CT.PRIORITY_BASE_DEFENSE
+        self.task_priorities["main_attack"] = _CT.PRIORITY_MAIN_ATTACK_DEFAULT
 
         # 공격 모드면 공격 우선순위 대폭 상향
         if current_mode in ["aggressive", "all_in"]:
-            self.task_priorities["main_attack"] = 95  # 공격성 강화
-            self.task_priorities["base_defense"] = 40 # 일반 방어 최소화
-            
+            self.task_priorities["main_attack"] = _CT.PRIORITY_MAIN_ATTACK_AGGRESSIVE
+            self.task_priorities["base_defense"] = _CT.PRIORITY_BASE_DEFENSE_AGGRESSIVE
+
             # ALL_IN이면 방어 더 낮춤
             if current_mode == "all_in":
-                self.task_priorities["base_defense"] = 15
+                self.task_priorities["base_defense"] = _CT.PRIORITY_BASE_DEFENSE_ALL_IN
                 # 올인 시 공격 대상 지정 강화
-                self.task_priorities["worker_harass"] = 80
+                self.task_priorities["worker_harass"] = _CT.PRIORITY_WORKER_HARASS_ALL_IN
         
         # Evaluate tasks
         tasks_to_execute = []
@@ -275,7 +324,7 @@ class CombatManager:
                 # 우선순위 95 (기지 방어 100보다는 낮지만 다른 모든 것보다 높음)
                 primary_target = self.bot.complete_destruction.get_primary_target()
                 if primary_target:
-                    tasks_to_execute.append(("complete_destruction", primary_target, 95))
+                    tasks_to_execute.append(("complete_destruction", primary_target, _CT.PRIORITY_COMPLETE_DESTRUCTION))
 
                     # 로그 (30초마다)
                     if iteration % 660 == 0:  # 30초
@@ -311,7 +360,7 @@ class CombatManager:
                     if hunters:
                         target = targets.closest_to(hunters[0])
                         # Priority 60 (Main Attack(50)보다 높음)
-                        tasks_to_execute.append(("kill_squad", target, 60))
+                        tasks_to_execute.append(("kill_squad", target, _CT.PRIORITY_KILL_SQUAD))
                         if iteration % 50 == 0:
                             self.logger.info(f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}")
             except ImportError:
@@ -326,17 +375,16 @@ class CombatManager:
              strategy_active = getattr(strategy, "early_harassment_active", False)
 
         # Trigger if time is right OR strategy manager requested it
-        if (60 <= game_time <= 420) or strategy_active:
+        if (_CT.EARLY_HARASS_WINDOW_START <= game_time <= _CT.EARLY_HARASS_WINDOW_END) or strategy_active:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 zerglings = [u for u in army_units if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
-                # ★ 저글링 6마리부터 하라스 시작 (더 빠른 압박)
-                if 6 <= len(zerglings) <= 24:
+                # ★ 저글링 EARLY_HARASS_MIN_LINGS 마리부터 하라스 시작 (더 빠른 압박)
+                if _CT.EARLY_HARASS_MIN_LINGS <= len(zerglings) <= _CT.EARLY_HARASS_MAX_LINGS:
                     harass_target = self._find_harass_target()
                     if harass_target:
-                        # Priority 75 (더 높은 우선순위 - 일꾼 제거가 중요!)
                         # Strategy requested it? Boost priority
-                        priority = 85 if strategy_active else 75
+                        priority = _CT.PRIORITY_EARLY_HARASS_STRATEGY if strategy_active else _CT.PRIORITY_EARLY_HARASS
                         tasks_to_execute.append(("early_harass", harass_target, priority))
                         
                         if strategy_active and iteration % 100 == 0:
@@ -353,27 +401,24 @@ class CombatManager:
                 tasks_to_execute.append(("counter_attack", enemy_base, self.task_priorities["counter_attack"]))
                 self.logger.info("Detected victory - attacking enemy base!")
 
-        # === TASK 2.5: ★ 초반 저글링 압박 (3:00-4:30) ★ ===
-        # 저글링 8마리 이상이면 압박
-        if 180 <= game_time <= 270:  # 3:00-4:30
+        # === TASK 2.5: ★ 초반 저글링 압박 (EARLY_PRESSURE 윈도우) ★ ===
+        if _CT.EARLY_PRESSURE_WINDOW_START <= game_time <= _CT.EARLY_PRESSURE_WINDOW_END:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
 
-                # ★ 저글링 4마리 이상이면 압박 (기존 8마리 -> 4마리로 완화)
-                if len(zerglings) >= 4:
+                if len(zerglings) >= _CT.EARLY_PRESSURE_MIN_LINGS:
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
-                        # Priority 75
-                        tasks_to_execute.append(("early_pressure", enemy_base, 75))
+                        tasks_to_execute.append(("early_pressure", enemy_base, _CT.PRIORITY_EARLY_PRESSURE))
                         if iteration % 50 == 0:
                             self.logger.info(f"[{int(game_time)}s] [*] EARLY PRESSURE: {len(zerglings)} lings! [*]")
             except ImportError:
                 pass
 
-        # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-8분) ★ ===
+        # === TASK 2.6: ★ MID-GAME TIMING ATTACK (MID_TIMING 윈도우) ★ ===
         # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
-        if 300 <= game_time <= 480:  # 5-8분
+        if _CT.MID_TIMING_WINDOW_START <= game_time <= _CT.MID_TIMING_WINDOW_END:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 # 바퀴 + 저글링 조합 타이밍 공격
@@ -381,29 +426,29 @@ class CombatManager:
                 zerglings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.ZERGLING]
                 banelings = [u for u in ground_army if hasattr(u, 'type_id') and u.type_id == UnitTypeId.BANELING]
 
-                # ★ BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
-                if len(roaches) >= 5 or len(zerglings) >= 12 or len(banelings) >= 4:
+                if (
+                    len(roaches) >= _CT.MID_TIMING_MIN_ROACHES
+                    or len(zerglings) >= _CT.MID_TIMING_MIN_LINGS
+                    or len(banelings) >= _CT.MID_TIMING_MIN_BANELINGS
+                ):
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
-                        # Priority 75 (higher than counter_attack)
-                        tasks_to_execute.append(("mid_timing_attack", enemy_base, 75))
+                        tasks_to_execute.append(("mid_timing_attack", enemy_base, _CT.PRIORITY_MID_TIMING))
             except ImportError:
                 pass
 
-        # === TASK 2.7: ★★★ 10-15분 강력한 타이밍 공격 ★★★ ===
+        # === TASK 2.7: ★★★ MAJOR_TIMING 강력한 타이밍 공격 ★★★ ===
         # ★ FIX: 15분까지만 (이후는 main_attack이 처리)
         # 3베이스 포화 후 강력한 타이밍 공격
-        if 600 <= game_time <= 900:  # 10-15분 (기존 10-20분 → 10-15분)
+        if _CT.MAJOR_TIMING_WINDOW_START <= game_time <= _CT.MAJOR_TIMING_WINDOW_END:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
                 army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
 
-                # ★ 서플라이 40 이상이면 강력한 타이밍 공격
-                if army_supply >= 40:
+                if army_supply >= _CT.MAJOR_TIMING_MIN_ARMY_SUPPLY:
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
-                        # Priority 75 (main_attack보다 높지만 80은 아님)
-                        tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
+                        tasks_to_execute.append(("major_timing_attack", enemy_base, _CT.PRIORITY_MAJOR_TIMING))
                         if iteration % 50 == 0:
                             self.logger.info(f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]")
             except ImportError:
