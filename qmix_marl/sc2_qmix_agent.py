@@ -45,6 +45,25 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    torch = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
+    class _NNStubModule:
+        """Minimal placeholder so torch-typed class bodies still import."""
+
+        def __init__(self, *args, **kwargs):  # pragma: no cover - import-time only
+            raise RuntimeError(
+                "PyTorch is not installed; instantiate the NumPy fallback variants instead."
+            )
+
+    class _NNStub:
+        Module = _NNStubModule
+
+        def __getattr__(self, name):  # pragma: no cover - returns the same stub
+            return _NNStubModule
+
+    nn = _NNStub()  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback primitives

@@ -1,0 +1,18 @@
+# ═══════════════════════════════════════════════
+# Development & Testing Dependencies
+# ═══════════════════════════════════════════════
+# Install with: pip install -r requirements-dev.txt
+
+# Core test runner
+pytest>=8.0.0
+pytest-asyncio>=0.23.0      # async def test support (required for ~85 tests)
+pytest-timeout>=2.3.0       # honors `timeout = 60` in pytest.ini
+pytest-cov>=4.1.0           # coverage reports
+
+# Test fixtures / utilities
+pyyaml>=6.0                 # config tests
+numpy>=1.20.0               # MARL module import tests (QMIX/MAPPO/etc)
+
+# Static analysis (optional but recommended)
+ruff>=0.5.0
+mypy>=1.10.0
