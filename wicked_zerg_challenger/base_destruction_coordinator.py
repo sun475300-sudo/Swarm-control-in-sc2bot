@@ -15,6 +15,11 @@ from sc2.ids.unit_typeid import UnitTypeId
 from utils.logger import get_logger
 import time
 
+# Iteration intervals (~22.4 iterations/sec)
+INTERVAL_TARGET_EVAL = 22       # ~1s : 현재 타겟 재평가
+INTERVAL_STATUS_LOG = 440       # ~20s : 상태 디버그 출력
+INTERVAL_ERROR_LOG = 50         # 에러 로그 throttle
+
 
 class EnemyBase:
     """적 기지 정보"""
@@ -71,16 +76,16 @@ class BaseDestructionCoordinator:
             # 2. 파괴된 기지 확인
             self._check_destroyed_bases(game_time)
 
-            # 3. 현재 타겟 평가
-            if iteration % 22 == 0:  # 1초마다
+            # 3. 현재 타겟 평가 (~1초마다)
+            if iteration % INTERVAL_TARGET_EVAL == 0:
                 self._evaluate_current_target(game_time)
 
-            # 4. 디버그 출력
-            if iteration % 440 == 0:  # 20초마다
+            # 4. 디버그 출력 (~20초마다)
+            if iteration % INTERVAL_STATUS_LOG == 0:
                 self._print_status(game_time)
 
         except Exception as e:
-            if iteration % 50 == 0:
+            if iteration % INTERVAL_ERROR_LOG == 0:
                 self.logger.error(f"[BASE_DESTRUCTION] Error: {e}")
 
     def _discover_enemy_bases(self, game_time: float):
