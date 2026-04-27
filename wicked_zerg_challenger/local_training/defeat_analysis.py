@@ -16,7 +16,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 logger = logging.getLogger("DefeatAnalysis")
 

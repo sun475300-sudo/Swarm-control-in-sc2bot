@@ -8,7 +8,7 @@ Common Helpers - 공통 유틸리티 함수
 3. 유지보수성 개선
 """
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 
 def has_units(units: Any) -> bool:

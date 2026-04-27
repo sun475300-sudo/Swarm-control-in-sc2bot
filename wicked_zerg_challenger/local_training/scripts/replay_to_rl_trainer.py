@@ -12,7 +12,6 @@ logger = logging.getLogger("ReplayToRlTrainer")
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 # from sc2reader.events.game import UnitBornEvent, UnitInitEvent, UnitDiedEvent, PlayerStatsEvent
 import numpy as np

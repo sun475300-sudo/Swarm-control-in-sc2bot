@@ -14,7 +14,7 @@ Features:
 - 공격적 유닛 생산
 """
 
-from typing import List, Optional
+from typing import Optional
 
 from utils.logger import get_logger
 
