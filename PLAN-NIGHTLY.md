@@ -191,10 +191,45 @@
      c7bb6dd was silently landing in a dead dict slot and never reaching
      the multitasking loop. Fix: rename to `air_harass`.
 
-  Total real bugs surfaced & fixed by this loop: **2** (the enum-vs-str
-  bug in iter 6 and the typo'd dict key in iter 7), both in
-  `LogicOptimizer.apply_*_improvements` — the same module, both
-  introduced in the same commit (c7bb6dd) without test coverage.
+  Continued the loop with two more iterations:
+
+  8. `bc349af` — `tests/test_task_priorities_keyset.py` generalises
+     the iter 9 fix into a regression guard. Scans every
+     `task_priorities[<str-literal>]` access in the bot core and
+     fails if any key is outside the canonical set. Catches the same
+     bug class as iter 9 going forward.
+
+  9. `f458bf1` — **Third real bug fix surfaced through the test loop.**
+     New `tests/test_blackboard_signal_pairs.py` asserts each
+     "actionable" blackboard alert has a reader. Found
+     `urgent_spine_all_bases` was set in `intel_manager.py:686` on
+     `NYDUS_INCOMING` (drop attack imminent) but had **no reader
+     anywhere** — every NYDUS detection silently produced no
+     defensive reaction. Wired into
+     `defense_coordinator._build_base_defense` to bump spine target
+     by +1 when set. Minimal blast radius: amplifies an existing
+     branch instead of adding a new method.
+
+     Also clarified that `urgent_overseer` (set in `strategy_manager`
+     and `racial_counter_manager` on DT detection) is *intentionally*
+     telemetry-only — the actionable morph already runs through
+     `protoss_counter_system._handle_dark_templar_threat → _emergency_overseer_morph`
+     off the same intel signal. Adding a redundant reader would
+     double-fire the morph.
+
+  Total real bugs surfaced & fixed by this loop: **3**
+  - iter 6 (`6a6814e`): `LogicOptimizer.apply_strategy_improvements`
+    enum-vs-str
+  - iter 7 (`dc6e8ac`): `LogicOptimizer.apply_combat_improvements`
+    dead key `air_harassment` vs `air_harass`
+  - iter 9 (`f458bf1`): NYDUS spine alert never reached
+    `defense_coordinator`
+
+  Two of the three were in `LogicOptimizer.apply_*_improvements`,
+  both introduced in the same commit (c7bb6dd) without test coverage.
+  The third was a long-standing gap in the intel→defense alert chain.
+
+  Final pytest delta: **222 → 322 passed** (+100), **84 → 0 failed**.
 
   PLAN-NIGHTLY surface footprint cleanup (P1.5) and harassment-loop
   polish (P1.2) remain untouched and continue to be the highest-ROI
