@@ -94,7 +94,7 @@ class TechCoordinator:
             self.pending_requests.items(), key=lambda x: x[1][0], reverse=True
         )
 
-        for stype, (priority, location, frame, requester) in sorted_requests:
+        for stype, (priority, location, _frame, requester) in sorted_requests:
             # Check resources
             if not self.bot.can_afford(stype):
                 continue

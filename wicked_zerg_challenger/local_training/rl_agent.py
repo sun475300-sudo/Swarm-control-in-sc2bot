@@ -388,7 +388,9 @@ class RLAgent:
         entropy_coeff = 0.01
         total_loss = 0.0
         total_entropy = 0.0
-        for cache, action, advantage in zip(self.caches, self.actions, advantages):
+        for cache, action, advantage in zip(
+            self.caches, self.actions, advantages, strict=False
+        ):
             probs = cache["probs"]
             # 엔트로피 보너스: 정책 붕괴 방지
             entropy = -np.sum(probs * np.log(probs + 1e-10))

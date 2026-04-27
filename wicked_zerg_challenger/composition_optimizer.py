@@ -392,7 +392,7 @@ class CompositionOptimizer:
 
         base_scores = dict(counter_scores)
 
-        for unit_name, base_score in base_scores.items():
+        for unit_name, _base_score in base_scores.items():
             partners = UNIT_SYNERGY_MATRIX.get(unit_name, {})
             if not partners:
                 continue

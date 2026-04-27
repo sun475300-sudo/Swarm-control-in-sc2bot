@@ -670,7 +670,7 @@ def radar_user_detection():
     )
 
     # 하단: 상태 변화 색상 바 (간격 넓힘)
-    for i, (start, end, label, col) in enumerate(
+    for _i, (start, end, label, col) in enumerate(
         [
             (0, 5, "감지", "#4CAF50"),
             (5, 10, "인증", "#2196F3"),

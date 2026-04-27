@@ -143,7 +143,7 @@ class RewardShaper:
 
         # 잠재 함수 보상 추가
         if state:
-            for name, potential in self.potentials.items():
+            for _name, potential in self.potentials.items():
                 shaped += potential.get_shaping_reward(state)
 
         # 정규화

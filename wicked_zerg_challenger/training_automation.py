@@ -275,7 +275,7 @@ def build_training_summary(
         if result.crashed:
             entry["crashes"] += 1
 
-    for race, entry in by_race.items():
+    for _race, entry in by_race.items():
         games = int(entry["games"])
         entry["win_rate"] = round((int(entry["wins"]) / max(1, games)) * 100, 2)
 

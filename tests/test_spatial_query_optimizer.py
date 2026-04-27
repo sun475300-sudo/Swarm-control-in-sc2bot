@@ -161,7 +161,7 @@ class TestSpatialQueryOptimizer:
         iteration = 100
 
         # Execute multiple queries
-        for i in range(5):
+        for _i in range(5):
             self.optimizer.get_enemies_near_position(position, radius, iteration)
 
         stats = self.optimizer.get_statistics()
@@ -221,7 +221,7 @@ class TestSpatialQueryOptimizer:
     def test_get_statistics(self):
         """Test statistics report generation"""
         # Execute some queries
-        for i in range(10):
+        for _i in range(10):
             self.optimizer.get_enemies_near_position(
                 Point2((50, 50)), 10.0, 100  # Same iteration for cache hits
             )
