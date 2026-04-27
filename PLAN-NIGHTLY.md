@@ -92,3 +92,25 @@
   catalogues which historical reports map to which subsystem, so the
   eventual `docs/history/` move is mechanical. Tracked as **P1.7 —
   add a STATUS.md index pointing at the existing reports**.
+  - P0.2 (regression guard for empty-logger) — not yet implemented; promoted
+    to tonight's next work item, but merge blocker took priority.
+  - Stale `index.lock` / `HEAD.lock` / `objects/maintenance.lock` present at
+    run start — cleared via rename workaround.
+
+  **Work completed this run: pending merge commit**
+
+  A previous session left a half-finished merge (local `985ee5b` vs
+  origin `c7bb6dd` — logic_optimizer improvements) in "all conflicts
+  resolved but not committed" state. Completed as commit `55eb51e`:
+  - `apply_combat_improvements()`: air harassment priority=60, worker defense=110
+  - `apply_economy_improvements()`: gas adjustment interval=22, macro hatch threshold=500
+  - `apply_strategy_improvements()`: aggressive mode on Cheat difficulties
+  - `optimize_all()`: orchestrates all three passes
+
+  **Next P1 items for following night:**
+
+| #    | Item                                    | Notes |
+|------|-----------------------------------------|-------|
+| P0.2 | Empty-logger regression guard (CI)      | `grep -RnE "logger\.(info|debug|warning|error)\(\)$"` fails build if any hits. Add to `ci.yml`. |
+| P1.1 | Scout cadence improvements              | `scouting_system.py` — initial overlord 30s, mid-game zergling sweep 60s, late overseer cloak detection |
+| P1.2 | Harassment loop polish                  | `strategy_manager.py:228–262`, `combat_manager.py` — retraction on HP threshold, worker kill tracking |
