@@ -74,11 +74,15 @@
 | 5 | `105852d` | B007 unused-loop / B905 zip-strict 70 | - | 306 P / 0 F |
 | 6 | `7c7d150` | E712 true/false 비교 42 | - | 306 P / 0 F |
 | 7 | `c5e3517` | E741 ambiguous name `l`→`larva_unit/lv` 13 | - | 306 P / 0 F |
-| 8 | `7f4ef09` | F841 production unused-var dead-code 92 | **1473** | 306 P / 0 F |
+| 8 | `7f4ef09` | F841 production unused-var dead-code 92 | 1473 | 306 P / 0 F |
+| 9 | `34e7154` | docs 진행현황 업데이트 | 1473 | 306 P / 0 F |
+| 10 | `a940ad5` | tests/ F401 unused-import 32 | - | 306 P / 0 F |
+| 11 | `479fab6` | visuals/+tools/ F401 36 | - | 306 P / 0 F |
+| 12 | `e83c25a` | combat/+scouting/ F401 39 | **1365** | 306 P / 0 F |
 
-**누적 정적 이슈 감소**: 2168 → 1473 (-695, -32%)
+**누적 정적 이슈 감소**: 2168 → 1365 (-803, -37%)
 **테스트 회귀**: 0건 (모든 iter에서 306 passed 유지)
-**실제 코드 LoC 감소**: -58 (dead-code)
+**실제 코드 LoC 감소**: -58 dead-code + -100 import 정리
 
 ## 잔여 우선 항목 (다음 iter 후보)
 
