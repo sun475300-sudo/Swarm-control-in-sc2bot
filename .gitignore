@@ -236,3 +236,13 @@ utm_demo.png
 # ── JARVIS 보안 자동 추가 ──
 *.env
 data/models/transformer_strategy.pt
+
+# Standardized common patterns (added 2026-04-27)
+_*.bat
+_*.log
+_*.txt
+_*.ps1
+.coverage
+htmlcov/
+.pytest_cache/
+pytest-cache-files-*/
