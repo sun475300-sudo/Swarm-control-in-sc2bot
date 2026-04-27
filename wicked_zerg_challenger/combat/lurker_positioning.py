@@ -397,8 +397,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWDOWN_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWDOWN_LURKER))
                 self.lurker_burrowed[lurker.tag] = True
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
     async def _unburrow_lurker(self, lurker: Unit):
         """럴커 언버로우"""
@@ -410,8 +410,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWUP_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWUP_LURKER))
                 self.lurker_burrowed[lurker.tag] = False
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
     def _check_enemies_nearby(self, lurker: Unit, distance: float) -> bool:
         """주변 적 유닛 확인"""

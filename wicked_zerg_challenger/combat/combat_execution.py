@@ -156,8 +156,8 @@ class CombatExecution:
                 for unit, target_pos in formation_positions[:30]:
                     try:
                         self.bot.do(unit.move(target_pos))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"action suppressed: {e}")
 
             # 길목 회피 확인
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -175,8 +175,8 @@ class CombatExecution:
                         for unit in units[:30]:  # ★ Phase 22: 10 -> 30 ★
                             try:
                                 self.bot.do(unit.move(retreat_pos))
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"action suppressed: {e}")
 
         except Exception as e:
             if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:

@@ -10,6 +10,9 @@ Features:
 """
 
 from typing import Dict, List, Set, Tuple
+import logging
+
+logger = logging.getLogger("baneling_tactics")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -249,8 +252,8 @@ class BanelingTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"action suppressed: {e}")
 
         return deployed
 
@@ -327,8 +330,8 @@ class BanelingTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"action suppressed: {e}")
 
         return acted_tags
 

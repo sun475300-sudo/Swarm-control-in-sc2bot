@@ -421,8 +421,8 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"action suppressed: {e}")
 
     async def _consume_mineral_bank(self):
         """
@@ -474,8 +474,8 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(UnitTypeId.ULTRALISK))
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"action suppressed: {e}")
 
     # ========== 상태 조회 ==========
 
