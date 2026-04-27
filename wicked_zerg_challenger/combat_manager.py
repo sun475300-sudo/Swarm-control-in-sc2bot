@@ -94,7 +94,7 @@ class CombatManager:
         initialize_combat_state(self)
         initialize_managers(self)
     
-    def reset(self):
+    def reset(self) -> None:
         """게임 간 전투 상태 초기화"""
         reset_combat_state(self)
 
@@ -822,7 +822,7 @@ class CombatManager:
             active_tasks = [t[0] for t in tasks_to_execute]
             self.logger.info(f"[{int(game_time)}s] Active tasks: {active_tasks}")
 
-    def _evaluate_base_threat(self, enemy_units):
+    def _evaluate_base_threat(self, enemy_units) -> float:
         """
         Check if any base is threatened and return threat info.
 
@@ -894,7 +894,7 @@ class CombatManager:
 
         return highest_threat
 
-    def _get_units_near_base(self, units, range_distance: float = 30):
+    def _get_units_near_base(self, units, range_distance: float = 30) -> list:
         """Get units near our bases (Optimized)."""
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
             return []
@@ -911,7 +911,7 @@ class CombatManager:
         # This avoids calculating distance for every unit against every base (N*M)
         return [u for u in units if u.tag in nearby_tags]
 
-    def _get_attack_target(self, enemy_units):
+    def _get_attack_target(self, enemy_units) -> "Optional[Any]":
         """Get best attack target for main army."""
         if self._has_units(enemy_units):
             return self._get_enemy_center(enemy_units)
@@ -1149,7 +1149,7 @@ class CombatManager:
             if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Formation error: {e}")
     
-    def _find_weakest_enemy(self, enemy_units):
+    def _find_weakest_enemy(self, enemy_units) -> "Optional[Any]":
         """
         ★ Phase 15-2: 가장 약한 적 우선 타겟팅 ★
         체력 비율이 가장 낮은 전투 유닛을 반환 (일꾼/건물 제외).
@@ -1706,7 +1706,7 @@ class CombatManager:
         """Check if army is gathered (rally_point_calculator 모듈 사용)"""
         return is_army_gathered(self, army_units)
 
-    def _filter_army_units(self, units):
+    def _filter_army_units(self, units) -> list:
         # Per-frame cache: avoid filtering the same units list multiple times
         current_frame = getattr(self.bot, "state", None)
         frame_id = getattr(current_frame, "game_loop", None) if current_frame else None

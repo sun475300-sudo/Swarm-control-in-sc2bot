@@ -9,8 +9,13 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 """
 
 from typing import List, Dict, Optional, Set, Tuple
-from sc2.position import Point2
-from sc2.ids.unit_typeid import UnitTypeId
+try:
+    from sc2.position import Point2
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    # Test-friendly fallback; real bot always has sc2 installed
+    Point2 = None  # type: ignore
+    UnitTypeId = None  # type: ignore
 from utils.logger import get_logger
 import random
 

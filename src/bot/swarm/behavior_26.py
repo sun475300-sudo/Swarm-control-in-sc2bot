@@ -1,31 +1,35 @@
 """
-Swarm Behavior Module #26 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm Behavior Module #26 - SpreadControl.
+Units spread extremely wide (spread=12.0) to maximise zone coverage and
+avoid AoE damage.  Uses the formation controller's spread_formation method.
 """
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
+
+_SPREAD_RADIUS = 12.0
 
 
 class Behavior26:
-    """Auto-generated swarm behavior module #26."""
+    """SpreadControl: maximum spacing (spread=12.0) to deny enemy AoE effectiveness."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_26"
 
-    def tick(self, positions: list) -> list:
+    def tick(self, positions: List[Position]) -> List[Position]:
         """
-        Execute behavior tick.
-        
+        Push every unit as far from the centroid as possible (radius 12.0)
+        to deny area-of-effect weapons and control a wide zone.
+
         Args:
-            positions: Current unit positions
-            
+            positions: Current (x, y) positions for each unit.
+
         Returns:
-            Target positions for units
+            Target positions on the wide spread formation circle.
         """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        return self.controller.spread_formation(positions, spread=_SPREAD_RADIUS)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

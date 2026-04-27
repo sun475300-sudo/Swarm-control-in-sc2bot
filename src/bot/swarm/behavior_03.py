@@ -1,31 +1,31 @@
 """
-Swarm Behavior Module #3 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm Behavior Module #3 - WedgeAttack.
+V-shape wedge formation pointing east for coordinated attack.
 """
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
 
 
 class Behavior03:
-    """Auto-generated swarm behavior module #3."""
+    """WedgeAttack: V-shape wedge pointing east (direction=0.0)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_03"
 
-    def tick(self, positions: list) -> list:
+    def tick(self, positions: List[Position]) -> List[Position]:
         """
-        Execute behavior tick.
-        
+        Arrange units in a V-shape wedge pointing east.
+
         Args:
-            positions: Current unit positions
-            
+            positions: Current (x, y) positions for each unit.
+
         Returns:
-            Target positions for units
+            Target positions forming a wedge pointing east.
         """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        return self.controller.wedge_formation(positions, direction=0.0)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

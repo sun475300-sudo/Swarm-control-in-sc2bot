@@ -244,10 +244,15 @@ class IdleUnitManager:
                     closest_base = self.bot.townhalls.closest_to(unit)
                     self.bot.do(unit.move(closest_base.position))
 
-                    # 퀸 트랜스퓨전 요청
+                    # 퀸 트랜스퓨전 요청 - 가장 가까운 퀸이 수혈하도록 위임
                     if hasattr(self.bot, 'queen_manager'):
-                        # 퀸 힐 우선순위 추가 (구현 필요)
-                        pass
+                        qm = self.bot.queen_manager
+                        if hasattr(qm, '_transfuse_injured_units'):
+                            queens = self.bot.units.filter(
+                                lambda q: q.type_id.name == "QUEEN" and q.energy >= 50
+                            )
+                            if queens.exists:
+                                await qm._transfuse_injured_units(queens, 0)
 
     def get_idle_count(self) -> int:
         """대기 중인 군사 유닛 수"""

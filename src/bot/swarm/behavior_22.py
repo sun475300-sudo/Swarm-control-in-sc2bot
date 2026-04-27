@@ -1,31 +1,52 @@
 """
-Swarm Behavior Module #22 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm Behavior Module #22 - BaitAndRetreat.
+Units cycle through a 6-phase attack/retreat pattern:
+  phases 0-2: advance eastward by 2 units each tick
+  phases 3-5: retreat westward by 6 units total over 3 ticks
+Repeats indefinitely.
 """
 
-from .formation_controller import FormationController
+import math
+from typing import List, Tuple
+from .formation_controller import FormationController, Position
+
+_ADVANCE_STEP = 2.0   # units east per advance tick
+_RETREAT_STEP = 2.0   # units west per retreat tick (3 ticks = 6 units total)
 
 
 class Behavior22:
-    """Auto-generated swarm behavior module #22."""
+    """BaitAndRetreat: 3 ticks forward then 3 ticks backward cycle."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_22"
+        self._phase: int = 0   # 0..5, phases 0-2 = advance, 3-5 = retreat
 
-    def tick(self, positions: list) -> list:
+    def tick(self, positions: List[Position]) -> List[Position]:
         """
-        Execute behavior tick.
-        
+        Advance the whole formation east for phases 0-2, then retreat west
+        for phases 3-5.  The phase counter increments each tick and wraps.
+
         Args:
-            positions: Current unit positions
-            
+            positions: Current (x, y) positions for each unit.
+
         Returns:
-            Target positions for units
+            Target positions shifted according to the current phase.
         """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        if not positions:
+            return []
+
+        if self._phase < 3:
+            offset_x = _ADVANCE_STEP
+        else:
+            offset_x = -_RETREAT_STEP
+
+        self._phase = (self._phase + 1) % 6
+
+        targets: List[Position] = [
+            (px + offset_x, py) for px, py in positions
+        ]
+        return targets
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
