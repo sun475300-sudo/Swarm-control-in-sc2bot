@@ -94,6 +94,9 @@ class AdvancedScoutingSystemV2:
         # ★ Phase 22: 우선 정찰 대상 (백과사전 기반) ★
         self._priority_scout_targets: List[str] = []  # 현재 찾아야 할 적 테크
 
+        # ★ 신규: 테크 전환 즉시 정찰 트리거 ★
+        self._known_enemy_tech: Set[str] = set()  # 이미 확인한 적 테크 건물 집합
+
         # 정찰 통계
         self.scouts_sent = 0
         self.scouts_returned = 0
@@ -152,6 +155,10 @@ class AdvancedScoutingSystemV2:
         # ★ Phase 22: 백과사전 기반 우선 정찰 대상 갱신 (매 60초) ★
         if iteration % 1320 == 0:
             self._update_priority_targets()
+
+        # ★ 신규: 테크 전환 감지 즉시 정찰 트리거 (매 5초) ★
+        if iteration % 110 == 0:
+            self._check_tech_transition_trigger()
 
         # 4. 메모리 누수 방지: 오래된 정찰 데이터 정리 (50초마다)
         if iteration % 1100 == 0:
@@ -997,6 +1004,33 @@ class AdvancedScoutingSystemV2:
     # ================================================================
     # ★ Phase 22: 백과사전 연동 - 상성 기반 정찰 우선순위 ★
     # ================================================================
+
+    def _check_tech_transition_trigger(self):
+        """
+        적 새 테크 건물이 처음 발견되면 즉시 정찰 쿨다운을 리셋하여
+        빠른 추가 정찰을 트리거한다.
+        """
+        intel = getattr(self.bot, "intel", None)
+        if not intel:
+            return
+
+        enemy_tech: set = getattr(intel, "enemy_tech_buildings", set())
+        if not enemy_tech:
+            return
+
+        new_tech = enemy_tech - self._known_enemy_tech
+        if not new_tech:
+            return
+
+        self._known_enemy_tech = self._known_enemy_tech | enemy_tech
+
+        # 새 테크 건물 발견 → 즉시 정찰 타이머 리셋
+        current_time = self.bot.time
+        self.last_scout_times["GENERAL"] = 0.0   # 즉시 정찰
+        self.last_scout_times["OVERLORD"] = max(0.0, current_time - 25.0)  # 30초 조건 만족
+        self.logger.info(
+            f"[SCOUT] [{int(current_time)}s] New enemy tech detected: {new_tech} → immediate scout triggered"
+        )
 
     def _update_priority_targets(self):
         """

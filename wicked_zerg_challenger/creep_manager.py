@@ -274,11 +274,30 @@ class CreepManager:
         origin = tumor.position
         spread_range = self.TUMOR_SPREAD_RANGE
 
-        # Generate circle positions (CreepyBot: trigonometric sampling)
+        # ★ 적 방향 편향 계산: 적 기지 방향으로 더 많은 후보 생성 ★
+        enemy_dir_bias = 0.0  # radians — 0 means no bias
+        bias_weight = 0.0     # 0=uniform, 1=full bias
+        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            enemy_pos = self.bot.enemy_start_locations[0]
+            dx = enemy_pos.x - origin.x
+            dy = enemy_pos.y - origin.y
+            if dx != 0 or dy != 0:
+                enemy_dir_bias = math.atan2(dy, dx)
+                bias_weight = 0.4  # 40% 편향 (너무 강하면 크립이 한쪽으로만 퍼짐)
+
+        # Generate circle positions with optional directional bias
         candidates = []
-        for angle_deg in range(0, 360, 20):  # 18 candidate positions
+        for angle_deg in range(0, 360, 15):  # 24 candidate positions (15° 간격 → 더 세밀)
             rad = math.radians(angle_deg)
-            for dist in [7.0, 9.0]:  # Two distance rings
+            # 적 방향 기준 각도 차이 계산
+            if bias_weight > 0:
+                angle_diff = abs(math.atan2(math.sin(rad - enemy_dir_bias), math.cos(rad - enemy_dir_bias)))
+                # 적 방향에 가까울수록 더 먼 거리 사용
+                far_dist = 9.0 + bias_weight * 2.0 * max(0, 1.0 - angle_diff / math.pi)
+                near_dist = 6.0
+            else:
+                far_dist, near_dist = 9.0, 7.0
+            for dist in [near_dist, far_dist]:
                 x = origin.x + dist * math.cos(rad)
                 y = origin.y + dist * math.sin(rad)
                 candidates.append(Point2((x, y)))

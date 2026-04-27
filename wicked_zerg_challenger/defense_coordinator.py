@@ -623,7 +623,7 @@ class DefenseCoordinator:
                     self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
                     self.logger.info(f"[DEFENSE] Building Spine Crawler at base")
             else:
-                pass # 자원 부족 또는 예약 실패
+                self.logger.debug("[DEFENSE] Spine Crawler skipped: insufficient minerals or no valid position")
 
         # 공중 위협 시 포자 촉수 (Reactive, 설정값 사용)
         if self.blackboard and hasattr(self.blackboard, 'threat') and self.blackboard.threat is not None and self.blackboard.threat.is_air_threat:

@@ -8,15 +8,18 @@ Modules:
 - pid_controller: PID control for smooth movement
 """
 
-from .kd_tree import KDTree, KDTreeNode, build_unit_kdtree
-from .spatial_partition import SpatialGrid, DynamicSpatialPartition, build_unit_grid
-from .pid_controller import (
-    PIDController,
-    PID2D,
-    UnitMovementController,
-    FormationController,
-)
-from .frame_cache import FrameCache, cached_per_frame
+try:
+    from .kd_tree import KDTree, KDTreeNode, build_unit_kdtree
+    from .spatial_partition import SpatialGrid, DynamicSpatialPartition, build_unit_grid
+    from .pid_controller import (
+        PIDController,
+        PID2D,
+        UnitMovementController,
+        FormationController,
+    )
+    from .frame_cache import FrameCache, cached_per_frame
+except ImportError:
+    pass
 
 __all__ = [
     "KDTree",

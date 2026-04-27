@@ -160,6 +160,15 @@ class GameStateBlackboard:
         self.is_under_attack: bool = False
         self.attacked_bases: Set[int] = set()  # 공격받은 기지 태그
 
+        # === 견제 성과 추적 ===
+        self.harass_workers_killed: int = 0    # 누적 적 일꾼 킬 수
+        self.harass_raids_executed: int = 0    # 누적 견제 횟수
+        self.harass_active: bool = False        # 현재 견제 중 여부
+
+        # === 업그레이드 매니저 상태 공유 ===
+        self.upgrade_reserved_count: int = 0         # 가스 부족으로 예약된 업그레이드 수
+        self.intel_upgrade_boosts: Dict[str, float] = {}  # 적 구성 기반 업그레이드 우선순위 부스트
+
         # === 캐시된 계산 결과 ===
         self._cache: Dict[str, Any] = {}
         self._cache_timestamps: Dict[str, float] = {}

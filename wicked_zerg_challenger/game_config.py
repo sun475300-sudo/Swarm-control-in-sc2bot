@@ -118,6 +118,11 @@ class GameConfig:
     ENGAGE_ARMY_RATIO = 0.7             # 적 병력 70% 이상 시 교전
     RETREAT_ARMY_RATIO = 0.4            # 아군 병력 40% 이하 시 후퇴
 
+    # 후퇴 단계별 적/아군 전투력 비율 임계값 (enemy_power / our_power)
+    RETREAT_RATIO_REGROUP = 1.3         # 30% 열세: 랠리 포인트 재집결
+    RETREAT_RATIO_CLOSEST_BASE = 1.5    # 50% 열세: 가장 가까운 기지로 후퇴
+    RETREAT_RATIO_EMERGENCY = 2.0       # 100% 열세: 본진으로 긴급 후퇴
+
     # 병력 비율
     TARGET_ARMY_RATIO = 0.5             # 목표 군대 비율 (50%)
     DRONE_ARMY_BALANCE_RATIO = 1.5      # 드론:군대 = 1.5:1

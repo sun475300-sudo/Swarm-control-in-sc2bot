@@ -895,8 +895,8 @@ class StrategyManager:
                     building_coord.request_building(UnitTypeId.SPINECRAWLER, "StrategyManager")
                 if spore:
                     building_coord.request_building(UnitTypeId.SPORECRAWLER, "StrategyManager")
-            except Exception:
-                pass  # Fallback to flag-based system
+            except Exception as e:
+                self.logger.debug(f"[STRATEGY] defensive building request failed: {e}")
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
         """
@@ -912,8 +912,8 @@ class StrategyManager:
                 if building_coord.can_build(UnitTypeId.SPIRE):
                     building_coord.request_building(UnitTypeId.SPIRE, "StrategyManager-AirThreat")
                     self.logger.info(f"[{int(game_time)}s] Spire build requested via BuildingCoordination")
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"[STRATEGY] spire build request failed: {e}")
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1012,6 +1012,10 @@ class StrategyManager:
                 current_ratios["hydra"] = max(current_ratios.get("hydra", 0), hydra_ratio)
             else:
                 current_ratios["hydra"] = hydra_ratio
+
+            # 조정된 비율을 race_unit_ratios에 반영 (이전에는 반영 없이 버려졌음)
+            if self.detected_enemy_race in self.race_unit_ratios:
+                self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = current_ratios
 
             # 공중 위협 대응 호출
             self._handle_air_threat()
