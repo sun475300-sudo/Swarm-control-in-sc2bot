@@ -114,3 +114,48 @@
 | P0.2 | Empty-logger regression guard (CI)      | `grep -RnE "logger\.(info|debug|warning|error)\(\)$"` fails build if any hits. Add to `ci.yml`. |
 | P1.1 | Scout cadence improvements              | `scouting_system.py` — initial overlord 30s, mid-game zergling sweep 60s, late overseer cloak detection |
 | P1.2 | Harassment loop polish                  | `strategy_manager.py:228–262`, `combat_manager.py` — retraction on HP threshold, worker kill tracking |
+
+- **2026-04-27** — User-driven test→improve→push iteration loop on
+  branch `claude/stoic-shannon-LsC1U` (PR #43). Each iteration is one
+  small commit pushed to the branch.
+
+  Pytest baseline before this run: 222 passed / **84 failed** / 34
+  skipped. The 84 failures all collapsed to a single missing dev-time
+  dependency: `pytest-asyncio` was not declared anywhere, so every
+  `async def test_…` in the suite reported "async def functions are
+  not natively supported." Plus one stale assertion.
+
+  Iterations landed:
+
+  1. `e0a7fd9` — `requirements-dev.txt` declares `pytest`,
+     `pytest-asyncio` (auto mode is already in `pytest.ini`), and
+     `pytest-timeout`. Stale `test_gas_overflow_threshold_lowered`
+     relaxed from `== 1000` to `<= 1000` so it guards the *direction*
+     of the improvement instead of breaking each time the threshold
+     is tightened further. Result: **306 passed / 0 failed**.
+  2. `9977c54` — `tests/test_no_empty_logger_calls.py` mirrors
+     `scripts/check_no_empty_logger_calls.py` (the existing CI guard
+     for **P0.2**) at the pytest level so a single `pytest tests/`
+     run locally catches the regression without needing the CI script.
+  3. `4ca966d` — `tests/test_scout_cadence_invariants.py` pins the
+     scout intervals from **P1.1** (overlord 30 s, mid-game zergling
+     60 s) so a future edit to `early_scout_system.py` cannot silently
+     drift the perception loop.
+  4. `a419877` — `tests/test_economy_invariants.py` pins five
+     economy-tuning numbers tightened in `c7bb6dd` and `34ac508`
+     (gas overflow ≤ 1000, gas worker rebalance ≤ 50 frames,
+     expansion cooldown ≤ 5 s, macro hatch threshold ≤ 700, race
+     gas timing coverage). Imports via the same
+     `sys.path.insert(0, '…/wicked_zerg_challenger')` shim as
+     `tests/test_economy_manager.py` because a top-level `utils/`
+     package shadows `wicked_zerg_challenger/utils/`.
+
+  Net pytest delta: **222 → 314 passed** (+92), **84 → 0 failed**, no
+  bot-runtime code touched. The new tests are pure regression guards;
+  they do not change game-time behaviour. Empty-logger CI workflow
+  (`empty-logger-guard.yml`) was already in place and stayed green
+  throughout.
+
+  PLAN-NIGHTLY surface footprint cleanup (P1.5) and harassment-loop
+  polish (P1.2) remain untouched and continue to be the highest-ROI
+  follow-ups.
