@@ -1503,6 +1503,12 @@ class StrategyManager:
         hydra_count = comp.get("HYDRALISK", 0)
         ravager_count = comp.get("RAVAGER", 0)
 
+        # 레이바저 4+ → 히드라 + 저글링 (corrosive bile은 클러스터/구조물 위주이므로
+        # 분산 사거리 + 저렴한 다수 유닛으로 노출 면적을 줄여 대응)
+        if ravager_count >= 4:
+            self._adjust_unit_ratio("hydra", 0.45)
+            self._adjust_unit_ratio("zergling", 0.20)
+
         # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
         # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
         if zergling_count >= 10:
@@ -1863,7 +1869,6 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)
