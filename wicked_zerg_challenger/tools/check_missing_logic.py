@@ -43,8 +43,8 @@ class MissingLogicChecker:
                         methods.add(node.name)
             except SyntaxError:
                 pass
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
         return methods
     
     def extract_calls_from_file(self, file_path: Path) -> Set[str]:
@@ -64,8 +64,8 @@ class MissingLogicChecker:
                 # await self.method() �Ǵ� self.method() ���� (public methods)
                 matches2 = re.findall(r'(?:await\s+)?self\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', line)
                 calls.update(matches2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
         return calls
     
     def find_pass_statements(self, file_path: Path) -> List[int]:
@@ -83,8 +83,8 @@ class MissingLogicChecker:
                     context = '\n'.join(lines[max(0, i-10):i])
                     if 'def ' in context or 'async def ' in context:
                         pass_lines.append(i)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
         return pass_lines
     
     def find_todo_comments(self, file_path: Path) -> List[Tuple[int, str]]:
@@ -97,8 +97,8 @@ class MissingLogicChecker:
             for i, line in enumerate(lines, 1):
                 if 'TODO' in line.upper() or 'FIXME' in line.upper() or 'XXX' in line.upper():
                     todos.append((i, line.strip()))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
         return todos
     
     def scan_file(self, file_path: Path):

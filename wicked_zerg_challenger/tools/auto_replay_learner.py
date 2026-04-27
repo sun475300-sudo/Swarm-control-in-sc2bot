@@ -70,8 +70,8 @@ class AutoReplayLearner:
                 with open(id_file, 'r') as f:
                     data = json.load(f)
                     return set(data.get("replay_ids", []))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"action suppressed: {e}")
         return set()
 
     def _save_processed_ids(self):

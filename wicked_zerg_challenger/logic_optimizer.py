@@ -376,8 +376,8 @@ class LogicOptimizer:
             try:
                 if not config.condition():
                     return False
-            except Exception:
-                pass  # 조건 체크 실패 시 실행
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")  # 조건 체크 실패 시 실행
 
         # 실행 기록
         config.last_executed = iteration

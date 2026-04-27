@@ -52,8 +52,8 @@ def _ensure_sc2_path():
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
             return
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
     for path in [
         "C:\\Program Files (x86)\\StarCraft II",
         "C:\\Program Files\\StarCraft II",
@@ -260,8 +260,8 @@ class TournamentRunner:
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"action suppressed: {e}")
 
     def _generate_report(self):
         """텍스트 보고서 생성"""

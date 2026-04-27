@@ -204,8 +204,8 @@ class BackgroundParallelLearner:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
                             import shutil
                             shutil.copy2(str(file_path), str(archive_path))
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"action suppressed: {e}")
                         continue
 
                     # ★ FIX: Use context manager to ensure file is closed ★
@@ -236,8 +236,8 @@ class BackgroundParallelLearner:
                     # 손상된 파일은 별도 이동 또는 삭제
                     try:
                         file_path.rename(file_path.with_suffix(".corrupt"))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"action suppressed: {e}")
 
             # 건너뛴 파일 통계 업데이트
             self.stats["files_skipped_old"] += files_skipped
@@ -316,8 +316,8 @@ class BackgroundParallelLearner:
             archive_files = list(self.archive_dir.glob("*.npz"))
             self.stats["buffer_file_count"] = len(buffer_files)
             self.stats["archive_file_count"] = len(archive_files)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def _print_status_report(self) -> None:
         """주기적 상태 보고"""

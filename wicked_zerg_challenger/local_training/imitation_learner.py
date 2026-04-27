@@ -142,8 +142,8 @@ class ReplayActionExtractor:
                         "action": action,
                         "ability_name": ability,
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
         return None
 
     def _map_ability_to_action(self, ability_name: str) -> Optional[int]:

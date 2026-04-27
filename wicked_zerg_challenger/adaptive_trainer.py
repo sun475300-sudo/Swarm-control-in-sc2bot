@@ -63,8 +63,8 @@ def kill_all_sc2():
             ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(3)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 def create_lock():
@@ -78,8 +78,8 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 def run_single_game(

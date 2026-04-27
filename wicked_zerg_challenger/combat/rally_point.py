@@ -129,8 +129,8 @@ class RallyPointManager:
                 target_base = self.bot.townhalls.closest_to(
                     self.bot.game_info.map_center
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
         # 기지와 맵 중앙 사이 (전진 배치)
         if hasattr(self.bot, "game_info"):

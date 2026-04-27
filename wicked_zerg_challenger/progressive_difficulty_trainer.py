@@ -89,8 +89,8 @@ def kill_all_sc2_processes():
             ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(2)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 class ProgressiveTrainer:

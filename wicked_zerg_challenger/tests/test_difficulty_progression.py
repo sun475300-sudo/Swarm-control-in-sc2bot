@@ -17,6 +17,9 @@ import tempfile
 import unittest
 from io import StringIO
 from unittest.mock import Mock, patch
+import logging
+
+logger = logging.getLogger("test_difficulty_progression")
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -63,8 +66,8 @@ class TestDifficultyProgressionBasics(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_initialization(self):
         """Test DifficultyProgression initialization"""
@@ -96,8 +99,8 @@ class TestGameRecording(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_record_single_win(self):
         """Test recording a single win"""
@@ -163,8 +166,8 @@ class TestDifficultyRecommendation(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_recommend_default_difficulty(self):
         """Test default difficulty recommendation for new map"""
@@ -219,8 +222,8 @@ class TestProgressionChecking(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_no_progression_with_few_games(self):
         """Test no progression with insufficient games"""
@@ -288,8 +291,8 @@ class TestStatsSerDe(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_save_and_load_stats(self):
         """Test saving and loading stats from file"""
@@ -339,8 +342,8 @@ class TestStatsSummary(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_summary_for_new_map(self):
         """Test summary for map with no stats"""
@@ -383,8 +386,8 @@ class TestHelperMethods(unittest.TestCase):
         """Clean up temporary file"""
         try:
             os.unlink(self.temp_file.name)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def test_get_next_difficulty(self):
         """Test getting next difficulty in ladder"""

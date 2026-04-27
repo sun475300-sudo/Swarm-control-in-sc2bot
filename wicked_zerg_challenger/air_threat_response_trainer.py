@@ -230,8 +230,8 @@ class AirThreatResponseTrainer:
                 if queens.amount < 5:
                     self.logger.info("[PRODUCTION] Requesting more Queens")
 
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
     def get_current_strategy(self) -> str:
         """현재 전략 반환"""

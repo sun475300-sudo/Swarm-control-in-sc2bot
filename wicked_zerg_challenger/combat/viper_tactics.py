@@ -392,8 +392,8 @@ class ViperTacticsManager:
                         AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building
                     )
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
     async def _maintain_safe_distance(self, viper: Unit, enemy_units):
         """바이퍼 안전 거리 유지"""
