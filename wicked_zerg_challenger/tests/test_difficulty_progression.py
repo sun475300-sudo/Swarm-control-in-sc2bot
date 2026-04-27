@@ -10,13 +10,11 @@ Tests DifficultyProgression system:
 - Stats persistence
 """
 
-import json
 import os
 import sys
 import tempfile
 import unittest
 from io import StringIO
-from unittest.mock import Mock, patch
 import logging
 
 logger = logging.getLogger("test_difficulty_progression")
