@@ -2594,7 +2594,7 @@ class BotStepIntegrator:
                         self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시
-            debug_text = """
+            debug_text = f"""
             [WickedZergBot Pro]
             Time: {int(b.time // 60)}:{int(b.time % 60):02d}
             Strategy: {strategy_mode}
