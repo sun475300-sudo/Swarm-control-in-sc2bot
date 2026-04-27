@@ -163,8 +163,8 @@ class MacroCycleManager:
                 queens = self.bot.units(UnitTypeId.QUEEN)
                 for q in queens:
                     active_queen_tags.add(q.tag)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"queen tag enumeration failed: {e!r}")
 
         # 죽은 퀸/기지 제거
         dead_assignments = []
@@ -273,8 +273,8 @@ class MacroCycleManager:
                 try:
                     if UnitTypeId:
                         already_pending = self.bot.already_pending(UnitTypeId.OVERLORD)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"already_pending(OVERLORD) failed: {e!r}")
 
                 # 필요한 오버로드 수 계산
                 needed = max(0, 2 - already_pending)
@@ -312,8 +312,8 @@ class MacroCycleManager:
 
             self.last_larva_count = current_larva
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"larva efficiency update failed: {e!r}")
 
     def _execute_creep_spread(self, game_time: float) -> None:
         """크립 확산 실행 (유휴 퀸 사용)"""
@@ -372,8 +372,8 @@ class MacroCycleManager:
                     self.total_creep_tumors += 1
                     return True
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"queen creep tumor placement failed: {e!r}")
         return False
 
     def get_optimal_drone_target(self) -> int:
@@ -414,8 +414,8 @@ class MacroCycleManager:
         try:
             if UnitTypeId and hasattr(self.bot, "units"):
                 drone_count = self.bot.units(UnitTypeId.DRONE).amount
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"drone count probe failed: {e!r}")
 
         target_drones = self.get_optimal_drone_target()
         if drone_count < target_drones:
