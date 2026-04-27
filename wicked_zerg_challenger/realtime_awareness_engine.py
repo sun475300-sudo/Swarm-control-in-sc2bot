@@ -132,8 +132,10 @@ class RealtimeAwarenessEngine:
             if self.active_problems and iteration % 100 == 0:
                 self._log_problems()
 
-        except Exception:
-            pass
+        except Exception as e:
+            # Suppress to keep on_step alive, but surface periodically.
+            if iteration % 220 == 0:
+                logger.warning(f"on_step suppressed: {e}")
 
         return self.active_overrides
 
@@ -217,8 +219,8 @@ class RealtimeAwarenessEngine:
                             break
                     if s.enemy_near_base:
                         break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"enemy_near_base scan suppressed: {e}")
 
         # Intel
         if hasattr(self.bot, "intel_manager"):
@@ -235,8 +237,8 @@ class RealtimeAwarenessEngine:
                     s.tech_level = "hive"
                 elif structures(UnitTypeId.LAIR).exists:
                     s.tech_level = "lair"
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"tech_level probe suppressed: {e}")
 
     # =========================================================================
     # Step 2: 문제 감지 (14가지 패턴)
@@ -463,8 +465,8 @@ class RealtimeAwarenessEngine:
                     )
                     if roach_count + hydra_count + ravager_count >= 5:
                         has_counter = True
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"air-counter unit count suppressed: {e}")
 
                 if not has_counter:
                     problems.append(
@@ -610,8 +612,8 @@ class RealtimeAwarenessEngine:
 
                         asyncio.ensure_future(result)
                     return
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     def _force_army_production(self) -> None:
         """군대 강제 대량 생산"""
@@ -646,8 +648,8 @@ class RealtimeAwarenessEngine:
                         import asyncio
 
                         asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     def _force_overlord_production(self) -> None:
         """오버로드 강제 생산"""
@@ -660,8 +662,8 @@ class RealtimeAwarenessEngine:
                     import asyncio
 
                     asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     def _flush_minerals(self) -> None:
         """미네랄 긴급 소비"""
@@ -681,8 +683,8 @@ class RealtimeAwarenessEngine:
                         import asyncio
 
                         asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     # =========================================================================
     # 유틸리티

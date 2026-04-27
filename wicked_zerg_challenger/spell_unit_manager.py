@@ -213,8 +213,8 @@ class SpellUnitManager:
                                 )
                                 self.infestor_last_spell[infestor_tag] = current_time
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"spell-cast suppressed: {e}")
 
             # Fungal Growth (area damage)
             if time_since_spell >= self.FUNGAL_GROWTH_COOLDOWN:
@@ -241,8 +241,8 @@ class SpellUnitManager:
                                 )
                             )
                             self.infestor_last_spell[infestor_tag] = current_time
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"spell-cast suppressed: {e}")
 
     async def _update_vipers(self):
         """Update Viper spell usage"""
@@ -281,8 +281,8 @@ class SpellUnitManager:
                             b.do(viper(consume_ability, consume_target))
                             self.viper_last_consume[viper_tag] = current_time
                             continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"spell-cast suppressed: {e}")
 
             # Abduct (pull high-value targets)
             if time_since_spell >= self.ABDUCT_COOLDOWN:
@@ -317,8 +317,8 @@ class SpellUnitManager:
                                 b.do(viper(AbilityId.ABDUCT_ABDUCT, target))
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"spell-cast suppressed: {e}")
 
             # Parasitic Bomb (air units)
             if time_since_spell >= self.PARASITIC_BOMB_COOLDOWN:
@@ -354,8 +354,8 @@ class SpellUnitManager:
                                 )
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"spell-cast suppressed: {e}")
 
             # Blinding Cloud (ground units)
             if time_since_spell >= self.BLINDING_CLOUD_COOLDOWN:
@@ -397,8 +397,8 @@ class SpellUnitManager:
                                     )
                                 )
                                 self.viper_last_spell[viper_tag] = current_time
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"spell-cast suppressed: {e}")
 
     def _find_best_fungal_target(
         self, infestor: Unit, enemies: List[Unit]
@@ -545,8 +545,8 @@ class SpellUnitManager:
                                     f"[{int(current_time)}s] Bile targeting enemy base!"
                                 )
                             continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"spell-cast suppressed: {e}")
 
                 # 사거리 내 모든 건물
                 nearby_structures = [
@@ -561,8 +561,8 @@ class SpellUnitManager:
                         b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                         self.ravager_last_bile[ravager_tag] = current_time
                         continue
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"spell-cast suppressed: {e}")
 
             # ★ 우선순위 2: 중갑 고가치 유닛
             if enemy_units:
@@ -592,8 +592,8 @@ class SpellUnitManager:
                             )
                             self.ravager_last_bile[ravager_tag] = current_time
                             continue
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"spell-cast suppressed: {e}")
 
                 # ★ 우선순위 3: 밀집된 적 병력 (3기 이상)
                 nearby_enemies = [
@@ -608,8 +608,8 @@ class SpellUnitManager:
                         try:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_position))
                             self.ravager_last_bile[ravager_tag] = current_time
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"spell-cast suppressed: {e}")
 
     def _find_best_bile_position(
         self, ravager: Unit, enemies: List[Unit]
@@ -669,8 +669,8 @@ class SpellUnitManager:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
                     continue
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"spell-cast suppressed: {e}")
 
             # 조건 2: 체력 50% 이하 + 적 2기 이상
             health_ratio = (
@@ -682,8 +682,8 @@ class SpellUnitManager:
                 try:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"spell-cast suppressed: {e}")
 
     async def _update_overseers(self):
         """
@@ -753,8 +753,8 @@ class SpellUnitManager:
                 try:
                     b.do(overseer(AbilityId.CONTAMINATE_CONTAMINATE, target))
                     self.overseer_last_contaminate[overseer_tag] = current_time
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"spell-cast suppressed: {e}")
 
     @staticmethod
     def _unit_type_ids(names: List[str]) -> List[object]:
