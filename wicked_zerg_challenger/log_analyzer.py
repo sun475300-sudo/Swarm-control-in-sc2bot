@@ -70,8 +70,8 @@ class LogAnalyzer:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     data["_filename"] = filepath.name
                     self.game_data_files.append(data)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"load_all_data swallow: {e!r}")
             logger.info(f"  data/games/: {len(self.game_data_files)} game files")
 
         # 4. Tournament results
@@ -81,8 +81,8 @@ class LogAnalyzer:
                 try:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     self.tournament_results.append(data)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"load_all_data swallow: {e!r}")
             logger.info(
                 f"  data/tournament/: {len(self.tournament_results)} tournaments"
             )
@@ -96,8 +96,8 @@ class LogAnalyzer:
                 ).splitlines()
                 self.bot_log_lines = lines[-500:]
                 logger.info(f"  logs/bot.log: {len(lines)} lines (last 500 loaded)")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"load_all_data swallow: {e!r}")
 
         logger.info("Data loading complete.\n")
 
