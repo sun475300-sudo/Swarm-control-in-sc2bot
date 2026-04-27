@@ -156,6 +156,28 @@
   (`empty-logger-guard.yml`) was already in place and stayed green
   throughout.
 
+  Continued the same loop:
+
+  5. `a397939` — `tests/test_combat_priority_invariants.py` pins the
+     four combat task-priority numbers tightened in `34ac508`
+     (main_attack ≥ 95, base_defense ≤ 15 in all_in, worker_harass
+     present at ≥ 70). Source-level regex check over
+     `inspect.getsource(CombatManager)`.
+  6. `6a6814e` — **First real bug fix surfaced through the test loop.**
+     New `tests/test_logic_optimizer.py` covers
+     `LogicOptimizer.apply_combat/economy/strategy_improvements`. The
+     strategy test reproduced an AttributeError waiting in
+     `apply_strategy_improvements`: it was assigning the raw string
+     `"aggressive"` to `strategy_manager.current_mode`, but
+     `combat_manager.py:248` does `.current_mode.value` and
+     `bot_step_integration.py:2433` does `.current_mode.name` — both
+     would crash on the next tick after the cheat-difficulty branch
+     fired. Fix: assign `StrategyMode.AGGRESSIVE` instead. Test injects
+     a minimal `sc2.data.Difficulty` stub into `sys.modules` so it can
+     run without sc2/burnysc2.
+
+  Final pytest delta: **222 → 320 passed** (+98), **84 → 0 failed**.
+
   PLAN-NIGHTLY surface footprint cleanup (P1.5) and harassment-loop
   polish (P1.2) remain untouched and continue to be the highest-ROI
   follow-ups.
