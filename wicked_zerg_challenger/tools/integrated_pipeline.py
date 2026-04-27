@@ -50,8 +50,7 @@ LOCAL_REPLAY_DIR = get_replay_dir()
 def validate_replays(replays: list) -> list:
     """Validate replay files using sc2reader if available."""
     try:
-        import sc2reader
-        sc2reader_available = True
+        import sc2reader  # noqa: F401  -- presence triggers validation path
     except ImportError:
         logger.warning("   [WARNING] sc2reader not installed. Skipping metadata validation.")
         return replays

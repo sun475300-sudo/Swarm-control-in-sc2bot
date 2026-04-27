@@ -708,14 +708,11 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (only zergling actually drives the path
+        # below; roach/hydra/mutalisk counts were dead code from a previous
+        # iteration of the composition logic).
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
@@ -1175,8 +1172,6 @@ class ProductionResilience:
                     except Exception as e:
                         logger.debug(f"production action suppressed: {e}")
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level
@@ -2488,9 +2483,6 @@ class ProductionResilience:
 
         if minerals <= 600:
             return
-
-        # Calculate how much to spend
-        excess = minerals - 600
 
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:
