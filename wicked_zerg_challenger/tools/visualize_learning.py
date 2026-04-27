@@ -99,7 +99,7 @@ class TrainingVisualizer:
         recent_win_rates = data.get("recent_win_rates", [])
 
         # 캔버스 설정
-        fig = plt.figure(figsize=(12, 8))
+        plt.figure(figsize=(12, 8))
         gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
 
         # 1. 학습률 변화 (Step Chart)
