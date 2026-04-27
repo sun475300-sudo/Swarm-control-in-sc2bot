@@ -244,8 +244,8 @@ class CreepManager:
                             grid = self.bot.game_info.pathing_grid
                             if grid[x, y] == 0:
                                 continue
-                    except (IndexError, AttributeError, TypeError):
-                        pass
+                    except (IndexError, AttributeError, TypeError) as e:
+                        logger.debug(f"_update_creep_coverage swallow: {e!r}")
 
                     try:
                         if hasattr(self.bot, "has_creep") and self.bot.has_creep(pos):
@@ -361,8 +361,8 @@ class CreepManager:
                 )
                 if placement_results and len(placement_results) == len(valid):
                     valid = [pos for pos, ok in zip(valid, placement_results) if ok]
-        except Exception:
-            pass  # Fall through to distance-based selection if batch query fails
+        except Exception as e:
+            logger.debug(f"batch can_place query failed, falling back: {e!r}")
 
         if not valid:
             return None
@@ -475,8 +475,8 @@ class CreepManager:
                             spread_target
                         ):
                             continue
-                    except (TypeError, AttributeError):
-                        pass
+                    except (TypeError, AttributeError) as e:
+                        logger.debug(f"_handle_tumor_relay swallow: {e!r}")
 
                 # Execute spread
                 if hasattr(tumor, "can_cast") and hasattr(
@@ -733,8 +733,8 @@ class CreepSpreadManager:
                     if 0 <= px < grid.width and 0 <= py < grid.height:
                         if grid[px, py] == 0:
                             continue
-            except (IndexError, AttributeError, TypeError):
-                pass
+            except (IndexError, AttributeError, TypeError) as e:
+                logger.debug(f"_generate_creep_grid swallow: {e!r}")
 
             targets.append(pos)
 
@@ -804,8 +804,8 @@ class CreepSpreadManager:
                 if hasattr(self.bot, "has_creep"):
                     if not self.bot.has_creep(tumor_pos):
                         continue
-            except (TypeError, AttributeError):
-                pass
+            except (TypeError, AttributeError) as e:
+                logger.debug(f"_queen_spread_creep swallow: {e!r}")
 
             try:
                 self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, tumor_pos))
@@ -936,14 +936,14 @@ class CreepSpreadManager:
                             grid = self.bot.game_info.pathing_grid
                             if grid[x, y] == 0:
                                 continue
-                    except (IndexError, AttributeError, TypeError):
-                        pass
+                    except (IndexError, AttributeError, TypeError) as e:
+                        logger.debug(f"_update_coverage swallow: {e!r}")
                     total_cells += 1
                     try:
                         if hasattr(self.bot, "has_creep") and self.bot.has_creep(pos):
                             creep_cells += 1
-                    except (TypeError, AttributeError):
-                        pass
+                    except (TypeError, AttributeError) as e:
+                        logger.debug(f"_update_coverage swallow: {e!r}")
             if total_cells > 0:
                 self._creep_coverage_percent = (creep_cells / total_cells) * 100
         except Exception as e:
