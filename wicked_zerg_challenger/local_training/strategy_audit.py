@@ -12,12 +12,12 @@ Strategy Audit - 전략 비교 분석
 """
 
 import json
+import logging
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger("StrategyAudit")
 
@@ -39,15 +39,15 @@ class StrategyAudit:
 
         # 기준 빌드 오더 (프로 게이머 기준)
         self.pro_build_timings = {
-            "SpawningPool": 75,      # 서랄 기준: 17 드론 풀
-            "Hatchery": 85,          # 자연 확장: 1:25
-            "Extractor": 90,         # 가스 타이밍
-            "Queen": 105,            # 첫 퀸
-            "Zergling": 115,         # 저글링 시작
-            "RoachWarren": 180,      # 3분 바퀴굴
-            "Lair": 270,             # 4:30 레어
-            "third_base": 210,       # 3:30 서드
-            "HydraliskDen": 330,     # 5:30 히드라굴
+            "SpawningPool": 75,  # 서랄 기준: 17 드론 풀
+            "Hatchery": 85,  # 자연 확장: 1:25
+            "Extractor": 90,  # 가스 타이밍
+            "Queen": 105,  # 첫 퀸
+            "Zergling": 115,  # 저글링 시작
+            "RoachWarren": 180,  # 3분 바퀴굴
+            "Lair": 270,  # 4:30 레어
+            "third_base": 210,  # 3:30 서드
+            "HydraliskDen": 330,  # 5:30 히드라굴
         }
 
         # 비교 결과
@@ -57,7 +57,7 @@ class StrategyAudit:
         """학습된 빌드 오더 로드"""
         try:
             if self.learned_builds_path.exists():
-                with open(self.learned_builds_path, 'r', encoding='utf-8') as f:
+                with open(self.learned_builds_path, "r", encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load learned builds: {e}")
@@ -67,7 +67,7 @@ class StrategyAudit:
         """훈련 통계 로드"""
         try:
             if self.training_stats_path.exists():
-                with open(self.training_stats_path, 'r', encoding='utf-8') as f:
+                with open(self.training_stats_path, "r", encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load training stats: {e}")
@@ -92,7 +92,7 @@ class StrategyAudit:
                     "diff_seconds": diff,
                     "diff_percent": diff_percent,
                     "status": status,
-                    "recommendation": self._get_timing_recommendation(building, diff)
+                    "recommendation": self._get_timing_recommendation(building, diff),
                 }
             else:
                 comparison[building] = {
@@ -101,7 +101,7 @@ class StrategyAudit:
                     "diff_seconds": 0,
                     "diff_percent": 0,
                     "status": "missing",
-                    "recommendation": f"Add {building} to build order"
+                    "recommendation": f"Add {building} to build order",
                 }
 
         return comparison
@@ -128,9 +128,7 @@ class StrategyAudit:
             return f"Good aggressive timing, {int(-diff)}s ahead of standard"
 
     def compare_unit_composition(
-        self,
-        bot_units: Dict[str, float],
-        learned_units: Dict[str, float]
+        self, bot_units: Dict[str, float], learned_units: Dict[str, float]
     ) -> Dict[str, Any]:
         """유닛 조합 비교"""
         comparison = {}
@@ -147,7 +145,7 @@ class StrategyAudit:
                 "bot_ratio": bot_ratio,
                 "learned_ratio": learned_ratio,
                 "diff": diff,
-                "recommendation": self._get_unit_recommendation(unit, diff)
+                "recommendation": self._get_unit_recommendation(unit, diff),
             }
 
         return comparison
@@ -180,12 +178,14 @@ class StrategyAudit:
                 "total_games": total_games,
                 "wins": wins,
                 "losses": losses,
-                "win_rate": win_rate
+                "win_rate": win_rate,
             },
             "vs_terran": self._analyze_matchup(vs_terran),
             "vs_protoss": self._analyze_matchup(vs_protoss),
             "vs_zerg": self._analyze_matchup(vs_zerg),
-            "recommendations": self._get_win_rate_recommendations(win_rate, vs_terran, vs_protoss, vs_zerg)
+            "recommendations": self._get_win_rate_recommendations(
+                win_rate, vs_terran, vs_protoss, vs_zerg
+            ),
         }
 
         return analysis
@@ -200,39 +200,59 @@ class StrategyAudit:
             "total_games": total,
             "wins": wins,
             "win_rate": win_rate,
-            "status": "strong" if win_rate >= 50 else "weak"
+            "status": "strong" if win_rate >= 50 else "weak",
         }
 
     def _get_win_rate_recommendations(
-        self,
-        overall: float,
-        vs_t: Dict,
-        vs_p: Dict,
-        vs_z: Dict
+        self, overall: float, vs_t: Dict, vs_p: Dict, vs_z: Dict
     ) -> List[str]:
         """승률 기반 추천"""
         recommendations = []
 
         if overall < 30:
-            recommendations.append("Focus on macro fundamentals: drone count, injection, creep spread")
+            recommendations.append(
+                "Focus on macro fundamentals: drone count, injection, creep spread"
+            )
             recommendations.append("Practice standard openers against AI before ladder")
 
         if overall < 50:
             recommendations.append("Review losing replays to identify common mistakes")
 
         # 종족별 추천
-        t_rate = (vs_t.get("wins", 0) / vs_t.get("total", 1)) * 100 if vs_t.get("total", 0) > 0 else 50
-        p_rate = (vs_p.get("wins", 0) / vs_p.get("total", 1)) * 100 if vs_p.get("total", 0) > 0 else 50
-        z_rate = (vs_z.get("wins", 0) / vs_z.get("total", 1)) * 100 if vs_z.get("total", 0) > 0 else 50
+        t_rate = (
+            (vs_t.get("wins", 0) / vs_t.get("total", 1)) * 100
+            if vs_t.get("total", 0) > 0
+            else 50
+        )
+        p_rate = (
+            (vs_p.get("wins", 0) / vs_p.get("total", 1)) * 100
+            if vs_p.get("total", 0) > 0
+            else 50
+        )
+        z_rate = (
+            (vs_z.get("wins", 0) / vs_z.get("total", 1)) * 100
+            if vs_z.get("total", 0) > 0
+            else 50
+        )
 
         if t_rate < 40:
-            recommendations.append("vs Terran: Focus on Roach/Ravager timing attacks, watch for hellion harass")
+            recommendations.append(
+                "vs Terran: Focus on Roach/Ravager timing attacks, watch for hellion harass"
+            )
         if p_rate < 40:
-            recommendations.append("vs Protoss: Scout for DT/Oracle, prepare Spore Crawlers")
+            recommendations.append(
+                "vs Protoss: Scout for DT/Oracle, prepare Spore Crawlers"
+            )
         if z_rate < 40:
-            recommendations.append("vs Zerg: Control creep spread, prepare for Baneling wars")
+            recommendations.append(
+                "vs Zerg: Control creep spread, prepare for Baneling wars"
+            )
 
-        return recommendations if recommendations else ["Keep practicing, win rate is good!"]
+        return (
+            recommendations
+            if recommendations
+            else ["Keep practicing, win rate is good!"]
+        )
 
     def generate_report(self) -> str:
         """감사 리포트 생성"""
@@ -245,7 +265,9 @@ class StrategyAudit:
 
         # 유닛 조합 비교
         bot_units = learned_data.get("unit_priorities", {})
-        unit_comparison = self.compare_unit_composition(bot_units, self.get_pro_unit_composition())
+        unit_comparison = self.compare_unit_composition(
+            bot_units, self.get_pro_unit_composition()
+        )
 
         # 승률 분석
         win_analysis = self.analyze_win_rate(training_stats)
@@ -262,7 +284,9 @@ class StrategyAudit:
         ]
 
         for building, data in timing_comparison.items():
-            status_icon = {"good": "+", "slow": "-", "fast": "*", "missing": "!"}.get(data["status"], "?")
+            status_icon = {"good": "+", "slow": "-", "fast": "*", "missing": "!"}.get(
+                data["status"], "?"
+            )
             report_lines.append(
                 f"[{status_icon}] {building}: Bot={data['bot_time']}s, Pro={data['pro_time']}s "
                 f"(diff: {data['diff_seconds']:+.0f}s)"
@@ -270,40 +294,48 @@ class StrategyAudit:
             if data["status"] != "good":
                 report_lines.append(f"    -> {data['recommendation']}")
 
-        report_lines.extend([
-            "",
-            "## 2. UNIT COMPOSITION ANALYSIS",
-            "-" * 40,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "## 2. UNIT COMPOSITION ANALYSIS",
+                "-" * 40,
+            ]
+        )
 
-        for unit, data in sorted(unit_comparison.items(), key=lambda x: abs(x[1]["diff"]), reverse=True)[:10]:
+        for unit, data in sorted(
+            unit_comparison.items(), key=lambda x: abs(x[1]["diff"]), reverse=True
+        )[:10]:
             report_lines.append(
                 f"  {unit}: Bot={data['bot_ratio']:.1%}, Learned={data['learned_ratio']:.1%}"
             )
 
-        report_lines.extend([
-            "",
-            "## 3. WIN RATE ANALYSIS",
-            "-" * 40,
-            f"  Overall: {win_analysis['overall']['win_rate']:.1f}% "
-            f"({win_analysis['overall']['wins']}/{win_analysis['overall']['total_games']})",
-            f"  vs Terran: {win_analysis['vs_terran']['win_rate']:.1f}%",
-            f"  vs Protoss: {win_analysis['vs_protoss']['win_rate']:.1f}%",
-            f"  vs Zerg: {win_analysis['vs_zerg']['win_rate']:.1f}%",
-            "",
-            "## 4. RECOMMENDATIONS",
-            "-" * 40,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "## 3. WIN RATE ANALYSIS",
+                "-" * 40,
+                f"  Overall: {win_analysis['overall']['win_rate']:.1f}% "
+                f"({win_analysis['overall']['wins']}/{win_analysis['overall']['total_games']})",
+                f"  vs Terran: {win_analysis['vs_terran']['win_rate']:.1f}%",
+                f"  vs Protoss: {win_analysis['vs_protoss']['win_rate']:.1f}%",
+                f"  vs Zerg: {win_analysis['vs_zerg']['win_rate']:.1f}%",
+                "",
+                "## 4. RECOMMENDATIONS",
+                "-" * 40,
+            ]
+        )
 
         for rec in win_analysis["recommendations"]:
             report_lines.append(f"  * {rec}")
 
-        report_lines.extend([
-            "",
-            "=" * 70,
-            "END OF REPORT",
-            "=" * 70,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "=" * 70,
+                "END OF REPORT",
+                "=" * 70,
+            ]
+        )
 
         report = "\n".join(report_lines)
 
@@ -333,12 +365,12 @@ class StrategyAudit:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             report_path = self.report_dir / f"audit_report_{timestamp}.txt"
 
-            with open(report_path, 'w', encoding='utf-8') as f:
+            with open(report_path, "w", encoding="utf-8") as f:
                 f.write(report)
 
             # JSON 형식도 저장
             json_path = self.report_dir / f"audit_data_{timestamp}.json"
-            with open(json_path, 'w', encoding='utf-8') as f:
+            with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(self.audit_results, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Report saved to {report_path}")

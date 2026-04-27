@@ -11,19 +11,22 @@ Tests cover:
 - Integration with IntelManager
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
-import os
-import tempfile
 import json
+import os
+import sys
+import tempfile
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from opponent_modeling import (
-    OpponentModeling, OpponentModel, GameHistory,
-    OpponentStyle, StrategySignal
+    GameHistory,
+    OpponentModel,
+    OpponentModeling,
+    OpponentStyle,
+    StrategySignal,
 )
 from sc2.position import Point2
 
@@ -66,7 +69,7 @@ class TestOpponentModel(unittest.TestCase):
             game_result="loss",  # We lost -> opponent won
             game_duration=300.0,
             early_signals=["early_pool", "early_army"],
-            tech_progression=[(90.0, "spawningpool")]
+            tech_progression=[(90.0, "spawningpool")],
         )
 
         self.model.update_from_game(game_history)
@@ -90,7 +93,7 @@ class TestOpponentModel(unittest.TestCase):
             game_result="win",  # We won -> opponent lost
             game_duration=600.0,
             early_signals=["fast_expand"],
-            tech_progression=[(120.0, "barracks"), (180.0, "factory")]
+            tech_progression=[(120.0, "barracks"), (180.0, "factory")],
         )
 
         self.model.update_from_game(game_history)
@@ -114,7 +117,7 @@ class TestOpponentModel(unittest.TestCase):
                 game_result="win",
                 game_duration=300.0,
                 early_signals=[],
-                tech_progression=[]
+                tech_progression=[],
             )
             self.model.update_from_game(game_history)
 
@@ -130,7 +133,7 @@ class TestOpponentModel(unittest.TestCase):
             game_result="win",
             game_duration=900.0,
             early_signals=[],
-            tech_progression=[]
+            tech_progression=[],
         )
         self.model.update_from_game(game_history)
 
@@ -154,7 +157,7 @@ class TestOpponentModel(unittest.TestCase):
                 game_result="win",
                 game_duration=300.0,
                 early_signals=["early_pool", "early_army"],
-                tech_progression=[]
+                tech_progression=[],
             )
             self.model.update_from_game(game_history)
 
@@ -179,7 +182,7 @@ class TestOpponentModel(unittest.TestCase):
                 game_result="win",
                 game_duration=500.0,
                 early_signals=["some_signal"],
-                tech_progression=[]
+                tech_progression=[],
             )
             self.model.update_from_game(game_history)
 
@@ -207,7 +210,7 @@ class TestOpponentModel(unittest.TestCase):
                 game_result="win",
                 game_duration=400.0,
                 early_signals=[],
-                tech_progression=[]
+                tech_progression=[],
             )
             self.model.update_from_game(game_history)
 
@@ -231,7 +234,7 @@ class TestOpponentModel(unittest.TestCase):
                 game_result="win",
                 game_duration=900.0,
                 early_signals=[],
-                tech_progression=[]
+                tech_progression=[],
             )
             self.model.update_from_game(game_history)
 
@@ -254,7 +257,7 @@ class TestOpponentModel(unittest.TestCase):
             game_result="win",
             game_duration=300.0,
             early_signals=["early_army"],
-            tech_progression=[]
+            tech_progression=[],
         )
         self.model.update_from_game(game_history)
 
@@ -280,10 +283,8 @@ class TestOpponentModel(unittest.TestCase):
             "strategy_frequency": {"zerg_rush": 2, "zerg_macro": 1},
             "build_order_patterns": [["spawningpool"], ["hatchery", "spawningpool"]],
             "timing_attack_history": [120.0, 150.0],
-            "early_signal_correlations": {
-                "early_pool": {"zerg_rush": 2}
-            },
-            "unit_preferences": {"zergling": 60, "roach": 20}
+            "early_signal_correlations": {"early_pool": {"zerg_rush": 2}},
+            "unit_preferences": {"zergling": 60, "roach": 20},
         }
 
         # Deserialize
@@ -319,13 +320,13 @@ class TestOpponentModeling(unittest.TestCase):
         self.bot.enemy_units = []
 
         # Use temporary file for testing
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
 
         self.modeling = OpponentModeling(
-            self.bot,
-            intel_manager=self.intel,
-            data_file=self.temp_file.name
+            self.bot, intel_manager=self.intel, data_file=self.temp_file.name
         )
 
     def tearDown(self):
@@ -548,9 +549,7 @@ class TestOpponentModeling(unittest.TestCase):
 
         # Create new instance and load
         new_modeling = OpponentModeling(
-            self.bot,
-            intel_manager=self.intel,
-            data_file=self.temp_file.name
+            self.bot, intel_manager=self.intel, data_file=self.temp_file.name
         )
 
         self.assertIn("test_opponent", new_modeling.opponent_models)
@@ -561,7 +560,7 @@ class TestOpponentModeling(unittest.TestCase):
         new_modeling = OpponentModeling(
             self.bot,
             intel_manager=self.intel,
-            data_file="/nonexistent/path/models.json"
+            data_file="/nonexistent/path/models.json",
         )
 
         # Should not crash
@@ -623,5 +622,5 @@ class TestOpponentModeling(unittest.TestCase):
 
 
 # Run tests
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(verbosity=2)

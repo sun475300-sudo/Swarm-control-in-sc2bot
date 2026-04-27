@@ -11,20 +11,25 @@ Tests cover:
 - FocusFireCoordinator - Target selection
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
     from advanced_micro_controller_v3 import (
-        RavagerMicro, LurkerMicro, QueenMicro, ViperMicro,
-        CorruptorMicro, FocusFireCoordinator
+        CorruptorMicro,
+        FocusFireCoordinator,
+        LurkerMicro,
+        QueenMicro,
+        RavagerMicro,
+        ViperMicro,
     )
     from sc2.position import Point2
+
     SC2_AVAILABLE = True
 except (ImportError, TypeError):
     SC2_AVAILABLE = False
@@ -94,7 +99,9 @@ class TestRavagerMicro(unittest.TestCase):
         for i, e in enumerate(mock_enemies):
             e.position = Point2((52 + i, 52))
 
-        target = self.ravager_micro.find_best_bile_target(mock_ravager, mock_enemies, 102.0)
+        target = self.ravager_micro.find_best_bile_target(
+            mock_ravager, mock_enemies, 102.0
+        )
         self.assertIsNone(target)
 
 
@@ -157,9 +164,7 @@ class TestLurkerMicro(unittest.TestCase):
             e.position = Point2((60 + i, 60))
 
         position = self.lurker_micro.find_optimal_position(
-            mock_lurker,
-            mock_enemies,
-            mock_bot
+            mock_lurker, mock_enemies, mock_bot
         )
 
         self.assertIsNotNone(position)
@@ -307,7 +312,9 @@ class TestCorruptorMicro(unittest.TestCase):
         self.corruptor_micro.last_spray_time[12345] = 100.0
 
         mock_enemies = [Mock()]
-        target = self.corruptor_micro.find_spray_target(mock_corruptor, mock_enemies, 102.0)
+        target = self.corruptor_micro.find_spray_target(
+            mock_corruptor, mock_enemies, 102.0
+        )
         self.assertIsNone(target)
 
 
@@ -406,5 +413,5 @@ class TestFocusFireCoordinator(unittest.TestCase):
 
 
 # Run tests
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(verbosity=2)

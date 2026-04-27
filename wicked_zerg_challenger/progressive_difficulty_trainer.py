@@ -15,19 +15,20 @@ Progressive Difficulty Trainer - 점진적 난이도 상승 학습 시스템
 10. CheatInsane: 20게임, 90% 승률 목표
 """
 
+import json
+import logging
+import random
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
 import sc2
 from sc2 import maps
-from sc2.player import Bot, Computer
+from sc2.data import Difficulty, Race
 from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import random
-import json
-import subprocess
-import time
-from pathlib import Path
-from datetime import datetime
-import logging
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("ProgressiveDifficultyTrainer")
 
@@ -38,13 +39,12 @@ if str(project_root) not in sys.path:
 
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
-
 # 사용 가능한 맵 리스트 (다양성 개선)
 AVAILABLE_MAPS = [
     "(2)CatalystLE",
     "AbyssalReefLE",
     "AscensiontoAiurLE",
-    "BelShirVestigeLE"
+    "BelShirVestigeLE",
 ]
 
 # 종족 다양성 (균등 분배)
@@ -61,7 +61,7 @@ DIFFICULTY_PROGRESSION = [
     (Difficulty.VeryHard, "VeryHard", 80.0),
     (Difficulty.CheatVision, "CheatVision", 80.0),
     (Difficulty.CheatMoney, "CheatMoney", 80.0),
-    (Difficulty.CheatInsane, "CheatInsane", 90.0)
+    (Difficulty.CheatInsane, "CheatInsane", 90.0),
 ]
 
 # 보상 점수 체계
@@ -75,17 +75,19 @@ REWARD_POINTS = {
     "VeryHard": 150,
     "CheatVision": 200,
     "CheatMoney": 300,
-    "CheatInsane": 500
+    "CheatInsane": 500,
 }
 
 
 def kill_all_sc2_processes():
     """모든 SC2 프로세스 강제 종료"""
     try:
-        subprocess.run(["taskkill", "/F", "/IM", "SC2_x64.exe"],
-                      capture_output=True, timeout=5)
-        subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
-                      capture_output=True, timeout=5)
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
+        )
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
+        )
         time.sleep(2)
     except Exception:
         pass
@@ -102,7 +104,7 @@ class ProgressiveTrainer:
     def load_results(self):
         """이전 결과 로드"""
         if self.results_file.exists():
-            with open(self.results_file, 'r', encoding='utf-8') as f:
+            with open(self.results_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 self.current_difficulty_index = data.get("current_difficulty_index", 0)
                 self.total_points = data.get("total_points", 0)
@@ -118,9 +120,9 @@ class ProgressiveTrainer:
             "current_difficulty_index": self.current_difficulty_index,
             "total_points": self.total_points,
             "difficulty_results": self.difficulty_results,
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
-        with open(self.results_file, 'w', encoding='utf-8') as f:
+        with open(self.results_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def run_single_game(self, difficulty: Difficulty, game_num: int, total_games: int):
@@ -145,11 +147,11 @@ class ProgressiveTrainer:
                 maps.get(selected_map),
                 [
                     Bot(Race.Zerg, WickedZergBotProImpl()),
-                    Computer(enemy_race, difficulty)
+                    Computer(enemy_race, difficulty),
                 ],
                 realtime=False,
                 save_replay_as=None,
-                game_time_limit=(60*10)  # 10분 제한 (더 빠른 테스트)
+                game_time_limit=(60 * 10),  # 10분 제한 (더 빠른 테스트)
             )
 
             # ★★★ 게임 종료 후 프로세스 정리 ★★★
@@ -165,41 +167,51 @@ class ProgressiveTrainer:
 
     def train_at_difficulty(self, difficulty_index: int):
         """특정 난이도에서 학습"""
-        difficulty, diff_name, target_win_rate = DIFFICULTY_PROGRESSION[difficulty_index]
+        difficulty, diff_name, target_win_rate = DIFFICULTY_PROGRESSION[
+            difficulty_index
+        ]
 
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info(f"DIFFICULTY: {diff_name}")
         logger.info(f"Target Win Rate: {target_win_rate}%")
         logger.info(f"Games: {self.games_per_difficulty}")
         logger.info(f"Reward Points: {REWARD_POINTS[diff_name]}")
-        logger.info("="*80 + "\n")
+        logger.info("=" * 80 + "\n")
 
         wins = 0
         losses = 0
         current_win_rate = 0.0
 
         for game_num in range(1, self.games_per_difficulty + 1):
-            result = self.run_single_game(difficulty, game_num, self.games_per_difficulty)
+            result = self.run_single_game(
+                difficulty, game_num, self.games_per_difficulty
+            )
 
             if result:
                 wins += 1
-                logger.info(f"Game {game_num} Victory! ({wins}/{game_num} = {wins/game_num*100:.1f}%)")
+                logger.info(
+                    f"Game {game_num} Victory! ({wins}/{game_num} = {wins/game_num*100:.1f}%)"
+                )
             else:
                 losses += 1
-                logger.info(f"Game {game_num} Defeat ({wins}/{game_num} = {wins/game_num*100:.1f}%)")
+                logger.info(
+                    f"Game {game_num} Defeat ({wins}/{game_num} = {wins/game_num*100:.1f}%)"
+                )
 
             current_win_rate = (wins / game_num) * 100
 
             # 중간 체크: 80% 이상 유지 중
             if game_num >= 10 and current_win_rate >= target_win_rate:
-                logger.info(f"\n[CHECK] Current win rate: {current_win_rate:.1f}% >= {target_win_rate}%")
+                logger.info(
+                    f"\n[CHECK] Current win rate: {current_win_rate:.1f}% >= {target_win_rate}%"
+                )
 
         # 최종 결과
         final_win_rate = (wins / self.games_per_difficulty) * 100
 
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info(f"DIFFICULTY {diff_name} RESULTS")
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Total Games: {self.games_per_difficulty}")
         logger.info(f"Wins: {wins}")
         logger.info(f"Losses: {losses}")
@@ -212,7 +224,7 @@ class ProgressiveTrainer:
             self.total_points += reward
             logger.info(f"\n[SUCCESS] Target achieved! +{reward} points")
             logger.info(f"Total Points: {self.total_points}")
-            logger.info("="*80 + "\n")
+            logger.info("=" * 80 + "\n")
 
             # 결과 저장
             self.difficulty_results[diff_name] = {
@@ -222,15 +234,17 @@ class ProgressiveTrainer:
                 "target": target_win_rate,
                 "passed": True,
                 "reward": reward,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             self.save_results()
 
             return True
         else:
-            logger.error(f"\n[FAILED] Target not achieved. Need {target_win_rate}%, got {final_win_rate:.1f}%")
+            logger.error(
+                f"\n[FAILED] Target not achieved. Need {target_win_rate}%, got {final_win_rate:.1f}%"
+            )
             logger.info("Retrying this difficulty...")
-            logger.info("="*80 + "\n")
+            logger.info("=" * 80 + "\n")
 
             # 실패 결과 저장
             self.difficulty_results[diff_name] = {
@@ -240,7 +254,7 @@ class ProgressiveTrainer:
                 "target": target_win_rate,
                 "passed": False,
                 "reward": 0,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             self.save_results()
 
@@ -248,12 +262,12 @@ class ProgressiveTrainer:
 
     def run_progressive_training(self):
         """점진적 학습 실행"""
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("PROGRESSIVE DIFFICULTY TRAINING")
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Starting from difficulty index: {self.current_difficulty_index}")
         logger.info(f"Current Total Points: {self.total_points}")
-        logger.info("="*80 + "\n")
+        logger.info("=" * 80 + "\n")
 
         while self.current_difficulty_index < len(DIFFICULTY_PROGRESSION):
             success = self.train_at_difficulty(self.current_difficulty_index)
@@ -264,7 +278,9 @@ class ProgressiveTrainer:
                 self.save_results()
 
                 if self.current_difficulty_index < len(DIFFICULTY_PROGRESSION):
-                    logger.info(f"\n[PROGRESS] Moving to next difficulty: {DIFFICULTY_PROGRESSION[self.current_difficulty_index][1]}")
+                    logger.info(
+                        f"\n[PROGRESS] Moving to next difficulty: {DIFFICULTY_PROGRESSION[self.current_difficulty_index][1]}"
+                    )
                 else:
                     logger.info("\n[COMPLETE] All difficulties completed!")
                     break
@@ -277,21 +293,25 @@ class ProgressiveTrainer:
 
     def print_final_report(self):
         """최종 보고서 출력"""
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("FINAL TRAINING REPORT")
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"Total Points Earned: {self.total_points}")
-        logger.info(f"Difficulties Completed: {self.current_difficulty_index}/{len(DIFFICULTY_PROGRESSION)}")
+        logger.info(
+            f"Difficulties Completed: {self.current_difficulty_index}/{len(DIFFICULTY_PROGRESSION)}"
+        )
         logger.info("\nResults by Difficulty:")
-        logger.info("-"*80)
+        logger.info("-" * 80)
 
         for diff_name, result in self.difficulty_results.items():
-            status = "[PASS]" if result['passed'] else "[FAIL]"
-            logger.info(f"{status} {diff_name}: {result['win_rate']:.1f}% "
-                  f"({result['wins']}/{result['wins']+result['losses']}) "
-                  f"- Reward: {result['reward']} pts")
+            status = "[PASS]" if result["passed"] else "[FAIL]"
+            logger.info(
+                f"{status} {diff_name}: {result['win_rate']:.1f}% "
+                f"({result['wins']}/{result['wins']+result['losses']}) "
+                f"- Reward: {result['reward']} pts"
+            )
 
-        logger.info("="*80 + "\n")
+        logger.info("=" * 80 + "\n")
 
 
 def main():

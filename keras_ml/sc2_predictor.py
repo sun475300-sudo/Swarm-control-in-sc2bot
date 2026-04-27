@@ -8,10 +8,10 @@ Graceful fallback to a pure-NumPy implementation when TensorFlow/Keras is absent
 
 from __future__ import annotations
 
-import sys
-import time
 import logging
 import random
+import sys
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -31,8 +31,11 @@ try:
     from tensorflow import keras
     from tensorflow.keras import layers, regularizers
     from tensorflow.keras.callbacks import (
-        EarlyStopping, ReduceLROnPlateau, ModelCheckpoint,
+        EarlyStopping,
+        ModelCheckpoint,
+        ReduceLROnPlateau,
     )
+
     TF_AVAILABLE = True
     log.info("TensorFlow %s / Keras available.", tf.__version__)
 except ImportError:
@@ -66,18 +69,30 @@ except ImportError:
 
 FEATURE_DIM = 16
 FEATURE_NAMES = [
-    "minerals", "gas", "supply_used", "supply_cap", "workers",
-    "army_supply", "base_count", "tech_level", "game_time",
-    "opp_army", "map_control", "opp_bases", "energy",
-    "upgrades", "kill_score", "loss_score",
+    "minerals",
+    "gas",
+    "supply_used",
+    "supply_cap",
+    "workers",
+    "army_supply",
+    "base_count",
+    "tech_level",
+    "game_time",
+    "opp_army",
+    "map_control",
+    "opp_bases",
+    "energy",
+    "upgrades",
+    "kill_score",
+    "loss_score",
 ]
 
 BUILD_ORDER_CLASSES = [
-    "macro_economy",      # 0
-    "early_aggression",   # 1
-    "tech_rush",          # 2
-    "defensive_turtle",   # 3
-    "timing_attack",      # 4
+    "macro_economy",  # 0
+    "early_aggression",  # 1
+    "tech_rush",  # 2
+    "defensive_turtle",  # 3
+    "timing_attack",  # 4
 ]
 NUM_BUILD_CLASSES = len(BUILD_ORDER_CLASSES)
 
@@ -86,9 +101,11 @@ NUM_BUILD_CLASSES = len(BUILD_ORDER_CLASSES)
 # SC2FeatureExtractor
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GameState:
     """Raw game state snapshot from the SC2 API."""
+
     minerals: float = 50.0
     gas: float = 0.0
     supply_used: float = 12.0
@@ -96,8 +113,8 @@ class GameState:
     worker_count: float = 12.0
     army_supply: float = 0.0
     base_count: float = 1.0
-    tech_level: float = 0.0        # 0=none, 1=tier1, 2=tier2, 3=tier3
-    game_time: float = 0.0         # seconds
+    tech_level: float = 0.0  # 0=none, 1=tier1, 2=tier2, 3=tier3
+    game_time: float = 0.0  # seconds
     opponent_army: float = 0.0
     map_control: float = 0.5
     opponent_base_count: float = 1.0
@@ -110,45 +127,51 @@ class GameState:
 class SC2FeatureExtractor:
     """Converts a GameState into a normalised feature vector."""
 
-    NORMALISATION_MAX = np.array([
-        2000.0,   # minerals
-        1500.0,   # gas
-        200.0,    # supply_used
-        200.0,    # supply_cap
-        80.0,     # workers
-        120.0,    # army_supply
-        6.0,      # base_count
-        3.0,      # tech_level
-        1200.0,   # game_time
-        120.0,    # opp_army
-        1.0,      # map_control  (already 0-1)
-        6.0,      # opp_bases
-        200.0,    # energy
-        10.0,     # upgrades
-        5000.0,   # kill_score
-        5000.0,   # loss_score
-    ], dtype=np.float32)
+    NORMALISATION_MAX = np.array(
+        [
+            2000.0,  # minerals
+            1500.0,  # gas
+            200.0,  # supply_used
+            200.0,  # supply_cap
+            80.0,  # workers
+            120.0,  # army_supply
+            6.0,  # base_count
+            3.0,  # tech_level
+            1200.0,  # game_time
+            120.0,  # opp_army
+            1.0,  # map_control  (already 0-1)
+            6.0,  # opp_bases
+            200.0,  # energy
+            10.0,  # upgrades
+            5000.0,  # kill_score
+            5000.0,  # loss_score
+        ],
+        dtype=np.float32,
+    )
 
     def extract(self, state: GameState) -> np.ndarray:
         """Returns a normalised float32 vector of length FEATURE_DIM."""
-        raw = np.array([
-            state.minerals,
-            state.gas,
-            state.supply_used,
-            state.supply_cap,
-            state.worker_count,
-            state.army_supply,
-            state.base_count,
-            state.tech_level,
-            state.game_time,
-            state.opponent_army,
-            state.map_control,
-            state.opponent_base_count,
-            state.energy,
-            state.upgrade_count,
-            state.kill_score,
-            state.loss_score,
-        ], dtype=np.float32)
+        raw = np.array(
+            [
+                state.minerals,
+                state.gas,
+                state.supply_used,
+                state.supply_cap,
+                state.worker_count,
+                state.army_supply,
+                state.base_count,
+                state.tech_level,
+                state.game_time,
+                state.opponent_army,
+                state.map_control,
+                state.opponent_base_count,
+                state.energy,
+                state.upgrade_count,
+                state.kill_score,
+                state.loss_score,
+            ],
+            dtype=np.float32,
+        )
         return np.clip(raw / self.NORMALISATION_MAX, 0.0, 1.0)
 
     def extract_batch(self, states: List[GameState]) -> np.ndarray:
@@ -160,11 +183,14 @@ class SC2FeatureExtractor:
 # Pure-NumPy fallback model
 # ---------------------------------------------------------------------------
 
+
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-x))
 
+
 def _relu(x: np.ndarray) -> np.ndarray:
     return np.maximum(0.0, x)
+
 
 def _softmax(x: np.ndarray) -> np.ndarray:
     e = np.exp(x - x.max(axis=-1, keepdims=True))
@@ -196,7 +222,7 @@ class NumpyDenseLayer:
             return _sigmoid(z)
         if self.activation == "softmax":
             return _softmax(z)
-        return z   # linear
+        return z  # linear
 
 
 class NumpyWinPredictor:
@@ -207,18 +233,20 @@ class NumpyWinPredictor:
 
     def __init__(self) -> None:
         self.layers = [
-            NumpyDenseLayer(FEATURE_DIM, 128, "relu",    seed=1),
-            NumpyDenseLayer(128,         64,  "relu",    seed=2),
-            NumpyDenseLayer(64,          1,   "sigmoid", seed=3),
+            NumpyDenseLayer(FEATURE_DIM, 128, "relu", seed=1),
+            NumpyDenseLayer(128, 64, "relu", seed=2),
+            NumpyDenseLayer(64, 1, "sigmoid", seed=3),
         ]
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         h = x
         for layer in self.layers:
             h = layer.forward(h)
-        return h   # shape (..., 1)
+        return h  # shape (..., 1)
 
-    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int = 10, lr: float = 0.01) -> List[float]:
+    def fit(
+        self, X: np.ndarray, y: np.ndarray, epochs: int = 10, lr: float = 0.01
+    ) -> List[float]:
         """
         Mini-batch SGD with binary cross-entropy.
         Returns list of epoch losses.
@@ -231,7 +259,7 @@ class NumpyWinPredictor:
             epoch_loss = 0.0
             batches = 0
             for start in range(0, n, batch_size):
-                batch_idx = idx[start:start + batch_size]
+                batch_idx = idx[start : start + batch_size]
                 xb, yb = X[batch_idx], y[batch_idx]
 
                 # Forward
@@ -258,8 +286,12 @@ class NumpyWinPredictor:
 
             losses.append(epoch_loss / batches)
             if (epoch + 1) % 5 == 0 or epoch == 0:
-                log.info("  [NumPy WinPredictor] Epoch %d/%d — loss=%.4f",
-                         epoch + 1, epochs, losses[-1])
+                log.info(
+                    "  [NumPy WinPredictor] Epoch %d/%d — loss=%.4f",
+                    epoch + 1,
+                    epochs,
+                    losses[-1],
+                )
         return losses
 
     def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict[str, float]:
@@ -278,16 +310,16 @@ class NumpyBuildOrderClassifier:
 
     def __init__(self) -> None:
         self.layers = [
-            NumpyDenseLayer(FEATURE_DIM, 128,              "relu",    seed=10),
-            NumpyDenseLayer(128,         64,               "relu",    seed=11),
-            NumpyDenseLayer(64,          NUM_BUILD_CLASSES, "softmax", seed=12),
+            NumpyDenseLayer(FEATURE_DIM, 128, "relu", seed=10),
+            NumpyDenseLayer(128, 64, "relu", seed=11),
+            NumpyDenseLayer(64, NUM_BUILD_CLASSES, "softmax", seed=12),
         ]
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         h = x
         for layer in self.layers:
             h = layer.forward(h)
-        return h   # shape (..., NUM_BUILD_CLASSES)
+        return h  # shape (..., NUM_BUILD_CLASSES)
 
     def predict_class(self, x: np.ndarray) -> np.ndarray:
         return np.argmax(self.predict(x), axis=-1)
@@ -296,6 +328,7 @@ class NumpyBuildOrderClassifier:
 # ---------------------------------------------------------------------------
 # Keras-based models (used when TF_AVAILABLE)
 # ---------------------------------------------------------------------------
+
 
 def build_win_predictor_keras(
     input_dim: int = FEATURE_DIM,
@@ -311,7 +344,9 @@ def build_win_predictor_keras(
     model = keras.Sequential(
         [
             layers.Input(shape=(input_dim,), name="game_state_input"),
-            layers.Dense(128, activation="relu", kernel_regularizer=reg, name="dense_1"),
+            layers.Dense(
+                128, activation="relu", kernel_regularizer=reg, name="dense_1"
+            ),
             layers.BatchNormalization(name="bn_1"),
             layers.Dropout(dropout_rate, name="dropout_1"),
             layers.Dense(64, activation="relu", kernel_regularizer=reg, name="dense_2"),
@@ -345,7 +380,9 @@ def build_build_order_classifier_keras(
     model = keras.Sequential(
         [
             layers.Input(shape=(input_dim,), name="game_state_input"),
-            layers.Dense(128, activation="relu", kernel_regularizer=reg, name="dense_1"),
+            layers.Dense(
+                128, activation="relu", kernel_regularizer=reg, name="dense_1"
+            ),
             layers.BatchNormalization(name="bn_1"),
             layers.Dropout(dropout_rate, name="dropout_1"),
             layers.Dense(64, activation="relu", kernel_regularizer=reg, name="dense_2"),
@@ -367,6 +404,7 @@ def build_build_order_classifier_keras(
 # Synthetic data generation
 # ---------------------------------------------------------------------------
 
+
 def generate_synthetic_data(
     n_samples: int = 5000,
     seed: int = 42,
@@ -382,12 +420,12 @@ def generate_synthetic_data(
     features = rng.uniform(0.0, 1.0, (n_samples, FEATURE_DIM)).astype(np.float32)
 
     # Heuristic win labels based on economic and military factors
-    worker_norm   = features[:, 4]    # workers
-    army_norm     = features[:, 5]    # army supply
-    bases         = features[:, 6]    # base_count
-    opp_army      = features[:, 9]    # opponent_army
-    map_ctrl      = features[:, 10]   # map_control
-    opp_bases     = features[:, 11]   # opp_bases
+    worker_norm = features[:, 4]  # workers
+    army_norm = features[:, 5]  # army supply
+    bases = features[:, 6]  # base_count
+    opp_army = features[:, 9]  # opponent_army
+    map_ctrl = features[:, 10]  # map_control
+    opp_bases = features[:, 11]  # opp_bases
 
     win_score = (
         0.30 * worker_norm
@@ -396,27 +434,27 @@ def generate_synthetic_data(
         + 0.15 * bases
         - 0.20 * opp_army
         - 0.10 * opp_bases
-        + rng.uniform(-0.15, 0.15, n_samples)   # noise
+        + rng.uniform(-0.15, 0.15, n_samples)  # noise
     )
     win_labels = (win_score > 0.5).astype(np.float32)
 
     # Build order labels — assign based on tech_level, timing, and army composition
-    tech   = features[:, 7]   # tech_level
-    time_  = features[:, 8]   # game_time
+    tech = features[:, 7]  # tech_level
+    time_ = features[:, 8]  # game_time
     army_s = features[:, 5]
 
     build_labels = np.zeros(n_samples, dtype=np.int32)
     for i in range(n_samples):
         if tech[i] > 0.6:
-            build_labels[i] = 2   # tech_rush
+            build_labels[i] = 2  # tech_rush
         elif time_[i] < 0.25 and army_s[i] > 0.4:
-            build_labels[i] = 1   # early_aggression
+            build_labels[i] = 1  # early_aggression
         elif worker_norm[i] > 0.6 and bases[i] > 0.5:
-            build_labels[i] = 0   # macro_economy
+            build_labels[i] = 0  # macro_economy
         elif opp_army[i] > 0.6:
-            build_labels[i] = 3   # defensive_turtle
+            build_labels[i] = 3  # defensive_turtle
         else:
-            build_labels[i] = 4   # timing_attack
+            build_labels[i] = 4  # timing_attack
 
     return features, win_labels, build_labels
 
@@ -424,6 +462,7 @@ def generate_synthetic_data(
 # ---------------------------------------------------------------------------
 # WinPredictor (unified interface)
 # ---------------------------------------------------------------------------
+
 
 class WinPredictor:
     """
@@ -456,11 +495,16 @@ class WinPredictor:
         log.info("Training WinPredictor (%s) on %d samples...", self._backend, len(X))
         if TF_AVAILABLE:
             callbacks = [
-                EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True),
-                ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-6),
+                EarlyStopping(
+                    monitor="val_loss", patience=5, restore_best_weights=True
+                ),
+                ReduceLROnPlateau(
+                    monitor="val_loss", factor=0.5, patience=3, min_lr=1e-6
+                ),
             ]
             history = self._model.fit(
-                X, y,
+                X,
+                y,
                 epochs=epochs,
                 batch_size=128,
                 validation_split=validation_split,
@@ -517,6 +561,7 @@ class WinPredictor:
 # BuildOrderClassifier (unified interface)
 # ---------------------------------------------------------------------------
 
+
 class BuildOrderClassifier:
     """
     Unified build order multi-class classifier.
@@ -545,14 +590,18 @@ class BuildOrderClassifier:
     ) -> Any:
         log.info(
             "Training BuildOrderClassifier (%s) on %d samples...",
-            self._backend, len(X),
+            self._backend,
+            len(X),
         )
         if TF_AVAILABLE:
             callbacks = [
-                EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True),
+                EarlyStopping(
+                    monitor="val_loss", patience=5, restore_best_weights=True
+                ),
             ]
             history = self._model.fit(
-                X, y,
+                X,
+                y,
                 epochs=epochs,
                 batch_size=128,
                 validation_split=validation_split,
@@ -607,6 +656,7 @@ class BuildOrderClassifier:
 # Training pipeline helper
 # ---------------------------------------------------------------------------
 
+
 def run_training_pipeline(n_samples: int = 5000, epochs: int = 30) -> None:
     """Generate synthetic data, train both models, and report metrics."""
     log.info("Generating synthetic SC2 training data (%d samples)...", n_samples)
@@ -639,6 +689,7 @@ def run_training_pipeline(n_samples: int = 5000, epochs: int = 30) -> None:
 # ---------------------------------------------------------------------------
 # Main demo
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     print("\n[SC2 Keras/ML Predictor — Phase 583]\n")
@@ -681,21 +732,60 @@ def main() -> None:
     # ---- Prediction demo ----
     print("--- Win Probability Predictions ---")
     test_states = [
-        GameState(minerals=100, gas=50, supply_used=80, supply_cap=100,
-                  worker_count=60, army_supply=20, base_count=3, tech_level=1,
-                  game_time=300, opponent_army=30, map_control=0.6,
-                  opponent_base_count=2, energy=100, upgrade_count=2,
-                  kill_score=1500, loss_score=800),
-        GameState(minerals=800, gas=400, supply_used=180, supply_cap=200,
-                  worker_count=70, army_supply=110, base_count=5, tech_level=2,
-                  game_time=900, opponent_army=60, map_control=0.7,
-                  opponent_base_count=2, energy=150, upgrade_count=6,
-                  kill_score=4000, loss_score=1000),
-        GameState(minerals=30, gas=0, supply_used=10, supply_cap=14,
-                  worker_count=10, army_supply=0, base_count=1, tech_level=0,
-                  game_time=30, opponent_army=20, map_control=0.2,
-                  opponent_base_count=2, energy=50, upgrade_count=0,
-                  kill_score=0, loss_score=500),
+        GameState(
+            minerals=100,
+            gas=50,
+            supply_used=80,
+            supply_cap=100,
+            worker_count=60,
+            army_supply=20,
+            base_count=3,
+            tech_level=1,
+            game_time=300,
+            opponent_army=30,
+            map_control=0.6,
+            opponent_base_count=2,
+            energy=100,
+            upgrade_count=2,
+            kill_score=1500,
+            loss_score=800,
+        ),
+        GameState(
+            minerals=800,
+            gas=400,
+            supply_used=180,
+            supply_cap=200,
+            worker_count=70,
+            army_supply=110,
+            base_count=5,
+            tech_level=2,
+            game_time=900,
+            opponent_army=60,
+            map_control=0.7,
+            opponent_base_count=2,
+            energy=150,
+            upgrade_count=6,
+            kill_score=4000,
+            loss_score=1000,
+        ),
+        GameState(
+            minerals=30,
+            gas=0,
+            supply_used=10,
+            supply_cap=14,
+            worker_count=10,
+            army_supply=0,
+            base_count=1,
+            tech_level=0,
+            game_time=30,
+            opponent_army=20,
+            map_control=0.2,
+            opponent_base_count=2,
+            energy=50,
+            upgrade_count=0,
+            kill_score=0,
+            loss_score=500,
+        ),
     ]
     state_labels = ["Mid-game dominant", "Late-game supreme", "Early disaster"]
 

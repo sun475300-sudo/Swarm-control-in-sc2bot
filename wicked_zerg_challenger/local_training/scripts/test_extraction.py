@@ -4,8 +4,8 @@
 Quick replay extraction test helper.
 """
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 logger = logging.getLogger("TestExtraction")
 

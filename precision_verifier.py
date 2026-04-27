@@ -3,14 +3,14 @@ Ultra-Precision Logic Verification System
 Checks for logic conflicts and ensures computational accuracy
 """
 
+import hashlib
 import json
 import time
-import hashlib
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any, Tuple, Set
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Set, Tuple
 
 
 @dataclass

@@ -10,10 +10,9 @@ from __future__ import annotations
 
 from typing import Optional, Sequence, Tuple
 
-
 try:
-    import pyopencl as cl
     import numpy as np
+    import pyopencl as cl
 except Exception:
     cl = None
     np = None
@@ -30,7 +29,11 @@ def _ensure_opencl():
 
     if cl is None or np is None:
         return False
-    if _OPENCL_CTX is not None and _OPENCL_QUEUE is not None and _OPENCL_PRG is not None:
+    if (
+        _OPENCL_CTX is not None
+        and _OPENCL_QUEUE is not None
+        and _OPENCL_PRG is not None
+    ):
         return True
 
     try:
@@ -77,7 +80,9 @@ def nearest_point_index_opencl(
             out_np = np.empty((n,), dtype=np.float32)
 
             mf = cl.mem_flags
-            points_buf = cl.Buffer(_OPENCL_CTX, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=points_np)
+            points_buf = cl.Buffer(
+                _OPENCL_CTX, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=points_np
+            )
             out_buf = cl.Buffer(_OPENCL_CTX, mf.WRITE_ONLY, out_np.nbytes)
 
             _OPENCL_PRG.dist_sq(

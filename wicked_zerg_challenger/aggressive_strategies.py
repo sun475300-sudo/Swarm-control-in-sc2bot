@@ -12,16 +12,16 @@ Aggressive Early Game Strategies - 초반 공격 전략 모음
 7. ★ Overlord Drop (대군주 드랍 견제) ★
 """
 
+import logging
+import math
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
-import math
-import logging
 
 logger = logging.getLogger("AggressiveStrategies")
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
@@ -38,13 +38,14 @@ except ImportError:
 
 class AggressiveStrategyType(Enum):
     """공격 전략 타입"""
+
     NONE = "none"
-    TWELVE_POOL = "12pool"           # 12드론 저글링 러시
+    TWELVE_POOL = "12pool"  # 12드론 저글링 러시
     BANELING_BUST = "baneling_bust"  # 맹독충 올인
-    RAVAGER_RUSH = "ravager_rush"    # 궤멸충 담즙 러시
-    TUNNELING_CLAWS = "tunneling"    # 잠복 바퀴
-    PROXY_HATCH = "proxy_hatch"      # 전진 해처리
-    NYDUS_ALLIN = "nydus_allin"      # 땅굴망 올인
+    RAVAGER_RUSH = "ravager_rush"  # 궤멸충 담즙 러시
+    TUNNELING_CLAWS = "tunneling"  # 잠복 바퀴
+    PROXY_HATCH = "proxy_hatch"  # 전진 해처리
+    NYDUS_ALLIN = "nydus_allin"  # 땅굴망 올인
     OVERLORD_DROP = "overlord_drop"  # ★ 대군주 드랍 견제
 
 
@@ -154,6 +155,7 @@ class AggressiveStrategyExecutor:
             return AggressiveStrategyType.NONE
 
         import random
+
         roll = random.random()
 
         # 50% Chance: Standard Macro (No Aggressive Strategy)
@@ -164,7 +166,7 @@ class AggressiveStrategyExecutor:
             return self.active_strategy
 
         # 50% Chance: Special Tactics (Aggressive or Cheese)
-        
+
         # 종족별 전략 선택
         if "Terran" in enemy_race:
             # 테란 상대: 맹독충 올인 / 궤멸충 러시
@@ -172,17 +174,17 @@ class AggressiveStrategyExecutor:
                 self.active_strategy = AggressiveStrategyType.BANELING_BUST
             else:
                 self.active_strategy = AggressiveStrategyType.RAVAGER_RUSH
-                
+
         elif "Protoss" in enemy_race:
             # 프로토스 상대: 궤멸충 러시 / 땅굴망 / 12풀
             r = random.random()
             if r < 0.4:
                 self.active_strategy = AggressiveStrategyType.RAVAGER_RUSH
             elif r < 0.7:
-                 self.active_strategy = AggressiveStrategyType.NYDUS_ALLIN
+                self.active_strategy = AggressiveStrategyType.NYDUS_ALLIN
             else:
-                 self.active_strategy = AggressiveStrategyType.TWELVE_POOL
-                 
+                self.active_strategy = AggressiveStrategyType.TWELVE_POOL
+
         elif "Zerg" in enemy_race:
             # 저그 상대: 12풀 / 맹독충 올인
             if random.random() < 0.6:
@@ -205,7 +207,10 @@ class AggressiveStrategyExecutor:
         if not authority:
             return True  # authority 시스템 없으면 허용
         from unit_authority_manager import AuthorityLevel
-        return authority.request_unit(unit_tag, self._authority_system_name, AuthorityLevel.COMBAT)
+
+        return authority.request_unit(
+            unit_tag, self._authority_system_name, AuthorityLevel.COMBAT
+        )
 
     async def execute(self, iteration: int) -> None:
         """
@@ -261,8 +266,8 @@ class AggressiveStrategyExecutor:
             pending = self.bot.already_pending(UnitTypeId.ZERGLING)
             if zerglings.amount + pending < config["ling_count_attack"]:
                 if self.bot.can_afford(UnitTypeId.ZERGLING) and self.bot.larva.exists:
-                     # SpawningPool이 완료되어야 생산 가능
-                     if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                    # SpawningPool이 완료되어야 생산 가능
+                    if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                         self.bot.do(self.bot.larva.first.train(UnitTypeId.ZERGLING))
 
             if zerglings.amount >= config["ling_count_attack"] and not self._lings_sent:
@@ -284,7 +289,9 @@ class AggressiveStrategyExecutor:
 
         if self.bot.can_afford(UnitTypeId.SPAWNINGPOOL):
             # ★★★ ALWAYS use TechCoordinator (no fallback to direct build) ★★★
-            if tech_coordinator and not tech_coordinator.is_planned(UnitTypeId.SPAWNINGPOOL):
+            if tech_coordinator and not tech_coordinator.is_planned(
+                UnitTypeId.SPAWNINGPOOL
+            ):
                 if not self.bot.townhalls.exists:
                     return
                 target_pos = self.bot.townhalls.first.position.towards(
@@ -294,7 +301,7 @@ class AggressiveStrategyExecutor:
                     UnitTypeId.SPAWNINGPOOL,
                     target_pos,
                     PRIORITY_STRATEGY,
-                    "AggressiveStrategies"
+                    "AggressiveStrategies",
                 )
                 self._pool_started = True
                 logger.info("Spawning Pool requested via TechCoordinator!")
@@ -332,7 +339,9 @@ class AggressiveStrategyExecutor:
 
         # 2. 맹독충 둥지 건설
         baneling_nest = self.bot.structures(UnitTypeId.BANELINGNEST)
-        if not baneling_nest.exists and not self.bot.already_pending(UnitTypeId.BANELINGNEST):
+        if not baneling_nest.exists and not self.bot.already_pending(
+            UnitTypeId.BANELINGNEST
+        ):
             if self.bot.can_afford(UnitTypeId.BANELINGNEST):
                 await self._build_structure(UnitTypeId.BANELINGNEST)
                 return
@@ -350,12 +359,15 @@ class AggressiveStrategyExecutor:
                 self.blackboard.request_production(
                     unit_type=UnitTypeId.ZERGLING,
                     count=needed,
-                    requester="AggressiveStrategies"
+                    requester="AggressiveStrategies",
                 )
         else:
             # Blackboard 없을 때 폴백 (기존 로직)
             pending_zerglings = self.bot.already_pending(UnitTypeId.ZERGLING)
-            if zerglings.amount + pending_zerglings < target_zerglings and self.bot.larva.exists:
+            if (
+                zerglings.amount + pending_zerglings < target_zerglings
+                and self.bot.larva.exists
+            ):
                 if self.bot.can_afford(UnitTypeId.ZERGLING):
                     self.bot.do(self.bot.larva.first.train(UnitTypeId.ZERGLING))
 
@@ -383,10 +395,14 @@ class AggressiveStrategyExecutor:
         # 적 구조물 (벽) 찾기
         enemy_structures = getattr(self.bot, "enemy_structures", [])
         wall_structures = [
-            s for s in enemy_structures
-            if s.type_id in [
-                UnitTypeId.SUPPLYDEPOT, UnitTypeId.SUPPLYDEPOTLOWERED,
-                UnitTypeId.BARRACKS, UnitTypeId.PYLON
+            s
+            for s in enemy_structures
+            if s.type_id
+            in [
+                UnitTypeId.SUPPLYDEPOT,
+                UnitTypeId.SUPPLYDEPOTLOWERED,
+                UnitTypeId.BARRACKS,
+                UnitTypeId.PYLON,
             ]
         ]
 
@@ -418,7 +434,9 @@ class AggressiveStrategyExecutor:
 
         # 1. 바퀴굴 건설
         roach_warren = self.bot.structures(UnitTypeId.ROACHWARREN)
-        if not roach_warren.exists and not self.bot.already_pending(UnitTypeId.ROACHWARREN):
+        if not roach_warren.exists and not self.bot.already_pending(
+            UnitTypeId.ROACHWARREN
+        ):
             if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                 if self.bot.can_afford(UnitTypeId.ROACHWARREN):
                     await self._build_structure(UnitTypeId.ROACHWARREN)
@@ -438,7 +456,7 @@ class AggressiveStrategyExecutor:
                     self.blackboard.request_production(
                         unit_type=UnitTypeId.ROACH,
                         count=needed,
-                        requester="AggressiveStrategies"
+                        requester="AggressiveStrategies",
                     )
             else:
                 # Blackboard 없을 때 폴백
@@ -450,8 +468,11 @@ class AggressiveStrategyExecutor:
 
         # 3. 궤멸충 변태
         ravagers = self.bot.units(UnitTypeId.RAVAGER)
-        if roaches.amount >= config["roach_count"] and ravagers.amount < config["ravager_count"]:
-            for roach in roaches[:config["ravager_count"]]:
+        if (
+            roaches.amount >= config["roach_count"]
+            and ravagers.amount < config["ravager_count"]
+        ):
+            for roach in roaches[: config["ravager_count"]]:
                 if self.bot.can_afford(UnitTypeId.RAVAGER):
                     self.bot.do(roach(AbilityId.MORPHTORAVAGER_RAVAGER))
             self._ravagers_ready = True
@@ -471,8 +492,9 @@ class AggressiveStrategyExecutor:
 
         for structure in enemy_structures:
             if structure.type_id in [
-                UnitTypeId.BUNKER, UnitTypeId.PHOTONCANNON,
-                UnitTypeId.SHIELDBATTERY
+                UnitTypeId.BUNKER,
+                UnitTypeId.PHOTONCANNON,
+                UnitTypeId.SHIELDBATTERY,
             ]:
                 priority_targets.append(structure)
 
@@ -487,7 +509,9 @@ class AggressiveStrategyExecutor:
             if AbilityId.EFFECT_CORROSIVEBILE in abilities:
                 if priority_targets:
                     target = min(priority_targets, key=lambda t: ravager.distance_to(t))
-                    self.bot.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
+                    self.bot.do(
+                        ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position)
+                    )
                     logger.info(f"Bile targeting {target.type_id.name}")
                 else:
                     # 타겟 없으면 적 본진 공격
@@ -517,7 +541,9 @@ class AggressiveStrategyExecutor:
             if self.bot.structures(UnitTypeId.LAIR).ready.exists:
                 if roach_warren.ready.exists:
                     if self.bot.can_afford(UpgradeId.TUNNELINGCLAWS):
-                        self.bot.do(roach_warren.first.research(UpgradeId.TUNNELINGCLAWS))
+                        self.bot.do(
+                            roach_warren.first.research(UpgradeId.TUNNELINGCLAWS)
+                        )
                         self._tunneling_upgrade_started = True
                         logger.info("Tunneling Claws upgrade started!")
 
@@ -534,7 +560,7 @@ class AggressiveStrategyExecutor:
                 self.blackboard.request_production(
                     unit_type=UnitTypeId.ROACH,
                     count=needed,
-                    requester="AggressiveStrategies"
+                    requester="AggressiveStrategies",
                 )
         else:
             # Blackboard 없을 때 폴백
@@ -589,16 +615,22 @@ class AggressiveStrategyExecutor:
             if workers.exists:
                 # 최대 2마리까지 파견 (redundancy)
                 target_drone_count = 2
-                current_alive_drones = sum(1 for tag in self._proxy_drones if self.bot.workers.find_by_tag(tag))
+                current_alive_drones = sum(
+                    1 for tag in self._proxy_drones if self.bot.workers.find_by_tag(tag)
+                )
 
                 if current_alive_drones < target_drone_count:
-                    drones_to_send = min(target_drone_count - current_alive_drones, workers.amount)
+                    drones_to_send = min(
+                        target_drone_count - current_alive_drones, workers.amount
+                    )
                     for _ in range(drones_to_send):
                         drone = workers.random
                         if drone and drone.tag not in self._proxy_drones:
                             self.bot.do(drone.move(self._proxy_location))
                             self._proxy_drones.add(drone.tag)
-                            logger.info(f"Drone sent to proxy location! (Total sent: {len(self._proxy_drones)})")
+                            logger.info(
+                                f"Drone sent to proxy location! (Total sent: {len(self._proxy_drones)})"
+                            )
 
         # 3. 해처리 건설
         proxy_hatch = None
@@ -610,15 +642,21 @@ class AggressiveStrategyExecutor:
         if proxy_hatch is None and not self.bot.already_pending(UnitTypeId.HATCHERY):
             for drone_tag in self._proxy_drones:
                 drone = self.bot.workers.find_by_tag(drone_tag)
-                if drone and drone.distance_to(self._proxy_location) < 8:  # ★ IMPROVED: 5 → 8 거리 완화 ★
+                if (
+                    drone and drone.distance_to(self._proxy_location) < 8
+                ):  # ★ IMPROVED: 5 → 8 거리 완화 ★
                     if self.bot.can_afford(UnitTypeId.HATCHERY):
-                        self.bot.do(drone.build(UnitTypeId.HATCHERY, self._proxy_location))
+                        self.bot.do(
+                            drone.build(UnitTypeId.HATCHERY, self._proxy_location)
+                        )
                         logger.info(f"Building proxy Hatchery!")
                         break  # ★ 한 드론만 건설하면 충분 ★
 
         # 4. 가시 촉수 건설
         if proxy_hatch and proxy_hatch.is_ready:
-            spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(15, self._proxy_location)
+            spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(
+                15, self._proxy_location
+            )
             if spines.amount < config["spine_count"]:
                 if self.bot.can_afford(UnitTypeId.SPINECRAWLER):
                     await self._build_spine_at_proxy(proxy_hatch.position)
@@ -629,7 +667,9 @@ class AggressiveStrategyExecutor:
             return None
 
         enemy_base = self.bot.enemy_start_locations[0]
-        our_base = self.bot.townhalls.first.position if self.bot.townhalls.exists else None
+        our_base = (
+            self.bot.townhalls.first.position if self.bot.townhalls.exists else None
+        )
 
         if our_base is None:
             return None
@@ -667,7 +707,9 @@ class AggressiveStrategyExecutor:
 
         # 2. 땅굴망 건설
         nydus_network = self.bot.structures(UnitTypeId.NYDUSNETWORK)
-        if not nydus_network.exists and not self.bot.already_pending(UnitTypeId.NYDUSNETWORK):
+        if not nydus_network.exists and not self.bot.already_pending(
+            UnitTypeId.NYDUSNETWORK
+        ):
             if game_time >= config["nydus_timing"]:
                 if self.bot.structures(UnitTypeId.LAIR).ready.exists:
                     if self.bot.can_afford(UnitTypeId.NYDUSNETWORK):
@@ -687,7 +729,7 @@ class AggressiveStrategyExecutor:
                 self.blackboard.request_production(
                     unit_type=UnitTypeId.QUEEN,
                     count=needed,
-                    requester="AggressiveStrategies"
+                    requester="AggressiveStrategies",
                 )
         else:
             # Blackboard 없을 때 폴백
@@ -711,7 +753,11 @@ class AggressiveStrategyExecutor:
         # 5. 땅굴 벌레 확인 및 추적
         nydus_worms = self.bot.structures(UnitTypeId.NYDUSCANAL)
         if nydus_worms.exists and self._nydus_built:
-            worm = nydus_worms.closest_to(self._nydus_location) if self._nydus_location else nydus_worms.first
+            worm = (
+                nydus_worms.closest_to(self._nydus_location)
+                if self._nydus_location
+                else nydus_worms.first
+            )
             if worm and worm.is_ready:
                 self._nydus_worm_tag = worm.tag
 
@@ -778,9 +824,15 @@ class AggressiveStrategyExecutor:
 
         # Worm 근처의 아군 유닛 찾기 (반경 15)
         our_units = self.bot.units.filter(
-            lambda u: u.distance_to(nydus_worm) < 15 and
-            u.type_id in {UnitTypeId.QUEEN, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-                          UnitTypeId.ZERGLING, UnitTypeId.RAVAGER}
+            lambda u: u.distance_to(nydus_worm) < 15
+            and u.type_id
+            in {
+                UnitTypeId.QUEEN,
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.ZERGLING,
+                UnitTypeId.RAVAGER,
+            }
         )
 
         if not our_units:
@@ -792,7 +844,8 @@ class AggressiveStrategyExecutor:
             lambda u: u.type_id in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
         )
         enemy_army = self.bot.enemy_units.filter(
-            lambda u: u.type_id not in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
+            lambda u: u.type_id
+            not in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
         )
 
         # 우선순위: 1. 일꾼 2. 건물 3. 군대
@@ -831,7 +884,7 @@ class AggressiveStrategyExecutor:
         """구조물 건설 유틸리티 (점막 체크 포함)"""
         if not self.bot.townhalls.exists:
             return
-            
+
         # Use TechCoordinator if available
         tech_coordinator = getattr(self.bot, "tech_coordinator", None)
         PRIORITY_STRATEGY = 75
@@ -839,14 +892,11 @@ class AggressiveStrategyExecutor:
         pos = self.bot.townhalls.first.position.towards(
             self.bot.game_info.map_center, 5
         )
-        
+
         if tech_coordinator:
-             if not tech_coordinator.is_planned(structure_type):
+            if not tech_coordinator.is_planned(structure_type):
                 tech_coordinator.request_structure(
-                    structure_type,
-                    pos,
-                    PRIORITY_STRATEGY,
-                    "AggressiveStrategies"
+                    structure_type, pos, PRIORITY_STRATEGY, "AggressiveStrategies"
                 )
                 return
 
@@ -857,9 +907,7 @@ class AggressiveStrategyExecutor:
         # 점막 체크 헬퍼 사용
         if self.placement_helper:
             success = await self.placement_helper.build_structure_safely(
-                structure_type,
-                pos,
-                max_distance=15.0
+                structure_type, pos, max_distance=15.0
             )
             if success:
                 return
@@ -888,7 +936,9 @@ class AggressiveStrategyExecutor:
             "pool_started": self._pool_started,
             "lings_sent": self._lings_sent,
             "ravagers_ready": self._ravagers_ready,
-            "proxy_location": str(self._proxy_location) if self._proxy_location else None,
+            "proxy_location": (
+                str(self._proxy_location) if self._proxy_location else None
+            ),
             "nydus_built": self._nydus_built,
             "overlord_drop_active": self._overlord_drop_active,
         }
@@ -910,17 +960,26 @@ class AggressiveStrategyExecutor:
         game_time = getattr(self.bot, "time", 0)
 
         # 1. Ventral Sacs 업그레이드 (배주머니)
-        if game_time >= config["ventral_sacs_timing"] and not hasattr(self, "_ventral_sacs_started"):
+        if game_time >= config["ventral_sacs_timing"] and not hasattr(
+            self, "_ventral_sacs_started"
+        ):
             # Lair가 있어야 함
-            if self.bot.structures(UnitTypeId.LAIR).ready.exists or self.bot.structures(UnitTypeId.HIVE).ready.exists:
-                if self.bot.can_afford(UpgradeId.OVERLORDSPEED):  # Ventral Sacs는 UpgradeId가 다름
+            if (
+                self.bot.structures(UnitTypeId.LAIR).ready.exists
+                or self.bot.structures(UnitTypeId.HIVE).ready.exists
+            ):
+                if self.bot.can_afford(
+                    UpgradeId.OVERLORDSPEED
+                ):  # Ventral Sacs는 UpgradeId가 다름
                     # 업그레이드 시작 (정확한 ability ID 필요)
                     try:
                         lairs = self.bot.structures(UnitTypeId.LAIR).ready
                         if lairs:
                             # OVERLORDSPEED는 pneumatized sacs (이동속도)
                             # Ventral sacs는 OVERLORDTRANSPORT
-                            self.bot.do(lairs.first.research(UpgradeId.OVERLORDTRANSPORT))
+                            self.bot.do(
+                                lairs.first.research(UpgradeId.OVERLORDTRANSPORT)
+                            )
                             self._ventral_sacs_started = True
                             logger.info(f"Ventral Sacs upgrade started!")
                     except Exception as e:
@@ -931,11 +990,13 @@ class AggressiveStrategyExecutor:
             overlords = self.bot.units(UnitTypeId.OVERLORD)
             if overlords.amount >= config["drop_overlord_count"]:
                 # 2기 선택
-                for i, ol in enumerate(overlords[:config["drop_overlord_count"]]):
+                for i, ol in enumerate(overlords[: config["drop_overlord_count"]]):
                     self._drop_overlords.add(ol.tag)
 
                 self._overlord_drop_active = True
-                logger.info(f"{len(self._drop_overlords)} Overlords designated for drop!")
+                logger.info(
+                    f"{len(self._drop_overlords)} Overlords designated for drop!"
+                )
 
         # 3. 저글링 탑승 및 드랍 실행
         if self._overlord_drop_active:
@@ -947,13 +1008,15 @@ class AggressiveStrategyExecutor:
             return
 
         # 드랍용 대군주 확인
-        drop_overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in(self._drop_overlords)
+        drop_overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in(
+            self._drop_overlords
+        )
         if not drop_overlords:
             return
 
         # 저글링 확인
         zerglings = self.bot.units(UnitTypeId.ZERGLING)
-        
+
         # 목표: 적 멀티 (자연 확장)
         enemy_base = self.bot.enemy_start_locations[0]
         # 적 본진 안쪽으로 조금 더 들어가서 드랍
@@ -961,7 +1024,7 @@ class AggressiveStrategyExecutor:
 
         for overlord in drop_overlords:
             # 탑승한 유닛 수 확인
-            cargo = getattr(overlord, "cargo_used", 0) # cargo_left가 아니라 cargo_used
+            cargo = getattr(overlord, "cargo_used", 0)  # cargo_left가 아니라 cargo_used
             max_cargo = 8  # 대군주 최대 탑승 8
 
             # 1. 아직 탑승 안했으면 저글링 탑승
@@ -986,8 +1049,8 @@ class AggressiveStrategyExecutor:
                     if available_lings.exists:
                         # 3마리씩 호출
                         for ling in available_lings[:3]:
-                             self.bot.do(ling.move(overlord.position))
-            
+                            self.bot.do(ling.move(overlord.position))
+
             # 2. 꽉 찼거나 적당히 찼으면 드랍 위치로 이동
             elif cargo > 0:
                 if overlord.distance_to(drop_target) > 4:
@@ -1002,7 +1065,7 @@ class AggressiveStrategyExecutor:
                         logger.info(f"Unloading units at {drop_target}")
                     except Exception as e:
                         logger.error(f"Unload failed: {e}")
-            
+
         # 드랍된 유닛 제어는 별도 로직이나 기본 공격 로직이 처리할 것임
 
     # ========== ★★★ 멀티 견제 시스템 (NEW) ★★★ ==========
@@ -1049,11 +1112,19 @@ class AggressiveStrategyExecutor:
             for structure in self.bot.enemy_structures:
                 if structure.is_structure:
                     # 타운홀 확인
-                    if structure.type_id in [UnitTypeId.COMMANDCENTER, UnitTypeId.NEXUS, UnitTypeId.HATCHERY]:
+                    if structure.type_id in [
+                        UnitTypeId.COMMANDCENTER,
+                        UnitTypeId.NEXUS,
+                        UnitTypeId.HATCHERY,
+                    ]:
                         enemy_expansions.append(structure.position)
 
         # 적 확장이 없으면 예상 위치로
-        if not enemy_expansions and hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            not enemy_expansions
+            and hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_base = self.bot.enemy_start_locations[0]
             map_center = self.bot.game_info.map_center
             # 자연 확장 예상 위치
@@ -1064,7 +1135,9 @@ class AggressiveStrategyExecutor:
             return
 
         # 견제 목표: 가장 가까운 적 확장
-        target = min(enemy_expansions, key=lambda pos: harass_lings.center.distance_to(pos))
+        target = min(
+            enemy_expansions, key=lambda pos: harass_lings.center.distance_to(pos)
+        )
 
         # 견제 명령
         for ling in harass_lings:
@@ -1073,4 +1146,6 @@ class AggressiveStrategyExecutor:
             self.bot.do(ling.attack(target))
             self._rush_units.add(ling.tag)
 
-        logger.info(f"[{int(game_time)}s] Sending {harass_lings.amount} Zerglings to harass enemy expansion!")
+        logger.info(
+            f"[{int(game_time)}s] Sending {harass_lings.amount} Zerglings to harass enemy expansion!"
+        )

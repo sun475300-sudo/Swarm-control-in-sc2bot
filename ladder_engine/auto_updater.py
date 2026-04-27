@@ -4,14 +4,14 @@ Blue-green deployment system for zero-downtime model updates.
 Handles version checking, model download, hot-swapping, and rollback.
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
 import hashlib
 import json
 import os
 import shutil
-import time
 import threading
+import time
+from dataclasses import dataclass, field
+from typing import Callable, Dict, List, Optional
 
 
 @dataclass
@@ -89,7 +89,7 @@ class AutoUpdater:
     check → download → verify → hot-swap → rollback on failure.
     """
 
-    CHECK_INTERVAL_S = 3600    # check for updates every hour
+    CHECK_INTERVAL_S = 3600  # check for updates every hour
     MAX_RETRIES = 3
 
     def __init__(
@@ -292,5 +292,7 @@ class AutoUpdater:
             "standby_version": self.vm.standby_version(),
             "background_running": self._running,
             "update_count": len([r for r in self._update_history if r.get("success")]),
-            "rollback_count": len([r for r in self._update_history if r.get("action") == "rollback"]),
+            "rollback_count": len(
+                [r for r in self._update_history if r.get("action") == "rollback"]
+            ),
         }

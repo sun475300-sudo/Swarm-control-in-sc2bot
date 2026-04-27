@@ -3,47 +3,54 @@ Phase 430: Hamilton - Declarative SC2 Feature Engineering Dataflow
 Functions-as-nodes dataflow for reproducible SC2 feature pipelines.
 """
 
-import pandas as pd
 import numpy as np
-from hamilton.function_modifiers import tag, extract_columns, check_output
-from hamilton import driver, base
-
+import pandas as pd
+from hamilton import base, driver
+from hamilton.function_modifiers import check_output, extract_columns, tag
 
 # ── Raw input nodes ───────────────────────────────────────────────────────────
+
 
 def game_state(data_path: str) -> pd.DataFrame:
     """Load raw SC2 game state data from storage."""
     np.random.seed(42)
     n = 1000
-    return pd.DataFrame({
-        "game_id": [f"g{i:05d}" for i in range(n)],
-        "race": np.random.choice(["Zerg", "Terran", "Protoss"], n),
-        "opponent_race": np.random.choice(["Zerg", "Terran", "Protoss"], n),
-        "game_time": np.random.uniform(60, 1500, n),
-        "minerals": np.random.randint(0, 2000, n),
-        "gas": np.random.randint(0, 1000, n),
-        "supply_used": np.random.randint(12, 200, n),
-        "supply_cap": np.random.randint(14, 200, n),
-        "army_supply": np.random.randint(0, 100, n),
-        "worker_count": np.random.randint(10, 75, n),
-        "expansion_count": np.random.randint(1, 5, n),
-        "army_value": np.random.randint(500, 15000, n),
-        "winner": np.random.randint(0, 2, n),
-    })
+    return pd.DataFrame(
+        {
+            "game_id": [f"g{i:05d}" for i in range(n)],
+            "race": np.random.choice(["Zerg", "Terran", "Protoss"], n),
+            "opponent_race": np.random.choice(["Zerg", "Terran", "Protoss"], n),
+            "game_time": np.random.uniform(60, 1500, n),
+            "minerals": np.random.randint(0, 2000, n),
+            "gas": np.random.randint(0, 1000, n),
+            "supply_used": np.random.randint(12, 200, n),
+            "supply_cap": np.random.randint(14, 200, n),
+            "army_supply": np.random.randint(0, 100, n),
+            "worker_count": np.random.randint(10, 75, n),
+            "expansion_count": np.random.randint(1, 5, n),
+            "army_value": np.random.randint(500, 15000, n),
+            "winner": np.random.randint(0, 2, n),
+        }
+    )
 
 
 # ── Feature engineering nodes ─────────────────────────────────────────────────
 
+
 @tag(feature_group="economy", feature_type="ratio")
 def mineral_gas_ratio(game_state: pd.DataFrame) -> pd.Series:
     """Ratio of minerals to gas banked (economy balance indicator)."""
-    return (game_state["minerals"] / (game_state["gas"] + 1)).rename("mineral_gas_ratio")
+    return (game_state["minerals"] / (game_state["gas"] + 1)).rename(
+        "mineral_gas_ratio"
+    )
 
 
 @tag(feature_group="macro", feature_type="ratio")
 def supply_ratio(game_state: pd.DataFrame) -> pd.Series:
     """Supply used / supply cap (saturation indicator)."""
-    return (game_state["supply_used"] / game_state["supply_cap"].clip(lower=1)).rename("supply_ratio")
+    return (game_state["supply_used"] / game_state["supply_cap"].clip(lower=1)).rename(
+        "supply_ratio"
+    )
 
 
 @tag(feature_group="macro", feature_type="binary")
@@ -55,7 +62,9 @@ def is_supply_blocked(supply_ratio: pd.Series) -> pd.Series:
 @tag(feature_group="economy", feature_type="derived")
 def worker_saturation(game_state: pd.DataFrame) -> pd.Series:
     """Workers per expansion (measures worker efficiency)."""
-    return (game_state["worker_count"] / game_state["expansion_count"].clip(lower=1)).rename("worker_saturation")
+    return (
+        game_state["worker_count"] / game_state["expansion_count"].clip(lower=1)
+    ).rename("worker_saturation")
 
 
 @tag(feature_group="combat", feature_type="ratio")
@@ -74,10 +83,13 @@ def normalized_game_time(game_state: pd.DataFrame) -> pd.Series:
 @tag(feature_group="macro", feature_type="derived")
 def expansion_rate(game_state: pd.DataFrame) -> pd.Series:
     """Expansions per unit of game time (pace indicator)."""
-    return (game_state["expansion_count"] / (game_state["game_time"] / 60 + 1)).rename("expansion_rate")
+    return (game_state["expansion_count"] / (game_state["game_time"] / 60 + 1)).rename(
+        "expansion_rate"
+    )
 
 
 # ── Feature assembly node ─────────────────────────────────────────────────────
+
 
 def unit_features(
     game_state: pd.DataFrame,
@@ -90,26 +102,34 @@ def unit_features(
     expansion_rate: pd.Series,
 ) -> pd.DataFrame:
     """Assemble all engineered features into a single DataFrame."""
-    return pd.concat([
-        game_state[["game_id", "race", "opponent_race", "winner"]],
-        mineral_gas_ratio,
-        supply_ratio,
-        is_supply_blocked,
-        worker_saturation,
-        army_efficiency,
-        normalized_game_time,
-        expansion_rate,
-    ], axis=1)
+    return pd.concat(
+        [
+            game_state[["game_id", "race", "opponent_race", "winner"]],
+            mineral_gas_ratio,
+            supply_ratio,
+            is_supply_blocked,
+            worker_saturation,
+            army_efficiency,
+            normalized_game_time,
+            expansion_rate,
+        ],
+        axis=1,
+    )
 
 
 # ── Normalization node ────────────────────────────────────────────────────────
+
 
 def normalized_features(unit_features: pd.DataFrame) -> pd.DataFrame:
     """Min-max normalize all numeric feature columns."""
     df = unit_features.copy()
     num_cols = [
-        "mineral_gas_ratio", "supply_ratio", "worker_saturation",
-        "army_efficiency", "normalized_game_time", "expansion_rate",
+        "mineral_gas_ratio",
+        "supply_ratio",
+        "worker_saturation",
+        "army_efficiency",
+        "normalized_game_time",
+        "expansion_rate",
     ]
     for col in num_cols:
         col_min = df[col].min()
@@ -120,17 +140,23 @@ def normalized_features(unit_features: pd.DataFrame) -> pd.DataFrame:
 
 # ── Final model input node ────────────────────────────────────────────────────
 
+
 def model_input(normalized_features: pd.DataFrame) -> np.ndarray:
     """Convert normalized feature DataFrame to model-ready numpy array."""
     feature_cols = [
-        "mineral_gas_ratio", "supply_ratio", "is_supply_blocked",
-        "worker_saturation", "army_efficiency", "normalized_game_time",
+        "mineral_gas_ratio",
+        "supply_ratio",
+        "is_supply_blocked",
+        "worker_saturation",
+        "army_efficiency",
+        "normalized_game_time",
         "expansion_rate",
     ]
     return normalized_features[feature_cols].values.astype(np.float32)
 
 
 # ── Driver runner ─────────────────────────────────────────────────────────────
+
 
 def run_sc2_hamilton_dataflow(data_path: str = "data/replays/") -> None:
     """Execute the Hamilton dataflow graph for SC2 feature engineering."""

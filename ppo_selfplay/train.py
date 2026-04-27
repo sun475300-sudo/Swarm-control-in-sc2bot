@@ -4,30 +4,33 @@ Main training loop orchestrating PPO self-play for SC2 bot.
 Supports distributed training (Ray / multiprocessing) and Wandb experiment tracking.
 """
 
-import os
-import json
-import time
-import torch
 import argparse
-from dataclasses import dataclass, asdict
-from typing import Optional, Dict, Any
+import json
+import os
+import time
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Optional
+
+import torch
 
 try:
     import wandb
+
     WANDB_AVAILABLE = True
 except ImportError:
     WANDB_AVAILABLE = False
 
 try:
     import ray
+
     RAY_AVAILABLE = True
 except ImportError:
     RAY_AVAILABLE = False
 
-from ppo_trainer import PPOTrainer, PPOConfig
-from selfplay_manager import SelfPlayManager, OpponentPool, AgentRole
-from reward_shaper import RewardShaper, RewardMode
 from curriculum import CurriculumScheduler
+from ppo_trainer import PPOConfig, PPOTrainer
+from reward_shaper import RewardMode, RewardShaper
+from selfplay_manager import AgentRole, OpponentPool, SelfPlayManager
 
 
 @dataclass
@@ -49,25 +52,41 @@ def setup_training(cfg: TrainConfig, ppo_cfg: PPOConfig) -> Dict[str, Any]:
     torch.manual_seed(cfg.seed)
     os.makedirs(cfg.checkpoint_dir, exist_ok=True)
     trainer = PPOTrainer(ppo_cfg)
-    pool = OpponentPool(max_size=20, checkpoint_dir=os.path.join(cfg.checkpoint_dir, "opponents"))
-    selfplay = SelfPlayManager(trainer.model, pool, checkpoint_interval=cfg.checkpoint_interval)
+    pool = OpponentPool(
+        max_size=20, checkpoint_dir=os.path.join(cfg.checkpoint_dir, "opponents")
+    )
+    selfplay = SelfPlayManager(
+        trainer.model, pool, checkpoint_interval=cfg.checkpoint_interval
+    )
     curriculum = CurriculumScheduler()
     reward_shaper = RewardShaper(mode=RewardMode.SHAPED, curriculum_stage=0)
 
     if cfg.use_wandb and WANDB_AVAILABLE:
-        wandb.init(project=cfg.wandb_project, name=cfg.wandb_run_name,
-                   config={**asdict(cfg), **asdict(ppo_cfg)})
+        wandb.init(
+            project=cfg.wandb_project,
+            name=cfg.wandb_run_name,
+            config={**asdict(cfg), **asdict(ppo_cfg)},
+        )
 
-    return {"trainer": trainer, "selfplay": selfplay,
-            "curriculum": curriculum, "reward_shaper": reward_shaper}
+    return {
+        "trainer": trainer,
+        "selfplay": selfplay,
+        "curriculum": curriculum,
+        "reward_shaper": reward_shaper,
+    }
 
 
-def save_checkpoint(trainer: PPOTrainer, selfplay: SelfPlayManager,
-                    step: int, path: str) -> None:
+def save_checkpoint(
+    trainer: PPOTrainer, selfplay: SelfPlayManager, step: int, path: str
+) -> None:
     os.makedirs(path, exist_ok=True)
     torch.save(trainer.model.state_dict(), os.path.join(path, f"model_{step}.pt"))
     torch.save(trainer.optimizer.state_dict(), os.path.join(path, f"optim_{step}.pt"))
-    meta = {"step": step, "main_elo": selfplay.main_elo, "pool_size": len(selfplay.pool)}
+    meta = {
+        "step": step,
+        "main_elo": selfplay.main_elo,
+        "pool_size": len(selfplay.pool),
+    }
     with open(os.path.join(path, f"meta_{step}.json"), "w") as f:
         json.dump(meta, f)
     print(f"[Checkpoint] saved at step {step} -> {path}")
@@ -122,11 +141,13 @@ def run_training_loop(cfg: TrainConfig, ppo_cfg: PPOConfig, env_factory) -> None
             elapsed = time.time() - t0
             fps = step / max(elapsed, 1)
             stats = selfplay.get_stats()
-            print(f"[Step {step:>8}] fps={fps:.0f} | "
-                  f"policy_loss={metrics['policy_loss']:.4f} | "
-                  f"value_loss={metrics['value_loss']:.4f} | "
-                  f"elo={stats['main_elo']:.1f} | "
-                  f"win_rate={stats['win_rate']:.2%}")
+            print(
+                f"[Step {step:>8}] fps={fps:.0f} | "
+                f"policy_loss={metrics['policy_loss']:.4f} | "
+                f"value_loss={metrics['value_loss']:.4f} | "
+                f"elo={stats['main_elo']:.1f} | "
+                f"win_rate={stats['win_rate']:.2%}"
+            )
             if cfg.use_wandb and WANDB_AVAILABLE:
                 wandb.log({**metrics, **stats, "step": step, "fps": fps})
 
@@ -146,7 +167,9 @@ def run_training_loop(cfg: TrainConfig, ppo_cfg: PPOConfig, env_factory) -> None
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="PPO Self-Play Training for SC2 Zerg Bot")
+    parser = argparse.ArgumentParser(
+        description="PPO Self-Play Training for SC2 Zerg Bot"
+    )
     parser.add_argument("--total_steps", type=int, default=10_000_000)
     parser.add_argument("--use_wandb", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
@@ -168,28 +191,38 @@ if __name__ == "__main__":
     # Gymnasium 환경 팩토리 연결
     try:
         import sys
+
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
         from gymnasium_env.sc2_gym_env import SC2ZergEnv
 
         def env_factory(**kwargs):
             return SC2ZergEnv(max_frames=kwargs.get("max_frames", 20000))
+
     except ImportError:
         print("[WARN] SC2ZergEnv not found. Using fallback dummy environment.")
 
         class _DummyEnv:
             """Minimal fallback env for testing the training loop."""
+
             def __init__(self, **kw):
                 import numpy as np
+
                 self._np = np
                 self.observation_space_n = 16
                 self.action_space_n = 7
+
             def reset(self):
                 return self._np.zeros(self.observation_space_n, dtype="float32")
+
             def step(self, action):
                 obs = self._np.random.rand(self.observation_space_n).astype("float32")
                 reward = self._np.random.uniform(-1, 1)
                 done = self._np.random.random() < 0.005
-                info = {"winner": "self"} if done and self._np.random.random() > 0.5 else {}
+                info = (
+                    {"winner": "self"}
+                    if done and self._np.random.random() > 0.5
+                    else {}
+                )
                 return obs, reward, done, info
 
         def env_factory(**kwargs):

@@ -10,10 +10,10 @@ Graceful fallback to regex-based parsing when spaCy is absent.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
-import hashlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -32,7 +32,7 @@ try:
     from spacy.matcher import Matcher, PhraseMatcher
     from spacy.tokens import Doc, Span, Token
     from spacy.training import Example
-    from spacy.util import minibatch, compounding
+    from spacy.util import compounding, minibatch
 
     SPACY_AVAILABLE = True
     log.info("spaCy %s available.", spacy.__version__)
@@ -49,41 +49,272 @@ except ImportError:
 
 SC2_UNITS: Dict[str, Dict[str, Any]] = {
     # Zerg
-    "zergling": {"race": "zerg", "tier": 1, "type": "unit", "supply": 0.5, "minerals": 25, "gas": 0},
-    "baneling": {"race": "zerg", "tier": 1, "type": "unit", "supply": 0.5, "minerals": 25, "gas": 25},
-    "roach": {"race": "zerg", "tier": 1, "type": "unit", "supply": 2, "minerals": 75, "gas": 25},
-    "ravager": {"race": "zerg", "tier": 2, "type": "unit", "supply": 3, "minerals": 75, "gas": 75},
-    "hydralisk": {"race": "zerg", "tier": 2, "type": "unit", "supply": 2, "minerals": 100, "gas": 50},
-    "lurker": {"race": "zerg", "tier": 3, "type": "unit", "supply": 3, "minerals": 50, "gas": 100},
-    "mutalisk": {"race": "zerg", "tier": 2, "type": "unit", "supply": 2, "minerals": 100, "gas": 100},
-    "corruptor": {"race": "zerg", "tier": 2, "type": "unit", "supply": 2, "minerals": 150, "gas": 100},
-    "brood lord": {"race": "zerg", "tier": 3, "type": "unit", "supply": 4, "minerals": 150, "gas": 150},
-    "infestor": {"race": "zerg", "tier": 2, "type": "unit", "supply": 2, "minerals": 100, "gas": 150},
-    "swarm host": {"race": "zerg", "tier": 2, "type": "unit", "supply": 3, "minerals": 100, "gas": 75},
-    "ultralisk": {"race": "zerg", "tier": 3, "type": "unit", "supply": 6, "minerals": 275, "gas": 200},
-    "viper": {"race": "zerg", "tier": 3, "type": "unit", "supply": 3, "minerals": 100, "gas": 200},
-    "queen": {"race": "zerg", "tier": 1, "type": "unit", "supply": 2, "minerals": 150, "gas": 0},
-    "overlord": {"race": "zerg", "tier": 1, "type": "unit", "supply": 0, "minerals": 100, "gas": 0},
-    "overseer": {"race": "zerg", "tier": 2, "type": "unit", "supply": 0, "minerals": 50, "gas": 50},
-    "drone": {"race": "zerg", "tier": 1, "type": "unit", "supply": 1, "minerals": 50, "gas": 0},
+    "zergling": {
+        "race": "zerg",
+        "tier": 1,
+        "type": "unit",
+        "supply": 0.5,
+        "minerals": 25,
+        "gas": 0,
+    },
+    "baneling": {
+        "race": "zerg",
+        "tier": 1,
+        "type": "unit",
+        "supply": 0.5,
+        "minerals": 25,
+        "gas": 25,
+    },
+    "roach": {
+        "race": "zerg",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 75,
+        "gas": 25,
+    },
+    "ravager": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 3,
+        "minerals": 75,
+        "gas": 75,
+    },
+    "hydralisk": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 50,
+    },
+    "lurker": {
+        "race": "zerg",
+        "tier": 3,
+        "type": "unit",
+        "supply": 3,
+        "minerals": 50,
+        "gas": 100,
+    },
+    "mutalisk": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 100,
+    },
+    "corruptor": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 150,
+        "gas": 100,
+    },
+    "brood lord": {
+        "race": "zerg",
+        "tier": 3,
+        "type": "unit",
+        "supply": 4,
+        "minerals": 150,
+        "gas": 150,
+    },
+    "infestor": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 150,
+    },
+    "swarm host": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 3,
+        "minerals": 100,
+        "gas": 75,
+    },
+    "ultralisk": {
+        "race": "zerg",
+        "tier": 3,
+        "type": "unit",
+        "supply": 6,
+        "minerals": 275,
+        "gas": 200,
+    },
+    "viper": {
+        "race": "zerg",
+        "tier": 3,
+        "type": "unit",
+        "supply": 3,
+        "minerals": 100,
+        "gas": 200,
+    },
+    "queen": {
+        "race": "zerg",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 150,
+        "gas": 0,
+    },
+    "overlord": {
+        "race": "zerg",
+        "tier": 1,
+        "type": "unit",
+        "supply": 0,
+        "minerals": 100,
+        "gas": 0,
+    },
+    "overseer": {
+        "race": "zerg",
+        "tier": 2,
+        "type": "unit",
+        "supply": 0,
+        "minerals": 50,
+        "gas": 50,
+    },
+    "drone": {
+        "race": "zerg",
+        "tier": 1,
+        "type": "unit",
+        "supply": 1,
+        "minerals": 50,
+        "gas": 0,
+    },
     # Terran
-    "marine": {"race": "terran", "tier": 1, "type": "unit", "supply": 1, "minerals": 50, "gas": 0},
-    "marauder": {"race": "terran", "tier": 1, "type": "unit", "supply": 2, "minerals": 100, "gas": 25},
-    "medivac": {"race": "terran", "tier": 2, "type": "unit", "supply": 2, "minerals": 100, "gas": 100},
-    "siege tank": {"race": "terran", "tier": 2, "type": "unit", "supply": 3, "minerals": 150, "gas": 125},
-    "hellion": {"race": "terran", "tier": 1, "type": "unit", "supply": 2, "minerals": 100, "gas": 0},
-    "thor": {"race": "terran", "tier": 3, "type": "unit", "supply": 6, "minerals": 300, "gas": 200},
-    "banshee": {"race": "terran", "tier": 2, "type": "unit", "supply": 3, "minerals": 150, "gas": 100},
-    "battlecruiser": {"race": "terran", "tier": 3, "type": "unit", "supply": 6, "minerals": 400, "gas": 300},
+    "marine": {
+        "race": "terran",
+        "tier": 1,
+        "type": "unit",
+        "supply": 1,
+        "minerals": 50,
+        "gas": 0,
+    },
+    "marauder": {
+        "race": "terran",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 25,
+    },
+    "medivac": {
+        "race": "terran",
+        "tier": 2,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 100,
+    },
+    "siege tank": {
+        "race": "terran",
+        "tier": 2,
+        "type": "unit",
+        "supply": 3,
+        "minerals": 150,
+        "gas": 125,
+    },
+    "hellion": {
+        "race": "terran",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 0,
+    },
+    "thor": {
+        "race": "terran",
+        "tier": 3,
+        "type": "unit",
+        "supply": 6,
+        "minerals": 300,
+        "gas": 200,
+    },
+    "banshee": {
+        "race": "terran",
+        "tier": 2,
+        "type": "unit",
+        "supply": 3,
+        "minerals": 150,
+        "gas": 100,
+    },
+    "battlecruiser": {
+        "race": "terran",
+        "tier": 3,
+        "type": "unit",
+        "supply": 6,
+        "minerals": 400,
+        "gas": 300,
+    },
     # Protoss
-    "zealot": {"race": "protoss", "tier": 1, "type": "unit", "supply": 2, "minerals": 100, "gas": 0},
-    "stalker": {"race": "protoss", "tier": 1, "type": "unit", "supply": 2, "minerals": 125, "gas": 50},
-    "adept": {"race": "protoss", "tier": 1, "type": "unit", "supply": 2, "minerals": 100, "gas": 25},
-    "immortal": {"race": "protoss", "tier": 2, "type": "unit", "supply": 4, "minerals": 275, "gas": 100},
-    "colossus": {"race": "protoss", "tier": 3, "type": "unit", "supply": 6, "minerals": 300, "gas": 200},
-    "void ray": {"race": "protoss", "tier": 2, "type": "unit", "supply": 4, "minerals": 250, "gas": 150},
-    "carrier": {"race": "protoss", "tier": 3, "type": "unit", "supply": 6, "minerals": 350, "gas": 250},
-    "archon": {"race": "protoss", "tier": 2, "type": "unit", "supply": 4, "minerals": 0, "gas": 0},
+    "zealot": {
+        "race": "protoss",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 0,
+    },
+    "stalker": {
+        "race": "protoss",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 125,
+        "gas": 50,
+    },
+    "adept": {
+        "race": "protoss",
+        "tier": 1,
+        "type": "unit",
+        "supply": 2,
+        "minerals": 100,
+        "gas": 25,
+    },
+    "immortal": {
+        "race": "protoss",
+        "tier": 2,
+        "type": "unit",
+        "supply": 4,
+        "minerals": 275,
+        "gas": 100,
+    },
+    "colossus": {
+        "race": "protoss",
+        "tier": 3,
+        "type": "unit",
+        "supply": 6,
+        "minerals": 300,
+        "gas": 200,
+    },
+    "void ray": {
+        "race": "protoss",
+        "tier": 2,
+        "type": "unit",
+        "supply": 4,
+        "minerals": 250,
+        "gas": 150,
+    },
+    "carrier": {
+        "race": "protoss",
+        "tier": 3,
+        "type": "unit",
+        "supply": 6,
+        "minerals": 350,
+        "gas": 250,
+    },
+    "archon": {
+        "race": "protoss",
+        "tier": 2,
+        "type": "unit",
+        "supply": 4,
+        "minerals": 0,
+        "gas": 0,
+    },
 }
 
 SC2_BUILDINGS: Dict[str, Dict[str, Any]] = {
@@ -135,7 +366,11 @@ SC2_STRATEGIES: Dict[str, Dict[str, Any]] = {
     "ultra ling": {"race": "zerg", "category": "composition", "timing": "late"},
     "proxy hatch": {"race": "zerg", "category": "cheese", "timing": "early"},
     "two base muta": {"race": "zerg", "category": "timing", "timing": "mid"},
-    "three hatch before pool": {"race": "zerg", "category": "greedy", "timing": "early"},
+    "three hatch before pool": {
+        "race": "zerg",
+        "category": "greedy",
+        "timing": "early",
+    },
     "cannon rush": {"race": "protoss", "category": "cheese", "timing": "early"},
     "four gate": {"race": "protoss", "category": "all-in", "timing": "early"},
     "marine push": {"race": "terran", "category": "timing", "timing": "early"},
@@ -144,33 +379,73 @@ SC2_STRATEGIES: Dict[str, Dict[str, Any]] = {
 }
 
 TIMING_MARKERS = [
-    "early game", "mid game", "late game",
-    "before", "after", "then", "first", "next", "when",
-    "at", "once", "as soon as", "immediately",
-    "@", "supply", "timing", "push", "all-in",
+    "early game",
+    "mid game",
+    "late game",
+    "before",
+    "after",
+    "then",
+    "first",
+    "next",
+    "when",
+    "at",
+    "once",
+    "as soon as",
+    "immediately",
+    "@",
+    "supply",
+    "timing",
+    "push",
+    "all-in",
 ]
 
 ACTION_VERBS = [
-    "build", "make", "train", "produce", "morph",
-    "attack", "push", "rush", "harass", "defend",
-    "expand", "scout", "research", "upgrade", "tech",
-    "transition", "rally", "retreat", "flank", "contain",
-    "drop", "nydus", "creep", "inject", "spread",
-    "mass", "spam", "stack", "split", "surround",
+    "build",
+    "make",
+    "train",
+    "produce",
+    "morph",
+    "attack",
+    "push",
+    "rush",
+    "harass",
+    "defend",
+    "expand",
+    "scout",
+    "research",
+    "upgrade",
+    "tech",
+    "transition",
+    "rally",
+    "retreat",
+    "flank",
+    "contain",
+    "drop",
+    "nydus",
+    "creep",
+    "inject",
+    "spread",
+    "mass",
+    "spam",
+    "stack",
+    "split",
+    "surround",
 ]
 
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SC2Entity:
     """A recognized SC2 entity in text."""
+
     text: str
-    label: str           # UNIT, BUILDING, STRATEGY, TIMING, ACTION, QUANTITY
+    label: str  # UNIT, BUILDING, STRATEGY, TIMING, ACTION, QUANTITY
     start_char: int
     end_char: int
-    linked_id: Optional[str] = None   # key into SC2_UNITS / SC2_BUILDINGS
+    linked_id: Optional[str] = None  # key into SC2_UNITS / SC2_BUILDINGS
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -187,6 +462,7 @@ class SC2Entity:
 @dataclass
 class ParsedCommand:
     """A single extracted command from strategy text."""
+
     action: str
     target: Optional[str] = None
     quantity: Optional[int] = None
@@ -208,6 +484,7 @@ class ParsedCommand:
 @dataclass
 class ParsedStrategy:
     """Full parsed strategy document."""
+
     raw_text: str
     entities: List[SC2Entity] = field(default_factory=list)
     commands: List[ParsedCommand] = field(default_factory=list)
@@ -239,6 +516,7 @@ class ParsedStrategy:
 # ---------------------------------------------------------------------------
 # Text preprocessor
 # ---------------------------------------------------------------------------
+
 
 class SC2TextPreprocessor:
     """Clean and normalise SC2 game chat / strategy guide text."""
@@ -311,6 +589,7 @@ class SC2TextPreprocessor:
             minutes, seconds = int(m.group(1)), int(m.group(2))
             total = minutes * 60 + seconds
             return f"[time:{total}s]"
+
         return cls._RE_GAME_TIME.sub(_replace, text)
 
     @classmethod
@@ -329,6 +608,7 @@ class SC2TextPreprocessor:
 # ---------------------------------------------------------------------------
 
 if SPACY_AVAILABLE:
+
     @Language.factory("sc2_strategy_classifier")
     def create_strategy_classifier(nlp: Language, name: str):
         return SC2StrategyClassifierComponent(nlp)
@@ -339,8 +619,14 @@ if SPACY_AVAILABLE:
         def __init__(self, nlp: Language):
             self.nlp = nlp
             self._categories = [
-                "rush", "timing", "all-in", "macro", "cheese",
-                "composition", "greedy", "aggression",
+                "rush",
+                "timing",
+                "all-in",
+                "macro",
+                "cheese",
+                "composition",
+                "greedy",
+                "aggression",
             ]
             # Register custom Doc extension
             if not Doc.has_extension("sc2_strategy_category"):
@@ -357,10 +643,23 @@ if SPACY_AVAILABLE:
             scores: Dict[str, float] = {c: 0.0 for c in self._categories}
 
             # Keyword-based scoring
-            rush_words = {"rush", "pool first", "12 pool", "13 pool", "early aggression"}
+            rush_words = {
+                "rush",
+                "pool first",
+                "12 pool",
+                "13 pool",
+                "early aggression",
+            }
             allin_words = {"all-in", "all in", "flood", "commit", "one base"}
             cheese_words = {"cheese", "proxy", "cannon rush", "nydus", "bunker rush"}
-            macro_words = {"macro", "expand", "greedy", "economic", "hatch first", "three base"}
+            macro_words = {
+                "macro",
+                "expand",
+                "greedy",
+                "economic",
+                "hatch first",
+                "three base",
+            }
             timing_words = {"timing", "push", "attack at", "hit at", "before"}
 
             for w in rush_words:
@@ -381,10 +680,26 @@ if SPACY_AVAILABLE:
 
             # Race detection
             race = None
-            zerg_score = sum(1 for ent_name in SC2_UNITS if SC2_UNITS[ent_name]["race"] == "zerg" and ent_name in text_lower)
-            terran_score = sum(1 for ent_name in SC2_UNITS if SC2_UNITS[ent_name]["race"] == "terran" and ent_name in text_lower)
-            protoss_score = sum(1 for ent_name in SC2_UNITS if SC2_UNITS[ent_name]["race"] == "protoss" and ent_name in text_lower)
-            race_scores = {"zerg": zerg_score, "terran": terran_score, "protoss": protoss_score}
+            zerg_score = sum(
+                1
+                for ent_name in SC2_UNITS
+                if SC2_UNITS[ent_name]["race"] == "zerg" and ent_name in text_lower
+            )
+            terran_score = sum(
+                1
+                for ent_name in SC2_UNITS
+                if SC2_UNITS[ent_name]["race"] == "terran" and ent_name in text_lower
+            )
+            protoss_score = sum(
+                1
+                for ent_name in SC2_UNITS
+                if SC2_UNITS[ent_name]["race"] == "protoss" and ent_name in text_lower
+            )
+            race_scores = {
+                "zerg": zerg_score,
+                "terran": terran_score,
+                "protoss": protoss_score,
+            }
             if max(race_scores.values()) > 0:
                 race = max(race_scores, key=race_scores.get)
 
@@ -394,7 +709,10 @@ if SPACY_AVAILABLE:
                 timing = "early"
             elif any(w in text_lower for w in ["mid game", "mid-game", "transition"]):
                 timing = "mid"
-            elif any(w in text_lower for w in ["late game", "late-game", "brood lord", "ultralisk"]):
+            elif any(
+                w in text_lower
+                for w in ["late game", "late-game", "brood lord", "ultralisk"]
+            ):
                 timing = "late"
 
             best_cat = max(scores, key=scores.get)
@@ -413,6 +731,7 @@ if SPACY_AVAILABLE:
 # ---------------------------------------------------------------------------
 # NER training data generator
 # ---------------------------------------------------------------------------
+
 
 class SC2TrainingDataGenerator:
     """Generate spaCy-format training data for custom NER on SC2 text."""
@@ -434,6 +753,7 @@ class SC2TrainingDataGenerator:
     def generate(cls, n_samples: int = 200) -> List[Tuple[str, Dict[str, Any]]]:
         """Generate n_samples training examples with entity annotations."""
         import random
+
         training_data = []
         unit_names = list(SC2_UNITS.keys())
         building_names = list(SC2_BUILDINGS.keys())
@@ -492,7 +812,9 @@ class SC2TrainingDataGenerator:
         return training_data
 
     @staticmethod
-    def _resolve_overlaps(entities: List[Tuple[int, int, str]]) -> List[Tuple[int, int, str]]:
+    def _resolve_overlaps(
+        entities: List[Tuple[int, int, str]],
+    ) -> List[Tuple[int, int, str]]:
         """Remove overlapping entity spans, keeping the longest."""
         if not entities:
             return entities
@@ -508,6 +830,7 @@ class SC2TrainingDataGenerator:
 # ---------------------------------------------------------------------------
 # Main parser — StrategyParser
 # ---------------------------------------------------------------------------
+
 
 class StrategyParser:
     """
@@ -580,22 +903,39 @@ class StrategyParser:
 
         # ------ Matcher: structural patterns ------
         # Pattern: NUMBER + UNIT_NAME (e.g., "10 roaches")
-        self._matcher.add("QUANTITY_UNIT", [
-            [{"LIKE_NUM": True}, {"LOWER": {"IN": list(SC2_UNITS.keys())}}],
-        ])
+        self._matcher.add(
+            "QUANTITY_UNIT",
+            [
+                [{"LIKE_NUM": True}, {"LOWER": {"IN": list(SC2_UNITS.keys())}}],
+            ],
+        )
 
         # Pattern: ACTION_VERB + ...
-        self._matcher.add("ACTION_COMMAND", [
-            [{"LOWER": {"IN": ACTION_VERBS}}, {"OP": "*"}, {"LOWER": {"IN": list(SC2_UNITS.keys())}}],
-        ])
+        self._matcher.add(
+            "ACTION_COMMAND",
+            [
+                [
+                    {"LOWER": {"IN": ACTION_VERBS}},
+                    {"OP": "*"},
+                    {"LOWER": {"IN": list(SC2_UNITS.keys())}},
+                ],
+            ],
+        )
 
         # Pattern: timing "@X supply"
-        self._matcher.add("TIMING_SUPPLY", [
-            [{"TEXT": "@"}, {"LIKE_NUM": True}, {"LOWER": "supply"}],
-        ])
+        self._matcher.add(
+            "TIMING_SUPPLY",
+            [
+                [{"TEXT": "@"}, {"LIKE_NUM": True}, {"LOWER": "supply"}],
+            ],
+        )
 
-        log.info("Matchers initialised with %d unit + %d building + %d strategy phrases.",
-                 len(SC2_UNITS), len(SC2_BUILDINGS), len(SC2_STRATEGIES))
+        log.info(
+            "Matchers initialised with %d unit + %d building + %d strategy phrases.",
+            len(SC2_UNITS),
+            len(SC2_BUILDINGS),
+            len(SC2_STRATEGIES),
+        )
 
     # --------------------------------------------------------------- parsing
     def parse(self, text: str, use_cache: bool = True) -> ParsedStrategy:
@@ -642,9 +982,15 @@ class StrategyParser:
             timing=timing,
             confidence=confidence,
         )
-        log.info("Parsed strategy: classification=%s, race=%s, timing=%s, "
-                 "%d entities, %d commands",
-                 classification, race, timing, len(entities), len(commands))
+        log.info(
+            "Parsed strategy: classification=%s, race=%s, timing=%s, "
+            "%d entities, %d commands",
+            classification,
+            race,
+            timing,
+            len(entities),
+            len(commands),
+        )
         return result
 
     def _extract_entities(self, doc: Doc) -> List[SC2Entity]:
@@ -656,12 +1002,14 @@ class StrategyParser:
         for ent in doc.ents:
             span_key = (ent.start_char, ent.end_char)
             if span_key not in seen_spans:
-                entities.append(SC2Entity(
-                    text=ent.text,
-                    label=ent.label_,
-                    start_char=ent.start_char,
-                    end_char=ent.end_char,
-                ))
+                entities.append(
+                    SC2Entity(
+                        text=ent.text,
+                        label=ent.label_,
+                        start_char=ent.start_char,
+                        end_char=ent.end_char,
+                    )
+                )
                 seen_spans.add(span_key)
 
         # PhraseMatcher results
@@ -682,14 +1030,16 @@ class StrategyParser:
             elif label == "SC2_STRATEGY" and linked_id in SC2_STRATEGIES:
                 metadata = SC2_STRATEGIES[linked_id]
 
-            entities.append(SC2Entity(
-                text=span.text,
-                label=label,
-                start_char=span.start_char,
-                end_char=span.end_char,
-                linked_id=linked_id,
-                metadata=metadata,
-            ))
+            entities.append(
+                SC2Entity(
+                    text=span.text,
+                    label=label,
+                    start_char=span.start_char,
+                    end_char=span.end_char,
+                    linked_id=linked_id,
+                    metadata=metadata,
+                )
+            )
             seen_spans.add(span_key)
 
         # Matcher results (structural patterns)
@@ -700,12 +1050,14 @@ class StrategyParser:
             if span_key in seen_spans:
                 continue
             rule_name = self._nlp.vocab.strings[match_id]
-            entities.append(SC2Entity(
-                text=span.text,
-                label=rule_name,
-                start_char=span.start_char,
-                end_char=span.end_char,
-            ))
+            entities.append(
+                SC2Entity(
+                    text=span.text,
+                    label=rule_name,
+                    start_char=span.start_char,
+                    end_char=span.end_char,
+                )
+            )
             seen_spans.add(span_key)
 
         entities.sort(key=lambda e: e.start_char)
@@ -719,7 +1071,12 @@ class StrategyParser:
         for sent in doc.sents:
             for token in sent:
                 # Look for action verbs as roots or heads
-                if token.lemma_.lower() in ACTION_VERBS and token.dep_ in ("ROOT", "conj", "advcl", "xcomp"):
+                if token.lemma_.lower() in ACTION_VERBS and token.dep_ in (
+                    "ROOT",
+                    "conj",
+                    "advcl",
+                    "xcomp",
+                ):
                     action = token.lemma_.lower()
                     target = None
                     quantity = None
@@ -766,14 +1123,16 @@ class StrategyParser:
                                 target = unit_name
                                 break
 
-                    commands.append(ParsedCommand(
-                        action=action,
-                        target=target,
-                        quantity=quantity,
-                        timing=timing_str,
-                        condition=condition,
-                        priority=priority,
-                    ))
+                    commands.append(
+                        ParsedCommand(
+                            action=action,
+                            target=target,
+                            quantity=quantity,
+                            timing=timing_str,
+                            condition=condition,
+                            priority=priority,
+                        )
+                    )
                     priority += 1
 
         return commands
@@ -789,36 +1148,42 @@ class StrategyParser:
         # Entity extraction via regex
         for unit_name, info in SC2_UNITS.items():
             for m in re.finditer(r"\b" + re.escape(unit_name) + r"s?\b", text_lower):
-                entities.append(SC2Entity(
-                    text=m.group(),
-                    label="SC2_UNIT",
-                    start_char=m.start(),
-                    end_char=m.end(),
-                    linked_id=unit_name,
-                    metadata=info,
-                ))
+                entities.append(
+                    SC2Entity(
+                        text=m.group(),
+                        label="SC2_UNIT",
+                        start_char=m.start(),
+                        end_char=m.end(),
+                        linked_id=unit_name,
+                        metadata=info,
+                    )
+                )
 
         for bld_name, info in SC2_BUILDINGS.items():
             for m in re.finditer(r"\b" + re.escape(bld_name) + r"s?\b", text_lower):
-                entities.append(SC2Entity(
-                    text=m.group(),
-                    label="SC2_BUILDING",
-                    start_char=m.start(),
-                    end_char=m.end(),
-                    linked_id=bld_name,
-                    metadata=info,
-                ))
+                entities.append(
+                    SC2Entity(
+                        text=m.group(),
+                        label="SC2_BUILDING",
+                        start_char=m.start(),
+                        end_char=m.end(),
+                        linked_id=bld_name,
+                        metadata=info,
+                    )
+                )
 
         for strat_name, info in SC2_STRATEGIES.items():
             for m in re.finditer(r"\b" + re.escape(strat_name) + r"\b", text_lower):
-                entities.append(SC2Entity(
-                    text=m.group(),
-                    label="SC2_STRATEGY",
-                    start_char=m.start(),
-                    end_char=m.end(),
-                    linked_id=strat_name,
-                    metadata=info,
-                ))
+                entities.append(
+                    SC2Entity(
+                        text=m.group(),
+                        label="SC2_STRATEGY",
+                        start_char=m.start(),
+                        end_char=m.end(),
+                        linked_id=strat_name,
+                        metadata=info,
+                    )
+                )
 
         # Command extraction via regex
         cmd_pattern = re.compile(
@@ -846,12 +1211,14 @@ class StrategyParser:
             if target is None:
                 target = target_raw
 
-            commands.append(ParsedCommand(
-                action=action,
-                target=target,
-                quantity=quantity,
-                priority=priority,
-            ))
+            commands.append(
+                ParsedCommand(
+                    action=action,
+                    target=target,
+                    quantity=quantity,
+                    priority=priority,
+                )
+            )
             priority += 1
 
         # Simple classification
@@ -897,9 +1264,7 @@ class StrategyParser:
         )
 
     # ---------------------------------------------------- sentence similarity
-    def compare_strategies(
-        self, text_a: str, text_b: str
-    ) -> Dict[str, Any]:
+    def compare_strategies(self, text_a: str, text_b: str) -> Dict[str, Any]:
         """
         Compare two strategy texts using sentence similarity.
         Returns a similarity score and shared entities.
@@ -968,8 +1333,12 @@ class StrategyParser:
         for label in labels:
             ner.add_label(label)
 
-        log.info("Training NER with %d samples, %d labels: %s",
-                 len(training_data), len(labels), sorted(labels))
+        log.info(
+            "Training NER with %d samples, %d labels: %s",
+            len(training_data),
+            len(labels),
+            sorted(labels),
+        )
 
         # Training loop
         other_pipes = [pipe for pipe in nlp.pipe_names if pipe != "ner"]
@@ -978,6 +1347,7 @@ class StrategyParser:
             for iteration in range(n_iter):
                 losses = {}
                 import random as _rng
+
                 _rng.shuffle(training_data)
                 batches = minibatch(training_data, size=compounding(*batch_size_range))
                 for batch in batches:
@@ -994,7 +1364,12 @@ class StrategyParser:
 
                 ner_loss = losses.get("ner", 0.0)
                 if (iteration + 1) % 5 == 0 or iteration == 0:
-                    log.info("  Iter %3d/%d — NER loss: %.4f", iteration + 1, n_iter, ner_loss)
+                    log.info(
+                        "  Iter %3d/%d — NER loss: %.4f",
+                        iteration + 1,
+                        n_iter,
+                        ner_loss,
+                    )
 
         log.info("NER training complete.")
         return nlp
@@ -1073,6 +1448,7 @@ def quick_parse(text: str) -> ParsedStrategy:
 # ---------------------------------------------------------------------------
 # CLI / demo
 # ---------------------------------------------------------------------------
+
 
 def _demo() -> None:
     """Run a demonstration of the strategy parser."""

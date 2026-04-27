@@ -3,19 +3,19 @@ Phase 435: LiteLLM - Unified LLM Gateway for SC2 AI
 Single interface for OpenAI, Anthropic, Gemini with fallback and cost tracking.
 """
 
-import litellm
-from litellm import acompletion, completion, Router
-from litellm.utils import ModelResponse
 import asyncio
 import json
 import time
 from dataclasses import dataclass, field
 
+import litellm
+from litellm import Router, acompletion, completion
+from litellm.utils import ModelResponse
 
 # ── LiteLLM configuration ─────────────────────────────────────────────────────
 
 litellm.set_verbose = False
-litellm.drop_params = True   # Ignore unsupported params per model
+litellm.drop_params = True  # Ignore unsupported params per model
 
 # Cost-per-million-token tracking (USD approximate)
 MODEL_COSTS = {
@@ -27,6 +27,7 @@ MODEL_COSTS = {
 
 
 # ── Fallback router configuration ─────────────────────────────────────────────
+
 
 def build_sc2_router() -> Router:
     """Build LiteLLM router with fallback chain for SC2 strategy queries."""
@@ -75,6 +76,7 @@ def build_sc2_router() -> Router:
 
 # ── Cost tracker ──────────────────────────────────────────────────────────────
 
+
 @dataclass
 class CostTracker:
     total_cost_usd: float = 0.0
@@ -83,10 +85,14 @@ class CostTracker:
 
     def record(self, model: str, input_tokens: int, output_tokens: int) -> float:
         costs = MODEL_COSTS.get(model, {"input": 1.0, "output": 4.0})
-        cost = (input_tokens * costs["input"] + output_tokens * costs["output"]) / 1_000_000
+        cost = (
+            input_tokens * costs["input"] + output_tokens * costs["output"]
+        ) / 1_000_000
         self.total_cost_usd += cost
         self.calls_by_model[model] = self.calls_by_model.get(model, 0) + 1
-        self.tokens_by_model[model] = self.tokens_by_model.get(model, 0) + input_tokens + output_tokens
+        self.tokens_by_model[model] = (
+            self.tokens_by_model.get(model, 0) + input_tokens + output_tokens
+        )
         return cost
 
     def summary(self) -> dict:
@@ -98,6 +104,7 @@ class CostTracker:
 
 
 # ── SC2 Gateway ───────────────────────────────────────────────────────────────
+
 
 class SC2LLMGateway:
     """Unified LLM gateway for SC2 strategy queries."""
@@ -157,14 +164,40 @@ class SC2LLMGateway:
 # ── Demo ──────────────────────────────────────────────────────────────────────
 
 SAMPLE_GAME_STATES = [
-    {"race": "Zerg", "opponent_race": "Terran", "game_time": 180, "supply_used": 30, "supply_cap": 36, "minerals": 400, "gas": 0},
-    {"race": "Zerg", "opponent_race": "Protoss", "game_time": 360, "supply_used": 70, "supply_cap": 84, "minerals": 200, "gas": 150},
-    {"race": "Zerg", "opponent_race": "Zerg", "game_time": 600, "supply_used": 120, "supply_cap": 150, "minerals": 600, "gas": 350},
+    {
+        "race": "Zerg",
+        "opponent_race": "Terran",
+        "game_time": 180,
+        "supply_used": 30,
+        "supply_cap": 36,
+        "minerals": 400,
+        "gas": 0,
+    },
+    {
+        "race": "Zerg",
+        "opponent_race": "Protoss",
+        "game_time": 360,
+        "supply_used": 70,
+        "supply_cap": 84,
+        "minerals": 200,
+        "gas": 150,
+    },
+    {
+        "race": "Zerg",
+        "opponent_race": "Zerg",
+        "game_time": 600,
+        "supply_used": 120,
+        "supply_cap": 150,
+        "minerals": 600,
+        "gas": 350,
+    },
 ]
 
 if __name__ == "__main__":
     print("[LiteLLM] SC2 LLM Gateway initialized.")
-    print(f"  Fallback chain: claude-3-5-sonnet → gpt-4o → gemini-1.5-pro → gpt-4o-mini")
+    print(
+        f"  Fallback chain: claude-3-5-sonnet → gpt-4o → gemini-1.5-pro → gpt-4o-mini"
+    )
     print(f"  Features: Cost tracking, async batch, automatic retry")
     print(f"\n[Sample batch: {len(SAMPLE_GAME_STATES)} game states]")
     for gs in SAMPLE_GAME_STATES:

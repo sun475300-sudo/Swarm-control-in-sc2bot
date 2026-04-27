@@ -3,12 +3,12 @@ Neural Network Prediction - Predicts enemy moves using simple neural network
 HIGH PRIORITY FEATURE
 """
 
-import random
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
+import random
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("NnPrediction")
 

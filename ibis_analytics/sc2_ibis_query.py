@@ -5,11 +5,11 @@ Works across DuckDB, BigQuery, Snowflake, and more with a single API.
 
 import ibis
 import ibis.expr.datatypes as dt
-from ibis import _
 import pandas as pd
-
+from ibis import _
 
 # ── Backend configuration ─────────────────────────────────────────────────────
+
 
 def get_connection(backend: str = "duckdb"):
     """Get Ibis connection for specified backend."""
@@ -23,32 +23,41 @@ def get_connection(backend: str = "duckdb"):
 
 # ── Table schema definitions ──────────────────────────────────────────────────
 
+
 def create_sc2_tables(con) -> dict:
     """Create SC2 analytics tables."""
-    games_df = pd.DataFrame({
-        "game_id": [f"g{i:04d}" for i in range(500)],
-        "map_name": (["Berlingrad", "Ancient Cistern", "Equilibrium"] * 167)[:500],
-        "duration_sec": [180 + i * 2 for i in range(500)],
-        "patch_version": ["5.0.11"] * 500,
-    })
+    games_df = pd.DataFrame(
+        {
+            "game_id": [f"g{i:04d}" for i in range(500)],
+            "map_name": (["Berlingrad", "Ancient Cistern", "Equilibrium"] * 167)[:500],
+            "duration_sec": [180 + i * 2 for i in range(500)],
+            "patch_version": ["5.0.11"] * 500,
+        }
+    )
 
-    unit_events_df = pd.DataFrame({
-        "event_id": range(2000),
-        "game_id": [f"g{i % 500:04d}" for i in range(2000)],
-        "player_id": [i % 10 for i in range(2000)],
-        "unit_type": (["Zergling", "Marine", "Stalker", "Roach", "Medivac"] * 400)[:2000],
-        "event_type": (["created", "destroyed", "attacked"] * 667)[:2000],
-        "game_time": [i * 3.0 for i in range(2000)],
-    })
+    unit_events_df = pd.DataFrame(
+        {
+            "event_id": range(2000),
+            "game_id": [f"g{i % 500:04d}" for i in range(2000)],
+            "player_id": [i % 10 for i in range(2000)],
+            "unit_type": (["Zergling", "Marine", "Stalker", "Roach", "Medivac"] * 400)[
+                :2000
+            ],
+            "event_type": (["created", "destroyed", "attacked"] * 667)[:2000],
+            "game_time": [i * 3.0 for i in range(2000)],
+        }
+    )
 
-    player_stats_df = pd.DataFrame({
-        "player_id": range(100),
-        "player_name": [f"Player_{i}" for i in range(100)],
-        "race": (["Zerg", "Terran", "Protoss"] * 34)[:100],
-        "mmr": [1500 + i * 15 for i in range(100)],
-        "total_games": [50 + i for i in range(100)],
-        "wins": [25 + i // 2 for i in range(100)],
-    })
+    player_stats_df = pd.DataFrame(
+        {
+            "player_id": range(100),
+            "player_name": [f"Player_{i}" for i in range(100)],
+            "race": (["Zerg", "Terran", "Protoss"] * 34)[:100],
+            "mmr": [1500 + i * 15 for i in range(100)],
+            "total_games": [50 + i for i in range(100)],
+            "wins": [25 + i // 2 for i in range(100)],
+        }
+    )
 
     con.create_table("games", games_df, overwrite=True)
     con.create_table("unit_events", unit_events_df, overwrite=True)
@@ -63,17 +72,20 @@ def create_sc2_tables(con) -> dict:
 
 # ── Portable queries ──────────────────────────────────────────────────────────
 
+
 def query_win_rates(tables: dict) -> ibis.Expr:
     """Win rate by race - works on any backend."""
     ps = tables["player_stats"]
     return (
         ps.group_by("race")
-        .aggregate([
-            ps.wins.sum().name("total_wins"),
-            ps.total_games.sum().name("total_games"),
-            (ps.wins.sum() / ps.total_games.sum()).name("win_rate"),
-            ps.mmr.mean().name("avg_mmr"),
-        ])
+        .aggregate(
+            [
+                ps.wins.sum().name("total_wins"),
+                ps.total_games.sum().name("total_games"),
+                (ps.wins.sum() / ps.total_games.sum()).name("win_rate"),
+                ps.mmr.mean().name("avg_mmr"),
+            ]
+        )
         .order_by(ibis.desc("win_rate"))
     )
 
@@ -108,15 +120,18 @@ def query_game_unit_join(tables: dict) -> ibis.Expr:
     return (
         games.join(ue, games.game_id == ue.game_id)
         .group_by(["games.game_id", "map_name"])
-        .aggregate([
-            ue.event_id.count().name("total_events"),
-            ue.game_time.max().name("last_event_time"),
-        ])
+        .aggregate(
+            [
+                ue.event_id.count().name("total_events"),
+                ue.game_time.max().name("last_event_time"),
+            ]
+        )
         .order_by(ibis.desc("total_events"))
     )
 
 
 # ── Backend-agnostic runner ───────────────────────────────────────────────────
+
 
 def run_sc2_ibis_analytics(backend: str = "duckdb") -> None:
     """Run SC2 analytics on the specified Ibis backend."""

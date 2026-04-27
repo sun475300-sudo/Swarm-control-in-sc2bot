@@ -6,15 +6,15 @@ Unit tests for ManagerFactory
 Tests the factory pattern for manager initialization
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.manager_factory import ManagerFactory, ManagerConfig, ManagerPriority
+from core.manager_factory import ManagerConfig, ManagerFactory, ManagerPriority
 
 
 class TestManagerFactory(unittest.TestCase):
@@ -77,8 +77,7 @@ class TestManagerFactory(unittest.TestCase):
 
         # Priority order should be: CRITICAL < HIGH < LOW
         sorted_managers = sorted(
-            self.factory.managers.values(),
-            key=lambda m: (m.priority, m.name)
+            self.factory.managers.values(), key=lambda m: (m.priority, m.name)
         )
 
         self.assertEqual(sorted_managers[0].attribute_name, "critical")
@@ -213,5 +212,5 @@ class TestManagerConfig(unittest.TestCase):
         self.assertEqual(config.init_args["arg2"], 42)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

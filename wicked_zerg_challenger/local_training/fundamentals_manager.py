@@ -25,10 +25,12 @@ except ImportError:
         from utils.logger import get_logger as _get_logger
     except ImportError:
         import logging as _logging
-        def _get_logger(name='WickedZergBot'):
+
+        def _get_logger(name="WickedZergBot"):
             return _logging.getLogger(name)
 
-logger = _get_logger('FundamentalsManager')
+
+logger = _get_logger("FundamentalsManager")
 from pathlib import Path
 from typing import Dict, List, Optional
 

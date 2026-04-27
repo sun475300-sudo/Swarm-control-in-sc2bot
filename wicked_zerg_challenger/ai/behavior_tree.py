@@ -10,19 +10,20 @@ Behavior Tree (행동 트리) 시스템
 3. Leaf Nodes: Condition, Action
 """
 
-from abc import ABC, abstractmethod
-from typing import Optional, List, Callable, Any
-from enum import Enum
 import logging
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Any, Callable, List, Optional
 
 logger = logging.getLogger("BehaviorTree")
 
 
 class NodeStatus(Enum):
     """노드 실행 상태"""
-    SUCCESS = "SUCCESS"    # 성공
-    FAILURE = "FAILURE"    # 실패
-    RUNNING = "RUNNING"    # 실행 중
+
+    SUCCESS = "SUCCESS"  # 성공
+    FAILURE = "FAILURE"  # 실패
+    RUNNING = "RUNNING"  # 실행 중
 
 
 class BehaviorNode(ABC):
@@ -43,6 +44,7 @@ class BehaviorNode(ABC):
 
 
 # ==================== Composite Nodes ====================
+
 
 class Sequence(BehaviorNode):
     """
@@ -119,7 +121,7 @@ class Parallel(BehaviorNode):
         name: str,
         children: List[BehaviorNode],
         success_threshold: int = None,
-        failure_threshold: int = None
+        failure_threshold: int = None,
     ):
         super().__init__(name)
         self.children = children
@@ -151,6 +153,7 @@ class Parallel(BehaviorNode):
 
 
 # ==================== Decorator Nodes ====================
+
 
 class Inverter(BehaviorNode):
     """
@@ -188,7 +191,9 @@ class Repeater(BehaviorNode):
     - max_repeats: 최대 반복 횟수 (None이면 무한)
     """
 
-    def __init__(self, name: str, child: BehaviorNode, max_repeats: Optional[int] = None):
+    def __init__(
+        self, name: str, child: BehaviorNode, max_repeats: Optional[int] = None
+    ):
         super().__init__(name)
         self.child = child
         self.max_repeats = max_repeats
@@ -214,6 +219,7 @@ class Repeater(BehaviorNode):
 
 
 # ==================== Leaf Nodes ====================
+
 
 class Condition(BehaviorNode):
     """
@@ -278,6 +284,7 @@ class Action(BehaviorNode):
 
 # ==================== Behavior Tree ====================
 
+
 class BehaviorTree:
     """
     행동 트리 메인 클래스
@@ -299,6 +306,7 @@ class BehaviorTree:
 
 
 # ==================== 헬퍼 함수 ====================
+
 
 def create_condition(name: str, condition_func: Callable[[Any], bool]) -> Condition:
     """조건 노드 생성 헬퍼"""

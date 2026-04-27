@@ -6,6 +6,7 @@ Micro Focus Mode - Combat 우선순위 동적 할당
 """
 
 from typing import Optional
+
 from utils.logger import get_logger
 
 
@@ -27,7 +28,7 @@ class MicroFocusMode:
 
         # ★ 실행 빈도 조정 ★
         self.normal_interval = 8  # 일반: 8프레임마다 (약 0.35초)
-        self.alert_interval = 5   # 경계: 5프레임마다 (약 0.22초)
+        self.alert_interval = 5  # 경계: 5프레임마다 (약 0.22초)
         self.combat_interval = 3  # 전투: 3프레임마다 (약 0.13초)
         self.critical_interval = 1  # 위급: 매 프레임 (약 0.04초)
 
@@ -140,9 +141,18 @@ class MicroFocusMode:
             return 0
 
         army_types = {
-            "ZERGLING", "BANELING", "ROACH", "RAVAGER",
-            "HYDRALISK", "LURKER", "LURKERMP", "MUTALISK",
-            "CORRUPTOR", "SWARMHOST", "ULTRALISK", "BROODLORD"
+            "ZERGLING",
+            "BANELING",
+            "ROACH",
+            "RAVAGER",
+            "HYDRALISK",
+            "LURKER",
+            "LURKERMP",
+            "MUTALISK",
+            "CORRUPTOR",
+            "SWARMHOST",
+            "ULTRALISK",
+            "BROODLORD",
         }
 
         count = 0
@@ -166,7 +176,7 @@ class MicroFocusMode:
             self.normal_interval,
             self.alert_interval,
             self.combat_interval,
-            self.critical_interval
+            self.critical_interval,
         ]
         return intervals[self.focus_level]
 

@@ -4,15 +4,16 @@ SC2 Bot Quantum Policy Network — hybrid quantum-classical RL
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional
+
 import math
 import random
-
+from dataclasses import dataclass, field
+from typing import Optional
 
 try:
-    import pennylane as qml
     import numpy as np
+    import pennylane as qml
+
     PENNYLANE_AVAILABLE = True
 except ImportError:
     PENNYLANE_AVAILABLE = False
@@ -23,9 +24,9 @@ except ImportError:
 # Quantum circuit parameters
 # ─────────────────────────────────────────────
 
-N_QUBITS = 6        # Encode game state into 6 qubits
-N_LAYERS = 4        # Variational layers
-N_ACTIONS = 5       # train_drone, train_army, build, expand, attack
+N_QUBITS = 6  # Encode game state into 6 qubits
+N_LAYERS = 4  # Variational layers
+N_ACTIONS = 5  # train_drone, train_army, build, expand, attack
 
 
 # ─────────────────────────────────────────────
@@ -67,9 +68,12 @@ if PENNYLANE_AVAILABLE:
 # State encoder / action decoder
 # ─────────────────────────────────────────────
 
-def encode_state(minerals: int, gas: int, supply: int,
-                  workers: int, army: int, threat: float) -> list[float]:
+
+def encode_state(
+    minerals: int, gas: int, supply: int, workers: int, army: int, threat: float
+) -> list[float]:
     """Map game state to qubit angles [0, π]."""
+
     def clip_angle(v: float) -> float:
         return max(0.0, min(math.pi, v))
 
@@ -105,11 +109,11 @@ def decode_action(measurements: list[float]) -> int:
 # Quantum Policy Network
 # ─────────────────────────────────────────────
 
+
 class QuantumPolicyNetwork:
     """Hybrid quantum-classical policy network for SC2 RL."""
 
-    ACTIONS = ["train_drone", "train_army", "build_supply",
-               "expand", "attack"]
+    ACTIONS = ["train_drone", "train_army", "build_supply", "expand", "attack"]
 
     def __init__(self, use_quantum: bool = True):
         self.use_quantum = use_quantum and PENNYLANE_AVAILABLE
@@ -119,22 +123,23 @@ class QuantumPolicyNetwork:
     def _init_weights(self) -> None:
         if self.use_quantum:
             import numpy as np
+
             self.weights = np.random.uniform(
-                -math.pi, math.pi,
-                size=(N_LAYERS, N_QUBITS, 3)
+                -math.pi, math.pi, size=(N_LAYERS, N_QUBITS, 3)
             )
         else:
             # Classical fallback: simple linear policy
-            self.weights = [[random.uniform(-1, 1) for _ in range(N_QUBITS)]
-                            for _ in range(N_ACTIONS)]
+            self.weights = [
+                [random.uniform(-1, 1) for _ in range(N_QUBITS)]
+                for _ in range(N_ACTIONS)
+            ]
 
     def select_action(self, state_vec: list[float]) -> tuple[int, float]:
         """Returns (action_idx, log_prob)."""
         if self.use_quantum:
             import numpy as np
-            measurements = quantum_policy_circuit(
-                np.array(state_vec), self.weights
-            )
+
+            measurements = quantum_policy_circuit(np.array(state_vec), self.weights)
             action = decode_action(list(measurements))
             log_prob = math.log(1.0 / N_ACTIONS)  # uniform approximation
         else:
@@ -159,7 +164,9 @@ class QuantumPolicyNetwork:
 
         return action, log_prob
 
-    def update(self, states: list, actions: list, rewards: list, lr: float = 0.01) -> float:
+    def update(
+        self, states: list, actions: list, rewards: list, lr: float = 0.01
+    ) -> float:
         """REINFORCE policy gradient update (simplified)."""
         total_reward = sum(rewards)
         self.episode_rewards.append(total_reward)
@@ -175,9 +182,11 @@ class QuantumPolicyNetwork:
 # Training loop
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SC2Env:
     """Minimal SC2 environment for quantum RL testing."""
+
     minerals: int = 50
     gas: int = 0
     supply: int = 12
@@ -195,22 +204,31 @@ class SC2Env:
         reward = 0.0
         if action == 0:  # drone
             if self.minerals >= 50:
-                self.minerals -= 50; self.workers += 1; reward = 0.5
+                self.minerals -= 50
+                self.workers += 1
+                reward = 0.5
         elif action == 1:  # army
             if self.minerals >= 25:
-                self.minerals -= 25; self.army += 1; reward = 0.3
+                self.minerals -= 25
+                self.army += 1
+                reward = 0.3
         elif action == 2:  # supply
             if self.minerals >= 100:
-                self.minerals -= 100; self.supply += 8; reward = 0.2
+                self.minerals -= 100
+                self.supply += 8
+                reward = 0.2
         elif action == 3:  # expand
             if self.minerals >= 300:
-                self.minerals -= 300; self.workers += 4; reward = 1.0
+                self.minerals -= 300
+                self.workers += 4
+                reward = 1.0
         elif action == 4:  # attack
             reward = self.army * 0.1
 
         done = self.frame >= 500
-        state = encode_state(self.minerals, self.gas, self.supply,
-                             self.workers, self.army, self.threat)
+        state = encode_state(
+            self.minerals, self.gas, self.supply, self.workers, self.army, self.threat
+        )
         return state, reward, done
 
 
@@ -220,8 +238,9 @@ def train_quantum_agent(episodes: int = 20) -> QuantumPolicyNetwork:
 
     for ep in range(episodes):
         env = SC2Env()
-        state = encode_state(env.minerals, env.gas, env.supply,
-                             env.workers, env.army, env.threat)
+        state = encode_state(
+            env.minerals, env.gas, env.supply, env.workers, env.army, env.threat
+        )
         states, actions_taken, rewards = [], [], []
         done = False
 
@@ -235,8 +254,10 @@ def train_quantum_agent(episodes: int = 20) -> QuantumPolicyNetwork:
 
         total = policy.update(states, actions_taken, rewards)
         if (ep + 1) % 5 == 0:
-            print(f"  Episode {ep+1:3d} | Reward: {total:.1f} | "
-                  f"Army: {env.army} | Workers: {env.workers}")
+            print(
+                f"  Episode {ep+1:3d} | Reward: {total:.1f} | "
+                f"Army: {env.army} | Workers: {env.workers}"
+            )
 
     return policy
 

@@ -12,28 +12,28 @@ Tests all configuration classes:
 - UpgradeConfig
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config.unit_configs import (
-    CombatConfig,
     BanelingConfig,
-    MutaliskConfig,
-    InfestorConfig,
+    CombatConfig,
     EconomyConfig,
+    InfestorConfig,
+    MutaliskConfig,
     PotentialFieldConfig,
     UpgradeConfig,
-    get_combat_config,
     get_baneling_config,
-    get_mutalisk_config,
-    get_infestor_config,
+    get_combat_config,
     get_economy_config,
+    get_infestor_config,
+    get_mutalisk_config,
     get_potential_field_config,
-    get_upgrade_config
+    get_upgrade_config,
 )
 
 
@@ -261,7 +261,7 @@ class TestConfigConsistency(unittest.TestCase):
             InfestorConfig(),
             EconomyConfig(),
             PotentialFieldConfig(),
-            UpgradeConfig()
+            UpgradeConfig(),
         ]
         for config in configs:
             self.assertIsNotNone(config)
@@ -275,7 +275,7 @@ class TestConfigConsistency(unittest.TestCase):
             (get_infestor_config, InfestorConfig),
             (get_economy_config, EconomyConfig),
             (get_potential_field_config, PotentialFieldConfig),
-            (get_upgrade_config, UpgradeConfig)
+            (get_upgrade_config, UpgradeConfig),
         ]
         for helper, expected_type in helpers_and_types:
             result = helper()
@@ -299,6 +299,6 @@ class TestConfigConsistency(unittest.TestCase):
         self.assertLessEqual(infestor.NEURAL_PRIORITY_HP_THRESHOLD, 1.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run all tests
     unittest.main(verbosity=2)

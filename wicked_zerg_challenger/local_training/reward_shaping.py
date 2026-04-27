@@ -12,23 +12,25 @@ Reward Shaping - 보상 셰이핑 시스템 (#113)
 - 보상 통계 추적
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-from enum import Enum
-import numpy as np
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger("RewardShaping")
 
 
 class RewardComponent(Enum):
     """보상 구성요소"""
-    COMBAT = "combat"                    # 전투 보상
-    ECONOMY = "economy"                  # 경제 보상
-    TECH = "tech"                        # 테크 보상
-    MAP_CONTROL = "map_control"          # 맵 컨트롤 보상
-    TIMING = "timing"                    # 타이밍 보상
-    EXPLORATION = "exploration"          # 탐색 보상
-    SURVIVAL = "survival"               # 생존 보상
+
+    COMBAT = "combat"  # 전투 보상
+    ECONOMY = "economy"  # 경제 보상
+    TECH = "tech"  # 테크 보상
+    MAP_CONTROL = "map_control"  # 맵 컨트롤 보상
+    TIMING = "timing"  # 타이밍 보상
+    EXPLORATION = "exploration"  # 탐색 보상
+    SURVIVAL = "survival"  # 생존 보상
 
 
 class PotentialFunction:
@@ -60,10 +62,10 @@ class PotentialFunction:
         bases = state.get("bases", 1)
 
         potential = (
-            min(workers / 66.0, 1.0) * 0.3 +
-            min(army / 100.0, 1.0) * 0.4 +
-            float(tech) * 0.2 +
-            min(bases / 4.0, 1.0) * 0.1
+            min(workers / 66.0, 1.0) * 0.3
+            + min(army / 100.0, 1.0) * 0.4
+            + float(tech) * 0.2
+            + min(bases / 4.0, 1.0) * 0.1
         )
         return potential
 
@@ -124,8 +126,9 @@ class RewardShaper:
 
         logger.info("보상 셰이핑 시스템 초기화")
 
-    def compute_shaped_reward(self, raw_reward: float,
-                               state: Optional[Dict[str, Any]] = None) -> float:
+    def compute_shaped_reward(
+        self, raw_reward: float, state: Optional[Dict[str, Any]] = None
+    ) -> float:
         """
         셰이핑된 보상 계산 (스텁)
 
@@ -173,7 +176,9 @@ class RewardShaper:
 
         # COMBAT: 아군 vs 적군 비율
         if enemy_army > 0:
-            rewards[RewardComponent.COMBAT.value] = min(army / max(enemy_army, 1), 2.0) - 1.0
+            rewards[RewardComponent.COMBAT.value] = (
+                min(army / max(enemy_army, 1), 2.0) - 1.0
+            )
         else:
             rewards[RewardComponent.COMBAT.value] = 0.5 if army > 20 else 0.0
 

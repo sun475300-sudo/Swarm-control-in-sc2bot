@@ -3,9 +3,10 @@ Phase 441: Memgraph - SC2 Unit Relationship Graph Analysis
 In-memory graph DB using gqlalchemy for Cypher queries.
 """
 
-from gqlalchemy import Memgraph, Node, Relationship, Field
-from typing import Optional
 import logging
+from typing import Optional
+
+from gqlalchemy import Field, Memgraph, Node, Relationship
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,11 @@ def insert_sample_units():
         )
 
     # Tech path edges
-    tech = [("Zergling", "Baneling", 2), ("Roach", "Ravager", 3), ("Hydralisk", "Lurker", 3)]
+    tech = [
+        ("Zergling", "Baneling", 2),
+        ("Roach", "Ravager", 3),
+        ("Hydralisk", "Lurker", 3),
+    ]
     for src, dst, lvl in tech:
         mg.execute(
             "MERGE (a:Unit {name:$src}) MERGE (b:Unit {name:$dst}) "

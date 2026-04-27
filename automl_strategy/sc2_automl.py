@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -72,9 +73,11 @@ def _categorical_sample(probs: List[float]) -> int:
 # SearchSpace
 # ============================================================
 
+
 @dataclass
 class HyperParam:
     """A single hyperparameter definition."""
+
     name: str
     param_type: str  # "float", "int", "categorical", "log_float"
     low: Optional[float] = None
@@ -102,17 +105,33 @@ class SearchSpace:
     def __init__(self) -> None:
         self.params: Dict[str, HyperParam] = {}
 
-    def add_float(self, name: str, low: float, high: float, default: Optional[float] = None) -> None:
-        self.params[name] = HyperParam(name, "float", low=low, high=high, default=default)
+    def add_float(
+        self, name: str, low: float, high: float, default: Optional[float] = None
+    ) -> None:
+        self.params[name] = HyperParam(
+            name, "float", low=low, high=high, default=default
+        )
 
-    def add_log_float(self, name: str, low: float, high: float, default: Optional[float] = None) -> None:
-        self.params[name] = HyperParam(name, "log_float", low=low, high=high, default=default)
+    def add_log_float(
+        self, name: str, low: float, high: float, default: Optional[float] = None
+    ) -> None:
+        self.params[name] = HyperParam(
+            name, "log_float", low=low, high=high, default=default
+        )
 
-    def add_int(self, name: str, low: int, high: int, default: Optional[int] = None) -> None:
-        self.params[name] = HyperParam(name, "int", low=float(low), high=float(high), default=default)
+    def add_int(
+        self, name: str, low: int, high: int, default: Optional[int] = None
+    ) -> None:
+        self.params[name] = HyperParam(
+            name, "int", low=float(low), high=float(high), default=default
+        )
 
-    def add_categorical(self, name: str, choices: List[Any], default: Optional[Any] = None) -> None:
-        self.params[name] = HyperParam(name, "categorical", choices=choices, default=default)
+    def add_categorical(
+        self, name: str, choices: List[Any], default: Optional[Any] = None
+    ) -> None:
+        self.params[name] = HyperParam(
+            name, "categorical", choices=choices, default=default
+        )
 
     def sample_config(self) -> Dict[str, Any]:
         return {name: param.sample() for name, param in self.params.items()}
@@ -132,8 +151,16 @@ class SearchSpace:
         space.add_int("expand_supply", low=16, high=30, default=20)
         space.add_float("drone_ratio", low=0.3, high=0.8, default=0.6)
         space.add_float("aggression_timing", low=3.0, high=8.0, default=5.0)
-        space.add_categorical("opening_style", choices=["rush", "macro", "timing", "cheese"], default="macro")
-        space.add_categorical("tech_path", choices=["ling_bane", "roach_ravager", "muta", "hydra"], default="roach_ravager")
+        space.add_categorical(
+            "opening_style",
+            choices=["rush", "macro", "timing", "cheese"],
+            default="macro",
+        )
+        space.add_categorical(
+            "tech_path",
+            choices=["ling_bane", "roach_ravager", "muta", "hydra"],
+            default="roach_ravager",
+        )
         space.add_log_float("learning_rate", low=1e-5, high=1e-2, default=1e-3)
         space.add_int("batch_size", low=16, high=256, default=64)
         space.add_float("gamma", low=0.9, high=0.999, default=0.99)
@@ -157,9 +184,11 @@ class SearchSpace:
 # TrialRunner
 # ============================================================
 
+
 @dataclass
 class Trial:
     """A single trial evaluation."""
+
     trial_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     config: Dict[str, Any] = field(default_factory=dict)
     score: float = 0.0
@@ -189,8 +218,9 @@ class Trial:
 class TrialRunner:
     """Manages trial execution with early stopping support."""
 
-    def __init__(self, max_trials: int = 50, patience: int = 10,
-                 min_improvement: float = 0.001):
+    def __init__(
+        self, max_trials: int = 50, patience: int = 10, min_improvement: float = 0.001
+    ):
         self.max_trials = max_trials
         self.patience = patience
         self.min_improvement = min_improvement
@@ -199,8 +229,9 @@ class TrialRunner:
         self.best_trial: Optional[Trial] = None
         self.no_improve_count: int = 0
 
-    def run_trial(self, config: Dict[str, Any],
-                  objective_fn: Callable[[Dict[str, Any]], float]) -> Trial:
+    def run_trial(
+        self, config: Dict[str, Any], objective_fn: Callable[[Dict[str, Any]], float]
+    ) -> Trial:
         """Execute a single trial with the given config."""
         trial = Trial(config=config)
         trial.status = "running"
@@ -233,8 +264,11 @@ class TrialRunner:
 
     def median_pruner(self, trial: Trial, step: int) -> bool:
         """Median pruner: prune if intermediate value below median at same step."""
-        completed = [t for t in self.trials if t.status == "completed"
-                     and len(t.intermediate_values) > step]
+        completed = [
+            t
+            for t in self.trials
+            if t.status == "completed" and len(t.intermediate_values) > step
+        ]
         if len(completed) < 5:
             return False
         medians = sorted([t.intermediate_values[step] for t in completed])
@@ -268,11 +302,17 @@ class TrialRunner:
 # HPOOptimizer - Bayesian Optimization (TPE)
 # ============================================================
 
+
 class HPOOptimizer:
     """Hyperparameter Optimization with Random Search and TPE-inspired Bayesian Optimization."""
 
-    def __init__(self, search_space: SearchSpace, method: str = "tpe",
-                 n_startup_trials: int = 10, gamma: float = 0.25):
+    def __init__(
+        self,
+        search_space: SearchSpace,
+        method: str = "tpe",
+        n_startup_trials: int = 10,
+        gamma: float = 0.25,
+    ):
         self.search_space = search_space
         self.method = method  # "random", "tpe"
         self.n_startup_trials = n_startup_trials
@@ -300,8 +340,16 @@ class HPOOptimizer:
                     sigma = max(_np_std(good_vals), 1e-6)
                     # Sample from KDE around good values
                     candidate = _np_random_normal(mu, sigma)
-                    lo = param.low if param.param_type == "float" else math.log(max(param.low, 1e-10))
-                    hi = param.high if param.param_type == "float" else math.log(max(param.high, 1e-10))
+                    lo = (
+                        param.low
+                        if param.param_type == "float"
+                        else math.log(max(param.low, 1e-10))
+                    )
+                    hi = (
+                        param.high
+                        if param.param_type == "float"
+                        else math.log(max(param.high, 1e-10))
+                    )
                     if param.param_type == "log_float":
                         candidate = math.exp(max(lo, min(hi, candidate)))
                     else:
@@ -325,7 +373,9 @@ class HPOOptimizer:
                     for v in good_vals:
                         if v in counts:
                             counts[v] += 1
-                    total = sum(counts.values()) + len(param.choices)  # Laplace smoothing
+                    total = sum(counts.values()) + len(
+                        param.choices
+                    )  # Laplace smoothing
                     probs = [(counts[ch] + 1) / total for ch in param.choices]
                     idx = _categorical_sample(probs)
                     config[name] = param.choices[idx]
@@ -352,15 +402,21 @@ class HPOOptimizer:
 # NASController - Neural Architecture Search
 # ============================================================
 
+
 @dataclass
 class Architecture:
     """Describes a neural network architecture."""
+
     arch_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     layers: List[Dict[str, Any]] = field(default_factory=list)
     score: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"arch_id": self.arch_id, "layers": self.layers, "score": round(self.score, 6)}
+        return {
+            "arch_id": self.arch_id,
+            "layers": self.layers,
+            "score": round(self.score, 6),
+        }
 
     def param_count_estimate(self) -> int:
         """Rough parameter count estimate."""
@@ -400,19 +456,23 @@ class NASController:
         num_layers = _categorical_sample(depth_probs) + 1
         layers = []
         for i in range(num_layers):
-            type_probs = _softmax([l / self.temperature for l in self.layer_type_logits])
+            type_probs = _softmax(
+                [l / self.temperature for l in self.layer_type_logits]
+            )
             act_probs = _softmax([l / self.temperature for l in self.activation_logits])
             unit_probs = _softmax([l / self.temperature for l in self.unit_logits])
             layer_type = self.LAYER_TYPES[_categorical_sample(type_probs)]
             activation = self.ACTIVATIONS[_categorical_sample(act_probs)]
             units = self.UNIT_OPTIONS[_categorical_sample(unit_probs)]
-            layers.append({
-                "layer_idx": i,
-                "type": layer_type,
-                "activation": activation,
-                "units": units,
-                "dropout": round(random.uniform(0.0, 0.5), 2),
-            })
+            layers.append(
+                {
+                    "layer_idx": i,
+                    "type": layer_type,
+                    "activation": activation,
+                    "units": units,
+                    "dropout": round(random.uniform(0.0, 0.5), 2),
+                }
+            )
         arch = Architecture(layers=layers)
         return arch
 
@@ -448,8 +508,12 @@ class NASController:
     def controller_distribution(self) -> Dict[str, Any]:
         """Return current controller probability distributions."""
         return {
-            "layer_types": dict(zip(self.LAYER_TYPES, _softmax(self.layer_type_logits))),
-            "activations": dict(zip(self.ACTIVATIONS, _softmax(self.activation_logits))),
+            "layer_types": dict(
+                zip(self.LAYER_TYPES, _softmax(self.layer_type_logits))
+            ),
+            "activations": dict(
+                zip(self.ACTIVATIONS, _softmax(self.activation_logits))
+            ),
             "units": dict(zip(self.UNIT_OPTIONS, _softmax(self.unit_logits))),
             "depth": {i + 1: p for i, p in enumerate(_softmax(self.depth_logits))},
         }
@@ -459,22 +523,34 @@ class NASController:
 # Feature Engineering
 # ============================================================
 
+
 class SC2FeatureEngineer:
     """Auto-generate and select features from SC2 game state."""
 
     BASIC_FEATURES = [
-        "minerals", "vespene", "supply_used", "supply_cap",
-        "worker_count", "army_supply", "tech_level",
+        "minerals",
+        "vespene",
+        "supply_used",
+        "supply_cap",
+        "worker_count",
+        "army_supply",
+        "tech_level",
     ]
 
     DERIVED_FEATURES = [
-        "mineral_rate", "vespene_rate", "supply_ratio",
-        "army_worker_ratio", "mineral_per_worker",
-        "time_since_last_expand", "bases_count",
+        "mineral_rate",
+        "vespene_rate",
+        "supply_ratio",
+        "army_worker_ratio",
+        "mineral_per_worker",
+        "time_since_last_expand",
+        "bases_count",
     ]
 
     TEMPORAL_FEATURES = [
-        "mineral_delta_30s", "army_delta_30s", "supply_delta_60s",
+        "mineral_delta_30s",
+        "army_delta_30s",
+        "supply_delta_60s",
         "tech_progress_rate",
     ]
 
@@ -507,16 +583,18 @@ class SC2FeatureEngineer:
                 features[fname] = round(normalized[i] * normalized[j], 6)
         return features
 
-    def select_top_features(self, feature_scores: Dict[str, float],
-                            top_k: int = 10) -> List[str]:
+    def select_top_features(
+        self, feature_scores: Dict[str, float], top_k: int = 10
+    ) -> List[str]:
         """Select top-k features by importance score."""
         self.feature_importances = feature_scores
         sorted_feats = sorted(feature_scores.items(), key=lambda x: x[1], reverse=True)
         self.selected_features = [f[0] for f in sorted_feats[:top_k]]
         return self.selected_features
 
-    def auto_importance(self, game_states: List[Dict[str, float]],
-                        outcomes: List[float]) -> Dict[str, float]:
+    def auto_importance(
+        self, game_states: List[Dict[str, float]], outcomes: List[float]
+    ) -> Dict[str, float]:
         """Estimate feature importance via correlation with outcomes."""
         if not game_states or not outcomes:
             return {}
@@ -530,8 +608,9 @@ class SC2FeatureEngineer:
             val_mean = _np_mean(vals)
             val_std = _np_std(vals) or 1.0
             # Pearson correlation
-            cov = _np_mean([(v - val_mean) * (o - outcome_mean)
-                            for v, o in zip(vals, outcomes)])
+            cov = _np_mean(
+                [(v - val_mean) * (o - outcome_mean) for v, o in zip(vals, outcomes)]
+            )
             corr = cov / (val_std * outcome_std)
             importances[fname] = round(abs(corr), 6)
         return importances
@@ -541,13 +620,24 @@ class SC2FeatureEngineer:
 # AutoMLPipeline
 # ============================================================
 
+
 class AutoMLPipeline:
     """End-to-end AutoML pipeline for SC2 strategy discovery."""
 
-    MODEL_TYPES = ["linear", "decision_tree", "random_forest", "neural_net", "gradient_boost"]
+    MODEL_TYPES = [
+        "linear",
+        "decision_tree",
+        "random_forest",
+        "neural_net",
+        "gradient_boost",
+    ]
 
-    def __init__(self, search_space: Optional[SearchSpace] = None,
-                 max_trials: int = 30, method: str = "tpe"):
+    def __init__(
+        self,
+        search_space: Optional[SearchSpace] = None,
+        max_trials: int = 30,
+        method: str = "tpe",
+    ):
         self.search_space = search_space or SearchSpace.sc2_build_order_space()
         self.optimizer = HPOOptimizer(self.search_space, method=method)
         self.runner = TrialRunner(max_trials=max_trials, patience=10)
@@ -555,8 +645,11 @@ class AutoMLPipeline:
         self.feature_engineer = SC2FeatureEngineer()
         self.pipeline_results: List[Dict[str, Any]] = []
 
-    def run_hpo(self, objective_fn: Callable[[Dict[str, Any]], float],
-                n_trials: Optional[int] = None) -> Dict[str, Any]:
+    def run_hpo(
+        self,
+        objective_fn: Callable[[Dict[str, Any]], float],
+        n_trials: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """Run hyperparameter optimization loop."""
         n = n_trials or self.runner.max_trials
         for i in range(n):
@@ -567,8 +660,9 @@ class AutoMLPipeline:
                 break
         return self.runner.summary()
 
-    def run_nas(self, eval_fn: Callable[[Architecture], float],
-                n_architectures: int = 20) -> Dict[str, Any]:
+    def run_nas(
+        self, eval_fn: Callable[[Architecture], float], n_architectures: int = 20
+    ) -> Dict[str, Any]:
         """Run neural architecture search."""
         for _ in range(n_architectures):
             arch = self.nas_controller.sample_architecture()
@@ -583,8 +677,12 @@ class AutoMLPipeline:
             "controller_dist": self.nas_controller.controller_distribution(),
         }
 
-    def run_feature_selection(self, game_states: List[Dict[str, float]],
-                              outcomes: List[float], top_k: int = 10) -> Dict[str, Any]:
+    def run_feature_selection(
+        self,
+        game_states: List[Dict[str, float]],
+        outcomes: List[float],
+        top_k: int = 10,
+    ) -> Dict[str, Any]:
         """Auto feature engineering and selection."""
         importances = self.feature_engineer.auto_importance(game_states, outcomes)
         selected = self.feature_engineer.select_top_features(importances, top_k)
@@ -594,13 +692,20 @@ class AutoMLPipeline:
             "top_importances": {f: importances[f] for f in selected},
         }
 
-    def select_best_model(self, configs: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    def select_best_model(
+        self, configs: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
         """Pipeline selection: evaluate different model types."""
         results = []
         for model_type in self.MODEL_TYPES:
             # Simulate model evaluation (in production: train + validate)
-            base_score = {"linear": 0.55, "decision_tree": 0.58, "random_forest": 0.65,
-                          "neural_net": 0.68, "gradient_boost": 0.70}
+            base_score = {
+                "linear": 0.55,
+                "decision_tree": 0.58,
+                "random_forest": 0.65,
+                "neural_net": 0.68,
+                "gradient_boost": 0.70,
+            }
             score = base_score.get(model_type, 0.5) + random.gauss(0, 0.05)
             results.append({"model_type": model_type, "score": round(score, 6)})
         results.sort(key=lambda x: x["score"], reverse=True)
@@ -610,10 +715,15 @@ class AutoMLPipeline:
             "all_results": results,
         }
 
-    def full_pipeline(self, objective_fn: Optional[Callable] = None,
-                      n_hpo_trials: int = 20, n_nas_trials: int = 10) -> Dict[str, Any]:
+    def full_pipeline(
+        self,
+        objective_fn: Optional[Callable] = None,
+        n_hpo_trials: int = 20,
+        n_nas_trials: int = 10,
+    ) -> Dict[str, Any]:
         """Run the complete AutoML pipeline."""
         if objective_fn is None:
+
             def objective_fn(config: Dict[str, Any]) -> float:
                 # Simulated SC2 win rate based on config
                 score = 0.5
@@ -637,6 +747,7 @@ class AutoMLPipeline:
             score = 0.6 + 0.05 * min(depth, 4) - 0.00001 * max(params - 50000, 0)
             score += random.gauss(0, 0.03)
             return max(0.0, min(1.0, score))
+
         nas_result = self.run_nas(nas_eval, n_nas_trials)
 
         # Step 3: Feature Selection
@@ -653,7 +764,12 @@ class AutoMLPipeline:
                 "tech_level": random.uniform(1, 3),
             }
             game_states.append(gs)
-            outcome = 0.3 + 0.005 * gs["army_supply"] - 0.001 * gs["minerals"] + random.gauss(0, 0.1)
+            outcome = (
+                0.3
+                + 0.005 * gs["army_supply"]
+                - 0.001 * gs["minerals"]
+                + random.gauss(0, 0.1)
+            )
             outcomes.append(max(0.0, min(1.0, outcome)))
         feat_result = self.run_feature_selection(game_states, outcomes, top_k=8)
 
@@ -673,6 +789,7 @@ class AutoMLPipeline:
 # ============================================================
 # Demo
 # ============================================================
+
 
 def demo() -> None:
     """Demonstrate the AutoML pipeline for SC2 strategy discovery."""
@@ -705,8 +822,8 @@ def demo() -> None:
     hpo_result = pipeline.run_hpo(sc2_objective, n_trials=25)
     print(f"    Trials completed: {hpo_result['completed']}")
     print(f"    Best score: {hpo_result['best_score']}")
-    if hpo_result['best_config']:
-        for k, v in list(hpo_result['best_config'].items())[:4]:
+    if hpo_result["best_config"]:
+        for k, v in list(hpo_result["best_config"].items())[:4]:
             display_v = f"{v:.4f}" if isinstance(v, float) else str(v)
             print(f"    Best {k}: {display_v}")
 
@@ -716,8 +833,16 @@ def demo() -> None:
     def nas_eval(arch: Architecture) -> float:
         depth = len(arch.layers)
         params = arch.param_count_estimate()
-        return max(0.0, min(1.0, 0.5 + 0.06 * min(depth, 5) - 0.00002 * max(params - 30000, 0)
-                            + random.gauss(0, 0.03)))
+        return max(
+            0.0,
+            min(
+                1.0,
+                0.5
+                + 0.06 * min(depth, 5)
+                - 0.00002 * max(params - 30000, 0)
+                + random.gauss(0, 0.03),
+            ),
+        )
 
     # Reset NAS controller for demo
     pipeline.nas_controller = NASController(max_layers=6)
@@ -745,7 +870,12 @@ def demo() -> None:
             "tech_level": random.uniform(1, 3),
         }
         game_states.append(gs)
-        outcome = 0.3 + 0.004 * gs["army_supply"] - 0.0005 * gs["minerals"] + random.gauss(0, 0.08)
+        outcome = (
+            0.3
+            + 0.004 * gs["army_supply"]
+            - 0.0005 * gs["minerals"]
+            + random.gauss(0, 0.08)
+        )
         outcomes.append(max(0.0, min(1.0, outcome)))
     feat_result = pipeline.run_feature_selection(game_states, outcomes, top_k=6)
     print(f"    Total features generated: {feat_result['total_features']}")
@@ -774,7 +904,9 @@ def demo() -> None:
     print("\n[7] Controller Distribution After NAS")
     dist = pipeline.nas_controller.controller_distribution()
     print("    Layer type preferences:")
-    for lt, prob in sorted(dist["layer_types"].items(), key=lambda x: x[1], reverse=True):
+    for lt, prob in sorted(
+        dist["layer_types"].items(), key=lambda x: x[1], reverse=True
+    ):
         print(f"      {lt}: {prob:.3f}")
 
     print("\n" + "=" * 70)

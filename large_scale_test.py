@@ -6,10 +6,10 @@ Extended tests with multiple scenarios and configurations
 import json
 import random
 import time
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 @dataclass

@@ -4,16 +4,18 @@
     NOTION_API_KEY     - Notion Integration 토큰
     NOTION_DATABASE_ID - 저장할 데이터베이스 ID
 """
+
 import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import partial
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
 logger = logging.getLogger("jarvis.notion")
+
 
 class NotionIntegration:
     def __init__(self):
@@ -76,14 +78,16 @@ class NotionIntegration:
 
             children = []
             for i in range(0, len(content), 2000):
-                chunk = content[i:i + 2000]
-                children.append({
-                    "object": "block",
-                    "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [{"type": "text", "text": {"content": chunk}}]
-                    },
-                })
+                chunk = content[i : i + 2000]
+                children.append(
+                    {
+                        "object": "block",
+                        "type": "paragraph",
+                        "paragraph": {
+                            "rich_text": [{"type": "text", "text": {"content": chunk}}]
+                        },
+                    }
+                )
 
             body = {
                 "parent": {"database_id": self.database_id},
@@ -126,7 +130,9 @@ class NotionIntegration:
                 title_prop = props.get("Name", props.get("title", {}))
                 if "title" in title_prop:
                     title_texts = title_prop["title"]
-                    title = title_texts[0]["plain_text"] if title_texts else "(제목 없음)"
+                    title = (
+                        title_texts[0]["plain_text"] if title_texts else "(제목 없음)"
+                    )
                 else:
                     title = "(제목 없음)"
                 url = p.get("url", "")
@@ -146,7 +152,9 @@ class NotionIntegration:
                 "page_size": limit,
                 "sorts": [{"timestamp": "created_time", "direction": "descending"}],
             }
-            result = await self._api_call("POST", f"/databases/{self.database_id}/query", body)
+            result = await self._api_call(
+                "POST", f"/databases/{self.database_id}/query", body
+            )
             if "error" in result:
                 return f"Notion 조회 실패: {result['error']}"
             pages = result.get("results", [])
@@ -160,7 +168,9 @@ class NotionIntegration:
                 title_prop = props.get("Name", props.get("title", {}))
                 if "title" in title_prop:
                     title_texts = title_prop["title"]
-                    title = title_texts[0]["plain_text"] if title_texts else "(제목 없음)"
+                    title = (
+                        title_texts[0]["plain_text"] if title_texts else "(제목 없음)"
+                    )
                 else:
                     title = "(제목 없음)"
                 created = p.get("created_time", "")[:10]
@@ -168,4 +178,3 @@ class NotionIntegration:
             return "\n".join(lines)
         except Exception as e:
             return f"Notion 조회 실패: {e}"
-

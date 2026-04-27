@@ -6,8 +6,8 @@ errors, then generates actionable training targets for the RL agent.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class MistakeType(Enum):
@@ -25,10 +25,10 @@ class MistakeType(Enum):
 class Mistake:
     mistake_type: MistakeType
     game_time: float
-    severity: float           # 0.0 (minor) to 1.0 (critical)
+    severity: float  # 0.0 (minor) to 1.0 (critical)
     description: str
     suggested_fix: str
-    training_signal: str      # which RL task module to reinforce
+    training_signal: str  # which RL task module to reinforce
 
     def __repr__(self):
         return (
@@ -40,6 +40,7 @@ class Mistake:
 @dataclass
 class ReplayFrame:
     """Single game state snapshot extracted from replay."""
+
     game_time: float
     minerals: int
     vespene: int
@@ -81,8 +82,14 @@ class AnalysisReport:
             "macro_score": round(self.macro_score, 3),
             "micro_score": round(self.micro_score, 3),
             "top_mistakes": [
-                {"type": m.mistake_type.value, "time": m.game_time, "fix": m.suggested_fix}
-                for m in sorted(self.mistakes, key=lambda x: x.severity, reverse=True)[:5]
+                {
+                    "type": m.mistake_type.value,
+                    "time": m.game_time,
+                    "fix": m.suggested_fix,
+                }
+                for m in sorted(self.mistakes, key=lambda x: x.severity, reverse=True)[
+                    :5
+                ]
             ],
         }
 
@@ -94,11 +101,11 @@ class ReplayAnalyzer:
     """
 
     # Thresholds
-    SUPPLY_BLOCK_THRESHOLD = 3.0         # seconds blocked = mistake
+    SUPPLY_BLOCK_THRESHOLD = 3.0  # seconds blocked = mistake
     HIGH_BANK_MINERALS = 500
     HIGH_BANK_VESPENE = 250
-    INJECT_LAG_THRESHOLD = 15.0          # seconds of missed inject energy
-    EXPAND_LATE_TIME = 300.0             # should have natural by 5 min
+    INJECT_LAG_THRESHOLD = 15.0  # seconds of missed inject energy
+    EXPAND_LATE_TIME = 300.0  # should have natural by 5 min
 
     def __init__(self):
         self._reports: List[AnalysisReport] = []
@@ -107,9 +114,7 @@ class ReplayAnalyzer:
     # Individual mistake detectors
     # ------------------------------------------------------------------
 
-    def _check_supply_blocks(
-        self, frames: List[ReplayFrame], report: AnalysisReport
-    ):
+    def _check_supply_blocks(self, frames: List[ReplayFrame], report: AnalysisReport):
         """Detect periods where supply was capped."""
         block_start: Optional[float] = None
         total_blocked = 0.0
@@ -122,20 +127,20 @@ class ReplayAnalyzer:
                     duration = frame.game_time - block_start
                     total_blocked += duration
                     if duration >= self.SUPPLY_BLOCK_THRESHOLD:
-                        report.add_mistake(Mistake(
-                            mistake_type=MistakeType.SUPPLY_BLOCK,
-                            game_time=block_start,
-                            severity=min(duration / 30.0, 1.0),
-                            description=f"Supply blocked for {duration:.1f}s at {block_start:.0f}s",
-                            suggested_fix="Build overlords earlier (at ~80% supply cap)",
-                            training_signal="macro_strategy",
-                        ))
+                        report.add_mistake(
+                            Mistake(
+                                mistake_type=MistakeType.SUPPLY_BLOCK,
+                                game_time=block_start,
+                                severity=min(duration / 30.0, 1.0),
+                                description=f"Supply blocked for {duration:.1f}s at {block_start:.0f}s",
+                                suggested_fix="Build overlords earlier (at ~80% supply cap)",
+                                training_signal="macro_strategy",
+                            )
+                        )
                     block_start = None
         report.total_supply_blocked_s = total_blocked
 
-    def _check_resource_bank(
-        self, frames: List[ReplayFrame], report: AnalysisReport
-    ):
+    def _check_resource_bank(self, frames: List[ReplayFrame], report: AnalysisReport):
         """Detect consistently high mineral/vespene banks."""
         if not frames:
             return
@@ -145,27 +150,29 @@ class ReplayAnalyzer:
         report.avg_vespene_bank = avg_ves
 
         if avg_min > self.HIGH_BANK_MINERALS:
-            report.add_mistake(Mistake(
-                mistake_type=MistakeType.UNSPENT_RESOURCES,
-                game_time=frames[0].game_time,
-                severity=min(avg_min / 1000.0, 1.0),
-                description=f"Average mineral bank {avg_min:.0f} — resources wasted",
-                suggested_fix="Produce more units/workers or expand when bank is high",
-                training_signal="worker_production",
-            ))
+            report.add_mistake(
+                Mistake(
+                    mistake_type=MistakeType.UNSPENT_RESOURCES,
+                    game_time=frames[0].game_time,
+                    severity=min(avg_min / 1000.0, 1.0),
+                    description=f"Average mineral bank {avg_min:.0f} — resources wasted",
+                    suggested_fix="Produce more units/workers or expand when bank is high",
+                    training_signal="worker_production",
+                )
+            )
         if avg_ves > self.HIGH_BANK_VESPENE:
-            report.add_mistake(Mistake(
-                mistake_type=MistakeType.UNSPENT_RESOURCES,
-                game_time=frames[0].game_time,
-                severity=min(avg_ves / 500.0, 0.8),
-                description=f"Average vespene bank {avg_ves:.0f} — invest in upgrades",
-                suggested_fix="Research upgrades or tech units to spend excess gas",
-                training_signal="macro_strategy",
-            ))
+            report.add_mistake(
+                Mistake(
+                    mistake_type=MistakeType.UNSPENT_RESOURCES,
+                    game_time=frames[0].game_time,
+                    severity=min(avg_ves / 500.0, 0.8),
+                    description=f"Average vespene bank {avg_ves:.0f} — invest in upgrades",
+                    suggested_fix="Research upgrades or tech units to spend excess gas",
+                    training_signal="macro_strategy",
+                )
+            )
 
-    def _check_inject_timing(
-        self, frames: List[ReplayFrame], report: AnalysisReport
-    ):
+    def _check_inject_timing(self, frames: List[ReplayFrame], report: AnalysisReport):
         """Detect queens with excess energy indicating missed injects."""
         for frame in frames:
             if not frame.queen_energy:
@@ -174,14 +181,16 @@ class ReplayAnalyzer:
             if over_energy:
                 waste = sum(over_energy) - len(over_energy) * 25
                 if waste > 20:
-                    report.add_mistake(Mistake(
-                        mistake_type=MistakeType.MISSED_INJECT,
-                        game_time=frame.game_time,
-                        severity=min(waste / 100.0, 0.9),
-                        description=f"Queens wasting inject energy at {frame.game_time:.0f}s",
-                        suggested_fix="Inject all queens at ≤50 energy",
-                        training_signal="macro_strategy",
-                    ))
+                    report.add_mistake(
+                        Mistake(
+                            mistake_type=MistakeType.MISSED_INJECT,
+                            game_time=frame.game_time,
+                            severity=min(waste / 100.0, 0.9),
+                            description=f"Queens wasting inject energy at {frame.game_time:.0f}s",
+                            suggested_fix="Inject all queens at ≤50 energy",
+                            training_signal="macro_strategy",
+                        )
+                    )
                     break  # one mistake per analysis
 
     def _check_expansion_timing(
@@ -190,14 +199,16 @@ class ReplayAnalyzer:
         """Detect late natural expansion."""
         for frame in frames:
             if frame.game_time > self.EXPAND_LATE_TIME and frame.base_count < 2:
-                report.add_mistake(Mistake(
-                    mistake_type=MistakeType.LATE_EXPAND,
-                    game_time=frame.game_time,
-                    severity=0.7,
-                    description=f"Only {frame.base_count} base(s) at {frame.game_time:.0f}s",
-                    suggested_fix="Take natural expansion before 5 minutes",
-                    training_signal="macro_strategy",
-                ))
+                report.add_mistake(
+                    Mistake(
+                        mistake_type=MistakeType.LATE_EXPAND,
+                        game_time=frame.game_time,
+                        severity=0.7,
+                        description=f"Only {frame.base_count} base(s) at {frame.game_time:.0f}s",
+                        suggested_fix="Take natural expansion before 5 minutes",
+                        training_signal="macro_strategy",
+                    )
+                )
                 break
 
     def _score_macro(self, frames: List[ReplayFrame], report: AnalysisReport) -> float:
@@ -205,7 +216,16 @@ class ReplayAnalyzer:
         penalty = 0.0
         penalty += min(report.total_supply_blocked_s / 120.0, 0.3)
         penalty += min(report.avg_mineral_bank / 2000.0, 0.3)
-        penalty += len([m for m in report.mistakes if m.mistake_type == MistakeType.MISSED_INJECT]) * 0.05
+        penalty += (
+            len(
+                [
+                    m
+                    for m in report.mistakes
+                    if m.mistake_type == MistakeType.MISSED_INJECT
+                ]
+            )
+            * 0.05
+        )
         return max(0.0, 1.0 - penalty)
 
     def _score_micro(self, frames: List[ReplayFrame]) -> float:
@@ -230,12 +250,14 @@ class ReplayAnalyzer:
             module_penalties[key] = module_penalties.get(key, 0.0) + m.severity
 
         for module, total_penalty in module_penalties.items():
-            targets.append({
-                "task_module": module,
-                "reward_adjustment": -min(total_penalty, 1.0),
-                "priority": min(total_penalty, 1.0),
-                "reason": f"Aggregate penalty from {len(report.mistakes)} mistakes",
-            })
+            targets.append(
+                {
+                    "task_module": module,
+                    "reward_adjustment": -min(total_penalty, 1.0),
+                    "priority": min(total_penalty, 1.0),
+                    "reason": f"Aggregate penalty from {len(report.mistakes)} mistakes",
+                }
+            )
         return targets
 
     # ------------------------------------------------------------------

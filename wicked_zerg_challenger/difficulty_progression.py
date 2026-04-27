@@ -9,10 +9,11 @@ Difficulty Progression System - 난이도 자동 조정
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Dict, Optional
+
 from sc2.data import Difficulty, Race
-import logging
 
 logger = logging.getLogger("DifficultyProgression")
 
@@ -41,7 +42,9 @@ class DifficultyProgression:
         Difficulty.CheatInsane,
     ]
 
-    def __init__(self, data_file: str = "local_training/data/difficulty_progression.json"):
+    def __init__(
+        self, data_file: str = "local_training/data/difficulty_progression.json"
+    ):
         self.data_file = Path(data_file)
         self.stats: Dict = {}  # {map_name: {race: {difficulty: {wins, losses}}}}
         self.win_rate_threshold = 0.90  # 90%
@@ -53,7 +56,7 @@ class DifficultyProgression:
         """통계 데이터 로드"""
         if self.data_file.exists():
             try:
-                with open(self.data_file, 'r', encoding='utf-8') as f:
+                with open(self.data_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     # Convert string keys back to enums
                     self.stats = self._deserialize_stats(data)
@@ -71,7 +74,7 @@ class DifficultyProgression:
             self.data_file.parent.mkdir(parents=True, exist_ok=True)
             # Convert enums to strings for JSON
             serialized = self._serialize_stats(self.stats)
-            with open(self.data_file, 'w', encoding='utf-8') as f:
+            with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
             logger.info(f"Saved progression data")
         except Exception as e:
@@ -110,11 +113,7 @@ class DifficultyProgression:
         return stats
 
     def record_game(
-        self,
-        map_name: str,
-        opponent_race: Race,
-        difficulty: Difficulty,
-        won: bool
+        self, map_name: str, opponent_race: Race, difficulty: Difficulty, won: bool
     ) -> None:
         """게임 결과 기록"""
         # 맵 초기화
@@ -127,10 +126,7 @@ class DifficultyProgression:
 
         # 난이도 초기화
         if difficulty not in self.stats[map_name][opponent_race]:
-            self.stats[map_name][opponent_race][difficulty] = {
-                "wins": 0,
-                "losses": 0
-            }
+            self.stats[map_name][opponent_race][difficulty] = {"wins": 0, "losses": 0}
 
         # 기록
         if won:
@@ -145,10 +141,7 @@ class DifficultyProgression:
         self._check_progression(map_name, opponent_race, difficulty)
 
     def _check_progression(
-        self,
-        map_name: str,
-        opponent_race: Race,
-        difficulty: Difficulty
+        self, map_name: str, opponent_race: Race, difficulty: Difficulty
     ) -> None:
         """승률 체크 및 난이도 상승 판단"""
         stats = self.stats[map_name][opponent_race][difficulty]
@@ -185,9 +178,7 @@ class DifficultyProgression:
         return None
 
     def get_recommended_difficulty(
-        self,
-        map_name: str,
-        opponent_race: Race
+        self, map_name: str, opponent_race: Race
     ) -> Difficulty:
         """추천 난이도 반환"""
         if map_name not in self.stats:
@@ -236,11 +227,7 @@ class DifficultyProgression:
             pass
         return None
 
-    def get_stats_summary(
-        self,
-        map_name: str,
-        opponent_race: Race
-    ) -> str:
+    def get_stats_summary(self, map_name: str, opponent_race: Race) -> str:
         """통계 요약"""
         if map_name not in self.stats:
             return f"No stats for {map_name}"

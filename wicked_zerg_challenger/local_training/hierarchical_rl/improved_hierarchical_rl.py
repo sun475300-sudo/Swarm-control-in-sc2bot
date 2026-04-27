@@ -11,11 +11,13 @@ Role: Pure Strategic Decision Maker (The Brain)
 - step() 메서드가 순수 전략 모드만 반환하도록 변경
 """
 
-from typing import Any, Dict, List, Optional
-import numpy as np
 import logging
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 logger = logging.getLogger("ImprovedHierarchicalRl")
+
 
 class CommanderAgent:
     """
@@ -147,9 +149,7 @@ class HierarchicalRLSystem:
                 vespene=bot.vespene,
                 supply_used=bot.supply_used,
                 supply_cap=bot.supply_cap,
-                enemy_race=self._normalize_enemy_race(
-                    getattr(bot, "enemy_race", None)
-                ),
+                enemy_race=self._normalize_enemy_race(getattr(bot, "enemy_race", None)),
                 enemy_army_value=(
                     self._calculate_army_value(bot.enemy_units)
                     if hasattr(bot, "enemy_units")
@@ -168,14 +168,18 @@ class HierarchicalRLSystem:
             final_mode = override_strategy if override_strategy else rule_based_decision
 
             # 로깅 (오버라이드 발생 시)
-            if override_strategy and bot.iteration % 220 == 0 and final_mode != rule_based_decision:
-                 logger.info(f"RL 결정: {final_mode} (Rule: {rule_based_decision})")
+            if (
+                override_strategy
+                and bot.iteration % 220 == 0
+                and final_mode != rule_based_decision
+            ):
+                logger.info(f"RL 결정: {final_mode} (Rule: {rule_based_decision})")
 
             # 3. 순수 전략 결정 반환 (직접 실행하지 않음)
             return {
                 "strategy_mode": final_mode,
                 "author": "RLAgent" if override_strategy else "RuleBasedCommander",
-                "timestamp": getattr(bot, "time", 0)
+                "timestamp": getattr(bot, "time", 0),
             }
 
         except Exception as e:

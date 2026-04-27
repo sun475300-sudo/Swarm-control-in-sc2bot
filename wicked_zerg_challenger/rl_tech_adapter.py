@@ -12,14 +12,16 @@ Features:
 4. Win/loss feedback integration (승/패 피드백 통합)
 """
 
-from typing import Dict, List, Optional, Set, Tuple
-from pathlib import Path
 import json
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
+
     class UnitTypeId:
         ROACHWARREN = "ROACHWARREN"
         HYDRALISKDEN = "HYDRALISKDEN"
@@ -77,7 +79,6 @@ class RLTechAdapter:
                 "ratio_boost": 0.10,
                 "timing": 300,
             },
-
             # Protoss Tech
             "ROBOTICSFACILITY": {
                 "counter_units": ["roach", "ravager", "hydralisk"],
@@ -103,7 +104,6 @@ class RLTechAdapter:
                 "ratio_boost": 0.10,
                 "timing": 300,
             },
-
             # Zerg Tech
             "ROACHWARREN": {
                 "counter_units": ["roach", "hydralisk"],
@@ -173,7 +173,9 @@ class RLTechAdapter:
             game_time = getattr(self.bot, "time", 0)
             for tech in new_tech:
                 self.tech_first_seen[tech] = game_time
-                self.logger.info(f"[RL_TECH] [{int(game_time)}s] [*] NEW ENEMY TECH: {tech} [*]")
+                self.logger.info(
+                    f"[RL_TECH] [{int(game_time)}s] [*] NEW ENEMY TECH: {tech} [*]"
+                )
 
         # 관찰 상태 업데이트
         self.observed_enemy_tech = current_enemy_tech.copy()
@@ -197,7 +199,9 @@ class RLTechAdapter:
             # 타이밍 체크: 너무 늦게 발견되면 대응 안 함
             detection_timing = counter_rule.get("timing", 300)
             if game_time > detection_timing + 120:  # 타이밍 + 2분 이후면 너무 늦음
-                self.logger.info(f"[RL_TECH] {tech} detected too late ({int(game_time)}s), skipping response")
+                self.logger.info(
+                    f"[RL_TECH] {tech} detected too late ({int(game_time)}s), skipping response"
+                )
                 continue
 
             # ★ 학습된 성공률 확인 ★
@@ -210,7 +214,7 @@ class RLTechAdapter:
                 "tech_detected": tech,
                 "game_time": game_time,
                 "counter_strategy": counter_rule,
-                "applied": False
+                "applied": False,
             }
             self.adaptations_made.append(adaptation)
 
@@ -245,7 +249,9 @@ class RLTechAdapter:
         blackboard.set("rl_tech_response_active", True)
         blackboard.set("rl_countering_tech", tech)
 
-        self.logger.info(f"[RL_TECH] Registered counter strategy to Blackboard: {current_ratios}")
+        self.logger.info(
+            f"[RL_TECH] Registered counter strategy to Blackboard: {current_ratios}"
+        )
 
     async def _execute_adaptation(self, iteration: int):
         """
@@ -269,7 +275,9 @@ class RLTechAdapter:
 
             if success:
                 adaptation["applied"] = True
-                self.logger.info(f"[RL_TECH] [{int(game_time)}s] Applied tech response: {tech_response}")
+                self.logger.info(
+                    f"[RL_TECH] [{int(game_time)}s] Applied tech response: {tech_response}"
+                )
 
     async def _request_tech_building(self, building_type: str) -> bool:
         """
@@ -360,7 +368,9 @@ class RLTechAdapter:
             if memory_file.exists():
                 with open(memory_file, "r", encoding="utf-8") as f:
                     self.success_memory = json.load(f)
-                self.logger.info(f"[RL_TECH] Loaded learning memory: {len(self.success_memory)} entries")
+                self.logger.info(
+                    f"[RL_TECH] Loaded learning memory: {len(self.success_memory)} entries"
+                )
         except Exception as e:
             self.logger.warning(f"[RL_TECH] Failed to load memory: {e}")
 

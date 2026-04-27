@@ -5,11 +5,12 @@ High-throughput event logging using ScyllaDB (C++ Cassandra-compatible).
 
 import asyncio
 import logging
-from datetime import datetime, timezone
-from cassandra.cluster import Cluster
-from cassandra.query import BatchStatement, BatchType
-from cassandra.policies import DCAwareRoundRobinPolicy
 import uuid
+from datetime import datetime, timezone
+
+from cassandra.cluster import Cluster
+from cassandra.policies import DCAwareRoundRobinPolicy
+from cassandra.query import BatchStatement, BatchType
 
 logger = logging.getLogger(__name__)
 
@@ -76,16 +77,19 @@ def batch_insert_events(session, game_id: str, events: list[dict]):
 
     batch = BatchStatement(batch_type=BatchType.UNLOGGED)
     for ev in events:
-        batch.add(insert_stmt, (
-            game_id,
-            ev.get("event_time", datetime.now(timezone.utc)),
-            ev.get("event_type", "unknown"),
-            ev.get("unit_name", ""),
-            ev.get("x", 0),
-            ev.get("y", 0),
-            ev.get("value", 0),
-            ev.get("metadata", {}),
-        ))
+        batch.add(
+            insert_stmt,
+            (
+                game_id,
+                ev.get("event_time", datetime.now(timezone.utc)),
+                ev.get("event_type", "unknown"),
+                ev.get("unit_name", ""),
+                ev.get("x", 0),
+                ev.get("y", 0),
+                ev.get("value", 0),
+                ev.get("metadata", {}),
+            ),
+        )
     session.execute(batch)
     logger.info(f"Batch inserted {len(events)} events for game {game_id}")
 
@@ -116,9 +120,27 @@ if __name__ == "__main__":
 
     game_id = "game_" + str(uuid.uuid4())[:8]
     sample_events = [
-        {"event_type": "unit_created", "unit_name": "Zergling", "x": 10, "y": 20, "value": 1},
-        {"event_type": "unit_died", "unit_name": "Marine", "x": 50, "y": 60, "value": 0},
-        {"event_type": "building_started", "unit_name": "Hatchery", "x": 5, "y": 5, "value": 300},
+        {
+            "event_type": "unit_created",
+            "unit_name": "Zergling",
+            "x": 10,
+            "y": 20,
+            "value": 1,
+        },
+        {
+            "event_type": "unit_died",
+            "unit_name": "Marine",
+            "x": 50,
+            "y": 60,
+            "value": 0,
+        },
+        {
+            "event_type": "building_started",
+            "unit_name": "Hatchery",
+            "x": 5,
+            "y": 5,
+            "value": 300,
+        },
     ]
     batch_insert_events(session, game_id, sample_events)
     timeline = get_game_timeline(session, game_id)

@@ -8,25 +8,25 @@ Phase 66: Multi-Language System Integration Hub
 
 from __future__ import annotations
 
-import os
-import sys
 import json
-import time
+import os
 import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
+import sys
+import time
+from dataclasses import asdict, dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from wicked_zerg_challenger.rust_accel import (
-        nearest_point_index,
-        combat_power_comparison,
         batch_nearest_points,
+        cluster_points,
+        combat_power_comparison,
+        formation_positions,
+        nearest_point_index,
         path_distance,
         route_distance,
-        cluster_points,
-        formation_positions,
         rust_available,
     )
 
@@ -137,11 +137,11 @@ class IntegrationHub:
 
         return {
             "advantage": advantage,
-            "recommendation": "ATTACK"
-            if advantage > 1.2
-            else "RETREAT"
-            if advantage < 0.8
-            else "HOLD",
+            "recommendation": (
+                "ATTACK"
+                if advantage > 1.2
+                else "RETREAT" if advantage < 0.8 else "HOLD"
+            ),
             "analysis": self._get_recommendation_text(advantage),
         }
 
@@ -230,7 +230,7 @@ def main():
     
     print("\\n=== Formation Plan ===")
     positions = hub.formation_plan(10, "circle")
-    print(f"Generated {len(positions)} positions")
+    print(f"Generated {len(positions)} positions")  # noqa: F821
     
     print("\\n✅ All tests passed!")
 

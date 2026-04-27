@@ -12,29 +12,35 @@ Tournament Mode - 토너먼트 모드 (#115)
 - 맵 풀 관리
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-from enum import Enum
-import random
-import math
 import logging
+import math
+import random
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("TournamentMode")
 
 
 class TournamentFormat(Enum):
     """토너먼트 형식"""
-    ROUND_ROBIN = "round_robin"              # 라운드 로빈
-    SINGLE_ELIMINATION = "single_elim"       # 싱글 엘리미네이션
-    DOUBLE_ELIMINATION = "double_elim"       # 더블 엘리미네이션
-    SWISS = "swiss"                          # 스위스 방식
-    BEST_OF_N = "best_of_n"                  # 최고 N전
+
+    ROUND_ROBIN = "round_robin"  # 라운드 로빈
+    SINGLE_ELIMINATION = "single_elim"  # 싱글 엘리미네이션
+    DOUBLE_ELIMINATION = "double_elim"  # 더블 엘리미네이션
+    SWISS = "swiss"  # 스위스 방식
+    BEST_OF_N = "best_of_n"  # 최고 N전
 
 
 class MatchResult:
     """경기 결과"""
 
-    def __init__(self, player1: str, player2: str,
-                 winner: Optional[str] = None, game_map: str = ""):
+    def __init__(
+        self,
+        player1: str,
+        player2: str,
+        winner: Optional[str] = None,
+        game_map: str = "",
+    ):
         self.player1 = player1
         self.player2 = player2
         self.winner = winner
@@ -92,7 +98,9 @@ class TournamentParticipant:
         }
 
 
-def _update_elo(winner_elo: float, loser_elo: float, k: float = 32.0) -> Tuple[float, float]:
+def _update_elo(
+    winner_elo: float, loser_elo: float, k: float = 32.0
+) -> Tuple[float, float]:
     """ELO 레이팅 업데이트 (표준 공식)."""
     expected_w = 1.0 / (1.0 + math.pow(10, (loser_elo - winner_elo) / 400))
     expected_l = 1.0 - expected_w
@@ -109,7 +117,9 @@ class TournamentManager:
     - 매칭 스케줄링 + 결과 기록 + ELO 순위 산정
     """
 
-    def __init__(self, tournament_format: TournamentFormat = TournamentFormat.ROUND_ROBIN):
+    def __init__(
+        self, tournament_format: TournamentFormat = TournamentFormat.ROUND_ROBIN
+    ):
         self.format = tournament_format
         self.participants: List[TournamentParticipant] = []
         self.matches: List[MatchResult] = []
@@ -166,8 +176,12 @@ class TournamentManager:
             # SWISS, BEST_OF_N 등은 라운드 로빈 폴백
             self._build_round_robin()
 
-        logger.info("토너먼트 시작: %s, 참가자 %d명, 매치 %d개",
-                     self.format.value, len(self.participants), len(self._pending_matches))
+        logger.info(
+            "토너먼트 시작: %s, 참가자 %d명, 매치 %d개",
+            self.format.value,
+            len(self.participants),
+            len(self._pending_matches),
+        )
 
     def _build_round_robin(self) -> None:
         """라운드 로빈 매칭 생성 — 모든 참가자 쌍."""
@@ -193,7 +207,9 @@ class TournamentManager:
         """현재 브래킷에서 한 라운드 매치를 생성한다."""
         for i in range(0, len(self._bracket) - 1, 2):
             game_map = random.choice(self.map_pool)
-            self._pending_matches.append((self._bracket[i], self._bracket[i + 1], game_map))
+            self._pending_matches.append(
+                (self._bracket[i], self._bracket[i + 1], game_map)
+            )
         # 홀수인 경우 마지막은 부전승
         if len(self._bracket) % 2 == 1:
             bye = self._bracket[-1]
@@ -238,13 +254,21 @@ class TournamentManager:
 
         # 큐에서 해당 매치 제거
         self._pending_matches = [
-            m for m in self._pending_matches
+            m
+            for m in self._pending_matches
             if not (m[0] == result.player1 and m[1] == result.player2)
         ]
 
         # 싱글 엘리미네이션: 다음 라운드 진행
-        if self.format == TournamentFormat.SINGLE_ELIMINATION and not self._pending_matches:
-            winners = [r.winner for r in self.matches if r.winner and r in self.matches[-len(self._bracket) // 2:]]
+        if (
+            self.format == TournamentFormat.SINGLE_ELIMINATION
+            and not self._pending_matches
+        ):
+            winners = [
+                r.winner
+                for r in self.matches
+                if r.winner and r in self.matches[-len(self._bracket) // 2 :]
+            ]
             if len(winners) > 1:
                 self._bracket = winners
                 self.current_round += 1
@@ -257,7 +281,7 @@ class TournamentManager:
         sorted_participants = sorted(
             self.participants,
             key=lambda p: (p.elo_rating, p.wins, -p.losses),
-            reverse=True
+            reverse=True,
         )
         return [p.to_dict() for p in sorted_participants]
 

@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 import json
-import time
-import struct
 import logging
+import struct
 import threading
+import time
+from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Callable, Any
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +58,11 @@ class ButtonAction(Enum):
 # Data Classes
 # ============================================================
 
+
 @dataclass
 class ESP32Config:
     """Configuration for ESP32 connection and hardware pins."""
+
     broker_host: str = MQTT_DEFAULT_BROKER
     broker_port: int = MQTT_DEFAULT_PORT
     client_id: str = "sc2_esp32_monitor"
@@ -89,6 +91,7 @@ class ESP32Config:
 @dataclass
 class TelemetryPacket:
     """Telemetry data packet sent between SC2 bot and ESP32."""
+
     timestamp: float = 0.0
     game_loop: int = 0
     minerals: int = 0
@@ -115,7 +118,7 @@ class TelemetryPacket:
         if len(data) < 4:
             return cls()
         _magic, length = struct.unpack("!HH", data[:4])
-        payload = json.loads(data[4:4 + length].decode("utf-8"))
+        payload = json.loads(data[4 : 4 + length].decode("utf-8"))
         valid = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in payload.items() if k in valid})
 
@@ -135,6 +138,7 @@ class TelemetryPacket:
 # ============================================================
 # MQTT Bridge
 # ============================================================
+
 
 class MQTTBridge:
     """MQTT bridge for communication between SC2 bot and ESP32 hardware."""
@@ -205,13 +209,18 @@ class MQTTBridge:
 
     def get_stats(self) -> dict[str, Any]:
         with self._lock:
-            return {"connected": self._connected, "published": self._publish_count,
-                    "received": self._receive_count, "topics": list(self._subscriptions)}
+            return {
+                "connected": self._connected,
+                "published": self._publish_count,
+                "received": self._receive_count,
+                "topics": list(self._subscriptions),
+            }
 
 
 # ============================================================
 # LED Controller
 # ============================================================
+
 
 class LEDController:
     """RGB LED controller for SC2 game status visualization."""
@@ -264,7 +273,8 @@ class LEDController:
 
     def update_from_supply(self, used: int, cap: int) -> None:
         if cap == 0:
-            self.set_color(LEDColor.BLUE); return
+            self.set_color(LEDColor.BLUE)
+            return
         ratio = used / cap
         if ratio < 0.5:
             self.set_color(LEDColor.GREEN)
@@ -296,6 +306,7 @@ class LEDController:
 # OLED Display Simulator
 # ============================================================
 
+
 class OLEDDisplay:
     """Simulated OLED display for SC2 game information."""
 
@@ -310,7 +321,7 @@ class OLEDDisplay:
         self._lines = []
 
     def write_line(self, text: str, line: int = -1) -> None:
-        text = text[:self.width // 6]
+        text = text[: self.width // 6]
         if 0 <= line < self._max_lines:
             while len(self._lines) <= line:
                 self._lines.append("")
@@ -351,13 +362,16 @@ class OLEDDisplay:
 # Button / Sensor Simulator
 # ============================================================
 
+
 class ButtonController:
     """Simulates button inputs on ESP32 GPIO for game commands."""
 
     def __init__(self, config: ESP32Config) -> None:
         actions = list(ButtonAction)
         self._pin_map: dict[int, ButtonAction] = {
-            pin: actions[i] for i, pin in enumerate(config.button_pins) if i < len(actions)
+            pin: actions[i]
+            for i, pin in enumerate(config.button_pins)
+            if i < len(actions)
         }
         self._log: list[dict[str, Any]] = []
         self._callbacks: dict[ButtonAction, Callable[[], None]] = {}
@@ -391,6 +405,7 @@ class ButtonController:
 # Buzzer Controller
 # ============================================================
 
+
 class BuzzerController:
     """Piezo buzzer for audio alerts."""
 
@@ -416,6 +431,7 @@ class BuzzerController:
 # ============================================================
 # ESP32 Monitor (Main Coordinator)
 # ============================================================
+
 
 class ESP32Monitor:
     """Main coordinator: ties MQTT, LEDs, OLED, buttons, and buzzer together."""
@@ -493,18 +509,33 @@ class ESP32Monitor:
         return self.mqtt.publish(TOPIC_GAME_STATE, pkt.to_json())
 
     def publish_alert(self, level: AlertLevel, message: str) -> bool:
-        return self.mqtt.publish(TOPIC_ALERTS, {"level": level.name, "message": message})
+        return self.mqtt.publish(
+            TOPIC_ALERTS, {"level": level.name, "message": message}
+        )
 
-    def simulate_game_tick(self, game_loop: int, minerals: int, vespene: int,
-                           supply_used: int, supply_cap: int, army_count: int = 0,
-                           worker_count: int = 16, under_attack: bool = False,
-                           enemy_detected: bool = False) -> TelemetryPacket:
+    def simulate_game_tick(
+        self,
+        game_loop: int,
+        minerals: int,
+        vespene: int,
+        supply_used: int,
+        supply_cap: int,
+        army_count: int = 0,
+        worker_count: int = 16,
+        under_attack: bool = False,
+        enemy_detected: bool = False,
+    ) -> TelemetryPacket:
         pkt = TelemetryPacket(
-            timestamp=time.time(), game_loop=game_loop,
-            minerals=minerals, vespene=vespene,
-            supply_used=supply_used, supply_cap=supply_cap,
-            army_count=army_count, worker_count=worker_count,
-            under_attack=under_attack, enemy_detected=enemy_detected,
+            timestamp=time.time(),
+            game_loop=game_loop,
+            minerals=minerals,
+            vespene=vespene,
+            supply_used=supply_used,
+            supply_cap=supply_cap,
+            army_count=army_count,
+            worker_count=worker_count,
+            under_attack=under_attack,
+            enemy_detected=enemy_detected,
             base_count=max(1, supply_cap // 50),
             tech_level=min(3, 1 + game_loop // 5000),
             current_strategy="rush" if game_loop < 3000 else "macro",
@@ -515,16 +546,20 @@ class ESP32Monitor:
         return pkt
 
     def get_status(self) -> dict[str, Any]:
-        return {"running": self._running, "mqtt": self.mqtt.get_stats(),
-                "led_events": len(self.leds.get_history()),
-                "oled_frames": self.oled._frames,
-                "button_presses": len(self.buttons.get_log()),
-                "events": len(self._events)}
+        return {
+            "running": self._running,
+            "mqtt": self.mqtt.get_stats(),
+            "led_events": len(self.leds.get_history()),
+            "oled_frames": self.oled._frames,
+            "button_presses": len(self.buttons.get_log()),
+            "events": len(self._events),
+        }
 
 
 # ============================================================
 # Demo
 # ============================================================
+
 
 def demo() -> None:
     """Demonstrate ESP32 IoT Monitor with mock MQTT and simulated game ticks."""
@@ -538,14 +573,20 @@ def demo() -> None:
     assert monitor.start(), "Monitor failed to start"
 
     print(f"\n[1] Config: {config.broker_host}:{config.broker_port}")
-    print(f"  OLED: {config.oled_width}x{config.oled_height}  Buttons: {config.button_pins}")
+    print(
+        f"  OLED: {config.oled_width}x{config.oled_height}  Buttons: {config.button_pins}"
+    )
 
     print("\n[2] Simulating early game")
     for loop in range(0, 4000, 800):
         pkt = monitor.simulate_game_tick(
-            game_loop=loop, minerals=300 + loop // 10, vespene=50 + loop // 20,
-            supply_used=12 + loop // 200, supply_cap=14 + (loop // 800) * 8,
-            army_count=loop // 500, worker_count=min(66, 12 + loop // 300),
+            game_loop=loop,
+            minerals=300 + loop // 10,
+            vespene=50 + loop // 20,
+            supply_used=12 + loop // 200,
+            supply_cap=14 + (loop // 800) * 8,
+            army_count=loop // 500,
+            worker_count=min(66, 12 + loop // 300),
         )
         print(f"  Loop {loop}: supply={pkt.supply_used}/{pkt.supply_cap}")
 
@@ -555,8 +596,14 @@ def demo() -> None:
     print("\n[4] Attack alert")
     monitor.publish_alert(AlertLevel.CRITICAL, "Zerglings at natural!")
     atk = monitor.simulate_game_tick(
-        game_loop=5000, minerals=800, vespene=400, supply_used=120,
-        supply_cap=150, army_count=45, worker_count=55, under_attack=True,
+        game_loop=5000,
+        minerals=800,
+        vespene=400,
+        supply_used=120,
+        supply_cap=150,
+        army_count=45,
+        worker_count=55,
+        under_attack=True,
     )
     print(f"  Under attack: {atk.supply_used}/{atk.supply_cap}")
     print(monitor.oled.get_display_text())

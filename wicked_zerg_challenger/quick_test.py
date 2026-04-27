@@ -4,16 +4,17 @@
 빠른 테스트 - Easy 난이도 20게임 (최적화 검증용)
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty, Result
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
+import logging
 import os
+import sys
 import time
 from datetime import datetime
-import logging
+
+from sc2 import maps
+from sc2.data import Difficulty, Race, Result
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("QuickTest")
 
@@ -31,8 +32,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -81,15 +84,15 @@ def run_single_game(game_num, total_games):
             return None
 
         result = run_game(
-            map_instance,
-            [bot, Computer(opponent_race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
         )
 
         # Get result
         if result is not None:
-            is_victory = (result == Result.Victory)
-            logger.info(f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}")
+            is_victory = result == Result.Victory
+            logger.info(
+                f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}"
+            )
             return is_victory
         else:
             logger.info(f"\n[RESULT] Game #{game_num}: UNKNOWN")
@@ -98,6 +101,7 @@ def run_single_game(game_num, total_games):
     except Exception as e:
         logger.error(f"Game #{game_num} failed: {e}")
         import traceback
+
         traceback.print_exc()
         return None
 

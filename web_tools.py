@@ -1,11 +1,11 @@
-
-import requests
-import random
 import datetime
 import json
 import logging
+import random
 import warnings
 from urllib.parse import quote
+
+import requests
 
 logger = logging.getLogger("web_tools")
 
@@ -23,6 +23,7 @@ except ImportError:
 BeautifulSoup = None
 try:
     from bs4 import BeautifulSoup as _BS
+
     BeautifulSoup = _BS
 except ImportError:
     pass
@@ -35,40 +36,90 @@ HEADERS = {
 
 # 한국 주요 도시 좌표 (Open-Meteo용)
 CITY_COORDS = {
-    "광주": (35.1595, 126.8526), "광주광역시": (35.1595, 126.8526),
-    "서울": (37.5665, 126.9780), "부산": (35.1796, 129.0756),
-    "대구": (35.8714, 128.6014), "인천": (37.4563, 126.7052),
-    "대전": (36.3504, 127.3845), "울산": (35.5384, 129.3114),
-    "세종": (36.4800, 127.2890), "수원": (37.2636, 127.0286),
-    "성남": (37.4200, 127.1267), "고양": (37.6564, 126.8350),
-    "용인": (37.2411, 127.1776), "청주": (36.6424, 127.4890),
-    "천안": (36.8151, 127.1139), "전주": (35.8242, 127.1480),
-    "포항": (36.0190, 129.3435), "창원": (35.2281, 128.6812),
-    "제주": (33.4996, 126.5312), "김포": (37.6153, 126.7156),
-    "춘천": (37.8813, 127.7298), "강릉": (37.7519, 128.8761),
-    "목포": (34.8118, 126.3922), "여수": (34.7604, 127.6622),
-    "순천": (34.9508, 127.4872), "안동": (36.5684, 128.7294),
-    "경주": (35.8562, 129.2247), "익산": (35.9483, 126.9577),
+    "광주": (35.1595, 126.8526),
+    "광주광역시": (35.1595, 126.8526),
+    "서울": (37.5665, 126.9780),
+    "부산": (35.1796, 129.0756),
+    "대구": (35.8714, 128.6014),
+    "인천": (37.4563, 126.7052),
+    "대전": (36.3504, 127.3845),
+    "울산": (35.5384, 129.3114),
+    "세종": (36.4800, 127.2890),
+    "수원": (37.2636, 127.0286),
+    "성남": (37.4200, 127.1267),
+    "고양": (37.6564, 126.8350),
+    "용인": (37.2411, 127.1776),
+    "청주": (36.6424, 127.4890),
+    "천안": (36.8151, 127.1139),
+    "전주": (35.8242, 127.1480),
+    "포항": (36.0190, 129.3435),
+    "창원": (35.2281, 128.6812),
+    "제주": (33.4996, 126.5312),
+    "김포": (37.6153, 126.7156),
+    "춘천": (37.8813, 127.7298),
+    "강릉": (37.7519, 128.8761),
+    "목포": (34.8118, 126.3922),
+    "여수": (34.7604, 127.6622),
+    "순천": (34.9508, 127.4872),
+    "안동": (36.5684, 128.7294),
+    "경주": (35.8562, 129.2247),
+    "익산": (35.9483, 126.9577),
 }
 
 # WMO 날씨 코드 → 한국어 설명
 WMO_CODES = {
-    0: "맑음", 1: "대체로 맑음", 2: "부분 흐림", 3: "흐림",
-    45: "안개", 48: "안개(서리)", 51: "가벼운 이슬비", 53: "이슬비",
-    55: "짙은 이슬비", 61: "약한 비", 63: "비", 65: "강한 비",
-    71: "약한 눈", 73: "눈", 75: "강한 눈", 77: "눈알갱이",
-    80: "약한 소나기", 81: "소나기", 82: "강한 소나기",
-    85: "약한 눈보라", 86: "눈보라", 95: "뇌우", 96: "우박 뇌우", 99: "강한 우박 뇌우",
+    0: "맑음",
+    1: "대체로 맑음",
+    2: "부분 흐림",
+    3: "흐림",
+    45: "안개",
+    48: "안개(서리)",
+    51: "가벼운 이슬비",
+    53: "이슬비",
+    55: "짙은 이슬비",
+    61: "약한 비",
+    63: "비",
+    65: "강한 비",
+    71: "약한 눈",
+    73: "눈",
+    75: "강한 눈",
+    77: "눈알갱이",
+    80: "약한 소나기",
+    81: "소나기",
+    82: "강한 소나기",
+    85: "약한 눈보라",
+    86: "눈보라",
+    95: "뇌우",
+    96: "우박 뇌우",
+    99: "강한 우박 뇌우",
 }
 
 # WMO 날씨 코드 → 아이콘 매핑
 WMO_ICONS = {
-    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-    45: "🌫️", 48: "🌫️", 51: "🌦️", 53: "🌦️",
-    55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
-    71: "🌨️", 73: "🌨️", 75: "❄️", 77: "❄️",
-    80: "🌦️", 81: "🌧️", 82: "⛈️",
-    85: "🌨️", 86: "❄️", 95: "⛈️", 96: "⛈️", 99: "⛈️",
+    0: "☀️",
+    1: "🌤️",
+    2: "⛅",
+    3: "☁️",
+    45: "🌫️",
+    48: "🌫️",
+    51: "🌦️",
+    53: "🌦️",
+    55: "🌧️",
+    61: "🌧️",
+    63: "🌧️",
+    65: "🌧️",
+    71: "🌨️",
+    73: "🌨️",
+    75: "❄️",
+    77: "❄️",
+    80: "🌦️",
+    81: "🌧️",
+    82: "⛈️",
+    85: "🌨️",
+    86: "❄️",
+    95: "⛈️",
+    96: "⛈️",
+    99: "⛈️",
 }
 
 
@@ -81,7 +132,7 @@ def _get_city_coords(city):
     try:
         resp = requests.get(
             f"https://geocoding-api.open-meteo.com/v1/search?name={quote(city)}&count=5&language=ko",
-            timeout=5
+            timeout=5,
         )
         if resp.status_code == 200:
             data = resp.json()
@@ -230,7 +281,9 @@ def _get_weather_wttr(city):
     current = data.get("current_condition", [{}])[0]
     weather_desc = current.get("lang_ko", [{}])
     if weather_desc:
-        desc = weather_desc[0].get("value", current.get("weatherDesc", [{}])[0].get("value", ""))
+        desc = weather_desc[0].get(
+            "value", current.get("weatherDesc", [{}])[0].get("value", "")
+        )
     else:
         desc = current.get("weatherDesc", [{}])[0].get("value", "")
 
@@ -281,14 +334,20 @@ def search_web(query):
                 # Bug fix #26: Use module-level BeautifulSoup variable instead of re-importing
                 if BeautifulSoup is None:
                     raise ImportError("BeautifulSoup not available")
-                resp = requests.get(f"https://html.duckduckgo.com/html/?q={query}", headers=HEADERS, timeout=10)
+                resp = requests.get(
+                    f"https://html.duckduckgo.com/html/?q={query}",
+                    headers=HEADERS,
+                    timeout=10,
+                )
                 soup = BeautifulSoup(resp.text, "html.parser")
                 results = []
                 for r in soup.select(".result__body")[:5]:
                     title = r.select_one(".result__a")
                     snippet = r.select_one(".result__snippet")
                     if title:
-                        results.append(f"• {title.get_text()}: {snippet.get_text() if snippet else ''}")
+                        results.append(
+                            f"• {title.get_text()}: {snippet.get_text() if snippet else ''}"
+                        )
                 if results:
                     return "\n".join(results)
             except Exception:
@@ -364,7 +423,9 @@ def _search_naver_fallback(query):
         # 네이버 웹 검색 결과 (sds-comps 기반 새 UI)
         for item in soup.select(".sds-comps-vertical-layout"):
             text = item.get_text(strip=True)
-            if 30 < len(text) < 300 and not any(skip in text for skip in ["더보기", "관련문서", "광고", "Keep에"]):
+            if 30 < len(text) < 300 and not any(
+                skip in text for skip in ["더보기", "관련문서", "광고", "Keep에"]
+            ):
                 results.append(text[:200])
             if len(results) >= 5:
                 break
@@ -400,8 +461,20 @@ def _search_naver_fallback(query):
 
 def get_daily_fortune():
     """오늘의 운세를 반환한다. 같은 날에는 항상 동일한 결과를 보장."""
-    zodiacs = ["쥐띠", "소띠", "호랑이띠", "토끼띠", "용띠", "뱀띠",
-               "말띠", "양띠", "원숭이띠", "닭띠", "개띠", "돼지띠"]
+    zodiacs = [
+        "쥐띠",
+        "소띠",
+        "호랑이띠",
+        "토끼띠",
+        "용띠",
+        "뱀띠",
+        "말띠",
+        "양띠",
+        "원숭이띠",
+        "닭띠",
+        "개띠",
+        "돼지띠",
+    ]
     fortunes = [
         "오늘은 기분 좋은 일이 생길 거예요.",
         "조금 신중하게 행동하는 게 좋겠어요.",
@@ -412,7 +485,7 @@ def get_daily_fortune():
         "새로운 도전을 하기에 좋은 날입니다.",
         "재물운이 상승하고 있어요.",
         "건강 관리에 유의하세요.",
-        "오랜 친구에게 연락이 올 수 있어요."
+        "오랜 친구에게 연락이 올 수 있어요.",
     ]
 
     today = datetime.date.today()
@@ -433,7 +506,10 @@ def get_exchange_rate(base="USD", target="KRW"):
     """환율 조회"""
     try:
         import requests
-        resp = requests.get(f"https://api.exchangerate-api.com/v4/latest/{base}", timeout=5)
+
+        resp = requests.get(
+            f"https://api.exchangerate-api.com/v4/latest/{base}", timeout=5
+        )
         if resp.status_code == 200:
             data = resp.json()
             rate = data.get("rates", {}).get(target)

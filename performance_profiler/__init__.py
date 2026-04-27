@@ -2,11 +2,11 @@
 """Phase 659: Performance Profiler for SC2 Bot Optimization."""
 
 from .sc2_profiler import (
-    Timer,
-    MemoryTracker,
     CPUProfiler,
     FrameAnalyzer,
+    MemoryTracker,
     SC2Profiler,
+    Timer,
 )
 
 __all__ = [

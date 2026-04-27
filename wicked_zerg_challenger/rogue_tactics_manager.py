@@ -9,15 +9,15 @@
 4. 후반 운영: 점막 감지 기반 의사결정
 """
 
-from typing import List, Optional, Set, Tuple
-import math
 import logging
+import math
+from typing import List, Optional, Set, Tuple
 
 logger = logging.getLogger("RogueTacticsManager")
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
@@ -74,10 +74,10 @@ class RogueTacticsManager:
         Args:
             iteration: 현재 게임 반복 횟수
         """
-        if not UnitTypeId or not hasattr(self.bot, 'units'):
+        if not UnitTypeId or not hasattr(self.bot, "units"):
             return
 
-        game_time = getattr(self.bot, 'time', 0)
+        game_time = getattr(self.bot, "time", 0)
 
         try:
             # 1. 점막 위 적 병력 감지 업데이트
@@ -85,7 +85,9 @@ class RogueTacticsManager:
 
             # 2. 드랍 쿨다운 업데이트
             if self._drop_cooldown > 0:
-                self._drop_cooldown = max(0, self._drop_cooldown_duration - (game_time - self._last_drop_time))
+                self._drop_cooldown = max(
+                    0, self._drop_cooldown_duration - (game_time - self._last_drop_time)
+                )
 
             # 3. 드랍 가능 여부 확인 및 실행
             if self._can_execute_drop():
@@ -104,7 +106,7 @@ class RogueTacticsManager:
 
     def _check_overlord_speed_upgrade(self) -> bool:
         """대군주 속업 상태 확인"""
-        if not UpgradeId or not hasattr(self.bot, 'already_pending_upgrade'):
+        if not UpgradeId or not hasattr(self.bot, "already_pending_upgrade"):
             return False
         try:
             return self.bot.already_pending_upgrade(UpgradeId.OVERLORDSPEED) > 0
@@ -117,7 +119,7 @@ class RogueTacticsManager:
 
         Rogue 전술: 적 병력이 내 기지 앞마당 점막 끝에 도달했을 때 드랍 유닛
         """
-        if not hasattr(self.bot, 'enemy_units') or not hasattr(self.bot, 'townhalls'):
+        if not hasattr(self.bot, "enemy_units") or not hasattr(self.bot, "townhalls"):
             return
 
         enemy_units = self.bot.enemy_units
@@ -127,9 +129,12 @@ class RogueTacticsManager:
             return
 
         # 전투 유닛만 필터링
-        combat_enemy = [u for u in enemy_units
-                       if not getattr(u, 'is_structure', False)
-                       and getattr(u.type_id, 'name', '') not in ['SCV', 'PROBE', 'DRONE']]
+        combat_enemy = [
+            u
+            for u in enemy_units
+            if not getattr(u, "is_structure", False)
+            and getattr(u.type_id, "name", "") not in ["SCV", "PROBE", "DRONE"]
+        ]
 
         if not combat_enemy:
             self._enemy_on_creep = False
@@ -139,7 +144,7 @@ class RogueTacticsManager:
         # 점막 위 적 확인
         for enemy in combat_enemy:
             try:
-                if hasattr(self.bot, 'is_visible') and hasattr(self.bot, 'has_creep'):
+                if hasattr(self.bot, "is_visible") and hasattr(self.bot, "has_creep"):
                     pos = enemy.position
                     if self.bot.has_creep(pos):
                         self._enemy_on_creep = True
@@ -160,7 +165,7 @@ class RogueTacticsManager:
 
     def _can_execute_drop(self) -> bool:
         """드랍 실행 가능 여부 확인"""
-        if not UnitTypeId or not hasattr(self.bot, 'units'):
+        if not UnitTypeId or not hasattr(self.bot, "units"):
             return False
 
         # 쿨다운 중이면 불가
@@ -186,7 +191,7 @@ class RogueTacticsManager:
             return True
 
         # 게임 시간 8분 이후 적 본진 드랍도 고려
-        game_time = getattr(self.bot, 'time', 0)
+        game_time = getattr(self.bot, "time", 0)
         if game_time > 480:  # 8분
             return True
 
@@ -201,10 +206,10 @@ class RogueTacticsManager:
         2. 적 확장 기지 일꾼
         3. 적 주요 건물 (공성 전차 등)
         """
-        if not Point2 or not hasattr(self.bot, 'enemy_structures'):
+        if not Point2 or not hasattr(self.bot, "enemy_structures"):
             return None
 
-        game_time = getattr(self.bot, 'time', 0)
+        game_time = getattr(self.bot, "time", 0)
 
         # 캐시 확인 (5초마다 업데이트)
         if self._cached_drop_target and game_time - self._drop_target_update_time < 5:
@@ -213,9 +218,12 @@ class RogueTacticsManager:
         target = None
 
         # 1. 적 일꾼 위치 확인
-        if hasattr(self.bot, 'enemy_units'):
-            enemy_workers = [u for u in self.bot.enemy_units
-                           if getattr(u.type_id, 'name', '') in ['SCV', 'PROBE', 'DRONE']]
+        if hasattr(self.bot, "enemy_units"):
+            enemy_workers = [
+                u
+                for u in self.bot.enemy_units
+                if getattr(u.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
+            ]
             if len(enemy_workers) >= 5:
                 # 일꾼 중심점
                 worker_positions = [w.position for w in enemy_workers]
@@ -225,16 +233,29 @@ class RogueTacticsManager:
 
         # 2. 적 타운홀 위치
         if not target:
-            townhall_types = ['NEXUS', 'COMMANDCENTER', 'ORBITALCOMMAND',
-                            'PLANETARYFORTRESS', 'HATCHERY', 'LAIR', 'HIVE']
-            enemy_townhalls = [s for s in self.bot.enemy_structures
-                              if getattr(s.type_id, 'name', '') in townhall_types]
+            townhall_types = [
+                "NEXUS",
+                "COMMANDCENTER",
+                "ORBITALCOMMAND",
+                "PLANETARYFORTRESS",
+                "HATCHERY",
+                "LAIR",
+                "HIVE",
+            ]
+            enemy_townhalls = [
+                s
+                for s in self.bot.enemy_structures
+                if getattr(s.type_id, "name", "") in townhall_types
+            ]
             if enemy_townhalls:
                 target = enemy_townhalls[0].position
 
         # 3. 적 시작 위치
         if not target:
-            if hasattr(self.bot, 'enemy_start_locations') and self.bot.enemy_start_locations:
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
                 target = self.bot.enemy_start_locations[0]
 
         # 캐시 업데이트
@@ -253,7 +274,7 @@ class RogueTacticsManager:
         1. 맵 모서리 4개 중 적 시야에서 가장 먼 곳 선택
         2. 해당 모서리를 경유하여 이동
         """
-        if not Point2 or not hasattr(self.bot, 'game_info'):
+        if not Point2 or not hasattr(self.bot, "game_info"):
             return [end]
 
         try:
@@ -269,7 +290,7 @@ class RogueTacticsManager:
 
             # 적 유닛 위치 수집
             enemy_positions = []
-            if hasattr(self.bot, 'enemy_units'):
+            if hasattr(self.bot, "enemy_units"):
                 enemy_positions = [u.position for u in self.bot.enemy_units]
 
             # 적에서 가장 먼 코너 선택
@@ -278,9 +299,11 @@ class RogueTacticsManager:
 
             for corner in corners:
                 if enemy_positions:
-                    min_enemy_dist = min(corner.distance_to(ep) for ep in enemy_positions)
+                    min_enemy_dist = min(
+                        corner.distance_to(ep) for ep in enemy_positions
+                    )
                 else:
-                    min_enemy_dist = float('inf')
+                    min_enemy_dist = float("inf")
 
                 if min_enemy_dist > best_distance:
                     best_distance = min_enemy_dist
@@ -306,8 +329,10 @@ class RogueTacticsManager:
         try:
             # ★ HarassmentCoordinator가 이미 드랍 중이면 스킵 ★
             harass = getattr(self.bot, "harassment_coord", None)
-            if harass and (getattr(harass, "drop_play_active", False) or
-                          getattr(harass, "baneling_drop_active", False)):
+            if harass and (
+                getattr(harass, "drop_play_active", False)
+                or getattr(harass, "baneling_drop_active", False)
+            ):
                 return
 
             # 수송 대군주 선택
@@ -348,7 +373,7 @@ class RogueTacticsManager:
                     continue
 
             # 탑승 완료 확인 후 드랍 위치로 이동
-            cargo = getattr(transport, 'cargo_used', 0)
+            cargo = getattr(transport, "cargo_used", 0)
             if cargo >= 4:  # 최소 4기 이상 탑승
                 # 우회 경로 계산
                 path = self._calculate_stealth_path(transport.position, target)
@@ -362,10 +387,12 @@ class RogueTacticsManager:
 
                 self._drop_in_progress = True
                 self._drop_overlords.add(transport.tag)
-                self._last_drop_time = getattr(self.bot, 'time', 0)
+                self._last_drop_time = getattr(self.bot, "time", 0)
 
-                game_time = getattr(self.bot, 'time', 0)
-                logger.info(f"[{int(game_time)}s] Baneling drop initiated with {cargo} banelings")
+                game_time = getattr(self.bot, "time", 0)
+                logger.info(
+                    f"[{int(game_time)}s] Baneling drop initiated with {cargo} banelings"
+                )
 
         except Exception as e:
             logger.error(f"Baneling drop execution error: {e}")
@@ -388,7 +415,7 @@ class RogueTacticsManager:
                     continue
 
                 # 화물이 비었으면 드랍 완료
-                cargo = getattr(transport, 'cargo_used', 0)
+                cargo = getattr(transport, "cargo_used", 0)
                 if cargo == 0:
                     self._drop_overlords.discard(tag)
 

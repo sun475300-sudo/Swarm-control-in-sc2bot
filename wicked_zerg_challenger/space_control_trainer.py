@@ -9,9 +9,11 @@ Space Control Trainer - 공간 확보 학습 시스템
 4. 크립 확장 경로 개척
 """
 
-from typing import Dict, Set, List, Optional, Tuple
-from sc2.position import Point2
+from typing import Dict, List, Optional, Set, Tuple
+
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
 from utils.logger import get_logger
 
 
@@ -103,9 +105,7 @@ class SpaceControlTrainer:
             priority = self._calculate_initial_priority(position)
 
             self.destructible_targets[tag] = DestructibleTarget(
-                tag=tag,
-                position=position,
-                priority=priority
+                tag=tag, position=position, priority=priority
             )
 
             self.total_destructibles_found += 1
@@ -245,9 +245,7 @@ class SpaceControlTrainer:
 
         # 우선순위 순으로 정렬
         sorted_targets = sorted(
-            self.destructible_targets.values(),
-            key=lambda t: t.priority,
-            reverse=True
+            self.destructible_targets.values(), key=lambda t: t.priority, reverse=True
         )
 
         if not sorted_targets:
@@ -258,8 +256,7 @@ class SpaceControlTrainer:
 
         # 근처 일꾼 찾기
         nearby_workers = idle_workers.closer_than(
-            self.DESTRUCTION_RANGE,
-            target.position
+            self.DESTRUCTION_RANGE, target.position
         )
 
         if nearby_workers:
@@ -270,11 +267,12 @@ class SpaceControlTrainer:
                 # Unit Authority 확인
                 if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                     from unit_authority_manager import AuthorityLevel
+
                     granted = self.bot.unit_authority.request_authority(
                         {worker.tag},
                         AuthorityLevel.ECONOMY,
                         "SpaceControl",
-                        self.bot.state.game_loop
+                        self.bot.state.game_loop,
                     )
 
                     if worker.tag in granted:
@@ -325,15 +323,18 @@ class SpaceControlTrainer:
         """통계 반환"""
         cleared_percent = 0
         if self.total_destructibles_found > 0:
-            cleared_percent = (self.total_destructibles_destroyed /
-                             self.total_destructibles_found * 100)
+            cleared_percent = (
+                self.total_destructibles_destroyed
+                / self.total_destructibles_found
+                * 100
+            )
 
         return {
             "total_found": self.total_destructibles_found,
             "total_destroyed": self.total_destructibles_destroyed,
             "remaining": len(self.destructible_targets),
             "cleared_percent": f"{cleared_percent:.1f}%",
-            "expansion_paths": self.expansion_paths_cleared
+            "expansion_paths": self.expansion_paths_cleared,
         }
 
     def _print_statistics(self, game_time: float):

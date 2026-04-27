@@ -8,11 +8,14 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 3. 맵 전역 감시를 위한 분산 배치
 """
 
-from typing import List, Dict, Optional, Set, Tuple
-from sc2.position import Point2
-from sc2.ids.unit_typeid import UnitTypeId
-from utils.logger import get_logger
 import random
+from typing import Dict, List, Optional, Set, Tuple
+
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
+from utils.logger import get_logger
+
 
 class OverlordSafetyManager:
     """
@@ -22,18 +25,18 @@ class OverlordSafetyManager:
     def __init__(self, bot):
         self.bot = bot
         self.logger = get_logger("OverlordSafety")
-        
+
         # 안전한 위치 (Pillars)
         self.safe_spots: List[Point2] = []
         self._pillars_calculated = False
-        
+
         # 대군주 상태 추적
         self.overlord_assignments: Dict[int, Point2] = {}  # tag -> target_pos
         self.fleeing_overlords: Set[int] = set()
-        
+
         # 설정
         self.SAFETY_DISTANCE = 15.0  # 대공 유닛과의 안전 거리
-        self.RETREAT_DISTANCE = 10.0 # 후퇴 거리
+        self.RETREAT_DISTANCE = 10.0  # 후퇴 거리
 
     def reset(self):
         """게임 간 상태 초기화"""
@@ -52,15 +55,15 @@ class OverlordSafetyManager:
             # 1. 안전 지대 계산 (아직 안 했으면)
             if not self._pillars_calculated:
                 self._calculate_safe_spots()
-                
+
             # 2. 대군주 관리 (2초마다)
             if iteration % 44 == 0:
                 await self._manage_overlords()
-                
+
             # 3. 위협 회피 (매 프레임 - 중요)
-            if iteration % 4 == 0: # 자주 체크
+            if iteration % 4 == 0:  # 자주 체크
                 await self._check_threats()
-                
+
         except Exception as e:
             if iteration % 50 == 0:
                 self.logger.error(f"[OVERLORD_SAFETY] Error: {e}")
@@ -79,8 +82,12 @@ class OverlordSafetyManager:
         game_info = self.bot.game_info
 
         # 지형 정보 확인
-        if not hasattr(game_info, "terrain_height") or not hasattr(game_info, "pathing_grid"):
-            self.logger.warning("[OVERLORD_SAFETY] Terrain data not available, using fallback positions")
+        if not hasattr(game_info, "terrain_height") or not hasattr(
+            game_info, "pathing_grid"
+        ):
+            self.logger.warning(
+                "[OVERLORD_SAFETY] Terrain data not available, using fallback positions"
+            )
             self._use_fallback_positions()
             return
 
@@ -90,17 +97,23 @@ class OverlordSafetyManager:
 
             if pillars:
                 self.safe_spots = pillars
-                self.logger.info(f"[OVERLORD_SAFETY] Found {len(pillars)} Pillar positions")
+                self.logger.info(
+                    f"[OVERLORD_SAFETY] Found {len(pillars)} Pillar positions"
+                )
             else:
                 # Pillar를 찾지 못한 경우 폴백
-                self.logger.warning("[OVERLORD_SAFETY] No Pillars found, using fallback positions")
+                self.logger.warning(
+                    "[OVERLORD_SAFETY] No Pillars found, using fallback positions"
+                )
                 self._use_fallback_positions()
 
             self._pillars_calculated = True
 
         except Exception as e:
             # ★ FIX: 로그 레벨 완화 (폴백 위치 사용하므로 치명적이지 않음)
-            self.logger.warning(f"[OVERLORD_SAFETY] Pillar calculation skipped, using fallback: {e}")
+            self.logger.warning(
+                f"[OVERLORD_SAFETY] Pillar calculation skipped, using fallback: {e}"
+            )
             self._use_fallback_positions()
             self._pillars_calculated = True
 
@@ -196,7 +209,9 @@ class OverlordSafetyManager:
 
         return True
 
-    def _select_distributed_pillars(self, pillars: List[Point2], max_count: int) -> List[Point2]:
+    def _select_distributed_pillars(
+        self, pillars: List[Point2], max_count: int
+    ) -> List[Point2]:
         """맵 전체에 고르게 분포된 Pillar 선택
 
         Args:
@@ -235,8 +250,7 @@ class OverlordSafetyManager:
 
                 # 이 셀에 속하는 Pillar 찾기
                 cell_pillars = [
-                    p for p in pillars
-                    if min_x <= p.x < max_x and min_y <= p.y < max_y
+                    p for p in pillars if min_x <= p.x < max_x and min_y <= p.y < max_y
                 ]
 
                 if cell_pillars:
@@ -249,7 +263,10 @@ class OverlordSafetyManager:
         if len(selected) < max_count:
             remaining = [p for p in pillars if p not in selected]
             import random
-            additional = random.sample(remaining, min(max_count - len(selected), len(remaining)))
+
+            additional = random.sample(
+                remaining, min(max_count - len(selected), len(remaining))
+            )
             selected.extend(additional)
 
         return selected
@@ -264,9 +281,14 @@ class OverlordSafetyManager:
 
         # 맵 가장자리 포인트 (기존 로직)
         self.safe_spots = [
-            Point2((10, 10)), Point2((w/2, 10)), Point2((w-10, 10)),
-            Point2((10, h/2)), Point2((w-10, h/2)),
-            Point2((10, h-10)), Point2((w/2, h-10)), Point2((w-10, h-10))
+            Point2((10, 10)),
+            Point2((w / 2, 10)),
+            Point2((w - 10, 10)),
+            Point2((10, h / 2)),
+            Point2((w - 10, h / 2)),
+            Point2((10, h - 10)),
+            Point2((w / 2, h - 10)),
+            Point2((w - 10, h - 10)),
         ]
 
     async def _manage_overlords(self):
@@ -284,18 +306,22 @@ class OverlordSafetyManager:
 
         # 할당되지 않은 대군주 찾기
         unassigned = [ov for ov in overlords if ov.tag not in self.overlord_assignments]
-        
+
         for ov in unassigned:
             # 권한 체크 (UnitAuthority)
             if hasattr(self.bot, "unit_authority"):
                 from unit_authority_manager import AuthorityLevel
+
                 # 대군주는 낮은 우선순위로 제어 (드랍 등에 뺏길 수 있음)
                 granted = self.bot.unit_authority.request_authority(
-                    {ov.tag}, AuthorityLevel.IDLE, "OverlordSafety", self.bot.state.game_loop
+                    {ov.tag},
+                    AuthorityLevel.IDLE,
+                    "OverlordSafety",
+                    self.bot.state.game_loop,
                 )
                 if ov.tag not in granted:
                     continue
-            
+
             # 빈 안전 지대 찾기
             target = self._find_best_spot(ov)
             if target:
@@ -306,15 +332,15 @@ class OverlordSafetyManager:
         """대군주에게 가장 적합한 안전 지대 찾기"""
         if not self.safe_spots:
             return None
-            
+
         # 이미 점유된 위치 제외
         occupied = set(self.overlord_assignments.values())
         available = [s for s in self.safe_spots if s not in occupied]
-        
+
         if not available:
             # 남는 자리가 없으면 랜덤 (또는 맵 중앙 제외)
             return random.choice(self.safe_spots)
-            
+
         # 가장 가까운 곳
         return min(available, key=lambda s: overlord.distance_to(s))
 
@@ -322,44 +348,52 @@ class OverlordSafetyManager:
         """대공 위협 감지 및 회피"""
         overlords = self.bot.units(UnitTypeId.OVERLORD)
         enemy_anti_air = self.bot.enemy_units.filter(lambda u: u.can_attack_air)
-        
+
         # 대공 구조물 (★ SHIELDBATTERY, PYLON(오버차지) 추가)
         enemy_structures = self.bot.enemy_structures.filter(
-            lambda s: s.type_id in {
-                UnitTypeId.MISSILETURRET, UnitTypeId.SPORECRAWLER,
-                UnitTypeId.PHOTONCANNON, UnitTypeId.BUNKER,
+            lambda s: s.type_id
+            in {
+                UnitTypeId.MISSILETURRET,
+                UnitTypeId.SPORECRAWLER,
+                UnitTypeId.PHOTONCANNON,
+                UnitTypeId.BUNKER,
                 UnitTypeId.SHIELDBATTERY,
             }
         )
-        
+
         for ov in overlords:
             # 드랍 작전 중인 대군주는 제외 (UnitAuthority로 체크 가능하지만 태그로 간단 체크)
             if hasattr(self.bot, "aggressive_strategies"):
                 strat = self.bot.aggressive_strategies
-                if hasattr(strat, "_drop_overlords") and ov.tag in strat._drop_overlords:
+                if (
+                    hasattr(strat, "_drop_overlords")
+                    and ov.tag in strat._drop_overlords
+                ):
                     continue
 
             threats = []
-            
+
             # 유닛 위협
             nearby_units = enemy_anti_air.closer_than(self.SAFETY_DISTANCE, ov)
             if nearby_units:
                 threats.extend(nearby_units)
-                
+
             # 구조물 위협
-            nearby_structures = enemy_structures.closer_than(self.SAFETY_DISTANCE + 2, ov) # 구조물은 사거리 고려 더 넓게
+            nearby_structures = enemy_structures.closer_than(
+                self.SAFETY_DISTANCE + 2, ov
+            )  # 구조물은 사거리 고려 더 넓게
             if nearby_structures:
                 threats.extend(nearby_structures)
-                
+
             if threats:
                 # 회피 기동
                 self.fleeing_overlords.add(ov.tag)
-                
+
                 # 가장 가까운 위협으로부터 반대 방향으로 도망
                 closest_threat = min(threats, key=lambda t: t.distance_to(ov))
                 flee_dir = ov.position - closest_threat.position
                 target_pos = ov.position + flee_dir.normalized * self.RETREAT_DISTANCE
-                
+
                 # 맵 밖으로 안 나가게 클램핑 (필요 시)
                 self.bot.do(ov.move(target_pos))
             else:
@@ -391,7 +425,10 @@ class OverlordSafetyManager:
 
         # 2. Enemy start location area
         enemy_start = None
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_start = self.bot.enemy_start_locations[0]
 
             # Enemy natural: the closest expansion to enemy start that isn't enemy start
@@ -399,7 +436,7 @@ class OverlordSafetyManager:
                 try:
                     expansions = sorted(
                         self.bot.expansion_locations_list,
-                        key=lambda loc: loc.distance_to(enemy_start)
+                        key=lambda loc: loc.distance_to(enemy_start),
                     )
                     # First is enemy main, second is enemy natural, third is enemy third
                     if len(expansions) >= 2:
@@ -422,16 +459,24 @@ class OverlordSafetyManager:
         # 4. If no watchtowers found, add midpoints between bases
         if len(positions) < 4 and enemy_start:
             try:
-                our_start = self.bot.start_location if hasattr(self.bot, "start_location") else None
+                our_start = (
+                    self.bot.start_location
+                    if hasattr(self.bot, "start_location")
+                    else None
+                )
                 if our_start:
                     # Midpoint between our base and enemy base
                     mid = Point2(
-                        ((our_start.x + enemy_start.x) / 2,
-                         (our_start.y + enemy_start.y) / 2)
+                        (
+                            (our_start.x + enemy_start.x) / 2,
+                            (our_start.y + enemy_start.y) / 2,
+                        )
                     )
                     positions.append(mid)
             except Exception:
                 pass
 
-        self.logger.info(f"[SCOUT] Optimal scout positions: {len(positions)} locations identified")
+        self.logger.info(
+            f"[SCOUT] Optimal scout positions: {len(positions)} locations identified"
+        )
         return positions

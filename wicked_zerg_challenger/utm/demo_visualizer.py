@@ -10,17 +10,17 @@ GIF/MP4 녹화 기능 포함 (포트폴리오용).
 
 from __future__ import annotations
 
+import logging
 import math
 import sys
 from typing import List, Optional
 
 import numpy as np
 
-from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 from wicked_zerg_challenger.utm.boids3d import Boids3DController
 from wicked_zerg_challenger.utm.collision_predictor import CollisionPredictor
 from wicked_zerg_challenger.utm.corridor import CorridorManager
-import logging
+from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 
 logger = logging.getLogger("DemoVisualizer")
 
@@ -38,11 +38,13 @@ def create_demo_drones(n: int = 10, spread: float = 100.0) -> List[DroneState]:
         drone = DroneState(
             id=i,
             position=Point3D(x, y, z),
-            velocity=np.array([
-                np.random.uniform(-2, 2),
-                np.random.uniform(-2, 2),
-                np.random.uniform(-0.5, 0.5),
-            ]),
+            velocity=np.array(
+                [
+                    np.random.uniform(-2, 2),
+                    np.random.uniform(-2, 2),
+                    np.random.uniform(-0.5, 0.5),
+                ]
+            ),
             max_speed=12.0,
         )
         drones.append(drone)
@@ -68,8 +70,12 @@ def run_simulation(
                 # 관련 드론에 회피력 추가 적용
                 drone_a = next(d for d in drones if d.id == alert.drone_a_id)
                 drone_b = next(d for d in drones if d.id == alert.drone_b_id)
-                avoid_a = predictor.compute_avoidance_vector(drone_a, drone_b, alert.ttc)
-                avoid_b = predictor.compute_avoidance_vector(drone_b, drone_a, alert.ttc)
+                avoid_a = predictor.compute_avoidance_vector(
+                    drone_a, drone_b, alert.ttc
+                )
+                avoid_b = predictor.compute_avoidance_vector(
+                    drone_b, drone_a, alert.ttc
+                )
                 drone_a.velocity += avoid_a * dt
                 drone_b.velocity += avoid_b * dt
 
@@ -116,10 +122,29 @@ def visualize(
     for i, drone in enumerate(drones):
         p = drone.position
         v = drone.velocity
-        ax.scatter(p.x, p.y, p.z, color=colors[i], s=80, marker="^",
-                   edgecolors="black", linewidth=0.5, zorder=5)
-        ax.quiver(p.x, p.y, p.z, v[0], v[1], v[2],
-                  color=colors[i], alpha=0.8, length=3.0, arrow_length_ratio=0.3)
+        ax.scatter(
+            p.x,
+            p.y,
+            p.z,
+            color=colors[i],
+            s=80,
+            marker="^",
+            edgecolors="black",
+            linewidth=0.5,
+            zorder=5,
+        )
+        ax.quiver(
+            p.x,
+            p.y,
+            p.z,
+            v[0],
+            v[1],
+            v[2],
+            color=colors[i],
+            alpha=0.8,
+            length=3.0,
+            arrow_length_ratio=0.3,
+        )
         ax.text(p.x, p.y, p.z + 2, f"D{drone.id}", fontsize=7, ha="center")
 
     # 비행 회랑 표시
@@ -135,6 +160,7 @@ def visualize(
 
     # 고도층 표시 (반투명 평면)
     from wicked_zerg_challenger.utm.corridor import ALTITUDE_LAYERS
+
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     for name, (z_min, z_max) in ALTITUDE_LAYERS.items():
@@ -142,8 +168,7 @@ def visualize(
             np.linspace(xlim[0], xlim[1], 2),
             np.linspace(ylim[0], ylim[1], 2),
         )
-        ax.plot_surface(xx, yy, np.full_like(xx, z_min),
-                        alpha=0.05, color="gray")
+        ax.plot_surface(xx, yy, np.full_like(xx, z_min), alpha=0.05, color="gray")
 
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Y (m)")
@@ -206,8 +231,10 @@ def main():
     if alerts:
         logger.info(f"\n경고: {len(alerts)}건의 충돌 위험 감지")
         for a in alerts[:3]:
-            logger.info(f"  D{a.drone_a_id}↔D{a.drone_b_id}: TTC={a.ttc:.1f}s, "
-                  f"min_dist={a.min_distance:.1f}m [{a.severity}]")
+            logger.info(
+                f"  D{a.drone_a_id}↔D{a.drone_b_id}: TTC={a.ttc:.1f}s, "
+                f"min_dist={a.min_distance:.1f}m [{a.severity}]"
+            )
     else:
         logger.info("\n충돌 위험 없음 — 모든 드론 안전 분리 유지")
 

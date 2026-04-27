@@ -12,8 +12,8 @@ Feature #93: 바네 폭탄 전술 매니저
 이 BanelingTacticsManager는 '폭탄(Bomb Rush) 모드'를 담당합니다.
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -33,11 +33,12 @@ from utils.logger import get_logger
 
 class BanelingBombMode(Enum):
     """바네 폭탄 모드"""
+
     IDLE = "idle"
-    GATHERING = "gathering"       # 바네링 그룹 집결
+    GATHERING = "gathering"  # 바네링 그룹 집결
     WORKER_LINE_RUSH = "worker_line"  # 일꾼 라인 타겟
-    ARMY_BOMB = "army_bomb"       # 적 군대 밀집 타겟
-    SPEED_RUSH = "speed_rush"     # 고속 돌진
+    ARMY_BOMB = "army_bomb"  # 적 군대 밀집 타겟
+    SPEED_RUSH = "speed_rush"  # 고속 돌진
 
 
 class BanelingTacticsManager:
@@ -67,17 +68,17 @@ class BanelingTacticsManager:
         self.mode = BanelingBombMode.IDLE
 
         # 바네링 그룹 관리
-        self.bomb_squad: Set[int] = set()        # 폭탄 임무 바네링 태그
+        self.bomb_squad: Set[int] = set()  # 폭탄 임무 바네링 태그
         self.escort_zerglings: Set[int] = set()  # 호위 저글링 태그
         self.bomb_target: Optional[Point2] = None  # 폭탄 목표 위치
 
         # 전술 파라미터
-        self.min_banelings_for_bomb: int = 4     # 최소 바네링 수
-        self.max_banelings_per_squad: int = 10   # 그룹당 최대 바네링
-        self.worker_line_priority: float = 0.7   # 일꾼 라인 우선도
-        self.density_threshold: int = 5          # 적 밀집 판단 기준 (5기 이상)
-        self.density_radius: float = 4.0         # 밀집 판단 반경
-        self.explode_range: float = 2.5          # 자폭 사거리
+        self.min_banelings_for_bomb: int = 4  # 최소 바네링 수
+        self.max_banelings_per_squad: int = 10  # 그룹당 최대 바네링
+        self.worker_line_priority: float = 0.7  # 일꾼 라인 우선도
+        self.density_threshold: int = 5  # 적 밀집 판단 기준 (5기 이상)
+        self.density_radius: float = 4.0  # 밀집 판단 반경
+        self.explode_range: float = 2.5  # 자폭 사거리
 
         # 쿨다운
         self.last_bomb_time: float = 0.0
@@ -168,7 +169,9 @@ class BanelingTacticsManager:
         # 적 일꾼 라인 밀집 확인
         worker_target = self._find_dense_worker_line()
         if worker_target:
-            self._setup_bomb_squad(banelings, worker_target, BanelingBombMode.WORKER_LINE_RUSH)
+            self._setup_bomb_squad(
+                banelings, worker_target, BanelingBombMode.WORKER_LINE_RUSH
+            )
             return
 
         # 적 군대 밀집 확인
@@ -190,8 +193,11 @@ class BanelingTacticsManager:
 
         # 적 일꾼 필터링
         workers = enemy_units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.DRONE, UnitTypeId.PROBE, UnitTypeId.SCV,
+            lambda u: u.type_id
+            in {
+                UnitTypeId.DRONE,
+                UnitTypeId.PROBE,
+                UnitTypeId.SCV,
                 UnitTypeId.MULE,
             }
         )
@@ -256,9 +262,7 @@ class BanelingTacticsManager:
             mode: 작전 모드
         """
         # 목표에 가장 가까운 바네링부터 선택
-        sorted_banes = sorted(
-            banelings, key=lambda b: b.distance_to(target)
-        )
+        sorted_banes = sorted(banelings, key=lambda b: b.distance_to(target))
         squad_size = min(len(sorted_banes), self.max_banelings_per_squad)
         self.bomb_squad = {b.tag for b in sorted_banes[:squad_size]}
         self.bomb_target = target
@@ -269,9 +273,7 @@ class BanelingTacticsManager:
             zerglings = self.bot.units(UnitTypeId.ZERGLING).idle
             escort_count = min(zerglings.amount, squad_size * 2)
             if escort_count > 0:
-                closest_lings = zerglings.sorted(
-                    key=lambda z: z.distance_to(target)
-                )
+                closest_lings = zerglings.sorted(key=lambda z: z.distance_to(target))
                 self.escort_zerglings = {z.tag for z in closest_lings[:escort_count]}
 
         self.logger.info(
@@ -297,15 +299,15 @@ class BanelingTacticsManager:
             self.mode = BanelingBombMode.IDLE
             return
 
-        center = Point2((
-            sum(p.x for p in positions) / len(positions),
-            sum(p.y for p in positions) / len(positions),
-        ))
+        center = Point2(
+            (
+                sum(p.x for p in positions) / len(positions),
+                sum(p.y for p in positions) / len(positions),
+            )
+        )
 
         # 집결 완료 판단
-        all_close = all(
-            p.distance_to(center) < 5 for p in positions
-        )
+        all_close = all(p.distance_to(center) < 5 for p in positions)
 
         if all_close:
             # 원래 의도한 모드로 전환
@@ -399,10 +401,12 @@ class BanelingTacticsManager:
         # 부채꼴 형태로 돌진 (적이 분산 회피하기 어렵게)
         for i, bane in enumerate(bane_list):
             offset_x = (i - len(bane_list) / 2) * 1.5
-            target = Point2((
-                self.bomb_target.x + offset_x,
-                self.bomb_target.y,
-            ))
+            target = Point2(
+                (
+                    self.bomb_target.x + offset_x,
+                    self.bomb_target.y,
+                )
+            )
             self.bot.do(bane.attack(target))
 
         self.last_bomb_time = game_time
@@ -415,8 +419,11 @@ class BanelingTacticsManager:
             return None
 
         workers = enemy_units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.DRONE, UnitTypeId.PROBE, UnitTypeId.SCV,
+            lambda u: u.type_id
+            in {
+                UnitTypeId.DRONE,
+                UnitTypeId.PROBE,
+                UnitTypeId.SCV,
             }
         )
         nearby = workers.closer_than(radius, unit)

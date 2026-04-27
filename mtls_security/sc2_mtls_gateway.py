@@ -6,18 +6,18 @@ for StarCraft II bot-to-server interactions. Manages certificate lifecycle,
 enforces mutual authentication, and encrypts all traffic using TLS 1.3.
 """
 
-import os
-import time
 import hashlib
 import hmac
-import secrets
 import logging
-import threading
+import os
+import secrets
 import struct
+import threading
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional, Union
-from dataclasses import dataclass, field
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Enums & Constants
 # ---------------------------------------------------------------------------
+
 
 class CertStatus(Enum):
     ACTIVE = auto()
@@ -69,9 +70,11 @@ class ChannelState(Enum):
 # Data Classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CertificateInfo:
     """X.509 certificate representation."""
+
     serial_number: str
     subject_cn: str
     issuer_cn: str
@@ -80,7 +83,9 @@ class CertificateInfo:
     public_key_hash: str
     status: CertStatus = CertStatus.ACTIVE
     is_ca: bool = False
-    key_usage: list[str] = field(default_factory=lambda: ["digitalSignature", "keyEncipherment"])
+    key_usage: list[str] = field(
+        default_factory=lambda: ["digitalSignature", "keyEncipherment"]
+    )
     san_entries: list[str] = field(default_factory=list)
     fingerprint_sha256: str = ""
     raw_pem: str = ""
@@ -88,8 +93,10 @@ class CertificateInfo:
     @property
     def is_valid(self) -> bool:
         now = time.time()
-        return (self.status == CertStatus.ACTIVE
-                and self.not_before <= now <= self.not_after)
+        return (
+            self.status == CertStatus.ACTIVE
+            and self.not_before <= now <= self.not_after
+        )
 
     @property
     def days_until_expiry(self) -> float:
@@ -99,6 +106,7 @@ class CertificateInfo:
 @dataclass
 class HandshakeRecord:
     """Record of a completed or failed TLS handshake."""
+
     client_cn: str
     server_cn: str
     timestamp: float
@@ -112,6 +120,7 @@ class HandshakeRecord:
 @dataclass
 class TrafficStats:
     """Encrypted traffic statistics for a channel."""
+
     bytes_sent: int = 0
     bytes_recv: int = 0
     records_sent: int = 0
@@ -125,14 +134,14 @@ class TrafficStats:
 # CertificateAuthority
 # ---------------------------------------------------------------------------
 
+
 class CertificateAuthority:
     """
     Simulated Certificate Authority for issuing and managing X.509 certificates.
     Handles CA key generation, certificate signing, and revocation.
     """
 
-    def __init__(self, ca_name: str = "SC2-Bot-CA",
-                 validity_days: int = 365):
+    def __init__(self, ca_name: str = "SC2-Bot-CA", validity_days: int = 365):
         self.ca_name = ca_name
         self.validity_days = validity_days
         self._ca_cert: Optional[CertificateInfo] = None
@@ -148,9 +157,7 @@ class CertificateAuthority:
 
     def _initialize_ca(self) -> None:
         """Generate the root CA certificate and private key."""
-        self._ca_private_key_hash = hashlib.sha256(
-            secrets.token_bytes(32)
-        ).hexdigest()
+        self._ca_private_key_hash = hashlib.sha256(secrets.token_bytes(32)).hexdigest()
 
         now = time.time()
         serial = self._next_serial()
@@ -180,10 +187,13 @@ class CertificateAuthority:
             self._serial_counter += 1
             return f"{self._serial_counter:08X}"
 
-    def issue_certificate(self, common_name: str,
-                          san_entries: Optional[list[str]] = None,
-                          validity_days: Optional[int] = None,
-                          key_usage: Optional[list[str]] = None) -> CertificateInfo:
+    def issue_certificate(
+        self,
+        common_name: str,
+        san_entries: Optional[list[str]] = None,
+        validity_days: Optional[int] = None,
+        key_usage: Optional[list[str]] = None,
+    ) -> CertificateInfo:
         """Issue a new certificate signed by this CA."""
         if not self._ca_cert or not self._ca_cert.is_valid:
             raise RuntimeError("CA certificate is not valid")
@@ -213,12 +223,17 @@ class CertificateAuthority:
         )
         with self._lock:
             self._issued_certs[serial] = cert
-        logger.info("Certificate issued: CN=%s serial=%s (expires in %d days)",
-                     common_name, serial, days)
+        logger.info(
+            "Certificate issued: CN=%s serial=%s (expires in %d days)",
+            common_name,
+            serial,
+            days,
+        )
         return cert
 
-    def revoke_certificate(self, serial_number: str,
-                           reason: str = "unspecified") -> bool:
+    def revoke_certificate(
+        self, serial_number: str, reason: str = "unspecified"
+    ) -> bool:
         """Revoke a certificate by serial number."""
         cert = self._issued_certs.get(serial_number)
         if not cert:
@@ -230,8 +245,9 @@ class CertificateAuthority:
         cert.status = CertStatus.REVOKED
         self._revoked_serials.add(serial_number)
         self._crl_number += 1
-        logger.info("Certificate %s (CN=%s) revoked: %s",
-                     serial_number, cert.subject_cn, reason)
+        logger.info(
+            "Certificate %s (CN=%s) revoked: %s", serial_number, cert.subject_cn, reason
+        )
         return True
 
     def is_revoked(self, serial_number: str) -> bool:
@@ -258,11 +274,13 @@ class CertificateAuthority:
         for serial in self._revoked_serials:
             cert = self._issued_certs.get(serial)
             if cert:
-                revoked.append({
-                    "serial": serial,
-                    "cn": cert.subject_cn,
-                    "revoked_at": time.time(),
-                })
+                revoked.append(
+                    {
+                        "serial": serial,
+                        "cn": cert.subject_cn,
+                        "revoked_at": time.time(),
+                    }
+                )
         return {
             "issuer": self.ca_name,
             "crl_number": self._crl_number,
@@ -288,7 +306,7 @@ class CertificateAuthority:
     @staticmethod
     def _generate_pem_stub(cn: str, serial: str) -> str:
         b64_body = hashlib.sha512(f"{cn}:{serial}".encode()).hexdigest()
-        lines = [b64_body[i:i + 64] for i in range(0, len(b64_body), 64)]
+        lines = [b64_body[i : i + 64] for i in range(0, len(b64_body), 64)]
         return (
             "-----BEGIN CERTIFICATE-----\n"
             + "\n".join(lines)
@@ -300,14 +318,14 @@ class CertificateAuthority:
 # CertManager
 # ---------------------------------------------------------------------------
 
+
 class CertManager:
     """
     Manages certificate lifecycle including generation, rotation, storage,
     and expiry monitoring for SC2 bot clients and servers.
     """
 
-    def __init__(self, ca: CertificateAuthority,
-                 rotation_threshold_days: float = 30.0):
+    def __init__(self, ca: CertificateAuthority, rotation_threshold_days: float = 30.0):
         self.ca = ca
         self.rotation_threshold_days = rotation_threshold_days
         self._client_certs: dict[str, CertificateInfo] = {}
@@ -315,11 +333,14 @@ class CertManager:
         self._rotation_history: list[dict] = []
         self._pinned_fingerprints: dict[str, str] = {}
         self._lock = threading.Lock()
-        logger.info("CertManager initialised (rotation_threshold=%.0f days)",
-                     rotation_threshold_days)
+        logger.info(
+            "CertManager initialised (rotation_threshold=%.0f days)",
+            rotation_threshold_days,
+        )
 
-    def create_client_cert(self, client_id: str,
-                           san_entries: Optional[list[str]] = None) -> CertificateInfo:
+    def create_client_cert(
+        self, client_id: str, san_entries: Optional[list[str]] = None
+    ) -> CertificateInfo:
         """Create and store a client certificate."""
         cn = f"sc2-bot-client-{client_id}"
         cert = self.ca.issue_certificate(cn, san_entries=san_entries)
@@ -329,8 +350,9 @@ class CertManager:
         logger.info("Client cert created: %s", cn)
         return cert
 
-    def create_server_cert(self, server_id: str,
-                           san_entries: Optional[list[str]] = None) -> CertificateInfo:
+    def create_server_cert(
+        self, server_id: str, san_entries: Optional[list[str]] = None
+    ) -> CertificateInfo:
         """Create and store a server certificate."""
         cn = f"sc2-server-{server_id}"
         sans = san_entries or [cn, f"{server_id}.sc2.local"]
@@ -341,8 +363,9 @@ class CertManager:
         logger.info("Server cert created: %s", cn)
         return cert
 
-    def rotate_certificate(self, entity_id: str,
-                           is_client: bool = True) -> Optional[CertificateInfo]:
+    def rotate_certificate(
+        self, entity_id: str, is_client: bool = True
+    ) -> Optional[CertificateInfo]:
         """Rotate a certificate by issuing a new one and revoking the old."""
         store = self._client_certs if is_client else self._server_certs
         old_cert = store.get(entity_id)
@@ -351,21 +374,29 @@ class CertManager:
             return None
 
         # Issue replacement
-        new_cert = (self.create_client_cert(entity_id)
-                    if is_client
-                    else self.create_server_cert(entity_id))
+        new_cert = (
+            self.create_client_cert(entity_id)
+            if is_client
+            else self.create_server_cert(entity_id)
+        )
 
         # Revoke old
         self.ca.revoke_certificate(old_cert.serial_number, reason="superseded")
 
-        self._rotation_history.append({
-            "entity_id": entity_id,
-            "old_serial": old_cert.serial_number,
-            "new_serial": new_cert.serial_number,
-            "rotated_at": time.time(),
-        })
-        logger.info("Certificate rotated for '%s': %s -> %s",
-                     entity_id, old_cert.serial_number, new_cert.serial_number)
+        self._rotation_history.append(
+            {
+                "entity_id": entity_id,
+                "old_serial": old_cert.serial_number,
+                "new_serial": new_cert.serial_number,
+                "rotated_at": time.time(),
+            }
+        )
+        logger.info(
+            "Certificate rotated for '%s': %s -> %s",
+            entity_id,
+            old_cert.serial_number,
+            new_cert.serial_number,
+        )
         return new_cert
 
     def check_expiring(self, threshold_days: Optional[float] = None) -> list[dict]:
@@ -375,12 +406,14 @@ class CertManager:
         all_certs = list(self._client_certs.items()) + list(self._server_certs.items())
         for eid, cert in all_certs:
             if cert.is_valid and cert.days_until_expiry <= threshold:
-                expiring.append({
-                    "entity_id": eid,
-                    "cn": cert.subject_cn,
-                    "serial": cert.serial_number,
-                    "days_remaining": round(cert.days_until_expiry, 1),
-                })
+                expiring.append(
+                    {
+                        "entity_id": eid,
+                        "cn": cert.subject_cn,
+                        "serial": cert.serial_number,
+                        "days_remaining": round(cert.days_until_expiry, 1),
+                    }
+                )
         return expiring
 
     def auto_rotate_expiring(self) -> list[str]:
@@ -430,16 +463,19 @@ class CertManager:
 # TLSConfig
 # ---------------------------------------------------------------------------
 
+
 class TLSConfig:
     """
     TLS configuration including protocol version, cipher suites,
     and handshake parameters for SC2 bot communication.
     """
 
-    def __init__(self,
-                 min_version: TLSVersion = TLSVersion.TLS_1_3,
-                 max_version: TLSVersion = TLSVersion.TLS_1_3,
-                 require_client_cert: bool = True):
+    def __init__(
+        self,
+        min_version: TLSVersion = TLSVersion.TLS_1_3,
+        max_version: TLSVersion = TLSVersion.TLS_1_3,
+        require_client_cert: bool = True,
+    ):
         self.min_version = min_version
         self.max_version = max_version
         self.require_client_cert = require_client_cert
@@ -455,8 +491,12 @@ class TLSConfig:
         self.alpn_protocols: list[str] = ["sc2-bot/1.0", "h2", "http/1.1"]
         self.session_ticket_keys: list[bytes] = []
         self._rotate_session_keys()
-        logger.info("TLSConfig created (min=%s, max=%s, mTLS=%s)",
-                     min_version.value, max_version.value, require_client_cert)
+        logger.info(
+            "TLSConfig created (min=%s, max=%s, mTLS=%s)",
+            min_version.value,
+            max_version.value,
+            require_client_cert,
+        )
 
     def _rotate_session_keys(self) -> None:
         """Generate new session ticket encryption keys."""
@@ -465,8 +505,7 @@ class TLSConfig:
     def set_cipher_suites(self, suites: list[CipherSuite]) -> None:
         """Set allowed cipher suites in preference order."""
         self.cipher_suites = suites
-        logger.info("Cipher suites updated: %s",
-                     [s.value for s in suites])
+        logger.info("Cipher suites updated: %s", [s.value for s in suites])
 
     def negotiate_version(self, client_versions: list[str]) -> Optional[TLSVersion]:
         """Negotiate the highest mutually supported TLS version."""
@@ -512,17 +551,21 @@ class TLSConfig:
 # mTLSGateway
 # ---------------------------------------------------------------------------
 
+
 class mTLSGateway:
     """
     Mutual TLS gateway that enforces authenticated, encrypted communication
     between SC2 bot clients and game servers.
     """
 
-    def __init__(self, ca: CertificateAuthority,
-                 cert_manager: CertManager,
-                 tls_config: Optional[TLSConfig] = None,
-                 listen_addr: str = "0.0.0.0",
-                 listen_port: int = 8443):
+    def __init__(
+        self,
+        ca: CertificateAuthority,
+        cert_manager: CertManager,
+        tls_config: Optional[TLSConfig] = None,
+        listen_addr: str = "0.0.0.0",
+        listen_port: int = 8443,
+    ):
         self.ca = ca
         self.cert_manager = cert_manager
         self.tls_config = tls_config or TLSConfig()
@@ -551,8 +594,7 @@ class mTLSGateway:
                 "localhost",
             ],
         )
-        logger.info("Gateway initialised with cert CN=%s",
-                     self._server_cert.subject_cn)
+        logger.info("Gateway initialised with cert CN=%s", self._server_cert.subject_cn)
         return True
 
     def start(self) -> bool:
@@ -561,8 +603,7 @@ class mTLSGateway:
             logger.error("Gateway not initialised: no server certificate")
             return False
         self._running = True
-        logger.info("mTLS gateway started on %s:%d",
-                     self.listen_addr, self.listen_port)
+        logger.info("mTLS gateway started on %s:%d", self.listen_addr, self.listen_port)
         return True
 
     def stop(self) -> None:
@@ -572,8 +613,9 @@ class mTLSGateway:
         self._active_sessions.clear()
         logger.info("mTLS gateway stopped (%d sessions closed)", session_count)
 
-    def perform_handshake(self, client_cert: CertificateInfo,
-                          client_hello: Optional[dict] = None) -> HandshakeRecord:
+    def perform_handshake(
+        self, client_cert: CertificateInfo, client_hello: Optional[dict] = None
+    ) -> HandshakeRecord:
         """
         Perform a mutual TLS handshake with a client.
         Validates client certificate and negotiates session parameters.
@@ -629,8 +671,9 @@ class mTLSGateway:
             )
             self._handshake_log.append(record)
             self._traffic_stats.handshakes_failed += 1
-            logger.warning("Handshake failed for %s: %s",
-                           client_cert.subject_cn, reason)
+            logger.warning(
+                "Handshake failed for %s: %s", client_cert.subject_cn, reason
+            )
             return record
 
         # Negotiate TLS version
@@ -652,8 +695,9 @@ class mTLSGateway:
             return record
 
         # Negotiate cipher suite
-        client_suites = hello.get("cipher_suites",
-                                   [CipherSuite.TLS_AES_256_GCM_SHA384.value])
+        client_suites = hello.get(
+            "cipher_suites", [CipherSuite.TLS_AES_256_GCM_SHA384.value]
+        )
         cipher = self.tls_config.negotiate_cipher(client_suites)
         if not cipher:
             record = HandshakeRecord(
@@ -698,10 +742,14 @@ class mTLSGateway:
         )
         self._handshake_log.append(record)
         self._traffic_stats.handshakes_completed += 1
-        logger.info("Handshake OK: %s <-> %s (%s, %s) in %.1f ms",
-                     client_cert.subject_cn,
-                     self._server_cert.subject_cn if self._server_cert else "?",
-                     tls_version.value, cipher.value, duration_ms)
+        logger.info(
+            "Handshake OK: %s <-> %s (%s, %s) in %.1f ms",
+            client_cert.subject_cn,
+            self._server_cert.subject_cn if self._server_cert else "?",
+            tls_version.value,
+            cipher.value,
+            duration_ms,
+        )
         return record
 
     def _check_rate_limit(self, client_key: str) -> bool:
@@ -731,8 +779,7 @@ class mTLSGateway:
     def get_active_sessions(self) -> list[dict]:
         """Return all active sessions."""
         return [
-            {"session_id": sid, **info}
-            for sid, info in self._active_sessions.items()
+            {"session_id": sid, **info} for sid, info in self._active_sessions.items()
         ]
 
     def get_handshake_log(self, limit: int = 50) -> list[dict]:
@@ -764,6 +811,7 @@ class mTLSGateway:
 # SecureChannel
 # ---------------------------------------------------------------------------
 
+
 class SecureChannel:
     """
     Encrypted communication channel for SC2 bot data transfer.
@@ -772,9 +820,12 @@ class SecureChannel:
 
     MAX_RECORD_SIZE = 16384  # TLS record limit
 
-    def __init__(self, gateway: mTLSGateway,
-                 client_cert: CertificateInfo,
-                 channel_name: str = "default"):
+    def __init__(
+        self,
+        gateway: mTLSGateway,
+        client_cert: CertificateInfo,
+        channel_name: str = "default",
+    ):
         self.gateway = gateway
         self.client_cert = client_cert
         self.channel_name = channel_name
@@ -787,8 +838,9 @@ class SecureChannel:
         self._encryption_key: bytes = b""
         self._stats = TrafficStats()
         self._lock = threading.Lock()
-        logger.info("SecureChannel '%s' created for %s",
-                     channel_name, client_cert.subject_cn)
+        logger.info(
+            "SecureChannel '%s' created for %s", channel_name, client_cert.subject_cn
+        )
 
     def open(self) -> bool:
         """Open the channel by performing an mTLS handshake."""
@@ -797,8 +849,9 @@ class SecureChannel:
 
         if record.state != HandshakeState.ESTABLISHED:
             self._state = ChannelState.ERROR
-            logger.error("Channel '%s' handshake failed: %s",
-                         self.channel_name, record.error)
+            logger.error(
+                "Channel '%s' handshake failed: %s", self.channel_name, record.error
+            )
             return False
 
         self._encryption_key = secrets.token_bytes(32)
@@ -813,8 +866,11 @@ class SecureChannel:
                 self._session_id = sess.get("session_id")
                 break
 
-        logger.info("SecureChannel '%s' opened (cipher=%s)",
-                     self.channel_name, record.cipher_suite)
+        logger.info(
+            "SecureChannel '%s' opened (cipher=%s)",
+            self.channel_name,
+            record.cipher_suite,
+        )
         return True
 
     def close(self) -> None:
@@ -833,7 +889,7 @@ class SecureChannel:
         total_sent = 0
         offset = 0
         while offset < len(data):
-            chunk = data[offset:offset + self.MAX_RECORD_SIZE]
+            chunk = data[offset : offset + self.MAX_RECORD_SIZE]
             encrypted = self._encrypt_record(chunk)
             self._send_buffer.append(encrypted)
             total_sent += len(chunk)
@@ -864,13 +920,16 @@ class SecureChannel:
     def send_sc2_command(self, command: str, payload: dict) -> dict:
         """Send an SC2 bot command through the encrypted channel."""
         import json
-        message = json.dumps({
-            "type": "sc2_command",
-            "command": command,
-            "payload": payload,
-            "timestamp": time.time(),
-            "sequence": self._sequence_number,
-        }).encode("utf-8")
+
+        message = json.dumps(
+            {
+                "type": "sc2_command",
+                "command": command,
+                "payload": payload,
+                "timestamp": time.time(),
+                "sequence": self._sequence_number,
+            }
+        ).encode("utf-8")
         sent = self.send(message)
         return {
             "status": "sent",
@@ -879,8 +938,7 @@ class SecureChannel:
             "sequence": self._sequence_number,
         }
 
-    def send_replay_data(self, replay_path: str,
-                         chunk_size: int = 8192) -> dict:
+    def send_replay_data(self, replay_path: str, chunk_size: int = 8192) -> dict:
         """Send SC2 replay data through the encrypted channel."""
         # Simulate replay file content
         replay_data = hashlib.sha512(replay_path.encode()).digest() * 16
@@ -888,7 +946,7 @@ class SecureChannel:
         chunks = 0
         offset = 0
         while offset < len(replay_data):
-            chunk = replay_data[offset:offset + chunk_size]
+            chunk = replay_data[offset : offset + chunk_size]
             self.send(chunk)
             total_sent += len(chunk)
             chunks += 1
@@ -915,8 +973,7 @@ class SecureChannel:
         # Simulated encryption: XOR with key-derived stream
         key_stream = hashlib.sha256(self._encryption_key + nonce).digest()
         encrypted = bytes(
-            p ^ key_stream[i % len(key_stream)]
-            for i, p in enumerate(plaintext)
+            p ^ key_stream[i % len(key_stream)] for i, p in enumerate(plaintext)
         )
         return nonce + tag + encrypted
 
@@ -927,8 +984,7 @@ class SecureChannel:
         ciphertext = record[24:]
         key_stream = hashlib.sha256(self._encryption_key + nonce).digest()
         plaintext = bytes(
-            c ^ key_stream[i % len(key_stream)]
-            for i, c in enumerate(ciphertext)
+            c ^ key_stream[i % len(key_stream)] for i, c in enumerate(ciphertext)
         )
         return plaintext
 
@@ -953,6 +1009,7 @@ class SecureChannel:
 # Demo
 # ---------------------------------------------------------------------------
 
+
 def demo() -> None:
     """Demonstrate mTLS security gateway for SC2 bot communications."""
     print("=" * 70)
@@ -969,15 +1026,19 @@ def demo() -> None:
     # 2. CertManager
     print("\n[2] Certificate Management")
     cm = CertManager(ca, rotation_threshold_days=30)
-    client1 = cm.create_client_cert("bot-alpha",
-                                     san_entries=["bot-alpha.sc2.local"])
+    client1 = cm.create_client_cert("bot-alpha", san_entries=["bot-alpha.sc2.local"])
     client2 = cm.create_client_cert("bot-beta")
-    server1 = cm.create_server_cert("game-server-1",
-                                     san_entries=["gs1.sc2.local", "localhost"])
-    print(f"  Client 'bot-alpha': CN={client1.subject_cn}, "
-          f"serial={client1.serial_number}")
-    print(f"  Client 'bot-beta':  CN={client2.subject_cn}, "
-          f"serial={client2.serial_number}")
+    server1 = cm.create_server_cert(
+        "game-server-1", san_entries=["gs1.sc2.local", "localhost"]
+    )
+    print(
+        f"  Client 'bot-alpha': CN={client1.subject_cn}, "
+        f"serial={client1.serial_number}"
+    )
+    print(
+        f"  Client 'bot-beta':  CN={client2.subject_cn}, "
+        f"serial={client2.serial_number}"
+    )
     print(f"  Server 'game-server-1': CN={server1.subject_cn}")
     print(f"  CertManager stats: {cm.get_stats()}")
 
@@ -989,10 +1050,12 @@ def demo() -> None:
     print("\n[3] TLS Configuration")
     tls_cfg = TLSConfig(require_client_cert=True)
     ver = tls_cfg.negotiate_version(["TLSv1.2", "TLSv1.3"])
-    cipher = tls_cfg.negotiate_cipher([
-        "TLS_AES_256_GCM_SHA384",
-        "TLS_CHACHA20_POLY1305_SHA256",
-    ])
+    cipher = tls_cfg.negotiate_cipher(
+        [
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_CHACHA20_POLY1305_SHA256",
+        ]
+    )
     print(f"  Negotiated version: {ver.value if ver else 'None'}")
     print(f"  Negotiated cipher:  {cipher.value if cipher else 'None'}")
     print(f"  Config: {tls_cfg.to_dict()}")
@@ -1004,12 +1067,17 @@ def demo() -> None:
     gw.start()
 
     # Successful handshakes
-    hs1 = gw.perform_handshake(client1, {
-        "tls_versions": ["TLSv1.3"],
-        "cipher_suites": ["TLS_AES_256_GCM_SHA384"],
-    })
-    print(f"  Handshake bot-alpha: state={hs1.state.name}, "
-          f"cipher={hs1.cipher_suite}, duration={hs1.duration_ms:.2f}ms")
+    hs1 = gw.perform_handshake(
+        client1,
+        {
+            "tls_versions": ["TLSv1.3"],
+            "cipher_suites": ["TLS_AES_256_GCM_SHA384"],
+        },
+    )
+    print(
+        f"  Handshake bot-alpha: state={hs1.state.name}, "
+        f"cipher={hs1.cipher_suite}, duration={hs1.duration_ms:.2f}ms"
+    )
 
     hs2 = gw.perform_handshake(client2)
     print(f"  Handshake bot-beta:  state={hs2.state.name}")
@@ -1017,8 +1085,9 @@ def demo() -> None:
     # Revoke and try again
     ca.revoke_certificate(client2.serial_number, reason="compromised")
     hs3 = gw.perform_handshake(client2)
-    print(f"  Handshake bot-beta (revoked): state={hs3.state.name}, "
-          f"error={hs3.error}")
+    print(
+        f"  Handshake bot-beta (revoked): state={hs3.state.name}, " f"error={hs3.error}"
+    )
 
     # Certificate rotation
     print("\n  Rotating bot-beta certificate...")
@@ -1038,18 +1107,23 @@ def demo() -> None:
 
     if opened:
         # Send SC2 command
-        cmd_result = channel.send_sc2_command("build_order", {
-            "race": "Zerg",
-            "build": "12pool",
-            "supply": 12,
-        })
+        cmd_result = channel.send_sc2_command(
+            "build_order",
+            {
+                "race": "Zerg",
+                "build": "12pool",
+                "supply": 12,
+            },
+        )
         print(f"  Command sent: {cmd_result}")
 
         # Send replay data
         replay_result = channel.send_replay_data("/replays/game_001.SC2Replay")
-        print(f"  Replay transfer: {replay_result['total_bytes']} bytes, "
-              f"{replay_result['chunks']} chunks, "
-              f"encrypted={replay_result['encrypted']}")
+        print(
+            f"  Replay transfer: {replay_result['total_bytes']} bytes, "
+            f"{replay_result['chunks']} chunks, "
+            f"encrypted={replay_result['encrypted']}"
+        )
 
         # Simulate recv
         channel.inject_recv(b'{"status":"ok","game_id":42}')
@@ -1070,8 +1144,10 @@ def demo() -> None:
     # All certs
     print("\n[7] All Issued Certificates")
     for cert_info in ca.list_certificates():
-        print(f"    {cert_info['cn']:40s} status={cert_info['status']:8s} "
-              f"expires_in={cert_info['days_until_expiry']} days")
+        print(
+            f"    {cert_info['cn']:40s} status={cert_info['status']:8s} "
+            f"expires_in={cert_info['days_until_expiry']} days"
+        )
 
     gw.stop()
 
@@ -1081,8 +1157,9 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    )
     demo()
 
 # Phase 653: mTLS registered

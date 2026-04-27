@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import logging
 
 logger = logging.getLogger("RunHybridSupervised")
 
@@ -62,26 +62,37 @@ def run_epochs(
         # CRITICAL IMPROVEMENT: 배치 학습 수행
         try:
             from batch_trainer import train_from_manifest
-            
-            logger.info(f"[EPOCH {epoch}/{epochs}] Starting batch training from manifest...")
+
+            logger.info(
+                f"[EPOCH {epoch}/{epochs}] Starting batch training from manifest..."
+            )
             training_stats = train_from_manifest(
                 manifest_path=latest_manifest,
                 model_path=str(output_dir / "zerg_net_model.pt"),
-                epochs=10
+                epochs=10,
             )
-            
+
             if training_stats.get("error"):
-                logger.error(f"Batch training had issues: {training_stats.get('error')}")
+                logger.error(
+                    f"Batch training had issues: {training_stats.get('error')}"
+                )
             else:
-                logger.info(f"[EPOCH {epoch}/{epochs}] Batch training completed - Loss: {training_stats.get('loss', 0):.4f}, Accuracy: {training_stats.get('accuracy', 0):.2%}")
-        
+                logger.info(
+                    f"[EPOCH {epoch}/{epochs}] Batch training completed - Loss: {training_stats.get('loss', 0):.4f}, Accuracy: {training_stats.get('accuracy', 0):.2%}"
+                )
+
         except ImportError:
-            logger.warning("batch_trainer module not available, skipping batch training")
+            logger.warning(
+                "batch_trainer module not available, skipping batch training"
+            )
         except Exception as e:
             logger.error(f"Batch training failed: {e}")
             import traceback
+
             traceback.print_exc()
-        logger.info(f"[EPOCH {epoch}/{epochs}] Selected {count} replays -> {epoch_manifest}")
+        logger.info(
+            f"[EPOCH {epoch}/{epochs}] Selected {count} replays -> {epoch_manifest}"
+        )
         logger.info(f"[EPOCH {epoch}/{epochs}] Latest manifest -> {latest_manifest}")
 
 

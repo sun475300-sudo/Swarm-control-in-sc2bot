@@ -24,9 +24,12 @@ logger = logging.getLogger(__name__)
 # Statistical Helpers
 # ---------------------------------------------------------------------------
 
+
 def chi_squared_test(
-    wins_a: int, total_a: int,
-    wins_b: int, total_b: int,
+    wins_a: int,
+    total_a: int,
+    wins_b: int,
+    total_b: int,
 ) -> tuple[float, float]:
     """
     Chi-squared test for comparing win rates between two variants.
@@ -68,8 +71,12 @@ def chi_squared_test(
 
 
 def welch_t_test(
-    mean_a: float, std_a: float, n_a: int,
-    mean_b: float, std_b: float, n_b: int,
+    mean_a: float,
+    std_a: float,
+    n_a: int,
+    mean_b: float,
+    std_b: float,
+    n_b: int,
 ) -> tuple[float, float]:
     """
     Welch's t-test for comparing means (e.g. APM) between two variants.
@@ -78,15 +85,15 @@ def welch_t_test(
     if n_a < 2 or n_b < 2:
         return 0.0, 1.0
 
-    se_a = (std_a ** 2) / n_a
-    se_b = (std_b ** 2) / n_b
+    se_a = (std_a**2) / n_a
+    se_b = (std_b**2) / n_b
     se = math.sqrt(se_a + se_b)
 
     if se == 0:
         return 0.0, 1.0
 
     t = (mean_a - mean_b) / se
-    df = (se_a + se_b) ** 2 / (se_a ** 2 / (n_a - 1) + se_b ** 2 / (n_b - 1))
+    df = (se_a + se_b) ** 2 / (se_a**2 / (n_a - 1) + se_b**2 / (n_b - 1))
     p_value = _t_p_value(abs(t), df)
     return t, p_value
 
@@ -122,9 +129,11 @@ def _normal_cdf(z: float) -> float:
 # Data Classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GameResult:
     """Result of a single game in an A/B test."""
+
     game_id: str
     variant_name: str
     won: bool
@@ -137,6 +146,7 @@ class GameResult:
 @dataclass
 class VariantStats:
     """Accumulated statistics for a single variant."""
+
     name: str
     total_games: int = 0
     wins: int = 0
@@ -156,12 +166,18 @@ class VariantStats:
         if len(self.apm_values) < 2:
             return 0.0
         mean = self.avg_apm
-        variance = sum((x - mean) ** 2 for x in self.apm_values) / (len(self.apm_values) - 1)
+        variance = sum((x - mean) ** 2 for x in self.apm_values) / (
+            len(self.apm_values) - 1
+        )
         return math.sqrt(variance)
 
     @property
     def avg_game_length(self) -> float:
-        return sum(self.game_lengths) / len(self.game_lengths) if self.game_lengths else 0.0
+        return (
+            sum(self.game_lengths) / len(self.game_lengths)
+            if self.game_lengths
+            else 0.0
+        )
 
     def record(self, result: GameResult) -> None:
         self.total_games += 1
@@ -187,6 +203,7 @@ class Variant:
     """
     Represents one A/B test variant (bot strategy configuration).
     """
+
     name: str
     description: str
     config: dict[str, Any]
@@ -203,6 +220,7 @@ class Variant:
 @dataclass
 class ExperimentResult:
     """Final result of an A/B experiment."""
+
     experiment_id: str
     winner: str | None
     control_stats: dict
@@ -220,6 +238,7 @@ class ExperimentResult:
 # ---------------------------------------------------------------------------
 # Experiment
 # ---------------------------------------------------------------------------
+
 
 class Experiment:
     """
@@ -278,14 +297,20 @@ class Experiment:
 
         # Chi-squared test for win rate
         chi2, p_win = chi_squared_test(
-            ctrl.wins, ctrl.total_games,
-            trt.wins, trt.total_games,
+            ctrl.wins,
+            ctrl.total_games,
+            trt.wins,
+            trt.total_games,
         )
 
         # Welch's t-test for APM
         t_stat, p_apm = welch_t_test(
-            ctrl.avg_apm, ctrl.std_apm, ctrl.total_games,
-            trt.avg_apm, trt.std_apm, trt.total_games,
+            ctrl.avg_apm,
+            ctrl.std_apm,
+            ctrl.total_games,
+            trt.avg_apm,
+            trt.std_apm,
+            trt.total_games,
         )
 
         is_significant = p_win < self.significance_level
@@ -348,7 +373,8 @@ class Experiment:
             "name": self.name,
             "control": self.control.stats.summary(),
             "treatment": self.treatment.stats.summary(),
-            "total_games": self.control.stats.total_games + self.treatment.stats.total_games,
+            "total_games": self.control.stats.total_games
+            + self.treatment.stats.total_games,
             "ready_to_conclude": self.is_ready_to_conclude(),
         }
 
@@ -356,6 +382,7 @@ class Experiment:
 # ---------------------------------------------------------------------------
 # ABTestRunner
 # ---------------------------------------------------------------------------
+
 
 class ABTestRunner:
     """
@@ -406,7 +433,9 @@ class ABTestRunner:
         Simulate A/B test games and return statistical results.
         Used for testing the framework without running real SC2 games.
         """
-        logger.info(f"Running simulation: {n_games} games for experiment '{experiment.name}'")
+        logger.info(
+            f"Running simulation: {n_games} games for experiment '{experiment.name}'"
+        )
         rng = random.Random(42)
 
         for i in range(n_games):
@@ -448,7 +477,9 @@ class ABTestRunner:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
 
     runner = ABTestRunner()
 
@@ -479,7 +510,9 @@ if __name__ == "__main__":
     print(f"  Games:           {result.treatment_stats['total_games']}")
     print(f"  Win Rate:        {result.treatment_stats['win_rate']:.2%}")
     print(f"  Avg APM:         {result.treatment_stats['avg_apm']:.1f}")
-    print(f"Chi2 (win rate):   {result.win_rate_chi2:.4f} (p={result.win_rate_p_value:.4f})")
+    print(
+        f"Chi2 (win rate):   {result.win_rate_chi2:.4f} (p={result.win_rate_p_value:.4f})"
+    )
     print(f"T-stat (APM):      {result.apm_t_stat:.4f} (p={result.apm_p_value:.4f})")
     print(f"Significant:       {'YES' if result.is_significant else 'NO'}")
     print(f"Winner:            {result.winner or 'None (no significant difference)'}")

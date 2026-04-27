@@ -14,7 +14,8 @@ Features:
 - Changelings 정찰 지원
 """
 
-from typing import List, Dict, Set, Optional
+from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
@@ -22,11 +23,14 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         OVERLORD = "OVERLORD"
         OVERSEER = "OVERSEER"
+
     Point2 = tuple
 
 
@@ -65,7 +69,11 @@ class OverlordVisionNetwork:
 
         self.vision_positions = []
         our_base = self.bot.start_location
-        enemy_base = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
+        enemy_base = (
+            self.bot.enemy_start_locations[0]
+            if self.bot.enemy_start_locations
+            else None
+        )
 
         # ★ PRIORITY 0: Highground Pillars (대공 유닛 도달 불가 벼랑) ★
         # 적 본진 주변 지상 이동 불가 고지대에 대군주 배치 → 반영구 시야
@@ -89,12 +97,16 @@ class OverlordVisionNetwork:
 
         # ★ PRIORITY 3: Main attack path (between bases)
         if enemy_base:
-            midpoint = Point2(((our_base.x + enemy_base.x) / 2, (our_base.y + enemy_base.y) / 2))
+            midpoint = Point2(
+                ((our_base.x + enemy_base.x) / 2, (our_base.y + enemy_base.y) / 2)
+            )
             self.vision_positions.append(midpoint)
 
         # ★ PRIORITY 4: Expansion paths (우리 확장 + 적 예상 확장)
         for exp_pos in self.bot.expansion_locations_list[1:4]:
-            self.vision_positions.append(exp_pos.towards(self.bot.game_info.map_center, 5))
+            self.vision_positions.append(
+                exp_pos.towards(self.bot.game_info.map_center, 5)
+            )
 
         # ★ PRIORITY 5: Map center (general awareness)
         self.vision_positions.append(self.bot.game_info.map_center)
@@ -206,4 +218,6 @@ class OverlordVisionNetwork:
                 # Remove from available pool
                 overlords = overlords.filter(lambda u: u.tag != overlord.tag)
 
-                self.logger.info(f"[{int(self.bot.time)}s] [*] Overlord deployed to vision position {pos} [*]")
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] [*] Overlord deployed to vision position {pos} [*]"
+                )

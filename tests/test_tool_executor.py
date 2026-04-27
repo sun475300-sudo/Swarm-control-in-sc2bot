@@ -3,7 +3,7 @@
 
 import sys
 import types
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -28,7 +28,7 @@ _stub._ast_check_python_code = lambda c: (True, "")
 _stub.__file__ = __file__
 sys.modules["discord_jarvis"] = _stub
 
-from jarvis_features.tool_executor import ToolExecutor, DANGEROUS_TOOLS
+from jarvis_features.tool_executor import DANGEROUS_TOOLS, ToolExecutor
 
 
 @pytest.fixture

@@ -13,11 +13,12 @@ Protoss Counter System - Advanced counter logic for Protoss opponents
 """
 
 from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     UnitTypeId = None
@@ -113,7 +114,9 @@ class ProtossCounterSystem:
                     if not self.dt_detected:
                         self.dt_detected = True
                         self.dt_detection_time = self.bot.time
-                        self.logger.warning(f"[{int(self.bot.time)}s] [*][*][*] DARK TEMPLAR DETECTED! [*][*][*]")
+                        self.logger.warning(
+                            f"[{int(self.bot.time)}s] [*][*][*] DARK TEMPLAR DETECTED! [*][*][*]"
+                        )
 
                 # 오라클 감지
                 elif enemy_type == "ORACLE":
@@ -127,13 +130,17 @@ class ProtossCounterSystem:
                 elif enemy_type == "DISRUPTOR":
                     if not self.disruptor_detected:
                         self.disruptor_detected = True
-                        self.logger.warning(f"[{int(self.bot.time)}s] [*] DISRUPTOR DETECTED - SPLIT UNITS! [*]")
+                        self.logger.warning(
+                            f"[{int(self.bot.time)}s] [*] DISRUPTOR DETECTED - SPLIT UNITS! [*]"
+                        )
 
                 # 차원 분광기 감지
                 elif enemy_type == "WARPPRISM" or enemy_type == "WARPPRISMPHASING":
                     if not self.warp_prism_detected:
                         self.warp_prism_detected = True
-                        self.logger.warning(f"[{int(self.bot.time)}s] [*] WARP PRISM DETECTED! [*]")
+                        self.logger.warning(
+                            f"[{int(self.bot.time)}s] [*] WARP PRISM DETECTED! [*]"
+                        )
 
                 # 불멸자 카운트
                 elif enemy_type == "IMMORTAL":
@@ -210,7 +217,9 @@ class ProtossCounterSystem:
 
         try:
             self.bot.do(target_overlord(AbilityId.MORPH_OVERSEER))
-            self.logger.info(f"[{int(self.bot.time)}s] [*] EMERGENCY OVERSEER MORPH vs DT! [*]")
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [*] EMERGENCY OVERSEER MORPH vs DT! [*]"
+            )
         except Exception as e:
             self.logger.error(f"Emergency overseer morph failed: {e}")
 
@@ -224,7 +233,9 @@ class ProtossCounterSystem:
         # 각 기지마다 포자 촉수 1개씩
         for th in self.bot.townhalls.ready:
             # 기존 포자 촉수 확인
-            nearby_spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
+            nearby_spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(
+                10, th
+            )
             if nearby_spores.amount > 0:
                 continue
 
@@ -246,7 +257,9 @@ class ProtossCounterSystem:
 
                     try:
                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=placement)
-                        self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]")
+                        self.logger.info(
+                            f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]"
+                        )
                         return  # 한 번에 1개씩만
                     except Exception:
                         pass
@@ -274,7 +287,9 @@ class ProtossCounterSystem:
                         self.bot.do(drone.move(safe_base.position))
                     break
 
-        self.logger.warning(f"[{int(self.bot.time)}s] [*] WORKERS PULLED FROM DT THREAT! [*]")
+        self.logger.warning(
+            f"[{int(self.bot.time)}s] [*] WORKERS PULLED FROM DT THREAT! [*]"
+        )
 
     async def _handle_oracle_harassment(self, game_time: float, iteration: int):
         """
@@ -285,7 +300,11 @@ class ProtossCounterSystem:
         3. 포자 촉수 건설
         """
         # 오라클 위치 확인
-        oracles = [e for e in self.bot.enemy_units if getattr(e.type_id, "name", "").upper() == "ORACLE"]
+        oracles = [
+            e
+            for e in self.bot.enemy_units
+            if getattr(e.type_id, "name", "").upper() == "ORACLE"
+        ]
         if not oracles:
             self.oracle_detected = False
             return
@@ -326,7 +345,11 @@ class ProtossCounterSystem:
         1. 유닛 분산 (들어올리기 방지)
         2. 히드라/퀸 대공
         """
-        phoenixes = [e for e in self.bot.enemy_units if getattr(e.type_id, "name", "").upper() == "PHOENIX"]
+        phoenixes = [
+            e
+            for e in self.bot.enemy_units
+            if getattr(e.type_id, "name", "").upper() == "PHOENIX"
+        ]
         if not phoenixes or len(phoenixes) == 0:
             self.phoenix_detected = False
             return
@@ -360,7 +383,11 @@ class ProtossCounterSystem:
         분열구가 날아오면 유닛을 분산시켜 피해 최소화
         """
         # 분열기 위치 확인
-        disruptors = [e for e in self.bot.enemy_units if getattr(e.type_id, "name", "").upper() == "DISRUPTOR"]
+        disruptors = [
+            e
+            for e in self.bot.enemy_units
+            if getattr(e.type_id, "name", "").upper() == "DISRUPTOR"
+        ]
         if not disruptors:
             self.disruptor_detected = False
             return
@@ -395,8 +422,10 @@ class ProtossCounterSystem:
         차원 분광기를 발견하면 즉시 병력을 보내 파괴
         """
         warp_prisms = [
-            e for e in self.bot.enemy_units
-            if getattr(e.type_id, "name", "").upper() in ["WARPPRISM", "WARPPRISMPHASING"]
+            e
+            for e in self.bot.enemy_units
+            if getattr(e.type_id, "name", "").upper()
+            in ["WARPPRISM", "WARPPRISMPHASING"]
         ]
 
         if not warp_prisms:
@@ -417,7 +446,9 @@ class ProtossCounterSystem:
                     for unit in nearby_army:
                         self.bot.do(unit.attack(prism))
 
-                    self.logger.warning(f"[{int(self.bot.time)}s] [*] ATTACKING WARP PRISM! [*]")
+                    self.logger.warning(
+                        f"[{int(self.bot.time)}s] [*] ATTACKING WARP PRISM! [*]"
+                    )
 
     async def _handle_immortal_counter(self, iteration: int):
         """
@@ -429,7 +460,9 @@ class ProtossCounterSystem:
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard and blackboard.get("dynamic_counter_active", False):
             dynamic_counter = getattr(self.bot, "dynamic_counter", None)
-            if dynamic_counter and "IMMORTAL" in getattr(dynamic_counter, "active_counters", {}):
+            if dynamic_counter and "IMMORTAL" in getattr(
+                dynamic_counter, "active_counters", {}
+            ):
                 return  # DynamicCounter가 Blackboard를 통해 이미 대응 중
 
         # 전략 매니저에 불멸자 카운터 요청
@@ -468,7 +501,12 @@ class ProtossCounterSystem:
         if priority_targets and iteration % 20 == 0:
             for target in priority_targets:
                 nearby_army = self.bot.units.closer_than(15, target).exclude_type(
-                    [UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA, UnitTypeId.QUEEN]
+                    [
+                        UnitTypeId.DRONE,
+                        UnitTypeId.OVERLORD,
+                        UnitTypeId.LARVA,
+                        UnitTypeId.QUEEN,
+                    ]
                 )
 
                 for unit in nearby_army:

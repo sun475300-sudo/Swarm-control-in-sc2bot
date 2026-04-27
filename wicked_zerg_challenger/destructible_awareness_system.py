@@ -9,9 +9,11 @@ Destructible Awareness System - 파괴 가능 구조물 인지 시스템
 4. 우선순위 결정 (중요도)
 """
 
-from typing import List, Dict, Optional, Set
-from sc2.position import Point2
+from typing import Dict, List, Optional, Set
+
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
 from utils.logger import get_logger
 
 
@@ -51,19 +53,21 @@ class DestructibleAwarenessSystem:
         self.DESTRUCTIBLE_TYPES = set()
 
         # 안전하게 존재하는 타입만 추가 (hasattr이 이미 안전하므로 try-except 불필요)
-        if hasattr(UnitTypeId, 'DESTRUCTIBLEROCK6X6'):
+        if hasattr(UnitTypeId, "DESTRUCTIBLEROCK6X6"):
             self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEROCK6X6)
 
-        if hasattr(UnitTypeId, 'DESTRUCTIBLEDEBRIS6X6'):
+        if hasattr(UnitTypeId, "DESTRUCTIBLEDEBRIS6X6"):
             self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEDEBRIS6X6)
 
-        if hasattr(UnitTypeId, 'DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR'):
-            self.DESTRUCTIBLE_TYPES.add(UnitTypeId.DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR)
+        if hasattr(UnitTypeId, "DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR"):
+            self.DESTRUCTIBLE_TYPES.add(
+                UnitTypeId.DESTRUCTIBLEDEBRISRAMPDIAGONALHUGEBLBUR
+            )
 
-        if hasattr(UnitTypeId, 'UNBUILDABLEPLATESDESTRUCTIBLE'):
+        if hasattr(UnitTypeId, "UNBUILDABLEPLATESDESTRUCTIBLE"):
             self.DESTRUCTIBLE_TYPES.add(UnitTypeId.UNBUILDABLEPLATESDESTRUCTIBLE)
 
-        if hasattr(UnitTypeId, 'UNBUILDABLEBRICKSDESTRUCTIBLE'):
+        if hasattr(UnitTypeId, "UNBUILDABLEBRICKSDESTRUCTIBLE"):
             self.DESTRUCTIBLE_TYPES.add(UnitTypeId.UNBUILDABLEBRICKSDESTRUCTIBLE)
 
         # 통계
@@ -117,26 +121,30 @@ class DestructibleAwarenessSystem:
     def _is_destructible(self, unit) -> bool:
         """파괴 가능한 구조물인지 확인"""
         # 타입으로 확인
-        if hasattr(unit, 'type_id') and self.DESTRUCTIBLE_TYPES:
+        if hasattr(unit, "type_id") and self.DESTRUCTIBLE_TYPES:
             if unit.type_id in self.DESTRUCTIBLE_TYPES:
                 return True
 
         # 이름으로 확인 (주요 방법)
-        if hasattr(unit, 'name'):
+        if hasattr(unit, "name"):
             name_lower = unit.name.lower()
             # 파괴 가능한 구조물의 키워드
             keywords = [
-                'destructible', 'rock', 'debris', 'unbuildable',
-                'breakable', 'removable'
+                "destructible",
+                "rock",
+                "debris",
+                "unbuildable",
+                "breakable",
+                "removable",
             ]
             if any(keyword in name_lower for keyword in keywords):
                 return True
 
         # type_id 이름으로도 확인
-        if hasattr(unit, 'type_id'):
+        if hasattr(unit, "type_id"):
             try:
                 type_name = str(unit.type_id.name).upper()
-                if 'DESTRUCTIBLE' in type_name or 'UNBUILDABLE' in type_name:
+                if "DESTRUCTIBLE" in type_name or "UNBUILDABLE" in type_name:
                     return True
             except AttributeError:
                 pass
@@ -184,7 +192,10 @@ class DestructibleAwarenessSystem:
 
             # 1. 확장 경로 차단 여부 (최우선)
             for exp_loc in expansion_locations:
-                if destructible.position.distance_to(exp_loc) < self.EXPANSION_BLOCK_RADIUS:
+                if (
+                    destructible.position.distance_to(exp_loc)
+                    < self.EXPANSION_BLOCK_RADIUS
+                ):
                     destructible.blocks_expansion = True
                     priority += 100
                     break
@@ -194,7 +205,10 @@ class DestructibleAwarenessSystem:
                 main_base = self.bot.townhalls.first.position
                 for townhall in self.bot.townhalls:
                     path_center = (main_base + townhall.position) / 2
-                    if destructible.position.distance_to(path_center) < self.MAIN_PATH_RADIUS:
+                    if (
+                        destructible.position.distance_to(path_center)
+                        < self.MAIN_PATH_RADIUS
+                    ):
                         destructible.blocks_main_path = True
                         priority += 50
                         break
@@ -212,7 +226,7 @@ class DestructibleAwarenessSystem:
         self.destruction_queue = sorted(
             [tag for tag, d in self.destructibles.items() if not d.is_destroyed],
             key=lambda t: self.destructibles[t].priority,
-            reverse=True
+            reverse=True,
         )
 
     async def _execute_destruction(self):
@@ -234,14 +248,16 @@ class DestructibleAwarenessSystem:
         # ★ SpaceControlTrainer가 이미 처리 중인지 확인 (이중 할당 방지)
         if hasattr(self.bot, "space_control") and self.bot.space_control:
             sc = self.bot.space_control
-            if hasattr(sc, "_assigned_targets") and target.position in getattr(sc, "_assigned_targets", set()):
+            if hasattr(sc, "_assigned_targets") and target.position in getattr(
+                sc, "_assigned_targets", set()
+            ):
                 return  # SpaceControl이 이미 담당 중
 
         # 근처에 공격 가능한 유닛 찾기
         attacking_units = self.bot.units.filter(
-            lambda u: u.can_attack_ground and
-            u.distance_to(target.position) < 30 and
-            u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD}
+            lambda u: u.can_attack_ground
+            and u.distance_to(target.position) < 30
+            and u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD}
         )
 
         if not attacking_units:
@@ -254,12 +270,18 @@ class DestructibleAwarenessSystem:
                     sent = 0
                     for w in workers_to_send:
                         # ★ UnitAuthority 체크: 이미 다른 시스템이 사용 중인 일꾼 스킵
-                        if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
+                        if (
+                            hasattr(self.bot, "unit_authority")
+                            and self.bot.unit_authority
+                        ):
                             try:
                                 from unit_authority_manager import AuthorityLevel
+
                                 granted = self.bot.unit_authority.request_authority(
-                                    {w.tag}, AuthorityLevel.ECONOMY,
-                                    "DestructibleAwareness", self.bot.state.game_loop
+                                    {w.tag},
+                                    AuthorityLevel.ECONOMY,
+                                    "DestructibleAwareness",
+                                    self.bot.state.game_loop,
                                 )
                                 if not granted:
                                     continue
@@ -269,7 +291,11 @@ class DestructibleAwarenessSystem:
                         sent += 1
 
                     if sent > 0:
-                        reason = "blocks expansion" if target.blocks_expansion else "blocks path"
+                        reason = (
+                            "blocks expansion"
+                            if target.blocks_expansion
+                            else "blocks path"
+                        )
                         self.logger.info(
                             f"[DESTROY] Sending {sent} workers to destroy "
                             f"structure at {target.position} ({reason})"
@@ -289,13 +315,18 @@ class DestructibleAwarenessSystem:
 
     def _print_status(self):
         """상태 출력"""
-        active_count = len([d for d in self.destructibles.values() if not d.is_destroyed])
+        active_count = len(
+            [d for d in self.destructibles.values() if not d.is_destroyed]
+        )
 
         if active_count > 0:
-            high_priority = len([
-                d for d in self.destructibles.values()
-                if not d.is_destroyed and d.priority >= 50
-            ])
+            high_priority = len(
+                [
+                    d
+                    for d in self.destructibles.values()
+                    if not d.is_destroyed and d.priority >= 50
+                ]
+            )
 
             self.logger.info(
                 f"[DESTRUCTIBLE_STATUS] "
@@ -306,15 +337,18 @@ class DestructibleAwarenessSystem:
     def get_statistics(self) -> Dict:
         """통계 반환"""
         active = len([d for d in self.destructibles.values() if not d.is_destroyed])
-        blocks_expansion = len([
-            d for d in self.destructibles.values()
-            if not d.is_destroyed and d.blocks_expansion
-        ])
+        blocks_expansion = len(
+            [
+                d
+                for d in self.destructibles.values()
+                if not d.is_destroyed and d.blocks_expansion
+            ]
+        )
 
         return {
             "total_discovered": self.total_discovered,
             "total_destroyed": self.total_destroyed,
             "active": active,
             "blocks_expansion": blocks_expansion,
-            "destruction_queue_size": len(self.destruction_queue)
+            "destruction_queue_size": len(self.destruction_queue),
         }

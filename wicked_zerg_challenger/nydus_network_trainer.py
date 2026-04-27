@@ -9,12 +9,14 @@ Nydus Network Trainer - 땅굴망 사용법 학습 시스템
 4. 상황별 활용법
 """
 
-from typing import List, Dict, Optional, Set, Tuple
-from sc2.position import Point2
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.ability_id import AbilityId
-from utils.logger import get_logger
 import random
+from typing import Dict, List, Optional, Set, Tuple
+
+from sc2.ids.ability_id import AbilityId
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
+from utils.logger import get_logger
 
 
 class NydusWormSpot:
@@ -102,15 +104,19 @@ class NydusNetworkTrainer:
     async def _plan_new_worm(self, network, game_time: float):
         """새 Worm 계획"""
         # 쿨다운 체크
-        if hasattr(self, '_last_worm_time'):
+        if hasattr(self, "_last_worm_time"):
             if game_time - self._last_worm_time < self.WORM_BUILD_COOLDOWN:
                 return
 
         # 충분한 병력이 있는지 확인
         our_army = self.bot.units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.ROACH, UnitTypeId.HYDRALISK, UnitTypeId.QUEEN,
-                UnitTypeId.RAVAGER, UnitTypeId.ZERGLING
+            lambda u: u.type_id
+            in {
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.QUEEN,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.ZERGLING,
             }
         )
 
@@ -135,7 +141,9 @@ class NydusNetworkTrainer:
             # 위치 기록
             self.worm_spots.append(best_spot)
 
-    async def _find_best_worm_location(self, game_time: float) -> Optional[NydusWormSpot]:
+    async def _find_best_worm_location(
+        self, game_time: float
+    ) -> Optional[NydusWormSpot]:
         """최적 Worm 위치 찾기"""
         # 상황별 전략 결정
         strategy = self._decide_strategy(game_time)
@@ -179,10 +187,15 @@ class NydusNetworkTrainer:
         """멀티 견제 위치 (적 확장 기지)"""
         # 적 확장 기지 찾기
         enemy_expansions = self.bot.enemy_structures.filter(
-            lambda s: s.type_id in {
-                UnitTypeId.HATCHERY, UnitTypeId.NEXUS, UnitTypeId.COMMANDCENTER,
-                UnitTypeId.LAIR, UnitTypeId.HIVE, UnitTypeId.ORBITALCOMMAND,
-                UnitTypeId.PLANETARYFORTRESS
+            lambda s: s.type_id
+            in {
+                UnitTypeId.HATCHERY,
+                UnitTypeId.NEXUS,
+                UnitTypeId.COMMANDCENTER,
+                UnitTypeId.LAIR,
+                UnitTypeId.HIVE,
+                UnitTypeId.ORBITALCOMMAND,
+                UnitTypeId.PLANETARYFORTRESS,
             }
         )
 
@@ -196,7 +209,11 @@ class NydusNetworkTrainer:
             return None
 
         # 본진이 아닌 확장 기지
-        enemy_main = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else None
+        enemy_main = (
+            self.bot.enemy_start_locations[0]
+            if self.bot.enemy_start_locations
+            else None
+        )
         for expansion in enemy_expansions:
             if enemy_main and expansion.distance_to(enemy_main) > 20:
                 # 확장 기지 근처
@@ -229,17 +246,24 @@ class NydusNetworkTrainer:
     def _is_valid_position(self, pos: Point2) -> bool:
         """유효한 위치인지 확인"""
         playable_area = self.bot.game_info.playable_area
-        return (playable_area.x <= pos.x <= playable_area.x + playable_area.width and
-                playable_area.y <= pos.y <= playable_area.y + playable_area.height)
+        return (
+            playable_area.x <= pos.x <= playable_area.x + playable_area.width
+            and playable_area.y <= pos.y <= playable_area.y + playable_area.height
+        )
 
     async def _load_units_into_network(self, network):
         """유닛을 Network에 탑승"""
         # 투입할 유닛 선택
         loadable_units = self.bot.units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.ROACH, UnitTypeId.HYDRALISK, UnitTypeId.QUEEN,
-                UnitTypeId.RAVAGER, UnitTypeId.ZERGLING
-            } and u.tag not in self.units_in_transit
+            lambda u: u.type_id
+            in {
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.QUEEN,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.ZERGLING,
+            }
+            and u.tag not in self.units_in_transit
         )
 
         if not loadable_units:
@@ -254,7 +278,7 @@ class NydusNetworkTrainer:
         priority_units.extend(loadable_units(UnitTypeId.ZERGLING).take(10))
 
         # 최대 15유닛만
-        units_to_load = priority_units[:self.MAX_UNITS_PER_WORM]
+        units_to_load = priority_units[: self.MAX_UNITS_PER_WORM]
 
         loaded_count = 0
         for unit in units_to_load:
@@ -316,10 +340,14 @@ class NydusNetworkTrainer:
         """Worm 근처 유닛 명령"""
         # Worm 근처 아군 찾기 (반경 15)
         nearby_units = self.bot.units.filter(
-            lambda u: u.distance_to(worm) < 15 and
-            u.type_id in {
-                UnitTypeId.ROACH, UnitTypeId.HYDRALISK, UnitTypeId.QUEEN,
-                UnitTypeId.RAVAGER, UnitTypeId.ZERGLING
+            lambda u: u.distance_to(worm) < 15
+            and u.type_id
+            in {
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.QUEEN,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.ZERGLING,
             }
         )
 
@@ -380,14 +408,16 @@ class NydusNetworkTrainer:
             )
 
             for spot in self.active_worms.values():
-                self.logger.info(
-                    f"  @ {spot.position}: {spot.purpose}"
-                )
+                self.logger.info(f"  @ {spot.position}: {spot.purpose}")
 
     def get_statistics(self) -> Dict:
         """통계 반환"""
         total_attempts = self.successful_attacks + self.failed_attacks
-        success_rate = (self.successful_attacks / total_attempts * 100) if total_attempts > 0 else 0
+        success_rate = (
+            (self.successful_attacks / total_attempts * 100)
+            if total_attempts > 0
+            else 0
+        )
 
         return {
             "total_worms_built": len(self.worm_spots),
@@ -395,5 +425,5 @@ class NydusNetworkTrainer:
             "successful_attacks": self.successful_attacks,
             "failed_attacks": self.failed_attacks,
             "success_rate": f"{success_rate:.1f}%",
-            "units_deployed": len(self.units_deployed)
+            "units_deployed": len(self.units_deployed),
         }

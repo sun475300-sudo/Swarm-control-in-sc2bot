@@ -3,10 +3,10 @@ Meta Game Analyzer - Analyzes current meta and adapts strategy
 HIGH PRIORITY FEATURE
 """
 
-from typing import Dict, List, Any, Optional
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -149,9 +149,11 @@ class MetaGameAnalyzer:
             "trend": trend,
             "recent_win_rate": recent_win_rate * 100,
             "games_analyzed": len(recent_games),
-            "recommendation": "Keep current strategy"
-            if trend == "IMPROVING"
-            else "Try different approach",
+            "recommendation": (
+                "Keep current strategy"
+                if trend == "IMPROVING"
+                else "Try different approach"
+            ),
         }
 
 

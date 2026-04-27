@@ -15,6 +15,7 @@ Features:
 """
 
 from typing import Dict, Optional
+
 from utils.logger import get_logger
 
 try:
@@ -22,8 +23,10 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.race import Race
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         QUEEN = "QUEEN"
         ROACH = "ROACH"
@@ -35,6 +38,7 @@ except ImportError:
         BANELINGNEST = "BANELINGNEST"
         LAIR = "LAIR"
         HYDRALISKDEN = "HYDRALISKDEN"
+
     class Race:
         Terran = "Terran"
         Protoss = "Protoss"
@@ -108,7 +112,9 @@ class AdaptiveBuildOrder:
         if self.enemy_cheese_detected:
             self.current_build = "anti_cheese"
             self._setup_anti_cheese_build()
-            self.logger.info(f"[{int(self.bot.time)}s] [*] BUILD: Anti-Cheese Defense [*]")
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [*] BUILD: Anti-Cheese Defense [*]"
+            )
 
         elif self.enemy_fast_expand:
             self.current_build = "timing_attack"
@@ -150,7 +156,7 @@ class AdaptiveBuildOrder:
             "tech_buildings": [
                 UnitTypeId.ROACHWARREN,
                 UnitTypeId.SPINECRAWLER,
-            ]
+            ],
         }
 
     def _setup_timing_attack(self):
@@ -176,7 +182,7 @@ class AdaptiveBuildOrder:
                 ],
                 "upgrades": [
                     "GLIALRECONSTITUTION",  # Roach speed
-                ]
+                ],
             }
 
         elif self.enemy_race == Race.Protoss:
@@ -194,7 +200,7 @@ class AdaptiveBuildOrder:
                 ],
                 "upgrades": [
                     "GLIALRECONSTITUTION",
-                ]
+                ],
             }
 
         elif self.enemy_race == Race.Zerg:
@@ -212,7 +218,7 @@ class AdaptiveBuildOrder:
                 ],
                 "upgrades": [
                     "ZERGLINGMOVEMENTSPEED",  # Metabolic Boost
-                ]
+                ],
             }
 
         else:
@@ -226,7 +232,7 @@ class AdaptiveBuildOrder:
                 },
                 "tech_buildings": [
                     UnitTypeId.ROACHWARREN,
-                ]
+                ],
             }
 
     def _setup_macro_build(self):
@@ -244,7 +250,7 @@ class AdaptiveBuildOrder:
             "tech_buildings": [
                 UnitTypeId.LAIR,
                 UnitTypeId.HYDRALISKDEN,
-            ]
+            ],
         }
 
     def get_current_build(self) -> str:

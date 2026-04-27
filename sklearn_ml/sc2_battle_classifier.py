@@ -34,9 +34,9 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import (
+    accuracy_score,
     classification_report,
     confusion_matrix,
-    accuracy_score,
     f1_score,
     roc_auc_score,
 )
@@ -56,18 +56,18 @@ logger = logging.getLogger(__name__)
 # Feature schema
 # ---------------------------------------------------------------------------
 FEATURE_NAMES: List[str] = [
-    "army_supply",       # total supply in army composition
-    "worker_count",      # active drones
-    "minerals",          # mineral bank
-    "gas",               # vespene bank
-    "tech_level",        # 1=pool  2=lair  3=hive
-    "enemy_army_supply", # estimated enemy army supply
-    "enemy_worker_count",# estimated enemy workers (scouted)
+    "army_supply",  # total supply in army composition
+    "worker_count",  # active drones
+    "minerals",  # mineral bank
+    "gas",  # vespene bank
+    "tech_level",  # 1=pool  2=lair  3=hive
+    "enemy_army_supply",  # estimated enemy army supply
+    "enemy_worker_count",  # estimated enemy workers (scouted)
     "enemy_tech_level",  # estimated enemy tech tier
-    "upgrade_count",     # number of completed attack/armor upgrades
-    "base_count",        # active expansions (hatches)
-    "game_time_seconds", # elapsed game time
-    "creep_coverage",    # fraction of map with creep (0-1)
+    "upgrade_count",  # number of completed attack/armor upgrades
+    "base_count",  # active expansions (hatches)
+    "game_time_seconds",  # elapsed game time
+    "creep_coverage",  # fraction of map with creep (0-1)
 ]
 
 NUM_FEATURES: int = len(FEATURE_NAMES)
@@ -94,31 +94,42 @@ def generate_sc2_training_data(
     """
     rng = np.random.default_rng(seed)
 
-    army_supply       = rng.integers(10, 120, size=n_samples).astype(np.float64)
-    worker_count      = rng.integers(10, 80, size=n_samples).astype(np.float64)
-    minerals          = rng.uniform(0, 3000, size=n_samples)
-    gas               = rng.uniform(0, 1500, size=n_samples)
-    tech_level        = rng.integers(1, 4, size=n_samples).astype(np.float64)
+    army_supply = rng.integers(10, 120, size=n_samples).astype(np.float64)
+    worker_count = rng.integers(10, 80, size=n_samples).astype(np.float64)
+    minerals = rng.uniform(0, 3000, size=n_samples)
+    gas = rng.uniform(0, 1500, size=n_samples)
+    tech_level = rng.integers(1, 4, size=n_samples).astype(np.float64)
     enemy_army_supply = rng.integers(10, 120, size=n_samples).astype(np.float64)
-    enemy_worker_count= rng.integers(10, 80, size=n_samples).astype(np.float64)
-    enemy_tech_level  = rng.integers(1, 4, size=n_samples).astype(np.float64)
-    upgrade_count     = rng.integers(0, 10, size=n_samples).astype(np.float64)
-    base_count        = rng.integers(1, 6, size=n_samples).astype(np.float64)
+    enemy_worker_count = rng.integers(10, 80, size=n_samples).astype(np.float64)
+    enemy_tech_level = rng.integers(1, 4, size=n_samples).astype(np.float64)
+    upgrade_count = rng.integers(0, 10, size=n_samples).astype(np.float64)
+    base_count = rng.integers(1, 6, size=n_samples).astype(np.float64)
     game_time_seconds = rng.uniform(60, 1200, size=n_samples)
-    creep_coverage    = rng.uniform(0.0, 1.0, size=n_samples)
+    creep_coverage = rng.uniform(0.0, 1.0, size=n_samples)
 
-    X = np.column_stack([
-        army_supply, worker_count, minerals, gas, tech_level,
-        enemy_army_supply, enemy_worker_count, enemy_tech_level,
-        upgrade_count, base_count, game_time_seconds, creep_coverage,
-    ])
+    X = np.column_stack(
+        [
+            army_supply,
+            worker_count,
+            minerals,
+            gas,
+            tech_level,
+            enemy_army_supply,
+            enemy_worker_count,
+            enemy_tech_level,
+            upgrade_count,
+            base_count,
+            game_time_seconds,
+            creep_coverage,
+        ]
+    )
 
     # --- deterministic win probability heuristic ---
-    supply_ratio  = army_supply / np.maximum(enemy_army_supply, 1.0)
-    tech_edge     = (tech_level - enemy_tech_level) * 0.15
-    econ_edge     = (worker_count - enemy_worker_count) / 80.0 * 0.10
+    supply_ratio = army_supply / np.maximum(enemy_army_supply, 1.0)
+    tech_edge = (tech_level - enemy_tech_level) * 0.15
+    econ_edge = (worker_count - enemy_worker_count) / 80.0 * 0.10
     upgrade_bonus = upgrade_count * 0.03
-    creep_bonus   = creep_coverage * 0.05
+    creep_bonus = creep_coverage * 0.05
 
     logit = (
         1.2 * (supply_ratio - 1.0)
@@ -126,7 +137,7 @@ def generate_sc2_training_data(
         + econ_edge
         + upgrade_bonus
         + creep_bonus
-        + rng.normal(0, 0.25, size=n_samples)   # micro noise
+        + rng.normal(0, 0.25, size=n_samples)  # micro noise
     )
     prob = 1.0 / (1.0 + np.exp(-4.0 * logit))
     y = (rng.random(n_samples) < prob).astype(np.int64)
@@ -214,20 +225,23 @@ class BattleClassifier:
     def _build_pipeline(self, estimator: BaseEstimator) -> Pipeline:
         steps: list = [("scaler", StandardScaler())]
         if self.poly_degree > 1:
-            steps.append((
-                "poly",
-                PolynomialFeatures(
-                    degree=self.poly_degree,
-                    interaction_only=False,
-                    include_bias=False,
-                ),
-            ))
+            steps.append(
+                (
+                    "poly",
+                    PolynomialFeatures(
+                        degree=self.poly_degree,
+                        interaction_only=False,
+                        include_bias=False,
+                    ),
+                )
+            )
         steps.append(("clf", estimator))
         return Pipeline(steps)
 
     def _get_estimator(self) -> BaseEstimator:
         if self.model_type == "ensemble":
             from sklearn.ensemble import VotingClassifier
+
             estimators = [
                 (name, factory(self.random_state))
                 for name, factory in self._ESTIMATORS.items()
@@ -254,7 +268,9 @@ class BattleClassifier:
         self.pipeline.fit(X, y)
         self._is_fitted = True
         if verbose:
-            logger.info("BattleClassifier (%s) fitted on %d samples.", self.model_type, len(y))
+            logger.info(
+                "BattleClassifier (%s) fitted on %d samples.", self.model_type, len(y)
+            )
         return self
 
     def predict(self, X: NDArray) -> NDArray:
@@ -281,7 +297,9 @@ class BattleClassifier:
         )
         estimator = self._get_estimator()
         pipe = self._build_pipeline(estimator)
-        self.cv_scores_ = cross_val_score(pipe, X, y, cv=skf, scoring=scoring, n_jobs=-1)
+        self.cv_scores_ = cross_val_score(
+            pipe, X, y, cv=skf, scoring=scoring, n_jobs=-1
+        )
         logger.info(
             "CV %s: %.4f +/- %.4f  (folds=%d)",
             scoring,
@@ -370,6 +388,7 @@ class BattleClassifier:
     ) -> None:
         """Bar chart of top feature importances (requires matplotlib)."""
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
@@ -440,7 +459,12 @@ class BattleClassifier:
             self.pipeline = gs.best_estimator_
             self._is_fitted = True
 
-        logger.info("GridSearch best %s=%.4f  params=%s", scoring, gs.best_score_, gs.best_params_)
+        logger.info(
+            "GridSearch best %s=%.4f  params=%s",
+            scoring,
+            gs.best_score_,
+            gs.best_params_,
+        )
         return {
             "best_score": gs.best_score_,
             "best_params": gs.best_params_,
@@ -496,6 +520,7 @@ class BattleClassifier:
 @dataclass
 class UnitPosition:
     """Lightweight representation of a unit on the SC2 map."""
+
     unit_tag: int
     x: float
     y: float
@@ -596,6 +621,7 @@ class UnitClusterer:
     ) -> None:
         """Scatter plot of clustered positions."""
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
@@ -665,14 +691,16 @@ def generate_unit_positions(
         for _ in range(n):
             x = centre[0] + rng.normal(0, 4.0)
             y = centre[1] + rng.normal(0, 4.0)
-            units.append(UnitPosition(
-                unit_tag=tag,
-                x=float(np.clip(x, 0, map_size)),
-                y=float(np.clip(y, 0, map_size)),
-                unit_type_id=rng.choice([105, 106, 107, 110, 111]),  # zerg IDs
-                health=float(rng.uniform(0.3, 1.0)),
-                is_flying=bool(rng.random() < 0.15),
-            ))
+            units.append(
+                UnitPosition(
+                    unit_tag=tag,
+                    x=float(np.clip(x, 0, map_size)),
+                    y=float(np.clip(y, 0, map_size)),
+                    unit_type_id=rng.choice([105, 106, 107, 110, 111]),  # zerg IDs
+                    health=float(rng.uniform(0.3, 1.0)),
+                    is_flying=bool(rng.random() < 0.15),
+                )
+            )
             tag += 1
     return units
 
@@ -690,7 +718,11 @@ def main() -> None:
 
     X, y = generate_sc2_training_data(n_samples=2000, seed=42)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42,
+        X,
+        y,
+        test_size=0.2,
+        stratify=y,
+        random_state=42,
     )
 
     for model_type in ("random_forest", "gradient_boosting", "svm"):

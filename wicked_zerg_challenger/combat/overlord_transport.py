@@ -9,17 +9,17 @@ Overlord Transport - 대군주 수송 시스템
 4. 저글링/바퀴 드랍 전술
 """
 
-from typing import Optional, List, Dict, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Set
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object
@@ -45,7 +45,7 @@ class OverlordTransport:
         # Transport state
         self._transport_active = False
         self._loaded_overlords: Dict[int, List[int]] = {}  # overlord_tag -> [unit_tags]
-        self._drop_targets: Dict[int, 'Point2'] = {}  # overlord_tag -> target_position
+        self._drop_targets: Dict[int, "Point2"] = {}  # overlord_tag -> target_position
         self._last_drop_time = 0
         self._drop_cooldown = 60  # 1분마다 드랍 시도
 
@@ -101,7 +101,9 @@ class OverlordTransport:
             if pending > 0 and not self._ventral_sacs_started:
                 self._ventral_sacs_started = True
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] Ventral Sacs upgrade in progress...")
+                self.logger.info(
+                    f"[{int(game_time)}s] Ventral Sacs upgrade in progress..."
+                )
 
     async def execute_drop_tactics(self, iteration: int):
         """
@@ -117,8 +119,8 @@ class OverlordTransport:
             return
 
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
             from sc2.ids.ability_id import AbilityId
+            from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
 
@@ -157,7 +159,11 @@ class OverlordTransport:
 
         for idx, overlord in enumerate(overlord_list):
             start_idx = idx * units_per_overlord
-            end_idx = start_idx + units_per_overlord if idx < len(overlord_list) - 1 else len(transport_units)
+            end_idx = (
+                start_idx + units_per_overlord
+                if idx < len(overlord_list) - 1
+                else len(transport_units)
+            )
             units_to_load = transport_units[start_idx:end_idx]
 
             # 유닛 탑승 명령
@@ -173,12 +179,14 @@ class OverlordTransport:
             self._loaded_overlords[overlord.tag] = [u.tag for u in units_to_load]
 
         game_time = getattr(self.bot, "time", 0)
-        self.logger.info(f"[{int(game_time)}s] Initiating drop with {len(transport_units)} units!")
+        self.logger.info(
+            f"[{int(game_time)}s] Initiating drop with {len(transport_units)} units!"
+        )
 
         # 대군주 이동
         await self.move_overlords_to_drop(overlord_list, drop_target)
 
-    async def move_overlords_to_drop(self, overlords: List, target: 'Point2'):
+    async def move_overlords_to_drop(self, overlords: List, target: "Point2"):
         """
         대군주를 드랍 위치로 이동
 
@@ -202,8 +210,8 @@ class OverlordTransport:
             return
 
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
             from sc2.ids.ability_id import AbilityId
+            from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
 
@@ -229,9 +237,11 @@ class OverlordTransport:
                         del self._loaded_overlords[overlord.tag]
 
                 except AttributeError:
-                    self.logger.warning("Failed to unload units - ability not available")
+                    self.logger.warning(
+                        "Failed to unload units - ability not available"
+                    )
 
-    def find_drop_target(self) -> Optional['Point2']:
+    def find_drop_target(self) -> Optional["Point2"]:
         """
         드랍 타겟 찾기
 
@@ -241,7 +251,10 @@ class OverlordTransport:
         3. 적 테크 건물
         """
         # 적 시작 위치
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_start = self.bot.enemy_start_locations[0]
 
             # 본진 후방 계산 (미네랄 라인 쪽)
@@ -253,7 +266,7 @@ class OverlordTransport:
                 direction_y = enemy_start.y - our_start.y
 
                 # 정규화
-                length = (direction_x ** 2 + direction_y ** 2) ** 0.5
+                length = (direction_x**2 + direction_y**2) ** 0.5
                 if length > 0:
                     direction_x /= length
                     direction_y /= length
@@ -264,6 +277,7 @@ class OverlordTransport:
 
                 try:
                     from sc2.position import Point2
+
                     return Point2((drop_x, drop_y))
                 except ImportError:
                     return enemy_start
@@ -296,7 +310,9 @@ class OverlordTransport:
                 # 위험 지역에 있으면 후퇴
                 enemy_units = getattr(self.bot, "enemy_units", [])
                 if enemy_units:
-                    nearby_enemies = [e for e in enemy_units if e.distance_to(overlord.position) < 15]
+                    nearby_enemies = [
+                        e for e in enemy_units if e.distance_to(overlord.position) < 15
+                    ]
 
                     if nearby_enemies:
                         # 본진으로 후퇴

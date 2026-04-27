@@ -1,8 +1,7 @@
-
 import json
 import os
-import threading
 import tempfile
+import threading
 import time
 
 
@@ -13,13 +12,15 @@ class MemoryManager:
     디바운스: 변경 10건 또는 30초마다 실제 디스크에 flush합니다.
     """
 
-    _DEBOUNCE_COUNT = 10   # 이 횟수만큼 변경되면 flush
-    _DEBOUNCE_SEC = 30.0   # 이 시간 경과 시 flush
+    _DEBOUNCE_COUNT = 10  # 이 횟수만큼 변경되면 flush
+    _DEBOUNCE_SEC = 30.0  # 이 시간 경과 시 flush
 
     def __init__(self, filepath="data/memory.json"):
         self.filepath = filepath
         self.memory = {}
-        self._lock = threading.Lock()  # threading.Lock (not asyncio) — sync file I/O via asyncio.to_thread()
+        self._lock = (
+            threading.Lock()
+        )  # threading.Lock (not asyncio) — sync file I/O via asyncio.to_thread()
         self._save_count = 0
         self._AUTO_BACKUP_INTERVAL = 50  # N회 저장마다 자동 백업
         self._dirty = False
@@ -71,9 +72,7 @@ class MemoryManager:
                 os.makedirs(dir_path, exist_ok=True)
 
             # 원자적 쓰기: 임시 파일에 먼저 쓰고 교체
-            fd, tmp_path = tempfile.mkstemp(
-                dir=dir_path or ".", suffix=".tmp"
-            )
+            fd, tmp_path = tempfile.mkstemp(dir=dir_path or ".", suffix=".tmp")
             try:
                 with os.fdopen(fd, "w", encoding="utf-8") as f:
                     json.dump(self.memory, f, ensure_ascii=False, indent=2)
@@ -97,6 +96,7 @@ class MemoryManager:
         """주기적 자동 백업 (최근 3개 유지)"""
         import shutil
         from datetime import datetime
+
         try:
             if not os.path.exists(self.filepath):
                 return
@@ -104,14 +104,17 @@ class MemoryManager:
             os.makedirs(backup_dir, exist_ok=True)
 
             backup_path = os.path.join(
-                backup_dir,
-                f"memory_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                backup_dir, f"memory_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             )
             shutil.copy2(self.filepath, backup_path)
 
             # 오래된 백업 정리 (최근 3개만 유지)
             backups = sorted(
-                [f for f in os.listdir(backup_dir) if f.startswith("memory_") and f.endswith(".json")]
+                [
+                    f
+                    for f in os.listdir(backup_dir)
+                    if f.startswith("memory_") and f.endswith(".json")
+                ]
             )
             for old_backup in backups[:-3]:
                 try:
@@ -170,7 +173,9 @@ class MemoryManager:
 
             # Hard cap to prevent unbounded memory growth
             if len(self.memory[uid]["chat_history"]) > self.MAX_CHAT_HISTORY:
-                self.memory[uid]["chat_history"] = self.memory[uid]["chat_history"][-self.MAX_CHAT_HISTORY:]
+                self.memory[uid]["chat_history"] = self.memory[uid]["chat_history"][
+                    -self.MAX_CHAT_HISTORY :
+                ]
 
             self._mark_dirty()
 
@@ -189,7 +194,10 @@ class MemoryManager:
                 for key, value in data.items():
                     if key == "chat_history":
                         continue
-                    if query_lower in str(key).lower() or query_lower in str(value).lower():
+                    if (
+                        query_lower in str(key).lower()
+                        or query_lower in str(value).lower()
+                    ):
                         results.append({"user_id": uid, "key": key, "value": value})
             return results
 
@@ -202,8 +210,11 @@ class MemoryManager:
         """메모리 파일 백업 생성"""
         import shutil
         from datetime import datetime
+
         with self._lock:
-            backup_path = f"{self.filepath}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            backup_path = (
+                f"{self.filepath}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
             try:
                 if os.path.exists(self.filepath):
                     shutil.copy2(self.filepath, backup_path)
@@ -224,7 +235,9 @@ class MemoryManager:
                 "stored_facts": len(keys),
                 "fact_keys": keys,
                 "chat_messages": len(history),
-                "memory_size_bytes": len(json.dumps(data, ensure_ascii=False).encode("utf-8")),
+                "memory_size_bytes": len(
+                    json.dumps(data, ensure_ascii=False).encode("utf-8")
+                ),
             }
 
     def clear_user(self, user_id) -> bool:

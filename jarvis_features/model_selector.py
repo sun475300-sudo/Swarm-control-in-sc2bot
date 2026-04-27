@@ -41,7 +41,11 @@ GEMINI_MODELS = {
 CLAUDE_CASCADE = {
     "haiku": ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
     "sonnet": ["claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
-    "opus": ["claude-opus-4-6", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
+    "opus": [
+        "claude-opus-4-6",
+        "claude-sonnet-4-5-20250929",
+        "claude-haiku-4-5-20251001",
+    ],
 }
 
 # model_hint → Gemini 폴백 순서
@@ -62,21 +66,25 @@ PROXY_MODEL_MAP = {
 @dataclass
 class ModelPlan:
     """모델 선택 계획 — 각 프로바이더별 시도 순서"""
-    claude_models: List[str]     # Claude API 시도 순서
-    proxy_model: str             # claude_proxy.js에 전달할 모델 키
-    gemini_models: List[str]     # Gemini 폴백 시도 순서
-    hint: str                    # 원본 model_hint
-    reason: str = ""             # 선택 사유 (로깅용)
+
+    claude_models: List[str]  # Claude API 시도 순서
+    proxy_model: str  # claude_proxy.js에 전달할 모델 키
+    gemini_models: List[str]  # Gemini 폴백 시도 순서
+    hint: str  # 원본 model_hint
+    reason: str = ""  # 선택 사유 (로깅용)
 
     @property
     def full_cascade(self) -> list:
         """크로스 프로바이더 전체 폴백 순서: Claude → Gemini"""
-        return [("claude", m) for m in self.claude_models] + [("gemini", m) for m in self.gemini_models]
+        return [("claude", m) for m in self.claude_models] + [
+            ("gemini", m) for m in self.gemini_models
+        ]
 
 
 @dataclass
 class ModelMetrics:
     """단일 모델의 성능 메트릭"""
+
     total_calls: int = 0
     successes: int = 0
     failures: int = 0
@@ -173,9 +181,7 @@ class ModelSelector:
 
         return plan
 
-    def record_result(
-        self, model_name: str, success: bool, latency_ms: float = 0.0
-    ):
+    def record_result(self, model_name: str, success: bool, latency_ms: float = 0.0):
         """모델 호출 결과 기록 (적응형 라우팅용)"""
         if model_name not in self._metrics:
             self._metrics[model_name] = ModelMetrics()

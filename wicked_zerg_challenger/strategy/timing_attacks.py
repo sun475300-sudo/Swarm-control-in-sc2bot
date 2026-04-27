@@ -15,14 +15,17 @@ Features:
 """
 
 from typing import Dict, Optional
+
 from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         ROACH = "ROACH"
         MUTALISK = "MUTALISK"
@@ -37,7 +40,7 @@ class TimingAttacks:
 
         # Timing windows
         self.ROACH_TIMING = 420  # 7분
-        self.MUTA_TIMING = 360   # 6분
+        self.MUTA_TIMING = 360  # 6분
         self.ZERGLING_TIMING = 240  # 4분
 
         # Attack state
@@ -145,13 +148,17 @@ class TimingAttacks:
         """Roach 타이밍 공격 시작"""
         self.timing_attack_active = True
         self.timing_attack_type = "roach_ravager"
-        self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] ROACH/RAVAGER TIMING ATTACK! [*][*][*]")
+        self.logger.info(
+            f"[{int(self.bot.time)}s] [*][*][*] ROACH/RAVAGER TIMING ATTACK! [*][*][*]"
+        )
 
     def _initiate_muta_timing(self):
         """Mutalisk 타이밍 공격 시작"""
         self.timing_attack_active = True
         self.timing_attack_type = "mutalisk"
-        self.logger.info(f"[{int(self.bot.time)}s] [*][*][*] MUTALISK TIMING ATTACK! [*][*][*]")
+        self.logger.info(
+            f"[{int(self.bot.time)}s] [*][*][*] MUTALISK TIMING ATTACK! [*][*][*]"
+        )
 
     def _assess_enemy_defense(self) -> int:
         """

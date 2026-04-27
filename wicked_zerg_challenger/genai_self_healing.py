@@ -9,10 +9,10 @@ CRITICAL IMPROVEMENTS:
 """
 
 import ast
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger("GenaiSelfHealing")
 
@@ -92,7 +92,9 @@ class GenAISelfHealing:
             response = self.model.generate_content(prompt)
 
             # 응답 파싱
-            response_text = response.text if hasattr(response, "text") else str(response)
+            response_text = (
+                response.text if hasattr(response, "text") else str(response)
+            )
 
             # 패치 코드 추출
             patch_code = self._extract_patch_code(response_text)
@@ -416,7 +418,9 @@ class GenAISelfHealing:
                 if isinstance(node, ast.For):
                     # 중첩된 for 루프 확인
                     nested_fors = [
-                        n for n in ast.walk(node) if isinstance(n, ast.For) and n != node
+                        n
+                        for n in ast.walk(node)
+                        if isinstance(n, ast.For) and n != node
                     ]
                     if nested_fors:
                         suggestions.append(

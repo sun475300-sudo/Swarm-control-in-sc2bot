@@ -5,9 +5,9 @@ Stages: early_macro → army_control → multi_task → full_game
 Auto-promotes based on win rate threshold.
 """
 
-from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from enum import Enum
+from typing import Dict, List, Optional
 
 
 class CurriculumStage(Enum):
@@ -22,8 +22,8 @@ class StageConfig:
     stage: CurriculumStage
     name: str
     description: str
-    win_rate_threshold: float      # win rate to advance
-    min_games: int = 100           # minimum games before promotion
+    win_rate_threshold: float  # win rate to advance
+    min_games: int = 100  # minimum games before promotion
     enemy_difficulty: str = "very_easy"
     map_pool: List[str] = field(default_factory=list)
     time_limit_steps: int = 5000
@@ -105,30 +105,38 @@ class CurriculumScheduler:
 
     def _try_advance(self) -> bool:
         cfg = self.config
-        if (self._games_in_stage >= cfg.min_games
-                and self.win_rate >= cfg.win_rate_threshold
-                and self._stage_idx < len(STAGE_CONFIGS) - 1):
-            self.history.append({
-                "from_stage": self.stage.name,
-                "games": self._games_in_stage,
-                "win_rate": self.win_rate,
-            })
+        if (
+            self._games_in_stage >= cfg.min_games
+            and self.win_rate >= cfg.win_rate_threshold
+            and self._stage_idx < len(STAGE_CONFIGS) - 1
+        ):
+            self.history.append(
+                {
+                    "from_stage": self.stage.name,
+                    "games": self._games_in_stage,
+                    "win_rate": self.win_rate,
+                }
+            )
             self._stage_idx += 1
             self._games_in_stage = 0
             self._wins_in_stage = 0
-            print(f"[Curriculum] Promoted to: {self.config.name} "
-                  f"(difficulty={self.config.enemy_difficulty})")
+            print(
+                f"[Curriculum] Promoted to: {self.config.name} "
+                f"(difficulty={self.config.enemy_difficulty})"
+            )
             return True
         return False
 
     def advance(self, win_rate: Optional[float] = None) -> bool:
         """Manually advance stage (e.g., triggered by external eval)."""
         if self._stage_idx < len(STAGE_CONFIGS) - 1:
-            self.history.append({
-                "from_stage": self.stage.name,
-                "manual_advance": True,
-                "win_rate": win_rate,
-            })
+            self.history.append(
+                {
+                    "from_stage": self.stage.name,
+                    "manual_advance": True,
+                    "win_rate": win_rate,
+                }
+            )
             self._stage_idx += 1
             self._games_in_stage = 0
             self._wins_in_stage = 0

@@ -83,17 +83,29 @@ def build_feedback(input_dir: Path) -> dict[str, Any]:
     for item in top_focus:
         tag = item["tag"]
         if tag == "early_defense":
-            next_actions.append("Relax early defense thresholds and retrain from pre-5min combat replays.")
+            next_actions.append(
+                "Relax early defense thresholds and retrain from pre-5min combat replays."
+            )
         elif tag == "macro_supply":
-            next_actions.append("Improve overlord timing in supply-block segments and add macro cycle alerts.")
+            next_actions.append(
+                "Improve overlord timing in supply-block segments and add macro cycle alerts."
+            )
         elif tag == "resource_spend":
-            next_actions.append("Increase production priority during mineral and gas float windows.")
+            next_actions.append(
+                "Increase production priority during mineral and gas float windows."
+            )
         elif tag == "anti_air_response":
-            next_actions.append("Trigger hydra/queen transition earlier when air threats are detected.")
+            next_actions.append(
+                "Trigger hydra/queen transition earlier when air threats are detected."
+            )
         elif tag == "drop_defense":
-            next_actions.append("Increase drop-defense response units and reduce return-to-defense delay.")
+            next_actions.append(
+                "Increase drop-defense response units and reduce return-to-defense delay."
+            )
         elif tag == "creep_spread":
-            next_actions.append("Raise queen energy allocation and creep-tumor target scoring weights.")
+            next_actions.append(
+                "Raise queen energy allocation and creep-tumor target scoring weights."
+            )
 
     return {
         "total_replays": total,
@@ -107,7 +119,9 @@ def build_feedback(input_dir: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Replay feedback loop")
-    parser.add_argument("--input", required=True, help="Input directory of replay summary JSON files")
+    parser.add_argument(
+        "--input", required=True, help="Input directory of replay summary JSON files"
+    )
     parser.add_argument("--output", required=True, help="Output feedback JSON path")
     args = parser.parse_args()
 

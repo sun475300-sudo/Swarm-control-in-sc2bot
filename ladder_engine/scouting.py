@@ -4,10 +4,10 @@ Intel gathering and build order detection for Zerg.
 Overlord positioning and drone scout management.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-from enum import Enum
 import math
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class EnemyBuild(Enum):
@@ -38,13 +38,15 @@ class KnowledgeBase:
     detected_build: EnemyBuild = EnemyBuild.UNKNOWN
     enemy_unit_counts: Dict[str, int] = field(default_factory=dict)
     enemy_buildings: Dict[str, int] = field(default_factory=dict)
-    enemy_tech_level: int = 0        # 0=none, 1=tier1, 2=tier2, 3=tier3
+    enemy_tech_level: int = 0  # 0=none, 1=tier1, 2=tier2, 3=tier3
     timing_attack_predicted: bool = False
     predicted_attack_time: float = 0.0
     observations: List[ScoutObservation] = field(default_factory=list)
 
     def record_unit(self, unit_type: str, count: int = 1):
-        self.enemy_unit_counts[unit_type] = self.enemy_unit_counts.get(unit_type, 0) + count
+        self.enemy_unit_counts[unit_type] = (
+            self.enemy_unit_counts.get(unit_type, 0) + count
+        )
 
     def record_building(self, building: str):
         self.enemy_buildings[building] = self.enemy_buildings.get(building, 0) + 1
@@ -67,7 +69,12 @@ class BuildOrderDetector:
         race = kb.opponent_race
 
         # No second base scouted early
-        if buildings.get("CommandCenter", 0) + buildings.get("Nexus", 0) + buildings.get("Hatchery", 0) <= 1:
+        if (
+            buildings.get("CommandCenter", 0)
+            + buildings.get("Nexus", 0)
+            + buildings.get("Hatchery", 0)
+            <= 1
+        ):
             if kb.scouted_at < 180 and kb.enemy_base_position is not None:
                 # Check for proxy
                 if any(b in self.TERRAN_PROXY_BUILDINGS for b in buildings):
@@ -129,7 +136,7 @@ class ScoutingSystem:
         self,
         drone_tag: int,
         possible_enemy_positions: List[Tuple[float, float]],
-        our_base: Tuple[float, float]
+        our_base: Tuple[float, float],
     ) -> List[Tuple[int, Tuple[float, float]]]:
         """
         Assign a drone to scout enemy positions.
@@ -163,9 +170,7 @@ class ScoutingSystem:
     # ------------------------------------------------------------------
 
     def position_overlords_for_vision(
-        self,
-        overlord_tags: List[int],
-        watch_positions: List[Tuple[float, float]]
+        self, overlord_tags: List[int], watch_positions: List[Tuple[float, float]]
     ) -> Dict[int, Tuple[float, float]]:
         """
         Assign overlords to watch positions (attack paths, expansions).
@@ -185,7 +190,7 @@ class ScoutingSystem:
         self,
         our_base: Tuple[float, float],
         enemy_base: Optional[Tuple[float, float]],
-        map_size: Tuple[float, float] = (200.0, 200.0)
+        map_size: Tuple[float, float] = (200.0, 200.0),
     ) -> List[Tuple[float, float]]:
         """
         Generate recommended overlord watch positions between bases.
@@ -209,7 +214,7 @@ class ScoutingSystem:
             positions.append((our_base[0], our_base[1] + 20))
             positions.append((our_base[0] - 20, our_base[1]))
 
-        return positions[:self.OVERLORD_WATCH_POSITIONS_COUNT]
+        return positions[: self.OVERLORD_WATCH_POSITIONS_COUNT]
 
     # ------------------------------------------------------------------
     # Knowledge base updates
@@ -219,7 +224,7 @@ class ScoutingSystem:
         self,
         game_time: float,
         observed_units: List[Dict],
-        observed_buildings: List[Dict]
+        observed_buildings: List[Dict],
     ):
         """
         Process new scouting observations and update the knowledge base.
@@ -258,7 +263,10 @@ class ScoutingSystem:
         kb = self.knowledge_base
         total_army = sum(kb.enemy_unit_counts.values())
 
-        if kb.detected_build in (EnemyBuild.ONE_BASE_ALL_IN, EnemyBuild.EARLY_AGGRESSION):
+        if kb.detected_build in (
+            EnemyBuild.ONE_BASE_ALL_IN,
+            EnemyBuild.EARLY_AGGRESSION,
+        ):
             # Estimate attack arrives in 60-120 seconds from now
             kb.timing_attack_predicted = True
             arrival = game_time + 90.0

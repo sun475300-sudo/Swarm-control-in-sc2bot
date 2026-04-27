@@ -23,15 +23,19 @@ Unit Tests for EconomyManager
 18. 가스 타이밍 최적화
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
 from typing import List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Economy Manager 임포트
 try:
-    import sys
     import os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger'))
+    import sys
+
+    sys.path.insert(
+        0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+    )
     from economy_manager import EconomyManager
 except ImportError:
     pytest.skip("EconomyManager not available", allow_module_level=True)
@@ -39,8 +43,16 @@ except ImportError:
 
 class MockUnit:
     """Mock SC2 Unit"""
-    def __init__(self, tag: int, type_id, position, health: float = 100.0,
-                 health_max: float = 100.0, is_idle: bool = False):
+
+    def __init__(
+        self,
+        tag: int,
+        type_id,
+        position,
+        health: float = 100.0,
+        health_max: float = 100.0,
+        is_idle: bool = False,
+    ):
         self.tag = tag
         self.type_id = type_id
         self.position = position
@@ -53,22 +65,27 @@ class MockUnit:
         self.order_target = None
         self.assigned_harvesters = 0
         self.ideal_harvesters = 3
-        self.mineral_contents = health  # Use health as mineral_contents for mineral fields
+        self.mineral_contents = (
+            health  # Use health as mineral_contents for mineral fields
+        )
 
     @property
     def health_percentage(self):
         return self.health / self.health_max if self.health_max > 0 else 0
 
     def distance_to(self, other):
-        if hasattr(other, 'position'):
+        if hasattr(other, "position"):
             pos = other.position
         else:
             pos = other
-        return ((self.position[0] - pos[0])**2 + (self.position[1] - pos[1])**2)**0.5
+        return (
+            (self.position[0] - pos[0]) ** 2 + (self.position[1] - pos[1]) ** 2
+        ) ** 0.5
 
 
 class MockUnits:
     """Mock SC2 Units collection"""
+
     def __init__(self, units: List[MockUnit]):
         self._units = units
 
@@ -96,10 +113,7 @@ class MockUnits:
         return self
 
     def closer_than(self, distance: float, position):
-        return MockUnits([
-            u for u in self._units
-            if u.distance_to(position) < distance
-        ])
+        return MockUnits([u for u in self._units if u.distance_to(position) < distance])
 
     def closest_to(self, position):
         if not self._units:
@@ -122,6 +136,7 @@ class MockUnits:
 
 class MockBot:
     """Mock SC2 Bot"""
+
     def __init__(self):
         self.minerals = 50
         self.vespene = 0
@@ -174,7 +189,9 @@ class TestEconomyManagerInitialization:
         manager = EconomyManager(bot)
 
         # Default values should be used if config import fails
-        assert manager.macro_hatchery_mineral_threshold >= 300  # Phase 16: 600으로 낮춤 (더 빠른 매크로 해처리)
+        assert (
+            manager.macro_hatchery_mineral_threshold >= 300
+        )  # Phase 16: 600으로 낮춤 (더 빠른 매크로 해처리)
 
 
 class TestEmergencyMode:
@@ -279,10 +296,12 @@ class TestGoldExpansion:
 
         # Create gold mineral patches (1500+ minerals)
         gold_position = (60, 60)
-        bot.mineral_field = MockUnits([
-            MockUnit(1, "MINERAL", gold_position, health=1500),
-            MockUnit(2, "MINERAL", gold_position, health=1600)
-        ])
+        bot.mineral_field = MockUnits(
+            [
+                MockUnit(1, "MINERAL", gold_position, health=1500),
+                MockUnit(2, "MINERAL", gold_position, health=1600),
+            ]
+        )
 
         manager = EconomyManager(bot)
         is_gold = manager._is_gold_expansion(gold_position)
@@ -295,10 +314,12 @@ class TestGoldExpansion:
 
         # Create normal mineral patches (900 minerals)
         normal_position = (60, 60)
-        bot.mineral_field = MockUnits([
-            MockUnit(1, "MINERAL", normal_position, health=900),
-            MockUnit(2, "MINERAL", normal_position, health=900)
-        ])
+        bot.mineral_field = MockUnits(
+            [
+                MockUnit(1, "MINERAL", normal_position, health=900),
+                MockUnit(2, "MINERAL", normal_position, health=900),
+            ]
+        )
 
         manager = EconomyManager(bot)
         is_gold = manager._is_gold_expansion(normal_position)
@@ -311,10 +332,12 @@ class TestGoldExpansion:
         bot.expansion_locations_list = [(60, 60), (70, 70), (80, 80)]
 
         # Gold at (60, 60)
-        bot.mineral_field = MockUnits([
-            MockUnit(1, "MINERAL", (60, 60), health=1500),
-            MockUnit(2, "MINERAL", (70, 70), health=900),
-        ])
+        bot.mineral_field = MockUnits(
+            [
+                MockUnit(1, "MINERAL", (60, 60), health=1500),
+                MockUnit(2, "MINERAL", (70, 70), health=900),
+            ]
+        )
 
         manager = EconomyManager(bot)
         gold_locations = manager._get_gold_expansion_locations()
@@ -338,10 +361,10 @@ class TestResourceStatus:
         manager = EconomyManager(bot)
         status = manager.get_resource_status()
 
-        assert 'minerals' in status
-        assert 'gas' in status  # Changed from 'vespene' to 'gas'
-        assert status['minerals'] == 500
-        assert status['gas'] == 200
+        assert "minerals" in status
+        assert "gas" in status  # Changed from 'vespene' to 'gas'
+        assert status["minerals"] == 500
+        assert status["gas"] == 200
 
 
 class TestEconomyRecoveryMode:
@@ -363,10 +386,9 @@ class TestEconomyRecoveryMode:
         """경제 회복 모드 비활성 조건"""
         bot = MockBot()
         bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(60)])
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60))
-        ])
+        bot.townhalls = MockUnits(
+            [MockUnit(100, "HATCHERY", (50, 50)), MockUnit(101, "HATCHERY", (60, 60))]
+        )
 
         manager = EconomyManager(bot)
         is_recovery = manager.is_economy_recovery_mode()
@@ -392,11 +414,13 @@ class TestTargetDroneCount:
     def test_get_target_drone_count_multi_base(self):
         """멀티베이스 목표 드론 수"""
         bot = MockBot()
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60)),
-            MockUnit(102, "HATCHERY", (70, 70))
-        ])
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),
+                MockUnit(102, "HATCHERY", (70, 70)),
+            ]
+        )
 
         manager = EconomyManager(bot)
         target = manager.get_target_drone_count()
@@ -457,8 +481,8 @@ class TestResourceReservations:
         manager._update_resource_reservations()
 
         # Reservations should be tracked
-        assert hasattr(manager, '_reserved_minerals')
-        assert hasattr(manager, '_reserved_gas')
+        assert hasattr(manager, "_reserved_minerals")
+        assert hasattr(manager, "_reserved_gas")
 
 
 class TestEarlyWorkerSplit:
@@ -469,9 +493,9 @@ class TestEarlyWorkerSplit:
         """게임 시작 시 일꾼 분할 최적화"""
         bot = MockBot()
         bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(12)])
-        bot.mineral_field = MockUnits([
-            MockUnit(300 + i, "MINERAL", (50 + i, 50)) for i in range(8)
-        ])
+        bot.mineral_field = MockUnits(
+            [MockUnit(300 + i, "MINERAL", (50 + i, 50)) for i in range(8)]
+        )
         bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (50, 50))])
 
         manager = EconomyManager(bot)
@@ -599,5 +623,5 @@ class TestGasTimingOptimization:
         assert True
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

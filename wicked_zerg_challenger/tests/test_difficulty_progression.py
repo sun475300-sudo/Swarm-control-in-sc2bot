@@ -10,16 +10,16 @@ Tests DifficultyProgression system:
 - Stats persistence
 """
 
-import unittest
-import tempfile
-import os
 import json
-from unittest.mock import Mock, patch
+import os
 import sys
+import tempfile
+import unittest
 from io import StringIO
+from unittest.mock import Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from difficulty_progression import DifficultyProgression
 
@@ -53,7 +53,9 @@ class TestDifficultyProgressionBasics(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -84,7 +86,9 @@ class TestGameRecording(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -101,7 +105,7 @@ class TestGameRecording(unittest.TestCase):
             map_name="TestMap",
             opponent_race=Race.Terran,
             difficulty=Difficulty.Easy,
-            won=True
+            won=True,
         )
 
         stats = self.progression.stats["TestMap"][Race.Terran][Difficulty.Easy]
@@ -114,7 +118,7 @@ class TestGameRecording(unittest.TestCase):
             map_name="TestMap",
             opponent_race=Race.Protoss,
             difficulty=Difficulty.Medium,
-            won=False
+            won=False,
         )
 
         stats = self.progression.stats["TestMap"][Race.Protoss][Difficulty.Medium]
@@ -128,7 +132,7 @@ class TestGameRecording(unittest.TestCase):
                 map_name="TestMap",
                 opponent_race=Race.Zerg,
                 difficulty=Difficulty.Hard,
-                won=(i % 2 == 0)  # Win 3, Lose 2
+                won=(i % 2 == 0),  # Win 3, Lose 2
             )
 
         stats = self.progression.stats["TestMap"][Race.Zerg][Difficulty.Hard]
@@ -149,7 +153,9 @@ class TestDifficultyRecommendation(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -170,11 +176,12 @@ class TestDifficultyRecommendation(unittest.TestCase):
         # Record 10 games with 70% win rate (below 90% threshold)
         for i in range(10):
             self.progression.record_game(
-                "TestMap", Race.Protoss, Difficulty.Medium,
-                won=(i < 7)
+                "TestMap", Race.Protoss, Difficulty.Medium, won=(i < 7)
             )
 
-        difficulty = self.progression.get_recommended_difficulty("TestMap", Race.Protoss)
+        difficulty = self.progression.get_recommended_difficulty(
+            "TestMap", Race.Protoss
+        )
         self.assertEqual(difficulty, Difficulty.Medium)
 
     def test_recommend_next_difficulty_after_mastery(self):
@@ -186,11 +193,12 @@ class TestDifficultyRecommendation(unittest.TestCase):
             # Record 10 games with 100% win rate
             for i in range(10):
                 self.progression.record_game(
-                    "TestMap", Race.Zerg, Difficulty.Easy,
-                    won=True
+                    "TestMap", Race.Zerg, Difficulty.Easy, won=True
                 )
 
-            difficulty = self.progression.get_recommended_difficulty("TestMap", Race.Zerg)
+            difficulty = self.progression.get_recommended_difficulty(
+                "TestMap", Race.Zerg
+            )
             self.assertEqual(difficulty, Difficulty.Medium)
         finally:
             sys.stdout = old_stdout
@@ -201,7 +209,9 @@ class TestProgressionChecking(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -221,14 +231,17 @@ class TestProgressionChecking(unittest.TestCase):
             # Record only 5 games (below minimum of 10)
             for i in range(5):
                 self.progression.record_game(
-                    "TestMap", Race.Terran, Difficulty.Easy,
-                    won=True
+                    "TestMap", Race.Terran, Difficulty.Easy, won=True
                 )
 
             # Should not progress yet
-            difficulty = self.progression.get_recommended_difficulty("TestMap", Race.Terran)
+            difficulty = self.progression.get_recommended_difficulty(
+                "TestMap", Race.Terran
+            )
             # With only 5 games, still recommends Easy (not enough for progression)
-            self.assertIn(difficulty, [Difficulty.VeryEasy, Difficulty.Easy, Difficulty.Medium])
+            self.assertIn(
+                difficulty, [Difficulty.VeryEasy, Difficulty.Easy, Difficulty.Medium]
+            )
         finally:
             sys.stdout = old_stdout
 
@@ -241,8 +254,7 @@ class TestProgressionChecking(unittest.TestCase):
             # Record 10 wins (100% win rate) at Medium difficulty
             for i in range(10):
                 self.progression.record_game(
-                    "TestMap", Race.Protoss, Difficulty.Medium,
-                    won=True
+                    "TestMap", Race.Protoss, Difficulty.Medium, won=True
                 )
 
             # Check that win rate is 100%
@@ -251,8 +263,12 @@ class TestProgressionChecking(unittest.TestCase):
             self.assertEqual(stats["losses"], 0)
 
             # With 100% win rate at Medium, should recommend Medium or higher
-            difficulty = self.progression.get_recommended_difficulty("TestMap", Race.Protoss)
-            self.assertIn(difficulty, [Difficulty.Medium, Difficulty.MediumHard, Difficulty.Hard])
+            difficulty = self.progression.get_recommended_difficulty(
+                "TestMap", Race.Protoss
+            )
+            self.assertIn(
+                difficulty, [Difficulty.Medium, Difficulty.MediumHard, Difficulty.Hard]
+            )
         finally:
             sys.stdout = old_stdout
 
@@ -262,7 +278,9 @@ class TestStatsSerDe(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -303,10 +321,7 @@ class TestStatsSerDe(unittest.TestCase):
 
         # Verify
         self.assertIn("TestMap", deserialized)
-        self.assertEqual(
-            deserialized["TestMap"][Race.Zerg][Difficulty.Hard]["wins"],
-            5
-        )
+        self.assertEqual(deserialized["TestMap"][Race.Zerg][Difficulty.Hard]["wins"], 5)
 
 
 class TestStatsSummary(unittest.TestCase):
@@ -314,7 +329,9 @@ class TestStatsSummary(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -338,7 +355,9 @@ class TestStatsSummary(unittest.TestCase):
         try:
             # Record games
             for i in range(10):
-                self.progression.record_game("TestMap", Race.Protoss, Difficulty.Easy, True)
+                self.progression.record_game(
+                    "TestMap", Race.Protoss, Difficulty.Easy, True
+                )
 
             summary = self.progression.get_stats_summary("TestMap", Race.Protoss)
             self.assertIn("TestMap", summary)
@@ -354,7 +373,9 @@ class TestHelperMethods(unittest.TestCase):
 
     def setUp(self):
         """Create temporary file for each test"""
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
         self.temp_file.close()
         self.progression = DifficultyProgression(data_file=self.temp_file.name)
 
@@ -386,6 +407,6 @@ class TestHelperMethods(unittest.TestCase):
         self.assertIsNone(prev_diff)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run all tests
     unittest.main(verbosity=2)

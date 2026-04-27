@@ -16,26 +16,31 @@ Features:
 - 성능 통계 추적
 """
 
-from typing import Dict, Set, Optional, Tuple
 from collections import defaultdict
 from enum import Enum
+from typing import Dict, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.unit import Unit
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         QUEEN = "QUEEN"
         HATCHERY = "HATCHERY"
         LAIR = "LAIR"
         HIVE = "HIVE"
+
     class AbilityId:
         EFFECT_INJECTLARVA = "EFFECT_INJECTLARVA"
+
     Unit = None
 
 
@@ -49,6 +54,7 @@ class QueenRole(Enum):
     - CREEP: 점막 전용 (점막 종양 생성)
     - FLEXIBLE: 유연 (상황에 따라 모든 역할 수행)
     """
+
     INJECT = "inject"
     DEFENSE = "defense"
     CREEP = "creep"
@@ -71,7 +77,9 @@ class QueenInjectOptimizer:
 
         # ★ Queen Assignment ★
         self.queen_assignments: Dict[int, int] = {}  # {queen_tag: hatchery_tag}
-        self.hatchery_queens: Dict[int, Set[int]] = defaultdict(set)  # {hatchery_tag: {queen_tags}}
+        self.hatchery_queens: Dict[int, Set[int]] = defaultdict(
+            set
+        )  # {hatchery_tag: {queen_tags}}
 
         # ★ Priority System ★
         self.hatchery_priorities: Dict[int, int] = {}  # {hatchery_tag: priority}
@@ -92,9 +100,13 @@ class QueenInjectOptimizer:
         self.creep_queens_total = 2  # 점막 전용 여왕 수
 
         # ★★★ Phase 18: Inject Miss Detection ★★★
-        self.expected_inject_times: Dict[int, float] = {}  # {hatchery_tag: next_expected_inject_time}
+        self.expected_inject_times: Dict[int, float] = (
+            {}
+        )  # {hatchery_tag: next_expected_inject_time}
         self.inject_miss_threshold = 3.0  # 예상 시간에서 3초 이상 차이나면 미스로 간주
-        self.inject_retry_attempts: Dict[int, int] = defaultdict(int)  # {hatchery_tag: retry_count}
+        self.inject_retry_attempts: Dict[int, int] = defaultdict(
+            int
+        )  # {hatchery_tag: retry_count}
         self.max_retry_attempts = 3  # 최대 재시도 횟수
 
         # ★★★ Phase 18: Performance Metrics ★★★
@@ -131,7 +143,10 @@ class QueenInjectOptimizer:
                 self._calculate_inject_efficiency()
 
             # 6. ★ Phase 18: Enhanced efficiency report ★
-            if game_time - self.last_efficiency_report >= self.efficiency_report_interval:
+            if (
+                game_time - self.last_efficiency_report
+                >= self.efficiency_report_interval
+            ):
                 self._print_enhanced_report(game_time)
                 self.last_efficiency_report = game_time
 
@@ -169,7 +184,9 @@ class QueenInjectOptimizer:
                 assigned_hatchery_tag = self.queen_assignments[queen.tag]
 
                 # Hatchery가 아직 존재하는지 확인
-                hatchery_exists = any(h.tag == assigned_hatchery_tag for h in hatcheries)
+                hatchery_exists = any(
+                    h.tag == assigned_hatchery_tag for h in hatcheries
+                )
 
                 if hatchery_exists:
                     self.hatchery_queens[assigned_hatchery_tag].add(queen.tag)
@@ -177,8 +194,7 @@ class QueenInjectOptimizer:
 
             # ★ 새로운 할당: 가장 가까운 Hatchery ★
             closest_hatchery = min(
-                hatcheries,
-                key=lambda h: h.position.distance_to(queen.position)
+                hatcheries, key=lambda h: h.position.distance_to(queen.position)
             )
 
             self.queen_assignments[queen.tag] = closest_hatchery.tag
@@ -205,8 +221,7 @@ class QueenInjectOptimizer:
         main_base = self.bot.start_location
 
         hatchery_distances = [
-            (h.tag, h.position.distance_to(main_base))
-            for h in hatcheries
+            (h.tag, h.position.distance_to(main_base)) for h in hatcheries
         ]
 
         # 거리 순으로 정렬 (가까운 것부터)
@@ -242,8 +257,7 @@ class QueenInjectOptimizer:
 
         # ★ 우선순위 순으로 정렬 ★
         sorted_hatcheries = sorted(
-            hatcheries,
-            key=lambda h: self.hatchery_priorities.get(h.tag, 999)
+            hatcheries, key=lambda h: self.hatchery_priorities.get(h.tag, 999)
         )
 
         for hatchery in sorted_hatcheries:
@@ -258,7 +272,10 @@ class QueenInjectOptimizer:
                 # 할당된 Queen이 없으면 가장 가까운 Queen 사용
                 idle_queens = queens.idle
                 if idle_queens:
-                    queen = min(idle_queens, key=lambda q: q.position.distance_to(hatchery.position))
+                    queen = min(
+                        idle_queens,
+                        key=lambda q: q.position.distance_to(hatchery.position),
+                    )
                 else:
                     continue
             else:
@@ -292,7 +309,9 @@ class QueenInjectOptimizer:
 
                 # 쿨다운 및 예상 시간 기록
                 self.inject_cooldowns[hatchery.tag] = game_time
-                self.expected_inject_times[hatchery.tag] = game_time + self.INJECT_COOLDOWN  # ★ Phase 18
+                self.expected_inject_times[hatchery.tag] = (
+                    game_time + self.INJECT_COOLDOWN
+                )  # ★ Phase 18
 
                 # 재시도 카운터 초기화
                 self.inject_retry_attempts[hatchery.tag] = 0  # ★ Phase 18
@@ -463,7 +482,10 @@ class QueenInjectOptimizer:
                 break
 
             # 아직 역할이 없거나 Flexible인 경우
-            if queen.tag not in self.queen_roles or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE:
+            if (
+                queen.tag not in self.queen_roles
+                or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE
+            ):
                 self.queen_roles[queen.tag] = QueenRole.INJECT
                 assigned_inject += 1
 
@@ -473,7 +495,10 @@ class QueenInjectOptimizer:
             if defense_assigned >= self.defense_queens_total:
                 break
 
-            if queen.tag not in self.queen_roles or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE:
+            if (
+                queen.tag not in self.queen_roles
+                or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE
+            ):
                 self.queen_roles[queen.tag] = QueenRole.DEFENSE
                 defense_assigned += 1
 
@@ -483,7 +508,10 @@ class QueenInjectOptimizer:
             if creep_assigned >= self.creep_queens_total:
                 break
 
-            if queen.tag not in self.queen_roles or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE:
+            if (
+                queen.tag not in self.queen_roles
+                or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE
+            ):
                 self.queen_roles[queen.tag] = QueenRole.CREEP
                 creep_assigned += 1
 
@@ -534,6 +562,7 @@ class QueenInjectOptimizer:
         # ★ FIX: 퀸이 없으면 미스 감지 스킵 (퀸 없이는 인젝트 불가)
         if hasattr(self.bot, "units"):
             from sc2.ids.unit_typeid import UnitTypeId as UID
+
             queens = self.bot.units(UID.QUEEN).ready
             if not queens:
                 return
@@ -570,7 +599,9 @@ class QueenInjectOptimizer:
                                 del self.inject_cooldowns[hatchery_tag]
 
                             # 예상 시간 업데이트
-                            self.expected_inject_times[hatchery_tag] = game_time + self.INJECT_COOLDOWN
+                            self.expected_inject_times[hatchery_tag] = (
+                                game_time + self.INJECT_COOLDOWN
+                            )
                         else:
                             # 최대 재시도 횟수 초과 - 포기하고 다음 사이클로
                             self.logger.error(
@@ -578,16 +609,22 @@ class QueenInjectOptimizer:
                                 f"Hatchery {hatchery_tag}"
                             )
                             self.inject_retry_attempts[hatchery_tag] = 0
-                            self.expected_inject_times[hatchery_tag] = game_time + self.INJECT_COOLDOWN
+                            self.expected_inject_times[hatchery_tag] = (
+                                game_time + self.INJECT_COOLDOWN
+                            )
 
             # ★ 예상 시간이 없으면 생성 (첫 인젝트 또는 신규 기지) ★
             else:
                 if hatchery_tag in self.inject_cooldowns:
                     last_inject = self.inject_cooldowns[hatchery_tag]
-                    self.expected_inject_times[hatchery_tag] = last_inject + self.INJECT_COOLDOWN
+                    self.expected_inject_times[hatchery_tag] = (
+                        last_inject + self.INJECT_COOLDOWN
+                    )
                 else:
                     # 첫 인젝트 예상 시간 (게임 시작 후 충분한 에너지 모을 때까지 대기)
-                    self.expected_inject_times[hatchery_tag] = game_time + 10.0  # 10초 여유
+                    self.expected_inject_times[hatchery_tag] = (
+                        game_time + 10.0
+                    )  # 10초 여유
 
     # ========================================
     # ★★★ Phase 18: Enhanced Reporting ★★★
@@ -611,7 +648,7 @@ class QueenInjectOptimizer:
             QueenRole.INJECT: 0,
             QueenRole.DEFENSE: 0,
             QueenRole.CREEP: 0,
-            QueenRole.FLEXIBLE: 0
+            QueenRole.FLEXIBLE: 0,
         }
 
         for queen in queens:

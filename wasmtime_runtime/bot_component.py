@@ -4,17 +4,25 @@ SC2 Bot using wasmtime-py with Component Model support
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
+
 import struct
 import time
+from dataclasses import dataclass
+from typing import Optional
 
 try:
     import wasmtime
     from wasmtime import (
-        Store, Engine, Module, Linker,
-        WasiConfig, FuncType, ValType, Func
+        Engine,
+        Func,
+        FuncType,
+        Linker,
+        Module,
+        Store,
+        ValType,
+        WasiConfig,
     )
+
     WASMTIME_AVAILABLE = True
 except ImportError:
     WASMTIME_AVAILABLE = False
@@ -23,6 +31,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # WASI Configuration builder
 # ─────────────────────────────────────────────
+
 
 def make_wasi_config(bot_id: int) -> "WasiConfig":
     if not WASMTIME_AVAILABLE:
@@ -40,9 +49,11 @@ def make_wasi_config(bot_id: int) -> "WasiConfig":
 # Component model interface (WIT-style)
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class GameObservation:
     """Mirrors WIT interface: sc2bot:game/observation"""
+
     minerals: int
     gas: int
     supply: int
@@ -53,9 +64,11 @@ class GameObservation:
     enemy_army_supply: int
     threat_level: float
 
+
 @dataclass
 class GameAction:
     """Mirrors WIT interface: sc2bot:game/action"""
+
     action_type: str  # "train" | "build" | "move" | "attack" | "expand"
     target: Optional[str] = None
     x: float = 0.0
@@ -66,6 +79,7 @@ class GameAction:
 # ─────────────────────────────────────────────
 # Pure-Python bot logic (component implementation)
 # ─────────────────────────────────────────────
+
 
 class SC2BotComponent:
     """Implements sc2bot:game/strategy WIT interface in Python."""
@@ -123,8 +137,8 @@ class SC2BotComponent:
             "total_steps": len(self._state_history),
             "action_distribution": self._action_count,
             "avg_minerals": (
-                sum(o.minerals for o in self._state_history) /
-                max(1, len(self._state_history))
+                sum(o.minerals for o in self._state_history)
+                / max(1, len(self._state_history))
             ),
         }
 
@@ -132,6 +146,7 @@ class SC2BotComponent:
 # ─────────────────────────────────────────────
 # Wasmtime host wrapper
 # ─────────────────────────────────────────────
+
 
 class WasmtimeHost:
     def __init__(self, wasm_path: str):
@@ -171,6 +186,7 @@ class WasmtimeHost:
 # ─────────────────────────────────────────────
 # Simulation runner
 # ─────────────────────────────────────────────
+
 
 def simulate_game(bot: SC2BotComponent, frames: int = 1000) -> dict:
     """Drive the bot component through a simulated game."""

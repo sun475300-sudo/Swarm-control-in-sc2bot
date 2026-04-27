@@ -11,8 +11,8 @@ Graceful fallback to a pure-NumPy stub when PyTorch / PyG is absent.
 
 from __future__ import annotations
 
-import math
 import logging
+import math
 import random
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -34,6 +34,7 @@ try:
     import torch.nn.functional as F
     from torch.optim import Adam
     from torch.optim.lr_scheduler import CosineAnnealingLR
+
     TORCH_AVAILABLE = True
     log.info("PyTorch %s available.", torch.__version__)
 except ImportError:
@@ -45,18 +46,19 @@ except ImportError:
 
 try:
     import torch_geometric  # noqa: F811
-    from torch_geometric.data import Data, Batch
+    from torch_geometric.data import Batch, Data
     from torch_geometric.loader import DataLoader as PyGDataLoader
     from torch_geometric.nn import (
-        GCNConv,
         GATConv,
-        SAGEConv,
+        GCNConv,
         NNConv,
-        global_mean_pool,
-        global_max_pool,
+        SAGEConv,
         global_add_pool,
+        global_max_pool,
+        global_mean_pool,
     )
     from torch_geometric.utils import to_networkx
+
     PYG_AVAILABLE = True
     log.info("PyTorch Geometric %s available.", torch_geometric.__version__)
 except ImportError:
@@ -71,22 +73,60 @@ except ImportError:
 # SC2 unit-type catalogue (Zerg-centric, extensible)
 # ---------------------------------------------------------------------------
 UNIT_TYPES: Dict[str, int] = {
-    "Zergling": 0, "Baneling": 1, "Roach": 2, "Ravager": 3,
-    "Hydralisk": 4, "Lurker": 5, "Mutalisk": 6, "Corruptor": 7,
-    "BroodLord": 8, "Viper": 9, "Infestor": 10, "SwarmHost": 11,
-    "Ultralisk": 12, "Queen": 13, "Overlord": 14, "Overseer": 15,
-    "Drone": 16, "SpineCrawler": 17, "SporeCrawler": 18,
+    "Zergling": 0,
+    "Baneling": 1,
+    "Roach": 2,
+    "Ravager": 3,
+    "Hydralisk": 4,
+    "Lurker": 5,
+    "Mutalisk": 6,
+    "Corruptor": 7,
+    "BroodLord": 8,
+    "Viper": 9,
+    "Infestor": 10,
+    "SwarmHost": 11,
+    "Ultralisk": 12,
+    "Queen": 13,
+    "Overlord": 14,
+    "Overseer": 15,
+    "Drone": 16,
+    "SpineCrawler": 17,
+    "SporeCrawler": 18,
     # Terran
-    "Marine": 19, "Marauder": 20, "Reaper": 21, "Hellion": 22,
-    "SiegeTank": 23, "Thor": 24, "Viking": 25, "Medivac": 26,
-    "Banshee": 27, "Raven": 28, "Battlecruiser": 29, "Liberator": 30,
-    "Ghost": 31, "Cyclone": 32, "WidowMine": 33,
+    "Marine": 19,
+    "Marauder": 20,
+    "Reaper": 21,
+    "Hellion": 22,
+    "SiegeTank": 23,
+    "Thor": 24,
+    "Viking": 25,
+    "Medivac": 26,
+    "Banshee": 27,
+    "Raven": 28,
+    "Battlecruiser": 29,
+    "Liberator": 30,
+    "Ghost": 31,
+    "Cyclone": 32,
+    "WidowMine": 33,
     # Protoss
-    "Zealot": 34, "Stalker": 35, "Adept": 36, "Sentry": 37,
-    "Immortal": 38, "Colossus": 39, "Disruptor": 40, "Phoenix": 41,
-    "VoidRay": 42, "Oracle": 43, "Tempest": 44, "Carrier": 45,
-    "HighTemplar": 46, "DarkTemplar": 47, "Archon": 48, "WarpPrism": 49,
-    "Observer": 50, "Mothership": 51,
+    "Zealot": 34,
+    "Stalker": 35,
+    "Adept": 36,
+    "Sentry": 37,
+    "Immortal": 38,
+    "Colossus": 39,
+    "Disruptor": 40,
+    "Phoenix": 41,
+    "VoidRay": 42,
+    "Oracle": 43,
+    "Tempest": 44,
+    "Carrier": 45,
+    "HighTemplar": 46,
+    "DarkTemplar": 47,
+    "Archon": 48,
+    "WarpPrism": 49,
+    "Observer": 50,
+    "Mothership": 51,
 }
 NUM_UNIT_TYPES = len(UNIT_TYPES)
 
@@ -94,9 +134,11 @@ NUM_UNIT_TYPES = len(UNIT_TYPES)
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class UnitState:
     """Snapshot of a single unit on the battlefield."""
+
     unit_id: int
     unit_type: str
     hp: float
@@ -113,6 +155,7 @@ class UnitState:
 @dataclass
 class BattleSnapshot:
     """All units visible in a single game-tick battle frame."""
+
     units: List[UnitState]
     outcome: Optional[float] = None  # 1.0 win, 0.0 loss, 0.5 draw
     tick: int = 0
@@ -122,6 +165,7 @@ class BattleSnapshot:
 # Feature engineering helpers
 # ---------------------------------------------------------------------------
 
+
 def _unit_features(unit: UnitState, embed_dim: int = 16) -> np.ndarray:
     """Return a feature vector for a single unit node.
 
@@ -130,15 +174,18 @@ def _unit_features(unit: UnitState, embed_dim: int = 16) -> np.ndarray:
         <unit_type_embedding via learned lookup or one-hot placeholder>
     """
     hp_ratio = unit.hp / max(unit.max_hp, 1.0)
-    scalars = np.array([
-        hp_ratio,
-        unit.hp / 500.0,        # rough normalisation
-        unit.max_hp / 500.0,
-        unit.dps / 50.0,
-        unit.attack_range / 15.0,
-        unit.speed / 6.0,
-        float(unit.is_flying),
-    ], dtype=np.float32)
+    scalars = np.array(
+        [
+            hp_ratio,
+            unit.hp / 500.0,  # rough normalisation
+            unit.max_hp / 500.0,
+            unit.dps / 50.0,
+            unit.attack_range / 15.0,
+            unit.speed / 6.0,
+            float(unit.is_flying),
+        ],
+        dtype=np.float32,
+    )
 
     # One-hot placeholder for unit type (will be replaced by learnable
     # embedding inside the model, but we keep a sparse cue here).
@@ -162,10 +209,11 @@ def _edge_features(u1: UnitState, u2: UnitState) -> np.ndarray:
     dist = math.sqrt(dx * dx + dy * dy)
     dist_norm = min(dist / 30.0, 1.0)
 
-    can_attack = 1.0 if (
-        (not u2.is_flying or u1.attack_range > 0)
-        and dist <= u1.attack_range + 1.0
-    ) else 0.0
+    can_attack = (
+        1.0
+        if ((not u2.is_flying or u1.attack_range > 0) and dist <= u1.attack_range + 1.0)
+        else 0.0
+    )
 
     is_friendly = 1.0 if u1.player_id == u2.player_id else 0.0
 
@@ -178,6 +226,7 @@ EDGE_FEAT_DIM = 3
 # ---------------------------------------------------------------------------
 # Graph construction from game state
 # ---------------------------------------------------------------------------
+
 
 def build_graph_from_snapshot(
     snapshot: BattleSnapshot,
@@ -235,7 +284,8 @@ def build_graph_from_snapshot(
     )
 
     unit_type_ids = torch.tensor(
-        [UNIT_TYPES.get(u.unit_type, 0) for u in units], dtype=torch.long,
+        [UNIT_TYPES.get(u.unit_type, 0) for u in units],
+        dtype=torch.long,
     )
 
     return Data(
@@ -319,7 +369,11 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
         def forward(self, data: Data) -> torch.Tensor:
             x = self.type_embed(data.x, data.unit_type_ids)
             edge_index = data.edge_index
-            batch = data.batch if hasattr(data, "batch") and data.batch is not None else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            batch = (
+                data.batch
+                if hasattr(data, "batch") and data.batch is not None
+                else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            )
 
             for conv, bn in zip(self.convs, self.bns):
                 x = conv(x, edge_index)
@@ -359,10 +413,14 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             self.convs.append(GATConv(in_dim, hidden, heads=heads, dropout=dropout))
             self.bns.append(nn.BatchNorm1d(hidden * heads))
             for _ in range(num_layers - 2):
-                self.convs.append(GATConv(hidden * heads, hidden, heads=heads, dropout=dropout))
+                self.convs.append(
+                    GATConv(hidden * heads, hidden, heads=heads, dropout=dropout)
+                )
                 self.bns.append(nn.BatchNorm1d(hidden * heads))
             # Final layer: single head
-            self.convs.append(GATConv(hidden * heads, hidden, heads=1, concat=False, dropout=dropout))
+            self.convs.append(
+                GATConv(hidden * heads, hidden, heads=1, concat=False, dropout=dropout)
+            )
             self.bns.append(nn.BatchNorm1d(hidden))
 
             self.dropout = dropout
@@ -379,14 +437,22 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
         def forward(self, data: Data, return_attention: bool = False) -> torch.Tensor:
             x = self.type_embed(data.x, data.unit_type_ids)
             edge_index = data.edge_index
-            batch = data.batch if hasattr(data, "batch") and data.batch is not None else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            batch = (
+                data.batch
+                if hasattr(data, "batch") and data.batch is not None
+                else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            )
 
             self._attention_weights.clear()
 
             for i, (conv, bn) in enumerate(zip(self.convs, self.bns)):
-                x, (edge_idx_out, alpha) = conv(x, edge_index, return_attention_weights=True)
+                x, (edge_idx_out, alpha) = conv(
+                    x, edge_index, return_attention_weights=True
+                )
                 if return_attention:
-                    self._attention_weights.append((edge_idx_out.detach().cpu(), alpha.detach().cpu()))
+                    self._attention_weights.append(
+                        (edge_idx_out.detach().cpu(), alpha.detach().cpu())
+                    )
                 x = bn(x)
                 x = F.elu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
@@ -437,7 +503,11 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
         def forward(self, data: Data) -> torch.Tensor:
             x = self.type_embed(data.x, data.unit_type_ids)
             edge_index = data.edge_index
-            batch = data.batch if hasattr(data, "batch") and data.batch is not None else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            batch = (
+                data.batch
+                if hasattr(data, "batch") and data.batch is not None
+                else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            )
 
             for conv, bn in zip(self.convs, self.bns):
                 x = conv(x, edge_index)
@@ -498,7 +568,11 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             x = F.relu(self.lin_in(x))
             edge_index = data.edge_index
             edge_attr = data.edge_attr
-            batch = data.batch if hasattr(data, "batch") and data.batch is not None else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            batch = (
+                data.batch
+                if hasattr(data, "batch") and data.batch is not None
+                else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
+            )
 
             for conv, bn in zip(self.convs, self.bns):
                 x = conv(x, edge_index, edge_attr)
@@ -550,13 +624,19 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             device: str = "cpu",
         ):
             if arch not in self.ARCH_MAP:
-                raise ValueError(f"Unknown architecture '{arch}'. Choose from {list(self.ARCH_MAP)}")
+                raise ValueError(
+                    f"Unknown architecture '{arch}'. Choose from {list(self.ARCH_MAP)}"
+                )
 
             self.arch_name = arch
             self.device = torch.device(device)
 
             model_cls = self.ARCH_MAP[arch]
-            kwargs: Dict[str, Any] = {"hidden": hidden, "num_layers": num_layers, "dropout": dropout}
+            kwargs: Dict[str, Any] = {
+                "hidden": hidden,
+                "num_layers": num_layers,
+                "dropout": dropout,
+            }
             if arch == "gat":
                 kwargs["heads"] = 4
             self.model = model_cls(**kwargs).to(self.device)
@@ -638,7 +718,9 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             patience: int = 10,
         ) -> Dict[str, Any]:
             """Full training loop with early stopping."""
-            train_loader = PyGDataLoader(train_graphs, batch_size=batch_size, shuffle=True)
+            train_loader = PyGDataLoader(
+                train_graphs, batch_size=batch_size, shuffle=True
+            )
             val_loader = (
                 PyGDataLoader(val_graphs, batch_size=batch_size) if val_graphs else None
             )
@@ -657,7 +739,10 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
                     msg += f" | val_loss={metrics['loss']:.4f} acc={metrics['accuracy']:.3f} auc={metrics['auc']:.3f}"
                     if metrics["loss"] < best_val_loss:
                         best_val_loss = metrics["loss"]
-                        best_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
+                        best_state = {
+                            k: v.cpu().clone()
+                            for k, v in self.model.state_dict().items()
+                        }
                         wait = 0
                     else:
                         wait += 1
@@ -688,7 +773,9 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
                 return 0.5
             graph = graph.to(self.device)
             # Add batch vector for single graph
-            graph.batch = torch.zeros(graph.x.size(0), dtype=torch.long, device=self.device)
+            graph.batch = torch.zeros(
+                graph.x.size(0), dtype=torch.long, device=self.device
+            )
             return self.model(graph).item()
 
         @torch.no_grad()
@@ -724,7 +811,9 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             if graph is None:
                 return None
             graph = graph.to(self.device)
-            graph.batch = torch.zeros(graph.x.size(0), dtype=torch.long, device=self.device)
+            graph.batch = torch.zeros(
+                graph.x.size(0), dtype=torch.long, device=self.device
+            )
 
             _ = self.model(graph, return_attention=True)
             attn = self.model.get_attention_weights()
@@ -733,8 +822,7 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             return {
                 "unit_names": unit_names,
                 "layers": [
-                    {"edge_index": ei.numpy(), "alpha": al.numpy()}
-                    for ei, al in attn
+                    {"edge_index": ei.numpy(), "alpha": al.numpy()} for ei, al in attn
                 ],
             }
 
@@ -780,8 +868,13 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
             nx.draw_networkx_nodes(G, pos, node_size=600, node_color="lightblue")
             nx.draw_networkx_labels(G, pos, labels, font_size=8)
             nx.draw_networkx_edges(
-                G, pos, width=weights, alpha=0.6,
-                edge_color="red", arrows=True, arrowsize=15,
+                G,
+                pos,
+                width=weights,
+                alpha=0.6,
+                edge_color="red",
+                arrows=True,
+                arrowsize=15,
             )
             plt.title(f"GAT Attention Weights (Layer {layer})")
             plt.axis("off")
@@ -797,12 +890,15 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
         # -- Persistence ----------------------------------------------------
 
         def save(self, path: str) -> None:
-            torch.save({
-                "arch": self.arch_name,
-                "state_dict": self.model.state_dict(),
-                "train_losses": self._train_losses,
-                "val_losses": self._val_losses,
-            }, path)
+            torch.save(
+                {
+                    "arch": self.arch_name,
+                    "state_dict": self.model.state_dict(),
+                    "train_losses": self._train_losses,
+                    "val_losses": self._val_losses,
+                },
+                path,
+            )
             log.info("Model saved to %s", path)
 
         def load(self, path: str) -> None:
@@ -835,6 +931,7 @@ if TORCH_AVAILABLE and PYG_AVAILABLE:
 # ---------------------------------------------------------------------------
 # NumPy fallback (no PyTorch / PyG)
 # ---------------------------------------------------------------------------
+
 
 class SC2BattleGNNFallback:
     """Minimal pure-NumPy fallback that mirrors the SC2BattleGNN API.
@@ -877,6 +974,7 @@ class SC2BattleGNNFallback:
 # Synthetic data generator (for testing and demonstration)
 # ---------------------------------------------------------------------------
 
+
 def generate_synthetic_battle(
     min_units: int = 4,
     max_units: int = 20,
@@ -899,19 +997,21 @@ def generate_synthetic_battle(
         for _ in range(count):
             utype = rng.choice(unit_pool)
             max_hp = rng.uniform(35, 500)
-            units.append(UnitState(
-                unit_id=uid,
-                unit_type=utype,
-                hp=rng.uniform(max_hp * 0.3, max_hp),
-                max_hp=max_hp,
-                dps=rng.uniform(5, 40),
-                attack_range=rng.uniform(1, 13),
-                speed=rng.uniform(1.5, 5.5),
-                is_flying=rng.random() < 0.15,
-                x=cx + rng.gauss(0, 5),
-                y=cy + rng.gauss(0, 5),
-                player_id=player_id,
-            ))
+            units.append(
+                UnitState(
+                    unit_id=uid,
+                    unit_type=utype,
+                    hp=rng.uniform(max_hp * 0.3, max_hp),
+                    max_hp=max_hp,
+                    dps=rng.uniform(5, 40),
+                    attack_range=rng.uniform(1, 13),
+                    speed=rng.uniform(1.5, 5.5),
+                    is_flying=rng.random() < 0.15,
+                    x=cx + rng.gauss(0, 5),
+                    y=cy + rng.gauss(0, 5),
+                    player_id=player_id,
+                )
+            )
             uid += 1
 
     # Heuristic outcome (for synthetic data)
@@ -935,6 +1035,7 @@ def generate_synthetic_dataset(
 # Main demonstration
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     """End-to-end demonstration: generate data, train, evaluate."""
     log.info("=== SC2 Battle GNN — Phase 596 Demo ===")
@@ -951,15 +1052,21 @@ def main() -> None:
         for arch in ("gcn", "gat", "sage", "mpnn"):
             log.info("--- Training %s ---", arch.upper())
             gnn = SC2BattleGNN(arch=arch, hidden=64, num_layers=3, lr=1e-3)
-            results = gnn.fit(train_graphs, val_graphs, epochs=15, batch_size=32, patience=5)
+            results = gnn.fit(
+                train_graphs, val_graphs, epochs=15, batch_size=32, patience=5
+            )
             log.info(
                 "%s: epochs=%d  best_val_loss=%.4f",
-                arch.upper(), results["epochs_trained"], results["best_val_loss"],
+                arch.upper(),
+                results["epochs_trained"],
+                results["best_val_loss"],
             )
 
             # Single prediction
             prob = gnn.predict(snapshots[0])
-            log.info("  Sample prediction: %.3f  (actual: %.1f)", prob, snapshots[0].outcome)
+            log.info(
+                "  Sample prediction: %.3f  (actual: %.1f)", prob, snapshots[0].outcome
+            )
 
         # Attention visualisation demo
         log.info("--- GAT Attention Demo ---")
@@ -969,7 +1076,8 @@ def main() -> None:
         if attn:
             log.info(
                 "Attention map: %d units, %d layers captured.",
-                len(attn["unit_names"]), len(attn["layers"]),
+                len(attn["unit_names"]),
+                len(attn["layers"]),
             )
     else:
         fb = SC2BattleGNNFallback()

@@ -53,10 +53,10 @@ class UnitFactory:
 
         # 종족별 가스 유닛 비율 - ★ RE-BALANCED: 드론 생산 보장 ★
         self.race_gas_ratios = {
-            "Terran": 0.50,    # ★ BALANCED: 0.65 → 0.50 (미네랄 여유 확보) ★
-            "Protoss": 0.55,   # ★ BALANCED: 0.70 → 0.55 (드론 우선) ★
-            "Zerg": 0.45,      # ★ BALANCED: 0.55 → 0.45 ★
-            "Unknown": 0.50,   # ★ BALANCED: 0.60 → 0.50 ★
+            "Terran": 0.50,  # ★ BALANCED: 0.65 → 0.50 (미네랄 여유 확보) ★
+            "Protoss": 0.55,  # ★ BALANCED: 0.70 → 0.55 (드론 우선) ★
+            "Zerg": 0.45,  # ★ BALANCED: 0.55 → 0.45 ★
+            "Unknown": 0.50,  # ★ BALANCED: 0.60 → 0.50 ★
         }
 
     def _should_save_larva(self) -> bool:
@@ -136,10 +136,16 @@ class UnitFactory:
             in_combat = True
 
         # 2. 적 유닛이 기지 근처에 있는지 체크
-        if not in_combat and hasattr(self.bot, "enemy_units") and hasattr(self.bot, "townhalls"):
+        if (
+            not in_combat
+            and hasattr(self.bot, "enemy_units")
+            and hasattr(self.bot, "townhalls")
+        ):
             enemy_units = self.bot.enemy_units
             for th in self.bot.townhalls:
-                nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < 35]
+                nearby_enemies = [
+                    e for e in enemy_units if e.distance_to(th.position) < 35
+                ]
                 if len(nearby_enemies) >= 3:  # 3기 이상의 적이 근처에
                     in_combat = True
                     break
@@ -177,31 +183,54 @@ class UnitFactory:
         strategy = getattr(self.bot, "strategy_manager", None)
         under_attack = False
         if strategy:
-            under_attack = getattr(strategy, "emergency_active", False) or getattr(strategy, "defense_active", False)
+            under_attack = getattr(strategy, "emergency_active", False) or getattr(
+                strategy, "defense_active", False
+            )
 
         # ★ OPTIMIZATION: 2분 내 멀티 보장 (60초부터 자원 모으기 시작) ★
         # 기존 120초 -> 60초로 앞당김
         # ★ 단, 미네랄이 200-350 범위에 있을 때만 세이브 (너무 적으면 방어 유닛 필요)
-        if base_count < 2 and game_time > 60 and pending_hatch == 0 and not under_attack:
-            if 200 <= self.bot.minerals < 350: # 200 미만이면 유닛 생산 계속
-                 if iteration % 100 == 0:
-                     logger.info(f"Saving minerals for Natural Expansion (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
-                 return # 라바 소비 중단
+        if (
+            base_count < 2
+            and game_time > 60
+            and pending_hatch == 0
+            and not under_attack
+        ):
+            if 200 <= self.bot.minerals < 350:  # 200 미만이면 유닛 생산 계속
+                if iteration % 100 == 0:
+                    logger.info(
+                        f"Saving minerals for Natural Expansion (Time: {int(game_time)}s), Minerals: {self.bot.minerals}"
+                    )
+                return  # 라바 소비 중단
 
         # 2. 3멀티 체크 (빠른 3멀티: 3분 30초 목표 -> 3분 10초부터 자원 보존)
-        if base_count < 3 and game_time > 190 and pending_hatch == 0 and not under_attack:
-             if 200 <= self.bot.minerals < 350:
-                 if iteration % 100 == 0:
-                     logger.info(f"Saving minerals for 3rd Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
-                 return
+        if (
+            base_count < 3
+            and game_time > 190
+            and pending_hatch == 0
+            and not under_attack
+        ):
+            if 200 <= self.bot.minerals < 350:
+                if iteration % 100 == 0:
+                    logger.info(
+                        f"Saving minerals for 3rd Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}"
+                    )
+                return
 
         # 3. 4멀티 체크 (빠른 4멀티: 5분 목표 -> 4분 40초부터 자원 보존)
         # ★ 4멀티는 선택사항이므로 미네랄 250+ 있을 때만 세이브
-        if base_count < 4 and game_time > 280 and pending_hatch == 0 and not under_attack:
-             if 250 <= self.bot.minerals < 350:
-                 if iteration % 100 == 0:
-                     logger.info(f"Saving minerals for 4th Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}")
-                 return
+        if (
+            base_count < 4
+            and game_time > 280
+            and pending_hatch == 0
+            and not under_attack
+        ):
+            if 250 <= self.bot.minerals < 350:
+                if iteration % 100 == 0:
+                    logger.info(
+                        f"Saving minerals for 4th Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}"
+                    )
+                return
 
         larva = self.bot.larva
         if not larva:
@@ -222,20 +251,26 @@ class UnitFactory:
                         unit_type=UnitTypeId.OVERLORD,
                         count=1,
                         requester="UnitFactory",
-                        priority=0  # URGENT
+                        priority=0,  # URGENT
                     )
                     if iteration % 100 == 0:
-                        logger.info(f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
+                        logger.info(
+                            f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]"
+                        )
                 else:
                     # Fallback: 직접 생산
                     try:
                         if larva:
-                            if hasattr(self.bot, 'production') and self.bot.production:
-                                await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
+                            if hasattr(self.bot, "production") and self.bot.production:
+                                await self.bot.production._safe_train(
+                                    larva.first, UnitTypeId.OVERLORD
+                                )
                             else:
                                 self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
                             if iteration % 100 == 0:
-                                logger.info(f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]")
+                                logger.info(
+                                    f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]"
+                                )
                     except Exception:
                         pass
 
@@ -247,7 +282,9 @@ class UnitFactory:
             self.max_larva_spend_per_step = self._combat_larva_spend
             if iteration % 50 == 0:
                 game_time = getattr(self.bot, "time", 0)
-                logger.info(f"[{int(game_time)}s] COMBAT MODE: Increased production rate")
+                logger.info(
+                    f"[{int(game_time)}s] COMBAT MODE: Increased production rate"
+                )
         else:
             self.max_larva_spend_per_step = 3  # 기본값
 
@@ -260,14 +297,16 @@ class UnitFactory:
         if self.blackboard:
             strategy_mode = self.blackboard.get("strategy_mode", "NORMAL")
             emergency_active = self.blackboard.get("is_rush_detected", False)
-        
+
         # 2. Fallback to direct access if Blackboard missing (Backward Compat)
         elif hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             strategy = self.bot.strategy_manager
             strategy_mode = getattr(strategy, "current_mode", "NORMAL")
             # emergency_active handled below
 
-        strategy = getattr(self.bot, "strategy_manager", None) # Still needed for get_unit_ratios until that is moved to Blackboard
+        strategy = getattr(
+            self.bot, "strategy_manager", None
+        )  # Still needed for get_unit_ratios until that is moved to Blackboard
         if strategy:
             # Emergency Mode에서는 저글링 위주 생산 (가스 비율 낮춤)
             if emergency_active or getattr(strategy, "emergency_active", False):
@@ -282,17 +321,25 @@ class UnitFactory:
                     ratios = strategy.get_unit_ratios()
                     if ratios:
                         # 가스 유닛: hydra, mutalisk, roach, ravager, corruptor 등
-                        gas_ratio = (ratios.get("hydra", 0) + ratios.get("mutalisk", 0) +
-                                    ratios.get("roach", 0) + ratios.get("ravager", 0) +
-                                    ratios.get("corruptor", 0))
+                        gas_ratio = (
+                            ratios.get("hydra", 0)
+                            + ratios.get("mutalisk", 0)
+                            + ratios.get("roach", 0)
+                            + ratios.get("ravager", 0)
+                            + ratios.get("corruptor", 0)
+                        )
                         if gas_ratio > 0:
                             self.gas_unit_ratio_target = gas_ratio
 
                         # 디버그 로그 (100 프레임마다)
                         if iteration % 100 == 0:
                             race = getattr(strategy, "detected_enemy_race", None)
-                            race_name = race.value if hasattr(race, "value") else str(race)
-                            logger.info(f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}")
+                            race_name = (
+                                race.value if hasattr(race, "value") else str(race)
+                            )
+                            logger.info(
+                                f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
+                            )
 
         # Rogue Tactics 라바 세이빙 체크
         if self._should_save_larva():
@@ -306,13 +353,15 @@ class UnitFactory:
                         unit_type=UnitTypeId.OVERLORD,
                         count=1,
                         requester="UnitFactory",
-                        priority=0  # URGENT
+                        priority=0,  # URGENT
                     )
                 else:
                     # Fallback: 직접 생산
                     try:
-                        if hasattr(self.bot, 'production') and self.bot.production:
-                            await self.bot.production._safe_train(larva.first, UnitTypeId.OVERLORD)
+                        if hasattr(self.bot, "production") and self.bot.production:
+                            await self.bot.production._safe_train(
+                                larva.first, UnitTypeId.OVERLORD
+                            )
                         else:
                             self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
                     except Exception:
@@ -332,7 +381,7 @@ class UnitFactory:
 
         # ★★★ IMPROVED: 업그레이드 우선순위 존중 (자원 예약 시스템) ★★★
         # StrictUpgradePriority가 가스를 예약했으면 유닛 생산 제한
-        if hasattr(self.bot, 'upgrade_priority') and self.bot.upgrade_priority:
+        if hasattr(self.bot, "upgrade_priority") and self.bot.upgrade_priority:
             available_gas = self.bot.upgrade_priority.get_available_gas()
             can_spend_gas = can_spend_gas and available_gas >= self.min_gas_reserve
         queue = self._build_priority_queue(
@@ -364,7 +413,7 @@ class UnitFactory:
                     unit_type=unit_type,
                     count=count,
                     requester="UnitFactory",
-                    priority=priority
+                    priority=priority,
                 )
 
             # 디버그 로그
@@ -386,7 +435,7 @@ class UnitFactory:
                 try:
                     if prod_ctrl and hasattr(prod_ctrl, "request_unit"):
                         prod_ctrl.request_unit(unit_type, requester="UnitFactory")
-                    elif hasattr(self.bot, 'production') and self.bot.production:
+                    elif hasattr(self.bot, "production") and self.bot.production:
                         await self.bot.production._safe_train(larva_unit, unit_type)
                     else:
                         self.bot.do(larva_unit.train(unit_type))
@@ -452,13 +501,19 @@ class UnitFactory:
 
         allow_mineral_mix = not (gas_priority and (gas_shortfall or mineral_guard))
         if gas_priority and larva_count >= self.larva_pressure_threshold:
-            allow_mineral_mix = allow_mineral_mix or minerals >= self.min_mineral_reserve_for_gas * 2
+            allow_mineral_mix = (
+                allow_mineral_mix or minerals >= self.min_mineral_reserve_for_gas * 2
+            )
 
         queue: List[object] = []
 
         # ★ Strategy Manager에서 공중 위협 감지시 히드라 우선 ★
         strategy = getattr(self.bot, "strategy_manager", None)
-        if strategy and hasattr(strategy, "should_force_hydra") and strategy.should_force_hydra():
+        if (
+            strategy
+            and hasattr(strategy, "should_force_hydra")
+            and strategy.should_force_hydra()
+        ):
             # 히드라 우선 순위로 배치
             if self._requirements_met(UnitTypeId.HYDRALISK) and vespene >= 50:
                 queue.append(UnitTypeId.HYDRALISK)
@@ -473,7 +528,10 @@ class UnitFactory:
             queue.extend(self._filter_units(self._gas_unit_table(), vespene))
 
         if not queue:
-            queue = [entry["unit"] for entry in self._gas_unit_table() + self._mineral_unit_table()]
+            queue = [
+                entry["unit"]
+                for entry in self._gas_unit_table() + self._mineral_unit_table()
+            ]
         return queue
 
     def _filter_units(self, table: List[dict], vespene: int) -> List[object]:
@@ -505,16 +563,44 @@ class UnitFactory:
         # We use the ratio of the *final* unit to control the *base* unit production if needed,
         # but typically UnitMorphManager handles the morphing.
         # However, to support "Heavy Ravager" style, we need enough Roaches.
-        
+
         # Calculate max_ratio dynamically
         return [
-            {"unit": UnitTypeId.HYDRALISK, "min_gas": 50, "max_ratio": get_ratio("hydra", 0.3) + get_ratio("lurker", 0.1)}, 
-            {"unit": UnitTypeId.CORRUPTOR, "min_gas": 100, "max_ratio": get_ratio("corruptor", 0.15)},
-            {"unit": UnitTypeId.MUTALISK, "min_gas": 100, "max_ratio": get_ratio("mutalisk", 0.10)},
-            {"unit": UnitTypeId.ROACH, "min_gas": 25, "max_ratio": get_ratio("roach", 0.4) + get_ratio("ravager", 0.2)},
-            {"unit": UnitTypeId.ULTRALISK, "min_gas": 150, "max_ratio": get_ratio("ultralisk", 0.05)},
-            {"unit": UnitTypeId.INFESTOR, "min_gas": 150, "max_ratio": get_ratio("infestor", 0.05)},
-            {"unit": UnitTypeId.VIPER, "min_gas": 200, "max_ratio": get_ratio("viper", 0.05)},
+            {
+                "unit": UnitTypeId.HYDRALISK,
+                "min_gas": 50,
+                "max_ratio": get_ratio("hydra", 0.3) + get_ratio("lurker", 0.1),
+            },
+            {
+                "unit": UnitTypeId.CORRUPTOR,
+                "min_gas": 100,
+                "max_ratio": get_ratio("corruptor", 0.15),
+            },
+            {
+                "unit": UnitTypeId.MUTALISK,
+                "min_gas": 100,
+                "max_ratio": get_ratio("mutalisk", 0.10),
+            },
+            {
+                "unit": UnitTypeId.ROACH,
+                "min_gas": 25,
+                "max_ratio": get_ratio("roach", 0.4) + get_ratio("ravager", 0.2),
+            },
+            {
+                "unit": UnitTypeId.ULTRALISK,
+                "min_gas": 150,
+                "max_ratio": get_ratio("ultralisk", 0.05),
+            },
+            {
+                "unit": UnitTypeId.INFESTOR,
+                "min_gas": 150,
+                "max_ratio": get_ratio("infestor", 0.05),
+            },
+            {
+                "unit": UnitTypeId.VIPER,
+                "min_gas": 200,
+                "max_ratio": get_ratio("viper", 0.05),
+            },
         ]
 
     def _mineral_unit_table(self) -> List[dict]:
@@ -526,9 +612,12 @@ class UnitFactory:
         # Banelings are morphed from Zerglings
         ling_ratio = ratios.get("zergling", 0.4)
         bane_ratio = ratios.get("baneling", 0.1)
-        
+
         return [
-            {"unit": UnitTypeId.ZERGLING, "max_ratio": ling_ratio + bane_ratio + 0.2}, # +0.2 buffer
+            {
+                "unit": UnitTypeId.ZERGLING,
+                "max_ratio": ling_ratio + bane_ratio + 0.2,
+            },  # +0.2 buffer
         ]
 
     def _count_combat_units(self) -> int:
@@ -577,9 +666,15 @@ class UnitFactory:
             return False
 
         threat_units = {
-            "IMMORTAL": 1, "VOIDRAY": 1, "COLOSSUS": 1,
-            "CARRIER": 1, "ARCHON": 2, "DISRUPTOR": 1,
-            "TEMPEST": 1, "BATTLECRUISER": 1, "LIBERATOR": 1
+            "IMMORTAL": 1,
+            "VOIDRAY": 1,
+            "COLOSSUS": 1,
+            "CARRIER": 1,
+            "ARCHON": 2,
+            "DISRUPTOR": 1,
+            "TEMPEST": 1,
+            "BATTLECRUISER": 1,
+            "LIBERATOR": 1,
         }
 
         unit_counts = {}
@@ -590,18 +685,27 @@ class UnitFactory:
                 name = getattr(enemy.type_id, "name", "").upper()
                 if name in threat_units:
                     unit_counts[name] = unit_counts.get(name, 0) + 1
-                    if name in ["VOIDRAY", "CARRIER", "TEMPEST", "BATTLECRUISER", "LIBERATOR", "COLOSSUS"]:
+                    if name in [
+                        "VOIDRAY",
+                        "CARRIER",
+                        "TEMPEST",
+                        "BATTLECRUISER",
+                        "LIBERATOR",
+                        "COLOSSUS",
+                    ]:
                         found_air_threat = True
             except Exception:
                 continue
-                
+
         if found_air_threat:
-             self.gas_unit_ratio_target = 0.60
+            self.gas_unit_ratio_target = 0.60
 
         for unit_type, threshold in threat_units.items():
             if unit_counts.get(unit_type, 0) >= threshold:
                 if self.bot.iteration % 50 == 0:
-                    logger.info(f"Threat: {unit_type} x{unit_counts[unit_type]} → Gas Boost!")
+                    logger.info(
+                        f"Threat: {unit_type} x{unit_counts[unit_type]} → Gas Boost!"
+                    )
                 return True
 
         return False

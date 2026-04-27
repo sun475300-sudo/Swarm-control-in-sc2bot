@@ -11,8 +11,8 @@ Performance improvements:
 - Expected speedup: 3-10x for large unit counts
 """
 
-from typing import TYPE_CHECKING, Optional, Dict, Tuple
 from functools import lru_cache
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
@@ -40,10 +40,7 @@ class SpatialQueryOptimizer:
         self.cache_misses = 0
 
     def get_enemies_near_position(
-        self,
-        position: "Point2",
-        radius: float,
-        iteration: int
+        self, position: "Point2", radius: float, iteration: int
     ) -> "Units":
         """
         Get enemy units within radius of position (C++ optimized)
@@ -72,10 +69,7 @@ class SpatialQueryOptimizer:
         return result
 
     def get_allies_near_position(
-        self,
-        position: "Point2",
-        radius: float,
-        iteration: int
+        self, position: "Point2", radius: float, iteration: int
     ) -> "Units":
         """
         Get friendly units within radius of position (C++ optimized)
@@ -102,10 +96,7 @@ class SpatialQueryOptimizer:
         return result
 
     def get_allies_near_unit(
-        self,
-        unit: "Unit",
-        radius: float,
-        iteration: int
+        self, unit: "Unit", radius: float, iteration: int
     ) -> "Units":
         """
         Get friendly units near a specific unit (C++ optimized)
@@ -132,10 +123,7 @@ class SpatialQueryOptimizer:
         return result
 
     def get_enemies_near_unit(
-        self,
-        unit: "Unit",
-        radius: float,
-        iteration: int
+        self, unit: "Unit", radius: float, iteration: int
     ) -> "Units":
         """
         Get enemy units near a specific unit (C++ optimized)
@@ -190,10 +178,7 @@ class SpatialQueryOptimizer:
         return self.bot.units.closest_to(position)
 
     def get_units_in_range(
-        self,
-        units: "Units",
-        position: "Point2",
-        radius: float
+        self, units: "Units", position: "Point2", radius: float
     ) -> "Units":
         """
         Get units from collection within radius (C++ optimized)
@@ -212,10 +197,7 @@ class SpatialQueryOptimizer:
         return units.closer_than(radius, position)
 
     def count_enemies_near_position(
-        self,
-        position: "Point2",
-        radius: float,
-        iteration: int
+        self, position: "Point2", radius: float, iteration: int
     ) -> int:
         """
         Count enemy units near position (optimized with cache)
@@ -232,10 +214,7 @@ class SpatialQueryOptimizer:
         return len(enemies)
 
     def count_allies_near_position(
-        self,
-        position: "Point2",
-        radius: float,
-        iteration: int
+        self, position: "Point2", radius: float, iteration: int
     ) -> int:
         """
         Count friendly units near position (optimized with cache)
@@ -252,10 +231,7 @@ class SpatialQueryOptimizer:
         return len(allies)
 
     def is_position_safe(
-        self,
-        position: "Point2",
-        safe_distance: float,
-        iteration: int
+        self, position: "Point2", safe_distance: float, iteration: int
     ) -> bool:
         """
         Check if position is safe (no enemies within safe_distance)
@@ -268,7 +244,9 @@ class SpatialQueryOptimizer:
         Returns:
             True if safe, False otherwise
         """
-        enemy_count = self.count_enemies_near_position(position, safe_distance, iteration)
+        enemy_count = self.count_enemies_near_position(
+            position, safe_distance, iteration
+        )
         return enemy_count == 0
 
     def clear_cache_if_needed(self, iteration: int) -> None:
@@ -290,9 +268,7 @@ class SpatialQueryOptimizer:
             Dictionary containing statistics
         """
         cache_hit_rate = (
-            self.cache_hits / self.total_queries
-            if self.total_queries > 0
-            else 0.0
+            self.cache_hits / self.total_queries if self.total_queries > 0 else 0.0
         )
 
         return {
@@ -300,7 +276,7 @@ class SpatialQueryOptimizer:
             "cache_hits": self.cache_hits,
             "cache_misses": self.cache_misses,
             "cache_hit_rate": cache_hit_rate,
-            "active_cache_entries": len(self._query_cache)
+            "active_cache_entries": len(self._query_cache),
         }
 
     def log_statistics(self, iteration: int) -> None:
@@ -320,9 +296,7 @@ class SpatialQueryOptimizer:
             self.cache_misses = 0
 
     def get_furthest_unit_from_enemies(
-        self,
-        units: "Units",
-        iteration: int
+        self, units: "Units", iteration: int
     ) -> Optional["Unit"]:
         """
         Find unit furthest from all enemies (safe retreat position)

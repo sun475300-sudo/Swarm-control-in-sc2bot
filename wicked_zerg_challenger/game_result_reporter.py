@@ -13,10 +13,10 @@ Features:
 - 개선 제안
 """
 
-import os
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 import logging
+import os
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("GameResultReporter")
 
@@ -66,7 +66,9 @@ class GameResultReporter:
         timeline = self._build_timeline(normalized)
         if timeline:
             for event in timeline:
-                report_lines.append(f"  [{self._format_time(event['time'])}] {event['event']}")
+                report_lines.append(
+                    f"  [{self._format_time(event['time'])}] {event['event']}"
+                )
         else:
             report_lines.append("  No timeline data available")
         report_lines.append("")
@@ -169,7 +171,9 @@ class GameResultReporter:
 
         normalized["result"] = game_result.get("result", "UNKNOWN")
         normalized["game_time"] = game_result.get("duration", 0)
-        normalized["opponent_race"] = meta.get("opponent_race", "Unknown").replace("Race.", "")
+        normalized["opponent_race"] = meta.get("opponent_race", "Unknown").replace(
+            "Race.", ""
+        )
         normalized["map_name"] = meta.get("map_name", "Unknown")
 
         # --- Build orders ---
@@ -238,11 +242,19 @@ class GameResultReporter:
         snapshots = normalized["resource_snapshots"]
         last_snapshot = snapshots[-1] if snapshots else {}
         normalized["final_stats"] = {
-            "worker_count": last_snapshot.get("workers", game_result.get("final_workers", 0)),
-            "army_supply": last_snapshot.get("supply_army", game_result.get("final_supply", 0)),
+            "worker_count": last_snapshot.get(
+                "workers", game_result.get("final_workers", 0)
+            ),
+            "army_supply": last_snapshot.get(
+                "supply_army", game_result.get("final_supply", 0)
+            ),
             "base_count": last_snapshot.get("bases", game_result.get("final_bases", 0)),
-            "minerals": game_result.get("final_minerals", last_snapshot.get("minerals", 0)),
-            "vespene": game_result.get("final_vespene", last_snapshot.get("vespene", 0)),
+            "minerals": game_result.get(
+                "final_minerals", last_snapshot.get("minerals", 0)
+            ),
+            "vespene": game_result.get(
+                "final_vespene", last_snapshot.get("vespene", 0)
+            ),
         }
 
         return normalized
@@ -254,35 +266,40 @@ class GameResultReporter:
         # 빌드 오더 이벤트
         build_orders = game_data.get("build_orders", [])
         for bo in build_orders:
-            events.append({
-                "time": bo.get("time", 0),
-                "event": f"Build: {bo.get('unit', 'Unknown')} (Supply {bo.get('supply', '?')})"
-            })
+            events.append(
+                {
+                    "time": bo.get("time", 0),
+                    "event": f"Build: {bo.get('unit', 'Unknown')} (Supply {bo.get('supply', '?')})",
+                }
+            )
 
         # 확장 이벤트
         expansions = game_data.get("expansions", [])
         for i, exp in enumerate(expansions):
-            events.append({
-                "time": exp.get("time", 0),
-                "event": f"Expansion #{i+1} started"
-            })
+            events.append(
+                {"time": exp.get("time", 0), "event": f"Expansion #{i+1} started"}
+            )
 
         # 교전 이벤트
         engagements = game_data.get("engagements", [])
         for eng in engagements:
             army_lost = eng.get("army_lost", 0)
-            events.append({
-                "time": eng.get("time", 0),
-                "event": f"Engagement: Lost {army_lost} supply"
-            })
+            events.append(
+                {
+                    "time": eng.get("time", 0),
+                    "event": f"Engagement: Lost {army_lost} supply",
+                }
+            )
 
         # 견제 이벤트
         harassment = game_data.get("harassment_events", [])
         for h in harassment:
-            events.append({
-                "time": h.get("time", 0),
-                "event": f"Harassment: {h.get('type', 'Unknown')}"
-            })
+            events.append(
+                {
+                    "time": h.get("time", 0),
+                    "event": f"Harassment: {h.get('type', 'Unknown')}",
+                }
+            )
 
         # 시간순 정렬
         events.sort(key=lambda e: e["time"])
@@ -309,9 +326,7 @@ class GameResultReporter:
         lines.append(f"Peak Workers: {max_workers}")
 
         # 자원 낭비 감지 (미네랄 > 1000 이상인 시간)
-        high_mineral_time = sum(
-            1 for s in snapshots if s.get("minerals", 0) > 1000
-        )
+        high_mineral_time = sum(1 for s in snapshots if s.get("minerals", 0) > 1000)
         if high_mineral_time > 0:
             lines.append(f"High mineral periods (>1000): {high_mineral_time} snapshots")
             lines.append("  -> Consider spending faster or adding production")
@@ -325,7 +340,7 @@ class GameResultReporter:
         # 확장 타이밍
         expansions = game_data.get("expansions", [])
         benchmarks = {
-            1: 60,   # 1분 멀티
+            1: 60,  # 1분 멀티
             2: 240,  # 4분 셋째
             3: 360,  # 6분 넷째
         }
@@ -347,12 +362,16 @@ class GameResultReporter:
         # 테크 타이밍
         tech_timings = game_data.get("tech_timings", [])
         for tech in tech_timings:
-            lines.append(f"Tech: {tech.get('name', '?')} at {self._format_time(tech.get('time', 0))}")
+            lines.append(
+                f"Tech: {tech.get('name', '?')} at {self._format_time(tech.get('time', 0))}"
+            )
 
         # 업그레이드 타이밍
         upgrade_timings = game_data.get("upgrade_timings", [])
         for up in upgrade_timings:
-            lines.append(f"Upgrade: {up.get('name', '?')} at {self._format_time(up.get('time', 0))}")
+            lines.append(
+                f"Upgrade: {up.get('name', '?')} at {self._format_time(up.get('time', 0))}"
+            )
 
         if not lines:
             lines.append("No timing data available")
@@ -375,7 +394,9 @@ class GameResultReporter:
         # 가장 큰 교전
         if engagements:
             worst = max(engagements, key=lambda e: e.get("army_lost", 0))
-            lines.append(f"Biggest Loss: {worst.get('army_lost', 0)} supply at {self._format_time(worst.get('time', 0))}")
+            lines.append(
+                f"Biggest Loss: {worst.get('army_lost', 0)} supply at {self._format_time(worst.get('time', 0))}"
+            )
 
         return lines
 
@@ -396,6 +417,7 @@ class GameResultReporter:
         # list (fallback)
         elif isinstance(production, list):
             from collections import Counter
+
             counts = Counter(p.get("unit_type", "?") for p in production)
             for unit_name, count in counts.most_common(8):
                 lines.append(f"{unit_name}: {count} produced")
@@ -454,32 +476,44 @@ class GameResultReporter:
         if expansions:
             first_exp = expansions[0].get("time", 999)
             if first_exp > 90:
-                suggestions.append(f"Natural expansion at {int(first_exp)}s - aim for sub-60s with Hatch First build")
+                suggestions.append(
+                    f"Natural expansion at {int(first_exp)}s - aim for sub-60s with Hatch First build"
+                )
 
         # 2. 자원 낭비
         high_mineral = any(s.get("minerals", 0) > 1500 for s in snapshots)
         if high_mineral:
-            suggestions.append("Mineral bank exceeded 1500 - add more production or expand")
+            suggestions.append(
+                "Mineral bank exceeded 1500 - add more production or expand"
+            )
 
         # 3. 교전 손실
         if engagements:
             big_losses = [e for e in engagements if e.get("army_lost", 0) > 30]
             if len(big_losses) >= 2:
-                suggestions.append("Multiple large army losses - consider better engagement timing")
+                suggestions.append(
+                    "Multiple large army losses - consider better engagement timing"
+                )
 
         # 4. 일꾼 수
         workers = final_stats.get("worker_count", 0)
         bases = final_stats.get("base_count", 0)
         if workers < bases * 16 and game_time > 300:
-            suggestions.append("Worker count below optimal - prioritize drone production")
+            suggestions.append(
+                "Worker count below optimal - prioritize drone production"
+            )
 
         # 5. 빠른 패배
         if result.upper() not in ("WIN", "VICTORY") and game_time < 240:
-            suggestions.append("Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)")
+            suggestions.append(
+                "Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)"
+            )
 
         # 6. 긴 게임 패배
         if result.upper() not in ("WIN", "VICTORY") and game_time > 600:
-            suggestions.append("Late game loss - check tech transitions and army composition")
+            suggestions.append(
+                "Late game loss - check tech transitions and army composition"
+            )
 
         if not suggestions:
             suggestions.append("Game played well! Continue practicing current build")

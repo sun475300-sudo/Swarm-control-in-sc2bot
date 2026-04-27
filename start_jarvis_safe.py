@@ -1,7 +1,8 @@
 import os
-import sys
 import subprocess
+import sys
 import time
+
 import psutil
 
 # 1. 파일 경로 설정 (환경변수 우선, 없으면 스크립트 위치 기반)
@@ -17,6 +18,7 @@ anthropic_key = None
 
 try:
     from config_loader import load_dotenv_jarvis
+
     loaded = load_dotenv_jarvis(ENV_PATH)
     env_vars.update(loaded)
     anthropic_key = loaded.get("ANTHROPIC_API_KEY")
@@ -62,20 +64,34 @@ if anthropic_key:
         print("[INFO] CLAUDE_API_KEY already present")
 
 # 4. 기존 봇/MCP 프로세스 종료
-_KILL_TARGETS = ["discord_jarvis.py", "discord_bot_features.py", "sc2_mcp_server.py", "system_mcp_server.py", "crypto_mcp_server.py", "agentic_mcp_server.py", "claude_proxy.js", "discord_voice_chat_jarvis.js", "mcp_gateway_proxy.py"]
+_KILL_TARGETS = [
+    "discord_jarvis.py",
+    "discord_bot_features.py",
+    "sc2_mcp_server.py",
+    "system_mcp_server.py",
+    "crypto_mcp_server.py",
+    "agentic_mcp_server.py",
+    "claude_proxy.js",
+    "discord_voice_chat_jarvis.js",
+    "mcp_gateway_proxy.py",
+]
 print("[INFO] Checking for existing bot processes...")
 _killed = []
-for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+for proc in psutil.process_iter(["pid", "name", "cmdline"]):
     try:
-        cmdline = proc.info.get('cmdline') or []
+        cmdline = proc.info.get("cmdline") or []
         if proc.pid == os.getpid():
             continue
         cmd_str = " ".join(cmdline)
-        proc_name = proc.info.get('name', '').lower()
+        proc_name = proc.info.get("name", "").lower()
         is_target = any(t in cmd_str for t in _KILL_TARGETS)
-        is_python_or_node = proc_name.startswith('python') or proc_name.startswith('node')
+        is_python_or_node = proc_name.startswith("python") or proc_name.startswith(
+            "node"
+        )
         if is_target and is_python_or_node:
-            print(f"[INFO] Killing existing process (PID: {proc.info['pid']}, {cmd_str[:60]})")
+            print(
+                f"[INFO] Killing existing process (PID: {proc.info['pid']}, {cmd_str[:60]})"
+            )
             proc.kill()
             _killed.append(proc)
     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -114,11 +130,18 @@ if BOT_SCRIPT:
     except Exception as e:
         print(f"[FAIL] Bot launch failed: {e}")
 else:
-    print("[INFO] Python Discord bot disabled (JS bot discord_voice_chat_jarvis.js is primary)")
+    print(
+        "[INFO] Python Discord bot disabled (JS bot discord_voice_chat_jarvis.js is primary)"
+    )
 
 # MCP 서버 실행
 mcp_failures = []
-for mcp_script in ["sc2_mcp_server.py", "system_mcp_server.py", "crypto_mcp_server.py", "agentic_mcp_server.py"]:
+for mcp_script in [
+    "sc2_mcp_server.py",
+    "system_mcp_server.py",
+    "crypto_mcp_server.py",
+    "agentic_mcp_server.py",
+]:
     try:
         mcp_popen_kwargs = {"cwd": BASE_DIR, "env": env_vars}
         if sys.platform == "win32":
@@ -135,10 +158,12 @@ for mcp_script in ["sc2_mcp_server.py", "system_mcp_server.py", "crypto_mcp_serv
             mcp_failures.append(mcp_script)
             stderr_out = ""
             try:
-                stderr_out = mcp_proc.stderr.read().decode(errors='replace')[:500]
+                stderr_out = mcp_proc.stderr.read().decode(errors="replace")[:500]
             except Exception:
                 pass
-            print(f"[FAIL] {mcp_script} exited immediately (Code: {mcp_proc.returncode})")
+            print(
+                f"[FAIL] {mcp_script} exited immediately (Code: {mcp_proc.returncode})"
+            )
             if stderr_out:
                 print(f"[FAIL] stderr: {stderr_out}")
         else:
@@ -164,7 +189,9 @@ if os.path.exists(proxy_script):
         )
         time.sleep(2)
         if proxy_proc.poll() is not None:
-            print(f"[FAIL] claude_proxy.js exited immediately (Code: {proxy_proc.returncode})")
+            print(
+                f"[FAIL] claude_proxy.js exited immediately (Code: {proxy_proc.returncode})"
+            )
         else:
             print(f"[OK] claude_proxy.js started (PID: {proxy_proc.pid})")
     except FileNotFoundError:
