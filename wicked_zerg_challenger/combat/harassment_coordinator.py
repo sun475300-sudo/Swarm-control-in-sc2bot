@@ -1287,12 +1287,40 @@ class HarassmentCoordinator:
         )
 
     async def _trigger_zergling_runby(self) -> None:
-        """Trigger zergling run-by (placeholder for existing logic)"""
-        # This would call existing zergling run-by logic
+        """
+        Trigger zergling run-by — delegate to the existing
+        `_manage_zergling_runby` implementation in this same coordinator.
+        Previously a no-op placeholder, which made coordinate_multi_angle_attack
+        report 'zergling_runby' as a fired vector while doing nothing.
+        """
+        await self._manage_zergling_runby()
 
     async def _trigger_mutalisk_harassment(self) -> None:
-        """Trigger mutalisk harassment (placeholder for existing logic)"""
-        # This would call existing mutalisk harassment logic
+        """
+        Trigger mutalisk harassment — delegate to AirUnitManager's
+        `mutalisk_harass` (the canonical implementation).  Previously a
+        no-op placeholder; multi-angle attack would report
+        'mutalisk_harass' as a fired vector while doing nothing.
+
+        Falls back gracefully if AirUnitManager isn't attached or there
+        are no mutalisks; matches the original 'best-effort' contract.
+        """
+        air_mgr = getattr(self.bot, "air_unit_manager", None)
+        if air_mgr is None or not hasattr(air_mgr, "mutalisk_harass"):
+            return
+        try:
+            from sc2.ids.unit_typeid import UnitTypeId
+        except ImportError:
+            return
+        units = getattr(self.bot, "units", None)
+        if units is None:
+            return
+        mutalisks = units(UnitTypeId.MUTALISK)
+        if not getattr(mutalisks, "exists", False):
+            return
+        enemy_units = getattr(self.bot, "enemy_units", [])
+        iteration = getattr(self.bot, "iteration", 0)
+        await air_mgr.mutalisk_harass(mutalisks, enemy_units, iteration)
 
     # ============================================================================
     # Phase 21.3: Unit Persistence System (Squad Lock)
