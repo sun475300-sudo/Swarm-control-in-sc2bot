@@ -320,7 +320,16 @@ class OpponentModeling:
         )
 
     async def on_step(self, iteration: int):
-        """매 프레임 실행"""
+        """매 프레임 실행.
+
+        주의: 과거에는 동일 클래스에 더 축약된 버전의 on_step 이 파일 하단에
+        재정의되어 이 메서드가 섀도우되고 있었다. 축약본은 제거됐고 이쪽
+        풀 버전이 유일한 on_step 이다. 게임 시작 가드(current_opponent_id)는
+        축약본에서 살려 여기 합쳤다.
+        """
+        if not self.current_opponent_id or not self.bot:
+            return
+
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -645,7 +654,10 @@ class OpponentModeling:
 
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
+        # ★ 버그 수정: 과거에는 self.current_opponent 를 썼으나 __init__과
+        #   on_start/on_end가 self.current_opponent_id 를 사용하므로
+        #   상태 변수를 단일 필드로 통일한다.
+        self.current_opponent_id = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = opponent_race.name if opponent_race and hasattr(opponent_race, 'name') else "Unknown"
         self.current_game_history = GameHistory(
@@ -670,20 +682,9 @@ class OpponentModeling:
         else:
             self.logger.info(f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)")
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
-
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
+        if not self.current_opponent_id or not self.current_game_history:
             return
 
         # Update game history
@@ -697,20 +698,20 @@ class OpponentModeling:
             pass
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
         self.save_models()
 
-        self.logger.info(f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}")
+        self.logger.info(f"[OPPONENT_MODELING] Game data saved for {self.current_opponent_id}")
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
-        if not self.current_opponent or self.current_opponent not in self.opponent_models:
+        if not self.current_opponent_id or self.current_opponent_id not in self.opponent_models:
             return (None, 0.0)
 
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
 
         # If we have observed signals, use them for prediction
         if self.observed_signals:
