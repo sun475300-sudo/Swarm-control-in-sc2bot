@@ -341,8 +341,15 @@ class OpponentModeling:
 
     async def on_step(self, iteration: int):
         """매 프레임 실행 (메인 봇 루프 진입점)."""
-        # 적이 아직 식별되지 않았거나 봇 핸들이 없으면 조용히 종료
-        if not self.bot or not getattr(self, "current_opponent", None):
+        # 봇 핸들이 없으면 조용히 종료. 적 식별자(`current_opponent_id`는
+        # `on_start()` 흐름, `current_opponent`는 `on_game_start()` 흐름에서
+        # 설정됨)는 둘 중 하나라도 있으면 진행한다.
+        if not self.bot:
+            return
+        if not (
+            getattr(self, "current_opponent_id", None)
+            or getattr(self, "current_opponent", None)
+        ):
             return
 
         if iteration - self.last_update < self.update_interval:
