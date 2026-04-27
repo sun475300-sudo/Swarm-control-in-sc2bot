@@ -425,8 +425,11 @@ class LogicOptimizer:
         """전투 로직 개선: 마이크로 컨트롤 및 타겟팅 우선순위 강화"""
         self.logger.info("Applying combat improvements...")
         if hasattr(self.bot, "combat_manager"):
-            # 공중 유닛 타겟팅 우선순위 강화 (위협적인 유닛 우선)
-            self.bot.combat_manager.task_priorities["air_harassment"] = 60
+            # 공중 유닛 견제 우선순위 강화 (위협적인 유닛 우선)
+            # NB: canonical key is "air_harass" (combat/initialization.py
+            # and combat_manager.py:297). Previously written as
+            # "air_harassment", which silently landed in a dead dict slot.
+            self.bot.combat_manager.task_priorities["air_harass"] = 60
             # 방어 시 일꾼 보호 로직 강화
             self.bot.combat_manager.task_priorities["worker_defense"] = 110
             

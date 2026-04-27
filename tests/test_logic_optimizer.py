@@ -56,9 +56,40 @@ def _make_optimizer_with_managers():
 
 
 def test_apply_combat_improvements_sets_priorities():
+    """apply_combat_improvements must write to the canonical priority keys.
+
+    The canonical `task_priorities` dict is initialised in
+    `wicked_zerg_challenger/combat/initialization.py`:
+
+        "base_defense": 100, "worker_defense": 90, "counter_attack": 70,
+        "air_harass": 60, "scout": 50, "main_attack": 40, "creep_spread": 30
+
+    `combat_manager.py:297` reads `task_priorities["air_harass"]` —
+    note the missing "ment". A typo in the optimizer key would silently
+    write to a dead dict slot and never reach the multitasking loop.
+    """
     opt, bot = _make_optimizer_with_managers()
+    # Seed the dict with sentinel values different from what the
+    # optimizer should write — that way "value unchanged" proves the
+    # optimizer wrote to a wrong/unrecognised key (e.g. "air_harassment"
+    # instead of "air_harass").
+    sentinel = -1
+    bot.combat_manager.task_priorities = {
+        "base_defense": sentinel, "worker_defense": sentinel,
+        "counter_attack": sentinel, "air_harass": sentinel, "scout": sentinel,
+        "main_attack": sentinel, "creep_spread": sentinel,
+    }
+
     opt.apply_combat_improvements()
-    assert bot.combat_manager.task_priorities["air_harassment"] == 60
+
+    assert bot.combat_manager.task_priorities["air_harass"] != sentinel, (
+        "apply_combat_improvements never touched the canonical "
+        "`air_harass` key — combat_manager reads `air_harass` "
+        "(no 'ment'), so a typo like `air_harassment` silently lands "
+        "in a dead dict slot and the multitasking loop never sees the "
+        "tightened priority"
+    )
+    assert bot.combat_manager.task_priorities["air_harass"] == 60
     assert bot.combat_manager.task_priorities["worker_defense"] == 110
 
 
