@@ -875,7 +875,9 @@ class InfestorMicro:
                             acted_tags.add(infestor.tag)
                             continue
                         except (AttributeError, TypeError) as e:
-                            _module_logger.debug(f"infestor ability target failed: {e!r}")
+                            _module_logger.debug(
+                                f"infestor ability target failed: {e!r}"
+                            )
 
             # Safety: Burrow if in danger and low energy
             if energy < 50:

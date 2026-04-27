@@ -1581,7 +1581,9 @@ class ProductionResilience:
                                     )
                                     return
                             except Exception as e:
-                                logger.debug(f"_auto_build_tech_structures swallow: {e!r}")
+                                logger.debug(
+                                    f"_auto_build_tech_structures swallow: {e!r}"
+                                )
 
         # 6:00+ : Spire (requires Lair)
         if game_time >= 360:
@@ -1612,7 +1614,9 @@ class ProductionResilience:
                                 logger.info(f"[{int(game_time)}s] Building Spire")
                                 return
                             except Exception as e:
-                                logger.debug(f"_auto_build_tech_structures swallow: {e!r}")
+                                logger.debug(
+                                    f"_auto_build_tech_structures swallow: {e!r}"
+                                )
 
     async def _auto_build_extractors(self, game_time: float) -> None:
         """
@@ -2564,7 +2568,9 @@ class ProductionResilience:
                             b.do(hatch.train(UnitTypeId.QUEEN))
                             return
                         except Exception as e:
-                            logger.debug(f"_spend_minerals_without_larvae swallow: {e!r}")
+                            logger.debug(
+                                f"_spend_minerals_without_larvae swallow: {e!r}"
+                            )
 
         # Build expansion if minerals > 300
         if b.minerals > 300 and b.already_pending(UnitTypeId.HATCHERY) == 0:

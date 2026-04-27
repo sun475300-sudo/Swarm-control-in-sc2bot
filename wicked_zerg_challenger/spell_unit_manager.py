@@ -214,7 +214,9 @@ class SpellUnitManager:
                                 self.infestor_last_spell[infestor_tag] = current_time
                                 continue
                             except Exception as e:
-                                logger.debug(f"infestor first ability cast failed: {e!r}")
+                                logger.debug(
+                                    f"infestor first ability cast failed: {e!r}"
+                                )
 
             # Fungal Growth (area damage)
             if time_since_spell >= self.FUNGAL_GROWTH_COOLDOWN:
@@ -242,7 +244,9 @@ class SpellUnitManager:
                             )
                             self.infestor_last_spell[infestor_tag] = current_time
                         except Exception as e:
-                            logger.debug(f"infestor secondary ability cast failed: {e!r}")
+                            logger.debug(
+                                f"infestor secondary ability cast failed: {e!r}"
+                            )
 
     async def _update_vipers(self):
         """Update Viper spell usage"""
@@ -609,7 +613,9 @@ class SpellUnitManager:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_position))
                             self.ravager_last_bile[ravager_tag] = current_time
                         except Exception as e:
-                            logger.debug(f"ravager bile at predicted position failed: {e!r}")
+                            logger.debug(
+                                f"ravager bile at predicted position failed: {e!r}"
+                            )
 
     def _find_best_bile_position(
         self, ravager: Unit, enemies: List[Unit]

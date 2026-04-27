@@ -9,10 +9,10 @@ Multi-Base Defense System - Automatic defense for multiple expansions
 4. 공격 받는 기지 우선 방어
 """
 
+import logging
 from typing import Dict, List, Optional
 
 from utils.logger import get_logger
-import logging
 
 _module_logger = logging.getLogger("MultiBaseDefense")
 

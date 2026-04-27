@@ -9,8 +9,8 @@ Features:
 4. Escape: Burrow move away from threats
 """
 
-from typing import Dict, List, Optional, Set
 import logging
+from typing import Dict, List, Optional, Set
 
 _module_logger = logging.getLogger("InfestorTactics")
 
@@ -245,7 +245,9 @@ class InfestorTacticsController:
                             acted_tags.add(unit_tag)
                             continue
                         except Exception as e:
-                            _module_logger.debug(f"execute_burrow_tactics swallow: {e!r}")
+                            _module_logger.debug(
+                                f"execute_burrow_tactics swallow: {e!r}"
+                            )
 
             elif unit_tag in self.escaping and health_ratio >= 0.8:
                 # Stop escaping when healed
@@ -270,7 +272,9 @@ class InfestorTacticsController:
                                 actions.append(infestor(burrow_ability))
                                 acted_tags.add(unit_tag)
                             except Exception as e:
-                                _module_logger.debug(f"execute_burrow_tactics swallow: {e!r}")
+                                _module_logger.debug(
+                                    f"execute_burrow_tactics swallow: {e!r}"
+                                )
 
             # Execute infiltration
             if unit_tag in self.infiltrating:
@@ -288,7 +292,9 @@ class InfestorTacticsController:
                                 acted_tags.add(unit_tag)
                                 continue
                             except Exception as e:
-                                _module_logger.debug(f"execute_burrow_tactics swallow: {e!r}")
+                                _module_logger.debug(
+                                    f"execute_burrow_tactics swallow: {e!r}"
+                                )
                 else:
                     # Move towards target while burrowed
                     if is_burrowed:
@@ -296,7 +302,9 @@ class InfestorTacticsController:
                             actions.append(infestor.move(target_pos))
                             acted_tags.add(unit_tag)
                         except Exception as e:
-                            _module_logger.debug(f"execute_burrow_tactics swallow: {e!r}")
+                            _module_logger.debug(
+                                f"execute_burrow_tactics swallow: {e!r}"
+                            )
 
             # ★ FLANKING MODE: Enemy army detected ★
             elif enemy_army_center and energy >= self.energy_threshold:
@@ -314,7 +322,9 @@ class InfestorTacticsController:
                                 actions.append(infestor(burrow_ability))
                                 acted_tags.add(unit_tag)
                             except Exception as e:
-                                _module_logger.debug(f"execute_burrow_tactics swallow: {e!r}")
+                                _module_logger.debug(
+                                    f"execute_burrow_tactics swallow: {e!r}"
+                                )
 
                     # Move to flank position
                     if is_burrowed:
@@ -322,7 +332,9 @@ class InfestorTacticsController:
                             actions.append(infestor.move(flank_pos))
                             acted_tags.add(unit_tag)
                         except Exception as e:
-                            _module_logger.debug(f"execute_burrow_tactics swallow: {e!r}")
+                            _module_logger.debug(
+                                f"execute_burrow_tactics swallow: {e!r}"
+                            )
 
         if actions:
             for action in actions:

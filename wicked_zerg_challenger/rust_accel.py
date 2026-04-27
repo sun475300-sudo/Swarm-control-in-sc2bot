@@ -58,13 +58,17 @@ def nearest_point_index(
         try:
             return _nearest_point_index_rust(ox, oy, list(points))
         except Exception as e:
-            _module_logger.debug(f"nearest_point_index: rust accel fallback to py: {e!r}")
+            _module_logger.debug(
+                f"nearest_point_index: rust accel fallback to py: {e!r}"
+            )
 
     if _nearest_point_index_opencl is not None:
         try:
             return _nearest_point_index_opencl((ox, oy), points)
         except Exception as e:
-            _module_logger.debug(f"nearest_point_index: rust accel fallback to py: {e!r}")
+            _module_logger.debug(
+                f"nearest_point_index: rust accel fallback to py: {e!r}"
+            )
 
     best_idx = None
     best_dist_sq = float("inf")
@@ -92,7 +96,9 @@ def compute_feedback_priority(
                 size_kb, player_count, winner_count, note_count
             )
         except Exception as e:
-            _module_logger.debug(f"compute_feedback_priority: rust accel fallback to py: {e!r}")
+            _module_logger.debug(
+                f"compute_feedback_priority: rust accel fallback to py: {e!r}"
+            )
 
     score = 1.0
     score += min(size_kb / 1024.0, 1.5)
@@ -111,7 +117,9 @@ def combat_power_comparison(
         try:
             return _combat_power_comparison_rust(list(my_units), list(enemy_units))
         except Exception as e:
-            _module_logger.debug(f"combat_power_comparison: rust accel fallback to py: {e!r}")
+            _module_logger.debug(
+                f"combat_power_comparison: rust accel fallback to py: {e!r}"
+            )
 
     def calc_power(units):
         return sum(
@@ -133,7 +141,9 @@ def batch_nearest_points(
         try:
             return _batch_nearest_points_rust(list(origins), list(points))
         except Exception as e:
-            _module_logger.debug(f"batch_nearest_points: rust accel fallback to py: {e!r}")
+            _module_logger.debug(
+                f"batch_nearest_points: rust accel fallback to py: {e!r}"
+            )
 
     return [nearest_point_index(o, points) for o in origins]
 
@@ -199,7 +209,9 @@ def formation_positions(
                 count, spacing, center_x, center_y, formation_type
             )
         except Exception as e:
-            _module_logger.debug(f"formation_positions: rust accel fallback to py: {e!r}")
+            _module_logger.debug(
+                f"formation_positions: rust accel fallback to py: {e!r}"
+            )
 
     import math
 

@@ -25,8 +25,9 @@ except ImportError:
     Unit = None
     Units = None
 
-from utils.logger import get_logger
 import logging
+
+from utils.logger import get_logger
 
 _module_logger = logging.getLogger("QueenWalk")
 

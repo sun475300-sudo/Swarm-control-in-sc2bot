@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, Tuple
 
 from sc2.ids.ability_id import AbilityId
@@ -6,7 +7,6 @@ from sc2.position import Point2
 from sc2.units import Units
 
 from utils.logger import get_logger
-import logging
 
 _module_logger = logging.getLogger("DefenseCoordinator")
 
