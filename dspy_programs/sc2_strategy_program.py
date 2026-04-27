@@ -4,10 +4,17 @@ Programmatic LLM pipelines with optimizable prompts for SC2 strategy.
 """
 
 import dspy
-from dspy import Signature, InputField, OutputField, Module
-from dspy import ChainOfThought, ProgramOfThought, ReAct
-from dspy.teleprompt import BootstrapFewShot, BootstrapFewShotWithRandomSearch
+from dspy import (
+    ChainOfThought,
+    InputField,
+    Module,
+    OutputField,
+    ProgramOfThought,
+    ReAct,
+    Signature,
+)
 from dspy.evaluate import Evaluate
+from dspy.teleprompt import BootstrapFewShot, BootstrapFewShotWithRandomSearch
 
 # ── DSPy Signatures ───────────────────────────────────────────────────────────
 

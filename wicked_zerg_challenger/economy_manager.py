@@ -26,8 +26,9 @@ except ImportError:  # Fallbacks for tooling environments
     Point2 = tuple  # Fallback for tooling
 
 
-from local_training.economy_combat_balancer import EconomyCombatBalancer
 from config.unit_configs import EconomyConfig
+from local_training.economy_combat_balancer import EconomyCombatBalancer
+
 from utils.logger import get_logger
 
 

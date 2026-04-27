@@ -1,13 +1,14 @@
-from typing import Any, Dict
-import random
-from config.unit_configs import EconomyConfig
 import logging
+import random
+from typing import Any, Dict
+
+from config.unit_configs import EconomyConfig
 
 logger = logging.getLogger("ProductionResilience")
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
     # Mock for testing
     class UnitTypeId:
@@ -77,8 +78,8 @@ except ImportError:
 
 try:
     from local_training.opening_strategy_manager import (
-        OpeningStrategyManager,
         OpeningStrategy,
+        OpeningStrategyManager,
     )
 
     STRATEGY_MANAGER_AVAILABLE = True
@@ -97,15 +98,15 @@ except ImportError:
 
 # Import production modules
 from local_training.production import (
-    can_expand_safely,
-    try_expand,
-    log_expand_block,
-    cleanup_build_reservations,
-    safe_train,
-    produce_army_unit,
-    emergency_zergling_production,
     balanced_production,
+    can_expand_safely,
+    cleanup_build_reservations,
+    emergency_zergling_production,
     get_counter_unit,
+    log_expand_block,
+    produce_army_unit,
+    safe_train,
+    try_expand,
 )
 
 

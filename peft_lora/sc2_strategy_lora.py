@@ -45,15 +45,15 @@ except ImportError:
     log.warning("PyTorch not installed.")
 
 try:
+    from datasets import Dataset as HFDataset
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
         BitsAndBytesConfig,
-        TrainingArguments,
-        Trainer,
         DataCollatorForLanguageModeling,
+        Trainer,
+        TrainingArguments,
     )
-    from datasets import Dataset as HFDataset
 
     TRANSFORMERS_AVAILABLE = True
     log.info("Transformers available.")
@@ -66,9 +66,9 @@ except ImportError:
 try:
     from peft import (
         LoraConfig,
+        PeftModel,
         TaskType,
         get_peft_model,
-        PeftModel,
         prepare_model_for_kbit_training,
     )
 

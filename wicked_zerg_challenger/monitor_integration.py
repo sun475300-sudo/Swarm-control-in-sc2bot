@@ -10,9 +10,9 @@ Usage:
     python monitor_integration.py --watch
 """
 
-import logging
 import argparse
 import json
+import logging
 import os
 import time
 from datetime import datetime

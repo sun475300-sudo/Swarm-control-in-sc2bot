@@ -12,10 +12,11 @@ Blackboard 패턴을 사용하여 모든 매니저가 접근할 수 있는 "Sing
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 2 (State Management)
 """
 
-from typing import Dict, List, Set, Optional, Any
+import time
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
-import time
+from typing import Any, Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:

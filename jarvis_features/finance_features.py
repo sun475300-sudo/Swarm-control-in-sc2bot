@@ -16,7 +16,7 @@ import io
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import aiohttp
@@ -421,8 +421,8 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                     import matplotlib
 
                     matplotlib.use("Agg")
-                    import matplotlib.pyplot as plt
                     import matplotlib.dates as mdates
+                    import matplotlib.pyplot as plt
 
                     fig, (ax1, ax2) = plt.subplots(
                         2, 1, figsize=(10, 6), gridspec_kw={"height_ratios": [3, 1]}

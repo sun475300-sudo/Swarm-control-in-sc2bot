@@ -25,14 +25,15 @@ Unit Tests for ProductionResilience
 20. 뮤탈 생산
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
 from typing import List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Production Resilience 임포트
 try:
-    import sys
     import os
+    import sys
 
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")

@@ -5,10 +5,10 @@ Aggregates high-level game state into a structured SITREP (Situation Report)
 for strategic decision-making and LLM context.
 """
 
-from typing import Dict, Any, List, Optional
-from enum import Enum
 import json
 import time
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 try:
     from strategy.strategy_manager_v2 import StrategyManagerV2, WinCondition

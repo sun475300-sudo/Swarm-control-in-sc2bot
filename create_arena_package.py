@@ -7,12 +7,12 @@ SC2 AI Arena 업로드용 패키지 생성기
 결과: 바탕화면에 WickedZergBotPro_Arena.zip 생성
 """
 
-import os
-import zipfile
-import shutil
-from pathlib import Path
-from datetime import datetime
 import argparse
+import os
+import shutil
+import zipfile
+from datetime import datetime
+from pathlib import Path
 
 # 설정
 PROJECT_DIR = Path(__file__).parent

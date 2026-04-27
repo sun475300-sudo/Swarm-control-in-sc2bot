@@ -11,14 +11,15 @@ Unit Tests for CombatManager
 6. 후퇴 조건 체크
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from typing import List
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Combat Manager 임포트
 try:
-    import sys
     import os
+    import sys
 
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")

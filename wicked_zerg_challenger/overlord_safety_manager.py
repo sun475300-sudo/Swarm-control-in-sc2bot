@@ -8,11 +8,13 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 3. 맵 전역 감시를 위한 분산 배치
 """
 
-from typing import List, Dict, Optional, Set, Tuple
-from sc2.position import Point2
-from sc2.ids.unit_typeid import UnitTypeId
-from utils.logger import get_logger
 import random
+from typing import Dict, List, Optional, Set, Tuple
+
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
+from utils.logger import get_logger
 
 
 class OverlordSafetyManager:

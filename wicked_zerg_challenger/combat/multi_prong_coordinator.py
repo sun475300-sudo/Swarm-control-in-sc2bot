@@ -14,7 +14,8 @@ Features:
 - 실시간 위협 레벨 평가
 """
 
-from typing import List, Dict, Optional, Set
+from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:

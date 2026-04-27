@@ -16,15 +16,16 @@ Features:
 - 성능 통계 추적
 """
 
-from typing import Dict, Set, Optional, Tuple
 from collections import defaultdict
 from enum import Enum
+from typing import Dict, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.unit import Unit
 except ImportError:
 

@@ -7,11 +7,11 @@ via subprocess, with JSON parsing, timeout management, and usage stats.
 """
 
 import asyncio
-import subprocess
 import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import threading
 from pathlib import Path

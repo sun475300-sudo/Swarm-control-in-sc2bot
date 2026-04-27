@@ -5,18 +5,19 @@ Upsert (merge), time travel, and schema evolution for ML feature data.
 
 import logging
 from datetime import datetime
+
+from delta.tables import DeltaTable
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_timestamp, lit
 from pyspark.sql.types import (
-    StructType,
-    StructField,
-    StringType,
-    IntegerType,
-    DoubleType,
-    TimestampType,
     BooleanType,
+    DoubleType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
+    TimestampType,
 )
-from delta.tables import DeltaTable
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,13 @@ Phase 423: Great Expectations - SC2 Training Data Quality
 Validates SC2 replay datasets before feeding them to the ML pipeline.
 """
 
-import great_expectations as gx
-from great_expectations.core import ExpectationSuite, ExpectationConfiguration
-from great_expectations.dataset import PandasDataset
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import great_expectations as gx
+import numpy as np
+import pandas as pd
+from great_expectations.core import ExpectationConfiguration, ExpectationSuite
+from great_expectations.dataset import PandasDataset
 
 # ── Sample SC2 dataset ────────────────────────────────────────────────────────
 

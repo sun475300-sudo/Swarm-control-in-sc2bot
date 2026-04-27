@@ -4,9 +4,9 @@ Unified multi-language integration for Wicked Zerg Bot
 Connects: Python, Rust, Go, Julia, C++, TypeScript, Elixir, Swift, C#, R, Lua, Haskell, Scala
 """
 
-import subprocess
 import json
 import os
+import subprocess
 from pathlib import Path
 
 LANGUAGES = {

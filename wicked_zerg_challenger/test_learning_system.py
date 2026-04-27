@@ -6,9 +6,9 @@ Learning System Test - 학습 시스템 검증
 """
 
 import json
+import logging
 import os
 from datetime import datetime
-import logging
 
 logger = logging.getLogger("TestLearningSystem")
 

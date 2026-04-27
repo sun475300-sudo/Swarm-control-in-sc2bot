@@ -16,13 +16,14 @@ SC2 AI 대시보드 테스트 데이터 생성 스크립트
     - AI Arena 경기 기록 (30개)
 """
 
-import requests
+import argparse
 import json
 import random
-import time
 import sys
-import argparse
+import time
 from datetime import datetime, timedelta
+
+import requests
 
 # 기본 설정
 MAPS = [

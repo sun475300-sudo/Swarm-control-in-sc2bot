@@ -4,11 +4,12 @@ Streams, durable consumers, and KV store for SC2 game pipeline.
 """
 
 import asyncio
-import logging
 import json
+import logging
 from datetime import datetime
-from nats.aio.client import Client as NATS
+
 import nats.js.api as js_api
+from nats.aio.client import Client as NATS
 from nats.js.errors import NotFoundError
 
 logger = logging.getLogger(__name__)

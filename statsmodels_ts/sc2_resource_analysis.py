@@ -31,14 +31,14 @@ log = logging.getLogger("sc2_resource_analysis")
 # ---------------------------------------------------------------------------
 try:
     import statsmodels.api as sm
+    from statsmodels.graphics.gofplots import qqplot
+    from statsmodels.stats.diagnostic import het_breuschpagan
+    from statsmodels.stats.stattools import durbin_watson
     from statsmodels.tsa.arima.model import ARIMA
     from statsmodels.tsa.holtwinters import ExponentialSmoothing
     from statsmodels.tsa.seasonal import seasonal_decompose
-    from statsmodels.tsa.stattools import adfuller, acf, pacf, grangercausalitytests
+    from statsmodels.tsa.stattools import acf, adfuller, grangercausalitytests, pacf
     from statsmodels.tsa.vector_ar.var_model import VAR
-    from statsmodels.stats.stattools import durbin_watson
-    from statsmodels.stats.diagnostic import het_breuschpagan
-    from statsmodels.graphics.gofplots import qqplot
 
     SM_AVAILABLE = True
     log.info("statsmodels available.")

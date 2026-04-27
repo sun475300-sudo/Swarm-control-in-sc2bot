@@ -11,8 +11,9 @@ Data Cache Manager - 자주 사용되는 데이터 캐싱
 효과: CPU 사용량 30% 감소
 """
 
-from typing import Any, Dict, Optional, Callable, List
 import time
+from typing import Any, Callable, Dict, List, Optional
+
 from utils.logger import get_logger
 
 

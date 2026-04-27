@@ -1,11 +1,12 @@
 # Phase 412: CrewAI - SC2 Agent Crew
 # CrewAI agent crew for collaborative SC2 bot strategy management
 
-from crewai import Agent, Task, Crew, Process
-from crewai.tools import tool
-from langchain_anthropic import ChatAnthropic
 import json
 from typing import Optional
+
+from crewai import Agent, Crew, Process, Task
+from crewai.tools import tool
+from langchain_anthropic import ChatAnthropic
 
 # ============================================================
 # LLM

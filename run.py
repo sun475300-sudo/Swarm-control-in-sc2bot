@@ -20,15 +20,13 @@ from pathlib import Path
 bot_dir = Path(__file__).parent / "wicked_zerg_challenger"
 sys.path.insert(0, str(bot_dir))
 
-from sc2.player import Bot
-from sc2.data import Race
-from sc2.client import Client
-from sc2.portconfig import Portconfig
-from sc2.main import _play_game
-from sc2.protocol import ConnectionAlreadyClosed
-
 import aiohttp
-
+from sc2.client import Client
+from sc2.data import Race
+from sc2.main import _play_game
+from sc2.player import Bot
+from sc2.portconfig import Portconfig
+from sc2.protocol import ConnectionAlreadyClosed
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 logger = logging.getLogger(__name__)

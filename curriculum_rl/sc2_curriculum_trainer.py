@@ -10,16 +10,17 @@ Stages:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
-from enum import IntEnum
-import math
-import random
-import time
-import json
-import os
-import sys
+
 import collections
+import json
+import math
+import os
+import random
+import sys
+import time
+from dataclasses import dataclass, field
+from enum import IntEnum
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -4,8 +4,8 @@ PagedAttention-based serving for low-latency SC2 strategy recommendations.
 """
 
 import asyncio
-from typing import AsyncGenerator, Optional
 from dataclasses import dataclass, field
+from typing import AsyncGenerator, Optional
 
 # ── Request/Response schemas ──────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ class SC2LLMEngine:
 
     def _build_engine(self):
         """Lazily initialize AsyncLLMEngine with PagedAttention."""
-        from vllm import AsyncLLMEngine, AsyncEngineArgs
+        from vllm import AsyncEngineArgs, AsyncLLMEngine
 
         args = AsyncEngineArgs(
             model=self.model,
@@ -90,8 +90,9 @@ class SC2LLMEngine:
         temperature: float = 0.7,
     ) -> AsyncGenerator[str, None]:
         """Stream strategy recommendation tokens for a game state query."""
-        from vllm import SamplingParams
         import time
+
+        from vllm import SamplingParams
 
         if self._engine is None:
             self._build_engine()
@@ -144,9 +145,10 @@ class SC2LLMEngine:
 
 def build_fastapi_app(engine: SC2LLMEngine):
     """Build FastAPI app exposing SC2 strategy generation endpoints."""
+    import json
+
     from fastapi import FastAPI
     from fastapi.responses import StreamingResponse
-    import json
 
     app = FastAPI(title="SC2 Strategy LLM Server", version="1.0.0")
 

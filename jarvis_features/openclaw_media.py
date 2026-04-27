@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """OpenClaw 미디어 스킬 Cog (image gen, whisper, gif, video frames)."""
 
-import discord
-from discord import app_commands
-from discord.ext import commands
 import logging
 import os
 import sys
 
+import discord
+from discord import app_commands
+from discord.ext import commands
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.openclaw_helper import get_openclaw_helper, chunk_text
+from utils.openclaw_helper import chunk_text, get_openclaw_helper
 
 logger = logging.getLogger("jarvis.openclaw.media")
 

@@ -4,8 +4,9 @@ Unit Tests for Queen Transfusion Manager
 Tests the smart transfusion priority system.
 """
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

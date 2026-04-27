@@ -1,10 +1,11 @@
 # influxdb_metrics/performance_collector.py
 # InfluxDB time-series metrics collection for SC2 Zerg bot performance
 
-import os
-import time
-import random
 import datetime
+import os
+import random
+import time
+
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 

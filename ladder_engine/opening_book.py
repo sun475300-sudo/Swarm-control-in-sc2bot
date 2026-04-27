@@ -4,8 +4,8 @@ SC2 Zerg opening book with build order trees and matchup-based selection.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class Race(Enum):

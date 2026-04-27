@@ -8,18 +8,18 @@ and companion-app integration endpoints.
 
 from __future__ import annotations
 
-import math
-import random
-import time
-import os
-import sys
 import json
+import math
+import os
+import random
 import struct
+import sys
 import tempfile
-from dataclasses import dataclass, field
-from typing import Optional, List, Tuple, Dict, Any, Union
-from enum import Enum
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

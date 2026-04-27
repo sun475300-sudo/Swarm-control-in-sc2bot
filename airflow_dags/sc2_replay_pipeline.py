@@ -1,15 +1,15 @@
 # airflow_dags/sc2_replay_pipeline.py
 # Apache Airflow DAG for SC2 Zerg replay analysis pipeline
 
-from datetime import datetime, timedelta
-import os
 import glob
+import os
 import sqlite3
+from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
 from airflow.operators.email import EmailOperator
+from airflow.operators.python import PythonOperator
 
 # ---------------------------------------------------------------------------
 # Default arguments

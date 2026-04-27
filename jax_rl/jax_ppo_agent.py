@@ -13,10 +13,10 @@ Graceful fallback to NumPy simulation when JAX/Flax are not installed.
 
 from __future__ import annotations
 
+import functools
+import logging
 import sys
 import time
-import logging
-import functools
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
@@ -32,11 +32,13 @@ log = logging.getLogger("jax_ppo_agent")
 # Optional JAX / Flax import — graceful fallback
 # ---------------------------------------------------------------------------
 try:
+    import flax.linen as nn
     import jax
     import jax.numpy as jnp
-    from jax import grad, jit, vmap, random as jrandom
-    import flax.linen as nn
     import optax
+    from jax import grad, jit
+    from jax import random as jrandom
+    from jax import vmap
 
     JAX_AVAILABLE = True
     log.info("JAX %s / Flax available. Devices: %s", jax.__version__, jax.devices())

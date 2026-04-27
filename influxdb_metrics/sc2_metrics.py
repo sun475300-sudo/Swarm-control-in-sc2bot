@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-import os
-import time
-import random
 import logging
+import os
+import random
 import threading
-from dataclasses import dataclass, field, asdict
+import time
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Sequence
@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────
 try:
     from influxdb_client import InfluxDBClient, WriteOptions, WritePrecision
-    from influxdb_client.client.write_api import SYNCHRONOUS, ASYNCHRONOUS
-    from influxdb_client.domain.write_precision import WritePrecision as WP
     from influxdb_client.client.exceptions import InfluxDBError
+    from influxdb_client.client.write_api import ASYNCHRONOUS, SYNCHRONOUS
+    from influxdb_client.domain.write_precision import WritePrecision as WP
 
     _INFLUX_AVAILABLE = True
 except ImportError:

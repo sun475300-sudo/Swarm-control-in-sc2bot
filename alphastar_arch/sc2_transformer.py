@@ -3,11 +3,12 @@ Phase 357: AlphaStar Inspired Architecture
 SC2 Transformer with scatter network, core LSTM, pointer network, and auxiliary tasks.
 """
 
+from typing import Dict, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from typing import Dict, Optional, Tuple
 
 # --- Scatter / Entity Encoder ---
 

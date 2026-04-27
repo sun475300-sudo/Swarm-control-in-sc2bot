@@ -4,26 +4,27 @@ SC2 Bot strategy tuning via RLHF / PPO from human feedback
 """
 
 from __future__ import annotations
+
+import math
+import os
+import random
+import sys
 from dataclasses import dataclass, field
 from typing import Optional
-import math
-import random
-import os
-import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 try:
+    import torch
+    from transformers import AutoTokenizer
     from trl import (
+        AutoModelForCausalLMWithValueHead,
         PPOConfig,
         PPOTrainer,
-        AutoModelForCausalLMWithValueHead,
-        RewardTrainer,
         RewardConfig,
+        RewardTrainer,
     )
-    from transformers import AutoTokenizer
-    import torch
 
     TRL_AVAILABLE = True
 except ImportError:

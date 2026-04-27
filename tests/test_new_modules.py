@@ -5,10 +5,11 @@
 numpy, torch 등 외부 의존성이 없으면 graceful skip 처리.
 """
 
-import pytest
 import importlib
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

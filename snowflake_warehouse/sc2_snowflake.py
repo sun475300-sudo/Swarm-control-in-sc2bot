@@ -7,11 +7,12 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
+
 import snowflake.connector
 from snowflake.connector.cursor import DictCursor
 from snowflake.snowpark import Session
-from snowflake.snowpark.functions import col, avg, count, when, lit
-from snowflake.snowpark.types import IntegerType, StringType, DoubleType
+from snowflake.snowpark.functions import avg, col, count, lit, when
+from snowflake.snowpark.types import DoubleType, IntegerType, StringType
 
 logger = logging.getLogger(__name__)
 

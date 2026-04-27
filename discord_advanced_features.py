@@ -20,8 +20,8 @@ import io
 import logging
 import os
 import threading
-from datetime import datetime, time, timezone, timedelta
-from typing import Optional, Callable, Any
+from datetime import datetime, time, timedelta, timezone
+from typing import Any, Callable, Optional
 
 import discord
 from discord import app_commands
@@ -454,7 +454,8 @@ class ScheduledReporter(commands.Cog):
     def _default_portfolio_data() -> dict:
         """실제 포트폴리오 데이터 조회 (더미 데이터 대체)."""
         try:
-            import json, os
+            import json
+            import os
 
             # portfolio_history.json에서 실제 데이터 조회
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -584,8 +585,8 @@ def generate_price_chart(
         import matplotlib
 
         matplotlib.use("Agg")  # 비GUI 백엔드
-        import matplotlib.pyplot as plt
         import matplotlib.dates as mdates
+        import matplotlib.pyplot as plt
         import matplotlib.ticker as mticker
     except ImportError:
         logger.error("matplotlib가 설치되어 있지 않습니다: pip install matplotlib")
@@ -906,7 +907,8 @@ class TTSManager:
             logger.warning("TTS 합성 결과 없음")
             return False
         # 임시 파일에 저장 후 재생
-        import tempfile, os
+        import os
+        import tempfile
 
         try:
             with tempfile.NamedTemporaryFile(

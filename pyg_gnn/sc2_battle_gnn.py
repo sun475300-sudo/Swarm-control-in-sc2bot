@@ -11,8 +11,8 @@ Graceful fallback to a pure-NumPy stub when PyTorch / PyG is absent.
 
 from __future__ import annotations
 
-import math
 import logging
+import math
 import random
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -46,16 +46,16 @@ except ImportError:
 
 try:
     import torch_geometric  # noqa: F811
-    from torch_geometric.data import Data, Batch
+    from torch_geometric.data import Batch, Data
     from torch_geometric.loader import DataLoader as PyGDataLoader
     from torch_geometric.nn import (
-        GCNConv,
         GATConv,
-        SAGEConv,
+        GCNConv,
         NNConv,
-        global_mean_pool,
-        global_max_pool,
+        SAGEConv,
         global_add_pool,
+        global_max_pool,
+        global_mean_pool,
     )
     from torch_geometric.utils import to_networkx
 

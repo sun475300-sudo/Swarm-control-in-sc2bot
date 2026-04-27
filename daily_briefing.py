@@ -5,8 +5,8 @@ JARVIS 종합 일일 브리핑 (Daily Briefing)
 """
 
 import json
-import os
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -287,8 +287,8 @@ class DailyBriefing:
         # ★ WorkflowOrchestrator 기반 병렬 실행 ★
         try:
             from jarvis_features.workflow_orchestrator import (
-                WorkflowOrchestrator,
                 PipelineStep,
+                WorkflowOrchestrator,
             )
 
             orchestrator = WorkflowOrchestrator()

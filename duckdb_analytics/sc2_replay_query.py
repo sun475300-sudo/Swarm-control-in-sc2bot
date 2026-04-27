@@ -1,11 +1,12 @@
 # Phase 408: DuckDB - SC2 In-Process OLAP Analytics
 # DuckDB for fast in-process analytical queries on SC2 replay Parquet files
 
-import duckdb
-import pandas as pd
-import numpy as np
 from pathlib import Path
 from typing import Optional
+
+import duckdb
+import numpy as np
+import pandas as pd
 
 # ============================================================
 # Setup: Create DuckDB connection and sample Parquet files

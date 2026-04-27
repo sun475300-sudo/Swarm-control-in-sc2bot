@@ -3,10 +3,11 @@ Phase 421: Polars - Ultra-fast SC2 Replay Analytics
 Rust-based DataFrame library for high-performance SC2 data processing.
 """
 
-import polars as pl
-from pathlib import Path
 import json
 from datetime import datetime
+from pathlib import Path
+
+import polars as pl
 
 # ── Schema definitions ────────────────────────────────────────────────────────
 

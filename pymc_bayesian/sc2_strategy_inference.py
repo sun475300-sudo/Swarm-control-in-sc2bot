@@ -32,8 +32,8 @@ log = logging.getLogger("sc2_strategy_inference")
 # Optional PyMC / ArviZ imports — graceful fallback
 # ---------------------------------------------------------------------------
 try:
-    import pymc as pm
     import arviz as az
+    import pymc as pm
 
     PYMC_AVAILABLE = True
     log.info("PyMC %s / ArviZ %s available.", pm.__version__, az.__version__)

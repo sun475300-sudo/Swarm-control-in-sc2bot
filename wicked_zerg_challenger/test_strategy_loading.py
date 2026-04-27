@@ -1,5 +1,6 @@
-from strategy_manager import StrategyManager, EnemyRace, GamePhase
 import logging
+
+from strategy_manager import EnemyRace, GamePhase, StrategyManager
 
 logger = logging.getLogger("TestStrategyLoading")
 

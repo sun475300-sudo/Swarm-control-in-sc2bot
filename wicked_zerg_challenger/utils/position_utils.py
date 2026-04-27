@@ -6,11 +6,12 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 """
 
 from typing import TYPE_CHECKING, List, Optional, Union
+
 from sc2.position import Point2
 
 if TYPE_CHECKING:
-    from sc2.units import Units
     from sc2.unit import Unit
+    from sc2.units import Units
 
 
 def get_center_position(units: Union[List, "Units"]) -> Point2:

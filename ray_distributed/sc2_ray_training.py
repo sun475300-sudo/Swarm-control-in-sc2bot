@@ -1,19 +1,19 @@
 # Phase 403: Ray - SC2 Distributed Training
 # Ray distributed training, tuning, and serving for SC2 bot
 
-import ray
-from ray import train, tune
-from ray.train.torch import TorchTrainer
-from ray.train import ScalingConfig, RunConfig, CheckpointConfig
-from ray.tune import TuneConfig
-from ray.tune.schedulers import ASHAScheduler
-from ray.serve import deployment, serve
-import ray.serve as rs
+from typing import Any, Dict
 
+import numpy as np
+import ray
+import ray.serve as rs
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Dict, Any
+from ray import train, tune
+from ray.serve import deployment, serve
+from ray.train import CheckpointConfig, RunConfig, ScalingConfig
+from ray.train.torch import TorchTrainer
+from ray.tune import TuneConfig
+from ray.tune.schedulers import ASHAScheduler
 
 # ============================================================
 # SC2 Policy Network

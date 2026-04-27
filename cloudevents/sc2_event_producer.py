@@ -5,17 +5,18 @@ HTTP binding and Kafka binding
 SC2 event types: com.sc2bot.game.started, com.sc2bot.unit.killed
 """
 
-import uuid
 import json
 import logging
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from cloudevents.http import CloudEvent, from_dict
-from cloudevents.conversion import to_json, to_structured
-from cloudevents.kafka import to_binary as kafka_to_binary
 import httpx
 from kafka import KafkaProducer
+
+from cloudevents.conversion import to_json, to_structured
+from cloudevents.http import CloudEvent, from_dict
+from cloudevents.kafka import to_binary as kafka_to_binary
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -5,9 +5,9 @@ Stages: early_macro → army_control → multi_task → full_game
 Auto-promotes based on win rate threshold.
 """
 
-from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from enum import Enum
+from typing import Dict, List, Optional
 
 
 class CurriculumStage(Enum):

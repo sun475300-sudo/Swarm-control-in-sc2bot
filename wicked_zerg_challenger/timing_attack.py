@@ -12,9 +12,9 @@ Timing Attack Planner - 타이밍 공격 플래너 (#107)
 5. 공격 중단/철수 판단
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-from enum import Enum
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("TimingAttack")
 

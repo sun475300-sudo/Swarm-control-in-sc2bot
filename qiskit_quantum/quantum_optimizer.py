@@ -4,20 +4,21 @@ SC2 Bot strategy optimization using quantum algorithms (QAOA, VQE)
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
+
 import math
 import random
+from dataclasses import dataclass
+from typing import Optional
 
 # ─────────────────────────────────────────────
 # Qiskit availability check
 # ─────────────────────────────────────────────
 
 try:
-    from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+    from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
     from qiskit.circuit import Parameter
+    from qiskit.primitives import Estimator, Sampler
     from qiskit_aer import AerSimulator
-    from qiskit.primitives import Sampler, Estimator
 
     QISKIT_AVAILABLE = True
 except ImportError:

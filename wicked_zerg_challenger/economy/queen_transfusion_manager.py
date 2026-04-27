@@ -6,10 +6,11 @@ and optimizing healing efficiency in combat situations.
 """
 
 from typing import TYPE_CHECKING, Dict, Optional
-from sc2.ids.unit_typeid import UnitTypeId
+
 from sc2.ids.ability_id import AbilityId
-from sc2.units import Units
+from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
+from sc2.units import Units
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI

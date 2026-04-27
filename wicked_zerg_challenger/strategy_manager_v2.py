@@ -12,9 +12,11 @@ New Features:
 Inherits from StrategyManager and extends functionality.
 """
 
-from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
-from strategy_manager import StrategyManager, GamePhase, StrategyMode, EnemyRace
+from typing import Any, Dict, List, Optional, Tuple
+
+from strategy_manager import EnemyRace, GamePhase, StrategyManager, StrategyMode
+
 from utils.logger import get_logger
 
 try:
@@ -202,7 +204,7 @@ class StrategyManagerV2(StrategyManager):
             return
 
         try:
-            from core.situational_awareness import ThreatLevel, OpportunityIndex
+            from core.situational_awareness import OpportunityIndex, ThreatLevel
         except ImportError:
             return
 

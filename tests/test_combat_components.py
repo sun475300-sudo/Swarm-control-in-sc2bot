@@ -8,21 +8,22 @@ Unit Tests for Combat Components (Targeting, Micro, Boids)
 3. Boids Swarm Control (군집 제어)
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
 from typing import List
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 try:
-    import sys
     import os
+    import sys
 
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
     )
 
-    from combat.targeting import Targeting
-    from combat.micro_combat import MicroCombat
     from combat.boids_swarm_control import BoidsSwarmController
+    from combat.micro_combat import MicroCombat
+    from combat.targeting import Targeting
 except ImportError:
     pytest.skip("Combat components not available", allow_module_level=True)
 

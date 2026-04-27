@@ -4,11 +4,11 @@ Combines macro and micro decision-making via a mixture-of-experts architecture
 with task-specific heads for Zerg bot control.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-from enum import Enum
 import math
 import random
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class TaskModule(Enum):

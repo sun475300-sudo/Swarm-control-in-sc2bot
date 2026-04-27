@@ -8,11 +8,12 @@ v2 (개념 8장) + v2_new (기술 상세 10장) 통합 → 16장 슬라이드
 
 import os
 from pathlib import Path
+
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.util import Emu, Inches, Pt
 
 # ===== Paths =====
 BASE_DIR = Path(__file__).resolve().parent

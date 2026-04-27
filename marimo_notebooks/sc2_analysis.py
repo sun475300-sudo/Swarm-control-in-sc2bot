@@ -1,11 +1,12 @@
 # Phase 420: Marimo - SC2 Reactive Analysis Notebook
 # Marimo reactive notebook for SC2 match analysis with interactive widgets
 
-import marimo as mo
-import pandas as pd
-import numpy as np
-import altair as alt
 from datetime import datetime, timedelta
+
+import altair as alt
+import marimo as mo
+import numpy as np
+import pandas as pd
 
 # ============================================================
 # App Definition

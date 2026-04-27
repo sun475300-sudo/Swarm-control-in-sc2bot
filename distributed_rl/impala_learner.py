@@ -4,15 +4,16 @@ IMPALA (Importance Weighted Actor-Learner Architecture) for distributed SC2 trai
 Central learner with V-trace off-policy correction and async actor workers.
 """
 
+import queue
+import threading
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-import numpy as np
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-import queue
-import threading
 
 
 @dataclass

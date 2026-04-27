@@ -1,5 +1,6 @@
-from knowledge_manager import KnowledgeManager
 import logging
+
+from knowledge_manager import KnowledgeManager
 
 logger = logging.getLogger("TestExpandedKnowledge")
 

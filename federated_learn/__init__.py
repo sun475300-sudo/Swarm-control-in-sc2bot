@@ -1,8 +1,8 @@
 # Phase 643: Federated Learning for Privacy-Preserving SC2 Training
 from .sc2_federated_trainer import (
-    FederatedTrainer,
+    DifferentialPrivacy,
+    FedAvgAggregator,
     FederatedClient,
     FederatedServer,
-    FedAvgAggregator,
-    DifferentialPrivacy,
+    FederatedTrainer,
 )

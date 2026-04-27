@@ -3,18 +3,19 @@
 Single Game Only - 절대 하나만 실행 (Lock 파일 사용)
 """
 
-import sc2
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import time
+import logging
+import os
 import random
 import subprocess
-import os
+import sys
+import time
 from pathlib import Path
-import logging
+
+import sc2
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("SingleGameOnly")
 
@@ -23,8 +24,8 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 from game_statistics import GameStatistics
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # Lock 파일
 LOCK_FILE = Path("game_running.lock")

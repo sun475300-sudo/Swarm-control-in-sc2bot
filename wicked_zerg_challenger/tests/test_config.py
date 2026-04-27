@@ -12,26 +12,26 @@ Tests all configuration classes:
 - UpgradeConfig
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config.unit_configs import (
-    CombatConfig,
     BanelingConfig,
-    MutaliskConfig,
-    InfestorConfig,
+    CombatConfig,
     EconomyConfig,
+    InfestorConfig,
+    MutaliskConfig,
     PotentialFieldConfig,
     UpgradeConfig,
-    get_combat_config,
     get_baneling_config,
-    get_mutalisk_config,
-    get_infestor_config,
+    get_combat_config,
     get_economy_config,
+    get_infestor_config,
+    get_mutalisk_config,
     get_potential_field_config,
     get_upgrade_config,
 )

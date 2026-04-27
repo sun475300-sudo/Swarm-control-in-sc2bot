@@ -6,10 +6,10 @@ Inspects all agent modules for bugs, issues, and improvements
 import ast
 import os
 import re
-from pathlib import Path
-from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 
 @dataclass

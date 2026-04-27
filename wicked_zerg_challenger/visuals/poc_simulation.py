@@ -9,14 +9,14 @@ Swarm-Net Airspace Manager — PoC Simulation
 """
 
 import asyncio
+import logging
 import math
-import time
 import sys
+import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger("PocSimulation")
 

@@ -20,15 +20,15 @@ SC2-specific features:
 
 from __future__ import annotations
 
-import time
-import threading
 import hashlib
 import json
 import logging
-from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Tuple, Any, Callable
+import threading
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

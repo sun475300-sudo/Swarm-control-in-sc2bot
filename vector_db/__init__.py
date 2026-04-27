@@ -2,11 +2,11 @@
 """Phase 629: Vector Database for SC2 Game State Similarity."""
 
 from .sc2_vector_store import (
-    VectorStore,
-    VectorEntry,
-    LSHIndex,
-    HNSWIndex,
     GameStateEncoder,
+    HNSWIndex,
+    LSHIndex,
+    VectorEntry,
+    VectorStore,
 )
 
 __all__ = ["VectorStore", "VectorEntry", "LSHIndex", "HNSWIndex", "GameStateEncoder"]

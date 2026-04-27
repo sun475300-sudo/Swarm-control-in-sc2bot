@@ -5,21 +5,22 @@ PyIceberg catalog, partitioning, schema evolution, snapshot management.
 
 import logging
 from datetime import date, datetime
+
 from pyiceberg.catalog import load_catalog
+from pyiceberg.expressions import And, EqualTo, GreaterThanOrEqual
+from pyiceberg.partitioning import PartitionField, PartitionSpec
 from pyiceberg.schema import Schema
+from pyiceberg.table.snapshots import Operation
+from pyiceberg.transforms import DayTransform, IdentityTransform
 from pyiceberg.types import (
+    BooleanType,
+    DateType,
+    DoubleType,
+    IntegerType,
     NestedField,
     StringType,
-    IntegerType,
-    DoubleType,
-    DateType,
     TimestampType,
-    BooleanType,
 )
-from pyiceberg.partitioning import PartitionSpec, PartitionField
-from pyiceberg.transforms import DayTransform, IdentityTransform
-from pyiceberg.expressions import And, EqualTo, GreaterThanOrEqual
-from pyiceberg.table.snapshots import Operation
 
 logger = logging.getLogger(__name__)
 

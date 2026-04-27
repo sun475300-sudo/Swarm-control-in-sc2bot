@@ -17,17 +17,18 @@ Integration:
 - Energy and cooldown management
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from collections import defaultdict
+from typing import Dict, List, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
+    from sc2.bot_ai import BotAI
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
     from sc2.unit import Unit
-    from sc2.bot_ai import BotAI
 except ImportError:
     AbilityId = None
     UnitTypeId = None

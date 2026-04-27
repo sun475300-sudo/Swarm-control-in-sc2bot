@@ -10,10 +10,11 @@ Personality Module - 봇 성격 및 채팅 시스템
 5. 성격 모드 (공손, 중립, 도발적)
 """
 
+import random
 from enum import Enum
 from typing import List, Optional
+
 from utils.logger import get_logger
-import random
 
 
 class PersonalityMode(Enum):

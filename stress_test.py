@@ -4,14 +4,14 @@ Tests bot performance under heavy load with many units
 """
 
 import json
-import time
 import random
 import threading
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any
-from dataclasses import dataclass, field
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 @dataclass

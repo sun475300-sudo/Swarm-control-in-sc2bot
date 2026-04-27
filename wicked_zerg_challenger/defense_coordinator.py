@@ -14,13 +14,13 @@ Blackboard 기반 아키텍처:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 4 (Defense Consolidation)
 """
 
-from typing import Optional, Set, List
 import math
+from typing import List, Optional, Set
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     BotAI = None
@@ -29,7 +29,7 @@ except ImportError:
     Point2 = None
 
 try:
-    from game_state_blackboard import GameStateBlackboard, ThreatLevel, AuthorityMode
+    from game_state_blackboard import AuthorityMode, GameStateBlackboard, ThreatLevel
 except ImportError:
     GameStateBlackboard = None
     ThreatLevel = None

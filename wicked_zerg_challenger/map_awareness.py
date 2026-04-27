@@ -12,9 +12,9 @@ Map Awareness Manager - 맵 인식 시스템 (#106)
 5. 이동 경로 최적화를 위한 경유지 계산
 """
 
+import logging
 import math
 from typing import Any, Dict, List, Optional, Set, Tuple
-import logging
 
 logger = logging.getLogger("MapAwareness")
 

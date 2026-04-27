@@ -4,14 +4,14 @@ python-keycloak client: token exchange, user management
 Roles: admin, player, spectator
 """
 
-import os
-
-from keycloak import KeycloakOpenID, KeycloakAdmin
-from keycloak.exceptions import KeycloakAuthenticationError, KeycloakGetError
-import jwt
 import logging
+import os
 from functools import wraps
-from typing import Optional, List
+from typing import List, Optional
+
+import jwt
+from keycloak import KeycloakAdmin, KeycloakOpenID
+from keycloak.exceptions import KeycloakAuthenticationError, KeycloakGetError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -4,14 +4,15 @@ SC2 Bot Quantum Policy Network — hybrid quantum-classical RL
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional
+
 import math
 import random
+from dataclasses import dataclass, field
+from typing import Optional
 
 try:
-    import pennylane as qml
     import numpy as np
+    import pennylane as qml
 
     PENNYLANE_AVAILABLE = True
 except ImportError:

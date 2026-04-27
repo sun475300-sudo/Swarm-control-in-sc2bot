@@ -6,11 +6,12 @@ utm_slides.html 10장 → python-pptx 편집 가능 슬라이드 생성
 """
 
 from pathlib import Path
+
 from pptx import Presentation
-from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.util import Inches, Pt
 
 # ===== Color Constants =====
 BG_DARK = RGBColor(0x0B, 0x11, 0x20)

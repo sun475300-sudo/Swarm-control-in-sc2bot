@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 import os
+import sys
 
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -53,9 +53,10 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("crypto_mcp")
 
+import threading as _threading
+
 # ── 분석 쿨다운 관리 (스레드 안전) ──
 import time as _time
-import threading as _threading
 
 _analysis_cooldowns: dict = {}  # tool_name -> last_call_timestamp
 _cooldown_lock = _threading.Lock()

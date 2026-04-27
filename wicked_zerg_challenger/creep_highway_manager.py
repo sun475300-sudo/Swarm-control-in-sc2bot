@@ -8,12 +8,13 @@ Creep Highway Manager - 기지 간 연결 우선 점막 확장
 - 빠른 증원 및 재배치
 """
 
-from typing import List, Dict, Set, Tuple, Optional
+from typing import Dict, List, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
 

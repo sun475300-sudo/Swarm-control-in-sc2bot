@@ -3,9 +3,10 @@ Phase 439: Modal - Serverless Cloud SC2 Training
 GPU-accelerated serverless training and inference on Modal's cloud.
 """
 
-import modal
-from modal import App, Volume, Image, Period, web_endpoint
 from pathlib import Path
+
+import modal
+from modal import App, Image, Period, Volume, web_endpoint
 
 # ── Modal App and infrastructure ──────────────────────────────────────────────
 
@@ -46,10 +47,11 @@ def train_sc2_model(
     Train SC2 strategy model on Modal A100 GPU.
     Checkpoints are saved to the persistent volume.
     """
-    import torch
-    import numpy as np
     import json
     from datetime import datetime
+
+    import numpy as np
+    import torch
 
     print(f"[Modal] Training SC2 model on GPU: {torch.cuda.get_device_name(0)}")
 

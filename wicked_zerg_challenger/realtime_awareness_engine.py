@@ -13,10 +13,10 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 5. 학습 피드백 (Learning Feedback)
 """
 
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
-import time
 import logging
+import time
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
 

@@ -4,9 +4,9 @@ Opponent-history-aware strategy selection with Bayesian model updates
 and counter-strategy logic for common SC2 archetypes.
 """
 
+import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-import math
 
 # ------------------------------------------------------------------
 # Known strategy archetypes the bot must counter

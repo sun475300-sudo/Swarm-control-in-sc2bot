@@ -11,20 +11,20 @@ Tests cover:
 - Integration with IntelManager
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
-import os
-import tempfile
 import json
+import os
+import sys
+import tempfile
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from opponent_modeling import (
-    OpponentModeling,
-    OpponentModel,
     GameHistory,
+    OpponentModel,
+    OpponentModeling,
     OpponentStyle,
     StrategySignal,
 )

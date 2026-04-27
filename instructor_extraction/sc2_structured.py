@@ -3,11 +3,12 @@ Phase 431: Instructor - Structured SC2 Strategy Extraction
 Uses Pydantic + OpenAI to extract structured strategy data from game commentary.
 """
 
-import instructor
-from openai import OpenAI, AsyncOpenAI
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
 import asyncio
+from typing import Optional
+
+import instructor
+from openai import AsyncOpenAI, OpenAI
+from pydantic import BaseModel, Field, field_validator
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
 

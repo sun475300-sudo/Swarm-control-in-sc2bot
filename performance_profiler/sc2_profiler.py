@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import gc
 import os
-import sys
-import time
-import threading
 import statistics
+import sys
+import threading
+import time
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field

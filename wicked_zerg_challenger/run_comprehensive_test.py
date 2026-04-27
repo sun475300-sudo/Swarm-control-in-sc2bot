@@ -4,17 +4,18 @@
 종합 테스트 - 모든 난이도에서 승률 측정
 """
 
-import logging
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty, Result
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
-import os
-import time
 import json
+import logging
+import os
+import sys
+import time
 from datetime import datetime
+
+from sc2 import maps
+from sc2.data import Difficulty, Race, Result
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger(__name__)
 

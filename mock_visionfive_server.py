@@ -12,13 +12,14 @@ Features:
 """
 
 import asyncio
-import time
 import base64
-from aiohttp import web
-from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
-import random
 import logging
+import random
+import time
+from io import BytesIO
+
+from aiohttp import web
+from PIL import Image, ImageDraw, ImageFont
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

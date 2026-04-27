@@ -9,17 +9,18 @@ Purpose: Stable and optimized automated build order execution
 - Win-rate based adjustment
 """
 
-from typing import Optional, List, Dict, Tuple
-from enum import Enum
-from knowledge_manager import KnowledgeManager  # NEW
 import logging
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+from knowledge_manager import KnowledgeManager  # NEW
 
 logger = logging.getLogger("BuildOrderSystem")
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
 

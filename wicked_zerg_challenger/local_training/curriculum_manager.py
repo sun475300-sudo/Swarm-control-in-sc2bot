@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import json
-import os
-from pathlib import Path
-import time
 import logging
+import os
+import time
+from pathlib import Path
 
 logger = logging.getLogger("CurriculumManager")
 

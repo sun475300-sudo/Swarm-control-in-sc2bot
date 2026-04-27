@@ -3,20 +3,21 @@ Phase 425: Dagster - SC2 ML Data Assets
 Declarative data assets for the full SC2 machine learning pipeline.
 """
 
+from datetime import date, timedelta
+
+import numpy as np
+import pandas as pd
 from dagster import (
-    asset,
-    AssetIn,
     AssetCheckResult,
-    asset_check,
+    AssetIn,
+    AssetSelection,
     DailyPartitionsDefinition,
     MetadataValue,
     Output,
+    asset,
+    asset_check,
     define_asset_job,
-    AssetSelection,
 )
-import pandas as pd
-import numpy as np
-from datetime import date, timedelta
 
 # ── Partition definition ──────────────────────────────────────────────────────
 

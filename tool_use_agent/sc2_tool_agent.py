@@ -10,11 +10,12 @@ is reached.
 
 from __future__ import annotations
 
-import re
 import json
-import time
 import logging
+import re
+import time
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -24,7 +25,6 @@ from typing import (
     Tuple,
     Union,
 )
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 

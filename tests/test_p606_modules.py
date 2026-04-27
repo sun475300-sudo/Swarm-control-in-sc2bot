@@ -5,10 +5,11 @@ P606+ 대규모 모듈 테스트 — 20개 모듈 import/초기화 검증
 numpy/torch 미설치 시 graceful skip 처리.
 """
 
-import pytest
 import importlib
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

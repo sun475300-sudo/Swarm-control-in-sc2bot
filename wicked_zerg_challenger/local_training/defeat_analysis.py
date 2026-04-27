@@ -13,10 +13,10 @@ Defeat Analysis System - 패배 원인 분석 및 학습
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger("DefeatAnalysis")
 

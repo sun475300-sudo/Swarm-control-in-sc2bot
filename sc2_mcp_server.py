@@ -3,9 +3,10 @@ import json
 import logging
 import os
 import subprocess
+import urllib.error
 import urllib.parse
 import urllib.request
-import urllib.error
+
 from mcp.server.fastmcp import FastMCP
 
 logger = logging.getLogger(__name__)

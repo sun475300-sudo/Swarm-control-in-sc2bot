@@ -3,13 +3,14 @@ Phase 435: LiteLLM - Unified LLM Gateway for SC2 AI
 Single interface for OpenAI, Anthropic, Gemini with fallback and cost tracking.
 """
 
-import litellm
-from litellm import acompletion, completion, Router
-from litellm.utils import ModelResponse
 import asyncio
 import json
 import time
 from dataclasses import dataclass, field
+
+import litellm
+from litellm import Router, acompletion, completion
+from litellm.utils import ModelResponse
 
 # ── LiteLLM configuration ─────────────────────────────────────────────────────
 

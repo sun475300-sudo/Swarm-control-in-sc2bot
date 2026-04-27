@@ -4,10 +4,10 @@ Test Execution Log Tracker - Tracks all test executions with timestamps
 
 import json
 import os
-from pathlib import Path
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any
-from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 @dataclass

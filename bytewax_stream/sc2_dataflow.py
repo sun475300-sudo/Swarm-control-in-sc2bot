@@ -4,20 +4,21 @@ Real-time APM calculation and win rate sliding window with Bytewax dataflow.
 """
 
 import logging
-from datetime import timedelta, datetime, timezone
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from typing import Optional
-from bytewax.dataflow import Dataflow
+
 import bytewax.operators as op
-from bytewax.connectors.stdio import StdOutSink
 from bytewax.connectors.demo import RandomMetricSource
-from bytewax.testing import TestingSource, run_main
+from bytewax.connectors.stdio import StdOutSink
+from bytewax.dataflow import Dataflow
 from bytewax.operators.windowing import (
     EventClock,
     SlidingWindower,
     TumblingWindower,
     fold_window,
 )
+from bytewax.testing import TestingSource, run_main
 
 logger = logging.getLogger(__name__)
 

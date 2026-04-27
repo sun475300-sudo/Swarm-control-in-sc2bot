@@ -9,11 +9,11 @@ Features:
 - Low overhead design for production use
 """
 
-import time
 import functools
-from collections import defaultdict, deque
-from typing import Dict, List, Callable, Any
 import logging
+import time
+from collections import defaultdict, deque
+from typing import Any, Callable, Dict, List
 
 
 class PerformanceProfiler:

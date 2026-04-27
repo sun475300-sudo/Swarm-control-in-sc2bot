@@ -80,8 +80,8 @@ class LLMTradeAdvisor:
     def _call_claude_api_raw(self, prompt: str) -> str:
         """anthropic 라이브러리 없이 직접 HTTP 호출"""
         try:
-            import urllib.request
             import urllib.error
+            import urllib.request
 
             url = "https://api.anthropic.com/v1/messages"
             headers = {

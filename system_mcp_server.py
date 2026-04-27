@@ -7,10 +7,10 @@ try:
     import cv2
 except ImportError:
     cv2 = None
+import ast
 import base64
 import json
 import math
-import ast
 import operator
 import socket
 import subprocess
@@ -18,8 +18,8 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from urllib.request import urlopen, Request
 from urllib.parse import quote, urlparse
+from urllib.request import Request, urlopen
 
 import psutil
 from mcp.server.fastmcp import FastMCP
@@ -86,8 +86,9 @@ async def capture_screenshot(
     """스크린샷을 캡처합니다. x, y, width, height를 지정하면 해당 영역만 캡처합니다.
     모두 -1(기본값)이면 전체 화면을 캡처합니다."""
     try:
-        import pyautogui
         from io import BytesIO
+
+        import pyautogui
 
         # 전체 화면 캡처
         if x == -1 and y == -1 and width == -1 and height == -1:
@@ -447,7 +448,7 @@ async def weather(city: str = "Seoul") -> str:
     except json.JSONDecodeError:
         return "날씨 조회 실패: 서버 응답을 파싱할 수 없습니다 (잘못된 JSON)."
     except Exception as e:
-        from urllib.error import URLError, HTTPError
+        from urllib.error import HTTPError, URLError
 
         if isinstance(e, HTTPError):
             return f"날씨 조회 실패: HTTP 오류 {e.code} - {e.reason}"

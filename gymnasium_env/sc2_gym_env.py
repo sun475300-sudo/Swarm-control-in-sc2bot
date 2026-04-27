@@ -4,15 +4,16 @@ SC2 Bot custom Gymnasium environment for RL training
 """
 
 from __future__ import annotations
-from typing import Any, Optional, SupportsFloat
+
 import math
 import random
 from dataclasses import dataclass, field
+from typing import Any, Optional, SupportsFloat
 
 try:
     import gymnasium as gym
-    from gymnasium import spaces
     import numpy as np
+    from gymnasium import spaces
 
     GYM_AVAILABLE = True
 except ImportError:

@@ -32,7 +32,7 @@ import random
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Sequence, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Sequence, Set, Tuple
 
 import numpy as np
 

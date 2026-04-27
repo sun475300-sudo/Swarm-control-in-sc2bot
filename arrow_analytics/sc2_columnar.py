@@ -1,15 +1,16 @@
 # Phase 409: Apache Arrow - SC2 Columnar Data Processing
 # pyarrow columnar processing, Flight service, and Parquet storage
 
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.flight as flight
-import pyarrow.compute as pc
-import numpy as np
-import pandas as pd
+import threading
 from pathlib import Path
 from typing import Iterator, Optional
-import threading
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.compute as pc
+import pyarrow.flight as flight
+import pyarrow.parquet as pq
 
 # ============================================================
 # Schema Definition

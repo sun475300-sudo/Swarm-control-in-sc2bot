@@ -9,11 +9,12 @@ SC2-Swarm 캡스톤 디자인: 이해하기 쉬운 3D 시각화
 python generate_clear_visuals.py
 """
 
-import os
+import logging
 import math
+import os
+
 import numpy as np
 import plotly.graph_objects as go
-import logging
 
 logger = logging.getLogger("GenerateClearVisuals")
 

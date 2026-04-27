@@ -5,9 +5,10 @@ Prioritized experience replay buffer for SC2 training data with SumTree.
 
 import os
 import pickle
-import numpy as np
 from dataclasses import dataclass
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass

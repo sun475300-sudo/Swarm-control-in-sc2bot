@@ -19,12 +19,12 @@ Scoring Domains:
 """
 
 import json
+import logging
 import os
 import time
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-import logging
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("ScoringSystem")
 

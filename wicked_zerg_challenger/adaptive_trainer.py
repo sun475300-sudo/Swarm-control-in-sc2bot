@@ -3,19 +3,20 @@
 Adaptive Trainer - 각 난이도/종족마다 90% 승률 달성 반복 학습
 """
 
-import sc2
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import time
+import logging
+import os
 import random
 import subprocess
-import os
+import sys
+import time
 from pathlib import Path
+
+import sc2
 from game_statistics import GameStatistics
-import logging
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("AdaptiveTrainer")
 

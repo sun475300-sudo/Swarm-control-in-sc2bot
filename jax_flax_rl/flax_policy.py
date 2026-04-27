@@ -4,22 +4,23 @@ SC2 Bot policy network with JAX JIT, Flax, Optax
 """
 
 from __future__ import annotations
-from typing import Any, Callable, Optional, Tuple
+
 import math
-import random
 import os
+import random
 import sys
+from typing import Any, Callable, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
+from gymnasium_env.sc2_gym_env import ACT_DIM, OBS_DIM, SC2ZergEnv
 
 try:
+    import flax.linen as nn
     import jax
     import jax.numpy as jnp
-    from jax import jit, grad, vmap, value_and_grad
-    import flax.linen as nn
-    from flax.training import train_state
     import optax
+    from flax.training import train_state
+    from jax import grad, jit, value_and_grad, vmap
 
     JAX_AVAILABLE = True
 except ImportError:

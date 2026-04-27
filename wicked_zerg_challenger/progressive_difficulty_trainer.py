@@ -15,19 +15,20 @@ Progressive Difficulty Trainer - 점진적 난이도 상승 학습 시스템
 10. CheatInsane: 20게임, 90% 승률 목표
 """
 
+import json
+import logging
+import random
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
 import sc2
 from sc2 import maps
-from sc2.player import Bot, Computer
+from sc2.data import Difficulty, Race
 from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import random
-import json
-import subprocess
-import time
-from pathlib import Path
-from datetime import datetime
-import logging
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("ProgressiveDifficultyTrainer")
 

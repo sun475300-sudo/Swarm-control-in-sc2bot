@@ -3,10 +3,10 @@
 
 from .sc2_airsim_swarm import (
     AirSimDrone,
-    SwarmFormation,
-    FlightController,
-    CollisionAvoidance,
     AirSimSwarm,
+    CollisionAvoidance,
+    FlightController,
+    SwarmFormation,
 )
 
 __all__ = [

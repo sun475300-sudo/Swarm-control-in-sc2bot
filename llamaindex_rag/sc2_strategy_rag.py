@@ -1,22 +1,23 @@
 # Phase 410: LlamaIndex - SC2 Strategy RAG
 # Retrieval Augmented Generation for SC2 strategy guides and match analysis
 
+from typing import List
+
+import chromadb
 from llama_index.core import (
-    VectorStoreIndex,
-    SimpleDirectoryReader,
     Document,
     Settings,
+    SimpleDirectoryReader,
     StorageContext,
+    VectorStoreIndex,
 )
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.response_synthesizers import get_response_synthesizer
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.llms.anthropic import Anthropic
+from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-import chromadb
-from typing import List
+from llama_index.llms.anthropic import Anthropic
+from llama_index.vector_stores.chroma import ChromaVectorStore
 
 # ============================================================
 # Strategy Knowledge Base

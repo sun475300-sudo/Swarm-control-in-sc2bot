@@ -4,15 +4,16 @@ Run a single game for testing.
 단일 게임 테스트용 스크립트.
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 import argparse
-import sys
-import os
 import logging
+import os
+import sys
+
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("RunSingleGame")
 

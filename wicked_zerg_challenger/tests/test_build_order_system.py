@@ -9,17 +9,17 @@ Tests:
 - Knowledge JSON integrity (all builds, unit ratios)
 """
 
-import unittest
-from unittest.mock import Mock
-import sys
-import os
 import json
+import os
+import sys
+import unittest
 from pathlib import Path
+from unittest.mock import Mock
 
 # Add bot directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from build_order_system import BuildOrderSystem, BuildOrderType, BuildOrderStep
+from build_order_system import BuildOrderStep, BuildOrderSystem, BuildOrderType
 
 
 class MockBot:

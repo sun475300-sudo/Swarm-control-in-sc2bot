@@ -15,8 +15,8 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from urllib.request import urlopen, Request
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 # ═══════════════════════════════════════════════════
 #  설정

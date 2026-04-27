@@ -1,7 +1,7 @@
 import json
+import logging
 import os
 from collections import defaultdict
-import logging
 
 logger = logging.getLogger("AnalyzeStats")
 

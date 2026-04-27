@@ -14,18 +14,19 @@ DRONAI(osamhack2021) 스타일의 움직이는 시각 자료 생성
     python generate_animated_gifs.py
 """
 
-import os
-import math
-import numpy as np
-import matplotlib
 import logging
+import math
+import os
+
+import matplotlib
+import numpy as np
 
 logger = logging.getLogger("GenerateAnimatedGifs")
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
-from matplotlib.patches import FancyArrowPatch, Circle
+from matplotlib.patches import Circle, FancyArrowPatch
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 DPI = 100

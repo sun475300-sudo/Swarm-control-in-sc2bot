@@ -4,8 +4,9 @@ Unit Tests for Harassment Coordinator
 Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 """
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -51,8 +52,8 @@ class TestHarassmentCoordinator:
         """Setup before each test"""
         try:
             from wicked_zerg_challenger.combat.harassment_coordinator import (
-                HarassmentCoordinator,
                 AggressiveMode,
+                HarassmentCoordinator,
             )
 
             self.bot = MockBot()

@@ -5,7 +5,7 @@ Reward shaping functions for SC2 bot training with curriculum scheduling.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional, Callable
+from typing import Callable, Dict, Optional
 
 
 class RewardMode(Enum):

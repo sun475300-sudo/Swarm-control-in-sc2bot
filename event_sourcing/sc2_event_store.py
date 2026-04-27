@@ -19,16 +19,16 @@ SC2 event types:
 
 from __future__ import annotations
 
-import time
-import uuid
 import copy
 import json
-import threading
 import logging
-from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Any, Callable, Type
+import threading
+import time
+import uuid
 from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Type
 
 logger = logging.getLogger(__name__)
 

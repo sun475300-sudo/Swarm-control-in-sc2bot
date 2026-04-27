@@ -13,8 +13,8 @@ Features:
 - Configurable gains
 """
 
-from typing import Tuple, Optional
 import math
+from typing import Optional, Tuple
 
 
 class PIDController:

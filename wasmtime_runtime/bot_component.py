@@ -4,22 +4,23 @@ SC2 Bot using wasmtime-py with Component Model support
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
+
 import struct
 import time
+from dataclasses import dataclass
+from typing import Optional
 
 try:
     import wasmtime
     from wasmtime import (
-        Store,
         Engine,
-        Module,
-        Linker,
-        WasiConfig,
-        FuncType,
-        ValType,
         Func,
+        FuncType,
+        Linker,
+        Module,
+        Store,
+        ValType,
+        WasiConfig,
     )
 
     WASMTIME_AVAILABLE = True

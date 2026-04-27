@@ -12,13 +12,13 @@ Training Pipeline - 모델 버전 관리 + 자동 배포
 """
 
 import json
+import logging
 import os
 import shutil
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger("TrainingPipeline")
 

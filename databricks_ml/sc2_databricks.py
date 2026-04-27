@@ -3,23 +3,23 @@ Phase 459: Databricks - SC2 MLflow + Delta + Spark Integration
 Databricks Connect for remote cluster, AutoML, Feature Store.
 """
 
+import logging
 import os
 
-import logging
 import mlflow
 import mlflow.sklearn
 import mlflow.spark
-from mlflow.tracking import MlflowClient
-from databricks.sdk import WorkspaceClient
-from databricks.feature_engineering import FeatureEngineeringClient, FeatureLookup
-from databricks.connect import DatabricksSession
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, avg, count, stddev
-import pandas as pd
 import numpy as np
+import pandas as pd
+from databricks.connect import DatabricksSession
+from databricks.feature_engineering import FeatureEngineeringClient, FeatureLookup
+from databricks.sdk import WorkspaceClient
+from mlflow.tracking import MlflowClient
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import avg, col, count, stddev, when
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 

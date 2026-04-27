@@ -3,17 +3,18 @@ Phase 449: Netflix Conductor - SC2 Bot CI/CD Pipeline Workflow
 Workflow definition with JSON task list and Python worker implementation.
 """
 
+import json
 import logging
 import time
-import json
+
 import requests
+from conductor.client.automator.task_handler import TaskHandler
 from conductor.client.configuration.configuration import Configuration
 from conductor.client.configuration.settings.authentication_settings import (
     AuthenticationSettings,
 )
-from conductor.client.worker.worker_task import worker_task
-from conductor.client.automator.task_handler import TaskHandler
 from conductor.client.http.models import StartWorkflowRequest
+from conductor.client.worker.worker_task import worker_task
 
 logger = logging.getLogger(__name__)
 

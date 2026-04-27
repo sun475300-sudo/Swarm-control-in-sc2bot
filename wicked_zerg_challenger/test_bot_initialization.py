@@ -4,9 +4,9 @@
 Test script to verify bot initialization and manager connections.
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 
 logger = logging.getLogger("TestBotInitialization")
 

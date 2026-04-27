@@ -15,25 +15,25 @@ Tests all 11 utility functions:
 - can_unit_attack
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from utils.unit_helpers import (
+    calculate_unit_supply,
+    can_unit_attack,
+    execute_unit_action,
+    filter_workers_by_task,
     find_nearby_enemies,
     get_health_ratio,
     get_shield_ratio,
-    filter_workers_by_task,
-    execute_unit_action,
-    calculate_unit_supply,
-    is_unit_idle,
-    is_unit_attacking,
     get_unit_range,
-    can_unit_attack,
+    is_unit_attacking,
+    is_unit_idle,
 )
 
 

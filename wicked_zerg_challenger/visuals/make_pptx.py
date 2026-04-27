@@ -5,15 +5,16 @@ python-pptx로 텍스트 + 도형 기반의 편집 가능한 슬라이드 생성
 다크 블루 배경 + Cyan/Green 악센트 테마
 """
 
+import logging
 import os
 from pathlib import Path
+
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu, Cm
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.oxml.ns import qn
-import logging
+from pptx.util import Cm, Emu, Inches, Pt
 
 logger = logging.getLogger("MakePptx")
 

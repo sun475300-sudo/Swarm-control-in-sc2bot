@@ -20,20 +20,22 @@ except ImportError:
         pass
 
 
-from bot_step_integration import BotStepIntegrator
-from utils.logger import setup_logger
-from typing import Optional, List, Dict, Any
-from pathlib import Path
-from blackboard import Blackboard
-from difficulty_progression import DifficultyProgression
-from personality_module import PersonalityModule, PersonalityMode
-import traceback
+import glob as glob_mod
 import json
-import time
 import os
 import shutil
-import glob as glob_mod
+import time
+import traceback
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from blackboard import Blackboard
+from bot_step_integration import BotStepIntegrator
+from difficulty_progression import DifficultyProgression
+from personality_module import PersonalityMode, PersonalityModule
+
+from utils.logger import setup_logger
 
 
 class WickedZergBotProImpl(BotAI):
@@ -255,8 +257,9 @@ class WickedZergBotProImpl(BotAI):
         self.rl_agent = None
         if self.train_mode:
             try:
-                from local_training.rl_agent import RLAgent
                 import os as _os
+
+                from local_training.rl_agent import RLAgent
 
                 initial_lr = self.learning_rate if self.learning_rate else 0.001
                 model_path = str(

@@ -1,27 +1,29 @@
 # Phase 406: Apache Flink - SC2 Stream Processing
 # PyFlink DataStream API for real-time SC2 game event processing
 
+import json
+from datetime import timedelta
+
+from pyflink.cep import CEP
+from pyflink.cep import pattern as cep_pattern
+from pyflink.common import Row, Time, Types, WatermarkStrategy
+from pyflink.common.serialization import SimpleStringSchema
 from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
 from pyflink.datastream.connectors.kafka import (
     FlinkKafkaConsumer,
     FlinkKafkaProducer,
 )
+from pyflink.datastream.functions import (
+    FlatMapFunction,
+    KeyedProcessFunction,
+    MapFunction,
+    ProcessWindowFunction,
+    ReduceFunction,
+)
 from pyflink.datastream.window import (
     SlidingEventTimeWindows,
     TumblingEventTimeWindows,
 )
-from pyflink.datastream.functions import (
-    MapFunction,
-    FlatMapFunction,
-    ReduceFunction,
-    ProcessWindowFunction,
-    KeyedProcessFunction,
-)
-from pyflink.cep import pattern as cep_pattern, CEP
-from pyflink.common import Time, Types, Row, WatermarkStrategy
-from pyflink.common.serialization import SimpleStringSchema
-import json
-from datetime import timedelta
 
 # ============================================================
 # Environment Setup

@@ -7,10 +7,10 @@ Usage:
     python run_scouting_tests.py
 """
 
-import sys
-import os
-import unittest
 import logging
+import os
+import sys
+import unittest
 
 logger = logging.getLogger("RunScoutingTests")
 

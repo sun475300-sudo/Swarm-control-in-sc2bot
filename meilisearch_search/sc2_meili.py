@@ -1,8 +1,9 @@
 # SC2 Bot - Meilisearch Instant Search
 # Strategy database with faceted search, filtering, and typo tolerance
 
+from typing import Any, Dict, List, Optional
+
 import meilisearch
-from typing import List, Dict, Any, Optional
 
 # --- Client Setup ---
 client = meilisearch.Client("http://localhost:7700", "sc2-meili-master-key")

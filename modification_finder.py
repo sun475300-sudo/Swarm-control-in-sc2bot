@@ -4,12 +4,12 @@ Runs all tests and identifies required modifications
 """
 
 import json
-import time
 import os
-from pathlib import Path
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any
-from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 @dataclass

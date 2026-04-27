@@ -4,11 +4,12 @@ Lightweight BaaS using PocketBase REST API with real-time subscriptions.
 """
 
 import asyncio
-import logging
-import httpx
 import json
-from dataclasses import dataclass, asdict
-from typing import Optional, Callable
+import logging
+from dataclasses import asdict, dataclass
+from typing import Callable, Optional
+
+import httpx
 import websockets
 
 logger = logging.getLogger(__name__)

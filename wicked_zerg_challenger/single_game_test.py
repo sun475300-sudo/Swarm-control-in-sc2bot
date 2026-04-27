@@ -3,17 +3,18 @@
 Single Game Test - 단일 게임 테스트 (창 하나만)
 """
 
-import sc2
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import time
+import logging
 import random
 import subprocess
+import sys
+import time
 from pathlib import Path
-import logging
+
+import sc2
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("SingleGameTest")
 

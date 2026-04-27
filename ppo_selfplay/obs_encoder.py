@@ -4,10 +4,11 @@ Neural network observation encoder for SC2 game state.
 Combines spatial (minimap), entity (units), and scalar (resources) encodings.
 """
 
+from typing import Dict, Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, Optional
 
 
 class SpatialEncoder(nn.Module):

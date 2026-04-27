@@ -3,10 +3,11 @@ Phase 443: TigerBeetle - SC2 Resource Ledger
 Double-entry bookkeeping for SC2 mineral/gas economy tracking.
 """
 
-import tigerbeetle as tb
+import logging
 from dataclasses import dataclass
 from enum import IntEnum
-import logging
+
+import tigerbeetle as tb
 
 logger = logging.getLogger(__name__)
 

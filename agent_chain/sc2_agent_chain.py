@@ -8,9 +8,12 @@ complex strategy pipelines from simple, reusable agent nodes.
 
 from __future__ import annotations
 
-import time
 import logging
+import time
+from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -20,9 +23,6 @@ from typing import (
     Tuple,
     Union,
 )
-from enum import Enum
-from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 

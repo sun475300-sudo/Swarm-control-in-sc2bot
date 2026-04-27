@@ -3,8 +3,8 @@ CommandDispatcher — 등록형 명령 핸들러 디스패처
 _try_local_response()의 if-elif 체인을 점진적으로 이관합니다.
 """
 
-from typing import Callable, List, Optional, Tuple, Union
 import logging
+from typing import Callable, List, Optional, Tuple, Union
 
 logger = logging.getLogger("jarvis.command_dispatcher")
 

@@ -4,8 +4,9 @@ Keras Sequential model that predicts battle outcome (win/loss) from SC2 game fea
 Features: army_supply, enemy_supply, minerals, gas, tech_level, time_seconds
 """
 
-import numpy as np
 import os
+
+import numpy as np
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 

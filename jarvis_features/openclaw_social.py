@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 """OpenClaw 소셜/통신 스킬 Cog (twitter, instagram, slack, email, notion, trello, remindme)."""
 
+import logging
+import os
+import re
+import sys
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-import logging
-import re
-import sys, os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.openclaw_helper import get_openclaw_helper, chunk_text
+from utils.openclaw_helper import chunk_text, get_openclaw_helper
 
 logger = logging.getLogger("jarvis.openclaw.social")
 

@@ -13,21 +13,22 @@ Usage:
     python run_tournament.py --quick             # 퀵 모드 (6게임)
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
-import os
-import json
-import time
-import random
 import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional
+import json
 import logging
+import os
+import random
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("RunTournament")
 

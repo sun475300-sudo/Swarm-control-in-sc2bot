@@ -12,6 +12,7 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 4. 모델 저장/로드
 """
 
+import logging
 import os
 import shutil
 from datetime import datetime
@@ -19,7 +20,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import logging
 
 logger = logging.getLogger("RlAgent")
 

@@ -6,11 +6,12 @@ Multi-day training sessions with signals, child workflows, and saga support.
 import asyncio
 import logging
 from dataclasses import dataclass
-from cadence.workflow import workflow_method, signal_method, query_method, Workflow
-from cadence.activity import activity_method, Activity
-from cadence.workerfactory import WorkerFactory
-from cadence.cadence_types import WorkflowIdReusePolicy
+
 import cadence
+from cadence.activity import Activity, activity_method
+from cadence.cadence_types import WorkflowIdReusePolicy
+from cadence.workerfactory import WorkerFactory
+from cadence.workflow import Workflow, query_method, signal_method, workflow_method
 
 logger = logging.getLogger(__name__)
 

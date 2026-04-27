@@ -11,8 +11,10 @@
 """
 
 from typing import List, Optional, Set
-from sc2.position import Point2
+
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
 from utils.logger import get_logger
 
 

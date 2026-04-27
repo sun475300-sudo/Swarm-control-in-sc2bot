@@ -2,20 +2,21 @@
 # Microsoft Semantic Kernel for goal-directed SC2 strategy execution
 
 import asyncio
+import json
+from typing import Annotated
+
 import semantic_kernel as sk
 from semantic_kernel.connectors.ai.anthropic import AnthropicChatCompletion
+from semantic_kernel.contents import ChatHistory
 from semantic_kernel.core_plugins import (
-    TextPlugin,
     MathPlugin,
+    TextPlugin,
 )
 from semantic_kernel.functions import kernel_function
-from semantic_kernel.contents import ChatHistory
 from semantic_kernel.planners.function_calling_stepwise_planner import (
     FunctionCallingStepwisePlanner,
     FunctionCallingStepwisePlannerOptions,
 )
-from typing import Annotated
-import json
 
 # ============================================================
 # Plugins (Native Functions)

@@ -9,11 +9,13 @@ Base Destruction Coordinator - 적 기지 완전 파괴 시스템
 4. 완전 승리 보장
 """
 
-from typing import List, Dict, Optional, Set, Tuple
-from sc2.position import Point2
-from sc2.ids.unit_typeid import UnitTypeId
-from utils.logger import get_logger
 import time
+from typing import Dict, List, Optional, Set, Tuple
+
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
+from utils.logger import get_logger
 
 
 class EnemyBase:

@@ -3,9 +3,10 @@ Phase 441: Memgraph - SC2 Unit Relationship Graph Analysis
 In-memory graph DB using gqlalchemy for Cypher queries.
 """
 
-from gqlalchemy import Memgraph, Node, Relationship, Field
-from typing import Optional
 import logging
+from typing import Optional
+
+from gqlalchemy import Field, Memgraph, Node, Relationship
 
 logger = logging.getLogger(__name__)
 

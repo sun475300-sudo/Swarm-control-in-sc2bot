@@ -9,8 +9,8 @@ Feature #91: Nydus Worm 전술 매니저
 4. 다중 나이더스 출구 조율
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId

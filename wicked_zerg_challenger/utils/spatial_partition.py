@@ -11,8 +11,8 @@ Features:
 - Dynamic grid sizing
 """
 
-from typing import Dict, List, Optional, Set, Tuple, Any
 import math
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 class SpatialGrid:

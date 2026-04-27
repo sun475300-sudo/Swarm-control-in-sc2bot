@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
-import numpy as np
-from pathlib import Path
 import logging
+from pathlib import Path
+
+import numpy as np
 
 logger = logging.getLogger("ShowLearnedData")
 

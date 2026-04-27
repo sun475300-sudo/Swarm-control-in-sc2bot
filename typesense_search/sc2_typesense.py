@@ -1,8 +1,9 @@
 # SC2 Bot - Typesense Vector + Full-Text Hybrid Search
 # Build order collection with BM25 + semantic vector hybrid search
 
+from typing import Any, Dict, List, Optional
+
 import typesense
-from typing import List, Optional, Dict, Any
 
 # --- Client Setup ---
 client = typesense.Client(

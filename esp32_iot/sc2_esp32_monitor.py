@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 import json
-import time
-import struct
 import logging
+import struct
 import threading
+import time
+from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Callable, Any
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 

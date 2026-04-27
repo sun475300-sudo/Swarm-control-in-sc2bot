@@ -13,11 +13,11 @@ Usage:
     python wicked_zerg_challenger/tools/package_for_aiarena.py
 """
 
-import zipfile
-import os
-from pathlib import Path
-from datetime import datetime
 import logging
+import os
+import zipfile
+from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger("PackageForAiarena")
 

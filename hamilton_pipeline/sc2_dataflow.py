@@ -3,10 +3,10 @@ Phase 430: Hamilton - Declarative SC2 Feature Engineering Dataflow
 Functions-as-nodes dataflow for reproducible SC2 feature pipelines.
 """
 
-import pandas as pd
 import numpy as np
-from hamilton.function_modifiers import tag, extract_columns, check_output
-from hamilton import driver, base
+import pandas as pd
+from hamilton import base, driver
+from hamilton.function_modifiers import check_output, extract_columns, tag
 
 # ── Raw input nodes ───────────────────────────────────────────────────────────
 

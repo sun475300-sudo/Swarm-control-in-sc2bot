@@ -4,13 +4,14 @@ Hierarchical action decoding for SC2 bot with autoregressive decoding,
 action masking, and a pointer network for unit selection.
 """
 
+from dataclasses import dataclass
+from enum import IntEnum
+from typing import Dict, List, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
-from enum import IntEnum
 
 
 class ActionType(IntEnum):

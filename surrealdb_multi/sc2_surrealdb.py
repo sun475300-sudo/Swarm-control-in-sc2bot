@@ -6,6 +6,7 @@ Document + graph relations using surrealdb Python async client.
 import asyncio
 import logging
 from datetime import datetime
+
 from surrealdb import Surreal
 
 logger = logging.getLogger(__name__)

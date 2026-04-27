@@ -23,14 +23,15 @@ Unit Tests for EconomyManager
 18. 가스 타이밍 최적화
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
 from typing import List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Economy Manager 임포트
 try:
-    import sys
     import os
+    import sys
 
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")

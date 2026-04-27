@@ -4,10 +4,11 @@ SC2 Bot drone swarm simulation mapped to Isaac robotics framework
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional
+
 import math
 import random
+from dataclasses import dataclass, field
+from typing import Optional
 
 try:
     import omni.isaac.lab  # type: ignore

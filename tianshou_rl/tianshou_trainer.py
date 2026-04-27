@@ -4,29 +4,30 @@ SC2 Bot RL with Tianshou's modular Policy/Collector/Trainer
 """
 
 from __future__ import annotations
-from typing import Any, Optional
+
 import math
+import os
 import random
 import sys
-import os
+from typing import Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     import tianshou as ts
-    from tianshou.data import Collector, VectorReplayBuffer, Batch
-    from tianshou.env import DummyVectorEnv
-    from tianshou.policy import PPOPolicy, A2CPolicy, SACPolicy
-    from tianshou.trainer import onpolicy_trainer, offpolicy_trainer
-    from tianshou.utils import TensorboardLogger
     import torch
     import torch.nn as nn
+    from tianshou.data import Batch, Collector, VectorReplayBuffer
+    from tianshou.env import DummyVectorEnv
+    from tianshou.policy import A2CPolicy, PPOPolicy, SACPolicy
+    from tianshou.trainer import offpolicy_trainer, onpolicy_trainer
+    from tianshou.utils import TensorboardLogger
 
     TIANSHOU_AVAILABLE = True
 except ImportError:
     TIANSHOU_AVAILABLE = False
 
-from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
+from gymnasium_env.sc2_gym_env import ACT_DIM, OBS_DIM, SC2ZergEnv
 
 # ─────────────────────────────────────────────
 # Neural network (Tianshou-compatible)

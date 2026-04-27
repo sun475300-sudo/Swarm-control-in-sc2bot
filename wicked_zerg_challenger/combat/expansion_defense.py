@@ -9,17 +9,17 @@ Expansion Defense - 확장 기지 방어 시스템
 4. 파괴 후 반격
 """
 
-from typing import Dict, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Set
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object

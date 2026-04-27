@@ -3,15 +3,16 @@ Phase 438: Agno (formerly phidata) - SC2 AI Agent
 Knowledge-augmented agent with persistent memory for SC2 strategy.
 """
 
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.tools.file import FileTools
-from agno.knowledge.text import TextKnowledgeBase
-from agno.vectordb.chroma import ChromaDb
-from agno.storage.agent.sqlite import SqlAgentStorage
-from agno.embedder.openai import OpenAIEmbedder
-from pydantic import BaseModel
 from pathlib import Path
+
+from agno.agent import Agent
+from agno.embedder.openai import OpenAIEmbedder
+from agno.knowledge.text import TextKnowledgeBase
+from agno.models.openai import OpenAIChat
+from agno.storage.agent.sqlite import SqlAgentStorage
+from agno.tools.file import FileTools
+from agno.vectordb.chroma import ChromaDb
+from pydantic import BaseModel
 
 # ── Knowledge base content ────────────────────────────────────────────────────
 

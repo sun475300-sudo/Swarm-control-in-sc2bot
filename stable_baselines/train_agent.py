@@ -4,25 +4,26 @@ SC2 Bot RL training with PPO/SAC/A2C via SB3
 """
 
 from __future__ import annotations
-from typing import Optional
+
 import math
-import random
 import os
+import random
 import sys
+from typing import Optional
 
 # Add parent dir so sc2_gym_env is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 try:
-    from stable_baselines3 import PPO, SAC, A2C
+    from stable_baselines3 import A2C, PPO, SAC
+    from stable_baselines3.common.callbacks import (
+        BaseCallback,
+        CheckpointCallback,
+        EvalCallback,
+    )
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.evaluation import evaluate_policy
-    from stable_baselines3.common.callbacks import (
-        EvalCallback,
-        CheckpointCallback,
-        BaseCallback,
-    )
     from stable_baselines3.common.monitor import Monitor
     from stable_baselines3.common.vec_env import SubprocVecEnv
 

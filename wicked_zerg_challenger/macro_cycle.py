@@ -12,15 +12,15 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 5. 라바 사용 우선순위 (드론 > 군대 > 오버로드)
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
-from enum import Enum
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger("MacroCycle")
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     UnitTypeId = None

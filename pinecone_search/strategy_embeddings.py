@@ -2,8 +2,9 @@
 # Pinecone vector search for SC2 Zerg strategy recommendations
 
 import time
-from sentence_transformers import SentenceTransformer
+
 import pinecone
+from sentence_transformers import SentenceTransformer
 
 # ---------------------------------------------------------------------------
 # Configuration

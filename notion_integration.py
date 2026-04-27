@@ -9,10 +9,10 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import partial
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
 logger = logging.getLogger("jarvis.notion")
 

@@ -983,6 +983,7 @@ class IntelManager:
         """
         import json
         import os
+
         from sc2.position import Point2
 
         if not os.path.exists(file_path):

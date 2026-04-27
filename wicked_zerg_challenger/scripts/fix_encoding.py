@@ -6,9 +6,9 @@ Fix file encoding by converting to UTF-8.
 Usage: python fix_encoding.py <file>
 """
 
+import logging
 import sys
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("FixEncoding")
 

@@ -3,12 +3,13 @@ Phase 424: Prefect - SC2 Training Pipeline Orchestration
 Workflow orchestration for the full SC2 model training lifecycle.
 """
 
-from prefect import flow, task, get_run_logger
-from prefect.artifacts import create_table_artifact, create_markdown_artifact
-from prefect.tasks import task_input_hash
-from datetime import timedelta
-import time
 import random
+import time
+from datetime import timedelta
+
+from prefect import flow, get_run_logger, task
+from prefect.artifacts import create_markdown_artifact, create_table_artifact
+from prefect.tasks import task_input_hash
 
 # ── Tasks ─────────────────────────────────────────────────────────────────────
 

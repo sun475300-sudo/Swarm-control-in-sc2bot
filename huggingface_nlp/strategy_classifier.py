@@ -10,14 +10,14 @@ Strategies: expand | attack | defend | tech | macro
 
 from __future__ import annotations
 
+import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 from transformers import (
-    AutoTokenizer,
     AutoModelForSequenceClassification,
+    AutoTokenizer,
     get_linear_schedule_with_warmup,
 )
-import numpy as np
 
 # ---------------------------------------------------------------------------
 # Label mapping

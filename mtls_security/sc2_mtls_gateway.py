@@ -6,18 +6,18 @@ for StarCraft II bot-to-server interactions. Manages certificate lifecycle,
 enforces mutual authentication, and encrypts all traffic using TLS 1.3.
 """
 
-import os
-import time
 import hashlib
 import hmac
-import secrets
 import logging
-import threading
+import os
+import secrets
 import struct
+import threading
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional, Union
-from dataclasses import dataclass, field
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 

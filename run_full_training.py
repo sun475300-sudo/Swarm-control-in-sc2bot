@@ -8,15 +8,16 @@ Phase 3: Self-Play 리그 학습 + Curriculum Learning
 Phase 4: 최종 결과 분석 및 리포트
 """
 
-import sys
-import os
-import time
 import json
+import os
+import sys
+import time
+
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "wicked_zerg_challenger"))
 
-from gpu_manager import get_gpu_manager, TORCH_AVAILABLE
+from gpu_manager import TORCH_AVAILABLE, get_gpu_manager
 
 if TORCH_AVAILABLE:
     import torch

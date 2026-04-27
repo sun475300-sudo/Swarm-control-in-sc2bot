@@ -5,10 +5,11 @@
 SC2 라이브러리 미설치 환경에서 Mock 기반으로 테스트합니다.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, MagicMock, Mock
+
+import pytest
 
 sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")

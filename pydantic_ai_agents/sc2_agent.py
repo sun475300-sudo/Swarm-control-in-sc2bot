@@ -3,12 +3,13 @@ Phase 437: Pydantic AI - SC2 Strategy Agent
 Type-safe AI agent with tools and structured output for SC2 decision making.
 """
 
+import asyncio
+from dataclasses import dataclass
+from typing import Optional
+
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
-from dataclasses import dataclass
-from typing import Optional
-import asyncio
 
 # ── Dependency injection models ───────────────────────────────────────────────
 

@@ -4,13 +4,15 @@ Upbit API Client Wrapper
 - 에러 핸들링, 로깅, rate-limit 보호
 """
 
-import time
 import logging
 import threading
+import time
 from dataclasses import dataclass, field
-from typing import Optional, Literal
+from typing import Literal, Optional
+
 import pyupbit
 from pyupbit import Upbit
+
 from . import config
 from .utils import normalize_ticker
 

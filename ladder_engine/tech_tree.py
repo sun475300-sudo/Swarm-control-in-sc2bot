@@ -5,8 +5,8 @@ dynamic priority calculation based on army composition and opponent tech.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
 from enum import Enum
+from typing import Dict, List, Optional, Set
 
 
 class UpgradeStatus(Enum):

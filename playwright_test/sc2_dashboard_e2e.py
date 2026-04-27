@@ -731,8 +731,8 @@ class SC2DashboardTest:
         or per-pixel diff when PIL is installed.
         """
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
 
             img_a = np.array(Image.open(path_a).convert("RGBA"))
             img_b = np.array(Image.open(path_b).convert("RGBA"))

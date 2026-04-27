@@ -9,17 +9,17 @@ Roach Burrow Heal - 바퀴 잠복 회복 시스템
 4. 잠복 중 안전 확인
 """
 
-from typing import Dict, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Set
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object
@@ -124,8 +124,8 @@ class RoachBurrowHeal:
             return
 
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
             from sc2.ids.ability_id import AbilityId
+            from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
 

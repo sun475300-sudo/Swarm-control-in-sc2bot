@@ -47,8 +47,8 @@ except ImportError:
     HAS_TRT = False
 
 try:
-    import pycuda.driver as cuda
     import pycuda.autoinit
+    import pycuda.driver as cuda
 
     HAS_CUDA = True
 except ImportError:

@@ -1,16 +1,17 @@
 # Phase 411: AutoGen - SC2 Multi-Agent Strategy Framework
 # Microsoft AutoGen multi-agent collaboration for SC2 decision making
 
+import json
+from typing import Annotated, Optional
+
 import autogen
 from autogen import (
     AssistantAgent,
-    UserProxyAgent,
     GroupChat,
     GroupChatManager,
+    UserProxyAgent,
     config_list_from_json,
 )
-from typing import Annotated, Optional
-import json
 
 # ============================================================
 # LLM Configuration

@@ -3,13 +3,14 @@ Phase 348: PPO Trainer
 PyTorch PPO (Proximal Policy Optimization) trainer for SC2 bot self-play.
 """
 
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Categorical
-import numpy as np
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
 
 
 @dataclass

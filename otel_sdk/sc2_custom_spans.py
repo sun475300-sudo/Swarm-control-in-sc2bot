@@ -1,22 +1,25 @@
 # SC2 Bot - OpenTelemetry SDK Custom Spans
 # Advanced OpenTelemetry SDK usage with custom processors, exporters, and semantic conventions
 
-from opentelemetry import trace, metrics, baggage, context
-from opentelemetry.sdk.trace import TracerProvider, SpanProcessor
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+import logging
+from typing import Sequence
+
+from opentelemetry import baggage, context, metrics, trace
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.propagators.b3 import B3MultiFormat
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.propagators.b3 import B3MultiFormat
+from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
+from opentelemetry.sdk.trace import ReadableSpan, SpanProcessor, TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SpanExportResult,
+)
 from opentelemetry.sdk.trace.sampling import TraceIdRatioBased
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.semconv.trace import SpanAttributes
-from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.sdk.trace.export import SpanExportResult
-from typing import Sequence
-import logging
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 
 # --- Custom Span Processor ---

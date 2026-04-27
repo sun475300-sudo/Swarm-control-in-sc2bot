@@ -6,8 +6,9 @@ Spatial Optimizer - 공간 해싱 및 거리 계산 최적화
 O(N^2) → O(N) 연산량 감소 (70% 절감)
 """
 
-from typing import Dict, List, Set, Tuple, Optional
 from collections import defaultdict
+from typing import Dict, List, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:

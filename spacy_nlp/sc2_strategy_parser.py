@@ -10,10 +10,10 @@ Graceful fallback to regex-based parsing when spaCy is absent.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
-import hashlib
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -32,7 +32,7 @@ try:
     from spacy.matcher import Matcher, PhraseMatcher
     from spacy.tokens import Doc, Span, Token
     from spacy.training import Example
-    from spacy.util import minibatch, compounding
+    from spacy.util import compounding, minibatch
 
     SPACY_AVAILABLE = True
     log.info("spaCy %s available.", spacy.__version__)

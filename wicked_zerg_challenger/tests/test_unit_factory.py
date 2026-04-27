@@ -10,9 +10,9 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-import unittest
 import sys
-from unittest.mock import MagicMock, patch, PropertyMock
+import unittest
+from unittest.mock import MagicMock, PropertyMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 

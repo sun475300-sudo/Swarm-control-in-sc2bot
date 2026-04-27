@@ -10,8 +10,8 @@ Consolidated version combining original and improved features:
 - Robust error handling
 """
 
-from typing import Dict
 import logging
+from typing import Dict
 
 logger = logging.getLogger("EconomyCombatBalancer")
 

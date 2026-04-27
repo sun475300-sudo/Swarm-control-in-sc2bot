@@ -12,9 +12,10 @@ Zerg Specialized Reward System (Reward Shaping)
 4. ���� ������ ���� (�Ҹ��� ȿ��)
 """
 
-from typing import Optional
-import numpy as np
 import logging
+from typing import Optional
+
+import numpy as np
 
 logger = logging.getLogger("RewardSystem")
 

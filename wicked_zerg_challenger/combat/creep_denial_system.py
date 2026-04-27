@@ -11,15 +11,17 @@ ZvZ 매치업에서 특히 중요합니다.
 3. 안전 확인 후 제거 및 위협 시 후퇴
 """
 
-from typing import List, Set, Optional, Dict
+from typing import Dict, List, Optional, Set
+
+from sc2.ids.ability_id import AbilityId
+from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 from sc2.unit import Unit
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.ability_id import AbilityId
+
 from utils.logger import get_logger
 
 try:
-    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+    from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
 except ImportError:
     UnitAuthorityManager = None
     AuthorityLevel = None

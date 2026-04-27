@@ -3,14 +3,14 @@ Phase 500: gRPC Auth Interceptor for SC2 Bot — 500 Phases Milestone!
 Server-side interceptor: JWT validation, metadata extraction, rate limiting
 """
 
+import logging
 import os
+import time
+from collections import defaultdict
+from typing import Any, Callable
 
 import grpc
 import jwt
-import logging
-import time
-from collections import defaultdict
-from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 

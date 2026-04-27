@@ -4,23 +4,24 @@ Single-file PPO implementation for SC2 Bot training
 """
 
 from __future__ import annotations
+
 import math
-import random
-import time
 import os
+import random
 import sys
+import time
 from dataclasses import dataclass
 from typing import Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
+from gymnasium_env.sc2_gym_env import ACT_DIM, OBS_DIM, SC2ZergEnv
 
 try:
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.optim as optim
     from torch.distributions import Categorical
-    import numpy as np
 
     TORCH_AVAILABLE = True
 except ImportError:

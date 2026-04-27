@@ -1,11 +1,13 @@
 # SC2 Bot - Pulumi Automation API
 # Programmatic IaC: create/update stacks from Python code
 
+import os
+import sys
+from typing import Optional
+
 import pulumi
 import pulumi_aws as aws
 from pulumi import automation as auto
-from typing import Optional
-import os, sys
 
 
 # -----------------------------------------------

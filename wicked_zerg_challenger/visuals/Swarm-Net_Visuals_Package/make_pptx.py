@@ -5,11 +5,11 @@ HTML 슬라이드를 Playwright로 캡처 → python-pptx로 .pptx 생성
 캡처 이미지를 슬라이드 배경으로 사용 + 발표자 노트 삽입
 """
 
+import logging
 import os
 import sys
 import tempfile
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("MakePptx")
 
@@ -167,9 +167,9 @@ def main():
     logger.info("[3/3] Building PPTX with python-pptx...")
 
     from pptx import Presentation
-    from pptx.util import Inches, Pt, Emu
     from pptx.dml.color import RGBColor
     from pptx.enum.text import PP_ALIGN
+    from pptx.util import Emu, Inches, Pt
 
     prs = Presentation()
     # 16:9 비율 설정

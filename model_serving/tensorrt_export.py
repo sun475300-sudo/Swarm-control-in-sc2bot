@@ -7,14 +7,15 @@ Expected speedup: 3-5x over PyTorch.
 
 import os
 import time
+from typing import Dict, List, Optional, Tuple
+
 import torch
 import torch.nn as nn
-from typing import Optional, Dict, Tuple, List
 
 try:
-    import tensorrt as trt
-    import pycuda.driver as cuda
     import pycuda.autoinit
+    import pycuda.driver as cuda
+    import tensorrt as trt
 
     TRT_AVAILABLE = True
 except ImportError:

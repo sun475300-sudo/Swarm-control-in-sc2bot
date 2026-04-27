@@ -3,13 +3,14 @@ Phase 432: Outlines - Structured SC2 Strategy Generation
 Constrained text generation for build orders, strategy JSON, and unit compositions.
 """
 
+import json
+import re
+from typing import Literal
+
 import outlines
 import outlines.models as models
 import outlines.text.generate as generate
 from pydantic import BaseModel, Field
-from typing import Literal
-import json
-import re
 
 # ── Pydantic schemas for structured output ────────────────────────────────────
 

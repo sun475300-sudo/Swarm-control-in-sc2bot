@@ -4,17 +4,25 @@ SC2 Bot WASM host using wasmer-python for sandboxed bot execution
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional, Any
+
 import json
 import time
+from dataclasses import dataclass, field
+from typing import Any, Optional
 
 # ─────────────────────────────────────────────
 # Wasmer host (with graceful fallback)
 # ─────────────────────────────────────────────
 
 try:
-    from wasmer import engine, Store, Module, Instance, ImportObject, Function  # type: ignore
+    from wasmer import (  # type: ignore
+        Function,
+        ImportObject,
+        Instance,
+        Module,
+        Store,
+        engine,
+    )
     from wasmer_compiler_cranelift import Compiler  # type: ignore
 
     WASMER_AVAILABLE = True

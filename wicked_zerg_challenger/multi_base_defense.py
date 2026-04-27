@@ -10,6 +10,7 @@ Multi-Base Defense System - Automatic defense for multiple expansions
 """
 
 from typing import Dict, List, Optional
+
 from utils.logger import get_logger
 
 try:

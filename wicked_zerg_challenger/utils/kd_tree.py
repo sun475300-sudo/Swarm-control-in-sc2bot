@@ -11,8 +11,8 @@ Features:
 - Efficient for sparse unit distributions
 """
 
-from typing import List, Optional, Tuple, Any
 import math
+from typing import Any, List, Optional, Tuple
 
 
 class KDTreeNode:

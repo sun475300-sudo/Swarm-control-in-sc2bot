@@ -4,13 +4,14 @@ Main training loop orchestrating PPO self-play for SC2 bot.
 Supports distributed training (Ray / multiprocessing) and Wandb experiment tracking.
 """
 
-import os
-import json
-import time
-import torch
 import argparse
-from dataclasses import dataclass, asdict
-from typing import Optional, Dict, Any
+import json
+import os
+import time
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Optional
+
+import torch
 
 try:
     import wandb
@@ -26,10 +27,10 @@ try:
 except ImportError:
     RAY_AVAILABLE = False
 
-from ppo_trainer import PPOTrainer, PPOConfig
-from selfplay_manager import SelfPlayManager, OpponentPool, AgentRole
-from reward_shaper import RewardShaper, RewardMode
 from curriculum import CurriculumScheduler
+from ppo_trainer import PPOConfig, PPOTrainer
+from reward_shaper import RewardMode, RewardShaper
+from selfplay_manager import AgentRole, OpponentPool, SelfPlayManager
 
 
 @dataclass

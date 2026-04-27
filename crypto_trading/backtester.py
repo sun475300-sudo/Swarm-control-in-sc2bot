@@ -13,7 +13,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from .strategies import _calc_rsi, Signal
+from .strategies import Signal, _calc_rsi
 
 logger = logging.getLogger("crypto.backtester")
 

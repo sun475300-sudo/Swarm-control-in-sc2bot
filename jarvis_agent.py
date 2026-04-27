@@ -106,8 +106,8 @@ async def run_agent(prompt: str, model: str = None, all_servers: bool = False):
         AssistantMessage,
         ResultMessage,
         TextBlock,
-        ToolUseBlock,
         ToolResultBlock,
+        ToolUseBlock,
     )
 
     soul = _load_soul()

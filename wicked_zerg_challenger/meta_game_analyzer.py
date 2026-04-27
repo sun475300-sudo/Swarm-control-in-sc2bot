@@ -3,10 +3,10 @@ Meta Game Analyzer - Analyzes current meta and adapts strategy
 HIGH PRIORITY FEATURE
 """
 
-from typing import Dict, List, Any, Optional
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

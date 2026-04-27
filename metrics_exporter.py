@@ -37,18 +37,18 @@ import json
 import threading
 import time
 from contextlib import contextmanager
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Dict, List, Optional
 
 # prometheus_client 라이브러리 사용 시도
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,
         Counter,
         Gauge,
         Histogram,
-        start_http_server,
         generate_latest,
-        CONTENT_TYPE_LATEST,
+        start_http_server,
     )
 
     _HAS_PROMETHEUS = True

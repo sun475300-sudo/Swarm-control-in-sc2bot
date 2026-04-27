@@ -1,14 +1,15 @@
 # Phase 418: Hydra - SC2 Configuration Management
 # Hydra structured configs for SC2 bot with CLI overrides and multi-run sweeps
 
+import logging
+import os
+from dataclasses import dataclass, field
+from typing import List, Optional
+
 import hydra
 from hydra.core.config_store import ConfigStore
 from hydra.core.hydra_config import HydraConfig
-from dataclasses import dataclass, field
 from omegaconf import DictConfig, OmegaConf
-from typing import Optional, List
-import logging
-import os
 
 log = logging.getLogger(__name__)
 

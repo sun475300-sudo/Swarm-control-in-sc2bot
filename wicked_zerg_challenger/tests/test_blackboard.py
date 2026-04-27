@@ -10,20 +10,20 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-import unittest
 import sys
+import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from blackboard import (
-    GameStateBlackboard,
-    Blackboard,
     AuthorityMode,
+    Blackboard,
     GamePhase,
+    GameStateBlackboard,
+    ResourceState,
+    ThreatInfo,
     ThreatLevel,
     UnitCounts,
-    ThreatInfo,
-    ResourceState,
 )
 
 

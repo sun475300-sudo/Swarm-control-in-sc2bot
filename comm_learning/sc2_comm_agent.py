@@ -7,21 +7,21 @@ bandwidth constraints, emergent protocol analysis, and ablation support.
 from __future__ import annotations
 
 import math
-import random
-import time
 import os
+import random
 import sys
-from dataclasses import dataclass, field
-from typing import Optional, List, Tuple, Dict, Any
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
 
     TORCH_AVAILABLE = True
 except ImportError:

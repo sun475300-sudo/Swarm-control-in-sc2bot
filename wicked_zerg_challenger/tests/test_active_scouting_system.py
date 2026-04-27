@@ -17,17 +17,17 @@ Tests:
 11. Changeling management
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
     from sc2.position import Point2
+    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
 
     SCOUT_V2_AVAILABLE = True
 except (ImportError, TypeError):

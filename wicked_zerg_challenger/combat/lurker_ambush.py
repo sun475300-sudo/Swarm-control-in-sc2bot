@@ -16,16 +16,17 @@ Features:
 - Target prioritization
 """
 
-from typing import Dict, Set, List, Optional
+from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
-    from sc2.position import Point2
 
     SC2_AVAILABLE = True
 except ImportError:

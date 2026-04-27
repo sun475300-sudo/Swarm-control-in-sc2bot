@@ -14,9 +14,9 @@ Features:
 - Optimized unit iteration
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-import time
 import math
+import time
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class DistanceCache:
@@ -113,8 +113,8 @@ class PerformanceOptimizer:
         # Import utilities
         try:
             from utils.kd_tree import KDTree, build_unit_kdtree
-            from utils.spatial_partition import SpatialGrid, build_unit_grid
             from utils.pid_controller import UnitMovementController
+            from utils.spatial_partition import SpatialGrid, build_unit_grid
 
             self.KDTree = KDTree
             self.build_unit_kdtree = build_unit_kdtree

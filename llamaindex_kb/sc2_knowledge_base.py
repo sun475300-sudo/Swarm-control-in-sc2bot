@@ -56,8 +56,8 @@ try:
         load_index_from_storage,
     )
     from llama_index.core.node_parser import SentenceSplitter
-    from llama_index.core.schema import TextNode, NodeWithScore
     from llama_index.core.query_engine import RetrieverQueryEngine
+    from llama_index.core.schema import NodeWithScore, TextNode
 
     _LLAMAINDEX_AVAILABLE = True
 except ImportError:

@@ -8,9 +8,9 @@ SC2 KDTree(2D)를 3D로 확장.
 Origin: wicked_zerg_challenger/utils/kd_tree.py
 """
 
-from typing import Any, List, Optional, Tuple
-import math
 import heapq
+import math
+from typing import Any, List, Optional, Tuple
 
 Pos3 = Tuple[float, float, float]
 

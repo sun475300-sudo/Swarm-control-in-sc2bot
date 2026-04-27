@@ -12,18 +12,18 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 import pandas as pd
 
 from . import config
-from .upbit_client import UpbitClient
-from .strategies import Signal, get_strategy, AVAILABLE_STRATEGIES
-from .utils import normalize_ticker
-from .risk_manager import RiskManager
-from .portfolio_tracker import PortfolioTracker
 from .market_analyzer import MarketAnalyzer
+from .portfolio_tracker import PortfolioTracker
+from .risk_manager import RiskManager
 from .security import trade_safety
+from .strategies import AVAILABLE_STRATEGIES, Signal, get_strategy
+from .upbit_client import UpbitClient
+from .utils import normalize_ticker
 
 logger = logging.getLogger("crypto.auto_trader")
 

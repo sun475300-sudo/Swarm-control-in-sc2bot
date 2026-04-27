@@ -5,15 +5,17 @@ Swarm-Net Presentation Visual Asset Generator
 PPTX 텍스트와 겹침 방지 — 장식용 배경 그래픽 전용
 """
 
-import numpy as np
-import matplotlib
 import logging
+
+import matplotlib
+import numpy as np
 
 logger = logging.getLogger("GenerateVisuals")
 matplotlib.use("Agg")
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, Polygon
-from pathlib import Path
 
 # ===== Color constants (matching PPTX theme) =====
 BG_DARK = "#0B101F"

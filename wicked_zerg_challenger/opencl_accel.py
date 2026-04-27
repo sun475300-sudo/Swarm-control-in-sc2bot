@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import Optional, Sequence, Tuple
 
 try:
-    import pyopencl as cl
     import numpy as np
+    import pyopencl as cl
 except Exception:
     cl = None
     np = None

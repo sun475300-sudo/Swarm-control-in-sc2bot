@@ -4,9 +4,10 @@ Unit Tests for Resource Manager
 Tests the thread-safe resource reservation system.
 """
 
-import pytest
 import asyncio
 from unittest.mock import Mock
+
+import pytest
 
 
 class MockBot:

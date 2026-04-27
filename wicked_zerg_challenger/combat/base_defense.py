@@ -11,17 +11,17 @@ Base Defense System - 기지 방어 시스템
 6. 우선순위 타겟 집중 공격
 """
 
-from typing import Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object

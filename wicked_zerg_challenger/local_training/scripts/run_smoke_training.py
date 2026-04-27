@@ -9,12 +9,12 @@ that the training pipeline and model wiring are functional.
 
 import argparse
 import json
+import logging
 import random
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from batch_trainer import BatchTrainer
-import logging
 
 logger = logging.getLogger("RunSmokeTraining")
 

@@ -56,13 +56,13 @@ except ImportError:
     PLT_AVAILABLE = False
 
 try:
-    from sklearn.model_selection import train_test_split, StratifiedKFold
     from sklearn.metrics import (
         accuracy_score,
         classification_report,
         confusion_matrix,
         log_loss,
     )
+    from sklearn.model_selection import StratifiedKFold, train_test_split
     from sklearn.preprocessing import LabelEncoder
 
     SK_AVAILABLE = True

@@ -9,12 +9,12 @@
 """
 
 import ast
+import logging
 import os
 import re
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 from typing import Dict, List, Tuple
-import logging
 
 logger = logging.getLogger("CodeQualityImprover")
 

@@ -18,10 +18,10 @@ Victory & Defeat Conditions Learning System
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger("VictoryConditions")
 

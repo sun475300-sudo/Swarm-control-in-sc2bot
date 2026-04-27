@@ -34,9 +34,9 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import (
+    accuracy_score,
     classification_report,
     confusion_matrix,
-    accuracy_score,
     f1_score,
     roc_auc_score,
 )

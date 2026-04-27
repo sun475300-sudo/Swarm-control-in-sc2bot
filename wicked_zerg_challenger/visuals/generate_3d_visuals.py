@@ -8,14 +8,14 @@ Plotly 기반 인터랙티브 3D 시각화 4파트 생성
     python generate_3d_visuals.py --png    # PNG 이미지도 함께 생성
 """
 
+import logging
+import math
 import os
 import sys
-import math
-import numpy as np
 
+import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import logging
 
 logger = logging.getLogger("Generate3dVisuals")
 

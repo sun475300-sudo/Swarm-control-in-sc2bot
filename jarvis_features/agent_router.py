@@ -16,10 +16,10 @@ claude_skills의 card-dispatcher 패턴을 적용한 지능형 라우터.
     # → RoutingDecision(domain=CRYPTO_TRADING, confidence=0.9, ...)
 """
 
+import logging
 import os
 import re
 import time
-import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple

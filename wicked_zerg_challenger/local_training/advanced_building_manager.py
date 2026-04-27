@@ -8,15 +8,15 @@ Advanced Building Manager - 건설 로직 고도화 모듈
 3. 자원 적체 시(3000+) 테크 건물 공격적 건설 로직
 """
 
-from typing import Optional, List, Tuple, Dict, Callable
-import math
 import logging
+import math
+from typing import Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("AdvancedBuildingManager")
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
@@ -43,8 +43,8 @@ except ImportError:
     Unit = object
 
 try:
-    import sys
     import os
+    import sys
 
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if parent_dir not in sys.path:

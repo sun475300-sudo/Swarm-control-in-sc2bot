@@ -9,8 +9,8 @@ Feature #92: Queen Walk 러시 매니저
 4. 크립 종양 설치하며 전진 (시야 확보)
 """
 
-from typing import Dict, List, Optional, Set
 from enum import Enum
+from typing import Dict, List, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId

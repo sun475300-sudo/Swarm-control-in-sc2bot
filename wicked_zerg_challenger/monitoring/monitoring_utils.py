@@ -8,11 +8,11 @@ both dashboard.py (HTTP server) and dashboard_api.py (FastAPI).
 """
 
 
-import os
 import json
-from pathlib import Path
+import os
 from glob import glob
-from typing import Optional, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 def get_base_dir() -> Path:

@@ -10,8 +10,8 @@ Usage:
 
 from __future__ import annotations
 
-import ast
 import argparse
+import ast
 import sys
 from collections import defaultdict
 from pathlib import Path

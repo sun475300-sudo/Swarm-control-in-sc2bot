@@ -1,5 +1,6 @@
-from build_order_system import BuildOrderSystem, BuildOrderType
 import logging
+
+from build_order_system import BuildOrderSystem, BuildOrderType
 
 logger = logging.getLogger("TestKnowledgeLoading")
 

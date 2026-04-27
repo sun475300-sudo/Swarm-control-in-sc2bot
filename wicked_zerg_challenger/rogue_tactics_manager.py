@@ -9,15 +9,15 @@
 4. 후반 운영: 점막 감지 기반 의사결정
 """
 
-from typing import List, Optional, Set, Tuple
-import math
 import logging
+import math
+from typing import List, Optional, Set, Tuple
 
 logger = logging.getLogger("RogueTacticsManager")
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:

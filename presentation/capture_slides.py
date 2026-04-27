@@ -2,6 +2,7 @@
 
 import asyncio
 from pathlib import Path
+
 from playwright.async_api import async_playwright
 
 HTML_PATH = Path(__file__).parent / "slides.html"

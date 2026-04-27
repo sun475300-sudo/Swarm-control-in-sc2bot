@@ -5,8 +5,8 @@ Detects early aggression, timing attacks, all-ins, drops, and proxy builds.
 """
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
 from enum import Enum
+from typing import Callable, Dict, List, Optional, Tuple
 
 
 class ThreatLevel(Enum):

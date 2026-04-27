@@ -6,13 +6,13 @@ Background Training Live Monitor
 실시간으로 백그라운드 학습 상태를 모니터링하고 대시보드 형식으로 표시합니다.
 """
 
+import logging
 import os
 import sys
 import time
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger("MonitorBackgroundTraining")
 

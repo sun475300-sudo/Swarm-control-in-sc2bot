@@ -9,17 +9,17 @@ Overlord Transport - 대군주 수송 시스템
 4. 저글링/바퀴 드랍 전술
 """
 
-from typing import Optional, List, Dict, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Set
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object
@@ -119,8 +119,8 @@ class OverlordTransport:
             return
 
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
             from sc2.ids.ability_id import AbilityId
+            from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
 
@@ -210,8 +210,8 @@ class OverlordTransport:
             return
 
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
             from sc2.ids.ability_id import AbilityId
+            from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
 

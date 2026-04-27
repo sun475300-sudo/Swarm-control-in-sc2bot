@@ -9,10 +9,11 @@ Difficulty Progression System - 난이도 자동 조정
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Dict, Optional
+
 from sc2.data import Difficulty, Race
-import logging
 
 logger = logging.getLogger("DifficultyProgression")
 

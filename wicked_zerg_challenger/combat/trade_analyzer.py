@@ -14,8 +14,9 @@ Features:
 - Statistics tracking
 """
 
-from typing import Dict, List, Optional
 from collections import defaultdict
+from typing import Dict, List, Optional
+
 from utils.logger import get_logger
 
 try:

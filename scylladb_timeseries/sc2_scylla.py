@@ -5,11 +5,12 @@ High-throughput event logging using ScyllaDB (C++ Cassandra-compatible).
 
 import asyncio
 import logging
-from datetime import datetime, timezone
-from cassandra.cluster import Cluster
-from cassandra.query import BatchStatement, BatchType
-from cassandra.policies import DCAwareRoundRobinPolicy
 import uuid
+from datetime import datetime, timezone
+
+from cassandra.cluster import Cluster
+from cassandra.policies import DCAwareRoundRobinPolicy
+from cassandra.query import BatchStatement, BatchType
 
 logger = logging.getLogger(__name__)
 

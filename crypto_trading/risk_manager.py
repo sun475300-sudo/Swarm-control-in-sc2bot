@@ -7,6 +7,7 @@ Risk Manager
 
 import logging
 from typing import Optional
+
 from . import config
 
 logger = logging.getLogger("crypto.risk_manager")

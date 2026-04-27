@@ -6,16 +6,16 @@ monitoring for StarCraft II bot processes. Captures syscall latency, network I/O
 file operations, memory allocation, and CPU usage with minimal performance impact.
 """
 
-import time
-import struct
 import hashlib
 import logging
-import threading
 import statistics
+import struct
+import threading
+import time
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional, Union
-from dataclasses import dataclass, field
-from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
 

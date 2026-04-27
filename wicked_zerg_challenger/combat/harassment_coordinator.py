@@ -20,14 +20,15 @@ Features:
 - 우선순위 타겟팅 (일꾼 > 테크 건물 > 생산 건물)
 """
 
-from typing import List, Dict, Optional, Set
 from enum import Enum
+from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
     from sc2.unit import Unit
@@ -43,7 +44,7 @@ except ImportError:
     Units = list
 
 try:
-    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+    from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
 except ImportError:
     UnitAuthorityManager = None
     AuthorityLevel = None

@@ -16,13 +16,13 @@ Run Training Pipeline - 독립 실행 훈련 스크립트
 """
 
 import argparse
+import logging
 import os
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
-import logging
 
 logger = logging.getLogger("RunTrainingPipeline")
 
@@ -144,8 +144,8 @@ def main():
     args = parser.parse_args()
 
     # Pipeline & Agent 초기화
-    from training_pipeline import TrainingPipeline
     from rl_agent import RLAgent
+    from training_pipeline import TrainingPipeline
 
     pipeline = TrainingPipeline()
 

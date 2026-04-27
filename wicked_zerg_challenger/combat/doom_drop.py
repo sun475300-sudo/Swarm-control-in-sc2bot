@@ -14,8 +14,8 @@ Feature #94: Doom Drop 전술 매니저
 - DoomDropManager: 대규모 올인 드롭 (4기+, 유닛 전부 투입)
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId

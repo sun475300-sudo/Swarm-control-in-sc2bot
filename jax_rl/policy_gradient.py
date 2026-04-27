@@ -9,13 +9,14 @@ Actions: [attack, defend, expand, tech, macro]  (5 actions)
 
 from __future__ import annotations
 
+from typing import Sequence
+
+import flax.linen as nn
 import jax
 import jax.numpy as jnp
-import flax.linen as nn
-import optax
 import numpy as np
+import optax
 from flax.training import train_state
-from typing import Sequence
 
 # ---------------------------------------------------------------------------
 # Constants

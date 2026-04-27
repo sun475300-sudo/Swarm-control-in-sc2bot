@@ -23,12 +23,12 @@ from aiohttp import web
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from crypto_trading.upbit_client import UpbitClient
-from crypto_trading.auto_trader import AutoTrader
-from crypto_trading.portfolio_tracker import PortfolioTracker
-from crypto_trading.market_analyzer import MarketAnalyzer
 from crypto_trading import config
+from crypto_trading.auto_trader import AutoTrader
+from crypto_trading.market_analyzer import MarketAnalyzer
+from crypto_trading.portfolio_tracker import PortfolioTracker
 from crypto_trading.security import trade_safety
+from crypto_trading.upbit_client import UpbitClient
 from crypto_trading.utils import normalize_ticker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
@@ -323,8 +323,8 @@ def generate_trade_result_chart(trade_info: dict) -> str:
     import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
 
     plt.rcParams["font.family"] = "Malgun Gothic"
     plt.rcParams["axes.unicode_minus"] = False

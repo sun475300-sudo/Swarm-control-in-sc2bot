@@ -3,19 +3,21 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Any
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:
+    from swarm_rust_accel import batch_nearest_points as _batch_nearest_points_rust
+    from swarm_rust_accel import cluster_points as _cluster_points_rust
     from swarm_rust_accel import (
-        nearest_point_index as _nearest_point_index_rust,
-        compute_feedback_priority as _compute_feedback_priority_rust,
         combat_power_comparison as _combat_power_comparison_rust,
-        batch_nearest_points as _batch_nearest_points_rust,
-        path_distance as _path_distance_rust,
-        route_distance as _route_distance_rust,
-        cluster_points as _cluster_points_rust,
-        formation_positions as _formation_positions_rust,
     )
+    from swarm_rust_accel import (
+        compute_feedback_priority as _compute_feedback_priority_rust,
+    )
+    from swarm_rust_accel import formation_positions as _formation_positions_rust
+    from swarm_rust_accel import nearest_point_index as _nearest_point_index_rust
+    from swarm_rust_accel import path_distance as _path_distance_rust
+    from swarm_rust_accel import route_distance as _route_distance_rust
 except Exception:
     _nearest_point_index_rust = None
     _compute_feedback_priority_rust = None

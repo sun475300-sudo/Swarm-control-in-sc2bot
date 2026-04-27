@@ -17,15 +17,15 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 # Graceful fallback: pure-Python DataFrame substitute if pyspark unavailable
 # ---------------------------------------------------------------------------
 try:
-    from pyspark.sql import SparkSession, DataFrame
+    from pyspark.sql import DataFrame, SparkSession
     from pyspark.sql import functions as F
     from pyspark.sql.types import (
-        StructType,
-        StructField,
-        StringType,
-        IntegerType,
-        FloatType,
         BooleanType,
+        FloatType,
+        IntegerType,
+        StringType,
+        StructField,
+        StructType,
     )
     from pyspark.sql.window import Window
 

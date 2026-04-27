@@ -18,15 +18,15 @@ Usage:
     python log_analyzer.py --focus timing # 타이밍 분석만
 """
 
-import json
-import os
-import glob
 import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from collections import Counter, defaultdict
+import glob
+import json
 import logging
+import os
+from collections import Counter, defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("LogAnalyzer")
 

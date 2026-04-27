@@ -4,9 +4,9 @@ Low-level army micromanagement for Zerg: surround, focus fire, retreat,
 and Zerg-specific tactics like zergling runbys and baneling splash targeting.
 """
 
+import math
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
-import math
 
 
 @dataclass

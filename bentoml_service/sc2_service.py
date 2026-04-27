@@ -3,11 +3,12 @@ Phase 427: BentoML - SC2 Model Serving
 High-performance model serving with batching for SC2 action prediction.
 """
 
+from typing import Optional
+
 import bentoml
+import numpy as np
 from bentoml.io import JSON, NumpyNdarray
 from pydantic import BaseModel, Field
-from typing import Optional
-import numpy as np
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
+import os
+import sys
 import unittest
 from unittest.mock import MagicMock
-import sys
-import os
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -9,8 +9,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # Mock StrategyConfig before importing StrategyManagerV2
 sys.modules["config.unit_configs"] = MagicMock()
 
-from strategy_manager_v2 import StrategyManagerV2
 from strategy_manager import StrategyMode
+from strategy_manager_v2 import StrategyManagerV2
 
 
 class TestStrategyManagerV2Overrides(unittest.TestCase):

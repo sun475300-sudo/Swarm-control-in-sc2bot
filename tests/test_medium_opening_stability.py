@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,7 +11,6 @@ for candidate in (str(ROOT), str(PACKAGE_ROOT)):
         sys.path.insert(0, candidate)
 
 import pytest
-
 from wicked_zerg_challenger.blackboard import GameStateBlackboard
 from wicked_zerg_challenger.early_scout_system import EarlyScoutSystem
 from wicked_zerg_challenger.economy_manager import EconomyManager

@@ -788,8 +788,8 @@ class LatentVisualizer:
         """Simplified t-SNE. Falls back to PCA if sklearn unavailable."""
         if self._has_sklearn and HAS_NUMPY:
             try:
-                from sklearn.manifold import TSNE
                 import numpy as real_np
+                from sklearn.manifold import TSNE
 
                 data = real_np.array(self.collected_states)
                 perp = min(perplexity, len(data) - 1)

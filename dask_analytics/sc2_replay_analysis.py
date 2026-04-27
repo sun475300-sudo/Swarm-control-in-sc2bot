@@ -1,14 +1,15 @@
 # Phase 404: Dask - SC2 Replay Distributed Analytics
 # Dask distributed analytics pipeline for SC2 replay log processing
 
-import dask
-import dask.dataframe as dd
-import dask.array as da
-from dask.distributed import Client, LocalCluster, as_completed
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from typing import Optional
+
+import dask
+import dask.array as da
+import dask.dataframe as dd
+import numpy as np
+import pandas as pd
+from dask.distributed import Client, LocalCluster, as_completed
 
 # ============================================================
 # Cluster Setup

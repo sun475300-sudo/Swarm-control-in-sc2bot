@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 try:
     from airflow.decorators import dag, task
     from airflow.models import Variable
-    from airflow.utils.dates import days_ago
     from airflow.operators.email import EmailOperator
+    from airflow.utils.dates import days_ago
 
     AIRFLOW_AVAILABLE = True
     print("[INFO] Airflow detected — using real DAG runtime.")

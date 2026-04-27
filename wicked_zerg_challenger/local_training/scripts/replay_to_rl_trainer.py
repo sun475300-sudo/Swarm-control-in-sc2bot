@@ -4,18 +4,18 @@ Replay to RL Trainer
 리플레이 데이터를 RLAgent 학습용 데이터(State, Action, Reward)로 변환하고 학습시킵니다.
 """
 
-import sc2reader
 import logging
 
+import sc2reader
+
 logger = logging.getLogger("ReplayToRlTrainer")
-# from sc2reader.events.game import UnitBornEvent, UnitInitEvent, UnitDiedEvent, PlayerStatsEvent
-import numpy as np
 import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
-from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
+# from sc2reader.events.game import UnitBornEvent, UnitInitEvent, UnitDiedEvent, PlayerStatsEvent
+import numpy as np
 
 # Add project root to path
 script_dir = Path(__file__).parent

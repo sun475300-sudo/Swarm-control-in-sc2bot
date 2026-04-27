@@ -4,14 +4,15 @@ SC2 Bot ML training with Lightning modules, callbacks, and logging
 """
 
 from __future__ import annotations
-from typing import Any, Optional
-import os
-import sys
+
 import math
+import os
 import random
+import sys
+from typing import Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
+from gymnasium_env.sc2_gym_env import ACT_DIM, OBS_DIM, SC2ZergEnv
 
 try:
     import pytorch_lightning as pl

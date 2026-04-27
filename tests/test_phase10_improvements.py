@@ -11,8 +11,9 @@ Tests for:
 7. OverlordVisionNetwork faster update cycle
 """
 
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
 
 # ===== Shared Mock Helpers =====
 
@@ -230,9 +231,9 @@ class TestStrategyManagerZvZCounter:
     def setup_method(self):
         try:
             from wicked_zerg_challenger.strategy_manager import (
-                StrategyManager,
                 EnemyRace,
                 GamePhase,
+                StrategyManager,
             )
 
             self.EnemyRace = EnemyRace
@@ -451,9 +452,9 @@ class TestStrategyManagerDTResponse:
     def setup_method(self):
         try:
             from wicked_zerg_challenger.strategy_manager import (
-                StrategyManager,
                 EnemyRace,
                 GamePhase,
+                StrategyManager,
             )
 
             self.bot = MockBot()

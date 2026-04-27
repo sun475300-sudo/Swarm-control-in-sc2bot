@@ -1,7 +1,8 @@
-from typing import Dict, Optional, Tuple, Any
+import logging
+from typing import Any, Dict, Optional, Tuple
+
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
-import logging
 
 logger = logging.getLogger("TechCoordinator")
 

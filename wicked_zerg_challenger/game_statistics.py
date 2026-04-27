@@ -4,10 +4,11 @@ Game Statistics - 맵/난이도/종족별 승률 통계
 """
 
 import json
-from pathlib import Path
-from datetime import datetime
-from sc2.data import Race, Difficulty
 import logging
+from datetime import datetime
+from pathlib import Path
+
+from sc2.data import Difficulty, Race
 
 logger = logging.getLogger("GameStatistics")
 

@@ -13,9 +13,9 @@ Feature #98: 멀티프롱 공격 매니저
 - MultiprongAttackManager: 타이밍 동기화 + 동적 재편성 + 우선순위 기반 타겟팅
 """
 
-from typing import Dict, List, Optional, Set, Tuple
-from enum import Enum
 import time as _time
+from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

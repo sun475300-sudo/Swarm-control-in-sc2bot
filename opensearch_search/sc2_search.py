@@ -1,10 +1,11 @@
 # SC2 Bot - OpenSearch Full-Text & Vector Search
 # Replay search, game event queries, strategy similarity via k-NN
 
+import json
+from typing import Any, Dict, List
+
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
-from typing import List, Dict, Any
-import json
 
 # --- Client Setup ---
 client = OpenSearch(

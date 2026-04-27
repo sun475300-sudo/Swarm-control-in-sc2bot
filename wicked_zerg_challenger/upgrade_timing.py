@@ -13,9 +13,9 @@ Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 5. 기존 EvolutionUpgradeManager와 연동
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
-from enum import Enum
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger("UpgradeTiming")
 

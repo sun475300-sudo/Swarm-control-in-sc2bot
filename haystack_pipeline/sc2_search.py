@@ -1,13 +1,14 @@
 # Phase 415: Haystack - SC2 Knowledge Retrieval Pipeline
 # Deepset Haystack pipeline for SC2 strategy Q&A
 
+from typing import List
+
 from haystack import Document, Pipeline
-from haystack.components.retrievers.in_memory import InMemoryBM25Retriever
+from haystack.components.preprocessors import DocumentSplitter
 from haystack.components.readers import ExtractiveReader
+from haystack.components.retrievers.in_memory import InMemoryBM25Retriever
 from haystack.components.writers import DocumentWriter
 from haystack.document_stores.in_memory import InMemoryDocumentStore
-from haystack.components.preprocessors import DocumentSplitter
-from typing import List
 
 # ============================================================
 # SC2 Strategy Knowledge Base

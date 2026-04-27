@@ -10,19 +10,19 @@ Tests Strategy Manager V2 features:
 - Multi-strategy execution
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from strategy_manager_v2 import (
-    StrategyManagerV2,
-    WinCondition,
     BuildOrderPhase,
+    StrategyManagerV2,
     StrategyPriority,
+    WinCondition,
 )
 
 

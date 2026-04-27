@@ -28,11 +28,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import NDArray
-
 import xgboost as xgb
-from xgboost import XGBClassifier, XGBRegressor
-
+from numpy.typing import NDArray
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -42,6 +39,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier, XGBRegressor
 
 logger = logging.getLogger(__name__)
 

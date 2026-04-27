@@ -3,11 +3,12 @@ Phase 434: Ollama - Local LLM SC2 Strategy Advisor
 Run open-source LLMs locally via Ollama for offline SC2 strategy analysis.
 """
 
-import httpx
 import asyncio
 import json
 from dataclasses import dataclass
 from typing import AsyncGenerator, Optional
+
+import httpx
 
 OLLAMA_BASE_URL = "http://localhost:11434"
 DEFAULT_MODEL = "llama3"

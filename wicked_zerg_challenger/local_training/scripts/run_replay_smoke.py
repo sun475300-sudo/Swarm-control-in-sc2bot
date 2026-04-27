@@ -10,11 +10,11 @@ This is intended for smoke testing only.
 
 import argparse
 import json
+import logging
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from batch_trainer import train_from_manifest
-import logging
 
 logger = logging.getLogger("RunReplaySmoke")
 

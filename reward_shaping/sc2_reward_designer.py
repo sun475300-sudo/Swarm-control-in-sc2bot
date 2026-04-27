@@ -12,17 +12,18 @@ Features:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
-from enum import Enum
-import math
-import random
-import time
-import json
-import os
-import sys
+
 import collections
 import hashlib
+import json
+import math
+import os
+import random
+import sys
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

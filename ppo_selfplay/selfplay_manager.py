@@ -3,14 +3,15 @@ Phase 349: Self-Play Manager
 Self-play matchmaking and opponent pool management for SC2 bot training.
 """
 
-import os
-import math
-import random
-import torch
 import copy
+import math
+import os
+import random
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+import torch
 
 
 class AgentRole(Enum):

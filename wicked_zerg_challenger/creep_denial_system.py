@@ -12,16 +12,16 @@ ZvZ 대전에서 특히 중요한 시스템입니다.
 4. 크립 종양 파괴 유닛 자동 파견
 """
 
-from typing import Dict, List, Optional, Set, Tuple
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
-    from sc2.position import Point2
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.ids.ability_id import AbilityId
 except ImportError:
     Unit = object
     Units = object
@@ -29,8 +29,9 @@ except ImportError:
     UnitTypeId = None
     AbilityId = None
 
-from utils.logger import get_logger
 from game_config import GameConfig
+
+from utils.logger import get_logger
 
 
 @dataclass

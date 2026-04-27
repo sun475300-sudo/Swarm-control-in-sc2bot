@@ -7,18 +7,19 @@ Model will be saved to: local_training/models/zerg_net_model.pt
 """
 
 import logging
-from sc2 import maps  # type: ignore
-from sc2.player import Bot, Computer  # type: ignore
-from sc2.main import run_game  # type: ignore
-from sc2.data import Race, Difficulty  # type: ignore
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
 import os
-from pathlib import Path
 import random
+import sys
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Set, Any, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from sc2 import maps  # type: ignore
+from sc2.data import Difficulty, Race  # type: ignore
+from sc2.main import run_game  # type: ignore
+from sc2.player import Bot, Computer  # type: ignore
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +100,8 @@ def main():
     Main entry point for bot execution with training enabled.
     IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
-    import time
     import random
+    import time
 
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
@@ -881,8 +882,9 @@ def main():
             if str(script_dir) not in sys.path:
                 sys.path.insert(0, str(script_dir))
 
-            from tools.extract_and_train_from_training import TrainingDataExtractor
             from datetime import datetime
+
+            from tools.extract_and_train_from_training import TrainingDataExtractor
 
             extractor = TrainingDataExtractor()
 

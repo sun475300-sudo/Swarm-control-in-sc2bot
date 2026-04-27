@@ -13,9 +13,9 @@ Adaptive Build Order Manager - 적응형 빌드오더 시스템 (#104)
 5. 타이밍 기반 자동 전환
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-from enum import Enum
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("AdaptiveBuild")
 

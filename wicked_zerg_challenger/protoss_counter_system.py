@@ -13,11 +13,12 @@ Protoss Counter System - Advanced counter logic for Protoss opponents
 """
 
 from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     UnitTypeId = None

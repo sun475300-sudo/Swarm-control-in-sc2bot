@@ -12,12 +12,13 @@ SpellCaster Automation - 마법 유닛 스킬 자동화
 효과: 고급 유닛 활용도 0% → 100%
 """
 
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from utils.logger import get_logger
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
@@ -46,7 +47,7 @@ except ImportError:
     Point2 = tuple
 
 try:
-    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+    from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
 except ImportError:
     UnitAuthorityManager = None
     AuthorityLevel = None

@@ -8,13 +8,13 @@ Target: < 10 ms per decision for real-time SC2 play.
 
 from __future__ import annotations
 
-import time
 import os
-import sys
 import struct
+import sys
+import time
 from dataclasses import dataclass, field
-from typing import Optional, List, Tuple, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -3,15 +3,16 @@ Phase 426: ZenML - SC2 MLOps Pipeline
 Full ML lifecycle management for SC2 strategy models.
 """
 
+from typing import Annotated, Tuple
+
+import numpy as np
+import pandas as pd
 from zenml import pipeline, step
 from zenml.config import DockerSettings
+from zenml.integrations.constants import MLFLOW
 from zenml.integrations.mlflow.flavors.mlflow_experiment_tracker_flavor import (
     MLFlowExperimentTrackerSettings,
 )
-from zenml.integrations.constants import MLFLOW
-from typing import Annotated, Tuple
-import numpy as np
-import pandas as pd
 
 # ── Step definitions ──────────────────────────────────────────────────────────
 

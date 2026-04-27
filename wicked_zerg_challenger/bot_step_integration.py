@@ -263,7 +263,7 @@ except ImportError:
 
 # Unit Authority Manager
 try:
-    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+    from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
 except ImportError:
     UnitAuthorityManager = None
     AuthorityLevel = None

@@ -4,11 +4,11 @@ In-game performance profiler tracking APM, decision latency, and efficiency
 metrics. Exports data to a Prometheus-compatible metrics endpoint.
 """
 
+import threading
+import time
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-import time
-import threading
-from collections import deque
 
 
 @dataclass

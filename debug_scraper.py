@@ -1,5 +1,7 @@
-import requests
 import re
+
+import requests
+
 
 def scrape_ids():
     url = "https://lotv.spawningtool.com/replays/?race=1&tag=9" # Tag 9 = Professional? Or just race=1 (Zerg)

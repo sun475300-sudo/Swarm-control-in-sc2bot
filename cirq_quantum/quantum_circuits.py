@@ -4,11 +4,12 @@ SC2 Bot resource routing via quantum annealing simulation
 """
 
 from __future__ import annotations
+
+import cmath
+import math
+import random
 from dataclasses import dataclass, field
 from typing import Optional
-import math
-import cmath
-import random
 
 try:
     import cirq

@@ -7,8 +7,8 @@
 
 import asyncio
 import json
-import os
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger("jarvis.calendar")
@@ -18,8 +18,8 @@ KST = timezone(timedelta(hours=9))
 # Google API 가용 여부
 _google_available = False
 try:
-    from googleapiclient.discovery import build
     from google.oauth2 import service_account
+    from googleapiclient.discovery import build
 
     _google_available = True
 except ImportError:
@@ -53,8 +53,8 @@ class CalendarIntegration:
         token_path = os.path.join(os.path.dirname(__file__), "token.json")
         if os.path.exists(token_path):
             try:
-                from google.oauth2.credentials import Credentials
                 from google.auth.transport.requests import Request as GRequest
+                from google.oauth2.credentials import Credentials
 
                 creds = Credentials.from_authorized_user_file(token_path, _SCOPES)
                 if creds and creds.expired and creds.refresh_token:

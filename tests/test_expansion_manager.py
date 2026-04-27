@@ -24,14 +24,15 @@ Unit Tests for ExpansionManager
 - pytest 프레임워크 사용
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
 from typing import List
+from unittest.mock import AsyncMock, MagicMock, Mock
+
+import pytest
 
 # ExpansionManager 함수 임포트
 try:
-    import sys
     import os
+    import sys
 
     sys.path.insert(
         0,
@@ -45,9 +46,9 @@ try:
     )
     from expansion_manager import (
         can_expand_safely,
-        try_expand,
-        log_expand_block,
         cleanup_build_reservations,
+        log_expand_block,
+        try_expand,
     )
 except ImportError:
     pytest.skip("ExpansionManager not available", allow_module_level=True)

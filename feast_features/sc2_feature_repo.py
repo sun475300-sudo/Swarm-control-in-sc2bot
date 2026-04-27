@@ -3,22 +3,23 @@ Phase 429: Feast - SC2 Feature Store Repository
 Centralized feature management for SC2 ML training and real-time serving.
 """
 
-from feast import (
-    Entity,
-    FeatureView,
-    Feature,
-    FeatureStore,
-    FileSource,
-    RequestSource,
-    OnDemandFeatureView,
-    ValueType,
-    Field,
-)
-from feast.types import Float32, Float64, Int32, Int64, String
 from datetime import timedelta
 from pathlib import Path
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+from feast import (
+    Entity,
+    Feature,
+    FeatureStore,
+    FeatureView,
+    Field,
+    FileSource,
+    OnDemandFeatureView,
+    RequestSource,
+    ValueType,
+)
+from feast.types import Float32, Float64, Int32, Int64, String
 
 # ── Entities ──────────────────────────────────────────────────────────────────
 

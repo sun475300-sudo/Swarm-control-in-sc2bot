@@ -4,14 +4,14 @@ Blue-green deployment system for zero-downtime model updates.
 Handles version checking, model download, hot-swapping, and rollback.
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
 import hashlib
 import json
 import os
 import shutil
-import time
 import threading
+import time
+from dataclasses import dataclass, field
+from typing import Callable, Dict, List, Optional
 
 
 @dataclass

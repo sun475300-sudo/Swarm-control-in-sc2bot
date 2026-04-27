@@ -1,21 +1,23 @@
 # SC2 Bot - AWS CDK (Python) Infrastructure Stack
 # SC2BotInfraStack with EKS, RDS, S3, ECR, and custom SC2BotService construct
 
+import os
+
+from constructs import Construct
+
 import aws_cdk as cdk
 from aws_cdk import (
-    Stack,
     CfnOutput,
-    RemovalPolicy,
     Duration,
-    aws_eks as eks,
-    aws_rds as rds,
-    aws_s3 as s3,
-    aws_ecr as ecr,
-    aws_ec2 as ec2,
-    aws_iam as iam,
+    RemovalPolicy,
+    Stack,
 )
-from constructs import Construct
-import os
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecr as ecr
+from aws_cdk import aws_eks as eks
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_rds as rds
+from aws_cdk import aws_s3 as s3
 
 
 # ========================================

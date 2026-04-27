@@ -14,7 +14,8 @@ Dynamic Authority 기반 생산 관리:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 3 (Dynamic Authority)
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from utils.logger import get_logger
 
 try:
@@ -25,7 +26,8 @@ except ImportError:
     UnitTypeId = None
 
 try:
-    from blackboard import Blackboard as GameStateBlackboard, AuthorityMode
+    from blackboard import AuthorityMode
+    from blackboard import Blackboard as GameStateBlackboard
 except ImportError:
     GameStateBlackboard = None
     AuthorityMode = None

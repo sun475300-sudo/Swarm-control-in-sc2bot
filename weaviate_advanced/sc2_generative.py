@@ -2,23 +2,24 @@
 # Strategy Q&A with nearText, generative modules, and GraphQL
 # Phase 472: Weaviate generative + hybrid search for SC2 strategy Q&A
 
+from typing import List, Optional
+
 import weaviate
-from weaviate.classes.init import Auth
-from weaviate.classes.query import (
-    MetadataQuery,
-    HybridFusion,
-    Generate,
-    NearText,
-    Filter,
-    FilterMetadata,
-)
 from weaviate.classes.config import (
     Configure,
-    Property,
     DataType,
+    Property,
     VectorDistances,
 )
-from typing import List, Optional
+from weaviate.classes.init import Auth
+from weaviate.classes.query import (
+    Filter,
+    FilterMetadata,
+    Generate,
+    HybridFusion,
+    MetadataQuery,
+    NearText,
+)
 
 # --- Client Setup (Weaviate Cloud / local) ---
 client = weaviate.connect_to_local(

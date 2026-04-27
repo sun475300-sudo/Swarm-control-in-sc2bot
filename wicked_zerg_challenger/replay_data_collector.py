@@ -1,7 +1,8 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from utils.logger import get_logger
 
 

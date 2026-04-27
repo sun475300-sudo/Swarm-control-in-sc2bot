@@ -4,11 +4,11 @@ Tracks ladder progress, per-race win rates, map performance, streaks, and
 rank history. Exports to JSON and generates trend analysis.
 """
 
+import json
+import os
+import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-import json
-import time
-import os
 
 
 @dataclass

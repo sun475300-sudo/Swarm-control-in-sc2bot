@@ -15,21 +15,22 @@ Layer 5: 파일 시스템 보호 + 거래 안전 한도 / 이상 거래 탐지
 #160: 시크릿 매니저
 """
 
+import base64
+import hashlib
+import json
+import logging
 import math
 import os
 import re
-import sys
 import stat
-import hashlib
-import logging
+import sys
 import threading
 import time
-import json
-import base64
 import zipfile
 from collections import deque
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
+
 from . import config
 
 logger = logging.getLogger("crypto.security")
@@ -1104,10 +1105,10 @@ class SecretManager:
     def _init_fernet(self):
         """Bug #7 Fix + H-7: Fernet 대칭 암호화 초기화. PBKDF2 키 파생 강화."""
         try:
-            from cryptography.fernet import Fernet
-
             # H-7: PBKDF2로 강화된 키 파생 (salt + 100k iterations)
             import hashlib
+
+            from cryptography.fernet import Fernet
 
             _salt = hashlib.sha256(b"JARVIS_FERNET_SALT_v1").digest()[:16]
             key_hash = hashlib.pbkdf2_hmac(
@@ -1140,6 +1141,7 @@ class SecretManager:
                 # H-7: 구 SHA-256 키로 암호화된 데이터 복호화 시도 (마이그레이션 호환)
                 try:
                     import hashlib as _hlib
+
                     from cryptography.fernet import Fernet as _Fernet
 
                     old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()

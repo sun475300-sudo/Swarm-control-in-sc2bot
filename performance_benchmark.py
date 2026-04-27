@@ -4,12 +4,12 @@ Benchmarks various system components and operations
 """
 
 import json
-import time
 import random
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any
+import time
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 @dataclass

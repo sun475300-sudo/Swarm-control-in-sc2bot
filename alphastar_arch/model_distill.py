@@ -4,12 +4,13 @@ Knowledge distillation from large teacher model to compact student model.
 Supports KL policy distillation, MSE value distillation, and online self-play distillation.
 """
 
+from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 
 
 @dataclass

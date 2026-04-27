@@ -5,9 +5,9 @@ Identifies choke points, high ground, expansions, and drop positions.
 Analysis results are cached per named map.
 """
 
+import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-import math
 
 
 @dataclass

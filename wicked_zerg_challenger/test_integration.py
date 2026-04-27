@@ -13,10 +13,10 @@ Usage:
 
 import argparse
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("TestIntegration")
 
@@ -161,8 +161,9 @@ class IntegrationTester:
         )
 
         try:
-            from advanced_micro_controller_v3 import AdvancedMicroControllerV3
             from unittest.mock import Mock
+
+            from advanced_micro_controller_v3 import AdvancedMicroControllerV3
 
             # Create mock bot
             mock_bot = Mock()

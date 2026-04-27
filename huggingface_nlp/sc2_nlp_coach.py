@@ -9,10 +9,10 @@ Graceful fallback to keyword-based analysis when `transformers` is not installed
 
 from __future__ import annotations
 
-import re
-import sys
 import json
 import logging
+import re
+import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -26,8 +26,8 @@ log = logging.getLogger("sc2_nlp_coach")
 # Optional HuggingFace import — graceful fallback
 # ---------------------------------------------------------------------------
 try:
-    from transformers import pipeline, AutoTokenizer, AutoModel
     import torch
+    from transformers import AutoModel, AutoTokenizer, pipeline
 
     HF_AVAILABLE = True
     log.info("HuggingFace Transformers available — using neural models.")

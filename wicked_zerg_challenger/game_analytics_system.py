@@ -9,12 +9,12 @@ Game Analytics System - 게임 분석 및 통계 시스템
 - 타이밍 분석 (게임 길이, 첫 공격, 확장 등)
 """
 
-from typing import Dict, List, Optional
-from enum import Enum
 import json
-from pathlib import Path
-from datetime import datetime
 import logging
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger("GameAnalyticsSystem")
 

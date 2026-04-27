@@ -12,11 +12,12 @@
 python generate_radar_mesh_atc.py
 """
 
-import os
+import logging
 import math
+import os
+
 import numpy as np
 import plotly.graph_objects as go
-import logging
 
 logger = logging.getLogger("GenerateRadarMeshAtc")
 

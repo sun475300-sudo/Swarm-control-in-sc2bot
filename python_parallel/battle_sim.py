@@ -5,9 +5,10 @@ Phase 150: Python Parallel (Multiprocessing)
 
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple
+
+import numpy as np
 
 
 @dataclass

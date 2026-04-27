@@ -11,8 +11,8 @@ Performance improvements:
 - Expected speedup: 3-10x for large unit counts
 """
 
-from typing import TYPE_CHECKING, Optional, Dict, Tuple
 from functools import lru_cache
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI

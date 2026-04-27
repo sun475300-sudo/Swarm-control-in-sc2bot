@@ -1,19 +1,20 @@
 # Phase 417: Optuna - SC2 Hyperparameter Optimization
 # Optuna TPE sampler with pruning for SC2 PPO model tuning
 
+from pathlib import Path
+
+import numpy as np
 import optuna
-from optuna.samplers import TPESampler
-from optuna.pruners import MedianPruner
-from optuna.visualization import (
-    plot_optimization_history,
-    plot_param_importances,
-    plot_parallel_coordinate,
-    plot_contour,
-)
 import torch
 import torch.nn as nn
-import numpy as np
-from pathlib import Path
+from optuna.pruners import MedianPruner
+from optuna.samplers import TPESampler
+from optuna.visualization import (
+    plot_contour,
+    plot_optimization_history,
+    plot_parallel_coordinate,
+    plot_param_importances,
+)
 
 # ============================================================
 # Policy Network

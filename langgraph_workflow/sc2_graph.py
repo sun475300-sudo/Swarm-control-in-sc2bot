@@ -1,13 +1,14 @@
 # Phase 413: LangGraph - SC2 Stateful Decision Workflow
 # LangGraph stateful graph for SC2 game decision making with checkpointing
 
-from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import MemorySaver
-from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from typing import TypedDict, Annotated, Optional, Literal
-import operator
 import json
+import operator
+from typing import Annotated, Literal, Optional, TypedDict
+
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
 
 # ============================================================
 # State: SC2GameState TypedDict

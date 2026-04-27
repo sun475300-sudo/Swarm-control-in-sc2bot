@@ -4,12 +4,13 @@ PCollection transforms for replay analysis with ParDo and GroupByKey.
 """
 
 import logging
-import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
-from apache_beam.transforms.window import SlidingWindows, FixedWindows
-from apache_beam.transforms.trigger import AfterWatermark, AfterProcessingTime
-from apache_beam.io import ReadFromText, WriteToText
 from typing import Iterator
+
+import apache_beam as beam
+from apache_beam.io import ReadFromText, WriteToText
+from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
+from apache_beam.transforms.trigger import AfterProcessingTime, AfterWatermark
+from apache_beam.transforms.window import FixedWindows, SlidingWindows
 
 logger = logging.getLogger(__name__)
 

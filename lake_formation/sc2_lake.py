@@ -4,6 +4,7 @@ Register S3 locations, grant column-level permissions, fine-grained access contr
 """
 
 import logging
+
 import boto3
 from botocore.exceptions import ClientError
 

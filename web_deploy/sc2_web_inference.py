@@ -4,19 +4,19 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
-import math
-import time
-import struct
-import hashlib
 import logging
+import math
+import struct
 import threading
+import time
+from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Any, Union
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 

@@ -1,21 +1,22 @@
-import os
-import sys
-import time
-import logging
 import asyncio
+import base64
+import csv
+import io
+import json
+import logging
+import os
+import re
 import signal
 import socket
-import discord
-import aiohttp
-import json
 import subprocess
-import re
-import io
-import csv
-import base64
-from collections import deque, OrderedDict
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List, Dict, Any
+import sys
+import time
+from collections import OrderedDict, deque
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
@@ -81,8 +82,8 @@ except Exception as e:
 
 # ── Tool Registry & System Prompts ──
 try:
-    from tool_registry import get_tool_registry
     from system_prompts import build_system_prompt
+    from tool_registry import get_tool_registry
 except ImportError as e:
     logging.warning(f"tool_registry/system_prompts 임포트 실패: {e}")
     get_tool_registry = None
@@ -91,8 +92,8 @@ except ImportError as e:
 UpbitClient = None
 upbit_config = None
 try:
-    from crypto_trading.upbit_client import UpbitClient
     from crypto_trading import config as upbit_config
+    from crypto_trading.upbit_client import UpbitClient
 except ImportError as e:
     logging.warning(f"crypto_trading 임포트 실패: {e}")
 
@@ -116,17 +117,17 @@ set_user_language = None
 ActivityManager = None
 try:
     from discord_advanced_features import (
-        TradeView,
-        CoinSelectView,
-        generate_price_chart,
-        ScheduledReporter,
-        setup_advanced_features,
+        ActivityManager,
         AdvancedCommandsCog,
+        CoinSelectView,
+        ScheduledReporter,
+        TradeView,
         create_thread_for_long_conversation,
+        generate_price_chart,
         get_text,
         get_user_language,
         set_user_language,
-        ActivityManager,
+        setup_advanced_features,
     )
 
     ADVANCED_AVAILABLE = True
@@ -258,13 +259,13 @@ RATE_LIMIT_COOLDOWN_SECONDS = 60  # 429 에러 시 쿨다운
 HISTORY_TURNS = int(os.environ.get("JARVIS_HISTORY_TURNS", "5"))  # 대화 히스토리 턴 수
 try:
     from jarvis_features.constants import (
-        HTTP_TIMEOUT_GEMINI,
-        HTTP_TIMEOUT_DEFAULT,
-        HTTP_TIMEOUT_PROXY,
-        DISCORD_MSG_LIMIT,
-        SEARCH_RESULT_LIMIT,
         ATTACHMENT_TEXT_LIMIT,
+        DISCORD_MSG_LIMIT,
+        HTTP_TIMEOUT_DEFAULT,
+        HTTP_TIMEOUT_GEMINI,
+        HTTP_TIMEOUT_PROXY,
         PROMPT_TRUNCATE_LIMIT,
+        SEARCH_RESULT_LIMIT,
     )
 except ImportError:
     HTTP_TIMEOUT_GEMINI = 45
@@ -813,9 +814,9 @@ except ImportError:
 
 try:
     from jarvis_features.ai_features import (
+        _generate_image_free,
         _generate_image_openai,
         _generate_image_stable_diffusion,
-        _generate_image_free,
     )
 except ImportError:
     _generate_image_openai = _generate_image_stable_diffusion = _generate_image_free = (

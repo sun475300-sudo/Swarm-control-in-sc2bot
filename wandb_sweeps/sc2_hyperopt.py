@@ -1,11 +1,12 @@
 # Phase 416: Weights & Biases Sweeps - SC2 PPO Hyperparameter Optimization
 # W&B Sweeps with Bayesian optimization for SC2 PPO training
 
-import wandb
+from typing import Optional
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Optional
+import wandb
 
 # ============================================================
 # Sweep Configuration

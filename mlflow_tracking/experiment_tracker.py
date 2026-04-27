@@ -5,16 +5,16 @@
 
 from __future__ import annotations
 
-import os
 import json
-import math
-import time
-import random
 import logging
+import math
+import os
+import random
 import tempfile
 import threading
+import time
 from contextlib import contextmanager
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 try:
     import mlflow
     import mlflow.pyfunc
-    from mlflow.tracking import MlflowClient
     from mlflow.exceptions import MlflowException
     from mlflow.models import infer_signature
+    from mlflow.tracking import MlflowClient
 
     _MLFLOW_AVAILABLE = True
 except ImportError:

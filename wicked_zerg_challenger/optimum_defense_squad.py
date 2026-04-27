@@ -8,7 +8,8 @@ Optimum Defense Squad - 최적 방어 병력 계산 시스템
 - 나머지는 전선 유지 또는 생산 지속
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
 from utils.logger import get_logger
 
 try:

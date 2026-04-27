@@ -157,7 +157,7 @@ class TestConfigLoader:
 
     def test_get_project_name(self):
         """프로젝트 이름을 가져올 수 있는지 확인한다."""
-        from config_loader import load_config, get
+        from config_loader import get, load_config
 
         load_config()
         name = get("project.name")
@@ -167,7 +167,7 @@ class TestConfigLoader:
 
     def test_get_proxy_port(self):
         """프록시 포트 설정을 가져올 수 있는지 확인한다."""
-        from config_loader import load_config, get
+        from config_loader import get, load_config
 
         load_config()
         port = get("proxy.port")
@@ -176,7 +176,7 @@ class TestConfigLoader:
 
     def test_get_nonexistent_key_returns_default(self):
         """존재하지 않는 키에 대해 기본값을 반환하는지 확인한다."""
-        from config_loader import load_config, get
+        from config_loader import get, load_config
 
         load_config()
         result = get("no.such.key", default="테스트기본값")
@@ -185,10 +185,9 @@ class TestConfigLoader:
     def test_env_override(self, monkeypatch):
         """환경변수로 설정값을 오버라이드할 수 있는지 확인한다."""
         monkeypatch.setenv("PROXY_PORT", "9999")
-        from config_loader import load_config, get
-
         # 캐시를 무시하고 재로드
         import config_loader
+        from config_loader import get, load_config
 
         config_loader._config = None
         cfg = load_config()
@@ -209,6 +208,7 @@ class TestUnifiedLogger:
     def test_get_logger_returns_logger(self):
         """get_logger가 Logger 인스턴스를 반환하는지 확인한다."""
         import logging
+
         from unified_logger import UnifiedLogger
 
         UnifiedLogger.shutdown()
@@ -235,6 +235,7 @@ class TestUnifiedLogger:
     def test_set_level(self, temp_dir):
         """동적 로그 레벨 변경이 작동하는지 확인한다."""
         import logging
+
         from unified_logger import UnifiedLogger
 
         UnifiedLogger.shutdown()

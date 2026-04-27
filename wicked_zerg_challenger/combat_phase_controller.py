@@ -9,15 +9,15 @@ Combat Phase Controller - 전투 단계별 컨트롤 시스템
 4. Retreat Phase (후퇴 단계): 손실 최소화 후퇴
 """
 
-from typing import Dict, List, Optional, Set, Tuple
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
-    from sc2.units import Units
-    from sc2.unit import Unit
-    from sc2.position import Point2
     from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 except ImportError:
     Units = object
     Unit = object

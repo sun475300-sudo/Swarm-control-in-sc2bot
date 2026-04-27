@@ -8,25 +8,25 @@ Phase 66: Multi-Language System Integration Hub
 
 from __future__ import annotations
 
-import os
-import sys
 import json
-import time
+import os
 import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
+import sys
+import time
+from dataclasses import asdict, dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from wicked_zerg_challenger.rust_accel import (
-        nearest_point_index,
-        combat_power_comparison,
         batch_nearest_points,
+        cluster_points,
+        combat_power_comparison,
+        formation_positions,
+        nearest_point_index,
         path_distance,
         route_distance,
-        cluster_points,
-        formation_positions,
         rust_available,
     )
 

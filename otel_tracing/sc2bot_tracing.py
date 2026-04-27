@@ -6,23 +6,22 @@ and custom semantic attributes for race, map, and ladder MMR.
 """
 
 import functools
-from typing import Callable, Any
+from typing import Any, Callable
 
 # OpenTelemetry core imports
-from opentelemetry import trace, baggage, context
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
+from opentelemetry import baggage, context, propagate, trace
+from opentelemetry.baggage.propagation import W3CBaggagePropagator
 
 # Jaeger exporter (OTLP/gRPC to Jaeger ≥ 1.35, or legacy Thrift)
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.propagators.b3 import B3MultiFormat
 
 # Propagators for distributed context (W3C TraceContext + Baggage)
 from opentelemetry.propagators.composite import CompositePropagator
-from opentelemetry.propagators.b3 import B3MultiFormat
-from opentelemetry import propagate
+from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.baggage.propagation import W3CBaggagePropagator
 
 # ---------------------------------------------------------------------------
 # Resource & Provider Setup

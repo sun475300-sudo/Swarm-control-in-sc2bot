@@ -178,8 +178,8 @@ class PortfolioTracker:
             import matplotlib
 
             matplotlib.use("Agg")
-            import matplotlib.pyplot as plt
             import matplotlib.dates as mdates
+            import matplotlib.pyplot as plt
         except ImportError:
             logger.error("matplotlib가 설치되지 않았습니다: pip install matplotlib")
             return None

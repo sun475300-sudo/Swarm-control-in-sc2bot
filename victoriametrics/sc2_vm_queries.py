@@ -1,10 +1,11 @@
 # SC2 Bot - VictoriaMetrics Queries
 # High-performance Prometheus-compatible time series DB with MetricsQL
 
-import requests
 import json
 from datetime import datetime, timedelta
 from typing import Optional
+
+import requests
 
 VMSELECT_URL = "http://vmselect:8481/select/0/prometheus"
 VMINSERT_URL = "http://vminsert:8480/insert/0/prometheus"

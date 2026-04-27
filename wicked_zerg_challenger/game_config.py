@@ -11,9 +11,9 @@ Game Configuration - 중앙 설정 관리
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 5 (Magic Numbers)
 """
 
-from typing import Dict, Any
-import os
 import logging
+import os
+from typing import Any, Dict
 
 _config_logger = logging.getLogger("GameConfig")
 

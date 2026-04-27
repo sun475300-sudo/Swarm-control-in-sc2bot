@@ -9,6 +9,7 @@ Smart Resource Balancer - 실시간 일꾼 재배치로 자원 효율 극대화
 """
 
 from typing import Dict, List, Tuple
+
 from utils.logger import get_logger
 
 try:

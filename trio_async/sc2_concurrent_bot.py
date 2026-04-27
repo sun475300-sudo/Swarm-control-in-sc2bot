@@ -10,11 +10,11 @@
 
 from __future__ import annotations
 
+import dataclasses
 import enum
+import logging
 import math
 import time
-import logging
-import dataclasses
 from typing import Any, Optional
 
 import trio

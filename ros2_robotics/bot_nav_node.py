@@ -4,11 +4,12 @@ SC2 Bot mapped to ROS2 paradigm — spatial navigation & unit coordination
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional, Callable
+
 import math
-import time
 import threading
+import time
+from dataclasses import dataclass, field
+from typing import Callable, Optional
 
 # ─────────────────────────────────────────────
 # ROS2 interface stubs (for testing without ROS2)
@@ -16,10 +17,10 @@ import threading
 
 try:
     import rclpy
-    from rclpy.node import Node
-    from geometry_msgs.msg import Twist, PoseStamped, Point
-    from std_msgs.msg import Float32MultiArray, String
+    from geometry_msgs.msg import Point, PoseStamped, Twist
     from nav_msgs.msg import OccupancyGrid, Path
+    from rclpy.node import Node
+    from std_msgs.msg import Float32MultiArray, String
 
     ROS2_AVAILABLE = True
 except ImportError:
@@ -117,7 +118,7 @@ class MapGrid:
 def astar(
     grid: MapGrid, start: tuple[int, int], goal: tuple[int, int]
 ) -> list[tuple[int, int]]:
-    from heapq import heappush, heappop
+    from heapq import heappop, heappush
 
     def heuristic(a, b):
         return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)

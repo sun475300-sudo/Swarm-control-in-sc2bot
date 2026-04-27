@@ -5,8 +5,8 @@ Works across DuckDB, BigQuery, Snowflake, and more with a single API.
 
 import ibis
 import ibis.expr.datatypes as dt
-from ibis import _
 import pandas as pd
+from ibis import _
 
 # ── Backend configuration ─────────────────────────────────────────────────────
 

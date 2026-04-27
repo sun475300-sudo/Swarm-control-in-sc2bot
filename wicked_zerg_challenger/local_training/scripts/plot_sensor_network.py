@@ -8,14 +8,14 @@ Usage:
 """
 
 import argparse
-from pathlib import Path
 import logging
+from pathlib import Path
 
 logger = logging.getLogger("PlotSensorNetwork")
 
 try:
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import pandas as pd
 
     PLOT_AVAILABLE = True
 except ImportError:

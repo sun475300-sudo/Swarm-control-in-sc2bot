@@ -12,7 +12,8 @@ Features:
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Dict, Tuple, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
+
 from wicked_zerg_challenger.utils.logger import get_logger
 
 if TYPE_CHECKING:

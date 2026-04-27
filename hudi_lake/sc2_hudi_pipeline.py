@@ -5,14 +5,15 @@ Copy-on-Write table with upserts, incremental queries for new games.
 
 import logging
 from datetime import datetime, timedelta
+
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lit, current_timestamp, to_date
+from pyspark.sql.functions import col, current_timestamp, lit, to_date
 from pyspark.sql.types import (
-    StructType,
-    StructField,
-    StringType,
-    IntegerType,
     DoubleType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
     TimestampType,
 )
 

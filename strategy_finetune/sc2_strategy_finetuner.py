@@ -68,8 +68,8 @@ try:
     from transformers import (  # type: ignore
         AutoModelForCausalLM,
         AutoTokenizer,
-        TrainingArguments,
         Trainer,
+        TrainingArguments,
     )
 
     _TRANSFORMERS_AVAILABLE = True
@@ -77,14 +77,14 @@ except ImportError:
     pass
 
 try:
-    from peft import LoraConfig, get_peft_model, TaskType  # type: ignore
+    from peft import LoraConfig, TaskType, get_peft_model  # type: ignore
 
     _PEFT_AVAILABLE = True
 except ImportError:
     pass
 
 try:
-    from trl import DPOTrainer, PPOTrainer, PPOConfig  # type: ignore
+    from trl import DPOTrainer, PPOConfig, PPOTrainer  # type: ignore
 
     _TRL_AVAILABLE = True
 except ImportError:

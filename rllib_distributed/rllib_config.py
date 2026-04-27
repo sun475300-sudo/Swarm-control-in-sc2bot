@@ -4,17 +4,18 @@ SC2 Bot large-scale RL with RLlib APPO/IMPALA
 """
 
 from __future__ import annotations
-from typing import Optional, Any
+
 import os
 import sys
+from typing import Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     import ray
-    from ray.rllib.algorithms.ppo import PPOConfig
     from ray.rllib.algorithms.appo import APPOConfig
     from ray.rllib.algorithms.impala import IMPALAConfig
+    from ray.rllib.algorithms.ppo import PPOConfig
     from ray.rllib.env.env_context import EnvContext
 
     RLLIB_AVAILABLE = True
@@ -195,8 +196,9 @@ def build_selfplay_config():
 
 def _simulate_distributed_training(iterations: int) -> dict:
     """Simulate multi-worker training without Ray."""
-    from gymnasium_env.sc2_gym_env import SC2ZergEnv
     import random
+
+    from gymnasium_env.sc2_gym_env import SC2ZergEnv
 
     # 4 parallel "workers"
     n_workers = 4

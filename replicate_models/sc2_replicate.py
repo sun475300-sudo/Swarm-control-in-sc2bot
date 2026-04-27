@@ -3,10 +3,11 @@ Phase 440: Replicate - SC2 Model Deployment on Replicate Platform
 Cloud model hosting with custom cog packaging for SC2 strategy inference.
 """
 
-import replicate
 import json
-from pydantic import BaseModel, Field
 from typing import Optional
+
+import replicate
+from pydantic import BaseModel, Field
 
 # ── Input/Output schemas ──────────────────────────────────────────────────────
 

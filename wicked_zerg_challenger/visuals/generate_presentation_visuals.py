@@ -7,11 +7,12 @@
 python generate_presentation_visuals.py
 """
 
-import os
+import logging
 import math
+import os
+
 import numpy as np
 import plotly.graph_objects as go
-import logging
 
 logger = logging.getLogger("GeneratePresentationVisuals")
 

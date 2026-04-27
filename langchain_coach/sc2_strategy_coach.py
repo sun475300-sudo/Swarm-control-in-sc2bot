@@ -54,7 +54,7 @@ try:
     from langchain.chains import LLMChain, SequentialChain
     from langchain.memory import ConversationBufferMemory, ConversationSummaryMemory
     from langchain.prompts import PromptTemplate
-    from langchain.schema import BaseMessage, HumanMessage, AIMessage
+    from langchain.schema import AIMessage, BaseMessage, HumanMessage
     from langchain.tools import BaseTool
 
     _LANGCHAIN_AVAILABLE = True

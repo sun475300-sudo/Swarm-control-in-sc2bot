@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """OpenClaw 브라우저 자동화 Cog (Playwright 기반)."""
 
-import discord
-from discord import app_commands
-from discord.ext import commands
 import logging
 import os
 import re
 import sys
 from urllib.parse import urlparse
 
+import discord
+from discord import app_commands
+from discord.ext import commands
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.openclaw_helper import get_openclaw_helper, chunk_text
+from utils.openclaw_helper import chunk_text, get_openclaw_helper
 
 logger = logging.getLogger("jarvis.openclaw.browser")
 

@@ -1,27 +1,28 @@
 # SC2 Bot - Qdrant Vector Database
 # Strategy embeddings with payload filtering and recommendation API
 
+import uuid
+from typing import Any, Dict, List, Optional
+
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.models import (
-    Distance,
-    VectorParams,
-    PointStruct,
-    Filter,
-    FieldCondition,
-    MatchValue,
-    Range,
-    ScoredPoint,
-    RecommendRequest,
     CreateCollection,
-    OptimizersConfigDiff,
+    Distance,
+    FieldCondition,
+    Filter,
     HnswConfigDiff,
-    UpdateResult,
-    SearchRequest,
+    MatchValue,
+    OptimizersConfigDiff,
+    PointStruct,
+    Range,
+    RecommendRequest,
+    ScoredPoint,
     SearchParams,
+    SearchRequest,
+    UpdateResult,
+    VectorParams,
 )
-from typing import List, Optional, Dict, Any
-import uuid
 
 # --- Client Setup ---
 client = QdrantClient(host="localhost", port=6333)

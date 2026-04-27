@@ -10,15 +10,16 @@
 5. Complete Destruction 우선순위 95 (기지 방어 다음)
 """
 
+import logging
+import random
+import sys
+from pathlib import Path
+
 import sc2
 from sc2 import maps
-from sc2.player import Bot, Computer
+from sc2.data import Difficulty, Race
 from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import random
-from pathlib import Path
-import logging
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("TestMultitaskDestruction")
 

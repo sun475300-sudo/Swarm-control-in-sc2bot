@@ -3,24 +3,25 @@ Phase 428: Evidently - SC2 ML Monitoring & Drift Detection
 Monitors SC2 model health and detects distribution shifts in production.
 """
 
-import pandas as pd
+from pathlib import Path
+
 import numpy as np
-from evidently.report import Report
-from evidently.metric_preset import DataDriftPreset, ClassificationPreset
+import pandas as pd
+from evidently.metric_preset import ClassificationPreset, DataDriftPreset
 from evidently.metrics import (
-    DatasetDriftMetric,
-    DatasetMissingValuesMetric,
     ColumnDriftMetric,
     ColumnSummaryMetric,
+    DatasetDriftMetric,
+    DatasetMissingValuesMetric,
 )
+from evidently.report import Report
 from evidently.test_suite import TestSuite
 from evidently.tests import (
+    TestColumnDrift,
     TestNumberOfMissingValues,
     TestShareOfDriftedColumns,
-    TestColumnDrift,
     TestValueRange,
 )
-from pathlib import Path
 
 # ── Data generation ───────────────────────────────────────────────────────────
 

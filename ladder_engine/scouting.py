@@ -4,10 +4,10 @@ Intel gathering and build order detection for Zerg.
 Overlord positioning and drone scout management.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-from enum import Enum
 import math
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class EnemyBuild(Enum):

@@ -11,8 +11,8 @@ integrating separate modules for:
 - Boids swarm control (boids_swarm_control.py)
 """
 
-from typing import List, Set
 import logging
+from typing import List, Set
 
 logger = logging.getLogger("MicroController")
 
@@ -25,12 +25,12 @@ except ImportError:
 
 # Import modular components
 from combat.boids_swarm_control import BoidsSwarmController
+from combat.formation_tactics import BurrowController, ConcaveFormationController
 from combat.potential_fields import PotentialFieldController
+from combat.stutter_step_kiting import StutterStepKiting
+from combat.targeting import select_target
 from combat.terrain_analysis import ChokePointDetector
 from combat.threat_response import SplashThreatHandler
-from combat.formation_tactics import ConcaveFormationController, BurrowController
-from combat.targeting import select_target
-from combat.stutter_step_kiting import StutterStepKiting
 
 
 class BoidsController:

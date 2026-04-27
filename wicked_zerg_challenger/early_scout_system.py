@@ -6,8 +6,8 @@ Lightweight Zergling/Overlord scouting with blackboard synchronization so
 opening decisions can consume the scout state reliably.
 """
 
-from typing import Any, Dict, List, Optional, Set
 import logging
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger("EarlyScoutSystem")
 

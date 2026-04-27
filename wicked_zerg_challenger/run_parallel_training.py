@@ -10,15 +10,15 @@ SC2는 단일 인스턴스만 지원하므로, 순차적 멀티 게임을
 GPU 가속 활용 + 빠른 게임 전환.
 """
 
-import sys
-import os
-import time
 import json
-import random
-import multiprocessing
-from pathlib import Path
-from datetime import datetime
 import logging
+import multiprocessing
+import os
+import random
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger("RunParallelTraining")
 
@@ -44,9 +44,9 @@ def _ensure_sc2_path():
 _ensure_sc2_path()
 
 from sc2 import maps
-from sc2.player import Bot, Computer
+from sc2.data import Difficulty, Race
 from sc2.main import run_game
-from sc2.data import Race, Difficulty
+from sc2.player import Bot, Computer
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # GPU setup

@@ -2,13 +2,13 @@
 # Kafka producer/consumer for real-time SC2 game events
 
 import json
-import time
 import threading
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Optional, Callable
-from dataclasses import dataclass, asdict
+from typing import Callable, Optional
 
-from confluent_kafka import Producer, Consumer, KafkaException, KafkaError
+from confluent_kafka import Consumer, KafkaError, KafkaException, Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
 # ============================================================

@@ -6,9 +6,9 @@ Upgrade Resource Planner - 업그레이드 자원 계획 및 예약 시스템
 앞으로 필요한 업그레이드를 예측하고 자원을 미리 예약
 """
 
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

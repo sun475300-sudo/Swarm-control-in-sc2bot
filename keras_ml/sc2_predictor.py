@@ -8,10 +8,10 @@ Graceful fallback to a pure-NumPy implementation when TensorFlow/Keras is absent
 
 from __future__ import annotations
 
-import sys
-import time
 import logging
 import random
+import sys
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -32,8 +32,8 @@ try:
     from tensorflow.keras import layers, regularizers
     from tensorflow.keras.callbacks import (
         EarlyStopping,
-        ReduceLROnPlateau,
         ModelCheckpoint,
+        ReduceLROnPlateau,
     )
 
     TF_AVAILABLE = True

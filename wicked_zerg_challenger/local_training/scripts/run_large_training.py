@@ -14,12 +14,12 @@ SC2 클라이언트 없이 독립 실행 가능합니다.
 """
 
 import argparse
+import logging
 import os
 import sys
 import time
 
 import numpy as np
-import logging
 
 logger = logging.getLogger("RunLargeTraining")
 

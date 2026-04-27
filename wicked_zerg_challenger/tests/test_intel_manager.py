@@ -11,10 +11,10 @@ Tests:
 5. Blackboard integration
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

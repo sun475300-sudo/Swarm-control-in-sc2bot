@@ -10,17 +10,17 @@ GIF/MP4 녹화 기능 포함 (포트폴리오용).
 
 from __future__ import annotations
 
+import logging
 import math
 import sys
 from typing import List, Optional
 
 import numpy as np
 
-from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 from wicked_zerg_challenger.utm.boids3d import Boids3DController
 from wicked_zerg_challenger.utm.collision_predictor import CollisionPredictor
 from wicked_zerg_challenger.utm.corridor import CorridorManager
-import logging
+from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 
 logger = logging.getLogger("DemoVisualizer")
 

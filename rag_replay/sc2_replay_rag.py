@@ -2,17 +2,17 @@
 # Retrieval-Augmented Generation system that indexes SC2 replays and retrieves
 # relevant expert strategies based on game-state similarity queries.
 
-import json
 import hashlib
-import time
+import json
+import logging
 import math
 import os
 import struct
-import logging
+import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
 from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import numpy as np

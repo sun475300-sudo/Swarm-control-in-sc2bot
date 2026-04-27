@@ -1,5 +1,6 @@
 import requests
 
+
 def test_download(rid):
     # Step 1: Visit detail page (Try short URL)
     detail_url = f"https://lotv.spawningtool.com/{rid}/"
@@ -27,6 +28,7 @@ def test_download(rid):
         # Look for download link in detail page
         # Usually <a href="/replays/download/12345/">Download Replay</a> or similar
         import re
+
         # Find any link with 'download' in it
         downloads = re.findall(r'href=["\']([^"\']*)["\'][^>]*>.*?Download.*?</a>', resp.text, re.IGNORECASE)
         print(f"Download candidates (text search): {downloads}")

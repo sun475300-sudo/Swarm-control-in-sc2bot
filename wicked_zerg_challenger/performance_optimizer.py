@@ -10,9 +10,9 @@
 4. 로그 스팸 방지
 """
 
-from typing import Dict, Any, Set, Optional
-import time
 import logging
+import time
+from typing import Any, Dict, Optional, Set
 
 logger = logging.getLogger("PerformanceOptimizer")
 

@@ -3,8 +3,8 @@ ToolDispatcher — 등록형 도구 실행 디스패처
 _execute_tool()의 elif 체인을 점진적으로 이관합니다.
 """
 
-from typing import Callable, Dict, Optional
 import logging
+from typing import Callable, Dict, Optional
 
 logger = logging.getLogger("jarvis.tool_dispatcher")
 

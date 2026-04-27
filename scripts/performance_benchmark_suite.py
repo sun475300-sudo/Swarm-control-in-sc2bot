@@ -4,12 +4,12 @@ Phase 67: Performance Optimization & Benchmarking Suite
 성능 최적화 및 벤치마킹 모음
 """
 
-import time
 import json
 import statistics
-from typing import Dict, List, Callable, Any, Tuple
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Tuple
 
 
 @dataclass

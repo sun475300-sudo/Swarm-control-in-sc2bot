@@ -4,29 +4,30 @@ SC2 Bot game sequence modeling with transformer (BERT/GPT-style)
 """
 
 from __future__ import annotations
+
+import math
+import os
+import random
+import sys
 from dataclasses import dataclass
 from typing import Optional
-import math
-import random
-import os
-import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 try:
+    import torch
+    import torch.nn as nn
     from transformers import (
         AutoConfig,
         AutoModel,
         AutoModelForSequenceClassification,
-        PreTrainedModel,
+        DataCollatorWithPadding,
         PretrainedConfig,
+        PreTrainedModel,
         Trainer,
         TrainingArguments,
-        DataCollatorWithPadding,
     )
-    import torch
-    import torch.nn as nn
 
     HF_AVAILABLE = True
 except ImportError:

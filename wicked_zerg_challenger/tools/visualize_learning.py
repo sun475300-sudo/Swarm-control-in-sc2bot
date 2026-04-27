@@ -8,19 +8,19 @@ Learning Progress Visualization Tool
 """
 
 import json
-from pathlib import Path
-import sys
-import random
-from datetime import datetime
-from typing import Dict, List, Any
 import logging
+import random
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 logger = logging.getLogger("VisualizeLearning")
 
 # matplotlib 설치 확인
 try:
-    import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
+    import matplotlib.pyplot as plt
 except ImportError:
     logger.error("matplotlib is not installed.")
     logger.info("Please install it using: pip install matplotlib")

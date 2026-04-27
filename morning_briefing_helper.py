@@ -1,9 +1,10 @@
-import requests
-import feedparser
-import random
 import datetime
 import logging
+import random
 from datetime import datetime as dt
+
+import feedparser
+import requests
 
 logger = logging.getLogger("morning_helper")
 
