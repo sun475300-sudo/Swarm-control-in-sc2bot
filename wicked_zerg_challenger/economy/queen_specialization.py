@@ -13,8 +13,11 @@ Queen Specialization Manager - 여왕 전문 분담 체제
 3. 나머지 전부 COMBAT
 """
 
+import logging
 from enum import Enum
 from typing import Dict, List, Optional, Set
+
+logger = logging.getLogger("QueenSpecialization")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -107,8 +110,8 @@ class QueenSpecializationManager:
                     if queen.distance_to(hatch) > 12:
                         del self.pump_assignments[qt]
                         continue
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"assign_roles swallow: {e!r}")
                 self.specializations[qt] = QueenSpecialization.PUMP
                 assigned.add(qt)
 
@@ -192,8 +195,8 @@ class QueenSpecializationManager:
         try:
             self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
             self.last_inject_time[hatch_tag] = current_time
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"execute_pump_queen swallow: {e!r}")
 
     async def execute_creep_queen(self, queen, highway_waypoints: List) -> None:
         """
@@ -247,8 +250,8 @@ class QueenSpecializationManager:
                     closest_hatch = self.bot.townhalls.closest_to(queen)
                     move_target = queen.position.towards(closest_hatch.position, 3)
                     self.bot.do(queen.move(move_target))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"execute_creep_queen swallow: {e!r}")
 
     async def execute_combat_queen(self, queen, army_center) -> None:
         """
@@ -267,16 +270,16 @@ class QueenSpecializationManager:
                         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, injured))
                         self.last_transfuse_time[queen.tag] = current_time
                         return
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"execute_combat_queen swallow: {e!r}")
 
         # 본대 따라가기
         if army_center:
             try:
                 if queen.distance_to(army_center) > 8:
                     self.bot.do(queen.move(army_center))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"execute_combat_queen swallow: {e!r}")
 
     def _find_injured_nearby(self, queen, range_dist: float = 7.0):
         """수혈 대상 - HP 비율 낮은 순으로 가치 높은 유닛 우선"""
