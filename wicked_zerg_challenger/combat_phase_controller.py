@@ -161,7 +161,8 @@ class CombatPhaseController:
             return
 
         nearby_enemies = self._get_nearby_enemies(group_units)
-        group_center = self._get_group_center(group_units)
+        # group_center는 각 phase handler가 필요 시 자체 계산.
+        # 이 진입부에서는 nearby_enemies와 group_health_ratio만 캐시한다.
         group_health_ratio = self._get_group_health_ratio(group_units)
 
         # === 단계별 행동 ===
