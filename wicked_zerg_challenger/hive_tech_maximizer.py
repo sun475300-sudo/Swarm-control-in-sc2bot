@@ -32,22 +32,22 @@ class HiveTechMaximizer:
 
         # 목표 건물 개수 (Hive 이후)
         self.target_buildings = {
-            UnitTypeId.GREATERSPIRE: 1,        # Greater Spire (Brood Lord)
-            UnitTypeId.ULTRALISKCAVERN: 1,     # Ultralisk Cavern
-            UnitTypeId.SPIRE: 2,                # Spire x2 (빠른 공중 유닛)
-            UnitTypeId.ROACHWARREN: 3,          # Roach Warren x3 (Ravager 대량)
-            UnitTypeId.HYDRALISKDEN: 2,         # Hydra Den x2 (Lurker 대량)
-            UnitTypeId.INFESTATIONPIT: 1,       # Infestation Pit (Infestor)
-            UnitTypeId.EVOLUTIONCHAMBER: 2,     # Evolution Chamber x2 (업그레이드)
+            UnitTypeId.GREATERSPIRE: 1,  # Greater Spire (Brood Lord)
+            UnitTypeId.ULTRALISKCAVERN: 1,  # Ultralisk Cavern
+            UnitTypeId.SPIRE: 2,  # Spire x2 (빠른 공중 유닛)
+            UnitTypeId.ROACHWARREN: 3,  # Roach Warren x3 (Ravager 대량)
+            UnitTypeId.HYDRALISKDEN: 2,  # Hydra Den x2 (Lurker 대량)
+            UnitTypeId.INFESTATIONPIT: 1,  # Infestation Pit (Infestor)
+            UnitTypeId.EVOLUTIONCHAMBER: 2,  # Evolution Chamber x2 (업그레이드)
         }
 
         # 우선 생산 유닛 (Hive 이후)
         self.priority_units = {
-            UnitTypeId.ULTRALISK: 8,        # Ultralisk 8마리
-            UnitTypeId.BROODLORD: 6,        # Brood Lord 6마리
-            UnitTypeId.LURKERMP: 12,        # Lurker 12마리
-            UnitTypeId.VIPER: 4,            # Viper 4마리
-            UnitTypeId.INFESTOR: 6,         # Infestor 6마리
+            UnitTypeId.ULTRALISK: 8,  # Ultralisk 8마리
+            UnitTypeId.BROODLORD: 6,  # Brood Lord 6마리
+            UnitTypeId.LURKERMP: 12,  # Lurker 12마리
+            UnitTypeId.VIPER: 4,  # Viper 4마리
+            UnitTypeId.INFESTOR: 6,  # Infestor 6마리
         }
 
         # 통계
@@ -94,7 +94,9 @@ class HiveTechMaximizer:
         if hive_structures and not self.hive_active:
             self.hive_active = True
             self.hive_completion_time = game_time
-            self.logger.info(f"[HIVE] HIVE ACTIVE at {int(game_time)}s! Starting advanced tech!")
+            self.logger.info(
+                f"[HIVE] HIVE ACTIVE at {int(game_time)}s! Starting advanced tech!"
+            )
 
     def _analyze_enemy_composition(self) -> str:
         """
@@ -119,23 +121,34 @@ class HiveTechMaximizer:
 
         # 고가치 공중 유닛
         high_value_air = {
-            UnitTypeId.CARRIER, UnitTypeId.BATTLECRUISER, UnitTypeId.TEMPEST,
-            UnitTypeId.BROODLORD, UnitTypeId.VOIDRAY
+            UnitTypeId.CARRIER,
+            UnitTypeId.BATTLECRUISER,
+            UnitTypeId.TEMPEST,
+            UnitTypeId.BROODLORD,
+            UnitTypeId.VOIDRAY,
         }
         critical_air = sum(1 for u in air_units if u.type_id in high_value_air)
 
         # ★ 중장갑 지상 유닛 카운트 ★
         heavy_ground = {
-            UnitTypeId.THOR, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED,
-            UnitTypeId.IMMORTAL, UnitTypeId.COLOSSUS, UnitTypeId.ULTRALISK,
-            UnitTypeId.ARCHON
+            UnitTypeId.THOR,
+            UnitTypeId.SIEGETANK,
+            UnitTypeId.SIEGETANKSIEGED,
+            UnitTypeId.IMMORTAL,
+            UnitTypeId.COLOSSUS,
+            UnitTypeId.ULTRALISK,
+            UnitTypeId.ARCHON,
         }
         heavy_count = sum(1 for u in enemy_units if u.type_id in heavy_ground)
 
         # ★ 경장갑 다수 유닛 카운트 ★
         bio_units = {
-            UnitTypeId.MARINE, UnitTypeId.MARAUDER, UnitTypeId.ZEALOT,
-            UnitTypeId.ZERGLING, UnitTypeId.HYDRALISK, UnitTypeId.ROACH
+            UnitTypeId.MARINE,
+            UnitTypeId.MARAUDER,
+            UnitTypeId.ZEALOT,
+            UnitTypeId.ZERGLING,
+            UnitTypeId.HYDRALISK,
+            UnitTypeId.ROACH,
         }
         bio_count = sum(1 for u in enemy_units if u.type_id in bio_units)
 
@@ -204,11 +217,13 @@ class HiveTechMaximizer:
                 if hasattr(self.bot, "building_coord"):
                     self.bot.building_coord.request_building(building_type, "HiveTech")
 
-                self.logger.info(f"[HIVE] Building {building_type.name} ({total+1}/{target_count})")
+                self.logger.info(
+                    f"[HIVE] Building {building_type.name} ({total+1}/{target_count})"
+                )
                 self.advanced_buildings_built += 1
                 break  # 한 번에 하나씩
 
-            except Exception as e:
+            except Exception:
                 continue
 
     async def _produce_advanced_units(self, game_time: float):
@@ -222,20 +237,20 @@ class HiveTechMaximizer:
         # ★ Tech Path별 우선순위 생산 ★
         if tech_path == "anti_air":
             # vs Air Heavy (Carrier, BC, Mutalisk)
-            await self._produce_vipers()      # Abduct high-value air
-            await self._morph_broodlords()    # Long-range air counter
-            await self._produce_infestors()   # Fungal flying units
+            await self._produce_vipers()  # Abduct high-value air
+            await self._morph_broodlords()  # Long-range air counter
+            await self._produce_infestors()  # Fungal flying units
 
         elif tech_path == "anti_ground_heavy":
             # vs Ground Heavy (Thor, Siege Tank, Immortal, Colossus)
             await self._produce_ultralisks()  # Tank ground units
-            await self._produce_vipers()      # Abduct key units
-            await self._morph_lurkers()       # Long-range siege
+            await self._produce_vipers()  # Abduct key units
+            await self._morph_lurkers()  # Long-range siege
 
         elif tech_path == "anti_bio":
             # vs Bio (Marine, Marauder, Zealot, Hydralisk)
-            await self._produce_infestors()   # Fungal clumps
-            await self._morph_lurkers()       # AoE damage
+            await self._produce_infestors()  # Fungal clumps
+            await self._morph_lurkers()  # AoE damage
             await self._produce_ultralisks()  # Splash tank
 
         else:
@@ -263,7 +278,9 @@ class HiveTechMaximizer:
             larva = self.bot.larva.idle
             if larva:
                 self.bot.do(larva.first.train(UnitTypeId.ULTRALISK))
-                self.logger.info(f"[HIVE] Training Ultralisk ({current_ultralisks+1}/{target})")
+                self.logger.info(
+                    f"[HIVE] Training Ultralisk ({current_ultralisks+1}/{target})"
+                )
                 self.advanced_units_produced += 1
 
     async def _morph_broodlords(self):
@@ -284,7 +301,9 @@ class HiveTechMaximizer:
             abilities = await self.bot.get_available_abilities(corruptor)
             if AbilityId.MORPHTOBROODLORD_BROODLORD in abilities:
                 self.bot.do(corruptor(AbilityId.MORPHTOBROODLORD_BROODLORD))
-                self.logger.info(f"[HIVE] Morphing Brood Lord ({current_broodlords+1}/{target})")
+                self.logger.info(
+                    f"[HIVE] Morphing Brood Lord ({current_broodlords+1}/{target})"
+                )
                 self.advanced_units_produced += 1
 
     async def _morph_lurkers(self):
@@ -305,7 +324,9 @@ class HiveTechMaximizer:
             abilities = await self.bot.get_available_abilities(hydra)
             if AbilityId.MORPH_LURKER in abilities:
                 self.bot.do(hydra(AbilityId.MORPH_LURKER))
-                self.logger.info(f"[HIVE] Morphing Lurker ({current_lurkers+1}/{target})")
+                self.logger.info(
+                    f"[HIVE] Morphing Lurker ({current_lurkers+1}/{target})"
+                )
                 self.advanced_units_produced += 1
 
     async def _produce_vipers(self):
@@ -341,7 +362,9 @@ class HiveTechMaximizer:
             larva = self.bot.larva.idle
             if larva:
                 self.bot.do(larva.first.train(UnitTypeId.INFESTOR))
-                self.logger.info(f"[HIVE] Training Infestor ({current_infestors+1}/{target})")
+                self.logger.info(
+                    f"[HIVE] Training Infestor ({current_infestors+1}/{target})"
+                )
                 self.advanced_units_produced += 1
 
     async def _research_advanced_upgrades(self):
@@ -354,8 +377,12 @@ class HiveTechMaximizer:
                     if UpgradeId.ZERGLINGATTACKSPEED not in self.bot.state.upgrades:
                         abilities = await self.bot.get_available_abilities(pool.first)
                         if AbilityId.RESEARCH_ZERGLINGADRENALGLANDS in abilities:
-                            self.bot.do(pool.first(AbilityId.RESEARCH_ZERGLINGADRENALGLANDS))
-                            self.logger.info("[HIVE] [*] Researching Adrenal Glands! (Zergling attack speed +20%) [*]")
+                            self.bot.do(
+                                pool.first(AbilityId.RESEARCH_ZERGLINGADRENALGLANDS)
+                            )
+                            self.logger.info(
+                                "[HIVE] [*] Researching Adrenal Glands! (Zergling attack speed +20%) [*]"
+                            )
                             return  # 한 번에 하나씩
 
         # Chitinous Plating (Ultralisk 방어력)
@@ -366,7 +393,9 @@ class HiveTechMaximizer:
                     if UpgradeId.CHITINOUSPLATING not in self.bot.state.upgrades:
                         abilities = await self.bot.get_available_abilities(cavern.first)
                         if AbilityId.RESEARCH_CHITINOUSPLATING in abilities:
-                            self.bot.do(cavern.first(AbilityId.RESEARCH_CHITINOUSPLATING))
+                            self.bot.do(
+                                cavern.first(AbilityId.RESEARCH_CHITINOUSPLATING)
+                            )
                             self.logger.info("[HIVE] Researching Chitinous Plating!")
                             return
 
@@ -378,7 +407,9 @@ class HiveTechMaximizer:
                     if UpgradeId.ANABOLICSYNTHESIS not in self.bot.state.upgrades:
                         abilities = await self.bot.get_available_abilities(cavern.first)
                         if AbilityId.RESEARCH_ANABOLICSYNTHESIS in abilities:
-                            self.bot.do(cavern.first(AbilityId.RESEARCH_ANABOLICSYNTHESIS))
+                            self.bot.do(
+                                cavern.first(AbilityId.RESEARCH_ANABOLICSYNTHESIS)
+                            )
                             self.logger.info("[HIVE] Researching Anabolic Synthesis!")
                             return
 

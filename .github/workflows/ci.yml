@@ -47,10 +47,10 @@ jobs:
       - name: Python 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
+          pip install flake8 pytest pytest-cov pytest-asyncio pytest-timeout
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           # 추가 테스트 의존성
-          pip install pyyaml aiohttp
+          pip install pyyaml aiohttp numpy
 
       - name: flake8 린트 검사
         run: |
@@ -112,8 +112,12 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          pytest tests/ -v --tb=short --co -q 2>/dev/null || true
-          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short || true
+          # 전체 테스트 수집 검증
+          pytest tests/ -v --tb=short --co -q
+          # 핵심 보안/거래 테스트 — 실패 시 CI 실패
+          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
+          # 전체 스위트 — 실패는 CI 실패로 전파
+          pytest tests/ -q --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"

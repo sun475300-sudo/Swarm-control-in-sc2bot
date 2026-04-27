@@ -43,6 +43,32 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    torch = None  # type: ignore[assignment]
+
+    class _NNStubModule:
+        """Placeholder used when ``torch`` is unavailable."""
+
+        def __init__(self, *_args, **_kwargs):
+            raise RuntimeError(
+                "PyTorch is not installed; this class is only usable with the "
+                "PyTorch backend. Install torch or use the NumPy fallback."
+            )
+
+    class _NNStub:
+        Module = _NNStubModule
+
+        def __getattr__(self, name):
+            def _missing(*_a, **_kw):
+                raise RuntimeError(
+                    f"torch.nn.{name} requires PyTorch; install torch or use the "
+                    "NumPy fallback."
+                )
+
+            return _missing
+
+    nn = _NNStub()  # type: ignore[assignment]
+    optim = _NNStub()  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback helpers
@@ -303,7 +329,10 @@ class DecentralizedActorNumpy:
         return action, float(log_probs[action]), entropy
 
     def evaluate_actions(
-        self, encoded_obs: np.ndarray, actions: np.ndarray, action_mask: Optional[np.ndarray] = None
+        self,
+        encoded_obs: np.ndarray,
+        actions: np.ndarray,
+        action_mask: Optional[np.ndarray] = None,
     ) -> Tuple[np.ndarray, np.ndarray]:
         logits = self.forward(encoded_obs, action_mask)
         log_probs = _np_log_softmax(logits)
@@ -513,7 +542,9 @@ class PBTManager:
 
     MUTABLE_KEYS = ["lr_actor", "lr_critic", "clip_eps", "entropy_coef", "gae_lambda"]
 
-    def __init__(self, population_size: int, mutation_prob: float = 0.25, perturb: float = 0.2):
+    def __init__(
+        self, population_size: int, mutation_prob: float = 0.25, perturb: float = 0.2
+    ):
         self.population_size = population_size
         self.mutation_prob = mutation_prob
         self.perturb = perturb
@@ -526,7 +557,9 @@ class PBTManager:
             member: Dict[str, float] = {}
             for key in self.MUTABLE_KEYS:
                 base_val = getattr(base_config, key)
-                member[key] = base_val * (1.0 + np.random.uniform(-self.perturb, self.perturb))
+                member[key] = base_val * (
+                    1.0 + np.random.uniform(-self.perturb, self.perturb)
+                )
             self.population.append(member)
         self.fitness = [0.0] * self.population_size
         return self.population
@@ -578,7 +611,9 @@ class SC2MAPPOAgent:
         self._build_networks()
         self.buffer = MultiAgentRolloutBuffer(cfg.n_agents, cfg.n_steps)
         self.league = ELOLeague(cfg.league_size, cfg.elo_k)
-        self.pbt = PBTManager(cfg.league_size, cfg.pbt_mutation_prob, cfg.pbt_perturb_factor)
+        self.pbt = PBTManager(
+            cfg.league_size, cfg.pbt_mutation_prob, cfg.pbt_perturb_factor
+        )
         self.train_step = 0
 
     # ----- network construction -----
@@ -586,7 +621,9 @@ class SC2MAPPOAgent:
     def _build_networks(self) -> None:
         cfg = self.cfg
         if self.use_torch:
-            self.encoder = SharedObsEncoderTorch(cfg.obs_dim, cfg.encoder_dim, cfg.hidden_dim)
+            self.encoder = SharedObsEncoderTorch(
+                cfg.obs_dim, cfg.encoder_dim, cfg.hidden_dim
+            )
             self.critic = CentralizedCriticTorch(cfg.global_state_dim, cfg.hidden_dim)
             self.actors: List[Any] = [
                 DecentralizedActorTorch(cfg.encoder_dim, cfg.action_dim, cfg.hidden_dim)
@@ -599,7 +636,9 @@ class SC2MAPPOAgent:
             self.actor_optim = optim.Adam(actor_params, lr=cfg.lr_actor)
             self.critic_optim = optim.Adam(self.critic.parameters(), lr=cfg.lr_critic)
         else:
-            self.encoder = SharedObsEncoderNumpy(cfg.obs_dim, cfg.encoder_dim, cfg.hidden_dim)
+            self.encoder = SharedObsEncoderNumpy(
+                cfg.obs_dim, cfg.encoder_dim, cfg.hidden_dim
+            )
             self.critic = CentralizedCriticNumpy(cfg.global_state_dim, cfg.hidden_dim)
             self.actors = [
                 DecentralizedActorNumpy(cfg.encoder_dim, cfg.action_dim, cfg.hidden_dim)
@@ -637,7 +676,10 @@ class SC2MAPPOAgent:
                         if action_masks is not None
                         else None
                     )
-                    a, lp, _ = actor.get_action_and_log_prob(enc.unsqueeze(0), mask_t.unsqueeze(0) if mask_t is not None else None)
+                    a, lp, _ = actor.get_action_and_log_prob(
+                        enc.unsqueeze(0),
+                        mask_t.unsqueeze(0) if mask_t is not None else None,
+                    )
                     actions.append(int(a.item()))
                     log_probs.append(float(lp.item()))
         else:
@@ -662,9 +704,18 @@ class SC2MAPPOAgent:
         action_masks: Optional[List[np.ndarray]] = None,
     ) -> List[int]:
         """One environment step: pick actions, store transition."""
-        actions, log_probs, value = self.get_actions(observations, global_state, action_masks)
+        actions, log_probs, value = self.get_actions(
+            observations, global_state, action_masks
+        )
         self.buffer.add(
-            observations, global_state, actions, rewards, log_probs, value, done, action_masks
+            observations,
+            global_state,
+            actions,
+            rewards,
+            log_probs,
+            value,
+            done,
+            action_masks,
         )
         return actions
 
@@ -686,7 +737,9 @@ class SC2MAPPOAgent:
         else:
             last_val = float(self.critic(last_gs))
 
-        advantages, returns = self.buffer.compute_gae(last_val, cfg.gamma, cfg.gae_lambda)
+        advantages, returns = self.buffer.compute_gae(
+            last_val, cfg.gamma, cfg.gae_lambda
+        )
 
         # Normalise advantages
         adv_mean = advantages.mean()
@@ -699,7 +752,9 @@ class SC2MAPPOAgent:
         n_updates = 0
 
         for _ in range(cfg.n_epochs):
-            for batch in self.buffer.generate_batches(advantages, returns, cfg.mini_batch_size):
+            for batch in self.buffer.generate_batches(
+                advantages, returns, cfg.mini_batch_size
+            ):
                 if self.use_torch:
                     pl, vl, ent = self._torch_update(batch)
                 else:
@@ -748,7 +803,11 @@ class SC2MAPPOAgent:
 
         entropy_loss = -entropy.mean()
 
-        loss = policy_loss + self.cfg.value_coef * value_loss + self.cfg.entropy_coef * entropy_loss
+        loss = (
+            policy_loss
+            + self.cfg.value_coef * value_loss
+            + self.cfg.entropy_coef * entropy_loss
+        )
 
         self.actor_optim.zero_grad()
         self.critic_optim.zero_grad()
@@ -760,7 +819,11 @@ class SC2MAPPOAgent:
         self.actor_optim.step()
         self.critic_optim.step()
 
-        return float(policy_loss.item()), float(value_loss.item()), float(entropy.mean().item())
+        return (
+            float(policy_loss.item()),
+            float(value_loss.item()),
+            float(entropy.mean().item()),
+        )
 
     def _numpy_update(self, batch: Dict[str, Any]) -> Tuple[float, float, float]:
         """Approximate PPO update with NumPy (no gradient, uses finite-diff noise)."""
@@ -771,7 +834,9 @@ class SC2MAPPOAgent:
 
         encoded = self.encoder(obs)
         actor = self.actors[0]
-        new_lp, entropy = actor.evaluate_actions(encoded, actions, batch["action_masks"])
+        new_lp, entropy = actor.evaluate_actions(
+            encoded, actions, batch["action_masks"]
+        )
 
         ratio = np.exp(new_lp - old_lp)
         clipped = np.clip(ratio, 1.0 - self.cfg.clip_eps, 1.0 + self.cfg.clip_eps)
@@ -816,7 +881,9 @@ class SC2MAPPOAgent:
         return vec
 
     @staticmethod
-    def encode_sc2_global_state(game_data: Dict[str, Any], state_dim: int = 256) -> np.ndarray:
+    def encode_sc2_global_state(
+        game_data: Dict[str, Any], state_dim: int = 256
+    ) -> np.ndarray:
         """Encode global game state: minerals, gas, supply, time, etc."""
         vec = np.zeros(state_dim, dtype=np.float32)
         vec[0] = game_data.get("minerals", 0) / 10000.0
@@ -868,8 +935,13 @@ class SC2MAPPOAgent:
 class SyntheticSC2MultiAgentEnv:
     """Lightweight environment that mimics multi-agent SC2 interactions."""
 
-    def __init__(self, n_agents: int = 12, obs_dim: int = 64, global_dim: int = 256,
-                 action_dim: int = 16):
+    def __init__(
+        self,
+        n_agents: int = 12,
+        obs_dim: int = 64,
+        global_dim: int = 256,
+        action_dim: int = 16,
+    ):
         self.n_agents = n_agents
         self.obs_dim = obs_dim
         self.global_dim = global_dim
@@ -879,13 +951,21 @@ class SyntheticSC2MultiAgentEnv:
 
     def reset(self) -> Tuple[List[np.ndarray], np.ndarray]:
         self.step_count = 0
-        obs = [np.random.randn(self.obs_dim).astype(np.float32) * 0.1 for _ in range(self.n_agents)]
+        obs = [
+            np.random.randn(self.obs_dim).astype(np.float32) * 0.1
+            for _ in range(self.n_agents)
+        ]
         gs = np.random.randn(self.global_dim).astype(np.float32) * 0.1
         return obs, gs
 
-    def step(self, actions: List[int]) -> Tuple[List[np.ndarray], np.ndarray, List[float], bool]:
+    def step(
+        self, actions: List[int]
+    ) -> Tuple[List[np.ndarray], np.ndarray, List[float], bool]:
         self.step_count += 1
-        obs = [np.random.randn(self.obs_dim).astype(np.float32) * 0.1 for _ in range(self.n_agents)]
+        obs = [
+            np.random.randn(self.obs_dim).astype(np.float32) * 0.1
+            for _ in range(self.n_agents)
+        ]
         gs = np.random.randn(self.global_dim).astype(np.float32) * 0.1
 
         # Shaped reward: cooperative bonus when agents pick similar actions
@@ -933,12 +1013,18 @@ def run_demo(args: argparse.Namespace) -> None:
 
     print("=" * 60)
     print(" Phase 606: MAPPO Multi-Agent PPO for SC2")
-    print(f" Backend : {'NumPy (fallback)' if not HAS_TORCH or args.numpy else 'PyTorch'}")
-    print(f" Agents  : {cfg.n_agents}  |  ObsDim: {cfg.obs_dim}  |  Actions: {cfg.action_dim}")
+    print(
+        f" Backend : {'NumPy (fallback)' if not HAS_TORCH or args.numpy else 'PyTorch'}"
+    )
+    print(
+        f" Agents  : {cfg.n_agents}  |  ObsDim: {cfg.obs_dim}  |  Actions: {cfg.action_dim}"
+    )
     print("=" * 60)
 
     agent = SC2MAPPOAgent(cfg)
-    env = SyntheticSC2MultiAgentEnv(cfg.n_agents, cfg.obs_dim, cfg.global_state_dim, cfg.action_dim)
+    env = SyntheticSC2MultiAgentEnv(
+        cfg.n_agents, cfg.obs_dim, cfg.global_state_dim, cfg.action_dim
+    )
 
     # Initialize self-play league
     for i in range(cfg.league_size):
@@ -951,10 +1037,11 @@ def run_demo(args: argparse.Namespace) -> None:
         ep_reward = 0.0
         done = False
         step = 0
+        rewards: List[float] = [0.0] * cfg.n_agents
 
         while not done:
             masks = env.get_action_masks()
-            actions = agent.collect_step(obs, gs, [0.0] * cfg.n_agents if step == 0 else rewards, done, masks)
+            actions = agent.collect_step(obs, gs, rewards, done, masks)
             obs, gs, rewards, done = env.step(actions)
             ep_reward += np.mean(rewards)
             step += 1
@@ -981,7 +1068,9 @@ def run_demo(args: argparse.Namespace) -> None:
         if ep % max(1, n_episodes // 5) == 0:
             top = agent.league.top_agents(3)
             elo_str = "  ".join(f"{a}={r:.0f}" for a, r in top)
-            print(f"Episode {ep:>4d}/{n_episodes}  reward={ep_reward:.3f}  ELO: {elo_str}")
+            print(
+                f"Episode {ep:>4d}/{n_episodes}  reward={ep_reward:.3f}  ELO: {elo_str}"
+            )
 
     # PBT exploit-and-explore at end
     agent.pbt.exploit_and_explore()
@@ -997,11 +1086,17 @@ def run_demo(args: argparse.Namespace) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Phase 606: MAPPO SC2 Agent")
-    parser.add_argument("--n-agents", type=int, default=8, help="Number of agents (units)")
-    parser.add_argument("--obs-dim", type=int, default=64, help="Per-agent observation dim")
+    parser.add_argument(
+        "--n-agents", type=int, default=8, help="Number of agents (units)"
+    )
+    parser.add_argument(
+        "--obs-dim", type=int, default=64, help="Per-agent observation dim"
+    )
     parser.add_argument("--global-dim", type=int, default=256, help="Global state dim")
     parser.add_argument("--action-dim", type=int, default=16, help="Action space size")
-    parser.add_argument("--n-steps", type=int, default=128, help="Rollout steps before update")
+    parser.add_argument(
+        "--n-steps", type=int, default=128, help="Rollout steps before update"
+    )
     parser.add_argument("--n-epochs", type=int, default=3, help="PPO epochs per update")
     parser.add_argument("--episodes", type=int, default=20, help="Training episodes")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")

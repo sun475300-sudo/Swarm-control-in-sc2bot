@@ -40,10 +40,7 @@ class LogicActivityTracker:
     def start_logic(self, name: str) -> float:
         """로직 시작 시간 기록"""
         start_time = time.time()
-        self.active_logics[name] = {
-            "start_time": start_time,
-            "status": "running"
-        }
+        self.active_logics[name] = {"start_time": start_time, "status": "running"}
         return start_time
 
     def end_logic(self, name: str, start_time: float, success: bool = True):
@@ -89,8 +86,12 @@ class LogicActivityTracker:
 
     def get_current_status(self) -> List[str]:
         """현재 활성화된 로직 목록 반환"""
-        return [name for name, info in self.active_logics.items()
-                if info.get("status") == "running"]
+        return [
+            name
+            for name, info in self.active_logics.items()
+            if info.get("status") == "running"
+        ]
+
 
 try:
     from sc2.bot_ai import BotAI
@@ -124,6 +125,7 @@ except ImportError:
         SPAWNINGPOOL = "SPAWNINGPOOL"
         EXTRACTOR = "EXTRACTOR"
         LARVA = "LARVA"
+
 
 try:
     from .building_placement_helper import BuildingPlacementHelper
@@ -359,6 +361,7 @@ try:
 except ImportError:
     GameResultReporter = None
 
+
 class BotStepIntegrator:
     """
     Bot의 on_step 메서드를 구현하는 통합 클래스
@@ -373,14 +376,16 @@ class BotStepIntegrator:
 
     def __init__(self, bot):
         self.bot = bot
-        self.logger = getattr(bot, "logger", None) or __import__("logging").getLogger(self.__class__.__name__)
+        self.logger = getattr(bot, "logger", None) or __import__("logging").getLogger(
+            self.__class__.__name__
+        )
         self._managers_initialized = False
         self._logic_tracker = LogicActivityTracker()
 
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
-            self.bot.placement_helper = self.placement_helper # Attach globally
+            self.bot.placement_helper = self.placement_helper  # Attach globally
         else:
             self.placement_helper = None
             self.bot.placement_helper = None
@@ -442,7 +447,9 @@ class BotStepIntegrator:
         # ★ Phase 14: Unit Morph Manager 초기화 (Baneling/Ravager/Lurker/Broodlord)
         if UnitMorphManager:
             self.bot.morph_manager = UnitMorphManager(bot)
-            self.logger.info("[INIT] UnitMorphManager initialized (Phase 14) — 4종 변이 유닛 활성화")
+            self.logger.info(
+                "[INIT] UnitMorphManager initialized (Phase 14) — 4종 변이 유닛 활성화"
+            )
         elif not hasattr(self.bot, "morph_manager"):
             self.bot.morph_manager = None
 
@@ -454,16 +461,23 @@ class BotStepIntegrator:
             self.bot.queen_transfusion = None
 
         # Resource Manager (Thread-safe resource reservation)
-        if ResourceManager and (not hasattr(self.bot, 'resource_manager') or self.bot.resource_manager is None):
+        if ResourceManager and (
+            not hasattr(self.bot, "resource_manager")
+            or self.bot.resource_manager is None
+        ):
             self.bot.resource_manager = ResourceManager(bot)
-            self.logger.info("[INIT] ResourceManager initialized (Phase 21 - Race condition fix)")
-        elif not hasattr(self.bot, 'resource_manager'):
+            self.logger.info(
+                "[INIT] ResourceManager initialized (Phase 21 - Race condition fix)"
+            )
+        elif not hasattr(self.bot, "resource_manager"):
             self.bot.resource_manager = None
 
         # Spatial Query Optimizer (Performance optimization)
         if SpatialQueryOptimizer:
             self.bot.spatial_query = SpatialQueryOptimizer(bot)
-            self.logger.info("[INIT] SpatialQueryOptimizer initialized (Phase 21 - C++ optimization)")
+            self.logger.info(
+                "[INIT] SpatialQueryOptimizer initialized (Phase 21 - C++ optimization)"
+            )
         else:
             self.bot.spatial_query = None
 
@@ -538,23 +552,27 @@ class BotStepIntegrator:
             self.bot.multi_test = None
 
         # Unit Authority Manager (skip if already initialized by ManagerFactory)
-        if UnitAuthorityManager and not getattr(self.bot, 'unit_authority', None):
+        if UnitAuthorityManager and not getattr(self.bot, "unit_authority", None):
             self.bot.unit_authority = UnitAuthorityManager(bot)
             self.logger.info("[INIT] [*] UnitAuthorityManager initialized [*]")
-        elif not hasattr(self.bot, 'unit_authority'):
+        elif not hasattr(self.bot, "unit_authority"):
             self.bot.unit_authority = None
 
         # Advanced Scout System V2 (개선판)
         if AdvancedScoutSystemV2:
             self.bot.advanced_scout_v2 = AdvancedScoutSystemV2(bot)
-            self.logger.info("[INIT] [*] AdvancedScoutSystemV2 initialized (Overseer + Changeling) [*]")
+            self.logger.info(
+                "[INIT] [*] AdvancedScoutSystemV2 initialized (Overseer + Changeling) [*]"
+            )
         else:
             self.bot.advanced_scout_v2 = None
 
         # ★★★ 2순위: Flanking Coordinator (양각 포위 전술) ★★★
         if FlankingCoordinator:
             self.bot.flanking_coord = FlankingCoordinator(bot)
-            self.logger.info("[INIT] FlankingCoordinator initialized (2순위 - 양각 포위)")
+            self.logger.info(
+                "[INIT] FlankingCoordinator initialized (2순위 - 양각 포위)"
+            )
         else:
             self.bot.flanking_coord = None
 
@@ -563,7 +581,9 @@ class BotStepIntegrator:
         # Queen Specialization Manager (여왕 PUMP/CREEP/COMBAT 분담)
         if QueenSpecializationManager:
             self.bot.queen_specialization = QueenSpecializationManager(bot)
-            self.logger.info("[INIT] QueenSpecializationManager initialized (Phase 1 - PUMP/CREEP/COMBAT)")
+            self.logger.info(
+                "[INIT] QueenSpecializationManager initialized (Phase 1 - PUMP/CREEP/COMBAT)"
+            )
         else:
             self.bot.queen_specialization = None
 
@@ -577,7 +597,9 @@ class BotStepIntegrator:
         # ★ Phase 19: Hive Tech Maximizer (군락 이후 울트라/브루드/바이퍼 생산)
         if HiveTechMaximizer:
             self.bot.hive_tech = HiveTechMaximizer(bot)
-            self.logger.info("[INIT] HiveTechMaximizer initialized (Phase 19) — 후반 고급유닛 활성화")
+            self.logger.info(
+                "[INIT] HiveTechMaximizer initialized (Phase 19) — 후반 고급유닛 활성화"
+            )
         elif not hasattr(self.bot, "hive_tech"):
             self.bot.hive_tech = None
 
@@ -637,7 +659,9 @@ class BotStepIntegrator:
 
         if UpgradeCoordinationSystem:
             self.bot.upgrade_coord = UpgradeCoordinationSystem(bot)
-            self.logger.info("[INIT] UpgradeCoordinationSystem (Phase 22) — 업그레이드 조율")
+            self.logger.info(
+                "[INIT] UpgradeCoordinationSystem (Phase 22) — 업그레이드 조율"
+            )
         elif not hasattr(self.bot, "upgrade_coord"):
             self.bot.upgrade_coord = None
 
@@ -683,7 +707,7 @@ class BotStepIntegrator:
             minerals=self.bot.minerals,
             vespene=self.bot.vespene,
             supply_used=self.bot.supply_used,
-            supply_cap=self.bot.supply_cap
+            supply_cap=self.bot.supply_cap,
         )
 
         # 3. 기지 및 일꾼 카운트
@@ -711,14 +735,21 @@ class BotStepIntegrator:
         if hasattr(self.bot, "enemy_race"):
             blackboard.enemy_race = str(self.bot.enemy_race)
 
-        if hasattr(self.bot, "aggressive_strategies") and self.bot.aggressive_strategies:
-            blackboard.current_strategy = self.bot.aggressive_strategies.active_strategy.value
+        if (
+            hasattr(self.bot, "aggressive_strategies")
+            and self.bot.aggressive_strategies
+        ):
+            blackboard.current_strategy = (
+                self.bot.aggressive_strategies.active_strategy.value
+            )
 
         # 6. 빌드 오더 완료 여부
         # ★ Phase 25: build_order_active 기반 (빌드오더 자체가 완료 전파)
         if hasattr(self.bot, "build_order_system") and self.bot.build_order_system:
             bos = self.bot.build_order_system
-            blackboard.build_order_complete = not getattr(bos, "build_order_active", True)
+            blackboard.build_order_complete = not getattr(
+                bos, "build_order_active", True
+            )
         else:
             blackboard.build_order_complete = self.bot.time > 300.0
 
@@ -736,19 +767,28 @@ class BotStepIntegrator:
                 sm._pending_anti_air_tech = False
                 b = self.bot
                 if b.townhalls.exists:
-                    near_pos = b.townhalls.first.position.towards(b.game_info.map_center, 5)
+                    near_pos = b.townhalls.first.position.towards(
+                        b.game_info.map_center, 5
+                    )
                     # Hydra Den
-                    if (not b.structures(UnitTypeId.HYDRALISKDEN).exists and
-                            b.already_pending(UnitTypeId.HYDRALISKDEN) == 0 and
-                            b.can_afford(UnitTypeId.HYDRALISKDEN)):
+                    if (
+                        not b.structures(UnitTypeId.HYDRALISKDEN).exists
+                        and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0
+                        and b.can_afford(UnitTypeId.HYDRALISKDEN)
+                    ):
                         await b.build(UnitTypeId.HYDRALISKDEN, near=near_pos)
                     # Spire (Lair 이상)
-                    has_lair = (b.structures(UnitTypeId.LAIR).exists or b.structures(UnitTypeId.HIVE).exists)
-                    if (has_lair and
-                            not b.structures(UnitTypeId.SPIRE).exists and
-                            not b.structures(UnitTypeId.GREATERSPIRE).exists and
-                            b.already_pending(UnitTypeId.SPIRE) == 0 and
-                            b.can_afford(UnitTypeId.SPIRE)):
+                    has_lair = (
+                        b.structures(UnitTypeId.LAIR).exists
+                        or b.structures(UnitTypeId.HIVE).exists
+                    )
+                    if (
+                        has_lair
+                        and not b.structures(UnitTypeId.SPIRE).exists
+                        and not b.structures(UnitTypeId.GREATERSPIRE).exists
+                        and b.already_pending(UnitTypeId.SPIRE) == 0
+                        and b.can_afford(UnitTypeId.SPIRE)
+                    ):
                         await b.build(UnitTypeId.SPIRE, near=near_pos)
 
             # 2) Spore Crawler 건설 (Stargate 감지 시)
@@ -756,8 +796,12 @@ class BotStepIntegrator:
                 sm._pending_spore_request = False
                 b = self.bot
                 for th in b.townhalls.ready:
-                    nearby_spores = b.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th.position)
-                    if nearby_spores.amount < 1 and b.can_afford(UnitTypeId.SPORECRAWLER):
+                    nearby_spores = b.structures(UnitTypeId.SPORECRAWLER).closer_than(
+                        10, th.position
+                    )
+                    if nearby_spores.amount < 1 and b.can_afford(
+                        UnitTypeId.SPORECRAWLER
+                    ):
                         await b.build(UnitTypeId.SPORECRAWLER, near=th.position)
                         break  # 한 번에 하나씩
 
@@ -779,7 +823,10 @@ class BotStepIntegrator:
                 await self._update_blackboard_state(iteration)
 
             # 0. Performance Optimizer 프레임 시작
-            if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
+            if (
+                hasattr(self.bot, "performance_optimizer")
+                and self.bot.performance_optimizer
+            ):
                 self.bot.performance_optimizer.start_frame()
 
             # 0.005 ★★★ Logic Optimizer (시스템 활성화 관리) ★★★
@@ -799,7 +846,10 @@ class BotStepIntegrator:
                 await self.bot.map_memory.on_step(iteration)
 
             # 0.008 ★★★ Complete Destruction Trainer (모든 건물 파괴) ★★★
-            if hasattr(self.bot, "complete_destruction") and self.bot.complete_destruction:
+            if (
+                hasattr(self.bot, "complete_destruction")
+                and self.bot.complete_destruction
+            ):
                 await self.bot.complete_destruction.on_step(iteration)
 
             # 0.009 ★★★ Roach Tactics Trainer (바퀴 잠복 회복 전술) ★★★
@@ -815,7 +865,10 @@ class BotStepIntegrator:
                 await self.bot.overseer_scout.on_step(iteration)
 
             # 0.012 ★★★ Air Threat Response Trainer (공중 위협 대응) ★★★
-            if hasattr(self.bot, "air_threat_response") and self.bot.air_threat_response:
+            if (
+                hasattr(self.bot, "air_threat_response")
+                and self.bot.air_threat_response
+            ):
                 await self.bot.air_threat_response.on_step(iteration)
 
             # 0.013 ★★★ Space Control Trainer (공간 확보) ★★★
@@ -848,8 +901,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["CreepDenial"] = error_handler.error_counts.get("CreepDenial", 0) + 1
-                        if error_handler.error_counts["CreepDenial"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["CreepDenial"] = (
+                            error_handler.error_counts.get("CreepDenial", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["CreepDenial"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] CreepDenial error: {e}")
                 finally:
                     self._logic_tracker.end_logic("CreepDenial", start_time)
@@ -858,20 +916,19 @@ class BotStepIntegrator:
             if hasattr(self.bot, "hive_tech") and self.bot.hive_tech:
                 await self.bot.hive_tech.on_step(iteration)
 
-
             # 0.02 ★★★ Spatial Optimizer & Data Cache (최우선 최적화) ★★★
             # 다른 모든 시스템보다 먼저 실행하여 캐시 준비 (항상 실행)
             if hasattr(self.bot, "spatial_optimizer") and self.bot.spatial_optimizer:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
                     await self.bot.data_cache.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -879,7 +936,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -887,7 +944,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -895,7 +952,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
                 try:
                     await self.bot.self_healing.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -903,7 +960,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "personality") and self.bot.personality:
                 try:
                     await self.bot.personality.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -911,7 +968,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -923,7 +980,7 @@ class BotStepIntegrator:
                         await self.bot.destructible_aware.on_start()
 
                     await self.bot.destructible_aware.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -931,7 +988,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -939,7 +996,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -952,16 +1009,24 @@ class BotStepIntegrator:
                             self.logger.info("[BUILD_ORDER] 빌드 오더 시스템 활성화!")
 
                             # ★ RL Agent에게 오프닝 빌드 조언 구하기 (게임 시작 시 1회) ★
-                            if self.bot.train_mode and hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
+                            if (
+                                self.bot.train_mode
+                                and hasattr(self.bot, "rl_agent")
+                                and self.bot.rl_agent
+                            ):
                                 # 초기 상태로 제안 받기 (0 벡터라도 무관 - 초기 성향)
                                 # 간단히 action_labels[0] 등을 쓰는 대신, 랜덤 또는 epsilon 탐험 이용
                                 # 여기서는 RL Agent의 get_action을 호출하여 초기 전략 결정
                                 try:
                                     import numpy as np
-                                    dummy_state = np.zeros(15) # 초기화 전이라 0
-                                    _, action_label, _ = self.bot.rl_agent.get_action(dummy_state, training=True)
+
+                                    dummy_state = np.zeros(15)  # 초기화 전이라 0
+                                    _, action_label, _ = self.bot.rl_agent.get_action(
+                                        dummy_state, training=True
+                                    )
 
                                     from build_order_system import BuildOrderType
+
                                     new_build = None
 
                                     if action_label == "ECONOMY":
@@ -973,36 +1038,54 @@ class BotStepIntegrator:
                                         else:
                                             new_build = BuildOrderType.ROACH_RUSH
                                     elif action_label == "DEFENSIVE":
-                                        new_build = BuildOrderType.SAFE_14POOL # or LURKER??
+                                        new_build = (
+                                            BuildOrderType.SAFE_14POOL
+                                        )  # or LURKER??
                                     elif action_label == "TECH":
                                         if np.random.random() < 0.5:
                                             new_build = BuildOrderType.MUTALISK_RUSH
                                         else:
                                             new_build = BuildOrderType.HYDRA_TIMING
                                     elif action_label == "ALL_IN":
-                                        new_build = BuildOrderType.STANDARD_12POOL # or Baneling Bust logic
+                                        new_build = (
+                                            BuildOrderType.STANDARD_12POOL
+                                        )  # or Baneling Bust logic
 
                                     if new_build:
-                                        self.bot.build_order_system.current_build_order = new_build
-                                        self.bot.build_order_system._setup_build_order() # 재설정
-                                        self.logger.info(f"[RL_OPENING] RLAgent initialized build: {new_build.value} (Action: {action_label})")
+                                        self.bot.build_order_system.current_build_order = (
+                                            new_build
+                                        )
+                                        self.bot.build_order_system._setup_build_order()  # 재설정
+                                        self.logger.info(
+                                            f"[RL_OPENING] RLAgent initialized build: {new_build.value} (Action: {action_label})"
+                                        )
 
                                 except Exception as e:
-                                    self.logger.warning(f"[WARNING] Failed to set RL opening: {e}")
+                                    self.logger.warning(
+                                        f"[WARNING] Failed to set RL opening: {e}"
+                                    )
 
                         except Exception as e:
                             if error_handler.debug_mode:
                                 raise
                             else:
                                 error_handler.error_counts["BuildOrderInit"] += 1
-                                if error_handler.error_counts["BuildOrderInit"] <= error_handler.max_error_logs:
-                                    self.logger.error(f"[ERROR] Build Order initialization error: {e}")
+                                if (
+                                    error_handler.error_counts["BuildOrderInit"]
+                                    <= error_handler.max_error_logs
+                                ):
+                                    self.logger.error(
+                                        f"[ERROR] Build Order initialization error: {e}"
+                                    )
                             self.bot.build_order_system = None
                     else:
                         # BuildOrderSystem not available
                         self.bot.build_order_system = None
 
-                if hasattr(self.bot, "build_order_system") and self.bot.build_order_system:
+                if (
+                    hasattr(self.bot, "build_order_system")
+                    and self.bot.build_order_system
+                ):
                     start_time = self._logic_tracker.start_logic("BuildOrder")
                     try:
                         await self.bot.build_order_system.execute(iteration)
@@ -1015,33 +1098,52 @@ class BotStepIntegrator:
                             raise
                         else:
                             error_handler.error_counts["BuildOrder"] += 1
-                            if error_handler.error_counts["BuildOrder"] <= error_handler.max_error_logs:
+                            if (
+                                error_handler.error_counts["BuildOrder"]
+                                <= error_handler.max_error_logs
+                            ):
                                 self.logger.error(f"[ERROR] Build Order error: {e}")
                     finally:
                         self._logic_tracker.end_logic("BuildOrder", start_time)
 
             # 0.05 ★★★ DefenseCoordinator (통합 방어 시스템 - 최우선) ★★★
-            if hasattr(self.bot, "defense_coordinator") and self.bot.defense_coordinator:
+            if (
+                hasattr(self.bot, "defense_coordinator")
+                and self.bot.defense_coordinator
+            ):
                 start_time = self._logic_tracker.start_logic("DefenseCoordinator")
                 try:
                     await self.bot.defense_coordinator.execute(iteration)
                     # 주기적으로 상태 출력
                     if iteration % 100 == 0:
                         status = self.bot.defense_coordinator.get_status()
-                        threat = self.bot.blackboard.threat.level.name if self.bot.blackboard else "UNKNOWN"
-                        self.logger.info(f"[DEFENSE] Threat: {threat}, Status: {status}")
+                        threat = (
+                            self.bot.blackboard.threat.level.name
+                            if self.bot.blackboard
+                            else "UNKNOWN"
+                        )
+                        self.logger.info(
+                            f"[DEFENSE] Threat: {threat}, Status: {status}"
+                        )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
                         error_handler.error_counts["DefenseCoordinator"] += 1
-                        if error_handler.error_counts["DefenseCoordinator"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["DefenseCoordinator"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] DefenseCoordinator error: {e}")
                 finally:
                     self._logic_tracker.end_logic("DefenseCoordinator", start_time)
 
             # 0.048 ★★★ EarlyDefenseSystem (0-3분 러시 전용 방어) ★★★
-            if self.bot.time < 180 and hasattr(self.bot, "early_defense") and self.bot.early_defense:
+            if (
+                self.bot.time < 180
+                and hasattr(self.bot, "early_defense")
+                and self.bot.early_defense
+            ):
                 start_time = self._logic_tracker.start_logic("EarlyDefense")
                 try:
                     await self.bot.early_defense.on_step(iteration)
@@ -1049,8 +1151,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["EarlyDefense"] = error_handler.error_counts.get("EarlyDefense", 0) + 1
-                        if error_handler.error_counts["EarlyDefense"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["EarlyDefense"] = (
+                            error_handler.error_counts.get("EarlyDefense", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["EarlyDefense"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] EarlyDefense error: {e}")
                 finally:
                     self._logic_tracker.end_logic("EarlyDefense", start_time)
@@ -1064,8 +1171,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["WorkerCombat"] = error_handler.error_counts.get("WorkerCombat", 0) + 1
-                        if error_handler.error_counts["WorkerCombat"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["WorkerCombat"] = (
+                            error_handler.error_counts.get("WorkerCombat", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["WorkerCombat"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] WorkerCombat error: {e}")
                 finally:
                     self._logic_tracker.end_logic("WorkerCombat", start_time)
@@ -1079,8 +1191,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["UpgradePriority"] = error_handler.error_counts.get("UpgradePriority", 0) + 1
-                        if error_handler.error_counts["UpgradePriority"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["UpgradePriority"] = (
+                            error_handler.error_counts.get("UpgradePriority", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["UpgradePriority"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] UpgradePriority error: {e}")
                 finally:
                     self._logic_tracker.end_logic("UpgradePriority", start_time)
@@ -1095,7 +1212,10 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["RLTechAdapter"] += 1
-                        if error_handler.error_counts["RLTechAdapter"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["RLTechAdapter"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] RLTechAdapter error: {e}")
                 finally:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
@@ -1111,7 +1231,10 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["MicroFocusMode"] += 1
-                        if error_handler.error_counts["MicroFocusMode"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["MicroFocusMode"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] MicroFocusMode error: {e}")
                 finally:
                     self._logic_tracker.end_logic("MicroFocusMode", start_time)
@@ -1123,20 +1246,29 @@ class BotStepIntegrator:
                     ratio_adjustments = self.bot.resource_balancer.update(iteration)
 
                     # ★ OPTIMIZED: Store in bot for all systems to use
-                    self.bot.current_gas_ratio = ratio_adjustments.get("gas_unit_ratio", 0.50)
+                    self.bot.current_gas_ratio = ratio_adjustments.get(
+                        "gas_unit_ratio", 0.50
+                    )
                     self.bot.resource_state = ratio_adjustments.get("state", "BALANCED")
-                    self.bot.mineral_excess = ratio_adjustments.get("mineral_excess", False)
+                    self.bot.mineral_excess = ratio_adjustments.get(
+                        "mineral_excess", False
+                    )
                     self.bot.gas_shortage = ratio_adjustments.get("gas_shortage", False)
 
                     # UnitFactory에 조정된 비율 전달
                     if hasattr(self.bot, "unit_factory") and self.bot.unit_factory:
-                        self.bot.unit_factory.gas_unit_ratio_target = self.bot.current_gas_ratio
+                        self.bot.unit_factory.gas_unit_ratio_target = (
+                            self.bot.current_gas_ratio
+                        )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
                         error_handler.error_counts["ResourceBalancer"] += 1
-                        if error_handler.error_counts["ResourceBalancer"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["ResourceBalancer"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] ResourceBalancer error: {e}")
                 finally:
                     self._logic_tracker.end_logic("ResourceBalancer", start_time)
@@ -1151,7 +1283,10 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["SmartBalancer"] += 1
-                        if error_handler.error_counts["SmartBalancer"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["SmartBalancer"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] SmartBalancer error: {e}")
                 finally:
                     self._logic_tracker.end_logic("SmartBalancer", start_time)
@@ -1160,6 +1295,7 @@ class BotStepIntegrator:
             if iteration % 11 == 0:  # 매 0.5초마다 체크 (빠른 반응)
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
+
                     enemy_units = getattr(self.bot, "enemy_units", None)
                     enemy_structures = getattr(self.bot, "enemy_structures", None)
 
@@ -1170,36 +1306,63 @@ class BotStepIntegrator:
                         # Carrier 감지 → 즉시 Corruptor 생산
                         if enemy_units(UnitTypeId.CARRIER).exists:
                             if blackboard:
-                                blackboard.request_production(UnitTypeId.CORRUPTOR, count=2, requester="AirThreat_URGENT")
-                            elif self.bot.can_afford(UnitTypeId.CORRUPTOR) and self.bot.larva.exists:
-                                self.bot.do(self.bot.larva.first.train(UnitTypeId.CORRUPTOR))
+                                blackboard.request_production(
+                                    UnitTypeId.CORRUPTOR,
+                                    count=2,
+                                    requester="AirThreat_URGENT",
+                                )
+                            elif (
+                                self.bot.can_afford(UnitTypeId.CORRUPTOR)
+                                and self.bot.larva.exists
+                            ):
+                                self.bot.do(
+                                    self.bot.larva.first.train(UnitTypeId.CORRUPTOR)
+                                )
 
                         # Stargate 감지 → Hydralisk Den 건설 준비
                         elif enemy_structures(UnitTypeId.STARGATE).exists:
                             hydra_den = self.bot.structures(UnitTypeId.HYDRALISKDEN)
-                            if not hydra_den.exists and not self.bot.already_pending(UnitTypeId.HYDRALISKDEN):
+                            if not hydra_den.exists and not self.bot.already_pending(
+                                UnitTypeId.HYDRALISKDEN
+                            ):
                                 if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
-                                    lair_or_hive = self.bot.structures.of_type([UnitTypeId.LAIR, UnitTypeId.HIVE])
+                                    lair_or_hive = self.bot.structures.of_type(
+                                        [UnitTypeId.LAIR, UnitTypeId.HIVE]
+                                    )
                                     if lair_or_hive.ready.exists:
-                                        await self.bot.build(UnitTypeId.HYDRALISKDEN, near=lair_or_hive.ready.first)
+                                        await self.bot.build(
+                                            UnitTypeId.HYDRALISKDEN,
+                                            near=lair_or_hive.ready.first,
+                                        )
 
                         # Battlecruiser 감지 → 즉시 Corruptor 대량 생산
                         elif enemy_units(UnitTypeId.BATTLECRUISER).exists:
-                            corruptor_count = self.bot.units(UnitTypeId.CORRUPTOR).amount
+                            corruptor_count = self.bot.units(
+                                UnitTypeId.CORRUPTOR
+                            ).amount
                             if corruptor_count < 12:
                                 if blackboard:
-                                    blackboard.request_production(UnitTypeId.CORRUPTOR, count=3, requester="AirThreat_URGENT")
+                                    blackboard.request_production(
+                                        UnitTypeId.CORRUPTOR,
+                                        count=3,
+                                        requester="AirThreat_URGENT",
+                                    )
                                 elif self.bot.can_afford(UnitTypeId.CORRUPTOR):
                                     for larva in self.bot.larva[:3]:
                                         self.bot.do(larva.train(UnitTypeId.CORRUPTOR))
                 except Exception as e:
-                    self.logger.warning(f"[BotStepIntegrator] Air threat response suppressed: {e}")
+                    self.logger.warning(
+                        f"[BotStepIntegrator] Air threat response suppressed: {e}"
+                    )
 
             # 0.060 DynamicCounterSystem -> RacialCounterManager로 병합됨
             # 위협 감지 및 카운터 로직은 StrategyManager.counter_manager.update()에서 처리
 
             # 0.0605 ★★★ A* Creep Highway (적진 방향 A* 경로 계산 + 진행 체크) ★★★
-            if hasattr(self.bot, "creep_highway_astar") and self.bot.creep_highway_astar:
+            if (
+                hasattr(self.bot, "creep_highway_astar")
+                and self.bot.creep_highway_astar
+            ):
                 astar_hw = self.bot.creep_highway_astar
                 try:
                     if not astar_hw._computed and self.bot.time > 10:
@@ -1211,7 +1374,7 @@ class BotStepIntegrator:
                             )
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1225,7 +1388,10 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["CreepHighway"] += 1
-                        if error_handler.error_counts["CreepHighway"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["CreepHighway"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] CreepHighway error: {e}")
                 finally:
                     self._logic_tracker.end_logic("CreepHighway", start_time)
@@ -1239,8 +1405,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["FlankingCoord"] = error_handler.error_counts.get("FlankingCoord", 0) + 1
-                        if error_handler.error_counts["FlankingCoord"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["FlankingCoord"] = (
+                            error_handler.error_counts.get("FlankingCoord", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["FlankingCoord"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] FlankingCoord error: {e}")
                 finally:
                     self._logic_tracker.end_logic("FlankingCoord", start_time)
@@ -1255,7 +1426,10 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["SpellCaster"] += 1
-                        if error_handler.error_counts["SpellCaster"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["SpellCaster"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] SpellCaster error: {e}")
                 finally:
                     self._logic_tracker.end_logic("SpellCaster", start_time)
@@ -1286,20 +1460,28 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["UpgradeCoord"] += 1
-                        if error_handler.error_counts["UpgradeCoord"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["UpgradeCoord"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] UpgradeCoord error: {e}")
                 finally:
                     self._logic_tracker.end_logic("UpgradeCoord", start_time)
 
             # 0.06 ★★★ Early Scout System (초반 정찰) ★★★
-            if True:  # Keep scout state alive; execute() handles early vs. mid-game work.
+            if (
+                True
+            ):  # Keep scout state alive; execute() handles early vs. mid-game work.
                 if not hasattr(self.bot, "early_scout"):
                     try:
                         from early_scout_system import EarlyScoutSystem
+
                         self.bot.early_scout = EarlyScoutSystem(self.bot)
                         self.logger.info("[EARLY_SCOUT] 초반 정찰 시스템 활성화!")
                     except ImportError as e:
-                        self.logger.warning(f"[WARNING] Early scout system not available: {e}")
+                        self.logger.warning(
+                            f"[WARNING] Early scout system not available: {e}"
+                        )
                         self.bot.early_scout = None
 
                 if hasattr(self.bot, "early_scout") and self.bot.early_scout:
@@ -1315,7 +1497,10 @@ class BotStepIntegrator:
                             raise
                         else:
                             error_handler.error_counts["EarlyScout"] += 1
-                            if error_handler.error_counts["EarlyScout"] <= error_handler.max_error_logs:
+                            if (
+                                error_handler.error_counts["EarlyScout"]
+                                <= error_handler.max_error_logs
+                            ):
                                 self.logger.error(f"[ERROR] Early Scout error: {e}")
                     finally:
                         self._logic_tracker.end_logic("EarlyScout", start_time)
@@ -1328,18 +1513,25 @@ class BotStepIntegrator:
                     # 주기적으로 정찰 리포트 출력
                     if iteration % 660 == 0:  # ~30초마다
                         report = self.bot.advanced_scout_v2.get_scout_report()
-                        self.logger.info(f"[ADVANCED_SCOUT_V2] Ling:{report.get('zergling_patrol_count',0)}, "
-                              f"OL:{report.get('overlord_scout_count',0)}, "
-                              f"OS:{report.get('overseer_scout_count',0)}, "
-                              f"Patrol:{report.get('patrol_units',0)}, "
-                              f"WT:{report.get('watchtowers_held',0)}, "
-                              f"Lost:{report.get('scouts_lost',0)}")
+                        self.logger.info(
+                            f"[ADVANCED_SCOUT_V2] Ling:{report.get('zergling_patrol_count',0)}, "
+                            f"OL:{report.get('overlord_scout_count',0)}, "
+                            f"OS:{report.get('overseer_scout_count',0)}, "
+                            f"Patrol:{report.get('patrol_units',0)}, "
+                            f"WT:{report.get('watchtowers_held',0)}, "
+                            f"Lost:{report.get('scouts_lost',0)}"
+                        )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["AdvancedScoutV2"] = error_handler.error_counts.get("AdvancedScoutV2", 0) + 1
-                        if error_handler.error_counts["AdvancedScoutV2"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["AdvancedScoutV2"] = (
+                            error_handler.error_counts.get("AdvancedScoutV2", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["AdvancedScoutV2"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] AdvancedScoutV2 error: {e}")
                 finally:
                     self._logic_tracker.end_logic("AdvancedScoutV2", start_time)
@@ -1353,8 +1545,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["BuildOrderOpt"] = error_handler.error_counts.get("BuildOrderOpt", 0) + 1
-                        if error_handler.error_counts["BuildOrderOpt"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["BuildOrderOpt"] = (
+                            error_handler.error_counts.get("BuildOrderOpt", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["BuildOrderOpt"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] BuildOrderOpt error: {e}")
                 finally:
                     self._logic_tracker.end_logic("BuildOrderOpt", start_time)
@@ -1368,8 +1565,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["MultiTest"] = error_handler.error_counts.get("MultiTest", 0) + 1
-                        if error_handler.error_counts["MultiTest"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["MultiTest"] = (
+                            error_handler.error_counts.get("MultiTest", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["MultiTest"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] MultiTest error: {e}")
                 finally:
                     self._logic_tracker.end_logic("MultiTest", start_time)
@@ -1380,7 +1582,9 @@ class BotStepIntegrator:
                 try:
                     # Debug: 매니저 호출 확인
                     if iteration == 1 or iteration % 500 == 0:
-                        self.logger.debug(f"[DEBUG] Calling strategy_manager.update() at iteration {iteration}")
+                        self.logger.debug(
+                            f"[DEBUG] Calling strategy_manager.update() at iteration {iteration}"
+                        )
                     self.bot.strategy_manager.update()
 
                     # ★ Anti-Air Tech Building (async 처리 - strategy_manager 플래그 소비) ★
@@ -1389,39 +1593,57 @@ class BotStepIntegrator:
                     # Phase 18: Smart Surrender Check
                     if hasattr(self.bot.strategy_manager, "check_surrender"):
                         if self.bot.strategy_manager.check_surrender(self.bot.time):
-                             self.logger.info("[SURRENDER] StrategyManager requested surrender.")
-                             await self.bot.chat_send("gg")
-                             await self.bot.client.leave()
-                             return
-                             
+                            self.logger.info(
+                                "[SURRENDER] StrategyManager requested surrender."
+                            )
+                            await self.bot.chat_send("gg")
+                            await self.bot.client.leave()
+                            return
+
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
                         error_handler.error_counts["StrategyManager"] += 1
-                        if error_handler.error_counts["StrategyManager"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["StrategyManager"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] Strategy Manager error: {e}")
                 finally:
                     self._logic_tracker.end_logic("Strategy", start_time)
             else:
                 if iteration == 1:
-                    self.logger.warning(f"[WARNING] strategy_manager not found! hasattr={hasattr(self.bot, 'strategy_manager')}, value={getattr(self.bot, 'strategy_manager', None)}")
+                    self.logger.warning(
+                        f"[WARNING] strategy_manager not found! hasattr={hasattr(self.bot, 'strategy_manager')}, value={getattr(self.bot, 'strategy_manager', None)}"
+                    )
 
             # 0.11 ★★★ Situational Awareness (Stage 5 - SITREP Generation) ★★★
             # StrategyManager 직후에 실행하여 최신 전략 상태를 반영
-            if hasattr(self.bot, "situational_awareness") and self.bot.situational_awareness:
-                 start_time = self._logic_tracker.start_logic("SituationalAwareness")
-                 try:
-                     self.bot.situational_awareness.on_step(iteration)
-                 except Exception as e:
-                     if error_handler.debug_mode:
-                         raise
-                     else:
-                         error_handler.error_counts["SituationalAwareness"] = error_handler.error_counts.get("SituationalAwareness", 0) + 1
-                         if error_handler.error_counts["SituationalAwareness"] <= error_handler.max_error_logs:
-                             self.logger.error(f"[ERROR] SituationalAwareness error: {e}")
-                 finally:
-                     self._logic_tracker.end_logic("SituationalAwareness", start_time)
+            if (
+                hasattr(self.bot, "situational_awareness")
+                and self.bot.situational_awareness
+            ):
+                start_time = self._logic_tracker.start_logic("SituationalAwareness")
+                try:
+                    self.bot.situational_awareness.on_step(iteration)
+                except Exception as e:
+                    if error_handler.debug_mode:
+                        raise
+                    else:
+                        error_handler.error_counts["SituationalAwareness"] = (
+                            error_handler.error_counts.get("SituationalAwareness", 0)
+                            + 1
+                        )
+                        if (
+                            error_handler.error_counts["SituationalAwareness"]
+                            <= error_handler.max_error_logs
+                        ):
+                            self.logger.error(
+                                f"[ERROR] SituationalAwareness error: {e}"
+                            )
+                finally:
+                    self._logic_tracker.end_logic("SituationalAwareness", start_time)
 
             # 0.15 ★ Defeat Detection (패배 직감 시스템) ★
             if hasattr(self.bot, "defeat_detection") and self.bot.defeat_detection:
@@ -1432,14 +1654,22 @@ class BotStepIntegrator:
                     # 패배 직전이면 마지막 방어 시도 (항복보다 우선)
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 50 == 0:
-                            self.logger.info(f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]")
-                            self.logger.info(f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}")
-                            self.logger.info(f"  - 이유: {defeat_status.get('defeat_reason', '알 수 없음')}")
+                            self.logger.info(
+                                f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
+                            )
+                            self.logger.info(
+                                f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}"
+                            )
+                            self.logger.info(
+                                f"  - 이유: {defeat_status.get('defeat_reason', '알 수 없음')}"
+                            )
 
                         # Combat Manager에게 마지막 방어 위치 전달
                         if hasattr(self.bot, "combat") and self.bot.combat:
                             last_stand_pos = defeat_status.get("last_stand_position")
-                            if last_stand_pos and hasattr(self.bot.combat, "_defense_rally_point"):
+                            if last_stand_pos and hasattr(
+                                self.bot.combat, "_defense_rally_point"
+                            ):
                                 self.bot.combat._defense_rally_point = last_stand_pos
                                 self.bot.combat._base_defense_active = True
 
@@ -1447,7 +1677,9 @@ class BotStepIntegrator:
                     elif defeat_status.get("should_surrender", False):
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
-                        self.logger.info(f"\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]")
+                        self.logger.info(
+                            f"\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]"
+                        )
                         self.logger.info(f"  - 게임 시간: {int(game_time)}초")
                         self.logger.info(f"  - 이유: {reason}")
                         self.logger.info(f"  - 다음 게임으로 이동...\n")
@@ -1464,7 +1696,9 @@ class BotStepIntegrator:
                     # 위기 상황이면 경고
                     elif defeat_status.get("defeat_level", 0) >= 2:  # CRITICAL
                         if iteration % 300 == 0:
-                            self.logger.info(f"[DEFEAT DETECTION] 위기 상황! - {defeat_status.get('defeat_reason', '알 수 없음')}")
+                            self.logger.info(
+                                f"[DEFEAT DETECTION] 위기 상황! - {defeat_status.get('defeat_reason', '알 수 없음')}"
+                            )
 
                 except Exception as e:
                     if iteration % 50 == 0:
@@ -1488,15 +1722,24 @@ class BotStepIntegrator:
 
                     # Log strategy prediction every 30 seconds
                     if iteration % 660 == 0:  # ~30 seconds at 22 FPS
-                        predicted_strategy, confidence = self.bot.opponent_modeling.get_predicted_strategy()
+                        predicted_strategy, confidence = (
+                            self.bot.opponent_modeling.get_predicted_strategy()
+                        )
                         if predicted_strategy and confidence > 0.3:
-                            self.logger.info(f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)")
+                            self.logger.info(
+                                f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)"
+                            )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["OpponentModeling"] = error_handler.error_counts.get("OpponentModeling", 0) + 1
-                        if error_handler.error_counts["OpponentModeling"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["OpponentModeling"] = (
+                            error_handler.error_counts.get("OpponentModeling", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["OpponentModeling"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] OpponentModeling error: {e}")
                 finally:
                     self._logic_tracker.end_logic("OpponentModeling", start_time)
@@ -1529,7 +1772,10 @@ class BotStepIntegrator:
 
             # 3. ProductionController (통합 생산 관리 - Dynamic Authority) ★★★
             # Blackboard 생산 큐를 우선순위에 따라 처리
-            if hasattr(self.bot, "production_controller") and self.bot.production_controller:
+            if (
+                hasattr(self.bot, "production_controller")
+                and self.bot.production_controller
+            ):
                 start_time = self._logic_tracker.start_logic("ProductionController")
                 try:
                     await self.bot.production_controller.execute(iteration)
@@ -1537,14 +1783,21 @@ class BotStepIntegrator:
                     # 주기적으로 통계 출력
                     if iteration % 50 == 0:
                         stats = self.bot.production_controller.get_production_stats()
-                        self.logger.info(f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}")
+                        self.logger.info(
+                            f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}"
+                        )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
                         error_handler.error_counts["ProductionController"] += 1
-                        if error_handler.error_counts["ProductionController"] <= error_handler.max_error_logs:
-                            self.logger.error(f"[ERROR] ProductionController error: {e}")
+                        if (
+                            error_handler.error_counts["ProductionController"]
+                            <= error_handler.max_error_logs
+                        ):
+                            self.logger.error(
+                                f"[ERROR] ProductionController error: {e}"
+                            )
                 finally:
                     self._logic_tracker.end_logic("ProductionController", start_time)
 
@@ -1566,9 +1819,11 @@ class BotStepIntegrator:
             # 대군주 생산을 전략/드론보다 우선순위에 둠
             if hasattr(self.bot, "economy") and self.bot.economy:
                 # _train_overlord_if_needed 메서드 직접 호출
-                train_ov_method = getattr(self.bot.economy, "_train_overlord_if_needed", None)
+                train_ov_method = getattr(
+                    self.bot.economy, "_train_overlord_if_needed", None
+                )
                 if train_ov_method:
-                     await train_ov_method()
+                    await train_ov_method()
 
             # 4. Production (생산)
             if self.bot.production:
@@ -1609,8 +1864,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["WorkerOptimizer"] = error_handler.error_counts.get("WorkerOptimizer", 0) + 1
-                        if error_handler.error_counts["WorkerOptimizer"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["WorkerOptimizer"] = (
+                            error_handler.error_counts.get("WorkerOptimizer", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["WorkerOptimizer"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] WorkerOptimizer error: {e}")
                 finally:
                     self._logic_tracker.end_logic("WorkerOptimizer", start_time)
@@ -1623,13 +1883,19 @@ class BotStepIntegrator:
             # ★ Phase 21: 확장 타이밍 모니터링 (50초마다) ★
             if iteration % 1100 == 0:
                 try:
-                    base_count = self.bot.townhalls.ready.amount if self.bot.townhalls else 0
+                    base_count = (
+                        self.bot.townhalls.ready.amount if self.bot.townhalls else 0
+                    )
                     game_min = self.bot.time / 60.0
                     expected = min(int(game_min / 2.5) + 1, 5)  # 2.5분당 1기지, 최대 5
                     if base_count < expected and self.bot.minerals > 300:
-                        self.logger.info(f"[EXPANSION] 확장 지연: {base_count}기지 (목표: {expected}, {game_min:.1f}분)")
+                        self.logger.info(
+                            f"[EXPANSION] 확장 지연: {base_count}기지 (목표: {expected}, {game_min:.1f}분)"
+                        )
                 except Exception as e:
-                    self.logger.warning(f"[BotStepIntegrator] Expansion timing check suppressed: {e}")
+                    self.logger.warning(
+                        f"[BotStepIntegrator] Expansion timing check suppressed: {e}"
+                    )
 
             # 5.1 ★★★ Queen Inject Optimizer (Phase 8 - 완벽한 Inject) ★★★
             if hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt:
@@ -1639,15 +1905,22 @@ class BotStepIntegrator:
                     # 주기적으로 효율성 출력
                     if iteration % 1320 == 0:  # ~1분마다
                         stats = self.bot.queen_inject_opt.get_inject_stats()
-                        self.logger.info(f"[QUEEN_INJECT] Efficiency: {stats['inject_efficiency']*100:.1f}%, "
-                              f"Total: {stats['total_injects']}, "
-                              f"Queens: {stats['queens_assigned']}")
+                        self.logger.info(
+                            f"[QUEEN_INJECT] Efficiency: {stats['inject_efficiency']*100:.1f}%, "
+                            f"Total: {stats['total_injects']}, "
+                            f"Queens: {stats['queens_assigned']}"
+                        )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["QueenInjectOpt"] = error_handler.error_counts.get("QueenInjectOpt", 0) + 1
-                        if error_handler.error_counts["QueenInjectOpt"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["QueenInjectOpt"] = (
+                            error_handler.error_counts.get("QueenInjectOpt", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["QueenInjectOpt"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] QueenInjectOpt error: {e}")
                 finally:
                     self._logic_tracker.end_logic("QueenInjectOpt", start_time)
@@ -1658,6 +1931,7 @@ class BotStepIntegrator:
                 try:
                     # Get available queens (defense/flexible role queens with energy)
                     from sc2.ids.unit_typeid import UnitTypeId
+
                     queens = self.bot.units(UnitTypeId.QUEEN)
 
                     # Get damaged friendly units (biological only)
@@ -1677,8 +1951,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["QueenTransfusion"] = error_handler.error_counts.get("QueenTransfusion", 0) + 1
-                        if error_handler.error_counts["QueenTransfusion"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["QueenTransfusion"] = (
+                            error_handler.error_counts.get("QueenTransfusion", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["QueenTransfusion"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] QueenTransfusion error: {e}")
                 finally:
                     self._logic_tracker.end_logic("QueenTransfusion", start_time)
@@ -1691,14 +1970,21 @@ class BotStepIntegrator:
 
                     # Clear stale reservations (safety mechanism)
                     if iteration % 220 == 0:  # Every 10 seconds
-                        await self.bot.resource_manager.clear_stale_reservations(iteration)
+                        await self.bot.resource_manager.clear_stale_reservations(
+                            iteration
+                        )
 
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["ResourceManager"] = error_handler.error_counts.get("ResourceManager", 0) + 1
-                        if error_handler.error_counts["ResourceManager"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["ResourceManager"] = (
+                            error_handler.error_counts.get("ResourceManager", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["ResourceManager"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] ResourceManager error: {e}")
 
             # 5.4 ★★★ Spatial Query Optimizer (Phase 21 - Performance) ★★★
@@ -1714,8 +2000,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["SpatialQuery"] = error_handler.error_counts.get("SpatialQuery", 0) + 1
-                        if error_handler.error_counts["SpatialQuery"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["SpatialQuery"] = (
+                            error_handler.error_counts.get("SpatialQuery", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["SpatialQuery"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] SpatialQuery error: {e}")
 
             # 5.5 ★★★ Overlord Vision Network (Phase 8 - 시야 네트워크) ★★★
@@ -1727,8 +2018,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["VisionNetwork"] = error_handler.error_counts.get("VisionNetwork", 0) + 1
-                        if error_handler.error_counts["VisionNetwork"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["VisionNetwork"] = (
+                            error_handler.error_counts.get("VisionNetwork", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["VisionNetwork"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] VisionNetwork error: {e}")
                 finally:
                     self._logic_tracker.end_logic("VisionNetwork", start_time)
@@ -1742,8 +2038,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["CreepV2"] = error_handler.error_counts.get("CreepV2", 0) + 1
-                        if error_handler.error_counts["CreepV2"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["CreepV2"] = (
+                            error_handler.error_counts.get("CreepV2", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["CreepV2"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] CreepV2 error: {e}")
                 finally:
                     self._logic_tracker.end_logic("CreepV2", start_time)
@@ -1769,8 +2070,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["UpgradePlanner"] = error_handler.error_counts.get("UpgradePlanner", 0) + 1
-                        if error_handler.error_counts["UpgradePlanner"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["UpgradePlanner"] = (
+                            error_handler.error_counts.get("UpgradePlanner", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["UpgradePlanner"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] UpgradePlanner error: {e}")
                 finally:
                     self._logic_tracker.end_logic("UpgradePlanner", start_time)
@@ -1786,21 +2092,31 @@ class BotStepIntegrator:
                             await self.bot.advanced_building_manager.handle_resource_surplus()
                         )
                         if surplus_results and iteration % 100 == 0:
-                            self.logger.info(f"[RESOURCE SURPLUS] Handled: {surplus_results}")
+                            self.logger.info(
+                                f"[RESOURCE SURPLUS] Handled: {surplus_results}"
+                            )
 
                     # 방어 건물 최적 위치에 건설 - ★ 3베이스 이후에만! ★
                     if iteration % 44 == 0:  # 매 2초마다
                         # ★ CRITICAL: 초반 확장 우선! 3분 이후 + 3베이스 이후에만 방어 건물 건설 ★
                         game_time = getattr(self.bot, "time", 0)
-                        base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
+                        base_count = (
+                            self.bot.townhalls.amount
+                            if hasattr(self.bot, "townhalls")
+                            else 1
+                        )
                         if game_time >= 180 and base_count >= 3:
                             await self.bot.advanced_building_manager.build_defense_buildings_optimally()
                 except Exception as e:
                     success = False
                     if iteration % 50 == 0:
-                        self.logger.warning(f"[WARNING] Advanced Building Manager error: {e}")
+                        self.logger.warning(
+                            f"[WARNING] Advanced Building Manager error: {e}"
+                        )
                 finally:
-                    self._logic_tracker.end_logic("AdvancedBuilding", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "AdvancedBuilding", start_time, success
+                    )
 
             # 6. Aggressive Tech Builder (최신 개선 사항)
             if hasattr(self.bot, "aggressive_tech_builder"):
@@ -1826,7 +2142,9 @@ class BotStepIntegrator:
                 except Exception as e:
                     success = False
                     if iteration % 50 == 0:
-                        self.logger.warning(f"[WARNING] Aggressive Tech Builder error: {e}")
+                        self.logger.warning(
+                            f"[WARNING] Aggressive Tech Builder error: {e}"
+                        )
                 finally:
                     self._logic_tracker.end_logic("AggressiveTech", start_time, success)
 
@@ -1834,7 +2152,9 @@ class BotStepIntegrator:
             await self._handle_emergency_defense(iteration)
 
             # 7. Queen Manager (여왕 관리)
-            await self._safe_manager_step(self.bot.queen_manager, iteration, "Queen Manager")
+            await self._safe_manager_step(
+                self.bot.queen_manager, iteration, "Queen Manager"
+            )
 
             # 8. Combat (전투) - 단일 호출 (방어 모드 자동 감지)
             await self._safe_manager_step(self.bot.combat, iteration, "Combat")
@@ -1848,8 +2168,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["IdleUnits"] = error_handler.error_counts.get("IdleUnits", 0) + 1
-                        if error_handler.error_counts["IdleUnits"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["IdleUnits"] = (
+                            error_handler.error_counts.get("IdleUnits", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["IdleUnits"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] IdleUnits error: {e}")
                 finally:
                     self._logic_tracker.end_logic("IdleUnits", start_time)
@@ -1868,8 +2193,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["CombatPhase"] = error_handler.error_counts.get("CombatPhase", 0) + 1
-                        if error_handler.error_counts["CombatPhase"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["CombatPhase"] = (
+                            error_handler.error_counts.get("CombatPhase", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["CombatPhase"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] CombatPhase error: {e}")
                 finally:
                     self._logic_tracker.end_logic("CombatPhase", start_time)
@@ -1883,8 +2213,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["HarassmentCoord"] = error_handler.error_counts.get("HarassmentCoord", 0) + 1
-                        if error_handler.error_counts["HarassmentCoord"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["HarassmentCoord"] = (
+                            error_handler.error_counts.get("HarassmentCoord", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["HarassmentCoord"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] HarassmentCoord error: {e}")
                 finally:
                     self._logic_tracker.end_logic("HarassmentCoord", start_time)
@@ -1898,8 +2233,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["MultiProng"] = error_handler.error_counts.get("MultiProng", 0) + 1
-                        if error_handler.error_counts["MultiProng"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["MultiProng"] = (
+                            error_handler.error_counts.get("MultiProng", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["MultiProng"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] MultiProng error: {e}")
                 finally:
                     self._logic_tracker.end_logic("MultiProng", start_time)
@@ -1913,8 +2253,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["TradeAnalyzer"] = error_handler.error_counts.get("TradeAnalyzer", 0) + 1
-                        if error_handler.error_counts["TradeAnalyzer"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["TradeAnalyzer"] = (
+                            error_handler.error_counts.get("TradeAnalyzer", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["TradeAnalyzer"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] TradeAnalyzer error: {e}")
                 finally:
                     self._logic_tracker.end_logic("TradeAnalyzer", start_time)
@@ -1953,13 +2298,21 @@ class BotStepIntegrator:
             if hasattr(self.bot, "micro") and self.bot.micro:
                 is_focused = False
                 # 1. 인텔 매니저 확인 (공격 받는 중)
-                if hasattr(self.bot, "intel") and self.bot.intel and self.bot.intel.is_under_attack():
+                if (
+                    hasattr(self.bot, "intel")
+                    and self.bot.intel
+                    and self.bot.intel.is_under_attack()
+                ):
                     is_focused = True
-                
+
                 # 2. 공격 중인지 확인 (CombatManager 상태)
-                if not is_focused and hasattr(self.bot, "combat") and hasattr(self.bot.combat, "is_engaging"):
-                     if self.bot.combat.is_engaging: # 전투 중
-                         is_focused = True
+                if (
+                    not is_focused
+                    and hasattr(self.bot, "combat")
+                    and hasattr(self.bot.combat, "is_engaging")
+                ):
+                    if self.bot.combat.is_engaging:  # 전투 중
+                        is_focused = True
 
                 # Focus Mode 설정
                 if hasattr(self.bot.micro, "set_focus_mode"):
@@ -1978,18 +2331,27 @@ class BotStepIntegrator:
                     # Log micro status every 60 seconds
                     if iteration % 1320 == 0:  # ~60 seconds at 22 FPS
                         status = self.bot.micro_v3.get_status()
-                        self.logger.info(f"[MICRO_V3] Ravagers: {status.get('ravager_cooldowns', 0)}, "
-                              f"Lurkers burrowed: {status.get('lurker_burrowed', 0)}, "
-                              f"Focus fire: {status.get('focus_fire_assignments', 0)} assignments")
+                        self.logger.info(
+                            f"[MICRO_V3] Ravagers: {status.get('ravager_cooldowns', 0)}, "
+                            f"Lurkers burrowed: {status.get('lurker_burrowed', 0)}, "
+                            f"Focus fire: {status.get('focus_fire_assignments', 0)} assignments"
+                        )
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["MicroV3"] = error_handler.error_counts.get("MicroV3", 0) + 1
-                        if error_handler.error_counts["MicroV3"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["MicroV3"] = (
+                            error_handler.error_counts.get("MicroV3", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["MicroV3"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] MicroV3 error: {e}")
                         if error_handler.error_counts.get("MicroV3", 0) >= 5:
-                            self.logger.info("[RECOVERY] MicroV3 disabled after 5 consecutive errors")
+                            self.logger.info(
+                                "[RECOVERY] MicroV3 disabled after 5 consecutive errors"
+                            )
                             self.bot.micro_v3 = None
                 finally:
                     self._logic_tracker.end_logic("MicroV3", start_time)
@@ -2021,8 +2383,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["LateGameOpt"] = error_handler.error_counts.get("LateGameOpt", 0) + 1
-                        if error_handler.error_counts["LateGameOpt"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["LateGameOpt"] = (
+                            error_handler.error_counts.get("LateGameOpt", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["LateGameOpt"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] LateGameOpt error: {e}")
                 finally:
                     self._logic_tracker.end_logic("LateGameOpt", start_time)
@@ -2036,8 +2403,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["AdaptiveBuild"] = error_handler.error_counts.get("AdaptiveBuild", 0) + 1
-                        if error_handler.error_counts["AdaptiveBuild"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["AdaptiveBuild"] = (
+                            error_handler.error_counts.get("AdaptiveBuild", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["AdaptiveBuild"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] AdaptiveBuild error: {e}")
                 finally:
                     self._logic_tracker.end_logic("AdaptiveBuild", start_time)
@@ -2051,8 +2423,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["TimingAttacks"] = error_handler.error_counts.get("TimingAttacks", 0) + 1
-                        if error_handler.error_counts["TimingAttacks"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["TimingAttacks"] = (
+                            error_handler.error_counts.get("TimingAttacks", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["TimingAttacks"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] TimingAttacks error: {e}")
                 finally:
                     self._logic_tracker.end_logic("TimingAttacks", start_time)
@@ -2066,8 +2443,13 @@ class BotStepIntegrator:
                     if error_handler.debug_mode:
                         raise
                     else:
-                        error_handler.error_counts["ProxyHatch"] = error_handler.error_counts.get("ProxyHatch", 0) + 1
-                        if error_handler.error_counts["ProxyHatch"] <= error_handler.max_error_logs:
+                        error_handler.error_counts["ProxyHatch"] = (
+                            error_handler.error_counts.get("ProxyHatch", 0) + 1
+                        )
+                        if (
+                            error_handler.error_counts["ProxyHatch"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] ProxyHatch error: {e}")
                 finally:
                     self._logic_tracker.end_logic("ProxyHatch", start_time)
@@ -2083,7 +2465,9 @@ class BotStepIntegrator:
             if hasattr(self.bot, "game_data_logger") and self.bot.game_data_logger:
                 try:
                     # 첫 호출 시 메타 정보 초기화
-                    if not getattr(self.bot.game_data_logger, '_meta_initialized', False):
+                    if not getattr(
+                        self.bot.game_data_logger, "_meta_initialized", False
+                    ):
                         self.bot.game_data_logger.initialize_game_meta()
                         self.bot.game_data_logger._meta_initialized = True
                     await self.bot.game_data_logger.on_step(iteration)
@@ -2107,15 +2491,23 @@ class BotStepIntegrator:
                 raise
             else:
                 error_handler.error_counts["GameLogic"] += 1
-                if error_handler.error_counts["GameLogic"] <= error_handler.max_error_logs:
+                if (
+                    error_handler.error_counts["GameLogic"]
+                    <= error_handler.max_error_logs
+                ):
                     self.logger.error(f"[ERROR] Game logic execution error: {e}")
         finally:
             # Performance Optimizer 프레임 종료
-            if hasattr(self.bot, "performance_optimizer") and self.bot.performance_optimizer:
+            if (
+                hasattr(self.bot, "performance_optimizer")
+                and self.bot.performance_optimizer
+            ):
                 try:
                     self.bot.performance_optimizer.end_frame()
                 except (AttributeError, TypeError, RuntimeError) as e:
-                    self.logger.warning(f"[BotStepIntegrator] Perf optimizer end_frame suppressed: {e}")
+                    self.logger.warning(
+                        f"[BotStepIntegrator] Perf optimizer end_frame suppressed: {e}"
+                    )
 
     def _cleanup_dead_unit_authorities(self):
         """죽은 유닛의 권한 자동 해제"""
@@ -2125,8 +2517,12 @@ class BotStepIntegrator:
         try:
             # 각 시스템별로 죽은 유닛 권한 해제
             system_names = [
-                "scouting", "harassment_coord", "multi_prong_coord",
-                "combat_manager", "spell_unit_manager", "economy_manager"
+                "scouting",
+                "harassment_coord",
+                "multi_prong_coord",
+                "combat_manager",
+                "spell_unit_manager",
+                "economy_manager",
             ]
 
             for system_name in system_names:
@@ -2151,7 +2547,9 @@ class BotStepIntegrator:
                             del system.active_scouts[unit_tag]
 
         except Exception as e:
-            self.logger.warning(f"[BotStepIntegrator] Dead unit authority cleanup suppressed: {e}")
+            self.logger.warning(
+                f"[BotStepIntegrator] Dead unit authority cleanup suppressed: {e}"
+            )
 
     async def draw_debug_info(self):
         """화면 좌측 상단에 봇 상태 디버그 정보 표시"""
@@ -2171,24 +2569,31 @@ class BotStepIntegrator:
             # 2. 전략 상태
             strategy_mode = "DEFAULT"
             if hasattr(b, "strategy_manager") and b.strategy_manager:
-                strategy_mode = str(b.strategy_manager.current_mode).split('.')[-1]
-                if hasattr(b, "strategy_manager") and getattr(b.strategy_manager, "emergency_spine_requested", False):
+                strategy_mode = str(b.strategy_manager.current_mode).split(".")[-1]
+                if hasattr(b, "strategy_manager") and getattr(
+                    b.strategy_manager, "emergency_spine_requested", False
+                ):
                     strategy_mode += " (EMERGENCY)"
 
             # 3. 확장 상태 (ProductionResilience)
             expand_status = "Unknown"
-            if hasattr(b, "production") and b.production and hasattr(b.production, "_can_expand_safely"):
-                 try:
-                     can_expand, reason = b.production._can_expand_safely()
-                     if can_expand:
-                         expand_status = "Ready"
-                     else:
-                         expand_status = f"Blocked ({reason})"
-                 except (AttributeError, TypeError, ValueError) as e:
-                     # Expansion check failed, use default status
-                     expand_status = "Unknown"
-                     if iteration % 1000 == 0:  # Log occasionally
-                         self.logger.debug(f"[DEBUG] Expansion check error: {e}")
+            if (
+                hasattr(b, "production")
+                and b.production
+                and hasattr(b.production, "_can_expand_safely")
+            ):
+                try:
+                    can_expand, reason = b.production._can_expand_safely()
+                    if can_expand:
+                        expand_status = "Ready"
+                    else:
+                        expand_status = f"Blocked ({reason})"
+                except (AttributeError, TypeError, ValueError) as e:
+                    # Expansion check failed, use default status
+                    expand_status = "Unknown"
+                    game_loop = getattr(getattr(b, "state", None), "game_loop", 0)
+                    if game_loop and game_loop % 1000 == 0:
+                        self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시
             debug_text = f"""
@@ -2204,15 +2609,21 @@ class BotStepIntegrator:
             """
 
             # 화면 좌측 상단 (0.01, 0.01)에 표시
-            client.debug_text_screen(debug_text, pos=(0.01, 0.01), size=12, color=(0, 255, 0))
+            client.debug_text_screen(
+                debug_text, pos=(0.01, 0.01), size=12, color=(0, 255, 0)
+            )
 
             # 패배 직감 상태가 있다면 표시
             if hasattr(b, "defeat_detection") and b.defeat_detection:
                 status = b.defeat_detection._get_current_status()
                 level = status.get("defeat_level", 0)
                 if level > 0:
-                    defeat_text = f"Danger Level: {level} ({status.get('defeat_reason', '')})"
-                    client.debug_text_screen(defeat_text, pos=(0.01, 0.2), size=12, color=(255, 0, 0))
+                    defeat_text = (
+                        f"Danger Level: {level} ({status.get('defeat_reason', '')})"
+                    )
+                    client.debug_text_screen(
+                        defeat_text, pos=(0.01, 0.2), size=12, color=(255, 0, 0)
+                    )
 
             # debug_send 메서드가 있는 경우에만 호출
             if hasattr(client, "debug_send"):
@@ -2256,7 +2667,9 @@ class BotStepIntegrator:
             success = False
             if error_handler.debug_mode:
                 # DEBUG_MODE: 즉시 크래시
-                self.logger.error(f"\n[ERROR] {label} failed in DEBUG_MODE - crashing for debugging")
+                self.logger.error(
+                    f"\n[ERROR] {label} failed in DEBUG_MODE - crashing for debugging"
+                )
                 self.logger.error(f"[ERROR] Exception: {e}")
                 raise
             else:
@@ -2264,8 +2677,13 @@ class BotStepIntegrator:
                 error_handler.error_counts[label] += 1
                 if error_handler.error_counts[label] <= error_handler.max_error_logs:
                     self.logger.error(f"[ERROR] {label} error: {e}")
-                    if error_handler.error_counts[label] == error_handler.max_error_logs:
-                        self.logger.error(f"[ERROR] {label}: Suppressing further error logs")
+                    if (
+                        error_handler.error_counts[label]
+                        == error_handler.max_error_logs
+                    ):
+                        self.logger.error(
+                            f"[ERROR] {label}: Suppressing further error logs"
+                        )
         finally:
             self._logic_tracker.end_logic(label, start_time, success)
 
@@ -2296,12 +2714,21 @@ class BotStepIntegrator:
                     if hasattr(self.bot, "enemy_structures"):
                         # Count all enemy townhall types (Hatchery/CC/Nexus etc)
                         from sc2.ids.unit_typeid import UnitTypeId
+
                         townhall_types = {
-                            UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-                            UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
-                            UnitTypeId.NEXUS
+                            UnitTypeId.HATCHERY,
+                            UnitTypeId.LAIR,
+                            UnitTypeId.HIVE,
+                            UnitTypeId.COMMANDCENTER,
+                            UnitTypeId.ORBITALCOMMAND,
+                            UnitTypeId.PLANETARYFORTRESS,
+                            UnitTypeId.NEXUS,
                         }
-                        enemy_bases = sum(1 for s in self.bot.enemy_structures if s.type_id in townhall_types)
+                        enemy_bases = sum(
+                            1
+                            for s in self.bot.enemy_structures
+                            if s.type_id in townhall_types
+                        )
 
                     # 업그레이드 수
                     upgrade_count = 0
@@ -2316,7 +2743,15 @@ class BotStepIntegrator:
                     # 군대 체력 합계 (전투력 지표)
                     our_army_hp = 0
                     if hasattr(self.bot, "units"):
-                        combat_units = self.bot.units.filter(lambda u: u.type_id not in [UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA, UnitTypeId.EGG])
+                        combat_units = self.bot.units.filter(
+                            lambda u: u.type_id
+                            not in [
+                                UnitTypeId.DRONE,
+                                UnitTypeId.OVERLORD,
+                                UnitTypeId.LARVA,
+                                UnitTypeId.EGG,
+                            ]
+                        )
                         our_army_hp = sum(u.health for u in combat_units)
 
                     enemy_army_hp = 0
@@ -2326,68 +2761,96 @@ class BotStepIntegrator:
                     # 맵 장악력 (HierarchicalRL 메서드 재사용)
                     map_control = 0.5
                     if hasattr(self.bot.hierarchical_rl, "_calculate_map_control"):
-                        map_control = self.bot.hierarchical_rl._calculate_map_control(self.bot)
+                        map_control = self.bot.hierarchical_rl._calculate_map_control(
+                            self.bot
+                        )
 
-                    game_state = np.array([
-                        getattr(self.bot, "minerals", 0) / 2000.0,
-                        getattr(self.bot, "vespene", 0) / 1000.0,
-                        getattr(self.bot, "supply_used", 0) / 200.0,
-                        getattr(self.bot, "supply_cap", 0) / 200.0,
-                        len(getattr(self.bot, "workers", [])) / 100.0,
-                        len(getattr(self.bot, "units", [])) / 100.0,
-                        len(getattr(self.bot, "enemy_units", [])) / 100.0,
-                        len(getattr(self.bot, "townhalls", [])) / 10.0,
-                        getattr(self.bot, "time", 0) / 1000.0,
-                        # ★ COMPLETE: Filled Features (6 dims) - NO MORE 0.0! ★
-                        enemy_bases / 5.0,        # 적 기지 수
-                        upgrade_count / 10.0,     # 업그레이드 진척도
-                        larva_count / 20.0,       # 라바 가용량
-                        map_control,              # 맵 장악력 (0~1)
-                        our_army_hp / 5000.0,     # 아군 전투력
-                        enemy_army_hp / 5000.0    # 적군 전투력
-                    ], dtype=np.float32)
+                    game_state = np.array(
+                        [
+                            getattr(self.bot, "minerals", 0) / 2000.0,
+                            getattr(self.bot, "vespene", 0) / 1000.0,
+                            getattr(self.bot, "supply_used", 0) / 200.0,
+                            getattr(self.bot, "supply_cap", 0) / 200.0,
+                            len(getattr(self.bot, "workers", [])) / 100.0,
+                            len(getattr(self.bot, "units", [])) / 100.0,
+                            len(getattr(self.bot, "enemy_units", [])) / 100.0,
+                            len(getattr(self.bot, "townhalls", [])) / 10.0,
+                            getattr(self.bot, "time", 0) / 1000.0,
+                            # ★ COMPLETE: Filled Features (6 dims) - NO MORE 0.0! ★
+                            enemy_bases / 5.0,  # 적 기지 수
+                            upgrade_count / 10.0,  # 업그레이드 진척도
+                            larva_count / 20.0,  # 라바 가용량
+                            map_control,  # 맵 장악력 (0~1)
+                            our_army_hp / 5000.0,  # 아군 전투력
+                            enemy_army_hp / 5000.0,  # 적군 전투력
+                        ],
+                        dtype=np.float32,
+                    )
 
                     # ★ 상태 벡터 로깅 (30초마다) - 실제 값 확인 ★
                     if iteration % 660 == 0:  # 30초
                         self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
-                        self.logger.info(f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}")
-                        self.logger.info(f"  서플라이: {game_state[2]:.3f}/{game_state[3]:.3f}")
-                        self.logger.info(f"  일꾼: {game_state[4]:.3f}, 유닛: {game_state[5]:.3f}, 적 유닛: {game_state[6]:.3f}")
-                        self.logger.info(f"  기지: {game_state[7]:.3f}, 시간: {game_state[8]:.3f}")
-                        self.logger.info(f"  적 기지: {game_state[9]:.3f}, 업그레이드: {game_state[10]:.3f}, 라바: {game_state[11]:.3f}")
-                        self.logger.info(f"  맵 장악: {game_state[12]:.3f}, 아군 HP: {game_state[13]:.3f}, 적군 HP: {game_state[14]:.3f}")
+                        self.logger.info(
+                            f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
+                        )
+                        self.logger.info(
+                            f"  서플라이: {game_state[2]:.3f}/{game_state[3]:.3f}"
+                        )
+                        self.logger.info(
+                            f"  일꾼: {game_state[4]:.3f}, 유닛: {game_state[5]:.3f}, 적 유닛: {game_state[6]:.3f}"
+                        )
+                        self.logger.info(
+                            f"  기지: {game_state[7]:.3f}, 시간: {game_state[8]:.3f}"
+                        )
+                        self.logger.info(
+                            f"  적 기지: {game_state[9]:.3f}, 업그레이드: {game_state[10]:.3f}, 라바: {game_state[11]:.3f}"
+                        )
+                        self.logger.info(
+                            f"  맵 장악: {game_state[12]:.3f}, 아군 HP: {game_state[13]:.3f}, 적군 HP: {game_state[14]:.3f}"
+                        )
 
                     # ★★★ CRITICAL: RLAgent에게 행동 결정 요청 (최우선) ★★★
                     # 학습 모드 = train_mode, 추론 모드 = not train_mode
-                    training = getattr(self.bot, 'train_mode', True)
-                    action_idx, action_label, prob = self.bot.rl_agent.get_action(game_state, training=training)
+                    training = getattr(self.bot, "train_mode", True)
+                    action_idx, action_label, prob = self.bot.rl_agent.get_action(
+                        game_state, training=training
+                    )
 
                     # ★ SHADOW MODE: Dynamic Rule (5-minute priority) ★
                     # 1. 5분 이전: AggressiveStrategy 우선 (RL은 Shadow Mode)
                     # 2. 5분 이후: RLAgent가 지휘 (단, Emergency 모드는 예외)
-                    
+
                     is_shadow_mode = False
                     reason = ""
-                    
+
                     # 1. 시간 체크 (5분)
                     if self.bot.time < 300.0:
                         is_shadow_mode = True
                         reason = "Early Game (< 5min)"
-                        
+
                     # 2. Emergency 모드 체크
-                    if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
-                         from strategy_manager import StrategyMode
-                         if self.bot.strategy_manager.current_mode == StrategyMode.EMERGENCY:
-                             is_shadow_mode = True
-                             reason = "Emergency Mode"
+                    if (
+                        hasattr(self.bot, "strategy_manager")
+                        and self.bot.strategy_manager
+                    ):
+                        from strategy_manager import StrategyMode
+
+                        if (
+                            self.bot.strategy_manager.current_mode
+                            == StrategyMode.EMERGENCY
+                        ):
+                            is_shadow_mode = True
+                            reason = "Emergency Mode"
 
                     # 3. 상태 오버라이드 (Shadow Mode일 때만)
                     override_strategy = None
                     rl_decision_used = False
-                    
+
                     if is_shadow_mode:
                         if iteration % 220 == 0:
-                            self.logger.info(f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Ignored due to {reason})")
+                            self.logger.info(
+                                f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Ignored due to {reason})"
+                            )
                     else:
                         # ★ RL 결정 적용 ★
                         override_strategy = action_label
@@ -2399,59 +2862,78 @@ class BotStepIntegrator:
                         raise
                     else:
                         error_handler.error_counts["RLAgent"] += 1
-                        if error_handler.error_counts["RLAgent"] <= error_handler.max_error_logs:
+                        if (
+                            error_handler.error_counts["RLAgent"]
+                            <= error_handler.max_error_logs
+                        ):
                             self.logger.error(f"[ERROR] RLAgent error: {e}")
 
             # ★★★ HierarchicalRL 실행 (RL Override 강제 적용) ★★★
             # 이제 순수하게 전략적 결정만 반환함
-            result = self.bot.hierarchical_rl.step(self.bot, override_strategy=override_strategy)
+            result = self.bot.hierarchical_rl.step(
+                self.bot, override_strategy=override_strategy
+            )
 
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
-                
+
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
                     # StrategyMode Enum 변환 시도
                     from strategy_manager import StrategyMode
+
                     try:
                         # 문자열(예: "ALL_IN")을 Enum으로 변환
                         mode_enum = StrategyMode[new_mode]
-                        
+
                         # ★ CONFLICT RESOLUTION: Shadow Mode일 때는 StrategyManager를 덮어쓰지 않음 ★
                         if not is_shadow_mode:
                             # 모드가 변경될 때만 로그 출력 및 적용
                             if self.bot.strategy_manager.current_mode != mode_enum:
                                 self.bot.strategy_manager.current_mode = mode_enum
                                 if iteration % 100 == 0:
-                                    self.logger.info(f"[COMMANDER] [*] 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})")
+                                    self.logger.info(
+                                        f"[COMMANDER] [*] 전략 변경: {new_mode} (Auth: {result.get('author', 'Unknown')})"
+                                    )
                         else:
                             # Shadow Mode: 단순히 Commander의 의견을 로그로만 남김 (디버깅용)
                             if self.bot.strategy_manager.current_mode != mode_enum:
                                 if iteration % 220 == 0:
-                                     self.logger.info(f"[SHADOW_CONFLICT] Manager: {self.bot.strategy_manager.current_mode.name} vs Commander: {new_mode}")
-                                     
+                                    self.logger.info(
+                                        f"[SHADOW_CONFLICT] Manager: {self.bot.strategy_manager.current_mode.name} vs Commander: {new_mode}"
+                                    )
+
                     except KeyError:
-                        pass # 유효하지 않은 모드 문자열이면 무시
-                
+                        pass  # 유효하지 않은 모드 문자열이면 무시
+
                 if not is_shadow_mode:
                     self.bot._current_strategy = new_mode
 
                 # ★ 결정 로깅 (10초마다) ★
                 if iteration % 220 == 0:  # 10초마다
                     if rl_decision_used:
-                        self.logger.info(f"[STRATEGY] [*][*][*] RLAgent 결정 적용: {new_mode} [*][*][*]")
+                        self.logger.info(
+                            f"[STRATEGY] [*][*][*] RLAgent 결정 적용: {new_mode} [*][*][*]"
+                        )
                     elif not is_shadow_mode:
-                        self.logger.info(f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)")
+                        self.logger.info(
+                            f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)"
+                        )
                     else:
                         self.logger.info(f"[STRATEGY] 현행 유지 (Shadow Mode)")
 
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
-                if hasattr(self.bot, "rl_agent") and self.bot.rl_agent and not rl_decision_used:
+                if (
+                    hasattr(self.bot, "rl_agent")
+                    and self.bot.rl_agent
+                    and not rl_decision_used
+                ):
                     if iteration % 220 == 0:
-                        self.logger.warning(f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]")
-                    
+                        self.logger.warning(
+                            f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
+                        )
+
         except Exception as e:
             success = False
             if iteration % 50 == 0:
@@ -2461,7 +2943,10 @@ class BotStepIntegrator:
 
     async def _safe_transformer_step(self, iteration: int) -> None:
         """트랜스포머 의사결정 모델 실행"""
-        if not hasattr(self.bot, "transformer_model") or self.bot.transformer_model is None:
+        if (
+            not hasattr(self.bot, "transformer_model")
+            or self.bot.transformer_model is None
+        ):
             return
 
         start_time = self._logic_tracker.start_logic("Transformer")
@@ -2518,7 +3003,9 @@ class BotStepIntegrator:
 
             return sequence
         except (AttributeError, TypeError, ValueError, KeyError) as e:
-            self.logger.warning(f"[BotStepIntegrator] State observation suppressed: {e}")
+            self.logger.warning(
+                f"[BotStepIntegrator] State observation suppressed: {e}"
+            )
             return []
 
     def _is_defense_mode(self) -> bool:
@@ -2526,14 +3013,24 @@ class BotStepIntegrator:
         # Strategy Manager 확인
         if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             from strategy_manager import StrategyMode
-            if self.bot.strategy_manager.current_mode in [StrategyMode.EMERGENCY, StrategyMode.DEFENSIVE]:
+
+            if self.bot.strategy_manager.current_mode in [
+                StrategyMode.EMERGENCY,
+                StrategyMode.DEFENSIVE,
+            ]:
                 return True
 
         # Intel Manager 확인
         if hasattr(self.bot, "intel") and self.bot.intel:
-            if hasattr(self.bot.intel, "is_major_attack") and self.bot.intel.is_major_attack():
+            if (
+                hasattr(self.bot.intel, "is_major_attack")
+                and self.bot.intel.is_major_attack()
+            ):
                 return True
-            if hasattr(self.bot.intel, "is_under_attack") and self.bot.intel.is_under_attack():
+            if (
+                hasattr(self.bot.intel, "is_under_attack")
+                and self.bot.intel.is_under_attack()
+            ):
                 return True
 
         return False
@@ -2591,21 +3088,33 @@ class BotStepIntegrator:
 
                     # 스파인 크롤러 현재 수 확인
                     spines = self.bot.structures(UnitTypeId.SPINECRAWLER)
-                    spine_count = spines.amount if hasattr(spines, 'amount') else 0
+                    spine_count = spines.amount if hasattr(spines, "amount") else 0
                     pending = self.bot.already_pending(UnitTypeId.SPINECRAWLER)
 
                     # 스포닝 풀 필요
                     pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
-                    if pools.exists and spine_count + pending < max_spines and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
+                    if (
+                        pools.exists
+                        and spine_count + pending < max_spines
+                        and self.bot.can_afford(UnitTypeId.SPINECRAWLER)
+                    ):
                         if self.bot.townhalls.exists:
                             main_base = self.bot.townhalls.first
-                            defense_pos = main_base.position.towards(self.bot.game_info.map_center, 7)
-                            await self.bot.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
+                            defense_pos = main_base.position.towards(
+                                self.bot.game_info.map_center, 7
+                            )
+                            await self.bot.build(
+                                UnitTypeId.SPINECRAWLER, near=defense_pos
+                            )
 
                             if last_stand_mode:
-                                self.logger.info(f"[LAST STAND] [{int(game_time)}s] [*] 긴급 스파인 크롤러 건설! ({spine_count + pending + 1}/{max_spines}) [*]")
+                                self.logger.info(
+                                    f"[LAST STAND] [{int(game_time)}s] [*] 긴급 스파인 크롤러 건설! ({spine_count + pending + 1}/{max_spines}) [*]"
+                                )
                             else:
-                                self.logger.error(f"[EMERGENCY] [{int(game_time)}s] Building emergency Spine Crawler ({spine_count + pending + 1}/{max_spines})")
+                                self.logger.error(
+                                    f"[EMERGENCY] [{int(game_time)}s] Building emergency Spine Crawler ({spine_count + pending + 1}/{max_spines})"
+                                )
 
                             if hasattr(strategy, "emergency_spine_requested"):
                                 strategy.emergency_spine_requested = False
@@ -2616,19 +3125,30 @@ class BotStepIntegrator:
                     from sc2.ids.unit_typeid import UnitTypeId
 
                     spores = self.bot.structures(UnitTypeId.SPORECRAWLER)
-                    spore_count = spores.amount if hasattr(spores, 'amount') else 0
+                    spore_count = spores.amount if hasattr(spores, "amount") else 0
                     pending = self.bot.already_pending(UnitTypeId.SPORECRAWLER)
 
                     pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
-                    if pools.exists and spore_count + pending < 2 and self.bot.can_afford(UnitTypeId.SPORECRAWLER):
+                    if (
+                        pools.exists
+                        and spore_count + pending < 2
+                        and self.bot.can_afford(UnitTypeId.SPORECRAWLER)
+                    ):
                         if self.bot.townhalls.exists:
                             main_base = self.bot.townhalls.first
-                            await self.bot.build(UnitTypeId.SPORECRAWLER, near=main_base.position)
-                            self.logger.error(f"[EMERGENCY] [{int(game_time)}s] Building emergency Spore Crawler!")
+                            await self.bot.build(
+                                UnitTypeId.SPORECRAWLER, near=main_base.position
+                            )
+                            self.logger.error(
+                                f"[EMERGENCY] [{int(game_time)}s] Building emergency Spore Crawler!"
+                            )
                             strategy.emergency_spore_requested = False
 
             # === 공중 위협 대응: 히드라리스크 굴 건설 ===
-            if hasattr(strategy, "is_air_threat_detected") and strategy.is_air_threat_detected():
+            if (
+                hasattr(strategy, "is_air_threat_detected")
+                and strategy.is_air_threat_detected()
+            ):
                 await self._build_anti_air_tech(iteration, game_time)
 
         except Exception as e:
@@ -2665,9 +3185,13 @@ class BotStepIntegrator:
             for th in self.bot.townhalls:
                 # 캐싱된 spore 구조물에서 가까운 것만 필터링
                 nearby_spores = all_spores.closer_than(15, th)
-                spore_count = nearby_spores.amount if hasattr(nearby_spores, 'amount') else 0
+                spore_count = (
+                    nearby_spores.amount if hasattr(nearby_spores, "amount") else 0
+                )
 
-                if spore_count + pending_spores < spore_target and self.bot.can_afford(UnitTypeId.SPORECRAWLER):
+                if spore_count + pending_spores < spore_target and self.bot.can_afford(
+                    UnitTypeId.SPORECRAWLER
+                ):
                     # 스포닝 풀 확인 (캐싱된 결과 사용)
                     if pools.exists:
                         # 미네랄 라인 근처에 배치 (일꾼 보호)
@@ -2679,7 +3203,9 @@ class BotStepIntegrator:
                             defense_pos = th.position
 
                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=defense_pos)
-                        self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*] Building Spore Crawler (threat level: {air_threat_level}) [*]")
+                        self.logger.info(
+                            f"[ANTI-AIR] [{int(game_time)}s] [*] Building Spore Crawler (threat level: {air_threat_level}) [*]"
+                        )
                         return
 
             # === 2. 레어 진화 확인 (히드라 굴 전제 조건) ===
@@ -2692,12 +3218,18 @@ class BotStepIntegrator:
                 # 해처리에서 레어 진화 시작
                 hatcheries = self.bot.structures(UnitTypeId.HATCHERY).ready
                 pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
-                if hatcheries.exists and pools.exists and self.bot.can_afford(UnitTypeId.LAIR):
+                if (
+                    hatcheries.exists
+                    and pools.exists
+                    and self.bot.can_afford(UnitTypeId.LAIR)
+                ):
                     # idle 해처리 찾기
                     for hatch in hatcheries:
                         if hasattr(hatch, "is_idle") and hatch.is_idle:
                             self.bot.do(hatch(UnitTypeId.LAIR))
-                            self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*] Upgrading to Lair for Hydralisk Den [*]")
+                            self.logger.info(
+                                f"[ANTI-AIR] [{int(game_time)}s] [*] Upgrading to Lair for Hydralisk Den [*]"
+                            )
                             return
 
             # === 3. 히드라리스크 굴 건설 ===
@@ -2709,18 +3241,27 @@ class BotStepIntegrator:
                     if self.bot.townhalls.exists:
                         # 점막 체크 헬퍼 사용
                         if self.placement_helper:
-                            success = await self.placement_helper.build_structure_safely(
-                                UnitTypeId.HYDRALISKDEN,
-                                self.bot.townhalls.first.position,
-                                max_distance=15.0
+                            success = (
+                                await self.placement_helper.build_structure_safely(
+                                    UnitTypeId.HYDRALISKDEN,
+                                    self.bot.townhalls.first.position,
+                                    max_distance=15.0,
+                                )
                             )
                             if success:
-                                self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*][*] Building Hydralisk Den for anti-air! [*][*]")
+                                self.logger.info(
+                                    f"[ANTI-AIR] [{int(game_time)}s] [*][*] Building Hydralisk Den for anti-air! [*][*]"
+                                )
                                 return
                         else:
                             # 폴백: 기존 방식
-                            await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first.position)
-                            self.logger.info(f"[ANTI-AIR] [{int(game_time)}s] [*][*] Building Hydralisk Den for anti-air! [*][*]")
+                            await self.bot.build(
+                                UnitTypeId.HYDRALISKDEN,
+                                near=self.bot.townhalls.first.position,
+                            )
+                            self.logger.info(
+                                f"[ANTI-AIR] [{int(game_time)}s] [*][*] Building Hydralisk Den for anti-air! [*][*]"
+                            )
                             return
 
             # === 4. 히드라 우선 생산 플래그 설정 ===
@@ -2755,7 +3296,14 @@ class BotStepIntegrator:
         air_count = 0
         high_threat_air_count = 0
 
-        high_threat_air = {"CARRIER", "TEMPEST", "MOTHERSHIP", "BATTLECRUISER", "BROODLORD", "VOIDRAY"}
+        high_threat_air = {
+            "CARRIER",
+            "TEMPEST",
+            "MOTHERSHIP",
+            "BATTLECRUISER",
+            "BROODLORD",
+            "VOIDRAY",
+        }
 
         for enemy in self.bot.enemy_units:
             try:
@@ -2765,7 +3313,9 @@ class BotStepIntegrator:
                     if enemy_type in high_threat_air:
                         high_threat_air_count += 1
             except (AttributeError, TypeError) as e:
-                self.logger.warning(f"[BotStepIntegrator] Enemy unit attribute check suppressed: {e}")
+                self.logger.warning(
+                    f"[BotStepIntegrator] Enemy unit attribute check suppressed: {e}"
+                )
                 continue
 
         # 위협 레벨 결정
@@ -2797,7 +3347,9 @@ class BotStepIntegrator:
                 near=main_base.position.towards(map_center, 5),
             )
         except (AttributeError, TypeError, ValueError) as e:
-            self.logger.warning(f"[BotStepIntegrator] Building placement suppressed: {e}")
+            self.logger.warning(
+                f"[BotStepIntegrator] Building placement suppressed: {e}"
+            )
             return False
 
     @error_handler.safe_coroutine(log_key="TrainingLogic", default_return=None)
@@ -2808,9 +3360,7 @@ class BotStepIntegrator:
 
         # 보상 시스템 계산
         if hasattr(self.bot, "_reward_system"):
-            step_reward = self.bot._reward_system.calculate_step_reward(
-                self.bot
-            )
+            step_reward = self.bot._reward_system.calculate_step_reward(self.bot)
 
             # RL 에이전트 업데이트
             if hasattr(self.bot, "rl_agent") and self.bot.rl_agent:
@@ -2819,18 +3369,29 @@ class BotStepIntegrator:
                 # ★ 중간 보상: 기지/군대/보급차단 상태 기반 보상 ★
                 if iteration % 44 == 0:  # 2초마다
                     try:
-                        base_count = self.bot.townhalls.ready.amount if self.bot.townhalls else 0
-                        army_supply = sum(getattr(u, "supply_cost", 1) for u in self.bot.units
-                                         if not u.is_structure and u.type_id != UnitTypeId.DRONE
-                                         and u.type_id != UnitTypeId.OVERLORD and u.type_id != UnitTypeId.LARVA)
-                        supply_blocked = self.bot.supply_left <= 0 and self.bot.supply_cap < 200
+                        base_count = (
+                            self.bot.townhalls.ready.amount if self.bot.townhalls else 0
+                        )
+                        army_supply = sum(
+                            getattr(u, "supply_cost", 1)
+                            for u in self.bot.units
+                            if not u.is_structure
+                            and u.type_id != UnitTypeId.DRONE
+                            and u.type_id != UnitTypeId.OVERLORD
+                            and u.type_id != UnitTypeId.LARVA
+                        )
+                        supply_blocked = (
+                            self.bot.supply_left <= 0 and self.bot.supply_cap < 200
+                        )
                         self.bot.rl_agent.calculate_intermediate_rewards(
                             base_count=base_count,
                             army_supply=army_supply,
-                            supply_blocked=supply_blocked
+                            supply_blocked=supply_blocked,
                         )
                     except Exception as e:
-                        self.logger.warning(f"[BotStepIntegrator] RL intermediate rewards suppressed: {e}")
+                        self.logger.warning(
+                            f"[BotStepIntegrator] RL intermediate rewards suppressed: {e}"
+                        )
 
             # 주기적으로 보상 로그 출력
             if iteration % 500 == 0:
@@ -2843,7 +3404,9 @@ class BotStepIntegrator:
                 try:
                     hot_reloader.check_and_reload()
                 except Exception as e:
-                    self.logger.warning(f"[BotStepIntegrator] Hot reloader suppressed: {e}")
+                    self.logger.warning(
+                        f"[BotStepIntegrator] Hot reloader suppressed: {e}"
+                    )
 
     async def on_step(self, iteration: int):
         """
@@ -2881,7 +3444,6 @@ class BotStepIntegrator:
                 if iteration % 6600 == 0:  # ~5 minutes at 22 FPS
                     profiler.print_report()
 
-
     async def _handle_chat_interaction(self):
         """
         상대방 채팅 메시지 처리
@@ -2894,21 +3456,31 @@ class BotStepIntegrator:
             # 내 메시지는 무시
             if chat.player_id == self.bot.player_id:
                 continue
-            
+
             message = chat.message.lower().strip()
-            
+
             # 항복/GG 메시지 패턴
-            surrender_patterns = ["gg", "good game", "surrender", "i quit", "gewonnen", "g.g"]
-            
+            surrender_patterns = [
+                "gg",
+                "good game",
+                "surrender",
+                "i quit",
+                "gewonnen",
+                "g.g",
+            ]
+
             if any(pattern in message for pattern in surrender_patterns):
                 # 이미 응답했는지 확인 (플래그 사용)
                 if not getattr(self.bot, "_gg_replied", False):
                     self.logger.info(f"[CHAT] Opponent surrendered: {chat.message}")
                     await self.bot.chat_send("gg wp")
                     self.bot._gg_replied = True
-                    
+
                     # 훈련 보상에 승리 보너스 추가 가능성 (여기서는 로깅만)
-                    self.logger.info("[CHAT] Detected opponent surrender! Victory imminent.")
+                    self.logger.info(
+                        "[CHAT] Detected opponent surrender! Victory imminent."
+                    )
+
 
 def create_on_step_implementation(bot):
     """
@@ -2920,4 +3492,3 @@ def create_on_step_implementation(bot):
             await integrator.on_step(iteration)
     """
     return BotStepIntegrator(bot)
-

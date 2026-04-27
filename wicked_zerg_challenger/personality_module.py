@@ -18,6 +18,7 @@ import random
 
 class PersonalityMode(Enum):
     """성격 모드"""
+
     POLITE = "polite"  # 공손함
     NEUTRAL = "neutral"  # 중립
     COCKY = "cocky"  # 도발적
@@ -26,6 +27,7 @@ class PersonalityMode(Enum):
 
 class GamePhase(Enum):
     """게임 단계"""
+
     OPENING = "opening"  # 0-5분
     EARLY = "early"  # 5-10분
     MID = "mid"  # 10-15분
@@ -40,8 +42,13 @@ class PersonalityModule:
     게임 상황에 맞는 채팅을 자동으로 보냅니다.
     """
 
-    def __init__(self, bot, mode: PersonalityMode = PersonalityMode.NEUTRAL,
-                 knowledge_manager=None, opponent_modeling=None):
+    def __init__(
+        self,
+        bot,
+        mode: PersonalityMode = PersonalityMode.NEUTRAL,
+        knowledge_manager=None,
+        opponent_modeling=None,
+    ):
         self.bot = bot
         self.logger = get_logger("Personality")
         self.mode = mode
@@ -92,7 +99,6 @@ class PersonalityModule:
                 ],
                 PersonalityMode.SILENT: [],
             },
-
             # 우위 시 도발
             "ahead": {
                 PersonalityMode.POLITE: [
@@ -110,7 +116,6 @@ class PersonalityModule:
                 ],
                 PersonalityMode.SILENT: [],
             },
-
             # 적 좋은 플레이
             "respect": {
                 PersonalityMode.POLITE: [
@@ -127,7 +132,6 @@ class PersonalityModule:
                 ],
                 PersonalityMode.SILENT: [],
             },
-
             # 승리
             "victory": {
                 PersonalityMode.POLITE: [
@@ -146,7 +150,6 @@ class PersonalityModule:
                 ],
                 PersonalityMode.SILENT: ["gg"],
             },
-
             # 패배
             "defeat": {
                 PersonalityMode.POLITE: [
@@ -163,7 +166,6 @@ class PersonalityModule:
                 ],
                 PersonalityMode.SILENT: ["gg"],
             },
-
             # 긴 게임
             "long_game": {
                 PersonalityMode.POLITE: [
@@ -218,14 +220,15 @@ class PersonalityModule:
             return None
 
         # Get stats
-        stats = self.opponent_modeling.get_opponent_stats(self.opponent_modeling.current_opponent_id)
+        stats = self.opponent_modeling.get_opponent_stats(
+            self.opponent_modeling.current_opponent_id
+        )
         if not stats or stats["games_played"] == 0:
             return "처음 뵙겠습니다. 잘 부탁드립니다. (gl hf)"
 
         games = stats["games_played"]
         win_rate = stats["win_rate"] * 100
-        style = stats["dominant_style"]
-        
+
         # Format message based on win rate
         if win_rate > 70:
             return f"또 오셨나요? 이번엔 좀 버티시길. (승률: {win_rate:.1f}%) gl hf."
@@ -315,7 +318,11 @@ class PersonalityModule:
         """우위 판단"""
         # 간단한 우위 판단 (서플라이 기반)
         our_supply = self.bot.supply_used
-        enemy_supply = self.bot.supply_used_by_enemy if hasattr(self.bot, "supply_used_by_enemy") else 0
+        enemy_supply = (
+            self.bot.supply_used_by_enemy
+            if hasattr(self.bot, "supply_used_by_enemy")
+            else 0
+        )
 
         # 인텔 정보 사용 (있으면)
         if hasattr(self.bot, "intel") and self.bot.intel:
@@ -343,5 +350,5 @@ class PersonalityModule:
             "mode": self.mode.value,
             "messages_sent": len(self.messages_sent),
             "taunt_count": self.taunt_count,
-            "recent_messages": self.messages_sent[-5:] if self.messages_sent else []
+            "recent_messages": self.messages_sent[-5:] if self.messages_sent else [],
         }

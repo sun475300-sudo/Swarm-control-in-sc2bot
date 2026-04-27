@@ -31,24 +31,55 @@ if str(project_root) not in sys.path:
 class ReplayBuildOrderLearner:
     """리플레이에서 빌드 오더를 학습하는 클래스"""
 
-    def __init__(self, replay_dir: Optional[str] = None, output_dir: Optional[str] = None):
+    def __init__(
+        self, replay_dir: Optional[str] = None, output_dir: Optional[str] = None
+    ):
         # 2026-01-25: Changed default to D:/replays as requested by user env
         self.replay_dir = Path(replay_dir) if replay_dir else Path("D:/replays")
         if not self.replay_dir.exists():
             self.replay_dir = project_root / "replays"
-        self.output_dir = Path(output_dir) if output_dir else script_dir / "learned_build_orders.json"
+        self.output_dir = (
+            Path(output_dir) if output_dir else script_dir / "learned_build_orders.json"
+        )
 
         # 저그 유닛/건물 목록
         self.zerg_units = {
-            "Drone", "Zergling", "Baneling", "Roach", "Ravager",
-            "Hydralisk", "Lurker", "Mutalisk", "Corruptor", "BroodLord",
-            "Infestor", "SwarmHost", "Ultralisk", "Viper", "Queen", "Overlord", "Overseer"
+            "Drone",
+            "Zergling",
+            "Baneling",
+            "Roach",
+            "Ravager",
+            "Hydralisk",
+            "Lurker",
+            "Mutalisk",
+            "Corruptor",
+            "BroodLord",
+            "Infestor",
+            "SwarmHost",
+            "Ultralisk",
+            "Viper",
+            "Queen",
+            "Overlord",
+            "Overseer",
         }
         self.zerg_buildings = {
-            "Hatchery", "Lair", "Hive", "SpawningPool", "BanelingNest",
-            "RoachWarren", "HydraliskDen", "LurkerDen", "Spire", "GreaterSpire",
-            "InfestationPit", "UltraliskCavern", "EvolutionChamber", "Extractor",
-            "SpineCrawler", "SporeCrawler", "NydusNetwork"
+            "Hatchery",
+            "Lair",
+            "Hive",
+            "SpawningPool",
+            "BanelingNest",
+            "RoachWarren",
+            "HydraliskDen",
+            "LurkerDen",
+            "Spire",
+            "GreaterSpire",
+            "InfestationPit",
+            "UltraliskCavern",
+            "EvolutionChamber",
+            "Extractor",
+            "SpineCrawler",
+            "SporeCrawler",
+            "NydusNetwork",
         }
 
         # 학습된 빌드 오더
@@ -56,7 +87,7 @@ class ReplayBuildOrderLearner:
             "vs_terran": [],
             "vs_protoss": [],
             "vs_zerg": [],
-            "general": []
+            "general": [],
         }
 
         # 빌드 오더 통계
@@ -64,7 +95,7 @@ class ReplayBuildOrderLearner:
             "total_replays": 0,
             "zerg_wins": 0,
             "avg_game_length": 0.0,
-            "common_openers": {}
+            "common_openers": {},
         }
 
     def scan_replays(self) -> List[Path]:
@@ -82,6 +113,7 @@ class ReplayBuildOrderLearner:
             # sc2reader 시도
             try:
                 import sc2reader
+
                 replay = sc2reader.load_replay(str(replay_path), load_level=4)
                 return self._extract_from_sc2reader(replay)
             except ImportError:
@@ -98,33 +130,41 @@ class ReplayBuildOrderLearner:
         """sc2reader로 상세 정보 추출"""
         data = {
             "map": replay.map_name,
-            "duration": replay.game_length.seconds if hasattr(replay, 'game_length') else 0,
+            "duration": (
+                replay.game_length.seconds if hasattr(replay, "game_length") else 0
+            ),
             "players": [],
             "build_orders": [],
-            "winner": None
+            "winner": None,
         }
 
         for player in replay.players:
             player_data = {
                 "name": player.name,
-                "race": str(player.play_race) if hasattr(player, 'play_race') else "Unknown",
-                "result": str(player.result) if hasattr(player, 'result') else "Unknown",
-                "apm": player.avg_apm if hasattr(player, 'avg_apm') else 0
+                "race": (
+                    str(player.play_race) if hasattr(player, "play_race") else "Unknown"
+                ),
+                "result": (
+                    str(player.result) if hasattr(player, "result") else "Unknown"
+                ),
+                "apm": player.avg_apm if hasattr(player, "avg_apm") else 0,
             }
             data["players"].append(player_data)
 
             # 저그 플레이어의 빌드 오더 추출
-            logger.debug(f"Player {player.name} Race: '{player_data['race']}'") # DEBUG
+            logger.debug(f"Player {player.name} Race: '{player_data['race']}'")  # DEBUG
             if "Zerg" in player_data["race"]:
                 build_order = self._extract_build_order(replay, player)
-                logger.debug(f"- Extracted {len(build_order)} actions") # DEBUG
+                logger.debug(f"- Extracted {len(build_order)} actions")  # DEBUG
                 if build_order:
-                    data["build_orders"].append({
-                        "player": player.name,
-                        "race": player_data["race"],
-                        "result": player_data["result"],
-                        "actions": build_order
-                    })
+                    data["build_orders"].append(
+                        {
+                            "player": player.name,
+                            "race": player_data["race"],
+                            "result": player_data["result"],
+                            "actions": build_order,
+                        }
+                    )
 
                     if "Win" in player_data["result"]:
                         data["winner"] = player.name
@@ -136,25 +176,36 @@ class ReplayBuildOrderLearner:
         build_order = []
 
         try:
-            logger.debug(f"Total events: {len(replay.events)}") # DEBUG
-            debug_count = 0
-            
+            logger.debug(f"Total events: {len(replay.events)}")  # DEBUG
+
             # 이벤트에서 유닛/건물 생산 추출
             for event in replay.events:
                 # Check unit owner directly (sc2reader 0.8.0+ compatibility)
-                if hasattr(event, 'unit') and event.unit and event.unit.owner:
-                     # Compare names to ensure correct player
-                     if event.unit.owner.name == player.name:
+                if hasattr(event, "unit") and event.unit and event.unit.owner:
+                    # Compare names to ensure correct player
+                    if event.unit.owner.name == player.name:
                         # 유닛 생성 이벤트
-                        if 'UnitBornEvent' in type(event).__name__ or 'UnitInitEvent' in type(event).__name__:
-                             unit_name = getattr(event.unit, 'name', '')
-                             if unit_name in self.zerg_units or unit_name in self.zerg_buildings:
-                                 build_order.append({
-                                     "time": event.second,
-                                     "action": "build" if unit_name in self.zerg_buildings else "train",
-                                     "unit": unit_name,
-                                     "supply": getattr(event, 'supply', 0)
-                                 })
+                        if (
+                            "UnitBornEvent" in type(event).__name__
+                            or "UnitInitEvent" in type(event).__name__
+                        ):
+                            unit_name = getattr(event.unit, "name", "")
+                            if (
+                                unit_name in self.zerg_units
+                                or unit_name in self.zerg_buildings
+                            ):
+                                build_order.append(
+                                    {
+                                        "time": event.second,
+                                        "action": (
+                                            "build"
+                                            if unit_name in self.zerg_buildings
+                                            else "train"
+                                        ),
+                                        "unit": unit_name,
+                                        "supply": getattr(event, "supply", 0),
+                                    }
+                                )
         except Exception as e:
             logger.error(f"Build order extraction error: {e}")
 
@@ -170,7 +221,7 @@ class ReplayBuildOrderLearner:
             "players": [],
             "build_orders": [],
             "file": replay_path.name,
-            "parsed_at": datetime.now().isoformat()
+            "parsed_at": datetime.now().isoformat(),
         }
 
     def learn_from_replays(self, max_replays: int = 100) -> Dict[str, Any]:
@@ -204,11 +255,13 @@ class ReplayBuildOrderLearner:
                 category = f"vs_{opponent_race.lower()}" if opponent_race else "general"
 
                 if category in self.learned_builds:
-                    self.learned_builds[category].append({
-                        "actions": build["actions"],
-                        "map": data.get("map", "Unknown"),
-                        "duration": data.get("duration", 0)
-                    })
+                    self.learned_builds[category].append(
+                        {
+                            "actions": build["actions"],
+                            "map": data.get("map", "Unknown"),
+                            "duration": data.get("duration", 0),
+                        }
+                    )
 
     def _get_opponent_race(self, data: Dict, player_name: str) -> str:
         """상대 종족 추출"""
@@ -224,7 +277,7 @@ class ReplayBuildOrderLearner:
             "unit_priorities": self._calculate_unit_priorities(),
             "expansion_timings": self._calculate_expansion_timings(),
             "stats": self.build_stats,
-            "generated_at": datetime.now().isoformat()
+            "generated_at": datetime.now().isoformat(),
         }
         return parameters
 
@@ -242,7 +295,9 @@ class ReplayBuildOrderLearner:
                             timings[unit] = []
                         timings[unit].append(time)
 
-        return {unit: sum(times) / len(times) for unit, times in timings.items() if times}
+        return {
+            unit: sum(times) / len(times) for unit, times in timings.items() if times
+        }
 
     def _calculate_unit_priorities(self) -> Dict[str, float]:
         """유닛 우선순위 계산"""
@@ -294,7 +349,7 @@ class ReplayBuildOrderLearner:
                 "Zergling": 110.0,
                 "RoachWarren": 180.0,
                 "Lair": 270.0,
-                "HydraliskDen": 330.0
+                "HydraliskDen": 330.0,
             },
             "unit_priorities": {
                 "Drone": 0.3,
@@ -305,19 +360,15 @@ class ReplayBuildOrderLearner:
                 "Ravager": 0.05,
                 "Baneling": 0.05,
                 "Mutalisk": 0.03,
-                "Lurker": 0.02
+                "Lurker": 0.02,
             },
             "expansion_timings": {
                 "second_base": 90.0,
                 "third_base": 240.0,
-                "fourth_base": 420.0
+                "fourth_base": 420.0,
             },
-            "stats": {
-                "total_replays": 0,
-                "zerg_wins": 0,
-                "source": "default"
-            },
-            "generated_at": datetime.now().isoformat()
+            "stats": {"total_replays": 0, "zerg_wins": 0, "source": "default"},
+            "generated_at": datetime.now().isoformat(),
         }
 
     def save_learned_data(self, data: Dict[str, Any]) -> bool:
@@ -326,7 +377,7 @@ class ReplayBuildOrderLearner:
             output_path = Path(self.output_dir)
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved learned data to {output_path}")
@@ -349,10 +400,18 @@ class ReplayBuildOrderLearner:
 
         # 결과 출력
         logger.info("\n[RESULTS]")
-        logger.info(f"  - Total replays processed: {learned_params['stats'].get('total_replays', 0)}")
-        logger.info(f"  - Zerg wins analyzed: {learned_params['stats'].get('zerg_wins', 0)}")
-        logger.info(f"  - Build timings learned: {len(learned_params.get('build_order_timings', {}))}")
-        logger.info(f"  - Unit priorities: {len(learned_params.get('unit_priorities', {}))}")
+        logger.info(
+            f"  - Total replays processed: {learned_params['stats'].get('total_replays', 0)}"
+        )
+        logger.info(
+            f"  - Zerg wins analyzed: {learned_params['stats'].get('zerg_wins', 0)}"
+        )
+        logger.info(
+            f"  - Build timings learned: {len(learned_params.get('build_order_timings', {}))}"
+        )
+        logger.info(
+            f"  - Unit priorities: {len(learned_params.get('unit_priorities', {}))}"
+        )
         logger.info("=" * 60)
 
         return learned_params

@@ -18,26 +18,31 @@ logger = get_logger("ErrorHandler")
 
 class SC2BotError(Exception):
     """Base exception for SC2 bot errors"""
+
     pass
 
 
 class UnitCommandError(SC2BotError):
     """Exception for unit command failures"""
+
     pass
 
 
 class UpgradeError(SC2BotError):
     """Exception for upgrade-related errors"""
+
     pass
 
 
 class BuildingError(SC2BotError):
     """Exception for building-related errors"""
+
     pass
 
 
 class ResourceError(SC2BotError):
     """Exception for resource-related errors"""
+
     pass
 
 
@@ -56,6 +61,7 @@ def safe_execute(default_return=None, log_errors=True):
         def my_function():
             # ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -114,40 +120,45 @@ def retry_on_failure(max_retries=3, delay=0.1):
         def unstable_function():
             # ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             import asyncio
-            last_exception = None
 
             for attempt in range(max_retries):
                 try:
                     return await func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
-                    last_exception = e
                     if attempt < max_retries - 1:
-                        logger.debug(f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying...")
+                        logger.debug(
+                            f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
+                        )
                         await asyncio.sleep(delay)
                     else:
-                        logger.warning(f"{func.__name__} failed after {max_retries} attempts: {e}")
+                        logger.warning(
+                            f"{func.__name__} failed after {max_retries} attempts: {e}"
+                        )
 
             return None
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             import time
-            last_exception = None
 
             for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
-                    last_exception = e
                     if attempt < max_retries - 1:
-                        logger.debug(f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying...")
+                        logger.debug(
+                            f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
+                        )
                         time.sleep(delay)
                     else:
-                        logger.warning(f"{func.__name__} failed after {max_retries} attempts: {e}")
+                        logger.warning(
+                            f"{func.__name__} failed after {max_retries} attempts: {e}"
+                        )
 
             return None
 
@@ -197,8 +208,8 @@ def validate_position(position) -> bool:
 
     try:
         # x, y 좌표 확인
-        _ = position.x if hasattr(position, 'x') else position[0]
-        _ = position.y if hasattr(position, 'y') else position[1]
+        _ = position.x if hasattr(position, "x") else position[0]
+        _ = position.y if hasattr(position, "y") else position[1]
         return True
     except (AttributeError, KeyError, IndexError, TypeError):
         return False

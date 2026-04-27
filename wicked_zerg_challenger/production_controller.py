@@ -53,8 +53,13 @@ class ProductionController:
         self.production_failures: int = 0
         self.max_produced_per_frame = 0  # 프레임당 최대 생산 기록
 
-    def request_unit(self, unit_type: Any, count: int = 1,
-                     requester: str = "External", priority: int = 2) -> bool:
+    def request_unit(
+        self,
+        unit_type: Any,
+        count: int = 1,
+        requester: str = "External",
+        priority: int = 2,
+    ) -> bool:
         """
         Public method for external systems to request unit production.
 
@@ -157,7 +162,9 @@ class ProductionController:
                 # 생산 실패 (자원 부족 등)
                 # 요청을 다시 큐에 넣음
                 priority = self.blackboard.get_authority_priority(requester)
-                self.blackboard.request_production(unit_type, count, requester, priority)
+                self.blackboard.request_production(
+                    unit_type, count, requester, priority
+                )
                 break  # 자원 부족 시 더 이상 처리 안 함
 
         # ★ 대량 생산 로깅 (Smart Remax 추적) ★
@@ -224,7 +231,7 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception as e:
+            except Exception:
                 self.production_failures += 1
                 break
 
@@ -245,16 +252,15 @@ class ProductionController:
             return
 
         # ★ Phase 23: 서플라이 블록 완전 제거 — 선행 생산 ★
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
         if supply_used < 30:
-            buffer = 4   # 초반: 4 여유
+            buffer = 4  # 초반: 4 여유
         elif supply_used < 80:
-            buffer = 6   # 중반: 6 여유
+            buffer = 6  # 중반: 6 여유
         elif supply_used < 150:
-            buffer = 8   # 후반: 8 여유
+            buffer = 8  # 후반: 8 여유
         else:
             buffer = 10  # 200 근접: 10 여유
 
@@ -283,7 +289,7 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== ★ Phase 13: 비율 기반 군대 자동 생산 ★ ==========
@@ -298,7 +304,9 @@ class ProductionController:
         # ★ Phase 25: Blackboard 기반 전환 (빌드오더 완료 전이면 대기)
         bo_complete = True  # 기본값: 빌드오더 없으면 항상 생산
         if self.blackboard:
-            bo_complete = getattr(self.blackboard, "build_order_complete", self.bot.time >= 300)
+            bo_complete = getattr(
+                self.blackboard, "build_order_complete", self.bot.time >= 300
+            )
         if not bo_complete:
             return
 
@@ -345,11 +353,11 @@ class ProductionController:
         tech_requirements = {
             UnitTypeId.ROACH: UnitTypeId.ROACHWARREN,
             UnitTypeId.HYDRALISK: UnitTypeId.HYDRALISKDEN,
-            UnitTypeId.MUTALISK: UnitTypeId.SPIRE,       # GREATERSPIRE도 허용 (아래 별도 체크)
-            UnitTypeId.CORRUPTOR: UnitTypeId.SPIRE,      # GREATERSPIRE도 허용 (아래 별도 체크)
+            UnitTypeId.MUTALISK: UnitTypeId.SPIRE,  # GREATERSPIRE도 허용 (아래 별도 체크)
+            UnitTypeId.CORRUPTOR: UnitTypeId.SPIRE,  # GREATERSPIRE도 허용 (아래 별도 체크)
             UnitTypeId.INFESTOR: UnitTypeId.INFESTATIONPIT,
             UnitTypeId.ULTRALISK: UnitTypeId.ULTRALISKCAVERN,
-            UnitTypeId.VIPER: UnitTypeId.HIVE,           # ★ Phase 37: Viper requires Hive
+            UnitTypeId.VIPER: UnitTypeId.HIVE,  # ★ Phase 37: Viper requires Hive
         }
 
         # 현재 유닛 수 계산
@@ -368,7 +376,6 @@ class ProductionController:
 
         # 가장 부족한 유닛 찾기
         max_deficit = -1.0
-        best_unit = None
         best_uid = None
 
         for name, target_ratio in ratios.items():
@@ -386,17 +393,23 @@ class ProductionController:
                 has_building = self.bot.structures(req_building).ready.exists
                 # ★ Phase 37: SPIRE 요구 유닛은 GREATERSPIRE도 허용 (변이 후 생산 차단 수정)
                 if not has_building and req_building == UnitTypeId.SPIRE:
-                    has_building = self.bot.structures(UnitTypeId.GREATERSPIRE).ready.exists
+                    has_building = self.bot.structures(
+                        UnitTypeId.GREATERSPIRE
+                    ).ready.exists
                 if not has_building:
                     continue
 
             # 바네링/럴커는 변이 유닛이라 라바에서 직접 생산 불가
-            if uid in (UnitTypeId.BANELING, UnitTypeId.LURKERMP, UnitTypeId.BROODLORD, UnitTypeId.RAVAGER):
+            if uid in (
+                UnitTypeId.BANELING,
+                UnitTypeId.LURKERMP,
+                UnitTypeId.BROODLORD,
+                UnitTypeId.RAVAGER,
+            ):
                 continue  # 이들은 별도 변이 로직이 필요
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
 
         # 가장 부족한 유닛 생산
@@ -436,7 +449,10 @@ class ProductionController:
 
             spam_count = min(larvae.amount, 5)  # 한 번에 최대 5라바 사용
             for i in range(spam_count):
-                if self.bot.can_afford(UnitTypeId.ZERGLING) and self.bot.supply_left >= 1:
+                if (
+                    self.bot.can_afford(UnitTypeId.ZERGLING)
+                    and self.bot.supply_left >= 1
+                ):
                     try:
                         larva = larvae[i] if i < larvae.amount else None
                         if larva:
@@ -447,7 +463,11 @@ class ProductionController:
         # 미네랄 800+ & 가스 200+ : 고비용 유닛 (울트라리스크 우선)
         elif minerals >= 800 and getattr(self.bot, "vespene", 0) >= 200:
             cavern = self.bot.structures(UnitTypeId.ULTRALISKCAVERN).ready
-            if cavern.exists and self.bot.can_afford(UnitTypeId.ULTRALISK) and self.bot.supply_left >= 6:
+            if (
+                cavern.exists
+                and self.bot.can_afford(UnitTypeId.ULTRALISK)
+                and self.bot.supply_left >= 6
+            ):
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(UnitTypeId.ULTRALISK))
@@ -459,8 +479,14 @@ class ProductionController:
     def get_production_stats(self) -> dict:
         """생산 통계 반환"""
         return {
-            "authority_mode": self.blackboard.authority_mode.value if self.blackboard else "unknown",
+            "authority_mode": (
+                self.blackboard.authority_mode.value if self.blackboard else "unknown"
+            ),
             "units_produced": {str(k): v for k, v in self.units_produced.items()},
             "production_failures": self.production_failures,
-            "queue_size": sum(len(q) for q in self.blackboard.production_queue.values()) if self.blackboard else 0,
+            "queue_size": (
+                sum(len(q) for q in self.blackboard.production_queue.values())
+                if self.blackboard
+                else 0
+            ),
         }

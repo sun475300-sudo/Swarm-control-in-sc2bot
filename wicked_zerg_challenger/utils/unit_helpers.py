@@ -18,8 +18,34 @@ try:
     from sc2.position import Point2
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class Units(list):  # type: ignore[no-redef]
+        """Lightweight fallback used when sc2 isn't installed.
+
+        Mirrors only the constructor signature ``Units(iterable, bot)`` plus
+        the ``filter``/``closer_than`` methods that this module touches.
+        """
+
+        def __init__(self, items=None, _bot=None):
+            super().__init__(items or [])
+
+        def filter(self, predicate):  # noqa: A003 - mirror sc2 API
+            return Units([u for u in self if predicate(u)], None)
+
+        def closer_than(self, range_, _ref):
+            try:
+                return Units(
+                    [
+                        u
+                        for u in self
+                        if getattr(u, "distance_to", lambda _ref: 0)(_ref) < range_
+                    ],
+                    None,
+                )
+            except Exception:
+                return Units([], None)
+
 
 logger = get_logger("UnitHelpers")
 
@@ -97,7 +123,9 @@ def get_shield_ratio(unit: Unit) -> float:
         return 0.0
 
 
-def filter_workers_by_task(workers: Units, task_filter: Callable[[Unit], bool]) -> Units:
+def filter_workers_by_task(
+    workers: Units, task_filter: Callable[[Unit], bool]
+) -> Units:
     """
     작업 조건에 따라 일꾼 필터링
 
@@ -207,7 +235,9 @@ def is_unit_attacking(unit: Unit) -> bool:
         # 폴백: order 체크
         if hasattr(unit, "orders") and unit.orders:
             attack_abilities = {"ATTACK", "ATTACKATTACK"}
-            return any(order.ability.button_name in attack_abilities for order in unit.orders)
+            return any(
+                order.ability.button_name in attack_abilities for order in unit.orders
+            )
         return False
     except (AttributeError, TypeError):
         return False

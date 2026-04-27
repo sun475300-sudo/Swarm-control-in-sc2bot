@@ -16,6 +16,7 @@ from utils.logger import get_logger
 
 class ThreatLevel:
     """위협 수준"""
+
     NONE = 0
     LOW = 1
     MEDIUM = 2
@@ -36,21 +37,27 @@ class AirThreatResponseTrainer:
 
         # 공중 유닛 분류
         self.LIGHT_AIR = {
-            UnitTypeId.MUTALISK, UnitTypeId.PHOENIX,
-            UnitTypeId.ORACLE, UnitTypeId.MEDIVAC
+            UnitTypeId.MUTALISK,
+            UnitTypeId.PHOENIX,
+            UnitTypeId.ORACLE,
+            UnitTypeId.MEDIVAC,
         }
 
         self.HEAVY_AIR = {
-            UnitTypeId.VOIDRAY, UnitTypeId.CARRIER,
-            UnitTypeId.BATTLECRUISER, UnitTypeId.TEMPEST,
-            UnitTypeId.BROODLORD
+            UnitTypeId.VOIDRAY,
+            UnitTypeId.CARRIER,
+            UnitTypeId.BATTLECRUISER,
+            UnitTypeId.TEMPEST,
+            UnitTypeId.BROODLORD,
         }
 
         # 대공 유닛
         self.OUR_ANTI_AIR = {
-            UnitTypeId.QUEEN, UnitTypeId.HYDRALISK,
-            UnitTypeId.CORRUPTOR, UnitTypeId.INFESTOR,
-            UnitTypeId.SPORECRAWLER
+            UnitTypeId.QUEEN,
+            UnitTypeId.HYDRALISK,
+            UnitTypeId.CORRUPTOR,
+            UnitTypeId.INFESTOR,
+            UnitTypeId.SPORECRAWLER,
         }
 
         # 위협 임계값
@@ -105,16 +112,11 @@ class AirThreatResponseTrainer:
             return ThreatLevel.NONE
 
         # 적 공중 유닛 집계
-        light_air = self.bot.enemy_units.filter(
-            lambda u: u.type_id in self.LIGHT_AIR
-        )
-        heavy_air = self.bot.enemy_units.filter(
-            lambda u: u.type_id in self.HEAVY_AIR
-        )
+        light_air = self.bot.enemy_units.filter(lambda u: u.type_id in self.LIGHT_AIR)
+        heavy_air = self.bot.enemy_units.filter(lambda u: u.type_id in self.HEAVY_AIR)
 
         light_count = light_air.amount
         heavy_count = heavy_air.amount
-        total_air = light_count + heavy_count
 
         # 위협 가중치 (중형 공중은 2배)
         threat_score = light_count + (heavy_count * 2)
@@ -140,22 +142,22 @@ class AirThreatResponseTrainer:
         """
         # 아군 병력 확인
         ground_army = self.bot.units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.ZERGLING, UnitTypeId.ROACH,
-                UnitTypeId.RAVAGER, UnitTypeId.ULTRALISK
+            lambda u: u.type_id
+            in {
+                UnitTypeId.ZERGLING,
+                UnitTypeId.ROACH,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.ULTRALISK,
             }
         )
 
-        anti_air = self.bot.units.filter(
-            lambda u: u.type_id in self.OUR_ANTI_AIR
-        )
+        anti_air = self.bot.units.filter(lambda u: u.type_id in self.OUR_ANTI_AIR)
 
         ground_count = ground_army.amount
         anti_air_count = anti_air.amount
 
         # 전략 1: 공중유닛 무시 (공격 집중)
-        if (threat_level <= ThreatLevel.LOW and
-            ground_count >= self.MIN_GROUND_ARMY):
+        if threat_level <= ThreatLevel.LOW and ground_count >= self.MIN_GROUND_ARMY:
 
             if self.current_strategy != "IGNORE_AIR":
                 self.current_strategy = "IGNORE_AIR"
@@ -197,9 +199,7 @@ class AirThreatResponseTrainer:
 
         # 위협이 높고 대공 유닛이 부족하면
         if threat_level >= ThreatLevel.HIGH:
-            anti_air = self.bot.units.filter(
-                lambda u: u.type_id in self.OUR_ANTI_AIR
-            )
+            anti_air = self.bot.units.filter(lambda u: u.type_id in self.OUR_ANTI_AIR)
 
             if anti_air.amount < 10:
                 # Unit Factory에 긴급 생산 요청
@@ -247,7 +247,7 @@ class AirThreatResponseTrainer:
             "threat_level": threat_level,
             "threats_detected": self.air_threats_detected,
             "counter_units": self.counter_units_produced,
-            "air_kills": self.air_units_killed
+            "air_kills": self.air_units_killed,
         }
 
     def _print_statistics(self, game_time: float):

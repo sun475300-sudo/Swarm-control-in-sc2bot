@@ -57,13 +57,16 @@ class EconomyManager:
         # ★ Config 연동 ★
         try:
             from game_config import config
+
             self.config = config
         except ImportError:
             self.config = None
 
         # ★ Phase 16: 매크로 해처리 임계값 하향 (라바 부족 시 더 빠르게 건설) ★
         if self.config:
-            self.macro_hatchery_mineral_threshold = 600  # ★ Phase 16: OVERFLOW→600 (더 빠른 매크로 해처리)
+            self.macro_hatchery_mineral_threshold = (
+                600  # ★ Phase 16: OVERFLOW→600 (더 빠른 매크로 해처리)
+            )
             self.macro_hatchery_larva_threshold = self.config.LARVA_CRITICAL
         else:
             self.macro_hatchery_mineral_threshold = 600
@@ -103,16 +106,20 @@ class EconomyManager:
         self.gas_boost_duration = 120  # 2분간 가스 부스트
 
         self.dynamic_gas_workers_enabled = True  # 생산 큐 기반 가스 일꾼 조정
-        self.gas_overflow_prevention_threshold = 800  # ★ IMPROVED: 1000→800 (가스 뱅킹 방지 강화)
+        self.gas_overflow_prevention_threshold = (
+            800  # ★ IMPROVED: 1000→800 (가스 뱅킹 방지 강화)
+        )
 
         self.last_gas_worker_adjustment = 0
-        self.gas_worker_adjustment_interval = 33  # ★ FIX: 110→33 (~1.5초마다 조정, 가스 뱅킹 빠른 대응) ★
+        self.gas_worker_adjustment_interval = (
+            33  # ★ FIX: 110→33 (~1.5초마다 조정, 가스 뱅킹 빠른 대응) ★
+        )
 
         # ★ Expansion Blocking (Phase 17) ★
         self.expansion_block_active = False
         self.expansion_block_worker_tag = None
         self.expansion_block_start_time = 50  # 50초에 출발
-        self.expansion_block_duration = 45    # 45초간 방해
+        self.expansion_block_duration = 45  # 45초간 방해
 
         # ★ Expansion Telemetry ★
         self.first_expansion_time = 0.0
@@ -146,17 +153,24 @@ class EconomyManager:
 
     def get_saturation_info(self) -> dict:
         """기지별 미네랄/가스 포화도 계산 및 Blackboard 게시"""
-        result = {"bases": [], "total_workers": 0, "ideal_workers": 0, "oversaturated": False}
+        result = {
+            "bases": [],
+            "total_workers": 0,
+            "ideal_workers": 0,
+            "oversaturated": False,
+        }
         if not hasattr(self.bot, "townhalls"):
             return result
 
         for th in self.bot.townhalls.ready:
             nearby_minerals = self.bot.mineral_field.closer_than(10, th)
-            mineral_patches = nearby_minerals.amount if hasattr(nearby_minerals, 'amount') else 0
+            mineral_patches = (
+                nearby_minerals.amount if hasattr(nearby_minerals, "amount") else 0
+            )
             ideal_mineral = mineral_patches * 2  # 패치당 2명
 
             nearby_gas = self.bot.gas_buildings.closer_than(10, th).ready
-            gas_count = nearby_gas.amount if hasattr(nearby_gas, 'amount') else 0
+            gas_count = nearby_gas.amount if hasattr(nearby_gas, "amount") else 0
             ideal_gas = gas_count * 3  # 가스당 3명
 
             actual_workers = self.bot.workers.closer_than(10, th).amount
@@ -176,7 +190,7 @@ class EconomyManager:
         result["oversaturated"] = result["total_workers"] > result["ideal_workers"] + 4
 
         # Blackboard에 게시
-        bb = getattr(self.bot, 'blackboard', None)
+        bb = getattr(self.bot, "blackboard", None)
         if bb:
             bb.set("saturation_info", result)
             bb.set("all_bases_saturated", result["oversaturated"])
@@ -199,7 +213,7 @@ class EconomyManager:
         Ensures available resources never report negative values.
         """
         # 1. Use centralized manager if available
-        if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+        if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
             mins, gas = self.bot.resource_manager.get_available_resources()
             return max(0, mins), max(0, gas)
 
@@ -212,10 +226,14 @@ class EconomyManager:
 
         # Log warning on over-reservation (Logic Bug Detection)
         if available_mins < 0 and self.bot.iteration % 100 == 0:
-            self.logger.warning(f"[ECONOMY_WARN] Negative minerals detected! ({available_mins}) Reserved: {self._reserved_minerals}")
-        
+            self.logger.warning(
+                f"[ECONOMY_WARN] Negative minerals detected! ({available_mins}) Reserved: {self._reserved_minerals}"
+            )
+
         if available_gas < 0 and self.bot.iteration % 100 == 0:
-             self.logger.warning(f"[ECONOMY_WARN] Negative gas detected! ({available_gas}) Reserved: {self._reserved_gas}")
+            self.logger.warning(
+                f"[ECONOMY_WARN] Negative gas detected! ({available_gas}) Reserved: {self._reserved_gas}"
+            )
 
         return max(0, available_mins), max(0, available_gas)
 
@@ -251,7 +269,6 @@ class EconomyManager:
             self.blackboard.get("early_scout_cheese_suspected", False)
         )
         fresh = last_report > 0 and (game_time - last_report) <= 75.0
-        early_window = game_time <= 240.0
         cheese_active = fresh and cheese_suspected
         fast_gas = fresh and gas_time is not None and gas_time < 90.0
         # ★ FIX: natural_confirmed=False만으로 확장 차단 금지
@@ -293,11 +310,11 @@ class EconomyManager:
         # ★ Blackboard Sync ★
         if self.blackboard:
             from blackboard import AuthorityMode
-            if self.blackboard.authority_mode == AuthorityMode.EMERGENCY:
-                 self._emergency_mode = True
-            else:
-                 self._emergency_mode = False
 
+            if self.blackboard.authority_mode == AuthorityMode.EMERGENCY:
+                self._emergency_mode = True
+            else:
+                self._emergency_mode = False
 
         # 게임 시작 초반 일꾼 분할 (첫 10초)
         if iteration < 50:
@@ -348,7 +365,10 @@ class EconomyManager:
             await self._optimize_gas_timing()
 
         # ★★★ Phase 18: Dynamic gas worker adjustment ★★★
-        if iteration - self.last_gas_worker_adjustment >= self.gas_worker_adjustment_interval:
+        if (
+            iteration - self.last_gas_worker_adjustment
+            >= self.gas_worker_adjustment_interval
+        ):
             await self._adjust_gas_workers_dynamically()
             self.last_gas_worker_adjustment = iteration
 
@@ -398,19 +418,26 @@ class EconomyManager:
                         for extractor in self.bot.gas_buildings.ready:
                             if extractor.assigned_harvesters > 0:
                                 workers = self.bot.workers.filter(
-                                    lambda w: w.is_carrying_vespene or w.order_target == extractor.tag
+                                    lambda w: w.is_carrying_vespene
+                                    or w.order_target == extractor.tag
                                 )
                                 if not workers:
                                     continue
                                 # 50%만 이동 (최대 3마리)
                                 workers_to_move = min(max(1, len(workers) // 2), 3)
                                 for w in workers[:workers_to_move]:
-                                    nearby_minerals = self.bot.mineral_field.closer_than(10, w)
+                                    nearby_minerals = (
+                                        self.bot.mineral_field.closer_than(10, w)
+                                    )
                                     if nearby_minerals:
-                                        self.bot.do(w.gather(nearby_minerals.closest_to(w)))
+                                        self.bot.do(
+                                            w.gather(nearby_minerals.closest_to(w))
+                                        )
 
                         self._last_gas_cut_time = self.bot.time
-                        self.logger.info(f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})")
+                        self.logger.info(
+                            f"[ECONOMY] Reducing gas workers (Gas: {gas}, Min: {minerals})"
+                        )
 
     async def _optimize_early_worker_split(self) -> None:
         """
@@ -443,7 +470,9 @@ class EconomyManager:
             return
 
         # 미네랄을 거리순으로 정렬 (가까운 것부터)
-        sorted_minerals = sorted(nearby_minerals, key=lambda m: m.distance_to(main_base))
+        sorted_minerals = sorted(
+            nearby_minerals, key=lambda m: m.distance_to(main_base)
+        )
 
         # 일꾼 목록 생성
         worker_list = list(workers)
@@ -472,7 +501,9 @@ class EconomyManager:
                     assigned_count += 1
 
             self._early_split_done = True
-            self.logger.info(f"[ECONOMY] Early worker split completed: {assigned_count} workers distributed")
+            self.logger.info(
+                f"[ECONOMY] Early worker split completed: {assigned_count} workers distributed"
+            )
 
         except Exception as e:
             self.logger.warning(f"[ECONOMY_WARN] Early worker split failed: {e}")
@@ -480,7 +511,7 @@ class EconomyManager:
     async def _train_overlord_if_needed(self) -> None:
         # [FIX] Prevent execution multiple times per frame
         if getattr(self, "_overlord_checked_frame", -1) == self.bot.iteration:
-             return
+            return
         self._overlord_checked_frame = self.bot.iteration
 
         if not hasattr(self.bot, "supply_left"):
@@ -490,7 +521,9 @@ class EconomyManager:
         pending_supply_cost = 0
         try:
             pending_supply_cost += self.bot.already_pending(UnitTypeId.DRONE) * 1
-            pending_supply_cost += self.bot.already_pending(UnitTypeId.ZERGLING) * 0.5  # each zergling = 0.5 supply
+            pending_supply_cost += (
+                self.bot.already_pending(UnitTypeId.ZERGLING) * 0.5
+            )  # each zergling = 0.5 supply
             pending_supply_cost += self.bot.already_pending(UnitTypeId.ROACH) * 2
             pending_supply_cost += self.bot.already_pending(UnitTypeId.HYDRALISK) * 2
             pending_supply_cost += self.bot.already_pending(UnitTypeId.QUEEN) * 2
@@ -537,15 +570,21 @@ class EconomyManager:
             self.blackboard.request_production(
                 unit_type=UnitTypeId.OVERLORD,
                 count=overlords_needed,
-                requester="EconomyManager"
+                requester="EconomyManager",
             )
             return
 
         # ★ Blackboard 없을 때 폴백: CreepyBot 동적 공식 ★
         # larvaPerSecond = hatcheries * (1/11) + queens * (3/40)
         # Build overlords when supply_left + pending*8 < 2 * larvaPer18Seconds
-        hatch_count = self.bot.townhalls.ready.amount if hasattr(self.bot, "townhalls") else 0
-        queen_count = self.bot.units(UnitTypeId.QUEEN).ready.amount if hasattr(self.bot, "units") else 0
+        hatch_count = (
+            self.bot.townhalls.ready.amount if hasattr(self.bot, "townhalls") else 0
+        )
+        queen_count = (
+            self.bot.units(UnitTypeId.QUEEN).ready.amount
+            if hasattr(self.bot, "units")
+            else 0
+        )
         larva_per_second = hatch_count * (1 / 11) + queen_count * (3 / 40)
         larva_per_18s = larva_per_second * 18
         supply_threshold = max(6, int(2 * larva_per_18s))
@@ -562,7 +601,7 @@ class EconomyManager:
             return
 
         try:
-            if hasattr(self.bot, 'production') and self.bot.production:
+            if hasattr(self.bot, "production") and self.bot.production:
                 await self.bot.production._safe_train(larva_unit, UnitTypeId.OVERLORD)
             else:
                 self.bot.do(larva_unit.train(UnitTypeId.OVERLORD))
@@ -575,7 +614,9 @@ class EconomyManager:
         worker_count = 0
         if hasattr(self.bot, "workers"):
             workers = self.bot.workers
-            worker_count = workers.amount if hasattr(workers, "amount") else len(list(workers))
+            worker_count = (
+                workers.amount if hasattr(workers, "amount") else len(list(workers))
+            )
 
         # ★ 드론 절대 상한: 80마리 초과 금지 ★
         if worker_count >= 80:
@@ -586,11 +627,23 @@ class EconomyManager:
         # ★ FIX: 드론 14마리 미만이면 절대 중단하지 않음 (경제 마비 방지) ★
         base_count_check = 1
         if hasattr(self.bot, "townhalls"):
-            base_count_check = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
+            base_count_check = (
+                self.bot.townhalls.amount
+                if hasattr(self.bot.townhalls, "amount")
+                else 1
+            )
         current_minerals = getattr(self.bot, "minerals", 0)
-        pending_hatch = getattr(self.bot, "already_pending", lambda x: 0)(UnitTypeId.HATCHERY)
+        pending_hatch = getattr(self.bot, "already_pending", lambda x: 0)(
+            UnitTypeId.HATCHERY
+        )
         game_time_check = getattr(self.bot, "time", 0)
-        if base_count_check == 1 and pending_hatch == 0 and worker_count >= 13 and current_minerals >= 200 and game_time_check > 60:
+        if (
+            base_count_check == 1
+            and pending_hatch == 0
+            and worker_count >= 13
+            and current_minerals >= 200
+            and game_time_check > 60
+        ):
             return  # 확장을 위해 미네랄 비축 (16드론 이상 + 350미네랄이면 즉시 확장 가능)
 
         # ★ Phase 16: 66 드론 하드 컷오프 — 3기지 포화 후 군대 전환 ★
@@ -598,8 +651,12 @@ class EconomyManager:
         game_time = getattr(self.bot, "time", 0)
         if worker_count >= 66 and game_time > 360:
             # 예외: 새 기지 건설 직후 (포화 안 됨) → 드론 허용
-            townhalls_ready = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
-            base_count_r = townhalls_ready.amount if hasattr(townhalls_ready, "amount") else 1
+            townhalls_ready = (
+                self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
+            )
+            base_count_r = (
+                townhalls_ready.amount if hasattr(townhalls_ready, "amount") else 1
+            )
             if base_count_r <= 3:
                 return  # 3기지 이하에서 66드론이면 충분 → 군대 전환
 
@@ -628,7 +685,9 @@ class EconomyManager:
                 return
 
         scout_pressure = self._get_early_scout_pressure_state()
-        if scout_pressure["pressure_active"] and worker_count >= int(scout_pressure["drone_floor"]):
+        if scout_pressure["pressure_active"] and worker_count >= int(
+            scout_pressure["drone_floor"]
+        ):
             return
 
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
@@ -637,21 +696,20 @@ class EconomyManager:
         # ★ Blackboard 기반 생산 ★
         if self.blackboard:
             from blackboard import AuthorityMode
+
             # EMERGENCY 모드에서는 최소 일꾼(22) 미만일 때만 생산 요청
             if self.blackboard.authority_mode == AuthorityMode.EMERGENCY:
-                 if worker_count >= 22:
-                     return
+                if worker_count >= 22:
+                    return
 
             # Blackboard에 드론 생산 요청
             self.blackboard.request_production(
-                unit_type=UnitTypeId.DRONE,
-                count=1,
-                requester="EconomyManager"
+                unit_type=UnitTypeId.DRONE, count=1, requester="EconomyManager"
             )
             return
 
         # ★ Blackboard 없을 때: ProductionResilience에 위임 (이중 생산 방지) ★
-        if hasattr(self.bot, 'production') and self.bot.production:
+        if hasattr(self.bot, "production") and self.bot.production:
             # ProductionResilience가 드론 생산을 전담 → EconomyManager는 신호만 전달
             try:
                 self.bot.production._economy_drone_requested = True
@@ -674,7 +732,9 @@ class EconomyManager:
             self.bot.do(larva_unit.train(UnitTypeId.DRONE))
         except Exception as e:
             game_time = getattr(self.bot, "time", 0.0)
-            self.logger.warning(f"[ECONOMY_WARN] [{int(game_time)}s] Drone train failed: {e}")
+            self.logger.warning(
+                f"[ECONOMY_WARN] [{int(game_time)}s] Drone train failed: {e}"
+            )
             return
 
     async def _distribute_workers_to_gas(self) -> None:
@@ -720,9 +780,9 @@ class EconomyManager:
                     # Get workers that are gathering minerals (not gas)
                     available_workers = self.bot.workers.filter(
                         lambda w: (
-                            w.is_gathering and
-                            not w.is_carrying_vespene and
-                            w.distance_to(extractor) < 20
+                            w.is_gathering
+                            and not w.is_carrying_vespene
+                            and w.distance_to(extractor) < 20
                         )
                     )
 
@@ -742,7 +802,9 @@ class EconomyManager:
                                     lambda w: w.tag != worker.tag
                                 )
                 except (AttributeError, TypeError) as e:
-                    self.logger.warning(f"[EconomyManager] Worker filtering suppressed: {e}")
+                    self.logger.warning(
+                        f"[EconomyManager] Worker filtering suppressed: {e}"
+                    )
                     continue
 
     async def _build_macro_hatchery_if_needed(self) -> None:
@@ -776,7 +838,11 @@ class EconomyManager:
 
         # Check resource conditions (전투/가스 과잉 시 낮은 임계값)
         minerals = self.bot.minerals
-        mineral_threshold = 800 if (in_combat or gas_overflow) else self.macro_hatchery_mineral_threshold
+        mineral_threshold = (
+            800
+            if (in_combat or gas_overflow)
+            else self.macro_hatchery_mineral_threshold
+        )
 
         if minerals < mineral_threshold:
             return
@@ -790,7 +856,9 @@ class EconomyManager:
         avg_larva_per_base = total_larva / max(1, townhalls.amount)
 
         # 전투/가스 과잉 시 더 높은 라바 임계값 (더 많이 필요)
-        larva_threshold = 5 if (in_combat or gas_overflow) else self.macro_hatchery_larva_threshold
+        larva_threshold = (
+            5 if (in_combat or gas_overflow) else self.macro_hatchery_larva_threshold
+        )
 
         if avg_larva_per_base >= larva_threshold:
             return  # Have enough larva production
@@ -822,14 +890,20 @@ class EconomyManager:
                     worker = self.bot.workers.closest_to(build_location)
 
                 if worker:
-                    self.bot.do(
-                        worker.build(UnitTypeId.HATCHERY, build_location)
-                    )
+                    self.bot.do(worker.build(UnitTypeId.HATCHERY, build_location))
                     game_time = getattr(self.bot, "time", 0)
-                    reason = "COMBAT/GAS_OVERFLOW" if (in_combat or gas_overflow) else "normal"
-                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] Building MACRO HATCHERY ({reason}, gas: {gas}, larva: {total_larva})")
+                    reason = (
+                        "COMBAT/GAS_OVERFLOW"
+                        if (in_combat or gas_overflow)
+                        else "normal"
+                    )
+                    self.logger.info(
+                        f"[ECONOMY] [{int(game_time)}s] Building MACRO HATCHERY ({reason}, gas: {gas}, larva: {total_larva})"
+                    )
             except (AttributeError, TypeError, ValueError) as e:
-                self.logger.warning(f"[ECONOMY_WARN] Macro hatchery placement failed: {e}")
+                self.logger.warning(
+                    f"[ECONOMY_WARN] Macro hatchery placement failed: {e}"
+                )
 
     async def _find_macro_hatch_location(self, main_base):
         """Find safe location for macro hatchery near main base."""
@@ -849,9 +923,7 @@ class EconomyManager:
                     try:
                         # Create Point2 if available
                         if hasattr(main_base.position, "__add__"):
-                            test_pos = main_base.position.offset(
-                                (x_offset, y_offset)
-                            )
+                            test_pos = main_base.position.offset((x_offset, y_offset))
                         else:
                             continue
 
@@ -859,11 +931,15 @@ class EconomyManager:
                         if await self.bot.can_place(UnitTypeId.HATCHERY, test_pos):
                             return test_pos
                     except (AttributeError, TypeError, ValueError) as e:
-                        self.logger.warning(f"[EconomyManager] Hatch position check suppressed: {e}")
+                        self.logger.warning(
+                            f"[EconomyManager] Hatch position check suppressed: {e}"
+                        )
                         continue
 
         except (AttributeError, TypeError, ValueError) as e:
-            self.logger.warning(f"[ECONOMY_WARN] Macro hatch location search failed: {e}")
+            self.logger.warning(
+                f"[ECONOMY_WARN] Macro hatch location search failed: {e}"
+            )
 
         return None
 
@@ -897,8 +973,7 @@ class EconomyManager:
 
                 # ★ 거리순 정렬: 가까운 패치 우선 ★
                 sorted_minerals = sorted(
-                    nearby_minerals,
-                    key=lambda m: m.distance_to(townhall)
+                    nearby_minerals, key=lambda m: m.distance_to(townhall)
                 )
 
                 # 건강한 패치 / 고갈 패치 분리
@@ -935,7 +1010,7 @@ class EconomyManager:
                     if worker.is_carrying_vespene:
                         continue
 
-                    target_tag = getattr(worker, 'order_target', None)
+                    target_tag = getattr(worker, "order_target", None)
 
                     # 고갈 패치로 가는 드론 → 재배정 대상
                     if target_tag and any(d.tag == target_tag for d in depleted):
@@ -980,7 +1055,10 @@ class EconomyManager:
         가스 채취 일꾼은 남겨둠.
         """
         try:
-            if not hasattr(self.bot, "townhalls") or self.bot.townhalls.ready.amount < 2:
+            if (
+                not hasattr(self.bot, "townhalls")
+                or self.bot.townhalls.ready.amount < 2
+            ):
                 return
 
             # 건강한 기지 찾기 (미네랄 패치 3개+ 남은 곳)
@@ -1000,7 +1078,7 @@ class EconomyManager:
             # 가장 가깝고 여유 있는 기지 선택
             target_base = min(
                 healthy_bases,
-                key=lambda x: x[0].distance_to(depleted_townhall) - x[1] * 0.01
+                key=lambda x: x[0].distance_to(depleted_townhall) - x[1] * 0.01,
             )[0]
 
             # 고갈 기지의 미네랄 일꾼 이주 (가스 일꾼 제외)
@@ -1020,7 +1098,7 @@ class EconomyManager:
                 # 가스 채취 중이면 남겨둠
                 if worker.is_carrying_vespene:
                     continue
-                target_tag = getattr(worker, 'order_target', None)
+                target_tag = getattr(worker, "order_target", None)
                 if target_tag and target_tag in gas_tags:
                     continue
 
@@ -1078,10 +1156,18 @@ class EconomyManager:
             for th in townhalls:
                 # Count mineral patches near this base
                 nearby_minerals = self.bot.mineral_field.closer_than(10, th)
-                mineral_count = nearby_minerals.amount if hasattr(nearby_minerals, 'amount') else len(list(nearby_minerals))
+                mineral_count = (
+                    nearby_minerals.amount
+                    if hasattr(nearby_minerals, "amount")
+                    else len(list(nearby_minerals))
+                )
 
                 # Count total minerals remaining
-                total_minerals = sum(m.mineral_contents for m in nearby_minerals) if nearby_minerals else 0
+                total_minerals = (
+                    sum(m.mineral_contents for m in nearby_minerals)
+                    if nearby_minerals
+                    else 0
+                )
 
                 # 완화된 조건: 미네랄 < 2개 또는 총량 < 300
                 if mineral_count < 2 or total_minerals < 300:
@@ -1098,10 +1184,14 @@ class EconomyManager:
                 # Get IDLE mineral workers at this depleted base (not moving, not carrying)
                 # 개선: is_idle 또는 is_gathering하고 있고 가까이 있는 일꾼만
                 nearby_workers = workers.filter(
-                    lambda w: (w.distance_to(depleted_th) < 8 and  # 거리 줄임 (15 -> 8)
-                              (w.is_idle or (w.is_gathering and not w.is_moving)) and
-                              not w.is_carrying_vespene and
-                              not any(e.distance_to(w) < 3 for e in self.bot.gas_buildings))
+                    lambda w: (
+                        w.distance_to(depleted_th) < 8  # 거리 줄임 (15 -> 8)
+                        and (w.is_idle or (w.is_gathering and not w.is_moving))
+                        and not w.is_carrying_vespene
+                        and not any(
+                            e.distance_to(w) < 3 for e in self.bot.gas_buildings
+                        )
+                    )
                 )
 
                 if not nearby_workers or nearby_workers.amount < 2:  # 최소 2명 이상만
@@ -1120,7 +1210,9 @@ class EconomyManager:
 
                 if not best_target:
                     # All bases full - use closest
-                    best_target = min(active_bases, key=lambda th: th.distance_to(depleted_th))
+                    best_target = min(
+                        active_bases, key=lambda th: th.distance_to(depleted_th)
+                    )
 
                 # Move workers to target base (최대 3명으로 줄임)
                 workers_moved = 0
@@ -1134,11 +1226,15 @@ class EconomyManager:
                             self.bot.do(worker.gather(minerals.closest_to(best_target)))
                             workers_moved += 1
                         except (AttributeError, TypeError) as e:
-                            self.logger.warning(f"[EconomyManager] Worker command suppressed: {e}")
+                            self.logger.warning(
+                                f"[EconomyManager] Worker command suppressed: {e}"
+                            )
                             continue
 
                 if workers_moved > 0:
-                    self.logger.info(f"[ECONOMY] [{int(current_time)}s] Moved {workers_moved} workers from depleted base")
+                    self.logger.info(
+                        f"[ECONOMY] [{int(current_time)}s] Moved {workers_moved} workers from depleted base"
+                    )
 
             # Second: Normal redistribution for over/under-saturated bases
             over_saturated = []
@@ -1168,7 +1264,9 @@ class EconomyManager:
                         continue
 
                     # Move workers - ★ OPTIMIZED: 더 공격적인 재분배 ★
-                    workers_to_move = min(excess, deficit, 8)  # ★ 5 → 8 (더 빠른 재분배) ★
+                    workers_to_move = min(
+                        excess, deficit, 8
+                    )  # ★ 5 → 8 (더 빠른 재분배) ★
                     for _ in range(workers_to_move):
                         if not nearby_workers:
                             break
@@ -1178,7 +1276,9 @@ class EconomyManager:
                             # Find mineral field near target base
                             minerals = self.bot.mineral_field.closer_than(10, under_th)
                             if minerals:
-                                self.bot.do(worker.gather(minerals.closest_to(under_th)))
+                                self.bot.do(
+                                    worker.gather(minerals.closest_to(under_th))
+                                )
                                 nearby_workers = nearby_workers.filter(
                                     lambda w: w.tag != worker.tag
                                 )
@@ -1192,81 +1292,6 @@ class EconomyManager:
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
-
-    async def _prevent_resource_banking(self) -> None:
-        """
-        ★ Prevent resource banking by spending excess minerals ★
-
-        Logic:
-        1. If Minerals > Config.Threshold and Larva < Config.Threshold:
-           - Build Extra Queens (Injects/Defense)
-           - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
-        """
-        if not hasattr(self.bot, "minerals"):
-            return
-
-        minerals = self.bot.minerals
-        vespene = self.bot.vespene
-        larva_count = len(self.bot.larva) if hasattr(self.bot, "larva") else 0
-        game_time = getattr(self.bot, "time", 0)
-        base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
-
-        # ★ CRITICAL: 초반 (3분 이전) 또는 3베이스 이전에는 방어 건물 금지! ★
-        # 확장이 최우선이므로 미네랄 낭비 방지 (Config 기반)
-        can_build_defense = (
-            (game_time >= EconomyConfig.BANKING_DEFENSE_TIME_REQ and base_count >= EconomyConfig.BANKING_DEFENSE_BASE_REQ)
-            and minerals > 2000  # ★ FIX: or → and (2000미네랄이어도 초반엔 방어건물 금지)
-        )
-
-        # 임계값: 미네랄 1000, 라바 부족 시 (Config 기반)
-        if minerals > EconomyConfig.BANKING_MINERAL_THRESHOLD and larva_count < EconomyConfig.BANKING_LARVA_THRESHOLD:
-            # 1. 퀸 추가 생산 (주사기 + 수비)
-            if self.bot.supply_left >= 2 and self.bot.can_afford(UnitTypeId.QUEEN):
-                 for th in self.bot.townhalls.ready.idle:
-                     if not self.bot.units(UnitTypeId.QUEEN).closer_than(5, th).exists:
-                         self.bot.do(th.train(UnitTypeId.QUEEN))
-                         if minerals < 800: break
-
-            # 2. 방어 건물 건설 (본진/멀티) - ★ 3베이스 이후에만! ★
-            if can_build_defense and minerals > 1500 and hasattr(self.bot, "workers") and self.bot.workers:
-                for th in self.bot.townhalls.ready:
-                    # ★ 안전한 건설 위치: 미네랄 라인 근처 (맵 중앙 방향 X → 기지 뒤쪽) ★
-                    mineral_fields = self.bot.mineral_field.closer_than(10, th)
-                    if mineral_fields:
-                        mineral_center = mineral_fields.center
-                        base_pos = th.position
-
-                        # 기지 당 포자촉수 1개 유지
-                        spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
-                        if not spores.exists and self.bot.can_afford(UnitTypeId.SPORECRAWLER):
-                            # ★ 미네랄 라인 방향으로 건설 (안전한 위치) ★
-                            pos = base_pos.towards(mineral_center, 4)
-                            # ★ 안전 체크: 근처 적이 없는지 확인 ★
-                            enemies_near = self.bot.enemy_units.closer_than(15, pos) if self.bot.enemy_units else []
-                            if not enemies_near:
-                                worker = self.bot.workers.closest_to(pos)
-                                if worker:
-                                    try:
-                                        await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
-                                        minerals -= 75
-                                    except Exception as e:
-                                        self.logger.warning(f"[ECONOMY_WARN] Spore build failed: {e}")
-
-                        # 기지 당 가시촉수 1개 유지 (미네랄 2000+ 일 때만)
-                        if minerals > 2000:
-                            spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(10, th)
-                            if not spines.exists and self.bot.can_afford(UnitTypeId.SPINECRAWLER):
-                                # ★ 맵 중앙 방향으로 건설 (방어 최전방) ★
-                                pos = base_pos.towards(self.bot.game_info.map_center, 6)
-                                enemies_near = self.bot.enemy_units.closer_than(15, pos) if self.bot.enemy_units else []
-                                if not enemies_near:
-                                    worker = self.bot.workers.closest_to(pos)
-                                    if worker:
-                                        try:
-                                            await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
-                                            minerals -= 100
-                                        except Exception as e:
-                                            self.logger.warning(f"[ECONOMY_WARN] Spine build failed: {e}")
 
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
@@ -1288,7 +1313,7 @@ class EconomyManager:
         - idle 상태 일꾼 감지
         - 가장 가까운 미네랄/가스에 할당
         - 포화되지 않은 기지 우선
-        
+
         OPTIMIZED: 불필요한 연산 최소화
         """
         if not hasattr(self.bot, "workers") or not self.bot.workers:
@@ -1297,21 +1322,21 @@ class EconomyManager:
         try:
             # 대기 일꾼 찾기 (가장 비용이 적은 필터)
             idle_workers = self.bot.workers.idle
-            
+
             if not idle_workers:
                 return  # 대기 일꾼 없음
 
             # 타운홀이 있는지 확인
             if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
                 return
-                
+
             townhalls = self.bot.townhalls.ready
-            
+
             # 캐싱된 미네랄 필드 사용 (매번 closer_than 호출 방지)
             if not hasattr(self, "_cached_minerals_near_base"):
                 self._cached_minerals_near_base = {}
                 self._last_mineral_cache = 0
-            
+
             current_frame = self.bot.iteration
             if current_frame - getattr(self, "_last_mineral_cache", 0) > 100:
                 self._cached_minerals_near_base = {}
@@ -1325,17 +1350,17 @@ class EconomyManager:
                 if hasattr(self.bot, "gas_buildings"):
                     for extractor in self.bot.gas_buildings.ready:
                         if extractor.assigned_harvesters < extractor.ideal_harvesters:
-                             # 거리 체크 없이 바로 할당해도 됨 (일단 채취가 중요)
-                             self.bot.do(worker.gather(extractor))
-                             assigned = True
-                             break
+                            # 거리 체크 없이 바로 할당해도 됨 (일단 채취가 중요)
+                            self.bot.do(worker.gather(extractor))
+                            assigned = True
+                            break
 
                 if assigned:
                     continue
 
                 # 2순위: 가장 가까운 기지의 미네랄에 할당
                 closest_th = townhalls.closest_to(worker)
-                
+
                 # 미네랄 찾기 (캐싱 활용)
                 minerals = None
                 if closest_th.tag in self._cached_minerals_near_base:
@@ -1343,18 +1368,22 @@ class EconomyManager:
                 else:
                     minerals = self.bot.mineral_field.closer_than(10, closest_th)
                     self._cached_minerals_near_base[closest_th.tag] = minerals
-                
+
                 if minerals:
                     target_mineral = minerals.closest_to(worker)
                     self.bot.do(worker.gather(target_mineral))
                 else:
                     # 폴백: 맵 전체에서 찾기 (드문 경우)
                     if self.bot.mineral_field:
-                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(worker)))
+                        self.bot.do(
+                            worker.gather(self.bot.mineral_field.closest_to(worker))
+                        )
 
         except (AttributeError, TypeError) as e:
             if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Idle worker assignment failed: {e}")
+                self.logger.warning(
+                    f"[ECONOMY_WARN] Idle worker assignment failed: {e}"
+                )
 
     async def _auto_re_expand_if_lost(self):
         """
@@ -1367,7 +1396,9 @@ class EconomyManager:
         if game_time < 300:
             return
 
-        base_count = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 0
+        base_count = (
+            self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 0
+        )
         if base_count >= 3:
             return  # 3기지 이상이면 OK
 
@@ -1390,8 +1421,12 @@ class EconomyManager:
         # 재확장 실행
         try:
             self._last_expansion_attempt_time = game_time
-            await self._perform_smart_expansion(f"Re-expand (lost bases, only {base_count} remaining)")
-            self.logger.info(f"[{int(game_time)}s] [*] Phase 19: AUTO RE-EXPAND (bases: {base_count}) [*]")
+            await self._perform_smart_expansion(
+                f"Re-expand (lost bases, only {base_count} remaining)"
+            )
+            self.logger.info(
+                f"[{int(game_time)}s] [*] Phase 19: AUTO RE-EXPAND (bases: {base_count}) [*]"
+            )
         except Exception as e:
             self.logger.warning(f"Re-expand failed: {e}")
 
@@ -1411,7 +1446,6 @@ class EconomyManager:
             return
 
         game_time = self.bot.time
-        base_count = self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
 
         # ★ 공통 쿨다운 체크 (모든 확장 시스템 공유) ★
         time_since_last = game_time - self._last_expansion_attempt_time
@@ -1421,6 +1455,7 @@ class EconomyManager:
         # ★ Blackboard 위협 체크: CRITICAL 위협 시 확장 중단 ★
         if self.blackboard:
             from blackboard import ThreatLevel
+
             if self.blackboard.threat.level >= ThreatLevel.CRITICAL:
                 return
 
@@ -1449,7 +1484,7 @@ class EconomyManager:
     async def _force_expansion_if_stuck(self) -> None:
         """
         ★ CRITICAL: 확장이 막혔을 때 강제 확장 ★
-        
+
         Uses EconomyConfig.FORCE_EXPAND_TRIGGERS for table-driven logic.
         """
         if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "time"):
@@ -1457,7 +1492,9 @@ class EconomyManager:
 
         game_time = self.bot.time
         townhalls = self.bot.townhalls
-        base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
+        base_count = (
+            townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
+        )
         minerals = getattr(self.bot, "minerals", 0)
 
         force_expand = False
@@ -1476,40 +1513,45 @@ class EconomyManager:
                     # Actually, if any trigger matches, we force expand. The specific reason might matter for logging.
                     # We can pick the most urgent one. Since the list is sorted by time, later ones are more advanced.
                     # Let's use the matching one.
-                    break 
-
+                    break
 
         if not force_expand:
             return
 
         # ★ 비용 체크 (Config 기반) ★
         triggers = EconomyConfig.FORCE_EXPAND_TRIGGERS
-        min_minerals = 300 # Default
+        min_minerals = 300  # Default
         for time_req, min_req, target_bases in triggers:
-             if game_time >= time_req and base_count < target_bases:
-                 min_minerals = min_req
+            if game_time >= time_req and base_count < target_bases:
+                min_minerals = min_req
 
         if minerals < min_minerals:
             if int(game_time) % 30 == 0:
-                self.logger.info(f"[FORCE EXPAND] [*] {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) [*]")
+                self.logger.info(
+                    f"[FORCE EXPAND] [*] {reason} BUT cannot afford (minerals: {minerals}/{min_minerals}) [*]"
+                )
             return
 
         # ★ OPTIMIZED: 동시 확장 허용 (Config 기반) ★
         pending = getattr(self.bot, "already_pending", lambda x: 0)(UnitTypeId.HATCHERY)
         max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["DEFAULT"]
-        
+
         if base_count < 2:
-             if game_time > 60: max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["CRITICAL_RETRY"]
-             else: max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["NATURAL_EMERGENCY"]
+            if game_time > 60:
+                max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["CRITICAL_RETRY"]
+            else:
+                max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["NATURAL_EMERGENCY"]
         elif base_count < 4 and game_time > 120:
-             max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["DUAL_EXPAND"]
+            max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["DUAL_EXPAND"]
         elif game_time > 300:
-             max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["TRIPLE_EXPAND"]
+            max_pending = EconomyConfig.MAX_PENDING_EXPANSIONS["TRIPLE_EXPAND"]
 
         # 이미 건설 중인 해처리가 max_pending 이상이면 중단
         if pending >= max_pending:
             if int(game_time) % 30 == 0:
-                self.logger.info(f"[FORCE EXPAND] {reason} but already expanding (pending: {pending}/{max_pending})")
+                self.logger.info(
+                    f"[FORCE EXPAND] {reason} but already expanding (pending: {pending}/{max_pending})"
+                )
             return
 
         # ★ 2026-01-26 FIX: 쿨다운 체크 (중복 시도 방지) ★
@@ -1518,7 +1560,9 @@ class EconomyManager:
             return  # 너무 최근에 시도했으면 스킵
 
         # ★ 강제 확장 실행 ★
-        self.logger.info(f"[FORCE EXPAND] [*][*][*] {reason} - FORCING EXPANSION NOW! [*][*][*]")
+        self.logger.info(
+            f"[FORCE EXPAND] [*][*][*] {reason} - FORCING EXPANSION NOW! [*][*][*]"
+        )
 
         # ★ 2026-01-26 FIX: 확장 시도 시간 기록 ★
         self._last_expansion_attempt_time = game_time
@@ -1528,21 +1572,33 @@ class EconomyManager:
             if hasattr(self.bot, "expand_now"):
                 result = await self.bot.expand_now()
                 if result is not False:
-                    self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
+                    self.logger.info(
+                        f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
+                    )
                     expansion_success = True
                 else:
                     self.logger.info(f"[FORCE EXPAND] expand_now returned False")
             else:
                 # expand_now가 없으면 직접 위치 찾아서 건설
                 # ★★★ USE GOLD PRIORITY ★★★
-                expansion_locations = await self._get_best_expansion_with_gold_priority()
-                if expansion_locations and hasattr(self.bot, "workers") and self.bot.workers:
+                expansion_locations = (
+                    await self._get_best_expansion_with_gold_priority()
+                )
+                if (
+                    expansion_locations
+                    and hasattr(self.bot, "workers")
+                    and self.bot.workers
+                ):
                     worker = self.bot.workers.closest_to(expansion_locations)
                     if worker:
                         is_gold = self._is_gold_expansion(expansion_locations)
                         gold_marker = "💰 GOLD" if is_gold else ""
-                        self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
-                        self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS")
+                        self.bot.do(
+                            worker.build(UnitTypeId.HATCHERY, expansion_locations)
+                        )
+                        self.logger.info(
+                            f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS"
+                        )
                         expansion_success = True
         except Exception as e:
             self.logger.info(f"[FORCE EXPAND] Failed: {e}")
@@ -1567,15 +1623,20 @@ class EconomyManager:
         # ★ Blackboard Threat Check ★
         if self.blackboard:
             from blackboard import ThreatLevel
+
             # 위협이 높으면 확장 시도 중단 (안정성 우선)
             if self.blackboard.threat.level >= ThreatLevel.HIGH:
                 if self.bot.iteration % 100 == 0:
-                    self.logger.info(f"[ECONOMY] Proactive expansion paused due to HIGH THREAT")
+                    self.logger.info(
+                        f"[ECONOMY] Proactive expansion paused due to HIGH THREAT"
+                    )
                 return
 
         game_time = self.bot.time  # 게임 시간 (초)
         townhalls = self.bot.townhalls
-        base_count = townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
+        base_count = (
+            townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
+        )
 
         # ★★★ MAXIMUM FAST EXPANSION: 최대한 빠르고 많은 멀티 ★★★
         if self._should_delay_opening_expansion(base_count):
@@ -1598,7 +1659,9 @@ class EconomyManager:
 
         # 1베이스 → 2베이스 (내츄럴): ★★★ HATCH FIRST (최대한 빠른 확장) ★★★
         if not should_expand and base_count == 1:
-            worker_count = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
+            worker_count = (
+                self.bot.workers.amount if hasattr(self.bot, "workers") else 0
+            )
             # ★★★ TARGET: ~1분 확장 (해처리 300 미네랄 모이면 즉시) ★★★
             # 해처리 건설 시간: 71초 (fastest) / 100초 (normal)
             # 목표: 미네랄 300 도달 즉시 건설 시작 → ~1:00 시작
@@ -1617,31 +1680,41 @@ class EconomyManager:
             # 3rd: 2.5분 또는 미네랄 넘침
             if game_time >= 150 or minerals >= 350:
                 should_expand = True
-                expand_reason = f"3rd base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = (
+                    f"3rd base (time: {int(game_time)}s, minerals: {minerals})"
+                )
 
         elif not should_expand and base_count == 3:
             # 4th: 5분 또는 미네랄 넘침 (이전: 120초)
             if game_time >= 300 or minerals >= 600:
                 should_expand = True
-                expand_reason = f"4th base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = (
+                    f"4th base (time: {int(game_time)}s, minerals: {minerals})"
+                )
 
         elif not should_expand and base_count == 4:
             # 5th: 7분 또는 미네랄 넘침 (이전: 180초)
             if game_time >= 420 or minerals >= 700:
                 should_expand = True
-                expand_reason = f"5th base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = (
+                    f"5th base (time: {int(game_time)}s, minerals: {minerals})"
+                )
 
         elif not should_expand and base_count == 5:
             # 6th: 9분 (이전: 210초)
             if game_time >= 540 or minerals >= 800:
                 should_expand = True
-                expand_reason = f"6th base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = (
+                    f"6th base (time: {int(game_time)}s, minerals: {minerals})"
+                )
 
         elif not should_expand and base_count == 6:
             # 7th: 11분 (이전: 240초)
             if game_time >= 660 or minerals >= 900:
                 should_expand = True
-                expand_reason = f"7th base (time: {int(game_time)}s, minerals: {minerals})"
+                expand_reason = (
+                    f"7th base (time: {int(game_time)}s, minerals: {minerals})"
+                )
 
         # ★ 7베이스 이상: 무한 확장 (60초마다 또는 미네랄 900+ 저장) ★
         elif not should_expand and base_count >= 7:
@@ -1664,7 +1737,9 @@ class EconomyManager:
             return  # 너무 최근에 시도했으면 스킵
 
         # ★ DEBUG: 확장 시도 로그 ★
-        self.logger.info(f"[EXPANSION] [{int(game_time)}s] Trying to expand: {expand_reason}")
+        self.logger.info(
+            f"[EXPANSION] [{int(game_time)}s] Trying to expand: {expand_reason}"
+        )
 
         # ★ 2026-01-26 FIX: 확장 시도 시간 기록 (시도할 때마다) ★
         self._last_expansion_attempt_time = game_time
@@ -1679,19 +1754,27 @@ class EconomyManager:
             else:
                 max_pending = 3 if minerals > 1000 else 2 if minerals > 600 else 1
             if pending >= max_pending:
-                self.logger.info(f"[EXPANSION] [{int(game_time)}s] Already {pending} pending, max is {max_pending}")
+                self.logger.info(
+                    f"[EXPANSION] [{int(game_time)}s] Already {pending} pending, max is {max_pending}"
+                )
                 return
 
         # 비용 확인
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
             # ★ FIX: 초반 확장은 짧은 쿨다운 (5초), 이후는 10초 ★
             if base_count <= 1 and game_time < 120:
-                self._last_expansion_attempt_time = game_time + 2.0  # 3초 쿨다운 + 2초 = 5초 총 대기
+                self._last_expansion_attempt_time = (
+                    game_time + 2.0
+                )  # 3초 쿨다운 + 2초 = 5초 총 대기
             else:
-                self._last_expansion_attempt_time = game_time + 7.0  # 3초 쿨다운 + 7초 = 10초 총 대기
+                self._last_expansion_attempt_time = (
+                    game_time + 7.0
+                )  # 3초 쿨다운 + 7초 = 10초 총 대기
             # ★ 로그 스팸 방지: 30초마다만 출력 ★
             if int(game_time) % 30 < 2:  # 30초 주기로 2초 이내에만 출력
-                self.logger.info(f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals})")
+                self.logger.info(
+                    f"[EXPANSION] [{int(game_time)}s] Cannot afford Hatchery (need 300 minerals, have {minerals})"
+                )
             return
 
         # ★ MACRO ECONOMY: 비상 모드여도 확장 계속 (매크로 최우선) ★
@@ -1704,7 +1787,9 @@ class EconomyManager:
                 # ★ 극심한 위협만 확장 차단 (적 15명 이상) ★
                 if nearby_enemies.amount >= 15:
                     if int(game_time) % 30 == 0:  # 30초마다만 로그
-                        self.logger.info(f"[EXPANSION] [{int(game_time)}s] [*] SEVERE THREAT: {nearby_enemies.amount} enemies - expansion blocked [*]")
+                        self.logger.info(
+                            f"[EXPANSION] [{int(game_time)}s] [*] SEVERE THREAT: {nearby_enemies.amount} enemies - expansion blocked [*]"
+                        )
                     return  # 심각한 위협: 확장 중단
 
         # ★ 그 외 모든 경우: 확장 계속 (매크로 경제 우선) ★
@@ -1718,10 +1803,14 @@ class EconomyManager:
                 result = await self.bot.expand_now()
                 # expand_now()가 성공하면 None 또는 True 반환
                 if result is not False:  # False가 아니면 성공으로 간주
-                    self.logger.info(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS")
+                    self.logger.info(
+                        f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS"
+                    )
                     expansion_success = True
                 else:
-                    self.logger.info(f"[EXPAND] expand_now returned False (no valid location?)")
+                    self.logger.info(
+                        f"[EXPAND] expand_now returned False (no valid location?)"
+                    )
         except Exception as e:
             self.logger.info(f"[EXPAND] expand_now failed: {e}")
 
@@ -1735,7 +1824,9 @@ class EconomyManager:
                         self.bot.do(worker.build(UnitTypeId.HATCHERY, gold_pos))
                         is_gold = self._is_gold_expansion(gold_pos)
                         gold_tag = " [GOLD!]" if is_gold else ""
-                        self.logger.info(f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS")
+                        self.logger.info(
+                            f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS"
+                        )
                         expansion_success = True
             except Exception as e:
                 self.logger.info(f"[EXPAND] Gold expansion failed: {e}")
@@ -1747,19 +1838,31 @@ class EconomyManager:
         """
         Find a "Hidden Base" location far from enemy.
         """
-        if not hasattr(self.bot, "expansion_locations_list") or not self.bot.expansion_locations_list:
+        if (
+            not hasattr(self.bot, "expansion_locations_list")
+            or not self.bot.expansion_locations_list
+        ):
             return None
 
-        enemy_start = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else self.bot.game_info.map_center
-        start_loc = self.bot.start_location
+        enemy_start = (
+            self.bot.enemy_start_locations[0]
+            if self.bot.enemy_start_locations
+            else self.bot.game_info.map_center
+        )
 
         # Filter out taken bases
         available_bases = []
         for loc in self.bot.expansion_locations_list:
-            if hasattr(self.bot, "townhalls") and self.bot.townhalls.closer_than(4, loc).exists:
-                continue # We already have this
-            if hasattr(self.bot, "enemy_structures") and self.bot.enemy_structures.closer_than(10, loc).exists:
-                continue # Enemy has this
+            if (
+                hasattr(self.bot, "townhalls")
+                and self.bot.townhalls.closer_than(4, loc).exists
+            ):
+                continue  # We already have this
+            if (
+                hasattr(self.bot, "enemy_structures")
+                and self.bot.enemy_structures.closer_than(10, loc).exists
+            ):
+                continue  # Enemy has this
 
             available_bases.append(loc)
 
@@ -1770,13 +1873,15 @@ class EconomyManager:
         # But for Rogue style, maybe just far from enemy?
         # Let's prioritize: Furthest from Enemy Start
         best_loc = max(available_bases, key=lambda p: p.distance_to(enemy_start))
-        
+
         return best_loc
 
-    async def _perform_smart_expansion(self, reason: str, force_hidden: bool = False) -> bool:
+    async def _perform_smart_expansion(
+        self, reason: str, force_hidden: bool = False
+    ) -> bool:
         """
         Execute expansion using smart logic.
-        
+
         Priority:
         1. Hidden Base (if force_hidden is True)
         2. Gold Base (if safe)
@@ -1791,7 +1896,7 @@ class EconomyManager:
                 target_pos = await self._get_hidden_expansion_location()
                 if target_pos:
                     method = "Hidden"
-            
+
             # 2. Gold / Safe Base
             if not target_pos:
                 target_pos = await self._get_best_expansion_with_gold_priority()
@@ -1809,7 +1914,7 @@ class EconomyManager:
             if target_pos:
                 # ★ Reserve resources using ResourceManager (thread-safe) ★
                 reserved = False
-                if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+                if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
                     reserved = await self.bot.resource_manager.try_reserve(
                         300, 0, "EconomyManager_Expansion"
                     )
@@ -1824,35 +1929,51 @@ class EconomyManager:
                         tech_coordinator.request_structure(
                             UnitTypeId.HATCHERY,
                             target_pos,
-                            priority=100, # High priority
-                            requester="EconomyManager"
+                            priority=100,  # High priority
+                            requester="EconomyManager",
                         )
                     else:
                         worker = self.bot.workers.closest_to(target_pos)
                         if worker:
                             self.bot.do(worker.build(UnitTypeId.HATCHERY, target_pos))
-                    
+
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] [*] Expanding ({method}): {reason} @ {target_pos} [*]")
+                    self.logger.info(
+                        f"[ECONOMY] [{int(game_time)}s] [*] Expanding ({method}): {reason} @ {target_pos} [*]"
+                    )
 
                     # ★ Release resources after successful build command ★
-                    if reserved and hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
-                        await self.bot.resource_manager.release("EconomyManager_Expansion")
+                    if (
+                        reserved
+                        and hasattr(self.bot, "resource_manager")
+                        and self.bot.resource_manager
+                    ):
+                        await self.bot.resource_manager.release(
+                            "EconomyManager_Expansion"
+                        )
 
                     return True
                 else:
                     # ★ Release resources if placement failed ★
-                    if reserved and hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
-                        await self.bot.resource_manager.release("EconomyManager_Expansion")
+                    if (
+                        reserved
+                        and hasattr(self.bot, "resource_manager")
+                        and self.bot.resource_manager
+                    ):
+                        await self.bot.resource_manager.release(
+                            "EconomyManager_Expansion"
+                        )
 
         except Exception as e:
             self.logger.info(f"[ECONOMY] Smart expansion failed: {e}")
             # ★ Release resources on exception ★
-            if hasattr(self.bot, 'resource_manager') and self.bot.resource_manager:
+            if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
                 try:
                     await self.bot.resource_manager.release("EconomyManager_Expansion")
                 except Exception as e2:
-                    self.logger.warning(f"[EconomyManager] Resource release suppressed: {e2}")
+                    self.logger.warning(
+                        f"[EconomyManager] Resource release suppressed: {e2}"
+                    )
 
         return False
 
@@ -1883,7 +2004,11 @@ class EconomyManager:
 
             for th in townhalls:
                 nearby_minerals = self.bot.mineral_field.closer_than(10, th)
-                base_minerals = sum(m.mineral_contents for m in nearby_minerals) if nearby_minerals else 0
+                base_minerals = (
+                    sum(m.mineral_contents for m in nearby_minerals)
+                    if nearby_minerals
+                    else 0
+                )
                 total_remaining_minerals += base_minerals
 
                 if base_minerals < 500:  # Less than 500 minerals = depleted
@@ -1892,7 +2017,9 @@ class EconomyManager:
                     low_mineral_base_count += 1
 
             # Calculate threshold based on worker count
-            worker_count = self.bot.workers.amount if hasattr(self.bot, "workers") else 0
+            worker_count = (
+                self.bot.workers.amount if hasattr(self.bot, "workers") else 0
+            )
             # Need ~1500 minerals per 16 workers for decent income
             mineral_threshold_per_worker = 100
             expansion_threshold = worker_count * mineral_threshold_per_worker
@@ -1904,17 +2031,26 @@ class EconomyManager:
             # ★ NEW: Reason 0: 미네랄 50% 미만 기지가 있으면 사전 확장 ★
             if low_mineral_base_count >= 1 and townhalls.amount >= 2:
                 should_expand = True
-                expand_reason = f"PREEMPTIVE: {low_mineral_base_count} bases below 50% minerals"
+                expand_reason = (
+                    f"PREEMPTIVE: {low_mineral_base_count} bases below 50% minerals"
+                )
 
             # Reason 1: Total minerals running low
-            if total_remaining_minerals < expansion_threshold and total_remaining_minerals < 5000:
+            if (
+                total_remaining_minerals < expansion_threshold
+                and total_remaining_minerals < 5000
+            ):
                 should_expand = True
-                expand_reason = f"low minerals ({int(total_remaining_minerals)} remaining)"
+                expand_reason = (
+                    f"low minerals ({int(total_remaining_minerals)} remaining)"
+                )
 
             # Reason 2: Multiple depleted bases
             if depleted_base_count >= townhalls.amount // 2 and townhalls.amount > 1:
                 should_expand = True
-                expand_reason = f"{depleted_base_count}/{townhalls.amount} bases depleted"
+                expand_reason = (
+                    f"{depleted_base_count}/{townhalls.amount} bases depleted"
+                )
 
             # Reason 3: High worker count but low base count
             # Optimal: ~16 workers per base
@@ -1939,11 +2075,15 @@ class EconomyManager:
 
             # 1.5분 지났는데 앞마당 없으면 즉시 확장 (미네랄 350+ - 공격적 확장)
             if townhalls.amount < 2 and game_time > 90 and minerals >= 350:
-                self.logger.error(f"[ECONOMY] [*] CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) [*]")
+                self.logger.error(
+                    f"[ECONOMY] [*] CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) [*]"
+                )
                 if hasattr(self.bot, "expand_now"):
                     try:
                         await self.bot.expand_now()
-                        self.logger.info(f"[ECONOMY] [*] Natural expansion started successfully! [*]")
+                        self.logger.info(
+                            f"[ECONOMY] [*] Natural expansion started successfully! [*]"
+                        )
                     except Exception as e:
                         self.logger.info(f"[ECONOMY] [*] Expansion failed: {e} [*]")
                 return
@@ -1968,20 +2108,29 @@ class EconomyManager:
                 if hasattr(self.bot, "enemy_units") and townhalls.exists:
                     main_base = townhalls.first
                     nearby_enemies = self.bot.enemy_units.closer_than(15, main_base)
-                    if nearby_enemies.amount >= 10 and depleted_base_count < townhalls.amount // 2:
+                    if (
+                        nearby_enemies.amount >= 10
+                        and depleted_base_count < townhalls.amount // 2
+                    ):
                         return  # 심각한 위협 + 자원 여유: 확장 중단
                 # 경미한 위협 또는 자원 부족: 확장 계속
 
             # Check for hidden base condition (Late game + Pressure)
             force_hidden = False
             if game_time > 600 and depleted_base_count > 0:
-                 force_hidden = True # Try to take a hidden base if we are losing main bases
+                force_hidden = (
+                    True  # Try to take a hidden base if we are losing main bases
+                )
 
             # Execute Smart Expansion
-            await self._perform_smart_expansion(expand_reason, force_hidden=force_hidden)
+            await self._perform_smart_expansion(
+                expand_reason, force_hidden=force_hidden
+            )
 
         except (AttributeError, TypeError, ValueError) as e:
-            self.logger.warning(f"[ECONOMY_WARN] Expansion on depletion check failed: {e}")
+            self.logger.warning(
+                f"[ECONOMY_WARN] Expansion on depletion check failed: {e}"
+            )
 
     async def _manual_expansion(self, game_time: float, reason: str) -> None:
         """
@@ -2012,7 +2161,9 @@ class EconomyManager:
             is_gold = self._is_gold_expansion(expansion_locations)
             gold_marker = "GOLD" if is_gold else ""
             self.bot.do(worker.build(UnitTypeId.HATCHERY, expansion_locations))
-            self.logger.info(f"[MANUAL EXPAND] [{int(game_time)}s] [*] {reason} {gold_marker} [*] (Manual expansion)")
+            self.logger.info(
+                f"[MANUAL EXPAND] [{int(game_time)}s] [*] {reason} {gold_marker} [*] (Manual expansion)"
+            )
 
         except Exception as e:
             self.logger.info(f"[MANUAL EXPAND] Exception: {e}")
@@ -2095,7 +2246,9 @@ class EconomyManager:
                 if gold_count > 0:
                     # Priority: gold count * 1000 + total minerals
                     priority = gold_count * 1000 + total_minerals
-                    gold_expansions.append((exp_pos, gold_count, total_minerals, priority))
+                    gold_expansions.append(
+                        (exp_pos, gold_count, total_minerals, priority)
+                    )
 
             # Sort by priority (highest first)
             gold_expansions.sort(key=lambda x: x[3], reverse=True)
@@ -2107,7 +2260,9 @@ class EconomyManager:
             return gold_expansions
 
         except (AttributeError, TypeError, ValueError) as e:
-            self.logger.warning(f"[EconomyManager] Gold expansion search suppressed: {e}")
+            self.logger.warning(
+                f"[EconomyManager] Gold expansion search suppressed: {e}"
+            )
             return []
 
     async def _get_best_expansion_with_gold_priority(self):
@@ -2125,7 +2280,10 @@ class EconomyManager:
         try:
             our_base = self.bot.start_location
             enemy_base = None
-            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
                 enemy_base = self.bot.enemy_start_locations[0]
 
             game_time = getattr(self.bot, "time", 0)
@@ -2135,11 +2293,13 @@ class EconomyManager:
 
             if gold_expansions:
                 best_gold = None
-                best_score = float('-inf')
+                best_score = float("-inf")
 
                 for exp_pos, gold_count, total_minerals, _ in gold_expansions:
                     dist_to_us = exp_pos.distance_to(our_base)
-                    dist_to_enemy = exp_pos.distance_to(enemy_base) if enemy_base else 100
+                    dist_to_enemy = (
+                        exp_pos.distance_to(enemy_base) if enemy_base else 100
+                    )
 
                     # ★ 골드 패치 보너스 대폭 강화 (+80 per gold) ★
                     safety_score = (dist_to_enemy - dist_to_us) + (gold_count * 80)
@@ -2176,18 +2336,22 @@ class EconomyManager:
                         taken.add(th.position)
 
                 best_exp = None
-                best_exp_score = float('-inf')
+                best_exp_score = float("-inf")
 
                 for exp_pos in self.bot.expansion_locations_list:
                     if any(exp_pos.distance_to(t) < 5 for t in taken):
                         continue
 
                     dist_to_us = exp_pos.distance_to(our_base)
-                    dist_to_enemy = exp_pos.distance_to(enemy_base) if enemy_base else 100
+                    dist_to_enemy = (
+                        exp_pos.distance_to(enemy_base) if enemy_base else 100
+                    )
 
                     # 자원량 계산
                     nearby = self.bot.mineral_field.closer_than(10, exp_pos)
-                    mineral_total = sum(m.mineral_contents for m in nearby) if nearby else 0
+                    mineral_total = (
+                        sum(m.mineral_contents for m in nearby) if nearby else 0
+                    )
 
                     # 적 근처는 페널티
                     if hasattr(self.bot, "enemy_structures"):
@@ -2195,7 +2359,9 @@ class EconomyManager:
                             continue
 
                     # 종합 점수: 가까울수록 + 자원 많을수록 + 적으로부터 멀수록
-                    score = -dist_to_us * 1.5 + dist_to_enemy * 0.5 + mineral_total * 0.005
+                    score = (
+                        -dist_to_us * 1.5 + dist_to_enemy * 0.5 + mineral_total * 0.005
+                    )
 
                     if score > best_exp_score:
                         best_exp_score = score
@@ -2213,7 +2379,9 @@ class EconomyManager:
             return None
 
         except (AttributeError, TypeError, ValueError) as e:
-            self.logger.warning(f"[EconomyManager] Best expansion lookup suppressed: {e}")
+            self.logger.warning(
+                f"[EconomyManager] Best expansion lookup suppressed: {e}"
+            )
             if hasattr(self.bot, "get_next_expansion"):
                 return await self.bot.get_next_expansion()
             return None
@@ -2242,12 +2410,13 @@ class EconomyManager:
         is_opening_unsafe = False
         if self.blackboard:
             from blackboard import GamePhase, ThreatLevel
+
             if self.blackboard.game_phase == GamePhase.OPENING:
-                 if self.blackboard.threat.level >= ThreatLevel.MEDIUM:
-                     is_opening_unsafe = True
+                if self.blackboard.threat.level >= ThreatLevel.MEDIUM:
+                    is_opening_unsafe = True
 
         if is_opening_unsafe and minerals < 2000:
-             return # 오프닝 위협 시 자원 보존 (방어 유닛용)
+            return  # 오프닝 위협 시 자원 보존 (방어 유닛용)
 
         try:
             # ★ 미네랄 과잉 (1000+) ★
@@ -2255,21 +2424,36 @@ class EconomyManager:
                 # 라바 부족 체크
                 larva_count = 0
                 if hasattr(self.bot, "larva"):
-                    larva_count = self.bot.larva.amount if hasattr(self.bot.larva, "amount") else len(self.bot.larva)
+                    larva_count = (
+                        self.bot.larva.amount
+                        if hasattr(self.bot.larva, "amount")
+                        else len(self.bot.larva)
+                    )
 
-                hatch_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
+                hatch_count = (
+                    self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
+                )
                 avg_larva = larva_count / max(1, hatch_count)
 
                 # 미네랄 과잉 로그 (30초마다)
                 if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] Resource banking: {minerals}M / {gas}G")
-                    self.logger.info(f"[ECONOMY]   Larva: {larva_count}, Avg per base: {avg_larva:.1f}")
+                    self.logger.info(
+                        f"[ECONOMY] [{int(game_time)}s] Resource banking: {minerals}M / {gas}G"
+                    )
+                    self.logger.info(
+                        f"[ECONOMY]   Larva: {larva_count}, Avg per base: {avg_larva:.1f}"
+                    )
 
                 # ★★★ IMPROVED: 미네랄 과잉 → 스마트 확장 ★★★
                 # 2000+ → 1500+ 로 완화하여 더 빨리 확장
                 if minerals > 1500:
-                    if hatch_count < 8 and self.bot.already_pending(UnitTypeId.HATCHERY) == 0:
-                         await self._perform_smart_expansion(f"Resource banking (M:{minerals}/G:{gas})")
+                    if (
+                        hatch_count < 8
+                        and self.bot.already_pending(UnitTypeId.HATCHERY) == 0
+                    ):
+                        await self._perform_smart_expansion(
+                            f"Resource banking (M:{minerals}/G:{gas})"
+                        )
 
                 # 미네랄 1500+ & 라바 부족 → 매크로 해처리
                 elif minerals > 1500 and avg_larva < 3:
@@ -2289,12 +2473,19 @@ class EconomyManager:
             if gas > 0 and minerals / max(1, gas) > 10:
                 if minerals > 1000:
                     # 확장으로 전체 자원 증가
-                    if hatch_count < 8 and self.bot.already_pending(UnitTypeId.HATCHERY) == 0:
-                        await self._perform_smart_expansion(f"Resource ratio (M/G = {minerals}/{gas} = {minerals/max(1,gas):.1f})")
+                    if (
+                        hatch_count < 8
+                        and self.bot.already_pending(UnitTypeId.HATCHERY) == 0
+                    ):
+                        await self._perform_smart_expansion(
+                            f"Resource ratio (M/G = {minerals}/{gas} = {minerals/max(1,gas):.1f})"
+                        )
 
         except Exception as e:
             if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Resource banking prevention error: {e}")
+                self.logger.warning(
+                    f"[ECONOMY_WARN] Resource banking prevention error: {e}"
+                )
 
     def _update_resource_reservations(self) -> None:
         """
@@ -2321,30 +2512,6 @@ class EconomyManager:
             if not lairs.exists:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
-
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
-        try:
-            if not hasattr(self.bot, "gas_buildings") or not self.bot.gas_buildings.ready:
-                return
-
-            for extractor in self.bot.gas_buildings.ready:
-                if extractor.assigned_harvesters >= 3:
-                    # 가스에서 일꾼 1명 이동
-                    workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
-                    )
-                    if workers_on_gas:
-                        worker = workers_on_gas.first
-                        # 가까운 미네랄로 이동
-                        closest_mineral = self.bot.mineral_field.closest_to(worker)
-                        if closest_mineral:
-                            self.bot.do(worker.gather(closest_mineral))
-                            return  # 한 번에 하나만
-
-        except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""
@@ -2407,21 +2574,32 @@ class EconomyManager:
             # ★ 첫 가스 타이밍 (종족별 최적화) ★
             if game_time >= optimal_gas_timing and game_time < optimal_gas_timing + 30:
                 # 첫 가스 확인
-                if not hasattr(self.bot, "gas_buildings") or self.bot.gas_buildings.amount == 0:
+                if (
+                    not hasattr(self.bot, "gas_buildings")
+                    or self.bot.gas_buildings.amount == 0
+                ):
                     if self.bot.already_pending(UnitTypeId.EXTRACTOR) == 0:
                         if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                             await self._build_extractors()
-                            self.logger.info(f"[ECONOMY] [{int(game_time)}s] [*] First gas timing (vs {race_name}) [*]")
+                            self.logger.info(
+                                f"[ECONOMY] [{int(game_time)}s] [*] First gas timing (vs {race_name}) [*]"
+                            )
 
             # ★ 두 번째 가스 타이밍 (2분) ★
             elif game_time >= 120 and game_time < 150:  # 2분-2분30초
-                gas_count = self.bot.gas_buildings.amount if hasattr(self.bot, "gas_buildings") else 0
+                gas_count = (
+                    self.bot.gas_buildings.amount
+                    if hasattr(self.bot, "gas_buildings")
+                    else 0
+                )
                 pending_gas = self.bot.already_pending(UnitTypeId.EXTRACTOR)
 
                 if gas_count + pending_gas < 2:
                     if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                         await self._build_extractors()
-                        self.logger.info(f"[ECONOMY] [{int(game_time)}s] [*] Second gas timing [*]")
+                        self.logger.info(
+                            f"[ECONOMY] [{int(game_time)}s] [*] Second gas timing [*]"
+                        )
 
             # ★ 확장 가스 (4분 이후) ★
             elif game_time >= 240:
@@ -2429,14 +2607,22 @@ class EconomyManager:
                 if hasattr(self.bot, "townhalls"):
                     for th in self.bot.townhalls.ready:
                         vespene_geysers = self.bot.vespene_geyser.closer_than(10, th)
-                        extractors_near = self.bot.gas_buildings.closer_than(10, th) if hasattr(self.bot, "gas_buildings") else []
+                        extractors_near = (
+                            self.bot.gas_buildings.closer_than(10, th)
+                            if hasattr(self.bot, "gas_buildings")
+                            else []
+                        )
 
                         # 가이저가 있고 익스트랙터가 부족하면 건설
                         if vespene_geysers.amount > len(extractors_near):
                             if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                                 for geyser in vespene_geysers:
-                                    if not self.bot.gas_buildings.closer_than(1, geyser).exists:
-                                        workers = self.bot.workers.closer_than(20, geyser)
+                                    if not self.bot.gas_buildings.closer_than(
+                                        1, geyser
+                                    ).exists:
+                                        workers = self.bot.workers.closer_than(
+                                            20, geyser
+                                        )
                                         if workers:
                                             worker = workers.closest_to(geyser)
                                             self.bot.do(worker.build_gas(geyser))
@@ -2444,7 +2630,9 @@ class EconomyManager:
 
         except Exception as e:
             if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas timing optimization failed: {e}")
+                self.logger.warning(
+                    f"[ECONOMY_WARN] Gas timing optimization failed: {e}"
+                )
 
     def get_resource_status(self) -> dict:
         """현재 자원 상태 반환"""
@@ -2484,7 +2672,6 @@ class EconomyManager:
         game_time = getattr(self.bot, "time", 0)
         workers = self.bot.workers
         bases = self.bot.townhalls.ready
-        minerals = getattr(self.bot, "minerals", 0)
 
         # ★ 현재 경제 상태 분석 ★
         worker_count = workers.amount
@@ -2500,9 +2687,15 @@ class EconomyManager:
             self._target_drone_count = min(ideal_workers, 75)
 
             if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
-                self.logger.info(f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Worker deficit: {worker_deficit} [*]")
-                self.logger.info(f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}")
-                self.logger.info(f"[ECONOMY RECOVERY]   Prioritizing drone production...")
+                self.logger.info(
+                    f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Worker deficit: {worker_deficit} [*]"
+                )
+                self.logger.info(
+                    f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}"
+                )
+                self.logger.info(
+                    f"[ECONOMY RECOVERY]   Prioritizing drone production..."
+                )
 
         elif worker_deficit <= 0:
             # 드론 포화 → unified expansion이 처리
@@ -2541,7 +2734,9 @@ class EconomyManager:
                     gold_marker = "GOLD" if is_gold else "Normal"
 
                     await self.bot.build(UnitTypeId.HATCHERY, exp_pos)
-                    self.logger.info(f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Expanding for growth ({gold_marker}, bases: {base_count}) [*]")
+                    self.logger.info(
+                        f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Expanding for growth ({gold_marker}, bases: {base_count}) [*]"
+                    )
         except (AttributeError, TypeError, ValueError) as e:
             self.logger.warning(f"[ECONOMY_WARN] Expansion for growth failed: {e}")
 
@@ -2586,9 +2781,15 @@ class EconomyManager:
 
                     if pending == 0 and base_count < 5:
                         if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                            self.logger.info(f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min")
-                            self.logger.info(f"[ECONOMY PREDICTION]   Remaining minerals: {total_remaining}")
-                            self.logger.info(f"[ECONOMY PREDICTION]   Triggering pre-emptive expansion...")
+                            self.logger.info(
+                                f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min"
+                            )
+                            self.logger.info(
+                                f"[ECONOMY PREDICTION]   Remaining minerals: {total_remaining}"
+                            )
+                            self.logger.info(
+                                f"[ECONOMY PREDICTION]   Triggering pre-emptive expansion..."
+                            )
 
                         await self._trigger_expansion_for_growth()
                         break  # 한 번에 하나만
@@ -2622,7 +2823,12 @@ class EconomyManager:
             urgent_spore = self.blackboard.get("urgent_spore_all_bases", False)
 
         # 적 공중 유닛 감지 (오버로드/감시군주 제외)
-        air_threats = [u for u in self.bot.enemy_units if getattr(u, "is_flying", False) and u.type_id not in {UnitTypeId.OVERLORD, UnitTypeId.OVERSEER}]
+        air_threats = [
+            u
+            for u in self.bot.enemy_units
+            if getattr(u, "is_flying", False)
+            and u.type_id not in {UnitTypeId.OVERLORD, UnitTypeId.OVERSEER}
+        ]
         if not air_threats and not urgent_spore:
             return
 
@@ -2634,10 +2840,19 @@ class EconomyManager:
         if self.bot.can_afford(UnitTypeId.SPORECRAWLER):
             for th in self.bot.townhalls.ready:
                 # 기지 근처 10거리 내에 포자 촉수가 없으면 건설
-                spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(10, th)
-                if not spores.exists and self.bot.already_pending(UnitTypeId.SPORECRAWLER) == 0:
+                spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(
+                    10, th
+                )
+                if (
+                    not spores.exists
+                    and self.bot.already_pending(UnitTypeId.SPORECRAWLER) == 0
+                ):
                     # ★ 안전한 위치에서 건설 (적이 없는 곳) ★
-                    enemies_near_base = self.bot.enemy_units.closer_than(10, th) if self.bot.enemy_units else []
+                    enemies_near_base = (
+                        self.bot.enemy_units.closer_than(10, th)
+                        if self.bot.enemy_units
+                        else []
+                    )
                     if len(enemies_near_base) > 3:
                         continue  # 적이 너무 많으면 이 기지 건설 스킵 (일꾼 안전 우선)
 
@@ -2652,17 +2867,29 @@ class EconomyManager:
                         worker = workers.closest_to(pos)
                         if worker:
                             self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, pos))
-                            self.logger.info(f"[DEFENSE] [*] Anti-Air Detected! Building Spore Crawler at {th.position} [*]")
-                            return # 한 번에 하나씩
+                            self.logger.info(
+                                f"[DEFENSE] [*] Anti-Air Detected! Building Spore Crawler at {th.position} [*]"
+                            )
+                            return  # 한 번에 하나씩
 
         # 2. 히드라리스크 덴 테크 올리기 (지상 대공 핵심)
         if hasattr(self.bot, "structures"):
             hydra_den = self.bot.structures(UnitTypeId.HYDRALISKDEN)
-            if not hydra_den.exists and self.bot.already_pending(UnitTypeId.HYDRALISKDEN) == 0:
-                if self.bot.structures(UnitTypeId.LAIR).ready.exists or self.bot.structures(UnitTypeId.HIVE).ready.exists:
-                     if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
-                        await self.bot.build(UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first)
-                        self.logger.info(f"[DEFENSE] [*] Anti-Air Tech: Building Hydralisk Den! [*]")
+            if (
+                not hydra_den.exists
+                and self.bot.already_pending(UnitTypeId.HYDRALISKDEN) == 0
+            ):
+                if (
+                    self.bot.structures(UnitTypeId.LAIR).ready.exists
+                    or self.bot.structures(UnitTypeId.HIVE).ready.exists
+                ):
+                    if self.bot.can_afford(UnitTypeId.HYDRALISKDEN):
+                        await self.bot.build(
+                            UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first
+                        )
+                        self.logger.info(
+                            f"[DEFENSE] [*] Anti-Air Tech: Building Hydralisk Den! [*]"
+                        )
 
     async def _check_maynarding(self) -> None:
         """
@@ -2687,13 +2914,13 @@ class EconomyManager:
             ready_bases = self.bot.townhalls.ready.filter(
                 lambda th: th.assigned_harvesters > 12
             )
-            
+
             if not ready_bases.exists:
                 continue
 
             # Closest source base
             source_base = ready_bases.closest_to(target_hatch)
-            
+
             # ★ SAFE MAYNARDING: 적정 인원만 이동 + 안전 체크 ★
             workers = self.bot.workers.filter(
                 lambda w: w.distance_to(source_base) < 10 and w.is_gathering
@@ -2703,7 +2930,11 @@ class EconomyManager:
                 continue
 
             # ★ 안전 체크: 목적지 근처 적 확인 ★
-            enemies_near_target = self.bot.enemy_units.closer_than(15, target_hatch.position) if self.bot.enemy_units else []
+            enemies_near_target = (
+                self.bot.enemy_units.closer_than(15, target_hatch.position)
+                if self.bot.enemy_units
+                else []
+            )
             if len(enemies_near_target) > 0:
                 continue  # 적이 있으면 이동 취소
 
@@ -2714,17 +2945,27 @@ class EconomyManager:
             if transfer_count < 2:
                 continue  # 이동할 일꾼이 2명 미만이면 스킵
 
-            transfer_group = workers.take(transfer_count) if workers.amount >= transfer_count else workers
+            transfer_group = (
+                workers.take(transfer_count)
+                if workers.amount >= transfer_count
+                else workers
+            )
 
             # ★ 미네랄 gather 명령으로 이동 (도착 후 바로 채취) ★
-            target_minerals = self.bot.mineral_field.closer_than(10, target_hatch.position)
+            target_minerals = self.bot.mineral_field.closer_than(
+                10, target_hatch.position
+            )
             for worker in transfer_group:
                 if target_minerals:
-                    self.bot.do(worker.gather(target_minerals.closest_to(target_hatch.position)))
+                    self.bot.do(
+                        worker.gather(target_minerals.closest_to(target_hatch.position))
+                    )
                 else:
                     self.bot.do(worker.move(target_hatch.position))
 
-            self.logger.info(f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base (safe)")
+            self.logger.info(
+                f"[ECONOMY] Maynarding: {len(transfer_group)} workers to new base (safe)"
+            )
             self.transferred_hatcheries.add(target_hatch.tag)
 
     # ========================================
@@ -2741,19 +2982,21 @@ class EconomyManager:
         second_hatch = None
         for h in hatcheries:
             if h.position != self.bot.start_location:
-                 second_hatch = h
-                 break
-        
+                second_hatch = h
+                break
+
         if second_hatch:
             # 건설 시작 시간 추정 (현재 시간 - 진행된 시간)
             # build_time = 71s (Standard speed)
             start_time = self.bot.time - (second_hatch.build_progress * 71)
             self.first_expansion_time = start_time
             self.first_expansion_reported = True
-            
+
             # 로그 출력
             status = "SUCCESS" if start_time < 70 else "DELAYED"
-            self.logger.info(f"[ECONOMY_TELEMETRY] First Expansion Started at {start_time:.2f}s ({status})")
+            self.logger.info(
+                f"[ECONOMY_TELEMETRY] First Expansion Started at {start_time:.2f}s ({status})"
+            )
 
     async def _manage_expansion_blocking(self):
         """
@@ -2761,61 +3004,78 @@ class EconomyManager:
         0:50초에 드론 1기를 적 앞마당으로 보내서 건설을 방해합니다.
         """
         game_time = self.bot.time
-        
+
         # 1. 종료 조건
         if game_time > self.expansion_block_start_time + self.expansion_block_duration:
-             if self.expansion_block_active and self.expansion_block_worker_tag:
-                 # 복귀
-                 worker = self.bot.units.find_by_tag(self.expansion_block_worker_tag)
-                 if worker:
-                     self.bot.do(worker.gather(self.bot.mineral_field.closest_to(self.bot.start_location)))
-                 self.expansion_block_active = False
-                 self.expansion_block_worker_tag = None
-             return
+            if self.expansion_block_active and self.expansion_block_worker_tag:
+                # 복귀
+                worker = self.bot.units.find_by_tag(self.expansion_block_worker_tag)
+                if worker:
+                    self.bot.do(
+                        worker.gather(
+                            self.bot.mineral_field.closest_to(self.bot.start_location)
+                        )
+                    )
+                self.expansion_block_active = False
+                self.expansion_block_worker_tag = None
+            return
 
         # 2. 시작 조건 (0:50 ~ 1:00 사이)
         if game_time < self.expansion_block_start_time:
             return
 
         if not self.expansion_block_active:
-             # 일꾼 선발
-             if not hasattr(self.bot, "workers") or not self.bot.workers:
-                 return
-             
-             candidates = self.bot.workers.filter(lambda w: w.is_carrying_minerals or w.is_gathering)
-             if candidates:
-                 worker = candidates.first
-                 self.expansion_block_worker_tag = worker.tag
-                 self.expansion_block_active = True
-                 self.logger.info(f"[ECONOMY] Sending Expansion Blocker Drone (Tag: {worker.tag})")
-        
+            # 일꾼 선발
+            if not hasattr(self.bot, "workers") or not self.bot.workers:
+                return
+
+            candidates = self.bot.workers.filter(
+                lambda w: w.is_carrying_minerals or w.is_gathering
+            )
+            if candidates:
+                worker = candidates.first
+                self.expansion_block_worker_tag = worker.tag
+                self.expansion_block_active = True
+                self.logger.info(
+                    f"[ECONOMY] Sending Expansion Blocker Drone (Tag: {worker.tag})"
+                )
+
         # 3. 방해 실행
         if self.expansion_block_active and self.expansion_block_worker_tag:
-             worker = self.bot.units.find_by_tag(self.expansion_block_worker_tag)
-             if not worker:
-                 self.expansion_block_active = False
-                 return
-             
-             # 적 앞마당 찾기
-             target_loc = None
-             if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
-                 enemy_main = self.bot.enemy_start_locations[0]
-                 if hasattr(self.bot, "expansion_locations_list"):
-                     expansions = [loc for loc in self.bot.expansion_locations_list if loc != enemy_main]
-                     if expansions:
-                         target_loc = min(expansions, key=lambda p: p.distance_to(enemy_main))
-             
-             if target_loc:
-                 if worker.distance_to(target_loc) > 5:
-                     self.bot.do(worker.move(target_loc))
-                 else:
-                     nearby_enemies = self.bot.enemy_units.closer_than(5, worker)
-                     if nearby_enemies:
-                         self.bot.do(worker.attack(nearby_enemies.closest_to(worker)))
-                     else:
-                         # 패트롤
-                         p1 = target_loc.offset((2, 2))
-                         self.bot.do(worker.patrol(p1))
+            worker = self.bot.units.find_by_tag(self.expansion_block_worker_tag)
+            if not worker:
+                self.expansion_block_active = False
+                return
+
+            # 적 앞마당 찾기
+            target_loc = None
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
+                enemy_main = self.bot.enemy_start_locations[0]
+                if hasattr(self.bot, "expansion_locations_list"):
+                    expansions = [
+                        loc
+                        for loc in self.bot.expansion_locations_list
+                        if loc != enemy_main
+                    ]
+                    if expansions:
+                        target_loc = min(
+                            expansions, key=lambda p: p.distance_to(enemy_main)
+                        )
+
+            if target_loc:
+                if worker.distance_to(target_loc) > 5:
+                    self.bot.do(worker.move(target_loc))
+                else:
+                    nearby_enemies = self.bot.enemy_units.closer_than(5, worker)
+                    if nearby_enemies:
+                        self.bot.do(worker.attack(nearby_enemies.closest_to(worker)))
+                    else:
+                        # 패트롤
+                        p1 = target_loc.offset((2, 2))
+                        self.bot.do(worker.patrol(p1))
 
     # ========================================
     # ★★★ Phase 18: Gas Optimization ★★★
@@ -2849,7 +3109,9 @@ class EconomyManager:
         # 2. 가스가 넘치고 미네랄이 부족하면 가스 일꾼 감소
         # ★ 임계값 하향: 500 → 300 (가스 뱅킹 방지 강화)
         elif gas > 300 and minerals < 400:
-            if getattr(self.bot, "time", 0) >= 60:  # ★ FIX: 120→60 (1분부터 가스 감소 허용)
+            if (
+                getattr(self.bot, "time", 0) >= 60
+            ):  # ★ FIX: 120→60 (1분부터 가스 감소 허용)
                 await self._reduce_gas_workers()
 
         # 3. 가스가 극심하게 넘치면 (500+) 미네랄 상태와 무관하게 감소
@@ -2875,7 +3137,9 @@ class EconomyManager:
                     self.bot.do(worker.gather(extractor))
                     # ★ Phase 39: return 제거 — 모든 부족한 익스트랙터 채우기
                     # (이전: 첫 번째 익스트랙터만 보충 후 종료)
-                    self.logger.info(f"[ECONOMY] Boosting gas workers (Gas: {self.bot.vespene})")
+                    self.logger.info(
+                        f"[ECONOMY] Boosting gas workers (Gas: {self.bot.vespene})"
+                    )
 
     async def _reduce_gas_workers(self):
         """가스 일꾼 감소 (가스 일꾼 → 미네랄 일꾼)
@@ -2924,7 +3188,9 @@ class EconomyManager:
                         moved += 1
 
         if moved > 0:
-            self.logger.info(f"[ECONOMY] Reduced {moved} gas workers (Gas: {gas}, Min: {self.bot.minerals}, min_per_ext: {min_workers})")
+            self.logger.info(
+                f"[ECONOMY] Reduced {moved} gas workers (Gas: {gas}, Min: {self.bot.minerals}, min_per_ext: {min_workers})"
+            )
 
     async def _prevent_gas_overflow(self):
         """
@@ -2941,7 +3207,9 @@ class EconomyManager:
             return
 
         # 가스가 넘침 - 가스 일꾼을 미네랄로 이동
-        self.logger.info(f"[ECONOMY] [*] GAS OVERFLOW: {gas} (moving gas workers to minerals) [*]")
+        self.logger.info(
+            f"[ECONOMY] [*] GAS OVERFLOW: {gas} (moving gas workers to minerals) [*]"
+        )
 
         extractors = self.bot.gas_buildings.ready
 
@@ -2983,7 +3251,9 @@ class EconomyManager:
         self.gas_boost_start_time = self.bot.time
         self.gas_boost_duration = duration
 
-        self.logger.info(f"[ECONOMY] [*] GAS BOOST MODE ACTIVATED (duration: {duration}s) [*]")
+        self.logger.info(
+            f"[ECONOMY] [*] GAS BOOST MODE ACTIVATED (duration: {duration}s) [*]"
+        )
 
     def disable_gas_boost_mode(self):
         """가스 부스트 모드 비활성화"""
@@ -3004,8 +3274,12 @@ class EconomyManager:
             "gas_workers": total_gas_workers,
             "gas_boost_mode": self.gas_boost_mode,
             "optimal_gas_timing": self.gas_timing_by_race.get(
-                str(self.bot.enemy_race).split(".")[-1] if hasattr(self.bot, "enemy_race") else "Unknown",
-                90
+                (
+                    str(self.bot.enemy_race).split(".")[-1]
+                    if hasattr(self.bot, "enemy_race")
+                    else "Unknown"
+                ),
+                90,
             ),
         }
 
@@ -3086,22 +3360,26 @@ class EconomyManager:
             ideal_workers = mineral_patches * 2 + nearby_gas * 3
 
             # 현재 할당된 일꾼 수
-            current_workers = th.assigned_harvesters if hasattr(th, "assigned_harvesters") else 0
+            current_workers = (
+                th.assigned_harvesters if hasattr(th, "assigned_harvesters") else 0
+            )
 
             # 이상적 일꾼 수 상한 (16 광물 + 6 가스 = 최대 22)
             ideal_workers = min(ideal_workers, 22)
 
-            base_info.append({
-                "townhall": th,
-                "ideal": ideal_workers,
-                "current": current_workers,
-                "deficit": ideal_workers - current_workers,
-                "mineral_count": mineral_patches,
-            })
+            base_info.append(
+                {
+                    "townhall": th,
+                    "ideal": ideal_workers,
+                    "current": current_workers,
+                    "deficit": ideal_workers - current_workers,
+                    "mineral_count": mineral_patches,
+                }
+            )
 
         # 과잉 기지와 부족 기지 분류
         surplus_bases = [b for b in base_info if b["deficit"] < -1]  # 과잉
-        deficit_bases = [b for b in base_info if b["deficit"] > 1]   # 부족
+        deficit_bases = [b for b in base_info if b["deficit"] > 1]  # 부족
 
         if not surplus_bases or not deficit_bases:
             return
@@ -3150,9 +3428,11 @@ class EconomyManager:
 
                 if transferred > 0:
                     game_time = getattr(self.bot, "time", 0.0)
-                    self.logger.info(f"[ECONOMY] [{int(game_time)}s] 일꾼 재분배: "
+                    self.logger.info(
+                        f"[ECONOMY] [{int(game_time)}s] 일꾼 재분배: "
                         f"{transferred}기 이전 "
-                        f"({source_th.position} -> {target_th.position})")
+                        f"({source_th.position} -> {target_th.position})"
+                    )
 
     def get_worker_distribution_stats(self) -> dict:
         """
@@ -3174,7 +3454,9 @@ class EconomyManager:
                 nearby_gas = self.bot.gas_buildings.ready.closer_than(10, th).amount
 
             ideal = min(mineral_patches * 2 + nearby_gas * 3, 22)
-            current = th.assigned_harvesters if hasattr(th, "assigned_harvesters") else 0
+            current = (
+                th.assigned_harvesters if hasattr(th, "assigned_harvesters") else 0
+            )
 
             stats[f"base_{i}"] = {
                 "position": str(th.position),
@@ -3182,8 +3464,11 @@ class EconomyManager:
                 "current_workers": current,
                 "mineral_patches": mineral_patches,
                 "gas_geysers": nearby_gas,
-                "status": "optimal" if abs(current - ideal) <= 1
-                          else ("surplus" if current > ideal else "deficit"),
+                "status": (
+                    "optimal"
+                    if abs(current - ideal) <= 1
+                    else ("surplus" if current > ideal else "deficit")
+                ),
             }
 
         return stats

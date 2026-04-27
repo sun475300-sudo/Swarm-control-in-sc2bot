@@ -137,11 +137,11 @@ class IntegrationHub:
 
         return {
             "advantage": advantage,
-            "recommendation": "ATTACK"
-            if advantage > 1.2
-            else "RETREAT"
-            if advantage < 0.8
-            else "HOLD",
+            "recommendation": (
+                "ATTACK"
+                if advantage > 1.2
+                else "RETREAT" if advantage < 0.8 else "HOLD"
+            ),
             "analysis": self._get_recommendation_text(advantage),
         }
 
@@ -204,11 +204,16 @@ class IntegrationHub:
         return [(cx, cy)] * count
 
     def generate_test_script(self, output_path: Path) -> str:
-        script = f'''#!/usr/bin/env python3
+        # Note: this is a *literal* template, not an f-string — the generated
+        # script is a separate Python file that will run in its own scope.
+        script = '''#!/usr/bin/env python3
 """Phase 66 Integration Test Script"""
 
+import json
 import sys
-sys.path.insert(0, str(__file__).parent.parent)
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from integration_hub import IntegrationHub
 
@@ -217,22 +222,22 @@ def main():
     print("=== System Status ===")
     status = hub.get_status()
     print(json.dumps(status, indent=2))
-    
+
     print("\\n=== Benchmark ===")
     results = hub.run_benchmark()
     print(json.dumps(results, indent=2))
-    
+
     print("\\n=== Combat Analysis ===")
     my_units = [(50, 100, 10, 5), (80, 100, 12, 6)]
     enemy_units = [(45, 100, 11, 5), (60, 100, 9, 4)]
     combat = hub.combat_analysis(my_units, enemy_units)
     print(json.dumps(combat, indent=2))
-    
+
     print("\\n=== Formation Plan ===")
     positions = hub.formation_plan(10, "circle")
     print(f"Generated {len(positions)} positions")
-    
-    print("\\n✅ All tests passed!")
+
+    print("\\n[OK] All tests passed!")
 
 if __name__ == "__main__":
     main()

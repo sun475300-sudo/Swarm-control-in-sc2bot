@@ -51,11 +51,21 @@ class PotentialFieldController:
 
         # ★ NEW: Splash Damage Threats ★
         self.splash_unit_types = {
-            "THOR", "ARCHON", "WIDOWMINE", "WIDOWMINEBURROWED", "RAVAGER", 
-            "INFESTOR", "VIPER", "HIGHTEMPLAR", "LIBERATOR", "LIBERATORAG", "LURKERMP", "LURKER"
+            "THOR",
+            "ARCHON",
+            "WIDOWMINE",
+            "WIDOWMINEBURROWED",
+            "RAVAGER",
+            "INFESTOR",
+            "VIPER",
+            "HIGHTEMPLAR",
+            "LIBERATOR",
+            "LIBERATORAG",
+            "LURKERMP",
+            "LURKER",
         }
-        self.splash_weight = 2.5 # Strong repulsion from splash units
-        self.splash_radius = 9.0 # Keep safe distance
+        self.splash_weight = 2.5  # Strong repulsion from splash units
+        self.splash_radius = 9.0  # Keep safe distance
 
     def get_repulsion_vector(
         self,
@@ -130,7 +140,7 @@ class PotentialFieldController:
                     splash_strength = strength * self.splash_weight
                     repulsion_x += (dx / (dist + 0.1)) * splash_strength
                     repulsion_y += (dy / (dist + 0.1)) * splash_strength
-            except (AttributeError, ZeroDivisionError) as e:
+            except (AttributeError, ZeroDivisionError):
                 # Unit position or attribute access failed, skip this unit
                 continue
 
