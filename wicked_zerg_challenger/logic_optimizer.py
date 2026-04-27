@@ -442,12 +442,16 @@ class LogicOptimizer:
     def apply_strategy_improvements(self, difficulty):
         """전략 로직 개선: 난이도별 맞춤형 전략 적용"""
         self.logger.info(f"Applying strategy improvements for {difficulty.name}...")
-        
+
         # 난이도가 높을수록 더 공격적인 빌드 및 정찰 빈도 증가
         from sc2.data import Difficulty
         if difficulty in [Difficulty.CheatVision, Difficulty.CheatMoney, Difficulty.CheatInsane]:
             if hasattr(self.bot, "strategy_manager"):
-                self.bot.strategy_manager.current_mode = "aggressive"
+                # current_mode is a StrategyMode enum elsewhere
+                # (combat_manager.py:248 does `.value`, bot_step_integration.py:2433 does `.name`).
+                # Assigning a raw "aggressive" string crashed those call sites.
+                from strategy_manager import StrategyMode
+                self.bot.strategy_manager.current_mode = StrategyMode.AGGRESSIVE
                 
     def optimize_all(self):
         """모든 로직 최적화 실행"""
