@@ -1,0 +1,15 @@
+# ═══════════════════════════════════════════════
+# Development & test-only dependencies
+# ═══════════════════════════════════════════════
+# Install via: pip install -r requirements-dev.txt
+#
+# pytest is loose-pinned to >=8 because the suite uses class-style
+# async tests (`async def test_...` in `class Test...`) which depend
+# on pytest-asyncio's auto mode (configured in pytest.ini).
+# Without pytest-asyncio installed, ~80 async tests collected from
+# tests/ silently fail with "async def functions are not natively
+# supported." See tests/test_resource_manager.py for an example.
+
+pytest>=8.0
+pytest-asyncio>=0.23
+pytest-timeout>=2.2
