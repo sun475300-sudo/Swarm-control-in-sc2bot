@@ -83,10 +83,10 @@ def kill_all_sc2_processes():
     """모든 SC2 프로세스 강제 종료"""
     try:
         subprocess.run(
-            ["taskkill", "/F", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
+            ["taskkill", "/", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
         )
         subprocess.run(
-            ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
+            ["taskkill", "/", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(2)
     except Exception as e:

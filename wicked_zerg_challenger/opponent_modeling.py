@@ -603,7 +603,7 @@ class OpponentModeling:
         self.save_models()
 
         self.logger.info(
-            f"[GAME_END] Opponent model updated:\n"
+            "[GAME_END] Opponent model updated:\n"
             f"  Opponent: {self.current_opponent_id}\n"
             f"  Style: {self.current_game_history.opponent_style}\n"
             f"  Strategy: {self.current_game_history.detected_strategy}\n"

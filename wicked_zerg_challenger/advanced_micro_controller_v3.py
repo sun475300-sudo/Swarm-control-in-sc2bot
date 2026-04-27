@@ -22,6 +22,9 @@ from typing import Dict, Optional, Set
 
 from utils.logger import get_logger
 
+# Module-level logger for use in @staticmethod helpers (no self).
+_module_logger = get_logger("AdvancedMicroController")
+
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.ability_id import AbilityId
@@ -1193,7 +1196,8 @@ class AdvancedMicroControllerV3:
                 if hasattr(result, "__await__"):
                     await result
             except Exception as e:
-                self.logger.debug(f"action suppressed: {e}")
+                # @staticmethod has no self; use module-level logger.
+                _module_logger.debug(f"action suppressed: {e}")
 
     async def on_step(self, iteration: int):
         """

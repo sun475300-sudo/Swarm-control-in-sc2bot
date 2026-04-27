@@ -647,7 +647,7 @@ class CombatManager:
             if locked_units and iteration % 220 == 0:  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
-                    f"(excluded from combat reassignment)"
+                    "(excluded from combat reassignment)"
                 )
 
         # Assign units to tasks (exclude locked units)
@@ -3020,20 +3020,6 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
-
         for th in self.bot.townhalls:
             # 일반 감지 거리
             base_range = 25 if game_time >= 180 else 30  # 초반 더 민감
@@ -3734,7 +3720,7 @@ class CombatManager:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:

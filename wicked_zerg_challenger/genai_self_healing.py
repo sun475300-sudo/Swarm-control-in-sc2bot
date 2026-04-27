@@ -116,7 +116,7 @@ class GenAISelfHealing:
         self, error: Exception, context: Dict, source_code: Optional[str]
     ) -> str:
         """에러 분석 프롬프트 생성"""
-        prompt = f"""
+        prompt = """
 에러 분석 및 패치 생성을 요청합니다.
 
 에러 정보:
@@ -127,7 +127,7 @@ class GenAISelfHealing:
 
 """
         if source_code:
-            prompt += f"""
+            prompt += """
 문제 소스 코드:
 ```python
 {source_code}

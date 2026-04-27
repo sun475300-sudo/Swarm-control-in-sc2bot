@@ -251,12 +251,12 @@ class TournamentRunner:
                 import subprocess
 
                 subprocess.run(
-                    ["taskkill", "/f", "/im", "SC2_x64.exe"],
+                    ["taskkill", "/", "/im", "SC2_x64.exe"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
                 subprocess.run(
-                    ["taskkill", "/f", "/im", "SC2.exe"],
+                    ["taskkill", "/", "/im", "SC2.exe"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
@@ -286,7 +286,7 @@ class TournamentRunner:
         errors = sum(1 for r in self.results if r.get("error"))
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        lines.append(f"--- OVERALL ---")
+        lines.append("--- OVERALL ---")
         lines.append(f"  Total: {total} games")
         lines.append(f"  Wins: {wins} | Losses: {losses} | Errors: {errors}")
         lines.append(f"  Win Rate: {win_rate:.1f}%")

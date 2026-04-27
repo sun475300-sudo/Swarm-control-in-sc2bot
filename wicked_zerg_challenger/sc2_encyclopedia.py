@@ -387,7 +387,7 @@ def get_encyclopedia_report(unit_name: str) -> str:
 
     tech = get_tech_path(unit_name)
 
-    report = f"""
+    report = """
 === {info['name']} ({unit_name}) ===
 비용: {info['cost'][0]}광/{info['cost'][1]}가스/{info['cost'][2]}보급
 체력: {info['hp']} | 방어: {info['armor']} | DPS: {info['dps']} | 속도: {info['speed']}
