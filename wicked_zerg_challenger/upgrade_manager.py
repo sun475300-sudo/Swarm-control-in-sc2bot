@@ -314,6 +314,20 @@ class EvolutionUpgradeManager:
             priorities.append("air_attack")
             priorities.append("air_armor")
 
+        # ★★★ Phase 18: Race modifier 적용 ★★★
+        # 동일 lane이 여러 번 등장하는 patterned 우선순위에 종족 modifier로
+        # 가중치를 적용하여 정렬 안정성을 유지하면서 우선순위를 살짝 조정.
+        if race_modifiers:
+
+            def _lane_weight(lane: str) -> float:
+                # ground melee/armor/missile에 대해서만 modifier가 정의되어 있다.
+                return float(race_modifiers.get(lane, 1.0))
+
+            # 안정 정렬: weight가 큰 항목을 앞으로. 동일 weight면 원래 순서 유지.
+            priorities = sorted(
+                priorities, key=_lane_weight, reverse=True
+            )
+
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []
         seen_upgrades = set()
