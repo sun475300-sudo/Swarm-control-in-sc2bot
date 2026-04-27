@@ -52,7 +52,12 @@ class ProxyDetector:
         if building_type.lower() in ["pylon", "gateway", "forge", "barracks"]:
             if not is_near_expansion and not is_near_start:
                 result.is_proxy = True
-                result.confidence = 0.8
+                # 적 본진에서 멀리 떨어질수록(>30) 프록시 신뢰도 상향
+                # (cannon rush/forge proxy 등은 통상 본진에서 멀리 배치됨)
+                if distance_to_base > 30:
+                    result.confidence = 0.95
+                else:
+                    result.confidence = 0.8
                 result.proxy_type = self._classify_proxy(building_type)
                 result.location = position
                 result.threat_level = "HIGH"
