@@ -24,22 +24,23 @@ SC2BOT_SOURCE = "https://sc2bot.io/game-engine"
 CONTENT_TYPE = "application/json"
 
 # Event type constants
-EVENT_GAME_STARTED  = "com.sc2bot.game.started"
-EVENT_GAME_ENDED    = "com.sc2bot.game.ended"
-EVENT_UNIT_KILLED   = "com.sc2bot.unit.killed"
+EVENT_GAME_STARTED = "com.sc2bot.game.started"
+EVENT_GAME_ENDED = "com.sc2bot.game.ended"
+EVENT_UNIT_KILLED = "com.sc2bot.unit.killed"
 EVENT_STRATEGY_PRED = "com.sc2bot.strategy.predicted"
 
 
-def create_sc2_event(event_type: str, data: Dict[str, Any],
-                     subject: Optional[str] = None) -> CloudEvent:
+def create_sc2_event(
+    event_type: str, data: Dict[str, Any], subject: Optional[str] = None
+) -> CloudEvent:
     """Create a CloudEvent for an SC2 game occurrence."""
     attributes = {
-        "type":            event_type,
-        "source":          SC2BOT_SOURCE,
-        "id":              str(uuid.uuid4()),
-        "time":            datetime.now(timezone.utc).isoformat(),
+        "type": event_type,
+        "source": SC2BOT_SOURCE,
+        "id": str(uuid.uuid4()),
+        "time": datetime.now(timezone.utc).isoformat(),
         "datacontenttype": CONTENT_TYPE,
-        "specversion":     "1.0",
+        "specversion": "1.0",
     }
     if subject:
         attributes["subject"] = subject
@@ -63,8 +64,12 @@ def publish_kafka(event: CloudEvent, producer: KafkaProducer, topic: str) -> Non
     """Publish CloudEvent via Kafka binary binding."""
     headers, value = kafka_to_binary(event)
     kafka_headers = [(k, v.encode() if isinstance(v, str) else v) for k, v in headers]
-    producer.send(topic, value=value.encode() if isinstance(value, str) else value,
-                  headers=kafka_headers, key=event["id"].encode())
+    producer.send(
+        topic,
+        value=value.encode() if isinstance(value, str) else value,
+        headers=kafka_headers,
+        key=event["id"].encode(),
+    )
     logger.info(f"Published {event['type']} to Kafka topic {topic}")
 
 
@@ -88,12 +93,17 @@ class SC2EventProducer:
         publish_kafka(event, self.kafka_producer, "sc2-game-events")
         return event
 
-    def unit_killed(self, game_id: str, unit_type: str, killed_by: str,
-                    position: Dict[str, float]) -> CloudEvent:
+    def unit_killed(
+        self, game_id: str, unit_type: str, killed_by: str, position: Dict[str, float]
+    ) -> CloudEvent:
         event = create_sc2_event(
             EVENT_UNIT_KILLED,
-            data={"gameId": game_id, "unitType": unit_type,
-                  "killedBy": killed_by, "position": position},
+            data={
+                "gameId": game_id,
+                "unitType": unit_type,
+                "killedBy": killed_by,
+                "position": position,
+            },
             subject=f"{game_id}/{unit_type}",
         )
         publish_kafka(event, self.kafka_producer, "sc2-unit-events")

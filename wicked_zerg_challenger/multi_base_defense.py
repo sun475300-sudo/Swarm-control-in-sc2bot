@@ -33,8 +33,8 @@ class MultiBaseDefense:
         self.defense_check_interval = 44  # ~2초마다 체크
 
         # 방어 건물 목표 (기지별)
-        self.spine_per_base = 2   # 기지당 스파인 크롤러
-        self.spore_per_base = 1   # 기지당 포자 촉수
+        self.spine_per_base = 2  # 기지당 스파인 크롤러
+        self.spore_per_base = 1  # 기지당 포자 촉수
 
         # 퀸 할당 (각 기지마다)
         self.queens_per_base = 2  # 기지당 퀸 2마리
@@ -84,8 +84,12 @@ class MultiBaseDefense:
             base_tag = th.tag
 
             # 기지 주변 방어 구조물 카운트
-            nearby_spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(12, th)
-            nearby_spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(12, th)
+            nearby_spines = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(
+                12, th
+            )
+            nearby_spores = self.bot.structures(UnitTypeId.SPORECRAWLER).closer_than(
+                12, th
+            )
             nearby_queens = self.bot.units(UnitTypeId.QUEEN).closer_than(15, th)
 
             # 위협 레벨 계산
@@ -143,7 +147,7 @@ class MultiBaseDefense:
         # 기지 우선순위 정렬 (위협 레벨 높은 순)
         sorted_bases = sorted(
             self.base_defense_status.items(),
-            key=lambda x: (-x[1]["threat_level"], x[1]["spine_count"])
+            key=lambda x: (-x[1]["threat_level"], x[1]["spine_count"]),
         )
 
         for base_tag, status in sorted_bases:
@@ -176,7 +180,9 @@ class MultiBaseDefense:
             try:
                 await self.bot.build(UnitTypeId.SPINECRAWLER, near=placement)
                 if iteration % 100 == 0:
-                    self.logger.info(f"[{int(self.bot.time)}s] Building Spine Crawler at expansion")
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] Building Spine Crawler at expansion"
+                    )
             except Exception:
                 pass
 
@@ -197,7 +203,9 @@ class MultiBaseDefense:
         try:
             await self.bot.build(UnitTypeId.SPORECRAWLER, near=placement)
             if iteration % 100 == 0:
-                self.logger.info(f"[{int(self.bot.time)}s] Building Spore Crawler at expansion")
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] Building Spore Crawler at expansion"
+                )
         except Exception:
             pass
 
@@ -261,8 +269,13 @@ class MultiBaseDefense:
             # ★ NEW: 먼 곳의 idle 군대도 위협 기지로 이동 (중간 이상 위협 시)
             if threat_level >= 2:
                 idle_army = self.bot.units.idle.exclude_type(
-                    [UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA,
-                     UnitTypeId.QUEEN, UnitTypeId.OVERSEER]
+                    [
+                        UnitTypeId.DRONE,
+                        UnitTypeId.OVERLORD,
+                        UnitTypeId.LARVA,
+                        UnitTypeId.QUEEN,
+                        UnitTypeId.OVERSEER,
+                    ]
                 ).filter(lambda u: u.can_attack and u.distance_to(base_pos) > 20)
 
                 for unit in idle_army:
@@ -271,16 +284,22 @@ class MultiBaseDefense:
 
             # 2. 심각한 위협이면 일꾼도 투입 (threat_level >= 3)
             if threat_level >= 3:
-                nearby_drones = self.bot.units(UnitTypeId.DRONE).closer_than(8, base_pos)
+                nearby_drones = self.bot.units(UnitTypeId.DRONE).closer_than(
+                    8, base_pos
+                )
                 drone_count = min(nearby_drones.amount, 5)  # 최대 5마리만
 
                 for drone in nearby_drones[:drone_count]:
                     # ★ CRITICAL: 드론이 기지에서 12거리 이상 벗어나지 않도록 체크 ★
                     if drone.distance_to(base_pos) > 12:
                         # 너무 멀리 나갔으면 복귀
-                        nearby_minerals = self.bot.mineral_field.closer_than(10, base_pos)
+                        nearby_minerals = self.bot.mineral_field.closer_than(
+                            10, base_pos
+                        )
                         if nearby_minerals:
-                            self.bot.do(drone.gather(nearby_minerals.closest_to(base_pos)))
+                            self.bot.do(
+                                drone.gather(nearby_minerals.closest_to(base_pos))
+                            )
                         continue
 
                     closest_enemy = nearby_enemies.closest_to(drone)
@@ -306,13 +325,16 @@ class MultiBaseDefense:
     def get_defended_bases(self) -> int:
         """방어 구조물이 있는 기지 수 반환"""
         return sum(
-            1 for status in self.base_defense_status.values()
+            1
+            for status in self.base_defense_status.values()
             if status["spine_count"] > 0 or status["spore_count"] > 0
         )
 
     def get_bases_under_attack(self) -> int:
         """공격 받는 기지 수 반환"""
-        return sum(1 for status in self.base_defense_status.values() if status["under_attack"])
+        return sum(
+            1 for status in self.base_defense_status.values() if status["under_attack"]
+        )
 
     async def _build_forward_spine(self, game_time: float, iteration: int):
         """

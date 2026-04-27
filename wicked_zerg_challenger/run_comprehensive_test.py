@@ -32,8 +32,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -81,16 +83,16 @@ def run_single_game(difficulty, game_num, total_games):
             return None
 
         result = run_game(
-            map_instance,
-            [bot, Computer(opponent_race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
         )
 
         # Get result
         if result is not None:
             # run_game returns Result directly, not a list
-            is_victory = (result == Result.Victory)
-            logger.info(f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}")
+            is_victory = result == Result.Victory
+            logger.info(
+                f"\n[RESULT] Game #{game_num}: {'WIN' if is_victory else 'LOSS'}"
+            )
             return is_victory
         else:
             logger.info(f"\n[RESULT] Game #{game_num}: UNKNOWN")
@@ -99,6 +101,7 @@ def run_single_game(difficulty, game_num, total_games):
     except Exception as e:
         logger.error(f"[ERROR] Game #{game_num} failed: {e}")
         import traceback
+
         traceback.print_exc()
         return None
 
@@ -157,7 +160,7 @@ def test_difficulty(difficulty, games_per_difficulty=20):
         "total_games": total_completed,
         "win_rate": final_win_rate,
         "duration_minutes": total_duration / 60,
-        "avg_game_time": total_duration / max(total_completed, 1)
+        "avg_game_time": total_duration / max(total_completed, 1),
     }
 
 
@@ -203,13 +206,15 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("  FINAL REPORT")
     logger.info("=" * 70)
-    total_wins = sum(r['wins'] for r in results)
-    total_games = sum(r['total_games'] for r in results)
+    total_wins = sum(r["wins"] for r in results)
+    total_games = sum(r["total_games"] for r in results)
     overall_win_rate = (total_wins / total_games * 100) if total_games > 0 else 0
 
     for result in results:
-        status = "PASS" if result['win_rate'] >= 90 else "FAIL"
-        logger.info(f"  {result['difficulty']:12} | {result['win_rate']:5.1f}% | {result['wins']:2}W-{result['losses']:2}L | {status}")
+        status = "PASS" if result["win_rate"] >= 90 else "FAIL"
+        logger.info(
+            f"  {result['difficulty']:12} | {result['win_rate']:5.1f}% | {result['wins']:2}W-{result['losses']:2}L | {status}"
+        )
 
     logger.info("-" * 70)
     logger.info(f"  Overall Win Rate: {overall_win_rate:.1f}%")
@@ -223,7 +228,7 @@ def main():
         "total_wins": total_wins,
         "total_games": total_games,
         "total_duration_minutes": overall_duration / 60,
-        "results": results
+        "results": results,
     }
 
     report_file = "test_results.json"
@@ -233,7 +238,7 @@ def main():
     logger.info(f"\n[SAVED] Results saved to: {report_file}")
 
     # Check if target achieved
-    passed_all = all(r['win_rate'] >= 90 for r in results)
+    passed_all = all(r["win_rate"] >= 90 for r in results)
     if passed_all:
         logger.info("\n[SUCCESS] All difficulties passed with 90%+ win rate!")
     else:

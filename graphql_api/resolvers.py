@@ -15,6 +15,7 @@ from strawberry.scalars import JSON
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
+
 @strawberry.enum
 class MatchResult:
     WIN = "WIN"
@@ -30,6 +31,7 @@ class GamePhase:
 
 
 # ── Types ─────────────────────────────────────────────────────────────────────
+
 
 @strawberry.type
 class PlayerStats:
@@ -110,6 +112,7 @@ _matches: list[dict] = []
 
 # ── Query resolvers ───────────────────────────────────────────────────────────
 
+
 @strawberry.type
 class Query:
     @strawberry.field
@@ -136,9 +139,7 @@ class Query:
         self, player_id: ID, limit: int = 20, offset: int = 0
     ) -> list[MatchRecord]:
         filtered = [m for m in _matches if m["player_id"] == str(player_id)]
-        return [
-            MatchRecord(**m) for m in filtered[offset : offset + limit]
-        ]
+        return [MatchRecord(**m) for m in filtered[offset : offset + limit]]
 
     @strawberry.field
     async def leaderboard(self, limit: int = 10) -> list[LeaderboardEntry]:
@@ -165,6 +166,7 @@ class Query:
 
 # ── Mutation resolvers ────────────────────────────────────────────────────────
 
+
 @strawberry.type
 class Mutation:
     @strawberry.mutation
@@ -180,18 +182,20 @@ class Mutation:
         score: float,
     ) -> MutationResult:
         match_id = str(uuid.uuid4())
-        _matches.append({
-            "match_id": match_id,
-            "player_id": str(player_id),
-            "opponent_id": str(opponent_id),
-            "result": result,
-            "race": race,
-            "map_name": map_name,
-            "game_duration": game_duration,
-            "apm": apm,
-            "score": score,
-            "played_at": datetime.now(timezone.utc),
-        })
+        _matches.append(
+            {
+                "match_id": match_id,
+                "player_id": str(player_id),
+                "opponent_id": str(opponent_id),
+                "result": result,
+                "race": race,
+                "map_name": map_name,
+                "game_duration": game_duration,
+                "apm": apm,
+                "score": score,
+                "played_at": datetime.now(timezone.utc),
+            }
+        )
         return MutationResult(success=True, match_id=match_id, message="Match recorded")
 
     @strawberry.mutation
@@ -207,6 +211,7 @@ class Mutation:
 
 
 # ── Subscription resolvers ────────────────────────────────────────────────────
+
 
 @strawberry.type
 class Subscription:

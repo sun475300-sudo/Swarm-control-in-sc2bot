@@ -8,7 +8,9 @@ import time
 import json
 import requests
 from conductor.client.configuration.configuration import Configuration
-from conductor.client.configuration.settings.authentication_settings import AuthenticationSettings
+from conductor.client.configuration.settings.authentication_settings import (
+    AuthenticationSettings,
+)
 from conductor.client.worker.worker_task import worker_task
 from conductor.client.automator.task_handler import TaskHandler
 from conductor.client.http.models import StartWorkflowRequest
@@ -81,6 +83,7 @@ SC2_CICD_WORKFLOW = {
 
 # ---- Task Worker Implementations ----
 
+
 @worker_task(task_definition_name="lint_code")
 def lint_code_worker(repo_path: str) -> dict:
     logger.info(f"Linting code at {repo_path}")
@@ -109,7 +112,10 @@ def build_docker_worker(image_name: str, tag: str) -> dict:
 def deploy_bot_worker(image: str, environment: str) -> dict:
     logger.info(f"Deploying {image} to {environment}")
     time.sleep(0.2)
-    return {"bot_url": f"http://sc2bot-{environment}.internal:8080", "status": "running"}
+    return {
+        "bot_url": f"http://sc2bot-{environment}.internal:8080",
+        "status": "running",
+    }
 
 
 @worker_task(task_definition_name="integration_test")
@@ -132,7 +138,9 @@ def register_workflow(conductor_url: str):
         logger.error(f"Workflow registration failed: {resp.status_code} {resp.text}")
 
 
-def start_pipeline(conductor_url: str, repo_path: str, git_sha: str, env: str = "staging"):
+def start_pipeline(
+    conductor_url: str, repo_path: str, git_sha: str, env: str = "staging"
+):
     """Start the CI/CD pipeline workflow."""
     payload = {
         "name": "sc2_bot_cicd_pipeline",

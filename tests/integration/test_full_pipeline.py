@@ -16,6 +16,7 @@ import pytest
 
 # ── Mock SC2 Environment ──────────────────────────────────────────────────────
 
+
 @dataclass
 class MockUnit:
     tag: int
@@ -69,10 +70,18 @@ class MockSC2Env:
             vespene=max(0, self.game_loop * 2 - 200),
             supply_used=n_units + 2,
             supply_cap=14,
-            units=[MockUnit(tag=i, unit_type=105, pos=(random.random() * 100, random.random() * 100))
-                   for i in range(n_units)],
-            enemy_units=[MockUnit(tag=1000 + i, unit_type=48, pos=(150.0, 150.0))
-                         for i in range(n_enemies)],
+            units=[
+                MockUnit(
+                    tag=i,
+                    unit_type=105,
+                    pos=(random.random() * 100, random.random() * 100),
+                )
+                for i in range(n_units)
+            ],
+            enemy_units=[
+                MockUnit(tag=1000 + i, unit_type=48, pos=(150.0, 150.0))
+                for i in range(n_enemies)
+            ],
         )
 
     def _calc_reward(self, obs: MockObservation, action: dict[str, Any]) -> float:
@@ -83,6 +92,7 @@ class MockSC2Env:
 
 
 # ── Minimal pipeline stubs (replace with actual imports) ─────────────────────
+
 
 def obs_encoder(obs: MockObservation) -> dict[str, float]:
     """Encode raw observation into feature vector."""
@@ -99,12 +109,17 @@ def obs_encoder(obs: MockObservation) -> dict[str, float]:
 def action_decoder(features: dict[str, float], obs: MockObservation) -> dict[str, Any]:
     """Decode features into an SC2 action."""
     if features["enemy_count"] > 0 and obs.units:
-        return {"action_type": "attack", "unit_tag": obs.units[0].tag,
-                "target_tag": obs.enemy_units[0].tag if obs.enemy_units else 0}
+        return {
+            "action_type": "attack",
+            "unit_tag": obs.units[0].tag,
+            "target_tag": obs.enemy_units[0].tag if obs.enemy_units else 0,
+        }
     return {"action_type": "noop", "unit_tag": 0, "target_tag": 0}
 
 
-def reward_shaper(raw_reward: float, features: dict[str, float], prev_features: dict[str, float]) -> float:
+def reward_shaper(
+    raw_reward: float, features: dict[str, float], prev_features: dict[str, float]
+) -> float:
     """Apply potential-based reward shaping."""
     mineral_bonus = (features["minerals"] - prev_features.get("minerals", 0)) * 0.001
     supply_penalty = max(0.0, features["supply_ratio"] - 0.9) * -0.05
@@ -113,12 +128,15 @@ def reward_shaper(raw_reward: float, features: dict[str, float], prev_features: 
 
 class MockPPOTrainer:
     """Stub PPO trainer that records transitions."""
+
     def __init__(self) -> None:
         self.transitions: list[dict] = []
         self.update_count = 0
 
     def record(self, obs: dict, action: dict, reward: float, done: bool) -> None:
-        self.transitions.append({"obs": obs, "action": action, "reward": reward, "done": done})
+        self.transitions.append(
+            {"obs": obs, "action": action, "reward": reward, "done": done}
+        )
 
     def update(self) -> dict[str, float]:
         if len(self.transitions) < 8:
@@ -131,11 +149,19 @@ class MockPPOTrainer:
 
 # ── Integration Tests ─────────────────────────────────────────────────────────
 
+
 class TestObsEncoder:
     def test_encodes_all_features(self) -> None:
         obs = MockObservation(minerals=300, vespene=100, supply_used=20, supply_cap=44)
         features = obs_encoder(obs)
-        assert set(features.keys()) == {"minerals", "vespene", "supply_ratio", "unit_count", "enemy_count", "game_loop"}
+        assert set(features.keys()) == {
+            "minerals",
+            "vespene",
+            "supply_ratio",
+            "unit_count",
+            "enemy_count",
+            "game_loop",
+        }
 
     def test_supply_ratio_bounded(self) -> None:
         obs = MockObservation(supply_used=44, supply_cap=44)

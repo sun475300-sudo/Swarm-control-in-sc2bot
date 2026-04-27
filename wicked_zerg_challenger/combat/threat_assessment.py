@@ -48,9 +48,18 @@ class ThreatAssessment:
 
         # High threat unit types
         self.high_threat_names = {
-            "ZERGLING", "MARINE", "ZEALOT", "REAPER", "ADEPT",
-            "BANELING", "ROACH", "STALKER", "MARAUDER",
-            "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE"
+            "ZERGLING",
+            "MARINE",
+            "ZEALOT",
+            "REAPER",
+            "ADEPT",
+            "BANELING",
+            "ROACH",
+            "STALKER",
+            "MARAUDER",
+            "SIEGETANK",
+            "SIEGETANKSIEGED",
+            "WIDOWMINE",
         }
 
         # ★ Phase 22: Supply calculation cache ★
@@ -93,13 +102,17 @@ class ThreatAssessment:
                         return True
             else:
                 # Fallback for non-Units collections
-                nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < base_range]
+                nearby_enemies = [
+                    e for e in enemy_units if e.distance_to(th.position) < base_range
+                ]
                 if len(nearby_enemies) >= 1:
                     return True
 
         return False
 
-    def check_counterattack_opportunity(self, army_units, enemy_units, game_time: float) -> bool:
+    def check_counterattack_opportunity(
+        self, army_units, enemy_units, game_time: float
+    ) -> bool:
         """
         전투 후 역공격 기회 확인
 
@@ -123,8 +136,14 @@ class ThreatAssessment:
 
         # ★ Phase 22: Use cached supply calculations (updated every 2s) ★
         if game_time - self._supply_cache_time >= 2.0:
-            self._cached_our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
-            self._cached_enemy_supply = sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
+            self._cached_our_supply = sum(
+                getattr(u, "supply_cost", 1) for u in army_units
+            )
+            self._cached_enemy_supply = (
+                sum(getattr(u, "supply_cost", 1) for u in enemy_units)
+                if enemy_units
+                else 0
+            )
             self._supply_cache_time = game_time
         our_supply = self._cached_our_supply
         enemy_supply = self._cached_enemy_supply

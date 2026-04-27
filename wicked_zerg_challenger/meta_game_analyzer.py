@@ -149,9 +149,11 @@ class MetaGameAnalyzer:
             "trend": trend,
             "recent_win_rate": recent_win_rate * 100,
             "games_analyzed": len(recent_games),
-            "recommendation": "Keep current strategy"
-            if trend == "IMPROVING"
-            else "Try different approach",
+            "recommendation": (
+                "Keep current strategy"
+                if trend == "IMPROVING"
+                else "Try different approach"
+            ),
         }
 
 

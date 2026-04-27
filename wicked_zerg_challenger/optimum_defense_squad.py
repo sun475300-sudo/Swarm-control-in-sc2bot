@@ -15,6 +15,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class UnitTypeId:
         ZERGLING = "ZERGLING"
         BANELING = "BANELING"
@@ -22,6 +23,7 @@ except ImportError:
         HYDRALISK = "HYDRALISK"
         QUEEN = "QUEEN"
         MUTALISK = "MUTALISK"
+
     Point2 = tuple
 
 
@@ -56,7 +58,6 @@ class OptimumDefenseSquad:
             "QUEEN": 18,
             "ULTRALISK": 80,
             "BROODLORD": 70,
-
             # Terran
             "MARINE": 8,
             "MARAUDER": 18,
@@ -74,7 +75,6 @@ class OptimumDefenseSquad:
             "BATTLECRUISER": 100,
             "LIBERATOR": 35,
             "WIDOWMINE": 20,
-
             # Protoss
             "ZEALOT": 20,
             "STALKER": 22,
@@ -123,13 +123,19 @@ class OptimumDefenseSquad:
 
         for th in townhalls:
             # 기지 근처 적 감지 (반경 20)
-            threats = [e for e in self.bot.enemy_units 
-                      if e.distance_to(th.position) < 20 and not e.is_flying] # 지상 위협 우선
-            
+            threats = [
+                e
+                for e in self.bot.enemy_units
+                if e.distance_to(th.position) < 20 and not e.is_flying
+            ]  # 지상 위협 우선
+
             # 공중 유닛도 포함하되, 스포어 범위 밖이면 무시? -> 일단 단순히 거리로 체크
-            air_threats = [e for e in self.bot.enemy_units 
-                          if e.is_flying and e.distance_to(th.position) < 15]
-            
+            air_threats = [
+                e
+                for e in self.bot.enemy_units
+                if e.is_flying and e.distance_to(th.position) < 15
+            ]
+
             combined_threats = threats + air_threats
             if not combined_threats:
                 continue
@@ -141,12 +147,14 @@ class OptimumDefenseSquad:
             threat_pos = Point2((avg_x, avg_y))
 
             # 방어 병력 계산
-            defense_plan = await self.calculate_defense_force(threat_pos, threat_radius=20.0)
-            
+            defense_plan = await self.calculate_defense_force(
+                threat_pos, threat_radius=20.0
+            )
+
             # 병력 배치
             if defense_plan["required_units"]:
                 await self.deploy_defense_force(defense_plan, threat_pos)
-                
+
                 # 방어 중인 유닛 태그 기록
                 for tag in defense_plan.get("unit_tags", []):
                     current_defenders.add(tag)
@@ -154,11 +162,8 @@ class OptimumDefenseSquad:
         # 방어 중인 유닛 목록 업데이트 (CombatManager 등에서 참조 가능하게)
         self.defending_unit_tags = current_defenders
 
-
     async def calculate_defense_force(
-        self,
-        threat_position: Point2,
-        threat_radius: float = 15.0
+        self, threat_position: Point2, threat_radius: float = 15.0
     ) -> Dict:
         """
         주어진 위치의 적 위협을 평가하고 필요한 방어 병력 계산
@@ -176,7 +181,12 @@ class OptimumDefenseSquad:
             }
         """
         if not hasattr(self.bot, "enemy_units"):
-            return {"threat_value": 0, "required_units": {}, "unit_tags": [], "overkill": False}
+            return {
+                "threat_value": 0,
+                "required_units": {},
+                "unit_tags": [],
+                "overkill": False,
+            }
 
         # ★ 1. 위협 평가 ★
         threat_value = 0
@@ -192,16 +202,19 @@ class OptimumDefenseSquad:
                 enemy_composition[type_name] = enemy_composition.get(type_name, 0) + 1
 
         if threat_value == 0:
-            return {"threat_value": 0, "required_units": {}, "unit_tags": [], "overkill": False}
+            return {
+                "threat_value": 0,
+                "required_units": {},
+                "unit_tags": [],
+                "overkill": False,
+            }
 
         # ★ 2. 필요 병력 계산 (+20% 여유분) ★
         required_power = int(threat_value * 1.2)
 
         # ★ 3. 최적 방어 조합 선택 ★
         required_units, unit_tags = self._select_defense_units(
-            threat_position,
-            required_power,
-            enemy_composition
+            threat_position, required_power, enemy_composition
         )
 
         game_time = getattr(self.bot, "time", 0)
@@ -219,14 +232,11 @@ class OptimumDefenseSquad:
             "required_power": required_power,
             "required_units": required_units,
             "unit_tags": unit_tags,
-            "overkill": False
+            "overkill": False,
         }
 
     def _select_defense_units(
-        self,
-        threat_position: Point2,
-        required_power: int,
-        enemy_composition: Dict
+        self, threat_position: Point2, required_power: int, enemy_composition: Dict
     ) -> Tuple[Dict, List]:
         """
         최적 방어 유닛 선택
@@ -247,9 +257,7 @@ class OptimumDefenseSquad:
 
         # ★ 2. 우선순위 정렬 (거리, 효율성) ★
         sorted_units = self._sort_by_defense_priority(
-            available_units,
-            threat_position,
-            enemy_composition
+            available_units, threat_position, enemy_composition
         )
 
         # ★ 3. 필요한 만큼만 선택 ★
@@ -306,10 +314,7 @@ class OptimumDefenseSquad:
         return available
 
     def _sort_by_defense_priority(
-        self,
-        units: List,
-        threat_position: Point2,
-        enemy_composition: Dict
+        self, units: List, threat_position: Point2, enemy_composition: Dict
     ) -> List:
         """
         방어 우선순위로 유닛 정렬
@@ -327,6 +332,7 @@ class OptimumDefenseSquad:
         Returns:
             정렬된 유닛 리스트
         """
+
         def priority_score(unit):
             type_name = getattr(unit.type_id, "name", "").upper()
             distance = unit.position.distance_to(threat_position)

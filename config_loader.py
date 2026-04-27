@@ -31,6 +31,7 @@ from typing import Any, Dict, Optional, Union
 # ── YAML 라이브러리 로드 (없으면 간이 파서 사용) ──
 try:
     import yaml
+
     _HAS_YAML = True
 except ImportError:
     _HAS_YAML = False
@@ -47,6 +48,7 @@ _ENV_REF_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 # ═══════════════════════════════════════════════════════
 # 간이 YAML 파서 (yaml 라이브러리가 없을 때 사용)
 # ═══════════════════════════════════════════════════════
+
 
 def _simple_yaml_parse(text: str) -> Dict[str, Any]:
     """
@@ -85,7 +87,7 @@ def _simple_yaml_parse(text: str) -> Dict[str, Any]:
         if ":" in content:
             colon_idx = content.index(":")
             key = content[:colon_idx].strip()
-            raw_value = content[colon_idx + 1:].strip()
+            raw_value = content[colon_idx + 1 :].strip()
 
             parent_dict = stack[-1][0]
 
@@ -126,8 +128,9 @@ def _check_and_convert_to_list(
 def _parse_scalar(value: str) -> Any:
     """문자열 값을 적절한 Python 타입으로 변환한다."""
     # 따옴표 제거
-    if (value.startswith('"') and value.endswith('"')) or \
-       (value.startswith("'") and value.endswith("'")):
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
         return value[1:-1]
 
     # 불리언
@@ -155,15 +158,18 @@ def _parse_scalar(value: str) -> Any:
 # 환경변수 참조 해석
 # ═══════════════════════════════════════════════════════
 
+
 def _resolve_env_refs(value: Any) -> Any:
     """
     문자열 내의 ${ENV_VAR} 참조를 실제 환경변수 값으로 대체한다.
     환경변수가 없으면 빈 문자열로 대체한다.
     """
     if isinstance(value, str):
+
         def _replace(match: re.Match) -> str:
             env_name = match.group(1)
             return os.environ.get(env_name, "")
+
         return _ENV_REF_PATTERN.sub(_replace, value)
     elif isinstance(value, dict):
         return {k: _resolve_env_refs(v) for k, v in value.items()}
@@ -175,6 +181,7 @@ def _resolve_env_refs(value: Any) -> Any:
 # ═══════════════════════════════════════════════════════
 # 환경변수 오버라이드
 # ═══════════════════════════════════════════════════════
+
 
 def _apply_env_overrides(config: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
     """
@@ -194,7 +201,9 @@ def _apply_env_overrides(config: Dict[str, Any], prefix: str = "") -> Dict[str, 
             env_val = os.environ.get(env_key)
             if env_val is not None:
                 # 원래 타입에 맞게 변환
-                result[key] = _cast_to_type(env_val, type(value) if value is not None else str)
+                result[key] = _cast_to_type(
+                    env_val, type(value) if value is not None else str
+                )
 
     return result
 
@@ -222,6 +231,7 @@ def _cast_to_type(value: str, target_type: type) -> Any:
 # ═══════════════════════════════════════════════════════
 # 공개 API
 # ═══════════════════════════════════════════════════════
+
 
 def load_config(
     config_path: Optional[Union[str, Path]] = None,
@@ -324,6 +334,7 @@ def get_all() -> Dict[str, Any]:
 # ═══════════════════════════════════════════════════════
 # .env.jarvis 로더 (환경변수 주입)
 # ═══════════════════════════════════════════════════════
+
 
 def load_dotenv_jarvis(env_path: Optional[str] = None) -> Dict[str, str]:
     """Parse .env.jarvis and inject into os.environ. Returns loaded key-value pairs."""

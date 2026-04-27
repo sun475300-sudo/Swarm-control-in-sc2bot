@@ -32,10 +32,10 @@ class MutaliskMicroController:
 
     def __init__(
         self,
-        regen_threshold: float = 0.7,     # Retreat when HP < 70%
-        regen_target: float = 0.9,        # Return when HP > 90%
-        regen_cooldown: float = 3.0,      # Minimum time between regen cycles
-        magic_box_radius: float = 2.5,    # Spread radius for magic box
+        regen_threshold: float = 0.7,  # Retreat when HP < 70%
+        regen_target: float = 0.9,  # Return when HP > 90%
+        regen_cooldown: float = 3.0,  # Minimum time between regen cycles
+        magic_box_radius: float = 2.5,  # Spread radius for magic box
     ):
         """
         Initialize Mutalisk micro controller.
@@ -86,11 +86,7 @@ class MutaliskMicroController:
         return False
 
     def get_magic_box_position(
-        self,
-        unit: Unit,
-        target_center: object,
-        unit_index: int,
-        total_units: int
+        self, unit: Unit, target_center: object, unit_index: int, total_units: int
     ) -> Optional[object]:
         """
         Calculate Magic Box position for a Mutalisk.
@@ -124,16 +120,9 @@ class MutaliskMicroController:
         offset_x = radius * math.cos(theta)
         offset_y = radius * math.sin(theta)
 
-        return Point2((
-            target_center.x + offset_x,
-            target_center.y + offset_y
-        ))
+        return Point2((target_center.x + offset_x, target_center.y + offset_y))
 
-    def get_regen_status(
-        self,
-        unit: Unit,
-        current_time: float
-    ) -> Tuple[bool, bool]:
+    def get_regen_status(self, unit: Unit, current_time: float) -> Tuple[bool, bool]:
         """
         Get regeneration status for a Mutalisk.
 
@@ -202,10 +191,9 @@ class MutaliskMicroController:
                 norm_x = direction_x / length
                 norm_y = direction_y / length
 
-                return Point2((
-                    unit.position.x + norm_x * 10,
-                    unit.position.y + norm_y * 10
-                ))
+                return Point2(
+                    (unit.position.x + norm_x * 10, unit.position.y + norm_y * 10)
+                )
 
         # Fallback: move away from current position
         if hasattr(bot, "start_location"):
@@ -227,10 +215,7 @@ class MutaliskMicroController:
         return max(0.0, min(1.0, health / health_max))
 
     async def execute_regen_dance(
-        self,
-        mutalisks,
-        current_time: float,
-        bot
+        self, mutalisks, current_time: float, bot
     ) -> Tuple[List, List]:
         """
         Execute Regen Dance logic.
@@ -296,12 +281,7 @@ class MutaliskMicroController:
 
         return combat_ready, regenerating
 
-    async def execute_magic_box(
-        self,
-        mutalisks,
-        target_position: object,
-        bot
-    ):
+    async def execute_magic_box(self, mutalisks, target_position: object, bot):
         """
         Execute Magic Box formation.
 
@@ -317,12 +297,7 @@ class MutaliskMicroController:
         total = len(mutalisks)
 
         for index, muta in enumerate(mutalisks):
-            magic_pos = self.get_magic_box_position(
-                muta,
-                target_position,
-                index,
-                total
-            )
+            magic_pos = self.get_magic_box_position(muta, target_position, index, total)
 
             if magic_pos:
                 try:

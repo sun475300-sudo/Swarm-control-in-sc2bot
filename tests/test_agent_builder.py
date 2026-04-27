@@ -9,7 +9,9 @@ from jarvis_features.agent_builder import AgentBuilder, AgentDefinition, VALID_M
 class TestBuildValidatesModel:
     def test_invalid_model_falls_back_to_sonnet(self):
         builder = AgentBuilder()
-        definition = builder.build(name="test-agent", description="테스트", model="gpt-5")
+        definition = builder.build(
+            name="test-agent", description="테스트", model="gpt-5"
+        )
         assert definition.model == "sonnet"
 
     def test_valid_model_accepted(self):
@@ -68,7 +70,12 @@ class TestBuildWithPipeline:
             name="pipeline-agent",
             description="파이프라인 에이전트",
             pipeline=[
-                {"name": "fetch", "source": "mod.fetch", "timeout": 5, "required": True},
+                {
+                    "name": "fetch",
+                    "source": "mod.fetch",
+                    "timeout": 5,
+                    "required": True,
+                },
                 {"name": "analyze"},
             ],
         )

@@ -74,9 +74,9 @@ SC2_SITUATIONS: list[tuple[str, str]] = [
 # ---------------------------------------------------------------------------
 class SC2SituationDataset(Dataset):
     def __init__(self, data: list[tuple[str, str]], tokenizer, max_length: int = 64):
-        self.tokenizer  = tokenizer
+        self.tokenizer = tokenizer
         self.max_length = max_length
-        self.texts  = [d[0] for d in data]
+        self.texts = [d[0] for d in data]
         self.labels = [LABEL2ID[d[1]] for d in data]
 
     def __len__(self):
@@ -91,9 +91,9 @@ class SC2SituationDataset(Dataset):
             return_tensors="pt",
         )
         return {
-            "input_ids":      enc["input_ids"].squeeze(0),
+            "input_ids": enc["input_ids"].squeeze(0),
             "attention_mask": enc["attention_mask"].squeeze(0),
-            "labels":         torch.tensor(self.labels[idx], dtype=torch.long),
+            "labels": torch.tensor(self.labels[idx], dtype=torch.long),
         }
 
 
@@ -126,32 +126,38 @@ def fine_tune(
     lr: float = 2e-5,
     batch_size: int = 8,
 ) -> None:
-    dataset    = SC2SituationDataset(SC2_SITUATIONS, tokenizer)
+    dataset = SC2SituationDataset(SC2_SITUATIONS, tokenizer)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-    device    = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model     = model.to(device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     total_steps = len(dataloader) * epochs
     scheduler = get_linear_schedule_with_warmup(
-        optimizer, num_warmup_steps=max(1, total_steps // 5), num_training_steps=total_steps
+        optimizer,
+        num_warmup_steps=max(1, total_steps // 5),
+        num_training_steps=total_steps,
     )
 
-    print(f"[StrategyClassifier] Fine-tuning on {len(dataset)} SC2 examples  "
-          f"| epochs={epochs} | device={device}\n")
+    print(
+        f"[StrategyClassifier] Fine-tuning on {len(dataset)} SC2 examples  "
+        f"| epochs={epochs} | device={device}\n"
+    )
 
     model.train()
     for epoch in range(1, epochs + 1):
         total_loss = 0.0
-        correct    = 0
+        correct = 0
         for batch in dataloader:
-            input_ids      = batch["input_ids"].to(device)
+            input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
-            labels         = batch["labels"].to(device)
+            labels = batch["labels"].to(device)
 
-            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            loss    = outputs.loss
-            logits  = outputs.logits
+            outputs = model(
+                input_ids=input_ids, attention_mask=attention_mask, labels=labels
+            )
+            loss = outputs.loss
+            logits = outputs.logits
 
             optimizer.zero_grad()
             loss.backward()
@@ -160,11 +166,11 @@ def fine_tune(
             scheduler.step()
 
             total_loss += loss.item()
-            preds       = logits.argmax(dim=-1)
-            correct    += (preds == labels).sum().item()
+            preds = logits.argmax(dim=-1)
+            correct += (preds == labels).sum().item()
 
         avg_loss = total_loss / len(dataloader)
-        acc      = correct / len(dataset)
+        acc = correct / len(dataset)
         print(f"  Epoch {epoch}/{epochs}  loss={avg_loss:.4f}  acc={acc:.2%}")
 
     return model, device
@@ -179,12 +185,12 @@ def classify_situation(model, tokenizer, text: str, device) -> tuple[str, float]
     enc = tokenizer(
         text, truncation=True, padding="max_length", max_length=64, return_tensors="pt"
     )
-    input_ids      = enc["input_ids"].to(device)
+    input_ids = enc["input_ids"].to(device)
     attention_mask = enc["attention_mask"].to(device)
 
     with torch.no_grad():
         logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
-    probs    = torch.softmax(logits, dim=-1)[0].cpu().numpy()
+    probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()
     pred_idx = int(np.argmax(probs))
     return ID2LABEL[pred_idx], float(probs[pred_idx])
 
@@ -194,7 +200,7 @@ def classify_situation(model, tokenizer, text: str, device) -> tuple[str, float]
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     model, tokenizer = load_model_and_tokenizer()
-    model, device    = fine_tune(model, tokenizer)
+    model, device = fine_tune(model, tokenizer)
 
     print("\n--- Strategy Classification Inference ---")
     test_situations = [
@@ -208,4 +214,4 @@ if __name__ == "__main__":
 
     for situation in test_situations:
         strategy, confidence = classify_situation(model, tokenizer, situation, device)
-        print(f"  [{strategy.upper():7s} {confidence:.1%}]  \"{situation}\"")
+        print(f'  [{strategy.upper():7s} {confidence:.1%}]  "{situation}"')

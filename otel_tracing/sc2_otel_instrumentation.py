@@ -61,8 +61,10 @@ from opentelemetry.trace.propagation import set_span_in_context
 # Enums & Constants
 # ---------------------------------------------------------------------------
 
+
 class SamplingStrategy(Enum):
     """Supported trace sampling strategies."""
+
     ALWAYS_ON = "always_on"
     TRACE_ID_RATIO = "trace_id_ratio"
     PARENT_BASED = "parent_based"
@@ -70,6 +72,7 @@ class SamplingStrategy(Enum):
 
 class SpanName:
     """Canonical span names used across the bot."""
+
     ON_STEP = "sc2.bot.on_step"
     COMBAT_DECISION = "sc2.bot.combat_decision"
     ECONOMY_TICK = "sc2.bot.economy_tick"
@@ -83,6 +86,7 @@ class SpanName:
 
 class MetricName:
     """Canonical metric names."""
+
     STEP_DURATION = "sc2.bot.step_duration"
     STEP_COUNT = "sc2.bot.step_count"
     COMBAT_DECISIONS = "sc2.bot.combat_decisions"
@@ -103,6 +107,7 @@ class MetricName:
 # ---------------------------------------------------------------------------
 # Resource Builder
 # ---------------------------------------------------------------------------
+
 
 def build_resource(
     service_name: str = "sc2-zerg-commander-bot",
@@ -131,6 +136,7 @@ def build_resource(
 # Sampler Factory
 # ---------------------------------------------------------------------------
 
+
 def create_sampler(
     strategy: SamplingStrategy = SamplingStrategy.PARENT_BASED,
     ratio: float = 1.0,
@@ -157,6 +163,7 @@ def create_sampler(
 # Metric Views
 # ---------------------------------------------------------------------------
 
+
 def _default_metric_views() -> Sequence[View]:
     """Return custom metric views for aggregation tuning."""
     return [
@@ -180,6 +187,7 @@ def _default_metric_views() -> Sequence[View]:
 # ---------------------------------------------------------------------------
 # Core Instrumentation Class
 # ---------------------------------------------------------------------------
+
 
 class SC2OTelInstrumentation:
     """OpenTelemetry instrumentation facade for the SC2 Zerg commander bot.
@@ -362,9 +370,7 @@ class SC2OTelInstrumentation:
 
     def _setup_logger_provider(self) -> None:
         """Configure LoggerProvider with OTLP exporter for structured logging."""
-        otlp_log_exporter = OTLPLogExporter(
-            endpoint=self._otlp_endpoint, insecure=True
-        )
+        otlp_log_exporter = OTLPLogExporter(endpoint=self._otlp_endpoint, insecure=True)
 
         self._logger_provider = LoggerProvider(resource=self._resource)
         self._logger_provider.add_log_record_processor(
@@ -617,7 +623,9 @@ class SC2OTelInstrumentation:
                 raise
             finally:
                 elapsed_ms = (time.perf_counter_ns() - start) / 1_000_000
-                self._step_duration_hist.record(elapsed_ms, {"sc2.iteration": iteration})
+                self._step_duration_hist.record(
+                    elapsed_ms, {"sc2.iteration": iteration}
+                )
                 self._step_counter.add(1)
 
     @contextmanager
@@ -990,7 +998,11 @@ if __name__ == "__main__":
 
     # Simulate a game loop with baggage for cross-cutting match metadata
     with otel.propagated_context(
-        baggage_items={"matchup": "ZvT", "map_name": "Equilibrium", "ladder_season": "2026-S1"}
+        baggage_items={
+            "matchup": "ZvT",
+            "map_name": "Equilibrium",
+            "ladder_season": "2026-S1",
+        }
     ):
         for iteration in range(5):
             game_time = iteration * 22.4

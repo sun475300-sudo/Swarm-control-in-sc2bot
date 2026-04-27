@@ -30,7 +30,9 @@ except ImportError:
 
 logger = logging.getLogger("jarvis.security")
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
+)
 AUDIT_LOG_FILE = os.path.join(DATA_DIR, "audit_log.json")
 PERMISSION_FILE = os.path.join(DATA_DIR, "permissions.json")
 ANOMALY_CONFIG_FILE = os.path.join(DATA_DIR, "anomaly_config.json")
@@ -65,8 +67,19 @@ DEFAULT_PERMISSIONS = {
     "member": {
         "description": "일반 멤버 - 기본 명령어",
         "commands": [
-            "할일", "알려줘", "뽀모", "습관", "가위바위보", "숫자맞히기",
-            "퀴즈", "레벨", "랭킹", "챌린지", "요약", "날씨", "환율",
+            "할일",
+            "알려줘",
+            "뽀모",
+            "습관",
+            "가위바위보",
+            "숫자맞히기",
+            "퀴즈",
+            "레벨",
+            "랭킹",
+            "챌린지",
+            "요약",
+            "날씨",
+            "환율",
         ],
     },
 }
@@ -88,7 +101,9 @@ class SecurityCog(commands.Cog, name="보안/관리"):
         }
         self._last_login_check: Optional[str] = None
         self._last_audit_search: float = 0.0  # 감사 로그 검색 레이트 리밋 타임스탬프
-        self._anomaly_alert_times: dict[str, datetime] = {}  # 알림 유형별 마지막 전송 시간
+        self._anomaly_alert_times: dict[str, datetime] = (
+            {}
+        )  # 알림 유형별 마지막 전송 시간
         self._bot_start_time: datetime = datetime.now(timezone.utc)
         self._message_count: int = 0
         self.check_pc_login.start()
@@ -134,12 +149,21 @@ class SecurityCog(commands.Cog, name="보안/관리"):
             # Windows 이벤트 로그에서 로그인 이벤트 확인
             result = await asyncio.to_thread(
                 subprocess.run,
-                ["powershell", "-Command",
-                 "Get-WinEvent -FilterHashtable @{LogName='Security';ID=4624} -MaxEvents 5 2>$null | "
-                 "Select-Object TimeCreated, @{N='User';E={$_.Properties[5].Value}} | "
-                 "ConvertTo-Json"],
-                capture_output=True, text=True, timeout=15,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
+                [
+                    "powershell",
+                    "-Command",
+                    "Get-WinEvent -FilterHashtable @{LogName='Security';ID=4624} -MaxEvents 5 2>$null | "
+                    "Select-Object TimeCreated, @{N='User';E={$_.Properties[5].Value}} | "
+                    "ConvertTo-Json",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                creationflags=(
+                    subprocess.CREATE_NO_WINDOW
+                    if hasattr(subprocess, "CREATE_NO_WINDOW")
+                    else 0
+                ),
             )
 
             if result.returncode != 0 or not result.stdout.strip():
@@ -164,20 +188,33 @@ class SecurityCog(commands.Cog, name="보안/관리"):
                             event_time = datetime.fromtimestamp(ts, tz=timezone.utc)
                         else:
                             continue  # 파싱 불가 이벤트는 건너뜀
-                        if (datetime.now(timezone.utc) - event_time).total_seconds() > 300:
+                        if (
+                            datetime.now(timezone.utc) - event_time
+                        ).total_seconds() > 300:
                             continue
                     except Exception:
                         continue
 
                     channel = self.bot.get_channel(alert_channel_id)
-                    if channel and user not in ["SYSTEM", "NETWORK SERVICE", "LOCAL SERVICE", "DWM-1", "UMFD-0", "UMFD-1"]:
+                    if channel and user not in [
+                        "SYSTEM",
+                        "NETWORK SERVICE",
+                        "LOCAL SERVICE",
+                        "DWM-1",
+                        "UMFD-0",
+                        "UMFD-1",
+                    ]:
                         embed = discord.Embed(
                             title="🔐 PC 로그인 감지",
                             color=discord.Color.yellow(),
                             timestamp=datetime.now(timezone.utc),
                         )
                         embed.add_field(name="사용자", value=user, inline=True)
-                        embed.add_field(name="시간", value=event_time.strftime("%Y-%m-%d %H:%M:%S"), inline=True)
+                        embed.add_field(
+                            name="시간",
+                            value=event_time.strftime("%Y-%m-%d %H:%M:%S"),
+                            inline=True,
+                        )
                         await channel.send(embed=embed)
                     break
 
@@ -201,15 +238,28 @@ class SecurityCog(commands.Cog, name="보안/관리"):
             try:
                 result = await asyncio.to_thread(
                     subprocess.run,
-                    ["powershell", "-Command",
-                     f"Get-WinEvent -FilterHashtable @{{LogName='Security';ID=4624,4634}} -MaxEvents {count} 2>$null | "
-                     "Select-Object TimeCreated, ID, @{N='User';E={$_.Properties[5].Value}} | "
-                     "Format-Table -AutoSize | Out-String"],
-                    capture_output=True, text=True, timeout=15,
-                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
+                    [
+                        "powershell",
+                        "-Command",
+                        f"Get-WinEvent -FilterHashtable @{{LogName='Security';ID=4624,4634}} -MaxEvents {count} 2>$null | "
+                        "Select-Object TimeCreated, ID, @{N='User';E={$_.Properties[5].Value}} | "
+                        "Format-Table -AutoSize | Out-String",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                    creationflags=(
+                        subprocess.CREATE_NO_WINDOW
+                        if hasattr(subprocess, "CREATE_NO_WINDOW")
+                        else 0
+                    ),
                 )
 
-                output = result.stdout.strip() if result.returncode == 0 else "로그 조회 실패"
+                output = (
+                    result.stdout.strip()
+                    if result.returncode == 0
+                    else "로그 조회 실패"
+                )
 
                 embed = discord.Embed(
                     title=f"🔐 최근 접속 로그 ({count}건)",
@@ -268,7 +318,9 @@ class SecurityCog(commands.Cog, name="보안/관리"):
                 alert_key = "ram_high"
                 last_sent = self._anomaly_alert_times.get(alert_key)
                 if not last_sent or (now - last_sent).total_seconds() >= 3600:
-                    alerts.append(f"🔴 **RAM {ram.percent:.1f}%** ({ram.used / 1024**3:.1f}/{ram.total / 1024**3:.1f} GB)")
+                    alerts.append(
+                        f"🔴 **RAM {ram.percent:.1f}%** ({ram.used / 1024**3:.1f}/{ram.total / 1024**3:.1f} GB)"
+                    )
                     self._anomaly_alert_times[alert_key] = now
 
             # 디스크 거의 꽉 참
@@ -302,13 +354,27 @@ class SecurityCog(commands.Cog, name="보안/관리"):
         await self.bot.wait_until_ready()
 
     @commands.command(name="이상감지설정", aliases=["anomalyconfig"])
-    async def anomaly_config_cmd(self, ctx: commands.Context, setting: str = "", value: str = ""):
+    async def anomaly_config_cmd(
+        self, ctx: commands.Context, setting: str = "", value: str = ""
+    ):
         """이상 감지 설정을 변경합니다. 사용법: !이상감지설정 cpu 90"""
         if not setting:
             embed = discord.Embed(title="⚙️ 이상 감지 설정", color=discord.Color.blue())
-            embed.add_field(name="활성화", value="✅" if self.anomaly_config.get("enabled") else "❌", inline=True)
-            embed.add_field(name="CPU 임계값", value=f"{self.anomaly_config.get('cpu_threshold', 95)}%", inline=True)
-            embed.add_field(name="RAM 임계값", value=f"{self.anomaly_config.get('ram_threshold', 95)}%", inline=True)
+            embed.add_field(
+                name="활성화",
+                value="✅" if self.anomaly_config.get("enabled") else "❌",
+                inline=True,
+            )
+            embed.add_field(
+                name="CPU 임계값",
+                value=f"{self.anomaly_config.get('cpu_threshold', 95)}%",
+                inline=True,
+            )
+            embed.add_field(
+                name="RAM 임계값",
+                value=f"{self.anomaly_config.get('ram_threshold', 95)}%",
+                inline=True,
+            )
             embed.set_footer(text="!이상감지설정 <cpu|ram|on|off> <값>")
             await ctx.send(embed=embed)
             return
@@ -368,7 +434,9 @@ class SecurityCog(commands.Cog, name="보안/관리"):
 
         role_data = self.permissions.get(role_name.lower())
         if not role_data:
-            await ctx.send(f"❌ 역할 '{role_name}'이 없습니다. 등록된 역할: {', '.join(self.permissions.keys())}")
+            await ctx.send(
+                f"❌ 역할 '{role_name}'이 없습니다. 등록된 역할: {', '.join(self.permissions.keys())}"
+            )
             return
 
         embed = discord.Embed(
@@ -377,16 +445,23 @@ class SecurityCog(commands.Cog, name="보안/관리"):
             color=discord.Color.blue(),
         )
         cmds = role_data.get("commands", [])
-        embed.add_field(name="허용 명령어", value=", ".join(cmds) if cmds else "없음", inline=False)
+        embed.add_field(
+            name="허용 명령어", value=", ".join(cmds) if cmds else "없음", inline=False
+        )
         await ctx.send(embed=embed)
 
     @commands.command(name="권한설정", aliases=["setperm"])
     @commands.has_permissions(administrator=True)
-    async def set_permission(self, ctx: commands.Context, role_name: str, action: str, *, command_name: str):
+    async def set_permission(
+        self, ctx: commands.Context, role_name: str, action: str, *, command_name: str
+    ):
         """역할 권한을 설정합니다. 사용법: !권한설정 trader add 알림"""
         role_name = role_name.lower()
         if role_name not in self.permissions:
-            self.permissions[role_name] = {"description": f"{role_name} 역할", "commands": []}
+            self.permissions[role_name] = {
+                "description": f"{role_name} 역할",
+                "commands": [],
+            }
 
         if action.lower() in ["add", "추가"]:
             if command_name not in self.permissions[role_name]["commands"]:
@@ -414,7 +489,11 @@ class SecurityCog(commands.Cog, name="보안/관리"):
         owner_id = os.environ.get("BOT_OWNER_ID")
         if owner_id and str(ctx.author.id) == owner_id:
             return True
-        if hasattr(ctx.bot, "owner_id") and ctx.bot.owner_id and ctx.author.id == ctx.bot.owner_id:
+        if (
+            hasattr(ctx.bot, "owner_id")
+            and ctx.bot.owner_id
+            and ctx.author.id == ctx.bot.owner_id
+        ):
             return True
 
         # DM에서는 봇 오너만 허용 (위에서 체크), 나머지는 서버에서만
@@ -422,11 +501,18 @@ class SecurityCog(commands.Cog, name="보안/관리"):
             return False
 
         # 서버 관리자는 항상 허용
-        if hasattr(ctx.author, "guild_permissions") and ctx.author.guild_permissions.administrator:
+        if (
+            hasattr(ctx.author, "guild_permissions")
+            and ctx.author.guild_permissions.administrator
+        ):
             return True
 
         # 역할 기반 권한 확인
-        user_roles = [r.name.lower() for r in ctx.author.roles] if hasattr(ctx.author, "roles") else []
+        user_roles = (
+            [r.name.lower() for r in ctx.author.roles]
+            if hasattr(ctx.author, "roles")
+            else []
+        )
 
         for role_name, role_data in self.permissions.items():
             if role_name in user_roles:
@@ -478,7 +564,9 @@ class SecurityCog(commands.Cog, name="보안/관리"):
             self._save_audit_log()
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
+    async def on_command_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ):
         """명령어 에러도 감사 로그에 기록."""
         # Only handle errors from SecurityCog commands to avoid conflicts with other handlers
         if ctx.cog is not self:
@@ -517,25 +605,33 @@ class SecurityCog(commands.Cog, name="보안/관리"):
         embed.add_field(name="⏱️ 업타임", value=uptime_str, inline=True)
 
         # 메시지 수
-        embed.add_field(name="📨 처리된 명령어", value=f"{self._message_count:,}개", inline=True)
+        embed.add_field(
+            name="📨 처리된 명령어", value=f"{self._message_count:,}개", inline=True
+        )
 
         # 서버/유저 수
         guild_count = len(self.bot.guilds) if self.bot.guilds else 0
-        user_count = sum(g.member_count or 0 for g in self.bot.guilds) if self.bot.guilds else 0
+        user_count = (
+            sum(g.member_count or 0 for g in self.bot.guilds) if self.bot.guilds else 0
+        )
         embed.add_field(name="🏠 서버", value=f"{guild_count}개", inline=True)
         embed.add_field(name="👥 유저", value=f"{user_count:,}명", inline=True)
 
         # 레이턴시
         latency = self.bot.latency * 1000
         latency_status = "🟢" if latency < 100 else "🟡" if latency < 300 else "🔴"
-        embed.add_field(name="📡 레이턴시", value=f"{latency_status} {latency:.0f}ms", inline=True)
+        embed.add_field(
+            name="📡 레이턴시", value=f"{latency_status} {latency:.0f}ms", inline=True
+        )
 
         # Cog 상태
         cog_lines = []
         for cog_name, cog in self.bot.cogs.items():
             cmd_count = len([c for c in cog.get_commands()])
             listener_count = len(cog.get_listeners())
-            cog_lines.append(f"✅ **{cog_name}** ({cmd_count} cmds, {listener_count} listeners)")
+            cog_lines.append(
+                f"✅ **{cog_name}** ({cmd_count} cmds, {listener_count} listeners)"
+            )
 
         if cog_lines:
             embed.add_field(
@@ -545,7 +641,9 @@ class SecurityCog(commands.Cog, name="보안/관리"):
             )
 
         # 감사 로그 통계
-        embed.add_field(name="📋 감사 로그", value=f"{len(self.audit_log):,}건", inline=True)
+        embed.add_field(
+            name="📋 감사 로그", value=f"{len(self.audit_log):,}건", inline=True
+        )
 
         # 도구 레지스트리 통계
         if get_tool_registry:
@@ -555,10 +653,17 @@ class SecurityCog(commands.Cog, name="보안/관리"):
                 total_calls = sum(s.get("calls", 0) for s in stats.values())
                 avg_rate = (
                     sum(s.get("success_rate", 0) for s in stats.values()) / len(stats)
-                    if stats else 0
+                    if stats
+                    else 0
                 )
-                top_tools = sorted(stats.items(), key=lambda x: x[1]["calls"], reverse=True)[:3]
-                top_str = ", ".join(f"{n}({s['calls']})" for n, s in top_tools) if top_tools else "없음"
+                top_tools = sorted(
+                    stats.items(), key=lambda x: x[1]["calls"], reverse=True
+                )[:3]
+                top_str = (
+                    ", ".join(f"{n}({s['calls']})" for n, s in top_tools)
+                    if top_tools
+                    else "없음"
+                )
                 embed.add_field(
                     name="🔧 도구 사용",
                     value=f"총 {total_calls:,}회 | 성공률 {avg_rate:.0f}%\nTop: {top_str}",
@@ -570,15 +675,26 @@ class SecurityCog(commands.Cog, name="보안/관리"):
         # 시스템 정보
         try:
             import psutil
+
             mem = psutil.virtual_memory()
             cpu = psutil.cpu_percent(interval=0.1)
             embed.add_field(name="💻 CPU", value=f"{cpu:.1f}%", inline=True)
-            embed.add_field(name="🧠 RAM", value=f"{mem.percent:.1f}% ({mem.used / (1024**3):.1f}GB)", inline=True)
+            embed.add_field(
+                name="🧠 RAM",
+                value=f"{mem.percent:.1f}% ({mem.used / (1024**3):.1f}GB)",
+                inline=True,
+            )
         except ImportError:
             pass
-        embed.add_field(name="🖥️ 플랫폼", value=f"{platform.system()} {platform.release()}", inline=True)
+        embed.add_field(
+            name="🖥️ 플랫폼",
+            value=f"{platform.system()} {platform.release()}",
+            inline=True,
+        )
 
-        embed.set_footer(text=f"Bot ID: {self.bot.user.id}" if self.bot.user else "JARVIS")
+        embed.set_footer(
+            text=f"Bot ID: {self.bot.user.id}" if self.bot.user else "JARVIS"
+        )
         await ctx.send(embed=embed)
 
     @commands.command(name="감사로그", aliases=["auditlog", "audit"])
@@ -618,7 +734,9 @@ class SecurityCog(commands.Cog, name="보안/관리"):
         now = time.monotonic()
         if now - self._last_audit_search < 5.0:
             remaining = 5.0 - (now - self._last_audit_search)
-            await ctx.send(f"⏳ 검색 쿨다운 중입니다. {remaining:.1f}초 후 다시 시도해주세요.")
+            await ctx.send(
+                f"⏳ 검색 쿨다운 중입니다. {remaining:.1f}초 후 다시 시도해주세요."
+            )
             return
         self._last_audit_search = now
 
@@ -664,9 +782,10 @@ async def setup(bot: commands.Bot):
     await bot.add_cog(SecurityCog(bot))
 
     async def global_permission_check(ctx):
-        cog = bot.get_cog('SecurityCog') or bot.get_cog('보안/관리')
+        cog = bot.get_cog("SecurityCog") or bot.get_cog("보안/관리")
         if cog:
             return await cog.cog_check(ctx)
         logger.warning("SecurityCog not found; denying command by default")
         return False
+
     bot.add_check(global_permission_check)

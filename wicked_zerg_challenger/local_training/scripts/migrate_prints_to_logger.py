@@ -9,7 +9,9 @@ import os
 import re
 import sys
 
-TARGET_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "wicked_zerg_challenger")
+TARGET_DIR = os.path.join(
+    os.path.dirname(__file__), "..", "..", "wicked_zerg_challenger"
+)
 SKIP_FILES = {"__pycache__", ".pyc"}
 ALREADY_MIGRATED = set()
 
@@ -43,7 +45,7 @@ def add_logger_import(content: str, filename: str) -> str:
         # Has import logging but no logger instance
         idx = content.index("import logging")
         end = content.index("\n", idx)
-        content = content[:end+1] + logger_line + content[end+1:]
+        content = content[: end + 1] + logger_line + content[end + 1 :]
 
     return content
 
@@ -87,7 +89,7 @@ def migrate_prints(content: str) -> tuple:
     def replace_generic(m):
         nonlocal count
         count += 1
-        return f'logger.info({m.group(1)}'
+        return f"logger.info({m.group(1)}"
 
     content, n = re.subn(
         r'print\((f?"[^"]*".*)\)',
@@ -97,8 +99,8 @@ def migrate_prints(content: str) -> tuple:
 
     # print(variable) → logger.info(variable)
     content, n2 = re.subn(
-        r'print\((\w+[\.\w]*(?:\(.*?\))?)\)$',
-        r'logger.info(\1)',
+        r"print\((\w+[\.\w]*(?:\(.*?\))?)\)$",
+        r"logger.info(\1)",
         content,
         flags=re.MULTILINE,
     )
@@ -127,7 +129,9 @@ def process_file(filepath: str) -> None:
             f.write(content)
         STATS["files_modified"] += 1
         STATS["prints_replaced"] += replaced
-        logger.info(f"  ✅ {os.path.relpath(filepath, TARGET_DIR)}: {replaced} prints → logger")
+        logger.info(
+            f"  ✅ {os.path.relpath(filepath, TARGET_DIR)}: {replaced} prints → logger"
+        )
     else:
         STATS["files_skipped"] += 1
 
@@ -146,8 +150,12 @@ def main():
             process_file(filepath)
 
     logger.info("\n" + "=" * 60)
-    logger.info(f"  완료: {STATS['files_modified']}개 파일 수정, {STATS['prints_replaced']}건 변환")
-    logger.info(f"  스킵: {STATS['files_skipped']}개 파일 (print 없음 또는 변환 불필요)")
+    logger.info(
+        f"  완료: {STATS['files_modified']}개 파일 수정, {STATS['prints_replaced']}건 변환"
+    )
+    logger.info(
+        f"  스킵: {STATS['files_skipped']}개 파일 (print 없음 또는 변환 불필요)"
+    )
     logger.info("=" * 60)
 
 

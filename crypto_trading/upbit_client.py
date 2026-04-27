@@ -3,6 +3,7 @@ Upbit API Client Wrapper
 - pyupbit 라이브러리 위에 안전한 래핑 레이어
 - 에러 핸들링, 로깅, rate-limit 보호
 """
+
 import time
 import logging
 import threading
@@ -19,6 +20,7 @@ logger = logging.getLogger("crypto.upbit_client")
 @dataclass
 class OrderResult:
     """주문 결과 구조체 — 성공/실패를 명확히 구분"""
+
     success: bool
     order: Optional[dict] = None
     error_type: Optional[Literal["network", "api", "validation", "rate_limit"]] = None
@@ -34,9 +36,13 @@ class UpbitClient:
 
         # 빈 문자열 API 키 경고
         if not self.access_key or not self.access_key.strip():
-            logger.warning("Upbit access_key가 빈 문자열입니다. 인증이 필요한 API는 사용할 수 없습니다.")
+            logger.warning(
+                "Upbit access_key가 빈 문자열입니다. 인증이 필요한 API는 사용할 수 없습니다."
+            )
         if not self.secret_key or not self.secret_key.strip():
-            logger.warning("Upbit secret_key가 빈 문자열입니다. 인증이 필요한 API는 사용할 수 없습니다.")
+            logger.warning(
+                "Upbit secret_key가 빈 문자열입니다. 인증이 필요한 API는 사용할 수 없습니다."
+            )
 
         self._upbit: Optional[Upbit] = None
         self._last_request_time = 0.0
@@ -49,7 +55,9 @@ class UpbitClient:
             with self._lock:
                 if self._upbit is None:  # double-check locking
                     if not self.access_key or not self.secret_key:
-                        raise ValueError("Upbit API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
+                        raise ValueError(
+                            "Upbit API 키가 설정되지 않았습니다. .env 파일을 확인하세요."
+                        )
                     # H-8: 완전히 생성된 후 할당 (GIL 릴리스 방어)
                     client = Upbit(self.access_key, self.secret_key)
                     self._upbit = client
@@ -72,7 +80,9 @@ class UpbitClient:
                 if attempt == max_attempts:
                     raise
                 wait = 0.5 * (2 ** (attempt - 1))
-                logger.warning(f"API 재시도 {attempt}/{max_attempts} ({fn.__name__}): {e}, {wait:.1f}s 후 재시도")
+                logger.warning(
+                    f"API 재시도 {attempt}/{max_attempts} ({fn.__name__}): {e}, {wait:.1f}s 후 재시도"
+                )
                 time.sleep(wait)
 
     # ─────────── 시세 조회 (공개 API) ───────────
@@ -131,7 +141,9 @@ class UpbitClient:
         try:
             result = self._retry(self._get_upbit().get_balances)
             if not result:
-                logger.warning("잔고 조회 결과가 비어있음 - API 키 또는 네트워크 확인 필요")
+                logger.warning(
+                    "잔고 조회 결과가 비어있음 - API 키 또는 네트워크 확인 필요"
+                )
             return result if result else []
         except Exception as e:
             logger.error(f"잔고 조회 실패: {e}")
@@ -188,13 +200,25 @@ class UpbitClient:
         """시장가 매수 (KRW 금액 지정) — P2-1: OrderResult 반환"""
         krw_amount = round(krw_amount)  # #37 주문 금액 정수 반올림
         if krw_amount < config.MIN_ORDER_AMOUNT:
-            logger.warning(f"최소 주문 금액 미달: {krw_amount} < {config.MIN_ORDER_AMOUNT}")
-            return OrderResult(success=False, error_type="validation",
-                               error_msg=f"Amount {krw_amount} < {config.MIN_ORDER_AMOUNT}")
+            logger.warning(
+                f"최소 주문 금액 미달: {krw_amount} < {config.MIN_ORDER_AMOUNT}"
+            )
+            return OrderResult(
+                success=False,
+                error_type="validation",
+                error_msg=f"Amount {krw_amount} < {config.MIN_ORDER_AMOUNT}",
+            )
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 시장가 매수: {ticker} / {krw_amount:,.0f}원")
-            return OrderResult(success=True,
-                               order={"dry_run": True, "side": "bid", "ticker": ticker, "price": krw_amount})
+            return OrderResult(
+                success=True,
+                order={
+                    "dry_run": True,
+                    "side": "bid",
+                    "ticker": ticker,
+                    "price": krw_amount,
+                },
+            )
         self._throttle()
         try:
             result = self._get_upbit().buy_market_order(ticker, krw_amount)
@@ -215,13 +239,25 @@ class UpbitClient:
         """시장가 매도 (수량 지정) — P2-1: OrderResult 반환"""
         current_price = self.get_current_price(ticker) or 0
         if current_price > 0 and volume * current_price < config.MIN_ORDER_AMOUNT:
-            logger.warning(f"매도 금액 최소 미달: {ticker} {volume * current_price:,.0f}원 < {config.MIN_ORDER_AMOUNT:,.0f}원")
-            return OrderResult(success=False, error_type="validation",
-                               error_msg=f"Sell value below minimum: {volume * current_price:,.0f}")
+            logger.warning(
+                f"매도 금액 최소 미달: {ticker} {volume * current_price:,.0f}원 < {config.MIN_ORDER_AMOUNT:,.0f}원"
+            )
+            return OrderResult(
+                success=False,
+                error_type="validation",
+                error_msg=f"Sell value below minimum: {volume * current_price:,.0f}",
+            )
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 시장가 매도: {ticker} / {volume}")
-            return OrderResult(success=True,
-                               order={"dry_run": True, "side": "ask", "ticker": ticker, "volume": volume})
+            return OrderResult(
+                success=True,
+                order={
+                    "dry_run": True,
+                    "side": "ask",
+                    "ticker": ticker,
+                    "volume": volume,
+                },
+            )
         self._throttle()
         try:
             result = self._get_upbit().sell_market_order(ticker, volume)
@@ -238,11 +274,19 @@ class UpbitClient:
             logger.error(f"매도 실패 ({ticker}): {e}")
             return OrderResult(success=False, error_type=error_type, error_msg=err_str)
 
-    def buy_limit_order(self, ticker: str, price: float, volume: float) -> Optional[dict]:
+    def buy_limit_order(
+        self, ticker: str, price: float, volume: float
+    ) -> Optional[dict]:
         """지정가 매수"""
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 지정가 매수: {ticker} / {price:,.0f}원 x {volume}")
-            return {"dry_run": True, "side": "bid", "ticker": ticker, "price": price, "volume": volume}
+            return {
+                "dry_run": True,
+                "side": "bid",
+                "ticker": ticker,
+                "price": price,
+                "volume": volume,
+            }
         self._throttle()
         try:
             return self._get_upbit().buy_limit_order(ticker, price, volume)
@@ -250,11 +294,19 @@ class UpbitClient:
             logger.error(f"지정가 매수 실패 ({ticker}): {e}")
             return None
 
-    def sell_limit_order(self, ticker: str, price: float, volume: float) -> Optional[dict]:
+    def sell_limit_order(
+        self, ticker: str, price: float, volume: float
+    ) -> Optional[dict]:
         """지정가 매도"""
         if config.DRY_RUN:
             logger.info(f"[DRY-RUN] 지정가 매도: {ticker} / {price:,.0f}원 x {volume}")
-            return {"dry_run": True, "side": "ask", "ticker": ticker, "price": price, "volume": volume}
+            return {
+                "dry_run": True,
+                "side": "ask",
+                "ticker": ticker,
+                "price": price,
+                "volume": volume,
+            }
         self._throttle()
         try:
             return self._get_upbit().sell_limit_order(ticker, price, volume)

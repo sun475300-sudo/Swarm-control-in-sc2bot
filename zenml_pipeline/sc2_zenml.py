@@ -16,6 +16,7 @@ import pandas as pd
 
 # ── Step definitions ──────────────────────────────────────────────────────────
 
+
 @step(enable_cache=True)
 def ingest_data(
     n_samples: int = 5000,
@@ -23,18 +24,20 @@ def ingest_data(
 ) -> Annotated[pd.DataFrame, "raw_data"]:
     """Ingest SC2 replay data from storage."""
     np.random.seed(42)
-    df = pd.DataFrame({
-        "game_id": [f"g{i:05d}" for i in range(n_samples)],
-        "race": np.random.choice(["Zerg", "Terran", "Protoss"], n_samples),
-        "opponent_race": np.random.choice(["Zerg", "Terran", "Protoss"], n_samples),
-        "apm": np.random.uniform(40, 300, n_samples),
-        "duration": np.random.uniform(90, 1500, n_samples),
-        "supply_peak": np.random.randint(60, 200, n_samples),
-        "minerals_spent": np.random.randint(3000, 25000, n_samples),
-        "gas_spent": np.random.randint(1000, 12000, n_samples),
-        "workers_produced": np.random.randint(10, 80, n_samples),
-        "winner": np.random.randint(0, 2, n_samples),
-    })
+    df = pd.DataFrame(
+        {
+            "game_id": [f"g{i:05d}" for i in range(n_samples)],
+            "race": np.random.choice(["Zerg", "Terran", "Protoss"], n_samples),
+            "opponent_race": np.random.choice(["Zerg", "Terran", "Protoss"], n_samples),
+            "apm": np.random.uniform(40, 300, n_samples),
+            "duration": np.random.uniform(90, 1500, n_samples),
+            "supply_peak": np.random.randint(60, 200, n_samples),
+            "minerals_spent": np.random.randint(3000, 25000, n_samples),
+            "gas_spent": np.random.randint(1000, 12000, n_samples),
+            "workers_produced": np.random.randint(10, 80, n_samples),
+            "winner": np.random.randint(0, 2, n_samples),
+        }
+    )
     print(f"[ingest_data] Loaded {len(df)} samples from {data_path}")
     return df
 
@@ -49,7 +52,14 @@ def preprocess(
     Annotated[np.ndarray, "y_val"],
 ]:
     """Normalize and split SC2 features."""
-    feature_cols = ["apm", "duration", "supply_peak", "minerals_spent", "gas_spent", "workers_produced"]
+    feature_cols = [
+        "apm",
+        "duration",
+        "supply_peak",
+        "minerals_spent",
+        "gas_spent",
+        "workers_produced",
+    ]
     X = raw_data[feature_cols].values.astype(np.float32)
     y = raw_data["winner"].values
 
@@ -79,7 +89,14 @@ def train_model(
         "n_estimators": 200,
         "max_depth": 6,
         "train_accuracy": round(float(np.random.uniform(0.72, 0.88)), 4),
-        "feature_names": ["apm", "duration", "supply_peak", "minerals_spent", "gas_spent", "workers_produced"],
+        "feature_names": [
+            "apm",
+            "duration",
+            "supply_peak",
+            "minerals_spent",
+            "gas_spent",
+            "workers_produced",
+        ],
         "weights_path": f"models/sc2_{model_type}.pkl",
     }
     print(f"[train_model] Train accuracy: {model_artifact['train_accuracy']:.4f}")
@@ -101,7 +118,9 @@ def evaluate(
         "auc_roc": round(float(np.random.uniform(0.70, 0.90)), 4),
         "n_val_samples": len(X_val),
     }
-    print(f"[evaluate] Val accuracy: {metrics['val_accuracy']:.4f}, AUC: {metrics['auc_roc']:.4f}")
+    print(
+        f"[evaluate] Val accuracy: {metrics['val_accuracy']:.4f}, AUC: {metrics['auc_roc']:.4f}"
+    )
     return metrics
 
 
@@ -129,6 +148,7 @@ def deploy(
 
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
+
 
 @pipeline(
     name="sc2_training_pipeline",

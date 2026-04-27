@@ -11,12 +11,12 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 # ---------------------------------------------------------------------------
 # InfluxDB configuration
 # ---------------------------------------------------------------------------
-INFLUX_URL    = "http://localhost:8086"
-INFLUX_TOKEN  = os.environ.get("INFLUX_TOKEN", "")
-INFLUX_ORG    = "zerg_bot"
+INFLUX_URL = "http://localhost:8086"
+INFLUX_TOKEN = os.environ.get("INFLUX_TOKEN", "")
+INFLUX_ORG = "zerg_bot"
 INFLUX_BUCKET = "sc2_metrics"
 
-client    = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 write_api = client.write_api(write_options=SYNCHRONOUS)
 query_api = client.query_api()
 
@@ -35,32 +35,34 @@ def collect_game_metrics(game_id: str, matchup: str, duration_sec: int = 300) ->
         gas              – current gas bank
         win_probability  – model output probability of winning (0.0–1.0)
     """
-    print(f"[InfluxDB] Writing metrics for game {game_id} ({matchup}, {duration_sec}s)…")
+    print(
+        f"[InfluxDB] Writing metrics for game {game_id} ({matchup}, {duration_sec}s)…"
+    )
 
     base_time = datetime.datetime.utcnow() - datetime.timedelta(seconds=duration_sec)
     points = []
 
-    army      = 0
-    minerals  = 500
-    gas       = 0
-    win_prob  = 0.5
+    army = 0
+    minerals = 500
+    gas = 0
+    win_prob = 0.5
 
     for second in range(duration_sec):
         # Simulate gradual game progression
-        army      = min(200, army + random.randint(0, 2))
-        minerals  = max(0, minerals + random.randint(-50, 80))
-        gas       = max(0, gas + random.randint(-20, 35))
-        win_prob  = max(0.0, min(1.0, win_prob + random.uniform(-0.03, 0.03)))
+        army = min(200, army + random.randint(0, 2))
+        minerals = max(0, minerals + random.randint(-50, 80))
+        gas = max(0, gas + random.randint(-20, 35))
+        win_prob = max(0.0, min(1.0, win_prob + random.uniform(-0.03, 0.03)))
 
         ts = base_time + datetime.timedelta(seconds=second)
 
         point = (
             Point("game_metrics")
-            .tag("game_id",  game_id)
-            .tag("matchup",  matchup)
-            .field("army_size",       army)
-            .field("minerals",        minerals)
-            .field("gas",             gas)
+            .tag("game_id", game_id)
+            .tag("matchup", matchup)
+            .field("army_size", army)
+            .field("minerals", minerals)
+            .field("gas", gas)
             .field("win_probability", round(win_prob, 4))
             .time(ts, WritePrecision.SECONDS)
         )
@@ -88,16 +90,18 @@ from(bucket: "{INFLUX_BUCKET}")
   |> limit(n: {last_n_games})
   |> yield(name: "recent_win_prob")
 """
-    tables  = query_api.query(flux, org=INFLUX_ORG)
+    tables = query_api.query(flux, org=INFLUX_ORG)
     results = []
     for table in tables:
         for record in table.records:
-            results.append({
-                "time":     record.get_time(),
-                "game_id":  record.values.get("game_id"),
-                "matchup":  record.values.get("matchup"),
-                "win_prob": round(record.get_value(), 4),
-            })
+            results.append(
+                {
+                    "time": record.get_time(),
+                    "game_id": record.values.get("game_id"),
+                    "matchup": record.values.get("matchup"),
+                    "win_prob": round(record.get_value(), 4),
+                }
+            )
     return results
 
 
@@ -109,12 +113,14 @@ def plot_trend(records: list[dict]) -> None:
     try:
         import matplotlib.pyplot as plt
 
-        times     = [r["time"]     for r in records]
+        times = [r["time"] for r in records]
         win_probs = [r["win_prob"] for r in records]
 
         plt.figure(figsize=(10, 4))
         plt.plot(times, win_probs, marker="o", linewidth=1.5, color="#00aaff")
-        plt.axhline(0.5, color="gray", linestyle="--", linewidth=0.8, label="50 % baseline")
+        plt.axhline(
+            0.5, color="gray", linestyle="--", linewidth=0.8, label="50 % baseline"
+        )
         plt.title("SC2 Zerg Bot — Win Probability Trend (last 10 games)")
         plt.xlabel("Time")
         plt.ylabel("Win Probability")

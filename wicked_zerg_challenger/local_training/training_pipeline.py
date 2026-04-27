@@ -26,6 +26,7 @@ logger = logging.getLogger("TrainingPipeline")
 @dataclass
 class ModelVersion:
     """모델 버전 정보"""
+
     version_id: int
     model_path: str
     metrics: Dict  # {"win_rate": 0.6, "avg_reward": 50, "games": 10}
@@ -44,7 +45,7 @@ class TrainingPipeline:
     """
 
     DEPLOY_THRESHOLD = 0.05  # win_rate 5% 이상 향상 시 배포
-    MAX_VERSIONS = 50        # 최대 보관 버전 수
+    MAX_VERSIONS = 50  # 최대 보관 버전 수
 
     def __init__(self, base_dir: Optional[str] = None):
         if base_dir is None:
@@ -69,9 +70,7 @@ class TrainingPipeline:
             try:
                 with open(self.history_path, "r") as f:
                     data = json.load(f)
-                self.versions = [
-                    ModelVersion(**v) for v in data.get("versions", [])
-                ]
+                self.versions = [ModelVersion(**v) for v in data.get("versions", [])]
             except (json.JSONDecodeError, TypeError):
                 self.versions = []
 

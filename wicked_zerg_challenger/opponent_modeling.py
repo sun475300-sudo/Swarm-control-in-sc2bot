@@ -28,45 +28,48 @@ except ImportError:
 
 class OpponentStyle(Enum):
     """적 플레이 스타일 분류"""
+
     UNKNOWN = "unknown"
-    AGGRESSIVE = "aggressive"      # 초반 압박형 (러쉬, 올인)
-    MACRO = "macro"                # 확장 중심 (후반 지향)
-    CHEESE = "cheese"              # 치즈 (프록시, 올인)
-    TIMING = "timing"              # 타이밍 공격 중심
-    DEFENSIVE = "defensive"        # 방어 중심
-    MIXED = "mixed"                # 혼합형
+    AGGRESSIVE = "aggressive"  # 초반 압박형 (러쉬, 올인)
+    MACRO = "macro"  # 확장 중심 (후반 지향)
+    CHEESE = "cheese"  # 치즈 (프록시, 올인)
+    TIMING = "timing"  # 타이밍 공격 중심
+    DEFENSIVE = "defensive"  # 방어 중심
+    MIXED = "mixed"  # 혼합형
 
 
 class StrategySignal(Enum):
     """전략 시그널 (초반 지표)"""
+
     # Build patterns
-    EARLY_POOL = "early_pool"                  # 12 Pool (Zerg)
-    FAST_EXPAND = "fast_expand"                # 빠른 확장
-    PROXY_DETECTED = "proxy_detected"          # 프록시 건물
-    TECH_RUSH = "tech_rush"                    # 빠른 테크 (Stargate, Factory)
-    NO_NATURAL = "no_natural"                  # 멀티 없음 (올인 징조)
-    EARLY_GAS = "early_gas"                    # 빠른 가스 (테크 or 올인)
+    EARLY_POOL = "early_pool"  # 12 Pool (Zerg)
+    FAST_EXPAND = "fast_expand"  # 빠른 확장
+    PROXY_DETECTED = "proxy_detected"  # 프록시 건물
+    TECH_RUSH = "tech_rush"  # 빠른 테크 (Stargate, Factory)
+    NO_NATURAL = "no_natural"  # 멀티 없음 (올인 징조)
+    EARLY_GAS = "early_gas"  # 빠른 가스 (테크 or 올인)
 
     # Army composition
-    MASS_WORKERS = "mass_workers"              # 일꾼 다수 (매크로)
-    EARLY_ARMY = "early_army"                  # 초반 병력 집결
-    AIR_UNITS_EARLY = "air_units_early"        # 초반 공중 유닛
+    MASS_WORKERS = "mass_workers"  # 일꾼 다수 (매크로)
+    EARLY_ARMY = "early_army"  # 초반 병력 집결
+    AIR_UNITS_EARLY = "air_units_early"  # 초반 공중 유닛
 
     # Behavior
     SCOUTING_AGGRESSIVE = "scouting_aggressive"  # 공격적 정찰
-    BASE_HIDDEN = "base_hidden"                # 본진 숨김 (치즈)
-    EARLY_AGGRESSION = "early_aggression"      # 초반 압박
+    BASE_HIDDEN = "base_hidden"  # 본진 숨김 (치즈)
+    EARLY_AGGRESSION = "early_aggression"  # 초반 압박
 
 
 @dataclass
 class GameHistory:
     """한 게임의 기록"""
+
     game_id: str
     opponent_race: str
     opponent_style: str
     detected_strategy: str
     build_order_observed: List[str]  # ["spawningpool", "roachwarren", ...]
-    timing_attacks: List[float]      # [180.0, 360.0, ...] (seconds)
+    timing_attacks: List[float]  # [180.0, 360.0, ...] (seconds)
     final_composition: Dict[str, int]  # {"zergling": 30, "roach": 15, ...}
     game_result: str  # "win" or "loss"
     game_duration: float
@@ -93,7 +96,9 @@ class OpponentModel:
         self.timing_attack_history: List[float] = []
 
         # Predictive indicators
-        self.early_signal_correlations: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.early_signal_correlations: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         # {signal: {strategy: count}}
 
         # Composition preferences
@@ -116,7 +121,9 @@ class OpponentModel:
 
         # Update style
         self.style_counts[game_history.opponent_style] += 1
-        self.dominant_style = OpponentStyle(max(self.style_counts.items(), key=lambda x: x[1])[0])
+        self.dominant_style = OpponentStyle(
+            max(self.style_counts.items(), key=lambda x: x[1])[0]
+        )
 
         # Update strategy frequency
         self.strategy_frequency[game_history.detected_strategy] += 1
@@ -157,7 +164,9 @@ class OpponentModel:
 
         for signal in observed_signals:
             if signal in self.early_signal_correlations:
-                total_signal_count = sum(self.early_signal_correlations[signal].values())
+                total_signal_count = sum(
+                    self.early_signal_correlations[signal].values()
+                )
                 for strategy, count in self.early_signal_correlations[signal].items():
                     # Normalized score
                     strategy_scores[strategy] += count / total_signal_count
@@ -209,11 +218,11 @@ class OpponentModel:
             "early_signal_correlations": {
                 k: dict(v) for k, v in self.early_signal_correlations.items()
             },
-            "unit_preferences": dict(self.unit_preferences)
+            "unit_preferences": dict(self.unit_preferences),
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'OpponentModel':
+    def from_dict(cls, data: dict) -> "OpponentModel":
         """모델 역직렬화"""
         model = cls(data["opponent_id"])
         model.games_played = data.get("games_played", 0)
@@ -228,7 +237,7 @@ class OpponentModel:
         signal_corr = data.get("early_signal_correlations", {})
         model.early_signal_correlations = defaultdict(
             lambda: defaultdict(int),
-            {k: defaultdict(int, v) for k, v in signal_corr.items()}
+            {k: defaultdict(int, v) for k, v in signal_corr.items()},
         )
 
         model.unit_preferences = defaultdict(float, data.get("unit_preferences", {}))
@@ -248,7 +257,12 @@ class OpponentModeling:
     5. 게임 종료 시 데이터 저장
     """
 
-    def __init__(self, bot: BotAI, intel_manager=None, data_file: str = "data/opponent_models.json"):
+    def __init__(
+        self,
+        bot: BotAI,
+        intel_manager=None,
+        data_file: str = "data/opponent_models.json",
+    ):
         self.bot = bot
         self.intel = intel_manager or getattr(bot, "intel", None)
         self.logger = get_logger("OpponentModeling")
@@ -292,8 +306,12 @@ class OpponentModeling:
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
-                self.opponent_models[self.current_opponent_id] = OpponentModel(self.current_opponent_id)
-                self.logger.info(f"[OPPONENT_MODELING] New opponent: {self.current_opponent_id}")
+                self.opponent_models[self.current_opponent_id] = OpponentModel(
+                    self.current_opponent_id
+                )
+                self.logger.info(
+                    f"[OPPONENT_MODELING] New opponent: {self.current_opponent_id}"
+                )
             else:
                 model = self.opponent_models[self.current_opponent_id]
                 self.logger.info(
@@ -316,7 +334,7 @@ class OpponentModeling:
             game_result="unknown",
             game_duration=0.0,
             early_signals=[],
-            tech_progression=[]
+            tech_progression=[],
         )
 
     async def on_step(self, iteration: int):
@@ -356,11 +374,25 @@ class OpponentModeling:
         enemy_units = getattr(self.bot, "enemy_units", [])
 
         # Build pattern signals
-        structure_names = {getattr(s.type_id, "name", "").upper() for s in enemy_structures}
+        structure_names = {
+            getattr(s.type_id, "name", "").upper() for s in enemy_structures
+        }
 
         # Fast expand detection
-        if game_time < 120 and any(base in structure_names for base in ["HATCHERY", "NEXUS", "COMMANDCENTER"]):
-            if len([s for s in enemy_structures if getattr(s.type_id, "name", "").upper() in ["HATCHERY", "NEXUS", "COMMANDCENTER"]]) >= 2:
+        if game_time < 120 and any(
+            base in structure_names for base in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
+        ):
+            if (
+                len(
+                    [
+                        s
+                        for s in enemy_structures
+                        if getattr(s.type_id, "name", "").upper()
+                        in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
+                    ]
+                )
+                >= 2
+            ):
                 self._add_signal(StrategySignal.FAST_EXPAND)
 
         # Early pool detection (Zerg)
@@ -379,17 +411,35 @@ class OpponentModeling:
 
         # No natural expansion
         if game_time > 120:
-            base_count = len([s for s in enemy_structures if getattr(s.type_id, "name", "").upper() in ["HATCHERY", "NEXUS", "COMMANDCENTER", "LAIR", "HIVE", "ORBITALCOMMAND"]])
+            base_count = len(
+                [
+                    s
+                    for s in enemy_structures
+                    if getattr(s.type_id, "name", "").upper()
+                    in [
+                        "HATCHERY",
+                        "NEXUS",
+                        "COMMANDCENTER",
+                        "LAIR",
+                        "HIVE",
+                        "ORBITALCOMMAND",
+                    ]
+                ]
+            )
             if base_count <= 1:
                 self._add_signal(StrategySignal.NO_NATURAL)
 
         # Early army detection
-        army_supply = sum(getattr(u, "supply_cost", 1) for u in enemy_units if not u.is_worker)
+        army_supply = sum(
+            getattr(u, "supply_cost", 1) for u in enemy_units if not u.is_worker
+        )
         if game_time < 150 and army_supply >= 15:
             self._add_signal(StrategySignal.EARLY_ARMY)
 
         # Air units early
-        air_units = [u for u in enemy_units if getattr(u, "is_flying", False) and not u.is_worker]
+        air_units = [
+            u for u in enemy_units if getattr(u, "is_flying", False) and not u.is_worker
+        ]
         if game_time < 180 and len(air_units) >= 2:
             self._add_signal(StrategySignal.AIR_UNITS_EARLY)
 
@@ -398,12 +448,19 @@ class OpponentModeling:
         signal_name = signal.value
         if signal_name not in self.observed_signals:
             self.observed_signals.add(signal_name)
-            self.logger.info(f"[{int(self.bot.time)}s] [*] SIGNAL DETECTED: {signal_name}")
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [*] SIGNAL DETECTED: {signal_name}"
+            )
 
     async def _make_strategy_prediction(self, game_time: float):
         """전략 예측 수행 (초반 종료 시)"""
-        if not self.current_opponent_id or self.current_opponent_id not in self.opponent_models:
-            self.logger.info(f"[{int(game_time)}s] No opponent model available for prediction")
+        if (
+            not self.current_opponent_id
+            or self.current_opponent_id not in self.opponent_models
+        ):
+            self.logger.info(
+                f"[{int(game_time)}s] No opponent model available for prediction"
+            )
             return
 
         model = self.opponent_models[self.current_opponent_id]
@@ -426,7 +483,9 @@ class OpponentModeling:
         # Notify StrategyManagerV2
         await self._send_prediction_to_strategy_manager(predicted, confidence)
 
-    async def _send_prediction_to_strategy_manager(self, strategy: str, confidence: float):
+    async def _send_prediction_to_strategy_manager(
+        self, strategy: str, confidence: float
+    ):
         """예측을 StrategyManagerV2에 전달"""
         if not hasattr(self.bot, "strategy_manager"):
             return
@@ -438,13 +497,18 @@ class OpponentModeling:
             # Recommend counter strategy
             counter_strategies = self._get_counter_strategy(strategy)
             self.bot.blackboard.set("recommended_strategy", counter_strategies)
-            self.bot.blackboard.set("opponent_prediction", {
-                "strategy": strategy,
-                "confidence": confidence,
-                "counter": counter_strategies
-            })
+            self.bot.blackboard.set(
+                "opponent_prediction",
+                {
+                    "strategy": strategy,
+                    "confidence": confidence,
+                    "counter": counter_strategies,
+                },
+            )
 
-            self.logger.info(f"[OPPONENT_MODELING] Recommended counter: {counter_strategies}")
+            self.logger.info(
+                f"[OPPONENT_MODELING] Recommended counter: {counter_strategies}"
+            )
 
     def _get_counter_strategy(self, opponent_strategy: str) -> List[str]:
         """적 전략에 대한 카운터 전략 반환"""
@@ -484,7 +548,10 @@ class OpponentModeling:
         # Check if under attack
         if self.intel.is_under_attack():
             # Check if this is a new attack (not within 30s of previous)
-            if not self.timing_attacks_detected or game_time - self.timing_attacks_detected[-1] > 30:
+            if (
+                not self.timing_attacks_detected
+                or game_time - self.timing_attacks_detected[-1] > 30
+            ):
                 self.timing_attacks_detected.append(game_time)
                 self.logger.info(f"[{int(game_time)}s] [*] TIMING ATTACK DETECTED")
 
@@ -514,11 +581,17 @@ class OpponentModeling:
 
         # Finalize game history
         self.current_game_history.opponent_style = self._classify_opponent_style()
-        self.current_game_history.detected_strategy = self.predicted_strategy or "unknown"
+        self.current_game_history.detected_strategy = (
+            self.predicted_strategy or "unknown"
+        )
         self.current_game_history.build_order_observed = self.build_order_observed
         self.current_game_history.timing_attacks = self.timing_attacks_detected
-        self.current_game_history.final_composition = self._get_final_enemy_composition()
-        self.current_game_history.game_result = "win" if game_result == "Defeat" else "loss"
+        self.current_game_history.final_composition = (
+            self._get_final_enemy_composition()
+        )
+        self.current_game_history.game_result = (
+            "win" if game_result == "Defeat" else "loss"
+        )
         self.current_game_history.game_duration = game_time
         self.current_game_history.early_signals = list(self.observed_signals)
         self.current_game_history.tech_progression = self.tech_progression
@@ -559,7 +632,9 @@ class OpponentModeling:
 
         # Macro detection
         if StrategySignal.FAST_EXPAND.value in self.observed_signals:
-            if len(self.timing_attacks_detected) == 0 or (self.timing_attacks_detected and self.timing_attacks_detected[0] > 300):
+            if len(self.timing_attacks_detected) == 0 or (
+                self.timing_attacks_detected and self.timing_attacks_detected[0] > 300
+            ):
                 return OpponentStyle.MACRO.value
 
         # Timing attack detection
@@ -588,7 +663,7 @@ class OpponentModeling:
                 for opponent_id, model in self.opponent_models.items()
             }
 
-            with open(self.data_file, 'w', encoding='utf-8') as f:
+            with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"[OPPONENT_MODELING] Models saved: {len(data)} opponents")
@@ -601,11 +676,13 @@ class OpponentModeling:
     def load_models(self) -> bool:
         """파일에서 모델 로드"""
         if not os.path.exists(self.data_file):
-            self.logger.info(f"[OPPONENT_MODELING] No existing models file: {self.data_file}")
+            self.logger.info(
+                f"[OPPONENT_MODELING] No existing models file: {self.data_file}"
+            )
             return False
 
         try:
-            with open(self.data_file, 'r', encoding='utf-8') as f:
+            with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             self.opponent_models = {
@@ -632,11 +709,19 @@ class OpponentModeling:
 
         return {
             "games_played": model.games_played,
-            "win_rate": model.games_won / model.games_played if model.games_played > 0 else 0.0,
+            "win_rate": (
+                model.games_won / model.games_played if model.games_played > 0 else 0.0
+            ),
             "dominant_style": model.dominant_style.value,
-            "most_common_strategy": max(model.strategy_frequency.items(), key=lambda x: x[1])[0] if model.strategy_frequency else "unknown",
+            "most_common_strategy": (
+                max(model.strategy_frequency.items(), key=lambda x: x[1])[0]
+                if model.strategy_frequency
+                else "unknown"
+            ),
             "expected_timings": model.get_expected_timing_attacks(),
-            "favorite_units": sorted(model.unit_preferences.items(), key=lambda x: x[1], reverse=True)[:5]
+            "favorite_units": sorted(
+                model.unit_preferences.items(), key=lambda x: x[1], reverse=True
+            )[:5],
         }
 
     # ============================================================
@@ -647,7 +732,11 @@ class OpponentModeling:
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
-        race_name = opponent_race.name if opponent_race and hasattr(opponent_race, 'name') else "Unknown"
+        race_name = (
+            opponent_race.name
+            if opponent_race and hasattr(opponent_race, "name")
+            else "Unknown"
+        )
         self.current_game_history = GameHistory(
             game_id=f"game_{opponent_id}",
             opponent_race=race_name,
@@ -668,7 +757,9 @@ class OpponentModeling:
             self.opponent_models[opponent_id] = OpponentModel(opponent_id)
             self.logger.info(f"[OPPONENT_MODELING] New opponent: {opponent_id}")
         else:
-            self.logger.info(f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)")
+            self.logger.info(
+                f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
+            )
 
     async def on_step(self, iteration: int):
         """매 프레임 호출 - 신호 감지"""
@@ -689,7 +780,9 @@ class OpponentModeling:
         # Update game history
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [s.value for s in self.observed_signals]
+        self.current_game_history.early_signals = [
+            s.value for s in self.observed_signals
+        ]
 
         # Detect strategy (placeholder - would need more logic)
         if self.intel:
@@ -703,11 +796,16 @@ class OpponentModeling:
         # Save to disk
         self.save_models()
 
-        self.logger.info(f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}")
+        self.logger.info(
+            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
+        )
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
-        if not self.current_opponent or self.current_opponent not in self.opponent_models:
+        if (
+            not self.current_opponent
+            or self.current_opponent not in self.opponent_models
+        ):
             return (None, 0.0)
 
         model = self.opponent_models[self.current_opponent]

@@ -25,22 +25,28 @@ from racial_counter_manager import RacialCounterManager
 try:
     from knowledge_manager import KnowledgeManager
 except ImportError:
+
     class KnowledgeManager:
         """Fallback stub when knowledge_manager module is unavailable."""
+
         def __init__(self):
             self.knowledge = {}
+
         def get(self, key, default=None):
             return default
 
+
 class GamePhase(Enum):
     """게임 페이즈"""
-    EARLY = "early"      # 0-4분
-    MID = "mid"          # 4-10분
-    LATE = "late"        # 10분+
+
+    EARLY = "early"  # 0-4분
+    MID = "mid"  # 4-10분
+    LATE = "late"  # 10분+
 
 
 class StrategyMode(Enum):
     """전략 모드"""
+
     NORMAL = "normal"
     EMERGENCY = "emergency"
     AGGRESSIVE = "aggressive"
@@ -50,6 +56,7 @@ class StrategyMode(Enum):
 
 class EnemyRace(Enum):
     """상대 종족"""
+
     TERRAN = "Terran"
     PROTOSS = "Protoss"
     ZERG = "Zerg"
@@ -60,18 +67,18 @@ class EnemyRace(Enum):
 class StrategyManager:
     """
     종족별 전략 및 Emergency Mode 관리자 (Data-Driven)
-    
+
     Features:
     - 상대 종족에 따른 유닛 비율 조정 (Json Load)
     - 러시/치즈 감지 및 긴급 대응
     - Rogue Tactics 연동
     """
 
-    def __init__(self, bot, blackboard=None): # Added blackboard
+    def __init__(self, bot, blackboard=None):  # Added blackboard
         self.bot = bot
-        self.blackboard = blackboard # Store blackboard
+        self.blackboard = blackboard  # Store blackboard
         self.logger = get_logger("StrategyManager")
-        self.knowledge_manager = KnowledgeManager() # Initialize
+        self.knowledge_manager = KnowledgeManager()  # Initialize
 
         # 전략 상태
         self.current_mode = StrategyMode.NORMAL
@@ -86,7 +93,9 @@ class StrategyManager:
 
         # 러시 감지 설정 (config-driven)
         self.rush_detection_threshold = rush_cfg.get("rush_threshold_seconds", 150.0)
-        self.cheese_detection_threshold = rush_cfg.get("cheese_threshold_seconds", 120.0)
+        self.cheese_detection_threshold = rush_cfg.get(
+            "cheese_threshold_seconds", 120.0
+        )
 
         # 로그 스팸 방지
         self.last_air_threat_log = 0
@@ -105,25 +114,33 @@ class StrategyManager:
             EnemyRace.TERRAN: self._load_ratios("Terran"),
             EnemyRace.PROTOSS: self._load_ratios("Protoss"),
             EnemyRace.ZERG: self._load_ratios("Zerg"),
-            EnemyRace.UNKNOWN: self._load_ratios("Terran"), # Default to Terran ratios
+            EnemyRace.UNKNOWN: self._load_ratios("Terran"),  # Default to Terran ratios
         }
-        
-        self.logger.info(f"[STRATEGY] Loaded unit ratios for {len(self.race_unit_ratios)} races from Knowledge Base")
+
+        self.logger.info(
+            f"[STRATEGY] Loaded unit ratios for {len(self.race_unit_ratios)} races from Knowledge Base"
+        )
 
         # Emergency Mode 비율 (config-driven)
         emergency_cfg = ConfigLoader.get_emergency_config()
-        self.emergency_ratios = emergency_cfg.get("default_ratios", {
-            "zergling": 0.5,
-            "roach": 0.25,
-            "baneling": 0.15,
-            "queen": 0.1,
-        })
-        self.emergency_air_ratios = emergency_cfg.get("air_threat_ratios", {
-            "zergling": 0.30,
-            "hydralisk": 0.40,
-            "roach": 0.20,
-            "queen": 0.10,
-        })
+        self.emergency_ratios = emergency_cfg.get(
+            "default_ratios",
+            {
+                "zergling": 0.5,
+                "roach": 0.25,
+                "baneling": 0.15,
+                "queen": 0.1,
+            },
+        )
+        self.emergency_air_ratios = emergency_cfg.get(
+            "air_threat_ratios",
+            {
+                "zergling": 0.30,
+                "hydralisk": 0.40,
+                "roach": 0.20,
+                "queen": 0.10,
+            },
+        )
 
         # Racial Counter Manager (extracted from this class)
         self.counter_manager = RacialCounterManager(bot, blackboard, self.logger)
@@ -140,7 +157,7 @@ class StrategyManager:
         # Rogue Tactics 연동
         self.rogue_tactics_active = False
         self.larva_saving_mode = False
-        
+
         # Rush Persistence Counter
         self.rush_persistence_count = 0
 
@@ -151,8 +168,10 @@ class StrategyManager:
 
         # ★ Feature 83: Extended JARVIS command fields ★
         self.target_priority: str = "military"  # "economy" | "military" | "tech"
-        self.expansion_timing: str = "normal"   # "fast" | "normal" | "slow"
-        self.preferred_comp: str = "balanced"    # "zergling_heavy" | "roach_heavy" | "muta_heavy" | "balanced"
+        self.expansion_timing: str = "normal"  # "fast" | "normal" | "slow"
+        self.preferred_comp: str = (
+            "balanced"  # "zergling_heavy" | "roach_heavy" | "muta_heavy" | "balanced"
+        )
 
         # ★ Feature 89: Custom unit weights from JARVIS ★
         self.custom_unit_weights: Optional[Dict[str, float]] = None
@@ -164,8 +183,10 @@ class StrategyManager:
     def _load_ratios(self, race_name: str) -> Dict[GamePhase, Dict[str, float]]:
         """KnowledgeManager에서 유닛 비율 로드"""
         ratios = {}
-        race_data = self.knowledge_manager.knowledge.get("unit_ratios", {}).get(race_name, {})
-        
+        race_data = self.knowledge_manager.knowledge.get("unit_ratios", {}).get(
+            race_name, {}
+        )
+
         # Convert string keys to GamePhase enum
         for phase_str, unit_data in race_data.items():
             try:
@@ -178,20 +199,36 @@ class StrategyManager:
                 elif phase_str == "late":
                     ratios[GamePhase.LATE] = normalized_data
             except Exception as e:
-                self.logger.warning(f"Failed to load ratios for {race_name}/{phase_str}: {e}")
-        
+                self.logger.warning(
+                    f"Failed to load ratios for {race_name}/{phase_str}: {e}"
+                )
+
         # Fill missing phases with defaults if empty (Safe Fallback)
         if not ratios:
             self.logger.warning(f"No ratios found for {race_name}, using fallback.")
             return {
                 GamePhase.EARLY: {"zergling": 0.6, "queen": 0.2, "roach": 0.2},
-                GamePhase.MID: {"roach": 0.25, "hydralisk": 0.2, "zergling": 0.2,
-                                "ravager": 0.1, "baneling": 0.1, "queen": 0.1, "lurker": 0.05},
-                GamePhase.LATE: {"ultralisk": 0.20, "hydralisk": 0.20, "corruptor": 0.15,
-                                 "broodlord": 0.10, "viper": 0.10, "zergling": 0.10,
-                                 "lurker": 0.10, "ravager": 0.05},
+                GamePhase.MID: {
+                    "roach": 0.25,
+                    "hydralisk": 0.2,
+                    "zergling": 0.2,
+                    "ravager": 0.1,
+                    "baneling": 0.1,
+                    "queen": 0.1,
+                    "lurker": 0.05,
+                },
+                GamePhase.LATE: {
+                    "ultralisk": 0.20,
+                    "hydralisk": 0.20,
+                    "corruptor": 0.15,
+                    "broodlord": 0.10,
+                    "viper": 0.10,
+                    "zergling": 0.10,
+                    "lurker": 0.10,
+                    "ravager": 0.05,
+                },
             }
-            
+
         return ratios
 
     def update(self) -> None:
@@ -334,7 +371,7 @@ class StrategyManager:
 
     def _check_jarvis_commands(self) -> None:
         """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
-        if self.bot.iteration % 22 != 0: # 1초마다만 체크
+        if self.bot.iteration % 22 != 0:  # 1초마다만 체크
             return
 
         cmd_path = Path("jarvis_command.json")
@@ -354,7 +391,9 @@ class StrategyManager:
                             self.current_mode = StrategyMode.AGGRESSIVE
                         elif level == "all_in":
                             self.current_mode = StrategyMode.ALL_IN
-                        self.logger.info(f"[JARVIS] Aggression level updated to: {level}")
+                        self.logger.info(
+                            f"[JARVIS] Aggression level updated to: {level}"
+                        )
 
                     # ★ Feature 83: target_priority ★
                     tp = cmd_data.get("target_priority")
@@ -370,7 +409,12 @@ class StrategyManager:
 
                     # ★ Feature 83: unit_composition ★
                     uc = cmd_data.get("unit_composition")
-                    if uc and uc in ("zergling_heavy", "roach_heavy", "muta_heavy", "balanced"):
+                    if uc and uc in (
+                        "zergling_heavy",
+                        "roach_heavy",
+                        "muta_heavy",
+                        "balanced",
+                    ):
                         self.preferred_comp = uc
                         self.logger.info(f"[JARVIS] Preferred composition set to: {uc}")
 
@@ -380,16 +424,20 @@ class StrategyManager:
                         # Validate all values are numeric
                         valid = all(isinstance(v, (int, float)) for v in uw.values())
                         if valid:
-                            self.custom_unit_weights = {k.lower(): float(v) for k, v in uw.items()}
-                            self.logger.info(f"[JARVIS] Custom unit weights set: {self.custom_unit_weights}")
+                            self.custom_unit_weights = {
+                                k.lower(): float(v) for k, v in uw.items()
+                            }
+                            self.logger.info(
+                                f"[JARVIS] Custom unit weights set: {self.custom_unit_weights}"
+                            )
                         else:
-                            self.logger.warning("[JARVIS] Invalid unit_weights (values must be numeric)")
+                            self.logger.warning(
+                                "[JARVIS] Invalid unit_weights (values must be numeric)"
+                            )
 
                 cmd_path.unlink(missing_ok=True)
             except Exception as e:
                 self.logger.warning(f"Failed to read jarvis command: {e}")
-
-
 
     def get_learned_economy_weight(self) -> float:
         """
@@ -512,8 +560,11 @@ class StrategyManager:
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 main_base = self.bot.townhalls.first
                 # ★ CRITICAL: 비상 모드 조건 완화 (30 → 15) - 확장 차단 방지 ★
-                nearby_enemies = [e for e in self.bot.enemy_units
-                                 if e.can_attack and e.distance_to(main_base) < 15]
+                nearby_enemies = [
+                    e
+                    for e in self.bot.enemy_units
+                    if e.can_attack and e.distance_to(main_base) < 15
+                ]
                 # 적 3마리 이상일 때만 러시로 판정 (정찰 유닛 무시)
                 if len(nearby_enemies) >= 3:
                     self.rush_persistence_count += 1
@@ -521,7 +572,7 @@ class StrategyManager:
                     if self.rush_persistence_count >= 3:
                         return True
                     return False
-                
+
         self.rush_persistence_count = 0
         return False
 
@@ -545,9 +596,11 @@ class StrategyManager:
 
         self.last_harassment_time = game_time
         self.early_harassment_active = True
-        
+
         # Log only - Control is delegated to CombatManager
-        self.logger.info(f"[{int(game_time)}s] EARLY HARASSMENT: Signal sent to CombatManager")
+        self.logger.info(
+            f"[{int(game_time)}s] EARLY HARASSMENT: Signal sent to CombatManager"
+        )
 
     def _detect_major_attack(self, game_time: float) -> bool:
         """
@@ -571,13 +624,29 @@ class StrategyManager:
         # 고위협 유닛 목록 (중후반 푸쉬의 핵심)
         high_threat_units = {
             # 테란
-            "SIEGETANK", "SIEGETANKSIEGED", "THOR", "BATTLECRUISER",
-            "LIBERATOR", "LIBERATORAG", "CYCLONE", "WIDOWMINE",
+            "SIEGETANK",
+            "SIEGETANKSIEGED",
+            "THOR",
+            "BATTLECRUISER",
+            "LIBERATOR",
+            "LIBERATORAG",
+            "CYCLONE",
+            "WIDOWMINE",
             # 프로토스
-            "COLOSSUS", "DISRUPTOR", "IMMORTAL", "ARCHON",
-            "CARRIER", "TEMPEST", "VOIDRAY", "HIGHTEMPLAR",
+            "COLOSSUS",
+            "DISRUPTOR",
+            "IMMORTAL",
+            "ARCHON",
+            "CARRIER",
+            "TEMPEST",
+            "VOIDRAY",
+            "HIGHTEMPLAR",
             # 저그
-            "ULTRALISK", "BROODLORD", "RAVAGER", "LURKER", "LURKERMP"
+            "ULTRALISK",
+            "BROODLORD",
+            "RAVAGER",
+            "LURKER",
+            "LURKERMP",
         }
 
         total_threat_score = 0
@@ -611,8 +680,10 @@ class StrategyManager:
         if total_threat_score >= 30 or high_threat_count >= 3:
             # ★★★ 로그 스팸 방지: 5초마다만 출력 ★★★
             if game_time - self.last_major_attack_log > self.log_cooldown:
-                self.logger.warning(f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
-                                    f"Threat score: {total_threat_score}, High-threat units: {high_threat_count}")
+                self.logger.warning(
+                    f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
+                    f"Threat score: {total_threat_score}, High-threat units: {high_threat_count}"
+                )
                 self.last_major_attack_log = game_time
             return True
 
@@ -643,7 +714,9 @@ class StrategyManager:
 
         if should_log:
             self._last_defense_log_time = game_time
-            self.logger.warning(f"[{int(game_time)}s] DEFENSE MODE ACTIVATED - Major attack incoming!")
+            self.logger.warning(
+                f"[{int(game_time)}s] DEFENSE MODE ACTIVATED - Major attack incoming!"
+            )
 
         # 군대 집결 신호
         self._request_army_rally()
@@ -653,8 +726,16 @@ class StrategyManager:
 
         # 적 공중 유닛 체크 → 스포어 요청도 위임
         if hasattr(self.bot, "enemy_units"):
-            air_threats = {"MUTALISK", "VOIDRAY", "ORACLE", "PHOENIX",
-                         "BATTLECRUISER", "CARRIER", "LIBERATOR", "BROODLORD"}
+            air_threats = {
+                "MUTALISK",
+                "VOIDRAY",
+                "ORACLE",
+                "PHOENIX",
+                "BATTLECRUISER",
+                "CARRIER",
+                "LIBERATOR",
+                "BROODLORD",
+            }
             for enemy in self.bot.enemy_units:
                 enemy_type = getattr(enemy.type_id, "name", "").upper()
                 if enemy_type in air_threats:
@@ -748,15 +829,17 @@ class StrategyManager:
 
         # === Dynamic Counter Logic from Knowledge Base (Commander Learning) ===
         # 1. Reset to base ratios for this race/phase
-        enemy_race_name = self.detected_enemy_race.name.capitalize() # e.g. "Terran"
-        base_ratios = self.knowledge_manager.get_unit_ratios(enemy_race_name, self.game_phase.value)
-        
+        enemy_race_name = self.detected_enemy_race.name.capitalize()  # e.g. "Terran"
+        base_ratios = self.knowledge_manager.get_unit_ratios(
+            enemy_race_name, self.game_phase.value
+        )
+
         if not base_ratios:
-             # Keep existing if loading failed
-             return
-        
+            # Keep existing if loading failed
+            return
+
         current_ratios = base_ratios.copy()
-        
+
         # 2. ★ Phase 17: Apply Build Pattern Counters with Confidence-Based Scaling ★
         recommended = intel.get_recommended_response()
         if recommended:
@@ -775,8 +858,10 @@ class StrategyManager:
 
             for unit_name in recommended:
                 u_key = unit_name.lower().replace(" ", "")
-                if u_key == "hydralisk": u_key = "hydra"
-                if u_key == "lurkermp": u_key = "lurker"
+                if u_key == "hydralisk":
+                    u_key = "hydra"
+                if u_key == "lurkermp":
+                    u_key = "lurker"
 
                 base_boost = 0.3
                 adjusted_boost = base_boost * boost_multiplier
@@ -789,21 +874,23 @@ class StrategyManager:
                         f"[{int(game_time)}s] Counter boost: {u_key} +{adjusted_boost:.2f} "
                         f"({build_status}, confidence={build_confidence:.0%})"
                     )
-        
+
         # 3. Scan enemy units and adjust ratios (Reactive)
         if hasattr(self.bot, "enemy_units"):
             detected_types = set(u.type_id.name.upper() for u in self.bot.enemy_units)
-            
+
             for e_type in detected_types:
                 counter_rule = self.knowledge_manager.get_counter_unit(e_type)
                 if counter_rule:
                     c_unit = counter_rule["unit"].lower()
                     # Normalize common names to match UnitFactory keys
-                    if c_unit == "hydralisk": c_unit = "hydra"
-                    if c_unit == "lurkermp": c_unit = "lurker"
-                    
+                    if c_unit == "hydralisk":
+                        c_unit = "hydra"
+                    if c_unit == "lurkermp":
+                        c_unit = "lurker"
+
                     ratio_boost = counter_rule["ratio"]
-                    
+
                     # Add/Boost counter unit (Adding weight)
                     current_ratios[c_unit] = current_ratios.get(c_unit, 0) + ratio_boost
 
@@ -812,10 +899,12 @@ class StrategyManager:
         if total > 0:
             for k in current_ratios:
                 current_ratios[k] /= total
-        
+
         # 5. Apply to current state
         if self.detected_enemy_race in self.race_unit_ratios:
-            self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = current_ratios
+            self.race_unit_ratios[self.detected_enemy_race][
+                self.game_phase
+            ] = current_ratios
         self._request_defensive_building(spine=True)
 
         # 로그 출력 (30초마다)
@@ -847,7 +936,9 @@ class StrategyManager:
         if not hasattr(self, "_last_air_log_time"):
             self._last_air_log_time = 0
         if game_time - self._last_air_log_time >= 10:
-            self.logger.warning(f"[{int(game_time)}s] AIR THREAT ACTIVE - Anti-air priority")
+            self.logger.warning(
+                f"[{int(game_time)}s] AIR THREAT ACTIVE - Anti-air priority"
+            )
             self._last_air_log_time = game_time
 
     def _force_anti_air_ratios(self) -> None:
@@ -868,7 +959,9 @@ class StrategyManager:
 
     # ========== Delegation Helpers ==========
 
-    def _request_defensive_building(self, spine: bool = False, spore: bool = False) -> None:
+    def _request_defensive_building(
+        self, spine: bool = False, spore: bool = False
+    ) -> None:
         """
         방어 건물 건설 요청을 중앙화하는 헬퍼.
 
@@ -891,10 +984,15 @@ class StrategyManager:
         if building_coord:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
+
                 if spine:
-                    building_coord.request_building(UnitTypeId.SPINECRAWLER, "StrategyManager")
+                    building_coord.request_building(
+                        UnitTypeId.SPINECRAWLER, "StrategyManager"
+                    )
                 if spore:
-                    building_coord.request_building(UnitTypeId.SPORECRAWLER, "StrategyManager")
+                    building_coord.request_building(
+                        UnitTypeId.SPORECRAWLER, "StrategyManager"
+                    )
             except Exception:
                 pass  # Fallback to flag-based system
 
@@ -909,15 +1007,22 @@ class StrategyManager:
         if building_coord:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
+
                 if building_coord.can_build(UnitTypeId.SPIRE):
-                    building_coord.request_building(UnitTypeId.SPIRE, "StrategyManager-AirThreat")
-                    self.logger.info(f"[{int(game_time)}s] Spire build requested via BuildingCoordination")
+                    building_coord.request_building(
+                        UnitTypeId.SPIRE, "StrategyManager-AirThreat"
+                    )
+                    self.logger.info(
+                        f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
+                    )
             except Exception:
                 pass
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                self.logger.info(f"[{int(game_time)}s] Spire needed for anti-air (no BuildingCoord)")
+                self.logger.info(
+                    f"[{int(game_time)}s] Spire needed for anti-air (no BuildingCoord)"
+                )
 
     def _get_drone_count(self) -> int:
         """
@@ -966,13 +1071,26 @@ class StrategyManager:
         # 공중 위협 유닛 목록
         air_threat_units = {
             # 테란
-            "BANSHEE", "BATTLECRUISER", "LIBERATOR", "LIBERATORAG",
-            "VIKINGFIGHTER", "RAVEN", "MEDIVAC",
+            "BANSHEE",
+            "BATTLECRUISER",
+            "LIBERATOR",
+            "LIBERATORAG",
+            "VIKINGFIGHTER",
+            "RAVEN",
+            "MEDIVAC",
             # 프로토스
-            "VOIDRAY", "ORACLE", "PHOENIX", "CARRIER", "TEMPEST",
-            "MOTHERSHIP", "INTERCEPTOR",
+            "VOIDRAY",
+            "ORACLE",
+            "PHOENIX",
+            "CARRIER",
+            "TEMPEST",
+            "MOTHERSHIP",
+            "INTERCEPTOR",
             # 저그
-            "MUTALISK", "CORRUPTOR", "BROODLORD", "VIPER"
+            "MUTALISK",
+            "CORRUPTOR",
+            "BROODLORD",
+            "VIPER",
         }
 
         # ★ 캐시된 적 구성 사용 ★
@@ -991,7 +1109,9 @@ class StrategyManager:
 
             # 30초마다 로그
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
-                self.logger.warning(f"[{int(game_time)}s] [*][*][*] AIR THREAT ACTIVE: {air_unit_count} air units detected! [*][*][*]")
+                self.logger.warning(
+                    f"[{int(game_time)}s] [*][*][*] AIR THREAT ACTIVE: {air_unit_count} air units detected! [*][*][*]"
+                )
                 self.logger.info(f"Air types: {detected_air_types}")
 
             # 히드라 우선 생산 설정
@@ -1009,7 +1129,9 @@ class StrategyManager:
                 hydra_ratio = 0.45  # 소규모 → 45% 히드라 (기존 40%에서 증가)
 
             if "hydra" in current_ratios:
-                current_ratios["hydra"] = max(current_ratios.get("hydra", 0), hydra_ratio)
+                current_ratios["hydra"] = max(
+                    current_ratios.get("hydra", 0), hydra_ratio
+                )
             else:
                 current_ratios["hydra"] = hydra_ratio
 
@@ -1056,13 +1178,17 @@ class StrategyManager:
         if not race_str:
             return
 
-        current_ratios = self.race_unit_ratios.get(
-            self.detected_enemy_race, {}
-        ).get(self.game_phase, {})
+        current_ratios = self.race_unit_ratios.get(self.detected_enemy_race, {}).get(
+            self.game_phase, {}
+        )
 
         updated = self.counter_manager.update(
             enemy_race=race_str,
-            game_phase=self.game_phase.name if hasattr(self.game_phase, 'name') else str(self.game_phase),
+            game_phase=(
+                self.game_phase.name
+                if hasattr(self.game_phase, "name")
+                else str(self.game_phase)
+            ),
             game_time=getattr(self.bot, "time", 0),
             enemy_composition=self._cached_enemy_composition,
             current_ratios=current_ratios,
@@ -1112,7 +1238,9 @@ class StrategyManager:
             self._adjust_unit_ratio("ravager", 0.10)
             if game_time > 300 and not getattr(self, "_zvt_bio_logged", False):
                 self._zvt_bio_logged = True
-                self.logger.info(f"[{int(game_time)}s] [*] ZvT BIO DETECTED -> Baneling+Ling priority [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] ZvT BIO DETECTED -> Baneling+Ling priority [*]"
+                )
 
         # 메카닉 (탱크 2+ 또는 토르 1+): 레바저 담즙 + 우회 기동
         if tank_count >= 2 or thor_count >= 1:
@@ -1123,7 +1251,9 @@ class StrategyManager:
             self._adjust_unit_ratio("corruptor", 0.10)  # 토르+메디 대응
             if game_time > 300 and not getattr(self, "_zvt_mech_logged", False):
                 self._zvt_mech_logged = True
-                self.logger.info(f"[{int(game_time)}s] [*] ZvT MECH DETECTED -> Ravager bile + Roach [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] ZvT MECH DETECTED -> Ravager bile + Roach [*]"
+                )
 
         # 공중 (밴시/배틀크루저/리버레이터): 히드라 + 코럽터
         if banshee_count >= 1 or battlecruiser_count >= 1 or liberator_count >= 2:
@@ -1135,7 +1265,9 @@ class StrategyManager:
             self._request_defensive_building(spore=True)
             if game_time > 300 and not getattr(self, "_zvt_air_logged", False):
                 self._zvt_air_logged = True
-                self.logger.info(f"[{int(game_time)}s] [*] ZvT AIR DETECTED -> Hydra+Corruptor+Spore [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] ZvT AIR DETECTED -> Hydra+Corruptor+Spore [*]"
+                )
 
         # 헬리온 러시 (초반): 퀸 + 바퀴
         # ★ Phase 34: 4분→5분으로 확장 (4:30~5분 헬리온 러시 대응)
@@ -1186,7 +1318,9 @@ class StrategyManager:
                 if not getattr(self, "_dt_response_active", False):
                     self._dt_response_active = True
                     self._request_defensive_building(spore=True)
-                    self.logger.warning(f"[{int(game_time)}s] [*][*][*] DT INCOMING! Spore + Overseer PRIORITY [*][*][*]")
+                    self.logger.warning(
+                        f"[{int(game_time)}s] [*][*][*] DT INCOMING! Spore + Overseer PRIORITY [*][*][*]"
+                    )
                     # Blackboard에 오버시어 긴급 요청
                     if self.blackboard:
                         self.blackboard.set("urgent_overseer", True)
@@ -1196,7 +1330,9 @@ class StrategyManager:
                 if not getattr(self, "_air_response_active", False):
                     self._air_response_active = True
                     self._request_defensive_building(spore=True)
-                    self.logger.warning(f"[{int(game_time)}s] [*][*][*] STARGATE TECH! Spore + Queen PRIORITY [*][*][*]")
+                    self.logger.warning(
+                        f"[{int(game_time)}s] [*][*][*] STARGATE TECH! Spore + Queen PRIORITY [*][*][*]"
+                    )
 
         # ★ 유닛별 대응 전략 ★
 
@@ -1207,7 +1343,9 @@ class StrategyManager:
 
             if not self._immortal_counter_active:
                 self._immortal_counter_active = True
-                self.logger.info(f"[{int(game_time)}s] [*] IMMORTAL DETECTED ({immortal_count}) - Ravager bile priority [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] IMMORTAL DETECTED ({immortal_count}) - Ravager bile priority [*]"
+                )
 
             # 레이바저 비율 증가
             self._adjust_unit_ratio("ravager", 0.35)
@@ -1221,7 +1359,9 @@ class StrategyManager:
 
             if not self._colossus_counter_active:
                 self._colossus_counter_active = True
-                self.logger.info(f"[{int(game_time)}s] [*][*][*] COLOSSUS DETECTED ({colossus_count}) - Corruptor PRIORITY [*][*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*][*] COLOSSUS DETECTED ({colossus_count}) - Corruptor PRIORITY [*][*][*]"
+                )
 
             # 커럽터 + 레이바저 담즙
             self._adjust_unit_ratio("corruptor", 0.4)
@@ -1234,7 +1374,9 @@ class StrategyManager:
         if voidray_count >= 2 or carrier_count >= 1:
             if not getattr(self, "_zvp_air_logged", False):
                 self._zvp_air_logged = True
-                self.logger.warning(f"[{int(game_time)}s] [*] AIR THREAT - VoidRay/Carrier detected [*]")
+                self.logger.warning(
+                    f"[{int(game_time)}s] [*] AIR THREAT - VoidRay/Carrier detected [*]"
+                )
             self._handle_air_threat()
             self._adjust_unit_ratio("hydralisk", 0.35)
             self._adjust_unit_ratio("corruptor", 0.30)
@@ -1248,7 +1390,9 @@ class StrategyManager:
         if disruptor_count >= 1:
             # 로그 스팸 방지
             if game_time - self.last_disruptor_log > self.log_cooldown:
-                self.logger.warning(f"[{int(game_time)}s] DISRUPTOR DETECTED - Split micro needed")
+                self.logger.warning(
+                    f"[{int(game_time)}s] DISRUPTOR DETECTED - Split micro needed"
+                )
                 self.last_disruptor_log = game_time
             # 빠른 유닛으로 우회 공격
             self._adjust_unit_ratio("zergling", 0.3)
@@ -1258,7 +1402,9 @@ class StrategyManager:
         if high_templar_count >= 1 or archon_count >= 2:
             # 로그 스팸 방지
             if game_time - self.last_high_templar_log > self.log_cooldown:
-                self.logger.warning(f"[{int(game_time)}s] HIGH TEMPLAR/ARCHON - Rush them!")
+                self.logger.warning(
+                    f"[{int(game_time)}s] HIGH TEMPLAR/ARCHON - Rush them!"
+                )
                 self.last_high_templar_log = game_time
             self._adjust_unit_ratio("zergling", 0.4)
             self._adjust_unit_ratio("ravager", 0.3)  # 담즙으로 폭풍 지역 회피
@@ -1267,10 +1413,12 @@ class StrategyManager:
         if stalker_count >= 4:
             if not getattr(self, "_zvp_stalker_logged", False):
                 self._zvp_stalker_logged = True
-                self.logger.info(f"[{int(game_time)}s] [*] ZvP STALKER ARMY -- Zergling surround + Roach [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] ZvP STALKER ARMY -- Zergling surround + Roach [*]"
+                )
             self._adjust_unit_ratio("zergling", 0.35)  # 포위
-            self._adjust_unit_ratio("roach", 0.30)     # 정면 탱킹
-            self._adjust_unit_ratio("ravager", 0.20)   # 담즙으로 추격 저지
+            self._adjust_unit_ratio("roach", 0.30)  # 정면 탱킹
+            self._adjust_unit_ratio("ravager", 0.20)  # 담즙으로 추격 저지
             self._adjust_unit_ratio("baneling", 0.15)  # 집결 시 광역
 
     def _apply_safe_fallback_ratios(self) -> None:
@@ -1321,7 +1469,9 @@ class StrategyManager:
 
         # 현재 비율에 적용
         if self.detected_enemy_race in self.race_unit_ratios:
-            self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = fallback_ratios
+            self.race_unit_ratios[self.detected_enemy_race][
+                self.game_phase
+            ] = fallback_ratios
         if self.blackboard:
             self.blackboard.set("unit_ratios", fallback_ratios)
 
@@ -1376,7 +1526,9 @@ class StrategyManager:
             self._request_defensive_building(spore=True)
             if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
                 self._last_zvz_muta_log = game_time
-                self.logger.warning(f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority")
+                self.logger.warning(
+                    f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority"
+                )
 
         # ★ Phase 21: ZvZ 중반 안정화 — 로치→히드라→럴커 전환 ★
         if game_time >= 360:  # 6분+
@@ -1390,7 +1542,9 @@ class StrategyManager:
                 self._adjust_unit_ratio("zergling", 0.10)
                 if not getattr(self, "_zvz_lurker_logged", False):
                     self._zvz_lurker_logged = True
-                    self.logger.info(f"[{int(game_time)}s] [*] ZvZ MID: Lurker transition for positional advantage [*]")
+                    self.logger.info(
+                        f"[{int(game_time)}s] [*] ZvZ MID: Lurker transition for positional advantage [*]"
+                    )
 
     def _adjust_unit_ratio(self, unit_type: str, target_ratio: float) -> None:
         """유닛 비율 동적 조정"""
@@ -1428,7 +1582,9 @@ class StrategyManager:
         self.emergency_start_time = game_time
         self.current_mode = StrategyMode.EMERGENCY
 
-        self.logger.warning(f"EMERGENCY MODE ACTIVATED at {int(game_time)}s - Rush detected!")
+        self.logger.warning(
+            f"EMERGENCY MODE ACTIVATED at {int(game_time)}s - Rush detected!"
+        )
 
         # Economy Manager에 알림
         if hasattr(self.bot, "economy") and self.bot.economy:
@@ -1460,7 +1616,9 @@ class StrategyManager:
                 emergency_ratios = dict(self.emergency_ratios)
             self.blackboard.set("unit_ratios", emergency_ratios)
 
-        self.logger.info(f"Emergency defense requested: Spine={self.emergency_spine_requested}, Spore={self.emergency_spore_requested}")
+        self.logger.info(
+            f"Emergency defense requested: Spine={self.emergency_spine_requested}, Spore={self.emergency_spore_requested}"
+        )
 
     def _end_emergency_mode(self) -> None:
         """Emergency Mode 종료"""
@@ -1493,8 +1651,10 @@ class StrategyManager:
 
         # ★ 방어 모드가 활성화된 직후에는 덮어쓰지 않음 (oscillation 방지) ★
         game_time = getattr(self.bot, "time", 0.0)
-        if (self.current_mode == StrategyMode.DEFENSIVE
-                and game_time - self.defense_mode_start_time < 15.0):
+        if (
+            self.current_mode == StrategyMode.DEFENSIVE
+            and game_time - self.defense_mode_start_time < 15.0
+        ):
             return  # 방어 모드 전환 후 15초간 유지
 
         # 군대 우위 계산 (supply-weighted)
@@ -1532,7 +1692,10 @@ class StrategyManager:
                 self.current_mode = StrategyMode.NORMAL
 
             # Reset attack threshold when leaving DEFENSIVE mode
-            if prev_mode == StrategyMode.DEFENSIVE and self.current_mode != StrategyMode.DEFENSIVE:
+            if (
+                prev_mode == StrategyMode.DEFENSIVE
+                and self.current_mode != StrategyMode.DEFENSIVE
+            ):
                 self._reset_min_army_for_attack()
 
     def get_unit_ratios(self) -> Dict[str, float]:
@@ -1549,7 +1712,9 @@ class StrategyManager:
         if race == EnemyRace.RANDOM or race == EnemyRace.UNKNOWN:
             race = EnemyRace.UNKNOWN
 
-        phase_ratios = self.race_unit_ratios.get(race, self.race_unit_ratios[EnemyRace.UNKNOWN])
+        phase_ratios = self.race_unit_ratios.get(
+            race, self.race_unit_ratios[EnemyRace.UNKNOWN]
+        )
         base_ratios = phase_ratios.get(self.game_phase, phase_ratios[GamePhase.EARLY])
 
         # ★ Feature 89: Apply custom unit weights from JARVIS when set ★
@@ -1675,7 +1840,9 @@ class StrategyManager:
             },
         }
 
-        current_config = phase_config.get(self.game_phase, phase_config[GamePhase.EARLY])
+        current_config = phase_config.get(
+            self.game_phase, phase_config[GamePhase.EARLY]
+        )
 
         return {
             "phase": self.game_phase.value,
@@ -1753,9 +1920,9 @@ class StrategyManager:
     def check_surrender(self, game_time: float) -> bool:
         """
         ★ Smart Surrender Logic ★
-        
+
         Check if the game is hopelessly lost to save time.
-        
+
         Conditions:
         1. Time > 5 minutes
         2. No bases left OR
@@ -1764,7 +1931,7 @@ class StrategyManager:
         """
         if game_time < 300:  # Don't surrender in first 5 mins
             return False
-            
+
         # 1. No bases left
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
             # Check if we have enough minerals to rebuild (300+) AND a drone
@@ -1772,26 +1939,47 @@ class StrategyManager:
             if self.bot.minerals >= 300:
                 if hasattr(self.bot, "workers") and self.bot.workers.exists:
                     can_rebuild = True
-            
+
             if not can_rebuild:
-                self.logger.warning(f"[{int(game_time)}s] SURRENDER: No bases and cannot rebuild.")
+                self.logger.warning(
+                    f"[{int(game_time)}s] SURRENDER: No bases and cannot rebuild."
+                )
                 return True
 
         # 2. Critical Supply Drop (Wiped out)
         if hasattr(self.bot, "supply_used"):
-            if self.bot.supply_used < 10 and game_time > 600: # 10분 이후 인구 10 미만
-                self.logger.warning(f"[{int(game_time)}s] SURRENDER: Critical supply drop ({self.bot.supply_used}) late game.")
+            if self.bot.supply_used < 10 and game_time > 600:  # 10분 이후 인구 10 미만
+                self.logger.warning(
+                    f"[{int(game_time)}s] SURRENDER: Critical supply drop ({self.bot.supply_used}) late game."
+                )
                 return True
-                
+
         # 3. Massive Disadvantage
         # (Requires reliable army value calculation, so keep it simple for now)
         # If opponent has 5+ bases and we have 1 base after 15 mins?
-        if game_time > 900: # 15분
+        if game_time > 900:  # 15분
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.amount < 2:
-                 if hasattr(self.bot, "enemy_structures"):
-                     enemy_bases = len([s for s in self.bot.enemy_structures if s.name.lower() in ["nexus", "commandcenter", "orbitalcommand", "planetaryfortress", "hatchery", "lair", "hive"]])
-                     if enemy_bases >= 4:
-                        self.logger.warning(f"[{int(game_time)}s] SURRENDER: Economic collapse (1 vs {enemy_bases} bases).")
+                if hasattr(self.bot, "enemy_structures"):
+                    enemy_bases = len(
+                        [
+                            s
+                            for s in self.bot.enemy_structures
+                            if s.name.lower()
+                            in [
+                                "nexus",
+                                "commandcenter",
+                                "orbitalcommand",
+                                "planetaryfortress",
+                                "hatchery",
+                                "lair",
+                                "hive",
+                            ]
+                        ]
+                    )
+                    if enemy_bases >= 4:
+                        self.logger.warning(
+                            f"[{int(game_time)}s] SURRENDER: Economic collapse (1 vs {enemy_bases} bases)."
+                        )
                         return True
 
         return False
@@ -1872,9 +2060,22 @@ class StrategyManager:
                 name = u.name.lower() if hasattr(u, "name") else ""
                 if any(n in name for n in ["marine", "marauder", "ghost", "reaper"]):
                     bio_count += 1
-                elif any(n in name for n in ["hellion", "hellbat", "siegetank", "cyclone", "thor"]):
+                elif any(
+                    n in name
+                    for n in ["hellion", "hellbat", "siegetank", "cyclone", "thor"]
+                ):
                     mech_count += 1
-                elif any(n in name for n in ["viking", "liberator", "banshee", "raven", "battlecruiser", "medivac"]):
+                elif any(
+                    n in name
+                    for n in [
+                        "viking",
+                        "liberator",
+                        "banshee",
+                        "raven",
+                        "battlecruiser",
+                        "medivac",
+                    ]
+                ):
                     air_count += 1
 
         result = {
@@ -1891,7 +2092,9 @@ class StrategyManager:
                 result["detected"] = True
                 result["from_tech"] = "bio"
                 result["to_tech"] = "mech"
-                result["confidence"] = min(1.0, mech_count / max(bio_count + mech_count, 1))
+                result["confidence"] = min(
+                    1.0, mech_count / max(bio_count + mech_count, 1)
+                )
                 result["recommended_comp"] = "roach_ravager_heavy"
                 self.logger.info(
                     f"[{int(self.bot.time)}s] [TECH_SWITCH] 테란 바이오->메카 전환 감지! "
@@ -1903,7 +2106,9 @@ class StrategyManager:
             result["detected"] = True
             result["from_tech"] = "ground"
             result["to_tech"] = "air"
-            result["confidence"] = min(1.0, air_count / max(bio_count + mech_count + air_count, 1))
+            result["confidence"] = min(
+                1.0, air_count / max(bio_count + mech_count + air_count, 1)
+            )
             result["recommended_comp"] = "hydra_corruptor"
             self.logger.info(
                 f"[{int(self.bot.time)}s] [TECH_SWITCH] 테란 공중 전환 감지! "

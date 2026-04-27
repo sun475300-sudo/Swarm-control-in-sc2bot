@@ -16,12 +16,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     from trl import (
-        PPOConfig, PPOTrainer,
+        PPOConfig,
+        PPOTrainer,
         AutoModelForCausalLMWithValueHead,
-        RewardTrainer, RewardConfig,
+        RewardTrainer,
+        RewardConfig,
     )
     from transformers import AutoTokenizer
     import torch
+
     TRL_AVAILABLE = True
 except ImportError:
     TRL_AVAILABLE = False
@@ -65,20 +68,22 @@ STRATEGY_EXAMPLES = [
 # Reward model (preference-based)
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SC2RewardSignal:
     """RLHF reward signals for SC2 strategies."""
-    economic_efficiency: float = 0.0   # worker/mineral ratio
-    army_efficiency: float = 0.0       # combat value per supply
-    expansion_timing: float = 0.0      # when bases were built
-    tech_progression: float = 0.0      # tech upgrades obtained
-    survival_time: float = 0.0         # how long game lasted
-    win_loss: float = 0.0              # +1 win, -1 loss, 0 draw
+
+    economic_efficiency: float = 0.0  # worker/mineral ratio
+    army_efficiency: float = 0.0  # combat value per supply
+    expansion_timing: float = 0.0  # when bases were built
+    tech_progression: float = 0.0  # tech upgrades obtained
+    survival_time: float = 0.0  # how long game lasted
+    win_loss: float = 0.0  # +1 win, -1 loss, 0 draw
 
     @property
     def total_reward(self) -> float:
         weights = [0.2, 0.25, 0.15, 0.15, 0.1, 0.15]
-        values  = [
+        values = [
             self.economic_efficiency,
             self.army_efficiency,
             self.expansion_timing,
@@ -115,6 +120,7 @@ def compute_reward(
 # Strategy LLM wrapper (RLHF tuning target)
 # ─────────────────────────────────────────────
 
+
 class SC2StrategyLLM:
     """
     Wraps an LLM for SC2 strategy generation.
@@ -124,10 +130,10 @@ class SC2StrategyLLM:
 
     STRATEGY_TEMPLATES = {
         "aggro": "저글링 스피드 후 {time}분 저글링 러시. 방어 확인 후 멀티 확장.",
-        "eco":   "해처리 3개 후 지상군 + 히드라 덴 테크. 안정적 경제 우선.",
-        "air":   "스파이어 테크 후 뮤탈 러시 또는 브루드로드 레이트 테크.",
-        "ground":"바퀴 워렌 + 하이드라 덴. 바퀴-히드라-울트라 전환.",
-        "timing":"특정 타이밍 {time}분에 집중 공격. 이후 재확장.",
+        "eco": "해처리 3개 후 지상군 + 히드라 덴 테크. 안정적 경제 우선.",
+        "air": "스파이어 테크 후 뮤탈 러시 또는 브루드로드 레이트 테크.",
+        "ground": "바퀴 워렌 + 하이드라 덴. 바퀴-히드라-울트라 전환.",
+        "timing": "특정 타이밍 {time}분에 집중 공격. 이후 재확장.",
     }
 
     def generate_strategy(self, state: dict) -> str:
@@ -157,6 +163,7 @@ class SC2StrategyLLM:
 # ─────────────────────────────────────────────
 # RLHF training loop
 # ─────────────────────────────────────────────
+
 
 def train_rlhf_agent(episodes: int = 50) -> dict:
     """RLHF training loop using preference-based reward."""
@@ -202,10 +209,12 @@ def train_rlhf_agent(episodes: int = 50) -> dict:
         reward_b = llm.evaluate_strategy(strat_b, outcome)
 
         preferred = strat_a if reward_a >= reward_b else strat_b
-        preference_log.append({
-            "chosen": preferred,
-            "reward": max(reward_a, reward_b),
-        })
+        preference_log.append(
+            {
+                "chosen": preferred,
+                "reward": max(reward_a, reward_b),
+            }
+        )
         total_reward += max(reward_a, reward_b)
 
         if (ep + 1) % 10 == 0:

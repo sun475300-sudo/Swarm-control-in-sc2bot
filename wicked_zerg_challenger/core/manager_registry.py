@@ -18,7 +18,6 @@ def get_all_manager_configs():
     """
     return [
         # ========== CRITICAL SYSTEMS (실패 시 봇 중단) ==========
-
         ManagerConfig(
             name="Blackboard",
             module_path="blackboard",
@@ -26,7 +25,6 @@ def get_all_manager_configs():
             attribute_name="blackboard",
             priority=ManagerPriority.CRITICAL,
         ),
-
         ManagerConfig(
             name="UnitAuthorityManager",
             module_path="unit_authority_manager",
@@ -34,9 +32,7 @@ def get_all_manager_configs():
             attribute_name="unit_authority",
             priority=ManagerPriority.CRITICAL,
         ),
-
         # ========== HIGH PRIORITY (핵심 시스템) ==========
-
         ManagerConfig(
             name="ProductionResilience",
             module_path="local_training.production_resilience",
@@ -45,7 +41,6 @@ def get_all_manager_configs():
             priority=ManagerPriority.HIGH,
             dependencies=["blackboard"],
         ),
-
         ManagerConfig(
             name="EconomyManager",
             module_path="economy_manager",
@@ -53,7 +48,6 @@ def get_all_manager_configs():
             attribute_name="economy",
             priority=ManagerPriority.HIGH,
         ),
-
         ManagerConfig(
             name="CombatManager",
             module_path="combat_manager",
@@ -61,7 +55,6 @@ def get_all_manager_configs():
             attribute_name="combat",
             priority=ManagerPriority.HIGH,
         ),
-
         ManagerConfig(
             name="IntelManager",
             module_path="intel_manager",
@@ -70,18 +63,17 @@ def get_all_manager_configs():
             priority=ManagerPriority.HIGH,
             post_init=lambda bot, manager: manager.load_data(),
         ),
-
         # REMOVED: scouting_system.py (DEPRECATED → AdvancedScoutingSystemV2)
-
         ManagerConfig(
             name="StrategyManager",
             module_path="strategy_manager_v2",
             class_name="StrategyManagerV2",
             attribute_name="strategy_manager",
             priority=ManagerPriority.HIGH,
-            post_init=lambda bot, manager: setattr(manager, "blackboard", getattr(bot, "blackboard", None)),
+            post_init=lambda bot, manager: setattr(
+                manager, "blackboard", getattr(bot, "blackboard", None)
+            ),
         ),
-
         ManagerConfig(
             name="DefenseCoordinator",
             module_path="defense_coordinator",
@@ -89,11 +81,11 @@ def get_all_manager_configs():
             attribute_name="defense_coordinator",
             priority=ManagerPriority.HIGH,
             dependencies=["blackboard"],
-            post_init=lambda bot, manager: setattr(manager, "blackboard", getattr(bot, "blackboard", None)),
+            post_init=lambda bot, manager: setattr(
+                manager, "blackboard", getattr(bot, "blackboard", None)
+            ),
         ),
-
         # ========== MEDIUM PRIORITY (일반 시스템) ==========
-
         ManagerConfig(
             name="★ AdvancedWorkerOptimizer",
             module_path="advanced_worker_optimizer",
@@ -101,7 +93,6 @@ def get_all_manager_configs():
             attribute_name="worker_optimizer",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="★ IdleUnitManager",
             module_path="idle_unit_manager",
@@ -109,7 +100,6 @@ def get_all_manager_configs():
             attribute_name="idle_units",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="★ CombatPhaseController",
             module_path="combat_phase_controller",
@@ -117,7 +107,6 @@ def get_all_manager_configs():
             attribute_name="combat_phase",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="PerformanceOptimizer",
             module_path="local_training.performance_optimizer",
@@ -125,7 +114,6 @@ def get_all_manager_configs():
             attribute_name="performance_optimizer",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="PID FormationController",
             module_path="utils.pid_controller",
@@ -134,7 +122,6 @@ def get_all_manager_configs():
             priority=ManagerPriority.MEDIUM,
             # FormationController는 인자를 받지 않음
         ),
-
         ManagerConfig(
             name="RogueTacticsManager",
             module_path="rogue_tactics_manager",
@@ -142,7 +129,6 @@ def get_all_manager_configs():
             attribute_name="rogue_tactics",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="UpgradeManager",
             module_path="upgrade_manager",
@@ -150,7 +136,6 @@ def get_all_manager_configs():
             attribute_name="upgrade_manager",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="QueenManager",
             module_path="queen_manager",
@@ -158,7 +143,6 @@ def get_all_manager_configs():
             attribute_name="queen_manager",
             priority=ManagerPriority.MEDIUM,
         ),
-
         ManagerConfig(
             name="OverlordSafetyManager",
             module_path="overlord_safety_manager",
@@ -166,9 +150,7 @@ def get_all_manager_configs():
             attribute_name="overlord_safety",
             priority=ManagerPriority.MEDIUM,
         ),
-
         # REMOVED: active_scouting_system.py (DEPRECATED → AdvancedScoutingSystemV2)
-
         ManagerConfig(
             name="★ CreepDenialSystem",
             module_path="creep_denial_system",
@@ -176,11 +158,11 @@ def get_all_manager_configs():
             attribute_name="creep_denial",
             priority=ManagerPriority.MEDIUM,
             dependencies=["unit_authority"],
-            post_init=lambda bot, manager: setattr(manager, "unit_authority", bot.unit_authority),
+            post_init=lambda bot, manager: setattr(
+                manager, "unit_authority", bot.unit_authority
+            ),
         ),
-
         # ========== LOW PRIORITY (선택적 시스템) ==========
-
         ManagerConfig(
             name="★ OpponentModeling",
             module_path="opponent_modeling",
@@ -189,7 +171,6 @@ def get_all_manager_configs():
             priority=ManagerPriority.LOW,
             dependencies=["intel"],
         ),
-
         ManagerConfig(
             name="★ AdvancedMicroControllerV3",
             module_path="advanced_micro_controller_v3",
@@ -197,7 +178,6 @@ def get_all_manager_configs():
             attribute_name="micro_v3",  # Fixed: code accesses bot.micro_v3
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="MicroController",
             module_path="micro_controller",
@@ -205,7 +185,6 @@ def get_all_manager_configs():
             attribute_name="micro",  # Fixed: code accesses bot.micro
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="SpellUnitManager",
             module_path="spell_unit_manager",
@@ -213,7 +192,6 @@ def get_all_manager_configs():
             attribute_name="spell_manager",  # Fixed: bot_step_integration uses "spell_manager"
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="AggressiveStrategies",
             module_path="aggressive_strategies",
@@ -221,7 +199,6 @@ def get_all_manager_configs():
             attribute_name="aggressive_strategies",
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="HiveTechMaximizer",
             module_path="hive_tech_maximizer",
@@ -229,7 +206,6 @@ def get_all_manager_configs():
             attribute_name="hive_tech",
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="CreepExpansion",
             module_path="creep_expansion_system",
@@ -237,7 +213,6 @@ def get_all_manager_configs():
             attribute_name="creep_expansion",
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="★ BattlePreparationSystem",
             module_path="battle_preparation_system",
@@ -245,7 +220,6 @@ def get_all_manager_configs():
             attribute_name="battle_prep",
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="TimingAttacks",
             module_path="strategy.timing_attacks",
@@ -254,7 +228,6 @@ def get_all_manager_configs():
             priority=ManagerPriority.LOW,
             dependencies=["blackboard"],
         ),
-
         ManagerConfig(
             name="AdaptiveBuildOrder",
             module_path="strategy.adaptive_build_order",
@@ -263,7 +236,6 @@ def get_all_manager_configs():
             priority=ManagerPriority.LOW,
             dependencies=["blackboard"],
         ),
-
         ManagerConfig(
             name="★ BuildingDestroyer",
             module_path="building_destroyer",
@@ -271,7 +243,6 @@ def get_all_manager_configs():
             attribute_name="building_destroyer",
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="CreepHighwayManager",
             module_path="creep_highway_manager",
@@ -279,7 +250,6 @@ def get_all_manager_configs():
             attribute_name="creep_highway",
             priority=ManagerPriority.LOW,
         ),
-
         ManagerConfig(
             name="RuntimeSelfHealing",
             module_path="runtime_self_healing",
@@ -287,7 +257,6 @@ def get_all_manager_configs():
             attribute_name="self_healing",
             priority=ManagerPriority.LOW,
         ),
-
         # NOTE: BotStepIntegrator는 on_start에서 수동으로 초기화됨 (_step_integrator)
         # ManagerConfig(
         #     name="★ BotStepIntegrator",
@@ -297,9 +266,7 @@ def get_all_manager_configs():
         #     priority=ManagerPriority.LOW,
         #     dependencies=["blackboard"],
         # ),
-
         # ========== OPTIONAL (완전 선택적) ==========
-
         ManagerConfig(
             name="DataCache",
             module_path="data_cache_manager",
@@ -307,7 +274,6 @@ def get_all_manager_configs():
             attribute_name="data_cache",
             priority=ManagerPriority.OPTIONAL,
         ),
-
         ManagerConfig(
             name="UnitFactory",
             module_path="unit_factory",
@@ -316,7 +282,6 @@ def get_all_manager_configs():
             priority=ManagerPriority.OPTIONAL,
             dependencies=["blackboard"],
         ),
-
         ManagerConfig(
             name="ProductionController",
             module_path="production_controller",
@@ -336,6 +301,7 @@ def get_minimal_manager_configs():
         List[ManagerConfig]: 최소 매니저 설정 리스트
     """
     return [
-        config for config in get_all_manager_configs()
+        config
+        for config in get_all_manager_configs()
         if config.priority <= ManagerPriority.HIGH
     ]

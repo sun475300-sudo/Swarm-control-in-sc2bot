@@ -37,13 +37,14 @@ from utils.logger import get_logger
 
 class DoomDropPhase(Enum):
     """둠 드롭 단계"""
+
     IDLE = "idle"
-    PREPARING = "preparing"        # Ventral Sacs 연구 대기
-    LOADING = "loading"            # 유닛 탑승 중
-    EN_ROUTE = "en_route"          # 이동 중
-    DROPPING = "dropping"          # 투하 중
-    ATTACKING = "attacking"        # 투하 후 공격 중
-    RETREATING = "retreating"      # 오버로드 회수
+    PREPARING = "preparing"  # Ventral Sacs 연구 대기
+    LOADING = "loading"  # 유닛 탑승 중
+    EN_ROUTE = "en_route"  # 이동 중
+    DROPPING = "dropping"  # 투하 중
+    ATTACKING = "attacking"  # 투하 후 공격 중
+    RETREATING = "retreating"  # 오버로드 회수
 
 
 class DoomDropManager:
@@ -76,16 +77,18 @@ class DoomDropManager:
         self.drop_active: bool = False
 
         # 오버로드 관리
-        self.transport_overlords: Dict[int, List[int]] = {}  # overlord_tag -> [unit_tags]
+        self.transport_overlords: Dict[int, List[int]] = (
+            {}
+        )  # overlord_tag -> [unit_tags]
         self.drop_target: Optional[Point2] = None
         self.waypoints: List[Point2] = []  # 대공 회피 경로
         self.current_waypoint_idx: int = 0
 
         # 전술 파라미터
-        self.min_overlords: int = 4           # 최소 오버로드 수
-        self.min_supply_for_drop: int = 30    # 최소 투하 서플라이
+        self.min_overlords: int = 4  # 최소 오버로드 수
+        self.min_supply_for_drop: int = 30  # 최소 투하 서플라이
         self.safe_distance_from_aa: float = 12.0  # 대공 위협 회피 거리
-        self.drop_distance: float = 5.0       # 투하 시작 거리
+        self.drop_distance: float = 5.0  # 투하 시작 거리
         self.overlord_retreat_hp: float = 0.3  # 오버로드 후퇴 체력
 
         # 유닛 탑승 우선순위 (공격력 높은 유닛 우선)
@@ -216,7 +219,7 @@ class DoomDropManager:
 
         # 오버로드 선택
         idle_overlords = overlords.idle if hasattr(overlords, "idle") else overlords
-        selected = list(idle_overlords)[:min(idle_overlords.amount, 6)]
+        selected = list(idle_overlords)[: min(idle_overlords.amount, 6)]
         self.transport_overlords = {ol.tag: [] for ol in selected}
 
         # 회피 경로 계산
@@ -268,10 +271,15 @@ class DoomDropManager:
 
         if enemy_structures and enemy_structures.exists:
             enemy_bases = enemy_structures.filter(
-                lambda s: s.type_id in {
-                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-                    UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-                    UnitTypeId.PLANETARYFORTRESS, UnitTypeId.NEXUS,
+                lambda s: s.type_id
+                in {
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
+                    UnitTypeId.COMMANDCENTER,
+                    UnitTypeId.ORBITALCOMMAND,
+                    UnitTypeId.PLANETARYFORTRESS,
+                    UnitTypeId.NEXUS,
                 }
             )
 
@@ -281,9 +289,12 @@ class DoomDropManager:
 
                 # 방어 건물 확인
                 nearby_defense = enemy_structures.closer_than(15, base).filter(
-                    lambda s: s.type_id in {
-                        UnitTypeId.MISSILETURRET, UnitTypeId.PHOTONCANNON,
-                        UnitTypeId.SPORECRAWLER, UnitTypeId.SPINECRAWLER,
+                    lambda s: s.type_id
+                    in {
+                        UnitTypeId.MISSILETURRET,
+                        UnitTypeId.PHOTONCANNON,
+                        UnitTypeId.SPORECRAWLER,
+                        UnitTypeId.SPINECRAWLER,
                         UnitTypeId.BUNKER,
                     }
                 )
@@ -305,7 +316,10 @@ class DoomDropManager:
             return candidates[0][0]
 
         # 폴백: 적 시작 위치
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             return self.bot.enemy_start_locations[0]
 
         return None
@@ -400,9 +414,10 @@ class DoomDropManager:
                     continue
 
         # 탑승 완료 또는 20초 경과 시 이동 개시
-        if all_loaded or (game_time - self.last_drop_time > 20 and any(
-            len(v) > 0 for v in self.transport_overlords.values()
-        )):
+        if all_loaded or (
+            game_time - self.last_drop_time > 20
+            and any(len(v) > 0 for v in self.transport_overlords.values())
+        ):
             total_loaded = sum(len(v) for v in self.transport_overlords.values())
             self.phase = DoomDropPhase.EN_ROUTE
             self.logger.info(
@@ -506,7 +521,8 @@ class DoomDropManager:
 
             # 대공 유닛 감지
             aa_threats = enemy_units.filter(
-                lambda u: u.can_attack_air and u.distance_to(overlord) < self.safe_distance_from_aa
+                lambda u: u.can_attack_air
+                and u.distance_to(overlord) < self.safe_distance_from_aa
             )
 
             if aa_threats.exists and aa_threats.amount > 3:

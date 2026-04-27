@@ -90,14 +90,15 @@ GOAL_TYPE_IDX: Dict[GoalType, int] = {g: i for i, g in enumerate(GOAL_TYPE_LIST)
 # Relabeling Strategies
 # ---------------------------------------------------------------------------
 class RelabelStrategy(Enum):
-    FUTURE = "future"     # sample from future states in same episode
-    EPISODE = "episode"   # sample from any state in the episode
-    RANDOM = "random"     # sample from any stored goal
+    FUTURE = "future"  # sample from future states in same episode
+    EPISODE = "episode"  # sample from any state in the episode
+    RANDOM = "random"  # sample from any stored goal
 
 
 # ---------------------------------------------------------------------------
 # NumPy neural-network helpers
 # ---------------------------------------------------------------------------
+
 
 def _relu(x: NDArray) -> NDArray:
     return np.maximum(0.0, x)
@@ -398,7 +399,8 @@ class MultiGoalReplayBuffer:
         """Sample a mini-batch of transitions, optionally filtered by goal type."""
         if goal_type is not None:
             candidates = [
-                t for t in self._flat_buffer
+                t
+                for t in self._flat_buffer
                 if t.goal is not None and t.goal.goal_type == goal_type
             ]
             if not candidates:
@@ -416,7 +418,13 @@ class MultiGoalReplayBuffer:
         """Return batch as stacked arrays: states, goals, actions, rewards, next_states, dones."""
         batch = self.sample_batch(batch_size, goal_type)
         states = np.array([t.state for t in batch], dtype=np.float32)
-        goals = np.array([t.goal.to_array() if t.goal else np.zeros(SC2Goal.goal_array_dim()) for t in batch], dtype=np.float32)
+        goals = np.array(
+            [
+                t.goal.to_array() if t.goal else np.zeros(SC2Goal.goal_array_dim())
+                for t in batch
+            ],
+            dtype=np.float32,
+        )
         actions = np.array([t.action for t in batch], dtype=np.int64)
         rewards = np.array([t.reward for t in batch], dtype=np.float32)
         next_states = np.array([t.next_state for t in batch], dtype=np.float32)
@@ -431,7 +439,8 @@ class MultiGoalReplayBuffer:
         gt_counts: Dict[str, int] = {}
         for gt in GoalType:
             count = sum(
-                1 for t in self._flat_buffer
+                1
+                for t in self._flat_buffer
                 if t.goal is not None and t.goal.goal_type == gt
             )
             gt_counts[gt.value] = count
@@ -486,7 +495,10 @@ class GoalConditionedPolicy:
         return self.net.forward(x)[0]
 
     def select_action(
-        self, state: NDArray, goal: SC2Goal, greedy: bool = False,
+        self,
+        state: NDArray,
+        goal: SC2Goal,
+        greedy: bool = False,
         rng: Optional[np.random.Generator] = None,
     ) -> int:
         rng = rng or np.random.default_rng()
@@ -540,7 +552,9 @@ class UniversalValueFunction:
         input_dim = state_dim + SC2Goal.goal_array_dim()
 
         if HAS_TORCH:
-            self.net = TorchMLP([input_dim, hidden, hidden, 1], output_activation="none")
+            self.net = TorchMLP(
+                [input_dim, hidden, hidden, 1], output_activation="none"
+            )
             self.optimizer = optim.Adam(self.net.parameters(), lr=lr)
         else:
             self.net = NumpyMLP(
@@ -754,9 +768,7 @@ class SC2HindsightReplay:
         self.policy = GoalConditionedPolicy(
             state_dim, action_dim, hidden, lr, seed=seed
         )
-        self.value_fn = UniversalValueFunction(
-            state_dim, hidden, lr, gamma, seed=seed
-        )
+        self.value_fn = UniversalValueFunction(state_dim, hidden, lr, gamma, seed=seed)
         self.buffer = MultiGoalReplayBuffer(
             buffer_capacity, her_ratio, k_future, relabel_strategy, seed=seed
         )
@@ -773,7 +785,9 @@ class SC2HindsightReplay:
     def collect_episode(
         self,
         env_reset_fn: Callable[[SC2Goal], NDArray],
-        env_step_fn: Callable[[NDArray, int, SC2Goal], Tuple[NDArray, float, bool, NDArray]],
+        env_step_fn: Callable[
+            [NDArray, int, SC2Goal], Tuple[NDArray, float, bool, NDArray]
+        ],
         goal: Optional[SC2Goal] = None,
         max_steps: int = 200,
         greedy: bool = False,
@@ -828,8 +842,9 @@ class SC2HindsightReplay:
         if self.buffer.size < batch_size:
             return {"policy_loss": 0.0, "value_loss": 0.0}
 
-        states, goals, actions, rewards, next_states, dones = \
+        states, goals, actions, rewards, next_states, dones = (
             self.buffer.sample_batch_arrays(batch_size, goal_type)
+        )
 
         # Update value function
         v_loss = self.value_fn.train_step(states, goals, rewards, next_states, dones)
@@ -855,7 +870,9 @@ class SC2HindsightReplay:
         self,
         n_episodes: int,
         env_reset_fn: Callable[[SC2Goal], NDArray],
-        env_step_fn: Callable[[NDArray, int, SC2Goal], Tuple[NDArray, float, bool, NDArray]],
+        env_step_fn: Callable[
+            [NDArray, int, SC2Goal], Tuple[NDArray, float, bool, NDArray]
+        ],
         train_steps_per_episode: int = 10,
         batch_size: int = 64,
         max_episode_steps: int = 200,
@@ -895,7 +912,11 @@ class SC2HindsightReplay:
         if verbose:
             logger.info(
                 "Epoch: %d eps, success=%d/%d, p_loss=%.4f, v_loss=%.4f",
-                n_episodes, n_successes, n_episodes, avg_p, avg_v,
+                n_episodes,
+                n_successes,
+                n_episodes,
+                avg_p,
+                avg_v,
             )
 
         return {
@@ -910,7 +931,9 @@ class SC2HindsightReplay:
     def evaluate(
         self,
         env_reset_fn: Callable[[SC2Goal], NDArray],
-        env_step_fn: Callable[[NDArray, int, SC2Goal], Tuple[NDArray, float, bool, NDArray]],
+        env_step_fn: Callable[
+            [NDArray, int, SC2Goal], Tuple[NDArray, float, bool, NDArray]
+        ],
         n_episodes: int = 50,
         max_steps: int = 200,
     ) -> Dict[str, Any]:
@@ -1017,11 +1040,14 @@ class SC2GoalEnv:
     ) -> Tuple[NDArray, float, bool, NDArray]:
         self.step_count += 1
         noise = self.rng.standard_normal(self.state_dim).astype(np.float32) * 0.1
-        direction = goal.goal_vector[:self.state_dim] if len(goal.goal_vector) >= self.state_dim else \
-            np.pad(goal.goal_vector, (0, self.state_dim - len(goal.goal_vector)))
+        direction = (
+            goal.goal_vector[: self.state_dim]
+            if len(goal.goal_vector) >= self.state_dim
+            else np.pad(goal.goal_vector, (0, self.state_dim - len(goal.goal_vector)))
+        )
         # Move slightly toward goal
         move = direction * 0.01 * (action + 1)
-        self.state = state + noise + move[:self.state_dim]
+        self.state = state + noise + move[: self.state_dim]
 
         # Achieved goal: extract from current state
         achieved = self.state[:SC2_GOAL_DIM].copy()
@@ -1050,10 +1076,16 @@ def main() -> None:
         description="Phase 615 -- SC2 Hindsight Experience Replay"
     )
     parser.add_argument("--epochs", type=int, default=5, help="Training epochs")
-    parser.add_argument("--episodes-per-epoch", type=int, default=20, help="Episodes per epoch")
+    parser.add_argument(
+        "--episodes-per-epoch", type=int, default=20, help="Episodes per epoch"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--strategy", choices=["future", "episode", "random"],
-                        default="future", help="HER relabeling strategy")
+    parser.add_argument(
+        "--strategy",
+        choices=["future", "episode", "random"],
+        default="future",
+        help="HER relabeling strategy",
+    )
     args = parser.parse_args()
 
     strategy_map = {
@@ -1083,10 +1115,14 @@ def main() -> None:
     print("\n[2] Sampling goals from curriculum...")
     for gt in GoalType:
         goal = her_system.curriculum.sample_goal(goal_type=gt)
-        print(f"   {gt.value:20s}: diff={goal.difficulty:.2f}  vec_norm={np.linalg.norm(goal.goal_vector):.3f}")
+        print(
+            f"   {gt.value:20s}: diff={goal.difficulty:.2f}  vec_norm={np.linalg.norm(goal.goal_vector):.3f}"
+        )
 
     # ---- Training loop ----
-    print(f"\n[3] Training: {args.epochs} epochs x {args.episodes_per_epoch} episodes...")
+    print(
+        f"\n[3] Training: {args.epochs} epochs x {args.episodes_per_epoch} episodes..."
+    )
     for epoch in range(args.epochs):
         result = her_system.train_epoch(
             n_episodes=args.episodes_per_epoch,
@@ -1122,7 +1158,9 @@ def main() -> None:
     )
     for key, val in eval_results.items():
         if isinstance(val, dict):
-            print(f"   {key:20s}: success={val['success_rate']:.1%}  reward={val['avg_reward']:.3f}")
+            print(
+                f"   {key:20s}: success={val['success_rate']:.1%}  reward={val['avg_reward']:.3f}"
+            )
         else:
             print(f"   {key:20s}: {val:.1%}")
 

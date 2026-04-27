@@ -4,6 +4,7 @@ Risk Manager
 - 손절/익절 관리
 - 최대 투자 한도 제어
 """
+
 import logging
 from typing import Optional
 from . import config
@@ -26,7 +27,9 @@ class RiskManager:
         self.stop_loss_pct = stop_loss_pct
         self.take_profit_pct = take_profit_pct
 
-    def calculate_order_amount(self, total_krw: float, signal_strength: float = 0.5) -> float:
+    def calculate_order_amount(
+        self, total_krw: float, signal_strength: float = 0.5
+    ) -> float:
         """
         주문 금액 산출
         - total_krw: 총 보유 원화
@@ -48,7 +51,9 @@ class RiskManager:
             return False
         pnl_pct = ((current_price - avg_buy_price) / avg_buy_price) * 100
         if pnl_pct <= self.stop_loss_pct:
-            logger.warning(f"손절 조건 충족: 수익률 {pnl_pct:.2f}% <= {self.stop_loss_pct}%")
+            logger.warning(
+                f"손절 조건 충족: 수익률 {pnl_pct:.2f}% <= {self.stop_loss_pct}%"
+            )
             return True
         return False
 
@@ -58,11 +63,15 @@ class RiskManager:
             return False
         pnl_pct = ((current_price - avg_buy_price) / avg_buy_price) * 100
         if pnl_pct >= self.take_profit_pct:
-            logger.info(f"익절 조건 충족: 수익률 {pnl_pct:.2f}% >= {self.take_profit_pct}%")
+            logger.info(
+                f"익절 조건 충족: 수익률 {pnl_pct:.2f}% >= {self.take_profit_pct}%"
+            )
             return True
         return False
 
-    def check_position(self, avg_buy_price: float, current_price: float) -> Optional[str]:
+    def check_position(
+        self, avg_buy_price: float, current_price: float
+    ) -> Optional[str]:
         """
         보유 포지션 체크: 'stop_loss', 'take_profit', 또는 None
         """
@@ -72,14 +81,24 @@ class RiskManager:
             return "take_profit"
         return None
 
-    def validate_order(self, krw_balance: float, order_amount: float) -> tuple[bool, str]:
+    def validate_order(
+        self, krw_balance: float, order_amount: float
+    ) -> tuple[bool, str]:
         """주문 유효성 검증"""
         if order_amount < config.MIN_ORDER_AMOUNT:
-            return False, f"최소 주문 금액 미달: {order_amount:,.0f} < {config.MIN_ORDER_AMOUNT:,.0f}"
+            return (
+                False,
+                f"최소 주문 금액 미달: {order_amount:,.0f} < {config.MIN_ORDER_AMOUNT:,.0f}",
+            )
         if order_amount > krw_balance:
-            return False, f"잔고 부족: 주문 {order_amount:,.0f} > 잔고 {krw_balance:,.0f}"
+            return (
+                False,
+                f"잔고 부족: 주문 {order_amount:,.0f} > 잔고 {krw_balance:,.0f}",
+            )
         # 1회 주문 한도: 잔고의 max_single_order_ratio 또는 MIN_ORDER_AMOUNT 중 큰 값
-        max_single = max(krw_balance * self.max_single_order_ratio, config.MIN_ORDER_AMOUNT)
+        max_single = max(
+            krw_balance * self.max_single_order_ratio, config.MIN_ORDER_AMOUNT
+        )
         if order_amount > max_single:
             return False, f"1회 주문 한도 초과: {order_amount:,.0f} > {max_single:,.0f}"
         return True, "OK"

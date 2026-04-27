@@ -12,8 +12,10 @@ from dspy.evaluate import Evaluate
 
 # ── DSPy Signatures ───────────────────────────────────────────────────────────
 
+
 class GameStateToAction(Signature):
     """Analyze an SC2 game state and recommend the optimal action."""
+
     race: str = InputField(desc="Player's race: Zerg, Terran, or Protoss")
     opponent_race: str = InputField(desc="Opponent's race")
     game_time: float = InputField(desc="Current game time in seconds")
@@ -27,22 +29,29 @@ class GameStateToAction(Signature):
 
 class ReplayToInsight(Signature):
     """Extract strategic insight from an SC2 replay description."""
+
     replay_summary: str = InputField(desc="Text summary of an SC2 replay")
-    key_insight: str = OutputField(desc="Most important strategic lesson from this replay")
+    key_insight: str = OutputField(
+        desc="Most important strategic lesson from this replay"
+    )
     tactical_error: str = OutputField(desc="Main mistake made, or 'None' if flawless")
     improvement: str = OutputField(desc="Specific improvement for next game")
 
 
 class ThreatToResponse(Signature):
     """Assess a threat and recommend a counter-strategy."""
+
     threat_description: str = InputField(desc="Description of opponent's army/strategy")
     current_units: str = InputField(desc="Player's current army composition")
     threat_level: int = OutputField(desc="Threat level 1-10")
     counter_strategy: str = OutputField(desc="Recommended counter in 1-2 sentences")
-    units_to_build: str = OutputField(desc="Comma-separated list of units to prioritize")
+    units_to_build: str = OutputField(
+        desc="Comma-separated list of units to prioritize"
+    )
 
 
 # ── DSPy Modules ──────────────────────────────────────────────────────────────
+
 
 class SC2TacticalAdvisor(Module):
     """Chain-of-thought tactical advisor for real-time SC2 decision making."""
@@ -51,7 +60,9 @@ class SC2TacticalAdvisor(Module):
         super().__init__()
         self.analyze = ChainOfThought(GameStateToAction)
 
-    def forward(self, race, opponent_race, game_time, supply_ratio, minerals, gas, army_supply):
+    def forward(
+        self, race, opponent_race, game_time, supply_ratio, minerals, gas, army_supply
+    ):
         return self.analyze(
             race=race,
             opponent_race=opponent_race,
@@ -103,8 +114,15 @@ SC2_DEMONSTRATIONS = [
         army_supply=10,
         action="Build Roach Warren immediately and produce Roaches.",
         reasoning="Terran bio timing attack incoming around 4 minutes; Roaches counter Marines efficiently.",
-    ).with_inputs("race", "opponent_race", "game_time", "supply_ratio", "minerals", "gas", "army_supply"),
-
+    ).with_inputs(
+        "race",
+        "opponent_race",
+        "game_time",
+        "supply_ratio",
+        "minerals",
+        "gas",
+        "army_supply",
+    ),
     dspy.Example(
         race="Zerg",
         opponent_race="Protoss",
@@ -115,8 +133,15 @@ SC2_DEMONSTRATIONS = [
         army_supply=40,
         action="Saturate third base workers and add two Spire for Corruptors.",
         reasoning="High gas, low minerals indicates Protoss Colossus tech; air counter needed.",
-    ).with_inputs("race", "opponent_race", "game_time", "supply_ratio", "minerals", "gas", "army_supply"),
-
+    ).with_inputs(
+        "race",
+        "opponent_race",
+        "game_time",
+        "supply_ratio",
+        "minerals",
+        "gas",
+        "army_supply",
+    ),
     dspy.Example(
         race="Zerg",
         opponent_race="Zerg",
@@ -127,11 +152,20 @@ SC2_DEMONSTRATIONS = [
         army_supply=15,
         action="Expand to third hatchery and maintain Zergling speed patrol.",
         reasoning="ZvZ early is drone-focused; Zergling speed provides map control while droning.",
-    ).with_inputs("race", "opponent_race", "game_time", "supply_ratio", "minerals", "gas", "army_supply"),
+    ).with_inputs(
+        "race",
+        "opponent_race",
+        "game_time",
+        "supply_ratio",
+        "minerals",
+        "gas",
+        "army_supply",
+    ),
 ]
 
 
 # ── Metric and optimizer ──────────────────────────────────────────────────────
+
 
 def sc2_action_metric(example: dspy.Example, prediction, trace=None) -> float:
     """Evaluate whether predicted action matches ground truth quality."""
@@ -145,7 +179,9 @@ def sc2_action_metric(example: dspy.Example, prediction, trace=None) -> float:
     return min(1.0, overlap * 2)
 
 
-def optimize_sc2_advisor(advisor: SC2TacticalAdvisor, trainset: list) -> SC2TacticalAdvisor:
+def optimize_sc2_advisor(
+    advisor: SC2TacticalAdvisor, trainset: list
+) -> SC2TacticalAdvisor:
     """Run BootstrapFewShot optimization on the SC2 tactical advisor."""
     optimizer = BootstrapFewShot(
         metric=sc2_action_metric,
@@ -156,6 +192,7 @@ def optimize_sc2_advisor(advisor: SC2TacticalAdvisor, trainset: list) -> SC2Tact
 
 
 # ── Runner ────────────────────────────────────────────────────────────────────
+
 
 def run_sc2_dspy(lm_model: str = "openai/gpt-4o-mini") -> None:
     """Run SC2 DSPy strategy program."""
@@ -168,9 +205,13 @@ def run_sc2_dspy(lm_model: str = "openai/gpt-4o-mini") -> None:
 
     print("[DSPy] Running SC2 tactical advisor (unoptimized)...")
     result = advisor(
-        race="Zerg", opponent_race="Terran",
-        game_time=300.0, supply_ratio=0.72,
-        minerals=350, gas=100, army_supply=25,
+        race="Zerg",
+        opponent_race="Terran",
+        game_time=300.0,
+        supply_ratio=0.72,
+        minerals=350,
+        gas=100,
+        army_supply=25,
     )
     print(f"  Action: {result.action}")
     print(f"  Reasoning: {result.reasoning}")
@@ -183,7 +224,9 @@ def run_sc2_dspy(lm_model: str = "openai/gpt-4o-mini") -> None:
 if __name__ == "__main__":
     print("[DSPy] SC2 Strategy Program modules:")
     print("  Signatures: GameStateToAction, ReplayToInsight, ThreatToResponse")
-    print("  Modules: SC2TacticalAdvisor (CoT), SC2ReplayAnalyzer (PoT), SC2ThreatResponder (ReAct)")
+    print(
+        "  Modules: SC2TacticalAdvisor (CoT), SC2ReplayAnalyzer (PoT), SC2ThreatResponder (ReAct)"
+    )
     print("  Optimizer: BootstrapFewShot with 3 SC2 demonstrations")
 
 # Phase 436: DSPy registered

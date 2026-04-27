@@ -57,33 +57,66 @@ BENCHMARK_VALUES: dict[str, dict[str, float]] = {
 # Known build order archetypes with baseline scores
 ARCHETYPE_SCORES: dict[str, dict[str, float]] = {
     "hatch_first": {
-        "economy": 0.9, "army": 0.5, "timing": 0.4, "risk": 0.3, "versatility": 0.8,
+        "economy": 0.9,
+        "army": 0.5,
+        "timing": 0.4,
+        "risk": 0.3,
+        "versatility": 0.8,
     },
     "pool_first": {
-        "economy": 0.5, "army": 0.7, "timing": 0.8, "risk": 0.5, "versatility": 0.6,
+        "economy": 0.5,
+        "army": 0.7,
+        "timing": 0.8,
+        "risk": 0.5,
+        "versatility": 0.6,
     },
     "roach_ravager_timing": {
-        "economy": 0.6, "army": 0.8, "timing": 0.9, "risk": 0.6, "versatility": 0.5,
+        "economy": 0.6,
+        "army": 0.8,
+        "timing": 0.9,
+        "risk": 0.6,
+        "versatility": 0.5,
     },
     "ling_bane_muta": {
-        "economy": 0.7, "army": 0.7, "timing": 0.6, "risk": 0.5, "versatility": 0.7,
+        "economy": 0.7,
+        "army": 0.7,
+        "timing": 0.6,
+        "risk": 0.5,
+        "versatility": 0.7,
     },
     "hydra_lurker": {
-        "economy": 0.6, "army": 0.85, "timing": 0.5, "risk": 0.4, "versatility": 0.6,
+        "economy": 0.6,
+        "army": 0.85,
+        "timing": 0.5,
+        "risk": 0.4,
+        "versatility": 0.6,
     },
     "12_pool": {
-        "economy": 0.2, "army": 0.6, "timing": 1.0, "risk": 0.9, "versatility": 0.2,
+        "economy": 0.2,
+        "army": 0.6,
+        "timing": 1.0,
+        "risk": 0.9,
+        "versatility": 0.2,
     },
     "macro_hive": {
-        "economy": 1.0, "army": 0.9, "timing": 0.3, "risk": 0.3, "versatility": 0.9,
+        "economy": 1.0,
+        "army": 0.9,
+        "timing": 0.3,
+        "risk": 0.3,
+        "versatility": 0.9,
     },
     "nydus_swarm_host": {
-        "economy": 0.4, "army": 0.6, "timing": 0.7, "risk": 0.8, "versatility": 0.3,
+        "economy": 0.4,
+        "army": 0.6,
+        "timing": 0.7,
+        "risk": 0.8,
+        "versatility": 0.3,
     },
 }
 
 
 # ── Enums ───────────────────────────────────────────────────────────────────────
+
 
 class EvalDimension(Enum):
     ECONOMY = "economy"
@@ -112,6 +145,7 @@ class RiskLevel(Enum):
 
 
 # ── Data Classes ────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class StrategyProfile:
@@ -157,7 +191,9 @@ class EvalCriteria:
         if self.max_threshold == self.min_threshold:
             return 1.0 if raw >= self.max_threshold else 0.0
         clamped = max(self.min_threshold, min(raw, self.max_threshold))
-        return (clamped - self.min_threshold) / (self.max_threshold - self.min_threshold)
+        return (clamped - self.min_threshold) / (
+            self.max_threshold - self.min_threshold
+        )
 
 
 @dataclass
@@ -252,24 +288,37 @@ class ComparisonResult:
 
 # ── Matchup Evaluator ──────────────────────────────────────────────────────────
 
+
 class MatchupEvaluator:
     """Evaluate strategies within the context of specific SC2 matchups."""
 
     # Matchup-specific dimension weights
     MATCHUP_WEIGHTS: dict[str, dict[str, float]] = {
         "ZvT": {
-            "economy": 1.2, "army": 1.0, "timing": 0.9,
-            "risk": 0.8, "versatility": 1.0, "micro_demand": 0.7,
+            "economy": 1.2,
+            "army": 1.0,
+            "timing": 0.9,
+            "risk": 0.8,
+            "versatility": 1.0,
+            "micro_demand": 0.7,
             "macro_demand": 1.3,
         },
         "ZvP": {
-            "economy": 1.0, "army": 1.1, "timing": 1.1,
-            "risk": 0.9, "versatility": 0.8, "micro_demand": 0.9,
+            "economy": 1.0,
+            "army": 1.1,
+            "timing": 1.1,
+            "risk": 0.9,
+            "versatility": 0.8,
+            "micro_demand": 0.9,
             "macro_demand": 1.1,
         },
         "ZvZ": {
-            "economy": 0.8, "army": 0.9, "timing": 1.3,
-            "risk": 1.1, "versatility": 0.6, "micro_demand": 1.2,
+            "economy": 0.8,
+            "army": 0.9,
+            "timing": 1.3,
+            "risk": 1.1,
+            "versatility": 0.6,
+            "micro_demand": 1.2,
             "macro_demand": 0.8,
         },
     }
@@ -295,23 +344,30 @@ class MatchupEvaluator:
 
     def get_matchup_weights(self, matchup: str) -> dict[str, float]:
         """Get dimension weights for a matchup."""
-        return dict(self.MATCHUP_WEIGHTS.get(matchup, {
-            dim: 1.0 for dim in [
-                "economy", "army", "timing", "risk",
-                "versatility", "micro_demand", "macro_demand",
-            ]
-        }))
+        return dict(
+            self.MATCHUP_WEIGHTS.get(
+                matchup,
+                {
+                    dim: 1.0
+                    for dim in [
+                        "economy",
+                        "army",
+                        "timing",
+                        "risk",
+                        "versatility",
+                        "micro_demand",
+                        "macro_demand",
+                    ]
+                },
+            )
+        )
 
-    def suggest_counters(
-        self, matchup: str, opponent_style: str
-    ) -> list[str]:
+    def suggest_counters(self, matchup: str, opponent_style: str) -> list[str]:
         """Suggest counter-strategies for a given opponent style."""
         matchup_counters = self.COUNTERS.get(matchup, {})
         return list(matchup_counters.get(opponent_style, []))
 
-    def evaluate_matchup_fitness(
-        self, profile: StrategyProfile
-    ) -> dict[str, float]:
+    def evaluate_matchup_fitness(self, profile: StrategyProfile) -> dict[str, float]:
         """Score how well a strategy fits its intended matchup."""
         archetype_scores = ARCHETYPE_SCORES.get(profile.archetype, {})
         weights = self.get_matchup_weights(profile.matchup)
@@ -376,7 +432,9 @@ class MatchupEvaluator:
                 result["safety_score"] = 0.7
             else:
                 result["safety_score"] = 0.5
-                result["notes"].append("Late pool may be vulnerable to early aggression")
+                result["notes"].append(
+                    "Late pool may be vulnerable to early aggression"
+                )
         else:
             result["safety_score"] = 0.3
 
@@ -396,6 +454,7 @@ class MatchupEvaluator:
 
 
 # ── Strategy Evaluator (main) ──────────────────────────────────────────────────
+
 
 class StrategyEvaluator:
     """Full strategy evaluation engine with scoring, comparison, and ranking."""
@@ -464,7 +523,7 @@ class StrategyEvaluator:
             fitness_mod = matchup_fitness.get(dim_name, base)
 
             # Blend base archetype score with matchup fitness
-            raw_score = (base * 0.6 + fitness_mod * 0.4)
+            raw_score = base * 0.6 + fitness_mod * 0.4
 
             # Apply adjustments based on profile specifics
             raw_score = self._apply_profile_adjustments(
@@ -692,18 +751,14 @@ class StrategyEvaluator:
                 )
 
         if not profile.key_upgrades:
-            suggestions.append(
-                "Add attack/armor upgrades to improve mid-game power"
-            )
+            suggestions.append("Add attack/armor upgrades to improve mid-game power")
 
         # Matchup-specific suggestions
         counters = self.matchup_evaluator.suggest_counters(
             profile.matchup, profile.archetype
         )
         if counters:
-            suggestions.append(
-                f"Be aware of counter-styles: {', '.join(counters)}"
-            )
+            suggestions.append(f"Be aware of counter-styles: {', '.join(counters)}")
 
         return suggestions
 
@@ -722,14 +777,10 @@ class StrategyEvaluator:
             dim_name = sa.dimension.value
             if sa.score > sb.score + 0.05:
                 dimension_winners[dim_name] = profile_a.name
-                advantages_a.append(
-                    f"{dim_name}: {sa.score:.2f} vs {sb.score:.2f}"
-                )
+                advantages_a.append(f"{dim_name}: {sa.score:.2f} vs {sb.score:.2f}")
             elif sb.score > sa.score + 0.05:
                 dimension_winners[dim_name] = profile_b.name
-                advantages_b.append(
-                    f"{dim_name}: {sb.score:.2f} vs {sa.score:.2f}"
-                )
+                advantages_b.append(f"{dim_name}: {sb.score:.2f} vs {sa.score:.2f}")
             else:
                 dimension_winners[dim_name] = "tie"
 
@@ -757,8 +808,10 @@ class StrategyEvaluator:
 
         # Update Elo ratings
         self._update_elo(
-            profile_a.name, profile_b.name,
-            report_a.overall_score, report_b.overall_score,
+            profile_a.name,
+            profile_b.name,
+            report_a.overall_score,
+            report_b.overall_score,
         )
 
         return ComparisonResult(
@@ -802,9 +855,7 @@ class StrategyEvaluator:
 
     def get_rankings(self) -> list[tuple[str, float]]:
         """Return strategies sorted by Elo rating (descending)."""
-        ranked = sorted(
-            self.elo_ratings.items(), key=lambda x: x[1], reverse=True
-        )
+        ranked = sorted(self.elo_ratings.items(), key=lambda x: x[1], reverse=True)
         return ranked
 
     def evaluate_build_order(
@@ -831,6 +882,7 @@ class StrategyEvaluator:
 
 # ── Demo ────────────────────────────────────────────────────────────────────────
 
+
 def demo() -> None:
     """Demonstrate the Strategy Evaluator capabilities."""
     print("=" * 72)
@@ -847,9 +899,14 @@ def demo() -> None:
         archetype="roach_ravager_timing",
         description="2-base roach-ravager push at 5:30",
         build_order=[
-            (14, "overlord"), (17, "hatch"), (18, "gas"),
-            (17, "pool"), (20, "queen"), (24, "roach_warren"),
-            (30, "roach"), (36, "ravager"),
+            (14, "overlord"),
+            (17, "hatch"),
+            (18, "gas"),
+            (17, "pool"),
+            (20, "queen"),
+            (24, "roach_warren"),
+            (30, "roach"),
+            (36, "ravager"),
         ],
         key_units=["Roach", "Ravager", "Queen"],
         key_upgrades=["Glial Reconstitution"],
@@ -866,9 +923,15 @@ def demo() -> None:
         archetype="ling_bane_muta",
         description="Standard ZvT with ling-bane-muta mid-game",
         build_order=[
-            (14, "overlord"), (17, "hatch"), (18, "gas"),
-            (17, "pool"), (19, "overlord"), (22, "queen"),
-            (26, "lair"), (30, "spire"), (36, "bane_nest"),
+            (14, "overlord"),
+            (17, "hatch"),
+            (18, "gas"),
+            (17, "pool"),
+            (19, "overlord"),
+            (22, "queen"),
+            (26, "lair"),
+            (30, "spire"),
+            (36, "bane_nest"),
         ],
         key_units=["Zergling", "Baneling", "Mutalisk"],
         key_upgrades=["Metabolic Boost", "Centrifugal Hooks", "Flyer Attacks 1"],
@@ -885,8 +948,11 @@ def demo() -> None:
         archetype="12_pool",
         description="Early pool aggression in ZvZ",
         build_order=[
-            (12, "pool"), (13, "overlord"), (14, "zergling"),
-            (16, "zergling"), (18, "queen"),
+            (12, "pool"),
+            (13, "overlord"),
+            (14, "zergling"),
+            (16, "zergling"),
+            (18, "queen"),
         ],
         key_units=["Zergling"],
         key_upgrades=["Metabolic Boost"],
@@ -903,9 +969,15 @@ def demo() -> None:
         archetype="macro_hive",
         description="Greedy 4-base hive tech with broodlords",
         build_order=[
-            (14, "overlord"), (17, "hatch"), (18, "gas"),
-            (17, "pool"), (20, "queen"), (30, "third_hatch"),
-            (44, "lair"), (50, "infestation_pit"), (60, "hive"),
+            (14, "overlord"),
+            (17, "hatch"),
+            (18, "gas"),
+            (17, "pool"),
+            (20, "queen"),
+            (30, "third_hatch"),
+            (44, "lair"),
+            (50, "infestation_pit"),
+            (60, "hive"),
         ],
         key_units=["Hydralisk", "Lurker", "BroodLord", "Viper"],
         key_upgrades=["Grooved Spines", "Muscular Augments", "Lurker Range"],

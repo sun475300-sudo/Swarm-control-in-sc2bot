@@ -16,27 +16,67 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # ── Security: Path traversal detection ──
-_PATH_TRAVERSAL_RE = re.compile(r'(^|[\\/])\.\.($|[\\/])')
+_PATH_TRAVERSAL_RE = re.compile(r"(^|[\\/])\.\.($|[\\/])")
 
 # ── Security: Command whitelist/blocklist ──
 _ALLOWED_COMMANDS = {
-    "git", "dir", "ls", "type", "cat", "echo", "npm", "npx", "pip", "python",
-    "node", "docker", "kubectl", "where", "which", "whoami", "hostname",
-    "ipconfig", "systeminfo", "tasklist", "netstat", "ping", "nslookup",
-    "Get-ChildItem", "Get-Content", "Get-Process", "Get-Service",
-    "Test-Connection", "Test-NetConnection",
+    "git",
+    "dir",
+    "ls",
+    "type",
+    "cat",
+    "echo",
+    "npm",
+    "npx",
+    "pip",
+    "python",
+    "node",
+    "docker",
+    "kubectl",
+    "where",
+    "which",
+    "whoami",
+    "hostname",
+    "ipconfig",
+    "systeminfo",
+    "tasklist",
+    "netstat",
+    "ping",
+    "nslookup",
+    "Get-ChildItem",
+    "Get-Content",
+    "Get-Process",
+    "Get-Service",
+    "Test-Connection",
+    "Test-NetConnection",
 }
 
 _BLOCKED_PATTERNS = [
-    "rm -rf", "Remove-Item", "del /", "rmdir", "format ", "diskpart",
-    "shutdown", "restart", "Stop-Computer", "Restart-Computer",
-    "reg delete", "reg add", "regedit",
-    "net user", "net localgroup",
-    "Invoke-WebRequest", "Invoke-Expression", "iex ",
-    "curl ", "wget ",  # Prevent data exfiltration
+    "rm -rf",
+    "Remove-Item",
+    "del /",
+    "rmdir",
+    "format ",
+    "diskpart",
+    "shutdown",
+    "restart",
+    "Stop-Computer",
+    "Restart-Computer",
+    "reg delete",
+    "reg add",
+    "regedit",
+    "net user",
+    "net localgroup",
+    "Invoke-WebRequest",
+    "Invoke-Expression",
+    "iex ",
+    "curl ",
+    "wget ",  # Prevent data exfiltration
     "certutil",  # Often used in attacks
-    "powershell -enc", "powershell -e ",  # Encoded commands
+    "powershell -enc",
+    "powershell -e ",  # Encoded commands
 ]
+
 
 def _is_command_allowed(command: str) -> tuple[bool, str]:
     """Check if a terminal command is allowed."""
@@ -63,15 +103,23 @@ def _is_command_allowed(command: str) -> tuple[bool, str]:
 
     # 절대 경로가 지정된 경우, 실제 시스템 경로와 일치하는지 검증
     import shutil
+
     if os.sep in first_word or "/" in first_word:
         resolved = shutil.which(base_cmd)
-        if resolved and os.path.normcase(os.path.abspath(first_word)) != os.path.normcase(resolved):
-            return False, f"Command path mismatch: '{first_word}' is not the system '{base_cmd}'"
+        if resolved and os.path.normcase(
+            os.path.abspath(first_word)
+        ) != os.path.normcase(resolved):
+            return (
+                False,
+                f"Command path mismatch: '{first_word}' is not the system '{base_cmd}'",
+            )
 
     return True, "OK"
 
+
 # Create the MCP server for Agentic Computer Use & Terminal execution
 mcp = FastMCP("JARVIS-Agentic-Core")
+
 
 @mcp.tool()
 async def execute_terminal_command(command: str, timeout: int = 15) -> str:
@@ -96,16 +144,16 @@ async def execute_terminal_command(command: str, timeout: int = 15) -> str:
             text=True,
             timeout=timeout,
         )
-        
+
         stdout_text = result.stdout.strip()
         stderr_text = result.stderr.strip()
-        
+
         out = []
         if stdout_text:
             out.append(f"[STDOUT]\n{stdout_text}")
         if stderr_text:
             out.append(f"[STDERR]\n{stderr_text}")
-        
+
         if result.returncode == 0:
             if not out:
                 return "Command executed successfully with no output."
@@ -113,7 +161,7 @@ async def execute_terminal_command(command: str, timeout: int = 15) -> str:
         else:
             out.insert(0, f"Command failed with return code {result.returncode}")
             return "\n\n".join(out)
-            
+
     except subprocess.TimeoutExpired:
         logger.warning(f"명령 타임아웃 ({timeout}s): {command}")
         return f"Warning: Command '{command}' timed out after {timeout} seconds."
@@ -121,21 +169,60 @@ async def execute_terminal_command(command: str, timeout: int = 15) -> str:
         logger.error(f"명령 실행 오류: {command!r} → {e}")
         return f"Error executing command: {e}"
 
+
 # ── Security: Python code sandbox ──
 _ALLOWED_PYTHON_IMPORTS = {
-    "math", "datetime", "json", "statistics", "re", "collections",
-    "itertools", "functools", "decimal", "fractions", "random",
-    "string", "textwrap", "csv", "io", "pprint", "typing",
-    "dataclasses", "enum", "copy", "operator", "bisect", "heapq",
+    "math",
+    "datetime",
+    "json",
+    "statistics",
+    "re",
+    "collections",
+    "itertools",
+    "functools",
+    "decimal",
+    "fractions",
+    "random",
+    "string",
+    "textwrap",
+    "csv",
+    "io",
+    "pprint",
+    "typing",
+    "dataclasses",
+    "enum",
+    "copy",
+    "operator",
+    "bisect",
+    "heapq",
 }
 
 _BLOCKED_PYTHON_IMPORTS = {
-    "os", "subprocess", "sys", "shutil", "socket", "http",
-    "urllib", "requests", "pathlib", "glob", "tempfile",
-    "ctypes", "importlib", "code", "compile", "exec",
-    "pickle", "shelve", "marshal", "builtins",
-    "signal", "threading", "multiprocessing",
+    "os",
+    "subprocess",
+    "sys",
+    "shutil",
+    "socket",
+    "http",
+    "urllib",
+    "requests",
+    "pathlib",
+    "glob",
+    "tempfile",
+    "ctypes",
+    "importlib",
+    "code",
+    "compile",
+    "exec",
+    "pickle",
+    "shelve",
+    "marshal",
+    "builtins",
+    "signal",
+    "threading",
+    "multiprocessing",
 }
+
 
 def _validate_python_code(code: str) -> tuple[bool, str]:
     """Validate Python code for dangerous imports and operations."""
@@ -158,19 +245,44 @@ def _validate_python_code(code: str) -> tuple[bool, str]:
         elif isinstance(node, ast.Call):
             # Block eval(), exec(), compile(), __import__(), open()
             func = node.func
-            _BLOCKED_CALLS = {"eval", "exec", "compile", "__import__", "open", "globals", "locals", "vars", "dir", "type"}
+            _BLOCKED_CALLS = {
+                "eval",
+                "exec",
+                "compile",
+                "__import__",
+                "open",
+                "globals",
+                "locals",
+                "vars",
+                "dir",
+                "type",
+            }
             if isinstance(func, ast.Name) and func.id in _BLOCKED_CALLS:
                 return False, f"Built-in '{func.id}()' is blocked for security"
             # Block getattr(__builtins__, ...) style bypass
             if isinstance(func, ast.Name) and func.id == "getattr":
-                if node.args and isinstance(node.args[0], ast.Name) and node.args[0].id in ("__builtins__", "builtins"):
-                    return False, f"getattr() on '{node.args[0].id}' is blocked for security"
+                if (
+                    node.args
+                    and isinstance(node.args[0], ast.Name)
+                    and node.args[0].id in ("__builtins__", "builtins")
+                ):
+                    return (
+                        False,
+                        f"getattr() on '{node.args[0].id}' is blocked for security",
+                    )
         elif isinstance(node, ast.Attribute):
             # Block dunder attribute access (sandbox bypass vectors)
             _BLOCKED_ATTRS = {
-                "__import__", "__builtins__", "__class__", "__subclasses__",
-                "__globals__", "__code__", "__getattribute__", "__bases__",
-                "__mro__", "__dict__",
+                "__import__",
+                "__builtins__",
+                "__class__",
+                "__subclasses__",
+                "__globals__",
+                "__code__",
+                "__getattribute__",
+                "__bases__",
+                "__mro__",
+                "__dict__",
             }
             if node.attr in _BLOCKED_ATTRS:
                 return False, f"Attribute access '{node.attr}' is blocked for security"
@@ -207,33 +319,34 @@ async def execute_python_code(code: str) -> str:
 
     try:
         # Save code to a temporary file with sandbox preamble, then run it
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False, encoding="utf-8"
+        ) as f:
             f.write(_SANDBOX_PREAMBLE)
             f.write(code)
             temp_path = f.name
-            
+
         try:
             result = subprocess.run(
-                ["python", temp_path],
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["python", temp_path], capture_output=True, text=True, timeout=30
             )
             stdout_text = result.stdout.strip()
             stderr_text = result.stderr.strip()
-            
+
             out = []
             if stdout_text:
                 out.append(f"[STDOUT]\n{stdout_text}")
             if stderr_text:
                 out.append(f"[STDERR]\n{stderr_text}")
-            
+
             if result.returncode == 0:
                 if not out:
                     return "Python code executed successfully with no output."
                 return "\n\n".join(out)
             else:
-                out.insert(0, f"Python execution failed with return code {result.returncode}")
+                out.insert(
+                    0, f"Python execution failed with return code {result.returncode}"
+                )
                 return "\n\n".join(out)
         finally:
             if os.path.exists(temp_path):
@@ -241,14 +354,23 @@ async def execute_python_code(code: str) -> str:
     except Exception as e:
         return f"Error executing Python code: {e}"
 
+
 # ── Security: File path validation ──
 _BLOCKED_FILE_PATTERNS = [
-    ".env", "credentials", "secret", ".git/config",
-    "id_rsa", "id_ed25519", ".ssh/", "token",
-    ".npmrc", ".pypirc",
+    ".env",
+    "credentials",
+    "secret",
+    ".git/config",
+    "id_rsa",
+    "id_ed25519",
+    ".ssh/",
+    "token",
+    ".npmrc",
+    ".pypirc",
 ]
-_MAX_READ_SIZE = 1 * 1024 * 1024   # 1MB
+_MAX_READ_SIZE = 1 * 1024 * 1024  # 1MB
 _MAX_WRITE_SIZE = 10 * 1024 * 1024  # 10MB
+
 
 def _is_path_safe(path: str) -> tuple[bool, str]:
     """Check if file path is safe to access."""
@@ -270,6 +392,7 @@ async def computer_use_mouse_move(x: int, y: int, duration: float = 0.5) -> str:
     except Exception as e:
         return f"Failed to move mouse: {e}"
 
+
 @mcp.tool()
 async def computer_use_mouse_click(button: str = "left", clicks: int = 1) -> str:
     """Clicks the mouse at the current position. button can be 'left', 'right', or 'middle'."""
@@ -278,11 +401,12 @@ async def computer_use_mouse_click(button: str = "left", clicks: int = 1) -> str
     try:
         if button not in ["left", "right", "middle"]:
             return "Error: invalid button name. Choose from 'left', 'right', 'middle'."
-        
+
         pyautogui.click(button=button, clicks=clicks)
         return f"{button.capitalize()} mouse button clicked {clicks} time(s)."
     except Exception as e:
         return f"Failed to click mouse: {e}"
+
 
 @mcp.tool()
 async def computer_use_keyboard_type(text: str, interval: float = 0.05) -> str:
@@ -294,6 +418,7 @@ async def computer_use_keyboard_type(text: str, interval: float = 0.05) -> str:
         return f"Successfully typed text (length: {len(text)})."
     except Exception as e:
         return f"Failed to type text: {e}"
+
 
 @mcp.tool()
 async def computer_use_keyboard_press(keys_comma_separated: str) -> str:
@@ -310,6 +435,7 @@ async def computer_use_keyboard_press(keys_comma_separated: str) -> str:
     except Exception as e:
         return f"Failed to press keys: {e}"
 
+
 @mcp.tool()
 async def read_file(path: str) -> str:
     """Reads the contents of a file."""
@@ -319,10 +445,11 @@ async def read_file(path: str) -> str:
     try:
         if os.path.exists(path) and os.path.getsize(path) > _MAX_READ_SIZE:
             return f"File too large (>{_MAX_READ_SIZE // 1024 // 1024}MB). Use a text editor."
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
         return f"Error reading file {path}: {e}"
+
 
 @mcp.tool()
 async def write_file(path: str, content: str) -> str:
@@ -330,14 +457,15 @@ async def write_file(path: str, content: str) -> str:
     safe, reason = _is_path_safe(path)
     if not safe:
         return f"Access denied: {reason}"
-    if len(content.encode('utf-8')) > _MAX_WRITE_SIZE:
+    if len(content.encode("utf-8")) > _MAX_WRITE_SIZE:
         return f"Content too large (>{_MAX_WRITE_SIZE // 1024 // 1024}MB)"
     try:
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         return f"Successfully wrote to file {path}."
     except Exception as e:
         return f"Error writing to file {path}: {e}"
+
 
 @mcp.tool()
 async def edit_file(path: str, old_text: str, new_text: str) -> str:
@@ -346,19 +474,20 @@ async def edit_file(path: str, old_text: str, new_text: str) -> str:
     if not safe:
         return f"Access denied: {reason}"
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             content = f.read()
-            
+
         if old_text not in content:
             return f"Error: 'old_text' not found in {path}"
-            
+
         new_content = content.replace(old_text, new_text, 1)
-        
-        with open(path, 'w', encoding='utf-8') as f:
+
+        with open(path, "w", encoding="utf-8") as f:
             f.write(new_content)
         return f"Successfully edited file {path}."
     except Exception as e:
         return f"Error editing file {path}: {e}"
+
 
 @mcp.tool()
 async def list_directory(path: str = ".") -> str:
@@ -376,6 +505,7 @@ async def list_directory(path: str = ".") -> str:
         return "\n".join(output)
     except Exception as e:
         return f"Error listing directory {path}: {e}"
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

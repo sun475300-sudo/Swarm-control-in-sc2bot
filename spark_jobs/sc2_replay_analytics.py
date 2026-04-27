@@ -20,9 +20,15 @@ try:
     from pyspark.sql import SparkSession, DataFrame
     from pyspark.sql import functions as F
     from pyspark.sql.types import (
-        StructType, StructField, StringType, IntegerType, FloatType, BooleanType,
+        StructType,
+        StructField,
+        StringType,
+        IntegerType,
+        FloatType,
+        BooleanType,
     )
     from pyspark.sql.window import Window
+
     PYSPARK_AVAILABLE = True
     print("[INFO] PySpark detected — using Spark runtime.")
 except ImportError:
@@ -39,16 +45,25 @@ except ImportError:
     class StructType:
         def __init__(self, fields: list):
             self.fields = fields
+
         def __iter__(self):
             return iter(self.fields)
 
-    class StringType: pass
-    class IntegerType: pass
-    class FloatType: pass
-    class BooleanType: pass
+    class StringType:
+        pass
+
+    class IntegerType:
+        pass
+
+    class FloatType:
+        pass
+
+    class BooleanType:
+        pass
 
     class Row(dict):
         """Dict-backed Row that supports attribute access."""
+
         def __getattr__(self, item):
             try:
                 return self[item]
@@ -91,7 +106,11 @@ except ImportError:
             col = cols[0] if cols else None
             if col:
                 return DataFrame(
-                    sorted(self._data, key=lambda r: (r.get(col) or 0), reverse=not ascending),
+                    sorted(
+                        self._data,
+                        key=lambda r: (r.get(col) or 0),
+                        reverse=not ascending,
+                    ),
                     self.schema,
                 )
             return self
@@ -215,7 +234,9 @@ except ImportError:
             def getOrCreate() -> "SparkSession":
                 return SparkSession()
 
-        def createDataFrame(self, data: List[dict], schema: StructType = None) -> DataFrame:
+        def createDataFrame(
+            self, data: List[dict], schema: StructType = None
+        ) -> DataFrame:
             return DataFrame(data, schema)
 
         def read(self):
@@ -254,25 +275,32 @@ except ImportError:
 
     class F:  # noqa: N801  (shadows import)
         @staticmethod
-        def col(name): return lambda r: r.get(name)
+        def col(name):
+            return lambda r: r.get(name)
 
         @staticmethod
-        def count(col): return ("count", col)
+        def count(col):
+            return ("count", col)
 
         @staticmethod
-        def sum(col): return ("sum", col)
+        def sum(col):
+            return ("sum", col)
 
         @staticmethod
-        def avg(col): return ("avg", col)
+        def avg(col):
+            return ("avg", col)
 
         @staticmethod
-        def max(col): return ("max", col)
+        def max(col):
+            return ("max", col)
 
         @staticmethod
-        def min(col): return ("min", col)
+        def min(col):
+            return ("min", col)
 
         @staticmethod
-        def stddev(col): return ("stddev", col)
+        def stddev(col):
+            return ("stddev", col)
 
         @staticmethod
         def round(col, decimals=0):
@@ -283,13 +311,16 @@ except ImportError:
             class WhenExpr:
                 def __init__(self, cond, val):
                     self._branches = [(cond, val)]
+
                 def otherwise(self, other_val):
                     def _eval(r):
                         for c, v in self._branches:
                             if c(r):
                                 return v(r) if callable(v) else v
                         return other_val(r) if callable(other_val) else other_val
+
                     return _eval
+
             return WhenExpr(condition, value)
 
         @staticmethod
@@ -305,19 +336,21 @@ except ImportError:
 # Schema definition
 # ---------------------------------------------------------------------------
 
-REPLAY_SCHEMA = StructType([
-    StructField("game_id",             StringType(),  nullable=False),
-    StructField("map",                 StringType(),  nullable=False),
-    StructField("race",                StringType(),  nullable=False),
-    StructField("opponent_race",       StringType(),  nullable=False),
-    StructField("result",              StringType(),  nullable=False),   # "win" / "loss"
-    StructField("duration",            IntegerType(), nullable=False),   # seconds
-    StructField("minerals_collected",  IntegerType(), nullable=False),
-    StructField("gas_collected",       IntegerType(), nullable=False),
-    StructField("army_supply_peak",    IntegerType(), nullable=False),
-    StructField("workers_created",     IntegerType(), nullable=False),
-    StructField("apm",                 IntegerType(), nullable=False),
-])
+REPLAY_SCHEMA = StructType(
+    [
+        StructField("game_id", StringType(), nullable=False),
+        StructField("map", StringType(), nullable=False),
+        StructField("race", StringType(), nullable=False),
+        StructField("opponent_race", StringType(), nullable=False),
+        StructField("result", StringType(), nullable=False),  # "win" / "loss"
+        StructField("duration", IntegerType(), nullable=False),  # seconds
+        StructField("minerals_collected", IntegerType(), nullable=False),
+        StructField("gas_collected", IntegerType(), nullable=False),
+        StructField("army_supply_peak", IntegerType(), nullable=False),
+        StructField("workers_created", IntegerType(), nullable=False),
+        StructField("apm", IntegerType(), nullable=False),
+    ]
+)
 
 
 # ---------------------------------------------------------------------------
@@ -325,8 +358,13 @@ REPLAY_SCHEMA = StructType([
 # ---------------------------------------------------------------------------
 
 MAPS = [
-    "Blackburn LE", "Submarine LE", "Crimson Court", "Ancient Cistern LE",
-    "Goldenaura LE", "Radhuset Station LE", "Gresvan LE",
+    "Blackburn LE",
+    "Submarine LE",
+    "Crimson Court",
+    "Ancient Cistern LE",
+    "Goldenaura LE",
+    "Radhuset Station LE",
+    "Gresvan LE",
 ]
 RACES = ["Terran", "Zerg", "Protoss"]
 
@@ -337,17 +375,17 @@ def _make_record(game_id: int, race: str = "Zerg") -> dict:
     duration = random.randint(180, 1800)
     eco_scale = duration / 1800
     return {
-        "game_id":            f"g{game_id:06d}",
-        "map":                random.choice(MAPS),
-        "race":               race,
-        "opponent_race":      opponent_race,
-        "result":             result,
-        "duration":           duration,
+        "game_id": f"g{game_id:06d}",
+        "map": random.choice(MAPS),
+        "race": race,
+        "opponent_race": opponent_race,
+        "result": result,
+        "duration": duration,
         "minerals_collected": int(random.gauss(3000, 800) * eco_scale),
-        "gas_collected":      int(random.gauss(1500, 400) * eco_scale),
-        "army_supply_peak":   random.randint(40, 200),
-        "workers_created":    int(random.gauss(60, 15) * eco_scale),
-        "apm":                random.randint(80, 350),
+        "gas_collected": int(random.gauss(1500, 400) * eco_scale),
+        "army_supply_peak": random.randint(40, 200),
+        "workers_created": int(random.gauss(60, 15) * eco_scale),
+        "apm": random.randint(80, 350),
     }
 
 
@@ -360,7 +398,10 @@ def generate_sample_data(n: int = 2000, race: str = "Zerg") -> List[dict]:
 # Analysis functions
 # ---------------------------------------------------------------------------
 
-def read_replay_data(spark: SparkSession, path: str, sample_data: List[dict]) -> DataFrame:
+
+def read_replay_data(
+    spark: SparkSession, path: str, sample_data: List[dict]
+) -> DataFrame:
     """Read parquet replay data (falls back to sample_data in non-Spark mode)."""
     if PYSPARK_AVAILABLE:
         try:
@@ -405,15 +446,17 @@ def compute_win_rates(df: DataFrame) -> DataFrame:
     for (map_name, opp_race), grp in groups.items():
         total = len(grp)
         wins = sum(1 for r in grp if r["result"] == "win")
-        rows.append({
-            "map":           map_name,
-            "opponent_race": opp_race,
-            "total_games":   total,
-            "wins":          wins,
-            "avg_duration":  round(mean(r["duration"] for r in grp), 2),
-            "avg_apm":       round(mean(r["apm"] for r in grp), 2),
-            "win_rate":      round(wins / total, 4),
-        })
+        rows.append(
+            {
+                "map": map_name,
+                "opponent_race": opp_race,
+                "total_games": total,
+                "wins": wins,
+                "avg_duration": round(mean(r["duration"] for r in grp), 2),
+                "avg_apm": round(mean(r["apm"] for r in grp), 2),
+                "win_rate": round(wins / total, 4),
+            }
+        )
     rows.sort(key=lambda r: r["win_rate"], reverse=True)
     return DataFrame(rows)
 
@@ -441,16 +484,18 @@ def army_composition_aggregation(df: DataFrame) -> DataFrame:
     rows = []
     for (result, opp_race), grp in groups.items():
         armies = [r["army_supply_peak"] for r in grp]
-        rows.append({
-            "result":          result,
-            "opponent_race":   opp_race,
-            "games":           len(grp),
-            "avg_army_supply": round(mean(r["army_supply_peak"] for r in grp), 2),
-            "avg_minerals":    round(mean(r["minerals_collected"] for r in grp), 2),
-            "avg_gas":         round(mean(r["gas_collected"] for r in grp), 2),
-            "avg_workers":     round(mean(r["workers_created"] for r in grp), 2),
-            "stddev_army":     round(stdev(armies) if len(armies) > 1 else 0.0, 4),
-        })
+        rows.append(
+            {
+                "result": result,
+                "opponent_race": opp_race,
+                "games": len(grp),
+                "avg_army_supply": round(mean(r["army_supply_peak"] for r in grp), 2),
+                "avg_minerals": round(mean(r["minerals_collected"] for r in grp), 2),
+                "avg_gas": round(mean(r["gas_collected"] for r in grp), 2),
+                "avg_workers": round(mean(r["workers_created"] for r in grp), 2),
+                "stddev_army": round(stdev(armies) if len(armies) > 1 else 0.0, 4),
+            }
+        )
     rows.sort(key=lambda r: (r["result"], r["opponent_race"]))
     return DataFrame(rows)
 
@@ -461,9 +506,9 @@ def optimal_build_timing_analysis(df: DataFrame) -> DataFrame:
     proxy for build order tempo analysis.
     """
     BUCKETS = [
-        (0,   300,  "0-5min  (early_all_in)"),
-        (300, 600,  "5-10min (aggression)"),
-        (600, 900,  "10-15min(mid_game)"),
+        (0, 300, "0-5min  (early_all_in)"),
+        (300, 600, "5-10min (aggression)"),
+        (600, 900, "10-15min(mid_game)"),
         (900, 1200, "15-20min(late_mid)"),
         (1200, 99999, "20min+ (macro_late)"),
     ]
@@ -507,14 +552,16 @@ def optimal_build_timing_analysis(df: DataFrame) -> DataFrame:
     for bracket, grp in groups.items():
         total = len(grp)
         wins = sum(1 for r in grp if r["result"] == "win")
-        rows.append({
-            "duration_bracket": bracket,
-            "total_games":      total,
-            "wins":             wins,
-            "avg_apm":          round(mean(r["apm"] for r in grp), 2),
-            "avg_army":         round(mean(r["army_supply_peak"] for r in grp), 2),
-            "win_rate":         round(wins / total, 4),
-        })
+        rows.append(
+            {
+                "duration_bracket": bracket,
+                "total_games": total,
+                "wins": wins,
+                "avg_apm": round(mean(r["apm"] for r in grp), 2),
+                "avg_army": round(mean(r["army_supply_peak"] for r in grp), 2),
+                "win_rate": round(wins / total, 4),
+            }
+        )
     rows.sort(key=lambda r: r["win_rate"], reverse=True)
     return DataFrame(rows)
 
@@ -526,10 +573,7 @@ def rolling_win_rate(df: DataFrame, window_size: int = 50) -> DataFrame:
     """
     if PYSPARK_AVAILABLE:
         win_flag = F.when(F.col("result") == "win", F.lit(1)).otherwise(F.lit(0))
-        w = (
-            Window.orderBy("game_id")
-            .rowsBetween(-window_size + 1, 0)
-        )
+        w = Window.orderBy("game_id").rowsBetween(-window_size + 1, 0)
         return (
             df.withColumn("win_flag", win_flag)
             .withColumn("rolling_win_rate", F.round(F.avg("win_flag").over(w), 4))
@@ -541,14 +585,16 @@ def rolling_win_rate(df: DataFrame, window_size: int = 50) -> DataFrame:
     flags = [1 if r["result"] == "win" else 0 for r in records]
     rows = []
     for i, r in enumerate(records):
-        window_flags = flags[max(0, i - window_size + 1): i + 1]
+        window_flags = flags[max(0, i - window_size + 1) : i + 1]
         rolling = round(mean(window_flags), 4) if window_flags else 0.0
-        rows.append({
-            "game_id":           r["game_id"],
-            "result":            r["result"],
-            "win_flag":          flags[i],
-            "rolling_win_rate":  rolling,
-        })
+        rows.append(
+            {
+                "game_id": r["game_id"],
+                "result": r["result"],
+                "win_flag": flags[i],
+                "rolling_win_rate": rolling,
+            }
+        )
     return DataFrame(rows)
 
 
@@ -562,9 +608,7 @@ def compute_summary_stats(
     army_rows = army_df.collect()
     bt_rows = build_timing_df.collect()
 
-    overall_win_rate = (
-        mean(r["win_rate"] for r in wr_rows) if wr_rows else 0.0
-    )
+    overall_win_rate = mean(r["win_rate"] for r in wr_rows) if wr_rows else 0.0
     best_map = max(wr_rows, key=lambda r: r["win_rate"])["map"] if wr_rows else "N/A"
     best_bracket = bt_rows[0]["duration_bracket"] if bt_rows else "N/A"
     best_bracket_wr = bt_rows[0]["win_rate"] if bt_rows else 0.0
@@ -573,12 +617,12 @@ def compute_summary_stats(
     loss_army = [r["avg_army_supply"] for r in army_rows if r["result"] == "loss"]
 
     return {
-        "overall_win_rate":          round(overall_win_rate, 4),
-        "best_map":                  best_map,
-        "best_duration_bracket":     best_bracket,
-        "best_bracket_win_rate":     best_bracket_wr,
-        "avg_army_on_win":           round(mean(win_army), 2) if win_army else 0.0,
-        "avg_army_on_loss":          round(mean(loss_army), 2) if loss_army else 0.0,
+        "overall_win_rate": round(overall_win_rate, 4),
+        "best_map": best_map,
+        "best_duration_bracket": best_bracket,
+        "best_bracket_win_rate": best_bracket_wr,
+        "avg_army_on_win": round(mean(win_army), 2) if win_army else 0.0,
+        "avg_army_on_loss": round(mean(loss_army), 2) if loss_army else 0.0,
         "total_matchup_combinations": len(wr_rows),
     }
 
@@ -586,6 +630,7 @@ def compute_summary_stats(
 # ---------------------------------------------------------------------------
 # Main entrypoint
 # ---------------------------------------------------------------------------
+
 
 def run_analysis(
     parquet_path: str = "s3://sc2-replays/processed/replays.parquet",
@@ -598,8 +643,7 @@ def run_analysis(
     print("=" * 60 + "\n")
 
     spark = (
-        SparkSession.builder
-        .appName("SC2ReplayAnalytics")
+        SparkSession.builder.appName("SC2ReplayAnalytics")
         .master("local[*]")
         .config("spark.sql.shuffle.partitions", "8")
         .getOrCreate()

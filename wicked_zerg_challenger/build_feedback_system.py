@@ -24,7 +24,9 @@ class BuildFeedbackSystem:
 
     def __init__(self, bot):
         self.bot = bot
-        self.data_file = Path("wicked_zerg_challenger/local_training/data/build_feedback.json")
+        self.data_file = Path(
+            "wicked_zerg_challenger/local_training/data/build_feedback.json"
+        )
         self.data_file.parent.mkdir(parents=True, exist_ok=True)
 
         # 게임 데이터
@@ -74,7 +76,9 @@ class BuildFeedbackSystem:
     def _record_build_order(self):
         """현재 빌드 오더 기록"""
         if hasattr(self.bot, "build_order_system"):
-            build_order = getattr(self.bot.build_order_system, "current_build_order", "unknown")
+            build_order = getattr(
+                self.bot.build_order_system, "current_build_order", "unknown"
+            )
             self.game_data["build_order"] = build_order
 
     def _track_milestones(self, game_time: float):
@@ -84,46 +88,56 @@ class BuildFeedbackSystem:
         # Spawning Pool
         if not self.milestones_tracked["spawning_pool"]:
             if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
-                self.game_data["milestones"].append({
-                    "name": "spawning_pool",
-                    "time": game_time,
-                })
+                self.game_data["milestones"].append(
+                    {
+                        "name": "spawning_pool",
+                        "time": game_time,
+                    }
+                )
                 self.milestones_tracked["spawning_pool"] = True
 
         # First Expansion
         if not self.milestones_tracked["first_expansion"]:
             if self.bot.townhalls.amount >= 2:
-                self.game_data["milestones"].append({
-                    "name": "first_expansion",
-                    "time": game_time,
-                })
+                self.game_data["milestones"].append(
+                    {
+                        "name": "first_expansion",
+                        "time": game_time,
+                    }
+                )
                 self.milestones_tracked["first_expansion"] = True
 
         # Lair
         if not self.milestones_tracked["lair"]:
             if self.bot.structures(UnitTypeId.LAIR).ready.exists:
-                self.game_data["milestones"].append({
-                    "name": "lair",
-                    "time": game_time,
-                })
+                self.game_data["milestones"].append(
+                    {
+                        "name": "lair",
+                        "time": game_time,
+                    }
+                )
                 self.milestones_tracked["lair"] = True
 
         # Hive
         if not self.milestones_tracked["hive"]:
             if self.bot.structures(UnitTypeId.HIVE).ready.exists:
-                self.game_data["milestones"].append({
-                    "name": "hive",
-                    "time": game_time,
-                })
+                self.game_data["milestones"].append(
+                    {
+                        "name": "hive",
+                        "time": game_time,
+                    }
+                )
                 self.milestones_tracked["hive"] = True
 
         # Spire
         if not self.milestones_tracked["spire"]:
             if self.bot.structures(UnitTypeId.SPIRE).ready.exists:
-                self.game_data["milestones"].append({
-                    "name": "spire",
-                    "time": game_time,
-                })
+                self.game_data["milestones"].append(
+                    {
+                        "name": "spire",
+                        "time": game_time,
+                    }
+                )
                 self.milestones_tracked["spire"] = True
 
     def _track_resources(self, game_time: float):
@@ -134,14 +148,16 @@ class BuildFeedbackSystem:
         supply_used = getattr(self.bot, "supply_used", 0)
         supply_cap = getattr(self.bot, "supply_cap", 0)
 
-        self.game_data["resources"].append({
-            "time": game_time,
-            "minerals": minerals,
-            "vespene": vespene,
-            "workers": workers,
-            "supply_used": supply_used,
-            "supply_cap": supply_cap,
-        })
+        self.game_data["resources"].append(
+            {
+                "time": game_time,
+                "minerals": minerals,
+                "vespene": vespene,
+                "workers": workers,
+                "supply_used": supply_used,
+                "supply_cap": supply_cap,
+            }
+        )
 
     def _track_army_composition(self, game_time: float):
         """군대 조합 추적"""
@@ -166,10 +182,12 @@ class BuildFeedbackSystem:
                 composition[unit_type.name] = count
 
         if composition:
-            self.game_data["army_composition"].append({
-                "time": game_time,
-                "composition": composition,
-            })
+            self.game_data["army_composition"].append(
+                {
+                    "time": game_time,
+                    "composition": composition,
+                }
+            )
 
     async def on_game_end(self, result: str):
         """게임 종료 시 호출"""
@@ -183,7 +201,9 @@ class BuildFeedbackSystem:
             # 패배 원인 파악
             if hasattr(self.bot, "defeat_detection"):
                 defeat_status = self.bot.defeat_detection._get_current_status()
-                self.game_data["defeat_reason"] = defeat_status.get("defeat_reason", "Unknown")
+                self.game_data["defeat_reason"] = defeat_status.get(
+                    "defeat_reason", "Unknown"
+                )
 
         # 데이터 저장
         self._save_game_data()
@@ -249,12 +269,16 @@ class BuildFeedbackSystem:
 
             # 평균 승리 시간
             if victories:
-                avg_victory_time = sum(g["victory_time"] for g in victories) / len(victories)
+                avg_victory_time = sum(g["victory_time"] for g in victories) / len(
+                    victories
+                )
             else:
                 avg_victory_time = 0
 
             logger.info(f"\n[BUILD FEEDBACK] Analysis:")
-            logger.info(f"  Win Rate: {win_rate * 100:.1f}% ({len(victories)}/{len(recent_games)})")
+            logger.info(
+                f"  Win Rate: {win_rate * 100:.1f}% ({len(victories)}/{len(recent_games)})"
+            )
             logger.info(f"  Avg Victory Time: {avg_victory_time:.0f}s")
 
             # 빌드 오더별 분석
@@ -271,7 +295,9 @@ class BuildFeedbackSystem:
             logger.info(f"\n  Build Order Stats:")
             for build, stats in build_stats.items():
                 wr = stats["wins"] / stats["total"] if stats["total"] > 0 else 0
-                logger.info(f"    {build}: {wr * 100:.1f}% ({stats['wins']}/{stats['total']})")
+                logger.info(
+                    f"    {build}: {wr * 100:.1f}% ({stats['wins']}/{stats['total']})"
+                )
 
             # 추천 사항
             self._generate_recommendations(recent_games, victories, avg_victory_time)
@@ -279,16 +305,22 @@ class BuildFeedbackSystem:
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
 
-    def _generate_recommendations(self, recent_games: List, victories: List, avg_victory_time: float):
+    def _generate_recommendations(
+        self, recent_games: List, victories: List, avg_victory_time: float
+    ):
         """개선 추천 사항 생성"""
         logger.info(f"\n[BUILD FEEDBACK] Recommendations:")
 
         # 1. 승리 시간 분석
         if avg_victory_time > 600:  # 10분 이상
-            logger.info(f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) → 더 공격적인 전략 필요")
+            logger.info(
+                f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) → 더 공격적인 전략 필요"
+            )
             logger.info(f"    → 제안: 3분 저글링 공격, 5분 바퀴 푸시")
         elif avg_victory_time < 300:  # 5분 미만
-            logger.info(f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) → 현재 전략 유지")
+            logger.info(
+                f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) → 현재 전략 유지"
+            )
 
         # 2. 자원 효율성
         if victories:
@@ -299,9 +331,13 @@ class BuildFeedbackSystem:
                     # 중반 (5분) 자원 상태
                     mid_game = [r for r in resources if 250 < r["time"] < 350]
                     if mid_game:
-                        avg_minerals = sum(r["minerals"] for r in mid_game) / len(mid_game)
+                        avg_minerals = sum(r["minerals"] for r in mid_game) / len(
+                            mid_game
+                        )
                         if avg_minerals > 1000:
-                            logger.info(f"  - 미네랄 과잉 ({avg_minerals:.0f}) → 유닛 생산 증가 필요")
+                            logger.info(
+                                f"  - 미네랄 과잉 ({avg_minerals:.0f}) → 유닛 생산 증가 필요"
+                            )
 
         # 3. 유닛 조합
         if victories:
@@ -317,6 +353,8 @@ class BuildFeedbackSystem:
 
             if unit_usage:
                 logger.info(f"  - 승리 시 주력 유닛:")
-                for unit, counts in sorted(unit_usage.items(), key=lambda x: sum(x[1]), reverse=True)[:3]:
+                for unit, counts in sorted(
+                    unit_usage.items(), key=lambda x: sum(x[1]), reverse=True
+                )[:3]:
                     avg = sum(counts) / len(counts)
                     logger.info(f"    → {unit}: 평균 {avg:.1f}마리")

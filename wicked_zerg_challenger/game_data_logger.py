@@ -46,13 +46,13 @@ class GameDataLogger:
             "decision_log": [],
             "game_result": {},
             # ★ 추가 학습 항목 ★
-            "enemy_scouts": [],           # 적 정찰 정보
-            "harassment": [],             # 하라스 기록
-            "defense_events": [],         # 방어 성공/실패
-            "unit_composition": [],       # 유닛 구성비 스냅샷
-            "upgrade_sequence": [],       # 업그레이드 순서
-            "map_control": [],            # 맵 장악도
-            "enemy_build_detected": {}    # 적 빌드 패턴
+            "enemy_scouts": [],  # 적 정찰 정보
+            "harassment": [],  # 하라스 기록
+            "defense_events": [],  # 방어 성공/실패
+            "unit_composition": [],  # 유닛 구성비 스냅샷
+            "upgrade_sequence": [],  # 업그레이드 순서
+            "map_control": [],  # 맵 장악도
+            "enemy_build_detected": {},  # 적 빌드 패턴
         }
 
         self.start_time = datetime.now()
@@ -79,8 +79,16 @@ class GameDataLogger:
         """게임 시작 시 메타 정보 기록"""
         self.game_data["meta"] = {
             "timestamp": self.start_time.isoformat(),
-            "map_name": self.bot.game_info.map_name if hasattr(self.bot, "game_info") else "Unknown",
-            "opponent_race": str(self.bot.enemy_race) if hasattr(self.bot, "enemy_race") else "Unknown",
+            "map_name": (
+                self.bot.game_info.map_name
+                if hasattr(self.bot, "game_info")
+                else "Unknown"
+            ),
+            "opponent_race": (
+                str(self.bot.enemy_race)
+                if hasattr(self.bot, "enemy_race")
+                else "Unknown"
+            ),
             "bot_race": "Zerg",
             "game_version": "5.0.12",  # SC2 버전
         }
@@ -142,31 +150,43 @@ class GameDataLogger:
 
                 # 건설 시작 시간 기록
                 if not structure.is_ready:
-                    self.game_data["build_order"].append({
-                        "time": round(game_time, 1),
-                        "supply": self.bot.supply_used,
-                        "action": "build_start",
-                        "unit_type": str(structure.type_id),
-                        "position": [round(structure.position.x, 1), round(structure.position.y, 1)]
-                    })
+                    self.game_data["build_order"].append(
+                        {
+                            "time": round(game_time, 1),
+                            "supply": self.bot.supply_used,
+                            "action": "build_start",
+                            "unit_type": str(structure.type_id),
+                            "position": [
+                                round(structure.position.x, 1),
+                                round(structure.position.y, 1),
+                            ],
+                        }
+                    )
 
     async def _track_expansions(self, game_time: float):
         """확장 기지 추적"""
-        current_bases = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
+        current_bases = (
+            self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
+        )
 
         # 새로운 확장 발견
         for townhall in self.bot.townhalls:
             if townhall.tag not in self._tracked_structures:
                 expansion_number = len([e for e in self.game_data["expansions"]]) + 1
 
-                self.game_data["expansions"].append({
-                    "time": round(game_time, 1),
-                    "expansion_number": expansion_number,
-                    "supply": self.bot.supply_used,
-                    "minerals": self.bot.minerals,
-                    "vespene": self.bot.vespene,
-                    "position": [round(townhall.position.x, 1), round(townhall.position.y, 1)]
-                })
+                self.game_data["expansions"].append(
+                    {
+                        "time": round(game_time, 1),
+                        "expansion_number": expansion_number,
+                        "supply": self.bot.supply_used,
+                        "minerals": self.bot.minerals,
+                        "vespene": self.bot.vespene,
+                        "position": [
+                            round(townhall.position.x, 1),
+                            round(townhall.position.y, 1),
+                        ],
+                    }
+                )
 
                 self._tracked_structures.add(townhall.tag)
 
@@ -181,28 +201,43 @@ class GameDataLogger:
 
                 # 전투 유닛만 기록
                 combat_units = [
-                    UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-                    UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.BANELING,
-                    UnitTypeId.RAVAGER, UnitTypeId.LURKERMP, UnitTypeId.INFESTOR,
-                    UnitTypeId.SWARMHOSTMP, UnitTypeId.VIPER, UnitTypeId.ULTRALISK,
-                    UnitTypeId.BROODLORD
+                    UnitTypeId.ZERGLING,
+                    UnitTypeId.ROACH,
+                    UnitTypeId.HYDRALISK,
+                    UnitTypeId.MUTALISK,
+                    UnitTypeId.CORRUPTOR,
+                    UnitTypeId.BANELING,
+                    UnitTypeId.RAVAGER,
+                    UnitTypeId.LURKERMP,
+                    UnitTypeId.INFESTOR,
+                    UnitTypeId.SWARMHOSTMP,
+                    UnitTypeId.VIPER,
+                    UnitTypeId.ULTRALISK,
+                    UnitTypeId.BROODLORD,
                 ]
 
                 if UnitTypeId and unit.type_id in combat_units:
-                    self.game_data["unit_production"].append({
-                        "time": round(game_time, 1),
-                        "unit_type": str(unit.type_id),
-                        "supply": self.bot.supply_used
-                    })
+                    self.game_data["unit_production"].append(
+                        {
+                            "time": round(game_time, 1),
+                            "unit_type": str(unit.type_id),
+                            "supply": self.bot.supply_used,
+                        }
+                    )
 
     async def _track_tech_upgrades(self, game_time: float):
         """테크 건물 및 업그레이드 추적"""
         tech_buildings = [
-            UnitTypeId.LAIR, UnitTypeId.HIVE,
-            UnitTypeId.ROACHWARREN, UnitTypeId.HYDRALISKDEN,
-            UnitTypeId.SPIRE, UnitTypeId.GREATERSPIRE,
-            UnitTypeId.INFESTATIONPIT, UnitTypeId.ULTRALISKCAVERN,
-            UnitTypeId.LURKERDENMP, UnitTypeId.EVOLUTIONCHAMBER
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
+            UnitTypeId.ROACHWARREN,
+            UnitTypeId.HYDRALISKDEN,
+            UnitTypeId.SPIRE,
+            UnitTypeId.GREATERSPIRE,
+            UnitTypeId.INFESTATIONPIT,
+            UnitTypeId.ULTRALISKCAVERN,
+            UnitTypeId.LURKERDENMP,
+            UnitTypeId.EVOLUTIONCHAMBER,
         ]
 
         if not UnitTypeId:
@@ -213,13 +248,15 @@ class GameDataLogger:
                 if structure.tag not in self._tracked_upgrades:
                     self._tracked_upgrades.add(structure.tag)
 
-                    self.game_data["tech_upgrades"].append({
-                        "time": round(game_time, 1),
-                        "building": str(structure.type_id),
-                        "supply": self.bot.supply_used,
-                        "minerals": self.bot.minerals,
-                        "vespene": self.bot.vespene
-                    })
+                    self.game_data["tech_upgrades"].append(
+                        {
+                            "time": round(game_time, 1),
+                            "building": str(structure.type_id),
+                            "supply": self.bot.supply_used,
+                            "minerals": self.bot.minerals,
+                            "vespene": self.bot.vespene,
+                        }
+                    )
 
     async def _detect_engagements(self, game_time: float):
         """교전 감지 (병력 손실 감지)"""
@@ -233,13 +270,15 @@ class GameDataLogger:
         supply_lost = self._last_army_supply - current_army_supply
 
         if supply_lost >= 10:
-            self.game_data["engagements"].append({
-                "time": round(game_time, 1),
-                "supply_lost": supply_lost,
-                "remaining_army": current_army_supply,
-                "minerals": self.bot.minerals,
-                "vespene": self.bot.vespene
-            })
+            self.game_data["engagements"].append(
+                {
+                    "time": round(game_time, 1),
+                    "supply_lost": supply_lost,
+                    "remaining_army": current_army_supply,
+                    "minerals": self.bot.minerals,
+                    "vespene": self.bot.vespene,
+                }
+            )
 
             self._engagement_cooldown = 10  # 10초 쿨다운
 
@@ -247,28 +286,32 @@ class GameDataLogger:
 
     def _take_resource_snapshot(self, game_time: float):
         """자원 상태 스냅샷"""
-        self.game_data["resource_snapshots"].append({
-            "time": round(game_time, 1),
-            "minerals": self.bot.minerals,
-            "vespene": self.bot.vespene,
-            "supply_used": self.bot.supply_used,
-            "supply_cap": self.bot.supply_cap,
-            "supply_army": self.bot.supply_army,
-            "supply_workers": self.bot.supply_workers,
-            "bases": self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0,
-            "workers": self.bot.workers.amount if hasattr(self.bot, "workers") else 0
-        })
+        self.game_data["resource_snapshots"].append(
+            {
+                "time": round(game_time, 1),
+                "minerals": self.bot.minerals,
+                "vespene": self.bot.vespene,
+                "supply_used": self.bot.supply_used,
+                "supply_cap": self.bot.supply_cap,
+                "supply_army": self.bot.supply_army,
+                "supply_workers": self.bot.supply_workers,
+                "bases": (
+                    self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
+                ),
+                "workers": (
+                    self.bot.workers.amount if hasattr(self.bot, "workers") else 0
+                ),
+            }
+        )
 
     def log_decision(self, decision_type: str, details: Dict[str, Any]):
         """의사결정 로그 (중요한 결정만)"""
         if not hasattr(self.bot, "time"):
             return
 
-        self.game_data["decision_log"].append({
-            "time": round(self.bot.time, 1),
-            "type": decision_type,
-            "details": details
-        })
+        self.game_data["decision_log"].append(
+            {"time": round(self.bot.time, 1), "type": decision_type, "details": details}
+        )
 
     def finalize_game(self, result: str):
         """게임 종료 시 최종 결과 기록"""
@@ -281,8 +324,10 @@ class GameDataLogger:
             "final_supply": self.bot.supply_used,
             "final_minerals": self.bot.minerals,
             "final_vespene": self.bot.vespene,
-            "final_bases": self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0,
-            "end_time": end_time.isoformat()
+            "final_bases": (
+                self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
+            ),
+            "end_time": end_time.isoformat(),
         }
 
         # 파일 저장
@@ -304,7 +349,7 @@ class GameDataLogger:
         filepath = os.path.join(games_dir, filename)
 
         # JSON 저장
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(self.game_data, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Game data saved: {filename}")
@@ -326,17 +371,34 @@ class GameDataLogger:
             nearby_enemies = enemy_units.closer_than(15, base)
             if nearby_enemies:
                 # 정찰 유닛 감지 (Overlord, Observer, Reaper 등)
-                scout_types = ["OVERLORD", "OBSERVER", "REAPER", "SCV", "PROBE", "DRONE"]
-                scouts = [u for u in nearby_enemies if str(u.type_id).upper() in scout_types]
+                scout_types = [
+                    "OVERLORD",
+                    "OBSERVER",
+                    "REAPER",
+                    "SCV",
+                    "PROBE",
+                    "DRONE",
+                ]
+                scouts = [
+                    u for u in nearby_enemies if str(u.type_id).upper() in scout_types
+                ]
 
                 if scouts:
                     for scout in scouts:
-                        self.game_data["enemy_scouts"].append({
-                            "time": round(game_time, 1),
-                            "unit_type": str(scout.type_id),
-                            "position": [round(scout.position.x, 1), round(scout.position.y, 1)],
-                            "near_base": [round(base.position.x, 1), round(base.position.y, 1)]
-                        })
+                        self.game_data["enemy_scouts"].append(
+                            {
+                                "time": round(game_time, 1),
+                                "unit_type": str(scout.type_id),
+                                "position": [
+                                    round(scout.position.x, 1),
+                                    round(scout.position.y, 1),
+                                ],
+                                "near_base": [
+                                    round(base.position.x, 1),
+                                    round(base.position.y, 1),
+                                ],
+                            }
+                        )
 
     async def _track_harassment(self, game_time: float):
         """하라스 기록 (적 확장, 일꾼 등 공격)"""
@@ -349,21 +411,32 @@ class GameDataLogger:
 
         our_units = self.bot.units
         enemy_structures = self.bot.enemy_structures
-        enemy_workers = self.bot.enemy_units.filter(
-            lambda u: str(u.type_id).upper() in ["SCV", "PROBE", "DRONE"]
-        ) if hasattr(self.bot, "enemy_units") else []
+        enemy_workers = (
+            self.bot.enemy_units.filter(
+                lambda u: str(u.type_id).upper() in ["SCV", "PROBE", "DRONE"]
+            )
+            if hasattr(self.bot, "enemy_units")
+            else []
+        )
 
         # 적 기지 근처에 우리 유닛이 있으면 하라스 중
         for structure in enemy_structures:
             nearby_our_units = our_units.closer_than(10, structure)
             if nearby_our_units.amount >= 3:  # 3마리 이상
-                self.game_data["harassment"].append({
-                    "time": round(game_time, 1),
-                    "our_units": nearby_our_units.amount,
-                    "target_structure": str(structure.type_id),
-                    "target_position": [round(structure.position.x, 1), round(structure.position.y, 1)],
-                    "workers_killed": len([w for w in enemy_workers if w.distance_to(structure) < 10])
-                })
+                self.game_data["harassment"].append(
+                    {
+                        "time": round(game_time, 1),
+                        "our_units": nearby_our_units.amount,
+                        "target_structure": str(structure.type_id),
+                        "target_position": [
+                            round(structure.position.x, 1),
+                            round(structure.position.y, 1),
+                        ],
+                        "workers_killed": len(
+                            [w for w in enemy_workers if w.distance_to(structure) < 10]
+                        ),
+                    }
+                )
                 self._harassment_cooldown = 30  # 30초 쿨다운
                 break
 
@@ -379,13 +452,22 @@ class GameDataLogger:
             nearby_enemies = enemy_units.closer_than(15, base)
 
             if nearby_enemies.amount >= 5:  # 5명 이상 적이 있으면 방어 상황
-                self.game_data["defense_events"].append({
-                    "time": round(game_time, 1),
-                    "enemy_count": nearby_enemies.amount,
-                    "base_position": [round(base.position.x, 1), round(base.position.y, 1)],
-                    "our_army_nearby": self.bot.units.closer_than(15, base).amount,
-                    "base_health": round(base.health / base.health_max * 100, 1) if hasattr(base, "health") and base.health_max > 0 else 100
-                })
+                self.game_data["defense_events"].append(
+                    {
+                        "time": round(game_time, 1),
+                        "enemy_count": nearby_enemies.amount,
+                        "base_position": [
+                            round(base.position.x, 1),
+                            round(base.position.y, 1),
+                        ],
+                        "our_army_nearby": self.bot.units.closer_than(15, base).amount,
+                        "base_health": (
+                            round(base.health / base.health_max * 100, 1)
+                            if hasattr(base, "health") and base.health_max > 0
+                            else 100
+                        ),
+                    }
+                )
 
     def _track_unit_composition(self, game_time: float):
         """유닛 구성비 스냅샷"""
@@ -408,13 +490,17 @@ class GameDataLogger:
 
         # 비율 계산
         for unit_type, data in composition.items():
-            data["ratio"] = round(data["supply"] / total_supply, 3) if total_supply > 0 else 0
+            data["ratio"] = (
+                round(data["supply"] / total_supply, 3) if total_supply > 0 else 0
+            )
 
-        self.game_data["unit_composition"].append({
-            "time": round(game_time, 1),
-            "total_supply": total_supply,
-            "composition": composition
-        })
+        self.game_data["unit_composition"].append(
+            {
+                "time": round(game_time, 1),
+                "total_supply": total_supply,
+                "composition": composition,
+            }
+        )
 
     def _track_map_control(self, game_time: float):
         """맵 장악도 추적"""
@@ -425,7 +511,9 @@ class GameDataLogger:
         enemy_units = self.bot.enemy_units
 
         # 맵을 그리드로 나눠서 장악도 계산
-        map_center = self.bot.game_info.map_center if hasattr(self.bot, "game_info") else None
+        map_center = (
+            self.bot.game_info.map_center if hasattr(self.bot, "game_info") else None
+        )
         if not map_center:
             return
 
@@ -434,7 +522,11 @@ class GameDataLogger:
         enemy_center_units = enemy_units.closer_than(30, map_center).amount
 
         # 확장 위치 장악도
-        expansion_locations = self.bot.expansion_locations_list if hasattr(self.bot, "expansion_locations_list") else []
+        expansion_locations = (
+            self.bot.expansion_locations_list
+            if hasattr(self.bot, "expansion_locations_list")
+            else []
+        )
         controlled_expansions = 0
         for exp_loc in expansion_locations[:5]:  # 첫 5개만
             our_nearby = our_units.closer_than(10, exp_loc).amount
@@ -442,13 +534,18 @@ class GameDataLogger:
             if our_nearby > enemy_nearby:
                 controlled_expansions += 1
 
-        self.game_data["map_control"].append({
-            "time": round(game_time, 1),
-            "center_control": {
-                "our_units": our_center_units,
-                "enemy_units": enemy_center_units,
-                "control_ratio": round(our_center_units / (our_center_units + enemy_center_units + 1), 2)
-            },
-            "controlled_expansions": controlled_expansions,
-            "total_expansions_checked": min(5, len(expansion_locations))
-        })
+        self.game_data["map_control"].append(
+            {
+                "time": round(game_time, 1),
+                "center_control": {
+                    "our_units": our_center_units,
+                    "enemy_units": enemy_center_units,
+                    "control_ratio": round(
+                        our_center_units / (our_center_units + enemy_center_units + 1),
+                        2,
+                    ),
+                },
+                "controlled_expansions": controlled_expansions,
+                "total_expansions_checked": min(5, len(expansion_locations)),
+            }
+        )

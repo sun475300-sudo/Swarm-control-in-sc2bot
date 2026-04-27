@@ -37,7 +37,7 @@ class PerformanceProfiler:
 
         # Warning thresholds (seconds)
         self.slow_function_threshold = 0.010  # 10ms
-        self.slow_frame_threshold = 0.045     # 45ms (SC2 runs at ~22 FPS)
+        self.slow_frame_threshold = 0.045  # 45ms (SC2 runs at ~22 FPS)
 
         # Enable/disable profiling
         self.enabled = True
@@ -51,6 +51,7 @@ class PerformanceProfiler:
             def my_function():
                 ...
         """
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if not self.enabled:
@@ -129,18 +130,11 @@ class PerformanceProfiler:
 
         # Sort by total time spent
         sorted_stats = sorted(
-            stats.items(),
-            key=lambda x: x[1]["total_time"],
-            reverse=True
+            stats.items(), key=lambda x: x[1]["total_time"], reverse=True
         )
 
         return [
-            (
-                func_name,
-                data["total_time"],
-                data["avg_time"],
-                data["call_count"]
-            )
+            (func_name, data["total_time"], data["avg_time"], data["call_count"])
             for func_name, data in sorted_stats[:n]
         ]
 
@@ -168,7 +162,9 @@ class PerformanceProfiler:
         if frame_stats:
             self.logger.info("\n[Frame Statistics]")
             self.logger.info(f"  Average FPS: {frame_stats['avg_fps']:.1f}")
-            self.logger.info(f"  Average Frame Time: {frame_stats['avg_frame_ms']:.2f}ms")
+            self.logger.info(
+                f"  Average Frame Time: {frame_stats['avg_frame_ms']:.2f}ms"
+            )
             self.logger.info(f"  Max Frame Time: {frame_stats['max_frame_ms']:.2f}ms")
             self.logger.info(f"  Min Frame Time: {frame_stats['min_frame_ms']:.2f}ms")
 
@@ -176,7 +172,9 @@ class PerformanceProfiler:
         bottlenecks = self.get_top_bottlenecks(10)
         if bottlenecks:
             self.logger.info("\n[Top 10 Bottlenecks by Total Time]")
-            for i, (func_name, total_time, avg_time, call_count) in enumerate(bottlenecks, 1):
+            for i, (func_name, total_time, avg_time, call_count) in enumerate(
+                bottlenecks, 1
+            ):
                 self.logger.info(
                     f"  {i}. {func_name}\n"
                     f"     Total: {total_time*1000:.2f}ms, "

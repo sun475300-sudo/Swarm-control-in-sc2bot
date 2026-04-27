@@ -28,8 +28,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -84,9 +86,7 @@ def main():
     # Run game
     try:
         run_game(
-            map_instance,
-            [bot, Computer(opponent_race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
         )
         logger.info("\n[TEST FINISHED]")
     except Exception as e:

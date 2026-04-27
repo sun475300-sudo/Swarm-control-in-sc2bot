@@ -19,8 +19,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 # Constants & Enums
 # ============================================================
 
+
 class FlagType(Enum):
     """Supported feature flag types."""
+
     BOOLEAN = "boolean"
     PERCENTAGE = "percentage"
     USER_TARGETING = "user_targeting"
@@ -30,6 +32,7 @@ class FlagType(Enum):
 
 class FlagStatus(Enum):
     """Flag lifecycle status."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     ARCHIVED = "archived"
@@ -39,9 +42,11 @@ class FlagStatus(Enum):
 # Audit Log
 # ============================================================
 
+
 @dataclass
 class AuditEntry:
     """Single audit log entry for flag changes."""
+
     timestamp: float
     flag_name: str
     action: str
@@ -53,7 +58,9 @@ class AuditEntry:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "timestamp": self.timestamp,
-            "datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.timestamp)),
+            "datetime": time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime(self.timestamp)
+            ),
             "flag_name": self.flag_name,
             "action": self.action,
             "old_value": self.old_value,
@@ -92,7 +99,7 @@ class AuditLog:
         with self._lock:
             self._entries.append(entry)
             if len(self._entries) > self._max_entries:
-                self._entries = self._entries[-self._max_entries:]
+                self._entries = self._entries[-self._max_entries :]
         return entry
 
     def query(
@@ -126,6 +133,7 @@ class AuditLog:
 # Flag Definition
 # ============================================================
 
+
 @dataclass
 class Flag:
     """A single feature flag with evaluation rules.
@@ -141,6 +149,7 @@ class Flag:
         created_at: Creation timestamp.
         updated_at: Last modification timestamp.
     """
+
     name: str
     flag_type: FlagType = FlagType.BOOLEAN
     default_value: Any = False
@@ -185,6 +194,7 @@ class Flag:
 # ============================================================
 # Percentage Rollout
 # ============================================================
+
 
 class PercentageRollout:
     """Consistent percentage-based feature rollout using hashing.
@@ -231,6 +241,7 @@ class PercentageRollout:
 # ============================================================
 # User Targeting
 # ============================================================
+
 
 class UserTargeting:
     """Rule-based user targeting for feature flags.
@@ -292,6 +303,7 @@ class UserTargeting:
 # ============================================================
 # Flag Store (Persistence & Hot Reload)
 # ============================================================
+
 
 class FlagStore:
     """JSON-backed flag store with hot reload capability.
@@ -393,6 +405,7 @@ class FlagStore:
 # ============================================================
 # Time-Based Evaluation
 # ============================================================
+
 
 class TimeBasedEvaluator:
     """Evaluate flags based on time windows and schedules."""
@@ -521,6 +534,7 @@ SC2_DEFAULT_FLAGS: List[Dict[str, Any]] = [
 # ============================================================
 # Feature Flag Service (Main Facade)
 # ============================================================
+
 
 class FeatureFlagService:
     """Main service coordinating flag evaluation.
@@ -655,12 +669,15 @@ class FeatureFlagService:
                 if game_loop is not None:
                     min_loop = rule.get("min_game_loop", 0)
                     max_loop = rule.get("max_game_loop", 999999)
-                    if TimeBasedEvaluator.is_within_game_time(game_loop, min_loop, max_loop):
+                    if TimeBasedEvaluator.is_within_game_time(
+                        game_loop, min_loop, max_loop
+                    ):
                         return True
                     else:
                         continue
                 schedule = {
-                    k: v for k, v in rule.items()
+                    k: v
+                    for k, v in rule.items()
                     if k in ("start_time", "end_time", "active_hours")
                 }
                 if schedule and TimeBasedEvaluator.evaluate_schedule(schedule):
@@ -756,6 +773,7 @@ class FeatureFlagService:
 # Demo
 # ============================================================
 
+
 def demo() -> None:
     """Demonstrate the Phase 658 Feature Flag System."""
     print("=" * 70)
@@ -789,11 +807,19 @@ def demo() -> None:
     # --- User Targeting ---
     print("\n[4] User targeting (allowlist / blocklist)")
     service.create_flag("sc2.test.vip_feature", default_value=False)
-    service.targeting.set_allowlist("sc2.test.vip_feature", ["pro_player_1", "streamer_2"])
+    service.targeting.set_allowlist(
+        "sc2.test.vip_feature", ["pro_player_1", "streamer_2"]
+    )
     service.targeting.set_blocklist("sc2.test.vip_feature", ["banned_user"])
-    print(f"    pro_player_1: {service.evaluate('sc2.test.vip_feature', user_id='pro_player_1')}")
-    print(f"    random_user:  {service.evaluate('sc2.test.vip_feature', user_id='random_user')}")
-    print(f"    banned_user:  {service.evaluate('sc2.test.vip_feature', user_id='banned_user')}")
+    print(
+        f"    pro_player_1: {service.evaluate('sc2.test.vip_feature', user_id='pro_player_1')}"
+    )
+    print(
+        f"    random_user:  {service.evaluate('sc2.test.vip_feature', user_id='random_user')}"
+    )
+    print(
+        f"    banned_user:  {service.evaluate('sc2.test.vip_feature', user_id='banned_user')}"
+    )
 
     # --- Attribute-Based Targeting ---
     print("\n[5] Attribute-based targeting")
@@ -833,11 +859,17 @@ def demo() -> None:
 
     # --- Overrides ---
     print("\n[8] Manual override demonstration")
-    print(f"    Aggressive before override: {service.evaluate('sc2.strategy.aggressive_mode')}")
+    print(
+        f"    Aggressive before override: {service.evaluate('sc2.strategy.aggressive_mode')}"
+    )
     service.set_override("sc2.strategy.aggressive_mode", True, actor="admin")
-    print(f"    Aggressive after override:  {service.evaluate('sc2.strategy.aggressive_mode')}")
+    print(
+        f"    Aggressive after override:  {service.evaluate('sc2.strategy.aggressive_mode')}"
+    )
     service.clear_override("sc2.strategy.aggressive_mode", actor="admin")
-    print(f"    Aggressive after clear:     {service.evaluate('sc2.strategy.aggressive_mode')}")
+    print(
+        f"    Aggressive after clear:     {service.evaluate('sc2.strategy.aggressive_mode')}"
+    )
 
     # --- Audit Trail ---
     print("\n[9] Audit trail (last 10 entries)")

@@ -14,6 +14,7 @@ try:
     import gymnasium as gym
     from gymnasium import spaces
     import numpy as np
+
     GYM_AVAILABLE = True
 except ImportError:
     GYM_AVAILABLE = False
@@ -24,8 +25,8 @@ except ImportError:
 # Observation / Action spaces
 # ─────────────────────────────────────────────
 
-OBS_DIM = 16   # feature vector size
-ACT_DIM = 7    # discrete actions
+OBS_DIM = 16  # feature vector size
+ACT_DIM = 7  # discrete actions
 
 """
 Observation features:
@@ -61,16 +62,19 @@ Actions:
 # SC2 Gym Environment
 # ─────────────────────────────────────────────
 
+
 class SC2ZergEnv:
     """
     Gymnasium-compatible SC2 Zerg environment.
     Implements gymnasium.Env interface.
     """
+
     metadata = {"render_modes": ["ansi"]}
 
     if GYM_AVAILABLE:
         observation_space = spaces.Box(
-            low=0.0, high=1.0,
+            low=0.0,
+            high=1.0,
             shape=(OBS_DIM,),
             dtype="float32",
         )
@@ -116,9 +120,7 @@ class SC2ZergEnv:
         self._reset_state()
         return self._observe(), {"frame": 0}
 
-    def step(
-        self, action: int
-    ) -> tuple[list[float], float, bool, bool, dict]:
+    def step(self, action: int) -> tuple[list[float], float, bool, bool, dict]:
         self.frame += 1
         self._economy_tick()
         self._enemy_tick()
@@ -168,9 +170,12 @@ class SC2ZergEnv:
                 self.supply += 1
                 reward = 0.2
         elif action == 2:  # train roach
-            if (self.minerals >= 75 and self.gas >= 25 and
-                    self.supply + 2 <= self.max_supply and
-                    self.tech_level >= 0.33):
+            if (
+                self.minerals >= 75
+                and self.gas >= 25
+                and self.supply + 2 <= self.max_supply
+                and self.tech_level >= 0.33
+            ):
                 self.minerals -= 75
                 self.gas -= 25
                 self.army_supply += 2
@@ -218,6 +223,7 @@ class SC2ZergEnv:
     def _observe(self) -> list[float]:
         def clip(v, mx):
             return max(0.0, min(1.0, v / mx))
+
         return [
             clip(self.minerals, 1000),
             clip(self.gas, 500),
@@ -256,6 +262,7 @@ class SC2ZergEnv:
 # Random policy benchmark
 # ─────────────────────────────────────────────
 
+
 def benchmark_random_policy(episodes: int = 10) -> dict:
     results = []
     for ep in range(episodes):
@@ -267,12 +274,14 @@ def benchmark_random_policy(episodes: int = 10) -> dict:
             action = random.randint(0, ACT_DIM - 1)
             obs, reward, terminated, truncated, info = env.step(action)
             total_reward += reward
-        results.append({
-            "episode": ep,
-            "total_reward": total_reward,
-            "frames": info["frame"],
-            "final_army": info["army"],
-        })
+        results.append(
+            {
+                "episode": ep,
+                "total_reward": total_reward,
+                "frames": info["frame"],
+                "final_army": info["army"],
+            }
+        )
     return {
         "episodes": episodes,
         "mean_reward": sum(r["total_reward"] for r in results) / episodes,

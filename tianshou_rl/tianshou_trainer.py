@@ -21,6 +21,7 @@ try:
     from tianshou.utils import TensorboardLogger
     import torch
     import torch.nn as nn
+
     TIANSHOU_AVAILABLE = True
 except ImportError:
     TIANSHOU_AVAILABLE = False
@@ -33,6 +34,7 @@ from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
 # ─────────────────────────────────────────────
 
 if TIANSHOU_AVAILABLE:
+
     class SC2ActorNet(nn.Module):
         def __init__(self, obs_dim: int, act_dim: int, hidden: int = 256):
             super().__init__()
@@ -49,6 +51,7 @@ if TIANSHOU_AVAILABLE:
             if isinstance(obs, dict):
                 obs = obs.get("obs", obs)
             import torch
+
             if not isinstance(obs, torch.Tensor):
                 obs = torch.FloatTensor(obs)
             return self.net(obs), state
@@ -66,6 +69,7 @@ if TIANSHOU_AVAILABLE:
 
         def forward(self, obs, state=None):
             import torch
+
             if not isinstance(obs, torch.Tensor):
                 obs = torch.FloatTensor(obs)
             return self.net(obs)
@@ -74,6 +78,7 @@ if TIANSHOU_AVAILABLE:
 # ─────────────────────────────────────────────
 # Tianshou PPO training setup
 # ─────────────────────────────────────────────
+
 
 def build_ppo_agent():
     if not TIANSHOU_AVAILABLE:
@@ -84,10 +89,7 @@ def build_ppo_agent():
 
     actor = SC2ActorNet(OBS_DIM, ACT_DIM)
     critic = SC2CriticNet(OBS_DIM)
-    optim_ = optim.Adam(
-        list(actor.parameters()) + list(critic.parameters()),
-        lr=3e-4
-    )
+    optim_ = optim.Adam(list(actor.parameters()) + list(critic.parameters()), lr=3e-4)
 
     def dist_fn(logits):
         return Categorical(logits=logits)
@@ -116,17 +118,12 @@ def train_with_tianshou(total_steps: int = 100_000):
         print("[Tianshou] Not available — using simulation")
         return _simulate_tianshou_training(total_steps)
 
-    train_envs = DummyVectorEnv([
-        lambda: SC2ZergEnv(max_frames=2000) for _ in range(4)
-    ])
-    test_envs = DummyVectorEnv([
-        lambda: SC2ZergEnv(max_frames=2000) for _ in range(2)
-    ])
+    train_envs = DummyVectorEnv([lambda: SC2ZergEnv(max_frames=2000) for _ in range(4)])
+    test_envs = DummyVectorEnv([lambda: SC2ZergEnv(max_frames=2000) for _ in range(2)])
 
     policy = build_ppo_agent()
     train_collector = Collector(
-        policy, train_envs,
-        VectorReplayBuffer(20000, len(train_envs))
+        policy, train_envs, VectorReplayBuffer(20000, len(train_envs))
     )
     test_collector = Collector(policy, test_envs)
 
@@ -147,6 +144,7 @@ def train_with_tianshou(total_steps: int = 100_000):
 # ─────────────────────────────────────────────
 # Pure-Python simulation fallback
 # ─────────────────────────────────────────────
+
 
 class SimpleReplayBuffer:
     def __init__(self, capacity: int):
@@ -187,8 +185,9 @@ class SimpleValueNetwork:
             self.q_table[k] = [0.0] * self.n_actions
         return self.q_table[k]
 
-    def update(self, obs: list[float], action: int,
-               reward: float, next_obs: list[float]) -> None:
+    def update(
+        self, obs: list[float], action: int, reward: float, next_obs: list[float]
+    ) -> None:
         q = self.get_q(obs)
         next_q = self.get_q(next_obs)
         td_target = reward + self.gamma * max(next_q)
@@ -221,8 +220,9 @@ def _simulate_tianshou_training(total_steps: int) -> dict:
             action = agent.select_action(obs, epsilon)
             next_obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            buffer.push({"obs": obs, "action": action,
-                         "reward": reward, "next_obs": next_obs})
+            buffer.push(
+                {"obs": obs, "action": action, "reward": reward, "next_obs": next_obs}
+            )
             ep_r += reward
             steps += 1
             obs = next_obs
@@ -231,15 +231,16 @@ def _simulate_tianshou_training(total_steps: int) -> dict:
             if len(buffer) >= 32:
                 batch = buffer.sample(32)
                 for t in batch:
-                    agent.update(t["obs"], t["action"],
-                                 t["reward"], t["next_obs"])
+                    agent.update(t["obs"], t["action"], t["reward"], t["next_obs"])
 
         total_reward += ep_r
         episodes += 1
         if episodes % 20 == 0:
             avg = total_reward / episodes
-            print(f"  Ep {episodes:4d} | Steps: {steps:5d} | "
-                  f"ε: {epsilon:.3f} | Avg reward: {avg:.2f}")
+            print(
+                f"  Ep {episodes:4d} | Steps: {steps:5d} | "
+                f"ε: {epsilon:.3f} | Avg reward: {avg:.2f}"
+            )
 
     return {
         "total_steps": steps,

@@ -29,6 +29,7 @@ logger = logging.getLogger("jarvis.agent_router")
 
 class AgentDomain(Enum):
     """에이전트 도메인 (메시지 분류 카테고리)"""
+
     SC2_GAMING = "sc2"
     CRYPTO_TRADING = "crypto"
     SYSTEM_ADMIN = "system"
@@ -41,11 +42,12 @@ class AgentDomain(Enum):
 @dataclass
 class RoutingDecision:
     """라우팅 결정 결과"""
+
     domain: AgentDomain
-    confidence: float           # 0.0 ~ 1.0
-    role: str                   # system_prompts.py ROLE_PROMPTS 키
+    confidence: float  # 0.0 ~ 1.0
+    role: str  # system_prompts.py ROLE_PROMPTS 키
     tool_categories: List[str]  # TOOL_CATALOG 카테고리 필터
-    model_hint: str             # "haiku" | "sonnet" | "opus"
+    model_hint: str  # "haiku" | "sonnet" | "opus"
     matched_keywords: List[str] = field(default_factory=list)
 
 
@@ -55,58 +57,155 @@ class RoutingDecision:
 DOMAIN_KEYWORDS: Dict[AgentDomain, List[str]] = {
     AgentDomain.SC2_GAMING: [
         # 강한 신호
-        "sc2", "스타크래프트", "스타2", "starcraft",
-        "전적", "리플레이", "래더", "ladder",
-        "저그", "zerg", "프로토스", "protoss", "테란", "terran",
-        "빌드오더", "빌드 오더", "build order",
+        "sc2",
+        "스타크래프트",
+        "스타2",
+        "starcraft",
+        "전적",
+        "리플레이",
+        "래더",
+        "ladder",
+        "저그",
+        "zerg",
+        "프로토스",
+        "protoss",
+        "테란",
+        "terran",
+        "빌드오더",
+        "빌드 오더",
+        "build order",
         # 중간 신호
-        "봇", "게임", "훈련", "대전", "매치", "경기",
-        "뮤탈", "저글링", "바퀴", "히드라", "울트라",
-        "해처리", "레어", "하이브",
+        "봇",
+        "게임",
+        "훈련",
+        "대전",
+        "매치",
+        "경기",
+        "뮤탈",
+        "저글링",
+        "바퀴",
+        "히드라",
+        "울트라",
+        "해처리",
+        "레어",
+        "하이브",
     ],
     AgentDomain.CRYPTO_TRADING: [
         # 강한 신호
-        "btc", "eth", "xrp", "비트코인", "이더리움", "리플",
-        "코인", "시세", "매매", "매수", "매도",
-        "포트폴리오", "portfolio",
-        "업비트", "upbit", "binance", "바이낸스",
+        "btc",
+        "eth",
+        "xrp",
+        "비트코인",
+        "이더리움",
+        "리플",
+        "코인",
+        "시세",
+        "매매",
+        "매수",
+        "매도",
+        "포트폴리오",
+        "portfolio",
+        "업비트",
+        "upbit",
+        "binance",
+        "바이낸스",
         # 중간 신호
-        "자동매매", "auto_trade", "거래", "차트",
-        "수익률", "손절", "익절", "RSI", "MACD",
-        "김프", "김치프리미엄", "호가",
+        "자동매매",
+        "auto_trade",
+        "거래",
+        "차트",
+        "수익률",
+        "손절",
+        "익절",
+        "RSI",
+        "MACD",
+        "김프",
+        "김치프리미엄",
+        "호가",
     ],
     AgentDomain.SYSTEM_ADMIN: [
         # 강한 신호
-        "시스템", "system", "cpu", "gpu", "ram", "메모리",
-        "프로세스", "process", "서버", "server",
-        "ssh", "터미널", "terminal",
-        "디스크", "disk", "네트워크", "network",
+        "시스템",
+        "system",
+        "cpu",
+        "gpu",
+        "ram",
+        "메모리",
+        "프로세스",
+        "process",
+        "서버",
+        "server",
+        "ssh",
+        "터미널",
+        "terminal",
+        "디스크",
+        "disk",
+        "네트워크",
+        "network",
         # 중간 신호
-        "파일", "폴더", "디렉토리", "경로",
-        "로그", "모니터링", "상태",
+        "파일",
+        "폴더",
+        "디렉토리",
+        "경로",
+        "로그",
+        "모니터링",
+        "상태",
     ],
     AgentDomain.DAILY_BRIEFING: [
         # 강한 신호
-        "브리핑", "briefing", "모닝", "morning",
+        "브리핑",
+        "briefing",
+        "모닝",
+        "morning",
         # 중간 신호 (다른 도메인과 겹칠 수 있음)
-        "오늘", "날씨", "뉴스", "운세",
+        "오늘",
+        "날씨",
+        "뉴스",
+        "운세",
     ],
     AgentDomain.PRODUCTIVITY: [
         # 강한 신호
-        "일정", "캘린더", "calendar", "스케줄", "schedule",
-        "메모", "노트", "note", "노션", "notion",
-        "번역", "translate", "계산", "calculate",
-        "이메일", "email",
+        "일정",
+        "캘린더",
+        "calendar",
+        "스케줄",
+        "schedule",
+        "메모",
+        "노트",
+        "note",
+        "노션",
+        "notion",
+        "번역",
+        "translate",
+        "계산",
+        "calculate",
+        "이메일",
+        "email",
         # 중간 신호
-        "리마인더", "reminder", "알림", "할일", "todo",
+        "리마인더",
+        "reminder",
+        "알림",
+        "할일",
+        "todo",
     ],
     AgentDomain.PC_CONTROL: [
         # 강한 신호
-        "마우스", "mouse", "키보드", "keyboard",
-        "클릭", "click", "스크린샷", "screenshot",
-        "화면", "screen", "캡처", "capture",
+        "마우스",
+        "mouse",
+        "키보드",
+        "keyboard",
+        "클릭",
+        "click",
+        "스크린샷",
+        "screenshot",
+        "화면",
+        "screen",
+        "캡처",
+        "capture",
         # 중간 신호
-        "프로그램 실행", "실행해", "열어줘",
+        "프로그램 실행",
+        "실행해",
+        "열어줘",
     ],
 }
 
@@ -153,14 +252,36 @@ DOMAIN_CONFIG: Dict[AgentDomain, dict] = {
 # ── 복잡도 기반 모델 오버라이드 키워드 ──
 
 COMPLEXITY_OPUS_KEYWORDS = [
-    "분석해", "analyze", "코드", "code", "디버그", "debug",
-    "전략", "strategy", "설계", "design", "리팩토링", "refactor",
-    "비교해", "compare", "평가해", "evaluate",
+    "분석해",
+    "analyze",
+    "코드",
+    "code",
+    "디버그",
+    "debug",
+    "전략",
+    "strategy",
+    "설계",
+    "design",
+    "리팩토링",
+    "refactor",
+    "비교해",
+    "compare",
+    "평가해",
+    "evaluate",
 ]
 
 COMPLEXITY_HAIKU_KEYWORDS = [
-    "안녕", "hello", "hi", "감사", "thanks", "고마워",
-    "뭐해", "ㅎㅇ", "ㅋㅋ", "네", "응",
+    "안녕",
+    "hello",
+    "hi",
+    "감사",
+    "thanks",
+    "고마워",
+    "뭐해",
+    "ㅎㅇ",
+    "ㅋㅋ",
+    "네",
+    "응",
 ]
 
 
@@ -191,7 +312,9 @@ class AgentRouter:
         else:
             logger.info("[AGENT_ROUTER] AgentRouter disabled by JARVIS_AGENT_ROUTER=0")
 
-    def route(self, message: str, user_id: str = "", has_image: bool = False) -> RoutingDecision:
+    def route(
+        self, message: str, user_id: str = "", has_image: bool = False
+    ) -> RoutingDecision:
         """
         메시지를 분석하여 최적 도메인으로 라우팅.
 
@@ -213,7 +336,10 @@ class AgentRouter:
         if has_image:
             keyword_decision = self._keyword_classify(message)
             # 이미지+강한 도메인 신호(confidence >= 0.7)가 아니면 범용으로 라우팅
-            if keyword_decision.confidence < 0.7 or keyword_decision.domain == AgentDomain.GENERAL_CHAT:
+            if (
+                keyword_decision.confidence < 0.7
+                or keyword_decision.domain == AgentDomain.GENERAL_CHAT
+            ):
                 decision = self._default_decision()
                 decision.matched_keywords = ["[image_attachment]"]
                 decision = self._adjust_model_hint(message, decision)
@@ -221,7 +347,9 @@ class AgentRouter:
                 elapsed_ms = (time.perf_counter() - start) * 1000
                 self._routing_count += 1
                 domain_key = decision.domain.value
-                self._domain_stats[domain_key] = self._domain_stats.get(domain_key, 0) + 1
+                self._domain_stats[domain_key] = (
+                    self._domain_stats.get(domain_key, 0) + 1
+                )
                 logger.info(
                     f"[AGENT_ROUTER] '{message[:50]}' [+image] → GENERAL_CHAT "
                     f"(image override, {elapsed_ms:.1f}ms)"
@@ -251,9 +379,7 @@ class AgentRouter:
         # 메모리에 라우팅 기록 (향후 학습용)
         if self.memory and user_id:
             try:
-                self.memory.update_user_memory(
-                    user_id, "last_domain", domain_key
-                )
+                self.memory.update_user_memory(user_id, "last_domain", domain_key)
             except Exception:
                 pass
 

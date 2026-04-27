@@ -32,6 +32,7 @@ PROJECT_DIR = Path(__file__).parent.resolve()
 try:
     sys.path.insert(0, str(PROJECT_DIR))
     from config_loader import load_dotenv_jarvis
+
     load_dotenv_jarvis(str(PROJECT_DIR / ".env.jarvis"))
 except ImportError:
     env_path = PROJECT_DIR / ".env.jarvis"
@@ -74,11 +75,13 @@ def _build_mcp_servers(all_servers: bool = False) -> dict:
         "jarvis-crypto": "crypto_mcp_server.py",
     }
     if all_servers:
-        server_defs.update({
-            "jarvis-ops": "jarvis_mcp_server.py",
-            "jarvis-agentic": "agentic_mcp_server.py",
-            "jarvis-location": "location_mcp_server.py",
-        })
+        server_defs.update(
+            {
+                "jarvis-ops": "jarvis_mcp_server.py",
+                "jarvis-agentic": "agentic_mcp_server.py",
+                "jarvis-location": "location_mcp_server.py",
+            }
+        )
 
     for name, script in server_defs.items():
         script_path = PROJECT_DIR / script
@@ -139,7 +142,11 @@ async def run_agent(prompt: str, model: str = None, all_servers: bool = False):
                         try:
                             print(block.text)
                         except UnicodeEncodeError:
-                            print(block.text.encode('utf-8', errors='replace').decode('utf-8'))
+                            print(
+                                block.text.encode("utf-8", errors="replace").decode(
+                                    "utf-8"
+                                )
+                            )
                     elif isinstance(block, ToolUseBlock):
                         print(f"\n[TOOL] {block.name}")
                     elif isinstance(block, ToolResultBlock):
@@ -192,7 +199,9 @@ def main():
     parser = argparse.ArgumentParser(description="J.A.R.V.I.S. Claude Agent SDK")
     parser.add_argument("prompt", nargs="*", help="실행할 명령 (없으면 REPL 모드)")
     parser.add_argument("--model", default=None, help="Claude model")
-    parser.add_argument("--all-servers", action="store_true", help="Connect all 6 MCP servers")
+    parser.add_argument(
+        "--all-servers", action="store_true", help="Connect all 6 MCP servers"
+    )
     args = parser.parse_args()
 
     if args.prompt:

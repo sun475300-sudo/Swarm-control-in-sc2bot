@@ -27,20 +27,22 @@ class DynamicResourceBalancer:
 
         # ★ 자원 불균형 임계값 ★
         self.mineral_excess_threshold = 1000  # 미네랄 1000+ 과다
-        self.gas_shortage_threshold = 100     # 가스 100- 부족
-        self.high_mineral_threshold = 1500    # 미네랄 1500+ 심각한 과다
+        self.gas_shortage_threshold = 100  # 가스 100- 부족
+        self.high_mineral_threshold = 1500  # 미네랄 1500+ 심각한 과다
 
         # ★ 동적 비율 조정 ★
         self.base_gas_ratio = 0.50  # 기본 가스 유닛 비율
         self.current_gas_ratio = 0.50
-        self.min_gas_ratio = 0.30   # 최소 30%
-        self.max_gas_ratio = 0.75   # 최대 75%
+        self.min_gas_ratio = 0.30  # 최소 30%
+        self.max_gas_ratio = 0.75  # 최대 75%
 
         # ★ 조정 속도 ★
         self.adjustment_step = 0.05  # 한번에 5% 조정
 
         # ★ 상태 추적 ★
-        self.resource_state = "BALANCED"  # BALANCED, MINERAL_EXCESS, GAS_SHORTAGE, CRITICAL
+        self.resource_state = (
+            "BALANCED"  # BALANCED, MINERAL_EXCESS, GAS_SHORTAGE, CRITICAL
+        )
         self.last_state_change = 0
 
     def update(self, iteration: int) -> Dict[str, float]:
@@ -105,29 +107,48 @@ class DynamicResourceBalancer:
             return "BALANCED", self.base_gas_ratio
 
         # ★ Critical: 미네랄 폭증 + 가스 고갈 ★
-        if minerals >= self.high_mineral_threshold and gas < self.gas_shortage_threshold:
+        if (
+            minerals >= self.high_mineral_threshold
+            and gas < self.gas_shortage_threshold
+        ):
             # 가스 유닛 비율 최대로 증가
-            target_ratio = min(self.max_gas_ratio, self.current_gas_ratio + self.adjustment_step * 2)
+            target_ratio = min(
+                self.max_gas_ratio, self.current_gas_ratio + self.adjustment_step * 2
+            )
             return "CRITICAL", target_ratio
 
         # ★ Mineral Excess: 미네랄만 많음 ★
-        if minerals >= self.mineral_excess_threshold and gas >= self.gas_shortage_threshold:
+        if (
+            minerals >= self.mineral_excess_threshold
+            and gas >= self.gas_shortage_threshold
+        ):
             # 가스 유닛 비율 증가
-            target_ratio = min(self.max_gas_ratio, self.current_gas_ratio + self.adjustment_step)
+            target_ratio = min(
+                self.max_gas_ratio, self.current_gas_ratio + self.adjustment_step
+            )
             return "MINERAL_EXCESS", target_ratio
 
         # ★ Gas Shortage: 가스만 부족 ★
-        if gas < self.gas_shortage_threshold and minerals < self.mineral_excess_threshold:
+        if (
+            gas < self.gas_shortage_threshold
+            and minerals < self.mineral_excess_threshold
+        ):
             # 가스 유닛 비율 감소 (미네랄 유닛 늘림)
-            target_ratio = max(self.min_gas_ratio, self.current_gas_ratio - self.adjustment_step)
+            target_ratio = max(
+                self.min_gas_ratio, self.current_gas_ratio - self.adjustment_step
+            )
             return "GAS_SHORTAGE", target_ratio
 
         # ★ Balanced: 정상 범위 ★
         # 점진적으로 기본 비율로 복귀
         if self.current_gas_ratio > self.base_gas_ratio:
-            target_ratio = max(self.base_gas_ratio, self.current_gas_ratio - self.adjustment_step * 0.5)
+            target_ratio = max(
+                self.base_gas_ratio, self.current_gas_ratio - self.adjustment_step * 0.5
+            )
         elif self.current_gas_ratio < self.base_gas_ratio:
-            target_ratio = min(self.base_gas_ratio, self.current_gas_ratio + self.adjustment_step * 0.5)
+            target_ratio = min(
+                self.base_gas_ratio, self.current_gas_ratio + self.adjustment_step * 0.5
+            )
         else:
             target_ratio = self.base_gas_ratio
 

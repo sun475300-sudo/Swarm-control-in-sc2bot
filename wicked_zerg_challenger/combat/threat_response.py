@@ -51,9 +51,18 @@ class SplashThreatHandler:
         self.splash_threat_types: Set = set()
         if UnitTypeId:
             threat_names = [
-                "SIEGETANK", "SIEGETANKSIEGED", "HIGHTEMPLAR", "BANELING",
-                "BANELINGBURROWED", "DISRUPTOR", "COLOSSUS", "RAVAGER",
-                "WIDOWMINE", "WIDOWMINEBURROWED", "LIBERATOR", "LIBERATORAG",
+                "SIEGETANK",
+                "SIEGETANKSIEGED",
+                "HIGHTEMPLAR",
+                "BANELING",
+                "BANELINGBURROWED",
+                "DISRUPTOR",
+                "COLOSSUS",
+                "RAVAGER",
+                "WIDOWMINE",
+                "WIDOWMINEBURROWED",
+                "LIBERATOR",
+                "LIBERATORAG",
             ]
             for name in threat_names:
                 unit_type = getattr(UnitTypeId, name, None)
@@ -73,9 +82,7 @@ class SplashThreatHandler:
         if not UnitTypeId or not enemy_units:
             return []
         return [
-            enemy
-            for enemy in enemy_units
-            if enemy.type_id in self.splash_threat_types
+            enemy for enemy in enemy_units if enemy.type_id in self.splash_threat_types
         ]
 
     def get_separation_multiplier(self, unit, splash_threats) -> float:
@@ -110,8 +117,7 @@ class SplashThreatHandler:
         ratio = max(0.0, 1.0 - (nearest_dist / self.splash_avoid_radius))
         return min(
             self.separation_max,
-            self.separation_min
-            + ratio * (self.separation_max - self.separation_min),
+            self.separation_min + ratio * (self.separation_max - self.separation_min),
         )
 
     def calculate_repulsion(self, unit, splash_threats) -> Tuple[float, float]:

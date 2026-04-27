@@ -37,7 +37,7 @@ class ReinforcementLearner:
             "total_patterns": 0,
             "learned_patterns": 0,
             "rejected_patterns": 0,
-            "confidence_avg": 0.0
+            "confidence_avg": 0.0,
         }
 
     def load_games(self):
@@ -50,7 +50,7 @@ class ReinforcementLearner:
             if filename.endswith(".json"):
                 filepath = os.path.join(self.games_dir, filename)
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         game = json.load(f)
                         self.games_data.append(game)
                 except Exception as e:
@@ -69,18 +69,18 @@ class ReinforcementLearner:
             "reinforcement_meta": {
                 "total_games": len(self.games_data),
                 "min_samples": self.MIN_SAMPLES,
-                "success_multiplier": self.SUCCESS_MULTIPLIER
+                "success_multiplier": self.SUCCESS_MULTIPLIER,
             },
             "learned_timings": {},
             "learned_compositions": {},
             "learned_harassment": {},
             "learned_defense": {},
             "learned_map_control": {},
-            "enemy_counter_patterns": {}
+            "enemy_counter_patterns": {},
         }
 
         logger.info("\n[REINFORCE] Starting reinforcement learning...")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         # 1. 타이밍 강화 학습
         timing_knowledge = self._reinforce_timings()
@@ -155,17 +155,27 @@ class ReinforcementLearner:
                 avg_time = weighted_sum / weight_total if weight_total > 0 else 0
 
                 # 신뢰도 계산
-                confidence = self._calculate_confidence(data["wins"], data["losses"], len(data["values"]))
+                confidence = self._calculate_confidence(
+                    data["wins"], data["losses"], len(data["values"])
+                )
 
                 if confidence >= self.CONFIDENCE_THRESHOLD:
                     learned_timings[key] = {
                         "avg_time": round(avg_time, 1),
                         "samples": len(data["values"]),
                         "confidence": round(confidence, 3),
-                        "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
+                        "winrate": (
+                            round(
+                                data["wins"] / (data["wins"] + data["losses"]) * 100, 1
+                            )
+                            if (data["wins"] + data["losses"]) > 0
+                            else 0
+                        ),
                     }
                     self.learning_stats["learned_patterns"] += 1
-                    logger.info(f"  [OK] {key}: {round(avg_time, 1)}s (conf: {round(confidence, 2)})")
+                    logger.info(
+                        f"  [OK] {key}: {round(avg_time, 1)}s (conf: {round(confidence, 2)})"
+                    )
                 else:
                     self.learning_stats["rejected_patterns"] += 1
 
@@ -176,7 +186,9 @@ class ReinforcementLearner:
         """유닛 구성비 강화 학습"""
         logger.info("\n[COMPOSITION] Reinforcement learning for unit compositions...")
 
-        composition_samples = defaultdict(lambda: {"samples": [], "wins": 0, "losses": 0})
+        composition_samples = defaultdict(
+            lambda: {"samples": [], "wins": 0, "losses": 0}
+        )
 
         for game in self.games_data:
             result = game["game_result"].get("result", "Unknown")
@@ -206,17 +218,27 @@ class ReinforcementLearner:
             if len(data["samples"]) >= self.MIN_SAMPLES:
                 # 가중 평균 구성비 계산
                 unit_ratios = self._calculate_weighted_composition(data["samples"])
-                confidence = self._calculate_confidence(data["wins"], data["losses"], len(data["samples"]))
+                confidence = self._calculate_confidence(
+                    data["wins"], data["losses"], len(data["samples"])
+                )
 
                 if confidence >= self.CONFIDENCE_THRESHOLD:
                     learned_compositions[phase] = {
                         "unit_ratios": unit_ratios,
                         "samples": len(data["samples"]),
                         "confidence": round(confidence, 3),
-                        "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
+                        "winrate": (
+                            round(
+                                data["wins"] / (data["wins"] + data["losses"]) * 100, 1
+                            )
+                            if (data["wins"] + data["losses"]) > 0
+                            else 0
+                        ),
                     }
                     self.learning_stats["learned_patterns"] += 1
-                    logger.info(f"  [OK] {phase}: {len(unit_ratios)} unit types (conf: {round(confidence, 2)})")
+                    logger.info(
+                        f"  [OK] {phase}: {len(unit_ratios)} unit types (conf: {round(confidence, 2)})"
+                    )
 
         return learned_compositions
 
@@ -240,13 +262,21 @@ class ReinforcementLearner:
 
         if harassment_data["attempts"] >= self.MIN_SAMPLES:
             success_rate = harassment_data["successes"] / harassment_data["attempts"]
-            avg_timing = statistics.mean(harassment_data["avg_timing"]) if harassment_data["avg_timing"] else 0
+            avg_timing = (
+                statistics.mean(harassment_data["avg_timing"])
+                if harassment_data["avg_timing"]
+                else 0
+            )
 
             return {
                 "avg_harassment_timing": round(avg_timing, 1),
                 "success_rate": round(success_rate * 100, 1),
                 "total_attempts": harassment_data["attempts"],
-                "confidence": self._calculate_confidence(harassment_data["successes"], harassment_data["attempts"] - harassment_data["successes"], harassment_data["attempts"])
+                "confidence": self._calculate_confidence(
+                    harassment_data["successes"],
+                    harassment_data["attempts"] - harassment_data["successes"],
+                    harassment_data["attempts"],
+                ),
             }
 
         return {}
@@ -269,12 +299,20 @@ class ReinforcementLearner:
                     defense_samples["failed"] += 1
 
         if defense_samples["events"] >= self.MIN_SAMPLES:
-            success_rate = defense_samples["successful"] / defense_samples["events"] if defense_samples["events"] > 0 else 0
+            success_rate = (
+                defense_samples["successful"] / defense_samples["events"]
+                if defense_samples["events"] > 0
+                else 0
+            )
 
             return {
                 "total_defense_events": defense_samples["events"],
                 "success_rate": round(success_rate * 100, 1),
-                "confidence": self._calculate_confidence(defense_samples["successful"], defense_samples["failed"], defense_samples["events"])
+                "confidence": self._calculate_confidence(
+                    defense_samples["successful"],
+                    defense_samples["failed"],
+                    defense_samples["events"],
+                ),
             }
 
         return {}
@@ -293,10 +331,9 @@ class ReinforcementLearner:
                 center_ratio = control.get("center_control", {}).get("control_ratio", 0)
                 expansions = control.get("controlled_expansions", 0)
 
-                map_control_data["samples"].append({
-                    "center_ratio": center_ratio,
-                    "expansions": expansions
-                })
+                map_control_data["samples"].append(
+                    {"center_ratio": center_ratio, "expansions": expansions}
+                )
 
                 if result == "Victory":
                     map_control_data["wins"] += 1
@@ -304,14 +341,27 @@ class ReinforcementLearner:
                     map_control_data["losses"] += 1
 
         if len(map_control_data["samples"]) >= self.MIN_SAMPLES:
-            avg_center = statistics.mean([s["center_ratio"] for s in map_control_data["samples"]])
-            avg_expansions = statistics.mean([s["expansions"] for s in map_control_data["samples"]])
+            avg_center = statistics.mean(
+                [s["center_ratio"] for s in map_control_data["samples"]]
+            )
+            avg_expansions = statistics.mean(
+                [s["expansions"] for s in map_control_data["samples"]]
+            )
 
             return {
                 "avg_center_control": round(avg_center, 2),
                 "avg_controlled_expansions": round(avg_expansions, 1),
                 "samples": len(map_control_data["samples"]),
-                "winrate": round(map_control_data["wins"] / (map_control_data["wins"] + map_control_data["losses"]) * 100, 1) if (map_control_data["wins"] + map_control_data["losses"]) > 0 else 0
+                "winrate": (
+                    round(
+                        map_control_data["wins"]
+                        / (map_control_data["wins"] + map_control_data["losses"])
+                        * 100,
+                        1,
+                    )
+                    if (map_control_data["wins"] + map_control_data["losses"]) > 0
+                    else 0
+                ),
             }
 
         return {}
@@ -328,12 +378,16 @@ class ReinforcementLearner:
         logger.info("\n[COUNTERS] Reinforcement learning for enemy counters...")
 
         # 카운터 데이터 수집: {enemy_unit: {our_unit: [trade_efficiency_samples]}}
-        counter_samples = defaultdict(lambda: defaultdict(lambda: {
-            "trade_efficiencies": [],
-            "wins": 0,
-            "losses": 0,
-            "total_battles": 0
-        }))
+        counter_samples = defaultdict(
+            lambda: defaultdict(
+                lambda: {
+                    "trade_efficiencies": [],
+                    "wins": 0,
+                    "losses": 0,
+                    "total_battles": 0,
+                }
+            )
+        )
 
         for game in self.games_data:
             result = game.get("game_result", {}).get("result", "Unknown")
@@ -390,20 +444,32 @@ class ReinforcementLearner:
 
                     # 신뢰도 계산
                     confidence = self._calculate_confidence(
-                        data["wins"],
-                        data["losses"],
-                        data["total_battles"]
+                        data["wins"], data["losses"], data["total_battles"]
                     )
 
                     # 효율 임계값: 1.0 이상 (최소한 1:1 교환)
-                    if avg_efficiency >= 1.0 and confidence >= self.CONFIDENCE_THRESHOLD:
-                        best_counters.append({
-                            "counter_unit": our_unit,
-                            "avg_trade_efficiency": round(avg_efficiency, 2),
-                            "samples": data["total_battles"],
-                            "confidence": round(confidence, 3),
-                            "winrate": round(data["wins"] / (data["wins"] + data["losses"]) * 100, 1) if (data["wins"] + data["losses"]) > 0 else 0
-                        })
+                    if (
+                        avg_efficiency >= 1.0
+                        and confidence >= self.CONFIDENCE_THRESHOLD
+                    ):
+                        best_counters.append(
+                            {
+                                "counter_unit": our_unit,
+                                "avg_trade_efficiency": round(avg_efficiency, 2),
+                                "samples": data["total_battles"],
+                                "confidence": round(confidence, 3),
+                                "winrate": (
+                                    round(
+                                        data["wins"]
+                                        / (data["wins"] + data["losses"])
+                                        * 100,
+                                        1,
+                                    )
+                                    if (data["wins"] + data["losses"]) > 0
+                                    else 0
+                                ),
+                            }
+                        )
                         self.learning_stats["learned_patterns"] += 1
 
             # 효율이 높은 순으로 정렬
@@ -412,9 +478,11 @@ class ReinforcementLearner:
             if best_counters:
                 learned_counters[enemy_unit] = {
                     "recommended_counters": best_counters[:3],  # 상위 3개만
-                    "total_counter_options": len(best_counters)
+                    "total_counter_options": len(best_counters),
                 }
-                logger.info(f"  [OK] {enemy_unit}: {len(best_counters)} effective counters found")
+                logger.info(
+                    f"  [OK] {enemy_unit}: {len(best_counters)} effective counters found"
+                )
 
         self.learning_stats["total_patterns"] += len(counter_samples)
 
@@ -425,7 +493,9 @@ class ReinforcementLearner:
 
         return learned_counters
 
-    def _calculate_confidence(self, wins: int, losses: int, total_samples: int) -> float:
+    def _calculate_confidence(
+        self, wins: int, losses: int, total_samples: int
+    ) -> float:
         """신뢰도 계산"""
         # 샘플 수가 많을수록 높은 신뢰도
         sample_confidence = min(total_samples / (self.MIN_SAMPLES * 3), 1.0)
@@ -453,24 +523,34 @@ class ReinforcementLearner:
         weighted_ratios = {}
         for unit_type, totals in unit_totals.items():
             if totals["weight_sum"] > 0:
-                weighted_ratios[unit_type] = round(totals["weighted_sum"] / totals["weight_sum"], 3)
+                weighted_ratios[unit_type] = round(
+                    totals["weighted_sum"] / totals["weight_sum"], 3
+                )
 
         return weighted_ratios
 
     def _print_learning_stats(self):
         """학습 통계 출력"""
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("REINFORCEMENT LEARNING STATISTICS")
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info(f"Total patterns analyzed: {self.learning_stats['total_patterns']}")
-        logger.info(f"Patterns learned (>=60% confidence): {self.learning_stats['learned_patterns']}")
-        logger.info(f"Patterns rejected (<60% confidence): {self.learning_stats['rejected_patterns']}")
+        logger.info(
+            f"Patterns learned (>=60% confidence): {self.learning_stats['learned_patterns']}"
+        )
+        logger.info(
+            f"Patterns rejected (<60% confidence): {self.learning_stats['rejected_patterns']}"
+        )
 
-        if self.learning_stats['total_patterns'] > 0:
-            learn_rate = self.learning_stats['learned_patterns'] / self.learning_stats['total_patterns'] * 100
+        if self.learning_stats["total_patterns"] > 0:
+            learn_rate = (
+                self.learning_stats["learned_patterns"]
+                / self.learning_stats["total_patterns"]
+                * 100
+            )
             logger.info(f"Learning rate: {round(learn_rate, 1)}%")
 
-        logger.info("="*60 + "\n")
+        logger.info("=" * 60 + "\n")
 
 
 def main():
@@ -481,7 +561,7 @@ def main():
 
     # 결과 저장
     output_file = "learned_knowledge_reinforced.json"
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(learned_knowledge, f, indent=2, ensure_ascii=False)
 
     logger.info(f"\n[REINFORCE] Learned knowledge saved to: {output_file}")

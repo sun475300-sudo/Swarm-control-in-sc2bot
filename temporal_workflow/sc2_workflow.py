@@ -38,6 +38,7 @@ class TrainingResult:
 
 # ---- Activities ----
 
+
 @activity.defn
 async def collect_replays(source: str) -> list[str]:
     """Collect replay files from storage."""
@@ -80,7 +81,9 @@ async def deploy_model(model_path: str, result: TrainingResult) -> bool:
     """Deploy model to production bot."""
     if result.win_rate < 0.55:
         raise ApplicationError("Win rate too low for deployment", non_retryable=True)
-    logger.info(f"Deploying model {result.model_version} (win_rate={result.win_rate:.2f})")
+    logger.info(
+        f"Deploying model {result.model_version} (win_rate={result.win_rate:.2f})"
+    )
     return True
 
 
@@ -92,6 +95,7 @@ async def rollback_deployment(model_version: str):
 
 
 # ---- Workflow ----
+
 
 @workflow.defn
 class SC2TrainingWorkflow:
@@ -159,7 +163,14 @@ async def run_worker():
         client,
         task_queue=TASK_QUEUE,
         workflows=[SC2TrainingWorkflow],
-        activities=[collect_replays, process_features, train_model, evaluate_model, deploy_model, rollback_deployment],
+        activities=[
+            collect_replays,
+            process_features,
+            train_model,
+            evaluate_model,
+            deploy_model,
+            rollback_deployment,
+        ],
     )
     logger.info(f"Worker started on {TASK_QUEUE}")
     await worker.run()

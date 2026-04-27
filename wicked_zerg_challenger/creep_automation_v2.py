@@ -23,15 +23,19 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         QUEEN = "QUEEN"
         CREEPTUMOR = "CREEPTUMOR"
         CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
+
     class AbilityId:
         BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
         BUILD_CREEPTUMOR_TUMOR = "BUILD_CREEPTUMOR_TUMOR"
+
     Point2 = tuple
 
 
@@ -82,7 +86,10 @@ class CreepAutomationV2:
         self.creep_targets.append(map_center)
 
         # 3. ★ Phase 18: 적진 방향 공격적 크립 — 다단계 웨이포인트 ★
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_start = self.bot.enemy_start_locations[0]
             our_base = self.bot.start_location
             total_dist = our_base.distance_to(enemy_start)
@@ -101,15 +108,18 @@ class CreepAutomationV2:
                 # 10% 간격으로 웨이포인트 생성
                 for pct in range(10, int(max_ratio * 100) + 1, 10):
                     ratio = pct / 100.0
-                    wp = Point2((
-                        our_base.x + (enemy_start.x - our_base.x) * ratio,
-                        our_base.y + (enemy_start.y - our_base.y) * ratio
-                    ))
+                    wp = Point2(
+                        (
+                            our_base.x + (enemy_start.x - our_base.x) * ratio,
+                            our_base.y + (enemy_start.y - our_base.y) * ratio,
+                        )
+                    )
                     self.creep_targets.append(wp)
 
                 # ★ Phase 18: 측면 크립도 추가 (8분+, 적진 방향 좌우 15도 오프셋) ★
                 if game_time >= 480:
                     import math
+
                     dx = enemy_start.x - our_base.x
                     dy = enemy_start.y - our_base.y
                     angle = math.atan2(dy, dx)
@@ -118,10 +128,12 @@ class CreepAutomationV2:
                         new_angle = angle + offset_rad
                         for dist_ratio in [0.4, 0.55]:
                             dist = total_dist * dist_ratio
-                            wp = Point2((
-                                our_base.x + math.cos(new_angle) * dist,
-                                our_base.y + math.sin(new_angle) * dist
-                            ))
+                            wp = Point2(
+                                (
+                                    our_base.x + math.cos(new_angle) * dist,
+                                    our_base.y + math.sin(new_angle) * dist,
+                                )
+                            )
                             self.creep_targets.append(wp)
 
     async def _spread_creep(self):
@@ -147,11 +159,19 @@ class CreepAutomationV2:
             # Creep tumor 배치
             if self.creep_targets:
                 # ★ Phase 18: 크립이 없는 타겟 우선 (프론티어 확장) ★
-                uncovered_targets = [t for t in self.creep_targets if not self.bot.has_creep(t)]
+                uncovered_targets = [
+                    t for t in self.creep_targets if not self.bot.has_creep(t)
+                ]
                 if uncovered_targets:
-                    target = min(uncovered_targets, key=lambda pos: pos.distance_to(queen.position))
+                    target = min(
+                        uncovered_targets,
+                        key=lambda pos: pos.distance_to(queen.position),
+                    )
                 else:
-                    target = min(self.creep_targets, key=lambda pos: pos.distance_to(queen.position))
+                    target = min(
+                        self.creep_targets,
+                        key=lambda pos: pos.distance_to(queen.position),
+                    )
 
                 # Tumor 배치 가능한 위치 찾기
                 placement = queen.position.towards(target, 5)
@@ -167,15 +187,16 @@ class CreepAutomationV2:
         매립된 종양(CREEPTUMORBURROWED)이 쿨다운 완료 시
         적 방향으로 새 종양을 생성하여 크립 프론티어를 전진시킴.
         """
-        if not hasattr(self.bot, "enemy_start_locations") or not self.bot.enemy_start_locations:
+        if (
+            not hasattr(self.bot, "enemy_start_locations")
+            or not self.bot.enemy_start_locations
+        ):
             return
 
         enemy_start = self.bot.enemy_start_locations[0]
 
         # 매립된 종양 찾기
-        tumors = self.bot.structures.of_type({
-            UnitTypeId.CREEPTUMORBURROWED
-        })
+        tumors = self.bot.structures.of_type({UnitTypeId.CREEPTUMORBURROWED})
 
         if not tumors.exists:
             return

@@ -14,6 +14,7 @@ from utils.logger import get_logger
 try:
     from sc2.ids.upgrade_id import UpgradeId
 except ImportError:
+
     class UpgradeId:
         # Zerg Upgrades
         ZERGMISSILEWEAPONSLEVEL1 = "ZERGMISSILEWEAPONSLEVEL1"
@@ -87,7 +88,12 @@ class UpgradeCoordinationSystem:
                 "secondary_upgrade": UpgradeId.ZERGGROUNDARMORSLEVEL3,
                 "min_game_time": 540,  # 9:00 이후
                 "min_army_supply": 150,
-                "attack_composition": {"hydralisk": 0.40, "roach": 0.30, "mutalisk": 0.20, "ultralisk": 0.10},
+                "attack_composition": {
+                    "hydralisk": 0.40,
+                    "roach": 0.30,
+                    "mutalisk": 0.20,
+                    "ultralisk": 0.10,
+                },
                 "urgency": "ALL_IN",
                 "description": "공3방3 최종 결전",
             },
@@ -189,7 +195,9 @@ class UpgradeCoordinationSystem:
             # 보조 업그레이드 확인 (있는 경우)
             secondary_upgrade = attack_info.get("secondary_upgrade")
             if secondary_upgrade:
-                secondary_name = getattr(secondary_upgrade, "name", str(secondary_upgrade))
+                secondary_name = getattr(
+                    secondary_upgrade, "name", str(secondary_upgrade)
+                )
                 if secondary_name not in self.completed_upgrades:
                     continue
 
@@ -237,7 +245,9 @@ class UpgradeCoordinationSystem:
         blackboard.set("timing_attack_active", True)
         blackboard.set("timing_attack_id", attack_id)
         blackboard.set("timing_attack_urgency", attack_info.get("urgency", "NORMAL"))
-        blackboard.set("timing_attack_composition", attack_info.get("attack_composition", {}))
+        blackboard.set(
+            "timing_attack_composition", attack_info.get("attack_composition", {})
+        )
 
         # CombatManager에 강제 공격 명령
         if hasattr(self.bot, "combat") and self.bot.combat:
@@ -273,7 +283,9 @@ class UpgradeCoordinationSystem:
                     f"  Army Supply: {current_supply}/{min_supply}"
                 )
 
-                await self._register_timing_attack(self.active_timing_attack, attack_info)
+                await self._register_timing_attack(
+                    self.active_timing_attack, attack_info
+                )
 
         # ★ 타이밍 공격 지속 시간 (2분) ★
         if elapsed > 120:
@@ -300,10 +312,20 @@ class UpgradeCoordinationSystem:
             return 0
 
         army_types = {
-            "ZERGLING", "BANELING", "ROACH", "RAVAGER",
-            "HYDRALISK", "LURKER", "LURKERMP", "MUTALISK",
-            "CORRUPTOR", "BROODLORD", "ULTRALISK", "VIPER",
-            "INFESTOR", "SWARMHOST"
+            "ZERGLING",
+            "BANELING",
+            "ROACH",
+            "RAVAGER",
+            "HYDRALISK",
+            "LURKER",
+            "LURKERMP",
+            "MUTALISK",
+            "CORRUPTOR",
+            "BROODLORD",
+            "ULTRALISK",
+            "VIPER",
+            "INFESTOR",
+            "SWARMHOST",
         }
 
         total_supply = 0

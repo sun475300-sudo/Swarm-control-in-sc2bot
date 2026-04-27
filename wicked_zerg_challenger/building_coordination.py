@@ -25,7 +25,9 @@ class BuildingCoordination:
         self.logger = get_logger("BuildingCoord")
 
         # 건설 요청 추적
-        self.building_requests: Dict[UnitTypeId, float] = {}  # {building_type: request_time}
+        self.building_requests: Dict[UnitTypeId, float] = (
+            {}
+        )  # {building_type: request_time}
         self.request_cooldown = 10.0  # 같은 건물 10초 쿨다운
 
         # 1개만 필요한 건물
@@ -40,7 +42,7 @@ class BuildingCoordination:
             UnitTypeId.ULTRALISKCAVERN,
             UnitTypeId.NYDUSNETWORK,
             UnitTypeId.EVOLUTIONCHAMBER,
-            UnitTypeId.LURKERDENMP
+            UnitTypeId.LURKERDENMP,
         }
 
     def can_build(self, building_type: UnitTypeId) -> bool:
@@ -58,7 +60,9 @@ class BuildingCoordination:
         if pending > 0:
             # 1개만 필요한 건물이면 거부
             if building_type in self.UNIQUE_BUILDINGS:
-                self.logger.debug(f"[BLOCKED] {building_type.name} already pending ({pending})")
+                self.logger.debug(
+                    f"[BLOCKED] {building_type.name} already pending ({pending})"
+                )
                 return False
 
         # 3. 최근 요청 확인 (쿨다운)
@@ -69,14 +73,18 @@ class BuildingCoordination:
 
         return True
 
-    def request_building(self, building_type: UnitTypeId, requester: str = "Unknown") -> bool:
+    def request_building(
+        self, building_type: UnitTypeId, requester: str = "Unknown"
+    ) -> bool:
         """건물 건설 요청"""
         if self.can_build(building_type):
             self.building_requests[building_type] = self.bot.time
             self.logger.info(f"[REQUEST] {requester} requested {building_type.name}")
             return True
         else:
-            self.logger.debug(f"[DENIED] {requester} request for {building_type.name} denied")
+            self.logger.debug(
+                f"[DENIED] {requester} request for {building_type.name} denied"
+            )
             return False
 
     def get_building_count(self, building_type: UnitTypeId) -> Dict[str, int]:
@@ -84,5 +92,6 @@ class BuildingCoordination:
         return {
             "existing": self.bot.structures(building_type).amount,
             "pending": self.bot.already_pending(building_type),
-            "total": self.bot.structures(building_type).amount + self.bot.already_pending(building_type)
+            "total": self.bot.structures(building_type).amount
+            + self.bot.already_pending(building_type),
         }

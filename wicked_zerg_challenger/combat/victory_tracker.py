@@ -84,7 +84,9 @@ class VictoryTracker:
         if current_structure_count < self._last_enemy_structure_count:
             destroyed = self._last_enemy_structure_count - current_structure_count
             self._enemy_structures_destroyed += destroyed
-            self.logger.info(f"{destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}")
+            self.logger.info(
+                f"{destroyed} enemy structures destroyed! Total: {self._enemy_structures_destroyed}"
+            )
 
         self._last_enemy_structure_count = current_structure_count
 
@@ -100,10 +102,14 @@ class VictoryTracker:
         # 승리 푸시 활성화
         if should_activate_victory_push and not self._victory_push_active:
             self._victory_push_active = True
-            self.logger.info(f"Victory push ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}")
+            self.logger.info(
+                f"Victory push ACTIVATED! Enemy structures: {current_structure_count}, Army: {our_army_supply}"
+            )
 
         # 승리 푸시 비활성화 조건
-        if self._victory_push_active and (current_structure_count > 10 or our_army_supply < 20):
+        if self._victory_push_active and (
+            current_structure_count > 10 or our_army_supply < 20
+        ):
             self._victory_push_active = False
             self.logger.info(f"Victory push deactivated - regroup needed")
 
@@ -111,8 +117,10 @@ class VictoryTracker:
         if iteration % 660 == 0:
             expansion_count = len(self._known_enemy_expansions)
             status = "ACTIVE" if self._victory_push_active else "STANDBY"
-            self.logger.info(f"[{int(game_time)}s] Enemy: {current_structure_count} structures, "
-                  f"{expansion_count} expansions | Status: {status}")
+            self.logger.info(
+                f"[{int(game_time)}s] Enemy: {current_structure_count} structures, "
+                f"{expansion_count} expansions | Status: {status}"
+            )
 
     async def track_enemy_expansions(self):
         """
@@ -129,8 +137,13 @@ class VictoryTracker:
 
         # 타운홀 타입
         townhall_types = {
-            "NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
-            "HATCHERY", "LAIR", "HIVE"
+            "NEXUS",
+            "COMMANDCENTER",
+            "ORBITALCOMMAND",
+            "PLANETARYFORTRESS",
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
         }
 
         # 적 타운홀 찾기
@@ -140,7 +153,9 @@ class VictoryTracker:
                 pos = struct.position
                 if pos not in self._known_enemy_expansions:
                     self._known_enemy_expansions.add(pos)
-                    self.logger.info(f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
+                    self.logger.info(
+                        f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})"
+                    )
 
     async def execute_victory_push(self, iteration: int, attack_target_finder):
         """
@@ -174,8 +189,14 @@ class VictoryTracker:
 
         # 로그 (10초마다)
         if iteration % 220 == 0:
-            target_str = f"({attack_target.x:.1f}, {attack_target.y:.1f})" if hasattr(attack_target, 'x') else str(attack_target)
-            self.logger.info(f"[{int(game_time)}s] {len(army_units)} units attacking {target_str}")
+            target_str = (
+                f"({attack_target.x:.1f}, {attack_target.y:.1f})"
+                if hasattr(attack_target, "x")
+                else str(attack_target)
+            )
+            self.logger.info(
+                f"[{int(game_time)}s] {len(army_units)} units attacking {target_str}"
+            )
 
     def get_army_supply(self) -> int:
         """현재 아군 병력의 supply 합계 계산"""
@@ -198,9 +219,18 @@ class VictoryTracker:
     def _filter_army_units(self, units):
         """전투 유닛 필터링"""
         army_types = [
-            "ZERGLING", "ROACH", "HYDRALISK", "MUTALISK",
-            "CORRUPTOR", "BROODLORD", "BANELING", "RAVAGER",
-            "ULTRALISK", "LURKER", "INFESTOR", "VIPER"
+            "ZERGLING",
+            "ROACH",
+            "HYDRALISK",
+            "MUTALISK",
+            "CORRUPTOR",
+            "BROODLORD",
+            "BANELING",
+            "RAVAGER",
+            "ULTRALISK",
+            "LURKER",
+            "INFESTOR",
+            "VIPER",
         ]
 
         if hasattr(units, "filter"):

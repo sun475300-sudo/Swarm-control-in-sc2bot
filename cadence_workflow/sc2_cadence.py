@@ -29,6 +29,7 @@ class TrainingProgress:
 
 # ---- Activity Interface ----
 
+
 class SC2TrainingActivities:
     @activity_method(task_list=TASK_LIST, schedule_to_close_timeout_seconds=3600 * 48)
     async def run_training_epoch(self, epoch: int, config: dict) -> dict:
@@ -53,15 +54,20 @@ class SC2TrainingActivities:
 
 # ---- Child Workflows ----
 
+
 class DataCollectionWorkflow:
-    @workflow_method(task_list=TASK_LIST, execution_start_to_close_timeout_seconds=3600 * 24)
+    @workflow_method(
+        task_list=TASK_LIST, execution_start_to_close_timeout_seconds=3600 * 24
+    )
     async def run(self, num_batches: int) -> list:
         """Child workflow: collect replay data over extended period."""
         ...
 
 
 class ModelOptimizationWorkflow:
-    @workflow_method(task_list=TASK_LIST, execution_start_to_close_timeout_seconds=3600 * 72)
+    @workflow_method(
+        task_list=TASK_LIST, execution_start_to_close_timeout_seconds=3600 * 72
+    )
     async def run(self, config: dict) -> dict:
         """Child workflow: optimize model hyperparameters."""
         ...
@@ -69,10 +75,13 @@ class ModelOptimizationWorkflow:
 
 # ---- Main Training Workflow ----
 
+
 class SC2LongTrainingWorkflow:
     def __init__(self):
         self._paused = False
-        self._progress = TrainingProgress(epoch=0, total_epochs=100, current_win_rate=0.0)
+        self._progress = TrainingProgress(
+            epoch=0, total_epochs=100, current_win_rate=0.0
+        )
 
     @signal_method
     def pause_training(self):
@@ -99,10 +108,14 @@ class SC2LongTrainingWorkflow:
         """Main long-running training session workflow."""
         total_epochs = config.get("epochs", 100)
         self._progress.total_epochs = total_epochs
-        activities: SC2TrainingActivities = Workflow.new_activity_stub(SC2TrainingActivities)
+        activities: SC2TrainingActivities = Workflow.new_activity_stub(
+            SC2TrainingActivities
+        )
 
         # Spawn child workflow for data collection
-        data_wf: DataCollectionWorkflow = Workflow.new_child_workflow(DataCollectionWorkflow)
+        data_wf: DataCollectionWorkflow = Workflow.new_child_workflow(
+            DataCollectionWorkflow
+        )
         replay_data = await data_wf.run(num_batches=10)
         logger.info(f"Data collection complete: {len(replay_data)} batches")
 
@@ -130,7 +143,11 @@ class SC2LongTrainingWorkflow:
                 best_checkpoint = checkpoint
                 logger.info(f"Epoch {epoch}: new best win rate {win_rate:.3f}")
 
-        return {"best_win_rate": best_win_rate, "best_checkpoint": best_checkpoint, "epochs_completed": total_epochs}
+        return {
+            "best_win_rate": best_win_rate,
+            "best_checkpoint": best_checkpoint,
+            "epochs_completed": total_epochs,
+        }
 
 
 def start_worker():

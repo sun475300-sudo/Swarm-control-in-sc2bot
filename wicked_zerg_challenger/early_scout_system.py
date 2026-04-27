@@ -16,6 +16,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
 
@@ -108,7 +109,9 @@ class EarlyScoutSystem:
         map_center = getattr(game_info, "map_center", None)
         if map_center is None:
             return None
-        return map_center.towards(enemy_start, map_center.distance_to(enemy_start) * 0.65)
+        return map_center.towards(
+            enemy_start, map_center.distance_to(enemy_start) * 0.65
+        )
 
     def _is_enemy_townhall(self, structure: Any) -> bool:
         type_id = getattr(structure, "type_id", None)
@@ -166,8 +169,10 @@ class EarlyScoutSystem:
 
         if not self.overlord_scout_sent and self.bot.time > 5:
             await self._send_overlord_scout()
-        elif (self.bot.time - self._last_overlord_rescout_time
-              >= self._overlord_rescout_interval):
+        elif (
+            self.bot.time - self._last_overlord_rescout_time
+            >= self._overlord_rescout_interval
+        ):
             # Periodic overlord re-scout of enemy base every 30s
             await self._send_overlord_rescout()
         if self.scout_overlord_tag:
@@ -256,7 +261,11 @@ class EarlyScoutSystem:
         self.scout_overlord_tag = scout_ol.tag
 
         map_center = self.bot.game_info.map_center
-        enemy_start = self.bot.enemy_start_locations[0] if self.bot.enemy_start_locations else map_center
+        enemy_start = (
+            self.bot.enemy_start_locations[0]
+            if self.bot.enemy_start_locations
+            else map_center
+        )
         enemy_natural = self._get_enemy_natural_location() or map_center.towards(
             enemy_start,
             max(1, map_center.distance_to(enemy_start) * 0.65),
@@ -275,7 +284,9 @@ class EarlyScoutSystem:
         logger.info(f"Sent Overlord scout at {int(self.bot.time)}s")
 
     async def _manage_overlord_scout(self) -> None:
-        overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in([self.scout_overlord_tag])
+        overlords = self.bot.units(UnitTypeId.OVERLORD).tags_in(
+            [self.scout_overlord_tag]
+        )
         if not overlords:
             self.scout_overlord_tag = None
             self.overlord_scout_sent = False
@@ -299,9 +310,7 @@ class EarlyScoutSystem:
             return
 
         # Pick an overlord that isn't already actively scouting
-        available = overlords.filter(
-            lambda u: u.tag != self.scout_overlord_tag
-        )
+        available = overlords.filter(lambda u: u.tag != self.scout_overlord_tag)
         if not available:
             available = overlords
 
@@ -321,9 +330,7 @@ class EarlyScoutSystem:
 
         self.bot.do(scout_ol.move(self.overlord_waypoints[0]))
         self._last_overlord_rescout_time = self.bot.time
-        logger.info(
-            f"[EARLY_SCOUT] Overlord re-scout sent at {int(self.bot.time)}s"
-        )
+        logger.info(f"[EARLY_SCOUT] Overlord re-scout sent at {int(self.bot.time)}s")
 
     async def _analyze_enemy_info(self) -> None:
         structures = getattr(self.bot, "enemy_structures", None)
@@ -414,8 +421,12 @@ class EarlyScoutSystem:
         status_parts: List[str] = []
 
         if self.ling_scouts_assigned:
-            zergling_tags: Set[int] = {u.tag for u in self.bot.units(UnitTypeId.ZERGLING)}
-            alive_scouts = len([tag for tag in self.scout_ling_tags if tag in zergling_tags])
+            zergling_tags: Set[int] = {
+                u.tag for u in self.bot.units(UnitTypeId.ZERGLING)
+            }
+            alive_scouts = len(
+                [tag for tag in self.scout_ling_tags if tag in zergling_tags]
+            )
             status_parts.append(f"Lings:{alive_scouts}/{self.max_scout_lings}")
         else:
             status_parts.append("Lings:idle")

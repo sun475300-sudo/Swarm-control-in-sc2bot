@@ -22,15 +22,17 @@ from utils.logger import get_logger
 
 class UpgradePriority(Enum):
     """업그레이드 우선순위"""
-    CRITICAL = 0    # 생명줄 (저글링 발업, 대군주 속업)
-    HIGH = 1        # 고우선순위 (공1, 방1)
-    MEDIUM = 2      # 중우선순위 (공2, 방2)
-    LOW = 3         # 저우선순위 (공3, 방3, 특수 업그레이드)
+
+    CRITICAL = 0  # 생명줄 (저글링 발업, 대군주 속업)
+    HIGH = 1  # 고우선순위 (공1, 방1)
+    MEDIUM = 2  # 중우선순위 (공2, 방2)
+    LOW = 3  # 저우선순위 (공3, 방3, 특수 업그레이드)
 
 
 @dataclass
 class UpgradePlan:
     """업그레이드 계획"""
+
     upgrade_id: object
     name: str
     mineral_cost: int
@@ -73,7 +75,9 @@ class UpgradeResourcePlanner:
         self.upgrade_costs = self._initialize_upgrade_costs()
 
         # 학습 데이터
-        self.resource_banking_history = []  # [(time, minerals, gas, reserved_minerals, reserved_gas)]
+        self.resource_banking_history = (
+            []
+        )  # [(time, minerals, gas, reserved_minerals, reserved_gas)]
         self.upgrade_completion_times = {}  # upgrade_name -> completion_time
 
         # 설정
@@ -88,25 +92,21 @@ class UpgradeResourcePlanner:
             "ZERGLINGMOVEMENTSPEED": (100, 100),  # 저글링 발업
             "OVERLORDSPEED": (100, 100),  # 대군주 속업
             "OVERLORDTRANSPORT": (25, 25),  # 배주머니
-
             # 1순위 - HIGH (공방 1단계)
             "ZERGMELEEWEAPONSLEVEL1": (100, 100),  # 근접 공1
             "ZERGMISSILEWEAPONSLEVEL1": (100, 100),  # 원거리 공1
             "ZERGGROUNDARMORSLEVEL1": (100, 100),  # 방어 1
             "ZERGFLYERWEAPONSLEVEL1": (100, 100),  # 공중 공1
-
             # 2순위 - MEDIUM (공방 2단계)
             "ZERGMELEEWEAPONSLEVEL2": (150, 150),  # 근접 공2
             "ZERGMISSILEWEAPONSLEVEL2": (150, 150),  # 원거리 공2
             "ZERGGROUNDARMORSLEVEL2": (150, 150),  # 방어 2
             "ZERGFLYERWEAPONSLEVEL2": (175, 175),  # 공중 공2
-
             # 3순위 - LOW (공방 3단계)
             "ZERGMELEEWEAPONSLEVEL3": (200, 200),  # 근접 공3
             "ZERGMISSILEWEAPONSLEVEL3": (200, 200),  # 원거리 공3
             "ZERGGROUNDARMORSLEVEL3": (200, 200),  # 방어 3
             "ZERGFLYERWEAPONSLEVEL3": (250, 250),  # 공중 공3
-
             # 유닛별 업그레이드
             "CENTRIFICALHOOKS": (150, 150),  # 맹독충 발업
             "GLIALRECONSTITUTION": (100, 100),  # 바퀴 발업
@@ -147,107 +147,139 @@ class UpgradeResourcePlanner:
 
         # === 0순위: 생명줄 업그레이드 ===
         if has_spawning_pool and not self._is_upgrade_done("ZERGLINGMOVEMENTSPEED"):
-            self.upgrade_timeline.append(UpgradePlan(
-                upgrade_id=getattr(UpgradeId, "ZERGLINGMOVEMENTSPEED", None),
-                name="ZERGLINGMOVEMENTSPEED",
-                mineral_cost=100,
-                gas_cost=100,
-                priority=UpgradePriority.CRITICAL,
-                tech_requirement="Spawning Pool",
-                estimated_timing=game_time + 10
-            ))
+            self.upgrade_timeline.append(
+                UpgradePlan(
+                    upgrade_id=getattr(UpgradeId, "ZERGLINGMOVEMENTSPEED", None),
+                    name="ZERGLINGMOVEMENTSPEED",
+                    mineral_cost=100,
+                    gas_cost=100,
+                    priority=UpgradePriority.CRITICAL,
+                    tech_requirement="Spawning Pool",
+                    estimated_timing=game_time + 10,
+                )
+            )
 
         if game_time >= 180 and not self._is_upgrade_done("OVERLORDSPEED"):
-            self.upgrade_timeline.append(UpgradePlan(
-                upgrade_id=getattr(UpgradeId, "OVERLORDSPEED", None),
-                name="OVERLORDSPEED",
-                mineral_cost=100,
-                gas_cost=100,
-                priority=UpgradePriority.CRITICAL,
-                tech_requirement="Hatchery",
-                estimated_timing=game_time + 20
-            ))
+            self.upgrade_timeline.append(
+                UpgradePlan(
+                    upgrade_id=getattr(UpgradeId, "OVERLORDSPEED", None),
+                    name="OVERLORDSPEED",
+                    mineral_cost=100,
+                    gas_cost=100,
+                    priority=UpgradePriority.CRITICAL,
+                    tech_requirement="Hatchery",
+                    estimated_timing=game_time + 20,
+                )
+            )
 
         # === 1순위: 공방 1단계 ===
         if has_evo_chamber:
             if composition["melee"] > composition["ranged"]:
                 # 저글링/맹독충 중심
                 if not self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL1"):
-                    self.upgrade_timeline.append(UpgradePlan(
-                        upgrade_id=getattr(UpgradeId, "ZERGMELEEWEAPONSLEVEL1", None),
-                        name="ZERGMELEEWEAPONSLEVEL1",
-                        mineral_cost=100,
-                        gas_cost=100,
-                        priority=UpgradePriority.HIGH,
-                        tech_requirement="Evolution Chamber",
-                        estimated_timing=game_time + 30
-                    ))
+                    self.upgrade_timeline.append(
+                        UpgradePlan(
+                            upgrade_id=getattr(
+                                UpgradeId, "ZERGMELEEWEAPONSLEVEL1", None
+                            ),
+                            name="ZERGMELEEWEAPONSLEVEL1",
+                            mineral_cost=100,
+                            gas_cost=100,
+                            priority=UpgradePriority.HIGH,
+                            tech_requirement="Evolution Chamber",
+                            estimated_timing=game_time + 30,
+                        )
+                    )
             else:
                 # 바퀴/히드라 중심
                 if not self._is_upgrade_done("ZERGMISSILEWEAPONSLEVEL1"):
-                    self.upgrade_timeline.append(UpgradePlan(
-                        upgrade_id=getattr(UpgradeId, "ZERGMISSILEWEAPONSLEVEL1", None),
-                        name="ZERGMISSILEWEAPONSLEVEL1",
+                    self.upgrade_timeline.append(
+                        UpgradePlan(
+                            upgrade_id=getattr(
+                                UpgradeId, "ZERGMISSILEWEAPONSLEVEL1", None
+                            ),
+                            name="ZERGMISSILEWEAPONSLEVEL1",
+                            mineral_cost=100,
+                            gas_cost=100,
+                            priority=UpgradePriority.HIGH,
+                            tech_requirement="Evolution Chamber",
+                            estimated_timing=game_time + 30,
+                        )
+                    )
+
+            # 방어 업그레이드
+            if not self._is_upgrade_done("ZERGGROUNDARMORSLEVEL1"):
+                self.upgrade_timeline.append(
+                    UpgradePlan(
+                        upgrade_id=getattr(UpgradeId, "ZERGGROUNDARMORSLEVEL1", None),
+                        name="ZERGGROUNDARMORSLEVEL1",
                         mineral_cost=100,
                         gas_cost=100,
                         priority=UpgradePriority.HIGH,
                         tech_requirement="Evolution Chamber",
-                        estimated_timing=game_time + 30
-                    ))
-
-            # 방어 업그레이드
-            if not self._is_upgrade_done("ZERGGROUNDARMORSLEVEL1"):
-                self.upgrade_timeline.append(UpgradePlan(
-                    upgrade_id=getattr(UpgradeId, "ZERGGROUNDARMORSLEVEL1", None),
-                    name="ZERGGROUNDARMORSLEVEL1",
-                    mineral_cost=100,
-                    gas_cost=100,
-                    priority=UpgradePriority.HIGH,
-                    tech_requirement="Evolution Chamber",
-                    estimated_timing=game_time + 60
-                ))
+                        estimated_timing=game_time + 60,
+                    )
+                )
 
         # === 2순위: 공방 2단계 (Lair 필요) ===
         if has_lair and has_evo_chamber:
             if composition["melee"] > composition["ranged"]:
-                if self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL1") and not self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL2"):
-                    self.upgrade_timeline.append(UpgradePlan(
-                        upgrade_id=getattr(UpgradeId, "ZERGMELEEWEAPONSLEVEL2", None),
-                        name="ZERGMELEEWEAPONSLEVEL2",
-                        mineral_cost=150,
-                        gas_cost=150,
-                        priority=UpgradePriority.MEDIUM,
-                        tech_requirement="Lair",
-                        estimated_timing=game_time + 90,
-                        prerequisite="ZERGMELEEWEAPONSLEVEL1"
-                    ))
+                if self._is_upgrade_done(
+                    "ZERGMELEEWEAPONSLEVEL1"
+                ) and not self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL2"):
+                    self.upgrade_timeline.append(
+                        UpgradePlan(
+                            upgrade_id=getattr(
+                                UpgradeId, "ZERGMELEEWEAPONSLEVEL2", None
+                            ),
+                            name="ZERGMELEEWEAPONSLEVEL2",
+                            mineral_cost=150,
+                            gas_cost=150,
+                            priority=UpgradePriority.MEDIUM,
+                            tech_requirement="Lair",
+                            estimated_timing=game_time + 90,
+                            prerequisite="ZERGMELEEWEAPONSLEVEL1",
+                        )
+                    )
             else:
-                if self._is_upgrade_done("ZERGMISSILEWEAPONSLEVEL1") and not self._is_upgrade_done("ZERGMISSILEWEAPONSLEVEL2"):
-                    self.upgrade_timeline.append(UpgradePlan(
-                        upgrade_id=getattr(UpgradeId, "ZERGMISSILEWEAPONSLEVEL2", None),
-                        name="ZERGMISSILEWEAPONSLEVEL2",
-                        mineral_cost=150,
-                        gas_cost=150,
-                        priority=UpgradePriority.MEDIUM,
-                        tech_requirement="Lair",
-                        estimated_timing=game_time + 90,
-                        prerequisite="ZERGMISSILEWEAPONSLEVEL1"
-                    ))
+                if self._is_upgrade_done(
+                    "ZERGMISSILEWEAPONSLEVEL1"
+                ) and not self._is_upgrade_done("ZERGMISSILEWEAPONSLEVEL2"):
+                    self.upgrade_timeline.append(
+                        UpgradePlan(
+                            upgrade_id=getattr(
+                                UpgradeId, "ZERGMISSILEWEAPONSLEVEL2", None
+                            ),
+                            name="ZERGMISSILEWEAPONSLEVEL2",
+                            mineral_cost=150,
+                            gas_cost=150,
+                            priority=UpgradePriority.MEDIUM,
+                            tech_requirement="Lair",
+                            estimated_timing=game_time + 90,
+                            prerequisite="ZERGMISSILEWEAPONSLEVEL1",
+                        )
+                    )
 
         # === 3순위: 공방 3단계 (Hive 필요) ===
         if has_hive and has_evo_chamber:
             if composition["melee"] > composition["ranged"]:
-                if self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL2") and not self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL3"):
-                    self.upgrade_timeline.append(UpgradePlan(
-                        upgrade_id=getattr(UpgradeId, "ZERGMELEEWEAPONSLEVEL3", None),
-                        name="ZERGMELEEWEAPONSLEVEL3",
-                        mineral_cost=200,
-                        gas_cost=200,
-                        priority=UpgradePriority.LOW,
-                        tech_requirement="Hive",
-                        estimated_timing=game_time + 120,
-                        prerequisite="ZERGMELEEWEAPONSLEVEL2"
-                    ))
+                if self._is_upgrade_done(
+                    "ZERGMELEEWEAPONSLEVEL2"
+                ) and not self._is_upgrade_done("ZERGMELEEWEAPONSLEVEL3"):
+                    self.upgrade_timeline.append(
+                        UpgradePlan(
+                            upgrade_id=getattr(
+                                UpgradeId, "ZERGMELEEWEAPONSLEVEL3", None
+                            ),
+                            name="ZERGMELEEWEAPONSLEVEL3",
+                            mineral_cost=200,
+                            gas_cost=200,
+                            priority=UpgradePriority.LOW,
+                            tech_requirement="Hive",
+                            estimated_timing=game_time + 120,
+                            prerequisite="ZERGMELEEWEAPONSLEVEL2",
+                        )
+                    )
 
         # 우선순위 정렬
         self.upgrade_timeline.sort(key=lambda x: (x.priority.value, x.estimated_timing))
@@ -302,7 +334,9 @@ class UpgradeResourcePlanner:
             if self._is_upgrade_pending(upgrade_plan.name):
                 continue
             # 선행 업그레이드가 필요한 경우 체크
-            if upgrade_plan.prerequisite and not self._is_upgrade_done(upgrade_plan.prerequisite):
+            if upgrade_plan.prerequisite and not self._is_upgrade_done(
+                upgrade_plan.prerequisite
+            ):
                 continue
             return upgrade_plan
         return None
@@ -341,13 +375,18 @@ class UpgradeResourcePlanner:
         time_until_upgrade = next_upgrade.estimated_timing - game_time
 
         # 업그레이드가 20초 이내이고 CRITICAL 우선순위인 경우
-        if time_until_upgrade <= 20 and next_upgrade.priority == UpgradePriority.CRITICAL:
+        if (
+            time_until_upgrade <= 20
+            and next_upgrade.priority == UpgradePriority.CRITICAL
+        ):
             current_minerals = getattr(self.bot, "minerals", 0)
             current_gas = getattr(self.bot, "vespene", 0)
 
             # 유닛 생산 시 업그레이드 자원이 부족해지는 경우
-            if (current_minerals - mineral_cost < next_upgrade.mineral_cost or
-                current_gas - gas_cost < next_upgrade.gas_cost):
+            if (
+                current_minerals - mineral_cost < next_upgrade.mineral_cost
+                or current_gas - gas_cost < next_upgrade.gas_cost
+            ):
                 self.logger.info(
                     f"[PLANNER] Delaying unit production for critical upgrade: {next_upgrade.name}"
                 )
@@ -360,13 +399,15 @@ class UpgradeResourcePlanner:
         current_minerals = getattr(self.bot, "minerals", 0)
         current_gas = getattr(self.bot, "vespene", 0)
 
-        self.resource_banking_history.append((
-            game_time,
-            current_minerals,
-            current_gas,
-            self.reserved_minerals,
-            self.reserved_gas
-        ))
+        self.resource_banking_history.append(
+            (
+                game_time,
+                current_minerals,
+                current_gas,
+                self.reserved_minerals,
+                self.reserved_gas,
+            )
+        )
 
         # 최근 300개 데이터만 유지 (메모리 관리)
         if len(self.resource_banking_history) > 300:
@@ -374,21 +415,30 @@ class UpgradeResourcePlanner:
 
     def _analyze_unit_composition(self) -> Dict[str, int]:
         """현재 유닛 구성 분석"""
-        composition = {
-            "melee": 0,
-            "ranged": 0,
-            "air": 0
-        }
+        composition = {"melee": 0, "ranged": 0, "air": 0}
 
         if not hasattr(self.bot, "units"):
             return composition
 
         for unit in self.bot.units:
-            if unit.type_id in [UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ULTRALISK]:
+            if unit.type_id in [
+                UnitTypeId.ZERGLING,
+                UnitTypeId.BANELING,
+                UnitTypeId.ULTRALISK,
+            ]:
                 composition["melee"] += 1
-            elif unit.type_id in [UnitTypeId.ROACH, UnitTypeId.HYDRALISK, UnitTypeId.RAVAGER, UnitTypeId.LURKER]:
+            elif unit.type_id in [
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.LURKER,
+            ]:
                 composition["ranged"] += 1
-            elif unit.type_id in [UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD]:
+            elif unit.type_id in [
+                UnitTypeId.MUTALISK,
+                UnitTypeId.CORRUPTOR,
+                UnitTypeId.BROODLORD,
+            ]:
                 composition["air"] += 1
 
         return composition

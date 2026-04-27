@@ -175,7 +175,11 @@ def prioritize_targets(enemies: Iterable, *, current_frame: int = -1) -> List:
         logger.debug("prioritize_targets: tag 추출 실패, 캐시 생략")
 
     same_frame = current_frame >= 0 and current_frame == _prioritized_cache.get("frame")
-    if same_frame and cache_id is not None and cache_id == _prioritized_cache.get("enemies_id"):
+    if (
+        same_frame
+        and cache_id is not None
+        and cache_id == _prioritized_cache.get("enemies_id")
+    ):
         return _prioritized_cache["result"]
 
     enemy_list.sort(key=_score_target, reverse=True)
@@ -228,7 +232,9 @@ class Targeting:
     def prioritize(self, enemies: Iterable) -> List:
         return prioritize_targets(enemies)
 
-    def select(self, unit, enemies: Iterable, max_range: float = 12.0) -> Optional[object]:
+    def select(
+        self, unit, enemies: Iterable, max_range: float = 12.0
+    ) -> Optional[object]:
         return select_target(unit, enemies, max_range)
 
     def score(self, unit) -> float:
@@ -237,7 +243,9 @@ class Targeting:
         return _score_target(unit)
 
     # ★ Phase 13: 하위 호환성 메서드 (테스트 호환) ★
-    def get_priority_target(self, enemies_or_unit, position_or_enemies=None, max_range: float = 12.0) -> Optional[object]:
+    def get_priority_target(
+        self, enemies_or_unit, position_or_enemies=None, max_range: float = 12.0
+    ) -> Optional[object]:
         """하위 호환: prioritize_targets로 가장 높은 우선순위 반환.
 
         지원 시그니처:
@@ -255,6 +263,8 @@ class Targeting:
         prioritized = prioritize_targets(enemies_or_unit)
         return prioritized[0] if prioritized else None
 
-    def get_focus_fire_target(self, enemies_or_unit, position_or_enemies=None, max_range: float = 12.0) -> Optional[object]:
+    def get_focus_fire_target(
+        self, enemies_or_unit, position_or_enemies=None, max_range: float = 12.0
+    ) -> Optional[object]:
         """하위 호환: get_priority_target과 동일"""
         return self.get_priority_target(enemies_or_unit, position_or_enemies, max_range)

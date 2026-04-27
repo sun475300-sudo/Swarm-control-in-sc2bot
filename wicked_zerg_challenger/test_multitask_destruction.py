@@ -34,16 +34,16 @@ AVAILABLE_MAPS = [
     "(2)RedshiftLE",
     "(2)CatalystLE",
     "AbyssalReefLE",
-    "AscensiontoAiurLE"
+    "AscensiontoAiurLE",
 ]
 
 
 def main():
     """멀티테스킹 건물 파괴 시스템 테스트"""
 
-    logger.info("\n" + "="*70)
+    logger.info("\n" + "=" * 70)
     logger.info("멀티테스킹 건물 파괴 시스템 테스트")
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info("\n개선 사항:")
     logger.info("  1. 전투 감지: 전투 중/평시 구분")
     logger.info("  2. 평시: 모든 병력을 최대 8개 건물에 동시 공격")
@@ -54,7 +54,7 @@ def main():
     logger.info("  - 난이도: Easy")
     logger.info("  - 게임 수: 3게임")
     logger.info("  - 목표: 모든 건물 완전 파괴 확인")
-    logger.info("="*70 + "\n")
+    logger.info("=" * 70 + "\n")
 
     wins = 0
     total_games = 3
@@ -74,10 +74,10 @@ def main():
                 maps.get(selected_map),
                 [
                     Bot(Race.Zerg, WickedZergBotProImpl()),
-                    Computer(Race.Random, Difficulty.Easy)
+                    Computer(Race.Random, Difficulty.Easy),
                 ],
                 realtime=False,
-                save_replay_as=None
+                save_replay_as=None,
             )
 
             # 결과 판정
@@ -93,18 +93,22 @@ def main():
     # 최종 결과
     win_rate = (wins / total_games) * 100
 
-    logger.info("\n" + "="*70)
+    logger.info("\n" + "=" * 70)
     logger.info("테스트 결과")
-    logger.info("="*70)
+    logger.info("=" * 70)
     logger.info(f"총 게임: {total_games}")
     logger.info(f"승리: {wins}")
     logger.info(f"패배: {total_games - wins}")
     logger.info(f"승률: {win_rate:.1f}%")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     if win_rate >= 66.7:  # 3게임 중 2게임 승리
-        logger.info("\n[PASS] Test passed! Multitask destruction system working correctly.")
+        logger.info(
+            "\n[PASS] Test passed! Multitask destruction system working correctly."
+        )
     else:
         logger.error("\n[FAIL] Test failed. System check required.")
+
+
 if __name__ == "__main__":
     main()

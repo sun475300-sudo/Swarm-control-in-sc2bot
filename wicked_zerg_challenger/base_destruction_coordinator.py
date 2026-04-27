@@ -94,9 +94,13 @@ class BaseDestructionCoordinator:
         enemy_structures = self.bot.enemy_structures
 
         townhall_types = {
-            UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
+            UnitTypeId.COMMANDCENTER,
+            UnitTypeId.ORBITALCOMMAND,
+            UnitTypeId.PLANETARYFORTRESS,
             UnitTypeId.NEXUS,
-            UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE
+            UnitTypeId.HATCHERY,
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
         }
 
         for structure in enemy_structures:
@@ -134,7 +138,9 @@ class BaseDestructionCoordinator:
                         )
 
             except Exception as e:
-                self.logger.error(f"[BASE_DESTRUCTION] Map Memory integration error: {e}")
+                self.logger.error(
+                    f"[BASE_DESTRUCTION] Map Memory integration error: {e}"
+                )
 
         # 모든 기지의 정보 업데이트
         self._update_base_info()
@@ -147,7 +153,8 @@ class BaseDestructionCoordinator:
 
             # 근처 건물 카운트
             nearby_structures = [
-                s for s in self.bot.enemy_structures
+                s
+                for s in self.bot.enemy_structures
                 if s.distance_to(base.position) < self.base_detection_radius
             ]
             base.structure_count = len(nearby_structures)
@@ -155,25 +162,29 @@ class BaseDestructionCoordinator:
             # 근처 일꾼 카운트
             worker_types = {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
             nearby_workers = [
-                u for u in self.bot.enemy_units
+                u
+                for u in self.bot.enemy_units
                 if u.type_id in worker_types and u.distance_to(base.position) < 15
             ]
             base.worker_count = len(nearby_workers)
 
             # 방어력 계산 (방어 건물 + 군대)
             defense_buildings = {
-                UnitTypeId.PHOTONCANNON, UnitTypeId.SHIELDBATTERY,
-                UnitTypeId.BUNKER, UnitTypeId.MISSILETURRET,
-                UnitTypeId.SPORECRAWLER, UnitTypeId.SPINECRAWLER
+                UnitTypeId.PHOTONCANNON,
+                UnitTypeId.SHIELDBATTERY,
+                UnitTypeId.BUNKER,
+                UnitTypeId.MISSILETURRET,
+                UnitTypeId.SPORECRAWLER,
+                UnitTypeId.SPINECRAWLER,
             }
 
             nearby_defense = [
-                s for s in nearby_structures
-                if s.type_id in defense_buildings
+                s for s in nearby_structures if s.type_id in defense_buildings
             ]
 
             nearby_army = [
-                u for u in self.bot.enemy_units
+                u
+                for u in self.bot.enemy_units
                 if u.distance_to(base.position) < 20 and not u.type_id in worker_types
             ]
 
@@ -208,7 +219,9 @@ class BaseDestructionCoordinator:
         if not active_bases:
             # 승리!
             if self.total_bases_discovered > 0:
-                self.logger.info(f"[{int(game_time)}s] ALL ENEMY BASES DESTROYED! VICTORY!")
+                self.logger.info(
+                    f"[{int(game_time)}s] ALL ENEMY BASES DESTROYED! VICTORY!"
+                )
             return
 
         # 현재 타겟 체크
@@ -256,10 +269,10 @@ class BaseDestructionCoordinator:
 
             # 종합 점수
             score = (
-                distance_score * 0.3 +
-                defense_score * 0.3 +
-                importance_score * 0.2 +
-                age_score * 0.2
+                distance_score * 0.3
+                + defense_score * 0.3
+                + importance_score * 0.2
+                + age_score * 0.2
             )
 
             base.priority = score
@@ -302,9 +315,7 @@ class BaseDestructionCoordinator:
             활성 기지 위치 리스트
         """
         return [
-            base.position
-            for base in self.enemy_bases.values()
-            if not base.is_destroyed
+            base.position for base in self.enemy_bases.values() if not base.is_destroyed
         ]
 
     def is_all_bases_destroyed(self) -> bool:
@@ -345,5 +356,5 @@ class BaseDestructionCoordinator:
             "destroyed": self.bases_destroyed,
             "active": len(active_bases),
             "current_target": self.current_target_base is not None,
-            "all_destroyed": self.is_all_bases_destroyed()
+            "all_destroyed": self.is_all_bases_destroyed(),
         }

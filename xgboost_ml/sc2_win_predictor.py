@@ -49,17 +49,17 @@ logger = logging.getLogger(__name__)
 # Feature schema
 # ---------------------------------------------------------------------------
 FEATURE_NAMES: List[str] = [
-    "mineral_rate",       # minerals collected per minute
-    "gas_rate",           # vespene collected per minute
-    "supply_ratio",       # our_army / max(enemy_army, 1)
-    "tech_score",         # weighted tech tier (pool=1, lair=2, hive=3) * upgrades
-    "army_value",         # total resource cost of army
-    "worker_count",       # active drones
-    "base_count",         # active expansions
-    "upgrade_count",      # completed attack/armor upgrades
-    "enemy_army_value",   # estimated enemy army resource cost
-    "enemy_base_count",   # scouted enemy expansions
-    "creep_coverage",     # fraction of map with creep (0-1)
+    "mineral_rate",  # minerals collected per minute
+    "gas_rate",  # vespene collected per minute
+    "supply_ratio",  # our_army / max(enemy_army, 1)
+    "tech_score",  # weighted tech tier (pool=1, lair=2, hive=3) * upgrades
+    "army_value",  # total resource cost of army
+    "worker_count",  # active drones
+    "base_count",  # active expansions
+    "upgrade_count",  # completed attack/armor upgrades
+    "enemy_army_value",  # estimated enemy army resource cost
+    "enemy_base_count",  # scouted enemy expansions
+    "creep_coverage",  # fraction of map with creep (0-1)
     "game_time_minutes",  # elapsed game time in minutes
 ]
 
@@ -93,24 +93,35 @@ def generate_sc2_data(
     """
     rng = np.random.default_rng(seed)
 
-    mineral_rate      = rng.uniform(400, 2500, n_samples)
-    gas_rate          = rng.uniform(100, 1200, n_samples)
-    supply_ratio      = rng.uniform(0.2, 3.0, n_samples)
-    tech_score        = rng.uniform(1.0, 15.0, n_samples)
-    army_value        = rng.uniform(500, 12000, n_samples)
-    worker_count      = rng.integers(10, 80, n_samples).astype(np.float64)
-    base_count        = rng.integers(1, 6, n_samples).astype(np.float64)
-    upgrade_count     = rng.integers(0, 10, n_samples).astype(np.float64)
-    enemy_army_value  = rng.uniform(500, 12000, n_samples)
-    enemy_base_count  = rng.integers(1, 6, n_samples).astype(np.float64)
-    creep_coverage    = rng.uniform(0.0, 1.0, n_samples)
+    mineral_rate = rng.uniform(400, 2500, n_samples)
+    gas_rate = rng.uniform(100, 1200, n_samples)
+    supply_ratio = rng.uniform(0.2, 3.0, n_samples)
+    tech_score = rng.uniform(1.0, 15.0, n_samples)
+    army_value = rng.uniform(500, 12000, n_samples)
+    worker_count = rng.integers(10, 80, n_samples).astype(np.float64)
+    base_count = rng.integers(1, 6, n_samples).astype(np.float64)
+    upgrade_count = rng.integers(0, 10, n_samples).astype(np.float64)
+    enemy_army_value = rng.uniform(500, 12000, n_samples)
+    enemy_base_count = rng.integers(1, 6, n_samples).astype(np.float64)
+    creep_coverage = rng.uniform(0.0, 1.0, n_samples)
     game_time_minutes = rng.uniform(1.0, 20.0, n_samples)
 
-    X = np.column_stack([
-        mineral_rate, gas_rate, supply_ratio, tech_score, army_value,
-        worker_count, base_count, upgrade_count,
-        enemy_army_value, enemy_base_count, creep_coverage, game_time_minutes,
-    ])
+    X = np.column_stack(
+        [
+            mineral_rate,
+            gas_rate,
+            supply_ratio,
+            tech_score,
+            army_value,
+            worker_count,
+            base_count,
+            upgrade_count,
+            enemy_army_value,
+            enemy_base_count,
+            creep_coverage,
+            game_time_minutes,
+        ]
+    )
 
     # --- win probability heuristic ---
     army_edge = (army_value - enemy_army_value) / 8000.0
@@ -152,11 +163,11 @@ def sc2_asymmetric_logloss(
 
     Returns (gradient, hessian) arrays.
     """
-    alpha_loss = 1.5   # extra penalty for false-positive wins
-    alpha_win  = 1.0
+    alpha_loss = 1.5  # extra penalty for false-positive wins
+    alpha_win = 1.0
 
     y_true = dtrain.get_label()
-    p = 1.0 / (1.0 + np.exp(-y_pred))          # sigmoid
+    p = 1.0 / (1.0 + np.exp(-y_pred))  # sigmoid
     p = np.clip(p, 1e-7, 1.0 - 1e-7)
 
     weights = np.where(y_true == 0, alpha_loss, alpha_win)
@@ -196,11 +207,11 @@ def lr_decay_callback(
 
     def _callback(env: xgb.core.CallbackEnv) -> None:  # type: ignore[attr-defined]
         iteration = env.iteration
-        new_lr = max(initial_lr * (decay_rate ** iteration), min_lr)
+        new_lr = max(initial_lr * (decay_rate**iteration), min_lr)
         env.model.set_param("learning_rate", new_lr)
 
     _callback.before_iteration = False  # type: ignore[attr-defined]
-    _callback.after_iteration = True     # type: ignore[attr-defined]
+    _callback.after_iteration = True  # type: ignore[attr-defined]
     return _callback
 
 
@@ -316,7 +327,8 @@ class SC2WinPredictor:
         """
         if X_val is None and auto_split:
             X_train, X_val, y_train, y_val = train_test_split(
-                X_train, y_train,
+                X_train,
+                y_train,
                 test_size=val_fraction,
                 stratify=y_train if self.task == "classify" else None,
                 random_state=self.random_state,
@@ -354,9 +366,9 @@ class SC2WinPredictor:
 
     def predict_proba(self, X: NDArray) -> NDArray:
         """Return win probability (classifier only)."""
-        assert self._is_fitted and self.task == "classify", (
-            "predict_proba requires a fitted classifier."
-        )
+        assert (
+            self._is_fitted and self.task == "classify"
+        ), "predict_proba requires a fitted classifier."
         return self.model.predict_proba(X)
 
     def predict_win_chance(self, X: NDArray) -> NDArray:
@@ -382,7 +394,9 @@ class SC2WinPredictor:
                 "roc_auc": roc_auc_score(y_test, y_proba),
                 "log_loss": log_loss(y_test, y_proba),
                 "classification_report": classification_report(
-                    y_test, y_pred, output_dict=True,
+                    y_test,
+                    y_pred,
+                    output_dict=True,
                 ),
             }
             logger.info(
@@ -437,6 +451,7 @@ class SC2WinPredictor:
     ) -> None:
         """Plot built-in XGBoost feature importance (SHAP-ready)."""
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
@@ -512,9 +527,7 @@ class SC2WinPredictor:
             self.model = XGBClassifier(**self._base_params())
         else:
             self.model = XGBRegressor(**self._base_params())
-        self.model.get_booster().load_model(
-            self._booster.save_raw(raw_format="json")
-        )
+        self.model.get_booster().load_model(self._booster.save_raw(raw_format="json"))
         self._is_fitted = True
 
         best_iter = getattr(self._booster, "best_iteration", self.n_estimators)
@@ -568,8 +581,14 @@ class SC2WinPredictor:
         )
 
         best_round = len(cv_results)
-        metric_key = "test-logloss-mean" if self.task == "classify" else "test-rmse-mean"
-        best_score = cv_results[metric_key].iloc[-1] if metric_key in cv_results.columns else None
+        metric_key = (
+            "test-logloss-mean" if self.task == "classify" else "test-rmse-mean"
+        )
+        best_score = (
+            cv_results[metric_key].iloc[-1]
+            if metric_key in cv_results.columns
+            else None
+        )
 
         logger.info(
             "xgb.cv  nfold=%d  best_round=%d  %s=%.4f",
@@ -644,6 +663,7 @@ class SC2WinPredictor:
     ) -> None:
         """Plot training / validation loss curves from evals_result_."""
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
@@ -683,7 +703,11 @@ def main() -> None:
     # ===== 1. Generate data =====
     X, y = generate_sc2_data(n_samples=5000, seed=42)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42,
+        X,
+        y,
+        test_size=0.2,
+        stratify=y,
+        random_state=42,
     )
 
     # ===== 2. Classifier with early stopping =====
@@ -769,12 +793,14 @@ def main() -> None:
 
     # ===== 8. Win chance prediction =====
     print("\n--- Sample predictions ---")
-    sample_states = np.array([
-        # min_rate gas_rate sup_ratio tech army  wrk  base upg  e_army e_base creep time
-        [1800,    600,     2.5,      10.0, 8000, 60,  4,   6,   3000,  2,     0.7,  12.0],
-        [500,     100,     0.4,       2.0, 1000, 20,  1,   0,   5000,  3,     0.1,   5.0],
-        [1200,    400,     1.0,       6.0, 4000, 45,  3,   3,   4000,  3,     0.4,   8.0],
-    ])
+    sample_states = np.array(
+        [
+            # min_rate gas_rate sup_ratio tech army  wrk  base upg  e_army e_base creep time
+            [1800, 600, 2.5, 10.0, 8000, 60, 4, 6, 3000, 2, 0.7, 12.0],
+            [500, 100, 0.4, 2.0, 1000, 20, 1, 0, 5000, 3, 0.1, 5.0],
+            [1200, 400, 1.0, 6.0, 4000, 45, 3, 3, 4000, 3, 0.4, 8.0],
+        ]
+    )
     chances = clf.predict_win_chance(sample_states)
     labels = ["Strong advantage", "Heavy deficit", "Even game"]
     for label, chance in zip(labels, chances):

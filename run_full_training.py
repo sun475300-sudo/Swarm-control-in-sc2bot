@@ -35,21 +35,33 @@ def phase1_combat_benchmark():
     sim = GPUCombatSimulator()
 
     matchups = [
-        ("24 Zerglings vs 12 Marines",
-         [{"hp": 35, "attack": 5} for _ in range(24)],
-         [{"hp": 45, "attack": 6} for _ in range(12)]),
-        ("15 Roaches vs 5 Immortals",
-         [{"hp": 145, "attack": 16} for _ in range(15)],
-         [{"hp": 200, "attack": 20} for _ in range(5)]),
-        ("20 Hydras vs 8 Siege Tanks",
-         [{"hp": 80, "attack": 12} for _ in range(20)],
-         [{"hp": 175, "attack": 40} for _ in range(8)]),
-        ("10 Mutas vs 6 Marines + 4 Medivacs",
-         [{"hp": 120, "attack": 9} for _ in range(10)],
-         [{"hp": 45, "attack": 6} for _ in range(6)] + [{"hp": 150, "attack": 0} for _ in range(4)]),
-        ("30 Lings + 5 Banes vs 15 Marines",
-         [{"hp": 35, "attack": 5} for _ in range(30)] + [{"hp": 30, "attack": 20} for _ in range(2)],
-         [{"hp": 45, "attack": 6} for _ in range(15)]),
+        (
+            "24 Zerglings vs 12 Marines",
+            [{"hp": 35, "attack": 5} for _ in range(24)],
+            [{"hp": 45, "attack": 6} for _ in range(12)],
+        ),
+        (
+            "15 Roaches vs 5 Immortals",
+            [{"hp": 145, "attack": 16} for _ in range(15)],
+            [{"hp": 200, "attack": 20} for _ in range(5)],
+        ),
+        (
+            "20 Hydras vs 8 Siege Tanks",
+            [{"hp": 80, "attack": 12} for _ in range(20)],
+            [{"hp": 175, "attack": 40} for _ in range(8)],
+        ),
+        (
+            "10 Mutas vs 6 Marines + 4 Medivacs",
+            [{"hp": 120, "attack": 9} for _ in range(10)],
+            [{"hp": 45, "attack": 6} for _ in range(6)]
+            + [{"hp": 150, "attack": 0} for _ in range(4)],
+        ),
+        (
+            "30 Lings + 5 Banes vs 15 Marines",
+            [{"hp": 35, "attack": 5} for _ in range(30)]
+            + [{"hp": 30, "attack": 20} for _ in range(2)],
+            [{"hp": 45, "attack": 6} for _ in range(15)],
+        ),
     ]
 
     results = {}
@@ -58,7 +70,9 @@ def phase1_combat_benchmark():
         result = sim.simulate_battles_gpu(our, enemy, num_simulations=8192)
         elapsed = (time.perf_counter() - start) * 1000
         print(f"  {name}:")
-        print(f"    Win: {result['win_rate']:.1%} | Survivors: {result.get('avg_survivors_on_win', 0):.1f} | Rounds: {result.get('avg_rounds', 0):.0f} | {elapsed:.0f}ms")
+        print(
+            f"    Win: {result['win_rate']:.1%} | Survivors: {result.get('avg_survivors_on_win', 0):.1f} | Rounds: {result.get('avg_rounds', 0):.0f} | {elapsed:.0f}ms"
+        )
         results[name] = {**result, "time_ms": elapsed}
 
     return results
@@ -72,14 +86,16 @@ def phase2_large_scale_training():
     print("  Phase 2: Large-Scale PPO Training")
     print("=" * 60)
 
-    pipeline = GPUTrainingPipeline({
-        "learning_rate": 3e-4,
-        "batch_size": 4096,
-        "minibatch_size": 512,
-        "num_epochs": 4,
-        "lr_schedule": "cosine",
-        "total_timesteps": 1_000_000,
-    })
+    pipeline = GPUTrainingPipeline(
+        {
+            "learning_rate": 3e-4,
+            "batch_size": 4096,
+            "minibatch_size": 512,
+            "num_epochs": 4,
+            "lr_schedule": "cosine",
+            "total_timesteps": 1_000_000,
+        }
+    )
 
     # 200 iterations × 4096 batch = 819,200 samples
     result = pipeline.run_synthetic_training(
@@ -131,12 +147,15 @@ def phase3_selfplay_league():
     # 학습된 모델 저장
     models_dir = "data/models"
     os.makedirs(models_dir, exist_ok=True)
-    torch.save({
-        "model": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "elo": result["final_elo"],
-        "win_rate": result["win_rate"],
-    }, os.path.join(models_dir, "league_champion.pt"))
+    torch.save(
+        {
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "elo": result["final_elo"],
+            "win_rate": result["win_rate"],
+        },
+        os.path.join(models_dir, "league_champion.pt"),
+    )
 
     # 전략/전투/마이크로 네트워크에도 저장
     torch.save(model.state_dict(), os.path.join(models_dir, "strategy_net.pt"))
@@ -165,7 +184,7 @@ def phase4_transformer_training():
     optimizer = optim.Adam(model.parameters(), lr=1e-4, eps=1e-5)
 
     start_time = time.time()
-    best_reward = float('-inf')
+    best_reward = float("-inf")
     history = []
 
     for epoch in range(100):
@@ -182,9 +201,13 @@ def phase4_transformer_training():
             torch.zeros(batch_size, dtype=torch.long, device=device),  # Early: ECONOMY
             torch.where(
                 game_times < 12,
-                torch.ones(batch_size, dtype=torch.long, device=device),  # Mid: AGGRESSIVE
-                torch.full((batch_size,), 4, dtype=torch.long, device=device),  # Late: ALL_IN
-            )
+                torch.ones(
+                    batch_size, dtype=torch.long, device=device
+                ),  # Mid: AGGRESSIVE
+                torch.full(
+                    (batch_size,), 4, dtype=torch.long, device=device
+                ),  # Late: ALL_IN
+            ),
         )
         # 노이즈 추가 (10% 확률로 다른 행동)
         noise_mask = torch.rand(batch_size, device=device) < 0.1
@@ -199,9 +222,7 @@ def phase4_transformer_training():
         )
 
         # Imitation + RL Loss
-        imitation_loss = F.cross_entropy(
-            model(states, game_times)[0], expert_actions
-        )
+        imitation_loss = F.cross_entropy(model(states, game_times)[0], expert_actions)
 
         # PPO-style loss
         advantages = rewards - values.detach()
@@ -213,10 +234,12 @@ def phase4_transformer_training():
 
         # Combined loss (imitation 비중을 점진적으로 줄임)
         imitation_weight = max(0.5 * (1 - epoch / 100), 0.05)
-        loss = (imitation_weight * imitation_loss +
-                (1 - imitation_weight) * policy_loss +
-                0.5 * value_loss -
-                0.01 * entropy_loss)
+        loss = (
+            imitation_weight * imitation_loss
+            + (1 - imitation_weight) * policy_loss
+            + 0.5 * value_loss
+            - 0.01 * entropy_loss
+        )
 
         optimizer.zero_grad()
         loss.backward()
@@ -227,13 +250,15 @@ def phase4_transformer_training():
         if avg_reward > best_reward:
             best_reward = avg_reward
 
-        history.append({
-            "epoch": epoch,
-            "imitation_loss": imitation_loss.item(),
-            "policy_loss": policy_loss.item(),
-            "value_loss": value_loss.item(),
-            "entropy": entropy_loss.item(),
-        })
+        history.append(
+            {
+                "epoch": epoch,
+                "imitation_loss": imitation_loss.item(),
+                "policy_loss": policy_loss.item(),
+                "value_loss": value_loss.item(),
+                "entropy": entropy_loss.item(),
+            }
+        )
 
         if (epoch + 1) % 20 == 0:
             elapsed = time.time() - start_time
@@ -279,11 +304,15 @@ def final_report(combat_results, ppo_results, league_results, transformer_result
     print("=" * 70)
 
     print(f"\n  GPU: {gpu.gpu_name}")
-    print(f"  VRAM Used: {gpu.memory_stats()['allocated_mb']:.1f} MB / {gpu.memory_stats()['total_mb']:.0f} MB")
+    print(
+        f"  VRAM Used: {gpu.memory_stats()['allocated_mb']:.1f} MB / {gpu.memory_stats()['total_mb']:.0f} MB"
+    )
 
     print(f"\n  --- Combat Simulation ---")
     for name, res in combat_results.items():
-        print(f"  {name}: {res['win_rate']:.0%} win ({res['time_ms']:.0f}ms for 8192 sims)")
+        print(
+            f"  {name}: {res['win_rate']:.0%} win ({res['time_ms']:.0f}ms for 8192 sims)"
+        )
 
     print(f"\n  --- PPO Training ---")
     print(f"  Samples: {ppo_results.get('total_samples', 0):,}")
@@ -295,7 +324,9 @@ def final_report(combat_results, ppo_results, league_results, transformer_result
     print(f"  Games: {league_results.get('total_games', 0)}")
     print(f"  Win rate: {league_results.get('win_rate', 0):.1%}")
     print(f"  Final ELO: {league_results.get('final_elo', 0):.0f}")
-    print(f"  Curriculum: {league_results.get('curriculum', {}).get('current_level', 'N/A')}")
+    print(
+        f"  Curriculum: {league_results.get('curriculum', {}).get('current_level', 'N/A')}"
+    )
     print(f"  Time: {league_results.get('total_time_seconds', 0):.1f}s")
 
     print(f"\n  --- Transformer Model ---")
@@ -322,9 +353,14 @@ def final_report(combat_results, ppo_results, league_results, transformer_result
     report = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "gpu": gpu.gpu_name,
-        "combat_simulation": {k: {kk: vv for kk, vv in v.items() if not isinstance(vv, np.ndarray)} for k, v in combat_results.items()},
+        "combat_simulation": {
+            k: {kk: vv for kk, vv in v.items() if not isinstance(vv, np.ndarray)}
+            for k, v in combat_results.items()
+        },
         "ppo_training": ppo_results,
-        "selfplay_league": {k: v for k, v in league_results.items() if k != "elo_history"},
+        "selfplay_league": {
+            k: v for k, v in league_results.items() if k != "elo_history"
+        },
         "transformer": transformer_results,
     }
 
@@ -340,6 +376,7 @@ def final_report(combat_results, ppo_results, league_results, transformer_result
         return str(obj)
 
     from collections import deque
+
     os.makedirs("data/training_results", exist_ok=True)
     with open("data/training_results/full_training_report.json", "w") as f:
         json.dump(report, f, indent=2, default=serialize)

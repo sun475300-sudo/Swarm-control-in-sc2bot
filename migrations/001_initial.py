@@ -28,17 +28,20 @@ def upgrade(conn) -> None:
     cursor = conn.cursor()
 
     # ── 마이그레이션 이력 테이블 ──
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS migrations (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             migration_id TEXT    NOT NULL UNIQUE,
             description  TEXT,
             applied_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
     # ── 거래 기록 테이블 ──
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS trades (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             trade_id        TEXT    NOT NULL UNIQUE,
@@ -56,21 +59,29 @@ def upgrade(conn) -> None:
             created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
     # 거래 검색 인덱스
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades(symbol)
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_trades_created_at ON trades(created_at)
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status)
-    """)
+    """
+    )
 
     # ── 포트폴리오 스냅샷 테이블 ──
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS portfolio_snapshots (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             total_value_krw  REAL    NOT NULL,
@@ -80,15 +91,19 @@ def upgrade(conn) -> None:
                              CHECK(snapshot_type IN ('auto', 'manual', 'daily')),
             created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_portfolio_created_at
         ON portfolio_snapshots(created_at)
-    """)
+    """
+    )
 
     # ── API 호출 로그 테이블 ──
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS api_logs (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             service          TEXT    NOT NULL,
@@ -101,17 +116,23 @@ def upgrade(conn) -> None:
             error_message    TEXT,
             created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_api_logs_service ON api_logs(service)
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at)
-    """)
+    """
+    )
 
     # ── SC2 봇 세션 테이블 ──
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS bot_sessions (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id       TEXT    NOT NULL UNIQUE,
@@ -127,21 +148,26 @@ def upgrade(conn) -> None:
             started_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ended_at         TIMESTAMP
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE INDEX IF NOT EXISTS idx_bot_sessions_result ON bot_sessions(result)
-    """)
+    """
+    )
 
     # ── 설정 저장 테이블 (키-값) ──
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS settings (
             key         TEXT PRIMARY KEY,
             value       TEXT,
             description TEXT,
             updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
     conn.commit()
     print(f"[마이그레이션 001] 초기 스키마 생성 완료")
@@ -157,7 +183,14 @@ def downgrade(conn) -> None:
     """
     cursor = conn.cursor()
 
-    _ALLOWED_TABLES = {"settings", "bot_sessions", "api_logs", "portfolio_snapshots", "trades", "migrations"}
+    _ALLOWED_TABLES = {
+        "settings",
+        "bot_sessions",
+        "api_logs",
+        "portfolio_snapshots",
+        "trades",
+        "migrations",
+    }
     for table in _ALLOWED_TABLES:
         if table.isidentifier():
             cursor.execute(f"DROP TABLE IF EXISTS [{table}]")

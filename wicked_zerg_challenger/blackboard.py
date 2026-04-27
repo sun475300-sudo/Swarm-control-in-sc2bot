@@ -30,33 +30,37 @@ class ThreatLevel(IntEnum):
     """
     위협 수준 (숫자 비교 가능)
     """
-    NONE = 0        # 안전
-    LOW = 1         # 경계
-    MEDIUM = 2      # 위험
-    HIGH = 3        # 매우 위험
-    CRITICAL = 4    # 긴급 상황 (러시, 올인)
+
+    NONE = 0  # 안전
+    LOW = 1  # 경계
+    MEDIUM = 2  # 위험
+    HIGH = 3  # 매우 위험
+    CRITICAL = 4  # 긴급 상황 (러시, 올인)
 
 
 class GamePhase(Enum):
     """게임 단계"""
-    OPENING = "opening"          # 오프닝 (0-3분)
-    EARLY_GAME = "early_game"    # 초반 (3-6분)
-    MID_GAME = "mid_game"        # 중반 (6-12분)
-    LATE_GAME = "late_game"      # 후반 (12분+)
+
+    OPENING = "opening"  # 오프닝 (0-3분)
+    EARLY_GAME = "early_game"  # 초반 (3-6분)
+    MID_GAME = "mid_game"  # 중반 (6-12분)
+    LATE_GAME = "late_game"  # 후반 (12분+)
 
 
 class AuthorityMode(Enum):
     """생산 권한 모드 - Dynamic Authority System"""
-    EMERGENCY = "emergency"      # 긴급: DefenseCoordinator 전권
-    COMBAT = "combat"           # 전투: UnitFactory 우선
-    STRATEGY = "strategy"       # 전략: AggressiveStrategies 우선
-    ECONOMY = "economy"         # 경제: EconomyManager 우선
-    BALANCED = "balanced"       # 균형: 모두 협력
+
+    EMERGENCY = "emergency"  # 긴급: DefenseCoordinator 전권
+    COMBAT = "combat"  # 전투: UnitFactory 우선
+    STRATEGY = "strategy"  # 전략: AggressiveStrategies 우선
+    ECONOMY = "economy"  # 경제: EconomyManager 우선
+    BALANCED = "balanced"  # 균형: 모두 협력
 
 
 @dataclass
 class UnitCounts:
     """유닛 카운트 (현재 + pending)"""
+
     current: int = 0
     pending: int = 0
 
@@ -69,18 +73,20 @@ class UnitCounts:
 @dataclass
 class ThreatInfo:
     """위협 정보"""
+
     level: ThreatLevel = ThreatLevel.NONE
     enemy_army_supply: float = 0.0
     enemy_units_near_base: int = 0
     is_rushing: bool = False
     is_air_threat: bool = False
     detected_at: float = 0.0
-    threat_position: Optional[Any] = None # Point2 or None
+    threat_position: Optional[Any] = None  # Point2 or None
 
 
 @dataclass
 class ResourceState:
     """자원 상태"""
+
     minerals: int = 0
     vespene: int = 0
     supply_used: int = 0
@@ -107,7 +113,7 @@ class GameStateBlackboard:
 
     def __init__(self):
         self.logger = get_logger("Blackboard")
-        
+
         # === 기본 게임 정보 ===
         self.game_time: float = 0.0
         self.iteration: int = 0
@@ -115,7 +121,7 @@ class GameStateBlackboard:
 
         # === 자원 상태 ===
         self.resources = ResourceState()
-        
+
         # Compatible Accessors (Flat properties)
         self.minerals = 0
         self.vespene = 0
@@ -141,7 +147,7 @@ class GameStateBlackboard:
         self.enemy_race: str = "Unknown"
         self.current_strategy: str = "none"
         self.build_order_complete: bool = False
-        self.strategy_mode: str = "NORMAL" # Backward compatibility
+        self.strategy_mode: str = "NORMAL"  # Backward compatibility
 
         # === 생산 요청 큐 ===
         # 우선순위별 생산 요청: {priority: [(unit_type, count, requester)]}
@@ -165,23 +171,23 @@ class GameStateBlackboard:
         self._cache_timestamps: Dict[str, float] = {}
         self._default_cache_ttl: float = 1.0  # 기본 캐시 유효 시간 (초)
         self._cache_ttls: dict = {}  # Bug fix #6: Per-key TTL storage
-        
+
         # === Generic State (Backward Compatibility) ===
         self.state: Dict[str, Any] = {}
-        self.requests: List[Dict[str, Any]] = [] # For old usage if any
+        self.requests: List[Dict[str, Any]] = []  # For old usage if any
 
     # ========== Compatibility Methods ==========
-    
+
     def set(self, key: str, value: Any) -> None:
         """Update a state value (Backward Compatibility)"""
         self.state[key] = value
-        
+
         # Sync with structured attributes if applicable
         if key == "strategy_mode":
             self.strategy_mode = value
         elif key == "game_phase":
             # Map string to enum if possible, or just store
-            pass 
+            pass
         elif key == "enemy_race":
             self.enemy_race = str(value)
         elif key == "is_rush_detected":
@@ -197,11 +203,11 @@ class GameStateBlackboard:
         """기본 게임 정보 업데이트 (Overloaded for compatibility)"""
         # If called with bot instance as first arg (old signature)
         bot = None
-        if hasattr(game_time, "time"): 
+        if hasattr(game_time, "time"):
             bot = game_time
             game_time = bot.time
             iteration = getattr(bot, "iteration", 0)
-        
+
         self.game_time = game_time
         self.iteration = iteration
 
@@ -218,21 +224,22 @@ class GameStateBlackboard:
         else:
             self.game_phase = GamePhase.LATE_GAME
             self.state["game_phase"] = "LATE_GAME"
-            
+
         # If bot passed, update enemy race
-        if bot and hasattr(bot, 'enemy_race') and bot.enemy_race:
+        if bot and hasattr(bot, "enemy_race") and bot.enemy_race:
             self.enemy_race = str(bot.enemy_race)
             self.state["enemy_race"] = self.enemy_race
 
-    def update_resources(self, minerals: int, vespene: int,
-                        supply_used: int, supply_cap: int):
+    def update_resources(
+        self, minerals: int, vespene: int, supply_used: int, supply_cap: int
+    ):
         """자원 상태 업데이트"""
         self.resources.minerals = minerals
         self.resources.vespene = vespene
         self.resources.supply_used = supply_used
         self.resources.supply_cap = supply_cap
         self.resources.supply_left = supply_cap - supply_used
-        
+
         # Sync flat usage
         self.minerals = minerals
         self.vespene = vespene
@@ -251,16 +258,22 @@ class GameStateBlackboard:
         """유닛 카운트 조회"""
         return self.unit_counts.get(unit_type, UnitCounts())
 
-    def update_threat(self, level: ThreatLevel, enemy_army_supply: float = 0.0,
-                     enemy_units_near_base: int = 0, is_rushing: bool = False,
-                     is_air_threat: bool = False, threat_position: Optional[Any] = None):
+    def update_threat(
+        self,
+        level: ThreatLevel,
+        enemy_army_supply: float = 0.0,
+        enemy_units_near_base: int = 0,
+        is_rushing: bool = False,
+        is_air_threat: bool = False,
+        threat_position: Optional[Any] = None,
+    ):
         """위협 정보 업데이트"""
         self.threat.level = level
         self.threat.enemy_army_supply = enemy_army_supply
         self.threat.enemy_units_near_base = enemy_units_near_base
         self.threat.is_rushing = is_rushing
         self.threat.is_air_threat = is_air_threat
-        
+
         # Sync backward config
         self.state["is_rush_detected"] = is_rushing
         self.state["threat_level"] = int(level)
@@ -353,7 +366,10 @@ class GameStateBlackboard:
             return
 
         # 안전한 경제 성장
-        if self.threat.level == ThreatLevel.NONE and self.game_phase == GamePhase.OPENING:
+        if (
+            self.threat.level == ThreatLevel.NONE
+            and self.game_phase == GamePhase.OPENING
+        ):
             self.set_authority_mode(AuthorityMode.ECONOMY, "Safe expansion")
             return
 
@@ -362,8 +378,9 @@ class GameStateBlackboard:
 
     # ========== 생산 요청 시스템 ==========
 
-    def request_production(self, unit_type: Any, count: int,
-                          requester: str, priority: Optional[int] = None):
+    def request_production(
+        self, unit_type: Any, count: int, requester: str, priority: Optional[int] = None
+    ):
         """
         생산 요청 추가
 
@@ -413,18 +430,20 @@ class GameStateBlackboard:
         else:
             for priority in self.production_queue:
                 self.production_queue[priority] = [
-                    (utype, cnt, req) for utype, cnt, req in self.production_queue[priority]
+                    (utype, cnt, req)
+                    for utype, cnt, req in self.production_queue[priority]
                     if req != requester
                 ]
-    
+
     # Alias for backward compatibility with old blackboard.py
     def clear_requests(self):
         self.clear_production_requests()
 
     # ========== 건설 예약 시스템 ==========
 
-    def reserve_building(self, building_type: Any, requester: str,
-                        duration: float = 10.0) -> bool:
+    def reserve_building(
+        self, building_type: Any, requester: str, duration: float = 10.0
+    ) -> bool:
         """
         건물 건설 예약
 
@@ -490,25 +509,32 @@ class GameStateBlackboard:
 
     def should_defend(self) -> bool:
         """방어가 필요한 상황인가?"""
-        return (self.threat.level >= ThreatLevel.MEDIUM or
-                self.is_under_attack or
-                self.threat.is_rushing)
+        return (
+            self.threat.level >= ThreatLevel.MEDIUM
+            or self.is_under_attack
+            or self.threat.is_rushing
+        )
 
     def can_attack(self) -> bool:
         """공격 가능한 상황인가?"""
-        return (self.threat.level <= ThreatLevel.LOW and
-                not self.is_under_attack and
-                self.game_phase != GamePhase.OPENING)
+        return (
+            self.threat.level <= ThreatLevel.LOW
+            and not self.is_under_attack
+            and self.game_phase != GamePhase.OPENING
+        )
 
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
-        return (self.threat.level == ThreatLevel.NONE and
-                not self.resources.is_supply_blocked and
-                self.resources.minerals >= 300)
-                
+        return (
+            self.threat.level == ThreatLevel.NONE
+            and not self.resources.is_supply_blocked
+            and self.resources.minerals >= 300
+        )
+
     def get_army_value(self) -> float:
         # Simplification for reference
         return 0.0
+
 
 # Alias for backward compatibility
 Blackboard = GameStateBlackboard

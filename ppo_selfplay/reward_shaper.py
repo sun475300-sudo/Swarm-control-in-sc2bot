@@ -17,7 +17,8 @@ class RewardMode(Enum):
 @dataclass
 class GameState:
     """Minimal SC2 game state snapshot for reward calculation."""
-    winner: Optional[str] = None          # "self" | "opponent" | None
+
+    winner: Optional[str] = None  # "self" | "opponent" | None
     supply_used: int = 0
     supply_cap: int = 14
     army_value: float = 0.0
@@ -42,14 +43,27 @@ class CurriculumStageConfig:
 
 
 CURRICULUM_STAGES = [
-    CurriculumStageConfig("early_macro",  win_loss_weight=1.0, supply_weight=0.3,
-                          worker_weight=0.2),
-    CurriculumStageConfig("army_control", win_loss_weight=1.0, army_weight=0.4,
-                          supply_weight=0.1),
-    CurriculumStageConfig("multi_task",   win_loss_weight=1.0, army_weight=0.3,
-                          tech_weight=0.2, worker_weight=0.1),
-    CurriculumStageConfig("full_game",    win_loss_weight=1.0, army_weight=0.2,
-                          tech_weight=0.2, supply_weight=0.1, worker_weight=0.1),
+    CurriculumStageConfig(
+        "early_macro", win_loss_weight=1.0, supply_weight=0.3, worker_weight=0.2
+    ),
+    CurriculumStageConfig(
+        "army_control", win_loss_weight=1.0, army_weight=0.4, supply_weight=0.1
+    ),
+    CurriculumStageConfig(
+        "multi_task",
+        win_loss_weight=1.0,
+        army_weight=0.3,
+        tech_weight=0.2,
+        worker_weight=0.1,
+    ),
+    CurriculumStageConfig(
+        "full_game",
+        win_loss_weight=1.0,
+        army_weight=0.2,
+        tech_weight=0.2,
+        supply_weight=0.1,
+        worker_weight=0.1,
+    ),
 ]
 
 
@@ -59,8 +73,7 @@ class RewardShaper:
     WIN_REWARD = 1.0
     LOSS_REWARD = -1.0
 
-    def __init__(self, mode: RewardMode = RewardMode.SHAPED,
-                 curriculum_stage: int = 0):
+    def __init__(self, mode: RewardMode = RewardMode.SHAPED, curriculum_stage: int = 0):
         self.mode = mode
         self.curriculum_stage = min(curriculum_stage, len(CURRICULUM_STAGES) - 1)
         self._stage_cfg = CURRICULUM_STAGES[self.curriculum_stage]
@@ -91,7 +104,7 @@ class RewardShaper:
     def worker_survival_reward(self, state: GameState) -> float:
         delta = state.worker_count - state.prev_worker_count
         if delta < 0:
-            return 0.05 * delta       # penalise worker losses
+            return 0.05 * delta  # penalise worker losses
         return 0.0
 
     # --- Composite reward ---
@@ -101,17 +114,21 @@ class RewardShaper:
             return self.win_loss_reward(state)
 
         cfg = self._stage_cfg
-        r = (cfg.win_loss_weight * self.win_loss_reward(state)
-             + cfg.supply_weight * self.supply_efficiency_reward(state)
-             + cfg.army_weight * self.army_value_reward(state)
-             + cfg.tech_weight * self.tech_progress_reward(state)
-             + cfg.worker_weight * self.worker_survival_reward(state))
+        r = (
+            cfg.win_loss_weight * self.win_loss_reward(state)
+            + cfg.supply_weight * self.supply_efficiency_reward(state)
+            + cfg.army_weight * self.army_value_reward(state)
+            + cfg.tech_weight * self.tech_progress_reward(state)
+            + cfg.worker_weight * self.worker_survival_reward(state)
+        )
 
         if self.mode == RewardMode.DENSE:
-            r += (self.supply_efficiency_reward(state)
-                  + self.army_value_reward(state)
-                  + self.tech_progress_reward(state)
-                  + self.worker_survival_reward(state))
+            r += (
+                self.supply_efficiency_reward(state)
+                + self.army_value_reward(state)
+                + self.tech_progress_reward(state)
+                + self.worker_survival_reward(state)
+            )
         return r
 
     def advance_curriculum(self, win_rate: float, threshold: float = 0.55) -> bool:

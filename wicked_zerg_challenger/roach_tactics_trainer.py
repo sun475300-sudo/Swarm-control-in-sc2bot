@@ -109,7 +109,9 @@ class RoachTacticsTrainer:
         """업그레이드 확인"""
         try:
             self.has_burrow = UpgradeId.BURROW in self.bot.state.upgrades
-            self.has_tunneling_claws = UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades
+            self.has_tunneling_claws = (
+                UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades
+            )
         except Exception:
             pass
 
@@ -166,15 +168,23 @@ class RoachTacticsTrainer:
             # ★ Unit Authority Check ★
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 from unit_authority_manager import AuthorityLevel
+
                 # MICRO 권한 요청 (전술적 잠복은 높은 우선순위)
                 granted = self.bot.unit_authority.request_authority(
-                    {roach.tag}, AuthorityLevel.COMBAT, "RoachTactics", self.bot.state.game_loop
+                    {roach.tag},
+                    AuthorityLevel.COMBAT,
+                    "RoachTactics",
+                    self.bot.state.game_loop,
                 )
                 if roach.tag not in granted:
                     continue
 
             # 잠복 가능 여부 확인
-            if not roach.is_idle and AbilityId.BURROWDOWN_ROACH in await self.bot.get_available_abilities(roach):
+            if (
+                not roach.is_idle
+                and AbilityId.BURROWDOWN_ROACH
+                in await self.bot.get_available_abilities(roach)
+            ):
                 try:
                     self.bot.do(roach(AbilityId.BURROWDOWN_ROACH))
 
@@ -222,7 +232,9 @@ class RoachTacticsTrainer:
                     continue
 
             # 잠복 해제
-            if AbilityId.BURROWUP_ROACH in await self.bot.get_available_abilities(roach):
+            if AbilityId.BURROWUP_ROACH in await self.bot.get_available_abilities(
+                roach
+            ):
                 try:
                     self.bot.do(roach(AbilityId.BURROWUP_ROACH))
 
@@ -250,7 +262,9 @@ class RoachTacticsTrainer:
                 return True
 
             # 근처 적 건물 확인
-            nearby_structures = self.bot.enemy_structures.closer_than(15, roach.position)
+            nearby_structures = self.bot.enemy_structures.closer_than(
+                15, roach.position
+            )
             if nearby_structures.amount > 0:
                 return True
 
@@ -284,7 +298,9 @@ class RoachTacticsTrainer:
 
             for tank in tanks:
                 # 이미 잠복 중이거나 체력이 낮으면 스킵
-                if tank.is_burrowed or (tank.health_max > 0 and tank.health / tank.health_max < 0.5):
+                if tank.is_burrowed or (
+                    tank.health_max > 0 and tank.health / tank.health_max < 0.5
+                ):
                     continue
 
                 # 적과의 거리
@@ -337,7 +353,9 @@ class RoachTacticsTrainer:
         """바퀴 전술 통계 반환"""
         avg_burrows_per_roach = 0
         if len(self.roaches) > 0:
-            avg_burrows_per_roach = sum(r.times_burrowed for r in self.roaches.values()) / len(self.roaches)
+            avg_burrows_per_roach = sum(
+                r.times_burrowed for r in self.roaches.values()
+            ) / len(self.roaches)
 
         return {
             "total_roaches": len(self.roaches),
@@ -346,7 +364,7 @@ class RoachTacticsTrainer:
             "roaches_saved": self.roaches_saved,
             "avg_burrows_per_roach": f"{avg_burrows_per_roach:.2f}",
             "has_burrow": self.has_burrow,
-            "has_tunneling_claws": self.has_tunneling_claws
+            "has_tunneling_claws": self.has_tunneling_claws,
         }
 
     def _print_statistics(self, game_time: float):
@@ -361,7 +379,7 @@ class RoachTacticsTrainer:
             f"Saved: {stats['roaches_saved']}"
         )
 
-        if stats['has_burrow']:
+        if stats["has_burrow"]:
             self.logger.info(
                 f"[ROACH_TACTICS] Avg Burrows/Roach: {stats['avg_burrows_per_roach']}"
             )

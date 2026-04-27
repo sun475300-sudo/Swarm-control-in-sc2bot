@@ -63,6 +63,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 class ZergStrategy(Enum):
     """Common Zerg strategies."""
+
     TWELVE_POOL = auto()
     HATCH_FIRST = auto()
     LING_BANE_MUTA = auto()
@@ -77,6 +78,7 @@ class ZergStrategy(Enum):
 
 class EnemyStrategy(Enum):
     """Generalised enemy strategies (observable via scouting)."""
+
     RUSH = auto()
     TIMING_ATTACK = auto()
     TWO_BASE_ALL_IN = auto()
@@ -99,6 +101,7 @@ class Matchup(Enum):
 @dataclass
 class ScoutingObservation:
     """A single scouting observation at a game time."""
+
     game_time_seconds: float
     enemy_worker_count: int = 0
     enemy_gas_count: int = 0
@@ -114,6 +117,7 @@ class ScoutingObservation:
 @dataclass
 class MatchHistory:
     """Win/loss record for a specific matchup or strategy."""
+
     wins: int = 0
     losses: int = 0
 
@@ -276,7 +280,7 @@ class _FallbackGaussianProcess:
 
     def _kernel(self, X1: np.ndarray, X2: np.ndarray) -> np.ndarray:
         sq_dist = np.subtract.outer(X1.ravel(), X2.ravel()) ** 2
-        return self.sf2 * np.exp(-0.5 * sq_dist / self.l ** 2)
+        return self.sf2 * np.exp(-0.5 * sq_dist / self.l**2)
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self.X_train = X.ravel()
@@ -285,9 +289,7 @@ class _FallbackGaussianProcess:
         K += self.sn2 * np.eye(len(self.X_train))
         self._K_inv = np.linalg.inv(K)
 
-    def predict(
-        self, X_new: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def predict(self, X_new: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         if self.X_train is None or self._K_inv is None:
             raise RuntimeError("GP not fitted yet.")
         X_new = X_new.ravel()
@@ -379,10 +381,9 @@ class SC2StrategyInference:
 
         # Prior probabilities
         priors = META_GAME_PRIORS.get(matchup.value, {})
-        self.prior = np.array([
-            priors.get(s.name, 1.0 / self.n_strategies)
-            for s in self.strategies
-        ])
+        self.prior = np.array(
+            [priors.get(s.name, 1.0 / self.n_strategies) for s in self.strategies]
+        )
         self.prior /= self.prior.sum()
 
         # Posterior (starts as prior)
@@ -399,7 +400,9 @@ class SC2StrategyInference:
 
         # GP for timing prediction
         self.timing_gp = _FallbackGaussianProcess(
-            length_scale=60.0, signal_variance=1.0, noise_variance=0.1,
+            length_scale=60.0,
+            signal_variance=1.0,
+            noise_variance=0.1,
         )
         self._timing_data_X: List[float] = []
         self._timing_data_y: List[float] = []
@@ -418,7 +421,8 @@ class SC2StrategyInference:
 
     # -- prior & likelihood -------------------------------------------------
     def _compute_observation_features(
-        self, obs: ScoutingObservation,
+        self,
+        obs: ScoutingObservation,
     ) -> Dict[str, float]:
         """Extract features from a scouting observation for likelihood calc."""
         return {
@@ -430,7 +434,9 @@ class SC2StrategyInference:
         }
 
     def _log_likelihood_observation(
-        self, obs: ScoutingObservation, strategy_name: str,
+        self,
+        obs: ScoutingObservation,
+        strategy_name: str,
     ) -> float:
         """Log-likelihood of an observation given a strategy."""
         features = self._compute_observation_features(obs)
@@ -473,8 +479,7 @@ class SC2StrategyInference:
     def get_strategy_probabilities(self) -> Dict[str, float]:
         """Return current posterior probabilities for all strategies."""
         return {
-            name: float(prob)
-            for name, prob in zip(self.strategy_names, self.posterior)
+            name: float(prob) for name, prob in zip(self.strategy_names, self.posterior)
         }
 
     def most_likely_strategy(self) -> Tuple[str, float]:
@@ -542,9 +547,9 @@ class SC2StrategyInference:
             self._pymc_model = model
 
         # Extract posterior means
-        post_means = self._trace.posterior["strategy_probs"].mean(
-            dim=("chain", "draw")
-        ).values
+        post_means = (
+            self._trace.posterior["strategy_probs"].mean(dim=("chain", "draw")).values
+        )
         self.posterior = post_means / post_means.sum()
 
         summary = az.summary(self._trace, var_names=["strategy_probs"])
@@ -555,11 +560,15 @@ class SC2StrategyInference:
             "n_samples": n_samples,
             "n_chains": chains,
             "strategy_posteriors": self.get_strategy_probabilities(),
-            "summary": summary.to_dict() if hasattr(summary, "to_dict") else str(summary),
+            "summary": (
+                summary.to_dict() if hasattr(summary, "to_dict") else str(summary)
+            ),
         }
 
     def _run_fallback_mcmc(
-        self, n_samples: int, n_warmup: int,
+        self,
+        n_samples: int,
+        n_warmup: int,
     ) -> Dict[str, Any]:
         """Metropolis-Hastings fallback."""
 
@@ -573,7 +582,9 @@ class SC2StrategyInference:
 
         sampler = _FallbackMCMC(self.n_strategies, self.prior)
         samples = sampler.sample_posterior(
-            log_likelihood_fn, n_samples=n_samples, n_warmup=n_warmup,
+            log_likelihood_fn,
+            n_samples=n_samples,
+            n_warmup=n_warmup,
         )
 
         self.posterior = samples.mean(axis=0)
@@ -635,8 +646,11 @@ class SC2StrategyInference:
                 pm.Binomial("wins", n=totals, p=theta, observed=wins)
 
                 trace = pm.sample(
-                    draws=n_samples, tune=500, chains=2,
-                    return_inferencedata=True, progressbar=True,
+                    draws=n_samples,
+                    tune=500,
+                    chains=2,
+                    return_inferencedata=True,
+                    progressbar=True,
                 )
 
             post = trace.posterior
@@ -685,7 +699,10 @@ class SC2StrategyInference:
 
     # -- Beta-Binomial win rate estimation ----------------------------------
     def update_win_rate(
-        self, matchup: str, wins: int, losses: int,
+        self,
+        matchup: str,
+        wins: int,
+        losses: int,
     ) -> Dict[str, Any]:
         """
         Update Beta-Binomial win rate model with new match results.
@@ -707,7 +724,10 @@ class SC2StrategyInference:
         }
         log.info(
             "Win rate updated for %s: %.1f%% [%.1f%%, %.1f%%]",
-            matchup, model.mean * 100, ci[0] * 100, ci[1] * 100,
+            matchup,
+            model.mean * 100,
+            ci[0] * 100,
+            ci[1] * 100,
         )
         return result
 
@@ -793,20 +813,27 @@ class SC2StrategyInference:
             eta = pm.HalfNormal("signal_variance", sigma=2.0)
             sigma = pm.HalfNormal("noise", sigma=0.5)
 
-            cov = eta ** 2 * pm.gp.cov.ExpQuad(1, ls=ell)
+            cov = eta**2 * pm.gp.cov.ExpQuad(1, ls=ell)
             gp = pm.gp.Marginal(cov_func=cov)
 
             gp.marginal_likelihood(
-                "y", X=X[:, None], y=y, sigma=sigma,
+                "y",
+                X=X[:, None],
+                y=y,
+                sigma=sigma,
             )
 
             trace = pm.sample(
-                draws=1000, tune=500, chains=2,
-                return_inferencedata=True, progressbar=False,
+                draws=1000,
+                tune=500,
+                chains=2,
+                return_inferencedata=True,
+                progressbar=False,
             )
 
             mu, var = gp.predict(
-                X_new[:, None], point=trace.posterior.mean(dim=("chain", "draw")),
+                X_new[:, None],
+                point=trace.posterior.mean(dim=("chain", "draw")),
                 diag=True,
             )
             std = np.sqrt(var)
@@ -833,11 +860,19 @@ class SC2StrategyInference:
                 return {
                     "backend": "arviz",
                     "waic": {
-                        "waic_value": float(waic.waic) if hasattr(waic, "waic") else float(waic.elpd_waic * -2),
+                        "waic_value": (
+                            float(waic.waic)
+                            if hasattr(waic, "waic")
+                            else float(waic.elpd_waic * -2)
+                        ),
                         "p_waic": float(waic.p_waic),
                     },
                     "loo": {
-                        "loo_value": float(loo.loo) if hasattr(loo, "loo") else float(loo.elpd_loo * -2),
+                        "loo_value": (
+                            float(loo.loo)
+                            if hasattr(loo, "loo")
+                            else float(loo.elpd_loo * -2)
+                        ),
                         "p_loo": float(loo.p_loo),
                     },
                 }
@@ -912,7 +947,11 @@ class SC2StrategyInference:
                     hdi_prob=0.95,
                 )
                 rhat = summary["r_hat"].to_dict() if "r_hat" in summary.columns else {}
-                ess_bulk = summary["ess_bulk"].to_dict() if "ess_bulk" in summary.columns else {}
+                ess_bulk = (
+                    summary["ess_bulk"].to_dict()
+                    if "ess_bulk" in summary.columns
+                    else {}
+                )
                 return {
                     "backend": "arviz",
                     "r_hat": rhat,
@@ -949,12 +988,15 @@ class SC2StrategyInference:
         ax.set_xticks(range(self.n_strategies))
         ax.set_xticklabels(
             [n.replace("_", " ").title() for n in self.strategy_names],
-            rotation=45, ha="right", fontsize=9,
+            rotation=45,
+            ha="right",
+            fontsize=9,
         )
         ax.set_ylabel("Posterior Probability")
         ax.set_title(
             f"Enemy Strategy Posterior — {self.matchup.value}",
-            fontsize=13, fontweight="bold",
+            fontsize=13,
+            fontweight="bold",
         )
         ax.set_ylim(0, min(1.0, max(self.posterior) * 1.3))
 
@@ -963,7 +1005,9 @@ class SC2StrategyInference:
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.005,
                 f"{prob:.1%}",
-                ha="center", va="bottom", fontsize=8,
+                ha="center",
+                va="bottom",
+                fontsize=8,
             )
 
         fig.tight_layout()
@@ -990,10 +1034,18 @@ class SC2StrategyInference:
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.fill_between(x, y, alpha=0.3, color="steelblue")
         ax.plot(x, y, color="steelblue", lw=2)
-        ax.axvline(model.mean, color="red", ls="--", lw=1.5, label=f"Mean={model.mean:.3f}")
+        ax.axvline(
+            model.mean, color="red", ls="--", lw=1.5, label=f"Mean={model.mean:.3f}"
+        )
 
         ci = model.credible_interval(0.95)
-        ax.axvspan(ci[0], ci[1], alpha=0.15, color="orange", label=f"95% CI [{ci[0]:.3f}, {ci[1]:.3f}]")
+        ax.axvspan(
+            ci[0],
+            ci[1],
+            alpha=0.15,
+            color="orange",
+            label=f"95% CI [{ci[0]:.3f}, {ci[1]:.3f}]",
+        )
 
         ax.set_xlabel("Win Rate")
         ax.set_ylabel("Density")
@@ -1102,11 +1154,13 @@ def main() -> None:
 
     # 6. Hierarchical model
     print("\n--- Hierarchical Matchup Model ---")
-    hier_result = engine.hierarchical_matchup_model({
-        "ZvT": MatchHistory(wins=35, losses=25),
-        "ZvP": MatchHistory(wins=28, losses=32),
-        "ZvZ": MatchHistory(wins=20, losses=20),
-    })
+    hier_result = engine.hierarchical_matchup_model(
+        {
+            "ZvT": MatchHistory(wins=35, losses=25),
+            "ZvP": MatchHistory(wins=28, losses=32),
+            "ZvZ": MatchHistory(wins=20, losses=20),
+        }
+    )
     print(f"  Population mean: {hier_result['population_mean']:.1%}")
     for m, data in hier_result["matchup_win_rates"].items():
         print(f"  {m}: {data['mean']:.1%} +/- {data['std']:.1%} CI={data['ci_95']}")

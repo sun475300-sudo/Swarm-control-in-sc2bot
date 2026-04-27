@@ -28,20 +28,27 @@ except ImportError:
 
 class AttackPhase(Enum):
     """공격 페이즈"""
-    PREPARING = "preparing"      # 준비 중
-    LAUNCHING = "launching"      # 개시
-    ATTACKING = "attacking"      # 공격 중
-    RETREATING = "retreating"    # 철수 중
-    COMPLETED = "completed"      # 완료
-    FAILED = "failed"            # 실패
+
+    PREPARING = "preparing"  # 준비 중
+    LAUNCHING = "launching"  # 개시
+    ATTACKING = "attacking"  # 공격 중
+    RETREATING = "retreating"  # 철수 중
+    COMPLETED = "completed"  # 완료
+    FAILED = "failed"  # 실패
 
 
 class TimingWindow:
     """타이밍 공격 윈도우"""
 
-    def __init__(self, name: str, min_supply: int, required_units: Dict[str, int],
-                 required_upgrades: Optional[List[str]] = None,
-                 max_time: float = 0.0, priority: int = 5):
+    def __init__(
+        self,
+        name: str,
+        min_supply: int,
+        required_units: Dict[str, int],
+        required_upgrades: Optional[List[str]] = None,
+        max_time: float = 0.0,
+        priority: int = 5,
+    ):
         """
         Args:
             name: 타이밍 이름
@@ -251,8 +258,9 @@ class TimingAttackPlanner:
         self.active_plan = plan
         self.attack_ready = False
 
-        logger.info(f"공격 개시: {timing.name} "
-              f"(supply={plan.army_supply_at_start})")
+        logger.info(
+            f"공격 개시: {timing.name} " f"(supply={plan.army_supply_at_start})"
+        )
         return plan
 
     def retreat(self) -> None:
@@ -378,14 +386,16 @@ class TimingAttackPlanner:
             self.consecutive_failures = 0
 
         # 이력 기록
-        self.attack_history.append({
-            "timing": plan.timing.name,
-            "start_time": plan.start_time,
-            "supply_at_start": plan.army_supply_at_start,
-            "supply_at_end": plan.current_army_supply,
-            "success": success,
-            "reason": reason,
-        })
+        self.attack_history.append(
+            {
+                "timing": plan.timing.name,
+                "start_time": plan.start_time,
+                "supply_at_start": plan.army_supply_at_start,
+                "supply_at_end": plan.current_army_supply,
+                "success": success,
+                "reason": reason,
+            }
+        )
 
         result_str = "성공" if success else "실패"
         logger.info(f"공격 종료 ({result_str}): {plan.timing.name} - {reason}")

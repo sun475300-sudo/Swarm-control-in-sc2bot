@@ -16,18 +16,21 @@ from pathlib import Path
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
 
 try:
     import faiss
+
     HAS_FAISS = True
 except ImportError:
     HAS_FAISS = False
 
 try:
     import chromadb
+
     HAS_CHROMA = True
 except ImportError:
     HAS_CHROMA = False
@@ -47,9 +50,10 @@ TOP_K_DEFAULT = 5
 
 class GamePhase(Enum):
     """SC2 game phases for phase-aware chunking."""
-    EARLY = "early"          # 0-5 min
-    MID = "mid"              # 5-12 min
-    LATE = "late"            # 12-20 min
+
+    EARLY = "early"  # 0-5 min
+    MID = "mid"  # 5-12 min
+    LATE = "late"  # 12-20 min
     ULTRA_LATE = "ultra_late"  # 20+ min
 
 
@@ -64,7 +68,7 @@ PHASE_TIME_BOUNDARIES = {
     GamePhase.EARLY: (0, 300),
     GamePhase.MID: (300, 720),
     GamePhase.LATE: (720, 1200),
-    GamePhase.ULTRA_LATE: (1200, float('inf')),
+    GamePhase.ULTRA_LATE: (1200, float("inf")),
 }
 
 # ============================================================
@@ -75,6 +79,7 @@ PHASE_TIME_BOUNDARIES = {
 @dataclass
 class BuildOrderEntry:
     """A single entry in a build order."""
+
     time_seconds: float
     supply: int
     action: str
@@ -90,6 +95,7 @@ class BuildOrderEntry:
 @dataclass
 class ReplayOutcome:
     """Outcome metadata for a replay."""
+
     winner_race: str
     loser_race: str
     duration_seconds: float
@@ -111,6 +117,7 @@ class ReplayOutcome:
 @dataclass
 class TimingWindow:
     """A notable timing event in the replay."""
+
     time_seconds: float
     event_type: str  # "attack", "expand", "tech", "upgrade"
     description: str
@@ -120,12 +127,15 @@ class TimingWindow:
     def to_text(self) -> str:
         mins = int(self.time_seconds) // 60
         secs = int(self.time_seconds) % 60
-        return f"[{mins}:{secs:02d}] P{self.player} {self.event_type}: {self.description}"
+        return (
+            f"[{mins}:{secs:02d}] P{self.player} {self.event_type}: {self.description}"
+        )
 
 
 @dataclass
 class ReplayDocument:
     """Parsed SC2 replay as a structured document."""
+
     replay_id: str
     replay_path: str
     player1_race: str
@@ -169,6 +179,7 @@ class ReplayDocument:
 @dataclass
 class TextChunk:
     """A chunked piece of replay text with metadata."""
+
     chunk_id: str
     text: str
     source_replay_id: str
@@ -186,6 +197,7 @@ class TextChunk:
 @dataclass
 class RetrievalResult:
     """A single retrieval result with score and citation."""
+
     chunk: TextChunk
     score: float
     rerank_score: float = 0.0
@@ -335,11 +347,15 @@ class SC2ReplayLoader:
             timings=[
                 TimingWindow(210, "tech", "Roach Warren started", 1, GamePhase.EARLY),
                 TimingWindow(360, "tech", "Hydralisk Den started", 1, GamePhase.MID),
-                TimingWindow(480, "attack", "Roach-Hydra push begins", 1, GamePhase.MID),
+                TimingWindow(
+                    480, "attack", "Roach-Hydra push begins", 1, GamePhase.MID
+                ),
                 TimingWindow(300, "expand", "Natural base completed", 2, GamePhase.MID),
                 TimingWindow(420, "tech", "Stim research completed", 2, GamePhase.MID),
             ],
-            outcome=ReplayOutcome("Zerg", "Terran", 580, 185, 160, "Oxide LE", "5.0.12"),
+            outcome=ReplayOutcome(
+                "Zerg", "Terran", 580, 185, 160, "Oxide LE", "5.0.12"
+            ),
             army_compositions={
                 1: {"Roach": 12, "Hydralisk": 10, "Zergling": 8, "Queen": 3},
                 2: {"Marine": 18, "Marauder": 4, "SiegeTank": 2, "Medivac": 2},
@@ -388,14 +404,20 @@ class SC2ReplayLoader:
             },
             timings=[
                 TimingWindow(180, "tech", "Baneling Nest started", 1, GamePhase.EARLY),
-                TimingWindow(300, "attack", "Ling-Bane pressure at natural", 1, GamePhase.MID),
+                TimingWindow(
+                    300, "attack", "Ling-Bane pressure at natural", 1, GamePhase.MID
+                ),
                 TimingWindow(480, "tech", "Hive started", 1, GamePhase.MID),
-                TimingWindow(600, "tech", "Ultralisk Cavern completed", 1, GamePhase.LATE),
+                TimingWindow(
+                    600, "tech", "Ultralisk Cavern completed", 1, GamePhase.LATE
+                ),
                 TimingWindow(720, "attack", "Ultra push begins", 1, GamePhase.LATE),
                 TimingWindow(350, "tech", "Charge completed", 2, GamePhase.MID),
                 TimingWindow(500, "expand", "Third base taken", 2, GamePhase.MID),
             ],
-            outcome=ReplayOutcome("Zerg", "Protoss", 840, 210, 145, "Alcyone LE", "5.0.12"),
+            outcome=ReplayOutcome(
+                "Zerg", "Protoss", 840, 210, 145, "Alcyone LE", "5.0.12"
+            ),
             army_compositions={
                 1: {"Ultralisk": 6, "Zergling": 20, "Baneling": 12, "Corruptor": 4},
                 2: {"Zealot": 12, "Archon": 4, "Immortal": 3, "Stalker": 6},
@@ -447,7 +469,9 @@ class SC2ReplayLoader:
                 TimingWindow(180, "tech", "Baneling Nest started", 2, GamePhase.EARLY),
                 TimingWindow(300, "attack", "Ling-Bane counter", 2, GamePhase.MID),
             ],
-            outcome=ReplayOutcome("Zerg", "Zerg", 510, 230, 190, "Goldenaura LE", "5.0.12"),
+            outcome=ReplayOutcome(
+                "Zerg", "Zerg", 510, 230, 190, "Goldenaura LE", "5.0.12"
+            ),
             army_compositions={
                 1: {"Roach": 14, "Ravager": 4, "Zergling": 6},
                 2: {"Zergling": 16, "Baneling": 8, "Roach": 6},
@@ -497,15 +521,27 @@ class SC2ReplayLoader:
             timings=[
                 TimingWindow(198, "tech", "Lair started", 1, GamePhase.EARLY),
                 TimingWindow(300, "tech", "Spire completed", 1, GamePhase.MID),
-                TimingWindow(390, "attack", "11 Mutalisk harass begins", 1, GamePhase.MID),
-                TimingWindow(540, "attack", "Second muta wave + ling runby", 1, GamePhase.MID),
+                TimingWindow(
+                    390, "attack", "11 Mutalisk harass begins", 1, GamePhase.MID
+                ),
+                TimingWindow(
+                    540, "attack", "Second muta wave + ling runby", 1, GamePhase.MID
+                ),
                 TimingWindow(400, "tech", "Missile Turrets placed", 2, GamePhase.MID),
                 TimingWindow(480, "attack", "Marine-Medivac drop", 2, GamePhase.MID),
             ],
-            outcome=ReplayOutcome("Zerg", "Terran", 720, 245, 175, "Oxide LE", "5.0.12"),
+            outcome=ReplayOutcome(
+                "Zerg", "Terran", 720, 245, 175, "Oxide LE", "5.0.12"
+            ),
             army_compositions={
                 1: {"Mutalisk": 17, "Zergling": 24, "Baneling": 6, "Queen": 4},
-                2: {"Marine": 22, "Medivac": 4, "Marauder": 6, "SiegeTank": 3, "Thor": 1},
+                2: {
+                    "Marine": 22,
+                    "Medivac": 4,
+                    "Marauder": 6,
+                    "SiegeTank": 3,
+                    "Thor": 1,
+                },
             },
         )
 
@@ -545,12 +581,20 @@ class SC2ReplayLoader:
             },
             timings=[
                 TimingWindow(165, "tech", "Lair started for Nydus", 1, GamePhase.EARLY),
-                TimingWindow(210, "tech", "Nydus Network completed", 1, GamePhase.EARLY),
-                TimingWindow(252, "attack", "Nydus Worm placed in main", 1, GamePhase.EARLY),
+                TimingWindow(
+                    210, "tech", "Nydus Network completed", 1, GamePhase.EARLY
+                ),
+                TimingWindow(
+                    252, "attack", "Nydus Worm placed in main", 1, GamePhase.EARLY
+                ),
                 TimingWindow(270, "attack", "All-in through Nydus", 1, GamePhase.EARLY),
-                TimingWindow(200, "tech", "Oracle out for scouting", 2, GamePhase.EARLY),
+                TimingWindow(
+                    200, "tech", "Oracle out for scouting", 2, GamePhase.EARLY
+                ),
             ],
-            outcome=ReplayOutcome("Zerg", "Protoss", 350, 265, 130, "Equilibrium LE", "5.0.12"),
+            outcome=ReplayOutcome(
+                "Zerg", "Protoss", 350, 265, 130, "Equilibrium LE", "5.0.12"
+            ),
             army_compositions={
                 1: {"Roach": 10, "Ravager": 4, "Queen": 3, "Zergling": 8},
                 2: {"Adept": 4, "Oracle": 1, "Stalker": 2, "Zealot": 3},
@@ -610,7 +654,9 @@ class SC2ReplayLoader:
 class GamePhaseTextSplitter:
     """Split replay text into chunks aligned with game phases."""
 
-    def __init__(self, max_tokens: int = MAX_CHUNK_TOKENS, overlap: int = OVERLAP_TOKENS):
+    def __init__(
+        self, max_tokens: int = MAX_CHUNK_TOKENS, overlap: int = OVERLAP_TOKENS
+    ):
         self.max_tokens = max_tokens
         self.overlap = overlap
 
@@ -638,16 +684,21 @@ class GamePhaseTextSplitter:
                 race = replay.player1_race if pid == 1 else replay.player2_race
                 comp_str = ", ".join(f"{u}: {c}" for u, c in comp.items())
                 overview_lines.append(f"Player {pid} ({race}) final army: {comp_str}")
-        chunks.append(TextChunk(
-            chunk_id=f"{replay.replay_id}_overview",
-            text="\n".join(overview_lines),
-            source_replay_id=replay.replay_id,
-            source_replay_path=replay.replay_path,
-            phase=GamePhase.EARLY,
-            matchup=replay.matchup,
-            chunk_type="outcome",
-            metadata={"player1_race": replay.player1_race, "player2_race": replay.player2_race},
-        ))
+        chunks.append(
+            TextChunk(
+                chunk_id=f"{replay.replay_id}_overview",
+                text="\n".join(overview_lines),
+                source_replay_id=replay.replay_id,
+                source_replay_path=replay.replay_path,
+                phase=GamePhase.EARLY,
+                matchup=replay.matchup,
+                chunk_type="outcome",
+                metadata={
+                    "player1_race": replay.player1_race,
+                    "player2_race": replay.player2_race,
+                },
+            )
+        )
 
         # Chunk per phase per player build order
         for player_id in sorted(replay.build_orders.keys()):
@@ -666,19 +717,23 @@ class GamePhaseTextSplitter:
 
                 # If chunk too long, split further
                 if self._estimate_tokens(text) > self.max_tokens:
-                    sub_chunks = self._split_long_text(text, phase, replay, "build_order", player_id)
+                    sub_chunks = self._split_long_text(
+                        text, phase, replay, "build_order", player_id
+                    )
                     chunks.extend(sub_chunks)
                 else:
-                    chunks.append(TextChunk(
-                        chunk_id=f"{replay.replay_id}_p{player_id}_{phase.value}_bo",
-                        text=text,
-                        source_replay_id=replay.replay_id,
-                        source_replay_path=replay.replay_path,
-                        phase=phase,
-                        matchup=replay.matchup,
-                        chunk_type="build_order",
-                        metadata={"player_id": player_id, "race": race},
-                    ))
+                    chunks.append(
+                        TextChunk(
+                            chunk_id=f"{replay.replay_id}_p{player_id}_{phase.value}_bo",
+                            text=text,
+                            source_replay_id=replay.replay_id,
+                            source_replay_path=replay.replay_path,
+                            phase=phase,
+                            matchup=replay.matchup,
+                            chunk_type="build_order",
+                            metadata={"player_id": player_id, "race": race},
+                        )
+                    )
 
         # Chunk for timing windows
         if replay.timings:
@@ -689,21 +744,27 @@ class GamePhaseTextSplitter:
                 lines = [f"Key timings ({phase.value} game):"]
                 for tw in sorted(tws, key=lambda t: t.time_seconds):
                     lines.append(tw.to_text())
-                chunks.append(TextChunk(
-                    chunk_id=f"{replay.replay_id}_{phase.value}_timings",
-                    text="\n".join(lines),
-                    source_replay_id=replay.replay_id,
-                    source_replay_path=replay.replay_path,
-                    phase=phase,
-                    matchup=replay.matchup,
-                    chunk_type="timing",
-                ))
+                chunks.append(
+                    TextChunk(
+                        chunk_id=f"{replay.replay_id}_{phase.value}_timings",
+                        text="\n".join(lines),
+                        source_replay_id=replay.replay_id,
+                        source_replay_path=replay.replay_path,
+                        phase=phase,
+                        matchup=replay.matchup,
+                        chunk_type="timing",
+                    )
+                )
 
         return chunks
 
     def _split_long_text(
-        self, text: str, phase: GamePhase, replay: ReplayDocument,
-        chunk_type: str, player_id: int = 0
+        self,
+        text: str,
+        phase: GamePhase,
+        replay: ReplayDocument,
+        chunk_type: str,
+        player_id: int = 0,
     ) -> List[TextChunk]:
         """Split text that exceeds max_tokens into overlapping sub-chunks."""
         words = text.split()
@@ -713,16 +774,18 @@ class GamePhaseTextSplitter:
         while idx < len(words):
             end = min(idx + self.max_tokens, len(words))
             chunk_text = " ".join(words[idx:end])
-            chunks.append(TextChunk(
-                chunk_id=f"{replay.replay_id}_p{player_id}_{phase.value}_{chunk_type}_pt{part}",
-                text=chunk_text,
-                source_replay_id=replay.replay_id,
-                source_replay_path=replay.replay_path,
-                phase=phase,
-                matchup=replay.matchup,
-                chunk_type=chunk_type,
-                metadata={"player_id": player_id, "part": part},
-            ))
+            chunks.append(
+                TextChunk(
+                    chunk_id=f"{replay.replay_id}_p{player_id}_{phase.value}_{chunk_type}_pt{part}",
+                    text=chunk_text,
+                    source_replay_id=replay.replay_id,
+                    source_replay_path=replay.replay_path,
+                    phase=phase,
+                    matchup=replay.matchup,
+                    chunk_type=chunk_type,
+                    metadata={"player_id": player_id, "part": part},
+                )
+            )
             idx = end - self.overlap if end < len(words) else end
             part += 1
         return chunks
@@ -749,19 +812,71 @@ class SC2GameStateEncoder:
     def _init_keyword_vectors(self):
         """Create stable pseudo-random vectors for SC2 keywords."""
         keywords = [
-            "zergling", "baneling", "roach", "hydralisk", "mutalisk",
-            "ultralisk", "corruptor", "broodlord", "infestor", "queen",
-            "ravager", "lurker", "viper", "swarmhost", "overlord",
-            "marine", "marauder", "medivac", "siegetank", "thor",
-            "hellion", "viking", "liberator", "ghost", "battlecruiser",
-            "zealot", "stalker", "adept", "immortal", "colossus",
-            "archon", "oracle", "phoenix", "voidray", "carrier",
-            "hatchery", "lair", "hive", "spawningpool", "roachwarren",
-            "hydraliskden", "spire", "banelingnest", "nydusnetwork",
-            "attack", "defend", "expand", "harass", "timing",
-            "push", "allin", "macro", "micro", "scout",
-            "early", "mid", "late", "upgrade", "research",
-            "zvt", "zvp", "zvz", "tvp", "tvt", "pvp",
+            "zergling",
+            "baneling",
+            "roach",
+            "hydralisk",
+            "mutalisk",
+            "ultralisk",
+            "corruptor",
+            "broodlord",
+            "infestor",
+            "queen",
+            "ravager",
+            "lurker",
+            "viper",
+            "swarmhost",
+            "overlord",
+            "marine",
+            "marauder",
+            "medivac",
+            "siegetank",
+            "thor",
+            "hellion",
+            "viking",
+            "liberator",
+            "ghost",
+            "battlecruiser",
+            "zealot",
+            "stalker",
+            "adept",
+            "immortal",
+            "colossus",
+            "archon",
+            "oracle",
+            "phoenix",
+            "voidray",
+            "carrier",
+            "hatchery",
+            "lair",
+            "hive",
+            "spawningpool",
+            "roachwarren",
+            "hydraliskden",
+            "spire",
+            "banelingnest",
+            "nydusnetwork",
+            "attack",
+            "defend",
+            "expand",
+            "harass",
+            "timing",
+            "push",
+            "allin",
+            "macro",
+            "micro",
+            "scout",
+            "early",
+            "mid",
+            "late",
+            "upgrade",
+            "research",
+            "zvt",
+            "zvp",
+            "zvz",
+            "tvp",
+            "tvt",
+            "pvp",
         ]
         for kw in keywords:
             seed = int(hashlib.md5(kw.encode()).hexdigest(), 16) % (2**31)
@@ -782,7 +897,9 @@ class SC2GameStateEncoder:
     def encode(self, text: str) -> List[float]:
         """Encode text into a vector by aggregating keyword vectors."""
         text_lower = text.lower()
-        tokens = text_lower.replace(",", " ").replace(".", " ").replace(":", " ").split()
+        tokens = (
+            text_lower.replace(",", " ").replace(".", " ").replace(":", " ").split()
+        )
         accumulator = VectorMath.zeros(self.dim)
         matches = 0
 
@@ -796,7 +913,9 @@ class SC2GameStateEncoder:
             else:
                 for kw, kw_vec in self.keyword_weights.items():
                     if kw in token_clean or token_clean in kw:
-                        accumulator = VectorMath.add(accumulator, VectorMath.scale(kw_vec, 0.5))
+                        accumulator = VectorMath.add(
+                            accumulator, VectorMath.scale(kw_vec, 0.5)
+                        )
                         matches += 1
                         break
 
@@ -834,7 +953,9 @@ class BruteForceVectorStore:
         for c, v in zip(chunks, vectors):
             self.add(c, v)
 
-    def search(self, query_vector: List[float], top_k: int = TOP_K_DEFAULT) -> List[Tuple[TextChunk, float]]:
+    def search(
+        self, query_vector: List[float], top_k: int = TOP_K_DEFAULT
+    ) -> List[Tuple[TextChunk, float]]:
         if not self.vectors:
             return []
         scores = []
@@ -877,16 +998,18 @@ class BruteForceVectorStore:
         self.vectors = data["vectors"]
         self.chunks = []
         for cd in data["chunks"]:
-            self.chunks.append(TextChunk(
-                chunk_id=cd["chunk_id"],
-                text=cd["text"],
-                source_replay_id=cd["source_replay_id"],
-                source_replay_path=cd["source_replay_path"],
-                phase=GamePhase(cd["phase"]),
-                matchup=cd["matchup"],
-                chunk_type=cd["chunk_type"],
-                metadata=cd.get("metadata", {}),
-            ))
+            self.chunks.append(
+                TextChunk(
+                    chunk_id=cd["chunk_id"],
+                    text=cd["text"],
+                    source_replay_id=cd["source_replay_id"],
+                    source_replay_path=cd["source_replay_path"],
+                    phase=GamePhase(cd["phase"]),
+                    matchup=cd["matchup"],
+                    chunk_type=cd["chunk_type"],
+                    metadata=cd.get("metadata", {}),
+                )
+            )
         logger.info(f"Loaded vector store from {path} ({self.size()} vectors)")
 
 
@@ -919,7 +1042,9 @@ class FAISSVectorStore:
         else:
             self._fallback.add_batch(chunks, vectors)
 
-    def search(self, query_vector: List[float], top_k: int = TOP_K_DEFAULT) -> List[Tuple[TextChunk, float]]:
+    def search(
+        self, query_vector: List[float], top_k: int = TOP_K_DEFAULT
+    ) -> List[Tuple[TextChunk, float]]:
         if self.index is not None:
             q = np.array([query_vector], dtype=np.float32)
             k = min(top_k, self.index.ntotal)
@@ -964,12 +1089,14 @@ class ChromaVectorStore:
                 ids=[chunk.chunk_id],
                 embeddings=[vector],
                 documents=[chunk.text],
-                metadatas=[{
-                    "source_replay_id": chunk.source_replay_id,
-                    "phase": chunk.phase.value,
-                    "matchup": chunk.matchup,
-                    "chunk_type": chunk.chunk_type,
-                }],
+                metadatas=[
+                    {
+                        "source_replay_id": chunk.source_replay_id,
+                        "phase": chunk.phase.value,
+                        "matchup": chunk.matchup,
+                        "chunk_type": chunk.chunk_type,
+                    }
+                ],
             )
         else:
             self._fallback.add(chunk, vector)
@@ -978,7 +1105,9 @@ class ChromaVectorStore:
         for c, v in zip(chunks, vectors):
             self.add(c, v)
 
-    def search(self, query_vector: List[float], top_k: int = TOP_K_DEFAULT) -> List[Tuple[TextChunk, float]]:
+    def search(
+        self, query_vector: List[float], top_k: int = TOP_K_DEFAULT
+    ) -> List[Tuple[TextChunk, float]]:
         if self.collection is not None:
             count = self.collection.count()
             if count == 0:
@@ -990,7 +1119,11 @@ class ChromaVectorStore:
             )
             output = []
             if results["ids"] and results["ids"][0]:
-                distances = results["distances"][0] if results.get("distances") else [0.0] * len(results["ids"][0])
+                distances = (
+                    results["distances"][0]
+                    if results.get("distances")
+                    else [0.0] * len(results["ids"][0])
+                )
                 for cid, dist in zip(results["ids"][0], distances):
                     if cid in self.chunks:
                         score = 1.0 - dist  # cosine distance to similarity
@@ -1127,9 +1260,24 @@ class MultiQueryRetriever:
         # Extract key subjects
         subjects = []
         sc2_terms = [
-            "roach", "hydra", "mutalisk", "zergling", "baneling", "ultra",
-            "marine", "tank", "medivac", "stalker", "immortal", "colossus",
-            "timing", "macro", "allin", "harass", "nydus", "drop",
+            "roach",
+            "hydra",
+            "mutalisk",
+            "zergling",
+            "baneling",
+            "ultra",
+            "marine",
+            "tank",
+            "medivac",
+            "stalker",
+            "immortal",
+            "colossus",
+            "timing",
+            "macro",
+            "allin",
+            "harass",
+            "nydus",
+            "drop",
         ]
         for term in sc2_terms:
             if term in query_lower:
@@ -1171,7 +1319,7 @@ class MultiQueryRetriever:
 
         merged = list(all_results.values())
         merged.sort(key=lambda x: x[1], reverse=True)
-        return merged[:top_k * 2]  # Return up to 2x top_k for reranking
+        return merged[: top_k * 2]  # Return up to 2x top_k for reranking
 
 
 # ============================================================
@@ -1183,26 +1331,52 @@ class QueryContextExtractor:
     """Extract structured context from natural language queries."""
 
     MATCHUP_PATTERNS = {
-        "zvt": "ZvT", "zerg vs terran": "ZvT", "zerg versus terran": "ZvT",
-        "zvp": "ZvP", "zerg vs protoss": "ZvP", "zerg versus protoss": "ZvP",
-        "zvz": "ZvZ", "zerg vs zerg": "ZvZ", "zerg mirror": "ZvZ",
-        "tvp": "TvP", "terran vs protoss": "TvP",
-        "tvt": "TvT", "terran vs terran": "TvT", "terran mirror": "TvT",
-        "pvp": "PvP", "protoss vs protoss": "PvP", "protoss mirror": "PvP",
+        "zvt": "ZvT",
+        "zerg vs terran": "ZvT",
+        "zerg versus terran": "ZvT",
+        "zvp": "ZvP",
+        "zerg vs protoss": "ZvP",
+        "zerg versus protoss": "ZvP",
+        "zvz": "ZvZ",
+        "zerg vs zerg": "ZvZ",
+        "zerg mirror": "ZvZ",
+        "tvp": "TvP",
+        "terran vs protoss": "TvP",
+        "tvt": "TvT",
+        "terran vs terran": "TvT",
+        "terran mirror": "TvT",
+        "pvp": "PvP",
+        "protoss vs protoss": "PvP",
+        "protoss mirror": "PvP",
     }
 
     PHASE_PATTERNS = {
-        "early": "early", "opening": "early", "start": "early",
-        "mid": "mid", "midgame": "mid", "mid game": "mid",
-        "late": "late", "lategame": "late", "late game": "late",
-        "ultra late": "ultra_late", "very late": "ultra_late",
+        "early": "early",
+        "opening": "early",
+        "start": "early",
+        "mid": "mid",
+        "midgame": "mid",
+        "mid game": "mid",
+        "late": "late",
+        "lategame": "late",
+        "late game": "late",
+        "ultra late": "ultra_late",
+        "very late": "ultra_late",
     }
 
     TYPE_PATTERNS = {
-        "build": "build_order", "build order": "build_order", "opener": "build_order",
-        "timing": "timing", "attack timing": "timing", "push": "timing",
-        "composition": "composition", "army": "composition", "comp": "composition",
-        "counter": "outcome", "result": "outcome", "winner": "outcome",
+        "build": "build_order",
+        "build order": "build_order",
+        "opener": "build_order",
+        "timing": "timing",
+        "attack timing": "timing",
+        "push": "timing",
+        "composition": "composition",
+        "army": "composition",
+        "comp": "composition",
+        "counter": "outcome",
+        "result": "outcome",
+        "winner": "outcome",
     }
 
     def extract(self, query: str) -> Dict[str, Any]:
@@ -1232,11 +1406,31 @@ class QueryContextExtractor:
 
         # Extract SC2 keywords
         sc2_keywords = [
-            "roach", "hydralisk", "mutalisk", "zergling", "baneling",
-            "ultralisk", "ravager", "nydus", "lurker", "infestor",
-            "marine", "marauder", "tank", "medivac", "thor",
-            "zealot", "stalker", "immortal", "colossus", "archon",
-            "macro", "micro", "timing", "allin", "harass",
+            "roach",
+            "hydralisk",
+            "mutalisk",
+            "zergling",
+            "baneling",
+            "ultralisk",
+            "ravager",
+            "nydus",
+            "lurker",
+            "infestor",
+            "marine",
+            "marauder",
+            "tank",
+            "medivac",
+            "thor",
+            "zealot",
+            "stalker",
+            "immortal",
+            "colossus",
+            "archon",
+            "macro",
+            "micro",
+            "timing",
+            "allin",
+            "harass",
         ]
         for kw in sc2_keywords:
             if kw in ql:
@@ -1300,9 +1494,7 @@ class SC2ReplayRAG:
             self.vector_store.add_batch(chunks, vectors)
             self.all_chunks.extend(chunks)
             total_chunks += len(chunks)
-            logger.info(
-                f"Indexed replay {replay.replay_id}: {len(chunks)} chunks"
-            )
+            logger.info(f"Indexed replay {replay.replay_id}: {len(chunks)} chunks")
 
         logger.info(f"Total indexed: {total_chunks} chunks from {len(replays)} replays")
 
@@ -1348,8 +1540,7 @@ class SC2ReplayRAG:
 
         # Build RetrievalResult objects
         retrieval_results = [
-            RetrievalResult(chunk=chunk, score=score)
-            for chunk, score in raw_results
+            RetrievalResult(chunk=chunk, score=score) for chunk, score in raw_results
         ]
 
         # Re-rank
@@ -1374,19 +1565,21 @@ class SC2ReplayRAG:
             "results": [],
         }
         for i, r in enumerate(results):
-            formatted["results"].append({
-                "rank": i + 1,
-                "text": r.chunk.text,
-                "citation": r.citation,
-                "similarity_score": round(r.score, 4),
-                "rerank_score": round(r.rerank_score, 4),
-                "combined_score": round(r.combined_score, 4),
-                "matchup": r.chunk.matchup,
-                "phase": r.chunk.phase.value,
-                "chunk_type": r.chunk.chunk_type,
-                "source_replay": r.chunk.source_replay_id,
-                "source_path": r.chunk.source_replay_path,
-            })
+            formatted["results"].append(
+                {
+                    "rank": i + 1,
+                    "text": r.chunk.text,
+                    "citation": r.citation,
+                    "similarity_score": round(r.score, 4),
+                    "rerank_score": round(r.rerank_score, 4),
+                    "combined_score": round(r.combined_score, 4),
+                    "matchup": r.chunk.matchup,
+                    "phase": r.chunk.phase.value,
+                    "chunk_type": r.chunk.chunk_type,
+                    "source_replay": r.chunk.source_replay_id,
+                    "source_path": r.chunk.source_replay_path,
+                }
+            )
         return formatted
 
     def get_stats(self) -> Dict[str, Any]:
@@ -1431,7 +1624,9 @@ def run_cli_demo():
     rag.index_demos()
 
     stats = rag.get_stats()
-    print(f"[*] Indexed {stats['total_replays']} replays -> {stats['total_chunks']} chunks")
+    print(
+        f"[*] Indexed {stats['total_replays']} replays -> {stats['total_chunks']} chunks"
+    )
     print(f"    Vector store size: {stats['vector_store_size']}")
     print(f"    Embedding dimension: {stats['embedding_dim']}")
     print(f"    Matchups: {stats['matchup_distribution']}")
@@ -1457,12 +1652,14 @@ def run_cli_demo():
         result = rag.query_with_citations(query, top_k=3)
         print(f"    Found {result['num_results']} results:")
         for r in result["results"]:
-            print(f"    [{r['rank']}] Score: {r['combined_score']:.3f} "
-                  f"(sim={r['similarity_score']:.3f}, rerank={r['rerank_score']:.3f})")
+            print(
+                f"    [{r['rank']}] Score: {r['combined_score']:.3f} "
+                f"(sim={r['similarity_score']:.3f}, rerank={r['rerank_score']:.3f})"
+            )
             print(f"        {r['citation']}")
             # Print first 120 chars of text
             text_preview = r["text"][:120].replace("\n", " ")
-            print(f"        \"{text_preview}...\"")
+            print(f'        "{text_preview}..."')
         print()
 
     # Interactive mode
@@ -1478,10 +1675,14 @@ def run_cli_demo():
             result = rag.query_with_citations(query, top_k=5)
             print(f"\nFound {result['num_results']} results:\n")
             for r in result["results"]:
-                print(f"  [{r['rank']}] Combined={r['combined_score']:.3f} | "
-                      f"{r['citation']}")
-                print(f"      Matchup: {r['matchup']} | Phase: {r['phase']} | "
-                      f"Type: {r['chunk_type']}")
+                print(
+                    f"  [{r['rank']}] Combined={r['combined_score']:.3f} | "
+                    f"{r['citation']}"
+                )
+                print(
+                    f"      Matchup: {r['matchup']} | Phase: {r['phase']} | "
+                    f"Type: {r['chunk_type']}"
+                )
                 lines = r["text"].strip().split("\n")
                 for line in lines[:6]:
                     print(f"      {line}")

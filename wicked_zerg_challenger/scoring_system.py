@@ -32,6 +32,7 @@ logger = logging.getLogger("ScoringSystem")
 @dataclass
 class DomainScore:
     """단일 도메인 점수"""
+
     name: str
     score: float = 0.0
     total_events: int = 0
@@ -46,11 +47,7 @@ class DomainScore:
             self.positive_events += 1
         else:
             self.negative_events += 1
-        self.history.append({
-            "points": points,
-            "reason": reason,
-            "time": time.time()
-        })
+        self.history.append({"points": points, "reason": reason, "time": time.time()})
         # Keep only last 100 events
         if len(self.history) > 100:
             self.history = self.history[-100:]
@@ -170,22 +167,31 @@ class ScoringSystem:
             return
 
         army_supply = sum(
-            getattr(u, "supply_cost", 1) for u in units
-            if not getattr(u, "is_structure", False) and
-            getattr(u.type_id, "name", "") != "DRONE" and
-            getattr(u.type_id, "name", "") != "OVERLORD"
+            getattr(u, "supply_cost", 1)
+            for u in units
+            if not getattr(u, "is_structure", False)
+            and getattr(u.type_id, "name", "") != "DRONE"
+            and getattr(u.type_id, "name", "") != "OVERLORD"
         )
         enemy_count = len(enemy_units) if hasattr(enemy_units, "__len__") else 0
 
         # 교전 승패 판정
         if enemy_count > 0 and army_supply > 0:
-            if enemy_count < self._last_enemy_count and army_supply >= self._last_army_supply * 0.7:
+            if (
+                enemy_count < self._last_enemy_count
+                and army_supply >= self._last_army_supply * 0.7
+            ):
                 # 적 줄고 아군 유지 = 교전 승리
                 self.domains["combat"].add(+5, f"교전 승리 ({enemy_count} enemies)")
                 self._engagements_won += 1
-            elif army_supply < self._last_army_supply * 0.5 and enemy_count >= self._last_enemy_count:
+            elif (
+                army_supply < self._last_army_supply * 0.5
+                and enemy_count >= self._last_enemy_count
+            ):
                 # 아군 반토막, 적 유지 = 교전 패배
-                self.domains["combat"].add(-5, f"교전 패배 (army {army_supply}→{self._last_army_supply})")
+                self.domains["combat"].add(
+                    -5, f"교전 패배 (army {army_supply}→{self._last_army_supply})"
+                )
                 self._engagements_lost += 1
 
         # 유닛 교환비
@@ -230,7 +236,9 @@ class ScoringSystem:
 
         # 가스 축적 패널티 (가장 큰 문제!)
         if vespene > 1000 and game_time > 180:
-            self.domains["production"].add(-5, f"가스 과잉 축적: {vespene} — 가스 유닛 생산 필요!")
+            self.domains["production"].add(
+                -5, f"가스 과잉 축적: {vespene} — 가스 유닛 생산 필요!"
+            )
         elif vespene > 500 and game_time > 120:
             self.domains["production"].add(-2, f"가스 축적 경고: {vespene}")
 
@@ -244,14 +252,20 @@ class ScoringSystem:
         if supply_used > self._peak_supply:
             growth = supply_used - self._peak_supply
             if growth >= 10:
-                self.domains["production"].add(+2, f"서플 성장: {self._peak_supply}→{supply_used}")
+                self.domains["production"].add(
+                    +2, f"서플 성장: {self._peak_supply}→{supply_used}"
+                )
             self._peak_supply = supply_used
 
         # 서플 목표 미달
         if game_time > 300 and supply_used < 80:
-            self.domains["production"].add(-3, f"5분 경과인데 서플 {supply_used} (목표 80+)")
+            self.domains["production"].add(
+                -3, f"5분 경과인데 서플 {supply_used} (목표 80+)"
+            )
         elif game_time > 600 and supply_used < 150:
-            self.domains["production"].add(-3, f"10분 경과인데 서플 {supply_used} (목표 150+)")
+            self.domains["production"].add(
+                -3, f"10분 경과인데 서플 {supply_used} (목표 150+)"
+            )
 
         self._last_minerals = minerals
         self._last_vespene = vespene
@@ -266,11 +280,15 @@ class ScoringSystem:
         enemy_units = getattr(self.bot, "enemy_units", [])
 
         # 적 건물 발견 보너스
-        visible_structures = len(enemy_structures) if hasattr(enemy_structures, "__len__") else 0
+        visible_structures = (
+            len(enemy_structures) if hasattr(enemy_structures, "__len__") else 0
+        )
         visible_units = len(enemy_units) if hasattr(enemy_units, "__len__") else 0
 
         if visible_structures > 0:
-            self.domains["scouting"].add(+1, f"적 건물 {visible_structures}개 시야 확보")
+            self.domains["scouting"].add(
+                +1, f"적 건물 {visible_structures}개 시야 확보"
+            )
 
         if visible_units > 3:
             self.domains["scouting"].add(+1, f"적 유닛 {visible_units}기 시야 확보")
@@ -288,7 +306,9 @@ class ScoringSystem:
             if hasattr(intel, "_build_pattern_confidence"):
                 confidence = getattr(intel, "_build_pattern_confidence", 0)
                 if confidence > 0.7:
-                    self.domains["scouting"].add(+3, f"적 빌드 패턴 감지 (신뢰도 {confidence:.0%})")
+                    self.domains["scouting"].add(
+                        +3, f"적 빌드 패턴 감지 (신뢰도 {confidence:.0%})"
+                    )
 
     # =========================================================================
     # 4. Economy (경제) 평가
@@ -299,16 +319,24 @@ class ScoringSystem:
         workers = getattr(self.bot, "workers", None)
         worker_count = len(workers) if workers and hasattr(workers, "__len__") else 0
         townhalls = getattr(self.bot, "townhalls", None)
-        base_count = len(townhalls) if townhalls and hasattr(townhalls, "__len__") else 0
+        base_count = (
+            len(townhalls) if townhalls and hasattr(townhalls, "__len__") else 0
+        )
 
         # 일꾼 수 평가
-        ideal_workers = base_count * 16 + (base_count * 2 * 3)  # 미네랄 16 + 가스 6 per base
+        ideal_workers = base_count * 16 + (
+            base_count * 2 * 3
+        )  # 미네랄 16 + 가스 6 per base
         if worker_count > 0:
             saturation_ratio = worker_count / max(ideal_workers, 1)
             if 0.7 <= saturation_ratio <= 1.1:
-                self.domains["economy"].add(+1, f"일꾼 포화도 양호: {worker_count}/{ideal_workers}")
+                self.domains["economy"].add(
+                    +1, f"일꾼 포화도 양호: {worker_count}/{ideal_workers}"
+                )
             elif saturation_ratio > 1.3:
-                self.domains["economy"].add(-2, f"과잉 드론: {worker_count} (이상적: {ideal_workers})")
+                self.domains["economy"].add(
+                    -2, f"과잉 드론: {worker_count} (이상적: {ideal_workers})"
+                )
 
         # 확장 타이밍
         if game_time > 120 and base_count < 2:
@@ -317,13 +345,17 @@ class ScoringSystem:
             self.domains["economy"].add(-2, "5분 경과인데 3확장 미실시")
 
         if base_count > self._last_base_count:
-            self.domains["economy"].add(+5, f"확장 성공! ({self._last_base_count}→{base_count})")
+            self.domains["economy"].add(
+                +5, f"확장 성공! ({self._last_base_count}→{base_count})"
+            )
             self._last_base_count = base_count
 
         # 일꾼 과다 생산 vs 군대 부족
         army_supply = self._last_army_supply
         if worker_count > 50 and army_supply < 20 and game_time > 300:
-            self.domains["economy"].add(-5, f"과잉 드론 경고: 일꾼 {worker_count} vs 군대 {army_supply}")
+            self.domains["economy"].add(
+                -5, f"과잉 드론 경고: 일꾼 {worker_count} vs 군대 {army_supply}"
+            )
 
         self._last_worker_count = worker_count
 
@@ -342,7 +374,9 @@ class ScoringSystem:
 
         # 기지 방어 성공/실패
         if base_count < self._last_base_count and self._last_base_count > 0:
-            self.domains["defense"].add(-8, f"기지 파괴됨! ({self._last_base_count}→{base_count})")
+            self.domains["defense"].add(
+                -8, f"기지 파괴됨! ({self._last_base_count}→{base_count})"
+            )
         elif base_count >= self._last_base_count and len(enemy_units) > 5:
             # 적이 많은데 기지 유지 = 방어 성공
             near_base_enemies = 0
@@ -354,18 +388,27 @@ class ScoringSystem:
             except Exception:
                 pass
             if near_base_enemies > 3:
-                self.domains["defense"].add(+3, f"기지 근접 적 {near_base_enemies}기 방어 중")
+                self.domains["defense"].add(
+                    +3, f"기지 근접 적 {near_base_enemies}기 방어 중"
+                )
 
         # 퀸 인젝트 체크
         structures = getattr(self.bot, "structures", None)
         if structures and hasattr(structures, "__call__"):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
+
                 queens = self.bot.units(UnitTypeId.QUEEN)
                 if hasattr(queens, "amount") and queens.amount > 0:
                     idle_queens = queens.idle if hasattr(queens, "idle") else []
-                    if hasattr(idle_queens, "amount") and idle_queens.amount > 0 and game_time > 120:
-                        self.domains["defense"].add(-1, f"유휴 퀸 {idle_queens.amount}마리 — 인젝트 필요")
+                    if (
+                        hasattr(idle_queens, "amount")
+                        and idle_queens.amount > 0
+                        and game_time > 120
+                    ):
+                        self.domains["defense"].add(
+                            -1, f"유휴 퀸 {idle_queens.amount}마리 — 인젝트 필요"
+                        )
             except Exception:
                 pass
 
@@ -381,7 +424,11 @@ class ScoringSystem:
         if game_time < 180:
             # 초반: 풀 + 확장 + 가스
             gas_buildings = getattr(self.bot, "gas_buildings", None)
-            gas_count = len(gas_buildings) if gas_buildings and hasattr(gas_buildings, "__len__") else 0
+            gas_count = (
+                len(gas_buildings)
+                if gas_buildings and hasattr(gas_buildings, "__len__")
+                else 0
+            )
             if gas_count >= 1 and game_time > 90:
                 self.domains["strategy"].add(+1, "가스 타이밍 양호")
         elif game_time < 480:
@@ -390,7 +437,11 @@ class ScoringSystem:
             if structures and hasattr(structures, "__call__"):
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
-                    has_lair = self.bot.structures(UnitTypeId.LAIR).exists or self.bot.structures(UnitTypeId.HIVE).exists
+
+                    has_lair = (
+                        self.bot.structures(UnitTypeId.LAIR).exists
+                        or self.bot.structures(UnitTypeId.HIVE).exists
+                    )
                     if has_lair:
                         self.domains["strategy"].add(+2, "레어/하이브 테크업 완료")
                 except Exception:
@@ -400,7 +451,9 @@ class ScoringSystem:
             if supply_used >= 180:
                 self.domains["strategy"].add(+3, f"후반 맥서플: {supply_used}")
             elif supply_used < 100:
-                self.domains["strategy"].add(-3, f"후반인데 서플 {supply_used} — 생산 부족")
+                self.domains["strategy"].add(
+                    -3, f"후반인데 서플 {supply_used} — 생산 부족"
+                )
 
     # =========================================================================
     # 7. Micro (마이크로) 평가
@@ -414,12 +467,18 @@ class ScoringSystem:
 
         # 유휴 군대 유닛 패널티
         try:
-            idle_army = [u for u in units if
-                         not getattr(u, "is_structure", False) and
-                         getattr(u.type_id, "name", "") not in ("DRONE", "OVERLORD", "LARVA", "EGG") and
-                         getattr(u, "is_idle", False)]
+            idle_army = [
+                u
+                for u in units
+                if not getattr(u, "is_structure", False)
+                and getattr(u.type_id, "name", "")
+                not in ("DRONE", "OVERLORD", "LARVA", "EGG")
+                and getattr(u, "is_idle", False)
+            ]
             if len(idle_army) > 5 and game_time > 120:
-                self.domains["micro"].add(-2, f"유휴 군대 {len(idle_army)}기 — 명령 필요")
+                self.domains["micro"].add(
+                    -2, f"유휴 군대 {len(idle_army)}기 — 명령 필요"
+                )
         except Exception:
             pass
 
@@ -434,13 +493,16 @@ class ScoringSystem:
 
         # 라바 과잉 = 생산 안 하고 있음
         if larva_count > 10 and game_time > 120:
-            self.domains["macro"].add(-3, f"라바 {larva_count}마리 방치 — 즉시 생산 필요!")
+            self.domains["macro"].add(
+                -3, f"라바 {larva_count}마리 방치 — 즉시 생산 필요!"
+            )
         elif larva_count <= 3 and game_time > 60:
             self.domains["macro"].add(+1, "라바 효율적 사용")
 
         # 크립 확산 체크
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             tumors = self.bot.structures(UnitTypeId.CREEPTUMORBURROWED)
             if hasattr(tumors, "amount"):
                 if tumors.amount > self._creep_tumor_count:
@@ -459,14 +521,18 @@ class ScoringSystem:
 
         # 가스 유닛 생산 체크 (핵심!)
         if vespene > 1500 and game_time > 300:
-            self.domains["adaptation"].add(-5, "가스 1500+ 축적 — 히드라/뮤탈/바퀴 즉시 생산!")
+            self.domains["adaptation"].add(
+                -5, "가스 1500+ 축적 — 히드라/뮤탈/바퀴 즉시 생산!"
+            )
 
         # 적 구성에 맞는 카운터 유닛 생산 확인
         if hasattr(self.bot, "intel_manager"):
             intel = self.bot.intel_manager
             pattern = getattr(intel, "_enemy_build_pattern", "unknown")
             if pattern != "unknown":
-                self.domains["adaptation"].add(+2, f"적 빌드 '{pattern}' 인지 후 대응 중")
+                self.domains["adaptation"].add(
+                    +2, f"적 빌드 '{pattern}' 인지 후 대응 중"
+                )
 
     # =========================================================================
     # 10. Survival (생존) 평가
@@ -514,11 +580,15 @@ class ScoringSystem:
                 domain.add(-10, "패배 패널티")
             # 초반 패배 추가 패널티
             if game_time < 240:
-                self.domains["defense"].add(-15, f"초반 패배 ({game_time:.0f}초) — 러시 방어 실패")
+                self.domains["defense"].add(
+                    -15, f"초반 패배 ({game_time:.0f}초) — 러시 방어 실패"
+                )
             # 가스 축적 패배
             vespene = getattr(self.bot, "vespene", 0)
             if vespene > 2000:
-                self.domains["production"].add(-15, f"가스 {vespene} 축적 채 패배 — 심각한 생산 문제")
+                self.domains["production"].add(
+                    -15, f"가스 {vespene} 축적 채 패배 — 심각한 생산 문제"
+                )
 
         # 종합 리포트 생성
         report = self._generate_report(result, game_time)
@@ -610,9 +680,13 @@ class ScoringSystem:
         self._save_cumulative_score()
 
         logger.info(f"\n{'='*60}")
-        logger.info(f"  [SCORING] 10-GAME BLOCK #{block_report['block_number']} COMPLETE")
+        logger.info(
+            f"  [SCORING] 10-GAME BLOCK #{block_report['block_number']} COMPLETE"
+        )
         logger.info(f"  Record: {wins}W / {losses}L ({wins*10}% WR)")
-        logger.info(f"  Avg Score: {avg_score:.1f} | Avg Peak Supply: {avg_peak_supply:.0f}")
+        logger.info(
+            f"  Avg Score: {avg_score:.1f} | Avg Peak Supply: {avg_peak_supply:.0f}"
+        )
         logger.info(f"  Cumulative Adjustment: {block_report['adjustment']}")
         logger.info(f"  Total Cumulative Score: {self._cumulative_score['total']}")
         logger.info(f"{'='*60}\n")
@@ -657,7 +731,9 @@ class ScoringSystem:
         total = sum(d.score for d in self.domains.values())
         lines = [f"[SCORE] Total: {total:.0f}"]
         for name, d in sorted(self.domains.items(), key=lambda x: x[1].score):
-            lines.append(f"  {d.grade} {name}: {d.score:.0f} (+{d.positive_events}/-{d.negative_events})")
+            lines.append(
+                f"  {d.grade} {name}: {d.score:.0f} (+{d.positive_events}/-{d.negative_events})"
+            )
         return "\n".join(lines)
 
     # =========================================================================

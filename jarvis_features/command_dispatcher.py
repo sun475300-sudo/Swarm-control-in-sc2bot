@@ -2,6 +2,7 @@
 CommandDispatcher — 등록형 명령 핸들러 디스패처
 _try_local_response()의 if-elif 체인을 점진적으로 이관합니다.
 """
+
 from typing import Callable, List, Optional, Tuple, Union
 import logging
 
@@ -36,20 +37,24 @@ class CommandDispatcher:
             max_len: 프롬프트 최대 길이 제한
             exclude: 이 키워드가 있으면 스킵
         """
+
         def decorator(func: Callable):
             if match_fn is not None:
                 self._handlers.append((match_fn, func))
             elif keywords is not None:
+
                 def _keyword_match(p: str) -> bool:
                     if max_len and len(p) > max_len:
                         return False
                     if exclude and any(kw in p for kw in exclude):
                         return False
                     return any(kw in p for kw in keywords)
+
                 self._handlers.append((_keyword_match, func))
             else:
                 raise ValueError("register() requires 'keywords' or 'match_fn'")
             return func
+
         return decorator
 
     @property
@@ -66,7 +71,9 @@ class CommandDispatcher:
                     if result is not None:
                         return result
                 except Exception as e:
-                    logger.error(f"CommandDispatcher handler error [{handler.__name__}]: {e}")
+                    logger.error(
+                        f"CommandDispatcher handler error [{handler.__name__}]: {e}"
+                    )
         return None  # fallback to legacy
 
 

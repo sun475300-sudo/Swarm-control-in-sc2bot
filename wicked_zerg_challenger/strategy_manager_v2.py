@@ -20,11 +20,13 @@ from utils.logger import get_logger
 try:
     from sc2.data import Race
 except ImportError:
+
     class Race:
         Terran = "Terran"
         Protoss = "Protoss"
         Zerg = "Zerg"
         Random = "Random"
+
 
 try:
     from config.unit_configs import StrategyConfig
@@ -34,31 +36,34 @@ except ImportError:
 
 class WinCondition(Enum):
     """승리/패배 조건"""
+
     UNKNOWN = "unknown"
-    WINNING_ECONOMY = "winning_economy"      # 경제 우위
-    WINNING_ARMY = "winning_army"            # 군사 우위
-    WINNING_TECH = "winning_tech"            # 기술 우위
-    LOSING_ECONOMY = "losing_economy"        # 경제 열세
-    LOSING_ARMY = "losing_army"              # 군사 열세
-    LOSING_TECH = "losing_tech"              # 기술 열세
-    EVEN = "even"                            # 균형
+    WINNING_ECONOMY = "winning_economy"  # 경제 우위
+    WINNING_ARMY = "winning_army"  # 군사 우위
+    WINNING_TECH = "winning_tech"  # 기술 우위
+    LOSING_ECONOMY = "losing_economy"  # 경제 열세
+    LOSING_ARMY = "losing_army"  # 군사 열세
+    LOSING_TECH = "losing_tech"  # 기술 열세
+    EVEN = "even"  # 균형
 
 
 class BuildOrderPhase(Enum):
     """빌드 오더 페이즈"""
-    OPENING = "opening"          # 0-3분: 초반 개막
-    TRANSITION = "transition"    # 3-6분: 중반 전환
-    MIDGAME = "midgame"         # 6-10분: 중반 운영
-    LATEGAME = "lategame"       # 10분+: 후반 확장
+
+    OPENING = "opening"  # 0-3분: 초반 개막
+    TRANSITION = "transition"  # 3-6분: 중반 전환
+    MIDGAME = "midgame"  # 6-10분: 중반 운영
+    LATEGAME = "lategame"  # 10분+: 후반 확장
 
 
 class StrategyPriority(Enum):
     """전략 우선순위"""
-    CRITICAL = 5    # 즉시 실행 (생존 관련)
-    HIGH = 4        # 높은 우선순위
-    MEDIUM = 3      # 보통
-    LOW = 2         # 낮음
-    OPTIONAL = 1    # 선택적
+
+    CRITICAL = 5  # 즉시 실행 (생존 관련)
+    HIGH = 4  # 높은 우선순위
+    MEDIUM = 3  # 보통
+    LOW = 2  # 낮음
+    OPTIONAL = 1  # 선택적
 
 
 class StrategyManagerV2(StrategyManager):
@@ -84,14 +89,15 @@ class StrategyManagerV2(StrategyManager):
         # Win condition tracking
         self.current_win_condition = WinCondition.UNKNOWN
         self.win_condition_history: List[WinCondition] = []
-        self.win_condition_update_interval = self.config.WIN_CONDITION_UPDATE_INTERVAL if self.config else 5.0
+        self.win_condition_update_interval = (
+            self.config.WIN_CONDITION_UPDATE_INTERVAL if self.config else 5.0
+        )
         self.last_win_condition_check = 0.0
 
         # Smart Surrender (Phase 18)
         self.surrender_trigger_time = 0
-        self.surrender_threshold = 120 # seconds of strong losing (Relaxed from 30s)
+        self.surrender_threshold = 120  # seconds of strong losing (Relaxed from 30s)
         self._should_surrender = False  # Flag checked by async callers
-
 
         # Build order system
         self.current_build_phase = BuildOrderPhase.OPENING
@@ -109,24 +115,25 @@ class StrategyManagerV2(StrategyManager):
                 "economy": self.config.DEFAULT_PRIORITY_ECONOMY,
                 "army": self.config.DEFAULT_PRIORITY_ARMY,
                 "tech": self.config.DEFAULT_PRIORITY_TECH,
-                "defense": self.config.DEFAULT_PRIORITY_DEFENSE
+                "defense": self.config.DEFAULT_PRIORITY_DEFENSE,
             }
         else:
             self.resource_priorities: Dict[str, float] = {
                 "economy": 0.4,
                 "army": 0.4,
                 "tech": 0.1,
-                "defense": 0.1
+                "defense": 0.1,
             }
 
         # Multi-strategy execution
         self.strategy_queue: List[Dict[str, Any]] = []
-        self.concurrent_strategy_limit = self.config.CONCURRENT_STRATEGY_LIMIT if self.config else 3
+        self.concurrent_strategy_limit = (
+            self.config.CONCURRENT_STRATEGY_LIMIT if self.config else 3
+        )
 
         # Adaptive Composition (Phase 18)
         self.target_unit_ratios: Dict[str, float] = {}
         self.last_composition_update = 0
-
 
         self.logger.info("[STRATEGY_V2] Initialized with enhanced decision-making")
 
@@ -147,11 +154,11 @@ class StrategyManagerV2(StrategyManager):
         self.target_unit_ratios.clear()
         self.last_composition_update = 0
         # V1 상태도 초기화
-        if hasattr(self, 'current_mode'):
+        if hasattr(self, "current_mode"):
             self.current_mode = StrategyMode.NORMAL
-        if hasattr(self, 'current_phase'):
+        if hasattr(self, "current_phase"):
             self.current_phase = GamePhase.EARLY
-        if hasattr(self, 'defense_mode_start_time'):
+        if hasattr(self, "defense_mode_start_time"):
             self.defense_mode_start_time = 0
 
     def update(self) -> None:
@@ -168,7 +175,7 @@ class StrategyManagerV2(StrategyManager):
         self._apply_intel_driven_strategy()
         self._adjust_resource_priorities()
         self._execute_multi_strategy()
-        
+
         # Phase 18: Adaptive Composition
         self._update_unit_composition(game_time)
 
@@ -188,7 +195,10 @@ class StrategyManagerV2(StrategyManager):
         """
         Stage 5: High-level strategic overrides based on SITREP
         """
-        if not hasattr(self.bot, "situational_awareness") or not self.bot.situational_awareness:
+        if (
+            not hasattr(self.bot, "situational_awareness")
+            or not self.bot.situational_awareness
+        ):
             return
 
         try:
@@ -199,15 +209,17 @@ class StrategyManagerV2(StrategyManager):
         sitrep = self.bot.situational_awareness.get_latest_sitrep()
         if not sitrep:
             return
-            
+
         status = sitrep.get("status", {})
         threat_level_name = status.get("threat_level", "NONE")
         opportunity_name = status.get("opportunity", "NONE")
-        
+
         # 1. CRITICAL THREAT -> EMERGENCY Mode
         if threat_level_name == ThreatLevel.CRITICAL.name:
             if self.current_mode != StrategyMode.EMERGENCY:
-                self.logger.warning("[DECISION] CRITICAL THREAT DETECTED! Forcing EMERGENCY mode.")
+                self.logger.warning(
+                    "[DECISION] CRITICAL THREAT DETECTED! Forcing EMERGENCY mode."
+                )
                 self.current_mode = StrategyMode.EMERGENCY
                 self.emergency_active = True
                 self.emergency_start_time = self.bot.time
@@ -215,16 +227,19 @@ class StrategyManagerV2(StrategyManager):
         # 2. Specific Tech Threat Adaptation (Phase 21)
         intel = sitrep.get("intelligence", {})
         detected_threats = intel.get("threats", [])
-        
+
         if "CLOAK_TECH" in detected_threats:
             # Prioritize detection
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 # Request Overseer
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
+
                     # Request at least 2 Overseers
                     if self.bot.units(UnitTypeId.OVERSEER).amount < 2:
-                        self.bot.blackboard.request_production(UnitTypeId.OVERSEER, 1, "StrategyManagerV2", priority=0)
+                        self.bot.blackboard.request_production(
+                            UnitTypeId.OVERSEER, 1, "StrategyManagerV2", priority=0
+                        )
                 except (ImportError, AttributeError):
                     pass
             self.logger.info("[STRATEGY] CLOAK_TECH detected! Prioritizing detection.")
@@ -234,32 +249,48 @@ class StrategyManagerV2(StrategyManager):
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
+
                     # Hydralisk + Corruptor 생산 요청
                     if self.bot.units(UnitTypeId.HYDRALISK).amount < 10:
-                        self.bot.blackboard.request_production(UnitTypeId.HYDRALISK, 5, "StrategyManagerV2", priority=1)
-                    if (self.bot.structures(UnitTypeId.SPIRE).ready.exists and
-                            self.bot.units(UnitTypeId.CORRUPTOR).amount < 5):
-                        self.bot.blackboard.request_production(UnitTypeId.CORRUPTOR, 3, "StrategyManagerV2", priority=1)
+                        self.bot.blackboard.request_production(
+                            UnitTypeId.HYDRALISK, 5, "StrategyManagerV2", priority=1
+                        )
+                    if (
+                        self.bot.structures(UnitTypeId.SPIRE).ready.exists
+                        and self.bot.units(UnitTypeId.CORRUPTOR).amount < 5
+                    ):
+                        self.bot.blackboard.request_production(
+                            UnitTypeId.CORRUPTOR, 3, "StrategyManagerV2", priority=1
+                        )
                     # ★ 대공 테크 건설 플래그 (on_step에서 async 처리) ★
                     self._pending_anti_air_tech = True
                 except (ImportError, AttributeError):
                     pass
             # ★ FIX: 로그 스팸 방지 - 최초 1회만 출력
             if not getattr(self, "_air_threat_logged", False):
-                self.logger.info("[STRATEGY] AIR_THREAT detected! Building anti-air tech + units.")
+                self.logger.info(
+                    "[STRATEGY] AIR_THREAT detected! Building anti-air tech + units."
+                )
                 self._air_threat_logged = True
 
         # 3. HIGH OPPORTUNITY -> ALL_IN / AGGRESSIVE (Only if not in emergency)
         elif self.current_mode != StrategyMode.EMERGENCY:
             if opportunity_name == OpportunityIndex.GAME_ENDING.name:
-                 if self.current_mode != StrategyMode.ALL_IN:
-                     self.logger.info("[DECISION] FINISH move detected! Forcing ALL_IN mode.")
-                     self.current_mode = StrategyMode.ALL_IN
+                if self.current_mode != StrategyMode.ALL_IN:
+                    self.logger.info(
+                        "[DECISION] FINISH move detected! Forcing ALL_IN mode."
+                    )
+                    self.current_mode = StrategyMode.ALL_IN
 
             elif opportunity_name == OpportunityIndex.HIGH.name:
-                 if self.current_mode not in [StrategyMode.ALL_IN, StrategyMode.AGGRESSIVE]:
-                     self.logger.info("[DECISION] High opportunity detected. Switching to AGGRESSIVE.")
-                     self.current_mode = StrategyMode.AGGRESSIVE
+                if self.current_mode not in [
+                    StrategyMode.ALL_IN,
+                    StrategyMode.AGGRESSIVE,
+                ]:
+                    self.logger.info(
+                        "[DECISION] High opportunity detected. Switching to AGGRESSIVE."
+                    )
+                    self.current_mode = StrategyMode.AGGRESSIVE
 
     # ========== WIN CONDITION DETECTION ==========
 
@@ -274,7 +305,10 @@ class StrategyManagerV2(StrategyManager):
         - Tech progress vs enemy
         - Map control
         """
-        if game_time - self.last_win_condition_check < self.win_condition_update_interval:
+        if (
+            game_time - self.last_win_condition_check
+            < self.win_condition_update_interval
+        ):
             return
 
         self.last_win_condition_check = game_time
@@ -322,8 +356,10 @@ class StrategyManagerV2(StrategyManager):
             if len(self.win_condition_history) > history_size:
                 self.win_condition_history.pop(0)
 
-            self.logger.info(f"[{int(game_time)}s] Win Condition: {self.current_win_condition.name} "
-                           f"(Economy: {economy_score:+.1f}, Army: {army_score:+.1f}, Tech: {tech_score:+.1f})")
+            self.logger.info(
+                f"[{int(game_time)}s] Win Condition: {self.current_win_condition.name} "
+                f"(Economy: {economy_score:+.1f}, Army: {army_score:+.1f}, Tech: {tech_score:+.1f})"
+            )
 
     def _calculate_economy_score(self) -> float:
         """
@@ -462,6 +498,7 @@ class StrategyManagerV2(StrategyManager):
             return 0
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             return self.bot.units(UnitTypeId.DRONE).amount
         except (ImportError, AttributeError) as e:
             self.logger.debug(f"Failed to count workers: {e}")
@@ -504,8 +541,13 @@ class StrategyManagerV2(StrategyManager):
             return default_bases
 
         base_types = {
-            "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
-            "NEXUS", "HATCHERY", "LAIR", "HIVE"
+            "COMMANDCENTER",
+            "ORBITALCOMMAND",
+            "PLANETARYFORTRESS",
+            "NEXUS",
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
         }
 
         count = 0
@@ -526,18 +568,33 @@ class StrategyManagerV2(StrategyManager):
             return default_supply
 
         supply = 0
-        supply_costs = self.config.UNIT_SUPPLY_COSTS if self.config else {
-            "MARINE": 1, "MARAUDER": 2, "SIEGETANK": 3, "THOR": 6,
-            "ZEALOT": 2, "STALKER": 2, "IMMORTAL": 4, "COLOSSUS": 6,
-            "ZERGLING": 0.5, "ROACH": 2, "HYDRALISK": 2, "ULTRALISK": 6,
-            "DEFAULT": 2
-        }
+        supply_costs = (
+            self.config.UNIT_SUPPLY_COSTS
+            if self.config
+            else {
+                "MARINE": 1,
+                "MARAUDER": 2,
+                "SIEGETANK": 3,
+                "THOR": 6,
+                "ZEALOT": 2,
+                "STALKER": 2,
+                "IMMORTAL": 4,
+                "COLOSSUS": 6,
+                "ZERGLING": 0.5,
+                "ROACH": 2,
+                "HYDRALISK": 2,
+                "ULTRALISK": 6,
+                "DEFAULT": 2,
+            }
+        )
 
         for unit in self.bot.enemy_units:
             try:
                 if unit.can_attack:
                     unit_name = unit.type_id.name.upper()
-                    supply += supply_costs.get(unit_name, supply_costs.get("DEFAULT", 2))
+                    supply += supply_costs.get(
+                        unit_name, supply_costs.get("DEFAULT", 2)
+                    )
             except AttributeError:
                 continue
 
@@ -551,12 +608,18 @@ class StrategyManagerV2(StrategyManager):
 
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             tech_buildings = [
-                UnitTypeId.LAIR, UnitTypeId.HIVE,
-                UnitTypeId.SPAWNINGPOOL, UnitTypeId.ROACHWARREN,
-                UnitTypeId.HYDRALISKDEN, UnitTypeId.SPIRE,
-                UnitTypeId.GREATERSPIRE, UnitTypeId.INFESTATIONPIT,
-                UnitTypeId.ULTRALISKCAVERN, UnitTypeId.LURKERDENMP
+                UnitTypeId.LAIR,
+                UnitTypeId.HIVE,
+                UnitTypeId.SPAWNINGPOOL,
+                UnitTypeId.ROACHWARREN,
+                UnitTypeId.HYDRALISKDEN,
+                UnitTypeId.SPIRE,
+                UnitTypeId.GREATERSPIRE,
+                UnitTypeId.INFESTATIONPIT,
+                UnitTypeId.ULTRALISKCAVERN,
+                UnitTypeId.LURKERDENMP,
             ]
             count = 0
             for building_type in tech_buildings:
@@ -578,11 +641,21 @@ class StrategyManagerV2(StrategyManager):
             try:
                 name = structure.type_id.name.upper()
                 # Tech buildings
-                if any(tech in name for tech in [
-                    "BARRACKS", "FACTORY", "STARPORT",
-                    "GATEWAY", "ROBOTICSFACILITY", "STARGATE",
-                    "SPAWNINGPOOL", "ROACHWARREN", "HYDRALISKDEN", "SPIRE"
-                ]):
+                if any(
+                    tech in name
+                    for tech in [
+                        "BARRACKS",
+                        "FACTORY",
+                        "STARPORT",
+                        "GATEWAY",
+                        "ROBOTICSFACILITY",
+                        "STARGATE",
+                        "SPAWNINGPOOL",
+                        "ROACHWARREN",
+                        "HYDRALISKDEN",
+                        "SPIRE",
+                    ]
+                ):
                     tech_count += 1
             except AttributeError:
                 continue
@@ -627,7 +700,9 @@ class StrategyManagerV2(StrategyManager):
         if self.current_build_phase != previous_phase:
             self._execute_build_transition(previous_phase, self.current_build_phase)
 
-    def _execute_build_transition(self, from_phase: BuildOrderPhase, to_phase: BuildOrderPhase) -> None:
+    def _execute_build_transition(
+        self, from_phase: BuildOrderPhase, to_phase: BuildOrderPhase
+    ) -> None:
         """
         Execute build order transition actions
 
@@ -636,7 +711,9 @@ class StrategyManagerV2(StrategyManager):
             to_phase: New build phase
         """
         game_time = getattr(self.bot, "time", 0.0)
-        self.logger.info(f"[{int(game_time)}s] BUILD TRANSITION: {from_phase.name} → {to_phase.name}")
+        self.logger.info(
+            f"[{int(game_time)}s] BUILD TRANSITION: {from_phase.name} → {to_phase.name}"
+        )
 
         if to_phase == BuildOrderPhase.TRANSITION:
             self._transition_to_midgame()
@@ -651,9 +728,9 @@ class StrategyManagerV2(StrategyManager):
 
         # Blackboard에 빌드 우선순위 전달 → EconomyManager가 실행
         if self.blackboard:
-            self.blackboard.set("build_priority", [
-                "LAIR", "ROACHWARREN", "EVOLUTIONCHAMBER"
-            ])
+            self.blackboard.set(
+                "build_priority", ["LAIR", "ROACHWARREN", "EVOLUTIONCHAMBER"]
+            )
             self.blackboard.set("desired_drone_count", 44)
             self.blackboard.set("desired_gas_count", 2)
 
@@ -663,12 +740,14 @@ class StrategyManagerV2(StrategyManager):
 
     def _transition_to_aggressive(self) -> None:
         """Transition to aggressive mid-game (6-10 min): Multi-base + 대규모 군대 생산"""
-        self.logger.info("[BUILD] Transitioning to aggressive: Multi-base + Army production")
+        self.logger.info(
+            "[BUILD] Transitioning to aggressive: Multi-base + Army production"
+        )
 
         if self.blackboard:
-            self.blackboard.set("build_priority", [
-                "HYDRALISKDEN", "INFESTATIONPIT", "SPIRE"
-            ])
+            self.blackboard.set(
+                "build_priority", ["HYDRALISKDEN", "INFESTATIONPIT", "SPIRE"]
+            )
             self.blackboard.set("desired_drone_count", 66)
             self.blackboard.set("desired_gas_count", 4)
             self.blackboard.set("army_production_ratio", 0.7)
@@ -682,9 +761,9 @@ class StrategyManagerV2(StrategyManager):
         self.logger.info("[BUILD] Transitioning to late-game: Max out army")
 
         if self.blackboard:
-            self.blackboard.set("build_priority", [
-                "HIVE", "GREATERSPIRE", "ULTRALISKCAVERN"
-            ])
+            self.blackboard.set(
+                "build_priority", ["HIVE", "GREATERSPIRE", "ULTRALISKCAVERN"]
+            )
             self.blackboard.set("desired_drone_count", 80)
             self.blackboard.set("desired_gas_count", 6)
             self.blackboard.set("army_production_ratio", 0.85)
@@ -758,17 +837,17 @@ class StrategyManagerV2(StrategyManager):
 
         # 가중 평균 (각 요소에 가중치 적용)
         weights = {
-            "kill_death": 0.35,      # 35% - 교환비가 가장 중요
-            "resource": 0.25,        # 25% - 자원 효율
-            "territory": 0.20,       # 20% - 영토 확보
-            "disruption": 0.20       # 20% - 생산 방해
+            "kill_death": 0.35,  # 35% - 교환비가 가장 중요
+            "resource": 0.25,  # 25% - 자원 효율
+            "territory": 0.20,  # 20% - 영토 확보
+            "disruption": 0.20,  # 20% - 생산 방해
         }
 
         score = (
-            kill_death_score * weights["kill_death"] +
-            resource_efficiency_score * weights["resource"] +
-            territory_score * weights["territory"] +
-            disruption_score * weights["disruption"]
+            kill_death_score * weights["kill_death"]
+            + resource_efficiency_score * weights["resource"]
+            + territory_score * weights["territory"]
+            + disruption_score * weights["disruption"]
         )
 
         # 0.0 ~ 1.0 범위로 제한
@@ -881,13 +960,17 @@ class StrategyManagerV2(StrategyManager):
             return 0.5
 
         # 적 건물 파괴 수
-        enemy_structures_destroyed = getattr(self.blackboard, "enemy_structures_destroyed", 0)
+        enemy_structures_destroyed = getattr(
+            self.blackboard, "enemy_structures_destroyed", 0
+        )
 
         # 적 일꾼 킬 수
         enemy_workers_killed = getattr(self.blackboard, "enemy_workers_killed", 0)
 
         # 점수 계산 (건물 1개 = 2점, 일꾼 1명 = 0.5점)
-        disruption_points = enemy_structures_destroyed * 2.0 + enemy_workers_killed * 0.5
+        disruption_points = (
+            enemy_structures_destroyed * 2.0 + enemy_workers_killed * 0.5
+        )
 
         # 10점 이상이면 완벽한 방해
         if disruption_points >= 10:
@@ -915,15 +998,22 @@ class StrategyManagerV2(StrategyManager):
         game_time = getattr(self.bot, "time", 0.0)
 
         # 1. Rush/Proxy → Force defensive
-        if confidence >= 0.5 and ("rush" in pattern or "proxy" in pattern or "12pool" in pattern):
-            if self.current_mode not in [StrategyMode.EMERGENCY, StrategyMode.DEFENSIVE]:
+        if confidence >= 0.5 and (
+            "rush" in pattern or "proxy" in pattern or "12pool" in pattern
+        ):
+            if self.current_mode not in [
+                StrategyMode.EMERGENCY,
+                StrategyMode.DEFENSIVE,
+            ]:
                 self.current_mode = StrategyMode.DEFENSIVE
                 self.resource_priorities["defense"] = 0.4
                 self.resource_priorities["army"] = 0.4
                 self.resource_priorities["economy"] = 0.15
                 self.resource_priorities["tech"] = 0.05
                 if game_time % 30 < 1:
-                    self.logger.info(f"[INTEL→STRATEGY] Rush detected ({pattern}, {confidence:.0%}): DEFENSIVE mode")
+                    self.logger.info(
+                        f"[INTEL→STRATEGY] Rush detected ({pattern}, {confidence:.0%}): DEFENSIVE mode"
+                    )
 
         # 2. Mech → Prioritize anti-mech tech
         elif confidence >= 0.7 and ("mech" in pattern or "factory" in pattern):
@@ -932,7 +1022,9 @@ class StrategyManagerV2(StrategyManager):
             self.resource_priorities["economy"] = 0.25
             self.resource_priorities["defense"] = 0.05
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Mech confirmed ({pattern}): Prioritizing Viper/Corruptor tech")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Mech confirmed ({pattern}): Prioritizing Viper/Corruptor tech"
+                )
 
         # 3. Stargate → Anti-air priority + 즉시 대공 테크 건설
         elif confidence >= 0.7 and "stargate" in pattern:
@@ -944,19 +1036,26 @@ class StrategyManagerV2(StrategyManager):
             # ★ Stargate 감지 시 즉시 Hydra + Spore 요청 (Blackboard 경유) ★
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
+
                 if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                     if self.bot.units(UnitTypeId.HYDRALISK).amount < 8:
-                        self.bot.blackboard.request_production(UnitTypeId.HYDRALISK, 4, "StrategyManagerV2", priority=1)
+                        self.bot.blackboard.request_production(
+                            UnitTypeId.HYDRALISK, 4, "StrategyManagerV2", priority=1
+                        )
                     # Spore Crawler 건설 플래그 (on_step에서 async 처리)
                     self._pending_spore_request = True
             except (ImportError, AttributeError):
                 pass
 
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Stargate confirmed ({pattern}): Anti-air priority + tech")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Stargate confirmed ({pattern}): Anti-air priority + tech"
+                )
 
         # 4. Barracks Aggression (Terran) → 저글링+바퀴 방어
-        elif confidence >= 0.5 and ("barracks" in pattern or "bio" in pattern or "marine" in pattern):
+        elif confidence >= 0.5 and (
+            "barracks" in pattern or "bio" in pattern or "marine" in pattern
+        ):
             self.resource_priorities["army"] = 0.5
             self.resource_priorities["defense"] = 0.25
             self.resource_priorities["economy"] = 0.2
@@ -964,10 +1063,14 @@ class StrategyManagerV2(StrategyManager):
             if self.blackboard:
                 self.blackboard.set("counter_composition", ["ROACH", "BANELING"])
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Bio aggression ({pattern}): Roach+Baneling counter")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Bio aggression ({pattern}): Roach+Baneling counter"
+                )
 
         # 5. Warp Prism Harassment (Protoss) → 기지별 스포어+스파인
-        elif confidence >= 0.5 and ("warpprism" in pattern or "prism" in pattern or "dt" in pattern):
+        elif confidence >= 0.5 and (
+            "warpprism" in pattern or "prism" in pattern or "dt" in pattern
+        ):
             self.resource_priorities["defense"] = 0.35
             self.resource_priorities["army"] = 0.35
             self.resource_priorities["economy"] = 0.2
@@ -976,7 +1079,9 @@ class StrategyManagerV2(StrategyManager):
                 self.blackboard.set("need_base_defense", True)
                 self.blackboard.set("counter_composition", ["HYDRALISK", "QUEEN"])
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Warp Prism/DT ({pattern}): Base defense priority")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Warp Prism/DT ({pattern}): Base defense priority"
+                )
 
         # 6. Baneling Bust (Zerg) → 바퀴 위주 + 벽막기
         elif confidence >= 0.5 and ("baneling" in pattern or "bust" in pattern):
@@ -989,10 +1094,14 @@ class StrategyManagerV2(StrategyManager):
                 self.blackboard.set("counter_composition", ["ROACH"])
                 self.blackboard.set("need_wall", True)
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Baneling bust ({pattern}): Roach wall defense")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Baneling bust ({pattern}): Roach wall defense"
+                )
 
         # 7. Carrier/Tempest (Protoss late) → 부패귀+타락귀
-        elif confidence >= 0.6 and ("carrier" in pattern or "tempest" in pattern or "skytoss" in pattern):
+        elif confidence >= 0.6 and (
+            "carrier" in pattern or "tempest" in pattern or "skytoss" in pattern
+        ):
             self.resource_priorities["tech"] = 0.35
             self.resource_priorities["army"] = 0.4
             self.resource_priorities["economy"] = 0.2
@@ -1000,7 +1109,9 @@ class StrategyManagerV2(StrategyManager):
             if self.blackboard:
                 self.blackboard.set("counter_composition", ["CORRUPTOR", "VIPER"])
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Skytoss ({pattern}): Corruptor+Viper counter")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Skytoss ({pattern}): Corruptor+Viper counter"
+                )
 
         # 8. Battlecruiser (Terran late) → 타락귀+감염충
         elif confidence >= 0.6 and ("battlecruiser" in pattern or "bc" in pattern):
@@ -1011,10 +1122,14 @@ class StrategyManagerV2(StrategyManager):
             if self.blackboard:
                 self.blackboard.set("counter_composition", ["CORRUPTOR", "INFESTOR"])
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Battlecruiser ({pattern}): Corruptor+Infestor counter")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Battlecruiser ({pattern}): Corruptor+Infestor counter"
+                )
 
         # 9. Fast Expand / Greedy → 공격적 타이밍 어택
-        elif confidence >= 0.6 and ("expand" in pattern or "greedy" in pattern or "macro" in pattern):
+        elif confidence >= 0.6 and (
+            "expand" in pattern or "greedy" in pattern or "macro" in pattern
+        ):
             if self.current_mode != StrategyMode.EMERGENCY:
                 self.current_mode = StrategyMode.AGGRESSIVE
             self.resource_priorities["army"] = 0.55
@@ -1022,10 +1137,14 @@ class StrategyManagerV2(StrategyManager):
             self.resource_priorities["tech"] = 0.1
             self.resource_priorities["defense"] = 0.1
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Greedy play ({pattern}): Timing attack")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Greedy play ({pattern}): Timing attack"
+                )
 
         # 10. Cloak/Dark Templar → 감지 건물 긴급 건설
-        elif confidence >= 0.4 and ("cloak" in pattern or "dark" in pattern or "banshee" in pattern):
+        elif confidence >= 0.4 and (
+            "cloak" in pattern or "dark" in pattern or "banshee" in pattern
+        ):
             self.resource_priorities["defense"] = 0.3
             self.resource_priorities["army"] = 0.35
             self.resource_priorities["economy"] = 0.25
@@ -1034,7 +1153,9 @@ class StrategyManagerV2(StrategyManager):
                 self.blackboard.set("need_detection", True)
             self._pending_spore_request = True
             if game_time % 30 < 1:
-                self.logger.info(f"[INTEL→STRATEGY] Cloak ({pattern}): Detection priority")
+                self.logger.info(
+                    f"[INTEL→STRATEGY] Cloak ({pattern}): Detection priority"
+                )
 
     # ========== RESOURCE ALLOCATION ==========
 
@@ -1053,14 +1174,14 @@ class StrategyManagerV2(StrategyManager):
                 "economy": self.config.DEFAULT_PRIORITY_ECONOMY,
                 "army": self.config.DEFAULT_PRIORITY_ARMY,
                 "tech": self.config.DEFAULT_PRIORITY_TECH,
-                "defense": self.config.DEFAULT_PRIORITY_DEFENSE
+                "defense": self.config.DEFAULT_PRIORITY_DEFENSE,
             }
         else:
             self.resource_priorities = {
                 "economy": 0.4,
                 "army": 0.4,
                 "tech": 0.1,
-                "defense": 0.1
+                "defense": 0.1,
             }
 
         # Adjust based on win condition (설정값 사용)
@@ -1068,8 +1189,12 @@ class StrategyManagerV2(StrategyManager):
             # Need more army immediately
             if self.config:
                 self.resource_priorities["army"] = self.config.LOSING_ARMY_PRIORITY_ARMY
-                self.resource_priorities["economy"] = self.config.LOSING_ARMY_PRIORITY_ECONOMY
-                self.resource_priorities["defense"] = self.config.LOSING_ARMY_PRIORITY_DEFENSE
+                self.resource_priorities["economy"] = (
+                    self.config.LOSING_ARMY_PRIORITY_ECONOMY
+                )
+                self.resource_priorities["defense"] = (
+                    self.config.LOSING_ARMY_PRIORITY_DEFENSE
+                )
             else:
                 self.resource_priorities["army"] = 0.6
                 self.resource_priorities["economy"] = 0.2
@@ -1078,20 +1203,35 @@ class StrategyManagerV2(StrategyManager):
         elif self.current_win_condition == WinCondition.LOSING_ECONOMY:
             # Need more workers/bases
             if self.config:
-                self.resource_priorities["economy"] = self.config.WINNING_ECONOMY_PRIORITY_ECONOMY
-                self.resource_priorities["army"] = self.config.WINNING_ECONOMY_PRIORITY_ARMY
-                self.resource_priorities["defense"] = self.config.WINNING_ECONOMY_PRIORITY_DEFENSE
+                self.resource_priorities["economy"] = (
+                    self.config.WINNING_ECONOMY_PRIORITY_ECONOMY
+                )
+                self.resource_priorities["army"] = (
+                    self.config.WINNING_ECONOMY_PRIORITY_ARMY
+                )
+                self.resource_priorities["defense"] = (
+                    self.config.WINNING_ECONOMY_PRIORITY_DEFENSE
+                )
             else:
                 self.resource_priorities["economy"] = 0.6
                 self.resource_priorities["army"] = 0.2
                 self.resource_priorities["defense"] = 0.2
 
-        elif self.current_win_condition in [WinCondition.WINNING_ARMY, WinCondition.WINNING_ECONOMY]:
+        elif self.current_win_condition in [
+            WinCondition.WINNING_ARMY,
+            WinCondition.WINNING_ECONOMY,
+        ]:
             # Push advantage
             if self.config:
-                self.resource_priorities["army"] = self.config.WINNING_ARMY_PRIORITY_ARMY
-                self.resource_priorities["economy"] = self.config.WINNING_ARMY_PRIORITY_ECONOMY
-                self.resource_priorities["tech"] = self.config.WINNING_ARMY_PRIORITY_TECH
+                self.resource_priorities["army"] = (
+                    self.config.WINNING_ARMY_PRIORITY_ARMY
+                )
+                self.resource_priorities["economy"] = (
+                    self.config.WINNING_ARMY_PRIORITY_ECONOMY
+                )
+                self.resource_priorities["tech"] = (
+                    self.config.WINNING_ARMY_PRIORITY_TECH
+                )
             else:
                 self.resource_priorities["army"] = 0.6
                 self.resource_priorities["economy"] = 0.2
@@ -1100,10 +1240,18 @@ class StrategyManagerV2(StrategyManager):
         # Adjust for emergency mode (설정값 사용)
         if self.emergency_active:
             if self.config:
-                self.resource_priorities["army"] = self.config.LOSING_EMERGENCY_PRIORITY_ARMY
-                self.resource_priorities["defense"] = self.config.LOSING_EMERGENCY_PRIORITY_DEFENSE
-                self.resource_priorities["economy"] = self.config.LOSING_EMERGENCY_PRIORITY_ECONOMY
-                self.resource_priorities["tech"] = self.config.LOSING_EMERGENCY_PRIORITY_TECH
+                self.resource_priorities["army"] = (
+                    self.config.LOSING_EMERGENCY_PRIORITY_ARMY
+                )
+                self.resource_priorities["defense"] = (
+                    self.config.LOSING_EMERGENCY_PRIORITY_DEFENSE
+                )
+                self.resource_priorities["economy"] = (
+                    self.config.LOSING_EMERGENCY_PRIORITY_ECONOMY
+                )
+                self.resource_priorities["tech"] = (
+                    self.config.LOSING_EMERGENCY_PRIORITY_TECH
+                )
             else:
                 self.resource_priorities["army"] = 0.7
                 self.resource_priorities["defense"] = 0.3
@@ -1137,7 +1285,9 @@ class StrategyManagerV2(StrategyManager):
         game_time = getattr(self.bot, "time", 0.0)
 
         # Clean up completed strategies
-        self.active_strategies = [s for s in self.active_strategies if not s.get("complete", False)]
+        self.active_strategies = [
+            s for s in self.active_strategies if not s.get("complete", False)
+        ]
 
         # Add new strategies based on conditions
         if len(self.active_strategies) < self.concurrent_strategy_limit:
@@ -1147,21 +1297,25 @@ class StrategyManagerV2(StrategyManager):
         """Queue new strategies based on game state"""
         # Example: Queue expansion if we have resources and map control
         if self._should_expand(game_time):
-            self._add_strategy({
-                "name": "expansion",
-                "priority": StrategyPriority.HIGH,
-                "start_time": game_time,
-                "complete": False
-            })
+            self._add_strategy(
+                {
+                    "name": "expansion",
+                    "priority": StrategyPriority.HIGH,
+                    "start_time": game_time,
+                    "complete": False,
+                }
+            )
 
         # Example: Queue harassment if we have mutalisks
         if self._should_harass(game_time):
-            self._add_strategy({
-                "name": "harassment",
-                "priority": StrategyPriority.MEDIUM,
-                "start_time": game_time,
-                "complete": False
-            })
+            self._add_strategy(
+                {
+                    "name": "harassment",
+                    "priority": StrategyPriority.MEDIUM,
+                    "start_time": game_time,
+                    "complete": False,
+                }
+            )
 
     def _should_expand(self, game_time: float) -> bool:
         """Check if we should expand now (설정값 사용)"""
@@ -1175,7 +1329,10 @@ class StrategyManagerV2(StrategyManager):
     def _should_harass(self, game_time: float) -> bool:
         """Check if we should harass"""
         # Harass in mid-game if we have units
-        if self.current_build_phase in [BuildOrderPhase.TRANSITION, BuildOrderPhase.MIDGAME]:
+        if self.current_build_phase in [
+            BuildOrderPhase.TRANSITION,
+            BuildOrderPhase.MIDGAME,
+        ]:
             # Check for harassment units (handled by harassment coordinator)
             return False  # Delegate to harassment_coordinator
         return False
@@ -1188,7 +1345,9 @@ class StrategyManagerV2(StrategyManager):
             return
 
         self.active_strategies.append(strategy)
-        self.logger.info(f"[STRATEGY] Added: {strategy_name} (Priority: {strategy.get('priority', 'N/A')})")
+        self.logger.info(
+            f"[STRATEGY] Added: {strategy_name} (Priority: {strategy.get('priority', 'N/A')})"
+        )
 
     # ========== ADAPTIVE COMPOSITION (Phase 18) ==========
 
@@ -1196,55 +1355,94 @@ class StrategyManagerV2(StrategyManager):
         """Update target unit composition based on enemy tech"""
         if game_time - self.last_composition_update < 5:
             return
-            
+
         self.last_composition_update = game_time
         self.target_unit_ratios = self._calculate_desired_composition()
 
     def _calculate_desired_composition(self) -> Dict[str, float]:
         """
         Calculate ideal Zerg unit composition based on enemy army
-        
+
         Returns:
             Dictionary of {unit_type_name: ratio}
         """
         ratios = {
-            "roach": 0.0, "ravager": 0.0, "hydra": 0.0,
-            "lingu": 0.0, "baneling": 0.0, "mutalisk": 0.0,
-            "corruptor": 0.0, "infestor": 0.0, "viper": 0.0,
-            "ultralisk": 0.0, "lurker": 0.0
+            "roach": 0.0,
+            "ravager": 0.0,
+            "hydra": 0.0,
+            "lingu": 0.0,
+            "baneling": 0.0,
+            "mutalisk": 0.0,
+            "corruptor": 0.0,
+            "infestor": 0.0,
+            "viper": 0.0,
+            "ultralisk": 0.0,
+            "lurker": 0.0,
         }
-        
+
         # Default composition based on race if no enemies seen
         if not hasattr(self.bot, "enemy_units") or not self.bot.enemy_units:
-             return self._get_default_composition_by_race()
+            return self._get_default_composition_by_race()
 
         enemy_units = self.bot.enemy_units
-        total_enemy_supply = sum(u.radius for u in enemy_units) # Rough proxy for supply
+        total_enemy_supply = sum(
+            u.radius for u in enemy_units
+        )  # Rough proxy for supply
         if total_enemy_supply == 0:
             return self._get_default_composition_by_race()
 
         # Count enemy composition tags
         counts = {
-            "air_capital": 0, # Carrier, BC, Tempest
-            "air_fighter": 0, # Viking, Phoenix, VoidRay, Mutalisk
-            "ground_mech": 0, # Tank, Thor, Colossus, Immortal
+            "air_capital": 0,  # Carrier, BC, Tempest
+            "air_fighter": 0,  # Viking, Phoenix, VoidRay, Mutalisk
+            "ground_mech": 0,  # Tank, Thor, Colossus, Immortal
             "ground_bio": 0,  # Marine, Zealot, Zergling
-            "massive": 0      # Ultralisk, Archon
+            "massive": 0,  # Ultralisk, Archon
         }
 
         for u in enemy_units:
             name = u.type_id.name.upper()
-            if name in ["CARRIER", "BATTLECRUISER", "TEMPEST", "BROODLORD", "MOTHERSHIP"]:
+            if name in [
+                "CARRIER",
+                "BATTLECRUISER",
+                "TEMPEST",
+                "BROODLORD",
+                "MOTHERSHIP",
+            ]:
                 counts["air_capital"] += 1
-            elif name in ["VIKINGFIGHTER", "PHOENIX", "VOIDRAY", "MUTALISK", "CORRUPTOR", "LIBERATOR", "BANSHEE"]:
+            elif name in [
+                "VIKINGFIGHTER",
+                "PHOENIX",
+                "VOIDRAY",
+                "MUTALISK",
+                "CORRUPTOR",
+                "LIBERATOR",
+                "BANSHEE",
+            ]:
                 counts["air_fighter"] += 1
-            elif name in ["SIEGETANK", "SIEGETANKSIEGED", "THOR", "COLOSSUS", "IMMORTAL", "STALKER", "DRAGOON"]:
+            elif name in [
+                "SIEGETANK",
+                "SIEGETANKSIEGED",
+                "THOR",
+                "COLOSSUS",
+                "IMMORTAL",
+                "STALKER",
+                "DRAGOON",
+            ]:
                 counts["ground_mech"] += 1
-            elif name in ["MARINE", "MARAUDER", "ZEALOT", "ADEPT", "ZERGLING", "ROACH", "HYDRALISK"]:
+            elif name in [
+                "MARINE",
+                "MARAUDER",
+                "ZEALOT",
+                "ADEPT",
+                "ZERGLING",
+                "ROACH",
+                "HYDRALISK",
+            ]:
                 counts["ground_bio"] += 1
             elif name in ["ULTRALISK", "ARCHON"]:
                 counts["massive"] += 1
-        
+
         # ★ Phase 21.2: 향상된 유닛 조합 로직 ★
         # Logic Tree for Composition (우선순위 기반)
 
@@ -1252,16 +1450,16 @@ class StrategyManagerV2(StrategyManager):
         if counts["air_capital"] >= 3:
             # 대규모 공중 자본함 위협 (3+ 유닛)
             ratios["corruptor"] = 0.55  # 주력 대응
-            ratios["viper"] = 0.15      # Abduct 중요
-            ratios["hydra"] = 0.20      # 지상 방어
-            ratios["queen"] = 0.10      # Transfusion 지원
+            ratios["viper"] = 0.15  # Abduct 중요
+            ratios["hydra"] = 0.20  # 지상 방어
+            ratios["queen"] = 0.10  # Transfusion 지원
         elif counts["air_capital"] >= 1:
             # 소규모 공중 자본함 (1-2 유닛)
             ratios["corruptor"] = 0.40
             ratios["hydra"] = 0.30
             ratios["viper"] = 0.10
             ratios["zergling"] = 0.20  # Mineral dump
-            
+
         # 2. Anti-Ground Mech (Ravager/Viper/Lurker)
         elif counts["ground_mech"] >= 5:
             ratios["ravager"] = 0.30
@@ -1269,26 +1467,26 @@ class StrategyManagerV2(StrategyManager):
             ratios["viper"] = 0.10
             ratios["zergling"] = 0.20
             ratios["hydra"] = 0.20
-            
+
         # 3. Anti-Bio (Baneling/Roach/Lurker)
         elif counts["ground_bio"] >= 10:
             ratios["roach"] = 0.40
             ratios["ravager"] = 0.10
             ratios["baneling"] = 0.20
             ratios["hydra"] = 0.20
-            ratios["infestor"] = 0.10 # Fungal
-            
+            ratios["infestor"] = 0.10  # Fungal
+
         # 4. Default Balanced
         else:
             return self._get_default_composition_by_race()
-            
+
         return ratios
 
     def _get_default_composition_by_race(self) -> Dict[str, float]:
         """Default compositions per matchup"""
         if not hasattr(self.bot, "enemy_race"):
             return {"roach": 0.5, "hydra": 0.3, "ravager": 0.2}
-            
+
         race = self.bot.enemy_race
         if race == Race.Terran:
             # Roach/Ravager/Ling
@@ -1297,7 +1495,13 @@ class StrategyManagerV2(StrategyManager):
             # ★ Anti-Protoss: Roach/Ravager core + Hydra ranged DPS
             # Roaches/Ravagers tank stalker/zealot damage; Hydras provide ranged DPS
             # Ravager bile breaks force fields and hits shield batteries
-            return {"roach": 0.30, "ravager": 0.25, "hydra": 0.30, "lurker": 0.10, "viper": 0.05}
+            return {
+                "roach": 0.30,
+                "ravager": 0.25,
+                "hydra": 0.30,
+                "lurker": 0.10,
+                "viper": 0.05,
+            }
         elif race == Race.Zerg:
             # Roach/Ravager
             return {"roach": 0.6, "ravager": 0.3, "hydra": 0.1}
@@ -1309,7 +1513,7 @@ class StrategyManagerV2(StrategyManager):
         return self.target_unit_ratios
 
     # ========== SMART SURRENDER (Phase 18/17) ==========
-    
+
     def _check_smart_surrender(self, game_time: float) -> bool:
         """Surrender if game is hopeless to save training time.
 
@@ -1318,31 +1522,35 @@ class StrategyManagerV2(StrategyManager):
         """
         # Only surrender after 4 minutes (was 5)
         if game_time < 240:
-             return False
+            return False
 
         # Conditions for hopeless state:
         # 1. Strong Losing Economy AND Strong Losing Army
         is_hopeless = (
-            self.current_win_condition in [WinCondition.LOSING_ECONOMY, WinCondition.LOSING_ARMY]
-            and self._calculate_economy_score() <= -5.0 # Very bad eco (Reasonable threshold)
-            and self._calculate_army_score() <= -5.0    # Very bad army (Reasonable threshold)
+            self.current_win_condition
+            in [WinCondition.LOSING_ECONOMY, WinCondition.LOSING_ARMY]
+            and self._calculate_economy_score()
+            <= -5.0  # Very bad eco (Reasonable threshold)
+            and self._calculate_army_score()
+            <= -5.0  # Very bad army (Reasonable threshold)
         )
 
         if is_hopeless:
-             if self.surrender_trigger_time == 0:
-                 self.surrender_trigger_time = game_time
+            if self.surrender_trigger_time == 0:
+                self.surrender_trigger_time = game_time
 
-             # If hopeless for threshold seconds
-             duration = game_time - self.surrender_trigger_time
-             if duration > self.surrender_threshold:
-                 self.logger.warning(f"[SURRENDER] Game is hopeless for {int(duration)}s. Setting surrender flag.")
-                 self._should_surrender = True
-                 return True
+            # If hopeless for threshold seconds
+            duration = game_time - self.surrender_trigger_time
+            if duration > self.surrender_threshold:
+                self.logger.warning(
+                    f"[SURRENDER] Game is hopeless for {int(duration)}s. Setting surrender flag."
+                )
+                self._should_surrender = True
+                return True
         else:
-             self.surrender_trigger_time = 0
+            self.surrender_trigger_time = 0
 
         return False
-
 
     # ========== PUBLIC API ==========
 
@@ -1435,16 +1643,25 @@ class StrategyManagerV2(StrategyManager):
         """
         # 종족별 기본 전략 매핑
         race_strategies = {
-            "Terran": {"strategy": "ling_bane_muta", "reasoning": "바이오 상대 링바네뮤탈 유리"},
-            "Protoss": {"strategy": "roach_hydra", "reasoning": "관문 유닛 상대 로치히드라 안정"},
-            "Zerg": {"strategy": "roach_ravager", "reasoning": "동족전 로치레바저 빠른 전환"},
+            "Terran": {
+                "strategy": "ling_bane_muta",
+                "reasoning": "바이오 상대 링바네뮤탈 유리",
+            },
+            "Protoss": {
+                "strategy": "roach_hydra",
+                "reasoning": "관문 유닛 상대 로치히드라 안정",
+            },
+            "Zerg": {
+                "strategy": "roach_ravager",
+                "reasoning": "동족전 로치레바저 빠른 전환",
+            },
         }
 
         enemy_race = getattr(self.bot, "enemy_race", None)
         race_name = enemy_race.name if enemy_race else "Unknown"
-        base_strategy = race_strategies.get(race_name, {
-            "strategy": "balanced", "reasoning": "종족 미확인 균형 전략"
-        })
+        base_strategy = race_strategies.get(
+            race_name, {"strategy": "balanced", "reasoning": "종족 미확인 균형 전략"}
+        )
 
         # 전략 효과 기반 신뢰도 계산
         effectiveness = self.evaluate_strategy_effectiveness()
@@ -1514,23 +1731,29 @@ class StrategyManagerV2(StrategyManager):
         candidates = []
 
         if opponent["aggression"] > 0.6:
-            candidates.append({
-                "strategy": "defensive_turtle",
-                "reasoning": "공격적 상대 → 방어 강화",
-                "risk": 0.3,
-            })
+            candidates.append(
+                {
+                    "strategy": "defensive_turtle",
+                    "reasoning": "공격적 상대 → 방어 강화",
+                    "risk": 0.3,
+                }
+            )
         if opponent["expansion_tendency"] > 0.6:
-            candidates.append({
-                "strategy": "timing_attack",
-                "reasoning": "확장적 상대 → 타이밍 어택",
-                "risk": 0.5,
-            })
+            candidates.append(
+                {
+                    "strategy": "timing_attack",
+                    "reasoning": "확장적 상대 → 타이밍 어택",
+                    "risk": 0.5,
+                }
+            )
         if not candidates:
-            candidates.append({
-                "strategy": "balanced_macro",
-                "reasoning": "기본 매크로 전환",
-                "risk": 0.2,
-            })
+            candidates.append(
+                {
+                    "strategy": "balanced_macro",
+                    "reasoning": "기본 매크로 전환",
+                    "risk": 0.2,
+                }
+            )
 
         # 리스크가 가장 낮은 후보 선택
         best = min(candidates, key=lambda c: c["risk"])
@@ -1587,4 +1810,3 @@ class StrategyManagerV2(StrategyManager):
             "confidence": round(confidence, 2),
             "enemy_army_estimate": enemy_army_supply,
         }
-

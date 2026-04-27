@@ -96,29 +96,65 @@ except ImportError:
 RACES = ["Zerg", "Terran", "Protoss"]
 
 ZERG_UNITS = [
-    "Zergling", "Baneling", "Roach", "Ravager", "Hydralisk",
-    "Lurker", "Mutalisk", "Corruptor", "BroodLord", "Viper",
-    "Infestor", "SwarmHost", "Ultralisk", "Overlord", "Overseer",
-    "Queen", "Drone",
+    "Zergling",
+    "Baneling",
+    "Roach",
+    "Ravager",
+    "Hydralisk",
+    "Lurker",
+    "Mutalisk",
+    "Corruptor",
+    "BroodLord",
+    "Viper",
+    "Infestor",
+    "SwarmHost",
+    "Ultralisk",
+    "Overlord",
+    "Overseer",
+    "Queen",
+    "Drone",
 ]
 
 ZERG_BUILDINGS = [
-    "Hatchery", "Lair", "Hive", "SpawningPool", "EvolutionChamber",
-    "RoachWarren", "BanelingNest", "HydraliskDen", "LurkerDen",
-    "Spire", "GreaterSpire", "InfestationPit", "UltraliskCavern",
-    "NydusNetwork", "Extractor",
+    "Hatchery",
+    "Lair",
+    "Hive",
+    "SpawningPool",
+    "EvolutionChamber",
+    "RoachWarren",
+    "BanelingNest",
+    "HydraliskDen",
+    "LurkerDen",
+    "Spire",
+    "GreaterSpire",
+    "InfestationPit",
+    "UltraliskCavern",
+    "NydusNetwork",
+    "Extractor",
 ]
 
 ZERG_UPGRADES = [
-    "ZergMeleeWeaponsLevel1", "ZergMeleeWeaponsLevel2",
-    "ZergMeleeWeaponsLevel3", "ZergGroundArmorsLevel1",
-    "ZergGroundArmorsLevel2", "ZergGroundArmorsLevel3",
-    "ZergMissileWeaponsLevel1", "ZergMissileWeaponsLevel2",
-    "ZergMissileWeaponsLevel3", "ZergFlyerWeaponsLevel1",
-    "ZergFlyerArmorsLevel1", "MetabolicBoost", "AdrenalGlands",
-    "GlialReconstitution", "TunnelingClaws", "MuscularAugments",
-    "GroovedSpines", "CentrifugalHooks", "ChitinousPlating",
-    "AnabolicSynthesis", "PneumatizedCarapace",
+    "ZergMeleeWeaponsLevel1",
+    "ZergMeleeWeaponsLevel2",
+    "ZergMeleeWeaponsLevel3",
+    "ZergGroundArmorsLevel1",
+    "ZergGroundArmorsLevel2",
+    "ZergGroundArmorsLevel3",
+    "ZergMissileWeaponsLevel1",
+    "ZergMissileWeaponsLevel2",
+    "ZergMissileWeaponsLevel3",
+    "ZergFlyerWeaponsLevel1",
+    "ZergFlyerArmorsLevel1",
+    "MetabolicBoost",
+    "AdrenalGlands",
+    "GlialReconstitution",
+    "TunnelingClaws",
+    "MuscularAugments",
+    "GroovedSpines",
+    "CentrifugalHooks",
+    "ChitinousPlating",
+    "AnabolicSynthesis",
+    "PneumatizedCarapace",
 ]
 
 BUILD_ORDERS = {
@@ -147,12 +183,14 @@ STRATEGY_TEMPLATES = [
     "Saturate gases for {gas_units}. Tech to {tech_target}.",
 ]
 
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
 @dataclass
 class SC2GameState:
     """Snapshot of a game state for training data generation."""
+
     game_time_seconds: float = 0.0
     minerals: int = 0
     gas: int = 0
@@ -179,24 +217,27 @@ class SC2GameState:
             tech_tier = 2.0
         if "Hive" in self.buildings:
             tech_tier = 3.0
-        return np.array([
-            self.game_time_seconds / 60.0,
-            self.minerals,
-            self.gas,
-            self.supply_used,
-            self.supply_cap,
-            self.worker_count,
-            self.base_count,
-            self.army_value,
-            total_units,
-            total_buildings,
-            len(self.upgrades),
-            self.enemy_army_estimate,
-            self.enemy_base_count,
-            self.creep_coverage,
-            tech_tier,
-            self.supply_used / max(self.supply_cap, 1),
-        ], dtype=np.float64)
+        return np.array(
+            [
+                self.game_time_seconds / 60.0,
+                self.minerals,
+                self.gas,
+                self.supply_used,
+                self.supply_cap,
+                self.worker_count,
+                self.base_count,
+                self.army_value,
+                total_units,
+                total_buildings,
+                len(self.upgrades),
+                self.enemy_army_estimate,
+                self.enemy_base_count,
+                self.creep_coverage,
+                tech_tier,
+                self.supply_used / max(self.supply_cap, 1),
+            ],
+            dtype=np.float64,
+        )
 
     def to_text(self) -> str:
         """Natural language description of the state."""
@@ -222,6 +263,7 @@ class SC2GameState:
 @dataclass
 class StrategyPair:
     """Instruction-response pair for SFT training."""
+
     instruction: str
     response: str
     game_state: Optional[SC2GameState] = None
@@ -232,6 +274,7 @@ class StrategyPair:
 @dataclass
 class PreferencePair:
     """Preference pair for DPO training."""
+
     prompt: str
     chosen: str
     rejected: str
@@ -242,6 +285,7 @@ class PreferencePair:
 @dataclass
 class LoRAConfig:
     """Configuration for LoRA adapters."""
+
     rank: int = 16
     alpha: float = 32.0
     dropout: float = 0.05
@@ -255,6 +299,7 @@ class LoRAConfig:
 @dataclass
 class FinetuneConfig:
     """Configuration for the full fine-tuning pipeline."""
+
     model_name: str = "meta-llama/Llama-2-7b-hf"
     output_dir: str = "sc2_strategy_model"
     num_epochs: int = 3
@@ -301,7 +346,14 @@ class SC2TrainingDataGenerator:
             for u in ["Zergling", "Queen"]:
                 units[u] = int(self.rng.integers(0, 12))
         elif phase == "mid":
-            available = ["Zergling", "Baneling", "Roach", "Hydralisk", "Queen", "Mutalisk"]
+            available = [
+                "Zergling",
+                "Baneling",
+                "Roach",
+                "Hydralisk",
+                "Queen",
+                "Mutalisk",
+            ]
             for u in self.random.sample(available, k=min(4, len(available))):
                 units[u] = int(self.rng.integers(1, 20))
         else:
@@ -322,9 +374,7 @@ class SC2TrainingDataGenerator:
             n_upgrades = min(int(minutes / 3), len(ZERG_UPGRADES))
             upgrades = self.random.sample(ZERG_UPGRADES, k=n_upgrades)
 
-        army_value = sum(
-            count * self.rng.uniform(25, 300) for count in units.values()
-        )
+        army_value = sum(count * self.rng.uniform(25, 300) for count in units.values())
         enemy_race = self.random.choice(RACES)
 
         return SC2GameState(
@@ -351,7 +401,9 @@ class SC2TrainingDataGenerator:
         if state.game_time_seconds < 180:
             name = self.random.choice(list(BUILD_ORDERS.keys()))
         elif state.enemy_race == "Terran":
-            name = self.random.choice(["ling_bane_muta", "roach_hydra", "lurker_contain"])
+            name = self.random.choice(
+                ["ling_bane_muta", "roach_hydra", "lurker_contain"]
+            )
         elif state.enemy_race == "Protoss":
             name = self.random.choice(["roach_hydra", "lurker_contain", "ultra_late"])
         else:
@@ -386,7 +438,9 @@ class SC2TrainingDataGenerator:
             attack_comp=self.random.choice(mid_comps),
             expansion_timing=self.random.choice(["early", "standard", "late"]),
             gas_units=self.random.choice(gas_units),
-            tech_target=self.random.choice(["Hive tech", "Greater Spire", "Lurker Den"]),
+            tech_target=self.random.choice(
+                ["Hive tech", "Greater Spire", "Lurker Den"]
+            ),
         )
         return text
 
@@ -406,20 +460,24 @@ class SC2TrainingDataGenerator:
             )
             response = self._generate_strategy_text(state)
             win = self.rng.random() > 0.3
-            pairs.append(StrategyPair(
-                instruction=instruction,
-                response=response,
-                game_state=state,
-                quality_score=float(self.rng.uniform(0.5, 1.0)),
-                win=bool(win),
-            ))
+            pairs.append(
+                StrategyPair(
+                    instruction=instruction,
+                    response=response,
+                    game_state=state,
+                    quality_score=float(self.rng.uniform(0.5, 1.0)),
+                    win=bool(win),
+                )
+            )
         return pairs
 
     def generate_dpo_pairs(self, n: int = 500) -> List[PreferencePair]:
         """Generate preference pairs for DPO training."""
         pairs: List[PreferencePair] = []
         for _ in range(n):
-            state = self.generate_random_state(self.random.choice(["early", "mid", "late"]))
+            state = self.generate_random_state(
+                self.random.choice(["early", "mid", "late"])
+            )
             prompt = (
                 f"Given the following SC2 game state, recommend the best strategy.\n\n"
                 f"{state.to_text()}"
@@ -432,13 +490,15 @@ class SC2TrainingDataGenerator:
             )
             bad_strategy = self._generate_strategy_text(bad_state)
 
-            pairs.append(PreferencePair(
-                prompt=prompt,
-                chosen=good_strategy,
-                rejected=bad_strategy,
-                chosen_score=float(self.rng.uniform(0.7, 1.0)),
-                rejected_score=float(self.rng.uniform(0.0, 0.4)),
-            ))
+            pairs.append(
+                PreferencePair(
+                    prompt=prompt,
+                    chosen=good_strategy,
+                    rejected=bad_strategy,
+                    chosen_score=float(self.rng.uniform(0.7, 1.0)),
+                    rejected_score=float(self.rng.uniform(0.0, 0.4)),
+                )
+            )
         return pairs
 
     def augment_pair(self, pair: StrategyPair) -> List[StrategyPair]:
@@ -457,13 +517,15 @@ class SC2TrainingDataGenerator:
         text = pair.response
         for old, new in synonyms.items():
             if old in text:
-                augmented.append(StrategyPair(
-                    instruction=pair.instruction,
-                    response=text.replace(old, new),
-                    game_state=pair.game_state,
-                    quality_score=pair.quality_score * 0.95,
-                    win=pair.win,
-                ))
+                augmented.append(
+                    StrategyPair(
+                        instruction=pair.instruction,
+                        response=text.replace(old, new),
+                        game_state=pair.game_state,
+                        quality_score=pair.quality_score * 0.95,
+                        win=pair.win,
+                    )
+                )
                 break
 
         # Context variation: slightly modify game time
@@ -475,13 +537,15 @@ class SC2TrainingDataGenerator:
                 f"Given the following SC2 game state, recommend the best strategy.\n\n"
                 f"{varied_state.to_text()}"
             )
-            augmented.append(StrategyPair(
-                instruction=varied_instruction,
-                response=pair.response,
-                game_state=varied_state,
-                quality_score=pair.quality_score * 0.9,
-                win=pair.win,
-            ))
+            augmented.append(
+                StrategyPair(
+                    instruction=varied_instruction,
+                    response=pair.response,
+                    game_state=varied_state,
+                    quality_score=pair.quality_score * 0.9,
+                    win=pair.win,
+                )
+            )
         return augmented
 
 
@@ -493,7 +557,9 @@ class NumpyLinear:
 
     def __init__(self, in_features: int, out_features: int, rng: np.random.Generator):
         scale = np.sqrt(2.0 / (in_features + out_features))
-        self.weight = rng.normal(0, scale, (out_features, in_features)).astype(np.float32)
+        self.weight = rng.normal(0, scale, (out_features, in_features)).astype(
+            np.float32
+        )
         self.bias = np.zeros(out_features, dtype=np.float32)
         self.grad_w = np.zeros_like(self.weight)
         self.grad_b = np.zeros_like(self.bias)
@@ -642,7 +708,9 @@ class NumpyLoRAAdapter:
 
     def update(self, grad: NDArray, x: NDArray, lr: float = 1e-3) -> None:
         delta_B = grad.T @ (x @ self.lora_A.T)
-        delta_A = (grad.T @ self.lora_B).T @ x  # noqa: E501 (intentional long expression kept readable)
+        delta_A = (
+            grad.T @ self.lora_B
+        ).T @ x  # noqa: E501 (intentional long expression kept readable)
         self.lora_B -= lr * self.scaling * delta_B
         self.lora_A -= lr * self.scaling * delta_A
 
@@ -842,7 +910,8 @@ class StrategyEvaluator:
         if not predictions:
             return 0.0
         correct = sum(
-            1 for p, g in zip(predictions, ground_truth)
+            1
+            for p, g in zip(predictions, ground_truth)
             if p.strip().lower() == g.strip().lower()
         )
         return correct / len(predictions)
@@ -890,14 +959,12 @@ class StrategyEvaluator:
             hyp_ngrams: Dict[str, int] = {}
             ref_ngrams: Dict[str, int] = {}
             for i in range(len(hyp_tokens) - k + 1):
-                gram = " ".join(hyp_tokens[i: i + k])
+                gram = " ".join(hyp_tokens[i : i + k])
                 hyp_ngrams[gram] = hyp_ngrams.get(gram, 0) + 1
             for i in range(len(ref_tokens) - k + 1):
-                gram = " ".join(ref_tokens[i: i + k])
+                gram = " ".join(ref_tokens[i : i + k])
                 ref_ngrams[gram] = ref_ngrams.get(gram, 0) + 1
-            clipped = sum(
-                min(hyp_ngrams[g], ref_ngrams.get(g, 0)) for g in hyp_ngrams
-            )
+            clipped = sum(min(hyp_ngrams[g], ref_ngrams.get(g, 0)) for g in hyp_ngrams)
             total = max(sum(hyp_ngrams.values()), 1)
             scores.append(clipped / total)
         if any(s == 0 for s in scores):
@@ -1008,10 +1075,15 @@ class ModelExporter:
                 if quantisation == "f16":
                     data = tensor.astype(np.float16).tobytes()
                 elif quantisation in ("q8_0", "q4_0"):
-                    data = np.clip(
-                        tensor * (127 if quantisation == "q8_0" else 7),
-                        -128, 127,
-                    ).astype(np.int8).tobytes()
+                    data = (
+                        np.clip(
+                            tensor * (127 if quantisation == "q8_0" else 7),
+                            -128,
+                            127,
+                        )
+                        .astype(np.int8)
+                        .tobytes()
+                    )
                 else:
                     data = tensor.astype(np.float32).tobytes()
                 f.write(struct.pack("<Q", len(data)))
@@ -1036,14 +1108,14 @@ class ModelExporter:
             "layers": [],
         }
         for i, layer in enumerate(model.layers):
-            manifest["layers"].append({
-                "name": f"layer_{i}",
-                "weight_shape": list(layer.weight.shape),
-                "weight_checksum": hashlib.md5(
-                    layer.weight.tobytes()
-                ).hexdigest(),
-                "bias_shape": list(layer.bias.shape),
-            })
+            manifest["layers"].append(
+                {
+                    "name": f"layer_{i}",
+                    "weight_shape": list(layer.weight.shape),
+                    "weight_checksum": hashlib.md5(layer.weight.tobytes()).hexdigest(),
+                    "bias_shape": list(layer.bias.shape),
+                }
+            )
         with open(path, "w") as f:
             json.dump(manifest, f, indent=2)
         logger.info(f"Exported ONNX manifest to {path}")
@@ -1161,7 +1233,11 @@ class SC2StrategyFineTuner:
 
             # Update LoRA adapters
             for adapter, layer in zip(self.lora_adapters, self.sft_model.layers):
-                adapter.lora_A -= lr * 0.01 * rng.normal(0, 1, adapter.lora_A.shape).astype(np.float32)
+                adapter.lora_A -= (
+                    lr
+                    * 0.01
+                    * rng.normal(0, 1, adapter.lora_A.shape).astype(np.float32)
+                )
 
             if epoch % 10 == 0:
                 acc = float(np.mean(logits.argmax(axis=-1) == labels))
@@ -1192,7 +1268,9 @@ class SC2StrategyFineTuner:
 
         # Synthesise features for chosen/rejected
         chosen_features = rng.normal(0, 1, (len(pairs), input_dim)).astype(np.float32)
-        rejected_features = rng.normal(0.5, 1, (len(pairs), input_dim)).astype(np.float32)
+        rejected_features = rng.normal(0.5, 1, (len(pairs), input_dim)).astype(
+            np.float32
+        )
 
         losses = self.dpo_trainer.train(chosen_features, rejected_features, epochs, lr)
         self.training_history["dpo_loss"] = losses
@@ -1226,8 +1304,12 @@ class SC2StrategyFineTuner:
         padded = np.zeros((len(features), state_dim + action_dim), dtype=np.float32)
         padded[:, :state_dim] = features[:, :state_dim]
 
-        self.reward_model = NumpyRewardModel(state_dim + action_dim, 64, self.config.seed)
-        reward_losses = self.reward_model.train(padded, labels, epochs=30, lr=self.config.rlhf_reward_lr)
+        self.reward_model = NumpyRewardModel(
+            state_dim + action_dim, 64, self.config.seed
+        )
+        reward_losses = self.reward_model.train(
+            padded, labels, epochs=30, lr=self.config.rlhf_reward_lr
+        )
 
         # Train policy with RLHF
         episodes: List[Tuple[NDArray, bool]] = []
@@ -1235,9 +1317,9 @@ class SC2StrategyFineTuner:
         for p in pairs[:50]:
             if p.game_state is not None:
                 n_steps = rng.integers(5, 15)
-                states = np.tile(
-                    p.game_state.to_feature_vector(), (n_steps, 1)
-                ).astype(np.float32)
+                states = np.tile(p.game_state.to_feature_vector(), (n_steps, 1)).astype(
+                    np.float32
+                )
                 # Add temporal variation
                 for t in range(n_steps):
                     states[t] += rng.normal(0, 0.1, state_dim).astype(np.float32)
@@ -1247,7 +1329,9 @@ class SC2StrategyFineTuner:
         self.training_history["rlhf_reward"] = rlhf_rewards
         self.training_history["reward_model_loss"] = reward_losses
         return {
-            "reward_model_final_loss": reward_losses[-1] if reward_losses else float("nan"),
+            "reward_model_final_loss": (
+                reward_losses[-1] if reward_losses else float("nan")
+            ),
             "rlhf_final_reward": rlhf_rewards[-1] if rlhf_rewards else float("nan"),
             "n_episodes": len(episodes),
         }
@@ -1269,13 +1353,15 @@ class SC2StrategyFineTuner:
         pred_timings = actual_timings + rng.normal(0, 15, n)
 
         results = self.evaluator.evaluate_all(
-            predictions, references,
+            predictions,
+            references,
             predicted_timings=pred_timings,
             actual_timings=actual_timings,
         )
-        self.comparator.add_result(model_name, {
-            k: v for k, v in results.items() if isinstance(v, (int, float))
-        })
+        self.comparator.add_result(
+            model_name,
+            {k: v for k, v in results.items() if isinstance(v, (int, float))},
+        )
         return results
 
     # -- Export --
@@ -1392,9 +1478,15 @@ def main() -> None:
     )
     parser.add_argument("--n-sft", type=int, default=200, help="Number of SFT pairs")
     parser.add_argument("--n-dpo", type=int, default=100, help="Number of DPO pairs")
-    parser.add_argument("--sft-epochs", type=int, default=20, help="SFT training epochs")
-    parser.add_argument("--dpo-epochs", type=int, default=15, help="DPO training epochs")
-    parser.add_argument("--rlhf-epochs", type=int, default=5, help="RLHF training epochs")
+    parser.add_argument(
+        "--sft-epochs", type=int, default=20, help="SFT training epochs"
+    )
+    parser.add_argument(
+        "--dpo-epochs", type=int, default=15, help="DPO training epochs"
+    )
+    parser.add_argument(
+        "--rlhf-epochs", type=int, default=5, help="RLHF training epochs"
+    )
     parser.add_argument("--output-dir", type=str, default="sc2_strategy_model")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
@@ -1470,11 +1562,13 @@ def main() -> None:
             dpo_epochs=args.dpo_epochs,
             rlhf_epochs=args.rlhf_epochs,
         )
-        print(json.dumps(
-            {k: v for k, v in results.items() if k != "evaluation"},
-            indent=2,
-            default=str,
-        ))
+        print(
+            json.dumps(
+                {k: v for k, v in results.items() if k != "evaluation"},
+                indent=2,
+                default=str,
+            )
+        )
 
 
 if __name__ == "__main__":

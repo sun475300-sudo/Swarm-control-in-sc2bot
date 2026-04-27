@@ -11,7 +11,7 @@ Purpose: Stable and optimized automated build order execution
 
 from typing import Optional, List, Dict, Tuple
 from enum import Enum
-from knowledge_manager import KnowledgeManager # NEW
+from knowledge_manager import KnowledgeManager  # NEW
 import logging
 
 logger = logging.getLogger("BuildOrderSystem")
@@ -22,8 +22,10 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         DRONE = "DRONE"
         OVERLORD = "OVERLORD"
@@ -32,20 +34,23 @@ except ImportError:
         EXTRACTOR = "EXTRACTOR"
         ZERGLING = "ZERGLING"
         QUEEN = "QUEEN"
+
     class AbilityId:
         pass
+
     class Point2:
         pass
 
 
 class BuildOrderType(Enum):
     """Build Order Types"""
+
     STANDARD_12POOL = "STANDARD_12POOL"  # Matches JSON key
-    SAFE_14POOL = "SAFE_14POOL"      # Need to add to JSON
+    SAFE_14POOL = "SAFE_14POOL"  # Need to add to JSON
     AGGRESSIVE_10POOL = "AGGRESSIVE_10POOL"
     ECONOMY_15HATCH = "ECONOMY_15HATCH"
     HATCH_FIRST_16 = "HATCH_FIRST_16"  # ★ Phase 22: 1분 멀티 빌드 ★
-    ROACH_RUSH = "ROACH_RUSH"               # Matches JSON key
+    ROACH_RUSH = "ROACH_RUSH"  # Matches JSON key
     MUTALISK_RUSH = "MUTALISK_RUSH"
     HYDRA_TIMING = "HYDRA_TIMING"
     LURKER_DEFENSE = "LURKER_DEFENSE"
@@ -53,7 +58,10 @@ class BuildOrderType(Enum):
 
 class BuildOrderStep:
     """Build Order Step"""
-    def __init__(self, supply: int, action: str, unit_type: UnitTypeId, description: str = ""):
+
+    def __init__(
+        self, supply: int, action: str, unit_type: UnitTypeId, description: str = ""
+    ):
         self.supply = supply  # Supply to execute at
         self.action = action  # "build", "train", "expand"
         self.unit_type = unit_type
@@ -68,7 +76,7 @@ class BuildOrderSystem:
     """
 
     Build Order System (Data-Driven by KnowledgeManager)
-    
+
     Key Features:
     1. Load build order data via KnowledgeManager
     2. JSON-based automated execution
@@ -77,7 +85,7 @@ class BuildOrderSystem:
 
     def __init__(self, bot: BotAI):
         self.bot = bot
-        self.knowledge_manager = KnowledgeManager() # Initialize Knowledge Manager
+        self.knowledge_manager = KnowledgeManager()  # Initialize Knowledge Manager
         self.enabled = True
         self.build_order_active = True
 
@@ -94,7 +102,11 @@ class BuildOrderSystem:
         self.build_order_stats = {
             BuildOrderType.STANDARD_12POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.SAFE_14POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
-            BuildOrderType.AGGRESSIVE_10POOL: {"games": 0, "wins": 0, "avg_timing": 0.0},
+            BuildOrderType.AGGRESSIVE_10POOL: {
+                "games": 0,
+                "wins": 0,
+                "avg_timing": 0.0,
+            },
             BuildOrderType.ECONOMY_15HATCH: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.HATCH_FIRST_16: {"games": 0, "wins": 0, "avg_timing": 0.0},
             BuildOrderType.ROACH_RUSH: {"games": 0, "wins": 0, "avg_timing": 0.0},
@@ -113,7 +125,7 @@ class BuildOrderSystem:
 
         # ★ Phase 22: 확장 타이밍 검증 ★
         self.expansion_timing_target = 60.0  # 1분 멀티 목표
-        self.expansion_actual_time = 0.0     # 실제 확장 시작 시간
+        self.expansion_actual_time = 0.0  # 실제 확장 시작 시간
         self.expansion_timing_verified = False
 
         # Initialization
@@ -174,13 +186,15 @@ class BuildOrderSystem:
                 else:
                     # Try uppercase just in case
                     unit_type = getattr(UnitTypeId, unit_str.upper())
-                
-                parsed_steps.append(BuildOrderStep(
-                    supply=step["supply"],
-                    action=step["action"],
-                    unit_type=unit_type,
-                    description=step["description"]
-                ))
+
+                parsed_steps.append(
+                    BuildOrderStep(
+                        supply=step["supply"],
+                        action=step["action"],
+                        unit_type=unit_type,
+                        description=step["description"],
+                    )
+                )
             except Exception as e:
                 logger.info(f"Error parsing step {step}: {e}")
         return parsed_steps
@@ -233,7 +247,9 @@ class BuildOrderSystem:
             if success:
                 # Record timing
                 self.step_timings[current_step.supply] = self.bot.time
-                logger.info(f"[OK] {current_step.supply} Supply: {current_step.description} (Timing: {int(self.bot.time)}s)")
+                logger.info(
+                    f"[OK] {current_step.supply} Supply: {current_step.description} (Timing: {int(self.bot.time)}s)"
+                )
 
                 # Next step
                 current_step.completed = True
@@ -243,7 +259,9 @@ class BuildOrderSystem:
                 # ★ Phase 25: 재시도 카운터 — 일정 횟수 실패 시 스킵 후 다음 스텝
                 self._step_retry_count += 1
                 if self._step_retry_count >= self._max_retries_before_skip:
-                    logger.info(f"[SKIP] {current_step.supply} Supply: {current_step.description} (retried {self._step_retry_count}x)")
+                    logger.info(
+                        f"[SKIP] {current_step.supply} Supply: {current_step.description} (retried {self._step_retry_count}x)"
+                    )
                     self._skipped_steps.append(current_step)
                     self.current_step_index += 1
                     self._step_retry_count = 0
@@ -289,25 +307,22 @@ class BuildOrderSystem:
             main_base = self.bot.townhalls.first
             # Calculate approx location
             pos = main_base.position.towards(self.bot.game_info.map_center, 5)
-            
+
             if tech_coordinator:
-                 if not tech_coordinator.is_planned(structure_type):
+                if not tech_coordinator.is_planned(structure_type):
                     tech_coordinator.request_structure(
                         UnitTypeId.SPAWNINGPOOL,
                         pos,
                         PRIORITY_BUILD_ORDER,
-                        "BuildOrderSystem"
+                        "BuildOrderSystem",
                     )
-                    return True # Request accepted, move to next step
+                    return True  # Request accepted, move to next step
             else:
                 if not self.bot.workers.exists:
                     return False
                 worker = self.bot.workers.random
                 location = await self.bot.find_placement(
-                    UnitTypeId.SPAWNINGPOOL,
-                    pos,
-                    max_distance=15,
-                    placement_step=2
+                    UnitTypeId.SPAWNINGPOOL, pos, max_distance=15, placement_step=2
                 )
                 if location:
                     self.bot.do(worker.build(UnitTypeId.SPAWNINGPOOL, location))
@@ -321,15 +336,17 @@ class BuildOrderSystem:
                 built_any = False
 
                 for geyser in geysers:
-                    if not self.bot.structures(UnitTypeId.EXTRACTOR).closer_than(1, geyser):
+                    if not self.bot.structures(UnitTypeId.EXTRACTOR).closer_than(
+                        1, geyser
+                    ):
                         if tech_coordinator:
-                             tech_coordinator.request_structure(
+                            tech_coordinator.request_structure(
                                 UnitTypeId.EXTRACTOR,
                                 geyser,
                                 PRIORITY_BUILD_ORDER,
-                                "BuildOrderSystem"
+                                "BuildOrderSystem",
                             )
-                             built_any = True
+                            built_any = True
                         else:
                             worker = self.bot.workers.closest_to(geyser)
                             if worker:
@@ -337,10 +354,10 @@ class BuildOrderSystem:
                                 built_any = True
                 if built_any:
                     return True
-        
+
         # General Structure Fallback (e.g. Roach Warren)
         else:
-             if self.bot.townhalls:
+            if self.bot.townhalls:
                 pos = self.bot.townhalls.first.position
                 if tech_coordinator:
                     if not tech_coordinator.is_planned(structure_type):
@@ -348,7 +365,7 @@ class BuildOrderSystem:
                             structure_type,
                             pos,
                             PRIORITY_BUILD_ORDER,
-                            "BuildOrderSystem"
+                            "BuildOrderSystem",
                         )
                         return True
                 else:
@@ -422,16 +439,23 @@ class BuildOrderSystem:
         if self.bot.already_pending(UnitTypeId.HATCHERY) > 0:
             if self.expansion_actual_time == 0:
                 self.expansion_actual_time = self.bot.time
-                logger.info(f"[*] Natural expansion started at {int(self.bot.time)}s [*]")
+                logger.info(
+                    f"[*] Natural expansion started at {int(self.bot.time)}s [*]"
+                )
             return True
 
         # Check Resources
         if not self.bot.can_afford(UnitTypeId.HATCHERY):
             # ★ Phase 22: 1분 멀티 경고 - 60초 넘었는데 아직 확장 못 함 ★
-            if self.bot.time > self.expansion_timing_target and self.expansion_actual_time == 0:
+            if (
+                self.bot.time > self.expansion_timing_target
+                and self.expansion_actual_time == 0
+            ):
                 # ★ FIX: 스팸 방지 - 10초마다 1회만 출력
                 if int(self.bot.time) % 10 == 0:
-                    logger.warning(f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)")
+                    logger.warning(
+                        f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)"
+                    )
             return False
 
         # Find Expansion Location
@@ -447,10 +471,12 @@ class BuildOrderSystem:
                         UnitTypeId.HATCHERY,
                         location,
                         PRIORITY_EXPANSION,
-                        "BuildOrderSystem"
+                        "BuildOrderSystem",
                     )
                     self.expansion_actual_time = self.bot.time
-                    logger.info(f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]")
+                    logger.info(
+                        f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]"
+                    )
                     return True
             else:
                 if not self.bot.workers.exists:
@@ -459,7 +485,9 @@ class BuildOrderSystem:
                 if worker:
                     self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
                     self.expansion_actual_time = self.bot.time
-                    logger.info(f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]")
+                    logger.info(
+                        f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]"
+                    )
                     return True
 
         return False
@@ -501,11 +529,17 @@ class BuildOrderSystem:
         diff = actual - target
 
         if diff <= 5:
-            logger.info(f"[OK] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME")
+            logger.info(
+                f"[OK] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - ON TIME"
+            )
         elif diff <= 15:
-            logger.info(f"[~] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)")
+            logger.info(
+                f"[~] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - SLIGHTLY LATE (+{int(diff)}s)"
+            )
         else:
-            logger.info(f"[X] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)")
+            logger.info(
+                f"[X] EXPANSION TIMING: {int(actual)}s (Target: {int(target)}s) - LATE (+{int(diff)}s)"
+            )
 
     def select_build_order_by_win_rate(self) -> BuildOrderType:
         """Auto-select Build Order by Win Rate"""
@@ -522,7 +556,10 @@ class BuildOrderSystem:
         best_win_rate = 0.0
 
         for build_type, win_rate in win_rates.items():
-            if self.build_order_stats[build_type]["games"] >= 5 and win_rate > best_win_rate:
+            if (
+                self.build_order_stats[build_type]["games"] >= 5
+                and win_rate > best_win_rate
+            ):
                 best_build = build_type
                 best_win_rate = win_rate
 

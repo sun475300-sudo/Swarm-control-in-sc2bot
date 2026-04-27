@@ -14,6 +14,7 @@ Layer 5: 파일 시스템 보호 + 거래 안전 한도 / 이상 거래 탐지
 #159: 제로 트러스트 검증
 #160: 시크릿 매니저
 """
+
 import math
 import os
 import re
@@ -57,11 +58,7 @@ _audit_log_lock = threading.Lock()
 
 def audit_log(event_type: str, details: dict):
     """감사 로그 기록 (JSONL 형식, 스레드 안전)"""
-    entry = {
-        "timestamp": datetime.now().isoformat(),
-        "event": event_type,
-        **details
-    }
+    entry = {"timestamp": datetime.now().isoformat(), "event": event_type, **details}
     try:
         with _audit_log_lock:
             with open(AUDIT_LOG_FILE, "a", encoding="utf-8") as f:
@@ -74,13 +71,20 @@ def audit_log(event_type: str, details: dict):
 # API Key Health Check (#153)
 # ═══════════════════════════════════════════════
 
+
 def check_api_key_health() -> dict:
     """API 키 상태 점검"""
     from . import config
-    status = {"upbit_key_set": bool(config.UPBIT_ACCESS_KEY), "upbit_secret_set": bool(config.UPBIT_SECRET_KEY)}
+
+    status = {
+        "upbit_key_set": bool(config.UPBIT_ACCESS_KEY),
+        "upbit_secret_set": bool(config.UPBIT_SECRET_KEY),
+    }
     # Key length validation
     if config.UPBIT_ACCESS_KEY and len(config.UPBIT_ACCESS_KEY) < 20:
-        status["warning"] = "Upbit Access Key가 너무 짧습니다. 올바른 키인지 확인하세요."
+        status["warning"] = (
+            "Upbit Access Key가 너무 짧습니다. 올바른 키인지 확인하세요."
+        )
     return status
 
 
@@ -105,12 +109,16 @@ def enforce_gitignore() -> list:
 
     existing_lines = set()
     if gitignore_path.exists():
-        with open(gitignore_path, 'r', encoding='utf-8') as f:
-            existing_lines = {line.strip() for line in f if line.strip() and not line.startswith('#')}
+        with open(gitignore_path, "r", encoding="utf-8") as f:
+            existing_lines = {
+                line.strip() for line in f if line.strip() and not line.startswith("#")
+            }
 
-    missing = [entry for entry in _REQUIRED_GITIGNORE_ENTRIES if entry not in existing_lines]
+    missing = [
+        entry for entry in _REQUIRED_GITIGNORE_ENTRIES if entry not in existing_lines
+    ]
     if missing:
-        with open(gitignore_path, 'a', encoding='utf-8') as f:
+        with open(gitignore_path, "a", encoding="utf-8") as f:
             f.write("\n# ── JARVIS 보안 자동 추가 ──\n")
             for entry in missing:
                 f.write(f"{entry}\n")
@@ -126,13 +134,13 @@ def enforce_gitignore() -> list:
 
 # 일반적인 API 키 패턴 (강화: 거래소별 패턴 추가)
 _KEY_PATTERNS = [
-    re.compile(r'[A-Za-z0-9]{30,64}'),          # 일반 API Key 패턴
-    re.compile(r'UPBIT_ACCESS_KEY\s*=\s*\S+'),   # Upbit Access
-    re.compile(r'UPBIT_SECRET_KEY\s*=\s*\S+'),   # Upbit Secret
+    re.compile(r"[A-Za-z0-9]{30,64}"),  # 일반 API Key 패턴
+    re.compile(r"UPBIT_ACCESS_KEY\s*=\s*\S+"),  # Upbit Access
+    re.compile(r"UPBIT_SECRET_KEY\s*=\s*\S+"),  # Upbit Secret
     re.compile(r'(access|secret|api)[_-]?key\s*[:=]\s*["\']?\w{20,}', re.IGNORECASE),
     re.compile(r'(token|password|passwd|pwd)\s*[:=]\s*["\']?\w{10,}', re.IGNORECASE),
-    re.compile(r'Bearer\s+[A-Za-z0-9\-._~+/]+=*', re.IGNORECASE),  # Bearer 토큰
-    re.compile(r'-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----'),        # SSH/RSA 키
+    re.compile(r"Bearer\s+[A-Za-z0-9\-._~+/]+=*", re.IGNORECASE),  # Bearer 토큰
+    re.compile(r"-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----"),  # SSH/RSA 키
 ]
 
 # 실제 키 값 패턴 (현재 등록된 키의 prefix로 탐지)
@@ -153,17 +161,19 @@ def scan_file_for_secrets(filepath: str) -> list:
     _load_known_keys()
     findings = []
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             for line_no, line in enumerate(f, 1):
                 # 실제 키 값이 포함되어 있는지 체크
                 for prefix in _KNOWN_KEY_PREFIXES:
                     if prefix in line:
-                        findings.append({
-                            "file": filepath,
-                            "line": line_no,
-                            "type": "ACTUAL_KEY_DETECTED",
-                            "snippet": mask_sensitive(line.strip()),
-                        })
+                        findings.append(
+                            {
+                                "file": filepath,
+                                "line": line_no,
+                                "type": "ACTUAL_KEY_DETECTED",
+                                "snippet": mask_sensitive(line.strip()),
+                            }
+                        )
     except Exception as e:
         logger.debug(f"Could not scan file {filepath} for secrets: {e}")
     return findings
@@ -172,10 +182,22 @@ def scan_file_for_secrets(filepath: str) -> list:
 def scan_directory_for_secrets(directory: str, extensions: list = None) -> list:
     """디렉토리 전체 스캔"""
     if extensions is None:
-        extensions = ['.py', '.js', '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini', '.bat', '.cmd', '.sh']
+        extensions = [
+            ".py",
+            ".js",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".toml",
+            ".cfg",
+            ".ini",
+            ".bat",
+            ".cmd",
+            ".sh",
+        ]
 
     all_findings = []
-    skip_dirs = {'.venv', 'venv', 'node_modules', '.git', '__pycache__', '.next'}
+    skip_dirs = {".venv", "venv", "node_modules", ".git", "__pycache__", ".next"}
 
     for root, dirs, files in os.walk(directory):
         dirs[:] = [d for d in dirs if d not in skip_dirs]
@@ -192,6 +214,7 @@ def scan_directory_for_secrets(directory: str, extensions: list = None) -> list:
 # Layer 3: 런타임 키 마스킹
 # ═══════════════════════════════════════════════
 
+
 def mask_sensitive(text: str) -> str:
     """텍스트에서 민감 정보를 마스킹"""
     result = text
@@ -206,9 +229,9 @@ class SecureLogFilter(logging.Filter):
     """로그에서 API 키 자동 마스킹 필터"""
 
     def filter(self, record):
-        if hasattr(record, 'msg') and isinstance(record.msg, str):
+        if hasattr(record, "msg") and isinstance(record.msg, str):
             record.msg = mask_sensitive(record.msg)
-        if hasattr(record, 'args') and record.args:
+        if hasattr(record, "args") and record.args:
             if isinstance(record.args, tuple):
                 record.args = tuple(
                     mask_sensitive(str(a)) if isinstance(a, str) else a
@@ -225,9 +248,16 @@ def install_log_filter():
     for handler in root_logger.handlers:
         handler.addFilter(secure_filter)
     # crypto 관련 로거에도 설치
-    for name in ["crypto", "crypto.upbit_client", "crypto.auto_trader",
-                  "crypto.portfolio_tracker", "crypto.risk_manager", "crypto_mcp",
-                  "crypto.analyzer", "crypto.security"]:
+    for name in [
+        "crypto",
+        "crypto.upbit_client",
+        "crypto.auto_trader",
+        "crypto.portfolio_tracker",
+        "crypto.risk_manager",
+        "crypto_mcp",
+        "crypto.analyzer",
+        "crypto.security",
+    ]:
         logging.getLogger(name).addFilter(secure_filter)
     logger.info("보안 로그 필터 설치 완료")
 
@@ -281,10 +311,10 @@ def validate_api_keys() -> tuple[bool, str]:
     if len(access) < 30 or len(secret) < 30:
         return False, "API 키 길이가 너무 짧습니다 (최소 30자)."
 
-    if not re.match(r'^[A-Za-z0-9]+$', access):
+    if not re.match(r"^[A-Za-z0-9]+$", access):
         return False, "Access Key에 허용되지 않는 문자가 포함되어 있습니다."
 
-    if not re.match(r'^[A-Za-z0-9]+$', secret):
+    if not re.match(r"^[A-Za-z0-9]+$", secret):
         return False, "Secret Key에 허용되지 않는 문자가 포함되어 있습니다."
 
     return True, "API 키 형식 검증 통과"
@@ -300,22 +330,23 @@ def check_key_integrity() -> tuple[bool, str]:
     current_hash = hashlib.sha256(f"{access}:{secret}".encode()).hexdigest()[:16]
 
     if _KEY_HASH_FILE.exists():
-        stored_hash = _KEY_HASH_FILE.read_text(encoding='utf-8').strip()
+        stored_hash = _KEY_HASH_FILE.read_text(encoding="utf-8").strip()
         if stored_hash != current_hash:
             logger.warning("⚠️ API 키 변경 감지! 이전 해시와 일치하지 않습니다.")
             # 새 해시 저장
-            _KEY_HASH_FILE.write_text(current_hash, encoding='utf-8')
+            _KEY_HASH_FILE.write_text(current_hash, encoding="utf-8")
             return False, "API 키가 변경됨 (신규 해시 저장)"
         return True, "API 키 무결성 확인 완료"
     else:
         # 최초 실행: 해시 저장
-        _KEY_HASH_FILE.write_text(current_hash, encoding='utf-8')
+        _KEY_HASH_FILE.write_text(current_hash, encoding="utf-8")
         return True, "API 키 해시 최초 등록"
 
 
 # ═══════════════════════════════════════════════
 # Layer 5: 파일 시스템 보호
 # ═══════════════════════════════════════════════
+
 
 def secure_data_files():
     """데이터 파일 권한 제한 (소유자만 읽기/쓰기)"""
@@ -337,9 +368,9 @@ def secure_data_files():
             try:
                 if sys.platform == "win32":
                     import subprocess
+
                     subprocess.run(
-                        ["attrib", "+H", str(path)],
-                        capture_output=True, timeout=5
+                        ["attrib", "+H", str(path)], capture_output=True, timeout=5
                     )
                 else:
                     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
@@ -352,23 +383,28 @@ def secure_data_files():
 # Layer 5 강화: 거래 안전 한도 / 이상 거래 탐지
 # ═══════════════════════════════════════════════
 
+
 class TradeSafetyGuard:
     """거래 안전 가드 — 비정상적 매매 패턴 감지 및 차단"""
 
     def __init__(self):
-        self.max_daily_trades: int = 50               # 일일 최대 거래 횟수
+        self.max_daily_trades: int = 50  # 일일 최대 거래 횟수
         self.max_single_order_krw: float = 1_000_000  # 1회 최대 주문 금액 (100만원)
         self.max_daily_volume_krw: float = 5_000_000  # 일일 최대 거래 총액 (500만원)
-        self._daily_trades: list = []                  # [(timestamp, amount), ...]
-        self._alerts: list = []                        # 보안 경고 기록
-        self._pending_confirmations: dict = {}         # 2FA 확인 대기 (#150)
-        self._recent_amounts: deque = deque(maxlen=100)  # P2-13: 이상 거래 탐지용 최근 금액 (자동 제한)
-        self._guard_lock = threading.Lock()            # 스레드 안전 보호
+        self._daily_trades: list = []  # [(timestamp, amount), ...]
+        self._alerts: list = []  # 보안 경고 기록
+        self._pending_confirmations: dict = {}  # 2FA 확인 대기 (#150)
+        self._recent_amounts: deque = deque(
+            maxlen=100
+        )  # P2-13: 이상 거래 탐지용 최근 금액 (자동 제한)
+        self._guard_lock = threading.Lock()  # 스레드 안전 보호
 
     def _clean_old_trades(self):
         """24시간 이전 기록 정리"""
         cutoff = datetime.now() - timedelta(hours=24)
-        self._daily_trades = [(ts, amt) for ts, amt in self._daily_trades if ts > cutoff]
+        self._daily_trades = [
+            (ts, amt) for ts, amt in self._daily_trades if ts > cutoff
+        ]
 
     def check_trade(self, amount_krw: float) -> tuple[bool, str]:
         """매매 전 안전 검증"""
@@ -412,7 +448,9 @@ class TradeSafetyGuard:
         """매매 기록"""
         with self._guard_lock:
             self._daily_trades.append((datetime.now(), abs(amount_krw)))
-            self._recent_amounts.append(abs(amount_krw))  # P2-13: deque(maxlen=100) 자동 제한
+            self._recent_amounts.append(
+                abs(amount_krw)
+            )  # P2-13: deque(maxlen=100) 자동 제한
 
     def get_daily_summary(self) -> dict:
         """일일 거래 요약 (스레드 안전)"""
@@ -427,20 +465,30 @@ class TradeSafetyGuard:
                 "recent_alerts": [(str(ts), msg) for ts, msg in self._alerts[-5:]],
             }
 
-    def set_limits(self, max_daily_trades: int = None, max_single_order_krw: float = None,
-                   max_daily_volume_krw: float = None):
+    def set_limits(
+        self,
+        max_daily_trades: int = None,
+        max_single_order_krw: float = None,
+        max_daily_volume_krw: float = None,
+    ):
         """안전 한도 변경 — P2-4: 범위 검증 추가"""
         if max_daily_trades is not None:
             if not (0 < max_daily_trades <= 1000):
-                raise ValueError(f"max_daily_trades는 1~1000 범위여야 합니다: {max_daily_trades}")
+                raise ValueError(
+                    f"max_daily_trades는 1~1000 범위여야 합니다: {max_daily_trades}"
+                )
             self.max_daily_trades = max_daily_trades
         if max_single_order_krw is not None:
             if not (5000 <= max_single_order_krw <= 100_000_000):
-                raise ValueError(f"max_single_order_krw는 5,000~100,000,000 범위여야 합니다: {max_single_order_krw}")
+                raise ValueError(
+                    f"max_single_order_krw는 5,000~100,000,000 범위여야 합니다: {max_single_order_krw}"
+                )
             self.max_single_order_krw = max_single_order_krw
         if max_daily_volume_krw is not None:
             if not (10_000 <= max_daily_volume_krw <= 1_000_000_000):
-                raise ValueError(f"max_daily_volume_krw는 10,000~1,000,000,000 범위여야 합니다: {max_daily_volume_krw}")
+                raise ValueError(
+                    f"max_daily_volume_krw는 10,000~1,000,000,000 범위여야 합니다: {max_daily_volume_krw}"
+                )
             self.max_daily_volume_krw = max_daily_volume_krw
 
     # ── 2FA Trade Confirmation (#150) ──
@@ -450,13 +498,19 @@ class TradeSafetyGuard:
         LARGE_TRADE_THRESHOLD = 1_000_000  # 100만원 이상
         if amount_krw >= LARGE_TRADE_THRESHOLD:
             import secrets as _secrets
+
             confirm_code = str(_secrets.randbelow(900000) + 100000)
             self._pending_confirmations[confirm_code] = {
-                "amount": amount_krw, "ticker": ticker,
-                "created": time.time(), "expires": time.time() + 300
+                "amount": amount_krw,
+                "ticker": ticker,
+                "created": time.time(),
+                "expires": time.time() + 300,
             }
-            return {"needs_confirmation": True, "code": confirm_code,
-                    "message": f"대규모 거래({amount_krw:,.0f}원). 확인 코드: {confirm_code}"}
+            return {
+                "needs_confirmation": True,
+                "code": confirm_code,
+                "message": f"대규모 거래({amount_krw:,.0f}원). 확인 코드: {confirm_code}",
+            }
         return {"needs_confirmation": False}
 
     def confirm_2fa(self, code: str) -> bool:
@@ -479,12 +533,17 @@ class TradeSafetyGuard:
             return False, "평균 0"
         deviation = abs(amount_krw - avg) / max(avg, 1)
         if deviation > 3.0:  # 평균 대비 3배 이상 편차
-            return True, f"비정상 거래 감지: 평균({avg:,.0f}) 대비 {deviation:.1f}배 편차"
+            return (
+                True,
+                f"비정상 거래 감지: 평균({avg:,.0f}) 대비 {deviation:.1f}배 편차",
+            )
         return False, "정상"
 
     # ── Statistical Anomaly Detection (#155) ──
 
-    def statistical_anomaly_detection(self, amount_krw: float, z_threshold: float = 2.5) -> dict:
+    def statistical_anomaly_detection(
+        self, amount_krw: float, z_threshold: float = 2.5
+    ) -> dict:
         """통계적 이상 탐지 — 이동 평균 및 표준 편차 기반 Z-score 분석
 
         Args:
@@ -512,7 +571,9 @@ class TradeSafetyGuard:
 
         # 최소 10개 이상의 거래 기록이 있어야 통계 의미 있음
         if len(self._recent_amounts) < 10:
-            result["message"] = f"데이터 부족 ({len(self._recent_amounts)}/10). 통계적 탐지 불가."
+            result["message"] = (
+                f"데이터 부족 ({len(self._recent_amounts)}/10). 통계적 탐지 불가."
+            )
             return result
 
         # 이동 평균 (최근 50건)
@@ -564,6 +625,7 @@ trade_safety = TradeSafetyGuard()
 # #156: 암호화된 거래 로그 (EncryptedTradeLog)
 # ═══════════════════════════════════════════════
 
+
 class EncryptedTradeLog:
     """암호화된 거래 로그 관리
 
@@ -587,6 +649,7 @@ class EncryptedTradeLog:
         # Fernet 초기화 시도
         try:
             from cryptography.fernet import Fernet
+
             if key:
                 self._fernet = Fernet(key)
             elif self._key_file.exists():
@@ -671,6 +734,7 @@ class EncryptedTradeLog:
 # #157: 자동 백업 (auto_backup)
 # ═══════════════════════════════════════════════
 
+
 def auto_backup(target_dir: str = None, max_backups: int = 10) -> str:
     """crypto_trading/data/ 디렉토리를 zip으로 자동 백업
 
@@ -724,6 +788,7 @@ def auto_backup(target_dir: str = None, max_backups: int = 10) -> str:
 # #158: 보안 대시보드 (get_security_dashboard)
 # ═══════════════════════════════════════════════
 
+
 def get_security_dashboard() -> dict:
     """보안 대시보드 — 각 보안 레이어 상태 종합 요약
 
@@ -747,10 +812,13 @@ def get_security_dashboard() -> dict:
     issues = 0
 
     # Layer 1: .env + .gitignore
-    env_exists = any(p.exists() for p in [
-        Path(__file__).parent.parent / "wicked_zerg_challenger" / ".env",
-        Path(__file__).parent.parent / ".env",
-    ])
+    env_exists = any(
+        p.exists()
+        for p in [
+            Path(__file__).parent.parent / "wicked_zerg_challenger" / ".env",
+            Path(__file__).parent.parent / ".env",
+        ]
+    )
     gitignore_path = Path(__file__).parent.parent / ".gitignore"
     dashboard["layers"]["layer1_env_isolation"] = {
         "status": "OK" if env_exists else "WARNING",
@@ -770,7 +838,11 @@ def get_security_dashboard() -> dict:
     dashboard["layers"]["layer3_runtime_protection"] = {
         "status": "OK",
         "log_filter_installed": True,
-        "exception_hook_installed": sys.excepthook.__name__ != "excepthook" if hasattr(sys.excepthook, '__name__') else True,
+        "exception_hook_installed": (
+            sys.excepthook.__name__ != "excepthook"
+            if hasattr(sys.excepthook, "__name__")
+            else True
+        ),
     }
 
     # Layer 4: 키 검증
@@ -787,7 +859,10 @@ def get_security_dashboard() -> dict:
         if not valid or not integrity_ok:
             issues += 1
     except Exception as e:
-        dashboard["layers"]["layer4_key_validation"] = {"status": "ERROR", "error": str(e)}
+        dashboard["layers"]["layer4_key_validation"] = {
+            "status": "ERROR",
+            "error": str(e),
+        }
         issues += 1
 
     # Layer 5: 파일 보호 + 거래 안전
@@ -816,7 +891,9 @@ def get_security_dashboard() -> dict:
 
     # trade_safety 알림도 추가
     for ts, msg in trade_safety._alerts[-10:]:
-        events.append({"timestamp": ts.isoformat(), "event": "trade_alert", "message": msg})
+        events.append(
+            {"timestamp": ts.isoformat(), "event": "trade_alert", "message": msg}
+        )
 
     dashboard["recent_events"] = events[-20:]
 
@@ -835,6 +912,7 @@ def get_security_dashboard() -> dict:
 # #159: 제로 트러스트 검증 (ZeroTrustValidator)
 # ═══════════════════════════════════════════════
 
+
 class ZeroTrustValidator:
     """제로 트러스트 보안 모델 — 모든 요청을 검증
 
@@ -848,8 +926,9 @@ class ZeroTrustValidator:
         self._allowed_hours: tuple = (0, 24)  # 기본: 24시간 허용
         self._trust_scores: dict = {}  # ip -> score (0~100)
 
-    def configure(self, max_requests_per_minute: int = 60,
-                  allowed_hours: tuple = (0, 24)):
+    def configure(
+        self, max_requests_per_minute: int = 60, allowed_hours: tuple = (0, 24)
+    ):
         """검증 정책 설정
 
         Args:
@@ -911,13 +990,17 @@ class ZeroTrustValidator:
             if not (start_h <= current_hour < end_h):
                 result["checks"]["time_check"] = False
                 result["allowed"] = False
-                reasons.append(f"허용 시간대 외 요청: {current_hour}시 (허용: {start_h}-{end_h}시)")
+                reasons.append(
+                    f"허용 시간대 외 요청: {current_hour}시 (허용: {start_h}-{end_h}시)"
+                )
         else:
             # 자정을 넘기는 경우 (예: 22시~6시)
             if not (current_hour >= start_h or current_hour < end_h):
                 result["checks"]["time_check"] = False
                 result["allowed"] = False
-                reasons.append(f"허용 시간대 외 요청: {current_hour}시 (허용: {start_h}-{end_h}시)")
+                reasons.append(
+                    f"허용 시간대 외 요청: {current_hour}시 (허용: {start_h}-{end_h}시)"
+                )
 
         # 3. 빈도 검증 (분당 요청 수)
         one_min_ago = now - timedelta(minutes=1)
@@ -948,9 +1031,9 @@ class ZeroTrustValidator:
             self._trust_scores[ip] = min(100, trust + 1)
         else:
             self._trust_scores[ip] = max(0, trust - 10)
-            audit_log("zero_trust_block", {
-                "ip": ip, "action": action, "reasons": reasons
-            })
+            audit_log(
+                "zero_trust_block", {"ip": ip, "action": action, "reasons": reasons}
+            )
 
         result["reason"] = "; ".join(reasons) if reasons else "모든 검증 통과"
         return result
@@ -983,6 +1066,7 @@ zero_trust = ZeroTrustValidator()
 # #160: 시크릿 매니저 (SecretManager)
 # ═══════════════════════════════════════════════
 
+
 class SecretManager:
     """시크릿 매니저 — 키를 환경변수 대신 암호화 파일에서 관리
 
@@ -1009,6 +1093,7 @@ class SecretManager:
     def _derive_master_key(self) -> str:
         """마스터 키 생성 — 머신 고유 정보 기반"""
         import platform
+
         try:
             login_name = os.getlogin()
         except OSError:
@@ -1020,8 +1105,10 @@ class SecretManager:
         """Bug #7 Fix + H-7: Fernet 대칭 암호화 초기화. PBKDF2 키 파생 강화."""
         try:
             from cryptography.fernet import Fernet
+
             # H-7: PBKDF2로 강화된 키 파생 (salt + 100k iterations)
             import hashlib
+
             _salt = hashlib.sha256(b"JARVIS_FERNET_SALT_v1").digest()[:16]
             key_hash = hashlib.pbkdf2_hmac(
                 "sha256", self._master_key.encode("utf-8"), _salt, 100_000
@@ -1054,6 +1141,7 @@ class SecretManager:
                 try:
                     import hashlib as _hlib
                     from cryptography.fernet import Fernet as _Fernet
+
                     old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()
                     old_fernet = _Fernet(base64.urlsafe_b64encode(old_key))
                     return old_fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
@@ -1136,7 +1224,9 @@ class SecretManager:
                 self._cache[name] = self._decrypt_value(encrypted)
                 self._cache_timestamps[name] = time.time()
             except Exception as e:
-                logger.warning(f"SecretManager: failed to decrypt secret: {type(e).__name__}")
+                logger.warning(
+                    f"SecretManager: failed to decrypt secret: {type(e).__name__}"
+                )
         logger.info(f"SecretManager: 캐시 갱신 완료 ({len(self._cache)}개)")
 
     def set_cache_ttl(self, ttl_seconds: int):
@@ -1169,15 +1259,19 @@ secret_manager = SecretManager()
 # 초기화
 # ═══════════════════════════════════════════════
 
+
 def initialize_security():
     """5중 보안 체계 초기화 (강화 버전)"""
     results = []
 
     # Layer 1: .env 격리 + .gitignore 자동 복구
-    env_exists = any(p.exists() for p in [
-        Path(__file__).parent.parent / "wicked_zerg_challenger" / ".env",
-        Path(__file__).parent.parent / ".env",
-    ])
+    env_exists = any(
+        p.exists()
+        for p in [
+            Path(__file__).parent.parent / "wicked_zerg_challenger" / ".env",
+            Path(__file__).parent.parent / ".env",
+        ]
+    )
     gitignore_added = enforce_gitignore()
     l1_status = "✓" if env_exists else "✗ .env 파일 없음"
     if gitignore_added:
@@ -1198,7 +1292,9 @@ def initialize_security():
     install_log_filter()
     removed_env = protect_environment_variables()
     install_exception_hook()
-    l3_detail = f"환경변수 {len(removed_env)}개 정리" if removed_env else "환경변수 클린"
+    l3_detail = (
+        f"환경변수 {len(removed_env)}개 정리" if removed_env else "환경변수 클린"
+    )
     results.append(f"Layer 3 (런타임 보호): ✓ 로그필터 + {l3_detail} + 예외핸들러")
 
     # Layer 4: 키 유효성 + 무결성 해시
@@ -1209,19 +1305,25 @@ def initialize_security():
 
     # Layer 5: 파일 보호 + 거래 안전 가드
     secure_data_files()
-    results.append(f"Layer 5 (파일/거래 보호): ✓ 파일보호 적용 | "
-                    f"일일한도: {trade_safety.max_daily_trades}회, "
-                    f"{trade_safety.max_daily_volume_krw:,.0f}원")
+    results.append(
+        f"Layer 5 (파일/거래 보호): ✓ 파일보호 적용 | "
+        f"일일한도: {trade_safety.max_daily_trades}회, "
+        f"{trade_safety.max_daily_volume_krw:,.0f}원"
+    )
 
     # #156: 암호화 거래 로그
     try:
         enc_log = EncryptedTradeLog()
-        results.append(f"#156 (암호화 로그): ✓ {'Fernet' if enc_log._use_fernet else 'Base64 폴백'} 모드")
+        results.append(
+            f"#156 (암호화 로그): ✓ {'Fernet' if enc_log._use_fernet else 'Base64 폴백'} 모드"
+        )
     except Exception as e:
         results.append(f"#156 (암호화 로그): ✗ {e}")
 
     # #159: 제로 트러스트
-    results.append(f"#159 (제로 트러스트): ✓ 분당 {zero_trust._max_requests_per_minute}건 제한")
+    results.append(
+        f"#159 (제로 트러스트): ✓ 분당 {zero_trust._max_requests_per_minute}건 제한"
+    )
 
     # #160: 시크릿 매니저
     results.append(f"#160 (시크릿 매니저): ✓ 캐시 TTL {secret_manager._cache_ttl}초")
@@ -1240,9 +1342,14 @@ def _generate_hook_content() -> str:
         if key and len(key) >= 10:
             prefixes.append(key[:10])
 
-    prefix_patterns = "\n".join(f'    "{p}"' for p in prefixes) if prefixes else '    # (키 prefix 없음 - .env 설정 필요)'
+    prefix_patterns = (
+        "\n".join(f'    "{p}"' for p in prefixes)
+        if prefixes
+        else "    # (키 prefix 없음 - .env 설정 필요)"
+    )
 
-    return r'''#!/bin/sh
+    return (
+        r"""#!/bin/sh
 # JARVIS Crypto Trading - Pre-commit Secret Scanner
 # 이 훅은 커밋 전에 API 키가 소스코드에 포함되어 있는지 검사합니다.
 
@@ -1252,7 +1359,9 @@ echo "🔒 보안 스캔: API 키 유출 검사 중..."
 PATTERNS=(
     "UPBIT_ACCESS_KEY\s*=\s*[A-Za-z0-9]{20,}"
     "UPBIT_SECRET_KEY\s*=\s*[A-Za-z0-9]{20,}"
-''' + prefix_patterns + r'''
+"""
+        + prefix_patterns
+        + r"""
     "access_key.*[A-Za-z0-9]{30,}"
     "secret_key.*[A-Za-z0-9]{30,}"
 )
@@ -1282,7 +1391,8 @@ fi
 
 echo "✅ 보안 스캔 통과"
 exit 0
-'''
+"""
+    )
 
 
 def install_pre_commit_hook():
@@ -1299,7 +1409,7 @@ def install_pre_commit_hook():
         hook_path.rename(backup)
 
     hook_content = _generate_hook_content()
-    with open(hook_path, 'w', encoding='utf-8', newline='\n') as f:  # noqa: S108
+    with open(hook_path, "w", encoding="utf-8", newline="\n") as f:  # noqa: S108
         f.write(hook_content)  # pre-commit hook script, not sensitive data
 
     if sys.platform != "win32":

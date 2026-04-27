@@ -28,6 +28,7 @@ log = logging.getLogger("sc2_nlp_coach")
 try:
     from transformers import pipeline, AutoTokenizer, AutoModel
     import torch
+
     HF_AVAILABLE = True
     log.info("HuggingFace Transformers available — using neural models.")
 except ImportError:
@@ -58,45 +59,74 @@ RACE_LABELS = ["Terran", "Zerg", "Protoss", "Unknown"]
 BUILD_ORDER_TEMPLATES: Dict[str, Dict[str, List[str]]] = {
     "Zerg": {
         "early_aggression": [
-            "12 Hatchery", "13 Pool", "15 Drones", "16 Queen",
-            "Zergling speed", "20 Zerglings — attack!",
+            "12 Hatchery",
+            "13 Pool",
+            "15 Drones",
+            "16 Queen",
+            "Zergling speed",
+            "20 Zerglings — attack!",
         ],
         "macro_economy": [
-            "17 Hatchery (natural)", "18 Pool", "19 Queen ×2",
-            "Lair @ 65 supply", "Roach Warren", "Third hatch @ 65",
+            "17 Hatchery (natural)",
+            "18 Pool",
+            "19 Queen ×2",
+            "Lair @ 65 supply",
+            "Roach Warren",
+            "Third hatch @ 65",
             "Hydra Den / Spire when needed",
         ],
         "tech_rush": [
-            "15 Hatchery", "16 Pool", "17 Gas ×2",
-            "Lair ASAP", "Spire/Hydra Den", "Mass Mutalisk / Lurker",
+            "15 Hatchery",
+            "16 Pool",
+            "17 Gas ×2",
+            "Lair ASAP",
+            "Spire/Hydra Den",
+            "Mass Mutalisk / Lurker",
         ],
     },
     "Terran": {
         "early_aggression": [
-            "14 Supply Depot", "15 Barracks", "16 Refinery",
-            "Reaper — scout + pressure", "Orbital Command",
+            "14 Supply Depot",
+            "15 Barracks",
+            "16 Refinery",
+            "Reaper — scout + pressure",
+            "Orbital Command",
             "Factory + Tech Lab → Hellion/Hellbat push",
         ],
         "macro_economy": [
-            "14 Supply", "15 Barracks", "16 CC (2nd)",
-            "3 CC economy", "Bio + Medivac mid-game push",
+            "14 Supply",
+            "15 Barracks",
+            "16 CC (2nd)",
+            "3 CC economy",
+            "Bio + Medivac mid-game push",
         ],
         "tech_rush": [
-            "14 Supply", "15 Barracks", "16 Factory",
-            "Starport — Banshee/Viking", "Cloaked Banshee harass",
+            "14 Supply",
+            "15 Barracks",
+            "16 Factory",
+            "Starport — Banshee/Viking",
+            "Cloaked Banshee harass",
         ],
     },
     "Protoss": {
         "early_aggression": [
-            "14 Pylon", "15 Gateway", "16 Assimilator",
-            "Adept — shade pressure", "2-Gate Stalker push",
+            "14 Pylon",
+            "15 Gateway",
+            "16 Assimilator",
+            "Adept — shade pressure",
+            "2-Gate Stalker push",
         ],
         "macro_economy": [
-            "14 Pylon", "15 Nexus (2nd)", "16 Cybernetics Core",
-            "Blink Stalkers / Colossus", "Third base @ 65",
+            "14 Pylon",
+            "15 Nexus (2nd)",
+            "16 Cybernetics Core",
+            "Blink Stalkers / Colossus",
+            "Third base @ 65",
         ],
         "tech_rush": [
-            "14 Pylon", "15 Gateway", "Dark Shrine — DT rush",
+            "14 Pylon",
+            "15 Gateway",
+            "Dark Shrine — DT rush",
             "Or: Stargate — Oracle into Void Ray",
         ],
     },
@@ -218,9 +248,10 @@ IMPROVEMENT_TIPS: List[str] = [
 @dataclass
 class GameEvent:
     """Represents a single parsed event from a SC2 game log."""
-    timestamp: float         # game time in seconds
-    event_type: str          # e.g. "unit_created", "building_started", "attack"
-    subject: str             # unit / building name
+
+    timestamp: float  # game time in seconds
+    event_type: str  # e.g. "unit_created", "building_started", "attack"
+    subject: str  # unit / building name
     value: Optional[float] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -234,6 +265,7 @@ class GameEvent:
 @dataclass
 class GameAnalysis:
     """Result of analysing a complete game log."""
+
     strategy: str
     confidence: float
     race: str
@@ -241,13 +273,14 @@ class GameAnalysis:
     events_parsed: int
     suggestions: List[str]
     build_order: List[str]
-    sentiment: str           # "positive" | "neutral" | "negative"
+    sentiment: str  # "positive" | "neutral" | "negative"
     raw_text_preview: str
 
 
 # ---------------------------------------------------------------------------
 # SC2TextEncoder
 # ---------------------------------------------------------------------------
+
 
 class SC2TextEncoder:
     """
@@ -257,50 +290,92 @@ class SC2TextEncoder:
 
     # Canonical unit/building name normalisation map
     UNIT_ALIASES: Dict[str, str] = {
-        "lair":        "lair_structure",
-        "hive":        "hive_structure",
+        "lair": "lair_structure",
+        "hive": "hive_structure",
         "spawning pool": "spawning_pool",
         "roach warren": "roach_warren",
         "baneling nest": "baneling_nest",
         "hydralisk den": "hydralisk_den",
-        "barracks":    "barracks_structure",
-        "factory":     "factory_structure",
-        "starport":    "starport_structure",
-        "gateway":     "gateway_structure",
+        "barracks": "barracks_structure",
+        "factory": "factory_structure",
+        "starport": "starport_structure",
+        "gateway": "gateway_structure",
         "cybernetics core": "cybernetics_core",
         "dark shrine": "dark_shrine",
         "fleet beacon": "fleet_beacon",
-        "robo bay":    "robotics_bay",
+        "robo bay": "robotics_bay",
         "robo facility": "robotics_facility",
-        "zergling":    "zergling_unit",
-        "marine":      "marine_unit",
-        "zealot":      "zealot_unit",
-        "stalker":     "stalker_unit",
-        "mutalisk":    "mutalisk_unit",
-        "banshee":     "banshee_unit",
-        "reaper":      "reaper_unit",
+        "zergling": "zergling_unit",
+        "marine": "marine_unit",
+        "zealot": "zealot_unit",
+        "stalker": "stalker_unit",
+        "mutalisk": "mutalisk_unit",
+        "banshee": "banshee_unit",
+        "reaper": "reaper_unit",
     }
 
     SC2_VOCAB: List[str] = [
-        "<PAD>", "<UNK>", "<SOS>", "<EOS>",
+        "<PAD>",
+        "<UNK>",
+        "<SOS>",
+        "<EOS>",
         # Events
-        "unit_created", "building_started", "building_complete",
-        "attack_started", "attack_complete", "expansion_taken",
-        "worker_killed", "army_killed", "game_won", "game_lost",
+        "unit_created",
+        "building_started",
+        "building_complete",
+        "attack_started",
+        "attack_complete",
+        "expansion_taken",
+        "worker_killed",
+        "army_killed",
+        "game_won",
+        "game_lost",
         # Units & structures (abbreviated)
-        "drone", "scv", "probe", "queen", "orbital_command",
-        "nexus", "command_center", "hatchery",
-        "zergling_unit", "marine_unit", "zealot_unit", "stalker_unit",
-        "mutalisk_unit", "banshee_unit", "reaper_unit",
-        "spawning_pool", "barracks_structure", "gateway_structure",
-        "lair_structure", "hive_structure", "cybernetics_core",
-        "dark_shrine", "fleet_beacon", "robotics_facility", "robotics_bay",
-        "hydralisk_den", "roach_warren", "baneling_nest",
+        "drone",
+        "scv",
+        "probe",
+        "queen",
+        "orbital_command",
+        "nexus",
+        "command_center",
+        "hatchery",
+        "zergling_unit",
+        "marine_unit",
+        "zealot_unit",
+        "stalker_unit",
+        "mutalisk_unit",
+        "banshee_unit",
+        "reaper_unit",
+        "spawning_pool",
+        "barracks_structure",
+        "gateway_structure",
+        "lair_structure",
+        "hive_structure",
+        "cybernetics_core",
+        "dark_shrine",
+        "fleet_beacon",
+        "robotics_facility",
+        "robotics_bay",
+        "hydralisk_den",
+        "roach_warren",
+        "baneling_nest",
         # Resources
-        "minerals", "gas", "supply", "worker_count", "army_supply",
+        "minerals",
+        "gas",
+        "supply",
+        "worker_count",
+        "army_supply",
         # Strategy tokens
-        "rush", "expand", "tech", "harass", "defend", "all_in",
-        "timing", "deathball", "macro", "micro",
+        "rush",
+        "expand",
+        "tech",
+        "harass",
+        "defend",
+        "all_in",
+        "timing",
+        "deathball",
+        "macro",
+        "micro",
     ]
 
     def __init__(self) -> None:
@@ -365,6 +440,7 @@ class SC2TextEncoder:
 # StrategyClassifier
 # ---------------------------------------------------------------------------
 
+
 class StrategyClassifier:
     """
     Classifies a game log text into one of STRATEGY_LABELS.
@@ -375,36 +451,81 @@ class StrategyClassifier:
 
     KEYWORD_WEIGHTS: Dict[str, Dict[str, float]] = {
         "early_aggression": {
-            "zergling": 2.0, "reaper": 2.0, "zealot": 1.5, "rush": 3.0,
-            "early": 1.5, "pool": 1.0, "6pool": 4.0, "proxy": 2.5,
+            "zergling": 2.0,
+            "reaper": 2.0,
+            "zealot": 1.5,
+            "rush": 3.0,
+            "early": 1.5,
+            "pool": 1.0,
+            "6pool": 4.0,
+            "proxy": 2.5,
         },
         "macro_economy": {
-            "expand": 2.5, "hatchery": 2.0, "nexus": 2.0, "command_center": 2.0,
-            "drone": 1.5, "worker": 1.5, "saturation": 2.0, "macro": 3.0,
+            "expand": 2.5,
+            "hatchery": 2.0,
+            "nexus": 2.0,
+            "command_center": 2.0,
+            "drone": 1.5,
+            "worker": 1.5,
+            "saturation": 2.0,
+            "macro": 3.0,
         },
         "tech_rush": {
-            "lair": 2.0, "spire": 3.0, "dark_shrine": 3.5, "tech": 2.0,
-            "mutalisk": 2.5, "banshee": 3.0, "void_ray": 3.0, "lurker": 2.5,
+            "lair": 2.0,
+            "spire": 3.0,
+            "dark_shrine": 3.5,
+            "tech": 2.0,
+            "mutalisk": 2.5,
+            "banshee": 3.0,
+            "void_ray": 3.0,
+            "lurker": 2.5,
         },
         "defensive_turtle": {
-            "bunker": 3.0, "spine": 3.0, "shield_battery": 3.0,
-            "cannon": 2.5, "defend": 2.0, "wall": 2.0, "turtle": 3.5,
+            "bunker": 3.0,
+            "spine": 3.0,
+            "shield_battery": 3.0,
+            "cannon": 2.5,
+            "defend": 2.0,
+            "wall": 2.0,
+            "turtle": 3.5,
         },
         "timing_attack": {
-            "timing": 3.0, "push": 2.0, "window": 2.5, "before": 1.5,
-            "attack": 1.5, "3rax": 3.5, "2base": 2.0,
+            "timing": 3.0,
+            "push": 2.0,
+            "window": 2.5,
+            "before": 1.5,
+            "attack": 1.5,
+            "3rax": 3.5,
+            "2base": 2.0,
         },
         "all_in": {
-            "all_in": 4.0, "no_expand": 3.0, "cheese": 3.0, "proxy": 2.5,
-            "cannon_rush": 4.0, "4gate": 3.5, "mass": 1.5,
+            "all_in": 4.0,
+            "no_expand": 3.0,
+            "cheese": 3.0,
+            "proxy": 2.5,
+            "cannon_rush": 4.0,
+            "4gate": 3.5,
+            "mass": 1.5,
         },
         "harassment": {
-            "harass": 3.0, "worker_kill": 2.5, "multi": 2.0, "drop": 2.5,
-            "banshee": 2.0, "hellion": 2.0, "oracle": 2.5, "adept": 2.0,
+            "harass": 3.0,
+            "worker_kill": 2.5,
+            "multi": 2.0,
+            "drop": 2.5,
+            "banshee": 2.0,
+            "hellion": 2.0,
+            "oracle": 2.5,
+            "adept": 2.0,
         },
         "late_game_deathball": {
-            "max": 2.5, "200_200": 3.5, "deathball": 4.0, "siege": 2.5,
-            "carrier": 3.0, "brood_lord": 3.0, "thor": 2.5, "late": 1.5,
+            "max": 2.5,
+            "200_200": 3.5,
+            "deathball": 4.0,
+            "siege": 2.5,
+            "carrier": 3.0,
+            "brood_lord": 3.0,
+            "thor": 2.5,
+            "late": 1.5,
         },
     }
 
@@ -415,7 +536,7 @@ class StrategyClassifier:
                 self._pipeline = pipeline(
                     "zero-shot-classification",
                     model="facebook/bart-large-mnli",
-                    device=-1,   # CPU; set to 0 for GPU
+                    device=-1,  # CPU; set to 0 for GPU
                 )
                 log.info("Zero-shot classification pipeline loaded.")
             except Exception as exc:
@@ -452,15 +573,29 @@ class StrategyClassifier:
         total = sum(scores.values()) or 1.0
         best_label = max(scores, key=lambda k: scores[k])
         confidence = scores[best_label] / total
-        return best_label, min(confidence * 2.0, 1.0)   # normalise
+        return best_label, min(confidence * 2.0, 1.0)  # normalise
 
     def detect_race(self, text: str) -> str:
         """Heuristic race detection from log text."""
         text_lower = text.lower()
         race_keywords = {
-            "Zerg":    ["zerg", "hatchery", "drone", "zergling", "queen", "lair", "hive"],
-            "Terran":  ["terran", "barracks", "scv", "marine", "factory", "command center"],
-            "Protoss": ["protoss", "nexus", "probe", "zealot", "gateway", "cybernetics"],
+            "Zerg": ["zerg", "hatchery", "drone", "zergling", "queen", "lair", "hive"],
+            "Terran": [
+                "terran",
+                "barracks",
+                "scv",
+                "marine",
+                "factory",
+                "command center",
+            ],
+            "Protoss": [
+                "protoss",
+                "nexus",
+                "probe",
+                "zealot",
+                "gateway",
+                "cybernetics",
+            ],
         }
         race_scores = {race: 0 for race in race_keywords}
         for race, keywords in race_keywords.items():
@@ -473,6 +608,7 @@ class StrategyClassifier:
 # ---------------------------------------------------------------------------
 # SC2Coach
 # ---------------------------------------------------------------------------
+
 
 class SC2Coach:
     """
@@ -518,7 +654,7 @@ class SC2Coach:
         """
         normalised = self.encoder.normalise(log_text)
         tokens = self.encoder.tokenize(log_text)
-        event_count = log_text.count("[")   # rough proxy for event lines
+        event_count = log_text.count("[")  # rough proxy for event lines
 
         strategy, confidence = self.classifier.classify(normalised)
         race = self.classifier.detect_race(normalised)
@@ -584,6 +720,7 @@ class SC2Coach:
 
         # Generic rotating tip
         import random
+
         tip = random.choice(IMPROVEMENT_TIPS)
         if tip not in suggestions:
             suggestions.append(tip)
@@ -659,8 +796,12 @@ class SC2Coach:
                 pass
         # Keyword fallback
         text_lower = log_text.lower()
-        pos = sum(text_lower.count(w) for w in ["win", "victory", "승리", "good", "great"])
-        neg = sum(text_lower.count(w) for w in ["loss", "defeat", "패배", "bad", "mistake"])
+        pos = sum(
+            text_lower.count(w) for w in ["win", "victory", "승리", "good", "great"]
+        )
+        neg = sum(
+            text_lower.count(w) for w in ["loss", "defeat", "패배", "bad", "mistake"]
+        )
         if pos > neg:
             return "positive"
         if neg > pos:
@@ -779,13 +920,13 @@ def main() -> None:
 
     # ---- Serialise analysis to JSON ----
     result_dict = {
-        "strategy":        analysis_en.strategy,
-        "confidence":      round(analysis_en.confidence, 4),
-        "race":            analysis_en.race,
+        "strategy": analysis_en.strategy,
+        "confidence": round(analysis_en.confidence, 4),
+        "race": analysis_en.race,
         "win_probability": round(analysis_en.win_probability, 4),
-        "sentiment":       analysis_en.sentiment,
-        "suggestions":     analysis_en.suggestions,
-        "build_order":     analysis_en.build_order,
+        "sentiment": analysis_en.sentiment,
+        "suggestions": analysis_en.suggestions,
+        "build_order": analysis_en.build_order,
     }
     print("\nJSON output:")
     print(json.dumps(result_dict, ensure_ascii=False, indent=2))

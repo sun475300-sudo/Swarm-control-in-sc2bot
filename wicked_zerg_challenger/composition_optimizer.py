@@ -27,21 +27,30 @@ logger = logging.getLogger(__name__)
 
 class UnitRole(Enum):
     """유닛 역할 분류"""
-    GROUND_MELEE = "ground_melee"       # 근접 지상
-    GROUND_RANGED = "ground_ranged"     # 원거리 지상
-    ANTI_AIR = "anti_air"              # 대공
-    AIR_FIGHTER = "air_fighter"         # 공중 전투기
-    SIEGE = "siege"                     # 공성
-    SUPPORT = "support"                 # 지원
-    WORKER = "worker"                   # 일꾼
+
+    GROUND_MELEE = "ground_melee"  # 근접 지상
+    GROUND_RANGED = "ground_ranged"  # 원거리 지상
+    ANTI_AIR = "anti_air"  # 대공
+    AIR_FIGHTER = "air_fighter"  # 공중 전투기
+    SIEGE = "siege"  # 공성
+    SUPPORT = "support"  # 지원
+    WORKER = "worker"  # 일꾼
 
 
 class ZergUnit:
     """저그 유닛 정보"""
 
-    def __init__(self, name: str, mineral: int, gas: int, supply: int,
-                 role: UnitRole, dps: float = 0.0, hp: float = 0.0,
-                 can_attack_air: bool = False):
+    def __init__(
+        self,
+        name: str,
+        mineral: int,
+        gas: int,
+        supply: int,
+        role: UnitRole,
+        dps: float = 0.0,
+        hp: float = 0.0,
+        can_attack_air: bool = False,
+    ):
         """
         Args:
             name: 유닛 이름
@@ -73,32 +82,58 @@ class ZergUnit:
 
 # 저그 유닛 데이터베이스
 ZERG_UNITS = {
-    "zergling": ZergUnit("zergling", 25, 0, 0.5, UnitRole.GROUND_MELEE,
-                          dps=10.5, hp=35),
-    "baneling": ZergUnit("baneling", 50, 25, 0.5, UnitRole.GROUND_MELEE,
-                          dps=80.0, hp=30),  # 자폭 데미지
-    "roach": ZergUnit("roach", 75, 25, 2, UnitRole.GROUND_RANGED,
-                       dps=11.2, hp=145),
-    "ravager": ZergUnit("ravager", 100, 75, 3, UnitRole.GROUND_RANGED,
-                          dps=14.0, hp=120),
-    "hydralisk": ZergUnit("hydralisk", 100, 50, 2, UnitRole.GROUND_RANGED,
-                            dps=20.0, hp=90, can_attack_air=True),
-    "mutalisk": ZergUnit("mutalisk", 100, 100, 2, UnitRole.AIR_FIGHTER,
-                           dps=12.6, hp=120, can_attack_air=True),
-    "corruptor": ZergUnit("corruptor", 150, 100, 2, UnitRole.AIR_FIGHTER,
-                            dps=11.4, hp=200, can_attack_air=True),
-    "infestor": ZergUnit("infestor", 100, 150, 2, UnitRole.SUPPORT,
-                           dps=0.0, hp=90),
-    "viper": ZergUnit("viper", 100, 200, 3, UnitRole.SUPPORT,
-                        dps=0.0, hp=150, can_attack_air=True),
-    "ultralisk": ZergUnit("ultralisk", 300, 200, 6, UnitRole.GROUND_MELEE,
-                            dps=57.3, hp=500),
-    "lurker": ZergUnit("lurker", 150, 150, 3, UnitRole.SIEGE,
-                         dps=20.0, hp=200),
-    "brood_lord": ZergUnit("brood_lord", 300, 250, 4, UnitRole.SIEGE,
-                             dps=22.4, hp=225),
-    "queen": ZergUnit("queen", 150, 0, 2, UnitRole.SUPPORT,
-                        dps=11.2, hp=175, can_attack_air=True),
+    "zergling": ZergUnit(
+        "zergling", 25, 0, 0.5, UnitRole.GROUND_MELEE, dps=10.5, hp=35
+    ),
+    "baneling": ZergUnit(
+        "baneling", 50, 25, 0.5, UnitRole.GROUND_MELEE, dps=80.0, hp=30
+    ),  # 자폭 데미지
+    "roach": ZergUnit("roach", 75, 25, 2, UnitRole.GROUND_RANGED, dps=11.2, hp=145),
+    "ravager": ZergUnit(
+        "ravager", 100, 75, 3, UnitRole.GROUND_RANGED, dps=14.0, hp=120
+    ),
+    "hydralisk": ZergUnit(
+        "hydralisk",
+        100,
+        50,
+        2,
+        UnitRole.GROUND_RANGED,
+        dps=20.0,
+        hp=90,
+        can_attack_air=True,
+    ),
+    "mutalisk": ZergUnit(
+        "mutalisk",
+        100,
+        100,
+        2,
+        UnitRole.AIR_FIGHTER,
+        dps=12.6,
+        hp=120,
+        can_attack_air=True,
+    ),
+    "corruptor": ZergUnit(
+        "corruptor",
+        150,
+        100,
+        2,
+        UnitRole.AIR_FIGHTER,
+        dps=11.4,
+        hp=200,
+        can_attack_air=True,
+    ),
+    "infestor": ZergUnit("infestor", 100, 150, 2, UnitRole.SUPPORT, dps=0.0, hp=90),
+    "viper": ZergUnit(
+        "viper", 100, 200, 3, UnitRole.SUPPORT, dps=0.0, hp=150, can_attack_air=True
+    ),
+    "ultralisk": ZergUnit(
+        "ultralisk", 300, 200, 6, UnitRole.GROUND_MELEE, dps=57.3, hp=500
+    ),
+    "lurker": ZergUnit("lurker", 150, 150, 3, UnitRole.SIEGE, dps=20.0, hp=200),
+    "brood_lord": ZergUnit("brood_lord", 300, 250, 4, UnitRole.SIEGE, dps=22.4, hp=225),
+    "queen": ZergUnit(
+        "queen", 150, 0, 2, UnitRole.SUPPORT, dps=11.2, hp=175, can_attack_air=True
+    ),
 }
 
 
@@ -116,7 +151,6 @@ COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
     "HELLION": {"roach": 0.8, "queen": 0.6},
     "CYCLONE": {"zergling": 0.7, "roach": 0.6, "mutalisk": 0.65},
     "WIDOWMINE": {"zergling": 0.5, "roach": 0.7, "mutalisk": 0.3},
-
     # 프로토스
     "ZEALOT": {"roach": 0.75, "lurker": 0.8, "baneling": 0.7},
     "STALKER": {"zergling": 0.8, "roach": 0.65, "hydralisk": 0.6},
@@ -130,7 +164,6 @@ COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
     "CARRIER": {"corruptor": 0.9, "viper": 0.85, "hydralisk": 0.6},
     "PHOENIX": {"hydralisk": 0.7, "queen": 0.65},
     "TEMPEST": {"corruptor": 0.8, "viper": 0.9},
-
     # 저그
     "ZERGLING": {"baneling": 0.9, "roach": 0.7, "lurker": 0.85},
     "ROACH": {"roach": 0.5, "ravager": 0.6, "hydralisk": 0.55},
@@ -247,8 +280,9 @@ class CompositionOptimizer:
         self.current_composition = composition
         return composition
 
-    def get_optimal_composition(self, budget_minerals: int = 0,
-                                 budget_gas: int = 0) -> Dict[str, float]:
+    def get_optimal_composition(
+        self, budget_minerals: int = 0, budget_gas: int = 0
+    ) -> Dict[str, float]:
         """
         적 조합 대비 최적 유닛 비율 계산
 
@@ -294,16 +328,27 @@ class CompositionOptimizer:
         for unit_name in counter_scores:
             if unit_name in ZERG_UNITS:
                 cost_eff = ZERG_UNITS[unit_name].cost_efficiency
-                counter_scores[unit_name] *= (1.0 + cost_eff * 0.1)
+                counter_scores[unit_name] *= 1.0 + cost_eff * 0.1
 
         # 유닛 시너지 점수 반영 (현재 보유 조합 + 추천 조합 내부 조합)
         self._apply_synergy_bonus(counter_scores)
 
         # 대공 유닛 필요 여부 체크
         has_air_threat = any(
-            unit_name in ("MUTALISK", "VOIDRAY", "CARRIER", "BATTLECRUISER",
-                          "PHOENIX", "ORACLE", "LIBERATOR", "BANSHEE",
-                          "BROODLORD", "CORRUPTOR", "TEMPEST")
+            unit_name
+            in (
+                "MUTALISK",
+                "VOIDRAY",
+                "CARRIER",
+                "BATTLECRUISER",
+                "PHOENIX",
+                "ORACLE",
+                "LIBERATOR",
+                "BANSHEE",
+                "BROODLORD",
+                "CORRUPTOR",
+                "TEMPEST",
+            )
             for unit_name in enemy_comp
         )
 
@@ -364,7 +409,7 @@ class CompositionOptimizer:
 
             # 과도한 쏠림 방지
             pair_bonus = min(pair_bonus, 0.35)
-            counter_scores[unit_name] *= (1.0 + pair_bonus)
+            counter_scores[unit_name] *= 1.0 + pair_bonus
 
     def get_production_recommendation(self) -> List[Tuple[str, int]]:
         """
@@ -382,8 +427,9 @@ class CompositionOptimizer:
 
         recommendations = []
 
-        for unit_name, target_ratio in sorted(optimal.items(),
-                                                key=lambda x: x[1], reverse=True):
+        for unit_name, target_ratio in sorted(
+            optimal.items(), key=lambda x: x[1], reverse=True
+        ):
             if unit_name not in ZERG_UNITS:
                 continue
 
@@ -395,7 +441,9 @@ class CompositionOptimizer:
 
             # 목표 수 (총 군대 서플라이 기준)
             army_supply = getattr(self.bot, "supply_army", 0)
-            target_count = max(1, int(target_ratio * army_supply / max(unit_info.supply, 0.5)))
+            target_count = max(
+                1, int(target_ratio * army_supply / max(unit_info.supply, 0.5))
+            )
 
             # 추가 필요량
             need = max(0, target_count - current_count)
@@ -445,9 +493,20 @@ class CompositionOptimizer:
         if enemy_race is not None:
             race_str = str(enemy_race)
             if "Terran" in race_str:
-                return {"roach": 0.35, "ravager": 0.15, "hydralisk": 0.3, "zergling": 0.2}
+                return {
+                    "roach": 0.35,
+                    "ravager": 0.15,
+                    "hydralisk": 0.3,
+                    "zergling": 0.2,
+                }
             elif "Protoss" in race_str:
-                return {"roach": 0.3, "hydralisk": 0.35, "ravager": 0.15, "lurker": 0.1, "zergling": 0.1}
+                return {
+                    "roach": 0.3,
+                    "hydralisk": 0.35,
+                    "ravager": 0.15,
+                    "lurker": 0.1,
+                    "zergling": 0.1,
+                }
             elif "Zerg" in race_str:
                 return {"roach": 0.4, "ravager": 0.2, "hydralisk": 0.2, "zergling": 0.2}
 

@@ -14,6 +14,7 @@ import random
 try:
     import cirq
     import numpy as np
+
     CIRQ_AVAILABLE = True
 except ImportError:
     CIRQ_AVAILABLE = False
@@ -22,6 +23,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # Pure-Python complex amplitude simulation
 # ─────────────────────────────────────────────
+
 
 class QuantumState:
     """Minimal statevector simulator for n-qubit systems."""
@@ -91,19 +93,21 @@ class QuantumState:
 # SC2 routing problem on a grid graph
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class RoutingProblem:
     """
     Max-cut formulation for army routing.
     Qubits = map nodes; edge weights = strategic value.
     """
-    nodes: list[str]       # e.g. ["main_base", "natural", "third", "enemy_main"]
+
+    nodes: list[str]  # e.g. ["main_base", "natural", "third", "enemy_main"]
     edges: list[tuple[int, int, float]]  # (i, j, weight)
 
     def max_cut_value(self, assignment: list[int]) -> float:
         """Count weighted cut edges."""
         total = 0.0
-        for (i, j, w) in self.edges:
+        for i, j, w in self.edges:
             if assignment[i] != assignment[j]:
                 total += w
         return total
@@ -112,6 +116,7 @@ class RoutingProblem:
 # ─────────────────────────────────────────────
 # QAOA on the routing problem
 # ─────────────────────────────────────────────
+
 
 class CirqQAOA:
     """QAOA for SC2 map routing using Cirq-style circuit."""
@@ -131,7 +136,7 @@ class CirqQAOA:
 
         for layer in range(self.p):
             # Cost unitary: ZZ interactions
-            for (i, j, w) in self.problem.edges:
+            for i, j, w in self.problem.edges:
                 state.apply_cnot(i, j)
                 state.apply_rz(j, 2 * gammas[layer] * w)
                 state.apply_cnot(i, j)
@@ -175,6 +180,7 @@ class CirqQAOA:
 # Cirq-native implementation (when available)
 # ─────────────────────────────────────────────
 
+
 def build_cirq_circuit(problem: RoutingProblem):
     if not CIRQ_AVAILABLE:
         return None
@@ -190,12 +196,14 @@ def build_cirq_circuit(problem: RoutingProblem):
     circuit.append(cirq.H.on_each(*qubits))
 
     # Cost layer
-    for (i, j, w) in problem.edges:
-        circuit.append([
-            cirq.CNOT(qubits[i], qubits[j]),
-            cirq.rz(rads=2 * gamma * w)(qubits[j]),
-            cirq.CNOT(qubits[i], qubits[j]),
-        ])
+    for i, j, w in problem.edges:
+        circuit.append(
+            [
+                cirq.CNOT(qubits[i], qubits[j]),
+                cirq.rz(rads=2 * gamma * w)(qubits[j]),
+                cirq.CNOT(qubits[i], qubits[j]),
+            ]
+        )
 
     # Mixer layer
     for q in qubits:

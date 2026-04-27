@@ -9,29 +9,35 @@ from src.sc2_env.mock_env import MockSC2Env
 
 def main() -> None:
     """Run scenario 17 simulation."""
-    print("="*70)
+    print("=" * 70)
     print(f"Scenario 17 Simulation")
-    print("="*70)
+    print("=" * 70)
     print()
-    
+
     env = MockSC2Env(initial_minerals=270)
     agent = BasicZergAgent()
-    
+
     obs = env.reset()
-    print(f"Initial State: Minerals={obs['minerals']}, Supply={obs['food_used']}/{obs['food_cap']}")
+    print(
+        f"Initial State: Minerals={obs['minerals']}, Supply={obs['food_used']}/{obs['food_cap']}"
+    )
     print()
-    
+
     for step in range(44):
         action = agent.on_step(obs)
         obs = env.step(action)
-        
+
         if step % 5 == 0:
-            print(f"Step {obs['step']:3d}: {action:15s} | "
-                  f"Minerals={obs['minerals']:3d} | Supply={obs['food_used']:2d}/{obs['food_cap']:2d}")
-    
+            print(
+                f"Step {obs['step']:3d}: {action:15s} | "
+                f"Minerals={obs['minerals']:3d} | Supply={obs['food_used']:2d}/{obs['food_cap']:2d}"
+            )
+
     print()
-    print(f"Final State: Minerals={obs['minerals']}, Supply={obs['food_used']}/{obs['food_cap']}, Army={obs['army_size']}")
-    print("="*70)
+    print(
+        f"Final State: Minerals={obs['minerals']}, Supply={obs['food_used']}/{obs['food_cap']}, Army={obs['army_size']}"
+    )
+    print("=" * 70)
 
 
 if __name__ == "__main__":

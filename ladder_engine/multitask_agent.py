@@ -22,6 +22,7 @@ class TaskModule(Enum):
 @dataclass
 class TaskObservation:
     """Flat feature vector for a specific task module."""
+
     task: TaskModule
     features: List[float]
     timestamp: float = 0.0
@@ -36,15 +37,18 @@ class TaskAction:
     parameters: Dict = field(default_factory=dict)
 
     def __repr__(self):
-        return f"Action({self.task.value}/{self.action_name}, conf={self.confidence:.3f})"
+        return (
+            f"Action({self.task.value}/{self.action_name}, conf={self.confidence:.3f})"
+        )
 
 
 @dataclass
 class ExpertHead:
     """A task-specific policy head."""
+
     task: TaskModule
     action_space: List[str]
-    weights: List[float] = field(default_factory=list)   # simplified weight vector
+    weights: List[float] = field(default_factory=list)  # simplified weight vector
     learning_rate: float = 1e-4
     total_updates: int = 0
 
@@ -90,35 +94,59 @@ def _softmax(x: List[float]) -> List[float]:
 # ------------------------------------------------------------------
 
 MACRO_ACTIONS = [
-    "expand_now", "tech_up", "army_push", "drone_build", "wait_macro",
-    "third_base", "upgrade_ground", "upgrade_air",
+    "expand_now",
+    "tech_up",
+    "army_push",
+    "drone_build",
+    "wait_macro",
+    "third_base",
+    "upgrade_ground",
+    "upgrade_air",
 ]
 
 WORKER_ACTIONS = [
-    "build_drone", "stop_drones", "transfer_workers", "saturate_gas",
+    "build_drone",
+    "stop_drones",
+    "transfer_workers",
+    "saturate_gas",
 ]
 
 ARMY_ACTIONS = [
-    "build_zergling", "build_roach", "build_hydralisk", "build_mutalisk",
-    "build_ravager", "build_baneling", "build_ultralisk", "hold_production",
+    "build_zergling",
+    "build_roach",
+    "build_hydralisk",
+    "build_mutalisk",
+    "build_ravager",
+    "build_baneling",
+    "build_ultralisk",
+    "hold_production",
 ]
 
 ARMY_CONTROL_ACTIONS = [
-    "attack_move", "retreat", "surround", "focus_fire", "split_army",
-    "runby", "hold_position", "inject_creep",
+    "attack_move",
+    "retreat",
+    "surround",
+    "focus_fire",
+    "split_army",
+    "runby",
+    "hold_position",
+    "inject_creep",
 ]
 
 SCOUTING_ACTIONS = [
-    "send_drone_scout", "position_overlord", "cancel_scout",
-    "watch_third", "watch_drop_paths",
+    "send_drone_scout",
+    "position_overlord",
+    "cancel_scout",
+    "watch_third",
+    "watch_drop_paths",
 ]
 
 TASK_ACTION_SPACES = {
-    TaskModule.MACRO_STRATEGY:   MACRO_ACTIONS,
+    TaskModule.MACRO_STRATEGY: MACRO_ACTIONS,
     TaskModule.WORKER_PRODUCTION: WORKER_ACTIONS,
-    TaskModule.ARMY_PRODUCTION:  ARMY_ACTIONS,
-    TaskModule.ARMY_CONTROL:     ARMY_CONTROL_ACTIONS,
-    TaskModule.SCOUTING:         SCOUTING_ACTIONS,
+    TaskModule.ARMY_PRODUCTION: ARMY_ACTIONS,
+    TaskModule.ARMY_CONTROL: ARMY_CONTROL_ACTIONS,
+    TaskModule.SCOUTING: SCOUTING_ACTIONS,
 }
 
 
@@ -241,10 +269,7 @@ class MultiTaskAgent:
             counts[key] = counts.get(key, 0) + 1
         return {
             "step_count": self._step_count,
-            "avg_rewards": {
-                k: round(v / counts[k], 4)
-                for k, v in avg_rewards.items()
-            },
+            "avg_rewards": {k: round(v / counts[k], 4) for k, v in avg_rewards.items()},
             "expert_updates": {
                 task.value: expert.total_updates
                 for task, expert in self.experts.items()

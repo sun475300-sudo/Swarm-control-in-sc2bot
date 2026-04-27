@@ -10,9 +10,11 @@ Phase 4: 최종 리포트
 
 import sys, os, time, json
 import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "wicked_zerg_challenger"))
 
 from gpu_manager import get_gpu_manager, TORCH_AVAILABLE
+
 if TORCH_AVAILABLE:
     import torch
     import torch.optim as optim
@@ -30,32 +32,54 @@ def phase1_v2_combat():
     results = {}
 
     matchups = [
-        ("24 Zerglings vs 12 Marines",
-         [{"type": "zergling", "count": 24}],
-         [{"type": "marine", "count": 12}]),
-        ("20 Hydras vs 8 Siege Tanks (THE counter test)",
-         [{"type": "hydralisk", "count": 20}],
-         [{"type": "siegetank", "count": 8}]),
-        ("20 Hydras vs 8 Siege Tanks (KITE tactics)",
-         [{"type": "hydralisk", "count": 20}],
-         [{"type": "siegetank", "count": 8}]),
-        ("15 Roaches vs 5 Immortals",
-         [{"type": "roach", "count": 15}],
-         [{"type": "immortal", "count": 5}]),
-        ("30 Lings vs 4 Colossus",
-         [{"type": "zergling", "count": 30}],
-         [{"type": "colossus", "count": 4}]),
-        ("10 Mutas vs 8 Marines + 2 Thor",
-         [{"type": "mutalisk", "count": 10}],
-         [{"type": "marine", "count": 8}, {"type": "thor", "count": 2}]),
-        ("8 Ultras vs 20 Marines + 5 Marauders",
-         [{"type": "ultralisk", "count": 8}],
-         [{"type": "marine", "count": 20}, {"type": "marauder", "count": 5}]),
-        ("Mixed Zerg vs Mixed Terran",
-         [{"type": "zergling", "count": 12}, {"type": "roach", "count": 6},
-          {"type": "hydralisk", "count": 4}],
-         [{"type": "marine", "count": 8}, {"type": "marauder", "count": 4},
-          {"type": "siegetank", "count": 2}]),
+        (
+            "24 Zerglings vs 12 Marines",
+            [{"type": "zergling", "count": 24}],
+            [{"type": "marine", "count": 12}],
+        ),
+        (
+            "20 Hydras vs 8 Siege Tanks (THE counter test)",
+            [{"type": "hydralisk", "count": 20}],
+            [{"type": "siegetank", "count": 8}],
+        ),
+        (
+            "20 Hydras vs 8 Siege Tanks (KITE tactics)",
+            [{"type": "hydralisk", "count": 20}],
+            [{"type": "siegetank", "count": 8}],
+        ),
+        (
+            "15 Roaches vs 5 Immortals",
+            [{"type": "roach", "count": 15}],
+            [{"type": "immortal", "count": 5}],
+        ),
+        (
+            "30 Lings vs 4 Colossus",
+            [{"type": "zergling", "count": 30}],
+            [{"type": "colossus", "count": 4}],
+        ),
+        (
+            "10 Mutas vs 8 Marines + 2 Thor",
+            [{"type": "mutalisk", "count": 10}],
+            [{"type": "marine", "count": 8}, {"type": "thor", "count": 2}],
+        ),
+        (
+            "8 Ultras vs 20 Marines + 5 Marauders",
+            [{"type": "ultralisk", "count": 8}],
+            [{"type": "marine", "count": 20}, {"type": "marauder", "count": 5}],
+        ),
+        (
+            "Mixed Zerg vs Mixed Terran",
+            [
+                {"type": "zergling", "count": 12},
+                {"type": "roach", "count": 6},
+                {"type": "hydralisk", "count": 4},
+            ],
+            [
+                {"type": "marine", "count": 8},
+                {"type": "marauder", "count": 4},
+                {"type": "siegetank", "count": 2},
+            ],
+        ),
     ]
 
     for i, (name, our, enemy) in enumerate(matchups):
@@ -64,10 +88,15 @@ def phase1_v2_combat():
         result = sim.simulate_v2(our, enemy, num_simulations=4096, tactics=tactics)
         elapsed = (time.perf_counter() - start) * 1000
         print(f"  {name}:")
-        print(f"    Win: {result['win_rate']:.1%} | Survivors: {result.get('avg_survivors_on_win',0):.1f} | "
-              f"Rounds: {result.get('avg_rounds',0):.0f} | Dmg: {result.get('avg_damage_dealt',0):.0f} | "
-              f"{elapsed:.0f}ms [{tactics}]")
-        results[name] = {**{k: v for k, v in result.items() if not isinstance(v, np.ndarray)}, "time_ms": elapsed}
+        print(
+            f"    Win: {result['win_rate']:.1%} | Survivors: {result.get('avg_survivors_on_win',0):.1f} | "
+            f"Rounds: {result.get('avg_rounds',0):.0f} | Dmg: {result.get('avg_damage_dealt',0):.0f} | "
+            f"{elapsed:.0f}ms [{tactics}]"
+        )
+        results[name] = {
+            **{k: v for k, v in result.items() if not isinstance(v, np.ndarray)},
+            "time_ms": elapsed,
+        }
 
     # 최적 카운터 탐색
     print(f"\n  --- Optimal Counter Search: vs 8 Siege Tanks ---")
@@ -127,10 +156,14 @@ def phase3_league_1000():
 
     optimizer = optim.Adam(model.parameters(), lr=5e-5, eps=1e-5)
 
-    league = GPUSelfPlayLeague(state_dim=20, action_dim=8, config={
-        "pool_size": 15,
-        "snapshot_interval": 100,
-    })
+    league = GPUSelfPlayLeague(
+        state_dim=20,
+        action_dim=8,
+        config={
+            "pool_size": 15,
+            "snapshot_interval": 100,
+        },
+    )
 
     result = league.run_league_training(
         model=model,
@@ -141,12 +174,15 @@ def phase3_league_1000():
     )
 
     # 저장
-    torch.save({
-        "model": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "elo": result["final_elo"],
-        "win_rate": result["win_rate"],
-    }, "data/models/league_champion_v2.pt")
+    torch.save(
+        {
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "elo": result["final_elo"],
+            "win_rate": result["win_rate"],
+        },
+        "data/models/league_champion_v2.pt",
+    )
     torch.save(model.state_dict(), "data/models/strategy_net.pt")
 
     return result
@@ -160,7 +196,9 @@ def final_report(combat, mappo, league):
     print("  ADVANCED TRAINING - FINAL REPORT")
     print("=" * 70)
 
-    print(f"\n  GPU: {gpu.gpu_name} | VRAM: {gpu.memory_stats()['allocated_mb']:.1f}MB used")
+    print(
+        f"\n  GPU: {gpu.gpu_name} | VRAM: {gpu.memory_stats()['allocated_mb']:.1f}MB used"
+    )
 
     print(f"\n  === V2 Combat Simulation ===")
     for name, r in combat.items():
@@ -174,7 +212,9 @@ def final_report(combat, mappo, league):
             print(f"  {c['composition']}: {c['win_rate']:.0%}")
 
     print(f"\n  === MAPPO Multi-Agent ===")
-    print(f"  Time: {mappo.get('total_time', 0):.1f}s | Steps: {mappo.get('total_steps', 0):,}")
+    print(
+        f"  Time: {mappo.get('total_time', 0):.1f}s | Steps: {mappo.get('total_steps', 0):,}"
+    )
     for agent, info in mappo.get("agents", {}).items():
         print(f"    {agent:12s}: reward={info['avg_reward']:+.4f}")
 

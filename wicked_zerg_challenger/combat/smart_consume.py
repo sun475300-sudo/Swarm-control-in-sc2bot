@@ -45,7 +45,9 @@ class SmartConsumeSystem:
 
         # Energy thresholds
         self.CONSUME_ENERGY_THRESHOLD = 150  # Only consume if energy < 150
-        self.MIN_ENERGY_AFTER_CONSUME = 50  # Don't consume if it would bring us below 50
+        self.MIN_ENERGY_AFTER_CONSUME = (
+            50  # Don't consume if it would bring us below 50
+        )
 
         # Building priorities (lower = more likely to consume)
         self.BUILDING_PRIORITIES = {
@@ -53,20 +55,17 @@ class SmartConsumeSystem:
             UnitTypeId.EVOLUTIONCHAMBER: 1,
             UnitTypeId.SPINECRAWLER: 2,
             UnitTypeId.SPORECRAWLER: 2,
-
             # Medium priority (consume if really needed)
             UnitTypeId.EXTRACTOR: 5,
             UnitTypeId.ROACHWARREN: 6,
             UnitTypeId.BANELINGNEST: 6,
             UnitTypeId.SPAWNINGPOOL: 7,
-
             # Low priority (avoid consuming)
             UnitTypeId.HYDRALISKDEN: 10,
             UnitTypeId.SPIRE: 15,
             UnitTypeId.INFESTATIONPIT: 15,
             UnitTypeId.NYDUSNETWORK: 15,
             UnitTypeId.ULTRALISKCAVERN: 15,
-
             # NEVER consume (critical buildings)
             UnitTypeId.HATCHERY: 999,
             UnitTypeId.LAIR: 999,
@@ -212,7 +211,9 @@ class SmartConsumeSystem:
             if hasattr(enemy_units, "closer_than"):
                 nearby_enemies = enemy_units.closer_than(25, townhall)
             else:
-                nearby_enemies = [e for e in enemy_units if e.distance_to(townhall) < 25]
+                nearby_enemies = [
+                    e for e in enemy_units if e.distance_to(townhall) < 25
+                ]
 
             if nearby_enemies:
                 return True
@@ -262,12 +263,8 @@ class SmartConsumeSystem:
         # Average viper energy
         avg_energy = sum(v.energy for v in vipers) / len(vipers) if vipers else 0
 
-        self.logger.info(
-            f"[{int(game_time)}s] === SMART CONSUME REPORT ==="
-        )
-        self.logger.info(
-            f"Vipers: {len(vipers)} | Avg Energy: {avg_energy:.1f}"
-        )
+        self.logger.info(f"[{int(game_time)}s] === SMART CONSUME REPORT ===")
+        self.logger.info(f"Vipers: {len(vipers)} | Avg Energy: {avg_energy:.1f}")
         self.logger.info(
             f"Consumed: {self.buildings_consumed} buildings | Energy gained: {self.energy_gained}"
         )

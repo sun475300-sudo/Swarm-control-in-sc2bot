@@ -28,7 +28,11 @@ class BatchTrainer:
             model_path: 모델 파일 경로 (미지정시 기본 경로)
             learning_rate: 학습률
         """
-        self.model_path = Path(model_path) if model_path else Path("local_training/models/zerg_net_model.pt")
+        self.model_path = (
+            Path(model_path)
+            if model_path
+            else Path("local_training/models/zerg_net_model.pt")
+        )
         self.learning_rate = learning_rate
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -53,25 +57,31 @@ class BatchTrainer:
                 nn.Linear(hidden_size, hidden_size),
                 nn.ReLU(),
                 nn.Linear(hidden_size, output_size),
-                nn.Softmax(dim=1)
+                nn.Softmax(dim=1),
             ).to(self.device)
 
             # 기존 모델 로드 시도
             if self.model_path.exists():
                 try:
-                    self.model.load_state_dict(torch.load(self.model_path, map_location=self.device))
+                    self.model.load_state_dict(
+                        torch.load(self.model_path, map_location=self.device)
+                    )
                     logger.info(f"Loaded existing model from {self.model_path}")
                 except Exception as e:
                     logger.error(f"Failed to load model: {e}, using new model")
 
             # 옵티마이저 설정
-            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=self.learning_rate
+            )
 
         except Exception as e:
             logger.error(f"Model initialization failed: {e}")
             raise
 
-    def train_from_batch_results(self, batch_results: List[Dict[str, Any]], epochs: int = 10) -> Dict[str, float]:
+    def train_from_batch_results(
+        self, batch_results: List[Dict[str, Any]], epochs: int = 10
+    ) -> Dict[str, float]:
         """
         배치 결과로부터 학습 수행
 
@@ -110,8 +120,8 @@ class BatchTrainer:
                 # 미니배치 처리
                 batch_size = min(32, len(inputs))
                 for i in range(0, len(inputs), batch_size):
-                    batch_inputs = inputs[i:i+batch_size]
-                    batch_targets = targets[i:i+batch_size]
+                    batch_inputs = inputs[i : i + batch_size]
+                    batch_targets = targets[i : i + batch_size]
 
                     # Forward pass
                     self.optimizer.zero_grad()
@@ -138,27 +148,38 @@ class BatchTrainer:
 
                 if (epoch + 1) % 5 == 0:
                     avg_loss = epoch_loss / (len(inputs) // batch_size + 1)
-                    accuracy = correct_predictions / total_samples if total_samples > 0 else 0.0
-                    logger.info(f"[EPOCH {epoch+1}/{epochs}] Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2%}")
+                    accuracy = (
+                        correct_predictions / total_samples
+                        if total_samples > 0
+                        else 0.0
+                    )
+                    logger.info(
+                        f"[EPOCH {epoch+1}/{epochs}] Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2%}"
+                    )
 
             # 최종 통계 계산
             avg_loss = total_loss / epochs
-            final_accuracy = correct_predictions / total_samples if total_samples > 0 else 0.0
+            final_accuracy = (
+                correct_predictions / total_samples if total_samples > 0 else 0.0
+            )
 
             # 모델 저장
             self._save_model()
 
-            logger.info(f"Batch training completed - Avg Loss: {avg_loss:.4f}, Accuracy: {final_accuracy:.2%}")
+            logger.info(
+                f"Batch training completed - Avg Loss: {avg_loss:.4f}, Accuracy: {final_accuracy:.2%}"
+            )
 
             return {
                 "loss": avg_loss,
                 "accuracy": final_accuracy,
-                "samples": total_samples
+                "samples": total_samples,
             }
 
         except Exception as e:
             logger.error(f"Batch training failed: {e}")
             import traceback
+
             traceback.print_exc()
             return {"loss": 0.0, "accuracy": 0.0, "error": str(e)}
 
@@ -226,9 +247,21 @@ class BatchTrainer:
             enemy_air_ground = result.get("enemy_air_ground_ratio", 0.5)
 
             features = [
-                minerals, gas, supply_used, drone_count, army_count,
-                enemy_army, enemy_tech, enemy_threat, enemy_diversity, scout_coverage,
-                enemy_distance, enemy_expansions, enemy_resources, enemy_upgrades, enemy_air_ground
+                minerals,
+                gas,
+                supply_used,
+                drone_count,
+                army_count,
+                enemy_army,
+                enemy_tech,
+                enemy_threat,
+                enemy_diversity,
+                scout_coverage,
+                enemy_distance,
+                enemy_expansions,
+                enemy_resources,
+                enemy_upgrades,
+                enemy_air_ground,
             ]
 
             return features
@@ -284,7 +317,9 @@ class BatchTrainer:
             logger.error(f"Failed to save model: {e}")
 
 
-def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, epochs: int = 10) -> Dict[str, float]:
+def train_from_manifest(
+    manifest_path: Path, model_path: Optional[str] = None, epochs: int = 10
+) -> Dict[str, float]:
     """
     매니페스트 파일로부터 배치 학습 수행
 
@@ -302,7 +337,7 @@ def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, e
             logger.error(f"Manifest file not found: {manifest_path}")
             return {"loss": 0.0, "accuracy": 0.0}
 
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with open(manifest_path, "r", encoding="utf-8") as f:
             manifest_data = json.load(f)
 
         # 결과 데이터 추출
@@ -324,5 +359,6 @@ def train_from_manifest(manifest_path: Path, model_path: Optional[str] = None, e
     except Exception as e:
         logger.error(f"Training from manifest failed: {e}")
         import traceback
+
         traceback.print_exc()
         return {"loss": 0.0, "accuracy": 0.0, "error": str(e)}

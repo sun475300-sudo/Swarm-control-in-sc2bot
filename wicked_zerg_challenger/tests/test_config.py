@@ -17,7 +17,7 @@ import sys
 import os
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from config.unit_configs import (
     CombatConfig,
@@ -33,7 +33,7 @@ from config.unit_configs import (
     get_infestor_config,
     get_economy_config,
     get_potential_field_config,
-    get_upgrade_config
+    get_upgrade_config,
 )
 
 
@@ -261,7 +261,7 @@ class TestConfigConsistency(unittest.TestCase):
             InfestorConfig(),
             EconomyConfig(),
             PotentialFieldConfig(),
-            UpgradeConfig()
+            UpgradeConfig(),
         ]
         for config in configs:
             self.assertIsNotNone(config)
@@ -275,7 +275,7 @@ class TestConfigConsistency(unittest.TestCase):
             (get_infestor_config, InfestorConfig),
             (get_economy_config, EconomyConfig),
             (get_potential_field_config, PotentialFieldConfig),
-            (get_upgrade_config, UpgradeConfig)
+            (get_upgrade_config, UpgradeConfig),
         ]
         for helper, expected_type in helpers_and_types:
             result = helper()
@@ -299,6 +299,6 @@ class TestConfigConsistency(unittest.TestCase):
         self.assertLessEqual(infestor.NEURAL_PRIORITY_HP_THRESHOLD, 1.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run all tests
     unittest.main(verbosity=2)

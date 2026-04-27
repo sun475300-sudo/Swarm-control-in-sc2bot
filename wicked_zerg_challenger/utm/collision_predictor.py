@@ -21,12 +21,13 @@ from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 @dataclass
 class CollisionAlert:
     """충돌 경고 데이터."""
+
     drone_a_id: int
     drone_b_id: int
-    ttc: float              # 충돌까지 남은 시간 (초)
-    min_distance: float     # 최소 접근 거리 (미터)
+    ttc: float  # 충돌까지 남은 시간 (초)
+    min_distance: float  # 최소 접근 거리 (미터)
     conflict_point: Point3D  # 예상 충돌 지점
-    severity: str           # "warning" | "critical" | "imminent"
+    severity: str  # "warning" | "critical" | "imminent"
 
 
 class CollisionPredictor:
@@ -40,11 +41,11 @@ class CollisionPredictor:
 
     def __init__(
         self,
-        time_horizon: float = 5.0,    # 예측 시간 범위 (초)
+        time_horizon: float = 5.0,  # 예측 시간 범위 (초)
         safety_distance: float = 5.0,  # 최소 안전 거리 (미터)
-        warning_ttc: float = 5.0,     # 경고 시간 임계값
-        critical_ttc: float = 3.0,    # 위험 시간 임계값
-        imminent_ttc: float = 1.0,    # 긴급 시간 임계값
+        warning_ttc: float = 5.0,  # 경고 시간 임계값
+        critical_ttc: float = 3.0,  # 위험 시간 임계값
+        imminent_ttc: float = 1.0,  # 긴급 시간 임계값
     ):
         self.time_horizon = time_horizon
         self.safety_distance = safety_distance
@@ -52,9 +53,7 @@ class CollisionPredictor:
         self.critical_ttc = critical_ttc
         self.imminent_ttc = imminent_ttc
 
-    def predict_ttc(
-        self, drone_a: DroneState, drone_b: DroneState
-    ) -> Optional[float]:
+    def predict_ttc(self, drone_a: DroneState, drone_b: DroneState) -> Optional[float]:
         """
         두 드론의 충돌 시간(TTC) 계산.
 
@@ -91,9 +90,7 @@ class CollisionPredictor:
         pos_b = drone_b.position.to_array() + drone_b.velocity * t
         return float(np.linalg.norm(pos_a - pos_b))
 
-    def check_all_pairs(
-        self, drones: List[DroneState]
-    ) -> List[CollisionAlert]:
+    def check_all_pairs(self, drones: List[DroneState]) -> List[CollisionAlert]:
         """
         모든 드론 쌍의 충돌 검사. O(N²) — VoxelGrid로 사전 필터링 가능.
         """
@@ -113,14 +110,16 @@ class CollisionPredictor:
                     else:
                         severity = "warning"
 
-                    alerts.append(CollisionAlert(
-                        drone_a_id=drones[i].id,
-                        drone_b_id=drones[j].id,
-                        ttc=ttc,
-                        min_distance=min_dist,
-                        conflict_point=conflict_pos,
-                        severity=severity,
-                    ))
+                    alerts.append(
+                        CollisionAlert(
+                            drone_a_id=drones[i].id,
+                            drone_b_id=drones[j].id,
+                            ttc=ttc,
+                            min_distance=min_dist,
+                            conflict_point=conflict_pos,
+                            severity=severity,
+                        )
+                    )
 
         # 긴급도 순 정렬
         alerts.sort(key=lambda a: a.ttc)

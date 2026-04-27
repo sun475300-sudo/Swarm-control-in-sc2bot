@@ -12,17 +12,24 @@ import asyncio
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
+
 class BuildOrderStep(BaseModel):
     """A single step in an SC2 build order."""
-    supply: int = Field(..., ge=9, le=200, description="Supply count when this step triggers")
+
+    supply: int = Field(
+        ..., ge=9, le=200, description="Supply count when this step triggers"
+    )
     action: str = Field(..., min_length=2, description="What to build or do")
     notes: Optional[str] = None
 
 
 class ThreatAssessment(BaseModel):
     """Assessed threat level from an SC2 game state description."""
+
     threat_level: int = Field(..., ge=1, le=10, description="Threat level 1-10")
-    threat_type: str = Field(..., description="Type: harassment, all-in, timing_attack, macro")
+    threat_type: str = Field(
+        ..., description="Type: harassment, all-in, timing_attack, macro"
+    )
     estimated_army_size: Optional[str] = None
     recommended_response: str
     urgency: str = Field(..., pattern="^(low|medium|high|critical)$")
@@ -38,6 +45,7 @@ class ThreatAssessment(BaseModel):
 
 class BuildOrderAdvice(BaseModel):
     """Recommended build order for a given matchup."""
+
     race: str = Field(..., pattern="^(Zerg|Terran|Protoss)$")
     opponent_race: str = Field(..., pattern="^(Zerg|Terran|Protoss)$")
     opening_name: str
@@ -48,6 +56,7 @@ class BuildOrderAdvice(BaseModel):
 
 class StrategyRecommendation(BaseModel):
     """Complete SC2 strategy recommendation extracted from commentary."""
+
     summary: str = Field(..., max_length=300)
     recommended_race: str = Field(..., pattern="^(Zerg|Terran|Protoss)$")
     build_order: BuildOrderAdvice
@@ -57,6 +66,7 @@ class StrategyRecommendation(BaseModel):
 
 
 # ── Instructor client setup ───────────────────────────────────────────────────
+
 
 def get_instructor_client() -> instructor.Instructor:
     """Create an Instructor-patched OpenAI client."""
@@ -69,6 +79,7 @@ def get_async_instructor_client() -> instructor.AsyncInstructor:
 
 
 # ── Extraction functions ──────────────────────────────────────────────────────
+
 
 def extract_strategy(commentary: str, client=None) -> StrategyRecommendation:
     """Extract structured strategy from SC2 game commentary text."""
@@ -88,7 +99,10 @@ def extract_strategy(commentary: str, client=None) -> StrategyRecommendation:
                     "and threat assessments."
                 ),
             },
-            {"role": "user", "content": f"Analyze this SC2 commentary and extract strategy:\n\n{commentary}"},
+            {
+                "role": "user",
+                "content": f"Analyze this SC2 commentary and extract strategy:\n\n{commentary}",
+            },
         ],
     )
 
@@ -104,12 +118,17 @@ def extract_threat(game_state_description: str, client=None) -> ThreatAssessment
         max_retries=3,
         messages=[
             {"role": "system", "content": "You are an SC2 threat assessment expert."},
-            {"role": "user", "content": f"Assess the threat in this game state:\n\n{game_state_description}"},
+            {
+                "role": "user",
+                "content": f"Assess the threat in this game state:\n\n{game_state_description}",
+            },
         ],
     )
 
 
-async def batch_extract_strategies(commentaries: list[str]) -> list[StrategyRecommendation]:
+async def batch_extract_strategies(
+    commentaries: list[str],
+) -> list[StrategyRecommendation]:
     """Asynchronously extract strategies from multiple commentaries."""
     client = get_async_instructor_client()
     tasks = [

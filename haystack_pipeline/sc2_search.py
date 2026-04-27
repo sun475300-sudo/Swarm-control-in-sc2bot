@@ -72,14 +72,16 @@ SC2_STRATEGY_DOCS: List[Document] = [
 # Document Store Setup
 # ============================================================
 
+
 def setup_document_store() -> InMemoryDocumentStore:
     store = InMemoryDocumentStore()
 
     # Indexing pipeline
     indexer = Pipeline()
-    indexer.add_component("splitter", DocumentSplitter(
-        split_by="sentence", split_length=5, split_overlap=1
-    ))
+    indexer.add_component(
+        "splitter",
+        DocumentSplitter(split_by="sentence", split_length=5, split_overlap=1),
+    )
     indexer.add_component("writer", DocumentWriter(document_store=store))
     indexer.connect("splitter", "writer")
 
@@ -87,27 +89,37 @@ def setup_document_store() -> InMemoryDocumentStore:
     print(f"[Haystack] Document store: {store.count_documents()} chunks indexed")
     return store
 
+
 # ============================================================
 # QA Pipeline: BM25Retriever + ExtractiveReader
 # ============================================================
 
+
 def build_qa_pipeline(store: InMemoryDocumentStore) -> Pipeline:
     pipeline = Pipeline()
-    pipeline.add_component("retriever", InMemoryBM25Retriever(document_store=store, top_k=3))
-    pipeline.add_component("reader",    ExtractiveReader(model="deepset/roberta-base-squad2"))
+    pipeline.add_component(
+        "retriever", InMemoryBM25Retriever(document_store=store, top_k=3)
+    )
+    pipeline.add_component(
+        "reader", ExtractiveReader(model="deepset/roberta-base-squad2")
+    )
     pipeline.connect("retriever.documents", "reader.documents")
     return pipeline
+
 
 # ============================================================
 # Ask Questions
 # ============================================================
 
+
 def ask_question(pipeline: Pipeline, question: str, top_k: int = 3) -> None:
     print(f"\n[Haystack] Q: {question}")
-    result = pipeline.run({
-        "retriever": {"query": question},
-        "reader":    {"query": question, "top_k": top_k},
-    })
+    result = pipeline.run(
+        {
+            "retriever": {"query": question},
+            "reader": {"query": question, "top_k": top_k},
+        }
+    )
 
     answers = result.get("reader", {}).get("answers", [])
     if answers:
@@ -117,22 +129,26 @@ def ask_question(pipeline: Pipeline, question: str, top_k: int = 3) -> None:
     else:
         print("[Haystack] No answer found")
 
+
 # ============================================================
 # BM25-only Retrieval (no reader dependency)
 # ============================================================
 
+
 def keyword_search(store: InMemoryDocumentStore, query: str, top_k: int = 2) -> None:
     retriever = InMemoryBM25Retriever(document_store=store, top_k=top_k)
-    results   = retriever.run(query=query)
-    docs      = results.get("documents", [])
+    results = retriever.run(query=query)
+    docs = results.get("documents", [])
     print(f"\n[BM25] Query: '{query}'")
     for i, doc in enumerate(docs, 1):
         snippet = doc.content[:100].replace("\n", " ")
         print(f"  [{i}] {snippet}...")
 
+
 # ============================================================
 # Main
 # ============================================================
+
 
 def main():
     print("[Haystack] SC2 strategy knowledge pipeline starting...")
@@ -150,8 +166,13 @@ def main():
     for q in questions:
         keyword_search(store, q, top_k=2)
 
-    print("\n[Haystack] Pipeline ready. Use build_qa_pipeline() for extractive Q&A with reader.")
-    print("[Haystack] Note: ExtractiveReader requires deepset/roberta-base-squad2 model download.")
+    print(
+        "\n[Haystack] Pipeline ready. Use build_qa_pipeline() for extractive Q&A with reader."
+    )
+    print(
+        "[Haystack] Note: ExtractiveReader requires deepset/roberta-base-squad2 model download."
+    )
+
 
 if __name__ == "__main__":
     main()

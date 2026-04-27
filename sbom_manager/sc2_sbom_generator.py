@@ -29,7 +29,13 @@ LICENSE_COMPATIBILITY: Dict[str, Set[str]] = {
     "Apache-2.0": {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"},
     "GPL-3.0-only": {"GPL-3.0-only", "GPL-3.0-or-later", "AGPL-3.0-only"},
     "GPL-2.0-only": {"GPL-2.0-only", "GPL-2.0-or-later", "LGPL-2.1-only"},
-    "LGPL-2.1-only": {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "LGPL-2.1-only"},
+    "LGPL-2.1-only": {
+        "MIT",
+        "Apache-2.0",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "LGPL-2.1-only",
+    },
     "BSD-2-Clause": {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"},
     "BSD-3-Clause": {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"},
 }
@@ -90,7 +96,9 @@ class Package:
             "packageUrl": self.purl,
             "licenseConcluded": self.license_id,
             "licenseDeclared": self.license_id,
-            "supplier": f"Organization: {self.supplier}" if self.supplier else "NOASSERTION",
+            "supplier": (
+                f"Organization: {self.supplier}" if self.supplier else "NOASSERTION"
+            ),
             "downloadLocation": self.download_url or "NOASSERTION",
             "checksums": [
                 {"algorithm": "SHA256", "checksumValue": self.checksum_sha256}
@@ -205,12 +213,16 @@ class SBOMDocument:
     def add_vulnerability(self, vuln: Vulnerability) -> None:
         self.vulnerabilities.append(vuln)
 
-    def add_relationship(self, source: str, target: str, rel_type: str = "DEPENDS_ON") -> None:
-        self.relationships.append({
-            "source": source,
-            "target": target,
-            "type": rel_type,
-        })
+    def add_relationship(
+        self, source: str, target: str, rel_type: str = "DEPENDS_ON"
+    ) -> None:
+        self.relationships.append(
+            {
+                "source": source,
+                "target": target,
+                "type": rel_type,
+            }
+        )
 
     def to_spdx(self) -> Dict[str, Any]:
         """Generate SPDX 2.3 JSON format."""
@@ -231,17 +243,21 @@ class SBOMDocument:
         for rel in self.relationships:
             spdx_src = f"SPDXRef-Package-{rel['source']}"
             spdx_tgt = f"SPDXRef-Package-{rel['target']}"
-            doc["relationships"].append({
-                "spdxElementId": spdx_src,
-                "relatedSpdxElement": spdx_tgt,
-                "relationshipType": rel["type"],
-            })
+            doc["relationships"].append(
+                {
+                    "spdxElementId": spdx_src,
+                    "relatedSpdxElement": spdx_tgt,
+                    "relationshipType": rel["type"],
+                }
+            )
         # Document describes root
-        doc["relationships"].append({
-            "spdxElementId": "SPDXRef-DOCUMENT",
-            "relatedSpdxElement": "SPDXRef-Package-sc2-commander-bot-1.0.0",
-            "relationshipType": "DESCRIBES",
-        })
+        doc["relationships"].append(
+            {
+                "spdxElementId": "SPDXRef-DOCUMENT",
+                "relatedSpdxElement": "SPDXRef-Package-sc2-commander-bot-1.0.0",
+                "relationshipType": "DESCRIBES",
+            }
+        )
         return doc
 
     def to_cyclonedx(self) -> Dict[str, Any]:
@@ -382,14 +398,14 @@ class DependencyScanner:
         in_deps = False
         for line in content.splitlines():
             stripped = line.strip()
-            if stripped == "dependencies = [" or stripped == 'dependencies = [':
+            if stripped == "dependencies = [" or stripped == "dependencies = [":
                 in_deps = True
                 continue
             if in_deps:
                 if stripped.startswith("]"):
                     in_deps = False
                     continue
-                cleaned = stripped.strip('"\',')
+                cleaned = stripped.strip("\"',")
                 if cleaned:
                     name, version = self._parse_requirement_line(cleaned)
                     if name:
@@ -398,8 +414,11 @@ class DependencyScanner:
                         self.packages[pkg.identifier] = pkg
         return packages
 
-    def resolve_transitive(self, direct_pkgs: List[Package],
-                           known_tree: Optional[Dict[str, List[str]]] = None) -> List[Package]:
+    def resolve_transitive(
+        self,
+        direct_pkgs: List[Package],
+        known_tree: Optional[Dict[str, List[str]]] = None,
+    ) -> List[Package]:
         """Resolve transitive dependencies given a dependency tree mapping."""
         if known_tree is None:
             known_tree = {}
@@ -495,7 +514,14 @@ class VulnerabilityDatabase:
             Vulnerability(
                 cve_id="CVE-2023-44271",
                 package_name="pillow",
-                affected_versions=["9.0.0", "9.1.0", "9.2.0", "9.3.0", "9.4.0", "9.5.0"],
+                affected_versions=[
+                    "9.0.0",
+                    "9.1.0",
+                    "9.2.0",
+                    "9.3.0",
+                    "9.4.0",
+                    "9.5.0",
+                ],
                 fixed_version="10.0.1",
                 severity="HIGH",
                 cvss_score=7.5,
@@ -523,7 +549,15 @@ class VulnerabilityDatabase:
             Vulnerability(
                 cve_id="CVE-2024-22195",
                 package_name="jinja2",
-                affected_versions=["3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.1.0", "3.1.1", "3.1.2"],
+                affected_versions=[
+                    "3.0.0",
+                    "3.0.1",
+                    "3.0.2",
+                    "3.0.3",
+                    "3.1.0",
+                    "3.1.1",
+                    "3.1.2",
+                ],
                 fixed_version="3.1.3",
                 severity="MEDIUM",
                 cvss_score=6.1,
@@ -593,14 +627,18 @@ class LicenseComplianceChecker:
             if pkg.license_id == "NOASSERTION":
                 continue
             if not self.check_compatibility(pkg.license_id):
-                conflicts.append({
-                    "package": pkg.identifier,
-                    "package_license": pkg.license_id,
-                    "project_license": self.project_license,
-                    "conflict": f"{pkg.license_id} is not compatible with {self.project_license}",
-                })
+                conflicts.append(
+                    {
+                        "package": pkg.identifier,
+                        "package_license": pkg.license_id,
+                        "project_license": self.project_license,
+                        "conflict": f"{pkg.license_id} is not compatible with {self.project_license}",
+                    }
+                )
         # Check inter-dependency conflicts
-        licenses_in_use = [p.license_id for p in packages if p.license_id != "NOASSERTION"]
+        licenses_in_use = [
+            p.license_id for p in packages if p.license_id != "NOASSERTION"
+        ]
         unique_licenses = set(licenses_in_use)
         for lic_a in unique_licenses:
             for lic_b in unique_licenses:
@@ -646,9 +684,12 @@ class SBOMGenerator:
     and document generation in SPDX / CycloneDX formats.
     """
 
-    def __init__(self, project_root: str = ".",
-                 project_license: str = "MIT",
-                 project_name: str = "SC2-Commander-Bot") -> None:
+    def __init__(
+        self,
+        project_root: str = ".",
+        project_license: str = "MIT",
+        project_name: str = "SC2-Commander-Bot",
+    ) -> None:
         self.project_root = project_root
         self.project_name = project_name
         self.scanner = DependencyScanner(project_root)
@@ -732,7 +773,9 @@ class SBOMGenerator:
             self.scanner.packages[pkg.identifier] = pkg
         return packages
 
-    def _build_sc2_dependency_relationships(self, packages: List[Package]) -> List[Tuple[str, str]]:
+    def _build_sc2_dependency_relationships(
+        self, packages: List[Package]
+    ) -> List[Tuple[str, str]]:
         """Build realistic dependency edges for SC2 bot packages."""
         edges: List[Tuple[str, str]] = [
             ("requests", "urllib3"),
@@ -776,8 +819,9 @@ class SBOMGenerator:
         pkg_names = {p.name for p in packages}
         return [(s, t) for s, t in edges if s in pkg_names and t in pkg_names]
 
-    def generate(self, output_format: str = "both",
-                 use_mock: bool = True) -> SBOMDocument:
+    def generate(
+        self, output_format: str = "both", use_mock: bool = True
+    ) -> SBOMDocument:
         """
         Generate a full SBOM document.
 
@@ -847,7 +891,12 @@ class SBOMGenerator:
         assert self.document is not None
         doc = self.document
 
-        vuln_by_severity: Dict[str, int] = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+        vuln_by_severity: Dict[str, int] = {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "LOW": 0,
+        }
         for v in doc.vulnerabilities:
             sev = v.severity
             if sev in vuln_by_severity:
@@ -859,7 +908,9 @@ class SBOMGenerator:
                 "cve": v.cve_id,
                 "package": v.package_name,
                 "severity": v.severity,
-                "action": f"Upgrade to >= {v.fixed_version}" if v.fixed_version else "Monitor",
+                "action": (
+                    f"Upgrade to >= {v.fixed_version}" if v.fixed_version else "Monitor"
+                ),
             }
             for v in doc.vulnerabilities
             if v.severity in ("CRITICAL", "HIGH")
@@ -908,15 +959,20 @@ class SBOMGenerator:
             ),
         }
 
-    def _generate_recommendations(self, vuln_counts: Dict[str, int],
-                                  exploitable: List[Vulnerability],
-                                  conflicts: List[Dict[str, str]]) -> List[str]:
+    def _generate_recommendations(
+        self,
+        vuln_counts: Dict[str, int],
+        exploitable: List[Vulnerability],
+        conflicts: List[Dict[str, str]],
+    ) -> List[str]:
         """Generate actionable recommendations based on findings."""
         recs: List[str] = []
         if vuln_counts.get("CRITICAL", 0) > 0:
             recs.append("URGENT: Patch all CRITICAL vulnerabilities immediately")
         if vuln_counts.get("HIGH", 0) > 0:
-            recs.append("HIGH PRIORITY: Address HIGH severity vulnerabilities within 7 days")
+            recs.append(
+                "HIGH PRIORITY: Address HIGH severity vulnerabilities within 7 days"
+            )
         if exploitable:
             recs.append(
                 f"WARNING: {len(exploitable)} exploitable vulnerability(ies) detected - "
@@ -928,8 +984,12 @@ class SBOMGenerator:
                 "review and resolve before distribution"
             )
         if vuln_counts.get("MEDIUM", 0) > 0:
-            recs.append("MEDIUM: Schedule patching of MEDIUM vulnerabilities within 30 days")
-        recs.append("GENERAL: Enable automated dependency updates via Dependabot or Renovate")
+            recs.append(
+                "MEDIUM: Schedule patching of MEDIUM vulnerabilities within 30 days"
+            )
+        recs.append(
+            "GENERAL: Enable automated dependency updates via Dependabot or Renovate"
+        )
         recs.append("GENERAL: Run SBOM generation as part of CI/CD pipeline")
         recs.append("GENERAL: Pin all dependency versions for reproducible builds")
         return recs
@@ -974,7 +1034,7 @@ def demo() -> None:
     print(f"    BOM Format:      {cdx_data['bomFormat']}")
     print(f"    Spec Version:    {cdx_data['specVersion']}")
     print(f"    Components:      {len(cdx_data['components'])}")
-    vuln_count = len(cdx_data.get('vulnerabilities', []))
+    vuln_count = len(cdx_data.get("vulnerabilities", []))
     print(f"    Vulnerabilities: {vuln_count}")
 
     # --- Vulnerability Scan ---
@@ -982,8 +1042,10 @@ def demo() -> None:
     print(f"    Total vulnerabilities: {len(doc.vulnerabilities)}")
     for v in doc.vulnerabilities:
         marker = " [EXPLOITABLE]" if v.exploitable else ""
-        print(f"    - {v.cve_id} ({v.severity}, CVSS {v.cvss_score}): "
-              f"{v.package_name}{marker}")
+        print(
+            f"    - {v.cve_id} ({v.severity}, CVSS {v.cvss_score}): "
+            f"{v.package_name}{marker}"
+        )
 
     # --- License Compliance ---
     print("\n[5] License Compliance Check")
@@ -991,30 +1053,31 @@ def demo() -> None:
     print(f"    Project license: {license_report['project_license']}")
     print(f"    Compliant: {license_report['compliant']}")
     print(f"    License distribution:")
-    for lic, count in sorted(license_report['license_distribution'].items(),
-                             key=lambda x: -x[1])[:6]:
+    for lic, count in sorted(
+        license_report["license_distribution"].items(), key=lambda x: -x[1]
+    )[:6]:
         print(f"      {lic}: {count}")
-    if license_report['conflicts']:
+    if license_report["conflicts"]:
         print(f"    Conflicts found: {len(license_report['conflicts'])}")
-        for c in license_report['conflicts'][:3]:
-            conflict_desc = c.get('conflict', 'unknown')
+        for c in license_report["conflicts"][:3]:
+            conflict_desc = c.get("conflict", "unknown")
             print(f"      - {conflict_desc}")
 
     # --- Security Report ---
     print("\n[6] Supply Chain Security Report")
     report = generator.generate_security_report()
-    risk = report['supply_chain_risk']
+    risk = report["supply_chain_risk"]
     print(f"    Risk Score:  {risk['risk_score']} / 100")
     print(f"    Risk Level:  {risk['risk_level']}")
     print(f"    Normalized:  {risk['normalized']:.2%}")
 
     print("\n[7] Recommendations")
-    for i, rec in enumerate(report['recommendations'], 1):
+    for i, rec in enumerate(report["recommendations"], 1):
         print(f"    {i}. {rec}")
 
     # --- Category Breakdown ---
     print("\n[8] Dependency Category Breakdown")
-    cats = summary.get('category_breakdown', {})
+    cats = summary.get("category_breakdown", {})
     for cat, count in sorted(cats.items(), key=lambda x: -x[1]):
         bar = "#" * count
         print(f"    {cat:25s} [{count:2d}] {bar}")

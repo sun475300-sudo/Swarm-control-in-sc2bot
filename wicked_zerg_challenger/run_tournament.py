@@ -31,6 +31,7 @@ import logging
 
 logger = logging.getLogger("RunTournament")
 
+
 # SC2 path auto-setup
 def _ensure_sc2_path():
     if sys.platform != "win32":
@@ -41,8 +42,10 @@ def _ensure_sc2_path():
             return
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
         if os.path.exists(install_path):
@@ -50,20 +53,32 @@ def _ensure_sc2_path():
             return
     except Exception:
         pass
-    for path in ["C:\\Program Files (x86)\\StarCraft II",
-                  "C:\\Program Files\\StarCraft II", "D:\\StarCraft II"]:
+    for path in [
+        "C:\\Program Files (x86)\\StarCraft II",
+        "C:\\Program Files\\StarCraft II",
+        "D:\\StarCraft II",
+    ]:
         if os.path.exists(path):
             os.environ["SC2PATH"] = path
             return
+
 
 _ensure_sc2_path()
 
 # Map pool
 TOURNAMENT_MAPS = [
-    "AbyssalReefLE", "CactusValleyLE", "BelShirVestigeLE",
-    "ProximaStationLE", "AcropolisLE", "DiscoBloodbathLE",
-    "EphemeronLE", "TritonLE", "WintersGateLE",
-    "ThunderbirdLE", "AutomatonLE", "KingsCoveLE",
+    "AbyssalReefLE",
+    "CactusValleyLE",
+    "BelShirVestigeLE",
+    "ProximaStationLE",
+    "AcropolisLE",
+    "DiscoBloodbathLE",
+    "EphemeronLE",
+    "TritonLE",
+    "WintersGateLE",
+    "ThunderbirdLE",
+    "AutomatonLE",
+    "KingsCoveLE",
 ]
 
 # Difficulty presets
@@ -88,10 +103,13 @@ RACE_MAP = {
 class TournamentRunner:
     """풀 토너먼트 시뮬레이션 실행기"""
 
-    def __init__(self, games_per_combo: int = 2,
-                 difficulties: List[str] = None,
-                 races: List[str] = None,
-                 personality: str = "serral"):
+    def __init__(
+        self,
+        games_per_combo: int = 2,
+        difficulties: List[str] = None,
+        races: List[str] = None,
+        personality: str = "serral",
+    ):
         self.games_per_combo = games_per_combo
         self.personality = personality
 
@@ -114,7 +132,9 @@ class TournamentRunner:
         logger.info("  TOURNAMENT SIMULATION - Phase 22")
         logger.info("=" * 70)
         logger.info(f"  Races: {', '.join(r.upper() for r in self.races)}")
-        logger.info(f"  Difficulties: {', '.join(d.upper() for d in self.difficulties)}")
+        logger.info(
+            f"  Difficulties: {', '.join(d.upper() for d in self.difficulties)}"
+        )
         logger.info(f"  Games per combo: {self.games_per_combo}")
         logger.info(f"  Total games: {total_games}")
         logger.info(f"  Personality: {self.personality}")
@@ -134,15 +154,16 @@ class TournamentRunner:
 
                     logger.info(f"\n{'='*60}")
                     logger.info(f"  GAME {game_number}/{total_games}")
-                    logger.info(f"  vs {race_name.upper()} ({diff_name.upper()}) on {map_name}")
+                    logger.info(
+                        f"  vs {race_name.upper()} ({diff_name.upper()}) on {map_name}"
+                    )
                     wins_so_far = sum(1 for r in self.results if r["won"])
                     losses_so_far = len(self.results) - wins_so_far
                     logger.info(f"  Record: {wins_so_far}W - {losses_so_far}L")
                     logger.info(f"{'='*60}\n")
 
                     result = self._run_single_game(
-                        game_number, map_name, race, race_name,
-                        difficulty, diff_name
+                        game_number, map_name, race, race_name, difficulty, diff_name
                     )
                     self.results.append(result)
 
@@ -154,9 +175,15 @@ class TournamentRunner:
         self._generate_report()
         self._save_json_results()
 
-    def _run_single_game(self, game_number: int, map_name: str,
-                         race: Race, race_name: str,
-                         difficulty: Difficulty, diff_name: str) -> Dict:
+    def _run_single_game(
+        self,
+        game_number: int,
+        map_name: str,
+        race: Race,
+        race_name: str,
+        difficulty: Difficulty,
+        diff_name: str,
+    ) -> Dict:
         """단일 게임 실행"""
         result = {
             "game_number": game_number,
@@ -200,9 +227,9 @@ class TournamentRunner:
             result["result_raw"] = result_str
 
             # Try to get game report from bot
-            if hasattr(bot_instance, '_game_quick_summary'):
+            if hasattr(bot_instance, "_game_quick_summary"):
                 result["quick_summary"] = bot_instance._game_quick_summary
-            if hasattr(bot_instance, '_training_result'):
+            if hasattr(bot_instance, "_training_result"):
                 tr = bot_instance._training_result
                 result["bot_game_time"] = tr.get("game_time", 0)
 
@@ -221,10 +248,17 @@ class TournamentRunner:
             try:
                 # Bug fix #10: Replace os.system() with subprocess.run()
                 import subprocess
-                subprocess.run(["taskkill", "/f", "/im", "SC2_x64.exe"],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                subprocess.run(["taskkill", "/f", "/im", "SC2.exe"],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                subprocess.run(
+                    ["taskkill", "/f", "/im", "SC2_x64.exe"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                subprocess.run(
+                    ["taskkill", "/f", "/im", "SC2.exe"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
             except Exception:
                 pass
 
@@ -237,7 +271,9 @@ class TournamentRunner:
         lines.append("=" * 70)
         lines.append("  TOURNAMENT RESULTS - Phase 22")
         lines.append("=" * 70)
-        lines.append(f"  Date: {self.start_time.strftime('%Y-%m-%d %H:%M')} ~ {end_time.strftime('%H:%M')}")
+        lines.append(
+            f"  Date: {self.start_time.strftime('%Y-%m-%d %H:%M')} ~ {end_time.strftime('%H:%M')}"
+        )
         lines.append(f"  Duration: {int(duration // 60)}m {int(duration % 60)}s")
         lines.append(f"  Personality: {self.personality}")
         lines.append("")
@@ -262,7 +298,9 @@ class TournamentRunner:
             race_wins = sum(1 for r in race_games if r["won"])
             race_total = len(race_games)
             rate = (race_wins / race_total * 100) if race_total > 0 else 0
-            lines.append(f"  vs {race_name.upper():8s}: {race_wins}W-{race_total - race_wins}L ({rate:.0f}%)")
+            lines.append(
+                f"  vs {race_name.upper():8s}: {race_wins}W-{race_total - race_wins}L ({rate:.0f}%)"
+            )
         lines.append("")
 
         # Per-difficulty stats
@@ -272,20 +310,27 @@ class TournamentRunner:
             diff_wins = sum(1 for r in diff_games if r["won"])
             diff_total = len(diff_games)
             rate = (diff_wins / diff_total * 100) if diff_total > 0 else 0
-            lines.append(f"  {diff_name.upper():12s}: {diff_wins}W-{diff_total - diff_wins}L ({rate:.0f}%)")
+            lines.append(
+                f"  {diff_name.upper():12s}: {diff_wins}W-{diff_total - diff_wins}L ({rate:.0f}%)"
+            )
         lines.append("")
 
         # Per-combo stats
         lines.append("--- BY COMBO ---")
         for diff_name in self.difficulties:
             for race_name in self.races:
-                combo_games = [r for r in self.results
-                               if r["opponent_race"] == race_name and r["difficulty"] == diff_name]
+                combo_games = [
+                    r
+                    for r in self.results
+                    if r["opponent_race"] == race_name and r["difficulty"] == diff_name
+                ]
                 combo_wins = sum(1 for r in combo_games if r["won"])
                 combo_total = len(combo_games)
                 rate = (combo_wins / combo_total * 100) if combo_total > 0 else 0
                 label = f"{diff_name.upper()} vs {race_name.upper()}"
-                lines.append(f"  {label:25s}: {combo_wins}W-{combo_total - combo_wins}L ({rate:.0f}%)")
+                lines.append(
+                    f"  {label:25s}: {combo_wins}W-{combo_total - combo_wins}L ({rate:.0f}%)"
+                )
         lines.append("")
 
         # Game details
@@ -294,9 +339,11 @@ class TournamentRunner:
             status = "WIN " if r["won"] else "LOSS"
             if r.get("error"):
                 status = "ERR "
-            time_str = f"{r['game_time']:.0f}s" if r['game_time'] > 0 else "N/A"
-            lines.append(f"  #{r['game_number']:2d} {status} vs {r['opponent_race'].upper():8s} "
-                         f"({r['difficulty'].upper():8s}) on {r['map']:20s} [{time_str}]")
+            time_str = f"{r['game_time']:.0f}s" if r["game_time"] > 0 else "N/A"
+            lines.append(
+                f"  #{r['game_number']:2d} {status} vs {r['opponent_race'].upper():8s} "
+                f"({r['difficulty'].upper():8s}) on {r['map']:20s} [{time_str}]"
+            )
         lines.append("")
         lines.append("=" * 70)
 
@@ -333,7 +380,9 @@ class TournamentRunner:
                 "games": self.results,
             }
 
-            filepath.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            filepath.write_text(
+                json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
             logger.info(f"Saved to {filepath}")
         except Exception as e:
             logger.error(f"Save failed: {e}")
@@ -341,18 +390,37 @@ class TournamentRunner:
 
 def main():
     parser = argparse.ArgumentParser(description="SC2 Bot Tournament Simulation")
-    parser.add_argument("--games", type=int, default=2,
-                        help="Games per race/difficulty combo (default: 2)")
-    parser.add_argument("--difficulty", type=str, default=None,
-                        help="Specific difficulty (easy/medium/hard/harder/veryhard)")
-    parser.add_argument("--race", type=str, default=None,
-                        help="Specific race (zerg/terran/protoss)")
-    parser.add_argument("--personality", type=str, default="serral",
-                        help="Bot personality (default: serral)")
-    parser.add_argument("--quick", action="store_true",
-                        help="Quick mode: 1 game per combo, easy+hard only")
-    parser.add_argument("--full", action="store_true",
-                        help="Full mode: 3 games per combo, easy/medium/hard/harder")
+    parser.add_argument(
+        "--games",
+        type=int,
+        default=2,
+        help="Games per race/difficulty combo (default: 2)",
+    )
+    parser.add_argument(
+        "--difficulty",
+        type=str,
+        default=None,
+        help="Specific difficulty (easy/medium/hard/harder/veryhard)",
+    )
+    parser.add_argument(
+        "--race", type=str, default=None, help="Specific race (zerg/terran/protoss)"
+    )
+    parser.add_argument(
+        "--personality",
+        type=str,
+        default="serral",
+        help="Bot personality (default: serral)",
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Quick mode: 1 game per combo, easy+hard only",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Full mode: 3 games per combo, easy/medium/hard/harder",
+    )
     args = parser.parse_args()
 
     # Configure

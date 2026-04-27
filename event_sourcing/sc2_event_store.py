@@ -37,8 +37,10 @@ logger = logging.getLogger(__name__)
 # Event Types
 # ---------------------------------------------------------------------------
 
+
 class EventType(Enum):
     """SC2 game event types."""
+
     GAME_STARTED = "game_started"
     GAME_ENDED = "game_ended"
     UNIT_CREATED = "unit_created"
@@ -60,6 +62,7 @@ class EventType(Enum):
 # Event Data Class
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class Event:
     """
@@ -68,6 +71,7 @@ class Event:
     All game state is derived from the sequence of events.
     Events are never modified or deleted.
     """
+
     event_id: str
     event_type: EventType
     aggregate_id: str
@@ -125,9 +129,11 @@ class Event:
 # Snapshot
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Snapshot:
     """Periodic state snapshot for fast aggregate reconstruction."""
+
     snapshot_id: str
     aggregate_id: str
     state: Dict[str, Any]
@@ -136,7 +142,9 @@ class Snapshot:
     timestamp: float
 
     @staticmethod
-    def create(aggregate_id: str, state: Dict[str, Any], version: int, game_tick: int) -> Snapshot:
+    def create(
+        aggregate_id: str, state: Dict[str, Any], version: int, game_tick: int
+    ) -> Snapshot:
         return Snapshot(
             snapshot_id=str(uuid.uuid4()),
             aggregate_id=aggregate_id,
@@ -151,6 +159,7 @@ class Snapshot:
 # Event Store
 # ---------------------------------------------------------------------------
 
+
 class EventStore:
     """
     Append-only event store.
@@ -161,7 +170,9 @@ class EventStore:
 
     def __init__(self, snapshot_interval: int = 100):
         self._events: List[Event] = []
-        self._streams: Dict[str, List[int]] = defaultdict(list)  # aggregate_id -> event indices
+        self._streams: Dict[str, List[int]] = defaultdict(
+            list
+        )  # aggregate_id -> event indices
         self._snapshots: Dict[str, List[Snapshot]] = defaultdict(list)
         self._snapshot_interval = snapshot_interval
         self._version_counter: Dict[str, int] = defaultdict(int)
@@ -213,7 +224,8 @@ class EventStore:
         with self._lock:
             indices = self._streams.get(aggregate_id, [])
             return [
-                self._events[i] for i in indices
+                self._events[i]
+                for i in indices
                 if start_tick <= self._events[i].game_tick <= end_tick
             ]
 
@@ -262,6 +274,7 @@ class EventStore:
 # ---------------------------------------------------------------------------
 # Aggregate
 # ---------------------------------------------------------------------------
+
 
 class Aggregate:
     """
@@ -326,7 +339,10 @@ class Aggregate:
 
     def take_snapshot(self) -> Snapshot:
         return Snapshot.create(
-            self.aggregate_id, self.state, self.version, self.state["game_tick"],
+            self.aggregate_id,
+            self.state,
+            self.version,
+            self.state["game_tick"],
         )
 
     # --- Event Handlers ---
@@ -428,7 +444,9 @@ class Aggregate:
         return {uid: u for uid, u in self.state["units"].items() if u.get("alive")}
 
     def get_completed_buildings(self) -> Dict[str, Dict[str, Any]]:
-        return {bid: b for bid, b in self.state["buildings"].items() if b.get("completed")}
+        return {
+            bid: b for bid, b in self.state["buildings"].items() if b.get("completed")
+        }
 
     def summary(self) -> Dict[str, Any]:
         return {
@@ -448,6 +466,7 @@ class Aggregate:
 # ---------------------------------------------------------------------------
 # Projection
 # ---------------------------------------------------------------------------
+
 
 class Projection:
     """
@@ -496,22 +515,26 @@ class ArmyValueProjection(Projection):
     def _on_unit_created(self, event: Event, data: Dict[str, Any]) -> None:
         cost = event.data.get("cost_minerals", 0) + event.data.get("cost_vespene", 0)
         data["current_value"] += cost
-        data["timeline"].append({
-            "tick": event.game_tick,
-            "value": data["current_value"],
-            "event": "created",
-            "unit_type": event.data.get("unit_type"),
-        })
+        data["timeline"].append(
+            {
+                "tick": event.game_tick,
+                "value": data["current_value"],
+                "event": "created",
+                "unit_type": event.data.get("unit_type"),
+            }
+        )
 
     def _on_unit_destroyed(self, event: Event, data: Dict[str, Any]) -> None:
         cost = event.data.get("cost_minerals", 0) + event.data.get("cost_vespene", 0)
         data["current_value"] = max(0, data["current_value"] - cost)
-        data["timeline"].append({
-            "tick": event.game_tick,
-            "value": data["current_value"],
-            "event": "destroyed",
-            "unit_type": event.data.get("unit_type"),
-        })
+        data["timeline"].append(
+            {
+                "tick": event.game_tick,
+                "value": data["current_value"],
+                "event": "destroyed",
+                "unit_type": event.data.get("unit_type"),
+            }
+        )
 
     def peak_value(self) -> int:
         if not self._data["timeline"]:
@@ -541,40 +564,48 @@ class ResourceCurveProjection(Projection):
         vespene = event.data.get("vespene", 0)
         data["total_mined_minerals"] += minerals
         data["total_mined_vespene"] += vespene
-        data["income"].append({
-            "tick": event.game_tick,
-            "minerals": minerals,
-            "vespene": vespene,
-        })
+        data["income"].append(
+            {
+                "tick": event.game_tick,
+                "minerals": minerals,
+                "vespene": vespene,
+            }
+        )
 
     def _on_spent(self, event: Event, data: Dict[str, Any]) -> None:
         minerals = event.data.get("cost_minerals", 0)
         vespene = event.data.get("cost_vespene", 0)
         data["total_spent_minerals"] += minerals
         data["total_spent_vespene"] += vespene
-        data["spending"].append({
-            "tick": event.game_tick,
-            "minerals": minerals,
-            "vespene": vespene,
-            "item": event.data.get("unit_type", "unknown"),
-        })
+        data["spending"].append(
+            {
+                "tick": event.game_tick,
+                "minerals": minerals,
+                "vespene": vespene,
+                "item": event.data.get("unit_type", "unknown"),
+            }
+        )
 
     def _on_building_spent(self, event: Event, data: Dict[str, Any]) -> None:
         minerals = event.data.get("cost_minerals", 0)
         vespene = event.data.get("cost_vespene", 0)
         data["total_spent_minerals"] += minerals
         data["total_spent_vespene"] += vespene
-        data["spending"].append({
-            "tick": event.game_tick,
-            "minerals": minerals,
-            "vespene": vespene,
-            "item": event.data.get("building_type", "unknown"),
-        })
+        data["spending"].append(
+            {
+                "tick": event.game_tick,
+                "minerals": minerals,
+                "vespene": vespene,
+                "item": event.data.get("building_type", "unknown"),
+            }
+        )
 
     def net_resources(self) -> Dict[str, int]:
         return {
-            "minerals": self._data["total_mined_minerals"] - self._data["total_spent_minerals"],
-            "vespene": self._data["total_mined_vespene"] - self._data["total_spent_vespene"],
+            "minerals": self._data["total_mined_minerals"]
+            - self._data["total_spent_minerals"],
+            "vespene": self._data["total_mined_vespene"]
+            - self._data["total_spent_vespene"],
         }
 
 
@@ -600,6 +631,7 @@ class UnitCompositionProjection(Projection):
 # ---------------------------------------------------------------------------
 # Event Bus
 # ---------------------------------------------------------------------------
+
 
 class EventBus:
     """
@@ -658,6 +690,7 @@ class EventBus:
 # SC2EventSource - Main Facade
 # ---------------------------------------------------------------------------
 
+
 class SC2EventSource:
     """
     Complete event sourcing system for SC2 game history.
@@ -693,7 +726,9 @@ class SC2EventSource:
         if self.store.should_snapshot(event.aggregate_id):
             snapshot = agg.take_snapshot()
             self.store.save_snapshot(snapshot)
-            logger.debug("Snapshot taken for %s at version %d", event.aggregate_id, agg.version)
+            logger.debug(
+                "Snapshot taken for %s at version %d", event.aggregate_id, agg.version
+            )
         return seq
 
     def record_events(self, events: List[Event]) -> List[int]:
@@ -702,24 +737,40 @@ class SC2EventSource:
     # --- SC2 convenience methods ---
 
     def game_started(
-        self, game_id: str, race: str, opponent_race: str, map_name: str,
+        self,
+        game_id: str,
+        race: str,
+        opponent_race: str,
+        map_name: str,
     ) -> Event:
         event = Event.create(
-            EventType.GAME_STARTED, game_id, game_tick=0,
+            EventType.GAME_STARTED,
+            game_id,
+            game_tick=0,
             data={"race": race, "opponent_race": opponent_race, "map_name": map_name},
         )
         self.record_event(event)
         return event
 
     def unit_created(
-        self, game_id: str, tick: int, unit_id: str, unit_type: str,
-        cost_minerals: int = 0, cost_vespene: int = 0, supply: int = 1,
+        self,
+        game_id: str,
+        tick: int,
+        unit_id: str,
+        unit_type: str,
+        cost_minerals: int = 0,
+        cost_vespene: int = 0,
+        supply: int = 1,
     ) -> Event:
         event = Event.create(
-            EventType.UNIT_CREATED, game_id, game_tick=tick,
+            EventType.UNIT_CREATED,
+            game_id,
+            game_tick=tick,
             data={
-                "unit_id": unit_id, "unit_type": unit_type,
-                "cost_minerals": cost_minerals, "cost_vespene": cost_vespene,
+                "unit_id": unit_id,
+                "unit_type": unit_type,
+                "cost_minerals": cost_minerals,
+                "cost_vespene": cost_vespene,
                 "supply": supply,
             },
         )
@@ -727,56 +778,90 @@ class SC2EventSource:
         return event
 
     def unit_destroyed(
-        self, game_id: str, tick: int, unit_id: str, unit_type: str,
-        cost_minerals: int = 0, cost_vespene: int = 0,
+        self,
+        game_id: str,
+        tick: int,
+        unit_id: str,
+        unit_type: str,
+        cost_minerals: int = 0,
+        cost_vespene: int = 0,
     ) -> Event:
         event = Event.create(
-            EventType.UNIT_DESTROYED, game_id, game_tick=tick,
+            EventType.UNIT_DESTROYED,
+            game_id,
+            game_tick=tick,
             data={
-                "unit_id": unit_id, "unit_type": unit_type,
-                "cost_minerals": cost_minerals, "cost_vespene": cost_vespene,
+                "unit_id": unit_id,
+                "unit_type": unit_type,
+                "cost_minerals": cost_minerals,
+                "cost_vespene": cost_vespene,
             },
         )
         self.record_event(event)
         return event
 
     def resource_gathered(
-        self, game_id: str, tick: int, minerals: int = 0, vespene: int = 0,
+        self,
+        game_id: str,
+        tick: int,
+        minerals: int = 0,
+        vespene: int = 0,
     ) -> Event:
         event = Event.create(
-            EventType.RESOURCE_GATHERED, game_id, game_tick=tick,
+            EventType.RESOURCE_GATHERED,
+            game_id,
+            game_tick=tick,
             data={"minerals": minerals, "vespene": vespene},
         )
         self.record_event(event)
         return event
 
     def building_started(
-        self, game_id: str, tick: int, building_id: str, building_type: str,
-        cost_minerals: int = 0, cost_vespene: int = 0,
+        self,
+        game_id: str,
+        tick: int,
+        building_id: str,
+        building_type: str,
+        cost_minerals: int = 0,
+        cost_vespene: int = 0,
     ) -> Event:
         event = Event.create(
-            EventType.BUILDING_STARTED, game_id, game_tick=tick,
+            EventType.BUILDING_STARTED,
+            game_id,
+            game_tick=tick,
             data={
-                "building_id": building_id, "building_type": building_type,
-                "cost_minerals": cost_minerals, "cost_vespene": cost_vespene,
+                "building_id": building_id,
+                "building_type": building_type,
+                "cost_minerals": cost_minerals,
+                "cost_vespene": cost_vespene,
             },
         )
         self.record_event(event)
         return event
 
     def building_completed(
-        self, game_id: str, tick: int, building_id: str, supply_provided: int = 0,
+        self,
+        game_id: str,
+        tick: int,
+        building_id: str,
+        supply_provided: int = 0,
     ) -> Event:
         event = Event.create(
-            EventType.BUILDING_COMPLETED, game_id, game_tick=tick,
+            EventType.BUILDING_COMPLETED,
+            game_id,
+            game_tick=tick,
             data={"building_id": building_id, "supply_provided": supply_provided},
         )
         self.record_event(event)
         return event
 
-    def attack_ordered(self, game_id: str, tick: int, target: str, unit_count: int) -> Event:
+    def attack_ordered(
+        self, game_id: str, tick: int, target: str, unit_count: int
+    ) -> Event:
         event = Event.create(
-            EventType.ATTACK_ORDERED, game_id, game_tick=tick,
+            EventType.ATTACK_ORDERED,
+            game_id,
+            game_tick=tick,
             data={"target": target, "unit_count": unit_count},
         )
         self.record_event(event)
@@ -784,7 +869,9 @@ class SC2EventSource:
 
     def upgrade_completed(self, game_id: str, tick: int, upgrade_name: str) -> Event:
         event = Event.create(
-            EventType.UPGRADE_COMPLETED, game_id, game_tick=tick,
+            EventType.UPGRADE_COMPLETED,
+            game_id,
+            game_tick=tick,
             data={"upgrade_name": upgrade_name},
         )
         self.record_event(event)
@@ -792,7 +879,9 @@ class SC2EventSource:
 
     def game_ended(self, game_id: str, tick: int, winner: str, result: str) -> Event:
         event = Event.create(
-            EventType.GAME_ENDED, game_id, game_tick=tick,
+            EventType.GAME_ENDED,
+            game_id,
+            game_tick=tick,
             data={"winner": winner, "result": result},
         )
         self.record_event(event)
@@ -860,6 +949,7 @@ class SC2EventSource:
 # Demo
 # ---------------------------------------------------------------------------
 
+
 def demo() -> None:
     """Demonstrate event sourcing for SC2 game history."""
     print("=" * 70)
@@ -888,27 +978,47 @@ def demo() -> None:
 
     # --- Simulate a game ---
     print("\n[1] Recording Game Events")
-    sc2es.game_started(game_id, race="Zerg", opponent_race="Terran", map_name="Oxide LE")
+    sc2es.game_started(
+        game_id, race="Zerg", opponent_race="Terran", map_name="Oxide LE"
+    )
 
     # Early game: gather resources, build
     for tick in range(1, 6):
         sc2es.resource_gathered(game_id, tick=tick * 10, minerals=75, vespene=0)
 
-    sc2es.building_started(game_id, tick=50, building_id="pool_1", building_type="SpawningPool",
-                           cost_minerals=200)
+    sc2es.building_started(
+        game_id,
+        tick=50,
+        building_id="pool_1",
+        building_type="SpawningPool",
+        cost_minerals=200,
+    )
     sc2es.building_completed(game_id, tick=115, building_id="pool_1")
 
-    sc2es.building_started(game_id, tick=60, building_id="hatch_2", building_type="Hatchery",
-                           cost_minerals=300)
-    sc2es.building_completed(game_id, tick=160, building_id="hatch_2", supply_provided=6)
+    sc2es.building_started(
+        game_id,
+        tick=60,
+        building_id="hatch_2",
+        building_type="Hatchery",
+        cost_minerals=300,
+    )
+    sc2es.building_completed(
+        game_id, tick=160, building_id="hatch_2", supply_provided=6
+    )
 
     # Mid game: create units
     zerglings = []
     for i in range(8):
         uid = f"ling_{i}"
         zerglings.append(uid)
-        sc2es.unit_created(game_id, tick=120 + i * 5, unit_id=uid, unit_type="Zergling",
-                           cost_minerals=25, supply=1)
+        sc2es.unit_created(
+            game_id,
+            tick=120 + i * 5,
+            unit_id=uid,
+            unit_type="Zergling",
+            cost_minerals=25,
+            supply=1,
+        )
 
     for tick in range(6, 16):
         sc2es.resource_gathered(game_id, tick=tick * 10, minerals=100, vespene=25)
@@ -916,19 +1026,34 @@ def demo() -> None:
     # Roaches
     for i in range(4):
         uid = f"roach_{i}"
-        sc2es.unit_created(game_id, tick=200 + i * 8, unit_id=uid, unit_type="Roach",
-                           cost_minerals=75, cost_vespene=25, supply=2)
+        sc2es.unit_created(
+            game_id,
+            tick=200 + i * 8,
+            unit_id=uid,
+            unit_type="Roach",
+            cost_minerals=75,
+            cost_vespene=25,
+            supply=2,
+        )
 
     # Attack
     sc2es.attack_ordered(game_id, tick=250, target="enemy_natural", unit_count=12)
 
     # Losses
-    sc2es.unit_destroyed(game_id, tick=260, unit_id="ling_0", unit_type="Zergling",
-                         cost_minerals=25)
-    sc2es.unit_destroyed(game_id, tick=262, unit_id="ling_1", unit_type="Zergling",
-                         cost_minerals=25)
-    sc2es.unit_destroyed(game_id, tick=265, unit_id="roach_0", unit_type="Roach",
-                         cost_minerals=75, cost_vespene=25)
+    sc2es.unit_destroyed(
+        game_id, tick=260, unit_id="ling_0", unit_type="Zergling", cost_minerals=25
+    )
+    sc2es.unit_destroyed(
+        game_id, tick=262, unit_id="ling_1", unit_type="Zergling", cost_minerals=25
+    )
+    sc2es.unit_destroyed(
+        game_id,
+        tick=265,
+        unit_id="roach_0",
+        unit_type="Roach",
+        cost_minerals=75,
+        cost_vespene=25,
+    )
 
     # Upgrade
     sc2es.upgrade_completed(game_id, tick=300, upgrade_name="MetabolicBoost")

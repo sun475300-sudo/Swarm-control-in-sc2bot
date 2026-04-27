@@ -22,12 +22,12 @@ logger = logging.getLogger("RewardSystem")
 class ZergRewardSystem:
     """
     ���� Ưȭ ���� �ý���
-    
+
     �ܼ��� "�̱�� +1, ���� -1"�� �н���Ű��,
     AI�� ������ ���� ������ ���� �������� ����ϸ� �н� �ӵ��� �ſ� �������ϴ�.
     **'���ϰ� �ִ�'�� Ī��(����)**�� �߰��߰� ��� ��� �մϴ�.
     """
-    
+
     def __init__(self):
         """보상 시스템 초기화"""
         self.previous_score = 0
@@ -42,40 +42,40 @@ class ZergRewardSystem:
         self.supply_blocked_steps = 0
         # 군대 가치 추적
         self.previous_army_value = 0
-        
+
     def calculate_step_reward(self, bot) -> float:
         """
         �� ����(Step)���� AI�� �󸶳� ���ϰ� �ִ��� ����(Reward)�� �ű�ϴ�.
-        
+
         Args:
             bot: ���� ���� ���¸� ��� �ִ� �� ��ü (BotAI �ν��Ͻ�)
-            
+
         Returns:
             �̹� ������ ���� ���� (float)
         """
         reward = 0.0
-        
+
         try:
             # 1. ����(Creep) Ŀ������ ���� (�� ���)
             # ������ �ٽ��� �þ߿� �̵� �ӵ� ������ �ִ� �����Դϴ�.
             reward += self._calculate_creep_reward(bot)
-            
+
             # 2. ���(Larva) ȿ���� ���� (����)
             # ������ �� �ؼ� ��ٰ� �׿������� ���� (�г�Ƽ)
             reward += self._calculate_larva_efficiency_reward(bot)
-            
+
             # 3. �ڿ� ȸ���� ���� (�Ҹ���)
             # �̳׶��� 2000 �̻� ������ '���� �� ���� �ִ�'�� ���̹Ƿ� ����
             reward += self._calculate_resource_turnover_reward(bot)
-            
+
             # 4. ���� ������ ���� (�Ҹ��� ȿ��)
             # (���� �ı��� �� �ڿ� ��ġ) - (���� ���� �ڿ� ��ġ)
             reward += self._calculate_combat_exchange_reward(bot)
-            
+
             # 5. ���� ��� ���� (NEW: Threat-based rewards)
             # ���� ��ũ �ǹ� �߰�, �Ʊ� ���� ü�� ���� ��
             reward += self._calculate_threat_based_reward(bot)
-            
+
             # 6. 시야 확보 보상 (Vision acquisition)
             reward += self._calculate_vision_reward(bot)
 
@@ -109,100 +109,100 @@ class ZergRewardSystem:
             return 0.0
 
         return reward
-    
+
     def _calculate_creep_reward(self, bot) -> float:
         """
         ����(Creep) Ŀ������ ���� ���
-        
+
         ������ ���� �а� �������� ���� ������ �����Ͽ�,
         ������ �����ϰ� ���� ����(Creep Tumor)�� �ɵ��� �����մϴ�.
-        
+
         Returns:
             ���� ���� ���� (float)
         """
         try:
-            if not hasattr(bot, 'state') or not bot.state:
+            if not hasattr(bot, "state") or not bot.state:
                 return 0.0
-            
-            if not hasattr(bot.state, 'creep') or not bot.state.creep:
+
+            if not hasattr(bot.state, "creep") or not bot.state.creep:
                 return 0.0
-            
+
             # �� ũ�� ���
             map_width = bot.game_info.map_size[0]
             map_height = bot.game_info.map_size[1]
             total_map_area = map_width * map_height
-            
+
             if total_map_area == 0:
                 return 0.0
-            
+
             # ���� Ŀ������ ���
             creep_coverage = np.sum(bot.state.creep) / total_map_area
-            
+
             # ���� Ŀ������ ��� ������ ���� (������ ������ ����)
             coverage_delta = creep_coverage - self.previous_creep_coverage
             reward = coverage_delta * 10.0  # ����ġ ���� (5.0 -> 10.0���� ����)
-            
+
             # ���� Ŀ������ ���� (�� ��ǵ�)
             reward += creep_coverage * 5.0  # ����ġ ���� (2.0 -> 5.0)
-            
+
             # ���� ����(Creep Tumor) ���� ���� (NEW)
-            if hasattr(bot, 'structures'):
-                creep_tumors = bot.structures.filter(lambda s: s.name == 'CreepTumor')
+            if hasattr(bot, "structures"):
+                creep_tumors = bot.structures.filter(lambda s: s.name == "CreepTumor")
                 tumor_count = len(creep_tumors)
                 # ���� ������ �������� ���� (�ִ� 3.0)
                 reward += min(tumor_count * 0.5, 3.0)
-            
+
             # ����(Queen)�� ���� ���� ���� �ൿ ���� (NEW)
-            if hasattr(bot, 'units'):
-                queens = bot.units.filter(lambda u: u.name == 'Queen')
+            if hasattr(bot, "units"):
+                queens = bot.units.filter(lambda u: u.name == "Queen")
                 for queen in queens:
                     # ���� ���� ���� ���� ���� Ȯ��
-                    if hasattr(queen, 'energy') and queen.energy >= 25:
+                    if hasattr(queen, "energy") and queen.energy >= 25:
                         # �������� ����ϸ� ���� ���� (���� ����)
                         reward += 0.1
-            
+
             self.previous_creep_coverage = creep_coverage
-            
+
             return reward
-            
+
         except Exception:
             return 0.0
-    
+
     def _calculate_larva_efficiency_reward(self, bot) -> float:
         """
         ���(Larva) ȿ���� ���� ���
-        
+
         ������ �� �ؼ� ��ٰ� 3���� �̻� �׿������� ���� (�г�Ƽ)
         ��ٰ� ���ϼ��� �� ū ���Ƽ�� �޽��ϴ�.
-        
+
         Returns:
             ��� ȿ���� ���� ���� (float, ���� ����)
         """
         try:
-            if not hasattr(bot, 'townhalls'):
+            if not hasattr(bot, "townhalls"):
                 return 0.0
-            
+
             total_larva_excess = 0
-            
+
             for hatch in bot.townhalls:
                 # ��� ���� Ȯ�� (��ó�� �ֺ� 5 Ÿ�� �̳�)
-                if hasattr(bot, 'units'):
+                if hasattr(bot, "units"):
                     larva_units = bot.units.larva.closer_than(5, hatch.position)
                     larva_count = len(larva_units)
-                    
+
                     # ��ٰ� 3���� �̻� �׿������� ����
                     if larva_count > 3:
                         excess = larva_count - 3
                         total_larva_excess += excess
-            
+
             # ���Ƽ: ��ٰ� ���ϼ��� ����
             penalty = -0.1 * total_larva_excess
-            
+
             return penalty
-            
+
         except Exception:
             return 0.0
-    
+
     def _calculate_resource_turnover_reward(self, bot) -> float:
         """
         자원 회전율 기반 보상
@@ -216,7 +216,7 @@ class ZergRewardSystem:
             자원 회전율 보상 값 (float, 주로 페널티)
         """
         try:
-            if not hasattr(bot, 'minerals') or not hasattr(bot, 'time'):
+            if not hasattr(bot, "minerals") or not hasattr(bot, "time"):
                 return 0.0
 
             minerals = bot.minerals
@@ -253,183 +253,196 @@ class ZergRewardSystem:
 
         except Exception:
             return 0.0
-    
+
     def _calculate_combat_exchange_reward(self, bot) -> float:
         """
         ���� ������ ���� ���
-        
+
         (���� �ı��� �� �ڿ� ��ġ) - (���� ���� �ڿ� ��ġ)�� ��ȭ���� ����
-        
+
         Returns:
             ���� ������ ���� ���� (float)
         """
         try:
-            if not hasattr(bot, 'state') or not bot.state:
+            if not hasattr(bot, "state") or not bot.state:
                 return 0.0
-            
-            if not hasattr(bot.state, 'score'):
+
+            if not hasattr(bot.state, "score"):
                 return 0.0
-            
+
             score = bot.state.score
-            
+
             # ���� ������ ���
-            current_kill_value = getattr(score, 'kill_value_units', 0)
-            current_lost_value = getattr(score, 'lost_value_units', 0)
+            current_kill_value = getattr(score, "kill_value_units", 0)
+            current_lost_value = getattr(score, "lost_value_units", 0)
             current_net_value = current_kill_value - current_lost_value
-            
+
             # ���� ������ ��� ��ȭ��
             delta_value = current_net_value - self.previous_score
-            
+
             # ��ȭ���� ����� ���� (�Ҹ��� ȿ��)
             reward = delta_value * 0.001
-            
+
             self.previous_score = current_net_value
-            
+
             return reward
-            
+
         except Exception:
             return 0.0
-    
+
     def _calculate_threat_based_reward(self, bot) -> float:
         """
         ���� ��� ���� ��� (NEW)
-        
+
         - ���� ��ũ �ǹ� �߰� �� ���� (���� ȹ��)
         - �Ʊ� ������ ü�� ����(Save) �� ����
         - ���� ������ ���� ��� ����
-        
+
         Returns:
             ���� ��� ���� ���� (float)
         """
         try:
             reward = 0.0
-            
+
             # 1. ���� ��ũ �ǹ� �߰� ���� (���� ȹ��)
-            if hasattr(bot, 'enemy_structures'):
-                tech_buildings = ['Factory', 'Starport', 'RoboticsFacility', 'Stargate', 
-                                 'CyberneticsCore', 'TwilightCouncil', 'FusionCore']
+            if hasattr(bot, "enemy_structures"):
+                tech_buildings = [
+                    "Factory",
+                    "Starport",
+                    "RoboticsFacility",
+                    "Stargate",
+                    "CyberneticsCore",
+                    "TwilightCouncil",
+                    "FusionCore",
+                ]
                 for building_type in tech_buildings:
                     if hasattr(bot.enemy_structures, building_type.lower()):
-                        count = len(getattr(bot.enemy_structures, building_type.lower()))
+                        count = len(
+                            getattr(bot.enemy_structures, building_type.lower())
+                        )
                         if count > 0:
                             # ��ũ �ǹ� �߰� �� ���� (���� ��ġ)
                             reward += 0.5 * count
-            
+
             # 1-1. ���� ��ũ �ǹ� �ı� ���� (���� ����) - NEW
             # ���� �����Ӱ� ���Ͽ� �ı��� �ǹ� �� Ȯ��
-            if not hasattr(self, '_previous_enemy_tech_count'):
+            if not hasattr(self, "_previous_enemy_tech_count"):
                 self._previous_enemy_tech_count = {}
-            
+
             current_tech_count = {}
-            if hasattr(bot, 'enemy_structures'):
+            if hasattr(bot, "enemy_structures"):
                 for building_type in tech_buildings:
                     if hasattr(bot.enemy_structures, building_type.lower()):
                         current_tech_count[building_type] = len(
                             getattr(bot.enemy_structures, building_type.lower())
                         )
-            
+
             # �ı��� �ǹ��� ���� ����
             for building_type, current_count in current_tech_count.items():
-                previous_count = self._previous_enemy_tech_count.get(building_type, current_count)
+                previous_count = self._previous_enemy_tech_count.get(
+                    building_type, current_count
+                )
                 if previous_count > current_count:
                     destroyed = previous_count - current_count
                     # ��ũ �ǹ� �ı� �� ū ���� (���� ����)
                     reward += 2.0 * destroyed
-            
+
             self._previous_enemy_tech_count = current_tech_count
-            
+
             # 2. �Ʊ� ���� ü�� ���� ����
-            if hasattr(bot, 'units'):
+            if hasattr(bot, "units"):
                 total_health = 0
                 total_max_health = 0
-                
+
                 # ���� ���ֵ��� ü�� ���� ���
-                combat_units = ['Zergling', 'Roach', 'Hydralisk', 'Mutalisk', 'Lurker']
+                combat_units = ["Zergling", "Roach", "Hydralisk", "Mutalisk", "Lurker"]
                 for unit_type in combat_units:
                     if hasattr(bot.units, unit_type.lower()):
                         units = getattr(bot.units, unit_type.lower())
                         for unit in units:
-                            if hasattr(unit, 'health') and hasattr(unit, 'health_max'):
+                            if hasattr(unit, "health") and hasattr(unit, "health_max"):
                                 total_health += unit.health
                                 total_max_health += unit.health_max
-                
+
                 # ü�� ������ �������� ���� (���� ����)
                 if total_max_health > 0:
                     health_ratio = total_health / total_max_health
                     # ü�� ������ 0.8 �̻��̸� ����
                     if health_ratio > 0.8:
                         reward += 0.1 * (health_ratio - 0.8) * 10
-            
+
             # 3. ���� ������ ���� ��� ���� (������ - ü�� �ս��� ������)
             # ���� ü�°� �񱳴� ���� �����ӿ��� ó��
-            
+
             # 4. ���� ���� (NEW: Risk-Aware Reward)
             # ������ ���� �ʰ� ü���� �����ϸ� �������� �� ����
-            if not hasattr(self, '_previous_unit_count'):
+            if not hasattr(self, "_previous_unit_count"):
                 self._previous_unit_count = 0
                 self._previous_total_health = 0
-            
+
             current_unit_count = 0
             current_total_health = 0
-            if hasattr(bot, 'units'):
+            if hasattr(bot, "units"):
                 for unit_type in combat_units:
                     if hasattr(bot.units, unit_type.lower()):
                         units = getattr(bot.units, unit_type.lower())
                         current_unit_count += len(units)
                         for unit in units:
-                            if hasattr(unit, 'health'):
+                            if hasattr(unit, "health"):
                                 current_total_health += unit.health
-            
+
             # ���� ���� �����ǰų� �����߰�, ü�� �ս��� ������ ���� ����
-            if (current_unit_count >= self._previous_unit_count * 0.9 and 
-                current_total_health > self._previous_total_health * 0.8):
+            if (
+                current_unit_count >= self._previous_unit_count * 0.9
+                and current_total_health > self._previous_total_health * 0.8
+            ):
                 # ���� ���� ���� (���� ����)
                 reward += 0.5
-            
+
             self._previous_unit_count = current_unit_count
             self._previous_total_health = current_total_health
-            
+
             return reward
-            
+
         except Exception:
             return 0.0
-    
+
     def _calculate_vision_reward(self, bot) -> float:
         """
         �þ� Ȯ�� ���� ��� (NEW)
-        
+
         - ���� ��ġ�� �ľ��ϰų� �߿��� ������ ������ ����
         - ���� ��Ƽ Ÿ�̹� ���� �� ����
-        
+
         Returns:
             �þ� Ȯ�� ���� ���� (float)
         """
         try:
             reward = 0.0
-            
+
             # 1. ���� ��Ƽ �߰� ����
-            if hasattr(bot, 'enemy_structures'):
-                if hasattr(bot.enemy_structures, 'townhall'):
+            if hasattr(bot, "enemy_structures"):
+                if hasattr(bot.enemy_structures, "townhall"):
                     enemy_bases = len(bot.enemy_structures.townhall)
                     if enemy_bases > 1:
                         # ���� ��Ƽ �߰� �� ���� (���� ��ġ)
                         reward += 1.0 * (enemy_bases - 1)
-            
+
             # 2. ���� ���� ��ġ �ľ� ����
-            if hasattr(bot, 'enemy_units'):
+            if hasattr(bot, "enemy_units"):
                 enemy_count = len(bot.enemy_units)
                 if enemy_count > 0:
                     # ���� ���� ��ġ�� �ľ��ϸ� ���� ����
                     reward += 0.05 * min(enemy_count, 20)  # �ִ� 1.0
-            
+
             # 3. ���� ���� Ÿ�̹� ���� (���� �ǹ� �ı�)
             # �̴� ���� ������ ���󿡼� �̹� ó����
-            
+
             return reward
-            
+
         except Exception:
             return 0.0
-    
+
     def _calculate_expansion_reward(self, bot) -> float:
         """
         확장 타이밍 보상 계산
@@ -443,12 +456,12 @@ class ZergRewardSystem:
             확장 타이밍 보상 (float)
         """
         try:
-            if not hasattr(bot, 'townhalls'):
+            if not hasattr(bot, "townhalls"):
                 return 0.0
 
             reward = 0.0
             base_count = bot.townhalls.amount
-            game_time = getattr(bot, 'time', 0)
+            game_time = getattr(bot, "time", 0)
 
             # 기지 수가 증가했는지 확인
             if base_count > self.previous_base_count:
@@ -492,10 +505,10 @@ class ZergRewardSystem:
             업그레이드 보상 (float)
         """
         try:
-            if not hasattr(bot, 'state') or not bot.state:
+            if not hasattr(bot, "state") or not bot.state:
                 return 0.0
 
-            if not hasattr(bot.state, 'upgrades'):
+            if not hasattr(bot.state, "upgrades"):
                 return 0.0
 
             reward = 0.0
@@ -506,11 +519,11 @@ class ZergRewardSystem:
 
             for upgrade in new_upgrades:
                 upgrade_name = str(upgrade).upper()
-                if 'LEVEL1' in upgrade_name:
+                if "LEVEL1" in upgrade_name:
                     reward += 1.0
-                elif 'LEVEL2' in upgrade_name:
+                elif "LEVEL2" in upgrade_name:
                     reward += 1.5
-                elif 'LEVEL3' in upgrade_name:
+                elif "LEVEL3" in upgrade_name:
                     reward += 2.0
                 else:
                     # 기타 업그레이드 (저글링 속도 등)
@@ -534,7 +547,7 @@ class ZergRewardSystem:
             보급 차단 페널티 (float, 음수)
         """
         try:
-            if not hasattr(bot, 'supply_left') or not hasattr(bot, 'supply_cap'):
+            if not hasattr(bot, "supply_left") or not hasattr(bot, "supply_cap"):
                 return 0.0
 
             # 서플라이 풀 상태 체크 (오버로드 생산 여유 없음)
@@ -562,25 +575,25 @@ class ZergRewardSystem:
             군대 효율성 보상 (float)
         """
         try:
-            if not hasattr(bot, 'units'):
+            if not hasattr(bot, "units"):
                 return 0.0
 
             reward = 0.0
 
             # 군대 가치 계산 (유닛 수 * 대략적 가치)
             unit_values = {
-                'zergling': 25,
-                'baneling': 50,
-                'roach': 75,
-                'ravager': 100,
-                'hydralisk': 100,
-                'mutalisk': 100,
-                'lurker': 150,
-                'ultralisk': 300,
-                'broodlord': 300,
-                'corruptor': 150,
-                'infestor': 150,
-                'viper': 200,
+                "zergling": 25,
+                "baneling": 50,
+                "roach": 75,
+                "ravager": 100,
+                "hydralisk": 100,
+                "mutalisk": 100,
+                "lurker": 150,
+                "ultralisk": 300,
+                "broodlord": 300,
+                "corruptor": 150,
+                "infestor": 150,
+                "viper": 200,
             }
 
             current_army_value = 0
@@ -598,10 +611,10 @@ class ZergRewardSystem:
 
             # 일꾼 대비 군대 비율 체크
             worker_count = 0
-            if hasattr(bot, 'workers'):
+            if hasattr(bot, "workers"):
                 worker_count = bot.workers.amount
 
-            game_time = getattr(bot, 'time', 0)
+            game_time = getattr(bot, "time", 0)
 
             # 6분 이후에는 최소 군대가 있어야 함
             if game_time > 360:
@@ -625,11 +638,13 @@ class ZergRewardSystem:
             매크로 해처리 보상 (float)
         """
         try:
-            if not hasattr(bot, 'townhalls') or not hasattr(bot, 'larva'):
+            if not hasattr(bot, "townhalls") or not hasattr(bot, "larva"):
                 return 0.0
 
             reward = 0.0
-            base_count = bot.townhalls.ready.amount if hasattr(bot.townhalls, 'ready') else 0
+            base_count = (
+                bot.townhalls.ready.amount if hasattr(bot.townhalls, "ready") else 0
+            )
             larva_count = len(bot.larva)
 
             if base_count == 0:
@@ -642,7 +657,7 @@ class ZergRewardSystem:
                 reward += 0.05
 
             # 매크로 해처리 보유 시 추가 보상
-            game_time = getattr(bot, 'time', 0)
+            game_time = getattr(bot, "time", 0)
             if game_time > 480:  # 8분 이후
                 # 본진 주변에 추가 해처리가 있으면 보상
                 if base_count >= 3 and larva_count >= base_count * 2:
@@ -842,19 +857,23 @@ class ZergRewardSystem:
                 return 0.0
 
             # 현재 전략 모드 확인
-            current_mode = str(bot.strategy_manager.current_mode).split('.')[-1]
-            
+            current_mode = str(bot.strategy_manager.current_mode).split(".")[-1]
+
             # 군사력 평가
             our_army_value = 0
             if hasattr(bot, "units"):
                 # 전투 유닛만 계산 (일꾼, 오버로드 제외)
-                combat_units = bot.units.filter(lambda u: u.name not in ["Drone", "Overlord", "Larva", "Egg"])
-                our_army_value = len(combat_units) * 100 # 단순 수량 * 100 (추후 정밀 계산 가능)
-            
+                combat_units = bot.units.filter(
+                    lambda u: u.name not in ["Drone", "Overlord", "Larva", "Egg"]
+                )
+                our_army_value = (
+                    len(combat_units) * 100
+                )  # 단순 수량 * 100 (추후 정밀 계산 가능)
+
             enemy_army_value = 0
             if hasattr(bot, "enemy_units"):
                 enemy_army_value = len(bot.enemy_units) * 100
-            
+
             # 0으로 나누기 방지
             if enemy_army_value == 0:
                 enemy_army_value = 1  # 최소값
@@ -870,7 +889,7 @@ class ZergRewardSystem:
                 elif army_ratio < 0.8:
                     # 열세에서 무리한 공격: 나쁜 판단 (자살 공격 방지)
                     reward -= 0.05
-            
+
             # 2. 방어 모드 평가
             elif current_mode in ["DEFEND", "EMERGENCY"]:
                 if army_ratio < 0.9:
@@ -904,11 +923,11 @@ class ZergRewardSystem:
         # 군대 가치 추적 리셋
         self.previous_army_value = 0
         # Reset threat-based reward tracking
-        if hasattr(self, '_previous_enemy_tech_count'):
+        if hasattr(self, "_previous_enemy_tech_count"):
             self._previous_enemy_tech_count = {}
-        if hasattr(self, '_previous_unit_count'):
+        if hasattr(self, "_previous_unit_count"):
             self._previous_unit_count = 0
-        if hasattr(self, '_previous_total_health'):
+        if hasattr(self, "_previous_total_health"):
             self._previous_total_health = 0
 
 
@@ -933,4 +952,3 @@ async def on_end(self, game_result):
     # ���� ���� �� ���� �ý��� �ʱ�ȭ
     reward_system.reset()
 """
-

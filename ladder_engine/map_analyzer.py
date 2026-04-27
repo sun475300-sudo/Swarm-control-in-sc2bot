@@ -13,7 +13,7 @@ import math
 @dataclass
 class Choke:
     position: Tuple[float, float]
-    width: float               # in game units
+    width: float  # in game units
     connects: Tuple[str, str]  # e.g. ("main", "natural")
     is_ramp: bool = False
     defensibility: float = 0.0  # 0.0 (bad) to 1.0 (excellent)
@@ -39,7 +39,7 @@ class ExpansionLocation:
     is_natural: bool = False
     is_third: bool = False
     defensibility: float = 0.5
-    rank: int = 0              # 1 = best, higher = worse
+    rank: int = 0  # 1 = best, higher = worse
 
     def __repr__(self):
         return (
@@ -162,8 +162,10 @@ class MapAnalyzer:
         perp = (-dy / length * 20, dx / length * 20)
         flank = [
             spawn_a,
-            (self._midpoint(spawn_a, spawn_b)[0] + perp[0],
-             self._midpoint(spawn_a, spawn_b)[1] + perp[1]),
+            (
+                self._midpoint(spawn_a, spawn_b)[0] + perp[0],
+                self._midpoint(spawn_a, spawn_b)[1] + perp[1],
+            ),
             spawn_b,
         ]
         return [direct, flank]
@@ -264,7 +266,9 @@ class MapAnalyzer:
             size=map_size,
             spawn_positions=[our_spawn, enemy_spawn],
         )
-        analysis.choke_points = self.find_choke_points(our_spawn, enemy_spawn, choke_width)
+        analysis.choke_points = self.find_choke_points(
+            our_spawn, enemy_spawn, choke_width
+        )
         analysis.attack_paths = self.analyze_attack_paths(our_spawn, enemy_spawn)
         analysis.expansions = self.rank_expansions(our_spawn, map_size, naturals_offset)
         analysis.drop_positions = self.find_drop_positions(our_spawn, enemy_spawn)
@@ -272,11 +276,15 @@ class MapAnalyzer:
         self._cache[cache_key] = analysis
         return analysis
 
-    def get_best_expansion(self, map_name: str, our_spawn: Tuple[float, float]) -> Optional[ExpansionLocation]:
+    def get_best_expansion(
+        self, map_name: str, our_spawn: Tuple[float, float]
+    ) -> Optional[ExpansionLocation]:
         analysis = self.analyze_map(map_name, our_spawn)
         return analysis.expansions[0] if analysis.expansions else None
 
-    def get_main_choke(self, map_name: str, our_spawn: Tuple[float, float]) -> Optional[Choke]:
+    def get_main_choke(
+        self, map_name: str, our_spawn: Tuple[float, float]
+    ) -> Optional[Choke]:
         analysis = self.analyze_map(map_name, our_spawn)
         ramps = [c for c in analysis.choke_points if c.is_ramp]
         return ramps[0] if ramps else None

@@ -6,6 +6,7 @@ authority mode, production queue, cache, building reservation,
 state queries 전체 커버리지
 """
 import os
+
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import unittest
@@ -14,9 +15,14 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from blackboard import (
-    GameStateBlackboard, Blackboard,
-    AuthorityMode, GamePhase, ThreatLevel,
-    UnitCounts, ThreatInfo, ResourceState,
+    GameStateBlackboard,
+    Blackboard,
+    AuthorityMode,
+    GamePhase,
+    ThreatLevel,
+    UnitCounts,
+    ThreatInfo,
+    ResourceState,
 )
 
 
@@ -102,7 +108,9 @@ class TestThreat(unittest.TestCase):
         self.bb = GameStateBlackboard()
 
     def test_update_threat(self):
-        self.bb.update_threat(ThreatLevel.HIGH, 60.0, 5, is_rushing=True, is_air_threat=True)
+        self.bb.update_threat(
+            ThreatLevel.HIGH, 60.0, 5, is_rushing=True, is_air_threat=True
+        )
         self.assertEqual(self.bb.threat.level, ThreatLevel.HIGH)
         self.assertEqual(self.bb.threat.enemy_army_supply, 60.0)
         self.assertTrue(self.bb.threat.is_rushing)

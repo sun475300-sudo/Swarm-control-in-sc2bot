@@ -6,6 +6,7 @@ gas ratio, combat mode, larva saving, emergency mode,
 unit table, priority queue 커버리지
 """
 import os
+
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import unittest
@@ -19,6 +20,7 @@ from unit_factory import UnitFactory
 
 class FakeBot:
     """UnitFactory 테스트용 Mock Bot"""
+
     def __init__(self):
         self.time = 300.0
         self.minerals = 500

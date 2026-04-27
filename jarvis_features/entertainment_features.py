@@ -26,7 +26,9 @@ from discord.ext import commands, tasks
 
 logger = logging.getLogger("jarvis.entertainment")
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
+)
 LEVELS_FILE = os.path.join(DATA_DIR, "levels.json")
 CHALLENGE_FILE = os.path.join(DATA_DIR, "daily_challenges.json")
 
@@ -49,7 +51,7 @@ def _save_json(path: str, data):
 
 # 레벨 계산
 def _xp_for_level(level: int) -> int:
-    return int(100 * (level ** 1.5))
+    return int(100 * (level**1.5))
 
 
 def _level_from_xp(xp: int) -> int:
@@ -61,23 +63,91 @@ def _level_from_xp(xp: int) -> int:
 
 # 퀴즈 데이터
 TRIVIA_QUESTIONS = [
-    {"q": "스타크래프트2에서 저그의 기본 일꾼 유닛은?", "a": "드론", "options": ["드론", "프로브", "SCV", "일벌레"]},
-    {"q": "비트코인의 최초 블록을 무엇이라 부르나?", "a": "제네시스 블록", "options": ["제네시스 블록", "빅뱅 블록", "알파 블록", "원조 블록"]},
-    {"q": "파이썬에서 리스트의 마지막 원소를 참조하는 인덱스는?", "a": "-1", "options": ["-1", "0", "last", "end"]},
-    {"q": "HTTP 상태 코드 404는 무엇을 의미하나?", "a": "Not Found", "options": ["Not Found", "Server Error", "Forbidden", "Bad Request"]},
-    {"q": "저그가 럴커를 만들기 위해 필요한 건물은?", "a": "히드라리스크 굴", "options": ["히드라리스크 굴", "산란못", "진화장", "감염구덩이"]},
-    {"q": "이더리움의 합의 알고리즘은?", "a": "PoS (Proof of Stake)", "options": ["PoS (Proof of Stake)", "PoW (Proof of Work)", "DPoS", "PoA"]},
-    {"q": "Git에서 마지막 커밋을 되돌리는 명령어는?", "a": "git revert", "options": ["git revert", "git undo", "git rollback", "git back"]},
-    {"q": "스타크래프트2에서 테란의 궁극 유닛은?", "a": "전투순양함", "options": ["전투순양함", "토르", "밤까마귀", "유령"]},
-    {"q": "1 BTC를 나누는 가장 작은 단위는?", "a": "사토시", "options": ["사토시", "웨이", "핀", "비트"]},
-    {"q": "디스코드 봇 프레임워크 discord.py의 명령어 접두사로 가장 흔한 것은?", "a": "!", "options": ["!", "/", "?", "."]},
-    {"q": "스타크래프트2에서 프로토스의 기본 방어 건물은?", "a": "광자포", "options": ["광자포", "벙커", "가시지옥", "미사일포탑"]},
-    {"q": "블록체인에서 이중 지불 문제를 해결하기 위해 사용하는 메커니즘은?", "a": "합의 알고리즘", "options": ["합의 알고리즘", "암호화", "해시 함수", "디지털 서명"]},
-    {"q": "파이썬에서 딕셔너리의 키가 존재하는지 확인하는 가장 파이썬다운 방법은?", "a": "in 연산자", "options": ["in 연산자", "has_key()", "try/except", "find()"]},
-    {"q": "저그의 감염충이 사용할 수 있는 스킬이 아닌 것은?", "a": "블라인딩 클라우드", "options": ["블라인딩 클라우드", "신경 기생충", "진균 번식", "감염된 테란"]},
-    {"q": "DeFi에서 유동성 공급자에게 주어지는 보상을 무엇이라 하나?", "a": "이자 파밍 (Yield Farming)", "options": ["이자 파밍 (Yield Farming)", "스테이킹", "에어드롭", "바운티"]},
-    {"q": "HTTP 메서드 중 서버의 리소스를 삭제하는 메서드는?", "a": "DELETE", "options": ["DELETE", "REMOVE", "DROP", "ERASE"]},
-    {"q": "스타크래프트2에서 공중 유닛을 공격할 수 없는 저그 유닛은?", "a": "맹독충", "options": ["맹독충", "히드라리스크", "뮤탈리스크", "인페스터"]},
+    {
+        "q": "스타크래프트2에서 저그의 기본 일꾼 유닛은?",
+        "a": "드론",
+        "options": ["드론", "프로브", "SCV", "일벌레"],
+    },
+    {
+        "q": "비트코인의 최초 블록을 무엇이라 부르나?",
+        "a": "제네시스 블록",
+        "options": ["제네시스 블록", "빅뱅 블록", "알파 블록", "원조 블록"],
+    },
+    {
+        "q": "파이썬에서 리스트의 마지막 원소를 참조하는 인덱스는?",
+        "a": "-1",
+        "options": ["-1", "0", "last", "end"],
+    },
+    {
+        "q": "HTTP 상태 코드 404는 무엇을 의미하나?",
+        "a": "Not Found",
+        "options": ["Not Found", "Server Error", "Forbidden", "Bad Request"],
+    },
+    {
+        "q": "저그가 럴커를 만들기 위해 필요한 건물은?",
+        "a": "히드라리스크 굴",
+        "options": ["히드라리스크 굴", "산란못", "진화장", "감염구덩이"],
+    },
+    {
+        "q": "이더리움의 합의 알고리즘은?",
+        "a": "PoS (Proof of Stake)",
+        "options": ["PoS (Proof of Stake)", "PoW (Proof of Work)", "DPoS", "PoA"],
+    },
+    {
+        "q": "Git에서 마지막 커밋을 되돌리는 명령어는?",
+        "a": "git revert",
+        "options": ["git revert", "git undo", "git rollback", "git back"],
+    },
+    {
+        "q": "스타크래프트2에서 테란의 궁극 유닛은?",
+        "a": "전투순양함",
+        "options": ["전투순양함", "토르", "밤까마귀", "유령"],
+    },
+    {
+        "q": "1 BTC를 나누는 가장 작은 단위는?",
+        "a": "사토시",
+        "options": ["사토시", "웨이", "핀", "비트"],
+    },
+    {
+        "q": "디스코드 봇 프레임워크 discord.py의 명령어 접두사로 가장 흔한 것은?",
+        "a": "!",
+        "options": ["!", "/", "?", "."],
+    },
+    {
+        "q": "스타크래프트2에서 프로토스의 기본 방어 건물은?",
+        "a": "광자포",
+        "options": ["광자포", "벙커", "가시지옥", "미사일포탑"],
+    },
+    {
+        "q": "블록체인에서 이중 지불 문제를 해결하기 위해 사용하는 메커니즘은?",
+        "a": "합의 알고리즘",
+        "options": ["합의 알고리즘", "암호화", "해시 함수", "디지털 서명"],
+    },
+    {
+        "q": "파이썬에서 딕셔너리의 키가 존재하는지 확인하는 가장 파이썬다운 방법은?",
+        "a": "in 연산자",
+        "options": ["in 연산자", "has_key()", "try/except", "find()"],
+    },
+    {
+        "q": "저그의 감염충이 사용할 수 있는 스킬이 아닌 것은?",
+        "a": "블라인딩 클라우드",
+        "options": ["블라인딩 클라우드", "신경 기생충", "진균 번식", "감염된 테란"],
+    },
+    {
+        "q": "DeFi에서 유동성 공급자에게 주어지는 보상을 무엇이라 하나?",
+        "a": "이자 파밍 (Yield Farming)",
+        "options": ["이자 파밍 (Yield Farming)", "스테이킹", "에어드롭", "바운티"],
+    },
+    {
+        "q": "HTTP 메서드 중 서버의 리소스를 삭제하는 메서드는?",
+        "a": "DELETE",
+        "options": ["DELETE", "REMOVE", "DROP", "ERASE"],
+    },
+    {
+        "q": "스타크래프트2에서 공중 유닛을 공격할 수 없는 저그 유닛은?",
+        "a": "맹독충",
+        "options": ["맹독충", "히드라리스크", "뮤탈리스크", "인페스터"],
+    },
 ]
 
 SC2_CHALLENGES = [
@@ -215,7 +285,11 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                     color=discord.Color.green(),
                 )
                 if duration:
-                    embed.add_field(name="길이", value=f"{duration // 60}:{duration % 60:02d}", inline=True)
+                    embed.add_field(
+                        name="길이",
+                        value=f"{duration // 60}:{duration % 60:02d}",
+                        inline=True,
+                    )
                 embed.set_footer(text=f"요청: {ctx.author.display_name}")
                 await ctx.send(embed=embed)
 
@@ -257,9 +331,15 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
     async def rock_paper_scissors(self, ctx: commands.Context, choice: str = ""):
         """가위바위보를 합니다. 사용법: !가위바위보 가위"""
         choices_map = {
-            "가위": "가위", "scissors": "가위", "✌️": "가위",
-            "바위": "바위", "rock": "바위", "✊": "바위",
-            "보": "보", "paper": "보", "✋": "보",
+            "가위": "가위",
+            "scissors": "가위",
+            "✌️": "가위",
+            "바위": "바위",
+            "rock": "바위",
+            "✊": "바위",
+            "보": "보",
+            "paper": "보",
+            "✋": "보",
         }
 
         user_choice = choices_map.get(choice.lower())
@@ -273,9 +353,11 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
         if user_choice == bot_choice:
             result = "🤝 무승부!"
             color = discord.Color.greyple()
-        elif (user_choice == "가위" and bot_choice == "보") or \
-             (user_choice == "바위" and bot_choice == "가위") or \
-             (user_choice == "보" and bot_choice == "바위"):
+        elif (
+            (user_choice == "가위" and bot_choice == "보")
+            or (user_choice == "바위" and bot_choice == "가위")
+            or (user_choice == "보" and bot_choice == "바위")
+        ):
             result = "🎉 승리! 축하합니다!"
             color = discord.Color.green()
             self._add_xp(ctx.author.id, 10)
@@ -284,8 +366,12 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
             color = discord.Color.red()
 
         embed = discord.Embed(title="가위바위보!", color=color)
-        embed.add_field(name="당신", value=f"{emoji_map[user_choice]} {user_choice}", inline=True)
-        embed.add_field(name="JARVIS", value=f"{emoji_map[bot_choice]} {bot_choice}", inline=True)
+        embed.add_field(
+            name="당신", value=f"{emoji_map[user_choice]} {user_choice}", inline=True
+        )
+        embed.add_field(
+            name="JARVIS", value=f"{emoji_map[bot_choice]} {bot_choice}", inline=True
+        )
         embed.add_field(name="결과", value=result, inline=False)
         await ctx.send(embed=embed)
 
@@ -301,7 +387,7 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
             "answer": answer,
             "max_num": max_num,
             "attempts": 0,
-            "max_attempts": int(max_num ** 0.5) + 5,
+            "max_attempts": int(max_num**0.5) + 5,
             "player": ctx.author.id,
         }
 
@@ -310,7 +396,11 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
             description=f"1~{max_num} 사이의 숫자를 맞혀보세요!",
             color=discord.Color.blue(),
         )
-        embed.add_field(name="시도 제한", value=f"{self.active_games[channel_id]['max_attempts']}회", inline=True)
+        embed.add_field(
+            name="시도 제한",
+            value=f"{self.active_games[channel_id]['max_attempts']}회",
+            inline=True,
+        )
         embed.set_footer(text="채팅으로 숫자를 입력하세요. !포기 로 포기")
         await ctx.send(embed=embed)
 
@@ -353,10 +443,13 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
     async def roll_dice(self, ctx: commands.Context, notation: str = "1d6"):
         """주사위를 굴립니다. 사용법: !주사위 2d6 / !주사위 1d20 / !주사위 3d8"""
         import re
+
         match = re.match(r"^(\d+)?d(\d+)([+-]\d+)?$", notation.lower().strip())
         if not match:
-            await ctx.send("❌ 주사위 형식: `NdF` (예: `1d6`, `2d20`, `3d8+5`)\n"
-                           "N=주사위 개수, F=면 수, +/-=보정치")
+            await ctx.send(
+                "❌ 주사위 형식: `NdF` (예: `1d6`, `2d20`, `3d8+5`)\n"
+                "N=주사위 개수, F=면 수, +/-=보정치"
+            )
             return
 
         num_dice = int(match.group(1) or 1)
@@ -399,7 +492,9 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                 embed.add_field(name="🎉 CRITICAL HIT!", value="대성공!", inline=False)
                 self._add_xp(ctx.author.id, 15)
             elif rolls[0] == 1:
-                embed.add_field(name="💀 CRITICAL FAIL!", value="대실패...", inline=False)
+                embed.add_field(
+                    name="💀 CRITICAL FAIL!", value="대실패...", inline=False
+                )
 
         await ctx.send(embed=embed)
 
@@ -420,11 +515,21 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                     description=f"축하합니다 {message.author.mention}!\n**레벨 {new_level}**에 도달했습니다!",
                     color=discord.Color.gold(),
                 )
-                embed.add_field(name="현재 XP", value=f"{self.levels[uid]['xp']:,}", inline=True)
-                embed.add_field(name="다음 레벨", value=f"{_xp_for_level(new_level + 1):,} XP", inline=True)
+                embed.add_field(
+                    name="현재 XP", value=f"{self.levels[uid]['xp']:,}", inline=True
+                )
+                embed.add_field(
+                    name="다음 레벨",
+                    value=f"{_xp_for_level(new_level + 1):,} XP",
+                    inline=True,
+                )
                 # 레벨 보상 안내
                 if new_level % 5 == 0:
-                    embed.add_field(name="🏆 마일스톤!", value=f"레벨 {new_level} 마일스톤 달성!", inline=False)
+                    embed.add_field(
+                        name="🏆 마일스톤!",
+                        value=f"레벨 {new_level} 마일스톤 달성!",
+                        inline=False,
+                    )
                 await message.channel.send(embed=embed)
                 self.levels[uid].pop("level_up", None)
                 self._levels_dirty = True
@@ -458,11 +563,17 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                 )
             elif game["attempts"] >= game["max_attempts"]:
                 del self.active_games[message.channel.id]
-                await message.channel.send(f"😢 기회 소진! 정답은 **{answer}**이었습니다.")
+                await message.channel.send(
+                    f"😢 기회 소진! 정답은 **{answer}**이었습니다."
+                )
             elif guess < answer:
-                await message.channel.send(f"⬆️ **UP!** ({game['max_attempts'] - game['attempts']}회 남음)")
+                await message.channel.send(
+                    f"⬆️ **UP!** ({game['max_attempts'] - game['attempts']}회 남음)"
+                )
             else:
-                await message.channel.send(f"⬇️ **DOWN!** ({game['max_attempts'] - game['attempts']}회 남음)")
+                await message.channel.send(
+                    f"⬇️ **DOWN!** ({game['max_attempts'] - game['attempts']}회 남음)"
+                )
 
         elif game["type"] == "quiz":
             answer = game["answer"]
@@ -500,7 +611,10 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                     font = ImageFont.truetype("arial.ttf", font_size)
                 except (IOError, OSError):
                     try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+                        font = ImageFont.truetype(
+                            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                            font_size,
+                        )
                     except (IOError, OSError):
                         font = ImageFont.load_default()
 
@@ -512,7 +626,9 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                     # 검은 외곽선
                     for dx in [-2, 0, 2]:
                         for dy in [-2, 0, 2]:
-                            draw.text((x + dx, 20 + dy), top_text, fill="black", font=font)
+                            draw.text(
+                                (x + dx, 20 + dy), top_text, fill="black", font=font
+                            )
                     draw.text((x, 20), top_text, fill="white", font=font)
 
                 if bottom_text:
@@ -522,7 +638,9 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                     y = height - 80
                     for dx in [-2, 0, 2]:
                         for dy in [-2, 0, 2]:
-                            draw.text((x + dx, y + dy), bottom_text, fill="black", font=font)
+                            draw.text(
+                                (x + dx, y + dy), bottom_text, fill="black", font=font
+                            )
                     draw.text((x, y), bottom_text, fill="white", font=font)
 
                 # 중앙에 JARVIS 로고 텍스트
@@ -533,7 +651,12 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
                     logo_font = font
                 bbox = draw.textbbox((0, 0), logo_text, font=logo_font)
                 tw = bbox[2] - bbox[0]
-                draw.text(((width - tw) // 2, height // 2 - 30), logo_text, fill=(100, 100, 100), font=logo_font)
+                draw.text(
+                    ((width - tw) // 2, height // 2 - 30),
+                    logo_text,
+                    fill=(100, 100, 100),
+                    font=logo_font,
+                )
 
                 buf = io.BytesIO()
                 img.save(buf, format="PNG")
@@ -570,7 +693,9 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
         return leveled_up
 
     @commands.command(name="레벨", aliases=["level", "rank", "xp"])
-    async def show_level(self, ctx: commands.Context, member: Optional[discord.Member] = None):
+    async def show_level(
+        self, ctx: commands.Context, member: Optional[discord.Member] = None
+    ):
         """레벨과 경험치를 확인합니다."""
         user = member or ctx.author
         uid = str(user.id)
@@ -593,7 +718,9 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
         )
         embed.add_field(name="레벨", value=f"**{level}**", inline=True)
         embed.add_field(name="XP", value=f"**{xp:,}** / {next_xp:,}", inline=True)
-        embed.add_field(name="메시지", value=f"{data.get('messages', 0):,}개", inline=True)
+        embed.add_field(
+            name="메시지", value=f"{data.get('messages', 0):,}개", inline=True
+        )
         embed.add_field(name="진행도", value=f"`{bar}` {progress:.1f}%", inline=False)
 
         if user.avatar:
@@ -699,7 +826,9 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
         _save_json(CHALLENGE_FILE, challenges)
 
         self._add_xp(ctx.author.id, 50)
-        await ctx.send(f"🎉 챌린지 완료! +50 XP 🎁\n{ctx.author.mention}님 수고하셨습니다!")
+        await ctx.send(
+            f"🎉 챌린지 완료! +50 XP 🎁\n{ctx.author.mention}님 수고하셨습니다!"
+        )
 
     @tasks.loop(hours=24)
     async def daily_challenge_post(self):
@@ -720,8 +849,12 @@ class EntertainmentCog(commands.Cog, name="엔터테인먼트"):
             color=discord.Color.orange(),
         )
         embed.add_field(name="🎮 SC2", value=rng.choice(SC2_CHALLENGES), inline=False)
-        embed.add_field(name="💻 코딩", value=rng.choice(CODING_CHALLENGES), inline=False)
-        embed.add_field(name="🎁 보상", value="완료 시 50 XP! `!챌린지완료`", inline=False)
+        embed.add_field(
+            name="💻 코딩", value=rng.choice(CODING_CHALLENGES), inline=False
+        )
+        embed.add_field(
+            name="🎁 보상", value="완료 시 50 XP! `!챌린지완료`", inline=False
+        )
 
         await channel.send(embed=embed)
 

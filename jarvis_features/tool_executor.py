@@ -17,12 +17,24 @@ import time
 logger = logging.getLogger("JarvisBot.ToolExecutor")
 
 # 위험한 도구 — 관리자만 실행 가능
-DANGEROUS_TOOLS = frozenset({
-    "ssh_execute", "kill_process", "pc_control", "run_program",
-    "restart_bot", "execute_terminal_command", "execute_python_code",
-    "pc_mouse_click", "write_file", "edit_file",
-    "openclaw_coding", "openclaw_browser", "openclaw_cron", "openclaw_email",
-})
+DANGEROUS_TOOLS = frozenset(
+    {
+        "ssh_execute",
+        "kill_process",
+        "pc_control",
+        "run_program",
+        "restart_bot",
+        "execute_terminal_command",
+        "execute_python_code",
+        "pc_mouse_click",
+        "write_file",
+        "edit_file",
+        "openclaw_coding",
+        "openclaw_browser",
+        "openclaw_cron",
+        "openclaw_email",
+    }
+)
 
 
 class ToolExecutor:
@@ -65,7 +77,11 @@ class ToolExecutor:
             # ── ToolDispatcher (점진적 이관 — 등록된 도구 우선 실행) ──
             if _mod.tool_dispatcher:
                 result = await _mod.tool_dispatcher.dispatch(
-                    name=name, args=args, message=message, user_id=user_id, bot=self.bot,
+                    name=name,
+                    args=args,
+                    message=message,
+                    user_id=user_id,
+                    bot=self.bot,
                 )
                 if result is not None:
                     return result
@@ -76,7 +92,7 @@ class ToolExecutor:
                 return "web_tools 모듈을 불러올 수 없습니다."
             elif name == "get_weather":
                 city = args.strip() if args.strip() else "서울"
-                if _mod.web_tools and hasattr(_mod.web_tools, 'get_weather'):
+                if _mod.web_tools and hasattr(_mod.web_tools, "get_weather"):
                     return await asyncio.to_thread(_mod.web_tools.get_weather, city)
                 if _mod.system_mcp_server:
                     return await _mod.system_mcp_server.weather(city)
@@ -115,9 +131,11 @@ class ToolExecutor:
                         return "Blocked Git command."
                 try:
                     res = await asyncio.to_thread(
-                        subprocess.check_output, cmd,
-                        encoding="utf-8", stderr=subprocess.STDOUT,
-                        cwd=os.path.dirname(os.path.abspath(_mod.__file__))
+                        subprocess.check_output,
+                        cmd,
+                        encoding="utf-8",
+                        stderr=subprocess.STDOUT,
+                        cwd=os.path.dirname(os.path.abspath(_mod.__file__)),
                     )
                     if len(res) > 1500:
                         res = res[:1500] + "\n...(truncated)"
@@ -125,7 +143,7 @@ class ToolExecutor:
                 except subprocess.CalledProcessError as e:
                     return f"Git Error: {e.output}"
             elif name == "get_fortune":
-                if _mod.web_tools and hasattr(_mod.web_tools, 'get_daily_fortune'):
+                if _mod.web_tools and hasattr(_mod.web_tools, "get_daily_fortune"):
                     return await asyncio.to_thread(_mod.web_tools.get_daily_fortune)
                 return "운세 모듈을 불러올 수 없습니다."
             elif name == "translate":
@@ -134,7 +152,11 @@ class ToolExecutor:
                     text = parts[0].strip()
                     if len(parts) > 1:
                         target = parts[1].strip()
-                        source = parts[2].strip() if len(parts) > 2 else ("ko" if target == "en" else "en")
+                        source = (
+                            parts[2].strip()
+                            if len(parts) > 2
+                            else ("ko" if target == "en" else "en")
+                        )
                     else:
                         target, source = _mod._detect_language_direction(text)
                     return await _mod.system_mcp_server.translate(text, target, source)
@@ -203,11 +225,21 @@ class ToolExecutor:
                         user_alerts = _mod._price_alert_store.get(user_id, {})
                         if not user_alerts:
                             return "등록된 가격 알림이 없습니다."
-                        lines = [f"{t.replace('KRW-','')}: {p:,.0f} KRW" for t, p in user_alerts.items()]
+                        lines = [
+                            f"{t.replace('KRW-','')}: {p:,.0f} KRW"
+                            for t, p in user_alerts.items()
+                        ]
                         return "현재 가격 알림:\n" + "\n".join(lines)
-                    ticker = f"KRW-{coin_arg}" if not coin_arg.startswith("KRW-") else coin_arg
+                    ticker = (
+                        f"KRW-{coin_arg}"
+                        if not coin_arg.startswith("KRW-")
+                        else coin_arg
+                    )
                     if value_arg.lower() == "clear":
-                        if user_id in _mod._price_alert_store and ticker in _mod._price_alert_store[user_id]:
+                        if (
+                            user_id in _mod._price_alert_store
+                            and ticker in _mod._price_alert_store[user_id]
+                        ):
                             del _mod._price_alert_store[user_id][ticker]
                             if not _mod._price_alert_store[user_id]:
                                 del _mod._price_alert_store[user_id]
@@ -221,11 +253,15 @@ class ToolExecutor:
                     MAX_TOTAL_ALERTS = 500
                     user_alerts = _mod._price_alert_store.get(user_id, {})
                     if len(user_alerts) >= MAX_ALERTS_PER_USER:
-                        return f"가격 알림 한도 초과: 유저당 최대 {MAX_ALERTS_PER_USER}개"
+                        return (
+                            f"가격 알림 한도 초과: 유저당 최대 {MAX_ALERTS_PER_USER}개"
+                        )
                     total_alerts = sum(len(v) for v in _mod._price_alert_store.values())
                     if total_alerts >= MAX_TOTAL_ALERTS:
                         return f"전체 가격 알림 한도 초과: 최대 {MAX_TOTAL_ALERTS}개"
-                    _mod._price_alert_store.setdefault(user_id, {})[ticker] = target_price
+                    _mod._price_alert_store.setdefault(user_id, {})[
+                        ticker
+                    ] = target_price
                     return f"{coin_arg} 가격 알림 설정: {target_price:,.0f} KRW 도달 시 DM 알림"
             elif name == "run_program":
                 if _mod.system_mcp_server:
@@ -250,13 +286,19 @@ class ToolExecutor:
                 return "시스템 모듈을 불러올 수 없습니다."
             elif name == "ssh_execute":
                 if _mod.system_mcp_server:
-                    parts = args.split("|", 1) if "|" in args else [args.strip(), "echo connected"]
+                    parts = (
+                        args.split("|", 1)
+                        if "|" in args
+                        else [args.strip(), "echo connected"]
+                    )
                     host_part = parts[0].strip()
                     command = parts[1].strip() if len(parts) > 1 else "echo connected"
                     user, host = ("", host_part)
                     if "@" in host_part:
                         user, host = host_part.split("@", 1)
-                    return await _mod.system_mcp_server.ssh_execute(host, command, user=user)
+                    return await _mod.system_mcp_server.ssh_execute(
+                        host, command, user=user
+                    )
                 return "시스템 모듈을 불러올 수 없습니다."
             # ── OpenClaw Agentic Tools ──
             elif name == "execute_terminal_command":
@@ -277,24 +319,36 @@ class ToolExecutor:
                         x = int(parts[0].strip())
                         y = int(parts[1].strip())
                         duration = float(parts[2].strip()) if len(parts) > 2 else 0.5
-                        return await _mod.agentic_mcp_server.computer_use_mouse_move(x, y, duration)
+                        return await _mod.agentic_mcp_server.computer_use_mouse_move(
+                            x, y, duration
+                        )
                     except (ValueError, IndexError):
                         return "좌표값이 올바르지 않습니다. (x|y)"
                 return "Agentic 모듈을 불러올 수 없습니다."
             elif name == "pc_mouse_click":
                 if _mod.agentic_mcp_server:
                     parts = args.split("|")
-                    btn = parts[0].strip() if len(parts) > 0 and parts[0].strip() else "left"
+                    btn = (
+                        parts[0].strip()
+                        if len(parts) > 0 and parts[0].strip()
+                        else "left"
+                    )
                     clicks = int(parts[1].strip()) if len(parts) > 1 else 1
-                    return await _mod.agentic_mcp_server.computer_use_mouse_click(button=btn, clicks=clicks)
+                    return await _mod.agentic_mcp_server.computer_use_mouse_click(
+                        button=btn, clicks=clicks
+                    )
                 return "Agentic 모듈을 불러올 수 없습니다."
             elif name == "pc_keyboard_type":
                 if _mod.agentic_mcp_server:
-                    return await _mod.agentic_mcp_server.computer_use_keyboard_type(args)
+                    return await _mod.agentic_mcp_server.computer_use_keyboard_type(
+                        args
+                    )
                 return "Agentic 모듈을 불러올 수 없습니다."
             elif name == "pc_keyboard_press":
                 if _mod.agentic_mcp_server:
-                    return await _mod.agentic_mcp_server.computer_use_keyboard_press(args)
+                    return await _mod.agentic_mcp_server.computer_use_keyboard_press(
+                        args
+                    )
                 return "Agentic 모듈을 불러올 수 없습니다."
             elif name == "read_file":
                 if _mod.agentic_mcp_server:
@@ -322,7 +376,9 @@ class ToolExecutor:
                 return "Agentic 모듈을 불러올 수 없습니다."
             # ── Phase 3: PC 제어 ──
             elif name == "pc_control":
-                if _mod.system_mcp_server and hasattr(_mod.system_mcp_server, 'pc_control'):
+                if _mod.system_mcp_server and hasattr(
+                    _mod.system_mcp_server, "pc_control"
+                ):
                     parts = args.split("|", 1) if "|" in args else [args.strip(), ""]
                     action = parts[0].strip()
                     value = parts[1].strip() if len(parts) > 1 else ""
@@ -330,19 +386,25 @@ class ToolExecutor:
                 return "PC 제어 모듈을 불러올 수 없습니다."
             # ── Phase 4: SC2 고급 ──
             elif name == "analyze_replay":
-                if _mod.sc2_mcp_server and hasattr(_mod.sc2_mcp_server, 'analyze_replay'):
-                    return await _mod.sc2_mcp_server.analyze_replay(args.strip() if args.strip() else None)
+                if _mod.sc2_mcp_server and hasattr(
+                    _mod.sc2_mcp_server, "analyze_replay"
+                ):
+                    return await _mod.sc2_mcp_server.analyze_replay(
+                        args.strip() if args.strip() else None
+                    )
                 return "SC2 리플레이 모듈을 불러올 수 없습니다."
             elif name == "list_replays":
-                if _mod.sc2_mcp_server and hasattr(_mod.sc2_mcp_server, 'list_replays'):
+                if _mod.sc2_mcp_server and hasattr(_mod.sc2_mcp_server, "list_replays"):
                     return await _mod.sc2_mcp_server.list_replays()
                 return "SC2 리플레이 모듈을 불러올 수 없습니다."
             elif name == "sc2_coaching":
-                if _mod.sc2_mcp_server and hasattr(_mod.sc2_mcp_server, 'sc2_coaching_check'):
+                if _mod.sc2_mcp_server and hasattr(
+                    _mod.sc2_mcp_server, "sc2_coaching_check"
+                ):
                     return await _mod.sc2_mcp_server.sc2_coaching_check()
                 return "SC2 코칭 모듈을 불러올 수 없습니다."
             elif name == "track_ladder":
-                if _mod.sc2_mcp_server and hasattr(_mod.sc2_mcp_server, 'track_ladder'):
+                if _mod.sc2_mcp_server and hasattr(_mod.sc2_mcp_server, "track_ladder"):
                     parts = args.split("|", 1) if "|" in args else [args.strip(), "kr"]
                     player = parts[0].strip()
                     server = parts[1].strip() if len(parts) > 1 else "kr"
@@ -364,12 +426,18 @@ class ToolExecutor:
                     title = parts[0].strip() if len(parts) > 0 else "새 일정"
                     start = parts[1].strip() if len(parts) > 1 else ""
                     end = parts[2].strip() if len(parts) > 2 else ""
-                    return await _mod.calendar_integration.create_event(title, start, end)
+                    return await _mod.calendar_integration.create_event(
+                        title, start, end
+                    )
                 return "캘린더 모듈을 불러올 수 없습니다."
             # ── Phase 5: Notion ──
             elif name == "save_note":
                 if _mod.notion_integration:
-                    parts = args.split("|", 1) if "|" in args else [args.strip()[:30], args.strip()]
+                    parts = (
+                        args.split("|", 1)
+                        if "|" in args
+                        else [args.strip()[:30], args.strip()]
+                    )
                     title = parts[0].strip()
                     content = parts[1].strip() if len(parts) > 1 else title
                     return await _mod.notion_integration.save_note(title, content)
@@ -389,7 +457,9 @@ class ToolExecutor:
                 for m, s in _mod._model_stats.items():
                     rate = (s["success"] / s["calls"] * 100) if s["calls"] > 0 else 0
                     avg_ms = (s["total_ms"] / s["success"]) if s["success"] > 0 else 0
-                    model_info.append(f"  {m}: {rate:.0f}% 성공 ({s['calls']}회, 평균 {avg_ms:.0f}ms)")
+                    model_info.append(
+                        f"  {m}: {rate:.0f}% 성공 ({s['calls']}회, 평균 {avg_ms:.0f}ms)"
+                    )
 
                 tool_summary = ""
                 if _mod.get_tool_registry:
@@ -401,23 +471,27 @@ class ToolExecutor:
                     f"• 처리 메시지: {self.bot._message_count:,}개\n"
                     f"• 실행 명령어: {self.bot._command_count:,}개\n"
                     f"• 메모리 사용자: {len(self.bot.memory.get_all_users()) if self.bot.memory and hasattr(self.bot.memory, 'get_all_users') else '?'}명\n"
-                    f"**AI 모델 통계:**\n" + ("\n".join(model_info) if model_info else "  통계 없음")
+                    f"**AI 모델 통계:**\n"
+                    + ("\n".join(model_info) if model_info else "  통계 없음")
                     + tool_summary
                 )
             # ── 신규 도구: 메모리 검색 ──
             elif name == "search_memory":
                 if not self.bot.memory:
                     return "메모리 모듈을 불러올 수 없습니다."
-                if self.bot.memory and hasattr(self.bot.memory, 'search_memory'):
+                if self.bot.memory and hasattr(self.bot.memory, "search_memory"):
                     results = self.bot.memory.search_memory(args)
                     if results:
-                        lines = [f"• [{r['user_id']}] {r['key']}: {r['value']}" for r in results[:10]]
+                        lines = [
+                            f"• [{r['user_id']}] {r['key']}: {r['value']}"
+                            for r in results[:10]
+                        ]
                         return "메모리 검색 결과:\n" + "\n".join(lines)
                     return "검색 결과가 없습니다."
                 return "메모리 모듈을 불러올 수 없습니다."
             # ── 신규 도구: 메모리 백업 ──
             elif name == "backup_memory":
-                if self.bot.memory and hasattr(self.bot.memory, 'backup'):
+                if self.bot.memory and hasattr(self.bot.memory, "backup"):
                     return self.bot.memory.backup()
                 return "메모리 모듈을 불러올 수 없습니다."
 
@@ -427,6 +501,7 @@ class ToolExecutor:
             elif name.startswith("openclaw_"):
                 try:
                     from utils.openclaw_helper import get_openclaw_helper
+
                     oc = get_openclaw_helper()
                 except ImportError:
                     return "OpenClaw 헬퍼를 불러올 수 없습니다."
@@ -438,14 +513,24 @@ class ToolExecutor:
                     "openclaw_youtube": lambda a: f"Search YouTube: {a.strip()}",
                     "openclaw_summarize": lambda a: f"Summarize: {a.strip()}",
                     "openclaw_news": lambda a: f"Get latest news about {a.strip() or 'technology'}",
-                    "openclaw_exchange": lambda a: f"Get exchange rate {a.replace('|', ' to ')}" if a.strip() else "Get USD to KRW exchange rate",
+                    "openclaw_exchange": lambda a: (
+                        f"Get exchange rate {a.replace('|', ' to ')}"
+                        if a.strip()
+                        else "Get USD to KRW exchange rate"
+                    ),
                     "openclaw_stock": lambda a: f"Analyze stock {a.strip() or 'AAPL'} with full scoring",
                     "openclaw_image_gen": lambda a: f"Generate image: {a.strip()}",
-                    "openclaw_email": lambda a: f"Send email to {a}" if "|" in a else f"Check emails: {a}",
+                    "openclaw_email": lambda a: (
+                        f"Send email to {a}" if "|" in a else f"Check emails: {a}"
+                    ),
                     "openclaw_notion": lambda a: f"Notion: {a.replace('|', ' - ')}",
                     "openclaw_github": lambda a: f"GitHub {a.replace('|', ' for repo ')}",
                     "openclaw_coding": lambda a: f"Write code: {a.strip()}",
-                    "openclaw_browser": lambda a: f"Browser: open {a.split('|')[0].strip()}" if a.strip() else "Browser status",
+                    "openclaw_browser": lambda a: (
+                        f"Browser: open {a.split('|')[0].strip()}"
+                        if a.strip()
+                        else "Browser status"
+                    ),
                     "openclaw_cron": lambda a: f"Cron: {a.replace('|', ' ')}",
                     "openclaw_transcribe": lambda a: f"Transcribe audio: {a.strip()}",
                     "openclaw_calendar": lambda a: f"Calendar: {'show today events' if a.strip() in ('today', 'none', '') else a.strip()}",
@@ -455,7 +540,12 @@ class ToolExecutor:
                     return f"Unknown OpenClaw tool: {name}"
                 skill_msg = msg_fn(args)
                 oc.record_skill_usage(name)
-                timeout = 90 if name in ("openclaw_coding", "openclaw_image_gen", "openclaw_transcribe") else 45
+                timeout = (
+                    90
+                    if name
+                    in ("openclaw_coding", "openclaw_image_gen", "openclaw_transcribe")
+                    else 45
+                )
                 return await oc.run_skill(skill_msg, timeout=timeout)
 
             return "Unknown Tool"
@@ -466,4 +556,6 @@ class ToolExecutor:
         finally:
             if _mod.get_tool_registry:
                 _elapsed = (time.time() - _tool_start) * 1000
-                _mod.get_tool_registry().record_call(name, user_id, _tool_success, _elapsed, _tool_error)
+                _mod.get_tool_registry().record_call(
+                    name, user_id, _tool_success, _elapsed, _tool_error
+                )

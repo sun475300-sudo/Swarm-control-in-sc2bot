@@ -37,7 +37,6 @@ class BuildingDestroyer:
             UnitTypeId.HATCHERY: 100,
             UnitTypeId.LAIR: 100,
             UnitTypeId.HIVE: 100,
-
             # 생산 건물
             UnitTypeId.GATEWAY: 80,
             UnitTypeId.WARPGATE: 80,
@@ -48,7 +47,6 @@ class BuildingDestroyer:
             UnitTypeId.STARGATE: 80,
             UnitTypeId.SPAWNINGPOOL: 80,
             UnitTypeId.ROACHWARREN: 80,
-
             # 테크 건물
             UnitTypeId.TWILIGHTCOUNCIL: 70,
             UnitTypeId.TEMPLARARCHIVE: 70,
@@ -58,14 +56,12 @@ class BuildingDestroyer:
             UnitTypeId.SPIRE: 70,
             UnitTypeId.GREATERSPIRE: 70,
             UnitTypeId.INFESTATIONPIT: 70,
-
             # 방어 건물
             UnitTypeId.PHOTONCANNON: 60,
             UnitTypeId.BUNKER: 60,
             UnitTypeId.MISSILETURRET: 60,
             UnitTypeId.SPINECRAWLER: 60,
             UnitTypeId.SPORECRAWLER: 60,
-
             # 기타 건물
             "DEFAULT": 40,
         }
@@ -154,7 +150,7 @@ class BuildingDestroyer:
                 break
 
             count = first_count if i == 0 else attack_units.amount - assigned_count
-            available = attack_units[assigned_count:assigned_count + count]
+            available = attack_units[assigned_count : assigned_count + count]
 
             for unit in available:
                 self.bot.do(unit.attack(building.position))
@@ -162,8 +158,14 @@ class BuildingDestroyer:
             assigned_count += len(available)
 
             if self.bot.iteration % 220 == 0:
-                building_name = building.type_id.name if hasattr(building.type_id, 'name') else str(building.type_id)
-                logger.info(f"{len(available)} units attacking {building_name} at {building.position}")
+                building_name = (
+                    building.type_id.name
+                    if hasattr(building.type_id, "name")
+                    else str(building.type_id)
+                )
+                logger.info(
+                    f"{len(available)} units attacking {building_name} at {building.position}"
+                )
 
     def _get_available_attack_units(self):
         """공격 가능한 유닛 가져오기"""
@@ -179,9 +181,7 @@ class BuildingDestroyer:
             UnitTypeId.ULTRALISK,
         }
 
-        return self.bot.units.filter(
-            lambda u: u.type_id in combat_types
-        )
+        return self.bot.units.filter(lambda u: u.type_id in combat_types)
 
     def _get_prioritized_buildings(self) -> List[Unit]:
         """
@@ -201,12 +201,13 @@ class BuildingDestroyer:
         def get_priority(building: Unit) -> float:
             # 기본 우선순위
             base_priority = self.building_priority.get(
-                building.type_id,
-                self.building_priority["DEFAULT"]
+                building.type_id, self.building_priority["DEFAULT"]
             )
 
             # HP 보너스 (HP 낮을수록 우선)
-            hp_ratio = building.health / building.health_max if building.health_max > 0 else 0
+            hp_ratio = (
+                building.health / building.health_max if building.health_max > 0 else 0
+            )
             hp_bonus = (1 - hp_ratio) * 20  # 최대 +20
 
             # 거리 페널티 (가까울수록 우선)
@@ -237,6 +238,7 @@ class BuildingDestroyer:
 
 # ==================== 빠른 게임 종료 전략 ====================
 
+
 class RapidVictorySystem:
     """
     빠른 승리 시스템
@@ -263,7 +265,9 @@ class RapidVictorySystem:
                 army_supply = getattr(self.bot, "supply_army", 0)
                 if army_supply >= self.min_army_supply_for_rush:
                     self.aggressive_mode = True
-                    self.logger.info(f"[{int(game_time)}s] RAPID VICTORY MODE ACTIVATED! (army supply: {army_supply})")
+                    self.logger.info(
+                        f"[{int(game_time)}s] RAPID VICTORY MODE ACTIVATED! (army supply: {army_supply})"
+                    )
 
             # 공격적 모드일 때
             if self.aggressive_mode:
@@ -314,12 +318,12 @@ class RapidVictorySystem:
     def _limit_worker_production(self):
         """드론 생산 제한"""
         # Economy Manager에 신호 전달
-        if hasattr(self.bot, 'economy'):
+        if hasattr(self.bot, "economy"):
             # 드론 45마리로 제한
             max_workers = 45
             current_workers = self.bot.workers.amount
 
             if current_workers >= max_workers:
                 # 드론 생산 중지 신호
-                if hasattr(self.bot.economy, '_emergency_mode'):
+                if hasattr(self.bot.economy, "_emergency_mode"):
                     self.bot.economy._emergency_mode = True

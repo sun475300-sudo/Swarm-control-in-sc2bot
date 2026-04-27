@@ -24,7 +24,7 @@ class ActionType(IntEnum):
 
 
 NUM_ACTION_TYPES = len(ActionType)
-NUM_SCREEN_POSITIONS = 64 * 64   # flattened screen grid
+NUM_SCREEN_POSITIONS = 64 * 64  # flattened screen grid
 NUM_BUILD_IDS = 64
 NUM_UNIT_IDS = 128
 NUM_UPGRADE_IDS = 32
@@ -50,12 +50,16 @@ class PointerNetwork(nn.Module):
         self.key_proj = nn.Linear(key_dim, key_dim)
         self.v = nn.Linear(key_dim, 1, bias=False)
 
-    def forward(self, query: torch.Tensor, keys: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self,
+        query: torch.Tensor,
+        keys: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         # query: (B, query_dim)  keys: (B, N, key_dim)
-        q = self.query_proj(query).unsqueeze(1)          # (B, 1, key_dim)
-        k = self.key_proj(keys)                           # (B, N, key_dim)
-        scores = self.v(torch.tanh(q + k)).squeeze(-1)   # (B, N)
+        q = self.query_proj(query).unsqueeze(1)  # (B, 1, key_dim)
+        k = self.key_proj(keys)  # (B, N, key_dim)
+        scores = self.v(torch.tanh(q + k)).squeeze(-1)  # (B, N)
         if mask is not None:
             scores = scores.masked_fill(mask, float("-inf"))
         return scores
@@ -67,8 +71,9 @@ class ActionDecoder(nn.Module):
     Decodes: action_type → type-specific arguments.
     """
 
-    def __init__(self, state_dim: int = 512, entity_dim: int = 128,
-                 hidden_dim: int = 256):
+    def __init__(
+        self, state_dim: int = 512, entity_dim: int = 128, hidden_dim: int = 256
+    ):
         super().__init__()
         self.state_dim = state_dim
         self.entity_dim = entity_dim
@@ -87,8 +92,9 @@ class ActionDecoder(nn.Module):
         self.research_head = nn.Linear(state_dim, NUM_UPGRADE_IDS)
         self.attack_ptr = PointerNetwork(state_dim, entity_dim)
 
-    def _apply_mask(self, logits: torch.Tensor,
-                    mask: Optional[torch.Tensor]) -> torch.Tensor:
+    def _apply_mask(
+        self, logits: torch.Tensor, mask: Optional[torch.Tensor]
+    ) -> torch.Tensor:
         if mask is not None:
             logits = logits.masked_fill(~mask.bool(), float("-inf"))
         return logits

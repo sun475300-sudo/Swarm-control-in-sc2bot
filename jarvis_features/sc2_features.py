@@ -130,11 +130,15 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
         try:
             import sc2_mcp_server
         except ImportError:
-            logger.warning("sc2_mcp_server 모듈이 설치되지 않았습니다. 실시간 중계 비활성화.")
+            logger.warning(
+                "sc2_mcp_server 모듈이 설치되지 않았습니다. 실시간 중계 비활성화."
+            )
             self.live_game_active = False
             channel = self.bot.get_channel(self.live_channel)
             if channel:
-                await channel.send("⚠️ sc2_mcp_server 모듈을 찾을 수 없습니다. 중계를 중단합니다.")
+                await channel.send(
+                    "⚠️ sc2_mcp_server 모듈을 찾을 수 없습니다. 중계를 중단합니다."
+                )
             self.live_broadcast.cancel()
             return
 
@@ -188,7 +192,9 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
             try:
                 replay = sc2reader.load_replay(replay_path)
             except Exception as e:
-                await ctx.send(f"❌ 리플레이 파일을 읽을 수 없습니다 (손상되었을 수 있음): {e}")
+                await ctx.send(
+                    f"❌ 리플레이 파일을 읽을 수 없습니다 (손상되었을 수 있음): {e}"
+                )
                 return
 
             try:
@@ -198,12 +204,18 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                     timestamp=datetime.now(timezone.utc),
                 )
                 embed.add_field(name="맵", value=replay.map_name, inline=True)
-                embed.add_field(name="게임 시간", value=f"{replay.frames / 22.4 / 60:.1f}분", inline=True)
+                embed.add_field(
+                    name="게임 시간",
+                    value=f"{replay.frames / 22.4 / 60:.1f}분",
+                    inline=True,
+                )
 
                 for player in replay.players:
                     race = player.play_race
                     result = player.result if hasattr(player, "result") else "Unknown"
-                    result_emoji = "🏆" if result == "Win" else "💀" if result == "Loss" else "🤝"
+                    result_emoji = (
+                        "🏆" if result == "Win" else "💀" if result == "Loss" else "🤝"
+                    )
 
                     # 빌드오더 추출
                     build_events = []
@@ -212,9 +224,15 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                             if hasattr(event, "unit") and hasattr(event, "frame"):
                                 time_sec = event.frame / 22.4
                                 if time_sec <= 300:  # 처음 5분
-                                    build_events.append(f"{time_sec:.0f}s: {event.unit.name if hasattr(event.unit, 'name') else event.unit}")
+                                    build_events.append(
+                                        f"{time_sec:.0f}s: {event.unit.name if hasattr(event.unit, 'name') else event.unit}"
+                                    )
 
-                    build_str = "\n".join(build_events[:15]) if build_events else "빌드 정보 없음"
+                    build_str = (
+                        "\n".join(build_events[:15])
+                        if build_events
+                        else "빌드 정보 없음"
+                    )
                     embed.add_field(
                         name=f"{result_emoji} {player.name} ({race})",
                         value=f"결과: {result}\n**빌드오더 (5분):**\n```\n{build_str[:500]}\n```",
@@ -294,17 +312,27 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                 for race, stats in sorted(race_stats.items()):
                     total_r = stats["win"] + stats["loss"]
                     wr = (stats["win"] / total_r * 100) if total_r > 0 else 0
-                    race_text += f"vs {race}: {stats['win']}W {stats['loss']}L ({wr:.0f}%)\n"
-                embed.add_field(name="🎯 종족별", value=race_text or "데이터 없음", inline=True)
+                    race_text += (
+                        f"vs {race}: {stats['win']}W {stats['loss']}L ({wr:.0f}%)\n"
+                    )
+                embed.add_field(
+                    name="🎯 종족별", value=race_text or "데이터 없음", inline=True
+                )
 
             # 맵별 전적
             if map_stats:
                 map_text = ""
-                for m, stats in sorted(map_stats.items(), key=lambda x: x[1]["win"] + x[1]["loss"], reverse=True)[:5]:
+                for m, stats in sorted(
+                    map_stats.items(),
+                    key=lambda x: x[1]["win"] + x[1]["loss"],
+                    reverse=True,
+                )[:5]:
                     total_m = stats["win"] + stats["loss"]
                     wr = (stats["win"] / total_m * 100) if total_m > 0 else 0
                     map_text += f"{m}: {wr:.0f}% ({total_m}판)\n"
-                embed.add_field(name="🗺️ 맵별 (Top 5)", value=map_text or "데이터 없음", inline=True)
+                embed.add_field(
+                    name="🗺️ 맵별 (Top 5)", value=map_text or "데이터 없음", inline=True
+                )
 
             # 리플레이 정보
             recent_replays = await asyncio.to_thread(_find_replays, 5)
@@ -313,8 +341,12 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                 for r in recent_replays:
                     name = os.path.basename(r)
                     mtime = datetime.fromtimestamp(os.path.getmtime(r))
-                    replay_text += f"• {name[:30]}... ({mtime.strftime('%m/%d %H:%M')})\n"
-                embed.add_field(name="🎬 최근 리플레이", value=replay_text, inline=False)
+                    replay_text += (
+                        f"• {name[:30]}... ({mtime.strftime('%m/%d %H:%M')})\n"
+                    )
+                embed.add_field(
+                    name="🎬 최근 리플레이", value=replay_text, inline=False
+                )
 
             embed.set_footer(text="JARVIS SC2 Analytics")
             await ctx.send(embed=embed)
@@ -351,8 +383,11 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                 detail = ""
                 try:
                     import sc2reader
+
                     replay = sc2reader.load_replay(replay_path)
-                    players = " vs ".join(f"{p.name}({p.play_race})" for p in replay.players)
+                    players = " vs ".join(
+                        f"{p.name}({p.play_race})" for p in replay.players
+                    )
                     detail = f"\n{players} | {replay.map_name}"
                 except Exception:
                     pass
@@ -439,7 +474,9 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                 timestamp=datetime.now(timezone.utc),
             )
             embed.add_field(name="맵", value=replay.map_name, inline=True)
-            embed.add_field(name="길이", value=f"{replay.frames / 22.4 / 60:.1f}분", inline=True)
+            embed.add_field(
+                name="길이", value=f"{replay.frames / 22.4 / 60:.1f}분", inline=True
+            )
 
             for player in replay.players:
                 result = player.result if hasattr(player, "result") else "?"
@@ -455,7 +492,11 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                 "map": replay.map_name,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "players": [
-                    {"name": p.name, "race": p.play_race, "result": getattr(p, "result", "Unknown")}
+                    {
+                        "name": p.name,
+                        "race": p.play_race,
+                        "result": getattr(p, "result", "Unknown"),
+                    }
                     for p in replay.players
                 ],
             }
@@ -475,12 +516,20 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
 
     # ── 3-5. 훈련 스케줄러 ──
     @commands.command(name="훈련", aliases=["training", "훈련설정"])
-    async def set_training(self, ctx: commands.Context, time_str: str = "", *, description: str = "자동 훈련"):
+    async def set_training(
+        self,
+        ctx: commands.Context,
+        time_str: str = "",
+        *,
+        description: str = "자동 훈련",
+    ):
         """봇 매치 훈련 스케줄을 설정합니다. 사용법: !훈련 14:00 래더 연습"""
         if not time_str:
             # 현재 스케줄 표시
             if not self.training_schedules:
-                await ctx.send("📋 설정된 훈련 스케줄이 없습니다.\n사용법: `!훈련 14:00 래더 연습`")
+                await ctx.send(
+                    "📋 설정된 훈련 스케줄이 없습니다.\n사용법: `!훈련 14:00 래더 연습`"
+                )
                 return
             embed = discord.Embed(title="📋 훈련 스케줄", color=discord.Color.green())
             for i, s in enumerate(self.training_schedules, 1):
@@ -529,7 +578,9 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
             return
         removed = self.training_schedules.pop(index - 1)
         self._save_schedules()
-        await ctx.send(f"✅ 훈련 스케줄 삭제: {removed['time']} - {removed['description']}")
+        await ctx.send(
+            f"✅ 훈련 스케줄 삭제: {removed['time']} - {removed['description']}"
+        )
 
     @tasks.loop(minutes=1)
     async def run_training_schedule(self):
@@ -549,6 +600,7 @@ class SC2FeaturesCog(commands.Cog, name="SC2 기능"):
                     await channel.send(f"🎮 **훈련 시작**: {schedule['description']}")
                     try:
                         import sc2_mcp_server
+
                         result = sc2_mcp_server.run_sc2_test_game()
                         await channel.send(f"🏁 훈련 결과: {result}")
                     except Exception as e:

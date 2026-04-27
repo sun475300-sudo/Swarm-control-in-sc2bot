@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -33,6 +34,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # NumPy fallback helpers
 # ─────────────────────────────────────────────
+
 
 def _np_zeros(shape):
     """Create zero array."""
@@ -111,6 +113,7 @@ def _np_random_choice(n, p=None):
 # Curriculum Stage Definition
 # ─────────────────────────────────────────────
 
+
 class CurriculumStage(IntEnum):
     ECONOMY = 1
     BASIC_COMBAT = 2
@@ -129,6 +132,7 @@ STAGE_NAMES = {
 @dataclass
 class StageConfig:
     """Configuration for a single curriculum stage."""
+
     stage: CurriculumStage
     obs_dim: int
     act_dim: int
@@ -159,8 +163,12 @@ STAGE_CONFIGS: Dict[CurriculumStage, StageConfig] = {
         obs_dim=12,
         act_dim=6,
         action_names=[
-            "train_drone", "train_zergling", "train_roach",
-            "build_overlord", "attack_move", "defend_base",
+            "train_drone",
+            "train_zergling",
+            "train_roach",
+            "build_overlord",
+            "attack_move",
+            "defend_base",
         ],
         promotion_win_rate=0.65,
         min_episodes_before_promotion=60,
@@ -174,9 +182,16 @@ STAGE_CONFIGS: Dict[CurriculumStage, StageConfig] = {
         obs_dim=20,
         act_dim=10,
         action_names=[
-            "train_drone", "train_zergling", "train_roach", "train_hydra",
-            "build_overlord", "attack_move", "defend_base",
-            "focus_fire", "retreat_wounded", "flank_maneuver",
+            "train_drone",
+            "train_zergling",
+            "train_roach",
+            "train_hydra",
+            "build_overlord",
+            "attack_move",
+            "defend_base",
+            "focus_fire",
+            "retreat_wounded",
+            "flank_maneuver",
         ],
         promotion_win_rate=0.60,
         min_episodes_before_promotion=80,
@@ -190,10 +205,20 @@ STAGE_CONFIGS: Dict[CurriculumStage, StageConfig] = {
         obs_dim=28,
         act_dim=14,
         action_names=[
-            "train_drone", "train_zergling", "train_roach", "train_hydra",
-            "train_mutalisk", "train_ultralisk", "build_overlord",
-            "expand", "attack_move", "defend_base",
-            "focus_fire", "retreat_wounded", "flank_maneuver", "tech_upgrade",
+            "train_drone",
+            "train_zergling",
+            "train_roach",
+            "train_hydra",
+            "train_mutalisk",
+            "train_ultralisk",
+            "build_overlord",
+            "expand",
+            "attack_move",
+            "defend_base",
+            "focus_fire",
+            "retreat_wounded",
+            "flank_maneuver",
+            "tech_upgrade",
         ],
         promotion_win_rate=0.55,
         min_episodes_before_promotion=100,
@@ -209,9 +234,11 @@ STAGE_CONFIGS: Dict[CurriculumStage, StageConfig] = {
 # Task Difficulty Scorer
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class TaskDifficultyScorer:
     """Scores and adaptively schedules task difficulty within a stage."""
+
     current_difficulty: float = 0.0
     difficulty_history: List[float] = field(default_factory=list)
     success_at_difficulty: Dict[str, List[bool]] = field(default_factory=dict)
@@ -232,8 +259,10 @@ class TaskDifficultyScorer:
         if len(self.success_at_difficulty[key]) > 50:
             self.success_at_difficulty[key] = self.success_at_difficulty[key][-50:]
 
-        self.ema_success = self.ema_alpha * (1.0 if success else 0.0) + \
-            (1.0 - self.ema_alpha) * self.ema_success
+        self.ema_success = (
+            self.ema_alpha * (1.0 if success else 0.0)
+            + (1.0 - self.ema_alpha) * self.ema_success
+        )
         self.difficulty_history.append(difficulty)
 
     def next_difficulty(self, lo: float, hi: float) -> float:
@@ -266,9 +295,11 @@ class TaskDifficultyScorer:
 # Hindsight Experience Replay Buffer
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class Transition:
     """Single environment transition."""
+
     state: Any
     action: int
     reward: float
@@ -296,8 +327,9 @@ class HindsightReplayBuffer:
         """Add transition to current episode."""
         self.episode_buffer.append(transition)
 
-    def end_episode(self, achieved_goal: Any = None, desired_goal: Any = None,
-                    success: bool = False):
+    def end_episode(
+        self, achieved_goal: Any = None, desired_goal: Any = None, success: bool = False
+    ):
         """End episode and optionally apply HER relabeling."""
         if not self.episode_buffer:
             return
@@ -308,7 +340,11 @@ class HindsightReplayBuffer:
             self.total_added += 1
 
         # HER: relabel failed episodes with achieved goal
-        if not success and achieved_goal is not None and random.random() < self.her_ratio:
+        if (
+            not success
+            and achieved_goal is not None
+            and random.random() < self.her_ratio
+        ):
             for t in self.episode_buffer:
                 relabeled = Transition(
                     state=t.state,
@@ -324,8 +360,7 @@ class HindsightReplayBuffer:
 
         self.episode_buffer = []
 
-    def _compute_her_reward(self, transition: Transition,
-                            achieved_goal: Any) -> float:
+    def _compute_her_reward(self, transition: Transition, achieved_goal: Any) -> float:
         """Compute reward as if achieved_goal was the intended goal."""
         # In HER, reaching the achieved goal = success
         if transition.done:
@@ -356,9 +391,11 @@ class HindsightReplayBuffer:
 # Simple SC2 Simulation Environment
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SC2SimState:
     """Lightweight SC2 game state for curriculum training."""
+
     minerals: float = 50.0
     gas: float = 0.0
     supply_used: int = 12
@@ -400,15 +437,17 @@ class SC2SimState:
             self.units_lost / 100.0,
             # Derived features
             min(1.0, self.workers / max(1, self.bases * 16)),  # saturation
-            self.supply_used / max(1, self.supply_max),        # supply ratio
+            self.supply_used / max(1, self.supply_max),  # supply ratio
             1.0 if self.gas > 0 else 0.0,
             min(1.0, self.army_value / max(1.0, self.enemy_army_value)),
             # Additional for full game
             min(1.0, (self.minerals + self.gas) / 2000.0),
-            self.tech_level ** 2,
+            self.tech_level**2,
             min(1.0, self.bases / 4.0),
             self.frame / 20000.0,
-            min(1.0, self.damage_dealt / max(1.0, self.damage_dealt + self.damage_taken)),
+            min(
+                1.0, self.damage_dealt / max(1.0, self.damage_dealt + self.damage_taken)
+            ),
             self.army_supply / max(1, self.supply_max),
             min(1.0, self.units_killed / max(1, self.units_killed + self.units_lost)),
             _np_clip(self.micro_score * 2.0, 0.0, 1.0),
@@ -462,7 +501,9 @@ class SC2CurriculumEnv:
         # Enemy pressure scaling with difficulty
         self._enemy_aggression_timer -= 1
         if self._enemy_aggression_timer <= 0:
-            enemy_attack_power = 50.0 * self.difficulty * (1.0 + self.state.frame / 5000.0)
+            enemy_attack_power = (
+                50.0 * self.difficulty * (1.0 + self.state.frame / 5000.0)
+            )
             defense = self.state.army_value * (1.0 + self.state.micro_score * 0.3)
             if defense >= enemy_attack_power:
                 self.state.damage_dealt += enemy_attack_power * 0.5
@@ -563,8 +604,12 @@ class SC2CurriculumEnv:
                 reward = 0.15
 
         elif action_name == "train_ultralisk":
-            if s.minerals >= 275 and s.gas >= 200 and s.supply_used + 6 <= s.supply_max \
-                    and s.tech_level >= 0.8:
+            if (
+                s.minerals >= 275
+                and s.gas >= 200
+                and s.supply_used + 6 <= s.supply_max
+                and s.tech_level >= 0.8
+            ):
                 s.minerals -= 275
                 s.gas -= 200
                 s.supply_used += 6
@@ -574,8 +619,11 @@ class SC2CurriculumEnv:
 
         elif action_name == "attack_move":
             if s.army_value > 0:
-                effectiveness = s.army_value / max(1.0, s.enemy_army_value) * \
-                    (1.0 + s.micro_score * 0.2)
+                effectiveness = (
+                    s.army_value
+                    / max(1.0, s.enemy_army_value)
+                    * (1.0 + s.micro_score * 0.2)
+                )
                 if effectiveness > 1.0:
                     dealt = s.army_value * 0.3
                     s.damage_dealt += dealt
@@ -636,9 +684,11 @@ class SC2CurriculumEnv:
 # Performance Metrics
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class StageMetrics:
     """Performance metrics for a single curriculum stage."""
+
     stage: CurriculumStage
     episodes: int = 0
     wins: int = 0
@@ -672,8 +722,7 @@ class StageMetrics:
             return 0.0
         return _np_std(self.reward_history[-50:])
 
-    def record_episode(self, reward: float, won: bool, steps: int,
-                       difficulty: float):
+    def record_episode(self, reward: float, won: bool, steps: int, difficulty: float):
         self.episodes += 1
         self.total_reward += reward
         self.reward_history.append(reward)
@@ -695,8 +744,11 @@ class StageMetrics:
             "reward_std": f"{self.reward_std:.2f}",
             "best_reward": f"{self.best_reward:.2f}",
             "avg_episode_length": f"{self.avg_episode_length:.0f}",
-            "avg_difficulty": f"{_np_mean(self.difficulty_history[-20:]):.2f}"
-            if self.difficulty_history else "N/A",
+            "avg_difficulty": (
+                f"{_np_mean(self.difficulty_history[-20:]):.2f}"
+                if self.difficulty_history
+                else "N/A"
+            ),
         }
 
 
@@ -704,14 +756,14 @@ class StageMetrics:
 # Simple Policy Network (NumPy)
 # ─────────────────────────────────────────────
 
+
 class SimplePolicy:
     """
     Lightweight policy using a 2-layer neural network (NumPy).
     Supports forward pass and simple policy-gradient updates.
     """
 
-    def __init__(self, obs_dim: int, act_dim: int, hidden: int = 64,
-                 lr: float = 0.001):
+    def __init__(self, obs_dim: int, act_dim: int, hidden: int = 64, lr: float = 0.001):
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.hidden = hidden
@@ -727,11 +779,13 @@ class SimplePolicy:
             self.w2 = np.random.randn(hidden, act_dim).astype(np.float32) * scale2
             self.b2 = np.zeros(act_dim, dtype=np.float32)
         else:
-            self.w1 = [[random.gauss(0, scale1) for _ in range(hidden)]
-                        for _ in range(obs_dim)]
+            self.w1 = [
+                [random.gauss(0, scale1) for _ in range(hidden)] for _ in range(obs_dim)
+            ]
             self.b1 = [0.0] * hidden
-            self.w2 = [[random.gauss(0, scale2) for _ in range(act_dim)]
-                        for _ in range(hidden)]
+            self.w2 = [
+                [random.gauss(0, scale2) for _ in range(act_dim)] for _ in range(hidden)
+            ]
             self.b2 = [0.0] * act_dim
 
     def forward(self, obs: list) -> list:
@@ -816,6 +870,7 @@ class SimplePolicy:
 # ─────────────────────────────────────────────
 # SC2 Curriculum Trainer
 # ─────────────────────────────────────────────
+
 
 class SC2CurriculumTrainer:
     """
@@ -903,11 +958,17 @@ class SC2CurriculumTrainer:
             action, probs = policy.select_action(obs, self.epsilon)
             next_obs, reward, done, info = env.step(action)
 
-            replay.add(Transition(
-                state=obs, action=action, reward=reward,
-                next_state=next_obs, done=done,
-                goal=None, info=info,
-            ))
+            replay.add(
+                Transition(
+                    state=obs,
+                    action=action,
+                    reward=reward,
+                    next_state=next_obs,
+                    done=done,
+                    goal=None,
+                    info=info,
+                )
+            )
 
             trajectory.append((obs, action, reward))
             episode_reward += reward
@@ -932,10 +993,7 @@ class SC2CurriculumTrainer:
                 returns = [(r - mean_r) / std_r for r in returns]
 
         # Build training data
-        training_data = [
-            (obs, act, G)
-            for (obs, act, _), G in zip(trajectory, returns)
-        ]
+        training_data = [(obs, act, G) for (obs, act, _), G in zip(trajectory, returns)]
 
         # Update policy
         policy.update(training_data)
@@ -952,8 +1010,7 @@ class SC2CurriculumTrainer:
         )
 
         # Decay epsilon
-        self.epsilon = max(self.epsilon_end,
-                          self.epsilon * self.epsilon_decay)
+        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
 
         self.total_episodes += 1
 
@@ -986,24 +1043,26 @@ class SC2CurriculumTrainer:
                 m.promotion_time = time.time() - self.training_start_time
 
                 self.current_stage = CurriculumStage(self.current_stage + 1)
-                self.metrics[self.current_stage].entry_time = time.time() - \
-                    self.training_start_time
+                self.metrics[self.current_stage].entry_time = (
+                    time.time() - self.training_start_time
+                )
 
                 # Transfer knowledge: initialize new policy from old
                 self._transfer_weights(old_stage, self.current_stage)
 
-                self.promotion_log.append({
-                    "from_stage": STAGE_NAMES[old_stage],
-                    "to_stage": STAGE_NAMES[self.current_stage],
-                    "episode": self.total_episodes,
-                    "win_rate": m.win_rate,
-                    "time_elapsed": m.promotion_time,
-                })
+                self.promotion_log.append(
+                    {
+                        "from_stage": STAGE_NAMES[old_stage],
+                        "to_stage": STAGE_NAMES[self.current_stage],
+                        "episode": self.total_episodes,
+                        "win_rate": m.win_rate,
+                        "time_elapsed": m.promotion_time,
+                    }
+                )
                 return True
         return False
 
-    def _transfer_weights(self, from_stage: CurriculumStage,
-                          to_stage: CurriculumStage):
+    def _transfer_weights(self, from_stage: CurriculumStage, to_stage: CurriculumStage):
         """
         Transfer learned weights from previous stage to next stage.
         Copies overlapping dimensions.
@@ -1032,9 +1091,9 @@ class SC2CurriculumTrainer:
             for j in range(min_act):
                 new_p.b2[j] = old_p.b2[j]
 
-    def train(self, total_episodes: int = 500,
-              log_interval: int = 25,
-              verbose: bool = True) -> Dict[str, Any]:
+    def train(
+        self, total_episodes: int = 500, log_interval: int = 25, verbose: bool = True
+    ) -> Dict[str, Any]:
         """
         Run full curriculum training loop.
 
@@ -1068,7 +1127,9 @@ class SC2CurriculumTrainer:
 
             if result.get("promoted"):
                 if verbose:
-                    print(f"\n  >>> PROMOTED to {STAGE_NAMES[self.current_stage]}! <<<\n")
+                    print(
+                        f"\n  >>> PROMOTED to {STAGE_NAMES[self.current_stage]}! <<<\n"
+                    )
 
         return self.training_summary()
 
@@ -1085,10 +1146,12 @@ class SC2CurriculumTrainer:
             m = self.metrics[stage]
             if m.episodes > 0:
                 summary["stage_metrics"][STAGE_NAMES[stage]] = m.summary()
-                summary["stage_metrics"][STAGE_NAMES[stage]]["replay_stats"] = \
+                summary["stage_metrics"][STAGE_NAMES[stage]]["replay_stats"] = (
                     self.replay_buffers[stage].stats()
-                summary["stage_metrics"][STAGE_NAMES[stage]]["mastery"] = \
-                    f"{self.difficulty_scorers[stage].mastery_score():.2f}"
+                )
+                summary["stage_metrics"][STAGE_NAMES[stage]][
+                    "mastery"
+                ] = f"{self.difficulty_scorers[stage].mastery_score():.2f}"
         return summary
 
     def visualize_progression(self, width: int = 60) -> str:
@@ -1109,8 +1172,10 @@ class SC2CurriculumTrainer:
                 continue
 
             lines.append(f"\n  Stage {stage.value}: {STAGE_NAMES[stage]}")
-            lines.append(f"  Episodes: {m.episodes} | Win Rate: {m.win_rate:.1%} | "
-                         f"Best Reward: {m.best_reward:.2f}")
+            lines.append(
+                f"  Episodes: {m.episodes} | Win Rate: {m.win_rate:.1%} | "
+                f"Best Reward: {m.best_reward:.2f}"
+            )
 
             # Win rate moving average chart
             lines.append(f"\n  Win Rate (moving avg, window=10):")
@@ -1118,7 +1183,7 @@ class SC2CurriculumTrainer:
                 bucket_size = max(1, len(m.win_history) // width)
                 chart_vals = []
                 for i in range(0, len(m.win_history), bucket_size):
-                    chunk = m.win_history[i:i + bucket_size]
+                    chunk = m.win_history[i : i + bucket_size]
                     chart_vals.append(sum(chunk) / len(chunk))
 
                 max_bars = min(width, len(chart_vals))
@@ -1148,21 +1213,25 @@ class SC2CurriculumTrainer:
 
             # Difficulty progression
             if m.difficulty_history:
-                lines.append(f"\n  Difficulty: {m.difficulty_history[0]:.2f} -> "
-                             f"{m.difficulty_history[-1]:.2f} "
-                             f"(avg: {_np_mean(m.difficulty_history):.2f})")
+                lines.append(
+                    f"\n  Difficulty: {m.difficulty_history[0]:.2f} -> "
+                    f"{m.difficulty_history[-1]:.2f} "
+                    f"(avg: {_np_mean(m.difficulty_history):.2f})"
+                )
 
             # Promotion marker
             if m.promotion_time is not None:
-                lines.append(f"  Promoted at episode {m.episodes} "
-                             f"(t={m.promotion_time:.1f}s)")
+                lines.append(
+                    f"  Promoted at episode {m.episodes} "
+                    f"(t={m.promotion_time:.1f}s)"
+                )
 
         # Overall summary
         lines.append("\n" + "=" * 70)
         lines.append("  Overall Progress:")
         reached = max(
             (s for s in CurriculumStage if self.metrics[s].episodes > 0),
-            default=CurriculumStage.ECONOMY
+            default=CurriculumStage.ECONOMY,
         )
         progress_bar = ""
         for s in CurriculumStage:
@@ -1212,6 +1281,7 @@ class SC2CurriculumTrainer:
 # CLI Demo
 # ─────────────────────────────────────────────
 
+
 def demo_single_stage():
     """Demo: train a single curriculum stage."""
     print("\n--- Single Stage Demo (Economy) ---\n")
@@ -1222,11 +1292,13 @@ def demo_single_stage():
     for i in range(30):
         result = trainer.train_episode()
         if (i + 1) % 10 == 0:
-            print(f"  Episode {result['episode']:3d}: "
-                  f"reward={result['reward']:.2f}, "
-                  f"won={result['won']}, "
-                  f"wr={result['win_rate']:.1%}, "
-                  f"diff={result['difficulty']:.2f}")
+            print(
+                f"  Episode {result['episode']:3d}: "
+                f"reward={result['reward']:.2f}, "
+                f"won={result['won']}, "
+                f"wr={result['win_rate']:.1%}, "
+                f"diff={result['difficulty']:.2f}"
+            )
 
     m = trainer.metrics[CurriculumStage.ECONOMY]
     print(f"\n  Summary: {m.summary()}")
@@ -1247,8 +1319,10 @@ def demo_full_curriculum():
     print(f"  Final stage: {summary['final_stage']}")
     print(f"  Promotions: {len(summary['promotions'])}")
     for p in summary["promotions"]:
-        print(f"    {p['from_stage']} -> {p['to_stage']} "
-              f"(ep {p['episode']}, wr {p['win_rate']:.1%})")
+        print(
+            f"    {p['from_stage']} -> {p['to_stage']} "
+            f"(ep {p['episode']}, wr {p['win_rate']:.1%})"
+        )
     print(f"\n  Stage Metrics:")
     for name, metrics in summary["stage_metrics"].items():
         print(f"    {name}: {metrics}")
@@ -1280,8 +1354,10 @@ def demo_her_buffer():
     sample = buf.sample(5)
     print(f"  Sampled {len(sample)} transitions")
     for i, t in enumerate(sample):
-        print(f"    [{i}] action={t.action}, reward={t.reward:.2f}, "
-              f"her={t.info.get('her_relabeled', False)}")
+        print(
+            f"    [{i}] action={t.action}, reward={t.reward:.2f}, "
+            f"her={t.info.get('her_relabeled', False)}"
+        )
 
 
 def demo_difficulty_scorer():
@@ -1293,23 +1369,29 @@ def demo_difficulty_scorer():
         success = random.random() < (0.8 - d * 0.5)
         scorer.record_result(d, success)
         if (i + 1) % 10 == 0:
-            print(f"  Step {i+1:3d}: difficulty={d:.3f}, "
-                  f"ema_success={scorer.ema_success:.3f}, "
-                  f"mastery={scorer.mastery_score():.3f}")
+            print(
+                f"  Step {i+1:3d}: difficulty={d:.3f}, "
+                f"ema_success={scorer.ema_success:.3f}, "
+                f"mastery={scorer.mastery_score():.3f}"
+            )
 
 
 def main():
     """Main CLI entry point."""
     import argparse
+
     parser = argparse.ArgumentParser(
         description="Phase 612: SC2 Curriculum Learning Trainer"
     )
     parser.add_argument(
-        "--demo", choices=["single", "full", "her", "difficulty", "all"],
-        default="all", help="Demo to run"
+        "--demo",
+        choices=["single", "full", "her", "difficulty", "all"],
+        default="all",
+        help="Demo to run",
     )
-    parser.add_argument("--episodes", type=int, default=200,
-                        help="Training episodes for full demo")
+    parser.add_argument(
+        "--episodes", type=int, default=200, help="Training episodes for full demo"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()
 

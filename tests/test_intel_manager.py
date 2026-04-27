@@ -33,6 +33,7 @@ class TestIntelManager:
         """Setup before each test"""
         try:
             from wicked_zerg_challenger.intel_manager import IntelManager
+
             self.bot = MockBot()
             self.intel = IntelManager(self.bot)
         except ImportError:

@@ -18,6 +18,7 @@ from opentelemetry.sdk.trace.export import SpanExportResult
 from typing import Sequence
 import logging
 
+
 # --- Custom Span Processor ---
 class SC2GameEventSpanProcessor(SpanProcessor):
     """Custom processor that enriches SC2 game event spans."""
@@ -28,7 +29,10 @@ class SC2GameEventSpanProcessor(SpanProcessor):
 
     def on_end(self, span: ReadableSpan):
         if span.status.is_ok and span.duration_ns > 5_000_000:  # > 5ms
-            logging.warning(f"[SC2 OTEL] Slow span: {span.name} took {span.duration_ns / 1e6:.1f}ms")
+            logging.warning(
+                f"[SC2 OTEL] Slow span: {span.name} took {span.duration_ns / 1e6:.1f}ms"
+            )
+
 
 # --- Custom Exporter ---
 class SC2MetricsLinkingExporter:
@@ -48,13 +52,16 @@ class SC2MetricsLinkingExporter:
     def shutdown(self):
         pass
 
+
 # --- Resource & Provider Setup ---
-resource = Resource.create({
-    SERVICE_NAME: "sc2-bot",
-    SERVICE_VERSION: "2.0.0",
-    "sc2.race": "Zerg",
-    "deployment.environment": "production",
-})
+resource = Resource.create(
+    {
+        SERVICE_NAME: "sc2-bot",
+        SERVICE_VERSION: "2.0.0",
+        "sc2.race": "Zerg",
+        "deployment.environment": "production",
+    }
+)
 
 otlp_exporter = OTLPSpanExporter(endpoint="http://otel-collector:4317", insecure=True)
 sampler = TraceIdRatioBased(0.1)  # Sample 10% of traces
@@ -73,18 +80,22 @@ tracer = trace.get_tracer("sc2.bot", "2.0.0")
 # --- Context Propagation Across Microservices ---
 propagator = TraceContextTextMapPropagator()
 
+
 def inject_trace_context(headers: dict) -> dict:
     propagator.inject(headers)
     return headers
 
+
 def extract_trace_context(headers: dict):
     return propagator.extract(headers)
 
+
 # --- SC2 Semantic Conventions ---
-SC2_SPAN_GAME_STEP     = "sc2.game.step"
-SC2_SPAN_ATTACK        = "sc2.unit.attack"
-SC2_SPAN_BUILD         = "sc2.unit.build"
-SC2_SPAN_STRATEGY      = "sc2.strategy.decision"
+SC2_SPAN_GAME_STEP = "sc2.game.step"
+SC2_SPAN_ATTACK = "sc2.unit.attack"
+SC2_SPAN_BUILD = "sc2.unit.build"
+SC2_SPAN_STRATEGY = "sc2.strategy.decision"
+
 
 def trace_game_step(step: int, minerals: int, vespene: int, supply: int):
     with tracer.start_as_current_span(SC2_SPAN_GAME_STEP) as span:
@@ -95,11 +106,13 @@ def trace_game_step(step: int, minerals: int, vespene: int, supply: int):
         span.set_attribute(SpanAttributes.CODE_FUNCTION, "on_step")
         return span
 
+
 def trace_attack_wave(unit_count: int, target: str):
     with tracer.start_as_current_span(SC2_SPAN_ATTACK) as span:
         span.set_attribute("sc2.attack.unit_count", unit_count)
         span.set_attribute("sc2.attack.target", target)
         span.add_event("attack_wave_launched", {"units": unit_count})
+
 
 def trace_strategy_decision(strategy: str, confidence: float):
     with tracer.start_as_current_span(SC2_SPAN_STRATEGY) as span:

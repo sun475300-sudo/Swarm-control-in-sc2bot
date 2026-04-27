@@ -32,8 +32,9 @@ except ImportError:
 class TerrainZone:
     """맵 지형 구역"""
 
-    def __init__(self, center: Tuple[float, float], zone_type: str,
-                 radius: float = 5.0):
+    def __init__(
+        self, center: Tuple[float, float], zone_type: str, radius: float = 5.0
+    ):
         """
         Args:
             center: 구역 중심 좌표
@@ -65,8 +66,13 @@ class EnemyGhost:
     시간이 지나면 정보의 신뢰도가 감소합니다.
     """
 
-    def __init__(self, unit_tag: int, unit_type: str,
-                 last_position: Tuple[float, float], last_seen: float):
+    def __init__(
+        self,
+        unit_tag: int,
+        unit_type: str,
+        last_position: Tuple[float, float],
+        last_seen: float,
+    ):
         """
         Args:
             unit_tag: 유닛 태그
@@ -93,8 +99,7 @@ class EnemyGhost:
         elapsed = current_time - self.last_seen
         self.confidence = max(0.0, 1.0 - elapsed * decay_rate)
 
-    def update_sighting(self, position: Tuple[float, float],
-                        time: float) -> None:
+    def update_sighting(self, position: Tuple[float, float], time: float) -> None:
         """유닛 재관찰 시 업데이트"""
         self.last_position = position
         self.estimated_position = position
@@ -180,10 +185,12 @@ class MapAwarenessManager:
 
             self._initialized = True
 
-            logger.info(f"맵 분석 완료: "
-                  f"chokepoints={len(self.chokepoints)}, "
-                  f"bases={len(self.base_locations)}, "
-                  f"ramps={len(self.ramps)}")
+            logger.info(
+                f"맵 분석 완료: "
+                f"chokepoints={len(self.chokepoints)}, "
+                f"bases={len(self.base_locations)}, "
+                f"ramps={len(self.ramps)}"
+            )
 
         except Exception as e:
             logger.info(f"맵 분석 실패: {e}")
@@ -211,7 +218,9 @@ class MapAwarenessManager:
         """초크포인트 목록 반환"""
         return self.chokepoints
 
-    def get_nearest_chokepoint(self, position: Tuple[float, float]) -> Optional[TerrainZone]:
+    def get_nearest_chokepoint(
+        self, position: Tuple[float, float]
+    ) -> Optional[TerrainZone]:
         """가장 가까운 초크포인트 반환"""
         if not self.chokepoints:
             return None
@@ -234,8 +243,8 @@ class MapAwarenessManager:
             if ghost.is_dead or ghost.confidence < 0.1:
                 continue
             dist = math.sqrt(
-                (position[0] - ghost.estimated_position[0]) ** 2 +
-                (position[1] - ghost.estimated_position[1]) ** 2
+                (position[0] - ghost.estimated_position[0]) ** 2
+                + (position[1] - ghost.estimated_position[1]) ** 2
             )
             if dist < 15:
                 danger = ghost.confidence * max(0, (15 - dist) / 15)
@@ -248,8 +257,9 @@ class MapAwarenessManager:
 
         return min(1.0, max_danger)
 
-    def get_safe_path_waypoints(self, start: Tuple[float, float],
-                                  end: Tuple[float, float]) -> List[Tuple[float, float]]:
+    def get_safe_path_waypoints(
+        self, start: Tuple[float, float], end: Tuple[float, float]
+    ) -> List[Tuple[float, float]]:
         """
         안전한 이동 경로의 경유지 계산
 
@@ -289,11 +299,14 @@ class MapAwarenessManager:
             적 고스트 리스트
         """
         return [
-            ghost for ghost in self.enemy_ghosts.values()
+            ghost
+            for ghost in self.enemy_ghosts.values()
             if ghost.confidence >= min_confidence and not ghost.is_dead
         ]
 
-    def get_unscouted_base_locations(self, time_threshold: float = 120.0) -> List[Tuple[float, float]]:
+    def get_unscouted_base_locations(
+        self, time_threshold: float = 120.0
+    ) -> List[Tuple[float, float]]:
         """
         최근에 정찰하지 않은 기지 위치 반환
 
@@ -317,7 +330,9 @@ class MapAwarenessManager:
     def _analyze_chokepoints(self) -> None:
         """초크포인트 분석"""
         try:
-            if hasattr(self.bot, "game_info") and hasattr(self.bot.game_info, "map_ramps"):
+            if hasattr(self.bot, "game_info") and hasattr(
+                self.bot.game_info, "map_ramps"
+            ):
                 for ramp in self.bot.game_info.map_ramps:
                     if hasattr(ramp, "top_center"):
                         center = (ramp.top_center.x, ramp.top_center.y)
@@ -345,7 +360,9 @@ class MapAwarenessManager:
     def _analyze_ramps(self) -> None:
         """경사로 분석"""
         try:
-            if hasattr(self.bot, "game_info") and hasattr(self.bot.game_info, "map_ramps"):
+            if hasattr(self.bot, "game_info") and hasattr(
+                self.bot.game_info, "map_ramps"
+            ):
                 for ramp in self.bot.game_info.map_ramps:
                     if hasattr(ramp, "bottom_center"):
                         center = (ramp.bottom_center.x, ramp.bottom_center.y)
@@ -405,14 +422,26 @@ class MapAwarenessManager:
             for struct in self.bot.enemy_structures:
                 try:
                     name = getattr(struct.type_id, "name", "").upper()
-                    if name in ("HATCHERY", "LAIR", "HIVE", "NEXUS",
-                               "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS"):
-                        known_enemy_bases.add((int(struct.position.x), int(struct.position.y)))
+                    if name in (
+                        "HATCHERY",
+                        "LAIR",
+                        "HIVE",
+                        "NEXUS",
+                        "COMMANDCENTER",
+                        "ORBITALCOMMAND",
+                        "PLANETARYFORTRESS",
+                    ):
+                        known_enemy_bases.add(
+                            (int(struct.position.x), int(struct.position.y))
+                        )
                 except Exception:
                     continue
 
         # 적 시작 위치 기반 가까운 확장 위치 예측
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_start = self.bot.enemy_start_locations[0]
             for base_zone in self.base_locations:
                 pos = base_zone.center
@@ -424,8 +453,7 @@ class MapAwarenessManager:
 
                 # 적 시작 위치에 가까운 확장 위치를 예측
                 dist = math.sqrt(
-                    (pos[0] - enemy_start.x) ** 2 +
-                    (pos[1] - enemy_start.y) ** 2
+                    (pos[0] - enemy_start.x) ** 2 + (pos[1] - enemy_start.y) ** 2
                 )
 
                 # 게임 시간에 따라 예측 범위 확대

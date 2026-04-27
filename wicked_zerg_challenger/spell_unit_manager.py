@@ -56,14 +56,19 @@ class SpellUnitManager:
 
         self.infestor_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
         self.viper_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
-        self.viper_last_consume: Dict[int, float] = {}  # ★ FIXED: Viper consume tracking
+        self.viper_last_consume: Dict[int, float] = (
+            {}
+        )  # ★ FIXED: Viper consume tracking
         self.ravager_last_bile: Dict[int, float] = {}  # ★ NEW: Ravager bile tracking
         self.baneling_exploded: set = set()  # ★ NEW: Baneling explode tracking
-        self.overseer_last_contaminate: Dict[int, float] = {}  # ★ NEW: Overseer contaminate
+        self.overseer_last_contaminate: Dict[int, float] = (
+            {}
+        )  # ★ NEW: Overseer contaminate
 
         # ★ NEW: Infestor Tactics Controller (Burrow Movement) ★
         try:
             from combat.infestor_tactics import InfestorTacticsController
+
             self.infestor_tactics = InfestorTacticsController()
         except ImportError:
             self.infestor_tactics = None
@@ -149,10 +154,7 @@ class SpellUnitManager:
         # ★ BURROW MOVEMENT TACTICS: Infiltration and flanking ★
         if self.infestor_tactics:
             await self.infestor_tactics.execute_burrow_tactics(
-                infestors,
-                enemy_units,
-                b,
-                current_time
+                infestors, enemy_units, b, current_time
             )
 
         for infestor in infestors:
@@ -514,31 +516,45 @@ class SpellUnitManager:
             if enemy_structures and enemy_structures.exists:
                 # 타운홀 우선
                 townhall_types = {
-                    UnitTypeId.NEXUS, UnitTypeId.COMMANDCENTER,
-                    UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
-                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE
+                    UnitTypeId.NEXUS,
+                    UnitTypeId.COMMANDCENTER,
+                    UnitTypeId.ORBITALCOMMAND,
+                    UnitTypeId.PLANETARYFORTRESS,
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
                 }
                 townhalls = [s for s in enemy_structures if s.type_id in townhall_types]
 
                 if townhalls:
                     # 사거리 내 타운홀
-                    nearby_townhalls = [t for t in townhalls if ravager.distance_to(t) <= 9.0]
+                    nearby_townhalls = [
+                        t for t in townhalls if ravager.distance_to(t) <= 9.0
+                    ]
                     if nearby_townhalls:
                         target = nearby_townhalls[0]
                         try:
-                            b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
+                            b.do(
+                                ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position)
+                            )
                             self.ravager_last_bile[ravager_tag] = current_time
                             if b.iteration % 50 == 0:
-                                logger.info(f"[{int(current_time)}s] Bile targeting enemy base!")
+                                logger.info(
+                                    f"[{int(current_time)}s] Bile targeting enemy base!"
+                                )
                             continue
                         except Exception:
                             pass
 
                 # 사거리 내 모든 건물
-                nearby_structures = [s for s in enemy_structures if ravager.distance_to(s) <= 9.0]
+                nearby_structures = [
+                    s for s in enemy_structures if ravager.distance_to(s) <= 9.0
+                ]
                 if nearby_structures:
                     # 가까운 건물 우선
-                    target = min(nearby_structures, key=lambda s: ravager.distance_to(s))
+                    target = min(
+                        nearby_structures, key=lambda s: ravager.distance_to(s)
+                    )
                     try:
                         b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                         self.ravager_last_bile[ravager_tag] = current_time
@@ -549,29 +565,43 @@ class SpellUnitManager:
             # ★ 우선순위 2: 중갑 고가치 유닛
             if enemy_units:
                 high_value_types = {
-                    UnitTypeId.SIEGETANKSIEGED, UnitTypeId.SIEGETANK,
-                    UnitTypeId.COLOSSUS, UnitTypeId.IMMORTAL,
-                    UnitTypeId.THOR, UnitTypeId.BATTLECRUISER,
-                    UnitTypeId.ARCHON, UnitTypeId.CARRIER
+                    UnitTypeId.SIEGETANKSIEGED,
+                    UnitTypeId.SIEGETANK,
+                    UnitTypeId.COLOSSUS,
+                    UnitTypeId.IMMORTAL,
+                    UnitTypeId.THOR,
+                    UnitTypeId.BATTLECRUISER,
+                    UnitTypeId.ARCHON,
+                    UnitTypeId.CARRIER,
                 }
-                high_value_units = [u for u in enemy_units if u.type_id in high_value_types]
+                high_value_units = [
+                    u for u in enemy_units if u.type_id in high_value_types
+                ]
 
                 if high_value_units:
-                    nearby_high_value = [u for u in high_value_units if ravager.distance_to(u) <= 9.0]
+                    nearby_high_value = [
+                        u for u in high_value_units if ravager.distance_to(u) <= 9.0
+                    ]
                     if nearby_high_value:
                         target = nearby_high_value[0]
                         try:
-                            b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
+                            b.do(
+                                ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position)
+                            )
                             self.ravager_last_bile[ravager_tag] = current_time
                             continue
                         except Exception:
                             pass
 
                 # ★ 우선순위 3: 밀집된 적 병력 (3기 이상)
-                nearby_enemies = [e for e in enemy_units if ravager.distance_to(e) <= 9.0]
+                nearby_enemies = [
+                    e for e in enemy_units if ravager.distance_to(e) <= 9.0
+                ]
                 if len(nearby_enemies) >= 3:
                     # 가장 밀집된 위치 찾기
-                    best_position = self._find_best_bile_position(ravager, nearby_enemies)
+                    best_position = self._find_best_bile_position(
+                        ravager, nearby_enemies
+                    )
                     if best_position:
                         try:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_position))
@@ -579,7 +609,9 @@ class SpellUnitManager:
                         except Exception:
                             pass
 
-    def _find_best_bile_position(self, ravager: Unit, enemies: List[Unit]) -> Optional[Point2]:
+    def _find_best_bile_position(
+        self, ravager: Unit, enemies: List[Unit]
+    ) -> Optional[Point2]:
         """
         가장 많은 적을 맞출 수 있는 Bile 위치 찾기
 
@@ -639,7 +671,11 @@ class SpellUnitManager:
                     pass
 
             # 조건 2: 체력 50% 이하 + 적 2기 이상
-            health_ratio = baneling.health / baneling.health_max if baneling.health_max > 0 else 1.0
+            health_ratio = (
+                baneling.health / baneling.health_max
+                if baneling.health_max > 0
+                else 1.0
+            )
             if health_ratio < 0.5 and len(nearby_enemies) >= 2:
                 try:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
@@ -671,11 +707,20 @@ class SpellUnitManager:
 
         # 생산 건물 타입
         production_types = {
-            UnitTypeId.NEXUS, UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-            UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-            UnitTypeId.BARRACKS, UnitTypeId.FACTORY, UnitTypeId.STARPORT,
-            UnitTypeId.GATEWAY, UnitTypeId.ROBOTICSFACILITY, UnitTypeId.STARGATE,
-            UnitTypeId.SPAWNINGPOOL, UnitTypeId.ROACHWARREN
+            UnitTypeId.NEXUS,
+            UnitTypeId.COMMANDCENTER,
+            UnitTypeId.ORBITALCOMMAND,
+            UnitTypeId.HATCHERY,
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
+            UnitTypeId.BARRACKS,
+            UnitTypeId.FACTORY,
+            UnitTypeId.STARPORT,
+            UnitTypeId.GATEWAY,
+            UnitTypeId.ROBOTICSFACILITY,
+            UnitTypeId.STARGATE,
+            UnitTypeId.SPAWNINGPOOL,
+            UnitTypeId.ROACHWARREN,
         }
 
         for overseer in overseers:
@@ -691,12 +736,16 @@ class SpellUnitManager:
                 continue
 
             # 생산 건물 찾기
-            production_buildings = [s for s in enemy_structures if s.type_id in production_types]
+            production_buildings = [
+                s for s in enemy_structures if s.type_id in production_types
+            ]
             if not production_buildings:
                 continue
 
             # 사거리 내 건물 (Contaminate 사거리: 7)
-            nearby_buildings = [b for b in production_buildings if overseer.distance_to(b) <= 7.0]
+            nearby_buildings = [
+                b for b in production_buildings if overseer.distance_to(b) <= 7.0
+            ]
             if nearby_buildings:
                 target = nearby_buildings[0]
                 try:

@@ -2,6 +2,7 @@
 Phase 500: gRPC Auth Interceptor for SC2 Bot — 500 Phases Milestone!
 Server-side interceptor: JWT validation, metadata extraction, rate limiting
 """
+
 import os
 
 import grpc
@@ -13,10 +14,10 @@ from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 
-JWT_SECRET      = os.environ.get("JWT_SECRET", "change-me-in-production")
-JWT_ALGORITHM   = "HS256"
-PUBLIC_METHODS  = {"/sc2.advanced.v1.SC2BotAdvancedService/WatchLeaderboard"}
-RATE_LIMIT_RPS  = 100
+JWT_SECRET = os.environ.get("JWT_SECRET", "change-me-in-production")
+JWT_ALGORITHM = "HS256"
+PUBLIC_METHODS = {"/sc2.advanced.v1.SC2BotAdvancedService/WatchLeaderboard"}
+RATE_LIMIT_RPS = 100
 RATE_WINDOW_SEC = 1
 
 
@@ -77,23 +78,31 @@ class SC2AuthInterceptor(grpc.ServerInterceptor):
         # Extract and validate JWT
         token = self._extract_token(handler_call_details.invocation_metadata)
         if not token:
+
             def abort(request, context):
-                context.abort(grpc.StatusCode.UNAUTHENTICATED, "Missing authorization token")
+                context.abort(
+                    grpc.StatusCode.UNAUTHENTICATED, "Missing authorization token"
+                )
+
             return grpc.unary_unary_rpc_method_handler(abort)
 
         try:
             payload = self._validate_token(token)
         except grpc.RpcError as e:
+
             def abort(request, context):
                 context.abort(e.code(), e.details())
+
             return grpc.unary_unary_rpc_method_handler(abort)
 
         # Rate limiting per user
         user_id = payload.get("sub", "anonymous")
         if self._is_rate_limited(user_id):
             logger.warning(f"Rate limit exceeded for user {user_id}")
+
             def abort(request, context):
                 context.abort(grpc.StatusCode.RESOURCE_EXHAUSTED, "Rate limit exceeded")
+
             return grpc.unary_unary_rpc_method_handler(abort)
 
         logger.info(f"[{request_id}] Authenticated user={user_id} method={method}")
@@ -107,10 +116,10 @@ def create_server_with_interceptor(port: int = 50051) -> grpc.Server:
         grpc.experimental.gevent_executor(),
         interceptors=[interceptor],
         options=[
-            ("grpc.max_send_message_length",    50 * 1024 * 1024),
+            ("grpc.max_send_message_length", 50 * 1024 * 1024),
             ("grpc.max_receive_message_length", 50 * 1024 * 1024),
-            ("grpc.keepalive_time_ms",          30000),
-            ("grpc.keepalive_timeout_ms",       10000),
+            ("grpc.keepalive_time_ms", 30000),
+            ("grpc.keepalive_timeout_ms", 10000),
         ],
     )
     server.add_insecure_port(f"[::]:{port}")

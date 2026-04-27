@@ -3,6 +3,7 @@ Phase 481: Keycloak Identity & Access Management for SC2 Bot Portal
 python-keycloak client: token exchange, user management
 Roles: admin, player, spectator
 """
+
 import os
 
 from keycloak import KeycloakOpenID, KeycloakAdmin
@@ -81,6 +82,7 @@ def get_user_roles(token: str) -> List[str]:
 
 def require_role(role: str):
     """Decorator to enforce role-based access control."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, token: str = None, **kwargs):
@@ -90,18 +92,22 @@ def require_role(role: str):
             if role not in roles:
                 raise PermissionError(f"Role '{role}' required, user has: {roles}")
             return func(*args, token=token, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 def create_user(username: str, email: str, role: str = ROLE_PLAYER) -> str:
     """Create a new SC2 bot portal user."""
-    user_id = keycloak_admin.create_user({
-        "username": username,
-        "email": email,
-        "enabled": True,
-        "emailVerified": True,
-    })
+    user_id = keycloak_admin.create_user(
+        {
+            "username": username,
+            "email": email,
+            "enabled": True,
+            "emailVerified": True,
+        }
+    )
     role_obj = keycloak_admin.get_realm_role(role)
     keycloak_admin.assign_realm_roles(user_id, [role_obj])
     logger.info(f"Created user {username} with role {role}")

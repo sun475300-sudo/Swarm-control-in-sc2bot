@@ -113,8 +113,12 @@ class ZerglingHarassmentTrainer:
     def _check_upgrades(self):
         """업그레이드 확인"""
         try:
-            self.has_metabolic_boost = UpgradeId.ZERGLINGMOVEMENTSPEED in self.bot.state.upgrades
-            self.has_adrenal_glands = UpgradeId.ZERGLINGATTACKSPEED in self.bot.state.upgrades
+            self.has_metabolic_boost = (
+                UpgradeId.ZERGLINGMOVEMENTSPEED in self.bot.state.upgrades
+            )
+            self.has_adrenal_glands = (
+                UpgradeId.ZERGLINGATTACKSPEED in self.bot.state.upgrades
+            )
         except Exception:
             pass
 
@@ -135,20 +139,24 @@ class ZerglingHarassmentTrainer:
         # 분대 생성 가능한지 확인
         if len(idle_lings) >= self.SQUAD_SIZE and len(self.squads) < self.MAX_SQUADS:
             # 새 분대 생성
-            squad_lings = idle_lings[:self.SQUAD_SIZE]
-            
+            squad_lings = idle_lings[: self.SQUAD_SIZE]
+
             # ★ Unit Authority Check ★
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 from unit_authority_manager import AuthorityLevel
+
                 ling_tags = {l.tag for l in squad_lings}
                 # COMBAT 권한 요청 (괴롭힘 임무)
                 granted = self.bot.unit_authority.request_authority(
-                    ling_tags, AuthorityLevel.HARASSMENT, "ZerglingHarass", self.bot.state.game_loop
+                    ling_tags,
+                    AuthorityLevel.HARASSMENT,
+                    "ZerglingHarass",
+                    self.bot.state.game_loop,
                 )
                 # 권한 못 받은 유닛 제외
                 squad_lings = [l for l in squad_lings if l.tag in granted]
-                
-            if len(squad_lings) >= 4: # 최소 4마리
+
+            if len(squad_lings) >= 4:  # 최소 4마리
                 squad = ZerglingSquad(self.next_squad_id, squad_lings)
                 squad.created_time = game_time
 
@@ -202,9 +210,8 @@ class ZerglingHarassmentTrainer:
         # 1. 적 일꾼
         if self.bot.enemy_units:
             workers = self.bot.enemy_units.filter(
-                lambda u: u.type_id in {
-                    UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE
-                }
+                lambda u: u.type_id
+                in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
             )
             if workers:
                 for worker in workers:
@@ -213,9 +220,14 @@ class ZerglingHarassmentTrainer:
         # 2. 가스 건물
         if self.bot.enemy_structures:
             gas_buildings = self.bot.enemy_structures.filter(
-                lambda s: s.type_id in {
-                    UnitTypeId.REFINERY, UnitTypeId.ASSIMILATOR, UnitTypeId.EXTRACTOR,
-                    UnitTypeId.REFINERYRICH, UnitTypeId.ASSIMILATORRICH, UnitTypeId.EXTRACTORRICH
+                lambda s: s.type_id
+                in {
+                    UnitTypeId.REFINERY,
+                    UnitTypeId.ASSIMILATOR,
+                    UnitTypeId.EXTRACTOR,
+                    UnitTypeId.REFINERYRICH,
+                    UnitTypeId.ASSIMILATORRICH,
+                    UnitTypeId.EXTRACTORRICH,
                 }
             )
             if gas_buildings:
@@ -225,10 +237,13 @@ class ZerglingHarassmentTrainer:
         # 3. 테크 건물
         if self.bot.enemy_structures:
             tech_buildings = self.bot.enemy_structures.filter(
-                lambda s: s.type_id in {
-                    UnitTypeId.ENGINEERINGBAY, UnitTypeId.ARMORY,
-                    UnitTypeId.FORGE, UnitTypeId.CYBERNETICSCORE,
-                    UnitTypeId.EVOLUTIONCHAMBER
+                lambda s: s.type_id
+                in {
+                    UnitTypeId.ENGINEERINGBAY,
+                    UnitTypeId.ARMORY,
+                    UnitTypeId.FORGE,
+                    UnitTypeId.CYBERNETICSCORE,
+                    UnitTypeId.EVOLUTIONCHAMBER,
                 }
             )
             if tech_buildings:
@@ -243,7 +258,7 @@ class ZerglingHarassmentTrainer:
                 if self.bot.start_location:
                     closest_base = min(
                         enemy_bases,
-                        key=lambda b: b.distance_to(self.bot.start_location)
+                        key=lambda b: b.distance_to(self.bot.start_location),
                     )
                     targets.append((closest_base, self.EXPANSION_PRIORITY))
 
@@ -267,7 +282,10 @@ class ZerglingHarassmentTrainer:
                 continue
 
             # 평균 체력 계산
-            avg_hp_ratio = sum((z.health / z.health_max if z.health_max > 0 else 1.0) for z in squad_lings) / len(squad_lings)
+            avg_hp_ratio = sum(
+                (z.health / z.health_max if z.health_max > 0 else 1.0)
+                for z in squad_lings
+            ) / len(squad_lings)
 
             # 체력이 낮으면 후퇴
             if avg_hp_ratio < self.RETREAT_HP_THRESHOLD:
@@ -312,9 +330,7 @@ class ZerglingHarassmentTrainer:
 
         # 적 일꾼 찾기
         workers = self.bot.enemy_units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE
-            }
+            lambda u: u.type_id in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
         )
 
         if not workers:
@@ -349,7 +365,7 @@ class ZerglingHarassmentTrainer:
             "worker_kills": self.total_worker_kills,
             "building_kills": self.total_building_kills,
             "has_metabolic_boost": self.has_metabolic_boost,
-            "has_adrenal_glands": self.has_adrenal_glands
+            "has_adrenal_glands": self.has_adrenal_glands,
         }
 
     def _print_statistics(self, game_time: float):
@@ -363,5 +379,5 @@ class ZerglingHarassmentTrainer:
             f"Missions: {stats['total_harass_missions']}"
         )
 
-        if stats['has_metabolic_boost']:
+        if stats["has_metabolic_boost"]:
             self.logger.info("[HARASS_STATS] Metabolic Boost: ACTIVE (+50% speed)")

@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -42,6 +43,7 @@ def _np_random_beta(alpha: float, beta_param: float) -> float:
     """Beta distribution sample via Gamma variates (Joehnk method fallback)."""
     if NP_AVAILABLE:
         return float(np.random.beta(alpha, beta_param))
+
     # Gamma sampling via Marsaglia-Tsang for shape >= 1
     def _gamma_sample(shape: float) -> float:
         if shape < 1.0:
@@ -54,8 +56,11 @@ def _np_random_beta(alpha: float, beta_param: float) -> float:
             v = (1.0 + c * x) ** 3
             if v > 0:
                 u = random.random()
-                if u < 1.0 - 0.0331 * x ** 4 or math.log(u) < 0.5 * x ** 2 + d * (1.0 - v + math.log(v)):
+                if u < 1.0 - 0.0331 * x**4 or math.log(u) < 0.5 * x**2 + d * (
+                    1.0 - v + math.log(v)
+                ):
                     return d * v
+
     g1 = _gamma_sample(alpha)
     g2 = _gamma_sample(beta_param)
     return g1 / (g1 + g2) if (g1 + g2) > 0 else 0.5
@@ -63,12 +68,20 @@ def _np_random_beta(alpha: float, beta_param: float) -> float:
 
 def _norm_cdf(z: float) -> float:
     """Standard normal CDF approximation (Abramowitz and Stegun)."""
-    a1, a2, a3, a4, a5 = 0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429
+    a1, a2, a3, a4, a5 = (
+        0.254829592,
+        -0.284496736,
+        1.421413741,
+        -1.453152027,
+        1.061405429,
+    )
     p = 0.3275911
     sign = 1.0 if z >= 0 else -1.0
     z = abs(z)
     t = 1.0 / (1.0 + p * z)
-    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-z * z / 2.0)
+    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(
+        -z * z / 2.0
+    )
     return 0.5 * (1.0 + sign * y)
 
 
@@ -78,25 +91,55 @@ def _norm_ppf(p: float) -> float:
         return -6.0
     if p >= 1:
         return 6.0
-    a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
-         1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00]
-    b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
-         6.680131188771972e+01, -1.328068155288572e+01]
-    c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
-         -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00]
-    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00]
+    a = [
+        -3.969683028665376e01,
+        2.209460984245205e02,
+        -2.759285104469687e02,
+        1.383577518672690e02,
+        -3.066479806614716e01,
+        2.506628277459239e00,
+    ]
+    b = [
+        -5.447609879822406e01,
+        1.615858368580409e02,
+        -1.556989798598866e02,
+        6.680131188771972e01,
+        -1.328068155288572e01,
+    ]
+    c = [
+        -7.784894002430293e-03,
+        -3.223964580411365e-01,
+        -2.400758277161838e00,
+        -2.549732539343734e00,
+        4.374664141464968e00,
+        2.938163982698783e00,
+    ]
+    d = [
+        7.784695709041462e-03,
+        3.224671290700398e-01,
+        2.445134137142996e00,
+        3.754408661907416e00,
+    ]
     p_low = 0.02425
     p_high = 1.0 - p_low
     if p < p_low:
         q = math.sqrt(-2.0 * math.log(p))
-        return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
+            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
+        )
     elif p <= p_high:
         q = p - 0.5
         r = q * q
-        return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1.0)
+        return (
+            (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5])
+            * q
+            / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0)
+        )
     else:
         q = math.sqrt(-2.0 * math.log(1.0 - p))
-        return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)
+        return -(
+            ((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]
+        ) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0)
 
 
 def _chi2_cdf(x: float, k: int) -> float:
@@ -118,9 +161,11 @@ def _chi2_cdf(x: float, k: int) -> float:
 # Variant / Experiment Data Classes
 # ============================================================
 
+
 @dataclass
 class Variant:
     """A single variant (treatment) in an A/B test."""
+
     name: str
     variant_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     successes: int = 0
@@ -171,6 +216,7 @@ class Variant:
 @dataclass
 class Experiment:
     """Container for an A/B test experiment."""
+
     name: str
     experiment_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
     variants: List[Variant] = field(default_factory=list)
@@ -215,6 +261,7 @@ class Experiment:
 # ABTester - Frequentist Methods
 # ============================================================
 
+
 class ABTester:
     """Frequentist A/B testing engine with z-test and chi-squared."""
 
@@ -222,8 +269,9 @@ class ABTester:
         self.significance_level = significance_level
         self.experiments: Dict[str, Experiment] = {}
 
-    def create_experiment(self, name: str, variant_names: List[str],
-                          sc2_context: Optional[Dict] = None) -> Experiment:
+    def create_experiment(
+        self, name: str, variant_names: List[str], sc2_context: Optional[Dict] = None
+    ) -> Experiment:
         exp = Experiment(name=name, sc2_context=sc2_context or {})
         for vname in variant_names:
             exp.add_variant(vname)
@@ -258,7 +306,7 @@ class ABTester:
             return {"z_stat": 0.0, "p_value": 1.0, "significant": False}
         m1, m2 = v1.mean_value, v2.mean_value
         s1, s2 = v1.std_value, v2.std_value
-        se = math.sqrt(max(s1 ** 2 / n1 + s2 ** 2 / n2, 1e-15))
+        se = math.sqrt(max(s1**2 / n1 + s2**2 / n2, 1e-15))
         z = (m1 - m2) / se
         p_value = 2.0 * (1.0 - _norm_cdf(abs(z)))
         return {
@@ -303,16 +351,19 @@ class ABTester:
     # ---- Sample Size Calculator ----
 
     @staticmethod
-    def required_sample_size(baseline_rate: float, mde: float,
-                             alpha: float = 0.05, power: float = 0.80) -> int:
+    def required_sample_size(
+        baseline_rate: float, mde: float, alpha: float = 0.05, power: float = 0.80
+    ) -> int:
         """Minimum sample size per variant for detecting a given MDE."""
         z_alpha = _norm_ppf(1.0 - alpha / 2.0)
         z_beta = _norm_ppf(power)
         p1 = baseline_rate
         p2 = baseline_rate + mde
         p_avg = (p1 + p2) / 2.0
-        numerator = (z_alpha * math.sqrt(2 * p_avg * (1 - p_avg)) +
-                     z_beta * math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))) ** 2
+        numerator = (
+            z_alpha * math.sqrt(2 * p_avg * (1 - p_avg))
+            + z_beta * math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))
+        ) ** 2
         denominator = (p1 - p2) ** 2
         if denominator == 0:
             return 0
@@ -320,8 +371,9 @@ class ABTester:
 
     # ---- Sequential Testing with Bonferroni ----
 
-    def sequential_test(self, experiment: Experiment,
-                        num_checks: int = 10) -> Dict[str, Any]:
+    def sequential_test(
+        self, experiment: Experiment, num_checks: int = 10
+    ) -> Dict[str, Any]:
         """Sequential testing with Bonferroni correction for early stopping."""
         corrected_alpha = self.significance_level / num_checks
         if len(experiment.variants) < 2:
@@ -334,7 +386,9 @@ class ABTester:
             "corrected_alpha": round(corrected_alpha, 6),
             "observed_p": result["p_value"],
             "z_stat": result["z_stat"],
-            "winner": v1.name if result["z_stat"] > 0 else v2.name if can_stop else None,
+            "winner": (
+                v1.name if result["z_stat"] > 0 else v2.name if can_stop else None
+            ),
         }
 
 
@@ -342,11 +396,16 @@ class ABTester:
 # BayesianABTest
 # ============================================================
 
+
 class BayesianABTest:
     """Bayesian A/B testing with Beta-Binomial model."""
 
-    def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0,
-                 num_samples: int = 10000):
+    def __init__(
+        self,
+        prior_alpha: float = 1.0,
+        prior_beta: float = 1.0,
+        num_samples: int = 10000,
+    ):
         self.prior_alpha = prior_alpha
         self.prior_beta = prior_beta
         self.num_samples = num_samples
@@ -357,18 +416,22 @@ class BayesianABTest:
         beta_p = self.prior_beta + variant.failures
         return alpha, beta_p
 
-    def credible_interval(self, variant: Variant,
-                          level: float = 0.95) -> Tuple[float, float]:
+    def credible_interval(
+        self, variant: Variant, level: float = 0.95
+    ) -> Tuple[float, float]:
         """Compute credible interval for a variant's win rate."""
         alpha, beta_p = self.posterior_params(variant)
         tail = (1.0 - level) / 2.0
-        samples = sorted([_np_random_beta(alpha, beta_p) for _ in range(self.num_samples)])
+        samples = sorted(
+            [_np_random_beta(alpha, beta_p) for _ in range(self.num_samples)]
+        )
         lo_idx = int(tail * len(samples))
         hi_idx = int((1.0 - tail) * len(samples)) - 1
-        return round(samples[max(lo_idx, 0)], 6), round(samples[min(hi_idx, len(samples) - 1)], 6)
+        return round(samples[max(lo_idx, 0)], 6), round(
+            samples[min(hi_idx, len(samples) - 1)], 6
+        )
 
-    def probability_b_beats_a(self, variant_a: Variant,
-                              variant_b: Variant) -> float:
+    def probability_b_beats_a(self, variant_a: Variant, variant_b: Variant) -> float:
         """Monte Carlo estimate of P(B > A)."""
         a_alpha, a_beta = self.posterior_params(variant_a)
         b_alpha, b_beta = self.posterior_params(variant_b)
@@ -407,18 +470,23 @@ class BayesianABTest:
                 ci_a = self.credible_interval(va)
                 ci_b = self.credible_interval(vb)
                 loss = self.expected_loss(va, vb)
-                results["pairs"].append({
-                    "a": va.name, "b": vb.name,
-                    "prob_b_beats_a": prob_b,
-                    "ci_a": ci_a, "ci_b": ci_b,
-                    "expected_loss": loss,
-                })
+                results["pairs"].append(
+                    {
+                        "a": va.name,
+                        "b": vb.name,
+                        "prob_b_beats_a": prob_b,
+                        "ci_a": ci_a,
+                        "ci_b": ci_b,
+                        "expected_loss": loss,
+                    }
+                )
         return results
 
 
 # ============================================================
 # MultiArmedBandit
 # ============================================================
+
 
 class MultiArmedBandit:
     """Multi-armed bandit algorithms for adaptive strategy allocation."""
@@ -495,11 +563,13 @@ class MultiArmedBandit:
             self.successes[arm_name] += 1
         else:
             self.failures[arm_name] += 1
-        self.history.append({
-            "step": self.total_pulls,
-            "arm": arm_name,
-            "reward": int(reward),
-        })
+        self.history.append(
+            {
+                "step": self.total_pulls,
+                "arm": arm_name,
+                "reward": int(reward),
+            }
+        )
 
     def get_stats(self) -> Dict[str, Any]:
         """Return summary statistics per arm."""
@@ -529,6 +599,7 @@ class MultiArmedBandit:
 # SC2-Specific A/B Testing Helpers
 # ============================================================
 
+
 class SC2StrategyTester:
     """High-level A/B tester specialized for StarCraft II strategies."""
 
@@ -537,8 +608,9 @@ class SC2StrategyTester:
         self.bayes_tester = BayesianABTest(num_samples=5000)
         self.experiments: Dict[str, Experiment] = {}
 
-    def compare_build_orders(self, build_a: str, build_b: str,
-                             results_a: List[bool], results_b: List[bool]) -> Dict[str, Any]:
+    def compare_build_orders(
+        self, build_a: str, build_b: str, results_a: List[bool], results_b: List[bool]
+    ) -> Dict[str, Any]:
         """Compare two build orders by win/loss records."""
         exp = self.freq_tester.create_experiment(
             name=f"BuildOrder: {build_a} vs {build_b}",
@@ -555,17 +627,34 @@ class SC2StrategyTester:
         ci_a = self.bayes_tester.credible_interval(va)
         ci_b = self.bayes_tester.credible_interval(vb)
         return {
-            "build_a": {"name": build_a, "win_rate": va.rate, "n": va.total, "ci": ci_a},
-            "build_b": {"name": build_b, "win_rate": vb.rate, "n": vb.total, "ci": ci_b},
+            "build_a": {
+                "name": build_a,
+                "win_rate": va.rate,
+                "n": va.total,
+                "ci": ci_a,
+            },
+            "build_b": {
+                "name": build_b,
+                "win_rate": vb.rate,
+                "n": vb.total,
+                "ci": ci_b,
+            },
             "frequentist": freq_result,
             "prob_b_better": bayes_result,
         }
 
-    def compare_macro_strategies(self, strategy_a: str, strategy_b: str,
-                                 scores_a: List[float], scores_b: List[float]) -> Dict[str, Any]:
+    def compare_macro_strategies(
+        self,
+        strategy_a: str,
+        strategy_b: str,
+        scores_a: List[float],
+        scores_b: List[float],
+    ) -> Dict[str, Any]:
         """Compare macro strategies by continuous score (e.g., resource collection rate)."""
-        exp = Experiment(name=f"Macro: {strategy_a} vs {strategy_b}",
-                         sc2_context={"type": "macro_comparison"})
+        exp = Experiment(
+            name=f"Macro: {strategy_a} vs {strategy_b}",
+            sc2_context={"type": "macro_comparison"},
+        )
         va = exp.add_variant(strategy_a)
         vb = exp.add_variant(strategy_b)
         for s in scores_a:
@@ -574,21 +663,39 @@ class SC2StrategyTester:
             vb.record_value(s)
         result = self.freq_tester.z_test_means(va, vb)
         return {
-            "strategy_a": {"name": strategy_a, "mean": va.mean_value, "std": va.std_value, "n": len(va.values)},
-            "strategy_b": {"name": strategy_b, "mean": vb.mean_value, "std": vb.std_value, "n": len(vb.values)},
+            "strategy_a": {
+                "name": strategy_a,
+                "mean": va.mean_value,
+                "std": va.std_value,
+                "n": len(va.values),
+            },
+            "strategy_b": {
+                "name": strategy_b,
+                "mean": vb.mean_value,
+                "std": vb.std_value,
+                "n": len(vb.values),
+            },
             "test_result": result,
         }
 
-    def compare_micro_behaviors(self, behavior_a: str, behavior_b: str,
-                                kd_a: List[Tuple[int, int]],
-                                kd_b: List[Tuple[int, int]]) -> Dict[str, Any]:
+    def compare_micro_behaviors(
+        self,
+        behavior_a: str,
+        behavior_b: str,
+        kd_a: List[Tuple[int, int]],
+        kd_b: List[Tuple[int, int]],
+    ) -> Dict[str, Any]:
         """Compare micro behaviors by kill/death ratios."""
+
         def kd_ratios(kd_list: List[Tuple[int, int]]) -> List[float]:
             return [k / max(d, 1) for k, d in kd_list]
+
         ratios_a = kd_ratios(kd_a)
         ratios_b = kd_ratios(kd_b)
-        exp = Experiment(name=f"Micro: {behavior_a} vs {behavior_b}",
-                         sc2_context={"type": "micro_comparison"})
+        exp = Experiment(
+            name=f"Micro: {behavior_a} vs {behavior_b}",
+            sc2_context={"type": "micro_comparison"},
+        )
         va = exp.add_variant(behavior_a)
         vb = exp.add_variant(behavior_b)
         for r in ratios_a:
@@ -597,14 +704,25 @@ class SC2StrategyTester:
             vb.record_value(r)
         result = self.freq_tester.z_test_means(va, vb)
         return {
-            "behavior_a": {"name": behavior_a, "mean_kd": round(_np_mean(ratios_a), 4), "n": len(ratios_a)},
-            "behavior_b": {"name": behavior_b, "mean_kd": round(_np_mean(ratios_b), 4), "n": len(ratios_b)},
+            "behavior_a": {
+                "name": behavior_a,
+                "mean_kd": round(_np_mean(ratios_a), 4),
+                "n": len(ratios_a),
+            },
+            "behavior_b": {
+                "name": behavior_b,
+                "mean_kd": round(_np_mean(ratios_b), 4),
+                "n": len(ratios_b),
+            },
             "test_result": result,
         }
 
-    def adaptive_strategy_selection(self, strategy_names: List[str],
-                                    num_rounds: int = 100,
-                                    true_rates: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
+    def adaptive_strategy_selection(
+        self,
+        strategy_names: List[str],
+        num_rounds: int = 100,
+        true_rates: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, Any]:
         """Run adaptive multi-armed bandit for strategy selection."""
         if true_rates is None:
             true_rates = {name: random.uniform(0.3, 0.7) for name in strategy_names}
@@ -626,6 +744,7 @@ class SC2StrategyTester:
 # Demo
 # ============================================================
 
+
 def demo() -> None:
     """Demonstrate A/B testing framework for SC2 strategies."""
     print("=" * 70)
@@ -642,7 +761,9 @@ def demo() -> None:
     tester = SC2StrategyTester()
     results_a = [random.random() < 0.55 for _ in range(200)]
     results_b = [random.random() < 0.48 for _ in range(200)]
-    bo_result = tester.compare_build_orders("12Pool", "HatchFirst", results_a, results_b)
+    bo_result = tester.compare_build_orders(
+        "12Pool", "HatchFirst", results_a, results_b
+    )
     print(f"    12Pool win rate: {bo_result['build_a']['win_rate']:.3f}")
     print(f"    HatchFirst win rate: {bo_result['build_b']['win_rate']:.3f}")
     print(f"    P-value: {bo_result['frequentist']['p_value']:.4f}")
@@ -658,7 +779,9 @@ def demo() -> None:
     print("\n[4] Macro Strategy Comparison (Resource Collection)")
     scores_greedy = [random.gauss(4200, 300) for _ in range(50)]
     scores_balanced = [random.gauss(4000, 250) for _ in range(50)]
-    macro_result = tester.compare_macro_strategies("GreedyExpand", "Balanced", scores_greedy, scores_balanced)
+    macro_result = tester.compare_macro_strategies(
+        "GreedyExpand", "Balanced", scores_greedy, scores_balanced
+    )
     print(f"    GreedyExpand mean: {macro_result['strategy_a']['mean']:.1f}")
     print(f"    Balanced mean: {macro_result['strategy_b']['mean']:.1f}")
     print(f"    P-value: {macro_result['test_result']['p_value']:.4f}")
@@ -667,7 +790,9 @@ def demo() -> None:
     print("\n[5] Micro Behavior Comparison (K/D Ratio)")
     kd_split = [(random.randint(5, 20), random.randint(2, 10)) for _ in range(40)]
     kd_focus = [(random.randint(8, 25), random.randint(3, 12)) for _ in range(40)]
-    micro_result = tester.compare_micro_behaviors("SplitMicro", "FocusFire", kd_split, kd_focus)
+    micro_result = tester.compare_micro_behaviors(
+        "SplitMicro", "FocusFire", kd_split, kd_focus
+    )
     print(f"    SplitMicro mean K/D: {micro_result['behavior_a']['mean_kd']:.3f}")
     print(f"    FocusFire mean K/D: {micro_result['behavior_b']['mean_kd']:.3f}")
 
@@ -676,7 +801,12 @@ def demo() -> None:
     bandit_result = tester.adaptive_strategy_selection(
         ["ZergRush", "MacroHatch", "LingBane", "RoachRavager"],
         num_rounds=500,
-        true_rates={"ZergRush": 0.45, "MacroHatch": 0.60, "LingBane": 0.52, "RoachRavager": 0.55},
+        true_rates={
+            "ZergRush": 0.45,
+            "MacroHatch": 0.60,
+            "LingBane": 0.52,
+            "RoachRavager": 0.55,
+        },
     )
     print(f"    Cumulative Regret: {bandit_result['cumulative_regret']:.2f}")
     for name, stat in bandit_result["stats"].items():
@@ -702,7 +832,9 @@ def demo() -> None:
         exp3.variants[1].record_binary(random.random() < 0.55)
         exp3.variants[2].record_binary(random.random() < 0.60)
     chi_result = freq.chi_squared_test(exp3)
-    print(f"    Chi2={chi_result['chi2']:.4f}, df={chi_result['df']}, p={chi_result['p_value']:.4f}")
+    print(
+        f"    Chi2={chi_result['chi2']:.4f}, df={chi_result['df']}, p={chi_result['p_value']:.4f}"
+    )
 
     print("\n" + "=" * 70)
     print("Phase 644 demo complete.")

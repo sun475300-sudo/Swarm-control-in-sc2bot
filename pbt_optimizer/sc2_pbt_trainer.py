@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -82,7 +83,13 @@ SC2_HYPERPARAMETER_RANGES: Dict[str, Dict[str, Any]] = {
     "army_weight": {"min": 0.1, "max": 2.0, "log_scale": False, "default": 1.0},
     "eco_weight": {"min": 0.1, "max": 2.0, "log_scale": False, "default": 1.0},
     "clip_ratio": {"min": 0.05, "max": 0.4, "log_scale": False, "default": 0.2},
-    "batch_size": {"min": 32, "max": 512, "log_scale": False, "default": 128, "type": "int"},
+    "batch_size": {
+        "min": 32,
+        "max": 512,
+        "log_scale": False,
+        "default": 128,
+        "type": "int",
+    },
     "gae_lambda": {"min": 0.9, "max": 1.0, "log_scale": False, "default": 0.95},
     "max_grad_norm": {"min": 0.1, "max": 10.0, "log_scale": True, "default": 0.5},
     "value_loss_coeff": {"min": 0.1, "max": 1.0, "log_scale": False, "default": 0.5},
@@ -240,14 +247,16 @@ class PBTAgent:
 
     def record_snapshot(self) -> None:
         """Store current state in history for tracking."""
-        self.history.append({
-            "step": self.training_steps,
-            "fitness": self.fitness,
-            "elo": self.elo,
-            "win_rate": self.win_rate,
-            "hyperparams": self.hyperparams.params.copy(),
-            "timestamp": time.time(),
-        })
+        self.history.append(
+            {
+                "step": self.training_steps,
+                "fitness": self.fitness,
+                "elo": self.elo,
+                "win_rate": self.win_rate,
+                "hyperparams": self.hyperparams.params.copy(),
+                "timestamp": time.time(),
+            }
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -293,9 +302,9 @@ class PBTAgent:
 class ELORating:
     """Standard ELO rating calculator with dynamic K-factor."""
 
-    K_NEW = 40.0        # K for agents with < 30 games
-    K_STANDARD = 20.0   # K for established agents
-    K_HIGH = 10.0       # K for high-rated agents (>2000)
+    K_NEW = 40.0  # K for agents with < 30 games
+    K_STANDARD = 20.0  # K for established agents
+    K_HIGH = 10.0  # K for high-rated agents (>2000)
 
     @classmethod
     def expected_score(cls, rating_a: float, rating_b: float) -> float:
@@ -310,7 +319,9 @@ class ELORating:
         return cls.K_STANDARD
 
     @classmethod
-    def update(cls, winner: PBTAgent, loser: PBTAgent, draw: bool = False) -> Tuple[float, float]:
+    def update(
+        cls, winner: PBTAgent, loser: PBTAgent, draw: bool = False
+    ) -> Tuple[float, float]:
         """Update ELO ratings after a match. Returns (new_winner_elo, new_loser_elo)."""
         expected_w = cls.expected_score(winner.elo, loser.elo)
         expected_l = cls.expected_score(loser.elo, winner.elo)
@@ -358,7 +369,9 @@ class SC2MatchSimulator:
         progress_bonus = min(agent.training_steps / 10000.0, 1.0) * 0.3
         # Weight quality (norm proximity to ideal)
         if NP_AVAILABLE:
-            weight_quality = 1.0 / (1.0 + abs(float(np.linalg.norm(agent.weights.data)) - 8.0))
+            weight_quality = 1.0 / (
+                1.0 + abs(float(np.linalg.norm(agent.weights.data)) - 8.0)
+            )
         else:
             norm = math.sqrt(sum(w * w for w in agent.weights.data))
             weight_quality = 1.0 / (1.0 + abs(norm - 8.0))
@@ -366,7 +379,9 @@ class SC2MatchSimulator:
         return _np_clip(base_strength + progress_bonus + weight_quality * 0.1, 0.0, 2.0)
 
     @classmethod
-    def simulate_match(cls, agent_a: PBTAgent, agent_b: PBTAgent) -> Tuple[str, float, float]:
+    def simulate_match(
+        cls, agent_a: PBTAgent, agent_b: PBTAgent
+    ) -> Tuple[str, float, float]:
         """
         Simulate a match. Returns (result, score_a, score_b).
         result is 'a_wins', 'b_wins', or 'draw'.
@@ -393,7 +408,7 @@ class WorkerTask:
     """A training or evaluation task for async execution."""
 
     task_id: str
-    task_type: str           # 'train' or 'evaluate'
+    task_type: str  # 'train' or 'evaluate'
     agent_id: str
     opponent_id: Optional[str] = None
     steps: int = 100
@@ -417,8 +432,10 @@ class AsyncWorkerPool:
     def submit_train_task(self, agent_id: str, steps: int = 100) -> str:
         task_id = f"train_{uuid.uuid4().hex[:8]}"
         task = WorkerTask(
-            task_id=task_id, task_type="train",
-            agent_id=agent_id, steps=steps,
+            task_id=task_id,
+            task_type="train",
+            agent_id=agent_id,
+            steps=steps,
         )
         self.task_queue.append(task)
         self.total_submitted += 1
@@ -427,8 +444,10 @@ class AsyncWorkerPool:
     def submit_eval_task(self, agent_id: str, opponent_id: str) -> str:
         task_id = f"eval_{uuid.uuid4().hex[:8]}"
         task = WorkerTask(
-            task_id=task_id, task_type="evaluate",
-            agent_id=agent_id, opponent_id=opponent_id,
+            task_id=task_id,
+            task_type="evaluate",
+            agent_id=agent_id,
+            opponent_id=opponent_id,
         )
         self.task_queue.append(task)
         self.total_submitted += 1
@@ -477,7 +496,9 @@ class AsyncWorkerPool:
                     task.status = "failed"
                     task.result = {"error": f"Opponent {task.opponent_id} not found"}
                 else:
-                    result, score_a, score_b = SC2MatchSimulator.simulate_match(agent, opponent)
+                    result, score_a, score_b = SC2MatchSimulator.simulate_match(
+                        agent, opponent
+                    )
                     draw = result == "draw"
                     if result == "a_wins":
                         ELORating.update(agent, opponent, draw=False)
@@ -495,8 +516,10 @@ class AsyncWorkerPool:
                     opponent.games_played += 1
                     task.result = {
                         "result": result,
-                        "score_a": score_a, "score_b": score_b,
-                        "new_elo_a": agent.elo, "new_elo_b": opponent.elo,
+                        "score_a": score_a,
+                        "score_b": score_b,
+                        "new_elo_a": agent.elo,
+                        "new_elo_b": opponent.elo,
                     }
                     task.status = "completed"
 
@@ -533,17 +556,26 @@ class HyperparamScheduleTracker:
     def __init__(self):
         self.records: List[Dict[str, Any]] = []
 
-    def record(self, agent_id: str, generation: int, step: int,
-               hyperparams: Dict[str, float], fitness: float, elo: float) -> None:
-        self.records.append({
-            "agent_id": agent_id,
-            "generation": generation,
-            "step": step,
-            "hyperparams": hyperparams.copy(),
-            "fitness": fitness,
-            "elo": elo,
-            "timestamp": time.time(),
-        })
+    def record(
+        self,
+        agent_id: str,
+        generation: int,
+        step: int,
+        hyperparams: Dict[str, float],
+        fitness: float,
+        elo: float,
+    ) -> None:
+        self.records.append(
+            {
+                "agent_id": agent_id,
+                "generation": generation,
+                "step": step,
+                "hyperparams": hyperparams.copy(),
+                "fitness": fitness,
+                "elo": elo,
+                "timestamp": time.time(),
+            }
+        )
 
     def get_agent_history(self, agent_id: str) -> List[Dict[str, Any]]:
         return [r for r in self.records if r["agent_id"] == agent_id]
@@ -578,10 +610,14 @@ class HyperparamScheduleTracker:
             vals = " | ".join(
                 f"{r['hyperparams'].get(p, 0.0):>8.4g}" for p in param_names
             )
-            lines.append(f"{aid[:12]:>12s} {r['elo']:7.1f} {r['fitness']:6.3f} | {vals}")
+            lines.append(
+                f"{aid[:12]:>12s} {r['elo']:7.1f} {r['fitness']:6.3f} | {vals}"
+            )
         return "\n".join(lines)
 
-    def render_ascii_chart(self, param_name: str, width: int = 60, height: int = 15) -> str:
+    def render_ascii_chart(
+        self, param_name: str, width: int = 60, height: int = 15
+    ) -> str:
         """Render a simple ASCII chart of a parameter across agents."""
         timeline = self.get_param_timeline(param_name)
         if not timeline:
@@ -787,7 +823,10 @@ class SC2PBTTrainer:
 
         # Step 3: Exploit and Explore (after evaluation rounds)
         exploited = []
-        if self.iteration % self.eval_interval == 0 and self.iteration > self.eval_interval:
+        if (
+            self.iteration % self.eval_interval == 0
+            and self.iteration > self.eval_interval
+        ):
             exploited = self.exploit()
             self.explore(exploited)
         results["exploited"] = exploited
@@ -843,7 +882,9 @@ class SC2PBTTrainer:
         if path is None:
             if self.checkpoint_dir:
                 os.makedirs(self.checkpoint_dir, exist_ok=True)
-                path = os.path.join(self.checkpoint_dir, f"pbt_checkpoint_iter{self.iteration}.json")
+                path = os.path.join(
+                    self.checkpoint_dir, f"pbt_checkpoint_iter{self.iteration}.json"
+                )
             else:
                 path = f"pbt_checkpoint_iter{self.iteration}.json"
 
@@ -881,8 +922,10 @@ class SC2PBTTrainer:
     def population_summary(self) -> str:
         """Generate population summary table."""
         lines = ["=" * 80]
-        lines.append(f"  PBT Population Summary  |  Iteration: {self.iteration}  |  "
-                      f"Exploits: {self.exploit_count}  Explores: {self.explore_count}")
+        lines.append(
+            f"  PBT Population Summary  |  Iteration: {self.iteration}  |  "
+            f"Exploits: {self.exploit_count}  Explores: {self.explore_count}"
+        )
         lines.append("=" * 80)
         lines.append(
             f"{'Agent':>12s} {'ELO':>7s} {'Fit':>6s} {'WR':>5s} "
@@ -901,8 +944,10 @@ class SC2PBTTrainer:
 
         lines.append("-" * 80)
         fitnesses = [a.fitness for a in self.agents.values()]
-        lines.append(f"  Fitness: mean={_np_mean(fitnesses):.4f}  "
-                      f"std={_np_std(fitnesses):.4f}  max={max(fitnesses):.4f}")
+        lines.append(
+            f"  Fitness: mean={_np_mean(fitnesses):.4f}  "
+            f"std={_np_std(fitnesses):.4f}  max={max(fitnesses):.4f}"
+        )
         lines.append(f"  Worker pool: {self.worker_pool.stats()}")
         lines.append("=" * 80)
         return "\n".join(lines)
@@ -1042,7 +1087,9 @@ def run_pbt_demo() -> None:
 
     trainer2 = SC2PBTTrainer(population_size=1, seed=99)
     trainer2.load_checkpoint(ckpt_path)
-    print(f"[Checkpoint] Loaded {len(trainer2.agents)} agents, iteration={trainer2.iteration}")
+    print(
+        f"[Checkpoint] Loaded {len(trainer2.agents)} agents, iteration={trainer2.iteration}"
+    )
 
     # Verify loaded agent matches
     best2 = trainer2.best_agent()

@@ -4,6 +4,7 @@ Auto Trader Engine
 - 손절/익절 자동 관리
 - 포트폴리오 스냅샷 자동 기록
 """
+
 import asyncio
 import json
 import logging
@@ -42,33 +43,35 @@ class AutoTrader:
         self.interval: int = config.AUTO_TRADE_INTERVAL
         self._last_status: dict = {}
         self.analyzer = MarketAnalyzer(self.client)
-        self.smart_mode: bool = True          # True = 종합 분석 기반, False = 단일 전략
-        self.buy_threshold: int = 20           # analyzer BUY 임계값과 통일 (20점)
-        self.sell_threshold: int = -20         # analyzer SELL 임계값과 통일 (-20점)
-        self.max_positions: int = 5            # 동시 보유 최대 종목 수
-        self.cooldown_minutes: int = 30        # 같은 코인 재매매 대기 시간(분)
-        self._trade_cooldown: dict = {}        # {ticker: last_trade_timestamp}
+        self.smart_mode: bool = True  # True = 종합 분석 기반, False = 단일 전략
+        self.buy_threshold: int = 20  # analyzer BUY 임계값과 통일 (20점)
+        self.sell_threshold: int = -20  # analyzer SELL 임계값과 통일 (-20점)
+        self.max_positions: int = 5  # 동시 보유 최대 종목 수
+        self.cooldown_minutes: int = 30  # 같은 코인 재매매 대기 시간(분)
+        self._trade_cooldown: dict = {}  # {ticker: last_trade_timestamp}
         self._cooldown_lock = threading.Lock()  # _trade_cooldown 동시성 보호
-        self._cycle_count: int = 0             # 누적 사이클 수
-        self.max_budget: float = 0             # 0 = 제한 없음, >0 이면 이 금액까지만 매수
-        self._total_spent: float = 0           # 이번 세션에서 사용한 총 매수 금액
-        self._budget_lock = threading.Lock()   # _total_spent / max_budget 동시성 보호
+        self._cycle_count: int = 0  # 누적 사이클 수
+        self.max_budget: float = 0  # 0 = 제한 없음, >0 이면 이 금액까지만 매수
+        self._total_spent: float = 0  # 이번 세션에서 사용한 총 매수 금액
+        self._budget_lock = threading.Lock()  # _total_spent / max_budget 동시성 보호
         # 동시성 보호
-        self._cycle_lock = threading.Lock()    # run_cycle 동시 실행 방지
-        self._in_flight: set = set()           # 현재 주문 진행 중인 티커
+        self._cycle_lock = threading.Lock()  # run_cycle 동시 실행 방지
+        self._in_flight: set = set()  # 현재 주문 진행 중인 티커
         self._in_flight_lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None  # 백그라운드 스레드 참조
         # #30 Price Alerts
-        self._price_alerts: dict = {}          # {ticker: {"above": float, "below": float}}
-        self._alerts_lock = threading.Lock()   # 가격 알림 동시 접근 보호
+        self._price_alerts: dict = {}  # {ticker: {"above": float, "below": float}}
+        self._alerts_lock = threading.Lock()  # 가격 알림 동시 접근 보호
         self._alerts_file = config.DATA_DIR / "price_alerts.json"
         self._load_price_alerts()
         # #35 DCA
-        self._dca_tasks: list = []             # DCA 진행 목록
-        self._DCA_MAX_HISTORY = 50             # 완료된 DCA 이력 최대 보관 수
-        self._dca_lock = threading.Lock()      # Bug #17 Fix: DCA 작업 목록 동기화
+        self._dca_tasks: list = []  # DCA 진행 목록
+        self._DCA_MAX_HISTORY = 50  # 완료된 DCA 이력 최대 보관 수
+        self._dca_lock = threading.Lock()  # Bug #17 Fix: DCA 작업 목록 동기화
         # #36 Trailing Stop
-        self._trailing_stops: dict = {}        # {ticker: {"trail_pct": float, "highest_price": float, "activated": bool}}
+        self._trailing_stops: dict = (
+            {}
+        )  # {ticker: {"trail_pct": float, "highest_price": float, "activated": bool}}
         self._trailing_stops_lock = threading.Lock()  # 스레드 안전성 보장
         # P2-20: 트레일링 스탑 재시도 제한
         self._trailing_retry_count: dict = {}  # {ticker: int}
@@ -126,7 +129,9 @@ class AutoTrader:
                 with open(self._alerts_file, "r", encoding="utf-8") as f:
                     self._price_alerts = json.load(f)
             except Exception as e:
-                logger.warning(f"Failed to load price alerts from {self._alerts_file}: {e}")
+                logger.warning(
+                    f"Failed to load price alerts from {self._alerts_file}: {e}"
+                )
                 self._price_alerts = {}
 
     def _save_price_alerts(self):
@@ -137,7 +142,9 @@ class AutoTrader:
         except Exception as e:
             logger.error(f"가격 알림 저장 실패: {e}")
 
-    def set_price_alert(self, ticker: str, above: float = None, below: float = None) -> dict:
+    def set_price_alert(
+        self, ticker: str, above: float = None, below: float = None
+    ) -> dict:
         """가격 알림 설정"""
         ticker = normalize_ticker(ticker)
         alert = {}
@@ -164,19 +171,27 @@ class AutoTrader:
                 if price is None:
                     continue
                 if "above" in alert and price >= alert["above"]:
-                    triggered.append({
-                        "ticker": ticker, "type": "above",
-                        "target": alert["above"], "current": price,
-                        "message": f"{ticker} 가격 {price:,.0f}원 - 상한 알림({alert['above']:,.0f}원) 도달"
-                    })
+                    triggered.append(
+                        {
+                            "ticker": ticker,
+                            "type": "above",
+                            "target": alert["above"],
+                            "current": price,
+                            "message": f"{ticker} 가격 {price:,.0f}원 - 상한 알림({alert['above']:,.0f}원) 도달",
+                        }
+                    )
                     to_remove.append(ticker)
                     logger.info(f"가격 알림 트리거: {ticker} >= {alert['above']:,.0f}")
                 elif "below" in alert and price <= alert["below"]:
-                    triggered.append({
-                        "ticker": ticker, "type": "below",
-                        "target": alert["below"], "current": price,
-                        "message": f"{ticker} 가격 {price:,.0f}원 - 하한 알림({alert['below']:,.0f}원) 도달"
-                    })
+                    triggered.append(
+                        {
+                            "ticker": ticker,
+                            "type": "below",
+                            "target": alert["below"],
+                            "current": price,
+                            "message": f"{ticker} 가격 {price:,.0f}원 - 하한 알림({alert['below']:,.0f}원) 도달",
+                        }
+                    )
                     to_remove.append(ticker)
                     logger.info(f"가격 알림 트리거: {ticker} <= {alert['below']:,.0f}")
             except Exception as e:
@@ -193,13 +208,21 @@ class AutoTrader:
 
     # ─────────── #35 DCA (Dollar Cost Averaging) ───────────
 
-    def start_dca(self, ticker: str, total_amount: float, num_splits: int, interval_minutes: int,
-                  on_complete: Optional[Callable] = None) -> dict:
+    def start_dca(
+        self,
+        ticker: str,
+        total_amount: float,
+        num_splits: int,
+        interval_minutes: int,
+        on_complete: Optional[Callable] = None,
+    ) -> dict:
         """분할 매수(DCA) 시작"""
         ticker = normalize_ticker(ticker)
         split_amount = total_amount / num_splits
         if split_amount < config.MIN_ORDER_AMOUNT:
-            return {"error": f"분할 금액({split_amount:,.0f}원)이 최소 주문 금액({config.MIN_ORDER_AMOUNT:,.0f}원) 미만"}
+            return {
+                "error": f"분할 금액({split_amount:,.0f}원)이 최소 주문 금액({config.MIN_ORDER_AMOUNT:,.0f}원) 미만"
+            }
 
         dca_task = {
             "ticker": ticker,
@@ -224,22 +247,35 @@ class AutoTrader:
                     if task["status"] != "running":
                         break
                 try:
-                    order = self.client.buy_market_order(task["ticker"], task["split_amount"])
+                    order = self.client.buy_market_order(
+                        task["ticker"], task["split_amount"]
+                    )
                     if order.success:
                         with self._dca_lock:
                             task["completed_splits"] += 1
                             task["total_spent"] += task["split_amount"]
-                            task["orders"].append({
-                                "split": i + 1, "amount": task["split_amount"],
-                                "timestamp": datetime.now().isoformat(),
-                            })
+                            task["orders"].append(
+                                {
+                                    "split": i + 1,
+                                    "amount": task["split_amount"],
+                                    "timestamp": datetime.now().isoformat(),
+                                }
+                            )
                         self.tracker.log_trade(
-                            "buy", task["ticker"], task["split_amount"],
-                            0, f"DCA {i+1}/{task['num_splits']}", order.order
+                            "buy",
+                            task["ticker"],
+                            task["split_amount"],
+                            0,
+                            f"DCA {i+1}/{task['num_splits']}",
+                            order.order,
                         )
-                        logger.info(f"DCA 매수 {i+1}/{task['num_splits']}: {task['ticker']} {task['split_amount']:,.0f}원")
+                        logger.info(
+                            f"DCA 매수 {i+1}/{task['num_splits']}: {task['ticker']} {task['split_amount']:,.0f}원"
+                        )
                     else:
-                        logger.error(f"DCA 매수 실패: {task['ticker']} split {i+1}: {order.error_msg}")
+                        logger.error(
+                            f"DCA 매수 실패: {task['ticker']} split {i+1}: {order.error_msg}"
+                        )
                 except Exception as e:
                     logger.error(f"DCA 오류: {e}")
 
@@ -249,11 +285,17 @@ class AutoTrader:
             with self._dca_lock:
                 task["status"] = "completed"
                 # 완료/취소된 DCA 이력이 너무 쌓이지 않도록 정리
-                finished = [t for t in self._dca_tasks if t.get("status") in ("completed", "cancelled")]
+                finished = [
+                    t
+                    for t in self._dca_tasks
+                    if t.get("status") in ("completed", "cancelled")
+                ]
                 if len(finished) > self._DCA_MAX_HISTORY:
-                    for old in finished[:-self._DCA_MAX_HISTORY]:
+                    for old in finished[: -self._DCA_MAX_HISTORY]:
                         self._dca_tasks.remove(old)
-            logger.info(f"DCA 완료: {task['ticker']} {task['completed_splits']}/{task['num_splits']} splits")
+            logger.info(
+                f"DCA 완료: {task['ticker']} {task['completed_splits']}/{task['num_splits']} splits"
+            )
             # P3-7: 완료/실패 콜백 호출
             if on_complete:
                 try:
@@ -279,9 +321,12 @@ class AutoTrader:
         with self._dca_lock:
             return [
                 {
-                    "ticker": t["ticker"], "status": t["status"],
-                    "completed": t["completed_splits"], "total": t["num_splits"],
-                    "spent": t["total_spent"], "target": t["total_amount"],
+                    "ticker": t["ticker"],
+                    "status": t["status"],
+                    "completed": t["completed_splits"],
+                    "total": t["num_splits"],
+                    "spent": t["total_spent"],
+                    "target": t["total_amount"],
                 }
                 for t in self._dca_tasks
             ]
@@ -302,10 +347,14 @@ class AutoTrader:
                 "activated": True,
                 "set_at": datetime.now().isoformat(),
             }
-        logger.info(f"트레일링 스탑 설정: {ticker} {trail_pct}% (현재가: {current_price:,.0f})")
+        logger.info(
+            f"트레일링 스탑 설정: {ticker} {trail_pct}% (현재가: {current_price:,.0f})"
+        )
         return {
-            "ticker": ticker, "trail_pct": trail_pct,
-            "highest_price": current_price, "status": "set",
+            "ticker": ticker,
+            "trail_pct": trail_pct,
+            "highest_price": current_price,
+            "status": "set",
         }
 
     def _check_trailing_stops(self) -> list:
@@ -313,6 +362,7 @@ class AutoTrader:
         triggered = []
         to_remove = []
         import copy
+
         with self._trailing_stops_lock:
             snapshot = copy.deepcopy(self._trailing_stops)
         for ticker, ts in snapshot.items():
@@ -325,9 +375,14 @@ class AutoTrader:
 
                 # 최고가 갱신 (락 내부에서 안전하게 업데이트)
                 with self._trailing_stops_lock:
-                    if ticker in self._trailing_stops and price > self._trailing_stops[ticker]["highest_price"]:
+                    if (
+                        ticker in self._trailing_stops
+                        and price > self._trailing_stops[ticker]["highest_price"]
+                    ):
                         self._trailing_stops[ticker]["highest_price"] = price
-                    current_highest = self._trailing_stops.get(ticker, ts)["highest_price"]
+                    current_highest = self._trailing_stops.get(ticker, ts)[
+                        "highest_price"
+                    ]
 
                 # 최고가 대비 하락률 확인
                 drop_pct = ((current_highest - price) / current_highest) * 100
@@ -339,25 +394,41 @@ class AutoTrader:
                         if order.success:
                             sell_value = coin_balance * price
                             self.tracker.log_trade(
-                                "sell", ticker, sell_value, price,
-                                f"트레일링스탑 ({ts['trail_pct']}%, 최고가:{current_highest:,.0f})", order.order
+                                "sell",
+                                ticker,
+                                sell_value,
+                                price,
+                                f"트레일링스탑 ({ts['trail_pct']}%, 최고가:{current_highest:,.0f})",
+                                order.order,
                             )
-                            triggered.append({
-                                "ticker": ticker, "action": "sell",
-                                "price": price, "highest": current_highest,
-                                "drop_pct": round(drop_pct, 2),
-                            })
-                            logger.info(f"트레일링 스탑 실행: {ticker} 매도 (하락 {drop_pct:.1f}%)")
+                            triggered.append(
+                                {
+                                    "ticker": ticker,
+                                    "action": "sell",
+                                    "price": price,
+                                    "highest": current_highest,
+                                    "drop_pct": round(drop_pct, 2),
+                                }
+                            )
+                            logger.info(
+                                f"트레일링 스탑 실행: {ticker} 매도 (하락 {drop_pct:.1f}%)"
+                            )
                             to_remove.append(ticker)  # 매도 성공 시에만 제거
                         else:
                             # P2-20: 재시도 카운트 증가, 최대 초과 시 비활성화
-                            self._trailing_retry_count[ticker] = self._trailing_retry_count.get(ticker, 0) + 1
+                            self._trailing_retry_count[ticker] = (
+                                self._trailing_retry_count.get(ticker, 0) + 1
+                            )
                             retries = self._trailing_retry_count[ticker]
                             if retries >= self._max_trailing_retries:
-                                logger.error(f"트레일링 스탑 매도 {self._max_trailing_retries}회 실패 — 비활성화: {ticker}")
+                                logger.error(
+                                    f"트레일링 스탑 매도 {self._max_trailing_retries}회 실패 — 비활성화: {ticker}"
+                                )
                                 to_remove.append(ticker)
                             else:
-                                logger.warning(f"트레일링 스탑 매도 실패 ({retries}/{self._max_trailing_retries}): {ticker} [{order.error_type}] {order.error_msg}")
+                                logger.warning(
+                                    f"트레일링 스탑 매도 실패 ({retries}/{self._max_trailing_retries}): {ticker} [{order.error_type}] {order.error_msg}"
+                                )
             except Exception as e:
                 logger.error(f"트레일링 스탑 확인 오류 ({ticker}): {e}")
         with self._trailing_stops_lock:
@@ -430,7 +501,9 @@ class AutoTrader:
         # 현재 비중 계산
         current_weights = {}
         for currency, info in portfolio.items():
-            current_weights[currency] = round(info["value_krw"] / total_value_krw * 100, 2)
+            current_weights[currency] = round(
+                info["value_krw"] / total_value_krw * 100, 2
+            )
 
         # 리밸런싱 액션 계산
         actions = []
@@ -445,24 +518,28 @@ class AutoTrader:
 
             if abs(diff_pct) < 1.0:
                 # 1% 미만 차이는 무시
-                actions.append({
-                    "currency": currency,
-                    "action": "skip",
-                    "current_pct": current_pct,
-                    "target_pct": target_pct,
-                    "reason": "차이 1% 미만",
-                })
+                actions.append(
+                    {
+                        "currency": currency,
+                        "action": "skip",
+                        "current_pct": current_pct,
+                        "target_pct": target_pct,
+                        "reason": "차이 1% 미만",
+                    }
+                )
                 continue
 
             if currency == "KRW":
                 # KRW는 직접 매매 불가, 다른 코인 매매로 조정
-                actions.append({
-                    "currency": "KRW",
-                    "action": "adjust_via_trades",
-                    "current_pct": current_pct,
-                    "target_pct": target_pct,
-                    "diff_krw": round(diff_krw, 0),
-                })
+                actions.append(
+                    {
+                        "currency": "KRW",
+                        "action": "adjust_via_trades",
+                        "current_pct": current_pct,
+                        "target_pct": target_pct,
+                        "diff_krw": round(diff_krw, 0),
+                    }
+                )
                 continue
 
             ticker = normalize_ticker(currency)
@@ -471,11 +548,15 @@ class AutoTrader:
                 # 비중 부족 → 매수 필요
                 buy_amount = abs(diff_krw)
                 if buy_amount < config.MIN_ORDER_AMOUNT:
-                    actions.append({
-                        "currency": currency, "action": "skip_buy",
-                        "current_pct": current_pct, "target_pct": target_pct,
-                        "reason": f"매수 금액 {buy_amount:,.0f}원 < 최소주문 {config.MIN_ORDER_AMOUNT}원",
-                    })
+                    actions.append(
+                        {
+                            "currency": currency,
+                            "action": "skip_buy",
+                            "current_pct": current_pct,
+                            "target_pct": target_pct,
+                            "reason": f"매수 금액 {buy_amount:,.0f}원 < 최소주문 {config.MIN_ORDER_AMOUNT}원",
+                        }
+                    )
                     continue
 
                 safe, safe_msg = trade_safety.check_trade(buy_amount)
@@ -485,16 +566,28 @@ class AutoTrader:
 
                 order = self.client.buy_market_order(ticker, buy_amount)
                 if order.success:
-                    self.tracker.log_trade("buy", ticker, buy_amount, 0,
-                                           f"리밸런싱 매수 ({current_pct:.1f}%→{target_pct:.1f}%)", order.order)
+                    self.tracker.log_trade(
+                        "buy",
+                        ticker,
+                        buy_amount,
+                        0,
+                        f"리밸런싱 매수 ({current_pct:.1f}%→{target_pct:.1f}%)",
+                        order.order,
+                    )
                     trade_safety.record_trade(buy_amount)
-                    executed.append({
-                        "currency": currency, "action": "buy",
-                        "amount_krw": round(buy_amount, 0),
-                        "from_pct": current_pct, "to_pct": target_pct,
-                    })
+                    executed.append(
+                        {
+                            "currency": currency,
+                            "action": "buy",
+                            "amount_krw": round(buy_amount, 0),
+                            "from_pct": current_pct,
+                            "to_pct": target_pct,
+                        }
+                    )
                 else:
-                    errors.append(f"매수 실패: {ticker} [{order.error_type}] {order.error_msg}")
+                    errors.append(
+                        f"매수 실패: {ticker} [{order.error_type}] {order.error_msg}"
+                    )
 
             elif diff_pct < 0:
                 # 비중 초과 → 매도 필요
@@ -519,17 +612,29 @@ class AutoTrader:
                 order = self.client.sell_market_order(ticker, sell_volume)
                 if order.success:
                     actual_value = sell_volume * price
-                    self.tracker.log_trade("sell", ticker, actual_value, price,
-                                           f"리밸런싱 매도 ({current_pct:.1f}%→{target_pct:.1f}%)", order.order)
+                    self.tracker.log_trade(
+                        "sell",
+                        ticker,
+                        actual_value,
+                        price,
+                        f"리밸런싱 매도 ({current_pct:.1f}%→{target_pct:.1f}%)",
+                        order.order,
+                    )
                     trade_safety.record_trade(actual_value)
-                    executed.append({
-                        "currency": currency, "action": "sell",
-                        "volume": round(sell_volume, 8),
-                        "value_krw": round(actual_value, 0),
-                        "from_pct": current_pct, "to_pct": target_pct,
-                    })
+                    executed.append(
+                        {
+                            "currency": currency,
+                            "action": "sell",
+                            "volume": round(sell_volume, 8),
+                            "value_krw": round(actual_value, 0),
+                            "from_pct": current_pct,
+                            "to_pct": target_pct,
+                        }
+                    )
                 else:
-                    errors.append(f"매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
+                    errors.append(
+                        f"매도 실패: {ticker} [{order.error_type}] {order.error_msg}"
+                    )
 
         logger.info(f"리밸런싱 완료: {len(executed)}건 실행, {len(errors)}건 오류")
 
@@ -545,7 +650,9 @@ class AutoTrader:
 
     # ─────────── #53 지정가 주문 ───────────
 
-    def place_limit_order(self, ticker: str, price: float, amount: float, side: str = "buy") -> dict:
+    def place_limit_order(
+        self, ticker: str, price: float, amount: float, side: str = "buy"
+    ) -> dict:
         """
         지정가 주문 (#53)
 
@@ -588,8 +695,12 @@ class AutoTrader:
             order = self.client.buy_limit_order(ticker, price, amount)
             if order is not None:
                 self.tracker.log_trade(
-                    "buy", ticker, order_value_krw, price,
-                    f"지정가 매수 ({price:,.0f}원, 현재가 대비 {price_diff_pct:+.2f}%)", order
+                    "buy",
+                    ticker,
+                    order_value_krw,
+                    price,
+                    f"지정가 매수 ({price:,.0f}원, 현재가 대비 {price_diff_pct:+.2f}%)",
+                    order,
                 )
                 trade_safety.record_trade(order_value_krw)
                 logger.info(f"지정가 매수 주문: {ticker} {price:,.0f}원 x {amount}")
@@ -625,8 +736,12 @@ class AutoTrader:
             order = self.client.sell_limit_order(ticker, price, amount)
             if order is not None:
                 self.tracker.log_trade(
-                    "sell", ticker, order_value_krw, price,
-                    f"지정가 매도 ({price:,.0f}원, 현재가 대비 {price_diff_pct:+.2f}%)", order
+                    "sell",
+                    ticker,
+                    order_value_krw,
+                    price,
+                    f"지정가 매도 ({price:,.0f}원, 현재가 대비 {price_diff_pct:+.2f}%)",
+                    order,
                 )
                 trade_safety.record_trade(order_value_krw)
                 logger.info(f"지정가 매도 주문: {ticker} {price:,.0f}원 x {amount}")
@@ -648,7 +763,9 @@ class AutoTrader:
 
     # ─────────── #54 ATR 기반 동적 손절 ───────────
 
-    def calculate_atr_stop(self, ticker: str, multiplier: float = 2.0, period: int = 14) -> dict:
+    def calculate_atr_stop(
+        self, ticker: str, multiplier: float = 2.0, period: int = 14
+    ) -> dict:
         """
         ATR (Average True Range) 기반 동적 손절가 계산 (#54)
 
@@ -674,9 +791,9 @@ class AutoTrader:
         low = df["low"]
         prev_close = df["close"].shift(1)
 
-        tr1 = high - low                      # 당일 고가 - 저가
-        tr2 = abs(high - prev_close)           # 당일 고가 - 전일 종가
-        tr3 = abs(low - prev_close)            # 당일 저가 - 전일 종가
+        tr1 = high - low  # 당일 고가 - 저가
+        tr2 = abs(high - prev_close)  # 당일 고가 - 전일 종가
+        tr3 = abs(low - prev_close)  # 당일 저가 - 전일 종가
 
         true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
 
@@ -709,10 +826,7 @@ class AutoTrader:
             volatility_level = "낮음"
 
         # 최근 ATR 추세
-        recent_atrs = [
-            round(float(v), 0) for v in atr.iloc[-5:]
-            if not pd.isna(v)
-        ]
+        recent_atrs = [round(float(v), 0) for v in atr.iloc[-5:] if not pd.isna(v)]
 
         logger.info(
             f"ATR 손절 계산: {ticker} 현재가={current_price:,.0f}, "
@@ -748,8 +862,12 @@ class AutoTrader:
         self.watch_list = tickers
         logger.info(f"관심 목록 변경: {tickers}")
 
-    def set_risk_params(self, stop_loss: float = None, take_profit: float = None,
-                        max_order_ratio: float = None):
+    def set_risk_params(
+        self,
+        stop_loss: float = None,
+        take_profit: float = None,
+        max_order_ratio: float = None,
+    ):
         """리스크 파라미터 변경"""
         if stop_loss is not None:
             self.risk.stop_loss_pct = stop_loss
@@ -757,7 +875,9 @@ class AutoTrader:
             self.risk.take_profit_pct = take_profit
         if max_order_ratio is not None:
             self.risk.max_single_order_ratio = max_order_ratio
-        logger.info(f"리스크 설정 변경: SL={self.risk.stop_loss_pct}% TP={self.risk.take_profit_pct}%")
+        logger.info(
+            f"리스크 설정 변경: SL={self.risk.stop_loss_pct}% TP={self.risk.take_profit_pct}%"
+        )
 
     # ─────────── 1회 사이클 ───────────
 
@@ -795,7 +915,9 @@ class AutoTrader:
                 result["actions"].append(a["message"])
             ts_triggered = self._check_trailing_stops()
             for ts in ts_triggered:
-                result["actions"].append(f"트레일링스탑 매도: {ts['ticker']} (하락 {ts['drop_pct']}%)")
+                result["actions"].append(
+                    f"트레일링스탑 매도: {ts['ticker']} (하락 {ts['drop_pct']}%)"
+                )
         except Exception as e:
             result["errors"].append(f"알림/트레일링 체크 오류: {str(e)}")
 
@@ -812,7 +934,9 @@ class AutoTrader:
                 currency = b.get("currency", "")
                 if currency != "KRW" and float(b.get("balance", 0)) > 0:
                     held_tickers.append(normalize_ticker(currency))
-            current_prices = self.client.get_prices(held_tickers) if held_tickers else {}
+            current_prices = (
+                self.client.get_prices(held_tickers) if held_tickers else {}
+            )
 
             for b in balances:
                 currency = b.get("currency", "")
@@ -837,7 +961,9 @@ class AutoTrader:
                     # 실시간 잔고 재확인 (이중 매도 방지)
                     actual_balance = self.client.get_balance(ticker)
                     if actual_balance <= 0:
-                        result["actions"].append(f"⚠️ {action} 스킵 ({ticker}): 잔고 없음")
+                        result["actions"].append(
+                            f"⚠️ {action} 스킵 ({ticker}): 잔고 없음"
+                        )
                         continue
                     with self._in_flight_lock:
                         self._in_flight.add(ticker)
@@ -845,11 +971,21 @@ class AutoTrader:
                         reason_text = "손절" if action == "stop_loss" else "익절"
                         order = self.client.sell_market_order(ticker, actual_balance)
                         if order.success:
-                            self.tracker.log_trade("sell", ticker, actual_balance * current_price,
-                                                   current_price, reason_text, order.order)
-                            result["actions"].append(f"{reason_text} 매도: {ticker} x {actual_balance}")
+                            self.tracker.log_trade(
+                                "sell",
+                                ticker,
+                                actual_balance * current_price,
+                                current_price,
+                                reason_text,
+                                order.order,
+                            )
+                            result["actions"].append(
+                                f"{reason_text} 매도: {ticker} x {actual_balance}"
+                            )
                         else:
-                            result["errors"].append(f"{reason_text} 매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
+                            result["errors"].append(
+                                f"{reason_text} 매도 실패: {ticker} [{order.error_type}] {order.error_msg}"
+                            )
                     finally:
                         with self._in_flight_lock:
                             self._in_flight.discard(ticker)
@@ -859,16 +995,18 @@ class AutoTrader:
             current_positions = self._count_current_positions(balances)
 
             for a in analyses:
-                result["analyses"].append({
-                    "ticker": a.ticker,
-                    "score": a.score,
-                    "recommendation": a.recommendation,
-                    "price": a.current_price,
-                    "rsi": a.rsi_14,
-                    "macd_h": a.macd_histogram,
-                    "trend": a.trend_strength,
-                    "reasons": a.reasons,
-                })
+                result["analyses"].append(
+                    {
+                        "ticker": a.ticker,
+                        "score": a.score,
+                        "recommendation": a.recommendation,
+                        "price": a.current_price,
+                        "rsi": a.rsi_14,
+                        "macd_h": a.macd_histogram,
+                        "trend": a.trend_strength,
+                        "reasons": a.reasons,
+                    }
+                )
 
                 # 쿨다운 체크
                 if self._is_on_cooldown(a.ticker):
@@ -882,9 +1020,14 @@ class AutoTrader:
                         continue
 
                 # 매수: 스코어가 buy_threshold 이상 + 포지션 여유
-                if a.score >= self.buy_threshold and a.recommendation in ("BUY", "STRONG_BUY"):
+                if a.score >= self.buy_threshold and a.recommendation in (
+                    "BUY",
+                    "STRONG_BUY",
+                ):
                     if current_positions >= self.max_positions:
-                        result["actions"].append(f"매수 스킵 ({a.ticker}): 최대 포지션({self.max_positions}) 도달")
+                        result["actions"].append(
+                            f"매수 스킵 ({a.ticker}): 최대 포지션({self.max_positions}) 도달"
+                        )
                         continue
 
                     # 예산 제한 체크 (thread-safe)
@@ -892,11 +1035,15 @@ class AutoTrader:
                         if self.max_budget > 0:
                             remaining_budget = self.max_budget - self._total_spent
                             if remaining_budget < config.MIN_ORDER_AMOUNT:
-                                result["actions"].append(f"매수 스킵 ({a.ticker}): 예산 소진 ({self._total_spent:,.0f}/{self.max_budget:,.0f}원)")
+                                result["actions"].append(
+                                    f"매수 스킵 ({a.ticker}): 예산 소진 ({self._total_spent:,.0f}/{self.max_budget:,.0f}원)"
+                                )
                                 continue
 
                         strength = min(a.score / 100.0, 1.0)
-                        order_amount = self.risk.calculate_order_amount(krw_balance, strength)
+                        order_amount = self.risk.calculate_order_amount(
+                            krw_balance, strength
+                        )
 
                         # 예산 제한이 있으면 주문 금액 조정
                         if self.max_budget > 0:
@@ -908,7 +1055,9 @@ class AutoTrader:
                         # 보안 가드: 거래 안전 검증
                         safe, safe_msg = trade_safety.check_trade(order_amount)
                         if not safe:
-                            result["actions"].append(f"🛡️ 매수 차단 ({a.ticker}): {safe_msg}")
+                            result["actions"].append(
+                                f"🛡️ 매수 차단 ({a.ticker}): {safe_msg}"
+                            )
                             continue
                         # 쿨다운 선기록 (중복 주문 방지)
                         self._record_cooldown(a.ticker)
@@ -918,16 +1067,31 @@ class AutoTrader:
                             order = self.client.buy_market_order(a.ticker, order_amount)
                             if order.success:
                                 reason = f"스마트분석 매수 (점수:{a.score:+d}, {', '.join(a.reasons[:2])})"
-                                self.tracker.log_trade("buy", a.ticker, order_amount, 0, reason, order.order)
+                                self.tracker.log_trade(
+                                    "buy",
+                                    a.ticker,
+                                    order_amount,
+                                    0,
+                                    reason,
+                                    order.order,
+                                )
                                 trade_safety.record_trade(order_amount)
                                 with self._budget_lock:
                                     self._total_spent += order_amount
-                                    budget_info = f" [예산: {self._total_spent:,.0f}/{self.max_budget:,.0f}원]" if self.max_budget > 0 else ""
-                                result["actions"].append(f"매수: {a.ticker} / {order_amount:,.0f}원 (점수:{a.score:+d}){budget_info}")
+                                    budget_info = (
+                                        f" [예산: {self._total_spent:,.0f}/{self.max_budget:,.0f}원]"
+                                        if self.max_budget > 0
+                                        else ""
+                                    )
+                                result["actions"].append(
+                                    f"매수: {a.ticker} / {order_amount:,.0f}원 (점수:{a.score:+d}){budget_info}"
+                                )
                                 krw_balance -= order_amount
                                 current_positions += 1
                             else:
-                                result["errors"].append(f"매수 실패: {a.ticker} / {order_amount:,.0f}원 [{order.error_type}] {order.error_msg}")
+                                result["errors"].append(
+                                    f"매수 실패: {a.ticker} / {order_amount:,.0f}원 [{order.error_type}] {order.error_msg}"
+                                )
                                 # 실패 시 쿨다운 해제
                                 with self._cooldown_lock:
                                     self._trade_cooldown.pop(a.ticker, None)
@@ -938,7 +1102,10 @@ class AutoTrader:
                         result["actions"].append(f"매수 스킵 ({a.ticker}): {msg}")
 
                 # 매도: 스코어가 sell_threshold 이하 + 보유 중 (점진적 매도)
-                elif a.score <= self.sell_threshold and a.recommendation in ("SELL", "STRONG_SELL"):
+                elif a.score <= self.sell_threshold and a.recommendation in (
+                    "SELL",
+                    "STRONG_SELL",
+                ):
                     coin_balance = self.client.get_balance(a.ticker)
                     if coin_balance > 0:
                         sell_ratio = self._calc_sell_ratio(a.score)
@@ -947,7 +1114,9 @@ class AutoTrader:
                         # 보안 가드: 거래 안전 검증
                         safe, safe_msg = trade_safety.check_trade(sell_value)
                         if not safe:
-                            result["actions"].append(f"🛡️ 매도 차단 ({a.ticker}): {safe_msg}")
+                            result["actions"].append(
+                                f"🛡️ 매도 차단 ({a.ticker}): {safe_msg}"
+                            )
                             continue
                         with self._in_flight_lock:
                             self._in_flight.add(a.ticker)
@@ -955,23 +1124,36 @@ class AutoTrader:
                             order = self.client.sell_market_order(a.ticker, sell_amount)
                             if order.success:
                                 reason = f"스마트분석 매도 (점수:{a.score:+d}, 비율:{sell_ratio:.0%}, {', '.join(a.reasons[:2])})"
-                                self.tracker.log_trade("sell", a.ticker, sell_value,
-                                                       a.current_price, reason, order.order)
+                                self.tracker.log_trade(
+                                    "sell",
+                                    a.ticker,
+                                    sell_value,
+                                    a.current_price,
+                                    reason,
+                                    order.order,
+                                )
                                 trade_safety.record_trade(sell_value)
                                 result["actions"].append(
                                     f"매도: {a.ticker} x {sell_amount:.4f} ({sell_ratio:.0%}) (점수:{a.score:+d})"
                                 )
                                 self._record_cooldown(a.ticker)
                             else:
-                                result["errors"].append(f"매도 실패: {a.ticker} [{order.error_type}] {order.error_msg}")
+                                result["errors"].append(
+                                    f"매도 실패: {a.ticker} [{order.error_type}] {order.error_msg}"
+                                )
                         finally:
                             with self._in_flight_lock:
                                 self._in_flight.discard(a.ticker)
 
             # 4. 포트폴리오 스냅샷
-            tickers_for_price = [normalize_ticker(b['currency']) for b in balances
-                                 if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
-            prices = self.client.get_prices(tickers_for_price) if tickers_for_price else {}
+            tickers_for_price = [
+                normalize_ticker(b["currency"])
+                for b in balances
+                if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0
+            ]
+            prices = (
+                self.client.get_prices(tickers_for_price) if tickers_for_price else {}
+            )
             self.tracker.record_snapshot(balances, prices)
 
         except Exception as e:
@@ -1006,7 +1188,9 @@ class AutoTrader:
                 result["actions"].append(a["message"])
             ts_triggered = self._check_trailing_stops()
             for ts in ts_triggered:
-                result["actions"].append(f"트레일링스탑 매도: {ts['ticker']} (하락 {ts['drop_pct']}%)")
+                result["actions"].append(
+                    f"트레일링스탑 매도: {ts['ticker']} (하락 {ts['drop_pct']}%)"
+                )
         except Exception as e:
             result["errors"].append(f"알림/트레일링 체크 오류: {str(e)}")
 
@@ -1023,7 +1207,9 @@ class AutoTrader:
                 currency = b.get("currency", "")
                 if currency != "KRW" and float(b.get("balance", 0)) > 0:
                     held_tickers_s.append(normalize_ticker(currency))
-            current_prices_s = self.client.get_prices(held_tickers_s) if held_tickers_s else {}
+            current_prices_s = (
+                self.client.get_prices(held_tickers_s) if held_tickers_s else {}
+            )
 
             for b in balances:
                 currency = b.get("currency", "")
@@ -1054,11 +1240,21 @@ class AutoTrader:
                         reason_text = "손절" if action == "stop_loss" else "익절"
                         order = self.client.sell_market_order(ticker, actual_balance)
                         if order.success:
-                            self.tracker.log_trade("sell", ticker, actual_balance * current_price,
-                                                   current_price, reason_text, order.order)
-                            result["actions"].append(f"{reason_text} 매도: {ticker} x {actual_balance}")
+                            self.tracker.log_trade(
+                                "sell",
+                                ticker,
+                                actual_balance * current_price,
+                                current_price,
+                                reason_text,
+                                order.order,
+                            )
+                            result["actions"].append(
+                                f"{reason_text} 매도: {ticker} x {actual_balance}"
+                            )
                         else:
-                            result["errors"].append(f"{reason_text} 매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
+                            result["errors"].append(
+                                f"{reason_text} 매도 실패: {ticker} [{order.error_type}] {order.error_msg}"
+                            )
                     finally:
                         with self._in_flight_lock:
                             self._in_flight.discard(ticker)
@@ -1073,17 +1269,21 @@ class AutoTrader:
 
                     df = self.client.get_ohlcv(ticker, interval="day", count=30)
                     signal = self.strategy.evaluate(ticker, df)
-                    result["signals"].append({
-                        "ticker": ticker,
-                        "signal": signal.signal.value,
-                        "reason": signal.reason,
-                        "strength": round(signal.strength, 2),
-                    })
+                    result["signals"].append(
+                        {
+                            "ticker": ticker,
+                            "signal": signal.signal.value,
+                            "reason": signal.reason,
+                            "strength": round(signal.strength, 2),
+                        }
+                    )
 
                     if signal.signal == Signal.BUY:
                         # 포지션 한도 체크
                         if current_positions >= self.max_positions:
-                            result["actions"].append(f"매수 스킵 ({ticker}): 최대 포지션({self.max_positions}) 도달")
+                            result["actions"].append(
+                                f"매수 스킵 ({ticker}): 최대 포지션({self.max_positions}) 도달"
+                            )
                             continue
 
                         # 쿨다운 체크
@@ -1096,10 +1296,14 @@ class AutoTrader:
                             if self.max_budget > 0:
                                 remaining_budget = self.max_budget - self._total_spent
                                 if remaining_budget < config.MIN_ORDER_AMOUNT:
-                                    result["actions"].append(f"매수 스킵 ({ticker}): 예산 소진")
+                                    result["actions"].append(
+                                        f"매수 스킵 ({ticker}): 예산 소진"
+                                    )
                                     continue
 
-                            order_amount = self.risk.calculate_order_amount(krw_balance, signal.strength)
+                            order_amount = self.risk.calculate_order_amount(
+                                krw_balance, signal.strength
+                            )
                             if self.max_budget > 0:
                                 remaining_budget = self.max_budget - self._total_spent
                                 order_amount = min(order_amount, remaining_budget)
@@ -1108,25 +1312,43 @@ class AutoTrader:
                             # 보안 가드: 거래 안전 검증
                             safe, safe_msg = trade_safety.check_trade(order_amount)
                             if not safe:
-                                result["actions"].append(f"🛡️ 매수 차단 ({ticker}): {safe_msg}")
+                                result["actions"].append(
+                                    f"🛡️ 매수 차단 ({ticker}): {safe_msg}"
+                                )
                                 continue
                             self._record_cooldown(ticker)
                             with self._in_flight_lock:
                                 self._in_flight.add(ticker)
                             try:
-                                order = self.client.buy_market_order(ticker, order_amount)
+                                order = self.client.buy_market_order(
+                                    ticker, order_amount
+                                )
                                 if order.success:
-                                    self.tracker.log_trade("buy", ticker, order_amount,
-                                                           0, signal.reason, order.order)
+                                    self.tracker.log_trade(
+                                        "buy",
+                                        ticker,
+                                        order_amount,
+                                        0,
+                                        signal.reason,
+                                        order.order,
+                                    )
                                     trade_safety.record_trade(order_amount)
                                     with self._budget_lock:
                                         self._total_spent += order_amount
-                                        budget_info = f" [예산: {self._total_spent:,.0f}/{self.max_budget:,.0f}원]" if self.max_budget > 0 else ""
-                                    result["actions"].append(f"매수: {ticker} / {order_amount:,.0f}원{budget_info}")
+                                        budget_info = (
+                                            f" [예산: {self._total_spent:,.0f}/{self.max_budget:,.0f}원]"
+                                            if self.max_budget > 0
+                                            else ""
+                                        )
+                                    result["actions"].append(
+                                        f"매수: {ticker} / {order_amount:,.0f}원{budget_info}"
+                                    )
                                     krw_balance -= order_amount
                                     current_positions += 1
                                 else:
-                                    result["errors"].append(f"매수 실패: {ticker} [{order.error_type}] {order.error_msg}")
+                                    result["errors"].append(
+                                        f"매수 실패: {ticker} [{order.error_type}] {order.error_msg}"
+                                    )
                                     with self._cooldown_lock:
                                         self._trade_cooldown.pop(ticker, None)
                             finally:
@@ -1138,25 +1360,41 @@ class AutoTrader:
                     elif signal.signal == Signal.SELL:
                         coin_balance = self.client.get_balance(ticker)
                         if coin_balance > 0:
-                            sell_value = coin_balance * (self.client.get_current_price(ticker) or 0)
+                            sell_value = coin_balance * (
+                                self.client.get_current_price(ticker) or 0
+                            )
                             # 보안 가드: 거래 안전 검증
                             safe, safe_msg = trade_safety.check_trade(sell_value)
                             if not safe:
-                                result["actions"].append(f"🛡️ 매도 차단 ({ticker}): {safe_msg}")
+                                result["actions"].append(
+                                    f"🛡️ 매도 차단 ({ticker}): {safe_msg}"
+                                )
                                 continue
                             with self._in_flight_lock:
                                 self._in_flight.add(ticker)
                             try:
-                                order = self.client.sell_market_order(ticker, coin_balance)
+                                order = self.client.sell_market_order(
+                                    ticker, coin_balance
+                                )
                                 if order.success:
                                     price = self.client.get_current_price(ticker) or 0
-                                    self.tracker.log_trade("sell", ticker, coin_balance * price,
-                                                           price, signal.reason, order.order)
+                                    self.tracker.log_trade(
+                                        "sell",
+                                        ticker,
+                                        coin_balance * price,
+                                        price,
+                                        signal.reason,
+                                        order.order,
+                                    )
                                     trade_safety.record_trade(sell_value)
-                                    result["actions"].append(f"매도: {ticker} x {coin_balance}")
+                                    result["actions"].append(
+                                        f"매도: {ticker} x {coin_balance}"
+                                    )
                                     self._record_cooldown(ticker)
                                 else:
-                                    result["errors"].append(f"매도 실패: {ticker} [{order.error_type}] {order.error_msg}")
+                                    result["errors"].append(
+                                        f"매도 실패: {ticker} [{order.error_type}] {order.error_msg}"
+                                    )
                             finally:
                                 with self._in_flight_lock:
                                     self._in_flight.discard(ticker)
@@ -1165,9 +1403,14 @@ class AutoTrader:
                     result["errors"].append(f"{ticker}: {str(e)}")
 
             # 4. 포트폴리오 스냅샷
-            tickers_for_price = [normalize_ticker(b['currency']) for b in balances
-                                 if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
-            prices = self.client.get_prices(tickers_for_price) if tickers_for_price else {}
+            tickers_for_price = [
+                normalize_ticker(b["currency"])
+                for b in balances
+                if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0
+            ]
+            prices = (
+                self.client.get_prices(tickers_for_price) if tickers_for_price else {}
+            )
             self.tracker.record_snapshot(balances, prices)
 
         except Exception as e:
@@ -1185,7 +1428,9 @@ class AutoTrader:
     async def _loop(self):
         """자동매매 메인 루프"""
         mode = "스마트" if self.smart_mode else self.strategy_name
-        logger.info(f"자동매매 시작 (모드: {mode}, 간격: {self.interval}초, DRY_RUN: {config.DRY_RUN})")
+        logger.info(
+            f"자동매매 시작 (모드: {mode}, 간격: {self.interval}초, DRY_RUN: {config.DRY_RUN})"
+        )
         loop = asyncio.get_running_loop()
         while self.is_running:
             try:
@@ -1214,6 +1459,7 @@ class AutoTrader:
             # 이벤트 루프가 없으면 새로 생성
             def _run():
                 asyncio.run(self._loop())
+
             t = threading.Thread(target=_run, daemon=True)
             t.start()
             self._thread = t
@@ -1242,29 +1488,37 @@ class AutoTrader:
     def get_status(self) -> dict:
         """현재 자동매매 상태"""
         st = self._last_status
-        
+
         # 분석 정보 매핑 (bot은 market, reason 기대)
         analyses = []
         for a in st.get("analyses", []):
-            analyses.append({
-                "market": a.get("ticker", ""),
-                "score": a.get("score", 0),
-                "recommendation": a.get("recommendation", ""),
-                "reason": ", ".join(a.get("reasons", [])) if isinstance(a.get("reasons"), list) else str(a.get("reasons", "")),
-                "current_price": a.get("price", 0)
-            })
+            analyses.append(
+                {
+                    "market": a.get("ticker", ""),
+                    "score": a.get("score", 0),
+                    "recommendation": a.get("recommendation", ""),
+                    "reason": (
+                        ", ".join(a.get("reasons", []))
+                        if isinstance(a.get("reasons"), list)
+                        else str(a.get("reasons", ""))
+                    ),
+                    "current_price": a.get("price", 0),
+                }
+            )
 
         # 거래 정보 매핑 (bot은 action, market 기대)
         trades = []
         for t in self.tracker.get_recent_trades(10):
-            trades.append({
-                "timestamp": t.get("timestamp", ""),
-                "action": t.get("side", ""),
-                "market": t.get("ticker", ""),
-                "price": t.get("price", 0),
-                "amount": t.get("amount", 0),
-                "reason": t.get("reason", "")
-            })
+            trades.append(
+                {
+                    "timestamp": t.get("timestamp", ""),
+                    "action": t.get("side", ""),
+                    "market": t.get("ticker", ""),
+                    "price": t.get("price", 0),
+                    "amount": t.get("amount", 0),
+                    "reason": t.get("reason", ""),
+                }
+            )
 
         return {
             "is_running": self.is_running,

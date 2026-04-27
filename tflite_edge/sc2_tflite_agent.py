@@ -22,12 +22,14 @@ import numpy as np
 
 try:
     import tensorflow as tf
+
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
 
 try:
     import tflite_runtime.interpreter as tflite_rt
+
     TFLITE_RUNTIME_AVAILABLE = True
 except ImportError:
     TFLITE_RUNTIME_AVAILABLE = False
@@ -37,8 +39,10 @@ except ImportError:
 # Quantization Mode Enum
 # ============================================================
 
+
 class QuantMode(str, Enum):
     """Supported TFLite quantization modes."""
+
     FLOAT32 = "float32"
     FLOAT16 = "float16"
     DYNAMIC_RANGE = "dynamic_range"
@@ -49,9 +53,11 @@ class QuantMode(str, Enum):
 # Configuration
 # ============================================================
 
+
 @dataclass
 class QuantizationConfig:
     """Controls how a model is quantized during TFLite conversion."""
+
     mode: QuantMode = QuantMode.DYNAMIC_RANGE
     representative_dataset_size: int = 200
     input_mean: float = 0.0
@@ -63,6 +69,7 @@ class QuantizationConfig:
 @dataclass
 class TFLiteConfig:
     """Top-level configuration for the TFLite edge pipeline."""
+
     obs_dim: int = 48
     hidden_dim: int = 128
     n_actions: int = 10
@@ -78,6 +85,7 @@ class TFLiteConfig:
 # ============================================================
 # Mock Policy Network (NumPy-based)
 # ============================================================
+
 
 class MockPolicyNetwork:
     """Simulates a trained SC2 policy network for conversion testing.
@@ -106,8 +114,16 @@ class MockPolicyNetwork:
         }
 
     def get_weights(self) -> List[np.ndarray]:
-        return [self.w1, self.b1, self.w2, self.b2,
-                self.w_act, self.b_act, self.w_val, self.b_val]
+        return [
+            self.w1,
+            self.b1,
+            self.w2,
+            self.b2,
+            self.w_act,
+            self.b_act,
+            self.w_val,
+            self.b_val,
+        ]
 
     @property
     def param_count(self) -> int:
@@ -117,6 +133,7 @@ class MockPolicyNetwork:
 # ============================================================
 # TFLite Converter
 # ============================================================
+
 
 class TFLiteConverter:
     """Converts a policy network to TFLite format with quantization.
@@ -134,6 +151,7 @@ class TFLiteConverter:
         if not TF_AVAILABLE:
             raise RuntimeError("TensorFlow required for real conversion")
         import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Build Keras model
             inp = tf.keras.Input(shape=(self.cfg.obs_dim,))
@@ -161,14 +179,20 @@ class TFLiteConverter:
                         yield [rng.randn(1, self.cfg.obs_dim).astype(np.float32)]
 
                 converter.representative_dataset = rep_gen
-                converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+                converter.target_spec.supported_ops = [
+                    tf.lite.OpsSet.TFLITE_BUILTINS_INT8
+                ]
                 converter.inference_input_type = tf.int8
                 converter.inference_output_type = tf.int8
             tflite_model = converter.convert()
-        self._conversion_log.append({
-            "mode": mode.value, "model_size_bytes": len(tflite_model),
-            "timestamp": time.time(), "method": "real_tf",
-        })
+        self._conversion_log.append(
+            {
+                "mode": mode.value,
+                "model_size_bytes": len(tflite_model),
+                "timestamp": time.time(),
+                "method": "real_tf",
+            }
+        )
         return tflite_model
 
     def convert_mock(self, network: MockPolicyNetwork) -> bytes:
@@ -200,12 +224,17 @@ class TFLiteConverter:
             parts.append(qw)
         model_bytes = b"".join(parts)
 
-        self._conversion_log.append({
-            "mode": mode.value, "model_size_bytes": len(model_bytes),
-            "original_param_bytes": network.param_count * 4,
-            "compression_ratio": (network.param_count * 4) / max(len(model_bytes), 1),
-            "timestamp": time.time(), "method": "mock",
-        })
+        self._conversion_log.append(
+            {
+                "mode": mode.value,
+                "model_size_bytes": len(model_bytes),
+                "original_param_bytes": network.param_count * 4,
+                "compression_ratio": (network.param_count * 4)
+                / max(len(model_bytes), 1),
+                "timestamp": time.time(),
+                "method": "mock",
+            }
+        )
         return model_bytes
 
     def convert(self, network: MockPolicyNetwork) -> bytes:
@@ -222,6 +251,7 @@ class TFLiteConverter:
 # Edge Inference Engine
 # ============================================================
 
+
 class EdgeInferenceEngine:
     """Runs TFLite inference; falls back to NumPy mock."""
 
@@ -233,16 +263,19 @@ class EdgeInferenceEngine:
         self._throughputs: List[float] = []
         self._is_real = False
 
-    def load_model(self, model_bytes: bytes,
-                   network: Optional[MockPolicyNetwork] = None):
+    def load_model(
+        self, model_bytes: bytes, network: Optional[MockPolicyNetwork] = None
+    ):
         if TFLITE_RUNTIME_AVAILABLE:
             self._interpreter = tflite_rt.Interpreter(
-                model_content=model_bytes, num_threads=self.cfg.num_threads)
+                model_content=model_bytes, num_threads=self.cfg.num_threads
+            )
             self._interpreter.allocate_tensors()
             self._is_real = True
         elif TF_AVAILABLE:
             self._interpreter = tf.lite.Interpreter(
-                model_content=model_bytes, num_threads=self.cfg.num_threads)
+                model_content=model_bytes, num_threads=self.cfg.num_threads
+            )
             self._interpreter.allocate_tensors()
             self._is_real = True
         else:
@@ -274,9 +307,9 @@ class EdgeInferenceEngine:
         self._throughputs.append(bs / (elapsed_ms / 1000.0) if elapsed_ms > 0 else 0.0)
         return result
 
-    def benchmark(self, obs: np.ndarray,
-                  warmup: Optional[int] = None,
-                  runs: Optional[int] = None) -> Dict[str, float]:
+    def benchmark(
+        self, obs: np.ndarray, warmup: Optional[int] = None, runs: Optional[int] = None
+    ) -> Dict[str, float]:
         warmup = warmup or self.cfg.warmup_runs
         runs = runs or self.cfg.benchmark_runs
         for _ in range(warmup):
@@ -299,8 +332,9 @@ class EdgeInferenceEngine:
             "meets_target": bool(np.percentile(lat, 95) < self.cfg.target_latency_ms),
         }
 
-    def compare_accuracy(self, network: MockPolicyNetwork,
-                         n_samples: int = 100, seed: int = 42) -> Dict[str, float]:
+    def compare_accuracy(
+        self, network: MockPolicyNetwork, n_samples: int = 100, seed: int = 42
+    ) -> Dict[str, float]:
         rng = np.random.RandomState(seed)
         cos_logits, mae_logits, mae_vals = [], [], []
         for _ in range(n_samples):
@@ -324,8 +358,11 @@ class EdgeInferenceEngine:
         if not self._latencies:
             return {"mean_ms": 0.0, "count": 0}
         arr = np.array(self._latencies)
-        return {"mean_ms": float(np.mean(arr)), "std_ms": float(np.std(arr)),
-                "count": len(arr)}
+        return {
+            "mean_ms": float(np.mean(arr)),
+            "std_ms": float(np.std(arr)),
+            "count": len(arr),
+        }
 
     def reset_stats(self):
         self._latencies.clear()
@@ -336,12 +373,21 @@ class EdgeInferenceEngine:
 # TFLite Agent (SC2 integration)
 # ============================================================
 
+
 class TFLiteAgent:
     """SC2 agent using a TFLite-converted policy for edge inference."""
 
     ACTION_NAMES = [
-        "no_op", "attack", "move", "hold", "patrol",
-        "gather", "build", "ability", "retreat", "regroup",
+        "no_op",
+        "attack",
+        "move",
+        "hold",
+        "patrol",
+        "gather",
+        "build",
+        "ability",
+        "retreat",
+        "regroup",
     ]
 
     def __init__(self, cfg: Optional[TFLiteConfig] = None, seed: int = 42):
@@ -376,13 +422,19 @@ class TFLiteAgent:
             actions = np.argmax(probs, axis=-1)
         else:
             rng = np.random.RandomState(self.step_count + self.seed)
-            actions = np.array([rng.choice(probs.shape[-1], p=probs[b])
-                                for b in range(probs.shape[0])], dtype=np.int64)
+            actions = np.array(
+                [
+                    rng.choice(probs.shape[-1], p=probs[b])
+                    for b in range(probs.shape[0])
+                ],
+                dtype=np.int64,
+            )
         self.step_count += 1
         return {"actions": actions, "action_probs": probs, "values": out["value"]}
 
-    def act_on_game_state(self, game_state: Dict[str, Any],
-                          deterministic: bool = False) -> List[Dict[str, Any]]:
+    def act_on_game_state(
+        self, game_state: Dict[str, Any], deterministic: bool = False
+    ) -> List[Dict[str, Any]]:
         units = game_state.get("units", [])
         friendly = [u for u in units if u.get("is_friendly", True)]
         n = min(len(friendly), self.cfg.max_units)
@@ -403,19 +455,27 @@ class TFLiteAgent:
         decisions = []
         for i in range(n):
             idx = int(result["actions"][i])
-            decisions.append({
-                "unit_tag": friendly[i].get("tag", i),
-                "action_type": self.ACTION_NAMES[idx],
-                "action_idx": idx,
-                "value_estimate": float(result["values"][i]),
-                "action_probs": {nm: float(result["action_probs"][i, j])
-                                 for j, nm in enumerate(self.ACTION_NAMES)},
-            })
+            decisions.append(
+                {
+                    "unit_tag": friendly[i].get("tag", i),
+                    "action_type": self.ACTION_NAMES[idx],
+                    "action_idx": idx,
+                    "value_estimate": float(result["values"][i]),
+                    "action_probs": {
+                        nm: float(result["action_probs"][i, j])
+                        for j, nm in enumerate(self.ACTION_NAMES)
+                    },
+                }
+            )
         return decisions
 
     def run_quant_comparison(self) -> Dict[str, Any]:
         results = {}
-        obs = np.random.RandomState(self.seed).randn(1, self.cfg.obs_dim).astype(np.float32)
+        obs = (
+            np.random.RandomState(self.seed)
+            .randn(1, self.cfg.obs_dim)
+            .astype(np.float32)
+        )
         for mode in QuantMode:
             self.cfg.quant.mode = mode
             conv = TFLiteConverter(self.cfg)
@@ -437,7 +497,11 @@ class TFLiteAgent:
     def benchmark(self, batch_size: int = 1) -> Dict[str, float]:
         if not self._is_loaded:
             self.convert_and_load()
-        obs = np.random.RandomState(self.seed).randn(batch_size, self.cfg.obs_dim).astype(np.float32)
+        obs = (
+            np.random.RandomState(self.seed)
+            .randn(batch_size, self.cfg.obs_dim)
+            .astype(np.float32)
+        )
         return self.engine.benchmark(obs)
 
     def export_model(self, path: str):
@@ -469,6 +533,7 @@ class TFLiteAgent:
 # CLI Demo
 # ============================================================
 
+
 def _demo_conversion():
     print("=" * 60)
     print("TFLite Conversion (all quantization modes)")
@@ -480,8 +545,10 @@ def _demo_conversion():
     for mode in QuantMode:
         cfg.quant.mode = mode
         mb = TFLiteConverter(cfg).convert_mock(net)
-        print(f"  {mode.value:15s} -> {len(mb):>8,} bytes "
-              f"(compression: {orig_size / max(len(mb), 1):.2f}x)")
+        print(
+            f"  {mode.value:15s} -> {len(mb):>8,} bytes "
+            f"(compression: {orig_size / max(len(mb), 1):.2f}x)"
+        )
     print()
 
 
@@ -499,9 +566,11 @@ def _demo_benchmark():
         eng.load_model(mb, network=net)
         b = eng.benchmark(obs)
         s = "PASS" if b["meets_target"] else "FAIL"
-        print(f"  {mode.value:15s} | mean:{b['mean_latency_ms']:6.3f}ms "
-              f"| p95:{b['p95_latency_ms']:6.3f}ms "
-              f"| thr:{b['mean_throughput_fps']:8.0f}fps | [{s}]")
+        print(
+            f"  {mode.value:15s} | mean:{b['mean_latency_ms']:6.3f}ms "
+            f"| p95:{b['p95_latency_ms']:6.3f}ms "
+            f"| thr:{b['mean_throughput_fps']:8.0f}fps | [{s}]"
+        )
     print()
 
 
@@ -511,13 +580,38 @@ def _demo_game_state():
     print("=" * 60)
     agent = TFLiteAgent(seed=42)
     agent.convert_and_load(QuantMode.DYNAMIC_RANGE)
-    gs = {"units": [
-        {"type_id": 84, "x": 50, "y": 50, "health": 45, "is_friendly": True, "tag": 1001},
-        {"type_id": 84, "x": 52, "y": 48, "health": 40, "is_friendly": True, "tag": 1002},
-        {"type_id": 105, "x": 55, "y": 53, "health": 35, "is_friendly": True, "tag": 1003},
-    ]}
+    gs = {
+        "units": [
+            {
+                "type_id": 84,
+                "x": 50,
+                "y": 50,
+                "health": 45,
+                "is_friendly": True,
+                "tag": 1001,
+            },
+            {
+                "type_id": 84,
+                "x": 52,
+                "y": 48,
+                "health": 40,
+                "is_friendly": True,
+                "tag": 1002,
+            },
+            {
+                "type_id": 105,
+                "x": 55,
+                "y": 53,
+                "health": 35,
+                "is_friendly": True,
+                "tag": 1003,
+            },
+        ]
+    }
     for d in agent.act_on_game_state(gs, deterministic=True):
-        print(f"  Unit {d['unit_tag']}: {d['action_type']} (value={d['value_estimate']:.3f})")
+        print(
+            f"  Unit {d['unit_tag']}: {d['action_type']} (value={d['value_estimate']:.3f})"
+        )
     print()
     print(agent.summary())
     print()
@@ -529,15 +623,19 @@ def _demo_quant_comparison():
     print("=" * 60)
     agent = TFLiteAgent(seed=42)
     results = agent.run_quant_comparison()
-    print(f"  {'Mode':15s} | {'Size':>10s} | {'Latency':>10s} | "
-          f"{'CosSim':>8s} | {'MaxErr':>8s} | Target")
+    print(
+        f"  {'Mode':15s} | {'Size':>10s} | {'Latency':>10s} | "
+        f"{'CosSim':>8s} | {'MaxErr':>8s} | Target"
+    )
     print("  " + "-" * 72)
     for mn, st in results.items():
         ts = "PASS" if st["meets_target"] else "FAIL"
-        print(f"  {mn:15s} | {st['model_size_bytes']:>8,} B | "
-              f"{st['mean_latency_ms']:>8.3f}ms | "
-              f"{st['logits_cosine_sim']:>8.6f} | "
-              f"{st['logits_max_abs_error']:>8.6f} | {ts}")
+        print(
+            f"  {mn:15s} | {st['model_size_bytes']:>8,} B | "
+            f"{st['mean_latency_ms']:>8.3f}ms | "
+            f"{st['logits_cosine_sim']:>8.6f} | "
+            f"{st['logits_max_abs_error']:>8.6f} | {ts}"
+        )
     print()
 
 

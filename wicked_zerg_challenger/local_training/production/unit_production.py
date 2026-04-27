@@ -11,6 +11,7 @@ logger = logging.getLogger("UnitProduction")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
+
     class UnitTypeId:
         ZERGLING = "ZERGLING"
         ROACH = "ROACH"
@@ -39,7 +40,7 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
     for attempt in range(retry_count + 1):
         try:
             # Validate unit is still valid
-            if not unit or not hasattr(unit, 'train'):
+            if not unit or not hasattr(unit, "train"):
                 logger.info(f"Invalid unit for training {unit_type}")
                 return False
 
@@ -56,7 +57,9 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
             if attempt == retry_count:  # Final attempt failed
                 logger.error(f"[{int(game_time)}s] Failed to train {unit_type}: {e}")
             else:
-                logger.info(f"[{int(game_time)}s] Retry {attempt + 1}/{retry_count} for {unit_type}: {e}")
+                logger.info(
+                    f"[{int(game_time)}s] Retry {attempt + 1}/{retry_count} for {unit_type}: {e}"
+                )
 
     return False
 
@@ -95,12 +98,19 @@ async def produce_army_unit(resilience, larva, ignore_caps=False) -> bool:
     if not ignore_caps:
         # Always maintain minimum army for defense before teching/droning
         min_defense_met = True
-        total_army_supply = (zergling_count * 0.5) + (roach_count * 2) + (hydra_count * 2) + (mutalisk_count * 2)
+        total_army_supply = (
+            (zergling_count * 0.5)
+            + (roach_count * 2)
+            + (hydra_count * 2)
+            + (mutalisk_count * 2)
+        )
 
         if game_time >= 120 and game_time < 240:
             min_defense_met = zergling_count >= 6
         elif game_time >= 240 and game_time < 360:
-            min_defense_met = zergling_count >= 8 or roach_count >= 4 or total_army_supply >= 8
+            min_defense_met = (
+                zergling_count >= 8 or roach_count >= 4 or total_army_supply >= 8
+            )
         elif game_time >= 360:
             min_defense_met = total_army_supply >= 10
 
@@ -112,8 +122,11 @@ async def produce_army_unit(resilience, larva, ignore_caps=False) -> bool:
 
     # === COUNTER ENEMY COMPOSITION ===
     from local_training.production.counter_units import get_counter_unit
+
     enemy_units = getattr(b, "enemy_units", [])
-    counter_unit = get_counter_unit(resilience, enemy_units, has_roach_warren, has_hydra_den, has_spire)
+    counter_unit = get_counter_unit(
+        resilience, enemy_units, has_roach_warren, has_hydra_den, has_spire
+    )
 
     if counter_unit and b.can_afford(counter_unit) and b.supply_left >= 2:
         return await safe_train(resilience, larva, counter_unit)
@@ -131,24 +144,28 @@ async def produce_army_unit(resilience, larva, ignore_caps=False) -> bool:
 
     # Late game priority
     if game_time > 600 and has_spire:
-         # Logic ...
-         if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
-              return await safe_train(resilience, larva, UnitTypeId.HYDRALISK)
+        # Logic ...
+        if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
+            return await safe_train(resilience, larva, UnitTypeId.HYDRALISK)
 
     # Mid game priority
     if game_time > 300:
-         if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
-              return await safe_train(resilience, larva, UnitTypeId.HYDRALISK)
-         if has_roach_warren and b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
-              return await safe_train(resilience, larva, UnitTypeId.ROACH)
+        if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
+            return await safe_train(resilience, larva, UnitTypeId.HYDRALISK)
+        if has_roach_warren and b.can_afford(UnitTypeId.ROACH) and b.supply_left >= 2:
+            return await safe_train(resilience, larva, UnitTypeId.ROACH)
 
     # Default / Early game: Zerglings
-    if (zergling_count < max_zerglings or ignore_caps) and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
+    if (
+        (zergling_count < max_zerglings or ignore_caps)
+        and b.can_afford(UnitTypeId.ZERGLING)
+        and b.supply_left >= 1
+    ):
         return await safe_train(resilience, larva, UnitTypeId.ZERGLING)
 
     # If ignore_caps is True and we failed to build tech units, DUMP into Zerglings anyway
     if ignore_caps and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
-         return await safe_train(resilience, larva, UnitTypeId.ZERGLING)
+        return await safe_train(resilience, larva, UnitTypeId.ZERGLING)
 
     return False
 

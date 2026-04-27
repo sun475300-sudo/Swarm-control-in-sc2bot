@@ -71,7 +71,11 @@ def insert_sample_units():
         )
 
     # Tech path edges
-    tech = [("Zergling", "Baneling", 2), ("Roach", "Ravager", 3), ("Hydralisk", "Lurker", 3)]
+    tech = [
+        ("Zergling", "Baneling", 2),
+        ("Roach", "Ravager", 3),
+        ("Hydralisk", "Lurker", 3),
+    ]
     for src, dst, lvl in tech:
         mg.execute(
             "MERGE (a:Unit {name:$src}) MERGE (b:Unit {name:$dst}) "

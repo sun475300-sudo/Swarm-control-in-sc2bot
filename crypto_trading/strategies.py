@@ -6,6 +6,7 @@ Trading Strategies
 - VWAP 기반 매매 (#44)
 - 스토캐스틱 RSI (#45)
 """
+
 import logging
 from dataclasses import dataclass
 from enum import Enum
@@ -69,13 +70,22 @@ class VolatilityBreakout:
         current_price = today["close"]
 
         if current_price > target_price:
-            strength = min((current_price - target_price) / target_range, 1.0) if target_range > 0 else 0.5
-            return TradeSignal(
-                Signal.BUY, ticker,
-                f"변동성 돌파: 현재가 {current_price:,.0f} > 목표가 {target_price:,.0f}",
-                strength=strength
+            strength = (
+                min((current_price - target_price) / target_range, 1.0)
+                if target_range > 0
+                else 0.5
             )
-        return TradeSignal(Signal.HOLD, ticker, f"돌파 미달: {current_price:,.0f} < {target_price:,.0f}")
+            return TradeSignal(
+                Signal.BUY,
+                ticker,
+                f"변동성 돌파: 현재가 {current_price:,.0f} > 목표가 {target_price:,.0f}",
+                strength=strength,
+            )
+        return TradeSignal(
+            Signal.HOLD,
+            ticker,
+            f"돌파 미달: {current_price:,.0f} < {target_price:,.0f}",
+        )
 
 
 class MACrossover:
@@ -105,18 +115,20 @@ class MACrossover:
         if prev["ma_short"] <= prev["ma_long"] and curr["ma_short"] > curr["ma_long"]:
             gap = (curr["ma_short"] - curr["ma_long"]) / curr["ma_long"]
             return TradeSignal(
-                Signal.BUY, ticker,
+                Signal.BUY,
+                ticker,
                 f"골든크로스: MA{self.short_period}={curr['ma_short']:,.0f} > MA{self.long_period}={curr['ma_long']:,.0f}",
-                strength=min(gap * 10, 1.0)
+                strength=min(gap * 10, 1.0),
             )
 
         # 데드크로스 (위→아래)
         if prev["ma_short"] >= prev["ma_long"] and curr["ma_short"] < curr["ma_long"]:
             gap = (curr["ma_long"] - curr["ma_short"]) / curr["ma_long"]
             return TradeSignal(
-                Signal.SELL, ticker,
+                Signal.SELL,
+                ticker,
                 f"데드크로스: MA{self.short_period}={curr['ma_short']:,.0f} < MA{self.long_period}={curr['ma_long']:,.0f}",
-                strength=min(gap * 10, 1.0)
+                strength=min(gap * 10, 1.0),
             )
 
         return TradeSignal(Signal.HOLD, ticker, "크로스 신호 없음")
@@ -129,7 +141,9 @@ class RSIStrategy:
     - RSI > overbought → 매도 (과매수)
     """
 
-    def __init__(self, period: int = 14, oversold: float = 30.0, overbought: float = 70.0):
+    def __init__(
+        self, period: int = 14, oversold: float = 30.0, overbought: float = 70.0
+    ):
         self.period = period
         self.oversold = oversold
         self.overbought = overbought
@@ -148,17 +162,19 @@ class RSIStrategy:
         if rsi < self.oversold:
             strength = (self.oversold - rsi) / self.oversold
             return TradeSignal(
-                Signal.BUY, ticker,
+                Signal.BUY,
+                ticker,
                 f"RSI 과매도: {rsi:.1f} < {self.oversold}",
-                strength=min(strength, 1.0)
+                strength=min(strength, 1.0),
             )
 
         if rsi > self.overbought:
             strength = (rsi - self.overbought) / (100 - self.overbought)
             return TradeSignal(
-                Signal.SELL, ticker,
+                Signal.SELL,
+                ticker,
                 f"RSI 과매수: {rsi:.1f} > {self.overbought}",
-                strength=min(strength, 1.0)
+                strength=min(strength, 1.0),
             )
 
         return TradeSignal(Signal.HOLD, ticker, f"RSI 중립: {rsi:.1f}")
@@ -218,7 +234,8 @@ class VWAPStrategy:
         if prev_close <= prev_vwap and curr_close > curr_vwap:
             strength = min(abs(deviation_pct) / self.deviation_threshold, 1.0)
             return TradeSignal(
-                Signal.BUY, ticker,
+                Signal.BUY,
+                ticker,
                 f"VWAP 상향 돌파: 현재가 {curr_close:,.0f} > VWAP {curr_vwap:,.0f} (괴리 {deviation_pct:+.2f}%)",
                 strength=strength,
             )
@@ -227,7 +244,8 @@ class VWAPStrategy:
         if prev_close >= prev_vwap and curr_close < curr_vwap:
             strength = min(abs(deviation_pct) / self.deviation_threshold, 1.0)
             return TradeSignal(
-                Signal.SELL, ticker,
+                Signal.SELL,
+                ticker,
                 f"VWAP 하향 이탈: 현재가 {curr_close:,.0f} < VWAP {curr_vwap:,.0f} (괴리 {deviation_pct:+.2f}%)",
                 strength=strength,
             )
@@ -236,7 +254,8 @@ class VWAPStrategy:
         if deviation_pct < -self.deviation_threshold:
             strength = min(abs(deviation_pct) / (self.deviation_threshold * 2), 1.0)
             return TradeSignal(
-                Signal.BUY, ticker,
+                Signal.BUY,
+                ticker,
                 f"VWAP 하방 과괴리: {deviation_pct:+.2f}% (기준: {self.deviation_threshold}%)",
                 strength=strength * 0.7,
             )
@@ -244,14 +263,16 @@ class VWAPStrategy:
         if deviation_pct > self.deviation_threshold:
             strength = min(abs(deviation_pct) / (self.deviation_threshold * 2), 1.0)
             return TradeSignal(
-                Signal.SELL, ticker,
+                Signal.SELL,
+                ticker,
                 f"VWAP 상방 과괴리: {deviation_pct:+.2f}% (기준: {self.deviation_threshold}%)",
                 strength=strength * 0.7,
             )
 
         return TradeSignal(
-            Signal.HOLD, ticker,
-            f"VWAP 중립: 현재가 {curr_close:,.0f}, VWAP {curr_vwap:,.0f} (괴리 {deviation_pct:+.2f}%)"
+            Signal.HOLD,
+            ticker,
+            f"VWAP 중립: 현재가 {curr_close:,.0f}, VWAP {curr_vwap:,.0f} (괴리 {deviation_pct:+.2f}%)",
         )
 
 
@@ -318,7 +339,9 @@ class StochasticRSIStrategy:
 
     def evaluate(self, ticker: str, df: pd.DataFrame) -> TradeSignal:
         """스토캐스틱 RSI 기반 매매 신호 평가"""
-        min_data = self.rsi_period + self.stoch_period + self.k_smooth + self.d_smooth + 2
+        min_data = (
+            self.rsi_period + self.stoch_period + self.k_smooth + self.d_smooth + 2
+        )
         if df is None or len(df) < min_data:
             return TradeSignal(Signal.HOLD, ticker, "데이터 부족")
 
@@ -336,7 +359,8 @@ class StochasticRSIStrategy:
         if prev_k <= prev_d and curr_k > curr_d and curr_k < self.oversold:
             strength = (self.oversold - curr_k) / self.oversold
             return TradeSignal(
-                Signal.BUY, ticker,
+                Signal.BUY,
+                ticker,
                 f"Stoch RSI 매수: %K({curr_k:.1f})가 %D({curr_d:.1f}) 상향돌파 (과매도영역)",
                 strength=min(strength, 1.0),
             )
@@ -345,7 +369,8 @@ class StochasticRSIStrategy:
         if curr_k < self.oversold * 0.5 and curr_k > prev_k:
             strength = (self.oversold - curr_k) / self.oversold
             return TradeSignal(
-                Signal.BUY, ticker,
+                Signal.BUY,
+                ticker,
                 f"Stoch RSI 극과매도 반등: %K={curr_k:.1f} (기준: {self.oversold})",
                 strength=min(strength * 0.6, 1.0),
             )
@@ -354,7 +379,8 @@ class StochasticRSIStrategy:
         if prev_k >= prev_d and curr_k < curr_d and curr_k > self.overbought:
             strength = (curr_k - self.overbought) / (100 - self.overbought)
             return TradeSignal(
-                Signal.SELL, ticker,
+                Signal.SELL,
+                ticker,
                 f"Stoch RSI 매도: %K({curr_k:.1f})가 %D({curr_d:.1f}) 하향돌파 (과매수영역)",
                 strength=min(strength, 1.0),
             )
@@ -363,14 +389,14 @@ class StochasticRSIStrategy:
         if curr_k > self.overbought + (100 - self.overbought) * 0.5 and curr_k < prev_k:
             strength = (curr_k - self.overbought) / (100 - self.overbought)
             return TradeSignal(
-                Signal.SELL, ticker,
+                Signal.SELL,
+                ticker,
                 f"Stoch RSI 극과매수 하락: %K={curr_k:.1f} (기준: {self.overbought})",
                 strength=min(strength * 0.6, 1.0),
             )
 
         return TradeSignal(
-            Signal.HOLD, ticker,
-            f"Stoch RSI 중립: %K={curr_k:.1f}, %D={curr_d:.1f}"
+            Signal.HOLD, ticker, f"Stoch RSI 중립: %K={curr_k:.1f}, %D={curr_d:.1f}"
         )
 
 
@@ -388,5 +414,7 @@ def get_strategy(name: str, **kwargs):
     """이름으로 전략 인스턴스 생성"""
     cls = AVAILABLE_STRATEGIES.get(name)
     if cls is None:
-        raise ValueError(f"Unknown strategy: {name}. Available: {list(AVAILABLE_STRATEGIES.keys())}")
+        raise ValueError(
+            f"Unknown strategy: {name}. Available: {list(AVAILABLE_STRATEGIES.keys())}"
+        )
     return cls(**kwargs)

@@ -28,10 +28,12 @@ from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 def kill_all_sc2_processes():
     """모든 SC2 프로세스 강제 종료"""
     try:
-        subprocess.run(["taskkill", "/F", "/IM", "SC2_x64.exe"],
-                      capture_output=True, timeout=5)
-        subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
-                      capture_output=True, timeout=5)
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
+        )
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
+        )
         time.sleep(2)  # 프로세스 종료 대기
         logger.info("All SC2 processes terminated")
     except Exception as e:
@@ -40,16 +42,21 @@ def kill_all_sc2_processes():
 
 def main():
     # ★★★ 시작 전 모든 SC2 프로세스 종료 ★★★
-    logger.info("\n" + "="*70)
+    logger.info("\n" + "=" * 70)
     logger.info("KILLING ALL EXISTING SC2 PROCESSES...")
-    logger.info("="*70)
+    logger.info("=" * 70)
     kill_all_sc2_processes()
-    logger.info("\n" + "="*70)
+    logger.info("\n" + "=" * 70)
     logger.info("SINGLE GAME TEST - ONE WINDOW ONLY")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     # 맵/종족 다양성 개선: 균등 분배
-    available_maps = ["AbyssalReefLE", "(2)CatalystLE", "AscensiontoAiurLE", "BelShirVestigeLE"]
+    available_maps = [
+        "AbyssalReefLE",
+        "(2)CatalystLE",
+        "AscensiontoAiurLE",
+        "BelShirVestigeLE",
+    ]
     enemy_races = [Race.Terran, Race.Protoss, Race.Zerg]
 
     # 랜덤 선택 (균등 확률)
@@ -59,18 +66,18 @@ def main():
     logger.info(f"Map: {selected_map}")
     logger.info(f"Enemy Race: {enemy_race.name}")
     logger.info("Difficulty: Easy")
-    logger.info("="*70 + "\n")
+    logger.info("=" * 70 + "\n")
 
     try:
         result = run_game(
             maps.get(selected_map),
             [
                 Bot(Race.Zerg, WickedZergBotProImpl()),
-                Computer(enemy_race, Difficulty.Easy)
+                Computer(enemy_race, Difficulty.Easy),
             ],
             realtime=False,
             save_replay_as=None,
-            game_time_limit=(60*10)  # 10분 제한 (600초)
+            game_time_limit=(60 * 10),  # 10분 제한 (600초)
         )
 
         # 결과 출력
@@ -83,9 +90,9 @@ def main():
         logger.error(f"\n[ERROR] {e}")
 
     # ★★★ 게임 종료 후 프로세스 정리 ★★★
-    logger.info("\n" + "="*70)
+    logger.info("\n" + "=" * 70)
     logger.info("CLEANING UP...")
-    logger.info("="*70)
+    logger.info("=" * 70)
     kill_all_sc2_processes()
     logger.info("\nDone.")
 

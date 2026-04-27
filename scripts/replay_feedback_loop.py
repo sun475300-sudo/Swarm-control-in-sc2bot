@@ -46,7 +46,9 @@ class ReplayFeedback:
     notes: list[str]
 
 
-def _calculate_priority_score(size_kb: float, player_count: int, winner_count: int, note_count: int) -> float:
+def _calculate_priority_score(
+    size_kb: float, player_count: int, winner_count: int, note_count: int
+) -> float:
     """Compute replay training priority using Rust when available, else Python fallback."""
     try:
         import swarm_rust_accel  # type: ignore
@@ -73,7 +75,9 @@ def _calculate_priority_score(size_kb: float, player_count: int, winner_count: i
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate replay feedback artifacts")
-    parser.add_argument("--limit", type=int, default=10, help="Number of recent replays to process")
+    parser.add_argument(
+        "--limit", type=int, default=10, help="Number of recent replays to process"
+    )
     parser.add_argument(
         "--replay-dir",
         action="append",
@@ -215,7 +219,9 @@ def _read_json(path: Path, default: Any) -> Any:
         return default
 
 
-def write_artifacts(output_dir: Path, feedbacks: list[ReplayFeedback], history_max: int) -> None:
+def write_artifacts(
+    output_dir: Path, feedbacks: list[ReplayFeedback], history_max: int
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     latest_payload: dict[str, Any] = {
@@ -224,7 +230,9 @@ def write_artifacts(output_dir: Path, feedbacks: list[ReplayFeedback], history_m
         "items": [asdict(f) for f in feedbacks],
     }
     latest_path = output_dir / "latest_feedback.json"
-    latest_path.write_text(json.dumps(latest_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    latest_path.write_text(
+        json.dumps(latest_payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     history_path = output_dir / "history.json"
     raw_history = _read_json(history_path, default=[])
@@ -244,7 +252,9 @@ def write_artifacts(output_dir: Path, feedbacks: list[ReplayFeedback], history_m
         )
 
     history = history[-history_max:]
-    history_path.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    history_path.write_text(
+        json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     summary_path = output_dir / "summary.md"
     summary_lines = [

@@ -29,23 +29,30 @@ except ImportError:
 
 class BuildOrderType(Enum):
     """빌드오더 종류"""
-    HATCH_FIRST = "hatch_first"           # 해처리 퍼스트 (경제)
-    POOL_FIRST = "pool_first"             # 풀 퍼스트 (안전)
-    TWELVE_POOL = "twelve_pool"           # 12풀 (공격적)
-    ROACH_RUSH = "roach_rush"             # 바퀴 러시
-    LING_BANE = "ling_bane"               # 저글링+맹독충
-    HYDRA_TIMING = "hydra_timing"         # 히드라 타이밍
-    MUTA_LING = "muta_ling"               # 뮤탈+저글링
-    ROACH_HYDRA = "roach_hydra"           # 바퀴+히드라
-    MACRO_HATCH = "macro_hatch"           # 매크로 해처리
-    DEFENSIVE = "defensive"               # 수비적 빌드
+
+    HATCH_FIRST = "hatch_first"  # 해처리 퍼스트 (경제)
+    POOL_FIRST = "pool_first"  # 풀 퍼스트 (안전)
+    TWELVE_POOL = "twelve_pool"  # 12풀 (공격적)
+    ROACH_RUSH = "roach_rush"  # 바퀴 러시
+    LING_BANE = "ling_bane"  # 저글링+맹독충
+    HYDRA_TIMING = "hydra_timing"  # 히드라 타이밍
+    MUTA_LING = "muta_ling"  # 뮤탈+저글링
+    ROACH_HYDRA = "roach_hydra"  # 바퀴+히드라
+    MACRO_HATCH = "macro_hatch"  # 매크로 해처리
+    DEFENSIVE = "defensive"  # 수비적 빌드
 
 
 class BuildStep:
     """빌드오더 단일 스텝"""
 
-    def __init__(self, supply: int, action: str, unit_or_building: str,
-                 priority: int = 5, condition: Optional[str] = None):
+    def __init__(
+        self,
+        supply: int,
+        action: str,
+        unit_or_building: str,
+        priority: int = 5,
+        condition: Optional[str] = None,
+    ):
         """
         Args:
             supply: 실행 서플라이
@@ -200,7 +207,7 @@ class AdaptiveBuildOrderManager:
         """
         current_supply = getattr(self.bot, "supply_used", 0)
 
-        for step in self.build_steps[self.current_step_index:]:
+        for step in self.build_steps[self.current_step_index :]:
             if step.completed or step.skipped:
                 continue
 
@@ -213,7 +220,9 @@ class AdaptiveBuildOrderManager:
 
         return None
 
-    def transition_build(self, new_build_type: BuildOrderType, reason: str = "") -> bool:
+    def transition_build(
+        self, new_build_type: BuildOrderType, reason: str = ""
+    ) -> bool:
         """
         빌드오더 전환
 
@@ -246,15 +255,19 @@ class AdaptiveBuildOrderManager:
         # 이력 기록
         self.transition_count += 1
         self.last_transition_time = game_time
-        self.build_history.append({
-            "time": game_time,
-            "from": old_build.value,
-            "to": new_build_type.value,
-            "reason": reason,
-        })
+        self.build_history.append(
+            {
+                "time": game_time,
+                "from": old_build.value,
+                "to": new_build_type.value,
+                "reason": reason,
+            }
+        )
 
-        logger.info(f"빌드 전환: {old_build.value} -> {new_build_type.value} "
-              f"(사유: {reason})")
+        logger.info(
+            f"빌드 전환: {old_build.value} -> {new_build_type.value} "
+            f"(사유: {reason})"
+        )
         return True
 
     def _detect_enemy_race(self) -> None:
@@ -311,9 +324,13 @@ class AdaptiveBuildOrderManager:
         """시간 기반 자동 빌드 전환"""
         # 5분 이후 여전히 초기 빌드면 매크로 전환
         if game_time > 300 and self.transition_count == 0:
-            if self.current_build_type in (BuildOrderType.POOL_FIRST,
-                                           BuildOrderType.TWELVE_POOL):
-                self.transition_build(BuildOrderType.ROACH_HYDRA, "5분 경과, 매크로 전환")
+            if self.current_build_type in (
+                BuildOrderType.POOL_FIRST,
+                BuildOrderType.TWELVE_POOL,
+            ):
+                self.transition_build(
+                    BuildOrderType.ROACH_HYDRA, "5분 경과, 매크로 전환"
+                )
 
         # 10분 이후 후반 전환
         if game_time > 600 and self.current_build_type == BuildOrderType.ROACH_RUSH:

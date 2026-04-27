@@ -32,9 +32,12 @@ DB_PATH = "/data/sc2_stats.db"
 # Task callbacks
 # ---------------------------------------------------------------------------
 
+
 def parse_metadata(**context):
     """Read .SC2Replay files and extract basic metadata."""
-    replay_files = glob.glob(os.path.join(REPLAY_DIR, "**", "*.SC2Replay"), recursive=True)
+    replay_files = glob.glob(
+        os.path.join(REPLAY_DIR, "**", "*.SC2Replay"), recursive=True
+    )
     records = []
     for path in replay_files:
         filename = os.path.basename(path)
@@ -43,12 +46,14 @@ def parse_metadata(**context):
         matchup = parts[0] if len(parts) > 0 else "ZvT"
         result = parts[1] if len(parts) > 1 else "win"
         date_str = parts[2] if len(parts) > 2 else "20260101"
-        records.append({
-            "file": filename,
-            "matchup": matchup,
-            "result": result,
-            "date": date_str,
-        })
+        records.append(
+            {
+                "file": filename,
+                "matchup": matchup,
+                "result": result,
+                "date": date_str,
+            }
+        )
     context["ti"].xcom_push(key="replay_records", value=records)
     print(f"Parsed {len(records)} replay files.")
 
@@ -76,14 +81,16 @@ def load_to_db(**context):
     win_rates = context["ti"].xcom_pull(key="win_rates", task_ids="compute_stats")
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS matchup_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             matchup TEXT NOT NULL,
             win_rate REAL NOT NULL,
             recorded_at TEXT NOT NULL
         )
-    """)
+    """
+    )
     now = datetime.utcnow().isoformat()
     for matchup, rate in win_rates.items():
         cur.execute(
@@ -137,9 +144,17 @@ with DAG(
         html_content="""
             <h2>SC2 Zerg Bot — Daily Stats</h2>
             <p>Replay pipeline completed for <b>{{ ds }}</b>.</p>
-            <p>Check the database at <code>""" + DB_PATH + """</code> for updated win rates.</p>
+            <p>Check the database at <code>"""
+        + DB_PATH
+        + """</code> for updated win rates.</p>
         """,
     )
 
     # Task dependency chain
-    extract_replays >> parse_metadata_task >> compute_stats_task >> load_to_db_task >> send_report
+    (
+        extract_replays
+        >> parse_metadata_task
+        >> compute_stats_task
+        >> load_to_db_task
+        >> send_report
+    )

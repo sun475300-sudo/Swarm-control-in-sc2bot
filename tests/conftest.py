@@ -23,6 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # 경로 관련 Fixtures
 # ═══════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def project_root() -> Path:
     """프로젝트 루트 디렉토리 경로를 반환한다."""
@@ -40,6 +41,7 @@ def temp_dir():
 # ═══════════════════════════════════════════════════════
 # 환경변수 Fixtures
 # ═══════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def clean_env(monkeypatch):
@@ -80,6 +82,7 @@ def mock_env(monkeypatch):
 # 설정 관련 Fixtures
 # ═══════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def sample_config():
     """테스트용 기본 설정 딕셔너리를 반환한다."""
@@ -112,6 +115,7 @@ def sample_config_yaml(temp_dir, sample_config):
     """테스트용 YAML 설정 파일을 임시 디렉토리에 생성하여 경로를 반환한다."""
     try:
         import yaml
+
         config_path = temp_dir / "config.yaml"
         config_path.write_text(
             yaml.dump(sample_config, default_flow_style=False, allow_unicode=True),
@@ -125,6 +129,7 @@ def sample_config_yaml(temp_dir, sample_config):
 # ═══════════════════════════════════════════════════════
 # Mock Fixtures
 # ═══════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def mock_upbit_client():

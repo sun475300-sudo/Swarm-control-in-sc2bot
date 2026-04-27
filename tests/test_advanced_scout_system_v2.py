@@ -44,7 +44,10 @@ class TestAdvancedScoutSystemV2:
     def setup_method(self):
         """Setup before each test"""
         try:
-            from wicked_zerg_challenger.scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
+            from wicked_zerg_challenger.scouting.advanced_scout_system_v2 import (
+                AdvancedScoutingSystemV2,
+            )
+
             self.bot = MockBot()
             self.scout_system = AdvancedScoutingSystemV2(self.bot)
         except ImportError:
@@ -89,7 +92,7 @@ class TestAdvancedScoutSystemV2:
         self.bot.time = 200
 
         # Simulate stale intel (last scouted > 60s ago)
-        with patch.object(self.scout_system, '_is_emergency_mode', return_value=True):
+        with patch.object(self.scout_system, "_is_emergency_mode", return_value=True):
             interval = self.scout_system._get_dynamic_interval()
 
         assert interval == 15.0  # Emergency: 15 seconds
@@ -112,7 +115,7 @@ class TestAdvancedScoutSystemV2:
         self.scout_system.active_scouts[scout_tag] = {
             "type": "ZERGLING",
             "target": Point2((50, 50)),
-            "start_time": self.bot.time
+            "start_time": self.bot.time,
         }
 
         assert len(self.scout_system.active_scouts) == initial_count + 1
@@ -126,7 +129,7 @@ class TestAdvancedScoutSystemV2:
         self.scout_system.active_scouts[scout_tag] = {
             "type": "ZERGLING",
             "target": Point2((50, 50)),
-            "start_time": 0.0
+            "start_time": 0.0,
         }
 
         # Mock bot units (scout not present = dead)
@@ -149,9 +152,9 @@ class TestAdvancedScoutSystemV2:
         self.scout_system.scouts_sent += 1
 
         assert self.scout_system.scouts_sent == initial_sent + 1
-        assert hasattr(self.scout_system, 'scouts_returned')
-        assert hasattr(self.scout_system, 'scouts_lost')
-        assert hasattr(self.scout_system, 'intel_updates')
+        assert hasattr(self.scout_system, "scouts_returned")
+        assert hasattr(self.scout_system, "scouts_lost")
+        assert hasattr(self.scout_system, "intel_updates")
 
     def test_scout_priority_locations(self):
         """Test that enemy expansions have higher priority"""
@@ -159,11 +162,11 @@ class TestAdvancedScoutSystemV2:
         self.bot.expansion_locations = [
             Point2((50, 50)),
             Point2((100, 100)),
-            Point2((150, 150))
+            Point2((150, 150)),
         ]
 
         # Last scouted tracking should exist
-        assert hasattr(self.scout_system, 'last_scouted_at')
+        assert hasattr(self.scout_system, "last_scouted_at")
         assert isinstance(self.scout_system.last_scouted_at, dict)
 
     # ===== Memory Management Tests =====
@@ -181,14 +184,14 @@ class TestAdvancedScoutSystemV2:
 
         # Data should still exist or be removed based on threshold
         # (Implementation may vary, just verify method exists)
-        assert hasattr(self.scout_system, '_cleanup_old_scout_data')
+        assert hasattr(self.scout_system, "_cleanup_old_scout_data")
 
     # ===== Changeling Tests =====
 
     @pytest.mark.asyncio
     async def test_changeling_management_exists(self):
         """Test that changeling management method exists"""
-        assert hasattr(self.scout_system, '_manage_changelings')
+        assert hasattr(self.scout_system, "_manage_changelings")
 
         # Should not crash when called
         try:
@@ -201,7 +204,7 @@ class TestAdvancedScoutSystemV2:
 
     def test_scout_report_generation(self):
         """Test that scout reports can be generated"""
-        assert hasattr(self.scout_system, '_print_report')
+        assert hasattr(self.scout_system, "_print_report")
 
         # Should not crash
         try:
@@ -212,7 +215,7 @@ class TestAdvancedScoutSystemV2:
 
     def test_emergency_mode_detection(self):
         """Test emergency mode detection logic"""
-        assert hasattr(self.scout_system, '_is_emergency_mode')
+        assert hasattr(self.scout_system, "_is_emergency_mode")
 
         # Should return boolean
         result = self.scout_system._is_emergency_mode()

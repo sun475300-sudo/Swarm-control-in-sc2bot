@@ -17,8 +17,10 @@ import sys
 import os
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'local_training')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "local_training"))
+)
 
 from local_training.production_resilience import ProductionResilience
 from sc2.ids.unit_typeid import UnitTypeId
@@ -61,12 +63,14 @@ class TestProductionResilience(unittest.TestCase):
     def test_get_learned_parameter_with_default(self):
         """Test get_learned_parameter returns default when not found"""
         from local_training.production_resilience import get_learned_parameter
+
         result = get_learned_parameter("nonexistent_param", default_value=42)
         self.assertEqual(result, 42)
 
     def test_get_learned_parameter_returns_value(self):
         """Test get_learned_parameter function exists"""
         from local_training.production_resilience import get_learned_parameter
+
         # Should return default if parameter doesn't exist
         result = get_learned_parameter("test_param", default_value=10)
         self.assertIsNotNone(result)
@@ -100,7 +104,9 @@ class TestProductionResilience(unittest.TestCase):
         mock_larva = Mock()
         mock_larva.train = Mock(side_effect=[Exception("First fail"), Mock()])
 
-        result = await self.resilience._safe_train(mock_larva, UnitTypeId.ZERGLING, retry_count=2)
+        result = await self.resilience._safe_train(
+            mock_larva, UnitTypeId.ZERGLING, retry_count=2
+        )
 
         # Should succeed on second attempt
         self.assertTrue(result)
@@ -119,7 +125,12 @@ class TestProductionResilience(unittest.TestCase):
         result = await self.resilience._get_counter_unit("Terran")
 
         # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
-        valid_counters = [UnitTypeId.BANELING, UnitTypeId.ROACH, UnitTypeId.MUTALISK, UnitTypeId.ZERGLING]
+        valid_counters = [
+            UnitTypeId.BANELING,
+            UnitTypeId.ROACH,
+            UnitTypeId.MUTALISK,
+            UnitTypeId.ZERGLING,
+        ]
         self.assertIn(result, valid_counters)
 
     async def test_get_counter_unit_protoss(self):
@@ -128,8 +139,10 @@ class TestProductionResilience(unittest.TestCase):
 
         # Common Protoss counters
         valid_counters = [
-            UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-            UnitTypeId.MUTALISK, UnitTypeId.ZERGLING
+            UnitTypeId.ROACH,
+            UnitTypeId.HYDRALISK,
+            UnitTypeId.MUTALISK,
+            UnitTypeId.ZERGLING,
         ]
         self.assertIn(result, valid_counters)
 
@@ -139,8 +152,10 @@ class TestProductionResilience(unittest.TestCase):
 
         # Common Zerg counters
         valid_counters = [
-            UnitTypeId.ROACH, UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING, UnitTypeId.HYDRALISK
+            UnitTypeId.ROACH,
+            UnitTypeId.MUTALISK,
+            UnitTypeId.ZERGLING,
+            UnitTypeId.HYDRALISK,
         ]
         self.assertIn(result, valid_counters)
 
@@ -204,22 +219,25 @@ class TestProductionResilience(unittest.TestCase):
     def test_balancer_import(self):
         """Test EconomyCombatBalancer availability"""
         from local_training.production_resilience import BALANCER_AVAILABLE
+
         # Just verify the flag exists
         self.assertIsInstance(BALANCER_AVAILABLE, bool)
 
     def test_resource_manager_import(self):
         """Test ResourceManager availability"""
         from local_training.production_resilience import RESOURCE_MANAGER_AVAILABLE
+
         self.assertIsInstance(RESOURCE_MANAGER_AVAILABLE, bool)
 
     def test_placement_helper_import(self):
         """Test BuildingPlacementHelper availability"""
         from local_training.production_resilience import PLACEMENT_HELPER_AVAILABLE
+
         self.assertIsInstance(PLACEMENT_HELPER_AVAILABLE, bool)
 
 
 # Run async tests
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Patch asyncio for unittest
     import asyncio
 
@@ -243,8 +261,11 @@ if __name__ == '__main__':
                     def sync_wrapper(self):
                         loop = asyncio.get_event_loop()
                         return loop.run_until_complete(async_func(self))
+
                     return sync_wrapper
 
-                setattr(test.__class__, test_method_name, make_sync_wrapper(test_method))
+                setattr(
+                    test.__class__, test_method_name, make_sync_wrapper(test_method)
+                )
 
     runner.run(suite)

@@ -21,25 +21,27 @@ logger = logging.getLogger(__name__)
 
 class ManagerPriority(IntEnum):
     """매니저 초기화 우선순위"""
-    CRITICAL = 0      # 필수 시스템 (실패 시 봇 중단)
-    HIGH = 10         # 핵심 시스템
-    MEDIUM = 20       # 일반 시스템
-    LOW = 30          # 선택적 시스템
-    OPTIONAL = 40     # 완전 선택적
+
+    CRITICAL = 0  # 필수 시스템 (실패 시 봇 중단)
+    HIGH = 10  # 핵심 시스템
+    MEDIUM = 20  # 일반 시스템
+    LOW = 30  # 선택적 시스템
+    OPTIONAL = 40  # 완전 선택적
 
 
 @dataclass
 class ManagerConfig:
     """매니저 설정"""
-    name: str                           # 표시 이름
-    module_path: str                    # import 경로
-    class_name: str                     # 클래스 이름
-    attribute_name: str                 # bot 속성 이름
-    priority: ManagerPriority           # 우선순위
-    dependencies: List[str] = None      # 의존 매니저 (attribute_name)
-    init_args: Dict[str, Any] = None    # 추가 초기화 인자
+
+    name: str  # 표시 이름
+    module_path: str  # import 경로
+    class_name: str  # 클래스 이름
+    attribute_name: str  # bot 속성 이름
+    priority: ManagerPriority  # 우선순위
+    dependencies: List[str] = None  # 의존 매니저 (attribute_name)
+    init_args: Dict[str, Any] = None  # 추가 초기화 인자
     post_init: Optional[Callable] = None  # 초기화 후 실행 함수
-    enabled: bool = True                # 활성화 여부
+    enabled: bool = True  # 활성화 여부
 
     def __post_init__(self):
         if self.dependencies is None:
@@ -102,8 +104,7 @@ class ManagerFactory:
         """
         # 1. 우선순위 정렬
         sorted_managers = sorted(
-            self.managers.values(),
-            key=lambda m: (m.priority, m.name)
+            self.managers.values(), key=lambda m: (m.priority, m.name)
         )
 
         # 2. 초기화 실행
@@ -213,7 +214,12 @@ class ManagerFactory:
             setattr(self.bot, attr_name, None)
 
             if verbose:
-                logger.error("[BOT_ERROR] %s initialization failed: %s", config.name, e, exc_info=True)
+                logger.error(
+                    "[BOT_ERROR] %s initialization failed: %s",
+                    config.name,
+                    e,
+                    exc_info=True,
+                )
 
             return False
 
@@ -229,26 +235,26 @@ class ManagerFactory:
             "failed": failed,
             "success_rate": succeeded / total * 100 if total > 0 else 0,
             "failed_managers": list(self.failed.keys()),
-            "initialization_order": self.initialization_order
+            "initialization_order": self.initialization_order,
         }
 
     def _log_summary(self, stats: Dict[str, Any]) -> None:
         """초기화 결과 요약 로그 출력"""
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("MANAGER INITIALIZATION SUMMARY")
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info(f"Total Managers: {stats['total']}")
         logger.info(f"Succeeded: {stats['succeeded']}")
         logger.error(f"Failed: {stats['failed']}")
         logger.info(f"Success Rate: {stats['success_rate']:.1f}%")
 
-        if stats['failed_managers']:
+        if stats["failed_managers"]:
             logger.error(f"\nFailed Managers ({len(stats['failed_managers'])}):")
-            for attr_name in stats['failed_managers']:
+            for attr_name in stats["failed_managers"]:
                 error = self.failed[attr_name]
                 logger.info(f"  - {attr_name}: {error}")
 
-        logger.info("="*70 + "\n")
+        logger.info("=" * 70 + "\n")
 
     def get_manager(self, attribute_name: str) -> Optional[Any]:
         """

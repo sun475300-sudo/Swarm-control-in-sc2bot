@@ -10,11 +10,11 @@ from enum import Enum
 
 
 class GamePhase(Enum):
-    OPENING = "opening"       # < 4 min
+    OPENING = "opening"  # < 4 min
     EARLY_MID = "early_mid"  # 4-8 min
-    MID = "mid"               # 8-14 min
-    LATE_MID = "late_mid"    # 14-20 min
-    LATE = "late"             # > 20 min
+    MID = "mid"  # 8-14 min
+    LATE_MID = "late_mid"  # 14-20 min
+    LATE = "late"  # > 20 min
 
 
 class PlanType(Enum):
@@ -28,7 +28,7 @@ class PlanType(Enum):
 @dataclass
 class StrategicPlan:
     plan_type: PlanType
-    priority: float           # 0.0 - 1.0
+    priority: float  # 0.0 - 1.0
     trigger_supply: int
     description: str
     actions: List[str] = field(default_factory=list)
@@ -44,6 +44,7 @@ class StrategicPlan:
 @dataclass
 class GameState:
     """Snapshot of relevant game state for planning decisions."""
+
     game_time: float = 0.0
     supply_used: int = 0
     supply_cap: int = 14
@@ -193,13 +194,18 @@ class MidGamePlanner:
 
         if not plans:
             # Default: drone up and macro
-            plans.append(StrategicPlan(
-                plan_type=PlanType.DRONE_UP,
-                priority=0.3,
-                trigger_supply=state.supply_used,
-                description="Macro phase: saturate workers and bank resources.",
-                actions=["Produce drones until 66% worker ratio", "Inject all queens"],
-            ))
+            plans.append(
+                StrategicPlan(
+                    plan_type=PlanType.DRONE_UP,
+                    priority=0.3,
+                    trigger_supply=state.supply_used,
+                    description="Macro phase: saturate workers and bank resources.",
+                    actions=[
+                        "Produce drones until 66% worker ratio",
+                        "Inject all queens",
+                    ],
+                )
+            )
 
         plans.sort(key=lambda p: p.priority, reverse=True)
         self._plan_history.extend(plans)

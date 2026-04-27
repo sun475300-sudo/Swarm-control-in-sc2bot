@@ -22,11 +22,14 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         HATCHERY = "HATCHERY"
         DRONE = "DRONE"
+
     Point2 = tuple
 
 

@@ -45,11 +45,11 @@ EXCLUDE_PATTERNS = [
     ".pytest_cache",
     "*.log",
     "*.replay",
-    "*.pt",        # 학습 모델 (용량 큼)
+    "*.pt",  # 학습 모델 (용량 큼)
     "*.pth",
     "*.onnx",
     "credentials",
-    "PHASE_",      # Phase 문서
+    "PHASE_",  # Phase 문서
     "CLAUDE.md",
     ".claude",
 ]
@@ -87,7 +87,7 @@ def create_arena_zip(output_dir: Path, zip_name: str):
     file_count = 0
     total_size = 0
 
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         # 1. 루트 파일 추가
         for fname in INCLUDE_FILES:
             fpath = PROJECT_DIR / fname

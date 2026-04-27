@@ -10,9 +10,11 @@ from dataclasses import dataclass, field
 
 # ── Request/Response schemas ──────────────────────────────────────────────────
 
+
 @dataclass
 class GameStateQuery:
     """SC2 game state query for strategy recommendation."""
+
     request_id: str
     game_time: float
     race: str
@@ -38,6 +40,7 @@ class GameStateQuery:
 @dataclass
 class StrategyResponse:
     """LLM-generated strategy recommendation."""
+
     request_id: str
     text: str
     tokens_generated: int
@@ -46,6 +49,7 @@ class StrategyResponse:
 
 
 # ── vLLM engine wrapper ───────────────────────────────────────────────────────
+
 
 class SC2LLMEngine:
     """
@@ -69,11 +73,12 @@ class SC2LLMEngine:
     def _build_engine(self):
         """Lazily initialize AsyncLLMEngine with PagedAttention."""
         from vllm import AsyncLLMEngine, AsyncEngineArgs
+
         args = AsyncEngineArgs(
             model=self.model,
             max_model_len=self.max_model_len,
             gpu_memory_utilization=0.90,
-            enforce_eager=False,      # Use CUDA graphs for speed
+            enforce_eager=False,  # Use CUDA graphs for speed
             trust_remote_code=True,
         )
         self._engine = AsyncLLMEngine.from_engine_args(args)
@@ -102,7 +107,9 @@ class SC2LLMEngine:
         prompt = query.to_prompt()
         start = time.time()
 
-        async for output in self._engine.generate(prompt, sampling_params, query.request_id):
+        async for output in self._engine.generate(
+            prompt, sampling_params, query.request_id
+        ):
             for completion in output.outputs:
                 yield completion.text
 
@@ -134,6 +141,7 @@ class SC2LLMEngine:
 
 
 # ── FastAPI server (vLLM compatible) ─────────────────────────────────────────
+
 
 def build_fastapi_app(engine: SC2LLMEngine):
     """Build FastAPI app exposing SC2 strategy generation endpoints."""

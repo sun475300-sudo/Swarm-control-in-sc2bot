@@ -36,6 +36,7 @@ from game_config import GameConfig
 @dataclass
 class DetectedTumor:
     """탐지된 크립 종양"""
+
     position: Point2
     detection_time: float
     last_seen: float
@@ -73,7 +74,9 @@ class CreepDenialSystem:
 
         # 감시군주 관리
         self.overseer_patrol_positions: List[Point2] = []
-        self.overseer_assignments: Dict[int, Point2] = {}  # overseer_tag -> patrol_position
+        self.overseer_assignments: Dict[int, Point2] = (
+            {}
+        )  # overseer_tag -> patrol_position
 
         # 크립 종양 제거 통계
         self.tumors_destroyed = 0
@@ -165,7 +168,12 @@ class CreepDenialSystem:
 
         # 보이는 적 크립 종양
         visible_tumors = self.bot.enemy_structures.filter(
-            lambda s: s.type_id in [UnitTypeId.CREEPTUMOR, UnitTypeId.CREEPTUMORBURROWED, UnitTypeId.CREEPTUMORQUEEN]
+            lambda s: s.type_id
+            in [
+                UnitTypeId.CREEPTUMOR,
+                UnitTypeId.CREEPTUMORBURROWED,
+                UnitTypeId.CREEPTUMORQUEEN,
+            ]
         )
 
         for tumor in visible_tumors:
@@ -176,7 +184,9 @@ class CreepDenialSystem:
                 # 기존 종양 업데이트
                 self.detected_tumors[existing_tumor_id].last_seen = game_time
                 self.detected_tumors[existing_tumor_id].unit_tag = tumor.tag
-                self.detected_tumors[existing_tumor_id].is_burrowed = tumor.type_id == UnitTypeId.CREEPTUMORBURROWED
+                self.detected_tumors[existing_tumor_id].is_burrowed = (
+                    tumor.type_id == UnitTypeId.CREEPTUMORBURROWED
+                )
             else:
                 # 새 종양 추가
                 tumor_id = self._next_tumor_id
@@ -187,12 +197,14 @@ class CreepDenialSystem:
                     detection_time=game_time,
                     last_seen=game_time,
                     unit_tag=tumor.tag,
-                    is_burrowed=tumor.type_id == UnitTypeId.CREEPTUMORBURROWED
+                    is_burrowed=tumor.type_id == UnitTypeId.CREEPTUMORBURROWED,
                 )
 
                 self.tumors_detected += 1
                 self.detection_by_unit_type["visible"] += 1
-                self.logger.info(f"[CREEP_DENIAL] New enemy tumor detected at {tumor.position}")
+                self.logger.info(
+                    f"[CREEP_DENIAL] New enemy tumor detected at {tumor.position}"
+                )
 
         # 적 크립 위에서 종양 위치 추정 (보이지 않는 종양)
         self._estimate_hidden_tumors(game_time)
@@ -211,7 +223,9 @@ class CreepDenialSystem:
                 # 이 지점이 아군 크립이 아니면 적 크립
                 if not self._is_friendly_creep_area(priority_pos):
                     # 종양이 근처에 있을 가능성이 높음
-                    existing_tumor = self._find_tumor_by_position(priority_pos, radius=10)
+                    existing_tumor = self._find_tumor_by_position(
+                        priority_pos, radius=10
+                    )
                     if existing_tumor is None:
                         # 추정 종양 추가 (정확한 위치는 모르지만 대략적 위치)
                         tumor_id = self._next_tumor_id
@@ -222,10 +236,12 @@ class CreepDenialSystem:
                             detection_time=game_time,
                             last_seen=game_time,
                             unit_tag=None,
-                            is_burrowed=True
+                            is_burrowed=True,
                         )
 
-                        self.logger.debug(f"[CREEP_DENIAL] Estimated hidden tumor near {priority_pos}")
+                        self.logger.debug(
+                            f"[CREEP_DENIAL] Estimated hidden tumor near {priority_pos}"
+                        )
 
     def _is_friendly_creep_area(self, position: Point2) -> bool:
         """아군 크립 영역인지 확인"""
@@ -234,7 +250,10 @@ class CreepDenialSystem:
 
         # 아군 기지 반경 이내면 아군 크립
         for base in self.bot.townhalls:
-            if base.distance_to(position) < GameConfig.CREEP_DENIAL_ATTACK_UNIT_DISTANCE:
+            if (
+                base.distance_to(position)
+                < GameConfig.CREEP_DENIAL_ATTACK_UNIT_DISTANCE
+            ):
                 return True
 
         return False
@@ -264,7 +283,10 @@ class CreepDenialSystem:
 
             # 순찰 위치로 이동
             patrol_pos = self.overseer_assignments[overseer.tag]
-            if overseer.distance_to(patrol_pos) > GameConfig.CREEP_DENIAL_PATROL_DISTANCE:
+            if (
+                overseer.distance_to(patrol_pos)
+                > GameConfig.CREEP_DENIAL_PATROL_DISTANCE
+            ):
                 self.bot.do(overseer.move(patrol_pos))
             else:
                 # 순찰 위치에 도착하면 다음 위치로
@@ -283,8 +305,10 @@ class CreepDenialSystem:
             return
 
         # 가스 확인 (감시군주 변이 비용)
-        if (self.bot.vespene < GameConfig.CREEP_DENIAL_MIN_GAS or
-            self.bot.minerals < GameConfig.CREEP_DENIAL_MIN_MINERALS):
+        if (
+            self.bot.vespene < GameConfig.CREEP_DENIAL_MIN_GAS
+            or self.bot.minerals < GameConfig.CREEP_DENIAL_MIN_MINERALS
+        ):
             return
 
         # 레어 필요
@@ -346,8 +370,9 @@ class CreepDenialSystem:
 
             # 가장 가까운 공격 유닛 찾기
             nearest_units = self._get_nearest_units(
-                attack_units, tumor.position,
-                count=GameConfig.CREEP_DENIAL_MAX_UNITS_PER_TUMOR
+                attack_units,
+                tumor.position,
+                count=GameConfig.CREEP_DENIAL_MAX_UNITS_PER_TUMOR,
             )
 
             for unit in nearest_units:
@@ -369,7 +394,9 @@ class CreepDenialSystem:
                     )
 
             # 할당된 유닛을 사용 가능 목록에서 제거
-            attack_units = [u for u in attack_units if u.tag not in tumor.assigned_units]
+            attack_units = [
+                u for u in attack_units if u.tag not in tumor.assigned_units
+            ]
             if not attack_units:
                 break
 
@@ -387,7 +414,9 @@ class CreepDenialSystem:
         if not self.unit_authority:
             self.unit_authority = getattr(self.bot, "unit_authority", None)
             if not self.unit_authority:
-                self.logger.warning("[CREEP_DENIAL] UnitAuthorityManager not available - using fallback mode")
+                self.logger.warning(
+                    "[CREEP_DENIAL] UnitAuthorityManager not available - using fallback mode"
+                )
                 return self._get_available_attack_units_fallback()
 
         # 저글링, 바퀴, 히드라 등 지상 공격 유닛
@@ -395,7 +424,7 @@ class CreepDenialSystem:
             UnitTypeId.ZERGLING,
             UnitTypeId.ROACH,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.RAVAGER
+            UnitTypeId.RAVAGER,
         ]
 
         available_units = []
@@ -412,9 +441,7 @@ class CreepDenialSystem:
 
                 # ★ UnitAuthorityManager를 통해 유닛 요청 ★
                 if self.unit_authority.request_unit(
-                    unit.tag,
-                    "creep_denial",
-                    AuthorityLevel.CREEP  # 낮은 우선순위 (20)
+                    unit.tag, "creep_denial", AuthorityLevel.CREEP  # 낮은 우선순위 (20)
                 ):
                     available_units.append(unit)
                     self.managed_units.add(unit.tag)
@@ -427,7 +454,7 @@ class CreepDenialSystem:
             UnitTypeId.ZERGLING,
             UnitTypeId.ROACH,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.RAVAGER
+            UnitTypeId.RAVAGER,
         ]
 
         available_units = []
@@ -460,7 +487,10 @@ class CreepDenialSystem:
         # ★ 체력이 낮은 유닛 보호 ★
         # 체력이 최소 비율 미만이면 사용 불가
         if hasattr(unit, "health") and hasattr(unit, "health_max"):
-            if unit.health < unit.health_max * GameConfig.CREEP_DENIAL_MIN_HEALTH_PERCENT:
+            if (
+                unit.health
+                < unit.health_max * GameConfig.CREEP_DENIAL_MIN_HEALTH_PERCENT
+            ):
                 return False
 
         # ★ 대기 중이거나 이미 creep denial 임무 중인 유닛만 사용 ★
@@ -493,14 +523,18 @@ class CreepDenialSystem:
         # 1. 우선순위 지역에 가까울수록 높은 우선순위
         if self.priority_areas:
             min_dist = min(tumor.position.distance_to(p) for p in self.priority_areas)
-            priority += max(0, GameConfig.CREEP_DENIAL_PRIORITY_DISTANCE_BONUS - min_dist)
+            priority += max(
+                0, GameConfig.CREEP_DENIAL_PRIORITY_DISTANCE_BONUS - min_dist
+            )
 
         # 2. 아군 기지에 가까울수록 높은 우선순위
         if hasattr(self.bot, "townhalls"):
             for base in self.bot.townhalls:
                 dist = tumor.position.distance_to(base)
                 if dist < GameConfig.CREEP_DENIAL_BASE_DISTANCE_THRESHOLD:
-                    priority += (GameConfig.CREEP_DENIAL_BASE_DISTANCE_THRESHOLD - dist) * 2
+                    priority += (
+                        GameConfig.CREEP_DENIAL_BASE_DISTANCE_THRESHOLD - dist
+                    ) * 2
 
         # 3. 보이는 종양이 더 높은 우선순위
         if tumor.unit_tag:
@@ -509,16 +543,22 @@ class CreepDenialSystem:
         # 4. 최근에 본 종양이 더 높은 우선순위
         game_time = getattr(self.bot, "time", 0)
         time_since_seen = game_time - tumor.last_seen
-        priority += max(0, GameConfig.CREEP_DENIAL_RECENT_SIGHTING_BONUS - time_since_seen)
+        priority += max(
+            0, GameConfig.CREEP_DENIAL_RECENT_SIGHTING_BONUS - time_since_seen
+        )
 
         return priority
 
-    def _get_nearest_units(self, units: List[Unit], position: Point2, count: int = 3) -> List[Unit]:
+    def _get_nearest_units(
+        self, units: List[Unit], position: Point2, count: int = 3
+    ) -> List[Unit]:
         """위치에서 가장 가까운 유닛들 반환"""
         sorted_units = sorted(units, key=lambda u: u.distance_to(position))
         return sorted_units[:count]
 
-    def _find_tumor_by_position(self, position: Point2, radius: float = 2.0) -> Optional[int]:
+    def _find_tumor_by_position(
+        self, position: Point2, radius: float = 2.0
+    ) -> Optional[int]:
         """위치로 종양 찾기"""
         for tumor_id, tumor in self.detected_tumors.items():
             if tumor.position.distance_to(position) < radius:
@@ -540,7 +580,9 @@ class CreepDenialSystem:
                 if not self._tumor_exists(tumor.unit_tag):
                     to_remove.append(tumor_id)
                     self.tumors_destroyed += 1
-                    self.logger.info(f"[CREEP_DENIAL] [*] Tumor destroyed at {tumor.position}! [*]")
+                    self.logger.info(
+                        f"[CREEP_DENIAL] [*] Tumor destroyed at {tumor.position}! [*]"
+                    )
 
                     # ★ 할당된 유닛들 반환 ★
                     self._release_tumor_units(tumor)
@@ -600,7 +642,9 @@ class CreepDenialSystem:
         for unit_tag in units_to_release:
             if self.unit_authority.release_unit(unit_tag, "creep_denial"):
                 self.managed_units.discard(unit_tag)
-                self.logger.debug(f"[CREEP_DENIAL] Released unit {unit_tag} back to authority manager")
+                self.logger.debug(
+                    f"[CREEP_DENIAL] Released unit {unit_tag} back to authority manager"
+                )
 
     async def _check_and_retreat_units(self, game_time: float) -> None:
         """
@@ -647,8 +691,7 @@ class CreepDenialSystem:
                 if nearby_enemies:
                     # 적 전투력 추정
                     enemy_supply = sum(
-                        getattr(enemy, "supply_cost", 1)
-                        for enemy in nearby_enemies
+                        getattr(enemy, "supply_cost", 1) for enemy in nearby_enemies
                     )
 
                     # 우리 유닛이 1개뿐이고 적이 2보급 이상이면 후퇴
@@ -695,10 +738,7 @@ class CreepDenialSystem:
             return None
 
         # 가장 가까운 아군 기지
-        closest_base = min(
-            self.bot.townhalls,
-            key=lambda base: unit.distance_to(base)
-        )
+        closest_base = min(self.bot.townhalls, key=lambda base: unit.distance_to(base))
 
         return closest_base.position
 
@@ -732,6 +772,8 @@ class CreepDenialSystem:
             report += "\nActive Tumors:\n"
             for tumor_id, tumor in list(self.detected_tumors.items())[:5]:  # 상위 5개만
                 assigned = len(tumor.assigned_units)
-                report += f"  Tumor {tumor_id}: {tumor.position} (Assigned: {assigned})\n"
+                report += (
+                    f"  Tumor {tumor_id}: {tumor.position} (Assigned: {assigned})\n"
+                )
 
         return report

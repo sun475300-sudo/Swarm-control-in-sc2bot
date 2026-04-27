@@ -17,15 +17,19 @@ def orchestrator():
 
 # ── 테스트용 스텝 함수 ──
 
+
 async def _success_fn():
     return "ok"
+
 
 async def _slow_fn():
     await asyncio.sleep(5)
     return "slow"
 
+
 async def _fail_fn():
     raise ValueError("test error")
+
 
 async def _delayed_success():
     await asyncio.sleep(0.1)

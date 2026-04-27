@@ -19,6 +19,7 @@ logger = logging.getLogger("RunMassTest")
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+
 # SC2 path auto-setup
 def _ensure_sc2_path():
     if sys.platform != "win32":
@@ -36,6 +37,7 @@ def _ensure_sc2_path():
             os.environ["SC2PATH"] = path
             return
 
+
 _ensure_sc2_path()
 
 from sc2 import maps
@@ -47,9 +49,10 @@ from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 # GPU setup
 try:
     import torch
+
     GPU_AVAILABLE = torch.cuda.is_available()
     if GPU_AVAILABLE:
-        torch.set_default_device('cuda')
+        torch.set_default_device("cuda")
         logger.info(f"{torch.cuda.get_device_name(0)} - CUDA {torch.version.cuda}")
 except ImportError:
     GPU_AVAILABLE = False
@@ -85,9 +88,7 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
 
         start = time.time()
         result = run_game(
-            map_instance,
-            [bot, Computer(race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(race, difficulty)], realtime=False
         )
         elapsed = time.time() - start
 
@@ -129,8 +130,12 @@ def main():
     total = len(test_cases)
     logger.info(f"\n{'='*70}")
     logger.info(f"  MASS TEST: {total} games")
-    logger.info(f"  Maps: {len(MAPS)} | Races: {len(RACES)} | Difficulties: {len(DIFFICULTIES)}")
-    logger.info(f"  GPU: {'YES - ' + torch.cuda.get_device_name(0) if GPU_AVAILABLE else 'CPU only'}")
+    logger.info(
+        f"  Maps: {len(MAPS)} | Races: {len(RACES)} | Difficulties: {len(DIFFICULTIES)}"
+    )
+    logger.info(
+        f"  GPU: {'YES - ' + torch.cuda.get_device_name(0) if GPU_AVAILABLE else 'CPU only'}"
+    )
     logger.info(f"{'='*70}\n")
 
     results = []
@@ -152,7 +157,9 @@ def main():
         # Progress
         elapsed = time.time() - start_time
         wr = wins / max(wins + losses, 1) * 100
-        logger.error(f"  Progress: {i}/{total} | W:{wins} L:{losses} E:{errors} | WR:{wr:.0f}% | Time:{elapsed/60:.1f}m")
+        logger.error(
+            f"  Progress: {i}/{total} | W:{wins} L:{losses} E:{errors} | WR:{wr:.0f}% | Time:{elapsed/60:.1f}m"
+        )
 
         time.sleep(2)
 

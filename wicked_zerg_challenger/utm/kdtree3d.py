@@ -80,7 +80,7 @@ class KDTree3D:
             data=data,
             axis=axis,
             left=self._build_recursive(points[:mid], depth + 1),
-            right=self._build_recursive(points[mid + 1:], depth + 1),
+            right=self._build_recursive(points[mid + 1 :], depth + 1),
         )
 
     def nearest_neighbor(
@@ -95,8 +95,7 @@ class KDTree3D:
         return (best[0].point, best[0].data, best[1])
 
     def _nn_recursive(
-        self, node: Optional[KDTree3DNode], query: Pos3,
-        best: List, exclude_data: Any
+        self, node: Optional[KDTree3DNode], query: Pos3, best: List, exclude_data: Any
     ) -> None:
         if node is None:
             return
@@ -107,23 +106,22 @@ class KDTree3D:
 
         axis = node.axis
         diff = query[axis] - node.point[axis]
-        first, second = (node.left, node.right) if diff <= 0 else (node.right, node.left)
+        first, second = (
+            (node.left, node.right) if diff <= 0 else (node.right, node.left)
+        )
 
         self._nn_recursive(first, query, best, exclude_data)
         if abs(diff) < best[1]:
             self._nn_recursive(second, query, best, exclude_data)
 
-    def range_query(
-        self, center: Pos3, radius: float
-    ) -> List[Tuple[Pos3, Any, float]]:
+    def range_query(self, center: Pos3, radius: float) -> List[Tuple[Pos3, Any, float]]:
         results: List[Tuple[Pos3, Any, float]] = []
         if self.root:
             self._range_recursive(self.root, center, radius, results)
         return results
 
     def _range_recursive(
-        self, node: Optional[KDTree3DNode], center: Pos3,
-        radius: float, results: List
+        self, node: Optional[KDTree3DNode], center: Pos3, radius: float, results: List
     ) -> None:
         if node is None:
             return
@@ -157,8 +155,12 @@ class KDTree3D:
         return results
 
     def _knn_recursive(
-        self, node: Optional[KDTree3DNode], query: Pos3,
-        k: int, heap: List, exclude_data: Any
+        self,
+        node: Optional[KDTree3DNode],
+        query: Pos3,
+        k: int,
+        heap: List,
+        exclude_data: Any,
     ) -> None:
         if node is None:
             return
@@ -172,7 +174,9 @@ class KDTree3D:
         max_dist = -heap[0][0] if heap else float("inf")
         axis = node.axis
         diff = query[axis] - node.point[axis]
-        first, second = (node.left, node.right) if diff <= 0 else (node.right, node.left)
+        first, second = (
+            (node.left, node.right) if diff <= 0 else (node.right, node.left)
+        )
 
         self._knn_recursive(first, query, k, heap, exclude_data)
         max_dist = -heap[0][0] if len(heap) >= k else float("inf")

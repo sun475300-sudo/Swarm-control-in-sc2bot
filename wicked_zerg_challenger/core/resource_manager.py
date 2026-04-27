@@ -127,8 +127,8 @@ class ResourceManager:
                 new_g = max(0, current_g - gas)
 
                 # Update global reserves
-                self._reserved_minerals -= (current_m - new_m)
-                self._reserved_gas -= (current_g - new_g)
+                self._reserved_minerals -= current_m - new_m
+                self._reserved_gas -= current_g - new_g
 
                 # Update manager reservation
                 if new_m > 0 or new_g > 0:
@@ -200,10 +200,11 @@ class ResourceManager:
             "reserved_minerals": self._reserved_minerals,
             "reserved_gas": self._reserved_gas,
             "success_rate": (
-                self.total_reservations / (self.total_reservations + self.failed_reservations)
+                self.total_reservations
+                / (self.total_reservations + self.failed_reservations)
                 if (self.total_reservations + self.failed_reservations) > 0
                 else 0.0
-            )
+            ),
         }
 
     def log_statistics(self, iteration: int) -> None:
@@ -235,7 +236,7 @@ class ResourceManager:
             iteration: Current game iteration
         """
         # Track reservation ages
-        if not hasattr(self, '_reservation_times'):
+        if not hasattr(self, "_reservation_times"):
             self._reservation_times: Dict[str, int] = {}
 
         async with self._lock:

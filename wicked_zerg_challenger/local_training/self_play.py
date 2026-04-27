@@ -31,8 +31,14 @@ class OpponentSnapshot:
     특정 시점의 모델 가중치와 메타데이터를 저장합니다.
     """
 
-    def __init__(self, model_path: str, episode: int, elo: float = 1000.0,
-                 win_rate: float = 0.5, timestamp: Optional[str] = None):
+    def __init__(
+        self,
+        model_path: str,
+        episode: int,
+        elo: float = 1000.0,
+        win_rate: float = 0.5,
+        timestamp: Optional[str] = None,
+    ):
         """
         Args:
             model_path: 모델 파일 경로
@@ -147,8 +153,10 @@ class SelfPlayTrainer:
         # 메타데이터 로드
         self._load_pool_metadata()
 
-        logger.info(f"초기화 완료 (pool_size={len(self.opponent_pool)}, "
-              f"current_elo={self.current_elo:.0f})")
+        logger.info(
+            f"초기화 완료 (pool_size={len(self.opponent_pool)}, "
+            f"current_elo={self.current_elo:.0f})"
+        )
 
     def add_snapshot(self, model_path: str, episode: int) -> Optional[OpponentSnapshot]:
         """
@@ -183,8 +191,10 @@ class SelfPlayTrainer:
             # 메타데이터 저장
             self._save_pool_metadata()
 
-            logger.info(f"스냅샷 추가: ep={episode}, elo={self.current_elo:.0f}, "
-                  f"pool_size={len(self.opponent_pool)}")
+            logger.info(
+                f"스냅샷 추가: ep={episode}, elo={self.current_elo:.0f}, "
+                f"pool_size={len(self.opponent_pool)}"
+            )
             return snapshot
 
         except Exception as e:
@@ -214,7 +224,7 @@ class SelfPlayTrainer:
         for snapshot in self.opponent_pool:
             elo_diff = abs(self.current_elo - snapshot.elo)
             # 가우시안 가중치: ELO 차이가 작을수록 높은 가중치
-            weight = np.exp(-elo_diff ** 2 / (2 * 200 ** 2))
+            weight = np.exp(-(elo_diff**2) / (2 * 200**2))
             weights.append(max(weight, 0.01))  # 최소 가중치 보장
 
         weights = np.array(weights)
@@ -223,8 +233,9 @@ class SelfPlayTrainer:
         selected_idx = np.random.choice(len(self.opponent_pool), p=weights)
         return self.opponent_pool[selected_idx]
 
-    def report_game_result(self, opponent: OpponentSnapshot, won: bool,
-                           game_time: float = 0.0) -> Dict[str, float]:
+    def report_game_result(
+        self, opponent: OpponentSnapshot, won: bool, game_time: float = 0.0
+    ) -> Dict[str, float]:
         """
         대전 결과 보고 및 ELO 업데이트
 
@@ -237,7 +248,9 @@ class SelfPlayTrainer:
             업데이트된 ELO 정보
         """
         # ELO 업데이트
-        expected_score = 1.0 / (1.0 + 10.0 ** ((opponent.elo - self.current_elo) / 400.0))
+        expected_score = 1.0 / (
+            1.0 + 10.0 ** ((opponent.elo - self.current_elo) / 400.0)
+        )
         actual_score = 1.0 if won else 0.0
 
         elo_change = self.elo_k_factor * (actual_score - expected_score)
@@ -275,8 +288,10 @@ class SelfPlayTrainer:
         self._save_pool_metadata()
 
         result_str = "승리" if won else "패배"
-        logger.info(f"{result_str} vs ep{opponent.episode}: "
-              f"ELO {old_elo:.0f} -> {self.current_elo:.0f} ({elo_change:+.1f})")
+        logger.info(
+            f"{result_str} vs ep{opponent.episode}: "
+            f"ELO {old_elo:.0f} -> {self.current_elo:.0f} ({elo_change:+.1f})"
+        )
 
         return {
             "elo": self.current_elo,
@@ -337,8 +352,10 @@ class SelfPlayTrainer:
                     if Path(snapshot.model_path).exists():
                         self.opponent_pool.append(snapshot)
 
-                logger.info(f"메타데이터 로드 완료: "
-                      f"pool_size={len(self.opponent_pool)}, elo={self.current_elo:.0f}")
+                logger.info(
+                    f"메타데이터 로드 완료: "
+                    f"pool_size={len(self.opponent_pool)}, elo={self.current_elo:.0f}"
+                )
         except Exception as e:
             logger.info(f"메타데이터 로드 실패: {e}")
 

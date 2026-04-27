@@ -27,6 +27,7 @@ import numpy as np
 
 try:
     import coremltools as ct
+
     COREML_AVAILABLE = True
 except ImportError:
     COREML_AVAILABLE = False
@@ -34,12 +35,14 @@ except ImportError:
 try:
     import torch
     import torch.nn as nn
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
 
 try:
     import onnx
+
     ONNX_AVAILABLE = True
 except ImportError:
     ONNX_AVAILABLE = False
@@ -49,16 +52,19 @@ except ImportError:
 # Enums
 # ============================================================
 
+
 class ComputeUnit(str, Enum):
     """Target compute unit for CoreML inference."""
+
     CPU_ONLY = "cpu_only"
     CPU_AND_GPU = "cpu_and_gpu"
-    CPU_AND_NE = "cpu_and_ne"       # Neural Engine
+    CPU_AND_NE = "cpu_and_ne"  # Neural Engine
     ALL = "all"
 
 
 class ConversionSource(str, Enum):
     """Source format for model conversion."""
+
     PYTORCH = "pytorch"
     ONNX = "onnx"
     NUMPY = "numpy"
@@ -66,6 +72,7 @@ class ConversionSource(str, Enum):
 
 class PrecisionMode(str, Enum):
     """Model precision for CoreML."""
+
     FLOAT32 = "float32"
     FLOAT16 = "float16"
     QUANTIZED_8BIT = "quantized_8bit"
@@ -75,9 +82,11 @@ class PrecisionMode(str, Enum):
 # Configuration
 # ============================================================
 
+
 @dataclass
 class MLModelSpec:
     """Defines input/output schema for a CoreML model."""
+
     model_name: str = "SC2StrategyAdvisor"
     model_version: str = "1.0.0"
     model_author: str = "SC2 Bot Project"
@@ -110,6 +119,7 @@ class MLModelSpec:
 @dataclass
 class CoreMLConfig:
     """Configuration for the CoreML deployment pipeline."""
+
     # Model architecture
     obs_dim: int = 48
     hidden_dim: int = 128
@@ -144,6 +154,7 @@ class CoreMLConfig:
 # Mock Strategy Advisor Network
 # ============================================================
 
+
 class MockStrategyNetwork:
     """Simulates a trained SC2 strategy advisor model.
 
@@ -155,8 +166,11 @@ class MockStrategyNetwork:
     """
 
     STRATEGY_NAMES = [
-        "aggressive_rush", "economic_boom", "tech_push",
-        "defensive_turtle", "timing_attack",
+        "aggressive_rush",
+        "economic_boom",
+        "tech_push",
+        "defensive_turtle",
+        "timing_attack",
     ]
 
     def __init__(self, cfg: CoreMLConfig, seed: int = 42):
@@ -178,7 +192,9 @@ class MockStrategyNetwork:
         self.b_val = np.zeros(1, dtype=np.float32)
 
         # Strategy head
-        self.w_str = rng.randn(cfg.hidden_dim, cfg.n_strategies).astype(np.float32) * 0.1
+        self.w_str = (
+            rng.randn(cfg.hidden_dim, cfg.n_strategies).astype(np.float32) * 0.1
+        )
         self.b_str = np.zeros(cfg.n_strategies, dtype=np.float32)
 
     def forward(self, obs: np.ndarray) -> Dict[str, np.ndarray]:
@@ -195,7 +211,9 @@ class MockStrategyNetwork:
 
         strategy_scores = h @ self.w_str + self.b_str
         # Softmax for strategy
-        exp_s = np.exp(strategy_scores - np.max(strategy_scores, axis=-1, keepdims=True))
+        exp_s = np.exp(
+            strategy_scores - np.max(strategy_scores, axis=-1, keepdims=True)
+        )
         strategy_probs = exp_s / np.sum(exp_s, axis=-1, keepdims=True)
 
         return {
@@ -205,9 +223,18 @@ class MockStrategyNetwork:
         }
 
     def get_weights(self) -> List[np.ndarray]:
-        return [self.w1, self.b1, self.w2, self.b2,
-                self.w_act, self.b_act, self.w_val, self.b_val,
-                self.w_str, self.b_str]
+        return [
+            self.w1,
+            self.b1,
+            self.w2,
+            self.b2,
+            self.w_act,
+            self.b_act,
+            self.w_val,
+            self.b_val,
+            self.w_str,
+            self.b_str,
+        ]
 
     @property
     def param_count(self) -> int:
@@ -217,6 +244,7 @@ class MockStrategyNetwork:
 # ============================================================
 # CoreML Converter
 # ============================================================
+
 
 class CoreMLConverter:
     """Converts SC2 strategy models to CoreML format.
@@ -235,8 +263,9 @@ class CoreMLConverter:
             raise RuntimeError("PyTorch required for torch-based conversion")
 
         class SC2Model(nn.Module):
-            def __init__(self, obs_dim: int, hidden_dim: int,
-                         n_actions: int, n_strategies: int):
+            def __init__(
+                self, obs_dim: int, hidden_dim: int, n_actions: int, n_strategies: int
+            ):
                 super().__init__()
                 self.trunk = nn.Sequential(
                     nn.Linear(obs_dim, hidden_dim),
@@ -255,8 +284,12 @@ class CoreMLConverter:
                 strategy = torch.softmax(self.strategy_head(h), dim=-1)
                 return actions, value, strategy
 
-        model = SC2Model(self.cfg.obs_dim, self.cfg.hidden_dim,
-                         self.cfg.n_actions, self.cfg.n_strategies)
+        model = SC2Model(
+            self.cfg.obs_dim,
+            self.cfg.hidden_dim,
+            self.cfg.n_actions,
+            self.cfg.n_strategies,
+        )
 
         # Load weights from mock network
         with torch.no_grad():
@@ -295,10 +328,12 @@ class CoreMLConverter:
 
         mlmodel = ct.convert(
             traced,
-            inputs=[ct.TensorType(
-                name=spec.input_name,
-                shape=(1, self.cfg.obs_dim),
-            )],
+            inputs=[
+                ct.TensorType(
+                    name=spec.input_name,
+                    shape=(1, self.cfg.obs_dim),
+                )
+            ],
             compute_units=compute_map.get(self.cfg.compute_unit, ct.ComputeUnit.ALL),
         )
 
@@ -317,13 +352,15 @@ class CoreMLConverter:
                 mlmodel, nbits=8
             )
 
-        self._conversion_log.append({
-            "source": "pytorch",
-            "precision": self.cfg.precision.value,
-            "compute_unit": self.cfg.compute_unit.value,
-            "timestamp": time.time(),
-            "method": "real_coreml",
-        })
+        self._conversion_log.append(
+            {
+                "source": "pytorch",
+                "precision": self.cfg.precision.value,
+                "compute_unit": self.cfg.compute_unit.value,
+                "timestamp": time.time(),
+                "method": "real_coreml",
+            }
+        )
 
         return mlmodel
 
@@ -363,12 +400,14 @@ class CoreMLConverter:
                 "model_version": spec.model_version,
                 "author": spec.model_author,
                 "description": spec.model_description,
-                "inputs": [{
-                    "name": spec.input_name,
-                    "shape": list(spec.input_shape),
-                    "dtype": spec.input_dtype,
-                    "description": spec.input_description,
-                }],
+                "inputs": [
+                    {
+                        "name": spec.input_name,
+                        "shape": list(spec.input_shape),
+                        "dtype": spec.input_dtype,
+                        "description": spec.input_description,
+                    }
+                ],
                 "outputs": [
                     {
                         "name": spec.output_action_name,
@@ -395,16 +434,18 @@ class CoreMLConverter:
             "bytes_per_param": bytes_per_param,
         }
 
-        self._conversion_log.append({
-            "source": "numpy",
-            "precision": self.cfg.precision.value,
-            "compute_unit": self.cfg.compute_unit.value,
-            "model_size_bytes": total_size,
-            "original_size_bytes": network.param_count * 4,
-            "compression_ratio": (network.param_count * 4) / max(total_size, 1),
-            "timestamp": time.time(),
-            "method": "mock",
-        })
+        self._conversion_log.append(
+            {
+                "source": "numpy",
+                "precision": self.cfg.precision.value,
+                "compute_unit": self.cfg.compute_unit.value,
+                "model_size_bytes": total_size,
+                "original_size_bytes": network.param_count * 4,
+                "compression_ratio": (network.param_count * 4) / max(total_size, 1),
+                "timestamp": time.time(),
+                "method": "mock",
+            }
+        )
 
         return mlmodel_mock
 
@@ -423,6 +464,7 @@ class CoreMLConverter:
 # CoreML Predictor
 # ============================================================
 
+
 class CoreMLPredictor:
     """Runs CoreML inference with GPU / Neural Engine delegation.
 
@@ -439,8 +481,7 @@ class CoreMLPredictor:
         self._throughputs: List[float] = []
         self._prediction_count = 0
 
-    def load_model(self, model: Any,
-                   network: Optional[MockStrategyNetwork] = None):
+    def load_model(self, model: Any, network: Optional[MockStrategyNetwork] = None):
         """Load a CoreML model for prediction.
 
         model: either a real MLModel or our mock dict.
@@ -504,9 +545,9 @@ class CoreMLPredictor:
             results.append(self.predict(chunk))
         return results
 
-    def benchmark(self, obs: np.ndarray,
-                  warmup: Optional[int] = None,
-                  runs: Optional[int] = None) -> Dict[str, float]:
+    def benchmark(
+        self, obs: np.ndarray, warmup: Optional[int] = None, runs: Optional[int] = None
+    ) -> Dict[str, float]:
         """Benchmark inference latency and throughput."""
         warmup = warmup or self.cfg.warmup_runs
         runs = runs or self.cfg.benchmark_runs
@@ -533,12 +574,14 @@ class CoreMLPredictor:
             "std_latency_ms": float(np.std(latencies)),
             "mean_throughput_fps": float(np.mean(throughputs)),
             "total_runs": runs,
-            "meets_target": bool(np.percentile(latencies, 95) < self.cfg.target_latency_ms),
+            "meets_target": bool(
+                np.percentile(latencies, 95) < self.cfg.target_latency_ms
+            ),
         }
 
-    def compare_accuracy(self, network: MockStrategyNetwork,
-                         n_samples: int = 100,
-                         seed: int = 42) -> Dict[str, float]:
+    def compare_accuracy(
+        self, network: MockStrategyNetwork, n_samples: int = 100, seed: int = 42
+    ) -> Dict[str, float]:
         """Compare CoreML output vs original network."""
         rng = np.random.RandomState(seed)
         cos_sims_actions = []
@@ -561,7 +604,9 @@ class CoreMLPredictor:
             sa = orig["strategy_scores"].flatten()
             sb = pred["strategy_scores"].flatten()
             denom_s = np.linalg.norm(sa) * np.linalg.norm(sb)
-            cos_sims_strategy.append(float(np.dot(sa, sb) / denom_s) if denom_s > 0 else 1.0)
+            cos_sims_strategy.append(
+                float(np.dot(sa, sb) / denom_s) if denom_s > 0 else 1.0
+            )
 
             # Value absolute error
             value_errors.append(float(np.abs(orig["value"] - pred["value"]).mean()))
@@ -594,6 +639,7 @@ class CoreMLPredictor:
 # Companion App Integration Layer
 # ============================================================
 
+
 class CompanionAppBridge:
     """Simulates the iOS companion app integration layer.
 
@@ -613,8 +659,7 @@ class CompanionAppBridge:
         self._recommendation_cache: Dict[str, Any] = {}
         self._last_update_time = 0.0
 
-    def get_strategy_recommendation(self, game_state: Dict[str, Any]
-                                    ) -> Dict[str, Any]:
+    def get_strategy_recommendation(self, game_state: Dict[str, Any]) -> Dict[str, Any]:
         """Generate a human-readable strategy recommendation.
 
         Returns a dict suitable for display in the iOS companion app.
@@ -629,8 +674,16 @@ class CompanionAppBridge:
         action_probs = out["action_probs"].flatten()
         top_action_idx = int(np.argmax(action_probs))
         action_names = [
-            "no_op", "attack", "move", "hold", "patrol",
-            "gather", "build", "ability", "retreat", "regroup",
+            "no_op",
+            "attack",
+            "move",
+            "hold",
+            "patrol",
+            "gather",
+            "build",
+            "ability",
+            "retreat",
+            "regroup",
         ]
         top_action = action_names[top_action_idx]
 
@@ -656,8 +709,9 @@ class CompanionAppBridge:
         self._recommendation_cache = recommendation
         return recommendation
 
-    def get_build_order_suggestion(self, game_state: Dict[str, Any]
-                                   ) -> List[Dict[str, Any]]:
+    def get_build_order_suggestion(
+        self, game_state: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Suggest next build order items based on strategy."""
         rec = self.get_strategy_recommendation(game_state)
         strategy = rec["strategy"]
@@ -702,11 +756,13 @@ class CompanionAppBridge:
         """Perform a background model prediction update."""
         rec = self.get_strategy_recommendation(game_state)
         self._last_update_time = time.time()
-        self._update_history.append({
-            "timestamp": self._last_update_time,
-            "strategy": rec["strategy"],
-            "win_prob": rec["win_probability"],
-        })
+        self._update_history.append(
+            {
+                "timestamp": self._last_update_time,
+                "strategy": rec["strategy"],
+                "win_prob": rec["win_probability"],
+            }
+        )
 
     def _encode_game_state(self, game_state: Dict[str, Any]) -> np.ndarray:
         """Encode game state dict into observation vector."""
@@ -749,8 +805,7 @@ class CompanionAppBridge:
             return "mid_game"
         return "late_game"
 
-    def _compute_urgency(self, game_state: Dict[str, Any],
-                         value: float) -> str:
+    def _compute_urgency(self, game_state: Dict[str, Any], value: float) -> str:
         """Compute urgency level for display."""
         if value < -0.5:
             return "critical"
@@ -760,9 +815,9 @@ class CompanionAppBridge:
             return "medium"
         return "low"
 
-    def _format_recommendation_text(self, strategy: str, action: str,
-                                    win_prob: float,
-                                    game_state: Dict[str, Any]) -> str:
+    def _format_recommendation_text(
+        self, strategy: str, action: str, win_prob: float, game_state: Dict[str, Any]
+    ) -> str:
         """Format a human-readable recommendation for the app."""
         phase = self._detect_game_phase(game_state)
         strategy_display = strategy.replace("_", " ").title()
@@ -779,6 +834,7 @@ class CompanionAppBridge:
 # CoreML Agent (SC2 integration)
 # ============================================================
 
+
 class CoreMLAgent:
     """SC2 agent using CoreML-converted strategy advisor.
 
@@ -787,8 +843,16 @@ class CoreMLAgent:
     """
 
     ACTION_NAMES = [
-        "no_op", "attack", "move", "hold", "patrol",
-        "gather", "build", "ability", "retreat", "regroup",
+        "no_op",
+        "attack",
+        "move",
+        "hold",
+        "patrol",
+        "gather",
+        "build",
+        "ability",
+        "retreat",
+        "regroup",
     ]
 
     def __init__(self, cfg: Optional[CoreMLConfig] = None, seed: int = 42):
@@ -802,8 +866,11 @@ class CoreMLAgent:
         self._is_loaded = False
         self.step_count = 0
 
-    def convert_and_load(self, precision: Optional[PrecisionMode] = None,
-                         compute_unit: Optional[ComputeUnit] = None):
+    def convert_and_load(
+        self,
+        precision: Optional[PrecisionMode] = None,
+        compute_unit: Optional[ComputeUnit] = None,
+    ):
         """Convert the strategy model and load for prediction."""
         if precision is not None:
             self.cfg.precision = precision
@@ -900,8 +967,7 @@ class CoreMLAgent:
             self.convert_and_load()
         if isinstance(self._mlmodel, dict):
             # Remove non-serializable weight blobs for JSON export
-            export = {k: v for k, v in self._mlmodel.items()
-                      if k != "weight_blobs"}
+            export = {k: v for k, v in self._mlmodel.items() if k != "weight_blobs"}
             with open(path, "w") as f:
                 json.dump(export, f, indent=2)
         elif COREML_AVAILABLE and hasattr(self._mlmodel, "save"):
@@ -934,6 +1000,7 @@ class CoreMLAgent:
 # CLI Demo
 # ============================================================
 
+
 def _demo_mock_network():
     print("=" * 60)
     print("Mock Strategy Network Demo")
@@ -948,8 +1015,10 @@ def _demo_mock_network():
     print(f"  Action probs shape:    {out['action_probs'].shape}")
     print(f"  Value shape:           {out['value'].shape}")
     print(f"  Strategy scores shape: {out['strategy_scores'].shape}")
-    print(f"  Top strategy:          "
-          f"{MockStrategyNetwork.STRATEGY_NAMES[np.argmax(out['strategy_scores'][0])]}")
+    print(
+        f"  Top strategy:          "
+        f"{MockStrategyNetwork.STRATEGY_NAMES[np.argmax(out['strategy_scores'][0])]}"
+    )
     print()
 
 
@@ -968,8 +1037,10 @@ def _demo_conversion():
         mlmodel = converter.convert_mock(net)
         size = mlmodel["total_weight_bytes"]
         ratio = original_size / max(size, 1)
-        print(f"  {precision.value:15s} -> {size:>8,} bytes "
-              f"(compression: {ratio:.2f}x)")
+        print(
+            f"  {precision.value:15s} -> {size:>8,} bytes "
+            f"(compression: {ratio:.2f}x)"
+        )
 
     print(f"  Original float32:    {original_size:>8,} bytes")
     print()
@@ -980,8 +1051,14 @@ def _demo_inference_benchmark():
     print("CoreML Inference Benchmark Demo")
     print("=" * 60)
 
-    cfg = CoreMLConfig(obs_dim=48, hidden_dim=128, n_actions=10,
-                       n_strategies=5, benchmark_runs=100, warmup_runs=10)
+    cfg = CoreMLConfig(
+        obs_dim=48,
+        hidden_dim=128,
+        n_actions=10,
+        n_strategies=5,
+        benchmark_runs=100,
+        warmup_runs=10,
+    )
     net = MockStrategyNetwork(cfg, seed=42)
 
     for precision in PrecisionMode:
@@ -996,9 +1073,11 @@ def _demo_inference_benchmark():
         bench = predictor.benchmark(obs)
 
         status = "PASS" if bench["meets_target"] else "FAIL"
-        print(f"  {precision.value:15s} | mean: {bench['mean_latency_ms']:6.3f} ms | "
-              f"p95: {bench['p95_latency_ms']:6.3f} ms | "
-              f"throughput: {bench['mean_throughput_fps']:8.0f} fps | [{status}]")
+        print(
+            f"  {precision.value:15s} | mean: {bench['mean_latency_ms']:6.3f} ms | "
+            f"p95: {bench['p95_latency_ms']:6.3f} ms | "
+            f"throughput: {bench['mean_throughput_fps']:8.0f} fps | [{status}]"
+        )
 
     print()
 
@@ -1013,14 +1092,46 @@ def _demo_companion_app():
 
     game_state = {
         "units": [
-            {"type_id": 84, "x": 50, "y": 50, "health": 45, "shield": 0,
-             "energy": 0, "is_friendly": True, "tag": 1001},
-            {"type_id": 84, "x": 52, "y": 48, "health": 40, "shield": 0,
-             "energy": 0, "is_friendly": True, "tag": 1002},
-            {"type_id": 105, "x": 55, "y": 53, "health": 35, "shield": 0,
-             "energy": 0, "is_friendly": True, "tag": 1003},
-            {"type_id": 48, "x": 80, "y": 60, "health": 150, "shield": 50,
-             "energy": 100, "is_friendly": False, "tag": 2001},
+            {
+                "type_id": 84,
+                "x": 50,
+                "y": 50,
+                "health": 45,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "tag": 1001,
+            },
+            {
+                "type_id": 84,
+                "x": 52,
+                "y": 48,
+                "health": 40,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "tag": 1002,
+            },
+            {
+                "type_id": 105,
+                "x": 55,
+                "y": 53,
+                "health": 35,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "tag": 1003,
+            },
+            {
+                "type_id": 48,
+                "x": 80,
+                "y": 60,
+                "health": 150,
+                "shield": 50,
+                "energy": 100,
+                "is_friendly": False,
+                "tag": 2001,
+            },
         ],
         "minerals": 450,
         "vespene": 200,
@@ -1054,15 +1165,19 @@ def _demo_precision_comparison():
     agent = CoreMLAgent(seed=42)
     results = agent.run_precision_comparison()
 
-    print(f"  {'Precision':15s} | {'Size':>10s} | {'Latency':>10s} | "
-          f"{'ActCos':>8s} | {'StrCos':>8s} | Target")
+    print(
+        f"  {'Precision':15s} | {'Size':>10s} | {'Latency':>10s} | "
+        f"{'ActCos':>8s} | {'StrCos':>8s} | Target"
+    )
     print("  " + "-" * 75)
     for prec_name, stats in results.items():
         target_str = "PASS" if stats["meets_target"] else "FAIL"
-        print(f"  {prec_name:15s} | {stats['model_size_bytes']:>8,} B | "
-              f"{stats['mean_latency_ms']:>8.3f} ms | "
-              f"{stats['action_cosine_sim']:>8.6f} | "
-              f"{stats['strategy_cosine_sim']:>8.6f} | {target_str}")
+        print(
+            f"  {prec_name:15s} | {stats['model_size_bytes']:>8,} B | "
+            f"{stats['mean_latency_ms']:>8.3f} ms | "
+            f"{stats['action_cosine_sim']:>8.6f} | "
+            f"{stats['strategy_cosine_sim']:>8.6f} | {target_str}"
+        )
 
     print()
 
@@ -1082,8 +1197,10 @@ def _demo_batch_prediction():
     print(f"  Input batch size: {obs.shape[0]}")
     print(f"  Number of chunks: {len(results)}")
     for i, res in enumerate(results):
-        print(f"  Chunk {i}: action_probs {res['action_probs'].shape}, "
-              f"strategy {res['strategy_scores'].shape}")
+        print(
+            f"  Chunk {i}: action_probs {res['action_probs'].shape}, "
+            f"strategy {res['strategy_scores'].shape}"
+        )
 
     print()
 

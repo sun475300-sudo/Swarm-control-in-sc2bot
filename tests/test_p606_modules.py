@@ -10,7 +10,7 @@ import importlib
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 _HAS_NUMPY = importlib.util.find_spec("numpy") is not None
 
@@ -25,6 +25,7 @@ def _safe_import(module_path, class_name):
 
 # ── MAPPO ──────────────────────────────────────
 
+
 @pytest.mark.skipif(not _HAS_NUMPY, reason="numpy required")
 class TestMAPPO:
     def test_config(self):
@@ -36,6 +37,7 @@ class TestMAPPO:
 
 # ── MADDPG ─────────────────────────────────────
 
+
 @pytest.mark.skipif(not _HAS_NUMPY, reason="numpy required")
 class TestMADDPG:
     def test_import(self):
@@ -44,6 +46,7 @@ class TestMADDPG:
 
 
 # ── League Training ────────────────────────────
+
 
 class TestLeagueTraining:
     def test_import(self):
@@ -61,6 +64,7 @@ class TestLeagueTraining:
 
 # ── Curriculum RL ──────────────────────────────
 
+
 class TestCurriculumRL:
     def test_import(self):
         cls = _safe_import("curriculum_rl.sc2_curriculum_trainer", "CurriculumStage")
@@ -77,6 +81,7 @@ class TestCurriculumRL:
 
 # ── PBT Optimizer ──────────────────────────────
 
+
 @pytest.mark.skipif(not _HAS_NUMPY, reason="numpy required")
 class TestPBTOptimizer:
     def test_import(self):
@@ -85,6 +90,7 @@ class TestPBTOptimizer:
 
 
 # ── Reward Shaping (P606+) ─────────────────────
+
 
 class TestRewardShapingP606:
     def test_import(self):
@@ -102,6 +108,7 @@ class TestRewardShapingP606:
 
 # ── Strategy Evaluator ─────────────────────────
 
+
 class TestStrategyEvaluator:
     def test_import(self):
         cls = _safe_import("strategy_evaluator.sc2_strategy_eval", "EvalDimension")
@@ -117,6 +124,7 @@ class TestStrategyEvaluator:
 
 
 # ── Digital Twin ───────────────────────────────
+
 
 class TestDigitalTwin:
     def test_import(self):
@@ -134,6 +142,7 @@ class TestDigitalTwin:
 
 # ── Canary Deploy ──────────────────────────────
 
+
 class TestCanaryDeploy:
     def test_import(self):
         cls = _safe_import("canary_deploy.sc2_canary_release", "DeploymentPhase")
@@ -150,6 +159,7 @@ class TestCanaryDeploy:
 
 # ── Circuit Breaker ────────────────────────────
 
+
 class TestCircuitBreaker:
     def test_import(self):
         cls = _safe_import("circuit_breaker.sc2_circuit_breaker", "CircuitState")
@@ -160,6 +170,7 @@ class TestCircuitBreaker:
 
 # ── Feature Flags ──────────────────────────────
 
+
 class TestFeatureFlags:
     def test_import(self):
         cls = _safe_import("feature_flags.sc2_feature_flags", "FlagType")
@@ -169,6 +180,7 @@ class TestFeatureFlags:
 
 
 # ── Tool Use Agent ─────────────────────────────
+
 
 class TestToolUseAgent:
     def test_import(self):
@@ -186,6 +198,7 @@ class TestToolUseAgent:
 
 # ── Imitation Learning ─────────────────────────
 
+
 @pytest.mark.skipif(not _HAS_NUMPY, reason="numpy required")
 class TestImitationLearning:
     def test_import(self):
@@ -195,6 +208,7 @@ class TestImitationLearning:
 
 # ── Comm Learning ──────────────────────────────
 
+
 @pytest.mark.skipif(not _HAS_NUMPY, reason="numpy required")
 class TestCommLearning:
     def test_import(self):
@@ -203,6 +217,7 @@ class TestCommLearning:
 
 
 # ── Model Based RL ─────────────────────────────
+
 
 @pytest.mark.skipif(not _HAS_NUMPY, reason="numpy required")
 class TestModelBasedRL:

@@ -21,6 +21,7 @@ try:
     from airflow.models import Variable
     from airflow.utils.dates import days_ago
     from airflow.operators.email import EmailOperator
+
     AIRFLOW_AVAILABLE = True
     print("[INFO] Airflow detected — using real DAG runtime.")
 except ImportError:
@@ -49,13 +50,16 @@ except ImportError:
             func._is_dag = True
             func._dag_id = dag_id or func.__name__
             return func
+
         return decorator
 
     def task(func=None, **kwargs):
         if func is not None:
             return func
+
         def decorator(f):
             return f
+
         return decorator
 
     class Variable:
@@ -100,6 +104,7 @@ def get_param(key: str) -> Any:
 # ---------------------------------------------------------------------------
 # TaskFlow API — individual tasks
 # ---------------------------------------------------------------------------
+
 
 @task
 def extract_replays(**context) -> dict:
@@ -147,7 +152,9 @@ def preprocess_features(extract_result: dict, **context) -> dict:
             "loss": None,  # computed below
         },
     }
-    result["label_distribution"]["loss"] = round(1.0 - result["label_distribution"]["win"], 3)
+    result["label_distribution"]["loss"] = round(
+        1.0 - result["label_distribution"]["win"], 3
+    )
 
     logger.info(
         "Features ready — %d valid samples, dim=%d, win_rate=%.3f",
@@ -170,18 +177,22 @@ def train_ppo(preprocess_result: dict, **context) -> dict:
 
     logger.info(
         "Starting PPO training — timesteps=%d, lr=%s, features=%s",
-        timesteps, lr, feature_path,
+        timesteps,
+        lr,
+        feature_path,
     )
 
     # Simulate training loop telemetry
     epochs = 10
     losses = []
     for epoch in range(epochs):
-        loss = 1.5 * (0.85 ** epoch) + random.uniform(-0.02, 0.02)
+        loss = 1.5 * (0.85**epoch) + random.uniform(-0.02, 0.02)
         losses.append(round(loss, 4))
         logger.info("  Epoch %d/%d — loss=%.4f", epoch + 1, epochs, loss)
 
-    checkpoint_path = f"/tmp/sc2_ppo_checkpoint_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pt"
+    checkpoint_path = (
+        f"/tmp/sc2_ppo_checkpoint_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pt"
+    )
 
     result = {
         "checkpoint_path": checkpoint_path,
@@ -191,7 +202,11 @@ def train_ppo(preprocess_result: dict, **context) -> dict:
         "learning_rate": lr,
         "training_duration_s": random.randint(600, 3600),
     }
-    logger.info("Training complete — checkpoint: %s, final_loss=%.4f", checkpoint_path, losses[-1])
+    logger.info(
+        "Training complete — checkpoint: %s, final_loss=%.4f",
+        checkpoint_path,
+        losses[-1],
+    )
     return result
 
 
@@ -232,7 +247,9 @@ def evaluate_model(train_result: dict, **context) -> dict:
     }
     logger.info(
         "Evaluation complete — win_rate=%.4f (%d/%d games)",
-        win_rate, wins, evaluation_games,
+        win_rate,
+        wins,
+        evaluation_games,
     )
     return result
 
@@ -253,14 +270,17 @@ def promote_if_better(eval_result: dict, **context) -> dict:
     if promoted:
         logger.info(
             "Model PROMOTED — win_rate=%.4f >= threshold=%.4f. Pushing to %s",
-            new_win_rate, min_win_rate, registry_uri,
+            new_win_rate,
+            min_win_rate,
+            registry_uri,
         )
         model_version = f"v{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
         promotion_status = "promoted"
     else:
         logger.warning(
             "Model NOT promoted — win_rate=%.4f < threshold=%.4f",
-            new_win_rate, min_win_rate,
+            new_win_rate,
+            min_win_rate,
         )
         model_version = None
         promotion_status = "rejected"
@@ -278,7 +298,9 @@ def promote_if_better(eval_result: dict, **context) -> dict:
 
 
 @task
-def notify(promote_result: dict, eval_result: dict, train_result: dict, **context) -> str:
+def notify(
+    promote_result: dict, eval_result: dict, train_result: dict, **context
+) -> str:
     """
     Send pipeline completion notification with summary metrics.
     """
@@ -312,6 +334,7 @@ def notify(promote_result: dict, eval_result: dict, train_result: dict, **contex
 # ---------------------------------------------------------------------------
 # DAG definition (TaskFlow API)
 # ---------------------------------------------------------------------------
+
 
 @dag(
     dag_id="sc2_training_pipeline",
@@ -372,6 +395,7 @@ pipeline_dag = sc2_training_pipeline()
 # Standalone simulation — runnable without Airflow
 # ---------------------------------------------------------------------------
 
+
 def run_standalone_simulation():
     """
     Execute the pipeline tasks sequentially to simulate the DAG run.
@@ -390,33 +414,43 @@ def run_standalone_simulation():
     # Task 1: Extract
     print("[STEP 1/6] extract_replays")
     extract_result = extract_replays()
-    print(f"  -> replay_count={extract_result['replay_count']}, "
-          f"ts={extract_result['extraction_ts']}\n")
+    print(
+        f"  -> replay_count={extract_result['replay_count']}, "
+        f"ts={extract_result['extraction_ts']}\n"
+    )
 
     # Task 2: Preprocess
     print("[STEP 2/6] preprocess_features")
     preprocess_result = preprocess_features(extract_result)
-    print(f"  -> valid_samples={preprocess_result['valid_samples']}, "
-          f"feature_dim={preprocess_result['feature_dim']}, "
-          f"win_dist={preprocess_result['label_distribution']}\n")
+    print(
+        f"  -> valid_samples={preprocess_result['valid_samples']}, "
+        f"feature_dim={preprocess_result['feature_dim']}, "
+        f"win_dist={preprocess_result['label_distribution']}\n"
+    )
 
     # Task 3: Train
     print("[STEP 3/6] train_ppo")
     train_result = train_ppo(preprocess_result)
-    print(f"  -> checkpoint={train_result['checkpoint_path']}, "
-          f"final_loss={train_result['final_loss']}\n")
+    print(
+        f"  -> checkpoint={train_result['checkpoint_path']}, "
+        f"final_loss={train_result['final_loss']}\n"
+    )
 
     # Task 4: Evaluate
     print("[STEP 4/6] evaluate_model")
     eval_result = evaluate_model(train_result)
-    print(f"  -> win_rate={eval_result['win_rate']:.4f} "
-          f"({eval_result['wins']}/{eval_result['total_games']})\n")
+    print(
+        f"  -> win_rate={eval_result['win_rate']:.4f} "
+        f"({eval_result['wins']}/{eval_result['total_games']})\n"
+    )
 
     # Task 5: Promote
     print("[STEP 5/6] promote_if_better")
     promote_result = promote_if_better(eval_result)
-    print(f"  -> status={promote_result['promotion_status']}, "
-          f"version={promote_result['model_version']}\n")
+    print(
+        f"  -> status={promote_result['promotion_status']}, "
+        f"version={promote_result['model_version']}\n"
+    )
 
     # Task 6: Notify
     print("[STEP 6/6] notify")

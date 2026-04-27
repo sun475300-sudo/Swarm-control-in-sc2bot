@@ -108,16 +108,22 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
-def _vec3_distance(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
+def _vec3_distance(
+    a: Tuple[float, float, float], b: Tuple[float, float, float]
+) -> float:
     return math.sqrt(sum((ai - bi) ** 2 for ai, bi in zip(a, b)))
 
 
-def _sc2_pos_to_unity(x: float, y: float, map_scale: float = 1.0) -> Tuple[float, float, float]:
+def _sc2_pos_to_unity(
+    x: float, y: float, map_scale: float = 1.0
+) -> Tuple[float, float, float]:
     """Convert SC2 2D map coordinates to Unity 3D world coordinates."""
     return (x * map_scale, 0.0, y * map_scale)
 
 
-def _unity_pos_to_sc2(ux: float, _uy: float, uz: float, map_scale: float = 1.0) -> Tuple[float, float]:
+def _unity_pos_to_sc2(
+    ux: float, _uy: float, uz: float, map_scale: float = 1.0
+) -> Tuple[float, float]:
     """Convert Unity 3D world coordinates back to SC2 2D."""
     return (ux / max(map_scale, 1e-9), uz / max(map_scale, 1e-9))
 
@@ -130,7 +136,7 @@ def _encode_float_list(values: List[float]) -> bytes:
 def _decode_float_list(data: bytes) -> List[float]:
     """Unpack a little-endian float blob."""
     n = len(data) // 4
-    return list(struct.unpack(f"<{n}f", data[:n * 4]))
+    return list(struct.unpack(f"<{n}f", data[: n * 4]))
 
 
 # ============================================================
@@ -148,6 +154,7 @@ class ChannelType(Enum):
 @dataclass
 class UnitSnapshot:
     """Snapshot of a single SC2 unit for transmission to Unity."""
+
     unit_id: int
     unit_type: str
     owner: int  # 1 = self, 2 = enemy
@@ -181,6 +188,7 @@ class UnitSnapshot:
 @dataclass
 class GameStatePacket:
     """Full game-state snapshot transmitted through the observation channel."""
+
     game_loop: int
     minerals: int
     vespene: int
@@ -191,16 +199,18 @@ class GameStatePacket:
     map_name: str = ""
 
     def to_json(self) -> str:
-        return json.dumps({
-            "game_loop": self.game_loop,
-            "minerals": self.minerals,
-            "vespene": self.vespene,
-            "supply_used": self.supply_used,
-            "supply_cap": self.supply_cap,
-            "camera_pos": list(self.camera_pos),
-            "map_name": self.map_name,
-            "units": [u.to_dict() for u in self.units],
-        })
+        return json.dumps(
+            {
+                "game_loop": self.game_loop,
+                "minerals": self.minerals,
+                "vespene": self.vespene,
+                "supply_used": self.supply_used,
+                "supply_cap": self.supply_cap,
+                "camera_pos": list(self.camera_pos),
+                "map_name": self.map_name,
+                "units": [u.to_dict() for u in self.units],
+            }
+        )
 
     def to_float_obs(self, max_units: int = 64) -> List[float]:
         """Flatten game state into a fixed-length float vector for RL."""
@@ -216,7 +226,9 @@ class GameStatePacket:
         for i in range(max_units):
             if i < len(self.units):
                 u = self.units[i]
-                obs.extend([u.x, u.y, u.health, u.shield, u.energy, u.facing, float(u.owner)])
+                obs.extend(
+                    [u.x, u.y, u.health, u.shield, u.energy, u.facing, float(u.owner)]
+                )
             else:
                 obs.extend([0.0] * 7)
         return obs
@@ -225,6 +237,7 @@ class GameStatePacket:
 @dataclass
 class ActionPacket:
     """Actions received from Unity back to the SC2 bot."""
+
     agent_id: str
     continuous_actions: List[float] = field(default_factory=list)
     discrete_actions: List[int] = field(default_factory=list)
@@ -259,7 +272,9 @@ class ObservationChannel:
         self._buffer: List[bytes] = []
         self._send_count: int = 0
         self._last_send_time: float = 0.0
-        logger.info("ObservationChannel created id=%s binary=%s", self.channel_id, binary_mode)
+        logger.info(
+            "ObservationChannel created id=%s binary=%s", self.channel_id, binary_mode
+        )
 
     # -- public API --
 
@@ -293,14 +308,16 @@ class ObservationChannel:
         for u in units:
             prefab = SC2_UNIT_PREFAB_MAP.get(u.unit_type, "Prefab_Generic")
             ux, uy, uz = _sc2_pos_to_unity(u.x, u.y)
-            result.append({
-                "prefab": prefab,
-                "position": [ux, uy, uz],
-                "rotation_y": math.degrees(u.facing),
-                "unit_id": u.unit_id,
-                "owner": u.owner,
-                "health_pct": u.health / max(u.health_max, 1.0),
-            })
+            result.append(
+                {
+                    "prefab": prefab,
+                    "position": [ux, uy, uz],
+                    "rotation_y": math.degrees(u.facing),
+                    "unit_id": u.unit_id,
+                    "owner": u.owner,
+                    "health_pct": u.health / max(u.health_max, 1.0),
+                }
+            )
         return result
 
 
@@ -389,6 +406,7 @@ class ActionChannel:
 @dataclass
 class AgentSpec:
     """Specification of an agent's observation / action spaces."""
+
     obs_size: int = 455  # 7 globals + 64 units * 7 features
     continuous_action_size: int = 3
     discrete_branches: List[int] = field(default_factory=lambda: [4, 16])
@@ -402,7 +420,12 @@ class UnityAgent:
     Tracks cumulative reward, episode length, and action history.
     """
 
-    def __init__(self, agent_id: str, spec: Optional[AgentSpec] = None, behavior_name: str = "SC2Brain"):
+    def __init__(
+        self,
+        agent_id: str,
+        spec: Optional[AgentSpec] = None,
+        behavior_name: str = "SC2Brain",
+    ):
         self.agent_id: str = agent_id
         self.spec: AgentSpec = spec or AgentSpec()
         self.behavior_name: str = behavior_name
@@ -511,7 +534,9 @@ class UnityEnvironment:
 
     # -- agent management --
 
-    def register_agent(self, agent_id: str, spec: Optional[AgentSpec] = None) -> UnityAgent:
+    def register_agent(
+        self, agent_id: str, spec: Optional[AgentSpec] = None
+    ) -> UnityAgent:
         agent = UnityAgent(agent_id=agent_id, spec=spec)
         self._agents[agent_id] = agent
         logger.info("Registered agent %s", agent_id)
@@ -534,7 +559,9 @@ class UnityEnvironment:
         """Poll the action channel for any pending decisions."""
         return self._act_channel.poll()
 
-    def step_agents(self, packet: GameStatePacket, rewards: Optional[Dict[str, float]] = None) -> Dict[str, Dict[str, Any]]:
+    def step_agents(
+        self, packet: GameStatePacket, rewards: Optional[Dict[str, float]] = None
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Full environment step: send observations, generate simulated actions,
         and update agent bookkeeping.
@@ -552,7 +579,9 @@ class UnityEnvironment:
             spec = agent.spec
             cont = [random.uniform(-1, 1) for _ in range(spec.continuous_action_size)]
             disc = [random.randint(0, b - 1) for b in spec.discrete_branches]
-            pkt = ActionPacket(agent_id=aid, continuous_actions=cont, discrete_actions=disc)
+            pkt = ActionPacket(
+                agent_id=aid, continuous_actions=cont, discrete_actions=disc
+            )
             agent.record_action(pkt)
 
             cmd = self._act_channel.interpret_sc2_action(pkt)
@@ -626,7 +655,9 @@ class UnityBridge:
 
     # -- environment management --
 
-    def create_environment(self, seed: int = 42, no_graphics: bool = False) -> UnityEnvironment:
+    def create_environment(
+        self, seed: int = 42, no_graphics: bool = False
+    ) -> UnityEnvironment:
         self._env = UnityEnvironment(
             env_path=self.env_path,
             port=self.port,
@@ -636,7 +667,9 @@ class UnityBridge:
         self._env.connect()
         return self._env
 
-    def register_agents(self, agent_ids: Optional[List[str]] = None) -> List[UnityAgent]:
+    def register_agents(
+        self, agent_ids: Optional[List[str]] = None
+    ) -> List[UnityAgent]:
         if self._env is None:
             raise RuntimeError("Call create_environment() first")
         ids = agent_ids or ["sc2_commander"]
@@ -724,7 +757,9 @@ class UnityBridge:
         """Run multiple training episodes and return logs."""
         results: List[Dict[str, Any]] = []
         for _ in range(num_episodes):
-            rec = self.run_training_episode(steps=steps_per_episode, algorithm=algorithm)
+            rec = self.run_training_episode(
+                steps=steps_per_episode, algorithm=algorithm
+            )
             results.append(rec)
         return results
 
@@ -742,16 +777,22 @@ class UnityBridge:
         for u in units:
             prefab = self.get_prefab(u.unit_type)
             ux, uy, uz = _sc2_pos_to_unity(u.x, u.y, self.map_scale)
-            scene.append({
-                "prefab": prefab,
-                "position": [round(ux, 3), round(uy, 3), round(uz, 3)],
-                "rotation_y": round(math.degrees(u.facing), 2),
-                "scale": 1.0,
-                "unit_id": u.unit_id,
-                "owner": u.owner,
-                "health_pct": round(u.health / max(u.health_max, 1.0), 3),
-                "shield_pct": round(u.shield / max(u.shield_max, 1.0), 3) if u.shield_max > 0 else 0.0,
-            })
+            scene.append(
+                {
+                    "prefab": prefab,
+                    "position": [round(ux, 3), round(uy, 3), round(uz, 3)],
+                    "rotation_y": round(math.degrees(u.facing), 2),
+                    "scale": 1.0,
+                    "unit_id": u.unit_id,
+                    "owner": u.owner,
+                    "health_pct": round(u.health / max(u.health_max, 1.0), 3),
+                    "shield_pct": (
+                        round(u.shield / max(u.shield_max, 1.0), 3)
+                        if u.shield_max > 0
+                        else 0.0
+                    ),
+                }
+            )
         return scene
 
     # -- internal helpers --
@@ -765,19 +806,27 @@ class UnityBridge:
             ut = random.choice(unit_types)
             owner = 1 if i < num_units // 2 else 2
             hp_max = random.uniform(35, 500)
-            units.append(UnitSnapshot(
-                unit_id=i,
-                unit_type=ut,
-                owner=owner,
-                x=random.uniform(0, 200),
-                y=random.uniform(0, 200),
-                health=random.uniform(1, hp_max),
-                health_max=hp_max,
-                shield=random.uniform(0, 100),
-                shield_max=100.0 if "Protoss" in ut or ut in ("Zealot", "Stalker", "Colossus", "Immortal", "VoidRay") else 0.0,
-                energy=random.uniform(0, 200),
-                facing=random.uniform(0, 2 * math.pi),
-            ))
+            units.append(
+                UnitSnapshot(
+                    unit_id=i,
+                    unit_type=ut,
+                    owner=owner,
+                    x=random.uniform(0, 200),
+                    y=random.uniform(0, 200),
+                    health=random.uniform(1, hp_max),
+                    health_max=hp_max,
+                    shield=random.uniform(0, 100),
+                    shield_max=(
+                        100.0
+                        if "Protoss" in ut
+                        or ut
+                        in ("Zealot", "Stalker", "Colossus", "Immortal", "VoidRay")
+                        else 0.0
+                    ),
+                    energy=random.uniform(0, 200),
+                    facing=random.uniform(0, 2 * math.pi),
+                )
+            )
 
         return GameStatePacket(
             game_loop=step * 16,
@@ -844,49 +893,70 @@ def demo() -> None:
     units = [
         UnitSnapshot(1, "Zergling", 1, 50.0, 50.0, 35.0, 35.0, facing=1.57),
         UnitSnapshot(2, "Marine", 2, 60.0, 55.0, 45.0, 45.0, facing=3.14),
-        UnitSnapshot(3, "Stalker", 1, 48.0, 52.0, 80.0, 80.0, shield=80.0, shield_max=80.0),
+        UnitSnapshot(
+            3, "Stalker", 1, 48.0, 52.0, 80.0, 80.0, shield=80.0, shield_max=80.0
+        ),
     ]
     packet = GameStatePacket(
-        game_loop=160, minerals=400, vespene=200,
-        supply_used=44, supply_cap=60, units=units,
-        camera_pos=(50.0, 50.0), map_name="CatalystLE",
+        game_loop=160,
+        minerals=400,
+        vespene=200,
+        supply_used=44,
+        supply_cap=60,
+        units=units,
+        camera_pos=(50.0, 50.0),
+        map_name="CatalystLE",
     )
     obs_ch.enqueue(packet)
     payloads = obs_ch.flush()
-    print(f"    Payloads flushed: {len(payloads)}, total bytes: {sum(len(p) for p in payloads)}")
+    print(
+        f"    Payloads flushed: {len(payloads)}, total bytes: {sum(len(p) for p in payloads)}"
+    )
     print(f"    Float obs vector length: {len(packet.to_float_obs())}")
 
     # 3. Action channel test
     print("\n[3] Testing ActionChannel ...")
     act_ch = ActionChannel()
-    raw_action = json.dumps({
-        "agent_id": "sc2_commander",
-        "continuous": [0.7, 0.3, 0.8],
-        "discrete": [2, 5],
-    }).encode("utf-8")
+    raw_action = json.dumps(
+        {
+            "agent_id": "sc2_commander",
+            "continuous": [0.7, 0.3, 0.8],
+            "discrete": [2, 5],
+        }
+    ).encode("utf-8")
     act_pkt = act_ch.receive_raw(raw_action)
     sc2_cmd = act_ch.interpret_sc2_action(act_pkt)
-    print(f"    Received action: type={sc2_cmd['action']}, target={sc2_cmd['target']}, aggression={sc2_cmd['aggression']}")
+    print(
+        f"    Received action: type={sc2_cmd['action']}, target={sc2_cmd['target']}, aggression={sc2_cmd['aggression']}"
+    )
 
     # 4. Unit-to-prefab mapping
     print("\n[4] Mapping SC2 units to Unity prefabs ...")
     scene = bridge.map_units_to_scene(units)
     for item in scene:
-        print(f"    {item['prefab']:20s} pos={item['position']} rot_y={item['rotation_y']}")
+        print(
+            f"    {item['prefab']:20s} pos={item['position']} rot_y={item['rotation_y']}"
+        )
 
     # 5. Training episode
     print("\n[5] Running training episodes ...")
     results = bridge.run_training(num_episodes=3, steps_per_episode=50, algorithm="ppo")
     for rec in results:
         rewards = rec["rewards"]
-        print(f"    Episode {rec['episode']}: steps={rec['steps']}, "
-              f"rewards={{{', '.join(f'{k}: {v:.3f}' for k, v in rewards.items())}}}")
+        print(
+            f"    Episode {rec['episode']}: steps={rec['steps']}, "
+            f"rewards={{{', '.join(f'{k}: {v:.3f}' for k, v in rewards.items())}}}"
+        )
 
     # 6. SAC training test
     print("\n[6] Running SAC training ...")
-    sac_results = bridge.run_training(num_episodes=2, steps_per_episode=30, algorithm="sac")
+    sac_results = bridge.run_training(
+        num_episodes=2, steps_per_episode=30, algorithm="sac"
+    )
     for rec in sac_results:
-        print(f"    Episode {rec['episode']}: algorithm={rec['algorithm']}, steps={rec['steps']}")
+        print(
+            f"    Episode {rec['episode']}: algorithm={rec['algorithm']}, steps={rec['steps']}"
+        )
 
     # 7. Summary
     print("\n[7] Bridge summary:")

@@ -20,12 +20,15 @@ logger = logging.getLogger("RunReplaySmoke")
 
 try:
     import sc2reader
+
     SC2READER_AVAILABLE = True
 except ImportError:
     SC2READER_AVAILABLE = False
 
 
-def build_results_from_replays(replay_dir: Path, max_files: int) -> List[Dict[str, Any]]:
+def build_results_from_replays(
+    replay_dir: Path, max_files: int
+) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
     replay_files = sorted(replay_dir.glob("*.SC2Replay"))[:max_files]
     logger.info(f"Found {len(replay_files)} replay files")
@@ -39,7 +42,14 @@ def build_results_from_replays(replay_dir: Path, max_files: int) -> List[Dict[st
             if hasattr(raw_length, "seconds"):
                 game_seconds = max(1, int(raw_length.seconds))
             elif raw_length is not None:
-                game_seconds = max(1, int(float(str(raw_length).replace("s", "").split(".")[0]) * 60 if "." in str(raw_length) else raw_length))
+                game_seconds = max(
+                    1,
+                    int(
+                        float(str(raw_length).replace("s", "").split(".")[0]) * 60
+                        if "." in str(raw_length)
+                        else raw_length
+                    ),
+                )
             else:
                 game_seconds = 600  # Default 10 minutes
 
@@ -61,7 +71,9 @@ def build_results_from_replays(replay_dir: Path, max_files: int) -> List[Dict[st
                 apm = 150.0
                 victory = False
 
-            logger.info(f"Processed: {replay_path.name} - {minutes:.1f}min, APM:{apm:.0f}, Win:{victory}")
+            logger.info(
+                f"Processed: {replay_path.name} - {minutes:.1f}min, APM:{apm:.0f}, Win:{victory}"
+            )
 
             # Heuristic feature synthesis for smoke training
             minerals = min(2000, apm * 4 + minutes * 200)
@@ -104,10 +116,16 @@ def build_results_from_replays(replay_dir: Path, max_files: int) -> List[Dict[st
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Replay-based smoke training")
-    parser.add_argument("--replay-dir", required=True, help="Directory with .SC2Replay files")
-    parser.add_argument("--max-files", type=int, default=30, help="Limit number of replays to sample")
+    parser.add_argument(
+        "--replay-dir", required=True, help="Directory with .SC2Replay files"
+    )
+    parser.add_argument(
+        "--max-files", type=int, default=30, help="Limit number of replays to sample"
+    )
     parser.add_argument("--epochs", type=int, default=2, help="Training epochs")
-    parser.add_argument("--output-dir", default="local_training/smoke_output", help="Output directory")
+    parser.add_argument(
+        "--output-dir", default="local_training/smoke_output", help="Output directory"
+    )
     args = parser.parse_args()
 
     if not SC2READER_AVAILABLE:
@@ -120,9 +138,15 @@ def main() -> None:
 
     results = build_results_from_replays(replay_dir, max(1, args.max_files))
     manifest_path = output_dir / "replay_smoke_manifest.json"
-    manifest_path.write_text(json.dumps({"results": results}, indent=2), encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps({"results": results}, indent=2), encoding="utf-8"
+    )
 
-    stats = train_from_manifest(manifest_path, model_path=str(output_dir / "zerg_net_model_replay_smoke.pt"), epochs=args.epochs)
+    stats = train_from_manifest(
+        manifest_path,
+        model_path=str(output_dir / "zerg_net_model_replay_smoke.pt"),
+        epochs=args.epochs,
+    )
     summary_path = output_dir / "replay_smoke_summary.json"
     summary_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
     logger.info(f"Replay smoke complete. Summary -> {summary_path}")

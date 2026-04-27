@@ -52,8 +52,9 @@ class TestHarassmentCoordinator:
         try:
             from wicked_zerg_challenger.combat.harassment_coordinator import (
                 HarassmentCoordinator,
-                AggressiveMode
+                AggressiveMode,
             )
+
             self.bot = MockBot()
             self.coordinator = HarassmentCoordinator(self.bot)
             self.AggressiveMode = AggressiveMode
@@ -64,10 +65,10 @@ class TestHarassmentCoordinator:
 
     def test_aggressive_mode_enum_values(self):
         """Test that AggressiveMode enum has all expected values"""
-        assert hasattr(self.AggressiveMode, 'PASSIVE')
-        assert hasattr(self.AggressiveMode, 'OPPORTUNISTIC')
-        assert hasattr(self.AggressiveMode, 'AGGRESSIVE')
-        assert hasattr(self.AggressiveMode, 'ULTRA_AGGRESSIVE')
+        assert hasattr(self.AggressiveMode, "PASSIVE")
+        assert hasattr(self.AggressiveMode, "OPPORTUNISTIC")
+        assert hasattr(self.AggressiveMode, "AGGRESSIVE")
+        assert hasattr(self.AggressiveMode, "ULTRA_AGGRESSIVE")
 
     def test_default_aggressive_mode(self):
         """Test that default mode is OPPORTUNISTIC"""
@@ -215,14 +216,14 @@ class TestHarassmentCoordinator:
 
     def test_multi_angle_coordination_initialization(self):
         """Test multi-angle attack system is initialized"""
-        assert hasattr(self.coordinator, 'zergling_runby_active')
-        assert hasattr(self.coordinator, 'mutalisk_harass_active')
-        assert hasattr(self.coordinator, 'baneling_drop_active')
+        assert hasattr(self.coordinator, "zergling_runby_active")
+        assert hasattr(self.coordinator, "mutalisk_harass_active")
+        assert hasattr(self.coordinator, "baneling_drop_active")
 
     @pytest.mark.asyncio
     async def test_coordinate_multi_angle_attack_exists(self):
         """Test that multi-angle coordination method exists"""
-        assert hasattr(self.coordinator, 'coordinate_multi_angle_attack')
+        assert hasattr(self.coordinator, "coordinate_multi_angle_attack")
 
         # Should not crash
         try:
@@ -235,15 +236,17 @@ class TestHarassmentCoordinator:
 
     def test_priority_target_list(self):
         """Test priority target list is initialized"""
-        assert hasattr(self.coordinator, 'priority_targets')
+        assert hasattr(self.coordinator, "priority_targets")
         assert isinstance(self.coordinator.priority_targets, list)
 
     def test_worker_target_priority(self):
         """Test that workers have highest priority for harassment"""
         # Verify worker finding method exists
-        assert hasattr(self.coordinator, '_find_enemy_workers_near') or \
-               hasattr(self.coordinator, '_find_worker_targets') or \
-               hasattr(self.coordinator, '_get_priority_targets')
+        assert (
+            hasattr(self.coordinator, "_find_enemy_workers_near")
+            or hasattr(self.coordinator, "_find_worker_targets")
+            or hasattr(self.coordinator, "_get_priority_targets")
+        )
 
     # ===== Zergling Runby Tests =====
 
@@ -269,8 +272,8 @@ class TestHarassmentCoordinator:
 
     def test_performance_caching_variables(self):
         """Test that performance optimization variables exist"""
-        assert hasattr(self.coordinator, '_cached_army_fighting')
-        assert hasattr(self.coordinator, '_last_army_check_time')
+        assert hasattr(self.coordinator, "_cached_army_fighting")
+        assert hasattr(self.coordinator, "_last_army_check_time")
 
 
 if __name__ == "__main__":

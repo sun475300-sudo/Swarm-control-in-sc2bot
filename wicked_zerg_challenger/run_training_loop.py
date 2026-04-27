@@ -31,8 +31,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -86,13 +88,11 @@ def run_single_game(game_num, progression_system):
             return (False, None)
 
         result = run_game(
-            map_instance,
-            [bot, Computer(opponent_race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
         )
 
         # Record result
-        won = (result == Race.Zerg)  # Assuming Zerg is player 1
+        won = result == Race.Zerg  # Assuming Zerg is player 1
         progression_system.record_game(map_name, opponent_race, difficulty, won)
 
         # Show stats
@@ -127,7 +127,9 @@ def print_block_summary(block_num, block_wins, block_losses, total_wins, total_l
     logger.info("\n" + "=" * 70)
     logger.info(f"  [*][*][*] BLOCK #{block_num} COMPLETE (10 GAMES) [*][*][*]")
     logger.info(f"  Block Record: {block_wins}W / {block_losses}L ({block_wr:.0f}%)")
-    logger.info(f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})")
+    logger.info(
+        f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})"
+    )
     logger.info(f"  Cumulative: {total_wins}W / {total_losses}L ({total_wr:.1f}%)")
     logger.info("=" * 70 + "\n")
 
@@ -173,8 +175,12 @@ def main():
         logger.info(f"  Total Duration: {total_duration/60:.1f} min")
         logger.info(f"  Games Completed: {games_completed}/{game_num}")
         if won is not None:
-            current_win_rate = (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0
-            logger.info(f"  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)")
+            current_win_rate = (
+                (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0
+            )
+            logger.info(
+                f"  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)"
+            )
         logger.info("-" * 70)
         # Break if 60 minutes passed
         if total_duration > 3600:  # 60 minutes

@@ -17,7 +17,7 @@ import sys
 import os
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from economy_manager import EconomyManager
 from sc2.ids.unit_typeid import UnitTypeId
@@ -47,10 +47,7 @@ class TestEconomyManager(unittest.TestCase):
         self.bot.iteration = 0
         self.bot.start_location = Point2((50, 50))
         self.bot.enemy_start_locations = [Point2((150, 150))]
-        self.bot.expansion_locations_list = [
-            Point2((60, 60)),
-            Point2((140, 140))
-        ]
+        self.bot.expansion_locations_list = [Point2((60, 60)), Point2((140, 140))]
         self.bot.mineral_field = Mock()
         self.bot.gas_buildings = Mock()
         self.bot.blackboard = None
@@ -239,8 +236,8 @@ class TestEconomyManager(unittest.TestCase):
 
     def test_early_split_done_flag_initialization(self):
         """Test early worker split flag is initialized"""
-        self.assertTrue(hasattr(self.manager, '_early_split_done'))
+        self.assertTrue(hasattr(self.manager, "_early_split_done"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

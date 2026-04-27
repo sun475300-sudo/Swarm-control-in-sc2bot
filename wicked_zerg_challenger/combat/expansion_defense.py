@@ -44,7 +44,9 @@ class ExpansionDefense:
         self.logger = get_logger("ExpansionDefense")
 
         # Expansion defense state
-        self._expansion_under_attack: Dict[int, float] = {}  # base_tag -> attack_start_time
+        self._expansion_under_attack: Dict[int, float] = (
+            {}
+        )  # base_tag -> attack_start_time
         self._expansion_destroyed_positions = []
         self._last_expansion_defense_check = 0
         self._expansion_defense_check_interval = 10
@@ -76,9 +78,13 @@ class ExpansionDefense:
         destroyed_bases = previous_bases - current_bases
         if destroyed_bases:
             for base_tag in destroyed_bases:
-                attack_start_time = self._expansion_under_attack.get(base_tag, current_time)
+                attack_start_time = self._expansion_under_attack.get(
+                    base_tag, current_time
+                )
 
-                self.logger.warning(f"[{int(current_time)}s] Expansion destroyed after {int(current_time - attack_start_time)}s!")
+                self.logger.warning(
+                    f"[{int(current_time)}s] Expansion destroyed after {int(current_time - attack_start_time)}s!"
+                )
 
                 # 파괴된 기지 정보 제거
                 if base_tag in self._expansion_under_attack:
@@ -99,14 +105,18 @@ class ExpansionDefense:
             expansion_tag = expansion.tag
 
             # 확장 기지 주변 30 거리 내 적 확인
-            nearby_enemies = [e for e in enemy_units if e.distance_to(expansion.position) < 30]
+            nearby_enemies = [
+                e for e in enemy_units if e.distance_to(expansion.position) < 30
+            ]
 
             if nearby_enemies:
                 # 공격받고 있음
                 if expansion_tag not in self._expansion_under_attack:
                     # 처음 공격받음
                     self._expansion_under_attack[expansion_tag] = current_time
-                    self.logger.warning(f"[{int(current_time)}s] Expansion under attack! {len(nearby_enemies)} enemies detected")
+                    self.logger.warning(
+                        f"[{int(current_time)}s] Expansion under attack! {len(nearby_enemies)} enemies detected"
+                    )
 
                 # 방어 병력 파견
                 await self.defend_expansion(expansion, nearby_enemies, iteration)
@@ -114,8 +124,12 @@ class ExpansionDefense:
             else:
                 # 공격받지 않음
                 if expansion_tag in self._expansion_under_attack:
-                    attack_duration = current_time - self._expansion_under_attack[expansion_tag]
-                    self.logger.info(f"[{int(current_time)}s] Expansion secured after {int(attack_duration)}s")
+                    attack_duration = (
+                        current_time - self._expansion_under_attack[expansion_tag]
+                    )
+                    self.logger.info(
+                        f"[{int(current_time)}s] Expansion secured after {int(attack_duration)}s"
+                    )
                     del self._expansion_under_attack[expansion_tag]
 
     async def defend_expansion(self, expansion, nearby_enemies, iteration: int):
@@ -147,15 +161,23 @@ class ExpansionDefense:
 
         if not defense_force:
             # 근처에 병력이 없으면 멀리서라도 파견
-            defense_force = sorted(army_units, key=lambda u: u.distance_to(expansion.position))[:8]
+            defense_force = sorted(
+                army_units, key=lambda u: u.distance_to(expansion.position)
+            )[:8]
 
         if not defense_force:
             return
 
         # 고위협 유닛 우선 타겟
         high_priority_targets = {
-            "SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "IMMORTAL",
-            "THOR", "BATTLECRUISER", "ARCHON", "DISRUPTOR"
+            "SIEGETANK",
+            "SIEGETANKSIEGED",
+            "COLOSSUS",
+            "IMMORTAL",
+            "THOR",
+            "BATTLECRUISER",
+            "ARCHON",
+            "DISRUPTOR",
         }
 
         priority_target = None
@@ -169,7 +191,11 @@ class ExpansionDefense:
         threat_center = self._get_enemy_center(nearby_enemies)
 
         # 퀸 우선 투입
-        queens = [u for u in defense_force if hasattr(u, 'type_id') and u.type_id == UnitTypeId.QUEEN]
+        queens = [
+            u
+            for u in defense_force
+            if hasattr(u, "type_id") and u.type_id == UnitTypeId.QUEEN
+        ]
         other_units = [u for u in defense_force if u not in queens]
 
         # 퀸 방어
@@ -194,9 +220,13 @@ class ExpansionDefense:
         # 로그 (5초마다)
         if iteration % 110 == 0:
             current_time = getattr(self.bot, "time", 0)
-            self.logger.info(f"[{int(current_time)}s] {len(defense_force)} units defending expansion")
+            self.logger.info(
+                f"[{int(current_time)}s] {len(defense_force)} units defending expansion"
+            )
 
-    async def counterattack_after_base_loss(self, destroyed_base_tags: Set[int], iteration: int):
+    async def counterattack_after_base_loss(
+        self, destroyed_base_tags: Set[int], iteration: int
+    ):
         """
         확장 기지 파괴 후 반격
 
@@ -226,16 +256,27 @@ class ExpansionDefense:
                 continue
 
         current_time = getattr(self.bot, "time", 0)
-        self.logger.warning(f"[{int(current_time)}s] COUNTERATTACK - {len(army_units)} units counterattacking after base loss!")
+        self.logger.warning(
+            f"[{int(current_time)}s] COUNTERATTACK - {len(army_units)} units counterattacking after base loss!"
+        )
 
     # ===== Helper Methods =====
 
     def _filter_army_units(self, units):
         """전투 유닛 필터링"""
         army_types = [
-            "ZERGLING", "ROACH", "HYDRALISK", "MUTALISK",
-            "CORRUPTOR", "BROODLORD", "BANELING", "RAVAGER",
-            "ULTRALISK", "LURKER", "INFESTOR", "VIPER"
+            "ZERGLING",
+            "ROACH",
+            "HYDRALISK",
+            "MUTALISK",
+            "CORRUPTOR",
+            "BROODLORD",
+            "BANELING",
+            "RAVAGER",
+            "ULTRALISK",
+            "LURKER",
+            "INFESTOR",
+            "VIPER",
         ]
 
         if hasattr(units, "filter"):
@@ -257,6 +298,7 @@ class ExpansionDefense:
 
         try:
             from sc2.position import Point2
+
             return Point2((x_sum / count, y_sum / count))
         except ImportError:
             return items[0].position

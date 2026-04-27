@@ -84,9 +84,15 @@ class BattlePreparationSystem:
     async def _detect_battles(self, game_time: float):
         """교전 감지"""
         enemy_army = self.bot.enemy_units.filter(
-            lambda u: not u.is_structure and u.type_id not in {
-                UnitTypeId.LARVA, UnitTypeId.EGG, UnitTypeId.OVERLORD,
-                UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE
+            lambda u: not u.is_structure
+            and u.type_id
+            not in {
+                UnitTypeId.LARVA,
+                UnitTypeId.EGG,
+                UnitTypeId.OVERLORD,
+                UnitTypeId.SCV,
+                UnitTypeId.PROBE,
+                UnitTypeId.DRONE,
             }
         )
 
@@ -99,8 +105,15 @@ class BattlePreparationSystem:
         for cluster_center, enemy_units in clusters:
             # 근처 아군 확인
             our_units = self.bot.units.filter(
-                lambda u: u.distance_to(cluster_center) < self.ENGAGEMENT_DETECTION_RADIUS and
-                u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA, UnitTypeId.EGG}
+                lambda u: u.distance_to(cluster_center)
+                < self.ENGAGEMENT_DETECTION_RADIUS
+                and u.type_id
+                not in {
+                    UnitTypeId.DRONE,
+                    UnitTypeId.OVERLORD,
+                    UnitTypeId.LARVA,
+                    UnitTypeId.EGG,
+                }
             )
 
             enemy_count = len(enemy_units)
@@ -142,7 +155,8 @@ class BattlePreparationSystem:
 
             # 이 유닛 근처의 적들 찾기
             nearby = [
-                u for u in enemy_units
+                u
+                for u in enemy_units
                 if u.distance_to(unit) < 10 and u.tag not in processed
             ]
 
@@ -188,8 +202,14 @@ class BattlePreparationSystem:
 
         # 근처 아군 병력 집결
         our_army = self.bot.units.filter(
-            lambda u: u.distance_to(zone.center) < self.REINFORCEMENT_RADIUS * 2 and
-            u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA, UnitTypeId.EGG}
+            lambda u: u.distance_to(zone.center) < self.REINFORCEMENT_RADIUS * 2
+            and u.type_id
+            not in {
+                UnitTypeId.DRONE,
+                UnitTypeId.OVERLORD,
+                UnitTypeId.LARVA,
+                UnitTypeId.EGG,
+            }
         )
 
         # 집결 포인트 (교전 지역 약간 뒤)
@@ -206,8 +226,14 @@ class BattlePreparationSystem:
     async def _order_aggressive_attack(self, zone: BattleZone):
         """적극 공격 명령"""
         our_units = self.bot.units.filter(
-            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS + 5 and
-            u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA, UnitTypeId.EGG}
+            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS + 5
+            and u.type_id
+            not in {
+                UnitTypeId.DRONE,
+                UnitTypeId.OVERLORD,
+                UnitTypeId.LARVA,
+                UnitTypeId.EGG,
+            }
         )
 
         if not our_units:
@@ -215,8 +241,8 @@ class BattlePreparationSystem:
 
         # 가장 가까운 적 찾기
         enemy_units = self.bot.enemy_units.filter(
-            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS and
-            not u.is_structure
+            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS
+            and not u.is_structure
         )
 
         if enemy_units:
@@ -227,8 +253,14 @@ class BattlePreparationSystem:
     async def _prepare_retreat(self, zone: BattleZone):
         """후퇴 준비"""
         our_units = self.bot.units.filter(
-            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS and
-            u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.LARVA, UnitTypeId.EGG}
+            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS
+            and u.type_id
+            not in {
+                UnitTypeId.DRONE,
+                UnitTypeId.OVERLORD,
+                UnitTypeId.LARVA,
+                UnitTypeId.EGG,
+            }
         )
 
         if not our_units:
@@ -247,8 +279,8 @@ class BattlePreparationSystem:
         for zone_key, zone in list(self.battle_zones.items()):
             # 교전 종료 확인 (적이 사라짐)
             enemy_nearby = self.bot.enemy_units.filter(
-                lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS and
-                not u.is_structure
+                lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS
+                and not u.is_structure
             )
 
             if not enemy_nearby:
@@ -261,13 +293,15 @@ class BattlePreparationSystem:
         """교전 결과 평가"""
         # 간단한 평가: 아군이 많이 남았으면 승리
         our_remaining = self.bot.units.filter(
-            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS and
-            u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD}
+            lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS
+            and u.type_id not in {UnitTypeId.DRONE, UnitTypeId.OVERLORD}
         ).amount
 
         if our_remaining > zone.enemy_count * 0.5:
             self.battles_won += 1
-            self.logger.info(f"[BATTLE] Victory at {zone.center}! (Our units: {our_remaining})")
+            self.logger.info(
+                f"[BATTLE] Victory at {zone.center}! (Our units: {our_remaining})"
+            )
         else:
             self.battles_lost += 1
             self.logger.info(f"[BATTLE] Defeat at {zone.center}")
@@ -300,5 +334,7 @@ class BattlePreparationSystem:
             "battles_won": self.battles_won,
             "battles_lost": self.battles_lost,
             "win_rate": f"{win_rate:.1f}%",
-            "active_battles": len([z for z in self.battle_zones.values() if z.is_active])
+            "active_battles": len(
+                [z for z in self.battle_zones.values() if z.is_active]
+            ),
         }

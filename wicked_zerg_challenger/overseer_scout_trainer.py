@@ -43,7 +43,9 @@ class OverseerScoutTrainer:
         self.overseers: Dict[int, OverseerScout] = {}  # tag -> OverseerScout
 
         # 정찰 설정
-        self.MIN_OVERSEERS_FOR_SCOUT = 1  # 정찰에 필요한 최소 감시군주 (1로 줄여 조기 활성화)
+        self.MIN_OVERSEERS_FOR_SCOUT = (
+            1  # 정찰에 필요한 최소 감시군주 (1로 줄여 조기 활성화)
+        )
         self.SCOUT_INTERVAL = 30.0  # 정찰 간격 (초)
 
         # 정찰 존 (맵을 여러 구역으로 나눔)
@@ -56,10 +58,18 @@ class OverseerScoutTrainer:
 
         # 오염 설정
         self.CONTAMINATE_TARGETS = {
-            UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-            UnitTypeId.NEXUS, UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-            UnitTypeId.BARRACKS, UnitTypeId.FACTORY, UnitTypeId.STARPORT,
-            UnitTypeId.GATEWAY, UnitTypeId.ROBOTICSFACILITY, UnitTypeId.STARGATE
+            UnitTypeId.COMMANDCENTER,
+            UnitTypeId.ORBITALCOMMAND,
+            UnitTypeId.NEXUS,
+            UnitTypeId.HATCHERY,
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
+            UnitTypeId.BARRACKS,
+            UnitTypeId.FACTORY,
+            UnitTypeId.STARPORT,
+            UnitTypeId.GATEWAY,
+            UnitTypeId.ROBOTICSFACILITY,
+            UnitTypeId.STARGATE,
         }
 
         # 통계
@@ -140,15 +150,21 @@ class OverseerScoutTrainer:
                 # ★ Unit Authority Check ★
                 if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                     from unit_authority_manager import AuthorityLevel
+
                     # IDLE 권한 요청 (정찰은 전투보다 낮음)
                     granted = self.bot.unit_authority.request_authority(
-                        {overseer.tag}, AuthorityLevel.SCOUTING, "OverseerScout", self.bot.state.game_loop
+                        {overseer.tag},
+                        AuthorityLevel.SCOUTING,
+                        "OverseerScout",
+                        self.bot.state.game_loop,
                     )
                     if overseer.tag not in granted:
                         continue
-                
+
                 self.overseers[overseer.tag] = OverseerScout(overseer.tag)
-                self.logger.info(f"[NEW] Overseer {overseer.tag} registered for scouting")
+                self.logger.info(
+                    f"[NEW] Overseer {overseer.tag} registered for scouting"
+                )
 
         # 죽은 감시군주 제거
         dead_tags = set(self.overseers.keys()) - current_tags
@@ -166,7 +182,8 @@ class OverseerScoutTrainer:
 
         # 미정찰 존 찾기
         unscouted_zones = [
-            (i, zone) for i, zone in enumerate(self.scout_zones)
+            (i, zone)
+            for i, zone in enumerate(self.scout_zones)
             if i not in self.scouted_zones
         ]
 
@@ -187,12 +204,15 @@ class OverseerScoutTrainer:
                 continue
 
             # 할당 없거나 이미 도착한 경우
-            if scout_info.assigned_zone is None or overseer.position.distance_to(scout_info.assigned_zone) < 5:
+            if (
+                scout_info.assigned_zone is None
+                or overseer.position.distance_to(scout_info.assigned_zone) < 5
+            ):
                 if unscouted_zones:
                     # 가장 가까운 미정찰 존 할당
                     zone_index, zone_pos = min(
                         unscouted_zones,
-                        key=lambda x: overseer.position.distance_to(x[1])
+                        key=lambda x: overseer.position.distance_to(x[1]),
                     )
 
                     scout_info.assigned_zone = zone_pos
@@ -276,7 +296,9 @@ class OverseerScoutTrainer:
             if distance < 10:
                 abilities = await self.bot.get_available_abilities(overseer)
                 if AbilityId.CONTAMINATE_CONTAMINATE in abilities:
-                    self.bot.do(overseer(AbilityId.CONTAMINATE_CONTAMINATE, closest_target))
+                    self.bot.do(
+                        overseer(AbilityId.CONTAMINATE_CONTAMINATE, closest_target)
+                    )
 
                     scout_info = self.overseers.get(overseer.tag)
                     if scout_info:
@@ -300,7 +322,7 @@ class OverseerScoutTrainer:
             "total_changelings": self.total_changelings,
             "total_contaminations": self.total_contaminations,
             "scout_zones": len(self.scout_zones),
-            "scouted_zones": len(self.scouted_zones)
+            "scouted_zones": len(self.scouted_zones),
         }
 
     def _print_statistics(self, game_time: float):

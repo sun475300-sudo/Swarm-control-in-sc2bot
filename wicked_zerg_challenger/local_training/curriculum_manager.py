@@ -30,7 +30,9 @@ class CurriculumManager:
 
         # Stats file path (in data/ directory)
         self.stats_file = (
-            self.data_dir / stats_file if not os.path.isabs(stats_file) else Path(stats_file)
+            self.data_dir / stats_file
+            if not os.path.isabs(stats_file)
+            else Path(stats_file)
         )
 
         # IMPROVED: Difficulty levels progression (gradually increasing, ONE level at a time)
@@ -51,8 +53,8 @@ class CurriculumManager:
         # ★ NEW: 승리 횟수 기반 승격 시스템 ★
         # 각 단계에서 필요한 승리 횟수 (달성 시 다음 단계로 승격)
         self.wins_required_per_level = {
-            0: 5,   # VeryEasy: 5승 필요
-            1: 7,   # Easy: 7승 필요
+            0: 5,  # VeryEasy: 5승 필요
+            1: 7,  # Easy: 7승 필요
             2: 10,  # Medium: 10승 필요
             3: 12,  # Hard: 12승 필요
             4: 15,  # VeryHard: 15승 필요
@@ -220,7 +222,9 @@ class CurriculumManager:
             race_wins = self.race_stats[opponent_race]["wins"]
             race_games = self.race_stats[opponent_race]["games"]
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
-            logger.info(f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
+            logger.info(
+                f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)"
+            )
         elif not opponent_race:
             logger.info(f"Opponent race unknown (None) - stats not recorded")
 
@@ -228,7 +232,9 @@ class CurriculumManager:
 
         logger.info(f"\n{'='*70}")
         logger.info(f"🎉 승리! ({self.wins_at_current_level}/{wins_required})")
-        logger.info(f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})")
+        logger.info(
+            f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})"
+        )
         logger.info(f"{'='*70}\n")
 
         # 승격 체크: 필요한 승리 횟수 달성
@@ -262,7 +268,9 @@ class CurriculumManager:
             race_wins = self.race_stats[opponent_race]["wins"]
             race_games = self.race_stats[opponent_race]["games"]
             race_rate = (race_wins / race_games * 100) if race_games > 0 else 0
-            logger.info(f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)")
+            logger.info(
+                f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)"
+            )
         elif not opponent_race:
             logger.info(f"Opponent race unknown (None) - stats not recorded")
 
@@ -270,7 +278,9 @@ class CurriculumManager:
 
         logger.info(f"\n{'='*70}")
         logger.info(f"패배 (승리: {self.wins_at_current_level}/{wins_required})")
-        logger.info(f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})")
+        logger.info(
+            f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})"
+        )
         logger.info(f"{'='*70}\n")
 
         # 강등 체크: 10게임 이상 & 승률 20% 미만
@@ -292,9 +302,13 @@ class CurriculumManager:
             self.save_level()
             return False
 
-        old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
+        old_difficulty = getattr(
+            self.levels[self.current_idx], "name", self.get_level_name()
+        )
         self.current_idx += 1
-        new_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
+        new_difficulty = getattr(
+            self.levels[self.current_idx], "name", self.get_level_name()
+        )
 
         # 새 레벨 초기화
         old_wins = self.wins_at_current_level
@@ -321,9 +335,13 @@ class CurriculumManager:
             self.save_level()
             return False
 
-        old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
+        old_difficulty = getattr(
+            self.levels[self.current_idx], "name", self.get_level_name()
+        )
         self.current_idx -= 1
-        new_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name())
+        new_difficulty = getattr(
+            self.levels[self.current_idx], "name", self.get_level_name()
+        )
 
         # 새 레벨 초기화
         self.wins_at_current_level = 0
@@ -353,17 +371,25 @@ class CurriculumManager:
         min_games = self.min_games_per_level.get(self.current_idx, 10)
 
         # IMPROVED: Only promote if conditions are met AND we're not at max level
-        if (total_games >= min_games and
-            win_rate >= self.promotion_threshold and
-            self.current_idx < len(self.levels) - 1):
+        if (
+            total_games >= min_games
+            and win_rate >= self.promotion_threshold
+            and self.current_idx < len(self.levels) - 1
+        ):
 
             # IMPROVED: Always increase by exactly 1 level (never skip levels)
             new_idx = self.current_idx + 1
 
             # Safety check: ensure we don't exceed bounds
             if 0 <= new_idx < len(self.levels):
-                old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name_from_idx(self.current_idx))
-                new_difficulty = getattr(self.levels[new_idx], 'name', self.get_level_name_from_idx(new_idx))
+                old_difficulty = getattr(
+                    self.levels[self.current_idx],
+                    "name",
+                    self.get_level_name_from_idx(self.current_idx),
+                )
+                new_difficulty = getattr(
+                    self.levels[new_idx], "name", self.get_level_name_from_idx(new_idx)
+                )
 
                 # IMPROVED: Only promote one level at a time
                 self.current_idx = new_idx
@@ -375,7 +401,9 @@ class CurriculumManager:
                 logger.info(f"\n{'='*70}")
                 logger.info(f"Difficulty increased by ONE level")
                 logger.info(f"  {old_difficulty} -> {new_difficulty}")
-                logger.info(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.promotion_threshold*100}%)")
+                logger.info(
+                    f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.promotion_threshold*100}%)"
+                )
                 logger.info(f"  Games at previous level: {total_games}")
                 logger.info(f"{'='*70}\n")
 
@@ -396,8 +424,14 @@ class CurriculumManager:
 
             # Safety check: ensure we don't go below 0
             if 0 <= new_idx < len(self.levels):
-                old_difficulty = getattr(self.levels[self.current_idx], 'name', self.get_level_name_from_idx(self.current_idx))
-                new_difficulty = getattr(self.levels[new_idx], 'name', self.get_level_name_from_idx(new_idx))
+                old_difficulty = getattr(
+                    self.levels[self.current_idx],
+                    "name",
+                    self.get_level_name_from_idx(self.current_idx),
+                )
+                new_difficulty = getattr(
+                    self.levels[new_idx], "name", self.get_level_name_from_idx(new_idx)
+                )
 
                 # IMPROVED: Only demote one level at a time
                 self.current_idx = new_idx
@@ -407,7 +441,9 @@ class CurriculumManager:
                 logger.info(f"\n{'='*70}")
                 logger.info(f"Difficulty decreased by ONE level")
                 logger.info(f"  {old_difficulty} -> {new_difficulty}")
-                logger.info(f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.demotion_threshold*100}%)")
+                logger.info(
+                    f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.demotion_threshold*100}%)"
+                )
                 logger.info(f"  Games at previous level: {total_games}")
                 logger.info(f"{'='*70}\n")
 
@@ -444,7 +480,9 @@ class CurriculumManager:
         return {
             "current_level": self.current_idx + 1,
             "total_levels": len(self.levels),
-            "current_difficulty": getattr(current_difficulty, 'name', self.get_level_name()),
+            "current_difficulty": getattr(
+                current_difficulty, "name", self.get_level_name()
+            ),
             "level_name": self.get_level_name(),
             "games_at_current_level": self.games_at_current_level,
             "wins_at_current_level": self.wins_at_current_level,
@@ -466,7 +504,7 @@ class CurriculumManager:
             priority: 우선순위 ("Urgent", "High", "Normal", "Low")
         """
         # 우선순위 저장 (다음 게임에서 사용)
-        if not hasattr(self, 'building_priorities'):
+        if not hasattr(self, "building_priorities"):
             self.building_priorities = {}
 
         self.building_priorities[building_name] = priority
@@ -474,7 +512,7 @@ class CurriculumManager:
         # 우선순위 파일에 저장
         try:
             priority_file = self.data_dir / "building_priorities.json"
-            with open(priority_file, 'w', encoding='utf-8') as f:
+            with open(priority_file, "w", encoding="utf-8") as f:
                 json.dump(self.building_priorities, f, indent=2, ensure_ascii=False)
             logger.info(f"Updated priority for {building_name}: {priority}")
         except Exception as e:
@@ -490,12 +528,12 @@ class CurriculumManager:
         Returns:
             우선순위 ("Urgent", "High", "Normal", "Low")
         """
-        if not hasattr(self, 'building_priorities'):
+        if not hasattr(self, "building_priorities"):
             # 파일에서 로드 시도
             try:
                 priority_file = self.data_dir / "building_priorities.json"
                 if priority_file.exists():
-                    with open(priority_file, 'r', encoding='utf-8') as f:
+                    with open(priority_file, "r", encoding="utf-8") as f:
                         self.building_priorities = json.load(f)
                 else:
                     self.building_priorities = {}
@@ -565,11 +603,15 @@ class CurriculumManager:
 
         for race in ["Terran", "Protoss", "Zerg"]:
             r = stats[race]
-            logger.info(f"{race:<10} {r['wins']:<8} {r['losses']:<8} {r['games']:<8} {r['win_rate']:.2f}%")
+            logger.info(
+                f"{race:<10} {r['wins']:<8} {r['losses']:<8} {r['games']:<8} {r['win_rate']:.2f}%"
+            )
 
         logger.info(f"{'-'*70}")
         t = stats["total"]
-        logger.info(f"{'전체':<10} {t['wins']:<8} {t['losses']:<8} {t['games']:<8} {t['win_rate']:.2f}%")
+        logger.info(
+            f"{'전체':<10} {t['wins']:<8} {t['losses']:<8} {t['games']:<8} {t['win_rate']:.2f}%"
+        )
         logger.info(f"{'='*70}\n")
 
     def get_weakest_race(self) -> str:

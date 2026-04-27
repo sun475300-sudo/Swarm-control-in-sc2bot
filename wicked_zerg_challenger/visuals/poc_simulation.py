@@ -29,6 +29,7 @@ if sys.platform == "win32":
 # 1. 데이터 모델
 # ═══════════════════════════════════════════════════════
 
+
 class DroneStatus(Enum):
     UNDETECTED = "UNDETECTED"
     DETECTED = "DETECTED"
@@ -49,9 +50,7 @@ class Position:
 
     def distance_to(self, other: "Position") -> float:
         return math.sqrt(
-            (self.x - other.x) ** 2
-            + (self.y - other.y) ** 2
-            + (self.z - other.z) ** 2
+            (self.x - other.x) ** 2 + (self.y - other.y) ** 2 + (self.z - other.z) ** 2
         )
 
     def ground_distance(self, other: "Position") -> float:
@@ -94,6 +93,7 @@ class UserDrone:
 # 2. 레이더 메쉬 네트워크 (Sentinel Swarm)
 # ═══════════════════════════════════════════════════════
 
+
 class RadarMeshNetwork:
     """군집 드론 레이더 망"""
 
@@ -106,21 +106,25 @@ class RadarMeshNetwork:
     def _deploy(self, n: int):
         """육각형 편대로 Sentinel 배치"""
         # 중심
-        self.sentinels.append(SentinelDrone(
-            id="S-01",
-            position=Position(self.center.x, self.center.y, self.center.z),
-            radar_range=self.radius * 0.8,
-        ))
+        self.sentinels.append(
+            SentinelDrone(
+                id="S-01",
+                position=Position(self.center.x, self.center.y, self.center.z),
+                radar_range=self.radius * 0.8,
+            )
+        )
         # 외곽
         for i in range(n - 1):
             ang = (i / (n - 1)) * 2 * math.pi
             x = self.center.x + self.radius * 0.6 * math.cos(ang)
             z = self.center.z + self.radius * 0.6 * math.sin(ang)
-            self.sentinels.append(SentinelDrone(
-                id=f"S-{i+2:02d}",
-                position=Position(x, self.center.y, z),
-                radar_range=self.radius * 0.6,
-            ))
+            self.sentinels.append(
+                SentinelDrone(
+                    id=f"S-{i+2:02d}",
+                    position=Position(x, self.center.y, z),
+                    radar_range=self.radius * 0.6,
+                )
+            )
         logger.info(f"  [MESH] {n}대 Sentinel 배치 완료 (반경 {self.radius}m)")
         for s in self.sentinels:
             logger.info(f"    {s.id} @ {s.position} (감지 반경: {s.radar_range:.0f}m)")
@@ -133,7 +137,9 @@ class RadarMeshNetwork:
         """해당 위치가 레이더 커버리지 내인지 확인"""
         return self.center.ground_distance(pos) <= self.radius
 
-    def triangulate(self, target_pos: Position, detecting_sentinels: List[str]) -> Optional[Position]:
+    def triangulate(
+        self, target_pos: Position, detecting_sentinels: List[str]
+    ) -> Optional[Position]:
         """삼각측량 시뮬레이션 (3대 이상 감지 시)"""
         if len(detecting_sentinels) < 3:
             return None
@@ -154,6 +160,7 @@ class RadarMeshNetwork:
 # 3. 세션 매니저 (Redis 시뮬레이션)
 # ═══════════════════════════════════════════════════════
 
+
 class SessionManager:
     """유저 드론 세션 관리 (Redis TTL 시뮬레이션)"""
 
@@ -168,7 +175,9 @@ class SessionManager:
         drone.timer_start = time.time()
         drone.status = DroneStatus.AUTHORIZED
         self.sessions[drone.id] = drone
-        logger.info(f"  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초")
+        logger.info(
+            f"  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초"
+        )
 
     def check_timers(self) -> List[dict]:
         """모든 세션 타이머 체크 → 이벤트 리스트 반환"""
@@ -177,15 +186,23 @@ class SessionManager:
             remaining = drone.remaining_time()
 
             if remaining <= 0 and drone.status not in (
-                DroneStatus.EXPIRED, DroneStatus.UNAUTHORIZED, DroneStatus.EVICTING, DroneStatus.DEPARTED
+                DroneStatus.EXPIRED,
+                DroneStatus.UNAUTHORIZED,
+                DroneStatus.EVICTING,
+                DroneStatus.DEPARTED,
             ):
                 drone.status = DroneStatus.EXPIRED
                 events.append({"type": "EXPIRED", "drone_id": drone_id, "remaining": 0})
 
-            elif remaining <= self.warn_threshold and drone.status == DroneStatus.AUTHORIZED:
+            elif (
+                remaining <= self.warn_threshold
+                and drone.status == DroneStatus.AUTHORIZED
+            ):
                 drone.status = DroneStatus.WARNING
                 drone.warnings_sent += 1
-                events.append({"type": "WARNING", "drone_id": drone_id, "remaining": remaining})
+                events.append(
+                    {"type": "WARNING", "drone_id": drone_id, "remaining": remaining}
+                )
 
         return events
 
@@ -198,19 +215,24 @@ class SessionManager:
 # 4. 알림 시스템 (FCM/MQTT 시뮬레이션)
 # ═══════════════════════════════════════════════════════
 
+
 class NotificationService:
     """Push 알림 서비스 시뮬레이션"""
 
     @staticmethod
     async def send_warning(drone_id: str, remaining: float):
         """1차 경고 알림"""
-        logger.info(f"  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초")
+        logger.info(
+            f"  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초"
+        )
         logger.info(f"         >>> FCM/MQTT Push 전송 완료")
 
     @staticmethod
     async def send_expiry(drone_id: str):
         """2차 만료 알림"""
-        logger.info(f"  [ALERT] !!! Drone {drone_id}: 비행 시간 만료! 즉시 착륙/복귀하세요!")
+        logger.info(
+            f"  [ALERT] !!! Drone {drone_id}: 비행 시간 만료! 즉시 착륙/복귀하세요!"
+        )
         logger.info(f"          !!! 상태: UNAUTHORIZED (적색 경고)")
         logger.info(f"          !!! FCM 강제 알림 전송 완료")
 
@@ -225,10 +247,13 @@ class NotificationService:
 # 5. 관제 시스템 (메인 오케스트레이터)
 # ═══════════════════════════════════════════════════════
 
+
 class AirspaceController:
     """Swarm-Net Airspace Manager 메인 컨트롤러"""
 
-    def __init__(self, mesh: RadarMeshNetwork, timer: float = 60.0, warn_at: float = 15.0):
+    def __init__(
+        self, mesh: RadarMeshNetwork, timer: float = 60.0, warn_at: float = 15.0
+    ):
         self.mesh = mesh
         self.session_mgr = SessionManager(default_timer=timer, warn_threshold=warn_at)
         self.notifier = NotificationService()
@@ -251,13 +276,17 @@ class AirspaceController:
                 if detecting:
                     drone.status = DroneStatus.DETECTED
                     drone.detected_by = detecting
-                    logger.info(f"\n  [DETECT] Drone {drone.id} 감지! ({len(detecting)}대 Sentinel)")
+                    logger.info(
+                        f"\n  [DETECT] Drone {drone.id} 감지! ({len(detecting)}대 Sentinel)"
+                    )
 
                     # 삼각측량
                     estimated_pos = self.mesh.triangulate(drone.position, detecting)
                     if estimated_pos:
                         drone.status = DroneStatus.IDENTIFIED
-                        logger.info(f"  [LOCATE] 삼각측량 위치: {estimated_pos} (실제: {drone.position})")
+                        logger.info(
+                            f"  [LOCATE] 삼각측량 위치: {estimated_pos} (실제: {drone.position})"
+                        )
 
                     # 세션 등록 + 타이머
                     self.session_mgr.register(drone)
@@ -296,7 +325,9 @@ class AirspaceController:
     def get_status_summary(self) -> str:
         """현재 상태 요약"""
         lines = []
-        lines.append(f"  Sentinel: {len(self.mesh.sentinels)}대 | Tracked: {len(self.tracked_drones)}대")
+        lines.append(
+            f"  Sentinel: {len(self.mesh.sentinels)}대 | Tracked: {len(self.tracked_drones)}대"
+        )
         for did, d in self.tracked_drones.items():
             rem = d.remaining_time()
             status_icon = {
@@ -306,13 +337,16 @@ class AirspaceController:
                 DroneStatus.UNAUTHORIZED: "[XX]",
                 DroneStatus.EVICTING: "[>>]",
             }.get(d.status, "[??]")
-            lines.append(f"    {status_icon} {did}: {d.status.value} | 잔여 {rem:.0f}s | 위치 {d.position}")
+            lines.append(
+                f"    {status_icon} {did}: {d.status.value} | 잔여 {rem:.0f}s | 위치 {d.position}"
+            )
         return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════
 # 6. 시뮬레이션 실행
 # ═══════════════════════════════════════════════════════
+
 
 async def run_simulation():
     """전체 시나리오 시뮬레이션"""
@@ -324,15 +358,15 @@ async def run_simulation():
     logger.info("\n[PHASE 1] 레이더 Mesh Network 구축")
     mesh = RadarMeshNetwork(
         center=Position(0, 100, 0),  # 중심 좌표, 고도 100m
-        radius=50.0,                 # 반경 50m
+        radius=50.0,  # 반경 50m
         n_sentinels=7,
     )
 
     # ── 관제 시스템 초기화 ──
     controller = AirspaceController(
         mesh=mesh,
-        timer=30.0,     # 데모용: 30초 타이머
-        warn_at=10.0,   # 10초 전 경고
+        timer=30.0,  # 데모용: 30초 타이머
+        warn_at=10.0,  # 10초 전 경고
     )
 
     # ── 유저 드론 시나리오 ──
@@ -340,7 +374,7 @@ async def run_simulation():
         UserDrone(
             id="UD-001",
             rf_signature="AA:BB:CC:DD:EE:01",
-            position=Position(10, 80, 5),   # 레이더 안
+            position=Position(10, 80, 5),  # 레이더 안
         ),
         UserDrone(
             id="UD-002",
@@ -350,7 +384,7 @@ async def run_simulation():
         UserDrone(
             id="UD-003",
             rf_signature="AA:BB:CC:DD:EE:03",
-            position=Position(100, 80, 100), # 레이더 밖 → 나중에 진입
+            position=Position(100, 80, 100),  # 레이더 밖 → 나중에 진입
         ),
     ]
 
@@ -390,7 +424,10 @@ async def run_simulation():
 
         # 만료된 드론 강제 퇴각 (5초 유예 후)
         for did, drone in list(controller.tracked_drones.items()):
-            if drone.status == DroneStatus.UNAUTHORIZED and did not in eviction_triggered:
+            if (
+                drone.status == DroneStatus.UNAUTHORIZED
+                and did not in eviction_triggered
+            ):
                 eviction_triggered[did] = sim_ticks
             if did in eviction_triggered and sim_ticks - eviction_triggered[did] >= 5:
                 await controller.force_eviction(did)
@@ -410,7 +447,9 @@ async def run_simulation():
     logger.info("=" * 65)
     logger.info(f"  총 이벤트: {len(controller.event_log)}건")
     for evt in controller.event_log:
-        logger.info(f"    {evt['type']:10s} | Drone {evt['drone_id']} | 잔여 {evt.get('remaining', 0):.0f}s")
+        logger.info(
+            f"    {evt['type']:10s} | Drone {evt['drone_id']} | 잔여 {evt.get('remaining', 0):.0f}s"
+        )
     logger.info("=" * 65)
 
 

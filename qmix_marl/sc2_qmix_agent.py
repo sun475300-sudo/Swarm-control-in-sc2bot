@@ -118,7 +118,7 @@ class QMIXConfig:
     priority_eps: float = 1e-6
 
     # Mode
-    use_vdn: bool = False   # If True, fallback to additive VDN
+    use_vdn: bool = False  # If True, fallback to additive VDN
     use_double_dqn: bool = True
 
     # Misc
@@ -212,7 +212,9 @@ class QMIXMixingNetTorch(nn.Module):
     where the weights are constrained to be non-negative (monotonicity).
     """
 
-    def __init__(self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int):
+    def __init__(
+        self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int
+    ):
         super().__init__()
         self.n_agents = n_agents
         self.embed_dim = embed_dim
@@ -268,7 +270,9 @@ class QMIXMixingNetTorch(nn.Module):
 class QMIXMixingNetNumpy:
     """NumPy fallback for the QMIX mixing network."""
 
-    def __init__(self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int):
+    def __init__(
+        self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int
+    ):
         self.n_agents = n_agents
         self.embed_dim = embed_dim
 
@@ -286,16 +290,16 @@ class QMIXMixingNetNumpy:
         """
         B = agent_qs.shape[0]
 
-        w1_raw = self.hyper_w1(state)                             # (B, n*e)
+        w1_raw = self.hyper_w1(state)  # (B, n*e)
         w1 = np.abs(w1_raw).reshape(B, self.n_agents, self.embed_dim)
         b1 = self.hyper_b1(state).reshape(B, 1, self.embed_dim)
 
         # hidden = ELU(agent_qs @ w1 + b1)
-        qs_exp = agent_qs[:, np.newaxis, :]                       # (B, 1, n)
+        qs_exp = agent_qs[:, np.newaxis, :]  # (B, 1, n)
         hidden = np.zeros((B, 1, self.embed_dim), dtype=np.float32)
         for i in range(B):
             hidden[i] = qs_exp[i] @ w1[i]
-        hidden = _np_elu(hidden + b1)                             # (B, 1, embed)
+        hidden = _np_elu(hidden + b1)  # (B, 1, embed)
 
         w2 = np.abs(self.hyper_w2(state)).reshape(B, self.embed_dim, 1)
         b2 = self.hyper_b2_net(state).reshape(B, 1, 1)
@@ -392,11 +396,12 @@ class PrioritizedReplayBuffer:
         self.max_priority = 1.0
 
     def add(self, transition: Dict[str, Any]) -> None:
-        priority = self.max_priority ** self.alpha
+        priority = self.max_priority**self.alpha
         self.tree.add(priority, transition)
 
-    def sample(self, batch_size: int, beta: float = 0.4
-               ) -> Tuple[List[Dict[str, Any]], np.ndarray, List[int]]:
+    def sample(
+        self, batch_size: int, beta: float = 0.4
+    ) -> Tuple[List[Dict[str, Any]], np.ndarray, List[int]]:
         batch: List[Dict[str, Any]] = []
         indices: List[int] = []
         priorities = np.zeros(batch_size, dtype=np.float64)
@@ -468,31 +473,43 @@ class SC2QMIXAgent:
         cfg = self.cfg
         if self.use_torch:
             # Online networks
-            self.agent_nets = nn.ModuleList([
-                AgentQNetTorch(cfg.obs_dim, cfg.action_dim, cfg.hidden_dim)
-                for _ in range(cfg.n_agents)
-            ])
+            self.agent_nets = nn.ModuleList(
+                [
+                    AgentQNetTorch(cfg.obs_dim, cfg.action_dim, cfg.hidden_dim)
+                    for _ in range(cfg.n_agents)
+                ]
+            )
             if cfg.use_vdn:
                 self.mixer: nn.Module = VDNMixerTorch()
             else:
                 self.mixer = QMIXMixingNetTorch(
-                    cfg.n_agents, cfg.state_dim, cfg.mixing_embed_dim, cfg.hypernet_hidden_dim
+                    cfg.n_agents,
+                    cfg.state_dim,
+                    cfg.mixing_embed_dim,
+                    cfg.hypernet_hidden_dim,
                 )
 
             # Target networks (deep copy)
-            self.target_agent_nets = nn.ModuleList([
-                AgentQNetTorch(cfg.obs_dim, cfg.action_dim, cfg.hidden_dim)
-                for _ in range(cfg.n_agents)
-            ])
+            self.target_agent_nets = nn.ModuleList(
+                [
+                    AgentQNetTorch(cfg.obs_dim, cfg.action_dim, cfg.hidden_dim)
+                    for _ in range(cfg.n_agents)
+                ]
+            )
             if cfg.use_vdn:
                 self.target_mixer: nn.Module = VDNMixerTorch()
             else:
                 self.target_mixer = QMIXMixingNetTorch(
-                    cfg.n_agents, cfg.state_dim, cfg.mixing_embed_dim, cfg.hypernet_hidden_dim
+                    cfg.n_agents,
+                    cfg.state_dim,
+                    cfg.mixing_embed_dim,
+                    cfg.hypernet_hidden_dim,
                 )
             self._hard_update_targets()
 
-            all_params = list(self.agent_nets.parameters()) + list(self.mixer.parameters())
+            all_params = list(self.agent_nets.parameters()) + list(
+                self.mixer.parameters()
+            )
             self.optimizer = optim.Adam(all_params, lr=cfg.lr)
         else:
             self.agent_nets_np = [
@@ -508,10 +525,16 @@ class SC2QMIXAgent:
                 self.target_mixer_np: Any = VDNMixerNumpy()
             else:
                 self.mixer_np = QMIXMixingNetNumpy(
-                    cfg.n_agents, cfg.state_dim, cfg.mixing_embed_dim, cfg.hypernet_hidden_dim
+                    cfg.n_agents,
+                    cfg.state_dim,
+                    cfg.mixing_embed_dim,
+                    cfg.hypernet_hidden_dim,
                 )
                 self.target_mixer_np = QMIXMixingNetNumpy(
-                    cfg.n_agents, cfg.state_dim, cfg.mixing_embed_dim, cfg.hypernet_hidden_dim
+                    cfg.n_agents,
+                    cfg.state_dim,
+                    cfg.mixing_embed_dim,
+                    cfg.hypernet_hidden_dim,
                 )
             self._hard_update_targets_np()
 
@@ -536,16 +559,20 @@ class SC2QMIXAgent:
         if self.use_torch:
             for i in range(self.cfg.n_agents):
                 for p, tp in zip(
-                    self.agent_nets[i].parameters(), self.target_agent_nets[i].parameters()
+                    self.agent_nets[i].parameters(),
+                    self.target_agent_nets[i].parameters(),
                 ):
                     tp.data.copy_(tau * p.data + (1.0 - tau) * tp.data)
             if not self.cfg.use_vdn:
-                for p, tp in zip(self.mixer.parameters(), self.target_mixer.parameters()):
+                for p, tp in zip(
+                    self.mixer.parameters(), self.target_mixer.parameters()
+                ):
                     tp.data.copy_(tau * p.data + (1.0 - tau) * tp.data)
         else:
             for i in range(self.cfg.n_agents):
                 for p_src, p_tgt in zip(
-                    self.agent_nets_np[i].params(), self.target_agent_nets_np[i].params()
+                    self.agent_nets_np[i].params(),
+                    self.target_agent_nets_np[i].params(),
                 ):
                     p_tgt[:] = tau * p_src + (1.0 - tau) * p_tgt
 
@@ -571,7 +598,9 @@ class SC2QMIXAgent:
             if explore and np.random.random() < self.epsilon:
                 if action_masks is not None:
                     valid = np.where(action_masks[i] > 0)[0]
-                    actions.append(int(np.random.choice(valid)) if len(valid) > 0 else 0)
+                    actions.append(
+                        int(np.random.choice(valid)) if len(valid) > 0 else 0
+                    )
                 else:
                     actions.append(np.random.randint(0, self.cfg.action_dim))
             else:
@@ -615,7 +644,9 @@ class SC2QMIXAgent:
             "next_state": next_state.copy(),
             "done": done,
             "action_masks": [m.copy() for m in action_masks] if action_masks else None,
-            "next_action_masks": [m.copy() for m in next_action_masks] if next_action_masks else None,
+            "next_action_masks": (
+                [m.copy() for m in next_action_masks] if next_action_masks else None
+            ),
         }
         self.replay.add(transition)
         self.total_steps += 1
@@ -630,7 +661,9 @@ class SC2QMIXAgent:
             return {"loss": 0.0, "q_tot_mean": 0.0}
 
         beta_frac = min(1.0, self.train_step / max(cfg.priority_beta_steps, 1))
-        beta = cfg.priority_beta_start + beta_frac * (cfg.priority_beta_end - cfg.priority_beta_start)
+        beta = cfg.priority_beta_start + beta_frac * (
+            cfg.priority_beta_end - cfg.priority_beta_start
+        )
 
         batch, weights, indices = self.replay.sample(cfg.batch_size, beta)
 
@@ -652,20 +685,32 @@ class SC2QMIXAgent:
         cfg = self.cfg
 
         # Collate batch
-        obs_batch = np.array([[batch[b]["obs"][a] for a in range(cfg.n_agents)] for b in range(B)], dtype=np.float32)
-        next_obs_batch = np.array([[batch[b]["next_obs"][a] for a in range(cfg.n_agents)] for b in range(B)], dtype=np.float32)
+        obs_batch = np.array(
+            [[batch[b]["obs"][a] for a in range(cfg.n_agents)] for b in range(B)],
+            dtype=np.float32,
+        )
+        next_obs_batch = np.array(
+            [[batch[b]["next_obs"][a] for a in range(cfg.n_agents)] for b in range(B)],
+            dtype=np.float32,
+        )
         state_batch = np.array([batch[b]["state"] for b in range(B)], dtype=np.float32)
-        next_state_batch = np.array([batch[b]["next_state"] for b in range(B)], dtype=np.float32)
-        actions_batch = np.array([batch[b]["actions"] for b in range(B)], dtype=np.int64)
-        rewards_batch = np.array([batch[b]["reward"] for b in range(B)], dtype=np.float32)
+        next_state_batch = np.array(
+            [batch[b]["next_state"] for b in range(B)], dtype=np.float32
+        )
+        actions_batch = np.array(
+            [batch[b]["actions"] for b in range(B)], dtype=np.int64
+        )
+        rewards_batch = np.array(
+            [batch[b]["reward"] for b in range(B)], dtype=np.float32
+        )
         dones_batch = np.array([batch[b]["done"] for b in range(B)], dtype=np.float32)
 
         # To torch
-        obs_t = torch.tensor(obs_batch)           # (B, n, obs_dim)
+        obs_t = torch.tensor(obs_batch)  # (B, n, obs_dim)
         next_obs_t = torch.tensor(next_obs_batch)
         state_t = torch.tensor(state_batch)
         next_state_t = torch.tensor(next_state_batch)
-        actions_t = torch.tensor(actions_batch)    # (B, n)
+        actions_t = torch.tensor(actions_batch)  # (B, n)
         rewards_t = torch.tensor(rewards_batch)
         dones_t = torch.tensor(dones_batch)
         weights_t = torch.tensor(weights)
@@ -673,12 +718,12 @@ class SC2QMIXAgent:
         # Compute chosen Q for each agent
         chosen_qs = []
         for a in range(cfg.n_agents):
-            q_all = self.agent_nets[a](obs_t[:, a])            # (B, action_dim)
-            q_chosen = q_all.gather(1, actions_t[:, a:a+1]).squeeze(1)
+            q_all = self.agent_nets[a](obs_t[:, a])  # (B, action_dim)
+            q_chosen = q_all.gather(1, actions_t[:, a : a + 1]).squeeze(1)
             chosen_qs.append(q_chosen)
-        chosen_qs_t = torch.stack(chosen_qs, dim=1)             # (B, n)
+        chosen_qs_t = torch.stack(chosen_qs, dim=1)  # (B, n)
 
-        q_tot = self.mixer(chosen_qs_t, state_t)                # (B,)
+        q_tot = self.mixer(chosen_qs_t, state_t)  # (B,)
 
         # Target Q_tot
         with torch.no_grad():
@@ -719,12 +764,24 @@ class SC2QMIXAgent:
         B = len(batch)
         cfg = self.cfg
 
-        obs_batch = np.array([[batch[b]["obs"][a] for a in range(cfg.n_agents)] for b in range(B)], dtype=np.float32)
-        next_obs_batch = np.array([[batch[b]["next_obs"][a] for a in range(cfg.n_agents)] for b in range(B)], dtype=np.float32)
+        obs_batch = np.array(
+            [[batch[b]["obs"][a] for a in range(cfg.n_agents)] for b in range(B)],
+            dtype=np.float32,
+        )
+        next_obs_batch = np.array(
+            [[batch[b]["next_obs"][a] for a in range(cfg.n_agents)] for b in range(B)],
+            dtype=np.float32,
+        )
         state_batch = np.array([batch[b]["state"] for b in range(B)], dtype=np.float32)
-        next_state_batch = np.array([batch[b]["next_state"] for b in range(B)], dtype=np.float32)
-        actions_batch = np.array([batch[b]["actions"] for b in range(B)], dtype=np.int64)
-        rewards_batch = np.array([batch[b]["reward"] for b in range(B)], dtype=np.float32)
+        next_state_batch = np.array(
+            [batch[b]["next_state"] for b in range(B)], dtype=np.float32
+        )
+        actions_batch = np.array(
+            [batch[b]["actions"] for b in range(B)], dtype=np.int64
+        )
+        rewards_batch = np.array(
+            [batch[b]["reward"] for b in range(B)], dtype=np.float32
+        )
         dones_batch = np.array([batch[b]["done"] for b in range(B)], dtype=np.float32)
 
         # Online Q
@@ -751,7 +808,7 @@ class SC2QMIXAgent:
         y = rewards_batch + cfg.gamma * (1.0 - dones_batch) * target_q_tot
 
         td_error = q_tot - y
-        loss = float(np.mean(weights * td_error ** 2))
+        loss = float(np.mean(weights * td_error**2))
 
         # Evolutionary weight perturbation (lightweight gradient-free update)
         lr = cfg.lr
@@ -760,7 +817,7 @@ class SC2QMIXAgent:
                 noise = np.random.randn(*p.shape).astype(np.float32) * 0.01
                 p -= lr * loss * noise
 
-        if hasattr(self.mixer_np, 'params'):
+        if hasattr(self.mixer_np, "params"):
             for p in self.mixer_np.params():
                 noise = np.random.randn(*p.shape).astype(np.float32) * 0.01
                 p -= lr * loss * noise
@@ -863,8 +920,14 @@ class SyntheticSC2QMIXEnv:
     diversity and quality of chosen actions.
     """
 
-    def __init__(self, n_agents: int = 8, obs_dim: int = 48, state_dim: int = 192,
-                 action_dim: int = 12, max_steps: int = 100):
+    def __init__(
+        self,
+        n_agents: int = 8,
+        obs_dim: int = 48,
+        state_dim: int = 192,
+        action_dim: int = 12,
+        max_steps: int = 100,
+    ):
         self.n_agents = n_agents
         self.obs_dim = obs_dim
         self.state_dim = state_dim
@@ -876,13 +939,21 @@ class SyntheticSC2QMIXEnv:
     def reset(self) -> Tuple[List[np.ndarray], np.ndarray]:
         self.step_count = 0
         self._target_actions = np.random.randint(0, self.action_dim, self.n_agents)
-        obs = [np.random.randn(self.obs_dim).astype(np.float32) * 0.1 for _ in range(self.n_agents)]
+        obs = [
+            np.random.randn(self.obs_dim).astype(np.float32) * 0.1
+            for _ in range(self.n_agents)
+        ]
         state = np.random.randn(self.state_dim).astype(np.float32) * 0.1
         return obs, state
 
-    def step(self, actions: List[int]) -> Tuple[List[np.ndarray], np.ndarray, List[float], bool]:
+    def step(
+        self, actions: List[int]
+    ) -> Tuple[List[np.ndarray], np.ndarray, List[float], bool]:
         self.step_count += 1
-        obs = [np.random.randn(self.obs_dim).astype(np.float32) * 0.1 for _ in range(self.n_agents)]
+        obs = [
+            np.random.randn(self.obs_dim).astype(np.float32) * 0.1
+            for _ in range(self.n_agents)
+        ]
         state = np.random.randn(self.state_dim).astype(np.float32) * 0.1
 
         # Reward: how many agents match a hidden target action
@@ -935,7 +1006,9 @@ def run_demo(args: argparse.Namespace) -> None:
     print("=" * 60)
     print(f" Phase 607: {mode} Value Decomposition for SC2")
     print(f" Backend : {backend}  |  {double_str}")
-    print(f" Agents  : {cfg.n_agents}  |  ObsDim: {cfg.obs_dim}  |  Actions: {cfg.action_dim}")
+    print(
+        f" Agents  : {cfg.n_agents}  |  ObsDim: {cfg.obs_dim}  |  Actions: {cfg.action_dim}"
+    )
     print("=" * 60)
 
     agent = SC2QMIXAgent(cfg)
@@ -956,7 +1029,17 @@ def run_demo(args: argparse.Namespace) -> None:
             next_obs, next_state, rewards, done = env.step(actions)
             next_masks = env.get_action_masks()
 
-            agent.store_transition(obs, state, actions, rewards, next_obs, next_state, done, masks, next_masks)
+            agent.store_transition(
+                obs,
+                state,
+                actions,
+                rewards,
+                next_obs,
+                next_state,
+                done,
+                masks,
+                next_masks,
+            )
             ep_reward += np.mean(rewards)
             obs, state = next_obs, next_state
 
@@ -988,12 +1071,22 @@ def run_demo(args: argparse.Namespace) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Phase 607: QMIX SC2 Agent")
     parser.add_argument("--n-agents", type=int, default=6, help="Number of agents")
-    parser.add_argument("--obs-dim", type=int, default=48, help="Per-agent obs dimension")
-    parser.add_argument("--state-dim", type=int, default=192, help="Global state dimension")
+    parser.add_argument(
+        "--obs-dim", type=int, default=48, help="Per-agent obs dimension"
+    )
+    parser.add_argument(
+        "--state-dim", type=int, default=192, help="Global state dimension"
+    )
     parser.add_argument("--action-dim", type=int, default=12, help="Action space size")
-    parser.add_argument("--batch-size", type=int, default=32, help="Training batch size")
-    parser.add_argument("--buffer-cap", type=int, default=5000, help="Replay buffer capacity")
-    parser.add_argument("--eps-decay", type=int, default=5000, help="Epsilon decay steps")
+    parser.add_argument(
+        "--batch-size", type=int, default=32, help="Training batch size"
+    )
+    parser.add_argument(
+        "--buffer-cap", type=int, default=5000, help="Replay buffer capacity"
+    )
+    parser.add_argument(
+        "--eps-decay", type=int, default=5000, help="Epsilon decay steps"
+    )
     parser.add_argument("--episodes", type=int, default=30, help="Training episodes")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--numpy", action="store_true", help="Force NumPy-only backend")

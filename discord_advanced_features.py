@@ -66,8 +66,12 @@ class TradeView(discord.ui.View):
         self._on_sell = on_sell
         self.result: Optional[str] = None
 
-    @discord.ui.button(label="매수", style=discord.ButtonStyle.green, emoji="\U0001F4B0")
-    async def buy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(
+        label="매수", style=discord.ButtonStyle.green, emoji="\U0001F4B0"
+    )
+    async def buy_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """매수 버튼 클릭 핸들러."""
         self.result = "buy"
         if self._on_buy:
@@ -81,7 +85,9 @@ class TradeView(discord.ui.View):
         await interaction.message.edit(view=self)
 
     @discord.ui.button(label="매도", style=discord.ButtonStyle.red, emoji="\U0001F4B8")
-    async def sell_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def sell_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """매도 버튼 클릭 핸들러."""
         self.result = "sell"
         if self._on_sell:
@@ -95,7 +101,9 @@ class TradeView(discord.ui.View):
         await interaction.message.edit(view=self)
 
     @discord.ui.button(label="취소", style=discord.ButtonStyle.grey, emoji="\u274C")
-    async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def cancel_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """취소 버튼 클릭 핸들러."""
         self.result = "cancel"
         await interaction.response.send_message("거래를 취소했습니다.", ephemeral=True)
@@ -236,7 +244,9 @@ async def create_thread_for_long_conversation(
     """
     channel_id = message.channel.id
     with _counter_lock:
-        _channel_message_counters[channel_id] = _channel_message_counters.get(channel_id, 0) + 1
+        _channel_message_counters[channel_id] = (
+            _channel_message_counters.get(channel_id, 0) + 1
+        )
         count = _channel_message_counters[channel_id]
 
         if count < threshold:
@@ -245,7 +255,10 @@ async def create_thread_for_long_conversation(
         # 임계값 도달 시 카운터 초기화 후 스레드 생성
         _channel_message_counters[channel_id] = 0
 
-    name = thread_name or f"대화 계속 - {message.author.display_name} ({datetime.now().strftime('%H:%M')})"
+    name = (
+        thread_name
+        or f"대화 계속 - {message.author.display_name} ({datetime.now().strftime('%H:%M')})"
+    )
     # 이름 길이 제한 (Discord 최대 100자)
     name = name[:100]
 
@@ -442,9 +455,12 @@ class ScheduledReporter(commands.Cog):
         """실제 포트폴리오 데이터 조회 (더미 데이터 대체)."""
         try:
             import json, os
+
             # portfolio_history.json에서 실제 데이터 조회
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            hist_path = os.path.join(base, "crypto_trading", "data", "portfolio_history.json")
+            hist_path = os.path.join(
+                base, "crypto_trading", "data", "portfolio_history.json"
+            )
             if os.path.exists(hist_path):
                 with open(hist_path, "r", encoding="utf-8") as f:
                     history = json.load(f)
@@ -459,6 +475,7 @@ class ScheduledReporter(commands.Cog):
             # Upbit API 직접 조회 폴백
             try:
                 from crypto_trading.upbit_client import UpbitClient
+
                 client = UpbitClient()
                 accounts = client.get_balances()
                 total = 0
@@ -474,8 +491,15 @@ class ScheduledReporter(commands.Cog):
                         total += value
                         avg = float(acc.get("avg_buy_price", 0))
                         pnl_pct = ((price - avg) / avg * 100) if avg > 0 else 0
-                        holdings.append({"symbol": curr, "pnl": round(pnl_pct, 2), "value": value})
-                return {"total_value": total, "daily_pnl": 0, "daily_return": 0, "holdings": holdings}
+                        holdings.append(
+                            {"symbol": curr, "pnl": round(pnl_pct, 2), "value": value}
+                        )
+                return {
+                    "total_value": total,
+                    "daily_pnl": 0,
+                    "daily_return": 0,
+                    "holdings": holdings,
+                }
             except Exception as e:
                 logger.debug("포트폴리오 API 조회 실패: %s", e)
         except Exception as e:
@@ -487,6 +511,7 @@ class ScheduledReporter(commands.Cog):
         """실제 시장 데이터 조회 (더미 데이터 대체)."""
         try:
             from crypto_trading.upbit_client import UpbitClient
+
             client = UpbitClient()
             tickers_data = []
             for coin in ["BTC", "ETH", "XRP", "SOL", "DOGE"]:
@@ -495,13 +520,24 @@ class ScheduledReporter(commands.Cog):
                     price = client.get_current_price(ticker) or 0
                     # 24h 변동률 조회
                     import requests
-                    r = requests.get(f"https://api.upbit.com/v1/ticker?markets={ticker}", timeout=5)
+
+                    r = requests.get(
+                        f"https://api.upbit.com/v1/ticker?markets={ticker}", timeout=5
+                    )
                     if r.status_code == 200:
                         data = r.json()
-                        change_pct = data[0].get("signed_change_rate", 0) * 100 if data else 0
+                        change_pct = (
+                            data[0].get("signed_change_rate", 0) * 100 if data else 0
+                        )
                     else:
                         change_pct = 0
-                    tickers_data.append({"symbol": coin, "price": price, "change_pct": round(change_pct, 2)})
+                    tickers_data.append(
+                        {
+                            "symbol": coin,
+                            "price": price,
+                            "change_pct": round(change_pct, 2),
+                        }
+                    )
                 except Exception as e:
                     logger.debug("코인 %s 시세 조회 실패: %s", coin, e)
                     tickers_data.append({"symbol": coin, "price": 0, "change_pct": 0})
@@ -546,6 +582,7 @@ def generate_price_chart(
     """
     try:
         import matplotlib
+
         matplotlib.use("Agg")  # 비GUI 백엔드
         import matplotlib.pyplot as plt
         import matplotlib.dates as mdates
@@ -557,6 +594,7 @@ def generate_price_chart(
     # 샘플 데이터
     if prices is None:
         import random
+
         random.seed(42)
         base = 100_000_000 if ticker.upper() == "BTC" else 1_000_000
         prices = [base]
@@ -566,7 +604,9 @@ def generate_price_chart(
 
     if timestamps is None:
         now = datetime.now()
-        timestamps = [now - timedelta(hours=len(prices) - 1 - i) for i in range(len(prices))]
+        timestamps = [
+            now - timedelta(hours=len(prices) - 1 - i) for i in range(len(prices))
+        ]
 
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -581,8 +621,12 @@ def generate_price_chart(
     if len(prices) >= 20:
         ma20 = _moving_average(prices, 20)
         ax.plot(
-            timestamps[19:], ma20,
-            color="#FF9800", linewidth=1.0, linestyle="--", label="MA20",
+            timestamps[19:],
+            ma20,
+            color="#FF9800",
+            linewidth=1.0,
+            linestyle="--",
+            label="MA20",
         )
 
     ax.set_title(title or f"{ticker} 가격 차트", fontsize=14, fontweight="bold")
@@ -620,7 +664,7 @@ def _moving_average(data: list[float], window: int) -> list[float]:
     """
     result = []
     for i in range(len(data) - window + 1):
-        avg = sum(data[i:i + window]) / window
+        avg = sum(data[i : i + window]) / window
         result.append(avg)
     return result
 
@@ -676,7 +720,9 @@ class VoiceManager:
         self._voice_clients: dict[int, discord.VoiceClient] = {}
         logger.info("VoiceManager 초기화 완료 (스텁)")
 
-    async def connect(self, channel: discord.VoiceChannel) -> Optional[discord.VoiceClient]:
+    async def connect(
+        self, channel: discord.VoiceChannel
+    ) -> Optional[discord.VoiceClient]:
         """음성 채널에 연결한다.
 
         Args:
@@ -687,7 +733,10 @@ class VoiceManager:
         """
         guild_id = channel.guild.id
         try:
-            if guild_id in self._voice_clients and self._voice_clients[guild_id].is_connected():
+            if (
+                guild_id in self._voice_clients
+                and self._voice_clients[guild_id].is_connected()
+            ):
                 await self._voice_clients[guild_id].move_to(channel)
             else:
                 vc = await channel.connect()
@@ -744,6 +793,7 @@ class VoiceManager:
             else:
                 # 로컬 파일 — 경로 검증
                 import pathlib
+
                 real_path = pathlib.Path(source).resolve()
                 allowed_exts = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".opus"}
                 if ".." in source or real_path.suffix.lower() not in allowed_exts:
@@ -794,13 +844,16 @@ class TTSManager:
         self._engine: Optional[str] = None
         logger.info("TTSManager 초기화 완료 (스텁, lang=%s)", default_lang)
 
-    async def synthesize(self, text: str, *, lang: Optional[str] = None) -> Optional[io.BytesIO]:
+    async def synthesize(
+        self, text: str, *, lang: Optional[str] = None
+    ) -> Optional[io.BytesIO]:
         """텍스트를 음성으로 변환한다."""
         target_lang = lang or self.default_lang
         logger.info("TTS 합성 요청: lang=%s, text_len=%d", target_lang, len(text))
         # edge-tts 시도
         try:
             import edge_tts
+
             voice_map = {
                 "ko": "ko-KR-SunHiNeural",
                 "en": "en-US-AriaNeural",
@@ -824,6 +877,7 @@ class TTSManager:
         # gTTS 폴백
         try:
             from gtts import gTTS
+
             tts = gTTS(text=text, lang=target_lang)
             buf = io.BytesIO()
             tts.write_to_fp(buf)
@@ -831,7 +885,9 @@ class TTSManager:
             self._engine = "gTTS"
             return buf
         except ImportError:
-            logger.warning("TTS 라이브러리 없음: pip install edge-tts 또는 pip install gtts")
+            logger.warning(
+                "TTS 라이브러리 없음: pip install edge-tts 또는 pip install gtts"
+            )
         except Exception as e:
             logger.warning("gTTS 실패: %s", e)
         return None
@@ -851,13 +907,19 @@ class TTSManager:
             return False
         # 임시 파일에 저장 후 재생
         import tempfile, os
+
         try:
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False, dir=self.cache_dir if os.path.isdir(self.cache_dir) else None) as tmp:
+            with tempfile.NamedTemporaryFile(
+                suffix=".mp3",
+                delete=False,
+                dir=self.cache_dir if os.path.isdir(self.cache_dir) else None,
+            ) as tmp:
                 tmp.write(audio.read())
                 tmp_path = tmp.name
             result = await voice_manager.play_audio(guild_id, tmp_path)
             # 재생 후 정리 (5초 대기)
             import asyncio
+
             await asyncio.sleep(5)
             try:
                 os.unlink(tmp_path)
@@ -945,7 +1007,9 @@ class ActivityManager:
             name: 스트리밍 제목. 기본값 'SC2 Training'.
             url: 스트리밍 URL (Twitch만 보라색 표시).
         """
-        activity = discord.Streaming(name=name, url=url or "https://twitch.tv/placeholder")
+        activity = discord.Streaming(
+            name=name, url=url or "https://twitch.tv/placeholder"
+        )
         await self.bot.change_presence(activity=activity)
         logger.info("Activity 설정: Streaming %s", name)
 
@@ -998,7 +1062,6 @@ _I18N_MESSAGES: dict[str, dict[str, str]] = {
         "ko": "이 명령어를 사용할 권한이 없습니다.",
         "en": "You don't have permission to use this command.",
     },
-
     # ── 거래 ──
     "trade_buy_confirm": {
         "ko": "{ticker} {amount:,.0f}원 매수를 진행합니다.",
@@ -1020,7 +1083,6 @@ _I18N_MESSAGES: dict[str, dict[str, str]] = {
         "ko": "거래에 실패했습니다: {reason}",
         "en": "Trade failed: {reason}",
     },
-
     # ── 포트폴리오 ──
     "portfolio_title": {
         "ko": "포트폴리오 리포트",
@@ -1034,19 +1096,16 @@ _I18N_MESSAGES: dict[str, dict[str, str]] = {
         "ko": "보유 중인 자산이 없습니다.",
         "en": "No assets in portfolio.",
     },
-
     # ── 시장 ──
     "market_summary_title": {
         "ko": "시장 요약",
         "en": "Market Summary",
     },
-
     # ── 스레드 ──
     "thread_created": {
         "ko": "대화가 길어져서 스레드로 이동합니다.",
         "en": "Conversation is getting long. Moving to a thread.",
     },
-
     # ── 음성 ──
     "voice_connected": {
         "ko": "음성 채널에 연결되었습니다.",
@@ -1056,7 +1115,6 @@ _I18N_MESSAGES: dict[str, dict[str, str]] = {
         "ko": "음성 채널에서 연결을 해제했습니다.",
         "en": "Disconnected from voice channel.",
     },
-
     # ── 차트 ──
     "chart_generating": {
         "ko": "{ticker} 차트를 생성 중입니다...",
@@ -1169,7 +1227,9 @@ class VoiceHistoryLogger:
     향후 데이터베이스 저장 등으로 확장 가능.
     """
 
-    def __init__(self, *, log_channel_id: Optional[int] = None, max_history: int = 1000):
+    def __init__(
+        self, *, log_channel_id: Optional[int] = None, max_history: int = 1000
+    ):
         """VoiceHistoryLogger 초기화.
 
         Args:
@@ -1217,7 +1277,7 @@ class VoiceHistoryLogger:
 
         # 최대 기록 수 초과 시 오래된 것 제거
         if len(self._history) > self.max_history:
-            self._history = self._history[-self.max_history:]
+            self._history = self._history[-self.max_history :]
 
         logger.info(
             "음성 이벤트: %s | %s | %s → %s",
@@ -1266,7 +1326,11 @@ class VoiceHistoryLogger:
             }
 
         # 뮤트/디펜 상태 변경 감지
-        channel_name = (after.channel or before.channel).name if (after.channel or before.channel) else None
+        channel_name = (
+            (after.channel or before.channel).name
+            if (after.channel or before.channel)
+            else None
+        )
         if channel_name:
             if not before.self_mute and after.self_mute:
                 return {"type": "mute", "channel_after": channel_name}
@@ -1291,10 +1355,26 @@ class VoiceHistoryLogger:
             return
 
         event_type = record["event"]
-        event_emojis = {"join": "\U0001F7E2", "leave": "\U0001F534", "move": "\U0001F7E1", "mute": "\U0001F507", "unmute": "\U0001F50A", "deafen": "\U0001F6D1", "undeafen": "\U0001F3A7"}
+        event_emojis = {
+            "join": "\U0001F7E2",
+            "leave": "\U0001F534",
+            "move": "\U0001F7E1",
+            "mute": "\U0001F507",
+            "unmute": "\U0001F50A",
+            "deafen": "\U0001F6D1",
+            "undeafen": "\U0001F3A7",
+        }
         emoji = event_emojis.get(event_type, "\u2753")
 
-        event_labels = {"join": "입장", "leave": "퇴장", "move": "이동", "mute": "음소거", "unmute": "음소거 해제", "deafen": "헤드셋 끔", "undeafen": "헤드셋 켬"}
+        event_labels = {
+            "join": "입장",
+            "leave": "퇴장",
+            "move": "이동",
+            "mute": "음소거",
+            "unmute": "음소거 해제",
+            "deafen": "헤드셋 끔",
+            "undeafen": "헤드셋 켬",
+        }
         label = event_labels.get(event_type, event_type)
 
         ch_before = record.get("channel_before") or "-"
@@ -1432,7 +1512,9 @@ class AdvancedCommandsCog(commands.Cog, name="고급 기능"):
         self.bot = bot
         self.managers = managers
 
-    @app_commands.command(name="trade_advanced", description="코인 매매 UI를 표시합니다")
+    @app_commands.command(
+        name="trade_advanced", description="코인 매매 UI를 표시합니다"
+    )
     @app_commands.describe(ticker="거래 티커 (예: KRW-BTC)", amount="거래 금액 (원)")
     async def trade_command(
         self, interaction: discord.Interaction, ticker: str, amount: float
@@ -1515,7 +1597,9 @@ class AdvancedCommandsCog(commands.Cog, name="고급 기능"):
         """#147: 봇 Activity를 변경하는 슬래시 커맨드."""
         am: ActivityManager = self.managers.get("activity_manager")
         if am is None:
-            await interaction.response.send_message("ActivityManager가 초기화되지 않았습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "ActivityManager가 초기화되지 않았습니다.", ephemeral=True
+            )
             return
 
         if activity_type == "playing":
@@ -1529,7 +1613,9 @@ class AdvancedCommandsCog(commands.Cog, name="고급 기능"):
             f"봇 상태가 변경되었습니다: {activity_type} {name}", ephemeral=True
         )
 
-    @app_commands.command(name="voice_history", description="음성 채널 활동 기록을 조회합니다")
+    @app_commands.command(
+        name="voice_history", description="음성 채널 활동 기록을 조회합니다"
+    )
     @app_commands.describe(limit="조회할 기록 수 (기본 10)")
     async def voice_history_command(
         self, interaction: discord.Interaction, limit: int = 10
@@ -1537,20 +1623,34 @@ class AdvancedCommandsCog(commands.Cog, name="고급 기능"):
         """#149: 음성 활동 기록을 조회하는 슬래시 커맨드."""
         vl: VoiceHistoryLogger = self.managers.get("voice_logger")
         if vl is None:
-            await interaction.response.send_message("VoiceHistoryLogger가 초기화되지 않았습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "VoiceHistoryLogger가 초기화되지 않았습니다.", ephemeral=True
+            )
             return
 
         records = vl.get_history(limit=limit)
         if not records:
-            await interaction.response.send_message("음성 활동 기록이 없습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "음성 활동 기록이 없습니다.", ephemeral=True
+            )
             return
 
-        event_labels = {"join": "입장", "leave": "퇴장", "move": "이동", "mute": "음소거", "unmute": "음소거 해제", "deafen": "헤드셋 끔", "undeafen": "헤드셋 켬"}
+        event_labels = {
+            "join": "입장",
+            "leave": "퇴장",
+            "move": "이동",
+            "mute": "음소거",
+            "unmute": "음소거 해제",
+            "deafen": "헤드셋 끔",
+            "undeafen": "헤드셋 켬",
+        }
         lines = []
         for r in records:
             label = event_labels.get(r["event"], r["event"])
             ch = r.get("channel_after") or r.get("channel_before") or "-"
-            lines.append(f"`{r['timestamp'][:19]}` | **{label}** | {r['user_name']} | {ch}")
+            lines.append(
+                f"`{r['timestamp'][:19]}` | **{label}** | {r['user_name']} | {ch}"
+            )
 
         embed = discord.Embed(
             title="음성 채널 활동 기록",

@@ -48,6 +48,7 @@ def _get_location_client():
         return _location_client
     try:
         import boto3
+
         _location_client = boto3.client("location", region_name=_AWS_REGION)
         return _location_client
     except ImportError:
@@ -115,7 +116,9 @@ async def search_place(query: str, max_results: int = 5) -> str:
         return "\n".join(lines)
 
     except client.exceptions.ResourceNotFoundException:
-        return f"Place Index '{_PLACE_INDEX}'를 찾을 수 없습니다. AWS 콘솔에서 생성하세요."
+        return (
+            f"Place Index '{_PLACE_INDEX}'를 찾을 수 없습니다. AWS 콘솔에서 생성하세요."
+        )
     except Exception as e:
         logger.error(f"search_place error: {e}")
         return f"장소 검색 실패: {e}"

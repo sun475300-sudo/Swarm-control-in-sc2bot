@@ -16,8 +16,8 @@ class MetricSnapshot:
     timestamp: float
     actions_per_minute: float
     decision_latency_ms: float
-    macro_efficiency: float      # 0.0–1.0
-    micro_efficiency: float      # 0.0–1.0
+    macro_efficiency: float  # 0.0–1.0
+    micro_efficiency: float  # 0.0–1.0
     worker_count: int
     army_supply: int
     supply_blocked_seconds: float
@@ -41,13 +41,13 @@ class PerformanceProfiler:
     Thread-safe; can export to Prometheus text format.
     """
 
-    HISTORY_WINDOW = 120     # seconds of rolling history
-    APM_WINDOW_SEC = 60      # window for APM calculation
+    HISTORY_WINDOW = 120  # seconds of rolling history
+    APM_WINDOW_SEC = 60  # window for APM calculation
 
     def __init__(self):
         self._lock = threading.Lock()
-        self._action_times: deque = deque()        # timestamps of each action
-        self._latency_samples: deque = deque()     # (timestamp, latency_ms)
+        self._action_times: deque = deque()  # timestamps of each action
+        self._latency_samples: deque = deque()  # (timestamp, latency_ms)
         self._snapshots: List[MetricSnapshot] = []
         self._supply_blocked_start: Optional[float] = None
         self._supply_blocked_total: float = 0.0

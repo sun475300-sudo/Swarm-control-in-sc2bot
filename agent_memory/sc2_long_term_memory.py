@@ -32,6 +32,7 @@ SC2_MATCHUPS = [f"{a}v{b}" for a in SC2_RACES for b in SC2_RACES]
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class MemoryType(Enum):
     EPISODIC = "episodic"
     SEMANTIC = "semantic"
@@ -48,6 +49,7 @@ class Outcome(Enum):
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MemoryEntry:
@@ -69,7 +71,9 @@ class MemoryEntry:
         self.access_count += 1
         self.last_accessed = time.time()
 
-    def strength(self, now: Optional[float] = None, decay_rate: float = DEFAULT_DECAY_RATE) -> float:
+    def strength(
+        self, now: Optional[float] = None, decay_rate: float = DEFAULT_DECAY_RATE
+    ) -> float:
         """
         Compute memory strength via Ebbinghaus-inspired forgetting curve.
         S(t) = importance * exp(-decay * dt) * log2(2 + access_count)
@@ -102,6 +106,7 @@ class MemoryEntry:
 # ---------------------------------------------------------------------------
 # Episodic Memory
 # ---------------------------------------------------------------------------
+
 
 class EpisodicMemory:
     """
@@ -195,7 +200,8 @@ class EpisodicMemory:
         now = time.time()
         before = len(self._episodes)
         self._episodes = [
-            ep for ep in self._episodes
+            ep
+            for ep in self._episodes
             if ep.strength(now, self.decay_rate) >= threshold
         ]
         return before - len(self._episodes)
@@ -204,7 +210,7 @@ class EpisodicMemory:
         if len(self._episodes) > self.capacity:
             now = time.time()
             self._episodes.sort(key=lambda e: e.strength(now, self.decay_rate))
-            self._episodes = self._episodes[len(self._episodes) - self.capacity:]
+            self._episodes = self._episodes[len(self._episodes) - self.capacity :]
 
     @property
     def size(self) -> int:
@@ -215,6 +221,7 @@ class EpisodicMemory:
 # Semantic Memory
 # ---------------------------------------------------------------------------
 
+
 class SemanticMemory:
     """
     Stores learned facts and generalized knowledge derived from experience.
@@ -224,7 +231,9 @@ class SemanticMemory:
     def __init__(self, decay_rate: float = DEFAULT_DECAY_RATE * 0.5):
         self.decay_rate = decay_rate
         self._facts: Dict[str, MemoryEntry] = {}
-        self._matchup_stats: Dict[str, Dict[str, int]] = defaultdict(lambda: {"wins": 0, "losses": 0, "draws": 0})
+        self._matchup_stats: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: {"wins": 0, "losses": 0, "draws": 0}
+        )
         self._counter_strategies: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
     # -- fact storage --
@@ -298,7 +307,9 @@ class SemanticMemory:
         return stats["wins"] / total
 
     def get_matchup_stats(self, matchup: str) -> Dict[str, int]:
-        return dict(self._matchup_stats.get(matchup, {"wins": 0, "losses": 0, "draws": 0}))
+        return dict(
+            self._matchup_stats.get(matchup, {"wins": 0, "losses": 0, "draws": 0})
+        )
 
     # -- counter strategies --
 
@@ -310,12 +321,14 @@ class SemanticMemory:
         notes: str = "",
     ) -> None:
         """Record a counter-strategy for a known enemy approach."""
-        self._counter_strategies[enemy_strategy].append({
-            "counter": counter,
-            "success_rate": success_rate,
-            "notes": notes,
-            "timestamp": time.time(),
-        })
+        self._counter_strategies[enemy_strategy].append(
+            {
+                "counter": counter,
+                "success_rate": success_rate,
+                "notes": notes,
+                "timestamp": time.time(),
+            }
+        )
 
     def get_best_counter(self, enemy_strategy: str) -> Optional[Dict[str, Any]]:
         options = self._counter_strategies.get(enemy_strategy, [])
@@ -329,7 +342,8 @@ class SemanticMemory:
         now = time.time()
         before = len(self._facts)
         self._facts = {
-            k: v for k, v in self._facts.items()
+            k: v
+            for k, v in self._facts.items()
             if v.strength(now, self.decay_rate) >= threshold
         }
         return before - len(self._facts)
@@ -342,6 +356,7 @@ class SemanticMemory:
 # ---------------------------------------------------------------------------
 # Working Memory
 # ---------------------------------------------------------------------------
+
 
 class WorkingMemory:
     """
@@ -413,6 +428,7 @@ class WorkingMemory:
 # Memory Consolidation Engine
 # ---------------------------------------------------------------------------
 
+
 class ConsolidationEngine:
     """
     Moves repeated episodic patterns into semantic memory.
@@ -483,6 +499,7 @@ class ConsolidationEngine:
 # Memory Manager - unified facade
 # ---------------------------------------------------------------------------
 
+
 class MemoryManager:
     """
     Top-level controller that owns all memory subsystems.
@@ -497,7 +514,9 @@ class MemoryManager:
         decay_rate: float = DEFAULT_DECAY_RATE,
         consolidation_threshold: int = DEFAULT_CONSOLIDATION_THRESHOLD,
     ):
-        self.episodic = EpisodicMemory(capacity=episodic_capacity, decay_rate=decay_rate)
+        self.episodic = EpisodicMemory(
+            capacity=episodic_capacity, decay_rate=decay_rate
+        )
         self.semantic = SemanticMemory(decay_rate=decay_rate * 0.5)
         self.working = WorkingMemory(capacity=working_capacity)
         self._consolidation = ConsolidationEngine(threshold=consolidation_threshold)
@@ -517,7 +536,9 @@ class MemoryManager:
         """Push a game-tick observation into working memory."""
         self.working.push_observation(observation)
 
-    def on_game_end(self, outcome: Outcome, summary_action: str = "default") -> MemoryEntry:
+    def on_game_end(
+        self, outcome: Outcome, summary_action: str = "default"
+    ) -> MemoryEntry:
         """
         Finalize the game: store an episode, update matchup stats,
         and periodically consolidate.
@@ -540,7 +561,9 @@ class MemoryManager:
             importance=0.7 if outcome == Outcome.WIN else 0.5,
         )
 
-        matchup = f"{self.working.get_context('my_race', 'Z')}v{race[0] if race else '?'}"
+        matchup = (
+            f"{self.working.get_context('my_race', 'Z')}v{race[0] if race else '?'}"
+        )
         self.semantic.record_matchup_result(matchup, outcome)
 
         # periodic consolidation
@@ -553,7 +576,9 @@ class MemoryManager:
         """Run episodic-to-semantic consolidation."""
         return self._consolidation.consolidate(self.episodic, self.semantic)
 
-    def run_forgetting(self, episodic_threshold: float = 0.01, semantic_threshold: float = 0.005) -> Dict[str, int]:
+    def run_forgetting(
+        self, episodic_threshold: float = 0.01, semantic_threshold: float = 0.005
+    ) -> Dict[str, int]:
         """Apply forgetting curves to both long-term stores."""
         return {
             "episodic_forgotten": self.episodic.forget(episodic_threshold),
@@ -625,7 +650,9 @@ class MemoryManager:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        self.episodic._episodes = [MemoryEntry.from_dict(d) for d in data.get("episodic", [])]
+        self.episodic._episodes = [
+            MemoryEntry.from_dict(d) for d in data.get("episodic", [])
+        ]
         self.semantic._facts = {
             k: MemoryEntry.from_dict(v) for k, v in data.get("semantic", {}).items()
         }
@@ -651,6 +678,7 @@ class MemoryManager:
 # ---------------------------------------------------------------------------
 # Demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate the Long-Term Agent Memory system with a simulated SC2 session."""
@@ -680,12 +708,14 @@ def demo() -> None:
 
         # push some fake observations
         for tick in range(5):
-            manager.on_step({
-                "tick": tick,
-                "minerals": 400 + tick * 50,
-                "gas": 200 + tick * 25,
-                "supply": 50 + tick * 10,
-            })
+            manager.on_step(
+                {
+                    "tick": tick,
+                    "minerals": 400 + tick * 50,
+                    "gas": 200 + tick * 25,
+                    "supply": 50 + tick * 10,
+                }
+            )
 
         manager.on_game_end(outcome, summary_action=action)
 
@@ -713,7 +743,9 @@ def demo() -> None:
     print("\n--- Episodic: wins vs Terran ---")
     wins = manager.episodic.recall(opponent_race="Terran", outcome=Outcome.WIN, top_k=5)
     for ep in wins:
-        print(f"  [{ep.key}] action={ep.content['action']} map={ep.content['map_name']}")
+        print(
+            f"  [{ep.key}] action={ep.content['action']} map={ep.content['map_name']}"
+        )
 
     print("\n--- Semantic: opponent tendencies for MarinePrince ---")
     tendencies = manager.recall_opponent_tendencies("MarinePrince")
@@ -723,7 +755,9 @@ def demo() -> None:
     print("\n--- Semantic: best counter for cannon_rush ---")
     counter = manager.semantic.get_best_counter("cannon_rush")
     if counter:
-        print(f"  {counter['counter']} (success={counter['success_rate']}) -- {counter['notes']}")
+        print(
+            f"  {counter['counter']} (success={counter['success_rate']}) -- {counter['notes']}"
+        )
 
     print("\n--- Matchup win-rates ---")
     for mu in ["ZvT", "ZvP", "ZvZ"]:

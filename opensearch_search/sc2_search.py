@@ -25,15 +25,15 @@ SC2_REPLAY_MAPPING = {
     },
     "mappings": {
         "properties": {
-            "replay_id":     {"type": "keyword"},
-            "map_name":      {"type": "keyword"},
-            "player_race":   {"type": "keyword"},
+            "replay_id": {"type": "keyword"},
+            "map_name": {"type": "keyword"},
+            "player_race": {"type": "keyword"},
             "opponent_race": {"type": "keyword"},
-            "result":        {"type": "keyword"},  # "win" | "loss"
+            "result": {"type": "keyword"},  # "win" | "loss"
             "game_duration": {"type": "integer"},
-            "timestamp":     {"type": "date"},
-            "build_order":   {"type": "text", "analyzer": "english"},
-            "events":        {"type": "text", "analyzer": "standard"},
+            "timestamp": {"type": "date"},
+            "build_order": {"type": "text", "analyzer": "english"},
+            "events": {"type": "text", "analyzer": "standard"},
             "strategy_tags": {"type": "keyword"},
             # k-NN vector field for strategy similarity
             "strategy_vector": {
@@ -50,18 +50,27 @@ SC2_REPLAY_MAPPING = {
     },
 }
 
+
 def create_index():
     if not client.indices.exists(SC2_REPLAY_INDEX):
         client.indices.create(index=SC2_REPLAY_INDEX, body=SC2_REPLAY_MAPPING)
         print(f"[OpenSearch] Created index: {SC2_REPLAY_INDEX}")
 
+
 # --- Index Replay Docs ---
 def index_replay(replay: dict):
-    client.index(index=SC2_REPLAY_INDEX, id=replay["replay_id"], body=replay, refresh=True)
+    client.index(
+        index=SC2_REPLAY_INDEX, id=replay["replay_id"], body=replay, refresh=True
+    )
+
 
 def bulk_index_replays(replays: List[dict]):
-    actions = [{"_index": SC2_REPLAY_INDEX, "_id": r["replay_id"], "_source": r} for r in replays]
+    actions = [
+        {"_index": SC2_REPLAY_INDEX, "_id": r["replay_id"], "_source": r}
+        for r in replays
+    ]
     bulk(client, actions, refresh=True)
+
 
 # --- Queries ---
 def search_by_build_order(query_text: str, size: int = 10) -> List[dict]:
@@ -79,6 +88,7 @@ def search_by_build_order(query_text: str, size: int = 10) -> List[dict]:
     resp = client.search(index=SC2_REPLAY_INDEX, body=body)
     return [hit["_source"] for hit in resp["hits"]["hits"]]
 
+
 def search_win_replays(race: str, min_duration: int = 300) -> List[dict]:
     """Bool query: win replays by race with minimum duration."""
     body = {
@@ -88,15 +98,14 @@ def search_win_replays(race: str, min_duration: int = 300) -> List[dict]:
                     {"term": {"result": "win"}},
                     {"term": {"player_race": race}},
                 ],
-                "filter": [
-                    {"range": {"game_duration": {"gte": min_duration}}}
-                ],
+                "filter": [{"range": {"game_duration": {"gte": min_duration}}}],
             }
         },
         "sort": [{"game_duration": {"order": "desc"}}],
     }
     resp = client.search(index=SC2_REPLAY_INDEX, body=body)
     return [hit["_source"] for hit in resp["hits"]["hits"]]
+
 
 def aggregate_win_rates_by_matchup() -> dict:
     """Aggregation: win rate per player_race x opponent_race matchup."""
@@ -111,8 +120,8 @@ def aggregate_win_rates_by_matchup() -> dict:
                     ]
                 },
                 "aggs": {
-                    "total":    {"value_count": {"field": "replay_id"}},
-                    "wins":     {"filter": {"term": {"result": "win"}}},
+                    "total": {"value_count": {"field": "replay_id"}},
+                    "wins": {"filter": {"term": {"result": "win"}}},
                     "avg_duration": {"avg": {"field": "game_duration"}},
                 },
             }
@@ -120,6 +129,7 @@ def aggregate_win_rates_by_matchup() -> dict:
     }
     resp = client.search(index=SC2_REPLAY_INDEX, body=body)
     return resp["aggregations"]
+
 
 def knn_similar_strategies(vector: List[float], k: int = 5) -> List[dict]:
     """k-NN vector search: find replays with similar strategy embeddings."""
@@ -135,4 +145,7 @@ def knn_similar_strategies(vector: List[float], k: int = 5) -> List[dict]:
         },
     }
     resp = client.search(index=SC2_REPLAY_INDEX, body=body)
-    return [{"id": h["_id"], "score": h["_score"], **h["_source"]} for h in resp["hits"]["hits"]]
+    return [
+        {"id": h["_id"], "score": h["_score"], **h["_source"]}
+        for h in resp["hits"]["hits"]
+    ]

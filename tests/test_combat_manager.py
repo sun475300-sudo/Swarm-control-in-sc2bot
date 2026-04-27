@@ -19,7 +19,10 @@ from typing import List
 try:
     import sys
     import os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger'))
+
+    sys.path.insert(
+        0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+    )
     from combat_manager import CombatManager
 except ImportError:
     pytest.skip("CombatManager not available", allow_module_level=True)
@@ -27,8 +30,17 @@ except ImportError:
 
 class MockUnit:
     """Mock SC2 Unit"""
-    def __init__(self, tag: int, type_id, position, health: float = 100.0,
-                 health_max: float = 100.0, shield: float = 0.0, weapon_cooldown: int = 0):
+
+    def __init__(
+        self,
+        tag: int,
+        type_id,
+        position,
+        health: float = 100.0,
+        health_max: float = 100.0,
+        shield: float = 0.0,
+        weapon_cooldown: int = 0,
+    ):
         self.tag = tag
         self.type_id = type_id
         self.position = position
@@ -47,15 +59,18 @@ class MockUnit:
         return self.health / self.health_max if self.health_max > 0 else 0
 
     def distance_to(self, other):
-        if hasattr(other, 'position'):
+        if hasattr(other, "position"):
             pos = other.position
         else:
             pos = other
-        return ((self.position[0] - pos[0])**2 + (self.position[1] - pos[1])**2)**0.5
+        return (
+            (self.position[0] - pos[0]) ** 2 + (self.position[1] - pos[1]) ** 2
+        ) ** 0.5
 
 
 class MockUnits:
     """Mock SC2 Units collection"""
+
     def __init__(self, units: List[MockUnit]):
         self._units = units
 
@@ -78,10 +93,7 @@ class MockUnits:
         return len(self._units) > 0
 
     def closer_than(self, distance: float, position):
-        return MockUnits([
-            u for u in self._units
-            if u.distance_to(position) < distance
-        ])
+        return MockUnits([u for u in self._units if u.distance_to(position) < distance])
 
     def closest_to(self, position):
         if not self._units:
@@ -97,6 +109,7 @@ class MockUnits:
 
 class MockBot:
     """Mock SC2 Bot"""
+
     def __init__(self):
         self.units = MockUnits([])
         self.enemy_units = MockUnits([])
@@ -118,6 +131,7 @@ class MockBot:
 
 # ===== 테스트 케이스 =====
 
+
 class TestCombatManagerInitialization:
     """전투 매니저 초기화 테스트"""
 
@@ -138,9 +152,9 @@ class TestCombatManagerInitialization:
 
         # 타겟팅, 마이크로, Boids 매니저 초기화 확인
         # (실패해도 None으로 설정되어야 함)
-        assert hasattr(combat, 'targeting')
-        assert hasattr(combat, 'micro_combat')
-        assert hasattr(combat, 'boids')
+        assert hasattr(combat, "targeting")
+        assert hasattr(combat, "micro_combat")
+        assert hasattr(combat, "boids")
 
 
 class TestBaseDefense:
@@ -188,7 +202,10 @@ class TestBaseDefense:
 
         # 방어 모드 비활성화 확인
         # (멀리 있는 적은 위협이 아님)
-        assert not combat._base_defense_active or "base_defense" not in combat._active_tasks
+        assert (
+            not combat._base_defense_active
+            or "base_defense" not in combat._active_tasks
+        )
 
 
 class TestRallyPoint:
@@ -207,14 +224,17 @@ class TestRallyPoint:
         bot.enemy_units = MockUnits([enemy])
 
         # 랠리 포인트 계산 (내부 메서드 직접 테스트)
-        if hasattr(combat, '_update_rally_point'):
+        if hasattr(combat, "_update_rally_point"):
             combat._update_rally_point()
 
             # 랠리 포인트가 설정될 수 있음 (None일 수도 있음)
             # 이 경우 테스트는 크래시 없이 완료되어야 함
             if combat._rally_point is not None:
                 # 랠리 포인트는 기지와 다른 위치여야 함
-                base_to_rally = ((combat._rally_point[0] - 50)**2 + (combat._rally_point[1] - 50)**2)**0.5
+                base_to_rally = (
+                    (combat._rally_point[0] - 50) ** 2
+                    + (combat._rally_point[1] - 50) ** 2
+                ) ** 0.5
                 # 랠리 포인트가 설정되었다면 기지에서 멀리 있을 수 있음
                 assert True  # 크래시 없이 실행되면 통과
         else:
@@ -273,7 +293,7 @@ class TestThreatAssessment:
         bot.units = MockUnits(friendly_units)
 
         # 적 병력 (아군보다 많음)
-        enemy_units = [MockUnit(100+i, "MARINE", (55, 55)) for i in range(20)]
+        enemy_units = [MockUnit(100 + i, "MARINE", (55, 55)) for i in range(20)]
         bot.enemy_units = MockUnits(enemy_units)
 
         # 위협 레벨은 높아야 함 (적이 2배)
@@ -307,7 +327,7 @@ class TestRetreatConditions:
         bot.units = MockUnits(friendly_units)
 
         # 압도적 적군 (3배)
-        enemy_units = [MockUnit(100+i, "MARINE", (55, 55)) for i in range(15)]
+        enemy_units = [MockUnit(100 + i, "MARINE", (55, 55)) for i in range(15)]
         bot.enemy_units = MockUnits(enemy_units)
 
         # 적이 1.5배 이상 우세하므로 후퇴 조건 만족
@@ -327,7 +347,10 @@ class TestMultitasking:
         assert "main_attack" in combat.task_priorities
 
         # 기지 방어가 가장 높은 우선순위
-        assert combat.task_priorities["base_defense"] > combat.task_priorities["main_attack"]
+        assert (
+            combat.task_priorities["base_defense"]
+            > combat.task_priorities["main_attack"]
+        )
 
     def test_unit_assignment_tracking(self):
         """유닛 할당 추적 테스트"""
@@ -354,8 +377,8 @@ class TestCombatStatistics:
         combat = CombatManager(bot)
 
         # 기본 전투 관련 필드 확인
-        assert hasattr(combat, '_base_defense_active')
-        assert hasattr(combat, '_victory_push_active')
+        assert hasattr(combat, "_base_defense_active")
+        assert hasattr(combat, "_victory_push_active")
         assert combat._base_defense_active == False
         assert combat._victory_push_active == False
 
@@ -365,11 +388,12 @@ class TestCombatStatistics:
         combat = CombatManager(bot)
 
         # 전투 추적 관련 필드 확인
-        assert hasattr(combat, '_enemy_structures_destroyed')
-        assert hasattr(combat, '_last_combat_time')
+        assert hasattr(combat, "_enemy_structures_destroyed")
+        assert hasattr(combat, "_last_combat_time")
 
 
 # ===== Integration Tests =====
+
 
 class TestCombatIntegration:
     """통합 테스트"""
@@ -385,15 +409,11 @@ class TestCombatIntegration:
         bot.townhalls = MockUnits([base])
 
         # 아군 병력
-        friendly_units = [
-            MockUnit(i, "ZERGLING", (50, 50)) for i in range(10)
-        ]
+        friendly_units = [MockUnit(i, "ZERGLING", (50, 50)) for i in range(10)]
         bot.units = MockUnits(friendly_units)
 
         # 적 병력
-        enemy_units = [
-            MockUnit(100+i, "MARINE", (60, 60)) for i in range(5)
-        ]
+        enemy_units = [MockUnit(100 + i, "MARINE", (60, 60)) for i in range(5)]
         bot.enemy_units = MockUnits(enemy_units)
 
         # 여러 프레임 시뮬레이션
@@ -412,6 +432,7 @@ class TestCombatIntegration:
 
 # ===== Performance Tests =====
 
+
 class TestCombatPerformance:
     """성능 테스트"""
 
@@ -423,19 +444,19 @@ class TestCombatPerformance:
 
         # 대규모 병력 (100기)
         friendly_units = [
-            MockUnit(i, "ZERGLING", (50 + i % 10, 50 + i // 10))
-            for i in range(100)
+            MockUnit(i, "ZERGLING", (50 + i % 10, 50 + i // 10)) for i in range(100)
         ]
         bot.units = MockUnits(friendly_units)
 
         enemy_units = [
-            MockUnit(1000+i, "MARINE", (70 + i % 10, 70 + i // 10))
+            MockUnit(1000 + i, "MARINE", (70 + i % 10, 70 + i // 10))
             for i in range(100)
         ]
         bot.enemy_units = MockUnits(enemy_units)
 
         # 10 프레임 실행
         import time
+
         start_time = time.time()
 
         for iteration in range(10):

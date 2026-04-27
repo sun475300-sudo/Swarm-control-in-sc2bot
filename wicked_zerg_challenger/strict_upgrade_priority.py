@@ -34,7 +34,7 @@ class StrictUpgradePriority:
             "cost_minerals": 100,
             "required_building": UnitTypeId.SPAWNINGPOOL,
             "priority": 100,
-            "name": "Metabolic Boost (발업)"
+            "name": "Metabolic Boost (발업)",
         },
     }
 
@@ -45,21 +45,21 @@ class StrictUpgradePriority:
             "cost_minerals": 100,
             "required_building": UnitTypeId.ROACHWARREN,
             "priority": 80,
-            "name": "Glial Reconstitution (바퀴 회복)"
+            "name": "Glial Reconstitution (바퀴 회복)",
         },
         UpgradeId.EVOLVEGROOVEDSPINES: {  # 히드라 사거리
             "cost_gas": 100,
             "cost_minerals": 100,
             "required_building": UnitTypeId.HYDRALISKDEN,
             "priority": 75,
-            "name": "Grooved Spines (히드라 사거리)"
+            "name": "Grooved Spines (히드라 사거리)",
         },
         UpgradeId.EVOLVEMUSCULARAUGMENTS: {  # 히드라 이속
             "cost_gas": 100,
             "cost_minerals": 100,
             "required_building": UnitTypeId.HYDRALISKDEN,
             "priority": 70,
-            "name": "Muscular Augments (히드라 이속)"
+            "name": "Muscular Augments (히드라 이속)",
         },
     }
 
@@ -127,15 +127,19 @@ class StrictUpgradePriority:
                 self._reserve_gas_for_upgrade(UpgradeId.ZERGLINGMOVEMENTSPEED)
 
         # 자원 확인 및 업그레이드 시작
-        if (self.bot.minerals >= upgrade_info["cost_minerals"]
-            and self.bot.vespene >= upgrade_info["cost_gas"]):
+        if (
+            self.bot.minerals >= upgrade_info["cost_minerals"]
+            and self.bot.vespene >= upgrade_info["cost_gas"]
+        ):
 
             pool = spawning_pools.idle.first if spawning_pools.idle else None
             if pool:
                 # 업그레이드 시작
                 if pool.research(UpgradeId.ZERGLINGMOVEMENTSPEED):
                     self.upgrade_in_progress.add(UpgradeId.ZERGLINGMOVEMENTSPEED)
-                    self.logger.info(f"[UPGRADE] Metabolic Boost (발업) 시작! (게임 시간: {int(self.bot.time)}초)")
+                    self.logger.info(
+                        f"[UPGRADE] Metabolic Boost (발업) 시작! (게임 시간: {int(self.bot.time)}초)"
+                    )
                     self._release_gas_reservation()
 
     async def _check_high_priority_upgrades(self) -> None:
@@ -163,8 +167,10 @@ class StrictUpgradePriority:
                 continue
 
             # 자원 확인 및 업그레이드 시작
-            if (self.bot.minerals >= upgrade_info["cost_minerals"]
-                and self.bot.vespene >= upgrade_info["cost_gas"]):
+            if (
+                self.bot.minerals >= upgrade_info["cost_minerals"]
+                and self.bot.vespene >= upgrade_info["cost_gas"]
+            ):
 
                 building = buildings.idle.first if buildings.idle else None
                 if building:
@@ -179,7 +185,9 @@ class StrictUpgradePriority:
             self.reserved_gas = upgrade_info["cost_gas"]
             self.reserved_for_upgrade = upgrade_id
             self.gas_spending_blocked = True
-            self.logger.info(f"[UPGRADE] 가스 {self.reserved_gas} 예약: {upgrade_info['name']}")
+            self.logger.info(
+                f"[UPGRADE] 가스 {self.reserved_gas} 예약: {upgrade_info['name']}"
+            )
 
     def _release_gas_reservation(self) -> None:
         """가스 예약 해제"""

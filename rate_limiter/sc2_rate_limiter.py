@@ -37,8 +37,10 @@ logger = logging.getLogger(__name__)
 # Enums & Data Classes
 # ---------------------------------------------------------------------------
 
+
 class LimitResult(Enum):
     """Result of a rate limit check."""
+
     ALLOWED = "allowed"
     DENIED = "denied"
     THROTTLED = "throttled"
@@ -46,6 +48,7 @@ class LimitResult(Enum):
 
 class ClientIdentifierType(Enum):
     """How to identify a client for rate limiting."""
+
     IP = "ip"
     API_KEY = "api_key"
     USER_ID = "user_id"
@@ -56,6 +59,7 @@ class ClientIdentifierType(Enum):
 @dataclass
 class RateLimitConfig:
     """Configuration for a rate limiter."""
+
     max_requests: int = 100
     window_seconds: float = 60.0
     burst_size: int = 10
@@ -67,6 +71,7 @@ class RateLimitConfig:
 @dataclass
 class RateLimitResponse:
     """Response from a rate limit check."""
+
     result: LimitResult
     remaining: int = 0
     retry_after: float = 0.0
@@ -91,6 +96,7 @@ class RateLimitResponse:
 @dataclass
 class ClientRecord:
     """Tracks per-client rate limit state."""
+
     client_id: str
     identifier_type: ClientIdentifierType = ClientIdentifierType.IP
     total_requests: int = 0
@@ -104,6 +110,7 @@ class ClientRecord:
 # ---------------------------------------------------------------------------
 # Token Bucket Algorithm
 # ---------------------------------------------------------------------------
+
 
 class TokenBucket:
     """
@@ -140,7 +147,8 @@ class TokenBucket:
                     result=LimitResult.ALLOWED,
                     remaining=int(remaining),
                     limit=self._bucket_size,
-                    reset_at=now + (self._bucket_size - remaining) / max(self._refill_rate, 0.001),
+                    reset_at=now
+                    + (self._bucket_size - remaining) / max(self._refill_rate, 0.001),
                     client_id=client_id,
                 )
             else:
@@ -175,6 +183,7 @@ class TokenBucket:
 # ---------------------------------------------------------------------------
 # Sliding Window Log Algorithm
 # ---------------------------------------------------------------------------
+
 
 class SlidingWindowLog:
     """
@@ -249,6 +258,7 @@ class SlidingWindowLog:
 # Sliding Window Counter Algorithm
 # ---------------------------------------------------------------------------
 
+
 class SlidingWindowCounter:
     """
     Sliding window counter rate limiter.
@@ -261,7 +271,9 @@ class SlidingWindowCounter:
         self._max_requests = max_requests
         self._window = window_seconds
         # {client_id: {window_key: count}}
-        self._counters: Dict[str, Dict[int, int]] = defaultdict(lambda: defaultdict(int))
+        self._counters: Dict[str, Dict[int, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         self._lock = threading.Lock()
 
     def _window_key(self, timestamp: float) -> int:
@@ -331,6 +343,7 @@ class SlidingWindowCounter:
 # ---------------------------------------------------------------------------
 # Leaky Bucket Algorithm
 # ---------------------------------------------------------------------------
+
 
 class LeakyBucket:
     """
@@ -405,6 +418,7 @@ class LeakyBucket:
 # ---------------------------------------------------------------------------
 # Fixed Window Counter
 # ---------------------------------------------------------------------------
+
 
 class FixedWindowCounter:
     """
@@ -485,6 +499,7 @@ class FixedWindowCounter:
 # SC2-Specific Rate Limit Policies
 # ---------------------------------------------------------------------------
 
+
 class SC2ActionLimiter:
     """
     SC2-specific rate limiter for bot actions.
@@ -503,7 +518,9 @@ class SC2ActionLimiter:
         # Chat commands: 20 per minute
         self.chat_limiter = LeakyBucket(bucket_size=5, leak_rate=0.33)
         # Observer API: 120 per minute
-        self.observer_limiter = SlidingWindowCounter(max_requests=120, window_seconds=60.0)
+        self.observer_limiter = SlidingWindowCounter(
+            max_requests=120, window_seconds=60.0
+        )
 
     def check_action(self, bot_id: str) -> RateLimitResponse:
         """Check if a bot action is allowed (APM control)."""
@@ -539,6 +556,7 @@ class SC2ActionLimiter:
 # Distributed Rate Limiter (Coordination Layer)
 # ---------------------------------------------------------------------------
 
+
 class DistributedRateLimiter:
     """
     Distributed rate limiting across multiple bot instances.
@@ -563,7 +581,10 @@ class DistributedRateLimiter:
         )
         logger.info(
             "Distributed limiter %s: global=%d, per_instance=%d, instances=%d",
-            self._instance_id, global_limit, per_instance, self._total_instances,
+            self._instance_id,
+            global_limit,
+            per_instance,
+            self._total_instances,
         )
 
     def consume(self, client_id: str, tokens: int = 1) -> RateLimitResponse:
@@ -595,6 +616,7 @@ class DistributedRateLimiter:
 # Per-Client Tracker
 # ---------------------------------------------------------------------------
 
+
 class ClientTracker:
     """Tracks per-client rate limit metadata."""
 
@@ -618,7 +640,8 @@ class ClientTracker:
         with self._lock:
             if client_id not in self._clients:
                 self._clients[client_id] = ClientRecord(
-                    client_id=client_id, first_seen=now,
+                    client_id=client_id,
+                    first_seen=now,
                 )
             record = self._clients[client_id]
             record.total_requests += 1
@@ -665,6 +688,7 @@ class ClientTracker:
 # Unified RateLimiter Facade
 # ---------------------------------------------------------------------------
 
+
 class RateLimiter:
     """
     Unified rate limiter combining multiple algorithms.
@@ -701,11 +725,20 @@ class RateLimiter:
         """Register a rate limit policy for an endpoint."""
         cls = self.ALGORITHM_MAP.get(algorithm)
         if cls is None:
-            raise ValueError(f"Unknown algorithm: {algorithm}. Available: {list(self.ALGORITHM_MAP)}")
+            raise ValueError(
+                f"Unknown algorithm: {algorithm}. Available: {list(self.ALGORITHM_MAP)}"
+            )
         self._policies[endpoint] = cls(**kwargs)
-        logger.info("Policy added: endpoint=%s, algorithm=%s, params=%s", endpoint, algorithm, kwargs)
+        logger.info(
+            "Policy added: endpoint=%s, algorithm=%s, params=%s",
+            endpoint,
+            algorithm,
+            kwargs,
+        )
 
-    def check(self, endpoint: str, client_id: str, tokens: int = 1) -> RateLimitResponse:
+    def check(
+        self, endpoint: str, client_id: str, tokens: int = 1
+    ) -> RateLimitResponse:
         """Check rate limit for an endpoint and client."""
         # Check penalty first
         if self._tracker.is_penalized(client_id):
@@ -719,7 +752,9 @@ class RateLimiter:
             response = self._policies[endpoint].consume(client_id, tokens)
         else:
             # Auto-create default policy
-            self.add_policy(endpoint, self._default_algorithm, bucket_size=50, refill_rate=5.0)
+            self.add_policy(
+                endpoint, self._default_algorithm, bucket_size=50, refill_rate=5.0
+            )
             response = self._policies[endpoint].consume(client_id, tokens)
 
         # Track
@@ -802,6 +837,7 @@ class RateLimiter:
 # Demo
 # ---------------------------------------------------------------------------
 
+
 def demo() -> None:
     """Demonstrate rate limiting algorithms for SC2 API protection."""
     print("=" * 70)
@@ -864,9 +900,18 @@ def demo() -> None:
     # --- Unified RateLimiter ---
     print("\n[7] Unified RateLimiter Facade")
     rl = RateLimiter(default_algorithm="token_bucket")
-    rl.add_policy("game/action", algorithm="token_bucket", bucket_size=10, refill_rate=3.0)
-    rl.add_policy("api/query", algorithm="sliding_window_log", max_requests=20, window_seconds=60.0)
-    rl.add_policy("replay/upload", algorithm="fixed_window", max_requests=5, window_seconds=3600.0)
+    rl.add_policy(
+        "game/action", algorithm="token_bucket", bucket_size=10, refill_rate=3.0
+    )
+    rl.add_policy(
+        "api/query",
+        algorithm="sliding_window_log",
+        max_requests=20,
+        window_seconds=60.0,
+    )
+    rl.add_policy(
+        "replay/upload", algorithm="fixed_window", max_requests=5, window_seconds=3600.0
+    )
 
     events_log: List[str] = []
     rl.on_limit_event(lambda ep, cid, r: events_log.append(f"{ep}:{r.result.value}"))

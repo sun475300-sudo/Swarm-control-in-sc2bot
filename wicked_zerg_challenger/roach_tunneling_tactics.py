@@ -87,7 +87,9 @@ class RoachTunnelingTactics:
         if not self.tunneling_researched:
             if UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades:
                 self.tunneling_researched = True
-                self.logger.info("[TUNNELING] Tunneling Claws completed! Roaches can now burrow move!")
+                self.logger.info(
+                    "[TUNNELING] Tunneling Claws completed! Roaches can now burrow move!"
+                )
 
     async def _use_tunneling_tactics(self, game_time: float):
         """땅굴발톱 전술 사용"""
@@ -105,9 +107,12 @@ class RoachTunnelingTactics:
         """후방 침투: 적 기지 뒤로 잠복 이동"""
         # 적 기지 확인
         enemy_bases = self.bot.enemy_structures.filter(
-            lambda s: s.type_id in {
-                UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-                UnitTypeId.NEXUS, UnitTypeId.HATCHERY
+            lambda s: s.type_id
+            in {
+                UnitTypeId.COMMANDCENTER,
+                UnitTypeId.ORBITALCOMMAND,
+                UnitTypeId.NEXUS,
+                UnitTypeId.HATCHERY,
             }
         )
 
@@ -162,7 +167,9 @@ class RoachTunnelingTactics:
             return
 
         # 건강한 바퀴
-        healthy_roaches = roaches.filter(lambda r: r.health_percentage > 0.7 and not r.is_burrowed)
+        healthy_roaches = roaches.filter(
+            lambda r: r.health_percentage > 0.7 and not r.is_burrowed
+        )
         if healthy_roaches.amount < 3:
             return
 
@@ -210,5 +217,5 @@ class RoachTunnelingTactics:
         return {
             "tunneling_researched": self.tunneling_researched,
             "infiltration_attacks": self.tunneling_attacks,
-            "flanking_maneuvers": self.flanking_maneuvers
+            "flanking_maneuvers": self.flanking_maneuvers,
         }

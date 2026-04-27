@@ -132,6 +132,7 @@ OPTIONAL_VARS = [
 #  유틸리티 함수
 # ═══════════════════════════════════════════════════
 
+
 def load_env_file(filepath: str) -> dict:
     """
     .env 파일을 파싱하여 딕셔너리로 반환.
@@ -212,6 +213,7 @@ def print_result(name: str, status: str, detail: str = ""):
 # ═══════════════════════════════════════════════════
 #  메인 검증 로직
 # ═══════════════════════════════════════════════════
+
 
 def validate(env_path: str = None) -> int:
     """
@@ -305,7 +307,9 @@ def validate(env_path: str = None) -> int:
         if ".env.jarvis" in gitignore_content or ".env*" in gitignore_content:
             print_result(".gitignore", "OK", ".env.jarvis가 .gitignore에 포함됨")
         else:
-            print_result(".gitignore", "WARN", ".env.jarvis가 .gitignore에 없음 - 키 유출 위험!")
+            print_result(
+                ".gitignore", "WARN", ".env.jarvis가 .gitignore에 없음 - 키 유출 위험!"
+            )
             security_ok = False
     else:
         print_result(".gitignore", "WARN", ".gitignore 파일이 없음")
@@ -314,10 +318,13 @@ def validate(env_path: str = None) -> int:
     # 파일 권한 체크 (Unix 계열)
     if sys.platform != "win32":
         import stat
+
         file_stat = os.stat(env_path)
         mode = oct(file_stat.st_mode)[-3:]
         if mode not in ("600", "400", "640"):
-            print_result("파일 권한", "WARN", f"현재 {mode} - 600 권장 (chmod 600 .env.jarvis)")
+            print_result(
+                "파일 권한", "WARN", f"현재 {mode} - 600 권장 (chmod 600 .env.jarvis)"
+            )
             security_ok = False
         else:
             print_result("파일 권한", "OK", f"현재 {mode}")

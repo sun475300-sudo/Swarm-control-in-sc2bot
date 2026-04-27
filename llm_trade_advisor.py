@@ -3,6 +3,7 @@
 
 시장 데이터를 Claude API에 전달하여 매매 조언을 받는 자문 시스템.
 """
+
 import json
 import logging
 import os
@@ -61,6 +62,7 @@ class LLMTradeAdvisor:
 
         try:
             import anthropic
+
             client = anthropic.Anthropic(api_key=self._api_key)
             response = client.messages.create(
                 model=self._model,
@@ -87,12 +89,14 @@ class LLMTradeAdvisor:
                 "x-api-key": self._api_key,
                 "anthropic-version": "2023-06-01",
             }
-            body = json.dumps({
-                "model": self._model,
-                "max_tokens": 1024,
-                "system": self.SYSTEM_PROMPT,
-                "messages": [{"role": "user", "content": prompt}],
-            }).encode("utf-8")
+            body = json.dumps(
+                {
+                    "model": self._model,
+                    "max_tokens": 1024,
+                    "system": self.SYSTEM_PROMPT,
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+            ).encode("utf-8")
 
             req = urllib.request.Request(url, data=body, headers=headers, method="POST")
             with urllib.request.urlopen(req, timeout=30) as resp:
@@ -171,18 +175,24 @@ class LLMTradeAdvisor:
         else:
             # 더 정밀한 파싱
             import re
-            rec_match = re.search(r"추천\s*[:：]\s*(BUY|SELL|HOLD)", response, re.IGNORECASE)
+
+            rec_match = re.search(
+                r"추천\s*[:：]\s*(BUY|SELL|HOLD)", response, re.IGNORECASE
+            )
             if rec_match:
                 result["recommendation"] = rec_match.group(1).upper()
 
         # 신뢰도 파싱
         import re
+
         conf_match = re.search(r"신뢰도\s*[:：]\s*(\d+)", response)
         if conf_match:
             result["confidence"] = min(100, max(0, int(conf_match.group(1))))
 
         # 근거 파싱
-        rationale_match = re.search(r"근거\s*[:：]\s*(.+?)(?=리스크|$)", response, re.DOTALL)
+        rationale_match = re.search(
+            r"근거\s*[:：]\s*(.+?)(?=리스크|$)", response, re.DOTALL
+        )
         if rationale_match:
             result["rationale"] = rationale_match.group(1).strip()
 
@@ -231,7 +241,7 @@ class LLMTradeAdvisor:
         # 히스토리 기록
         self._advice_history.append(advice)
         if len(self._advice_history) > self._max_history:
-            self._advice_history = self._advice_history[-self._max_history:]
+            self._advice_history = self._advice_history[-self._max_history :]
 
         return advice
 
@@ -242,12 +252,23 @@ class LLMTradeAdvisor:
     def get_summary(self) -> dict:
         """자문 통계 요약"""
         if not self._advice_history:
-            return {"total_advices": 0, "buy_count": 0, "sell_count": 0, "hold_count": 0}
+            return {
+                "total_advices": 0,
+                "buy_count": 0,
+                "sell_count": 0,
+                "hold_count": 0,
+            }
 
         buy_count = sum(1 for a in self._advice_history if a["recommendation"] == "BUY")
-        sell_count = sum(1 for a in self._advice_history if a["recommendation"] == "SELL")
-        hold_count = sum(1 for a in self._advice_history if a["recommendation"] == "HOLD")
-        avg_confidence = sum(a["confidence"] for a in self._advice_history) / len(self._advice_history)
+        sell_count = sum(
+            1 for a in self._advice_history if a["recommendation"] == "SELL"
+        )
+        hold_count = sum(
+            1 for a in self._advice_history if a["recommendation"] == "HOLD"
+        )
+        avg_confidence = sum(a["confidence"] for a in self._advice_history) / len(
+            self._advice_history
+        )
 
         return {
             "total_advices": len(self._advice_history),

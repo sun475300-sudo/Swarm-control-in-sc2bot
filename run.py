@@ -46,7 +46,9 @@ def _portconfig_from_start_port(start_port: int) -> Portconfig:
     return pc
 
 
-async def _run_ladder_game(bot_player: Bot, host: str, game_port: int, start_port: int, opponent_id: str = None):
+async def _run_ladder_game(
+    bot_player: Bot, host: str, game_port: int, start_port: int, opponent_id: str = None
+):
     """
     Connect to an already-running SC2 instance (managed by AI Arena)
     and play the game.
@@ -61,10 +63,12 @@ async def _run_ladder_game(bot_player: Bot, host: str, game_port: int, start_por
         ws = await session.ws_connect(ws_url, timeout=120)
         client = Client(ws)
 
-        if opponent_id and hasattr(bot_player.ai, 'opponent_id'):
+        if opponent_id and hasattr(bot_player.ai, "opponent_id"):
             bot_player.ai.opponent_id = opponent_id
 
-        result = await _play_game(bot_player, client, realtime=False, portconfig=portconfig)
+        result = await _play_game(
+            bot_player, client, realtime=False, portconfig=portconfig
+        )
         logger.info(f"Game result: {result}")
 
         try:
@@ -87,10 +91,18 @@ async def _run_ladder_game(bot_player: Bot, host: str, game_port: int, start_por
 
 def main():
     parser = argparse.ArgumentParser(description="WickedZergBotPro - AI Arena Entry")
-    parser.add_argument("--LadderServer", action="store_true", help="Run in AI Arena ladder mode")
-    parser.add_argument("--GamePort", type=int, default=None, help="Game connection port")
-    parser.add_argument("--StartPort", type=int, default=None, help="Starting port for configuration")
-    parser.add_argument("--OpponentId", type=str, default=None, help="Opponent identifier")
+    parser.add_argument(
+        "--LadderServer", action="store_true", help="Run in AI Arena ladder mode"
+    )
+    parser.add_argument(
+        "--GamePort", type=int, default=None, help="Game connection port"
+    )
+    parser.add_argument(
+        "--StartPort", type=int, default=None, help="Starting port for configuration"
+    )
+    parser.add_argument(
+        "--OpponentId", type=str, default=None, help="Opponent identifier"
+    )
     parser.add_argument("--ComputerRace", type=str, default=None)
     parser.add_argument("--ComputerDifficulty", type=str, default=None)
     parser.add_argument("--ComputerOpponent", type=str, default=None)
@@ -109,12 +121,18 @@ def main():
         host = "127.0.0.1"
         # Some AI Arena setups pass host via positional or other args
         for i, arg in enumerate(sys.argv):
-            if arg == "--LadderServer" and i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("--"):
+            if (
+                arg == "--LadderServer"
+                and i + 1 < len(sys.argv)
+                and not sys.argv[i + 1].startswith("--")
+            ):
                 host = sys.argv[i + 1]
                 break
 
         logging.basicConfig(level=logging.INFO)
-        logger.info(f"Starting ladder game: host={host}, GamePort={args.GamePort}, StartPort={args.StartPort}")
+        logger.info(
+            f"Starting ladder game: host={host}, GamePort={args.GamePort}, StartPort={args.StartPort}"
+        )
 
         result = asyncio.run(
             _run_ladder_game(bot, host, args.GamePort, args.StartPort, args.OpponentId)
@@ -123,7 +141,9 @@ def main():
     else:
         print("[run.py] No --LadderServer flag detected.")
         print("[run.py] For local training, use: python run_with_training.py")
-        print("[run.py] For Arena mode, use:     python run.py --LadderServer --GamePort PORT --StartPort PORT")
+        print(
+            "[run.py] For Arena mode, use:     python run.py --LadderServer --GamePort PORT --StartPort PORT"
+        )
         sys.exit(1)
 
 

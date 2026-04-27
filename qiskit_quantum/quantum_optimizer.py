@@ -19,6 +19,7 @@ try:
     from qiskit.circuit import Parameter
     from qiskit_aer import AerSimulator
     from qiskit.primitives import Sampler, Estimator
+
     QISKIT_AVAILABLE = True
 except ImportError:
     QISKIT_AVAILABLE = False
@@ -28,6 +29,7 @@ except ImportError:
 # Problem: SC2 Resource allocation as QUBO
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SC2AllocationProblem:
     """
@@ -35,6 +37,7 @@ class SC2AllocationProblem:
     x_i ∈ {0,1}: build unit type i (yes/no)
     Objective: maximize combat value subject to resource constraints
     """
+
     unit_types: list[str]
     mineral_cost: list[int]
     gas_cost: list[int]
@@ -58,16 +61,18 @@ class SC2AllocationProblem:
             # Diagonal: maximize combat value (negative = maximize)
             Q[i][i] -= self.combat_value[i]
             # Self-penalty for resource use
-            Q[i][i] += penalty_min * self.mineral_cost[i] ** 2 / self.max_minerals ** 2
+            Q[i][i] += penalty_min * self.mineral_cost[i] ** 2 / self.max_minerals**2
             Q[i][i] += penalty_gas * self.gas_cost[i] ** 2 / max(1, self.max_gas) ** 2
 
         for i in range(n):
             for j in range(i + 1, n):
                 # Cross-terms for resource constraint
                 Q[i][j] += (
-                    2 * penalty_min *
-                    self.mineral_cost[i] * self.mineral_cost[j] /
-                    self.max_minerals ** 2
+                    2
+                    * penalty_min
+                    * self.mineral_cost[i]
+                    * self.mineral_cost[j]
+                    / self.max_minerals**2
                 )
 
         return Q
@@ -86,9 +91,11 @@ class SC2AllocationProblem:
             reverse=True,
         )
         for i in order:
-            if (m >= self.mineral_cost[i] and
-                    g >= self.gas_cost[i] and
-                    s >= self.supply_cost[i]):
+            if (
+                m >= self.mineral_cost[i]
+                and g >= self.gas_cost[i]
+                and s >= self.supply_cost[i]
+            ):
                 chosen[i] = 1
                 m -= self.mineral_cost[i]
                 g -= self.gas_cost[i]
@@ -99,6 +106,7 @@ class SC2AllocationProblem:
 # ─────────────────────────────────────────────
 # QAOA simulator (pure Python approximation)
 # ─────────────────────────────────────────────
+
 
 class QAOASimulator:
     """
@@ -160,6 +168,7 @@ class QAOASimulator:
 # VQE-style variational optimizer
 # ─────────────────────────────────────────────
 
+
 class VariationalOptimizer:
     """Variational Quantum Eigensolver analog for continuous parameters."""
 
@@ -181,8 +190,8 @@ class VariationalOptimizer:
             params_plus[i] += math.pi / 2
             params_minus[i] -= math.pi / 2
             grad = (
-                self._mock_quantum_expectation(params_plus) -
-                self._mock_quantum_expectation(params_minus)
+                self._mock_quantum_expectation(params_plus)
+                - self._mock_quantum_expectation(params_minus)
             ) / 2.0
             gradients.append(grad)
 
@@ -202,6 +211,7 @@ class VariationalOptimizer:
 # ─────────────────────────────────────────────
 # Qiskit circuit builder (when available)
 # ─────────────────────────────────────────────
+
 
 def build_qaoa_circuit(n_qubits: int, p_layers: int = 1):
     """Build QAOA ansatz circuit."""

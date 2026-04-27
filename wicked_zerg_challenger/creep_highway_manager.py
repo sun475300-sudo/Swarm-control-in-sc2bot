@@ -16,14 +16,17 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.position import Point2
 except ImportError:
+
     class UnitTypeId:
         QUEEN = "QUEEN"
         CREEPTUMOR = "CREEPTUMOR"
         CREEPTUMORQUEEN = "CREEPTUMORQUEEN"
         CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
+
     class AbilityId:
         BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
         BUILD_CREEPTUMOR_TUMOR = "BUILD_CREEPTUMOR_TUMOR"
+
     Point2 = tuple
 
 
@@ -44,7 +47,9 @@ class CreepHighwayManager:
         self.check_interval = 44  # 약 2초마다
 
         # ★ 고속도로 계획 ★
-        self.highways: List[Dict] = []  # [{from: pos, to: pos, progress: 0-100, waypoints: []}]
+        self.highways: List[Dict] = (
+            []
+        )  # [{from: pos, to: pos, progress: 0-100, waypoints: []}]
         self.highway_waypoints: Set[Tuple[int, int]] = set()  # 고속도로 경유지
 
         # ★ 우선순위 ★
@@ -102,7 +107,7 @@ class CreepHighwayManager:
         new_highways = []
 
         for i, base1 in enumerate(bases):
-            for base2 in bases[i+1:]:
+            for base2 in bases[i + 1 :]:
                 pos1 = base1.position
                 pos2 = base2.position
 
@@ -129,7 +134,9 @@ class CreepHighwayManager:
                 f"[{int(game_time)}s] [*] NEW HIGHWAYS PLANNED: {len(new_highways)} [*]"
             )
 
-    def _calculate_waypoints(self, start: Point2, end: Point2, spacing: float = 8.0) -> List[Point2]:
+    def _calculate_waypoints(
+        self, start: Point2, end: Point2, spacing: float = 8.0
+    ) -> List[Point2]:
         """
         두 지점 사이의 경유지 계산
 
@@ -174,8 +181,7 @@ class CreepHighwayManager:
             return
 
         sorted_highways = sorted(
-            incomplete_highways,
-            key=lambda h: main_base.position.distance_to(h["from"])
+            incomplete_highways, key=lambda h: main_base.position.distance_to(h["from"])
         )
 
         # 최대 2개 고속도로 동시 건설
@@ -295,15 +301,19 @@ class CreepHighwayManager:
         if distance_to_enemy < 1:
             return
 
-        normalized = Point2((direction.x / distance_to_enemy, direction.y / distance_to_enemy))
+        normalized = Point2(
+            (direction.x / distance_to_enemy, direction.y / distance_to_enemy)
+        )
 
         # 본진에서 적 방향으로 8거리씩 경유지 생성
         for i in range(1, int(distance_to_enemy / 8)):
             offset = 8 * i
-            target_pos = Point2((
-                main_base.position.x + normalized.x * offset,
-                main_base.position.y + normalized.y * offset
-            ))
+            target_pos = Point2(
+                (
+                    main_base.position.x + normalized.x * offset,
+                    main_base.position.y + normalized.y * offset,
+                )
+            )
 
             # 이미 점막이 있으면 스킵
             if self.bot.has_creep(target_pos):
@@ -352,7 +362,9 @@ class CreepHighwayManager:
         completed = sum(1 for h in self.highways if h["completed"])
         in_progress = total - completed
 
-        avg_progress = sum(h["progress"] for h in self.highways) / total if total > 0 else 0
+        avg_progress = (
+            sum(h["progress"] for h in self.highways) / total if total > 0 else 0
+        )
 
         return {
             "total": total,

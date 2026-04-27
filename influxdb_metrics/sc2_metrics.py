@@ -25,6 +25,7 @@ try:
     from influxdb_client.client.write_api import SYNCHRONOUS, ASYNCHRONOUS
     from influxdb_client.domain.write_precision import WritePrecision as WP
     from influxdb_client.client.exceptions import InfluxDBError
+
     _INFLUX_AVAILABLE = True
 except ImportError:
     _INFLUX_AVAILABLE = False
@@ -63,6 +64,7 @@ class GamePhase(str, Enum):
 @dataclass
 class GameMetrics:
     """Top-level per-game summary written at game end."""
+
     game_id: str
     bot_race: Race
     opponent_race: Race
@@ -83,6 +85,7 @@ class GameMetrics:
 @dataclass
 class EconomySnapshot:
     """Periodic economy state — written every N game steps."""
+
     game_id: str
     game_time_seconds: float
     minerals_stored: int
@@ -110,13 +113,14 @@ class EconomySnapshot:
 @dataclass
 class CombatEvent:
     """Single combat engagement record."""
+
     game_id: str
     game_time_seconds: float
-    event_type: str          # "attack", "defend", "retreat", "worker_rush"
+    event_type: str  # "attack", "defend", "retreat", "worker_rush"
     units_sent: int
     units_lost: int
     enemy_units_killed: int
-    army_value_sent: int     # supply value of engaged army
+    army_value_sent: int  # supply value of engaged army
     army_value_lost: int
     location_x: float = 0.0
     location_y: float = 0.0
@@ -131,6 +135,7 @@ class CombatEvent:
 @dataclass
 class TrainingStep:
     """Single RL training iteration telemetry."""
+
     step: int
     policy_loss: float
     value_loss: float
@@ -242,8 +247,9 @@ class SC2MetricsWriter:
 
     # ── Internal helpers ───────────────────────
 
-    def _make_point_dict(self, measurement: str, tags: Dict, fields: Dict,
-                         ts: datetime) -> str:
+    def _make_point_dict(
+        self, measurement: str, tags: Dict, fields: Dict, ts: datetime
+    ) -> str:
         """Build an InfluxDB line-protocol string (fallback path)."""
         tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
         field_str = ",".join(
@@ -253,8 +259,13 @@ class SC2MetricsWriter:
         ns_ts = int(ts.timestamp() * 1e9)
         return f"{measurement},{tag_str} {field_str} {ns_ts}"
 
-    def _write(self, measurement: str, tags: Dict[str, str],
-               fields: Dict[str, Any], ts: datetime) -> None:
+    def _write(
+        self,
+        measurement: str,
+        tags: Dict[str, str],
+        fields: Dict[str, Any],
+        ts: datetime,
+    ) -> None:
         """Route to InfluxDB client or console sink."""
         if self._closed:
             raise RuntimeError("SC2MetricsWriter is closed.")
@@ -262,6 +273,7 @@ class SC2MetricsWriter:
         if _INFLUX_AVAILABLE and self._client is not None:
             try:
                 from influxdb_client import Point
+
                 p = Point(measurement)
                 for k, v in tags.items():
                     p = p.tag(k, v)
@@ -337,9 +349,7 @@ class SC2MetricsWriter:
             "location_x": float(event.location_x),
             "location_y": float(event.location_y),
             "game_time_seconds": float(event.game_time_seconds),
-            "kill_loss_ratio": (
-                event.enemy_units_killed / max(event.units_lost, 1)
-            ),
+            "kill_loss_ratio": (event.enemy_units_killed / max(event.units_lost, 1)),
         }
         self._write(self.MEASUREMENT_COMBAT, tags, fields, event.timestamp)
 
@@ -399,7 +409,9 @@ class SC2MetricsQuery:
 
     def __init__(self, writer: SC2MetricsWriter) -> None:
         self._api = writer._query_api
-        self._org = getattr(writer._client, "_org", "sc2bot") if writer._client else "sc2bot"
+        self._org = (
+            getattr(writer._client, "_org", "sc2bot") if writer._client else "sc2bot"
+        )
         self._bucket = writer._bucket
 
     def _run(self, flux: str) -> List[Any]:
@@ -488,7 +500,9 @@ def _simulate_game(writer: SC2MetricsWriter, game_id: str) -> None:
     rng = random.Random(hash(game_id))
     bot_race = rng.choice(list(Race))
     opp_race = rng.choice(list(Race))
-    map_name = rng.choice(["Equilibrium", "Gresvan", "Tropical Sacrifice", "Inside and Out"])
+    map_name = rng.choice(
+        ["Equilibrium", "Gresvan", "Tropical Sacrifice", "Inside and Out"]
+    )
     duration = rng.uniform(300, 1200)
     result = rng.choice(list(GameResult))
     model_version = "v2.4.1"
@@ -500,9 +514,9 @@ def _simulate_game(writer: SC2MetricsWriter, game_id: str) -> None:
 
     for step_idx, game_time in enumerate(range(0, int(duration), 30)):
         phase = (
-            GamePhase.EARLY if game_time < 240
-            else GamePhase.MID if game_time < 600
-            else GamePhase.LATE
+            GamePhase.EARLY
+            if game_time < 240
+            else GamePhase.MID if game_time < 600 else GamePhase.LATE
         )
         workers = min(16 + step_idx * 2, 66)
         supply = min(workers + step_idx * 3, 190)
@@ -559,7 +573,9 @@ def _simulate_game(writer: SC2MetricsWriter, game_id: str) -> None:
         model_version=model_version,
     )
     writer.write_game_metrics(gm)
-    print(f"  Result: {result.value} | Duration: {duration:.0f}s | APM: {gm.actions_per_minute:.1f}")
+    print(
+        f"  Result: {result.value} | Duration: {duration:.0f}s | APM: {gm.actions_per_minute:.1f}"
+    )
 
 
 def _simulate_training(writer: SC2MetricsWriter, num_steps: int = 20) -> None:

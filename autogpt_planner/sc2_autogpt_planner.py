@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # ── Enums & Constants ────────────────────────────────────────────────────────
 
+
 class ThoughtType(Enum):
     STRATEGIC = "strategic"
     TACTICAL = "tactical"
@@ -47,6 +48,7 @@ class PlanStatus(Enum):
 
 
 # ── Core Data Classes ────────────────────────────────────────────────────────
+
 
 @dataclass
 class Thought:
@@ -120,6 +122,7 @@ class Observation:
 
 # ── Long-Term Memory ────────────────────────────────────────────────────────
 
+
 class LongTermMemory:
     """Persists strategic learnings across games."""
 
@@ -181,6 +184,7 @@ class LongTermMemory:
 
 
 # ── Game State Representation ────────────────────────────────────────────────
+
 
 @dataclass
 class SC2GameState:
@@ -244,6 +248,7 @@ def _register_rule(name: str) -> Callable:
     def decorator(fn: Callable[[SC2GameState], Optional[Thought]]) -> Callable:
         _STRATEGY_RULES[name] = fn
         return fn
+
     return decorator
 
 
@@ -255,7 +260,7 @@ def _rule_expand(state: SC2GameState) -> Optional[Thought]:
             thought_type=ThoughtType.ECONOMIC,
             content="High minerals with low threat. Should expand.",
             reasoning=f"Minerals={state.minerals}, bases={state.base_count}, "
-                      f"threat={state.threat_level:.1f}",
+            f"threat={state.threat_level:.1f}",
             confidence=0.8,
             sub_goals=["Take next expansion", "Add workers to saturate"],
         )
@@ -303,7 +308,11 @@ def _rule_threat(state: SC2GameState) -> Optional[Thought]:
             content="High threat detected. Prepare defenses.",
             reasoning=f"Threat level {state.threat_level:.1f} exceeds 0.7 threshold.",
             confidence=0.85,
-            sub_goals=["Position army at choke", "Build static defense", "Pull workers if needed"],
+            sub_goals=[
+                "Position army at choke",
+                "Build static defense",
+                "Pull workers if needed",
+            ],
         )
     return None
 
@@ -316,7 +325,7 @@ def _rule_tech(state: SC2GameState) -> Optional[Thought]:
             thought_type=ThoughtType.STRATEGIC,
             content="Tech is behind schedule. Need to add tech structures.",
             reasoning=f"Only {len(state.tech_buildings)} tech buildings at "
-                      f"{state.game_time:.0f}s.",
+            f"{state.game_time:.0f}s.",
             confidence=0.7,
             sub_goals=["Build next tech structure", "Start key upgrades"],
         )
@@ -324,6 +333,7 @@ def _rule_tech(state: SC2GameState) -> Optional[Thought]:
 
 
 # ── AutoGPT Planner ─────────────────────────────────────────────────────────
+
 
 class AutoGPTPlanner:
     """
@@ -357,12 +367,14 @@ class AutoGPTPlanner:
                 thoughts.append(thought)
 
         if not thoughts:
-            thoughts.append(Thought(
-                thought_type=ThoughtType.STRATEGIC,
-                content="Stable situation. Continue current plan.",
-                reasoning="No urgent issues detected by rule engine.",
-                confidence=0.5,
-            ))
+            thoughts.append(
+                Thought(
+                    thought_type=ThoughtType.STRATEGIC,
+                    content="Stable situation. Continue current plan.",
+                    reasoning="No urgent issues detected by rule engine.",
+                    confidence=0.5,
+                )
+            )
 
         # Pick highest confidence thought
         best = max(thoughts, key=lambda t: t.confidence)
@@ -405,7 +417,9 @@ class AutoGPTPlanner:
             lessons_learned=(
                 [f"Action '{action.description}' succeeded. Reinforce this pattern."]
                 if success
-                else [f"Action '{action.description}' failed. Avoid or adapt next time."]
+                else [
+                    f"Action '{action.description}' failed. Avoid or adapt next time."
+                ]
             ),
         )
 
@@ -460,9 +474,7 @@ class AutoGPTPlanner:
         successful = sum(
             1 for a in self._action_queue if a.status == PlanStatus.COMPLETED
         )
-        failed = sum(
-            1 for a in self._action_queue if a.status == PlanStatus.FAILED
-        )
+        failed = sum(1 for a in self._action_queue if a.status == PlanStatus.FAILED)
 
         # Extract key learnings
         learnings: List[str] = []
@@ -520,6 +532,7 @@ class AutoGPTPlanner:
 
 # ── PlanExecutor ─────────────────────────────────────────────────────────────
 
+
 class PlanExecutor:
     """
     Executes a strategic plan by coordinating between the AutoGPT planner
@@ -543,12 +556,14 @@ class PlanExecutor:
         for idx, state in enumerate(states):
             phase_label = f"phase_{idx}"
             loop_log = self.planner.run_tao_loop(state, max_iterations=3)
-            all_logs.append({
-                "phase": phase_label,
-                "game_time": state.game_time,
-                "game_phase": state.game_phase,
-                "tao_steps": loop_log,
-            })
+            all_logs.append(
+                {
+                    "phase": phase_label,
+                    "game_time": state.game_time,
+                    "game_phase": state.game_phase,
+                    "tao_steps": loop_log,
+                }
+            )
 
         plan_result = {
             "total_phases": len(states),
@@ -567,7 +582,7 @@ class PlanExecutor:
             thought_type=ThoughtType.TACTICAL,
             content=f"Unexpected: {unexpected_event}. Re-evaluating plan.",
             reasoning=f"Event detected at {current_state.game_time:.0f}s. "
-                      f"Current threat: {current_state.threat_level:.1f}",
+            f"Current threat: {current_state.threat_level:.1f}",
             confidence=0.6,
             sub_goals=["Assess damage", "Adjust strategy", "Stabilize economy"],
         )
@@ -599,6 +614,7 @@ class PlanExecutor:
 
 # ── Demo ─────────────────────────────────────────────────────────────────────
 
+
 def demo() -> None:
     """Demonstrate the AutoGPT Strategic Planner for SC2."""
     print("=" * 70)
@@ -607,8 +623,12 @@ def demo() -> None:
 
     # 1. Initialize planner with long-term memory
     memory = LongTermMemory()
-    memory.store_learning("ZvT", "Roach-ravager timing at 7min wins vs greedy Terran", "win", 420)
-    memory.store_learning("ZvT", "Ling-bane all-in failed vs 2-base tank push", "loss", 360)
+    memory.store_learning(
+        "ZvT", "Roach-ravager timing at 7min wins vs greedy Terran", "win", 420
+    )
+    memory.store_learning(
+        "ZvT", "Ling-bane all-in failed vs 2-base tank push", "loss", 360
+    )
 
     planner = AutoGPTPlanner(memory=memory, max_iterations=5)
     executor = PlanExecutor(planner)
@@ -640,9 +660,13 @@ def demo() -> None:
     for step in tao_log:
         print(f"\n  Iteration {step['iteration']}:")
         print(f"    Thought: [{step['thought']['type']}] {step['thought']['content']}")
-        print(f"    Action:  [{step['action']['type']}] {step['action']['description']}")
-        print(f"    Result:  {'OK' if step['observation']['success'] else 'FAIL'} - "
-              f"{step['observation']['details'][:80]}")
+        print(
+            f"    Action:  [{step['action']['type']}] {step['action']['description']}"
+        )
+        print(
+            f"    Result:  {'OK' if step['observation']['success'] else 'FAIL'} - "
+            f"{step['observation']['details'][:80]}"
+        )
 
     # 4. Mid-game adaptation
     print("\n--- Mid-Game Adaptation ---")
@@ -662,9 +686,7 @@ def demo() -> None:
         tech_buildings=["SpawningPool", "RoachWarren", "Lair"],
         threat_level=0.65,
     )
-    adaptation = executor.adapt_mid_game(
-        mid_state, "Enemy drop detected in main base"
-    )
+    adaptation = executor.adapt_mid_game(mid_state, "Enemy drop detected in main base")
     print(f"  Event: {adaptation['event']}")
     print(f"  Reaction: {adaptation['reactive_thought']['content']}")
     print(f"  Action: {adaptation['action_taken']['description']}")
@@ -684,14 +706,22 @@ def demo() -> None:
         opponent_race="Terran",
         army_composition={"Roach": 12, "Ravager": 6, "Hydralisk": 10, "Lurker": 4},
         enemy_army_estimate={"Marine": 30, "SiegeTank": 8, "Medivac": 4},
-        tech_buildings=["SpawningPool", "RoachWarren", "Lair", "HydraliskDen", "LurkerDen"],
+        tech_buildings=[
+            "SpawningPool",
+            "RoachWarren",
+            "Lair",
+            "HydraliskDen",
+            "LurkerDen",
+        ],
         threat_level=0.4,
     )
     review = executor.post_game_review(final_state, "win")
     reflection = review["reflection"]
     print(f"  Result: {reflection['game_result']}")
-    print(f"  Success rate: {reflection['success_rate']:.0%} "
-          f"({reflection['successful_actions']}/{reflection['total_actions']} actions)")
+    print(
+        f"  Success rate: {reflection['success_rate']:.0%} "
+        f"({reflection['successful_actions']}/{reflection['total_actions']} actions)"
+    )
     print(f"  Iterations: {reflection['iterations']}")
     print(f"  Key learnings:")
     for lesson in reflection["key_learnings"][:5]:

@@ -8,7 +8,7 @@ import importlib
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 _HAS_NUMPY = importlib.util.find_spec("numpy") is not None
 

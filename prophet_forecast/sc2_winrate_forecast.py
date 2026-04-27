@@ -34,6 +34,7 @@ log = logging.getLogger("sc2_winrate_forecast")
 try:
     from prophet import Prophet
     from prophet.diagnostics import cross_validation, performance_metrics
+
     PROPHET_AVAILABLE = True
     log.info("Prophet available.")
 except ImportError:
@@ -45,14 +46,17 @@ except ImportError:
 
 try:
     import pandas as pd
+
     PD_AVAILABLE = True
 except ImportError:
     PD_AVAILABLE = False
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
     MPL_AVAILABLE = True
 except ImportError:
     MPL_AVAILABLE = False
@@ -61,9 +65,11 @@ except ImportError:
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class LadderGame:
     """One completed ladder game."""
+
     timestamp: datetime.datetime
     win: bool
     mmr: float
@@ -76,15 +82,17 @@ class LadderGame:
 @dataclass
 class PatchEvent:
     """A game patch or tournament date used as a Prophet holiday."""
+
     date: datetime.datetime
     name: str
-    lower_window: int = 0   # days before the event to include
-    upper_window: int = 1   # days after the event to include
+    lower_window: int = 0  # days before the event to include
+    upper_window: int = 1  # days after the event to include
 
 
 @dataclass
 class ForecastResult:
     """Container for forecast outputs."""
+
     name: str
     summary: Dict[str, Any] = field(default_factory=dict)
     dates: Optional[List[datetime.datetime]] = None
@@ -101,11 +109,12 @@ class ForecastResult:
 # Pure-NumPy fallback helpers
 # ---------------------------------------------------------------------------
 
+
 def _np_moving_average(y: np.ndarray, window: int = 7) -> np.ndarray:
     """Simple centred moving average."""
     kernel = np.ones(window) / window
     padded = np.pad(y, (window // 2, window // 2), mode="edge")
-    return np.convolve(padded, kernel, mode="valid")[:len(y)]
+    return np.convolve(padded, kernel, mode="valid")[: len(y)]
 
 
 def _np_linear_trend(y: np.ndarray) -> Tuple[float, float]:
@@ -118,8 +127,9 @@ def _np_linear_trend(y: np.ndarray) -> Tuple[float, float]:
     return slope, float(y_m - slope * x_m)
 
 
-def _np_detect_changepoints(y: np.ndarray, n_changepoints: int = 5,
-                             window: int = 14) -> List[int]:
+def _np_detect_changepoints(
+    y: np.ndarray, n_changepoints: int = 5, window: int = 14
+) -> List[int]:
     """Detect changepoints via maximum absolute derivative."""
     if len(y) < window * 2:
         return []
@@ -145,7 +155,9 @@ def _np_seasonal_pattern(n: int, period: int = 7) -> np.ndarray:
     return np.sin(2 * np.pi * np.arange(n) / period) * 0.02
 
 
-def _np_forecast(y: np.ndarray, steps: int, period: int = 7) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _np_forecast(
+    y: np.ndarray, steps: int, period: int = 7
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Trend + seasonal forecast with confidence bands."""
     slope, intercept = _np_linear_trend(y)
     n = len(y)
@@ -165,17 +177,22 @@ def _np_forecast(y: np.ndarray, steps: int, period: int = 7) -> Tuple[np.ndarray
 # SC2WinRateForecast
 # ---------------------------------------------------------------------------
 
+
 class SC2WinRateForecast:
     """Prophet-based forecasting of SC2 ladder performance metrics."""
 
-    def __init__(self, games: Optional[List[LadderGame]] = None,
-                 patch_events: Optional[List[PatchEvent]] = None):
+    def __init__(
+        self,
+        games: Optional[List[LadderGame]] = None,
+        patch_events: Optional[List[PatchEvent]] = None,
+    ):
         self.games: List[LadderGame] = games or []
         self.patch_events: List[PatchEvent] = patch_events or []
         self._daily_cache: Optional[Dict[str, Any]] = None
         log.info(
             "SC2WinRateForecast initialised — %d games, %d patch events.",
-            len(self.games), len(self.patch_events),
+            len(self.games),
+            len(self.patch_events),
         )
 
     # ------------------------------------------------------------------
@@ -189,7 +206,9 @@ class SC2WinRateForecast:
 
     def add_patch_events(self, events: List[PatchEvent]) -> None:
         self.patch_events.extend(events)
-        log.info("Added %d patch events (total %d).", len(events), len(self.patch_events))
+        log.info(
+            "Added %d patch events (total %d).", len(events), len(self.patch_events)
+        )
 
     def _aggregate_daily(self) -> Dict[str, Any]:
         """Aggregate games into daily statistics."""
@@ -235,12 +254,14 @@ class SC2WinRateForecast:
             return None
         rows = []
         for ev in self.patch_events:
-            rows.append({
-                "holiday": ev.name,
-                "ds": ev.date,
-                "lower_window": ev.lower_window,
-                "upper_window": ev.upper_window,
-            })
+            rows.append(
+                {
+                    "holiday": ev.name,
+                    "ds": ev.date,
+                    "lower_window": ev.lower_window,
+                    "upper_window": ev.upper_window,
+                }
+            )
         return pd.DataFrame(rows)
 
     def _require_games(self, min_n: int = 30) -> None:
@@ -251,9 +272,12 @@ class SC2WinRateForecast:
     # 1. Win rate time series forecast
     # ------------------------------------------------------------------
 
-    def forecast_win_rate(self, forecast_days: int = 30,
-                          changepoint_prior: float = 0.05,
-                          interval_width: float = 0.95) -> ForecastResult:
+    def forecast_win_rate(
+        self,
+        forecast_days: int = 30,
+        changepoint_prior: float = 0.05,
+        interval_width: float = 0.95,
+    ) -> ForecastResult:
         """Forecast daily win rate using Prophet (or fallback)."""
         self._require_games()
         daily = self._aggregate_daily()
@@ -286,7 +310,11 @@ class SC2WinRateForecast:
             upper = forecast["yhat_upper"].values
             forecast_dates = forecast["ds"].dt.to_pydatetime().tolist()
 
-            changepoints = model.changepoints.dt.to_pydatetime().tolist() if hasattr(model, "changepoints") else []
+            changepoints = (
+                model.changepoints.dt.to_pydatetime().tolist()
+                if hasattr(model, "changepoints")
+                else []
+            )
 
             summary = {
                 "metric": "win_rate",
@@ -298,7 +326,8 @@ class SC2WinRateForecast:
                 "current_win_rate": float(y[-1]),
                 "forecast_mean": float(np.mean(predicted[-forecast_days:])),
                 "trend_direction": (
-                    "improving" if predicted[-1] > predicted[-forecast_days - 1]
+                    "improving"
+                    if predicted[-1] > predicted[-forecast_days - 1]
                     else "declining"
                 ),
             }
@@ -326,7 +355,8 @@ class SC2WinRateForecast:
                 "current_win_rate": float(y[-1]),
                 "forecast_mean": float(np.mean(predicted[-forecast_days:])),
                 "trend_direction": (
-                    "improving" if predicted[-1] > predicted[-forecast_days - 1]
+                    "improving"
+                    if predicted[-1] > predicted[-forecast_days - 1]
                     else "declining"
                 ),
                 "note": "linear-trend fallback (Prophet not available)",
@@ -334,21 +364,28 @@ class SC2WinRateForecast:
 
         log.info(
             "Win rate forecast: current=%.3f  forecast_mean=%.3f  trend=%s  changepoints=%d",
-            summary["current_win_rate"], summary["forecast_mean"],
-            summary["trend_direction"], summary["n_changepoints"],
+            summary["current_win_rate"],
+            summary["forecast_mean"],
+            summary["trend_direction"],
+            summary["n_changepoints"],
         )
         return ForecastResult(
-            name="win_rate_forecast", summary=summary,
-            dates=forecast_dates, predicted=predicted,
-            lower=lower, upper=upper, changepoints=changepoints,
+            name="win_rate_forecast",
+            summary=summary,
+            dates=forecast_dates,
+            predicted=predicted,
+            lower=lower,
+            upper=upper,
+            changepoints=changepoints,
         )
 
     # ------------------------------------------------------------------
     # 2. Changepoint detection for strategy shifts
     # ------------------------------------------------------------------
 
-    def detect_strategy_shifts(self, n_changepoints: int = 10,
-                               changepoint_prior: float = 0.1) -> ForecastResult:
+    def detect_strategy_shifts(
+        self, n_changepoints: int = 10, changepoint_prior: float = 0.1
+    ) -> ForecastResult:
         """Identify moments where win rate trend shifted significantly."""
         self._require_games()
         daily = self._aggregate_daily()
@@ -371,15 +408,19 @@ class SC2WinRateForecast:
             # Magnitude of each changepoint
             cp_magnitudes = {
                 str(cp.date()): float(abs(d))
-                for cp, d in zip(changepoints, deltas[:len(changepoints)])
+                for cp, d in zip(changepoints, deltas[: len(changepoints)])
             }
 
             summary = {
                 "n_changepoints_detected": len(changepoints),
                 "changepoint_prior": changepoint_prior,
                 "changepoint_magnitudes": cp_magnitudes,
-                "largest_shift_date": max(cp_magnitudes, key=cp_magnitudes.get) if cp_magnitudes else None,
-                "largest_shift_magnitude": max(cp_magnitudes.values()) if cp_magnitudes else 0,
+                "largest_shift_date": (
+                    max(cp_magnitudes, key=cp_magnitudes.get) if cp_magnitudes else None
+                ),
+                "largest_shift_magnitude": (
+                    max(cp_magnitudes.values()) if cp_magnitudes else 0
+                ),
             }
         else:
             cp_indices = _np_detect_changepoints(y, n_changepoints)
@@ -395,8 +436,12 @@ class SC2WinRateForecast:
             summary = {
                 "n_changepoints_detected": len(changepoints),
                 "changepoint_magnitudes": cp_magnitudes,
-                "largest_shift_date": max(cp_magnitudes, key=cp_magnitudes.get) if cp_magnitudes else None,
-                "largest_shift_magnitude": max(cp_magnitudes.values()) if cp_magnitudes else 0,
+                "largest_shift_date": (
+                    max(cp_magnitudes, key=cp_magnitudes.get) if cp_magnitudes else None
+                ),
+                "largest_shift_magnitude": (
+                    max(cp_magnitudes.values()) if cp_magnitudes else 0
+                ),
                 "note": "derivative-based fallback",
             }
 
@@ -407,17 +452,20 @@ class SC2WinRateForecast:
             summary.get("largest_shift_magnitude", 0),
         )
         return ForecastResult(
-            name="strategy_shifts", summary=summary,
-            dates=dates, actual=y, changepoints=changepoints,
+            name="strategy_shifts",
+            summary=summary,
+            dates=dates,
+            actual=y,
+            changepoints=changepoints,
         )
 
     # ------------------------------------------------------------------
     # 3. Cross-validation with rolling origin
     # ------------------------------------------------------------------
 
-    def cross_validate(self, initial_days: int = 60,
-                       period_days: int = 7,
-                       horizon_days: int = 14) -> ForecastResult:
+    def cross_validate(
+        self, initial_days: int = 60, period_days: int = 7, horizon_days: int = 14
+    ) -> ForecastResult:
         """Rolling-origin cross-validation with MAE, RMSE, MAPE."""
         self._require_games(min_n=50)
         daily = self._aggregate_daily()
@@ -465,10 +513,12 @@ class SC2WinRateForecast:
             n_cutoffs = 0
             while cutoff + horizon_days <= n:
                 train = y[:cutoff]
-                test = y[cutoff:cutoff + horizon_days]
+                test = y[cutoff : cutoff + horizon_days]
 
                 slope, intercept = _np_linear_trend(train)
-                pred = np.array([slope * (len(train) + i) + intercept for i in range(len(test))])
+                pred = np.array(
+                    [slope * (len(train) + i) + intercept for i in range(len(test))]
+                )
 
                 for p, a in zip(pred, test):
                     errors_abs.append(abs(p - a))
@@ -496,7 +546,10 @@ class SC2WinRateForecast:
 
         log.info(
             "Cross-validation: MAE=%.4f  RMSE=%.4f  MAPE=%.4f  cutoffs=%d",
-            summary["mae"], summary["rmse"], summary["mape"], summary["n_cutoffs"],
+            summary["mae"],
+            summary["rmse"],
+            summary["mape"],
+            summary["n_cutoffs"],
         )
         return ForecastResult(name="cross_validation", summary=summary)
 
@@ -504,13 +557,19 @@ class SC2WinRateForecast:
     # 4. Multiple metrics forecasting (APM, win_rate, MMR)
     # ------------------------------------------------------------------
 
-    def forecast_multiple_metrics(self, forecast_days: int = 30) -> Dict[str, ForecastResult]:
+    def forecast_multiple_metrics(
+        self, forecast_days: int = 30
+    ) -> Dict[str, ForecastResult]:
         """Forecast win_rate, MMR, and APM independently."""
         self._require_games()
         daily = self._aggregate_daily()
         dates = daily["dates"]
 
-        metrics = {"win_rate": daily["win_rate"], "mmr": daily["mmr"], "apm": daily["apm"]}
+        metrics = {
+            "win_rate": daily["win_rate"],
+            "mmr": daily["mmr"],
+            "apm": daily["apm"],
+        }
         results: Dict[str, ForecastResult] = {}
 
         for metric_name, y in metrics.items():
@@ -540,7 +599,8 @@ class SC2WinRateForecast:
             else:
                 predicted, lower, upper = _np_forecast(y, forecast_days)
                 fc_dates = dates + [
-                    dates[-1] + datetime.timedelta(days=i + 1) for i in range(forecast_days)
+                    dates[-1] + datetime.timedelta(days=i + 1)
+                    for i in range(forecast_days)
                 ]
                 full_pred = np.concatenate([y, predicted])
                 full_lower = np.concatenate([y - np.std(y), lower])
@@ -556,13 +616,19 @@ class SC2WinRateForecast:
                 }
 
             results[metric_name] = ForecastResult(
-                name=f"forecast_{metric_name}", summary=summary,
-                dates=fc_dates, actual=y, predicted=predicted,
-                lower=lower, upper=upper,
+                name=f"forecast_{metric_name}",
+                summary=summary,
+                dates=fc_dates,
+                actual=y,
+                predicted=predicted,
+                lower=lower,
+                upper=upper,
             )
             log.info(
                 "Forecast %s: current=%.3f  mean=%.3f",
-                metric_name, summary["current_value"], summary["forecast_mean"],
+                metric_name,
+                summary["current_value"],
+                summary["forecast_mean"],
             )
 
         return results
@@ -629,20 +695,30 @@ class SC2WinRateForecast:
 
         log.info(
             "Anomaly detection: %d anomalies (%d drops, %d spikes) out of %d days (%.1f%%)",
-            summary["total_anomalies"], drops, spikes, len(y),
+            summary["total_anomalies"],
+            drops,
+            spikes,
+            len(y),
             summary["anomaly_rate"] * 100,
         )
         return ForecastResult(
-            name="anomaly_detection", summary=summary,
-            dates=dates, actual=y, predicted=predicted,
-            lower=lower, upper=upper, anomalies=anomaly_indices,
+            name="anomaly_detection",
+            summary=summary,
+            dates=dates,
+            actual=y,
+            predicted=predicted,
+            lower=lower,
+            upper=upper,
+            anomalies=anomaly_indices,
         )
 
     # ------------------------------------------------------------------
     # 6. Component plots (trend, seasonality, holidays)
     # ------------------------------------------------------------------
 
-    def plot_components(self, save_path: str = "sc2_forecast_components.png") -> ForecastResult:
+    def plot_components(
+        self, save_path: str = "sc2_forecast_components.png"
+    ) -> ForecastResult:
         """Generate component visualisation (trend + seasonality + holidays)."""
         self._require_games()
         daily = self._aggregate_daily()
@@ -670,7 +746,7 @@ class SC2WinRateForecast:
             summary = {
                 "plot_saved": save_path,
                 "components": ["trend", "weekly", "daily_play"]
-                              + (["holidays"] if holidays_df is not None else []),
+                + (["holidays"] if holidays_df is not None else []),
             }
         elif MPL_AVAILABLE:
             # Fallback component plots
@@ -720,14 +796,17 @@ class SC2WinRateForecast:
             summary = {"plot_saved": None, "note": "matplotlib not available"}
 
         log.info("Component plot: %s", summary.get("plot_saved"))
-        return ForecastResult(name="component_plots", summary=summary, plot_path=save_path)
+        return ForecastResult(
+            name="component_plots", summary=summary, plot_path=save_path
+        )
 
     # ------------------------------------------------------------------
     # 7. Confidence intervals visualisation
     # ------------------------------------------------------------------
 
-    def plot_forecast_with_ci(self, forecast_result: ForecastResult,
-                              save_path: str = "sc2_forecast_ci.png") -> str:
+    def plot_forecast_with_ci(
+        self, forecast_result: ForecastResult, save_path: str = "sc2_forecast_ci.png"
+    ) -> str:
         """Plot forecast with confidence intervals."""
         if not MPL_AVAILABLE:
             log.warning("matplotlib not available, skipping plot.")
@@ -735,33 +814,63 @@ class SC2WinRateForecast:
 
         fig, ax = plt.subplots(figsize=(14, 6))
 
-        n_actual = len(forecast_result.actual) if forecast_result.actual is not None else 0
+        n_actual = (
+            len(forecast_result.actual) if forecast_result.actual is not None else 0
+        )
         dates = forecast_result.dates or []
 
         if forecast_result.actual is not None and n_actual > 0:
-            ax.plot(dates[:n_actual], forecast_result.actual, "k.", markersize=3, alpha=0.6, label="Actual")
+            ax.plot(
+                dates[:n_actual],
+                forecast_result.actual,
+                "k.",
+                markersize=3,
+                alpha=0.6,
+                label="Actual",
+            )
 
         if forecast_result.predicted is not None:
-            ax.plot(dates[:len(forecast_result.predicted)], forecast_result.predicted,
-                    "b-", linewidth=1.5, label="Forecast")
+            ax.plot(
+                dates[: len(forecast_result.predicted)],
+                forecast_result.predicted,
+                "b-",
+                linewidth=1.5,
+                label="Forecast",
+            )
 
         if forecast_result.lower is not None and forecast_result.upper is not None:
             n = min(len(forecast_result.lower), len(forecast_result.upper), len(dates))
             ax.fill_between(
-                dates[:n], forecast_result.lower[:n], forecast_result.upper[:n],
-                alpha=0.2, color="steelblue", label="95% CI",
+                dates[:n],
+                forecast_result.lower[:n],
+                forecast_result.upper[:n],
+                alpha=0.2,
+                color="steelblue",
+                label="95% CI",
             )
 
         if forecast_result.changepoints:
             for cp in forecast_result.changepoints:
                 ax.axvline(cp, color="red", linestyle="--", alpha=0.4, linewidth=0.8)
-            ax.axvline(forecast_result.changepoints[0], color="red", linestyle="--",
-                       alpha=0.4, linewidth=0.8, label="Changepoints")
+            ax.axvline(
+                forecast_result.changepoints[0],
+                color="red",
+                linestyle="--",
+                alpha=0.4,
+                linewidth=0.8,
+                label="Changepoints",
+            )
 
         if forecast_result.anomalies and forecast_result.actual is not None:
             anom_dates = [dates[i] for i in forecast_result.anomalies if i < len(dates)]
-            anom_vals = [forecast_result.actual[i] for i in forecast_result.anomalies if i < n_actual]
-            ax.scatter(anom_dates, anom_vals, color="red", s=40, zorder=5, label="Anomalies")
+            anom_vals = [
+                forecast_result.actual[i]
+                for i in forecast_result.anomalies
+                if i < n_actual
+            ]
+            ax.scatter(
+                anom_dates, anom_vals, color="red", s=40, zorder=5, label="Anomalies"
+            )
 
         ax.set_title(f"SC2 Forecast: {forecast_result.name}")
         ax.set_xlabel("Date")
@@ -821,6 +930,7 @@ import contextlib
 import io
 import os
 
+
 @contextlib.contextmanager
 def _suppress_stdout():
     """Suppress stdout (Prophet prints fitting progress)."""
@@ -838,8 +948,10 @@ def _suppress_stdout():
 # Synthetic data generator
 # ---------------------------------------------------------------------------
 
-def generate_synthetic_games(n_days: int = 180, games_per_day_range: Tuple[int, int] = (3, 10),
-                             seed: int = 42) -> Tuple[List[LadderGame], List[PatchEvent]]:
+
+def generate_synthetic_games(
+    n_days: int = 180, games_per_day_range: Tuple[int, int] = (3, 10), seed: int = 42
+) -> Tuple[List[LadderGame], List[PatchEvent]]:
     """Generate realistic SC2 ladder games for testing."""
     rng = np.random.RandomState(seed)
     races = ["zerg", "terran", "protoss"]
@@ -869,7 +981,9 @@ def generate_synthetic_games(n_days: int = 180, games_per_day_range: Tuple[int, 
             hour = rng.choice([10, 14, 18, 20, 21, 22, 23])
             ts = current_date.replace(hour=hour, minute=rng.randint(0, 60))
 
-            win_prob = base_win_rate + skill_trend + weekend_effect + rng.normal(0, 0.02)
+            win_prob = (
+                base_win_rate + skill_trend + weekend_effect + rng.normal(0, 0.02)
+            )
             win_prob = np.clip(win_prob, 0.1, 0.9)
             win = rng.random() < win_prob
 
@@ -878,23 +992,50 @@ def generate_synthetic_games(n_days: int = 180, games_per_day_range: Tuple[int, 
 
             apm = 120 + 0.1 * day + rng.normal(0, 20)
 
-            games.append(LadderGame(
-                timestamp=ts,
-                win=bool(win),
-                mmr=mmr,
-                apm=max(50, apm),
-                game_length_s=rng.uniform(180, 900),
-                opponent_race=rng.choice(races),
-                map_name=rng.choice(maps),
-            ))
+            games.append(
+                LadderGame(
+                    timestamp=ts,
+                    win=bool(win),
+                    mmr=mmr,
+                    apm=max(50, apm),
+                    game_length_s=rng.uniform(180, 900),
+                    opponent_race=rng.choice(races),
+                    map_name=rng.choice(maps),
+                )
+            )
 
     # Patch events
     patch_events = [
-        PatchEvent(date=base_date + datetime.timedelta(days=30), name="balance_patch_5.0.13", lower_window=-1, upper_window=3),
-        PatchEvent(date=base_date + datetime.timedelta(days=75), name="balance_patch_5.0.14", lower_window=-1, upper_window=3),
-        PatchEvent(date=base_date + datetime.timedelta(days=90), name="dreamhack_summer", lower_window=-2, upper_window=2),
-        PatchEvent(date=base_date + datetime.timedelta(days=120), name="balance_patch_5.1.0", lower_window=-1, upper_window=5),
-        PatchEvent(date=base_date + datetime.timedelta(days=150), name="gsl_finals", lower_window=-1, upper_window=1),
+        PatchEvent(
+            date=base_date + datetime.timedelta(days=30),
+            name="balance_patch_5.0.13",
+            lower_window=-1,
+            upper_window=3,
+        ),
+        PatchEvent(
+            date=base_date + datetime.timedelta(days=75),
+            name="balance_patch_5.0.14",
+            lower_window=-1,
+            upper_window=3,
+        ),
+        PatchEvent(
+            date=base_date + datetime.timedelta(days=90),
+            name="dreamhack_summer",
+            lower_window=-2,
+            upper_window=2,
+        ),
+        PatchEvent(
+            date=base_date + datetime.timedelta(days=120),
+            name="balance_patch_5.1.0",
+            lower_window=-1,
+            upper_window=5,
+        ),
+        PatchEvent(
+            date=base_date + datetime.timedelta(days=150),
+            name="gsl_finals",
+            lower_window=-1,
+            upper_window=1,
+        ),
     ]
 
     return games, patch_events
@@ -903,6 +1044,7 @@ def generate_synthetic_games(n_days: int = 180, games_per_day_range: Tuple[int, 
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Run a demo forecast with synthetic data."""
@@ -941,8 +1083,10 @@ def main() -> None:
             print(f"{'─' * 50}")
             for metric_name, fr in value.items():
                 if isinstance(fr, ForecastResult):
-                    print(f"    {metric_name}: current={fr.summary.get('current_value', '?'):.3f}"
-                          f"  forecast_mean={fr.summary.get('forecast_mean', '?'):.3f}")
+                    print(
+                        f"    {metric_name}: current={fr.summary.get('current_value', '?'):.3f}"
+                        f"  forecast_mean={fr.summary.get('forecast_mean', '?'):.3f}"
+                    )
 
     print(f"\n{'=' * 70}")
     print(f"Forecast complete — {len(results)} result groups.")

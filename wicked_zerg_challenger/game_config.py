@@ -22,74 +22,76 @@ class GameConfig:
     """게임 설정 (기본값)"""
 
     # ========== 게임 단계 타이밍 ==========
-    OPENING_PHASE_END = 180         # 3분 (오프닝 종료)
-    EARLY_GAME_END = 360            # 6분 (초반 종료)
-    MID_GAME_END = 720              # 12분 (중반 종료)
+    OPENING_PHASE_END = 180  # 3분 (오프닝 종료)
+    EARLY_GAME_END = 360  # 6분 (초반 종료)
+    MID_GAME_END = 720  # 12분 (중반 종료)
 
     # 빌드 오더 전환
-    BUILD_ORDER_SWITCH_TIME = 300   # 5분 (Rule-based → RL 전환)
+    BUILD_ORDER_SWITCH_TIME = 300  # 5분 (Rule-based → RL 전환)
 
     # ========== 경제 설정 ==========
 
     # 드론 제한
-    DRONE_LIMIT_PER_BASE = 16       # ★ FIX: 20 → 16 (미네랄 포화 = 16, 초과 포화는 자원 낭비) ★
-    DRONE_LIMIT_PER_BASE_GAS = 22   # ★ FIX: 26 → 22 (16 미네랄 + 6 가스 = 22) ★
-    MIN_DRONES = 22                 # 최소 드론 수 (절대값)
-    MAX_DRONES = 80                 # 최대 드론 수
+    DRONE_LIMIT_PER_BASE = (
+        16  # ★ FIX: 20 → 16 (미네랄 포화 = 16, 초과 포화는 자원 낭비) ★
+    )
+    DRONE_LIMIT_PER_BASE_GAS = 22  # ★ FIX: 26 → 22 (16 미네랄 + 6 가스 = 22) ★
+    MIN_DRONES = 22  # 최소 드론 수 (절대값)
+    MAX_DRONES = 80  # 최대 드론 수
 
     # 자원 임계값
-    MINERAL_BANKING_THRESHOLD = 1000   # 미네랄 적체 기준
-    MINERAL_OVERFLOW = 1500            # 미네랄 넘침 (확장 필요)
-    MINERAL_CRITICAL = 2000            # 미네랄 심각 (긴급 소비)
+    MINERAL_BANKING_THRESHOLD = 1000  # 미네랄 적체 기준
+    MINERAL_OVERFLOW = 1500  # 미네랄 넘침 (확장 필요)
+    MINERAL_CRITICAL = 2000  # 미네랄 심각 (긴급 소비)
 
-    GAS_OVERFLOW_THRESHOLD = 300       # ★ Phase 16: 500→300 (가스 뱅킹 조기 감지)
-    GAS_CRITICAL = 800                 # ★ Phase 16: 1000→800 (가스 심각 — 더 빠른 대응)
+    GAS_OVERFLOW_THRESHOLD = 300  # ★ Phase 16: 500→300 (가스 뱅킹 조기 감지)
+    GAS_CRITICAL = 800  # ★ Phase 16: 1000→800 (가스 심각 — 더 빠른 대응)
 
     # 자원 비율
-    MINERAL_TO_GAS_RATIO = 2.0         # 미네랄:가스 = 2:1 목표
+    MINERAL_TO_GAS_RATIO = 2.0  # 미네랄:가스 = 2:1 목표
 
     # ========== 보급 관리 ==========
 
     # Overlord 생산 타이밍
-    SUPPLY_BUFFER_OPENING = 6          # 초반 보급 여유분 (0-3분)
-    SUPPLY_BUFFER_EARLY = 6            # ★ FIX: 4→6 (초반 보급 여유분, 3-6분)
-    SUPPLY_BUFFER_MID = 8              # ★ FIX: 3→8 (중반 보급 여유분, 6분+ — 블록 방지)
-    SUPPLY_BUFFER_HIGH_GAS = 10        # 가스 많을 때 여유분
+    SUPPLY_BUFFER_OPENING = 6  # 초반 보급 여유분 (0-3분)
+    SUPPLY_BUFFER_EARLY = 6  # ★ FIX: 4→6 (초반 보급 여유분, 3-6분)
+    SUPPLY_BUFFER_MID = 8  # ★ FIX: 3→8 (중반 보급 여유분, 6분+ — 블록 방지)
+    SUPPLY_BUFFER_HIGH_GAS = 10  # 가스 많을 때 여유분
 
-    SUPPLY_CAP = 200                   # 최대 보급
+    SUPPLY_CAP = 200  # 최대 보급
 
     # ========== 확장 타이밍 ==========
 
-    NATURAL_EXPANSION_TIMING = 17      # 자연 확장 보급 (17풀)
-    THIRD_BASE_TIMING = 30             # 3멀티 보급
-    FOURTH_BASE_TIMING = 44            # 4멀티 보급
+    NATURAL_EXPANSION_TIMING = 17  # 자연 확장 보급 (17풀)
+    THIRD_BASE_TIMING = 30  # 3멀티 보급
+    FOURTH_BASE_TIMING = 44  # 4멀티 보급
 
-    NATURAL_EXPANSION_TIME = 60        # 자연 확장 시간 (1분, 빠른 확장)
+    NATURAL_EXPANSION_TIME = 60  # 자연 확장 시간 (1분, 빠른 확장)
 
     # ========== 생산 설정 ==========
 
     # 가스 예비량
-    MIN_GAS_RESERVE = 100              # 최소 가스 예비 (업그레이드용)
-    TECH_GAS_RESERVE = 200             # 테크 전환용 가스 예비
+    MIN_GAS_RESERVE = 100  # 최소 가스 예비 (업그레이드용)
+    TECH_GAS_RESERVE = 200  # 테크 전환용 가스 예비
 
     # 애벌레 압박
-    LARVA_PRESSURE_THRESHOLD = 6       # 애벌레 부족 기준
-    LARVA_CRITICAL = 3                 # 애벌레 심각 부족
+    LARVA_PRESSURE_THRESHOLD = 6  # 애벌레 부족 기준
+    LARVA_CRITICAL = 3  # 애벌레 심각 부족
 
     # ========== 방어 설정 ==========
 
     # 초반 방어 타이밍
     SPAWNING_POOL_SUPPLY_STANDARD = 13  # 표준 13풀
-    SPAWNING_POOL_SUPPLY_RUSH = 12      # 러시 대응 12풀
-    SPAWNING_POOL_TIMING = 95           # 시간 기반 (95초 = 1분 35초)
+    SPAWNING_POOL_SUPPLY_RUSH = 12  # 러시 대응 12풀
+    SPAWNING_POOL_TIMING = 95  # 시간 기반 (95초 = 1분 35초)
 
     # 초반 방어 병력 목표
-    EARLY_ZERGLING_TARGET_2MIN = 4      # 2분 목표: 저글링 4
-    EARLY_ZERGLING_TARGET_3MIN = 8      # 3분 목표: 저글링 8
-    EARLY_QUEEN_TARGET = 2              # 퀸 2
+    EARLY_ZERGLING_TARGET_2MIN = 4  # 2분 목표: 저글링 4
+    EARLY_ZERGLING_TARGET_3MIN = 8  # 3분 목표: 저글링 8
+    EARLY_QUEEN_TARGET = 2  # 퀸 2
 
     # 위협 감지 거리
-    THREAT_DETECTION_RANGE = 25         # 기지 근처 위협 감지 거리
+    THREAT_DETECTION_RANGE = 25  # 기지 근처 위협 감지 거리
 
     # ========== 공격 전략 설정 ==========
 
@@ -99,87 +101,87 @@ class GameConfig:
 
     # 맹독충 올인
     BANELING_BUST_DRONE_LIMIT = 13
-    BANELING_BUST_GAS_TIMING = 13       # 13드론에 가스
-    BANELING_BUST_POOL_TIMING = 12      # 12드론에 풀
+    BANELING_BUST_GAS_TIMING = 13  # 13드론에 가스
+    BANELING_BUST_POOL_TIMING = 12  # 12드론에 풀
     BANELING_BUST_COUNT = 8
 
     # 궤멸충 러시
     RAVAGER_RUSH_ROACH_COUNT = 4
     RAVAGER_RUSH_RAVAGER_COUNT = 3
-    RAVAGER_RUSH_TIMING = 240           # 4분
+    RAVAGER_RUSH_TIMING = 240  # 4분
 
     # 뮤탈 러시
     MUTALISK_RUSH_COUNT = 6
-    MUTALISK_RUSH_TIMING = 300          # 5분
+    MUTALISK_RUSH_TIMING = 300  # 5분
 
     # ========== 전투 설정 ==========
 
     # 교전 비율
-    ENGAGE_ARMY_RATIO = 0.7             # 적 병력 70% 이상 시 교전
-    RETREAT_ARMY_RATIO = 0.4            # 아군 병력 40% 이하 시 후퇴
+    ENGAGE_ARMY_RATIO = 0.7  # 적 병력 70% 이상 시 교전
+    RETREAT_ARMY_RATIO = 0.4  # 아군 병력 40% 이하 시 후퇴
 
     # 병력 비율
-    TARGET_ARMY_RATIO = 0.5             # 목표 군대 비율 (50%)
-    DRONE_ARMY_BALANCE_RATIO = 1.5      # 드론:군대 = 1.5:1
+    TARGET_ARMY_RATIO = 0.5  # 목표 군대 비율 (50%)
+    DRONE_ARMY_BALANCE_RATIO = 1.5  # 드론:군대 = 1.5:1
 
     # ========== 성능 최적화 ==========
 
     # 실행 간격 (iteration)
-    INTEL_UPDATE_INTERVAL = 1           # 정보 수집 (매 프레임)
-    ECONOMY_UPDATE_INTERVAL = 4         # 경제 (4프레임마다 = 0.17초)
-    PRODUCTION_UPDATE_INTERVAL = 4      # 생산
-    COMBAT_UPDATE_INTERVAL = 2          # 전투 (2프레임마다)
-    MICRO_UPDATE_INTERVAL = 1           # 마이크로 (매 프레임)
-    CREEP_UPDATE_INTERVAL = 22          # 점막 (22프레임 = 1초)
-    TECH_UPDATE_INTERVAL = 50           # 테크 (50프레임 = 2초)
+    INTEL_UPDATE_INTERVAL = 1  # 정보 수집 (매 프레임)
+    ECONOMY_UPDATE_INTERVAL = 4  # 경제 (4프레임마다 = 0.17초)
+    PRODUCTION_UPDATE_INTERVAL = 4  # 생산
+    COMBAT_UPDATE_INTERVAL = 2  # 전투 (2프레임마다)
+    MICRO_UPDATE_INTERVAL = 1  # 마이크로 (매 프레임)
+    CREEP_UPDATE_INTERVAL = 22  # 점막 (22프레임 = 1초)
+    TECH_UPDATE_INTERVAL = 50  # 테크 (50프레임 = 2초)
 
     # 캐시 TTL
-    CACHE_TTL_SHORT = 0.5               # 짧은 캐시 (0.5초)
-    CACHE_TTL_MEDIUM = 1.0              # 중간 캐시 (1초)
-    CACHE_TTL_LONG = 2.0                # 긴 캐시 (2초)
+    CACHE_TTL_SHORT = 0.5  # 짧은 캐시 (0.5초)
+    CACHE_TTL_MEDIUM = 1.0  # 중간 캐시 (1초)
+    CACHE_TTL_LONG = 2.0  # 긴 캐시 (2초)
 
     # ========== Creep Denial System (적 점막 제거) ==========
 
     # 감시군주 관리
-    CREEP_DENIAL_MIN_OVERSEERS = 2          # 최소 감시군주 수 (ZvZ)
-    CREEP_DENIAL_MIN_OVERSEERS_OTHER = 1    # 다른 종족전 최소 감시군주 수
+    CREEP_DENIAL_MIN_OVERSEERS = 2  # 최소 감시군주 수 (ZvZ)
+    CREEP_DENIAL_MIN_OVERSEERS_OTHER = 1  # 다른 종족전 최소 감시군주 수
 
     # 종양 탐지 및 기억
-    CREEP_DENIAL_TUMOR_MEMORY_DURATION = 60.0   # 종양 위치 기억 시간 (초)
-    CREEP_DENIAL_DETECTION_RADIUS = 11          # 감시군주 탐지 반경
+    CREEP_DENIAL_TUMOR_MEMORY_DURATION = 60.0  # 종양 위치 기억 시간 (초)
+    CREEP_DENIAL_DETECTION_RADIUS = 11  # 감시군주 탐지 반경
 
     # 유닛 할당 및 공격
-    CREEP_DENIAL_MAX_UNITS_PER_TUMOR = 3        # 종양당 최대 할당 유닛 수
-    CREEP_DENIAL_ATTACK_UNIT_DISTANCE = 10      # 공격 유닛 근처 적 감지 거리
-    CREEP_DENIAL_PATROL_DISTANCE = 3            # 순찰 목표 도달 거리
+    CREEP_DENIAL_MAX_UNITS_PER_TUMOR = 3  # 종양당 최대 할당 유닛 수
+    CREEP_DENIAL_ATTACK_UNIT_DISTANCE = 10  # 공격 유닛 근처 적 감지 거리
+    CREEP_DENIAL_PATROL_DISTANCE = 3  # 순찰 목표 도달 거리
 
     # 자원 임계값
-    CREEP_DENIAL_MIN_MINERALS = 50              # 감시군주 생산 최소 미네랄
-    CREEP_DENIAL_MIN_GAS = 50                   # 감시군주 생산 최소 가스
+    CREEP_DENIAL_MIN_MINERALS = 50  # 감시군주 생산 최소 미네랄
+    CREEP_DENIAL_MIN_GAS = 50  # 감시군주 생산 최소 가스
 
     # 우선순위 계산
-    CREEP_DENIAL_PRIORITY_DISTANCE_BONUS = 20   # 우선순위 지역 거리 보너스
-    CREEP_DENIAL_BASE_DISTANCE_THRESHOLD = 15   # 기지 근처 거리 임계값
-    CREEP_DENIAL_VISIBLE_TUMOR_BONUS = 10       # 보이는 종양 우선순위 보너스
-    CREEP_DENIAL_RECENT_SIGHTING_BONUS = 30     # 최근 목격 시간 보너스
+    CREEP_DENIAL_PRIORITY_DISTANCE_BONUS = 20  # 우선순위 지역 거리 보너스
+    CREEP_DENIAL_BASE_DISTANCE_THRESHOLD = 15  # 기지 근처 거리 임계값
+    CREEP_DENIAL_VISIBLE_TUMOR_BONUS = 10  # 보이는 종양 우선순위 보너스
+    CREEP_DENIAL_RECENT_SIGHTING_BONUS = 30  # 최근 목격 시간 보너스
 
     # 업데이트 간격 (iterations)
-    CREEP_DENIAL_PRIORITY_UPDATE_INTERVAL = 110     # 우선순위 지점 업데이트 (5초)
-    CREEP_DENIAL_TUMOR_SCAN_INTERVAL = 22           # 종양 탐지 (1초)
-    CREEP_DENIAL_OVERSEER_MANAGE_INTERVAL = 66      # 감시군주 관리 (3초)
-    CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL = 22      # 공격 유닛 파견 (1초)
-    CREEP_DENIAL_CLEANUP_INTERVAL = 110             # 데이터 정리 (5초)
+    CREEP_DENIAL_PRIORITY_UPDATE_INTERVAL = 110  # 우선순위 지점 업데이트 (5초)
+    CREEP_DENIAL_TUMOR_SCAN_INTERVAL = 22  # 종양 탐지 (1초)
+    CREEP_DENIAL_OVERSEER_MANAGE_INTERVAL = 66  # 감시군주 관리 (3초)
+    CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL = 22  # 공격 유닛 파견 (1초)
+    CREEP_DENIAL_CLEANUP_INTERVAL = 110  # 데이터 정리 (5초)
 
     # 후퇴 로직 (안전성)
-    CREEP_DENIAL_RETREAT_ENEMY_DISTANCE = 12        # 후퇴 트리거 적 거리
-    CREEP_DENIAL_MIN_HEALTH_PERCENT = 0.5           # 최소 체력 비율 (50%)
+    CREEP_DENIAL_RETREAT_ENEMY_DISTANCE = 12  # 후퇴 트리거 적 거리
+    CREEP_DENIAL_MIN_HEALTH_PERCENT = 0.5  # 최소 체력 비율 (50%)
 
     # ========== Production System (생산 시스템) ==========
 
     # Smart Remax (순간 회전력)
-    PRODUCTION_MAX_PER_FRAME_DEFAULT = 100      # 기본 프레임당 최대 생산 수
-    PRODUCTION_MAX_PER_FRAME_EMERGENCY = 200    # 긴급 상황 시 (자원 넘침, 공격 후)
-    PRODUCTION_UNLIMITED_REMAX = True           # True면 애벌레 수만큼 무제한 생산
+    PRODUCTION_MAX_PER_FRAME_DEFAULT = 100  # 기본 프레임당 최대 생산 수
+    PRODUCTION_MAX_PER_FRAME_EMERGENCY = 200  # 긴급 상황 시 (자원 넘침, 공격 후)
+    PRODUCTION_UNLIMITED_REMAX = True  # True면 애벌레 수만큼 무제한 생산
 
     # 생산 우선순위
     PRODUCTION_PRIORITY_WORKER = 100
@@ -190,18 +192,18 @@ class GameConfig:
     # ========== Active Scouting System (능동 정찰) ==========
 
     # 정찰 간격
-    SCOUT_INTERVAL_DEFAULT = 560            # 기본 정찰 간격 (25초)
-    SCOUT_INTERVAL_ALERT = 336              # 경고 모드 정찰 간격 (15초)
-    SCOUT_INTEL_STALE_TIME = 30.0           # 정보 오래됨 판정 시간 (초)
+    SCOUT_INTERVAL_DEFAULT = 560  # 기본 정찰 간격 (25초)
+    SCOUT_INTERVAL_ALERT = 336  # 경고 모드 정찰 간격 (15초)
+    SCOUT_INTEL_STALE_TIME = 30.0  # 정보 오래됨 판정 시간 (초)
 
     # 위치 재정찰
-    SCOUT_LOCATION_REVISIT_TIME = 30.0      # 위치 재정찰 최소 간격 (초)
+    SCOUT_LOCATION_REVISIT_TIME = 30.0  # 위치 재정찰 최소 간격 (초)
 
     # Changeling 관리
-    SCOUT_CHANGELING_COOLDOWN = 30.0        # Changeling 재사용 대기시간 (초)
+    SCOUT_CHANGELING_COOLDOWN = 30.0  # Changeling 재사용 대기시간 (초)
 
     # 성과 추적
-    SCOUT_SUCCESS_RATE_TARGET = 0.8         # 목표 성공률 (80%)
+    SCOUT_SUCCESS_RATE_TARGET = 0.8  # 목표 성공률 (80%)
 
     # ========== 디버그 설정 ==========
 
@@ -209,17 +211,17 @@ class GameConfig:
     LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 
     # 로그 출력 간격
-    LOG_INTERVAL_FREQUENT = 50          # 자주 (2초)
-    LOG_INTERVAL_NORMAL = 100           # 보통 (4초)
-    LOG_INTERVAL_RARE = 200             # 드물게 (8초)
+    LOG_INTERVAL_FREQUENT = 50  # 자주 (2초)
+    LOG_INTERVAL_NORMAL = 100  # 보통 (4초)
+    LOG_INTERVAL_RARE = 200  # 드물게 (8초)
 
     # ========== 학습 설정 ==========
 
     # RL 보상
     REWARD_WIN = 100.0
     REWARD_LOSS = -100.0
-    REWARD_EARLY_DEFENSE_PENALTY = -2.0    # 초반 방어 실패 페널티
-    REWARD_EARLY_DEFENSE_BONUS = 2.0       # 초반 방어 성공 보너스
+    REWARD_EARLY_DEFENSE_PENALTY = -2.0  # 초반 방어 실패 페널티
+    REWARD_EARLY_DEFENSE_BONUS = 2.0  # 초반 방어 성공 보너스
 
     # 학습률
     LEARNING_RATE_DEFAULT = 0.001
@@ -227,52 +229,52 @@ class GameConfig:
 
     # ========== 거리 채굴 & 황금 기지 (1순위 경제) ==========
 
-    DISTANCE_MINING_INTERVAL = 330         # 15초마다 최적 배정
-    WORKERS_PER_CLOSE_PATCH = 2            # 가까운 패치: 2명
-    WORKERS_PER_FAR_PATCH = 1              # 먼 패치: 1명
-    DEPLETED_PATCH_THRESHOLD = 100         # 고갈 판정 미네랄 잔량
-    DEPLETED_BASE_TOTAL_THRESHOLD = 300    # 똥땅 판정 총 잔량
-    GOLD_MINERAL_THRESHOLD = 1200          # 황금 미네랄 판정 기준
-    GOLD_BASE_PRIORITY_BONUS = 80          # 황금 기지 우선순위 보너스
+    DISTANCE_MINING_INTERVAL = 330  # 15초마다 최적 배정
+    WORKERS_PER_CLOSE_PATCH = 2  # 가까운 패치: 2명
+    WORKERS_PER_FAR_PATCH = 1  # 먼 패치: 1명
+    DEPLETED_PATCH_THRESHOLD = 100  # 고갈 판정 미네랄 잔량
+    DEPLETED_BASE_TOTAL_THRESHOLD = 300  # 똥땅 판정 총 잔량
+    GOLD_MINERAL_THRESHOLD = 1200  # 황금 미네랄 판정 기준
+    GOLD_BASE_PRIORITY_BONUS = 80  # 황금 기지 우선순위 보너스
 
     # ========== 여왕 전문 분담 (Phase 1) ==========
 
-    QUEEN_PUMP_ENERGY_RESERVE = 25      # PUMP 퀸 에너지 예약
-    QUEEN_CREEP_PER_BASES = 2           # CREEP 퀸 기지 비율 (2기지당 1마리)
-    QUEEN_CREEP_ENERGY_THRESHOLD = 25   # CREEP 퀸 최소 에너지
+    QUEEN_PUMP_ENERGY_RESERVE = 25  # PUMP 퀸 에너지 예약
+    QUEEN_CREEP_PER_BASES = 2  # CREEP 퀸 기지 비율 (2기지당 1마리)
+    QUEEN_CREEP_ENERGY_THRESHOLD = 25  # CREEP 퀸 최소 에너지
     QUEEN_TRANSFUSE_HP_THRESHOLD = 0.5  # 수혈 HP 비율 임계값
 
     # ========== A* 점막 고속도로 (Phase 1) ==========
 
-    CREEP_HIGHWAY_GRID_RESOLUTION = 4      # A* 그리드 셀 크기
-    CREEP_HIGHWAY_WAYPOINT_SPACING = 9.0   # 종양 확산 간격
+    CREEP_HIGHWAY_GRID_RESOLUTION = 4  # A* 그리드 셀 크기
+    CREEP_HIGHWAY_WAYPOINT_SPACING = 9.0  # 종양 확산 간격
 
     # ========== 양각 포위 전술 (2순위-A) ==========
 
-    FLANKING_MIN_ARMY_SUPPLY = 15          # 포위 최소 보급
-    FLANKING_NUM_GROUPS = 2                # 분할 그룹 수
-    FLANKING_ANGLE_OFFSET_DEG = 60         # 편향 각도
-    FLANKING_APPROACH_DISTANCE = 15.0      # 접근 웨이포인트 거리
-    FLANKING_COOLDOWN = 30.0               # 재시도 쿨다운(초)
+    FLANKING_MIN_ARMY_SUPPLY = 15  # 포위 최소 보급
+    FLANKING_NUM_GROUPS = 2  # 분할 그룹 수
+    FLANKING_ANGLE_OFFSET_DEG = 60  # 편향 각도
+    FLANKING_APPROACH_DISTANCE = 15.0  # 접근 웨이포인트 거리
+    FLANKING_COOLDOWN = 30.0  # 재시도 쿨다운(초)
 
     # ========== 살모사/감염충 마이크로 (2순위-B) ==========
 
-    VIPER_ABDUCT_SAFETY_RADIUS = 5         # 납치 안전 반경
-    VIPER_ABDUCT_MIN_FRIENDLY = 5          # 납치 최소 아군 수
-    VIPER_CONSUME_BUILDING_MIN_HP = 250    # 건물 흡수 최소 HP
-    INFESTOR_FUNGAL_RADIUS = 2.0           # 진균 반경
-    INFESTOR_FUNGAL_LEAD_TIME = 0.5        # 예측 시간(초)
+    VIPER_ABDUCT_SAFETY_RADIUS = 5  # 납치 안전 반경
+    VIPER_ABDUCT_MIN_FRIENDLY = 5  # 납치 최소 아군 수
+    VIPER_CONSUME_BUILDING_MIN_HP = 250  # 건물 흡수 최소 HP
+    INFESTOR_FUNGAL_RADIUS = 2.0  # 진균 반경
+    INFESTOR_FUNGAL_LEAD_TIME = 0.5  # 예측 시간(초)
 
     # ========== 대군주 Pillars (2순위-C) ==========
 
-    OVERLORD_PILLAR_MAX = 3                # 최대 Pillar 대군주 수
+    OVERLORD_PILLAR_MAX = 3  # 최대 Pillar 대군주 수
 
     # ========== ML 훈련 파이프라인 (3순위) ==========
 
-    TRAINING_GAMES_PER_CYCLE = 5           # 사이클당 훈련 게임 수
-    TRAINING_DEPLOY_THRESHOLD = 0.05       # 자동 배포 win_rate 향상 기준 (5%)
-    TRAINING_HOT_RELOAD_INTERVAL = 30.0    # 핫 리로드 확인 주기 (초)
-    TRAINING_MAX_VERSIONS = 50             # 최대 버전 보관 수
+    TRAINING_GAMES_PER_CYCLE = 5  # 사이클당 훈련 게임 수
+    TRAINING_DEPLOY_THRESHOLD = 0.05  # 자동 배포 win_rate 향상 기준 (5%)
+    TRAINING_HOT_RELOAD_INTERVAL = 30.0  # 핫 리로드 확인 주기 (초)
+    TRAINING_MAX_VERSIONS = 50  # 최대 버전 보관 수
 
     # ========== 설정 로드/저장 ==========
 
@@ -291,7 +293,9 @@ class GameConfig:
         return {
             key: value
             for key, value in vars(cls).items()
-            if not key.startswith('_') and not callable(value) and isinstance(value, _JSON_TYPES)
+            if not key.startswith("_")
+            and not callable(value)
+            and isinstance(value, _JSON_TYPES)
         }
 
     @classmethod
@@ -303,12 +307,13 @@ class GameConfig:
             _config_logger.warning(f"Config file not found: {filepath}")
             return
 
-        with open(filepath, 'r') as f:
-            if filepath.endswith('.json'):
+        with open(filepath, "r") as f:
+            if filepath.endswith(".json"):
                 config_dict = json.load(f)
-            elif filepath.endswith('.yaml') or filepath.endswith('.yml'):
+            elif filepath.endswith(".yaml") or filepath.endswith(".yml"):
                 try:
                     import yaml
+
                     config_dict = yaml.safe_load(f)
                 except ImportError:
                     _config_logger.warning("PyYAML not installed, skipping YAML config")
@@ -332,7 +337,7 @@ class GameConfig:
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(config_dict, f, indent=2)
 
         _config_logger.info(f"Saved configuration to {filepath}")
@@ -340,28 +345,32 @@ class GameConfig:
 
 # ========== 프리셋 설정 ==========
 
+
 class AggressiveConfig(GameConfig):
     """공격적 설정"""
-    DRONE_LIMIT_PER_BASE = 14           # 더 적은 드론
+
+    DRONE_LIMIT_PER_BASE = 14  # 더 적은 드론
     SPAWNING_POOL_SUPPLY_STANDARD = 12  # 12풀 표준
-    TARGET_ARMY_RATIO = 0.6             # 군대 비율 60%
-    NATURAL_EXPANSION_TIMING = 20       # 늦은 확장
+    TARGET_ARMY_RATIO = 0.6  # 군대 비율 60%
+    NATURAL_EXPANSION_TIMING = 20  # 늦은 확장
 
 
 class EconomicConfig(GameConfig):
     """경제 중심 설정"""
-    DRONE_LIMIT_PER_BASE = 18           # 더 많은 드론
+
+    DRONE_LIMIT_PER_BASE = 18  # 더 많은 드론
     SPAWNING_POOL_SUPPLY_STANDARD = 15  # 15풀
-    TARGET_ARMY_RATIO = 0.4             # 군대 비율 40%
-    NATURAL_EXPANSION_TIMING = 15       # 빠른 확장
+    TARGET_ARMY_RATIO = 0.4  # 군대 비율 40%
+    NATURAL_EXPANSION_TIMING = 15  # 빠른 확장
 
 
 class SafeConfig(GameConfig):
     """안전한 설정 (방어 중심)"""
+
     SPAWNING_POOL_SUPPLY_STANDARD = 13  # 표준 13풀
-    EARLY_ZERGLING_TARGET_2MIN = 6      # 2분: 저글링 6
-    EARLY_ZERGLING_TARGET_3MIN = 12     # 3분: 저글링 12
-    TARGET_ARMY_RATIO = 0.55            # 군대 비율 55%
+    EARLY_ZERGLING_TARGET_2MIN = 6  # 2분: 저글링 6
+    EARLY_ZERGLING_TARGET_3MIN = 12  # 3분: 저글링 12
+    TARGET_ARMY_RATIO = 0.55  # 군대 비율 55%
 
 
 # ========== 전역 인스턴스 ==========

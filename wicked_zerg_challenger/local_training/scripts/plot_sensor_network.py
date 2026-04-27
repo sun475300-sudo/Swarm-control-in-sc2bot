@@ -16,6 +16,7 @@ logger = logging.getLogger("PlotSensorNetwork")
 try:
     import pandas as pd
     import matplotlib.pyplot as plt
+
     PLOT_AVAILABLE = True
 except ImportError:
     PLOT_AVAILABLE = False
@@ -23,12 +24,18 @@ except ImportError:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Plot sensor network positions")
-    parser.add_argument("--csv", default="logs/sensor_network.csv", help="Sensor CSV path")
-    parser.add_argument("--out", default="logs/sensor_network.png", help="Output image path")
+    parser.add_argument(
+        "--csv", default="logs/sensor_network.csv", help="Sensor CSV path"
+    )
+    parser.add_argument(
+        "--out", default="logs/sensor_network.png", help="Output image path"
+    )
     args = parser.parse_args()
 
     if not PLOT_AVAILABLE:
-        logger.error("pandas/matplotlib not installed. Install them to use this plotter.")
+        logger.error(
+            "pandas/matplotlib not installed. Install them to use this plotter."
+        )
         return
 
     csv_path = Path(args.csv)

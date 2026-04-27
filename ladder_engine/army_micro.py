@@ -40,7 +40,7 @@ class Unit:
 @dataclass
 class MicroCommand:
     unit_tag: int
-    command: str           # "attack", "move", "hold", "stop", "ability"
+    command: str  # "attack", "move", "hold", "stop", "ability"
     target_tag: Optional[int] = None
     target_pos: Optional[Tuple[float, float]] = None
     ability_id: Optional[int] = None
@@ -50,7 +50,7 @@ class ArmyMicro:
     """Unit-level micromanagement controller for Zerg armies."""
 
     RETREAT_HEALTH_PCT = 0.25
-    KITE_BUFFER = 0.5           # extra range buffer for kiting
+    KITE_BUFFER = 0.5  # extra range buffer for kiting
     SURROUND_RADIUS = 2.5
     BANE_SPLASH_MIN_CLUSTER = 3
 
@@ -70,10 +70,7 @@ class ArmyMicro:
     # ------------------------------------------------------------------
 
     def concave_formation(
-        self,
-        units: List[Unit],
-        target_pos: Tuple[float, float],
-        radius: float = 6.0
+        self, units: List[Unit], target_pos: Tuple[float, float], radius: float = 6.0
     ) -> List[MicroCommand]:
         """Arrange units in a concave arc facing the target position."""
         cmds: List[MicroCommand] = []
@@ -82,8 +79,7 @@ class ArmyMicro:
             return cmds
         angle_step = math.pi / max(n - 1, 1)
         base_angle = math.atan2(
-            units[0].position[1] - target_pos[1],
-            units[0].position[0] - target_pos[0]
+            units[0].position[1] - target_pos[1], units[0].position[0] - target_pos[0]
         )
         for i, unit in enumerate(units):
             angle = base_angle - math.pi / 2 + i * angle_step
@@ -95,9 +91,7 @@ class ArmyMicro:
         return cmds
 
     def focus_fire_weakest(
-        self,
-        our_units: List[Unit],
-        enemy_units: List[Unit]
+        self, our_units: List[Unit], enemy_units: List[Unit]
     ) -> List[MicroCommand]:
         """All units attack the enemy with the lowest effective HP."""
         if not enemy_units:
@@ -109,7 +103,7 @@ class ArmyMicro:
         self,
         unit: Unit,
         attacker: Unit,
-        retreat_dir: Optional[Tuple[float, float]] = None
+        retreat_dir: Optional[Tuple[float, float]] = None,
     ) -> MicroCommand:
         """Move unit away from attacker while staying at max range."""
         if retreat_dir is None:
@@ -124,11 +118,7 @@ class ArmyMicro:
         )
         return MicroCommand(unit.tag, "move", target_pos=dest)
 
-    def surround_enemy(
-        self,
-        our_units: List[Unit],
-        enemy: Unit
-    ) -> List[MicroCommand]:
+    def surround_enemy(self, our_units: List[Unit], enemy: Unit) -> List[MicroCommand]:
         """Surround a single enemy unit from multiple angles."""
         cmds: List[MicroCommand] = []
         n = len(our_units)
@@ -144,9 +134,7 @@ class ArmyMicro:
         return cmds
 
     def retreat_damaged(
-        self,
-        units: List[Unit],
-        rally_point: Tuple[float, float]
+        self, units: List[Unit], rally_point: Tuple[float, float]
     ) -> List[MicroCommand]:
         """Order damaged units to retreat to rally point."""
         return [
@@ -163,7 +151,7 @@ class ArmyMicro:
         self,
         zerglings: List[Unit],
         mineral_line_pos: Tuple[float, float],
-        return_pos: Tuple[float, float]
+        return_pos: Tuple[float, float],
     ) -> List[MicroCommand]:
         """
         Send zerglings on a worker line runby.
@@ -178,9 +166,7 @@ class ArmyMicro:
         return cmds
 
     def bane_splash_targeting(
-        self,
-        banelings: List[Unit],
-        enemy_units: List[Unit]
+        self, banelings: List[Unit], enemy_units: List[Unit]
     ) -> List[MicroCommand]:
         """
         Assign each baneling to the densest enemy cluster for maximum splash.
@@ -192,10 +178,7 @@ class ArmyMicro:
 
         # Find the enemy with the most neighbours within 2 range
         def cluster_density(enemy: Unit) -> int:
-            return sum(
-                1 for e in enemy_units
-                if enemy.dist_to(e) <= 2.0
-            )
+            return sum(1 for e in enemy_units if enemy.dist_to(e) <= 2.0)
 
         # Sort enemies by density descending
         sorted_enemies = sorted(enemy_units, key=cluster_density, reverse=True)
@@ -211,7 +194,7 @@ class ArmyMicro:
         mutalisks: List[Unit],
         enemy_workers: List[Unit],
         enemy_static_defense: List[Unit],
-        retreat_pos: Tuple[float, float]
+        retreat_pos: Tuple[float, float],
     ) -> List[MicroCommand]:
         """
         Mutalisk hit-and-run harass: attack workers, dodge static defense.
@@ -241,7 +224,9 @@ class ArmyMicro:
             # Attack nearest worker if available
             if enemy_workers:
                 closest_worker = min(enemy_workers, key=lambda w: muta.dist_to(w))
-                cmds.append(MicroCommand(muta.tag, "attack", target_tag=closest_worker.tag))
+                cmds.append(
+                    MicroCommand(muta.tag, "attack", target_tag=closest_worker.tag)
+                )
             else:
                 cmds.append(MicroCommand(muta.tag, "move", target_pos=retreat_pos))
 
@@ -255,7 +240,7 @@ class ArmyMicro:
         self,
         our_units: List[Unit],
         enemy_units: List[Unit],
-        rally_point: Tuple[float, float]
+        rally_point: Tuple[float, float],
     ) -> List[MicroCommand]:
         """
         High-level micro entry point: retreat damaged, then focus fire weakest.

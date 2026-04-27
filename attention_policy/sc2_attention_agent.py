@@ -22,6 +22,7 @@ try:
     import torch.nn.functional as F
     from torch.utils.checkpoint import checkpoint as torch_checkpoint
     import numpy as np
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -32,30 +33,32 @@ except ImportError:
 # Configuration
 # ============================================================
 
+
 @dataclass
 class AttentionPolicyConfig:
     """Hyperparameters for the attention-based policy network."""
+
     # Entity features
-    entity_dim: int = 64          # Per-unit feature dimension
-    max_entities: int = 128       # Max units tracked simultaneously
-    pos_encoding_dim: int = 16    # Positional encoding channels
-    map_size: int = 200           # Map dimension (square)
+    entity_dim: int = 64  # Per-unit feature dimension
+    max_entities: int = 128  # Max units tracked simultaneously
+    pos_encoding_dim: int = 16  # Positional encoding channels
+    map_size: int = 200  # Map dimension (square)
 
     # Transformer
-    d_model: int = 128            # Hidden dimension
-    n_heads: int = 8              # Attention heads
-    n_layers: int = 3             # Transformer encoder layers
-    d_ff: int = 256               # Feed-forward hidden size
+    d_model: int = 128  # Hidden dimension
+    n_heads: int = 8  # Attention heads
+    n_layers: int = 3  # Transformer encoder layers
+    d_ff: int = 256  # Feed-forward hidden size
     dropout: float = 0.1
     use_gradient_checkpointing: bool = True
 
     # Temporal
-    temporal_window: int = 16     # Recent observations to keep
+    temporal_window: int = 16  # Recent observations to keep
     temporal_scales: List[int] = field(default_factory=lambda: [1, 4, 16])
 
     # Action / value heads
-    n_action_types: int = 10      # Discrete action type count
-    pointer_heads: int = 4        # Pointer network heads
+    n_action_types: int = 10  # Discrete action type count
+    pointer_heads: int = 4  # Pointer network heads
 
     # Training
     lr: float = 3e-4
@@ -72,6 +75,7 @@ class AttentionPolicyConfig:
 # NumPy Fallback Helpers
 # ============================================================
 
+
 def np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     e = np.exp(x - np.max(x, axis=axis, keepdims=True))
     return e / (e.sum(axis=axis, keepdims=True) + 1e-12)
@@ -84,10 +88,12 @@ def np_layer_norm(x: np.ndarray, eps: float = 1e-5) -> np.ndarray:
 
 
 def np_gelu(x: np.ndarray) -> np.ndarray:
-    return 0.5 * x * (1.0 + np.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * x ** 3)))
+    return 0.5 * x * (1.0 + np.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * x**3)))
 
 
-def np_linear(x: np.ndarray, W: np.ndarray, b: Optional[np.ndarray] = None) -> np.ndarray:
+def np_linear(
+    x: np.ndarray, W: np.ndarray, b: Optional[np.ndarray] = None
+) -> np.ndarray:
     out = x @ W.T
     if b is not None:
         out = out + b
@@ -97,6 +103,7 @@ def np_linear(x: np.ndarray, W: np.ndarray, b: Optional[np.ndarray] = None) -> n
 # ============================================================
 # Positional Encoding (sinusoidal for 2-D map coordinates)
 # ============================================================
+
 
 def build_sinusoidal_2d(max_len: int, d: int) -> np.ndarray:
     """Create sinusoidal table for 1-D positions, applied per axis."""
@@ -127,6 +134,7 @@ class PositionalEncoding2D:
 # NumPy-only Attention Policy (fallback)
 # ============================================================
 
+
 class NumpyMultiHeadAttention:
     """Minimal multi-head attention with optional mask (NumPy)."""
 
@@ -144,8 +152,13 @@ class NumpyMultiHeadAttention:
         self.bv = np.zeros(d_model, dtype=np.float32)
         self.bo = np.zeros(d_model, dtype=np.float32)
 
-    def __call__(self, q: np.ndarray, k: np.ndarray, v: np.ndarray,
-                 mask: Optional[np.ndarray] = None) -> np.ndarray:
+    def __call__(
+        self,
+        q: np.ndarray,
+        k: np.ndarray,
+        v: np.ndarray,
+        mask: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """q,k,v: (batch, seq, d_model), mask: (batch, 1, 1, seq) or broadcastable."""
         B, Sq, _ = q.shape
         Sk = k.shape[1]
@@ -167,7 +180,9 @@ class NumpyMultiHeadAttention:
 class NumpyTransformerBlock:
     """Single transformer encoder block (NumPy)."""
 
-    def __init__(self, d_model: int, n_heads: int, d_ff: int, rng: np.random.RandomState):
+    def __init__(
+        self, d_model: int, n_heads: int, d_ff: int, rng: np.random.RandomState
+    ):
         self.mha = NumpyMultiHeadAttention(d_model, n_heads, rng)
         scale = 1.0 / math.sqrt(d_model)
         self.W1 = rng.randn(d_ff, d_model).astype(np.float32) * scale
@@ -190,11 +205,12 @@ class NumpyPointerNetwork:
         self.Wk = rng.randn(d_model, d_model).astype(np.float32) * scale
         self.n_heads = n_heads
 
-    def __call__(self, query: np.ndarray, keys: np.ndarray,
-                 mask: Optional[np.ndarray] = None) -> np.ndarray:
+    def __call__(
+        self, query: np.ndarray, keys: np.ndarray, mask: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """query: (B, d), keys: (B, N, d) -> logits (B, N)."""
         Q = np_linear(query[:, None, :], self.Wq)  # (B, 1, d)
-        K = np_linear(keys, self.Wk)                # (B, N, d)
+        K = np_linear(keys, self.Wk)  # (B, N, d)
         logits = (Q @ K.transpose(0, 2, 1)).squeeze(1) / math.sqrt(Q.shape[-1])
         if mask is not None:
             logits = logits + mask * (-1e9)
@@ -227,34 +243,45 @@ class NumpyAttentionPolicy:
             self.rng.randn(cfg.d_model, cfg.d_model).astype(np.float32) * scale
             for _ in cfg.temporal_scales
         ]
-        self.temporal_gate = self.rng.randn(len(cfg.temporal_scales), cfg.d_model).astype(np.float32) * 0.02
+        self.temporal_gate = (
+            self.rng.randn(len(cfg.temporal_scales), cfg.d_model).astype(np.float32)
+            * 0.02
+        )
 
         # Action type head
         scale_h = 1.0 / math.sqrt(cfg.d_model)
-        self.W_action = self.rng.randn(cfg.n_action_types, cfg.d_model).astype(np.float32) * scale_h
+        self.W_action = (
+            self.rng.randn(cfg.n_action_types, cfg.d_model).astype(np.float32) * scale_h
+        )
         self.b_action = np.zeros(cfg.n_action_types, dtype=np.float32)
 
         # Pointer network for target selection
         self.pointer = NumpyPointerNetwork(cfg.d_model, cfg.pointer_heads, self.rng)
 
         # Value head
-        self.W_val1 = self.rng.randn(cfg.d_model, cfg.d_model).astype(np.float32) * scale_h
+        self.W_val1 = (
+            self.rng.randn(cfg.d_model, cfg.d_model).astype(np.float32) * scale_h
+        )
         self.b_val1 = np.zeros(cfg.d_model, dtype=np.float32)
         self.W_val2 = self.rng.randn(1, cfg.d_model).astype(np.float32) * scale_h
         self.b_val2 = np.zeros(1, dtype=np.float32)
 
     # ---- observation encoding ----
 
-    def _encode_entities(self, entity_features: np.ndarray, positions: np.ndarray,
-                         allegiances: np.ndarray) -> np.ndarray:
+    def _encode_entities(
+        self,
+        entity_features: np.ndarray,
+        positions: np.ndarray,
+        allegiances: np.ndarray,
+    ) -> np.ndarray:
         """Encode entity observations into d_model embeddings.
         entity_features: (B, N, entity_dim)
         positions:       (B, N, 2) map coordinates
         allegiances:     (B, N) 0=friendly, 1=enemy
         """
-        pos_emb = self.pos_enc.encode_np(positions)   # (B, N, pos_dim)
+        pos_emb = self.pos_enc.encode_np(positions)  # (B, N, pos_dim)
         x = np.concatenate([entity_features, pos_emb], axis=-1)
-        x = np_linear(x, self.W_proj, self.b_proj)    # (B, N, d_model)
+        x = np_linear(x, self.W_proj, self.b_proj)  # (B, N, d_model)
         # Add relational bias
         rel = self.relation_embed[allegiances.astype(int)]  # (B, N, d_model)
         return x + rel
@@ -262,7 +289,7 @@ class NumpyAttentionPolicy:
     def _build_fog_mask(self, visibility: np.ndarray) -> np.ndarray:
         """visibility: (B, N) bool, True=visible. Returns additive mask for attention."""
         # Unseen entities get masked out as keys
-        mask = (1.0 - visibility.astype(np.float32))  # 1 where hidden
+        mask = 1.0 - visibility.astype(np.float32)  # 1 where hidden
         return mask[:, None, None, :]  # broadcastable (B, 1, 1, N)
 
     def _temporal_aggregate(self, history: List[np.ndarray]) -> np.ndarray:
@@ -283,26 +310,34 @@ class NumpyAttentionPolicy:
             indices = list(range(0, min(T, scale * 4), max(1, scale)))
             if not indices:
                 indices = [0]
-            frames = np.stack([history[min(i, T - 1)] for i in indices], axis=1)  # (B, K, d)
+            frames = np.stack(
+                [history[min(i, T - 1)] for i in indices], axis=1
+            )  # (B, K, d)
             pooled = frames.mean(axis=1)  # (B, d)
             projected = np_linear(pooled, self.temporal_W[si])  # (B, d)
             scale_feats.append(projected)
-            gate_logits.append((projected * self.temporal_gate[si]).sum(axis=-1, keepdims=True))  # (B, 1)
+            gate_logits.append(
+                (projected * self.temporal_gate[si]).sum(axis=-1, keepdims=True)
+            )  # (B, 1)
 
         gate_logits = np.concatenate(gate_logits, axis=-1)  # (B, n_scales)
         gates = np_softmax(gate_logits, axis=-1)  # (B, n_scales)
 
         for si, feat in enumerate(scale_feats):
-            aggregated += gates[:, si:si+1] * feat
+            aggregated += gates[:, si : si + 1] * feat
 
         return aggregated
 
     # ---- forward pass ----
 
-    def forward(self, entity_features: np.ndarray, positions: np.ndarray,
-                allegiances: np.ndarray, visibility: np.ndarray,
-                history: Optional[List[np.ndarray]] = None
-                ) -> Dict[str, np.ndarray]:
+    def forward(
+        self,
+        entity_features: np.ndarray,
+        positions: np.ndarray,
+        allegiances: np.ndarray,
+        visibility: np.ndarray,
+        history: Optional[List[np.ndarray]] = None,
+    ) -> Dict[str, np.ndarray]:
         """
         Full forward pass.
         Returns dict with: action_logits, pointer_logits, value, global_repr
@@ -323,7 +358,9 @@ class NumpyAttentionPolicy:
         # Use mean of visible entity embeddings
         vis_float = visibility.astype(np.float32)[:, :, None]  # (B, N, 1)
         vis_count = vis_float.sum(axis=1, keepdims=True).clip(1.0, None)  # (B, 1, 1)
-        global_repr = (x * vis_float).sum(axis=1) / vis_count.squeeze(-1)  # (B, d_model)
+        global_repr = (x * vis_float).sum(axis=1) / vis_count.squeeze(
+            -1
+        )  # (B, d_model)
 
         # Temporal fusion
         if history and len(history) > 0:
@@ -331,10 +368,16 @@ class NumpyAttentionPolicy:
             global_repr = global_repr + temporal_ctx
 
         # Action type logits
-        action_logits = np_linear(global_repr, self.W_action, self.b_action)  # (B, n_actions)
+        action_logits = np_linear(
+            global_repr, self.W_action, self.b_action
+        )  # (B, n_actions)
 
         # Pointer network: target selection
-        pointer_logits = self.pointer(global_repr, x, mask=fog_mask.squeeze(1).squeeze(1) if fog_mask is not None else None)
+        pointer_logits = self.pointer(
+            global_repr,
+            x,
+            mask=fog_mask.squeeze(1).squeeze(1) if fog_mask is not None else None,
+        )
 
         # Value head
         v_hidden = np_gelu(np_linear(global_repr, self.W_val1, self.b_val1))
@@ -347,11 +390,15 @@ class NumpyAttentionPolicy:
             "global_repr": global_repr,
         }
 
-    def select_action(self, entity_features: np.ndarray, positions: np.ndarray,
-                      allegiances: np.ndarray, visibility: np.ndarray,
-                      history: Optional[List[np.ndarray]] = None,
-                      deterministic: bool = False
-                      ) -> Dict[str, Any]:
+    def select_action(
+        self,
+        entity_features: np.ndarray,
+        positions: np.ndarray,
+        allegiances: np.ndarray,
+        visibility: np.ndarray,
+        history: Optional[List[np.ndarray]] = None,
+        deterministic: bool = False,
+    ) -> Dict[str, Any]:
         out = self.forward(entity_features, positions, allegiances, visibility, history)
         action_probs = np_softmax(out["action_logits"], axis=-1)
         pointer_probs = np_softmax(out["pointer_logits"], axis=-1)
@@ -360,12 +407,8 @@ class NumpyAttentionPolicy:
             action = np.argmax(action_probs, axis=-1)
             target = np.argmax(pointer_probs, axis=-1)
         else:
-            action = np.array([
-                self.rng.choice(len(p), p=p) for p in action_probs
-            ])
-            target = np.array([
-                self.rng.choice(len(p), p=p) for p in pointer_probs
-            ])
+            action = np.array([self.rng.choice(len(p), p=p) for p in action_probs])
+            target = np.array([self.rng.choice(len(p), p=p) for p in pointer_probs])
 
         return {
             "action": action,
@@ -407,11 +450,17 @@ if TORCH_AVAILABLE:
             input_dim = cfg.entity_dim + cfg.pos_encoding_dim
             self.proj = nn.Linear(input_dim, cfg.d_model)
             self.relation_embed = nn.Embedding(2, cfg.d_model)  # 0=friend, 1=enemy
-            self.pos_enc = SinusoidalPositionalEncoding2D(cfg.pos_encoding_dim, cfg.map_size)
+            self.pos_enc = SinusoidalPositionalEncoding2D(
+                cfg.pos_encoding_dim, cfg.map_size
+            )
             self.norm = nn.LayerNorm(cfg.d_model)
 
-        def forward(self, features: torch.Tensor, positions: torch.Tensor,
-                    allegiances: torch.Tensor) -> torch.Tensor:
+        def forward(
+            self,
+            features: torch.Tensor,
+            positions: torch.Tensor,
+            allegiances: torch.Tensor,
+        ) -> torch.Tensor:
             pos_emb = self.pos_enc(positions)
             x = torch.cat([features, pos_emb], dim=-1)
             x = self.proj(x)
@@ -432,8 +481,12 @@ if TORCH_AVAILABLE:
             # Pairwise relation bias: 4 types (friend-friend, friend-enemy, enemy-friend, enemy-enemy)
             self.relation_bias = nn.Embedding(4, n_heads)
 
-        def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None,
-                    allegiances: Optional[torch.Tensor] = None) -> torch.Tensor:
+        def forward(
+            self,
+            x: torch.Tensor,
+            mask: Optional[torch.Tensor] = None,
+            allegiances: Optional[torch.Tensor] = None,
+        ) -> torch.Tensor:
             B, N, D = x.shape
             H, Dh = self.n_heads, self.head_dim
 
@@ -473,8 +526,12 @@ if TORCH_AVAILABLE:
                 nn.Dropout(dropout),
             )
 
-        def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None,
-                    allegiances: Optional[torch.Tensor] = None) -> torch.Tensor:
+        def forward(
+            self,
+            x: torch.Tensor,
+            mask: Optional[torch.Tensor] = None,
+            allegiances: Optional[torch.Tensor] = None,
+        ) -> torch.Tensor:
             x = x + self.attn(self.norm1(x), mask=mask, allegiances=allegiances)
             x = x + self.ff(self.norm2(x))
             return x
@@ -485,14 +542,15 @@ if TORCH_AVAILABLE:
         def __init__(self, d_model: int, scales: List[int]):
             super().__init__()
             self.scales = scales
-            self.projections = nn.ModuleList([
-                nn.Linear(d_model, d_model) for _ in scales
-            ])
+            self.projections = nn.ModuleList(
+                [nn.Linear(d_model, d_model) for _ in scales]
+            )
             self.gate = nn.Linear(d_model * len(scales), len(scales))
             self.norm = nn.LayerNorm(d_model)
 
-        def forward(self, current: torch.Tensor,
-                    history: List[torch.Tensor]) -> torch.Tensor:
+        def forward(
+            self, current: torch.Tensor, history: List[torch.Tensor]
+        ) -> torch.Tensor:
             """current: (B, d), history: list of (B, d) newest-first."""
             T = len(history)
             if T == 0:
@@ -512,7 +570,7 @@ if TORCH_AVAILABLE:
 
             aggregated = torch.zeros_like(current)
             for si, feat in enumerate(scale_feats):
-                aggregated = aggregated + gates[:, si:si + 1] * feat
+                aggregated = aggregated + gates[:, si : si + 1] * feat
 
             return self.norm(current + aggregated)
 
@@ -527,8 +585,12 @@ if TORCH_AVAILABLE:
             self.key_proj = nn.Linear(d_model, d_model)
             self.head_merge = nn.Linear(n_heads, 1, bias=False)
 
-        def forward(self, query: torch.Tensor, keys: torch.Tensor,
-                    mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+        def forward(
+            self,
+            query: torch.Tensor,
+            keys: torch.Tensor,
+            mask: Optional[torch.Tensor] = None,
+        ) -> torch.Tensor:
             """query: (B, d), keys: (B, N, d) -> logits: (B, N)."""
             B, N, D = keys.shape
             H, Dh = self.n_heads, self.head_dim
@@ -541,7 +603,9 @@ if TORCH_AVAILABLE:
             logits = self.head_merge(scores).squeeze(-1)  # (B, N)
 
             if mask is not None:
-                logits = logits.masked_fill(mask.bool().squeeze(1).squeeze(1), float("-inf"))
+                logits = logits.masked_fill(
+                    mask.bool().squeeze(1).squeeze(1), float("-inf")
+                )
             return logits
 
     class GlobalAttentionPooling(nn.Module):
@@ -552,8 +616,9 @@ if TORCH_AVAILABLE:
             self.attn_weight = nn.Linear(d_model, 1)
             self.norm = nn.LayerNorm(d_model)
 
-        def forward(self, x: torch.Tensor,
-                    mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+        def forward(
+            self, x: torch.Tensor, mask: Optional[torch.Tensor] = None
+        ) -> torch.Tensor:
             """x: (B, N, d) -> (B, d)."""
             scores = self.attn_weight(x).squeeze(-1)  # (B, N)
             if mask is not None:
@@ -570,10 +635,14 @@ if TORCH_AVAILABLE:
             self.cfg = cfg
             self.entity_encoder = RelationalEntityEncoder(cfg)
 
-            self.transformer_blocks = nn.ModuleList([
-                TransformerEncoderBlock(cfg.d_model, cfg.n_heads, cfg.d_ff, cfg.dropout)
-                for _ in range(cfg.n_layers)
-            ])
+            self.transformer_blocks = nn.ModuleList(
+                [
+                    TransformerEncoderBlock(
+                        cfg.d_model, cfg.n_heads, cfg.d_ff, cfg.dropout
+                    )
+                    for _ in range(cfg.n_layers)
+                ]
+            )
 
             self.temporal_attn = MultiScaleTemporalAttention(
                 cfg.d_model, cfg.temporal_scales
@@ -605,14 +674,23 @@ if TORCH_AVAILABLE:
             mask = ~visibility  # True where hidden
             return mask.unsqueeze(1).unsqueeze(1)  # (B, 1, 1, N)
 
-        def _run_block(self, block: TransformerEncoderBlock, x: torch.Tensor,
-                       mask: torch.Tensor, allegiances: torch.Tensor) -> torch.Tensor:
+        def _run_block(
+            self,
+            block: TransformerEncoderBlock,
+            x: torch.Tensor,
+            mask: torch.Tensor,
+            allegiances: torch.Tensor,
+        ) -> torch.Tensor:
             return block(x, mask=mask, allegiances=allegiances)
 
-        def forward(self, entity_features: torch.Tensor, positions: torch.Tensor,
-                    allegiances: torch.Tensor, visibility: torch.Tensor,
-                    history: Optional[List[torch.Tensor]] = None
-                    ) -> Dict[str, torch.Tensor]:
+        def forward(
+            self,
+            entity_features: torch.Tensor,
+            positions: torch.Tensor,
+            allegiances: torch.Tensor,
+            visibility: torch.Tensor,
+            history: Optional[List[torch.Tensor]] = None,
+        ) -> Dict[str, torch.Tensor]:
             B, N, _ = entity_features.shape
 
             x = self.entity_encoder(entity_features, positions, allegiances)
@@ -620,8 +698,14 @@ if TORCH_AVAILABLE:
 
             for block in self.transformer_blocks:
                 if self.use_checkpointing and self.training:
-                    x = torch_checkpoint(self._run_block, block, x, fog_mask, allegiances,
-                                         use_reentrant=False)
+                    x = torch_checkpoint(
+                        self._run_block,
+                        block,
+                        x,
+                        fog_mask,
+                        allegiances,
+                        use_reentrant=False,
+                    )
                 else:
                     x = block(x, mask=fog_mask, allegiances=allegiances)
 
@@ -647,6 +731,7 @@ if TORCH_AVAILABLE:
 # SC2 Attention Agent
 # ============================================================
 
+
 class SC2AttentionAgent:
     """High-level agent wrapping the attention policy for SC2 gameplay.
 
@@ -655,8 +740,16 @@ class SC2AttentionAgent:
     """
 
     ACTION_NAMES = [
-        "no_op", "attack", "move", "build_worker", "build_supply",
-        "build_army", "build_tech", "expand", "scout", "defend",
+        "no_op",
+        "attack",
+        "move",
+        "build_worker",
+        "build_supply",
+        "build_army",
+        "build_tech",
+        "expand",
+        "scout",
+        "defend",
     ]
 
     def __init__(self, cfg: Optional[AttentionPolicyConfig] = None, seed: int = 42):
@@ -685,18 +778,25 @@ class SC2AttentionAgent:
     # ---- observation helpers ----
 
     @staticmethod
-    def _dummy_observation(batch_size: int, n_entities: int,
-                           cfg: AttentionPolicyConfig) -> Dict[str, np.ndarray]:
+    def _dummy_observation(
+        batch_size: int, n_entities: int, cfg: AttentionPolicyConfig
+    ) -> Dict[str, np.ndarray]:
         """Generate a synthetic observation for testing."""
         rng = np.random.RandomState(0)
         return {
-            "entity_features": rng.randn(batch_size, n_entities, cfg.entity_dim).astype(np.float32),
-            "positions": rng.randint(0, cfg.map_size, (batch_size, n_entities, 2)).astype(np.float32),
+            "entity_features": rng.randn(batch_size, n_entities, cfg.entity_dim).astype(
+                np.float32
+            ),
+            "positions": rng.randint(
+                0, cfg.map_size, (batch_size, n_entities, 2)
+            ).astype(np.float32),
             "allegiances": (rng.rand(batch_size, n_entities) > 0.5).astype(np.float32),
             "visibility": (rng.rand(batch_size, n_entities) > 0.2).astype(np.float32),
         }
 
-    def _preprocess_game_state(self, game_state: Dict[str, Any]) -> Dict[str, np.ndarray]:
+    def _preprocess_game_state(
+        self, game_state: Dict[str, Any]
+    ) -> Dict[str, np.ndarray]:
         """Convert a raw SC2 game state dict into model-ready arrays.
 
         Expected keys in game_state:
@@ -742,10 +842,11 @@ class SC2AttentionAgent:
 
     # ---- action selection ----
 
-    def act(self, observation: Dict[str, np.ndarray],
-            deterministic: bool = False) -> Dict[str, Any]:
+    def act(
+        self, observation: Dict[str, np.ndarray], deterministic: bool = False
+    ) -> Dict[str, Any]:
         """Select an action given preprocessed observation arrays."""
-        hist = self.history[-self.cfg.temporal_window:] if self.history else None
+        hist = self.history[-self.cfg.temporal_window :] if self.history else None
 
         if self.use_torch:
             self.network.eval()
@@ -753,8 +854,10 @@ class SC2AttentionAgent:
                 tensors = {k: torch.from_numpy(v) for k, v in observation.items()}
                 torch_hist = [torch.from_numpy(h) for h in hist] if hist else None
                 out = self.network(
-                    tensors["entity_features"], tensors["positions"],
-                    tensors["allegiances"], tensors["visibility"],
+                    tensors["entity_features"],
+                    tensors["positions"],
+                    tensors["allegiances"],
+                    tensors["visibility"],
                     history=torch_hist,
                 )
                 action_probs = F.softmax(out["action_logits"], dim=-1)
@@ -777,21 +880,25 @@ class SC2AttentionAgent:
                 }
         else:
             result = self.network.select_action(
-                observation["entity_features"], observation["positions"],
-                observation["allegiances"], observation["visibility"],
-                history=hist, deterministic=deterministic,
+                observation["entity_features"],
+                observation["positions"],
+                observation["allegiances"],
+                observation["visibility"],
+                history=hist,
+                deterministic=deterministic,
             )
 
         # Update history
         self.history.append(result["global_repr"].copy())
         if len(self.history) > self.cfg.temporal_window * 2:
-            self.history = self.history[-self.cfg.temporal_window:]
+            self.history = self.history[-self.cfg.temporal_window :]
 
         self.step_count += 1
         return result
 
-    def act_on_game_state(self, game_state: Dict[str, Any],
-                          deterministic: bool = False) -> Dict[str, Any]:
+    def act_on_game_state(
+        self, game_state: Dict[str, Any], deterministic: bool = False
+    ) -> Dict[str, Any]:
         """Convenience: raw game state -> action decision."""
         obs = self._preprocess_game_state(game_state)
         result = self.act(obs, deterministic=deterministic)
@@ -810,18 +917,36 @@ class SC2AttentionAgent:
 
     # ---- PPO training step ----
 
-    def store_transition(self, obs: Dict[str, np.ndarray], action: int, target: int,
-                         reward: float, done: bool, log_prob: float, value: float):
+    def store_transition(
+        self,
+        obs: Dict[str, np.ndarray],
+        action: int,
+        target: int,
+        reward: float,
+        done: bool,
+        log_prob: float,
+        value: float,
+    ):
         """Store a transition for PPO update."""
-        self._trajectory.append({
-            "obs": {k: v.copy() for k, v in obs.items()},
-            "action": action, "target": target,
-            "reward": reward, "done": done,
-            "log_prob": log_prob, "value": value,
-        })
+        self._trajectory.append(
+            {
+                "obs": {k: v.copy() for k, v in obs.items()},
+                "action": action,
+                "target": target,
+                "reward": reward,
+                "done": done,
+                "log_prob": log_prob,
+                "value": value,
+            }
+        )
 
-    def _compute_gae(self, rewards: List[float], values: List[float],
-                     dones: List[bool], last_value: float) -> Tuple[np.ndarray, np.ndarray]:
+    def _compute_gae(
+        self,
+        rewards: List[float],
+        values: List[float],
+        dones: List[bool],
+        last_value: float,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Compute GAE advantages and returns."""
         T = len(rewards)
         advantages = np.zeros(T, dtype=np.float32)
@@ -845,7 +970,9 @@ class SC2AttentionAgent:
         rewards = [t["reward"] for t in self._trajectory]
         values = [t["value"] for t in self._trajectory]
         dones = [t["done"] for t in self._trajectory]
-        old_log_probs = np.array([t["log_prob"] for t in self._trajectory], dtype=np.float32)
+        old_log_probs = np.array(
+            [t["log_prob"] for t in self._trajectory], dtype=np.float32
+        )
 
         advantages, returns = self._compute_gae(rewards, values, dones, values[-1])
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
@@ -865,32 +992,47 @@ class SC2AttentionAgent:
                 bs = len(batch)
 
                 obs_batch = {
-                    k: torch.from_numpy(np.concatenate([t["obs"][k] for t in batch], axis=0))
+                    k: torch.from_numpy(
+                        np.concatenate([t["obs"][k] for t in batch], axis=0)
+                    )
                     for k in batch[0]["obs"]
                 }
                 out = self.network(
-                    obs_batch["entity_features"], obs_batch["positions"],
-                    obs_batch["allegiances"], obs_batch["visibility"],
+                    obs_batch["entity_features"],
+                    obs_batch["positions"],
+                    obs_batch["allegiances"],
+                    obs_batch["visibility"],
                 )
 
-                action_dist = torch.distributions.Categorical(logits=out["action_logits"])
+                action_dist = torch.distributions.Categorical(
+                    logits=out["action_logits"]
+                )
                 actions_t = torch.tensor([t["action"] for t in batch])
                 new_log_probs = action_dist.log_prob(actions_t)
 
                 ratio = torch.exp(new_log_probs - old_lp_t[start:end])
                 adv_slice = adv_t[start:end]
                 surr1 = ratio * adv_slice
-                surr2 = torch.clamp(ratio, 1 - self.cfg.clip_eps, 1 + self.cfg.clip_eps) * adv_slice
+                surr2 = (
+                    torch.clamp(ratio, 1 - self.cfg.clip_eps, 1 + self.cfg.clip_eps)
+                    * adv_slice
+                )
                 policy_loss = -torch.min(surr1, surr2).mean()
 
                 value_loss = F.mse_loss(out["value"], ret_t[start:end])
                 entropy = action_dist.entropy().mean()
 
-                loss = policy_loss + self.cfg.value_coef * value_loss - self.cfg.entropy_coef * entropy
+                loss = (
+                    policy_loss
+                    + self.cfg.value_coef * value_loss
+                    - self.cfg.entropy_coef * entropy
+                )
 
                 self.optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_norm_(self.network.parameters(), self.cfg.max_grad_norm)
+                nn.utils.clip_grad_norm_(
+                    self.network.parameters(), self.cfg.max_grad_norm
+                )
                 self.optimizer.step()
 
                 total_pl += policy_loss.item()
@@ -910,12 +1052,15 @@ class SC2AttentionAgent:
 
     def save(self, path: str):
         if self.use_torch:
-            torch.save({
-                "network": self.network.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
-                "cfg": self.cfg,
-                "step_count": self.step_count,
-            }, path)
+            torch.save(
+                {
+                    "network": self.network.state_dict(),
+                    "optimizer": self.optimizer.state_dict(),
+                    "cfg": self.cfg,
+                    "step_count": self.step_count,
+                },
+                path,
+            )
 
     def load(self, path: str):
         if self.use_torch:
@@ -935,7 +1080,8 @@ class SC2AttentionAgent:
         with torch.no_grad():
             tensors = {k: torch.from_numpy(v) for k, v in observation.items()}
             x = self.network.entity_encoder(
-                tensors["entity_features"], tensors["positions"],
+                tensors["entity_features"],
+                tensors["positions"],
                 tensors["allegiances"],
             )
             fog_mask = self.network._build_fog_mask(tensors["visibility"])
@@ -979,14 +1125,16 @@ class SC2AttentionAgent:
 # CLI Demo
 # ============================================================
 
+
 def _demo_numpy_forward():
     """Demonstrate the NumPy fallback path."""
     print("=" * 60)
     print("NumPy Fallback Demo")
     print("=" * 60)
 
-    cfg = AttentionPolicyConfig(max_entities=16, d_model=64, n_heads=4,
-                                n_layers=2, d_ff=128, pos_encoding_dim=8)
+    cfg = AttentionPolicyConfig(
+        max_entities=16, d_model=64, n_heads=4, n_layers=2, d_ff=128, pos_encoding_dim=8
+    )
     policy = NumpyAttentionPolicy(cfg, seed=42)
 
     B, N = 2, 16
@@ -1013,8 +1161,9 @@ def _demo_numpy_forward():
 
     # Temporal history test
     history = [rng.randn(B, cfg.d_model).astype(np.float32) for _ in range(8)]
-    result2 = policy.select_action(entity_features, positions, allegiances,
-                                   visibility, history=history)
+    result2 = policy.select_action(
+        entity_features, positions, allegiances, visibility, history=history
+    )
     print(f"  With history ({len(history)} frames):")
     print(f"    Actions:      {result2['action']}")
     print(f"    Values:       {result2['value']}")
@@ -1026,8 +1175,14 @@ def _demo_torch_forward():
     print("PyTorch Demo")
     print("=" * 60)
 
-    cfg = AttentionPolicyConfig(max_entities=32, d_model=128, n_heads=8,
-                                n_layers=3, d_ff=256, pos_encoding_dim=16)
+    cfg = AttentionPolicyConfig(
+        max_entities=32,
+        d_model=128,
+        n_heads=8,
+        n_layers=3,
+        d_ff=256,
+        pos_encoding_dim=16,
+    )
     agent = SC2AttentionAgent(cfg, seed=42)
     print(agent.summary())
     print()
@@ -1059,21 +1214,50 @@ def _demo_torch_forward():
     # Simulated game state
     game_state = {
         "units": [
-            {"type_id": 84, "x": 50, "y": 50, "health": 45, "shield": 0,
-             "energy": 0, "is_friendly": True, "is_visible": True},
-            {"type_id": 105, "x": 80, "y": 60, "health": 150, "shield": 50,
-             "energy": 0, "is_friendly": False, "is_visible": True},
-            {"type_id": 48, "x": 30, "y": 40, "health": 35, "shield": 0,
-             "energy": 0, "is_friendly": True, "is_visible": True},
+            {
+                "type_id": 84,
+                "x": 50,
+                "y": 50,
+                "health": 45,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "is_visible": True,
+            },
+            {
+                "type_id": 105,
+                "x": 80,
+                "y": 60,
+                "health": 150,
+                "shield": 50,
+                "energy": 0,
+                "is_friendly": False,
+                "is_visible": True,
+            },
+            {
+                "type_id": 48,
+                "x": 30,
+                "y": 40,
+                "health": 35,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "is_visible": True,
+            },
         ],
-        "minerals": 450, "vespene": 200, "supply_used": 44, "supply_cap": 60,
+        "minerals": 450,
+        "vespene": 200,
+        "supply_used": 44,
+        "supply_cap": 60,
     }
     decision = agent.act_on_game_state(game_state)
     print("  Game state decision:")
     print(f"    Action:  {decision['action_type']}")
     print(f"    Target:  entity #{decision['target_entity_idx']}")
     print(f"    Value:   {decision['value_estimate']:.4f}")
-    print(f"    Probs:   { {k: f'{v:.3f}' for k, v in decision['action_probs'].items()} }")
+    print(
+        f"    Probs:   { {k: f'{v:.3f}' for k, v in decision['action_probs'].items()} }"
+    )
 
     # PPO update smoke test
     print("\n  PPO update smoke test:")
@@ -1081,9 +1265,15 @@ def _demo_torch_forward():
         obs_s = SC2AttentionAgent._dummy_observation(1, 32, cfg)
         res = agent.act(obs_s)
         log_p = float(np.log(res["action_probs"][0, res["action"][0]] + 1e-8))
-        agent.store_transition(obs_s, int(res["action"][0]), int(res["target"][0]),
-                               reward=random.uniform(-1, 1), done=(step == 7),
-                               log_prob=log_p, value=float(res["value"][0]))
+        agent.store_transition(
+            obs_s,
+            int(res["action"][0]),
+            int(res["target"][0]),
+            reward=random.uniform(-1, 1),
+            done=(step == 7),
+            log_prob=log_p,
+            value=float(res["value"][0]),
+        )
     metrics = agent.update()
     print(f"    Policy loss: {metrics['policy_loss']:.4f}")
     print(f"    Value loss:  {metrics['value_loss']:.4f}")
@@ -1096,8 +1286,9 @@ def _demo_fog_of_war():
     print("Fog-of-War Masking Demo")
     print("=" * 60)
 
-    cfg = AttentionPolicyConfig(max_entities=8, d_model=64, n_heads=4,
-                                n_layers=2, d_ff=128, pos_encoding_dim=8)
+    cfg = AttentionPolicyConfig(
+        max_entities=8, d_model=64, n_heads=4, n_layers=2, d_ff=128, pos_encoding_dim=8
+    )
     agent = SC2AttentionAgent(cfg, seed=42)
 
     rng = np.random.RandomState(99)
@@ -1114,7 +1305,9 @@ def _demo_fog_of_war():
     agent.history.clear()
     res_fog = agent.act(obs_fog, deterministic=True)
 
-    print(f"  Full visibility action: {res_full['action']} target: {res_full['target']}")
+    print(
+        f"  Full visibility action: {res_full['action']} target: {res_full['target']}"
+    )
     print(f"  Fog  visibility action: {res_fog['action']} target: {res_fog['target']}")
     print(f"  Values differ: {abs(res_full['value'][0] - res_fog['value'][0]):.4f}")
     print(f"  Pointer probs (full): {np.round(res_full['pointer_probs'][0, :8], 3)}")
@@ -1137,8 +1330,14 @@ def main():
         print("PyTorch not available; torch demos skipped.")
         print()
         # Run fog demo with numpy
-        cfg = AttentionPolicyConfig(max_entities=8, d_model=64, n_heads=4,
-                                    n_layers=2, d_ff=128, pos_encoding_dim=8)
+        cfg = AttentionPolicyConfig(
+            max_entities=8,
+            d_model=64,
+            n_heads=4,
+            n_layers=2,
+            d_ff=128,
+            pos_encoding_dim=8,
+        )
         agent = SC2AttentionAgent(cfg, seed=42)
         obs = SC2AttentionAgent._dummy_observation(1, 8, cfg)
         result = agent.act(obs)

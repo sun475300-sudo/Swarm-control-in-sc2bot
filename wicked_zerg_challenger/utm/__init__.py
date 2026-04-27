@@ -16,9 +16,12 @@ from wicked_zerg_challenger.utm.corridor import FlightCorridor, CorridorManager
 from wicked_zerg_challenger.utm.collision_predictor import CollisionPredictor
 
 __all__ = [
-    "Point3D", "DroneState",
-    "VoxelGrid", "KDTree3D",
+    "Point3D",
+    "DroneState",
+    "VoxelGrid",
+    "KDTree3D",
     "Boids3DController",
-    "FlightCorridor", "CorridorManager",
+    "FlightCorridor",
+    "CorridorManager",
     "CollisionPredictor",
 ]

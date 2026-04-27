@@ -33,8 +33,16 @@ from typing import List
 try:
     import sys
     import os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger'))
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger', 'local_training'))
+
+    sys.path.insert(
+        0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+    )
+    sys.path.insert(
+        0,
+        os.path.join(
+            os.path.dirname(__file__), "..", "wicked_zerg_challenger", "local_training"
+        ),
+    )
     from local_training.production_resilience import ProductionResilience
 except ImportError:
     pytest.skip("ProductionResilience not available", allow_module_level=True)
@@ -42,8 +50,17 @@ except ImportError:
 
 class MockUnit:
     """Mock SC2 Unit"""
-    def __init__(self, tag: int, type_id, position, health: float = 100.0,
-                 health_max: float = 100.0, is_idle: bool = False, is_ready: bool = True):
+
+    def __init__(
+        self,
+        tag: int,
+        type_id,
+        position,
+        health: float = 100.0,
+        health_max: float = 100.0,
+        is_idle: bool = False,
+        is_ready: bool = True,
+    ):
         self.tag = tag
         self.type_id = type_id
         self.position = position
@@ -64,11 +81,13 @@ class MockUnit:
         return self.health / self.health_max if self.health_max > 0 else 0
 
     def distance_to(self, other):
-        if hasattr(other, 'position'):
+        if hasattr(other, "position"):
             pos = other.position
         else:
             pos = other
-        return ((self.position[0] - pos[0])**2 + (self.position[1] - pos[1])**2)**0.5
+        return (
+            (self.position[0] - pos[0]) ** 2 + (self.position[1] - pos[1]) ** 2
+        ) ** 0.5
 
     def train(self, unit_type):
         """Mock train method"""
@@ -77,6 +96,7 @@ class MockUnit:
 
 class MockUnits:
     """Mock SC2 Units collection"""
+
     def __init__(self, units: List[MockUnit]):
         self._units = units
 
@@ -112,10 +132,7 @@ class MockUnits:
         return MockUnits([u for u in self._units if u.is_idle])
 
     def closer_than(self, distance: float, position):
-        return MockUnits([
-            u for u in self._units
-            if u.distance_to(position) < distance
-        ])
+        return MockUnits([u for u in self._units if u.distance_to(position) < distance])
 
     def closest_to(self, position):
         if not self._units:
@@ -134,6 +151,7 @@ class MockUnits:
 
 class MockBot:
     """Mock SC2 Bot"""
+
     def __init__(self):
         self.minerals = 200
         self.vespene = 100
@@ -180,11 +198,7 @@ class MockBot:
 
     async def _determine_ideal_composition(self):
         """Mock ideal composition method"""
-        return {
-            "ZERGLING": 0.5,
-            "ROACH": 0.3,
-            "HYDRALISK": 0.2
-        }
+        return {"ZERGLING": 0.5, "ROACH": 0.3, "HYDRALISK": 0.2}
 
     def can_afford_with_priority(self, unit_type):
         """Mock can_afford with priority"""
@@ -201,7 +215,7 @@ class TestProductionResilienceInitialization:
 
         assert resilience.bot == bot
         # Balancer may or may not be initialized depending on imports
-        assert hasattr(resilience, 'balancer')
+        assert hasattr(resilience, "balancer")
 
     def test_initialization_with_balancer(self):
         """Balancer와 함께 초기화"""
@@ -209,7 +223,7 @@ class TestProductionResilienceInitialization:
         resilience = ProductionResilience(bot)
 
         # Should have balancer attribute
-        assert hasattr(resilience, 'balancer')
+        assert hasattr(resilience, "balancer")
 
 
 class TestSafeTrain:
@@ -333,7 +347,9 @@ class TestProduceArmyUnit:
         bot.minerals = 50
         bot.supply_left = 2
         larva = MockUnit(1, "LARVA", (50, 50))
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         result = await resilience._produce_army_unit(larva)
@@ -365,7 +381,9 @@ class TestEmergencyZerglingProduction:
         bot.minerals = 200
         bot.supply_left = 10
         larvae = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(4)])
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         await resilience._emergency_zergling_production(larvae)
@@ -422,7 +440,9 @@ class TestBuildArmyAggressive:
         bot.vespene = 300
         bot.supply_left = 20
         bot.larva = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(5)])
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         await resilience.build_army_aggressive()
@@ -461,7 +481,9 @@ class TestBuildTerranCounters:
         bot.minerals = 500
         bot.vespene = 300
         bot.larva = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(3)])
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         await resilience.build_terran_counters()
@@ -481,7 +503,9 @@ class TestBuildProtossCounters:
         bot.minerals = 500
         bot.vespene = 300
         bot.larva = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(3)])
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         await resilience.build_protoss_counters()
@@ -501,7 +525,9 @@ class TestBuildZergCounters:
         bot.minerals = 500
         bot.vespene = 300
         bot.larva = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(3)])
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         await resilience.build_zerg_counters()
@@ -565,7 +591,9 @@ class TestMorphToLair:
         bot.vespene = 100
         hatchery = MockUnit(100, "HATCHERY", (50, 50), is_ready=True)
         bot.townhalls = MockUnits([hatchery])
-        bot._structures = MockUnits([MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)])
+        bot._structures = MockUnits(
+            [MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)]
+        )
 
         resilience = ProductionResilience(bot)
         result = await resilience._morph_to_lair()
@@ -619,10 +647,12 @@ class TestProduceMutalisks:
         bot.vespene = 500
         bot.supply_left = 10
         bot.larva = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(5)])
-        bot._structures = MockUnits([
-            MockUnit(200, "SPIRE", (52, 52), is_ready=True),
-            MockUnit(201, "SPAWNINGPOOL", (53, 53), is_ready=True)
-        ])
+        bot._structures = MockUnits(
+            [
+                MockUnit(200, "SPIRE", (52, 52), is_ready=True),
+                MockUnit(201, "SPAWNINGPOOL", (53, 53), is_ready=True),
+            ]
+        )
 
         resilience = ProductionResilience(bot)
         result = await resilience._produce_mutalisks(count=3)
@@ -631,5 +661,5 @@ class TestProduceMutalisks:
         assert isinstance(result, int)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

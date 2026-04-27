@@ -44,7 +44,7 @@ class ErrorHandler:
         *args,
         log_key: Optional[str] = None,
         default_return: Any = None,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         안전한 함수 실행
@@ -67,7 +67,9 @@ class ErrorHandler:
         except Exception as e:
             if self.debug_mode:
                 # 개발 모드: 즉시 크래시
-                logger.error(f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging")
+                logger.error(
+                    f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging"
+                )
                 logger.error(f"Exception: {e}")
                 logger.error(f"Traceback:")
                 traceback.print_exc()
@@ -81,18 +83,17 @@ class ErrorHandler:
                     logger.error(f"{log_key} failed: {e}")
                     # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
                     import logging as _logging
+
                     _logger = _logging.getLogger(__name__)
                     _logger.debug(traceback.format_exc())
                     if self.error_counts[log_key] == self.max_error_logs:
-                        logger.error(f"{log_key}: Suppressing further error logs for this key")
+                        logger.error(
+                            f"{log_key}: Suppressing further error logs for this key"
+                        )
 
                 return default_return
 
-    def safe_coroutine(
-        self,
-        log_key: Optional[str] = None,
-        default_return: Any = None
-    ):
+    def safe_coroutine(self, log_key: Optional[str] = None, default_return: Any = None):
         """
         안전한 코루틴 데코레이터
 
@@ -101,6 +102,7 @@ class ErrorHandler:
             async def on_step(self, iteration):
                 # 로직...
         """
+
         def decorator(coro_func: Callable):
             @functools.wraps(coro_func)
             async def wrapper(*args, **kwargs):
@@ -111,7 +113,9 @@ class ErrorHandler:
                 except Exception as e:
                     if self.debug_mode:
                         # 개발 모드: 즉시 크래시
-                        logger.error(f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging")
+                        logger.error(
+                            f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging"
+                        )
                         logger.error(f"Exception: {e}")
                         logger.error(f"Traceback:")
                         traceback.print_exc()
@@ -124,6 +128,7 @@ class ErrorHandler:
                             logger.error(f"{key} failed: {e}")
                             # ★ ADDED: Traceback for debugging even in production (logger.debug로 변경)
                             import logging as _logging
+
                             _logger = _logging.getLogger(__name__)
                             _logger.debug(traceback.format_exc())
                             if self.error_counts[key] == self.max_error_logs:
@@ -132,6 +137,7 @@ class ErrorHandler:
                         return default_return
 
             return wrapper
+
         return decorator
 
     def get_error_summary(self) -> dict:
@@ -148,9 +154,11 @@ class ErrorHandler:
 # Config에서 DEBUG_MODE 가져오기
 try:
     from game_config import config
+
     DEBUG_MODE = config.DEBUG_MODE
 except ImportError:
     import os
+
     DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
 
 # 전역 에러 핸들러 인스턴스
@@ -160,6 +168,7 @@ logger.info(f"Initialized with DEBUG_MODE={DEBUG_MODE}")
 
 
 # ========== 편의 함수 ==========
+
 
 def safe_execute(func: Callable, *args, log_key: Optional[str] = None, **kwargs) -> Any:
     """전역 에러 핸들러의 safe_execute 단축 함수"""

@@ -25,8 +25,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class DeploymentPhase(Enum):
     """Stages of a canary deployment."""
+
     NOT_STARTED = "not_started"
     CANARY_1_PERCENT = "canary_1%"
     CANARY_5_PERCENT = "canary_5%"
@@ -39,6 +41,7 @@ class DeploymentPhase(Enum):
 
 class HealthStatus(Enum):
     """Health check result."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -47,6 +50,7 @@ class HealthStatus(Enum):
 
 class RollbackReason(Enum):
     """Reasons for an automatic rollback."""
+
     WIN_RATE_BELOW_THRESHOLD = "win_rate_below_threshold"
     ERROR_RATE_ABOVE_THRESHOLD = "error_rate_above_threshold"
     LATENCY_ABOVE_THRESHOLD = "latency_above_threshold"
@@ -72,6 +76,7 @@ ROLLOUT_STAGES: List[Tuple[DeploymentPhase, float]] = [
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CanaryConfig:
     """
@@ -88,6 +93,7 @@ class CanaryConfig:
         auto_rollback: Whether to automatically rollback on threshold breach.
         rollout_stages: Ordered list of (phase, weight) for progressive rollout.
     """
+
     canary_version: str = "v2.0.0-canary"
     stable_version: str = "v1.9.0-stable"
     min_win_rate: float = 0.45
@@ -110,7 +116,9 @@ class CanaryConfig:
         if self.max_latency_ms <= 0:
             errors.append(f"max_latency_ms must be > 0, got {self.max_latency_ms}")
         if self.min_matches_per_stage < 1:
-            errors.append(f"min_matches_per_stage must be >= 1, got {self.min_matches_per_stage}")
+            errors.append(
+                f"min_matches_per_stage must be >= 1, got {self.min_matches_per_stage}"
+            )
         if len(self.rollout_stages) == 0:
             errors.append("rollout_stages must have at least one stage")
         return errors
@@ -119,6 +127,7 @@ class CanaryConfig:
 @dataclass
 class MatchResult:
     """Outcome of a single SC2 match played by one bot version."""
+
     match_id: str
     version: str
     opponent: str
@@ -133,6 +142,7 @@ class MatchResult:
 @dataclass
 class StageMetrics:
     """Aggregated metrics for a deployment stage."""
+
     phase: DeploymentPhase
     canary_matches: int = 0
     canary_wins: int = 0
@@ -190,6 +200,7 @@ class StageMetrics:
 @dataclass
 class RollbackEvent:
     """Records a rollback event."""
+
     deployment_id: str
     reason: RollbackReason
     phase_at_rollback: DeploymentPhase
@@ -201,6 +212,7 @@ class RollbackEvent:
 # ---------------------------------------------------------------------------
 # TrafficSplitter
 # ---------------------------------------------------------------------------
+
 
 class TrafficSplitter:
     """
@@ -221,8 +233,11 @@ class TrafficSplitter:
     @canary_weight.setter
     def canary_weight(self, value: float) -> None:
         self._canary_weight = max(0.0, min(1.0, value))
-        logger.info("Traffic weight updated: canary=%.2f, stable=%.2f",
-                     self._canary_weight, 1.0 - self._canary_weight)
+        logger.info(
+            "Traffic weight updated: canary=%.2f, stable=%.2f",
+            self._canary_weight,
+            1.0 - self._canary_weight,
+        )
 
     @property
     def stable_weight(self) -> float:
@@ -262,7 +277,8 @@ class TrafficSplitter:
             "stable_routed": self._stable_routed,
             "actual_canary_pct": (
                 round(self._canary_routed / self._total_routed, 4)
-                if self._total_routed > 0 else 0.0
+                if self._total_routed > 0
+                else 0.0
             ),
         }
 
@@ -275,6 +291,7 @@ class TrafficSplitter:
 # ---------------------------------------------------------------------------
 # HealthChecker
 # ---------------------------------------------------------------------------
+
 
 class HealthChecker:
     """
@@ -350,13 +367,15 @@ class HealthChecker:
         issues: List[str],
         metrics: StageMetrics,
     ) -> None:
-        self._check_history.append({
-            "timestamp": datetime.utcnow().isoformat(),
-            "status": status.value,
-            "issues": issues,
-            "canary_win_rate": metrics.canary_win_rate,
-            "canary_matches": metrics.canary_matches,
-        })
+        self._check_history.append(
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": status.value,
+                "issues": issues,
+                "canary_win_rate": metrics.canary_win_rate,
+                "canary_matches": metrics.canary_matches,
+            }
+        )
 
     @property
     def history(self) -> List[Dict[str, Any]]:
@@ -366,6 +385,7 @@ class HealthChecker:
 # ---------------------------------------------------------------------------
 # RollbackManager
 # ---------------------------------------------------------------------------
+
 
 class RollbackManager:
     """
@@ -428,7 +448,9 @@ class RollbackManager:
         self._is_rolled_back = True
         logger.warning(
             "ROLLBACK executed for deployment %s at phase %s: %s",
-            deployment_id, current_phase.value, reason.value,
+            deployment_id,
+            current_phase.value,
+            reason.value,
         )
         return event
 
@@ -448,6 +470,7 @@ class RollbackManager:
 # ---------------------------------------------------------------------------
 # SC2 Match Simulator (for demo / testing)
 # ---------------------------------------------------------------------------
+
 
 class SC2MatchSimulator:
     """
@@ -471,8 +494,14 @@ class SC2MatchSimulator:
         self.canary_latency_mean = canary_latency_mean
         self.stable_latency_mean = stable_latency_mean
         self._opponents = [
-            "RandomBot", "RushBot", "MacroBot", "CheeseMaster",
-            "TurtleBot", "AllInBot", "EcoBot", "AggroBot",
+            "RandomBot",
+            "RushBot",
+            "MacroBot",
+            "CheeseMaster",
+            "TurtleBot",
+            "AllInBot",
+            "EcoBot",
+            "AggroBot",
         ]
 
     def simulate_match(self, version: str, is_canary: bool) -> MatchResult:
@@ -515,6 +544,7 @@ class SC2MatchSimulator:
 # ---------------------------------------------------------------------------
 # CanaryDeployer  (main orchestrator)
 # ---------------------------------------------------------------------------
+
 
 class CanaryDeployer:
     """
@@ -562,10 +592,13 @@ class CanaryDeployer:
 
         self._started_at = datetime.utcnow().isoformat()
         self.rollback_manager.reset()
-        self._log_event("deployment_started", {
-            "canary_version": self.config.canary_version,
-            "stable_version": self.config.stable_version,
-        })
+        self._log_event(
+            "deployment_started",
+            {
+                "canary_version": self.config.canary_version,
+                "stable_version": self.config.stable_version,
+            },
+        )
 
         self._advance_stage()
         return {
@@ -595,10 +628,13 @@ class CanaryDeployer:
         )
         self._stage_metrics.append(stage_metrics)
 
-        self._log_event("stage_advanced", {
-            "phase": phase.value,
-            "canary_weight": weight,
-        })
+        self._log_event(
+            "stage_advanced",
+            {
+                "phase": phase.value,
+                "canary_weight": weight,
+            },
+        )
         logger.info("Advanced to %s (canary weight=%.2f)", phase.value, weight)
         return True
 
@@ -649,7 +685,9 @@ class CanaryDeployer:
 
         # Rollback decision
         should_rb, rb_reason = self.rollback_manager.should_rollback(
-            health_status, issues, metrics,
+            health_status,
+            issues,
+            metrics,
         )
         if should_rb and rb_reason is not None:
             event = self.rollback_manager.execute_rollback(
@@ -661,10 +699,13 @@ class CanaryDeployer:
             self._current_phase = DeploymentPhase.ROLLED_BACK
             self.splitter.canary_weight = 0.0
             self._completed_at = datetime.utcnow().isoformat()
-            self._log_event("rolled_back", {
-                "reason": rb_reason.value,
-                "metrics": metrics.summary(),
-            })
+            self._log_event(
+                "rolled_back",
+                {
+                    "reason": rb_reason.value,
+                    "metrics": metrics.summary(),
+                },
+            )
             return {
                 "action": "rolled_back",
                 "reason": rb_reason.value,
@@ -710,8 +751,10 @@ class CanaryDeployer:
 
     def force_rollback(self, message: str = "Manual rollback") -> RollbackEvent:
         """Manually trigger a rollback."""
-        metrics = self._stage_metrics[-1] if self._stage_metrics else StageMetrics(
-            phase=self._current_phase
+        metrics = (
+            self._stage_metrics[-1]
+            if self._stage_metrics
+            else StageMetrics(phase=self._current_phase)
         )
         event = self.rollback_manager.execute_rollback(
             deployment_id=self.deployment_id,
@@ -750,10 +793,14 @@ class CanaryDeployer:
             stable_count = per_stage - canary_count
 
             canary_matches = sim.simulate_batch(
-                self.config.canary_version, is_canary=True, count=canary_count,
+                self.config.canary_version,
+                is_canary=True,
+                count=canary_count,
             )
             stable_matches = sim.simulate_batch(
-                self.config.stable_version, is_canary=False, count=stable_count,
+                self.config.stable_version,
+                is_canary=False,
+                count=stable_count,
             )
 
             for m in canary_matches + stable_matches:
@@ -777,7 +824,9 @@ class CanaryDeployer:
 
     def status(self) -> Dict[str, Any]:
         """Get current deployment status."""
-        current_metrics = self._stage_metrics[-1].summary() if self._stage_metrics else {}
+        current_metrics = (
+            self._stage_metrics[-1].summary() if self._stage_metrics else {}
+        )
         return {
             "deployment_id": self.deployment_id,
             "phase": self._current_phase.value,
@@ -823,16 +872,19 @@ class CanaryDeployer:
         }
 
     def _log_event(self, event_type: str, data: Dict[str, Any]) -> None:
-        self._deployment_log.append({
-            "event": event_type,
-            "timestamp": datetime.utcnow().isoformat(),
-            "data": data,
-        })
+        self._deployment_log.append(
+            {
+                "event": event_type,
+                "timestamp": datetime.utcnow().isoformat(),
+                "data": data,
+            }
+        )
 
 
 # ---------------------------------------------------------------------------
 # Demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate canary deployment for SC2 bot updates."""
@@ -864,7 +916,9 @@ def demo() -> None:
     for _ in range(1000):
         dest = splitter.route()
         routing_counts[dest] += 1
-    print(f"  Weight: canary={splitter.canary_weight:.0%}, stable={splitter.stable_weight:.0%}")
+    print(
+        f"  Weight: canary={splitter.canary_weight:.0%}, stable={splitter.stable_weight:.0%}"
+    )
     print(f"  Actual routing (1000 requests): {routing_counts}")
 
     # --- Successful canary deployment ---
@@ -877,7 +931,9 @@ def demo() -> None:
         stable_error_prob=0.01,
     )
 
-    result = deployer.run_simulated_deployment(simulator=simulator, matches_per_stage=30)
+    result = deployer.run_simulated_deployment(
+        simulator=simulator, matches_per_stage=30
+    )
     print(f"  Final phase: {result['final_phase']}")
     print(f"  Stages completed: {result['stages_completed']}")
     print(f"  Total matches: {result['total_matches']}")
@@ -911,7 +967,8 @@ def demo() -> None:
     )
 
     bad_result = deployer_bad.run_simulated_deployment(
-        simulator=bad_simulator, matches_per_stage=30,
+        simulator=bad_simulator,
+        matches_per_stage=30,
     )
     print(f"  Final phase: {bad_result['final_phase']}")
     print(f"  Rollbacks: {bad_result['rollbacks']}")
@@ -922,11 +979,13 @@ def demo() -> None:
 
     # --- Manual rollback demo ---
     print("\n[5] Manual rollback demo...")
-    deployer_manual = CanaryDeployer(CanaryConfig(
-        canary_version="v3.0.0-experimental",
-        stable_version="v2.0.0-stable",
-        min_matches_per_stage=100,
-    ))
+    deployer_manual = CanaryDeployer(
+        CanaryConfig(
+            canary_version="v3.0.0-experimental",
+            stable_version="v2.0.0-stable",
+            min_matches_per_stage=100,
+        )
+    )
     deployer_manual.start()
     print(f"  Phase before rollback: {deployer_manual.current_phase.value}")
     rollback_event = deployer_manual.force_rollback("Operator decided to abort")
@@ -939,8 +998,10 @@ def demo() -> None:
     print(f"  Deployment ID: {report['deployment_id']}")
     print(f"  Stages recorded: {len(report['stages'])}")
     for stage in report["stages"]:
-        print(f"    {stage['phase']}: canary_wr={stage['canary_win_rate']:.2%}, "
-              f"stable_wr={stage['stable_win_rate']:.2%}")
+        print(
+            f"    {stage['phase']}: canary_wr={stage['canary_win_rate']:.2%}, "
+            f"stable_wr={stage['stable_win_rate']:.2%}"
+        )
 
     print(f"\n  Health check history entries: {len(report['health_check_history'])}")
     print(f"  Event log entries: {len(report['event_log'])}")

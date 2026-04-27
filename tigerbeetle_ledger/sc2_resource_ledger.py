@@ -10,14 +10,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 # TigerBeetle account IDs
 class AccountID(IntEnum):
-    MINERAL_INCOME   = 1
+    MINERAL_INCOME = 1
     MINERAL_SPENDING = 2
-    GAS_INCOME       = 3
-    GAS_SPENDING     = 4
-    MINERAL_RESERVE  = 5
-    GAS_RESERVE      = 6
+    GAS_INCOME = 3
+    GAS_SPENDING = 4
+    MINERAL_RESERVE = 5
+    GAS_RESERVE = 6
 
 
 @dataclass
@@ -27,15 +28,15 @@ class ResourceTransfer:
     credit_account: AccountID
     amount: int
     user_data: int  # game tick
-    code: int       # transfer type code
+    code: int  # transfer type code
 
 
 TRANSFER_CODES = {
-    "drone_mine":      1,
+    "drone_mine": 1,
     "structure_build": 2,
-    "unit_train":      3,
-    "gas_harvest":     4,
-    "refund":          5,
+    "unit_train": 3,
+    "gas_harvest": 4,
+    "refund": 5,
 }
 
 
@@ -44,22 +45,26 @@ def create_accounts(client: tb.Client):
     accounts = [
         tb.Account(
             id=int(AccountID.MINERAL_INCOME),
-            ledger=1, code=1,
+            ledger=1,
+            code=1,
             flags=tb.AccountFlags.CREDITS_MUST_NOT_EXCEED_DEBITS,
         ),
         tb.Account(
             id=int(AccountID.MINERAL_SPENDING),
-            ledger=1, code=2,
+            ledger=1,
+            code=2,
             flags=tb.AccountFlags.DEBITS_MUST_NOT_EXCEED_CREDITS,
         ),
         tb.Account(
             id=int(AccountID.GAS_INCOME),
-            ledger=2, code=3,
+            ledger=2,
+            code=3,
             flags=tb.AccountFlags.CREDITS_MUST_NOT_EXCEED_DEBITS,
         ),
         tb.Account(
             id=int(AccountID.GAS_SPENDING),
-            ledger=2, code=4,
+            ledger=2,
+            code=4,
             flags=tb.AccountFlags.DEBITS_MUST_NOT_EXCEED_CREDITS,
         ),
     ]
@@ -88,7 +93,9 @@ def record_mineral_income(client: tb.Client, amount: int, tick: int, transfer_id
         logger.error(f"Transfer error: {errors}")
 
 
-def record_spending(client: tb.Client, resource: str, amount: int, tick: int, transfer_id: int):
+def record_spending(
+    client: tb.Client, resource: str, amount: int, tick: int, transfer_id: int
+):
     """Record mineral or gas spending for buildings/units."""
     if resource == "mineral":
         debit_id = int(AccountID.MINERAL_RESERVE)

@@ -26,6 +26,7 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
     from sc2.position import Point2
+
     SC2_AVAILABLE = True
 except ImportError:
     BotAI = object
@@ -72,14 +73,12 @@ class LurkerAmbushSystem:
                 UnitTypeId.SIEGETANKSIEGED,
                 UnitTypeId.THOR,
                 UnitTypeId.MARAUDER,
-
                 # Protoss
                 UnitTypeId.COLOSSUS,
                 UnitTypeId.IMMORTAL,
                 UnitTypeId.DISRUPTOR,
                 UnitTypeId.ARCHON,
                 UnitTypeId.HIGHTEMPLAR,
-
                 # Zerg
                 UnitTypeId.ULTRALISK,
                 UnitTypeId.BROODLORD,
@@ -232,7 +231,10 @@ class LurkerAmbushSystem:
         if hasattr(enemy_units, "closer_than"):
             nearby = enemy_units.closer_than(self.LURKER_RANGE, lurker)
         else:
-            nearby = Units([e for e in enemy_units if e.distance_to(lurker) < self.LURKER_RANGE], self.bot)
+            nearby = Units(
+                [e for e in enemy_units if e.distance_to(lurker) < self.LURKER_RANGE],
+                self.bot,
+            )
 
         # Filter out air units (lurkers can't attack air)
         ground_enemies = nearby.filter(lambda u: not u.is_flying)
@@ -288,7 +290,9 @@ class LurkerAmbushSystem:
             return
 
         # Check if burrow is available
-        if AbilityId.BURROWDOWN_LURKER in await self.bot.get_available_abilities(lurker):
+        if AbilityId.BURROWDOWN_LURKER in await self.bot.get_available_abilities(
+            lurker
+        ):
             self.bot.do(lurker(AbilityId.BURROWDOWN_LURKER))
 
     async def _unburrow_and_retreat(self, lurker: Unit):
@@ -328,14 +332,19 @@ class LurkerAmbushSystem:
         # Check for Grooved Spines upgrade (lurker range +2)
         try:
             from sc2.ids.upgrade_id import UpgradeId
+
             if UpgradeId.LURKERRANGE in self.bot.state.upgrades:
-                self.LURKER_RANGE = 10  # Base 9 + 1 (upgrade gives +2 but we use 10 for safety)
+                self.LURKER_RANGE = (
+                    10  # Base 9 + 1 (upgrade gives +2 but we use 10 for safety)
+                )
         except ImportError as e:
             self.logger.error(f"[LurkerAmbush] Failed to import UpgradeId: {e}")
         except AttributeError as e:
             self.logger.error(f"[LurkerAmbush] Bot state not available: {e}")
         except Exception as e:
-            self.logger.error(f"[LurkerAmbush] Unexpected error checking lurker upgrades: {e}")
+            self.logger.error(
+                f"[LurkerAmbush] Unexpected error checking lurker upgrades: {e}"
+            )
 
     # ========================================
     # Statistics
@@ -355,12 +364,8 @@ class LurkerAmbushSystem:
         for tag, state in self.lurker_states.items():
             states[state] = states.get(state, 0) + 1
 
-        self.logger.info(
-            f"[{int(game_time)}s] === LURKER AMBUSH REPORT ==="
-        )
-        self.logger.info(
-            f"Lurkers: {len(lurkers)} | States: {states}"
-        )
+        self.logger.info(f"[{int(game_time)}s] === LURKER AMBUSH REPORT ===")
+        self.logger.info(f"Lurkers: {len(lurkers)} | States: {states}")
         self.logger.info(
             f"Ambushes: {self.ambushes_executed} | Range: {self.LURKER_RANGE}"
         )

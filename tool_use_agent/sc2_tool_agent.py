@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Tool Definition
 # ============================================================================
 
+
 @dataclass
 class Tool:
     """A single callable tool that the agent can invoke.
@@ -41,10 +42,11 @@ class Tool:
     return value.  The ``description`` is used by the agent's reasoning
     step to decide when this tool is appropriate.
     """
+
     name: str
     description: str
-    parameters: Dict[str, str]          # param_name -> type hint string
-    fn: Callable[..., Dict[str, Any]]   # the actual implementation
+    parameters: Dict[str, str]  # param_name -> type hint string
+    fn: Callable[..., Dict[str, Any]]  # the actual implementation
     category: str = "general"
     examples: List[str] = field(default_factory=list)
 
@@ -54,7 +56,10 @@ class Tool:
         try:
             result = self.fn(**kwargs)
             elapsed = time.perf_counter() - start
-            result["_meta"] = {"tool": self.name, "elapsed_ms": round(elapsed * 1000, 2)}
+            result["_meta"] = {
+                "tool": self.name,
+                "elapsed_ms": round(elapsed * 1000, 2),
+            }
             return result
         except Exception as exc:
             return {"error": str(exc), "_meta": {"tool": self.name}}
@@ -70,6 +75,7 @@ class Tool:
 # ============================================================================
 # Tool Registry
 # ============================================================================
+
 
 class ToolRegistry:
     """Central registry of all available tools.
@@ -113,6 +119,7 @@ class ToolRegistry:
 # Tool Call Parser
 # ============================================================================
 
+
 class ToolCallParser:
     """Parses structured tool-call strings from the agent's reasoning output.
 
@@ -122,9 +129,7 @@ class ToolCallParser:
     """
 
     # Pattern: CALL: name(k=v, k=v, ...)
-    _CALL_PATTERN = re.compile(
-        r"CALL:\s*(\w+)\(([^)]*)\)", re.IGNORECASE
-    )
+    _CALL_PATTERN = re.compile(r"CALL:\s*(\w+)\(([^)]*)\)", re.IGNORECASE)
     # Pattern: ACTION: name {json}
     _ACTION_PATTERN = re.compile(
         r"ACTION:\s*(\w+)\s*(\{.*\})", re.IGNORECASE | re.DOTALL
@@ -186,6 +191,7 @@ class ToolCallParser:
 # Tool Executor
 # ============================================================================
 
+
 class ToolExecutor:
     """Executes tool calls with validation and logging."""
 
@@ -198,15 +204,23 @@ class ToolExecutor:
         tool = self.registry.get(tool_name)
         if tool is None:
             result = {"error": f"Unknown tool: {tool_name}"}
-            self.call_history.append({
-                "tool": tool_name, "args": kwargs, "result": result,
-            })
+            self.call_history.append(
+                {
+                    "tool": tool_name,
+                    "args": kwargs,
+                    "result": result,
+                }
+            )
             return result
 
         result = tool.call(**kwargs)
-        self.call_history.append({
-            "tool": tool_name, "args": kwargs, "result": result,
-        })
+        self.call_history.append(
+            {
+                "tool": tool_name,
+                "args": kwargs,
+                "result": result,
+            }
+        )
         return result
 
     def get_history(self) -> List[Dict[str, Any]]:
@@ -220,6 +234,7 @@ class ToolExecutor:
 # SC2-Specific Tools
 # ============================================================================
 
+
 def _calculate_army_value(
     unit_counts: str,
     include_upgrades: bool = False,
@@ -231,38 +246,38 @@ def _calculate_army_value(
         include_upgrades: Whether to add estimated upgrade costs.
     """
     unit_costs: Dict[str, Tuple[int, int]] = {
-        "Zergling":     (25, 0),
-        "Baneling":     (50, 25),
-        "Roach":        (75, 25),
-        "Ravager":      (100, 75),
-        "Hydralisk":    (100, 50),
-        "Lurker":       (150, 100),
-        "Mutalisk":     (100, 100),
-        "Corruptor":    (150, 100),
-        "BroodLord":    (300, 250),
-        "Ultralisk":    (300, 200),
-        "Viper":        (100, 200),
-        "Infestor":     (100, 150),
-        "Queen":        (150, 0),
-        "Overlord":     (100, 0),
-        "Overseer":     (150, 50),
-        "SwarmHost":    (150, 100),
-        "Marine":       (50, 0),
-        "Marauder":     (100, 25),
-        "SiegeTank":    (150, 125),
-        "Medivac":      (100, 100),
-        "Viking":       (150, 75),
-        "Liberator":    (150, 150),
-        "Thor":         (300, 200),
+        "Zergling": (25, 0),
+        "Baneling": (50, 25),
+        "Roach": (75, 25),
+        "Ravager": (100, 75),
+        "Hydralisk": (100, 50),
+        "Lurker": (150, 100),
+        "Mutalisk": (100, 100),
+        "Corruptor": (150, 100),
+        "BroodLord": (300, 250),
+        "Ultralisk": (300, 200),
+        "Viper": (100, 200),
+        "Infestor": (100, 150),
+        "Queen": (150, 0),
+        "Overlord": (100, 0),
+        "Overseer": (150, 50),
+        "SwarmHost": (150, 100),
+        "Marine": (50, 0),
+        "Marauder": (100, 25),
+        "SiegeTank": (150, 125),
+        "Medivac": (100, 100),
+        "Viking": (150, 75),
+        "Liberator": (150, 150),
+        "Thor": (300, 200),
         "Battlecruiser": (400, 300),
-        "Zealot":       (100, 0),
-        "Stalker":      (125, 50),
-        "Immortal":     (275, 100),
-        "Colossus":     (300, 200),
-        "VoidRay":      (250, 150),
-        "Carrier":      (350, 250),
-        "HighTemplar":  (50, 150),
-        "Archon":       (100, 300),
+        "Zealot": (100, 0),
+        "Stalker": (125, 50),
+        "Immortal": (275, 100),
+        "Colossus": (300, 200),
+        "VoidRay": (250, 150),
+        "Carrier": (350, 250),
+        "HighTemplar": (50, 150),
+        "Archon": (100, 300),
     }
 
     total_minerals = 0
@@ -359,19 +374,19 @@ def _estimate_timing(
     """
     costs: Dict[str, Tuple[int, int, int]] = {
         # (minerals, gas, build_time_seconds)
-        "Hatchery":     (300, 0, 71),
-        "Lair":         (150, 100, 57),
-        "Hive":         (200, 150, 71),
+        "Hatchery": (300, 0, 71),
+        "Lair": (150, 100, 57),
+        "Hive": (200, 150, 71),
         "SpawningPool": (200, 0, 46),
-        "RoachWarren":  (150, 0, 39),
+        "RoachWarren": (150, 0, 39),
         "HydraliskDen": (100, 100, 29),
-        "Spire":        (200, 200, 71),
+        "Spire": (200, 200, 71),
         "UltraliskCavern": (150, 200, 46),
         "InfestationPit": (100, 100, 36),
-        "Ultralisk":    (300, 200, 39),
-        "BroodLord":    (300, 250, 34),
-        "Mutalisk":     (100, 100, 24),
-        "Lurker":       (150, 100, 18),
+        "Ultralisk": (300, 200, 39),
+        "BroodLord": (300, 250, 34),
+        "Mutalisk": (100, 100, 24),
+        "Lurker": (150, 100, 18),
     }
 
     if target_unit not in costs:
@@ -405,7 +420,11 @@ def _estimate_timing(
         "gather_seconds": round(gather_time, 1),
         "build_seconds": build_time,
         "total_seconds": round(total_time, 1),
-        "ready_in": f"{total_time / 60:.1f} minutes" if total_time > 60 else f"{total_time:.0f} seconds",
+        "ready_in": (
+            f"{total_time / 60:.1f} minutes"
+            if total_time > 60
+            else f"{total_time:.0f} seconds"
+        ),
         "can_afford_now": m_deficit == 0 and g_deficit == 0,
     }
 
@@ -422,37 +441,37 @@ def _suggest_counter(
     """
     counters: Dict[str, Dict[str, List[str]]] = {
         "Zerg": {
-            "Marine":       ["Baneling", "Zergling"],
-            "Marauder":     ["Zergling", "Mutalisk"],
-            "SiegeTank":    ["Mutalisk", "Ravager", "SwarmHost"],
-            "Medivac":      ["Corruptor", "Hydralisk"],
-            "Liberator":    ["Corruptor", "Viper"],
-            "Thor":         ["Zergling", "Broodlord"],
+            "Marine": ["Baneling", "Zergling"],
+            "Marauder": ["Zergling", "Mutalisk"],
+            "SiegeTank": ["Mutalisk", "Ravager", "SwarmHost"],
+            "Medivac": ["Corruptor", "Hydralisk"],
+            "Liberator": ["Corruptor", "Viper"],
+            "Thor": ["Zergling", "Broodlord"],
             "Battlecruiser": ["Corruptor", "Viper", "Infestor"],
-            "Zealot":       ["Roach", "Baneling"],
-            "Stalker":      ["Zergling", "Hydralisk"],
-            "Immortal":     ["Zergling", "Mutalisk"],
-            "Colossus":     ["Corruptor", "Viper"],
-            "VoidRay":      ["Hydralisk", "Corruptor", "Queen"],
-            "Carrier":      ["Corruptor", "Viper", "Hydralisk"],
-            "HighTemplar":  ["Ultralisk", "Ghost"],
-            "Archon":       ["Roach", "Hydralisk"],
-            "Phoenix":      ["Hydralisk", "Queen"],
-            "DarkTemplar":  ["Overseer", "Zergling"],
-            "Banshee":      ["Queen", "Hydralisk", "Overseer"],
-            "Hellion":      ["Roach", "Queen"],
+            "Zealot": ["Roach", "Baneling"],
+            "Stalker": ["Zergling", "Hydralisk"],
+            "Immortal": ["Zergling", "Mutalisk"],
+            "Colossus": ["Corruptor", "Viper"],
+            "VoidRay": ["Hydralisk", "Corruptor", "Queen"],
+            "Carrier": ["Corruptor", "Viper", "Hydralisk"],
+            "HighTemplar": ["Ultralisk", "Ghost"],
+            "Archon": ["Roach", "Hydralisk"],
+            "Phoenix": ["Hydralisk", "Queen"],
+            "DarkTemplar": ["Overseer", "Zergling"],
+            "Banshee": ["Queen", "Hydralisk", "Overseer"],
+            "Hellion": ["Roach", "Queen"],
         },
         "Terran": {
-            "Zergling":     ["Hellion", "Hellbat"],
-            "Roach":        ["Marauder", "SiegeTank"],
-            "Mutalisk":     ["Marine", "Thor", "Liberator"],
-            "Ultralisk":    ["Marauder", "Liberator", "Ghost"],
+            "Zergling": ["Hellion", "Hellbat"],
+            "Roach": ["Marauder", "SiegeTank"],
+            "Mutalisk": ["Marine", "Thor", "Liberator"],
+            "Ultralisk": ["Marauder", "Liberator", "Ghost"],
         },
         "Protoss": {
-            "Zergling":     ["Zealot", "Adept", "Sentry"],
-            "Roach":        ["Immortal", "Stalker"],
-            "Mutalisk":     ["Phoenix", "Stalker", "Archon"],
-            "Ultralisk":    ["Immortal", "VoidRay"],
+            "Zergling": ["Zealot", "Adept", "Sentry"],
+            "Roach": ["Immortal", "Stalker"],
+            "Mutalisk": ["Phoenix", "Stalker", "Archon"],
+            "Ultralisk": ["Immortal", "VoidRay"],
         },
     }
 
@@ -488,7 +507,9 @@ def _composition_note(units: List[str]) -> str:
         return "No specific counters identified. Build a balanced army."
     air_units = {"Corruptor", "Mutalisk", "Viper", "Phoenix", "Viking", "Liberator"}
     has_air = any(u in air_units for u in units)
-    has_splash = any(u in {"Baneling", "Lurker", "Colossus", "SiegeTank"} for u in units)
+    has_splash = any(
+        u in {"Baneling", "Lurker", "Colossus", "SiegeTank"} for u in units
+    )
     notes: List[str] = []
     if has_air:
         notes.append("Include anti-air units")
@@ -501,56 +522,71 @@ def _composition_note(units: List[str]) -> str:
 
 # ── Build the default SC2 tool registry ──────────────────────────────────────
 
+
 def build_sc2_tool_registry() -> ToolRegistry:
     """Create and populate the default SC2 tool registry."""
     registry = ToolRegistry()
 
-    registry.register(Tool(
-        name="calculate_army_value",
-        description="Calculate total mineral/gas value of an army composition",
-        parameters={"unit_counts": "str", "include_upgrades": "bool"},
-        fn=_calculate_army_value,
-        category="economy",
-        examples=["CALL: calculate_army_value(unit_counts=Zergling:20,Roach:8)"],
-    ))
+    registry.register(
+        Tool(
+            name="calculate_army_value",
+            description="Calculate total mineral/gas value of an army composition",
+            parameters={"unit_counts": "str", "include_upgrades": "bool"},
+            fn=_calculate_army_value,
+            category="economy",
+            examples=["CALL: calculate_army_value(unit_counts=Zergling:20,Roach:8)"],
+        )
+    )
 
-    registry.register(Tool(
-        name="check_supply",
-        description="Analyze supply usage and detect supply blocks or imbalances",
-        parameters={
-            "supply_used": "int",
-            "supply_cap": "int",
-            "army_supply": "int",
-            "worker_count": "int",
-        },
-        fn=_check_supply,
-        category="macro",
-        examples=["CALL: check_supply(supply_used=80, supply_cap=84, army_supply=40, worker_count=44)"],
-    ))
+    registry.register(
+        Tool(
+            name="check_supply",
+            description="Analyze supply usage and detect supply blocks or imbalances",
+            parameters={
+                "supply_used": "int",
+                "supply_cap": "int",
+                "army_supply": "int",
+                "worker_count": "int",
+            },
+            fn=_check_supply,
+            category="macro",
+            examples=[
+                "CALL: check_supply(supply_used=80, supply_cap=84, army_supply=40, worker_count=44)"
+            ],
+        )
+    )
 
-    registry.register(Tool(
-        name="estimate_timing",
-        description="Estimate when a unit or building can be afforded and completed",
-        parameters={
-            "target_unit": "str",
-            "current_minerals": "int",
-            "current_gas": "int",
-            "income_minerals": "int",
-            "income_gas": "int",
-        },
-        fn=_estimate_timing,
-        category="planning",
-        examples=["CALL: estimate_timing(target_unit=Hive, current_minerals=400, current_gas=200, income_minerals=1000, income_gas=300)"],
-    ))
+    registry.register(
+        Tool(
+            name="estimate_timing",
+            description="Estimate when a unit or building can be afforded and completed",
+            parameters={
+                "target_unit": "str",
+                "current_minerals": "int",
+                "current_gas": "int",
+                "income_minerals": "int",
+                "income_gas": "int",
+            },
+            fn=_estimate_timing,
+            category="planning",
+            examples=[
+                "CALL: estimate_timing(target_unit=Hive, current_minerals=400, current_gas=200, income_minerals=1000, income_gas=300)"
+            ],
+        )
+    )
 
-    registry.register(Tool(
-        name="suggest_counter",
-        description="Suggest counter units based on observed enemy composition",
-        parameters={"enemy_units": "str", "player_race": "str"},
-        fn=_suggest_counter,
-        category="strategy",
-        examples=["CALL: suggest_counter(enemy_units=Marine,SiegeTank,Medivac, player_race=Zerg)"],
-    ))
+    registry.register(
+        Tool(
+            name="suggest_counter",
+            description="Suggest counter units based on observed enemy composition",
+            parameters={"enemy_units": "str", "player_race": "str"},
+            fn=_suggest_counter,
+            category="strategy",
+            examples=[
+                "CALL: suggest_counter(enemy_units=Marine,SiegeTank,Medivac, player_race=Zerg)"
+            ],
+        )
+    )
 
     return registry
 
@@ -558,6 +594,7 @@ def build_sc2_tool_registry() -> ToolRegistry:
 # ============================================================================
 # ReAct Loop State
 # ============================================================================
+
 
 class ReActStep(Enum):
     REASON = "reason"
@@ -569,6 +606,7 @@ class ReActStep(Enum):
 @dataclass
 class ReActTrace:
     """Records one step in the ReAct loop."""
+
     step_type: ReActStep
     content: str
     tool_name: Optional[str] = None
@@ -580,6 +618,7 @@ class ReActTrace:
 # ============================================================================
 # Tool-Use Agent
 # ============================================================================
+
 
 class ToolUseAgent:
     """AI agent that uses a ReAct loop with structured tool calls for SC2.
@@ -677,7 +716,9 @@ class ToolUseAgent:
 
         for step in range(self.max_steps):
             # ── REASON ───────────────────────────────────────────────
-            reason_text, action_text = self._reason(game_state, observations, tool_calls_made)
+            reason_text, action_text = self._reason(
+                game_state, observations, tool_calls_made
+            )
             self.trace.append(ReActTrace(ReActStep.REASON, reason_text))
             if self.verbose:
                 logger.info("[Step %d] REASON: %s", step + 1, reason_text)
@@ -689,14 +730,20 @@ class ToolUseAgent:
             # ── ACT ──────────────────────────────────────────────────
             parsed = ToolCallParser.parse(action_text)
             if parsed is None:
-                self.trace.append(ReActTrace(ReActStep.ACT, f"Parse failed: {action_text}"))
+                self.trace.append(
+                    ReActTrace(ReActStep.ACT, f"Parse failed: {action_text}")
+                )
                 break
 
             tool_name, kwargs = parsed
-            self.trace.append(ReActTrace(
-                ReActStep.ACT, action_text,
-                tool_name=tool_name, tool_args=kwargs,
-            ))
+            self.trace.append(
+                ReActTrace(
+                    ReActStep.ACT,
+                    action_text,
+                    tool_name=tool_name,
+                    tool_args=kwargs,
+                )
+            )
             if self.verbose:
                 logger.info("[Step %d] ACT: %s(%s)", step + 1, tool_name, kwargs)
 
@@ -706,18 +753,22 @@ class ToolUseAgent:
 
             # ── OBSERVE ──────────────────────────────────────────────
             observations.append(result)
-            self.trace.append(ReActTrace(
-                ReActStep.OBSERVE,
-                json.dumps(result, default=str),
-                tool_name=tool_name,
-                tool_result=result,
-            ))
+            self.trace.append(
+                ReActTrace(
+                    ReActStep.OBSERVE,
+                    json.dumps(result, default=str),
+                    tool_name=tool_name,
+                    tool_result=result,
+                )
+            )
             if self.verbose:
                 logger.info("[Step %d] OBSERVE: %s", step + 1, result)
 
         # ── FINAL decision ───────────────────────────────────────────
         decision = self._synthesize(game_state, observations)
-        self.trace.append(ReActTrace(ReActStep.FINAL, json.dumps(decision, default=str)))
+        self.trace.append(
+            ReActTrace(ReActStep.FINAL, json.dumps(decision, default=str))
+        )
         return decision
 
     def _reason(
@@ -808,6 +859,7 @@ class ToolUseAgent:
 # Demo
 # ============================================================================
 
+
 def demo() -> None:
     """Demonstrate the tool-use agent with sample SC2 game states."""
     print("=" * 70)
@@ -825,36 +877,54 @@ def demo() -> None:
     executor = ToolExecutor(registry)
 
     print("\n  [calculate_army_value]")
-    result = executor.execute("calculate_army_value", {
-        "unit_counts": "Zergling:20, Roach:8, Hydralisk:6",
-    })
-    print(f"    Total value: {result['total_value']} "
-          f"(M:{result['total_minerals']} G:{result['total_gas']})")
+    result = executor.execute(
+        "calculate_army_value",
+        {
+            "unit_counts": "Zergling:20, Roach:8, Hydralisk:6",
+        },
+    )
+    print(
+        f"    Total value: {result['total_value']} "
+        f"(M:{result['total_minerals']} G:{result['total_gas']})"
+    )
 
     print("\n  [check_supply]")
-    result = executor.execute("check_supply", {
-        "supply_used": 78, "supply_cap": 84,
-        "army_supply": 40, "worker_count": 44,
-    })
+    result = executor.execute(
+        "check_supply",
+        {
+            "supply_used": 78,
+            "supply_cap": 84,
+            "army_supply": 40,
+            "worker_count": 44,
+        },
+    )
     print(f"    Free supply: {result['free_supply']}")
     print(f"    Warnings: {result['warnings']}")
     print(f"    Recommendations: {result['recommendations']}")
 
     print("\n  [estimate_timing]")
-    result = executor.execute("estimate_timing", {
-        "target_unit": "Hive",
-        "current_minerals": 400, "current_gas": 100,
-        "income_minerals": 1000, "income_gas": 300,
-    })
+    result = executor.execute(
+        "estimate_timing",
+        {
+            "target_unit": "Hive",
+            "current_minerals": 400,
+            "current_gas": 100,
+            "income_minerals": 1000,
+            "income_gas": 300,
+        },
+    )
     print(f"    Target: {result['target']}")
     print(f"    Ready in: {result['ready_in']}")
     print(f"    Can afford now: {result['can_afford_now']}")
 
     print("\n  [suggest_counter]")
-    result = executor.execute("suggest_counter", {
-        "enemy_units": "Marine, SiegeTank, Medivac, Liberator",
-        "player_race": "Zerg",
-    })
+    result = executor.execute(
+        "suggest_counter",
+        {
+            "enemy_units": "Marine, SiegeTank, Medivac, Liberator",
+            "player_race": "Zerg",
+        },
+    )
     print(f"    Recommended comp: {result['recommended_composition']}")
     print(f"    Primary counter: {result['primary_counter']}")
     print(f"    Note: {result['composition_note']}")
@@ -892,8 +962,10 @@ def demo() -> None:
         "next_tech_target": "Hive",
     }
 
-    print(f"  Game state: supply={game_state['supply_used']}/{game_state['supply_cap']}, "
-          f"minerals={game_state['minerals']}, enemy={game_state['enemy_units']}")
+    print(
+        f"  Game state: supply={game_state['supply_used']}/{game_state['supply_cap']}, "
+        f"minerals={game_state['minerals']}, enemy={game_state['enemy_units']}"
+    )
     print("  Running ReAct loop...")
 
     decision = agent.run(game_state)

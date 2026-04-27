@@ -61,11 +61,17 @@ class RacialCounterManager:
         ratios = dict(current_ratios)
 
         if enemy_race == "Terran":
-            ratios = self._counter_terran(game_time, enemy_composition, ratios, request_building_fn)
+            ratios = self._counter_terran(
+                game_time, enemy_composition, ratios, request_building_fn
+            )
         elif enemy_race == "Protoss":
-            ratios = self._counter_protoss(game_time, enemy_composition, ratios, request_building_fn)
+            ratios = self._counter_protoss(
+                game_time, enemy_composition, ratios, request_building_fn
+            )
         elif enemy_race == "Zerg":
-            ratios = self._counter_zerg(game_time, enemy_composition, ratios, request_building_fn)
+            ratios = self._counter_zerg(
+                game_time, enemy_composition, ratios, request_building_fn
+            )
 
         # High-value threat scan (merged from DynamicCounterSystem)
         self.scan_high_threats(enemy_composition, game_time)
@@ -77,8 +83,11 @@ class RacialCounterManager:
     # ------------------------------------------------------------------
 
     def _counter_terran(
-        self, game_time: float, comp: Dict[str, int],
-        ratios: Dict[str, float], req_building=None,
+        self,
+        game_time: float,
+        comp: Dict[str, int],
+        ratios: Dict[str, float],
+        req_building=None,
     ) -> Dict[str, float]:
         marine = comp.get("MARINE", 0)
         marauder = comp.get("MARAUDER", 0)
@@ -99,8 +108,12 @@ class RacialCounterManager:
             self._set(ratios, "roach", 0.20)
             self._set(ratios, "hydralisk", 0.15)
             self._set(ratios, "ravager", 0.10)
-            self._log_once("zvt_bio", game_time, 300,
-                           f"[{int(game_time)}s] ZvT BIO -> Baneling+Ling priority")
+            self._log_once(
+                "zvt_bio",
+                game_time,
+                300,
+                f"[{int(game_time)}s] ZvT BIO -> Baneling+Ling priority",
+            )
 
         # Mech (tanks/thors): ravager bile + flank
         if tank >= 2 or thor >= 1:
@@ -109,8 +122,12 @@ class RacialCounterManager:
             self._set(ratios, "hydralisk", 0.20)
             self._set(ratios, "zergling", 0.15)
             self._set(ratios, "corruptor", 0.10)
-            self._log_once("zvt_mech", game_time, 300,
-                           f"[{int(game_time)}s] ZvT MECH -> Ravager bile + Roach")
+            self._log_once(
+                "zvt_mech",
+                game_time,
+                300,
+                f"[{int(game_time)}s] ZvT MECH -> Ravager bile + Roach",
+            )
 
         # Air (banshee/BC/liberator): hydra + corruptor
         if banshee >= 1 or battlecruiser >= 1 or liberator >= 2:
@@ -121,8 +138,12 @@ class RacialCounterManager:
             self._set(ratios, "zergling", 0.10)
             if req_building:
                 req_building(spore=True)
-            self._log_once("zvt_air", game_time, 300,
-                           f"[{int(game_time)}s] ZvT AIR -> Hydra+Corruptor+Spore")
+            self._log_once(
+                "zvt_air",
+                game_time,
+                300,
+                f"[{int(game_time)}s] ZvT AIR -> Hydra+Corruptor+Spore",
+            )
 
         # Hellion rush (early game): queen + roach
         if hellion >= 3 and game_time < 300:
@@ -138,8 +159,11 @@ class RacialCounterManager:
     # ------------------------------------------------------------------
 
     def _counter_protoss(
-        self, game_time: float, comp: Dict[str, int],
-        ratios: Dict[str, float], req_building=None,
+        self,
+        game_time: float,
+        comp: Dict[str, int],
+        ratios: Dict[str, float],
+        req_building=None,
     ) -> Dict[str, float]:
         immortal = comp.get("IMMORTAL", 0)
         colossus = comp.get("COLOSSUS", 0)
@@ -159,7 +183,9 @@ class RacialCounterManager:
                     if req_building:
                         req_building(spore=True)
                     if self.logger:
-                        self.logger.warning(f"[{int(game_time)}s] DT INCOMING! Spore + Overseer PRIORITY")
+                        self.logger.warning(
+                            f"[{int(game_time)}s] DT INCOMING! Spore + Overseer PRIORITY"
+                        )
                     if self.blackboard:
                         self.blackboard.set("urgent_overseer", True)
 
@@ -169,23 +195,33 @@ class RacialCounterManager:
                     if req_building:
                         req_building(spore=True)
                     if self.logger:
-                        self.logger.warning(f"[{int(game_time)}s] STARGATE TECH! Spore + Queen PRIORITY")
+                        self.logger.warning(
+                            f"[{int(game_time)}s] STARGATE TECH! Spore + Queen PRIORITY"
+                        )
 
         # Immortal 2+ -> ravager bile + zergling surround
         if immortal >= 2:
             self._set(ratios, "ravager", 0.35)
             self._set(ratios, "zergling", 0.35)
             self._set(ratios, "roach", 0.10)
-            self._log_once("zvp_immortal", game_time, 300,
-                           f"[{int(game_time)}s] IMMORTAL ({immortal}) - Ravager bile priority")
+            self._log_once(
+                "zvp_immortal",
+                game_time,
+                300,
+                f"[{int(game_time)}s] IMMORTAL ({immortal}) - Ravager bile priority",
+            )
 
         # Colossus 1+ -> corruptor mandatory
         if colossus >= 1:
             self._set(ratios, "corruptor", 0.40)
             self._set(ratios, "ravager", 0.20)
             self._set(ratios, "hydra", 0.30)
-            self._log_once("zvp_colossus", game_time, 300,
-                           f"[{int(game_time)}s] COLOSSUS ({colossus}) - Corruptor PRIORITY")
+            self._log_once(
+                "zvp_colossus",
+                game_time,
+                300,
+                f"[{int(game_time)}s] COLOSSUS ({colossus}) - Corruptor PRIORITY",
+            )
 
         # Void Ray / Carrier -> anti-air + viper
         if voidray >= 2 or carrier >= 1:
@@ -195,22 +231,32 @@ class RacialCounterManager:
                 self._set(ratios, "viper", 0.10)
                 self._set(ratios, "corruptor", 0.25)
                 self._set(ratios, "hydralisk", 0.30)
-            self._log_once("zvp_air", game_time, 300,
-                           f"[{int(game_time)}s] AIR THREAT - VoidRay/Carrier detected")
+            self._log_once(
+                "zvp_air",
+                game_time,
+                300,
+                f"[{int(game_time)}s] AIR THREAT - VoidRay/Carrier detected",
+            )
 
         # Disruptor -> split micro, fast units
         if disruptor >= 1:
             self._set(ratios, "zergling", 0.30)
             self._set(ratios, "mutalisk", 0.30)
-            self._log_cooldown("zvp_disruptor", game_time,
-                               f"[{int(game_time)}s] DISRUPTOR - Split micro needed")
+            self._log_cooldown(
+                "zvp_disruptor",
+                game_time,
+                f"[{int(game_time)}s] DISRUPTOR - Split micro needed",
+            )
 
         # High Templar / Archon -> rush them
         if high_templar >= 1 or archon >= 2:
             self._set(ratios, "zergling", 0.40)
             self._set(ratios, "ravager", 0.30)
-            self._log_cooldown("zvp_ht", game_time,
-                               f"[{int(game_time)}s] HIGH TEMPLAR/ARCHON - Rush them!")
+            self._log_cooldown(
+                "zvp_ht",
+                game_time,
+                f"[{int(game_time)}s] HIGH TEMPLAR/ARCHON - Rush them!",
+            )
 
         # Stalker 4+ -> zergling surround + roach
         if stalker >= 4:
@@ -218,8 +264,12 @@ class RacialCounterManager:
             self._set(ratios, "roach", 0.30)
             self._set(ratios, "ravager", 0.20)
             self._set(ratios, "baneling", 0.15)
-            self._log_once("zvp_stalker", game_time, 300,
-                           f"[{int(game_time)}s] ZvP STALKER ARMY -- Zergling surround + Roach")
+            self._log_once(
+                "zvp_stalker",
+                game_time,
+                300,
+                f"[{int(game_time)}s] ZvP STALKER ARMY -- Zergling surround + Roach",
+            )
 
         return ratios
 
@@ -228,8 +278,11 @@ class RacialCounterManager:
     # ------------------------------------------------------------------
 
     def _counter_zerg(
-        self, game_time: float, comp: Dict[str, int],
-        ratios: Dict[str, float], req_building=None,
+        self,
+        game_time: float,
+        comp: Dict[str, int],
+        ratios: Dict[str, float],
+        req_building=None,
     ) -> Dict[str, float]:
         zergling = comp.get("ZERGLING", 0)
         baneling = comp.get("BANELING", 0)
@@ -259,8 +312,11 @@ class RacialCounterManager:
             self._set(ratios, "hydra", 0.50)
             if req_building:
                 req_building(spore=True)
-            self._log_cooldown("zvz_muta", game_time,
-                               f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority")
+            self._log_cooldown(
+                "zvz_muta",
+                game_time,
+                f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority",
+            )
 
         # Mid-game transition: roach/hydra mirror -> lurker
         if game_time >= 360 and (roach >= 5 or hydra >= 5):
@@ -269,8 +325,12 @@ class RacialCounterManager:
             self._set(ratios, "roach", 0.25)
             self._set(ratios, "ravager", 0.15)
             self._set(ratios, "zergling", 0.10)
-            self._log_once("zvz_lurker", game_time, 360,
-                           f"[{int(game_time)}s] ZvZ MID: Lurker transition for positional advantage")
+            self._log_once(
+                "zvz_lurker",
+                game_time,
+                360,
+                f"[{int(game_time)}s] ZvZ MID: Lurker transition for positional advantage",
+            )
 
         return ratios
 
@@ -313,22 +373,89 @@ class RacialCounterManager:
 
     # Counter rules for high-value enemy units
     THREAT_COUNTER_RULES: Dict[str, Dict] = {
-        "BATTLECRUISER": {"counter_units": ["corruptor", "queen"], "ratios": [0.70, 0.30], "min_count": 8, "urgency": "CRITICAL"},
-        "THOR":          {"counter_units": ["roach", "ravager"], "ratios": [0.60, 0.40], "min_count": 8, "urgency": "HIGH"},
-        "SIEGETANK":     {"counter_units": ["roach", "ravager", "mutalisk"], "ratios": [0.40, 0.30, 0.30], "min_count": 6, "urgency": "HIGH"},
-        "LIBERATOR":     {"counter_units": ["corruptor", "hydralisk"], "ratios": [0.70, 0.30], "min_count": 6, "urgency": "MEDIUM"},
-        "CARRIER":       {"counter_units": ["corruptor", "hydralisk"], "ratios": [0.80, 0.20], "min_count": 10, "urgency": "CRITICAL"},
-        "VOIDRAY":       {"counter_units": ["corruptor", "hydralisk"], "ratios": [0.60, 0.40], "min_count": 6, "urgency": "HIGH"},
-        "COLOSSUS":      {"counter_units": ["corruptor", "roach"], "ratios": [0.70, 0.30], "min_count": 6, "urgency": "HIGH"},
-        "DISRUPTOR":     {"counter_units": ["roach", "hydralisk"], "ratios": [0.50, 0.50], "min_count": 8, "urgency": "HIGH"},
-        "IMMORTAL":      {"counter_units": ["hydralisk", "roach", "zergling"], "ratios": [0.50, 0.30, 0.20], "min_count": 10, "urgency": "HIGH"},
-        "ARCHON":        {"counter_units": ["roach", "hydralisk"], "ratios": [0.60, 0.40], "min_count": 8, "urgency": "HIGH"},
-        "BROODLORD":     {"counter_units": ["corruptor", "hydralisk"], "ratios": [0.80, 0.20], "min_count": 8, "urgency": "CRITICAL"},
-        "ULTRALISK":     {"counter_units": ["roach", "queen"], "ratios": [0.80, 0.20], "min_count": 10, "urgency": "HIGH"},
-        "LURKER":        {"counter_units": ["roach", "hydralisk"], "ratios": [0.50, 0.50], "min_count": 8, "urgency": "HIGH"},
+        "BATTLECRUISER": {
+            "counter_units": ["corruptor", "queen"],
+            "ratios": [0.70, 0.30],
+            "min_count": 8,
+            "urgency": "CRITICAL",
+        },
+        "THOR": {
+            "counter_units": ["roach", "ravager"],
+            "ratios": [0.60, 0.40],
+            "min_count": 8,
+            "urgency": "HIGH",
+        },
+        "SIEGETANK": {
+            "counter_units": ["roach", "ravager", "mutalisk"],
+            "ratios": [0.40, 0.30, 0.30],
+            "min_count": 6,
+            "urgency": "HIGH",
+        },
+        "LIBERATOR": {
+            "counter_units": ["corruptor", "hydralisk"],
+            "ratios": [0.70, 0.30],
+            "min_count": 6,
+            "urgency": "MEDIUM",
+        },
+        "CARRIER": {
+            "counter_units": ["corruptor", "hydralisk"],
+            "ratios": [0.80, 0.20],
+            "min_count": 10,
+            "urgency": "CRITICAL",
+        },
+        "VOIDRAY": {
+            "counter_units": ["corruptor", "hydralisk"],
+            "ratios": [0.60, 0.40],
+            "min_count": 6,
+            "urgency": "HIGH",
+        },
+        "COLOSSUS": {
+            "counter_units": ["corruptor", "roach"],
+            "ratios": [0.70, 0.30],
+            "min_count": 6,
+            "urgency": "HIGH",
+        },
+        "DISRUPTOR": {
+            "counter_units": ["roach", "hydralisk"],
+            "ratios": [0.50, 0.50],
+            "min_count": 8,
+            "urgency": "HIGH",
+        },
+        "IMMORTAL": {
+            "counter_units": ["hydralisk", "roach", "zergling"],
+            "ratios": [0.50, 0.30, 0.20],
+            "min_count": 10,
+            "urgency": "HIGH",
+        },
+        "ARCHON": {
+            "counter_units": ["roach", "hydralisk"],
+            "ratios": [0.60, 0.40],
+            "min_count": 8,
+            "urgency": "HIGH",
+        },
+        "BROODLORD": {
+            "counter_units": ["corruptor", "hydralisk"],
+            "ratios": [0.80, 0.20],
+            "min_count": 8,
+            "urgency": "CRITICAL",
+        },
+        "ULTRALISK": {
+            "counter_units": ["roach", "queen"],
+            "ratios": [0.80, 0.20],
+            "min_count": 10,
+            "urgency": "HIGH",
+        },
+        "LURKER": {
+            "counter_units": ["roach", "hydralisk"],
+            "ratios": [0.50, 0.50],
+            "min_count": 8,
+            "urgency": "HIGH",
+        },
     }
 
-    def scan_high_threats(self, enemy_composition: Dict[str, int], game_time: float) -> None:
+    def scan_high_threats(
+        self, enemy_composition: Dict[str, int], game_time: float
+    ) -> None:
         """
         Scan for high-value enemy units and register counters to Blackboard.
         Replaces DynamicCounterSystem.on_step().
@@ -359,7 +486,9 @@ class RacialCounterManager:
 
     def get_active_threats(self) -> List[str]:
         """Return list of detected high-value enemy unit types."""
-        return [k.replace("threat_", "") for k in self._log_flags if k.startswith("threat_")]
+        return [
+            k.replace("threat_", "") for k in self._log_flags if k.startswith("threat_")
+        ]
 
     def get_highest_threat(self) -> Tuple[str, str]:
         """Return highest urgency threat detected."""

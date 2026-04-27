@@ -22,12 +22,13 @@ class MockUnits:
     def closer_than(self, radius, position):
         """Mock closer_than method"""
         pos = position
-        if hasattr(position, 'position'):
+        if hasattr(position, "position"):
             pos = position.position
         result = []
         for unit in self._units:
-            distance = ((unit.position.x - pos.x) ** 2 +
-                       (unit.position.y - pos.y) ** 2) ** 0.5
+            distance = (
+                (unit.position.x - pos.x) ** 2 + (unit.position.y - pos.y) ** 2
+            ) ** 0.5
             if distance < radius:
                 result.append(unit)
         return MockUnits(result)
@@ -37,12 +38,12 @@ class MockUnits:
         if not self._units:
             return None
         pos = position
-        if hasattr(position, 'position'):
+        if hasattr(position, "position"):
             pos = position.position
         return min(
             self._units,
-            key=lambda u: ((u.position.x - pos.x) ** 2 +
-                          (u.position.y - pos.y) ** 2) ** 0.5
+            key=lambda u: ((u.position.x - pos.x) ** 2 + (u.position.y - pos.y) ** 2)
+            ** 0.5,
         )
 
     def __iter__(self):
@@ -75,7 +76,10 @@ class TestSpatialQueryOptimizer:
     def setup_method(self):
         """Setup before each test"""
         try:
-            from wicked_zerg_challenger.combat.spatial_query_optimizer import SpatialQueryOptimizer
+            from wicked_zerg_challenger.combat.spatial_query_optimizer import (
+                SpatialQueryOptimizer,
+            )
+
             self.bot = MockBot()
             self.optimizer = SpatialQueryOptimizer(self.bot)
         except ImportError:
@@ -85,7 +89,7 @@ class TestSpatialQueryOptimizer:
 
     def test_cache_initialization(self):
         """Test that cache is properly initialized"""
-        assert hasattr(self.optimizer, '_query_cache')
+        assert hasattr(self.optimizer, "_query_cache")
         assert isinstance(self.optimizer._query_cache, dict)
         assert len(self.optimizer._query_cache) == 0
 
@@ -138,9 +142,9 @@ class TestSpatialQueryOptimizer:
 
     def test_statistics_tracking(self):
         """Test that query statistics are tracked"""
-        assert hasattr(self.optimizer, 'total_queries')
-        assert hasattr(self.optimizer, 'cache_hits')
-        assert hasattr(self.optimizer, 'cache_misses')
+        assert hasattr(self.optimizer, "total_queries")
+        assert hasattr(self.optimizer, "cache_hits")
+        assert hasattr(self.optimizer, "cache_misses")
 
         initial_total = self.optimizer.total_queries
 
@@ -218,9 +222,7 @@ class TestSpatialQueryOptimizer:
         # Execute some queries
         for i in range(10):
             self.optimizer.get_enemies_near_position(
-                Point2((50, 50)),
-                10.0,
-                100  # Same iteration for cache hits
+                Point2((50, 50)), 10.0, 100  # Same iteration for cache hits
             )
 
         stats = self.optimizer.get_statistics()

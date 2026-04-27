@@ -56,13 +56,17 @@ class SC2PocketBaseClient:
 
     async def create_game(self, game: GameRecord) -> dict:
         """Create a game record in the 'games' collection."""
-        resp = await self.client.post("/api/collections/games/records", json=asdict(game))
+        resp = await self.client.post(
+            "/api/collections/games/records", json=asdict(game)
+        )
         resp.raise_for_status()
         result = resp.json()
         logger.info(f"Game created: {result['id']}")
         return result
 
-    async def list_games(self, page: int = 1, per_page: int = 20, filter_str: str = "") -> dict:
+    async def list_games(
+        self, page: int = 1, per_page: int = 20, filter_str: str = ""
+    ) -> dict:
         """List games with optional filter."""
         params = {"page": page, "perPage": per_page}
         if filter_str:
@@ -73,7 +77,9 @@ class SC2PocketBaseClient:
 
     async def create_player(self, player: PlayerRecord) -> dict:
         """Create a player record."""
-        resp = await self.client.post("/api/collections/players/records", json=asdict(player))
+        resp = await self.client.post(
+            "/api/collections/players/records", json=asdict(player)
+        )
         resp.raise_for_status()
         return resp.json()
 
@@ -93,7 +99,9 @@ class SC2PocketBaseClient:
                 f"/api/collections/leaderboard/records/{record_id}", json=entry
             )
         else:
-            resp = await self.client.post("/api/collections/leaderboard/records", json=entry)
+            resp = await self.client.post(
+                "/api/collections/leaderboard/records", json=entry
+            )
         resp.raise_for_status()
         logger.info(f"Leaderboard updated for player {player_id}")
         return resp.json()
@@ -103,10 +111,14 @@ class SC2PocketBaseClient:
         ws_url = self.base_url.replace("http", "ws") + f"/api/realtime"
         async with websockets.connect(ws_url) as ws:
             # Subscribe to collection
-            await ws.send(json.dumps({
-                "clientId": "sc2bot",
-                "subscriptions": [f"{collection}/*"],
-            }))
+            await ws.send(
+                json.dumps(
+                    {
+                        "clientId": "sc2bot",
+                        "subscriptions": [f"{collection}/*"],
+                    }
+                )
+            )
             logger.info(f"Subscribed to {collection} real-time events.")
             async for message in ws:
                 event = json.loads(message)

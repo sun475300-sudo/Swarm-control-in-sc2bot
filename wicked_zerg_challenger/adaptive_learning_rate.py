@@ -32,7 +32,7 @@ class AdaptiveLearningRate:
         min_lr: float = 0.0001,
         max_lr: float = 0.01,
         adjustment_factor: float = 1.2,
-        patience: int = 10
+        patience: int = 10,
     ):
         # 학습률 파라미터
         self.learning_rate = initial_lr
@@ -94,7 +94,9 @@ class AdaptiveLearningRate:
                 # 학습률 증가 (더 공격적으로 학습)
                 new_lr = self._increase_learning_rate()
                 if new_lr:
-                    logger.info(f"[OK] 승률 개선! ({recent_avg:.1%}) - 학습률 증가: {self.learning_rate:.6f}")
+                    logger.info(
+                        f"[OK] 승률 개선! ({recent_avg:.1%}) - 학습률 증가: {self.learning_rate:.6f}"
+                    )
                     self._save_stats()
                     return new_lr
 
@@ -106,7 +108,9 @@ class AdaptiveLearningRate:
                 if self.games_without_improvement >= self.patience:
                     new_lr = self._decrease_learning_rate()
                     if new_lr:
-                        logger.warning(f"[WARNING] {self.patience}게임 개선 없음 - 학습률 감소: {self.learning_rate:.6f}")
+                        logger.warning(
+                            f"[WARNING] {self.patience}게임 개선 없음 - 학습률 감소: {self.learning_rate:.6f}"
+                        )
                         self.games_without_improvement = 0
                         self._save_stats()
                         return new_lr
@@ -125,13 +129,15 @@ class AdaptiveLearningRate:
             old_lr = self.learning_rate
             self.learning_rate = new_lr
 
-            self.adjustment_history.append({
-                "game": self.total_games,
-                "action": "increase",
-                "old_lr": old_lr,
-                "new_lr": new_lr,
-                "win_rate": self.best_win_rate
-            })
+            self.adjustment_history.append(
+                {
+                    "game": self.total_games,
+                    "action": "increase",
+                    "old_lr": old_lr,
+                    "new_lr": new_lr,
+                    "win_rate": self.best_win_rate,
+                }
+            )
 
             return new_lr
 
@@ -145,29 +151,39 @@ class AdaptiveLearningRate:
             old_lr = self.learning_rate
             self.learning_rate = new_lr
 
-            self.adjustment_history.append({
-                "game": self.total_games,
-                "action": "decrease",
-                "old_lr": old_lr,
-                "new_lr": new_lr,
-                "win_rate": sum(self.recent_win_rates) / len(self.recent_win_rates) if self.recent_win_rates else 0.0
-            })
+            self.adjustment_history.append(
+                {
+                    "game": self.total_games,
+                    "action": "decrease",
+                    "old_lr": old_lr,
+                    "new_lr": new_lr,
+                    "win_rate": (
+                        sum(self.recent_win_rates) / len(self.recent_win_rates)
+                        if self.recent_win_rates
+                        else 0.0
+                    ),
+                }
+            )
 
             return new_lr
 
         # 최소값에 도달했으면 best_learning_rate로 리셋
         if self.learning_rate <= self.min_lr:
-            logger.info(f"최소 학습률 도달 - 최적값으로 리셋: {self.best_learning_rate:.6f}")
+            logger.info(
+                f"최소 학습률 도달 - 최적값으로 리셋: {self.best_learning_rate:.6f}"
+            )
             old_lr = self.learning_rate
             self.learning_rate = self.best_learning_rate
 
-            self.adjustment_history.append({
-                "game": self.total_games,
-                "action": "reset_to_best",
-                "old_lr": old_lr,
-                "new_lr": self.learning_rate,
-                "win_rate": self.best_win_rate
-            })
+            self.adjustment_history.append(
+                {
+                    "game": self.total_games,
+                    "action": "reset_to_best",
+                    "old_lr": old_lr,
+                    "new_lr": self.learning_rate,
+                    "win_rate": self.best_win_rate,
+                }
+            )
 
             return self.learning_rate
 
@@ -179,7 +195,11 @@ class AdaptiveLearningRate:
 
     def get_stats(self) -> Dict:
         """통계 반환"""
-        recent_avg = sum(self.recent_win_rates) / len(self.recent_win_rates) if self.recent_win_rates else 0.0
+        recent_avg = (
+            sum(self.recent_win_rates) / len(self.recent_win_rates)
+            if self.recent_win_rates
+            else 0.0
+        )
 
         return {
             "current_lr": self.learning_rate,
@@ -188,9 +208,11 @@ class AdaptiveLearningRate:
             "recent_win_rate": recent_avg,
             "total_games": self.total_games,
             "total_wins": self.total_wins,
-            "overall_win_rate": self.total_wins / self.total_games if self.total_games > 0 else 0.0,
+            "overall_win_rate": (
+                self.total_wins / self.total_games if self.total_games > 0 else 0.0
+            ),
             "games_without_improvement": self.games_without_improvement,
-            "adjustments": len(self.adjustment_history)
+            "adjustments": len(self.adjustment_history),
         }
 
     def get_summary(self) -> str:
@@ -200,18 +222,32 @@ class AdaptiveLearningRate:
         lines = []
         lines.append("\n[ADAPTIVE_LR] === 적응형 학습률 통계 ===")
         lines.append(f"  현재 학습률: {stats['current_lr']:.6f}")
-        lines.append(f"  최적 학습률: {stats['best_lr']:.6f} (승률: {stats['best_win_rate']:.1%})")
-        lines.append(f"  최근 승률: {stats['recent_win_rate']:.1%} (최근 {len(self.recent_win_rates)}게임)")
-        lines.append(f"  전체 승률: {stats['overall_win_rate']:.1%} ({stats['total_wins']}/{stats['total_games']})")
-        lines.append(f"  개선 없음: {stats['games_without_improvement']}/{self.patience}게임")
+        lines.append(
+            f"  최적 학습률: {stats['best_lr']:.6f} (승률: {stats['best_win_rate']:.1%})"
+        )
+        lines.append(
+            f"  최근 승률: {stats['recent_win_rate']:.1%} (최근 {len(self.recent_win_rates)}게임)"
+        )
+        lines.append(
+            f"  전체 승률: {stats['overall_win_rate']:.1%} ({stats['total_wins']}/{stats['total_games']})"
+        )
+        lines.append(
+            f"  개선 없음: {stats['games_without_improvement']}/{self.patience}게임"
+        )
         lines.append(f"  총 조정 횟수: {stats['adjustments']}회")
 
         # 최근 조정 이력
         if self.adjustment_history:
             lines.append("\n  최근 조정:")
             for adj in self.adjustment_history[-3:]:
-                action_emoji = "[UP]" if adj["action"] == "increase" else "[DN]" if adj["action"] == "decrease" else "[~]"
-                lines.append(f"    {action_emoji} Game {adj['game']}: {adj['old_lr']:.6f} -> {adj['new_lr']:.6f}")
+                action_emoji = (
+                    "[UP]"
+                    if adj["action"] == "increase"
+                    else "[DN]" if adj["action"] == "decrease" else "[~]"
+                )
+                lines.append(
+                    f"    {action_emoji} Game {adj['game']}: {adj['old_lr']:.6f} -> {adj['new_lr']:.6f}"
+                )
 
         lines.append("=" * 40)
         return "\n".join(lines)
@@ -229,10 +265,10 @@ class AdaptiveLearningRate:
                 "total_wins": self.total_wins,
                 "recent_win_rates": self.recent_win_rates,
                 "games_without_improvement": self.games_without_improvement,
-                "adjustment_history": self.adjustment_history
+                "adjustment_history": self.adjustment_history,
             }
 
-            with open(self.save_path, 'w', encoding='utf-8') as f:
+            with open(self.save_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
@@ -242,16 +278,20 @@ class AdaptiveLearningRate:
         """통계 로드"""
         try:
             if self.save_path.exists():
-                with open(self.save_path, 'r', encoding='utf-8') as f:
+                with open(self.save_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.learning_rate = data.get("learning_rate", self.learning_rate)
-                self.best_learning_rate = data.get("best_learning_rate", self.best_learning_rate)
+                self.best_learning_rate = data.get(
+                    "best_learning_rate", self.best_learning_rate
+                )
                 self.best_win_rate = data.get("best_win_rate", self.best_win_rate)
                 self.total_games = data.get("total_games", 0)
                 self.total_wins = data.get("total_wins", 0)
                 self.recent_win_rates = data.get("recent_win_rates", [])
-                self.games_without_improvement = data.get("games_without_improvement", 0)
+                self.games_without_improvement = data.get(
+                    "games_without_improvement", 0
+                )
                 self.adjustment_history = data.get("adjustment_history", [])
 
                 logger.info(f"통계 로드 완료 - 현재 학습률: {self.learning_rate:.6f}")
@@ -261,6 +301,10 @@ class AdaptiveLearningRate:
 
     def reset(self) -> None:
         """통계 리셋"""
-        self.learning_rate = self.best_learning_rate if self.best_learning_rate > 0 else self.learning_rate
+        self.learning_rate = (
+            self.best_learning_rate
+            if self.best_learning_rate > 0
+            else self.learning_rate
+        )
         self.games_without_improvement = 0
         logger.info(f"리셋 완료 - 학습률: {self.learning_rate:.6f}")

@@ -11,6 +11,7 @@ logger = logging.getLogger("ExpansionManager")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
+
     class UnitTypeId:
         HATCHERY = "HATCHERY"
 
@@ -35,8 +36,12 @@ def can_expand_safely(resilience) -> tuple:
     if not under_attack and hasattr(b, "enemy_units") and b.enemy_units:
         if b.townhalls.exists:
             base = b.townhalls.first
-            threshold = resilience.enemy_near_base_distance * resilience.enemy_near_base_scale
-            enemy_near_base = any(e.distance_to(base.position) < threshold for e in b.enemy_units)
+            threshold = (
+                resilience.enemy_near_base_distance * resilience.enemy_near_base_scale
+            )
+            enemy_near_base = any(
+                e.distance_to(base.position) < threshold for e in b.enemy_units
+            )
 
     # AGGRESSIVE EXPANSION: If minerals > 300, bypass most safety checks
     # Especially if we don't have a natural expansion yet (bases < 2)
@@ -45,7 +50,9 @@ def can_expand_safely(resilience) -> tuple:
 
     # Critical: Bypass enemy check if it's just 1-2 units (likely scouts)
     if enemy_near_base and not under_attack:
-        enemy_count = sum(1 for e in b.enemy_units if e.distance_to(b.townhalls.first.position) < 30)
+        enemy_count = sum(
+            1 for e in b.enemy_units if e.distance_to(b.townhalls.first.position) < 30
+        )
         if enemy_count <= 2:
             enemy_near_base = False  # Ignore scouts
 
@@ -62,12 +69,16 @@ def can_expand_safely(resilience) -> tuple:
     # Aggressive expand ignores this ONLY if we are rich (>800 mins)
     req_army = resilience.min_army_supply
     if bases >= 2:
-         # If aggressive but poor army, BLOCK expansion to force army production
-         if aggressive_expand and b.minerals < 800 and supply_army < 6:
-              return False, f"danger_no_army ({supply_army}/6)"
+        # If aggressive but poor army, BLOCK expansion to force army production
+        if aggressive_expand and b.minerals < 800 and supply_army < 6:
+            return False, f"danger_no_army ({supply_army}/6)"
 
-         if not aggressive_expand and supply_army < req_army and b.time > resilience.min_army_time:
-              return False, f"low_army ({supply_army}/{req_army})"
+        if (
+            not aggressive_expand
+            and supply_army < req_army
+            and b.time > resilience.min_army_time
+        ):
+            return False, f"low_army ({supply_army}/{req_army})"
 
     # Relax drone requirement when banking minerals
     drones = b.workers.amount if hasattr(b, "workers") else 0
@@ -76,10 +87,10 @@ def can_expand_safely(resilience) -> tuple:
     # Exception: Huge bank (>1000) allows expanding to burn minerals
     min_drones_limit = resilience.min_drones_per_base  # Default 14-16
     if aggressive_expand:
-         if b.minerals > 1000:
-             min_drones_limit = 0 # Ignore limit if rich
-         else:
-             min_drones_limit = 12 # Minimum functional saturation
+        if b.minerals > 1000:
+            min_drones_limit = 0  # Ignore limit if rich
+        else:
+            min_drones_limit = 12  # Minimum functional saturation
 
     # 1기지 → 2기지는 드론 요구 최소화 (확장이 최우선)
     if bases == 1:
@@ -90,7 +101,15 @@ def can_expand_safely(resilience) -> tuple:
     # Reduce cooldown when banking minerals
     now = getattr(b, "time", 0.0)
     # If no natural, almost zero cooldown
-    effective_cooldown = 10.0 if bases < 2 else (resilience.expansion_retry_cooldown / 2 if aggressive_expand else resilience.expansion_retry_cooldown)
+    effective_cooldown = (
+        10.0
+        if bases < 2
+        else (
+            resilience.expansion_retry_cooldown / 2
+            if aggressive_expand
+            else resilience.expansion_retry_cooldown
+        )
+    )
     if now - resilience.last_expansion_attempt < effective_cooldown:
         return False, "cooldown"
 

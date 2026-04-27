@@ -12,6 +12,7 @@ import random
 
 try:
     import omni.isaac.lab  # type: ignore
+
     ISAAC_AVAILABLE = True
 except ImportError:
     ISAAC_AVAILABLE = False
@@ -20,6 +21,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # Vector2D primitive
 # ─────────────────────────────────────────────
+
 
 @dataclass
 class Vec2:
@@ -36,7 +38,7 @@ class Vec2:
         return Vec2(self.x * s, self.y * s)
 
     def magnitude(self) -> float:
-        return math.sqrt(self.x ** 2 + self.y ** 2)
+        return math.sqrt(self.x**2 + self.y**2)
 
     def normalized(self) -> "Vec2":
         m = self.magnitude()
@@ -55,18 +57,20 @@ class Vec2:
 # SC2 Drone (maps to Isaac Lab "agent")
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SC2Drone:
     """Individual unit agent in the swarm."""
+
     agent_id: int
     position: Vec2
     velocity: Vec2 = field(default_factory=Vec2)
     health: float = 40.0
     max_health: float = 40.0
-    role: str = "worker"    # worker | fighter | scout
-    carrying: int = 0       # minerals carried
+    role: str = "worker"  # worker | fighter | scout
+    carrying: int = 0  # minerals carried
     target: Optional[Vec2] = None
-    state: str = "idle"     # idle | moving | mining | returning | attacking
+    state: str = "idle"  # idle | moving | mining | returning | attacking
 
     MAX_SPEED = 2.81
     MINE_RANGE = 1.5
@@ -105,9 +109,11 @@ class SC2Drone:
 # Swarm controller (Isaac Lab "env" analog)
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SwarmEnvironment:
     """Manages a swarm of SC2 drone agents."""
+
     width: float = 100.0
     height: float = 100.0
     drones: list[SC2Drone] = field(default_factory=list)
@@ -155,8 +161,7 @@ class SwarmEnvironment:
             if other.agent_id == drone.agent_id:
                 continue
             if drone.position.distance_to(other.position) < self.FLOCKING_RADIUS:
-                center = Vec2(center.x + other.position.x,
-                              center.y + other.position.y)
+                center = Vec2(center.x + other.position.x, center.y + other.position.y)
                 count += 1
         if count > 0:
             center = Vec2(center.x / count, center.y / count)
@@ -169,8 +174,9 @@ class SwarmEnvironment:
         for drone in self.drones:
             if drone.role == "worker" and drone.state == "idle":
                 # Find nearest patch
-                nearest = min(self.minerals_patches,
-                              key=lambda p: drone.position.distance_to(p))
+                nearest = min(
+                    self.minerals_patches, key=lambda p: drone.position.distance_to(p)
+                )
                 drone.target = nearest
                 drone.state = "moving"
 
@@ -185,8 +191,7 @@ class SwarmEnvironment:
                     drone.state = "moving"
                     break
             # Return to hatchery
-            if (drone.carrying >= 8 and
-                    drone.position.distance_to(self.hatchery) < 1.5):
+            if drone.carrying >= 8 and drone.position.distance_to(self.hatchery) < 1.5:
                 self.total_minerals += drone.carrying
                 drone.carrying = 0
                 drone.state = "idle"
@@ -222,8 +227,11 @@ if __name__ == "__main__":
 
     env = SwarmEnvironment()
     env.minerals_patches = [
-        Vec2(25, 25), Vec2(27, 25), Vec2(25, 27),
-        Vec2(29, 25), Vec2(31, 25),
+        Vec2(25, 25),
+        Vec2(27, 25),
+        Vec2(25, 27),
+        Vec2(29, 25),
+        Vec2(31, 25),
     ]
 
     for _ in range(12):
@@ -233,8 +241,10 @@ if __name__ == "__main__":
     for step in range(200):
         state = env.step()
         if step % 50 == 0:
-            print(f"  Step {state['frame']:4d} | "
-                  f"Drones: {state['drones']} | "
-                  f"Minerals: {state['total_minerals']}")
+            print(
+                f"  Step {state['frame']:4d} | "
+                f"Drones: {state['drones']} | "
+                f"Minerals: {state['total_minerals']}"
+            )
 
     print(f"\nFinal minerals collected: {env.total_minerals}")

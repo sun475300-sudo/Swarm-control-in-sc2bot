@@ -78,8 +78,12 @@ def create_package(skip: bool) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Phase 50 integrated validation")
-    parser.add_argument("--skip-pytest", action="store_true", help="Skip pytest quick run")
-    parser.add_argument("--skip-package", action="store_true", help="Skip arena package creation")
+    parser.add_argument(
+        "--skip-pytest", action="store_true", help="Skip pytest quick run"
+    )
+    parser.add_argument(
+        "--skip-package", action="store_true", help="Skip arena package creation"
+    )
     args = parser.parse_args()
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -105,7 +109,9 @@ def main() -> int:
     }
 
     report_path = REPORT_DIR / f"phase50_validation_{ts}.json"
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    report_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     print("=" * 60)
     print("Phase 50 Integrated Validation")

@@ -39,7 +39,7 @@ _RESOURCE = Resource.create(
 
 _jaeger_exporter = JaegerExporter(
     agent_host_name="jaeger-agent.monitoring.svc.cluster.local",
-    agent_port=6831,          # UDP/Thrift compact protocol
+    agent_port=6831,  # UDP/Thrift compact protocol
     # udp_split_oversized_batches=True,
 )
 
@@ -62,14 +62,19 @@ propagate.set_global_textmap(
 )
 
 # Module-level tracer
-_tracer = trace.get_tracer(__name__, schema_url="https://opentelemetry.io/schemas/1.21.0")
+_tracer = trace.get_tracer(
+    __name__, schema_url="https://opentelemetry.io/schemas/1.21.0"
+)
 
 
 # ---------------------------------------------------------------------------
 # Helper: attach SC2-specific semantic attributes to the current span
 # ---------------------------------------------------------------------------
 
-def _attach_game_attributes(span: trace.Span, race: str = "", map_name: str = "", mmr: int = 0) -> None:
+
+def _attach_game_attributes(
+    span: trace.Span, race: str = "", map_name: str = "", mmr: int = 0
+) -> None:
     """Enrich a span with SC2 bot domain attributes."""
     if race:
         span.set_attribute("sc2bot.race", race)
@@ -84,12 +89,14 @@ def _attach_game_attributes(span: trace.Span, race: str = "", map_name: str = ""
 # Span Decorators
 # ---------------------------------------------------------------------------
 
+
 def game_decision_span(race: str = "", map_name: str = "", mmr: int = 0) -> Callable:
     """
     Decorator that wraps a game-decision function in an OTel span.
     Captures high-level strategic decision calls (build order evaluation,
     macro/micro priority arbiter).
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -101,7 +108,7 @@ def game_decision_span(race: str = "", map_name: str = "", mmr: int = 0) -> Call
                 span.set_attribute("sc2bot.decision.function", func.__name__)
                 # Propagate baggage values set by the caller
                 _race = baggage.get_baggage("sc2bot.race") or race
-                _map  = baggage.get_baggage("sc2bot.map")  or map_name
+                _map = baggage.get_baggage("sc2bot.map") or map_name
                 if _race:
                     span.set_attribute("sc2bot.race", _race)
                 if _map:
@@ -114,7 +121,9 @@ def game_decision_span(race: str = "", map_name: str = "", mmr: int = 0) -> Call
                     span.record_exception(exc)
                     span.set_status(trace.StatusCode.ERROR, str(exc))
                     raise
+
         return wrapper
+
     return decorator
 
 
@@ -123,6 +132,7 @@ def pathfinding_span(func: Callable) -> Callable:
     Decorator for pathfinding calls.
     Records unit_tag, start/end tile coordinates, and path length.
     """
+
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         unit_tag = kwargs.get("unit_tag", args[1] if len(args) > 1 else "unknown")
@@ -142,6 +152,7 @@ def pathfinding_span(func: Callable) -> Callable:
                 span.record_exception(exc)
                 span.set_status(trace.StatusCode.ERROR, str(exc))
                 raise
+
     return wrapper
 
 
@@ -150,6 +161,7 @@ def combat_calc_span(func: Callable) -> Callable:
     Decorator for combat calculation functions.
     Records army_supply, enemy_supply, and engagement outcome.
     """
+
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         with _tracer.start_as_current_span(
@@ -157,26 +169,30 @@ def combat_calc_span(func: Callable) -> Callable:
             kind=trace.SpanKind.INTERNAL,
         ) as span:
             span.set_attribute("sc2bot.combat.function", func.__name__)
-            army_supply   = kwargs.get("army_supply", 0)
-            enemy_supply  = kwargs.get("enemy_supply", 0)
-            span.set_attribute("sc2bot.combat.army_supply",  army_supply)
+            army_supply = kwargs.get("army_supply", 0)
+            enemy_supply = kwargs.get("enemy_supply", 0)
+            span.set_attribute("sc2bot.combat.army_supply", army_supply)
             span.set_attribute("sc2bot.combat.enemy_supply", enemy_supply)
             try:
                 result = func(*args, **kwargs)
                 if isinstance(result, dict):
-                    span.set_attribute("sc2bot.combat.engage", result.get("engage", False))
+                    span.set_attribute(
+                        "sc2bot.combat.engage", result.get("engage", False)
+                    )
                 span.set_status(trace.StatusCode.OK)
                 return result
             except Exception as exc:
                 span.record_exception(exc)
                 span.set_status(trace.StatusCode.ERROR, str(exc))
                 raise
+
     return wrapper
 
 
 # ---------------------------------------------------------------------------
 # Context Propagation between microservices
 # ---------------------------------------------------------------------------
+
 
 def inject_context_headers(headers: dict) -> dict:
     """

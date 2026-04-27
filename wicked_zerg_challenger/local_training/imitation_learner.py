@@ -24,6 +24,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.optim as optim
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -94,6 +95,7 @@ class ReplayActionExtractor:
             # sc2reader 또는 s2protocol 사용 시도
             try:
                 import sc2reader
+
                 replay = sc2reader.load_replay(replay_path)
 
                 for event in replay.events:
@@ -229,7 +231,9 @@ class ReplayActionExtractor:
         try:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(self.extracted_data, f, indent=2, ensure_ascii=False)
-            logger.info(f"데이터셋 저장 완료: {output_path} ({len(self.extracted_data)} frames)")
+            logger.info(
+                f"데이터셋 저장 완료: {output_path} ({len(self.extracted_data)} frames)"
+            )
             return True
         except Exception as e:
             logger.info(f"데이터셋 저장 실패: {e}")
@@ -245,9 +249,12 @@ class ImitationNetwork(nn.Module):
     출력: 행동 확률 분포
     """
 
-    def __init__(self, state_dim: int = 15,
-                 action_dim: int = ReplayActionExtractor.NUM_ACTIONS,
-                 hidden_dim: int = 128):
+    def __init__(
+        self,
+        state_dim: int = 15,
+        action_dim: int = ReplayActionExtractor.NUM_ACTIONS,
+        hidden_dim: int = 128,
+    ):
         """
         Args:
             state_dim: 상태 벡터 차원
@@ -336,8 +343,10 @@ class ImitationLearner:
         # 모델 로드 시도
         self._load_model()
 
-        logger.info(f"ImitationLearner 초기화 완료 "
-              f"(state_dim={state_dim}, action_dim={self.action_dim}, device={self.device})")
+        logger.info(
+            f"ImitationLearner 초기화 완료 "
+            f"(state_dim={state_dim}, action_dim={self.action_dim}, device={self.device})"
+        )
 
     def add_demonstration(self, state: np.ndarray, action: int) -> None:
         """
@@ -410,7 +419,9 @@ class ImitationLearner:
 
         return stats
 
-    def train(self, num_epochs: int = 100, verbose: bool = True) -> List[Dict[str, float]]:
+    def train(
+        self, num_epochs: int = 100, verbose: bool = True
+    ) -> List[Dict[str, float]]:
         """
         여러 에폭 학습
 
@@ -427,8 +438,10 @@ class ImitationLearner:
             results.append(stats)
 
             if verbose and epoch % 10 == 0:
-                logger.info(f"Epoch {self.epoch_count}: "
-                      f"loss={stats['loss']:.4f}, accuracy={stats['accuracy']:.3f}")
+                logger.info(
+                    f"Epoch {self.epoch_count}: "
+                    f"loss={stats['loss']:.4f}, accuracy={stats['accuracy']:.3f}"
+                )
 
         return results
 
@@ -444,7 +457,7 @@ class ImitationLearner:
         """
         self.network.eval()
 
-        state = state[:self.state_dim].astype(np.float32)
+        state = state[: self.state_dim].astype(np.float32)
         state = np.nan_to_num(state, nan=0.0, posinf=1.0, neginf=-1.0)
 
         state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
@@ -461,12 +474,15 @@ class ImitationLearner:
         save_path = Path(path) if path else self.model_path
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
-            torch.save({
-                "network_state_dict": self.network.state_dict(),
-                "optimizer_state_dict": self.optimizer.state_dict(),
-                "epoch_count": self.epoch_count,
-                "training_history": self.training_history[-100:],
-            }, str(save_path))
+            torch.save(
+                {
+                    "network_state_dict": self.network.state_dict(),
+                    "optimizer_state_dict": self.optimizer.state_dict(),
+                    "epoch_count": self.epoch_count,
+                    "training_history": self.training_history[-100:],
+                },
+                str(save_path),
+            )
             logger.info(f"모델 저장 완료: {save_path}")
             return True
         except Exception as e:

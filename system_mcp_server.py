@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+
 # Bug fix #12: Wrap cv2 import in try/except to prevent crash if not installed
 try:
     import cv2
@@ -41,8 +42,8 @@ def _cleanup_expired_timers(max_age_seconds: float = 3600) -> int:
     now = time.time()
     to_remove = []
     for tid, info in _timers.items():
-        if info.get('done') or info['end_time'] <= now:
-            expired_duration = now - info['end_time']
+        if info.get("done") or info["end_time"] <= now:
+            expired_duration = now - info["end_time"]
             if expired_duration > max_age_seconds:
                 to_remove.append(tid)
     for tid in to_remove:
@@ -58,18 +59,19 @@ async def capture_webcam() -> str:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         return "Error: Could not open webcam."
-    
+
     ret, frame = cap.read()
     cap.release()
-    
+
     if not ret:
         return "Error: Could not read frame from webcam."
-    
+
     # Encode as JPG
-    _, buffer = cv2.imencode('.jpg', frame)
-    jpg_as_text = base64.b64encode(buffer).decode('utf-8')
-    
+    _, buffer = cv2.imencode(".jpg", frame)
+    jpg_as_text = base64.b64encode(buffer).decode("utf-8")
+
     return f"data:image/jpeg;base64,{jpg_as_text}"
+
 
 # ──────────────────────────────────────────────
 # #126  Screen Capture (영역 지정 캡처 지원)
@@ -98,10 +100,14 @@ async def capture_screenshot(
             # 화면 범위에 맞게 자동 보정
             try:
                 screen_w, screen_h = pyautogui.size()
-                if width <= 0: width = screen_w
-                if height <= 0: height = screen_h
-                if x + width > screen_w: width = screen_w - x
-                if y + height > screen_h: height = screen_h - y
+                if width <= 0:
+                    width = screen_w
+                if height <= 0:
+                    height = screen_h
+                if x + width > screen_w:
+                    width = screen_w - x
+                if y + height > screen_h:
+                    height = screen_h - y
             except Exception:
                 pass
 
@@ -112,7 +118,7 @@ async def capture_screenshot(
 
         buffered = BytesIO()
         screenshot.save(buffered, format="JPEG")
-        img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
         if x == -1:
             info = "전체 화면"
@@ -128,6 +134,7 @@ async def capture_screenshot(
     except Exception as e:
         logger.error(f"스크린샷 캡처 실패: {e}", exc_info=True)
         return f"스크린샷 캡처 실패: {e}"
+
 
 @mcp.tool()
 async def check_internet_speed() -> str:
@@ -170,7 +177,11 @@ async def system_resources() -> str:
     try:
         cpu = psutil.cpu_percent(interval=1)
         ram = psutil.virtual_memory()
-        disk_path = os.path.splitdrive(os.path.expanduser("~"))[0] + os.sep if sys.platform == "win32" else "/"
+        disk_path = (
+            os.path.splitdrive(os.path.expanduser("~"))[0] + os.sep
+            if sys.platform == "win32"
+            else "/"
+        )
         disk = psutil.disk_usage(disk_path)
         return (
             f"CPU: {cpu}%\n"
@@ -189,7 +200,7 @@ async def list_processes(sort_by: str = "memory") -> str:
     """실행 중인 프로세스 목록을 조회합니다 (정렬 기준: memory 또는 cpu)."""
     try:
         procs = []
-        for p in psutil.process_iter(['pid', 'name', 'memory_percent', 'cpu_percent']):
+        for p in psutil.process_iter(["pid", "name", "memory_percent", "cpu_percent"]):
             try:
                 info = p.info
                 procs.append(info)
@@ -197,16 +208,16 @@ async def list_processes(sort_by: str = "memory") -> str:
                 continue
 
         if sort_by == "cpu":
-            procs.sort(key=lambda x: x.get('cpu_percent') or 0, reverse=True)
+            procs.sort(key=lambda x: x.get("cpu_percent") or 0, reverse=True)
         else:
-            procs.sort(key=lambda x: x.get('memory_percent') or 0, reverse=True)
+            procs.sort(key=lambda x: x.get("memory_percent") or 0, reverse=True)
 
         lines = [f"{'PID':>8}  {'MEM%':>6}  {'CPU%':>6}  NAME"]
         for p in procs[:15]:
-            pid = p.get('pid', '?')
-            name = p.get('name', 'unknown')
-            mem = p.get('memory_percent') or 0
-            cpu = p.get('cpu_percent') or 0
+            pid = p.get("pid", "?")
+            name = p.get("name", "unknown")
+            mem = p.get("memory_percent") or 0
+            cpu = p.get("cpu_percent") or 0
             lines.append(f"{pid:>8}  {mem:>6.1f}  {cpu:>6.1f}  {name}")
         return "\n".join(lines)
     except Exception as e:
@@ -254,7 +265,9 @@ async def search_files(directory: str, pattern: str) -> str:
         # Bug fix #14: Restrict search to allowed directories (user home or script dir)
         _allowed_roots = [Path.home().resolve(), Path(__file__).parent.resolve()]
         real_dir = dir_path.resolve()
-        if not any(real_dir == root or root in real_dir.parents for root in _allowed_roots):
+        if not any(
+            real_dir == root or root in real_dir.parents for root in _allowed_roots
+        ):
             return "오류: 허용되지 않은 경로입니다. 사용자 홈 디렉토리 또는 프로젝트 디렉토리만 검색 가능합니다."
 
         results = []
@@ -294,12 +307,11 @@ async def network_status() -> str:
                     iface_lines.append(f"  {iface}: {addr.address}")
 
         # Active connections summary
-        connections = psutil.net_connections(kind='inet')
-        listen_ports = sorted(set(
-            c.laddr.port for c in connections
-            if c.status == 'LISTEN' and c.laddr
-        ))
-        established = sum(1 for c in connections if c.status == 'ESTABLISHED')
+        connections = psutil.net_connections(kind="inet")
+        listen_ports = sorted(
+            set(c.laddr.port for c in connections if c.status == "LISTEN" and c.laddr)
+        )
+        established = sum(1 for c in connections if c.status == "ESTABLISHED")
 
         parts = [
             f"호스트명: {hostname}",
@@ -340,10 +352,11 @@ async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
 
             def _on_expire():
                 import threading as _th
+
                 # threading.Timer 콜백은 별도 스레드 — asyncio.Lock 보호 불가
                 try:
                     if timer_id in _timers:
-                        _timers[timer_id]['done'] = True
+                        _timers[timer_id]["done"] = True
                 except Exception:
                     pass
 
@@ -352,12 +365,12 @@ async def set_timer(minutes: float, message: str = "타이머 완료") -> str:
             t.start()
 
             _timers[timer_id] = {
-                'message': message,
-                'end_time': end_time,
-                'timer_obj': t,
-                'done': False,
+                "message": message,
+                "end_time": end_time,
+                "timer_obj": t,
+                "done": False,
             }
-            return f"타이머 설정 완료 [ID: {timer_id}] - {minutes}분 후 \"{message}\""
+            return f'타이머 설정 완료 [ID: {timer_id}] - {minutes}분 후 "{message}"'
     except Exception as e:
         return f"타이머 설정 실패: {e}"
 
@@ -373,13 +386,15 @@ async def list_timers() -> str:
             now = time.time()
             lines = []
             for tid, info in _timers.items():
-                remaining = info['end_time'] - now
-                if info['done'] or remaining <= 0:
+                remaining = info["end_time"] - now
+                if info["done"] or remaining <= 0:
                     lines.append(f"[{tid}] 완료됨 - \"{info['message']}\"")
                 else:
                     mins = int(remaining // 60)
                     secs = int(remaining % 60)
-                    lines.append(f"[{tid}] 남은 시간 {mins}분 {secs}초 - \"{info['message']}\"")
+                    lines.append(
+                        f"[{tid}] 남은 시간 {mins}분 {secs}초 - \"{info['message']}\""
+                    )
 
             return "\n".join(lines) if lines else "설정된 타이머가 없습니다."
     except Exception as e:
@@ -398,7 +413,7 @@ async def weather(city: str = "Seoul") -> str:
 
         def _fetch():
             with urlopen(req, timeout=10) as resp:
-                return json.loads(resp.read().decode('utf-8'))
+                return json.loads(resp.read().decode("utf-8"))
 
         loop = asyncio.get_running_loop()
         data = await loop.run_in_executor(None, _fetch)
@@ -424,13 +439,16 @@ async def weather(city: str = "Seoul") -> str:
             f"바람: {wind_kmph} km/h ({wind_dir})"
         )
     except socket.timeout:
-        return "날씨 조회 실패: 서버 응답 시간 초과 (timeout). 잠시 후 다시 시도해주세요."
+        return (
+            "날씨 조회 실패: 서버 응답 시간 초과 (timeout). 잠시 후 다시 시도해주세요."
+        )
     except ConnectionError:
         return "날씨 조회 실패: 네트워크 연결 오류. 인터넷 연결을 확인하세요."
     except json.JSONDecodeError:
         return "날씨 조회 실패: 서버 응답을 파싱할 수 없습니다 (잘못된 JSON)."
     except Exception as e:
         from urllib.error import URLError, HTTPError
+
         if isinstance(e, HTTPError):
             return f"날씨 조회 실패: HTTP 오류 {e.code} - {e.reason}"
         if isinstance(e, URLError):
@@ -454,7 +472,7 @@ async def translate(text: str, target_lang: str = "en", source_lang: str = "ko")
 
         def _fetch():
             with urlopen(req, timeout=10) as resp:
-                return json.loads(resp.read().decode('utf-8'))
+                return json.loads(resp.read().decode("utf-8"))
 
         loop = asyncio.get_running_loop()
         data = await loop.run_in_executor(None, _fetch)
@@ -487,32 +505,32 @@ _CALC_OPS = {
 }
 
 _CALC_FUNCS = {
-    'sqrt': math.sqrt,
-    'sin': math.sin,
-    'cos': math.cos,
-    'tan': math.tan,
-    'log': math.log,
-    'log10': math.log10,
-    'log2': math.log2,
-    'abs': abs,
-    'ceil': math.ceil,
-    'floor': math.floor,
-    'round': round,
-    'exp': math.exp,
-    'factorial': lambda n: math.factorial(min(int(n), 170)),
+    "sqrt": math.sqrt,
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+    "log": math.log,
+    "log10": math.log10,
+    "log2": math.log2,
+    "abs": abs,
+    "ceil": math.ceil,
+    "floor": math.floor,
+    "round": round,
+    "exp": math.exp,
+    "factorial": lambda n: math.factorial(min(int(n), 170)),
 }
 
 _CALC_CONSTS = {
-    'pi': math.pi,
-    'e': math.e,
-    'tau': math.tau,
-    'inf': math.inf,
+    "pi": math.pi,
+    "e": math.e,
+    "tau": math.tau,
+    "inf": math.inf,
 }
 
 
-_SAFE_EVAL_MAX_DEPTH = 20          # AST 재귀 깊이 제한
-_SAFE_EVAL_MAX_EXPONENT = 10_000   # 거듭제곱 지수 상한
-_SAFE_EVAL_MAX_EXPR_LEN = 500     # 입력 수식 길이 제한
+_SAFE_EVAL_MAX_DEPTH = 20  # AST 재귀 깊이 제한
+_SAFE_EVAL_MAX_EXPONENT = 10_000  # 거듭제곱 지수 상한
+_SAFE_EVAL_MAX_EXPR_LEN = 500  # 입력 수식 길이 제한
 
 
 def _safe_eval(node, _depth=0):
@@ -539,7 +557,9 @@ def _safe_eval(node, _depth=0):
         # 거듭제곱 DoS 방어: 지수 크기 제한
         if op_type is ast.Pow:
             if isinstance(right, (int, float)) and abs(right) > _SAFE_EVAL_MAX_EXPONENT:
-                raise ValueError(f"지수가 너무 큽니다: {right} (최대 {_SAFE_EVAL_MAX_EXPONENT})")
+                raise ValueError(
+                    f"지수가 너무 큽니다: {right} (최대 {_SAFE_EVAL_MAX_EXPONENT})"
+                )
         return _CALC_OPS[op_type](left, right)
     elif isinstance(node, ast.UnaryOp):
         op_type = type(node.op)
@@ -565,7 +585,7 @@ async def calculate(expression: str) -> str:
         expr = expression.strip()
         if len(expr) > _SAFE_EVAL_MAX_EXPR_LEN:
             return f"오류: 수식이 너무 깁니다 (최대 {_SAFE_EVAL_MAX_EXPR_LEN}자)"
-        tree = ast.parse(expr, mode='eval')
+        tree = ast.parse(expr, mode="eval")
         result = _safe_eval(tree)
         return f"{expression} = {result}"
     except ZeroDivisionError:
@@ -583,7 +603,9 @@ async def clipboard_read() -> str:
     try:
         result = subprocess.run(
             ["powershell", "-NoProfile", "-Command", "Get-Clipboard"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode != 0:
             return f"클립보드 읽기 실패: {result.stderr.strip()}"
@@ -601,8 +623,15 @@ async def clipboard_write(text: str) -> str:
     try:
         # stdin으로 텍스트를 전달하여 인젝션 방지
         result = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", "Set-Clipboard -Value ([Console]::In.ReadToEnd())"],
-            capture_output=True, text=True, timeout=5,
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "Set-Clipboard -Value ([Console]::In.ReadToEnd())",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
             input=text,
         )
         if result.returncode != 0:
@@ -650,13 +679,15 @@ async def run_program(name: str, args: str = "") -> str:
         if args:
             # Bug fix #13+H-3: 셸 메타문자 + 위험 인자 차단, shlex로 안전 파싱
             import re as _re_local
-            if _re_local.search(r'[;&|<>`$(){}\\]', args):
+
+            if _re_local.search(r"[;&|<>`$(){}\\]", args):
                 return "오류: 보안 차단 - 인자에 셸 메타문자가 포함되어 있습니다."
             _dangerous_args = ["--remote", "--user-data-dir"]
             for dangerous in _dangerous_args:
                 if dangerous in args.lower():
                     return f"오류: 보안 차단 - 인자에 허용되지 않은 패턴 '{dangerous}'이(가) 포함되어 있습니다."
             import shlex as _shlex_local
+
             try:
                 parsed_args = _shlex_local.split(args)
             except ValueError as e:
@@ -675,7 +706,9 @@ async def run_program(name: str, args: str = "") -> str:
             + f"\nPID: {proc.pid}"
         )
     except FileNotFoundError:
-        return f"오류: '{_ALLOWED_PROGRAMS.get(key, name)}' 실행 파일을 찾을 수 없습니다."
+        return (
+            f"오류: '{_ALLOWED_PROGRAMS.get(key, name)}' 실행 파일을 찾을 수 없습니다."
+        )
     except Exception as e:
         return f"프로그램 실행 실패: {e}"
 
@@ -683,7 +716,9 @@ async def run_program(name: str, args: str = "") -> str:
 # ──────────────────────────────────────────────
 # #128  Scheduler (간단한 cron 스타일 작업 예약)
 # ──────────────────────────────────────────────
-_scheduled_tasks: dict[str, dict] = {}  # id -> {command, cron, next_run, active, thread}
+_scheduled_tasks: dict[str, dict] = (
+    {}
+)  # id -> {command, cron, next_run, active, thread}
 _scheduled_tasks_lock = threading.Lock()  # 스레드/코루틴 동시 접근 보호
 MAX_SCHEDULED_TASKS = 50  # P2-12: 예약 작업 무제한 증가 방지
 
@@ -713,6 +748,7 @@ def _cron_matches_now(cron_expr: str) -> bool:
     """cron 표현식이 현재 시각과 일치하는지 확인합니다.
     형식: '분 시 일 월 요일' (표준 5-필드 cron)"""
     import datetime
+
     now = datetime.datetime.now()
     parts = cron_expr.strip().split()
     if len(parts) != 5:
@@ -745,6 +781,7 @@ def _cron_matches_now(cron_expr: str) -> bool:
 def _scheduler_loop(task_id: str):
     """스케줄러 백그라운드 루프: 매 30초마다 cron 매칭을 확인합니다."""
     import shlex
+
     while True:
         task = _scheduled_tasks.get(task_id)
         if task is None or not task.get("active"):
@@ -786,7 +823,10 @@ async def schedule_task(command: str, cron_expression: str) -> str:
         program_key = program_name.removesuffix(".exe")
 
         allowed_executables = {v.lower() for v in _ALLOWED_PROGRAMS.values()}
-        if program_key not in _ALLOWED_PROGRAMS and program_name not in allowed_executables:
+        if (
+            program_key not in _ALLOWED_PROGRAMS
+            and program_name not in allowed_executables
+        ):
             allowed = ", ".join(sorted(_ALLOWED_PROGRAMS.keys()))
             return (
                 f"오류: '{cmd_parts[0]}'은(는) 허용되지 않은 프로그램입니다.\n"
@@ -795,7 +835,9 @@ async def schedule_task(command: str, cron_expression: str) -> str:
 
         parts = cron_expression.strip().split()
         if len(parts) != 5:
-            return "오류: cron 표현식은 '분 시 일 월 요일' 5개 필드로 구성되어야 합니다."
+            return (
+                "오류: cron 표현식은 '분 시 일 월 요일' 5개 필드로 구성되어야 합니다."
+            )
 
         # 기본 필드 유효성 검증
         for part in parts:
@@ -843,7 +885,10 @@ async def list_scheduled_tasks() -> str:
             last = "없음"
             if info.get("last_run"):
                 import datetime
-                last = datetime.datetime.fromtimestamp(info["last_run"]).strftime("%Y-%m-%d %H:%M:%S")
+
+                last = datetime.datetime.fromtimestamp(info["last_run"]).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
             lines.append(
                 f"[{tid}] {status} | cron: {info['cron']} | 명령: {info['command']} | 마지막 실행: {last}"
             )
@@ -869,13 +914,27 @@ async def cancel_scheduled_task(task_id: str) -> str:
 # #129  SSH Remote Execution (subprocess ssh)
 # ──────────────────────────────────────────────
 SSH_ALLOWED_COMMANDS: set[str] = {
-    "ls", "cat", "df", "free", "uptime", "top", "ps", "whoami",
-    "date", "hostname", "uname", "pwd", "echo", "systemctl status",
+    "ls",
+    "cat",
+    "df",
+    "free",
+    "uptime",
+    "top",
+    "ps",
+    "whoami",
+    "date",
+    "hostname",
+    "uname",
+    "pwd",
+    "echo",
+    "systemctl status",
 }
 
 
 @mcp.tool()
-async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, timeout: int = 30) -> str:
+async def ssh_execute(
+    host: str, command: str, user: str = "", port: int = 22, timeout: int = 30
+) -> str:
     """SSH로 원격 명령을 실행합니다 (시스템 ssh 클라이언트 사용).
     host: 대상 호스트 (IP 또는 도메인)
     command: 실행할 명령어 (허용된 명령어만 사용 가능)
@@ -894,9 +953,8 @@ async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, t
         two_token_cmd = " ".join(cmd_tokens[:2]) if len(cmd_tokens) >= 2 else None
 
         # 2-토큰 명령(예: "systemctl status") 또는 단일 토큰 명령이 허용 목록에 있는지 확인
-        cmd_allowed = (
-            base_cmd in SSH_ALLOWED_COMMANDS
-            or (two_token_cmd is not None and two_token_cmd in SSH_ALLOWED_COMMANDS)
+        cmd_allowed = base_cmd in SSH_ALLOWED_COMMANDS or (
+            two_token_cmd is not None and two_token_cmd in SSH_ALLOWED_COMMANDS
         )
         if not cmd_allowed:
             allowed_list = ", ".join(sorted(SSH_ALLOWED_COMMANDS))
@@ -907,7 +965,12 @@ async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, t
 
         # H-4: 셸 메타문자를 통한 명령어 체이닝 차단 (정규식 기반 강화)
         import re as _re_ssh
-        if _re_ssh.search(r'[;&|<>`$(){}\\]', command) or "\n" in command or "\r" in command:
+
+        if (
+            _re_ssh.search(r"[;&|<>`$(){}\\]", command)
+            or "\n" in command
+            or "\r" in command
+        ):
             return "안전 차단: 명령어에 셸 메타문자가 포함되어 있습니다. 단일 명령만 허용됩니다."
 
         # 화이트리스트 매칭된 토큰 이후의 나머지 인자에서도 위험 패턴 검사
@@ -919,7 +982,20 @@ async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, t
         else:
             extra_tokens = []
 
-        dangerous_token_patterns = [";", "&&", "||", "|", "`", "$(", "${", "..", "~", ">", "<", "\\"]
+        dangerous_token_patterns = [
+            ";",
+            "&&",
+            "||",
+            "|",
+            "`",
+            "$(",
+            "${",
+            "..",
+            "~",
+            ">",
+            "<",
+            "\\",
+        ]
         for token in extra_tokens:
             for pat in dangerous_token_patterns:
                 if pat in token:
@@ -932,14 +1008,23 @@ async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, t
 
         # 호스트 유효성 검사 (IP 또는 호스트네임만 허용)
         import re as _re
-        if not _re.match(r'^[a-zA-Z0-9._-]+$', host.strip()):
+
+        if not _re.match(r"^[a-zA-Z0-9._-]+$", host.strip()):
             return "오류: host 형식이 유효하지 않습니다."
-        if user and not _re.match(r'^[a-zA-Z0-9._-]+$', user.strip()):
+        if user and not _re.match(r"^[a-zA-Z0-9._-]+$", user.strip()):
             return "오류: user 형식이 유효하지 않습니다."
 
         timeout = min(max(timeout, 5), 120)
 
-        ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=accept-new", "-o", f"ConnectTimeout={timeout}", "-p", str(port)]
+        ssh_cmd = [
+            "ssh",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            "-o",
+            f"ConnectTimeout={timeout}",
+            "-p",
+            str(port),
+        ]
         if user:
             ssh_cmd.append(f"{user}@{host}")
         else:
@@ -967,7 +1052,9 @@ async def ssh_execute(host: str, command: str, user: str = "", port: int = 22, t
             output_parts.append(f"[stderr]\n{result.stderr.strip()}")
 
         target = f"{user}@{host}" if user else host
-        status = "성공" if result.returncode == 0 else f"실패 (코드: {result.returncode})"
+        status = (
+            "성공" if result.returncode == 0 else f"실패 (코드: {result.returncode})"
+        )
 
         return (
             f"SSH 실행 결과 ({target}:{port})\n"
@@ -1011,12 +1098,12 @@ async def list_mcp_tools() -> str:
                 "등록된 MCP 서버가 없습니다.\n"
                 f"설정 파일 경로: {_MCP_SERVERS_CONFIG_PATH}\n"
                 "형식 예시:\n"
-                '{\n'
+                "{\n"
                 '  "servers": [\n'
                 '    {"name": "sc2-mcp", "url": "http://localhost:8001", "tools": ["build_order", "unit_control"]},\n'
                 '    {"name": "crypto-mcp", "url": "http://localhost:8002", "tools": ["get_price", "trade"]}\n'
-                '  ]\n'
-                '}'
+                "  ]\n"
+                "}"
             )
 
         servers = config.get("servers", [])
@@ -1070,7 +1157,9 @@ async def call_mcp_tool(server_name: str, tool_name: str, arguments: str = "{}")
         # SSRF 방어: 스키마/호스트 검증
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
-            return f"오류: 허용되지 않는 URL 스키마 '{parsed.scheme}' (http/https만 허용)"
+            return (
+                f"오류: 허용되지 않는 URL 스키마 '{parsed.scheme}' (http/https만 허용)"
+            )
         if parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
             return f"오류: 외부 호스트 '{parsed.hostname}'은 허용되지 않습니다 (localhost만 허용)"
 
@@ -1080,7 +1169,10 @@ async def call_mcp_tool(server_name: str, tool_name: str, arguments: str = "{}")
         req = Request(
             endpoint,
             data=payload,
-            headers={"Content-Type": "application/json", "User-Agent": "MCP-Gateway/1.0"},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "MCP-Gateway/1.0",
+            },
             method="POST",
         )
 
@@ -1156,7 +1248,11 @@ async def list_available_plugins() -> str:
             version = p.get("version", "?")
             desc = p.get("description", "")
             status = p.get("status", "unknown")
-            status_label = {"installed": "[설치됨]", "available": "[미설치]", "outdated": "[업데이트 필요]"}.get(status, f"[{status}]")
+            status_label = {
+                "installed": "[설치됨]",
+                "available": "[미설치]",
+                "outdated": "[업데이트 필요]",
+            }.get(status, f"[{status}]")
             lines.append(f"\n  {name} v{version} {status_label}")
             if desc:
                 lines.append(f"    {desc}")
@@ -1196,14 +1292,14 @@ async def smart_home_control(device: str, action: str, value: str = "") -> str:
                 "스마트홈 설정 파일이 없습니다.\n"
                 f"설정 파일 경로: {_SMARTHOME_CONFIG_PATH}\n"
                 "형식 예시:\n"
-                '{\n'
+                "{\n"
                 '  "hub_url": "http://192.168.1.100:8080",\n'
                 '  "api_key": "your-api-key",\n'
                 '  "devices": {\n'
                 '    "living_room_light": {"id": "light_01", "type": "light"},\n'
                 '    "bedroom_ac": {"id": "ac_01", "type": "ac"}\n'
-                '  }\n'
-                '}'
+                "  }\n"
+                "}"
             )
 
         hub_url = config.get("hub_url", "").rstrip("/")
@@ -1212,7 +1308,9 @@ async def smart_home_control(device: str, action: str, value: str = "") -> str:
 
         if device not in devices:
             available = ", ".join(sorted(devices.keys()))
-            return f"오류: 기기 '{device}'을(를) 찾을 수 없습니다. 사용 가능: {available}"
+            return (
+                f"오류: 기기 '{device}'을(를) 찾을 수 없습니다. 사용 가능: {available}"
+            )
 
         dev_info = devices[device]
         dev_id = dev_info.get("id", device)
@@ -1273,9 +1371,12 @@ async def send_notification(title: str, message: str, duration_seconds: int = 5)
         # PowerShell 스크립트: Windows Toast Notification
         # XML/PowerShell 인젝션 방지: 알파벳, 숫자, 공백, 기본 구두점만 허용
         import re as _re
+
         # Bug fix #19: Also strip @, &, # to prevent PowerShell here-string injection
-        safe_title = _re.sub(r'[^\w\s가-힣ㄱ-ㅎㅏ-ㅣ.,!?\-():\[\]% ]', '', title)[:200]
-        safe_message = _re.sub(r'[^\w\s가-힣ㄱ-ㅎㅏ-ㅣ.,!?\-():\[\]% ]', '', message)[:500]
+        safe_title = _re.sub(r"[^\w\s가-힣ㄱ-ㅎㅏ-ㅣ.,!?\-():\[\]% ]", "", title)[:200]
+        safe_message = _re.sub(r"[^\w\s가-힣ㄱ-ㅎㅏ-ㅣ.,!?\-():\[\]% ]", "", message)[
+            :500
+        ]
 
         ps_script = f"""
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
@@ -1302,7 +1403,14 @@ $notifier.Show($toast)
 
         def _notify():
             result = subprocess.run(
-                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script],
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    ps_script,
+                ],
                 capture_output=True,
                 text=True,
                 timeout=15,
@@ -1329,7 +1437,14 @@ $balloon.Dispose()
             result2 = await loop.run_in_executor(
                 None,
                 lambda: subprocess.run(
-                    ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", fallback_script],
+                    [
+                        "powershell",
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-Command",
+                        fallback_script,
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=duration_seconds + 10,
@@ -1390,23 +1505,30 @@ async def pc_control(action: str, value: str = "") -> str:
             confirm_key = f"_pc_control_confirm_{action}"
             confirm_time = getattr(pc_control, confirm_key, 0)
             import time as _time
+
             now = _time.time()
 
             if now - confirm_time > 300:  # 5-minute confirmation window
                 # Set pending confirmation
                 setattr(pc_control, confirm_key, now)
-                return (f"⚠ 경고: '{action}' 명령은 위험합니다. "
-                       f"5분 내에 동일 명령을 다시 호출하면 실행됩니다. "
-                       f"현재 상태: 대기 중")
+                return (
+                    f"⚠ 경고: '{action}' 명령은 위험합니다. "
+                    f"5분 내에 동일 명령을 다시 호출하면 실행됩니다. "
+                    f"현재 상태: 대기 중"
+                )
             # Confirmed - reset and execute
             setattr(pc_control, confirm_key, 0)
 
         try:
+
             def _run():
                 return subprocess.run(
                     _ACTIONS[action]["cmd"],
-                    capture_output=True, text=True, timeout=10,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
                 )
+
             await loop.run_in_executor(None, _run)
             return _ACTIONS[action]["msg"]
         except Exception as e:
@@ -1414,35 +1536,39 @@ async def pc_control(action: str, value: str = "") -> str:
 
     # 2. Volume Control (pycaw + comtypes for thread safety)
     if action.startswith("volume"):
+
         def _run_volume():
             try:
                 import comtypes
+
                 comtypes.CoInitialize()
                 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-                
+
                 devices = AudioUtilities.GetSpeakers()
-                interface = devices.Activate(IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
+                interface = devices.Activate(
+                    IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None
+                )
                 volume = interface.QueryInterface(IAudioEndpointVolume)
-                
+
                 msg = ""
                 if action == "volume_mute":
                     muted = volume.GetMute()
                     volume.SetMute(not muted, None)
                     # Bug fix #18: Clarify messages - when muted was False, we just set it to True (muting)
                     msg = "음소거 설정" if not muted else "음소거 해제"
-                
+
                 elif action == "volume_up":
                     current = volume.GetMasterVolumeLevelScalar()
                     new_vol = min(1.0, current + 0.1)
                     volume.SetMasterVolumeLevelScalar(new_vol, None)
                     msg = f"볼륨 증가 ({int(new_vol*100)}%)"
-                
+
                 elif action == "volume_down":
                     current = volume.GetMasterVolumeLevelScalar()
                     new_vol = max(0.0, current - 0.1)
                     volume.SetMasterVolumeLevelScalar(new_vol, None)
                     msg = f"볼륨 감소 ({int(new_vol*100)}%)"
-                
+
                 elif action == "volume_set":
                     try:
                         val = int(value)
@@ -1451,7 +1577,7 @@ async def pc_control(action: str, value: str = "") -> str:
                         msg = f"볼륨 설정 완료 ({val}%)"
                     except ValueError:
                         msg = "오류: 볼륨 값은 0-100 사이 정수여야 합니다."
-                
+
                 comtypes.CoUninitialize()
                 return msg
             except ImportError:
@@ -1463,13 +1589,15 @@ async def pc_control(action: str, value: str = "") -> str:
 
     # 3. Brightness Control (screen_brightness_control)
     if action == "brightness":
+
         def _run_brightness():
             try:
                 import screen_brightness_control as sbc
+
                 if not value:
                     current = sbc.get_brightness()
                     return f"현재 밝기: {current}%"
-                
+
                 try:
                     val = int(value)
                     sbc.set_brightness(val)

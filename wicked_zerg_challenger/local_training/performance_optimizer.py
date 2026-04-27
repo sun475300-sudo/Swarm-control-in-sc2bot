@@ -314,6 +314,10 @@ class PerformanceOptimizer:
             "avg_frame_time_ms": self.get_average_frame_time() * 1000,
             "cache_size": len(self.distance_cache.cache),
             "pid_controllers": len(self._unit_pids),
-            "spatial_index": "kd_tree" if self._kd_tree else ("grid" if self._spatial_grid else "none"),
+            "spatial_index": (
+                "kd_tree"
+                if self._kd_tree
+                else ("grid" if self._spatial_grid else "none")
+            ),
             "spatial_available": self._spatial_available,
         }

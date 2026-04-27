@@ -39,7 +39,7 @@ class ConfigLoader:
         config_path = Path(__file__).parent / "strategy_config.json"
 
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 ConfigLoader._config_cache["strategy"] = config
                 return config
@@ -163,40 +163,26 @@ class ConfigLoader:
                 "early_game_interval": 25,
                 "mid_game_interval": 40,
                 "late_game_interval": 35,
-                "emergency_interval": 15
+                "emergency_interval": 15,
             },
             "harassment": {
                 "default_mode": "opportunistic",
-                "allocation_percent": {
-                    "opportunistic": 0.10
-                }
+                "allocation_percent": {"opportunistic": 0.10},
             },
             "expansion": {
                 "target_timings": [60, 90, 150, 210, 270, 330],
-                "aggressive_minerals": 300
+                "aggressive_minerals": 300,
             },
-            "combat": {
-                "hp_thresholds": {
-                    "retreat": 0.3,
-                    "burrow": 0.4
-                }
-            },
+            "combat": {"hp_thresholds": {"retreat": 0.3, "burrow": 0.4}},
             "performance": {
-                "frame_time_targets": {
-                    "target_ms": 10.0,
-                    "warning_ms": 15.0
-                }
+                "frame_time_targets": {"target_ms": 10.0, "warning_ms": 15.0}
             },
-            "timing": {
-                "game_fps": 22,
-                "intervals_frames": {
-                    "1_second": 22
-                }
-            }
+            "timing": {"game_fps": 22, "intervals_frames": {"1_second": 22}},
         }
 
 
 # Convenience functions for direct access
+
 
 def get_scouting_config() -> Dict[str, Any]:
     """Get scouting configuration"""

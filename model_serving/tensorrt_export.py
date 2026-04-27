@@ -15,6 +15,7 @@ try:
     import tensorrt as trt
     import pycuda.driver as cuda
     import pycuda.autoinit
+
     TRT_AVAILABLE = True
 except ImportError:
     TRT_AVAILABLE = False
@@ -23,6 +24,7 @@ except ImportError:
 try:
     import onnx
     import onnxruntime as ort
+
     ONNX_AVAILABLE = True
 except ImportError:
     ONNX_AVAILABLE = False
@@ -42,12 +44,16 @@ def export_to_onnx(
     model.eval()
     input_names = input_names or ["obs"]
     output_names = output_names or ["policy_logits", "value"]
-    dynamic_axes = dynamic_axes or {"obs": {0: "batch_size"},
-                                    "policy_logits": {0: "batch_size"},
-                                    "value": {0: "batch_size"}}
+    dynamic_axes = dynamic_axes or {
+        "obs": {0: "batch_size"},
+        "policy_logits": {0: "batch_size"},
+        "value": {0: "batch_size"},
+    }
     with torch.no_grad():
         torch.onnx.export(
-            model, dummy_input, output_path,
+            model,
+            dummy_input,
+            output_path,
             input_names=input_names,
             output_names=output_names,
             dynamic_axes=dynamic_axes,
@@ -59,6 +65,7 @@ def export_to_onnx(
 
     if ONNX_AVAILABLE:
         import onnx as onnx_mod
+
         model_check = onnx_mod.load(output_path)
         onnx_mod.checker.check_model(model_check)
         print("[ONNX] Model check passed.")
@@ -80,7 +87,9 @@ def optimize_with_tensorrt(
 
     logger = trt.Logger(trt.Logger.WARNING)
     builder = trt.Builder(logger)
-    network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
+    network = builder.create_network(
+        1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+    )
     parser = trt.OnnxParser(network, logger)
 
     with open(onnx_path, "rb") as f:
@@ -102,7 +111,12 @@ def optimize_with_tensorrt(
     profile = builder.create_optimization_profile()
     input_name = network.get_input(0).name
     obs_dim = network.get_input(0).shape[-1]
-    profile.set_shape(input_name, (1, obs_dim), (max_batch_size // 2, obs_dim), (max_batch_size, obs_dim))
+    profile.set_shape(
+        input_name,
+        (1, obs_dim),
+        (max_batch_size // 2, obs_dim),
+        (max_batch_size, obs_dim),
+    )
     config.add_optimization_profile(profile)
 
     serialized = builder.build_serialized_network(network, config)
@@ -155,7 +169,12 @@ def benchmark_inference(
     print(f"[Bench] PyTorch: {pt_ms:.3f} ms/step ({results['pytorch_fps']} fps)")
 
     # ONNX Runtime benchmark
-    if ONNX_AVAILABLE and engine_path and engine_path.endswith(".onnx") and os.path.exists(engine_path):
+    if (
+        ONNX_AVAILABLE
+        and engine_path
+        and engine_path.endswith(".onnx")
+        and os.path.exists(engine_path)
+    ):
         sess = ort.InferenceSession(engine_path, providers=["CPUExecutionProvider"])
         inp = dummy.numpy()
         for _ in range(n_warmup):
@@ -166,6 +185,8 @@ def benchmark_inference(
         ort_ms = (time.perf_counter() - start) * 1000 / n_runs
         results["onnx_ms"] = round(ort_ms, 3)
         results["speedup_onnx"] = round(pt_ms / ort_ms, 2)
-        print(f"[Bench] ONNX: {ort_ms:.3f} ms/step (speedup: {results['speedup_onnx']}x)")
+        print(
+            f"[Bench] ONNX: {ort_ms:.3f} ms/step (speedup: {results['speedup_onnx']}x)"
+        )
 
     return results

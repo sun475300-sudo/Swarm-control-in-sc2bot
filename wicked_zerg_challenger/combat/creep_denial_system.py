@@ -29,10 +29,12 @@ try:
 except ImportError:
     CreepDenialConfig = None
 
+
 class CreepDenialSystem:
     """
     적 점막 제거 시스템
     """
+
     def __init__(self, bot):
         self.bot = bot
         self.logger = get_logger("CreepDenial")
@@ -96,7 +98,7 @@ class CreepDenialSystem:
         """적 점막 종양 탐색"""
         if not hasattr(self.bot, "enemy_structures"):
             return []
-            
+
         # 적 구조물 중 Tumor 타입 필터링
         tumors = self.bot.enemy_structures.filter(
             lambda s: s.type_id in self.tumor_types
@@ -109,15 +111,15 @@ class CreepDenialSystem:
             return
 
         completed_tumors = []
-        
+
         for tumor_tag, killer_tag in self.assignments.items():
             killer = self.bot.units.find_by_tag(killer_tag)
-            
+
             # 1. 킬러가 죽거나 없어진 경우
             if not killer:
                 completed_tumors.append(tumor_tag)
                 continue
-                
+
             # 2. 위협 체크 (즉시 후퇴)
             if self._is_dangerous_position(killer.position):
                 # 권한 해제하여 CombatManager가 처리하도록 함
@@ -131,15 +133,15 @@ class CreepDenialSystem:
             # 주의: 시야 밖으로 나간 경우일 수도 있음.
             # 여기서는 간단히 킬러의 명령이 없거나 다른 것으로 바뀌었으면 해제
             if not killer.orders or killer.order_target != tumor_tag:
-                 # 다시 공격 명령 (아직 종양이 있다면)
-                 tumor = self.bot.enemy_structures.find_by_tag(tumor_tag)
-                 if tumor:
-                     self.bot.do(killer.attack(tumor))
-                 else:
-                     # 종양 사라짐 -> 임무 완료
-                     if hasattr(self.bot, "unit_authority"):
+                # 다시 공격 명령 (아직 종양이 있다면)
+                tumor = self.bot.enemy_structures.find_by_tag(tumor_tag)
+                if tumor:
+                    self.bot.do(killer.attack(tumor))
+                else:
+                    # 종양 사라짐 -> 임무 완료
+                    if hasattr(self.bot, "unit_authority"):
                         self.bot.unit_authority.release_unit(killer.tag, "CreepDenial")
-                     completed_tumors.append(tumor_tag)
+                    completed_tumors.append(tumor_tag)
 
         for tag in completed_tumors:
             if tag in self.assignments:
@@ -162,7 +164,7 @@ class CreepDenialSystem:
         my_units = self.bot.units.filter(
             lambda u: u.type_id in self.killer_types and not u.is_structure
         )
-        
+
         if not my_units:
             return
 
@@ -170,28 +172,28 @@ class CreepDenialSystem:
             # 1. 주변 아군 유닛 찾기 (설정값 사용)
             assignment_range = self.config.ASSIGNMENT_RANGE if self.config else 20
             nearby_units = my_units.closer_than(assignment_range, tumor.position)
-            
+
             if not nearby_units:
                 continue
 
             # 2. 위협 체크
             if self._is_dangerous_position(tumor.position):
                 continue
-                
-            # 3. 공격 유닛 선택 
+
+            # 3. 공격 유닛 선택
             # 가장 가까운 유닛 1기
             killer = nearby_units.closest_to(tumor)
-            
+
             # 4. 권한 요청
             if self.bot.unit_authority.request_unit(
                 unit_tag=killer.tag,
                 requester="CreepDenial",
-                level=AuthorityLevel.TACTICAL  # 정찰보다 높고 전투보다 낮음
+                level=AuthorityLevel.TACTICAL,  # 정찰보다 높고 전투보다 낮음
             ):
                 # 권한 획득 성공 -> 공격 명령
                 self.bot.do(killer.attack(tumor))
                 self.assignments[tumor.tag] = killer.tag
-                break # 한 프레임에 하나씩만 할당 (부하 방지)
+                break  # 한 프레임에 하나씩만 할당 (부하 방지)
 
     def _is_dangerous_position(self, position: Point2) -> bool:
         """
@@ -229,7 +231,11 @@ class CreepDenialSystem:
                     pass
             ignore_types.update(self.tumor_types)
         else:
-            ignore_types = self.tumor_types | {UnitTypeId.DRONE, UnitTypeId.PROBE, UnitTypeId.SCV}
+            ignore_types = self.tumor_types | {
+                UnitTypeId.DRONE,
+                UnitTypeId.PROBE,
+                UnitTypeId.SCV,
+            }
 
         nearby_enemies = self.bot.enemy_units.closer_than(danger_range, position)
 
@@ -249,13 +255,17 @@ class CreepDenialSystem:
                 except AttributeError:
                     pass
         else:
-            defense_types = {UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED,
-                           UnitTypeId.SPINECRAWLER, UnitTypeId.PHOTONCANNON,
-                           UnitTypeId.BUNKER, UnitTypeId.PLANETARYFORTRESS}
+            defense_types = {
+                UnitTypeId.SIEGETANK,
+                UnitTypeId.SIEGETANKSIEGED,
+                UnitTypeId.SPINECRAWLER,
+                UnitTypeId.PHOTONCANNON,
+                UnitTypeId.BUNKER,
+                UnitTypeId.PLANETARYFORTRESS,
+            }
 
         static_defense = nearby_enemies.filter(lambda u: u.type_id in defense_types)
         if static_defense.exists:
             return True
 
         return False
-

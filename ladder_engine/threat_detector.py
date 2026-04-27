@@ -58,11 +58,11 @@ class ThreatDetector:
     """Monitors game state and raises threat events with defensive responses."""
 
     # Thresholds
-    EARLY_AGGRESSION_TIME = 240.0       # < 4 min
+    EARLY_AGGRESSION_TIME = 240.0  # < 4 min
     PROXY_MAX_DISTANCE_FROM_SPAWN = 60  # tiles
-    DROP_DETECT_RADIUS = 15.0           # near our base
-    ALL_IN_ARMY_RATIO = 0.85            # army/supply > 85% = all-in signal
-    TIMING_ARMY_THRESHOLD = 25          # enemy army supply for timing
+    DROP_DETECT_RADIUS = 15.0  # near our base
+    ALL_IN_ARMY_RATIO = 0.85  # army/supply > 85% = all-in signal
+    TIMING_ARMY_THRESHOLD = 25  # enemy army supply for timing
 
     def __init__(self):
         self._active_threats: Dict[ThreatType, ThreatEvent] = {}
@@ -181,8 +181,10 @@ class ThreatDetector:
     ) -> Optional[ThreatEvent]:
         """Detect drop ships / overlord drops heading toward our base."""
         transports_near = [
-            t for t in enemy_transport_units
-            if _dist(t.get("position", (999, 999)), our_base_pos) < self.DROP_DETECT_RADIUS
+            t
+            for t in enemy_transport_units
+            if _dist(t.get("position", (999, 999)), our_base_pos)
+            < self.DROP_DETECT_RADIUS
         ]
         if not transports_near:
             return None
@@ -205,7 +207,8 @@ class ThreatDetector:
     ) -> Optional[ThreatEvent]:
         """Detect proxy buildings placed far from enemy spawn."""
         proxy_buildings = [
-            b for b in enemy_buildings
+            b
+            for b in enemy_buildings
             if _dist(b.get("position", enemy_spawn_pos), enemy_spawn_pos)
             > self.PROXY_MAX_DISTANCE_FROM_SPAWN
         ]
@@ -281,4 +284,5 @@ class ThreatDetector:
 
 def _dist(a: Tuple[float, float], b: Tuple[float, float]) -> float:
     import math
+
     return math.hypot(a[0] - b[0], a[1] - b[1])

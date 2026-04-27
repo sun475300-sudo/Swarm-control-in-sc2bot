@@ -5,6 +5,7 @@ from sc2.position import Point2
 from sc2.units import Units
 from utils.logger import get_logger
 
+
 class DefenseCoordinator:
     """
     Centralized Defense Coordinator.
@@ -15,38 +16,40 @@ class DefenseCoordinator:
     3. Defense Structure Placement requests
     4. Rally Point Management
     """
+
     def __init__(self, bot):
         self.bot = bot
         self.logger = get_logger("DefenseCoordinator")
         self.last_threat_update = 0
         self.threat_level = "SAFE"
-        
+
         # Early Defense State
         self.early_defense_active = True
         self.last_defense_check = 0
         self._last_defense_build_time = 0
-        
+
         # Initialize BuildingPlacementHelper
         try:
             from building_placement_helper import BuildingPlacementHelper
+
             self.placement_helper = BuildingPlacementHelper(bot)
         except ImportError:
             self.placement_helper = None
-            
+
     async def execute(self, iteration: int):
         """Main execution method called every step"""
         # 1. Threat Assessment
         self._assess_threats()
-        
+
         # 2. Early Game Defense (replaces ProductionResilience._ensure_early_defense)
         # Run every 4 steps to save CPU, but check often for reaction speed
         if self.early_defense_active:
-             if iteration % 4 == 0:
+            if iteration % 4 == 0:
                 await self._ensure_early_defense()
-        
+
         # 3. Structure Defense (Spines/Spores)
-        if iteration % 22 == 0: # Every ~1 sec
-             await self._build_early_defense()
+        if iteration % 22 == 0:  # Every ~1 sec
+            await self._build_early_defense()
 
         # 4. Drop Defense (Frequency optimized: Every 8 frames)
         if iteration % 8 == 0:
@@ -64,15 +67,21 @@ class DefenseCoordinator:
         # Sync with StrategyManager if available
         if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             if self.bot.strategy_manager.emergency_active:
-                 self.threat_level = "EMERGENCY"
-            elif self.bot.strategy_manager.current_mode == "defensive": # StrategyMode.DEFENSIVE
-                 self.threat_level = "HIGH"
+                self.threat_level = "EMERGENCY"
+            elif (
+                self.bot.strategy_manager.current_mode == "defensive"
+            ):  # StrategyMode.DEFENSIVE
+                self.threat_level = "HIGH"
             else:
-                 self.threat_level = "SAFE"
-        
+                self.threat_level = "SAFE"
+
         # Independent threat assessment: check enemy army proximity
         if hasattr(self.bot, "enemy_units") and self.bot.enemy_units:
-            nearby_enemies = self.bot.enemy_units.closer_than(40, self.bot.start_location) if hasattr(self.bot, "start_location") else []
+            nearby_enemies = (
+                self.bot.enemy_units.closer_than(40, self.bot.start_location)
+                if hasattr(self.bot, "start_location")
+                else []
+            )
             if len(list(nearby_enemies)) > 5:
                 self.threat_level = "HIGH"
             elif len(list(nearby_enemies)) > 0 and self.threat_level == "SAFE":
@@ -81,7 +90,7 @@ class DefenseCoordinator:
     async def _ensure_early_defense(self) -> None:
         """
         3분 전 방어 유닛 빌드 최적화 (Consolidated from ProductionResilience)
-        
+
         목표:
         - 2:00 (120초): 스포닝 풀 완료
         - 2:30 (150초): 최소 6저글링 + 퀸 생산 시작
@@ -102,7 +111,11 @@ class DefenseCoordinator:
             spawning_pool_pending = b.already_pending(UnitTypeId.SPAWNINGPOOL) > 0
 
             # 100초(1:40) 이후 스포닝 풀이 없으면 긴급 건설
-            if game_time >= 100 and not spawning_pool_exists and not spawning_pool_pending:
+            if (
+                game_time >= 100
+                and not spawning_pool_exists
+                and not spawning_pool_pending
+            ):
                 if b.can_afford(UnitTypeId.SPAWNINGPOOL) and b.townhalls.exists:
                     try:
                         main_base = b.townhalls.first
@@ -110,7 +123,9 @@ class DefenseCoordinator:
                             UnitTypeId.SPAWNINGPOOL,
                             near=main_base.position.towards(b.game_info.map_center, 5),
                         )
-                        self.logger.info(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Spawning Pool build")
+                        self.logger.info(
+                            f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Spawning Pool build"
+                        )
                         return
                     except Exception:
                         pass
@@ -132,7 +147,9 @@ class DefenseCoordinator:
                             if not hatchery.is_idle:
                                 continue
                             b.do(hatchery.train(UnitTypeId.QUEEN))
-                            self.logger.info(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Queen production")
+                            self.logger.info(
+                                f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Queen production"
+                            )
                             break
                     except Exception:
                         pass
@@ -146,7 +163,9 @@ class DefenseCoordinator:
             enemy_threat_detected = False
             if hasattr(b, "enemy_units") and hasattr(b, "townhalls"):
                 for th in b.townhalls:
-                    nearby_enemies = [e for e in b.enemy_units if e.distance_to(th.position) < 40]
+                    nearby_enemies = [
+                        e for e in b.enemy_units if e.distance_to(th.position) < 40
+                    ]
                     if nearby_enemies:
                         enemy_threat_detected = True
                         break
@@ -155,27 +174,39 @@ class DefenseCoordinator:
             min_zerglings_150s = 4  # ★ 6 -> 4 (조건 완화)
             min_zerglings_180s = 6  # ★ 8 -> 6 (조건 완화)
 
-            target_zerglings = min_zerglings_150s if game_time < 180 else min_zerglings_180s
+            target_zerglings = (
+                min_zerglings_150s if game_time < 180 else min_zerglings_180s
+            )
 
             # ★ 개선: 적 위협이 있거나 3분(180초) 이후에만 긴급 생산
             should_emergency_produce = (
-                game_time >= 150 and
-                (zergling_count + zergling_pending) < target_zerglings and
-                (enemy_threat_detected or game_time >= 180)
+                game_time >= 150
+                and (zergling_count + zergling_pending) < target_zerglings
+                and (enemy_threat_detected or game_time >= 180)
             )
 
             if should_emergency_produce:
                 larvae = b.units(UnitTypeId.LARVA) if hasattr(b, "units") else []
-                if larvae.exists and b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
-                    larvae_list = list(larvae.ready) if hasattr(larvae, 'ready') else list(larvae)
-                    zerglings_to_produce = min(4, target_zerglings - zergling_count - zergling_pending)
+                if (
+                    larvae.exists
+                    and b.can_afford(UnitTypeId.ZERGLING)
+                    and b.supply_left >= 1
+                ):
+                    larvae_list = (
+                        list(larvae.ready) if hasattr(larvae, "ready") else list(larvae)
+                    )
+                    zerglings_to_produce = min(
+                        4, target_zerglings - zergling_count - zergling_pending
+                    )
 
                     for larva in larvae_list[:zerglings_to_produce]:
                         if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
                             b.do(larva.train(UnitTypeId.ZERGLING))
-                    
+
                     if zerglings_to_produce > 0:
-                        self.logger.info(f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Zergling production: {zergling_count} -> {target_zerglings}")
+                        self.logger.info(
+                            f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Zergling production: {zergling_count} -> {target_zerglings}"
+                        )
 
             # Overlord logic removed (Handled by ProductionController)
 
@@ -195,65 +226,88 @@ class DefenseCoordinator:
             return
 
         spine_crawlers = b.structures(UnitTypeId.SPINECRAWLER)
-        spine_count = spine_crawlers.amount if hasattr(spine_crawlers, 'amount') else len(list(spine_crawlers))
+        spine_count = (
+            spine_crawlers.amount
+            if hasattr(spine_crawlers, "amount")
+            else len(list(spine_crawlers))
+        )
         pending_spines = b.already_pending(UnitTypeId.SPINECRAWLER)
 
         spore_crawlers = b.structures(UnitTypeId.SPORECRAWLER)
-        spore_count = spore_crawlers.amount if hasattr(spore_crawlers, 'amount') else 0
+        spore_count = spore_crawlers.amount if hasattr(spore_crawlers, "amount") else 0
         pending_spores = b.already_pending(UnitTypeId.SPORECRAWLER)
 
         # Defense cooldown to prevent spam (except for emergency requests)
         if game_time - self._last_defense_build_time < 15:
             # Emergency requests bypass cooldown
-            pass 
-        elif game_time - self._last_defense_build_time < 5: # Minimum 5s even for emergency
+            pass
+        elif (
+            game_time - self._last_defense_build_time < 5
+        ):  # Minimum 5s even for emergency
             return
 
         # === 1. Check StrategyManager Requests ===
         strategy_manager = getattr(b, "strategy_manager", None)
         requested_spine = False
         requested_spore = False
-        
+
         if strategy_manager:
-            requested_spine = getattr(strategy_manager, "emergency_spine_requested", False)
-            requested_spore = getattr(strategy_manager, "emergency_spore_requested", False)
-        
+            requested_spine = getattr(
+                strategy_manager, "emergency_spine_requested", False
+            )
+            requested_spore = getattr(
+                strategy_manager, "emergency_spore_requested", False
+            )
+
         # === 2. Detect Rush Locally (Backup) ===
         local_rush = self._detect_early_rush_logic()
-        
+
         # === 3. Build Decision ===
-        
+
         # Spine Crawler (Ground Defense)
         if (requested_spine or local_rush) and spine_count < 2:
-             if b.can_afford(UnitTypeId.SPINECRAWLER) and b.townhalls.exists:
+            if b.can_afford(UnitTypeId.SPINECRAWLER) and b.townhalls.exists:
                 try:
                     main_base = b.townhalls.first
                     defense_pos = main_base.position.towards(b.game_info.map_center, 6)
                     # Don't block mineral line
-                    
+
                     await b.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPINE REQUESTED (Strat: {requested_spine}, Local: {local_rush})")
+                    self.logger.info(
+                        f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPINE REQUESTED (Strat: {requested_spine}, Local: {local_rush})"
+                    )
                     return
                 except Exception:
                     pass
 
         # ★★★ IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ★★★
-        if requested_spore and spore_count + pending_spores < 3:  # 긴급 시 3개까지 증가 (기존: 1개)
-             if b.can_afford(UnitTypeId.SPORECRAWLER) and b.townhalls.exists:
+        if (
+            requested_spore and spore_count + pending_spores < 3
+        ):  # 긴급 시 3개까지 증가 (기존: 1개)
+            if b.can_afford(UnitTypeId.SPORECRAWLER) and b.townhalls.exists:
                 try:
                     main_base = b.townhalls.first
                     # 다양한 위치에 분산 배치
                     offset = spore_count * 5  # 각 스포어를 5칸씩 떨어뜨림
-                    await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4 + offset))
+                    await b.build(
+                        UnitTypeId.SPORECRAWLER,
+                        near=main_base.position.towards(
+                            b.game_info.map_center, 4 + offset
+                        ),
+                    )
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPORE #{spore_count + 1} REQUESTED (Air threat)")
+                    self.logger.info(
+                        f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPORE #{spore_count + 1} REQUESTED (Air threat)"
+                    )
                     return
                 except Exception:
                     pass
 
         # === 4. Proactive Timeline (Standard Play) ===
-        if game_time - self._last_defense_build_time < 15: # Respect cooldown for scheduled builds
+        if (
+            game_time - self._last_defense_build_time < 15
+        ):  # Respect cooldown for scheduled builds
             return
 
         # 2:00+ : First Spine Crawler
@@ -264,7 +318,9 @@ class DefenseCoordinator:
                     defense_pos = main_base.position.towards(b.game_info.map_center, 7)
                     await b.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #1")
+                    self.logger.info(
+                        f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #1"
+                    )
                     return
                 except Exception:
                     pass
@@ -277,7 +333,9 @@ class DefenseCoordinator:
                     defense_pos = main_base.position.towards(b.game_info.map_center, 9)
                     await b.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #2")
+                    self.logger.info(
+                        f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #2"
+                    )
                     return
                 except Exception:
                     pass
@@ -290,19 +348,28 @@ class DefenseCoordinator:
                 pools = b.structures(UnitTypeId.SPAWNINGPOOL).ready
                 if not pools.exists:
                     if game_time < 185:  # 3:05까지만 대기 로그
-                        self.logger.info(f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 대기: Spawning Pool 미완료")
+                        self.logger.info(
+                            f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 대기: Spawning Pool 미완료"
+                        )
                     return
 
                 try:
                     main_base = b.townhalls.first
-                    await b.build(UnitTypeId.SPORECRAWLER, near=main_base.position.towards(b.game_info.map_center, 4))
+                    await b.build(
+                        UnitTypeId.SPORECRAWLER,
+                        near=main_base.position.towards(b.game_info.map_center, 4),
+                    )
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] [*][*][*] Spore Crawler #1 건설! (목표: 3:00) [*][*][*]")
+                    self.logger.info(
+                        f"[DEFENSE] [{int(game_time)}s] [*][*][*] Spore Crawler #1 건설! (목표: 3:00) [*][*][*]"
+                    )
                     return
                 except Exception as e:
                     self.logger.warning(f"[DEFENSE] Spore build failed: {e}")
             elif game_time < 185:  # 3:05까지만 대기 로그
-                self.logger.info(f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 자원 대기: {b.minerals}m (필요: 75m)")
+                self.logger.info(
+                    f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 자원 대기: {b.minerals}m (필요: 75m)"
+                )
 
         # 4:00+ : Third Spine Crawler
         if game_time >= 240 and spine_count + pending_spines < 3:
@@ -312,7 +379,9 @@ class DefenseCoordinator:
                     defense_pos = main_base.position.towards(b.game_info.map_center, 11)
                     await b.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #3")
+                    self.logger.info(
+                        f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #3"
+                    )
                     return
                 except Exception:
                     pass
@@ -332,13 +401,13 @@ class DefenseCoordinator:
         if not enemy_units:
             return False
 
-        rush_units = {'ZERGLING', 'MARINE', 'ZEALOT', 'REAPER', 'ADEPT', 'ROACH'}
+        rush_units = {"ZERGLING", "MARINE", "ZEALOT", "REAPER", "ADEPT", "ROACH"}
 
         for enemy in enemy_units:
             enemy_type = getattr(enemy.type_id, "name", "").upper()
             if enemy_type in rush_units:
                 for th in b.townhalls:
-                    if enemy.distance_to(th.position) < 30: # 30으로 완화
+                    if enemy.distance_to(th.position) < 30:  # 30으로 완화
                         return True
         return False
 
@@ -356,26 +425,39 @@ class DefenseCoordinator:
             nearby_spines = b.structures(UnitTypeId.SPINECRAWLER).closer_than(15, th)
             nearby_spores = b.structures(UnitTypeId.SPORECRAWLER).closer_than(15, th)
 
-            spine_count = nearby_spines.amount if hasattr(nearby_spines, 'amount') else 0
-            spore_count = nearby_spores.amount if hasattr(nearby_spores, 'amount') else 0
+            spine_count = (
+                nearby_spines.amount if hasattr(nearby_spines, "amount") else 0
+            )
+            spore_count = (
+                nearby_spores.amount if hasattr(nearby_spores, "amount") else 0
+            )
 
             if spine_count < 1 and b.can_afford(UnitTypeId.SPINECRAWLER):
                 try:
                     defense_pos = th.position.towards(b.game_info.map_center, 6)
                     await b.build(UnitTypeId.SPINECRAWLER, near=defense_pos)
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spine at expansion")
+                    self.logger.info(
+                        f"[DEFENSE] [{int(game_time)}s] Building Spine at expansion"
+                    )
                     return
                 except Exception:
                     pass
 
             # ★★★ IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 → 2개) ★★★
-            if spore_count < 2 and b.can_afford(UnitTypeId.SPORECRAWLER):  # 확장당 2개로 증가
+            if spore_count < 2 and b.can_afford(
+                UnitTypeId.SPORECRAWLER
+            ):  # 확장당 2개로 증가
                 try:
                     offset = spore_count * 6  # 스포어 간격 조정
-                    await b.build(UnitTypeId.SPORECRAWLER, near=th.position.towards(b.game_info.map_center, 3 + offset))
+                    await b.build(
+                        UnitTypeId.SPORECRAWLER,
+                        near=th.position.towards(b.game_info.map_center, 3 + offset),
+                    )
                     self._last_defense_build_time = game_time
-                    self.logger.info(f"[DEFENSE] [{int(game_time)}s] Building Spore #{spore_count + 1} at expansion")
+                    self.logger.info(
+                        f"[DEFENSE] [{int(game_time)}s] Building Spore #{spore_count + 1} at expansion"
+                    )
                     return
                 except Exception:
                     pass
@@ -398,13 +480,14 @@ class DefenseCoordinator:
         for th in b.townhalls.ready:
             # Check for enemies within 25 range of base
             nearby_enemies = [
-                e for e in enemy_units 
+                e
+                for e in enemy_units
                 if e.distance_to(th) < 25 and not e.is_structure and not e.is_flying
             ]
-            
+
             if nearby_enemies:
                 threat_bases.append((th, nearby_enemies))
-        
+
         if not threat_bases:
             return
 
@@ -413,35 +496,45 @@ class DefenseCoordinator:
         for base, enemies in threat_bases:
             # Find closest enemy center
             target_enemy = enemies[0]
-            
+
             # Find available combat units nearby (exclude Queens if possible unless emergency)
             # Use units within 35 range (local response)
             defenders = b.units.filter(
-                lambda u: u.type_id in {
-                    UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK, 
-                    UnitTypeId.MUTALISK, UnitTypeId.QUEEN
-                } and u.distance_to(base) < 35
+                lambda u: u.type_id
+                in {
+                    UnitTypeId.ZERGLING,
+                    UnitTypeId.ROACH,
+                    UnitTypeId.HYDRALISK,
+                    UnitTypeId.MUTALISK,
+                    UnitTypeId.QUEEN,
+                }
+                and u.distance_to(base) < 35
             )
-            
+
             if not defenders.exists:
                 # Global defense request via Blackboard when local defense fails
                 if hasattr(b, "blackboard") and b.blackboard:
                     b.blackboard.set("global_defense_needed", True)
                     b.blackboard.set("defense_target", base.position)
-                    self.logger.warning("Local defense failed at %s — requesting global reinforcement", base.position)
+                    self.logger.warning(
+                        "Local defense failed at %s — requesting global reinforcement",
+                        base.position,
+                    )
                 continue
-                
+
             # Attack command
             for defender in defenders:
                 # Don't interrupt important micro (handled by CombatManager hopefully)
                 # But simple attack-move is good for now
                 if defender.is_idle or defender.is_moving:
                     b.do(defender.attack(target_enemy.position))
-            
+
             if defenders.amount > 0:
                 # Log occasionally
                 if b.iteration % 100 == 0:
-                    self.logger.info(f"[DEFENSE] Defending base at {base.position} with {defenders.amount} units vs {len(enemies)} enemies")
+                    self.logger.info(
+                        f"[DEFENSE] Defending base at {base.position} with {defenders.amount} units vs {len(enemies)} enemies"
+                    )
 
     async def _handle_worker_defense(self) -> None:
         """
@@ -457,13 +550,13 @@ class DefenseCoordinator:
 
         # Filter workers under attack (HP < 100% or enemies very close)
         # Optimization: Only check workers near enemies
-        
+
         # 1. Find threatened bases (enemies in mineral line)
         for th in b.townhalls.ready:
             nearby_enemies = [e for e in enemy_units if e.distance_to(th) < 10]
             if not nearby_enemies:
                 continue
-                
+
             # Get workers at this base
             workers = b.workers.closer_than(15, th)
             if not workers:
@@ -472,18 +565,21 @@ class DefenseCoordinator:
             threat_center = Point2.center([e.position for e in nearby_enemies])
             enemy_count = len(nearby_enemies)
             worker_count = workers.amount
-            
+
             # === Decision: Fight or Flee ===
-            
+
             # Condition to Fight (Drill):
             # - Many workers (10+) vs Few enemies (<3)
             # - Enemies are ground units (not Hellions/Banelings ideally, but basic check first)
-            should_fight = (worker_count >= 10 and enemy_count <= 2)
-            
+            should_fight = worker_count >= 10 and enemy_count <= 2
+
             # Dangerous enemies to NEVER fight with drones
             dangerous_types = {
-                UnitTypeId.HELLION, UnitTypeId.BANELING, UnitTypeId.ARCHON, 
-                UnitTypeId.COLOSSUS, UnitTypeId.LURKER
+                UnitTypeId.HELLION,
+                UnitTypeId.BANELING,
+                UnitTypeId.ARCHON,
+                UnitTypeId.COLOSSUS,
+                UnitTypeId.LURKER,
             }
             if any(e.type_id in dangerous_types for e in nearby_enemies):
                 should_fight = False
@@ -498,11 +594,13 @@ class DefenseCoordinator:
                 minerals = b.mineral_field.closer_than(20, th)
                 if not minerals:
                     continue
-                    
+
                 for worker in workers:
                     # Only flee if too close to enemy or taking damage
                     dist = worker.distance_to(threat_center)
                     if dist < 6 or worker.health_percentage < 0.9:
                         # Find mineral patch FURTHEST from threat
-                        safe_mineral = max(minerals, key=lambda m: m.distance_to(threat_center))
+                        safe_mineral = max(
+                            minerals, key=lambda m: m.distance_to(threat_center)
+                        )
                         b.do(worker.gather(safe_mineral))

@@ -142,7 +142,9 @@ def build_enemy_race_sequence(
     return [rotation[index % len(rotation)] for index in range(games)]
 
 
-def run_one_game(index: int, map_name: str, enemy_race: str, difficulty: str) -> GameResult:
+def run_one_game(
+    index: int, map_name: str, enemy_race: str, difficulty: str
+) -> GameResult:
     start = time.time()
     bot_log = _detect_bot_log()
 
@@ -176,7 +178,9 @@ def run_one_game(index: int, map_name: str, enemy_race: str, difficulty: str) ->
     except subprocess.TimeoutExpired as exc:
         runtime_sec = round(time.time() - start, 2)
         combined_output = "\n".join(
-            part for part in ((exc.stdout or "").strip(), (exc.stderr or "").strip()) if part
+            part
+            for part in ((exc.stdout or "").strip(), (exc.stderr or "").strip())
+            if part
         )
         outcome = _parse_outcome(combined_output) if combined_output else "timeout"
         return GameResult(
@@ -195,7 +199,9 @@ def run_one_game(index: int, map_name: str, enemy_race: str, difficulty: str) ->
 
     runtime_sec = round(time.time() - start, 2)
     combined_output = "\n".join(
-        part for part in ((proc.stdout or "").strip(), (proc.stderr or "").strip()) if part
+        part
+        for part in ((proc.stdout or "").strip(), (proc.stderr or "").strip())
+        if part
     )
     outcome = _parse_outcome(combined_output)
 
@@ -277,7 +283,11 @@ def build_training_summary(
     if by_race:
         weakest_matchup = min(
             by_race.items(),
-            key=lambda item: (float(item[1]["win_rate"]), -int(item[1]["games"]), item[0]),
+            key=lambda item: (
+                float(item[1]["win_rate"]),
+                -int(item[1]["games"]),
+                item[0],
+            ),
         )[0]
 
     benchmark_passed = (

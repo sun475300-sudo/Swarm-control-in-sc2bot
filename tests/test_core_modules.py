@@ -10,7 +10,9 @@ from unittest.mock import Mock, MagicMock, AsyncMock
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger'))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+)
 
 
 def _try_import(module_name, class_name):
@@ -30,7 +32,10 @@ ProductionController = _try_import("production_controller", "ProductionControlle
 # 1. EvolutionUpgradeManager Tests
 # ─────────────────────────────────────────────
 
-@pytest.mark.skipif(EvolutionUpgradeManager is None, reason="upgrade_manager not importable")
+
+@pytest.mark.skipif(
+    EvolutionUpgradeManager is None, reason="upgrade_manager not importable"
+)
 class TestEvolutionUpgradeManager:
     """upgrade_manager.py 핵심 테스트"""
 
@@ -42,7 +47,9 @@ class TestEvolutionUpgradeManager:
         bot.vespene = 200
         bot.supply_used = 50
         bot.structures = MagicMock()
-        bot.structures.return_value = MagicMock(exists=True, ready=MagicMock(exists=True))
+        bot.structures.return_value = MagicMock(
+            exists=True, ready=MagicMock(exists=True)
+        )
         bot.already_pending_upgrade = MagicMock(return_value=0)
         bot.can_afford = MagicMock(return_value=True)
         return bot
@@ -86,7 +93,10 @@ class TestEvolutionUpgradeManager:
 # 2. ProductionController Tests
 # ─────────────────────────────────────────────
 
-@pytest.mark.skipif(ProductionController is None, reason="production_controller not importable")
+
+@pytest.mark.skipif(
+    ProductionController is None, reason="production_controller not importable"
+)
 class TestProductionController:
     """production_controller.py 핵심 테스트"""
 
@@ -145,6 +155,7 @@ class TestProductionController:
 # 3. BoidsController Tests (sc2 dependency — may skip)
 # ─────────────────────────────────────────────
 
+
 class TestBoidsController:
     """micro_controller.py 핵심 테스트 (sc2 의존성으로 스킵 가능)"""
 
@@ -152,6 +163,7 @@ class TestBoidsController:
         """BoidsController 임포트를 시도하고 결과를 확인한다."""
         try:
             from micro_controller import BoidsController
+
             mock_bot = MagicMock()
             mock_bot.game_info = MagicMock()
             mock_bot.game_info.map_size = (200, 200)
@@ -162,9 +174,19 @@ class TestBoidsController:
 
     def test_submodule_existence(self):
         """combat 서브모듈 파일이 존재하는지 확인한다."""
-        base = os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger', 'combat')
-        expected = ['boids_swarm_control.py', 'potential_fields.py', 'terrain_analysis.py',
-                    'threat_response.py', 'formation_tactics.py', 'targeting.py',
-                    'stutter_step_kiting.py']
+        base = os.path.join(
+            os.path.dirname(__file__), "..", "wicked_zerg_challenger", "combat"
+        )
+        expected = [
+            "boids_swarm_control.py",
+            "potential_fields.py",
+            "terrain_analysis.py",
+            "threat_response.py",
+            "formation_tactics.py",
+            "targeting.py",
+            "stutter_step_kiting.py",
+        ]
         for f in expected:
-            assert os.path.exists(os.path.join(base, f)), f"Missing combat submodule: {f}"
+            assert os.path.exists(
+                os.path.join(base, f)
+            ), f"Missing combat submodule: {f}"

@@ -15,7 +15,10 @@ from typing import List
 try:
     import sys
     import os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger'))
+
+    sys.path.insert(
+        0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+    )
 
     from combat.targeting import Targeting
     from combat.micro_combat import MicroCombat
@@ -26,8 +29,16 @@ except ImportError:
 
 class MockUnit:
     """Mock SC2 Unit"""
-    def __init__(self, tag: int, type_id, position, health: float = 100.0,
-                 health_max: float = 100.0, is_flying: bool = False):
+
+    def __init__(
+        self,
+        tag: int,
+        type_id,
+        position,
+        health: float = 100.0,
+        health_max: float = 100.0,
+        is_flying: bool = False,
+    ):
         self.tag = tag
         self.type_id = type_id
         self.position = position
@@ -44,15 +55,18 @@ class MockUnit:
         return self.health / self.health_max if self.health_max > 0 else 0
 
     def distance_to(self, other):
-        if hasattr(other, 'position'):
+        if hasattr(other, "position"):
             pos = other.position
         else:
             pos = other
-        return ((self.position[0] - pos[0])**2 + (self.position[1] - pos[1])**2)**0.5
+        return (
+            (self.position[0] - pos[0]) ** 2 + (self.position[1] - pos[1]) ** 2
+        ) ** 0.5
 
 
 class MockUnits:
     """Mock SC2 Units collection"""
+
     def __init__(self, units: List[MockUnit]):
         self._units = units
 
@@ -70,10 +84,7 @@ class MockUnits:
         return len(self._units) > 0
 
     def closer_than(self, distance: float, position):
-        return MockUnits([
-            u for u in self._units
-            if u.distance_to(position) < distance
-        ])
+        return MockUnits([u for u in self._units if u.distance_to(position) < distance])
 
     def closest_to(self, position):
         if not self._units:
@@ -84,12 +95,15 @@ class MockUnits:
         return MockUnits([u for u in self._units if func(u)])
 
     def sorted_by_distance_to(self, position, reverse=False):
-        sorted_units = sorted(self._units, key=lambda u: u.distance_to(position), reverse=reverse)
+        sorted_units = sorted(
+            self._units, key=lambda u: u.distance_to(position), reverse=reverse
+        )
         return MockUnits(sorted_units)
 
 
 class MockBot:
     """Mock SC2 Bot"""
+
     def __init__(self):
         self.units = MockUnits([])
         self.enemy_units = MockUnits([])
@@ -102,6 +116,7 @@ class MockBot:
 
 # ===== Targeting System Tests =====
 
+
 class TestTargeting:
     """타겟팅 시스템 테스트"""
 
@@ -111,7 +126,7 @@ class TestTargeting:
         targeting = Targeting(bot)
 
         assert targeting.bot == bot
-        assert hasattr(targeting, 'priority_targets')
+        assert hasattr(targeting, "priority_targets")
 
     def test_priority_target_worker(self):
         """일꾼 우선순위 타겟 테스트"""
@@ -170,11 +185,13 @@ class TestTargeting:
         bot = MockBot()
         targeting = Targeting(bot)
 
-        enemies = MockUnits([
-            MockUnit(1, "MARINE", (50, 50), health=45),
-            MockUnit(2, "MARINE", (51, 51), health=45),
-            MockUnit(3, "MARINE", (52, 52), health=45),
-        ])
+        enemies = MockUnits(
+            [
+                MockUnit(1, "MARINE", (50, 50), health=45),
+                MockUnit(2, "MARINE", (51, 51), health=45),
+                MockUnit(3, "MARINE", (52, 52), health=45),
+            ]
+        )
 
         # 집중 사격 타겟 선정
         focus_target = targeting.get_focus_fire_target(enemies, (50, 50))
@@ -185,6 +202,7 @@ class TestTargeting:
 
 
 # ===== Micro Combat Tests =====
+
 
 class TestMicroCombat:
     """마이크로 컨트롤 테스트"""
@@ -218,15 +236,14 @@ class TestMicroCombat:
         # 저글링 포위 공격 시뮬레이션
         target = MockUnit(1, "TANK", (50, 50))
 
-        zerglings = [
-            MockUnit(i+10, "ZERGLING", (50 + i, 50 + i))
-            for i in range(8)
-        ]
+        zerglings = [MockUnit(i + 10, "ZERGLING", (50 + i, 50 + i)) for i in range(8)]
 
         # 포위 포지션 계산
         # (실제 MicroCombat 메서드 호출)
-        if hasattr(micro, 'calculate_surround_positions'):
-            surround_positions = micro.calculate_surround_positions(target.position, len(zerglings))
+        if hasattr(micro, "calculate_surround_positions"):
+            surround_positions = micro.calculate_surround_positions(
+                target.position, len(zerglings)
+            )
             assert len(surround_positions) == len(zerglings)
 
     def test_retreat_logic(self):
@@ -264,6 +281,7 @@ class TestMicroCombat:
 
 # ===== Boids Swarm Control Tests =====
 
+
 class TestBoidsSwarmControl:
     """Boids 군집 제어 테스트"""
 
@@ -271,9 +289,9 @@ class TestBoidsSwarmControl:
         """Boids 초기화 테스트"""
         boids = BoidsSwarmController()
 
-        assert hasattr(boids, 'separation_weight')
-        assert hasattr(boids, 'alignment_weight')
-        assert hasattr(boids, 'cohesion_weight')
+        assert hasattr(boids, "separation_weight")
+        assert hasattr(boids, "alignment_weight")
+        assert hasattr(boids, "cohesion_weight")
 
     def test_separation_force(self):
         """분리 힘 계산 테스트"""
@@ -288,7 +306,7 @@ class TestBoidsSwarmControl:
 
         # 분리 힘 계산
         unit = units[0]
-        if hasattr(boids, 'calculate_separation'):
+        if hasattr(boids, "calculate_separation"):
             separation = boids.calculate_separation(unit, MockUnits(units[1:]))
             # 분리 힘이 0이 아니어야 함
             assert separation is not None
@@ -305,7 +323,7 @@ class TestBoidsSwarmControl:
         ]
 
         # 정렬 힘 계산
-        if hasattr(boids, 'calculate_alignment'):
+        if hasattr(boids, "calculate_alignment"):
             alignment = boids.calculate_alignment(units[0], MockUnits(units[1:]))
             assert alignment is not None
 
@@ -321,7 +339,7 @@ class TestBoidsSwarmControl:
         ]
 
         # 응집 힘 계산
-        if hasattr(boids, 'calculate_cohesion'):
+        if hasattr(boids, "calculate_cohesion"):
             cohesion = boids.calculate_cohesion(units[0], MockUnits(units[1:]))
             assert cohesion is not None
 
@@ -336,13 +354,14 @@ class TestBoidsSwarmControl:
         ]
 
         # 통합 힘 계산
-        if hasattr(boids, 'calculate_boids_force'):
+        if hasattr(boids, "calculate_boids_force"):
             force = boids.calculate_boids_force(units[0], MockUnits(units[1:]))
             # 힘이 계산되어야 함
             assert force is not None
 
 
 # ===== Integration Tests =====
+
 
 class TestCombatComponentsIntegration:
     """컴포넌트 통합 테스트"""
@@ -383,8 +402,7 @@ class TestCombatComponentsIntegration:
 
         # 저글링 군집이 적을 공격
         zerglings = [
-            MockUnit(i, "ZERGLING", (50 + i*0.5, 50 + i*0.5))
-            for i in range(10)
+            MockUnit(i, "ZERGLING", (50 + i * 0.5, 50 + i * 0.5)) for i in range(10)
         ]
 
         marine = MockUnit(100, "MARINE", (60, 60))
@@ -398,16 +416,16 @@ class TestCombatComponentsIntegration:
 
         # Boids 힘 계산으로 군집 유지
         for zergling in zerglings[:3]:  # 일부만 테스트
-            if hasattr(boids, 'calculate_boids_force'):
+            if hasattr(boids, "calculate_boids_force"):
                 force = boids.calculate_boids_force(
-                    zergling,
-                    MockUnits([z for z in zerglings if z.tag != zergling.tag])
+                    zergling, MockUnits([z for z in zerglings if z.tag != zergling.tag])
                 )
                 # 힘이 계산되어야 함
                 assert force is not None
 
 
 # ===== Edge Case Tests =====
+
 
 class TestEdgeCases:
     """엣지 케이스 테스트"""
@@ -431,7 +449,7 @@ class TestEdgeCases:
         empty_neighbors = MockUnits([])
 
         # 이웃이 없어도 크래시 없어야 함
-        if hasattr(boids, 'calculate_boids_force'):
+        if hasattr(boids, "calculate_boids_force"):
             force = boids.calculate_boids_force(single_unit, empty_neighbors)
             # None이거나 (0, 0) 반환
             assert force is None or force == (0, 0)

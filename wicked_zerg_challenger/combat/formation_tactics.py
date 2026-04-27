@@ -207,7 +207,7 @@ class BurrowController:
         """잠복 업그레이드 확인"""
         if not UpgradeId:
             return False
-        if hasattr(bot, 'state') and hasattr(bot.state, 'upgrades'):
+        if hasattr(bot, "state") and hasattr(bot.state, "upgrades"):
             return UpgradeId.BURROW in bot.state.upgrades
         return False
 
@@ -371,25 +371,25 @@ class BurrowController:
         }
 
         unit_name = getattr(unit_type, "name", "")
-        
+
         # Try exact match first
         down_name = down_map.get(unit_name)
         up_name = up_map.get(unit_name)
-        
+
         # Helper for common prefixes/suffixes if exact match fails
         if not down_name and not up_name:
-             if "ROACH" in unit_name: 
-                 down_name, up_name = "BURROWDOWN_ROACH", "BURROWUP_ROACH"
-             elif "LURKER" in unit_name:
-                 down_name, up_name = "BURROWDOWN_LURKER", "BURROWUP_LURKER"
-             elif "BANELING" in unit_name:
-                 down_name, up_name = "BURROWDOWN_BANELING", "BURROWUP_BANELING"
-             elif "INFESTOR" in unit_name:
-                 down_name, up_name = "BURROWDOWN_INFESTOR", "BURROWUP_INFESTOR"
-             elif "SWARMHOST" in unit_name:
-                 down_name, up_name = "BURROWDOWN_SWARMHOST", "BURROWUP_SWARMHOST"
-             else:
-                 down_name, up_name = "BURROWDOWN", "BURROWUP"
+            if "ROACH" in unit_name:
+                down_name, up_name = "BURROWDOWN_ROACH", "BURROWUP_ROACH"
+            elif "LURKER" in unit_name:
+                down_name, up_name = "BURROWDOWN_LURKER", "BURROWUP_LURKER"
+            elif "BANELING" in unit_name:
+                down_name, up_name = "BURROWDOWN_BANELING", "BURROWUP_BANELING"
+            elif "INFESTOR" in unit_name:
+                down_name, up_name = "BURROWDOWN_INFESTOR", "BURROWUP_INFESTOR"
+            elif "SWARMHOST" in unit_name:
+                down_name, up_name = "BURROWDOWN_SWARMHOST", "BURROWUP_SWARMHOST"
+            else:
+                down_name, up_name = "BURROWDOWN", "BURROWUP"
 
         down_ability = getattr(AbilityId, down_name or "BURROWDOWN", None)
         up_ability = getattr(AbilityId, up_name or "BURROWUP", None)

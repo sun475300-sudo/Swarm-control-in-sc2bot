@@ -14,38 +14,39 @@ import math
 # ------------------------------------------------------------------
 
 STRATEGY_ARCHETYPES = [
-    "bio_terran",       # marine/marauder/medivac
-    "mech_terran",      # tank/hellion/viking
-    "sky_terran",       # battlecruiser/banshee
+    "bio_terran",  # marine/marauder/medivac
+    "mech_terran",  # tank/hellion/viking
+    "sky_terran",  # battlecruiser/banshee
     "gateway_protoss",  # zealot/stalker/immortal
-    "skytoss",          # carrier/void ray
-    "colossus_protoss", # colossus/gateway
-    "zergling_bane",    # zerg mirror ling/bane
-    "roach_ravager",    # zerg roach pressure
+    "skytoss",  # carrier/void ray
+    "colossus_protoss",  # colossus/gateway
+    "zergling_bane",  # zerg mirror ling/bane
+    "roach_ravager",  # zerg roach pressure
     "hydra_ling_bane",  # zerg hydra army
-    "nydus_all_in",     # nydus drop all-in
+    "nydus_all_in",  # nydus drop all-in
     "unknown",
 ]
 
 # Counter recommendations: {archetype: [zerg_counter_composition]}
 COUNTER_TABLE: Dict[str, List[str]] = {
-    "bio_terran":       ["roach_ravager", "bane_ling", "hydralisk"],
-    "mech_terran":      ["ultralisk", "bane_infestor", "swarm_host"],
-    "sky_terran":       ["corruptor_hydra", "queen_spore"],
-    "gateway_protoss":  ["roach_ravager", "bane_ling"],
-    "skytoss":          ["corruptor_hydra", "queen_net"],
+    "bio_terran": ["roach_ravager", "bane_ling", "hydralisk"],
+    "mech_terran": ["ultralisk", "bane_infestor", "swarm_host"],
+    "sky_terran": ["corruptor_hydra", "queen_spore"],
+    "gateway_protoss": ["roach_ravager", "bane_ling"],
+    "skytoss": ["corruptor_hydra", "queen_net"],
     "colossus_protoss": ["corruptor_ravager", "hydra_ling"],
-    "zergling_bane":    ["roach", "spine_crawler"],
-    "roach_ravager":    ["hydra_ling_bane", "roach_ravager"],
-    "hydra_ling_bane":  ["roach_ravager", "infestor"],
-    "nydus_all_in":     ["spine_crawler_wall", "queen_pull"],
-    "unknown":          ["hatch_first_macro"],
+    "zergling_bane": ["roach", "spine_crawler"],
+    "roach_ravager": ["hydra_ling_bane", "roach_ravager"],
+    "hydra_ling_bane": ["roach_ravager", "infestor"],
+    "nydus_all_in": ["spine_crawler_wall", "queen_pull"],
+    "unknown": ["hatch_first_macro"],
 }
 
 
 @dataclass
 class OpponentProfile:
     """Tracks an opponent's strategy tendencies across multiple games."""
+
     opponent_id: str
     race: str = "Unknown"
     games_played: int = 0
@@ -141,9 +142,13 @@ class AdaptiveStrategySelector:
     def __init__(self):
         self._profiles: Dict[str, OpponentProfile] = {}
 
-    def get_or_create_profile(self, opponent_id: str, race: str = "Unknown") -> OpponentProfile:
+    def get_or_create_profile(
+        self, opponent_id: str, race: str = "Unknown"
+    ) -> OpponentProfile:
         if opponent_id not in self._profiles:
-            self._profiles[opponent_id] = OpponentProfile(opponent_id=opponent_id, race=race)
+            self._profiles[opponent_id] = OpponentProfile(
+                opponent_id=opponent_id, race=race
+            )
         return self._profiles[opponent_id]
 
     def select_counter_strategy(
@@ -189,9 +194,9 @@ class AdaptiveStrategySelector:
         Used when opponent has no history.
         """
         meta = {
-            "Terran":  ("bio_terran", COUNTER_TABLE["bio_terran"]),
+            "Terran": ("bio_terran", COUNTER_TABLE["bio_terran"]),
             "Protoss": ("gateway_protoss", COUNTER_TABLE["gateway_protoss"]),
-            "Zerg":    ("zergling_bane", COUNTER_TABLE["zergling_bane"]),
+            "Zerg": ("zergling_bane", COUNTER_TABLE["zergling_bane"]),
         }
         return meta.get(race, ("unknown", COUNTER_TABLE["unknown"]))
 
@@ -200,6 +205,9 @@ class AdaptiveStrategySelector:
         profile = self._profiles.get(opponent_id)
         if not profile:
             return {}
-        return {k: round(v, 4) for k, v in sorted(
-            profile.strategy_priors.items(), key=lambda x: x[1], reverse=True
-        )}
+        return {
+            k: round(v, 4)
+            for k, v in sorted(
+                profile.strategy_priors.items(), key=lambda x: x[1], reverse=True
+            )
+        }

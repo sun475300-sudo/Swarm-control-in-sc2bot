@@ -37,6 +37,7 @@ log = logging.getLogger("sc2_strategy_lora")
 try:
     import torch
     import torch.nn as nn
+
     TORCH_AVAILABLE = True
     log.info("PyTorch %s available.", torch.__version__)
 except ImportError:
@@ -53,11 +54,14 @@ try:
         DataCollatorForLanguageModeling,
     )
     from datasets import Dataset as HFDataset
+
     TRANSFORMERS_AVAILABLE = True
     log.info("Transformers available.")
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
-    log.warning("transformers not installed. Install with: pip install transformers datasets")
+    log.warning(
+        "transformers not installed. Install with: pip install transformers datasets"
+    )
 
 try:
     from peft import (
@@ -67,6 +71,7 @@ try:
         PeftModel,
         prepare_model_for_kbit_training,
     )
+
     PEFT_AVAILABLE = True
     log.info("PEFT available.")
 except ImportError:
@@ -75,6 +80,7 @@ except ImportError:
 
 try:
     import bitsandbytes as bnb  # noqa: F401
+
     BNB_AVAILABLE = True
     log.info("bitsandbytes available.")
 except ImportError:
@@ -90,9 +96,11 @@ MATCHUPS = ("ZvT", "ZvP", "ZvZ")
 # SC2 strategy dataset
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SC2StrategyExample:
     """A single instruction-response pair for strategy fine-tuning."""
+
     instruction: str
     response: str
     matchup: str = "ZvT"
@@ -251,16 +259,20 @@ def build_sc2_strategy_dataset(
         if matchup_filter and item["matchup"] != matchup_filter:
             continue
         for _ in range(augment_factor):
-            examples.append(SC2StrategyExample(
-                instruction=item["instruction"],
-                response=item["response"],
-                matchup=item["matchup"],
-            ))
+            examples.append(
+                SC2StrategyExample(
+                    instruction=item["instruction"],
+                    response=item["response"],
+                    matchup=item["matchup"],
+                )
+            )
 
     rng.shuffle(examples)
     log.info(
         "Built SC2 strategy dataset: %d examples (filter=%s, augment=%dx).",
-        len(examples), matchup_filter or "all", augment_factor,
+        len(examples),
+        matchup_filter or "all",
+        augment_factor,
     )
     return examples
 
@@ -278,17 +290,26 @@ def format_prompt(example: SC2StrategyExample) -> str:
 # LoRA configuration profiles
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class LoRAProfile:
     """Encapsulates a LoRA hyperparameter configuration."""
+
     name: str = "default"
     r: int = 16
     lora_alpha: int = 32
     lora_dropout: float = 0.05
-    target_modules: List[str] = field(default_factory=lambda: [
-        "q_proj", "k_proj", "v_proj", "o_proj",
-        "gate_proj", "up_proj", "down_proj",
-    ])
+    target_modules: List[str] = field(
+        default_factory=lambda: [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ]
+    )
     bias: str = "none"
     task_type: str = "CAUSAL_LM"
 
@@ -296,8 +317,13 @@ class LoRAProfile:
 LORA_PROFILES: Dict[str, LoRAProfile] = {
     "default": LoRAProfile(),
     "aggressive": LoRAProfile(name="aggressive", r=32, lora_alpha=64, lora_dropout=0.1),
-    "lightweight": LoRAProfile(name="lightweight", r=8, lora_alpha=16, lora_dropout=0.0,
-                                target_modules=["q_proj", "v_proj"]),
+    "lightweight": LoRAProfile(
+        name="lightweight",
+        r=8,
+        lora_alpha=16,
+        lora_dropout=0.0,
+        target_modules=["q_proj", "v_proj"],
+    ),
 }
 
 
@@ -357,7 +383,10 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
 
             log.info(
                 "SC2StrategyLoRA initialised  model=%s  quantize=%s  lora_r=%d  alpha=%d",
-                base_model_name, quantize, self.lora_profile.r, self.lora_profile.lora_alpha,
+                base_model_name,
+                quantize,
+                self.lora_profile.r,
+                self.lora_profile.lora_alpha,
             )
 
         # -- Model loading --------------------------------------------------
@@ -377,7 +406,9 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
             elif self.quantize == "8bit":
                 return BitsAndBytesConfig(load_in_8bit=True)
             else:
-                log.warning("Unknown quantize=%s, loading in full precision.", self.quantize)
+                log.warning(
+                    "Unknown quantize=%s, loading in full precision.", self.quantize
+                )
                 return None
 
         def load_base_model(self) -> None:
@@ -392,7 +423,11 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
                 self._tokenizer.pad_token_id = self._tokenizer.eos_token_id
 
             bnb_config = self._get_bnb_config()
-            log.info("Loading base model: %s (quantize=%s)", self.base_model_name, self.quantize)
+            log.info(
+                "Loading base model: %s (quantize=%s)",
+                self.base_model_name,
+                self.quantize,
+            )
 
             load_kwargs: Dict[str, Any] = {
                 "trust_remote_code": True,
@@ -410,7 +445,10 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
             if self.quantize in ("4bit", "8bit") and BNB_AVAILABLE:
                 self._base_model = prepare_model_for_kbit_training(self._base_model)
 
-            log.info("Base model loaded. Parameters: %d", sum(p.numel() for p in self._base_model.parameters()))
+            log.info(
+                "Base model loaded. Parameters: %d",
+                sum(p.numel() for p in self._base_model.parameters()),
+            )
 
         def _build_lora_config(self, adapter_name: str = "default") -> LoraConfig:
             """Create a PEFT LoraConfig from the current profile."""
@@ -432,12 +470,17 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
             self._peft_model = get_peft_model(self._base_model, lora_config)
             self._active_adapter = adapter_name
 
-            trainable = sum(p.numel() for p in self._peft_model.parameters() if p.requires_grad)
+            trainable = sum(
+                p.numel() for p in self._peft_model.parameters() if p.requires_grad
+            )
             total = sum(p.numel() for p in self._peft_model.parameters())
             pct = 100.0 * trainable / total if total > 0 else 0.0
             log.info(
                 "LoRA applied (adapter=%s): trainable=%d / %d (%.2f%%)",
-                adapter_name, trainable, total, pct,
+                adapter_name,
+                trainable,
+                total,
+                pct,
             )
 
         # -- Dataset preparation --------------------------------------------
@@ -449,7 +492,9 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
         ) -> Tuple[HFDataset, HFDataset]:
             """Tokenise SC2 strategy examples into HuggingFace Datasets."""
             if self._tokenizer is None:
-                raise RuntimeError("Tokenizer not loaded. Call load_base_model() first.")
+                raise RuntimeError(
+                    "Tokenizer not loaded. Call load_base_model() first."
+                )
 
             texts = [format_prompt(ex) for ex in examples]
 
@@ -465,14 +510,18 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
             data_dict = {
                 "input_ids": encodings["input_ids"].tolist(),
                 "attention_mask": encodings["attention_mask"].tolist(),
-                "labels": encodings["input_ids"].tolist(),  # causal LM: labels = input_ids
+                "labels": encodings[
+                    "input_ids"
+                ].tolist(),  # causal LM: labels = input_ids
             }
 
             dataset = HFDataset.from_dict(data_dict)
             split = dataset.train_test_split(test_size=val_split, seed=42)
             log.info(
                 "Dataset prepared: train=%d  val=%d  max_len=%d",
-                len(split["train"]), len(split["test"]), self.max_seq_len,
+                len(split["train"]),
+                len(split["test"]),
+                self.max_seq_len,
             )
             return split["train"], split["test"]
 
@@ -522,7 +571,11 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
                 eval_steps=save_steps if val_dataset else None,
                 report_to="none",
                 remove_unused_columns=False,
-                optim="paged_adamw_8bit" if self.quantize in ("4bit", "8bit") else "adamw_torch",
+                optim=(
+                    "paged_adamw_8bit"
+                    if self.quantize in ("4bit", "8bit")
+                    else "adamw_torch"
+                ),
                 lr_scheduler_type="cosine",
                 group_by_length=True,
             )
@@ -540,7 +593,12 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
                 data_collator=data_collator,
             )
 
-            log.info("Starting LoRA training: epochs=%d  lr=%.1e  grad_accum=%d", epochs, learning_rate, gradient_accumulation_steps)
+            log.info(
+                "Starting LoRA training: epochs=%d  lr=%.1e  grad_accum=%d",
+                epochs,
+                learning_rate,
+                gradient_accumulation_steps,
+            )
             train_result = trainer.train()
             metrics = train_result.metrics
             log.info("Training complete: %s", metrics)
@@ -584,7 +642,9 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
 
             return results
 
-        def load_adapter(self, adapter_name: str, adapter_path: Optional[str] = None) -> None:
+        def load_adapter(
+            self, adapter_name: str, adapter_path: Optional[str] = None
+        ) -> None:
             """Load a saved LoRA adapter by name or path."""
             if self._base_model is None:
                 self.load_base_model()
@@ -696,7 +756,7 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
                 pad_token_id=self._tokenizer.eos_token_id,
             )
 
-            generated = outputs[0][input_ids.shape[-1]:]
+            generated = outputs[0][input_ids.shape[-1] :]
             response = self._tokenizer.decode(generated, skip_special_tokens=True)
             return response.strip()
 
@@ -725,13 +785,17 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
             total_tokens = 0
 
             for i in range(0, len(dataset), batch_size):
-                batch = dataset[i: i + batch_size]
+                batch = dataset[i : i + batch_size]
                 input_ids = torch.tensor(batch["input_ids"], device=model.device)
-                attention_mask = torch.tensor(batch["attention_mask"], device=model.device)
+                attention_mask = torch.tensor(
+                    batch["attention_mask"], device=model.device
+                )
                 labels = input_ids.clone()
                 labels[attention_mask == 0] = -100
 
-                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                outputs = model(
+                    input_ids=input_ids, attention_mask=attention_mask, labels=labels
+                )
                 loss = outputs.loss
                 n_tokens = (labels != -100).sum().item()
                 total_loss += loss.item() * n_tokens
@@ -754,12 +818,44 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
             - matchup_accuracy: whether the response mentions the correct matchup units
             """
             sc2_keywords = {
-                "ZvT": ["marine", "tank", "medivac", "baneling", "zergling", "roach", "hydra",
-                         "viper", "queen", "creep", "mech", "bio"],
-                "ZvP": ["zealot", "stalker", "colossus", "carrier", "immortal", "corruptor",
-                         "infestor", "baneling", "roach", "queen", "cannon"],
-                "ZvZ": ["zergling", "baneling", "roach", "mutalisk", "queen", "drone",
-                         "speed", "spire", "pool"],
+                "ZvT": [
+                    "marine",
+                    "tank",
+                    "medivac",
+                    "baneling",
+                    "zergling",
+                    "roach",
+                    "hydra",
+                    "viper",
+                    "queen",
+                    "creep",
+                    "mech",
+                    "bio",
+                ],
+                "ZvP": [
+                    "zealot",
+                    "stalker",
+                    "colossus",
+                    "carrier",
+                    "immortal",
+                    "corruptor",
+                    "infestor",
+                    "baneling",
+                    "roach",
+                    "queen",
+                    "cannon",
+                ],
+                "ZvZ": [
+                    "zergling",
+                    "baneling",
+                    "roach",
+                    "mutalisk",
+                    "queen",
+                    "drone",
+                    "speed",
+                    "spire",
+                    "pool",
+                ],
             }
 
             results: Dict[str, List[float]] = {
@@ -770,7 +866,9 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
 
             for ex in test_examples[:max_examples]:
                 try:
-                    response = self.generate(ex.instruction, matchup=ex.matchup, max_new_tokens=200)
+                    response = self.generate(
+                        ex.instruction, matchup=ex.matchup, max_new_tokens=200
+                    )
                 except Exception as e:
                     log.warning("Generation failed: %s", e)
                     continue
@@ -818,7 +916,9 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
                 "registered_adapters": list(self._adapter_registry.keys()),
             }
             if self._peft_model is not None:
-                trainable = sum(p.numel() for p in self._peft_model.parameters() if p.requires_grad)
+                trainable = sum(
+                    p.numel() for p in self._peft_model.parameters() if p.requires_grad
+                )
                 total = sum(p.numel() for p in self._peft_model.parameters())
                 info["trainable_params"] = trainable
                 info["total_params"] = total
@@ -829,6 +929,7 @@ if TORCH_AVAILABLE and TRANSFORMERS_AVAILABLE and PEFT_AVAILABLE:
 # ---------------------------------------------------------------------------
 # Fallback (no PEFT / transformers)
 # ---------------------------------------------------------------------------
+
 
 class SC2StrategyLoRAFallback:
     """Minimal stub that mirrors the SC2StrategyLoRA API without real models."""
@@ -844,7 +945,9 @@ class SC2StrategyLoRAFallback:
         log.info("[Fallback] LoRA adapter '%s' applied (simulated).", adapter_name)
 
     def prepare_dataset(
-        self, examples: List[SC2StrategyExample], val_split: float = 0.1,
+        self,
+        examples: List[SC2StrategyExample],
+        val_split: float = 0.1,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         split_idx = max(1, int(len(examples) * (1 - val_split)))
         train = [{"text": format_prompt(ex)} for ex in examples[:split_idx]]
@@ -894,6 +997,7 @@ class SC2StrategyLoRAFallback:
 # Main demonstration
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     """End-to-end demonstration of SC2 strategy LoRA fine-tuning."""
     log.info("=== SC2 Strategy LoRA — Phase 597 Demo ===")
@@ -913,13 +1017,18 @@ def main() -> None:
         for name, profile in LORA_PROFILES.items():
             log.info(
                 "  Profile '%s': r=%d alpha=%d dropout=%.2f targets=%s",
-                name, profile.r, profile.lora_alpha,
-                profile.lora_dropout, profile.target_modules,
+                name,
+                profile.r,
+                profile.lora_alpha,
+                profile.lora_dropout,
+                profile.target_modules,
             )
 
         # Demonstrate adapter info (without loading a real model)
         log.info("To run full training:")
-        log.info("  lora = SC2StrategyLoRA(base_model_name='meta-llama/Llama-2-7b-hf', quantize='4bit')")
+        log.info(
+            "  lora = SC2StrategyLoRA(base_model_name='meta-llama/Llama-2-7b-hf', quantize='4bit')"
+        )
         log.info("  lora.load_base_model()")
         log.info("  lora.apply_lora('ZvT')")
         log.info("  train_ds, val_ds = lora.prepare_dataset(examples)")

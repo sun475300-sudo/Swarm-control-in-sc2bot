@@ -26,13 +26,15 @@ T = TypeVar("T")
 
 class CircuitState(Enum):
     """States of the circuit breaker."""
-    CLOSED = "closed"          # Normal operation, requests pass through
-    OPEN = "open"              # Failures exceeded threshold, requests blocked
-    HALF_OPEN = "half_open"    # Testing if service recovered
+
+    CLOSED = "closed"  # Normal operation, requests pass through
+    OPEN = "open"  # Failures exceeded threshold, requests blocked
+    HALF_OPEN = "half_open"  # Testing if service recovered
 
 
 class ServiceType(Enum):
     """SC2-specific service types protected by circuit breakers."""
+
     BOT_API = "bot_api"
     TRAINING_SERVICE = "training_service"
     DASHBOARD = "dashboard"
@@ -71,6 +73,7 @@ class BulkheadFullError(Exception):
 
 class DeadlineExceededError(Exception):
     """Raised when a deadline is exceeded."""
+
     pass
 
 
@@ -82,6 +85,7 @@ class DeadlineExceededError(Exception):
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for a circuit breaker instance."""
+
     failure_threshold: int = 5
     success_threshold: int = 3
     timeout_seconds: float = 30.0
@@ -99,7 +103,9 @@ class CircuitBreaker:
     - HALF_OPEN: limited requests allowed to test recovery.
     """
 
-    def __init__(self, service_name: str, config: Optional[CircuitBreakerConfig] = None):
+    def __init__(
+        self, service_name: str, config: Optional[CircuitBreakerConfig] = None
+    ):
         self.service_name = service_name
         self.config = config or CircuitBreakerConfig()
         self._state = CircuitState.CLOSED
@@ -136,12 +142,14 @@ class CircuitBreaker:
             self._failure_count = 0
             self._success_count = 0
 
-        self._state_change_log.append({
-            "timestamp": now,
-            "from": old_state.value,
-            "to": new_state.value,
-            "service": self.service_name,
-        })
+        self._state_change_log.append(
+            {
+                "timestamp": now,
+                "from": old_state.value,
+                "to": new_state.value,
+                "service": self.service_name,
+            }
+        )
 
     def _clean_window(self) -> None:
         cutoff = time.time() - self.config.monitoring_window_seconds
@@ -163,7 +171,9 @@ class CircuitBreaker:
 
         with self._lock:
             if current_state == CircuitState.OPEN:
-                retry_after = self.config.timeout_seconds - (time.time() - self._opened_at)
+                retry_after = self.config.timeout_seconds - (
+                    time.time() - self._opened_at
+                )
                 raise CircuitBreakerOpenError(self.service_name, max(retry_after, 0.0))
 
             if current_state == CircuitState.HALF_OPEN:
@@ -225,9 +235,7 @@ class CircuitBreaker:
             "success_count": self._success_count,
             "requests_in_window": total_in_window,
             "failures_in_window": failures_in_window,
-            "error_rate": round(
-                failures_in_window / max(total_in_window, 1), 4
-            ),
+            "error_rate": round(failures_in_window / max(total_in_window, 1), 4),
             "state_changes": len(self._state_change_log),
         }
 
@@ -260,8 +268,11 @@ class BulkheadIsolation:
 
     def acquire(self, timeout: float = 0.0) -> bool:
         """Try to acquire a slot in the bulkhead."""
-        acquired = self._semaphore.acquire(timeout=timeout) if timeout > 0 else \
-            self._semaphore.acquire(blocking=False)
+        acquired = (
+            self._semaphore.acquire(timeout=timeout)
+            if timeout > 0
+            else self._semaphore.acquire(blocking=False)
+        )
         if acquired:
             with self._lock:
                 self._active_count += 1
@@ -278,8 +289,9 @@ class BulkheadIsolation:
             self._active_count = max(0, self._active_count - 1)
             self._completed_count += 1
 
-    def execute(self, func: Callable[..., T], *args: Any,
-                timeout: float = 0.0, **kwargs: Any) -> T:
+    def execute(
+        self, func: Callable[..., T], *args: Any, timeout: float = 0.0, **kwargs: Any
+    ) -> T:
         """Execute a function within the bulkhead."""
         if not self.acquire(timeout=timeout):
             raise BulkheadFullError(self.pool_name, self.max_concurrent)
@@ -332,7 +344,7 @@ class RetryPolicy:
 
     def _compute_delay(self, attempt: int) -> float:
         """Compute delay with exponential backoff and jitter."""
-        delay = self.base_delay_seconds * (self.backoff_multiplier ** attempt)
+        delay = self.base_delay_seconds * (self.backoff_multiplier**attempt)
         delay = min(delay, self.max_delay_seconds)
         jitter = random.uniform(*self.jitter_range)
         return delay + jitter
@@ -344,20 +356,24 @@ class RetryPolicy:
         for attempt in range(self.max_attempts):
             try:
                 result = func(*args, **kwargs)
-                self._attempt_log.append({
-                    "attempt": attempt + 1,
-                    "success": True,
-                    "timestamp": time.time(),
-                })
+                self._attempt_log.append(
+                    {
+                        "attempt": attempt + 1,
+                        "success": True,
+                        "timestamp": time.time(),
+                    }
+                )
                 return result
             except self.retryable_exceptions as exc:
                 last_exception = exc
-                self._attempt_log.append({
-                    "attempt": attempt + 1,
-                    "success": False,
-                    "error": str(exc),
-                    "timestamp": time.time(),
-                })
+                self._attempt_log.append(
+                    {
+                        "attempt": attempt + 1,
+                        "success": False,
+                        "error": str(exc),
+                        "timestamp": time.time(),
+                    }
+                )
                 if attempt < self.max_attempts - 1:
                     delay = self._compute_delay(attempt)
                     time.sleep(delay * 0.01)  # Scaled for demo
@@ -402,14 +418,18 @@ class DeadlinePropagation:
     def checkpoint(self, label: str) -> float:
         """Record a checkpoint and return remaining time."""
         remaining = self.remaining
-        self._checkpoints.append({
-            "label": label,
-            "elapsed": time.time() - self._start_time,
-            "remaining": remaining,
-        })
+        self._checkpoints.append(
+            {
+                "label": label,
+                "elapsed": time.time() - self._start_time,
+                "remaining": remaining,
+            }
+        )
         return remaining
 
-    def execute_with_deadline(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+    def execute_with_deadline(
+        self, func: Callable[..., T], *args: Any, **kwargs: Any
+    ) -> T:
         """Execute a function, raising DeadlineExceededError if time runs out."""
         if self.is_expired:
             raise DeadlineExceededError(
@@ -422,7 +442,9 @@ class DeadlinePropagation:
             )
         return result
 
-    def create_child(self, label: str, budget_fraction: float = 1.0) -> "DeadlinePropagation":
+    def create_child(
+        self, label: str, budget_fraction: float = 1.0
+    ) -> "DeadlinePropagation":
         """Create a child deadline with a fraction of remaining budget."""
         remaining = self.remaining
         child_budget = remaining * min(max(budget_fraction, 0.0), 1.0)
@@ -481,8 +503,10 @@ class ServiceHealthMonitor:
                 "total_calls": total,
                 "error_rate": round(error_rate, 4),
                 "avg_latency_ms": round(sum(lats) / max(len(lats), 1), 2),
-                "status": "healthy" if error_rate < 0.1 else (
-                    "degraded" if error_rate < 0.5 else "unhealthy"
+                "status": (
+                    "healthy"
+                    if error_rate < 0.1
+                    else ("degraded" if error_rate < 0.5 else "unhealthy")
                 ),
             }
 
@@ -574,9 +598,7 @@ class ResilienceManager:
 
                 # Check deadline
                 if deadline and deadline.is_expired:
-                    raise DeadlineExceededError(
-                        f"Deadline exceeded for {service_name}"
-                    )
+                    raise DeadlineExceededError(f"Deadline exceeded for {service_name}")
 
                 latency = (time.time() - start_time) * 1000
                 self._health_monitor.record_call(service_name, True, latency)
@@ -639,8 +661,12 @@ class ResilienceManager:
 class SC2ServiceSimulator:
     """Simulates SC2 backend services with configurable failure rates."""
 
-    def __init__(self, service_name: str, base_latency_ms: float = 10.0,
-                 failure_rate: float = 0.0):
+    def __init__(
+        self,
+        service_name: str,
+        base_latency_ms: float = 10.0,
+        failure_rate: float = 0.0,
+    ):
         self.service_name = service_name
         self.base_latency_ms = base_latency_ms
         self.failure_rate = failure_rate
@@ -732,19 +758,24 @@ def demo() -> None:
 
     # --- 1. Basic Circuit Breaker ---
     print("\n[1] Basic Circuit Breaker")
-    cb = CircuitBreaker("bot_api", CircuitBreakerConfig(
-        failure_threshold=3,
-        success_threshold=2,
-        timeout_seconds=1.0,
-    ))
+    cb = CircuitBreaker(
+        "bot_api",
+        CircuitBreakerConfig(
+            failure_threshold=3,
+            success_threshold=2,
+            timeout_seconds=1.0,
+        ),
+    )
     print(f"    Initial state: {cb.state.value}")
 
     # Simulate failures to trip the breaker
     fail_count = 0
     for i in range(5):
         try:
+
             def _failing_call() -> str:
                 raise ConnectionError("Service down")
+
             cb.call(_failing_call)
         except ConnectionError:
             fail_count += 1
@@ -754,8 +785,10 @@ def demo() -> None:
 
     print(f"    State after {fail_count} failures: {cb.state.value}")
     status = cb.get_status()
-    print(f"    Status: failures={status['failure_count']}, "
-          f"error_rate={status['error_rate']}")
+    print(
+        f"    Status: failures={status['failure_count']}, "
+        f"error_rate={status['error_rate']}"
+    )
 
     # Wait for timeout and test half-open
     print("    Waiting for circuit timeout...")
@@ -783,9 +816,11 @@ def demo() -> None:
             results.append(f"REJECTED: {e}")
 
     bh_status = bulkhead.get_status()
-    print(f"    Pool: {bh_status['pool_name']}, "
-          f"completed={bh_status['completed']}, "
-          f"rejected={bh_status['rejected']}")
+    print(
+        f"    Pool: {bh_status['pool_name']}, "
+        f"completed={bh_status['completed']}, "
+        f"rejected={bh_status['rejected']}"
+    )
 
     # --- 3. Retry with Exponential Backoff ---
     print("\n[3] Retry Policy (Exponential Backoff)")
@@ -841,7 +876,9 @@ def demo() -> None:
     for svc in ServiceType:
         manager.register_service(
             svc.value,
-            breaker_config=CircuitBreakerConfig(failure_threshold=3, timeout_seconds=1.0),
+            breaker_config=CircuitBreakerConfig(
+                failure_threshold=3, timeout_seconds=1.0
+            ),
             bulkhead_max_concurrent=5,
             retry_max_attempts=2,
         )
@@ -854,26 +891,34 @@ def demo() -> None:
         except Exception as e:
             print(f"    Error: {e}")
     api_status = manager.get_service_status(ServiceType.BOT_API.value)
-    print(f"    Bot API - state: {api_status['circuit_breaker']['state']}, "
-          f"health: {api_status['health']['status']}")
+    print(
+        f"    Bot API - state: {api_status['circuit_breaker']['state']}, "
+        f"health: {api_status['health']['status']}"
+    )
 
     # Degrade a service
-    sim_training = SC2ServiceSimulator("training", base_latency_ms=50.0, failure_rate=0.8)
+    sim_training = SC2ServiceSimulator(
+        "training", base_latency_ms=50.0, failure_rate=0.8
+    )
     for _ in range(10):
         try:
             manager.call(ServiceType.TRAINING_SERVICE.value, sim_training.call)
         except Exception:
             pass
     training_status = manager.get_service_status(ServiceType.TRAINING_SERVICE.value)
-    print(f"    Training - state: {training_status['circuit_breaker']['state']}, "
-          f"health: {training_status['health']['status']}")
+    print(
+        f"    Training - state: {training_status['circuit_breaker']['state']}, "
+        f"health: {training_status['health']['status']}"
+    )
 
     # --- 6. Fallback Handler ---
     print("\n[6] Fallback Handler")
     fallback = FallbackHandler()
 
     # Cache a good response first
-    sim_dashboard = SC2ServiceSimulator("dashboard", base_latency_ms=15.0, failure_rate=0.0)
+    sim_dashboard = SC2ServiceSimulator(
+        "dashboard", base_latency_ms=15.0, failure_rate=0.0
+    )
     result = fallback.call_with_fallback(
         manager, ServiceType.DASHBOARD.value, sim_dashboard.call
     )
@@ -896,16 +941,20 @@ def demo() -> None:
         cb_state = svc_status.get("circuit_breaker", {}).get("state", "N/A")
         health = svc_status.get("health", {}).get("status", "unknown")
         bh = svc_status.get("bulkhead", {})
-        print(f"    {svc_name:20s} | CB: {cb_state:10s} | "
-              f"Health: {health:10s} | BH completed: {bh.get('completed', 0)}")
+        print(
+            f"    {svc_name:20s} | CB: {cb_state:10s} | "
+            f"Health: {health:10s} | BH completed: {bh.get('completed', 0)}"
+        )
 
     # --- 8. State History ---
     print("\n[8] Circuit Breaker State History")
     breaker = manager.get_breaker(ServiceType.TRAINING_SERVICE.value)
     if breaker:
         for change in breaker.get_state_history():
-            print(f"    {change['from']:10s} -> {change['to']:10s} "
-                  f"({change['service']})")
+            print(
+                f"    {change['from']:10s} -> {change['to']:10s} "
+                f"({change['service']})"
+            )
 
     print("\n" + "=" * 70)
     print("Phase 661 demo complete.")

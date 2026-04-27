@@ -60,6 +60,7 @@ SC2_STRATEGY_DOCS = [
 
 # ── Setup knowledge base ──────────────────────────────────────────────────────
 
+
 def build_knowledge_base(persist_dir: str = "agno_agents/kb") -> TextKnowledgeBase:
     """Build SC2 strategy knowledge base with vector search."""
     Path(persist_dir).mkdir(parents=True, exist_ok=True)
@@ -75,6 +76,7 @@ def build_knowledge_base(persist_dir: str = "agno_agents/kb") -> TextKnowledgeBa
 
 # ── Agent storage ─────────────────────────────────────────────────────────────
 
+
 def build_storage(db_path: str = "agno_agents/sc2_agent.db") -> SqlAgentStorage:
     """Persistent SQLite storage for agent conversation history."""
     return SqlAgentStorage(
@@ -84,6 +86,7 @@ def build_storage(db_path: str = "agno_agents/sc2_agent.db") -> SqlAgentStorage:
 
 
 # ── SC2 Agno Agent ────────────────────────────────────────────────────────────
+
 
 def create_sc2_agent(
     use_knowledge: bool = True,
@@ -120,6 +123,7 @@ def create_sc2_agent(
 
 
 # ── Convenience functions ─────────────────────────────────────────────────────
+
 
 def ask_strategy(agent: Agent, question: str, stream: bool = False) -> str:
     """Ask the SC2 agent a strategy question."""

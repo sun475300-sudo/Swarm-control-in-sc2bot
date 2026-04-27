@@ -43,6 +43,7 @@ def save_gif(anim, name, fps=FPS):
 # 1. Boids Swarm Attack Simulation
 # ═══════════════════════════════════════════════════════
 
+
 def gif_boids_swarm():
     """DRONAI 64기 편대처럼 저그 유닛 60기의 Boids 군집 공격"""
     logger.info("Boids Swarm Attack Simulation")
@@ -56,7 +57,7 @@ def gif_boids_swarm():
     vel = np.zeros((N, 2))
 
     # 유닛 타입: 0=저글링(녹), 1=바퀴(짙은녹), 2=히드라(파), 3=뮤탈(보라)
-    types = np.array([0]*20 + [1]*15 + [2]*15 + [3]*10)
+    types = np.array([0] * 20 + [1] * 15 + [2] * 15 + [3] * 10)
     colors = ["#8BC34A", "#2E7D32", "#1976D2", "#7B1FA2"]
     sizes = [15, 25, 20, 18]
     markers = ["o", "s", "^", "D"]
@@ -78,7 +79,7 @@ def gif_boids_swarm():
                     diff = pos[i] - pos[j]
                     dist = np.linalg.norm(diff)
                     if dist < 1.8 and dist > 0:
-                        sep += diff / (dist ** 2)
+                        sep += diff / (dist**2)
                         neighbors += 1
 
             # Alignment (이웃 속도 평균)
@@ -102,7 +103,7 @@ def gif_boids_swarm():
             if types[i] == 3:
                 offset = np.array([3.0 * (1 if i % 2 == 0 else -1), 0])
                 flank_target = target + offset
-                seek = (flank_target - pos[i])
+                seek = flank_target - pos[i]
                 seek = seek / (np.linalg.norm(seek) + 1e-6) * 0.35
 
             # 합성
@@ -127,30 +128,68 @@ def gif_boids_swarm():
     ax.axis("off")
 
     # 적 기지 (고정)
-    ax.scatter(enemy_pos[:, 0], enemy_pos[:, 1], c="#F44336", s=80,
-               marker="X", alpha=0.7, zorder=2)
-    ax.text(0, 12.5, "ENEMY BASE", color="#F44336", ha="center",
-            fontsize=14, fontweight="bold", family="monospace")
+    ax.scatter(
+        enemy_pos[:, 0],
+        enemy_pos[:, 1],
+        c="#F44336",
+        s=80,
+        marker="X",
+        alpha=0.7,
+        zorder=2,
+    )
+    ax.text(
+        0,
+        12.5,
+        "ENEMY BASE",
+        color="#F44336",
+        ha="center",
+        fontsize=14,
+        fontweight="bold",
+        family="monospace",
+    )
 
     # 점막 (Creep) 표시
     creep = plt.Rectangle((-6, -12), 12, 8, color="#4A148C", alpha=0.15)
     ax.add_patch(creep)
-    ax.text(0, -11.5, "CREEP TERRITORY", color="#7B1FA2", ha="center",
-            fontsize=9, alpha=0.5, family="monospace")
+    ax.text(
+        0,
+        -11.5,
+        "CREEP TERRITORY",
+        color="#7B1FA2",
+        ha="center",
+        fontsize=9,
+        alpha=0.5,
+        family="monospace",
+    )
 
     # 유닛 scatter (타입별)
     scatters = []
     for t in range(4):
         mask = types == t
-        sc = ax.scatter([], [], c=colors[t], s=sizes[t] * 3,
-                        marker=markers[t], alpha=0.85, edgecolors="white",
-                        linewidths=0.5, zorder=3)
+        sc = ax.scatter(
+            [],
+            [],
+            c=colors[t],
+            s=sizes[t] * 3,
+            marker=markers[t],
+            alpha=0.85,
+            edgecolors="white",
+            linewidths=0.5,
+            zorder=3,
+        )
         scatters.append((sc, mask))
 
-    title = ax.text(0, 13.5, "", color="white", ha="center",
-                    fontsize=16, fontweight="bold", family="monospace")
-    frame_text = ax.text(-9.5, -11.5, "", color="#666", fontsize=9,
-                         family="monospace")
+    title = ax.text(
+        0,
+        13.5,
+        "",
+        color="white",
+        ha="center",
+        fontsize=16,
+        fontweight="bold",
+        family="monospace",
+    )
+    frame_text = ax.text(-9.5, -11.5, "", color="#666", fontsize=9, family="monospace")
 
     # 레전드
     legend_elements = [
@@ -159,8 +198,14 @@ def gif_boids_swarm():
         mpatches.Patch(color="#1976D2", label=f"Hydralisk ×15"),
         mpatches.Patch(color="#7B1FA2", label=f"Mutalisk ×10"),
     ]
-    ax.legend(handles=legend_elements, loc="upper left", fontsize=8,
-              facecolor="#1a1a2e", edgecolor="#333", labelcolor="white")
+    ax.legend(
+        handles=legend_elements,
+        loc="upper left",
+        fontsize=8,
+        facecolor="#1a1a2e",
+        edgecolor="#333",
+        labelcolor="white",
+    )
 
     def update(frame):
         p = all_pos[frame]
@@ -177,6 +222,7 @@ def gif_boids_swarm():
 # ═══════════════════════════════════════════════════════
 # 2. Drone Formation Flight
 # ═══════════════════════════════════════════════════════
+
 
 def gif_formation_flight():
     """DRONAI 원형 편대처럼 드론 편대 비행 (V → Circle → Line 전환)"""
@@ -255,22 +301,45 @@ def gif_formation_flight():
     for y in range(-6, 7, 2):
         ax.axhline(y, color="#1a2a4a", linewidth=0.3, alpha=0.5)
 
-    sc = ax.scatter([], [], c="#00E5FF", s=80, marker="^",
-                    edgecolors="#00BCD4", linewidths=1.5, zorder=3, alpha=0.9)
+    sc = ax.scatter(
+        [],
+        [],
+        c="#00E5FF",
+        s=80,
+        marker="^",
+        edgecolors="#00BCD4",
+        linewidths=1.5,
+        zorder=3,
+        alpha=0.9,
+    )
 
     # 드론 간 연결선 (통신 메쉬)
     lines = []
     for i in range(N):
         for j in range(i + 1, N):
-            line, = ax.plot([], [], color="#00E5FF", alpha=0.1, linewidth=0.5)
+            (line,) = ax.plot([], [], color="#00E5FF", alpha=0.1, linewidth=0.5)
             lines.append((line, i, j))
 
-    title = ax.text(0, 5.3, "", color="#00E5FF", ha="center",
-                    fontsize=16, fontweight="bold", family="monospace")
-    info = ax.text(-7.5, -5.5, "", color="#4FC3F7", fontsize=9,
-                   family="monospace")
-    drone_count = ax.text(7.5, 5.3, f"DRONES: {N}", color="#4FC3F7",
-                          fontsize=10, ha="right", family="monospace")
+    title = ax.text(
+        0,
+        5.3,
+        "",
+        color="#00E5FF",
+        ha="center",
+        fontsize=16,
+        fontweight="bold",
+        family="monospace",
+    )
+    info = ax.text(-7.5, -5.5, "", color="#4FC3F7", fontsize=9, family="monospace")
+    drone_count = ax.text(
+        7.5,
+        5.3,
+        f"DRONES: {N}",
+        color="#4FC3F7",
+        fontsize=10,
+        ha="right",
+        family="monospace",
+    )
 
     def update(frame):
         p = all_frames[frame]
@@ -297,6 +366,7 @@ def gif_formation_flight():
 # 3. Collision Avoidance Simulation
 # ═══════════════════════════════════════════════════════
 
+
 def gif_collision_avoidance():
     """DRONAI 자동회피처럼 드론 간 충돌 회피 시뮬레이션"""
     logger.info("Collision Avoidance Simulation")
@@ -310,8 +380,9 @@ def gif_collision_avoidance():
     start_angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
     radius = 5.0
 
-    start_pos = np.stack([radius * np.cos(start_angles),
-                          radius * np.sin(start_angles)], axis=1)
+    start_pos = np.stack(
+        [radius * np.cos(start_angles), radius * np.sin(start_angles)], axis=1
+    )
     # 목표: 반대편
     end_pos = -start_pos
 
@@ -344,7 +415,7 @@ def gif_collision_avoidance():
                 diff = pos[i] - pos[j]
                 dist = np.linalg.norm(diff)
                 if dist < SAFE_DIST * 2 and dist > 0:
-                    force = diff / (dist ** 2) * 2.0
+                    force = diff / (dist**2) * 2.0
                     avoid += force
                     if dist < SAFE_DIST * 1.2:
                         avoiding = True
@@ -373,32 +444,60 @@ def gif_collision_avoidance():
 
     # 목표점 (반투명)
     for i in range(N):
-        ax.plot(end_pos[i][0], end_pos[i][1], "x",
-                color=drone_colors[i], markersize=12, alpha=0.3)
+        ax.plot(
+            end_pos[i][0],
+            end_pos[i][1],
+            "x",
+            color=drone_colors[i],
+            markersize=12,
+            alpha=0.3,
+        )
 
     # 드론
     init_pos = all_pos[0]
-    sc = ax.scatter(init_pos[:, 0], init_pos[:, 1], s=120, c=drone_colors,
-                    marker="^", edgecolors="white", linewidths=1, zorder=3)
+    sc = ax.scatter(
+        init_pos[:, 0],
+        init_pos[:, 1],
+        s=120,
+        c=drone_colors,
+        marker="^",
+        edgecolors="white",
+        linewidths=1,
+        zorder=3,
+    )
 
     # 안전 거리 원
     circles = []
     for i in range(N):
-        c = plt.Circle((0, 0), SAFE_DIST, fill=False, color=drone_colors[i],
-                        linestyle="--", linewidth=0.5, alpha=0)
+        c = plt.Circle(
+            (0, 0),
+            SAFE_DIST,
+            fill=False,
+            color=drone_colors[i],
+            linestyle="--",
+            linewidth=0.5,
+            alpha=0,
+        )
         ax.add_patch(c)
         circles.append(c)
 
     # 경고 라인
     warn_lines = []
     for _ in range(N * N):
-        line, = ax.plot([], [], color="#FF5252", linewidth=2, alpha=0)
+        (line,) = ax.plot([], [], color="#FF5252", linewidth=2, alpha=0)
         warn_lines.append(line)
 
-    title = ax.text(0, 6.3, "", color="white", ha="center",
-                    fontsize=14, fontweight="bold", family="monospace")
-    status = ax.text(-6.5, -6.5, "", color="#4FC3F7", fontsize=9,
-                     family="monospace")
+    title = ax.text(
+        0,
+        6.3,
+        "",
+        color="white",
+        ha="center",
+        fontsize=14,
+        fontweight="bold",
+        family="monospace",
+    )
+    status = ax.text(-6.5, -6.5, "", color="#4FC3F7", fontsize=9, family="monospace")
 
     def update(frame):
         p = all_pos[frame]
@@ -419,8 +518,7 @@ def gif_collision_avoidance():
         avoids = avoidance_events[min(frame, len(avoidance_events) - 1)]
         for i_a, j_a in avoids:
             if wi < len(warn_lines):
-                warn_lines[wi].set_data(
-                    [p[i_a][0], p[j_a][0]], [p[i_a][1], p[j_a][1]])
+                warn_lines[wi].set_data([p[i_a][0], p[j_a][0]], [p[i_a][1], p[j_a][1]])
                 warn_lines[wi].set_alpha(0.6)
                 wi += 1
                 warn_count += 1
@@ -445,6 +543,7 @@ def gif_collision_avoidance():
 # 4. Sim-to-Real Pipeline Animation
 # ═══════════════════════════════════════════════════════
 
+
 def gif_sim_to_real():
     """Sim-to-Real 파이프라인 단계별 진행 애니메이션"""
     logger.info("Sim-to-Real Pipeline")
@@ -467,42 +566,88 @@ def gif_sim_to_real():
 
     # 화살표
     for i in range(3):
-        ax.annotate("", xy=(stages[i + 1][0] - 0.8, 1.5),
-                     xytext=(stages[i][0] + 0.8, 1.5),
-                     arrowprops=dict(arrowstyle="->", color="#555",
-                                     lw=2, connectionstyle="arc3,rad=0"))
+        ax.annotate(
+            "",
+            xy=(stages[i + 1][0] - 0.8, 1.5),
+            xytext=(stages[i][0] + 0.8, 1.5),
+            arrowprops=dict(
+                arrowstyle="->", color="#555", lw=2, connectionstyle="arc3,rad=0"
+            ),
+        )
 
     # 단계 박스 (정적)
     boxes = []
     for x, label, col, desc in stages:
         rect = mpatches.FancyBboxPatch(
-            (x - 0.8, 0.8), 1.6, 1.4,
-            boxstyle="round,pad=0.1", facecolor=col, alpha=0.15,
-            edgecolor=col, linewidth=2)
+            (x - 0.8, 0.8),
+            1.6,
+            1.4,
+            boxstyle="round,pad=0.1",
+            facecolor=col,
+            alpha=0.15,
+            edgecolor=col,
+            linewidth=2,
+        )
         ax.add_patch(rect)
         boxes.append(rect)
-        ax.text(x, 1.5, label, color="white", ha="center", va="center",
-                fontsize=11, fontweight="bold", family="monospace")
-        ax.text(x, 0.2, desc, color="#888", ha="center", va="center",
-                fontsize=7, family="monospace")
+        ax.text(
+            x,
+            1.5,
+            label,
+            color="white",
+            ha="center",
+            va="center",
+            fontsize=11,
+            fontweight="bold",
+            family="monospace",
+        )
+        ax.text(
+            x,
+            0.2,
+            desc,
+            color="#888",
+            ha="center",
+            va="center",
+            fontsize=7,
+            family="monospace",
+        )
 
     # 프로그레스 바
     progress_bg = mpatches.FancyBboxPatch(
-        (0.5, -0.8), 11, 0.3, boxstyle="round,pad=0.05",
-        facecolor="#1a1a2e", edgecolor="#333")
+        (0.5, -0.8),
+        11,
+        0.3,
+        boxstyle="round,pad=0.05",
+        facecolor="#1a1a2e",
+        edgecolor="#333",
+    )
     ax.add_patch(progress_bg)
 
     progress_bar = mpatches.FancyBboxPatch(
-        (0.5, -0.8), 0.1, 0.3, boxstyle="round,pad=0.05",
-        facecolor="#00E5FF", edgecolor="none")
+        (0.5, -0.8),
+        0.1,
+        0.3,
+        boxstyle="round,pad=0.05",
+        facecolor="#00E5FF",
+        edgecolor="none",
+    )
     ax.add_patch(progress_bar)
 
     # 이동 포인트
-    dot, = ax.plot([], [], "o", color="#00E5FF", markersize=12, zorder=5)
-    stage_label = ax.text(6, 2.7, "", color="#00E5FF", ha="center",
-                          fontsize=13, fontweight="bold", family="monospace")
-    pct_text = ax.text(6, -1.2, "", color="#4FC3F7", ha="center",
-                       fontsize=10, family="monospace")
+    (dot,) = ax.plot([], [], "o", color="#00E5FF", markersize=12, zorder=5)
+    stage_label = ax.text(
+        6,
+        2.7,
+        "",
+        color="#00E5FF",
+        ha="center",
+        fontsize=13,
+        fontweight="bold",
+        family="monospace",
+    )
+    pct_text = ax.text(
+        6, -1.2, "", color="#4FC3F7", ha="center", fontsize=10, family="monospace"
+    )
 
     def update(frame):
         progress = frame / FRAMES
@@ -538,6 +683,7 @@ def gif_sim_to_real():
 # ═══════════════════════════════════════════════════════
 # 5. Authority Mode Switch Visualization
 # ═══════════════════════════════════════════════════════
+
 
 def gif_authority_mode():
     """Authority Mode 실시간 전환 시뮬레이션"""
@@ -579,8 +725,13 @@ def gif_authority_mode():
                 army_supply[f] = 60 + np.random.randn() * 5
                 threat_level[f] = 10 + np.random.randn() * 3
 
-    fig, axes = plt.subplots(3, 1, figsize=(10, 7), facecolor="#0d1117",
-                              gridspec_kw={"height_ratios": [2, 1, 1]})
+    fig, axes = plt.subplots(
+        3,
+        1,
+        figsize=(10, 7),
+        facecolor="#0d1117",
+        gridspec_kw={"height_ratios": [2, 1, 1]},
+    )
     for ax_ in axes:
         ax_.set_facecolor("#0d1117")
         ax_.tick_params(colors="#666")
@@ -593,22 +744,45 @@ def gif_authority_mode():
     ax_mode.set_ylim(0, 1)
     ax_mode.axis("off")
 
-    mode_text = ax_mode.text(0.5, 0.5, "", transform=ax_mode.transAxes,
-                              ha="center", va="center", fontsize=28,
-                              fontweight="bold", family="monospace")
-    event_text = ax_mode.text(0.5, 0.15, "", transform=ax_mode.transAxes,
-                               ha="center", va="center", fontsize=11,
-                               color="#888", family="monospace")
+    mode_text = ax_mode.text(
+        0.5,
+        0.5,
+        "",
+        transform=ax_mode.transAxes,
+        ha="center",
+        va="center",
+        fontsize=28,
+        fontweight="bold",
+        family="monospace",
+    )
+    event_text = ax_mode.text(
+        0.5,
+        0.15,
+        "",
+        transform=ax_mode.transAxes,
+        ha="center",
+        va="center",
+        fontsize=11,
+        color="#888",
+        family="monospace",
+    )
 
     # 중간: 리소스
     ax_res = axes[1]
     ax_res.set_xlim(0, FRAMES)
     ax_res.set_ylim(0, 600)
     ax_res.set_ylabel("Resources", color="#888", fontsize=9)
-    line_min, = ax_res.plot([], [], color="#FFD700", linewidth=1.5, label="Minerals")
-    line_army, = ax_res.plot([], [], color="#4FC3F7", linewidth=1.5, label="Army Supply")
-    ax_res.legend(fontsize=7, facecolor="#1a1a2e", edgecolor="#333",
-                  labelcolor="white", loc="upper right")
+    (line_min,) = ax_res.plot([], [], color="#FFD700", linewidth=1.5, label="Minerals")
+    (line_army,) = ax_res.plot(
+        [], [], color="#4FC3F7", linewidth=1.5, label="Army Supply"
+    )
+    ax_res.legend(
+        fontsize=7,
+        facecolor="#1a1a2e",
+        edgecolor="#333",
+        labelcolor="white",
+        loc="upper right",
+    )
 
     # 하단: 위협
     ax_threat = axes[2]
@@ -616,7 +790,7 @@ def gif_authority_mode():
     ax_threat.set_ylim(0, 100)
     ax_threat.set_ylabel("Threat %", color="#888", fontsize=9)
     ax_threat.set_xlabel("Game Time (frames)", color="#888", fontsize=9)
-    line_threat, = ax_threat.plot([], [], color="#F44336", linewidth=1.5)
+    (line_threat,) = ax_threat.plot([], [], color="#F44336", linewidth=1.5)
     threat_fill = None
 
     events = {
@@ -648,15 +822,16 @@ def gif_authority_mode():
 
         # 리소스 라인
         x = list(range(frame + 1))
-        line_min.set_data(x, minerals[:frame + 1])
-        line_army.set_data(x, army_supply[:frame + 1])
-        line_threat.set_data(x, threat_level[:frame + 1])
+        line_min.set_data(x, minerals[: frame + 1])
+        line_army.set_data(x, army_supply[: frame + 1])
+        line_threat.set_data(x, threat_level[: frame + 1])
 
         # 위협 배경색
         if threat_fill:
             threat_fill.remove()
         threat_fill = ax_threat.fill_between(
-            x, threat_level[:frame + 1], alpha=0.2, color="#F44336")
+            x, threat_level[: frame + 1], alpha=0.2, color="#F44336"
+        )
 
         return [mode_text, event_text, line_min, line_army, line_threat]
 

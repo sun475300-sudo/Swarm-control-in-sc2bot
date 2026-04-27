@@ -12,6 +12,7 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
+
     class UnitTypeId:
         # Terran Threats
         BATTLECRUISER = "BATTLECRUISER"
@@ -102,7 +103,6 @@ class DynamicCounterSystem:
                 "urgency": "MEDIUM",
                 "production_boost": 0.2,
             },
-
             # ===== Protoss Threats =====
             "CARRIER": {
                 "threat_value": 100,
@@ -152,7 +152,6 @@ class DynamicCounterSystem:
                 "urgency": "HIGH",
                 "production_boost": 0.3,
             },
-
             # ===== Zerg Threats =====
             "BROODLORD": {
                 "threat_value": 80,
@@ -283,7 +282,9 @@ class DynamicCounterSystem:
         # ★ 유닛 구성 오버라이드 ★
         current_override = blackboard.get("unit_composition_override", {})
 
-        for unit_name, ratio in zip(counter_rule["counter_units"], counter_rule["counter_ratios"]):
+        for unit_name, ratio in zip(
+            counter_rule["counter_units"], counter_rule["counter_ratios"]
+        ):
             # 기존 비율에 boost 추가
             boost = ratio * counter_rule["production_boost"]
             current_override[unit_name] = current_override.get(unit_name, 0) + boost
@@ -292,7 +293,9 @@ class DynamicCounterSystem:
         blackboard.set("dynamic_counter_active", True)
         blackboard.set("active_counter_threat", threat)
 
-        self.logger.info(f"[DYNAMIC_COUNTER] Registered to Blackboard: {current_override}")
+        self.logger.info(
+            f"[DYNAMIC_COUNTER] Registered to Blackboard: {current_override}"
+        )
 
     async def _update_active_counters(self, iteration: int):
         """

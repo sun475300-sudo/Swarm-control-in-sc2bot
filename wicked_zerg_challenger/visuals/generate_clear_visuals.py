@@ -30,6 +30,7 @@ def save(fig, name):
 # 1. 시스템 전체 구조도 (가장 중요한 한 장)
 # ═══════════════════════════════════════════════════════
 
+
 def clear_system_overview():
     """
     캡스톤 핵심 1장: SC2 → 시뮬레이션 → 실제 드론
@@ -41,18 +42,39 @@ def clear_system_overview():
 
     # ── 3개 스테이지 플랫폼 ──
     stages = [
-        {"name": "Stage 1\nSC2 게임 시뮬레이션", "x": 0, "z": 0,
-         "color": "#1976D2", "items": [
-             "Boids 군집 알고리즘", "FSM 상태 머신", "RL 강화학습",
-         ]},
-        {"name": "Stage 2\nGazebo 3D 시뮬레이션", "x": 5, "z": 2,
-         "color": "#7B1FA2", "items": [
-             "ROS 2 미들웨어", "물리 엔진 (중력/바람)", "센서 노이즈 반영",
-         ]},
-        {"name": "Stage 3\n실제 드론 비행", "x": 10, "z": 4,
-         "color": "#2E7D32", "items": [
-             "Pixhawk + RPi", "WiFi Mesh 통신", "3대 편대 비행",
-         ]},
+        {
+            "name": "Stage 1\nSC2 게임 시뮬레이션",
+            "x": 0,
+            "z": 0,
+            "color": "#1976D2",
+            "items": [
+                "Boids 군집 알고리즘",
+                "FSM 상태 머신",
+                "RL 강화학습",
+            ],
+        },
+        {
+            "name": "Stage 2\nGazebo 3D 시뮬레이션",
+            "x": 5,
+            "z": 2,
+            "color": "#7B1FA2",
+            "items": [
+                "ROS 2 미들웨어",
+                "물리 엔진 (중력/바람)",
+                "센서 노이즈 반영",
+            ],
+        },
+        {
+            "name": "Stage 3\n실제 드론 비행",
+            "x": 10,
+            "z": 4,
+            "color": "#2E7D32",
+            "items": [
+                "Pixhawk + RPi",
+                "WiFi Mesh 통신",
+                "3대 편대 비행",
+            ],
+        },
     ]
 
     for s in stages:
@@ -62,38 +84,66 @@ def clear_system_overview():
         # 바닥면
         bx = [x - 1.8, x + 1.8, x + 1.8, x - 1.8]
         by = [-1.5, -1.5, 1.5, 1.5]
-        fig.add_trace(go.Mesh3d(
-            x=bx, y=by, z=[z] * 4,
-            i=[0, 0], j=[1, 2], k=[2, 3],
-            color=col, opacity=0.15,
-            hoverinfo="skip", showlegend=False,
-        ))
+        fig.add_trace(
+            go.Mesh3d(
+                x=bx,
+                y=by,
+                z=[z] * 4,
+                i=[0, 0],
+                j=[1, 2],
+                k=[2, 3],
+                color=col,
+                opacity=0.15,
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
 
         # 스테이지 제목 (크게)
-        fig.add_trace(go.Scatter3d(
-            x=[x], y=[0], z=[z + 1.8],
-            mode="text",
-            text=[s["name"]],
-            textfont=dict(size=16, color=col, family="Arial Black"),
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[x],
+                y=[0],
+                z=[z + 1.8],
+                mode="text",
+                text=[s["name"]],
+                textfont=dict(size=16, color=col, family="Arial Black"),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
         # 세부 항목 (아래 정렬)
         for i, item in enumerate(s["items"]):
-            fig.add_trace(go.Scatter3d(
-                x=[x], y=[-1.0 + i * 1.0], z=[z + 0.5],
-                mode="markers+text",
-                marker=dict(size=8, color=col, opacity=0.7,
-                            symbol="circle", line=dict(width=1, color="white")),
-                text=[item],
-                textposition="middle right",
-                textfont=dict(size=12, color="#333"),
-                showlegend=False,
-            ))
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[x],
+                    y=[-1.0 + i * 1.0],
+                    z=[z + 0.5],
+                    mode="markers+text",
+                    marker=dict(
+                        size=8,
+                        color=col,
+                        opacity=0.7,
+                        symbol="circle",
+                        line=dict(width=1, color="white"),
+                    ),
+                    text=[item],
+                    textposition="middle right",
+                    textfont=dict(size=12, color="#333"),
+                    showlegend=False,
+                )
+            )
 
     # ── 스테이지 간 화살표 (큰 화살표) ──
     arrows = [
-        {"from": 0, "to": 5, "z1": 0, "z2": 2, "label": "알고리즘 추출\n(2D → 3D 변환)"},
+        {
+            "from": 0,
+            "to": 5,
+            "z1": 0,
+            "z2": 2,
+            "label": "알고리즘 추출\n(2D → 3D 변환)",
+        },
         {"from": 5, "to": 10, "z1": 2, "z2": 4, "label": "Sim-to-Real\n(시뮬 → 실제)"},
     ]
 
@@ -104,32 +154,47 @@ def clear_system_overview():
         az = a["z1"] + (a["z2"] - a["z1"]) * t
         ay = np.sin(t * math.pi) * 1.2  # 위로 볼록
 
-        fig.add_trace(go.Scatter3d(
-            x=ax, y=ay, z=az,
-            mode="lines",
-            line=dict(color="#FF6F00", width=8),
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=ax,
+                y=ay,
+                z=az,
+                mode="lines",
+                line=dict(color="#FF6F00", width=8),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
         # 화살표 라벨
         mid_x = (a["from"] + a["to"]) / 2
         mid_z = (a["z1"] + a["z2"]) / 2
-        fig.add_trace(go.Scatter3d(
-            x=[mid_x], y=[1.8], z=[mid_z + 0.5],
-            mode="text",
-            text=[a["label"]],
-            textfont=dict(size=13, color="#FF6F00", family="Arial Black"),
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[mid_x],
+                y=[1.8],
+                z=[mid_z + 0.5],
+                mode="text",
+                text=[a["label"]],
+                textfont=dict(size=13, color="#FF6F00", family="Arial Black"),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
     # 큰 제목
-    fig.add_trace(go.Scatter3d(
-        x=[5], y=[0], z=[7],
-        mode="text",
-        text=["SC2-Swarm: Sim-to-Real 3단계 파이프라인"],
-        textfont=dict(size=20, color="#333", family="Arial Black"),
-        showlegend=False, hoverinfo="skip",
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[5],
+            y=[0],
+            z=[7],
+            mode="text",
+            text=["SC2-Swarm: Sim-to-Real 3단계 파이프라인"],
+            textfont=dict(size=20, color="#333", family="Arial Black"),
+            showlegend=False,
+            hoverinfo="skip",
+        )
+    )
 
     fig.update_layout(
         scene=dict(
@@ -144,7 +209,8 @@ def clear_system_overview():
         ),
         paper_bgcolor="white",
         margin=dict(l=0, r=0, t=20, b=0),
-        width=1200, height=700,
+        width=1200,
+        height=700,
     )
     save(fig, "clear_1_system_overview")
 
@@ -152,6 +218,7 @@ def clear_system_overview():
 # ═══════════════════════════════════════════════════════
 # 2. Boids 알고리즘 설명도 (핵심 기술)
 # ═══════════════════════════════════════════════════════
+
 
 def clear_boids_explained():
     """
@@ -163,17 +230,25 @@ def clear_boids_explained():
     fig = go.Figure()
 
     # 중심 드론 (ME)
-    fig.add_trace(go.Scatter3d(
-        x=[0], y=[0], z=[0],
-        mode="markers+text",
-        marker=dict(size=20, color="#FF6F00", opacity=1,
-                    line=dict(width=3, color="white"),
-                    symbol="diamond"),
-        text=["  나 (ME)"],
-        textposition="middle right",
-        textfont=dict(size=18, color="#FF6F00", family="Arial Black"),
-        name="현재 드론",
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[0],
+            y=[0],
+            z=[0],
+            mode="markers+text",
+            marker=dict(
+                size=20,
+                color="#FF6F00",
+                opacity=1,
+                line=dict(width=3, color="white"),
+                symbol="diamond",
+            ),
+            text=["  나 (ME)"],
+            textposition="middle right",
+            textfont=dict(size=18, color="#FF6F00", family="Arial Black"),
+            name="현재 드론",
+        )
+    )
 
     # 이웃 드론들 (반원 배치)
     neighbor_angles = [30, 80, 130, 210, 280, 340]
@@ -181,20 +256,34 @@ def clear_boids_explained():
         rad = math.radians(ang)
         nx = 2.5 * math.cos(rad)
         ny = 2.5 * math.sin(rad)
-        fig.add_trace(go.Scatter3d(
-            x=[nx], y=[ny], z=[0],
-            mode="markers",
-            marker=dict(size=10, color="#78909C", opacity=0.6,
-                        line=dict(width=1, color="white")),
-            showlegend=False, hovertext=f"이웃 드론 {i + 1}",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[nx],
+                y=[ny],
+                z=[0],
+                mode="markers",
+                marker=dict(
+                    size=10,
+                    color="#78909C",
+                    opacity=0.6,
+                    line=dict(width=1, color="white"),
+                ),
+                showlegend=False,
+                hovertext=f"이웃 드론 {i + 1}",
+            )
+        )
         # 연결 점선
-        fig.add_trace(go.Scatter3d(
-            x=[0, nx], y=[0, ny], z=[0, 0],
-            mode="lines",
-            line=dict(color="#B0BEC5", width=1, dash="dot"),
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[0, nx],
+                y=[0, ny],
+                z=[0, 0],
+                mode="lines",
+                line=dict(color="#B0BEC5", width=1, dash="dot"),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
     # ── 3대 힘 벡터 (크고 명확하게) ──
     forces = [
@@ -223,33 +312,48 @@ def clear_boids_explained():
         col = f["color"]
 
         # 큰 화살표 (Cone)
-        fig.add_trace(go.Cone(
-            x=[0], y=[0], z=[0],
-            u=[dx], v=[dy], w=[dz],
-            sizemode="absolute", sizeref=0.6,
-            colorscale=[[0, col], [1, col]],
-            showscale=False,
-            name=f["name"],
-            hovertext=f["name"],
-        ))
+        fig.add_trace(
+            go.Cone(
+                x=[0],
+                y=[0],
+                z=[0],
+                u=[dx],
+                v=[dy],
+                w=[dz],
+                sizemode="absolute",
+                sizeref=0.6,
+                colorscale=[[0, col], [1, col]],
+                showscale=False,
+                name=f["name"],
+                hovertext=f["name"],
+            )
+        )
 
         # 라벨 (화살표 끝에)
-        fig.add_trace(go.Scatter3d(
-            x=[dx * 1.3], y=[dy * 1.3], z=[dz * 1.3],
-            mode="text",
-            text=[f["name"]],
-            textfont=dict(size=14, color=col, family="Arial Black"),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[dx * 1.3],
+                y=[dy * 1.3],
+                z=[dz * 1.3],
+                mode="text",
+                text=[f["name"]],
+                textfont=dict(size=14, color=col, family="Arial Black"),
+                showlegend=False,
+            )
+        )
 
         # 설명 (라벨 아래)
-        fig.add_trace(go.Scatter3d(
-            x=[dx * 1.5], y=[dy * 1.5], z=[dz * 1.5 - 0.5],
-            mode="text",
-            text=[f["desc"]],
-            textfont=dict(size=11, color="#666"),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[dx * 1.5],
+                y=[dy * 1.5],
+                z=[dz * 1.5 - 0.5],
+                mode="text",
+                text=[f["desc"]],
+                textfont=dict(size=11, color="#666"),
+                showlegend=False,
+            )
+        )
 
     # 최종 합벡터
     total = np.array([0.0, 0.0, 0.0])
@@ -257,36 +361,53 @@ def clear_boids_explained():
         total += np.array(f["dir"])
     total = total / np.linalg.norm(total) * 3.0
 
-    fig.add_trace(go.Cone(
-        x=[0], y=[0], z=[0],
-        u=[total[0]], v=[total[1]], w=[total[2]],
-        sizemode="absolute", sizeref=0.8,
-        colorscale=[[0, "#FF6F00"], [1, "#FFD600"]],
-        showscale=False,
-        name="최종 이동 방향",
-    ))
+    fig.add_trace(
+        go.Cone(
+            x=[0],
+            y=[0],
+            z=[0],
+            u=[total[0]],
+            v=[total[1]],
+            w=[total[2]],
+            sizemode="absolute",
+            sizeref=0.8,
+            colorscale=[[0, "#FF6F00"], [1, "#FFD600"]],
+            showscale=False,
+            name="최종 이동 방향",
+        )
+    )
 
-    fig.add_trace(go.Scatter3d(
-        x=[total[0] * 1.2], y=[total[1] * 1.2], z=[total[2] * 1.2],
-        mode="text",
-        text=["최종 이동 방향 ▶"],
-        textfont=dict(size=16, color="#FF6F00", family="Arial Black"),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[total[0] * 1.2],
+            y=[total[1] * 1.2],
+            z=[total[2] * 1.2],
+            mode="text",
+            text=["최종 이동 방향 ▶"],
+            textfont=dict(size=16, color="#FF6F00", family="Arial Black"),
+            showlegend=False,
+        )
+    )
 
     # 공식
-    fig.add_trace(go.Scatter3d(
-        x=[0], y=[0], z=[3.5],
-        mode="text",
-        text=["V = Separation × 1.5  +  Alignment × 1.0  +  Cohesion × 1.0"],
-        textfont=dict(size=14, color="#333", family="Courier New"),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[0],
+            y=[0],
+            z=[3.5],
+            mode="text",
+            text=["V = Separation × 1.5  +  Alignment × 1.0  +  Cohesion × 1.0"],
+            textfont=dict(size=14, color="#333", family="Courier New"),
+            showlegend=False,
+        )
+    )
 
     fig.update_layout(
-        title=dict(text="Boids 알고리즘: 군집 비행의 3대 규칙",
-                   font=dict(size=22, family="Arial Black"),
-                   x=0.5),
+        title=dict(
+            text="Boids 알고리즘: 군집 비행의 3대 규칙",
+            font=dict(size=22, family="Arial Black"),
+            x=0.5,
+        ),
         scene=dict(
             xaxis=dict(visible=False, range=[-5, 5]),
             yaxis=dict(visible=False, range=[-5, 5]),
@@ -296,7 +417,8 @@ def clear_boids_explained():
         ),
         paper_bgcolor="white",
         margin=dict(l=0, r=0, t=60, b=0),
-        width=1100, height=750,
+        width=1100,
+        height=750,
     )
     save(fig, "clear_2_boids_explained")
 
@@ -304,6 +426,7 @@ def clear_boids_explained():
 # ═══════════════════════════════════════════════════════
 # 3. SC2 ↔ 드론 매핑 (기술 전이)
 # ═══════════════════════════════════════════════════════
+
 
 def clear_tech_transfer():
     """
@@ -329,49 +452,73 @@ def clear_tech_transfer():
     START_Z = 7
 
     # 헤더
-    fig.add_trace(go.Scatter3d(
-        x=[LEFT_X], y=[0], z=[START_Z + 1.5],
-        mode="text",
-        text=["SC2 게임 모듈"],
-        textfont=dict(size=18, color="#1565C0", family="Arial Black"),
-        showlegend=False,
-    ))
-    fig.add_trace(go.Scatter3d(
-        x=[RIGHT_X], y=[0], z=[START_Z + 1.5],
-        mode="text",
-        text=["드론 ATC 모듈"],
-        textfont=dict(size=18, color="#C62828", family="Arial Black"),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[LEFT_X],
+            y=[0],
+            z=[START_Z + 1.5],
+            mode="text",
+            text=["SC2 게임 모듈"],
+            textfont=dict(size=18, color="#1565C0", family="Arial Black"),
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter3d(
+            x=[RIGHT_X],
+            y=[0],
+            z=[START_Z + 1.5],
+            mode="text",
+            text=["드론 ATC 모듈"],
+            textfont=dict(size=18, color="#C62828", family="Arial Black"),
+            showlegend=False,
+        )
+    )
 
     for i, (sc2, atc, conf, col) in enumerate(mappings):
         z = START_Z - i * 1.2
 
         # SC2 모듈 (좌측 박스)
-        fig.add_trace(go.Scatter3d(
-            x=[LEFT_X], y=[0], z=[z],
-            mode="markers+text",
-            marker=dict(size=14, color="#1565C0", opacity=0.8,
-                        symbol="square",
-                        line=dict(width=2, color="white")),
-            text=[sc2],
-            textposition="middle left",
-            textfont=dict(size=12, color="#1565C0"),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[LEFT_X],
+                y=[0],
+                z=[z],
+                mode="markers+text",
+                marker=dict(
+                    size=14,
+                    color="#1565C0",
+                    opacity=0.8,
+                    symbol="square",
+                    line=dict(width=2, color="white"),
+                ),
+                text=[sc2],
+                textposition="middle left",
+                textfont=dict(size=12, color="#1565C0"),
+                showlegend=False,
+            )
+        )
 
         # 드론 모듈 (우측 박스)
-        fig.add_trace(go.Scatter3d(
-            x=[RIGHT_X], y=[0], z=[z],
-            mode="markers+text",
-            marker=dict(size=14, color="#C62828", opacity=0.8,
-                        symbol="square",
-                        line=dict(width=2, color="white")),
-            text=[atc],
-            textposition="middle right",
-            textfont=dict(size=12, color="#C62828"),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[RIGHT_X],
+                y=[0],
+                z=[z],
+                mode="markers+text",
+                marker=dict(
+                    size=14,
+                    color="#C62828",
+                    opacity=0.8,
+                    symbol="square",
+                    line=dict(width=2, color="white"),
+                ),
+                text=[atc],
+                textposition="middle right",
+                textfont=dict(size=12, color="#C62828"),
+                showlegend=False,
+            )
+        )
 
         # 연결선 (두께 = 신뢰도)
         width = conf * 2
@@ -380,38 +527,54 @@ def clear_tech_transfer():
         ly = np.sin(t_arr * math.pi) * 0.8
         lz = np.full_like(t_arr, z)
 
-        fig.add_trace(go.Scatter3d(
-            x=lx, y=ly, z=lz,
-            mode="lines",
-            line=dict(color=col, width=width),
-            showlegend=False,
-            hovertext=f"전이 신뢰도: {'★' * conf}",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=lx,
+                y=ly,
+                z=lz,
+                mode="lines",
+                line=dict(color=col, width=width),
+                showlegend=False,
+                hovertext=f"전이 신뢰도: {'★' * conf}",
+            )
+        )
 
         # 신뢰도 표시 (가운데)
-        fig.add_trace(go.Scatter3d(
-            x=[0], y=[1.2], z=[z],
-            mode="text",
-            text=["★" * conf],
-            textfont=dict(size=12, color=col),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[0],
+                y=[1.2],
+                z=[z],
+                mode="text",
+                text=["★" * conf],
+                textfont=dict(size=12, color=col),
+                showlegend=False,
+            )
+        )
 
     # 범례
-    for conf_val, col, label in [(5, "#4CAF50", "★★★★★ Direct (직접 전이)"),
-                                  (4, "#FFC107", "★★★★☆ Adapt (적응 필요)"),
-                                  (3, "#FF9800", "★★★☆☆ Concept (개념 전이)")]:
-        fig.add_trace(go.Scatter3d(
-            x=[0], y=[0], z=[-2],  # 화면 밖
-            mode="markers",
-            marker=dict(size=8, color=col),
-            name=label,
-        ))
+    for conf_val, col, label in [
+        (5, "#4CAF50", "★★★★★ Direct (직접 전이)"),
+        (4, "#FFC107", "★★★★☆ Adapt (적응 필요)"),
+        (3, "#FF9800", "★★★☆☆ Concept (개념 전이)"),
+    ]:
+        fig.add_trace(
+            go.Scatter3d(
+                x=[0],
+                y=[0],
+                z=[-2],  # 화면 밖
+                mode="markers",
+                marker=dict(size=8, color=col),
+                name=label,
+            )
+        )
 
     fig.update_layout(
-        title=dict(text="SC2 → 드론 ATC: 기술 전이 매핑",
-                   font=dict(size=22, family="Arial Black"),
-                   x=0.5),
+        title=dict(
+            text="SC2 → 드론 ATC: 기술 전이 매핑",
+            font=dict(size=22, family="Arial Black"),
+            x=0.5,
+        ),
         scene=dict(
             xaxis=dict(visible=False, range=[-8, 8]),
             yaxis=dict(visible=False, range=[-2, 3]),
@@ -421,9 +584,11 @@ def clear_tech_transfer():
         ),
         paper_bgcolor="white",
         margin=dict(l=0, r=0, t=60, b=0),
-        width=1200, height=800,
-        legend=dict(font=dict(size=12), x=0.02, y=0.02,
-                    bgcolor="rgba(255,255,255,0.8)"),
+        width=1200,
+        height=800,
+        legend=dict(
+            font=dict(size=12), x=0.02, y=0.02, bgcolor="rgba(255,255,255,0.8)"
+        ),
     )
     save(fig, "clear_3_tech_transfer")
 
@@ -431,6 +596,7 @@ def clear_tech_transfer():
 # ═══════════════════════════════════════════════════════
 # 4. Boids 군집 비행 시뮬레이션 (깔끔 버전)
 # ═══════════════════════════════════════════════════════
+
 
 def clear_swarm_simulation():
     """
@@ -475,7 +641,7 @@ def clear_swarm_simulation():
                         d = pos[i] - pos[j]
                         dist = np.linalg.norm(d)
                         if 0 < dist < 3.0:
-                            sep += d / (dist ** 2)
+                            sep += d / (dist**2)
 
                 # 리더 방향 정렬
                 to_leader = leader_pos - pos[i]
@@ -484,7 +650,9 @@ def clear_swarm_simulation():
                 # V자 대형 위치 유지
                 row = i // 2
                 side = 1 if i % 2 == 0 else -1
-                formation_target = leader_pos + np.array([side * row * 2.0, row * -1.5, 0])
+                formation_target = leader_pos + np.array(
+                    [side * row * 2.0, row * -1.5, 0]
+                )
                 coh = (formation_target - pos[i]) * 0.1
 
                 v = sep * 1.0 + ali + coh
@@ -504,87 +672,119 @@ def clear_swarm_simulation():
     # 지면 그리드
     grid_x = np.linspace(-15, 15, 10)
     grid_y = np.linspace(-5, 35, 15)
-    fig.add_trace(go.Scatter3d(
-        x=np.repeat(grid_x, len(grid_y)),
-        y=np.tile(grid_y, len(grid_x)),
-        z=np.zeros(len(grid_x) * len(grid_y)),
-        mode="markers",
-        marker=dict(size=1, color="#2a2a4a", opacity=0.3),
-        showlegend=False, hoverinfo="skip",
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=np.repeat(grid_x, len(grid_y)),
+            y=np.tile(grid_y, len(grid_x)),
+            z=np.zeros(len(grid_x) * len(grid_y)),
+            mode="markers",
+            marker=dict(size=1, color="#2a2a4a", opacity=0.3),
+            showlegend=False,
+            hoverinfo="skip",
+        )
+    )
 
     # 목표점
-    fig.add_trace(go.Scatter3d(
-        x=[target[0]], y=[target[1]], z=[0],
-        mode="markers+text",
-        marker=dict(size=12, color="#FF6F00", symbol="x", opacity=0.6),
-        text=["목표 지점"],
-        textposition="top center",
-        textfont=dict(size=13, color="#FF6F00"),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[target[0]],
+            y=[target[1]],
+            z=[0],
+            mode="markers+text",
+            marker=dict(size=12, color="#FF6F00", symbol="x", opacity=0.6),
+            text=["목표 지점"],
+            textposition="top center",
+            textfont=dict(size=13, color="#FF6F00"),
+            showlegend=False,
+        )
+    )
 
     # 드론 (리더 + 팔로워)
     init = all_pos[0]
-    fig.add_trace(go.Scatter3d(
-        x=[init[0, 0]], y=[init[0, 1]], z=[init[0, 2]],
-        mode="markers+text",
-        marker=dict(size=12, color="#FFD600", symbol="diamond",
-                    line=dict(width=2, color="white")),
-        text=["LEADER"],
-        textposition="top center",
-        textfont=dict(size=11, color="#FFD600"),
-        name="리더 드론",
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[init[0, 0]],
+            y=[init[0, 1]],
+            z=[init[0, 2]],
+            mode="markers+text",
+            marker=dict(
+                size=12,
+                color="#FFD600",
+                symbol="diamond",
+                line=dict(width=2, color="white"),
+            ),
+            text=["LEADER"],
+            textposition="top center",
+            textfont=dict(size=11, color="#FFD600"),
+            name="리더 드론",
+        )
+    )
 
-    fig.add_trace(go.Scatter3d(
-        x=init[1:, 0], y=init[1:, 1], z=init[1:, 2],
-        mode="markers",
-        marker=dict(size=7, color="#00E5FF", opacity=0.85,
-                    symbol="circle",
-                    line=dict(width=1, color="white")),
-        name=f"팔로워 드론 ×{N - 1}",
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=init[1:, 0],
+            y=init[1:, 1],
+            z=init[1:, 2],
+            mode="markers",
+            marker=dict(
+                size=7,
+                color="#00E5FF",
+                opacity=0.85,
+                symbol="circle",
+                line=dict(width=1, color="white"),
+            ),
+            name=f"팔로워 드론 ×{N - 1}",
+        )
+    )
 
     # 드론 간 연결선 (편대 형태 시각화)
     for i in range(1, N):
-        fig.add_trace(go.Scatter3d(
-            x=[init[0, 0], init[i, 0]],
-            y=[init[0, 1], init[i, 1]],
-            z=[init[0, 2], init[i, 2]],
-            mode="lines",
-            line=dict(color="#00E5FF", width=1),
-            opacity=0.2,
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[init[0, 0], init[i, 0]],
+                y=[init[0, 1], init[i, 1]],
+                z=[init[0, 2], init[i, 2]],
+                mode="lines",
+                line=dict(color="#00E5FF", width=1),
+                opacity=0.2,
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
     # 애니메이션 프레임
     anim_frames = []
     for fi, fpos in enumerate(all_pos):
         frame_data = [
-            go.Scatter3d(x=np.repeat(grid_x, len(grid_y)),
-                         y=np.tile(grid_y, len(grid_x)),
-                         z=np.zeros(len(grid_x) * len(grid_y))),
+            go.Scatter3d(
+                x=np.repeat(grid_x, len(grid_y)),
+                y=np.tile(grid_y, len(grid_x)),
+                z=np.zeros(len(grid_x) * len(grid_y)),
+            ),
             go.Scatter3d(x=[target[0]], y=[target[1]], z=[0]),
             go.Scatter3d(x=[fpos[0, 0]], y=[fpos[0, 1]], z=[fpos[0, 2]]),
             go.Scatter3d(x=fpos[1:, 0], y=fpos[1:, 1], z=fpos[1:, 2]),
         ]
         # 연결선
         for i in range(1, N):
-            frame_data.append(go.Scatter3d(
-                x=[fpos[0, 0], fpos[i, 0]],
-                y=[fpos[0, 1], fpos[i, 1]],
-                z=[fpos[0, 2], fpos[i, 2]],
-            ))
+            frame_data.append(
+                go.Scatter3d(
+                    x=[fpos[0, 0], fpos[i, 0]],
+                    y=[fpos[0, 1], fpos[i, 1]],
+                    z=[fpos[0, 2], fpos[i, 2]],
+                )
+            )
 
         anim_frames.append(go.Frame(data=frame_data, name=f"f{fi}"))
 
     fig.frames = anim_frames
 
     fig.update_layout(
-        title=dict(text="V자 편대 비행 시뮬레이션 (20대 드론, Boids 알고리즘)",
-                   font=dict(size=18, family="Arial Black"),
-                   x=0.5),
+        title=dict(
+            text="V자 편대 비행 시뮬레이션 (20대 드론, Boids 알고리즘)",
+            font=dict(size=18, family="Arial Black"),
+            x=0.5,
+        ),
         scene=dict(
             xaxis=dict(title="East-West (m)", range=[-15, 15]),
             yaxis=dict(title="Forward (m)", range=[-5, 35]),
@@ -594,32 +794,65 @@ def clear_swarm_simulation():
         ),
         paper_bgcolor="#0a0a1a",
         font=dict(color="white"),
-        updatemenus=[dict(
-            type="buttons", showactive=False, y=0, x=0.5, xanchor="center",
-            buttons=[
-                dict(label="▶ 비행 시작",
-                     method="animate",
-                     args=[None, dict(frame=dict(duration=100, redraw=True),
-                                      fromcurrent=True)]),
-                dict(label="⏸ 정지",
-                     method="animate",
-                     args=[[None], dict(frame=dict(duration=0, redraw=False),
-                                        mode="immediate")]),
-            ],
-        )],
-        sliders=[dict(
-            active=0,
-            steps=[dict(args=[[f"f{i}"],
-                               dict(mode="immediate",
-                                    frame=dict(duration=80, redraw=True))],
-                         method="animate", label=f"{i}")
-                   for i in range(len(all_pos))],
-            x=0.1, len=0.8, y=0,
-            currentvalue=dict(prefix="Frame: ", visible=True, font=dict(color="white")),
-            font=dict(color="white"),
-        )],
+        updatemenus=[
+            dict(
+                type="buttons",
+                showactive=False,
+                y=0,
+                x=0.5,
+                xanchor="center",
+                buttons=[
+                    dict(
+                        label="▶ 비행 시작",
+                        method="animate",
+                        args=[
+                            None,
+                            dict(
+                                frame=dict(duration=100, redraw=True), fromcurrent=True
+                            ),
+                        ],
+                    ),
+                    dict(
+                        label="⏸ 정지",
+                        method="animate",
+                        args=[
+                            [None],
+                            dict(
+                                frame=dict(duration=0, redraw=False), mode="immediate"
+                            ),
+                        ],
+                    ),
+                ],
+            )
+        ],
+        sliders=[
+            dict(
+                active=0,
+                steps=[
+                    dict(
+                        args=[
+                            [f"f{i}"],
+                            dict(
+                                mode="immediate", frame=dict(duration=80, redraw=True)
+                            ),
+                        ],
+                        method="animate",
+                        label=f"{i}",
+                    )
+                    for i in range(len(all_pos))
+                ],
+                x=0.1,
+                len=0.8,
+                y=0,
+                currentvalue=dict(
+                    prefix="Frame: ", visible=True, font=dict(color="white")
+                ),
+                font=dict(color="white"),
+            )
+        ],
         margin=dict(l=0, r=0, t=60, b=60),
-        width=1200, height=800,
+        width=1200,
+        height=800,
     )
     save(fig, "clear_4_swarm_simulation")
 
@@ -627,6 +860,7 @@ def clear_swarm_simulation():
 # ═══════════════════════════════════════════════════════
 # 5. ATC 우선순위 시스템 (피라미드)
 # ═══════════════════════════════════════════════════════
+
 
 def clear_atc_priority():
     """
@@ -637,18 +871,34 @@ def clear_atc_priority():
     fig = go.Figure()
 
     levels = [
-        {"name": "Level 0: 충돌 회피\n(COLLISION AVOIDANCE)", "z": 3,
-         "color": "#F44336", "width": 1.5,
-         "desc": "모든 드론 즉각 회피\n= SC2 EMERGENCY 모드"},
-        {"name": "Level 1: 의료/긴급\n(MEDICAL/EMERGENCY)", "z": 2,
-         "color": "#FF9800", "width": 2.5,
-         "desc": "긴급 드론 우선 통과\n일반 드론 대기"},
-        {"name": "Level 2: 계획 배송\n(SCHEDULED DELIVERY)", "z": 1,
-         "color": "#4CAF50", "width": 3.5,
-         "desc": "스케줄 기반 경로 할당\n정상 운용"},
-        {"name": "Level 3: 순찰/측량\n(SURVEY/PATROL)", "z": 0,
-         "color": "#2196F3", "width": 4.5,
-         "desc": "여유 공역 자유 비행\n= SC2 ECONOMY 모드"},
+        {
+            "name": "Level 0: 충돌 회피\n(COLLISION AVOIDANCE)",
+            "z": 3,
+            "color": "#F44336",
+            "width": 1.5,
+            "desc": "모든 드론 즉각 회피\n= SC2 EMERGENCY 모드",
+        },
+        {
+            "name": "Level 1: 의료/긴급\n(MEDICAL/EMERGENCY)",
+            "z": 2,
+            "color": "#FF9800",
+            "width": 2.5,
+            "desc": "긴급 드론 우선 통과\n일반 드론 대기",
+        },
+        {
+            "name": "Level 2: 계획 배송\n(SCHEDULED DELIVERY)",
+            "z": 1,
+            "color": "#4CAF50",
+            "width": 3.5,
+            "desc": "스케줄 기반 경로 할당\n정상 운용",
+        },
+        {
+            "name": "Level 3: 순찰/측량\n(SURVEY/PATROL)",
+            "z": 0,
+            "color": "#2196F3",
+            "width": 4.5,
+            "desc": "여유 공역 자유 비행\n= SC2 ECONOMY 모드",
+        },
     ]
 
     for lv in levels:
@@ -661,64 +911,93 @@ def clear_atc_priority():
         corners_y = [-w, -w, w, w, -w]
         corners_z = [z] * 5
 
-        fig.add_trace(go.Scatter3d(
-            x=corners_x, y=corners_y, z=corners_z,
-            mode="lines",
-            line=dict(color=col, width=5),
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=corners_x,
+                y=corners_y,
+                z=corners_z,
+                mode="lines",
+                line=dict(color=col, width=5),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
         # 채움 (반투명)
-        fig.add_trace(go.Mesh3d(
-            x=[-w, w, w, -w],
-            y=[-w, -w, w, w],
-            z=[z] * 4,
-            i=[0, 0], j=[1, 2], k=[2, 3],
-            color=col, opacity=0.25,
-            showlegend=False, hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Mesh3d(
+                x=[-w, w, w, -w],
+                y=[-w, -w, w, w],
+                z=[z] * 4,
+                i=[0, 0],
+                j=[1, 2],
+                k=[2, 3],
+                color=col,
+                opacity=0.25,
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
         # 라벨 (위)
-        fig.add_trace(go.Scatter3d(
-            x=[0], y=[0], z=[z + 0.3],
-            mode="text",
-            text=[lv["name"]],
-            textfont=dict(size=14, color=col, family="Arial Black"),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[0],
+                y=[0],
+                z=[z + 0.3],
+                mode="text",
+                text=[lv["name"]],
+                textfont=dict(size=14, color=col, family="Arial Black"),
+                showlegend=False,
+            )
+        )
 
         # 설명 (옆)
-        fig.add_trace(go.Scatter3d(
-            x=[w + 1.5], y=[0], z=[z],
-            mode="text",
-            text=[lv["desc"]],
-            textfont=dict(size=11, color="#555"),
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[w + 1.5],
+                y=[0],
+                z=[z],
+                mode="text",
+                text=[lv["desc"]],
+                textfont=dict(size=11, color="#555"),
+                showlegend=False,
+            )
+        )
 
     # 위쪽 화살표
-    fig.add_trace(go.Scatter3d(
-        x=[-6], y=[0], z=[0, 1, 2, 3],
-        mode="lines+text",
-        line=dict(color="#333", width=3),
-        text=["낮음", "", "", "높음"],
-        textposition="middle left",
-        textfont=dict(size=12, color="#333"),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[-6],
+            y=[0],
+            z=[0, 1, 2, 3],
+            mode="lines+text",
+            line=dict(color="#333", width=3),
+            text=["낮음", "", "", "높음"],
+            textposition="middle left",
+            textfont=dict(size=12, color="#333"),
+            showlegend=False,
+        )
+    )
 
-    fig.add_trace(go.Scatter3d(
-        x=[-6.5], y=[0], z=[1.5],
-        mode="text",
-        text=["우\n선\n순\n위"],
-        textfont=dict(size=14, color="#333", family="Arial Black"),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[-6.5],
+            y=[0],
+            z=[1.5],
+            mode="text",
+            text=["우\n선\n순\n위"],
+            textfont=dict(size=14, color="#333", family="Arial Black"),
+            showlegend=False,
+        )
+    )
 
     fig.update_layout(
-        title=dict(text="드론 ATC 우선순위 시스템 (= SC2 Authority Mode)",
-                   font=dict(size=20, family="Arial Black"),
-                   x=0.5),
+        title=dict(
+            text="드론 ATC 우선순위 시스템 (= SC2 Authority Mode)",
+            font=dict(size=20, family="Arial Black"),
+            x=0.5,
+        ),
         scene=dict(
             xaxis=dict(visible=False, range=[-8, 8]),
             yaxis=dict(visible=False, range=[-6, 6]),
@@ -728,7 +1007,8 @@ def clear_atc_priority():
         ),
         paper_bgcolor="white",
         margin=dict(l=0, r=0, t=60, b=0),
-        width=1100, height=750,
+        width=1100,
+        height=750,
     )
     save(fig, "clear_5_atc_priority")
 

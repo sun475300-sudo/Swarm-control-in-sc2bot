@@ -98,10 +98,7 @@ class SpatialOptimizer:
         self.unit_grids[unit_tag] = grid_key
 
     def find_units_in_range(
-        self,
-        center: Point2,
-        radius: float,
-        unit_tags: Optional[Set[int]] = None
+        self, center: Point2, radius: float, unit_tags: Optional[Set[int]] = None
     ) -> List[int]:
         """
         특정 위치 주변의 유닛 찾기 (최적화된 버전)
@@ -153,7 +150,7 @@ class SpatialOptimizer:
         self,
         center: Point2,
         unit_tags: Optional[Set[int]] = None,
-        max_distance: float = 50.0
+        max_distance: float = 50.0,
     ) -> Optional[Tuple[int, float]]:
         """
         가장 가까운 유닛 찾기
@@ -172,7 +169,7 @@ class SpatialOptimizer:
             return None
 
         closest_tag = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         for tag in nearby:
             pos = self.unit_positions.get(tag)
@@ -185,10 +182,7 @@ class SpatialOptimizer:
         return (closest_tag, min_distance) if closest_tag else None
 
     def count_units_in_range(
-        self,
-        center: Point2,
-        radius: float,
-        unit_tags: Optional[Set[int]] = None
+        self, center: Point2, radius: float, unit_tags: Optional[Set[int]] = None
     ) -> int:
         """
         범위 내 유닛 개수 세기
@@ -207,7 +201,7 @@ class SpatialOptimizer:
         self,
         unit_tags: Set[int],
         cluster_radius: float = 8.0,
-        min_cluster_size: int = 3
+        min_cluster_size: int = 3,
     ) -> List[Tuple[Point2, List[int]]]:
         """
         유닛 클러스터(밀집 지역) 찾기
@@ -237,8 +231,16 @@ class SpatialOptimizer:
             if len(nearby) >= min_cluster_size:
                 # 클러스터 중심 계산
                 _nearby_count = len(nearby)
-                center_x = sum(self.unit_positions[t].x for t in nearby) / _nearby_count if _nearby_count else 0
-                center_y = sum(self.unit_positions[t].y for t in nearby) / _nearby_count if _nearby_count else 0
+                center_x = (
+                    sum(self.unit_positions[t].x for t in nearby) / _nearby_count
+                    if _nearby_count
+                    else 0
+                )
+                center_y = (
+                    sum(self.unit_positions[t].y for t in nearby) / _nearby_count
+                    if _nearby_count
+                    else 0
+                )
                 center = Point2((center_x, center_y))
 
                 clusters.append((center, nearby))
@@ -303,5 +305,5 @@ class SpatialOptimizer:
                 "x_max": (grid_x + 1) * self.grid_size,
                 "y_min": grid_y * self.grid_size,
                 "y_max": (grid_y + 1) * self.grid_size,
-            }
+            },
         }

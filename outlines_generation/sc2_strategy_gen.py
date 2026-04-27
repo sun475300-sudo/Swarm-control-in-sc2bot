@@ -14,6 +14,7 @@ import re
 
 # ── Pydantic schemas for structured output ────────────────────────────────────
 
+
 class BuildOrderStep(BaseModel):
     supply: int = Field(..., ge=9, le=200)
     action: str
@@ -81,13 +82,16 @@ def generate_unit_composition_json(model_name: str = "gpt2") -> UnitComposition:
 def generate_regex_build_order(model_name: str = "gpt2") -> str:
     """Generate a build order string constrained by regex pattern."""
     lm = models.transformers(model_name)
-    pattern = re.compile(r"(1[2-9]|[2-9]\d)\s+(Drone|Overlord|Zergling|Roach|Queen|Hatchery|Spawning Pool|Extractor)")
+    pattern = re.compile(
+        r"(1[2-9]|[2-9]\d)\s+(Drone|Overlord|Zergling|Roach|Queen|Hatchery|Spawning Pool|Extractor)"
+    )
     generator = generate.regex(lm, pattern)
     prompt = "17 "
     return generator(prompt)
 
 
 # ── Template-based generation (no LLM needed) ─────────────────────────────────
+
 
 def template_sc2_strategy(
     race: str = "Zerg",

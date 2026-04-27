@@ -58,8 +58,10 @@ def random_result_payload() -> dict:
 
 # ── BotPlayer: active game client ─────────────────────────────────────────────
 
+
 class BotPlayer(HttpUser):
     """Simulates an active SC2 bot playing games and requesting actions."""
+
     weight = 3
     wait_time = between(0.05, 0.2)  # Fast: one request per game tick
 
@@ -95,8 +97,10 @@ class BotPlayer(HttpUser):
 
 # ── Spectator: read-only viewer ───────────────────────────────────────────────
 
+
 class Spectator(HttpUser):
     """Simulates spectators fetching statistics and leaderboards."""
+
     weight = 5
     wait_time = between(1.0, 5.0)  # Slower: human browsing pace
 
@@ -109,7 +113,9 @@ class Spectator(HttpUser):
     def fetch_player_stats(self) -> None:
         """Fetch stats for a random player."""
         player_id = random.randint(1, 1000)
-        self.client.get(f"/api/players/{player_id}/stats", name="/api/players/[id]/stats")
+        self.client.get(
+            f"/api/players/{player_id}/stats", name="/api/players/[id]/stats"
+        )
 
     @task(2)
     def fetch_match_history(self) -> None:
@@ -130,8 +136,10 @@ class Spectator(HttpUser):
 
 # ── Admin: management operations ──────────────────────────────────────────────
 
+
 class Admin(HttpUser):
     """Simulates admin/management operations."""
+
     weight = 1
     wait_time = between(5.0, 15.0)  # Rare: infrequent admin calls
 
@@ -161,6 +169,7 @@ class Admin(HttpUser):
 
 
 # ── Event hooks ───────────────────────────────────────────────────────────────
+
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs) -> None:

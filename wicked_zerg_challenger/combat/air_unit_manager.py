@@ -67,7 +67,9 @@ class AirUnitManager:
 
         # 뮤탈리스크와 다른 공중 유닛 분리
         mutalisks = self._filter_units_by_type(air_units, ["MUTALISK"])
-        other_air = self._filter_units_by_type(air_units, ["CORRUPTOR", "BROODLORD", "VIPER"])
+        other_air = self._filter_units_by_type(
+            air_units, ["CORRUPTOR", "BROODLORD", "VIPER"]
+        )
 
         # === 뮤탈리스크 마이크로 ===
         if self._has_units(mutalisks):
@@ -98,7 +100,9 @@ class AirUnitManager:
         if hasattr(enemy_units, "closer_than"):
             nearby_enemies = enemy_units.closer_than(25, base.position)
         else:
-            nearby_enemies = [e for e in enemy_units if e.distance_to(base.position) < 25]
+            nearby_enemies = [
+                e for e in enemy_units if e.distance_to(base.position) < 25
+            ]
 
         if not nearby_enemies:
             return
@@ -145,13 +149,24 @@ class AirUnitManager:
     def find_harass_target(self):
         """하라스 타겟 찾기 (적 기지)"""
         # 적 본진
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             return self.bot.enemy_start_locations[0]
 
         # 적 건물
         enemy_structures = getattr(self.bot, "enemy_structures", [])
         if enemy_structures:
-            townhall_names = ["NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS", "HATCHERY", "LAIR", "HIVE"]
+            townhall_names = [
+                "NEXUS",
+                "COMMANDCENTER",
+                "ORBITALCOMMAND",
+                "PLANETARYFORTRESS",
+                "HATCHERY",
+                "LAIR",
+                "HIVE",
+            ]
             for struct in enemy_structures:
                 if getattr(struct.type_id, "name", "") in townhall_names:
                     return struct.position
@@ -173,11 +188,9 @@ class AirUnitManager:
 
         # Regen Dance: 손상된 유닛 분리
         if self.mutalisk_micro:
-            current_time = getattr(self.bot, 'time', 0)
+            current_time = getattr(self.bot, "time", 0)
             combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
-                mutalisks,
-                current_time,
-                self.bot
+                mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
@@ -187,7 +200,9 @@ class AirUnitManager:
             return
 
         # 대공 위협 체크
-        anti_air_threats = self.get_anti_air_threats(enemy_units, self._air_harass_target)
+        anti_air_threats = self.get_anti_air_threats(
+            enemy_units, self._air_harass_target
+        )
 
         # 대공 1기라도 있으면 즉시 후퇴 (뮤탈은 약함)
         if anti_air_threats and len(anti_air_threats) >= 1:
@@ -196,11 +211,15 @@ class AirUnitManager:
             return
 
         # 일꾼 찾기
-        workers_only = [e for e in enemy_units
-                       if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]]
+        workers_only = [
+            e
+            for e in enemy_units
+            if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
+        ]
 
-        enemy_workers = [w for w in workers_only
-                        if w.distance_to(self._air_harass_target) < 15]
+        enemy_workers = [
+            w for w in workers_only if w.distance_to(self._air_harass_target) < 15
+        ]
 
         if enemy_workers:
             # 바운스 공격
@@ -216,14 +235,29 @@ class AirUnitManager:
     def get_anti_air_threats(self, enemy_units, position, range_check=15):
         """대공 가능한 적 유닛 찾기"""
         anti_air_names = [
-            "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VOIDRAY",
-            "VIKINGFIGHTER", "THOR", "CYCLONE", "LIBERATOR",
-            "QUEEN", "CORRUPTOR", "MUTALISK", "ARCHON",
-            "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON"
+            "MARINE",
+            "HYDRALISK",
+            "STALKER",
+            "PHOENIX",
+            "VOIDRAY",
+            "VIKINGFIGHTER",
+            "THOR",
+            "CYCLONE",
+            "LIBERATOR",
+            "QUEEN",
+            "CORRUPTOR",
+            "MUTALISK",
+            "ARCHON",
+            "MISSILETURRET",
+            "SPORECRAWLER",
+            "PHOTONCANNON",
         ]
-        return [e for e in enemy_units
-                if getattr(e.type_id, "name", "") in anti_air_names
-                and e.distance_to(position) < range_check]
+        return [
+            e
+            for e in enemy_units
+            if getattr(e.type_id, "name", "") in anti_air_names
+            and e.distance_to(position) < range_check
+        ]
 
     async def mutalisk_bounce_attack(self, mutalisks, targets):
         """
@@ -240,7 +274,9 @@ class AirUnitManager:
         best_nearby_count = 0
 
         for target in targets:
-            nearby = [t for t in targets if t.tag != target.tag and target.distance_to(t) < 3]
+            nearby = [
+                t for t in targets if t.tag != target.tag and target.distance_to(t) < 3
+            ]
             if len(nearby) >= best_nearby_count:
                 best_nearby_count = len(nearby)
                 best_target = target
@@ -286,11 +322,9 @@ class AirUnitManager:
 
         # Regen Dance
         if self.mutalisk_micro:
-            current_time = getattr(self.bot, 'time', 0)
+            current_time = getattr(self.bot, "time", 0)
             combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
-                mutalisks,
-                current_time,
-                self.bot
+                mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
@@ -313,9 +347,7 @@ class AirUnitManager:
         if use_magic_box:
             # Magic Box 진형 사용
             await self.mutalisk_micro.execute_magic_box(
-                combat_ready,
-                target.position,
-                self.bot
+                combat_ready, target.position, self.bot
             )
             # 위치 잡은 후 공격
             for muta in combat_ready:
@@ -354,7 +386,13 @@ class AirUnitManager:
 
             if name in ["SCV", "PROBE", "DRONE"]:
                 workers.append(enemy)
-            elif name in ["SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "LIBERATOR", "WIDOWMINE"]:
+            elif name in [
+                "SIEGETANK",
+                "SIEGETANKSIEGED",
+                "COLOSSUS",
+                "LIBERATOR",
+                "WIDOWMINE",
+            ]:
                 siege.append(enemy)
             elif enemy.health_percentage < 0.3:
                 low_hp.append(enemy)
@@ -381,9 +419,19 @@ class AirUnitManager:
         # 커럽터: 적 공중 유닛 또는 거대 유닛 공격
         if self._has_units(corruptors):
             air_targets = [e for e in enemy_units if getattr(e, "is_flying", False)]
-            massive_targets = [e for e in enemy_units
-                             if getattr(e.type_id, "name", "") in
-                             ["COLOSSUS", "THOR", "BATTLECRUISER", "CARRIER", "TEMPEST", "MOTHERSHIP"]]
+            massive_targets = [
+                e
+                for e in enemy_units
+                if getattr(e.type_id, "name", "")
+                in [
+                    "COLOSSUS",
+                    "THOR",
+                    "BATTLECRUISER",
+                    "CARRIER",
+                    "TEMPEST",
+                    "MOTHERSHIP",
+                ]
+            ]
 
             target = None
             if air_targets:
@@ -400,7 +448,9 @@ class AirUnitManager:
 
         # 무리군주: 후방에서 지상 공격
         if self._has_units(broodlords):
-            ground_targets = [e for e in enemy_units if not getattr(e, "is_flying", False)]
+            ground_targets = [
+                e for e in enemy_units if not getattr(e, "is_flying", False)
+            ]
             if ground_targets:
                 target = min(ground_targets, key=lambda e: e.health)
                 for bl in broodlords:

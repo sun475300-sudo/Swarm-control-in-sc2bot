@@ -45,7 +45,9 @@ class IntegrationMonitor:
         json_files = list(self.data_dir.glob("*.json"))
 
         if not json_files:
-            logger.info("[i]  No opponent models found. Play some games to build the database.")
+            logger.info(
+                "[i]  No opponent models found. Play some games to build the database."
+            )
             return {"status": "no_models"}
 
         logger.info(f"\n[STATS] Found {len(json_files)} opponent model(s):\n")
@@ -56,7 +58,7 @@ class IntegrationMonitor:
 
         for json_file in sorted(json_files):
             try:
-                with open(json_file, 'r', encoding='utf-8') as f:
+                with open(json_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 opponent_id = data.get("opponent_id", json_file.stem)
@@ -69,26 +71,36 @@ class IntegrationMonitor:
                 total_wins += games_won
 
                 logger.info(f"  [TARGET] {opponent_id}")
-                logger.info(f"     Games: {games_played} | Wins: {games_won} | Losses: {games_lost} | Win Rate: {win_rate:.1f}%")
+                logger.info(
+                    f"     Games: {games_played} | Wins: {games_won} | Losses: {games_lost} | Win Rate: {win_rate:.1f}%"
+                )
 
                 # Most common strategies
                 strategy_freq = data.get("strategy_frequency", {})
                 if strategy_freq:
-                    sorted_strategies = sorted(strategy_freq.items(), key=lambda x: x[1], reverse=True)[:3]
-                    logger.info(f"     Top Strategies: {', '.join([f'{s}({c})' for s, c in sorted_strategies])}")
+                    sorted_strategies = sorted(
+                        strategy_freq.items(), key=lambda x: x[1], reverse=True
+                    )[:3]
+                    logger.info(
+                        f"     Top Strategies: {', '.join([f'{s}({c})' for s, c in sorted_strategies])}"
+                    )
 
                 # Style classification
                 style_counts = data.get("style_counts", {})
                 if style_counts:
                     most_common_style = max(style_counts.items(), key=lambda x: x[1])
-                    logger.info(f"     Play Style: {most_common_style[0]} ({most_common_style[1]} games)")
+                    logger.info(
+                        f"     Play Style: {most_common_style[0]} ({most_common_style[1]} games)"
+                    )
 
-                models_data.append({
-                    "opponent_id": opponent_id,
-                    "games_played": games_played,
-                    "games_won": games_won,
-                    "win_rate": win_rate
-                })
+                models_data.append(
+                    {
+                        "opponent_id": opponent_id,
+                        "games_played": games_played,
+                        "games_won": games_won,
+                        "win_rate": win_rate,
+                    }
+                )
             except Exception as e:
                 logger.info(f"  [X] Error reading {json_file.name}: {e}\n")
 
@@ -105,7 +117,7 @@ class IntegrationMonitor:
             "total_games": total_games,
             "total_wins": total_wins,
             "overall_win_rate": overall_win_rate,
-            "models": models_data
+            "models": models_data,
         }
 
     def check_micro_v3_status(self) -> Dict:
@@ -120,14 +132,16 @@ class IntegrationMonitor:
 
         # Read recent log entries
         try:
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for micro V3 log entries
             micro_v3_logs = [line for line in lines[-1000:] if "MICRO_V3" in line]
 
             if not micro_v3_logs:
-                logger.info("\n[i]  No Micro V3 logs found. System may not be active yet.")
+                logger.info(
+                    "\n[i]  No Micro V3 logs found. System may not be active yet."
+                )
                 return {"status": "no_activity"}
 
             logger.info(f"\n[STATS] Found {len(micro_v3_logs)} Micro V3 log entries:\n")
@@ -140,7 +154,9 @@ class IntegrationMonitor:
 
             # Count ability usage
             ravager_count = sum(1 for line in micro_v3_logs if "Ravagers:" in line)
-            lurker_count = sum(1 for line in micro_v3_logs if "Lurkers burrowed:" in line)
+            lurker_count = sum(
+                1 for line in micro_v3_logs if "Lurkers burrowed:" in line
+            )
             focus_fire_count = sum(1 for line in micro_v3_logs if "Focus fire:" in line)
 
             logger.info(f"\n  [GRAPH] Activity Summary:")
@@ -153,7 +169,7 @@ class IntegrationMonitor:
                 "log_entries": len(micro_v3_logs),
                 "ravager_executions": ravager_count,
                 "lurker_executions": lurker_count,
-                "focus_fire_executions": focus_fire_count
+                "focus_fire_executions": focus_fire_count,
             }
 
         except Exception as e:
@@ -171,7 +187,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for errors
@@ -193,7 +209,9 @@ class IntegrationMonitor:
             # Group by error type
             om_errors = [e for e in errors if "OpponentModeling" in e]
             micro_errors = [e for e in errors if "MicroV3" in e or "Micro" in e]
-            other_errors = [e for e in errors if e not in om_errors and e not in micro_errors]
+            other_errors = [
+                e for e in errors if e not in om_errors and e not in micro_errors
+            ]
 
             if om_errors:
                 logger.info(f"  [RED] OpponentModeling errors: {len(om_errors)}")
@@ -215,7 +233,7 @@ class IntegrationMonitor:
                 "error_count": len(errors),
                 "om_errors": len(om_errors),
                 "micro_errors": len(micro_errors),
-                "other_errors": len(other_errors)
+                "other_errors": len(other_errors),
             }
 
         except Exception as e:
@@ -233,11 +251,15 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for timing information
-            timing_logs = [line for line in lines[-1000:] if "ms" in line.lower() or "elapsed" in line.lower()]
+            timing_logs = [
+                line
+                for line in lines[-1000:]
+                if "ms" in line.lower() or "elapsed" in line.lower()
+            ]
 
             if not timing_logs:
                 logger.info("\n[i]  No performance data found in logs.")
@@ -247,20 +269,30 @@ class IntegrationMonitor:
 
             # Look for specific system timings
             om_timings = [line for line in timing_logs if "OpponentModeling" in line]
-            micro_timings = [line for line in timing_logs if "MicroV3" in line or "Micro" in line]
+            micro_timings = [
+                line for line in timing_logs if "MicroV3" in line or "Micro" in line
+            ]
 
             if om_timings:
-                logger.info(f"  [TIMER]  OpponentModeling timing entries: {len(om_timings)}")
+                logger.info(
+                    f"  [TIMER]  OpponentModeling timing entries: {len(om_timings)}"
+                )
                 if om_timings:
                     logger.info(f"     Latest: {om_timings[-1].strip()}")
 
             if micro_timings:
-                logger.info(f"\n  [TIMER]  MicroV3 timing entries: {len(micro_timings)}")
+                logger.info(
+                    f"\n  [TIMER]  MicroV3 timing entries: {len(micro_timings)}"
+                )
                 if micro_timings:
                     logger.info(f"     Latest: {micro_timings[-1].strip()}")
 
             # Check for frame rate issues
-            lag_indicators = [line for line in lines[-1000:] if "lag" in line.lower() or "slow" in line.lower()]
+            lag_indicators = [
+                line
+                for line in lines[-1000:]
+                if "lag" in line.lower() or "slow" in line.lower()
+            ]
             if lag_indicators:
                 logger.info(f"\n  [!]  Performance warnings: {len(lag_indicators)}")
             else:
@@ -270,7 +302,7 @@ class IntegrationMonitor:
                 "status": "ok",
                 "om_timings": len(om_timings),
                 "micro_timings": len(micro_timings),
-                "lag_warnings": len(lag_indicators)
+                "lag_warnings": len(lag_indicators),
             }
 
         except Exception as e:
@@ -289,7 +321,7 @@ class IntegrationMonitor:
             "opponent_modeling": self.check_opponent_models(),
             "micro_v3": self.check_micro_v3_status(),
             "errors": self.check_errors(),
-            "performance": self.check_performance()
+            "performance": self.check_performance(),
         }
 
         # Overall health check
@@ -305,24 +337,32 @@ class IntegrationMonitor:
         elif summary["opponent_modeling"]["status"] == "active":
             logger.info("[OK] OpponentModeling: Active")
         else:
-            health_issues.append(f"[X] OpponentModeling: {summary['opponent_modeling']['status']}")
+            health_issues.append(
+                f"[X] OpponentModeling: {summary['opponent_modeling']['status']}"
+            )
 
         if summary["micro_v3"]["status"] == "no_activity":
             health_issues.append("[!]  No Micro V3 activity - check integration")
         elif summary["micro_v3"]["status"] == "active":
             logger.info("[OK] AdvancedMicroV3: Active")
         else:
-            health_issues.append(f"[X] AdvancedMicroV3: {summary['micro_v3']['status']}")
+            health_issues.append(
+                f"[X] AdvancedMicroV3: {summary['micro_v3']['status']}"
+            )
 
         if summary["errors"]["error_count"] > 0:
-            health_issues.append(f"[!]  {summary['errors']['error_count']} errors detected")
+            health_issues.append(
+                f"[!]  {summary['errors']['error_count']} errors detected"
+            )
         else:
             logger.info("[OK] Error Check: Clean")
 
         if summary["performance"]["status"] == "ok":
             logger.info("[OK] Performance: OK")
         else:
-            health_issues.append(f"[!]  Performance: {summary['performance']['status']}")
+            health_issues.append(
+                f"[!]  Performance: {summary['performance']['status']}"
+            )
 
         if health_issues:
             logger.info("\n[SEARCH] Issues Found:")
@@ -333,7 +373,7 @@ class IntegrationMonitor:
 
         # Save report
         report_file = self.base_dir / "integration_monitor_report.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
 
         logger.info(f"\n[STATS] Full report saved to: {report_file}")
@@ -363,19 +403,15 @@ class IntegrationMonitor:
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(
-        description="Phase 15 Integration Monitor"
-    )
+    parser = argparse.ArgumentParser(description="Phase 15 Integration Monitor")
     parser.add_argument(
-        "--watch",
-        action="store_true",
-        help="Continuous monitoring mode"
+        "--watch", action="store_true", help="Continuous monitoring mode"
     )
     parser.add_argument(
         "--interval",
         type=int,
         default=60,
-        help="Watch mode refresh interval in seconds (default: 60)"
+        help="Watch mode refresh interval in seconds (default: 60)",
     )
 
     args = parser.parse_args()

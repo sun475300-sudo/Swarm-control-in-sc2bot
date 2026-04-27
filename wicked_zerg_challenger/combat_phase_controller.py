@@ -29,18 +29,20 @@ from utils.logger import get_logger
 
 class CombatPhase(Enum):
     """전투 단계"""
-    IDLE = 0           # 대기 (전투 없음)
-    GATHERING = 1      # 집결 중
-    POSITIONING = 2    # 포지셔닝 (전투 전 진형)
-    ENGAGEMENT = 3     # 교전 시작
+
+    IDLE = 0  # 대기 (전투 없음)
+    GATHERING = 1  # 집결 중
+    POSITIONING = 2  # 포지셔닝 (전투 전 진형)
+    ENGAGEMENT = 3  # 교전 시작
     ACTIVE_COMBAT = 4  # 활발한 전투 중
-    RETREAT = 5        # 후퇴 중
-    REGROUPING = 6     # 재집결 중
+    RETREAT = 5  # 후퇴 중
+    REGROUPING = 6  # 재집결 중
 
 
 @dataclass
 class CombatGroup:
     """전투 그룹"""
+
     units: Set[int]  # 유닛 태그 집합
     phase: CombatPhase
     rally_point: Optional[Point2]
@@ -98,7 +100,9 @@ class CombatPhaseController:
         game_time = getattr(self.bot, "time", 0)
 
         # ★ MicroV3가 활성이면 직접 유닛 명령 발행 스킵 (분석만 수행) ★
-        self._skip_commands = hasattr(self.bot, "micro_v3") and self.bot.micro_v3 is not None
+        self._skip_commands = (
+            hasattr(self.bot, "micro_v3") and self.bot.micro_v3 is not None
+        )
 
         # 전투 그룹 업데이트
         self._update_combat_groups(game_time)
@@ -147,7 +151,9 @@ class CombatPhaseController:
         if len(unassigned_units) >= 5:
             self._create_new_group(unassigned_units, game_time)
 
-    async def _manage_group_phase(self, group_id: str, group: CombatGroup, game_time: float, iteration: int) -> None:
+    async def _manage_group_phase(
+        self, group_id: str, group: CombatGroup, game_time: float, iteration: int
+    ) -> None:
         """그룹의 전투 단계 관리"""
         # 그룹의 현재 상태 평가
         group_units = self._get_group_units(group)
@@ -160,31 +166,49 @@ class CombatPhaseController:
 
         # === 단계별 행동 ===
         if group.phase == CombatPhase.IDLE:
-            await self._handle_idle_phase(group_id, group, group_units, nearby_enemies, game_time)
+            await self._handle_idle_phase(
+                group_id, group, group_units, nearby_enemies, game_time
+            )
 
         elif group.phase == CombatPhase.GATHERING:
             await self._handle_gathering_phase(group_id, group, group_units, game_time)
 
         elif group.phase == CombatPhase.POSITIONING:
-            await self._handle_positioning_phase(group_id, group, group_units, nearby_enemies, game_time)
+            await self._handle_positioning_phase(
+                group_id, group, group_units, nearby_enemies, game_time
+            )
 
         elif group.phase == CombatPhase.ENGAGEMENT:
-            await self._handle_engagement_phase(group_id, group, group_units, nearby_enemies, game_time)
+            await self._handle_engagement_phase(
+                group_id, group, group_units, nearby_enemies, game_time
+            )
 
         elif group.phase == CombatPhase.ACTIVE_COMBAT:
-            await self._handle_active_combat_phase(group_id, group, group_units, nearby_enemies, game_time, iteration)
+            await self._handle_active_combat_phase(
+                group_id, group, group_units, nearby_enemies, game_time, iteration
+            )
 
         elif group.phase == CombatPhase.RETREAT:
-            await self._handle_retreat_phase(group_id, group, group_units, nearby_enemies, game_time)
+            await self._handle_retreat_phase(
+                group_id, group, group_units, nearby_enemies, game_time
+            )
 
         elif group.phase == CombatPhase.REGROUPING:
             await self._handle_regrouping_phase(group_id, group, group_units, game_time)
 
         # === 단계 전환 조건 체크 ===
-        self._check_phase_transitions(group_id, group, group_units, nearby_enemies, group_health_ratio, game_time)
+        self._check_phase_transitions(
+            group_id, group, group_units, nearby_enemies, group_health_ratio, game_time
+        )
 
-    async def _handle_idle_phase(self, group_id: str, group: CombatGroup, group_units: Units,
-                                  nearby_enemies: Units, game_time: float) -> None:
+    async def _handle_idle_phase(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        group_units: Units,
+        nearby_enemies: Units,
+        game_time: float,
+    ) -> None:
         """대기 단계 처리"""
         # 적이 발견되면 집결 단계로
         if nearby_enemies:
@@ -194,10 +218,13 @@ class CombatPhaseController:
         # 병력이 충분하고 타겟이 있으면 집결 시작
         if len(group_units) >= self.min_army_for_attack:
             if group.target_position:
-                self._transition_phase(group_id, group, CombatPhase.GATHERING, game_time)
+                self._transition_phase(
+                    group_id, group, CombatPhase.GATHERING, game_time
+                )
 
-    async def _handle_gathering_phase(self, group_id: str, group: CombatGroup,
-                                      group_units: Units, game_time: float) -> None:
+    async def _handle_gathering_phase(
+        self, group_id: str, group: CombatGroup, group_units: Units, game_time: float
+    ) -> None:
         """집결 단계 처리 - 병력을 한 곳에 모음"""
         if not group.rally_point:
             # 집결 지점 설정 (그룹 중심에서 적 방향)
@@ -214,21 +241,27 @@ class CombatPhaseController:
                 self.bot.do(unit.move(group.rally_point))
 
         # 병력이 충분히 모였으면 포지셔닝 단계로
-        units_at_rally = sum(1 for u in group_units if u.distance_to(group.rally_point) < 4)
+        units_at_rally = sum(
+            1 for u in group_units if u.distance_to(group.rally_point) < 4
+        )
         if units_at_rally >= len(group_units) * 0.7:  # 70% 이상 도착
             self._transition_phase(group_id, group, CombatPhase.POSITIONING, game_time)
 
-    async def _handle_positioning_phase(self, group_id: str, group: CombatGroup, group_units: Units,
-                                        nearby_enemies: Units, game_time: float) -> None:
+    async def _handle_positioning_phase(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        group_units: Units,
+        nearby_enemies: Units,
+        game_time: float,
+    ) -> None:
         """포지셔닝 단계 처리 - 전투 전 진형 형성"""
         if not group.target_position:
             return
 
         # 진형 형성
         formation_positions = self._calculate_formation_positions(
-            group_units,
-            group.target_position,
-            group.formation_type
+            group_units, group.target_position, group.formation_type
         )
 
         # 유닛들을 진형 위치로 이동
@@ -237,11 +270,21 @@ class CombatPhaseController:
                 self.bot.do(unit.move(target_pos))
 
         # 적이 가까우면 즉시 교전 단계로
-        if nearby_enemies and nearby_enemies.closest_distance_to(self._get_group_center(group_units)) < 10:
+        if (
+            nearby_enemies
+            and nearby_enemies.closest_distance_to(self._get_group_center(group_units))
+            < 10
+        ):
             self._transition_phase(group_id, group, CombatPhase.ENGAGEMENT, game_time)
 
-    async def _handle_engagement_phase(self, group_id: str, group: CombatGroup, group_units: Units,
-                                       nearby_enemies: Units, game_time: float) -> None:
+    async def _handle_engagement_phase(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        group_units: Units,
+        nearby_enemies: Units,
+        game_time: float,
+    ) -> None:
         """교전 단계 처리 - 전투 시작, 포커스 파이어"""
         if not nearby_enemies:
             self._transition_phase(group_id, group, CombatPhase.POSITIONING, game_time)
@@ -264,10 +307,19 @@ class CombatPhaseController:
 
         # 교전 2초 후 활발한 전투 단계로
         if game_time - group.engagement_time > 2:
-            self._transition_phase(group_id, group, CombatPhase.ACTIVE_COMBAT, game_time)
+            self._transition_phase(
+                group_id, group, CombatPhase.ACTIVE_COMBAT, game_time
+            )
 
-    async def _handle_active_combat_phase(self, group_id: str, group: CombatGroup, group_units: Units,
-                                          nearby_enemies: Units, game_time: float, iteration: int) -> None:
+    async def _handle_active_combat_phase(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        group_units: Units,
+        nearby_enemies: Units,
+        game_time: float,
+        iteration: int,
+    ) -> None:
         """활발한 전투 단계 처리 - 마이크로 컨트롤"""
         if not nearby_enemies:
             self._transition_phase(group_id, group, CombatPhase.REGROUPING, game_time)
@@ -277,8 +329,14 @@ class CombatPhaseController:
         for unit in group_units:
             await self._micro_control_unit(unit, nearby_enemies, iteration)
 
-    async def _handle_retreat_phase(self, group_id: str, group: CombatGroup, group_units: Units,
-                                    nearby_enemies: Units, game_time: float) -> None:
+    async def _handle_retreat_phase(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        group_units: Units,
+        nearby_enemies: Units,
+        game_time: float,
+    ) -> None:
         """후퇴 단계 처리"""
         # 본진 방향으로 후퇴
         if hasattr(self.bot, "start_location"):
@@ -300,17 +358,21 @@ class CombatPhaseController:
                         self.bot.do(unit.move(retreat_target))
 
         # 안전 거리 확보 시 재집결 단계로
-        if not nearby_enemies or nearby_enemies.closest_distance_to(self._get_group_center(group_units)) > 15:
+        if (
+            not nearby_enemies
+            or nearby_enemies.closest_distance_to(self._get_group_center(group_units))
+            > 15
+        ):
             self._transition_phase(group_id, group, CombatPhase.REGROUPING, game_time)
 
-    async def _handle_regrouping_phase(self, group_id: str, group: CombatGroup,
-                                       group_units: Units, game_time: float) -> None:
+    async def _handle_regrouping_phase(
+        self, group_id: str, group: CombatGroup, group_units: Units, game_time: float
+    ) -> None:
         """재집결 단계 처리"""
         # 본진 근처로 재집결
         if hasattr(self.bot, "start_location"):
             regroup_point = self.bot.start_location.towards(
-                self._get_group_center(group_units),
-                self.regroup_distance
+                self._get_group_center(group_units), self.regroup_distance
             )
         else:
             regroup_point = self._get_group_center(group_units)
@@ -320,18 +382,29 @@ class CombatPhaseController:
                 self.bot.do(unit.move(regroup_point))
 
         # 재집결 완료 시 대기 단계로
-        units_regrouped = sum(1 for u in group_units if u.distance_to(regroup_point) < 6)
+        units_regrouped = sum(
+            1 for u in group_units if u.distance_to(regroup_point) < 6
+        )
         if units_regrouped >= len(group_units) * 0.8:
             self._transition_phase(group_id, group, CombatPhase.IDLE, game_time)
 
-    def _check_phase_transitions(self, group_id: str, group: CombatGroup, group_units: Units,
-                                  nearby_enemies: Units, health_ratio: float, game_time: float) -> None:
+    def _check_phase_transitions(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        group_units: Units,
+        nearby_enemies: Units,
+        health_ratio: float,
+        game_time: float,
+    ) -> None:
         """단계 전환 조건 체크"""
         # 후퇴 조건: HP가 임계값 이하이고 적이 우세
-        if (health_ratio < self.retreat_hp_threshold and
-            nearby_enemies and
-            len(nearby_enemies) > len(group_units) * 1.5 and
-            group.phase not in [CombatPhase.RETREAT, CombatPhase.REGROUPING]):
+        if (
+            health_ratio < self.retreat_hp_threshold
+            and nearby_enemies
+            and len(nearby_enemies) > len(group_units) * 1.5
+            and group.phase not in [CombatPhase.RETREAT, CombatPhase.REGROUPING]
+        ):
 
             self.logger.info(
                 f"[PHASE] Group {group_id} retreating (HP: {health_ratio:.1%}, "
@@ -339,7 +412,13 @@ class CombatPhaseController:
             )
             self._transition_phase(group_id, group, CombatPhase.RETREAT, game_time)
 
-    def _transition_phase(self, group_id: str, group: CombatGroup, new_phase: CombatPhase, game_time: float) -> None:
+    def _transition_phase(
+        self,
+        group_id: str,
+        group: CombatGroup,
+        new_phase: CombatPhase,
+        game_time: float,
+    ) -> None:
         """단계 전환"""
         old_phase = group.phase
         group.phase = new_phase
@@ -347,9 +426,13 @@ class CombatPhaseController:
 
         self.phase_transitions.append((old_phase, new_phase, game_time, True))
 
-        self.logger.info(f"[PHASE] Group {group_id}: {old_phase.name} -> {new_phase.name}")
+        self.logger.info(
+            f"[PHASE] Group {group_id}: {old_phase.name} -> {new_phase.name}"
+        )
 
-    async def _micro_control_unit(self, unit: Unit, enemies: Units, iteration: int) -> None:
+    async def _micro_control_unit(
+        self, unit: Unit, enemies: Units, iteration: int
+    ) -> None:
         """개별 유닛 마이크로 컨트롤"""
         if not enemies:
             return
@@ -405,14 +488,16 @@ class CombatPhaseController:
             initial_unit_count=len(units),
             initial_total_hp=sum(u.health + u.shield for u in units),
             enemies_killed=0,
-            damage_taken=0
+            damage_taken=0,
         )
 
         self.combat_groups[group_id] = group
         self.logger.info(f"[PHASE] Created {group_id} with {len(units)} units")
         return group_id
 
-    def _calculate_formation_positions(self, units: Units, target: Point2, formation_type: str) -> List[Point2]:
+    def _calculate_formation_positions(
+        self, units: Units, target: Point2, formation_type: str
+    ) -> List[Point2]:
         """진형 계산"""
         if not units:
             return []
@@ -443,7 +528,9 @@ class CombatPhaseController:
 
         return positions
 
-    def _get_priority_target(self, enemies: Units, friendly_units: Units) -> Optional[Unit]:
+    def _get_priority_target(
+        self, enemies: Units, friendly_units: Units
+    ) -> Optional[Unit]:
         """우선 타겟 선정"""
         if not enemies:
             return None
@@ -467,9 +554,15 @@ class CombatPhaseController:
             return Units([], self.bot)
 
         combat_types = [
-            UnitTypeId.ZERGLING, UnitTypeId.BANELING, UnitTypeId.ROACH,
-            UnitTypeId.RAVAGER, UnitTypeId.HYDRALISK, UnitTypeId.LURKER,
-            UnitTypeId.MUTALISK, UnitTypeId.CORRUPTOR, UnitTypeId.ULTRALISK
+            UnitTypeId.ZERGLING,
+            UnitTypeId.BANELING,
+            UnitTypeId.ROACH,
+            UnitTypeId.RAVAGER,
+            UnitTypeId.HYDRALISK,
+            UnitTypeId.LURKER,
+            UnitTypeId.MUTALISK,
+            UnitTypeId.CORRUPTOR,
+            UnitTypeId.ULTRALISK,
         ]
 
         return self.bot.units.filter(lambda u: u.type_id in combat_types)
@@ -493,10 +586,12 @@ class CombatPhaseController:
         """그룹 중심점 계산"""
         if not units:
             return Point2((0, 0))
-        return Point2((
-            sum(u.position.x for u in units) / len(units),
-            sum(u.position.y for u in units) / len(units)
-        ))
+        return Point2(
+            (
+                sum(u.position.x for u in units) / len(units),
+                sum(u.position.y for u in units) / len(units),
+            )
+        )
 
     def _get_group_health_ratio(self, units: Units) -> float:
         """그룹 체력 비율"""
@@ -520,12 +615,14 @@ class CombatPhaseController:
             group_units = self._get_group_units(group)
             nearby_enemies = self._get_nearby_enemies(group_units)
 
-            self.combat_history.append((
-                group.phase,
-                len(group_units),
-                len(nearby_enemies),
-                self._get_group_health_ratio(group_units)
-            ))
+            self.combat_history.append(
+                (
+                    group.phase,
+                    len(group_units),
+                    len(nearby_enemies),
+                    self._get_group_health_ratio(group_units),
+                )
+            )
 
         # 최근 1000개 데이터만 유지
         if len(self.combat_history) > 1000:

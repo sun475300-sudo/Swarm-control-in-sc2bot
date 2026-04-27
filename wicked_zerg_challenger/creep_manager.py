@@ -52,11 +52,11 @@ class CreepManager:
 
     # CreepyBot-inspired constants
     TUMOR_MIN_SPACING_DIST = 10  # Minimum distance between tumors to avoid overlap
-    TUMOR_SPREAD_RANGE = 10.0       # Max spread distance for existing tumors
-    QUEEN_TUMOR_RANGE = 8.0         # Max queen creep tumor placement range
-    EXPANSION_BLOCK_DIST = 3        # Chebyshev distance to protect expansions
-    COVERAGE_TARGET = 0.30          # 30% coverage target (CreepyBot default)
-    COVERAGE_SAMPLE_STEP = 15       # Grid step for coverage sampling
+    TUMOR_SPREAD_RANGE = 10.0  # Max spread distance for existing tumors
+    QUEEN_TUMOR_RANGE = 8.0  # Max queen creep tumor placement range
+    EXPANSION_BLOCK_DIST = 3  # Chebyshev distance to protect expansions
+    COVERAGE_TARGET = 0.30  # 30% coverage target (CreepyBot default)
+    COVERAGE_SAMPLE_STEP = 15  # Grid step for coverage sampling
 
     def __init__(self, bot):
         self.bot = bot
@@ -65,8 +65,12 @@ class CreepManager:
         self.tumor_relay_interval = 6
         self.last_tumor_relay = 0
         self.cached_targets: List[object] = []
-        self.tumor_spread_cooldowns: Dict[int, int] = {}  # tumor_tag -> last_spread_frame
-        self.used_tumor_tags: Set[int] = set()  # CreepyBot: track tumors that already spawned
+        self.tumor_spread_cooldowns: Dict[int, int] = (
+            {}
+        )  # tumor_tag -> last_spread_frame
+        self.used_tumor_tags: Set[int] = (
+            set()
+        )  # CreepyBot: track tumors that already spawned
         self.max_tumors_per_cycle = 6
         self.spread_directions = []
         self._tumor_count_check_interval = 0
@@ -126,16 +130,17 @@ class CreepManager:
         targets.extend(self._get_expansion_targets())
         targets.extend(self._get_scout_targets())
         targets.extend(self._get_attack_path_targets())
-        targets.extend(self._get_base_perimeter_targets()) # Issue 8
+        targets.extend(self._get_base_perimeter_targets())  # Issue 8
         self.cached_targets = self._dedupe_positions(targets)
 
     def _get_base_perimeter_targets(self) -> List[object]:
         """기지 주변 점막 우선 확장 (방어 및 시야)"""
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
             return []
-        
+
         targets = []
         import math
+
         # 각 기지 주변 12 거리의 원형 포인트 추가
         for th in self.bot.townhalls:
             for angle in range(0, 360, 60):
@@ -302,8 +307,7 @@ class CreepManager:
                 UnitTypeId.CREEPTUMORQUEEN,
             }
             tumor_positions = [
-                t.position for t in self.bot.structures
-                if t.type_id in tumor_types
+                t.position for t in self.bot.structures if t.type_id in tumor_types
             ]
 
         # Filter candidates
@@ -349,7 +353,9 @@ class CreepManager:
         # CreepyBot: Batch query_building_placement to validate positions
         # This is more reliable than has_creep alone - checks actual buildability
         try:
-            if hasattr(self.bot, "can_place") and hasattr(AbilityId, "ZERGBUILD_CREEPTUMOR"):
+            if hasattr(self.bot, "can_place") and hasattr(
+                AbilityId, "ZERGBUILD_CREEPTUMOR"
+            ):
                 placement_results = await_or_sync(
                     self.bot.can_place, AbilityId.ZERGBUILD_CREEPTUMOR, valid
                 )
@@ -363,6 +369,7 @@ class CreepManager:
 
         # KEY OPTIMIZATION (CreepyBot): Sort by distance to nearest uncreeped position
         if self._positions_without_creep:
+
             def dist_to_nearest_uncreeped(pos):
                 min_dist = float("inf")
                 for uc_pos in self._positions_without_creep:
@@ -454,7 +461,7 @@ class CreepManager:
         scored_tumors.sort(key=lambda x: x[1], reverse=True)
         actions = []
 
-        for tumor, _ in scored_tumors[:self.max_tumors_per_cycle]:
+        for tumor, _ in scored_tumors[: self.max_tumors_per_cycle]:
             try:
                 # Use CreepyBot-style optimal placement
                 spread_target = self._find_creep_plant_location(tumor)
@@ -464,19 +471,27 @@ class CreepManager:
                     spread_target = tumor.position.towards(direction_target, 9.0)
                     # Verify it's on creep
                     try:
-                        if hasattr(self.bot, "has_creep") and not self.bot.has_creep(spread_target):
+                        if hasattr(self.bot, "has_creep") and not self.bot.has_creep(
+                            spread_target
+                        ):
                             continue
                     except (TypeError, AttributeError):
                         pass
 
                 # Execute spread
-                if hasattr(tumor, "can_cast") and hasattr(AbilityId, "BUILD_CREEPTUMOR_TUMOR"):
+                if hasattr(tumor, "can_cast") and hasattr(
+                    AbilityId, "BUILD_CREEPTUMOR_TUMOR"
+                ):
                     if tumor.can_cast(AbilityId.BUILD_CREEPTUMOR_TUMOR):
-                        actions.append(tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target))
+                        actions.append(
+                            tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target)
+                        )
                         self.tumor_spread_cooldowns[tumor.tag] = iteration
                         self.used_tumor_tags.add(tumor.tag)  # Mark as used
                 elif hasattr(AbilityId, "BUILD_CREEPTUMOR_TUMOR"):
-                    actions.append(tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target))
+                    actions.append(
+                        tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, spread_target)
+                    )
                     self.tumor_spread_cooldowns[tumor.tag] = iteration
                     self.used_tumor_tags.add(tumor.tag)
             except Exception as e:
@@ -539,7 +554,9 @@ class CreepManager:
                         if dist > farthest_dist:
                             farthest_dist = dist
                     except Exception as e:
-                        logger.warning(f"[CreepManager] tumor distance check suppressed: {e}")
+                        logger.warning(
+                            f"[CreepManager] tumor distance check suppressed: {e}"
+                        )
                         continue
 
             logger.info(
@@ -589,10 +606,10 @@ class CreepSpreadManager:
     """
 
     # 크립 종양 관련 상수
-    TUMOR_SPREAD_RANGE = 10.0     # 종양 확산 반경
-    TUMOR_MIN_DISTANCE = 8.0      # 종양 간 최소 거리
-    QUEEN_TUMOR_ENERGY = 25       # 퀸 종양 생성 에너지
-    GRID_CELL_SIZE = 9.0          # 그리드 셀 크기
+    TUMOR_SPREAD_RANGE = 10.0  # 종양 확산 반경
+    TUMOR_MIN_DISTANCE = 8.0  # 종양 간 최소 거리
+    QUEEN_TUMOR_ENERGY = 25  # 퀸 종양 생성 에너지
+    GRID_CELL_SIZE = 9.0  # 그리드 셀 크기
 
     def __init__(self, bot):
         """
@@ -667,7 +684,9 @@ class CreepSpreadManager:
 
     def _generate_creep_grid(self):
         """BFS/그리드 패턴으로 크립 종양 목표 위치 생성"""
-        if not hasattr(self.bot, "start_location") or not hasattr(self.bot, "game_info"):
+        if not hasattr(self.bot, "start_location") or not hasattr(
+            self.bot, "game_info"
+        ):
             return
 
         if not Point2:
@@ -686,8 +705,14 @@ class CreepSpreadManager:
         visited.add((start_gx, start_gy))
 
         directions = [
-            (1, 0), (-1, 0), (0, 1), (0, -1),
-            (1, 1), (-1, 1), (1, -1), (-1, -1),
+            (1, 0),
+            (-1, 0),
+            (0, 1),
+            (0, -1),
+            (1, 1),
+            (-1, 1),
+            (1, -1),
+            (-1, -1),
         ]
 
         while queue:
@@ -734,7 +759,10 @@ class CreepSpreadManager:
         for exp in expansions:
             if exp.distance_to(start) < 50:
                 self._expansion_directions.append(exp)
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             self._enemy_direction = self.bot.enemy_start_locations[0]
 
     def _update_tumor_positions(self):
@@ -742,7 +770,11 @@ class CreepSpreadManager:
         if not hasattr(self.bot, "structures"):
             return
         self.tumor_positions.clear()
-        for tid in [UnitTypeId.CREEPTUMOR, UnitTypeId.CREEPTUMORBURROWED, UnitTypeId.CREEPTUMORQUEEN]:
+        for tid in [
+            UnitTypeId.CREEPTUMOR,
+            UnitTypeId.CREEPTUMORBURROWED,
+            UnitTypeId.CREEPTUMORQUEEN,
+        ]:
             for tumor in self.bot.structures(tid):
                 pos = (round(tumor.position.x, 1), round(tumor.position.y, 1))
                 self.tumor_positions.add(pos)
@@ -783,7 +815,9 @@ class CreepSpreadManager:
                 pos_tuple = (round(tumor_pos.x, 1), round(tumor_pos.y, 1))
                 self.pending_tumor_positions.add(pos_tuple)
             except Exception as e:
-                logger.warning(f"[CreepSpreadManager] queen tumor creation suppressed: {e}")
+                logger.warning(
+                    f"[CreepSpreadManager] queen tumor creation suppressed: {e}"
+                )
 
     async def _spread_from_tumors(self, game_time: float):
         """기존 크립 종양에서 새 종양 확산"""
@@ -815,7 +849,9 @@ class CreepSpreadManager:
                 pos_tuple = (round(spread_pos.x, 1), round(spread_pos.y, 1))
                 self.pending_tumor_positions.add(pos_tuple)
             except Exception as e:
-                logger.warning(f"[CreepSpreadManager] tumor spread action suppressed: {e}")
+                logger.warning(
+                    f"[CreepSpreadManager] tumor spread action suppressed: {e}"
+                )
 
     def _find_best_tumor_position(
         self,
@@ -849,7 +885,10 @@ class CreepSpreadManager:
                 continue
 
             pos_tuple = (round(target.x, 1), round(target.y, 1))
-            if pos_tuple in self.tumor_positions or pos_tuple in self.pending_tumor_positions:
+            if (
+                pos_tuple in self.tumor_positions
+                or pos_tuple in self.pending_tumor_positions
+            ):
                 continue
 
             too_close = False
@@ -868,7 +907,9 @@ class CreepSpreadManager:
                 if target.distance_to(exp_dir) < source_pos.distance_to(exp_dir):
                     score += 2.0
             if self._enemy_direction:
-                if target.distance_to(self._enemy_direction) < source_pos.distance_to(self._enemy_direction):
+                if target.distance_to(self._enemy_direction) < source_pos.distance_to(
+                    self._enemy_direction
+                ):
                     score += 1.0
             score += dist * 0.1
             candidates.append((target, score))

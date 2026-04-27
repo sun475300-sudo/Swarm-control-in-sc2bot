@@ -67,6 +67,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 class UnitRole(Enum):
     """High-level role classification for Zerg units."""
+
     WORKER = auto()
     GROUND_MELEE = auto()
     GROUND_RANGED = auto()
@@ -85,6 +86,7 @@ class Race(Enum):
 @dataclass(frozen=True)
 class UnitInfo:
     """Static metadata for one SC2 unit."""
+
     name: str
     race: Race
     role: UnitRole
@@ -104,22 +106,124 @@ class UnitInfo:
 # ---------------------------------------------------------------------------
 ZERG_UNITS: Dict[str, UnitInfo] = {
     "drone": UnitInfo("drone", Race.ZERG, UnitRole.WORKER, 50, 0, 1, 12.0, 1, 40, 4.67),
-    "zergling": UnitInfo("zergling", Race.ZERG, UnitRole.GROUND_MELEE, 25, 0, 0.5, 17.0, 1, 35, 10.22),
-    "baneling": UnitInfo("baneling", Race.ZERG, UnitRole.GROUND_MELEE, 50, 25, 0.5, 14.0, 1, 30, 80.0),
-    "roach": UnitInfo("roach", Race.ZERG, UnitRole.GROUND_RANGED, 75, 25, 2, 19.0, 1, 145, 11.2),
-    "ravager": UnitInfo("ravager", Race.ZERG, UnitRole.GROUND_RANGED, 100, 75, 3, 12.0, 1, 120, 14.0),
-    "hydralisk": UnitInfo("hydralisk", Race.ZERG, UnitRole.GROUND_RANGED, 100, 50, 2, 24.0, 2, 90, 18.6),
-    "lurker": UnitInfo("lurker", Race.ZERG, UnitRole.SIEGE, 150, 100, 3, 18.0, 2, 200, 20.0),
-    "queen": UnitInfo("queen", Race.ZERG, UnitRole.SPELLCASTER, 150, 0, 2, 36.0, 1, 175, 11.2),
-    "mutalisk": UnitInfo("mutalisk", Race.ZERG, UnitRole.AIR_UNIT, 100, 100, 2, 24.0, 2, 120, 11.8, is_flying=True),
-    "corruptor": UnitInfo("corruptor", Race.ZERG, UnitRole.AIR_UNIT, 150, 100, 2, 28.0, 2, 200, 10.1, is_flying=True),
-    "brood_lord": UnitInfo("brood_lord", Race.ZERG, UnitRole.SIEGE, 300, 250, 4, 24.0, 3, 225, 11.2, is_flying=True),
-    "viper": UnitInfo("viper", Race.ZERG, UnitRole.SPELLCASTER, 100, 200, 3, 29.0, 3, 150, 0.0, is_flying=True),
-    "infestor": UnitInfo("infestor", Race.ZERG, UnitRole.SPELLCASTER, 100, 150, 2, 36.0, 2, 90, 0.0),
-    "swarm_host": UnitInfo("swarm_host", Race.ZERG, UnitRole.SIEGE, 100, 75, 3, 29.0, 2, 160, 7.0),
-    "ultralisk": UnitInfo("ultralisk", Race.ZERG, UnitRole.GROUND_MELEE, 300, 200, 6, 39.0, 3, 500, 35.0, armor=2),
-    "overlord": UnitInfo("overlord", Race.ZERG, UnitRole.AIR_UNIT, 100, 0, 0, 18.0, 1, 200, 0.0, is_flying=True),
-    "overseer": UnitInfo("overseer", Race.ZERG, UnitRole.AIR_UNIT, 150, 50, 0, 12.0, 2, 200, 0.0, is_flying=True),
+    "zergling": UnitInfo(
+        "zergling", Race.ZERG, UnitRole.GROUND_MELEE, 25, 0, 0.5, 17.0, 1, 35, 10.22
+    ),
+    "baneling": UnitInfo(
+        "baneling", Race.ZERG, UnitRole.GROUND_MELEE, 50, 25, 0.5, 14.0, 1, 30, 80.0
+    ),
+    "roach": UnitInfo(
+        "roach", Race.ZERG, UnitRole.GROUND_RANGED, 75, 25, 2, 19.0, 1, 145, 11.2
+    ),
+    "ravager": UnitInfo(
+        "ravager", Race.ZERG, UnitRole.GROUND_RANGED, 100, 75, 3, 12.0, 1, 120, 14.0
+    ),
+    "hydralisk": UnitInfo(
+        "hydralisk", Race.ZERG, UnitRole.GROUND_RANGED, 100, 50, 2, 24.0, 2, 90, 18.6
+    ),
+    "lurker": UnitInfo(
+        "lurker", Race.ZERG, UnitRole.SIEGE, 150, 100, 3, 18.0, 2, 200, 20.0
+    ),
+    "queen": UnitInfo(
+        "queen", Race.ZERG, UnitRole.SPELLCASTER, 150, 0, 2, 36.0, 1, 175, 11.2
+    ),
+    "mutalisk": UnitInfo(
+        "mutalisk",
+        Race.ZERG,
+        UnitRole.AIR_UNIT,
+        100,
+        100,
+        2,
+        24.0,
+        2,
+        120,
+        11.8,
+        is_flying=True,
+    ),
+    "corruptor": UnitInfo(
+        "corruptor",
+        Race.ZERG,
+        UnitRole.AIR_UNIT,
+        150,
+        100,
+        2,
+        28.0,
+        2,
+        200,
+        10.1,
+        is_flying=True,
+    ),
+    "brood_lord": UnitInfo(
+        "brood_lord",
+        Race.ZERG,
+        UnitRole.SIEGE,
+        300,
+        250,
+        4,
+        24.0,
+        3,
+        225,
+        11.2,
+        is_flying=True,
+    ),
+    "viper": UnitInfo(
+        "viper",
+        Race.ZERG,
+        UnitRole.SPELLCASTER,
+        100,
+        200,
+        3,
+        29.0,
+        3,
+        150,
+        0.0,
+        is_flying=True,
+    ),
+    "infestor": UnitInfo(
+        "infestor", Race.ZERG, UnitRole.SPELLCASTER, 100, 150, 2, 36.0, 2, 90, 0.0
+    ),
+    "swarm_host": UnitInfo(
+        "swarm_host", Race.ZERG, UnitRole.SIEGE, 100, 75, 3, 29.0, 2, 160, 7.0
+    ),
+    "ultralisk": UnitInfo(
+        "ultralisk",
+        Race.ZERG,
+        UnitRole.GROUND_MELEE,
+        300,
+        200,
+        6,
+        39.0,
+        3,
+        500,
+        35.0,
+        armor=2,
+    ),
+    "overlord": UnitInfo(
+        "overlord",
+        Race.ZERG,
+        UnitRole.AIR_UNIT,
+        100,
+        0,
+        0,
+        18.0,
+        1,
+        200,
+        0.0,
+        is_flying=True,
+    ),
+    "overseer": UnitInfo(
+        "overseer",
+        Race.ZERG,
+        UnitRole.AIR_UNIT,
+        150,
+        50,
+        0,
+        12.0,
+        2,
+        200,
+        0.0,
+        is_flying=True,
+    ),
 }
 
 # Counter relationships: (unit_a, unit_b, weight) means unit_a counters unit_b
@@ -260,7 +364,9 @@ class _FallbackGraph:
         path.reverse()
         return dist[target], path
 
-    def pagerank(self, alpha: float = 0.85, max_iter: int = 100, tol: float = 1e-6) -> Dict[str, float]:
+    def pagerank(
+        self, alpha: float = 0.85, max_iter: int = 100, tol: float = 1e-6
+    ) -> Dict[str, float]:
         nodes = self.nodes()
         n = len(nodes)
         if n == 0:
@@ -287,10 +393,7 @@ class _FallbackGraph:
         n = self.number_of_nodes()
         if n <= 1:
             return {nd: 0.0 for nd in self.nodes()}
-        return {
-            nd: len(self._adj.get(nd, {})) / (n - 1)
-            for nd in self.nodes()
-        }
+        return {nd: len(self._adj.get(nd, {})) / (n - 1) for nd in self.nodes()}
 
     def betweenness_centrality(self) -> Dict[str, float]:
         """Brandes' algorithm for betweenness centrality."""
@@ -331,7 +434,9 @@ class _FallbackGraph:
             bc = {k: v * norm for k, v in bc.items()}
         return bc
 
-    def adjacency_matrix(self, node_order: Optional[List[str]] = None) -> Tuple[np.ndarray, List[str]]:
+    def adjacency_matrix(
+        self, node_order: Optional[List[str]] = None
+    ) -> Tuple[np.ndarray, List[str]]:
         nodes = node_order or sorted(self.nodes())
         idx = {n: i for i, n in enumerate(nodes)}
         mat = np.zeros((len(nodes), len(nodes)))
@@ -423,6 +528,7 @@ class _FallbackGraph:
 @dataclass
 class MapGrid:
     """2D grid map for pathfinding with obstacles."""
+
     width: int
     height: int
     obstacles: Set[Tuple[int, int]] = field(default_factory=set)
@@ -546,13 +652,29 @@ class SC2UnitGraph:
         g = self.counter_graph
         for name, info in ZERG_UNITS.items():
             if self._use_nx:
-                g.add_node(name, **{"role": info.role.name, "tier": info.tech_tier,
-                                    "supply": info.supply, "mineral": info.mineral_cost,
-                                    "gas": info.gas_cost, "hp": info.hp, "dps": info.dps})
+                g.add_node(
+                    name,
+                    **{
+                        "role": info.role.name,
+                        "tier": info.tech_tier,
+                        "supply": info.supply,
+                        "mineral": info.mineral_cost,
+                        "gas": info.gas_cost,
+                        "hp": info.hp,
+                        "dps": info.dps,
+                    },
+                )
             else:
-                g.add_node(name, role=info.role.name, tier=info.tech_tier,
-                           supply=info.supply, mineral=info.mineral_cost,
-                           gas=info.gas_cost, hp=info.hp, dps=info.dps)
+                g.add_node(
+                    name,
+                    role=info.role.name,
+                    tier=info.tech_tier,
+                    supply=info.supply,
+                    mineral=info.mineral_cost,
+                    gas=info.gas_cost,
+                    hp=info.hp,
+                    dps=info.dps,
+                )
         for counter, countered, weight in COUNTER_RELATIONSHIPS:
             g.add_edge(counter, countered, weight=weight)
 
@@ -560,7 +682,9 @@ class SC2UnitGraph:
         g = self.tech_tree
         for name, info in ZERG_UNITS.items():
             if self._use_nx:
-                g.add_node(name, **{"tier": info.tech_tier, "build_time": info.build_time})
+                g.add_node(
+                    name, **{"tier": info.tech_tier, "build_time": info.build_time}
+                )
             else:
                 g.add_node(name, tier=info.tech_tier, build_time=info.build_time)
         for prereq, unlocked in TECH_TREE_EDGES:
@@ -579,7 +703,9 @@ class SC2UnitGraph:
         if self._use_nx:
             try:
                 path = nx.shortest_path(self.tech_tree, start, target, weight="weight")
-                cost = nx.shortest_path_length(self.tech_tree, start, target, weight="weight")
+                cost = nx.shortest_path_length(
+                    self.tech_tree, start, target, weight="weight"
+                )
                 return float(cost), path
             except nx.NetworkXNoPath:
                 return math.inf, []
@@ -616,7 +742,9 @@ class SC2UnitGraph:
                 close[nd] = (reachable / total) if total > 0 else 0.0
 
         result: Dict[str, Dict[str, float]] = {}
-        for unit in self.counter_graph.nodes() if self._use_nx else self.counter_graph.nodes():
+        for unit in (
+            self.counter_graph.nodes() if self._use_nx else self.counter_graph.nodes()
+        ):
             result[unit] = {
                 "degree": deg.get(unit, 0.0),
                 "betweenness": betw.get(unit, 0.0),
@@ -643,7 +771,9 @@ class SC2UnitGraph:
         """
         if self._use_nx:
             undirected = self.counter_graph.to_undirected()
-            communities = list(greedy_modularity_communities(undirected, resolution=resolution))
+            communities = list(
+                greedy_modularity_communities(undirected, resolution=resolution)
+            )
             communities = [set(c) for c in communities]
         else:
             communities = self.counter_graph.greedy_communities(resolution)
@@ -655,7 +785,8 @@ class SC2UnitGraph:
 
     # -- adjacency matrix for battle simulation -----------------------------
     def counter_adjacency_matrix(
-        self, unit_order: Optional[List[str]] = None,
+        self,
+        unit_order: Optional[List[str]] = None,
     ) -> Tuple[np.ndarray, List[str]]:
         """
         Build an adjacency matrix from the counter graph.
@@ -749,7 +880,7 @@ class SC2UnitGraph:
                 g.add_node(name, pos=pos)
 
         for i, a in enumerate(names):
-            for b in names[i + 1:]:
+            for b in names[i + 1 :]:
                 dx = base_positions[a][0] - base_positions[b][0]
                 dy = base_positions[a][1] - base_positions[b][1]
                 dist = math.sqrt(dx * dx + dy * dy)
@@ -791,7 +922,9 @@ class SC2UnitGraph:
         return self.tech_tree.topological_sort()
 
     # -- visualization ------------------------------------------------------
-    def visualize_counter_graph(self, output_path: str = "sc2_counter_graph.png") -> str:
+    def visualize_counter_graph(
+        self, output_path: str = "sc2_counter_graph.png"
+    ) -> str:
         """
         Render the counter-relationship graph with matplotlib.
         Nodes coloured by unit role, edge width by counter strength.
@@ -828,17 +961,30 @@ class SC2UnitGraph:
         ]
 
         nx.draw_networkx_nodes(
-            self.counter_graph, pos, ax=ax,
-            node_color=node_colors, node_size=800, alpha=0.9, edgecolors="black",
+            self.counter_graph,
+            pos,
+            ax=ax,
+            node_color=node_colors,
+            node_size=800,
+            alpha=0.9,
+            edgecolors="black",
         )
         nx.draw_networkx_labels(
-            self.counter_graph, pos, ax=ax,
-            font_size=8, font_weight="bold",
+            self.counter_graph,
+            pos,
+            ax=ax,
+            font_size=8,
+            font_weight="bold",
         )
         nx.draw_networkx_edges(
-            self.counter_graph, pos, ax=ax,
-            width=edge_weights, alpha=0.5, edge_color="#555555",
-            arrows=True, arrowsize=15,
+            self.counter_graph,
+            pos,
+            ax=ax,
+            width=edge_weights,
+            alpha=0.5,
+            edge_color="#555555",
+            arrows=True,
+            arrowsize=15,
             connectionstyle="arc3,rad=0.1",
         )
 
@@ -847,7 +993,9 @@ class SC2UnitGraph:
             for name, c in role_colors.items()
         ]
         ax.legend(handles=patches, loc="upper left", fontsize=9)
-        ax.set_title("SC2 Zerg Unit Counter Relationships", fontsize=14, fontweight="bold")
+        ax.set_title(
+            "SC2 Zerg Unit Counter Relationships", fontsize=14, fontweight="bold"
+        )
         ax.axis("off")
 
         fig.tight_layout()
@@ -881,18 +1029,29 @@ class SC2UnitGraph:
         ]
 
         nx.draw_networkx_nodes(
-            self.tech_tree, pos, ax=ax,
-            node_color=node_colors, node_size=700, alpha=0.9, edgecolors="black",
+            self.tech_tree,
+            pos,
+            ax=ax,
+            node_color=node_colors,
+            node_size=700,
+            alpha=0.9,
+            edgecolors="black",
         )
-        nx.draw_networkx_labels(self.tech_tree, pos, ax=ax, font_size=7, font_weight="bold")
+        nx.draw_networkx_labels(
+            self.tech_tree, pos, ax=ax, font_size=7, font_weight="bold"
+        )
         nx.draw_networkx_edges(
-            self.tech_tree, pos, ax=ax,
-            arrows=True, arrowsize=12, edge_color="#666666", alpha=0.7,
+            self.tech_tree,
+            pos,
+            ax=ax,
+            arrows=True,
+            arrowsize=12,
+            edge_color="#666666",
+            alpha=0.7,
         )
 
         patches = [
-            mpatches.Patch(color=c, label=f"Tier {t}")
-            for t, c in tier_colors.items()
+            mpatches.Patch(color=c, label=f"Tier {t}") for t, c in tier_colors.items()
         ]
         ax.legend(handles=patches, loc="upper right", fontsize=10)
         ax.set_title("Zerg Tech Tree DAG", fontsize=14, fontweight="bold")
@@ -924,7 +1083,9 @@ class SC2UnitGraph:
             },
             "most_critical_units": critical,
             "composition_clusters": [sorted(c) for c in clusters],
-            "pagerank_top5": sorted(pagerank.items(), key=lambda x: x[1], reverse=True)[:5],
+            "pagerank_top5": sorted(pagerank.items(), key=lambda x: x[1], reverse=True)[
+                :5
+            ],
             "example_tech_path": {
                 "from": "drone",
                 "to": "brood_lord",

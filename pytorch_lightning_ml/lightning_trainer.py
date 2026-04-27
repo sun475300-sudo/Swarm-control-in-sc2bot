@@ -20,6 +20,7 @@ try:
     import torch.nn as nn
     import torch.optim as optim
     from torch.utils.data import DataLoader, TensorDataset
+
     PL_AVAILABLE = True
 except ImportError:
     PL_AVAILABLE = False
@@ -30,6 +31,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 
 if PL_AVAILABLE:
+
     class SC2ActorCritic(pl.LightningModule):
         def __init__(
             self,
@@ -48,7 +50,7 @@ if PL_AVAILABLE:
                 nn.Linear(hidden_dim, hidden_dim),
                 nn.ReLU(),
             )
-            self.actor  = nn.Linear(hidden_dim, act_dim)
+            self.actor = nn.Linear(hidden_dim, act_dim)
             self.critic = nn.Linear(hidden_dim, 1)
 
         def forward(self, obs):
@@ -72,12 +74,14 @@ if PL_AVAILABLE:
             entropy = -(probs * log_probs).sum(dim=-1).mean()
 
             loss = policy_loss + 0.5 * value_loss - 0.01 * entropy
-            self.log_dict({
-                "train/loss": loss,
-                "train/policy_loss": policy_loss,
-                "train/value_loss": value_loss,
-                "train/entropy": entropy,
-            })
+            self.log_dict(
+                {
+                    "train/loss": loss,
+                    "train/policy_loss": policy_loss,
+                    "train/value_loss": value_loss,
+                    "train/entropy": entropy,
+                }
+            )
             return loss
 
         def validation_step(self, batch, batch_idx):
@@ -89,9 +93,7 @@ if PL_AVAILABLE:
 
         def configure_optimizers(self):
             optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr)
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=100
-            )
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     class SC2DataModule(pl.LightningDataModule):
@@ -173,13 +175,16 @@ if PL_AVAILABLE:
             val_loss = metrics.get("val/loss", None)
             if val_loss is not None:
                 self.val_losses.append(float(val_loss))
-                print(f"  Epoch {trainer.current_epoch:3d} | "
-                      f"Val loss: {float(val_loss):.4f}")
+                print(
+                    f"  Epoch {trainer.current_epoch:3d} | "
+                    f"Val loss: {float(val_loss):.4f}"
+                )
 
 
 # ─────────────────────────────────────────────
 # Python fallback
 # ─────────────────────────────────────────────
+
 
 def _python_train(epochs: int = 20) -> dict:
     """Manual gradient-free training simulation."""
@@ -218,6 +223,7 @@ def _python_train(epochs: int = 20) -> dict:
 # ─────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────
+
 
 def train():
     print("Phase 538: PyTorch Lightning — SC2 Actor-Critic")
