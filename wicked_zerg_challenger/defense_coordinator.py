@@ -600,6 +600,13 @@ class DefenseCoordinator:
             else:
                 target_spines = 1
 
+        # Nydus alert from intel_manager: bump spine target by +1 at every base.
+        # intel_manager.py:686 sets this on NYDUS_INCOMING; without this reader
+        # the alert was silently dropped and NYDUS detection produced no
+        # defensive reaction.
+        if self.blackboard and self.blackboard.get("urgent_spine_all_bases", False):
+            target_spines += 1
+
         # 부족하면 건설 요청
         if len(spines_nearby) < target_spines:
             cost = self.bot.calculate_cost(UnitTypeId.SPINECRAWLER)
