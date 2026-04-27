@@ -178,6 +178,30 @@
 
   Final pytest delta: **222 → 320 passed** (+98), **84 → 0 failed**.
 
+  Continued the loop:
+
+  7. `dc6e8ac` — **Second real bug fix surfaced through the test loop.**
+     Strengthened `test_apply_combat_improvements_sets_priorities` to
+     seed `task_priorities` with sentinel values rather than asserting
+     on the optimizer's chosen key directly. That immediately exposed
+     a typo: `apply_combat_improvements` was writing
+     `task_priorities["air_harassment"]` but the canonical key (initialised
+     in `combat/initialization.py`, read in `combat_manager.py:297`) is
+     `air_harass` (no "ment"). The "tightened to 60" priority from
+     c7bb6dd was silently landing in a dead dict slot and never reaching
+     the multitasking loop. Fix: rename to `air_harass`.
+
+  Total real bugs surfaced & fixed by this loop: **2** (the enum-vs-str
+  bug in iter 6 and the typo'd dict key in iter 7), both in
+  `LogicOptimizer.apply_*_improvements` — the same module, both
+  introduced in the same commit (c7bb6dd) without test coverage.
+
   PLAN-NIGHTLY surface footprint cleanup (P1.5) and harassment-loop
   polish (P1.2) remain untouched and continue to be the highest-ROI
   follow-ups.
+
+  Open follow-up surfaced but not acted on: `combat_manager.py:263`
+  sets `task_priorities["worker_harass"] = 80` in all_in mode but no
+  task-pickup loop currently consumes that key — it's either dead
+  intent (delete) or an unfinished feature (wire up). Leaving it for a
+  separate review.
