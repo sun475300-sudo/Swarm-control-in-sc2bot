@@ -59,3 +59,36 @@
 4. **Iteration 4**: P4 — 의존성 핀 + CI guard
 
 각 iteration 후 pytest 재실행으로 회귀 검증.
+
+---
+
+## 진행 현황 (라이브 업데이트)
+
+| Iter | 커밋 | 내용 | ruff 잔여 | 테스트 |
+|---|---|---|---|---|
+| 베이스라인 | - | - | 2168 | 305 P / 1 F / 34 S |
+| 1 | `44dc7a4` | F823/F811 실 버그 6 + stale 테스트 1 | - | 306 P / 0 F |
+| 2 | `4c3c54a` | F541/W293/E713 safe-fix 533 | - | 306 P / 0 F |
+| 3 | `afb378f` | F841 except-var 48 | - | 306 P / 0 F |
+| 4 | `04d9cc7` | requirements-dev.txt + ci.yml pytest-asyncio | - | 306 P / 0 F |
+| 5 | `105852d` | B007 unused-loop / B905 zip-strict 70 | - | 306 P / 0 F |
+| 6 | `7c7d150` | E712 true/false 비교 42 | - | 306 P / 0 F |
+| 7 | `c5e3517` | E741 ambiguous name `l`→`larva_unit/lv` 13 | - | 306 P / 0 F |
+| 8 | `7f4ef09` | F841 production unused-var dead-code 92 | **1473** | 306 P / 0 F |
+
+**누적 정적 이슈 감소**: 2168 → 1473 (-695, -32%)
+**테스트 회귀**: 0건 (모든 iter에서 306 passed 유지)
+**실제 코드 LoC 감소**: -58 (dead-code)
+
+## 잔여 우선 항목 (다음 iter 후보)
+
+| 룰 | 잔여 | 처리 방향 |
+|---|---|---|
+| E501 | 836 | line-too-long — black 88자 적용 후 잔여, 대부분 의도적 (긴 코멘트/문자열). 무리하지 않음 |
+| F401 | 386 | unused-import — per-file review 필요 (side-effect 의존 가능) |
+| F405 | 95 | `from X import *` — 리팩터 위험, 별도 phase |
+| E402 | 74 | import-not-at-top — 보통 sys.path 조작 후 import. 의도적 |
+| B023 | 30 | closure-over-loop-var — false positive 다수, per-site |
+| F841 | 20 | tests의 smoke construction — `_var`로 rename 가능 |
+| E741 | 9 | visuals/ 보조 스크립트 — 영향 적음 |
+
