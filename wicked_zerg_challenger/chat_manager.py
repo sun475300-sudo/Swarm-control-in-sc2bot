@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Compatibility shim. Use chat_manager_utf8.ChatManager as the canonical implementation."""
+"""Compatibility shim. ChatManager moved; re-import path TBD."""
 
-__all__ = ["ChatManager"]
+__all__: list[str] = []

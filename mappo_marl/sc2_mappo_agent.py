@@ -1011,12 +1011,11 @@ def run_demo(args: argparse.Namespace) -> None:
         ep_reward = 0.0
         done = False
         step = 0
+        rewards = [0.0] * cfg.n_agents
 
         while not done:
             masks = env.get_action_masks()
-            actions = agent.collect_step(
-                obs, gs, [0.0] * cfg.n_agents if step == 0 else rewards, done, masks
-            )
+            actions = agent.collect_step(obs, gs, rewards, done, masks)
             obs, gs, rewards, done = env.step(actions)
             ep_reward += np.mean(rewards)
             step += 1

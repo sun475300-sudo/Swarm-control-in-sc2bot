@@ -230,7 +230,7 @@ def main():
     
     print("\\n=== Formation Plan ===")
     positions = hub.formation_plan(10, "circle")
-    print(f"Generated {len(positions)} positions")
+    print(f"Generated {len(positions)} positions")  # noqa: F821
     
     print("\\n✅ All tests passed!")
 

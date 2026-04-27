@@ -88,10 +88,12 @@ class SC2AuthInterceptor(grpc.ServerInterceptor):
 
         try:
             payload = self._validate_token(token)
-        except grpc.RpcError as e:
+        except grpc.RpcError as exc:
+            err_code = exc.code()
+            err_details = exc.details()
 
             def abort(request, context):
-                context.abort(e.code(), e.details())
+                context.abort(err_code, err_details)
 
             return grpc.unary_unary_rpc_method_handler(abort)
 

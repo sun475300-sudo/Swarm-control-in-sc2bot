@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import sys
 
 # Bug fix #12: Wrap cv2 import in try/except to prevent crash if not installed
 try:

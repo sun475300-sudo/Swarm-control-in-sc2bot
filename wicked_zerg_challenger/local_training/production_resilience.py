@@ -1006,7 +1006,7 @@ class ProductionResilience:
                             "ProductionResilience",
                         )
                         logger.info(
-                            f"Requested via TechCoordinator at {game_time:.1f}s, Supply: {supply_used}"
+                            f"Requested via TechCoordinator at {getattr(b, 'time', 0.0):.1f}s, Supply: {supply_used}"
                         )
                     elif not tech_coordinator:
                         # Fallback only if TechCoordinator not available (should not happen in normal operation)

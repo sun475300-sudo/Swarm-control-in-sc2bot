@@ -302,7 +302,6 @@ def get(key_path: str, default: Any = None) -> Any:
         >>> get("nonexistent", default="없음")
         '없음'
     """
-    global _config
     if _config is None:
         load_config()
 
@@ -325,7 +324,6 @@ def reload_config() -> Dict[str, Any]:
 
 def get_all() -> Dict[str, Any]:
     """전체 설정 딕셔너리를 반환한다."""
-    global _config
     if _config is None:
         load_config()
     return copy.deepcopy(_config)
