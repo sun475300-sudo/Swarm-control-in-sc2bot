@@ -63,8 +63,9 @@ def kill_all_sc2():
             ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(3)
-    except Exception:
-        pass
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+        # taskkill 미존재(Linux) / 타임아웃 / 권한 등 — cleanup이라 치명적이지 않음
+        logger.debug("kill_all_sc2 skipped: %s", e)
 
 
 def create_lock():
@@ -78,8 +79,8 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except OSError as e:
+        logger.debug("remove_lock failed: %s", e)
 
 
 def run_single_game(

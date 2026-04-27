@@ -1427,7 +1427,8 @@ class CombatManager:
                     best_score = score
                     best = e
             return best
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as ex:
+            self.logger.debug("priority target selection failed: %s", ex)
             return None
 
     async def _basic_attack(self, units: Units, enemy_units):
@@ -1557,7 +1558,12 @@ class CombatManager:
                     for unit in defenders:
                         try:
                             self.bot.do(unit.attack(drop_pos))
-                        except Exception:
+                        except (AttributeError, RuntimeError) as ex:
+                            self.logger.debug(
+                                "drop response attack issue tag=%s: %s",
+                                getattr(unit, "tag", "?"),
+                                ex,
+                            )
                             continue
                     # 드롭 플래그 해제
                     blackboard.set("drop_detected", False)
@@ -1689,7 +1695,12 @@ class CombatManager:
                     for ling in harass_lings:
                         try:
                             self.bot.do(ling.attack(harass_target))
-                        except Exception:
+                        except (AttributeError, RuntimeError) as ex:
+                            self.logger.debug(
+                                "ling harass issue tag=%s: %s",
+                                getattr(ling, "tag", "?"),
+                                ex,
+                            )
                             continue
                     # 견제팀 제외한 메인 병력
                     harass_tags = {u.tag for u in harass_lings}

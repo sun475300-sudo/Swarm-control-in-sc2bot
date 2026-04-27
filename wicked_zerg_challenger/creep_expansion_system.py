@@ -21,7 +21,7 @@ try:
         nearest_point_index,
         points_to_xy_tuples,
     )
-except Exception:
+except ImportError:
     from rust_accel import nearest_point_index, points_to_xy_tuples
 
 
