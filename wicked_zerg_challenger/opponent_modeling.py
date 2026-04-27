@@ -24,7 +24,10 @@ from utils.logger import get_logger
 try:
     from sc2.bot_ai import BotAI
 except ImportError:
-    pass
+    # `BotAI` is used purely as a type annotation below; provide a
+    # fallback so annotation evaluation (and reflection) doesn't raise
+    # NameError in environments where burnysc2 isn't installed.
+    BotAI = None  # type: ignore[assignment,misc]
 
 
 class OpponentStyle(Enum):
