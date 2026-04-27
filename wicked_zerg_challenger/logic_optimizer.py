@@ -421,6 +421,48 @@ class LogicOptimizer:
         except Exception:
             return False
 
+    def apply_combat_improvements(self):
+        """전투 로직 개선: 마이크로 컨트롤 및 타겟팅 우선순위 강화"""
+        self.logger.info("Applying combat improvements...")
+        if hasattr(self.bot, "combat_manager"):
+            # 공중 유닛 타겟팅 우선순위 강화 (위협적인 유닛 우선)
+            self.bot.combat_manager.task_priorities["air_harassment"] = 60
+            # 방어 시 일꾼 보호 로직 강화
+            self.bot.combat_manager.task_priorities["worker_defense"] = 110
+            
+    def apply_economy_improvements(self):
+        """경제 로직 개선: 최적화된 일꾼 생산 및 자원 관리"""
+        self.logger.info("Applying economy improvements...")
+        if hasattr(self.bot, "economy_manager"):
+            # 가스 채취 효율 최적화
+            self.bot.economy_manager.gas_worker_adjustment_interval = 22 # 더 자주 조정
+            # 매크로 해처리 타이밍 최적화
+            self.bot.economy_manager.macro_hatchery_mineral_threshold = 500 # 더 공격적인 인프라 확장
+            
+    def apply_strategy_improvements(self, difficulty):
+        """전략 로직 개선: 난이도별 맞춤형 전략 적용"""
+        self.logger.info(f"Applying strategy improvements for {difficulty.name}...")
+        
+        # 난이도가 높을수록 더 공격적인 빌드 및 정찰 빈도 증가
+        from sc2.data import Difficulty
+        if difficulty in [Difficulty.CheatVision, Difficulty.CheatMoney, Difficulty.CheatInsane]:
+            if hasattr(self.bot, "strategy_manager"):
+                self.bot.strategy_manager.current_mode = "aggressive"
+                
+    def optimize_all(self):
+        """모든 로직 최적화 실행"""
+        self.apply_combat_improvements()
+        self.apply_economy_improvements()
+        
+        # 현재 난이도 확인 후 전략 적용
+        from sc2.data import Difficulty, Race
+        current_diff = Difficulty.VeryHard
+        if hasattr(self.bot, "difficulty_progression"):
+             current_diff = self.bot.difficulty_progression.get_recommended_difficulty("DefaultMap", Race.Random)
+        
+        self.apply_strategy_improvements(current_diff)
+        return True
+
     def get_optimization_stats(self, iteration: int) -> Dict:
         """최적화 통계 반환"""
         current_phase = self._get_current_phase()
